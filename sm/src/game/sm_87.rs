@@ -7,7 +7,7 @@ use crate::game::sm_86::SpawnEprojWithRoomGfx;
 use crate::game::sm_8d::SpawnPalfxObject;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game_state::Game;
-use crate::ram_map::ram_word;
+use crate::ram_map::{ram_word, set_ram_word};
 use crate::rtl::{RomPtr, Unreachable};
 
 pub use crate::types::{
@@ -91,7 +91,7 @@ pub unsafe fn AnimtilesHandler(game: &mut Game) {
     {
         let mut i: ::core::ffi::c_int = 10 as ::core::ffi::c_int;
         while i >= 0i32 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1ef3) as *mut uint16) = i as uint16;
+            set_ram_word!(game.animtiles_object_index = i as uint16);
             if *((&raw mut game.g_ram as *mut uint8).offset(0x1ef5) as *mut uint16)
                 .offset((i >> 1 as ::core::ffi::c_int) as isize)
                 != 0
@@ -150,7 +150,7 @@ pub unsafe fn ProcessAnimtilesObject(game: &mut Game) {
             if (*v4 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32 {
                 break;
             }
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1f49) as *mut uint16) = *v4;
+            set_ram_word!(game.animtiles_instruction = *v4);
             v3 = CallAnimtilesInstr(
                 ((v5) as u32) | (0x870000u32),
                 v0,
@@ -179,7 +179,7 @@ pub unsafe fn AnimtilesInstr_Goto(k: uint16, j: uint16, game: &mut Game) -> uint
     *(RomPtr_87(j, game) as *mut uint16)
 }
 pub unsafe fn AnimtilesInstr_GotoRel(k: uint16, j: uint16, game: &mut Game) -> uint16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1f49) as *mut uint16) = j;
+    set_ram_word!(game.animtiles_instruction = j);
     (j).wrapping_add((*RomPtr_87(j, game) as int8) as u16)
 }
 pub unsafe fn AnimtilesInstr_DecrementTimerAndGoto(

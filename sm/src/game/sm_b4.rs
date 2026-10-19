@@ -1,6 +1,6 @@
 use crate::game::sm_81::DrawSpritemapWithBaseTile;
 use crate::game_state::Game;
-use crate::ram_map::ram_word;
+use crate::ram_map::{ram_word, set_ram_word};
 use crate::rtl::{RomPtr, Unreachable};
 
 pub use crate::types::{
@@ -78,7 +78,7 @@ pub unsafe fn HandleSpriteObjects(game: &mut Game) {
     {
         return;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1844) as *mut uint16) = 62 as uint16;
+    set_ram_word!(game.sprite_object_index = 62 as uint16);
     let mut current_block_9: u64;
     loop {
         let mut v0: ::core::ffi::c_int = 0;

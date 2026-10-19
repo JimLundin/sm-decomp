@@ -2,7 +2,7 @@ use crate::game::sm_80::QueueMusic_DelayedY;
 use crate::game::sm_81::DrawSamusSpritemap;
 use crate::game::sm_82::PlayRoomMusicTrackAfterAFrames;
 use crate::game_state::Game;
-use crate::ram_map::ram_word;
+use crate::ram_map::{ram_word, set_ram_word};
 use crate::rtl::RomPtr;
 
 pub use crate::types::{
@@ -27,20 +27,25 @@ pub unsafe fn SetSamusTilesDefsForCurAnim(game: &mut Game) {
             .offset(ram_word!(game, samus_pose) as isize) as ::core::ffi::c_int)
         as uint16;
     let AD: *mut SamusTileAnimationDefs = get_SamusTileAnimationDefs(v0, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x71f) as *mut uint16) = (7 as ::core::ffi::c_int
-        * (*AD).top_half_pos as ::core::ffi::c_int
-        + *(game.g_rom.offset(crate::rtl::lorom_offset(0x92d91e)) as *const uint8 as *mut uint16)
-            .offset((*AD).top_half_idx as isize) as ::core::ffi::c_int)
-        as uint16;
+    set_ram_word!(
+        game.nmi_copy_samus_top_half_src = (7 as ::core::ffi::c_int
+            * (*AD).top_half_pos as ::core::ffi::c_int
+            + *(game.g_rom.offset(crate::rtl::lorom_offset(0x92d91e)) as *const uint8
+                as *mut uint16)
+                .offset((*AD).top_half_idx as isize) as ::core::ffi::c_int)
+            as uint16
+    );
     *((&raw mut game.g_ram as *mut uint8).offset(0x71d) as *mut uint16 as *mut uint8).offset(0) =
         1 as uint8;
     if (*AD).bottom_half_idx != 255u8 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x721) as *mut uint16) =
-            (7 as ::core::ffi::c_int * (*AD).bottom_half_pos as ::core::ffi::c_int
+        set_ram_word!(
+            game.nmi_copy_samus_bottom_half_src = (7 as ::core::ffi::c_int
+                * (*AD).bottom_half_pos as ::core::ffi::c_int
                 + *(game.g_rom.offset(crate::rtl::lorom_offset(0x92d938)) as *const uint8
                     as *mut uint16)
                     .offset((*AD).bottom_half_idx as isize) as ::core::ffi::c_int)
-                as uint16;
+                as uint16
+        );
         *((&raw mut game.g_ram as *mut uint8).offset(0x71d) as *mut uint16 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
@@ -64,15 +69,13 @@ pub unsafe fn PlaySamusFanfare(game: &mut Game) -> uint8 {
         *fresh0 = (*fresh0).wrapping_add(1);
         0 as uint8
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa24) as *mut uint16) =
-            ram_word!(game, samus_prev_pose);
+        set_ram_word!(game.samus_last_different_pose = ram_word!(game, samus_prev_pose));
         *((&raw mut game.g_ram as *mut uint8).offset(0xa26) as *mut uint16) =
             *((&raw mut game.g_ram as *mut uint8).offset(0xa22) as *mut uint16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa20) as *mut uint16) =
-            ram_word!(game, samus_pose);
+        set_ram_word!(game.samus_prev_pose = ram_word!(game, samus_pose));
         *((&raw mut game.g_ram as *mut uint8).offset(0xa22) as *mut uint16) =
             *((&raw mut game.g_ram as *mut uint8).offset(0xa1e) as *mut uint16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.substate = 0 as uint16);
         1 as uint8
     }
 }

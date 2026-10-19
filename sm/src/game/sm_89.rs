@@ -9,7 +9,7 @@ use crate::game::sm_88::{
 use crate::game::sm_8d::SpawnPalfxObject;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game_state::Game;
-use crate::ram_map::ram_word;
+use crate::ram_map::{ram_word, set_ram_word};
 use crate::rtl::RomPtr;
 
 pub use crate::types::{
@@ -48,16 +48,13 @@ pub unsafe fn LoadFxEntry(v0: uint16, game: &mut Game) {
             as uint16,
         game,
     );
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16) = (*FD).base_y_pos;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16) = (*FD).target_y_pos;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16) = (*FD).y_vel;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1980) as *mut uint16) = (*FD).timer as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1982) as *mut uint16) =
-        (*FD).default_layer_blend as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1984) as *mut uint16) =
-        (*FD).layer3_layer_blend as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x197e) as *mut uint16) =
-        (*FD).fx_liquid_options_ as uint16;
+    set_ram_word!(game.fx_base_y_pos = (*FD).base_y_pos);
+    set_ram_word!(game.fx_target_y_pos = (*FD).target_y_pos);
+    set_ram_word!(game.fx_y_vel = (*FD).y_vel);
+    set_ram_word!(game.fx_timer = (*FD).timer as uint16);
+    set_ram_word!(game.fx_layer_blending_config_a = (*FD).default_layer_blend as uint16);
+    set_ram_word!(game.fx_layer_blending_config_b = (*FD).layer3_layer_blend as uint16);
+    set_ram_word!(game.fx_liquid_options = (*FD).fx_liquid_options_ as uint16);
     if (*FD).palette_blend != 0 {
         let v2: ::core::ffi::c_int =
             (*FD).palette_blend as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -122,16 +119,13 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
         entry_ptr = (entry_ptr).wrapping_add(16u16);
     }
     let FD: *mut FxDef = get_FxDef(entry_ptr, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16) = (*FD).base_y_pos;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16) = (*FD).target_y_pos;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16) = (*FD).y_vel;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1980) as *mut uint16) = (*FD).timer as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1982) as *mut uint16) =
-        (*FD).default_layer_blend as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1984) as *mut uint16) =
-        (*FD).layer3_layer_blend as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x197e) as *mut uint16) =
-        (*FD).fx_liquid_options_ as uint16;
+    set_ram_word!(game.fx_base_y_pos = (*FD).base_y_pos);
+    set_ram_word!(game.fx_target_y_pos = (*FD).target_y_pos);
+    set_ram_word!(game.fx_y_vel = (*FD).y_vel);
+    set_ram_word!(game.fx_timer = (*FD).timer as uint16);
+    set_ram_word!(game.fx_layer_blending_config_a = (*FD).default_layer_blend as uint16);
+    set_ram_word!(game.fx_layer_blending_config_b = (*FD).layer3_layer_blend as uint16);
+    set_ram_word!(game.fx_liquid_options = (*FD).fx_liquid_options_ as uint16);
     if (*FD).palette_blend != 0 {
         let v4: ::core::ffi::c_int =
             (*FD).palette_blend as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -148,11 +142,13 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(27) =
             0 as uint16;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x196e) as *mut uint16) = (*FD).type_0 as uint16;
+    set_ram_word!(game.fx_type = (*FD).type_0 as uint16);
     if (*FD).type_0 != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1964) as *mut uint16) =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x83abf0)) as *const uint8 as *mut uint16)
-                .offset(((*FD).type_0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+        set_ram_word!(
+            game.fx_tilemap_ptr = *(game.g_rom.offset(crate::rtl::lorom_offset(0x83abf0))
+                as *const uint8 as *mut uint16)
+                .offset(((*FD).type_0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
+        );
         kFxTypeFuncPtrs[((*FD).type_0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize]
             .expect("non-null function pointer")(game);
     }
@@ -213,9 +209,9 @@ pub unsafe fn RoomCode_CeresElevatorShaft(game: &mut Game) {
                 == kGameState_8_MainGameplay as ::core::ffi::c_int
         {
             CallSomeSamusCode(2 as uint16, game);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) = 32 as uint16;
+            set_ram_word!(game.screen_fade_delay = 0 as uint16);
+            set_ram_word!(game.screen_fade_counter = 0 as uint16);
+            set_ram_word!(game.game_state = 32 as uint16);
         }
         let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(2)
             as *mut uint8 as *mut uint16);
@@ -232,18 +228,20 @@ pub unsafe fn RoomCode_CeresElevatorShaft(game: &mut Game) {
                 as *mut uint16) = *(game.g_rom.offset(crate::rtl::lorom_offset(0x89ad5f))
                 as *const uint8 as *mut uint16)
                 .offset(v0 as isize);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x7a) as *mut uint16) =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0x89ad5f)) as *const uint8
-                    as *mut uint16)
-                    .offset((v0 + 1 as ::core::ffi::c_int) as isize);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x7c) as *mut uint16) =
-                -(ram_word!(game, reg_M7B) as ::core::ffi::c_int) as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x78) as *mut uint16) =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0x89ad5f)) as *const uint8
-                    as *mut uint16)
-                    .offset((v0 + 2 as ::core::ffi::c_int) as isize);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x7e) as *mut uint16) =
-                ram_word!(game, reg_M7A);
+            set_ram_word!(
+                game.reg_M7B = *(game.g_rom.offset(crate::rtl::lorom_offset(0x89ad5f))
+                    as *const uint8 as *mut uint16)
+                    .offset((v0 + 1 as ::core::ffi::c_int) as isize)
+            );
+            set_ram_word!(
+                game.reg_M7C = -(ram_word!(game, reg_M7B) as ::core::ffi::c_int) as uint16
+            );
+            set_ram_word!(
+                game.reg_M7A = *(game.g_rom.offset(crate::rtl::lorom_offset(0x89ad5f))
+                    as *const uint8 as *mut uint16)
+                    .offset((v0 + 2 as ::core::ffi::c_int) as isize)
+            );
+            set_ram_word!(game.reg_M7D = ram_word!(game, reg_M7A));
             if *((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut int16) < 0i16 {
                 v1 = ((*((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint16)) as i16)
                     .wrapping_sub(1i16);

@@ -18,7 +18,7 @@ use crate::game::sm_a0::{
 };
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
-use crate::ram_map::ram_word;
+use crate::ram_map::{ram_word, set_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{Mult8x8, RomPtr, Unreachable, WriteReg};
@@ -1247,13 +1247,15 @@ pub unsafe fn Fune_Instr_2(k: uint16, jp: *const uint16, game: &mut Game) -> *co
     jp
 }
 pub unsafe fn Fune_Instr_6(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1995) as *mut uint16) =
-        *(&raw mut (*(Get_Fune as unsafe fn(::core::ffi::c_int, &mut Game) -> *mut Enemy_Fune)(
+    set_ram_word!(
+        game.cinematic_var9 = *(&raw mut (*(Get_Fune
+            as unsafe fn(::core::ffi::c_int, &mut Game) -> *mut Enemy_Fune)(
             ram_word!(game, cur_enemy_index) as ::core::ffi::c_int,
             game,
         ))
         .fune_parameter_2 as *mut uint8)
-            .offset(0) as uint16;
+            .offset(0) as uint16
+    );
     SpawnEprojWithGfx(
         0 as uint16,
         ram_word!(game, cur_enemy_index),
@@ -1263,13 +1265,15 @@ pub unsafe fn Fune_Instr_6(k: uint16, jp: *const uint16, game: &mut Game) -> *co
     jp
 }
 pub unsafe fn Fune_Instr_7(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1995) as *mut uint16) =
-        *(&raw mut (*(Get_Fune as unsafe fn(::core::ffi::c_int, &mut Game) -> *mut Enemy_Fune)(
+    set_ram_word!(
+        game.cinematic_var9 = *(&raw mut (*(Get_Fune
+            as unsafe fn(::core::ffi::c_int, &mut Game) -> *mut Enemy_Fune)(
             ram_word!(game, cur_enemy_index) as ::core::ffi::c_int,
             game,
         ))
         .fune_parameter_2 as *mut uint8)
-            .offset(0) as uint16;
+            .offset(0) as uint16
+    );
     SpawnEprojWithGfx(
         1 as uint16,
         ram_word!(game, cur_enemy_index),
@@ -1279,13 +1283,15 @@ pub unsafe fn Fune_Instr_7(k: uint16, jp: *const uint16, game: &mut Game) -> *co
     jp
 }
 pub unsafe fn Fune_Instr_1(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1995) as *mut uint16) =
-        *(&raw mut (*(Get_Fune as unsafe fn(::core::ffi::c_int, &mut Game) -> *mut Enemy_Fune)(
+    set_ram_word!(
+        game.cinematic_var9 = *(&raw mut (*(Get_Fune
+            as unsafe fn(::core::ffi::c_int, &mut Game) -> *mut Enemy_Fune)(
             ram_word!(game, cur_enemy_index) as ::core::ffi::c_int,
             game,
         ))
         .fune_parameter_2 as *mut uint8)
-            .offset(0) as uint16;
+            .offset(0) as uint16
+    );
     SpawnEprojWithGfx(
         0 as uint16,
         ram_word!(game, cur_enemy_index),
@@ -1295,13 +1301,15 @@ pub unsafe fn Fune_Instr_1(k: uint16, jp: *const uint16, game: &mut Game) -> *co
     jp
 }
 pub unsafe fn Fune_Instr_4(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1995) as *mut uint16) =
-        *(&raw mut (*(Get_Fune as unsafe fn(::core::ffi::c_int, &mut Game) -> *mut Enemy_Fune)(
+    set_ram_word!(
+        game.cinematic_var9 = *(&raw mut (*(Get_Fune
+            as unsafe fn(::core::ffi::c_int, &mut Game) -> *mut Enemy_Fune)(
             ram_word!(game, cur_enemy_index) as ::core::ffi::c_int,
             game,
         ))
         .fune_parameter_2 as *mut uint8)
-            .offset(0) as uint16;
+            .offset(0) as uint16
+    );
     SpawnEprojWithGfx(
         1 as uint16,
         ram_word!(game, cur_enemy_index),
@@ -2218,10 +2226,8 @@ pub unsafe fn YappingMaw_Func_10(game: &mut Game) {
     CallSomeSamusCode(3 as uint16, game);
     let E: *mut Enemy_YappingMaw =
         Get_YappingMaw(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) =
-        ((*E).ymw_var_32).wrapping_add((*E).base.x_pos);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) =
-        ((*E).ymw_var_33).wrapping_add((*E).base.y_pos);
+    set_ram_word!(game.samus_x_pos = ((*E).ymw_var_32).wrapping_add((*E).base.x_pos));
+    set_ram_word!(game.samus_y_pos = ((*E).ymw_var_33).wrapping_add((*E).base.y_pos));
     EnemyFunc_B7A1(game);
 }
 pub unsafe fn YappingMaw_Func_11(game: &mut Game) {
@@ -2235,8 +2241,7 @@ pub unsafe fn YappingMaw_Func_11(game: &mut Game) {
         && ram_word!(game, samus_input_handler) as ::core::ffi::c_int
             != 0x90e91d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa60) as *mut uint16) =
-            ((0x90e913i32) as u16);
+        set_ram_word!(game.samus_input_handler = ((0x90e913i32) as u16));
         (*E).ymw_var_30 = 0 as uint16;
         (*E).ymw_var_35 = 48 as uint16;
         (*E).ymw_var_E = 64 as uint16;
@@ -2330,8 +2335,7 @@ pub unsafe fn YappingMaw_Touch(game: &mut Game) {
     {
         (*E).ymw_var_35 = 0 as uint16;
         (*E).ymw_var_30 = 1 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa60) as *mut uint16) =
-            ((0x90e90ei32) as u16);
+        set_ram_word!(game.samus_input_handler = ((0x90e90ei32) as u16));
     }
 }
 pub unsafe fn YappingMaw_Shot(game: &mut Game) {
@@ -2343,8 +2347,7 @@ pub unsafe fn YappingMaw_Shot(game: &mut Game) {
             if ram_word!(game, samus_input_handler) as ::core::ffi::c_int
                 != 0x90e91d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
             {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xa60) as *mut uint16) =
-                    ((0x90e913i32) as u16);
+                set_ram_word!(game.samus_input_handler = ((0x90e913i32) as u16));
             }
             (*E).ymw_var_30 = 0 as uint16;
         }
@@ -2363,8 +2366,7 @@ pub unsafe fn YappingMaw_Shot(game: &mut Game) {
         if ram_word!(game, samus_input_handler) as ::core::ffi::c_int
             != 0x90e91d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa60) as *mut uint16) =
-                ((0x90e913i32) as u16);
+            set_ram_word!(game.samus_input_handler = ((0x90e913i32) as u16));
         }
         (*Get_YappingMaw(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
             .ymw_var_30 = 0 as uint16;
@@ -2484,8 +2486,8 @@ pub unsafe fn Kago_Func_1(k: uint16, game: &mut Game) {
 pub unsafe fn Kago_Shot(game: &mut Game) {
     let mut v2: int16 = 0;
     NormalEnemyShotAi(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = 2 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 16 as uint16;
+    set_ram_word!(game.earthquake_type = 2 as uint16);
+    set_ram_word!(game.earthquake_timer = 16 as uint16);
     let E: *mut Enemy_Kago = Get_Kago(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if (*E).kago_var_B == 0 {
         (*E).kago_var_B = 1 as uint16;
@@ -3253,7 +3255,7 @@ pub unsafe fn Beetom_Init(game: &mut Game) {
     (*E).beetom_var_A = 0 as uint16;
     (*E).beetom_var_E = 64 as uint16;
     (*E).beetom_var_F = ram_word!(game, joypad1_lastkeys);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16) = 23 as uint16;
+    set_ram_word!(game.random_number = 23 as uint16);
     (*E).beetom_var_02 = Beetom_Func_2(12288 as uint16, 4 as uint16, game);
     (*E).beetom_var_03 = Beetom_Func_2(0x4000 as uint16, 5 as uint16, game);
     (*E).beetom_var_04 = Beetom_Func_2(12288 as uint16, 3 as uint16, game);
@@ -3939,8 +3941,8 @@ pub unsafe fn Beetom_Touch(game: &mut Game) {
     }
     if current_block == 12103599785691237014 {
         Enemy_NormalTouchAI_A8(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x18aa) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_invincibility_timer = 0 as uint16);
+        set_ram_word!(game.samus_knockback_timer = 0 as uint16);
     };
 }
 pub unsafe fn Beetom_Shot(game: &mut Game) {
@@ -4497,11 +4499,10 @@ pub unsafe fn WreckedShipRobot_Init(game: &mut Game) {
         (*E).base.timer = 0 as uint16;
         (*E).base.current_instruction = addr_kWreckedShipRobot_Ilist_C6E5 as uint16;
         (*E).wsrt_var_A = -(512 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd654) as *mut uint16) = 1 as uint16;
+        set_ram_word!(game.wrecked_ship_robot_palanim_timer = 1 as uint16);
         *((&raw mut game.g_ram as *mut uint8).offset(0xd656) as *mut uint16) = 0 as uint16;
         (*E).wsrt_var_B = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd652) as *mut uint16) =
-            (*E).base.palette_index;
+        set_ram_word!(game.wrecked_ship_robot_palanim_palindex = (*E).base.palette_index);
     } else {
         WreckedShipRobotDeactivated_Init(game);
     };
@@ -4524,7 +4525,7 @@ pub unsafe fn WreckedShipRobotDeactivated_Init(game: &mut Game) {
     (*v0).properties = ((*v0).properties) | (0x8000u16);
     (*v0).instruction_timer = 1 as uint16;
     (*v0).timer = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xd654) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.wrecked_ship_robot_palanim_timer = 0 as uint16);
     (*v0).ai_var_E = 0 as uint16;
     (*v0).ai_preinstr = 1 as uint16;
     let v2: ::core::ffi::c_int = 16 as ::core::ffi::c_int
@@ -4595,8 +4596,10 @@ pub unsafe fn WreckedShipRobot_Func_1(game: &mut Game) {
                 *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
                     .offset((v3 + 140 as ::core::ffi::c_int) as isize) =
                     g_word_A8CCC1[(v1 + 3 as ::core::ffi::c_int) as usize] as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xd654) as *mut uint16) =
-                    g_word_A8CCC1[(v1 + 4 as ::core::ffi::c_int) as usize] as uint16;
+                set_ram_word!(
+                    game.wrecked_ship_robot_palanim_timer =
+                        g_word_A8CCC1[(v1 + 4 as ::core::ffi::c_int) as usize] as uint16
+                );
                 *((&raw mut game.g_ram as *mut uint8).offset(0xd656) as *mut uint16) =
                     (i).wrapping_add(10u16);
             }
@@ -4630,9 +4633,8 @@ pub unsafe fn WreckedShipRobot_Instr_4(
             as *const uint16;
     } else {
         if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb56) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16) =
-                -(4 as ::core::ffi::c_int) as uint16;
+            set_ram_word!(game.extra_samus_x_subdisplacement = 0 as uint16);
+            set_ram_word!(game.extra_samus_x_displacement = -(4 as ::core::ffi::c_int) as uint16);
         }
         (*E).wsrt_var_D = (*E).base.y_pos;
         let x_pos: uint16 = (*E).base.x_pos;
@@ -4678,9 +4680,8 @@ pub unsafe fn WreckedShipRobot_Instr_9(
         return addr_kWreckedShipRobot_Ilist_C73F as ::core::ffi::c_int as uintptr_t
             as *const uint16;
     } else if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb56) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16) =
-            -(4 as ::core::ffi::c_int) as uint16;
+        set_ram_word!(game.extra_samus_x_subdisplacement = 0 as uint16);
+        set_ram_word!(game.extra_samus_x_displacement = -(4 as ::core::ffi::c_int) as uint16);
     }
     jp
 }
@@ -4703,8 +4704,8 @@ pub unsafe fn WreckedShipRobot_Instr_6(
         return addr_stru_A8C6E9 as ::core::ffi::c_int as uintptr_t as *const uint16;
     } else {
         if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb56) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16) = 4 as uint16;
+            set_ram_word!(game.extra_samus_x_subdisplacement = 0 as uint16);
+            set_ram_word!(game.extra_samus_x_displacement = 4 as uint16);
         }
         (*E).wsrt_var_D = (*E).base.y_pos;
         let x_pos: uint16 = (*E).base.x_pos;
@@ -4749,8 +4750,8 @@ pub unsafe fn WreckedShipRobot_Instr_8(
         (*E).wsrt_var_B = ((*E).wsrt_var_B).wrapping_add(8u16);
         return addr_stru_A8C6E9 as ::core::ffi::c_int as uintptr_t as *const uint16;
     } else if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb56) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16) = 4 as uint16;
+        set_ram_word!(game.extra_samus_x_subdisplacement = 0 as uint16);
+        set_ram_word!(game.extra_samus_x_displacement = 4 as uint16);
     }
     jp
 }
@@ -4777,8 +4778,8 @@ pub unsafe fn WreckedShipRobot_Instr_15(
             as *const uint16;
     } else {
         if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb56) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16) = 4 as uint16;
+            set_ram_word!(game.extra_samus_x_subdisplacement = 0 as uint16);
+            set_ram_word!(game.extra_samus_x_displacement = 4 as uint16);
         }
         (*E).wsrt_var_D = (*E).base.y_pos;
         let x_pos: uint16 = (*E).base.x_pos;
@@ -4824,8 +4825,8 @@ pub unsafe fn WreckedShipRobot_Instr_18(
         return addr_kWreckedShipRobot_Ilist_C985 as ::core::ffi::c_int as uintptr_t
             as *const uint16;
     } else if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb56) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16) = 4 as uint16;
+        set_ram_word!(game.extra_samus_x_subdisplacement = 0 as uint16);
+        set_ram_word!(game.extra_samus_x_displacement = 4 as uint16);
     }
     jp
 }
@@ -4848,9 +4849,8 @@ pub unsafe fn WreckedShipRobot_Instr_16(
         return addr_stru_A8C6E9 as ::core::ffi::c_int as uintptr_t as *const uint16;
     } else {
         if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb56) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16) =
-                -(4 as ::core::ffi::c_int) as uint16;
+            set_ram_word!(game.extra_samus_x_subdisplacement = 0 as uint16);
+            set_ram_word!(game.extra_samus_x_displacement = -(4 as ::core::ffi::c_int) as uint16);
         }
         (*E).wsrt_var_D = (*E).base.y_pos;
         let x_pos: uint16 = (*E).base.x_pos;
@@ -4895,9 +4895,8 @@ pub unsafe fn WreckedShipRobot_Instr_17(
         (*E).wsrt_var_B = ((*E).wsrt_var_B).wrapping_add(8u16);
         return addr_stru_A8C6E9 as ::core::ffi::c_int as uintptr_t as *const uint16;
     } else if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb56) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16) =
-            -(4 as ::core::ffi::c_int) as uint16;
+        set_ram_word!(game.extra_samus_x_subdisplacement = 0 as uint16);
+        set_ram_word!(game.extra_samus_x_displacement = -(4 as ::core::ffi::c_int) as uint16);
     }
     jp
 }
@@ -5067,10 +5066,9 @@ pub unsafe fn WreckedShipRobotDeactivated_Touch(game: &mut Game) {
         .wrapping_sub((ram_word!(game, samus_x_pos)) as i16)
         < 0i16
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16) = 4 as uint16;
+        set_ram_word!(game.extra_samus_x_displacement = 4 as uint16);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16) =
-            -(4 as ::core::ffi::c_int) as uint16;
+        set_ram_word!(game.extra_samus_x_displacement = -(4 as ::core::ffi::c_int) as uint16);
     };
 }
 pub unsafe fn WreckedShipRobotDeactivated_Shot(game: &mut Game) {
@@ -6471,8 +6469,7 @@ pub unsafe fn KiHunter_Shot(game: &mut Game) {
                 (*EK).khr_var_A = ((0xa8f55ai32) as u16);
                 (*EK).khr_var_08 = 0 as uint16;
                 (*EK).khr_var_09 = 1 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) =
-                    (old_cur_enemy_index).wrapping_add(64u16);
+                set_ram_word!(game.cur_enemy_index = (old_cur_enemy_index).wrapping_add(64u16));
                 if (*E1).khr_var_A as ::core::ffi::c_int
                     != 0xa8f7cf as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
                 {
@@ -6494,8 +6491,7 @@ pub unsafe fn KiHunter_Shot(game: &mut Game) {
                     (*E1).base.properties =
                         ((*E1).base.properties) | ((kEnemyProps_ProcessedOffscreen) as u16);
                 }
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) =
-                    old_cur_enemy_index;
+                set_ram_word!(game.cur_enemy_index = old_cur_enemy_index);
             }
         } else {
             (*E1).base.ai_handler_bits = (*EK).base.ai_handler_bits;

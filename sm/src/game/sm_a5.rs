@@ -21,7 +21,7 @@ use crate::game::sm_a0::{
 };
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
-use crate::ram_map::ram_word;
+use crate::ram_map::{ram_word, set_ram_word};
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{RomPtr, Unreachable};
 extern "C" {
@@ -282,8 +282,7 @@ pub unsafe fn Draygon_Init(game: &mut Game) {
         as *mut uint16) = 165 as uint16;
     (*((&raw mut game.g_ram as *mut uint8).offset(0x178c) as *mut LongPtr)).addr =
         ((0xa59342i32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x183c) as *mut uint16) =
-        -(1 as ::core::ffi::c_int) as uint16;
+    set_ram_word!(game.flag_process_all_enemies = -(1 as ::core::ffi::c_int) as uint16);
     (*Get_Draygon(0 as ::core::ffi::c_int, game))
         .base
         .current_instruction = addr_kDraygon_Ilist_9889 as uint16;
@@ -296,11 +295,11 @@ pub unsafe fn Draygon_Init(game: &mut Game) {
     (*Get_Draygon(0xc0 as ::core::ffi::c_int, game))
         .base
         .current_instruction = addr_kDraygon_Ilist_9813 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x179a) as *mut uint16) = 1024 as uint16;
+    set_ram_word!(game.enemy_bg2_tilemap_size = 1024 as uint16);
     (*Get_Draygon(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).draygon_var_A =
         ((0xa5871bi32) as u16);
     sub_88DF34(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa9) as *mut uint16) = 12 as uint16;
+    set_ram_word!(game.room_loading_irq_handler = 12 as uint16);
     SpawnBG3ScrollHdmaObject(game);
     (*Get_Draygon(0 as ::core::ffi::c_int, game)).draygon_var_45 = 1 as uint16;
     DisableMinimapAndMarkBossRoomAsExplored(game);
@@ -1045,7 +1044,7 @@ pub unsafe fn Draygon_Func_22(game: &mut Game) {
     };
 }
 pub unsafe fn Draygon_Func_23(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) = ((0x9bc8c5i32) as u16);
+    set_ram_word!(game.grapple_beam_function = ((0x9bc8c5i32) as u16));
     (*Get_Draygon(0 as ::core::ffi::c_int, game)).draygon_var_A = ((0xa59128i32) as u16);
 }
 pub unsafe fn Draygon_Func_24(k: uint16, game: &mut Game) {
@@ -1203,7 +1202,7 @@ pub unsafe fn Draygon_Func_28(k: uint16, game: &mut Game) {
 }
 pub unsafe fn Draygon_Func_29(game: &mut Game) {
     Samus_ReleaseFromDraygon_(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa64) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_grapple_flags = 0 as uint16);
     let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
     (*E).draygon_var_A = ((0xa59154i32) as u16);
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
@@ -1361,16 +1360,18 @@ pub unsafe fn Draygon_Func_35(game: &mut Game) {
 }
 pub unsafe fn Draygon_Func_36(game: &mut Game) {
     let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb5) as *mut uint16) =
-        ((*E).draygon_var_5E as ::core::ffi::c_int
+    set_ram_word!(
+        game.reg_BG2HOFS = ((*E).draygon_var_5E as ::core::ffi::c_int
             + ram_word!(game, layer1_x_pos) as ::core::ffi::c_int
             - (*E).base.x_pos as ::core::ffi::c_int
-            - 450 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16) =
-        ((*E).draygon_var_5F as ::core::ffi::c_int
+            - 450 as ::core::ffi::c_int) as uint16
+    );
+    set_ram_word!(
+        game.reg_BG2VOFS = ((*E).draygon_var_5F as ::core::ffi::c_int
             + ram_word!(game, layer1_y_pos) as ::core::ffi::c_int
             - (*E).base.y_pos as ::core::ffi::c_int
-            - 192 as ::core::ffi::c_int) as uint16;
+            - 192 as ::core::ffi::c_int) as uint16
+    );
 }
 pub unsafe fn Draygon_Func_37(game: &mut Game) {
     let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
@@ -1431,14 +1432,14 @@ pub unsafe fn Draygon_Func_38(game: &mut Game) {
             if v0 == ram_word!(game, debug_enemy_population_pointer) {
                 current_block = 1196177745739367891;
             } else {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1866) as *mut uint16) = v0;
+                set_ram_word!(game.debug_enemy_population_pointer = v0);
                 v2 = addr_kDraygon_Ilist_97D1 as uint16;
                 (*E).draygon_var_20 = 1 as uint16;
                 current_block = 3276175668257526147;
             }
         }
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1866) as *mut uint16) = v0;
+        set_ram_word!(game.debug_enemy_population_pointer = v0);
         v2 = addr_kDraygon_Ilist_97BB as uint16;
         (*E).draygon_var_20 = 0 as uint16;
         current_block = 3276175668257526147;
@@ -1474,16 +1475,14 @@ pub unsafe fn Draygon_Func_39(game: &mut Game) {
             if ram_word!(game, joypad2_last) == ram_word!(game, debug_enemy_population_pointer) {
                 current_block = 18201098939790280272;
             } else {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1866) as *mut uint16) =
-                    ram_word!(game, joypad2_last);
+                set_ram_word!(game.debug_enemy_population_pointer = ram_word!(game, joypad2_last));
                 v2 = addr_kDraygon_Ilist_97D1 as uint16;
                 (*E).draygon_var_20 = 1 as uint16;
                 current_block = 3276175668257526147;
             }
         }
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1866) as *mut uint16) =
-            ram_word!(game, joypad2_last);
+        set_ram_word!(game.debug_enemy_population_pointer = ram_word!(game, joypad2_last));
         v2 = addr_kDraygon_Ilist_97BB as uint16;
         (*E).draygon_var_20 = 0 as uint16;
         current_block = 3276175668257526147;
@@ -1508,15 +1507,13 @@ pub unsafe fn Draygon_Func_40(k: uint16, game: &mut Game) {
         v1 = -(8 as ::core::ffi::c_int) as int16;
     }
     let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) =
-        ((*E).base.x_pos).wrapping_add((v1) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) =
-        ((*E).base.y_pos).wrapping_add(40u16);
+    set_ram_word!(game.samus_x_pos = ((*E).base.x_pos).wrapping_add((v1) as u16));
+    set_ram_word!(game.samus_y_pos = ((*E).base.y_pos).wrapping_add(40u16));
     EnemyFunc_B7A1(game);
     if (ram_word!(game, samus_grapple_flags) as ::core::ffi::c_int & 2 as ::core::ffi::c_int)
         != 0i32
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa64) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_grapple_flags = 0 as uint16);
         (*E).draygon_var_A = ((0xa59154i32) as u16);
     }
 }
@@ -1640,8 +1637,7 @@ pub unsafe fn sub_A5960D(game: &mut Game) {
     {
         Draygon_Func_41(game);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-            ((0x9bc8c5i32) as u16);
+        set_ram_word!(game.grapple_beam_function = ((0x9bc8c5i32) as u16));
         let mut v0: uint16 = addr_kDraygon_Ilist_9867 as uint16;
         let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
         if (*E).draygon_var_20 != 0 {
@@ -1659,7 +1655,7 @@ pub unsafe fn sub_A5960D(game: &mut Game) {
         (*E1).draygon_var_A = ((0xa5804bi32) as u16);
         (*E).draygon_var_A = ((0xa59185i32) as u16);
         Samus_ReleaseFromDraygon_(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa64) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_grapple_flags = 0 as uint16);
         (*E).draygon_var_43 = ((64u8).wrapping_sub(
             (CalculateAngleFromXY(
                 (256u16).wrapping_sub((*E).base.x_pos),
@@ -1746,7 +1742,7 @@ pub unsafe fn Draygon_Instr_9(k: uint16, jp: *const uint16, game: &mut Game) -> 
     jp
 }
 pub unsafe fn Draygon_Instr_2(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa9) as *mut uint16) = 12 as uint16;
+    set_ram_word!(game.room_loading_irq_handler = 12 as uint16);
     jp
 }
 pub unsafe fn Draygon_Instr_11(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
@@ -1771,8 +1767,8 @@ pub unsafe fn Draygon_Instr_15(k: uint16, jp: *const uint16, game: &mut Game) ->
         SuitDamageDivision(*(v3.offset(6) as *mut uint16), game),
         game,
     );
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 32 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = 7 as uint16;
+    set_ram_word!(game.earthquake_timer = 32 as uint16);
+    set_ram_word!(game.earthquake_type = 7 as uint16);
     CreateSpriteAtPos(
         ram_word!(game, samus_x_pos),
         (ram_word!(game, samus_y_pos)).wrapping_add(16u16),
@@ -1783,7 +1779,7 @@ pub unsafe fn Draygon_Instr_15(k: uint16, jp: *const uint16, game: &mut Game) ->
     jp
 }
 pub unsafe fn Draygon_Instr_17(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa9) as *mut uint16) = 12 as uint16;
+    set_ram_word!(game.room_loading_irq_handler = 12 as uint16);
     jp
 }
 pub unsafe fn Draygon_Instr_14(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
@@ -1810,9 +1806,11 @@ pub unsafe fn Draygon_Instr_12(k: uint16, jp: *const uint16, game: &mut Game) ->
         x: (((*E).base.x_pos).wrapping_sub(28u16)),
         y: (((*E).base.y_pos).wrapping_sub(16u16)),
     };
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1995) as *mut uint16) =
-        ((NextRandom(game) as ::core::ffi::c_int & 0x3f as ::core::ffi::c_int)
-            + 128 as ::core::ffi::c_int) as uint16;
+    set_ram_word!(
+        game.cinematic_var9 = ((NextRandom(game) as ::core::ffi::c_int
+            & 0x3f as ::core::ffi::c_int)
+            + 128 as ::core::ffi::c_int) as uint16
+    );
     SpawnEprojWithGfx(
         2 as uint16,
         ram_word!(game, cur_enemy_index),
@@ -1827,9 +1825,11 @@ pub unsafe fn Draygon_Instr_18(k: uint16, jp: *const uint16, game: &mut Game) ->
         x: (((*E).base.x_pos).wrapping_add(24u16)),
         y: (((*E).base.y_pos).wrapping_sub(16u16)),
     };
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1995) as *mut uint16) =
-        ((NextRandom(game) as ::core::ffi::c_int & 0x3f as ::core::ffi::c_int)
-            + 192 as ::core::ffi::c_int) as uint16;
+    set_ram_word!(
+        game.cinematic_var9 = ((NextRandom(game) as ::core::ffi::c_int
+            & 0x3f as ::core::ffi::c_int)
+            + 192 as ::core::ffi::c_int) as uint16
+    );
     SpawnEprojWithGfx(
         2 as uint16,
         ram_word!(game, cur_enemy_index),
@@ -2226,7 +2226,7 @@ pub unsafe fn Draygon_Instr_53(k: uint16, j: uint16, game: &mut Game) -> uint16 
     (j).wrapping_add(2u16)
 }
 pub unsafe fn Draygon_Instr_22(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9000) as *mut uint16) = *jp.offset(0);
+    set_ram_word!(game.kraid_unk9000 = *jp.offset(0));
     jp.offset(1)
 }
 pub unsafe fn Draygon_Instr_27(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
@@ -2412,15 +2412,13 @@ pub unsafe fn SporeSpawn_Init(game: &mut Game) {
             },
             game,
         );
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7e9) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.scrolling_finished_hook = 0 as uint16);
     } else {
         (*E0).base.current_instruction = addr_kDraygon_Ilist_E6C7 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x183c) as *mut uint16) =
-            -(1 as ::core::ffi::c_int) as uint16;
+        set_ram_word!(game.flag_process_all_enemies = -(1 as ::core::ffi::c_int) as uint16);
         let v5: uint16 = ram_word!(game, cur_enemy_index);
         (*E).ssn_var_A = ((0xa5eb1ai32) as u16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7e9) as *mut uint16) =
-            ((0x909589i32) as u16);
+        set_ram_word!(game.scrolling_finished_hook = ((0x909589i32) as u16));
         (*E).base.y_pos = ((*E).base.y_pos).wrapping_sub(128u16);
         SpawnEprojWithGfx(0 as uint16, v5, addr_kEproj_SporeSpawners as uint16, game);
         SpawnEprojWithGfx(1 as uint16, v5, addr_kEproj_SporeSpawners as uint16, game);
@@ -2706,7 +2704,7 @@ pub unsafe fn SporeSpawn_Func_6(game: &mut Game) {
             .offset(ram_word!(game, area_index) as isize)
             as *mut uint8 as *mut uint16);
         *fresh5 = (*fresh5) | (2u16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7e9) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.scrolling_finished_hook = 0 as uint16);
         SpawnHardcodedPlm(
             SpawnHardcodedPlmArgs {
                 field_0: 0x7 as uint8,

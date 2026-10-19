@@ -1,7 +1,7 @@
 pub use crate::game::constants::bank_8d::*;
 use crate::game::sm_80::{QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game_state::Game;
-use crate::ram_map::ram_word;
+use crate::ram_map::{ram_word, set_ram_word};
 use crate::rtl::AddToHiLo;
 use crate::rtl::{MakePairU16, RomPtr, Unreachable};
 
@@ -112,7 +112,7 @@ pub unsafe fn PaletteFxHandler(game: &mut Game) {
     {
         let mut i: ::core::ffi::c_int = 14 as ::core::ffi::c_int;
         while i >= 0i32 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1e7b) as *mut uint16) = i as uint16;
+            set_ram_word!(game.palettefx_index = i as uint16);
             if *((&raw mut game.g_ram as *mut uint8).offset(0x1e7d) as *mut uint16)
                 .offset((i >> 1 as ::core::ffi::c_int) as isize)
                 != 0
@@ -321,8 +321,9 @@ pub unsafe fn PalPreInstr_SamusInHeat(k: uint16, game: &mut Game) {
     if ram_word!(game, samus_in_heat_palfx_index)
         != ram_word!(game, samus_in_heat_palettefx_prev_index)
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1eef) as *mut uint16) =
-            ram_word!(game, samus_in_heat_palfx_index);
+        set_ram_word!(
+            game.samus_in_heat_palettefx_prev_index = ram_word!(game, samus_in_heat_palfx_index)
+        );
         let v2: uint16 = (2u16).wrapping_mul(ram_word!(game, samus_in_heat_palfx_index));
         let mut v4: uint16 = 0;
         let v3: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -390,8 +391,7 @@ pub unsafe fn PalPreInstr_DeletePalfxIfMinibossDead(k: uint16, game: &mut Game) 
     }
 }
 pub unsafe fn PalInstr_SetPalfxIndex(k: uint16, j: uint16, game: &mut Game) -> PairU16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1eed) as *mut uint16) =
-        *RomPtr_8D(j, game) as uint16;
+    set_ram_word!(game.samus_in_heat_palfx_index = *RomPtr_8D(j, game) as uint16);
     MakePairU16(k, (j).wrapping_add(1u16))
 }
 pub unsafe fn PalPreInstr_F621(k: uint16, game: &mut Game) {

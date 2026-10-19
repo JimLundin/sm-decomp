@@ -70,6 +70,26 @@ Frontend changes are compiler-checked; the movies exercise core gameplay.
 For subsequent assignment cleanup, retain hdma_load_indirect_address's size
 read before its bus callback; RomPtr operands can also write g_fail.
 
+Named scalar RAM writes (2026-10-19): ast-grep replaces all 4197 eligible
+literal u16 assignments across 602 fields and 32 caller files. The
+set_ram_word!(game.field = value) macro evaluates the RHS before forming the
+raw destination, then calls one unaligned little-endian store helper. RHS
+temporaries survive the store; no whole-Game/RAM reference is introduced.
+The field table, RHS expressions and nested-store order remain exact.
+
+Net Rust lines -262 (179223 total), casts -8394, raw offsets -4197.
+Unsafe functions +1 is the shared raw store helper; existing unsafe stores
+are consolidated, not eliminated. The c_int cast-line counter rises 32 from
+wrapping; actual c_int casts remain 33870. All 602 fields pass all 65536
+word values (39452672 checks), neighbor/untouched-RAM checks and RHS
+mutation/temporary-drop controls. Independent source review has no findings.
+
+Frozen f73cc70c plus this batch passes any% 129712/0 (162.24s),
+native exit 0, with fixed sources/DLL/fixtures. Formatting/check, normal
+release (36.83s), stable workspace release (36.68s) and progress pass.
+Next: complete eligible named byte accesses and remaining compiler batches,
+then larger indexed/borrowed families. Broader readability remains open.
+
 Named scalar RAM reads (2026-10-19): ast-grep replaces all 7082 eligible
 literal u16 value loads across 535 named fields, including 185 reads inside
 other accesses' address calculations. The caller-side ram_word! macro uses
@@ -86,9 +106,9 @@ All 535 fields pass all 65536 word values (35061760 checks). Formatting/check,
 normal release (24.98s), stable workspace release and progress pass. The
 candidate includes the committed Boolean and identity cleanups and passes
 any% 129712/0 (108.07s), native exit 0, with fixed sources/DLL/fixtures.
-The frozen baseline matches the integrated committed source. Next: complete
-named scalar writes, preserving RHS-before-store order, then further compiler
-batches and larger repeated families. The broader readability goal is open.
+The frozen baseline matches the integrated committed source. Named scalar
+writes are completed above; continue further compiler batches and larger
+repeated families. The broader readability goal is open.
 
 Live enemy parameter reads (2026-10-19): finish the five pending projectile
 initializers using captured indices and live byte-backed fields. Six retained

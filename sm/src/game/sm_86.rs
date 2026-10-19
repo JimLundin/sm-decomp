@@ -21,7 +21,7 @@ use crate::game::sm_a0::{
 use crate::game::sm_a6::Ridley_Func_103;
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
-use crate::ram_map::ram_word;
+use crate::ram_map::{ram_word, set_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::AddToHiLo;
 use crate::rtl::{Load24, Mult8x8, RomPtr, SnesDivide, SnesModulus, Unreachable};
@@ -1292,10 +1292,11 @@ unsafe fn EprojColl_858E(eci: *mut EprojCollInfo, game: &mut Game) -> uint8 {
     if v0 < 5 {
         return EprojColl_85C2(eci, v0, ram_word!(game, cur_block_index), game);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1e77) as *mut uint16) =
-        *(&raw mut game.g_ram as *mut uint8)
+    set_ram_word!(
+        game.current_slope_bts = *(&raw mut game.g_ram as *mut uint8)
             .offset(0x16402)
-            .offset(game.cur_block_index() as isize) as uint16;
+            .offset(game.cur_block_index() as isize) as uint16
+    );
     EprojColl_873D()
 }
 unsafe fn EprojColl_85AD(eci: *mut EprojCollInfo, game: &mut Game) -> uint8 {
@@ -1752,8 +1753,9 @@ unsafe fn react_to_enemy_projectile_block(
     slope: Func_EprojCollInfo_U8,
     game: &mut Game,
 ) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) =
-        (k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
+    set_ram_word!(
+        game.cur_block_index = (k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16
+    );
     game.react_to_block(|block_type, game| match block_type {
         0 | 2 | 3 | 4 | 6 | 7 | 14 => 0,
         1 => slope(eci, game),
@@ -2112,7 +2114,7 @@ pub unsafe fn EprojPowerBombCollision(k: uint16, game: &mut Game) {
         {
             *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16)
                 .offset(v1 as isize) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa66) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.samus_x_speed_divisor = 0 as uint16);
         }
     }
 }
@@ -2138,8 +2140,8 @@ pub unsafe fn EprojInstr_868D99(k: uint16, epjp: *const uint8, game: &mut Game) 
                 .offset(v3 as isize) as ::core::ffi::c_int
                 & 0x5fff as ::core::ffi::c_int
                 | 0x2000 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x18aa) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_invincibility_timer = 0 as uint16);
+        set_ram_word!(game.samus_knockback_timer = 0 as uint16);
     }
     epjp
 }
@@ -2167,7 +2169,7 @@ pub unsafe fn EprojPreInstr_8DCA(k: uint16, game: &mut Game) {
         let ref mut fresh144 = *((&raw mut game.g_ram as *mut uint8).offset(0xa66) as *mut uint16);
         *fresh144 = (*fresh144).wrapping_sub(1);
         if (*fresh144 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa66) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.samus_x_speed_divisor = 0 as uint16);
         }
     }
 }
@@ -3889,7 +3891,7 @@ pub unsafe fn EprojPreInstr_CeresElevatorPad(k: uint16, game: &mut Game) {
         if fresh113 as ::core::ffi::c_int - 73 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             == 0
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) = 72 as uint16;
+            set_ram_word!(game.samus_y_pos = 72 as uint16);
             *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16)
                 .offset(v1 as isize) = 1 as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16)
@@ -3908,7 +3910,7 @@ pub unsafe fn EprojPreInstr_CeresElevatorPlatform(k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn EprojPreInstr_PrePhantomRoom(j: uint16, game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x923) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.bg2_y_scroll = 0 as uint16);
 }
 pub unsafe fn EprojInstr_A3BE(k: uint16, epjp: *const uint8, game: &mut Game) -> *const uint8 {
     let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -4351,8 +4353,9 @@ unsafe fn EprojInit_AB07(j: uint16, game: &mut Game) {
     (*v3).src.addr = addr_kEprojInit_AB07_Tile1 as ::core::ffi::c_int as VoidP;
     *(&raw mut (*v3).src.bank as *mut uint16) = 134 as uint16;
     (*v3).vram_dst = 28416 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) =
-        (v1 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
+    set_ram_word!(
+        game.vram_write_queue_tail = (v1 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16
+    );
     let v4: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v4 as isize) =
         ram_word!(game, samus_x_pos);
@@ -5258,7 +5261,7 @@ pub unsafe fn EprojInstr_Earthquake(
     epjp: *const uint8,
     game: &mut Game,
 ) -> *const uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = 1 as uint16;
+    set_ram_word!(game.earthquake_type = 1 as uint16);
     let ref mut fresh29 = *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16);
     *fresh29 = (*fresh29 as ::core::ffi::c_int | 0x20 as ::core::ffi::c_int) as uint16;
     epjp
@@ -6402,14 +6405,15 @@ pub unsafe fn Eproj_MoveToBlueRingSpawnPosition(k: uint16, game: &mut Game) {
         {
             BlueRingContactExplosion(k, game);
             Samus_DealDamage(SuitDamageDivision(0x50 as uint16, game), game);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) = 96 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x18aa) as *mut uint16) = 5 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa54) as *mut uint16) =
-                (((ram_word!(game, samus_x_pos) as ::core::ffi::c_int
+            set_ram_word!(game.samus_invincibility_timer = 96 as uint16);
+            set_ram_word!(game.samus_knockback_timer = 5 as uint16);
+            set_ram_word!(
+                game.knockback_x_dir = (((ram_word!(game, samus_x_pos) as ::core::ffi::c_int
                     - *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
                         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
                         as ::core::ffi::c_int) as int16)
-                    >= 0i16) as uint16;
+                    >= 0i16) as uint16
+            );
         } else if CheckForBlueRingCollisionWithRoom(k, game) as ::core::ffi::c_int
             & 1 as ::core::ffi::c_int
             != 0
@@ -6498,8 +6502,8 @@ unsafe fn Eproj_GetCollDetectRect(k: uint16, game: &mut Game) -> Rect16U {
     rect
 }
 pub unsafe fn Eproj_Earthqhake5(k: uint16, game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 10 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = 5 as uint16;
+    set_ram_word!(game.earthquake_timer = 10 as uint16);
+    set_ram_word!(game.earthquake_type = 5 as uint16);
     BlueRingContactExplosion(k, game);
 }
 pub unsafe fn BlueRingContactExplosion(k: uint16, game: &mut Game) {
@@ -6744,8 +6748,8 @@ unsafe fn EprojInit_MotherBrainDeathBeemFired(j: uint16, game: &mut Game) {
             game,
         );
         QueueSfx3_Max6(0x13 as uint16, game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 10 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = 5 as uint16;
+        set_ram_word!(game.earthquake_timer = 10 as uint16);
+        set_ram_word!(game.earthquake_type = 5 as uint16);
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16).offset(v1 as isize) =
             (*((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16)
@@ -9439,7 +9443,7 @@ pub unsafe fn RandomDropRoutine(k: uint16, game: &mut Game) -> uint16 {
                 current_block = 5399440093318478209;
             }
             if current_block == 5399440093318478209 {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe1a) as *mut uint16) = v5;
+                set_ram_word!(game.health_drop_bias_flag = v5);
             }
             v7 = RomPtr_B4(v2, game);
             if ram_word!(game, health_drop_bias_flag) as uint8 != 0 {
@@ -9518,7 +9522,7 @@ pub unsafe fn RandomDropRoutine(k: uint16, game: &mut Game) -> uint16 {
     byte_86F25E[i as usize] as uint16
 }
 pub unsafe fn RespawnEnemy(v0: uint16, game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) = v0;
+    set_ram_word!(game.cur_enemy_index = v0);
     let v1: *const uint8 = RomPtr_A1(
         (ram_word!(game, room_enemy_population_ptr))
             .wrapping_add((v0 as ::core::ffi::c_int >> 2 as ::core::ffi::c_int) as u16),

@@ -14,7 +14,7 @@ use crate::game::sm_a0::{
 };
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
-use crate::ram_map::ram_word;
+use crate::ram_map::{ram_word, set_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{RomPtr, Unreachable};
 
@@ -168,8 +168,8 @@ pub unsafe fn WalkingSpacePirates_Shot(game: &mut Game) {
 pub unsafe fn WalkingSpacePirates_8789(game: &mut Game) {
     let E: *mut Enemy_SpacePirates =
         Get_SpacePirates(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xf434) as *mut uint16) = (*E).base.x_pos;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xf436) as *mut uint16) = (*E).base.y_pos;
+    set_ram_word!(game.special_death_item_drop_x_origin_pos = (*E).base.x_pos);
+    set_ram_word!(game.special_death_item_drop_y_origin_pos = (*E).base.y_pos);
     NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
     if (*E).base.health == 0 {
         let v1: uint16 = ram_word!(game, cur_enemy_index);
@@ -429,8 +429,9 @@ pub unsafe fn SpacePirates_Instr_FireLaserL(
 ) -> *const uint16 {
     let E: *mut Enemy_SpacePirates =
         Get_SpacePirates(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1993) as *mut uint16) =
-        *(RomPtr_A0((*E).base.enemy_ptr, game) as *mut uint16).offset(3);
+    set_ram_word!(
+        game.cinematic_var8 = *(RomPtr_A0((*E).base.enemy_ptr, game) as *mut uint16).offset(3)
+    );
     game.eproj_spawn_pt = Point16U {
         x: (((*E).base.x_pos).wrapping_sub(24u16)),
         y: (((*E).base.y_pos).wrapping_sub(16u16)),

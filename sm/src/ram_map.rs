@@ -64,6 +64,31 @@ macro_rules! ram_word {
 }
 pub(crate) use ram_word;
 
+// Function arguments preserve assignment order: evaluate the RHS before the
+// destination, and keep RHS temporaries alive through the store. Form the raw
+// pointer at the caller without borrowing the whole Game or RAM allocation.
+macro_rules! set_ram_word {
+    ($game:ident.$field:ident = $value:expr $(,)?) => {
+        $crate::ram_map::write_word(
+            $value,
+            (&raw mut $game.g_ram)
+                .cast::<u8>()
+                .add($crate::ram_map::words::$field)
+                .cast::<u16>(),
+        )
+    };
+}
+pub(crate) use set_ram_word;
+
+/// Store one SNES word without imposing host alignment.
+///
+/// # Safety
+/// `destination` must be valid for writing two bytes. It may be unaligned.
+#[inline]
+pub(crate) unsafe fn write_word(value: u16, destination: *mut u16) {
+    destination.write_unaligned(value.to_le());
+}
+
 ram_vars! {
     0x00012, REMOVED_R18, uint16, Scalar;
     0x00014, REMOVED_R20, uint16, Scalar;

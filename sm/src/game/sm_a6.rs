@@ -33,7 +33,7 @@ use crate::game::sm_a9::{
 };
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
-use crate::ram_map::ram_word;
+use crate::ram_map::{ram_word, set_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::AddToHiLo;
 use crate::rtl::{mov24, Mult8x8, RomPtr, SnesDivide, Unreachable};
@@ -1982,24 +1982,24 @@ pub unsafe fn FakeKraid_Instr_5(k: uint16, jp: *const uint16, game: &mut Game) -
 pub unsafe fn sub_A69C0B(game: &mut Game) {
     let v0: *mut EnemyData =
         gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xf434) as *mut uint16) = (*v0).x_pos;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xf436) as *mut uint16) = (*v0).y_pos;
+    set_ram_word!(game.special_death_item_drop_x_origin_pos = (*v0).x_pos);
+    set_ram_word!(game.special_death_item_drop_y_origin_pos = (*v0).y_pos);
     NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game);
     FakeKraid_9C50(game);
 }
 pub unsafe fn FakeKraid_Touch(game: &mut Game) {
     let E: *mut Enemy_FakeKraid =
         Get_FakeKraid(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xf434) as *mut uint16) = (*E).base.x_pos;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xf436) as *mut uint16) = (*E).base.y_pos;
+    set_ram_word!(game.special_death_item_drop_x_origin_pos = (*E).base.x_pos);
+    set_ram_word!(game.special_death_item_drop_y_origin_pos = (*E).base.y_pos);
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
     FakeKraid_9C50(game);
 }
 pub unsafe fn FakeKraid_Shot(game: &mut Game) {
     let E: *mut Enemy_FakeKraid =
         Get_FakeKraid(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xf434) as *mut uint16) = (*E).base.x_pos;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xf436) as *mut uint16) = (*E).base.y_pos;
+    set_ram_word!(game.special_death_item_drop_x_origin_pos = (*E).base.x_pos);
+    set_ram_word!(game.special_death_item_drop_y_origin_pos = (*E).base.y_pos);
     NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
     FakeKraid_9C50(game);
 }
@@ -2046,8 +2046,8 @@ pub unsafe fn CeresRidley_Init(game: &mut Game) {
         (*E).base.extra_properties = ((*E).base.extra_properties) | (4u16);
         (*E).cry_var_01 = 0 as uint16;
         (*E).cry_var_0D = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.earthquake_type = 0 as uint16);
+        set_ram_word!(game.earthquake_timer = 0 as uint16);
         Ridley_Func_92(game);
         Ridley_Func_117(game);
         if ram_word!(game, area_index) == 2u16 {
@@ -2097,7 +2097,7 @@ pub unsafe fn CeresRidley_Init(game: &mut Game) {
                 as uint16;
             (*E).base.x_pos = 186 as uint16;
             (*E).base.y_pos = 169 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x93f) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.ceres_status = 0 as uint16);
             (*E).cry_var_10 = 0 as uint16;
             (*E).cry_var_02 = 0 as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(1) =
@@ -2527,10 +2527,9 @@ pub unsafe fn CeresRidley_Func_7(game: &mut Game) {
         {
             return;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16) = 440 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16) =
-            -(96 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1980) as *mut uint16) = 32 as uint16;
+        set_ram_word!(game.fx_target_y_pos = 440 as uint16);
+        set_ram_word!(game.fx_y_vel = -(96 as ::core::ffi::c_int) as uint16);
+        set_ram_word!(game.fx_timer = 32 as uint16);
     } else {
         (*E).cry_var_F = (*E).cry_var_F.wrapping_sub(1);
         let v1_0: bool =
@@ -2849,7 +2848,7 @@ pub unsafe fn CeresRidley_Func_23(game: &mut Game) {
 }
 pub unsafe fn CeresRidley_Func_24(game: &mut Game) {
     (*Get_CeresRidley(0 as ::core::ffi::c_int, game)).cry_var_A = ((0xa6aa4fi32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x93f) as *mut uint16) = 1 as uint16;
+    set_ram_word!(game.ceres_status = 1 as uint16);
     CeresRidley_Func_27(game);
 }
 pub unsafe fn CeresRidley_Func_25(game: &mut Game) {
@@ -2861,23 +2860,22 @@ pub unsafe fn CeresRidley_Func_26(game: &mut Game) {
 }
 pub unsafe fn CeresRidley_Func_27(game: &mut Game) {
     *(&raw mut game.g_ram as *mut uint8).offset(0x56) = 7 as uint8;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x783) as *mut uint16) = 1 as uint16;
+    set_ram_word!(game.irq_enable_mode7 = 1 as uint16);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5f) = 0x80 as uint8;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x78) as *mut uint16) = 256 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7a) as *mut uint16) = 256 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7c) as *mut uint16) = 256 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7e) as *mut uint16) = 256 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x80) as *mut uint16) = 64 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x82) as *mut uint16) = 64 as uint16;
+    set_ram_word!(game.reg_M7A = 256 as uint16);
+    set_ram_word!(game.reg_M7B = 256 as uint16);
+    set_ram_word!(game.reg_M7C = 256 as uint16);
+    set_ram_word!(game.reg_M7D = 256 as uint16);
+    set_ram_word!(game.reg_M7X = 64 as uint16);
+    set_ram_word!(game.reg_M7Y = 64 as uint16);
     let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
     (*E).cry_var_32 = 0 as uint16;
     (*E).cry_var_33 = 0 as uint16;
     (*E).cry_var_0A = 1 as uint16;
     (*E).cry_var_34 = -(128 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16) =
-        -(128 as ::core::ffi::c_int) as uint16;
+    set_ram_word!(game.reg_BG1HOFS = -(128 as ::core::ffi::c_int) as uint16);
     (*E).cry_var_35 = 32 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) = 32 as uint16;
+    set_ram_word!(game.reg_BG1VOFS = 32 as uint16);
     (*E).cry_var_30 = 2048 as uint16;
     (*E).cry_var_31 = 1024 as uint16;
 }
@@ -2895,8 +2893,8 @@ pub unsafe fn CeresRidley_Func_28(game: &mut Game) {
     }
     if cry_var_33 == 208u16 {
         Samus_SetPushedOutOfCeresRidley(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = 35 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 64 as uint16;
+        set_ram_word!(game.earthquake_type = 35 as uint16);
+        set_ram_word!(game.earthquake_timer = 64 as uint16);
     }
     let v2: ::core::ffi::c_int = cry_var_33 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6ae4d)) as *const uint8 as *mut uint16)
@@ -2906,14 +2904,14 @@ pub unsafe fn CeresRidley_Func_28(game: &mut Game) {
         (*E).cry_var_32 = (*E).cry_var_32.wrapping_add(1);
         *(&raw mut game.g_ram as *mut uint8).offset(0x56) = 9 as uint8;
         *(&raw mut game.g_ram as *mut uint8).offset(0x5f) = 0 as uint8;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x78) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7a) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7c) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7e) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x80) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x82) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.reg_M7A = 0 as uint16);
+        set_ram_word!(game.reg_M7B = 0 as uint16);
+        set_ram_word!(game.reg_M7C = 0 as uint16);
+        set_ram_word!(game.reg_M7D = 0 as uint16);
+        set_ram_word!(game.reg_M7X = 0 as uint16);
+        set_ram_word!(game.reg_M7Y = 0 as uint16);
+        set_ram_word!(game.reg_BG1HOFS = 0 as uint16);
+        set_ram_word!(game.reg_BG1VOFS = 0 as uint16);
         (*E).cry_var_A = ((0xa6c04ei32) as u16);
         (*E).cry_var_F = 0 as uint16;
     } else {
@@ -2925,13 +2923,13 @@ pub unsafe fn CeresRidley_Func_28(game: &mut Game) {
             .offset(v2 as isize))
         .wrapping_add((*E).cry_var_35);
         (*E).cry_var_35 = v3;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) = v3;
+        set_ram_word!(game.reg_BG1VOFS = v3);
         let v4: uint16 = ((*E).cry_var_34).wrapping_sub(
             *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6b00f)) as *const uint8 as *mut uint16)
                 .offset(v2 as isize),
         );
         (*E).cry_var_34 = v4;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16) = v4;
+        set_ram_word!(game.reg_BG1HOFS = v4);
         CeresRidley_Func_35((*E).cry_var_30, game);
         (*E).cry_var_0A = ((*E).cry_var_0A).wrapping_add(48u16);
         CeresRidley_Func_29(game);
@@ -2955,21 +2953,29 @@ pub unsafe fn CeresRidley_Func_29(game: &mut Game) {
             .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1_usize) as isize,
     ) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x78) as *mut uint16) = CeresMult(
-        CeresRidley_AC30((r18).wrapping_add(64u16), 0x100 as int16) as uint16,
-        (*E).cry_var_30,
+    set_ram_word!(
+        game.reg_M7A = CeresMult(
+            CeresRidley_AC30((r18).wrapping_add(64u16), 0x100 as int16) as uint16,
+            (*E).cry_var_30,
+        )
     );
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7a) as *mut uint16) = CeresMult(
-        CeresRidley_AC30(r18, 0x100 as int16) as uint16,
-        (*E).cry_var_30,
+    set_ram_word!(
+        game.reg_M7B = CeresMult(
+            CeresRidley_AC30(r18, 0x100 as int16) as uint16,
+            (*E).cry_var_30,
+        )
     );
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7c) as *mut uint16) = CeresMult(
-        -(CeresRidley_AC30(r18, 0x100 as int16) as ::core::ffi::c_int) as uint16,
-        (*E).cry_var_30,
+    set_ram_word!(
+        game.reg_M7C = CeresMult(
+            -(CeresRidley_AC30(r18, 0x100 as int16) as ::core::ffi::c_int) as uint16,
+            (*E).cry_var_30,
+        )
     );
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7e) as *mut uint16) = CeresMult(
-        CeresRidley_AC30((r18).wrapping_add(64u16), 0x100 as int16) as uint16,
-        (*E).cry_var_30,
+    set_ram_word!(
+        game.reg_M7D = CeresMult(
+            CeresRidley_AC30((r18).wrapping_add(64u16), 0x100 as int16) as uint16,
+            (*E).cry_var_30,
+        )
     );
 }
 pub unsafe fn CeresRidley_AC30(a: uint16, r20: int16) -> int16 {
@@ -3477,8 +3483,8 @@ pub unsafe fn Ridley_Func_21(game: &mut Game) {
             };
             SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as uint16, 9 as uint16, game);
             QueueSfx2_Max6(0x76 as uint16, game);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = 13 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 4 as uint16;
+            set_ram_word!(game.earthquake_type = 13 as uint16);
+            set_ram_word!(game.earthquake_timer = 4 as uint16);
             Ridley_Func_28(game);
             Ridley_Func_29(game);
             Ridley_Func_93(0x2026 as uint16, addr_word_A6D37C as uint16, game);
@@ -3752,19 +3758,23 @@ pub unsafe fn Ridley_Func_30(game: &mut Game) {
         }
         (*E).ridley_var_15 = v6;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) = ((*E).ridley_var_14
-        as ::core::ffi::c_int
-        + (*E).base.x_pos as ::core::ffi::c_int
-        + *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6b9d5)) as *const uint8 as *mut uint16)
-            .offset((*E).ridley_var_10 as isize) as ::core::ffi::c_int)
-        as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) = ((*E).ridley_var_15
-        as ::core::ffi::c_int
-        + (*E).base.y_pos as ::core::ffi::c_int
-        + *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6b9db)) as *const uint8 as *mut uint16)
-            .offset(((*E).ridley_var_1D as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-            as ::core::ffi::c_int)
-        as uint16;
+    set_ram_word!(
+        game.samus_x_pos = ((*E).ridley_var_14 as ::core::ffi::c_int
+            + (*E).base.x_pos as ::core::ffi::c_int
+            + *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6b9d5)) as *const uint8
+                as *mut uint16)
+                .offset((*E).ridley_var_10 as isize) as ::core::ffi::c_int)
+            as uint16
+    );
+    set_ram_word!(
+        game.samus_y_pos = ((*E).ridley_var_15 as ::core::ffi::c_int
+            + (*E).base.y_pos as ::core::ffi::c_int
+            + *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6b9db)) as *const uint8
+                as *mut uint16)
+                .offset(
+                    ((*E).ridley_var_1D as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize
+                ) as ::core::ffi::c_int) as uint16
+    );
 }
 pub unsafe fn Ridley_Func_31(game: &mut Game) {
     let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
@@ -4367,8 +4377,8 @@ pub unsafe fn Ridley_Func_58(game: &mut Game) {
     let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_F = 0 as uint16;
     (*E).ridley_var_A = ((0xa6aa50i32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x943) as *mut uint16) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x93f) as *mut uint16) = 2 as uint16;
+    set_ram_word!(game.timer_status = 1 as uint16);
+    set_ram_word!(game.ceres_status = 2 as uint16);
     SetBossBitForCurArea(1 as uint16, game);
 }
 pub unsafe fn Ridley_Func_59(game: &mut Game) {
@@ -4384,7 +4394,7 @@ pub unsafe fn Ridley_Func_59(game: &mut Game) {
         *(v1.offset(3) as *mut uint16);
     (*v2).src.addr = *(v1.offset(2) as *mut uint16);
     (*v2).vram_dst = *(v1.offset(5) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) = (v0).wrapping_add(7u16);
+    set_ram_word!(game.vram_write_queue_tail = (v0).wrapping_add(7u16));
 }
 pub unsafe fn Ridley_Func_60(game: &mut Game) {
     let mut v1: int16 = 0;
@@ -4437,8 +4447,8 @@ pub unsafe fn SetupZebesEscapeTypewriter(game: &mut Game) {
     (*E).mbn_var_3D = 0 as uint16;
     (*E).mbn_var_3E = 0 as uint16;
     (*E).mbn_var_3F = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb5) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.reg_BG2HOFS = 0 as uint16);
+    set_ram_word!(game.reg_BG2VOFS = 0 as uint16);
 }
 pub unsafe fn ProcessEscapeTimerTileTransfers(game: &mut Game) -> uint8 {
     let mut v4: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
@@ -4457,8 +4467,7 @@ pub unsafe fn ProcessEscapeTimerTileTransfers(game: &mut Game) -> uint8 {
             *(v3.offset(3) as *mut uint16);
         (*v4).src.addr = *(v3.offset(2) as *mut uint16);
         (*v4).vram_dst = *(v3.offset(5) as *mut uint16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) =
-            (v2).wrapping_add(7u16);
+        set_ram_word!(game.vram_write_queue_tail = (v2).wrapping_add(7u16));
         (*v0).ai_var_E = (ai_var_E).wrapping_add(7u16);
         if *(RomPtr_A6((*v0).ai_var_E, game) as *mut uint16) != 0 {
             return 0 as uint8;
@@ -4529,8 +4538,7 @@ pub unsafe fn HandleTypewriterText_Ext(a: uint16, game: &mut Game) -> uint8 {
             let mbn_var_3C: uint16 = (*E).mbn_var_3C;
             (*v12).vram_dst = mbn_var_3C;
             (*E).mbn_var_3C = (mbn_var_3C).wrapping_add(1u16);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) =
-                (v11).wrapping_add(7u16);
+            set_ram_word!(game.vram_write_queue_tail = (v11).wrapping_add(7u16));
             let v14: uint16 = ((*E).mbn_var_3F).wrapping_add(1u16);
             (*E).mbn_var_3F = v14;
             if v14 as ::core::ffi::c_int - 2 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -4566,7 +4574,7 @@ pub unsafe fn Ridley_Func_62(game: &mut Game) {
         v0 = (v0).wrapping_add(7u16);
         i += 7 as ::core::ffi::c_int;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) = i as uint16;
+    set_ram_word!(game.vram_write_queue_tail = i as uint16);
 }
 pub unsafe fn Ridley_Func_63(game: &mut Game) {
     if Ridley_Func_68(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
@@ -4586,9 +4594,9 @@ pub unsafe fn Ridley_C551(game: &mut Game) {
     if ((*E).ridley_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
         (*E).ridley_var_B = 0 as uint16;
         (*E).ridley_var_C = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16) = 528 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16) = 64 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1980) as *mut uint16) = 1 as uint16;
+        set_ram_word!(game.fx_target_y_pos = 528 as uint16);
+        set_ram_word!(game.fx_y_vel = 64 as uint16);
+        set_ram_word!(game.fx_timer = 1 as uint16);
         (*E).ridley_var_27 = 0 as uint16;
         (*E).ridley_var_28 = 0 as uint16;
         (*E).ridley_var_A = ((0xa6c588i32) as u16);
@@ -6632,8 +6640,8 @@ pub unsafe fn Ridley_Func_113(k: uint16, game: &mut Game) {
             } else {
                 v3 = 33 as uint16;
             }
-            *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = v3;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 12 as uint16;
+            set_ram_word!(game.earthquake_type = v3);
+            set_ram_word!(game.earthquake_timer = 12 as uint16);
         }
     }
 }
@@ -6742,8 +6750,7 @@ pub unsafe fn Ridley_Func_118(game: &mut Game) {
         (*v7.offset(1)).vram_dst = 29472 as uint16;
         (*v7).size = 64 as uint16;
         (*v7.offset(1)).size = 64 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) =
-            (v6).wrapping_add(14u16);
+        set_ram_word!(game.vram_write_queue_tail = (v6).wrapping_add(14u16));
         (*gVramWriteEntry(v6 as ::core::ffi::c_int + 14 as ::core::ffi::c_int, game)).size =
             0 as uint16;
         (*E).ridley_var_05 = (v3).wrapping_add(6u16);
@@ -6771,7 +6778,7 @@ pub unsafe fn Ridley_Func_119(carry: uint8, game: &mut Game) {
     (*v3.offset(1)).vram_dst = 31680 as uint16;
     (*v3).size = 128 as uint16;
     (*v3.offset(1)).size = 128 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) = (v2).wrapping_add(14u16);
+    set_ram_word!(game.vram_write_queue_tail = (v2).wrapping_add(14u16));
     (*gVramWriteEntry(v2 as ::core::ffi::c_int + 14 as ::core::ffi::c_int, game)).size =
         0 as uint16;
 }
@@ -6958,7 +6965,7 @@ pub unsafe fn sub_A6DC13(j: uint16, r18: uint16, r20: uint16, r22: uint16, game:
             break;
         }
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) = idx as uint16;
+    set_ram_word!(game.oam_next_ptr = idx as uint16);
 }
 pub unsafe fn Ridley_Func_121(game: &mut Game) -> uint8 {
     let mut y_pos: int16 = 0;
@@ -7103,14 +7110,15 @@ pub unsafe fn sub_A6DF60(game: &mut Game) {
 }
 pub unsafe fn Ridley_Func_125(game: &mut Game) {
     Ridley_Func_98(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) = 96 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x18aa) as *mut uint16) = 5 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa54) as *mut uint16) =
-        (((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(
+    set_ram_word!(game.samus_invincibility_timer = 96 as uint16);
+    set_ram_word!(game.samus_knockback_timer = 5 as uint16);
+    set_ram_word!(
+        game.knockback_x_dir = (((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(
             ((*Get_Ridley(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
                 .base
                 .x_pos) as i16,
-        ) >= 0i16) as uint16;
+        ) >= 0i16) as uint16
+    );
 }
 pub unsafe fn Ridley_Shot(game: &mut Game) {
     let mut v0: int16 = 0;
@@ -7152,13 +7160,14 @@ pub unsafe fn Ridley_Func_127(game: &mut Game) {
     if Ridley_Func_124(rect, game) != 0 {
         let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
         Samus_DealDamage(SuitDamageDivision((*E).ridley_var_1C, game), game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) = 96 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x18aa) as *mut uint16) = 5 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa54) as *mut uint16) =
-            (((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(
+        set_ram_word!(game.samus_invincibility_timer = 96 as uint16);
+        set_ram_word!(game.samus_knockback_timer = 5 as uint16);
+        set_ram_word!(
+            game.knockback_x_dir = (((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(
                 (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(82))
                     as i16,
-            ) >= 0i16) as uint16;
+            ) >= 0i16) as uint16
+        );
     }
 }
 pub unsafe fn Ridley_Func_128(game: &mut Game) {
@@ -7286,10 +7295,8 @@ pub unsafe fn Ridley_Instr_3(k: uint16, jp: *const uint16, game: &mut Game) -> *
     }
 }
 pub unsafe fn Ridley_Instr_2(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb10) as *mut uint16) =
-        ram_word!(game, samus_x_pos);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb14) as *mut uint16) =
-        ram_word!(game, samus_y_pos);
+    set_ram_word!(game.samus_prev_x_pos = ram_word!(game, samus_x_pos));
+    set_ram_word!(game.samus_prev_y_pos = ram_word!(game, samus_y_pos));
     (*Get_Ridley(0 as ::core::ffi::c_int, game)).ridley_var_1D = *jp.offset(0);
     jp.offset(1)
 }
@@ -7407,7 +7414,7 @@ pub unsafe fn Ridley_E90C(
     a: uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1995) as *mut uint16) = a;
+    set_ram_word!(game.cinematic_var9 = a);
     let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     SpawnEprojWithRoomGfx(0x9642 as uint16, (*E).ridley_var_10, game);
     jp
@@ -7537,7 +7544,7 @@ pub unsafe fn CeresDoor_Instr_8(k: uint16, jp: *const uint16, game: &mut Game) -
 }
 pub unsafe fn CeresDoor_Func_6b(game: &mut Game) {
     if ram_word!(game, ceres_status) != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x93f) as *mut uint16) = 0x8000 as uint16;
+        set_ram_word!(game.ceres_status = 0x8000 as uint16);
     }
 }
 pub unsafe fn CeresSteam_Instr_4(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
@@ -7625,8 +7632,7 @@ pub unsafe fn CeresDoor_Func_1(k: uint16, game: &mut Game) {
             -(20480 as ::core::ffi::c_int) as VoidP;
         (*v2).src.addr = -(15360 as ::core::ffi::c_int) as VoidP;
         (*v2).vram_dst = 28672 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) =
-            (v1).wrapping_add(7u16);
+        set_ram_word!(game.vram_write_queue_tail = (v1).wrapping_add(7u16));
     }
 }
 pub unsafe fn CallCeresDoor(ea: uint32, game: &mut Game) {
@@ -7671,12 +7677,11 @@ pub unsafe fn CeresDoor_F773(j: uint16, game: &mut Game) {
         if (ram_word!(game, random_number) as ::core::ffi::c_int & 0xfff as ::core::ffi::c_int)
             < 0x80i32
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 4 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) =
-                (j).wrapping_add(6u16);
+            set_ram_word!(game.earthquake_timer = 4 as uint16);
+            set_ram_word!(game.earthquake_type = (j).wrapping_add(6u16));
         } else {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 2 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = j;
+            set_ram_word!(game.earthquake_timer = 2 as uint16);
+            set_ram_word!(game.earthquake_type = j);
         }
     }
 }

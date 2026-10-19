@@ -5,6 +5,7 @@ use crate::game::sm_84::SpawnHardcodedPlm;
 use crate::game::sm_86::SpawnEprojWithRoomGfx;
 use crate::game::sm_a9::WriteColorsToPalette;
 use crate::game_state::Game;
+use crate::ram_map::set_ram_word;
 use crate::rtl::RomPtr;
 extern "C" {
     fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
@@ -820,8 +821,8 @@ pub unsafe fn MotherBrain_Phase3_TurnLightsBackOn(a: uint16, game: &mut Game) ->
     0 as uint8
 }
 pub unsafe fn EnableEarthquakeAframes(a: uint16, game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = a;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 20 as uint16;
+    set_ram_word!(game.earthquake_type = a);
+    set_ram_word!(game.earthquake_timer = 20 as uint16);
     QueueSfx2_Max6(0x25 as uint16, game);
 }
 pub unsafe fn HandleMotherBrainBodyFlickering(game: &mut Game) {

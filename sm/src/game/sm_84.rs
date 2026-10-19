@@ -20,7 +20,7 @@ use crate::game::sm_91::{
     GravitySuitPickup, LoadBlockToXrayTilemap, MakeSamusFaceForward, VariaSuitPickup,
 };
 use crate::game_state::Game;
-use crate::ram_map::ram_word;
+use crate::ram_map::{ram_word, set_ram_word};
 use crate::rtl::abs16;
 
 use crate::rtl::{Load24, Mult8x8, RomPtr, SnesDivide, SnesModulus, Unreachable};
@@ -422,7 +422,7 @@ pub unsafe fn SetGoldenTorizoPalette(mut a: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn LoadRoomPlmGfx(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1c2d) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.plm_item_gfx_index = 0 as uint16);
     let mut v0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     loop {
         if *((&raw mut game.g_ram as *mut uint8).offset(0x1c2f) as *mut uint16)
@@ -755,8 +755,8 @@ pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
                 {
                     return kCoroutineNone as CoroutineRet;
                 }
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1c25) as *mut uint16) = 0 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1c27) as *mut uint16) = 78 as uint16;
+                set_ram_word!(game.plm_draw_tilemap_index = 0 as uint16);
+                set_ram_word!(game.plm_id = 78 as uint16);
                 current_block_28 = 17179679302217393232;
             }
             1 => {
@@ -826,8 +826,7 @@ pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
                             }
                         }
                     } else {
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x1c27) as *mut uint16) =
-                            0 as uint16;
+                        set_ram_word!(game.plm_id = 0 as uint16);
                         current_block_28 = 2569451025026770673;
                         continue;
                     }
@@ -839,8 +838,7 @@ pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
                         *_state_variable_ = 1 as uint8;
                         return _coret_;
                     }
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xdc8) as *mut uint16) =
-                        0 as uint16;
+                    set_ram_word!(game.queued_message_box_index = 0 as uint16);
                     base = RomBankBase(0x84 as uint8, game);
                     v5 = base.offset(
                         *((&raw mut game.g_ram as *mut uint8).offset(0x1d27) as *mut uint16).offset(
@@ -1503,10 +1501,9 @@ pub unsafe fn PlmInstr_ClearMusicQueueAndQueueTrack(
             0 as uint16;
         i -= 2 as ::core::ffi::c_int;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x63b) as *mut uint16) =
-        ram_word!(game, music_queue_write_pos);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x63f) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x63d) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.music_queue_read_pos = ram_word!(game, music_queue_write_pos));
+    set_ram_word!(game.music_timer = 0 as uint16);
+    set_ram_word!(game.music_entry = 0 as uint16);
     QueueMusic_Delayed8(*plmp.offset(0) as uint16, game);
     plmp.offset(1)
 }
@@ -1649,8 +1646,7 @@ pub unsafe fn PlmInstr_ActivateEnergyStation(
 ) -> *const uint8 {
     if ram_word!(game, samus_max_health) != ram_word!(game, samus_health) {
         DisplayMessageBox(0x15 as uint16, game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16) =
-            ram_word!(game, samus_max_health);
+        set_ram_word!(game.samus_health = ram_word!(game, samus_max_health));
     }
     CallSomeSamusCode(1 as uint16, game);
     plmp
@@ -1662,8 +1658,7 @@ pub unsafe fn PlmInstr_ActivateMissileStation(
 ) -> *const uint8 {
     if ram_word!(game, samus_max_missiles) != ram_word!(game, samus_missiles) {
         DisplayMessageBox(0x16 as uint16, game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9c6) as *mut uint16) =
-            ram_word!(game, samus_max_missiles);
+        set_ram_word!(game.samus_missiles = ram_word!(game, samus_max_missiles));
     }
     CallSomeSamusCode(1 as uint16, game);
     plmp
@@ -1685,10 +1680,12 @@ pub unsafe fn PlmInstr_ActivateSaveStationAndGotoIfNo(
         0 as uint16,
         game,
     );
-    *((&raw mut game.g_ram as *mut uint8).offset(0x78b) as *mut uint16) =
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x1dc7) as *mut uint16).offset(
-            (ram_word!(game, plm_id) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-        )) & (7u16);
+    set_ram_word!(
+        game.load_station_index =
+            (*((&raw mut game.g_ram as *mut uint8).offset(0x1dc7) as *mut uint16).offset(
+                (ram_word!(game, plm_id) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
+            )) & (7u16)
+    );
     PrepareBitAccess(ram_word!(game, load_station_index), game);
     let ref mut fresh40 = *(&raw mut game.g_ram as *mut uint8).offset(0xd8f8).offset(
         (2 as ::core::ffi::c_int * ram_word!(game, area_index) as ::core::ffi::c_int) as isize,
@@ -1901,8 +1898,7 @@ pub unsafe fn DrawPlm(mut k: uint16, game: &mut Game) {
             r6 = (&raw mut game.g_ram as *mut uint8)
                 .offset((*v25.offset(1)).src.addr as ::core::ffi::c_int as isize)
                 as *mut uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) =
-                (v24).wrapping_add(14u16);
+            set_ram_word!(game.vram_write_queue_tail = (v24).wrapping_add(14u16));
             r18 = (r18).wrapping_mul(2u16);
             r3 = (r18 as ::core::ffi::c_int + v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int)
                 as uint16;
@@ -2167,8 +2163,7 @@ pub unsafe fn DrawPlm(mut k: uint16, game: &mut Game) {
                 (*v10.offset(1)).src.bank = 126 as uint8;
                 (*v10.offset(2)).src.bank = 126 as uint8;
                 (*v10.offset(3)).src.bank = 126 as uint8;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) =
-                    (v3).wrapping_add(28u16);
+                set_ram_word!(game.vram_write_queue_tail = (v3).wrapping_add(28u16));
             } else {
                 PartiallyQueueVramForSingleScreenPlm(a, v3, r20, 0 as uint16, game);
                 v15 = gVramWriteEntry(v3 as ::core::ffi::c_int, game);
@@ -2179,8 +2174,7 @@ pub unsafe fn DrawPlm(mut k: uint16, game: &mut Game) {
                 r6 = (&raw mut game.g_ram as *mut uint8)
                     .offset((*v15.offset(1)).src.addr as ::core::ffi::c_int as isize)
                     as *mut uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) =
-                    (v3).wrapping_add(14u16);
+                set_ram_word!(game.vram_write_queue_tail = (v3).wrapping_add(14u16));
             }
             r18 = (r18).wrapping_mul(2u16);
             r3 = (r18 as ::core::ffi::c_int + v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int)
@@ -2383,10 +2377,14 @@ pub unsafe fn PlmInstr_ABD6(plmp: *const uint8, k: uint16, game: &mut Game) -> *
 }
 pub unsafe fn PlmPreInstr_PositionSamusAndInvincible(k: uint16, game: &mut Game) {
     let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) =
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1e17) as *mut uint16).offset(v1 as isize);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdf0c) as *mut uint16).offset(v1 as isize);
+    set_ram_word!(
+        game.samus_x_pos = *((&raw mut game.g_ram as *mut uint8).offset(0x1e17) as *mut uint16)
+            .offset(v1 as isize)
+    );
+    set_ram_word!(
+        game.samus_y_pos = *((&raw mut game.g_ram as *mut uint8).offset(0xdf0c) as *mut uint16)
+            .offset(v1 as isize)
+    );
     let ref mut fresh69 = *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16);
     *fresh69 = (*fresh69) | (0x10u16);
 }
@@ -2404,7 +2402,7 @@ pub unsafe fn PlmInstr_GiveInvincibility(
     k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) = 48 as uint16;
+    set_ram_word!(game.samus_invincibility_timer = 48 as uint16);
     plmp
 }
 pub unsafe fn PlmInstr_Draw0x38FramesOfRightTreadmill(
@@ -2450,9 +2448,11 @@ pub unsafe fn PlmInstr_PlaceSamusOnSaveStation(
     k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) =
-        (ram_word!(game, samus_x_pos) as ::core::ffi::c_int + 8 as ::core::ffi::c_int
-            & 0xfff0 as ::core::ffi::c_int) as uint16;
+    set_ram_word!(
+        game.samus_x_pos = (ram_word!(game, samus_x_pos) as ::core::ffi::c_int
+            + 8 as ::core::ffi::c_int
+            & 0xfff0 as ::core::ffi::c_int) as uint16
+    );
     MakeSamusFaceForward(game);
     plmp
 }
@@ -2470,7 +2470,7 @@ pub unsafe fn PlmInstr_EnableMovementAndSetSaveStationUsed(
     game: &mut Game,
 ) -> *const uint8 {
     CallSomeSamusCode(1 as uint16, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1e75) as *mut uint16) = 1 as uint16;
+    set_ram_word!(game.save_station_lockout_flag = 1 as uint16);
     plmp
 }
 pub unsafe fn PlmSetup_SetrupWreckedShipEntrance(j: uint16, game: &mut Game) -> uint8 {
@@ -3177,7 +3177,7 @@ pub unsafe fn PlmPreInstr_B7EB_DecTimerEnableSoundsDeletePlm(k: uint16, game: &m
     let fresh85 = *fresh84;
     *fresh84 = (*fresh84).wrapping_sub(1);
     if fresh85 == 1u16 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x5f5) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.debug_disable_sounds = 0 as uint16);
         *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16).offset(v2 as isize) =
             0 as uint16;
     }
@@ -3193,8 +3193,7 @@ pub unsafe fn PlmPreInstr_WakeAndLavaIfBoosterCollected(k: uint16, game: &mut Ga
                 .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
                 0 as uint16;
         } else {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16) =
-                -(128 as ::core::ffi::c_int) as uint16;
+            set_ram_word!(game.fx_y_vel = -(128 as ::core::ffi::c_int) as uint16);
             let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
             *((&raw mut game.g_ram as *mut uint8).offset(0xde1c) as *mut uint16)
                 .offset(v1 as isize) = 1 as uint16;
@@ -3210,18 +3209,17 @@ pub unsafe fn PlmPreInstr_WakeAndLavaIfBoosterCollected(k: uint16, game: &mut Ga
                 .offset(v1 as isize) = 0 as uint16;
         }
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16) =
-            -(1 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1980) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.fx_target_y_pos = -(1 as ::core::ffi::c_int) as uint16);
+        set_ram_word!(game.fx_y_vel = 0 as uint16);
+        set_ram_word!(game.fx_timer = 0 as uint16);
+        set_ram_word!(game.earthquake_timer = 0 as uint16);
         *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     };
 }
 pub unsafe fn PlmPreInstr_WakePLMAndStartFxMotionSamusFarLeft(k: uint16, game: &mut Game) {
     if ram_word!(game, samus_x_pos) <= 0xae0u16 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1980) as *mut uint16) = 1 as uint16;
+        set_ram_word!(game.fx_timer = 1 as uint16);
         let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0xde1c) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
@@ -3248,11 +3246,11 @@ pub unsafe fn PlmPreInstr_AdvanceLavaSamusMovesLeft(k: uint16, game: &mut Game) 
         SetEventHappened(0x15 as uint16, game);
     } else if v4 >= ram_word!(game, samus_x_pos) {
         if g_word_84B876[(v3 + 1 as ::core::ffi::c_int) as usize] < ram_word!(game, fx_base_y_pos) {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16) =
-                g_word_84B876[(v3 + 1 as ::core::ffi::c_int) as usize];
+            set_ram_word!(
+                game.fx_base_y_pos = g_word_84B876[(v3 + 1 as ::core::ffi::c_int) as usize]
+            );
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16) =
-            g_word_84B876[(v3 + 2 as ::core::ffi::c_int) as usize];
+        set_ram_word!(game.fx_y_vel = g_word_84B876[(v3 + 2 as ::core::ffi::c_int) as usize]);
         *((&raw mut game.g_ram as *mut uint8).offset(0x1d77) as *mut uint16).offset(v1 as isize) =
             (v2).wrapping_add(6u16);
     }
@@ -3306,9 +3304,8 @@ pub unsafe fn PlmPreInstr_OldTourianEscapeShaftEscape(k: uint16, game: &mut Game
 }
 pub unsafe fn PlmPreInstr_EscapeRoomBeforeOldTourianEscapeShaft(k: uint16, game: &mut Game) {
     if WakePlmIfSamusIsBelowAndRightOfTarget(k, 240 as uint16, 1344 as uint16, game) == 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16) =
-            -(104 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1980) as *mut uint16) = 16 as uint16;
+        set_ram_word!(game.fx_y_vel = -(104 as ::core::ffi::c_int) as uint16);
+        set_ram_word!(game.fx_timer = 16 as uint16);
     }
 }
 pub fn PlmSetup_B974(j: uint16) -> uint8 {
@@ -4409,7 +4406,7 @@ pub unsafe fn PlmInstr_FxBaseYPos_0x2D2(
     k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16) = 722 as uint16;
+    set_ram_word!(game.fx_base_y_pos = 722 as uint16);
     plmp
 }
 pub unsafe fn PlmPreInstr_DeletePlmAndSpawnTriggerIfBlockDestroyed(k: uint16, game: &mut Game) {
@@ -4601,8 +4598,8 @@ pub unsafe fn PlmInstr_DiagonalEarthquake(
     k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = 11 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 64 as uint16;
+    set_ram_word!(game.earthquake_type = 11 as uint16);
+    set_ram_word!(game.earthquake_timer = 64 as uint16);
     plmp
 }
 pub unsafe fn PlmInstr_Spawn10shardsAnd6n00bs(
@@ -5296,12 +5293,11 @@ pub unsafe fn PlmInstr_ClearChargeBeamCounter(
     k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.flare_counter = 0 as uint16);
     plmp
 }
 pub unsafe fn PlmInstr_E63B(plmp: *const uint8, k: uint16, game: &mut Game) -> *const uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16) =
-        -(32 as ::core::ffi::c_int) as uint16;
+    set_ram_word!(game.fx_y_vel = -(32 as ::core::ffi::c_int) as uint16);
     plmp
 }
 pub unsafe fn sub_84EE4D(j: uint16, game: &mut Game) -> uint8 {

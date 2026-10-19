@@ -22,7 +22,7 @@ use crate::game::sm_a0::{
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy,
 };
 use crate::game_state::Game;
-use crate::ram_map::ram_word;
+use crate::ram_map::{ram_word, set_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{RomPtr, Unreachable};
@@ -813,8 +813,8 @@ pub unsafe fn Torizo_C643(k: uint16, game: &mut Game) {
     {
         let v3: int16 = (*E).toriz_var_B as int16;
         if v3 >= 0i16 && v3 != 256i16 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = 4 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 32 as uint16;
+            set_ram_word!(game.earthquake_type = 4 as uint16);
+            set_ram_word!(game.earthquake_timer = 32 as uint16);
             (*E).toriz_var_B = 256 as uint16;
         }
     } else {
@@ -1036,8 +1036,8 @@ pub unsafe fn Torizo_Func_7(k: uint16, game: &mut Game) {
         (*E).base.current_instruction = (*E).toriz_var_00;
         (*E).base.instruction_timer = 1 as uint16;
         (*E).toriz_var_B = 256 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = 4 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 32 as uint16;
+        set_ram_word!(game.earthquake_type = 4 as uint16);
+        set_ram_word!(game.earthquake_timer = 32 as uint16);
     } else {
         (*E).toriz_var_B = ((*E).toriz_var_B).wrapping_add((*E).toriz_var_C);
     };
@@ -1082,24 +1082,20 @@ pub unsafe fn Torizo_Init(game: &mut Game) {
         if ram_word!(game, area_index) != 0 {
             Torizo_C280(game);
             if ram_word!(game, joypad1_lastkeys) == 0xc0c0u16 {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16) = 700 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9c4) as *mut uint16) = 700 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9d4) as *mut uint16) = 300 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16) = 300 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9c6) as *mut uint16) = 100 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9c8) as *mut uint16) = 100 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9ca) as *mut uint16) = 20 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9cc) as *mut uint16) = 20 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9ce) as *mut uint16) = 20 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9d0) as *mut uint16) = 20 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16) =
-                    -(3273 as ::core::ffi::c_int) as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9a4) as *mut uint16) =
-                    -(3273 as ::core::ffi::c_int) as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9a6) as *mut uint16) =
-                    4111 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9a8) as *mut uint16) =
-                    4111 as uint16;
+                set_ram_word!(game.samus_health = 700 as uint16);
+                set_ram_word!(game.samus_max_health = 700 as uint16);
+                set_ram_word!(game.samus_max_reserve_health = 300 as uint16);
+                set_ram_word!(game.samus_reserve_health = 300 as uint16);
+                set_ram_word!(game.samus_missiles = 100 as uint16);
+                set_ram_word!(game.samus_max_missiles = 100 as uint16);
+                set_ram_word!(game.samus_super_missiles = 20 as uint16);
+                set_ram_word!(game.samus_max_super_missiles = 20 as uint16);
+                set_ram_word!(game.samus_power_bombs = 20 as uint16);
+                set_ram_word!(game.samus_max_power_bombs = 20 as uint16);
+                set_ram_word!(game.equipped_items = -(3273 as ::core::ffi::c_int) as uint16);
+                set_ram_word!(game.collected_items = -(3273 as ::core::ffi::c_int) as uint16);
+                set_ram_word!(game.equipped_beams = 4111 as uint16);
+                set_ram_word!(game.collected_beams = 4111 as uint16);
             }
         } else {
             Torizo_C250(game);
@@ -2352,12 +2348,12 @@ pub unsafe fn Shaktool_Shot(game: &mut Game) {
     }
 }
 pub unsafe fn Shaktool_Instr_9(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1980) as *mut uint16) = 32 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16) = 64 as uint16;
+    set_ram_word!(game.fx_timer = 32 as uint16);
+    set_ram_word!(game.fx_y_vel = 64 as uint16);
     jp
 }
 pub unsafe fn Shaktool_Instr_11(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16) = 722 as uint16;
+    set_ram_word!(game.fx_base_y_pos = 722 as uint16);
     jp
 }
 pub unsafe fn Shaktool_Instr_10(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
@@ -2427,14 +2423,20 @@ pub unsafe fn Shaktool_Instr_7(k: uint16, jp: *const uint16, game: &mut Game) ->
     );
     EnemyFunc_C8AD(k, game);
     let v6: ::core::ffi::c_int = (*E).shakt_var_C as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) =
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0xaae670)) as *const uint8 as *mut uint16)
-            .offset(v6 as isize))
-        .wrapping_add((*E).base.x_pos);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) =
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0xaae6b0)) as *const uint8 as *mut uint16)
-            .offset(v6 as isize))
-        .wrapping_add((*E).base.y_pos);
+    set_ram_word!(
+        game.samus_x_pos =
+            (*(game.g_rom.offset(crate::rtl::lorom_offset(0xaae670)) as *const uint8
+                as *mut uint16)
+                .offset(v6 as isize))
+            .wrapping_add((*E).base.x_pos)
+    );
+    set_ram_word!(
+        game.samus_y_pos =
+            (*(game.g_rom.offset(crate::rtl::lorom_offset(0xaae6b0)) as *const uint8
+                as *mut uint16)
+                .offset(v6 as isize))
+            .wrapping_add((*E).base.y_pos)
+    );
     jp.offset(1)
 }
 pub unsafe fn Shaktool_Instr_14(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {

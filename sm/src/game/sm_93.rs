@@ -6,7 +6,7 @@ use crate::game::sm_90::{
     ClearProjectile, HandleProjectileTrails, Samus_DrawShinesparkCrashEchoProjectiles,
 };
 use crate::game_state::Game;
-use crate::ram_map::ram_word;
+use crate::ram_map::{ram_word, set_ram_word};
 use crate::rtl::{RomPtr, Unreachable};
 
 pub use crate::types::{
@@ -172,8 +172,8 @@ pub unsafe fn KillProjectileInner(k: uint16, game: &mut Game) {
                             .wrapping_div(::core::mem::size_of::<uint16>())
                             .wrapping_sub(1_usize) as isize,
                     );
-            *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = 20 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 30 as uint16;
+            set_ram_word!(game.earthquake_type = 20 as uint16);
+            set_ram_word!(game.earthquake_timer = 30 as uint16);
         } else {
             *((&raw mut game.g_ram as *mut uint8).offset(0xc40) as *mut uint16)
                 .offset(v1 as isize) = *(&raw mut (*(game
@@ -188,7 +188,7 @@ pub unsafe fn KillProjectileInner(k: uint16, game: &mut Game) {
             & 0x8000 as ::core::ffi::c_int
             == 0
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) = 20 as uint16;
+            set_ram_word!(game.cooldown_timer = 20 as uint16);
         }
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(v1 as isize) =
@@ -351,7 +351,7 @@ pub unsafe fn DrawPlayerExplosions2(game: &mut Game) {
     let mut v0: uint16 = 8 as uint16;
     let mut r18: uint16 = 0;
     let mut r20: uint16 = 0;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16) = 8 as uint16;
+    set_ram_word!(game.projectile_index = 8 as uint16);
     loop {
         let v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         if (*((&raw mut game.g_ram as *mut uint8).offset(0xc40) as *mut uint16).offset(v1 as isize)
@@ -441,7 +441,7 @@ pub unsafe fn DrawPlayerExplosions2(game: &mut Game) {
             }
         }
         v0 = (v0).wrapping_sub(2u16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16) = v0;
+        set_ram_word!(game.projectile_index = v0);
         if ((v0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32) {
             break;
         }
@@ -451,7 +451,7 @@ pub unsafe fn DrawPlayerExplosions2(game: &mut Game) {
 }
 pub unsafe fn sub_9382FD(game: &mut Game) {
     let mut v0: uint16 = 8 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16) = 8 as uint16;
+    set_ram_word!(game.projectile_index = 8 as uint16);
     loop {
         let v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         if *((&raw mut game.g_ram as *mut uint8).offset(0xc40) as *mut uint16).offset(v1 as isize)
@@ -477,7 +477,7 @@ pub unsafe fn sub_9382FD(game: &mut Game) {
             v0 = ram_word!(game, projectile_index);
         }
         v0 = (v0).wrapping_sub(2u16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16) = v0;
+        set_ram_word!(game.projectile_index = v0);
         if ((v0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32) {
             break;
         }
@@ -490,7 +490,7 @@ pub unsafe fn DrawBombAndProjectileExplosions(game: &mut Game) {
     let mut v2: uint16 = 0;
     let mut r18: uint16 = 0;
     let mut r20: uint16 = 0;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16) = 18 as uint16;
+    set_ram_word!(game.projectile_index = 18 as uint16);
     loop {
         let v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         if !(*((&raw mut game.g_ram as *mut uint8).offset(0xc40) as *mut uint16)
@@ -568,7 +568,7 @@ pub unsafe fn DrawBombAndProjectileExplosions(game: &mut Game) {
             }
         }
         v0 = (v0).wrapping_sub(2u16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16) = v0;
+        set_ram_word!(game.projectile_index = v0);
         if ((v0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32) {
             break;
         }

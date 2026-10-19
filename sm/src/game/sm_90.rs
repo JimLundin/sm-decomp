@@ -46,7 +46,7 @@ use crate::game::sm_9b::{
 };
 use crate::game::sm_a0::Samus_CheckSolidEnemyColl;
 use crate::game_state::Game;
-use crate::ram_map::ram_word;
+use crate::ram_map::{ram_word, set_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{Load24, MakePairU16, Mult8x8, RomPtr, Unreachable};
@@ -297,15 +297,13 @@ pub unsafe fn Samus_Animate_WaterFx(game: &mut Game) {
         && (ram_word!(game, fx_liquid_options) as ::core::ffi::c_int & 4 as ::core::ffi::c_int)
             == 0i32
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa9c) as *mut uint16) =
-            kSamusPhys_AnimDelayInWater;
+        set_ram_word!(game.samus_anim_frame_buffer = kSamusPhys_AnimDelayInWater);
         if ram_word!(game, liquid_physics_type) as ::core::ffi::c_int
             == kLiquidPhysicsType_Water as ::core::ffi::c_int
         {
             Samus_SpawnAirBubbles(game);
         } else {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xad2) as *mut uint16) =
-                kLiquidPhysicsType_Water as uint16;
+            set_ram_word!(game.liquid_physics_type = kLiquidPhysicsType_Water as uint16);
             QueueSfx2_Max6(0xd as uint16, game);
             Samus_SpawnWaterSplash(r18, game);
         }
@@ -379,7 +377,7 @@ pub unsafe fn Samus_SpawnAirBubbles(game: &mut Game) {
         || (ram_word!(game, equipped_items) as ::core::ffi::c_int & 0x20 as ::core::ffi::c_int)
             != 0i32
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa9c) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_anim_frame_buffer = 0 as uint16);
     }
 }
 pub unsafe fn Samus_Animate_LavaFx(game: &mut Game) {
@@ -394,14 +392,14 @@ pub unsafe fn Samus_Animate_LavaFx(game: &mut Game) {
     {
         if ram_word!(game, speed_boost_counter) != 0 {
             Samus_CancelSpeedBoost(game);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb42) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb44) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.samus_x_extra_run_speed = 0 as uint16);
+            set_ram_word!(game.samus_x_extra_run_subspeed = 0 as uint16);
         }
         if (ram_word!(game, equipped_items) as ::core::ffi::c_int & 0x20 as ::core::ffi::c_int)
             != 0i32
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa9c) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xad2) as *mut uint16) = 2 as uint16;
+            set_ram_word!(game.samus_anim_frame_buffer = 0 as uint16);
+            set_ram_word!(game.liquid_physics_type = 2 as uint16);
         } else {
             if (ram_word!(game, game_time_frames) as ::core::ffi::c_int & 7 as ::core::ffi::c_int)
                 == 0i32
@@ -455,9 +453,8 @@ pub unsafe fn Samus_Animate_AcidFx(game: &mut Game) {
 pub unsafe fn Samus_Animate_SubmergedLavaAcid(game: &mut Game) {
     static kSamusPhys_AnimDelayInAcid: uint16 = 2 as uint16;
     let r20: uint16 = Samus_GetTop_R20(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa9c) as *mut uint16) =
-        kSamusPhys_AnimDelayInAcid;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xad2) as *mut uint16) = 2 as uint16;
+    set_ram_word!(game.samus_anim_frame_buffer = kSamusPhys_AnimDelayInAcid);
+    set_ram_word!(game.liquid_physics_type = 2 as uint16);
     if ((r20) as i16).wrapping_sub((ram_word!(game, lava_acid_y_pos)) as i16) < 0i16
         && (*((&raw mut game.g_ram as *mut uint8).offset(0xaec) as *mut uint16).offset(0)
             as ::core::ffi::c_int
@@ -507,7 +504,7 @@ pub unsafe fn Samus_Animate_SubmergedLavaAcid(game: &mut Game) {
         || (ram_word!(game, equipped_items) as ::core::ffi::c_int & 0x20 as ::core::ffi::c_int)
             != 0i32
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa9c) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_anim_frame_buffer = 0 as uint16);
     }
 }
 fn Samus_AnimDelayFunc_6_GotoStartIfLittleHealth(game: &mut Game) -> bool {
@@ -520,7 +517,7 @@ fn Samus_AnimDelayFunc_6_GotoStartIfLittleHealth(game: &mut Game) -> bool {
     true
 }
 unsafe fn Samus_AnimDelayFunc_7(jp: *const uint8, game: &mut Game) -> bool {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) = ((0x9094cbi32) as u16);
+    set_ram_word!(game.samus_movement_handler = ((0x9094cbi32) as u16));
     let ref mut fresh97 = *((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16);
     *fresh97 = (*fresh97).wrapping_add(1);
     true_0 != 0
@@ -565,13 +562,11 @@ unsafe fn Samus_AnimDelayFunc_9_TransToPose(instruction: *const u8, game: &mut G
 }
 unsafe fn UNUSED_Samus_AnimDelayFunc_10(jp: *const uint8, game: &mut Game) -> bool {
     if ram_word!(game, samus_y_speed) != 0u16 || ram_word!(game, samus_y_subspeed) != 0u16 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa2c) as *mut uint16) =
-            *jp.offset(2) as uint16;
+        set_ram_word!(game.samus_new_pose_transitional = *jp.offset(2) as uint16);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa2c) as *mut uint16) =
-            *jp.offset(1) as uint16;
+        set_ram_word!(game.samus_new_pose_transitional = *jp.offset(1) as uint16);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa32) as *mut uint16) = 3 as uint16;
+    set_ram_word!(game.samus_hurt_switch_index = 3 as uint16);
     false_0 != 0
 }
 unsafe fn Samus_AnimDelayFunc_11_SelectDelaySequenceWalljump(game: &mut Game) -> bool {
@@ -603,13 +598,11 @@ unsafe fn Samus_AnimDelayFunc_12_TransToPose(jp: *const uint8, game: &mut Game) 
         & ram_word!(game, equipped_items) as ::core::ffi::c_int)
         != 0i32
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa2c) as *mut uint16) =
-            *jp.offset(4) as uint16;
+        set_ram_word!(game.samus_new_pose_transitional = *jp.offset(4) as uint16);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa2c) as *mut uint16) =
-            *jp.offset(3) as uint16;
+        set_ram_word!(game.samus_new_pose_transitional = *jp.offset(3) as uint16);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa32) as *mut uint16) = 3 as uint16;
+    set_ram_word!(game.samus_hurt_switch_index = 3 as uint16);
     false_0 != 0
 }
 fn Samus_AnimDelayFunc_14_Goto(frames_back: u8, game: &mut Game) -> bool {
@@ -776,7 +769,7 @@ pub fn SamusBottomDrawn_1(game: &mut Game) -> uint8 {
     1 as uint8
 }
 pub unsafe fn SamusBottomDrawn_4(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaca) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_bottom_half_spritemap_index = 0 as uint16);
     0 as uint8
 }
 pub unsafe fn SamusBottomDrawn_0_Standing(game: &mut Game) -> uint8 {
@@ -795,8 +788,7 @@ pub unsafe fn SamusBottomDrawn_0_Standing(game: &mut Game) -> uint8 {
                 - 17 as ::core::ffi::c_int
                 - ram_word!(game, layer1_y_pos) as ::core::ffi::c_int) as uint16;
         *(&raw mut (*v1).charnum as *mut uint16) = 14369 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) =
-            (v0).wrapping_add(4u16);
+        set_ram_word!(game.oam_next_ptr = (v0).wrapping_add(4u16));
     }
     1 as uint8
 }
@@ -870,7 +862,7 @@ pub unsafe fn SamusBottomDrawn_F_Transitions(game: &mut Game) -> uint8 {
     {
         return 1 as uint8;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaca) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_bottom_half_spritemap_index = 0 as uint16);
     0 as uint8
 }
 pub unsafe fn UNUSED_SamusBottomDrawn_D(game: &mut Game) -> uint8 {
@@ -888,7 +880,7 @@ pub unsafe fn UNUSED_SamusBottomDrawn_D(game: &mut Game) -> uint8 {
     {
         return 1 as uint8;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaca) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_bottom_half_spritemap_index = 0 as uint16);
     0 as uint8
 }
 pub fn SamusBottomDrawn_14_WallJump(game: &mut Game) -> uint8 {
@@ -928,7 +920,7 @@ pub unsafe fn SamusBottomDrawn_1B(game: &mut Game) -> uint8 {
     {
         return 1 as uint8;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaca) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_bottom_half_spritemap_index = 0 as uint16);
     0 as uint8
 }
 pub unsafe fn Samus_DrawEchoes(game: &mut Game) {
@@ -1018,7 +1010,7 @@ pub unsafe fn Samus_DrawEchoes(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xab0) as *mut uint16).offset(1) == 0
         && *((&raw mut game.g_ram as *mut uint8).offset(0xab0) as *mut uint16).offset(0) == 0
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xaae) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.speed_echoes_index = 0 as uint16);
     }
 }
 pub unsafe fn Samus_DrawEcho(j: uint16, game: &mut Game) {
@@ -1336,8 +1328,7 @@ pub unsafe fn AtmosphericTypeFunc_1_FootstepSplash(k: uint16, j: uint16, game: &
                         game,
                     )
                         as *mut uint16);
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) =
-                        (v3).wrapping_add(4u16);
+                    set_ram_word!(game.oam_next_ptr = (v3).wrapping_add(4u16));
                 }
             }
         }
@@ -1445,8 +1436,8 @@ pub unsafe fn Samus_CalcSpritemapPos(k: uint16, game: &mut Game) -> PairU16 {
         Samus_CalcPos_Mode7(game);
         v1 = kSamus_CalcSpritemapPos[*(&raw mut game.g_ram as *mut uint8).offset(0xa1f) as usize]
             .expect("non-null function pointer")(k, game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) = old_y;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) = old_x;
+        set_ram_word!(game.samus_y_pos = old_y);
+        set_ram_word!(game.samus_x_pos = old_x);
     }
     MakePairU16(v1.k, v1.j)
 }
@@ -1458,12 +1449,16 @@ pub unsafe fn Samus_CalcSpritemapPos_Default(j: uint16, game: &mut Game) -> Pair
         .y_offset_to_gfx)
             .offset((4 as ::core::ffi::c_int * j as ::core::ffi::c_int) as isize) as int8
             as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb06) as *mut uint16) =
-        (ram_word!(game, samus_y_pos) as ::core::ffi::c_int
+    set_ram_word!(
+        game.samus_spritemap_y_pos = (ram_word!(game, samus_y_pos) as ::core::ffi::c_int
             - v1
-            - ram_word!(game, layer1_y_pos) as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb04) as *mut uint16) =
-        (ram_word!(game, samus_x_pos)).wrapping_sub(ram_word!(game, layer1_x_pos));
+            - ram_word!(game, layer1_y_pos) as ::core::ffi::c_int)
+            as uint16
+    );
+    set_ram_word!(
+        game.samus_spritemap_x_pos =
+            (ram_word!(game, samus_x_pos)).wrapping_sub(ram_word!(game, layer1_x_pos))
+    );
     MakePairU16(
         ram_word!(game, samus_spritemap_x_pos),
         ram_word!(game, samus_spritemap_y_pos),
@@ -1481,13 +1476,16 @@ pub unsafe fn Samus_CalcSpritemapPos_Standing(j: uint16, game: &mut Game) -> Pai
             & 0x8000 as ::core::ffi::c_int
             == 0
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb06) as *mut uint16) =
-                (ram_word!(game, samus_y_pos) as ::core::ffi::c_int
+            set_ram_word!(
+                game.samus_spritemap_y_pos = (ram_word!(game, samus_y_pos) as ::core::ffi::c_int
                     - 1 as ::core::ffi::c_int
                     - ram_word!(game, layer1_y_pos) as ::core::ffi::c_int)
-                    as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb04) as *mut uint16) =
-                (ram_word!(game, samus_x_pos)).wrapping_sub(ram_word!(game, layer1_x_pos));
+                    as uint16
+            );
+            set_ram_word!(
+                game.samus_spritemap_x_pos =
+                    (ram_word!(game, samus_x_pos)).wrapping_sub(ram_word!(game, layer1_x_pos))
+            );
             return MakePairU16(
                 (ram_word!(game, samus_x_pos)).wrapping_sub(ram_word!(game, layer1_x_pos)),
                 (ram_word!(game, samus_y_pos) as ::core::ffi::c_int
@@ -1508,12 +1506,16 @@ pub unsafe fn Samus_CalcSpritemapPos_Standing(j: uint16, game: &mut Game) -> Pai
                 + 4 as ::core::ffi::c_int * (v1 as ::core::ffi::c_int - 164 as ::core::ffi::c_int))
                 as uint16 as isize,
         ) as *const uint8 as *mut uint16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb06) as *mut uint16) =
-            (ram_word!(game, samus_y_pos) as ::core::ffi::c_int
+        set_ram_word!(
+            game.samus_spritemap_y_pos = (ram_word!(game, samus_y_pos) as ::core::ffi::c_int
                 - r18 as ::core::ffi::c_int
-                - ram_word!(game, layer1_y_pos) as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb04) as *mut uint16) =
-            (ram_word!(game, samus_x_pos)).wrapping_sub(ram_word!(game, layer1_x_pos));
+                - ram_word!(game, layer1_y_pos) as ::core::ffi::c_int)
+                as uint16
+        );
+        set_ram_word!(
+            game.samus_spritemap_x_pos =
+                (ram_word!(game, samus_x_pos)).wrapping_sub(ram_word!(game, layer1_x_pos))
+        );
         return MakePairU16(
             (ram_word!(game, samus_x_pos)).wrapping_sub(ram_word!(game, layer1_x_pos)),
             (ram_word!(game, samus_y_pos) as ::core::ffi::c_int
@@ -1567,11 +1569,15 @@ pub unsafe fn Samus_CalcSpritemapPos_Crouch(j: uint16, game: &mut Game) -> PairU
             as ::core::ffi::c_int
             + 2 as ::core::ffi::c_int * (v1 as ::core::ffi::c_int - 53 as ::core::ffi::c_int))
             as uint16 as usize] as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb06) as *mut uint16) =
-            (v4 + ram_word!(game, samus_y_pos) as ::core::ffi::c_int
-                - ram_word!(game, layer1_y_pos) as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb04) as *mut uint16) =
-            (ram_word!(game, samus_x_pos)).wrapping_sub(ram_word!(game, layer1_x_pos));
+        set_ram_word!(
+            game.samus_spritemap_y_pos = (v4 + ram_word!(game, samus_y_pos) as ::core::ffi::c_int
+                - ram_word!(game, layer1_y_pos) as ::core::ffi::c_int)
+                as uint16
+        );
+        set_ram_word!(
+            game.samus_spritemap_x_pos =
+                (ram_word!(game, samus_x_pos)).wrapping_sub(ram_word!(game, layer1_x_pos))
+        );
         MakePairU16(
             (ram_word!(game, samus_x_pos)).wrapping_sub(ram_word!(game, layer1_x_pos)),
             ram_word!(game, samus_spritemap_y_pos),
@@ -1629,11 +1635,15 @@ pub unsafe fn Samus_CalcSpritemapPos_Special(j: uint16, game: &mut Game) -> Pair
         }
         v2 = -(3 as ::core::ffi::c_int);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb06) as *mut uint16) =
-        (v2 + ram_word!(game, samus_y_pos) as ::core::ffi::c_int
-            - ram_word!(game, layer1_y_pos) as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb04) as *mut uint16) =
-        (ram_word!(game, samus_x_pos)).wrapping_sub(ram_word!(game, layer1_x_pos));
+    set_ram_word!(
+        game.samus_spritemap_y_pos = (v2 + ram_word!(game, samus_y_pos) as ::core::ffi::c_int
+            - ram_word!(game, layer1_y_pos) as ::core::ffi::c_int)
+            as uint16
+    );
+    set_ram_word!(
+        game.samus_spritemap_x_pos =
+            (ram_word!(game, samus_x_pos)).wrapping_sub(ram_word!(game, layer1_x_pos))
+    );
     MakePairU16(
         (ram_word!(game, samus_x_pos)).wrapping_sub(ram_word!(game, layer1_x_pos)),
         (v2 + ram_word!(game, samus_y_pos) as ::core::ffi::c_int
@@ -1683,10 +1693,9 @@ pub unsafe fn SetLiquidPhysicsType(game: &mut Game) {
                     & 0x8000 as ::core::ffi::c_int
                     != 0
             {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xad2) as *mut uint16) =
-                    kLiquidPhysicsType_LavaAcid as uint16;
+                set_ram_word!(game.liquid_physics_type = kLiquidPhysicsType_LavaAcid as uint16);
             } else {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xad2) as *mut uint16) = 0 as uint16;
+                set_ram_word!(game.liquid_physics_type = 0 as uint16);
             }
         }
         3 => {
@@ -1699,14 +1708,13 @@ pub unsafe fn SetLiquidPhysicsType(game: &mut Game) {
                     & 4 as ::core::ffi::c_int)
                     == 0i32
             {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xad2) as *mut uint16) =
-                    kLiquidPhysicsType_Water as uint16;
+                set_ram_word!(game.liquid_physics_type = kLiquidPhysicsType_Water as uint16);
             } else {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xad2) as *mut uint16) = 0 as uint16;
+                set_ram_word!(game.liquid_physics_type = 0 as uint16);
             }
         }
         _ => {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xad2) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.liquid_physics_type = 0 as uint16);
         }
     };
 }
@@ -1781,11 +1789,11 @@ pub unsafe fn Samus_BombJumpRisingYMovement_(game: &mut Game) {
         if (ram_word!(game, samus_y_speed) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int)
             != 0i32
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb2c) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb36) as *mut uint16) = 2 as uint16;
+            set_ram_word!(game.samus_y_subspeed = 0 as uint16);
+            set_ram_word!(game.samus_y_speed = 0 as uint16);
+            set_ram_word!(game.samus_y_dir = 2 as uint16);
             if (ram_word!(game, bomb_jump_dir) as uint8) != 2u8 {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb4a) as *mut uint16) = 2 as uint16;
+                set_ram_word!(game.samus_x_accel_mode = 2 as uint16);
             }
         } else if ram_word!(game, samus_y_speed) as ::core::ffi::c_int - 1 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
@@ -1794,8 +1802,7 @@ pub unsafe fn Samus_BombJumpRisingYMovement_(game: &mut Game) {
             if ram_word!(game, samus_input_handler) as ::core::ffi::c_int
                 != 0x90e91d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
             {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xa60) as *mut uint16) =
-                    ((0x90e913i32) as u16);
+                set_ram_word!(game.samus_input_handler = ((0x90e913i32) as u16));
             }
         }
     }
@@ -1846,7 +1853,7 @@ pub unsafe fn Samus_JumpingMovement(game: &mut Game) {
                 & 0x8000 as ::core::ffi::c_int
                 != 0
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb4a) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_x_accel_mode = 0 as uint16);
         Samus_Move_NoBaseSpeed_X(game);
         Samus_MoveExtraY(game);
         return;
@@ -1859,15 +1866,15 @@ pub unsafe fn Samus_JumpingMovement(game: &mut Game) {
                 & 0x8000 as ::core::ffi::c_int)
                 != 0i32)
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb2c) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb36) as *mut uint16) = 2 as uint16;
+        set_ram_word!(game.samus_y_subspeed = 0 as uint16);
+        set_ram_word!(game.samus_y_speed = 0 as uint16);
+        set_ram_word!(game.samus_y_dir = 2 as uint16);
     }
     let pair: Pair_Bool_Amt =
         Samus_CalcBaseSpeed_NoDecel_X(Samus_DetermineSpeedTableEntryPtr_X(game), game);
     if *(&raw mut game.g_ram as *mut uint8).offset(0xa1f) == 20u8 {
         if ram_word!(game, samus_x_accel_mode) == 0 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb4a) as *mut uint16) = 2 as uint16;
+            set_ram_word!(game.samus_x_accel_mode = 2 as uint16);
         }
         current_block = 13338778356158832468;
     } else if ram_word!(game, samus_x_accel_mode) != 0u16
@@ -1878,9 +1885,9 @@ pub unsafe fn Samus_JumpingMovement(game: &mut Game) {
     {
         current_block = 13338778356158832468;
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb46) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb48) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdd0) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_x_base_speed = 0 as uint16);
+        set_ram_word!(game.samus_x_base_subspeed = 0 as uint16);
+        set_ram_word!(game.samus_collision_flag = 0 as uint16);
         current_block = 294518303723010965;
     }
     if current_block == 13338778356158832468 {
@@ -1900,9 +1907,9 @@ pub unsafe fn Samus_SpinJumpMovement(game: &mut Game) {
                 & 0x8000 as ::core::ffi::c_int)
                 != 0i32)
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb2c) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb36) as *mut uint16) = 2 as uint16;
+        set_ram_word!(game.samus_y_subspeed = 0 as uint16);
+        set_ram_word!(game.samus_y_speed = 0 as uint16);
+        set_ram_word!(game.samus_y_dir = 2 as uint16);
     }
     let mut pair: Pair_Bool_Amt =
         Samus_CalcBaseSpeed_NoDecel_X(Samus_DetermineSpeedTableEntryPtr_X(game), game);
@@ -1930,17 +1937,17 @@ pub unsafe fn Samus_SpinJumpMovement(game: &mut Game) {
             15844657471994422988 => {}
             _ => {
                 pair.amt = 0 as int32;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb46) as *mut uint16) = 0 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb48) as *mut uint16) = 0 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdd0) as *mut uint16) = 0 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb4a) as *mut uint16) = 0 as uint16;
+                set_ram_word!(game.samus_x_base_speed = 0 as uint16);
+                set_ram_word!(game.samus_x_base_subspeed = 0 as uint16);
+                set_ram_word!(game.samus_collision_flag = 0 as uint16);
+                set_ram_word!(game.samus_x_accel_mode = 0 as uint16);
                 current_block = 7037269245041226537;
             }
         }
     }
     if current_block == 15844657471994422988 {
         if ram_word!(game, samus_x_accel_mode) == 0 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb4a) as *mut uint16) = 2 as uint16;
+            set_ram_word!(game.samus_x_accel_mode = 2 as uint16);
         }
     }
     Samus_MoveX(pair.amt, game);
@@ -1957,9 +1964,9 @@ pub unsafe fn Samus_CheckStartFalling(game: &mut Game) {
         && (ram_word!(game, samus_y_speed) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int)
             != 0i32
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb2c) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb36) as *mut uint16) = 2 as uint16;
+        set_ram_word!(game.samus_y_subspeed = 0 as uint16);
+        set_ram_word!(game.samus_y_speed = 0 as uint16);
+        set_ram_word!(game.samus_y_dir = 2 as uint16);
     }
 }
 pub unsafe fn Samus_MoveY_WithSpeedCalc(game: &mut Game) {
@@ -2009,9 +2016,9 @@ pub unsafe fn Samus_FallingMovement(game: &mut Game) {
     {
         Samus_MoveX(pair.amt, game);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb46) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb48) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdd0) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_x_base_speed = 0 as uint16);
+        set_ram_word!(game.samus_x_base_subspeed = 0 as uint16);
+        set_ram_word!(game.samus_collision_flag = 0 as uint16);
     }
     Samus_CheckStartFalling(game);
     Samus_MoveY_WithSpeedCalc(game);
@@ -2028,9 +2035,9 @@ pub unsafe fn Samus_MorphedFallingMovement(game: &mut Game) {
             == 0i32
     {
         pair.amt = 0 as int32;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb46) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb48) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdd0) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_x_base_speed = 0 as uint16);
+        set_ram_word!(game.samus_x_base_subspeed = 0 as uint16);
+        set_ram_word!(game.samus_collision_flag = 0 as uint16);
     }
     Samus_MoveX(pair.amt, game);
     Samus_CheckStartFalling(game);
@@ -2048,18 +2055,18 @@ pub unsafe fn Samus_MorphedBouncingMovement(game: &mut Game) {
             == 0i32
     {
         pair.amt = 0 as int32;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb46) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb48) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdd0) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_x_base_speed = 0 as uint16);
+        set_ram_word!(game.samus_x_base_subspeed = 0 as uint16);
+        set_ram_word!(game.samus_collision_flag = 0 as uint16);
     }
     Samus_MoveX(pair.amt, game);
     if ram_word!(game, knockback_dir) == 0 {
         if ram_word!(game, extra_samus_y_displacement) != 0u16
             || ram_word!(game, extra_samus_y_subdisplacement) != 0u16
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb36) as *mut uint16) = 2 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb2c) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.samus_y_dir = 2 as uint16);
+            set_ram_word!(game.samus_y_subspeed = 0 as uint16);
+            set_ram_word!(game.samus_y_speed = 0 as uint16);
             let amt: int32 = ((ram_word!(game, extra_samus_y_displacement) as uint32)
                 << 16 as ::core::ffi::c_int
                 | ram_word!(game, extra_samus_y_subdisplacement) as uint32)
@@ -2137,7 +2144,7 @@ pub unsafe fn Samus_Move_NoBaseSpeed_X(game: &mut Game) {
 pub unsafe fn Samus_MoveLeft(mut amt: int32, game: &mut Game) {
     amt = -amt;
     let cres: CheckEnemyColl_Result = Samus_CheckSolidEnemyColl(amt, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdd0) as *mut uint16) = cres.collision;
+    set_ram_word!(game.samus_collision_flag = cres.collision);
     amt = cres.amt;
     if ram_word!(game, samus_collision_flag) != 0 {
         Samus_ClearXSpeedIfColl(game);
@@ -2154,7 +2161,7 @@ pub unsafe fn Samus_MoveLeft(mut amt: int32, game: &mut Game) {
             & 1 as ::core::ffi::c_int)
             != 0i32
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdd0) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.samus_collision_flag = 0 as uint16);
         }
         Samus_ClearXSpeedIfColl(game);
         Samus_AlignYPosSlope(game);
@@ -2162,7 +2169,7 @@ pub unsafe fn Samus_MoveLeft(mut amt: int32, game: &mut Game) {
 }
 pub unsafe fn Samus_MoveRight(mut amt: int32, game: &mut Game) {
     let cres: CheckEnemyColl_Result = Samus_CheckSolidEnemyColl(amt, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdd0) as *mut uint16) = cres.collision;
+    set_ram_word!(game.samus_collision_flag = cres.collision);
     amt = cres.amt;
     if ram_word!(game, samus_collision_flag) != 0 {
         Samus_ClearXSpeedIfColl(game);
@@ -2179,16 +2186,16 @@ pub unsafe fn Samus_MoveRight(mut amt: int32, game: &mut Game) {
             & 1 as ::core::ffi::c_int)
             == 0i32
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdd0) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.samus_collision_flag = 0 as uint16);
         }
         Samus_ClearXSpeedIfColl(game);
         Samus_AlignYPosSlope(game);
     };
 }
 pub unsafe fn Samus_MoveUp(mut amt: int32, game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb02) as *mut uint16) = 2 as uint16;
+    set_ram_word!(game.samus_collision_direction = 2 as uint16);
     let cres: CheckEnemyColl_Result = Samus_CheckSolidEnemyColl(-amt, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdd0) as *mut uint16) = cres.collision;
+    set_ram_word!(game.samus_collision_flag = cres.collision);
     amt = cres.amt;
     if ram_word!(game, samus_collision_flag) != 0 {
         Samus_MoveUp_SetPoseCalcInput(game);
@@ -2204,18 +2211,20 @@ pub unsafe fn Samus_MoveUp(mut amt: int32, game: &mut Game) {
     };
 }
 pub unsafe fn Samus_MoveDown(mut amt: int32, game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb02) as *mut uint16) = 3 as uint16;
+    set_ram_word!(game.samus_collision_direction = 3 as uint16);
     let cres: CheckEnemyColl_Result = Samus_CheckSolidEnemyColl(amt, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdd0) as *mut uint16) = cres.collision;
+    set_ram_word!(game.samus_collision_flag = cres.collision);
     amt = cres.amt;
     if ram_word!(game, samus_collision_flag) != 0 {
         Samus_MoveDown_SetPoseCalcInput(game);
         Samus_MoveDown_NoColl(amt, game);
     } else {
         amt = Samus_MoveDown_NoSolidColl(amt, game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdb8) as *mut uint16) = amt as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdb6) as *mut uint16) =
-            (amt >> 16 as ::core::ffi::c_int) as uint16;
+        set_ram_word!(game.projectile_init_speed_samus_moved_down_fract = amt as uint16);
+        set_ram_word!(
+            game.projectile_init_speed_samus_moved_down =
+                (amt >> 16 as ::core::ffi::c_int) as uint16
+        );
         Samus_MoveDown_SetPoseCalcInput(game);
     };
 }
@@ -2224,13 +2233,12 @@ pub unsafe fn Samus_MoveHandler_ReleaseFromGrapple(game: &mut Game) {
         && (ram_word!(game, samus_y_speed) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int)
             != 0i32
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb2c) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb36) as *mut uint16) = 2 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) =
-            ((0x90a337i32) as u16);
+        set_ram_word!(game.samus_y_subspeed = 0 as uint16);
+        set_ram_word!(game.samus_y_speed = 0 as uint16);
+        set_ram_word!(game.samus_y_dir = 2 as uint16);
+        set_ram_word!(game.samus_movement_handler = ((0x90a337i32) as u16));
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb4a) as *mut uint16) = 2 as uint16;
+    set_ram_word!(game.samus_x_accel_mode = 2 as uint16);
     let amt: int32 = Samus_CalcBaseSpeed_X(Samus_DetermineGrappleSwingSpeed_X(game), game);
     if ram_word!(game, samus_x_accel_mode) != 0u16
         || (ram_word!(game, joypad1_lastkeys) as ::core::ffi::c_int
@@ -2242,25 +2250,23 @@ pub unsafe fn Samus_MoveHandler_ReleaseFromGrapple(game: &mut Game) {
     {
         Samus_MoveX(amt, game);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb46) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb48) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdd0) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_x_base_speed = 0 as uint16);
+        set_ram_word!(game.samus_x_base_subspeed = 0 as uint16);
+        set_ram_word!(game.samus_collision_flag = 0 as uint16);
     }
     Samus_MoveY_WithSpeedCalc(game);
     if ram_word!(game, input_to_pose_calc) != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) =
-            ((0x90a337i32) as u16);
+        set_ram_word!(game.samus_movement_handler = ((0x90a337i32) as u16));
     }
 }
 pub unsafe fn Samus_HandleMovement_DrainedCrouching(game: &mut Game) {
     Samus_MoveY_WithSpeedCalc(game);
     if ram_word!(game, samus_collision_flag) != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) =
-            ((0x90a337i32) as u16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa94) as *mut uint16) = 8 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16) = 7 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb2c) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_movement_handler = ((0x90a337i32) as u16));
+        set_ram_word!(game.samus_anim_frame_timer = 8 as uint16);
+        set_ram_word!(game.samus_anim_frame = 7 as uint16);
+        set_ram_word!(game.samus_y_subspeed = 0 as uint16);
+        set_ram_word!(game.samus_y_speed = 0 as uint16);
     }
 }
 pub unsafe fn CallScrollingFinishedHook(ea: uint32, game: &mut Game) {
@@ -2342,18 +2348,14 @@ pub unsafe fn MainScrollingRoutine(game: &mut Game) {
             game,
         );
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb10) as *mut uint16) =
-        ram_word!(game, samus_x_pos);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb12) as *mut uint16) =
-        ram_word!(game, samus_x_subpos);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb14) as *mut uint16) =
-        ram_word!(game, samus_y_pos);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb16) as *mut uint16) =
-        ram_word!(game, samus_y_subpos);
+    set_ram_word!(game.samus_prev_x_pos = ram_word!(game, samus_x_pos));
+    set_ram_word!(game.samus_prev_x_subpos = ram_word!(game, samus_x_subpos));
+    set_ram_word!(game.samus_prev_y_pos = ram_word!(game, samus_y_pos));
+    set_ram_word!(game.samus_prev_y_subpos = ram_word!(game, samus_y_subpos));
 }
 pub unsafe fn Samus_ScrollFinishedHook_SporeSpawnFight(game: &mut Game) {
     if ram_word!(game, layer1_y_pos) <= 0x1d0u16 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16) = 464 as uint16;
+        set_ram_word!(game.layer1_y_pos = 464 as uint16);
     }
 }
 pub unsafe fn Samus_HandleScroll_X(game: &mut Game) {
@@ -2369,21 +2371,23 @@ pub unsafe fn Samus_HandleScroll_X(game: &mut Game) {
         ^ (*(&raw mut game.g_ram as *mut uint8).offset(0xa1e) != 4u8) as ::core::ffi::c_int
         != 0
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb0a) as *mut uint16) =
-            (ram_word!(game, samus_x_pos)).wrapping_sub(
+        set_ram_word!(
+            game.ideal_layer1_xpos = (ram_word!(game, samus_x_pos)).wrapping_sub(
                 kSamus_HandleScroll_X_FaceRight[(ram_word!(game, camera_distance_index)
                     as ::core::ffi::c_int
                     >> 1 as ::core::ffi::c_int)
                     as usize],
-            );
+            )
+        );
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb0a) as *mut uint16) =
-            (ram_word!(game, samus_x_pos)).wrapping_sub(
+        set_ram_word!(
+            game.ideal_layer1_xpos = (ram_word!(game, samus_x_pos)).wrapping_sub(
                 kSamus_HandleScroll_X_FaceLeft[(ram_word!(game, camera_distance_index)
                     as ::core::ffi::c_int
                     >> 1 as ::core::ffi::c_int)
                     as usize],
-            );
+            )
+        );
     }
     if ram_word!(game, ideal_layer1_xpos) != ram_word!(game, layer1_x_pos) {
         if ((ram_word!(game, ideal_layer1_xpos)) as i16)
@@ -2416,11 +2420,15 @@ pub unsafe fn Samus_HandleScroll_Y(game: &mut Game) {
         HandleAutoscrolling_Y(game);
     } else {
         if ram_word!(game, samus_y_dir) == 1u16 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb0e) as *mut uint16) =
-                (ram_word!(game, samus_y_pos)).wrapping_sub(ram_word!(game, down_scroller));
+            set_ram_word!(
+                game.ideal_layer1_ypos =
+                    (ram_word!(game, samus_y_pos)).wrapping_sub(ram_word!(game, down_scroller))
+            );
         } else {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb0e) as *mut uint16) =
-                (ram_word!(game, samus_y_pos)).wrapping_sub(ram_word!(game, up_scroller));
+            set_ram_word!(
+                game.ideal_layer1_ypos =
+                    (ram_word!(game, samus_y_pos)).wrapping_sub(ram_word!(game, up_scroller))
+            );
         }
         if ram_word!(game, ideal_layer1_ypos) != ram_word!(game, layer1_y_pos) {
             if ((ram_word!(game, ideal_layer1_ypos)) as i16)
@@ -2549,16 +2557,15 @@ pub unsafe fn Samus_HandleExtraRunspeedX(game: &mut Game) {
                 != 0i32
             {
                 if ram_word!(game, samus_has_momentum_flag) == 0 {
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xb3c) as *mut uint16) =
-                        1 as uint16;
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xad0) as *mut uint16) =
-                        1 as uint16;
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xace) as *mut uint16) =
-                        0 as uint16;
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xb3e) as *mut uint16) =
-                        *(game.g_rom.offset(crate::rtl::lorom_offset(0x91b61f)) as *const uint8
-                            as *mut uint16)
-                            .offset(0);
+                    set_ram_word!(game.samus_has_momentum_flag = 1 as uint16);
+                    set_ram_word!(game.special_samus_palette_timer = 1 as uint16);
+                    set_ram_word!(game.special_samus_palette_frame = 0 as uint16);
+                    set_ram_word!(
+                        game.speed_boost_counter =
+                            *(game.g_rom.offset(crate::rtl::lorom_offset(0x91b61f)) as *const uint8
+                                as *mut uint16)
+                                .offset(0)
+                    );
                 }
                 if ((ram_word!(game, samus_x_extra_run_speed)) as i16).wrapping_sub(
                     (kSamus_HandleExtraRunspeedX_Tab2[0 as ::core::ffi::c_int as usize]) as i16,
@@ -2567,20 +2574,22 @@ pub unsafe fn Samus_HandleExtraRunspeedX(game: &mut Game) {
                         (kSamus_HandleExtraRunspeedX_Tab3[0 as ::core::ffi::c_int as usize]) as i16,
                     ) >= 0i16
                 {
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xb42) as *mut uint16) =
-                        kSamus_HandleExtraRunspeedX_Tab2[0 as ::core::ffi::c_int as usize];
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xb44) as *mut uint16) =
-                        kSamus_HandleExtraRunspeedX_Tab3[0 as ::core::ffi::c_int as usize];
+                    set_ram_word!(
+                        game.samus_x_extra_run_speed =
+                            kSamus_HandleExtraRunspeedX_Tab2[0 as ::core::ffi::c_int as usize]
+                    );
+                    set_ram_word!(
+                        game.samus_x_extra_run_subspeed =
+                            kSamus_HandleExtraRunspeedX_Tab3[0 as ::core::ffi::c_int as usize]
+                    );
                     current_block = 7368539786447134940;
                 } else {
                     current_block = 15768484401365413375;
                 }
             } else {
                 if ram_word!(game, samus_has_momentum_flag) == 0 {
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xb3c) as *mut uint16) =
-                        1 as uint16;
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xb3e) as *mut uint16) =
-                        0 as uint16;
+                    set_ram_word!(game.samus_has_momentum_flag = 1 as uint16);
+                    set_ram_word!(game.speed_boost_counter = 0 as uint16);
                 }
                 if ((ram_word!(game, samus_x_extra_run_speed)) as i16).wrapping_sub(
                     (kSamus_HandleExtraRunspeedX_Tab4[0 as ::core::ffi::c_int as usize]) as i16,
@@ -2589,10 +2598,14 @@ pub unsafe fn Samus_HandleExtraRunspeedX(game: &mut Game) {
                         (kSamus_HandleExtraRunspeedX_Tab5[0 as ::core::ffi::c_int as usize]) as i16,
                     ) >= 0i16
                 {
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xb42) as *mut uint16) =
-                        kSamus_HandleExtraRunspeedX_Tab4[0 as ::core::ffi::c_int as usize];
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xb44) as *mut uint16) =
-                        kSamus_HandleExtraRunspeedX_Tab5[0 as ::core::ffi::c_int as usize];
+                    set_ram_word!(
+                        game.samus_x_extra_run_speed =
+                            kSamus_HandleExtraRunspeedX_Tab4[0 as ::core::ffi::c_int as usize]
+                    );
+                    set_ram_word!(
+                        game.samus_x_extra_run_subspeed =
+                            kSamus_HandleExtraRunspeedX_Tab5[0 as ::core::ffi::c_int as usize]
+                    );
                     current_block = 7368539786447134940;
                 } else {
                     current_block = 15768484401365413375;
@@ -2617,14 +2630,14 @@ pub unsafe fn Samus_HandleExtraRunspeedX(game: &mut Game) {
     }
     if current_block == 3594490907146900115 {
         if ram_word!(game, samus_has_momentum_flag) == 0 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb42) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb44) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.samus_x_extra_run_speed = 0 as uint16);
+            set_ram_word!(game.samus_x_extra_run_subspeed = 0 as uint16);
         }
     }
     if (ram_word!(game, speed_boost_counter) as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int)
         == 1024i32
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa6e) as *mut uint16) = 1 as uint16;
+        set_ram_word!(game.samus_contact_damage_index = 1 as uint16);
     }
 }
 pub unsafe fn Samus_MoveRight_NoColl(amt: int32, game: &mut Game) {
@@ -2709,15 +2722,11 @@ pub unsafe fn Samus_InitJump(game: &mut Game) {
     let v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if (ram_word!(game, equipped_items) as ::core::ffi::c_int & 0x100 as ::core::ffi::c_int) != 0i32
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb2c) as *mut uint16) =
-            kSamus_InitJump_Tab3[v1 as usize];
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16) =
-            kSamus_InitJump_Tab2[v1 as usize];
+        set_ram_word!(game.samus_y_subspeed = kSamus_InitJump_Tab3[v1 as usize]);
+        set_ram_word!(game.samus_y_speed = kSamus_InitJump_Tab2[v1 as usize]);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb2c) as *mut uint16) =
-            kSamus_InitJump_Subspeed_Y[v1 as usize];
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16) =
-            kSamus_InitJump_Speed_Y[v1 as usize];
+        set_ram_word!(game.samus_y_subspeed = kSamus_InitJump_Subspeed_Y[v1 as usize]);
+        set_ram_word!(game.samus_y_speed = kSamus_InitJump_Speed_Y[v1 as usize]);
     }
     if (ram_word!(game, equipped_items) as ::core::ffi::c_int & 0x2000 as ::core::ffi::c_int)
         != 0i32
@@ -2729,9 +2738,9 @@ pub unsafe fn Samus_InitJump(game: &mut Game) {
             + (ram_word!(game, samus_x_extra_run_speed) as ::core::ffi::c_int
                 >> 1 as ::core::ffi::c_int)) as uint16;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa9e) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaa0) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb36) as *mut uint16) = 1 as uint16;
+    set_ram_word!(game.grapple_walljump_timer = 0 as uint16);
+    set_ram_word!(game.reached_ceres_elevator_fade_timer = 0 as uint16);
+    set_ram_word!(game.samus_y_dir = 1 as uint16);
 }
 pub unsafe fn Samus_InitWallJump(game: &mut Game) {
     let mut r18: uint16 = 0;
@@ -2768,15 +2777,11 @@ pub unsafe fn Samus_InitWallJump(game: &mut Game) {
     let v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if (ram_word!(game, equipped_items) as ::core::ffi::c_int & 0x100 as ::core::ffi::c_int) != 0i32
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb2c) as *mut uint16) =
-            kSamus_InitWallJump_3[v1 as usize];
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16) =
-            kSamus_InitWallJump_2[v1 as usize];
+        set_ram_word!(game.samus_y_subspeed = kSamus_InitWallJump_3[v1 as usize]);
+        set_ram_word!(game.samus_y_speed = kSamus_InitWallJump_2[v1 as usize]);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb2c) as *mut uint16) =
-            kSamus_InitWallJump_1[v1 as usize];
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16) =
-            kSamus_InitWallJump_0[v1 as usize];
+        set_ram_word!(game.samus_y_subspeed = kSamus_InitWallJump_1[v1 as usize]);
+        set_ram_word!(game.samus_y_speed = kSamus_InitWallJump_0[v1 as usize]);
     }
     if (ram_word!(game, equipped_items) as ::core::ffi::c_int & 0x2000 as ::core::ffi::c_int)
         != 0i32
@@ -2790,9 +2795,9 @@ pub unsafe fn Samus_InitWallJump(game: &mut Game) {
             + (ram_word!(game, samus_x_extra_run_speed) as ::core::ffi::c_int
                 >> 1 as ::core::ffi::c_int)) as uint16;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa9e) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaa0) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb36) as *mut uint16) = 1 as uint16;
+    set_ram_word!(game.grapple_walljump_timer = 0 as uint16);
+    set_ram_word!(game.reached_ceres_elevator_fade_timer = 0 as uint16);
+    set_ram_word!(game.samus_y_dir = 1 as uint16);
 }
 static kSamus_SetSpeedForKnockback_Y_Speed: [uint16; 3] = [5, 2, 2];
 static kSamus_SetSpeedForKnockback_Y_Subspeed: [uint16; 3] =
@@ -2823,13 +2828,11 @@ pub unsafe fn Samus_SetSpeedForKnockback_Y(game: &mut Game) {
         v0 = 0 as uint16;
     }
     let v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb2c) as *mut uint16) =
-        kSamus_SetSpeedForKnockback_Y_Subspeed[v1 as usize];
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16) =
-        kSamus_SetSpeedForKnockback_Y_Speed[v1 as usize];
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa9e) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaa0) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb36) as *mut uint16) = 1 as uint16;
+    set_ram_word!(game.samus_y_subspeed = kSamus_SetSpeedForKnockback_Y_Subspeed[v1 as usize]);
+    set_ram_word!(game.samus_y_speed = kSamus_SetSpeedForKnockback_Y_Speed[v1 as usize]);
+    set_ram_word!(game.grapple_walljump_timer = 0 as uint16);
+    set_ram_word!(game.reached_ceres_elevator_fade_timer = 0 as uint16);
+    set_ram_word!(game.samus_y_dir = 1 as uint16);
 }
 pub unsafe fn Samus_InitBombJump(game: &mut Game) {
     let current_block: u64;
@@ -2860,13 +2863,11 @@ pub unsafe fn Samus_InitBombJump(game: &mut Game) {
         v0 = 0 as uint16;
     }
     let v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb2c) as *mut uint16) =
-        kSamus_InitBombJump_Subspeed[v1 as usize];
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16) =
-        kSamus_InitBombJump_Speed[v1 as usize];
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa9e) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaa0) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb36) as *mut uint16) = 1 as uint16;
+    set_ram_word!(game.samus_y_subspeed = kSamus_InitBombJump_Subspeed[v1 as usize]);
+    set_ram_word!(game.samus_y_speed = kSamus_InitBombJump_Speed[v1 as usize]);
+    set_ram_word!(game.grapple_walljump_timer = 0 as uint16);
+    set_ram_word!(game.reached_ceres_elevator_fade_timer = 0 as uint16);
+    set_ram_word!(game.samus_y_dir = 1 as uint16);
 }
 unsafe fn IsGreaterThanQuirked(vhi: uint16, vlo: uint16, cmphi: uint16, cmplo: uint16) -> bool {
     if ((vhi) as i16).wrapping_sub((cmphi) as i16) >= 0i16 {
@@ -2903,9 +2904,9 @@ pub unsafe fn Samus_CalcBaseSpeed_X(k: uint16, game: &mut Game) -> int32 {
             -delta as uint32,
         );
         if (ram_word!(game, samus_x_base_speed) as int16) < 0i16 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb46) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb48) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb4a) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.samus_x_base_speed = 0 as uint16);
+            set_ram_word!(game.samus_x_base_subspeed = 0 as uint16);
+            set_ram_word!(game.samus_x_accel_mode = 0 as uint16);
         }
     } else {
         AddToHiLo(
@@ -2919,9 +2920,8 @@ pub unsafe fn Samus_CalcBaseSpeed_X(k: uint16, game: &mut Game) -> int32 {
             (*sste).max_speed,
             (*sste).max_speed_sub,
         ) {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb46) as *mut uint16) = (*sste).max_speed;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb48) as *mut uint16) =
-                (*sste).max_speed_sub;
+            set_ram_word!(game.samus_x_base_speed = (*sste).max_speed);
+            set_ram_word!(game.samus_x_base_subspeed = (*sste).max_speed_sub);
         }
     }
     ((ram_word!(game, samus_x_base_speed) as uint32) << 16 as ::core::ffi::c_int
@@ -2956,9 +2956,9 @@ unsafe fn Samus_CalcBaseSpeed_NoDecel_X(k: uint16, game: &mut Game) -> Pair_Bool
             -delta as uint32,
         );
         if (ram_word!(game, samus_x_base_speed) as int16) < 0i16 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb46) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb48) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb4a) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.samus_x_base_speed = 0 as uint16);
+            set_ram_word!(game.samus_x_base_subspeed = 0 as uint16);
+            set_ram_word!(game.samus_x_accel_mode = 0 as uint16);
         }
     } else {
         AddToHiLo(
@@ -2972,9 +2972,8 @@ unsafe fn Samus_CalcBaseSpeed_NoDecel_X(k: uint16, game: &mut Game) -> Pair_Bool
             (*sste).max_speed,
             (*sste).max_speed_sub,
         ) {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb46) as *mut uint16) = (*sste).max_speed;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb48) as *mut uint16) =
-                (*sste).max_speed_sub;
+            set_ram_word!(game.samus_x_base_speed = (*sste).max_speed);
+            set_ram_word!(game.samus_x_base_subspeed = (*sste).max_speed_sub);
             rv = true_0 != 0;
         }
     }
@@ -2990,12 +2989,14 @@ pub unsafe fn Samus_DetermineSpeedTableEntryPtr_X(game: &mut Game) -> uint16 {
         let r18: uint16 = Samus_GetBottom_R18(game);
         match liquid_at_height(game, r18) {
             LiquidAtHeight::Water => {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xa6c) as *mut uint16) =
-                    addr_kSamusSpeedTable_Water_X as uint16;
+                set_ram_word!(
+                    game.samus_x_speed_table_pointer = addr_kSamusSpeedTable_Water_X as uint16
+                );
             }
             LiquidAtHeight::LavaAcid => {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xa6c) as *mut uint16) =
-                    addr_kSamusSpeedTable_LavaAcid_X as uint16;
+                set_ram_word!(
+                    game.samus_x_speed_table_pointer = addr_kSamusSpeedTable_LavaAcid_X as uint16
+                );
             }
             LiquidAtHeight::None => {}
         }
@@ -3031,20 +3032,20 @@ pub unsafe fn Samus_DetermineAccel_Y(game: &mut Game) {
         r18 = Samus_GetBottom_R18(game);
         match liquid_at_height(game, r18) {
             LiquidAtHeight::Water => {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb32) as *mut uint16) = g_word_909EA3;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb34) as *mut uint16) = g_word_909EA9;
+                set_ram_word!(game.samus_y_subaccel = g_word_909EA3);
+                set_ram_word!(game.samus_y_accel = g_word_909EA9);
                 return;
             }
             LiquidAtHeight::LavaAcid => {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb32) as *mut uint16) = g_word_909EA5;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb34) as *mut uint16) = g_word_909EAB;
+                set_ram_word!(game.samus_y_subaccel = g_word_909EA5);
+                set_ram_word!(game.samus_y_accel = g_word_909EAB);
                 return;
             }
             LiquidAtHeight::None => {}
         }
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb32) as *mut uint16) = g_word_909EA1;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb34) as *mut uint16) = g_word_909EA7;
+    set_ram_word!(game.samus_y_subaccel = g_word_909EA1);
+    set_ram_word!(game.samus_y_accel = g_word_909EA7);
 }
 pub unsafe fn Samus_GrappleWallJumpCheck(amt: int32, game: &mut Game) -> uint8 {
     game.set_enemy_index_to_shake(0xffff);
@@ -3137,7 +3138,7 @@ pub unsafe fn Samus_WallJumpCheck(amt: int32, game: &mut Game) -> uint8 {
     1
 }
 pub unsafe fn Samus_Movement_07_Unused(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.input_to_pose_calc = 0 as uint16);
 }
 static kSamusMovementHandlers: [Option<HandlerFunc>; 28] = [
     Some(Samus_Movement_00_Standing as unsafe fn(&mut Game) -> ()),
@@ -3189,23 +3190,23 @@ pub unsafe fn Samus_Movement_00_Standing(game: &mut Game) {
                 & ram_word!(game, joypad1_lastkeys) as ::core::ffi::c_int)
                 != 0i32
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa94) as *mut uint16) = 16 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.samus_anim_frame_timer = 16 as uint16);
+            set_ram_word!(game.samus_anim_frame = 0 as uint16);
         }
         Samus_Move_NoBaseSpeed_X(game);
         Samus_Move_NoSpeedCalc_Y(game);
         Samus_CancelSpeedBoost(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb42) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb44) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb46) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb48) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb4a) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_x_extra_run_speed = 0 as uint16);
+        set_ram_word!(game.samus_x_extra_run_subspeed = 0 as uint16);
+        set_ram_word!(game.samus_x_base_speed = 0 as uint16);
+        set_ram_word!(game.samus_x_base_subspeed = 0 as uint16);
+        set_ram_word!(game.samus_x_accel_mode = 0 as uint16);
     } else {
         if ram_word!(game, elevator_status) != 0 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb02) as *mut uint16) = 2 as uint16;
+            set_ram_word!(game.samus_collision_direction = 2 as uint16);
             Samus_MoveDown_NoSolidColl((1 as int16 as int32) << 16 as ::core::ffi::c_int, game);
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.input_to_pose_calc = 0 as uint16);
     };
 }
 pub unsafe fn Samus_Movement_01_Running(game: &mut Game) {
@@ -3284,10 +3285,13 @@ pub unsafe fn Samus_Movement_03_SpinJumping(game: &mut Game) {
                 match current_block {
                     12147880666119273379 => {}
                     _ => {
-                        *((&raw mut game.g_ram as *mut uint8).offset(0xdfa) as *mut uint16) =
-                            (ram_word!(game, UNUSED_word_7E0DFA) as ::core::ffi::c_int
+                        set_ram_word!(
+                            game.UNUSED_word_7E0DFA = (ram_word!(game, UNUSED_word_7E0DFA)
+                                as ::core::ffi::c_int
                                 & 0xff00 as ::core::ffi::c_int
-                                | 1 as ::core::ffi::c_int) as uint16;
+                                | 1 as ::core::ffi::c_int)
+                                as uint16
+                        );
                         if (ram_word!(game, button_config_jump_a) as ::core::ffi::c_int
                             & ram_word!(game, joypad1_newkeys) as ::core::ffi::c_int)
                             != 0i32
@@ -3303,12 +3307,12 @@ pub unsafe fn Samus_Movement_03_SpinJumping(game: &mut Game) {
             || ram_word!(game, samus_pose) as ::core::ffi::c_int
                 == kPose_82_FaceL_Screwattack as ::core::ffi::c_int
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa6e) as *mut uint16) = 3 as uint16;
+            set_ram_word!(game.samus_contact_damage_index = 3 as uint16);
         } else if ram_word!(game, flare_counter) as ::core::ffi::c_int - 60 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             == 0
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa6e) as *mut uint16) = 4 as uint16;
+            set_ram_word!(game.samus_contact_damage_index = 4 as uint16);
         }
     } else if ram_word!(game, samus_anim_frame_timer) == 1u16
         && *(game.g_rom.offset(crate::rtl::lorom_offset(0x90a514)) as *const uint8 as *mut uint8)
@@ -3344,16 +3348,11 @@ pub unsafe fn Samus_Movement_04_MorphBallOnGround(game: &mut Game) {
                 if Samus_CheckAndMoveY(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
                     Samus_Move_NoSpeedCalc_Y(game);
                     Samus_CancelSpeedBoost(game);
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xb42) as *mut uint16) =
-                        0 as uint16;
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xb44) as *mut uint16) =
-                        0 as uint16;
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xb46) as *mut uint16) =
-                        0 as uint16;
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xb48) as *mut uint16) =
-                        0 as uint16;
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xb4a) as *mut uint16) =
-                        0 as uint16;
+                    set_ram_word!(game.samus_x_extra_run_speed = 0 as uint16);
+                    set_ram_word!(game.samus_x_extra_run_subspeed = 0 as uint16);
+                    set_ram_word!(game.samus_x_base_speed = 0 as uint16);
+                    set_ram_word!(game.samus_x_base_subspeed = 0 as uint16);
+                    set_ram_word!(game.samus_x_accel_mode = 0 as uint16);
                 }
                 return;
             }
@@ -3367,11 +3366,11 @@ pub unsafe fn Samus_Movement_04_MorphBallOnGround(game: &mut Game) {
 pub unsafe fn Samus_Movement_05_Crouching(game: &mut Game) {
     Samus_Move_NoBaseSpeed_X(game);
     Samus_Move_NoSpeedCalc_Y(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb42) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb44) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb46) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb48) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb4a) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_x_extra_run_speed = 0 as uint16);
+    set_ram_word!(game.samus_x_extra_run_subspeed = 0 as uint16);
+    set_ram_word!(game.samus_x_base_speed = 0 as uint16);
+    set_ram_word!(game.samus_x_base_subspeed = 0 as uint16);
+    set_ram_word!(game.samus_x_accel_mode = 0 as uint16);
 }
 pub unsafe fn Samus_Movement_06_Falling(game: &mut Game) {
     Samus_FallingMovement(game);
@@ -3391,8 +3390,8 @@ pub unsafe fn Samus_Movement_06_Falling(game: &mut Game) {
             & 0x8000 as ::core::ffi::c_int
             != 0
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa94) as *mut uint16) = 8 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16) = 5 as uint16;
+            set_ram_word!(game.samus_anim_frame_timer = 8 as uint16);
+            set_ram_word!(game.samus_anim_frame = 5 as uint16);
         }
     }
 }
@@ -3403,11 +3402,11 @@ pub unsafe fn Samus_Movement_08_MorphBallFalling(game: &mut Game) {
         && ram_word!(game, samus_x_accel_mode) == 0
     {
         Samus_CancelSpeedBoost(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb42) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb44) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb46) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb48) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb4a) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_x_extra_run_speed = 0 as uint16);
+        set_ram_word!(game.samus_x_extra_run_subspeed = 0 as uint16);
+        set_ram_word!(game.samus_x_base_speed = 0 as uint16);
+        set_ram_word!(game.samus_x_base_subspeed = 0 as uint16);
+        set_ram_word!(game.samus_x_accel_mode = 0 as uint16);
     }
     if ram_word!(game, used_for_ball_bounce_on_landing) != 0 {
         Samus_MorphedBouncingMovement(game);
@@ -3417,14 +3416,14 @@ pub unsafe fn Samus_Movement_08_MorphBallFalling(game: &mut Game) {
 }
 pub fn Samus_Movement_09_Unused(game: &mut Game) {}
 pub unsafe fn Samus_Movement_0A_KnockbackOrCrystalFlashEnding(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.input_to_pose_calc = 0 as uint16);
     Samus_Move_NoSpeedCalc_Y(game);
 }
 pub unsafe fn Samus_Movement_0B_Unused(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.input_to_pose_calc = 0 as uint16);
 }
 pub unsafe fn Samus_Movement_0C_Unused(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.input_to_pose_calc = 0 as uint16);
 }
 pub fn Samus_Movement_0D_Unused(game: &mut Game) {}
 pub fn nullsub_13(game: &mut Game) {}
@@ -3472,24 +3471,24 @@ pub unsafe fn Samus_Movement_0F_CrouchingEtcTransition(game: &mut Game) {
         }
     }
     if ram_word!(game, input_to_pose_calc) == 1025u16 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb2c) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb36) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb20) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_y_subspeed = 0 as uint16);
+        set_ram_word!(game.samus_y_speed = 0 as uint16);
+        set_ram_word!(game.samus_y_dir = 0 as uint16);
+        set_ram_word!(game.used_for_ball_bounce_on_landing = 0 as uint16);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.input_to_pose_calc = 0 as uint16);
 }
 pub unsafe fn SamusCrouchingEtcFunc(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa46) as *mut uint16) = 3 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaa4) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.enable_horiz_slope_coll = 3 as uint16);
+    set_ram_word!(game.UNUSEDword_7E0AA4 = 0 as uint16);
 }
 pub unsafe fn Samus_Movement_0E_TurningAroundOnGround(game: &mut Game) {
     Samus_HandleMovement_X(game);
     Samus_Move_NoSpeedCalc_Y(game);
     Samus_CancelSpeedBoost(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb42) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb44) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_x_extra_run_speed = 0 as uint16);
+    set_ram_word!(game.samus_x_extra_run_subspeed = 0 as uint16);
+    set_ram_word!(game.input_to_pose_calc = 0 as uint16);
 }
 pub unsafe fn Samus_Movement_10_Moonwalking(game: &mut Game) {
     Samus_HandleMovement_X(game);
@@ -3520,16 +3519,11 @@ pub unsafe fn Samus_Movement_11_SpringBallOnGround(game: &mut Game) {
                 if Samus_CheckAndMoveY(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
                     Samus_Move_NoSpeedCalc_Y(game);
                     Samus_CancelSpeedBoost(game);
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xb42) as *mut uint16) =
-                        0 as uint16;
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xb44) as *mut uint16) =
-                        0 as uint16;
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xb46) as *mut uint16) =
-                        0 as uint16;
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xb48) as *mut uint16) =
-                        0 as uint16;
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xb4a) as *mut uint16) =
-                        0 as uint16;
+                    set_ram_word!(game.samus_x_extra_run_speed = 0 as uint16);
+                    set_ram_word!(game.samus_x_extra_run_subspeed = 0 as uint16);
+                    set_ram_word!(game.samus_x_base_speed = 0 as uint16);
+                    set_ram_word!(game.samus_x_base_subspeed = 0 as uint16);
+                    set_ram_word!(game.samus_x_accel_mode = 0 as uint16);
                 }
                 return;
             }
@@ -3554,11 +3548,11 @@ pub unsafe fn Samus_Movement_13_SpringBallFalling(game: &mut Game) {
         && ram_word!(game, samus_x_accel_mode) == 0
     {
         Samus_CancelSpeedBoost(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb42) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb44) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb46) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb48) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb4a) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_x_extra_run_speed = 0 as uint16);
+        set_ram_word!(game.samus_x_extra_run_subspeed = 0 as uint16);
+        set_ram_word!(game.samus_x_base_speed = 0 as uint16);
+        set_ram_word!(game.samus_x_base_subspeed = 0 as uint16);
+        set_ram_word!(game.samus_x_accel_mode = 0 as uint16);
     }
     if ram_word!(game, used_for_ball_bounce_on_landing) != 0 {
         Samus_MorphedBouncingMovement(game);
@@ -3578,10 +3572,10 @@ pub unsafe fn Samus_Movement_14_WallJumping(game: &mut Game) {
                 & 0x8000 as ::core::ffi::c_int
                 == 0
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa6e) as *mut uint16) = 4 as uint16;
+            set_ram_word!(game.samus_contact_damage_index = 4 as uint16);
         }
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa6e) as *mut uint16) = 3 as uint16;
+        set_ram_word!(game.samus_contact_damage_index = 3 as uint16);
     }
     Samus_JumpingMovement(game);
 }
@@ -3589,15 +3583,15 @@ pub unsafe fn Samus_Movement_15_RanIntoWall(game: &mut Game) {
     Samus_Move_NoBaseSpeed_X(game);
     Samus_Move_NoSpeedCalc_Y(game);
     Samus_CancelSpeedBoost(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb42) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb44) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb46) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb48) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb4a) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_x_extra_run_speed = 0 as uint16);
+    set_ram_word!(game.samus_x_extra_run_subspeed = 0 as uint16);
+    set_ram_word!(game.samus_x_base_speed = 0 as uint16);
+    set_ram_word!(game.samus_x_base_subspeed = 0 as uint16);
+    set_ram_word!(game.samus_x_accel_mode = 0 as uint16);
 }
 pub unsafe fn Samus_Movement_16_Grappling(game: &mut Game) {
     if ram_word!(game, input_to_pose_calc) != 5u16 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.input_to_pose_calc = 0 as uint16);
     }
 }
 pub unsafe fn Samus_Movement_17_TurningAroundJumping(game: &mut Game) {
@@ -3606,9 +3600,9 @@ pub unsafe fn Samus_Movement_17_TurningAroundJumping(game: &mut Game) {
         Samus_Move_NoSpeedCalc_Y(game);
     }
     Samus_CancelSpeedBoost(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb42) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb44) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_x_extra_run_speed = 0 as uint16);
+    set_ram_word!(game.samus_x_extra_run_subspeed = 0 as uint16);
+    set_ram_word!(game.input_to_pose_calc = 0 as uint16);
 }
 pub unsafe fn Samus_Movement_18_TurningAroundFalling(game: &mut Game) {
     Samus_HandleMovement_X(game);
@@ -3616,18 +3610,18 @@ pub unsafe fn Samus_Movement_18_TurningAroundFalling(game: &mut Game) {
         Samus_Move_NoSpeedCalc_Y(game);
     }
     Samus_CancelSpeedBoost(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb42) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb44) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_x_extra_run_speed = 0 as uint16);
+    set_ram_word!(game.samus_x_extra_run_subspeed = 0 as uint16);
+    set_ram_word!(game.input_to_pose_calc = 0 as uint16);
 }
 pub unsafe fn Samus_Movement_19_DamageBoost(game: &mut Game) {
     Samus_JumpingMovement(game);
 }
 pub unsafe fn Samus_Movement_1A_GrabbedByDraygon(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.input_to_pose_calc = 0 as uint16);
 }
 pub unsafe fn Samus_Movement_1B_ShinesparkEtc(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.input_to_pose_calc = 0 as uint16);
 }
 static kShr0x80: [uint8; 8] = [0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1];
 static kShr0xFc00: [uint16; 8] = [0xfc00, 0x7e00, 0x3f00, 0x1f80, 0xfc0, 0x7e0, 0x3f0, 0x1f8];
@@ -3655,7 +3649,7 @@ unsafe fn MarkMapTileAsExplored(r18: uint16, r24: uint16, game: &mut Game) {
             & 7 as ::core::ffi::c_int) as usize]);
 }
 pub unsafe fn DisableMinimapAndMarkBossRoomAsExplored(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x5f7) as *mut uint16) = 1 as uint16;
+    set_ram_word!(game.debug_disable_minimap = 1 as uint16);
     let mut v0: uint16 = 0 as uint16;
     loop {
         let v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -4062,7 +4056,7 @@ pub unsafe fn UpdateMinimapInside(
 }
 pub unsafe fn Samus_HandleCooldown(game: &mut Game) {
     if ram_word!(game, time_is_frozen_flag) != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) = 32 as uint16;
+        set_ram_word!(game.cooldown_timer = 32 as uint16);
     } else if ram_word!(game, cooldown_timer) != 0 {
         if (ram_word!(game, cooldown_timer) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int)
             != 0i32
@@ -4075,7 +4069,7 @@ pub unsafe fn Samus_HandleCooldown(game: &mut Game) {
                     != 0i32
             }
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.cooldown_timer = 0 as uint16);
         }
     }
 }
@@ -4087,7 +4081,7 @@ pub unsafe fn Samus_CanFireBeam(game: &mut Game) -> uint8 {
     {
         return 0 as uint8;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) = 1 as uint16;
+    set_ram_word!(game.cooldown_timer = 1 as uint16);
     let ref mut fresh6 = *((&raw mut game.g_ram as *mut uint8).offset(0xcce) as *mut uint16);
     *fresh6 = (*fresh6).wrapping_add(1);
     1 as uint8
@@ -4107,7 +4101,7 @@ pub unsafe fn Samus_CanFireSuperMissile(game: &mut Game) -> uint8 {
         return 0 as uint8;
     }
     if ram_word!(game, cooldown_timer) as uint8 == 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) = 1 as uint16;
+        set_ram_word!(game.cooldown_timer = 1 as uint16);
         let ref mut fresh7 = *((&raw mut game.g_ram as *mut uint8).offset(0xcce) as *mut uint16);
         *fresh7 = (*fresh7).wrapping_add(1);
         return 1 as uint8;
@@ -4139,7 +4133,7 @@ pub unsafe fn UpdateBeamTilesAndPalette(game: &mut Game) {
     .size as *mut uint8)
         .offset(0) = -(102 as ::core::ffi::c_int) as uint8;
     (*gVramWriteEntry(v1 as ::core::ffi::c_int, game)).size = addr_unk_606300 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) = (v1).wrapping_add(2u16);
+    set_ram_word!(game.vram_write_queue_tail = (v1).wrapping_add(2u16));
     WriteBeamPalette_Y(v0, game);
 }
 pub unsafe fn WriteBeamPalette_A(a: uint16, game: &mut Game) {
@@ -4224,13 +4218,13 @@ pub unsafe fn ResetProjectileData(game: &mut Game) {
             break;
         }
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xcd2) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xcce) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xcee) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.bomb_counter = 0 as uint16);
+    set_ram_word!(game.cooldown_timer = 0 as uint16);
+    set_ram_word!(game.projectile_counter = 0 as uint16);
+    set_ram_word!(game.power_bomb_flag = 0 as uint16);
     if ram_word!(game, hud_auto_cancel_flag) != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9d2) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa04) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.hud_item_index = 0 as uint16);
+        set_ram_word!(game.samus_auto_cancel_hud_item_index = 0 as uint16);
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0xab0) as *mut uint16).offset(0) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xab0) as *mut uint16).offset(1) = 0 as uint16;
@@ -4244,9 +4238,9 @@ pub unsafe fn ResetProjectileData(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xac0) as *mut uint16).offset(1) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xac0) as *mut uint16).offset(2) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xac0) as *mut uint16).offset(3) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaae) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.speed_echoes_index = 0 as uint16);
     if ram_word!(game, samus_special_super_palette_flags) != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa4a) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_special_super_palette_flags = 0 as uint16);
         Samus_LoadSuitTargetPalette(game);
     }
     if ram_word!(game, hyper_beam_flag) != 0 {
@@ -4291,13 +4285,13 @@ pub unsafe fn ClearProjectile(k: uint16, game: &mut Game) {
         let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0xcd2) as *mut uint16);
         *fresh0 = (*fresh0).wrapping_sub(1);
         if (*fresh0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xcd2) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.bomb_counter = 0 as uint16);
         }
     } else {
         let ref mut fresh1 = *((&raw mut game.g_ram as *mut uint8).offset(0xcce) as *mut uint16);
         *fresh1 = (*fresh1).wrapping_sub(1);
         if (*fresh1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xcce) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.projectile_counter = 0 as uint16);
         }
     };
 }
@@ -4489,7 +4483,7 @@ pub unsafe fn CallProjPreInstr(ea: uint32, k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn HandleProjectile(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16) = 18 as uint16;
+    set_ram_word!(game.projectile_index = 18 as uint16);
     let mut i: ::core::ffi::c_int = 18 as ::core::ffi::c_int;
     while i >= 0i32 {
         let v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
@@ -4507,7 +4501,7 @@ pub unsafe fn HandleProjectile(game: &mut Game) {
             i = ram_word!(game, projectile_index) as ::core::ffi::c_int;
         }
         i -= 2 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16) = i as uint16;
+        set_ram_word!(game.projectile_index = i as uint16);
     }
 }
 static kDirToVelMult16_X: [int16; 10] = [0, 16, 16, 16, 0, 0, -(16), -(16), -(16), 0];
@@ -5159,10 +5153,9 @@ pub unsafe fn SuperMissileBlockCollDetect_Y(game: &mut Game) {
                         (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
                             .offset(v0 as isize))
                         .wrapping_sub(r18);
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16) =
-                        v5 as uint16;
+                    set_ram_word!(game.projectile_index = v5 as uint16);
                     BlockCollMissileVert(v5 as uint16, game);
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16) = v6;
+                    set_ram_word!(game.projectile_index = v6);
                     if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
                         .offset((v6 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
                         as ::core::ffi::c_int
@@ -5182,9 +5175,9 @@ pub unsafe fn SuperMissileBlockCollDetect_Y(game: &mut Game) {
                                 >> 1 as ::core::ffi::c_int) as isize,
                         ),
                     );
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16) = v5 as uint16;
+                set_ram_word!(game.projectile_index = v5 as uint16);
                 BlockCollMissileVert(v5 as uint16, game);
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16) = v7;
+                set_ram_word!(game.projectile_index = v7);
                 if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
                     .offset((v7 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
                     as ::core::ffi::c_int
@@ -5272,10 +5265,9 @@ pub unsafe fn SuperMissileBlockCollDetect_X(game: &mut Game) {
                         (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
                             .offset(v0 as isize))
                         .wrapping_sub(r18);
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16) =
-                        v5 as uint16;
+                    set_ram_word!(game.projectile_index = v5 as uint16);
                     BlockCollMissileHoriz(v5 as uint16, game);
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16) = v6;
+                    set_ram_word!(game.projectile_index = v6);
                     if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
                         .offset((v6 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
                         as ::core::ffi::c_int
@@ -5295,9 +5287,9 @@ pub unsafe fn SuperMissileBlockCollDetect_X(game: &mut Game) {
                                 >> 1 as ::core::ffi::c_int) as isize,
                         ),
                     );
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16) = v5 as uint16;
+                set_ram_word!(game.projectile_index = v5 as uint16);
                 BlockCollMissileHoriz(v5 as uint16, game);
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16) = v7;
+                set_ram_word!(game.projectile_index = v7);
                 if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
                     .offset((v7 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
                     as ::core::ffi::c_int
@@ -5477,8 +5469,7 @@ pub unsafe fn HandleProjectileTrails(game: &mut Game) {
                                         *((&raw mut game.g_ram as *mut uint8).offset(0xd6e8)
                                             as *mut uint16)
                                             .offset(v9 as isize);
-                                    *((&raw mut game.g_ram as *mut uint8).offset(0x590)
-                                        as *mut uint16) = (v8).wrapping_add(4u16);
+                                    set_ram_word!(game.oam_next_ptr = (v8).wrapping_add(4u16));
                                 }
                             }
                         }
@@ -5545,8 +5536,7 @@ pub unsafe fn HandleProjectileTrails(game: &mut Game) {
                                     *((&raw mut game.g_ram as *mut uint8).offset(0xd70c)
                                         as *mut uint16)
                                         .offset(v21 as isize);
-                                *((&raw mut game.g_ram as *mut uint8).offset(0x590)
-                                    as *mut uint16) = (v20).wrapping_add(4u16);
+                                set_ram_word!(game.oam_next_ptr = (v20).wrapping_add(4u16));
                             }
                         }
                     }
@@ -5581,8 +5571,7 @@ pub unsafe fn HandleProjectileTrails(game: &mut Game) {
                         *(&raw mut (*v29).charnum as *mut uint16) =
                             *((&raw mut game.g_ram as *mut uint8).offset(0xd6e8) as *mut uint16)
                                 .offset(v27 as isize);
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) =
-                            (v26).wrapping_add(4u16);
+                        set_ram_word!(game.oam_next_ptr = (v26).wrapping_add(4u16));
                     }
                 }
             }
@@ -5608,8 +5597,7 @@ pub unsafe fn HandleProjectileTrails(game: &mut Game) {
                         *(&raw mut (*v34).charnum as *mut uint16) =
                             *((&raw mut game.g_ram as *mut uint8).offset(0xd70c) as *mut uint16)
                                 .offset(v32 as isize);
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) =
-                            (v31).wrapping_add(4u16);
+                        set_ram_word!(game.oam_next_ptr = (v31).wrapping_add(4u16));
                     }
                 }
             }
@@ -5619,8 +5607,7 @@ pub unsafe fn HandleProjectileTrails(game: &mut Game) {
 }
 pub unsafe fn HudSelectionHandler_NothingOrPowerBombs(game: &mut Game) {
     let current_block: u64;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc2) as *mut uint16) =
-        ram_word!(game, flare_counter);
+    set_ram_word!(game.prev_beam_charge_counter = ram_word!(game, flare_counter));
     if ram_word!(game, hyper_beam_flag) != 0u16
         || (ram_word!(game, equipped_beams) as ::core::ffi::c_int & 0x1000 as ::core::ffi::c_int)
             == 0i32
@@ -5670,7 +5657,7 @@ pub unsafe fn HudSelectionHandler_NothingOrPowerBombs(game: &mut Game) {
                 FireUnchargedBeam(game);
             }
         } else if FireSba(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.flare_counter = 0 as uint16);
             ClearFlareAnimationState(game);
             Samus_LoadSuitPalette(game);
         }
@@ -5678,12 +5665,12 @@ pub unsafe fn HudSelectionHandler_NothingOrPowerBombs(game: &mut Game) {
     }
     match current_block {
         14652055052181797410 => {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.flare_counter = 0 as uint16);
             ClearFlareAnimationState(game);
             FireUnchargedBeam(game);
         }
         _ => {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.flare_counter = 0 as uint16);
             ClearFlareAnimationState(game);
             FireChargedBeam(game);
         }
@@ -5728,7 +5715,7 @@ pub unsafe fn FireUnchargedBeam(game: &mut Game) {
             let mut v5: uint16 = 0;
             let mut v4: ::core::ffi::c_int = 0;
             let current_block_32: u64;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x18ac) as *mut uint16) = 10 as uint16;
+            set_ram_word!(game.projectile_invincibility_timer = 10 as uint16);
             let mut v1: uint16 = v0;
             let v2: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
             *((&raw mut game.g_ram as *mut uint8).offset(0xc90) as *mut uint16)
@@ -5741,7 +5728,7 @@ pub unsafe fn FireUnchargedBeam(game: &mut Game) {
                     [(v3 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int) as usize],
                 game,
             );
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc0) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.play_resume_charging_beam_sfx = 0 as uint16);
             InitializeProjectile(v1, game);
             if (ram_word!(game, equipped_beams) as ::core::ffi::c_int
                 & 0x1000 as ::core::ffi::c_int)
@@ -5756,10 +5743,11 @@ pub unsafe fn FireUnchargedBeam(game: &mut Game) {
                 let mut v6: uint16 = 0;
                 v6 = *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
                     .offset(v2 as isize);
-                *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) =
-                    kProjectileCooldown_Uncharged
+                set_ram_word!(
+                    game.cooldown_timer = kProjectileCooldown_Uncharged
                         [(v6 as ::core::ffi::c_int & 0x3f as ::core::ffi::c_int) as usize]
-                        as uint16;
+                        as uint16
+                );
                 if (v6 as ::core::ffi::c_int & 1 as ::core::ffi::c_int) == 0i32 {
                     current_block_32 = 1316823607412241498;
                 } else {
@@ -5769,10 +5757,11 @@ pub unsafe fn FireUnchargedBeam(game: &mut Game) {
                 v5 = 0;
                 v5 = *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
                     .offset(v2 as isize);
-                *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) =
-                    kBeamAutoFireCooldowns
+                set_ram_word!(
+                    game.cooldown_timer = kBeamAutoFireCooldowns
                         [(v5 as ::core::ffi::c_int & 0x3f as ::core::ffi::c_int) as usize]
-                        as uint16;
+                        as uint16
+                );
                 if (v5 as ::core::ffi::c_int & 1 as ::core::ffi::c_int) == 0i32 {
                     current_block_32 = 1316823607412241498;
                 } else {
@@ -5787,7 +5776,7 @@ pub unsafe fn FireUnchargedBeam(game: &mut Game) {
                         .offset(v4 as isize) = 0 as uint16;
                     *((&raw mut game.g_ram as *mut uint8).offset(0xbf0) as *mut uint16)
                         .offset(v4 as isize) = 0 as uint16;
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16) = v1;
+                    set_ram_word!(game.projectile_index = v1);
                     WaveBeam_CheckColl(v1, game);
                 }
                 _ => {
@@ -5795,7 +5784,7 @@ pub unsafe fn FireUnchargedBeam(game: &mut Game) {
                         .offset(v2 as isize) = 0 as uint16;
                     *((&raw mut game.g_ram as *mut uint8).offset(0xbf0) as *mut uint16)
                         .offset(v2 as isize) = 0 as uint16;
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16) = v1;
+                    set_ram_word!(game.projectile_index = v1);
                     CheckBeamCollByDir(v1, game);
                     v1 = ram_word!(game, projectile_index);
                     if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(
@@ -5824,7 +5813,7 @@ pub unsafe fn FireUnchargedBeam(game: &mut Game) {
         & 0x8000 as ::core::ffi::c_int
         == 0
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdc0) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.play_resume_charging_beam_sfx = 0 as uint16);
         QueueSfx1_Max15(2 as uint16, game);
     }
 }
@@ -5862,7 +5851,7 @@ pub unsafe fn FireChargedBeam(game: &mut Game) {
             == 0
         {
             let current_block_24: u64;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x18ac) as *mut uint16) = 10 as uint16;
+            set_ram_word!(game.projectile_invincibility_timer = 10 as uint16);
             let mut v1: uint16 = r20;
             let v2: ::core::ffi::c_int = r20 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
             *((&raw mut game.g_ram as *mut uint8).offset(0xc90) as *mut uint16)
@@ -5877,21 +5866,22 @@ pub unsafe fn FireChargedBeam(game: &mut Game) {
                     [(v3 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int) as usize],
                 game,
             );
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc0) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.play_resume_charging_beam_sfx = 0 as uint16);
             InitializeProjectile(v1, game);
             let v5: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
                 .offset(v2 as isize);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) =
-                kProjectileCooldown_Uncharged
+            set_ram_word!(
+                game.cooldown_timer = kProjectileCooldown_Uncharged
                     [(v5 as ::core::ffi::c_int & 0x3f as ::core::ffi::c_int) as usize]
-                    as uint16;
+                    as uint16
+            );
             if (v5 as ::core::ffi::c_int & 1 as ::core::ffi::c_int) != 0i32 {
                 let v4: ::core::ffi::c_int = v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
                 *((&raw mut game.g_ram as *mut uint8).offset(0xbdc) as *mut uint16)
                     .offset(v4 as isize) = 0 as uint16;
                 *((&raw mut game.g_ram as *mut uint8).offset(0xbf0) as *mut uint16)
                     .offset(v4 as isize) = 0 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16) = v1;
+                set_ram_word!(game.projectile_index = v1);
                 WaveBeam_CheckColl(v1, game);
                 current_block_24 = 1109700713171191020;
             } else {
@@ -5899,7 +5889,7 @@ pub unsafe fn FireChargedBeam(game: &mut Game) {
                     .offset(v2 as isize) = 0 as uint16;
                 *((&raw mut game.g_ram as *mut uint8).offset(0xbf0) as *mut uint16)
                     .offset(v2 as isize) = 0 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16) = v1;
+                set_ram_word!(game.projectile_index = v1);
                 CheckBeamCollByDir(v1, game);
                 v1 = ram_word!(game, projectile_index);
                 if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(
@@ -5926,7 +5916,7 @@ pub unsafe fn FireChargedBeam(game: &mut Game) {
                         as usize];
                 SetInitialProjectileSpeed(r20, game);
             }
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb18) as *mut uint16) = 4 as uint16;
+            set_ram_word!(game.charged_shot_glow_timer = 4 as uint16);
             return;
         }
     }
@@ -5934,7 +5924,7 @@ pub unsafe fn FireChargedBeam(game: &mut Game) {
         & 0x8000 as ::core::ffi::c_int
         == 0
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdc0) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.play_resume_charging_beam_sfx = 0 as uint16);
         QueueSfx1_Max15(2 as uint16, game);
     }
 }
@@ -5951,7 +5941,7 @@ pub unsafe fn InitProjectilePositionDirection(r20: uint16, game: &mut Game) -> u
     if ram_word!(game, new_projectile_direction_changed_pose) != 0 {
         direction_shots_fired =
             ram_word!(game, new_projectile_direction_changed_pose) as uint8 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb5e) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.new_projectile_direction_changed_pose = 0 as uint16);
     } else {
         direction_shots_fired = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629))
             as *const uint8 as *mut SamusPoseParams)
@@ -6041,8 +6031,7 @@ pub unsafe fn HandleChargingBeamGfxAudio(game: &mut Game) {
                     v7 = fresh21 == 1u16;
                     if v7 {
                         if i == 4i32 {
-                            *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) =
-                                0 as uint16;
+                            set_ram_word!(game.flare_counter = 0 as uint16);
                         }
                     } else {
                         *(((&raw mut game.g_ram as *mut uint8).offset(0xcdc) as *mut uint16
@@ -6056,12 +6045,12 @@ pub unsafe fn HandleChargingBeamGfxAudio(game: &mut Game) {
         }
     } else if (ram_word!(game, flare_counter) as int16) > 0i16 {
         if ram_word!(game, flare_counter) == 1u16 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xcd6) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xcd8) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xcda) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xcdc) as *mut uint16) = 3 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xcde) as *mut uint16) = 5 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xce0) as *mut uint16) = 4 as uint16;
+            set_ram_word!(game.flare_animation_frame = 0 as uint16);
+            set_ram_word!(game.flare_slow_sparks_anim_frame = 0 as uint16);
+            set_ram_word!(game.flare_fast_sparks_anim_frame = 0 as uint16);
+            set_ram_word!(game.flare_animation_timer = 3 as uint16);
+            set_ram_word!(game.flare_slow_sparks_anim_timer = 5 as uint16);
+            set_ram_word!(game.flare_fast_sparks_anim_timer = 4 as uint16);
         }
         if ram_word!(game, flare_counter) as ::core::ffi::c_int - 15 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
@@ -6235,18 +6224,18 @@ pub unsafe fn DrawFlareAnimationComponent(k: uint16, game: &mut Game) {
         if (ram_word!(game, ceres_status) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int)
             != 0i32
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) = old_y;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) = old_x;
+            set_ram_word!(game.samus_y_pos = old_y);
+            set_ram_word!(game.samus_x_pos = old_x);
         }
     }
 }
 pub unsafe fn ClearFlareAnimationState(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xcd6) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xcd8) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xcda) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xcdc) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xcde) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xce0) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.flare_animation_frame = 0 as uint16);
+    set_ram_word!(game.flare_slow_sparks_anim_frame = 0 as uint16);
+    set_ram_word!(game.flare_fast_sparks_anim_frame = 0 as uint16);
+    set_ram_word!(game.flare_animation_timer = 0 as uint16);
+    set_ram_word!(game.flare_slow_sparks_anim_timer = 0 as uint16);
+    set_ram_word!(game.flare_fast_sparks_anim_timer = 0 as uint16);
 }
 pub unsafe fn FireHyperBeam(game: &mut Game) {
     if Samus_CanFireBeam(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
@@ -6267,7 +6256,7 @@ pub unsafe fn FireHyperBeam(game: &mut Game) {
             & 1 as ::core::ffi::c_int
             == 0
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x18ac) as *mut uint16) = 10 as uint16;
+            set_ram_word!(game.projectile_invincibility_timer = 10 as uint16);
             let k: uint16 = r20;
             *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
                 .offset((r20 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
@@ -6276,14 +6265,14 @@ pub unsafe fn FireHyperBeam(game: &mut Game) {
                 kChargedProjectile_Sfx[8 as ::core::ffi::c_int as usize],
                 game,
             );
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc0) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.play_resume_charging_beam_sfx = 0 as uint16);
             InitializeProjectile(k, game);
             let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
             *((&raw mut game.g_ram as *mut uint8).offset(0xbdc) as *mut uint16)
                 .offset(v1 as isize) = 0 as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0xbf0) as *mut uint16)
                 .offset(v1 as isize) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16) = k;
+            set_ram_word!(game.projectile_index = k);
             WaveBeam_CheckColl(k, game);
             let v2: uint16 = ram_word!(game, projectile_index);
             let v3: ::core::ffi::c_int =
@@ -6294,16 +6283,15 @@ pub unsafe fn FireHyperBeam(game: &mut Game) {
                 .offset(v3 as isize) = ((0x90b159i32) as u16);
             r20 = v2;
             SetInitialProjectileSpeed(r20, game);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) = 21 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb18) as *mut uint16) =
-                -(32748 as ::core::ffi::c_int) as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xcd6) as *mut uint16) = 29 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xcd8) as *mut uint16) = 5 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xcda) as *mut uint16) = 5 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xcdc) as *mut uint16) = 3 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xcde) as *mut uint16) = 3 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xce0) as *mut uint16) = 3 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 0x8000 as uint16;
+            set_ram_word!(game.cooldown_timer = 21 as uint16);
+            set_ram_word!(game.charged_shot_glow_timer = -(32748 as ::core::ffi::c_int) as uint16);
+            set_ram_word!(game.flare_animation_frame = 29 as uint16);
+            set_ram_word!(game.flare_slow_sparks_anim_frame = 5 as uint16);
+            set_ram_word!(game.flare_fast_sparks_anim_frame = 5 as uint16);
+            set_ram_word!(game.flare_animation_timer = 3 as uint16);
+            set_ram_word!(game.flare_slow_sparks_anim_timer = 3 as uint16);
+            set_ram_word!(game.flare_fast_sparks_anim_timer = 3 as uint16);
+            set_ram_word!(game.flare_counter = 0x8000 as uint16);
         }
     }
 }
@@ -6477,8 +6465,7 @@ pub unsafe fn HudSelectionHandler_MissilesOrSuperMissiles(game: &mut Game) {
                     & 1 as ::core::ffi::c_int
                     == 0
                 {
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x18ac) as *mut uint16) =
-                        20 as uint16;
+                    set_ram_word!(game.projectile_invincibility_timer = 20 as uint16);
                     if ram_word!(game, hud_item_index) == 2u16 {
                         let ref mut fresh78 =
                             *((&raw mut game.g_ram as *mut uint8).offset(0x9ca) as *mut uint16);
@@ -6522,20 +6509,20 @@ pub unsafe fn HudSelectionHandler_MissilesOrSuperMissiles(game: &mut Game) {
                         *((&raw mut game.g_ram as *mut uint8).offset(0xc68) as *mut uint16)
                             .offset(v1 as isize) = ((0x90af68i32) as u16);
                     }
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) =
-                        kNonBeamProjectileCooldowns[(*(&raw mut v7 as *mut uint8).offset(
-                            (::core::mem::size_of::<uint16>())
-                                .wrapping_div(::core::mem::size_of::<uint8>())
-                                .wrapping_sub(1_usize) as isize,
-                        )
-                            as ::core::ffi::c_int
-                            & 0xf as ::core::ffi::c_int)
-                            as usize] as uint16;
+                    set_ram_word!(
+                        game.cooldown_timer =
+                            kNonBeamProjectileCooldowns[(*(&raw mut v7 as *mut uint8).offset(
+                                (::core::mem::size_of::<uint16>())
+                                    .wrapping_div(::core::mem::size_of::<uint8>())
+                                    .wrapping_sub(1_usize) as isize,
+                            )
+                                as ::core::ffi::c_int
+                                & 0xf as ::core::ffi::c_int)
+                                as usize] as uint16
+                    );
                     if ram_word!(game, samus_auto_cancel_hud_item_index) != 0 {
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x9d2) as *mut uint16) =
-                            0 as uint16;
-                        *((&raw mut game.g_ram as *mut uint8).offset(0xa04) as *mut uint16) =
-                            0 as uint16;
+                        set_ram_word!(game.hud_item_index = 0 as uint16);
+                        set_ram_word!(game.samus_auto_cancel_hud_item_index = 0 as uint16);
                         return;
                     }
                     if ram_word!(game, hud_item_index) == 2u16 {
@@ -6545,8 +6532,7 @@ pub unsafe fn HudSelectionHandler_MissilesOrSuperMissiles(game: &mut Game) {
                     } else if ram_word!(game, samus_missiles) != 0 {
                         return;
                     }
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x9d2) as *mut uint16) =
-                        0 as uint16;
+                    set_ram_word!(game.hud_item_index = 0 as uint16);
                 }
                 return;
             }
@@ -6614,8 +6600,9 @@ pub unsafe fn HudSelectionHandler_MorphBall(game: &mut Game) {
                             *((&raw mut game.g_ram as *mut uint8).offset(0x9ce) as *mut uint16);
                         *fresh81 = (*fresh81).wrapping_sub(1);
                         if (*fresh81 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32 {
-                            *((&raw mut game.g_ram as *mut uint8).offset(0xcee) as *mut uint16) =
-                                -(1 as ::core::ffi::c_int) as uint16;
+                            set_ram_word!(
+                                game.power_bomb_flag = -(1 as ::core::ffi::c_int) as uint16
+                            );
                             let mut v2: uint16 = 10 as uint16;
                             while *((&raw mut game.g_ram as *mut uint8).offset(0xc18)
                                 as *mut uint16)
@@ -6656,20 +6643,19 @@ pub unsafe fn HudSelectionHandler_MorphBall(game: &mut Game) {
                             InitializeInstrForMissile(v2, game);
                             *((&raw mut game.g_ram as *mut uint8).offset(0xc68) as *mut uint16)
                                 .offset(v4 as isize) = ((0x90b0aei32) as u16);
-                            *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) =
-                                kNonBeamProjectileCooldowns[(v6 as ::core::ffi::c_int
-                                    & 0xf as ::core::ffi::c_int)
-                                    as usize] as uint16;
+                            set_ram_word!(
+                                game.cooldown_timer =
+                                    kNonBeamProjectileCooldowns[(v6 as ::core::ffi::c_int
+                                        & 0xf as ::core::ffi::c_int)
+                                        as usize] as uint16
+                            );
                             if ram_word!(game, samus_auto_cancel_hud_item_index) != 0 {
-                                *((&raw mut game.g_ram as *mut uint8).offset(0x9d2)
-                                    as *mut uint16) = 0 as uint16;
-                                *((&raw mut game.g_ram as *mut uint8).offset(0xa04)
-                                    as *mut uint16) = 0 as uint16;
+                                set_ram_word!(game.hud_item_index = 0 as uint16);
+                                set_ram_word!(game.samus_auto_cancel_hud_item_index = 0 as uint16);
                             } else if ram_word!(game, hud_item_index) == 3u16
                                 && ram_word!(game, samus_power_bombs) == 0
                             {
-                                *((&raw mut game.g_ram as *mut uint8).offset(0x9d2)
-                                    as *mut uint16) = 0 as uint16;
+                                set_ram_word!(game.hud_item_index = 0 as uint16);
                             }
                         }
                     }
@@ -6705,12 +6691,14 @@ pub unsafe fn HudSelectionHandler_MorphBall(game: &mut Game) {
             InitializeInstrForMissile(v0, game);
             *((&raw mut game.g_ram as *mut uint8).offset(0xc68) as *mut uint16)
                 .offset(v1 as isize) = ((0x90b099i32) as u16);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) =
-                kNonBeamProjectileCooldowns[5 as ::core::ffi::c_int as usize] as uint16;
+            set_ram_word!(
+                game.cooldown_timer =
+                    kNonBeamProjectileCooldowns[5 as ::core::ffi::c_int as usize] as uint16
+            );
         }
     } else if ram_word!(game, flare_counter) != 0 {
         QueueSfx1_Max9(2 as uint16, game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.flare_counter = 0 as uint16);
         ClearFlareAnimationState(game);
         Samus_LoadSuitPalette(game);
     }
@@ -6758,7 +6746,7 @@ pub unsafe fn HudSelectionHandler_MorphBall_Helper2(game: &mut Game) -> uint8 {
     {
         if ram_word!(game, flare_counter) != 0 {
             QueueSfx1_Max9(2 as uint16, game);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.flare_counter = 0 as uint16);
             ClearFlareAnimationState(game);
             Samus_LoadSuitPalette(game);
         }
@@ -6812,12 +6800,16 @@ pub unsafe fn PowerBomb_Func3(game: &mut Game) {
                 *fresh61 = (*fresh61).wrapping_add(28u16);
             }
         } else {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xce2) as *mut uint16) =
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
-                    .offset(v1 as isize);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xce4) as *mut uint16) =
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
-                    .offset(v1 as isize);
+            set_ram_word!(
+                game.power_bomb_explosion_x_pos =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
+                        .offset(v1 as isize)
+            );
+            set_ram_word!(
+                game.power_bomb_explosion_y_pos =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
+                        .offset(v1 as isize)
+            );
             EnableHdmaObjects(game);
             SpawnPowerBombExplosion(game);
             *((&raw mut game.g_ram as *mut uint8).offset(0xc7c) as *mut uint16)
@@ -6847,7 +6839,7 @@ pub unsafe fn HandleSwitchingHudSelection(game: &mut Game) {
         & ram_word!(game, joypad1_newkeys) as ::core::ffi::c_int)
         != 0i32
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa04) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_auto_cancel_hud_item_index = 0 as uint16);
         current_block = 5182151076943748346;
     } else {
         r22 = ((ram_word!(game, button_config_itemcancel_y) as ::core::ffi::c_int
@@ -6875,26 +6867,25 @@ pub unsafe fn HandleSwitchingHudSelection(game: &mut Game) {
         current_block = 11963831534727063849;
     }
     if current_block == 11963831534727063849 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9d2) as *mut uint16) = v0;
+        set_ram_word!(game.hud_item_index = v0);
         while kRunSwitchedToHudHandler[v0 as usize].expect("non-null function pointer")(game)
             as ::core::ffi::c_int
             & 1 as ::core::ffi::c_int
             != 0
         {
             v0 = (ram_word!(game, hud_item_index)).wrapping_add(1u16);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x9d2) as *mut uint16) = v0;
+            set_ram_word!(game.hud_item_index = v0);
             if v0 as ::core::ffi::c_int - 6 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                 == 0
             {
                 v0 = 0 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9d2) as *mut uint16) = 0 as uint16;
+                set_ram_word!(game.hud_item_index = 0 as uint16);
             }
         }
         if r22 != 0 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa04) as *mut uint16) =
-                ram_word!(game, hud_item_index);
+            set_ram_word!(game.samus_auto_cancel_hud_item_index = ram_word!(game, hud_item_index));
         } else {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa04) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.samus_auto_cancel_hud_item_index = 0 as uint16);
         }
     }
     if ram_word!(game, hud_item_index) == r18 {
@@ -6906,13 +6897,13 @@ pub unsafe fn HandleSwitchingHudSelection(game: &mut Game) {
         {
             v1 = 2 as uint16;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0xaaa) as *mut uint16) = v1;
+        set_ram_word!(game.hud_item_changed_this_frame = v1);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xaaa) as *mut uint16) = 1 as uint16;
+        set_ram_word!(game.hud_item_changed_this_frame = 1 as uint16);
     };
 }
 pub unsafe fn SwitchToHudHandler_Nothing(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.flare_counter = 0 as uint16);
     ClearFlareAnimationState(game);
     Samus_LoadSuitPalette(game);
     0 as uint8
@@ -6921,7 +6912,7 @@ pub unsafe fn SwitchToHudHandler_Missiles(game: &mut Game) -> uint8 {
     if ram_word!(game, samus_missiles) == 0 {
         return 1 as uint8;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.flare_counter = 0 as uint16);
     ClearFlareAnimationState(game);
     Samus_LoadSuitPalette(game);
     0 as uint8
@@ -6930,7 +6921,7 @@ pub unsafe fn SwitchToHudHandler_SuperMissiles(game: &mut Game) -> uint8 {
     if ram_word!(game, samus_super_missiles) == 0 {
         return 1 as uint8;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.flare_counter = 0 as uint16);
     ClearFlareAnimationState(game);
     Samus_LoadSuitPalette(game);
     0 as uint8
@@ -6939,7 +6930,7 @@ pub unsafe fn SwitchToHudHandler_PowerBombs(game: &mut Game) -> uint8 {
     if ram_word!(game, samus_power_bombs) == 0 {
         return 1 as uint8;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.flare_counter = 0 as uint16);
     ClearFlareAnimationState(game);
     Samus_LoadSuitPalette(game);
     0 as uint8
@@ -6954,10 +6945,9 @@ pub unsafe fn SwitchToHudHandler_Grapple(game: &mut Game) -> uint8 {
         == 0x9bc4f0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
     {
         Samus_LoadSuitPalette(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.flare_counter = 0 as uint16);
         ClearFlareAnimationState(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-            ((0x9bc4f0i32) as u16);
+        set_ram_word!(game.grapple_beam_function = ((0x9bc4f0i32) as u16));
     }
     0 as uint8
 }
@@ -6967,7 +6957,7 @@ pub unsafe fn SwitchToHudHandler_Xray(game: &mut Game) -> uint8 {
     {
         return 1 as uint8;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.flare_counter = 0 as uint16);
     ClearFlareAnimationState(game);
     Samus_LoadSuitPalette(game);
     0 as uint8
@@ -6978,12 +6968,14 @@ pub unsafe fn HandleArmCannonOpenState(game: &mut Game) {
     {
         AdvanceArmCannonFrame(game);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaac) as *mut uint16) = *RomPtr_90(
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0x90c7df)) as *const uint8 as *mut uint16)
-            .offset(ram_word!(game, samus_pose) as isize),
-        game,
-    )
-    .offset(1) as uint16;
+    set_ram_word!(
+        game.arm_cannon_drawing_mode = *RomPtr_90(
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x90c7df)) as *const uint8 as *mut uint16)
+                .offset(ram_word!(game, samus_pose) as isize),
+            game,
+        )
+        .offset(1) as uint16
+    );
 }
 pub unsafe fn UpdateArmCannonIsOpenFlag(game: &mut Game) -> uint8 {
     static kFlagShouldArmCannonBeOpen: [int8; 6] = [0, 1, 1, 0, 1, 0];
@@ -6999,9 +6991,9 @@ pub unsafe fn UpdateArmCannonIsOpenFlag(game: &mut Game) -> uint8 {
         return 0 as uint8;
     }
     if r18 != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xaa8) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.arm_cannon_frame = 0 as uint16);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xaa8) as *mut uint16) = 4 as uint16;
+        set_ram_word!(game.arm_cannon_frame = 4 as uint16);
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0xaa6) as *mut uint16) = (r18) | (0x100u16);
     1 as uint8
@@ -7017,7 +7009,7 @@ pub unsafe fn AdvanceArmCannonFrame(game: &mut Game) {
             *fresh8 = (*fresh8).wrapping_add(1);
             return;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0xaa8) as *mut uint16) = 3 as uint16;
+        set_ram_word!(game.arm_cannon_frame = 3 as uint16);
     } else {
         if ram_word!(game, arm_cannon_frame) != 1u16
             && ((ram_word!(game, arm_cannon_frame)) as i16).wrapping_sub(1i16) >= 0i16
@@ -7027,7 +7019,7 @@ pub unsafe fn AdvanceArmCannonFrame(game: &mut Game) {
             *fresh9 = (*fresh9).wrapping_sub(1);
             return;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0xaa8) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.arm_cannon_frame = 0 as uint16);
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0xaa6) as *mut uint16) =
         *(&raw mut game.g_ram as *mut uint8).offset(0xaa6) as uint16;
@@ -7101,8 +7093,7 @@ pub unsafe fn Samus_ArmCannon_Draw(game: &mut Game) {
                     {
                         (*v9).ycoord = v10 as uint8;
                         *(&raw mut (*v9).charnum as *mut uint16) = r24;
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) =
-                            (v7).wrapping_add(4u16);
+                        set_ram_word!(game.oam_next_ptr = (v7).wrapping_add(4u16));
                     }
                 }
             }
@@ -7146,8 +7137,7 @@ pub unsafe fn Samus_ArmCannon_Draw(game: &mut Game) {
         .size as *mut uint8)
             .offset(0) = -(102 as ::core::ffi::c_int) as uint8;
         (*gVramWriteEntry(v14 as ::core::ffi::c_int, game)).size = addr_unk_6061F0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) =
-            (v14).wrapping_add(2u16);
+        set_ram_word!(game.vram_write_queue_tail = (v14).wrapping_add(2u16));
     }
 }
 unsafe fn Projectile_SinLookup_Inner(k: uint16, r24: uint16) -> uint16 {
@@ -7223,12 +7213,12 @@ pub unsafe fn FireSba(game: &mut Game) -> uint8 {
     if v2 < 0i16 {
         v2 = 0 as int16;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9ce) as *mut uint16) = v2 as uint16;
+    set_ram_word!(game.samus_power_bombs = v2 as uint16);
     let rv: uint8 = kFireSbaFuncs[(v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize]
         .expect("non-null function pointer")(game);
     if ram_word!(game, samus_power_bombs) == 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9d2) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa04) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.hud_item_index = 0 as uint16);
+        set_ram_word!(game.samus_auto_cancel_hud_item_index = 0 as uint16);
     }
     rv
 }
@@ -7267,13 +7257,15 @@ pub unsafe fn FireSba_FireWave(game: &mut Game) -> uint8 {
         InitializeSbaProjectile(i as uint16, game);
         i -= 2 as ::core::ffi::c_int;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xcce) as *mut uint16) = 4 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) =
-        kProjectileCooldown_Uncharged[(*((&raw mut game.g_ram as *mut uint8).offset(0xc18)
-            as *mut uint16)
-            .offset(0) as ::core::ffi::c_int
-            & 0x3f as ::core::ffi::c_int) as usize] as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb60) as *mut uint16) = 4 as uint16;
+    set_ram_word!(game.projectile_counter = 4 as uint16);
+    set_ram_word!(
+        game.cooldown_timer =
+            kProjectileCooldown_Uncharged[(*((&raw mut game.g_ram as *mut uint8).offset(0xc18)
+                as *mut uint16)
+                .offset(0) as ::core::ffi::c_int
+                & 0x3f as ::core::ffi::c_int) as usize] as uint16
+    );
+    set_ram_word!(game.used_for_sba_attacksB60 = 4 as uint16);
     QueueSfx1_Max6(0x28 as uint16, game);
     1 as uint8
 }
@@ -7308,17 +7300,18 @@ pub unsafe fn FireSba_FireIce(game: &mut Game) -> uint8 {
         InitializeProjectile(i as uint16, game);
         i -= 2 as ::core::ffi::c_int;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xcce) as *mut uint16) = 4 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) =
-        kProjectileCooldown_Uncharged[(*((&raw mut game.g_ram as *mut uint8).offset(0xc18)
-            as *mut uint16)
-            .offset(0) as ::core::ffi::c_int
-            & 0x3f as ::core::ffi::c_int) as usize] as uint16;
+    set_ram_word!(game.projectile_counter = 4 as uint16);
+    set_ram_word!(
+        game.cooldown_timer =
+            kProjectileCooldown_Uncharged[(*((&raw mut game.g_ram as *mut uint8).offset(0xc18)
+                as *mut uint16)
+                .offset(0) as ::core::ffi::c_int
+                & 0x3f as ::core::ffi::c_int) as usize] as uint16
+    );
     if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) == 4u8 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb60) as *mut uint16) =
-            -(4 as ::core::ffi::c_int) as uint16;
+        set_ram_word!(game.used_for_sba_attacksB60 = -(4 as ::core::ffi::c_int) as uint16);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb60) as *mut uint16) = 4 as uint16;
+        set_ram_word!(game.used_for_sba_attacksB60 = 4 as uint16);
     }
     QueueSfx1_Max6(0x23 as uint16, game);
     1 as uint8
@@ -7362,13 +7355,15 @@ pub unsafe fn FireSba_FireSpazer(game: &mut Game) -> uint8 {
         }
         i -= 2 as ::core::ffi::c_int;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xcce) as *mut uint16) = 4 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) =
-        kProjectileCooldown_Uncharged[(*((&raw mut game.g_ram as *mut uint8).offset(0xc18)
-            as *mut uint16)
-            .offset(0) as ::core::ffi::c_int
-            & 0x3f as ::core::ffi::c_int) as usize] as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb60) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.projectile_counter = 4 as uint16);
+    set_ram_word!(
+        game.cooldown_timer =
+            kProjectileCooldown_Uncharged[(*((&raw mut game.g_ram as *mut uint8).offset(0xc18)
+                as *mut uint16)
+                .offset(0) as ::core::ffi::c_int
+                & 0x3f as ::core::ffi::c_int) as usize] as uint16
+    );
+    set_ram_word!(game.used_for_sba_attacksB60 = 0 as uint16);
     QueueSfx1_Max6(0x25 as uint16, game);
     1 as uint8
 }
@@ -7400,17 +7395,18 @@ pub unsafe fn FireSba_FirePlasma(game: &mut Game) -> uint8 {
         InitializeSbaProjectile(i as uint16, game);
         i -= 2 as ::core::ffi::c_int;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xcce) as *mut uint16) = 4 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) =
-        kProjectileCooldown_Uncharged[(*((&raw mut game.g_ram as *mut uint8).offset(0xc18)
-            as *mut uint16)
-            .offset(0) as ::core::ffi::c_int
-            & 0x3f as ::core::ffi::c_int) as usize] as uint16;
+    set_ram_word!(game.projectile_counter = 4 as uint16);
+    set_ram_word!(
+        game.cooldown_timer =
+            kProjectileCooldown_Uncharged[(*((&raw mut game.g_ram as *mut uint8).offset(0xc18)
+                as *mut uint16)
+                .offset(0) as ::core::ffi::c_int
+                & 0x3f as ::core::ffi::c_int) as usize] as uint16
+    );
     if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) == 4u8 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb60) as *mut uint16) =
-            -(4 as ::core::ffi::c_int) as uint16;
+        set_ram_word!(game.used_for_sba_attacksB60 = -(4 as ::core::ffi::c_int) as uint16);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb60) as *mut uint16) = 4 as uint16;
+        set_ram_word!(game.used_for_sba_attacksB60 = 4 as uint16);
     }
     QueueSfx1_Max6(0x27 as uint16, game);
     1 as uint8
@@ -7462,8 +7458,8 @@ pub unsafe fn ProjPreInstr_IceSba(mut k: uint16, game: &mut Game) {
                 .offset(v3 as isize) = 40 as uint16;
             QueueSfx1_Max6(0x24 as uint16, game);
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) = 2 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.cooldown_timer = 2 as uint16);
+        set_ram_word!(game.flare_counter = 0 as uint16);
     };
 }
 pub unsafe fn ProjPreInstr_IceSba2(mut k: uint16, game: &mut Game) {
@@ -7528,8 +7524,8 @@ pub unsafe fn ProjPreInstr_IceSba2(mut k: uint16, game: &mut Game) {
                 as *mut uint16)
                 .offset(v3 as isize)) as u8)
                 .wrapping_add(8u8)) as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) = 2 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.cooldown_timer = 2 as uint16);
+            set_ram_word!(game.flare_counter = 0 as uint16);
             current_block = 17860125682698302841;
         }
     }
@@ -7538,24 +7534,24 @@ pub unsafe fn ProjPreInstr_IceSba2(mut k: uint16, game: &mut Game) {
     };
 }
 pub unsafe fn Projectile_Func7_Shinespark(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) = ((0x90d068i32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb36) as *mut uint16) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb3e) as *mut uint16) = 1024 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb2c) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa52) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb42) as *mut uint16) = 8 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb44) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb46) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb48) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) = 7 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaa2) as *mut uint16) = 30 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa68) as *mut uint16) = 60 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xacc) as *mut uint16) = 6 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xace) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa56) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_movement_handler = ((0x90d068i32) as u16));
+    set_ram_word!(game.samus_y_dir = 1 as uint16);
+    set_ram_word!(game.speed_boost_counter = 1024 as uint16);
+    set_ram_word!(game.samus_y_subspeed = 0 as uint16);
+    set_ram_word!(game.samus_y_speed = 0 as uint16);
+    set_ram_word!(game.knockback_dir = 0 as uint16);
+    set_ram_word!(game.samus_x_extra_run_speed = 8 as uint16);
+    set_ram_word!(game.samus_x_extra_run_subspeed = 0 as uint16);
+    set_ram_word!(game.samus_x_base_speed = 0 as uint16);
+    set_ram_word!(game.samus_x_base_subspeed = 0 as uint16);
+    set_ram_word!(game.substate = 7 as uint16);
+    set_ram_word!(game.suit_pickup_light_beam_pos = 0 as uint16);
+    set_ram_word!(game.cooldown_timer = 0 as uint16);
+    set_ram_word!(game.timer_for_shinesparks_startstop = 30 as uint16);
+    set_ram_word!(game.samus_shine_timer = 60 as uint16);
+    set_ram_word!(game.timer_for_shine_timer = 6 as uint16);
+    set_ram_word!(game.special_samus_palette_frame = 0 as uint16);
+    set_ram_word!(game.bomb_jump_dir = 0 as uint16);
     if ram_word!(game, flare_counter) != 0 {
         if ram_word!(game, flare_counter) as ::core::ffi::c_int - 16 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
@@ -7563,7 +7559,7 @@ pub unsafe fn Projectile_Func7_Shinespark(game: &mut Game) {
         {
             QueueSfx1_Max9(2 as uint16, game);
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.flare_counter = 0 as uint16);
         ClearFlareAnimationState(game);
     }
 }
@@ -7573,15 +7569,13 @@ pub unsafe fn Samus_MoveHandlerShinesparkWindup(game: &mut Game) {
     let v0: bool = (*fresh124 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32;
     if ram_word!(game, timer_for_shinesparks_startstop) == 0 || v0 {
         if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) == 4u8 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa2a) as *mut uint16) = 204 as uint16;
+            set_ram_word!(game.samus_new_pose_interrupted = 204 as uint16);
         } else {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa2a) as *mut uint16) = 203 as uint16;
+            set_ram_word!(game.samus_new_pose_interrupted = 203 as uint16);
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) =
-            ((0x90d0abi32) as u16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa60) as *mut uint16) =
-            ((0x90e90ei32) as u16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xaae) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_movement_handler = ((0x90d0abi32) as u16));
+        set_ram_word!(game.samus_input_handler = ((0x90e90ei32) as u16));
+        set_ram_word!(game.speed_echoes_index = 0 as uint16);
         *((&raw mut game.g_ram as *mut uint8).offset(0xac0) as *mut uint16).offset(0) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0xac0) as *mut uint16).offset(1) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0xab0) as *mut uint16).offset(0) = 0 as uint16;
@@ -7590,8 +7584,8 @@ pub unsafe fn Samus_MoveHandlerShinesparkWindup(game: &mut Game) {
     }
 }
 pub unsafe fn Samus_MoveHandlerVerticalShinespark(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa6e) as *mut uint16) = 2 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa48) as *mut uint16) = 8 as uint16;
+    set_ram_word!(game.samus_contact_damage_index = 2 as uint16);
+    set_ram_word!(game.samus_hurt_flash_counter = 8 as uint16);
     Samus_UpdateSpeedEchoPos(game);
     Samus_ShinesparkMove_Y(game);
     Samus_EndSuperJump(game);
@@ -7605,12 +7599,12 @@ pub unsafe fn Samus_MoveHandlerVerticalShinespark(game: &mut Game) {
             (*fresh122 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32
         }
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_health = 0 as uint16);
     }
 }
 pub unsafe fn Samus_MoveHandler_Shinespark_Diag(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa6e) as *mut uint16) = 2 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa48) as *mut uint16) = 8 as uint16;
+    set_ram_word!(game.samus_contact_damage_index = 2 as uint16);
+    set_ram_word!(game.samus_hurt_flash_counter = 8 as uint16);
     Samus_UpdateSpeedEchoPos(game);
     Samus_ShinesparkMove_X(game);
     Samus_ShinesparkMove_Y(game);
@@ -7625,12 +7619,12 @@ pub unsafe fn Samus_MoveHandler_Shinespark_Diag(game: &mut Game) {
             (*fresh121 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32
         }
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_health = 0 as uint16);
     }
 }
 pub unsafe fn Samus_MoveHandler_Shinespark_Horiz(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa6e) as *mut uint16) = 2 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa48) as *mut uint16) = 8 as uint16;
+    set_ram_word!(game.samus_contact_damage_index = 2 as uint16);
+    set_ram_word!(game.samus_hurt_flash_counter = 8 as uint16);
     Samus_UpdateSpeedEchoPos(game);
     Samus_ShinesparkMove_X(game);
     Samus_EndSuperJump(game);
@@ -7644,7 +7638,7 @@ pub unsafe fn Samus_MoveHandler_Shinespark_Horiz(game: &mut Game) {
             (*fresh120 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32
         }
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_health = 0 as uint16);
     }
 }
 unsafe fn Samus_ClampSpeedHi(mut amt: int32, val: ::core::ffi::c_int) -> uint32 {
@@ -7656,7 +7650,7 @@ unsafe fn Samus_ClampSpeedHi(mut amt: int32, val: ::core::ffi::c_int) -> uint32 
 pub unsafe fn Samus_ShinesparkMove_X(game: &mut Game) {
     let current_block: u64;
     let mut v4: int16 = 0;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa68) as *mut uint16) = 15 as uint16;
+    set_ram_word!(game.samus_shine_timer = 15 as uint16);
     AddToHiLo(
         (&raw mut game.g_ram as *mut uint8).offset(0xb42) as *mut uint16,
         (&raw mut game.g_ram as *mut uint8).offset(0xb44) as *mut uint16,
@@ -7682,7 +7676,7 @@ pub unsafe fn Samus_ShinesparkMove_X(game: &mut Game) {
         let cres: CheckEnemyColl_Result = Samus_CheckSolidEnemyColl(amt, game);
         amt = cres.amt;
         if cres.collision != 0 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdd0) as *mut uint16) = cres.collision;
+            set_ram_word!(game.samus_collision_flag = cres.collision);
             current_block = 13493817977953381822;
         } else {
             amt = -amt;
@@ -7696,7 +7690,7 @@ pub unsafe fn Samus_ShinesparkMove_X(game: &mut Game) {
         let cres_0: CheckEnemyColl_Result = Samus_CheckSolidEnemyColl(amt, game);
         amt = cres_0.amt;
         if cres_0.collision != 0 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdd0) as *mut uint16) = cres_0.collision;
+            set_ram_word!(game.samus_collision_flag = cres_0.collision);
             current_block = 13493817977953381822;
         } else {
             current_block = 12800627514080957624;
@@ -7713,18 +7707,18 @@ pub unsafe fn Samus_ShinesparkMove_X(game: &mut Game) {
         < 0i16
     {
         if v4 as ::core::ffi::c_int + 15 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb10) as *mut uint16) =
-                (ram_word!(game, samus_x_pos)).wrapping_add(15u16);
+            set_ram_word!(
+                game.samus_prev_x_pos = (ram_word!(game, samus_x_pos)).wrapping_add(15u16)
+            );
         }
     } else if v4 as ::core::ffi::c_int - 16 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         == 0
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb10) as *mut uint16) =
-            (ram_word!(game, samus_x_pos)).wrapping_sub(15u16);
+        set_ram_word!(game.samus_prev_x_pos = (ram_word!(game, samus_x_pos)).wrapping_sub(15u16));
     }
 }
 pub unsafe fn Samus_ShinesparkMove_Y(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa68) as *mut uint16) = 15 as uint16;
+    set_ram_word!(game.samus_shine_timer = 15 as uint16);
     AddToHiLo(
         (&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16,
         (&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16,
@@ -7746,14 +7740,14 @@ pub unsafe fn Samus_ShinesparkMove_Y(game: &mut Game) {
         (ram_word!(game, extra_samus_y_displacement) as uint32) << 16 as ::core::ffi::c_int
             | ram_word!(game, extra_samus_y_subdisplacement) as uint32,
     ) as int32;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb02) as *mut uint16) = 2 as uint16;
+    set_ram_word!(game.samus_collision_direction = 2 as uint16);
     let cres: CheckEnemyColl_Result = Samus_CheckSolidEnemyColl(
         Samus_ClampSpeedHi(amt, 15 as ::core::ffi::c_int) as int32,
         game,
     );
     amt = cres.amt;
     if cres.collision != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdd0) as *mut uint16) = cres.collision;
+        set_ram_word!(game.samus_collision_flag = cres.collision);
     } else {
         Samus_MoveDown_NoSolidColl(-amt, game);
     }
@@ -7763,8 +7757,7 @@ pub unsafe fn Samus_ShinesparkMove_Y(game: &mut Game) {
         & 0x8000 as ::core::ffi::c_int
         != 0
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb14) as *mut uint16) =
-            (ram_word!(game, samus_y_pos)).wrapping_add(14u16);
+        set_ram_word!(game.samus_prev_y_pos = (ram_word!(game, samus_y_pos)).wrapping_add(14u16));
     }
 }
 pub unsafe fn Samus_EndSuperJump(game: &mut Game) -> uint8 {
@@ -7789,16 +7782,16 @@ pub unsafe fn Samus_EndSuperJump(game: &mut Game) -> uint8 {
         *((&raw mut game.g_ram as *mut uint8).offset(0xab0) as *mut uint16).offset(2) =
             -(4 as ::core::ffi::c_int) as uint16;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb2c) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb42) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb44) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb3e) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb1a) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb36) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) = ((0x90d346i32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa5c) as *mut uint16) = ((0x90ebf3i32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaae) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_y_subspeed = 0 as uint16);
+    set_ram_word!(game.samus_y_speed = 0 as uint16);
+    set_ram_word!(game.samus_x_extra_run_speed = 0 as uint16);
+    set_ram_word!(game.samus_x_extra_run_subspeed = 0 as uint16);
+    set_ram_word!(game.speed_boost_counter = 0 as uint16);
+    set_ram_word!(game.UNUSED_word_7E0B1A = 0 as uint16);
+    set_ram_word!(game.samus_y_dir = 0 as uint16);
+    set_ram_word!(game.samus_movement_handler = ((0x90d346i32) as u16));
+    set_ram_word!(game.samus_draw_handler = ((0x90ebf3i32) as u16));
+    set_ram_word!(game.speed_echoes_index = 0 as uint16);
     *((&raw mut game.g_ram as *mut uint8).offset(0xab0) as *mut uint16).offset(0) =
         ram_word!(game, samus_x_pos);
     *((&raw mut game.g_ram as *mut uint8).offset(0xab0) as *mut uint16).offset(1) =
@@ -7808,7 +7801,7 @@ pub unsafe fn Samus_EndSuperJump(game: &mut Game) -> uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xab8) as *mut uint16).offset(1) =
         ram_word!(game, samus_y_pos);
     *((&raw mut game.g_ram as *mut uint8).offset(0xac0) as *mut uint16).offset(2) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa48) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_hurt_flash_counter = 0 as uint16);
     QueueSfx1_Max6(0x35 as uint16, game);
     QueueSfx3_Max6(0x10 as uint16, game);
     1 as uint8
@@ -7821,7 +7814,7 @@ static kSamus_MoveHandler_ShinesparkCrash: [Option<Func_V>; 3] = unsafe {
     ]
 };
 pub unsafe fn Samus_MoveHandler_ShinesparkCrash(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa68) as *mut uint16) = 15 as uint16;
+    set_ram_word!(game.samus_shine_timer = 15 as uint16);
     kSamus_MoveHandler_ShinesparkCrash[*((&raw mut game.g_ram as *mut uint8).offset(0xaae)
         as *mut uint16 as *mut uint8)
         .offset(
@@ -7852,7 +7845,7 @@ pub unsafe fn Samus_MoveHandler_ShinesparkCrash_0(game: &mut Game) {
     {
         v0 = (v0) | (0x100u16);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaae) as *mut uint16) = v0;
+    set_ram_word!(game.speed_echoes_index = v0);
 }
 pub unsafe fn Samus_MoveHandler_ShinesparkCrash_1(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xac0) as *mut uint16).offset(0) =
@@ -7882,39 +7875,38 @@ pub unsafe fn Samus_MoveHandler_ShinesparkCrash_1(game: &mut Game) {
         & 0x8000 as ::core::ffi::c_int
         == 0
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xaae) as *mut uint16) =
-            ((ram_word!(game, speed_echoes_index) as uint8) as u16) | (0x200u16);
+        set_ram_word!(
+            game.speed_echoes_index =
+                ((ram_word!(game, speed_echoes_index) as uint8) as u16) | (0x200u16)
+        );
     }
 }
 pub unsafe fn Samus_MoveHandler_ShinesparkCrash_2(game: &mut Game) {
     let ref mut fresh118 = *((&raw mut game.g_ram as *mut uint8).offset(0xaae) as *mut uint16);
     *fresh118 = (*fresh118).wrapping_sub(4u16);
     if ram_word!(game, speed_echoes_index) as uint8 == 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) =
-            ((0x90d3f3i32) as u16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xaa2) as *mut uint16) = 30 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xaae) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_movement_handler = ((0x90d3f3i32) as u16));
+        set_ram_word!(game.timer_for_shinesparks_startstop = 30 as uint16);
+        set_ram_word!(game.speed_echoes_index = 0 as uint16);
         *((&raw mut game.g_ram as *mut uint8).offset(0xac0) as *mut uint16).offset(0) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0xac0) as *mut uint16).offset(1) = 0 as uint16;
     }
 }
 pub unsafe fn Samus_MoveHandler_ShinesparkCrashEchoCircle(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa68) as *mut uint16) = 15 as uint16;
+    set_ram_word!(game.samus_shine_timer = 15 as uint16);
     let ref mut fresh117 = *((&raw mut game.g_ram as *mut uint8).offset(0xaa2) as *mut uint16);
     *fresh117 = (*fresh117).wrapping_sub(1);
     let v0: bool = (*fresh117 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32;
     if ram_word!(game, timer_for_shinesparks_startstop) == 0 || v0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) =
-            ((0x90d40di32) as u16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa5c) as *mut uint16) =
-            ((0x90eb52i32) as u16);
+        set_ram_word!(game.samus_movement_handler = ((0x90d40di32) as u16));
+        set_ram_word!(game.samus_draw_handler = ((0x90eb52i32) as u16));
     }
 }
 pub unsafe fn Samus_MoveHandler_ShinesparkCrashFinish(game: &mut Game) {
     static kShinesparkCrashFinish_Tab0: [uint8; 12] = [
         0, 0x80, 0, 0x80, 0x40, 0xc0, 0x40, 0xc0, 0xe0, 0x60, 0x20, 0xa0,
     ];
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaae) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.speed_echoes_index = 0 as uint16);
     if ram_word!(game, projectile_counter) as ::core::ffi::c_int - 5 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0
@@ -7965,16 +7957,16 @@ pub unsafe fn Samus_MoveHandler_ShinesparkCrashFinish(game: &mut Game) {
                 + 1 as ::core::ffi::c_int) as usize] as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0xbdc) as *mut uint16).offset(4) = 0 as uint16;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa68) as *mut uint16) = 1 as uint16;
+    set_ram_word!(game.cooldown_timer = 0 as uint16);
+    set_ram_word!(game.samus_shine_timer = 1 as uint16);
     if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) == 4u8 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa2c) as *mut uint16) = 2 as uint16;
+        set_ram_word!(game.samus_new_pose_transitional = 2 as uint16);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa2c) as *mut uint16) = 1 as uint16;
+        set_ram_word!(game.samus_new_pose_transitional = 1 as uint16);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa32) as *mut uint16) = 2 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_hurt_switch_index = 2 as uint16);
+    set_ram_word!(game.substate = 0 as uint16);
+    set_ram_word!(game.suit_pickup_light_beam_pos = 0 as uint16);
 }
 pub unsafe fn ProjPreInstr_SpeedEcho(k: uint16, game: &mut Game) {
     let mut v3: int16 = 0;
@@ -8044,8 +8036,9 @@ pub unsafe fn Grapple_Func1(game: &mut Game) {
                 & 0x8000 as ::core::ffi::c_int
                 == 0
             {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xd00) as *mut uint16) =
-                    -(16 as ::core::ffi::c_int) as uint16;
+                set_ram_word!(
+                    game.grapple_beam_length_delta = -(16 as ::core::ffi::c_int) as uint16
+                );
             }
         }
         let pt: Point16U = Projectile_SinLookup(
@@ -8057,16 +8050,19 @@ pub unsafe fn Grapple_Func1(game: &mut Game) {
                 ) as uint16,
             ram_word!(game, grapple_beam_length),
         );
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd08) as *mut uint16) =
-            (pt.x).wrapping_add(ram_word!(game, x_pos_of_start_of_grapple_beam));
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16) =
-            (pt.y).wrapping_add(ram_word!(game, y_pos_of_start_of_grapple_beam));
+        set_ram_word!(
+            game.grapple_beam_end_x_pos =
+                (pt.x).wrapping_add(ram_word!(game, x_pos_of_start_of_grapple_beam))
+        );
+        set_ram_word!(
+            game.grapple_beam_end_y_pos =
+                (pt.y).wrapping_add(ram_word!(game, y_pos_of_start_of_grapple_beam))
+        );
         let ref mut fresh25 = *((&raw mut game.g_ram as *mut uint8).offset(0xcfa) as *mut uint16);
         *fresh25 = (*fresh25).wrapping_add(2048u16);
         GrappleBeamFunc_BF1B(game);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-            ((0x9bc856i32) as u16);
+        set_ram_word!(game.grapple_beam_function = ((0x9bc856i32) as u16));
     };
 }
 pub unsafe fn Hdmaobj_CrystalFlash(game: &mut Game) -> uint8 {
@@ -8105,39 +8101,36 @@ pub unsafe fn Hdmaobj_CrystalFlash(game: &mut Game) -> uint8 {
     } else {
         kPose_D3_FaceR_CrystalFlash as ::core::ffi::c_int
     }) as SamusPose;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) = v1 as uint16;
+    set_ram_word!(game.samus_pose = v1 as uint16);
     SamusFunc_F433(game);
     Samus_SetAnimationFrameIfPoseChanged(game);
     if *(&raw mut game.g_ram as *mut uint8).offset(0xa1f) != 27u8 {
         return 1 as uint8;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa24) as *mut uint16) =
-        ram_word!(game, samus_prev_pose);
+    set_ram_word!(game.samus_last_different_pose = ram_word!(game, samus_prev_pose));
     *((&raw mut game.g_ram as *mut uint8).offset(0xa26) as *mut uint16) =
         *((&raw mut game.g_ram as *mut uint8).offset(0xa22) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa20) as *mut uint16) =
-        ram_word!(game, samus_pose);
+    set_ram_word!(game.samus_prev_pose = ram_word!(game, samus_pose));
     *((&raw mut game.g_ram as *mut uint8).offset(0xa22) as *mut uint16) =
         *((&raw mut game.g_ram as *mut uint8).offset(0xa1e) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) = ((0x90d678i32) as u16);
+    set_ram_word!(game.samus_movement_handler = ((0x90d678i32) as u16));
     if ram_word!(game, samus_input_handler) as ::core::ffi::c_int
         != 0x90e91d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa60) as *mut uint16) =
-            ((0x90e90ei32) as u16);
+        set_ram_word!(game.samus_input_handler = ((0x90e90ei32) as u16));
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaa2) as *mut uint16) = 9 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdea) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) = 10 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.timer_for_shinesparks_startstop = 9 as uint16);
+    set_ram_word!(game.which_item_to_pickup = 0 as uint16);
+    set_ram_word!(game.substate = 10 as uint16);
+    set_ram_word!(game.suit_pickup_light_beam_pos = 0 as uint16);
     *((&raw mut game.g_ram as *mut uint8).offset(0xdf0) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xacc) as *mut uint16) = 7 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xace) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa68) as *mut uint16) = 1 as uint16;
+    set_ram_word!(game.timer_for_shine_timer = 7 as uint16);
+    set_ram_word!(game.special_samus_palette_frame = 0 as uint16);
+    set_ram_word!(game.samus_shine_timer = 1 as uint16);
     *((&raw mut game.g_ram as *mut uint8).offset(0xdf2) as *mut uint16) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x18aa) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa52) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_invincibility_timer = 0 as uint16);
+    set_ram_word!(game.samus_knockback_timer = 0 as uint16);
+    set_ram_word!(game.knockback_dir = 0 as uint16);
     0 as uint8
 }
 pub unsafe fn SamusMoveHandler_CrystalFlashStart(game: &mut Game) {
@@ -8146,20 +8139,17 @@ pub unsafe fn SamusMoveHandler_CrystalFlashStart(game: &mut Game) {
     let ref mut fresh113 = *((&raw mut game.g_ram as *mut uint8).offset(0xaa2) as *mut uint16);
     *fresh113 = (*fresh113).wrapping_sub(1);
     if (*fresh113 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa94) as *mut uint16) = 3 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16) = 6 as uint16;
+        set_ram_word!(game.samus_anim_frame_timer = 3 as uint16);
+        set_ram_word!(game.samus_anim_frame = 6 as uint16);
         *((&raw mut game.g_ram as *mut uint8).offset(0xdf0) as *mut uint16) =
             ram_word!(game, samus_y_pos);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) =
-            ((0x90d6cei32) as u16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x18aa) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_movement_handler = ((0x90d6cei32) as u16));
+        set_ram_word!(game.samus_invincibility_timer = 0 as uint16);
+        set_ram_word!(game.samus_knockback_timer = 0 as uint16);
         QueueSfx3_Max15(1 as uint16, game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xcee) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xce2) as *mut uint16) =
-            ram_word!(game, samus_x_pos);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xce4) as *mut uint16) =
-            ram_word!(game, samus_y_pos);
+        set_ram_word!(game.power_bomb_flag = 0 as uint16);
+        set_ram_word!(game.power_bomb_explosion_x_pos = ram_word!(game, samus_x_pos));
+        set_ram_word!(game.power_bomb_explosion_y_pos = ram_word!(game, samus_y_pos));
         EnableHdmaObjects(game);
         SpawnCrystalFlashHdmaObjs(game);
     }
@@ -8174,8 +8164,8 @@ static kSamusMoveHandler_CrystalFlashMainFuncs: [Option<Func_V>; 3] = unsafe {
 pub unsafe fn SamusMoveHandler_CrystalFlashMain(game: &mut Game) {
     kSamusMoveHandler_CrystalFlashMainFuncs[ram_word!(game, which_item_to_pickup) as usize]
         .expect("non-null function pointer")(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x18aa) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_invincibility_timer = 0 as uint16);
+    set_ram_word!(game.samus_knockback_timer = 0 as uint16);
 }
 pub unsafe fn SamusMoveHandler_CrystalFlashMain_0(game: &mut Game) {
     if (ram_word!(game, nmi_frame_counter_word) as ::core::ffi::c_int & 7 as ::core::ffi::c_int)
@@ -8188,7 +8178,7 @@ pub unsafe fn SamusMoveHandler_CrystalFlashMain_0(game: &mut Game) {
         let ref mut fresh110 = *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16);
         *fresh110 = (*fresh110).wrapping_sub(1);
         if *fresh110 == 0 || v0 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) = 10 as uint16;
+            set_ram_word!(game.substate = 10 as uint16);
             let ref mut fresh111 =
                 *((&raw mut game.g_ram as *mut uint8).offset(0xdea) as *mut uint16);
             *fresh111 = (*fresh111).wrapping_add(1);
@@ -8206,7 +8196,7 @@ pub unsafe fn SamusMoveHandler_CrystalFlashMain_1(game: &mut Game) {
         let ref mut fresh107 = *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16);
         *fresh107 = (*fresh107).wrapping_sub(1);
         if *fresh107 == 0 || v0 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) = 10 as uint16;
+            set_ram_word!(game.substate = 10 as uint16);
             let ref mut fresh108 =
                 *((&raw mut game.g_ram as *mut uint8).offset(0xdea) as *mut uint16);
             *fresh108 = (*fresh108).wrapping_add(1);
@@ -8224,12 +8214,10 @@ pub unsafe fn SamusMoveHandler_CrystalFlashMain_2(game: &mut Game) {
         let ref mut fresh105 = *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16);
         *fresh105 = (*fresh105).wrapping_sub(1);
         if *fresh105 == 0 || v0 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) =
-                ((0x90d75bi32) as u16);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa5c) as *mut uint16) =
-                ((0x90eb52i32) as u16);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa94) as *mut uint16) = 3 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16) = 12 as uint16;
+            set_ram_word!(game.samus_movement_handler = ((0x90d75bi32) as u16));
+            set_ram_word!(game.samus_draw_handler = ((0x90eb52i32) as u16));
+            set_ram_word!(game.samus_anim_frame_timer = 3 as uint16);
+            set_ram_word!(game.samus_anim_frame = 12 as uint16);
         }
     }
 }
@@ -8241,18 +8229,15 @@ pub unsafe fn kSamusMoveHandler_CrystalFlashFinish(game: &mut Game) {
         *fresh103 = (*fresh103).wrapping_add(1);
     }
     if *(&raw mut game.g_ram as *mut uint8).offset(0xa1f) == 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xcee) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa68) as *mut uint16) =
-            -(1 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) =
-            ((0x90a337i32) as u16);
+        set_ram_word!(game.power_bomb_flag = 0 as uint16);
+        set_ram_word!(game.samus_shine_timer = -(1 as ::core::ffi::c_int) as uint16);
+        set_ram_word!(game.samus_movement_handler = ((0x90a337i32) as u16));
         if ram_word!(game, samus_input_handler) as ::core::ffi::c_int
             != 0x90e91d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa60) as *mut uint16) =
-                ((0x90e913i32) as u16);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x18aa) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.samus_input_handler = ((0x90e913i32) as u16));
+            set_ram_word!(game.samus_invincibility_timer = 0 as uint16);
+            set_ram_word!(game.samus_knockback_timer = 0 as uint16);
         }
     }
 }
@@ -8266,8 +8251,8 @@ pub unsafe fn ProjPreInstr_PlasmaSba(k: uint16, game: &mut Game) {
     {
         ClearProjectile(k, game);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) = 2 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.cooldown_timer = 2 as uint16);
+        set_ram_word!(game.flare_counter = 0 as uint16);
         let pt: Point16U = Projectile_SinLookup(
             *((&raw mut game.g_ram as *mut uint8).offset(0xc7c) as *mut uint16).offset(v1 as isize),
             *((&raw mut game.g_ram as *mut uint8).offset(0xbdc) as *mut uint16).offset(v1 as isize),
@@ -8596,8 +8581,8 @@ pub unsafe fn ProjPreInstr_WaveSba(mut k: uint16, game: &mut Game) {
             QueueSfx1_Max6(0x28 as uint16, game);
         }
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) = 2 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.cooldown_timer = 2 as uint16);
+    set_ram_word!(game.flare_counter = 0 as uint16);
 }
 pub unsafe fn BombSpread(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xc72) as *mut uint16).offset(0)
@@ -8644,19 +8629,23 @@ pub unsafe fn BombSpread(game: &mut Game) {
                 break;
             }
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0xcd2) as *mut uint16) = 5 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) =
-            kNonBeamProjectileCooldowns[(*(((&raw mut game.g_ram as *mut uint8).offset(0xc18)
-                as *mut uint16)
-                .offset(5) as *mut uint16 as *mut uint8)
-                .offset(
-                    (::core::mem::size_of::<uint16>())
-                        .wrapping_div(::core::mem::size_of::<uint8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) as ::core::ffi::c_int
-                & 0xf as ::core::ffi::c_int) as usize] as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xcd4) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.bomb_counter = 5 as uint16);
+        set_ram_word!(
+            game.cooldown_timer =
+                kNonBeamProjectileCooldowns[(*(((&raw mut game.g_ram as *mut uint8).offset(0xc18)
+                    as *mut uint16)
+                    .offset(5) as *mut uint16
+                    as *mut uint8)
+                    .offset(
+                        (::core::mem::size_of::<uint16>())
+                            .wrapping_div(::core::mem::size_of::<uint8>())
+                            .wrapping_sub(1_usize) as isize,
+                    ) as ::core::ffi::c_int
+                    & 0xf as ::core::ffi::c_int)
+                    as usize] as uint16
+        );
+        set_ram_word!(game.bomb_spread_charge_timeout_counter = 0 as uint16);
+        set_ram_word!(game.flare_counter = 0 as uint16);
     }
 }
 static kProjPreInstr_SpazerSba_FuncsB: [Option<Func_SpazerSba_V>; 3] = unsafe {
@@ -8706,8 +8695,8 @@ pub unsafe fn ProjPreInstr_SpazerSba(mut k: uint16, game: &mut Game) {
             .offset(v4 as isize) as ::core::ffi::c_int
             >> 1 as ::core::ffi::c_int) as usize]
             .expect("non-null function pointer")(k, pt.y, game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) = 2 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.cooldown_timer = 2 as uint16);
+        set_ram_word!(game.flare_counter = 0 as uint16);
     };
 }
 pub unsafe fn ProjPreInstr_SpazerSba_FuncA_0(k: uint16, game: &mut Game) {
@@ -8889,8 +8878,8 @@ pub unsafe fn ProjPreInstr_EndOfSpazerSba(mut k: uint16, game: &mut Game) {
         {
             current_block = 14656271494628884762;
         } else {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) = 2 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.cooldown_timer = 2 as uint16);
+            set_ram_word!(game.flare_counter = 0 as uint16);
             current_block = 7651349459974463963;
         }
     }
@@ -8983,8 +8972,7 @@ pub unsafe fn HudSelectionHandler_TurningAround(game: &mut Game) {
     } else if ram_word!(game, grapple_beam_function) as ::core::ffi::c_int
         != 0x9bc4f0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-            ((0x9bc856i32) as u16);
+        set_ram_word!(game.grapple_beam_function = ((0x9bc856i32) as u16));
     }
 }
 pub unsafe fn HudSelectionHandler_CrouchEtcTrans(game: &mut Game) {
@@ -9007,8 +8995,7 @@ pub unsafe fn HudSelectionHandler_CrouchEtcTrans(game: &mut Game) {
             if ram_word!(game, grapple_beam_function) as ::core::ffi::c_int
                 != 0x9bc4f0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
             {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-                    ((0x9bc856i32) as u16);
+                set_ram_word!(game.grapple_beam_function = ((0x9bc856i32) as u16));
                 HudSelectionHandler_Normal(game);
             }
             current_block = 5720623009719927633;
@@ -9024,8 +9011,7 @@ pub unsafe fn HudSelectionHandler_JumpEtc(game: &mut Game) {
     if ram_word!(game, grapple_beam_function) as ::core::ffi::c_int
         != 0x9bc4f0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-            ((0x9bc856i32) as u16);
+        set_ram_word!(game.grapple_beam_function = ((0x9bc856i32) as u16));
         HudSelectionHandler_Normal(game);
     }
 }
@@ -9093,13 +9079,12 @@ pub unsafe fn Samus_HitInterruption(game: &mut Game) {
                     & 1 as ::core::ffi::c_int
                     != 0
                 {
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xa30) as *mut uint16) =
-                        1 as uint16;
+                    set_ram_word!(game.samus_special_transgfx_index = 1 as uint16);
                 }
             }
         } else {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x18aa) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.samus_invincibility_timer = 0 as uint16);
+            set_ram_word!(game.samus_knockback_timer = 0 as uint16);
         }
     } else if ram_word!(game, knockback_dir) != 0 {
         if *(&raw mut game.g_ram as *mut uint8).offset(0xa1f) as ::core::ffi::c_int
@@ -9112,21 +9097,18 @@ pub unsafe fn Samus_HitInterruption(game: &mut Game) {
                 QueueSfx1_Max6(0x41 as uint16, game);
             }
             if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) == 4u8 {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xa2c) as *mut uint16) =
-                    kPose_2A_FaceL_Fall as uint16;
+                set_ram_word!(game.samus_new_pose_transitional = kPose_2A_FaceL_Fall as uint16);
             } else {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xa2c) as *mut uint16) =
-                    kPose_29_FaceR_Fall as uint16;
+                set_ram_word!(game.samus_new_pose_transitional = kPose_29_FaceR_Fall as uint16);
             }
         } else {
             if ram_word!(game, samus_hurt_switch_index) == 3u16 {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xa32) as *mut uint16) = 8 as uint16;
+                set_ram_word!(game.samus_hurt_switch_index = 8 as uint16);
                 return;
             }
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa2c) as *mut uint16) =
-                ram_word!(game, samus_pose);
+            set_ram_word!(game.samus_new_pose_transitional = ram_word!(game, samus_pose));
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa32) as *mut uint16) = 1 as uint16;
+        set_ram_word!(game.samus_hurt_switch_index = 1 as uint16);
     } else if ram_word!(game, bomb_jump_dir) != 0 {
         SetupBombJump(game);
     }
@@ -9137,20 +9119,20 @@ pub unsafe fn Samus_HitInterrupt_Shinespark(game: &mut Game) -> uint8 {
         || ram_word!(game, samus_pose) as ::core::ffi::c_int
             == kPose_E9_FaceL_Drained_CrouchFalling as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa94) as *mut uint16) = 17 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16) = 26 as uint16;
+        set_ram_word!(game.samus_anim_frame_timer = 17 as uint16);
+        set_ram_word!(game.samus_anim_frame = 26 as uint16);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa30) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa52) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_special_transgfx_index = 0 as uint16);
+    set_ram_word!(game.knockback_dir = 0 as uint16);
     0 as uint8
 }
 pub unsafe fn Samus_HitInterrupt_KnockbackGrapple(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa30) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_special_transgfx_index = 0 as uint16);
     0 as uint8
 }
 pub unsafe fn Samus_HitInterrupt_Turning(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa30) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa52) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_special_transgfx_index = 0 as uint16);
+    set_ram_word!(game.knockback_dir = 0 as uint16);
     0 as uint8
 }
 pub unsafe fn Samus_HitInterrupt_Falling(game: &mut Game) -> uint8 {
@@ -9159,28 +9141,27 @@ pub unsafe fn Samus_HitInterrupt_Falling(game: &mut Game) -> uint8 {
     {
         return Samus_HitInterrupt_Stand(game);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa30) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa52) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_special_transgfx_index = 0 as uint16);
+    set_ram_word!(game.knockback_dir = 0 as uint16);
     0 as uint8
 }
 pub unsafe fn Samus_HitInterrupt_Stand(game: &mut Game) -> uint8 {
     if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) == 4u8 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa2a) as *mut uint16) = 84 as uint16;
+        set_ram_word!(game.samus_new_pose_interrupted = 84 as uint16);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa2a) as *mut uint16) = 83 as uint16;
+        set_ram_word!(game.samus_new_pose_interrupted = 83 as uint16);
     }
     1 as uint8
 }
 pub unsafe fn Samus_HitInterrupt_Ball(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa2a) as *mut uint16) =
-        ram_word!(game, samus_pose);
+    set_ram_word!(game.samus_new_pose_interrupted = ram_word!(game, samus_pose));
     1 as uint8
 }
 pub unsafe fn Samus_HitInterrupt_Unused(game: &mut Game) -> uint8 {
     if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) == 4u8 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa2a) as *mut uint16) = 52 as uint16;
+        set_ram_word!(game.samus_new_pose_interrupted = 52 as uint16);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa2a) as *mut uint16) = 51 as uint16;
+        set_ram_word!(game.samus_new_pose_interrupted = 51 as uint16);
     }
     1 as uint8
 }
@@ -9197,7 +9178,7 @@ static kSamus_MoveHandler_Knockback: [Option<Func_V>; 6] = unsafe {
 pub unsafe fn Samus_MoveHandler_Knockback(game: &mut Game) {
     kSamus_MoveHandler_Knockback[ram_word!(game, knockback_dir) as usize]
         .expect("non-null function pointer")(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.input_to_pose_calc = 0 as uint16);
 }
 pub unsafe fn Samus_MoveHandler_Knockback_0(game: &mut Game) {
     InvalidInterrupt_Crash(game);
@@ -9218,17 +9199,17 @@ pub unsafe fn Samus_MoveHandler_Knockback_Down(game: &mut Game) {
 }
 pub unsafe fn Samus_ClearMoveVars(game: &mut Game) {
     if ram_word!(game, samus_collision_flag) != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb4a) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdce) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb22) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb1a) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb2a) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb2c) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb36) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb38) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb46) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb48) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_x_accel_mode = 0 as uint16);
+        set_ram_word!(game.samus_collides_with_solid_enemy = 0 as uint16);
+        set_ram_word!(game.samus_is_falling_flag = 0 as uint16);
+        set_ram_word!(game.UNUSED_word_7E0B1A = 0 as uint16);
+        set_ram_word!(game.UNUSED_word_7E0B2A = 0 as uint16);
+        set_ram_word!(game.samus_y_subspeed = 0 as uint16);
+        set_ram_word!(game.samus_y_speed = 0 as uint16);
+        set_ram_word!(game.samus_y_dir = 0 as uint16);
+        set_ram_word!(game.UNUSED_word_7E0B38 = 0 as uint16);
+        set_ram_word!(game.samus_x_base_speed = 0 as uint16);
+        set_ram_word!(game.samus_x_base_subspeed = 0 as uint16);
         Samus_AlignBottomWithPrevPose(game);
     }
 }
@@ -9276,7 +9257,7 @@ pub unsafe fn SetupBombJump(game: &mut Game) {
             & 1 as ::core::ffi::c_int
             != 0
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa30) as *mut uint16) = 3 as uint16;
+            set_ram_word!(game.samus_special_transgfx_index = 3 as uint16);
         }
     }
 }
@@ -9284,36 +9265,33 @@ pub unsafe fn SetupBombJump_StandCrouch(game: &mut Game) -> uint8 {
     if ram_word!(game, time_is_frozen_flag) == 0 {
         return SetupBombJump_1(game);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa56) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.bomb_jump_dir = 0 as uint16);
     0 as uint8
 }
 pub unsafe fn SetupBombJump_1(game: &mut Game) -> uint8 {
     if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) == 4u8 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa2a) as *mut uint16) =
-            kPose_52_FaceL_Jump_NoAim_MoveF as uint16;
+        set_ram_word!(game.samus_new_pose_interrupted = kPose_52_FaceL_Jump_NoAim_MoveF as uint16);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa2a) as *mut uint16) =
-            kPose_51_FaceR_Jump_NoAim_MoveF as uint16;
+        set_ram_word!(game.samus_new_pose_interrupted = kPose_51_FaceR_Jump_NoAim_MoveF as uint16);
     }
     1 as uint8
 }
 pub unsafe fn SetupBombJump_4(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa2a) as *mut uint16) =
-        ram_word!(game, samus_pose);
+    set_ram_word!(game.samus_new_pose_interrupted = ram_word!(game, samus_pose));
     1 as uint8
 }
 pub unsafe fn SetupBombJump_2(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa60) as *mut uint16) = ((0x90e913i32) as u16);
+    set_ram_word!(game.samus_input_handler = ((0x90e913i32) as u16));
     SetupBombJump_1A(game)
 }
 pub unsafe fn SetupBombJump_1A(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa56) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.bomb_jump_dir = 0 as uint16);
     0 as uint8
 }
 pub unsafe fn Samus_MoveHandler_BombJumpStart(game: &mut Game) {
     Samus_InitBombJump(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) = ((0x90e032i32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_movement_handler = ((0x90e032i32) as u16));
+    set_ram_word!(game.input_to_pose_calc = 0 as uint16);
 }
 static kSamus_MoveHandler_BombJumpMain: [Option<Func_V>; 4] = unsafe {
     [
@@ -9351,14 +9329,13 @@ pub unsafe fn Samus_VerticalBombJump(game: &mut Game) {
     }
 }
 pub unsafe fn Samus_MoveHandler_BombJumpFunc1(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) = ((0x90a337i32) as u16);
+    set_ram_word!(game.samus_movement_handler = ((0x90a337i32) as u16));
     if ram_word!(game, samus_input_handler) as ::core::ffi::c_int
         != 0x90e91d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa60) as *mut uint16) =
-            ((0x90e913i32) as u16);
+        set_ram_word!(game.samus_input_handler = ((0x90e913i32) as u16));
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa56) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.bomb_jump_dir = 0 as uint16);
 }
 pub unsafe fn CallFrameHandlerGamma(ea: uint32, game: &mut Game) {
     match ea {
@@ -9412,10 +9389,9 @@ pub unsafe fn Samus_Func1(game: &mut Game) {
             & kButton_Up as ::core::ffi::c_int)
             != 0i32
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa94) as *mut uint16) = 1 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16) = 13 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa5a) as *mut uint16) =
-            ((0x90e90ei32) as u16);
+        set_ram_word!(game.samus_anim_frame_timer = 1 as uint16);
+        set_ram_word!(game.samus_anim_frame = 13 as uint16);
+        set_ram_word!(game.frame_handler_gamma = ((0x90e90ei32) as u16));
     }
 }
 pub unsafe fn Samus_Func2(game: &mut Game) {
@@ -9429,22 +9405,20 @@ pub unsafe fn Samus_Func2(game: &mut Game) {
             & kButton_Up as ::core::ffi::c_int)
             != 0i32
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa94) as *mut uint16) = 1 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16) = 18 as uint16;
+        set_ram_word!(game.samus_anim_frame_timer = 1 as uint16);
+        set_ram_word!(game.samus_anim_frame = 18 as uint16);
     }
 }
 pub unsafe fn Samus_Func3(game: &mut Game) {
     if ProcessTimer(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
-            kGameState_35_TimeUp as uint16;
+        set_ram_word!(game.game_state = kGameState_35_TimeUp as uint16);
         let mut i: ::core::ffi::c_int = 510 as ::core::ffi::c_int;
         while i >= 0i32 {
             *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
                 .offset((i >> 1 as ::core::ffi::c_int) as isize) = 0x7fff as uint16;
             i -= 2 as ::core::ffi::c_int;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa5a) as *mut uint16) =
-            ((0x90e114i32) as u16);
+        set_ram_word!(game.frame_handler_gamma = ((0x90e114i32) as u16));
         DisablePaletteFx(game);
     }
     if ram_word!(game, timer_status) != 0 {
@@ -9455,25 +9429,21 @@ pub unsafe fn DrawTimer_(game: &mut Game) {
     DrawTimer(game);
 }
 pub unsafe fn Samus_SetPushedOutOfCeresRidley(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) = ((0x90e90ei32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa5a) as *mut uint16) = ((0x90e12ei32) as u16);
+    set_ram_word!(game.samus_movement_handler = ((0x90e90ei32) as u16));
+    set_ram_word!(game.frame_handler_gamma = ((0x90e12ei32) as u16));
 }
 pub unsafe fn Samus_PushOutOfRidleysWay(game: &mut Game) {
     if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) == 4u8 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-            kPose_54_FaceL_Knockback as uint16;
+        set_ram_word!(game.samus_pose = kPose_54_FaceL_Knockback as uint16);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-            kPose_53_FaceR_Knockback as uint16;
+        set_ram_word!(game.samus_pose = kPose_53_FaceR_Knockback as uint16);
     }
     SamusFunc_F433(game);
     Samus_SetAnimationFrameIfPoseChanged(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa24) as *mut uint16) =
-        ram_word!(game, samus_prev_pose);
+    set_ram_word!(game.samus_last_different_pose = ram_word!(game, samus_prev_pose));
     *((&raw mut game.g_ram as *mut uint8).offset(0xa26) as *mut uint16) =
         *((&raw mut game.g_ram as *mut uint8).offset(0xa22) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa20) as *mut uint16) =
-        ram_word!(game, samus_pose);
+    set_ram_word!(game.samus_prev_pose = ram_word!(game, samus_pose));
     *((&raw mut game.g_ram as *mut uint8).offset(0xa22) as *mut uint16) =
         *((&raw mut game.g_ram as *mut uint8).offset(0xa1e) as *mut uint16);
     let ref mut fresh131 = *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16);
@@ -9486,23 +9456,20 @@ pub unsafe fn Samus_PushOutOfRidleysWay(game: &mut Game) {
         & 0x8000 as ::core::ffi::c_int
         != 0
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa62) as *mut uint16) = 1 as uint16;
+        set_ram_word!(game.samus_var62 = 1 as uint16);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa62) as *mut uint16) = 2 as uint16;
+        set_ram_word!(game.samus_var62 = 2 as uint16);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16) = 5 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb2c) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa56) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa5a) as *mut uint16) = ((0x90e1c8i32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa28) as *mut uint16) =
-        -(1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa2a) as *mut uint16) =
-        -(1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa2c) as *mut uint16) =
-        -(1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa2e) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa30) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa32) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_y_speed = 5 as uint16);
+    set_ram_word!(game.samus_y_subspeed = 0 as uint16);
+    set_ram_word!(game.bomb_jump_dir = 0 as uint16);
+    set_ram_word!(game.frame_handler_gamma = ((0x90e1c8i32) as u16));
+    set_ram_word!(game.samus_new_pose = -(1 as ::core::ffi::c_int) as uint16);
+    set_ram_word!(game.samus_new_pose_interrupted = -(1 as ::core::ffi::c_int) as uint16);
+    set_ram_word!(game.samus_new_pose_transitional = -(1 as ::core::ffi::c_int) as uint16);
+    set_ram_word!(game.samus_momentum_routine_index = 0 as uint16);
+    set_ram_word!(game.samus_special_transgfx_index = 0 as uint16);
+    set_ram_word!(game.samus_hurt_switch_index = 0 as uint16);
     ProcessTimer(game);
     if ram_word!(game, timer_status) != 0 {
         DrawTimer(game);
@@ -9521,12 +9488,11 @@ pub unsafe fn Samus_Func4(game: &mut Game) {
         || ram_word!(game, samus_new_pose) as ::core::ffi::c_int
             == kPose_50_FaceR_Dmgboost as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa28) as *mut uint16) =
-            -(1 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa2e) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_new_pose = -(1 as ::core::ffi::c_int) as uint16);
+        set_ram_word!(game.samus_momentum_routine_index = 0 as uint16);
     }
     off_90E1F7[ram_word!(game, samus_var62) as usize].expect("non-null function pointer")(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.input_to_pose_calc = 0 as uint16);
     ProcessTimer(game);
     if ram_word!(game, timer_status) != 0 {
         DrawTimer(game);
@@ -9535,11 +9501,9 @@ pub unsafe fn Samus_Func4(game: &mut Game) {
 pub unsafe fn Samus_Func5(game: &mut Game) {
     Samus_BombJumpFallingXMovement_(game);
     if ram_word!(game, samus_collision_flag) != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) =
-            ((0x90a337i32) as u16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa5a) as *mut uint16) =
-            ((0x90e0e6i32) as u16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa62) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_movement_handler = ((0x90a337i32) as u16));
+        set_ram_word!(game.frame_handler_gamma = ((0x90e0e6i32) as u16));
+        set_ram_word!(game.samus_var62 = 0 as uint16);
         Samus_ClearMoveVars(game);
     } else {
         Samus_BombJumpFallingYMovement_(game);
@@ -9548,11 +9512,9 @@ pub unsafe fn Samus_Func5(game: &mut Game) {
 pub unsafe fn Samus_Func6(game: &mut Game) {
     Samus_BombJumpFallingXMovement_(game);
     if ram_word!(game, samus_collision_flag) != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) =
-            ((0x90a337i32) as u16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa5a) as *mut uint16) =
-            ((0x90e0e6i32) as u16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa62) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_movement_handler = ((0x90a337i32) as u16));
+        set_ram_word!(game.frame_handler_gamma = ((0x90e0e6i32) as u16));
+        set_ram_word!(game.samus_var62 = 0 as uint16);
         Samus_ClearMoveVars(game);
     } else {
         Samus_BombJumpFallingYMovement_(game);
@@ -9562,9 +9524,8 @@ pub unsafe fn Samus_GrabbedByDraygonFrameHandler(game: &mut Game) {
     if ram_word!(game, grapple_beam_function) as ::core::ffi::c_int
         == 0x9bc77e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa28) as *mut uint16) =
-            -(1 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa2e) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_new_pose = -(1 as ::core::ffi::c_int) as uint16);
+        set_ram_word!(game.samus_momentum_routine_index = 0 as uint16);
     }
     if ram_word!(game, joypad1_newkeys) as ::core::ffi::c_int
         & (kButton_Up as ::core::ffi::c_int
@@ -9579,12 +9540,14 @@ pub unsafe fn Samus_GrabbedByDraygonFrameHandler(game: &mut Game) {
                 | kButton_Right as ::core::ffi::c_int)
             != ram_word!(game, suit_pickup_light_beam_pos) as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16) =
-            (ram_word!(game, joypad1_newkeys) as ::core::ffi::c_int
-                & (kButton_Up as ::core::ffi::c_int
-                    | kButton_Down as ::core::ffi::c_int
-                    | kButton_Left as ::core::ffi::c_int
-                    | kButton_Right as ::core::ffi::c_int)) as uint16;
+        set_ram_word!(
+            game.suit_pickup_light_beam_pos =
+                (ram_word!(game, joypad1_newkeys) as ::core::ffi::c_int
+                    & (kButton_Up as ::core::ffi::c_int
+                        | kButton_Down as ::core::ffi::c_int
+                        | kButton_Left as ::core::ffi::c_int
+                        | kButton_Right as ::core::ffi::c_int)) as uint16
+        );
         let ref mut fresh130 = *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16);
         *fresh130 = (*fresh130).wrapping_add(1);
         if ((*fresh130) as i16).wrapping_sub(60i16) >= 0i16 {
@@ -9594,79 +9557,67 @@ pub unsafe fn Samus_GrabbedByDraygonFrameHandler(game: &mut Game) {
 }
 pub unsafe fn Samus_SetGrabbedByDraygonPose(a: uint16, game: &mut Game) {
     if (a as ::core::ffi::c_int & 1 as ::core::ffi::c_int) != 0i32 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-            kPose_EC_FaceR_Draygon_NoMove_NoAim as uint16;
+        set_ram_word!(game.samus_pose = kPose_EC_FaceR_Draygon_NoMove_NoAim as uint16);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-            kPose_BA_FaceL_Draygon_NoMove_NoAim as uint16;
+        set_ram_word!(game.samus_pose = kPose_BA_FaceL_Draygon_NoMove_NoAim as uint16);
     }
     SamusFunc_F433(game);
     Samus_SetAnimationFrameIfPoseChanged(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa5a) as *mut uint16) = ((0x90e2a1i32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) = ((0x90e90ei32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.frame_handler_gamma = ((0x90e2a1i32) as u16));
+    set_ram_word!(game.samus_movement_handler = ((0x90e90ei32) as u16));
+    set_ram_word!(game.substate = 0 as uint16);
+    set_ram_word!(game.suit_pickup_light_beam_pos = 0 as uint16);
     *((&raw mut game.g_ram as *mut uint8).offset(0xdf0) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa24) as *mut uint16) =
-        ram_word!(game, samus_prev_pose);
+    set_ram_word!(game.samus_last_different_pose = ram_word!(game, samus_prev_pose));
     *((&raw mut game.g_ram as *mut uint8).offset(0xa26) as *mut uint16) =
         *((&raw mut game.g_ram as *mut uint8).offset(0xa22) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa20) as *mut uint16) =
-        ram_word!(game, samus_pose);
+    set_ram_word!(game.samus_prev_pose = ram_word!(game, samus_pose));
     *((&raw mut game.g_ram as *mut uint8).offset(0xa22) as *mut uint16) =
         *((&raw mut game.g_ram as *mut uint8).offset(0xa1e) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa28) as *mut uint16) =
-        -(1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa2a) as *mut uint16) =
-        -(1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa2c) as *mut uint16) =
-        -(1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa2e) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa30) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa32) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_new_pose = -(1 as ::core::ffi::c_int) as uint16);
+    set_ram_word!(game.samus_new_pose_interrupted = -(1 as ::core::ffi::c_int) as uint16);
+    set_ram_word!(game.samus_new_pose_transitional = -(1 as ::core::ffi::c_int) as uint16);
+    set_ram_word!(game.samus_momentum_routine_index = 0 as uint16);
+    set_ram_word!(game.samus_special_transgfx_index = 0 as uint16);
+    set_ram_word!(game.samus_hurt_switch_index = 0 as uint16);
 }
 pub unsafe fn Samus_ReleaseFromDraygon_(game: &mut Game) {
     Samus_ReleaseFromDraygon(game);
 }
 pub unsafe fn Samus_ReleaseFromDraygon(game: &mut Game) {
     if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) == 4u8 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-            kPose_02_FaceL_Normal as uint16;
+        set_ram_word!(game.samus_pose = kPose_02_FaceL_Normal as uint16);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-            kPose_01_FaceR_Normal as uint16;
+        set_ram_word!(game.samus_pose = kPose_01_FaceR_Normal as uint16);
     }
     SamusFunc_F433(game);
     Samus_SetAnimationFrameIfPoseChanged(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) = ((0x90a337i32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa5a) as *mut uint16) = ((0x90e90ei32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa24) as *mut uint16) =
-        ram_word!(game, samus_prev_pose);
+    set_ram_word!(game.samus_movement_handler = ((0x90a337i32) as u16));
+    set_ram_word!(game.frame_handler_gamma = ((0x90e90ei32) as u16));
+    set_ram_word!(game.samus_last_different_pose = ram_word!(game, samus_prev_pose));
     *((&raw mut game.g_ram as *mut uint8).offset(0xa26) as *mut uint16) =
         *((&raw mut game.g_ram as *mut uint8).offset(0xa22) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa20) as *mut uint16) =
-        ram_word!(game, samus_pose);
+    set_ram_word!(game.samus_prev_pose = ram_word!(game, samus_pose));
     *((&raw mut game.g_ram as *mut uint8).offset(0xa22) as *mut uint16) =
         *((&raw mut game.g_ram as *mut uint8).offset(0xa1e) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb46) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb48) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa28) as *mut uint16) =
-        -(1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa2a) as *mut uint16) =
-        -(1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa2c) as *mut uint16) =
-        -(1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa2e) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa30) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa32) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb2c) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb36) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb20) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb4a) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa64) as *mut uint16) =
-        (ram_word!(game, samus_grapple_flags) as ::core::ffi::c_int & 0xfffd as ::core::ffi::c_int
-            | 2 as ::core::ffi::c_int) as uint16;
+    set_ram_word!(game.samus_x_base_speed = 0 as uint16);
+    set_ram_word!(game.samus_x_base_subspeed = 0 as uint16);
+    set_ram_word!(game.samus_new_pose = -(1 as ::core::ffi::c_int) as uint16);
+    set_ram_word!(game.samus_new_pose_interrupted = -(1 as ::core::ffi::c_int) as uint16);
+    set_ram_word!(game.samus_new_pose_transitional = -(1 as ::core::ffi::c_int) as uint16);
+    set_ram_word!(game.samus_momentum_routine_index = 0 as uint16);
+    set_ram_word!(game.samus_special_transgfx_index = 0 as uint16);
+    set_ram_word!(game.samus_hurt_switch_index = 0 as uint16);
+    set_ram_word!(game.samus_y_speed = 0 as uint16);
+    set_ram_word!(game.samus_y_subspeed = 0 as uint16);
+    set_ram_word!(game.samus_y_dir = 0 as uint16);
+    set_ram_word!(game.used_for_ball_bounce_on_landing = 0 as uint16);
+    set_ram_word!(game.samus_x_accel_mode = 0 as uint16);
+    set_ram_word!(
+        game.samus_grapple_flags = (ram_word!(game, samus_grapple_flags) as ::core::ffi::c_int
+            & 0xfffd as ::core::ffi::c_int
+            | 2 as ::core::ffi::c_int) as uint16
+    );
 }
 pub unsafe fn Samus_Func7(game: &mut Game) {
     Samus_BombJumpFallingXMovement_(game);
@@ -9674,21 +9625,19 @@ pub unsafe fn Samus_Func7(game: &mut Game) {
         Samus_BombJumpFallingYMovement_(game);
         ram_word!(game, samus_collision_flag) != 0u16
     } {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) =
-            ((0x90a337i32) as u16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa5a) as *mut uint16) =
-            ((0x90e90ei32) as u16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa62) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_movement_handler = ((0x90a337i32) as u16));
+        set_ram_word!(game.frame_handler_gamma = ((0x90e90ei32) as u16));
+        set_ram_word!(game.samus_var62 = 0 as uint16);
         Samus_ClearMoveVars(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa2a) as *mut uint16) = 65 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa30) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_new_pose_interrupted = 65 as uint16);
+        set_ram_word!(game.samus_special_transgfx_index = 0 as uint16);
     }
 }
 pub unsafe fn Samus_Func8(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb2c) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) = ((0x90a337i32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa5a) as *mut uint16) = ((0x90e90ei32) as u16);
+    set_ram_word!(game.samus_y_subspeed = 0 as uint16);
+    set_ram_word!(game.samus_y_speed = 0 as uint16);
+    set_ram_word!(game.samus_movement_handler = ((0x90a337i32) as u16));
+    set_ram_word!(game.frame_handler_gamma = ((0x90e90ei32) as u16));
 }
 pub unsafe fn Samus_Func9(game: &mut Game) {
     if ram_word!(game, samus_y_speed) as ::core::ffi::c_int - 5 as ::core::ffi::c_int
@@ -9714,8 +9663,8 @@ pub unsafe fn Samus_Func9(game: &mut Game) {
             & 0x8000 as ::core::ffi::c_int
             == 0
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa94) as *mut uint16) = 16 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16) = 4 as uint16;
+        set_ram_word!(game.samus_anim_frame_timer = 16 as uint16);
+        set_ram_word!(game.samus_anim_frame = 4 as uint16);
     }
 }
 unsafe fn Samus_ClampSpeed(amt: int32) -> int32 {
@@ -9735,7 +9684,7 @@ unsafe fn Samus_ClampSpeed(amt: int32) -> int32 {
 }
 pub unsafe fn Samus_CalcDisplacementMoveLeft(mut amt: int32, game: &mut Game) -> int32 {
     amt = Samus_CalcSpeed_X(amt as uint32, game) as int32;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb02) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_collision_direction = 0 as uint16);
     amt = ((ram_word!(game, extra_samus_x_displacement) as uint32) << 16 as ::core::ffi::c_int
         | ram_word!(game, extra_samus_x_subdisplacement) as uint32)
         .wrapping_sub(amt as uint32) as int32;
@@ -9743,7 +9692,7 @@ pub unsafe fn Samus_CalcDisplacementMoveLeft(mut amt: int32, game: &mut Game) ->
 }
 pub unsafe fn Samus_CalcDisplacementMoveRight(mut amt: int32, game: &mut Game) -> int32 {
     amt = Samus_CalcSpeed_X(amt as uint32, game) as int32;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb02) as *mut uint16) = 1 as uint16;
+    set_ram_word!(game.samus_collision_direction = 1 as uint16);
     amt = (amt as uint32).wrapping_add(
         (ram_word!(game, extra_samus_x_displacement) as uint32) << 16 as ::core::ffi::c_int
             | ram_word!(game, extra_samus_x_subdisplacement) as uint32,
@@ -9770,26 +9719,26 @@ pub unsafe fn Samus_CalcSpeed_X(mut amt: uint32, game: &mut Game) -> uint32 {
 pub unsafe fn Samus_ClearXSpeedIfColl(game: &mut Game) {
     if ram_word!(game, samus_collision_flag) != 0 {
         if ram_word!(game, samus_collision_direction) != 0 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdce) as *mut uint16) = 8 as uint16;
+            set_ram_word!(game.samus_collides_with_solid_enemy = 8 as uint16);
         } else {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdce) as *mut uint16) = 4 as uint16;
+            set_ram_word!(game.samus_collides_with_solid_enemy = 4 as uint16);
         }
         Samus_CancelSpeedBoost(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb42) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb44) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb46) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb48) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb4a) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_x_extra_run_speed = 0 as uint16);
+        set_ram_word!(game.samus_x_extra_run_subspeed = 0 as uint16);
+        set_ram_word!(game.samus_x_base_speed = 0 as uint16);
+        set_ram_word!(game.samus_x_base_subspeed = 0 as uint16);
+        set_ram_word!(game.samus_x_accel_mode = 0 as uint16);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdce) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.input_to_pose_calc = 0 as uint16);
+        set_ram_word!(game.samus_collides_with_solid_enemy = 0 as uint16);
     };
 }
 pub unsafe fn Samus_MoveUp_SetPoseCalcInput(game: &mut Game) {
     if ram_word!(game, samus_collision_flag) != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16) = 4 as uint16;
+        set_ram_word!(game.input_to_pose_calc = 4 as uint16);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.input_to_pose_calc = 0 as uint16);
     };
 }
 static kSamus_MoveDown_SetPoseCalcInput_Tab0: [uint8; 28] = [
@@ -9800,7 +9749,7 @@ static kSamus_MoveDown_SetPoseCalcInput_Tab1: [uint8; 28] = [
 ];
 pub unsafe fn Samus_MoveDown_SetPoseCalcInput(game: &mut Game) {
     if ram_word!(game, samus_collision_flag) != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16) = 1 as uint16;
+        set_ram_word!(game.input_to_pose_calc = 1 as uint16);
         *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
@@ -9808,7 +9757,7 @@ pub unsafe fn Samus_MoveDown_SetPoseCalcInput(game: &mut Game) {
         ) = kSamus_MoveDown_SetPoseCalcInput_Tab1
             [*(&raw mut game.g_ram as *mut uint8).offset(0xa1f) as usize];
     } else if (ram_word!(game, input_to_pose_calc) as uint8) != 5u8 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16) = 2 as uint16;
+        set_ram_word!(game.input_to_pose_calc = 2 as uint16);
         *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
@@ -9841,15 +9790,12 @@ pub unsafe fn HandleControllerInputForGamePhysics(game: &mut Game) {
     );
 }
 pub unsafe fn Samus_FrameHandlerAlfa_Func11(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa28) as *mut uint16) =
-        -(1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa2a) as *mut uint16) =
-        -(1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa2c) as *mut uint16) =
-        -(1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa2e) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa30) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa32) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_new_pose = -(1 as ::core::ffi::c_int) as uint16);
+    set_ram_word!(game.samus_new_pose_interrupted = -(1 as ::core::ffi::c_int) as uint16);
+    set_ram_word!(game.samus_new_pose_transitional = -(1 as ::core::ffi::c_int) as uint16);
+    set_ram_word!(game.samus_momentum_routine_index = 0 as uint16);
+    set_ram_word!(game.samus_special_transgfx_index = 0 as uint16);
+    set_ram_word!(game.samus_hurt_switch_index = 0 as uint16);
     Samus_SetRadius(game);
     Samus_CallInputHandler(game);
     Samus_UpdateSuitPaletteIndex(game);
@@ -9859,23 +9805,20 @@ pub unsafe fn Samus_FrameHandlerAlfa_Func11(game: &mut Game) {
     Samus_Func10(game);
 }
 pub unsafe fn Samus_FrameHandlerAlfa_Func12(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa28) as *mut uint16) =
-        -(1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa2a) as *mut uint16) =
-        -(1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa2c) as *mut uint16) =
-        -(1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa2e) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa30) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa32) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa14) as *mut uint16) =
-        ram_word!(game, joypad1_lastkeys);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa16) as *mut uint16) =
-        ram_word!(game, joypad1_newkeys);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa90) as *mut uint16) =
-        ram_word!(game, joypad1_input_samusfilter);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa92) as *mut uint16) =
-        ram_word!(game, joypad1_newinput_samusfilter);
+    set_ram_word!(game.samus_new_pose = -(1 as ::core::ffi::c_int) as uint16);
+    set_ram_word!(game.samus_new_pose_interrupted = -(1 as ::core::ffi::c_int) as uint16);
+    set_ram_word!(game.samus_new_pose_transitional = -(1 as ::core::ffi::c_int) as uint16);
+    set_ram_word!(game.samus_momentum_routine_index = 0 as uint16);
+    set_ram_word!(game.samus_special_transgfx_index = 0 as uint16);
+    set_ram_word!(game.samus_hurt_switch_index = 0 as uint16);
+    set_ram_word!(game.controller1_input_for_demo = ram_word!(game, joypad1_lastkeys));
+    set_ram_word!(game.controller1_new_input_for_demo = ram_word!(game, joypad1_newkeys));
+    set_ram_word!(
+        game.demo_backup_prev_controller_input = ram_word!(game, joypad1_input_samusfilter)
+    );
+    set_ram_word!(
+        game.demo_backup_prev_controller_input_new = ram_word!(game, joypad1_newinput_samusfilter)
+    );
     Samus_SetRadius(game);
     Samus_UpdateSuitPaletteIndex(game);
     Samus_CallInputHandler(game);
@@ -9932,7 +9875,7 @@ pub unsafe fn HandleSamusMovementAndPause(game: &mut Game) {
     );
 }
 pub unsafe fn Samus_FrameHandlerBeta_Func17(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa6e) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_contact_damage_index = 0 as uint16);
     RunSamusMovementHandler(game);
     UpdateMinimap(game);
     RunFrameHandlerGamma(game);
@@ -9955,36 +9898,30 @@ pub unsafe fn HandleDemoRecorder_1(game: &mut Game) {
                 != 0i32
         {
             DisableEprojs(game);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa78) as *mut uint16) = 1 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa42) as *mut uint16) =
-                ((0x90e8cdi32) as u16);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa44) as *mut uint16) =
-                ((0x90e7d2i32) as u16);
+            set_ram_word!(game.time_is_frozen_flag = 1 as uint16);
+            set_ram_word!(game.frame_handler_alfa = ((0x90e8cdi32) as u16));
+            set_ram_word!(game.frame_handler_beta = ((0x90e7d2i32) as u16));
         }
     } else if ram_word!(game, debug_flag) != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa5c) as *mut uint16) =
-            ((0x90e90ei32) as u16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9e6) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_draw_handler = ((0x90e90ei32) as u16));
+        set_ram_word!(game.debug_flag = 0 as uint16);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9e6) as *mut uint16) = 1 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa5c) as *mut uint16) =
-            ((0x90eb52i32) as u16);
+        set_ram_word!(game.debug_flag = 1 as uint16);
+        set_ram_word!(game.samus_draw_handler = ((0x90eb52i32) as u16));
     };
 }
 pub unsafe fn HandleDemoRecorder_3(game: &mut Game) {
     if (ram_word!(game, joypad2_new_keys) as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int)
         != 0i32
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa42) as *mut uint16) =
-            ((0x90e695i32) as u16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa44) as *mut uint16) =
-            ((0x90e725i32) as u16);
+        set_ram_word!(game.frame_handler_alfa = ((0x90e695i32) as u16));
+        set_ram_word!(game.frame_handler_beta = ((0x90e725i32) as u16));
         EnableEprojs(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa78) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.time_is_frozen_flag = 0 as uint16);
     }
 }
 pub unsafe fn Samus_FrameHandlerBeta_Func14(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa6e) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_contact_damage_index = 0 as uint16);
     RunSamusMovementHandler(game);
     UpdateMinimap(game);
     Samus_Animate(game);
@@ -9992,39 +9929,38 @@ pub unsafe fn Samus_FrameHandlerBeta_Func14(game: &mut Game) {
     Samus_HandleTransFromBlockColl(game);
     Samus_HandleTransitions(game);
     Samus_HandlePalette(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16) =
-        ram_word!(game, controller1_input_for_demo);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) =
-        ram_word!(game, controller1_new_input_for_demo);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdfe) as *mut uint16) =
-        ram_word!(game, demo_backup_prev_controller_input);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xe00) as *mut uint16) =
-        ram_word!(game, demo_backup_prev_controller_input_new);
+    set_ram_word!(game.joypad1_lastkeys = ram_word!(game, controller1_input_for_demo));
+    set_ram_word!(game.joypad1_newkeys = ram_word!(game, controller1_new_input_for_demo));
+    set_ram_word!(
+        game.joypad1_input_samusfilter = ram_word!(game, demo_backup_prev_controller_input)
+    );
+    set_ram_word!(
+        game.joypad1_newinput_samusfilter = ram_word!(game, demo_backup_prev_controller_input_new)
+    );
 }
 pub unsafe fn Samus_Func15(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa6e) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_contact_damage_index = 0 as uint16);
     RunSamusMovementHandler(game);
     Samus_Animate(game);
     Samus_HitInterruption(game);
     Samus_HandleTransFromBlockColl(game);
     Samus_HandleTransitions(game);
     Samus_HandlePalette(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16) =
-        ram_word!(game, controller1_input_for_demo);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) =
-        ram_word!(game, controller1_new_input_for_demo);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdfe) as *mut uint16) =
-        ram_word!(game, demo_backup_prev_controller_input);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xe00) as *mut uint16) =
-        ram_word!(game, demo_backup_prev_controller_input_new);
+    set_ram_word!(game.joypad1_lastkeys = ram_word!(game, controller1_input_for_demo));
+    set_ram_word!(game.joypad1_newkeys = ram_word!(game, controller1_new_input_for_demo));
+    set_ram_word!(
+        game.joypad1_input_samusfilter = ram_word!(game, demo_backup_prev_controller_input)
+    );
+    set_ram_word!(
+        game.joypad1_newinput_samusfilter = ram_word!(game, demo_backup_prev_controller_input_new)
+    );
 }
 pub unsafe fn Samus_Func16(game: &mut Game) {
     Samus_SetRadius(game);
     UpdateMinimap(game);
     Samus_Animate(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xe18) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb14) as *mut uint16) =
-        ram_word!(game, samus_y_pos);
+    set_ram_word!(game.elevator_status = 0 as uint16);
+    set_ram_word!(game.samus_prev_y_pos = ram_word!(game, samus_y_pos));
     if PlaySamusFanfare(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         if ram_word!(game, debug_invincibility) as ::core::ffi::c_int - 7 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
@@ -10032,12 +9968,10 @@ pub unsafe fn Samus_Func16(game: &mut Game) {
             || (ram_word!(game, joypad2_last) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int)
                 == 0i32
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xde0) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.debug_invincibility = 0 as uint16);
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa42) as *mut uint16) =
-            ((0x90e695i32) as u16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa44) as *mut uint16) =
-            ((0x90e725i32) as u16);
+        set_ram_word!(game.frame_handler_alfa = ((0x90e695i32) as u16));
+        set_ram_word!(game.frame_handler_beta = ((0x90e725i32) as u16));
     }
 }
 pub unsafe fn Samus_Func18(game: &mut Game) {
@@ -10047,16 +9981,15 @@ pub unsafe fn Samus_Func18(game: &mut Game) {
         && ram_word!(game, game_state) as ::core::ffi::c_int
             != kGameState_35_TimeUp as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
-            kGameState_35_TimeUp as uint16;
+        set_ram_word!(game.game_state = kGameState_35_TimeUp as uint16);
     }
 }
 pub unsafe fn SetContactDamageIndexAndUpdateMinimap(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa6e) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_contact_damage_index = 0 as uint16);
     UpdateMinimap(game);
 }
 pub unsafe fn Samus_Func19(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa6e) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_contact_damage_index = 0 as uint16);
     RunSamusMovementHandler(game);
     UpdateMinimap(game);
     Samus_Animate(game);
@@ -10109,11 +10042,11 @@ pub unsafe fn HandleAutoJumpHack(game: &mut Game) {
     {
         let ref mut fresh26 = *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16);
         *fresh26 = (*fresh26) | (ram_word!(game, button_config_jump_a));
-        *((&raw mut game.g_ram as *mut uint8).offset(0xaf4) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.autojump_timer = 0 as uint16);
     }
     Samus_InputHandler(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) = v0;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa60) as *mut uint16) = ((0x90e913i32) as u16);
+    set_ram_word!(game.joypad1_newkeys = v0);
+    set_ram_word!(game.samus_input_handler = ((0x90e913i32) as u16));
 }
 pub unsafe fn CallSamusMovementHandler(ea: uint32, game: &mut Game) {
     match ea {
@@ -10215,7 +10148,7 @@ pub unsafe fn SamusMovementType_Xray(game: &mut Game) {
     if *(&raw mut game.g_ram as *mut uint8).offset(0xa1f) as ::core::ffi::c_int
         != kMovementType_0E_TurningAroundOnGround as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa94) as *mut uint16) = 15 as uint16;
+        set_ram_word!(game.samus_anim_frame_timer = 15 as uint16);
         if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) == 4u8 {
             if ram_word!(game, xray_angle) as ::core::ffi::c_int - 153 as ::core::ffi::c_int
                 & 0x8000 as ::core::ffi::c_int
@@ -10261,14 +10194,14 @@ pub unsafe fn SamusMovementType_Xray(game: &mut Game) {
         } else {
             v0 = 4 as uint16;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16) = v0;
+        set_ram_word!(game.samus_anim_frame = v0);
     }
 }
 pub unsafe fn Samus_HandlePeriodicDamage(game: &mut Game) {
     if ram_word!(game, time_is_frozen_flag) != 0 {
         let ref mut fresh127 = *((&raw mut game.g_ram as *mut uint8).offset(0xa4e) as *mut uint16);
         *fresh127 = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa50) as *mut uint16) = *fresh127;
+        set_ram_word!(game.samus_periodic_damage = *fresh127);
         return;
     }
     let mut t: int32 = ((ram_word!(game, samus_periodic_damage) as uint32)
@@ -10294,11 +10227,11 @@ pub unsafe fn Samus_HandlePeriodicDamage(game: &mut Game) {
     if (ram_word!(game, samus_health) as int16) < 0i16 {
         let ref mut fresh128 = *((&raw mut game.g_ram as *mut uint8).offset(0xa4c) as *mut uint16);
         *fresh128 = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16) = *fresh128;
+        set_ram_word!(game.samus_health = *fresh128);
     }
     let ref mut fresh129 = *((&raw mut game.g_ram as *mut uint8).offset(0xa4e) as *mut uint16);
     *fresh129 = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa50) as *mut uint16) = *fresh129;
+    set_ram_word!(game.samus_periodic_damage = *fresh129);
 }
 pub unsafe fn Samus_PauseCheck(game: &mut Game) {
     if ram_word!(game, power_bomb_flag) == 0
@@ -10311,10 +10244,9 @@ pub unsafe fn Samus_PauseCheck(game: &mut Game) {
             & kButton_Start as ::core::ffi::c_int)
             != 0i32
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 1 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 1 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
-            kGameState_12_Pausing as uint16;
+        set_ram_word!(game.screen_fade_delay = 1 as uint16);
+        set_ram_word!(game.screen_fade_counter = 1 as uint16);
+        set_ram_word!(game.game_state = kGameState_12_Pausing as uint16);
     }
 }
 pub unsafe fn Samus_LowHealthCheck_(game: &mut Game) {
@@ -10343,12 +10275,10 @@ pub unsafe fn Samus_JumpCheck(game: &mut Game) {
         let ref mut fresh14 = *((&raw mut game.g_ram as *mut uint8).offset(0xaf4) as *mut uint16);
         *fresh14 = (*fresh14).wrapping_add(1);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xaf4) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.autojump_timer = 0 as uint16);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdfe) as *mut uint16) =
-        ram_word!(game, joypad1_lastkeys);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xe00) as *mut uint16) =
-        ram_word!(game, joypad1_newkeys);
+    set_ram_word!(game.joypad1_input_samusfilter = ram_word!(game, joypad1_lastkeys));
+    set_ram_word!(game.joypad1_newinput_samusfilter = ram_word!(game, joypad1_newkeys));
     if ((ram_word!(game, samus_health)) as i16)
         .wrapping_sub((ram_word!(game, samus_prev_health_for_flash)) as i16)
         >= 0i16
@@ -10356,7 +10286,7 @@ pub unsafe fn Samus_JumpCheck(game: &mut Game) {
         current_block = 16352754044285948771;
     } else {
         if ram_word!(game, samus_hurt_flash_counter) == 0 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa48) as *mut uint16) = 1 as uint16;
+            set_ram_word!(game.samus_hurt_flash_counter = 1 as uint16);
         }
         if ram_word!(game, debug_invincibility) as ::core::ffi::c_int - 7 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
@@ -10364,27 +10294,25 @@ pub unsafe fn Samus_JumpCheck(game: &mut Game) {
         {
             current_block = 16352754044285948771;
         } else {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16) =
-                ram_word!(game, samus_prev_health_for_flash);
+            set_ram_word!(game.samus_health = ram_word!(game, samus_prev_health_for_flash));
             current_block = 8515828400728868193;
         }
     }
     if current_block == 16352754044285948771 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa12) as *mut uint16) =
-            ram_word!(game, samus_health);
+        set_ram_word!(game.samus_prev_health_for_flash = ram_word!(game, samus_health));
     };
 }
 pub unsafe fn Samus_Func10(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdaa) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdac) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdae) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdb0) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdb2) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdb4) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdb6) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdb8) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa9a) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb5e) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.projectile_init_speed_samus_moved_left = 0 as uint16);
+    set_ram_word!(game.projectile_init_speed_samus_moved_left_fract = 0 as uint16);
+    set_ram_word!(game.projectile_init_speed_samus_moved_right = 0 as uint16);
+    set_ram_word!(game.projectile_init_speed_samus_moved_right_fract = 0 as uint16);
+    set_ram_word!(game.projectile_init_speed_samus_moved_up = 0 as uint16);
+    set_ram_word!(game.projectile_init_speed_samus_moved_up_fract = 0 as uint16);
+    set_ram_word!(game.projectile_init_speed_samus_moved_down = 0 as uint16);
+    set_ram_word!(game.projectile_init_speed_samus_moved_down_fract = 0 as uint16);
+    set_ram_word!(game.samus_anim_frame_skip = 0 as uint16);
+    set_ram_word!(game.new_projectile_direction_changed_pose = 0 as uint16);
     let ref mut fresh27 = *((&raw mut game.g_ram as *mut uint8).offset(0xdfa) as *mut uint16);
     *fresh27 = ((*fresh27 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xa10) as *mut uint8 as *mut uint16) =
@@ -10558,13 +10486,13 @@ pub fn Samus_AlignBottomWithPrevPose(game: &mut Game) {
 pub unsafe fn Samus_UpdateSuitPaletteIndex(game: &mut Game) {
     if (ram_word!(game, equipped_items) as ::core::ffi::c_int & 0x20 as ::core::ffi::c_int) != 0i32
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa74) as *mut uint16) = 4 as uint16;
+        set_ram_word!(game.samus_suit_palette_index = 4 as uint16);
     } else if (ram_word!(game, equipped_items) as ::core::ffi::c_int & 1 as ::core::ffi::c_int)
         != 0i32
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa74) as *mut uint16) = 2 as uint16;
+        set_ram_word!(game.samus_suit_palette_index = 2 as uint16);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa74) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_suit_palette_index = 0 as uint16);
     };
 }
 pub unsafe fn MoveSamusWithControlPad(game: &mut Game) {
@@ -10600,33 +10528,31 @@ static byte_90ED50: [uint8; 28] = [
 ];
 pub unsafe fn SwappedAmmoRoutine(game: &mut Game) {
     if byte_90ED50[*(&raw mut game.g_ram as *mut uint8).offset(0xa1f) as usize] != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9c6) as *mut uint16) =
-            (ram_word!(game, samus_x_pos) as ::core::ffi::c_int >> 4 as ::core::ffi::c_int)
-                as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9c8) as *mut uint16) =
-            (ram_word!(game, samus_x_pos) as ::core::ffi::c_int >> 4 as ::core::ffi::c_int)
-                as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9ca) as *mut uint16) =
-            (ram_word!(game, samus_y_pos) as ::core::ffi::c_int >> 4 as ::core::ffi::c_int)
-                as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9cc) as *mut uint16) =
-            (ram_word!(game, samus_y_pos) as ::core::ffi::c_int >> 4 as ::core::ffi::c_int)
-                as uint16;
+        set_ram_word!(
+            game.samus_missiles = (ram_word!(game, samus_x_pos) as ::core::ffi::c_int
+                >> 4 as ::core::ffi::c_int) as uint16
+        );
+        set_ram_word!(
+            game.samus_max_missiles = (ram_word!(game, samus_x_pos) as ::core::ffi::c_int
+                >> 4 as ::core::ffi::c_int) as uint16
+        );
+        set_ram_word!(
+            game.samus_super_missiles = (ram_word!(game, samus_y_pos) as ::core::ffi::c_int
+                >> 4 as ::core::ffi::c_int) as uint16
+        );
+        set_ram_word!(
+            game.samus_max_super_missiles = (ram_word!(game, samus_y_pos) as ::core::ffi::c_int
+                >> 4 as ::core::ffi::c_int) as uint16
+        );
     }
 }
 pub unsafe fn UNUSEDsub_90ED6C(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9c6) as *mut uint16) =
-        ram_word!(game, game_time_hours);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9c8) as *mut uint16) =
-        ram_word!(game, game_time_hours);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9ca) as *mut uint16) =
-        ram_word!(game, game_time_minutes);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9cc) as *mut uint16) =
-        ram_word!(game, game_time_minutes);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9ce) as *mut uint16) =
-        ram_word!(game, game_time_seconds);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9d0) as *mut uint16) =
-        ram_word!(game, game_time_seconds);
+    set_ram_word!(game.samus_missiles = ram_word!(game, game_time_hours));
+    set_ram_word!(game.samus_max_missiles = ram_word!(game, game_time_hours));
+    set_ram_word!(game.samus_super_missiles = ram_word!(game, game_time_minutes));
+    set_ram_word!(game.samus_max_super_missiles = ram_word!(game, game_time_minutes));
+    set_ram_word!(game.samus_power_bombs = ram_word!(game, game_time_seconds));
+    set_ram_word!(game.samus_max_power_bombs = ram_word!(game, game_time_seconds));
 }
 static kSamus_FootstepGraphics: [Option<Func_V>; 8] = unsafe {
     [
@@ -10767,7 +10693,7 @@ pub unsafe fn Samus_UpdateSpeedEchoPos(game: &mut Game) {
         if ((v2) as i16).wrapping_sub(4i16) >= 0i16 {
             v2 = 0 as uint16;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0xaae) as *mut uint16) = v2;
+        set_ram_word!(game.speed_echoes_index = v2);
     }
 }
 pub fn Samus_PostGrappleCollisionDetect(game: &mut Game) {
@@ -10808,8 +10734,7 @@ pub unsafe fn ProjPreInstr_UnknownProj8027(k: uint16, game: &mut Game) {
             == 1u16
         {
             if k == 6u16 {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) =
-                    ((0x90f04bi32) as u16);
+                set_ram_word!(game.samus_movement_handler = ((0x90f04bi32) as u16));
             }
             ClearProjectile(k, game);
         } else {
@@ -10818,9 +10743,9 @@ pub unsafe fn ProjPreInstr_UnknownProj8027(k: uint16, game: &mut Game) {
                 as *mut uint16)
                 .offset(v3 as isize);
             *fresh29 = (*fresh29).wrapping_add(1);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa68) as *mut uint16) = 180 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xacc) as *mut uint16) = 1 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xace) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.samus_shine_timer = 180 as uint16);
+            set_ram_word!(game.timer_for_shine_timer = 1 as uint16);
+            set_ram_word!(game.special_samus_palette_frame = 0 as uint16);
             *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
                 .offset(v3 as isize) = ((kProjPreInstr_UnknownProj8027_X2[v3 as usize]) as u16)
                 .wrapping_add(ram_word!(game, samus_x_pos));
@@ -10832,21 +10757,18 @@ pub unsafe fn ProjPreInstr_UnknownProj8027(k: uint16, game: &mut Game) {
 }
 pub unsafe fn Samus_Func25_ShineSpark(game: &mut Game) {
     if ram_word!(game, samus_shine_timer) == 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xace) as *mut uint16) = 6 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xad0) as *mut uint16) = 1 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa80) as *mut uint16) = 1 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xacc) as *mut uint16) = 10 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa68) as *mut uint16) = 120 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) =
-            ((0x90f072i32) as u16);
+        set_ram_word!(game.special_samus_palette_frame = 6 as uint16);
+        set_ram_word!(game.special_samus_palette_timer = 1 as uint16);
+        set_ram_word!(game.demo_timer_counter = 1 as uint16);
+        set_ram_word!(game.timer_for_shine_timer = 10 as uint16);
+        set_ram_word!(game.samus_shine_timer = 120 as uint16);
+        set_ram_word!(game.samus_movement_handler = ((0x90f072i32) as u16));
     }
 }
 pub unsafe fn Samus_MoveHandler_F072(game: &mut Game) {
     if ram_word!(game, samus_shine_timer) == 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa42) as *mut uint16) =
-            ((0x90e695i32) as u16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) =
-            ((0x90a337i32) as u16);
+        set_ram_word!(game.frame_handler_alfa = ((0x90e695i32) as u16));
+        set_ram_word!(game.samus_movement_handler = ((0x90a337i32) as u16));
     }
 }
 static kSamusCodeHandlers: [Option<Func_U8>; 32] = unsafe {
@@ -10892,24 +10814,19 @@ pub unsafe fn CallSomeSamusCode(a: uint16, game: &mut Game) -> uint16 {
     if code as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
         return (code as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa28) as *mut uint16) =
-        -(1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa2a) as *mut uint16) =
-        -(1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa2c) as *mut uint16) =
-        -(1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa2e) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa30) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa32) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_new_pose = -(1 as ::core::ffi::c_int) as uint16);
+    set_ram_word!(game.samus_new_pose_interrupted = -(1 as ::core::ffi::c_int) as uint16);
+    set_ram_word!(game.samus_new_pose_transitional = -(1 as ::core::ffi::c_int) as uint16);
+    set_ram_word!(game.samus_momentum_routine_index = 0 as uint16);
+    set_ram_word!(game.samus_special_transgfx_index = 0 as uint16);
+    set_ram_word!(game.samus_hurt_switch_index = 0 as uint16);
     -(1 as ::core::ffi::c_int) as uint16
 }
 pub unsafe fn Samus_UpdatePreviousPose(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa24) as *mut uint16) =
-        ram_word!(game, samus_prev_pose);
+    set_ram_word!(game.samus_last_different_pose = ram_word!(game, samus_prev_pose));
     *((&raw mut game.g_ram as *mut uint8).offset(0xa26) as *mut uint16) =
         *((&raw mut game.g_ram as *mut uint8).offset(0xa22) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa20) as *mut uint16) =
-        ram_word!(game, samus_pose);
+    set_ram_word!(game.samus_prev_pose = ram_word!(game, samus_pose));
     *((&raw mut game.g_ram as *mut uint8).offset(0xa22) as *mut uint16) =
         *((&raw mut game.g_ram as *mut uint8).offset(0xa1e) as *mut uint16);
 }
@@ -10917,35 +10834,32 @@ pub fn ClearCarry() -> uint8 {
     0 as uint8
 }
 pub unsafe fn SamusCode_00_LockSamus(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa42) as *mut uint16) = ((0x90e713i32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa44) as *mut uint16) = ((0x90e8dci32) as u16);
+    set_ram_word!(game.frame_handler_alfa = ((0x90e713i32) as u16));
+    set_ram_word!(game.frame_handler_beta = ((0x90e8dci32) as u16));
     1 as uint8
 }
 pub unsafe fn SamusCode_01_UnlockSamus(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa42) as *mut uint16) = ((0x90e695i32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa44) as *mut uint16) = ((0x90e725i32) as u16);
+    set_ram_word!(game.frame_handler_alfa = ((0x90e695i32) as u16));
+    set_ram_word!(game.frame_handler_beta = ((0x90e725i32) as u16));
     1 as uint8
 }
 pub unsafe fn SamusCode_02_ReachCeresElevator(game: &mut Game) -> uint8 {
     if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) == 4u8 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-            kPose_02_FaceL_Normal as uint16;
+        set_ram_word!(game.samus_pose = kPose_02_FaceL_Normal as uint16);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-            kPose_01_FaceR_Normal as uint16;
+        set_ram_word!(game.samus_pose = kPose_01_FaceR_Normal as uint16);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa9a) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_anim_frame_skip = 0 as uint16);
     SamusFunc_F433(game);
     Samus_SetAnimationFrameIfPoseChanged(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaa0) as *mut uint16) = 60 as uint16;
+    set_ram_word!(game.reached_ceres_elevator_fade_timer = 60 as uint16);
     SamusCode_00_LockSamus(game)
 }
 pub unsafe fn SamusCode_03(game: &mut Game) -> uint8 {
     if ram_word!(game, grapple_beam_function) as ::core::ffi::c_int
         != 0x9bc4f0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-            ((0x9bc8c5i32) as u16);
+        set_ram_word!(game.grapple_beam_function = ((0x9bc8c5i32) as u16));
         return 0 as uint8;
     }
     if *(&raw mut game.g_ram as *mut uint8).offset(0xa1f) as ::core::ffi::c_int
@@ -10958,31 +10872,29 @@ pub unsafe fn SamusCode_03(game: &mut Game) -> uint8 {
     if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) as ::core::ffi::c_int
         == kMovementType_04_MorphBallOnGround as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-            kPose_02_FaceL_Normal as uint16;
+        set_ram_word!(game.samus_pose = kPose_02_FaceL_Normal as uint16);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-            kPose_01_FaceR_Normal as uint16;
+        set_ram_word!(game.samus_pose = kPose_01_FaceR_Normal as uint16);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa9a) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_anim_frame_skip = 0 as uint16);
     SamusFunc_F433(game);
     Samus_SetAnimationFrameIfPoseChanged(game);
     Samus_UpdatePreviousPose(game);
     1 as uint8
 }
 pub unsafe fn SamusCode_04_06_Common(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.flare_counter = 0 as uint16);
     ClearFlareAnimationState(game);
     Samus_LoadSuitPalette(game);
     0 as uint8
 }
 pub unsafe fn SamusCode_04(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb62) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_charge_palette_index = 0 as uint16);
     SamusCode_04_06_Common(game)
 }
 pub unsafe fn SamusCode_06_LockToStation(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa42) as *mut uint16) = ((0x90e713i32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa44) as *mut uint16) = ((0x90e8d6i32) as u16);
+    set_ram_word!(game.frame_handler_alfa = ((0x90e713i32) as u16));
+    set_ram_word!(game.frame_handler_beta = ((0x90e8d6i32) as u16));
     if ram_word!(game, flare_counter) as ::core::ffi::c_int - 15 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         == 0
@@ -10993,32 +10905,29 @@ pub unsafe fn SamusCode_06_LockToStation(game: &mut Game) -> uint8 {
 }
 pub unsafe fn SamusCode_07_SetupForElevator(game: &mut Game) -> uint8 {
     MakeSamusFaceForward(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa44) as *mut uint16) = ((0x90e8eci32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) = ((0x90a337i32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa5c) as *mut uint16) = ((0x90ec14i32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa60) as *mut uint16) = ((0x90e913i32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa56) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.frame_handler_beta = ((0x90e8eci32) as u16));
+    set_ram_word!(game.samus_movement_handler = ((0x90a337i32) as u16));
+    set_ram_word!(game.samus_draw_handler = ((0x90ec14i32) as u16));
+    set_ram_word!(game.samus_input_handler = ((0x90e913i32) as u16));
+    set_ram_word!(game.bomb_jump_dir = 0 as uint16);
     1 as uint8
 }
 pub unsafe fn SamusCode_08_SetupForCeresStart(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa42) as *mut uint16) = ((0x90e8cdi32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa44) as *mut uint16) = ((0x90e8dci32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-        kPose_00_FaceF_Powersuit as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa9a) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.frame_handler_alfa = ((0x90e8cdi32) as u16));
+    set_ram_word!(game.frame_handler_beta = ((0x90e8dci32) as u16));
+    set_ram_word!(game.samus_pose = kPose_00_FaceF_Powersuit as uint16);
+    set_ram_word!(game.samus_anim_frame_skip = 0 as uint16);
     SamusFunc_F433(game);
     Samus_SetAnimationFrameIfPoseChanged(game);
     Samus_LoadSuitPalette(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa5c) as *mut uint16) = ((0x90eb52i32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa20) as *mut uint16) =
-        ram_word!(game, samus_pose);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa24) as *mut uint16) =
-        ram_word!(game, samus_pose);
+    set_ram_word!(game.samus_draw_handler = ((0x90eb52i32) as u16));
+    set_ram_word!(game.samus_prev_pose = ram_word!(game, samus_pose));
+    set_ram_word!(game.samus_last_different_pose = ram_word!(game, samus_pose));
     *((&raw mut game.g_ram as *mut uint8).offset(0xa22) as *mut uint16) =
         *((&raw mut game.g_ram as *mut uint8).offset(0xa1e) as *mut uint16);
     *((&raw mut game.g_ram as *mut uint8).offset(0xa26) as *mut uint16) =
         *((&raw mut game.g_ram as *mut uint8).offset(0xa1e) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_y_pos = 0 as uint16);
     let platform_parameter = SpawnEprojWithGfx(
         0 as uint16,
         0 as uint16,
@@ -11031,7 +10940,7 @@ pub unsafe fn SamusCode_08_SetupForCeresStart(game: &mut Game) -> uint8 {
         addr_kEproj_CeresElevatorPlatform as uint16,
         game,
     );
-    *((&raw mut game.g_ram as *mut uint8).offset(0x5f7) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.debug_disable_minimap = 0 as uint16);
     PlayRoomMusicTrackAfterAFrames(0x20 as uint16, game);
     1 as uint8
 }
@@ -11039,32 +10948,29 @@ pub unsafe fn SamusCode_08_SetupForZebesStart(game: &mut Game) -> uint8 {
     if (ram_word!(game, equipped_items) as ::core::ffi::c_int & 0x20 as ::core::ffi::c_int) != 0i32
     {
         SpawnPalfxObject(addr_stru_8DE1FC as uint16, game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-            kPose_9B_FaceF_VariaGravitySuit as uint16;
+        set_ram_word!(game.samus_pose = kPose_9B_FaceF_VariaGravitySuit as uint16);
     } else if (ram_word!(game, equipped_items) as ::core::ffi::c_int & 1 as ::core::ffi::c_int)
         != 0i32
     {
         SpawnPalfxObject(addr_stru_8DE1F8 as uint16, game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-            kPose_9B_FaceF_VariaGravitySuit as uint16;
+        set_ram_word!(game.samus_pose = kPose_9B_FaceF_VariaGravitySuit as uint16);
     } else {
         SpawnPalfxObject(addr_stru_8DE1F4 as uint16, game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-            kPose_00_FaceF_Powersuit as uint16;
+        set_ram_word!(game.samus_pose = kPose_00_FaceF_Powersuit as uint16);
     }
     Samus_LoadSuitPalette(game);
     SamusFunc_F433(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa94) as *mut uint16) = 3 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16) = 2 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_anim_frame_timer = 3 as uint16);
+    set_ram_word!(game.samus_anim_frame = 2 as uint16);
+    set_ram_word!(game.substate = 0 as uint16);
     1 as uint8
 }
 pub unsafe fn SamusCode_0A_ClearDrawHandler(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa5c) as *mut uint16) = ((0x90e90ei32) as u16);
+    set_ram_word!(game.samus_draw_handler = ((0x90e90ei32) as u16));
     0 as uint8
 }
 pub unsafe fn SamusCode_0B_DrawHandlerDefault(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa5c) as *mut uint16) = ((0x90eb52i32) as u16);
+    set_ram_word!(game.samus_draw_handler = ((0x90eb52i32) as u16));
     SamusCode_01_UnlockSamus(game)
 }
 pub unsafe fn SamusCode_0C_UnlockFromMapStation(game: &mut Game) -> uint8 {
@@ -11072,10 +10978,8 @@ pub unsafe fn SamusCode_0C_UnlockFromMapStation(game: &mut Game) -> uint8 {
     if ram_word!(game, frame_handler_beta) as ::core::ffi::c_int
         == 0x90e8d6 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa42) as *mut uint16) =
-            ((0x90e695i32) as u16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa44) as *mut uint16) =
-            ((0x90e725i32) as u16);
+        set_ram_word!(game.frame_handler_alfa = ((0x90e695i32) as u16));
+        set_ram_word!(game.frame_handler_beta = ((0x90e725i32) as u16));
     }
     1 as uint8
 }
@@ -11093,29 +10997,27 @@ pub unsafe fn SamusCode_0D_IsGrappleActive_A(game: &mut Game) -> uint8 {
         != 0x9bc4f0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint8
 }
 pub unsafe fn SamusCode_0E(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa42) as *mut uint16) = ((0x90e695i32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa44) as *mut uint16) = ((0x90e8aai32) as u16);
+    set_ram_word!(game.frame_handler_alfa = ((0x90e695i32) as u16));
+    set_ram_word!(game.frame_handler_beta = ((0x90e8aai32) as u16));
     1 as uint8
 }
 pub unsafe fn SamusCode_0F_EnableTimerHandling(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa5a) as *mut uint16) = ((0x90e0e6i32) as u16);
+    set_ram_word!(game.frame_handler_gamma = ((0x90e0e6i32) as u16));
     0 as uint8
 }
 pub unsafe fn SamusCode_10(game: &mut Game) -> uint8 {
     if ram_word!(game, frame_handler_beta) as ::core::ffi::c_int
         != 0x90e8d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa42) as *mut uint16) =
-            ((0x90e695i32) as u16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa44) as *mut uint16) =
-            ((0x90e725i32) as u16);
+        set_ram_word!(game.frame_handler_alfa = ((0x90e695i32) as u16));
+        set_ram_word!(game.frame_handler_beta = ((0x90e725i32) as u16));
     }
     1 as uint8
 }
 pub unsafe fn SamusCode_11_15_Common(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa42) as *mut uint16) = ((0x90e713i32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa44) as *mut uint16) = ((0x90e8cdi32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa5c) as *mut uint16) = ((0x90ec1di32) as u16);
+    set_ram_word!(game.frame_handler_alfa = ((0x90e713i32) as u16));
+    set_ram_word!(game.frame_handler_beta = ((0x90e8cdi32) as u16));
+    set_ram_word!(game.samus_draw_handler = ((0x90ec1di32) as u16));
     1 as uint8
 }
 pub unsafe fn SamusCode_11_SetupForDeath(game: &mut Game) -> uint8 {
@@ -11124,17 +11026,17 @@ pub unsafe fn SamusCode_11_SetupForDeath(game: &mut Game) -> uint8 {
 }
 pub unsafe fn SamusCode_15_CalledBySuitAcquision(game: &mut Game) -> uint8 {
     Samus_UpdatePreviousPose(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.flare_counter = 0 as uint16);
     ClearFlareAnimationState(game);
     Samus_LoadSuitPalette(game);
     SamusCode_11_15_Common(game)
 }
 pub unsafe fn SamusCode_12_SetSuperPaletteFlag1(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa4a) as *mut uint16) = 1 as uint16;
+    set_ram_word!(game.samus_special_super_palette_flags = 1 as uint16);
     0 as uint8
 }
 pub unsafe fn SamusCode_12_SetSuperPaletteFlag0(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa4a) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_special_super_palette_flags = 0 as uint16);
     Samus_LoadSuitPalette(game);
     0 as uint8
 }
@@ -11169,51 +11071,50 @@ pub unsafe fn SamusCode_14(game: &mut Game) -> uint8 {
     0 as uint8
 }
 pub unsafe fn SamusCode_05_SetupDrained(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa5a) as *mut uint16) = ((0x90e09bi32) as u16);
+    set_ram_word!(game.frame_handler_gamma = ((0x90e09bi32) as u16));
     Samus_SetupForBeingDrained(game)
 }
 pub unsafe fn Samus_SetupForBeingDrained(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-        kPose_54_FaceL_Knockback as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa9a) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_pose = kPose_54_FaceL_Knockback as uint16);
+    set_ram_word!(game.samus_anim_frame_skip = 0 as uint16);
     SamusFunc_F433(game);
     Samus_SetAnimationFrameIfPoseChanged(game);
     Samus_UpdatePreviousPose(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.flare_counter = 0 as uint16);
     ClearFlareAnimationState(game);
     Samus_LoadSuitPalette(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa42) as *mut uint16) = ((0x90e713i32) as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa44) as *mut uint16) = ((0x90e8d9i32) as u16);
+    set_ram_word!(game.frame_handler_alfa = ((0x90e713i32) as u16));
+    set_ram_word!(game.frame_handler_beta = ((0x90e8d9i32) as u16));
     1 as uint8
 }
 pub unsafe fn SamusCode_18(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa5a) as *mut uint16) = ((0x90e0c5i32) as u16);
+    set_ram_word!(game.frame_handler_gamma = ((0x90e0c5i32) as u16));
     Samus_SetupForBeingDrained(game)
 }
 pub unsafe fn SamusCode_16(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa4a) as *mut uint16) = 0x8000 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xace) as *mut uint16) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xad0) as *mut uint16) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb62) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_special_super_palette_flags = 0x8000 as uint16);
+    set_ram_word!(game.special_samus_palette_frame = 1 as uint16);
+    set_ram_word!(game.special_samus_palette_timer = 1 as uint16);
+    set_ram_word!(game.samus_charge_palette_index = 0 as uint16);
     0 as uint8
 }
 pub unsafe fn SamusCode_17_DisableRainbowSamusAndStandUp(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa4a) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xace) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xad0) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb62) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_special_super_palette_flags = 0 as uint16);
+    set_ram_word!(game.special_samus_palette_frame = 0 as uint16);
+    set_ram_word!(game.special_samus_palette_timer = 0 as uint16);
+    set_ram_word!(game.samus_charge_palette_index = 0 as uint16);
     Samus_LoadSuitPalette(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa94) as *mut uint16) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16) = 13 as uint16;
+    set_ram_word!(game.samus_anim_frame_timer = 1 as uint16);
+    set_ram_word!(game.samus_anim_frame = 13 as uint16);
     0 as uint8
 }
 pub unsafe fn SamusCode_17_FreezeDrainedSamus(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa94) as *mut uint16) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16) = 28 as uint16;
+    set_ram_word!(game.samus_anim_frame_timer = 1 as uint16);
+    set_ram_word!(game.samus_anim_frame = 28 as uint16);
     1 as uint8
 }
 pub unsafe fn SamusCode_1A(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa44) as *mut uint16) = ((0x90e902i32) as u16);
+    set_ram_word!(game.frame_handler_beta = ((0x90e902i32) as u16));
     0 as uint8
 }
 pub unsafe fn SamusCode_1B_CheckedLockSamus(game: &mut Game) -> uint8 {
@@ -11323,19 +11224,17 @@ pub unsafe fn SamusCode_1E(game: &mut Game) -> uint8 {
 }
 pub unsafe fn SamusCode_1F(game: &mut Game) -> uint8 {
     if ram_word!(game, grapple_beam_function) != (addr_loc_90C4F0 as uint16) {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd1e) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd20) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd34) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd36) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa9e) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xcf8) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xcf6) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xcf4) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.grapple_beam_unkD1E = 0 as uint16);
+        set_ram_word!(game.grapple_beam_unkD20 = 0 as uint16);
+        set_ram_word!(game.grapple_beam_direction = 0 as uint16);
+        set_ram_word!(game.grapple_beam_unkD36 = 0 as uint16);
+        set_ram_word!(game.grapple_walljump_timer = 0 as uint16);
+        set_ram_word!(game.slow_grabble_scrolling_flag = 0 as uint16);
+        set_ram_word!(game.grapple_varCF6 = 0 as uint16);
+        set_ram_word!(game.grapple_beam_flags = 0 as uint16);
         LoadProjectilePalette(ram_word!(game, equipped_beams), game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-            -(15120 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa5c) as *mut uint16) =
-            ((0x90eb52i32) as u16);
+        set_ram_word!(game.grapple_beam_function = -(15120 as ::core::ffi::c_int) as uint16);
+        set_ram_word!(game.samus_draw_handler = ((0x90eb52i32) as u16));
     }
     0 as uint8
 }
@@ -11370,14 +11269,14 @@ pub unsafe fn Samus_ShootCheck(game: &mut Game) {
             {
                 QueueSfx1_Max9(0x41 as uint16, game);
             }
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc0) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.play_resume_charging_beam_sfx = 0 as uint16);
         }
         if ram_word!(game, samus_echoes_sound_flag) != 0u16
             && (ram_word!(game, speed_boost_counter) as ::core::ffi::c_int
                 & 0x400 as ::core::ffi::c_int)
                 == 0i32
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb40) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.samus_echoes_sound_flag = 0 as uint16);
             QueueSfx3_Max15(0x25 as uint16, game);
         }
         if (*(&raw mut game.g_ram as *mut uint8).offset(0xa11) == 3u8
@@ -11404,7 +11303,7 @@ pub unsafe fn Samus_ShootCheck(game: &mut Game) {
         }
     }
     if current_block == 635020727918217222 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdc0) as *mut uint16) = 1 as uint16;
+        set_ram_word!(game.play_resume_charging_beam_sfx = 1 as uint16);
     }
     if ram_word!(game, enable_debug) != 0 {
         if ram_word!(game, samus_pose) as ::core::ffi::c_int
@@ -11418,7 +11317,7 @@ pub unsafe fn Samus_ShootCheck(game: &mut Game) {
                     & 0x80 as ::core::ffi::c_int)
                     != 0i32
             {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xde0) as *mut uint16) = 7 as uint16;
+                set_ram_word!(game.debug_invincibility = 7 as uint16);
             }
         } else {
             if ram_word!(game, debug_invincibility) as ::core::ffi::c_int - 7 as ::core::ffi::c_int
@@ -11427,7 +11326,7 @@ pub unsafe fn Samus_ShootCheck(game: &mut Game) {
             {
                 return;
             }
-            *((&raw mut game.g_ram as *mut uint8).offset(0xde0) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.debug_invincibility = 0 as uint16);
         }
     }
     if CheckEventHappened(0xe as uint16, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
@@ -11436,7 +11335,6 @@ pub unsafe fn Samus_ShootCheck(game: &mut Game) {
         && ram_word!(game, game_state) as ::core::ffi::c_int
             != kGameState_35_TimeUp as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
-            kGameState_35_TimeUp as uint16;
+        set_ram_word!(game.game_state = kGameState_35_TimeUp as uint16);
     }
 }

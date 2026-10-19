@@ -1,7 +1,7 @@
 use crate::cpu_infra::RtlUpdateSnesPatchForBugfix;
 use crate::game_state::Game;
 use crate::host::{Die, RtlApuLock, RtlApuUnlock};
-use crate::ram_map::ram_word;
+use crate::ram_map::{ram_word, set_ram_word};
 use crate::snes::apu::apu_cycle;
 use crate::snes::dsp::dsp_getSamples;
 use crate::snes::ppu::ppu_copy;
@@ -965,8 +965,9 @@ pub unsafe fn RtlRunFrame(mut inputs: ::core::ffi::c_int, game: &mut Game) -> bo
             if (ram_word!(game, bug_fix_counter) as ::core::ffi::c_int)
                 < kCurrentBugFixCounter as ::core::ffi::c_int
             {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc2) as *mut uint16) =
-                    kCurrentBugFixCounter as ::core::ffi::c_int as uint16;
+                set_ram_word!(
+                    game.bug_fix_counter = kCurrentBugFixCounter as ::core::ffi::c_int as uint16
+                );
                 StateRecorder_RecordPatchByte(
                     &raw mut game.state_recorder,
                     ((&raw mut game.g_ram as *mut uint8).offset(0xc2) as *mut uint16 as *mut uint8)
@@ -1099,8 +1100,7 @@ pub unsafe fn RtlSaveLoad(cmd: ::core::ffi::c_int, slot: ::core::ffi::c_int, gam
                 as uint8;
         }
         if ram_word!(game, bug_fix_counter) as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc2) as *mut uint16) =
-                ram_word!(game, bug_fix_counter_BAD);
+            set_ram_word!(game.bug_fix_counter = ram_word!(game, bug_fix_counter_BAD));
         }
     } else {
         RtlSaveSnapshot(
@@ -1474,8 +1474,7 @@ pub unsafe fn RtlRenderAudio(
 }
 pub unsafe fn RtlCheat(c: ::core::ffi::c_char, game: &mut Game) {
     if c as ::core::ffi::c_int == 'w' as i32 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16) =
-            ram_word!(game, samus_max_health);
+        set_ram_word!(game.samus_health = ram_word!(game, samus_max_health));
         StateRecorder_RecordPatchByte(
             &raw mut game.state_recorder,
             0x9c2 as uint32,
@@ -1485,8 +1484,7 @@ pub unsafe fn RtlCheat(c: ::core::ffi::c_char, game: &mut Game) {
     } else if c as ::core::ffi::c_int == 'q' as i32 {
         let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16);
         *fresh0 = (*fresh0 as ::core::ffi::c_int - 4 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16) =
-            -(8 as ::core::ffi::c_int) as uint16;
+        set_ram_word!(game.samus_y_speed = -(8 as ::core::ffi::c_int) as uint16);
         StateRecorder_RecordPatchByte(
             &raw mut game.state_recorder,
             0xafa as uint32,
@@ -1499,10 +1497,12 @@ pub unsafe fn RtlCheat(c: ::core::ffi::c_char, game: &mut Game) {
             (&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16 as *mut uint8,
             2 as ::core::ffi::c_int,
         );
-        *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.menu_index = 0 as uint16);
     } else if c as ::core::ffi::c_int == 'q' as i32 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16) =
-            (ram_word!(game, japanese_text_flag) == 0) as ::core::ffi::c_int as uint16;
+        set_ram_word!(
+            game.japanese_text_flag =
+                (ram_word!(game, japanese_text_flag) == 0) as ::core::ffi::c_int as uint16
+        );
         StateRecorder_RecordPatchByte(
             &raw mut game.state_recorder,
             0x9e2 as uint32,

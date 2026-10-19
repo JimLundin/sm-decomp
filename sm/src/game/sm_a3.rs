@@ -23,7 +23,7 @@ use crate::game::sm_a0::{
 use crate::game::sm_b4::CreateSpriteAtPos;
 pub use crate::game::waver::{Enemy_Waver, Waver_Func_1, Waver_Init, Waver_Instr_1, Waver_Main};
 use crate::game_state::Game;
-use crate::ram_map::ram_word;
+use crate::ram_map::{ram_word, set_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{RomPtr, SnesDivide, Unreachable};
@@ -1134,7 +1134,7 @@ pub unsafe fn Elevator_Init(game: &mut Game) {
     if ram_word!(game, elevator_status) != 2u16 {
         let ref mut fresh5 = *((&raw mut game.g_ram as *mut uint8).offset(0xe18) as *mut uint16);
         *fresh5 = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe16) as *mut uint16) = *fresh5;
+        set_ram_word!(game.elevator_flags = *fresh5);
     }
     if (ram_word!(game, elevator_status) as uint32) << 16 as ::core::ffi::c_int
         | ram_word!(game, elevator_flags) as uint32
@@ -1181,21 +1181,21 @@ pub unsafe fn Elevator_Func_1(game: &mut Game) {
         let ref mut fresh4 = *((&raw mut game.g_ram as *mut uint8).offset(0xe18) as *mut uint16);
         *fresh4 = (*fresh4).wrapping_add(1);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe16) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.elevator_flags = 0 as uint16);
     };
 }
 pub unsafe fn Elevator_Func_2(game: &mut Game) {
     let E: *mut Enemy_Elevator =
         Get_Elevator(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if (*E).elevat_parameter_1 != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x799) as *mut uint16) = 0x8000 as uint16;
+        set_ram_word!(game.elevator_direction = 0x8000 as uint16);
         AddToHiLo(
             &raw mut (*E).base.y_pos,
             &raw mut (*E).base.y_subpos,
             -(0x18000 as ::core::ffi::c_int) as uint32,
         );
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x799) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.elevator_direction = 0 as uint16);
         AddToHiLo(
             &raw mut (*E).base.y_pos,
             &raw mut (*E).base.y_subpos,
@@ -1233,8 +1233,8 @@ pub unsafe fn Elevator_Func3b(game: &mut Game) {
             return;
         }
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xe18) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xe16) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.elevator_status = 0 as uint16);
+    set_ram_word!(game.elevator_flags = 0 as uint16);
     QueueSfx3_Max6(0x25 as uint16, game);
     (*E).base.y_pos = (*E).elevat_var_A;
     CallSomeSamusCode(0xb as uint16, game);
@@ -1243,12 +1243,11 @@ pub unsafe fn Elevator_Func3b(game: &mut Game) {
 pub unsafe fn Elevator_Func_4(game: &mut Game) {
     let E: *mut Enemy_Elevator =
         Get_Elevator(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) =
-        ((*E).base.y_pos).wrapping_sub(26u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xafc) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) = (*E).base.x_pos;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb2c) as *mut uint16) = 0 as uint16;
+    set_ram_word!(game.samus_y_pos = ((*E).base.y_pos).wrapping_sub(26u16));
+    set_ram_word!(game.samus_y_subpos = 0 as uint16);
+    set_ram_word!(game.samus_x_pos = (*E).base.x_pos);
+    set_ram_word!(game.samus_y_speed = 0 as uint16);
+    set_ram_word!(game.samus_y_subspeed = 0 as uint16);
 }
 pub unsafe fn Crab_Init(game: &mut Game) {
     let v1: *mut EnemyData =
@@ -1904,7 +1903,7 @@ pub unsafe fn Roach_Func_11(game: &mut Game) {
         ((0xa3a40ei32) as u16);
 }
 pub unsafe fn Roach_Func_12(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16) = 11 as uint16;
+    set_ram_word!(game.random_number = 11 as uint16);
     (*Get_Roach(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).roach_var_B =
         ((0xa3a4f0i32) as u16);
 }
@@ -1912,7 +1911,7 @@ pub unsafe fn Roach_Func_13(game: &mut Game) {
     let E: *mut Enemy_Roach =
         Get_Roach(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).roach_var_A = 512 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16) = 11 as uint16;
+    set_ram_word!(game.random_number = 11 as uint16);
     (*E).roach_var_B = ((0xa3a4b6i32) as u16);
 }
 pub unsafe fn Roach_Func_14(game: &mut Game) {
@@ -2392,8 +2391,8 @@ pub unsafe fn Mochtroid_Touch(game: &mut Game) {
     }
     if current_block == 17285009320546006530 {
         Enemy_NormalTouchAI_A3(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x18aa) as *mut uint16) = 0 as uint16;
+        set_ram_word!(game.samus_invincibility_timer = 0 as uint16);
+        set_ram_word!(game.samus_knockback_timer = 0 as uint16);
     };
 }
 pub unsafe fn Mochtroid_Shot(game: &mut Game) {
@@ -2409,7 +2408,7 @@ pub unsafe fn Sidehopper_Instr_1(k: uint16, jp: *const uint16, game: &mut Game) 
     jp
 }
 pub unsafe fn Sidehopper_Init(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16) = 37 as uint16;
+    set_ram_word!(game.random_number = 37 as uint16);
     NextRandom(game);
     let E: *mut Enemy_Sidehopper =
         Get_Sidehopper(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
@@ -5127,8 +5126,8 @@ pub unsafe fn Metroid_Shot(game: &mut Game) {
             .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize))
             & (0xf00u16);
         if v3 == 256u16 || v3 == 512u16 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xf434) as *mut uint16) = (*E).base.x_pos;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xf436) as *mut uint16) = (*E).base.y_pos;
+            set_ram_word!(game.special_death_item_drop_x_origin_pos = (*E).base.x_pos);
+            set_ram_word!(game.special_death_item_drop_y_origin_pos = (*E).base.y_pos);
             Enemy_NormalShotAI_SkipSomeParts_A3(game);
             if (*E).base.health == 0 {
                 (*E).metroid_var_B = 0 as uint16;

@@ -1,7 +1,7 @@
 use crate::game::sm_80::Vector_IRQ;
 use crate::game::sm_82::RunOneFrameOfGame;
 use crate::game_state::Game;
-use crate::ram_map::ram_word;
+use crate::ram_map::{ram_word, set_ram_word};
 pub use crate::snes::registers::*;
 use crate::types::SpcPlayer;
 
@@ -372,8 +372,7 @@ pub unsafe fn PatchBugs(mode: uint32, addr: uint32, game: &mut Game) -> uint32 {
                 ((*game.g_cpu).x as ::core::ffi::c_int & 0x7 as ::core::ffi::c_int) as uint16_t;
         } else if FixBugHook(0xa496e0 as uint32, game) {
             if (*game.g_cpu).x as ::core::ffi::c_int > 48 as ::core::ffi::c_int {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x690) as *mut uint16) =
-                    (*game.g_cpu).x as uint16;
+                set_ram_word!(game.croco_cur_vline_idx = (*game.g_cpu).x as uint16);
                 (*game.g_cpu).mf = 0 as ::core::ffi::c_int != 0;
                 return 0xa497ce as uint32;
             }
@@ -381,7 +380,7 @@ pub unsafe fn PatchBugs(mode: uint32, addr: uint32, game: &mut Game) -> uint32 {
             if ram_word!(game, special_samus_palette_frame) as ::core::ffi::c_int
                 > 6 as ::core::ffi::c_int
             {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xace) as *mut uint16) = 6 as uint16;
+                set_ram_word!(game.special_samus_palette_frame = 6 as uint16);
             }
         } else if FixBugHook(0x828d56 as uint32, game) {
             WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
@@ -415,31 +414,38 @@ pub unsafe fn PatchBugs(mode: uint32, addr: uint32, game: &mut Game) -> uint32 {
                 8 as size_t,
             );
         } else if FixBugHook(0xa0a35c as uint32, game) {
-            *((&raw mut game.g_ram as *mut uint8).offset(18) as *mut uint16) =
-                *((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16 as *mut uint8)
+            set_ram_word!(
+                game.REMOVED_R18 = *((&raw mut game.g_ram as *mut uint8).offset(0xcea)
+                    as *mut uint16 as *mut uint8)
                     .offset(
                         (::core::mem::size_of::<uint16>() as usize)
                             .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                             .wrapping_sub(1_usize) as isize,
-                    ) as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(20) as *mut uint16) =
-                (ram_word!(game, REMOVED_R18) as ::core::ffi::c_int
+                    ) as uint16
+            );
+            set_ram_word!(
+                game.REMOVED_R20 = (ram_word!(game, REMOVED_R18) as ::core::ffi::c_int
                     + (ram_word!(game, REMOVED_R18) as ::core::ffi::c_int
                         >> 1 as ::core::ffi::c_int)
-                    >> 1 as ::core::ffi::c_int) as uint16;
+                    >> 1 as ::core::ffi::c_int) as uint16
+            );
         } else if FixBugHook(0xa7b049 as uint32, game) {
             (*game.g_cpu).x = 0 as uint16_t;
         } else if FixBugHook(0xa5a018 as uint32, game) {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe24) as *mut uint16) = 0 as uint16;
+            set_ram_word!(game.REMOVED_varE24 = 0 as uint16);
         } else if FixBugHook(0xb39ddb as uint32, game) {
             let E: *mut Enemy_Botwoon =
                 Get_Botwoon(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
-            *((&raw mut game.g_ram as *mut uint8).offset(18) as *mut uint16) =
-                ((*E).base.x_pos as ::core::ffi::c_int - (*E).botwoon_var_56 as ::core::ffi::c_int)
-                    as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(20) as *mut uint16) =
-                ((*E).base.y_pos as ::core::ffi::c_int - (*E).botwoon_var_57 as ::core::ffi::c_int)
-                    as uint16;
+            set_ram_word!(
+                game.REMOVED_R18 = ((*E).base.x_pos as ::core::ffi::c_int
+                    - (*E).botwoon_var_56 as ::core::ffi::c_int)
+                    as uint16
+            );
+            set_ram_word!(
+                game.REMOVED_R20 = ((*E).base.y_pos as ::core::ffi::c_int
+                    - (*E).botwoon_var_57 as ::core::ffi::c_int)
+                    as uint16
+            );
         } else if FixBugHook(0xb39e13 as uint32, game) {
             let E_0: *mut Enemy_Botwoon =
                 Get_Botwoon(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
@@ -450,8 +456,7 @@ pub unsafe fn PatchBugs(mode: uint32, addr: uint32, game: &mut Game) -> uint32 {
                     * 3 as ::core::ffi::c_int
                     / 4 as ::core::ffi::c_int) as uint8
                 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(22) as *mut uint16) =
-                (*E_0).botwoon_var_45;
+            set_ram_word!(game.REMOVED_R22 = (*E_0).botwoon_var_45);
         }
     }
     0 as uint32
@@ -2866,7 +2871,7 @@ pub unsafe fn RunOneFrameOfGame_Emulated(game: &mut Game) {
     RunCpuUntilPC(0x808343 as uint32, 0x85813c as uint32, game);
     (*(*game.g_snes).cpu).nmiWanted = true_0 != 0;
     RunCpuUntilPC(0x80834a as uint32, 0x858142 as uint32, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc2) as *mut uint16) = bug_fix_bak;
+    set_ram_word!(game.bug_fix_counter = bug_fix_bak);
 }
 pub unsafe fn DrawFrameToPpu(game: &mut Game) {
     (*game.g_snes).vPos = 0 as uint16_t;
