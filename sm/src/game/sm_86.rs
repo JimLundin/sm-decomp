@@ -811,6 +811,9 @@ impl EprojStateMut<'_> {
     fn set_spritemap(&mut self, word_index: usize, value: u16) {
         self.write(0x1b6b, word_index, value);
     }
+    fn set_preinstruction(&mut self, word_index: usize, value: u16) {
+        self.write(0x1a03, word_index, value);
+    }
     fn set_instruction(&mut self, word_index: usize, value: u16) {
         self.write(0x1b47, word_index, value);
     }
@@ -855,13 +858,10 @@ unsafe fn SpawnEprojInner(mut j: uint16, mut gfx_idx: uint16, game: &mut Game) -
     *((&raw mut game.g_ram as *mut uint8).offset(0x19bb as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(v4 as isize) = gfx_idx;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v4 as isize) = j;
+    EprojStateMut(&mut game.g_ram).set_id(v4, j);
     let mut Edef: *mut EprojDef = get_EprojDef(j, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a03 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v4 as isize) = (*Edef).pre_instr_ptr as uint16;
+    let value = (*Edef).pre_instr_ptr as uint16;
+    EprojStateMut(&mut game.g_ram).set_preinstruction(v4, value);
     let value = (*Edef).instr_list as uint16;
     EprojStateMut(&mut game.g_ram).set_instruction(v4, value);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1bb3 as ::core::ffi::c_int as isize)
@@ -957,38 +957,24 @@ pub fn EprojInstr_Delete(k: uint16, epjp: *const uint8, game: &mut Game) -> *con
     EprojStateMut(&mut game.g_ram).set_id(usize::from(k >> 1), 0);
     ::core::ptr::null()
 }
-pub unsafe fn EprojInstr_Sleep(
-    mut k: uint16,
-    mut epjp: *const uint8,
-    game: &mut Game,
-) -> *const uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1b47 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-        (epjp.offset_from(RomBankBase(0x86 as uint8, game)) as ::core::ffi::c_long
-            - 2 as ::core::ffi::c_long) as uint16;
-    return ::core::ptr::null::<uint8>();
+pub unsafe fn EprojInstr_Sleep(k: uint16, epjp: *const uint8, game: &mut Game) -> *const uint8 {
+    let value = (epjp.offset_from(RomBankBase(0x86 as uint8, game)) as ::core::ffi::c_long
+        - 2 as ::core::ffi::c_long) as uint16;
+    EprojStateMut(&mut game.g_ram).set_instruction(usize::from(k >> 1), value);
+    ::core::ptr::null()
 }
 pub unsafe fn EprojInstr_SetPreInstr_(
-    mut k: uint16,
-    mut epjp: *const uint8,
+    k: uint16,
+    epjp: *const uint8,
     game: &mut Game,
 ) -> *const uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a03 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-        *(epjp as *mut uint16);
-    return epjp.offset(2 as ::core::ffi::c_int as isize);
+    let value = *(epjp as *mut uint16);
+    EprojStateMut(&mut game.g_ram).set_preinstruction(usize::from(k >> 1), value);
+    epjp.offset(2 as ::core::ffi::c_int as isize)
 }
-pub unsafe fn EprojInstr_ClearPreInstr(
-    mut k: uint16,
-    mut epjp: *const uint8,
-    game: &mut Game,
-) -> *const uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a03 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0x8170 as uint16;
-    return epjp;
+pub fn EprojInstr_ClearPreInstr(k: uint16, epjp: *const uint8, game: &mut Game) -> *const uint8 {
+    EprojStateMut(&mut game.g_ram).set_preinstruction(usize::from(k >> 1), 0x8170);
+    epjp
 }
 pub unsafe fn CallEprojFunc(mut ea: uint32, mut k: uint32, game: &mut Game) {
     match ea {

@@ -14864,6 +14864,27 @@ review. Then continue exercised indexed updates and explicit-width arithmetic.
 Full gameplay/credits,
 hardware/audio/masks and ownership remain unfinished.
 
+Enemy-projectile instruction fields (2026-10-19): reuse byte-backed
+setters for spawn ID/preinstruction and Sleep, SetPreInstr and ClearPreInstr.
+ClearPreInstr is safe Rust. Original ROM reads precede their corresponding
+stores; definition lookup, callback order, instruction-pointer arithmetic,
+null returns and unsigned half-slot rounding remain unchanged.
+
+Frozen 9853f974 plus only this change passes
+any%129712/0 (236.79s) and Hi-Jump99191/0 (206.35s),
+native exits0. Observed Hi-Jump99191/0 (227.07s) checks
+complete RAM after each byte-backed store against the original unaligned
+word operation. Changed-site hits: spawn ID/preinstruction 345
+each, Sleep 56, SetPreInstr 45, ClearPreInstr
+111. Clean/observed non-timing diagnostics match after probe
+stripping; all other frozen source files and maintained changed sections
+match. Source/DLL/input hashes remain stable. No observers are committed.
+
+Cargo fmt/check, normal release build and progress pass. Including setter:
+raw offsets-5, cast lines-8, unsafe functions-1, Rust lines-14. Other own
+counters unchanged. Further indexed-field/update cleanup and broader
+gameplay/credits, hardware/audio/masks and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
