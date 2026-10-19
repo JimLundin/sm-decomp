@@ -1439,6 +1439,32 @@ Ignored movies/warehouse-return.inputs has SHA-256
 No rebuild, repeated full boot, source change or committed asset is needed
 for this continuation. Abandoned gameplay attempts are excluded.
 
+Warehouse Energy Tank and Bubble Mountain (2026-10-19): ordinary inputs
+extend the exact Warehouse 128547/Varia 122732 prefixes. The Warehouse
+Energy Tank is collected at 129802, raising maximum health 299 -> 399 and
+refilling to 399/399. Continued traversal reaches Bubble Mountain at
+138749 through Norfair, Cathedral Entrance and Rising Tide. Speed Booster
+is not acquired. The route work stops at its timebox; Energy Tank inputs
+and the original checkpoint at 399/399 health are retained.
+
+Frozen 40b4f9fa plus the committed message-box coroutine change resumes
+its own full-boot Warehouse 128547/0 checkpoint for 10202/0 (29.34s),
+native exit 0, without new diagnostics or a rebuild. Complete final RAM
+equals the original continuous route; source, DLL, fixtures and checkpoint
+bindings remain fixed. Final state 8 is room $ACB3, X55/Y651,
+pose $0001, health 3/399, missiles 12/15,
+Supers 1/5, items $1105 and beams $1004;
+all eight coroutine bytes are zero and Kraid's defeated flag remains set.
+The next route work needs health recovery before continuing toward Speed
+Booster. This extends gameplay coverage; credits and remaining bosses are
+still pending.
+
+Ignored movies/bubble-mountain.inputs SHA-256:
+a2e848ad2669841cea5a55a42d7d702e10403b09a8a9b23481fa9f79137dbdcf.
+Ignored movies/warehouse-energy.inputs SHA-256:
+fb72539cbdc8149bb08aa1fa19377a45e875568d995c2d15b70fa313f1a41d7a.
+No checkpoint, ROM or input asset is committed.
+
 Kraid second-phase milestone (2026-10-19): preserve the ordinary-input
 extension through frame 119823 when the combat timebox ends. Main Kraid is
 not defeated. Full boot on the previously reviewed immutable baseline
