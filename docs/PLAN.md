@@ -10384,6 +10384,31 @@ this replay. Rust lines +2 name the combined address and split fields; other
 own counters unchanged. Continue covered CPU cleanup. Complete gameplay/
 render/audio and prior coverage holds remain open.
 
+Crateria map retained through unpause and west exit (2026-10-19).
+Jump30, neutral1, Jump30, neutral90 from the acquisition endpoint leaves
+state15 unchanged: crateria-map-dismiss73143/71 (93.16s), native exit1.
+State15 is the paused map screen; HandlePauseScreenStart tests Start.
+From crateria-map-activate instead: Start30,neutral90,left/shoot80,
+left/jump40,left/shoot90,neutral90 succeeds. Start enters state16 at72997,
+17 at73027,18 at73028, gameplay8 at73058. West-door transition73269/73270,
+98E2load73287, gameplay73374. crateria-map-unpause73412/71 (65.74s), native
+exit1. Final98E2X712/Y139,health34/99,missiles1/10,equipment1004; map1 and
+station255 remain set. Retain this successful normal-input checkpoint.
+
+Independent read-only failure-counter replay73412/71 (90.58s), observed
+native exit1, matches all71 ordered baseline failed frames exactly. Same
+pinned7fcc20d6 core plus committed Missile Tank accessors, explicit rendering;
+no maintained source/RAM/controller mutation or new failing frames. The
+committed map-activation change's separate any% passed129712/0 (164.06s),
+exit0; that source verification is not replaced by this controller probe.
+Inputs/probes/SRAM/ROM-derived geometry remain ignored. Source/residue delta0;
+Cargo fmt/check, release build and progress completed with the preceding
+map-activation change. Peer CPU/PPU edits and remote sync remain separate.
+Next: cross98E2 westward from retained73412 using fresh jumps across columns,
+then return to Parlor for further accessible item/boss progression. Credits,
+gameplay/hardware, render/audio, masked RAM and ownership remain unfinished.
+Held upper99BD ascent, cliff tuning, old9AD9 drop ammo and HDMA stay held.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
