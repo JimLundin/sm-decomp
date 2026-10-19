@@ -1929,20 +1929,18 @@ pub unsafe fn PlmInstr_PickupBeamAndShowMessage(
     return plmp.offset(3 as ::core::ffi::c_int as isize);
 }
 pub unsafe fn PlmInstr_PickupEquipmentAndShowMessage(
-    mut plmp: *const uint8,
-    mut k: uint16,
+    plmp: *const uint8,
+    _k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
     let equipment = (plmp as *const u16).read_unaligned();
     let equipped = u16::from_le_bytes([game.g_ram[0x9a2], game.g_ram[0x9a3]]);
     game.set_equipped_items(equipped | equipment);
     game.set_collected_items(game.collected_items() | equipment);
-    PlayRoomMusicTrackAfterAFrames(0x168 as uint16, game);
-    DisplayMessageBox(
-        *plmp.offset(2 as ::core::ffi::c_int as isize) as uint16,
-        game,
-    );
-    return plmp.offset(3 as ::core::ffi::c_int as isize);
+    PlayRoomMusicTrackAfterAFrames(0x168, game);
+    let message = u16::from(*plmp.add(2));
+    DisplayMessageBox(message, game);
+    plmp.add(3)
 }
 pub unsafe fn PlmInstr_PickupEquipmentAddGrappleShowMessage(
     mut plmp: *const uint8,

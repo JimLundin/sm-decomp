@@ -12744,6 +12744,22 @@ cleanup; extracted arithmetic/source review do not close this gap.
 Super Missile passage and previous holds remain held. Complete credits,
 gameplay, hardware/audio timing, remaining masks and ownership stay open.
 
+Equipment pickup message (2026-10-19):
+PlmInstr_PickupEquipmentAndShowMessage now names its message-byte read,
+uses ordinary pointer advances and removes mutable/unused argument bindings.
+The live message read remains after PlayRoomMusicTrackAfterAFrames and
+before DisplayMessageBox; the equipped/collected writes and return pointer
+remain exact. Frozen 6e06416f plus only this change passes any%129712/0
+(206.04s), native exit0, and pickup route68606/0
+(135.85s), native exit0. Observed pickup route68606/0
+(138.22s) executes both actual message reads at27563 and48957.
+The observed message bytes are9 and19; maintained source has no observers.
+Cargo fmt/check and release build pass. Own cast lines-2, Rust lines-2;
+other own counters unchanged. Frozen replays exclude peer source, which
+remains preserved. Chozo guarded reads and Super Missile passage remain
+held; complete credits, gameplay, hardware/audio, masks and ownership stay
+open. Continue covered PLM cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
