@@ -11022,6 +11022,22 @@ work is outside this replay. Rust lines -2; other own counters unchanged.
 Prior holds and complete gameplay/render/audio remain open. Continue covered
 CPU cleanup.
 
+Post-map Waver lower exit reaches99BD (2026-10-19).
+From map-waver-tank-exit@77470, retain the pickup-message wait, then
+left/shoot100, left120, neutral30 dismiss, cross and land in lower99BD.
+Transition starts77548, room changes77566, control returns77674.
+map-waver-low-door ends99BDX158/Y1163, standing, health189/199,
+map1/station255, missiles1/10, equipment1004. This continues the map/tank
+route into the lower shaft; held upper99BD ascent stays held.
+Read-only failure-counter replay77720/71 (104.70s), observed native exit1,
+matches all71 ordered baseline failed frames exactly, rendering enabled.
+No gameplay/RAM/inventory writes or new failures; source/residue delta0.
+Committed door-bit cleanup owns fmt/check, release, progress, contextual
+75665/71 and clean any%129712/0 (149.79s). Inputs, probes, SRAM and
+ROM-derived data remain ignored. Next: descend toward the bottom exit9969
+and onward item/boss coverage. Credits, complete gameplay/hardware,
+audio/render, masked RAM and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
