@@ -6948,8 +6948,9 @@ pub unsafe fn CinematicFunction_Intro_WaitInputSetupMotherBrainFight(game: &mut 
             (0x90e833 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         ResetDemoData(game);
         EnableDemoInput(game);
+        // EnableDemoInput leaves $8000 in the ROM accumulator for the loader.
         LoadDemoInputObject(
-            0 as uint16,
+            0x8000,
             addr_stru_918784 as ::core::ffi::c_int as uint16,
             game,
         );
@@ -7051,8 +7052,9 @@ pub unsafe fn CinematicFunction_Intro_WaitInputSetupBabyMetroid(game: &mut Game)
             (0x90e833 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         ResetDemoData(game);
         EnableDemoInput(game);
+        // EnableDemoInput leaves $8000 in the ROM accumulator for the loader.
         LoadDemoInputObject(
-            0 as uint16,
+            0x8000,
             addr_stru_91877E as ::core::ffi::c_int as uint16,
             game,
         );

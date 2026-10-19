@@ -263,6 +263,25 @@ change and no new replay result belong to this cleanup.
 
 ## The oracle
 
+Demo accumulator correction and A82 enforcement (2026-10-19): the two
+cinematic demo callers now pass 8000, preserving the ROM accumulator left
+by EnableDemoInput. The loader and the attract caller's object-pointer
+argument remain unchanged. Remove only the A82/A83 normalization so both
+bytes are compared. Without the caller fix, unmasked any% fails four frames
+and Waver two; the 2219-frame repro first fails at frame2218, byte A83.
+
+Frozen 69b844d9 plus the fix and mask removal passes clean any% 129712/0
+(271.86s) and Waver 58109/0 (132.97s), native exits 0. The 3600/0 control
+executes both cinematic callers; attract 30000/0 executes 26 unchanged
+third-caller loads. Both newly enforced byte faults are detected once and
+recover A82 without cascade; the old mask hides them. Fault runs match
+adjacent-byte recovery, with one existing masked E02 byte different from
+clean execution, so complete clean/fault RAM equality is not claimed.
+Independent ROM/source/control review, exact source checks, Cargo fmt/check,
+release and progress pass. Own cast lines -2 and Rust lines -5; other counters
+unchanged. No diagnostic hooks or ROM-derived assets are committed. Remaining
+masked state, audio timing and full gameplay/credits coverage stay open.
+
 Reviewed gameplay integration (2026-10-19): frozen 50be5476 passes any%
 129712/0 (274.57s), Waver 58109/0 (120.29s) and pickup route 68606/0
 (153.43s), all native exits 0. This combines animation reads, PLM links,
