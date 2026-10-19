@@ -58,6 +58,20 @@ Retain targeted comparisons for state/control-flow changes. Preserve read
 and write order; compound-assignment suggestions need alias/order review.
 Keep plan updates concise. The broader readability goal remains incomplete.
 
+SPC memory-map descriptors (2026-10-19): all 330 repeated initializers use
+two private const constructors. The 47 channel mappings and 283 player mappings
+retain all 943 field values, row order, encoded width flags and struct layouts.
+Complete source reconstruction and compiled const comparisons pass; all 45
+existing runtime functions remain unchanged. Net Rust lines -1252 and casts
+-1273; other residue counters are unchanged. Total Rust is 166702 lines.
+
+Frozen 000c619e plus this family includes the reviewed image, tile-writer and
+Geyser work. Normal release (12.86s), formatting/check and progress pass.
+Full any% passes 129712/0 (115.16s replay, 115.27s wall), native exit 0;
+all 76 source/DLL/fixture pins remain fixed. Independent descriptor/source
+review has no findings. Continue substantial repeated families; the broader
+readability and boot-to-credits goals remain open.
+
 Tile flip writers (2026-10-19): four repeated scrolling/PLM drawing
 branches share TileTables::draw_block. Horizontal/vertical flip selection,
 row/column store order, live source reads between stores and PLM wrapped
