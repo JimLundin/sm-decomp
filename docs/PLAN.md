@@ -4,6 +4,11 @@ Goal: Super Metroid as a readable, maintained Rust program that plays from
 boot to credits, with emulated SNES hardware for video and audio. Map Rando
 support comes after vanilla.
 
+Performance work targets the verification pipeline to shorten implementation
+iterations. Readability takes priority in maintained gameplay and hardware
+code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
+retired; preserve their behavior while making the code easier to read.
+
 ## Where we are (2026-10-19)
 
 `sm/` contains the maintained Rust program. It was transpiled once from
@@ -12547,6 +12552,30 @@ Keep it this small. Add a crate only when the game code itself needs one.
 
 Nothing else should start until this works, because it is how every later
 change is judged.
+
+Windows verifier build reuse (2026-10-19): `tools/verify_dll.py` now retains
+separate rustc incremental caches for the library and DLL host. Both compiler
+commands still run on every normal invocation; rustc manages invalidation.
+Explicit 16 codegen units preserve the previous default. `--no-build` still
+skips compilation; build once before parallel replays and never rebuild the
+fixed DLL while another process has it loaded.
+
+Frozen b670ec87 build measurements: warm unchanged 17.95 -> 5.43s, controlled
+bank edit 18.00 -> 7.08s, cold 38.54 -> 42.10s. Library-only and host-only
+edits appear in actual replays. A deliberate compiler error exits 2 before
+loading the old DLL; the subsequent recovery rebuild/replay passes. Full
+any% 129712/0 and Waver 58109/71 retain all ordered output, including coverage
+and failure details, after excluding timing. Those Waver failures predate the
+separate X-ray correction. Replay CPU seconds before/after: any% 140.84/121.98,
+Waver 55.80/58.72. These single runs had variable background load; the measured
+gain is repeated-build reuse, with a modest cold-build cost.
+
+Final normal-CLI check uses committed 76ade707 plus the maintained build
+script: any% 129712/0 and Waver 58109/0, both native exit 0. Frozen source
+and script remain exact before/after replay; peer gameplay edits are separate.
+Cargo fmt/check, release build with the installed external SDL2 library, and
+progress pass. This change modifies only the build script and this plan;
+all own Rust residue counters are unchanged.
 
 1. **Run it once — done.** Put the ROM in `rom/sm.smc`, run
    `cargo run --release -- rom/sm.smc` from the repo root, play a minute and

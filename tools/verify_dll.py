@@ -14,10 +14,13 @@ def build(root, rustc):
     output.mkdir(parents=True, exist_ok=True)
     library = output / "libsm.rlib"
     dll = output / "sm_verify.dll"
-    common = [rustc, "--edition=2021", "-C", "opt-level=3", "-A", "warnings"]
+    # Retain 16 codegen units; incremental compilation otherwise defaults to 256.
+    common = [rustc, "--edition=2021", "-C", "opt-level=3",
+              "-C", "codegen-units=16", "-A", "warnings"]
     subprocess.run(
         common + ["--crate-name", "sm", "--crate-type", "rlib", "--cfg",
-                  "sm_verify_dll", "sm/src/lib.rs", "-o", str(library)],
+                  "sm_verify_dll", "-C", f"incremental={output / 'incremental-sm'}",
+                  "sm/src/lib.rs", "-o", str(library)],
         cwd=root, check=True,
     )
     sysroot = Path(subprocess.check_output(
@@ -31,7 +34,8 @@ def build(root, rustc):
     linker = sysroot / "lib" / "rustlib" / host / "bin" / "gcc-ld" / "ld.lld.exe"
     subprocess.run(
         common + ["--crate-name", "sm_verify", "--crate-type", "cdylib",
-                  "-C", f"linker={linker}", "-C", "linker-flavor=ld", "sm/src/verify_dll.rs",
+                  "-C", f"linker={linker}", "-C", "linker-flavor=ld",
+                  "-C", f"incremental={output / 'incremental-host'}", "sm/src/verify_dll.rs",
                   "--extern", f"sm={library}", "-o", str(dll)],
         cwd=root, check=True,
     )
