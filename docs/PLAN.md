@@ -22,6 +22,10 @@ changing what it does.
 Current verification has limits: the any% fixture runs 129,712 frames with
 zero failures, but visits only six rooms and does not reach credits. The
 58,109-frame Waver route now also passes with zero rendered failures.
+The 69,700-frame Super Missile route passes with zero failures, visiting
+22 rooms and 28 enemy definitions and collecting 5/5 Super Missiles.
+Its frozen source is 69b844d9 plus the demo correction committed in 620a6ac6;
+this route result does not establish coverage of later implementation changes.
 Rendering starts enabled deterministically. Complete gameplay, audio timing
 and other masked RAM remain unverified. Historical zero-failure Waver runs
 made before the render initialization fix do not establish rendering equivalence.
@@ -275,6 +279,32 @@ change and no new replay result belong to this cleanup.
 
 ## The oracle
 
+Super Missile route milestone (2026-10-19): the normal-input route branches
+from the verified 68096-frame prefix before the first timed shutter closes.
+A running jump, timed morph and Jump+Run between Down presses retain enough
+rolling speed to cross all three shutters. The upper-right shot passage near
+672/272 then leads to the tank. Full boot replay passes 69700/0 (125.19s),
+native exit 0, with 55332 gameplay frames, 22 rooms and 28 enemy definitions.
+Final state is gameplay in 9BC8 at X85/Y107, health29/199, missiles0/5,
+Supers5/5 and equipment1004; the item message has been dismissed. This branch
+skips the extra Missile Tank from the earlier ledge route. No credits frames
+are observed, and complete gameplay remains unfinished.
+
+The ignored fixture is movies/super-missiles.inputs, 69700 frames, SHA-256
+6cc116c4eb16bd238cf5d6457e9c28e6868786f2fc0fc99a3e8f12921bea6b56.
+Verification uses frozen 69b844d9 plus the two-file demo correction and mask
+removal committed in 620a6ac6. The ordinary verifier host adds only read-only
+final inventory logging and preserves comparisons and exit status. Inputs
+are copied and hashed, saves are separate and inherited SM_* overrides are
+cleared. Later current-HEAD changes are outside this source claim. Cargo
+format check, normal release build and progress pass. No maintained Rust,
+own residue counts or ROM-derived committed assets change.
+
+This supersedes the historical Super Missile access holds below; the
+from-below crumble obstruction remains confirmed. Next: validate the saved
+continuation against the verified implementation, leave with Supers, recover
+health and extend coverage toward credits.
+
 Demo accumulator correction and A82 enforcement (2026-10-19): the two
 cinematic demo callers now pass 8000, preserving the ROM accumulator left
 by EnableDemoInput. The loader and the attract caller's object-pointer
@@ -351,11 +381,12 @@ therefore not a route through this obstruction from below.
 
 The upper-right entrance near672/272 has a normal-shot reaction, but the
 first timed shutter is already closed in the ledge checkpoint after the
-earlier missile pickup. Next: use the earlier verified 68096-frame prefix
-before that trigger and establish upper-corridor access, then verify the
-successful extension from boot. The 69714-frame ledge remains the strongest
-boot route; these checks add no item, room or credits milestone. No maintained
-source or residue changes, probes or ROM-derived assets belong to this audit.
+earlier missile pickup. The later Super Missile milestone above succeeds
+from the earlier verified 68096-frame prefix before that trigger. The
+69714-frame ledge remains a separate verified extra-Missile route; these
+geometry checks themselves add no item, room or credits milestone. No
+maintained source or residue changes, probes or ROM-derived assets belong
+to this audit.
 
 Reviewed-change integration QC (2026-10-19): frozen 626b0b7e plus the
 verified door fields and window-boundary snapshots passes any% 129712/0
@@ -12801,7 +12832,8 @@ coverage. Maintained source contains no observations. Cargo fmt/check and
 release build pass. Own raw offsets-2, cast lines-8, Rust lines-5; other
 own counters unchanged and peer source excluded from these replays.
 
-Super Missile passage hold (2026-10-19): accumulated access work reached
+Historical Super Missile passage hold (2026-10-19), superseded by the
+verified 69700-frame tank pickup recorded above: accumulated access work reached
 the one-hour stop rule. Stop controller timing probes for the64/288 Bomb
 passage and64/96 tank. The verified missile pickup andX89/Y347 ledge remain
 valid, but no Super Missile was collected. Live block observations show
