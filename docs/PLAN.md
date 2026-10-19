@@ -13113,6 +13113,33 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Morph Ball eye-beam full intensity (2026-10-19): rename EA3C to
+HdmaobjPreInstr_MorphBallEyeBeamFull and name its dispatch constant.
+Byte-backed reads/stores preserve the activation word and updater-first
+order. The live ROM lookup maps its base before adding the wrapped word
+index times four; each color read/store stays ordered. The final color-index
+increment rereads live RAM, retaining color-destination aliases. The inactive
+branch advances the captured, rounded current slot with wrapping arithmetic.
+
+Frozen 626b0b7e plus only sm_88.rs passes any% 129712/0 (290.20s) and
+Waver 58109/0 (171.68s), native exits 0. The extended checkpoint passes
+772/0, executing 270 active calls and the inactive transition at frame 28504.
+All 128 KiB RAM matches baseline at updater entry/return and callback return;
+all 16 color indices execute. An index fault is detected at frame 28234.
+Independent controls pass 72,088 focused pairs (including all 65,536 index
+words) and 3,312 actual updater/table pairs. Premasked lookup, stale final
+index and premature color-write mutants are rejected. Source-stripping and
+maintained-candidate identity checks pass; independent review has no findings.
+
+Cargo fmt, fmt --check, optimized library/DLL builds and progress pass.
+Ordinary Cargo release initially hit Windows build-script execution denial.
+After the separately committed native-linkage repair, frozen 6e06416f plus
+this candidate passes cargo build --release --locked (41.07s), native exit 0,
+using committed build files. Own raw offsets -12, cast lines -41, Rust lines
+-35; other counters unchanged. No probes or ROM-derived assets committed. Next: EACB fading;
+the extended checkpoint now demonstrates 13 fading calls at frames
+28505..28517 and the completion branch at 28518. Phase 3 remains open.
+
 Morph Ball eye-beam widening (2026-10-19): rename E9E6 to
 HdmaobjPreInstr_MorphBallEyeBeamWidening and name its dispatch constant.
 Safe byte-backed fixed-point additions retain fraction-before-whole stores,
