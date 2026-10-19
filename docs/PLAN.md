@@ -49,6 +49,18 @@ transpile notes are historical provenance, not a regeneration workflow.
 Keep only current build outputs in `target/` and the ignored ROM/movie inputs
 needed for verification. Remove obsolete scratch and restart artifacts.
 
+Retired PLM/beam-probe cleanup (2026-10-19): moved colored-door-cleanup,
+colored-door-safe, power-block-cleanup, door-counter-cleanup and floor-observe
+from target, with their 13 retired helper scripts from route-gunship-top,
+to temporary `sm-workspace-retired-plm-probes-20261019-094522-401`.
+All 327 files / 256,537,923 bytes have matching SHA-256 hashes after moving;
+the recovery directory preserves their relative paths. No live process or
+retained repository/top-level temporary script depends on these retired
+files. Current route inputs, build outputs and verification jobs remain.
+Formatting, release build and progress checks pass. No maintained source,
+own residue-count change or new replay belongs to this cleanup; concurrent
+item-read, X-ray and verifier integration results remain separate work.
+
 Retired Waver prototype cleanup (2026-10-19): moved `target/waver-render-fix`
 outside the checkout to temporary
 `sm-workspace-retired-waver-20261019-093821-027/waver-render-fix`.
