@@ -18925,6 +18925,38 @@ cast lines -2 and unsafe functions -2. No RAM/layout change or probe/ROM-
 derived artifact committed. Full progression/readability/hardware/audio
 completion remains open; neither movie reaches credits.
 
+SPC byte-comparison family (2026-10-19): normalized jscpd and
+complete CST functions select A/X/Y and memory comparison implementations.
+One shared C/Z/N update and one const-generic register reader replace the
+three register copies; the memory reader retains source-before-destination
+bus order. All 18 opcode call sites keep their original addressing calls
+and cycle entries. Register is read after its operand bus read. Carry uses
+left >= right and Z/N use byte-wrapping subtraction, equal to the original
+complement/add-one arithmetic for all byte operands. V/H and other flags,
+registers and memory remain unchanged. Word comparisons have separate
+width/flag behavior and are outside this family.
+
+Complete source reconstruction permits only these four routines, their
+18 call sites and helpers. Other frozen sources match. Actual original/
+current comparisons agree in 262144 cases across every byte pair for all
+four entries, with independent C/Z/N expectations and unchanged other flags,
+registers and destination memory. Actual spc_runOpcode agrees in 18432
+constructed SPC/APU bus contexts: all 18 opcodes and 1024 register/flag/
+operand seeds, RAM, ports, timer counters and selected addressing forms.
+Complete initialized SPC/APU/DSP state and cycle counts match. This is actual
+instruction/bus execution, not every possible hardware state.
+
+Frozen 3df620f0 plus only this family passes any% 129712/0
+(191.28s) and Speed Booster 148406/0 (249.13s), native exits 0,
+with fixed source/library/DLL/ROM/movie hashes. Cargo fmt/check, normal live
+release (23.23s), progress and diff check pass. The committed Clippy return cleanup is preserved by applying these same
+selected replacements to the current parent; the resulting complete file
+matches the live composed source. Its return-only differences retain the
+separate Clippy verification.
+Own Rust lines -14, c_int cast lines -14 and unsafe functions -1. No layout
+change or probe/ROM-derived artifact committed. Neither movie reaches credits;
+full progression, readability and hardware/audio completion remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
