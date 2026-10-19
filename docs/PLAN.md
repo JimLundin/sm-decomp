@@ -19904,6 +19904,26 @@ replay supplies integration regression coverage; direct APIs cover frontend.
 Spritemap consolidation is parked at only 120 net lines. Continue larger
 complete repeated families; readability and full credits remain incomplete.
 
+Fire Geyser animation-shape family (2026-10-19): all 22 instruction
+callbacks share the ordered parent-Y read and adjacent-child position/height
+stores. Both live enemy-index reads, wide child offset, wrapping subtraction,
+original 44 constants, returned instruction pointer and first-step width write
+remain exact. Complete function normalization and whole-file reconstruction
+limit the change to this family. Net Rust lines -164, casts -65 and c_int
+cast lines -44; unsafe functions +1 is the shared raw enemy-overlay helper.
+RAM accesses and ABI counts are unchanged.
+
+Compiled original Rust and actual optimized library callbacks match full RAM
+and returned pointers in 2883584 cases across every index and parent-Y word,
+with odd/high slots and patterned RAM. This factored coverage is not every
+joint RAM state. Normal release (27.00s registry-only snapshot), composed
+workspace release, formatting/check, progress and diff checks pass.
+Frozen 6fffab58 plus this family includes the image and tile-flip commits
+and passes full any% 129712/0 (142.01s), native exit 0, with all 70 Rust/Cargo
+inputs and 72 runtime pins bound. Movie coverage of this enemy is unproven;
+direct comparisons exercise all callbacks. Continue larger repeated families;
+readability and full credits remain incomplete.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

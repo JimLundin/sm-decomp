@@ -1104,269 +1104,105 @@ pub unsafe fn FireGeyser_Instr_1(k: uint16, jp: *const uint16, game: &mut Game) 
     QueueSfx2_Max6(0x61 as uint16, game);
     jp
 }
+// Each animation step reads the live parent, then selects the adjacent child.
+unsafe fn set_fire_geyser_shape(offset: u16, height: u16, begin: bool, game: &mut Game) {
+    let y = (*Get_FireGeyser(ram_word!(game, cur_enemy_index) as i32, game))
+        .fgr_var_D
+        .wrapping_sub(offset);
+    let child = Get_FireGeyser(ram_word!(game, cur_enemy_index) as i32 + 64, game);
+    (*child).base.y_pos = y;
+    (*child).base.y_height = height;
+    if begin {
+        (*child).base.x_width = 8;
+    }
+}
+
 pub unsafe fn FireGeyser_Instr_2(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    let v2: uint16 =
-        ((*Get_FireGeyser(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).fgr_var_D)
-            .wrapping_sub(g_word_A68DBB);
-    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
-        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.y_pos = v2;
-    (*E).base.y_height = g_word_A68DE7;
-    (*E).base.x_width = 8 as uint16;
+    set_fire_geyser_shape(g_word_A68DBB, g_word_A68DE7, true, game);
     jp
 }
 pub unsafe fn FireGeyser_Instr_3(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    let v2: uint16 =
-        ((*Get_FireGeyser(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).fgr_var_D)
-            .wrapping_sub(g_word_A68DBD);
-    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
-        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.y_pos = v2;
-    (*E).base.y_height = g_word_A68DE9;
+    set_fire_geyser_shape(g_word_A68DBD, g_word_A68DE9, false, game);
     jp
 }
 pub unsafe fn FireGeyser_Instr_4(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    let v2: uint16 =
-        ((*Get_FireGeyser(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).fgr_var_D)
-            .wrapping_sub(g_word_A68DBF);
-    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
-        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.y_pos = v2;
-    (*E).base.y_height = g_word_A68DEB;
+    set_fire_geyser_shape(g_word_A68DBF, g_word_A68DEB, false, game);
     jp
 }
 pub unsafe fn FireGeyser_Instr_5(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    let v2: uint16 =
-        ((*Get_FireGeyser(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).fgr_var_D)
-            .wrapping_sub(g_word_A68DC1);
-    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
-        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.y_pos = v2;
-    (*E).base.y_height = g_word_A68DED;
+    set_fire_geyser_shape(g_word_A68DC1, g_word_A68DED, false, game);
     jp
 }
 pub unsafe fn FireGeyser_Instr_6(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    let v2: uint16 =
-        ((*Get_FireGeyser(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).fgr_var_D)
-            .wrapping_sub(g_word_A68DC3);
-    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
-        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.y_pos = v2;
-    (*E).base.y_height = g_word_A68DEF;
+    set_fire_geyser_shape(g_word_A68DC3, g_word_A68DEF, false, game);
     jp
 }
 pub unsafe fn FireGeyser_Instr_7(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    let v2: uint16 =
-        ((*Get_FireGeyser(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).fgr_var_D)
-            .wrapping_sub(g_word_A68DC5);
-    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
-        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.y_pos = v2;
-    (*E).base.y_height = g_word_A68DF1;
+    set_fire_geyser_shape(g_word_A68DC5, g_word_A68DF1, false, game);
     jp
 }
 pub unsafe fn FireGeyser_Instr_8(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    let v2: uint16 =
-        ((*Get_FireGeyser(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).fgr_var_D)
-            .wrapping_sub(g_word_A68DC7);
-    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
-        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.y_pos = v2;
-    (*E).base.y_height = g_word_A68DF3;
+    set_fire_geyser_shape(g_word_A68DC7, g_word_A68DF3, false, game);
     jp
 }
 pub unsafe fn FireGeyser_Instr_9(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    let v2: uint16 =
-        ((*Get_FireGeyser(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).fgr_var_D)
-            .wrapping_sub(g_word_A68DC9);
-    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
-        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.y_pos = v2;
-    (*E).base.y_height = g_word_A68DF5;
+    set_fire_geyser_shape(g_word_A68DC9, g_word_A68DF5, false, game);
     jp
 }
 pub unsafe fn FireGeyser_Instr_10(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    let v2: uint16 =
-        ((*Get_FireGeyser(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).fgr_var_D)
-            .wrapping_sub(g_word_A68DCB);
-    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
-        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.y_pos = v2;
-    (*E).base.y_height = g_word_A68DF7;
+    set_fire_geyser_shape(g_word_A68DCB, g_word_A68DF7, false, game);
     jp
 }
 pub unsafe fn FireGeyser_Instr_11(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    let v2: uint16 =
-        ((*Get_FireGeyser(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).fgr_var_D)
-            .wrapping_sub(g_word_A68DCD);
-    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
-        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.y_pos = v2;
-    (*E).base.y_height = g_word_A68DF9;
+    set_fire_geyser_shape(g_word_A68DCD, g_word_A68DF9, false, game);
     jp
 }
 pub unsafe fn FireGeyser_Instr_12(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    let v2: uint16 =
-        ((*Get_FireGeyser(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).fgr_var_D)
-            .wrapping_sub(g_word_A68DCF);
-    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
-        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.y_pos = v2;
-    (*E).base.y_height = g_word_A68DFB;
+    set_fire_geyser_shape(g_word_A68DCF, g_word_A68DFB, false, game);
     jp
 }
 pub unsafe fn FireGeyser_Instr_13(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    let v2: uint16 =
-        ((*Get_FireGeyser(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).fgr_var_D)
-            .wrapping_sub(g_word_A68DD1);
-    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
-        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.y_pos = v2;
-    (*E).base.y_height = g_word_A68DFD;
+    set_fire_geyser_shape(g_word_A68DD1, g_word_A68DFD, false, game);
     jp
 }
 pub unsafe fn FireGeyser_Instr_14(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    let v2: uint16 =
-        ((*Get_FireGeyser(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).fgr_var_D)
-            .wrapping_sub(g_word_A68DD3);
-    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
-        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.y_pos = v2;
-    (*E).base.y_height = g_word_A68DFF;
+    set_fire_geyser_shape(g_word_A68DD3, g_word_A68DFF, false, game);
     jp
 }
 pub unsafe fn FireGeyser_Instr_15(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    let v2: uint16 =
-        ((*Get_FireGeyser(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).fgr_var_D)
-            .wrapping_sub(g_word_A68DD5);
-    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
-        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.y_pos = v2;
-    (*E).base.y_height = g_word_A68E01;
+    set_fire_geyser_shape(g_word_A68DD5, g_word_A68E01, false, game);
     jp
 }
 pub unsafe fn FireGeyser_Instr_16(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    let v2: uint16 =
-        ((*Get_FireGeyser(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).fgr_var_D)
-            .wrapping_sub(g_word_A68DD7);
-    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
-        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.y_pos = v2;
-    (*E).base.y_height = g_word_A68E03;
+    set_fire_geyser_shape(g_word_A68DD7, g_word_A68E03, false, game);
     jp
 }
 pub unsafe fn FireGeyser_Instr_17(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    let v2: uint16 =
-        ((*Get_FireGeyser(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).fgr_var_D)
-            .wrapping_sub(g_word_A68DD9);
-    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
-        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.y_pos = v2;
-    (*E).base.y_height = g_word_A68E05;
+    set_fire_geyser_shape(g_word_A68DD9, g_word_A68E05, false, game);
     jp
 }
 pub unsafe fn FireGeyser_Instr_18(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    let v2: uint16 =
-        ((*Get_FireGeyser(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).fgr_var_D)
-            .wrapping_sub(g_word_A68DDB);
-    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
-        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.y_pos = v2;
-    (*E).base.y_height = g_word_A68E07;
+    set_fire_geyser_shape(g_word_A68DDB, g_word_A68E07, false, game);
     jp
 }
 pub unsafe fn FireGeyser_Instr_19(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    let v2: uint16 =
-        ((*Get_FireGeyser(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).fgr_var_D)
-            .wrapping_sub(g_word_A68DDD);
-    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
-        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.y_pos = v2;
-    (*E).base.y_height = g_word_A68E09;
+    set_fire_geyser_shape(g_word_A68DDD, g_word_A68E09, false, game);
     jp
 }
 pub unsafe fn FireGeyser_Instr_20(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    let v2: uint16 =
-        ((*Get_FireGeyser(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).fgr_var_D)
-            .wrapping_sub(g_word_A68DDF);
-    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
-        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.y_pos = v2;
-    (*E).base.y_height = g_word_A68E0B;
+    set_fire_geyser_shape(g_word_A68DDF, g_word_A68E0B, false, game);
     jp
 }
 pub unsafe fn FireGeyser_Instr_21(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    let v2: uint16 =
-        ((*Get_FireGeyser(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).fgr_var_D)
-            .wrapping_sub(g_word_A68DE1);
-    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
-        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.y_pos = v2;
-    (*E).base.y_height = g_word_A68E0D;
+    set_fire_geyser_shape(g_word_A68DE1, g_word_A68E0D, false, game);
     jp
 }
 pub unsafe fn FireGeyser_Instr_22(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    let v2: uint16 =
-        ((*Get_FireGeyser(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).fgr_var_D)
-            .wrapping_sub(g_word_A68DE3);
-    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
-        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.y_pos = v2;
-    (*E).base.y_height = g_word_A68E0F;
+    set_fire_geyser_shape(g_word_A68DE3, g_word_A68E0F, false, game);
     jp
 }
 pub unsafe fn FireGeyser_Instr_23(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    let v2: uint16 =
-        ((*Get_FireGeyser(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).fgr_var_D)
-            .wrapping_sub(g_word_A68DE5);
-    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
-        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.y_pos = v2;
-    (*E).base.y_height = g_word_A68E11;
+    set_fire_geyser_shape(g_word_A68DE5, g_word_A68E11, false, game);
     jp
 }
 pub unsafe fn FireGeyser_Instr_24(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
