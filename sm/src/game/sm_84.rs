@@ -1673,7 +1673,7 @@ pub unsafe fn PlmInstr_SetTimer(plmp: *const uint8, k: uint16, game: &mut Game) 
 }
 pub unsafe fn PlmInstr_LoadItemPlmGfx(
     mut plmp: *const uint8,
-    mut k: uint16,
+    k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
     let gfx_index = u16::from_le_bytes([game.g_ram[0x1c2d], game.g_ram[0x1c2e]]);
@@ -1684,8 +1684,8 @@ pub unsafe fn PlmInstr_LoadItemPlmGfx(
     game.g_ram[0x1c2d..0x1c2f].copy_from_slice(&next_index.to_le_bytes());
     let table_offset = usize::from(gfx_index >> 1) * 2;
     let vram_destination = game.read_rom_word(0x8487cd, table_offset);
-    let tile_offset = i32::from(game.read_rom_word(0x8487d5, table_offset));
-    let mut tile_number = i32::from(game.read_rom_word(0x8487dd, table_offset));
+    let tile_offset = usize::from(game.read_rom_word(0x8487d5, table_offset));
+    let mut tile_number = game.read_rom_word(0x8487dd, table_offset);
     let instruction = plmp.offset_from(RomBankBase(0x84, game)) as u16;
     let pointer_offset = 0x1c2f + usize::from(gfx_index >> 1) * 2; // plm_item_gfx_ptrs
     game.g_ram[pointer_offset..pointer_offset + 2].copy_from_slice(&instruction.to_le_bytes());
@@ -1698,28 +1698,16 @@ pub unsafe fn PlmInstr_LoadItemPlmGfx(
     game.g_ram[entry + 4] = 0x89;
     game.g_ram[entry + 5..entry + 7].copy_from_slice(&vram_destination.to_le_bytes());
     game.g_ram[0x330..0x332].copy_from_slice(&queue_tail.wrapping_add(7).to_le_bytes());
-    plmp = plmp.offset(2 as ::core::ffi::c_int as isize);
-    let mut v7: ::core::ffi::c_int = tile_offset;
-    let mut R24: ::core::ffi::c_int = tile_offset + 16 as ::core::ffi::c_int;
-    loop {
-        *((&raw mut (*(&raw mut (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0xa000 as ::core::ffi::c_int as isize)
-            as *mut TileTables))
-            .tables as *mut TileTable)
-            .offset(0 as ::core::ffi::c_int as isize))
-        .top_left as *mut uint8)
-            .offset(v7 as isize) as *mut uint16) = (tile_number
-            + ((*plmp.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int)
-                << 10 as ::core::ffi::c_int))
-            as uint16;
-        tile_number += 1;
-        plmp = plmp.offset(1);
-        v7 += 2 as ::core::ffi::c_int;
-        if !(v7 != R24) {
-            break;
-        }
+    plmp = plmp.add(2);
+    for tile in 0..8 {
+        let attributes = u16::from(*plmp) << 10;
+        let word = tile_number.wrapping_add(attributes);
+        let destination = 0xa000 + tile_offset + tile * 2; // tile_table.tables[0].top_left
+        game.g_ram[destination..destination + 2].copy_from_slice(&word.to_le_bytes());
+        tile_number = tile_number.wrapping_add(1);
+        plmp = plmp.add(1);
     }
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_CopyFromRamToVram(
     mut plmp: *const uint8,

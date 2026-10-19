@@ -13162,6 +13162,27 @@ ROM results and sequential operand-byte reads. PLM decrement and Chozo
 coverage holds and complete credits/gameplay/hardware/audio/masks/ownership
 remain open; the peer Super Missile route/cleanup retains separate evidence.
 
+PLM item-graphics tile words (2026-10-19): PlmInstr_LoadItemPlmGfx
+now writes its eight little-endian tile words through byte-backed RAM.
+The original wide tile-table byte offset remains linear fromA000. Each live
+attribute-byte read still precedes its corresponding word store; tile-number
+increment and operand-pointer advance remain afterward. The bounded eight-
+iteration loop is equivalent to the former offset-to-offset+16 loop. Tile
+word addition/increment explicitly wrap at16 bits. Other loader work stays
+ordered before these writes.
+
+Frozen 29ca49db plus only this change passes any%129712/0
+(155.32s), native exit0, and pickup route68606/0
+(105.85s), native exit0. Observed pickup route68606/0
+(105.85s) executes24 tile stores across three loader calls.
+Maintained source has no observers. All16777216 tile-number/attribute pairs
+match and all65536 destination offsets fit RAM; these add no movie coverage.
+Cargo fmt/check and release build pass. Own raw offsets-1, cast lines-7,
+Rust lines-12; other own counters unchanged. Frozen replays contain only
+this loader change, and peer edits remain preserved. PLM decrement/Chozo
+coverage holds and complete credits/gameplay/hardware/audio/masks/ownership
+remain open; the Super Missile route/cleanup retains separate evidence.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
