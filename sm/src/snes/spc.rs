@@ -245,40 +245,26 @@ unsafe fn spc_adrIndP(mut spc: *mut Spc) -> uint16_t {
     return (fresh2 as ::core::ffi::c_int
         | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16_t;
 }
-unsafe fn spc_and(mut spc: *mut Spc, mut adr: uint16_t) {
-    (*spc).a =
-        ((*spc).a as ::core::ffi::c_int & spc_read(spc, adr) as ::core::ffi::c_int) as uint8_t;
+// OR, AND and EOR share addressing forms; opcode bits 5..6 select the logic.
+fn spc_logic_value(opcode: u8, left: u8, right: u8) -> u8 {
+    match opcode & 0x60 {
+        0x00 => left | right,
+        0x20 => left & right,
+        0x40 => left ^ right,
+        _ => unreachable!("invalid SPC logical opcode"),
+    }
+}
+unsafe fn spc_logic_accumulator(spc: *mut Spc, address: u16, opcode: u8) {
+    let left = (*spc).a;
+    let right = spc_read(spc, address);
+    (*spc).a = spc_logic_value(opcode, left, right);
     spc_setZN(spc, (*spc).a);
 }
-unsafe fn spc_andm(mut spc: *mut Spc, mut dst: uint16_t, mut src: uint16_t) {
-    let mut value: uint8_t = spc_read(spc, src);
-    let mut result: uint8_t =
-        (spc_read(spc, dst) as ::core::ffi::c_int & value as ::core::ffi::c_int) as uint8_t;
-    spc_write(spc, dst, result);
-    spc_setZN(spc, result);
-}
-unsafe fn spc_or(mut spc: *mut Spc, mut adr: uint16_t) {
-    (*spc).a =
-        ((*spc).a as ::core::ffi::c_int | spc_read(spc, adr) as ::core::ffi::c_int) as uint8_t;
-    spc_setZN(spc, (*spc).a);
-}
-unsafe fn spc_orm(mut spc: *mut Spc, mut dst: uint16_t, mut src: uint16_t) {
-    let mut value: uint8_t = spc_read(spc, src);
-    let mut result: uint8_t =
-        (spc_read(spc, dst) as ::core::ffi::c_int | value as ::core::ffi::c_int) as uint8_t;
-    spc_write(spc, dst, result);
-    spc_setZN(spc, result);
-}
-unsafe fn spc_eor(mut spc: *mut Spc, mut adr: uint16_t) {
-    (*spc).a =
-        ((*spc).a as ::core::ffi::c_int ^ spc_read(spc, adr) as ::core::ffi::c_int) as uint8_t;
-    spc_setZN(spc, (*spc).a);
-}
-unsafe fn spc_eorm(mut spc: *mut Spc, mut dst: uint16_t, mut src: uint16_t) {
-    let mut value: uint8_t = spc_read(spc, src);
-    let mut result: uint8_t =
-        (spc_read(spc, dst) as ::core::ffi::c_int ^ value as ::core::ffi::c_int) as uint8_t;
-    spc_write(spc, dst, result);
+unsafe fn spc_logic_memory(spc: *mut Spc, destination: u16, source: u16, opcode: u8) {
+    let right = spc_read(spc, source);
+    let left = spc_read(spc, destination);
+    let result = spc_logic_value(opcode, left, right);
+    spc_write(spc, destination, result);
     spc_setZN(spc, result);
 }
 // Subtraction passes the complemented right operand through the same adder.
@@ -461,25 +447,25 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
                     == 0 as ::core::ffi::c_int,
             );
         }
-        4 => {
-            spc_or(spc, spc_adrDp(spc));
+        4 | 36 | 68 => {
+            spc_logic_accumulator(spc, spc_adrDp(spc), opcode);
         }
-        5 => {
-            spc_or(spc, spc_adrAbs(spc));
+        5 | 37 | 69 => {
+            spc_logic_accumulator(spc, spc_adrAbs(spc), opcode);
         }
-        6 => {
-            spc_or(spc, spc_adrInd(spc));
+        6 | 38 | 70 => {
+            spc_logic_accumulator(spc, spc_adrInd(spc), opcode);
         }
-        7 => {
-            spc_or(spc, spc_adrIdx(spc));
+        7 | 39 | 71 => {
+            spc_logic_accumulator(spc, spc_adrIdx(spc), opcode);
         }
-        8 => {
-            spc_or(spc, spc_adrImm(spc));
+        8 | 40 | 72 => {
+            spc_logic_accumulator(spc, spc_adrImm(spc), opcode);
         }
-        9 => {
+        9 | 41 | 73 => {
             let mut src: uint16_t = 0 as uint16_t;
             let mut dst: uint16_t = spc_adrDpDp(spc, &raw mut src);
-            spc_orm(spc, dst, src);
+            spc_logic_memory(spc, dst, src, opcode);
         }
         10 => {
             let mut adr_2: uint16_t = 0 as uint16_t;
@@ -521,27 +507,27 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
         16 => {
             spc_doBranch(spc, spc_readOpcode(spc), !(*spc).n);
         }
-        20 => {
-            spc_or(spc, spc_adrDpx(spc));
+        20 | 52 | 84 => {
+            spc_logic_accumulator(spc, spc_adrDpx(spc), opcode);
         }
-        21 => {
-            spc_or(spc, spc_adrAbx(spc));
+        21 | 53 | 85 => {
+            spc_logic_accumulator(spc, spc_adrAbx(spc), opcode);
         }
-        22 => {
-            spc_or(spc, spc_adrAby(spc));
+        22 | 54 | 86 => {
+            spc_logic_accumulator(spc, spc_adrAby(spc), opcode);
         }
-        23 => {
-            spc_or(spc, spc_adrIdy(spc));
+        23 | 55 | 87 => {
+            spc_logic_accumulator(spc, spc_adrIdy(spc), opcode);
         }
-        24 => {
+        24 | 56 | 88 => {
             let mut src_0: uint16_t = 0 as uint16_t;
             let mut dst_0: uint16_t = spc_adrDpImm(spc, &raw mut src_0);
-            spc_orm(spc, dst_0, src_0);
+            spc_logic_memory(spc, dst_0, src_0, opcode);
         }
-        25 => {
+        25 | 57 | 89 => {
             let mut src_1: uint16_t = 0 as uint16_t;
             let mut dst_1: uint16_t = spc_adrIndInd(spc, &raw mut src_1);
-            spc_orm(spc, dst_1, src_1);
+            spc_logic_memory(spc, dst_1, src_1, opcode);
         }
         26 => {
             let mut low: uint16_t = 0 as uint16_t;
@@ -583,26 +569,6 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
         32 => {
             (*spc).p = false_0 != 0;
         }
-        36 => {
-            spc_and(spc, spc_adrDp(spc));
-        }
-        37 => {
-            spc_and(spc, spc_adrAbs(spc));
-        }
-        38 => {
-            spc_and(spc, spc_adrInd(spc));
-        }
-        39 => {
-            spc_and(spc, spc_adrIdx(spc));
-        }
-        40 => {
-            spc_and(spc, spc_adrImm(spc));
-        }
-        41 => {
-            let mut src_2: uint16_t = 0 as uint16_t;
-            let mut dst_2: uint16_t = spc_adrDpDp(spc, &raw mut src_2);
-            spc_andm(spc, dst_2, src_2);
-        }
         42 => {
             let mut adr_4: uint16_t = 0 as uint16_t;
             let mut bit_0: uint8_t = spc_adrAbsBit(spc, &raw mut adr_4);
@@ -640,28 +606,6 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
         48 => {
             spc_doBranch(spc, spc_readOpcode(spc), (*spc).n);
         }
-        52 => {
-            spc_and(spc, spc_adrDpx(spc));
-        }
-        53 => {
-            spc_and(spc, spc_adrAbx(spc));
-        }
-        54 => {
-            spc_and(spc, spc_adrAby(spc));
-        }
-        55 => {
-            spc_and(spc, spc_adrIdy(spc));
-        }
-        56 => {
-            let mut src_3: uint16_t = 0 as uint16_t;
-            let mut dst_3: uint16_t = spc_adrDpImm(spc, &raw mut src_3);
-            spc_andm(spc, dst_3, src_3);
-        }
-        57 => {
-            let mut src_4: uint16_t = 0 as uint16_t;
-            let mut dst_4: uint16_t = spc_adrIndInd(spc, &raw mut src_4);
-            spc_andm(spc, dst_4, src_4);
-        }
         58 => {
             let mut low_0: uint16_t = 0 as uint16_t;
             let mut high_0: uint16_t = spc_adrDpWord(spc, &raw mut low_0);
@@ -694,26 +638,6 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
         }
         64 => {
             (*spc).p = true_0 != 0;
-        }
-        68 => {
-            spc_eor(spc, spc_adrDp(spc));
-        }
-        69 => {
-            spc_eor(spc, spc_adrAbs(spc));
-        }
-        70 => {
-            spc_eor(spc, spc_adrInd(spc));
-        }
-        71 => {
-            spc_eor(spc, spc_adrIdx(spc));
-        }
-        72 => {
-            spc_eor(spc, spc_adrImm(spc));
-        }
-        73 => {
-            let mut src_5: uint16_t = 0 as uint16_t;
-            let mut dst_6: uint16_t = spc_adrDpDp(spc, &raw mut src_5);
-            spc_eorm(spc, dst_6, src_5);
         }
         74 => {
             let mut adr_5: uint16_t = 0 as uint16_t;
@@ -752,28 +676,6 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
         }
         80 => {
             spc_doBranch(spc, spc_readOpcode(spc), !(*spc).v);
-        }
-        84 => {
-            spc_eor(spc, spc_adrDpx(spc));
-        }
-        85 => {
-            spc_eor(spc, spc_adrAbx(spc));
-        }
-        86 => {
-            spc_eor(spc, spc_adrAby(spc));
-        }
-        87 => {
-            spc_eor(spc, spc_adrIdy(spc));
-        }
-        88 => {
-            let mut src_6: uint16_t = 0 as uint16_t;
-            let mut dst_8: uint16_t = spc_adrDpImm(spc, &raw mut src_6);
-            spc_eorm(spc, dst_8, src_6);
-        }
-        89 => {
-            let mut src_7: uint16_t = 0 as uint16_t;
-            let mut dst_9: uint16_t = spc_adrIndInd(spc, &raw mut src_7);
-            spc_eorm(spc, dst_9, src_7);
         }
         90 => {
             let mut low_1: uint16_t = 0 as uint16_t;

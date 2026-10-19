@@ -18762,6 +18762,38 @@ ROM-derived asset committed. Concurrent gameplay/standard-tool edits keep
 their own checks. Neither movie reaches credits; the broad project goal
 remains unfinished.
 
+SPC logical-opcode family (2026-10-19): normalized jscpd discovery
+and complete CST functions select OR/AND/EOR and their memory forms, plus
+the containing opcode dispatch. Its 36 complete logical arms agree after
+only operation, selector and local-name substitution. They now share twelve
+addressing arms; opcode bits 5..6 select the same byte operation. Six repeated
+routines become two raw-pointer destination routines and one safe byte helper.
+Accumulator is captured before its operand bus read, as in the original
+expression. Memory reads source before destination, writes the result before
+Z/N and leaves all other flags exact. Addressing helpers, operand order,
+PC movement and cycle handling stay in the shared arms. Carry-bit logic uses
+different instructions/invariants and stays separate. Invalid operation bits
+are unreachable through the selected, unchanged opcode inventory.
+
+Complete source reconstruction permits only six routines, the 36 selected
+arms, their shared implementations and formatting. Other frozen sources match.
+Actual original/current logical routines agree in 393216 byte-pair cases over
+all six entries. Independent OR/AND/XOR results, Z/N and preservation of other
+flags agree. Actual spc_runOpcode agrees in 36864 constructed bus contexts:
+all 36 affected opcodes, 1024 register/flag/operand seeds, RAM, ports, timer
+counters and direct/absolute/indexed/indirect addressing. Complete initialized
+SPC/APU/DSP state and cycle counts match. These exercise instruction dispatch
+and bus effects but do not establish every hardware state or bus combination.
+
+Frozen a0c36eb7 plus only this family passes any% 129712/0
+(179.89s) and Speed Booster 148406/0 (231.29s), native exits 0,
+with fixed source/library/DLL/ROM/movie hashes. Cargo fmt/check, normal release
+(29.19s), progress and diff check pass. Own Rust lines -98, c_int cast lines
+-6 and unsafe functions -4. No RAM/layout change or probe/ROM-derived artifact
+committed. Concurrent gameplay/Clippy changes retain their own checks. Neither
+movie reaches credits; broader readability, progression and hardware/audio
+completion remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
