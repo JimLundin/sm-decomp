@@ -23,13 +23,13 @@ Complete gameplay, audio timing and masked RAM remain unverified. Historical
 zero-failure Waver runs made before the render initialization fix do not
 establish rendering equivalence.
 
-Latest integrated check: frozen `05ab44c8` plus SNES allocation initialization
-includes the committed CPU direct-page load helper, async door state, safe
-backdrop clearing and complete verifier diagnostics. Any% passes 129712/0
-(190.00s), native exit 0; Waver passes 58109/71 (96.95s), native exit 1. All
-71 ordered Waver failure diagnostics match the explicit-render baseline.
-Formatting, release build and progress checks pass. Later gameplay and CPU
-edits are outside this snapshot and are not verified by this run.
+Latest integrated check: frozen `76ef4899` plus the Power Bomb block change
+from `f69e97c9` passes any% 129712/0 (254.29s), native exit 0, and the
+83073-frame floor route with 71 failures (199.50s), native exit 1. All 71
+ordered diagnostics equal the Waver baseline; the input prefix is identical
+through every known failure. The route executes ten block setup calls, while
+any% executes none. The Power Bomb projectile branch remains uncovered.
+Later gameplay, CPU, APU and PPU edits are outside this snapshot.
 
 Everything that existed before is in the branch `archive/pre-transpile-2026-10-17`.
 
@@ -160,6 +160,21 @@ sessions own the adjacent cleanup above. No maintained source or residue
 change and no new replay result belong to this cleanup.
 
 ## The oracle
+
+Independent Power Bomb block QC (2026-10-19): frozen 76ef4899 plus only
+the sm_84 candidate and temporary call counters passes any% 129712/0
+(254.29s), native exit 0, and map9ad9-ball136 83073/71 (199.50s), native
+exit 1. All 71 ordered frame/pixel/value diagnostics equal the explicit-render
+Waver baseline. Inputs first differ at frame 56786, after the last known
+failure at 28479. The route executes eight 0500 cases and two fallback cases;
+0300 is unexercised. Any% has zero calls and is only a general regression
+check for this routine. Committed f69e97c9 matches the independent candidate
+exactly. The earlier peer build reused target source that predates verifier
+SRAM isolation; subsequent checks should build from the maintained source or
+a named current commit. This independent run includes SRAM isolation and
+standard complete diagnostics. Formatting, release and progress checks pass;
+no maintained source or own residue delta belongs to this review. Later peer
+edits and the held Power Bomb branch remain outside this evidence.
 
 SNES allocation validity QC (2026-10-19): snes_init now zero-initializes its
 allocation before constructing child devices. The named padx/padpad arrays
