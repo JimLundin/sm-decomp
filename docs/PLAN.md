@@ -13245,6 +13245,21 @@ replays contain only this instruction change; peer edits remain preserved.
 PLM decrement/Chozo coverage holds and complete credits/gameplay/hardware/
 audio/masks/ownership remain open.
 
+PLM jump operand (2026-10-19): PlmInstr_Goto now reads its target
+with an explicit unaligned word read and converts the16-bit target to the
+same bank-relative pointer value. Unused slot and mutable parameter
+bindings are removed. Callers, RAM and dispatch remain unchanged.
+
+Frozen 09bc4d3c plus only this change passes any%129712/0
+(254.46s), native exit0, and pickup route68606/0
+(169.23s), native exit0. Observed pickup route68606/0
+(181.07s) executes 1413 actual jump-target reads. Maintained
+source has no observers. Cargo fmt/check and release build pass. Own Rust
+lines+1 names the target before pointer conversion; other own residue
+counters unchanged. Frozen replays contain only this routine change;
+peer edits remain preserved. PLM decrement/Chozo coverage holds and complete
+credits/gameplay/hardware/audio/masks/ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

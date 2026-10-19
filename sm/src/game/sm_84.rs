@@ -1648,8 +1648,9 @@ pub unsafe fn PlmInstr_CallFunction(
     CallPlmInstrFunc(Load24(plmp as *mut LongPtr), game);
     return plmp.offset(3 as ::core::ffi::c_int as isize);
 }
-pub unsafe fn PlmInstr_Goto(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
-    return *(plmp as *mut uint16) as uintptr_t as *const uint8;
+pub unsafe fn PlmInstr_Goto(plmp: *const uint8, _k: uint16) -> *const uint8 {
+    let target = (plmp as *const u16).read_unaligned();
+    usize::from(target) as *const uint8
 }
 pub unsafe fn PlmInstr_DecrementAndBranchNonzero(
     mut plmp: *const uint8,
