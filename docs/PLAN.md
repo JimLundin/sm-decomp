@@ -19184,6 +19184,35 @@ and projectile edits are preserved outside this commit. No probe or
 ROM-derived asset committed. Neither movie reaches credits; the broader
 readability, full progression and hardware/audio goal remains open.
 
+SPC register/memory move family (2026-10-19): normalized jscpd and
+complete CST routines/dispatch arms select all six A/X/Y load/store helpers.
+Fourteen memory addressing pairs share their dispatch arms; three immediate
+loads and the postincrement load use the same core. All 32 opcode entries,
+address helpers and cycle entries remain exact. Loads read the bus, assign
+the selected register, then set Z/N; stores retain their dummy bus read,
+read the selected register afterward, write it and leave flags unchanged.
+The postincrement helper increments X before the load. Its store counterpart
+omits a dummy read and remains separate, as do word and register transfers.
+
+Complete source reconstruction permits only these six routines, their 31
+original callers, the additional postincrement load and formatting. Other
+frozen sources match. Both compiled implementations pass 393216 independent
+register/value/flag checks across all six direct-page variants, checking
+all registers, destination RAM, flags, PC and cycles. Actual spc_runOpcode
+agrees in 32768 constructed bus contexts across all 32 affected opcodes,
+1024 register/flag/operand seeds, RAM, ports, timers and addressing variants.
+Complete initialized SPC/APU/DSP state and cycles match, including dummy
+read timer clearing. These contexts do not exhaust all hardware states.
+
+Frozen c5f296f8 plus only this family passes any% 129712/0
+(157.30s) and Speed Booster 148406/0 (192.09s), native exits 0,
+with fixed source/library/DLL/ROM/movie hashes. Cargo fmt/check, normal live
+release (23.57s), progress and diff check pass. Own Rust lines -46,
+unsafe functions -5; c_int/raw/layout counts unchanged. Concurrent frontend
+zlib and projectile changes retain their own checks outside this commit.
+No probe or ROM-derived artifact committed. Neither movie reaches credits;
+full progression, readability and hardware/audio completion remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

@@ -308,29 +308,26 @@ unsafe fn spc_compare_memory(spc: *mut Spc, destination: u16, source: u16) {
     let left = spc_read(spc, destination);
     spc_compare_flags(spc, left, right);
 }
-unsafe fn spc_mov(mut spc: *mut Spc, mut adr: uint16_t) {
-    (*spc).a = spc_read(spc, adr);
-    spc_setZN(spc, (*spc).a);
-}
-unsafe fn spc_movx(mut spc: *mut Spc, mut adr: uint16_t) {
-    (*spc).x = spc_read(spc, adr);
-    spc_setZN(spc, (*spc).x);
-}
-unsafe fn spc_movy(mut spc: *mut Spc, mut adr: uint16_t) {
-    (*spc).y = spc_read(spc, adr);
-    spc_setZN(spc, (*spc).y);
-}
-unsafe fn spc_movs(mut spc: *mut Spc, mut adr: uint16_t) {
-    spc_read(spc, adr);
-    spc_write(spc, adr, (*spc).a);
-}
-unsafe fn spc_movsx(mut spc: *mut Spc, mut adr: uint16_t) {
-    spc_read(spc, adr);
-    spc_write(spc, adr, (*spc).x);
-}
-unsafe fn spc_movsy(mut spc: *mut Spc, mut adr: uint16_t) {
-    spc_read(spc, adr);
-    spc_write(spc, adr, (*spc).y);
+// Loads and stores both read the operand address; stores retain the dummy read.
+unsafe fn spc_move_memory<const REGISTER: u8>(spc: *mut Spc, address: u16, store: bool) {
+    let value = spc_read(spc, address);
+    if store {
+        let register = match REGISTER {
+            0 => (*spc).a,
+            1 => (*spc).x,
+            2 => (*spc).y,
+            _ => unreachable!("invalid SPC move register"),
+        };
+        spc_write(spc, address, register);
+    } else {
+        match REGISTER {
+            0 => (*spc).a = value,
+            1 => (*spc).x = value,
+            2 => (*spc).y = value,
+            _ => unreachable!("invalid SPC move register"),
+        }
+        spc_setZN(spc, value);
+    }
 }
 // Return the shifted byte and outgoing carry; callers retain write order.
 fn spc_shift<const RIGHT: bool, const ROTATE: bool>(value: u8, carry: bool) -> (u8, bool) {
@@ -816,7 +813,7 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
             spc_dec(spc, spc_adrAbs(spc));
         }
         141 => {
-            spc_movy(spc, spc_adrImm(spc));
+            spc_move_memory::<2>(spc, spc_adrImm(spc), false);
         }
         142 => {
             spc_setFlags(spc, spc_pullByte(spc));
@@ -974,29 +971,28 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
         }
         191 => {
             let mut adr_12: uint16_t = spc_adrIndP(spc);
-            (*spc).a = spc_read(spc, adr_12);
-            spc_setZN(spc, (*spc).a);
+            spc_move_memory::<0>(spc, adr_12, false);
         }
         192 => {
             (*spc).i = false_0 != 0;
         }
-        196 => {
-            spc_movs(spc, spc_adrDp(spc));
+        196 | 228 => {
+            spc_move_memory::<0>(spc, spc_adrDp(spc), opcode & 0x20 == 0);
         }
-        197 => {
-            spc_movs(spc, spc_adrAbs(spc));
+        197 | 229 => {
+            spc_move_memory::<0>(spc, spc_adrAbs(spc), opcode & 0x20 == 0);
         }
-        198 => {
-            spc_movs(spc, spc_adrInd(spc));
+        198 | 230 => {
+            spc_move_memory::<0>(spc, spc_adrInd(spc), opcode & 0x20 == 0);
         }
-        199 => {
-            spc_movs(spc, spc_adrIdx(spc));
+        199 | 231 => {
+            spc_move_memory::<0>(spc, spc_adrIdx(spc), opcode & 0x20 == 0);
         }
         200 => {
             spc_compare_register::<1>(spc, spc_adrImm(spc));
         }
-        201 => {
-            spc_movsx(spc, spc_adrAbs(spc));
+        201 | 233 => {
+            spc_move_memory::<1>(spc, spc_adrAbs(spc), opcode & 0x20 == 0);
         }
         202 => {
             let mut adr_13: uint16_t = 0 as uint16_t;
@@ -1007,14 +1003,14 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
                 as uint8_t;
             spc_write(spc, adr_13, result_7);
         }
-        203 => {
-            spc_movsy(spc, spc_adrDp(spc));
+        203 | 235 => {
+            spc_move_memory::<2>(spc, spc_adrDp(spc), opcode & 0x20 == 0);
         }
-        204 => {
-            spc_movsy(spc, spc_adrAbs(spc));
+        204 | 236 => {
+            spc_move_memory::<2>(spc, spc_adrAbs(spc), opcode & 0x20 == 0);
         }
         205 => {
-            spc_movx(spc, spc_adrImm(spc));
+            spc_move_memory::<1>(spc, spc_adrImm(spc), false);
         }
         206 => {
             (*spc).x = spc_pullByte(spc);
@@ -1029,23 +1025,23 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
         208 => {
             spc_doBranch(spc, spc_readOpcode(spc), !(*spc).z);
         }
-        212 => {
-            spc_movs(spc, spc_adrDpx(spc));
+        212 | 244 => {
+            spc_move_memory::<0>(spc, spc_adrDpx(spc), opcode & 0x20 == 0);
         }
-        213 => {
-            spc_movs(spc, spc_adrAbx(spc));
+        213 | 245 => {
+            spc_move_memory::<0>(spc, spc_adrAbx(spc), opcode & 0x20 == 0);
         }
-        214 => {
-            spc_movs(spc, spc_adrAby(spc));
+        214 | 246 => {
+            spc_move_memory::<0>(spc, spc_adrAby(spc), opcode & 0x20 == 0);
         }
-        215 => {
-            spc_movs(spc, spc_adrIdy(spc));
+        215 | 247 => {
+            spc_move_memory::<0>(spc, spc_adrIdy(spc), opcode & 0x20 == 0);
         }
-        216 => {
-            spc_movsx(spc, spc_adrDp(spc));
+        216 | 248 => {
+            spc_move_memory::<1>(spc, spc_adrDp(spc), opcode & 0x20 == 0);
         }
-        217 => {
-            spc_movsx(spc, spc_adrDpy(spc));
+        217 | 249 => {
+            spc_move_memory::<1>(spc, spc_adrDpy(spc), opcode & 0x20 == 0);
         }
         218 => {
             let mut low_5: uint16_t = 0 as uint16_t;
@@ -1054,8 +1050,8 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
             spc_write(spc, low_5, (*spc).a);
             spc_write(spc, high_5, (*spc).y);
         }
-        219 => {
-            spc_movsy(spc, spc_adrDpx(spc));
+        219 | 251 => {
+            spc_move_memory::<2>(spc, spc_adrDpx(spc), opcode & 0x20 == 0);
         }
         220 => {
             (*spc).y = (*spc).y.wrapping_sub(1);
@@ -1095,23 +1091,8 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
             (*spc).v = false_0 != 0;
             (*spc).h = false_0 != 0;
         }
-        228 => {
-            spc_mov(spc, spc_adrDp(spc));
-        }
-        229 => {
-            spc_mov(spc, spc_adrAbs(spc));
-        }
-        230 => {
-            spc_mov(spc, spc_adrInd(spc));
-        }
-        231 => {
-            spc_mov(spc, spc_adrIdx(spc));
-        }
         232 => {
-            spc_mov(spc, spc_adrImm(spc));
-        }
-        233 => {
-            spc_movx(spc, spc_adrAbs(spc));
+            spc_move_memory::<0>(spc, spc_adrImm(spc), false);
         }
         234 => {
             let mut adr_14: uint16_t = 0 as uint16_t;
@@ -1120,12 +1101,6 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
                 ^ (1 as ::core::ffi::c_int) << bit_6 as ::core::ffi::c_int)
                 as uint8_t;
             spc_write(spc, adr_14, result_10);
-        }
-        235 => {
-            spc_movy(spc, spc_adrDp(spc));
-        }
-        236 => {
-            spc_movy(spc, spc_adrAbs(spc));
         }
         237 => {
             (*spc).c = !(*spc).c;
@@ -1139,32 +1114,11 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
         240 => {
             spc_doBranch(spc, spc_readOpcode(spc), (*spc).z);
         }
-        244 => {
-            spc_mov(spc, spc_adrDpx(spc));
-        }
-        245 => {
-            spc_mov(spc, spc_adrAbx(spc));
-        }
-        246 => {
-            spc_mov(spc, spc_adrAby(spc));
-        }
-        247 => {
-            spc_mov(spc, spc_adrIdy(spc));
-        }
-        248 => {
-            spc_movx(spc, spc_adrDp(spc));
-        }
-        249 => {
-            spc_movx(spc, spc_adrDpy(spc));
-        }
         250 => {
             let mut src_18: uint16_t = 0 as uint16_t;
             let mut dst_20: uint16_t = spc_adrDpDp(spc, &raw mut src_18);
             let mut val_7: uint8_t = spc_read(spc, src_18);
             spc_write(spc, dst_20, val_7);
-        }
-        251 => {
-            spc_movy(spc, spc_adrDpx(spc));
         }
         252 => {
             (*spc).y = (*spc).y.wrapping_add(1);
