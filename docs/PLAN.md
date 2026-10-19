@@ -89,6 +89,23 @@ implementation session owns actual fade branch counts and final replay.
 
 ## The oracle
 
+Verifier SRAM isolation (2026-10-19): RtlWriteSram now skips host file writes
+when VERIFY_ACTIVE. Game SRAM mutations and the oracle's complete8192-byte
+comparison remain active. Replays previously renamed/overwrote the shared
+saves/sm.srm and sometimes failed under concurrent execution. Actual before/
+after controls confirm normal writes and backup creation remain intact,
+verification preserves existing saves, RtlReadSram still loads the requested
+bytes, and verification without a saves directory creates nothing or warns.
+Frozen54fc8f2c plus only this runtime guard passes any%129712/0 (188.71s),
+native exit0, with15 actual SRAM-write calls; Waver58109/71 (91.09s), native
+exit1, with5 calls. All71 full Waver diagnostics equal the explicit-render
+baseline. Both concurrent replays retain distinct save/backup sentinels
+byte-for-byte in isolated temporary directories. Live runtime equals the
+frozen source after removing counters. Cargo fmt/check and release pass.
+Rust lines+3 enforce verifier disk isolation; other own counters unchanged.
+Normal concurrent interactive saves are outside this fix. Temporary counters,
+fixtures and ROM-derived data remain untracked; later peer edits are separate.
+
 PPU host-field initialization QC (2026-10-19): ppu_init initializes
 renderBuffer to null and renderPitch to zero before the first ppu_reset.
 Reset previously read and preserved both malloc-backed uninitialized fields.

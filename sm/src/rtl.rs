@@ -1775,6 +1775,9 @@ pub unsafe fn RtlReadSram(game: &mut Game) {
     }
 }
 pub unsafe fn RtlWriteSram(game: &mut Game) {
+    if game.VERIFY_ACTIVE {
+        return;
+    }
     rename(
         b"saves/sm.srm\0" as *const u8 as *const ::core::ffi::c_char,
         b"saves/sm.srm.bak\0" as *const u8 as *const ::core::ffi::c_char,
