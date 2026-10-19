@@ -3,6 +3,7 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::enemy_properties::*;
 pub use crate::game::constants::samus_poses::*;
+use crate::game::enemy_layouts::enemy_layout;
 use crate::game::sm_80::{
     CheckBossBitForCurArea, NextRandom, QueueMusic_Delayed8, QueueSfx2_Max6, SetBossBitForCurArea,
 };
@@ -58,65 +59,36 @@ pub const addr_kTorizo_Ilist_B0E5: Consts_AA = 45285;
 pub const addr_kTorizo_ExtSprmap_87D0: Consts_AA = 34768;
 pub const addr_kSpritemap_Nothing_AA: Consts_AA = 32845;
 pub use crate::types::SpawnHardcodedPlmArgs;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_Shaktool {
-    pub base: EnemyBase,
-    pub shakt_var_A: uint16,
-    pub shakt_var_B: uint16,
-    pub shakt_var_C: uint16,
-    pub shakt_var_D: uint16,
-    pub shakt_var_E: uint16,
-    pub shakt_var_F: uint16,
-    pub shakt_parameter_1: uint16,
-    pub shakt_parameter_2: uint16,
+enemy_layout! {
+    Enemy_Shaktool {
+        base: EnemyBase,
+        words: [
+            shakt_var_A, shakt_var_B, shakt_var_C, shakt_var_D, shakt_var_E, shakt_var_F,
+            shakt_parameter_1, shakt_parameter_2,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_Torizo {
-    pub base: EnemyBase,
-    pub toriz_var_A: uint16,
-    pub toriz_var_B: uint16,
-    pub toriz_var_C: uint16,
-    pub toriz_var_D: uint16,
-    pub toriz_var_E: uint16,
-    pub toriz_var_F: uint16,
-    pub toriz_parameter_1: uint16,
-    pub toriz_parameter_2: uint16,
-    pub pad1: [uint8; 26696],
-    pub toriz_var_00: uint16,
-    pub toriz_var_01: uint16,
-    pub toriz_var_02: uint16,
-    pub toriz_var_03: uint16,
-    pub toriz_var_04: uint16,
-    pub toriz_var_05: uint16,
-    pub toriz_var_06: uint16,
-    pub toriz_var_07: uint16,
-    pub toriz_var_08: uint16,
-    pub toriz_var_09: uint16,
-    pub toriz_var_0A: uint16,
-    pub toriz_var_0B: uint16,
-    pub toriz_var_0C: uint16,
-    pub toriz_var_0D: uint16,
-    pub toriz_var_0E: uint16,
-    pub toriz_var_0F: uint16,
-    pub toriz_var_10: uint16,
-    pub toriz_var_11: uint16,
-    pub toriz_var_12: uint16,
-    pub toriz_var_13: uint16,
-    pub toriz_var_14: uint16,
-    pub toriz_var_15: uint16,
-    pub toriz_var_16: uint16,
-    pub toriz_var_17: uint16,
-    pub toriz_var_18: uint16,
-    pub toriz_var_19: uint16,
-    pub toriz_var_1A: uint16,
-    pub toriz_var_1B: uint16,
-    pub toriz_var_1C: uint16,
-    pub toriz_var_1D: uint16,
-    pub toriz_var_1E: uint16,
-    pub toriz_var_1F: uint16,
+
+enemy_layout! {
+    Enemy_Torizo {
+        base: EnemyBase,
+        words: [
+            toriz_var_A, toriz_var_B, toriz_var_C, toriz_var_D, toriz_var_E, toriz_var_F,
+            toriz_parameter_1, toriz_parameter_2,
+        ],
+        pad1: [uint8; 26696],
+        words: [
+            toriz_var_00, toriz_var_01, toriz_var_02, toriz_var_03, toriz_var_04,
+            toriz_var_05, toriz_var_06, toriz_var_07, toriz_var_08, toriz_var_09,
+            toriz_var_0A, toriz_var_0B, toriz_var_0C, toriz_var_0D, toriz_var_0E,
+            toriz_var_0F, toriz_var_10, toriz_var_11, toriz_var_12, toriz_var_13,
+            toriz_var_14, toriz_var_15, toriz_var_16, toriz_var_17, toriz_var_18,
+            toriz_var_19, toriz_var_1A, toriz_var_1B, toriz_var_1C, toriz_var_1D,
+            toriz_var_1E, toriz_var_1F,
+        ],
+    }
 }
+
 #[inline]
 unsafe fn RomBankBase(mut bank: uint8, game: &mut Game) -> *const uint8 {
     return RomPtr(

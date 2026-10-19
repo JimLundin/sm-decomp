@@ -1,5 +1,6 @@
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::enemy_properties::*;
+use crate::game::enemy_layouts::enemy_layout;
 use crate::game::sm_80::{
     DecompressToMem, NextRandom, QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx2_Max15,
     QueueSfx2_Max6, QueueSfx3_Max6, ScreenOff, ScreenOn, SetupDmaTransfer, WaitForNMI_Async,
@@ -128,73 +129,57 @@ pub const addr_kKraid_Ilist_86ED: Consts_A7 = 34541;
 pub const addr_kKraid_Ilist_86E7: Consts_A7 = 34535;
 pub const addr_kSpritemap_Nothing_A7: Consts_A7 = 32845;
 pub use crate::types::SpawnHardcodedPlmArgs;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_Phantoon {
-    pub base: EnemyBase,
-    pub phant_var_A: uint16,
-    pub phant_var_B: uint16,
-    pub phant_var_C: uint16,
-    pub phant_var_D: uint16,
-    pub phant_var_E: uint16,
-    pub phant_var_F: uint16,
-    pub phant_parameter_1: uint16,
-    pub phant_parameter_2: uint16,
+enemy_layout! {
+    Enemy_Phantoon {
+        base: EnemyBase,
+        words: [
+            phant_var_A, phant_var_B, phant_var_C, phant_var_D, phant_var_E, phant_var_F,
+            phant_parameter_1, phant_parameter_2,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_Kraid {
-    pub base: EnemyBase,
-    pub kraid_var_A: uint16,
-    pub kraid_var_B: uint16,
-    pub kraid_var_C: uint16,
-    pub kraid_var_D: uint16,
-    pub kraid_var_E: uint16,
-    pub kraid_var_F: uint16,
-    pub kraid_parameter_1: uint16,
-    pub kraid_parameter_2: uint16,
-    pub pad1: [uint8; 26696],
-    pub kraid_next: uint16,
-    pub field_2: uint16,
-    pub field_4: uint16,
-    pub kraid_thinking: uint16,
-    pub kraid_min_y_pos_eject: uint16,
-    pub kraid_mouth_flags: uint16,
-    pub kraid_healths_8ths: [uint16; 8],
-    pub field_1C: uint16,
-    pub kraid_target_x: uint16,
-    pub kraid_healths_4ths: [uint16; 4],
-    pub field_28: uint16,
-    pub kraid_hurt_frame: uint16,
-    pub kraid_hurt_frame_timer: uint16,
-    pub field_2E: [uint16; 9],
+
+enemy_layout! {
+    Enemy_Kraid {
+        base: EnemyBase,
+        words: [
+            kraid_var_A, kraid_var_B, kraid_var_C, kraid_var_D, kraid_var_E, kraid_var_F,
+            kraid_parameter_1, kraid_parameter_2,
+        ],
+        pad1: [uint8; 26696],
+        words: [
+            kraid_next, field_2, field_4, kraid_thinking, kraid_min_y_pos_eject,
+            kraid_mouth_flags,
+        ],
+        kraid_healths_8ths: [uint16; 8],
+        words: [field_1C, kraid_target_x],
+        kraid_healths_4ths: [uint16; 4],
+        words: [field_28, kraid_hurt_frame, kraid_hurt_frame_timer],
+        field_2E: [uint16; 9],
+        words: [],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_Etecoon {
-    pub base: EnemyBase,
-    pub etecoon_var_A: uint16,
-    pub etecoon_var_B: uint16,
-    pub etecoon_var_C: uint16,
-    pub etecoon_var_D: uint16,
-    pub etecoon_var_E: uint16,
-    pub etecoon_var_F: uint16,
-    pub etecoon_parameter_1: uint16,
-    pub etecoon_parameter_2: uint16,
+
+enemy_layout! {
+    Enemy_Etecoon {
+        base: EnemyBase,
+        words: [
+            etecoon_var_A, etecoon_var_B, etecoon_var_C, etecoon_var_D, etecoon_var_E,
+            etecoon_var_F, etecoon_parameter_1, etecoon_parameter_2,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_Dachora {
-    pub base: EnemyBase,
-    pub dachor_var_A: uint16,
-    pub dachor_var_B: uint16,
-    pub dachor_var_C: uint16,
-    pub dachor_var_D: uint16,
-    pub dachor_var_E: uint16,
-    pub dachor_var_F: uint16,
-    pub dachor_parameter_1: uint16,
-    pub dachor_parameter_2: uint16,
+
+enemy_layout! {
+    Enemy_Dachora {
+        base: EnemyBase,
+        words: [
+            dachor_var_A, dachor_var_B, dachor_var_C, dachor_var_D, dachor_var_E,
+            dachor_var_F, dachor_parameter_1, dachor_parameter_2,
+        ],
+    }
 }
+
 pub const kCoroutineNone: ::core::ffi::c_int = 0;
 #[inline]
 unsafe fn RomPtr_A7(mut addr: uint16_t, game: &mut Game) -> *const uint8 {

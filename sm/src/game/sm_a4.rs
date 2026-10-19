@@ -1,6 +1,7 @@
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a4::*;
 pub use crate::game::constants::enemy_properties::*;
+use crate::game::enemy_layouts::enemy_layout;
 use crate::game::sm_80::{QueueMusic_Delayed8, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::sm_84::SpawnHardcodedPlm;
 use crate::game::sm_86::{ClearEprojs, SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
@@ -33,85 +34,36 @@ pub use crate::types::{
     VramWriteEntry,
 };
 pub use crate::types::{Consts_86, Ram4000, Ram4000_Backups};
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_Crocomire {
-    pub base: EnemyBase,
-    pub crocom_var_A: uint16,
-    pub crocom_var_B: uint16,
-    pub crocom_var_C: uint16,
-    pub crocom_var_D: uint16,
-    pub crocom_var_E: uint16,
-    pub crocom_var_F: uint16,
-    pub crocom_parameter_1: uint16,
-    pub crocom_parameter_2: uint16,
-    pub pad1: [uint8; 26696],
-    pub crocom_var_00: uint16,
-    pub crocom_var_01: uint16,
-    pub crocom_var_02: uint16,
-    pub crocom_var_03: uint16,
-    pub crocom_var_04: uint16,
-    pub crocom_var_05: uint16,
-    pub crocom_var_06: uint16,
-    pub crocom_var_07: uint16,
-    pub crocom_var_08: uint16,
-    pub crocom_var_09: uint16,
-    pub crocom_var_0A: uint16,
-    pub crocom_var_0B: uint16,
-    pub crocom_var_0C: uint16,
-    pub crocom_var_0D: uint16,
-    pub crocom_var_0E: uint16,
-    pub crocom_var_0F: uint16,
-    pub crocom_var_10: uint16,
-    pub crocom_var_11: uint16,
-    pub crocom_var_12: uint16,
-    pub crocom_var_13: uint16,
-    pub crocom_var_14: uint16,
-    pub crocom_var_15: uint16,
-    pub crocom_var_16: uint16,
-    pub crocom_var_17: uint16,
-    pub crocom_var_18: uint16,
-    pub crocom_var_19: uint16,
-    pub crocom_var_1A: uint16,
-    pub crocom_var_1B: uint16,
-    pub crocom_var_1C: uint16,
-    pub crocom_var_1D: uint16,
-    pub crocom_var_1E: uint16,
-    pub crocom_var_1F: uint16,
-    pub pad2: [uint8; 1984],
-    pub crocom_var_20: uint16,
-    pub crocom_var_21: uint16,
-    pub crocom_var_22: uint16,
-    pub crocom_var_23: uint16,
-    pub crocom_var_24: uint16,
-    pub crocom_var_25: uint16,
-    pub crocom_var_26: uint16,
-    pub crocom_var_27: uint16,
-    pub crocom_var_28: uint16,
-    pub crocom_var_29: uint16,
-    pub crocom_var_2A: uint16,
-    pub crocom_var_2B: uint16,
-    pub crocom_var_2C: uint16,
-    pub crocom_var_2D: uint16,
-    pub crocom_var_2E: uint16,
-    pub crocom_var_2F: uint16,
-    pub crocom_var_30: uint16,
-    pub crocom_var_31: uint16,
-    pub crocom_var_32: uint16,
-    pub crocom_var_33: uint16,
-    pub crocom_var_34: uint16,
-    pub crocom_var_35: uint16,
-    pub crocom_var_36: uint16,
-    pub crocom_var_37: uint16,
-    pub crocom_var_38: uint16,
-    pub crocom_var_39: uint16,
-    pub crocom_var_3A: uint16,
-    pub crocom_var_3B: uint16,
-    pub crocom_var_3C: uint16,
-    pub crocom_var_3D: uint16,
-    pub crocom_var_3E: uint16,
-    pub crocom_var_3F: uint16,
+enemy_layout! {
+    Enemy_Crocomire {
+        base: EnemyBase,
+        words: [
+            crocom_var_A, crocom_var_B, crocom_var_C, crocom_var_D, crocom_var_E,
+            crocom_var_F, crocom_parameter_1, crocom_parameter_2,
+        ],
+        pad1: [uint8; 26696],
+        words: [
+            crocom_var_00, crocom_var_01, crocom_var_02, crocom_var_03, crocom_var_04,
+            crocom_var_05, crocom_var_06, crocom_var_07, crocom_var_08, crocom_var_09,
+            crocom_var_0A, crocom_var_0B, crocom_var_0C, crocom_var_0D, crocom_var_0E,
+            crocom_var_0F, crocom_var_10, crocom_var_11, crocom_var_12, crocom_var_13,
+            crocom_var_14, crocom_var_15, crocom_var_16, crocom_var_17, crocom_var_18,
+            crocom_var_19, crocom_var_1A, crocom_var_1B, crocom_var_1C, crocom_var_1D,
+            crocom_var_1E, crocom_var_1F,
+        ],
+        pad2: [uint8; 1984],
+        words: [
+            crocom_var_20, crocom_var_21, crocom_var_22, crocom_var_23, crocom_var_24,
+            crocom_var_25, crocom_var_26, crocom_var_27, crocom_var_28, crocom_var_29,
+            crocom_var_2A, crocom_var_2B, crocom_var_2C, crocom_var_2D, crocom_var_2E,
+            crocom_var_2F, crocom_var_30, crocom_var_31, crocom_var_32, crocom_var_33,
+            crocom_var_34, crocom_var_35, crocom_var_36, crocom_var_37, crocom_var_38,
+            crocom_var_39, crocom_var_3A, crocom_var_3B, crocom_var_3C, crocom_var_3D,
+            crocom_var_3E, crocom_var_3F,
+        ],
+    }
 }
+
 pub use crate::types::CrocomireFunc;
 #[inline]
 unsafe fn RomPtr_A4(mut addr: uint16_t, game: &mut Game) -> *const uint8 {

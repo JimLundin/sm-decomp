@@ -1,6 +1,7 @@
 //! Waver: horizontal 16.16 motion with a sine-wave vertical phase.
 //! RAM views are scoped between legacy movement calls. Animation words are
 //! read from the loaded ROM; no ROM-derived data is stored in this module.
+use crate::game::enemy_layouts::enemy_layout;
 use crate::game::sm_a0::{Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, SineMult8bit};
 use crate::game_state::Game;
 use crate::types::{uint16, EnemyBase};
@@ -8,19 +9,16 @@ use crate::types::{uint16, EnemyBase};
 const INITIAL_INSTRUCTION: u16 = 0x86a7;
 const ANIMATION_TABLE: u32 = 0xa386db;
 
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_Waver {
-    pub base: EnemyBase,
-    pub velocity_fraction: uint16,
-    pub velocity_integer: uint16,
-    pub previous_animation: uint16,
-    pub sine_phase: uint16,
-    pub animation_finished: uint16,
-    pub animation: uint16,
-    pub initial_direction: uint16,
-    pub unused_parameter: uint16,
+enemy_layout! {
+    Enemy_Waver {
+        base: EnemyBase,
+        words: [
+            velocity_fraction, velocity_integer, previous_animation, sine_phase,
+            animation_finished, animation, initial_direction, unused_parameter,
+        ],
+    }
 }
+
 /// A byte-backed view of one Waver slot; no typed pointers or alignment assumptions.
 struct WaverRam<'a> {
     bytes: &'a mut [u8],

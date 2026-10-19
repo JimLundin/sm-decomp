@@ -1,5 +1,6 @@
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::enemy_properties::*;
+use crate::game::enemy_layouts::enemy_layout;
 use crate::game::sm_80::{
     CheckEventHappened, NextRandom, QueueMusic_Delayed8, QueueSfx2_Max6, SetBossBitForCurArea,
 };
@@ -48,111 +49,54 @@ pub const addr_kBrinstarPipeBug_Ilist_87AB: Consts_B3 = 34731;
 pub const addr_kUnusedSpinningTurtleEye_Ilist_86A7: Consts_B3 = 34471;
 pub const addr_kSpritemap_Nothing_B3: Consts_B3 = 32845;
 pub use crate::types::{Enemy_Botwoon, Point32, SpawnHardcodedPlmArgs};
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_EscapeDachora {
-    pub base: EnemyBase,
-    pub eda_var_A: uint16,
-    pub eda_var_B: uint16,
-    pub eda_var_C: uint16,
-    pub eda_var_D: uint16,
-    pub eda_var_E: uint16,
-    pub eda_var_F: uint16,
-    pub eda_parameter_1: uint16,
-    pub eda_parameter_2: uint16,
+enemy_layout! {
+    Enemy_EscapeDachora {
+        base: EnemyBase,
+        words: [
+            eda_var_A, eda_var_B, eda_var_C, eda_var_D, eda_var_E, eda_var_F,
+            eda_parameter_1, eda_parameter_2,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_EscapeEtecoon {
-    pub base: EnemyBase,
-    pub een_var_A: uint16,
-    pub een_var_B: uint16,
-    pub een_var_C: uint16,
-    pub een_var_D: uint16,
-    pub een_var_E: uint16,
-    pub een_var_F: uint16,
-    pub een_parameter_1: uint16,
-    pub een_parameter_2: uint16,
+
+enemy_layout! {
+    Enemy_EscapeEtecoon {
+        base: EnemyBase,
+        words: [
+            een_var_A, een_var_B, een_var_C, een_var_D, een_var_E, een_var_F,
+            een_parameter_1, een_parameter_2,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_PipeBug {
-    pub base: EnemyBase,
-    pub pbg_var_A: uint16,
-    pub pbg_var_B: uint16,
-    pub pbg_var_C: uint16,
-    pub pbg_var_D: uint16,
-    pub pbg_var_E: uint16,
-    pub pbg_var_F: uint16,
-    pub pbg_parameter_1: uint16,
-    pub pbg_parameter_2: uint16,
-    pub pad1: [uint8; 26696],
-    pub pbg_var_00: uint16,
-    pub pbg_var_01: uint16,
-    pub pbg_var_02: uint16,
-    pub pbg_var_03: uint16,
-    pub pbg_var_04: uint16,
-    pub pbg_var_05: uint16,
-    pub pbg_var_06: uint16,
-    pub pbg_var_07: uint16,
-    pub pbg_var_08: uint16,
-    pub pbg_var_09: uint16,
-    pub pbg_var_0A: uint16,
-    pub pbg_var_0B: uint16,
-    pub pbg_var_0C: uint16,
-    pub pbg_var_0D: uint16,
-    pub pbg_var_0E: uint16,
-    pub pbg_var_0F: uint16,
-    pub pbg_var_10: uint16,
-    pub pbg_var_11: uint16,
-    pub pbg_var_12: uint16,
-    pub pbg_var_13: uint16,
-    pub pbg_var_14: uint16,
-    pub pbg_var_15: uint16,
-    pub pbg_var_16: uint16,
-    pub pbg_var_17: uint16,
-    pub pbg_var_18: uint16,
-    pub pbg_var_19: uint16,
-    pub pbg_var_1A: uint16,
-    pub pbg_var_1B: uint16,
-    pub pbg_var_1C: uint16,
-    pub pbg_var_1D: uint16,
-    pub pbg_var_1E: uint16,
-    pub pbg_var_1F: uint16,
-    pub pad2: [uint8; 1984],
-    pub pbg_var_20: uint16,
-    pub pbg_var_21: uint16,
-    pub pbg_var_22: uint16,
-    pub pbg_var_23: uint16,
-    pub pbg_var_24: uint16,
-    pub pbg_var_25: uint16,
-    pub pbg_var_26: uint16,
-    pub pbg_var_27: uint16,
-    pub pbg_var_28: uint16,
-    pub pbg_var_29: uint16,
-    pub pbg_var_2A: uint16,
-    pub pbg_var_2B: uint16,
-    pub pbg_var_2C: uint16,
-    pub pbg_var_2D: uint16,
-    pub pbg_var_2E: uint16,
-    pub pbg_var_2F: uint16,
-    pub pbg_var_30: uint16,
-    pub pbg_var_31: uint16,
-    pub pbg_var_32: uint16,
-    pub pbg_var_33: uint16,
-    pub pbg_var_34: uint16,
-    pub pbg_var_35: uint16,
-    pub pbg_var_36: uint16,
-    pub pbg_var_37: uint16,
-    pub pbg_var_38: uint16,
-    pub pbg_var_39: uint16,
-    pub pbg_var_3A: uint16,
-    pub pbg_var_3B: uint16,
-    pub pbg_var_3C: uint16,
-    pub pbg_var_3D: uint16,
-    pub pbg_var_3E: uint16,
-    pub pbg_var_3F: uint16,
+
+enemy_layout! {
+    Enemy_PipeBug {
+        base: EnemyBase,
+        words: [
+            pbg_var_A, pbg_var_B, pbg_var_C, pbg_var_D, pbg_var_E, pbg_var_F,
+            pbg_parameter_1, pbg_parameter_2,
+        ],
+        pad1: [uint8; 26696],
+        words: [
+            pbg_var_00, pbg_var_01, pbg_var_02, pbg_var_03, pbg_var_04, pbg_var_05,
+            pbg_var_06, pbg_var_07, pbg_var_08, pbg_var_09, pbg_var_0A, pbg_var_0B,
+            pbg_var_0C, pbg_var_0D, pbg_var_0E, pbg_var_0F, pbg_var_10, pbg_var_11,
+            pbg_var_12, pbg_var_13, pbg_var_14, pbg_var_15, pbg_var_16, pbg_var_17,
+            pbg_var_18, pbg_var_19, pbg_var_1A, pbg_var_1B, pbg_var_1C, pbg_var_1D,
+            pbg_var_1E, pbg_var_1F,
+        ],
+        pad2: [uint8; 1984],
+        words: [
+            pbg_var_20, pbg_var_21, pbg_var_22, pbg_var_23, pbg_var_24, pbg_var_25,
+            pbg_var_26, pbg_var_27, pbg_var_28, pbg_var_29, pbg_var_2A, pbg_var_2B,
+            pbg_var_2C, pbg_var_2D, pbg_var_2E, pbg_var_2F, pbg_var_30, pbg_var_31,
+            pbg_var_32, pbg_var_33, pbg_var_34, pbg_var_35, pbg_var_36, pbg_var_37,
+            pbg_var_38, pbg_var_39, pbg_var_3A, pbg_var_3B, pbg_var_3C, pbg_var_3D,
+            pbg_var_3E, pbg_var_3F,
+        ],
+    }
 }
+
 #[inline]
 unsafe fn RomPtr_B3(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
     return RomPtr(

@@ -40,11 +40,41 @@ candidates after local-name, literal and enemy-type normalization. These are
 discovery counts, not equivalence proofs. Larger structures include 94 enemy
 layouts in five repeated field-type shapes (3806 lines), 111 typed enemy-pointer
 constructors and 1077 RAM borrowed-place update sequences. Near-match inspection
-must preserve real behavior differences. Next disjoint pass: shared enemy-layout
-declarations across all eligible shapes, checking every public field type,
-offset, size and alignment. Follow with coherent RAM/update and handler families;
-coordinate with the already-running projectile and Samus work. Temporary
-discovery scripts stay outside maintained code.
+must preserve real behavior differences. The enemy-layout pass below is complete. Next: consolidate coherent RAM
+read/modify/write families across banks, including already-simplified variants.
+The fresh survey finds 1077 borrowed-place updates (3418 source lines): 470
+wrapping increments/decrements, 385 promoted adds/subtracts, 200 bitwise updates
+and 22 other cases. This is a discovery inventory, not a rewrite proof. Preserve
+the width, destination calculation, old-value read, right-hand evaluation and
+write order; account for aliasing before replacing raw places with byte-backed
+state operations. Use the existing subsystem interfaces and coordinate with
+the projectile and Samus work. Temporary discovery scripts stay outside
+maintained code.
+
+Shared enemy layouts (2026-10-19): all 94 bank-local Copy/Clone repr(C)
+enemy overlays use one field-declaration template. Preserve all 3501 public
+field names and types, their order, base fields, explicit padding and arrays.
+This includes Kraid's extra word arrays and Waver's renamed fields, so earlier
+local cleanup does not exclude those variants. All 12 banks/modules retain
+their original public type paths. No gameplay operation or pointer helper moves
+into the macro. Net Rust lines -2146, including the shared template, imports
+and module registration; cast, unsafe and raw-access counts are unchanged.
+
+Compiler checks compare each actual new public type with the exact old Rust
+declaration: every size/alignment and all 3501 field offsets/types match. A
+deliberately wrong offset is rejected. Source/configuration audit across all
+72 original files permits only selected declarations, imports, registration
+and formatting; the shared template declares only the original structs and
+their Copy/Clone implementations. All checkpoint fingerprint inputs remain
+byte-identical. This is source consolidation, not new gameplay coverage.
+
+Frozen 9edc009c plus this pass passes full any% 129712/0
+(184.68s) and Speed Booster 148406/0 (238.75s), native exits 0,
+with stable source, DLL and fixtures. Final checkpoints remain local. The
+longer route includes Bubble Mountain, Warehouse and Varia; no shorter prefix
+is replayed separately. Formatting/check, normal release builds (33.93s frozen,
+23.13s stable workspace) and progress pass. These timings do not establish
+a build-time gain. Concurrent gameplay changes retain their own verification.
 
 The inspected workspace has about 256,000 Rust lines, 83,800 lines containing
 `c_int` casts and 6,700 unsafe functions. Against the transpilation baseline,

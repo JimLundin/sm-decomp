@@ -5,6 +5,7 @@ pub use crate::game::constants::enemy_properties::*;
 pub use crate::game::constants::game_states::*;
 pub use crate::game::constants::loading_game_states::*;
 pub use crate::game::constants::samus_poses::*;
+use crate::game::enemy_layouts::enemy_layout;
 use crate::game::sm_80::{CheckEventHappened, NextRandom, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::sm_81::SaveToSram;
 use crate::game::sm_85::DisplayMessageBox_Poll;
@@ -134,965 +135,450 @@ pub const addr_kBouncingGoofball_Ilist_86BF: Consts_A2 = 34495;
 pub const addr_kBouncingGoofball_Ilist_86A7: Consts_A2 = 34471;
 pub const addr_kSpritemap_Nothing_A2: Consts_A2 = 32845;
 pub use crate::types::Point32;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_BouncingGoofball {
-    pub base: EnemyBase,
-    pub bgl_var_A: uint16,
-    pub bgl_var_B: uint16,
-    pub bgl_var_C: uint16,
-    pub bgl_var_D: uint16,
-    pub bgl_var_E: uint16,
-    pub bgl_var_F: uint16,
-    pub bgl_parameter_1: uint16,
-    pub bgl_parameter_2: uint16,
-    pub pad1: [uint8; 26696],
-    pub bgl_var_00: uint16,
-    pub bgl_var_01: uint16,
-    pub bgl_var_02: uint16,
-    pub bgl_var_03: uint16,
-    pub bgl_var_04: uint16,
-    pub bgl_var_05: uint16,
-    pub bgl_var_06: uint16,
-    pub bgl_var_07: uint16,
-    pub bgl_var_08: uint16,
-    pub bgl_var_09: uint16,
-    pub bgl_var_0A: uint16,
-    pub bgl_var_0B: uint16,
-    pub bgl_var_0C: uint16,
-    pub bgl_var_0D: uint16,
-    pub bgl_var_0E: uint16,
-    pub bgl_var_0F: uint16,
-    pub bgl_var_10: uint16,
-    pub bgl_var_11: uint16,
-    pub bgl_var_12: uint16,
-    pub bgl_var_13: uint16,
-    pub bgl_var_14: uint16,
-    pub bgl_var_15: uint16,
-    pub bgl_var_16: uint16,
-    pub bgl_var_17: uint16,
-    pub bgl_var_18: uint16,
-    pub bgl_var_19: uint16,
-    pub bgl_var_1A: uint16,
-    pub bgl_var_1B: uint16,
-    pub bgl_var_1C: uint16,
-    pub bgl_var_1D: uint16,
-    pub bgl_var_1E: uint16,
-    pub bgl_var_1F: uint16,
+enemy_layout! {
+    Enemy_BouncingGoofball {
+        base: EnemyBase,
+        words: [
+            bgl_var_A, bgl_var_B, bgl_var_C, bgl_var_D, bgl_var_E, bgl_var_F,
+            bgl_parameter_1, bgl_parameter_2,
+        ],
+        pad1: [uint8; 26696],
+        words: [
+            bgl_var_00, bgl_var_01, bgl_var_02, bgl_var_03, bgl_var_04, bgl_var_05,
+            bgl_var_06, bgl_var_07, bgl_var_08, bgl_var_09, bgl_var_0A, bgl_var_0B,
+            bgl_var_0C, bgl_var_0D, bgl_var_0E, bgl_var_0F, bgl_var_10, bgl_var_11,
+            bgl_var_12, bgl_var_13, bgl_var_14, bgl_var_15, bgl_var_16, bgl_var_17,
+            bgl_var_18, bgl_var_19, bgl_var_1A, bgl_var_1B, bgl_var_1C, bgl_var_1D,
+            bgl_var_1E, bgl_var_1F,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_Rio {
-    pub base: EnemyBase,
-    pub rio_var_A: uint16,
-    pub rio_var_B: uint16,
-    pub rio_var_C: uint16,
-    pub rio_var_D: uint16,
-    pub rio_var_E: uint16,
-    pub rio_var_F: uint16,
-    pub rio_parameter_1: uint16,
-    pub rio_parameter_2: uint16,
+
+enemy_layout! {
+    Enemy_Rio {
+        base: EnemyBase,
+        words: [
+            rio_var_A, rio_var_B, rio_var_C, rio_var_D, rio_var_E, rio_var_F,
+            rio_parameter_1, rio_parameter_2,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_Flies {
-    pub base: EnemyBase,
-    pub flies_var_A: uint16,
-    pub flies_var_B: uint16,
-    pub flies_var_C: uint16,
-    pub flies_var_D: uint16,
-    pub flies_var_E: uint16,
-    pub flies_var_F: uint16,
-    pub flies_parameter_1: uint16,
-    pub flies_parameter_2: uint16,
+
+enemy_layout! {
+    Enemy_Flies {
+        base: EnemyBase,
+        words: [
+            flies_var_A, flies_var_B, flies_var_C, flies_var_D, flies_var_E, flies_var_F,
+            flies_parameter_1, flies_parameter_2,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_LavaSeahorse {
-    pub base: EnemyBase,
-    pub lse_var_A: uint16,
-    pub lse_var_B: uint16,
-    pub lse_var_C: uint16,
-    pub lse_var_D: uint16,
-    pub lse_var_E: uint16,
-    pub lse_var_F: uint16,
-    pub lse_parameter_1: uint16,
-    pub lse_parameter_2: uint16,
-    pub pad1: [uint8; 26696],
-    pub lse_var_00: uint16,
-    pub lse_var_01: uint16,
-    pub lse_var_02: uint16,
-    pub lse_var_03: uint16,
-    pub lse_var_04: uint16,
-    pub lse_var_05: uint16,
-    pub lse_var_06: uint16,
-    pub lse_var_07: uint16,
-    pub lse_var_08: uint16,
-    pub lse_var_09: uint16,
-    pub lse_var_0A: uint16,
-    pub lse_var_0B: uint16,
-    pub lse_var_0C: uint16,
-    pub lse_var_0D: uint16,
-    pub lse_var_0E: uint16,
-    pub lse_var_0F: uint16,
-    pub lse_var_10: uint16,
-    pub lse_var_11: uint16,
-    pub lse_var_12: uint16,
-    pub lse_var_13: uint16,
-    pub lse_var_14: uint16,
-    pub lse_var_15: uint16,
-    pub lse_var_16: uint16,
-    pub lse_var_17: uint16,
-    pub lse_var_18: uint16,
-    pub lse_var_19: uint16,
-    pub lse_var_1A: uint16,
-    pub lse_var_1B: uint16,
-    pub lse_var_1C: uint16,
-    pub lse_var_1D: uint16,
-    pub lse_var_1E: uint16,
-    pub lse_var_1F: uint16,
+
+enemy_layout! {
+    Enemy_LavaSeahorse {
+        base: EnemyBase,
+        words: [
+            lse_var_A, lse_var_B, lse_var_C, lse_var_D, lse_var_E, lse_var_F,
+            lse_parameter_1, lse_parameter_2,
+        ],
+        pad1: [uint8; 26696],
+        words: [
+            lse_var_00, lse_var_01, lse_var_02, lse_var_03, lse_var_04, lse_var_05,
+            lse_var_06, lse_var_07, lse_var_08, lse_var_09, lse_var_0A, lse_var_0B,
+            lse_var_0C, lse_var_0D, lse_var_0E, lse_var_0F, lse_var_10, lse_var_11,
+            lse_var_12, lse_var_13, lse_var_14, lse_var_15, lse_var_16, lse_var_17,
+            lse_var_18, lse_var_19, lse_var_1A, lse_var_1B, lse_var_1C, lse_var_1D,
+            lse_var_1E, lse_var_1F,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_NorfairRio {
-    pub base: EnemyBase,
-    pub nro_var_A: uint16,
-    pub nro_var_B: uint16,
-    pub nro_var_C: uint16,
-    pub nro_var_D: uint16,
-    pub nro_var_E: uint16,
-    pub nro_var_F: uint16,
-    pub nro_parameter_1: uint16,
-    pub nro_parameter_2: uint16,
-    pub pad1: [uint8; 26696],
-    pub nro_var_00: uint16,
-    pub nro_var_01: uint16,
-    pub nro_var_02: uint16,
-    pub nro_var_03: uint16,
-    pub nro_var_04: uint16,
-    pub nro_var_05: uint16,
-    pub nro_var_06: uint16,
-    pub nro_var_07: uint16,
-    pub nro_var_08: uint16,
-    pub nro_var_09: uint16,
-    pub nro_var_0A: uint16,
-    pub nro_var_0B: uint16,
-    pub nro_var_0C: uint16,
-    pub nro_var_0D: uint16,
-    pub nro_var_0E: uint16,
-    pub nro_var_0F: uint16,
-    pub nro_var_10: uint16,
-    pub nro_var_11: uint16,
-    pub nro_var_12: uint16,
-    pub nro_var_13: uint16,
-    pub nro_var_14: uint16,
-    pub nro_var_15: uint16,
-    pub nro_var_16: uint16,
-    pub nro_var_17: uint16,
-    pub nro_var_18: uint16,
-    pub nro_var_19: uint16,
-    pub nro_var_1A: uint16,
-    pub nro_var_1B: uint16,
-    pub nro_var_1C: uint16,
-    pub nro_var_1D: uint16,
-    pub nro_var_1E: uint16,
-    pub nro_var_1F: uint16,
+
+enemy_layout! {
+    Enemy_NorfairRio {
+        base: EnemyBase,
+        words: [
+            nro_var_A, nro_var_B, nro_var_C, nro_var_D, nro_var_E, nro_var_F,
+            nro_parameter_1, nro_parameter_2,
+        ],
+        pad1: [uint8; 26696],
+        words: [
+            nro_var_00, nro_var_01, nro_var_02, nro_var_03, nro_var_04, nro_var_05,
+            nro_var_06, nro_var_07, nro_var_08, nro_var_09, nro_var_0A, nro_var_0B,
+            nro_var_0C, nro_var_0D, nro_var_0E, nro_var_0F, nro_var_10, nro_var_11,
+            nro_var_12, nro_var_13, nro_var_14, nro_var_15, nro_var_16, nro_var_17,
+            nro_var_18, nro_var_19, nro_var_1A, nro_var_1B, nro_var_1C, nro_var_1D,
+            nro_var_1E, nro_var_1F,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_MaridiaBeybladeTurtle {
-    pub base: EnemyBase,
-    pub mbte_var_A: uint16,
-    pub mbte_var_B: uint16,
-    pub mbte_var_C: uint16,
-    pub mbte_var_D: uint16,
-    pub mbte_var_E: uint16,
-    pub mbte_var_F: uint16,
-    pub mbte_parameter_1: uint16,
-    pub mbte_parameter_2: uint16,
+
+enemy_layout! {
+    Enemy_MaridiaBeybladeTurtle {
+        base: EnemyBase,
+        words: [
+            mbte_var_A, mbte_var_B, mbte_var_C, mbte_var_D, mbte_var_E, mbte_var_F,
+            mbte_parameter_1, mbte_parameter_2,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_MaridiaTurtle {
-    pub base: EnemyBase,
-    pub mte_var_A: uint16,
-    pub mte_var_B: uint16,
-    pub mte_var_C: uint16,
-    pub mte_var_D: uint16,
-    pub mte_var_E: uint16,
-    pub mte_var_F: uint16,
-    pub mte_parameter_1: uint16,
-    pub mte_parameter_2: uint16,
-    pub pad1: [uint8; 26696],
-    pub mte_var_00: uint16,
-    pub mte_var_01: uint16,
-    pub mte_var_02: uint16,
-    pub mte_var_03: uint16,
-    pub mte_var_04: uint16,
-    pub mte_var_05: uint16,
-    pub mte_var_06: uint16,
-    pub mte_var_07: uint16,
-    pub mte_var_08: uint16,
-    pub mte_var_09: uint16,
-    pub mte_var_0A: uint16,
-    pub mte_var_0B: uint16,
-    pub mte_var_0C: uint16,
-    pub mte_var_0D: uint16,
-    pub mte_var_0E: uint16,
-    pub mte_var_0F: uint16,
-    pub mte_var_10: uint16,
-    pub mte_var_11: uint16,
-    pub mte_var_12: uint16,
-    pub mte_var_13: uint16,
-    pub mte_var_14: uint16,
-    pub mte_var_15: uint16,
-    pub mte_var_16: uint16,
-    pub mte_var_17: uint16,
-    pub mte_var_18: uint16,
-    pub mte_var_19: uint16,
-    pub mte_var_1A: uint16,
-    pub mte_var_1B: uint16,
-    pub mte_var_1C: uint16,
-    pub mte_var_1D: uint16,
-    pub mte_var_1E: uint16,
-    pub mte_var_1F: uint16,
+
+enemy_layout! {
+    Enemy_MaridiaTurtle {
+        base: EnemyBase,
+        words: [
+            mte_var_A, mte_var_B, mte_var_C, mte_var_D, mte_var_E, mte_var_F,
+            mte_parameter_1, mte_parameter_2,
+        ],
+        pad1: [uint8; 26696],
+        words: [
+            mte_var_00, mte_var_01, mte_var_02, mte_var_03, mte_var_04, mte_var_05,
+            mte_var_06, mte_var_07, mte_var_08, mte_var_09, mte_var_0A, mte_var_0B,
+            mte_var_0C, mte_var_0D, mte_var_0E, mte_var_0F, mte_var_10, mte_var_11,
+            mte_var_12, mte_var_13, mte_var_14, mte_var_15, mte_var_16, mte_var_17,
+            mte_var_18, mte_var_19, mte_var_1A, mte_var_1B, mte_var_1C, mte_var_1D,
+            mte_var_1E, mte_var_1F,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_MaridiaLargeSnail {
-    pub base: EnemyBase,
-    pub mlsl_var_A: uint16,
-    pub mlsl_var_B: uint16,
-    pub mlsl_var_C: uint16,
-    pub mlsl_var_D: uint16,
-    pub mlsl_var_E: uint16,
-    pub mlsl_var_F: uint16,
-    pub mlsl_parameter_1: uint16,
-    pub mlsl_parameter_2: uint16,
-    pub pad1: [uint8; 26696],
-    pub mlsl_var_00: uint16,
-    pub mlsl_var_01: uint16,
-    pub mlsl_var_02: uint16,
-    pub mlsl_var_03: uint16,
-    pub mlsl_var_04: uint16,
-    pub mlsl_var_05: uint16,
-    pub mlsl_var_06: uint16,
-    pub mlsl_var_07: uint16,
-    pub mlsl_var_08: uint16,
-    pub mlsl_var_09: uint16,
-    pub mlsl_var_0A: uint16,
-    pub mlsl_var_0B: uint16,
-    pub mlsl_var_0C: uint16,
-    pub mlsl_var_0D: uint16,
-    pub mlsl_var_0E: uint16,
-    pub mlsl_var_0F: uint16,
-    pub mlsl_var_10: uint16,
-    pub mlsl_var_11: uint16,
-    pub mlsl_var_12: uint16,
-    pub mlsl_var_13: uint16,
-    pub mlsl_var_14: uint16,
-    pub mlsl_var_15: uint16,
-    pub mlsl_var_16: uint16,
-    pub mlsl_var_17: uint16,
-    pub mlsl_var_18: uint16,
-    pub mlsl_var_19: uint16,
-    pub mlsl_var_1A: uint16,
-    pub mlsl_var_1B: uint16,
-    pub mlsl_var_1C: uint16,
-    pub mlsl_var_1D: uint16,
-    pub mlsl_var_1E: uint16,
-    pub mlsl_var_1F: uint16,
+
+enemy_layout! {
+    Enemy_MaridiaLargeSnail {
+        base: EnemyBase,
+        words: [
+            mlsl_var_A, mlsl_var_B, mlsl_var_C, mlsl_var_D, mlsl_var_E, mlsl_var_F,
+            mlsl_parameter_1, mlsl_parameter_2,
+        ],
+        pad1: [uint8; 26696],
+        words: [
+            mlsl_var_00, mlsl_var_01, mlsl_var_02, mlsl_var_03, mlsl_var_04, mlsl_var_05,
+            mlsl_var_06, mlsl_var_07, mlsl_var_08, mlsl_var_09, mlsl_var_0A, mlsl_var_0B,
+            mlsl_var_0C, mlsl_var_0D, mlsl_var_0E, mlsl_var_0F, mlsl_var_10, mlsl_var_11,
+            mlsl_var_12, mlsl_var_13, mlsl_var_14, mlsl_var_15, mlsl_var_16, mlsl_var_17,
+            mlsl_var_18, mlsl_var_19, mlsl_var_1A, mlsl_var_1B, mlsl_var_1C, mlsl_var_1D,
+            mlsl_var_1E, mlsl_var_1F,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_MaridiaSpikeyShell {
-    pub base: EnemyBase,
-    pub mssl_var_A: uint16,
-    pub mssl_var_B: uint16,
-    pub mssl_var_C: uint16,
-    pub mssl_var_D: uint16,
-    pub mssl_var_E: uint16,
-    pub mssl_var_F: uint16,
-    pub mssl_parameter_1: uint16,
-    pub mssl_parameter_2: uint16,
-    pub pad1: [uint8; 26696],
-    pub mssl_var_00: uint16,
-    pub mssl_var_01: uint16,
-    pub mssl_var_02: uint16,
-    pub mssl_var_03: uint16,
-    pub mssl_var_04: uint16,
-    pub mssl_var_05: uint16,
-    pub mssl_var_06: uint16,
-    pub mssl_var_07: uint16,
-    pub mssl_var_08: uint16,
-    pub mssl_var_09: uint16,
-    pub mssl_var_0A: uint16,
-    pub mssl_var_0B: uint16,
-    pub mssl_var_0C: uint16,
-    pub mssl_var_0D: uint16,
-    pub mssl_var_0E: uint16,
-    pub mssl_var_0F: uint16,
-    pub mssl_var_10: uint16,
-    pub mssl_var_11: uint16,
-    pub mssl_var_12: uint16,
-    pub mssl_var_13: uint16,
-    pub mssl_var_14: uint16,
-    pub mssl_var_15: uint16,
-    pub mssl_var_16: uint16,
-    pub mssl_var_17: uint16,
-    pub mssl_var_18: uint16,
-    pub mssl_var_19: uint16,
-    pub mssl_var_1A: uint16,
-    pub mssl_var_1B: uint16,
-    pub mssl_var_1C: uint16,
-    pub mssl_var_1D: uint16,
-    pub mssl_var_1E: uint16,
-    pub mssl_var_1F: uint16,
+
+enemy_layout! {
+    Enemy_MaridiaSpikeyShell {
+        base: EnemyBase,
+        words: [
+            mssl_var_A, mssl_var_B, mssl_var_C, mssl_var_D, mssl_var_E, mssl_var_F,
+            mssl_parameter_1, mssl_parameter_2,
+        ],
+        pad1: [uint8; 26696],
+        words: [
+            mssl_var_00, mssl_var_01, mssl_var_02, mssl_var_03, mssl_var_04, mssl_var_05,
+            mssl_var_06, mssl_var_07, mssl_var_08, mssl_var_09, mssl_var_0A, mssl_var_0B,
+            mssl_var_0C, mssl_var_0D, mssl_var_0E, mssl_var_0F, mssl_var_10, mssl_var_11,
+            mssl_var_12, mssl_var_13, mssl_var_14, mssl_var_15, mssl_var_16, mssl_var_17,
+            mssl_var_18, mssl_var_19, mssl_var_1A, mssl_var_1B, mssl_var_1C, mssl_var_1D,
+            mssl_var_1E, mssl_var_1F,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_MiniCrocomire {
-    pub base: EnemyBase,
-    pub mce_var_A: uint16,
-    pub mce_var_B: uint16,
-    pub mce_var_C: uint16,
-    pub mce_var_D: uint16,
-    pub mce_var_E: uint16,
-    pub mce_var_F: uint16,
-    pub mce_parameter_1: uint16,
-    pub mce_parameter_2: uint16,
+
+enemy_layout! {
+    Enemy_MiniCrocomire {
+        base: EnemyBase,
+        words: [
+            mce_var_A, mce_var_B, mce_var_C, mce_var_D, mce_var_E, mce_var_F,
+            mce_parameter_1, mce_parameter_2,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_NorfairLavajumpingEnemy {
-    pub base: EnemyBase,
-    pub nley_var_A: uint16,
-    pub nley_var_B: uint16,
-    pub nley_var_C: uint16,
-    pub nley_var_D: uint16,
-    pub nley_var_E: uint16,
-    pub nley_var_F: uint16,
-    pub nley_parameter_1: uint16,
-    pub nley_parameter_2: uint16,
-    pub pad1: [uint8; 26696],
-    pub nley_var_00: uint16,
-    pub nley_var_01: uint16,
-    pub nley_var_02: uint16,
-    pub nley_var_03: uint16,
-    pub nley_var_04: uint16,
-    pub nley_var_05: uint16,
-    pub nley_var_06: uint16,
-    pub nley_var_07: uint16,
-    pub nley_var_08: uint16,
-    pub nley_var_09: uint16,
-    pub nley_var_0A: uint16,
-    pub nley_var_0B: uint16,
-    pub nley_var_0C: uint16,
-    pub nley_var_0D: uint16,
-    pub nley_var_0E: uint16,
-    pub nley_var_0F: uint16,
-    pub nley_var_10: uint16,
-    pub nley_var_11: uint16,
-    pub nley_var_12: uint16,
-    pub nley_var_13: uint16,
-    pub nley_var_14: uint16,
-    pub nley_var_15: uint16,
-    pub nley_var_16: uint16,
-    pub nley_var_17: uint16,
-    pub nley_var_18: uint16,
-    pub nley_var_19: uint16,
-    pub nley_var_1A: uint16,
-    pub nley_var_1B: uint16,
-    pub nley_var_1C: uint16,
-    pub nley_var_1D: uint16,
-    pub nley_var_1E: uint16,
-    pub nley_var_1F: uint16,
+
+enemy_layout! {
+    Enemy_NorfairLavajumpingEnemy {
+        base: EnemyBase,
+        words: [
+            nley_var_A, nley_var_B, nley_var_C, nley_var_D, nley_var_E, nley_var_F,
+            nley_parameter_1, nley_parameter_2,
+        ],
+        pad1: [uint8; 26696],
+        words: [
+            nley_var_00, nley_var_01, nley_var_02, nley_var_03, nley_var_04, nley_var_05,
+            nley_var_06, nley_var_07, nley_var_08, nley_var_09, nley_var_0A, nley_var_0B,
+            nley_var_0C, nley_var_0D, nley_var_0E, nley_var_0F, nley_var_10, nley_var_11,
+            nley_var_12, nley_var_13, nley_var_14, nley_var_15, nley_var_16, nley_var_17,
+            nley_var_18, nley_var_19, nley_var_1A, nley_var_1B, nley_var_1C, nley_var_1D,
+            nley_var_1E, nley_var_1F,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_Rinka {
-    pub base: EnemyBase,
-    pub rinka_var_A: uint16,
-    pub rinka_var_B: uint16,
-    pub rinka_var_C: uint16,
-    pub rinka_var_D: uint16,
-    pub rinka_var_E: uint16,
-    pub rinka_var_F: uint16,
-    pub rinka_parameter_1: uint16,
-    pub rinka_parameter_2: uint16,
-    pub pad1: [uint8; 26696],
-    pub rinka_var_00: uint16,
-    pub rinka_var_01: uint16,
-    pub rinka_var_02: uint16,
-    pub rinka_var_03: uint16,
-    pub rinka_var_04: uint16,
-    pub rinka_var_05: uint16,
-    pub rinka_var_06: uint16,
-    pub rinka_var_07: uint16,
-    pub rinka_var_08: uint16,
-    pub rinka_var_09: uint16,
-    pub rinka_var_0A: uint16,
-    pub rinka_var_0B: uint16,
-    pub rinka_var_0C: uint16,
-    pub rinka_var_0D: uint16,
-    pub rinka_var_0E: uint16,
-    pub rinka_var_0F: uint16,
-    pub rinka_var_10: uint16,
-    pub rinka_var_11: uint16,
-    pub rinka_var_12: uint16,
-    pub rinka_var_13: uint16,
-    pub rinka_var_14: uint16,
-    pub rinka_var_15: uint16,
-    pub rinka_var_16: uint16,
-    pub rinka_var_17: uint16,
-    pub rinka_var_18: uint16,
-    pub rinka_var_19: uint16,
-    pub rinka_var_1A: uint16,
-    pub rinka_var_1B: uint16,
-    pub rinka_var_1C: uint16,
-    pub rinka_var_1D: uint16,
-    pub rinka_var_1E: uint16,
-    pub rinka_var_1F: uint16,
+
+enemy_layout! {
+    Enemy_Rinka {
+        base: EnemyBase,
+        words: [
+            rinka_var_A, rinka_var_B, rinka_var_C, rinka_var_D, rinka_var_E, rinka_var_F,
+            rinka_parameter_1, rinka_parameter_2,
+        ],
+        pad1: [uint8; 26696],
+        words: [
+            rinka_var_00, rinka_var_01, rinka_var_02, rinka_var_03, rinka_var_04,
+            rinka_var_05, rinka_var_06, rinka_var_07, rinka_var_08, rinka_var_09,
+            rinka_var_0A, rinka_var_0B, rinka_var_0C, rinka_var_0D, rinka_var_0E,
+            rinka_var_0F, rinka_var_10, rinka_var_11, rinka_var_12, rinka_var_13,
+            rinka_var_14, rinka_var_15, rinka_var_16, rinka_var_17, rinka_var_18,
+            rinka_var_19, rinka_var_1A, rinka_var_1B, rinka_var_1C, rinka_var_1D,
+            rinka_var_1E, rinka_var_1F,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_SpikeShootingPlant {
-    pub base: EnemyBase,
-    pub sspt_var_A: uint16,
-    pub sspt_var_B: uint16,
-    pub sspt_var_C: uint16,
-    pub sspt_var_D: uint16,
-    pub sspt_var_E: uint16,
-    pub sspt_var_F: uint16,
-    pub sspt_parameter_1: uint16,
-    pub sspt_parameter_2: uint16,
-    pub pad1: [uint8; 26696],
-    pub sspt_var_00: uint16,
-    pub sspt_var_01: uint16,
-    pub sspt_var_02: uint16,
-    pub sspt_var_03: uint16,
-    pub sspt_var_04: uint16,
-    pub sspt_var_05: uint16,
-    pub sspt_var_06: uint16,
-    pub sspt_var_07: uint16,
-    pub sspt_var_08: uint16,
-    pub sspt_var_09: uint16,
-    pub sspt_var_0A: uint16,
-    pub sspt_var_0B: uint16,
-    pub sspt_var_0C: uint16,
-    pub sspt_var_0D: uint16,
-    pub sspt_var_0E: uint16,
-    pub sspt_var_0F: uint16,
-    pub sspt_var_10: uint16,
-    pub sspt_var_11: uint16,
-    pub sspt_var_12: uint16,
-    pub sspt_var_13: uint16,
-    pub sspt_var_14: uint16,
-    pub sspt_var_15: uint16,
-    pub sspt_var_16: uint16,
-    pub sspt_var_17: uint16,
-    pub sspt_var_18: uint16,
-    pub sspt_var_19: uint16,
-    pub sspt_var_1A: uint16,
-    pub sspt_var_1B: uint16,
-    pub sspt_var_1C: uint16,
-    pub sspt_var_1D: uint16,
-    pub sspt_var_1E: uint16,
-    pub sspt_var_1F: uint16,
+
+enemy_layout! {
+    Enemy_SpikeShootingPlant {
+        base: EnemyBase,
+        words: [
+            sspt_var_A, sspt_var_B, sspt_var_C, sspt_var_D, sspt_var_E, sspt_var_F,
+            sspt_parameter_1, sspt_parameter_2,
+        ],
+        pad1: [uint8; 26696],
+        words: [
+            sspt_var_00, sspt_var_01, sspt_var_02, sspt_var_03, sspt_var_04, sspt_var_05,
+            sspt_var_06, sspt_var_07, sspt_var_08, sspt_var_09, sspt_var_0A, sspt_var_0B,
+            sspt_var_0C, sspt_var_0D, sspt_var_0E, sspt_var_0F, sspt_var_10, sspt_var_11,
+            sspt_var_12, sspt_var_13, sspt_var_14, sspt_var_15, sspt_var_16, sspt_var_17,
+            sspt_var_18, sspt_var_19, sspt_var_1A, sspt_var_1B, sspt_var_1C, sspt_var_1D,
+            sspt_var_1E, sspt_var_1F,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_Gripper {
-    pub base: EnemyBase,
-    pub gripper_var_A: uint16,
-    pub gripper_var_B: uint16,
-    pub gripper_var_C: uint16,
-    pub gripper_var_D: uint16,
-    pub gripper_var_E: uint16,
-    pub gripper_var_F: uint16,
-    pub gripper_parameter_1: uint16,
-    pub gripper_parameter_2: uint16,
+
+enemy_layout! {
+    Enemy_Gripper {
+        base: EnemyBase,
+        words: [
+            gripper_var_A, gripper_var_B, gripper_var_C, gripper_var_D, gripper_var_E,
+            gripper_var_F, gripper_parameter_1, gripper_parameter_2,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_GunshipBottom {
-    pub base: EnemyBase,
-    pub gbm_var_A: uint16,
-    pub gbm_var_B: uint16,
-    pub gbm_var_C: uint16,
-    pub gbm_var_D: uint16,
-    pub gbm_var_E: uint16,
-    pub gbm_var_F: uint16,
-    pub gbm_parameter_1: uint16,
-    pub gbm_parameter_2: uint16,
+
+enemy_layout! {
+    Enemy_GunshipBottom {
+        base: EnemyBase,
+        words: [
+            gbm_var_A, gbm_var_B, gbm_var_C, gbm_var_D, gbm_var_E, gbm_var_F,
+            gbm_parameter_1, gbm_parameter_2,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_GunshipTop {
-    pub base: EnemyBase,
-    pub gtp_var_A: uint16,
-    pub gtp_var_B: uint16,
-    pub gtp_var_C: uint16,
-    pub gtp_var_D: uint16,
-    pub gtp_var_E: uint16,
-    pub gtp_var_F: uint16,
-    pub gtp_parameter_1: uint16,
-    pub gtp_parameter_2: uint16,
-    pub pad1: [uint8; 26696],
-    pub gtp_var_00: uint16,
-    pub gtp_var_01: uint16,
-    pub gtp_var_02: uint16,
-    pub gtp_var_03: uint16,
-    pub gtp_var_04: uint16,
-    pub gtp_var_05: uint16,
-    pub gtp_var_06: uint16,
-    pub gtp_var_07: uint16,
-    pub gtp_var_08: uint16,
-    pub gtp_var_09: uint16,
-    pub gtp_var_0A: uint16,
-    pub gtp_var_0B: uint16,
-    pub gtp_var_0C: uint16,
-    pub gtp_var_0D: uint16,
-    pub gtp_var_0E: uint16,
-    pub gtp_var_0F: uint16,
-    pub gtp_var_10: uint16,
-    pub gtp_var_11: uint16,
-    pub gtp_var_12: uint16,
-    pub gtp_var_13: uint16,
-    pub gtp_var_14: uint16,
-    pub gtp_var_15: uint16,
-    pub gtp_var_16: uint16,
-    pub gtp_var_17: uint16,
-    pub gtp_var_18: uint16,
-    pub gtp_var_19: uint16,
-    pub gtp_var_1A: uint16,
-    pub gtp_var_1B: uint16,
-    pub gtp_var_1C: uint16,
-    pub gtp_var_1D: uint16,
-    pub gtp_var_1E: uint16,
-    pub gtp_var_1F: uint16,
+
+enemy_layout! {
+    Enemy_GunshipTop {
+        base: EnemyBase,
+        words: [
+            gtp_var_A, gtp_var_B, gtp_var_C, gtp_var_D, gtp_var_E, gtp_var_F,
+            gtp_parameter_1, gtp_parameter_2,
+        ],
+        pad1: [uint8; 26696],
+        words: [
+            gtp_var_00, gtp_var_01, gtp_var_02, gtp_var_03, gtp_var_04, gtp_var_05,
+            gtp_var_06, gtp_var_07, gtp_var_08, gtp_var_09, gtp_var_0A, gtp_var_0B,
+            gtp_var_0C, gtp_var_0D, gtp_var_0E, gtp_var_0F, gtp_var_10, gtp_var_11,
+            gtp_var_12, gtp_var_13, gtp_var_14, gtp_var_15, gtp_var_16, gtp_var_17,
+            gtp_var_18, gtp_var_19, gtp_var_1A, gtp_var_1B, gtp_var_1C, gtp_var_1D,
+            gtp_var_1E, gtp_var_1F,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_HirisingSlowfalling {
-    pub base: EnemyBase,
-    pub hsg_var_A: uint16,
-    pub hsg_var_B: uint16,
-    pub hsg_var_C: uint16,
-    pub hsg_var_D: uint16,
-    pub hsg_var_E: uint16,
-    pub hsg_var_F: uint16,
-    pub hsg_parameter_1: uint16,
-    pub hsg_parameter_2: uint16,
-    pub pad1: [uint8; 26696],
-    pub hsg_var_00: uint16,
-    pub hsg_var_01: uint16,
-    pub hsg_var_02: uint16,
-    pub hsg_var_03: uint16,
-    pub hsg_var_04: uint16,
-    pub hsg_var_05: uint16,
-    pub hsg_var_06: uint16,
-    pub hsg_var_07: uint16,
-    pub hsg_var_08: uint16,
-    pub hsg_var_09: uint16,
-    pub hsg_var_0A: uint16,
-    pub hsg_var_0B: uint16,
-    pub hsg_var_0C: uint16,
-    pub hsg_var_0D: uint16,
-    pub hsg_var_0E: uint16,
-    pub hsg_var_0F: uint16,
-    pub hsg_var_10: uint16,
-    pub hsg_var_11: uint16,
-    pub hsg_var_12: uint16,
-    pub hsg_var_13: uint16,
-    pub hsg_var_14: uint16,
-    pub hsg_var_15: uint16,
-    pub hsg_var_16: uint16,
-    pub hsg_var_17: uint16,
-    pub hsg_var_18: uint16,
-    pub hsg_var_19: uint16,
-    pub hsg_var_1A: uint16,
-    pub hsg_var_1B: uint16,
-    pub hsg_var_1C: uint16,
-    pub hsg_var_1D: uint16,
-    pub hsg_var_1E: uint16,
-    pub hsg_var_1F: uint16,
+
+enemy_layout! {
+    Enemy_HirisingSlowfalling {
+        base: EnemyBase,
+        words: [
+            hsg_var_A, hsg_var_B, hsg_var_C, hsg_var_D, hsg_var_E, hsg_var_F,
+            hsg_parameter_1, hsg_parameter_2,
+        ],
+        pad1: [uint8; 26696],
+        words: [
+            hsg_var_00, hsg_var_01, hsg_var_02, hsg_var_03, hsg_var_04, hsg_var_05,
+            hsg_var_06, hsg_var_07, hsg_var_08, hsg_var_09, hsg_var_0A, hsg_var_0B,
+            hsg_var_0C, hsg_var_0D, hsg_var_0E, hsg_var_0F, hsg_var_10, hsg_var_11,
+            hsg_var_12, hsg_var_13, hsg_var_14, hsg_var_15, hsg_var_16, hsg_var_17,
+            hsg_var_18, hsg_var_19, hsg_var_1A, hsg_var_1B, hsg_var_1C, hsg_var_1D,
+            hsg_var_1E, hsg_var_1F,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_RisingFallingPlatform {
-    pub base: EnemyBase,
-    pub rfpm_var_A: uint16,
-    pub rfpm_var_B: uint16,
-    pub rfpm_var_C: uint16,
-    pub rfpm_var_D: uint16,
-    pub rfpm_var_E: uint16,
-    pub rfpm_var_F: uint16,
-    pub rfpm_parameter_1: uint16,
-    pub rfpm_parameter_2: uint16,
-    pub pad1: [uint8; 26696],
-    pub rfpm_var_00: uint16,
-    pub rfpm_var_01: uint16,
-    pub rfpm_var_02: uint16,
-    pub rfpm_var_03: uint16,
-    pub rfpm_var_04: uint16,
-    pub rfpm_var_05: uint16,
-    pub rfpm_var_06: uint16,
-    pub rfpm_var_07: uint16,
-    pub rfpm_var_08: uint16,
-    pub rfpm_var_09: uint16,
-    pub rfpm_var_0A: uint16,
-    pub rfpm_var_0B: uint16,
-    pub rfpm_var_0C: uint16,
-    pub rfpm_var_0D: uint16,
-    pub rfpm_var_0E: uint16,
-    pub rfpm_var_0F: uint16,
-    pub rfpm_var_10: uint16,
-    pub rfpm_var_11: uint16,
-    pub rfpm_var_12: uint16,
-    pub rfpm_var_13: uint16,
-    pub rfpm_var_14: uint16,
-    pub rfpm_var_15: uint16,
-    pub rfpm_var_16: uint16,
-    pub rfpm_var_17: uint16,
-    pub rfpm_var_18: uint16,
-    pub rfpm_var_19: uint16,
-    pub rfpm_var_1A: uint16,
-    pub rfpm_var_1B: uint16,
-    pub rfpm_var_1C: uint16,
-    pub rfpm_var_1D: uint16,
-    pub rfpm_var_1E: uint16,
-    pub rfpm_var_1F: uint16,
-    pub pad2: [uint8; 1984],
-    pub rfpm_var_20: uint16,
-    pub rfpm_var_21: uint16,
-    pub rfpm_var_22: uint16,
-    pub rfpm_var_23: uint16,
-    pub rfpm_var_24: uint16,
-    pub rfpm_var_25: uint16,
-    pub rfpm_var_26: uint16,
-    pub rfpm_var_27: uint16,
-    pub rfpm_var_28: uint16,
-    pub rfpm_var_29: uint16,
-    pub rfpm_var_2A: uint16,
-    pub rfpm_var_2B: uint16,
-    pub rfpm_var_2C: uint16,
-    pub rfpm_var_2D: uint16,
-    pub rfpm_var_2E: uint16,
-    pub rfpm_var_2F: uint16,
-    pub rfpm_var_30: uint16,
-    pub rfpm_var_31: uint16,
-    pub rfpm_var_32: uint16,
-    pub rfpm_var_33: uint16,
-    pub rfpm_var_34: uint16,
-    pub rfpm_var_35: uint16,
-    pub rfpm_var_36: uint16,
-    pub rfpm_var_37: uint16,
-    pub rfpm_var_38: uint16,
-    pub rfpm_var_39: uint16,
-    pub rfpm_var_3A: uint16,
-    pub rfpm_var_3B: uint16,
-    pub rfpm_var_3C: uint16,
-    pub rfpm_var_3D: uint16,
-    pub rfpm_var_3E: uint16,
-    pub rfpm_var_3F: uint16,
+
+enemy_layout! {
+    Enemy_RisingFallingPlatform {
+        base: EnemyBase,
+        words: [
+            rfpm_var_A, rfpm_var_B, rfpm_var_C, rfpm_var_D, rfpm_var_E, rfpm_var_F,
+            rfpm_parameter_1, rfpm_parameter_2,
+        ],
+        pad1: [uint8; 26696],
+        words: [
+            rfpm_var_00, rfpm_var_01, rfpm_var_02, rfpm_var_03, rfpm_var_04, rfpm_var_05,
+            rfpm_var_06, rfpm_var_07, rfpm_var_08, rfpm_var_09, rfpm_var_0A, rfpm_var_0B,
+            rfpm_var_0C, rfpm_var_0D, rfpm_var_0E, rfpm_var_0F, rfpm_var_10, rfpm_var_11,
+            rfpm_var_12, rfpm_var_13, rfpm_var_14, rfpm_var_15, rfpm_var_16, rfpm_var_17,
+            rfpm_var_18, rfpm_var_19, rfpm_var_1A, rfpm_var_1B, rfpm_var_1C, rfpm_var_1D,
+            rfpm_var_1E, rfpm_var_1F,
+        ],
+        pad2: [uint8; 1984],
+        words: [
+            rfpm_var_20, rfpm_var_21, rfpm_var_22, rfpm_var_23, rfpm_var_24, rfpm_var_25,
+            rfpm_var_26, rfpm_var_27, rfpm_var_28, rfpm_var_29, rfpm_var_2A, rfpm_var_2B,
+            rfpm_var_2C, rfpm_var_2D, rfpm_var_2E, rfpm_var_2F, rfpm_var_30, rfpm_var_31,
+            rfpm_var_32, rfpm_var_33, rfpm_var_34, rfpm_var_35, rfpm_var_36, rfpm_var_37,
+            rfpm_var_38, rfpm_var_39, rfpm_var_3A, rfpm_var_3B, rfpm_var_3C, rfpm_var_3D,
+            rfpm_var_3E, rfpm_var_3F,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_HorizontalShootableShutter {
-    pub base: EnemyBase,
-    pub hssr_var_A: uint16,
-    pub hssr_var_B: uint16,
-    pub hssr_var_C: uint16,
-    pub hssr_var_D: uint16,
-    pub hssr_var_E: uint16,
-    pub hssr_var_F: uint16,
-    pub hssr_parameter_1: uint16,
-    pub hssr_parameter_2: uint16,
+
+enemy_layout! {
+    Enemy_HorizontalShootableShutter {
+        base: EnemyBase,
+        words: [
+            hssr_var_A, hssr_var_B, hssr_var_C, hssr_var_D, hssr_var_E, hssr_var_F,
+            hssr_parameter_1, hssr_parameter_2,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_JetPowerRipper {
-    pub base: EnemyBase,
-    pub jprr_var_A: uint16,
-    pub jprr_var_B: uint16,
-    pub jprr_var_C: uint16,
-    pub jprr_var_D: uint16,
-    pub jprr_var_E: uint16,
-    pub jprr_var_F: uint16,
-    pub jprr_parameter_1: uint16,
-    pub jprr_parameter_2: uint16,
+
+enemy_layout! {
+    Enemy_JetPowerRipper {
+        base: EnemyBase,
+        words: [
+            jprr_var_A, jprr_var_B, jprr_var_C, jprr_var_D, jprr_var_E, jprr_var_F,
+            jprr_parameter_1, jprr_parameter_2,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_LavaquakeRocks {
-    pub base: EnemyBase,
-    pub lrs_var_A: uint16,
-    pub lrs_var_B: uint16,
-    pub lrs_var_C: uint16,
-    pub lrs_var_D: uint16,
-    pub lrs_var_E: uint16,
-    pub lrs_var_F: uint16,
-    pub lrs_parameter_1: uint16,
-    pub lrs_parameter_2: uint16,
-    pub pad1: [uint8; 26696],
-    pub lrs_var_00: uint16,
-    pub lrs_var_01: uint16,
-    pub lrs_var_02: uint16,
-    pub lrs_var_03: uint16,
-    pub lrs_var_04: uint16,
-    pub lrs_var_05: uint16,
-    pub lrs_var_06: uint16,
-    pub lrs_var_07: uint16,
-    pub lrs_var_08: uint16,
-    pub lrs_var_09: uint16,
-    pub lrs_var_0A: uint16,
-    pub lrs_var_0B: uint16,
-    pub lrs_var_0C: uint16,
-    pub lrs_var_0D: uint16,
-    pub lrs_var_0E: uint16,
-    pub lrs_var_0F: uint16,
-    pub lrs_var_10: uint16,
-    pub lrs_var_11: uint16,
-    pub lrs_var_12: uint16,
-    pub lrs_var_13: uint16,
-    pub lrs_var_14: uint16,
-    pub lrs_var_15: uint16,
-    pub lrs_var_16: uint16,
-    pub lrs_var_17: uint16,
-    pub lrs_var_18: uint16,
-    pub lrs_var_19: uint16,
-    pub lrs_var_1A: uint16,
-    pub lrs_var_1B: uint16,
-    pub lrs_var_1C: uint16,
-    pub lrs_var_1D: uint16,
-    pub lrs_var_1E: uint16,
-    pub lrs_var_1F: uint16,
+
+enemy_layout! {
+    Enemy_LavaquakeRocks {
+        base: EnemyBase,
+        words: [
+            lrs_var_A, lrs_var_B, lrs_var_C, lrs_var_D, lrs_var_E, lrs_var_F,
+            lrs_parameter_1, lrs_parameter_2,
+        ],
+        pad1: [uint8; 26696],
+        words: [
+            lrs_var_00, lrs_var_01, lrs_var_02, lrs_var_03, lrs_var_04, lrs_var_05,
+            lrs_var_06, lrs_var_07, lrs_var_08, lrs_var_09, lrs_var_0A, lrs_var_0B,
+            lrs_var_0C, lrs_var_0D, lrs_var_0E, lrs_var_0F, lrs_var_10, lrs_var_11,
+            lrs_var_12, lrs_var_13, lrs_var_14, lrs_var_15, lrs_var_16, lrs_var_17,
+            lrs_var_18, lrs_var_19, lrs_var_1A, lrs_var_1B, lrs_var_1C, lrs_var_1D,
+            lrs_var_1E, lrs_var_1F,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_LowerNorfairRio {
-    pub base: EnemyBase,
-    pub lnro_var_A: uint16,
-    pub lnro_var_B: uint16,
-    pub lnro_var_C: uint16,
-    pub lnro_var_D: uint16,
-    pub lnro_var_E: uint16,
-    pub lnro_var_F: uint16,
-    pub lnro_parameter_1: uint16,
-    pub lnro_parameter_2: uint16,
+
+enemy_layout! {
+    Enemy_LowerNorfairRio {
+        base: EnemyBase,
+        words: [
+            lnro_var_A, lnro_var_B, lnro_var_C, lnro_var_D, lnro_var_E, lnro_var_F,
+            lnro_parameter_1, lnro_parameter_2,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_MiniMaridiaTurtle {
-    pub base: EnemyBase,
-    pub mmte_var_A: uint16,
-    pub mmte_var_B: uint16,
-    pub mmte_var_C: uint16,
-    pub mmte_var_D: uint16,
-    pub mmte_var_E: uint16,
-    pub mmte_var_F: uint16,
-    pub mmte_parameter_1: uint16,
-    pub mmte_parameter_2: uint16,
-    pub pad1: [uint8; 26696],
-    pub mmte_var_00: uint16,
-    pub mmte_var_01: uint16,
-    pub mmte_var_02: uint16,
-    pub mmte_var_03: uint16,
-    pub mmte_var_04: uint16,
-    pub mmte_var_05: uint16,
-    pub mmte_var_06: uint16,
-    pub mmte_var_07: uint16,
-    pub mmte_var_08: uint16,
-    pub mmte_var_09: uint16,
-    pub mmte_var_0A: uint16,
-    pub mmte_var_0B: uint16,
-    pub mmte_var_0C: uint16,
-    pub mmte_var_0D: uint16,
-    pub mmte_var_0E: uint16,
-    pub mmte_var_0F: uint16,
-    pub mmte_var_10: uint16,
-    pub mmte_var_11: uint16,
-    pub mmte_var_12: uint16,
-    pub mmte_var_13: uint16,
-    pub mmte_var_14: uint16,
-    pub mmte_var_15: uint16,
-    pub mmte_var_16: uint16,
-    pub mmte_var_17: uint16,
-    pub mmte_var_18: uint16,
-    pub mmte_var_19: uint16,
-    pub mmte_var_1A: uint16,
-    pub mmte_var_1B: uint16,
-    pub mmte_var_1C: uint16,
-    pub mmte_var_1D: uint16,
-    pub mmte_var_1E: uint16,
-    pub mmte_var_1F: uint16,
+
+enemy_layout! {
+    Enemy_MiniMaridiaTurtle {
+        base: EnemyBase,
+        words: [
+            mmte_var_A, mmte_var_B, mmte_var_C, mmte_var_D, mmte_var_E, mmte_var_F,
+            mmte_parameter_1, mmte_parameter_2,
+        ],
+        pad1: [uint8; 26696],
+        words: [
+            mmte_var_00, mmte_var_01, mmte_var_02, mmte_var_03, mmte_var_04, mmte_var_05,
+            mmte_var_06, mmte_var_07, mmte_var_08, mmte_var_09, mmte_var_0A, mmte_var_0B,
+            mmte_var_0C, mmte_var_0D, mmte_var_0E, mmte_var_0F, mmte_var_10, mmte_var_11,
+            mmte_var_12, mmte_var_13, mmte_var_14, mmte_var_15, mmte_var_16, mmte_var_17,
+            mmte_var_18, mmte_var_19, mmte_var_1A, mmte_var_1B, mmte_var_1C, mmte_var_1D,
+            mmte_var_1E, mmte_var_1F,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_MiniMaridiaBeybladeTurtle {
-    pub base: EnemyBase,
-    pub mmbte_var_A: uint16,
-    pub mmbte_var_B: uint16,
-    pub mmbte_var_C: uint16,
-    pub mmbte_var_D: uint16,
-    pub mmbte_var_E: uint16,
-    pub mmbte_var_F: uint16,
-    pub mmbte_parameter_1: uint16,
-    pub mmbte_parameter_2: uint16,
+
+enemy_layout! {
+    Enemy_MiniMaridiaBeybladeTurtle {
+        base: EnemyBase,
+        words: [
+            mmbte_var_A, mmbte_var_B, mmbte_var_C, mmbte_var_D, mmbte_var_E, mmbte_var_F,
+            mmbte_parameter_1, mmbte_parameter_2,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_NorfairErraticFireball {
-    pub base: EnemyBase,
-    pub nefl_var_A: uint16,
-    pub nefl_var_B: uint16,
-    pub nefl_var_C: uint16,
-    pub nefl_var_D: uint16,
-    pub nefl_var_E: uint16,
-    pub nefl_var_F: uint16,
-    pub nefl_parameter_1: uint16,
-    pub nefl_parameter_2: uint16,
+
+enemy_layout! {
+    Enemy_NorfairErraticFireball {
+        base: EnemyBase,
+        words: [
+            nefl_var_A, nefl_var_B, nefl_var_C, nefl_var_D, nefl_var_E, nefl_var_F,
+            nefl_parameter_1, nefl_parameter_2,
+        ],
+    }
 }
+
 pub use crate::types::Ram8000_Default;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_Ripper {
-    pub base: EnemyBase,
-    pub ripper_var_A: uint16,
-    pub ripper_var_B: uint16,
-    pub ripper_var_C: uint16,
-    pub ripper_var_D: uint16,
-    pub ripper_var_E: uint16,
-    pub ripper_var_F: uint16,
-    pub ripper_parameter_1: uint16,
-    pub ripper_parameter_2: uint16,
+enemy_layout! {
+    Enemy_Ripper {
+        base: EnemyBase,
+        words: [
+            ripper_var_A, ripper_var_B, ripper_var_C, ripper_var_D, ripper_var_E,
+            ripper_var_F, ripper_parameter_1, ripper_parameter_2,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_ThinHoppingBlobs {
-    pub base: EnemyBase,
-    pub thbs_var_A: uint16,
-    pub thbs_var_B: uint16,
-    pub thbs_var_C: uint16,
-    pub thbs_var_D: uint16,
-    pub thbs_var_E: uint16,
-    pub thbs_var_F: uint16,
-    pub thbs_parameter_1: uint16,
-    pub thbs_parameter_2: uint16,
-    pub pad1: [uint8; 26696],
-    pub thbs_var_00: uint16,
-    pub thbs_var_01: uint16,
-    pub thbs_var_02: uint16,
-    pub thbs_var_03: uint16,
-    pub thbs_var_04: uint16,
-    pub thbs_var_05: uint16,
-    pub thbs_var_06: uint16,
-    pub thbs_var_07: uint16,
-    pub thbs_var_08: uint16,
-    pub thbs_var_09: uint16,
-    pub thbs_var_0A: uint16,
-    pub thbs_var_0B: uint16,
-    pub thbs_var_0C: uint16,
-    pub thbs_var_0D: uint16,
-    pub thbs_var_0E: uint16,
-    pub thbs_var_0F: uint16,
-    pub thbs_var_10: uint16,
-    pub thbs_var_11: uint16,
-    pub thbs_var_12: uint16,
-    pub thbs_var_13: uint16,
-    pub thbs_var_14: uint16,
-    pub thbs_var_15: uint16,
-    pub thbs_var_16: uint16,
-    pub thbs_var_17: uint16,
-    pub thbs_var_18: uint16,
-    pub thbs_var_19: uint16,
-    pub thbs_var_1A: uint16,
-    pub thbs_var_1B: uint16,
-    pub thbs_var_1C: uint16,
-    pub thbs_var_1D: uint16,
-    pub thbs_var_1E: uint16,
-    pub thbs_var_1F: uint16,
+
+enemy_layout! {
+    Enemy_ThinHoppingBlobs {
+        base: EnemyBase,
+        words: [
+            thbs_var_A, thbs_var_B, thbs_var_C, thbs_var_D, thbs_var_E, thbs_var_F,
+            thbs_parameter_1, thbs_parameter_2,
+        ],
+        pad1: [uint8; 26696],
+        words: [
+            thbs_var_00, thbs_var_01, thbs_var_02, thbs_var_03, thbs_var_04, thbs_var_05,
+            thbs_var_06, thbs_var_07, thbs_var_08, thbs_var_09, thbs_var_0A, thbs_var_0B,
+            thbs_var_0C, thbs_var_0D, thbs_var_0E, thbs_var_0F, thbs_var_10, thbs_var_11,
+            thbs_var_12, thbs_var_13, thbs_var_14, thbs_var_15, thbs_var_16, thbs_var_17,
+            thbs_var_18, thbs_var_19, thbs_var_1A, thbs_var_1B, thbs_var_1C, thbs_var_1D,
+            thbs_var_1E, thbs_var_1F,
+        ],
+    }
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_TimedShutter {
-    pub base: EnemyBase,
-    pub tsr_var_A: uint16,
-    pub tsr_var_B: uint16,
-    pub tsr_var_C: uint16,
-    pub tsr_var_D: uint16,
-    pub tsr_var_E: uint16,
-    pub tsr_var_F: uint16,
-    pub tsr_parameter_1: uint16,
-    pub tsr_parameter_2: uint16,
-    pub pad1: [uint8; 26696],
-    pub tsr_var_00: uint16,
-    pub tsr_var_01: uint16,
-    pub tsr_var_02: uint16,
-    pub tsr_var_03: uint16,
-    pub tsr_var_04: uint16,
-    pub tsr_var_05: uint16,
-    pub tsr_var_06: uint16,
-    pub tsr_var_07: uint16,
-    pub tsr_var_08: uint16,
-    pub tsr_var_09: uint16,
-    pub tsr_var_0A: uint16,
-    pub tsr_var_0B: uint16,
-    pub tsr_var_0C: uint16,
-    pub tsr_var_0D: uint16,
-    pub tsr_var_0E: uint16,
-    pub tsr_var_0F: uint16,
-    pub tsr_var_10: uint16,
-    pub tsr_var_11: uint16,
-    pub tsr_var_12: uint16,
-    pub tsr_var_13: uint16,
-    pub tsr_var_14: uint16,
-    pub tsr_var_15: uint16,
-    pub tsr_var_16: uint16,
-    pub tsr_var_17: uint16,
-    pub tsr_var_18: uint16,
-    pub tsr_var_19: uint16,
-    pub tsr_var_1A: uint16,
-    pub tsr_var_1B: uint16,
-    pub tsr_var_1C: uint16,
-    pub tsr_var_1D: uint16,
-    pub tsr_var_1E: uint16,
-    pub tsr_var_1F: uint16,
-    pub pad3: [uint8; 4032],
-    pub tsr_var_40: uint16,
-    pub tsr_var_41: uint16,
-    pub tsr_var_42: uint16,
-    pub tsr_var_43: uint16,
-    pub tsr_var_44: uint16,
-    pub tsr_var_45: uint16,
-    pub tsr_var_46: uint16,
-    pub tsr_var_47: uint16,
-    pub tsr_var_48: uint16,
-    pub tsr_var_49: uint16,
-    pub tsr_var_4A: uint16,
-    pub tsr_var_4B: uint16,
-    pub tsr_var_4C: uint16,
-    pub tsr_var_4D: uint16,
-    pub tsr_var_4E: uint16,
-    pub tsr_var_4F: uint16,
-    pub tsr_var_50: uint16,
-    pub tsr_var_51: uint16,
-    pub tsr_var_52: uint16,
-    pub tsr_var_53: uint16,
-    pub tsr_var_54: uint16,
-    pub tsr_var_55: uint16,
-    pub tsr_var_56: uint16,
-    pub tsr_var_57: uint16,
-    pub tsr_var_58: uint16,
-    pub tsr_var_59: uint16,
-    pub tsr_var_5A: uint16,
-    pub tsr_var_5B: uint16,
-    pub tsr_var_5C: uint16,
-    pub tsr_var_5D: uint16,
-    pub tsr_var_5E: uint16,
-    pub tsr_var_5F: uint16,
+
+enemy_layout! {
+    Enemy_TimedShutter {
+        base: EnemyBase,
+        words: [
+            tsr_var_A, tsr_var_B, tsr_var_C, tsr_var_D, tsr_var_E, tsr_var_F,
+            tsr_parameter_1, tsr_parameter_2,
+        ],
+        pad1: [uint8; 26696],
+        words: [
+            tsr_var_00, tsr_var_01, tsr_var_02, tsr_var_03, tsr_var_04, tsr_var_05,
+            tsr_var_06, tsr_var_07, tsr_var_08, tsr_var_09, tsr_var_0A, tsr_var_0B,
+            tsr_var_0C, tsr_var_0D, tsr_var_0E, tsr_var_0F, tsr_var_10, tsr_var_11,
+            tsr_var_12, tsr_var_13, tsr_var_14, tsr_var_15, tsr_var_16, tsr_var_17,
+            tsr_var_18, tsr_var_19, tsr_var_1A, tsr_var_1B, tsr_var_1C, tsr_var_1D,
+            tsr_var_1E, tsr_var_1F,
+        ],
+        pad3: [uint8; 4032],
+        words: [
+            tsr_var_40, tsr_var_41, tsr_var_42, tsr_var_43, tsr_var_44, tsr_var_45,
+            tsr_var_46, tsr_var_47, tsr_var_48, tsr_var_49, tsr_var_4A, tsr_var_4B,
+            tsr_var_4C, tsr_var_4D, tsr_var_4E, tsr_var_4F, tsr_var_50, tsr_var_51,
+            tsr_var_52, tsr_var_53, tsr_var_54, tsr_var_55, tsr_var_56, tsr_var_57,
+            tsr_var_58, tsr_var_59, tsr_var_5A, tsr_var_5B, tsr_var_5C, tsr_var_5D,
+            tsr_var_5E, tsr_var_5F,
+        ],
+    }
 }
+
 #[inline]
 unsafe fn RomPtr_A2(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
     return RomPtr(

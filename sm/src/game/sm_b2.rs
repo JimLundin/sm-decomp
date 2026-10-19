@@ -2,6 +2,7 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a0::*;
 pub use crate::game::constants::bank_b4::*;
 pub use crate::game::constants::projectile_types::*;
+use crate::game::enemy_layouts::enemy_layout;
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
 use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_90::ProjectileReflection;
@@ -59,85 +60,34 @@ pub const addr_off_B2ECEC: Consts_B2 = 60652;
 pub const addr_kSpacePirates_Ilist_ECE4: Consts_B2 = 60644;
 pub const addr_kSpacePirates_Ilist_ECC0: Consts_B2 = 60608;
 pub use crate::types::Consts_B4;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_SpacePirates {
-    pub base: EnemyBase,
-    pub sps_var_A: uint16,
-    pub sps_var_B: uint16,
-    pub sps_var_C: uint16,
-    pub sps_var_D: uint16,
-    pub sps_var_E: uint16,
-    pub sps_var_F: uint16,
-    pub sps_parameter_1: uint16,
-    pub sps_parameter_2: uint16,
-    pub pad1: [uint8; 26696],
-    pub sps_var_00: uint16,
-    pub sps_var_01: uint16,
-    pub sps_var_02: uint16,
-    pub sps_var_03: uint16,
-    pub sps_var_04: uint16,
-    pub sps_var_05: uint16,
-    pub sps_var_06: uint16,
-    pub sps_var_07: uint16,
-    pub sps_var_08: uint16,
-    pub sps_var_09: uint16,
-    pub sps_var_0A: uint16,
-    pub sps_var_0B: uint16,
-    pub sps_var_0C: uint16,
-    pub sps_var_0D: uint16,
-    pub sps_var_0E: uint16,
-    pub sps_var_0F: uint16,
-    pub sps_var_10: uint16,
-    pub sps_var_11: uint16,
-    pub sps_var_12: uint16,
-    pub sps_var_13: uint16,
-    pub sps_var_14: uint16,
-    pub sps_var_15: uint16,
-    pub sps_var_16: uint16,
-    pub sps_var_17: uint16,
-    pub sps_var_18: uint16,
-    pub sps_var_19: uint16,
-    pub sps_var_1A: uint16,
-    pub sps_var_1B: uint16,
-    pub sps_var_1C: uint16,
-    pub sps_var_1D: uint16,
-    pub sps_var_1E: uint16,
-    pub sps_var_1F: uint16,
-    pub pad2: [uint8; 1984],
-    pub sps_var_20: uint16,
-    pub sps_var_21: uint16,
-    pub sps_var_22: uint16,
-    pub sps_var_23: uint16,
-    pub sps_var_24: uint16,
-    pub sps_var_25: uint16,
-    pub sps_var_26: uint16,
-    pub sps_var_27: uint16,
-    pub sps_var_28: uint16,
-    pub sps_var_29: uint16,
-    pub sps_var_2A: uint16,
-    pub sps_var_2B: uint16,
-    pub sps_var_2C: uint16,
-    pub sps_var_2D: uint16,
-    pub sps_var_2E: uint16,
-    pub sps_var_2F: uint16,
-    pub sps_var_30: uint16,
-    pub sps_var_31: uint16,
-    pub sps_var_32: uint16,
-    pub sps_var_33: uint16,
-    pub sps_var_34: uint16,
-    pub sps_var_35: uint16,
-    pub sps_var_36: uint16,
-    pub sps_var_37: uint16,
-    pub sps_var_38: uint16,
-    pub sps_var_39: uint16,
-    pub sps_var_3A: uint16,
-    pub sps_var_3B: uint16,
-    pub sps_var_3C: uint16,
-    pub sps_var_3D: uint16,
-    pub sps_var_3E: uint16,
-    pub sps_var_3F: uint16,
+enemy_layout! {
+    Enemy_SpacePirates {
+        base: EnemyBase,
+        words: [
+            sps_var_A, sps_var_B, sps_var_C, sps_var_D, sps_var_E, sps_var_F,
+            sps_parameter_1, sps_parameter_2,
+        ],
+        pad1: [uint8; 26696],
+        words: [
+            sps_var_00, sps_var_01, sps_var_02, sps_var_03, sps_var_04, sps_var_05,
+            sps_var_06, sps_var_07, sps_var_08, sps_var_09, sps_var_0A, sps_var_0B,
+            sps_var_0C, sps_var_0D, sps_var_0E, sps_var_0F, sps_var_10, sps_var_11,
+            sps_var_12, sps_var_13, sps_var_14, sps_var_15, sps_var_16, sps_var_17,
+            sps_var_18, sps_var_19, sps_var_1A, sps_var_1B, sps_var_1C, sps_var_1D,
+            sps_var_1E, sps_var_1F,
+        ],
+        pad2: [uint8; 1984],
+        words: [
+            sps_var_20, sps_var_21, sps_var_22, sps_var_23, sps_var_24, sps_var_25,
+            sps_var_26, sps_var_27, sps_var_28, sps_var_29, sps_var_2A, sps_var_2B,
+            sps_var_2C, sps_var_2D, sps_var_2E, sps_var_2F, sps_var_30, sps_var_31,
+            sps_var_32, sps_var_33, sps_var_34, sps_var_35, sps_var_36, sps_var_37,
+            sps_var_38, sps_var_39, sps_var_3A, sps_var_3B, sps_var_3C, sps_var_3D,
+            sps_var_3E, sps_var_3F,
+        ],
+    }
 }
+
 #[inline]
 unsafe fn RomPtr_A0(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
     return RomPtr(
