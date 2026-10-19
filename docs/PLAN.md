@@ -14478,6 +14478,44 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Samus drawing state (2026-10-19): Samus_Draw now uses named byte-backed
+flicker gates, sprite indexes and coordinates plus safe ROM-word reads.
+The top lookup keeps the full pose word; the lower lookup keeps the captured,
+word-wrapped doubled pose. Top index capture before position/drawing calls,
+live movement dispatch and lower frame/coordinate reads, low-bit visibility
+selection and the unconditional final tile-definition call retain their order.
+The shared lower-visibility table and its handlers are unchanged.
+
+Frozen 49b6ac06 plus this source passes clean any% 129712/0 (351.86s)
+and Charge 78380/0 (255.92s), native exits 0. Observed Charge passes
+78380/0 (346.84s), comparing complete RAM, g_fail, callback-entry RAM,
+arguments and return values on all 59841 actual drawing calls across the
+full movie. There are 57833 visible calls and 2008 flicker skips; the lower
+sprite is drawn 49876 times and suppressed 7957 times. Visible gates are
+231 knockback, 55606 non-invincible and 1996 even-frame calls. The shine-timer
+bypass has zero hits. Spin-jump and wall-jump visibility handlers execute
+3372 and 126 times respectively, establishing candidates for later cleanup.
+
+132712 constructed comparisons use live ROM tables with substituted callees
+to cover every pose/frame word, crossed flicker boundaries, all movement
+selectors, low-bit return decisions and callback mutations. Eight controls
+detect a wrapped top lookup, live lower pose, stale frame, nonzero-only lower
+test, skipped tile update, live top index, saturated addition and reversed
+flicker parity. RAM/g_fail are restored before the 10000-frame prefix passes
+with zero failures (143.10s); constructed calls are excluded from movie hits.
+High-word and callback-mutation cases do not establish natural gameplay coverage.
+Exact observer stripping, source/DLL/fixture hashes and clean/observed
+non-timing diagnostics pass.
+
+Formatting/check, release --locked and progress pass. The first workspace
+build caught an incomplete concurrent verifier-module edit; after that module
+appeared, the normal release retry passed. Own raw offsets -16, cast lines
+-40 and Rust lines -47; other own counters are unchanged. Automatic approval
+review rejected deletion of the local temporary directory sm-draw-cleanup-rpazdu38
+with "blocked by policy", so those checks/builds remain outside Git. No probe
+code or ROM-derived fixtures are committed. Commands 7/10/12, full gameplay/
+credits and wider hardware/audio coverage remain open.
+
 Elevator map wrapper cleanup (2026-10-19): SaveMapExploredifElevator
 and LoadMapExploredIfElevator use existing named word reads and byte masks.
 The marking callback still precedes the fresh door lookup; map callbacks
