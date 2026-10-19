@@ -10701,6 +10701,23 @@ shelf and normal beam/jump controls to clear the enemy and reach higher
 platforms. Held upper99BD ascent,cliff tuning,old9AD9ammoandHDMA stay held.
 Credits,fullgameplay/hardware,render/audio,maskedRAM andownership remain open.
 
+Post-map Parlor ascent reaches Y523 (2026-10-19).
+From map-parlor-rise571@75291, X431/Y619 and health34, turn left/shoot1,
+shoot80, Jump1, left/jump35, Jump/shoot1 and neutral70 land at X398/Y523,
+standing, health34/99, map1/station255, missiles1/10, equipment1004.
+map-parlor-shoot619 verifies75479/71 (99.24s), observed native exit1.
+Shooting before jumping avoids the contact in the retired rise571 extension.
+
+Read-only failure-counter replay75479/71 (92.16s), observed native exit1,
+matches all71 ordered baseline failed frames exactly, with rendering enabled.
+No gameplay/RAM/health/inventory mutation; no new failing frames. Maintained
+source/residue delta0. The preceding committed door-hit counter cleanup owns
+Cargo fmt/check, release, progress and any%129712/0 source verification.
+Inputs, probes, SRAM and ROM-derived geometry stay ignored. Peer CPU/PPU
+work and remote sync are separate. Next: climb from X398/Y523 toward the
+upper hall and onward item/boss coverage. Credits, complete gameplay/hardware,
+render/audio, masked RAM and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
