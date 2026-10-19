@@ -9946,6 +9946,24 @@ delta remains. Hold indexed-indirect direct-page cleanup until contextual
 execution is available, alongside TSX/accumulator ROR. Continue covered CPU
 work; complete gameplay/render/audio remain open.
 
+CPU indirect direct-page pointer setup (2026-10-19): the non-indexed indirect
+helper reuses direct_page_address for alignment cycles and captured pointer
+byte addresses. Safe reference ends before ordered read_word callbacks; DB is
+still read afterward. Frozen `112de871` plus this change passes 33,550,336
+actual old/current RAM-bus cases: pointer/bank combinations at varied RAM
+locations with DP/operand wrapping, varied MF/XF/E and PC 8000/FFFF. Eight
+pointer values whose chosen low address is 1FFF are excluded to avoid MMIO
+at the second byte. Address pairs, named CPU/bus state, operand/pointer RAM,
+PC and wrapping cycles match. Arbitrary MMIO and independent address/pointer/
+bank Cartesian coverage remain unproven. Prefix 3,600/0 (1.07s), native exit 0,
+executes this helper 34,066 times. Clean full any% 129,712/0 (48.49s), native
+exit 0. Cargo fmt/check, full release/release-library builds with external
+SDL2, normal metadata and frozen optimized core/DLL pass. Live CPU matches
+verified source; peer PPU work is outside this replay. Rust lines -7; other
+own counters unchanged. Indexed-indirect remains held for movie execution,
+alongside TSX/accumulator ROR. Complete gameplay/render/audio remain open.
+Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
