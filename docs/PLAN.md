@@ -1676,24 +1676,56 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `bc15bf6b` passes
-uninterrupted full boot any% 129712/0 (172.39s) and Speed Booster
-148406/0 (219.19s), native exits 0. All 74 source/configuration/host/
-progress inputs match that commit. This adds the six shared PPU tile-row loads
-to the previously reviewed families below. Later pause-label, projectile and
-PPU full-tile drawing work is outside this snapshot.
+Latest reviewed integration (2026-10-19): frozen `cf6cd56a` passes
+uninterrupted full boot any% 129712/0 (188.85s) and Speed Booster
+148406/0 (247.85s), native exits 0. All 74 source/configuration/host/
+progress inputs match that commit. This adds the complete pause-label palette
+family to the previously reviewed families below. Later projectile and PPU
+full/partial-tile drawing work is outside this snapshot.
 
-Serialized checkpoint payloads are byte-identical to reviewed bf562b75.
-The only changed header field is the runtime-source fingerprint, independently
-recomputed from the actual inputs. Only snes/ppu.rs differs among
-those inputs. Structure layouts and the checkpoint codec remain unchanged.
-All other bindings, including the payload checksum, agree. No compatibility
-hash is patched and neither replay loads an earlier checkpoint. Complete
-non-timing diagnostics and coverage agree, including the known fingernail
+Complete serialized checkpoints, including all header fields, are byte-identical
+to reviewed bc15bf6b. Each source, ROM, movie, frame, version and payload binding
+is independently recomputed. The runtime-source fingerprint stays unchanged:
+the bank and accessor edits are excluded by the existing compatibility rule;
+the included runtime inputs, Game declaration and checkpoint codec are exact.
+No compatibility hash is patched and neither replay loads an earlier checkpoint.
+Complete non-timing diagnostics and coverage agree, including the known fingernail
 diagnostic. Speed reaches 55 rooms and 53 enemy definitions, ending in state 8,
 room $AD1B, X171/Y123, pose $0089, health 46/399, missiles 6/15, Supers 0/5,
 items $3105 and beams $1004 equipped/collected. Kraid is defeated and all eight
 coroutine bytes are zero. Credits remain unexercised.
+
+Independent pause-label reconstruction covers all 74 integration inputs and
+all 67 source files of the owner's candidate and both observed builds. The
+entire bank is restored by replacing the label helper/dispatch and its one
+direct initialization call; the accessor is the only other source change.
+All 18 original loop bodies are reconstructed token-for-token. Expanding the
+final table preserves each mode's label order, top-before-bottom rows and
+ascending read/write pairs over 28 distinct tile words. Widths are 5/4/5;
+the Ram3000 union tilemap begins at $3000. Every address remains in RAM.
+The mode accessor reads the original little-endian word at $0753. No RAM
+layout or whole-RAM borrow is added. The three routines also match the original
+transpilation after accounting for existing ABI, ownership and decrement edits.
+
+A freshly linked version of the reviewed comparison driver uses the independent
+release library and the exact former functions. All 196608 full-RAM cases
+pass: every u16 value appears at each of 28 tiles in each of three modes.
+Independent palette expectations agree, and the wrong-mask helper is rejected.
+These correlated word sweeps are not every combination of tile values. All
+65533 invalid modes panic before writes in both the old dispatch and final
+entry. Selection remains before the helper's RAM accesses.
+
+Both original movie observers reach 0/3 label modes and exit 2 for missing
+required probes despite zero failing frames. The new 40836-frame pause route
+is independently reconstructed from 40000 Speed Booster inputs and the stated
+neutral/Start/R/L sequence. Exact old/new observations reach modes 0/1/2
+3/1/2 times, at the same input-frame ranges (40039..40413, 40589, 40205..40221).
+Stripping only those probes restores each clean source; fixed source, libraries,
+inputs and non-timing logs are checked. This establishes actual mode execution,
+not every entry state or caller. Fresh full-boot clean before/after runs pass
+40836/0 (73.04s/71.95s), native exits 0, with identical complete
+checkpoints and non-timing logs. Both return to gameplay in room $96BA; their
+logs also match the observed route after removing probe records.
 
 Independent tile-load reconstruction covers the complete PPU and all 67
 candidate source files. The three sequences per bit depth are identical after
@@ -1913,17 +1945,16 @@ dedicated 5544-case API checks and 24/24 site observations are recorded by
 implementation; this review verifies the source transformation. The movie
 replays do not establish frontend decoder execution coverage.
 
-The normal Cargo integration is independently built from frozen bc15bf6b.
+The normal Cargo integration is independently built from frozen cf6cd56a.
 All 74 inputs, the fresh game library/DLL and copied fixtures stay fixed.
 Only registry dependencies seed this checkout, including existing registry
 build-script executable links. Formatting, normal release
-(41.64s), host build (5.17s) and progress pass. The family removes
-70 Rust lines and 21 c_int casts across 18 lines. One private unsafe helper
-centralizes six raw load sequences, increasing unsafe functions by one;
-other progress counters stay unchanged. Frozen totals: 201489 Rust lines,
-21391 raw-offset lines, 43969 c_int casts across 35504 lines and 6502 unsafe
-functions. This audit changes no maintained Rust or assets; later peer work
-retains its own checks.
+(38.76s), host build (3.80s) and progress pass. The family removes
+330 Rust lines, 37 raw-offset lines, four unsafe functions and 126 c_int casts
+across 90 lines. Other progress counters stay unchanged. Frozen totals:
+201159 Rust lines, 21354 raw-offset lines, 43843 c_int casts across 35414 lines
+and 6498 unsafe functions. This audit changes no maintained Rust or assets;
+later peer work retains its own checks.
 
 The prior PLM block-mask review remains valid: all six helper sites execute,
 with 2082 air-scroll updates, 105 shared retain updates and one each for four
