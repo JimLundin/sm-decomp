@@ -10789,6 +10789,23 @@ ascent from the retained Y299 prefix toward upper hall and item/boss coverage.
 Credits, complete hardware/gameplay, audio/render, masked RAM and ownership
 remain open; existing holds remain held.
 
+Post-map Parlor ascent reaches Y235 (2026-10-19).
+From map-parlor-rise459@75655, right1, right/jump30, Jump/shoot1 and
+neutral55 land X456/Y299, health29. Retain map-parlor-quick299@75735.
+Left7, left/jump38, Jump/shoot1 and neutral15 then land X408/Y235,
+standing, health29/99, map1/station255, missiles1/10, equipment1004.
+map-parlor-stable235 retains75795 frames, before a later enemy contact.
+Full rise235 trial75846/71 (103.02s), native exit1, adds no stable endpoint.
+Read-only failure-counter replay75795/71 (91.21s), observed native exit1,
+matches all71 ordered baseline failed frames exactly with rendering enabled.
+No gameplay/RAM/inventory writes, no new failing frames; source/residue delta0.
+Committed door-bit cleanup owns fmt/check, release, progress and clean
+any%129712/0 (149.79s), plus contextual75665/71 verification. Inputs,
+probes, SRAM and ROM-derived geometry remain ignored. Next: climb through
+the Y192 ledge gap toward Parlor's upper door and onward boss/item coverage.
+Credits, complete gameplay/hardware, render/audio, masked RAM and ownership
+remain open; prior holds stay held.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
