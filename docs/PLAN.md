@@ -11459,6 +11459,22 @@ Old9AD9 enemy-drop ammunition trials, upper99BD ascent and earlier holds
 remain held. Complete credits/gameplay/hardware, render/audio, masked RAM
 and ownership remain open.
 
+Post-map9AD9 elevator arrival settles (2026-10-19).
+From map9938-elevator, neutral180 then neutral350 finish the slow elevator
+ride and restore normal movement. Retain map9ad9-land@81010 atX128/Y680,
+health54/199, missiles1/10, equipment1004, current-area map0/station0.
+The subsequent right25,neutral30 prove movement control and begin descent
+atX167/Y728, health54. Full landing trial81066/71 (134.26s), native exit1.
+Read-only retained-platform replay81010/71 (124.48s), observed native exit1,
+matches all71 ordered baseline failed frames exactly, rendering enabled.
+No gameplay/RAM/inventory writes or new failures; source/residue delta0.
+Committed Energy Tank callback cleanup owns fmt/check, release, progress,
+contextual77139/71 and clean any%129712/0 (195.69s). Inputs, probes, SRAM
+and ROM-derived assets stay ignored. Next: normal-input descent from this
+map/tank route toward accessible onward passages. Old9AD9 enemy-drop ammo,
+upper99BD ascent and earlier holds remain held. Complete credits/gameplay/
+hardware, render/audio, masked RAM and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
