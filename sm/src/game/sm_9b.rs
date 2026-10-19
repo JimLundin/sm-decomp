@@ -731,15 +731,7 @@ pub unsafe fn GrappleBeamFunc_BC1F(game: &mut Game) {
             if (ram_word!(game, grapple_beam_unkD26) as i32 & 0x8000 as i32) != 0i32 {
                 v0 = !(ram_word!(game, grapple_beam_unkD26) as i32 - 1 as i32) as u16;
             }
-            if *(&raw mut v0 as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as i32
-                - 1 as i32
-                & 0x8000 as i32
-                != 0
-            {
+            if *(&raw mut v0 as *mut u8).offset(1isize) as i32 - 1 as i32 & 0x8000 as i32 != 0 {
                 set_ram_word!(game.grapple_beam_unkD26 = 0 as u16);
             }
         } else {
@@ -843,11 +835,8 @@ pub unsafe fn GrappleBeamFunc_BD95(game: &mut Game) {
             }
             v1 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc1c2)) as *const u8 as *mut u8)
                 .offset(
-                    *((&raw mut game.g_ram as *mut u8).offset(0xcfc) as *mut u16 as *mut u8).offset(
-                        (::core::mem::size_of::<u16>())
-                            .wrapping_div(::core::mem::size_of::<u8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ) as isize,
+                    *((&raw mut game.g_ram as *mut u8).offset(0xcfc) as *mut u16 as *mut u8)
+                        .offset(1isize) as isize,
                 ) as u16;
             current_block = 13536709405535804910;
         }
@@ -856,11 +845,8 @@ pub unsafe fn GrappleBeamFunc_BD95(game: &mut Game) {
         set_ram_word!(game.samus_anim_frame_timer = 15 as u16);
         v1 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc1c2)) as *const u8 as *mut u8)
             .offset(
-                *((&raw mut game.g_ram as *mut u8).offset(0xcfc) as *mut u16 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) as isize,
+                *((&raw mut game.g_ram as *mut u8).offset(0xcfc) as *mut u16 as *mut u8)
+                    .offset(1isize) as isize,
             ) as u16;
         set_ram_word!(game.samus_anim_frame = v1);
     }
@@ -1711,11 +1697,7 @@ pub unsafe fn PropelSamusFromGrappleSwing(game: &mut Game) {
         v0 = (2u16).wrapping_mul(ram_word!(game, grapple_beam_unkD26));
         v2 = kSinCosTable8bit_Sext[(*((&raw mut game.g_ram as *mut u8).offset(0xcfa) as *mut u16
             as *mut u8)
-            .offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as i32
+            .offset(1isize) as i32
             + 64 as i32) as usize];
         if v2 >= 0i16 {
             SetHiLo(
@@ -1736,11 +1718,7 @@ pub unsafe fn PropelSamusFromGrappleSwing(game: &mut Game) {
         v0 = (-(2 as i32) * ram_word!(game, grapple_beam_unkD26) as i32) as u16;
         v1 = kSinCosTable8bit_Sext[(*((&raw mut game.g_ram as *mut u8).offset(0xcfa) as *mut u16
             as *mut u8)
-            .offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as i32
+            .offset(1isize) as i32
             + 64 as i32) as usize];
         if v1 < 0i16 {
             SetHiLo(

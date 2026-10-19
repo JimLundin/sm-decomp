@@ -1727,15 +1727,8 @@ pub unsafe fn FileSelectMenu_22_FileClearSelectSlot(game: &mut Game) {
     let mut v1: u8 = 0;
     DrawBorderAroundDataClearMode(game);
     DrawMenuSelectionMissile(game);
-    *(&raw mut v0 as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) = *((&raw mut game.g_ram as *mut u8).offset(0x8f) as *mut u16 as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    );
+    *(&raw mut v0 as *mut u8).offset(1isize) =
+        *((&raw mut game.g_ram as *mut u8).offset(0x8f) as *mut u16 as *mut u8).offset(1isize);
     if ram_word!(game, joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0i32 {
         QueueSfx1_Max6(0x37 as u16, game);
         if ram_word!(game, eproj_id[15]) != 3u16 {

@@ -1094,13 +1094,8 @@ pub unsafe fn ProcessCinematicBgObject_DrawToBgTilemap(
     }
 }
 pub unsafe fn CinematicGetTilemapOffsetForTile(mut r18: u16) -> u16 {
-    (2 as i32 * r18 as u8 as i32
-        + *(&raw mut r18 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) as i32
-            * 0x40 as i32) as u16
+    (2 as i32 * r18 as u8 as i32 + *(&raw mut r18 as *mut u8).offset(1isize) as i32 * 0x40 as i32)
+        as u16
 }
 pub unsafe fn ProcessCinematicBgObject_Unk1(k: u16, j: u16, r18: u16, game: &mut Game) {
     let mut r22: u16 = Mult0x80Add(r18);
@@ -1187,13 +1182,7 @@ pub unsafe fn ProcessCinematicBgObject_Unk2(k: u16, j: u16, r18: u16, game: &mut
     set_ram_word!(game.mode7_vram_write_queue_tail = v4);
 }
 pub unsafe fn Mult0x80Add(mut r18: u16) -> u16 {
-    (r18 as u8 as i32
-        + 0x80 as i32
-            * *(&raw mut r18 as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as i32) as u16
+    (r18 as u8 as i32 + 0x80 as i32 * *(&raw mut r18 as *mut u8).offset(1isize) as i32) as u16
 }
 pub unsafe fn Samus_CalcPos_Mode7(game: &mut Game) {
     let r34: u16 = (ram_word!(game, samus_x_pos)).wrapping_sub(ram_word!(game, reg_M7X));
@@ -1344,11 +1333,7 @@ pub unsafe fn ComposeFadingPalettes(game: &mut Game) {
         let v2: i32 = v0 as i32 >> 1 as i32;
         let mut r18: i32 = *(((&raw mut game.g_ram as *mut u8).offset(0x2000) as *mut u16)
             .offset((v2 + 512 as i32) as isize) as *mut u16 as *mut u8)
-            .offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as i32
+            .offset(1isize) as i32
             & 0x1f as i32;
         r18 |= ram_word!(game, tilemap_stuff[(v2 + 768i32)]) as i32 >> 3 as i32 & 0x3e0 as i32;
         let v3: u16 = (r18
@@ -1586,11 +1571,8 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
                 *((&raw mut game.g_ram as *mut u8).offset(0x53) as *mut u16 as *mut u8).offset(0) =
                     0 as u8;
                 WriteReg(OAMADDH as u16, 0x80 as u8, game);
-                *((&raw mut game.g_ram as *mut u8).offset(0x53) as *mut u16 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) = 0x80 as u8;
+                *((&raw mut game.g_ram as *mut u8).offset(0x53) as *mut u16 as *mut u8)
+                    .offset(1isize) = 0x80 as u8;
                 WriteReg(OAMDATA as u16, 0 as u8, game);
                 WriteReg(OAMDATA as u16, 0 as u8, game);
                 crate::rtl::write_register_and_mirror(BGMODE as u16, 1, 0x55, false, game);
@@ -2266,11 +2248,7 @@ pub unsafe fn SpawnTextGlowObject(j: u16, mut r18: u16, game: &mut Game) {
     set_ram_word!(game.eproj_pre_instr[(v2 + 2i32)] = 1 as u16);
     set_ram_word!(game.eproj_pre_instr[(v2 + 10i32)] = r18 as u8 as u16);
     *(((&raw mut game.g_ram as *mut u8).offset(0x1a27) as *mut u16 as *mut u8)
-        .offset(v1 as i32 as isize) as *mut u16) = *(&raw mut r18 as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) as u16;
+        .offset(v1 as i32 as isize) as *mut u16) = *(&raw mut r18 as *mut u8).offset(1isize) as u16;
     *(((&raw mut game.g_ram as *mut u8).offset(0x1a37) as *mut u16 as *mut u8)
         .offset(v1 as i32 as isize) as *mut u16) = 0 as u16;
 }
@@ -3536,11 +3514,7 @@ pub unsafe fn SetSomeStuffForSpriteObject_7(k: u16, game: &mut Game) {
     let v6: i32 = 2 as i32
         * *(((&raw mut game.g_ram as *mut u8).offset(0x1b7d) as *mut u16).offset(v1 as isize)
             as *mut u16 as *mut u8)
-            .offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as i32;
+            .offset(1isize) as i32;
     '_c2rust_label_0: {
         if (v6 + 1 as i32) < 82i32 {
         } else {
@@ -3883,11 +3857,7 @@ pub unsafe fn SetSomeStuffForSpriteObject_9(k: u16, game: &mut Game) {
         let v12: i32 = 2 as i32
             * *(((&raw mut game.g_ram as *mut u8).offset(0x1b7d) as *mut u16).offset(v1 as isize)
                 as *mut u16 as *mut u8)
-                .offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) as i32;
+                .offset(1isize) as i32;
         '_c2rust_label_0: {
             if (v12 + 1 as i32) < 124i32 {
             } else {
@@ -3912,11 +3882,7 @@ pub unsafe fn SetSomeStuffForSpriteObject_9(k: u16, game: &mut Game) {
         let v6: i32 = 2 as i32
             * *(((&raw mut game.g_ram as *mut u8).offset(0x1b7d) as *mut u16).offset(v1 as isize)
                 as *mut u16 as *mut u8)
-                .offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) as i32;
+                .offset(1isize) as i32;
         '_c2rust_label_1: {
             if (v6 + 1 as i32) < 138i32 {
             } else {
@@ -7942,11 +7908,7 @@ pub unsafe fn CinematicFunction_Intro_Func149(game: &mut Game) {
                         .offset((v4 + 1 as i32) as isize))
                     .wrapping_add((v5) as u16);
                 let mut v23: u16 = *(v3.offset(12) as *mut u16);
-                let mut r18: u16 = *(&raw mut v23 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) as i8 as u16;
+                let mut r18: u16 = *(&raw mut v23 as *mut u8).offset(1isize) as i8 as u16;
                 let mut r20: u16 = ((v23 as i32) << 8 as i32 & 0xff00 as i32) as u16;
                 v8 = *(v3.offset(4) as *mut u16) as i16;
                 let mut v9: bool = u16::overflowing_add(r20, v8 as u16).1;
@@ -7954,11 +7916,7 @@ pub unsafe fn CinematicFunction_Intro_Func149(game: &mut Game) {
                 let ref mut fresh166 = *(v3 as *mut u16).offset(1);
                 *fresh166 = (*fresh166 as i32 + (r18 as i32 + v9 as i32)) as u16;
                 let mut v24: u16 = *(v3.offset(14) as *mut u16);
-                r18 = *(&raw mut v24 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) as i8 as u16;
+                r18 = *(&raw mut v24 as *mut u8).offset(1isize) as i8 as u16;
                 r20 = ((v24 as i32) << 8 as i32 & 0xff00 as i32) as u16;
                 v12 = *(v3.offset(8) as *mut u16) as i16;
                 v9 = u16::overflowing_add(r20, v12 as u16).1;

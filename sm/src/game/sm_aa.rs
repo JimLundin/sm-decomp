@@ -1633,21 +1633,11 @@ pub unsafe fn Shaktool_DC07(k: u16, game: &mut Game) {
     } else {
         v2 = ((*E).shakt_var_A).wrapping_sub((*E).shakt_var_B);
     }
-    (*E).shakt_var_C = (4u16).wrapping_mul(
-        (*(&raw mut v2 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        )) as u16,
-    );
+    (*E).shakt_var_C = (4u16).wrapping_mul((*(&raw mut v2 as *mut u8).offset(1isize)) as u16);
 }
 pub unsafe fn Shaktool_DC2A(k: u16, game: &mut Game) {
     let E: *mut Enemy_Shaktool = Get_Shaktool(k as i32, game);
-    let v3: i32 = *(&raw mut (*E).shakt_var_B as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) as i32;
+    let v3: i32 = *(&raw mut (*E).shakt_var_B as *mut u8).offset(1isize) as i32;
     let v5: i32 = k as i32 >> 1 as i32;
     SetHiLo(
         &raw mut (*E).base.x_pos,
@@ -1719,20 +1709,10 @@ pub unsafe fn Shaktool_DCD7(k: u16, game: &mut Game) {
         + ((((*Get_Shaktool(k as i32 + 64 as i32, game)).shakt_var_B).wrapping_sub(r18)) as i32
             >> 1 as i32)) as i16;
     if ((*E).shakt_var_D as i32 & 0x8000 as i32) != 0i32 {
-        let ref mut fresh2 = *(&raw mut v2 as *mut u8).offset(
-            (::core::mem::size_of::<i16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        );
+        let ref mut fresh2 = *(&raw mut v2 as *mut u8).offset(1isize);
         *fresh2 = (*fresh2) ^ (0x80u8);
     }
-    let v3: u16 = (*(&raw mut v2 as *mut u8).offset(
-        (::core::mem::size_of::<i16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) as i32
-        + 8 as i32
-        & 0xe0 as i32) as u16;
+    let v3: u16 = (*(&raw mut v2 as *mut u8).offset(1isize) as i32 + 8 as i32 & 0xe0 as i32) as u16;
     *(&raw mut (*E).shakt_var_D as *mut u8).offset(0) = v3 as u8;
     (*E).base.current_instruction = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadd15))
         as *const u8 as *mut u16)
@@ -1816,11 +1796,7 @@ pub unsafe fn Shaktool_DD25(mut k: u16, game: &mut Game) {
                 Shaktool_DC6F(k, game);
                 (*E).shakt_var_D = 30720 as u16;
                 Shaktool_DB0E(k, ((*E).shakt_parameter_1) & (0xdfffu16), game);
-                (*E).shakt_var_D = ((*(&raw mut (*E).shakt_var_D as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) as i32)
+                (*E).shakt_var_D = ((*(&raw mut (*E).shakt_var_D as *mut u8).offset(1isize) as i32)
                     << 8 as i32) as u16;
             }
             let v2: u16 = ((*E).shakt_var_D).wrapping_add((*E).shakt_var_C);

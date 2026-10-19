@@ -1152,60 +1152,31 @@ pub unsafe fn Crocomire_Func_55(game: &mut Game) {
         *(&raw mut (*E).crocom_var_D as *mut u8).offset(0) =
             ((crocom_var_D) as u8).wrapping_add(0x80u8);
         v7 = (u8::overflowing_add(crocom_var_D as u8, 0x80 as u8).1 as i32
-            + *(&raw mut (*E).crocom_var_D as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as i32
+            + *(&raw mut (*E).crocom_var_D as *mut u8).offset(1isize) as i32
             + 3 as i32) as i8;
         if v7 as i32 - 48 as i32 & 0x80 as i32 == 0 {
             v7 = 48 as i8;
         }
-        *(&raw mut (*E).crocom_var_D as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) = v7 as u8;
+        *(&raw mut (*E).crocom_var_D as *mut u8).offset(1isize) = v7 as u8;
         let mut v8: bool =
             u8::overflowing_add(*(&raw mut (*E).crocom_var_E as *mut u8).offset(0), v7 as u8).1;
         let ref mut fresh13 = *(&raw mut (*E).crocom_var_E as *mut u8).offset(0);
         *fresh13 = (*fresh13).wrapping_add((v7) as u8);
-        v9 = ((v8) as i8).wrapping_add(
-            (*(&raw mut (*E).crocom_var_E as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            )) as i8,
-        );
+        v9 = ((v8) as i8)
+            .wrapping_add((*(&raw mut (*E).crocom_var_E as *mut u8).offset(1isize)) as i8);
         if v9 as i32 - 3 as i32 & 0x80 as i32 == 0 {
             v9 = 3 as i8;
         }
-        *(&raw mut (*E).crocom_var_E as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) = v9 as u8;
+        *(&raw mut (*E).crocom_var_E as *mut u8).offset(1isize) = v9 as u8;
         crocom_var_E = (*E).crocom_var_E as i8;
         v8 = u8::overflowing_add(
-            *(&raw mut (*E).crocom_var_F as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ),
+            *(&raw mut (*E).crocom_var_F as *mut u8).offset(1isize),
             crocom_var_E as u8,
         )
         .1;
-        let ref mut fresh14 = *(&raw mut (*E).crocom_var_F as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        );
+        let ref mut fresh14 = *(&raw mut (*E).crocom_var_F as *mut u8).offset(1isize);
         *fresh14 = (*fresh14).wrapping_add((crocom_var_E) as u8);
-        crocom_var_E_high = *(&raw mut (*E).crocom_var_E as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) as i8;
+        crocom_var_E_high = *(&raw mut (*E).crocom_var_E as *mut u8).offset(1isize) as i8;
         let v13: bool = v8;
         v8 = u8::overflowing_add(v8 as u8, crocom_var_E_high as u8).1;
         v12 = ((v13) as i8).wrapping_add(crocom_var_E_high);
@@ -1215,11 +1186,7 @@ pub unsafe fn Crocomire_Func_55(game: &mut Game) {
             != 0;
         let ref mut fresh15 = *(&raw mut (*E).base.y_pos as *mut u8).offset(0);
         *fresh15 = (*fresh15).wrapping_add((v12) as u8);
-        let ref mut fresh16 = *(&raw mut (*E).base.y_pos as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        );
+        let ref mut fresh16 = *(&raw mut (*E).base.y_pos as *mut u8).offset(1isize);
         *fresh16 = (*fresh16).wrapping_add((v8) as u8);
     } else {
         (*E).crocom_var_A = (*E).crocom_var_A.wrapping_add(1);
@@ -1285,59 +1252,25 @@ pub unsafe fn Crocomire_92D8(game: &mut Game) {
         }
         (*E0).crocom_var_D = v3 as u16;
         let crocom_var_E: u8 = (*E0).crocom_var_E as u8;
-        let mut v5: bool = crocom_var_E
-            < *(&raw mut (*E0).crocom_var_D as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            );
-        *(&raw mut (*E0).crocom_var_E as *mut u8).offset(0) = (crocom_var_E).wrapping_sub(
-            *(&raw mut (*E0).crocom_var_D as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ),
-        );
-        v6 = ((*(&raw mut (*E0).crocom_var_E as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        )) as i8)
+        let mut v5: bool = crocom_var_E < *(&raw mut (*E0).crocom_var_D as *mut u8).offset(1isize);
+        *(&raw mut (*E0).crocom_var_E as *mut u8).offset(0) =
+            (crocom_var_E).wrapping_sub(*(&raw mut (*E0).crocom_var_D as *mut u8).offset(1isize));
+        v6 = ((*(&raw mut (*E0).crocom_var_E as *mut u8).offset(1isize)) as i8)
             .wrapping_sub((v5) as i8);
         if v6 < 0i8 {
             *(&raw mut (*E0).crocom_var_E as *mut u8).offset(0) = -(1 as i32) as u8;
             v6 = 0 as i8;
         }
-        *(&raw mut (*E0).crocom_var_E as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) = v6 as u8;
-        let crocom_var_F_high: u8 = *(&raw mut (*E0).crocom_var_F as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        );
+        *(&raw mut (*E0).crocom_var_E as *mut u8).offset(1isize) = v6 as u8;
+        let crocom_var_F_high: u8 = *(&raw mut (*E0).crocom_var_F as *mut u8).offset(1isize);
         v5 = crocom_var_F_high < *(&raw mut (*E0).crocom_var_E as *mut u8).offset(0);
-        *(&raw mut (*E0).crocom_var_F as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) = (crocom_var_F_high).wrapping_sub(*(&raw mut (*E0).crocom_var_E as *mut u8).offset(0));
+        *(&raw mut (*E0).crocom_var_F as *mut u8).offset(1isize) =
+            (crocom_var_F_high).wrapping_sub(*(&raw mut (*E0).crocom_var_E as *mut u8).offset(0));
         let y_pos: u8 = (*E0).base.y_pos as u8;
-        let v9: u8 = ((v5) as u8).wrapping_add(
-            *(&raw mut (*E0).crocom_var_E as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ),
-        );
+        let v9: u8 =
+            ((v5) as u8).wrapping_add(*(&raw mut (*E0).crocom_var_E as *mut u8).offset(1isize));
         *(&raw mut (*E0).base.y_pos as *mut u8).offset(0) = (y_pos).wrapping_sub(v9);
-        let ref mut fresh7 = *(&raw mut (*E0).base.y_pos as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        );
+        let ref mut fresh7 = *(&raw mut (*E0).base.y_pos as *mut u8).offset(1isize);
         *fresh7 = (*fresh7).wrapping_sub((y_pos < v9) as u8);
     };
 }

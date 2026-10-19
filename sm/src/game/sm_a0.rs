@@ -3726,12 +3726,7 @@ pub unsafe fn WriteEnemyOams(game: &mut Game) {
                 if (x as i32 + 128 as i32 & 0xfe00 as i32) == 0i32
                     && (y as i32 + 128 as i32 & 0xfe00 as i32) == 0i32
                 {
-                    if *(&raw mut y as *mut u8).offset(
-                        (::core::mem::size_of::<u16>())
-                            .wrapping_div(::core::mem::size_of::<u8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ) != 0
-                    {
+                    if *(&raw mut y as *mut u8).offset(1isize) != 0 {
                         DrawSpritemapWithBaseTileOffscreen(
                             (*E).bank,
                             (*ext).spritemap,
@@ -3923,11 +3918,7 @@ pub unsafe fn EprojSamusCollDetect(game: &mut Game) {
                 .offset(0) as u16;
             let varE22: u16 = *(((&raw mut game.g_ram as *mut u8).offset(0x1bb3) as *mut u16)
                 .offset(i as isize) as *mut u16 as *mut u8)
-                .offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) as u16;
+                .offset(1isize) as u16;
             if (abs16((ram_word!(game, samus_x_pos)).wrapping_sub(ram_word!(game, eproj_x_pos[i])))
                 as i32
                 - ram_word!(game, samus_x_radius) as i32)
@@ -4580,11 +4571,8 @@ pub unsafe fn EnemyBombCollHandler(game: &mut Game) {
 }
 pub unsafe fn ProcessEnemyPowerBombInteraction(game: &mut Game) {
     set_ram_word!(game.enemy_processing_stage = 5 as u16);
-    let rx: u16 = *((&raw mut game.g_ram as *mut u8).offset(0xcea) as *mut u16 as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) as u16;
+    let rx: u16 = *((&raw mut game.g_ram as *mut u8).offset(0xcea) as *mut u16 as *mut u8)
+        .offset(1isize) as u16;
     let ry: u16 = (rx as i32 + (rx as i32 >> 1 as i32) >> 1 as i32) as u16;
     let mut i: i32 = 0x7c0 as i32;
     while rx != 0u16 && i >= 0i32 {
@@ -4801,11 +4789,7 @@ pub unsafe fn NormalEnemyShotAi(game: &mut Game) {
         let j: u16 = ((*(((&raw mut game.g_ram as *mut u8).offset(0xc18) as *mut u16)
             .offset(ram_word!(game, collision_detection_index) as isize)
             as *mut u16 as *mut u8)
-            .offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            )) as u16)
+            .offset(1isize)) as u16)
             & (0xfu16);
         (*gEnemySpawnData(ram_word!(game, cur_enemy_index) as i32, game)).cause_of_death = j;
         let mut death_anim: u16 = 2 as u16;

@@ -2482,12 +2482,7 @@ pub unsafe fn SpikeShootingPlant_Init(game: &mut Game) {
     let E: *mut Enemy_SpikeShootingPlant =
         Get_SpikeShootingPlant(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A2 as u16;
-    if *(&raw mut (*E).sspt_parameter_1 as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) != 0
-    {
+    if *(&raw mut (*E).sspt_parameter_1 as *mut u8).offset(1isize) != 0 {
         SpikeShootingPlant_5(game);
     } else {
         SpikeShootingPlant_7(game);
@@ -2506,13 +2501,8 @@ pub unsafe fn SpikeShootingPlant_Init(game: &mut Game) {
         *(game.g_rom.offset(crate::rtl::lorom_offset(0xa29f36)) as *const u8 as *mut u16)
             .offset(v2 as isize),
     );
-    let v3: i32 = 8 as i32
-        * *(&raw mut (*E).sspt_parameter_2 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) as i32
-        >> 1 as i32;
+    let v3: i32 =
+        8 as i32 * *(&raw mut (*E).sspt_parameter_2 as *mut u8).offset(1isize) as i32 >> 1 as i32;
     (*E).sspt_var_B = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa28187)) as *const u8
         as *mut u16)
         .offset(v3 as isize);
@@ -2570,12 +2560,7 @@ pub unsafe fn SpikeShootingPlant_4(game: &mut Game) {
         != 0
     {
         (*E).sspt_var_F = ((0xa2a01bi32) as u16);
-        if *(&raw mut (*E).sspt_parameter_1 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) != 0
-        {
+        if *(&raw mut (*E).sspt_parameter_1 as *mut u8).offset(1isize) != 0 {
             SpikeShootingPlant_6(game);
         } else {
             SpikeShootingPlant_8(game);
@@ -2659,11 +2644,7 @@ pub unsafe fn MaridiaSpikeyShell_Init(game: &mut Game) {
     (*E).mssl_var_C = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa28187)) as *const u8
         as *mut u16)
         .offset((v3 + 3 as i32) as isize);
-    let v4: i32 = *(&raw mut (*E).mssl_parameter_2 as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) as i32;
+    let v4: i32 = *(&raw mut (*E).mssl_parameter_2 as *mut u8).offset(1isize) as i32;
     (*E).mssl_var_02 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa2a3dd)) as *const u8
         as *mut u16)
         .offset(v4 as isize))
@@ -2672,14 +2653,9 @@ pub unsafe fn MaridiaSpikeyShell_Init(game: &mut Game) {
         *(game.g_rom.offset(crate::rtl::lorom_offset(0xa2a3dd)) as *const u8 as *mut u16)
             .offset(v4 as isize),
     );
-    (*E).mssl_var_00 =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa2a3ed)) as *const u8 as *mut u16).offset(
-            *(&raw mut (*E).mssl_parameter_1 as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as isize,
-        );
+    (*E).mssl_var_00 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa2a3ed)) as *const u8
+        as *mut u16)
+        .offset(*(&raw mut (*E).mssl_parameter_1 as *mut u8).offset(1isize) as isize);
     (*E).mssl_var_F = 0 as u16;
     if (*E).mssl_var_E == 2u16 {
         (*E).mssl_var_F = 16 as u16;
@@ -2750,13 +2726,7 @@ pub unsafe fn MaridiaSpikeyShell_6(game: &mut Game) {
         (*E).mssl_var_E = 2 as u16;
         (*E).mssl_var_00 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa2a3ed)) as *const u8
             as *mut u16)
-            .offset(
-                *(&raw mut (*E).mssl_parameter_1 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) as isize,
-            );
+            .offset(*(&raw mut (*E).mssl_parameter_1 as *mut u8).offset(1isize) as isize);
     }
 }
 pub unsafe fn MaridiaSpikeyShell_7(game: &mut Game) {
@@ -2766,13 +2736,10 @@ pub unsafe fn MaridiaSpikeyShell_7(game: &mut Game) {
     let fresh29 = (*E).mssl_var_F;
     (*E).mssl_var_F = (*E).mssl_var_F.wrapping_sub(1);
     if fresh29 == 1u16 {
-        (*E).mssl_var_E =
-            ((*((&raw mut game.g_ram as *mut u8).offset(0x5e5) as *mut u16 as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            )) as u16)
-                & (1u16);
+        (*E).mssl_var_E = ((*((&raw mut game.g_ram as *mut u8).offset(0x5e5) as *mut u16
+            as *mut u8)
+            .offset(1isize)) as u16)
+            & (1u16);
     }
 }
 pub unsafe fn MaridiaSpikeyShell_8(k: u16, game: &mut Game) {
@@ -3356,11 +3323,7 @@ pub unsafe fn Flies_1(k: u16, game: &mut Game) {
     (*E).base.x_pos = ((*E).base.x_pos as i32
         + (*((&raw const kSinCosTable8bit_Sext as *const i16).offset((v2 + 64 as i32) as isize)
             as *const i16 as *mut u8)
-            .offset(
-                (::core::mem::size_of::<i16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as i8 as i32
+            .offset(1isize) as i8 as i32
             + carry as i32)) as u16;
     carry = CarryAdd16(
         &raw mut (*E).base.y_subpos,
@@ -3372,11 +3335,7 @@ pub unsafe fn Flies_1(k: u16, game: &mut Game) {
     (*E).base.y_pos = ((*E).base.y_pos as i32
         + (*((&raw const kSinCosTable8bit_Sext as *const i16).offset(v2 as isize) as *const i16
             as *mut u8)
-            .offset(
-                (::core::mem::size_of::<i16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as i8 as i32
+            .offset(1isize) as i8 as i32
             + carry as i32)) as u16;
 }
 pub unsafe fn Flies_2(k: u16, game: &mut Game) -> u16 {
@@ -3386,22 +3345,14 @@ pub unsafe fn Flies_2(k: u16, game: &mut Game) -> u16 {
         ((*(&raw mut (*E).flies_var_B as *mut u8).offset(0) as i32) << 8 as i32) as u16,
     );
     (*E).base.x_pos = ((*E).base.x_pos as i32
-        + (*(&raw mut (*E).flies_var_B as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) as i8 as i32
-            + carry as i32)) as u16;
+        + (*(&raw mut (*E).flies_var_B as *mut u8).offset(1isize) as i8 as i32 + carry as i32))
+        as u16;
     carry = CarryAdd16(
         &raw mut (*E).base.y_subpos,
         ((*(&raw mut (*E).flies_var_C as *mut u8).offset(0) as i32) << 8 as i32) as u16,
     );
     let result: u16 = ((*E).base.y_pos as i32
-        + *(&raw mut (*E).flies_var_C as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) as i8 as i32
+        + *(&raw mut (*E).flies_var_C as *mut u8).offset(1isize) as i8 as i32
         + carry as i32) as u16;
     (*E).base.y_pos = result;
     result
@@ -4147,11 +4098,8 @@ pub unsafe fn NorfairLavajumpingEnemy_Func_2(k: u16, game: &mut Game) {
     let E: *mut Enemy_NorfairLavajumpingEnemy = Get_NorfairLavajumpingEnemy(k as i32, game);
     (*E).nley_var_C =
         *(game.g_rom.offset(crate::rtl::lorom_offset(0xa2be86)) as *const u8 as *mut u16).offset(
-            ((((*((&raw mut game.g_ram as *mut u8).offset(0x5e5) as *mut u16 as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            )) as u16)
+            ((((*((&raw mut game.g_ram as *mut u8).offset(0x5e5) as *mut u16 as *mut u8)
+                .offset(1isize)) as u16)
                 & (6u16)) as i32
                 >> 1 as i32) as isize,
         );
@@ -4165,12 +4113,8 @@ pub unsafe fn NorfairLavajumpingEnemy_Func_3(k: u16, game: &mut Game) {
         + ((*(&raw mut (*E).nley_var_C as *mut u8).offset(0) as i32) << 8 as i32);
     (*E).base.y_subpos = t as u16;
     (*E).base.y_pos = ((*E).base.y_pos as i32
-        + (*(&raw mut (*E).nley_var_C as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) as i8 as i32
-            + (t >> 16 as i32))) as u16;
+        + (*(&raw mut (*E).nley_var_C as *mut u8).offset(1isize) as i8 as i32 + (t >> 16 as i32)))
+        as u16;
     let v3: u16 = ((*E).nley_var_C).wrapping_add(56u16);
     (*E).nley_var_C = v3;
     if v3 >= 0xfc00u16 {
@@ -4184,12 +4128,8 @@ pub unsafe fn NorfairLavajumpingEnemy_Func_4(k: u16, game: &mut Game) {
         + ((*(&raw mut (*E).nley_var_C as *mut u8).offset(0) as i32) << 8 as i32);
     (*E).base.y_subpos = t as u16;
     (*E).base.y_pos = ((*E).base.y_pos as i32
-        + (*(&raw mut (*E).nley_var_C as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) as i8 as i32
-            + (t >> 16 as i32))) as u16;
+        + (*(&raw mut (*E).nley_var_C as *mut u8).offset(1isize) as i8 as i32 + (t >> 16 as i32)))
+        as u16;
     (*E).nley_var_C = ((*E).nley_var_C).wrapping_add(56u16);
     if (*E).nley_var_00 != 0 {
         (*E).nley_var_00 = 0 as u16;
@@ -4202,11 +4142,7 @@ pub unsafe fn NorfairLavajumpingEnemy_Func_5(k: u16, game: &mut Game) {
         + ((*(&raw mut (*E).nley_var_C as *mut u8).offset(0) as i32) << 8 as i32);
     (*E).base.y_subpos = t as u16;
     (*E).base.y_pos = ((*E).base.y_pos as i32
-        + *(&raw mut (*E).nley_var_C as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) as i8 as i32
+        + *(&raw mut (*E).nley_var_C as *mut u8).offset(1isize) as i8 as i32
         + (t >> 16 as i32)) as u16;
     if ((*E).base.y_pos as i32 & 0xf0 as i32) == 240i32 {
         (*E).base.x_pos = (*E).nley_var_D;
@@ -4858,11 +4794,7 @@ pub unsafe fn HirisingSlowfalling_Init(game: &mut Game) {
     (*E).hsg_var_A = ((0xa2e035i32) as u16);
     (*E).hsg_var_00 = (*E).base.x_pos;
     (*E).hsg_var_01 = (*E).base.y_pos;
-    let v2: i32 = *(&raw mut (*E).hsg_parameter_1 as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) as i32;
+    let v2: i32 = *(&raw mut (*E).hsg_parameter_1 as *mut u8).offset(1isize) as i32;
     (*E).hsg_var_E = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa2df5e)) as *const u8
         as *mut u16)
         .offset(v2 as isize);
@@ -4940,12 +4872,7 @@ pub unsafe fn HirisingSlowfalling_Func_5(game: &mut Game) {
 pub unsafe fn HirisingSlowfalling_Func_6(game: &mut Game) {
     let E: *mut Enemy_HirisingSlowfalling =
         Get_HirisingSlowfalling(ram_word!(game, cur_enemy_index) as i32, game);
-    let v2: i32 = 4 as i32
-        * *(&raw mut (*E).hsg_var_B as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) as i32;
+    let v2: i32 = 4 as i32 * *(&raw mut (*E).hsg_var_B as *mut u8).offset(1isize) as i32;
     AddToHiLo(
         &raw mut (*E).base.y_pos,
         &raw mut (*E).base.y_subpos,
@@ -4974,12 +4901,8 @@ pub unsafe fn HirisingSlowfalling_Func_7(game: &mut Game) {
         Get_HirisingSlowfalling(ram_word!(game, cur_enemy_index) as i32, game);
     let v1: *const u8 = RomPtr_A2(
         ((*E).hsg_var_E as i32
-            + 4 as i32
-                * *(&raw mut (*E).hsg_var_C as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) as i32) as u16,
+            + 4 as i32 * *(&raw mut (*E).hsg_var_C as *mut u8).offset(1isize) as i32)
+            as u16,
         game,
     );
     if *(v1 as *mut u16) == 0x8000u16 {
@@ -5673,32 +5596,22 @@ pub unsafe fn RisingFallingPlatform_Func_1(k: u16, game: &mut Game) {
     (*E).rfpm_var_E = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa28187)) as *const u8
         as *mut u16)
         .offset((v3 + 3 as i32) as isize);
-    let current_instruction_high: u16 = *(&raw mut (*E).base.current_instruction as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) as u16;
+    let current_instruction_high: u16 =
+        *(&raw mut (*E).base.current_instruction as *mut u8).offset(1isize) as u16;
     (*E).rfpm_var_01 = current_instruction_high;
     (*E).rfpm_var_20 = current_instruction_high;
     let extra_properties_low: u16 =
         *(&raw mut (*E).base.extra_properties as *mut u8).offset(0) as u16;
     (*E).rfpm_var_02 = extra_properties_low;
     (*E).rfpm_var_08 = (16u16).wrapping_mul(extra_properties_low);
-    let extra_properties_high: u16 = *(&raw mut (*E).base.extra_properties as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) as u16;
+    let extra_properties_high: u16 =
+        *(&raw mut (*E).base.extra_properties as *mut u8).offset(1isize) as u16;
     (*E).rfpm_var_03 = extra_properties_high;
     (*E).rfpm_var_09 = (16u16).wrapping_mul(extra_properties_high);
     let rfpm_parameter_1_low: u16 = *(&raw mut (*E).rfpm_parameter_1 as *mut u8).offset(0) as u16;
     (*E).rfpm_var_04 = rfpm_parameter_1_low;
     (*E).rfpm_var_07 = (2u16).wrapping_mul(rfpm_parameter_1_low);
-    (*E).rfpm_var_05 = *(&raw mut (*E).rfpm_parameter_1 as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) as u16;
+    (*E).rfpm_var_05 = *(&raw mut (*E).rfpm_parameter_1 as *mut u8).offset(1isize) as u16;
     let rfpm_parameter_2: u16 = (*E).rfpm_parameter_2;
     (*E).rfpm_var_06 = rfpm_parameter_2;
     (*E).rfpm_var_B = rfpm_parameter_2;
@@ -5949,32 +5862,22 @@ pub unsafe fn HorizontalShootableShutter_Func_1(k: u16, game: &mut Game) {
     (*E).rfpm_var_E = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa28187)) as *const u8
         as *mut u16)
         .offset((v3 + 3 as i32) as isize);
-    let current_instruction_high: u16 = *(&raw mut (*E).base.current_instruction as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) as u16;
+    let current_instruction_high: u16 =
+        *(&raw mut (*E).base.current_instruction as *mut u8).offset(1isize) as u16;
     (*E).rfpm_var_01 = current_instruction_high;
     (*E).rfpm_var_20 = (current_instruction_high) ^ (1u16);
     let extra_properties_low: u16 =
         *(&raw mut (*E).base.extra_properties as *mut u8).offset(0) as u16;
     (*E).rfpm_var_02 = extra_properties_low;
     (*E).rfpm_var_08 = (16u16).wrapping_mul(extra_properties_low);
-    let extra_properties_high: u16 = *(&raw mut (*E).base.extra_properties as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) as u16;
+    let extra_properties_high: u16 =
+        *(&raw mut (*E).base.extra_properties as *mut u8).offset(1isize) as u16;
     (*E).rfpm_var_03 = extra_properties_high;
     (*E).rfpm_var_09 = (16u16).wrapping_mul(extra_properties_high);
     let rfpm_parameter_1_low: u16 = *(&raw mut (*E).rfpm_parameter_1 as *mut u8).offset(0) as u16;
     (*E).rfpm_var_04 = rfpm_parameter_1_low;
     (*E).rfpm_var_07 = (2u16).wrapping_mul(rfpm_parameter_1_low);
-    (*E).rfpm_var_05 = *(&raw mut (*E).rfpm_parameter_1 as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) as u16;
+    (*E).rfpm_var_05 = *(&raw mut (*E).rfpm_parameter_1 as *mut u8).offset(1isize) as u16;
     let rfpm_parameter_2: u16 = (*E).rfpm_parameter_2;
     (*E).rfpm_var_06 = rfpm_parameter_2;
     (*E).rfpm_var_B = rfpm_parameter_2;

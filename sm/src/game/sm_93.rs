@@ -44,14 +44,7 @@ pub unsafe fn InitializeProjectile(k: u16, game: &mut Game) {
     let mut v3: u16 = 0;
     if (v2 as i32 & 0xf00 as i32) != 0i32 {
         v3 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9383f1)) as *const u8 as *mut u16)
-            .offset(
-                (*(&raw mut v2 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) as i32
-                    & 0xf as i32) as isize,
-            );
+            .offset((*(&raw mut v2 as *mut u8).offset(1isize) as i32 & 0xf as i32) as isize);
     } else if (v2 as i32 & 0x10 as i32) != 0i32 {
         v3 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9383d9)) as *const u8 as *mut u16)
             .offset((ram_word!(game, projectile_type[v1]) as i32 & 0xf as i32) as isize);
@@ -77,11 +70,7 @@ pub unsafe fn InitializeInstrForSuperMissile(v0: u16, game: &mut Game) {
         *(game.g_rom.offset(crate::rtl::lorom_offset(0x93842b)) as *const u8 as *mut u16).offset(
             (*(((&raw mut game.g_ram as *mut u8).offset(0xc18) as *mut u16).offset(v1 as isize)
                 as *mut u16 as *mut u8)
-                .offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) as i32
+                .offset(1isize) as i32
                 & 0xf as i32) as isize,
         ),
         game,
@@ -100,11 +89,7 @@ pub unsafe fn InitializeInstrForMissile(v0: u16, game: &mut Game) {
         *(game.g_rom.offset(crate::rtl::lorom_offset(0x9383f1)) as *const u8 as *mut u16).offset(
             (*(((&raw mut game.g_ram as *mut u8).offset(0xc18) as *mut u16).offset(v1 as isize)
                 as *mut u16 as *mut u8)
-                .offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) as i32
+                .offset(1isize) as i32
                 & 0xf as i32) as isize,
         ),
         game,
@@ -134,11 +119,7 @@ pub unsafe fn KillProjectileInner(k: u16, game: &mut Game) {
                     as *mut ProjectileDamagesAndInstrPtr))
                     .damages
                     as *mut u16)
-                    .offset(
-                        (::core::mem::size_of::<u32>())
-                            .wrapping_div(::core::mem::size_of::<u16>())
-                            .wrapping_sub(1_usize) as isize,
-                    )
+                    .offset(1isize,)
             );
             set_ram_word!(game.earthquake_type = 20 as u16);
             set_ram_word!(game.earthquake_timer = 30 as u16);
@@ -166,11 +147,7 @@ pub unsafe fn KillProjectileInner(k: u16, game: &mut Game) {
                 *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x938679)) as *const u8
                     as *mut ProjectileDamagesAndInstrPtr))
                     .damages as *mut u16)
-                    .offset(
-                        (::core::mem::size_of::<u32>())
-                            .wrapping_div(::core::mem::size_of::<u16>())
-                            .wrapping_sub(1_usize) as isize,
-                    )
+                    .offset(1isize,)
         );
         QueueSfx2_Max6(0xc as u16, game);
     }
@@ -184,11 +161,7 @@ pub unsafe fn InitializeBombExplosion(k: u16, game: &mut Game) {
             *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x938681)) as *const u8
                 as *mut ProjectileDamagesAndInstrPtr))
                 .damages as *mut u16)
-                .offset(
-                    (::core::mem::size_of::<u32>())
-                        .wrapping_div(::core::mem::size_of::<u16>())
-                        .wrapping_sub(1_usize) as isize,
-                )
+                .offset(1isize,)
     );
     set_ram_word!(game.projectile_bomb_instruction_timers[v1] = 1 as u16);
 }

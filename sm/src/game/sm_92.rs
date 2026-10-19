@@ -36,11 +36,8 @@ pub unsafe fn SetSamusTilesDefsForCurAnim(game: &mut Game) {
                     .offset((*AD).bottom_half_idx as isize) as i32)
                 as u16
         );
-        *((&raw mut game.g_ram as *mut u8).offset(0x71d) as *mut u16 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) = 1 as u8;
+        *((&raw mut game.g_ram as *mut u8).offset(0x71d) as *mut u16 as *mut u8).offset(1isize) =
+            1 as u8;
     }
 }
 pub unsafe fn PlaySamusFanfare(game: &mut Game) -> u8 {

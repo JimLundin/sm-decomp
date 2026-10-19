@@ -387,12 +387,7 @@ pub const fnGravitySuitPickup: u32 = 9557434;
 pub const fnPlmPreInstr_Empty4: u32 = 8686246;
 pub unsafe fn SetGoldenTorizoPalette(mut a: u16, game: &mut Game) {
     let mut v1: i16 = 0;
-    v1 = ((*(&raw mut a as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    )) as i16)
-        & (0x78i16);
+    v1 = ((*(&raw mut a as *mut u8).offset(1isize)) as i16) & (0x78i16);
     if (v1 as i32 & 0x40 as i32) != 0i32 {
         v1 = 56 as i16;
     }
@@ -3172,11 +3167,7 @@ pub unsafe fn PlmSetup_C794_GreyDoor(j: u16, game: &mut Game) -> u8 {
     set_ram_word!(
         game.plm_variable[v1] = ((((*(((&raw mut game.g_ram as *mut u8).offset(0x1dc7) as *mut u16)
             .offset(v1 as isize) as *mut u16 as *mut u8)
-            .offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            )) as u16)
+            .offset(1isize,)) as u16)
             & (0x7cu16)) as i32
             >> 1 as i32) as u16
     );

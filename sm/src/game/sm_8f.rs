@@ -472,13 +472,8 @@ pub unsafe fn RoomCode_GenRandomExplodes_Nonblank(game: &mut Game) {
     {
         let mut Random: u16 = NextRandom(game);
         let x: u16 = (ram_word!(game, layer1_x_pos)).wrapping_add((Random as u8) as u16);
-        let y: u16 = (ram_word!(game, layer1_y_pos)).wrapping_add(
-            (*(&raw mut Random as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            )) as u16,
-        );
+        let y: u16 = (ram_word!(game, layer1_y_pos))
+            .wrapping_add((*(&raw mut Random as *mut u8).offset(1isize)) as u16);
         let prod: u16 = Mult8x8(
             (y as i32 >> 4 as i32) as u8,
             ram_word!(game, room_width_in_blocks) as u8,
@@ -508,13 +503,8 @@ pub unsafe fn RoomCode_GenRandomExplodes_4th(game: &mut Game) {
         let mut Random: u16 = NextRandom(game);
         RoomCode_GenRandomExplodes(
             (ram_word!(game, layer1_x_pos)).wrapping_add((Random as u8) as u16),
-            (ram_word!(game, layer1_y_pos)).wrapping_add(
-                (*(&raw mut Random as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                )) as u16,
-            ),
+            (ram_word!(game, layer1_y_pos))
+                .wrapping_add((*(&raw mut Random as *mut u8).offset(1isize)) as u16),
             game,
         );
     }

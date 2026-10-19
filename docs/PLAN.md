@@ -72,6 +72,24 @@ all 76 source/DLL/fixture pins remain fixed. Independent descriptor/source
 review has no findings. Continue substantial repeated families; the broader
 readability and boot-to-credits goals remain open.
 
+Constant high-half indices (2026-10-20): all 352 repeated primitive
+size-of/divide/subtract index expressions become the identical 1isize. The
+325 u16/u8, 18 i16/u8 and nine u32/u16 ratios retain their value and type;
+329 ordinary expressions and 23 expressions inside the known RAM macros
+are selected through parsed syntax. Pointer accesses, field widths, RAM
+metadata, reads, writes and callback order remain unchanged.
+
+Net Rust lines -1436 and constant cast spellings -352. Raw-offset and
+unsafe-function counts are unchanged. The i32 cast-line count falls 45
+through formatting; all 31372 actual i32 casts remain. Compiler const
+equality checks for all three type pairs and formatting/check pass.
+Independent complete source/composition review has no findings. Combined
+verification with typed integer literals on 58d51ace passes normal release
+(28.47s), formatting/check, progress and full any% 129712/0
+(112.65s), native exit 0. This focused index commit shares that
+composed run; no index-only replay is claimed. Final committed source matches
+the frozen composition. Continue substantial shared implementations.
+
 Named RAM word updates (2026-10-20): one caller-side macro shares all 882
 eligible read/modify/write sequences across 243 named fields and 29 callers.
 It captures the raw destination once, reads the old word before the RHS,

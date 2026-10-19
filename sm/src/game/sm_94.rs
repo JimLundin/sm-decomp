@@ -1286,11 +1286,7 @@ unsafe fn BlockFunc_9C73(v0: u16, game: &mut Game) -> u16 {
         kBlockFunc_9C73_Tab1[(2 as i32
             * (*(((&raw mut game.g_ram as *mut u8).offset(0xc18) as *mut u16).offset(v1 as isize)
                 as *mut u16 as *mut u8)
-                .offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) as i32
+                .offset(1isize) as i32
                 & 0xf as i32)
             + 1 as i32) as usize] as u16
     } else {
@@ -1306,22 +1302,14 @@ pub unsafe fn BombOrPowerBomb_Func1(v0: u16, game: &mut Game) {
     v2 = ram_word!(game, projectile_x_pos[v1]) as i16;
     if v2 >= 0i16 {
         let r26: u16 = ram_word!(game, projectile_x_pos[v1]);
-        if ((*(&raw mut v2 as *mut u8).offset(
-            (::core::mem::size_of::<i16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        )) as i16)
+        if ((*(&raw mut v2 as *mut u8).offset(1isize)) as i16)
             .wrapping_sub((ram_word!(game, room_width_in_scrolls)) as i16)
             < 0i16
         {
             v3 = ram_word!(game, projectile_y_pos[v1]) as i16;
             if v3 >= 0i16 {
                 let R28: u16 = ram_word!(game, projectile_y_pos[v1]);
-                if ((*(&raw mut v3 as *mut u8).offset(
-                    (::core::mem::size_of::<i16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                )) as i16)
+                if ((*(&raw mut v3 as *mut u8).offset(1isize)) as i16)
                     .wrapping_sub((ram_word!(game, room_height_in_scrolls)) as i16)
                     < 0i16
                 {
@@ -1509,25 +1497,15 @@ unsafe fn BlockFunc_A06A(k: u16, game: &mut Game) {
         }
     } else {
         let r18: u16 = *((&raw mut game.g_ram as *mut u8).offset(0xcea) as *mut u16 as *mut u8)
-            .offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as u16;
+            .offset(1isize) as u16;
         let r20: u16 = (((3u16).wrapping_mul(
-            (*((&raw mut game.g_ram as *mut u8).offset(0xcea) as *mut u16 as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            )) as u16,
+            (*((&raw mut game.g_ram as *mut u8).offset(0xcea) as *mut u16 as *mut u8)
+                .offset(1isize)) as u16,
         )) as i32
             >> 2 as i32) as u16;
         v3 = ((ram_word!(game, power_bomb_explosion_x_pos)) as i16).wrapping_sub(
-            (*((&raw mut game.g_ram as *mut u8).offset(0xcea) as *mut u16 as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            )) as i16,
+            (*((&raw mut game.g_ram as *mut u8).offset(0xcea) as *mut u16 as *mut u8)
+                .offset(1isize)) as i16,
         );
         if v3 < 0i16 {
             v3 = 0 as i16;
@@ -1572,13 +1550,8 @@ unsafe fn BlockFunc_A06A(k: u16, game: &mut Game) {
 }
 unsafe fn BlockFunc_A0F4(mut a: u16, r22: u16, r24: u16, r26: u16, r28: u16, game: &mut Game) {
     let RegWord: u16 = Mult8x8(a as u8, ram_word!(game, room_width_in_blocks) as u8);
-    let mut v3: u16 = (2 as i32
-        * (RegWord as i32
-            + *(&raw mut a as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as i32)) as u16;
+    let mut v3: u16 =
+        (2 as i32 * (RegWord as i32 + *(&raw mut a as *mut u8).offset(1isize) as i32)) as u16;
     let mut v4: i16 = ((r24) as i16).wrapping_sub((r22) as i16);
     let mut ci: CollInfo = CollInfo {
         ci_r18_r20: 0,
@@ -1601,13 +1574,8 @@ unsafe fn BlockFunc_A0F4(mut a: u16, r22: u16, r24: u16, r26: u16, r28: u16, gam
 }
 unsafe fn BlockFunc_A11A(mut a: u16, r24: u16, r26: u16, r28: u16, game: &mut Game) {
     let RegWord: u16 = Mult8x8(a as u8, ram_word!(game, room_width_in_blocks) as u8);
-    let mut v3: u16 = (2 as i32
-        * (RegWord as i32
-            + *(&raw mut a as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as i32)) as u16;
+    let mut v3: u16 =
+        (2 as i32 * (RegWord as i32 + *(&raw mut a as *mut u8).offset(1isize) as i32)) as u16;
     let mut v4: i16 = ((r28) as i16).wrapping_sub((r26) as i16);
     let mut ci: CollInfo = CollInfo {
         ci_r18_r20: 0,
@@ -1753,11 +1721,7 @@ pub unsafe fn BlockCollNoWaveBeamHoriz(k: u16, game: &mut Game) -> u8 {
     let mut R28: u16 = v7;
     let mut v8: u16 = (2 as i32 * (prod as i32 + (v7 as i32 >> 4 as i32))) as u16;
     if some_pos as i32 - 16 as i32 & 0x8000 as i32 == 0
-        || ((*(&raw mut R28 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        )) as i16)
+        || ((*(&raw mut R28 as *mut u8).offset(1isize)) as i16)
             .wrapping_sub((ram_word!(game, room_width_in_scrolls)) as i16)
             >= 0i16
     {
@@ -1819,11 +1783,7 @@ pub unsafe fn BlockCollNoWaveBeamVert(k: u16, game: &mut Game) -> u8 {
         ) as i32
             + v8 as i32)) as u16;
     if some_pos as i32 - 16 as i32 & 0x8000 as i32 == 0
-        || ((*(&raw mut R28 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        )) as i16)
+        || ((*(&raw mut R28 as *mut u8).offset(1isize)) as i16)
             .wrapping_sub((ram_word!(game, room_height_in_scrolls)) as i16)
             >= 0i16
     {
@@ -1897,18 +1857,10 @@ pub unsafe fn BlockCollWaveBeamHoriz(k: u16, game: &mut Game) -> u8 {
     };
     let v9: u8 = *(((&raw mut game.g_ram as *mut u8).offset(0xb78) as *mut u16).offset(v1 as isize)
         as *mut u16 as *mut u8)
-        .offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        );
+        .offset(1isize);
     if v9 as i32 & 0x80 as i32 == 0
         && ((v9) as i16).wrapping_sub((ram_word!(game, room_height_in_scrolls)) as i16) < 0i16
-        && ((*(&raw mut R28 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        )) as i16)
+        && ((*(&raw mut R28 as *mut u8).offset(1isize)) as i16)
             .wrapping_sub((ram_word!(game, room_width_in_scrolls)) as i16)
             < 0i16
     {
@@ -1959,11 +1911,7 @@ pub unsafe fn BlockCollWaveBeamVert(k: u16, game: &mut Game) -> u8 {
     let v10: u8 =
         *(((&raw mut game.g_ram as *mut u8).offset(0xb64) as *mut u16).offset(v1 as isize)
             as *mut u16 as *mut u8)
-            .offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            );
+            .offset(1isize);
     let mut ci: CollInfo = CollInfo {
         ci_r18_r20: amt,
         ci_r24: r24,
@@ -1976,11 +1924,7 @@ pub unsafe fn BlockCollWaveBeamVert(k: u16, game: &mut Game) -> u8 {
     };
     if v10 as i32 & 0x80 as i32 == 0
         && ((v10) as i16).wrapping_sub((ram_word!(game, room_width_in_scrolls)) as i16) < 0i16
-        && ((*(&raw mut R28 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        )) as i16)
+        && ((*(&raw mut R28 as *mut u8).offset(1isize)) as i16)
             .wrapping_sub((ram_word!(game, room_height_in_scrolls)) as i16)
             < 0i16
     {
@@ -2025,11 +1969,7 @@ pub unsafe fn BlockCollMissileHoriz(k: u16, game: &mut Game) -> u8 {
         ci_r38: 0 as u16,
         ci_r40: 0,
     };
-    if ((*(&raw mut r24 as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    )) as i16)
+    if ((*(&raw mut r24 as *mut u8).offset(1isize)) as i16)
         .wrapping_sub((ram_word!(game, room_width_in_scrolls)) as i16)
         >= 0i16
         || BlockShotReactHoriz(&raw mut ci, v7, game) == 0
@@ -2067,11 +2007,7 @@ pub unsafe fn BlockCollMissileVert(k: u16, game: &mut Game) -> u8 {
         ci_r38: 0 as u16,
         ci_r40: 0,
     };
-    if ((*(&raw mut r24 as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    )) as i16)
+    if ((*(&raw mut r24 as *mut u8).offset(1isize)) as i16)
         .wrapping_sub((ram_word!(game, room_height_in_scrolls)) as i16)
         >= 0i16
         || BlockShotReactVert(&raw mut ci, v8, game) == 0
@@ -3055,11 +2991,8 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> u8 {
             if current_block == 16784897620381762466 {
             } else {
                 *(&raw mut v4 as *mut u8).offset(0) = 0 as u8;
-                *(&raw mut v4 as *mut u8).offset(
-                    (::core::mem::size_of::<i16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) = (grapple_beam_tmpD86 as i32 >> 1 as i32) as u8;
+                *(&raw mut v4 as *mut u8).offset(1isize) =
+                    (grapple_beam_tmpD86 as i32 >> 1 as i32) as u8;
                 set_ram_word!(game.grapple_beam_end_angle16 = ((v4) as u16) | (0x80u16));
                 set_ram_word!(game.grapple_beam_end_angles_mirror = ((v4) as u16) | (0x80u16));
                 if ram_word!(game, g_word_7E0D98) != 6u16 && ram_word!(game, g_word_7E0D98) != 5u16
@@ -3134,11 +3067,8 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> u8 {
                 let grapple_beam_tmpD82_0: u16 = (v5 as i32 - 2 as i32 & 0x1ff as i32) as u16;
                 if BlockFunc_ABE6(grapple_beam_tmpD82_0, game) as i32 & 1 as i32 != 0 {
                     *(&raw mut v7 as *mut u8).offset(0) = 0 as u8;
-                    *(&raw mut v7 as *mut u8).offset(
-                        (::core::mem::size_of::<i16>())
-                            .wrapping_div(::core::mem::size_of::<u8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ) = (grapple_beam_tmpD86 as i32 >> 1 as i32) as u8;
+                    *(&raw mut v7 as *mut u8).offset(1isize) =
+                        (grapple_beam_tmpD86 as i32 >> 1 as i32) as u8;
                     set_ram_word!(game.grapple_beam_end_angle16 = ((v7) as u16) | (0x80u16));
                     set_ram_word!(game.grapple_beam_end_angles_mirror = ((v7) as u16) | (0x80u16));
                     if (ram_word!(game, g_word_7E0D98) == 6u16

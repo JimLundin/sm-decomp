@@ -1706,11 +1706,7 @@ unsafe fn Eproj_Init_0x8aaf(j: u16, game: &mut Game) {
             .offset(
                 ((*(((&raw mut game.g_ram as *mut u8).offset(0x1adb) as *mut u16)
                     .offset(v3 as isize) as *mut u16 as *mut u8)
-                    .offset(
-                        (::core::mem::size_of::<u16>())
-                            .wrapping_div(::core::mem::size_of::<u8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ) as i32
+                    .offset(1isize,) as i32
                     & 6 as i32) as u16 as i32
                     >> 1 as i32) as isize,
             )
@@ -1804,23 +1800,13 @@ unsafe fn EprojInit_DraygonsWallTurretProjs(j: u16, game: &mut Game) {
     set_ram_word!(game.eproj_pre_instr[v1] = (0x868d54 as i32 & 0xffff as i32) as u16);
 }
 pub unsafe fn EprojPowerBombCollision(k: u16, game: &mut Game) {
-    let r18: u16 = *((&raw mut game.g_ram as *mut u8).offset(0xcea) as *mut u16 as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) as u16;
-    if *((&raw mut game.g_ram as *mut u8).offset(0xcea) as *mut u16 as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) != 0
+    let r18: u16 = *((&raw mut game.g_ram as *mut u8).offset(0xcea) as *mut u16 as *mut u8)
+        .offset(1isize) as u16;
+    if *((&raw mut game.g_ram as *mut u8).offset(0xcea) as *mut u16 as *mut u8).offset(1isize) != 0
     {
         let r20: u16 = ((r18 as i32
-            + (*((&raw mut game.g_ram as *mut u8).offset(0xcea) as *mut u16 as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as i32
+            + (*((&raw mut game.g_ram as *mut u8).offset(0xcea) as *mut u16 as *mut u8)
+                .offset(1isize) as i32
                 & 1 as i32)
             + (ram_word!(game, power_bomb_explosion_radius) as i32 >> 9 as i32))
             as u16 as i32
@@ -3121,11 +3107,7 @@ pub unsafe fn EprojPreInstr_PirateClawThrownLeft(k: u16, game: &mut Game) {
         update_ram_word!(game.eproj_x_pos[v1], |fresh118| (fresh118 as i32
             - *(((&raw mut game.g_ram as *mut u8).offset(0x1aff) as *mut u16).offset(v1 as isize)
                 as *mut u16 as *mut u8)
-                .offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) as i32)
+                .offset(1isize,) as i32)
             as u16);
         let v2: u16 = (ram_word!(game, eproj_E[v1]) as i32 - 32 as i32) as u16;
         set_ram_word!(game.eproj_E[v1] = v2);
@@ -3136,11 +3118,7 @@ pub unsafe fn EprojPreInstr_PirateClawThrownLeft(k: u16, game: &mut Game) {
         update_ram_word!(game.eproj_x_pos[v1], |fresh119| (fresh119 as i32
             + *(((&raw mut game.g_ram as *mut u8).offset(0x1aff) as *mut u16).offset(v1 as isize)
                 as *mut u16 as *mut u8)
-                .offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) as i32)
+                .offset(1isize,) as i32)
             as u16);
         update_ram_word!(game.eproj_E[v1], |fresh120| (fresh120 as i32 + 32 as i32)
             as u16);
@@ -3156,11 +3134,7 @@ pub unsafe fn EprojPreInstr_PirateClawThrownRight(k: u16, game: &mut Game) {
         update_ram_word!(game.eproj_x_pos[v1], |fresh114| (fresh114 as i32
             + *(((&raw mut game.g_ram as *mut u8).offset(0x1aff) as *mut u16).offset(v1 as isize)
                 as *mut u16 as *mut u8)
-                .offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) as i32)
+                .offset(1isize,) as i32)
             as u16);
         let v2: u16 = (ram_word!(game, eproj_E[v1]) as i32 - 32 as i32) as u16;
         set_ram_word!(game.eproj_E[v1] = v2);
@@ -3171,11 +3145,7 @@ pub unsafe fn EprojPreInstr_PirateClawThrownRight(k: u16, game: &mut Game) {
         update_ram_word!(game.eproj_x_pos[v1], |fresh115| (fresh115 as i32
             - *(((&raw mut game.g_ram as *mut u8).offset(0x1aff) as *mut u16).offset(v1 as isize)
                 as *mut u16 as *mut u8)
-                .offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) as i32)
+                .offset(1isize,) as i32)
             as u16);
         update_ram_word!(game.eproj_E[v1], |fresh116| (fresh116 as i32 + 32 as i32)
             as u16);
@@ -5314,11 +5284,7 @@ unsafe fn Eproj_GetCollDetectRect(k: u16, game: &mut Game) -> Rect16U {
             .offset(0) as u16,
         h: *(((&raw mut game.g_ram as *mut u8).offset(0x1bb3) as *mut u16).offset(v1 as isize)
             as *mut u16 as *mut u8)
-            .offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as u16,
+            .offset(1isize) as u16,
     };
     rect
 }
@@ -5379,11 +5345,7 @@ pub unsafe fn MotherBrainBomb_Bomb_CollDetect_DoubleRet(k: u16, game: &mut Game)
             .offset(0) as u16,
         h: *(((&raw mut game.g_ram as *mut u8).offset(0x1bb3) as *mut u16).offset(v1 as isize)
             as *mut u16 as *mut u8)
-            .offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as u16,
+            .offset(1isize) as u16,
     };
     if Eproj_CheckForBombCollisionWithRect(rect, game) == 0 {
         return 0 as u8;
@@ -6964,11 +6926,8 @@ unsafe fn EprojInit_EyeDoorSmoke(j: u16, game: &mut Game) {
             .offset(ram_word!(game, cinematic_var8) as u8 as isize)
     );
     let v2: i32 = 8 as i32
-        * *((&raw mut game.g_ram as *mut u8).offset(0x1993) as *mut u16 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) as i32
+        * *((&raw mut game.g_ram as *mut u8).offset(0x1993) as *mut u16 as *mut u8).offset(1isize)
+            as i32
         >> 1 as i32;
     let x: u16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x86e47e)) as *const u8 as *mut u16)
         .offset((v2 + 2 as i32) as isize) as i32
@@ -7043,11 +7002,7 @@ pub unsafe fn EprojPreInstr_E605(k: u16, game: &mut Game) {
         wrapping_add(
             (*(((&raw mut game.g_ram as *mut u8).offset(0x1adb) as *mut u16).offset(v1 as isize)
                 as *mut u16 as *mut u8)
-                .offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) as i8) as u16
+                .offset(1isize,) as i8) as u16
         )
     );
 }

@@ -1893,45 +1893,28 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionWhite(k: u16, game: &
     let v1: u16 = 96 as u16;
     let mut v2: u16 = 0;
     let kk: i32 = Mult8x8(
-        *((&raw mut game.g_ram as *mut u8).offset(0xcec) as *mut u16 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ),
+        *((&raw mut game.g_ram as *mut u8).offset(0xcec) as *mut u16 as *mut u8).offset(1isize),
         *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a286)) as *const u8 as *mut u8).offset(0),
     ) as i32
         >> 8 as i32;
-    if *((&raw mut game.g_ram as *mut u8).offset(0xce6) as *mut u16 as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) != 0
+    if *((&raw mut game.g_ram as *mut u8).offset(0xce6) as *mut u16 as *mut u8).offset(1isize) != 0
     {
-        if *((&raw mut game.g_ram as *mut u8).offset(0xce6) as *mut u16 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) == 1u8
+        if *((&raw mut game.g_ram as *mut u8).offset(0xce6) as *mut u16 as *mut u8).offset(1isize)
+            == 1u8
         {
             v2 = CalculatePowerBombHdmaScaled_OnScreen(
                 kk as u16,
                 v1,
-                *((&raw mut game.g_ram as *mut u8).offset(0xcec) as *mut u16 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ),
+                *((&raw mut game.g_ram as *mut u8).offset(0xcec) as *mut u16 as *mut u8)
+                    .offset(1isize),
                 game,
             );
         } else {
             v2 = CalculatePowerBombHdmaScaled_RightOfScreen(
                 kk as u16,
                 v1,
-                *((&raw mut game.g_ram as *mut u8).offset(0xcec) as *mut u16 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ),
+                *((&raw mut game.g_ram as *mut u8).offset(0xcec) as *mut u16 as *mut u8)
+                    .offset(1isize),
                 game,
             );
         }
@@ -1939,11 +1922,7 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionWhite(k: u16, game: &
         v2 = CalculatePowerBombHdmaScaled_LeftOfScreen(
             kk as u16,
             v1,
-            *((&raw mut game.g_ram as *mut u8).offset(0xcec) as *mut u16 as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ),
+            *((&raw mut game.g_ram as *mut u8).offset(0xcec) as *mut u16 as *mut u8).offset(1isize),
             game,
         );
     }
@@ -1954,11 +1933,7 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionWhite(k: u16, game: &
             .offset(i as isize) = v2 as u8;
         *(&raw mut game.g_ram as *mut u8)
             .offset(0xc506)
-            .offset(i as isize) = *(&raw mut v2 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        );
+            .offset(i as isize) = *(&raw mut v2 as *mut u8).offset(1isize);
         i = i.wrapping_sub(1);
         if ((i as i32 & 0x80 as i32) != 0i32) {
             break;
@@ -1974,11 +1949,8 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionWhite(k: u16, game: &
             .offset(v3 as isize) = 0 as u8;
         v3 = v3.wrapping_add(1);
     }
-    let t: i32 = *((&raw mut game.g_ram as *mut u8).offset(0xcec) as *mut u16 as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) as i32
+    let t: i32 = *((&raw mut game.g_ram as *mut u8).offset(0xcec) as *mut u16 as *mut u8)
+        .offset(1isize) as i32
         >> 3 as i32
         & 0xf as i32;
     *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0) =
@@ -2416,11 +2388,8 @@ pub unsafe fn HdmaobjPreInstr_CrystalFlash_Stage1_Explosion(k: u16, game: &mut G
             .offset(v3 as isize) = 0 as u8;
         v3 = v3.wrapping_add(1);
     }
-    let pos: i32 = (*((&raw mut game.g_ram as *mut u8).offset(0xcea) as *mut u16 as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) as i32
+    let pos: i32 = (*((&raw mut game.g_ram as *mut u8).offset(0xcea) as *mut u16 as *mut u8)
+        .offset(1isize) as i32
         >> 3 as i32)
         * 3 as i32;
     *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0) =
@@ -3174,11 +3143,7 @@ pub unsafe fn FxHandleTide(game: &mut Game) {
         set_ram_word!(game.fx_y_suboffset = 0 as u16);
         set_ram_word!(game.fx_y_offset = 0 as u16);
         let v0: i32 = *((&raw mut game.g_ram as *mut u8).offset(0x1974) as *mut u16 as *mut u8)
-            .offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as i32;
+            .offset(1isize) as i32;
         let v1: u16 = (8u16).wrapping_mul((kSinCosTable8bit_Sext[v0 as usize]) as u16);
         if (kSinCosTable8bit_Sext[v0 as usize] as i32 & 0x1000 as i32) != 0i32 {
             update_ram_word!(game.fx_y_offset, wrapping_sub(1));
@@ -3199,11 +3164,7 @@ pub unsafe fn FxHandleTide(game: &mut Game) {
         set_ram_word!(game.fx_y_suboffset = 0 as u16);
         set_ram_word!(game.fx_y_offset = 0 as u16);
         let v3: i32 = *((&raw mut game.g_ram as *mut u8).offset(0x1974) as *mut u16 as *mut u8)
-            .offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as i32;
+            .offset(1isize) as i32;
         let v4: u16 = (32u16).wrapping_mul((kSinCosTable8bit_Sext[v3 as usize]) as u16);
         if (kSinCosTable8bit_Sext[v3 as usize] as i32 & 0x400 as i32) != 0i32 {
             update_ram_word!(game.fx_y_offset, wrapping_sub(1));
@@ -3588,11 +3549,7 @@ pub unsafe fn HdmaobjPreInstr_WaterBG3XScroll(k: u16, game: &mut Game) {
     let r20: u16 = (ram_word!(game, layer1_x_pos)).wrapping_add(
         (*(((&raw mut game.g_ram as *mut u8).offset(0x192c) as *mut u16).offset(v5 as isize)
             as *mut u16 as *mut u8)
-            .offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as i8) as u16,
+            .offset(1isize) as i8) as u16,
     );
     let ref mut fresh98 =
         *((&raw mut game.g_ram as *mut u8).offset(0x1920) as *mut u16).offset(v5 as isize);
@@ -3789,11 +3746,7 @@ pub unsafe fn HdmaobjPreInstr_RainBg3Scroll(k: u16, game: &mut Game) {
                 - ram_word!(game, layer1_y_pos) as i32
                 + *(((&raw mut game.g_ram as *mut u8).offset(0x1914) as *mut u16)
                     .offset(v1 as isize) as *mut u16 as *mut u8)
-                    .offset(
-                        (::core::mem::size_of::<u16>())
-                            .wrapping_div(::core::mem::size_of::<u8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ) as i8 as i32) as u16
+                    .offset(1isize,) as i8 as i32) as u16
         );
         update_ram_word!(game.hdma_object_A[v1], wrapping_sub(1536u16));
         set_ram_word!(game.hdma_object_E[v1] = ram_word!(game, layer1_y_pos));
@@ -3802,11 +3755,7 @@ pub unsafe fn HdmaobjPreInstr_RainBg3Scroll(k: u16, game: &mut Game) {
                 - ram_word!(game, layer1_x_pos) as i32
                 + *(((&raw mut game.g_ram as *mut u8).offset(0x1920) as *mut u16)
                     .offset(v1 as isize) as *mut u16 as *mut u8)
-                    .offset(
-                        (::core::mem::size_of::<u16>())
-                            .wrapping_div(::core::mem::size_of::<u8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ) as i8 as i32) as u16
+                    .offset(1isize,) as i8 as i32) as u16
         );
         update_ram_word!(
             game.hdma_object_B[v1],
@@ -3836,11 +3785,7 @@ pub unsafe fn HdmaobjPreInstr_SporesBG3Xscroll(k: u16, game: &mut Game) {
             game.bg3_ypos = (ram_word!(game, layer1_y_pos)).wrapping_add(
                 (*(((&raw mut game.g_ram as *mut u8).offset(0x192c) as *mut u16).offset(v1 as isize)
                     as *mut u16 as *mut u8)
-                    .offset(
-                        (::core::mem::size_of::<u16>())
-                            .wrapping_div(::core::mem::size_of::<u8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ) as i8) as u16,
+                    .offset(1isize,) as i8) as u16,
             )
         );
         let v3: u16 = (ram_word!(game, hdma_object_C[v1])).wrapping_sub(64u16);
@@ -3849,11 +3794,7 @@ pub unsafe fn HdmaobjPreInstr_SporesBG3Xscroll(k: u16, game: &mut Game) {
             game.bg3_xpos = (ram_word!(game, layer1_x_pos)).wrapping_add(
                 (*(((&raw mut game.g_ram as *mut u8).offset(0x1938) as *mut u16).offset(v1 as isize)
                     as *mut u16 as *mut u8)
-                    .offset(
-                        (::core::mem::size_of::<u16>())
-                            .wrapping_div(::core::mem::size_of::<u8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ) as i8) as u16,
+                    .offset(1isize,) as i8) as u16,
             )
         );
         set_ram_word!(game.hdma_object_D[v1] = ram_word!(game, hdma_object_D[v1]));
@@ -3878,11 +3819,7 @@ pub unsafe fn HdmaobjPreInstr_FogBG3Scroll(k: u16, game: &mut Game) {
             game.bg3_ypos = (ram_word!(game, layer1_y_pos)).wrapping_add(
                 (*(((&raw mut game.g_ram as *mut u8).offset(0x1914) as *mut u16).offset(v1 as isize)
                     as *mut u16 as *mut u8)
-                    .offset(
-                        (::core::mem::size_of::<u16>())
-                            .wrapping_div(::core::mem::size_of::<u8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ) as i8) as u16,
+                    .offset(1isize,) as i8) as u16,
             )
         );
         update_ram_word!(game.hdma_object_A[v1], wrapping_sub(64u16));
@@ -3890,11 +3827,7 @@ pub unsafe fn HdmaobjPreInstr_FogBG3Scroll(k: u16, game: &mut Game) {
             game.bg3_xpos = (ram_word!(game, layer1_x_pos)).wrapping_add(
                 (*(((&raw mut game.g_ram as *mut u8).offset(0x1920) as *mut u16).offset(v1 as isize)
                     as *mut u16 as *mut u8)
-                    .offset(
-                        (::core::mem::size_of::<u16>())
-                            .wrapping_div(::core::mem::size_of::<u8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ) as i8) as u16,
+                    .offset(1isize,) as i8) as u16,
             )
         );
         update_ram_word!(game.hdma_object_B[v1], wrapping_add(80u16));
@@ -4324,24 +4257,12 @@ pub unsafe fn VariaSuitPickup_0_LightBeamAppears(game: &mut Game) -> u8 {
 pub unsafe fn VariaSuitPickup_1(game: &mut Game) -> u8 {
     *((&raw mut game.g_ram as *mut u8).offset(0xdee) as *mut u16 as *mut u8).offset(0) =
         ((ram_word!(game, suit_pickup_light_beam_pos)) as u8).wrapping_sub(
-            *((&raw mut game.g_ram as *mut u8).offset(0xddc) as *mut u16 as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ),
+            *((&raw mut game.g_ram as *mut u8).offset(0xddc) as *mut u16 as *mut u8).offset(1isize),
         );
-    let ref mut fresh17 = *((&raw mut game.g_ram as *mut u8).offset(0xdee) as *mut u16 as *mut u8)
-        .offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        );
+    let ref mut fresh17 =
+        *((&raw mut game.g_ram as *mut u8).offset(0xdee) as *mut u16 as *mut u8).offset(1isize);
     *fresh17 = (*fresh17).wrapping_add(
-        *((&raw mut game.g_ram as *mut u8).offset(0xddc) as *mut u16 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ),
+        *((&raw mut game.g_ram as *mut u8).offset(0xddc) as *mut u16 as *mut u8).offset(1isize),
     );
     let mut i: i32 = 510 as i32;
     while i >= 0i32 {
@@ -4363,56 +4284,32 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> u8 {
     let mut v10: i8 = 0;
     AdvanceSuitPickupColorMathSubscreenToWhite(game);
     let v0: bool = ((ram_word!(game, suit_pickup_light_beam_pos)) as i8).wrapping_sub(
-        (*((&raw mut game.g_ram as *mut u8).offset(0xddc) as *mut u16 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        )) as i8,
+        (*((&raw mut game.g_ram as *mut u8).offset(0xddc) as *mut u16 as *mut u8).offset(1isize))
+            as i8,
     ) < 0i8;
     *((&raw mut game.g_ram as *mut u8).offset(0xdee) as *mut u16 as *mut u8).offset(0) =
         ((ram_word!(game, suit_pickup_light_beam_pos)) as u8).wrapping_sub(
-            *((&raw mut game.g_ram as *mut u8).offset(0xddc) as *mut u16 as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ),
+            *((&raw mut game.g_ram as *mut u8).offset(0xddc) as *mut u16 as *mut u8).offset(1isize),
         );
     if ram_word!(game, suit_pickup_light_beam_pos) as u8 == 0 || v0 {
         set_ram_word!(game.suit_pickup_light_beam_pos = -(256 as i32) as u16);
     } else {
-        v1 = ((*((&raw mut game.g_ram as *mut u8).offset(0xddc) as *mut u16 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        )) as i8)
+        v1 = ((*((&raw mut game.g_ram as *mut u8).offset(0xddc) as *mut u16 as *mut u8)
+            .offset(1isize)) as i8)
             .wrapping_add(
-                (*((&raw mut game.g_ram as *mut u8).offset(0xdee) as *mut u16 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                )) as i8,
+                (*((&raw mut game.g_ram as *mut u8).offset(0xdee) as *mut u16 as *mut u8)
+                    .offset(1isize)) as i8,
             );
         if u8::overflowing_add(
-            *((&raw mut game.g_ram as *mut u8).offset(0xddc) as *mut u16 as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ),
-            *((&raw mut game.g_ram as *mut u8).offset(0xdee) as *mut u16 as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ),
+            *((&raw mut game.g_ram as *mut u8).offset(0xddc) as *mut u16 as *mut u8).offset(1isize),
+            *((&raw mut game.g_ram as *mut u8).offset(0xdee) as *mut u16 as *mut u8).offset(1isize),
         )
         .1
         {
             v1 = -(1 as i32) as i8;
         }
-        *((&raw mut game.g_ram as *mut u8).offset(0xdee) as *mut u16 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) = v1 as u8;
+        *((&raw mut game.g_ram as *mut u8).offset(0xdee) as *mut u16 as *mut u8).offset(1isize) =
+            v1 as u8;
     }
     v2 = 0 as i16;
     let mut v3: u16 = 0 as u16;
@@ -4430,20 +4327,13 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> u8 {
         v6 = ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x88e3c9)) as *const u8 as *mut u8)
             .offset(v3 as isize)) as i8)
             .wrapping_add(
-                (*((&raw mut game.g_ram as *mut u8).offset(0xdee) as *mut u16 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                )) as i8,
+                (*((&raw mut game.g_ram as *mut u8).offset(0xdee) as *mut u16 as *mut u8)
+                    .offset(1isize)) as i8,
             );
         if u8::overflowing_add(
             *(game.g_rom.offset(crate::rtl::lorom_offset(0x88e3c9)) as *const u8 as *mut u8)
                 .offset(v3 as isize),
-            *((&raw mut game.g_ram as *mut u8).offset(0xdee) as *mut u16 as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ),
+            *((&raw mut game.g_ram as *mut u8).offset(0xdee) as *mut u16 as *mut u8).offset(1isize),
         )
         .1
         {
@@ -4472,20 +4362,13 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> u8 {
         v10 = ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x88e3c9)) as *const u8 as *mut u8)
             .offset(v7 as isize)) as i8)
             .wrapping_add(
-                (*((&raw mut game.g_ram as *mut u8).offset(0xdee) as *mut u16 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                )) as i8,
+                (*((&raw mut game.g_ram as *mut u8).offset(0xdee) as *mut u16 as *mut u8)
+                    .offset(1isize)) as i8,
             );
         if u8::overflowing_add(
             *(game.g_rom.offset(crate::rtl::lorom_offset(0x88e3c9)) as *const u8 as *mut u8)
                 .offset(v7 as isize),
-            *((&raw mut game.g_ram as *mut u8).offset(0xdee) as *mut u16 as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ),
+            *((&raw mut game.g_ram as *mut u8).offset(0xdee) as *mut u16 as *mut u8).offset(1isize),
         )
         .1
         {
@@ -4561,12 +4444,8 @@ pub unsafe fn VariaSuitPickup_4_LightBeamShrinks(game: &mut Game) -> u8 {
 pub unsafe fn VariaSuitPickup_5_LightBeamDissipates(game: &mut Game) -> u8 {
     *((&raw mut game.g_ram as *mut u8).offset(0xdee) as *mut u16 as *mut u8).offset(0) =
         ((ram_word!(game, suit_pickup_light_beam_pos)) as u8).wrapping_add(8u8);
-    let ref mut fresh28 = *((&raw mut game.g_ram as *mut u8).offset(0xdee) as *mut u16 as *mut u8)
-        .offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        );
+    let ref mut fresh28 =
+        *((&raw mut game.g_ram as *mut u8).offset(0xdee) as *mut u16 as *mut u8).offset(1isize);
     *fresh28 = (*fresh28).wrapping_sub(8u8);
     set_ram_word!(game.hdma_table_1[128] = ram_word!(game, suit_pickup_light_beam_pos));
     if ram_word!(game, suit_pickup_light_beam_pos) as u8 as i32 - 112 as i32 & 0x8000 as i32 == 0 {
@@ -4751,21 +4630,13 @@ pub unsafe fn HdmaobjInstr_E4BD(k: u16, hdp: *const u8, game: &mut Game) -> *con
         set_ram_word!(game.g_word_7E9006 = 192 as u16);
         v4 = 12620032 as i32 as u32;
         *(((&raw mut game.g_ram as *mut u8).offset(0x9002) as *mut u16 as *mut u8).offset(1)
-            as *mut u16) = *(&raw mut v4 as *mut u16).offset(
-            (::core::mem::size_of::<u32>())
-                .wrapping_div(::core::mem::size_of::<u16>())
-                .wrapping_sub(1_usize) as isize,
-        );
+            as *mut u16) = *(&raw mut v4 as *mut u16).offset(1isize);
         *(((&raw mut game.g_ram as *mut u8).offset(0x9000) as *mut u16 as *mut u8).offset(1)
             as *mut u16) = v4 as u16;
         set_ram_word!(game.g_word_7E9004 = -(28288 as i32) as u16);
         v5 = 12620032 as i32 as u32;
         *(((&raw mut game.g_ram as *mut u8).offset(0x9008) as *mut u16 as *mut u8).offset(1)
-            as *mut u16) = *(&raw mut v5 as *mut u16).offset(
-            (::core::mem::size_of::<u32>())
-                .wrapping_div(::core::mem::size_of::<u16>())
-                .wrapping_sub(1_usize) as isize,
-        );
+            as *mut u16) = *(&raw mut v5 as *mut u16).offset(1isize);
         *(((&raw mut game.g_ram as *mut u8).offset(0x9006) as *mut u16 as *mut u8).offset(1)
             as *mut u16) = v5 as u16;
         set_ram_word!(game.g_word_7E900A = addr_loc_889180 as u16);
@@ -4779,20 +4650,12 @@ pub unsafe fn HdmaobjInstr_E4BD(k: u16, hdp: *const u8, game: &mut Game) -> *con
         set_ram_word!(game.g_word_7E9015 = 160 as u16);
         v2 = 10522880 as i32 as u32;
         *(((&raw mut game.g_ram as *mut u8).offset(0x9002) as *mut u16 as *mut u8).offset(1)
-            as *mut u16) = *(&raw mut v2 as *mut u16).offset(
-            (::core::mem::size_of::<u32>())
-                .wrapping_div(::core::mem::size_of::<u16>())
-                .wrapping_sub(1_usize) as isize,
-        );
+            as *mut u16) = *(&raw mut v2 as *mut u16).offset(1isize);
         *(((&raw mut game.g_ram as *mut u8).offset(0x9000) as *mut u16 as *mut u8).offset(1)
             as *mut u16) = v2 as u16;
         v3 = 10522880 as i32 as u32;
         *(((&raw mut game.g_ram as *mut u8).offset(0x9008) as *mut u16 as *mut u8).offset(1)
-            as *mut u16) = *(&raw mut v3 as *mut u16).offset(
-            (::core::mem::size_of::<u32>())
-                .wrapping_div(::core::mem::size_of::<u16>())
-                .wrapping_sub(1_usize) as isize,
-        );
+            as *mut u16) = *(&raw mut v3 as *mut u16).offset(1isize);
         *(((&raw mut game.g_ram as *mut u8).offset(0x9006) as *mut u16 as *mut u8).offset(1)
             as *mut u16) = v3 as u16;
         *(((&raw mut game.g_ram as *mut u8).offset(0x900c) as *mut u16 as *mut u8).offset(1)
@@ -4866,11 +4729,7 @@ pub unsafe fn HdmaobjPreInstr_E567(v0: u16, game: &mut Game) {
                 ) as i32
                     >> 8 as i32) as u16;
                 r22 = (r22).wrapping_add(Mult8x8(
-                    *(&raw mut r18 as *mut u8).offset(
-                        (::core::mem::size_of::<u16>())
-                            .wrapping_div(::core::mem::size_of::<u8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ),
+                    *(&raw mut r18 as *mut u8).offset(1isize),
                     (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(3))
                         .ai_var_D as u8,
                 ));
@@ -4879,26 +4738,14 @@ pub unsafe fn HdmaobjPreInstr_E567(v0: u16, game: &mut Game) {
                     *(&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData)
                         .offset(3))
                     .ai_var_D as *mut u8)
-                        .offset(
-                            (::core::mem::size_of::<u16>())
-                                .wrapping_div(::core::mem::size_of::<u8>())
-                                .wrapping_sub(1_usize) as isize,
-                        ),
+                        .offset(1isize),
                 );
                 let mult: u8 = Mult8x8(
-                    *(&raw mut r18 as *mut u8).offset(
-                        (::core::mem::size_of::<u16>())
-                            .wrapping_div(::core::mem::size_of::<u8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ),
+                    *(&raw mut r18 as *mut u8).offset(1isize),
                     *(&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData)
                         .offset(3))
                     .ai_var_D as *mut u8)
-                        .offset(
-                            (::core::mem::size_of::<u16>())
-                                .wrapping_div(::core::mem::size_of::<u8>())
-                                .wrapping_sub(1_usize) as isize,
-                        ),
+                        .offset(1isize),
                 ) as u8;
                 r22 = (r22).wrapping_add(r24);
                 r18 =
@@ -4917,11 +4764,7 @@ pub unsafe fn HdmaobjPreInstr_E567(v0: u16, game: &mut Game) {
                 ) as i32
                     >> 8 as i32) as u16;
                 r22_0 = (r22_0).wrapping_add(Mult8x8(
-                    *(&raw mut r18_0 as *mut u8).offset(
-                        (::core::mem::size_of::<u16>())
-                            .wrapping_div(::core::mem::size_of::<u8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ),
+                    *(&raw mut r18_0 as *mut u8).offset(1isize),
                     (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(3))
                         .ai_var_D as u8,
                 ));
@@ -4930,26 +4773,14 @@ pub unsafe fn HdmaobjPreInstr_E567(v0: u16, game: &mut Game) {
                     *(&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData)
                         .offset(3))
                     .ai_var_D as *mut u8)
-                        .offset(
-                            (::core::mem::size_of::<u16>())
-                                .wrapping_div(::core::mem::size_of::<u8>())
-                                .wrapping_sub(1_usize) as isize,
-                        ),
+                        .offset(1isize),
                 );
                 let mult_0: u8 = Mult8x8(
-                    *(&raw mut r18_0 as *mut u8).offset(
-                        (::core::mem::size_of::<u16>())
-                            .wrapping_div(::core::mem::size_of::<u8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ),
+                    *(&raw mut r18_0 as *mut u8).offset(1isize),
                     *(&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData)
                         .offset(3))
                     .ai_var_D as *mut u8)
-                        .offset(
-                            (::core::mem::size_of::<u16>())
-                                .wrapping_div(::core::mem::size_of::<u8>())
-                                .wrapping_sub(1_usize) as isize,
-                        ),
+                        .offset(1isize),
                 ) as u8;
                 r22_0 = (r22_0).wrapping_add(r24_0);
                 r18_0 = ((r22_0 as i32 + ((mult_0 as i32) << 8 as i32) & 0xff00 as i32) >> 8 as i32)
@@ -5318,21 +5149,13 @@ pub unsafe fn CinematicFunction_Intro_Func133(game: &mut Game) {
     set_ram_word!(game.button_config_itemcancel_y_saved = 192 as u16);
     v0 = 12621824 as i32 as u32;
     *(((&raw mut game.g_ram as *mut u8).offset(0xd84) as *mut u16 as *mut u8).offset(1)
-        as *mut u16) = *(&raw mut v0 as *mut u16).offset(
-        (::core::mem::size_of::<u32>())
-            .wrapping_div(::core::mem::size_of::<u16>())
-            .wrapping_sub(1_usize) as isize,
-    );
+        as *mut u16) = *(&raw mut v0 as *mut u16).offset(1isize);
     *(((&raw mut game.g_ram as *mut u8).offset(0xd82) as *mut u16 as *mut u8).offset(1)
         as *mut u16) = v0 as u16;
     set_ram_word!(game.button_config_run_b_saved = -(26496 as i32) as u16);
     v1 = 12621824 as i32 as u32;
     *(((&raw mut game.g_ram as *mut u8).offset(0xd8a) as *mut u16 as *mut u8).offset(1)
-        as *mut u16) = *(&raw mut v1 as *mut u16).offset(
-        (::core::mem::size_of::<u32>())
-            .wrapping_div(::core::mem::size_of::<u16>())
-            .wrapping_sub(1_usize) as isize,
-    );
+        as *mut u16) = *(&raw mut v1 as *mut u16).offset(1isize);
     *(((&raw mut game.g_ram as *mut u8).offset(0xd88) as *mut u16 as *mut u8).offset(1)
         as *mut u16) = v1 as u16;
     set_ram_word!(game.button_config_aim_down_L_saved = -(26496 as i32) as u16);
@@ -5381,20 +5204,12 @@ pub unsafe fn HdmaobjPreInstr_ECB6(k: u16, game: &mut Game) {
                 ) as i32
                     >> 8 as i32) as u16;
                 r22 = (r22).wrapping_add(Mult8x8(
-                    *(&raw mut r18 as *mut u8).offset(
-                        (::core::mem::size_of::<u16>())
-                            .wrapping_div(::core::mem::size_of::<u8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ),
+                    *(&raw mut r18 as *mut u8).offset(1isize),
                     *(&raw mut game.g_ram as *mut u8).offset(0xd9e),
                 ));
                 let r24: u16 = Mult8x8(r18 as u8, *(&raw mut game.g_ram as *mut u8).offset(0xd9f));
                 let mult: u8 = Mult8x8(
-                    *(&raw mut r18 as *mut u8).offset(
-                        (::core::mem::size_of::<u16>())
-                            .wrapping_div(::core::mem::size_of::<u8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ),
+                    *(&raw mut r18 as *mut u8).offset(1isize),
                     *(&raw mut game.g_ram as *mut u8).offset(0xd9f),
                 ) as u8;
                 r22 = (r22).wrapping_add(r24);
@@ -5412,21 +5227,13 @@ pub unsafe fn HdmaobjPreInstr_ECB6(k: u16, game: &mut Game) {
                     (Mult8x8(v7 as u8, *(&raw mut game.g_ram as *mut u8).offset(0xd9e)) as i32
                         >> 8 as i32) as u16;
                 r22_0 = (r22_0).wrapping_add(Mult8x8(
-                    *(&raw mut r18_0 as *mut u8).offset(
-                        (::core::mem::size_of::<u16>())
-                            .wrapping_div(::core::mem::size_of::<u8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ),
+                    *(&raw mut r18_0 as *mut u8).offset(1isize),
                     *(&raw mut game.g_ram as *mut u8).offset(0xd9e),
                 ));
                 let r24_0: u16 =
                     Mult8x8(r18_0 as u8, *(&raw mut game.g_ram as *mut u8).offset(0xd9f));
                 let mult_0: u8 = Mult8x8(
-                    *(&raw mut r18_0 as *mut u8).offset(
-                        (::core::mem::size_of::<u16>())
-                            .wrapping_div(::core::mem::size_of::<u8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ),
+                    *(&raw mut r18_0 as *mut u8).offset(1isize),
                     *(&raw mut game.g_ram as *mut u8).offset(0xd9f),
                 ) as u8;
                 r22_0 = (r22_0).wrapping_add(r24_0);

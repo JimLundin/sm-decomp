@@ -1062,13 +1062,7 @@ pub unsafe fn HandleAtmosphericEffects(game: &mut Game) {
         let mut v2: u16 = ram_word!(game, atmospheric_gfx_frame_and_type[v1]);
         if (v2 != 0) {
             let r18: u16 = (2u16).wrapping_mul((v2 as u8) as u16);
-            let v3: u16 = (2u16).wrapping_mul(
-                (*(&raw mut v2 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                )) as u16,
-            );
+            let v3: u16 = (2u16).wrapping_mul((*(&raw mut v2 as *mut u8).offset(1isize)) as u16);
             v4 = ((ram_word!(game, atmospheric_gfx_anim_timer[v1])) as i16).wrapping_sub(1i16);
             set_ram_word!(game.atmospheric_gfx_anim_timer[v1] = v4 as u16);
             if v4 != 0 {
@@ -2556,11 +2550,7 @@ pub unsafe fn Samus_CalcBaseSpeed_X(k: u16, game: &mut Game) -> i32 {
                 << 16 as i32
                 | Mult8x8(
                     *(&raw mut game.g_ram as *mut u8).offset(0xb4c),
-                    *(&raw mut (*sste).decel_sub as *mut u8).offset(
-                        (::core::mem::size_of::<u16>())
-                            .wrapping_div(::core::mem::size_of::<u8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ),
+                    *(&raw mut (*sste).decel_sub as *mut u8).offset(1isize),
                 ) as u32
         } else {
             ((*sste).decel as u32) << 16 as i32 | (*sste).decel_sub as u32
@@ -2607,11 +2597,7 @@ unsafe fn Samus_CalcBaseSpeed_NoDecel_X(k: u16, game: &mut Game) -> Pair_Bool_Am
                 << 16 as i32
                 | Mult8x8(
                     *(&raw mut game.g_ram as *mut u8).offset(0xb4c),
-                    *(&raw mut (*sste).decel_sub as *mut u8).offset(
-                        (::core::mem::size_of::<u16>())
-                            .wrapping_div(::core::mem::size_of::<u8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ),
+                    *(&raw mut (*sste).decel_sub as *mut u8).offset(1isize),
                 ) as u32
         } else {
             ((*sste).decel as u32) << 16 as i32 | (*sste).decel_sub as u32
@@ -3371,96 +3357,39 @@ pub unsafe fn UpdateMinimap(game: &mut Game) {
             *(&raw mut r44 as *mut u8).offset(0) = *(&raw mut game.g_ram as *mut u8)
                 .offset(0x7f7)
                 .offset(R48 as isize);
-            *(&raw mut r44 as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) = *r9;
+            *(&raw mut r44 as *mut u8).offset(1isize) = *r9;
             if (r34 as u8) == 32u8 {
-                *(&raw mut r38 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) = *(&raw mut r44 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                );
-                *(&raw mut r24 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) = r44 as u8;
+                *(&raw mut r38 as *mut u8).offset(1isize) =
+                    *(&raw mut r44 as *mut u8).offset(1isize);
+                *(&raw mut r24 as *mut u8).offset(1isize) = r44 as u8;
             } else {
-                *(&raw mut r38 as *mut u8).offset(0) = *(&raw mut r44 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                );
+                *(&raw mut r38 as *mut u8).offset(0) = *(&raw mut r44 as *mut u8).offset(1isize);
                 *(&raw mut r24 as *mut u8).offset(0) = r44 as u8;
             }
             *(&raw mut r44 as *mut u8).offset(0) = *(&raw mut game.g_ram as *mut u8)
                 .offset(0x7f7)
                 .offset((v0_0 as i32 + 4 as i32) as isize);
             r9 = r9.offset(4);
-            *(&raw mut r44 as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) = *r9;
+            *(&raw mut r44 as *mut u8).offset(1isize) = *r9;
             if (r34 as u8) == 32u8 {
-                *(&raw mut r40 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) = *(&raw mut r44 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                );
-                *(&raw mut r26 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) = r44 as u8;
+                *(&raw mut r40 as *mut u8).offset(1isize) =
+                    *(&raw mut r44 as *mut u8).offset(1isize);
+                *(&raw mut r26 as *mut u8).offset(1isize) = r44 as u8;
             } else {
-                *(&raw mut r40 as *mut u8).offset(0) = *(&raw mut r44 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                );
+                *(&raw mut r40 as *mut u8).offset(0) = *(&raw mut r44 as *mut u8).offset(1isize);
                 *(&raw mut r26 as *mut u8).offset(0) = r44 as u8;
             }
             *(&raw mut r44 as *mut u8).offset(0) = *(&raw mut game.g_ram as *mut u8)
                 .offset(0x7f7)
                 .offset((v0_0 as i32 + 8 as i32) as isize);
             r9 = r9.offset(4);
-            *(&raw mut r44 as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) = *r9;
+            *(&raw mut r44 as *mut u8).offset(1isize) = *r9;
             if (r34 as u8) == 32u8 {
-                *(&raw mut r42 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) = *(&raw mut r44 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                );
-                *(&raw mut r28 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) = r44 as u8;
+                *(&raw mut r42 as *mut u8).offset(1isize) =
+                    *(&raw mut r44 as *mut u8).offset(1isize);
+                *(&raw mut r28 as *mut u8).offset(1isize) = r44 as u8;
             } else {
-                *(&raw mut r42 as *mut u8).offset(0) = *(&raw mut r44 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                );
+                *(&raw mut r42 as *mut u8).offset(0) = *(&raw mut r44 as *mut u8).offset(1isize);
                 *(&raw mut r28 as *mut u8).offset(0) = r44 as u8;
             }
         }
@@ -3497,11 +3426,7 @@ pub unsafe fn UpdateMinimapInside(
     let mut v7: i16 = 0;
     let mut v8: i16 = 0;
     *(&raw mut v0 as *mut u8).offset(0) = (((r34).wrapping_add(r22)) as i32 >> 8 as i32) as u8;
-    *(&raw mut v0 as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) = ((r34) as u8).wrapping_add((r22) as u8);
+    *(&raw mut v0 as *mut u8).offset(1isize) = ((r34) as u8).wrapping_add((r22) as u8);
     let t: u16 = (r18 as i32 + (v0 as i32 >> 3 as i32)) as u16;
     if r34 != 0u16 && (t as i32 & 0x1f as i32) - 2 as i32 & 0x8000 as i32 != 0 {
         v1 = ((t) as i16).wrapping_sub(1026i16);
@@ -3829,11 +3754,7 @@ pub unsafe fn KillProjectile(k: u16, game: &mut Game) {
     if (ram_word!(game, projectile_type[v1]) as i32 & 0xf00 as i32) != 0i32 {
         if (*(((&raw mut game.g_ram as *mut u8).offset(0xc18) as *mut u16).offset(v1 as isize)
             as *mut u16 as *mut u8)
-            .offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as i32
+            .offset(1isize) as i32
             & 0xf as i32)
             - 3 as i32
             & 0x8000 as i32
@@ -4544,12 +4465,7 @@ pub unsafe fn SpawnProjectileTrail(k: u16, game: &mut Game) {
     let mut v2: i16 = 0;
     let mut v1: u16 = ram_word!(game, projectile_type[(k as i32 >> 1i32)]);
     if (v1 as i32 & 0xf00 as i32) != 0i32 {
-        let v3: u16 = ((*(&raw mut v1 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        )) as u16)
-            & (0xfu16);
+        let v3: u16 = ((*(&raw mut v1 as *mut u8).offset(1isize)) as u16) & (0xfu16);
         if v3 >= 3u16 {
             return;
         }
@@ -5530,14 +5446,9 @@ pub unsafe fn HudSelectionHandler_MissilesOrSuperMissiles(game: &mut Game) {
                     );
                 }
                 set_ram_word!(
-                    game.cooldown_timer =
-                        kNonBeamProjectileCooldowns[(*(&raw mut v7 as *mut u8).offset(
-                            (::core::mem::size_of::<u16>())
-                                .wrapping_div(::core::mem::size_of::<u8>())
-                                .wrapping_sub(1_usize) as isize,
-                        ) as i32
-                            & 0xf as i32)
-                            as usize] as u16
+                    game.cooldown_timer = kNonBeamProjectileCooldowns
+                        [(*(&raw mut v7 as *mut u8).offset(1isize,) as i32 & 0xf as i32) as usize]
+                        as u16
                 );
                 if ram_word!(game, samus_auto_cancel_hud_item_index) != 0 {
                     set_ram_word!(game.hud_item_index = 0 as u16);
@@ -5612,11 +5523,7 @@ pub unsafe fn HudSelectionHandler_MorphBall(game: &mut Game) {
                     let v4: i32 = v2 as i32 >> 1 as i32;
                     let mut v5: u16 = (r18) | (ram_word!(game, projectile_type[v4]));
                     set_ram_word!(game.projectile_type[v4] = v5);
-                    let v6: u8 = *(&raw mut v5 as *mut u8).offset(
-                        (::core::mem::size_of::<u16>())
-                            .wrapping_div(::core::mem::size_of::<u8>())
-                            .wrapping_sub(1_usize) as isize,
-                    );
+                    let v6: u8 = *(&raw mut v5 as *mut u8).offset(1isize);
                     set_ram_word!(game.projectile_dir[v4] = 0 as u16);
                     set_ram_word!(game.projectile_x_pos[v4] = ram_word!(game, samus_x_pos));
                     set_ram_word!(game.projectile_y_pos[v4] = ram_word!(game, samus_y_pos));
@@ -6601,11 +6508,7 @@ pub unsafe fn Samus_MoveHandler_ShinesparkCrash(game: &mut Game) {
     set_ram_word!(game.samus_shine_timer = 15 as u16);
     kSamus_MoveHandler_ShinesparkCrash[*((&raw mut game.g_ram as *mut u8).offset(0xaae) as *mut u16
         as *mut u8)
-        .offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) as usize]
+        .offset(1isize) as usize]
         .expect("non-null function pointer")(game);
     let mut i: i32 = 2 as i32;
     while i >= 0i32 {
@@ -6788,11 +6691,8 @@ pub unsafe fn Grapple_Func1(game: &mut Game) {
             }
         }
         let pt: Point16U = Projectile_SinLookup(
-            *((&raw mut game.g_ram as *mut u8).offset(0xcfa) as *mut u16 as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as u16,
+            *((&raw mut game.g_ram as *mut u8).offset(0xcfa) as *mut u16 as *mut u8).offset(1isize)
+                as u16,
             ram_word!(game, grapple_beam_length),
         );
         set_ram_word!(
@@ -7237,11 +7137,7 @@ pub unsafe fn BombSpread(game: &mut Game) {
                     as *mut u16)
                     .offset(5) as *mut u16
                     as *mut u8)
-                    .offset(
-                        (::core::mem::size_of::<u16>())
-                            .wrapping_div(::core::mem::size_of::<u8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ) as i32
+                    .offset(1isize,) as i32
                     & 0xf as i32) as usize] as u16
         );
         set_ram_word!(game.bomb_spread_charge_timeout_counter = 0 as u16);
@@ -7772,11 +7668,7 @@ static kSetupBombJump: [Option<Func_U8>; 28] = unsafe {
     ]
 };
 pub unsafe fn SetupBombJump(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut u8).offset(0xa56) as *mut u16 as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) == 0
+    if *((&raw mut game.g_ram as *mut u8).offset(0xa56) as *mut u16 as *mut u8).offset(1isize) == 0
         && kSetupBombJump[*(&raw mut game.g_ram as *mut u8).offset(0xa1f) as usize]
             .expect("non-null function pointer")(game) as i32
             & 1 as i32
@@ -8216,20 +8108,14 @@ static kSamus_MoveDown_SetPoseCalcInput_Tab1: [u8; 28] = [
 pub unsafe fn Samus_MoveDown_SetPoseCalcInput(game: &mut Game) {
     if ram_word!(game, samus_collision_flag) != 0 {
         set_ram_word!(game.input_to_pose_calc = 1 as u16);
-        *((&raw mut game.g_ram as *mut u8).offset(0xdc6) as *mut u16 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) = kSamus_MoveDown_SetPoseCalcInput_Tab1
-            [*(&raw mut game.g_ram as *mut u8).offset(0xa1f) as usize];
+        *((&raw mut game.g_ram as *mut u8).offset(0xdc6) as *mut u16 as *mut u8).offset(1isize) =
+            kSamus_MoveDown_SetPoseCalcInput_Tab1
+                [*(&raw mut game.g_ram as *mut u8).offset(0xa1f) as usize];
     } else if (ram_word!(game, input_to_pose_calc) as u8) != 5u8 {
         set_ram_word!(game.input_to_pose_calc = 2 as u16);
-        *((&raw mut game.g_ram as *mut u8).offset(0xdc6) as *mut u16 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) = kSamus_MoveDown_SetPoseCalcInput_Tab0
-            [*(&raw mut game.g_ram as *mut u8).offset(0xa1f) as usize];
+        *((&raw mut game.g_ram as *mut u8).offset(0xdc6) as *mut u16 as *mut u8).offset(1isize) =
+            kSamus_MoveDown_SetPoseCalcInput_Tab0
+                [*(&raw mut game.g_ram as *mut u8).offset(0xa1f) as usize];
     }
 }
 pub unsafe fn CallFrameHandlerAlfa(ea: u32, game: &mut Game) {

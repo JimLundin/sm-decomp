@@ -1555,12 +1555,7 @@ pub unsafe fn KraidsArm_Main(game: &mut Game) {
     }
     (*E1).base.properties = v4;
     (*E1).base.x_pos = (*E).base.x_pos;
-    if *(&raw mut (*E).kraid_mouth_flags as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) != 0
-    {
+    if *(&raw mut (*E).kraid_mouth_flags as *mut u8).offset(1isize) != 0 {
         (*E1).base.instruction_timer = (*E1).base.instruction_timer.wrapping_add(1);
     }
 }
@@ -4255,11 +4250,7 @@ pub unsafe fn Phantoon_Hurt(game: &mut Game) {
                 game,
             ))
             .phant_parameter_2 as *mut u8)
-                .offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                )
+                .offset(1isize)
                 == 0
             {
                 return;
@@ -4270,11 +4261,7 @@ pub unsafe fn Phantoon_Hurt(game: &mut Game) {
                 game,
             ))
             .phant_parameter_2 as *mut u8)
-                .offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                )
+                .offset(1isize)
                 == 0
             {
                 let mut i: i32 = 30 as i32;
@@ -4426,12 +4413,7 @@ pub unsafe fn Etecoon_Init(game: &mut Game) {
 }
 pub unsafe fn Etecoon_Main(game: &mut Game) {
     let E: *mut Enemy_Etecoon = Get_Etecoon(ram_word!(game, cur_enemy_index) as i32, game);
-    if *(&raw mut (*E).etecoon_parameter_2 as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) != 0
-    {
+    if *(&raw mut (*E).etecoon_parameter_2 as *mut u8).offset(1isize) != 0 {
         (*E).etecoon_parameter_2 = ((*E).etecoon_parameter_2).wrapping_sub(256u16);
     } else {
         CallEnemyPreInstr((((*E).etecoon_var_F) as u32) | (0xa70000u32), game);
@@ -4960,13 +4942,7 @@ pub unsafe fn Dachora_Func_6(k: u16, game: &mut Game) -> i32 {
         if v2 as u8 == 0 {
             Dachora_Func_1(
                 *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7f787)) as *const u8 as *mut u16)
-                    .offset(
-                        *(&raw mut (*E).dachor_var_E as *mut u8).offset(
-                            (::core::mem::size_of::<u16>())
-                                .wrapping_div(::core::mem::size_of::<u8>())
-                                .wrapping_sub(1_usize) as isize,
-                        ) as isize,
-                    ),
+                    .offset(*(&raw mut (*E).dachor_var_E as *mut u8).offset(1isize) as isize),
                 k,
                 game,
             );
@@ -5131,13 +5107,8 @@ pub unsafe fn Dachora_Func_9(k: u16, game: &mut Game) {
 pub unsafe fn Dachora_Func_10(k: u16, game: &mut Game) {
     let E: *mut Enemy_Dachora = Get_Dachora(k as i32, game);
     Dachora_Func_1(
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7f92d)) as *const u8 as *mut u16).offset(
-            *(&raw mut (*E).dachor_var_E as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as isize,
-        ),
+        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7f92d)) as *const u8 as *mut u16)
+            .offset(*(&raw mut (*E).dachor_var_E as *mut u8).offset(1isize) as isize),
         k,
         game,
     );

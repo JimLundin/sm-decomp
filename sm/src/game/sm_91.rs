@@ -1535,22 +1535,14 @@ pub unsafe fn Xray_SetupStage1_FreezeTimeBackup(k: u16, game: &mut Game) {
         .offset(k as u8 as i32 as isize) = ram_word!(game, reg_BG2HOFS) as u8;
     *((&raw mut game.g_ram as *mut u8).offset(0x1914) as *mut u16 as *mut u8)
         .offset(k as u8 as i32 as isize)
-        .offset(1) = *((&raw mut game.g_ram as *mut u8).offset(0xb5) as *mut u16 as *mut u8)
-        .offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        );
+        .offset(1) =
+        *((&raw mut game.g_ram as *mut u8).offset(0xb5) as *mut u16 as *mut u8).offset(1isize);
     *((&raw mut game.g_ram as *mut u8).offset(0x1920) as *mut u16 as *mut u8)
         .offset(k as u8 as i32 as isize) = ram_word!(game, reg_BG2VOFS) as u8;
     *((&raw mut game.g_ram as *mut u8).offset(0x1920) as *mut u16 as *mut u8)
         .offset(k as u8 as i32 as isize)
-        .offset(1) = *((&raw mut game.g_ram as *mut u8).offset(0xb7) as *mut u16 as *mut u8)
-        .offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        );
+        .offset(1) =
+        *((&raw mut game.g_ram as *mut u8).offset(0xb7) as *mut u16 as *mut u8).offset(1isize);
     *((&raw mut game.g_ram as *mut u8).offset(0x192c) as *mut u16 as *mut u8)
         .offset(k as u8 as i32 as isize) = *(&raw mut game.g_ram as *mut u8).offset(0x59);
 }
@@ -2562,21 +2554,9 @@ pub unsafe fn HandleVisorPalette(game: &mut Game) -> u8 {
         set_ram_word!(
             game.palette_buffer[196] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9ba3c0))
                 as *const u8 as *mut u16)
-                .offset(
-                    (*(&raw mut v1 as *mut u8).offset(
-                        (::core::mem::size_of::<u16>())
-                            .wrapping_div(::core::mem::size_of::<u8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ) as i32
-                        >> 1 as i32) as isize,
-                )
+                .offset((*(&raw mut v1 as *mut u8).offset(1isize,) as i32 >> 1 as i32) as isize,)
         );
-        let v2: i32 = *(&raw mut v1 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) as i32
-            + 2 as i32;
+        let v2: i32 = *(&raw mut v1 as *mut u8).offset(1isize) as i32 + 2 as i32;
         if v2 - 12 as i32 & 0x8000 as i32 != 0 {
             set_ram_word!(
                 game.samus_visor_palette_timer_index = (u16::swap_bytes(v2 as u16))
@@ -3703,18 +3683,12 @@ static off_91E951: [Option<Func_U8>; 6] = unsafe {
     ]
 };
 pub unsafe fn Samus_HandleTransFromBlockColl_2(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut u8).offset(0xdc6) as *mut u16 as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) != 4u8
+    if *((&raw mut game.g_ram as *mut u8).offset(0xdc6) as *mut u16 as *mut u8).offset(1isize)
+        != 4u8
     {
         let v0: u16 = (4u16).wrapping_mul(
-            (*((&raw mut game.g_ram as *mut u8).offset(0xdc6) as *mut u16 as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            )) as u16,
+            (*((&raw mut game.g_ram as *mut u8).offset(0xdc6) as *mut u16 as *mut u8)
+                .offset(1isize)) as u16,
         );
         if *(&raw mut game.g_ram as *mut u8).offset(0xa1e) == 4u8 {
             set_ram_word!(
@@ -3733,18 +3707,11 @@ pub unsafe fn Samus_HandleTransFromBlockColl_2(game: &mut Game) {
     }
 }
 pub unsafe fn Samus_HandleTransFromBlockColl_1(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut u8).offset(0xdc6) as *mut u16 as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) != 4u8
+    if *((&raw mut game.g_ram as *mut u8).offset(0xdc6) as *mut u16 as *mut u8).offset(1isize)
+        != 4u8
     {
         if off_91E951[*((&raw mut game.g_ram as *mut u8).offset(0xdc6) as *mut u16 as *mut u8)
-            .offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as usize]
+            .offset(1isize) as usize]
             .expect("non-null function pointer")(game) as i32
             & 1 as i32
             != 0
@@ -4457,20 +4424,13 @@ static kSamus_HandleTransitionsA_5_1: [Option<Func_U8>; 6] = unsafe {
 };
 pub unsafe fn Samus_HandleTransitionsA_5_1(game: &mut Game) {
     HandleLandingSoundEffectsAndGfx(game);
-    if *((&raw mut game.g_ram as *mut u8).offset(0xdc6) as *mut u16 as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) == 4u8
+    if *((&raw mut game.g_ram as *mut u8).offset(0xdc6) as *mut u16 as *mut u8).offset(1isize)
+        == 4u8
     {
         SamusFunc_F1D3(game);
     } else if kSamus_HandleTransitionsA_5_1[*((&raw mut game.g_ram as *mut u8).offset(0xdc6)
         as *mut u16 as *mut u8)
-        .offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) as usize]
+        .offset(1isize) as usize]
         .expect("non-null function pointer")(game) as i32
         & 1 as i32
         == 0

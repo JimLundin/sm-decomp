@@ -324,13 +324,8 @@ pub unsafe fn NorfairPipeBug_Init(game: &mut Game) {
     (*PipeBug).pbg_var_D = (*PipeBug).base.x_pos;
     (*PipeBug).pbg_var_E = (*PipeBug).base.y_pos;
     (*PipeBug).base.properties = ((*PipeBug).base.properties) | ((kEnemyProps_Invisible) as u16);
-    (*PipeBug).pbg_var_B = (8u16).wrapping_mul(
-        (*(&raw mut (*PipeBug).pbg_parameter_2 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        )) as u16,
-    );
+    (*PipeBug).pbg_var_B = (8u16)
+        .wrapping_mul((*(&raw mut (*PipeBug).pbg_parameter_2 as *mut u8).offset(1isize)) as u16);
     (*PipeBug).pbg_var_C = 0 as u16;
     (*PipeBug).base.instruction_timer = 1 as u16;
     (*PipeBug).base.timer = 0 as u16;
@@ -1244,13 +1239,8 @@ pub unsafe fn Botwoon_Func_14(game: &mut Game) {
 }
 pub unsafe fn Botwoon_Func_15(game: &mut Game) {
     let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
-    let v2: i32 = 8 as i32
-        * *(&raw mut (*E).botwoon_var_28 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) as i32
-        >> 1 as i32;
+    let v2: i32 =
+        8 as i32 * *(&raw mut (*E).botwoon_var_28 as *mut u8).offset(1isize) as i32 >> 1 as i32;
     AddToHiLo(
         &raw mut (*E).base.y_pos,
         &raw mut (*E).base.y_subpos,

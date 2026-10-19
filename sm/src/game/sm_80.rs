@@ -120,24 +120,10 @@ pub unsafe fn NextRandom(game: &mut Game) -> u16 {
         .offset(0)) as u16)
         .wrapping_mul(5u16);
     let Reg: u8 = (*((&raw mut game.g_ram as *mut u8).offset(0x5e5) as *mut u16 as *mut u8)
-        .offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ))
+        .offset(1isize))
     .wrapping_mul(5u8);
-    let carry: i32 = *(&raw mut RegWord as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) as i32
-        + Reg as i32
-        + 1 as i32;
-    *(&raw mut RegWord as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) = carry as u8;
+    let carry: i32 = *(&raw mut RegWord as *mut u8).offset(1isize) as i32 + Reg as i32 + 1 as i32;
+    *(&raw mut RegWord as *mut u8).offset(1isize) = carry as u8;
     let result: u16 = ((carry >> 8 as i32) + RegWord as i32 + 17 as i32) as u16;
     set_ram_word!(game.random_number = result);
     result
@@ -483,11 +469,8 @@ pub unsafe fn InitializePpuIoRegs(game: &mut Game) {
     WriteReg(OAMADDL as u16, 0 as u8, game);
     *((&raw mut game.g_ram as *mut u8).offset(0x53) as *mut u16 as *mut u8).offset(0) = 0 as u8;
     WriteReg(OAMADDH as u16, 0x80 as u8, game);
-    *((&raw mut game.g_ram as *mut u8).offset(0x53) as *mut u16 as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) = 0x80 as u8;
+    *((&raw mut game.g_ram as *mut u8).offset(0x53) as *mut u16 as *mut u8).offset(1isize) =
+        0x80 as u8;
     WriteReg(OAMDATA as u16, 0 as u8, game);
     WriteReg(OAMDATA as u16, 0 as u8, game);
     crate::rtl::write_register_and_mirror(BGMODE as u16, 9, 0x55, false, game);
@@ -2147,17 +2130,11 @@ pub unsafe fn DrawTimerSpritemap(a: u16, j: u16, game: &mut Game) {
         0x80 as u8,
         j,
         (a).wrapping_add(
-            (*((&raw mut game.g_ram as *mut u8).offset(0x948) as *mut u16 as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            )) as u16,
+            (*((&raw mut game.g_ram as *mut u8).offset(0x948) as *mut u16 as *mut u8)
+                .offset(1isize)) as u16,
         ),
-        *((&raw mut game.g_ram as *mut u8).offset(0x94a) as *mut u16 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) as u16,
+        *((&raw mut game.g_ram as *mut u8).offset(0x94a) as *mut u16 as *mut u8).offset(1isize)
+            as u16,
         2560 as u16,
         game,
     );
@@ -2411,11 +2388,7 @@ pub unsafe fn CalculateLayer2Xpos(game: &mut Game) -> u8 {
         set_ram_word!(
             game.layer2_x_pos = (t * *((&raw mut game.g_ram as *mut u8).offset(0x911) as *mut u16
                 as *mut u8)
-                .offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) as i32
+                .offset(1isize,) as i32
                 + var933 as i32) as u16
         );
         return 0 as u8;
@@ -2433,11 +2406,7 @@ pub unsafe fn CalculateLayer2Ypos(game: &mut Game) -> u8 {
         set_ram_word!(
             game.layer2_y_pos = (t * *((&raw mut game.g_ram as *mut u8).offset(0x915) as *mut u16
                 as *mut u8)
-                .offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) as i32
+                .offset(1isize,) as i32
                 + var933 as i32) as u16
         );
         return 0 as u8;
@@ -2619,11 +2588,8 @@ pub unsafe fn HandleAutoscrolling_X(game: &mut Game) {
         if v0 < ram_word!(game, layer1_x_pos) {
             set_ram_word!(game.layer1_x_pos = v0);
         }
-        v1 = *((&raw mut game.g_ram as *mut u8).offset(0x911) as *mut u16 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) as i16;
+        v1 = *((&raw mut game.g_ram as *mut u8).offset(0x911) as *mut u16 as *mut u8).offset(1isize)
+            as i16;
         let v2: u16 = (Mult8x8(
             (((ram_word!(game, layer1_y_pos)).wrapping_add(128u16)) as i32 >> 8 as i32) as u8,
             ram_word!(game, room_width_in_scrolls) as u8,
@@ -2650,11 +2616,7 @@ pub unsafe fn HandleAutoscrolling_X(game: &mut Game) {
                 v4 = var933;
             } else {
                 var939 = v5;
-                v6 = *(&raw mut var939 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) as i16;
+                v6 = *(&raw mut var939 as *mut u8).offset(1isize) as i16;
                 if *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(
                     ((Mult8x8(
                         (((ram_word!(game, layer1_y_pos)).wrapping_add(128u16)) as i32 >> 8 as i32)
@@ -2680,12 +2642,7 @@ pub unsafe fn HandleAutoscrolling_X(game: &mut Game) {
                 var939 = (var939 as i32
                     + (ram_word!(game, absolute_moved_last_frame_x) as i32 + 2 as i32))
                     as u16;
-                v3 = ((*(&raw mut var939 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ))
-                .wrapping_add(1u8)) as i16;
+                v3 = ((*(&raw mut var939 as *mut u8).offset(1isize)).wrapping_add(1u8)) as i16;
                 if *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(
                     ((Mult8x8(
                         (((ram_word!(game, layer1_y_pos)).wrapping_add(128u16)) as i32 >> 8 as i32)
@@ -2716,11 +2673,8 @@ pub unsafe fn HandleScrollingWhenTriggeringScrollRight(game: &mut Game) {
     }
     let v0: u16 = u16::swap_bytes((ram_word!(game, room_width_in_scrolls)).wrapping_sub(1u16));
     if v0 >= ram_word!(game, layer1_x_pos) {
-        v1 = *((&raw mut game.g_ram as *mut u8).offset(0x911) as *mut u16 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) as i16;
+        v1 = *((&raw mut game.g_ram as *mut u8).offset(0x911) as *mut u16 as *mut u8).offset(1isize)
+            as i16;
         let RegWord: u16 = Mult8x8(
             (((ram_word!(game, layer1_y_pos)).wrapping_add(128u16)) as i32 >> 8 as i32) as u8,
             ram_word!(game, room_width_in_scrolls) as u8,
@@ -2755,11 +2709,8 @@ pub unsafe fn HandleScrollingWhenTriggeringScrollLeft(game: &mut Game) {
         set_ram_word!(game.layer1_x_subpos = 0 as u16);
     }
     if (ram_word!(game, layer1_x_pos) as i32 & 0x8000 as i32) == 0i32 {
-        v0 = *((&raw mut game.g_ram as *mut u8).offset(0x911) as *mut u16 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) as i16;
+        v0 = *((&raw mut game.g_ram as *mut u8).offset(0x911) as *mut u16 as *mut u8).offset(1isize)
+            as i16;
         let prod: u16 = Mult8x8(
             (((ram_word!(game, layer1_y_pos)).wrapping_add(128u16)) as i32 >> 8 as i32) as u8,
             ram_word!(game, room_width_in_scrolls) as u8,
@@ -2794,11 +2745,7 @@ pub unsafe fn HandleAutoscrolling_Y(game: &mut Game) {
         let mut v0: u16 = 0 as u16;
         v1 = (((ram_word!(game, layer1_x_pos)).wrapping_add(128u16)) as i32 >> 8 as i32) as i16;
         let r20: u16 = (Mult8x8(
-            *((&raw mut game.g_ram as *mut u8).offset(0x915) as *mut u16 as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ),
+            *((&raw mut game.g_ram as *mut u8).offset(0x915) as *mut u16 as *mut u8).offset(1isize),
             ram_word!(game, room_width_in_scrolls) as u8,
         ))
         .wrapping_add((v1) as u16);
@@ -2817,22 +2764,15 @@ pub unsafe fn HandleAutoscrolling_Y(game: &mut Game) {
         *(&raw mut v2 as *mut u8).offset(0) = (((ram_word!(game, room_height_in_scrolls))
             .wrapping_sub(1u16)) as i32
             >> 8 as i32) as u8;
-        *(&raw mut v2 as *mut u8).offset(
-            (::core::mem::size_of::<i16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) = ((ram_word!(game, room_height_in_scrolls)) as u8).wrapping_sub(1u8);
+        *(&raw mut v2 as *mut u8).offset(1isize) =
+            ((ram_word!(game, room_height_in_scrolls)) as u8).wrapping_sub(1u8);
         let v3: u16 = (var933).wrapping_add((v2) as u16);
         if v3 < ram_word!(game, layer1_y_pos) {
             set_ram_word!(game.layer1_y_pos = v3);
         }
         v4 = (((ram_word!(game, layer1_x_pos)).wrapping_add(128u16)) as i32 >> 8 as i32) as i16;
         let v5: u16 = (Mult8x8(
-            *((&raw mut game.g_ram as *mut u8).offset(0x915) as *mut u16 as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ),
+            *((&raw mut game.g_ram as *mut u8).offset(0x915) as *mut u16 as *mut u8).offset(1isize),
             ram_word!(game, room_width_in_scrolls) as u8,
         ))
         .wrapping_add((v4) as u16);
@@ -2855,12 +2795,7 @@ pub unsafe fn HandleAutoscrolling_Y(game: &mut Game) {
                 v7 = (((ram_word!(game, layer1_x_pos)).wrapping_add(128u16)) as i32 >> 8 as i32)
                     as i16;
                 let prod: u16 = Mult8x8(
-                    (*(&raw mut v6 as *mut u8).offset(
-                        (::core::mem::size_of::<u16>())
-                            .wrapping_div(::core::mem::size_of::<u8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ))
-                    .wrapping_add(1u8),
+                    (*(&raw mut v6 as *mut u8).offset(1isize)).wrapping_add(1u8),
                     ram_word!(game, room_width_in_scrolls) as u8,
                 );
                 if *(&raw mut game.g_ram as *mut u8)
@@ -2892,11 +2827,7 @@ pub unsafe fn HandleAutoscrolling_Y(game: &mut Game) {
                 } else {
                     var939 = v9;
                     let prod_0: u16 = Mult8x8(
-                        *(&raw mut v9 as *mut u8).offset(
-                            (::core::mem::size_of::<u16>())
-                                .wrapping_div(::core::mem::size_of::<u8>())
-                                .wrapping_sub(1_usize) as isize,
-                        ),
+                        *(&raw mut v9 as *mut u8).offset(1isize),
                         ram_word!(game, room_width_in_scrolls) as u8,
                     );
                     v10 = (((ram_word!(game, layer1_x_pos)).wrapping_add(128u16)) as i32
@@ -2920,11 +2851,7 @@ pub unsafe fn HandleScrollingWhenTriggeringScrollDown(game: &mut Game) {
     let var939: u16 = ram_word!(game, layer1_y_pos);
     let mut v0: i32 = 0 as i32;
     let prod: u16 = Mult8x8(
-        *((&raw mut game.g_ram as *mut u8).offset(0x915) as *mut u16 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ),
+        *((&raw mut game.g_ram as *mut u8).offset(0x915) as *mut u16 as *mut u8).offset(1isize),
         ram_word!(game, room_width_in_scrolls) as u8,
     );
     let v1: u16 =
@@ -2978,11 +2905,7 @@ pub unsafe fn HandleScrollingWhenTriggeringScrollUp(game: &mut Game) {
     }
     if (ram_word!(game, layer1_y_pos) as i32 & 0x8000 as i32) == 0i32 {
         let prod: u16 = Mult8x8(
-            *((&raw mut game.g_ram as *mut u8).offset(0x915) as *mut u16 as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ),
+            *((&raw mut game.g_ram as *mut u8).offset(0x915) as *mut u16 as *mut u8).offset(1isize),
             ram_word!(game, room_width_in_scrolls) as u8,
         );
         v0 = (((ram_word!(game, layer1_x_pos)).wrapping_add(128u16)) as i32 >> 8 as i32) as i16;

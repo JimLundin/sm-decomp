@@ -573,11 +573,8 @@ pub unsafe fn InitPpuForGameplay(game: &mut Game) {
     WriteReg(OAMADDL as u16, 0 as u8, game);
     *((&raw mut game.g_ram as *mut u8).offset(0x53) as *mut u16 as *mut u8).offset(0) = 0 as u8;
     WriteReg(OAMADDH as u16, 0x80 as u8, game);
-    *((&raw mut game.g_ram as *mut u8).offset(0x53) as *mut u16 as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) = 0x80 as u8;
+    *((&raw mut game.g_ram as *mut u8).offset(0x53) as *mut u16 as *mut u8).offset(1isize) =
+        0x80 as u8;
     WriteReg(OAMDATA as u16, 0 as u8, game);
     WriteReg(OAMDATA as u16, 0 as u8, game);
     crate::rtl::write_register_and_mirror(BGMODE as u16, 9, 0x55, false, game);
@@ -1905,11 +1902,8 @@ pub unsafe fn SetupMapScrollingForFileSelectMap(game: &mut Game) {
     set_ram_word!(game.reg_BG1VOFS = -(112 as i32 - r18 as i32 & 0xfff8 as i32) as u16);
     r18 = (8 as i32
         * (ram_word!(game, room_y_coordinate_on_map) as i32
-            + *((&raw mut game.g_ram as *mut u8).offset(0xafa) as *mut u16 as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as i32
+            + *((&raw mut game.g_ram as *mut u8).offset(0xafa) as *mut u16 as *mut u8)
+                .offset(1isize) as i32
             + 1 as i32)
         + (112 as i32 - r18 as i32 & 0xfff8 as i32)) as u16;
     let v1: i16 = (64i16).wrapping_sub((r18) as i16);
@@ -2489,11 +2483,8 @@ pub unsafe fn SetupMapScrollingForPauseMenu(a: u16, game: &mut Game) {
     set_ram_word!(game.reg_BG1VOFS = -(a as i32 - r18 as i32 & 0xfff8 as i32) as u16);
     r18 = (8 as i32
         * (ram_word!(game, room_y_coordinate_on_map) as i32
-            + *((&raw mut game.g_ram as *mut u8).offset(0xafa) as *mut u16 as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as i32
+            + *((&raw mut game.g_ram as *mut u8).offset(0xafa) as *mut u16 as *mut u8)
+                .offset(1isize) as i32
             + 1 as i32)
         + (a as i32 - r18 as i32 & 0xfff8 as i32)) as u16;
     v2 = (64i16).wrapping_sub((r18) as i16);
@@ -3183,11 +3174,8 @@ pub unsafe fn HandlePauseScreenPaletteAnimation(game: &mut Game) {
             }
             *((&raw mut game.g_ram as *mut u8).offset(0x73b) as *mut u16 as *mut u8).offset(0) = v1;
             *(&raw mut v2 as *mut u8).offset(0) = 0 as u8;
-            *(&raw mut v2 as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) = ram_word!(game, pausemenu_palette_animation_frame) as u8;
+            *(&raw mut v2 as *mut u8).offset(1isize) =
+                ram_word!(game, pausemenu_palette_animation_frame) as u8;
             let mut v3: u16 = ((v2 as i32 >> 3 as i32) + 30 as i32) as u16;
             j = 30 as u16;
             while (j as i32 & 0x8000 as i32) == 0i32 {
@@ -3270,11 +3258,7 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
             } else {
                 *(&raw mut v5 as *mut u8).offset(0) =
                     ((v4 as i32 >> 1 as i32) as u16 as i32 >> 8 as i32) as u8;
-                *(&raw mut v5 as *mut u8).offset(
-                    (::core::mem::size_of::<i16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) = (v4 as i32 >> 1 as i32) as u8;
+                *(&raw mut v5 as *mut u8).offset(1isize) = (v4 as i32 >> 1 as i32) as u8;
                 set_ram_word!(game.pausemenu_equipment_category_item = ((v5) as u16) | (1u16));
                 current_block = 9932683223035187777;
             }
@@ -3291,11 +3275,7 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
                 {
                     *(&raw mut v7 as *mut u8).offset(0) =
                         ((v6 as i32 >> 1 as i32) as u16 as i32 >> 8 as i32) as u8;
-                    *(&raw mut v7 as *mut u8).offset(
-                        (::core::mem::size_of::<i16>())
-                            .wrapping_div(::core::mem::size_of::<u8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ) = (v6 as i32 >> 1 as i32) as u8;
+                    *(&raw mut v7 as *mut u8).offset(1isize) = (v6 as i32 >> 1 as i32) as u8;
                     set_ram_word!(game.pausemenu_equipment_category_item = ((v7) as u16) | (2u16));
                     current_block = 9932683223035187777;
                     break;
@@ -3358,9 +3338,7 @@ pub unsafe fn EquipmentScreenCategory_Tanks(game: &mut Game) {
     kEquipmentScreenCategory_TanksFuncs[*((&raw mut game.g_ram as *mut u8).offset(0x755)
         as *mut u16 as *mut u8)
         .offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
+            1isize,
         ) as usize]
         .expect("non-null function pointer")(game);
     EquipmentScreenHandleDpad(game);
@@ -3405,11 +3383,7 @@ pub unsafe fn EquipmentScreenGlowingArrow(game: &mut Game) {
     } else {
         kEquipmentScreenGlowingArrowFuncs[*((&raw mut game.g_ram as *mut u8).offset(0x755)
             as *mut u16 as *mut u8)
-            .offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as usize]
+            .offset(1isize) as usize]
             .expect("non-null function pointer")(game);
     };
 }
@@ -3640,11 +3614,7 @@ pub unsafe fn EquipmentScreenCategory_Weapons_MoveButtons(game: &mut Game) {
             EquipmentScreenMoveToBeams(
                 (2u16).wrapping_mul(
                     (*((&raw mut game.g_ram as *mut u8).offset(0x755) as *mut u16 as *mut u8)
-                        .offset(
-                            (::core::mem::size_of::<u16>())
-                                .wrapping_div(::core::mem::size_of::<u8>())
-                                .wrapping_sub(1_usize) as isize,
-                        )) as u16,
+                        .offset(1isize)) as u16,
                 ),
                 r18,
                 game,
@@ -3657,11 +3627,7 @@ pub unsafe fn EquipmentScreenCategory_Weapons_MoveButtons(game: &mut Game) {
                 EquipmentScreenMoveToBottomOfBeams(
                     (2u16).wrapping_mul(
                         (*((&raw mut game.g_ram as *mut u8).offset(0x755) as *mut u16 as *mut u8)
-                            .offset(
-                                (::core::mem::size_of::<u16>())
-                                    .wrapping_div(::core::mem::size_of::<u8>())
-                                    .wrapping_sub(1_usize) as isize,
-                            )) as u16,
+                            .offset(1isize)) as u16,
                     ),
                     game,
                 ) == 0xffffu16
@@ -3731,11 +3697,7 @@ pub unsafe fn EquipmentScreenCategory_Suit_MoveResponse(game: &mut Game) {
             EquipmentScreenMoveToScrewOrHigherOnSuits(
                 (2u16).wrapping_mul(
                     (*((&raw mut game.g_ram as *mut u8).offset(0x755) as *mut u16 as *mut u8)
-                        .offset(
-                            (::core::mem::size_of::<u16>())
-                                .wrapping_div(::core::mem::size_of::<u8>())
-                                .wrapping_sub(1_usize) as isize,
-                        )) as u16,
+                        .offset(1isize)) as u16,
                 ),
                 r18,
                 game,
@@ -3748,11 +3710,7 @@ pub unsafe fn EquipmentScreenCategory_Suit_MoveResponse(game: &mut Game) {
                 EquipmentScreenMoveLowerOnSuitsMisc(
                     (2u16).wrapping_mul(
                         (*((&raw mut game.g_ram as *mut u8).offset(0x755) as *mut u16 as *mut u8)
-                            .offset(
-                                (::core::mem::size_of::<u16>())
-                                    .wrapping_div(::core::mem::size_of::<u8>())
-                                    .wrapping_sub(1_usize) as isize,
-                            )) as u16,
+                            .offset(1isize)) as u16,
                     ),
                     game,
                 ) == 0xffffu16
@@ -3782,11 +3740,7 @@ pub unsafe fn EquipmentScreenCategory_Boots_MoveResponse(game: &mut Game) {
             EquipmentScreenMoveToHighJumpOrLowerInBoots(
                 (2u16).wrapping_mul(
                     (*((&raw mut game.g_ram as *mut u8).offset(0x755) as *mut u16 as *mut u8)
-                        .offset(
-                            (::core::mem::size_of::<u16>())
-                                .wrapping_div(::core::mem::size_of::<u8>())
-                                .wrapping_sub(1_usize) as isize,
-                        )) as u16,
+                        .offset(1isize)) as u16,
                 ),
                 r18,
                 game,
@@ -3799,11 +3753,7 @@ pub unsafe fn EquipmentScreenCategory_Boots_MoveResponse(game: &mut Game) {
                 EquipmentScreenCategory_Boots_MoveUpInBoots(
                     (2u16).wrapping_mul(
                         (*((&raw mut game.g_ram as *mut u8).offset(0x755) as *mut u16 as *mut u8)
-                            .offset(
-                                (::core::mem::size_of::<u16>())
-                                    .wrapping_div(::core::mem::size_of::<u8>())
-                                    .wrapping_sub(1_usize) as isize,
-                            )) as u16,
+                            .offset(1isize)) as u16,
                     ),
                     game,
                 ) == 0xffffu16
@@ -3883,11 +3833,7 @@ pub unsafe fn EquipmentScreenDrawItemSelector(game: &mut Game) {
                 as i32
                 + 4 as i32
                     * *((&raw mut game.g_ram as *mut u8).offset(0x755) as *mut u16 as *mut u8)
-                        .offset(
-                            (::core::mem::size_of::<u16>())
-                                .wrapping_div(::core::mem::size_of::<u8>())
-                                .wrapping_sub(1_usize) as isize,
-                        ) as i32) as u16,
+                        .offset(1isize) as i32) as u16,
             game,
         ) as *mut u16;
         DrawPauseScreenSpriteAnim(
@@ -4049,11 +3995,7 @@ pub unsafe fn EquipmentScreenMoveToBeams(mut v0: u16, r18: u16, game: &mut Game)
         } else {
             *(&raw mut v1 as *mut u8).offset(0) =
                 ((v0 as i32 >> 1 as i32) as u16 as i32 >> 8 as i32) as u8;
-            *(&raw mut v1 as *mut u8).offset(
-                (::core::mem::size_of::<i16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) = (v0 as i32 >> 1 as i32) as u8;
+            *(&raw mut v1 as *mut u8).offset(1isize) = (v0 as i32 >> 1 as i32) as u8;
             set_ram_word!(
                 game.pausemenu_equipment_category_item =
                     (v1 as i32 & 0xff00 as i32 | 1 as i32) as u16
@@ -4099,11 +4041,7 @@ pub unsafe fn EquipmentScreenMoveLowerOnSuitsMisc(mut v0: u16, game: &mut Game) 
     }
     QueueSfx1_Max6(0x37 as u16, game);
     *(&raw mut v1 as *mut u8).offset(0) = ((v0 as i32 >> 1 as i32) as u16 as i32 >> 8 as i32) as u8;
-    *(&raw mut v1 as *mut u8).offset(
-        (::core::mem::size_of::<i16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) = (v0 as i32 >> 1 as i32) as u8;
+    *(&raw mut v1 as *mut u8).offset(1isize) = (v0 as i32 >> 1 as i32) as u8;
     set_ram_word!(
         game.pausemenu_equipment_category_item = (v1 as i32 & 0xff00 as i32 | 2 as i32) as u16
     );
@@ -4165,11 +4103,7 @@ pub unsafe fn EquipmentScreenCategory_ButtonResponse(r24: u16, game: &mut Game) 
     if (ram_word!(game, joypad1_newkeys) as i32 & kButton_A as i32) != 0i32 {
         QueueSfx1_Max6(0x38 as u16, game);
         let item: i32 = *((&raw mut game.g_ram as *mut u8).offset(0x755) as *mut u16 as *mut u8)
-            .offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as i32;
+            .offset(1isize) as i32;
         let category: i32 = ram_word!(game, pausemenu_equipment_category_item) as u8 as i32;
         let target: *mut u8 = (&raw mut game.g_ram as *mut u8).offset(
             *(RomPtr_82(
@@ -4520,19 +4454,13 @@ pub unsafe fn MapScreenDrawSamusPositionIndicator(game: &mut Game) {
         a,
         (8 as i32
             * (ram_word!(game, room_x_coordinate_on_map) as i32
-                + *((&raw mut game.g_ram as *mut u8).offset(0xaf6) as *mut u16 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) as i32)
+                + *((&raw mut game.g_ram as *mut u8).offset(0xaf6) as *mut u16 as *mut u8)
+                    .offset(1isize) as i32)
             - ram_word!(game, reg_BG1HOFS) as i32) as u16,
         (8 as i32
             * (ram_word!(game, room_y_coordinate_on_map) as i32
-                + *((&raw mut game.g_ram as *mut u8).offset(0xafa) as *mut u16 as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) as i32
+                + *((&raw mut game.g_ram as *mut u8).offset(0xafa) as *mut u16 as *mut u8)
+                    .offset(1isize) as i32
                 + 1 as i32)
             - ram_word!(game, reg_BG1VOFS) as i32) as u16,
         3584 as u16,

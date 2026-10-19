@@ -800,11 +800,7 @@ pub unsafe fn MiniDraygon_Init(game: &mut Game) {
             v2 as i32, game
         ))
         .mdn_parameter_2 as *mut u8)
-            .offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as i32
+            .offset(1isize) as i32
             >> 1 as i32) as u16;
     }
     (*E).mdn_var_00 = 0 as u16;
@@ -908,11 +904,7 @@ pub unsafe fn MiniDraygon_Func_5(game: &mut Game) {
     }
     (*E).mdn_var_E = (*E).mdn_var_E.wrapping_sub(1);
     if ((*E).mdn_var_E as i32 & 0x8000 as i32) != 0i32 {
-        (*E).mdn_var_E = *(&raw mut (*E).mdn_parameter_2 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) as u16;
+        (*E).mdn_var_E = *(&raw mut (*E).mdn_parameter_2 as *mut u8).offset(1isize) as u16;
         (*E).mdn_var_00 = ((*E).mdn_var_00) ^ (1u16);
     }
 }
@@ -1267,16 +1259,8 @@ pub unsafe fn Fune_Init(game: &mut Game) {
         (*E).fune_var_A = ((*E).fune_var_A).wrapping_add(2u16);
     }
     Fune_Func_4(game);
-    (*E).fune_var_C = *(&raw mut (*E).fune_parameter_2 as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) as u16;
-    (*E).fune_var_F = *(&raw mut (*E).fune_parameter_1 as *mut u8).offset(
-        (::core::mem::size_of::<u16>())
-            .wrapping_div(::core::mem::size_of::<u8>())
-            .wrapping_sub(1_usize) as isize,
-    ) as u16;
+    (*E).fune_var_C = *(&raw mut (*E).fune_parameter_2 as *mut u8).offset(1isize) as u16;
+    (*E).fune_var_F = *(&raw mut (*E).fune_parameter_1 as *mut u8).offset(1isize) as u16;
     (*E).fune_var_E = 0 as u16;
 }
 pub unsafe fn CallFuneFunc(ea: u32, game: &mut Game) {
@@ -2084,22 +2068,11 @@ pub unsafe fn YappingMaw_Func_17(a: u16, varE32: u16, game: &mut Game) -> u16 {
     }
     WriteReg(
         WRMPYA as u16,
-        *(&raw mut v1 as *mut u8).offset(
-            (::core::mem::size_of::<i16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ),
+        *(&raw mut v1 as *mut u8).offset(1isize),
         game,
     );
     if varE32 as u8 != 0 {
-        let prod: u16 = Mult8x8(
-            *(&raw mut v1 as *mut u8).offset(
-                (::core::mem::size_of::<i16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ),
-            varE32 as u8,
-        );
+        let prod: u16 = Mult8x8(*(&raw mut v1 as *mut u8).offset(1isize), varE32 as u8);
         r22 = (2 as i32 * ((prod as i32 & 0xff00 as i32) >> 8 as i32)) as u16;
         if r20 != 0 {
             r22 = (2 as i32 * (-(prod as i32) as u16 as i32 >> 8 as i32) | 0xff00 as i32) as u16;
@@ -2452,13 +2425,8 @@ pub unsafe fn NorfairLavaMan_Func_3(game: &mut Game) {
 pub unsafe fn NorfairLavaMan_Func_4(game: &mut Game) {
     let E: *mut Enemy_NorfairLavaMan =
         Get_NorfairLavaMan(ram_word!(game, cur_enemy_index) as i32, game);
-    let v1: i32 = 8 as i32
-        * *(&raw mut (*E).nlmn_parameter_2 as *mut u8).offset(
-            (::core::mem::size_of::<u16>())
-                .wrapping_div(::core::mem::size_of::<u8>())
-                .wrapping_sub(1_usize) as isize,
-        ) as i32
-        >> 1 as i32;
+    let v1: i32 =
+        8 as i32 * *(&raw mut (*E).nlmn_parameter_2 as *mut u8).offset(1isize) as i32 >> 1 as i32;
     (*E).nlmn_var_08 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa28187)) as *const u8
         as *mut u16)
         .offset(v1 as isize);
@@ -5543,33 +5511,20 @@ pub unsafe fn KiHunter_Func_11(game: &mut Game) {
         *(((game.g_rom.offset(crate::rtl::lorom_offset(0xa2838f)) as *const u8 as *mut u16)
             .offset(2) as *mut u16 as *mut u8)
             .offset(
-                (8 as i32
-                    * *(&raw mut (*E).khr_var_B as *mut u8).offset(
-                        (::core::mem::size_of::<u16>())
-                            .wrapping_div(::core::mem::size_of::<u8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ) as i32) as isize,
+                (8 as i32 * *(&raw mut (*E).khr_var_B as *mut u8).offset(1isize) as i32) as isize,
             )
             .offset(1) as *mut u16),
     );
     (*E).base.y_pos = ((*E).khr_var_06 as i32
         + SineMult8bit(
-            *(&raw mut (*E).khr_var_F as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as u16,
+            *(&raw mut (*E).khr_var_F as *mut u8).offset(1isize) as u16,
             g_byte_A8F186 as u16,
             game,
         ) as i32
         - (*E).khr_var_04 as i32) as u16;
     (*E).base.x_pos = ((*E).khr_var_05 as i32
         + CosineMult8bit(
-            *(&raw mut (*E).khr_var_F as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as u16,
+            *(&raw mut (*E).khr_var_F as *mut u8).offset(1isize) as u16,
             g_byte_A8F186 as u16,
             game,
         ) as i32
@@ -5603,22 +5558,13 @@ pub unsafe fn KiHunter_Func_14(game: &mut Game) {
         *((game.g_rom.offset(crate::rtl::lorom_offset(0xa2838f)) as *const u8 as *mut u16
             as *mut u8)
             .offset(
-                (8 as i32
-                    * *(&raw mut (*E).khr_var_B as *mut u8).offset(
-                        (::core::mem::size_of::<u16>())
-                            .wrapping_div(::core::mem::size_of::<u8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ) as i32) as isize,
+                (8 as i32 * *(&raw mut (*E).khr_var_B as *mut u8).offset(1isize) as i32) as isize,
             )
             .offset(1) as *mut u16),
     );
     let r20: u16 = ((*E).khr_var_06 as i32
         + SineMult8bit(
-            *(&raw mut (*E).khr_var_F as *mut u8).offset(
-                (::core::mem::size_of::<u16>())
-                    .wrapping_div(::core::mem::size_of::<u8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as u16,
+            *(&raw mut (*E).khr_var_F as *mut u8).offset(1isize) as u16,
             g_byte_A8F186 as u16,
             game,
         ) as i32
@@ -5637,11 +5583,7 @@ pub unsafe fn KiHunter_Func_14(game: &mut Game) {
     } else {
         (*E).base.x_pos = ((*E).khr_var_05 as i32
             + CosineMult8bit(
-                *(&raw mut (*E).khr_var_F as *mut u8).offset(
-                    (::core::mem::size_of::<u16>())
-                        .wrapping_div(::core::mem::size_of::<u8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) as u16,
+                *(&raw mut (*E).khr_var_F as *mut u8).offset(1isize) as u16,
                 g_byte_A8F186 as u16,
                 game,
             ) as i32
