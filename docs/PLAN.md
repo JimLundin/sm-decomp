@@ -13790,6 +13790,24 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Door-transition state cleanup (2026-10-19): HandleTransition now uses
+named byte-backed coordinates, IRQ and elevator words, preserving wrapped
+coordinate corrections, callback order and the two-byte INIDISP/OBSEL update.
+Frozen ff755657 plus this routine and three getters passes any% 129712/0
+(291.07s) and Waver 58109/0 (117.08s), native exits 0. Observed prefix 20000/0
+(65.79s) and Waver 58109/0 (173.15s) compare 35 actual old/current calls:
+all 128 KiB RAM, g_fail, returns and real callback boundaries/arguments match.
+Waver exercises each elevator command once; the other 33 calls skip them.
+Natural calls leave coordinates unchanged and use the zero-IRQ fallback;
+coordinate adjustments and nonzero IRQ values have constructed coverage only.
+All 70 targeted cases pass with actual callbacks and restored continuation.
+An OBSEL-byte fault is detected at frame 11612, byte 52, native exit 91.
+Independent source/footprint/observer reviews, exact stripping and unchanged
+frozen hashes pass; clean/observed Waver non-timing diagnostics match.
+Formatting, normal release build (33.08s) and progress pass. Own raw offsets
+-15, cast lines -37 and Rust lines -25; other counters unchanged. Remaining
+room loading, wider gameplay/credits coverage and ownership stay open.
+
 Samus no-FX animation state (2026-10-19): use byte-backed word reads and
 writes for the animation buffer, liquid state and suit palette, plus the
 existing movement-byte accessor. The bottom-position call still precedes

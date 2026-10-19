@@ -10065,76 +10065,36 @@ pub unsafe fn DoorTransition_WaitForMusicToClear(game: &mut Game) -> CoroutineRe
     return kCoroutineNone as CoroutineRet;
 }
 pub unsafe fn DoorTransition_HandleTransition(game: &mut Game) -> CoroutineRet {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 0xf0 as ::core::ffi::c_int
-        == 16 as ::core::ffi::c_int
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16) = ((*((&raw mut game.g_ram as *mut uint8)
-            .offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            | 0xf as ::core::ffi::c_int)
-            + 8 as ::core::ffi::c_int) as uint16;
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 0xf0 as ::core::ffi::c_int
-        == 224 as ::core::ffi::c_int
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16) = ((*((&raw mut game.g_ram as *mut uint8)
-            .offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            & 0xfff0 as ::core::ffi::c_int)
-            - 8 as ::core::ffi::c_int) as uint16;
+    let x = game.samus_x_pos();
+    match x & 0x00f0 {
+        0x10 => game.set_samus_x_pos((x | 0x000f).wrapping_add(8)),
+        0xe0 => game.set_samus_x_pos((x & 0xfff0).wrapping_sub(8)),
+        _ => {}
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 0xf0 as ::core::ffi::c_int
-        == 16 as ::core::ffi::c_int
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16) = ((*((&raw mut game.g_ram as *mut uint8)
-            .offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            | 0xf as ::core::ffi::c_int)
-            + 8 as ::core::ffi::c_int) as uint16;
+    let y = game.samus_y_pos();
+    if y & 0x00f0 == 0x10 {
+        game.set_samus_y_pos((y | 0x000f).wrapping_add(8));
     }
     for offset in (0..512).step_by(2).rev() {
         game.g_ram[0x9c00 + offset..0x9c02 + offset].copy_from_slice(&[0, 0]);
         game.g_ram[0x9e00 + offset..0x9e02 + offset].copy_from_slice(&[0, 0]);
     }
-    let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xa9 as ::core::ffi::c_int as isize) as *mut uint16);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa9 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        == 0
-    {
-        v1 = 4 as uint16;
-    }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa7 as ::core::ffi::c_int as isize)
-        as *mut uint16) = v1;
+    let room_irq = game.room_loading_irq_handler();
+    game.set_irqhandler_next_handler(if room_irq == 0 { 4 } else { room_irq });
     PointlessFunctionStupidToo();
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xe16 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x799 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
-        {
-            CallSomeSamusCode(7 as uint16, game);
+    if game.elevator_flags() != 0 {
+        let samus_command = if game.elevator_direction() & 0x8000 == 0 {
+            7
         } else {
-            CallSomeSamusCode(0 as uint16, game);
-        }
+            0
+        };
+        CallSomeSamusCode(samus_command, game);
     }
     SetLiquidPhysicsType(game);
     game.set_door_transition_function(fnDoorTransition_FadeInScreenAndFinish as u16);
-    let ref mut fresh37 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x51 as ::core::ffi::c_int as isize) as *mut uint16);
-    *fresh37 = (*fresh37 as ::core::ffi::c_int | 0x1f as ::core::ffi::c_int) as uint16;
-    return kCoroutineNone as CoroutineRet;
+    let inidisp_obsel = u16::from_le_bytes([game.g_ram[0x51], game.g_ram[0x52]]);
+    game.g_ram[0x51..0x53].copy_from_slice(&(inidisp_obsel | 0x001f).to_le_bytes());
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn DoorTransition_FadeInScreenAndFinish(game: &mut Game) -> CoroutineRet {
     AnimtilesHandler(game);

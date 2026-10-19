@@ -242,6 +242,11 @@ impl Game {
         self.g_ram[0xa7..0xa9].copy_from_slice(&value.to_le_bytes());
     }
 
+    /// room_loading_irq_handler ($7E:00A9 in ram_map).
+    pub fn room_loading_irq_handler(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xa9], self.g_ram[0xaa]])
+    }
+
     /// debug_disable_sounds ($7E:05F5 in ram_map).
     pub fn set_debug_disable_sounds(&mut self, value: u16) {
         self.g_ram[0x5f5..0x5f7].copy_from_slice(&value.to_le_bytes());
@@ -283,6 +288,16 @@ impl Game {
     /// door_direction ($7E:0791 in ram_map).
     pub fn door_direction(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0x791], self.g_ram[0x792]])
+    }
+
+    /// elevator_direction ($7E:0799 in ram_map).
+    pub fn elevator_direction(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x799], self.g_ram[0x79a]])
+    }
+
+    /// elevator_flags ($7E:0E16 in ram_map).
+    pub fn elevator_flags(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xe16], self.g_ram[0xe17]])
     }
 
     /// cre_bitset ($7E:07B3 in ram_map).
