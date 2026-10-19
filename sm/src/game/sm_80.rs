@@ -1309,407 +1309,90 @@ pub unsafe fn NMI_ProcessVramWriteQueue(game: &mut Game) {
     Nmi_ProcessHorizScrollingDma(game);
     Nmi_ProcessVertScrollingDma(game);
 }
-pub unsafe fn Nmi_ProcessHorizScrollingDma(game: &mut Game) {
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x81 as uint8, game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x962 as ::core::ffi::c_int as isize)
-        as *mut uint16) as uint8
-        != 0
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x962 as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
-            .offset(0 as ::core::ffi::c_int as isize) = 0 as uint8;
-        let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x95a as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        WriteRegWord(
-            VMADDL as ::core::ffi::c_int as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x95a as ::core::ffi::c_int as isize)
-                as *mut uint16),
-            game,
-        );
-        WriteRegWord(
-            DMAP1 as ::core::ffi::c_int as uint16,
-            0x1801 as uint16,
-            game,
-        );
-        WriteRegWord(
-            A1T1L as ::core::ffi::c_int as uint16,
-            ((&raw mut game.g_ram as *mut uint8).offset(0xc8c8 as ::core::ffi::c_int as isize)
-                as *mut uint16 as *mut uint8)
-                .offset_from(&raw mut game.g_ram as *mut uint8) as ::core::ffi::c_long
-                as uint16,
-            game,
-        );
-        WriteReg(A1B1 as ::core::ffi::c_int as uint16, 0x7e as uint8, game);
-        let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x956 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        WriteRegWord(
-            DAS1L as ::core::ffi::c_int as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x956 as ::core::ffi::c_int as isize)
-                as *mut uint16),
-            game,
-        );
-        WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-        WriteRegWord(
-            VMADDL as ::core::ffi::c_int as uint16,
-            (v0 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16,
-            game,
-        );
-        WriteRegWord(DAS1L as ::core::ffi::c_int as uint16, v1, game);
-        WriteRegWord(
-            A1T1L as ::core::ffi::c_int as uint16,
-            ((&raw mut game.g_ram as *mut uint8).offset(0xc908 as ::core::ffi::c_int as isize)
-                as *mut uint16 as *mut uint8)
-                .offset_from(&raw mut game.g_ram as *mut uint8) as ::core::ffi::c_long
-                as uint16,
-            game,
-        );
-        WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-        WriteRegWord(
-            A1T1L as ::core::ffi::c_int as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x95e as ::core::ffi::c_int as isize)
-                as *mut uint16),
-            game,
-        );
-        let mut v2: uint16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x958 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x958 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            != 0
-        {
-            WriteRegWord(
-                DAS1L as ::core::ffi::c_int as uint16,
-                *((&raw mut game.g_ram as *mut uint8).offset(0x958 as ::core::ffi::c_int as isize)
-                    as *mut uint16),
-                game,
-            );
-            let mut v3: uint16 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x95c as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            WriteRegWord(
-                VMADDL as ::core::ffi::c_int as uint16,
-                *((&raw mut game.g_ram as *mut uint8).offset(0x95c as ::core::ffi::c_int as isize)
-                    as *mut uint16),
-                game,
-            );
-            WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-            WriteRegWord(
-                VMADDL as ::core::ffi::c_int as uint16,
-                (v3 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16,
-                game,
-            );
-            WriteRegWord(DAS1L as ::core::ffi::c_int as uint16, v2, game);
-            WriteRegWord(
-                A1T1L as ::core::ffi::c_int as uint16,
-                *((&raw mut game.g_ram as *mut uint8).offset(0x960 as ::core::ffi::c_int as isize)
-                    as *mut uint16),
-                game,
-            );
-            WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-        }
-    }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x97e as ::core::ffi::c_int as isize)
-        as *mut uint16) as uint8
-        != 0
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x97e as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
-            .offset(0 as ::core::ffi::c_int as isize) = 0 as uint8;
-        let mut v4: uint16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x976 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        WriteRegWord(
-            VMADDL as ::core::ffi::c_int as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x976 as ::core::ffi::c_int as isize)
-                as *mut uint16),
-            game,
-        );
-        WriteRegWord(
-            DMAP1 as ::core::ffi::c_int as uint16,
-            0x1801 as uint16,
-            game,
-        );
-        WriteRegWord(
-            A1T1L as ::core::ffi::c_int as uint16,
-            (&raw mut game.g_ram as *mut uint8)
-                .offset(0xc9d0 as ::core::ffi::c_int as isize)
-                .offset_from(&raw mut game.g_ram as *mut uint8) as ::core::ffi::c_long
-                as uint16,
-            game,
-        );
-        WriteReg(A1B1 as ::core::ffi::c_int as uint16, 0x7e as uint8, game);
-        let mut v5: uint16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x972 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        WriteRegWord(
-            DAS1L as ::core::ffi::c_int as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x972 as ::core::ffi::c_int as isize)
-                as *mut uint16),
-            game,
-        );
-        WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-        WriteRegWord(
-            VMADDL as ::core::ffi::c_int as uint16,
-            (v4 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16,
-            game,
-        );
-        WriteRegWord(DAS1L as ::core::ffi::c_int as uint16, v5, game);
-        WriteRegWord(
-            A1T1L as ::core::ffi::c_int as uint16,
-            ((&raw mut game.g_ram as *mut uint8).offset(0xca10 as ::core::ffi::c_int as isize)
-                as *mut uint16 as *mut uint8)
-                .offset_from(&raw mut game.g_ram as *mut uint8) as ::core::ffi::c_long
-                as uint16,
-            game,
-        );
-        WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-        WriteRegWord(
-            A1T1L as ::core::ffi::c_int as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x97a as ::core::ffi::c_int as isize)
-                as *mut uint16),
-            game,
-        );
-        let mut v6: uint16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x974 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x974 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            != 0
-        {
-            WriteRegWord(
-                DAS1L as ::core::ffi::c_int as uint16,
-                *((&raw mut game.g_ram as *mut uint8).offset(0x974 as ::core::ffi::c_int as isize)
-                    as *mut uint16),
-                game,
-            );
-            let mut v7: uint16 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x978 as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            WriteRegWord(
-                VMADDL as ::core::ffi::c_int as uint16,
-                *((&raw mut game.g_ram as *mut uint8).offset(0x978 as ::core::ffi::c_int as isize)
-                    as *mut uint16),
-                game,
-            );
-            WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-            WriteRegWord(
-                VMADDL as ::core::ffi::c_int as uint16,
-                (v7 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16,
-                game,
-            );
-            WriteRegWord(DAS1L as ::core::ffi::c_int as uint16, v6, game);
-            WriteRegWord(
-                A1T1L as ::core::ffi::c_int as uint16,
-                *((&raw mut game.g_ram as *mut uint8).offset(0x97c as ::core::ffi::c_int as isize)
-                    as *mut uint16),
-                game,
-            );
-            WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+#[derive(Clone, Copy)]
+enum ScrollingDmaLayout {
+    Column,
+    Row,
+}
+
+impl ScrollingDmaLayout {
+    fn second_half_destination(self, address: u16) -> u16 {
+        match self {
+            Self::Column => address.wrapping_add(1),
+            Self::Row => address | 0x20,
         }
     }
 }
+
+unsafe fn transfer_scrolling_tilemap(
+    parameters: usize,
+    initial_sources: [u16; 2],
+    layout: ScrollingDmaLayout,
+    game: &mut Game,
+) {
+    let enable = parameters + 12;
+    if game.g_ram[enable] == 0 {
+        return;
+    }
+    // Only the low enable byte is consumed, before reading transfer parameters.
+    game.g_ram[enable] = 0;
+    // Sizes, destinations and wrapped sources are three pairs of RAM words.
+    let read_parameter = |game: &Game, offset: usize| {
+        u16::from_le_bytes([
+            game.g_ram[parameters + offset],
+            game.g_ram[parameters + offset + 1],
+        ])
+    };
+
+    let destination = read_parameter(game, 4);
+    WriteRegWord(VMADDL as u16, destination, game);
+    WriteRegWord(DMAP1 as u16, 0x1801, game);
+    WriteRegWord(A1T1L as u16, initial_sources[0], game);
+    WriteReg(A1B1 as u16, 0x7e, game);
+    let size = read_parameter(game, 0);
+    // A zero unwrapped size still triggers a full 65,536-byte DMA.
+    WriteRegWord(DAS1L as u16, size, game);
+    WriteReg(MDMAEN as u16, 2, game);
+    WriteRegWord(
+        VMADDL as u16,
+        layout.second_half_destination(destination),
+        game,
+    );
+    WriteRegWord(DAS1L as u16, size, game);
+    WriteRegWord(A1T1L as u16, initial_sources[1], game);
+    WriteReg(MDMAEN as u16, 2, game);
+
+    // Prepare the wrapped source even when there is no wrapped transfer.
+    WriteRegWord(A1T1L as u16, read_parameter(game, 8), game);
+    let wrapped_size = read_parameter(game, 2);
+    if wrapped_size != 0 {
+        WriteRegWord(DAS1L as u16, wrapped_size, game);
+        let wrapped_destination = read_parameter(game, 6);
+        WriteRegWord(VMADDL as u16, wrapped_destination, game);
+        WriteReg(MDMAEN as u16, 2, game);
+        WriteRegWord(
+            VMADDL as u16,
+            layout.second_half_destination(wrapped_destination),
+            game,
+        );
+        WriteRegWord(DAS1L as u16, wrapped_size, game);
+        WriteRegWord(A1T1L as u16, read_parameter(game, 10), game);
+        WriteReg(MDMAEN as u16, 2, game);
+    }
+}
+
+pub unsafe fn Nmi_ProcessHorizScrollingDma(game: &mut Game) {
+    WriteReg(VMAIN as u16, 0x81, game);
+    let layout = ScrollingDmaLayout::Column;
+    transfer_scrolling_tilemap(0x956, [0xc8c8, 0xc908], layout, game);
+    transfer_scrolling_tilemap(0x972, [0xc9d0, 0xca10], layout, game);
+}
+
 pub unsafe fn Nmi_ProcessVertScrollingDma(game: &mut Game) {
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x970 as ::core::ffi::c_int as isize)
-        as *mut uint16) as uint8
-        != 0
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x970 as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
-            .offset(0 as ::core::ffi::c_int as isize) = 0 as uint8;
-        let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x968 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        WriteRegWord(
-            VMADDL as ::core::ffi::c_int as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x968 as ::core::ffi::c_int as isize)
-                as *mut uint16),
-            game,
-        );
-        WriteRegWord(
-            DMAP1 as ::core::ffi::c_int as uint16,
-            0x1801 as uint16,
-            game,
-        );
-        WriteRegWord(
-            A1T1L as ::core::ffi::c_int as uint16,
-            ((&raw mut game.g_ram as *mut uint8).offset(0xc948 as ::core::ffi::c_int as isize)
-                as *mut uint16 as *mut uint8)
-                .offset_from(&raw mut game.g_ram as *mut uint8) as ::core::ffi::c_long
-                as uint16,
-            game,
-        );
-        WriteReg(A1B1 as ::core::ffi::c_int as uint16, 0x7e as uint8, game);
-        let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x964 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        WriteRegWord(
-            DAS1L as ::core::ffi::c_int as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x964 as ::core::ffi::c_int as isize)
-                as *mut uint16),
-            game,
-        );
-        WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-        WriteRegWord(
-            VMADDL as ::core::ffi::c_int as uint16,
-            (v0 as ::core::ffi::c_int | 0x20 as ::core::ffi::c_int) as uint16,
-            game,
-        );
-        WriteRegWord(DAS1L as ::core::ffi::c_int as uint16, v1, game);
-        WriteRegWord(
-            A1T1L as ::core::ffi::c_int as uint16,
-            ((&raw mut game.g_ram as *mut uint8).offset(0xc98c as ::core::ffi::c_int as isize)
-                as *mut uint16 as *mut uint8)
-                .offset_from(&raw mut game.g_ram as *mut uint8) as ::core::ffi::c_long
-                as uint16,
-            game,
-        );
-        WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-        WriteRegWord(
-            A1T1L as ::core::ffi::c_int as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x96c as ::core::ffi::c_int as isize)
-                as *mut uint16),
-            game,
-        );
-        let mut v2: uint16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x966 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x966 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            != 0
-        {
-            WriteRegWord(
-                DAS1L as ::core::ffi::c_int as uint16,
-                *((&raw mut game.g_ram as *mut uint8).offset(0x966 as ::core::ffi::c_int as isize)
-                    as *mut uint16),
-                game,
-            );
-            let mut v3: uint16 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x96a as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            WriteRegWord(
-                VMADDL as ::core::ffi::c_int as uint16,
-                *((&raw mut game.g_ram as *mut uint8).offset(0x96a as ::core::ffi::c_int as isize)
-                    as *mut uint16),
-                game,
-            );
-            WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-            WriteRegWord(
-                VMADDL as ::core::ffi::c_int as uint16,
-                (v3 as ::core::ffi::c_int | 0x20 as ::core::ffi::c_int) as uint16,
-                game,
-            );
-            WriteRegWord(DAS1L as ::core::ffi::c_int as uint16, v2, game);
-            WriteRegWord(
-                A1T1L as ::core::ffi::c_int as uint16,
-                *((&raw mut game.g_ram as *mut uint8).offset(0x96e as ::core::ffi::c_int as isize)
-                    as *mut uint16),
-                game,
-            );
-            WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-        }
-    }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x98c as ::core::ffi::c_int as isize)
-        as *mut uint16) as uint8
-        != 0
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x98c as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
-            .offset(0 as ::core::ffi::c_int as isize) = 0 as uint8;
-        let mut v4: uint16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x984 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        WriteRegWord(
-            VMADDL as ::core::ffi::c_int as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x984 as ::core::ffi::c_int as isize)
-                as *mut uint16),
-            game,
-        );
-        WriteRegWord(
-            DMAP1 as ::core::ffi::c_int as uint16,
-            0x1801 as uint16,
-            game,
-        );
-        WriteRegWord(
-            A1T1L as ::core::ffi::c_int as uint16,
-            (&raw mut game.g_ram as *mut uint8)
-                .offset(0xca50 as ::core::ffi::c_int as isize)
-                .offset_from(&raw mut game.g_ram as *mut uint8) as ::core::ffi::c_long
-                as uint16,
-            game,
-        );
-        WriteReg(A1B1 as ::core::ffi::c_int as uint16, 0x7e as uint8, game);
-        let mut v5: uint16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x980 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        WriteRegWord(
-            DAS1L as ::core::ffi::c_int as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x980 as ::core::ffi::c_int as isize)
-                as *mut uint16),
-            game,
-        );
-        WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-        WriteRegWord(
-            VMADDL as ::core::ffi::c_int as uint16,
-            (v4 as ::core::ffi::c_int | 0x20 as ::core::ffi::c_int) as uint16,
-            game,
-        );
-        WriteRegWord(DAS1L as ::core::ffi::c_int as uint16, v5, game);
-        WriteRegWord(
-            A1T1L as ::core::ffi::c_int as uint16,
-            (&raw mut game.g_ram as *mut uint8)
-                .offset(0xca94 as ::core::ffi::c_int as isize)
-                .offset_from(&raw mut game.g_ram as *mut uint8) as ::core::ffi::c_long
-                as uint16,
-            game,
-        );
-        WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-        WriteRegWord(
-            A1T1L as ::core::ffi::c_int as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x988 as ::core::ffi::c_int as isize)
-                as *mut uint16),
-            game,
-        );
-        let mut v6: uint16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x982 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x982 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            != 0
-        {
-            WriteRegWord(
-                DAS1L as ::core::ffi::c_int as uint16,
-                *((&raw mut game.g_ram as *mut uint8).offset(0x982 as ::core::ffi::c_int as isize)
-                    as *mut uint16),
-                game,
-            );
-            let mut v7: uint16 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x986 as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            WriteRegWord(
-                VMADDL as ::core::ffi::c_int as uint16,
-                *((&raw mut game.g_ram as *mut uint8).offset(0x986 as ::core::ffi::c_int as isize)
-                    as *mut uint16),
-                game,
-            );
-            WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-            WriteRegWord(
-                VMADDL as ::core::ffi::c_int as uint16,
-                (v7 as ::core::ffi::c_int | 0x20 as ::core::ffi::c_int) as uint16,
-                game,
-            );
-            WriteRegWord(DAS1L as ::core::ffi::c_int as uint16, v6, game);
-            WriteRegWord(
-                A1T1L as ::core::ffi::c_int as uint16,
-                *((&raw mut game.g_ram as *mut uint8).offset(0x98a as ::core::ffi::c_int as isize)
-                    as *mut uint16),
-                game,
-            );
-            WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-        }
-    }
+    WriteReg(VMAIN as u16, 0x80, game);
+    let layout = ScrollingDmaLayout::Row;
+    transfer_scrolling_tilemap(0x964, [0xc948, 0xc98c], layout, game);
+    transfer_scrolling_tilemap(0x980, [0xca50, 0xca94], layout, game);
 }
 pub unsafe fn NMI_ProcessVramReadQueue(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x360 as ::core::ffi::c_int as isize)

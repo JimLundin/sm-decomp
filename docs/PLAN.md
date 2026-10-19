@@ -91,22 +91,23 @@ No maintained source or own residue counters change in this quality check.
 Later Cargo-profile and gameplay changes retain separate verification;
 full gameplay/credits, hardware/audio coverage and remaining masks stay open.
 
-Latest focused check: frozen `a85ff831` plus direct palette/OAM DMA source
-addresses passes any% 129712/0 (311.78s) and Waver 58109/0 (173.02s), both
-native exits 0. NmiUpdatePalettesAndOam retains all 18 ordered register writes
-and the single MDMAEN=3 start. The 9000/0 prefix passes 9000 actual old/current
-comparisons and 18000 transfers per side. Each call uploads 544 OAM bytes from
-a WRAM mirror, then 512 palette bytes from full WRAM: 9,504,000 transferred
-bytes across the replay. Captured RAM,
-both PPUs, CPU/Snes/Cart, SRAM, inputs, DMA state and g_fail match after checked
-restoration; source reads, transferred bytes, channel order and complete
-OAM/CGRAM tables and latches match. Four constructed controls pass eight
-transfers / 4224 bytes, covering all initial OAM/CGRAM write-phase combinations
-with zero, FF and patterned RAM. Natural calls start with both write phases
-clear; other phase combinations are constructed. Frozen hashes, exact
-observation stripping and independent review pass. Formatting, release build
-and progress pass. Own raw offsets -4, cast lines -13 and Rust lines -15;
-other own counters unchanged.
+Latest focused check: frozen `97b3dbb5` plus the shared scrolling DMA helper
+passes any% 129712/0 (301.94s) and Waver 58109/0 (143.79s), both native exits
+0. Column wrapping +1 and row OR $20 remain distinct; low-byte flag clearing,
+saved values across DMA and live wrapped-parameter reads retain their order.
+The 30000/0 Waver prefix passes 58808 actual old/current wrapper comparisons
+and 117616 helper entries. All four configurations execute: active BG1/BG2
+columns 540/92 and rows 466/1; wrapped counts are 10/0 and 466/1 respectively.
+Captured RAM, both PPUs, CPU/Snes/Cart, SRAM, inputs, DMA state and g_fail match
+after checked restoration. Ordered registers, parameter reads, flag clears,
+3152 DMA launches, 144408 transferred bytes and 6304 diagnostic prereads match
+per side. All 16 constructed cases pass 64 launches / 263304 bytes / 263432
+reads, including four 65536-byte transfers, source wrap/bank carry, flag aliases
+and inherited byte phases. First-size zero, BG2 column wrapping and row wrapped
+skips have constructed coverage only. Frozen hashes, exact observation stripping
+and independent review pass. Formatting, release build and progress pass.
+Own raw offsets -68, cast lines -146 and Rust lines -317; unsafe functions +1
+because one private helper consolidates the four hardware-transfer sequences.
 
 Everything that existed before is in the branch `archive/pre-transpile-2026-10-17`.
 
