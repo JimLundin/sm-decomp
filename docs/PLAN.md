@@ -12509,6 +12509,36 @@ Next: use the actual wall-jump contact/animation gate to reach this passage,
 then verify a successful route from boot. Complete gameplay/credits,
 hardware/audio timing, remaining masked state and ownership remain open.
 
+9BC8 left ledge and actual wall-jump coverage (2026-10-19): the frozen
+revised-render/table-mask-removal library boot replay69714/0 (92.07s),
+nativeexit0, reaches a stableX89/Y347 ledge, health59/199, missiles7/10.
+The resumed2414-frame check also passes with zero failures. This is normal
+controller input with all comparisons/rendering enabled, no injected RAM.
+
+From the missile-pickup prefix68606: neutral500, left20, neutral5, up1,
+neutral20, left/Y/A65, left25, neutral10, down1, neutral10, down1,
+neutral10; left/X1,left44 twice, then left/X1,left90, neutral80.
+From69535: up1,neutral20,left14,left/B/A12,right/B3,right/B/A19,
+B/A30,neutral80. Wall-jump pose0083 executes around69590; standing pose0001
+atX89/Y347 persists69635..69710. Buttons use the recorded fixture mapping:
+A=0080 jump, X=0040 shoot, B=8000 run, Y=4000 cancel item.
+
+Read-only per-frame state observations explain previous failed attempts:
+jumping from rest entered movement2, while a running approach enters spin
+movement3. Turning right and releasing jump3 frames allows animation11
+before a fresh jump press. Earlier normal-jump timing sweeps were therefore
+ineligible. Late wall jumps hit the ceiling left of the shaft; the lower
+wall jump reaches this ledge. Subsequent Bomb/left alignment probes have
+not reached the64/288 passage or Super Missile tank; no new item claimed.
+
+No maintained source or own residue change. Cargo fmt/check, release and
+progress pass; peer source/PLAN/tool changes remain separately owned.
+Frozen route does not include later committed X-ray outer-boundary changes.
+Inputs, saves and probe hosts remain outside tracked files. Next: align
+from this verified ledge into the Bomb passage and verify tank access from
+boot. Complete gameplay/credits, hardware/audio timing, masks and ownership
+remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
