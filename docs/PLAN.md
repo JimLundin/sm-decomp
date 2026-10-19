@@ -9208,6 +9208,22 @@ builds pass. Live CPU matches verified source. Rust lines -10; other counters
 unchanged. Arbitrary device mutations and full gameplay/render/audio remain
 open; ROR stays held for contextual coverage. Continue covered CPU cleanup.
 
+CPU safe BIT flag arithmetic (2026-10-19): test_accumulator_bits retains
+pre-fetch width selection, word cycle increment and ordered operand reads,
+then calls safe test_bits. Zero-extended byte operands make the full A-word
+AND equivalent to the original byte AND; post-fetch A read and Z/N/V store
+order remain exact. Independent source/probe review finds no differences.
+Frozen HEAD `04725587` plus this change passes 17,956,864 actual old/current
+BIT cases: every A word/byte operand pair, all word operands with accumulator
+boundaries and all A words with operand boundaries. Named CPU/bus fields,
+flags and cycle wrapping match. Prefix 3,600/0 (1.11s), native exit 0, executes
+word/byte BIT 23,474/6,698 times. Clean full any% 129,712/0 (56.79s), native
+exit 0. Cargo fmt/check, full release and release-library builds with external
+SDL2, normal metadata and optimized frozen core/DLL builds pass. Live CPU
+matches verified source. Rust lines +1 introduce the safe helper; other counters
+unchanged. Full word Cartesian, arbitrary MMIO mutation and complete gameplay/
+render/audio coverage remain open; ROR stays held. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

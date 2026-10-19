@@ -623,18 +623,19 @@ unsafe fn compare_y(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     };
     set_zero_negative(result, (*cpu).xf, &mut *cpu);
 }
+fn test_bits(value: u16, byte: bool, cpu: &mut Cpu) {
+    cpu.z = cpu.a & value == 0;
+    cpu.n = value & if byte { 0x80 } else { 0x8000 } != 0;
+    cpu.v = value & if byte { 0x40 } else { 0x4000 } != 0;
+}
 unsafe fn test_accumulator_bits(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
-        let value = read_byte(cpu, low, game);
-        (*cpu).z = (*cpu).a as u8 & value == 0;
-        (*cpu).n = value & 0x80 != 0;
-        (*cpu).v = value & 0x40 != 0;
+        let value = u16::from(read_byte(cpu, low, game));
+        test_bits(value, true, &mut *cpu);
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
         let value = read_word(cpu, low, high, game);
-        (*cpu).z = (*cpu).a & value == 0;
-        (*cpu).n = value & 0x8000 != 0;
-        (*cpu).v = value & 0x4000 != 0;
+        test_bits(value, false, &mut *cpu);
     }
 }
 unsafe fn load_accumulator(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
