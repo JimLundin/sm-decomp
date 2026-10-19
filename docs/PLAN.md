@@ -12895,6 +12895,29 @@ source, which remains preserved. Chozo guarded reads, Super Missile passage
 and previous holds stay held; complete credits, gameplay, hardware/audio,
 masks and ownership remain open.
 
+PLM timer byte setter (2026-10-19): PlmInstr_SetTimer now writes
+its operand byte directly at plm_timers+k, preserving the other timer byte
+and the original byte indexing, including odd slots. The operand read still
+precedes the single store; the return pointer advances exactly one byte.
+
+Frozen 6222ac0f plus only this change passes any%129712/0
+(222.13s), native exit0, and pickup route68606/0
+(139.89s), native exit0. Observed pickup route68606/0
+(138.72s) executes two setter calls at31814 and48938.
+Maintained source has no observers. Cargo fmt/check and release build pass.
+Own raw offsets-1, cast lines-3, Rust lines-6; other own counters unchanged.
+Frozen replays exclude peer source, which remains preserved.
+
+PLM timer decrement coverage hold (2026-10-19): the combined byte-backed
+setter/decrement candidate passes clean and observed pickup68606/0
+(167.74s/168.62s), native exits0, but the observer records zero
+PlmInstr_DecrementAndBranchNonzero calls. Retire only the decrement
+candidate and retain its original maintained body. Obtain contextual
+execution before further cleanup of its wrap/store/branch sequence.
+The final setter-only replays above replace the combined regression evidence.
+Chozo guarded reads, Super Missile passage and previous holds stay held;
+complete credits, gameplay, hardware/audio, masks and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

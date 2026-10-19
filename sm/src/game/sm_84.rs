@@ -1678,15 +1678,9 @@ pub unsafe fn PlmInstr_DecrementAndBranchNonzero(
         return PlmInstr_Goto(plmp, k);
     };
 }
-pub unsafe fn PlmInstr_SetTimer(
-    mut plmp: *const uint8,
-    mut k: uint16,
-    game: &mut Game,
-) -> *const uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1d77 as ::core::ffi::c_int as isize)
-        as *mut uint16 as *mut uint8)
-        .offset(k as ::core::ffi::c_int as isize) = *plmp;
-    return plmp.offset(1 as ::core::ffi::c_int as isize);
+pub unsafe fn PlmInstr_SetTimer(plmp: *const uint8, k: uint16, game: &mut Game) -> *const uint8 {
+    game.g_ram[0x1d77 + usize::from(k)] = *plmp; // Only one byte of plm_timers.
+    plmp.add(1)
 }
 pub unsafe fn PlmInstr_LoadItemPlmGfx(
     mut plmp: *const uint8,
