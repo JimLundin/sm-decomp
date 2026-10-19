@@ -294,6 +294,28 @@ change and no new replay result belong to this cleanup.
 
 ## The oracle
 
+Independent NMI register QC (2026-10-19): frozen e1a9a3d3 plus only
+NmiUpdateIoRegisters passes clean any% 129712/0 (305.76s) and Waver 58109/0
+(149.57s), native exits 0. All 63 frozen source/host files match that scope.
+The live candidate and both exact old/current observed bodies match;
+removing the temporary observation restores every frozen source file.
+
+An independent 9000-frame replay passes 0 failures (45.56s), native exit 0,
+with 9000 routine calls and 436908 ordered register writes. Each candidate
+write matches the old routine's register, value and full 128 KiB RAM at that
+point; final RAM and g_fail also match. Candidate writes execute actual
+hardware, with the maintained frame oracle enabled. Ordinary/current-only/
+next-only Mode 7 counts are 7841/455/704; both-Mode 7 is unexercised. Flipping
+the first register value is caught at frame 0, native exit 91. Source hashes
+remain unchanged. This compares ordered arguments/RAM plus candidate
+hardware against the frame oracle, not separate old/current hardware snapshots.
+
+Source review also preserves all 59 possible ordered register/source-byte
+pairs, four intervening RAM copies and same-address low/high latch writes.
+Formatting/check, normal Cargo release and progress pass. No maintained
+source or own residue counts change in this quality check. Other concurrent
+changes, complete gameplay and broader hardware/audio coverage remain open.
+
 Super Missile integration QC (2026-10-19): frozen e1a9a3d3 passes the
 maintained Windows verifier CLI over all 69,700 controller frames: zero
 failures (147.04s), native exit 0, 22 rooms and 28 enemy definitions.
