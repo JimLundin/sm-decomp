@@ -13336,6 +13336,34 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Samus animation frame commands (2026-10-19): commands 6/14/15 now use safe
+functions, named frame/health accessors and explicit word wrapping. Command
+14 receives its byte operand from the dispatcher. The health decision retains
+the bit-15 test after subtracting 30, including health values above 32767.
+Command 7 and its call site retain their original implementation because
+neither movie exercises it, resolving the coverage review below by holding
+that cleanup until contextual verification is available.
+
+Frozen 6222ac0f plus this final source passes clean any% 129712/0 (193.56s).
+Old/current comparisons match complete 128 KiB RAM and g_fail on every
+animation-handler call: any% 17429 calls / 129712 frames (196.96s), Waver
+8558 calls / 58109 frames (110.06s), native exits 0. Commands 6/14/15 run
+613/1600/857 times in any% and 95/1879/643 in Waver. Health reset/advance
+branches run 588/25 and 78/17 times. Clean/observed any% non-timing
+diagnostics match; the maintained source equals the verified candidate.
+
+592320 constructed comparisons also match complete RAM, g_fail and return
+values. They cover every health/frame word, seven jump operands across all
+frames, all byte operands at eight frame boundaries and all command high
+nibbles. Ordinary health comparison, saturating subtraction and wrong-byte
+operand mutants fail at cases 295182, 3 and 2 respectively, at RAM byte 0A96.
+These controls supplement the demonstrated movie execution of all three
+rewritten routines. Cargo format/check, release --locked and progress pass.
+Own raw offsets -5, unsafe functions -3, cast lines -13, Rust lines -16;
+other counters are unchanged. Temporary scripts/builds are removed; no
+probes or ROM-derived fixtures are committed. Remaining callbacks and full
+gameplay coverage stay open.
+
 Animation callback coverage review resolved (2026-10-19): command 7
 (DrainedCrouching) was removed from the pending cleanup after both movie
 observations showed zero calls. Independent comparison confirms its entire

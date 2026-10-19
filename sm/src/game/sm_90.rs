@@ -1400,25 +1400,14 @@ pub unsafe fn Samus_Animate_SubmergedLavaAcid(game: &mut Game) {
             as *mut uint16) = 0 as uint16;
     }
 }
-unsafe fn Samus_AnimDelayFunc_6_GotoStartIfLittleHealth(
-    mut jp: *const uint8,
-    game: &mut Game,
-) -> bool {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (if *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9c2 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        - 30 as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        != 0
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + 1 as ::core::ffi::c_int
+fn Samus_AnimDelayFunc_6_GotoStartIfLittleHealth(game: &mut Game) -> bool {
+    let frame = if game.samus_health().wrapping_sub(30) & 0x8000 != 0 {
+        game.samus_anim_frame().wrapping_add(1)
     } else {
-        0 as ::core::ffi::c_int
-    }) as uint16;
-    return true_0 != 0;
+        0
+    };
+    game.set_samus_anim_frame(frame);
+    true
 }
 unsafe fn Samus_AnimDelayFunc_7(mut jp: *const uint8, game: &mut Game) -> bool {
     *((&raw mut game.g_ram as *mut uint8).offset(0xa58 as ::core::ffi::c_int as isize)
@@ -1624,18 +1613,13 @@ unsafe fn Samus_AnimDelayFunc_12_TransToPose(mut jp: *const uint8, game: &mut Ga
         as *mut uint16) = 3 as uint16;
     return false_0 != 0;
 }
-unsafe fn Samus_AnimDelayFunc_14_Goto(mut jp: *const uint8, game: &mut Game) -> bool {
-    let ref mut fresh93 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xa96 as ::core::ffi::c_int as isize) as *mut uint16);
-    *fresh93 = (*fresh93 as ::core::ffi::c_int
-        - *jp.offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int)
-        as uint16;
-    return true_0 != 0;
+fn Samus_AnimDelayFunc_14_Goto(frames_back: u8, game: &mut Game) -> bool {
+    game.set_samus_anim_frame(game.samus_anim_frame().wrapping_sub(u16::from(frames_back)));
+    true
 }
-unsafe fn Samus_AnimDelayFunc_15_GotoStart(mut jp: *const uint8, game: &mut Game) -> bool {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    return true_0 != 0;
+fn Samus_AnimDelayFunc_15_GotoStart(game: &mut Game) -> bool {
+    game.set_samus_anim_frame(0);
+    true
 }
 unsafe fn Samus_HandleSpeedBoosterAnimDelay(mut jp: *const uint8, game: &mut Game) -> uint8 {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xb3c as ::core::ffi::c_int as isize)
@@ -1745,7 +1729,7 @@ unsafe fn Samus_HandleAnimDelay(game: &mut Game) {
         // Keep the captured list and reread the frame after each callback.
         let instruction = delays.add(usize::from(game.samus_anim_frame()));
         let update_timer = match command & 0xf {
-            6 => Samus_AnimDelayFunc_6_GotoStartIfLittleHealth(instruction, game),
+            6 => Samus_AnimDelayFunc_6_GotoStartIfLittleHealth(game),
             7 => Samus_AnimDelayFunc_7(instruction, game),
             8 => Samus_AnimDelayFunc_8_AutoJumpHack(instruction, game),
             9 => Samus_AnimDelayFunc_9_TransToPose(instruction, game),
@@ -1753,8 +1737,8 @@ unsafe fn Samus_HandleAnimDelay(game: &mut Game) {
             11 => Samus_AnimDelayFunc_11_SelectDelaySequenceWalljump(instruction, game),
             12 => Samus_AnimDelayFunc_12_TransToPose(instruction, game),
             13 => Samus_AnimDelayFunc_13_TransToPose(instruction, game),
-            14 => Samus_AnimDelayFunc_14_Goto(instruction, game),
-            15 => Samus_AnimDelayFunc_15_GotoStart(instruction, game),
+            14 => Samus_AnimDelayFunc_14_Goto(*instruction.add(1), game),
+            15 => Samus_AnimDelayFunc_15_GotoStart(game),
             // Commands 0..=5 retain the timer selected by the speed helper.
             _ => false,
         };
