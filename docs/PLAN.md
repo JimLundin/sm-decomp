@@ -17165,6 +17165,38 @@ and keep their separate checks. No probes, fixtures, checkpoints or temporary
 scripts are committed. Continue shared projectile state/handler families;
 gameplay through credits and broader hardware/audio coverage remain unfinished.
 
+Projectile fixed-mask OR family (2026-10-19): inspected nine fixed-bit
+instruction handlers, operand-based set/clear and gameplay property updates.
+Discovery on frozen 6fff47a8 passes any% 129712/0 (175.48s) and Speed Booster
+148406/0 (222.86s), native exits 0. Any% has no selected hits; the survey
+runner's positive-hit assertion reports that absence after completion.
+Speed Booster reaches Set 111, Clear 59, Bomb Torizo initialization 8 and
+Kago routine 336. All nine fixed-bit instruction handlers remain unhit and
+unchanged. Additional uncovered pickup conversion is not rewritten.
+
+Consolidate the two eligible fixed-mask OR gameplay updates in the existing
+byte-backed projectile writer. Bomb Torizo's final property update and Kago's
+conditional update retain position, captured slot, masks and all other reads/
+writes/callbacks. Operand-based set retains its read-before-ROM-mask order.
+
+Frozen d5b405ec plus only this change passes
+any% 129712/0 (175.19s) and Speed Booster 148406/0
+(234.40s), native exits 0. Observed Speed Booster 148406/0
+(257.35s) reaches actual changed updates: Bomb 8,
+Kago 199. Every byte-backed word store matches the original unaligned
+store over complete RAM. Clean/observed non-timing diagnostics match; source/
+DLL/ROM/input hashes remain fixed and maintained regions match verified source.
+The helper matches original promoted OR stores in 196608 complete-RAM cases:
+both masks, every rounded slot and every word value. Other frozen sources
+match HEAD after newline normalization; only helper and selected sequences
+change in the bank.
+
+Cargo fmt/check, normal release build and progress pass. Including helper,
+raw offsets -2, cast lines -2; Rust lines and unsafe functions unchanged.
+No probes or ROM-derived artifacts committed. Further property-family cleanup
+requires normal-input hits for the pending handlers. Broader gameplay/credits,
+hardware/audio/masks and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

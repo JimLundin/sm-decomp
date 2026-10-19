@@ -618,6 +618,10 @@ impl EprojStateMut<'_> {
     fn set_properties(&mut self, word_index: usize, value: u16) {
         self.write(0x1bd7, word_index, value);
     }
+    fn set_property_bits(&mut self, word_index: usize, mask: u16) {
+        let properties = EprojState(self.0).properties(word_index);
+        self.set_properties(word_index, properties | mask);
+    }
     fn set_preinstruction(&mut self, word_index: usize, value: u16) {
         self.write(0x1a03, word_index, value);
     }
@@ -4559,9 +4563,7 @@ unsafe fn EprojInit_BombTorizoStatueBreaking(mut j: uint16, game: &mut Game) {
         kEprojInit_BombTorizoStatueBreaking_Yvel[v4 as usize] as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16).offset(v3 as isize) =
         kEprojInit_BombTorizoStatueBreaking_F[v4 as usize] as uint16;
-    let ref mut fresh15 =
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16).offset(v3 as isize);
-    *fresh15 = (*fresh15 as ::core::ffi::c_int | 0x1000 as ::core::ffi::c_int) as uint16;
+    EprojStateMut(&mut game.g_ram).set_property_bits(v3 as usize, 0x1000);
 }
 unsafe fn EprojInit_BombTorizoLowHealthExplode(mut j: uint16, game: &mut Game) {
     let mut v1: *mut EnemyData = gEnemyData(game.cur_enemy_index() as ::core::ffi::c_int, game);
@@ -7984,9 +7986,7 @@ pub unsafe fn EprojPreInstr_KagosBugs_Func2(mut k: uint16, game: &mut Game) {
             - game.enemy_projectile_x_pos(k) as ::core::ffi::c_int) as uint16,
     );
     if v3 as ::core::ffi::c_int - 23 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
-        let ref mut fresh26 = *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh26 = (*fresh26 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
+        EprojStateMut(&mut game.g_ram).set_property_bits(v1 as usize, 0x8000);
     }
 }
 pub unsafe fn EprojPreInstr_KagosBugs(mut k: uint16, game: &mut Game) {
