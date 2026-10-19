@@ -5998,47 +5998,29 @@ pub unsafe fn PlmSetup_RespawningBombBlock2(mut j: uint16, game: &mut Game) -> u
     }
     return 0 as uint8;
 }
-pub unsafe fn PlmSetup_RespawningPowerBombBlock(mut j: uint16, game: &mut Game) -> uint8 {
-    let mut v1: int16 = 0;
-    v1 = (*((&raw mut game.g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(
-            (*((&raw mut game.g_ram as *mut uint8).offset(0xdde as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                >> 1 as ::core::ffi::c_int) as isize,
-        ) as ::core::ffi::c_int
-        & 0xf00 as ::core::ffi::c_int) as int16;
-    if v1 as ::core::ffi::c_int == 1280 as ::core::ffi::c_int {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1d27 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-            addr_kPlmInstrList_C91C as ::core::ffi::c_int as uint16;
-    } else if v1 as ::core::ffi::c_int == 768 as ::core::ffi::c_int {
-        let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        let mut v3: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x1c87 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v2 as isize) as ::core::ffi::c_int
-            >> 1 as ::core::ffi::c_int;
-        let mut v4: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x10002 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v3 as isize) as ::core::ffi::c_int
-            & 0xf000 as ::core::ffi::c_int
-            | 0x57 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1e17 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v2 as isize) = v4;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x10002 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v3 as isize) =
-            (v4 as ::core::ffi::c_int & 0x8fff as ::core::ffi::c_int) as uint16;
-    } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1c37 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
+pub fn PlmSetup_RespawningPowerBombBlock(j: uint16, game: &mut Game) -> uint8 {
+    let read_word = |game: &Game, offset: usize| {
+        u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
+    };
+    let write_word = |game: &mut Game, offset: usize, value: u16| {
+        game.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+    };
+    let projectile_index = usize::from(read_word(game, 0xdde) >> 1) * 2;
+    let projectile_type = read_word(game, 0xc18 + projectile_index) & 0x0f00;
+    let index = usize::from(j >> 1) * 2;
+    match projectile_type {
+        0x0500 => write_word(game, 0x1d27 + index, addr_kPlmInstrList_C91C as u16),
+        0x0300 => {
+            let block_index = usize::from(read_word(game, 0x1c87 + index) >> 1) * 2;
+            let block = read_word(game, 0x10002 + block_index);
+            let revealed = (block & 0xf000) | 0x0057;
+            write_word(game, 0x1e17 + index, revealed);
+            // Keep the original reveal mask and variable-before-level write order.
+            write_word(game, 0x10002 + block_index, revealed & 0x8fff);
+        }
+        _ => write_word(game, 0x1c37 + index, 0),
     }
-    return 0 as uint8;
+    0
 }
 pub unsafe fn PlmSetup_D08C_SuperMissileBlockRespawning(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: int16 = 0;

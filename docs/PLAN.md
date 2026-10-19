@@ -11912,6 +11912,39 @@ replays prevent interpreting timings as performance measurements. TSC/TDC
 and prior holds remain held; complete gameplay/render/audio remain open.
 Continue covered CPU cleanup.
 
+Power Bomb block setup uses safe byte-backed RAM (2026-10-19).
+PlmSetup_RespawningPowerBombBlock reads little-endian projectile/block words
+and uses a direct match for instruction selection, icon reveal or deletion.
+Word-index truncation, F000/8FFF masks and variable-before-level write order
+remain exact, including possible aliases. The callback no longer needs unsafe.
+
+Correction to the preceding floor diagnosis: projectile0500 is an ordinary
+bomb; projectile0300 is a Power Bomb. https://patrickjohnston.org/bank/84 CF2E explicitly labels those branches;
+C91C draws A4E7 (word C057) then deletes the temporary PLM. It is not
+the breaking list. Actual placed bombs are0501 and reveal C057 without
+removing collision. Power Bombs use0300 to clear bits via8FFF. The floor
+still requires Power Bombs; no ordinary-bomb passage or regeneration claim.
+The earlier statements assigning0300 to ordinary bombs and describingC91C
+as breaking are superseded by this contextual observation and bank log.
+
+Instrumented normal-input route executes ten actual setup calls in slot54:
+frames81978/81998 projectile8000 take deletion; eight0501 calls at82246,
+82302,82442,82579,82718,82839,82855,83011 selectC91C. The0300 branch has no
+contextual coverage here; its masks and write order are preserved by source
+review, without claiming Power Bomb inventory or execution. Baseline83073/71
+(166.27s), clean83073/71 (206.67s), observed native exits1, match all71
+ordered baseline failure frames. Clean explicit-render any%129712/0
+(298.72s), observed native exit0. Pinned host/gameplay snapshot excludes
+peer edits, and maintained sm_84.rs matches the clean replay source. Cargo
+fmt/check, full release build and progress pass. Own raw offsets-8, unsafe
+functions-1, cast lines-24 and Rust lines-18; other own counters unchanged.
+Only this routine and this plan note are committed; no probes, inputs or
+ROM-derived assets. Post-map gunship return trial76374/71 endsX491/Y280 in
+92FD withhealth19/99 and does not establish a refill or onward traversal.
+Next: use retained refilled shaft route for accessible item/boss coverage;
+obtain actual0300 execution before further cleanup of that branch. Credits,
+complete gameplay/hardware, render/audio, masked RAM and ownership stay open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
