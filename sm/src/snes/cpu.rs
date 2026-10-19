@@ -610,6 +610,14 @@ impl CpuRegister {
             Self::Y => cpu.y,
         }
     }
+    fn load(self, value: u16, cpu: &mut Cpu) {
+        match self {
+            Self::Accumulator => cpu.a = value,
+            Self::X => cpu.x = value,
+            Self::Y => cpu.y = value,
+        }
+        set_zero_negative(value, self.byte(cpu), cpu);
+    }
 }
 unsafe fn compare_register(
     cpu: *mut Cpu,
@@ -662,12 +670,7 @@ unsafe fn load_register(
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
         read_word(cpu, low, high, game)
     };
-    match register {
-        CpuRegister::Accumulator => (*cpu).a = value,
-        CpuRegister::X => (*cpu).x = value,
-        CpuRegister::Y => (*cpu).y = value,
-    }
-    set_zero_negative(value, register.byte(&*cpu), &mut *cpu);
+    register.load(value, &mut *cpu);
 }
 unsafe fn pull_register(cpu: *mut Cpu, register: CpuRegister, game: &mut Game) {
     let value = if register.byte(&*cpu) {
@@ -680,12 +683,7 @@ unsafe fn pull_register(cpu: *mut Cpu, register: CpuRegister, game: &mut Game) {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
         pull_word(cpu, game)
     };
-    match register {
-        CpuRegister::Accumulator => (*cpu).a = value,
-        CpuRegister::X => (*cpu).x = value,
-        CpuRegister::Y => (*cpu).y = value,
-    }
-    set_zero_negative(value, register.byte(&*cpu), &mut *cpu);
+    register.load(value, &mut *cpu);
 }
 unsafe fn push_register(cpu: *mut Cpu, register: CpuRegister, game: &mut Game) {
     if register.byte(&*cpu) {

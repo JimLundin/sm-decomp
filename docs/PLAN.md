@@ -9724,6 +9724,26 @@ Unsafe functions +1 centralizes repeated stack bus handling; other own counters,
 including Rust lines, unchanged. Arbitrary MMIO and complete gameplay/render/
 audio remain open. Continue covered CPU cleanup; TSX/ROR stay held.
 
+CPU safe register load completion (2026-10-19): CpuRegister::load owns the
+callback-free register assignment and subsequent live-width Z/N update shared
+by memory loads and stack pulls. Its mutable reference begins after all bus
+reads; operand selection, captured A high byte and cycles stay in the existing
+unsafe wrappers. Frozen `f00bee1a` plus this change passes 1,572,864 actual
+old/current memory loads and 12,582,912 actual old/current stack pulls, checking
+named CPU/bus fields, RAM, flags and cycles across every operand word,
+independent widths, all A-high/byte pairs, aliased memory addresses and eight
+native/emulation RAM stack positions. Prefix 3,600/0 (1.04s), native exit 0,
+executes safe completion through all A/X/Y memory-load and stack-pull paths.
+Word/byte loads: A 990,782/420,817, X 171,669/246,437, Y 36,080/19,911;
+pulls: A 11,140/17,559, X 97,558/0, Y 22,979/10,038. Byte PLX coverage is
+absent in this prefix; its full-movie coverage is recorded in the preceding
+commit. Clean full any% 129,712/0 (51.63s), native exit 0. Cargo fmt/check,
+full release/release-library builds with external SDL2, normal metadata and
+optimized frozen core/DLL pass. Live CPU matches verified source; peer PPU
+work is outside this replay. Rust lines -2; other own counters unchanged.
+Arbitrary MMIO and complete gameplay/render/audio remain open. Continue
+covered CPU cleanup; TSX/ROR stay held for contextual execution.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
