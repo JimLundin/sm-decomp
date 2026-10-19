@@ -26,6 +26,10 @@ The 69,700-frame Super Missile route passes with zero failures, visiting
 22 rooms and 28 enemy definitions and collecting 5/5 Super Missiles.
 The route also passes on reviewed integration e1a9a3d3; later implementation
 changes still require separate verification.
+The extension to the Green Brinstar Save Room passes 71,800 frames with zero
+failures, 23 rooms and 28 enemy definitions. It ends with 3/5 Supers and an
+in-game save completed. Its frozen source is 438e7755 plus the menu correction
+and mask removal committed in b1c4b470; credits remain unvisited.
 Rendering starts enabled deterministically. Complete gameplay, audio timing
 and other masked RAM remain unverified. Historical zero-failure Waver runs
 made before the render initialization fix do not establish rendering equivalence.
@@ -35,7 +39,16 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration: frozen `620a6ac6` passes any% 129712/0
+Latest reviewed integration: frozen `438e7755` plus only the menu correction
+and mask removal committed in `b1c4b470` passes any%129712/0 (233.88s),
+Waver58109/0 (102.78s), Super Missile69700/0 (140.59s) and Green Brinstar
+Save Room71800/0 (128.97s), all native exits0. This includes the committed
+Super Missile collector cleanup. Independent source/host review, immutable
+source/input hashes, isolated saves, formatting, normal release and progress
+pass. Later concurrent edits are excluded; full gameplay/credits and wider
+hardware/audio coverage remain unfinished.
+
+Earlier reviewed integration: frozen `620a6ac6` passes any% 129712/0
 (234.56s), Waver 58109/0 (108.46s) and pickup route 68606/0
 (131.50s), all native exits 0. This combines the committed gameplay
 cleanup, verifier pixel clears and demo-accumulator correction with A82/A83
@@ -294,6 +307,32 @@ change and no new replay result belong to this cleanup.
 
 ## The oracle
 
+Green Brinstar Save Room milestone (2026-10-19): the normal-input Super
+Missile route now leaves9BC8, recovers20 health from enemies after an exit
+hit, reaches new roomA201 and completes the in-game save sequence. Full boot
+passes71800/0 (128.97s), native exit0: 57200 gameplay frames, 23 rooms,
+28 enemy definitions and zero credits frames. Final state8 is X98/Y155,
+health39/199, missiles0/5, Supers3/5 and equipment1004. Save lockout, station
+and area are1; all eight coroutine bytes are zero and messages are dismissed.
+Disk-save persistence is not established: VERIFY_ACTIVE deliberately skips
+RtlWriteSram, so this replay checks in-game state and SRAM behavior only.
+
+The ignored fixture is movies/green-brinstar-save.inputs, 71800 frames,
+SHA-256 2a91489248668506b8799126edecc752d4b724cf4adf758ec574d7b588322893.
+The clean library is frozen438e7755 plus only the menu correction and mask
+removal committed in b1c4b470. The host adds read-only final inventory/save
+logging after the standard verifier and preserves comparisons and exit status.
+Independent host/source/input/result review passes. No maintained Rust,
+own residue counts, probes or ROM-derived committed assets change.
+
+The original save29 resumes continuously69700..71800 for2100/0 on the
+previous verified library. Save50, captured before71800, also resumes40/0
+on438e7755 plus the menu fix, retaining the final state above. This validates
+the continuation checkpoint across the source change. Next: leave the save
+room to the right, descend9AD9 toward the pink door atY1632 and use a Super
+Missile to extend coverage toward Big Pink. Actual access remains to be
+verified; complete gameplay, audio timing and remaining masks stay open.
+
 Independent NMI register QC (2026-10-19): frozen e1a9a3d3 plus only
 NmiUpdateIoRegisters passes clean any% 129712/0 (305.76s) and Waver 58109/0
 (149.57s), native exits 0. All 63 frozen source/host files match that scope.
@@ -383,9 +422,9 @@ format check, normal release build and progress pass. No maintained Rust,
 own residue counts or ROM-derived committed assets change.
 
 This supersedes the historical Super Missile access holds below; the
-from-below crumble obstruction remains confirmed. Next: validate the saved
-continuation against the verified implementation, leave with Supers, recover
-health and extend coverage toward credits.
+from-below crumble obstruction remains confirmed. The later Green Brinstar
+Save Room milestone above validates continuation, exits with Supers and
+recovers health. Further coverage toward credits remains unfinished.
 
 Demo accumulator correction and A82 enforcement (2026-10-19): the two
 cinematic demo callers now pass 8000, preserving the ROM accumulator left
