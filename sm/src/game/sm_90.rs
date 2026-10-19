@@ -1652,33 +1652,22 @@ pub unsafe fn SamusBottomDrawn_0_Standing(game: &mut Game) -> uint8 {
     }
     return 1 as uint8;
 }
-pub unsafe fn SamusBottomDrawn_3_SpinJump(game: &mut Game) -> uint8 {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        == kPose_81_FaceR_Screwattack as ::core::ffi::c_int
-        || *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            == kPose_82_FaceL_Screwattack as ::core::ffi::c_int
-        || *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            == kPose_1B_FaceR_SpaceJump as ::core::ffi::c_int
-        || *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            == kPose_1C_FaceL_SpaceJump as ::core::ffi::c_int
-        || *((&raw mut game.g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            == 0
-        || *((&raw mut game.g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - kPose_0B_MoveR_Gun as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            == 0
+pub fn SamusBottomDrawn_3_SpinJump(game: &mut Game) -> uint8 {
+    let pose = SamusPose::from(game.samus_pose());
+    let frame = game.samus_anim_frame();
+    if matches!(
+        pose,
+        kPose_81_FaceR_Screwattack
+            | kPose_82_FaceL_Screwattack
+            | kPose_1B_FaceR_SpaceJump
+            | kPose_1C_FaceL_SpaceJump
+    ) || frame == 0
+        || frame.wrapping_sub(11) & 0x8000 == 0
     {
-        return 1 as uint8;
+        return 1;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaca as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    return 0 as uint8;
+    game.g_ram[0xaca..0xacc].fill(0);
+    0
 }
 pub unsafe fn SamusBottomDrawn_A_Knockback(game: &mut Game) -> uint8 {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)

@@ -14560,6 +14560,34 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Spin-jump lower sprite visibility (2026-10-19): SamusBottomDrawn_3_SpinJump
+is now safe Rust using named pose/frame reads and a two-byte RAM clear.
+The four Screw Attack/Space Jump poses, frame-zero exception and wrapped
+sign-bit test of frame minus 11 retain their meaning. Visible returns preserve
+the lower sprite index; hidden returns clear both bytes.
+
+Frozen c1d11581 plus this source passes clean any% 129712/0 (250.50s).
+The observed 10000-frame prefix passes with zero failures (18.23s), comparing
+complete RAM, g_fail and return values on 61 actual calls. Frame-zero visibility
+executes 12 times at input indexes 2477..8658; hiding executes 49 times at
+2481..8668. Both results are required by the observer. The four upgraded
+poses and the other visible frame branch have no hits in this focused movie.
+
+458752 constructed comparisons cover every frame word for six representative
+poses and every pose word at frame 1. Five controls detect unsigned frame
+comparison, an early threshold, omitted Screw Attack pose, one-byte clearing
+and clearing visible sprites. RAM/g_fail are restored before the same prefix
+passes 10000/0 (38.06s), with identical natural hits and non-timing diagnostics.
+Constructed calls do not count as movie coverage. Exact observation stripping
+and source/DLL/fixture hashes pass.
+
+Formatting/check, release --locked and progress pass. Own raw offsets -7,
+unsafe functions -1, cast lines -18 and Rust lines -11; other own counters
+are unchanged. Automatic approval review rejected deleting
+target/samus-spin-cleanup with "blocked by policy"; it remains ignored.
+No diagnostic code or ROM-derived fixtures are committed. Commands 7/10/12,
+broader gameplay/credits and hardware/audio coverage remain open.
+
 Door-dispatch address cleanup (2026-10-19): states 9 and 11 read the
 full selector through a named byte-backed word getter and explicitly widen
 it before adding bank $82. Frozen 19fc0e46 plus this change passes any%
