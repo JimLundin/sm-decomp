@@ -3124,22 +3124,16 @@ pub unsafe fn EprojInstr_9620(
     }
     return epjp;
 }
-unsafe fn EprojInit_9734_CeresFallingDebris(mut j: uint16, game: &mut Game) {
-    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16).offset(v1 as isize) =
-        0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16).offset(v1 as isize) =
-        0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(v1 as isize) =
-        0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x19bb) as *mut uint16).offset(v1 as isize) =
-        3584 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v1 as isize) =
-        EprojState(&game.g_ram).init_param_1();
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize) =
-        42 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v1 as isize) =
-        16 as uint16;
+fn EprojInit_9734_CeresFallingDebris(j: uint16, game: &mut Game) {
+    let slot = usize::from(j >> 1);
+    EprojStateMut(&mut game.g_ram).write(0x1aff, slot, 0);
+    EprojStateMut(&mut game.g_ram).write(0x1b23, slot, 0);
+    EprojStateMut(&mut game.g_ram).write(0x1ab7, slot, 0);
+    EprojStateMut(&mut game.g_ram).write(0x19bb, slot, 3584);
+    let x = EprojState(&game.g_ram).init_param_1();
+    EprojStateMut(&mut game.g_ram).write(0x1a4b, slot, x);
+    EprojStateMut(&mut game.g_ram).write(0x1a93, slot, 42);
+    EprojStateMut(&mut game.g_ram).write(0x1adb, slot, 16);
 }
 pub unsafe fn EprojPreInstr_9734_CeresFallingDebris(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;

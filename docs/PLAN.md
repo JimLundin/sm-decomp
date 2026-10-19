@@ -16369,6 +16369,31 @@ counters unchanged. No temporary probes or ROM-derived artifacts committed.
 Continue indexed projectile state/handler families; broader gameplay/credits,
 hardware/audio/masks and ownership remain unfinished.
 
+Ceres falling-debris initialization (2026-10-19): seven ordered stores
+now use the existing little-endian byte-backed projectile interface. The
+routine is safe. Captured slot retains full-width arithmetic and rounding.
+E/F/X velocity clears precede graphics, then the live init-parameter read/X
+store, Y position and Y velocity stores. No callbacks or borrowed RAM
+pointers remain.
+
+Frozen 7db5656b plus only this change passes
+any% 129712/0 (213.90s) and Warehouse 128547/0
+(238.10s), native exits 0. Observed Warehouse 128547/0
+(256.50s) reaches the initializer 19 times.
+Every byte-backed write matches the original unaligned store over complete
+RAM. Clean/observed non-timing route diagnostics match; source/DLL/ROM/input
+hashes remain fixed and the maintained function matches verified source.
+Extracted old/current functions match complete RAM in 131072 cases: every
+16-bit child index, including odd/max indices, two backing patterns and
+varied init-parameter words. Other frozen sources match HEAD after newline
+normalization, and only the initializer differs in its bank.
+
+Cargo fmt/check, normal release build (41.99s) and progress pass. Net raw
+offsets -7, unsafe functions -1, cast lines -1, Rust lines -6; all other own
+counters unchanged. No probes or ROM-derived artifacts committed. Continue
+indexed projectile state/handler families; broader gameplay/credits,
+hardware/audio/masks and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
