@@ -9392,10 +9392,7 @@ pub unsafe fn CallDoorTransitionFunction_Async(mut ea: uint32, game: &mut Game) 
     };
 }
 pub unsafe fn GameState_9_HitDoorBlock(game: &mut Game) -> CoroutineRet {
-    return CallDoorTransitionFunction_Async(
-        u32::from(game.door_transition_function()) | 0x820000,
-        game,
-    );
+    CallDoorTransitionFunction_Async(u32::from(game.door_transition_function()) | 0x820000, game)
 }
 pub unsafe fn DoorTransitionFunction_HandleElevator(game: &mut Game) -> CoroutineRet {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xe16 as ::core::ffi::c_int as isize)
@@ -9597,20 +9594,17 @@ pub unsafe fn GameState_10_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRe
     return kCoroutineNone as CoroutineRet;
 }
 pub unsafe fn GameState_11_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRet {
-    let mut _coret_: uint8 = CallDoorTransitionFunction_Async(
+    let dispatch_result = CallDoorTransitionFunction_Async(
         u32::from(game.door_transition_function()) | 0x820000,
         game,
-    ) as uint8;
-    if _coret_ != 0 {
-        return _coret_ as CoroutineRet;
+    );
+    if dispatch_result != 0 {
+        return dispatch_result;
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x943 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
+    if game.timer_status() != 0 {
         DrawTimer(game);
     }
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn DoorTransitionFunction_WaitForSoundsToFinish(game: &mut Game) -> CoroutineRet {
     DetermineWhichEnemiesToProcess(game);

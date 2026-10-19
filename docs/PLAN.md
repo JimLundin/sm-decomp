@@ -14870,6 +14870,30 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Door wrapper result cleanup (2026-10-19): states 9 and 11 return the
+actual dispatcher byte directly, with an immutable named result in state 11.
+Its timer read stays a live full word after the zero-result gate; the shared
+kCoroutineNone conversion is retained. Frozen 7de53cc1 plus this change
+passes any% 129712/0 (269.17s) and Waver 58109/0 (156.25s), native
+exits 0. Observed Waver passes 58109/0 (124.73s): all 76 state-9 calls return
+zero; state 11 has 1350 zero and 1734 one returns. Its 1350 timer reads see
+0000 or 8006, and its direct timer drawing executes 254 times. Each actual
+wrapper return, read/draw count and callback order matches the original
+contract. State-9/state-11 entry ranges are 11521..57940 / 11522..58044.
+The exact candidate bodies run inside observed closures, forwarding real
+callbacks once. The observer supports nesting; natural maximum depth is one.
+Other return bytes and high-byte-only timer values remain unobserved.
+A return-bit fault is caught at first completion, frame 11521, native exit 91.
+Independent source/helper/driver review, exact stripping, all 69 frozen files,
+input/ROM/DLL identity and complete clean/observed Waver non-timing diagnostics
+pass. Formatting, release build and progress pass. The temporary Cargo-linked
+runner needed the maintained SDL2 directory setup; initial startup failures
+ran no frames, and the same DLL then passed. Own raw offsets, cast lines and
+Rust lines each decrease by one; other own counters are unchanged. Concurrent
+verifier additions retain separate checks. Next: the updated plan's repeated
+enemy-projectile scalar-access pattern; broader gameplay/credits and
+ownership remain unfinished.
+
 Samus lower sprite visibility windows (2026-10-19): knockback, wall-jump
 and damage-boost handlers now use safe pose/frame reads and two-byte clears.
 Wall-jump hides frames 3..12 and damage-boost hides 2..8; exhaustive checks of

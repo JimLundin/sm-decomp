@@ -224,6 +224,11 @@ impl Game {
         self.g_ram[0x612] = value;
     }
 
+    /// timer_status ($7E:0943 in ram_map).
+    pub fn timer_status(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x943], self.g_ram[0x944]])
+    }
+
     /// door_transition_function ($7E:099C in ram_map).
     pub fn door_transition_function(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0x99c], self.g_ram[0x99d]])
