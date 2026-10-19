@@ -13920,6 +13920,27 @@ cast lines-15 and Rust lines-15; other own counters unchanged. Peer edits
 remain preserved. Remaining room-entry reads and broader gameplay/credits,
 hardware/audio/masks/ownership remain unfinished.
 
+Room PLM block arithmetic (2026-10-19): SpawnRoomPLM now reads the
+room-width word through little-endian RAM bytes, retains its low byte, and
+multiplies unsigned Y/width bytes directly. The subsequent X-byte read and
+wrapping block-index sum/doubling retain the original order and word result.
+All field stores, pointer resolution and setup callback remain unchanged.
+
+Frozen 094e17c1 plus only this arithmetic rewrite
+passes any%129712/0 (289.82s) and pickup68606/0
+(173.20s), native exits0. Observed pickup68606/0
+(194.88s) compares all128KiB RAM, setup address and slot
+against the original on 294 actual spawns before invoking setup
+once. The initializer has no effects outside RAM. Clean and observed
+non-timing diagnostics match after stripping observers. Frozen scope and
+maintained routine identity pass; no observers are committed. Full-table,
+zero-width and unusual RAM-entry alias states are not inferred from calls.
+
+Cargo fmt/check, normal release build and progress pass. Own raw offsets-1,
+cast lines-1 and Rust lines-3; own unsafe and other counters unchanged. Peer edits remain
+preserved. Remaining room-entry reads and broader gameplay/credits,
+hardware/audio/masks/ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

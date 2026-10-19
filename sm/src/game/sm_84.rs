@@ -1142,7 +1142,6 @@ unsafe fn spawn_hardcoded_plm(
 }
 pub unsafe fn SpawnRoomPLM(mut k: uint16, game: &mut Game) {
     let mut rpe: *mut RoomPlmEntry = ::core::ptr::null_mut::<RoomPlmEntry>();
-    let mut x_block: int16 = 0;
     let v1 = match (0..40).rev().find(|&slot| {
         let header_addr = 0x1c37 + slot * 2; // plm_header_ptr
         u16::from_le_bytes([game.g_ram[header_addr], game.g_ram[header_addr + 1]]) == 0
@@ -1156,17 +1155,15 @@ pub unsafe fn SpawnRoomPLM(mut k: uint16, game: &mut Game) {
     } else {
         get_RoomPlmEntry(k, game)
     };
-    let mut prod: uint16 = Mult8x8(
-        (*rpe).y_block,
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
-    );
-    x_block = (*rpe).x_block as int16;
+    let y_block = u16::from((*rpe).y_block);
+    let room_width = u16::from_le_bytes([game.g_ram[0x7a5], game.g_ram[0x7a6]]) as u8;
+    let row_start = y_block * u16::from(room_width);
+    let x_block = u16::from((*rpe).x_block);
     let index = usize::from(v1 >> 1) * 2;
     let write_word = |game: &mut Game, offset: usize, value: u16| {
         game.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
     };
-    let block_index = ((u32::from(prod) + x_block as u32) * 2) as u16;
+    let block_index = row_start.wrapping_add(x_block).wrapping_mul(2);
     write_word(game, 0x1c87 + index, block_index); // plm_block_indices
     let argument = (*rpe).plm_room_argument;
     write_word(game, 0x1dc7 + index, argument); // plm_room_arguments
