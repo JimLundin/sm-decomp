@@ -1417,75 +1417,43 @@ unsafe fn Samus_AnimDelayFunc_7(mut jp: *const uint8, game: &mut Game) -> bool {
     *fresh97 = (*fresh97).wrapping_add(1);
     return true_0 != 0;
 }
-unsafe fn Samus_AnimDelayFunc_13_TransToPose(mut jp: *const uint8, game: &mut Game) -> bool {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa2c as ::core::ffi::c_int as isize)
-        as *mut uint16) = *jp.offset(1 as ::core::ffi::c_int as isize) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa32 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 3 as uint16;
-    return false_0 != 0;
+fn Samus_AnimDelayFunc_13_TransToPose(pose: u8, game: &mut Game) -> bool {
+    game.set_samus_new_pose_transitional(u16::from(pose));
+    game.set_samus_hurt_switch_index(3);
+    false
 }
-unsafe fn Samus_AnimDelayFunc_8_AutoJumpHack(mut jp: *const uint8, game: &mut Game) -> bool {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa60 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        == 0x90e91d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
-    {
-        return Samus_AnimDelayFunc_13_TransToPose(jp, game);
+unsafe fn Samus_AnimDelayFunc_8_AutoJumpHack(instruction: *const u8, game: &mut Game) -> bool {
+    let input_handler = u16::from_le_bytes([game.g_ram[0xa60], game.g_ram[0xa61]]);
+    if input_handler == fnSamus_InputHandler_E91D as u16 {
+        return Samus_AnimDelayFunc_13_TransToPose(*instruction.add(1), game);
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa28 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        != kPose_4B_FaceR_Jumptrans as ::core::ffi::c_int
-        && *((&raw mut game.g_ram as *mut uint8).offset(0xa28 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            != kPose_4C_FaceL_Jumptrans as ::core::ffi::c_int
-        && *((&raw mut game.g_ram as *mut uint8).offset(0xa28 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            != kPose_19_FaceR_SpinJump as ::core::ffi::c_int
-        && *((&raw mut game.g_ram as *mut uint8).offset(0xa28 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            != kPose_1A_FaceL_SpinJump as ::core::ffi::c_int
+    let new_pose = u16::from_le_bytes([game.g_ram[0xa28], game.g_ram[0xa29]]);
+    if new_pose != kPose_4B_FaceR_Jumptrans as u16
+        && new_pose != kPose_4C_FaceL_Jumptrans as u16
+        && new_pose != kPose_19_FaceR_SpinJump as u16
+        && new_pose != kPose_1A_FaceL_SpinJump as u16
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa60 as ::core::ffi::c_int as isize)
-            as *mut uint16) =
-            (0x90e926 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        return Samus_AnimDelayFunc_13_TransToPose(jp, game);
+        game.set_samus_input_handler(fnHandleAutoJumpHack as u16);
+        return Samus_AnimDelayFunc_13_TransToPose(*instruction.add(1), game);
     }
-    return false_0 != 0;
+    false
 }
-unsafe fn Samus_AnimDelayFunc_9_TransToPose(mut jp: *const uint8, game: &mut Game) -> bool {
-    if *(jp.offset(1 as ::core::ffi::c_int as isize) as *mut uint16) as ::core::ffi::c_int
-        & *((&raw mut game.g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
-    {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xb2e as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            != 0
-            || *((&raw mut game.g_ram as *mut uint8).offset(0xb2c as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                != 0
-        {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa2c as ::core::ffi::c_int as isize)
-                as *mut uint16) = *jp.offset(6 as ::core::ffi::c_int as isize) as uint16;
-        } else {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa2c as ::core::ffi::c_int as isize)
-                as *mut uint16) = *jp.offset(5 as ::core::ffi::c_int as isize) as uint16;
-        }
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0xb2e as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        != 0
-        || *((&raw mut game.g_ram as *mut uint8).offset(0xb2c as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            != 0
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa2c as ::core::ffi::c_int as isize)
-            as *mut uint16) = *jp.offset(4 as ::core::ffi::c_int as isize) as uint16;
-    } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa2c as ::core::ffi::c_int as isize)
-            as *mut uint16) = *jp.offset(3 as ::core::ffi::c_int as isize) as uint16;
-    }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa32 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 3 as uint16;
-    return false_0 != 0;
+unsafe fn Samus_AnimDelayFunc_9_TransToPose(instruction: *const u8, game: &mut Game) -> bool {
+    let item_mask = u16::from_le_bytes([*instruction.add(1), *instruction.add(2)]);
+    let equipped_items = u16::from_le_bytes([game.g_ram[0x9a2], game.g_ram[0x9a3]]);
+    let has_item = item_mask & equipped_items != 0;
+    let y_speed = u16::from_le_bytes([game.g_ram[0xb2e], game.g_ram[0xb2f]]);
+    let moving_vertically =
+        y_speed != 0 || u16::from_le_bytes([game.g_ram[0xb2c], game.g_ram[0xb2d]]) != 0;
+    let pose_offset = match (has_item, moving_vertically) {
+        (false, false) => 3,
+        (false, true) => 4,
+        (true, false) => 5,
+        (true, true) => 6,
+    };
+    game.set_samus_new_pose_transitional(u16::from(*instruction.add(pose_offset)));
+    game.set_samus_hurt_switch_index(3);
+    false
 }
 unsafe fn UNUSED_Samus_AnimDelayFunc_10(mut jp: *const uint8, game: &mut Game) -> bool {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xb2e as ::core::ffi::c_int as isize)
@@ -1736,7 +1704,7 @@ unsafe fn Samus_HandleAnimDelay(game: &mut Game) {
             10 => UNUSED_Samus_AnimDelayFunc_10(instruction, game),
             11 => Samus_AnimDelayFunc_11_SelectDelaySequenceWalljump(instruction, game),
             12 => Samus_AnimDelayFunc_12_TransToPose(instruction, game),
-            13 => Samus_AnimDelayFunc_13_TransToPose(instruction, game),
+            13 => Samus_AnimDelayFunc_13_TransToPose(*instruction.add(1), game),
             14 => Samus_AnimDelayFunc_14_Goto(*instruction.add(1), game),
             15 => Samus_AnimDelayFunc_15_GotoStart(game),
             // Commands 0..=5 retain the timer selected by the speed helper.

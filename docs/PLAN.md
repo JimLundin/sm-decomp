@@ -13461,6 +13461,39 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Samus animation pose commands (2026-10-19): commands 8/9/13 now use
+byte-backed scalar reads and named input-handler/transition setters. Command
+13 accepts a pose byte and is safe. Command 9 reads its little-endian item
+mask bytewise, removing the unaligned word dereference, and explicitly
+selects one of four pose operands. The demo-input override, four excluded
+jump poses, conditional operand reads, input-handler store before the pose
+read, and transition-pose-before-hurt-switch stores retain their order.
+
+Frozen cd0a6111 plus this source passes clean any% 129712/0 (229.86s).
+Contextual comparisons match all 128 KiB RAM and g_fail on every animation
+handler call: any% 17429 / 129712 frames (229.08s), Waver 8558 / 58109
+frames (129.40s), native exits 0. Command 8 demo/install/skip counts are
+4/1339/5 and 2/298/5. Command 13 executes 2011/448 times including nested
+calls. Command 9 runs six times in Waver, choosing offsets 3/4 five/one
+times; equipped-item branches remain covered only by constructed inputs.
+Clean/observed any% non-timing diagnostics match, and maintained source
+identity plus exact counter stripping pass.
+
+592176 constructed host comparisons match complete RAM, g_fail and return
+values across all pose/input-handler, item-mask/equipment and vertical-speed
+words, every pose byte, 288 artificial RAM operand aliases and 16 no-read
+guards. Fractional-speed omission, reversed mask bytes and an incorrect
+input-handler store are detected at cases 12, 16 and 0. Fault variants are
+separate functions: an earlier in-function fault branch perturbed a synthetic
+alias observation despite unchanged maintained behavior. The corrected
+normal probe strips exactly to the candidate and passes that same case.
+
+Cargo format/check, release --locked and progress pass. Own raw offsets -18,
+unsafe functions -1, cast lines -41 and Rust lines -32; other counters are
+unchanged. Temporary verification/diagnosis files and builds are removed;
+no probes or ROM-derived fixtures are committed. Commands 7/10/11/12 and
+broader gameplay coverage remain open.
+
 Pose callback contextual QC (2026-10-19): independent replays of frozen
 7745edfc plus the proposed commands 8/9/13 cleanup pass any% 129712/0
 (241.72s) and Waver 58109/0 (96.52s), native exits 0. Actual
