@@ -18364,6 +18364,34 @@ no ROM or derived asset is committed. Continue larger coherent state/handler
 families and actual route coverage; hardware/audio/masks and ownership remain
 unfinished.
 
+PPU window interval family (2026-10-19): fresh normalized jscpd discovery
+and complete CST selection identify the two enabled-window edge scans. One
+safe helper now computes their consecutive interval bits. Boundary references
+preserve reads inside each scan and the left-before-right comparison order;
+all callers use separate local PpuWindows records, so the shared immutable
+edge/endpoint borrows do not alias writes. Insertion loops, enabled gates,
+inversion, and final OR remain exact. The removed i/j final values have no
+later uses. Byte endpoints extend to 256 without overflow in int16.
+
+Complete source reconstruction allows only these two blocks and their helper;
+all other frozen sources match. Actual original/current PpuWindows_Calc records
+match in 25165824 cases: every 8-bit endpoint pair for either varying window,
+all six layers, all 16 window flag patterns and zero/255 extension widths. An
+independent ordered-edge/interval model agrees in 4194304 of those cases.
+Actual drawing routines also agree on complete initialized PPU state and pixel
+buffers in 12288 six-path cases with masked/unmasked screens; enabled windows
+execute the new helper in their rendering context. This does not prove all
+hardware states or SNES accuracy.
+
+Frozen cc17d506 plus this family passes any% 129712/0 (228.25s)
+and Speed Booster 148406/0 (296.60s), native exits 0, with fixed
+source/library/DLL/fixture hashes. Cargo fmt/check, normal release (9.05s),
+progress and diff check pass. Own Rust lines -14 and c_int cast lines -10;
+unsafe functions/raw RAM counts are unchanged. Workspace raw-offset +1 and
+other broad count changes belong to concurrent gameplay cleanup outside this
+commit. No probes or ROM-derived assets committed. Neither movie reaches
+credits; the broader family audit and full project goal remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

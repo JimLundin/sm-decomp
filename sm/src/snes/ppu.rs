@@ -284,6 +284,18 @@ unsafe fn PpuWindows_Clear(mut win: *mut PpuWindows, mut ppu: *mut Ppu, mut laye
     (*win).nr = 1 as uint8;
     (*win).bits = 0 as uint8;
 }
+// Each window covers consecutive intervals between its two boundary edges.
+fn ppu_window_bits(edges: &[int16; 6], left: &uint8, right: &uint8) -> uint8 {
+    let mut start: uint = 0;
+    while edges[start as usize] != *left as int16 {
+        start = start.wrapping_add(1);
+    }
+    let mut end = start;
+    while edges[end as usize] != *right as int16 + 1 {
+        end = end.wrapping_add(1);
+    }
+    (((1i32 << end.wrapping_sub(start)) - 1) << start) as uint8
+}
 unsafe fn PpuWindows_Calc(mut win: *mut PpuWindows, mut ppu: *mut Ppu, mut layer: uint) {
     let mut winflags: uint32 = (*ppu).windowsel as uint32 >> layer.wrapping_mul(4 as uint);
     let mut nr: uint = 1 as uint;
@@ -364,20 +376,7 @@ unsafe fn PpuWindows_Calc(mut win: *mut PpuWindows, mut ppu: *mut Ppu, mut layer
     let mut w1_bits: uint8 = 0 as uint8;
     let mut w2_bits: uint8 = 0 as uint8;
     if w1_ena {
-        i = 0 as uint;
-        while (*win).edges[i as usize] as ::core::ffi::c_int
-            != (*ppu).window1left as ::core::ffi::c_int
-        {
-            i = i.wrapping_add(1);
-        }
-        j = i;
-        while (*win).edges[j as usize] as ::core::ffi::c_int
-            != (*ppu).window1right as ::core::ffi::c_int + 1 as ::core::ffi::c_int
-        {
-            j = j.wrapping_add(1);
-        }
-        w1_bits = ((((1 as ::core::ffi::c_int) << j.wrapping_sub(i)) - 1 as ::core::ffi::c_int)
-            << i) as uint8;
+        w1_bits = ppu_window_bits(&(*win).edges, &(*ppu).window1left, &(*ppu).window1right);
     }
     if winflags
         & (kWindow1Enabled as ::core::ffi::c_int | kWindow1Inversed as ::core::ffi::c_int) as uint32
@@ -387,20 +386,7 @@ unsafe fn PpuWindows_Calc(mut win: *mut PpuWindows, mut ppu: *mut Ppu, mut layer
         w1_bits = !(w1_bits as ::core::ffi::c_int) as uint8;
     }
     if w2_ena {
-        i = 0 as uint;
-        while (*win).edges[i as usize] as ::core::ffi::c_int
-            != (*ppu).window2left as ::core::ffi::c_int
-        {
-            i = i.wrapping_add(1);
-        }
-        j = i;
-        while (*win).edges[j as usize] as ::core::ffi::c_int
-            != (*ppu).window2right as ::core::ffi::c_int + 1 as ::core::ffi::c_int
-        {
-            j = j.wrapping_add(1);
-        }
-        w2_bits = ((((1 as ::core::ffi::c_int) << j.wrapping_sub(i)) - 1 as ::core::ffi::c_int)
-            << i) as uint8;
+        w2_bits = ppu_window_bits(&(*win).edges, &(*ppu).window2left, &(*ppu).window2right);
     }
     if winflags
         & (kWindow2Enabled as ::core::ffi::c_int | kWindow2Inversed as ::core::ffi::c_int) as uint32
