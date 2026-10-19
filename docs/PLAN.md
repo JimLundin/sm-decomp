@@ -142,23 +142,26 @@ No maintained source or own residue counters change in this quality check.
 Later Cargo-profile and gameplay changes retain separate verification;
 full gameplay/credits, hardware/audio coverage and remaining masks stay open.
 
-Latest focused check: frozen `97b3dbb5` plus the shared scrolling DMA helper
-passes any% 129712/0 (301.94s) and Waver 58109/0 (143.79s), both native exits
-0. Column wrapping +1 and row OR $20 remain distinct; low-byte flag clearing,
-saved values across DMA and live wrapped-parameter reads retain their order.
-The 30000/0 Waver prefix passes 58808 actual old/current wrapper comparisons
-and 117616 helper entries. All four configurations execute: active BG1/BG2
-columns 540/92 and rows 466/1; wrapped counts are 10/0 and 466/1 respectively.
-Captured RAM, both PPUs, CPU/Snes/Cart, SRAM, inputs, DMA state and g_fail match
-after checked restoration. Ordered registers, parameter reads, flag clears,
-3152 DMA launches, 144408 transferred bytes and 6304 diagnostic prereads match
-per side. All 16 constructed cases pass 64 launches / 263304 bytes / 263432
-reads, including four 65536-byte transfers, source wrap/bank carry, flag aliases
-and inherited byte phases. First-size zero, BG2 column wrapping and row wrapped
-skips have constructed coverage only. Frozen hashes, exact observation stripping
-and independent review pass. Formatting, release build and progress pass.
-Own raw offsets -68, cast lines -146 and Rust lines -317; unsafe functions +1
-because one private helper consolidates the four hardware-transfer sequences.
+Latest focused check: frozen `8e2bd047` plus the byte-backed VRAM write
+queue consumer passes any% 129712/0 (183.46s) and Waver 58109/0 (74.98s),
+both native exits 0. Captured-tail sentinel writes, linear seven-byte cursor,
+live field reads, word VMAIN's VMADDL side effect and final tail clearing before
+real scrolling retain their order. The 9000/0 prefix passes 9017 actual
+old/current comparisons: zero/nonzero tails 1361/7656, 15138 queue transfers,
+14434720 DMA bytes and 30276 diagnostic prereads per side. Both scrolling
+wrappers execute 9017 times. Captured RAM, both PPUs, CPU/Snes/Cart, SRAM,
+inputs, DMA state and g_fail match after checked restoration; ordered registers,
+entry fields, sentinels, tail clearing and transfer traces match.
+All 13 constructed controls pass 9377 queue starts plus 10 scrolling starts,
+9673 bytes and 28447 reads. They cover unaligned tails, all three tail-word
+aliases, early stops, inherited phase, both increments, source boundaries and
+a 9364-entry scan reaching cursor 65541 before terminating at 65548. Natural
+calls use increment 1, at most three entries and inactive scrolling; alternatives
+are constructed. Equivalence is checked for scans terminating within g_ram;
+queues without an in-RAM terminator remain outside verified coverage. Frozen
+hashes, exact observation stripping and independent review pass. Formatting,
+release build and progress pass. Own raw offsets -3, cast lines -16 and Rust
+lines -13; other own counters unchanged.
 
 Everything that existed before is in the branch `archive/pre-transpile-2026-10-17`.
 

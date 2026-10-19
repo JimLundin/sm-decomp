@@ -1262,50 +1262,37 @@ pub unsafe fn NMI_ProcessMode7QueueInner(mut p: *const uint8, game: &mut Game) {
     }
 }
 pub unsafe fn NMI_ProcessVramWriteQueue(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
-        (*gVramWriteEntry(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int,
-            game,
-        ))
-        .size = 0 as uint16;
-        WriteRegWord(
-            DMAP1 as ::core::ffi::c_int as uint16,
-            0x1801 as uint16,
-            game,
-        );
-        let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+    let tail = game.vram_write_queue_tail();
+    if tail != 0 {
+        // The sentinel uses the byte tail, which need not lie on an entry boundary.
+        game.write_vram_queue_word(tail, 0, 0);
+        WriteRegWord(DMAP1 as u16, 0x1801, game);
+        let read_word = |game: &Game, address: usize| {
+            u16::from_le_bytes([game.g_ram[address], game.g_ram[address + 1]])
+        };
+        // Entries are seven packed bytes; the consumer advances without bank wrap.
+        let mut entry = 0xd0;
         loop {
-            let mut e: *mut VramWriteEntry = gVramWriteEntry(i, game);
-            if (*e).size == 0 {
+            let size = read_word(game, entry);
+            if size == 0 {
                 break;
             }
-            WriteRegWord(DAS1L as ::core::ffi::c_int as uint16, (*e).size, game);
-            WriteRegWord(
-                A1T1L as ::core::ffi::c_int as uint16,
-                (*e).src.addr as uint16,
-                game,
-            );
-            WriteReg(A1B1 as ::core::ffi::c_int as uint16, (*e).src.bank, game);
-            WriteRegWord(
-                VMAIN as ::core::ffi::c_int as uint16,
-                (if (*e).vram_dst as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
-                    0x81 as ::core::ffi::c_int
-                } else {
-                    0x80 as ::core::ffi::c_int
-                }) as uint16,
-                game,
-            );
-            WriteRegWord(VMADDL as ::core::ffi::c_int as uint16, (*e).vram_dst, game);
-            WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-            i += 7 as ::core::ffi::c_int;
+            WriteRegWord(DAS1L as u16, size, game);
+            WriteRegWord(A1T1L as u16, read_word(game, entry + 2), game);
+            WriteReg(A1B1 as u16, game.g_ram[entry + 4], game);
+            let increment = if read_word(game, entry + 5) & 0x8000 != 0 {
+                0x81
+            } else {
+                0x80
+            };
+            // This word write also clears VMADDL before the full destination write.
+            WriteRegWord(VMAIN as u16, increment, game);
+            WriteRegWord(VMADDL as u16, read_word(game, entry + 5), game);
+            WriteReg(MDMAEN as u16, 2, game);
+            entry += 7;
         }
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    game.set_vram_write_queue_tail(0);
     Nmi_ProcessHorizScrollingDma(game);
     Nmi_ProcessVertScrollingDma(game);
 }
