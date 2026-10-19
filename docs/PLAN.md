@@ -12982,6 +12982,42 @@ Keep it this small. Add a crate only when the game code itself needs one.
 
 ## Phase 1: make the oracle a one-command check
 
+Release build turnaround (2026-10-19): prioritize the user's edit-to-result
+iteration time. Enable Cargo release incremental compilation and explicitly
+retain 16 codegen units. Release optimization, debug information and every
+verification check remain unchanged; repeated builds reuse unchanged code.
+
+Frozen b1a18b45 with only this profile change was compared using matching
+SnesInit body edits. First application builds with cached dependencies took
+36.863s before and 42.650s after; this is not a fully cold dependency build.
+Two edited-build pairs took 52.494 -> 23.352s and 48.205 -> 29.457s.
+A later candidate/base/base/candidate series took 20.595/47.031/39.475/20.638s.
+Its compiler-process-tree CPU times were 55.28125/89.0625/83.125/54.296875s:
+52.3% less elapsed time and 36.4% less CPU time on average for that series.
+
+The normal edit/Cargo/DLL/full-any% cycle took 290.877s before and 297.076s
+after under shared load. Cargo took 26.361 -> 44.070s in this pair, reversing
+the isolated edited-build gains; replay took 252.18 -> 229.35s. Both cycles
+pass 129712/0, native exits 0, with identical complete non-timing diagnostics.
+These measurements establish less repeated compilation work, not a stable
+full-cycle speedup. Future timing should continue to measure build-to-result.
+
+Actual updated Cargo libraries print the expected temporary revision marker
+and pass 3600/0; the full normal cycles likewise execute their newer marker.
+A deliberate compiler error makes the cached Cargo build exit 101; clean
+recovery builds pass. The adjacent actual-Cargo artifact QC uses the exact
+clean DLL hashes from this experiment: both profiles pass any% 129712/0
+and Waver 58109/0 with identical non-timing output. An additional pinned Cargo
+candidate replay passes 129712/0 (154.07s), native exit 0. All 68 source/config
+files match the base commit after removing only temporary revision markers
+and the proposed profile change. Cargo fmt/check, release build with installed
+SDL2, and progress pass. Own Rust residue counters are unchanged. No diagnostic
+scripts, compiled artifacts or ROM-derived data are committed.
+
+A separate narrowed comparison-argument trial was rejected: paired prefix
+wall times disagreed and mean replay CPU time increased about 1.25%. No
+comparison or gameplay changes from that trial are retained.
+
 Actual Cargo artifact QC (2026-10-19): frozen b1a18b45 with the default
 release profile and with incremental=true/codegen-units=16 both passes
 any% 129712/0 and Waver 58109/0, all four native exits 0. Every non-timing

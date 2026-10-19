@@ -4,3 +4,6 @@ members = ["sm"]
 
 [profile.release]
 debug = "line-tables-only"
+# Reuse unchanged code during verification; retain the usual release partitioning.
+incremental = true
+codegen-units = 16
