@@ -13790,6 +13790,38 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Samus top/bottom coordinates (2026-10-19): make Samus_GetBottom_R18 and
+Samus_GetTop_R20 safe read-only functions. Named Y/pose accessors and the
+existing bounds-checked ROM byte reader replace typed raw pointers. Y is
+captured before the live pose/radius lookup. The eight-byte pose record's
+radius remains byte 6; the offset is added after LoROM mapping without
+16-bit truncation. Bottom retains Y+radius-1 and top Y-radius, both wrapping.
+
+Frozen 182e6a2c plus this source passes clean any% 129712/0 (313.25s).
+Contextual old/current return values and unchanged complete 128 KiB RAM /
+g_fail match on bottom/top calls 219546/101458 in any% (311.82s) and
+116188/45250 in Waver 58109/0 (174.51s), native exits 0. The helpers
+visit 108/108 distinct poses in any% and 92/92 in Waver.
+Clean/observed any% non-timing diagnostics match; exact copied-body
+identity and maintained source identity pass. All callers stay unchanged.
+
+Constructed checks execute both actual old/current helpers for every
+16-bit pose word at seven Y boundaries, then every Y word for all 256
+radius bytes found through the original live-ROM record layout.
+17235968 paired cases pass; record size/field offset assertions pass.
+Only pose/Y inputs change during these read-only comparisons. Their
+restoration leaves complete RAM and g_fail equal to entry, and the movie
+continues for 10000 frames with zero failures (17.02s).
+Omitting the bottom's -1, selecting field 5, truncating the pose byte
+offset and saturating top subtraction all fail their controls. These
+constructed checks supplement the demonstrated movie calls.
+
+Cargo format/check, release --locked (38.24s) and progress pass. Own raw
+offsets -4, unsafe functions -2, cast lines -17 and Rust lines -18; other
+counters are unchanged. Temporary scripts/builds are removed; no probes or
+ROM-derived fixtures are committed. Remaining pose/animation cleanup and
+broader gameplay/credits verification stay open.
+
 Door-transition state cleanup (2026-10-19): HandleTransition now uses
 named byte-backed coordinates, IRQ and elevator words, preserving wrapped
 coordinate corrections, callback order and the two-byte INIDISP/OBSEL update.
