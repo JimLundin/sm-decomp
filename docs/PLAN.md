@@ -13335,6 +13335,29 @@ order. Current formatting/check, normal Cargo release (2.31s) and progress
 pass. This review changes no maintained source or own residue counters;
 the existing full replays above provide its movie verification.
 
+PLM block coordinates (2026-10-19): CalculatePlmBlockCoords now reads
+its captured block index and live room-width words through little-endian
+RAM bytes and writes the named Y/X words through byte-backed stores.
+Slot rounding, block-index halving, low-byte width and Y-before-X order
+remain exact. The width is reread after the Y store. Existing SNES divide
+helpers retain zero-divisor quotientFFFF/remainder-dividend behavior;
+the function remains unsafe because those shared helpers are unsafe.
+
+Frozen 182e6a2c plus only this routine passes any%129712/0
+(273.19s) and pickup route68606/0 (173.40s), both
+native exits0. Observed pickup68606/0 (180.91s) compares all
+128KiB RAM on 2831 actual calls against the original routine and
+restores the current result before continuing. This function and its two
+pure arithmetic helpers have no effects outside RAM. No contextual coverage
+of zero-width or invalid slots is inferred. Clean and observed route
+diagnostics match after removing observation lines. Frozen source scope and
+maintained routine identity pass; no observers are committed.
+
+Cargo fmt/check, normal release build and progress pass. Own raw offsets-5,
+cast lines-8 and Rust lines-6; all other own counters unchanged. Peer edits
+remain preserved. Full credits/gameplay/hardware/audio/masks/ownership and
+uncovered PLM routine holds remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

@@ -932,24 +932,18 @@ pub unsafe fn UNUSED_sub_848278(game: &mut Game) {
         QueueSfx1_Max15(0x30 as uint16, game);
     }
 }
-pub unsafe fn CalculatePlmBlockCoords(mut k: uint16, game: &mut Game) {
-    let mut t: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1c87 as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-        as ::core::ffi::c_int
-        >> 1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1c2b as ::core::ffi::c_int as isize)
-        as *mut uint16) = SnesDivide(
-        t,
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
-    );
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1c29 as ::core::ffi::c_int as isize)
-        as *mut uint16) = SnesModulus(
-        t,
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
-    );
+pub unsafe fn CalculatePlmBlockCoords(k: uint16, game: &mut Game) {
+    let block_index_addr = 0x1c87 + usize::from(k >> 1) * 2; // plm_block_indices
+    let block_index = u16::from_le_bytes([
+        game.g_ram[block_index_addr],
+        game.g_ram[block_index_addr + 1],
+    ]) >> 1;
+    let room_width = u16::from_le_bytes([game.g_ram[0x7a5], game.g_ram[0x7a6]]) as u8;
+    let y = SnesDivide(block_index, room_width);
+    game.g_ram[0x1c2b..0x1c2d].copy_from_slice(&y.to_le_bytes()); // plm_y_block
+    let room_width = u16::from_le_bytes([game.g_ram[0x7a5], game.g_ram[0x7a6]]) as u8;
+    let x = SnesModulus(block_index, room_width);
+    game.g_ram[0x1c29..0x1c2b].copy_from_slice(&x.to_le_bytes()); // plm_x_block
 }
 pub fn WriteLevelDataBlockTypeAndBts(k: uint16, a: uint16, game: &mut Game) {
     // The level-data byte uses the exact offset, while BTS rounds down to a word.
