@@ -10113,6 +10113,24 @@ unchanged. Independent pointer/Y/address Cartesian, arbitrary MMIO and full
 gameplay/render/audio remain open. Indexed-indirect/TSX/accumulator ROR held.
 Continue covered CPU cleanup.
 
+CPU shared word direct-page pointer fetch (2026-10-19): indirect/indirect-Y
+wrappers share read_direct_page_pointer. Operand fetch, alignment cycle,
+captured pointer addresses and ordered word reads retain their sequence;
+callers read live DB/Y afterward. Safe address references end before bus reads.
+Frozen `06b6d634` plus this change passes 33,550,336 actual old/current indirect
+cases and 134,201,344 indirect-Y cases using the preceding RAM-pointer probes.
+Named CPU/bus fields, RAM, addresses, PC and cycles match. MMIO-boundary
+locations are excluded; independent pointer/Y/address Cartesian and mutating
+MMIO remain unproven. Prefix 3,600/0 (1.03s), native exit 0, executes both
+wrappers through shared fetch 34,066/4,362 times; indirect-Y has write=false/
+XF=true there. Clean full any% 129,712/0 (50.46s), native exit 0. Cargo fmt/check,
+full release/release-library builds with external SDL2, normal metadata and
+frozen optimized core/DLL pass. Live CPU matches verified source; peer PPU
+work is outside this replay. Rust lines +1 and unsafe functions +1 centralize
+the duplicated word-pointer bus sequence. Other own counters unchanged.
+Indexed-indirect/TSX/accumulator ROR remain held. Complete gameplay/render/
+audio remain open. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
