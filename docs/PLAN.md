@@ -40,10 +40,11 @@ No allocation, conversion or new runtime operation is introduced.
 
 Complete source reconstruction and all four expanded initializers pass.
 Whole-library expansion matches after removing the new macro/import and
-normalizing qualified null/c_char names; every comma remains exact. Compiler
+normalizing 775 c_char/244 null qualifications and four trailing array commas.
+Independent source and complete expansion review passes. Compiler
 typecheck, normal release (30.20s), formatting and progress pass. Final
 composition includes a61a5376 SDL declarations. Full any% passes 129712/0
-(104.22s), native exit 0; all 70 inputs, 67 replay sources and 72 pins
+(104.22s), native exit 0; all 71 inputs, 68 replay sources and 73 pins
 remain fixed. Net Rust lines -575 (138548 total); raw offsets, unsafe
 functions and cast-line counters are unchanged. Any% covers core gameplay;
 this refactor claims no broader tracing/UI coverage. Continue substantial
