@@ -8998,6 +8998,57 @@ Rust lines +1 name both operand components; other own counters unchanged.
 Full operand/index Cartesian coverage, arbitrary device mutation, gameplay and
 rendering/audio completion remain open. Continue covered CPU cleanup.
 
+DMA start channel iteration (2026-10-19): dma_startDma now borrows only its
+initialized channel array and iterates mutable channels in index order.
+Normal/HDMA flag selection and the normal busy-before-wrapping-timer update
+are unchanged. The raw unsafe public boundary remains: dma_init initializes
+only the owner pointer before reset, and its explicit seven-byte pad is never
+initialized. Borrowing the entire Dma would impose an invalid field invariant.
+No allocation, reset, caller, RAM or serialized layout changes are included.
+
+Independent subagents approve the final field-only borrow and compare actual
+old/current helpers in 1,048,576 initialized cases across all masks, both modes
+and timer wrap boundaries. All 156 operational scalar fields and seven explicit
+pad bytes match; implicit representation padding is not compared. Corrected
+probe initialization uses raw field stores before creating typed values.
+An instrumented 3,600/0 replay executes 24,992 normal and 7,206 HDMA starts;
+full any% passes 129,712/0 (85.81s), with 1,407,626 normal and 259,544 HDMA
+starts. Every immediate operational-state result matches the actual old helper;
+runtime checks exclude the uninitialized pad. Both processes return native 0.
+A separately built clean DLL, containing no observations, passes any%
+129,712/0 (72.63s), captured native exit 0. All frozen source is e8878518
+plus this exact DMA change;
+the concurrent CPU cleanup is excluded from these DLL comparisons.
+
+Cargo fmt/check and full release build pass on 6e2f8971 plus this DMA change
+(32.45s), using cached dependencies and the external SDL2 library. Fresh Cargo
+dependency build scripts and execution of the newly rebuilt native executable
+remain ASR-denied; the denied executable is not a replay pass. The approved
+DLL path supplies the full replay. Rust lines +1 introduce the initialized
+array reference; other residue counters are unchanged by this focused change.
+Next: avoid the two whole-Dma references in snapshot capture/restore without
+writing its serialized pad. Other whole-allocation validity, renderer/audio,
+masked RAM and boot-to-credits gaps remain open.
+
+CPU arithmetic branch results (2026-10-19): byte/word ADC and SBC initialize
+their result from decimal/binary branch expressions. Decimal intermediate
+corrections remain local; arithmetic, live field reads, overflow-before-final-
+adjustment and C/A/Z/N ordering are unchanged. Frozen HEAD `6e2f8971` plus this
+change passes 144,179,200 actual old/current helper comparisons over every byte
+operand/register word and nineteen word boundary/decimal/sign/equality entries
+(including duplicates), both carry values and decimal flags. Named CPU/bus
+state, cycle wrapping, byte high-A preservation and binary A/C assertions pass;
+decimal results are differential preservation evidence. Prefix 3,600/0 (1.18s)
+executes word/byte ADC 195,798/37,613 and SBC 38,340/169 times. All movie calls
+are binary; constructed real-helper cases exercise decimal paths. Clean full
+any% 129,712/0 (71.97s), native exit 0. Independent source/probe review finds
+no differences. Cargo fmt/check, full release and release-library builds with
+external SDL2, normal metadata and optimized frozen core/DLL builds pass. Live
+CPU matches verified source; concurrent DMA work is outside this replay. Own
+progress counters unchanged. Full word Cartesian coverage, decimal movie
+coverage, arbitrary device mutation and gameplay/render/audio completion remain
+open. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

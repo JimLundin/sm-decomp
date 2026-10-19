@@ -470,12 +470,13 @@ pub unsafe fn dma_cycle(dma: *mut Dma, game: &mut Game) -> bool {
     }
 }
 pub unsafe fn dma_startDma(dma: *mut Dma, mask: u8, hdma: bool) {
-    for i in 0..8 {
+    let channels = &mut (*dma).channel;
+    for (i, channel) in channels.iter_mut().enumerate() {
         let active = mask & (1 << i) != 0;
         if hdma {
-            (*dma).channel[i].hdmaActive = active;
+            channel.hdmaActive = active;
         } else {
-            (*dma).channel[i].dmaActive = active;
+            channel.dmaActive = active;
         }
     }
     if !hdma {
