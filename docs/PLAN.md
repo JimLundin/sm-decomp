@@ -12936,6 +12936,24 @@ The final setter-only replays above replace the combined regression evidence.
 Chozo guarded reads, Super Missile passage and previous holds stay held;
 complete credits, gameplay, hardware/audio, masks and ownership remain open.
 
+PLM sleep/delete state (2026-10-19): PlmInstr_Sleep now stores its
+wrapped bank-relative instruction address minus2 in byte-backed
+plm_instr_list_ptrs. RomBankBase still runs before the store. PlmInstr_Delete
+clears the byte-backed plm_header_ptr word and is now safe. Full-width k>>1
+slot indexing and both null return pointers retain their behavior.
+
+Frozen b1410a5d plus only this change passes any%129712/0
+(219.50s), native exit0, and pickup route68606/0
+(125.61s), native exit0. Observed pickup route68606/0
+(128.07s) executes 679 sleeps and 977 deletes.
+Maintained source contains no observers. Arithmetic audit matches196608
+signed/wrapped sleep offsets; this adds no movie coverage. Cargo fmt/check
+and release build pass. Own raw offsets-2, unsafe functions-1, cast lines-4,
+Rust lines-11; other own counters unchanged. Frozen replays exclude peer
+source, which remains preserved. PLM decrement, Chozo guarded reads,
+Super Missile passage and previous holds stay held; complete credits,
+gameplay, hardware/audio, masks and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
