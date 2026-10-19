@@ -14382,6 +14382,26 @@ unsafe functions and other counters unchanged. This begins the prioritized
 subsystem approach; broader indexed-field/update consolidation remains open,
 as do gameplay/credits, hardware/audio/masks and ownership.
 
+Enemy-projectile indexed reads (2026-10-19): extend EprojState with
+byte-backed ID, preinstruction and instruction-list words. Replace four
+repeated indexed read sites in SpawnEprojInner, EprojRunAll and EprojRunOne.
+Each method takes a word index explicitly; slot rounding, wide address
+arithmetic, callback-relative reads and surrounding writes remain unchanged.
+
+Frozen 9173c4b8 plus only this change passes
+any%129712/0 (257.61s) and Spazer90706/0 (201.19s),
+native exits0. Observed Spazer90706/0 (259.05s) compares
+1317261 actual slot-word reads against the original pointer address at
+each read. All three field methods execute in context. Clean and observed
+non-timing diagnostics match after probe stripping. Frozen scope and
+maintained region identity pass; no observers are committed. Invalid-index
+and arbitrary alias extremes are not inferred from these movie calls.
+
+Cargo fmt/check, normal release build and progress pass. Including shared
+definitions: raw offsets-4, cast lines-7; Rust lines, unsafe functions and
+other own counters unchanged. Broader indexed-field/update consolidation
+remains open, as do gameplay/credits, hardware/audio/masks and ownership.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

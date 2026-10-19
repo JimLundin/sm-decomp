@@ -776,6 +776,19 @@ impl EprojState<'_> {
     fn index(&self) -> u16 {
         u16::from_le_bytes([self.0[0x1991], self.0[0x1992]])
     }
+    fn slot_word(&self, base: usize, word_index: usize) -> u16 {
+        let address = base + word_index * 2;
+        u16::from_le_bytes([self.0[address], self.0[address + 1]])
+    }
+    fn id(&self, word_index: usize) -> u16 {
+        self.slot_word(0x1997, word_index)
+    }
+    fn preinstruction(&self, word_index: usize) -> u16 {
+        self.slot_word(0x1a03, word_index)
+    }
+    fn instruction(&self, word_index: usize) -> u16 {
+        self.slot_word(0x1b47, word_index)
+    }
 }
 
 pub unsafe fn EnableEprojs(game: &mut Game) {
@@ -799,11 +812,7 @@ pub unsafe fn ClearEprojs(game: &mut Game) {
 }
 unsafe fn SpawnEprojInner(mut j: uint16, mut gfx_idx: uint16, game: &mut Game) {
     let mut v3: uint16 = 34 as uint16;
-    while *((&raw mut game.g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-        != 0
-    {
+    while EprojState(&game.g_ram).id(usize::from(v3 >> 1)) != 0 {
         v3 = (v3 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
         if v3 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
             return;
@@ -877,10 +886,7 @@ pub unsafe fn SpawnEprojWithRoomGfx(mut j: uint16, mut a: uint16, game: &mut Gam
 }
 unsafe fn EprojRunOne(mut k: uint16, game: &mut Game) {
     CallEprojPreInstr(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x1a03 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-            as ::core::ffi::c_int
+        (EprojState(&game.g_ram).preinstruction(usize::from(k >> 1)) as ::core::ffi::c_int
             | 0x860000 as ::core::ffi::c_int) as uint32,
         k,
         game,
@@ -896,9 +902,7 @@ unsafe fn EprojRunOne(mut k: uint16, game: &mut Game) {
     if fresh20 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
         let mut base: *const uint8 = RomBankBase(0x86 as uint8, game);
         let mut p: *const uint8 = base.offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1b47 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v2 as isize) as ::core::ffi::c_int as isize,
+            EprojState(&game.g_ram).instruction(v2 as usize) as ::core::ffi::c_int as isize
         );
         while !(*(p as *mut uint16) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int)
@@ -936,11 +940,7 @@ pub unsafe fn EprojRunAll(game: &mut Game) {
         while i >= 0 as ::core::ffi::c_int {
             *((&raw mut game.g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize)
                 as *mut uint16) = i as uint16;
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset((i >> 1 as ::core::ffi::c_int) as isize)
-                != 0
-            {
+            if EprojState(&game.g_ram).id((i >> 1) as usize) != 0 {
                 EprojRunOne(i as uint16, game);
                 i = EprojState(&game.g_ram).index() as ::core::ffi::c_int;
             }
