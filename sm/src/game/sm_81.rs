@@ -153,12 +153,12 @@ unsafe fn get_RoomDefHeader(mut a: uint16, game: &mut Game) -> *mut RoomDefHeade
     ) as *mut RoomDefHeader;
 }
 static kFileSelectMap_AreaIndexes: [uint16; 6] = [
-    0 as ::core::ffi::c_int as uint16,
-    3 as ::core::ffi::c_int as uint16,
-    5 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    4 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
+    0 as uint16,
+    3 as uint16,
+    5 as uint16,
+    1 as uint16,
+    4 as uint16,
+    2 as uint16,
 ];
 pub unsafe fn SoftReset(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) = 0xffff as uint16;
@@ -1010,9 +1010,9 @@ pub unsafe fn MapVramForMenu(game: &mut Game) {
     *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 19 as uint8;
 }
 pub unsafe fn LoadInitialMenuTiles(game: &mut Game) {
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_818DF1: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -1024,10 +1024,10 @@ pub unsafe fn LoadInitialMenuTiles(game: &mut Game) {
         das: 0x5600 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_818DF1 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x30 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x30 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_818E11: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -1039,10 +1039,10 @@ pub unsafe fn LoadInitialMenuTiles(game: &mut Game) {
         das: 0x2000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_818E11 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x60 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_818E31: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -1054,10 +1054,10 @@ pub unsafe fn LoadInitialMenuTiles(game: &mut Game) {
         das: 0x2000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_818E31 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x40 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x40 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_818E51: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -1069,7 +1069,7 @@ pub unsafe fn LoadInitialMenuTiles(game: &mut Game) {
         das: 0x600 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_818E51 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
 }
 pub unsafe fn LoadMenuPalettes(game: &mut Game) {
     let mut v0: uint16 = 0 as uint16;
@@ -1181,9 +1181,9 @@ pub unsafe fn RestorePalettesAndIoAfterDebugGameover(game: &mut Game) {
     }
 }
 pub unsafe fn GameOverMenu_5_Continue(game: &mut Game) {
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x40 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x40 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_819093: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -1195,7 +1195,7 @@ pub unsafe fn GameOverMenu_5_Continue(game: &mut Game) {
         das: 0x2000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_819093 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) = 16 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x950) as *mut uint16) = 0 as uint16;
     RestorePalettesAndIoAfterDebugGameover(game);
@@ -1256,7 +1256,7 @@ pub unsafe fn GameOverMenu_6_LoadGameMapView(game: &mut Game) {
     DisableHdmaObjects(game);
     WaitUntilEndOfVblankAndClearHdma(game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
-        kGameState_5_FileSelectMap as ::core::ffi::c_int as uint16;
+        kGameState_5_FileSelectMap as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16) = 0 as uint16;
 }
 pub unsafe fn GameOverMenu_4_Main(game: &mut Game) {
@@ -1353,29 +1353,21 @@ pub unsafe fn GameOverMenu_1_Init(game: &mut Game) {
         (v1 + 7 as ::core::ffi::c_int) as uint16;
     (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
         .palette_index = 0 as uint16;
-    LoadMenuTilemap(
-        0x156 as uint16,
-        addr_kMenuTilemap_GameOver as ::core::ffi::c_int as uint16,
-        game,
-    );
+    LoadMenuTilemap(0x156 as uint16, addr_kMenuTilemap_GameOver as uint16, game);
     LoadMenuTilemap(
         0x38a as uint16,
-        addr_kMenuTilemap_FindMetroidLarva as ::core::ffi::c_int as uint16,
+        addr_kMenuTilemap_FindMetroidLarva as uint16,
         game,
     );
-    LoadMenuTilemap(
-        0x414 as uint16,
-        addr_kMenuTilemap_TryAgain as ::core::ffi::c_int as uint16,
-        game,
-    );
+    LoadMenuTilemap(0x414 as uint16, addr_kMenuTilemap_TryAgain as uint16, game);
     LoadMenuTilemap(
         0x4ce as uint16,
-        addr_kMenuTilemap_YesReturnToGame as ::core::ffi::c_int as uint16,
+        addr_kMenuTilemap_YesReturnToGame as uint16,
         game,
     );
     LoadMenuTilemap(
         0x5ce as uint16,
-        addr_kMenuTilemap_NoGoToTitle as ::core::ffi::c_int as uint16,
+        addr_kMenuTilemap_NoGoToTitle as uint16,
         game,
     );
     (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
@@ -1531,7 +1523,7 @@ pub unsafe fn FileSelectMenu_32_FadeOutToOptions(game: &mut Game) {
         == 0 as ::core::ffi::c_int
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
-            kGameState_2_GameOptionsMenu as ::core::ffi::c_int as uint16;
+            kGameState_2_GameOptionsMenu as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16) = 0 as uint16;
         let mut v0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
         loop {
@@ -1580,18 +1572,18 @@ pub unsafe fn FileSelectMenu_15_FadeOutToMain(game: &mut Game) {
     }
 }
 static kMenuSelectionMissileXY: [uint16; 12] = [
-    0x30 as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0x58 as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0x80 as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xa3 as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xbb as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xd3 as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
+    0x30 as uint16,
+    0xe as uint16,
+    0x58 as uint16,
+    0xe as uint16,
+    0x80 as uint16,
+    0xe as uint16,
+    0xa3 as uint16,
+    0xe as uint16,
+    0xbb as uint16,
+    0xe as uint16,
+    0xd3 as uint16,
+    0xe as uint16,
 ];
 pub unsafe fn FileSelectMenu_17_FadeInToMain(game: &mut Game) {
     let mut v0: ::core::ffi::c_int = (4 as ::core::ffi::c_int
@@ -1633,12 +1625,12 @@ pub unsafe fn FileSelectMenu_Func1(game: &mut Game) {
         .palette_index = 0 as uint16;
     LoadMenuTilemap(
         0x52 as uint16,
-        addr_kMenuTilemap_DataCopyMode as ::core::ffi::c_int as uint16,
+        addr_kMenuTilemap_DataCopyMode as uint16,
         game,
     );
     LoadMenuTilemap(
         0x150 as uint16,
-        addr_kMenuTilemap_CopyWhichData as ::core::ffi::c_int as uint16,
+        addr_kMenuTilemap_CopyWhichData as uint16,
         game,
     );
     LoadMenuExitTilemap(game);
@@ -1677,11 +1669,7 @@ pub unsafe fn ClearMenuTilemap(game: &mut Game) {
     }
 }
 pub unsafe fn LoadMenuExitTilemap(game: &mut Game) {
-    LoadMenuTilemap(
-        0x688 as uint16,
-        addr_kMenuTilemap_Exit as ::core::ffi::c_int as uint16,
-        game,
-    );
+    LoadMenuTilemap(0x688 as uint16, addr_kMenuTilemap_Exit as uint16, game);
 }
 pub unsafe fn DrawFileCopySaveFileInfo(game: &mut Game) {
     LoadFromSram_(0 as uint16, game);
@@ -1723,27 +1711,19 @@ pub unsafe fn DrawFileCopySaveSlotAInfo(game: &mut Game) {
     DrawFileSelectionHealth(
         (*((&raw mut game.g_ram as *mut uint8).offset(0x954) as *mut uint16) as ::core::ffi::c_int
             & 1 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16,
+            == 0 as ::core::ffi::c_int) as uint16,
         0x218 as uint16,
         game,
     );
     DrawFileSelectionTime(
         (*((&raw mut game.g_ram as *mut uint8).offset(0x954) as *mut uint16) as ::core::ffi::c_int
             & 1 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16,
+            == 0 as ::core::ffi::c_int) as uint16,
         0x272 as uint16,
         game,
     );
-    LoadMenuTilemap(
-        0x234 as uint16,
-        addr_kMenuTilemap_TIME as ::core::ffi::c_int as uint16,
-        game,
-    );
-    LoadMenuTilemap(
-        0x208 as uint16,
-        addr_kMenuTilemap_SamusA as ::core::ffi::c_int as uint16,
-        game,
-    );
+    LoadMenuTilemap(0x234 as uint16, addr_kMenuTilemap_TIME as uint16, game);
+    LoadMenuTilemap(0x208 as uint16, addr_kMenuTilemap_SamusA as uint16, game);
 }
 pub unsafe fn DrawFileCopySaveSlotBInfo(game: &mut Game) {
     DrawFileSelectionHealth(
@@ -1760,16 +1740,8 @@ pub unsafe fn DrawFileCopySaveSlotBInfo(game: &mut Game) {
         0x372 as uint16,
         game,
     );
-    LoadMenuTilemap(
-        0x334 as uint16,
-        addr_kMenuTilemap_TIME as ::core::ffi::c_int as uint16,
-        game,
-    );
-    LoadMenuTilemap(
-        0x308 as uint16,
-        addr_kMenuTilemap_SamusB as ::core::ffi::c_int as uint16,
-        game,
-    );
+    LoadMenuTilemap(0x334 as uint16, addr_kMenuTilemap_TIME as uint16, game);
+    LoadMenuTilemap(0x308 as uint16, addr_kMenuTilemap_SamusB as uint16, game);
 }
 pub unsafe fn DrawFileCopySaveSlotCInfo(game: &mut Game) {
     DrawFileSelectionHealth(
@@ -1786,16 +1758,8 @@ pub unsafe fn DrawFileCopySaveSlotCInfo(game: &mut Game) {
         0x472 as uint16,
         game,
     );
-    LoadMenuTilemap(
-        0x434 as uint16,
-        addr_kMenuTilemap_TIME as ::core::ffi::c_int as uint16,
-        game,
-    );
-    LoadMenuTilemap(
-        0x408 as uint16,
-        addr_kMenuTilemap_SamusC as ::core::ffi::c_int as uint16,
-        game,
-    );
+    LoadMenuTilemap(0x434 as uint16, addr_kMenuTilemap_TIME as uint16, game);
+    LoadMenuTilemap(0x408 as uint16, addr_kMenuTilemap_SamusC as uint16, game);
 }
 pub unsafe fn QueueTransferOfMenuTilemapToVramBG1(game: &mut Game) {
     let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
@@ -1816,11 +1780,7 @@ pub unsafe fn QueueTransferOfMenuTilemapToVramBG1(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) =
         (v0 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
 }
-static kBitShl: [uint8; 3] = [
-    1 as ::core::ffi::c_int as uint8,
-    2 as ::core::ffi::c_int as uint8,
-    4 as ::core::ffi::c_int as uint8,
-];
+static kBitShl: [uint8; 3] = [1 as uint8, 2 as uint8, 4 as uint8];
 pub unsafe fn FileSelectMenu_8(game: &mut Game) {
     let mut v0: uint8 = 0;
     DrawBorderAroundDataCopyMode(game);
@@ -1921,12 +1881,8 @@ pub unsafe fn FileSelectMenu_8(game: &mut Game) {
     };
 }
 pub unsafe fn SetFileCopyMenuSelectionMissilePosition(game: &mut Game) {
-    static kFileCopyMissileY: [uint16; 4] = [
-        72 as ::core::ffi::c_int as uint16,
-        104 as ::core::ffi::c_int as uint16,
-        136 as ::core::ffi::c_int as uint16,
-        211 as ::core::ffi::c_int as uint16,
-    ];
+    static kFileCopyMissileY: [uint16; 4] =
+        [72 as uint16, 104 as uint16, 136 as uint16, 211 as uint16];
     *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(10) =
         kFileCopyMissileY[*((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16)
             .offset(15) as usize];
@@ -1957,14 +1913,14 @@ pub unsafe fn DrawFileCopySelectDestinationSaveFileInfo(game: &mut Game) {
         .palette_index = 0 as uint16;
     LoadMenuTilemap(
         0x52 as uint16,
-        addr_kMenuTilemap_DataCopyMode as ::core::ffi::c_int as uint16,
+        addr_kMenuTilemap_DataCopyMode as uint16,
         game,
     );
     (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
         .palette_index = 0 as uint16;
     LoadMenuTilemap(
         0x148 as uint16,
-        addr_kMenuTilemap_CopySamusToWhere as ::core::ffi::c_int as uint16,
+        addr_kMenuTilemap_CopySamusToWhere as uint16,
         game,
     );
     (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
@@ -2007,12 +1963,8 @@ pub unsafe fn DrawFileCopySelectDestinationSaveFileInfo(game: &mut Game) {
 }
 pub unsafe fn FileSelectMenu_10_FileCopySelectDest(game: &mut Game) {
     let mut current_block: u64;
-    static kFileCopySelectDest_MissileY: [uint16; 4] = [
-        72 as ::core::ffi::c_int as uint16,
-        104 as ::core::ffi::c_int as uint16,
-        136 as ::core::ffi::c_int as uint16,
-        212 as ::core::ffi::c_int as uint16,
-    ];
+    static kFileCopySelectDest_MissileY: [uint16; 4] =
+        [72 as uint16, 104 as uint16, 136 as uint16, 212 as uint16];
     let mut v0: uint16 = 0;
     DrawBorderAroundDataCopyMode(game);
     DrawMenuSelectionMissile(game);
@@ -2126,7 +2078,7 @@ pub unsafe fn FileSelectMenu_11_InitializeConfirm(game: &mut Game) {
         .palette_index = 0 as uint16;
     LoadMenuTilemap(
         0x144 as uint16,
-        addr_kMenuTilemap_CopySamusToSamus as ::core::ffi::c_int as uint16,
+        addr_kMenuTilemap_CopySamusToSamus as uint16,
         game,
     );
     (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
@@ -2148,18 +2100,10 @@ pub unsafe fn FileSelectMenu_11_InitializeConfirm(game: &mut Game) {
 pub unsafe fn DrawFileCopyClearConfirmation(game: &mut Game) {
     (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
         .palette_index = 0 as uint16;
-    LoadMenuTilemap(
-        0x514 as uint16,
-        addr_kMenuTilemap_IsThisOk as ::core::ffi::c_int as uint16,
-        game,
-    );
+    LoadMenuTilemap(0x514 as uint16, addr_kMenuTilemap_IsThisOk as uint16, game);
     (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
         .palette_index = 0 as uint16;
-    LoadMenuTilemap(
-        0x59c as uint16,
-        addr_kMenuTilemap_Yes as ::core::ffi::c_int as uint16,
-        game,
-    );
+    LoadMenuTilemap(0x59c as uint16, addr_kMenuTilemap_Yes as uint16, game);
     let mut v0: ::core::ffi::c_int = 832 as ::core::ffi::c_int;
     loop {
         // Menu rows live in the full $3600..$3dff RAM tilemap.
@@ -2177,11 +2121,7 @@ pub unsafe fn DrawFileCopyClearConfirmation(game: &mut Game) {
     }
     (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
         .palette_index = 0 as uint16;
-    LoadMenuTilemap(
-        0x65c as uint16,
-        addr_kMenuTilemap_No as ::core::ffi::c_int as uint16,
-        game,
-    );
+    LoadMenuTilemap(0x65c as uint16, addr_kMenuTilemap_No as uint16, game);
     DrawFileCopyConfirmationSaveFileInfo(game);
 }
 pub unsafe fn DrawFileCopyConfirmationSaveFileInfo(game: &mut Game) {
@@ -2311,11 +2251,7 @@ pub unsafe fn HandleFileCopyArrowPalette(game: &mut Game) {
     }
 }
 pub unsafe fn FileSelectMenu_13_FileCopyDoIt(game: &mut Game) {
-    static kBitShl_16bit: [uint16; 3] = [
-        1 as ::core::ffi::c_int as uint16,
-        2 as ::core::ffi::c_int as uint16,
-        4 as ::core::ffi::c_int as uint16,
-    ];
+    static kBitShl_16bit: [uint16; 3] = [1 as uint16, 2 as uint16, 4 as uint16];
     DrawBorderAroundDataCopyMode(game);
     DrawMenuSelectionMissile(game);
     HandleFileCopyArrowPalette(game);
@@ -2427,7 +2363,7 @@ pub unsafe fn FileSelectMenu_13_FileCopyDoIt(game: &mut Game) {
         .palette_index = 0 as uint16;
     LoadMenuTilemap(
         0x510 as uint16,
-        addr_kMenuTilemap_CopyCompleted as ::core::ffi::c_int as uint16,
+        addr_kMenuTilemap_CopyCompleted as uint16,
         game,
     );
     DrawFileCopyConfirmationSaveFileInfo(game);
@@ -2469,12 +2405,12 @@ pub unsafe fn InitFileSelectMenuFileClear(game: &mut Game) {
         .palette_index = 0 as uint16;
     LoadMenuTilemap(
         0x50 as uint16,
-        addr_kMenuTilemap_DataClearMode as ::core::ffi::c_int as uint16,
+        addr_kMenuTilemap_DataClearMode as uint16,
         game,
     );
     LoadMenuTilemap(
         0x140 as uint16,
-        addr_kMenuTilemap_ClearWhichData as ::core::ffi::c_int as uint16,
+        addr_kMenuTilemap_ClearWhichData as uint16,
         game,
     );
     LoadMenuExitTilemap(game);
@@ -2484,11 +2420,7 @@ pub unsafe fn InitFileSelectMenuFileClear(game: &mut Game) {
     SetFileClearMenuMissilePos(game);
 }
 pub unsafe fn FileSelectMenu_22_FileClearSelectSlot(game: &mut Game) {
-    static kBitShl_: [uint8; 3] = [
-        1 as ::core::ffi::c_int as uint8,
-        2 as ::core::ffi::c_int as uint8,
-        4 as ::core::ffi::c_int as uint8,
-    ];
+    static kBitShl_: [uint8; 3] = [1 as uint8, 2 as uint8, 4 as uint8];
     let mut v0: uint16 = 0;
     let mut v1: uint8 = 0;
     DrawBorderAroundDataClearMode(game);
@@ -2596,12 +2528,8 @@ pub unsafe fn FileSelectMenu_22_FileClearSelectSlot(game: &mut Game) {
     *fresh57 = (*fresh57 as ::core::ffi::c_int + 5 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn SetFileClearMenuMissilePos(game: &mut Game) {
-    static kFileClear_MissileY: [uint16; 4] = [
-        72 as ::core::ffi::c_int as uint16,
-        104 as ::core::ffi::c_int as uint16,
-        136 as ::core::ffi::c_int as uint16,
-        211 as ::core::ffi::c_int as uint16,
-    ];
+    static kFileClear_MissileY: [uint16; 4] =
+        [72 as uint16, 104 as uint16, 136 as uint16, 211 as uint16];
     *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(10) =
         kFileClear_MissileY[*((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16)
             .offset(15) as usize];
@@ -2613,7 +2541,7 @@ pub unsafe fn FileSelectMenu_23_FileClearInitConfirm(game: &mut Game) {
         .palette_index = 0 as uint16;
     LoadMenuTilemap(
         0x140 as uint16,
-        addr_kMenuTilemap_ClearSamusA as ::core::ffi::c_int as uint16,
+        addr_kMenuTilemap_ClearSamusA as uint16,
         game,
     );
     (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
@@ -2686,11 +2614,7 @@ pub unsafe fn FileSelectMenu_24_FileClearConfirm(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(5) = 94 as uint16;
 }
 pub unsafe fn FileSelectMenu_25_FileClearDoClear(game: &mut Game) {
-    static kBitShl_Not: [uint16; 3] = [
-        0xfffe as ::core::ffi::c_int as uint16,
-        0xfffd as ::core::ffi::c_int as uint16,
-        0xfffb as ::core::ffi::c_int as uint16,
-    ];
+    static kBitShl_Not: [uint16; 3] = [0xfffe as uint16, 0xfffd as uint16, 0xfffb as uint16];
     DrawBorderAroundDataClearMode(game);
     let mut sram_addr: ::core::ffi::c_int = *(game.g_rom.offset(
         (((0x81812b as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
@@ -2759,7 +2683,7 @@ pub unsafe fn FileSelectMenu_25_FileClearDoClear(game: &mut Game) {
         .palette_index = 0 as uint16;
     LoadMenuTilemap(
         0x500 as uint16,
-        addr_kMenuTilemap_DataCleared as ::core::ffi::c_int as uint16,
+        addr_kMenuTilemap_DataCleared as uint16,
         game,
     );
     DrawFileCopyConfirmationSaveFileInfo(game);
@@ -2871,15 +2795,15 @@ pub unsafe fn DrawFileSelectSlotSamusHelmet(mut k: uint16, game: &mut Game) {
         * *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(v5 as isize)
             as ::core::ffi::c_int) as uint16;
     static kDrawFileSlotHelmet_Spritemaps: [uint16; 9] = [
-        0x2c as ::core::ffi::c_int as uint16,
-        0x2d as ::core::ffi::c_int as uint16,
-        0x2e as ::core::ffi::c_int as uint16,
-        0x2f as ::core::ffi::c_int as uint16,
-        0x30 as ::core::ffi::c_int as uint16,
-        0x31 as ::core::ffi::c_int as uint16,
-        0x32 as ::core::ffi::c_int as uint16,
-        0x33 as ::core::ffi::c_int as uint16,
-        0x33 as ::core::ffi::c_int as uint16,
+        0x2c as uint16,
+        0x2d as uint16,
+        0x2e as uint16,
+        0x2f as uint16,
+        0x30 as uint16,
+        0x31 as uint16,
+        0x32 as uint16,
+        0x33 as uint16,
+        0x33 as uint16,
     ];
     DrawMenuSpritemap(
         kDrawFileSlotHelmet_Spritemaps
@@ -2932,7 +2856,7 @@ pub unsafe fn FileSelectMap_22(game: &mut Game) {
         == 0 as ::core::ffi::c_int
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
-            kGameState_2_GameOptionsMenu as ::core::ffi::c_int as uint16;
+            kGameState_2_GameOptionsMenu as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16) = 0 as uint16;
     }
 }
@@ -3009,16 +2933,8 @@ pub unsafe fn FileSelectMenu_16(game: &mut Game) {
         -(1 as ::core::ffi::c_int) as uint16;
     (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
         .palette_index = 0 as uint16;
-    LoadMenuTilemap(
-        0x56 as uint16,
-        addr_kMenuTilemap_SamusData as ::core::ffi::c_int as uint16,
-        game,
-    );
-    LoadMenuTilemap(
-        0x146 as uint16,
-        addr_kMenuTilemap_SamusA as ::core::ffi::c_int as uint16,
-        game,
-    );
+    LoadMenuTilemap(0x56 as uint16, addr_kMenuTilemap_SamusData as uint16, game);
+    LoadMenuTilemap(0x146 as uint16, addr_kMenuTilemap_SamusA as uint16, game);
     let mut c: uint8 = LoadFromSram_(0 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x954) as *mut uint16) =
         (*((&raw mut game.g_ram as *mut uint8).offset(0x954) as *mut uint16) as ::core::ffi::c_int
@@ -3036,18 +2952,10 @@ pub unsafe fn FileSelectMenu_16(game: &mut Game) {
         0x1b4 as uint16,
         game,
     );
-    LoadMenuTilemap(
-        0x176 as uint16,
-        addr_kMenuTilemap_TIME as ::core::ffi::c_int as uint16,
-        game,
-    );
+    LoadMenuTilemap(0x176 as uint16, addr_kMenuTilemap_TIME as uint16, game);
     (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
         .palette_index = 0 as uint16;
-    LoadMenuTilemap(
-        0x286 as uint16,
-        addr_kMenuTilemap_SamusB as ::core::ffi::c_int as uint16,
-        game,
-    );
+    LoadMenuTilemap(0x286 as uint16, addr_kMenuTilemap_SamusB as uint16, game);
     c = LoadFromSram_(1 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x954) as *mut uint16) =
         (*((&raw mut game.g_ram as *mut uint8).offset(0x954) as *mut uint16) as ::core::ffi::c_int
@@ -3065,18 +2973,10 @@ pub unsafe fn FileSelectMenu_16(game: &mut Game) {
         0x2f4 as uint16,
         game,
     );
-    LoadMenuTilemap(
-        0x2b6 as uint16,
-        addr_kMenuTilemap_TIME as ::core::ffi::c_int as uint16,
-        game,
-    );
+    LoadMenuTilemap(0x2b6 as uint16, addr_kMenuTilemap_TIME as uint16, game);
     (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
         .palette_index = 0 as uint16;
-    LoadMenuTilemap(
-        0x3c6 as uint16,
-        addr_kMenuTilemap_SamusC as ::core::ffi::c_int as uint16,
-        game,
-    );
+    LoadMenuTilemap(0x3c6 as uint16, addr_kMenuTilemap_SamusC as uint16, game);
     c = LoadFromSram_(2 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x954) as *mut uint16) =
         (*((&raw mut game.g_ram as *mut uint8).offset(0x954) as *mut uint16) as ::core::ffi::c_int
@@ -3094,11 +2994,7 @@ pub unsafe fn FileSelectMenu_16(game: &mut Game) {
         0x434 as uint16,
         game,
     );
-    LoadMenuTilemap(
-        0x3f6 as uint16,
-        addr_kMenuTilemap_TIME as ::core::ffi::c_int as uint16,
-        game,
-    );
+    LoadMenuTilemap(0x3f6 as uint16, addr_kMenuTilemap_TIME as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x954) as *mut uint16) =
         (u16::swap_bytes(
             !(*((&raw mut game.g_ram as *mut uint8).offset(0x954) as *mut uint16)
@@ -3108,26 +3004,14 @@ pub unsafe fn FileSelectMenu_16(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x954) as *mut uint16) != 0 {
         (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
             .palette_index = 0 as uint16;
-        LoadMenuTilemap(
-            0x508 as uint16,
-            addr_kMenuTilemap_DataCopy as ::core::ffi::c_int as uint16,
-            game,
-        );
+        LoadMenuTilemap(0x508 as uint16, addr_kMenuTilemap_DataCopy as uint16, game);
         (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
             .palette_index = 0 as uint16;
-        LoadMenuTilemap(
-            0x5c8 as uint16,
-            addr_kMenuTilemap_DataClear as ::core::ffi::c_int as uint16,
-            game,
-        );
+        LoadMenuTilemap(0x5c8 as uint16, addr_kMenuTilemap_DataClear as uint16, game);
     }
     (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
         .palette_index = 0 as uint16;
-    LoadMenuTilemap(
-        0x688 as uint16,
-        addr_kMenuTilemap_Exit as ::core::ffi::c_int as uint16,
-        game,
-    );
+    LoadMenuTilemap(0x688 as uint16, addr_kMenuTilemap_Exit as uint16, game);
     QueueTransferOfMenuTilemapToVramBG1(game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x198d) as *mut uint16) = 1 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x198f) as *mut uint16) = 0 as uint16;
@@ -3189,15 +3073,11 @@ pub unsafe fn DrawFileSelectionHealth(mut a: uint16, mut k: uint16, game: &mut G
         FileSelectClearRestOfMenuTilemapRow(k, game);
         LoadMenuTilemap(
             (k as ::core::ffi::c_int + 64 as ::core::ffi::c_int) as uint16,
-            addr_kMenuTilemap_NoData as ::core::ffi::c_int as uint16,
+            addr_kMenuTilemap_NoData as uint16,
             game,
         );
     } else {
-        LoadMenuTilemap(
-            k,
-            addr_kMenuTilemap_Energy as ::core::ffi::c_int as uint16,
-            game,
-        );
+        LoadMenuTilemap(k, addr_kMenuTilemap_Energy as uint16, game);
         v2 = (k as ::core::ffi::c_int + 8 as ::core::ffi::c_int) as int16;
         let mut n: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x9c2)
             as *mut uint16) as ::core::ffi::c_int
@@ -3278,7 +3158,7 @@ pub unsafe fn DrawFileSelectionTime(mut a: uint16, mut k: uint16, game: &mut Gam
                 | div_val + 8288 as ::core::ffi::c_int) as uint16;
         LoadMenuTilemap(
             (r26 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16,
-            addr_word_81B4A8 as ::core::ffi::c_int as uint16,
+            addr_word_81B4A8 as uint16,
             game,
         );
         let mut div_min: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x9de)
@@ -3595,20 +3475,20 @@ pub unsafe fn sub_81A3D1(mut k: uint16, game: &mut Game) {
     LoadActiveAreaMapForegroundColors(k, game);
 }
 static kActiveAreaMapForegroundColors: [uint16; 6] = [
-    0 as ::core::ffi::c_int as uint16,
-    0xa as ::core::ffi::c_int as uint16,
-    0x10 as ::core::ffi::c_int as uint16,
-    0x16 as ::core::ffi::c_int as uint16,
-    0x24 as ::core::ffi::c_int as uint16,
-    0x2a as ::core::ffi::c_int as uint16,
+    0 as uint16,
+    0xa as uint16,
+    0x10 as uint16,
+    0x16 as uint16,
+    0x24 as uint16,
+    0x2a as uint16,
 ];
 static kInactiveAreaMapForegroundColors: [uint16; 6] = [
-    0x30 as ::core::ffi::c_int as uint16,
-    0x3a as ::core::ffi::c_int as uint16,
-    0x40 as ::core::ffi::c_int as uint16,
-    0x46 as ::core::ffi::c_int as uint16,
-    0x54 as ::core::ffi::c_int as uint16,
-    0x5a as ::core::ffi::c_int as uint16,
+    0x30 as uint16,
+    0x3a as uint16,
+    0x40 as uint16,
+    0x46 as uint16,
+    0x54 as uint16,
+    0x5a as uint16,
 ];
 pub unsafe fn LoadActiveAreaMapForegroundColors(mut v0: uint16, game: &mut Game) {
     LoadAreaMapForegroundColors(kActiveAreaMapForegroundColors[v0 as usize], game);
@@ -3722,19 +3602,19 @@ pub unsafe fn LoadAreaSelectBackgroundTilemap(mut j: uint16, game: &mut Game) {
 }
 pub unsafe fn FileSelectMap_4_SetupExpandingSquareTransition(game: &mut Game) {
     *(&raw mut game.g_ram as *mut uint8).offset(0x6b) = 4 as uint8;
-    WriteReg(TS as ::core::ffi::c_int as uint16, 4 as uint8, game);
+    WriteReg(TS as uint16, 4 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x6d) = 4 as uint8;
-    WriteReg(TSW as ::core::ffi::c_int as uint16, 4 as uint8, game);
+    WriteReg(TSW as uint16, 4 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x6f) = 2 as uint8;
-    WriteReg(CGWSEL as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteReg(CGWSEL as uint16, 2 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x72) = 37 as uint8;
-    WriteReg(CGADSUB as ::core::ffi::c_int as uint16, 0x25 as uint8, game);
+    WriteReg(CGADSUB as uint16, 0x25 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2) = 0x80 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) = 64 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) = 32 as uint8;
     SetupInitialExpandingSquareHDMA(game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x85) = 12 as uint8;
-    WriteReg(HDMAEN as ::core::ffi::c_int as uint16, 0xc as uint8, game);
+    WriteReg(HDMAEN as uint16, 0xc as uint8, game);
     ConfigureWindow1ForExpandingSquare(game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x18b0) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16 as *mut uint8).offset(0) =
@@ -3743,15 +3623,15 @@ pub unsafe fn FileSelectMap_4_SetupExpandingSquareTransition(game: &mut Game) {
 }
 pub unsafe fn ConfigureWindow1ForExpandingSquare(game: &mut Game) {
     *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 19 as uint8;
-    WriteReg(TM as ::core::ffi::c_int as uint16, 0x13 as uint8, game);
+    WriteReg(TM as uint16, 0x13 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x6c) = 19 as uint8;
-    WriteReg(TMW as ::core::ffi::c_int as uint16, 0x13 as uint8, game);
+    WriteReg(TMW as uint16, 0x13 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x60) = 35 as uint8;
-    WriteReg(W12SEL as ::core::ffi::c_int as uint16, 0x23 as uint8, game);
+    WriteReg(W12SEL as uint16, 0x23 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x61) = 3 as uint8;
-    WriteReg(W34SEL as ::core::ffi::c_int as uint16, 3 as uint8, game);
+    WriteReg(W34SEL as uint16, 3 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x62) = 35 as uint8;
-    WriteReg(WOBJSEL as ::core::ffi::c_int as uint16, 0x23 as uint8, game);
+    WriteReg(WOBJSEL as uint16, 0x23 as uint8, game);
 }
 pub unsafe fn SetupInitialExpandingSquareHDMA(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x9e20) as *mut uint16) = 0 as uint16;
@@ -3797,17 +3677,17 @@ pub unsafe fn SetupInitialExpandingSquareHDMA(game: &mut Game) {
     (*((&raw mut game.g_ram as *mut uint8).offset(0x9e00) as *mut ExpandingSquareTransitionHdma)
         .offset(3))
     .field_2 = -(98 as ::core::ffi::c_int) as uint8;
-    WriteReg(DMAP2 as ::core::ffi::c_int as uint16, 0x40 as uint8, game);
-    WriteReg(BBAD2 as ::core::ffi::c_int as uint16, 0x26 as uint8, game);
-    WriteReg(A1T2L as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(A1T2H as ::core::ffi::c_int as uint16, 0x9e as uint8, game);
-    WriteReg(A1B2 as ::core::ffi::c_int as uint16, 0x7e as uint8, game);
-    WriteReg(DAS20 as ::core::ffi::c_int as uint16, 0x7e as uint8, game);
-    WriteReg(DAS2L as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(DAS2H as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(A2A2L as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(A2A2H as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(NTRL2 as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(DMAP2 as uint16, 0x40 as uint8, game);
+    WriteReg(BBAD2 as uint16, 0x26 as uint8, game);
+    WriteReg(A1T2L as uint16, 0 as uint8, game);
+    WriteReg(A1T2H as uint16, 0x9e as uint8, game);
+    WriteReg(A1B2 as uint16, 0x7e as uint8, game);
+    WriteReg(DAS20 as uint16, 0x7e as uint8, game);
+    WriteReg(DAS2L as uint16, 0 as uint8, game);
+    WriteReg(DAS2H as uint16, 0 as uint8, game);
+    WriteReg(A2A2L as uint16, 0 as uint8, game);
+    WriteReg(A2A2H as uint16, 0 as uint8, game);
+    WriteReg(NTRL2 as uint16, 0 as uint8, game);
     (*((&raw mut game.g_ram as *mut uint8).offset(0x9e10) as *mut ExpandingSquareTransitionHdma)
         .offset(0))
     .field_0 = 111 as uint8;
@@ -3844,17 +3724,17 @@ pub unsafe fn SetupInitialExpandingSquareHDMA(game: &mut Game) {
     (*((&raw mut game.g_ram as *mut uint8).offset(0x9e10) as *mut ExpandingSquareTransitionHdma)
         .offset(3))
     .field_2 = -(98 as ::core::ffi::c_int) as uint8;
-    WriteReg(DMAP3 as ::core::ffi::c_int as uint16, 0x40 as uint8, game);
-    WriteReg(BBAD3 as ::core::ffi::c_int as uint16, 0x27 as uint8, game);
-    WriteReg(A1T3L as ::core::ffi::c_int as uint16, 0x10 as uint8, game);
-    WriteReg(A1T3H as ::core::ffi::c_int as uint16, 0x9e as uint8, game);
-    WriteReg(A1B3 as ::core::ffi::c_int as uint16, 0x7e as uint8, game);
-    WriteReg(DAS30 as ::core::ffi::c_int as uint16, 0x7e as uint8, game);
-    WriteReg(DAS3L as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(DAS3H as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(A2A3L as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(A2A3H as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(NTRL3 as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(DMAP3 as uint16, 0x40 as uint8, game);
+    WriteReg(BBAD3 as uint16, 0x27 as uint8, game);
+    WriteReg(A1T3L as uint16, 0x10 as uint8, game);
+    WriteReg(A1T3H as uint16, 0x9e as uint8, game);
+    WriteReg(A1B3 as uint16, 0x7e as uint8, game);
+    WriteReg(DAS30 as uint16, 0x7e as uint8, game);
+    WriteReg(DAS3L as uint16, 0 as uint8, game);
+    WriteReg(DAS3H as uint16, 0 as uint8, game);
+    WriteReg(A2A3L as uint16, 0 as uint8, game);
+    WriteReg(A2A3H as uint16, 0 as uint8, game);
+    WriteReg(NTRL3 as uint16, 0 as uint8, game);
 }
 static kExpandingSquareTransitionSpeed: uint8 = 4 as uint8;
 pub unsafe fn FileSelectMap_5_ExpandingSquare(game: &mut Game) {
@@ -4205,8 +4085,7 @@ pub unsafe fn CheckIfFileSelectMapAreaCanBeSelected(mut a: uint16, game: &mut Ga
     .crateria as *mut uint8)
         .offset(v1 as isize) as *mut uint16) as ::core::ffi::c_int
         + 64 as ::core::ffi::c_int) as uint16;
-    return (t as ::core::ffi::c_int != 0xffff as ::core::ffi::c_int) as ::core::ffi::c_int
-        as uint16;
+    return (t as ::core::ffi::c_int != 0xffff as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn SwitchActiveFileSelectMapArea(mut R28: uint16, game: &mut Game) {
     LoadInactiveAreaMapForegroundColors(
@@ -4223,18 +4102,18 @@ pub unsafe fn SwitchActiveFileSelectMapArea(mut R28: uint16, game: &mut Game) {
     );
 }
 static kAreaSelectMapLabelPositions: [uint16; 12] = [
-    0x5b as ::core::ffi::c_int as uint16,
-    0x32 as ::core::ffi::c_int as uint16,
-    0x2a as ::core::ffi::c_int as uint16,
-    0x7f as ::core::ffi::c_int as uint16,
-    0x5e as ::core::ffi::c_int as uint16,
-    0xb5 as ::core::ffi::c_int as uint16,
-    0xce as ::core::ffi::c_int as uint16,
-    0x50 as ::core::ffi::c_int as uint16,
-    0xce as ::core::ffi::c_int as uint16,
-    0x9f as ::core::ffi::c_int as uint16,
-    0x87 as ::core::ffi::c_int as uint16,
-    0x8b as ::core::ffi::c_int as uint16,
+    0x5b as uint16,
+    0x32 as uint16,
+    0x2a as uint16,
+    0x7f as uint16,
+    0x5e as uint16,
+    0xb5 as uint16,
+    0xce as uint16,
+    0x50 as uint16,
+    0xce as uint16,
+    0x9f as uint16,
+    0x87 as uint16,
+    0x8b as uint16,
 ];
 pub unsafe fn DrawAreaSelectMapLabels(game: &mut Game) {
     let mut r3: uint16 = 0 as uint16;
@@ -4321,12 +4200,12 @@ pub unsafe fn DrawAreaSelectMapLabels(game: &mut Game) {
     }
 }
 static kRoomSelectMapExpandingSquareTimers: [uint16; 6] = [
-    0x33 as ::core::ffi::c_int as uint16,
-    0x35 as ::core::ffi::c_int as uint16,
-    0x2d as ::core::ffi::c_int as uint16,
-    0x33 as ::core::ffi::c_int as uint16,
-    0x33 as ::core::ffi::c_int as uint16,
-    0x22 as ::core::ffi::c_int as uint16,
+    0x33 as uint16,
+    0x35 as uint16,
+    0x2d as uint16,
+    0x33 as uint16,
+    0x33 as uint16,
+    0x22 as uint16,
 ];
 pub unsafe fn FileSelectMap_7_PrepExpandSquareTransToRoomMap(game: &mut Game) {
     DrawAreaSelectMapLabels(game);
@@ -4334,13 +4213,13 @@ pub unsafe fn FileSelectMap_7_PrepExpandSquareTransToRoomMap(game: &mut Game) {
     *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 19 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x6c) = 19 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x60) = 50 as uint8;
-    WriteReg(W12SEL as ::core::ffi::c_int as uint16, 0x32 as uint8, game);
+    WriteReg(W12SEL as uint16, 0x32 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x61) = 2 as uint8;
-    WriteReg(W34SEL as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteReg(W34SEL as uint16, 2 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x72) = 5 as uint8;
-    WriteReg(CGADSUB as ::core::ffi::c_int as uint16, 5 as uint8, game);
+    WriteReg(CGADSUB as uint16, 5 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x62) = 34 as uint8;
-    WriteReg(WOBJSEL as ::core::ffi::c_int as uint16, 0x22 as uint8, game);
+    WriteReg(WOBJSEL as uint16, 0x22 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5d) = 48 as uint8;
     (*((&raw mut game.g_ram as *mut uint8).offset(0x9e00) as *mut ExpandingSquareTransitionHdma)
         .offset(3))
@@ -4405,7 +4284,7 @@ pub unsafe fn FileSelectMap_7_PrepExpandSquareTransToRoomMap(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x9e4e) as *mut uint16) = (*vels).bottom_vel;
     SetupRoomSelectMapExpandingSquareTransHDMA(game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x85) = 12 as uint8;
-    WriteReg(HDMAEN as ::core::ffi::c_int as uint16, 0xc as uint8, game);
+    WriteReg(HDMAEN as uint16, 0xc as uint8, game);
     let ref mut fresh34 = *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16);
     *fresh34 = (*fresh34).wrapping_add(1);
     QueueSfx1_Max6(0x3b as uint16, game);
@@ -4877,7 +4756,7 @@ pub unsafe fn HandleFileSelectMapScrollArrows(game: &mut Game) {
     {
         DrawMapScrollArrowAndCheckToScroll(
             0x81 as uint8,
-            addr_kLeftMapScrollArrowData as ::core::ffi::c_int as uint16,
+            addr_kLeftMapScrollArrowData as uint16,
             game,
         );
     }
@@ -4889,7 +4768,7 @@ pub unsafe fn HandleFileSelectMapScrollArrows(game: &mut Game) {
     {
         DrawMapScrollArrowAndCheckToScroll(
             0x81 as uint8,
-            addr_kRightMapScrollArrowData as ::core::ffi::c_int as uint16,
+            addr_kRightMapScrollArrowData as uint16,
             game,
         );
     }
@@ -4901,7 +4780,7 @@ pub unsafe fn HandleFileSelectMapScrollArrows(game: &mut Game) {
     {
         DrawMapScrollArrowAndCheckToScroll(
             0x81 as uint8,
-            addr_kUpMapScrollArrowData as ::core::ffi::c_int as uint16,
+            addr_kUpMapScrollArrowData as uint16,
             game,
         );
     }
@@ -4927,7 +4806,7 @@ pub unsafe fn HandleFileSelectMapScrollArrows(game: &mut Game) {
     } else {
         DrawMapScrollArrowAndCheckToScroll(
             0x81 as uint8,
-            addr_kDownMapScrollArrowData as ::core::ffi::c_int as uint16,
+            addr_kDownMapScrollArrowData as uint16,
             game,
         );
     };
@@ -5159,11 +5038,11 @@ pub unsafe fn FileSelectMap_20_SetupExpandingSquare(game: &mut Game) {
     let ref mut fresh16 = *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16);
     *fresh16 = (*fresh16).wrapping_add(1);
     *(&raw mut game.g_ram as *mut uint8).offset(0x85) = 12 as uint8;
-    WriteReg(HDMAEN as ::core::ffi::c_int as uint16, 0xc as uint8, game);
+    WriteReg(HDMAEN as uint16, 0xc as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x60) = 50 as uint8;
-    WriteReg(W12SEL as ::core::ffi::c_int as uint16, 0x32 as uint8, game);
+    WriteReg(W12SEL as uint16, 0x32 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x61) = 2 as uint8;
-    WriteReg(W34SEL as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteReg(W34SEL as uint16, 2 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5d) = 48 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x62) = 34 as uint8;
     (*((&raw mut game.g_ram as *mut uint8).offset(0x9e00) as *mut ExpandingSquareTransitionHdma)
@@ -5242,28 +5121,17 @@ pub unsafe fn NewSaveFile(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x9d4) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x9d8) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9aa) as *mut uint16) =
-        kButton_Up as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9ac) as *mut uint16) =
-        kButton_Down as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9ae) as *mut uint16) =
-        kButton_Left as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9b0) as *mut uint16) =
-        kButton_Right as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9b4) as *mut uint16) =
-        kButton_A as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9b6) as *mut uint16) =
-        kButton_B as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9b2) as *mut uint16) =
-        kButton_X as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9b8) as *mut uint16) =
-        kButton_Y as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9ba) as *mut uint16) =
-        kButton_Select as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9be) as *mut uint16) =
-        kButton_R as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9bc) as *mut uint16) =
-        kButton_L as ::core::ffi::c_int as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9aa) as *mut uint16) = kButton_Up as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9ac) as *mut uint16) = kButton_Down as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9ae) as *mut uint16) = kButton_Left as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9b0) as *mut uint16) = kButton_Right as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9b4) as *mut uint16) = kButton_A as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9b6) as *mut uint16) = kButton_B as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9b2) as *mut uint16) = kButton_X as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9b8) as *mut uint16) = kButton_Y as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9ba) as *mut uint16) = kButton_Select as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9be) as *mut uint16) = kButton_R as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9bc) as *mut uint16) = kButton_L as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x9da) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x9dc) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x9de) as *mut uint16) = 0 as uint16;

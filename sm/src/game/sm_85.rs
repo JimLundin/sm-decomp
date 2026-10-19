@@ -41,52 +41,52 @@ pub const fnSetupPpuForSmallMessageBox: uint32 = 8750134;
 pub const fnSetupPpuForLargeMessageBox: uint32 = 8750145;
 
 static kMsgBoxSpecialButtonTilemapOffs: [uint16; 27] = [
-    0 as ::core::ffi::c_int as uint16,
-    0x12a as ::core::ffi::c_int as uint16,
-    0x12a as ::core::ffi::c_int as uint16,
-    0x12c as ::core::ffi::c_int as uint16,
-    0x12c as ::core::ffi::c_int as uint16,
-    0x12c as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0x120 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0x12a as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
+    0 as uint16,
+    0x12a as uint16,
+    0x12a as uint16,
+    0x12c as uint16,
+    0x12c as uint16,
+    0x12c as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0x120 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0x12a as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
 ];
 static kTileNumbersForButtonLetters: [uint16; 8] = [
-    0x28e0 as ::core::ffi::c_int as uint16,
-    0x3ce1 as ::core::ffi::c_int as uint16,
-    0x2cf7 as ::core::ffi::c_int as uint16,
-    0x38f8 as ::core::ffi::c_int as uint16,
-    0x38d0 as ::core::ffi::c_int as uint16,
-    0x38eb as ::core::ffi::c_int as uint16,
-    0x38f1 as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
+    0x28e0 as uint16,
+    0x3ce1 as uint16,
+    0x2cf7 as uint16,
+    0x38f8 as uint16,
+    0x38d0 as uint16,
+    0x38eb as uint16,
+    0x38f1 as uint16,
+    0x284e as uint16,
 ];
 unsafe fn InitializePpuForMessageBoxes(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x5f9) as *mut uint16) = 0 as uint16;
-    WriteReg(HDMAEN as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(CGADD as ::core::ffi::c_int as uint16, 0x19 as uint8, game);
-    WriteReg(CGDATA as ::core::ffi::c_int as uint16, 0xb1 as uint8, game);
-    WriteReg(CGDATA as ::core::ffi::c_int as uint16, 0xb as uint8, game);
-    WriteReg(CGDATA as ::core::ffi::c_int as uint16, 0x1f as uint8, game);
-    WriteReg(CGDATA as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(HDMAEN as uint16, 0 as uint8, game);
+    WriteReg(CGADD as uint16, 0x19 as uint8, game);
+    WriteReg(CGDATA as uint16, 0xb1 as uint8, game);
+    WriteReg(CGDATA as uint16, 0xb as uint8, game);
+    WriteReg(CGDATA as uint16, 0x1f as uint8, game);
+    WriteReg(CGDATA as uint16, 0 as uint8, game);
     (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
         .msgbox
         .backup_of_enabled_hdma_channels = *(&raw mut game.g_ram as *mut uint8).offset(0x85);
@@ -98,15 +98,15 @@ unsafe fn InitializePpuForMessageBoxes(game: &mut Game) {
     *(&raw mut game.g_ram as *mut uint8).offset(0x6a) = 23 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x70) = 0 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x73) = 0 as uint8;
-    WriteReg(COLDATA as ::core::ffi::c_int as uint16, 0x20 as uint8, game);
-    WriteReg(COLDATA as ::core::ffi::c_int as uint16, 0x40 as uint8, game);
-    WriteReg(COLDATA as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
-    ReadReg(BG3HOFS as ::core::ffi::c_int as uint16, game);
-    WriteReg(BG3HOFS as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(BG3HOFS as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    ReadReg(BG3VOFS as ::core::ffi::c_int as uint16, game);
-    WriteReg(BG3VOFS as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(BG3VOFS as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(COLDATA as uint16, 0x20 as uint8, game);
+    WriteReg(COLDATA as uint16, 0x40 as uint8, game);
+    WriteReg(COLDATA as uint16, 0x80 as uint8, game);
+    ReadReg(BG3HOFS as uint16, game);
+    WriteReg(BG3HOFS as uint16, 0 as uint8, game);
+    WriteReg(BG3HOFS as uint16, 0 as uint8, game);
+    ReadReg(BG3VOFS as uint16, game);
+    WriteReg(BG3VOFS as uint16, 0 as uint8, game);
+    WriteReg(BG3VOFS as uint16, 0 as uint8, game);
     let mut i: ::core::ffi::c_int = 128 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         *((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
@@ -114,30 +114,22 @@ unsafe fn InitializePpuForMessageBoxes(game: &mut Game) {
             .offset(i as uint16 as ::core::ffi::c_int as isize) as *mut uint16) = 0 as uint16;
         i -= 2 as ::core::ffi::c_int;
     }
+    WriteRegWord(VMADDL as uint16, addr_unk_605880 as uint16, game);
+    ReadRegWord(RDVRAML as uint16, game);
+    WriteRegWord(DMAP1 as uint16, 0x3981 as uint16, game);
     WriteRegWord(
-        VMADDL as ::core::ffi::c_int as uint16,
-        addr_unk_605880 as ::core::ffi::c_int as uint16,
-        game,
-    );
-    ReadRegWord(RDVRAML as ::core::ffi::c_int as uint16, game);
-    WriteRegWord(
-        DMAP1 as ::core::ffi::c_int as uint16,
-        0x3981 as uint16,
-        game,
-    );
-    WriteRegWord(
-        A1T1L as ::core::ffi::c_int as uint16,
+        A1T1L as uint16,
         (((&raw mut game.g_ram as *mut uint8).offset(0x4000) as *mut Ram4000 as *mut uint8)
             .offset_from(&raw mut game.g_ram as *mut uint8) as ::core::ffi::c_long
             + 256 as ::core::ffi::c_long) as uint16,
         game,
     );
-    WriteRegWord(A1B1 as ::core::ffi::c_int as uint16, 0x7e as uint16, game);
-    WriteRegWord(DAS1L as ::core::ffi::c_int as uint16, 0x700 as uint16, game);
-    WriteRegWord(DAS10 as ::core::ffi::c_int as uint16, 0 as uint16, game);
-    WriteRegWord(A2A1H as ::core::ffi::c_int as uint16, 0 as uint16, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteRegWord(A1B1 as uint16, 0x7e as uint16, game);
+    WriteRegWord(DAS1L as uint16, 0x700 as uint16, game);
+    WriteRegWord(DAS10 as uint16, 0 as uint16, game);
+    WriteRegWord(A2A1H as uint16, 0 as uint16, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
 }
 unsafe fn ClearMessageBoxBg3Tilemap(game: &mut Game) {
     let mut v0: int16 = 0;
@@ -151,97 +143,89 @@ unsafe fn ClearMessageBoxBg3Tilemap(game: &mut Game) {
             break;
         }
     }
+    WriteRegWord(VMADDL as uint16, addr_unk_605880 as uint16, game);
+    WriteRegWord(DMAP1 as uint16, 0x1801 as uint16, game);
     WriteRegWord(
-        VMADDL as ::core::ffi::c_int as uint16,
-        addr_unk_605880 as ::core::ffi::c_int as uint16,
-        game,
-    );
-    WriteRegWord(
-        DMAP1 as ::core::ffi::c_int as uint16,
-        0x1801 as uint16,
-        game,
-    );
-    WriteRegWord(
-        A1T1L as ::core::ffi::c_int as uint16,
+        A1T1L as uint16,
         ((&raw mut game.g_ram as *mut uint8).offset(0x3800) as *mut Ram3800 as *mut uint8)
             .offset_from(&raw mut game.g_ram as *mut uint8) as ::core::ffi::c_long
             as uint16,
         game,
     );
-    WriteRegWord(A1B1 as ::core::ffi::c_int as uint16, 0x7e as uint16, game);
-    WriteRegWord(DAS1L as ::core::ffi::c_int as uint16, 0x700 as uint16, game);
-    WriteRegWord(DAS10 as ::core::ffi::c_int as uint16, 0 as uint16, game);
-    WriteRegWord(A2A1H as ::core::ffi::c_int as uint16, 0 as uint16, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteRegWord(A1B1 as uint16, 0x7e as uint16, game);
+    WriteRegWord(DAS1L as uint16, 0x700 as uint16, game);
+    WriteRegWord(DAS10 as uint16, 0 as uint16, game);
+    WriteRegWord(A2A1H as uint16, 0 as uint16, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
 }
 static kLargeMsgBoxTopBottomBorderTilemap: [uint16; 32] = [
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
-    0x280f as ::core::ffi::c_int as uint16,
-    0x280f as ::core::ffi::c_int as uint16,
-    0x280f as ::core::ffi::c_int as uint16,
-    0x280f as ::core::ffi::c_int as uint16,
-    0x280f as ::core::ffi::c_int as uint16,
-    0x280f as ::core::ffi::c_int as uint16,
-    0x280f as ::core::ffi::c_int as uint16,
-    0x280f as ::core::ffi::c_int as uint16,
-    0x280f as ::core::ffi::c_int as uint16,
-    0x280f as ::core::ffi::c_int as uint16,
-    0x280f as ::core::ffi::c_int as uint16,
-    0x280f as ::core::ffi::c_int as uint16,
-    0x280f as ::core::ffi::c_int as uint16,
-    0x280f as ::core::ffi::c_int as uint16,
-    0x280f as ::core::ffi::c_int as uint16,
-    0x280f as ::core::ffi::c_int as uint16,
-    0x280f as ::core::ffi::c_int as uint16,
-    0x280f as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0x284e as uint16,
+    0x284e as uint16,
+    0x284e as uint16,
+    0x284e as uint16,
+    0x284e as uint16,
+    0x284e as uint16,
+    0x280f as uint16,
+    0x280f as uint16,
+    0x280f as uint16,
+    0x280f as uint16,
+    0x280f as uint16,
+    0x280f as uint16,
+    0x280f as uint16,
+    0x280f as uint16,
+    0x280f as uint16,
+    0x280f as uint16,
+    0x280f as uint16,
+    0x280f as uint16,
+    0x280f as uint16,
+    0x280f as uint16,
+    0x280f as uint16,
+    0x280f as uint16,
+    0x280f as uint16,
+    0x280f as uint16,
+    0x284e as uint16,
+    0x284e as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
 ];
 static kSmallMsgBoxTopBottomBorderTilemap: [uint16; 32] = [
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
-    0x284e as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0x284e as uint16,
+    0x284e as uint16,
+    0x284e as uint16,
+    0x284e as uint16,
+    0x284e as uint16,
+    0x284e as uint16,
+    0x284e as uint16,
+    0x284e as uint16,
+    0x284e as uint16,
+    0x284e as uint16,
+    0x284e as uint16,
+    0x284e as uint16,
+    0x284e as uint16,
+    0x284e as uint16,
+    0x284e as uint16,
+    0x284e as uint16,
+    0x284e as uint16,
+    0x284e as uint16,
+    0x284e as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
 ];
 unsafe fn WriteMessageTilemap(game: &mut Game) -> uint16 {
     game.g_ram[0x5a6..0x5a8].copy_from_slice(&112u16.to_le_bytes());
@@ -332,46 +316,38 @@ fn MsgBoxMakeHdmaTable(game: &mut Game) {
 }
 unsafe fn SetupMessageBoxBg3YscrollHdma(game: &mut Game) {
     game.g_ram[0x3380..0x3387].copy_from_slice(&[0xff, 0x00, 0x30, 0xe1, 0xfe, 0x30, 0x00]);
-    WriteReg(DMAP6 as ::core::ffi::c_int as uint16, 0x42 as uint8, game);
-    WriteReg(BBAD6 as ::core::ffi::c_int as uint16, 0x12 as uint8, game);
-    WriteReg(A1T6L as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
-    WriteReg(DAS6L as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
-    WriteReg(A1T6H as ::core::ffi::c_int as uint16, 0x33 as uint8, game);
-    WriteReg(DAS6H as ::core::ffi::c_int as uint16, 0x33 as uint8, game);
-    WriteReg(A1B6 as ::core::ffi::c_int as uint16, 0x7e as uint8, game);
-    WriteReg(DAS60 as ::core::ffi::c_int as uint16, 0x7e as uint8, game);
-    WriteReg(A2A6L as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(A2A6H as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(NTRL6 as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(DMAP6 as uint16, 0x42 as uint8, game);
+    WriteReg(BBAD6 as uint16, 0x12 as uint8, game);
+    WriteReg(A1T6L as uint16, 0x80 as uint8, game);
+    WriteReg(DAS6L as uint16, 0x80 as uint8, game);
+    WriteReg(A1T6H as uint16, 0x33 as uint8, game);
+    WriteReg(DAS6H as uint16, 0x33 as uint8, game);
+    WriteReg(A1B6 as uint16, 0x7e as uint8, game);
+    WriteReg(DAS60 as uint16, 0x7e as uint8, game);
+    WriteReg(A2A6L as uint16, 0 as uint8, game);
+    WriteReg(A2A6H as uint16, 0 as uint8, game);
+    WriteReg(NTRL6 as uint16, 0 as uint8, game);
     MsgBoxMakeHdmaTable(game);
-    WriteReg(HDMAEN as ::core::ffi::c_int as uint16, 0x40 as uint8, game);
+    WriteReg(HDMAEN as uint16, 0x40 as uint8, game);
 }
 unsafe fn SetupPpuForActiveMessageBox(mut r52: uint16, game: &mut Game) {
     SetupMessageBoxBg3YscrollHdma(game);
     r52 = (r52 as ::core::ffi::c_int + 22528 as ::core::ffi::c_int) as uint16;
-    WriteRegWord(VMADDL as ::core::ffi::c_int as uint16, r52, game);
+    WriteRegWord(VMADDL as uint16, r52, game);
+    WriteRegWord(DMAP1 as uint16, 0x1801 as uint16, game);
     WriteRegWord(
-        DMAP1 as ::core::ffi::c_int as uint16,
-        0x1801 as uint16,
-        game,
-    );
-    WriteRegWord(
-        A1T1L as ::core::ffi::c_int as uint16,
+        A1T1L as uint16,
         (((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000 as *mut uint8)
             .offset_from(&raw mut game.g_ram as *mut uint8) as ::core::ffi::c_long
             + 512 as ::core::ffi::c_long) as uint16,
         game,
     );
-    WriteRegWord(A1B1 as ::core::ffi::c_int as uint16, 0x7e as uint16, game);
-    WriteRegWord(
-        DAS1L as ::core::ffi::c_int as uint16,
-        game.message_box_das0l_value,
-        game,
-    );
-    WriteRegWord(DAS10 as ::core::ffi::c_int as uint16, 0 as uint16, game);
-    WriteRegWord(A2A1H as ::core::ffi::c_int as uint16, 0 as uint16, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteRegWord(A1B1 as uint16, 0x7e as uint16, game);
+    WriteRegWord(DAS1L as uint16, game.message_box_das0l_value, game);
+    WriteRegWord(DAS10 as uint16, 0 as uint16, game);
+    WriteRegWord(A2A1H as uint16, 0 as uint16, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
 }
 unsafe fn DrawSpecialButtonAndSetupPpuForLargeMessageBox(a: uint16, game: &mut Game) {
     let buttons = [
@@ -438,156 +414,140 @@ unsafe fn InitializeMessageBox(game: &mut Game) {
     CallMsgBoxModify(0x850000 | u32::from(modify), game);
 }
 static kSaveConfirmationSelectionTilemap: [uint16; 96] = [
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x38cc as ::core::ffi::c_int as uint16,
-    0x38cd as ::core::ffi::c_int as uint16,
-    0x3cf8 as ::core::ffi::c_int as uint16,
-    0x3ce4 as ::core::ffi::c_int as uint16,
-    0x3cf2 as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x2ced as ::core::ffi::c_int as uint16,
-    0x2cee as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x38cc as ::core::ffi::c_int as uint16,
-    0x38cd as ::core::ffi::c_int as uint16,
-    0x3cf8 as ::core::ffi::c_int as uint16,
-    0x3ce4 as ::core::ffi::c_int as uint16,
-    0x3cf2 as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x2ced as ::core::ffi::c_int as uint16,
-    0x2cee as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x2cf8 as ::core::ffi::c_int as uint16,
-    0x2ce4 as ::core::ffi::c_int as uint16,
-    0x2cf2 as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x38cc as ::core::ffi::c_int as uint16,
-    0x38cd as ::core::ffi::c_int as uint16,
-    0x3ced as ::core::ffi::c_int as uint16,
-    0x3cee as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0x3c4e as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0x3c4e as uint16,
+    0x3c4e as uint16,
+    0x38cc as uint16,
+    0x38cd as uint16,
+    0x3cf8 as uint16,
+    0x3ce4 as uint16,
+    0x3cf2 as uint16,
+    0x3c4e as uint16,
+    0x3c4e as uint16,
+    0x3c4e as uint16,
+    0x3c4e as uint16,
+    0x3c4e as uint16,
+    0x3c4e as uint16,
+    0x2ced as uint16,
+    0x2cee as uint16,
+    0x3c4e as uint16,
+    0x3c4e as uint16,
+    0x3c4e as uint16,
+    0x3c4e as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0x3c4e as uint16,
+    0x3c4e as uint16,
+    0x38cc as uint16,
+    0x38cd as uint16,
+    0x3cf8 as uint16,
+    0x3ce4 as uint16,
+    0x3cf2 as uint16,
+    0x3c4e as uint16,
+    0x3c4e as uint16,
+    0x3c4e as uint16,
+    0x3c4e as uint16,
+    0x3c4e as uint16,
+    0x3c4e as uint16,
+    0x2ced as uint16,
+    0x2cee as uint16,
+    0x3c4e as uint16,
+    0x3c4e as uint16,
+    0x3c4e as uint16,
+    0x3c4e as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0x3c4e as uint16,
+    0x3c4e as uint16,
+    0x3c4e as uint16,
+    0x3c4e as uint16,
+    0x2cf8 as uint16,
+    0x2ce4 as uint16,
+    0x2cf2 as uint16,
+    0x3c4e as uint16,
+    0x3c4e as uint16,
+    0x3c4e as uint16,
+    0x3c4e as uint16,
+    0x38cc as uint16,
+    0x38cd as uint16,
+    0x3ced as uint16,
+    0x3cee as uint16,
+    0x3c4e as uint16,
+    0x3c4e as uint16,
+    0x3c4e as uint16,
+    0x3c4e as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0xe as uint16,
 ];
 unsafe fn ToggleSaveConfirmationSelection(game: &mut Game) {
     let selection = u16::from_le_bytes([game.g_ram[0x5f9], game.g_ram[0x5fa]]) ^ 2;
     game.g_ram[0x5f9..0x5fb].copy_from_slice(&selection.to_le_bytes());
     let row = if selection == 2 { 64 } else { 32 };
     WriteMessageBoxTilemapRow(128, &kSaveConfirmationSelectionTilemap[row..row + 32], game);
-    WriteRegWord(
-        VMADDL as ::core::ffi::c_int as uint16,
-        addr_unk_6059A0 as ::core::ffi::c_int as uint16,
-        game,
-    );
-    WriteRegWord(
-        DMAP1 as ::core::ffi::c_int as uint16,
-        0x1801 as uint16,
-        game,
-    );
-    WriteRegWord(A1T1L as ::core::ffi::c_int as uint16, 0x3200, game);
-    WriteRegWord(A1B1 as ::core::ffi::c_int as uint16, 0x7e as uint16, game);
-    WriteRegWord(DAS1L as ::core::ffi::c_int as uint16, 0x180 as uint16, game);
-    WriteRegWord(DAS10 as ::core::ffi::c_int as uint16, 0 as uint16, game);
-    WriteRegWord(A2A1H as ::core::ffi::c_int as uint16, 0 as uint16, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteRegWord(VMADDL as uint16, addr_unk_6059A0 as uint16, game);
+    WriteRegWord(DMAP1 as uint16, 0x1801 as uint16, game);
+    WriteRegWord(A1T1L as uint16, 0x3200, game);
+    WriteRegWord(A1B1 as uint16, 0x7e as uint16, game);
+    WriteRegWord(DAS1L as uint16, 0x180 as uint16, game);
+    WriteRegWord(DAS10 as uint16, 0 as uint16, game);
+    WriteRegWord(A2A1H as uint16, 0 as uint16, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
 }
 unsafe fn RestorePpuForMessageBox(game: &mut Game) {
+    WriteRegWord(VMADDL as uint16, addr_unk_605880 as uint16, game);
+    WriteRegWord(DMAP1 as uint16, 0x1801 as uint16, game);
     WriteRegWord(
-        VMADDL as ::core::ffi::c_int as uint16,
-        addr_unk_605880 as ::core::ffi::c_int as uint16,
-        game,
-    );
-    WriteRegWord(
-        DMAP1 as ::core::ffi::c_int as uint16,
-        0x1801 as uint16,
-        game,
-    );
-    WriteRegWord(
-        A1T1L as ::core::ffi::c_int as uint16,
+        A1T1L as uint16,
         (((&raw mut game.g_ram as *mut uint8).offset(0x4000) as *mut Ram4000 as *mut uint8)
             .offset_from(&raw mut game.g_ram as *mut uint8) as ::core::ffi::c_long
             + 256 as ::core::ffi::c_long) as uint16,
         game,
     );
-    WriteRegWord(A1B1 as ::core::ffi::c_int as uint16, 0x7e as uint16, game);
-    WriteRegWord(DAS1L as ::core::ffi::c_int as uint16, 0x700 as uint16, game);
-    WriteRegWord(DAS10 as ::core::ffi::c_int as uint16, 0 as uint16, game);
-    WriteRegWord(A2A1H as ::core::ffi::c_int as uint16, 0 as uint16, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteRegWord(A1B1 as uint16, 0x7e as uint16, game);
+    WriteRegWord(DAS1L as uint16, 0x700 as uint16, game);
+    WriteRegWord(DAS10 as uint16, 0 as uint16, game);
+    WriteRegWord(A2A1H as uint16, 0 as uint16, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x85) =
         (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .msgbox
             .backup_of_enabled_hdma_channels;
     WriteReg(
-        HDMAEN as ::core::ffi::c_int as uint16,
+        HDMAEN as uint16,
         (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .msgbox
             .backup_of_enabled_hdma_channels,
@@ -603,14 +563,14 @@ unsafe fn RestorePpuForMessageBox(game: &mut Game) {
         *(&raw mut game.g_ram as *mut uint8).offset(0x6e);
     *(&raw mut game.g_ram as *mut uint8).offset(0x73) =
         *(&raw mut game.g_ram as *mut uint8).offset(0x71);
-    WriteReg(CGADD as ::core::ffi::c_int as uint16, 0x19 as uint8, game);
+    WriteReg(CGADD as uint16, 0x19 as uint8, game);
     WriteReg(
-        CGDATA as ::core::ffi::c_int as uint16,
+        CGDATA as uint16,
         *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(25) as uint8,
         game,
     );
     WriteReg(
-        CGDATA as ::core::ffi::c_int as uint16,
+        CGDATA as uint16,
         *(((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(25)
             as *mut uint16 as *mut uint8)
             .offset(
@@ -621,12 +581,12 @@ unsafe fn RestorePpuForMessageBox(game: &mut Game) {
         game,
     );
     WriteReg(
-        CGDATA as ::core::ffi::c_int as uint16,
+        CGDATA as uint16,
         *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(26) as uint8,
         game,
     );
     WriteReg(
-        CGDATA as ::core::ffi::c_int as uint16,
+        CGDATA as uint16,
         *(((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(26)
             as *mut uint16 as *mut uint8)
             .offset(

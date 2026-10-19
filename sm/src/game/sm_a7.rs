@@ -405,14 +405,7 @@ static g_word_A7CD9F: uint16 = 0x100 as uint16;
 static g_word_A7CDA1: uint16 = 0xf000 as uint16;
 static g_word_A7CDA3: uint16 = 8 as uint16;
 static g_byte_A7CDA5: [uint8; 8] = [
-    6 as ::core::ffi::c_int as uint8,
-    6 as ::core::ffi::c_int as uint8,
-    8 as ::core::ffi::c_int as uint8,
-    8 as ::core::ffi::c_int as uint8,
-    6 as ::core::ffi::c_int as uint8,
-    8 as ::core::ffi::c_int as uint8,
-    6 as ::core::ffi::c_int as uint8,
-    8 as ::core::ffi::c_int as uint8,
+    6 as uint8, 6 as uint8, 8 as uint8, 8 as uint8, 6 as uint8, 8 as uint8, 6 as uint8, 8 as uint8,
 ];
 static g_word_A7E900: uint16 = 0xfffd as uint16;
 static g_word_A7E902: uint16 = 0 as uint16;
@@ -540,7 +533,7 @@ pub unsafe fn Kraid_CheckIfDead(game: &mut Game) -> uint16 {
         .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize)
         as *mut uint8 as *mut uint16) as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
+        != 0 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn Kraid_SetEnemyPropsToDead(game: &mut Game) {
     let mut E: *mut Enemy_Kraid = Get_Kraid(
@@ -749,8 +742,7 @@ pub unsafe fn KraidsArm_Init(game: &mut Game) {
         (*v0.offset(1)).palette_index = (*v0).palette_index;
         (*v0.offset(1)).ai_var_A =
             (0xa7ba2d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        (*v0.offset(1)).current_instruction =
-            addr_kKraid_Ilist_8AA4 as ::core::ffi::c_int as uint16;
+        (*v0.offset(1)).current_instruction = addr_kKraid_Ilist_8AA4 as uint16;
         (*v0.offset(1)).instruction_timer = 1 as uint16;
         (*v0.offset(1)).ai_var_B = 0 as uint16;
     };
@@ -762,10 +754,9 @@ pub unsafe fn KraidsTopLint_Init(game: &mut Game) {
         let mut v0: *mut EnemyData = gEnemyData(0 as ::core::ffi::c_int, game);
         (*v0.offset(2)).palette_index = (*v0).palette_index;
         (*v0.offset(2)).instruction_timer = 0x7fff as uint16;
-        (*v0.offset(2)).current_instruction =
-            addr_kKraid_Ilist_8AFE as ::core::ffi::c_int as uint16;
-        (*v0.offset(2)).spritemap_pointer = addr_kKraid_Sprmap_A5DF as ::core::ffi::c_int as uint16;
-        (*v0.offset(2)).ai_var_A = addr_locret_A7B831 as ::core::ffi::c_int as uint16;
+        (*v0.offset(2)).current_instruction = addr_kKraid_Ilist_8AFE as uint16;
+        (*v0.offset(2)).spritemap_pointer = addr_kKraid_Sprmap_A5DF as uint16;
+        (*v0.offset(2)).ai_var_A = addr_locret_A7B831 as uint16;
         (*v0.offset(2)).ai_preinstr = 0x7fff as uint16;
         (*v0.offset(2)).ai_var_C = 0 as uint16;
     };
@@ -777,10 +768,9 @@ pub unsafe fn KraidsMiddleLint_Init(game: &mut Game) {
         let mut v0: *mut EnemyData = gEnemyData(0 as ::core::ffi::c_int, game);
         (*v0.offset(3)).palette_index = (*v0).palette_index;
         (*v0.offset(3)).instruction_timer = 0x7fff as uint16;
-        (*v0.offset(3)).current_instruction =
-            addr_kKraid_Ilist_8AFE as ::core::ffi::c_int as uint16;
-        (*v0.offset(3)).spritemap_pointer = addr_kKraid_Sprmap_A5DF as ::core::ffi::c_int as uint16;
-        (*v0.offset(3)).ai_var_A = addr_locret_A7B831 as ::core::ffi::c_int as uint16;
+        (*v0.offset(3)).current_instruction = addr_kKraid_Ilist_8AFE as uint16;
+        (*v0.offset(3)).spritemap_pointer = addr_kKraid_Sprmap_A5DF as uint16;
+        (*v0.offset(3)).ai_var_A = addr_locret_A7B831 as uint16;
         (*v0.offset(3)).ai_var_C = -(16 as ::core::ffi::c_int) as uint16;
     };
 }
@@ -791,10 +781,9 @@ pub unsafe fn KraidsBottomLint_Init(game: &mut Game) {
         let mut v0: *mut EnemyData = gEnemyData(0 as ::core::ffi::c_int, game);
         (*v0.offset(4)).palette_index = (*v0).palette_index;
         (*v0.offset(4)).instruction_timer = 0x7fff as uint16;
-        (*v0.offset(4)).current_instruction =
-            addr_kKraid_Ilist_8AFE as ::core::ffi::c_int as uint16;
-        (*v0.offset(4)).spritemap_pointer = addr_kKraid_Sprmap_A5DF as ::core::ffi::c_int as uint16;
-        (*v0.offset(4)).ai_var_A = addr_locret_A7B831 as ::core::ffi::c_int as uint16;
+        (*v0.offset(4)).current_instruction = addr_kKraid_Ilist_8AFE as uint16;
+        (*v0.offset(4)).spritemap_pointer = addr_kKraid_Sprmap_A5DF as uint16;
+        (*v0.offset(4)).ai_var_A = addr_locret_A7B831 as uint16;
         (*v0.offset(4)).ai_var_C = -(16 as ::core::ffi::c_int) as uint16;
     };
 }
@@ -807,7 +796,7 @@ pub unsafe fn KraidsFoot_Init(game: &mut Game) {
             .palette_index;
         let mut E: *mut Enemy_Kraid = Get_Kraid(0x140 as ::core::ffi::c_int, game);
         (*E).base.palette_index = palette_index;
-        (*E).base.current_instruction = addr_kKraid_Ilist_86E7 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kKraid_Ilist_86E7 as uint16;
         (*E).base.instruction_timer = 1 as uint16;
         (*E).kraid_var_A =
             (0xa7ba2d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -867,7 +856,7 @@ pub unsafe fn Kraid_GetsBig_BreakCeilingPlatforms(game: &mut Game) {
             ) as *const uint8 as *mut uint16)
                 .offset((kraid_var_F as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize),
             *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-            addr_kEproj_RocksFallingKraidCeiling as ::core::ffi::c_int as uint16,
+            addr_kEproj_RocksFallingKraidCeiling as uint16,
             game,
         );
         match (*E).kraid_var_F as ::core::ffi::c_int >> 1 as ::core::ffi::c_int {
@@ -1000,16 +989,16 @@ pub unsafe fn Kraid_GetsBig_FinishUpdateBg2Tilemap(game: &mut Game) {
         (0xa7ad8e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     let mut E5: *mut Enemy_Kraid = Get_Kraid(0x140 as ::core::ffi::c_int, game);
     (*E5).base.instruction_timer = 1 as uint16;
-    (*E5).base.current_instruction = addr_kKraid_Ilist_86ED as ::core::ffi::c_int as uint16;
+    (*E5).base.current_instruction = addr_kKraid_Ilist_86ED as uint16;
     let mut E2: *mut Enemy_Kraid = Get_Kraid(0x80 as ::core::ffi::c_int, game);
-    (*E2).base.current_instruction = addr_kKraid_Ilist_8B04 as ::core::ffi::c_int as uint16;
+    (*E2).base.current_instruction = addr_kKraid_Ilist_8B04 as uint16;
     let mut E3: *mut Enemy_Kraid = Get_Kraid(0xc0 as ::core::ffi::c_int, game);
-    (*E3).base.current_instruction = addr_kKraid_Ilist_8B04 as ::core::ffi::c_int as uint16;
+    (*E3).base.current_instruction = addr_kKraid_Ilist_8B04 as uint16;
     let mut E: *mut Enemy_Kraid = Get_Kraid(0x100 as ::core::ffi::c_int, game);
-    (*E).base.current_instruction = addr_kKraid_Ilist_8B04 as ::core::ffi::c_int as uint16;
-    (*E2).base.spritemap_pointer = addr_kKraid_Sprmap_8C6C as ::core::ffi::c_int as uint16;
-    (*E3).base.spritemap_pointer = addr_kKraid_Sprmap_8C6C as ::core::ffi::c_int as uint16;
-    (*E).base.spritemap_pointer = addr_kKraid_Sprmap_8C6C as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_kKraid_Ilist_8B04 as uint16;
+    (*E2).base.spritemap_pointer = addr_kKraid_Sprmap_8C6C as uint16;
+    (*E3).base.spritemap_pointer = addr_kKraid_Sprmap_8C6C as uint16;
+    (*E).base.spritemap_pointer = addr_kKraid_Sprmap_8C6C as uint16;
     Kraid_UpdateBG2TilemapBottomHalf(game);
 }
 pub unsafe fn Kraid_DrawRoomBg(game: &mut Game) {
@@ -1113,13 +1102,13 @@ pub unsafe fn Kraid_GetsBig_FadeInRoomBg(game: &mut Game) {
         (*E7).kraid_var_F = 128 as uint16;
         (*Get_Kraid(0x40 as ::core::ffi::c_int, game)).kraid_var_C = 1 as uint16;
         let mut E0: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int, game);
-        (*E0).kraid_var_B = addr_stru_A796DA as ::core::ffi::c_int as uint16;
+        (*E0).kraid_var_B = addr_stru_A796DA as uint16;
         (*E0).kraid_target_x = 288 as uint16;
         let mut E5: *mut Enemy_Kraid = Get_Kraid(0x140 as ::core::ffi::c_int, game);
         (*E5).kraid_var_A =
             (0xa7bb6e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E5).base.instruction_timer = 1 as uint16;
-        (*E5).base.current_instruction = addr_kKraid_Ilist_8887 as ::core::ffi::c_int as uint16;
+        (*E5).base.current_instruction = addr_kKraid_Ilist_8887 as uint16;
     }
 }
 pub unsafe fn Kraid_Mainloop_Thinking(game: &mut Game) {
@@ -1132,7 +1121,7 @@ pub unsafe fn Kraid_Mainloop_Thinking(game: &mut Game) {
         if v2 == 0 {
             (*E).kraid_var_A =
                 (0xa7bbea as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-            (*E).kraid_var_B = addr_stru_A796DA as ::core::ffi::c_int as uint16;
+            (*E).kraid_var_B = addr_stru_A796DA as uint16;
             (*E).kraid_var_C = (*(game.g_rom.offset(
                 (((0xa796d2 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                     << 15 as ::core::ffi::c_int
@@ -1153,7 +1142,7 @@ pub unsafe fn Kraid_GetsBig_Thinking(game: &mut Game) {
         if v2 == 0 {
             (*E).kraid_var_A =
                 (0xa7aee4 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-            (*E).kraid_var_B = addr_stru_A796DA as ::core::ffi::c_int as uint16;
+            (*E).kraid_var_B = addr_stru_A796DA as uint16;
             (*E).kraid_var_C = (*(game.g_rom.offset(
                 (((0xa796d2 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                     << 15 as ::core::ffi::c_int
@@ -1453,11 +1442,7 @@ pub unsafe fn Kraid_SpawnExplosionEproj(mut k: uint16, game: &mut Game) {
     } else {
         29 as ::core::ffi::c_int
     }) as uint16;
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_DustCloudExplosion as ::core::ffi::c_int as uint16,
-        v2,
-        game,
-    );
+    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as uint16, v2, game);
     QueueSfx1_Max6(0x3d as uint16, game);
 }
 pub unsafe fn Kraid_Enemy_Touch(game: &mut Game) {
@@ -2074,7 +2059,7 @@ pub unsafe fn Kraid_Shot_UnglowEye(game: &mut Game) {
     if r20 == 0 {
         (*E).kraid_var_A =
             (0xa7aee4 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        (*E).kraid_var_B = addr_stru_A796DA as ::core::ffi::c_int as uint16;
+        (*E).kraid_var_B = addr_stru_A796DA as uint16;
         (*E).kraid_var_C = (*(game.g_rom.offset(
             (((0xa796d2 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                 << 15 as ::core::ffi::c_int
@@ -2250,7 +2235,7 @@ pub unsafe fn KraidEnemy_DecrementEnemyFunctionTimer(game: &mut Game) {
         (*E).kraid_var_F = (*E).kraid_var_F.wrapping_sub(1);
         if fresh8 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
             (*E).kraid_var_A = (*E).kraid_next;
-            (*E).base.current_instruction = addr_kKraid_Ilist_8887 as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kKraid_Ilist_8887 as uint16;
             (*E).base.instruction_timer = 1 as uint16;
         }
     }
@@ -2389,7 +2374,7 @@ pub unsafe fn Kraid_SetWalkingBackwards(mut j: uint16, mut a: uint16, game: &mut
     (*E).kraid_next = j;
     (*E).kraid_var_A = (0xa7bb45 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).base.instruction_timer = 1 as uint16;
-    (*E).base.current_instruction = addr_kKraid_Ilist_8887 as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_kKraid_Ilist_8887 as uint16;
 }
 pub unsafe fn Kraid_SetWalkingForwards(mut j: uint16, mut a: uint16, game: &mut Game) {
     (*Get_Kraid(0 as ::core::ffi::c_int, game)).kraid_target_x = a;
@@ -2397,7 +2382,7 @@ pub unsafe fn Kraid_SetWalkingForwards(mut j: uint16, mut a: uint16, game: &mut 
     (*E).kraid_next = j;
     (*E).kraid_var_A = (0xa7bbae as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).base.instruction_timer = 1 as uint16;
-    (*E).base.current_instruction = addr_kKraid_Ilist_86F3 as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_kKraid_Ilist_86F3 as uint16;
 }
 pub unsafe fn KraidsFoot_SecondPhase_Thinking(game: &mut Game) {
     let mut v4: int16 = 0;
@@ -2483,7 +2468,7 @@ pub unsafe fn KraidsFoot_SecondPhase_WalkingBackwards(game: &mut Game) {
         (*E5).kraid_var_A =
             (0xa7ba2e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E5).base.instruction_timer = 1 as uint16;
-        (*E5).base.current_instruction = addr_kKraid_Ilist_86ED as ::core::ffi::c_int as uint16;
+        (*E5).base.current_instruction = addr_kKraid_Ilist_86ED as uint16;
     }
 }
 pub unsafe fn KraidsFoot_SecondPhaseSetup_WalkToStartPt(game: &mut Game) {
@@ -2509,7 +2494,7 @@ pub unsafe fn KraidsFoot_SecondPhaseSetup_WalkToStartPt(game: &mut Game) {
         (*E5).kraid_next =
             (0xa7bba4 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E5).base.instruction_timer = 1 as uint16;
-        (*E5).base.current_instruction = addr_kKraid_Ilist_86ED as ::core::ffi::c_int as uint16;
+        (*E5).base.current_instruction = addr_kKraid_Ilist_86ED as uint16;
     }
 }
 pub unsafe fn KraidsFoot_SecondPhase_Init(game: &mut Game) {
@@ -2524,22 +2509,21 @@ pub unsafe fn KraidsFoot_SecondPhase_WalkForward(game: &mut Game) {
     {
         let mut E5: *mut Enemy_Kraid = Get_Kraid(0x140 as ::core::ffi::c_int, game);
         if (*E5).base.current_instruction as ::core::ffi::c_int
-            == addr_off_A787BB as ::core::ffi::c_int as uint16 as ::core::ffi::c_int
+            == addr_off_A787BB as uint16 as ::core::ffi::c_int
         {
-            (*E5).base.current_instruction = addr_kKraid_Ilist_86F3 as ::core::ffi::c_int as uint16;
+            (*E5).base.current_instruction = addr_kKraid_Ilist_86F3 as uint16;
             (*E5).base.instruction_timer = 1 as uint16;
         }
     } else {
         (*E0).base.x_pos = kraid_target_x;
         let mut E5_0: *mut Enemy_Kraid = Get_Kraid(0x140 as ::core::ffi::c_int, game);
         if (*E5_0).base.current_instruction as ::core::ffi::c_int
-            == addr_off_A787BB as ::core::ffi::c_int as uint16 as ::core::ffi::c_int
+            == addr_off_A787BB as uint16 as ::core::ffi::c_int
         {
             (*E5_0).kraid_var_A =
                 (0xa7ba2e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
             (*E5_0).base.instruction_timer = 1 as uint16;
-            (*E5_0).base.current_instruction =
-                addr_kKraid_Ilist_86ED as ::core::ffi::c_int as uint16;
+            (*E5_0).base.current_instruction = addr_kKraid_Ilist_86ED as uint16;
         }
     };
 }
@@ -2593,7 +2577,7 @@ pub unsafe fn Kraid_Main_AttackWithMouthOpen(game: &mut Game) {
             (*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
                 as ::core::ffi::c_int
                 & 0xe as ::core::ffi::c_int) as uint16,
-            addr_kEproj_RocksKraidSpits as ::core::ffi::c_int as uint16,
+            addr_kEproj_RocksKraidSpits as uint16,
             game,
         );
         QueueSfx3_Max6(0x1e as uint16, game);
@@ -2629,7 +2613,7 @@ pub unsafe fn KraidFingernailInit(mut k: uint16, game: &mut Game) {
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         | kEnemyProps_Invisible as ::core::ffi::c_int) as uint16;
     (*E).base.instruction_timer = 0x7fff as uint16;
-    (*E).base.current_instruction = addr_kKraid_Ilist_8B0A as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_kKraid_Ilist_8B0A as uint16;
     (*E).base.spritemap_pointer = (*(game.g_rom.offset(
         (((0xa78b0a as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0xa78b0a as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -2743,7 +2727,7 @@ pub unsafe fn KraidsFingernail_Init(game: &mut Game) {
         & !(kEnemyProps_Tangible as ::core::ffi::c_int
             | kEnemyProps_Invisible as ::core::ffi::c_int)) as uint16;
     (*E).base.instruction_timer = 1 as uint16;
-    (*E).base.current_instruction = addr_kKraid_Ilist_8B0A as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_kKraid_Ilist_8B0A as uint16;
     (*E).kraid_var_A = (0xa7be8e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     if *((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16) as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
@@ -2874,12 +2858,10 @@ pub unsafe fn KraidsFoot_PrepareToLungeForward(game: &mut Game) {
         & 0x8000 as ::core::ffi::c_int
         == 0
     {
-        (*v0.offset(1)).current_instruction =
-            addr_kKraid_Ilist_8AF0 as ::core::ffi::c_int as uint16;
+        (*v0.offset(1)).current_instruction = addr_kKraid_Ilist_8AF0 as uint16;
         (*v0.offset(1)).instruction_timer = 1 as uint16;
         (*v0.offset(5)).instruction_timer = 1 as uint16;
-        (*v0.offset(5)).current_instruction =
-            addr_kKraid_Ilist_87BD as ::core::ffi::c_int as uint16;
+        (*v0.offset(5)).current_instruction = addr_kKraid_Ilist_87BD as uint16;
         (*v0.offset(5)).ai_var_A =
             (0xa7bf5d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*v0.offset(5)).ai_preinstr = 0 as uint16;
@@ -2896,7 +2878,7 @@ pub unsafe fn KraidsFoot_FirstPhase_LungeForward(game: &mut Game) {
     }
     let mut E5: *mut Enemy_Kraid = Get_Kraid(0x140 as ::core::ffi::c_int, game);
     if (*E5).base.current_instruction as ::core::ffi::c_int
-        == addr_off_A78885 as ::core::ffi::c_int as uint16 as ::core::ffi::c_int
+        == addr_off_A78885 as uint16 as ::core::ffi::c_int
     {
         if (*E).base.x_pos as ::core::ffi::c_int == 92 as ::core::ffi::c_int {
             (*E5).kraid_next =
@@ -2905,10 +2887,10 @@ pub unsafe fn KraidsFoot_FirstPhase_LungeForward(game: &mut Game) {
                 (0xa7b93f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
             (*E5).kraid_var_F = 1 as uint16;
             (*E5).base.instruction_timer = 1 as uint16;
-            (*E5).base.current_instruction = addr_kKraid_Ilist_86ED as ::core::ffi::c_int as uint16;
+            (*E5).base.current_instruction = addr_kKraid_Ilist_86ED as uint16;
         } else {
             (*E5).base.instruction_timer = 1 as uint16;
-            (*E5).base.current_instruction = addr_kKraid_Ilist_87BD as ::core::ffi::c_int as uint16;
+            (*E5).base.current_instruction = addr_kKraid_Ilist_87BD as uint16;
         }
     }
 }
@@ -2928,10 +2910,10 @@ pub unsafe fn KraidsFoot_FirstPhase_RetreatFromLunge(game: &mut Game) {
     {
         if (*E0).base.x_pos as ::core::ffi::c_int == 176 as ::core::ffi::c_int {
             let mut E1: *mut Enemy_Kraid = Get_Kraid(0x40 as ::core::ffi::c_int, game);
-            (*E1).base.current_instruction = addr_kKraid_Ilist_89F3 as ::core::ffi::c_int as uint16;
+            (*E1).base.current_instruction = addr_kKraid_Ilist_89F3 as uint16;
             (*E1).base.instruction_timer = 1 as uint16;
             (*E5).base.instruction_timer = 1 as uint16;
-            (*E5).base.current_instruction = addr_kKraid_Ilist_86ED as ::core::ffi::c_int as uint16;
+            (*E5).base.current_instruction = addr_kKraid_Ilist_86ED as uint16;
             (*E5).kraid_var_A =
                 (0xa7b960 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
             (*E5).kraid_var_F = 300 as uint16;
@@ -2944,7 +2926,7 @@ pub unsafe fn KraidsFoot_FirstPhase_RetreatFromLunge(game: &mut Game) {
                     as ::core::ffi::c_int,
                 game,
             );
-            (*E).base.current_instruction = addr_kKraid_Ilist_8887 as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kKraid_Ilist_8887 as uint16;
             (*E).base.instruction_timer = 1 as uint16;
         }
     }
@@ -2986,12 +2968,12 @@ pub unsafe fn Kraid_HandleFirstPhase(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = 4 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 340 as uint16;
         let mut E5: *mut Enemy_Kraid = Get_Kraid(0x140 as ::core::ffi::c_int, game);
-        (*E5).base.current_instruction = addr_kKraid_Ilist_86E7 as ::core::ffi::c_int as uint16;
+        (*E5).base.current_instruction = addr_kKraid_Ilist_86E7 as uint16;
         (*E5).base.instruction_timer = 1 as uint16;
         (*E5).kraid_var_A =
             (0xa7ba2d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         let mut E1: *mut Enemy_Kraid = Get_Kraid(0x40 as ::core::ffi::c_int, game);
-        (*E1).base.current_instruction = addr_kKraid_Ilist_89F3 as ::core::ffi::c_int as uint16;
+        (*E1).base.current_instruction = addr_kKraid_Ilist_89F3 as uint16;
         (*E1).base.instruction_timer = 1 as uint16;
         let mut E2: *mut Enemy_Kraid = Get_Kraid(0x80 as ::core::ffi::c_int, game);
         (*E2).base.properties =
@@ -3056,23 +3038,23 @@ pub unsafe fn UnpauseHook_Kraid_IsDead(game: &mut Game) -> CoroutineRet {
         das: 0x800 as VoidP,
     };
     ScreenOff(game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
     WriteReg(
-        VMADDH as ::core::ffi::c_int as uint16,
+        VMADDH as uint16,
         (16 as ::core::ffi::c_int
             * (*(&raw mut game.g_ram as *mut uint8).offset(0x5d) as ::core::ffi::c_int
                 & 0xf as ::core::ffi::c_int)
             + 63 as ::core::ffi::c_int) as uint8,
         game,
     );
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     SetupDmaTransfer(&raw const unk_A7C21E as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x40 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x40 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     SetupDmaTransfer(&raw const unk_A7C23E as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
     Kraid_TransferTopHalfToVram(game);
     return kCoroutineNone as CoroutineRet;
 }
@@ -3098,30 +3080,30 @@ static unk_A7C28D: StartDmaCopy = StartDmaCopy {
 };
 pub unsafe fn UnpauseHook_Kraid_IsAlive(game: &mut Game) -> CoroutineRet {
     ScreenOff(game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
     WriteReg(
-        VMADDH as ::core::ffi::c_int as uint16,
+        VMADDH as uint16,
         (*(&raw mut game.g_ram as *mut uint8).offset(0x5d) as ::core::ffi::c_int
             + 62 as ::core::ffi::c_int) as uint8,
         game,
     );
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     SetupDmaTransfer(&raw const unk_A7C26B as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
     Kraid_TransferTopHalfToVram(game);
     return kCoroutineNone as CoroutineRet;
 }
 pub unsafe fn Kraid_TransferTopHalfToVram(game: &mut Game) {
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
     WriteReg(
-        VMADDH as ::core::ffi::c_int as uint16,
+        VMADDH as uint16,
         (*(&raw mut game.g_ram as *mut uint8).offset(0x59) as ::core::ffi::c_int
             & 0xfc as ::core::ffi::c_int) as uint8,
         game,
     );
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     SetupDmaTransfer(&raw const unk_A7C28D as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
     ScreenOn(game);
 }
 static unk_A7C2BD: StartDmaCopy = StartDmaCopy {
@@ -3142,16 +3124,16 @@ pub unsafe fn Kraid_UnpauseHook_IsSinking(game: &mut Game) -> CoroutineRet {
         match *_state_variable_ as ::core::ffi::c_int {
             0 => {
                 ScreenOff(game);
-                WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
+                WriteReg(VMADDL as uint16, 0 as uint8, game);
                 WriteReg(
-                    VMADDH as ::core::ffi::c_int as uint16,
+                    VMADDH as uint16,
                     (*(&raw mut game.g_ram as *mut uint8).offset(0x5d) as ::core::ffi::c_int
                         + 62 as ::core::ffi::c_int) as uint8,
                     game,
                 );
-                WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+                WriteReg(VMAIN as uint16, 0x80 as uint8, game);
                 SetupDmaTransfer(&raw const unk_A7C2BD as *const ::core::ffi::c_void, game);
-                WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+                WriteReg(MDMAEN as uint16, 2 as uint8, game);
                 if ((*Get_Kraid(0 as ::core::ffi::c_int, game)).base.y_pos as ::core::ffi::c_int
                     - (*(game.g_rom.offset(
                         (((0xa7c5e7 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -3341,7 +3323,7 @@ pub unsafe fn Kraid_Death_Init(game: &mut Game) {
             i -= 2 as ::core::ffi::c_int;
         }
         let mut E1: *mut Enemy_Kraid = Get_Kraid(0x40 as ::core::ffi::c_int, game);
-        (*E1).base.current_instruction = addr_kKraid_Ilist_8AF0 as ::core::ffi::c_int as uint16;
+        (*E1).base.current_instruction = addr_kKraid_Ilist_8AF0 as uint16;
         (*E1).base.instruction_timer = 1 as uint16;
         (*E0).kraid_var_A =
             (0xa7c3f9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -3455,10 +3437,10 @@ pub unsafe fn Kraid_Death_UpdateBG2TilemapBottomHalf(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = 1 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 256 as uint16;
     let mut E1: *mut Enemy_Kraid = Get_Kraid(0x40 as ::core::ffi::c_int, game);
-    (*E1).base.current_instruction = addr_kKraid_Ilist_8AA4 as ::core::ffi::c_int as uint16;
+    (*E1).base.current_instruction = addr_kKraid_Ilist_8AA4 as uint16;
     (*E1).base.instruction_timer = 1 as uint16;
     let mut E5: *mut Enemy_Kraid = Get_Kraid(0x140 as ::core::ffi::c_int, game);
-    (*E5).base.current_instruction = addr_kKraid_Ilist_86E7 as ::core::ffi::c_int as uint16;
+    (*E5).base.current_instruction = addr_kKraid_Ilist_86E7 as uint16;
     (*E5).base.instruction_timer = 1 as uint16;
     (*E5).kraid_var_A = (0xa7ba2d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     Kraid_UpdateBG2TilemapBottomHalf(game);
@@ -3595,7 +3577,7 @@ pub unsafe fn Kraid_CrumbleLeftPlatform_Left(game: &mut Game) {
     SpawnEprojWithGfx(
         0x70 as uint16,
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        addr_kEproj_RocksFallingKraidCeiling as ::core::ffi::c_int as uint16,
+        addr_kEproj_RocksFallingKraidCeiling as uint16,
         game,
     );
     SpawnHardcodedPlm(
@@ -3611,7 +3593,7 @@ pub unsafe fn Kraid_CrumbleRightPlatform_Middle(game: &mut Game) {
     SpawnEprojWithGfx(
         0xf0 as uint16,
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        addr_kEproj_RocksFallingKraidCeiling as ::core::ffi::c_int as uint16,
+        addr_kEproj_RocksFallingKraidCeiling as uint16,
         game,
     );
     SpawnHardcodedPlm(
@@ -3627,7 +3609,7 @@ pub unsafe fn Kraid_CrumbleRightPlatform_Left(game: &mut Game) {
     SpawnEprojWithGfx(
         0xe0 as uint16,
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        addr_kEproj_RocksFallingKraidCeiling as ::core::ffi::c_int as uint16,
+        addr_kEproj_RocksFallingKraidCeiling as uint16,
         game,
     );
     SpawnHardcodedPlm(
@@ -3643,7 +3625,7 @@ pub unsafe fn Kraid_CrumbleLeftPlatform_Right(game: &mut Game) {
     SpawnEprojWithGfx(
         0x90 as uint16,
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        addr_kEproj_RocksFallingKraidCeiling as ::core::ffi::c_int as uint16,
+        addr_kEproj_RocksFallingKraidCeiling as uint16,
         game,
     );
     SpawnHardcodedPlm(
@@ -3659,7 +3641,7 @@ pub unsafe fn Kraid_CrumbleLeftPlatform_Middle(game: &mut Game) {
     SpawnEprojWithGfx(
         0x80 as uint16,
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        addr_kEproj_RocksFallingKraidCeiling as ::core::ffi::c_int as uint16,
+        addr_kEproj_RocksFallingKraidCeiling as uint16,
         game,
     );
     SpawnHardcodedPlm(
@@ -3675,7 +3657,7 @@ pub unsafe fn Kraid_CrumbleRightPlatform_Right(game: &mut Game) {
     SpawnEprojWithGfx(
         0x100 as uint16,
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        addr_kEproj_RocksFallingKraidCeiling as ::core::ffi::c_int as uint16,
+        addr_kEproj_RocksFallingKraidCeiling as uint16,
         game,
     );
     SpawnHardcodedPlm(
@@ -3980,10 +3962,10 @@ pub unsafe fn Kraid_Raise_Handler(game: &mut Game) {
         (*E5).kraid_var_F = 300 as uint16;
         (*E5).kraid_next =
             (0xa7bf2d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        (*E0).kraid_var_B = addr_stru_A796DA as ::core::ffi::c_int as uint16;
+        (*E0).kraid_var_B = addr_stru_A796DA as uint16;
         Kraid_Mainloop_Thinking_Setup(game);
         let mut E1: *mut Enemy_Kraid = Get_Kraid(0x40 as ::core::ffi::c_int, game);
-        (*E1).base.current_instruction = addr_kKraid_Ilist_89F3 as ::core::ffi::c_int as uint16;
+        (*E1).base.current_instruction = addr_kKraid_Ilist_89F3 as uint16;
         (*E1).base.instruction_timer = 1 as uint16;
     }
 }
@@ -4306,7 +4288,7 @@ pub unsafe fn Phantoon2_Init(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    (*v6).spritemap_pointer = addr_kSpritemap_Nothing_A7 as ::core::ffi::c_int as uint16;
+    (*v6).spritemap_pointer = addr_kSpritemap_Nothing_A7 as uint16;
     (*v6).instruction_timer = 1 as uint16;
     (*v6).timer = 0 as uint16;
     let mut v7: *mut EnemyData = gEnemyData(0 as ::core::ffi::c_int, game);
@@ -4411,7 +4393,7 @@ pub unsafe fn Phantoon_Func_2(mut k: uint16, game: &mut Game) {
                 .offset(0))
             .ypos as *mut uint8)
                 .offset(1) as *mut uint16) as ::core::ffi::c_int
-                == 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
+                == 0 as ::core::ffi::c_int) as uint16;
     }
 }
 pub unsafe fn Phantoon_Func_3(mut amt: int32, game: &mut Game) -> uint8 {
@@ -4446,7 +4428,7 @@ pub unsafe fn Phantoon_Func_4(mut k: uint16, game: &mut Game) {
     SpawnEprojWithGfx(
         0 as uint16,
         k,
-        addr_kEproj_DestroyableFireballs as ::core::ffi::c_int as uint16,
+        addr_kEproj_DestroyableFireballs as uint16,
         game,
     );
     QueueSfx3_Max6(0x1d as uint16, game);
@@ -4457,7 +4439,7 @@ pub unsafe fn Phantoon_Func_5(mut k: uint16, game: &mut Game) {
         SpawnEprojWithGfx(
             (i | 0x600 as ::core::ffi::c_int) as uint16,
             k,
-            addr_kEproj_DestroyableFireballs as ::core::ffi::c_int as uint16,
+            addr_kEproj_DestroyableFireballs as uint16,
             game,
         );
         i -= 1;
@@ -4482,7 +4464,7 @@ pub unsafe fn Phantoon_Func_6(mut k: uint16, mut a: uint16, game: &mut Game) {
         SpawnEprojWithGfx(
             (r20 | fresh25 as ::core::ffi::c_int | 0x400 as ::core::ffi::c_int) as uint16,
             k,
-            addr_kEproj_DestroyableFireballs as ::core::ffi::c_int as uint16,
+            addr_kEproj_DestroyableFireballs as uint16,
             game,
         );
         if (v3 as ::core::ffi::c_int - 8 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
@@ -4543,7 +4525,7 @@ pub unsafe fn Phantoon_Func_7(mut k: uint16, game: &mut Game) {
                     .offset(1);
             }
             (*E).base.instruction_timer = 1 as uint16;
-            (*E).base.current_instruction = addr_kKraid_Ilist_CCEB as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kKraid_Ilist_CCEB as uint16;
         } else {
             let mut v5: uint16 =
                 (NextRandom(game) as ::core::ffi::c_int & 3 as ::core::ffi::c_int) as uint16;
@@ -4570,7 +4552,7 @@ pub unsafe fn Phantoon_StartTrackingSamusAndInitEyeTimer(game: &mut Game) {
     (*Get_Phantoon(0x80 as ::core::ffi::c_int, game)).phant_var_A = 0 as uint16;
     let mut E: *mut Enemy_Phantoon = Get_Phantoon(0 as ::core::ffi::c_int, game);
     (*E).base.instruction_timer = 1 as uint16;
-    (*E).base.current_instruction = addr_kKraid_Ilist_CC4D as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_kKraid_Ilist_CC4D as uint16;
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         & !(kEnemyProps_Tangible as ::core::ffi::c_int)) as uint16;
     (*E).phant_var_E = *(game.g_rom.offset(
@@ -4582,7 +4564,7 @@ pub unsafe fn Phantoon_StartTrackingSamusAndInitEyeTimer(game: &mut Game) {
     (*E).phant_var_F = (0xa7d60d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     let mut E1: *mut Enemy_Phantoon = Get_Phantoon(0x40 as ::core::ffi::c_int, game);
     (*E1).base.instruction_timer = 1 as uint16;
-    (*E1).base.current_instruction = addr_kKraid_Ilist_CC9D as ::core::ffi::c_int as uint16;
+    (*E1).base.current_instruction = addr_kKraid_Ilist_CC9D as uint16;
 }
 pub unsafe fn Phantoon_PickPatternForRound2(game: &mut Game) {
     let mut v4: int16 = 0;
@@ -4640,14 +4622,14 @@ pub unsafe fn Phantoon_AdjustSpeedAndMoveInFigure8(game: &mut Game) {
     if (*Get_Phantoon(0x40 as ::core::ffi::c_int, game)).phant_var_C != 0 {
         Phantoon_AdjustSpeedRightSideClockwise(game);
         Phantoon_MoveInFigure8_RightSideClockwise(
-            addr_kPhantoonMoveData as ::core::ffi::c_int as uint16,
+            addr_kPhantoonMoveData as uint16,
             533 as uint16,
             game,
         );
     } else {
         Phantoon_AdjustSpeedLeftSideClockwise(game);
         Phantoon_MoveInFigure8_LeftSideClockwise(
-            addr_kPhantoonMoveData as ::core::ffi::c_int as uint16,
+            addr_kPhantoonMoveData as uint16,
             534 as uint16,
             game,
         );
@@ -5012,7 +4994,7 @@ pub unsafe fn Phantoon_Spawn8FireballsInCircleAtStart(mut k: uint16, game: &mut 
         SpawnEprojWithGfx(
             (*E0).phant_var_A,
             k,
-            addr_kEproj_StartingFireballs as ::core::ffi::c_int as uint16,
+            addr_kEproj_StartingFireballs as uint16,
             game,
         );
         QueueSfx3_Max6(0x1d as uint16, game);
@@ -5149,7 +5131,7 @@ pub unsafe fn Phantoon_MovePhantoonInFigure8ThenOpenEye(mut k: uint16, game: &mu
         (*Get_Phantoon(k as ::core::ffi::c_int, game)).phant_var_F =
             (0xa7d4a8 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E).base.instruction_timer = 1 as uint16;
-        (*E).base.current_instruction = addr_kKraid_Ilist_CC53 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kKraid_Ilist_CC53 as uint16;
         (*Get_Phantoon(0 as ::core::ffi::c_int, game)).phant_parameter_2 = 0 as uint16;
         Phantoon_Func_5(k, game);
     }
@@ -5171,8 +5153,8 @@ pub unsafe fn Phantoon_EyeFollowsSamusUntilTimerRunsOut(mut k: uint16, game: &mu
             (*E0).base.instruction_timer = 1 as uint16;
             let mut E1: *mut Enemy_Phantoon = Get_Phantoon(0x40 as ::core::ffi::c_int, game);
             (*E1).base.instruction_timer = 1 as uint16;
-            (*E0).base.current_instruction = addr_kKraid_Ilist_CC41 as ::core::ffi::c_int as uint16;
-            (*E1).base.current_instruction = addr_kKraid_Ilist_CC81 as ::core::ffi::c_int as uint16;
+            (*E0).base.current_instruction = addr_kKraid_Ilist_CC41 as uint16;
+            (*E1).base.current_instruction = addr_kKraid_Ilist_CC81 as uint16;
             (*E0).base.properties = ((*E0).base.properties as ::core::ffi::c_int
                 | kEnemyProps_Tangible as ::core::ffi::c_int)
                 as uint16;
@@ -5193,7 +5175,7 @@ pub unsafe fn Phantoon_BecomesSolidAndBodyVuln(mut v0: uint16, game: &mut Game) 
     Phantoon_BeginSwoopingPattern(v0, game);
     let mut E: *mut Enemy_Phantoon = Get_Phantoon(0 as ::core::ffi::c_int, game);
     (*E).base.instruction_timer = 1 as uint16;
-    (*E).base.current_instruction = addr_kKraid_Ilist_CC47 as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_kKraid_Ilist_CC47 as uint16;
 }
 pub unsafe fn Phantoon_IsSwooping(mut k: uint16, game: &mut Game) {
     Phantoon_ChangeEyeSpriteBasedOnSamusDist(game);
@@ -5212,8 +5194,8 @@ pub unsafe fn Phantoon_IsSwooping(mut k: uint16, game: &mut Game) {
         (*E0).base.instruction_timer = 1 as uint16;
         let mut E1: *mut Enemy_Phantoon = Get_Phantoon(0x40 as ::core::ffi::c_int, game);
         (*E1).base.instruction_timer = 1 as uint16;
-        (*E0).base.current_instruction = addr_kKraid_Ilist_CC41 as ::core::ffi::c_int as uint16;
-        (*E1).base.current_instruction = addr_kKraid_Ilist_CC91 as ::core::ffi::c_int as uint16;
+        (*E0).base.current_instruction = addr_kKraid_Ilist_CC41 as uint16;
+        (*E1).base.current_instruction = addr_kKraid_Ilist_CC91 as uint16;
         (*E0).base.properties = ((*E0).base.properties as ::core::ffi::c_int
             | kEnemyProps_Tangible as ::core::ffi::c_int) as uint16;
         (*E1).phant_var_F = 0 as uint16;
@@ -5277,8 +5259,8 @@ pub unsafe fn Phantoon_BecomeSolidAfterRainingFireballs(mut k: uint16, game: &mu
     let mut E: *mut Enemy_Phantoon = Get_Phantoon(0 as ::core::ffi::c_int, game);
     (*E).base.instruction_timer = 1 as uint16;
     (*E1).base.instruction_timer = 1 as uint16;
-    (*E).base.current_instruction = addr_kKraid_Ilist_CC47 as ::core::ffi::c_int as uint16;
-    (*E1).base.current_instruction = addr_kKraid_Ilist_CC9D as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_kKraid_Ilist_CC47 as uint16;
+    (*E1).base.current_instruction = addr_kKraid_Ilist_CC9D as uint16;
     (*Get_Phantoon(k as ::core::ffi::c_int, game)).phant_var_F =
         (0xa7d767 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
@@ -5316,8 +5298,8 @@ pub unsafe fn Phantoon_FollowSamusWithEyeDuringFireballRain(mut k: uint16, game:
             let mut E0: *mut Enemy_Phantoon = Get_Phantoon(0 as ::core::ffi::c_int, game);
             (*E0).base.instruction_timer = 1 as uint16;
             (*E1).base.instruction_timer = 1 as uint16;
-            (*E0).base.current_instruction = addr_kKraid_Ilist_CC41 as ::core::ffi::c_int as uint16;
-            (*E1).base.current_instruction = addr_kKraid_Ilist_CC91 as ::core::ffi::c_int as uint16;
+            (*E0).base.current_instruction = addr_kKraid_Ilist_CC41 as uint16;
+            (*E1).base.current_instruction = addr_kKraid_Ilist_CC91 as uint16;
             (*E0).base.properties = ((*E0).base.properties as ::core::ffi::c_int
                 | kEnemyProps_Tangible as ::core::ffi::c_int)
                 as uint16;
@@ -5460,7 +5442,7 @@ pub unsafe fn Phantoon_Enraged(mut k: uint16, game: &mut Game) {
                 SpawnEprojWithGfx(
                     (fresh24 as ::core::ffi::c_int | 0x200 as ::core::ffi::c_int) as uint16,
                     k,
-                    addr_kEproj_DestroyableFireballs as ::core::ffi::c_int as uint16,
+                    addr_kEproj_DestroyableFireballs as uint16,
                     game,
                 );
                 if !((v8 as ::core::ffi::c_int - 9 as ::core::ffi::c_int) as int16
@@ -5476,7 +5458,7 @@ pub unsafe fn Phantoon_Enraged(mut k: uint16, game: &mut Game) {
                 SpawnEprojWithGfx(
                     (i | 0x200 as ::core::ffi::c_int) as uint16,
                     k,
-                    addr_kEproj_DestroyableFireballs as ::core::ffi::c_int as uint16,
+                    addr_kEproj_DestroyableFireballs as uint16,
                     game,
                 );
                 i -= 1;
@@ -5491,7 +5473,7 @@ pub unsafe fn Phantoon_Enraged(mut k: uint16, game: &mut Game) {
             (*Get_Phantoon(k as ::core::ffi::c_int, game)).phant_var_E = 128 as uint16;
         } else {
             (*E1).base.instruction_timer = 1 as uint16;
-            (*E1).base.current_instruction = addr_kKraid_Ilist_CC91 as ::core::ffi::c_int as uint16;
+            (*E1).base.current_instruction = addr_kKraid_Ilist_CC91 as uint16;
             (*E1).phant_var_F = 0 as uint16;
             (*Get_Phantoon(k as ::core::ffi::c_int, game)).phant_var_F =
                 (0xa7d916 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -5585,11 +5567,7 @@ pub unsafe fn Phantoon_DyingPhantoonExplosions(mut k: uint16, game: &mut Game) {
         ) as *const uint8 as *mut uint8)
             .offset((v5 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as isize)
             as uint16;
-        SpawnEprojWithRoomGfx(
-            addr_kEproj_DustCloudExplosion as ::core::ffi::c_int as uint16,
-            v11,
-            game,
-        );
+        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as uint16, v11, game);
         if v11 as ::core::ffi::c_int == 29 as ::core::ffi::c_int {
             QueueSfx2_Max6(0x24 as uint16, game);
         } else {
@@ -6186,10 +6164,8 @@ pub unsafe fn Phantoon_Shot(game: &mut Game) {
                         let mut E1: *mut Enemy_Phantoon =
                             Get_Phantoon(0x40 as ::core::ffi::c_int, game);
                         (*E1).base.instruction_timer = 1 as uint16;
-                        (*E0).base.current_instruction =
-                            addr_kKraid_Ilist_CC41 as ::core::ffi::c_int as uint16;
-                        (*E1).base.current_instruction =
-                            addr_kKraid_Ilist_CC91 as ::core::ffi::c_int as uint16;
+                        (*E0).base.current_instruction = addr_kKraid_Ilist_CC41 as uint16;
+                        (*E1).base.current_instruction = addr_kKraid_Ilist_CC91 as uint16;
                         (*E0).base.properties = ((*E0).base.properties as ::core::ffi::c_int
                             | kEnemyProps_Tangible as ::core::ffi::c_int)
                             as uint16;
@@ -6210,10 +6186,10 @@ pub unsafe fn Etecoon_Init(game: &mut Game) {
     );
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         | kEnemyProps_DisableSamusColl as ::core::ffi::c_int) as uint16;
-    (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A7 as ::core::ffi::c_int as uint16;
+    (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A7 as uint16;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
-    (*E).base.current_instruction = addr_kEtecoon_Ilist_E8CE as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_kEtecoon_Ilist_E8CE as uint16;
     (*E).etecoon_var_F = (0xa7e9af as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).etecoon_var_E = -(1 as ::core::ffi::c_int) as uint16;
 }
@@ -6286,8 +6262,7 @@ pub unsafe fn Etecoon_Func_4(mut k: uint16, game: &mut Game) {
                 & 0x8000 as ::core::ffi::c_int
                 != 0 as ::core::ffi::c_int;
             if v2 || v3 {
-                (*E).base.current_instruction =
-                    addr_kEtecoon_Ilist_E854 as ::core::ffi::c_int as uint16;
+                (*E).base.current_instruction = addr_kEtecoon_Ilist_E854 as uint16;
                 (*E).etecoon_var_F =
                     (0xa7ea00 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
                 (*E).etecoon_var_E = 11 as uint16;
@@ -6299,8 +6274,7 @@ pub unsafe fn Etecoon_Func_4(mut k: uint16, game: &mut Game) {
                 QueueSfx2_Max15(0x35 as uint16, game);
             }
             (*E).base.instruction_timer = 1 as uint16;
-            (*E).base.current_instruction =
-                addr_kEtecoon_Ilist_E8D6 as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kEtecoon_Ilist_E8D6 as uint16;
             (*E).etecoon_var_E = 256 as uint16;
         }
     }
@@ -6341,12 +6315,10 @@ pub unsafe fn Etecoon_Func_6(mut k: uint16, game: &mut Game) {
                 if v2 as ::core::ffi::c_int - 5 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                     != 0
                 {
-                    (*E).base.current_instruction =
-                        addr_kEtecoon_Ilist_E81E as ::core::ffi::c_int as uint16;
+                    (*E).base.current_instruction = addr_kEtecoon_Ilist_E81E as uint16;
                     (*E).etecoon_parameter_1 = 0 as uint16;
                 } else {
-                    (*E).base.current_instruction =
-                        addr_kEtecoon_Ilist_E876 as ::core::ffi::c_int as uint16;
+                    (*E).base.current_instruction = addr_kEtecoon_Ilist_E876 as uint16;
                     (*E).etecoon_parameter_1 = 1 as uint16;
                 }
                 (*E).etecoon_var_E = 32 as uint16;
@@ -6358,14 +6330,13 @@ pub unsafe fn Etecoon_Func_6(mut k: uint16, game: &mut Game) {
                 (*E).etecoon_var_F =
                     (0xa7ea00 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
                 (*E).base.instruction_timer = 1 as uint16;
-                (*E).base.current_instruction =
-                    addr_kEtecoon_Ilist_E854 as ::core::ffi::c_int as uint16;
+                (*E).base.current_instruction = addr_kEtecoon_Ilist_E854 as uint16;
             }
         } else {
             (*E).etecoon_var_A = 0 as uint16;
             (*E).etecoon_var_B = 0 as uint16;
             (*E).base.instruction_timer = 3 as uint16;
-            (*E).base.current_instruction = addr_stru_A7E862 as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_stru_A7E862 as uint16;
         }
     }
 }
@@ -6402,21 +6373,20 @@ pub unsafe fn Etecoon_Func_8(mut k: uint16, game: &mut Game) {
         (*E).etecoon_var_F =
             (0xa7eb2c as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E).base.instruction_timer = 1 as uint16;
-        (*E).base.current_instruction = addr_stru_A7E880 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_stru_A7E880 as uint16;
         (*E).etecoon_parameter_1 = 1 as uint16;
     }
 }
 pub unsafe fn Etecoon_Func_9(mut k: uint16, game: &mut Game) {
     if EnemyFunc_BBBF(
         k,
-        ((32 as ::core::ffi::c_int as uint32) << 16 as ::core::ffi::c_int
-            | 0 as ::core::ffi::c_int as uint16 as uint32) as int32,
+        ((32 as uint32) << 16 as ::core::ffi::c_int | 0 as uint16 as uint32) as int32,
         game,
     ) != 0
     {
         let mut E: *mut Enemy_Etecoon = Get_Etecoon(k as ::core::ffi::c_int, game);
         (*E).base.instruction_timer = 1 as uint16;
-        (*E).base.current_instruction = addr_stru_A7E898 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_stru_A7E898 as uint16;
         (*E).etecoon_var_F =
             (0xa7eb50 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     } else {
@@ -6428,12 +6398,10 @@ pub unsafe fn Etecoon_Func_10(mut k: uint16, game: &mut Game) {
     if Etecoon_Func_2(k, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         let mut E: *mut Enemy_Etecoon = Get_Etecoon(k as ::core::ffi::c_int, game);
         if (*E).etecoon_parameter_1 != 0 {
-            (*E).base.current_instruction =
-                addr_kEtecoon_Ilist_E870 as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kEtecoon_Ilist_E870 as uint16;
             (*E).etecoon_parameter_1 = 0 as uint16;
         } else {
-            (*E).base.current_instruction =
-                addr_kEtecoon_Ilist_E8C8 as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kEtecoon_Ilist_E8C8 as uint16;
             (*E).etecoon_parameter_1 = 1 as uint16;
         }
         (*E).base.instruction_timer = 1 as uint16;
@@ -6450,11 +6418,9 @@ pub unsafe fn Etecoon_Func_10(mut k: uint16, game: &mut Game) {
     } else if Etecoon_Func_3(k, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         let mut E_0: *mut Enemy_Etecoon = Get_Etecoon(k as ::core::ffi::c_int, game);
         if (*E_0).etecoon_parameter_1 != 0 {
-            (*E_0).base.current_instruction =
-                addr_kEtecoon_Ilist_E854 as ::core::ffi::c_int as uint16;
+            (*E_0).base.current_instruction = addr_kEtecoon_Ilist_E854 as uint16;
         } else {
-            (*E_0).base.current_instruction =
-                addr_kEtecoon_Ilist_E8AC as ::core::ffi::c_int as uint16;
+            (*E_0).base.current_instruction = addr_kEtecoon_Ilist_E8AC as uint16;
         }
         (*E_0).base.instruction_timer = 1 as uint16;
         (*E_0).etecoon_var_E = 11 as uint16;
@@ -6473,13 +6439,11 @@ pub unsafe fn Etecoon_Func_11(mut k: uint16, game: &mut Game) {
         != 0 as ::core::ffi::c_int;
     if v2 || v3 {
         if (*E).etecoon_parameter_1 != 0 {
-            (*E).base.current_instruction =
-                addr_kEtecoon_Ilist_E894 as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kEtecoon_Ilist_E894 as uint16;
             (*E).etecoon_var_C = g_word_A7E908;
             (*E).etecoon_var_D = g_word_A7E90A;
         } else {
-            (*E).base.current_instruction =
-                addr_kEtecoon_Ilist_E83C as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kEtecoon_Ilist_E83C as uint16;
             (*E).etecoon_var_C = g_word_A7E90C;
             (*E).etecoon_var_D = g_word_A7E90E;
         }
@@ -6516,14 +6480,14 @@ pub unsafe fn Etecoon_Func_12(mut k: uint16, game: &mut Game) {
 pub unsafe fn Etecoon_Func_13(mut j: uint16, game: &mut Game) {
     let mut E: *mut Enemy_Etecoon = Get_Etecoon(j as ::core::ffi::c_int, game);
     (*E).etecoon_var_F = (0xa7ec97 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    (*E).base.current_instruction = addr_stru_A7E828 as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_stru_A7E828 as uint16;
     (*E).etecoon_var_C = g_word_A7E90C;
     (*E).etecoon_var_D = g_word_A7E90E;
 }
 pub unsafe fn Etecoon_Func_14(mut j: uint16, game: &mut Game) {
     let mut E: *mut Enemy_Etecoon = Get_Etecoon(j as ::core::ffi::c_int, game);
     (*E).etecoon_var_F = (0xa7ecbb as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    (*E).base.current_instruction = addr_stru_A7E880 as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_stru_A7E880 as uint16;
     (*E).etecoon_var_C = g_word_A7E908;
     (*E).etecoon_var_D = g_word_A7E90A;
 }
@@ -6546,7 +6510,7 @@ pub unsafe fn Etecoon_Func_16(mut k: uint16, game: &mut Game) {
         (*E).etecoon_var_F =
             (0xa7edc7 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E).base.instruction_timer = 1 as uint16;
-        (*E).base.current_instruction = addr_kEtecoon_Ilist_E854 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kEtecoon_Ilist_E854 as uint16;
     }
 }
 pub unsafe fn Etecoon_Func_17(mut k: uint16, game: &mut Game) {
@@ -6560,7 +6524,7 @@ pub unsafe fn Etecoon_Func_17(mut k: uint16, game: &mut Game) {
         (*E).etecoon_var_F =
             (0xa7edc7 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E).base.instruction_timer = 1 as uint16;
-        (*E).base.current_instruction = addr_kEtecoon_Ilist_E854 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kEtecoon_Ilist_E854 as uint16;
     }
 }
 pub unsafe fn Etecoon_Func_18(mut k: uint16, game: &mut Game) {
@@ -6575,7 +6539,7 @@ pub unsafe fn Etecoon_Func_18(mut k: uint16, game: &mut Game) {
         (*E).etecoon_var_A = g_word_A7E904;
         (*E).etecoon_var_B = g_word_A7E906;
         (*E).base.instruction_timer = 1 as uint16;
-        (*E).base.current_instruction = addr_stru_A7E898 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_stru_A7E898 as uint16;
     }
 }
 pub unsafe fn Etecoon_Func_19(mut k: uint16, game: &mut Game) {
@@ -6587,7 +6551,7 @@ pub unsafe fn Etecoon_Func_19(mut k: uint16, game: &mut Game) {
         == 0
     {
         (*E).base.instruction_timer = 1 as uint16;
-        (*E).base.current_instruction = addr_stru_A7E880 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_stru_A7E880 as uint16;
         (*E).etecoon_var_F =
             (0xa7ed2a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
@@ -6600,7 +6564,7 @@ pub unsafe fn Etecoon_Func_20(mut k: uint16, game: &mut Game) {
         == 0
     {
         (*E).base.instruction_timer = 1 as uint16;
-        (*E).base.current_instruction = addr_stru_A7E898 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_stru_A7E898 as uint16;
         (*E).etecoon_var_F =
             (0xa7ed54 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E).etecoon_var_A = -(1 as ::core::ffi::c_int) as uint16;
@@ -6613,7 +6577,7 @@ pub unsafe fn Etecoon_Func_21(mut k: uint16, game: &mut Game) {
         let mut E: *mut Enemy_Etecoon = Get_Etecoon(k as ::core::ffi::c_int, game);
         (*E).etecoon_var_E = 11 as uint16;
         (*E).base.instruction_timer = 1 as uint16;
-        (*E).base.current_instruction = addr_kEtecoon_Ilist_E854 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kEtecoon_Ilist_E854 as uint16;
         (*E).etecoon_var_F =
             (0xa7edc7 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
@@ -6627,8 +6591,7 @@ pub unsafe fn Etecoon_Func_22(mut k: uint16, game: &mut Game) {
         {
             (*E).etecoon_var_E = 11 as uint16;
             (*E).base.instruction_timer = 1 as uint16;
-            (*E).base.current_instruction =
-                addr_kEtecoon_Ilist_E854 as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kEtecoon_Ilist_E854 as uint16;
             if (*E).etecoon_parameter_2 as ::core::ffi::c_int & 2 as ::core::ffi::c_int
                 != 0 as ::core::ffi::c_int
                 && (*E).base.x_pos as ::core::ffi::c_int - 832 as ::core::ffi::c_int
@@ -6645,7 +6608,7 @@ pub unsafe fn Etecoon_Func_22(mut k: uint16, game: &mut Game) {
             (*E).etecoon_var_A = 0 as uint16;
             (*E).etecoon_var_B = 0 as uint16;
             (*E).base.instruction_timer = 3 as uint16;
-            (*E).base.current_instruction = addr_stru_A7E862 as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_stru_A7E862 as uint16;
         }
     }
 }
@@ -6677,7 +6640,7 @@ pub unsafe fn Etecoon_Func_23(mut k: uint16, game: &mut Game) {
         } else {
             (*E).etecoon_var_F =
                 (0xa7ee9a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-            (*E).base.current_instruction = addr_stru_A7E880 as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_stru_A7E880 as uint16;
             (*E).etecoon_var_C = g_word_A7E908;
             (*E).etecoon_var_D = g_word_A7E90A;
         }
@@ -6704,7 +6667,7 @@ pub unsafe fn Etecoon_Func_24(mut k: uint16, game: &mut Game) {
         if IsSamusWithinEnemy_Y(k, 0x40 as uint16, game) as ::core::ffi::c_int != 0
             && IsSamusWithinEnemy_X(k, 0x30 as uint16, game) as ::core::ffi::c_int != 0
         {
-            (*E).base.current_instruction = addr_stru_A7E880 as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_stru_A7E880 as uint16;
             (*E).etecoon_var_F =
                 (0xa7ecdf as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         } else {
@@ -6736,7 +6699,7 @@ pub unsafe fn Etecoon_Func_25(mut k: uint16, game: &mut Game) {
         (*E).etecoon_var_F =
             (0xa7eeb8 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E).base.instruction_timer = 1 as uint16;
-        (*E).base.current_instruction = addr_stru_A7E898 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_stru_A7E898 as uint16;
     }
 }
 pub unsafe fn Etecoon_Func_26(mut k: uint16, game: &mut Game) {
@@ -6750,7 +6713,7 @@ pub unsafe fn Etecoon_Func_26(mut k: uint16, game: &mut Game) {
         (*E).etecoon_var_A = g_word_A7E900;
         (*E).etecoon_var_B = g_word_A7E902;
         (*E).base.instruction_timer = 1 as uint16;
-        (*E).base.current_instruction = addr_stru_A7E828 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_stru_A7E828 as uint16;
     }
 }
 pub unsafe fn Dachora_Init(game: &mut Game) {
@@ -6761,7 +6724,7 @@ pub unsafe fn Dachora_Init(game: &mut Game) {
     );
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         | kEnemyProps_DisableSamusColl as ::core::ffi::c_int) as uint16;
-    (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A7 as ::core::ffi::c_int as uint16;
+    (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A7 as uint16;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
     dachor_parameter_1 = (*E).dachor_parameter_1 as int16;
@@ -6769,21 +6732,17 @@ pub unsafe fn Dachora_Init(game: &mut Game) {
         if dachor_parameter_1 as ::core::ffi::c_int & 1 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
         {
-            (*E).base.current_instruction =
-                addr_kDachora_Ilist_F4B9 as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kDachora_Ilist_F4B9 as uint16;
         } else {
-            (*E).base.current_instruction =
-                addr_kDachora_Ilist_F3F7 as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kDachora_Ilist_F3F7 as uint16;
         }
         (*E).dachor_var_F =
             (0xa7f98c as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     } else {
         if dachor_parameter_1 != 0 {
-            (*E).base.current_instruction =
-                addr_kDachora_Ilist_F45B as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kDachora_Ilist_F45B as uint16;
         } else {
-            (*E).base.current_instruction =
-                addr_kDachora_Ilist_F399 as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kDachora_Ilist_F399 as uint16;
         }
         (*E).dachor_var_F =
             (0xa7f570 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -6820,8 +6779,7 @@ pub unsafe fn Dachora_Func_1(mut j: uint16, mut k: uint16, game: &mut Game) {
 pub unsafe fn Dachora_Func_2(mut k: uint16, game: &mut Game) {
     Enemy_MoveDown(
         k,
-        ((1 as ::core::ffi::c_int as uint32) << 16 as ::core::ffi::c_int
-            | 0 as ::core::ffi::c_int as uint16 as uint32) as int32,
+        ((1 as uint32) << 16 as ::core::ffi::c_int | 0 as uint16 as uint32) as int32,
         game,
     );
     if IsSamusWithinEnemy_Y(k, 0x40 as uint16, game) as ::core::ffi::c_int != 0
@@ -6829,11 +6787,9 @@ pub unsafe fn Dachora_Func_2(mut k: uint16, game: &mut Game) {
     {
         let mut E: *mut Enemy_Dachora = Get_Dachora(k as ::core::ffi::c_int, game);
         if (*E).dachor_parameter_1 != 0 {
-            (*E).base.current_instruction =
-                addr_kDachora_Ilist_F48B as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kDachora_Ilist_F48B as uint16;
         } else {
-            (*E).base.current_instruction =
-                addr_kDachora_Ilist_F3C9 as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kDachora_Ilist_F3C9 as uint16;
         }
         (*E).base.instruction_timer = 1 as uint16;
         (*E).dachor_var_F =
@@ -6848,13 +6804,11 @@ pub unsafe fn Dachora_Func_3(mut k: uint16, game: &mut Game) {
     (*E).dachor_var_A = (*E).dachor_var_A.wrapping_sub(1);
     if fresh2 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
         if (*E).dachor_parameter_1 != 0 {
-            (*E).base.current_instruction =
-                addr_kDachora_Ilist_F407 as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kDachora_Ilist_F407 as uint16;
             (*E).dachor_var_F =
                 (0xa7f65e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         } else {
-            (*E).base.current_instruction =
-                addr_kDachora_Ilist_F345 as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kDachora_Ilist_F345 as uint16;
             (*E).dachor_var_F =
                 (0xa7f5ed as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         }
@@ -6871,7 +6825,7 @@ pub unsafe fn Dachora_Func_4(mut k: uint16, game: &mut Game) {
             & 0x8000 as ::core::ffi::c_int
             != 0
     } {
-        (*E).base.current_instruction = addr_kDachora_Ilist_F407 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kDachora_Ilist_F407 as uint16;
         (*E).dachor_var_F =
             (0xa7f65e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E).dachor_var_E = 1 as uint16;
@@ -6879,11 +6833,7 @@ pub unsafe fn Dachora_Func_4(mut k: uint16, game: &mut Game) {
         (*E).base.instruction_timer = 1 as uint16;
         (*E).dachor_var_A = 0 as uint16;
         (*E).dachor_var_B = 0 as uint16;
-        Dachora_Func_1(
-            addr_kDachora_Palette as ::core::ffi::c_int as uint16,
-            k,
-            game,
-        );
+        Dachora_Func_1(addr_kDachora_Palette as uint16, k, game);
     }
 }
 pub unsafe fn Dachora_Func_5(mut k: uint16, game: &mut Game) {
@@ -6891,24 +6841,19 @@ pub unsafe fn Dachora_Func_5(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_Dachora = Get_Dachora(k as ::core::ffi::c_int, game);
     if Enemy_MoveRight_IgnoreSlopes(k, amt, game) != 0 {
         QueueSfx2_Max15(0x71 as uint16, game);
-        (*E).base.current_instruction = addr_kDachora_Ilist_F345 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kDachora_Ilist_F345 as uint16;
         (*E).dachor_var_F =
             (0xa7f5ed as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E).dachor_parameter_1 = 0 as uint16;
         (*E).dachor_var_A = 0 as uint16;
-        Dachora_Func_1(
-            addr_kDachora_Palette as ::core::ffi::c_int as uint16,
-            k,
-            game,
-        );
+        Dachora_Func_1(addr_kDachora_Palette as uint16, k, game);
     } else {
         EnemyFunc_C8AD(k, game);
         if (*E).base.x_pos as ::core::ffi::c_int - 1152 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             == 0
         {
-            (*E).base.current_instruction =
-                addr_kDachora_Ilist_F4B3 as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kDachora_Ilist_F4B3 as uint16;
             (*E).dachor_var_F =
                 (0xa7f78f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
             (*E).dachor_var_A = g_word_A7F4CF;
@@ -6963,11 +6908,7 @@ pub unsafe fn Dachora_Func_6(mut k: uint16, game: &mut Game) -> int32 {
             }
         }
     }
-    Enemy_MoveDown(
-        k,
-        (1 as ::core::ffi::c_int as int16 as int32) << 16 as ::core::ffi::c_int,
-        game,
-    );
+    Enemy_MoveDown(k, (1 as int16 as int32) << 16 as ::core::ffi::c_int, game);
     if ((*E).dachor_var_A as ::core::ffi::c_int - g_word_A7F4D5 as ::core::ffi::c_int) as int16
         as ::core::ffi::c_int
         >= 0 as ::core::ffi::c_int
@@ -7024,29 +6965,29 @@ pub unsafe fn Dachora_Func_7(mut k: uint16, game: &mut Game) {
         if (*E).dachor_parameter_1 != 0 {
             (*Get_Dachora(k as ::core::ffi::c_int + 64 as ::core::ffi::c_int, game))
                 .base
-                .current_instruction = addr_kDachora_Ilist_F4B9 as ::core::ffi::c_int as uint16;
+                .current_instruction = addr_kDachora_Ilist_F4B9 as uint16;
             (*Get_Dachora(k as ::core::ffi::c_int + 128 as ::core::ffi::c_int, game))
                 .base
-                .current_instruction = addr_kDachora_Ilist_F4B9 as ::core::ffi::c_int as uint16;
+                .current_instruction = addr_kDachora_Ilist_F4B9 as uint16;
             (*Get_Dachora(k as ::core::ffi::c_int + 192 as ::core::ffi::c_int, game))
                 .base
-                .current_instruction = addr_kDachora_Ilist_F4B9 as ::core::ffi::c_int as uint16;
+                .current_instruction = addr_kDachora_Ilist_F4B9 as uint16;
             (*Get_Dachora(k as ::core::ffi::c_int + 256 as ::core::ffi::c_int, game))
                 .base
-                .current_instruction = addr_kDachora_Ilist_F4B9 as ::core::ffi::c_int as uint16;
+                .current_instruction = addr_kDachora_Ilist_F4B9 as uint16;
         } else {
             (*Get_Dachora(k as ::core::ffi::c_int + 64 as ::core::ffi::c_int, game))
                 .base
-                .current_instruction = addr_kDachora_Ilist_F3F7 as ::core::ffi::c_int as uint16;
+                .current_instruction = addr_kDachora_Ilist_F3F7 as uint16;
             (*Get_Dachora(k as ::core::ffi::c_int + 128 as ::core::ffi::c_int, game))
                 .base
-                .current_instruction = addr_kDachora_Ilist_F3F7 as ::core::ffi::c_int as uint16;
+                .current_instruction = addr_kDachora_Ilist_F3F7 as uint16;
             (*Get_Dachora(k as ::core::ffi::c_int + 192 as ::core::ffi::c_int, game))
                 .base
-                .current_instruction = addr_kDachora_Ilist_F3F7 as ::core::ffi::c_int as uint16;
+                .current_instruction = addr_kDachora_Ilist_F3F7 as uint16;
             (*Get_Dachora(k as ::core::ffi::c_int + 256 as ::core::ffi::c_int, game))
                 .base
-                .current_instruction = addr_kDachora_Ilist_F3F7 as ::core::ffi::c_int as uint16;
+                .current_instruction = addr_kDachora_Ilist_F3F7 as uint16;
         }
         (*Get_Dachora(k as ::core::ffi::c_int + 64 as ::core::ffi::c_int, game))
             .base
@@ -7086,12 +7027,10 @@ pub unsafe fn Dachora_Func_8(mut k: uint16, game: &mut Game) {
         ((v6 as uint32) << 16 as ::core::ffi::c_int | (*E).dachor_var_B as uint32) as int32;
     if Enemy_MoveDown(k, -amt, game) != 0 {
         if (*E).dachor_parameter_1 != 0 {
-            (*E).base.current_instruction =
-                addr_kDachora_Ilist_F3FF as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kDachora_Ilist_F3FF as uint16;
             (*E).dachor_parameter_1 = 0 as uint16;
         } else {
-            (*E).base.current_instruction =
-                addr_kDachora_Ilist_F4C1 as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kDachora_Ilist_F4C1 as uint16;
             (*E).dachor_parameter_1 = 1 as uint16;
         }
         (*E).dachor_var_F =
@@ -7100,11 +7039,7 @@ pub unsafe fn Dachora_Func_8(mut k: uint16, game: &mut Game) {
         (*E).dachor_var_A = 0 as uint16;
         (*E).dachor_var_B = 0 as uint16;
         (*E).dachor_var_E = 0 as uint16;
-        Dachora_Func_1(
-            addr_kDachora_Palette as ::core::ffi::c_int as uint16,
-            k,
-            game,
-        );
+        Dachora_Func_1(addr_kDachora_Palette as uint16, k, game);
         QueueSfx2_Max6(0x3c as uint16, game);
     }
 }
@@ -7187,18 +7122,15 @@ pub unsafe fn Dachora_Func_11(mut k: uint16, game: &mut Game) {
     let mut amt: int32 = (((*E).dachor_var_A as uint32) << 16 as ::core::ffi::c_int
         | (*E).dachor_var_B as uint32) as int32;
     if (amt >> 16 as ::core::ffi::c_int) - 10 as int32 & 0x8000 as int32 == 0 {
-        amt = ((10 as ::core::ffi::c_int as int16 as ::core::ffi::c_int)
-            << 16 as ::core::ffi::c_int) as int32;
+        amt = ((10 as int16 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) as int32;
     }
     if Enemy_MoveDown(k, amt, game) != 0 {
         if (*E).dachor_parameter_1 != 0 {
-            (*E).base.current_instruction =
-                addr_kDachora_Ilist_F407 as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kDachora_Ilist_F407 as uint16;
             (*E).dachor_var_F =
                 (0xa7f65e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         } else {
-            (*E).base.current_instruction =
-                addr_kDachora_Ilist_F345 as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kDachora_Ilist_F345 as uint16;
             (*E).dachor_var_F =
                 (0xa7f5ed as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         }

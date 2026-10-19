@@ -344,11 +344,43 @@ Formatting/check, normal release builds (67.80s frozen,
 casts and raw accesses unchanged. No build-time gain is established.
 Concurrent gameplay edits retain separate validation; temporary checks stay local.
 
-Next disjoint cast audit: the current gameplay survey finds 7442 consecutive
-c_int-to-8/16/32-bit integer cast chains. Use compiler operand types to prove
-which intermediate promotions are redundant; exclude floating conversions
-and preserve evaluation order and the exact final truncation. Continue the
-shared state and handler consolidation owned by other sessions.
+Intermediate integer casts (2026-10-19): remove 7442 c_int promotions
+immediately followed by 8/16/32-bit integer casts in 28 gameplay banks. The
+retained final casts preserve truncation/sign interpretation; every operand
+expression and its evaluation position remain exact. Compiler types identify
+4784 i32, 2596 u32 and 62 bool operands. None is floating-point or a wider
+integer. Casting through i32 cannot alter the low bits selected by these
+final integer types, and bool retains its zero/one value.
+
+Before/after compiler output matches all 7442 target types and operand spans.
+Nonliteral operand types remain exact. 4780 unsuffixed literals adopt their
+final integer type; one explicit 0x8000i32 retains the former i32 input and
+-32768 signed-word result. The normal build caught that necessary annotation.
+All 850 distinct literal/type pairs match under normal compiler lint settings.
+Independent byte-model checks pass 3145732 compiled comparisons: every low
+word at six high-word boundaries, all eight integer type pairs and both bool
+values. Counterexamples reject floating saturation and 64-bit widening as
+extensions of this rule. These are boundary checks, not all 32-bit inputs.
+
+Exact/token comparison across all 72 source/configuration files allows only
+the selected casts, the one literal suffix and formatting. Checkpoint inputs,
+actual raw accesses and pointer-offset calls remain unchanged. Net Rust lines
+-2111, c_int cast lines -7343, unsafe functions and raw-offset lines unchanged.
+No wrapper, macro or maintained checking tool is introduced.
+
+Frozen b5aa5701 plus this pass passes full-boot any% 129712/0 (223.24s)
+and Speed Booster 148406/0 (290.47s), native exits 0, with stable
+source, DLL and fixtures. Speed Booster contains Bubble Mountain, Warehouse
+and Varia; no shorter included route is replayed separately. Final checkpoints
+are saved locally for continuations. Formatting/check, normal release builds
+(44.14s frozen, 38.63s workspace) and progress pass. These timings do not
+establish a build-time gain. Concurrent gameplay edits retain their own checks.
+
+Next disjoint cast audit: 1222 compiler-identified identity casts on nonliteral
+integer operands: 710 usize, 352 u16, 74 u8, 59 i32 and 27 u32. Check declared
+aliases and preserve complete expression types, including contextual inference.
+Continue shared state/handler consolidation in the other sessions; reuse the
+longer Speed Booster route where applicable.
 
 Independent split-word audit (2026-10-19): reconstruct e23ad2ee from
 its parent and the owning e8592193-based candidate across all 64 Rust files

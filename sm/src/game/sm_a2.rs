@@ -1482,8 +1482,8 @@ static g_word_A28E80: [int16; 48] = [
     -(5 as ::core::ffi::c_int) as int16,
     -(4 as ::core::ffi::c_int) as int16,
     -(4 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
+    0 as int16,
     -(16 as ::core::ffi::c_int) as int16,
     -(16 as ::core::ffi::c_int) as int16,
     -(16 as ::core::ffi::c_int) as int16,
@@ -1504,10 +1504,10 @@ static g_word_A28E80: [int16; 48] = [
     -(3 as ::core::ffi::c_int) as int16,
     -(3 as ::core::ffi::c_int) as int16,
     -(2 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
+    0 as int16,
+    0 as int16,
+    0 as int16,
 ];
 pub unsafe fn Enemy_GrappleReact_CancelBeam_A2(game: &mut Game) {
     Enemy_SwitchToFrozenAi(game);
@@ -2185,21 +2185,17 @@ pub unsafe fn MaridiaBeybladeTurtle_Func3(mut k: uint16, game: &mut Game) {
         } else {
             (*E).base.x_pos = (*E).base.x_pos.wrapping_add(1);
         }
-        if Enemy_MoveRight_IgnoreSlopes(
-            k,
-            (1 as ::core::ffi::c_int as int16 as int32) << 16 as ::core::ffi::c_int,
-            game,
-        ) == 0
+        if Enemy_MoveRight_IgnoreSlopes(k, (1 as int16 as int32) << 16 as ::core::ffi::c_int, game)
+            == 0
         {
-            (*E).base.current_instruction =
-                addr_kMaridiaBeybladeTurtle_Ilist_8C4A as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kMaridiaBeybladeTurtle_Ilist_8C4A as uint16;
             (*E).base.instruction_timer = 1 as uint16;
-            (*E).mbte_var_A = addr_locret_A28E09 as ::core::ffi::c_int as uint16;
+            (*E).mbte_var_A = addr_locret_A28E09 as uint16;
         }
     }
 }
 pub unsafe fn MaridiaBeybladeTurtle_Func5(mut k: uint16, game: &mut Game) {
-    let mut v1: uint16 = addr_kMaridiaBeybladeTurtle_Ilist_8C1C as ::core::ffi::c_int as uint16;
+    let mut v1: uint16 = addr_kMaridiaBeybladeTurtle_Ilist_8C1C as uint16;
     let mut E: *mut Enemy_MaridiaBeybladeTurtle =
         Get_MaridiaBeybladeTurtle(k as ::core::ffi::c_int, game);
     if (((*E).base.x_pos as ::core::ffi::c_int
@@ -2207,11 +2203,11 @@ pub unsafe fn MaridiaBeybladeTurtle_Func5(mut k: uint16, game: &mut Game) {
         as int16 as ::core::ffi::c_int)
         < 0 as ::core::ffi::c_int
     {
-        v1 = addr_kMaridiaBeybladeTurtle_Ilist_8D00 as ::core::ffi::c_int as uint16;
+        v1 = addr_kMaridiaBeybladeTurtle_Ilist_8D00 as uint16;
     }
     (*E).base.current_instruction = v1;
     (*E).base.instruction_timer = 1 as uint16;
-    (*E).mbte_var_A = addr_locret_A28E09 as ::core::ffi::c_int as uint16;
+    (*E).mbte_var_A = addr_locret_A28E09 as uint16;
 }
 pub unsafe fn MaridiaBeybladeTurtle_Func6(mut k: uint16, game: &mut Game) {
     if CheckIfEnemyTouchesSamus(k, game) != 0 {
@@ -2392,7 +2388,7 @@ pub unsafe fn MaridiaBeybladeTurtle_Func11(mut k: uint16, game: &mut Game) {
             addr_kMaridiaBeybladeTurtle_Ilist_8C4A as ::core::ffi::c_int
         }) as uint16;
         (*E).base.instruction_timer = 1 as uint16;
-        (*E).mte_var_A = addr_locret_A28E09 as ::core::ffi::c_int as uint16;
+        (*E).mte_var_A = addr_locret_A28E09 as uint16;
     }
 }
 pub unsafe fn MiniMaridiaBeybladeTurtle_Main(game: &mut Game) {
@@ -2418,11 +2414,11 @@ pub unsafe fn MiniMaridiaBeybladeTurtle_Func1(mut k: uint16, game: &mut Game) {
             Get_MiniMaridiaTurtle(k as ::core::ffi::c_int, game);
         (*E).mmte_var_A = (0xa2916e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E).mmte_var_05 = 4 as uint16;
-        let mut v2: uint16 = addr_kMaridiaBeybladeTurtle_Ilist_8C30 as ::core::ffi::c_int as uint16;
+        let mut v2: uint16 = addr_kMaridiaBeybladeTurtle_Ilist_8C30 as uint16;
         if (*E).mmte_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
         {
-            v2 = addr_kMaridiaBeybladeTurtle_Ilist_8D14 as ::core::ffi::c_int as uint16;
+            v2 = addr_kMaridiaBeybladeTurtle_Ilist_8D14 as uint16;
         }
         (*E).base.current_instruction = v2;
         (*E).base.instruction_timer = 1 as uint16;
@@ -2447,8 +2443,7 @@ pub unsafe fn MiniMaridiaBeybladeTurtle_Func3(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_MiniMaridiaTurtle = Get_MiniMaridiaTurtle(k as ::core::ffi::c_int, game);
     if CheckIfEnemyTouchesSamus(k, game) != 0 {
         (*E).mmte_var_A = (0xa291f8 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        (*E).base.current_instruction =
-            addr_kMaridiaBeybladeTurtle_Ilist_8BD2 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kMaridiaBeybladeTurtle_Ilist_8BD2 as uint16;
         (*E).base.instruction_timer = 1 as uint16;
         (*E).mmte_var_04 = 1 as uint16;
         let mut v2: uint16 = g_word_A28D68;
@@ -2464,12 +2459,11 @@ pub unsafe fn MiniMaridiaBeybladeTurtle_Func3(mut k: uint16, game: &mut Game) {
             ((*E).mmte_var_00 as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16;
         (*E).mmte_var_00 = v4;
         if v4 == 0 {
-            let mut v5: uint16 =
-                addr_kMaridiaBeybladeTurtle_Ilist_8B80 as ::core::ffi::c_int as uint16;
+            let mut v5: uint16 = addr_kMaridiaBeybladeTurtle_Ilist_8B80 as uint16;
             if (*E).mmte_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                 == 0 as ::core::ffi::c_int
             {
-                v5 = addr_kMaridiaBeybladeTurtle_Ilist_8C72 as ::core::ffi::c_int as uint16;
+                v5 = addr_kMaridiaBeybladeTurtle_Ilist_8C72 as uint16;
             }
             (*E).base.current_instruction = v5;
             (*E).base.instruction_timer = 1 as uint16;
@@ -2482,8 +2476,7 @@ pub unsafe fn MiniMaridiaBeybladeTurtle_Func4(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_MiniMaridiaTurtle = Get_MiniMaridiaTurtle(k as ::core::ffi::c_int, game);
     if Enemy_MoveRight_IgnoreSlopes(
         k,
-        (((*E).mmte_var_E as uint32) << 16 as ::core::ffi::c_int
-            | 0 as ::core::ffi::c_int as uint16 as uint32) as int32,
+        (((*E).mmte_var_E as uint32) << 16 as ::core::ffi::c_int | 0 as uint16 as uint32) as int32,
         game,
     ) != 0
     {
@@ -2497,13 +2490,13 @@ pub unsafe fn MiniMaridiaBeybladeTurtle_Func4(mut k: uint16, game: &mut Game) {
     };
 }
 pub unsafe fn MiniMaridiaBeybladeTurtle_Func5(mut k: uint16, game: &mut Game) {
-    let mut v1: uint16 = addr_kMaridiaBeybladeTurtle_Ilist_8B80 as ::core::ffi::c_int as uint16;
+    let mut v1: uint16 = addr_kMaridiaBeybladeTurtle_Ilist_8B80 as uint16;
     let mut E: *mut Enemy_MiniMaridiaBeybladeTurtle =
         Get_MiniMaridiaBeybladeTurtle(k as ::core::ffi::c_int, game);
     if (*E).mmbte_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
     {
-        v1 = addr_kMaridiaBeybladeTurtle_Ilist_8C72 as ::core::ffi::c_int as uint16;
+        v1 = addr_kMaridiaBeybladeTurtle_Ilist_8C72 as uint16;
     }
     (*E).base.current_instruction = v1;
     (*E).base.instruction_timer = 1 as uint16;
@@ -2511,13 +2504,13 @@ pub unsafe fn MiniMaridiaBeybladeTurtle_Func5(mut k: uint16, game: &mut Game) {
 }
 pub unsafe fn MiniMaridiaBeybladeTurtle_Func6(mut k: uint16, game: &mut Game) {
     if CheckIfEnemyTouchesSamus(k, game) != 0 {
-        let mut v1: uint16 = addr_kMaridiaBeybladeTurtle_Ilist_8B80 as ::core::ffi::c_int as uint16;
+        let mut v1: uint16 = addr_kMaridiaBeybladeTurtle_Ilist_8B80 as uint16;
         let mut E: *mut Enemy_MiniMaridiaBeybladeTurtle =
             Get_MiniMaridiaBeybladeTurtle(k as ::core::ffi::c_int, game);
         if (*E).mmbte_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
         {
-            v1 = addr_kMaridiaBeybladeTurtle_Ilist_8C72 as ::core::ffi::c_int as uint16;
+            v1 = addr_kMaridiaBeybladeTurtle_Ilist_8C72 as uint16;
         }
         (*E).base.current_instruction = v1;
         (*E).base.instruction_timer = 1 as uint16;
@@ -2570,12 +2563,10 @@ pub unsafe fn MiniMaridiaBeybladeTurtle_Touch(game: &mut Game) {
         if (*E).mmbte_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
         {
-            (*E).base.current_instruction =
-                addr_kMaridiaBeybladeTurtle_Ilist_8C72 as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kMaridiaBeybladeTurtle_Ilist_8C72 as uint16;
             v2 = 1 as int16;
         } else {
-            (*E).base.current_instruction =
-                addr_kMaridiaBeybladeTurtle_Ilist_8B80 as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kMaridiaBeybladeTurtle_Ilist_8B80 as uint16;
             v2 = -(1 as ::core::ffi::c_int) as int16;
         }
         (*E).mmbte_var_E = v2 as uint16;
@@ -2610,8 +2601,8 @@ pub unsafe fn MiniMaridiaBeybladeTurtle_Touch(game: &mut Game) {
             (0xa29142 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         Enemy_MoveRight_IgnoreSlopes(
             *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-            (((*E).mmbte_var_E as uint32) << 16 as ::core::ffi::c_int
-                | 0 as ::core::ffi::c_int as uint16 as uint32) as int32,
+            (((*E).mmbte_var_E as uint32) << 16 as ::core::ffi::c_int | 0 as uint16 as uint32)
+                as int32,
             game,
         );
         MaridiaBeybladeTurtle_Func21(game);
@@ -2910,12 +2901,9 @@ pub unsafe fn ThinHoppingBlobs_Init(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A2 as ::core::ffi::c_int as uint16;
+    (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A2 as uint16;
     (*E).thbs_var_A = 0 as uint16;
-    sub_A29A6C(
-        addr_kThinHoppingBlobs_Ilist_99AD as ::core::ffi::c_int as uint16,
-        game,
-    );
+    sub_A29A6C(addr_kThinHoppingBlobs_Ilist_99AD as uint16, game);
     (*E).thbs_var_00 = 0 as uint16;
     (*E).thbs_var_D = (0xa29b65 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).thbs_var_C = (*E).thbs_parameter_1;
@@ -3253,14 +3241,14 @@ pub unsafe fn ThinHoppingBlobs_Func9(game: &mut Game) {
             as ::core::ffi::c_int
             >= 0 as ::core::ffi::c_int
         {
-            v2 = addr_kThinHoppingBlobs_Ilist_9A01 as ::core::ffi::c_int as uint16;
+            v2 = addr_kThinHoppingBlobs_Ilist_9A01 as uint16;
         } else if (thbs_var_B as ::core::ffi::c_int - (*E).thbs_var_07 as ::core::ffi::c_int)
             as int16 as ::core::ffi::c_int
             >= 0 as ::core::ffi::c_int
         {
-            v2 = addr_kThinHoppingBlobs_Ilist_99FB as ::core::ffi::c_int as uint16;
+            v2 = addr_kThinHoppingBlobs_Ilist_99FB as uint16;
         } else {
-            v2 = addr_kThinHoppingBlobs_Ilist_99F5 as ::core::ffi::c_int as uint16;
+            v2 = addr_kThinHoppingBlobs_Ilist_99F5 as uint16;
         }
     } else {
         let mut v1: uint16 = (*E).thbs_var_B;
@@ -3268,14 +3256,14 @@ pub unsafe fn ThinHoppingBlobs_Func9(game: &mut Game) {
             as ::core::ffi::c_int
             >= 0 as ::core::ffi::c_int
         {
-            v2 = addr_kThinHoppingBlobs_Ilist_99E9 as ::core::ffi::c_int as uint16;
+            v2 = addr_kThinHoppingBlobs_Ilist_99E9 as uint16;
         } else if (v1 as ::core::ffi::c_int - (*E).thbs_var_07 as ::core::ffi::c_int) as int16
             as ::core::ffi::c_int
             >= 0 as ::core::ffi::c_int
         {
-            v2 = addr_kThinHoppingBlobs_Ilist_99EF as ::core::ffi::c_int as uint16;
+            v2 = addr_kThinHoppingBlobs_Ilist_99EF as uint16;
         } else {
-            v2 = addr_kThinHoppingBlobs_Ilist_99F5 as ::core::ffi::c_int as uint16;
+            v2 = addr_kThinHoppingBlobs_Ilist_99F5 as uint16;
         }
     }
     sub_A29A6C(v2, game);
@@ -3292,14 +3280,14 @@ pub unsafe fn ThinHoppingBlobs_Func10(game: &mut Game) {
             as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int
         {
-            v2 = addr_kThinHoppingBlobs_Ilist_99F5 as ::core::ffi::c_int as uint16;
+            v2 = addr_kThinHoppingBlobs_Ilist_99F5 as uint16;
         } else if ((thbs_var_B as ::core::ffi::c_int - (*E).thbs_var_06 as ::core::ffi::c_int)
             as int16 as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int
         {
-            v2 = addr_kThinHoppingBlobs_Ilist_99EF as ::core::ffi::c_int as uint16;
+            v2 = addr_kThinHoppingBlobs_Ilist_99EF as uint16;
         } else {
-            v2 = addr_kThinHoppingBlobs_Ilist_99E9 as ::core::ffi::c_int as uint16;
+            v2 = addr_kThinHoppingBlobs_Ilist_99E9 as uint16;
         }
     } else {
         let mut v1: uint16 = (*E).thbs_var_B;
@@ -3307,14 +3295,14 @@ pub unsafe fn ThinHoppingBlobs_Func10(game: &mut Game) {
             as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int
         {
-            v2 = addr_kThinHoppingBlobs_Ilist_99F5 as ::core::ffi::c_int as uint16;
+            v2 = addr_kThinHoppingBlobs_Ilist_99F5 as uint16;
         } else if ((v1 as ::core::ffi::c_int - (*E).thbs_var_06 as ::core::ffi::c_int) as int16
             as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int
         {
-            v2 = addr_kThinHoppingBlobs_Ilist_99FB as ::core::ffi::c_int as uint16;
+            v2 = addr_kThinHoppingBlobs_Ilist_99FB as uint16;
         } else {
-            v2 = addr_kThinHoppingBlobs_Ilist_9A01 as ::core::ffi::c_int as uint16;
+            v2 = addr_kThinHoppingBlobs_Ilist_9A01 as uint16;
         }
     }
     sub_A29A6C(v2, game);
@@ -3327,10 +3315,7 @@ pub unsafe fn ThinHoppingBlobs_Func11(game: &mut Game) {
     );
     if (*E).thbs_var_04 as ::core::ffi::c_int != 0 || (*E).thbs_var_01 == 0 {
         (*E).thbs_var_01 = 0 as uint16;
-        sub_A29A6C(
-            addr_kThinHoppingBlobs_Ilist_99D5 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        sub_A29A6C(addr_kThinHoppingBlobs_Ilist_99D5 as uint16, game);
     }
 }
 pub unsafe fn ThinHoppingBlobs_Func12(game: &mut Game) {
@@ -3341,10 +3326,7 @@ pub unsafe fn ThinHoppingBlobs_Func12(game: &mut Game) {
     );
     if (*E).thbs_var_04 as ::core::ffi::c_int != 0 || (*E).thbs_var_01 == 0 {
         (*E).thbs_var_01 = 0 as uint16;
-        sub_A29A6C(
-            addr_kThinHoppingBlobs_Ilist_99C1 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        sub_A29A6C(addr_kThinHoppingBlobs_Ilist_99C1 as uint16, game);
     }
 }
 pub unsafe fn ThinHoppingBlobs_Func13(game: &mut Game) {
@@ -3355,10 +3337,7 @@ pub unsafe fn ThinHoppingBlobs_Func13(game: &mut Game) {
     );
     if (*E).thbs_var_04 as ::core::ffi::c_int != 0 || (*E).thbs_var_01 == 0 {
         (*E).thbs_var_01 = 0 as uint16;
-        sub_A29A6C(
-            addr_kThinHoppingBlobs_Ilist_99AD as ::core::ffi::c_int as uint16,
-            game,
-        );
+        sub_A29A6C(addr_kThinHoppingBlobs_Ilist_99AD as uint16, game);
     }
 }
 pub unsafe fn ThinHoppingBlobs_Func14(game: &mut Game) {
@@ -3375,10 +3354,7 @@ pub unsafe fn ThinHoppingBlobs_Func14(game: &mut Game) {
         (*E).thbs_var_D = (0xa29b65 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
     (*E).thbs_var_01 = 0 as uint16;
-    sub_A29A6C(
-        addr_kThinHoppingBlobs_Ilist_99D5 as ::core::ffi::c_int as uint16,
-        game,
-    );
+    sub_A29A6C(addr_kThinHoppingBlobs_Ilist_99D5 as uint16, game);
 }
 pub unsafe fn ThinHoppingBlobs_Func15(game: &mut Game) {
     let mut E: *mut Enemy_ThinHoppingBlobs = Get_ThinHoppingBlobs(
@@ -3425,10 +3401,7 @@ pub unsafe fn ThinHoppingBlobs_Func16(game: &mut Game) {
         (*E).thbs_var_01 = 0 as uint16;
         (*E).thbs_var_00 = 3 as uint16;
         (*E).thbs_var_D = (0xa29b65 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        sub_A29A6C(
-            addr_kThinHoppingBlobs_Ilist_99D5 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        sub_A29A6C(addr_kThinHoppingBlobs_Ilist_99D5 as uint16, game);
     }
 }
 pub unsafe fn SpikeShootingPlant_Instr_9F2A(
@@ -3444,7 +3417,7 @@ pub unsafe fn SpikeShootingPlant_Init(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A2 as ::core::ffi::c_int as uint16;
+    (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A2 as uint16;
     if *(&raw mut (*E).sspt_parameter_1 as *mut uint8).offset(
         (::core::mem::size_of::<uint16>() as usize)
             .wrapping_div(::core::mem::size_of::<uint8>() as usize)
@@ -3592,8 +3565,7 @@ pub unsafe fn SpikeShootingPlant_5(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    (*E).base.current_instruction =
-        addr_kSpikeShootingPlant_Ilist_9E8A as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_kSpikeShootingPlant_Ilist_9E8A as uint16;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
 }
@@ -3602,8 +3574,7 @@ pub unsafe fn SpikeShootingPlant_6(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    (*E).base.current_instruction =
-        addr_kSpikeShootingPlant_Ilist_9EB0 as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_kSpikeShootingPlant_Ilist_9EB0 as uint16;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
 }
@@ -3612,8 +3583,7 @@ pub unsafe fn SpikeShootingPlant_7(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    (*E).base.current_instruction =
-        addr_kSpikeShootingPlant_Ilist_9EDA as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_kSpikeShootingPlant_Ilist_9EDA as uint16;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
 }
@@ -3622,8 +3592,7 @@ pub unsafe fn SpikeShootingPlant_8(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    (*E).base.current_instruction =
-        addr_kSpikeShootingPlant_Ilist_9F00 as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_kSpikeShootingPlant_Ilist_9F00 as uint16;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
 }
@@ -3648,7 +3617,7 @@ pub unsafe fn SpikeShootingPlant_Instr_A0A7(
     SpawnEprojWithGfx(
         *jp,
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        addr_kEproj_SpikeShootingPlantSpikes as ::core::ffi::c_int as uint16,
+        addr_kEproj_SpikeShootingPlantSpikes as uint16,
         game,
     );
     return jp.offset(1);
@@ -3669,7 +3638,7 @@ pub unsafe fn MaridiaSpikeyShell_Init(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A2 as ::core::ffi::c_int as uint16;
+    (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A2 as uint16;
     let mut mssl_parameter_1_low: uint16 =
         *(&raw mut (*E).mssl_parameter_1 as *mut uint8).offset(0) as uint16;
     (*E).mssl_var_E = mssl_parameter_1_low;
@@ -3753,8 +3722,7 @@ pub unsafe fn MaridiaSpikeyShell_1(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    (*E).base.current_instruction =
-        addr_kMaridiaSpikeyShell_Ilist_A3AB as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_kMaridiaSpikeyShell_Ilist_A3AB as uint16;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
 }
@@ -3763,8 +3731,7 @@ pub unsafe fn MaridiaSpikeyShell_2(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    (*E).base.current_instruction =
-        addr_kMaridiaSpikeyShell_Ilist_A3BD as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_kMaridiaSpikeyShell_Ilist_A3BD as uint16;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
 }
@@ -3920,7 +3887,7 @@ pub unsafe fn GunshipTop_Init(game: &mut Game) {
             | kEnemyProps_Tangible as ::core::ffi::c_int)) as uint16;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
-    (*E).base.current_instruction = addr_kGunshipTop_Ilist_A616 as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_kGunshipTop_Ilist_A616 as uint16;
     (*E).base.palette_index = 3584 as uint16;
     if *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) as ::core::ffi::c_int
         != 40 as ::core::ffi::c_int
@@ -3954,7 +3921,7 @@ pub unsafe fn GunshipTop_Init(game: &mut Game) {
         (*E).gtp_var_F = (0xa2ab60 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*Get_GunshipTop(0 as ::core::ffi::c_int, game)).gtp_var_A = 144 as uint16;
     }
-    SpawnPalfxObject(addr_stru_8DE1C0 as ::core::ffi::c_int as uint16, game);
+    SpawnPalfxObject(addr_stru_8DE1C0 as uint16, game);
     (*Get_GunshipTop(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
@@ -3973,9 +3940,9 @@ pub unsafe fn GunshipBottom_Init(game: &mut Game) {
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
     if (*E).gbm_parameter_2 != 0 {
-        (*E).base.current_instruction = addr_kGunshipTop_Ilist_A60E as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kGunshipTop_Ilist_A60E as uint16;
     } else {
-        (*E).base.current_instruction = addr_kGunshipTop_Ilist_A61C as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kGunshipTop_Ilist_A61C as uint16;
     }
     let mut v2: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0xe54)
         as *mut uint16) as ::core::ffi::c_int
@@ -3994,8 +3961,7 @@ pub unsafe fn GunshipBottom_Init(game: &mut Game) {
             && *((&raw mut game.g_ram as *mut uint8).offset(0x1f55) as *mut uint16) == 0
         {
             (*E).base.instruction_timer = 1 as uint16;
-            (*E).base.current_instruction =
-                addr_kGunshipTop_Ilist_A5BE as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kGunshipTop_Ilist_A5BE as uint16;
         }
     } else if *((&raw mut game.g_ram as *mut uint8).offset(0xd914) as *mut uint16)
         as ::core::ffi::c_int
@@ -4228,8 +4194,7 @@ pub unsafe fn GunshipTop_4(mut k: uint16, game: &mut Game) {
         let mut v7: *mut Enemy_GunshipTop =
             Get_GunshipTop(k as ::core::ffi::c_int + 128 as ::core::ffi::c_int, game);
         (*v7).base.instruction_timer = 1 as uint16;
-        (*v7).base.current_instruction =
-            addr_kGunshipTop_Ilist_A5BE as ::core::ffi::c_int as uint16;
+        (*v7).base.current_instruction = addr_kGunshipTop_Ilist_A5BE as uint16;
         (*v6).gtp_var_A = 144 as uint16;
         QueueSfx3_Max6(0x14 as uint16, game);
     }
@@ -4258,8 +4223,7 @@ pub unsafe fn GunshipTop_6(mut k: uint16, game: &mut Game) {
         let mut E2: *mut Enemy_GunshipTop =
             Get_GunshipTop(k as ::core::ffi::c_int + 128 as ::core::ffi::c_int, game);
         (*E2).base.instruction_timer = 1 as uint16;
-        (*E2).base.current_instruction =
-            addr_kGunshipTop_Ilist_A5EE as ::core::ffi::c_int as uint16;
+        (*E2).base.current_instruction = addr_kGunshipTop_Ilist_A5EE as uint16;
         (*Get_GunshipTop(0 as ::core::ffi::c_int, game)).gtp_var_A = 144 as uint16;
         QueueSfx3_Max6(0x15 as uint16, game);
     }
@@ -4278,7 +4242,7 @@ pub unsafe fn GunshipTop_7(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xa44) as *mut uint16) =
             (0x90e725 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0xd914) as *mut uint16) =
-            kLoadingGameState_5_Main as ::core::ffi::c_int as uint16;
+            kLoadingGameState_5_Main as uint16;
         let ref mut fresh11 = *((&raw mut game.g_ram as *mut uint8).offset(0xd8f8) as *mut uint16);
         *fresh11 = (*fresh11 as ::core::ffi::c_int | 1 as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x78b) as *mut uint16) = 0 as uint16;
@@ -4339,8 +4303,7 @@ pub unsafe fn GunshipTop_8(mut k: uint16, game: &mut Game) {
                 Get_GunshipTop(k as ::core::ffi::c_int + 128 as ::core::ffi::c_int, game);
             (*E2).base.y_pos = v3;
             (*E2).base.instruction_timer = 1 as uint16;
-            (*E2).base.current_instruction =
-                addr_kGunshipTop_Ilist_A5BE as ::core::ffi::c_int as uint16;
+            (*E2).base.current_instruction = addr_kGunshipTop_Ilist_A5BE as uint16;
             (*Get_GunshipTop(0 as ::core::ffi::c_int, game)).gtp_var_A = 144 as uint16;
             QueueSfx3_Max6(0x14 as uint16, game);
         }
@@ -4372,8 +4335,7 @@ pub unsafe fn GunshipTop_10(mut k: uint16, game: &mut Game) {
         let mut E2: *mut Enemy_GunshipTop =
             Get_GunshipTop(k as ::core::ffi::c_int + 128 as ::core::ffi::c_int, game);
         (*E2).base.instruction_timer = 1 as uint16;
-        (*E2).base.current_instruction =
-            addr_kGunshipTop_Ilist_A5EE as ::core::ffi::c_int as uint16;
+        (*E2).base.current_instruction = addr_kGunshipTop_Ilist_A5EE as uint16;
         (*Get_GunshipTop(0 as ::core::ffi::c_int, game)).gtp_var_A = 144 as uint16;
         QueueSfx3_Max6(0x15 as uint16, game);
     }
@@ -4457,7 +4419,7 @@ pub unsafe fn GunshipTop_13(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_GunshipTop =
         Get_GunshipTop(k as ::core::ffi::c_int + 128 as ::core::ffi::c_int, game);
     (*E).base.instruction_timer = 1 as uint16;
-    (*E).base.current_instruction = addr_kGunshipTop_Ilist_A5BE as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_kGunshipTop_Ilist_A5BE as uint16;
     (*Get_GunshipTop(0 as ::core::ffi::c_int, game)).gtp_var_A = 144 as uint16;
     QueueSfx3_Max6(0x14 as uint16, game);
 }
@@ -4487,8 +4449,7 @@ pub unsafe fn GunshipTop_15(mut k: uint16, game: &mut Game) {
         let mut E2: *mut Enemy_GunshipTop =
             Get_GunshipTop(k as ::core::ffi::c_int + 128 as ::core::ffi::c_int, game);
         (*E2).base.instruction_timer = 1 as uint16;
-        (*E2).base.current_instruction =
-            addr_kGunshipTop_Ilist_A5EE as ::core::ffi::c_int as uint16;
+        (*E2).base.current_instruction = addr_kGunshipTop_Ilist_A5EE as uint16;
         (*Get_GunshipTop(0 as ::core::ffi::c_int, game)).gtp_var_A = 144 as uint16;
         QueueSfx3_Max6(0x15 as uint16, game);
     }
@@ -4613,36 +4574,12 @@ pub unsafe fn GunshipTop_18(mut k: uint16, game: &mut Game) {
     (*E1).gtp_var_E = v7;
     if v7 as ::core::ffi::c_int - 128 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         if v7 as ::core::ffi::c_int == 64 as ::core::ffi::c_int {
-            SpawnEprojWithRoomGfx(
-                addr_stru_86A379 as ::core::ffi::c_int as uint16,
-                0 as uint16,
-                game,
-            );
-            SpawnEprojWithRoomGfx(
-                addr_stru_86A379 as ::core::ffi::c_int as uint16,
-                2 as uint16,
-                game,
-            );
-            SpawnEprojWithRoomGfx(
-                addr_stru_86A379 as ::core::ffi::c_int as uint16,
-                4 as uint16,
-                game,
-            );
-            SpawnEprojWithRoomGfx(
-                addr_stru_86A379 as ::core::ffi::c_int as uint16,
-                6 as uint16,
-                game,
-            );
-            SpawnEprojWithRoomGfx(
-                addr_stru_86A379 as ::core::ffi::c_int as uint16,
-                8 as uint16,
-                game,
-            );
-            SpawnEprojWithRoomGfx(
-                addr_stru_86A379 as ::core::ffi::c_int as uint16,
-                0xa as uint16,
-                game,
-            );
+            SpawnEprojWithRoomGfx(addr_stru_86A379 as uint16, 0 as uint16, game);
+            SpawnEprojWithRoomGfx(addr_stru_86A379 as uint16, 2 as uint16, game);
+            SpawnEprojWithRoomGfx(addr_stru_86A379 as uint16, 4 as uint16, game);
+            SpawnEprojWithRoomGfx(addr_stru_86A379 as uint16, 6 as uint16, game);
+            SpawnEprojWithRoomGfx(addr_stru_86A379 as uint16, 8 as uint16, game);
+            SpawnEprojWithRoomGfx(addr_stru_86A379 as uint16, 0xa as uint16, game);
         }
     } else {
         (*E0).gtp_var_F = (0xa2acd7 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -4731,10 +4668,10 @@ pub unsafe fn Flies_Init(game: &mut Game) {
     );
     (*E).flies_var_E = 0 as uint16;
     (*E).flies_var_F = (0xa2b14e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    (*E).base.current_instruction = addr_kFlies_Ilist_B013 as ::core::ffi::c_int as uint16;
-    (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A2 as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_kFlies_Ilist_B013 as uint16;
+    (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A2 as uint16;
     (*E).base.instruction_timer = 1 as uint16;
-    (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A2 as ::core::ffi::c_int as uint16;
+    (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A2 as uint16;
 }
 pub unsafe fn CarryAdd16(mut rv: *mut uint16, mut v: uint16) -> bool {
     let mut i: ::core::ffi::c_int = *rv as ::core::ffi::c_int + v as ::core::ffi::c_int;
@@ -4930,8 +4867,7 @@ pub unsafe fn NorfairErraticFireball_Init(game: &mut Game) {
     (*E).nefl_var_D = pt.x as uint16;
     (*E).nefl_var_E = (pt.y >> 16 as ::core::ffi::c_int) as uint16;
     (*E).nefl_var_F = pt.y as uint16;
-    (*E).base.current_instruction =
-        addr_kNorfairErraticFireball_Ilist_B2DC as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_kNorfairErraticFireball_Ilist_B2DC as uint16;
 }
 pub unsafe fn NorfairErraticFireball_Main(game: &mut Game) {
     let mut E: *mut Enemy_NorfairErraticFireball = Get_NorfairErraticFireball(
@@ -4988,8 +4924,7 @@ pub unsafe fn LavaquakeRocks_Init(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    (*E).base.current_instruction =
-        addr_kNorfairErraticFireball_Ilist_B51A as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_kNorfairErraticFireball_Ilist_B51A as uint16;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
     (*E).lrs_var_A = (0xa2b596 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -5069,7 +5004,7 @@ pub unsafe fn LavaquakeRocks_2(game: &mut Game) {
         ) as *const uint8 as *mut uint16)
             .offset(v1 as isize),
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        addr_stru_86BD5A as ::core::ffi::c_int as uint16,
+        addr_stru_86BD5A as uint16,
         game,
     );
     let mut E: *mut Enemy_LavaquakeRocks = Get_LavaquakeRocks(
@@ -5153,12 +5088,12 @@ pub unsafe fn Rinka_Init3(mut k: uint16, game: &mut Game) {
                 | kEnemyProps_Deleted as ::core::ffi::c_int)
                 as uint16;
         } else {
-            (*E).base.current_instruction = addr_kRinka_Ilist_BA0C as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kRinka_Ilist_BA0C as uint16;
             (*E).base.instruction_timer = 1 as uint16;
             (*E).base.timer = 0 as uint16;
         }
     } else {
-        (*E).base.current_instruction = addr_kRinka_Ilist_B9E0 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kRinka_Ilist_B9E0 as uint16;
         (*E).base.instruction_timer = 1 as uint16;
         (*E).base.timer = 0 as uint16;
     };
@@ -5687,7 +5622,7 @@ pub unsafe fn Rio_Init(game: &mut Game) {
     );
     (*E).rio_var_E = 0 as uint16;
     (*E).rio_var_F = 0 as uint16;
-    (*E).base.current_instruction = addr_kRio_Ilist_BB4B as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_kRio_Ilist_BB4B as uint16;
     (*E).rio_var_B = (0xa2bbed as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn CallRioFunc(mut ea: uint32, game: &mut Game) {
@@ -5753,7 +5688,7 @@ pub unsafe fn Rio_1(mut k: uint16, game: &mut Game) {
         {
             (*E).rio_var_D = -((*E).rio_var_D as ::core::ffi::c_int) as uint16;
         }
-        Rio_6(addr_kRio_Ilist_BB7F as ::core::ffi::c_int as uint16, game);
+        Rio_6(addr_kRio_Ilist_BB7F as uint16, game);
         (*E).rio_var_B = (0xa2bc48 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         if CheckIfEnemyIsOnScreen(game) == 0 {
             QueueSfx2_Max6(0x65 as uint16, game);
@@ -5764,7 +5699,7 @@ pub unsafe fn Rio_2(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_Rio = Get_Rio(k as ::core::ffi::c_int, game);
     if (*E).rio_var_E != 0 {
         (*E).rio_var_E = 0 as uint16;
-        Rio_6(addr_stru_A2BB53 as ::core::ffi::c_int as uint16, game);
+        Rio_6(addr_stru_A2BB53 as uint16, game);
         (*E).rio_var_B = (0xa2bbed as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
@@ -5794,7 +5729,7 @@ pub unsafe fn Rio_3(mut k: uint16, game: &mut Game) {
                 (0xa2bcff as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         } else if (*E).rio_var_E != 0 {
             (*E).rio_var_E = 0 as uint16;
-            Rio_6(addr_kRio_Ilist_BB97 as ::core::ffi::c_int as uint16, game);
+            Rio_6(addr_kRio_Ilist_BB97 as uint16, game);
         }
         return;
     }
@@ -5817,7 +5752,7 @@ pub unsafe fn Rio_4(mut k: uint16, game: &mut Game) {
         game,
     ) != 0
     {
-        Rio_6(addr_kRio_Ilist_BBA3 as ::core::ffi::c_int as uint16, game);
+        Rio_6(addr_kRio_Ilist_BBA3 as uint16, game);
         (*E).rio_var_B = (0xa2bc32 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     } else {
         (*E).rio_var_C =
@@ -5885,14 +5820,12 @@ pub unsafe fn NorfairLavajumpingEnemy_Init(game: &mut Game) {
     if (*E).nley_parameter_1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        (*E).base.current_instruction =
-            addr_kNorfairLavajumpingEnemy_Ilist_BE62 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kNorfairLavajumpingEnemy_Ilist_BE62 as uint16;
         (*E).nley_var_F = (0xa2bedc as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     } else {
         (*E).nley_var_D = (*E).base.x_pos;
         (*E).nley_var_E = (*E).base.y_pos;
-        (*E).base.current_instruction =
-            addr_kNorfairLavajumpingEnemy_Ilist_BE3C as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kNorfairLavajumpingEnemy_Ilist_BE3C as uint16;
         (*E).nley_var_F = (0xa2bf1a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     };
 }
@@ -5982,10 +5915,7 @@ pub unsafe fn NorfairLavajumpingEnemy_Func_3(mut k: uint16, game: &mut Game) {
         ((*E).nley_var_C as ::core::ffi::c_int + 56 as ::core::ffi::c_int) as uint16;
     (*E).nley_var_C = v3;
     if v3 as ::core::ffi::c_int >= 0xfc00 as ::core::ffi::c_int {
-        NorfairLavajumpingEnemy_Func_6(
-            addr_kNorfairLavajumpingEnemy_Ilist_BE42 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        NorfairLavajumpingEnemy_Func_6(addr_kNorfairLavajumpingEnemy_Ilist_BE42 as uint16, game);
         (*E).nley_var_F = (0xa2bf7c as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
@@ -6028,10 +5958,7 @@ pub unsafe fn NorfairLavajumpingEnemy_Func_5(mut k: uint16, game: &mut Game) {
     {
         (*E).base.x_pos = (*E).nley_var_D;
         (*E).base.y_pos = (*E).nley_var_E;
-        NorfairLavajumpingEnemy_Func_6(
-            addr_kNorfairLavajumpingEnemy_Ilist_BE3C as ::core::ffi::c_int as uint16,
-            game,
-        );
+        NorfairLavajumpingEnemy_Func_6(addr_kNorfairLavajumpingEnemy_Ilist_BE3C as uint16, game);
         (*E).nley_var_F = (0xa2bf1a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
             & !(kEnemyProps_ProcessedOffscreen as ::core::ffi::c_int))
@@ -6195,12 +6122,12 @@ pub unsafe fn NorfairRio_Init(game: &mut Game) {
     if (*E).nro_parameter_1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        (*E).nro_var_00 = addr_kNorfairRio_Ilist_C18F as ::core::ffi::c_int as uint16;
-        (*E).base.current_instruction = addr_kNorfairRio_Ilist_C18F as ::core::ffi::c_int as uint16;
+        (*E).nro_var_00 = addr_kNorfairRio_Ilist_C18F as uint16;
+        (*E).base.current_instruction = addr_kNorfairRio_Ilist_C18F as uint16;
         (*E).nro_var_F = (0xa2c281 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     } else {
-        (*E).nro_var_00 = addr_kNorfairRio_Ilist_C0F1 as ::core::ffi::c_int as uint16;
-        (*E).base.current_instruction = addr_kNorfairRio_Ilist_C0F1 as ::core::ffi::c_int as uint16;
+        (*E).nro_var_00 = addr_kNorfairRio_Ilist_C0F1 as uint16;
+        (*E).base.current_instruction = addr_kNorfairRio_Ilist_C0F1 as uint16;
         (*E).nro_var_F = (0xa2c2e7 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     };
 }
@@ -6238,12 +6165,12 @@ pub unsafe fn NorfairRio_Func_1(mut k: uint16, game: &mut Game) {
                 | kEnemyProps_Invisible as ::core::ffi::c_int)
                 as uint16;
         } else {
-            let mut r18: uint16 = addr_kNorfairRio_Ilist_C18F as ::core::ffi::c_int as uint16;
+            let mut r18: uint16 = addr_kNorfairRio_Ilist_C18F as uint16;
             v6 = gEnemySpawnData(k as ::core::ffi::c_int, game);
             if (*v6.offset(31)).field_4 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                 != 0 as ::core::ffi::c_int
             {
-                r18 = addr_kNorfairRio_Ilist_C1A3 as ::core::ffi::c_int as uint16;
+                r18 = addr_kNorfairRio_Ilist_C1A3 as uint16;
             }
             NorfairRio_Func_7(r18, game);
             (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
@@ -6296,27 +6223,18 @@ pub unsafe fn NorfairRio_Func_2(mut k: uint16, game: &mut Game) {
         {
             (*E).nro_var_B = -((*E).nro_var_B as ::core::ffi::c_int) as uint16;
         }
-        NorfairRio_Func_7(
-            addr_kNorfairRio_Ilist_C107 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        NorfairRio_Func_7(addr_kNorfairRio_Ilist_C107 as uint16, game);
         (*E).nro_var_F = (0xa2c33f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     } else if (*E).nro_var_01 != 0 {
         (*E).nro_var_01 = 0 as uint16;
-        NorfairRio_Func_7(
-            addr_kNorfairRio_Ilist_C0F1 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        NorfairRio_Func_7(addr_kNorfairRio_Ilist_C0F1 as uint16, game);
     }
 }
 pub unsafe fn NorfairRio_Func_3(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_NorfairRio = Get_NorfairRio(k as ::core::ffi::c_int, game);
     if (*E).nro_var_01 != 0 {
         (*E).nro_var_01 = 0 as uint16;
-        NorfairRio_Func_7(
-            addr_kNorfairRio_Ilist_C12F as ::core::ffi::c_int as uint16,
-            game,
-        );
+        NorfairRio_Func_7(addr_kNorfairRio_Ilist_C12F as uint16, game);
         (*E).nro_var_F = (0xa2c361 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         QueueSfx2_Max6(0x65 as uint16, game);
     }
@@ -6345,10 +6263,7 @@ pub unsafe fn NorfairRio_Func_4(mut k: uint16, game: &mut Game) {
         }
     {
         (*E).nro_var_A = -(1 as ::core::ffi::c_int) as uint16;
-        NorfairRio_Func_7(
-            addr_kNorfairRio_Ilist_C145 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        NorfairRio_Func_7(addr_kNorfairRio_Ilist_C145 as uint16, game);
         (*E).nro_var_F = (0xa2c3b1 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
@@ -6374,10 +6289,7 @@ pub unsafe fn NorfairRio_Func_5(mut k: uint16, game: &mut Game) {
             ((*E).nro_var_A as ::core::ffi::c_int - 32 as ::core::ffi::c_int) as uint16;
         if (*E).nro_var_01 != 0 {
             (*E).nro_var_01 = 0 as uint16;
-            NorfairRio_Func_7(
-                addr_kNorfairRio_Ilist_C179 as ::core::ffi::c_int as uint16,
-                game,
-            );
+            NorfairRio_Func_7(addr_kNorfairRio_Ilist_C179 as uint16, game);
         }
     };
 }
@@ -6443,14 +6355,12 @@ pub unsafe fn LowerNorfairRio_Init(game: &mut Game) {
         == 0 as ::core::ffi::c_int
     {
         (*E).nro_var_F = (0xa2c771 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        (*E).nro_var_00 = addr_kLowerNorfairRio_Ilist_C61A as ::core::ffi::c_int as uint16;
-        (*E).base.current_instruction =
-            addr_kLowerNorfairRio_Ilist_C61A as ::core::ffi::c_int as uint16;
+        (*E).nro_var_00 = addr_kLowerNorfairRio_Ilist_C61A as uint16;
+        (*E).base.current_instruction = addr_kLowerNorfairRio_Ilist_C61A as uint16;
     } else {
         (*E).nro_var_F = (0xa2c72e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        (*E).nro_var_00 = addr_kLowerNorfairRio_Ilist_C6B0 as ::core::ffi::c_int as uint16;
-        (*E).base.current_instruction =
-            addr_kLowerNorfairRio_Ilist_C6B0 as ::core::ffi::c_int as uint16;
+        (*E).nro_var_00 = addr_kLowerNorfairRio_Ilist_C6B0 as uint16;
+        (*E).base.current_instruction = addr_kLowerNorfairRio_Ilist_C6B0 as uint16;
     };
 }
 pub unsafe fn LowerNorfairRio_Main(game: &mut Game) {
@@ -6526,27 +6436,18 @@ pub unsafe fn LowerNorfairRio_Func_2(mut k: uint16, game: &mut Game) {
         {
             (*E).nro_var_D = -((*E).nro_var_D as ::core::ffi::c_int) as uint16;
         }
-        LowerNorfairRio_Func_7(
-            addr_kLowerNorfairRio_Ilist_C630 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        LowerNorfairRio_Func_7(addr_kLowerNorfairRio_Ilist_C630 as uint16, game);
         (*E).nro_var_F = (0xa2c7bb as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     } else {
         (*E).nro_var_01 = 0 as uint16;
-        LowerNorfairRio_Func_7(
-            addr_kLowerNorfairRio_Ilist_C61A as ::core::ffi::c_int as uint16,
-            game,
-        );
+        LowerNorfairRio_Func_7(addr_kLowerNorfairRio_Ilist_C61A as uint16, game);
     };
 }
 pub unsafe fn LowerNorfairRio_Func_3(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_NorfairRio = Get_NorfairRio(k as ::core::ffi::c_int, game);
     if (*E).nro_var_01 != 0 {
         (*E).nro_var_01 = 0 as uint16;
-        LowerNorfairRio_Func_7(
-            addr_kLowerNorfairRio_Ilist_C65A as ::core::ffi::c_int as uint16,
-            game,
-        );
+        LowerNorfairRio_Func_7(addr_kLowerNorfairRio_Ilist_C65A as uint16, game);
         (*E).nro_var_F = (0xa2c7d6 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
@@ -6574,10 +6475,7 @@ pub unsafe fn LowerNorfairRio_Func_4(mut k: uint16, game: &mut Game) {
         }
     {
         (*E).lnro_var_C = -(1 as ::core::ffi::c_int) as uint16;
-        LowerNorfairRio_Func_7(
-            addr_kLowerNorfairRio_Ilist_C662 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        LowerNorfairRio_Func_7(addr_kLowerNorfairRio_Ilist_C662 as uint16, game);
         (*E).lnro_var_F = (0xa2c82d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         QueueSfx2_Max6(0x64 as uint16, game);
     }
@@ -6598,20 +6496,14 @@ pub unsafe fn LowerNorfairRio_Func_5(mut k: uint16, game: &mut Game) {
         game,
     ) != 0
     {
-        LowerNorfairRio_Func_7(
-            addr_kLowerNorfairRio_Ilist_C686 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        LowerNorfairRio_Func_7(addr_kLowerNorfairRio_Ilist_C686 as uint16, game);
         (*E).nro_var_F = (0xa2c888 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     } else {
         (*E).nro_var_C =
             ((*E).nro_var_C as ::core::ffi::c_int - 32 as ::core::ffi::c_int) as uint16;
         if (*E).nro_var_01 != 0 {
             (*E).nro_var_01 = 0 as uint16;
-            LowerNorfairRio_Func_7(
-                addr_kLowerNorfairRio_Ilist_C674 as ::core::ffi::c_int as uint16,
-                game,
-            );
+            LowerNorfairRio_Func_7(addr_kLowerNorfairRio_Ilist_C674 as uint16, game);
         }
     };
 }
@@ -6619,10 +6511,7 @@ pub unsafe fn LowerNorfairRio_Func_6(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_NorfairRio = Get_NorfairRio(k as ::core::ffi::c_int, game);
     if (*E).nro_var_01 != 0 {
         (*E).nro_var_01 = 0 as uint16;
-        LowerNorfairRio_Func_7(
-            addr_kLowerNorfairRio_Ilist_C686 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        LowerNorfairRio_Func_7(addr_kLowerNorfairRio_Ilist_C686 as uint16, game);
         (*E).nro_var_F = (0xa2c771 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
@@ -6696,8 +6585,7 @@ pub unsafe fn MaridiaLargeSnail_Init(game: &mut Game) {
     (*E).mlsl_var_0A = 0 as uint16;
     (*E).mlsl_var_E = 3 as uint16;
     (*E).mlsl_var_C = 128 as uint16;
-    (*E).base.current_instruction =
-        addr_kMaridiaLargeSnail_Ilist_CA4B as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_kMaridiaLargeSnail_Ilist_CA4B as uint16;
     (*E).mlsl_var_A = (0xa2cde6 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).mlsl_var_F = (0xa2cf66 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
@@ -6872,7 +6760,7 @@ pub unsafe fn MaridiaLargeSnail_Func_5(game: &mut Game) {
         );
     } else if Enemy_MoveDown(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        (1 as ::core::ffi::c_int as int16 as int32) << 16 as ::core::ffi::c_int,
+        (1 as int16 as int32) << 16 as ::core::ffi::c_int,
         game,
     ) == 0
     {
@@ -7147,10 +7035,7 @@ unsafe fn HirisingSlowfalling_Func_1(mut k: uint16, game: &mut Game) -> uint16 {
     return Mult8x8((*E).hsg_parameter_1 as uint8, (*E).hsg_var_F as uint8);
 }
 pub unsafe fn HirisingSlowfalling_Init(game: &mut Game) {
-    HirisingSlowfalling_Func_3(
-        addr_kHirisingSlowfalling_Ilist_D82C as ::core::ffi::c_int as uint16,
-        game,
-    );
+    HirisingSlowfalling_Func_3(addr_kHirisingSlowfalling_Ilist_D82C as uint16, game);
     let mut E: *mut Enemy_HirisingSlowfalling = Get_HirisingSlowfalling(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
@@ -7288,10 +7173,7 @@ pub unsafe fn HirisingSlowfalling_Func_5(game: &mut Game) {
     let mut v1: int16 = ((*E).hsg_var_07 as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as int16;
     (*E).hsg_var_07 = v1 as uint16;
     if (v1 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
-        HirisingSlowfalling_Func_3(
-            addr_kHirisingSlowfalling_Ilist_D834 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        HirisingSlowfalling_Func_3(addr_kHirisingSlowfalling_Ilist_D834 as uint16, game);
         (*E).hsg_var_A = (0xa2e06a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
@@ -7336,10 +7218,7 @@ pub unsafe fn HirisingSlowfalling_Func_6(game: &mut Game) {
         (*E).hsg_var_D = (*(&raw mut (*E).hsg_parameter_1 as *mut uint8).offset(0)
             as ::core::ffi::c_int
             - 1 as ::core::ffi::c_int) as uint16;
-        HirisingSlowfalling_Func_3(
-            addr_kHirisingSlowfalling_Ilist_D840 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        HirisingSlowfalling_Func_3(addr_kHirisingSlowfalling_Ilist_D840 as uint16, game);
         (*E).hsg_var_A = (0xa2e0cd as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
@@ -7371,10 +7250,7 @@ pub unsafe fn HirisingSlowfalling_Func_7(game: &mut Game) {
             (*E).base.x_subpos = 0 as uint16;
             (*E).base.y_pos = (*E).hsg_var_01;
             (*E).base.y_subpos = 0 as uint16;
-            HirisingSlowfalling_Func_3(
-                addr_kHirisingSlowfalling_Ilist_D82C as ::core::ffi::c_int as uint16,
-                game,
-            );
+            HirisingSlowfalling_Func_3(addr_kHirisingSlowfalling_Ilist_D82C as uint16, game);
             (*E).hsg_var_A =
                 (0xa2e035 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         }
@@ -7432,11 +7308,11 @@ pub unsafe fn Gripper_Init(game: &mut Game) {
             .offset((v2 + 3 as ::core::ffi::c_int) as isize);
     }
     (*E).gripper_var_C = v3;
-    let mut v4: uint16 = addr_kGripper_Ilist_E19B as ::core::ffi::c_int as uint16;
+    let mut v4: uint16 = addr_kGripper_Ilist_E19B as uint16;
     if (*E).gripper_var_D as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
     {
-        v4 = addr_kGripper_Ilist_E1AF as ::core::ffi::c_int as uint16;
+        v4 = addr_kGripper_Ilist_E1AF as uint16;
     }
     (*E).base.current_instruction = v4;
     (*E).gripper_var_A = (*E).gripper_parameter_1;
@@ -7487,7 +7363,7 @@ pub unsafe fn Gripper_Main(game: &mut Game) {
                     & 0x3fffff as ::core::ffi::c_int) as isize,
             ) as *const uint8 as *mut uint16)
                 .offset((v3 + 3 as ::core::ffi::c_int) as isize);
-            v4 = addr_kGripper_Ilist_E19B as ::core::ffi::c_int as uint16;
+            v4 = addr_kGripper_Ilist_E19B as uint16;
         } else {
             (*E).gripper_var_D = *(game.g_rom.offset(
                 (((0xa28187 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -7503,7 +7379,7 @@ pub unsafe fn Gripper_Main(game: &mut Game) {
                     & 0x3fffff as ::core::ffi::c_int) as isize,
             ) as *const uint8 as *mut uint16)
                 .offset((v3 + 1 as ::core::ffi::c_int) as isize);
-            v4 = addr_kGripper_Ilist_E1AF as ::core::ffi::c_int as uint16;
+            v4 = addr_kGripper_Ilist_E1AF as uint16;
         }
         (*E).base.current_instruction = v4;
         (*E).base.instruction_timer = 1 as uint16;
@@ -7516,7 +7392,7 @@ pub unsafe fn Gripper_Func_1(mut k: uint16, game: &mut Game) -> uint8 {
         != 0 as ::core::ffi::c_int
         && (((*E).base.x_pos as ::core::ffi::c_int - (*E).gripper_var_A as ::core::ffi::c_int)
             as int16 as ::core::ffi::c_int)
-            < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
+            < 0 as ::core::ffi::c_int) as uint8;
 }
 pub unsafe fn Gripper_Func_2(mut k: uint16, game: &mut Game) -> uint8 {
     let mut E: *mut Enemy_Gripper = Get_Gripper(k as ::core::ffi::c_int, game);
@@ -7524,7 +7400,7 @@ pub unsafe fn Gripper_Func_2(mut k: uint16, game: &mut Game) -> uint8 {
         == 0 as ::core::ffi::c_int
         && ((*E).base.x_pos as ::core::ffi::c_int - (*E).gripper_var_B as ::core::ffi::c_int)
             as int16 as ::core::ffi::c_int
-            >= 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
+            >= 0 as ::core::ffi::c_int) as uint8;
 }
 pub unsafe fn Gripper_Func_3(game: &mut Game) {
     Enemy_NormalFrozenAI_A2(game);
@@ -7536,23 +7412,23 @@ pub unsafe fn Gripper_Func_4(game: &mut Game) {
         game,
     );
     if (*E).base.frozen_timer != 0 {
-        let mut v1: uint16 = addr_kGripper_Sprmap_E43F as ::core::ffi::c_int as uint16;
+        let mut v1: uint16 = addr_kGripper_Sprmap_E43F as uint16;
         if (*E).gripper_var_D as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
         {
-            v1 = addr_kGripper_Sprmap_E44B as ::core::ffi::c_int as uint16;
+            v1 = addr_kGripper_Sprmap_E44B as uint16;
         }
         (*E).base.spritemap_pointer = v1;
     }
 }
 pub unsafe fn JetPowerRipper_Init(game: &mut Game) {
-    let mut v0: uint16 = addr_kRipper_Ilist_E2E0 as ::core::ffi::c_int as uint16;
+    let mut v0: uint16 = addr_kRipper_Ilist_E2E0 as uint16;
     let mut E: *mut Enemy_JetPowerRipper = Get_JetPowerRipper(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     if (*E).jprr_parameter_2 != 0 {
-        v0 = addr_kRipper_Ilist_E2F4 as ::core::ffi::c_int as uint16;
+        v0 = addr_kRipper_Ilist_E2F4 as uint16;
     }
     (*E).base.current_instruction = v0;
     let mut v2: uint16 =
@@ -7669,13 +7545,13 @@ pub unsafe fn JetPowerRipper_Shot(game: &mut Game) {
     }
 }
 pub unsafe fn Ripper_Init(game: &mut Game) {
-    let mut v0: uint16 = addr_kRipper_Ilist_E477 as ::core::ffi::c_int as uint16;
+    let mut v0: uint16 = addr_kRipper_Ilist_E477 as uint16;
     let mut E: *mut Enemy_Ripper = Get_Ripper(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     if (*E).ripper_parameter_2 == 0 {
-        v0 = addr_kRipper_Ilist_E48B as ::core::ffi::c_int as uint16;
+        v0 = addr_kRipper_Ilist_E48B as uint16;
     }
     (*E).base.current_instruction = v0;
     let mut v2: uint16 =
@@ -7792,16 +7668,14 @@ pub unsafe fn LavaSeahorse_Init(game: &mut Game) {
     if (*E).lse_parameter_1 != 0 {
         (*E).lse_var_00 = 2 as uint16;
         (*E).lse_var_01 = 2 as uint16;
-        (*E).base.current_instruction =
-            addr_kLavaSeahorse_Ilist_E5A1 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kLavaSeahorse_Ilist_E5A1 as uint16;
         (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
             | kEnemyProps_Tangible as ::core::ffi::c_int) as uint16;
         (*E).lse_var_F = (0xa2e781 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     } else {
         (*E).lse_var_00 = 0 as uint16;
         (*E).lse_var_01 = 0 as uint16;
-        (*E).base.current_instruction =
-            addr_kLavaSeahorse_Ilist_E59B as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kLavaSeahorse_Ilist_E59B as uint16;
         (*E).lse_var_F = (0xa2e654 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     };
 }
@@ -7873,7 +7747,7 @@ pub unsafe fn LavaSeahorse_Func_3(mut k: uint16, game: &mut Game) {
         SpawnEprojWithGfx(
             0xffff as uint16,
             k,
-            addr_kEproj_LavaSeahorseFireball as ::core::ffi::c_int as uint16,
+            addr_kEproj_LavaSeahorseFireball as uint16,
             game,
         );
         QueueSfx2_Max6(0x61 as uint16, game);
@@ -8027,7 +7901,7 @@ pub unsafe fn TimedShutter_Init(game: &mut Game) {
     (*E).tsr_var_E = v3;
     (*E).base.extra_properties = 0 as uint16;
     (*E).tsr_var_F = 0 as uint16;
-    (*E).base.current_instruction = addr_kTimedShutter_Ilist_E998 as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_kTimedShutter_Ilist_E998 as uint16;
     let mut v5: ::core::ffi::c_int = (4 as ::core::ffi::c_int
         * *(&raw mut (*E).tsr_parameter_2 as *mut uint8).offset(0) as ::core::ffi::c_int)
         as uint16 as ::core::ffi::c_int
@@ -8156,8 +8030,7 @@ pub unsafe fn TimedShutter_Func_6(game: &mut Game) {
             ((*E).tsr_var_B as ::core::ffi::c_int + 9 as ::core::ffi::c_int) as uint16;
         (*E).tsr_var_F = (*E).tsr_var_F.wrapping_add(1);
         (*E).base.instruction_timer = 1 as uint16;
-        (*E).base.current_instruction =
-            addr_kTimedShutter_Ilist_E99E as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kTimedShutter_Ilist_E99E as uint16;
         (*E).base.y_height = 16 as uint16;
     }
 }
@@ -8179,8 +8052,7 @@ pub unsafe fn TimedShutter_Func_7(game: &mut Game) {
             ((*E).tsr_var_C as ::core::ffi::c_int + 9 as ::core::ffi::c_int) as uint16;
         (*E).tsr_var_F = (*E).tsr_var_F.wrapping_add(1);
         (*E).base.instruction_timer = 1 as uint16;
-        (*E).base.current_instruction =
-            addr_kTimedShutter_Ilist_E9A4 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kTimedShutter_Ilist_E9A4 as uint16;
         (*E).base.y_height = 24 as uint16;
     }
 }
@@ -8202,8 +8074,7 @@ pub unsafe fn TimedShutter_Func_8(game: &mut Game) {
             ((*E).tsr_var_D as ::core::ffi::c_int + 9 as ::core::ffi::c_int) as uint16;
         (*E).tsr_var_F = (*E).tsr_var_F.wrapping_add(1);
         (*E).base.instruction_timer = 1 as uint16;
-        (*E).base.current_instruction =
-            addr_kTimedShutter_Ilist_E9AA as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kTimedShutter_Ilist_E9AA as uint16;
         (*E).base.y_height = 32 as uint16;
     }
 }
@@ -8272,8 +8143,7 @@ pub unsafe fn TimedShutter_Func_11(game: &mut Game) {
         (*E).base.y_pos = (v3 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
         (*E).tsr_var_F = (*E).tsr_var_F.wrapping_add(1);
         (*E).base.instruction_timer = 1 as uint16;
-        (*E).base.current_instruction =
-            addr_kTimedShutter_Ilist_E99E as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kTimedShutter_Ilist_E99E as uint16;
         (*E).base.y_height = 16 as uint16;
     }
 }
@@ -8296,8 +8166,7 @@ pub unsafe fn TimedShutter_Func_12(game: &mut Game) {
         (*E).base.y_pos = (v3 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
         (*E).tsr_var_F = (*E).tsr_var_F.wrapping_add(1);
         (*E).base.instruction_timer = 1 as uint16;
-        (*E).base.current_instruction =
-            addr_kTimedShutter_Ilist_E9A4 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kTimedShutter_Ilist_E9A4 as uint16;
         (*E).base.y_height = 24 as uint16;
     }
 }
@@ -8320,8 +8189,7 @@ pub unsafe fn TimedShutter_Func_13(game: &mut Game) {
         (*E).base.y_pos = (v3 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
         (*E).tsr_var_F = (*E).tsr_var_F.wrapping_add(1);
         (*E).base.instruction_timer = 1 as uint16;
-        (*E).base.current_instruction =
-            addr_kTimedShutter_Ilist_E9AA as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kTimedShutter_Ilist_E9AA as uint16;
         (*E).base.y_height = 32 as uint16;
     }
 }
@@ -8357,7 +8225,7 @@ pub unsafe fn RisingFallingPlatform_Init(game: &mut Game) {
         game,
     ))
     .base
-    .current_instruction = addr_kRisingFallingPlatform_Ilist_EDE7 as ::core::ffi::c_int as uint16;
+    .current_instruction = addr_kRisingFallingPlatform_Ilist_EDE7 as uint16;
 }
 pub unsafe fn ShootableShutter_Init(game: &mut Game) {
     RisingFallingPlatform_Func_1(
@@ -8368,7 +8236,7 @@ pub unsafe fn ShootableShutter_Init(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
-    .current_instruction = addr_kTimedShutter_Ilist_E9AA as ::core::ffi::c_int as uint16;
+    .current_instruction = addr_kTimedShutter_Ilist_E9AA as uint16;
 }
 pub unsafe fn RisingFallingPlatform_Func_1(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_RisingFallingPlatform =
@@ -8803,7 +8671,7 @@ pub unsafe fn HorizontalShootableShutter_Init(game: &mut Game) {
         game,
     ))
     .base
-    .current_instruction = addr_kTimedShutter_Ilist_E9D4 as ::core::ffi::c_int as uint16;
+    .current_instruction = addr_kTimedShutter_Ilist_E9D4 as uint16;
 }
 pub unsafe fn HorizontalShootableShutter_Func_1(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_RisingFallingPlatform =

@@ -161,404 +161,389 @@ static g_word_AAC3EE: [int16; 16] = [
     -(9 as ::core::ffi::c_int) as int16,
     -(6 as ::core::ffi::c_int) as int16,
     -(7 as ::core::ffi::c_int) as int16,
-    5 as ::core::ffi::c_int as int16,
+    5 as int16,
     -(16 as ::core::ffi::c_int) as int16,
     -(7 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    9 as ::core::ffi::c_int as int16,
-    6 as ::core::ffi::c_int as int16,
-    7 as ::core::ffi::c_int as int16,
+    0 as int16,
+    0 as int16,
+    9 as int16,
+    6 as int16,
+    7 as int16,
     -(5 as ::core::ffi::c_int) as int16,
-    16 as ::core::ffi::c_int as int16,
-    7 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
+    16 as int16,
+    7 as int16,
+    0 as int16,
+    0 as int16,
 ];
 static g_word_AAC40E: [int16; 8] = [
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
     -(6 as ::core::ffi::c_int) as int16,
     -(6 as ::core::ffi::c_int) as int16,
     -(7 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
+    0 as int16,
+    0 as int16,
+    0 as int16,
 ];
 static g_word_AAC440: [int16; 16] = [
     -(9 as ::core::ffi::c_int) as int16,
     -(6 as ::core::ffi::c_int) as int16,
     -(7 as ::core::ffi::c_int) as int16,
-    5 as ::core::ffi::c_int as int16,
+    5 as int16,
     -(16 as ::core::ffi::c_int) as int16,
     -(7 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    9 as ::core::ffi::c_int as int16,
-    6 as ::core::ffi::c_int as int16,
-    7 as ::core::ffi::c_int as int16,
+    0 as int16,
+    0 as int16,
+    9 as int16,
+    6 as int16,
+    7 as int16,
     -(5 as ::core::ffi::c_int) as int16,
-    16 as ::core::ffi::c_int as int16,
-    7 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
+    16 as int16,
+    7 as int16,
+    0 as int16,
+    0 as int16,
 ];
 static g_word_AAC460: [int16; 8] = [
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
     -(6 as ::core::ffi::c_int) as int16,
     -(6 as ::core::ffi::c_int) as int16,
     -(7 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
+    0 as int16,
+    0 as int16,
+    0 as int16,
 ];
 static g_word_AAC4BD: [int16; 20] = [
     -(5 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
     -(5 as ::core::ffi::c_int) as int16,
     -(19 as ::core::ffi::c_int) as int16,
     -(16 as ::core::ffi::c_int) as int16,
     -(7 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
     -(7 as ::core::ffi::c_int) as int16,
     -(17 as ::core::ffi::c_int) as int16,
     -(18 as ::core::ffi::c_int) as int16,
-    5 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    5 as ::core::ffi::c_int as int16,
-    19 as ::core::ffi::c_int as int16,
-    16 as ::core::ffi::c_int as int16,
-    7 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    7 as ::core::ffi::c_int as int16,
-    17 as ::core::ffi::c_int as int16,
-    18 as ::core::ffi::c_int as int16,
+    5 as int16,
+    0 as int16,
+    5 as int16,
+    19 as int16,
+    16 as int16,
+    7 as int16,
+    0 as int16,
+    7 as int16,
+    17 as int16,
+    18 as int16,
 ];
 static g_word_AAC532: [int16; 20] = [
     -(5 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
     -(5 as ::core::ffi::c_int) as int16,
     -(0x13 as ::core::ffi::c_int) as int16,
     -(0x10 as ::core::ffi::c_int) as int16,
     -(7 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
     -(7 as ::core::ffi::c_int) as int16,
     -(0x11 as ::core::ffi::c_int) as int16,
     -(0x12 as ::core::ffi::c_int) as int16,
-    5 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    5 as ::core::ffi::c_int as int16,
-    0x13 as ::core::ffi::c_int as int16,
-    0x10 as ::core::ffi::c_int as int16,
-    7 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    7 as ::core::ffi::c_int as int16,
-    0x11 as ::core::ffi::c_int as int16,
-    0x12 as ::core::ffi::c_int as int16,
+    5 as int16,
+    0 as int16,
+    5 as int16,
+    0x13 as int16,
+    0x10 as int16,
+    7 as int16,
+    0 as int16,
+    7 as int16,
+    0x11 as int16,
+    0x12 as int16,
 ];
-static g_word_AAC95F: [int16; 2] = [
-    0xdb as ::core::ffi::c_int as int16,
-    0x1a8 as ::core::ffi::c_int as int16,
-];
-static g_word_AAC963: [int16; 2] = [
-    0xb3 as ::core::ffi::c_int as int16,
-    0x90 as ::core::ffi::c_int as int16,
-];
-static g_word_AAC96B: [int16; 2] = [
-    0x2800 as ::core::ffi::c_int as int16,
-    0x2800 as ::core::ffi::c_int as int16,
-];
-static g_word_AAC96F: [int16; 2] = [
-    0x12 as ::core::ffi::c_int as int16,
-    0x12 as ::core::ffi::c_int as int16,
-];
-static g_word_AAC973: [int16; 2] = [
-    0x30 as ::core::ffi::c_int as int16,
-    0x29 as ::core::ffi::c_int as int16,
-];
+static g_word_AAC95F: [int16; 2] = [0xdb as int16, 0x1a8 as int16];
+static g_word_AAC963: [int16; 2] = [0xb3 as int16, 0x90 as int16];
+static g_word_AAC96B: [int16; 2] = [0x2800 as int16, 0x2800 as int16];
+static g_word_AAC96F: [int16; 2] = [0x12 as int16, 0x12 as int16];
+static g_word_AAC973: [int16; 2] = [0x30 as int16, 0x29 as int16];
 static kTorizo_Palette: [uint16; 16] = [
-    0x3800 as ::core::ffi::c_int as uint16,
-    0x3ff as ::core::ffi::c_int as uint16,
-    0x33b as ::core::ffi::c_int as uint16,
-    0x216 as ::core::ffi::c_int as uint16,
-    0x113 as ::core::ffi::c_int as uint16,
-    0x6b1e as ::core::ffi::c_int as uint16,
-    0x4a16 as ::core::ffi::c_int as uint16,
-    0x3591 as ::core::ffi::c_int as uint16,
-    0x20e9 as ::core::ffi::c_int as uint16,
-    0x1580 as ::core::ffi::c_int as uint16,
-    0x1580 as ::core::ffi::c_int as uint16,
-    0x1580 as ::core::ffi::c_int as uint16,
-    0x1580 as ::core::ffi::c_int as uint16,
-    0x1580 as ::core::ffi::c_int as uint16,
-    0x1580 as ::core::ffi::c_int as uint16,
-    0x1580 as ::core::ffi::c_int as uint16,
+    0x3800 as uint16,
+    0x3ff as uint16,
+    0x33b as uint16,
+    0x216 as uint16,
+    0x113 as uint16,
+    0x6b1e as uint16,
+    0x4a16 as uint16,
+    0x3591 as uint16,
+    0x20e9 as uint16,
+    0x1580 as uint16,
+    0x1580 as uint16,
+    0x1580 as uint16,
+    0x1580 as uint16,
+    0x1580 as uint16,
+    0x1580 as uint16,
+    0x1580 as uint16,
 ];
 static kTorizo_Palettes_1: [uint16; 16] = [
-    0x3800 as ::core::ffi::c_int as uint16,
-    0x2df as ::core::ffi::c_int as uint16,
-    0x1d7 as ::core::ffi::c_int as uint16,
-    0xac as ::core::ffi::c_int as uint16,
-    0x5a73 as ::core::ffi::c_int as uint16,
-    0x41ad as ::core::ffi::c_int as uint16,
-    0x2d08 as ::core::ffi::c_int as uint16,
-    0x1863 as ::core::ffi::c_int as uint16,
-    0x1486 as ::core::ffi::c_int as uint16,
-    0x145 as ::core::ffi::c_int as uint16,
-    0x145 as ::core::ffi::c_int as uint16,
-    0x145 as ::core::ffi::c_int as uint16,
-    0x7fff as ::core::ffi::c_int as uint16,
-    0x145 as ::core::ffi::c_int as uint16,
-    0x145 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
+    0x3800 as uint16,
+    0x2df as uint16,
+    0x1d7 as uint16,
+    0xac as uint16,
+    0x5a73 as uint16,
+    0x41ad as uint16,
+    0x2d08 as uint16,
+    0x1863 as uint16,
+    0x1486 as uint16,
+    0x145 as uint16,
+    0x145 as uint16,
+    0x145 as uint16,
+    0x7fff as uint16,
+    0x145 as uint16,
+    0x145 as uint16,
+    0 as uint16,
 ];
 static kTorizo_Palettes_2: [uint16; 16] = [
-    0x3800 as ::core::ffi::c_int as uint16,
-    0x679f as ::core::ffi::c_int as uint16,
-    0x5299 as ::core::ffi::c_int as uint16,
-    0x252e as ::core::ffi::c_int as uint16,
-    0x14aa as ::core::ffi::c_int as uint16,
-    0x5efc as ::core::ffi::c_int as uint16,
-    0x4657 as ::core::ffi::c_int as uint16,
-    0x35b2 as ::core::ffi::c_int as uint16,
-    0x2d70 as ::core::ffi::c_int as uint16,
-    0x5b7f as ::core::ffi::c_int as uint16,
-    0x3df8 as ::core::ffi::c_int as uint16,
-    0x2d0e as ::core::ffi::c_int as uint16,
-    0x5f5f as ::core::ffi::c_int as uint16,
-    0x5e1a as ::core::ffi::c_int as uint16,
-    0x5d35 as ::core::ffi::c_int as uint16,
-    0xc63 as ::core::ffi::c_int as uint16,
+    0x3800 as uint16,
+    0x679f as uint16,
+    0x5299 as uint16,
+    0x252e as uint16,
+    0x14aa as uint16,
+    0x5efc as uint16,
+    0x4657 as uint16,
+    0x35b2 as uint16,
+    0x2d70 as uint16,
+    0x5b7f as uint16,
+    0x3df8 as uint16,
+    0x2d0e as uint16,
+    0x5f5f as uint16,
+    0x5e1a as uint16,
+    0x5d35 as uint16,
+    0xc63 as uint16,
 ];
 static kTorizo_Palettes_3: [uint16; 16] = [
-    0x3800 as ::core::ffi::c_int as uint16,
-    0x4aba as ::core::ffi::c_int as uint16,
-    0x35b2 as ::core::ffi::c_int as uint16,
-    0x847 as ::core::ffi::c_int as uint16,
-    3 as ::core::ffi::c_int as uint16,
-    0x4215 as ::core::ffi::c_int as uint16,
-    0x2970 as ::core::ffi::c_int as uint16,
-    0x18cb as ::core::ffi::c_int as uint16,
-    0x1089 as ::core::ffi::c_int as uint16,
-    0x463a as ::core::ffi::c_int as uint16,
-    0x28b3 as ::core::ffi::c_int as uint16,
-    0x1809 as ::core::ffi::c_int as uint16,
-    0x6f7f as ::core::ffi::c_int as uint16,
-    0x51fd as ::core::ffi::c_int as uint16,
-    0x4113 as ::core::ffi::c_int as uint16,
-    0xc63 as ::core::ffi::c_int as uint16,
+    0x3800 as uint16,
+    0x4aba as uint16,
+    0x35b2 as uint16,
+    0x847 as uint16,
+    3 as uint16,
+    0x4215 as uint16,
+    0x2970 as uint16,
+    0x18cb as uint16,
+    0x1089 as uint16,
+    0x463a as uint16,
+    0x28b3 as uint16,
+    0x1809 as uint16,
+    0x6f7f as uint16,
+    0x51fd as uint16,
+    0x4113 as uint16,
+    0xc63 as uint16,
 ];
 static kTorizo_Palettes_4: [uint16; 16] = [
-    0x3800 as ::core::ffi::c_int as uint16,
-    0x56ba as ::core::ffi::c_int as uint16,
-    0x41b2 as ::core::ffi::c_int as uint16,
-    0x1447 as ::core::ffi::c_int as uint16,
-    0x403 as ::core::ffi::c_int as uint16,
-    0x4e15 as ::core::ffi::c_int as uint16,
-    0x3570 as ::core::ffi::c_int as uint16,
-    0x24cb as ::core::ffi::c_int as uint16,
-    0x1868 as ::core::ffi::c_int as uint16,
-    0x6f7f as ::core::ffi::c_int as uint16,
-    0x51f8 as ::core::ffi::c_int as uint16,
-    0x410e as ::core::ffi::c_int as uint16,
-    0x31f as ::core::ffi::c_int as uint16,
-    0x1da as ::core::ffi::c_int as uint16,
-    0xf5 as ::core::ffi::c_int as uint16,
-    0xc63 as ::core::ffi::c_int as uint16,
+    0x3800 as uint16,
+    0x56ba as uint16,
+    0x41b2 as uint16,
+    0x1447 as uint16,
+    0x403 as uint16,
+    0x4e15 as uint16,
+    0x3570 as uint16,
+    0x24cb as uint16,
+    0x1868 as uint16,
+    0x6f7f as uint16,
+    0x51f8 as uint16,
+    0x410e as uint16,
+    0x31f as uint16,
+    0x1da as uint16,
+    0xf5 as uint16,
+    0xc63 as uint16,
 ];
 static kTorizo_Palettes_5: [uint16; 16] = [
-    0x3800 as ::core::ffi::c_int as uint16,
-    0x4215 as ::core::ffi::c_int as uint16,
-    0x2d0d as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0x3970 as ::core::ffi::c_int as uint16,
-    0x20cb as ::core::ffi::c_int as uint16,
-    0xc26 as ::core::ffi::c_int as uint16,
-    0x403 as ::core::ffi::c_int as uint16,
-    0x463a as ::core::ffi::c_int as uint16,
-    0x28b3 as ::core::ffi::c_int as uint16,
-    0x1809 as ::core::ffi::c_int as uint16,
-    0x6f7f as ::core::ffi::c_int as uint16,
-    0x51fd as ::core::ffi::c_int as uint16,
-    0x4113 as ::core::ffi::c_int as uint16,
-    0xc63 as ::core::ffi::c_int as uint16,
+    0x3800 as uint16,
+    0x4215 as uint16,
+    0x2d0d as uint16,
+    2 as uint16,
+    0 as uint16,
+    0x3970 as uint16,
+    0x20cb as uint16,
+    0xc26 as uint16,
+    0x403 as uint16,
+    0x463a as uint16,
+    0x28b3 as uint16,
+    0x1809 as uint16,
+    0x6f7f as uint16,
+    0x51fd as uint16,
+    0x4113 as uint16,
+    0xc63 as uint16,
 ];
 static kTorizo_Palettes_6: [uint16; 16] = [
-    0x3800 as ::core::ffi::c_int as uint16,
-    0x6ab5 as ::core::ffi::c_int as uint16,
-    0x49b0 as ::core::ffi::c_int as uint16,
-    0x1c45 as ::core::ffi::c_int as uint16,
-    0xc01 as ::core::ffi::c_int as uint16,
-    0x5613 as ::core::ffi::c_int as uint16,
-    0x416d as ::core::ffi::c_int as uint16,
-    0x2cc9 as ::core::ffi::c_int as uint16,
-    0x2066 as ::core::ffi::c_int as uint16,
-    0x5714 as ::core::ffi::c_int as uint16,
-    0x31cc as ::core::ffi::c_int as uint16,
-    0x14e3 as ::core::ffi::c_int as uint16,
-    0x5630 as ::core::ffi::c_int as uint16,
-    0x3569 as ::core::ffi::c_int as uint16,
-    0x1883 as ::core::ffi::c_int as uint16,
-    0xc66 as ::core::ffi::c_int as uint16,
+    0x3800 as uint16,
+    0x6ab5 as uint16,
+    0x49b0 as uint16,
+    0x1c45 as uint16,
+    0xc01 as uint16,
+    0x5613 as uint16,
+    0x416d as uint16,
+    0x2cc9 as uint16,
+    0x2066 as uint16,
+    0x5714 as uint16,
+    0x31cc as uint16,
+    0x14e3 as uint16,
+    0x5630 as uint16,
+    0x3569 as uint16,
+    0x1883 as uint16,
+    0xc66 as uint16,
 ];
 static kTorizo_Palettes_7: [uint16; 16] = [
-    0x3800 as ::core::ffi::c_int as uint16,
-    0x5610 as ::core::ffi::c_int as uint16,
-    0x350b as ::core::ffi::c_int as uint16,
-    0x800 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0x416e as ::core::ffi::c_int as uint16,
-    0x2cc8 as ::core::ffi::c_int as uint16,
-    0x1823 as ::core::ffi::c_int as uint16,
-    0xc01 as ::core::ffi::c_int as uint16,
-    0x6a31 as ::core::ffi::c_int as uint16,
-    0x4caa as ::core::ffi::c_int as uint16,
-    0x2406 as ::core::ffi::c_int as uint16,
-    0x7f7b as ::core::ffi::c_int as uint16,
-    0x75f4 as ::core::ffi::c_int as uint16,
-    0x4d10 as ::core::ffi::c_int as uint16,
-    0xc63 as ::core::ffi::c_int as uint16,
+    0x3800 as uint16,
+    0x5610 as uint16,
+    0x350b as uint16,
+    0x800 as uint16,
+    0 as uint16,
+    0x416e as uint16,
+    0x2cc8 as uint16,
+    0x1823 as uint16,
+    0xc01 as uint16,
+    0x6a31 as uint16,
+    0x4caa as uint16,
+    0x2406 as uint16,
+    0x7f7b as uint16,
+    0x75f4 as uint16,
+    0x4d10 as uint16,
+    0xc63 as uint16,
 ];
 static kTorizo_Palettes_8: [uint16; 16] = [
-    0x3800 as ::core::ffi::c_int as uint16,
-    0x4bbe as ::core::ffi::c_int as uint16,
-    0x6b9 as ::core::ffi::c_int as uint16,
-    0xa8 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0x173a as ::core::ffi::c_int as uint16,
-    0x276 as ::core::ffi::c_int as uint16,
-    0x1f2 as ::core::ffi::c_int as uint16,
-    0x14d as ::core::ffi::c_int as uint16,
-    0x73e0 as ::core::ffi::c_int as uint16,
-    0x4f20 as ::core::ffi::c_int as uint16,
-    0x2a20 as ::core::ffi::c_int as uint16,
-    0x7fe0 as ::core::ffi::c_int as uint16,
-    0x5aa0 as ::core::ffi::c_int as uint16,
-    0x5920 as ::core::ffi::c_int as uint16,
-    0x43 as ::core::ffi::c_int as uint16,
+    0x3800 as uint16,
+    0x4bbe as uint16,
+    0x6b9 as uint16,
+    0xa8 as uint16,
+    0 as uint16,
+    0x173a as uint16,
+    0x276 as uint16,
+    0x1f2 as uint16,
+    0x14d as uint16,
+    0x73e0 as uint16,
+    0x4f20 as uint16,
+    0x2a20 as uint16,
+    0x7fe0 as uint16,
+    0x5aa0 as uint16,
+    0x5920 as uint16,
+    0x43 as uint16,
 ];
 static kTorizo_Palettes_10: [uint16; 16] = [
-    0x3800 as ::core::ffi::c_int as uint16,
-    0x3719 as ::core::ffi::c_int as uint16,
-    0x214 as ::core::ffi::c_int as uint16,
-    3 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0x295 as ::core::ffi::c_int as uint16,
-    0x1d1 as ::core::ffi::c_int as uint16,
-    0x14d as ::core::ffi::c_int as uint16,
-    0xa8 as ::core::ffi::c_int as uint16,
-    0x4b40 as ::core::ffi::c_int as uint16,
-    0x25e0 as ::core::ffi::c_int as uint16,
-    0xe0 as ::core::ffi::c_int as uint16,
-    0x6b40 as ::core::ffi::c_int as uint16,
-    0x4600 as ::core::ffi::c_int as uint16,
-    0x4480 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
+    0x3800 as uint16,
+    0x3719 as uint16,
+    0x214 as uint16,
+    3 as uint16,
+    0 as uint16,
+    0x295 as uint16,
+    0x1d1 as uint16,
+    0x14d as uint16,
+    0xa8 as uint16,
+    0x4b40 as uint16,
+    0x25e0 as uint16,
+    0xe0 as uint16,
+    0x6b40 as uint16,
+    0x4600 as uint16,
+    0x4480 as uint16,
+    0 as uint16,
 ];
 static g_word_AAD59A: [int16; 20] = [
     -(5 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
     -(5 as ::core::ffi::c_int) as int16,
     -(19 as ::core::ffi::c_int) as int16,
     -(16 as ::core::ffi::c_int) as int16,
     -(7 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
     -(7 as ::core::ffi::c_int) as int16,
     -(17 as ::core::ffi::c_int) as int16,
     -(18 as ::core::ffi::c_int) as int16,
-    5 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    5 as ::core::ffi::c_int as int16,
-    19 as ::core::ffi::c_int as int16,
-    16 as ::core::ffi::c_int as int16,
-    7 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    7 as ::core::ffi::c_int as int16,
-    17 as ::core::ffi::c_int as int16,
-    18 as ::core::ffi::c_int as int16,
+    5 as int16,
+    0 as int16,
+    5 as int16,
+    19 as int16,
+    16 as int16,
+    7 as int16,
+    0 as int16,
+    7 as int16,
+    17 as int16,
+    18 as int16,
 ];
 static g_word_AADEE9: [uint16; 7] = [
-    0 as ::core::ffi::c_int as uint16,
-    0x20 as ::core::ffi::c_int as uint16,
-    0x60 as ::core::ffi::c_int as uint16,
-    0xc0 as ::core::ffi::c_int as uint16,
-    0x140 as ::core::ffi::c_int as uint16,
-    0x1a0 as ::core::ffi::c_int as uint16,
-    0x1e0 as ::core::ffi::c_int as uint16,
+    0 as uint16,
+    0x20 as uint16,
+    0x60 as uint16,
+    0xc0 as uint16,
+    0x140 as uint16,
+    0x1a0 as uint16,
+    0x1e0 as uint16,
 ];
 static kChozoStatue_Palette: [uint16; 16] = [
-    0x3800 as ::core::ffi::c_int as uint16,
-    0x633f as ::core::ffi::c_int as uint16,
-    0x4a9f as ::core::ffi::c_int as uint16,
-    0x2ddf as ::core::ffi::c_int as uint16,
-    0x6739 as ::core::ffi::c_int as uint16,
-    0x4e73 as ::core::ffi::c_int as uint16,
-    0x318c as ::core::ffi::c_int as uint16,
-    0x18c6 as ::core::ffi::c_int as uint16,
-    0x27ff as ::core::ffi::c_int as uint16,
-    0x1af7 as ::core::ffi::c_int as uint16,
-    0xdce as ::core::ffi::c_int as uint16,
-    0xc6 as ::core::ffi::c_int as uint16,
-    0x3fff as ::core::ffi::c_int as uint16,
-    0x2b39 as ::core::ffi::c_int as uint16,
-    0x7fff as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
+    0x3800 as uint16,
+    0x633f as uint16,
+    0x4a9f as uint16,
+    0x2ddf as uint16,
+    0x6739 as uint16,
+    0x4e73 as uint16,
+    0x318c as uint16,
+    0x18c6 as uint16,
+    0x27ff as uint16,
+    0x1af7 as uint16,
+    0xdce as uint16,
+    0xc6 as uint16,
+    0x3fff as uint16,
+    0x2b39 as uint16,
+    0x7fff as uint16,
+    0 as uint16,
 ];
 static kChozoStatue_Palettes: [int16; 16] = [
-    0x3800 as ::core::ffi::c_int as int16,
-    0x633f as ::core::ffi::c_int as int16,
-    0x4a9f as ::core::ffi::c_int as int16,
-    0x2ddf as ::core::ffi::c_int as int16,
-    0x4210 as ::core::ffi::c_int as int16,
-    0x318c as ::core::ffi::c_int as int16,
-    0x2108 as ::core::ffi::c_int as int16,
-    0x1084 as ::core::ffi::c_int as int16,
-    0x27ff as ::core::ffi::c_int as int16,
-    0x1af7 as ::core::ffi::c_int as int16,
-    0xdce as ::core::ffi::c_int as int16,
-    0xc6 as ::core::ffi::c_int as int16,
-    0x3fff as ::core::ffi::c_int as int16,
-    0x2b39 as ::core::ffi::c_int as int16,
-    0x5294 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
+    0x3800 as int16,
+    0x633f as int16,
+    0x4a9f as int16,
+    0x2ddf as int16,
+    0x4210 as int16,
+    0x318c as int16,
+    0x2108 as int16,
+    0x1084 as int16,
+    0x27ff as int16,
+    0x1af7 as int16,
+    0xdce as int16,
+    0xc6 as int16,
+    0x3fff as int16,
+    0x2b39 as int16,
+    0x5294 as int16,
+    0 as int16,
 ];
 static kChozoStatue_Palettes2: [int16; 16] = [
-    0x3800 as ::core::ffi::c_int as int16,
-    0x633f as ::core::ffi::c_int as int16,
-    0x4a9f as ::core::ffi::c_int as int16,
-    0x2ddf as ::core::ffi::c_int as int16,
-    0x2f7c as ::core::ffi::c_int as int16,
-    0x2295 as ::core::ffi::c_int as int16,
-    0x118d as ::core::ffi::c_int as int16,
-    0x8e8 as ::core::ffi::c_int as int16,
-    0x27ff as ::core::ffi::c_int as int16,
-    0x1af7 as ::core::ffi::c_int as int16,
-    0xdce as ::core::ffi::c_int as int16,
-    0xc6 as ::core::ffi::c_int as int16,
-    0x3fff as ::core::ffi::c_int as int16,
-    0x2b39 as ::core::ffi::c_int as int16,
-    0x73df as ::core::ffi::c_int as int16,
-    0x43 as ::core::ffi::c_int as int16,
+    0x3800 as int16,
+    0x633f as int16,
+    0x4a9f as int16,
+    0x2ddf as int16,
+    0x2f7c as int16,
+    0x2295 as int16,
+    0x118d as int16,
+    0x8e8 as int16,
+    0x27ff as int16,
+    0x1af7 as int16,
+    0xdce as int16,
+    0xc6 as int16,
+    0x3fff as int16,
+    0x2b39 as int16,
+    0x73df as int16,
+    0x43 as int16,
 ];
 static kChozoStatue_Palettes3: [int16; 16] = [
-    0x3800 as ::core::ffi::c_int as int16,
-    0x633f as ::core::ffi::c_int as int16,
-    0x4a9f as ::core::ffi::c_int as int16,
-    0x2ddf as ::core::ffi::c_int as int16,
-    0x2295 as ::core::ffi::c_int as int16,
-    0x118d as ::core::ffi::c_int as int16,
-    0x8e8 as ::core::ffi::c_int as int16,
-    0x85 as ::core::ffi::c_int as int16,
-    0x27ff as ::core::ffi::c_int as int16,
-    0x1af7 as ::core::ffi::c_int as int16,
-    0xdce as ::core::ffi::c_int as int16,
-    0xc6 as ::core::ffi::c_int as int16,
-    0x3fff as ::core::ffi::c_int as int16,
-    0x2b39 as ::core::ffi::c_int as int16,
-    0x5294 as ::core::ffi::c_int as int16,
-    1 as ::core::ffi::c_int as int16,
+    0x3800 as int16,
+    0x633f as int16,
+    0x4a9f as int16,
+    0x2ddf as int16,
+    0x2295 as int16,
+    0x118d as int16,
+    0x8e8 as int16,
+    0x85 as int16,
+    0x27ff as int16,
+    0x1af7 as int16,
+    0xdce as int16,
+    0xc6 as int16,
+    0x3fff as int16,
+    0x2b39 as int16,
+    0x5294 as int16,
+    1 as int16,
 ];
 pub unsafe fn Enemy_GrappleReact_CancelBeam_AA(game: &mut Game) {
     Enemy_SwitchToFrozenAi(game);
@@ -599,42 +584,13 @@ pub unsafe fn Torizo_Instr_31(
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
     (*E).toriz_parameter_2 =
         ((*E).toriz_parameter_2 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
-    let mut parameter = SpawnEprojWithGfx(
-        (*E).toriz_parameter_2,
-        k,
-        addr_stru_86A95B as ::core::ffi::c_int as uint16,
-        game,
-    );
-    parameter = SpawnEprojWithGfx(
-        parameter,
-        k,
-        addr_stru_86A95B as ::core::ffi::c_int as uint16,
-        game,
-    );
-    parameter = SpawnEprojWithGfx(
-        parameter,
-        k,
-        addr_stru_86A95B as ::core::ffi::c_int as uint16,
-        game,
-    );
-    parameter = SpawnEprojWithGfx(
-        parameter,
-        k,
-        addr_stru_86A95B as ::core::ffi::c_int as uint16,
-        game,
-    );
-    parameter = SpawnEprojWithGfx(
-        parameter,
-        k,
-        addr_stru_86A95B as ::core::ffi::c_int as uint16,
-        game,
-    );
-    SpawnEprojWithGfx(
-        parameter,
-        k,
-        addr_stru_86A95B as ::core::ffi::c_int as uint16,
-        game,
-    );
+    let mut parameter =
+        SpawnEprojWithGfx((*E).toriz_parameter_2, k, addr_stru_86A95B as uint16, game);
+    parameter = SpawnEprojWithGfx(parameter, k, addr_stru_86A95B as uint16, game);
+    parameter = SpawnEprojWithGfx(parameter, k, addr_stru_86A95B as uint16, game);
+    parameter = SpawnEprojWithGfx(parameter, k, addr_stru_86A95B as uint16, game);
+    parameter = SpawnEprojWithGfx(parameter, k, addr_stru_86A95B as uint16, game);
+    SpawnEprojWithGfx(parameter, k, addr_stru_86A95B as uint16, game);
     return jp;
 }
 pub unsafe fn Torizo_Instr_33(
@@ -719,7 +675,7 @@ pub unsafe fn Torizo_Instr_9(
     game: &mut Game,
 ) -> *const uint16 {
     QueueMusic_Delayed8(g_word_AAB098, game);
-    SpawnPalfxObject(addr_stru_8DF759 as ::core::ffi::c_int as uint16, game);
+    SpawnPalfxObject(addr_stru_8DF759 as uint16, game);
     return jp;
 }
 pub unsafe fn Torizo_C20A(mut k: uint16, game: &mut Game) {
@@ -873,11 +829,7 @@ pub unsafe fn Torizo_Instr_30(
     let mut a: uint16 = *jp.offset(0);
     let mut i: ::core::ffi::c_int = 5 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
-        SpawnEprojWithRoomGfx(
-            addr_kEproj_BombTorizoLowHealthExplode as ::core::ffi::c_int as uint16,
-            a,
-            game,
-        );
+        SpawnEprojWithRoomGfx(addr_kEproj_BombTorizoLowHealthExplode as uint16, a, game);
         i -= 1;
     }
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
@@ -895,11 +847,7 @@ pub unsafe fn Torizo_Instr_34(
     game: &mut Game,
 ) -> *const uint16 {
     // The instruction dispatcher leaves this handler address in A.
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_BombTorizoDeathExplosion as ::core::ffi::c_int as uint16,
-        0xc32f,
-        game,
-    );
+    SpawnEprojWithRoomGfx(addr_kEproj_BombTorizoDeathExplosion as uint16, 0xc32f, game);
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
     (*E).base.current_instruction = (jp as *mut uint8).offset_from(RomBankBase(
         (*gEnemyData(k as ::core::ffi::c_int, game)).bank,
@@ -915,15 +863,11 @@ pub unsafe fn Torizo_Instr_24(
     game: &mut Game,
 ) -> *const uint16 {
     let left_foot_parameter = SpawnEprojWithRoomGfx(
-        addr_kEproj_TourianLandingDustCloudsRightFoot as ::core::ffi::c_int as uint16,
+        addr_kEproj_TourianLandingDustCloudsRightFoot as uint16,
         0xc34a,
         game,
     );
-    SpawnEprojWithRoomGfx(
-        addr_stru_86AFF3 as ::core::ffi::c_int as uint16,
-        left_foot_parameter,
-        game,
-    );
+    SpawnEprojWithRoomGfx(addr_stru_86AFF3 as uint16, left_foot_parameter, game);
     return jp;
 }
 pub unsafe fn Torizo_Instr_12(
@@ -936,7 +880,7 @@ pub unsafe fn Torizo_Instr_12(
         SpawnEprojWithGfx(
             health,
             k,
-            addr_kEproj_BombTorizoLowHealthInitialDrool as ::core::ffi::c_int as uint16,
+            addr_kEproj_BombTorizoLowHealthInitialDrool as uint16,
             game,
         );
     }
@@ -1200,22 +1144,18 @@ pub unsafe fn Torizo_Instr_18(
     game: &mut Game,
 ) -> *const uint16 {
     // The instruction dispatcher leaves this handler address in A.
-    let mut parameter = SpawnEprojWithGfx(
-        0xc5cb,
-        k,
-        addr_kEproj_BombTorizosChozoOrbs as ::core::ffi::c_int as uint16,
-        game,
-    );
+    let mut parameter =
+        SpawnEprojWithGfx(0xc5cb, k, addr_kEproj_BombTorizosChozoOrbs as uint16, game);
     parameter = SpawnEprojWithGfx(
         parameter,
         k,
-        addr_kEproj_BombTorizosChozoOrbs as ::core::ffi::c_int as uint16,
+        addr_kEproj_BombTorizosChozoOrbs as uint16,
         game,
     );
     SpawnEprojWithGfx(
         parameter,
         k,
-        addr_kEproj_BombTorizosChozoOrbs as ::core::ffi::c_int as uint16,
+        addr_kEproj_BombTorizosChozoOrbs as uint16,
         game,
     );
     return jp;
@@ -1228,7 +1168,7 @@ pub unsafe fn Torizo_Instr_20(
     SpawnEprojWithGfx(
         *jp.offset(0),
         k,
-        addr_kEproj_BombTorizoSonicBoom as ::core::ffi::c_int as uint16,
+        addr_kEproj_BombTorizoSonicBoom as uint16,
         game,
     );
     return jp.offset(1);
@@ -1241,7 +1181,7 @@ pub unsafe fn Torizo_Instr_44(
     SpawnEprojWithGfx(
         *jp.offset(0),
         k,
-        addr_kEproj_GoldenTorizoSonicBoom as ::core::ffi::c_int as uint16,
+        addr_kEproj_GoldenTorizoSonicBoom as uint16,
         game,
     );
     return jp.offset(1);
@@ -1252,7 +1192,7 @@ pub unsafe fn Torizo_Instr_21(
     game: &mut Game,
 ) -> *const uint16 {
     SpawnEprojWithRoomGfx(
-        addr_kEproj_BombTorizoExplosiveSwipe as ::core::ffi::c_int as uint16,
+        addr_kEproj_BombTorizoExplosiveSwipe as uint16,
         *jp.offset(0),
         game,
     );
@@ -1287,7 +1227,7 @@ pub unsafe fn Torizo_C620(mut k: uint16, game: &mut Game) {
             SpawnEprojWithGfx(
                 health,
                 k,
-                addr_kEproj_BombTorizoLowHealthInitialDrool as ::core::ffi::c_int as uint16,
+                addr_kEproj_BombTorizoLowHealthInitialDrool as uint16,
                 game,
             );
         }
@@ -1438,17 +1378,17 @@ pub unsafe fn Torizo_Func_1(mut k: uint16, game: &mut Game) {
             if (*E).toriz_parameter_1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                 != 0 as ::core::ffi::c_int
             {
-                v2 = addr_kTorizo_Ilist_BD0E as ::core::ffi::c_int as uint16;
+                v2 = addr_kTorizo_Ilist_BD0E as uint16;
             } else {
-                v2 = addr_kTorizo_Ilist_C188 as ::core::ffi::c_int as uint16;
+                v2 = addr_kTorizo_Ilist_C188 as uint16;
             }
             (*E).toriz_var_00 = v2;
-            (*E).base.current_instruction = addr_kTorizo_Ilist_B155 as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kTorizo_Ilist_B155 as uint16;
             (*E).base.instruction_timer = 1 as uint16;
         }
     } else {
         (*E).toriz_var_01 = (*E).base.current_instruction;
-        (*E).base.current_instruction = addr_kTorizo_Ilist_B0E5 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kTorizo_Ilist_B0E5 as uint16;
         (*E).base.instruction_timer = 1 as uint16;
     };
 }
@@ -1475,9 +1415,9 @@ pub unsafe fn Torizo_Func_5(mut k: uint16, game: &mut Game) {
                 if (*E).toriz_parameter_1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                     != 0 as ::core::ffi::c_int
                 {
-                    v11 = addr_off_AAC0F2 as ::core::ffi::c_int as uint16;
+                    v11 = addr_off_AAC0F2 as uint16;
                 } else {
-                    v11 = addr_off_AABC78 as ::core::ffi::c_int as uint16;
+                    v11 = addr_off_AABC78 as uint16;
                 }
                 (*E).base.current_instruction = v11;
                 (*E).base.instruction_timer = 1 as uint16;
@@ -1490,9 +1430,9 @@ pub unsafe fn Torizo_Func_5(mut k: uint16, game: &mut Game) {
             if (*E).toriz_parameter_1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                 != 0 as ::core::ffi::c_int
             {
-                v9 = addr_kTorizo_Ilist_BD0E as ::core::ffi::c_int as uint16;
+                v9 = addr_kTorizo_Ilist_BD0E as uint16;
             } else {
-                v9 = addr_kTorizo_Ilist_C188 as ::core::ffi::c_int as uint16;
+                v9 = addr_kTorizo_Ilist_C188 as uint16;
             }
             (*E).base.current_instruction = v9;
             (*E).base.instruction_timer = 1 as uint16;
@@ -1514,9 +1454,9 @@ pub unsafe fn Torizo_Func_5(mut k: uint16, game: &mut Game) {
                 if (*E).toriz_parameter_1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                     != 0 as ::core::ffi::c_int
                 {
-                    v6 = addr_off_AAC0F2 as ::core::ffi::c_int as uint16;
+                    v6 = addr_off_AAC0F2 as uint16;
                 } else {
-                    v6 = addr_off_AABC78 as ::core::ffi::c_int as uint16;
+                    v6 = addr_off_AABC78 as uint16;
                 }
                 (*E).base.current_instruction = v6;
                 (*E).base.instruction_timer = 1 as uint16;
@@ -1529,9 +1469,9 @@ pub unsafe fn Torizo_Func_5(mut k: uint16, game: &mut Game) {
             if (*E).toriz_parameter_1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                 != 0 as ::core::ffi::c_int
             {
-                v4 = addr_kTorizo_Ilist_B962 as ::core::ffi::c_int as uint16;
+                v4 = addr_kTorizo_Ilist_B962 as uint16;
             } else {
-                v4 = addr_kTorizo_Ilist_BDD8 as ::core::ffi::c_int as uint16;
+                v4 = addr_kTorizo_Ilist_BDD8 as uint16;
             }
             (*E).base.current_instruction = v4;
             (*E).base.instruction_timer = 1 as uint16;
@@ -1591,7 +1531,7 @@ pub unsafe fn Torizo_Init(game: &mut Game) {
         (*E).base.instruction_timer = 1 as uint16;
         (*E).base.timer = 0 as uint16;
         (*E).base.palette_index = 0 as uint16;
-        (*E).toriz_var_F = addr_locret_AAC95E as ::core::ffi::c_int as uint16;
+        (*E).toriz_var_F = addr_locret_AAC95E as uint16;
         (*E).base.current_instruction = *(game.g_rom.offset(
             (((0xaac967 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                 << 15 as ::core::ffi::c_int
@@ -1599,7 +1539,7 @@ pub unsafe fn Torizo_Init(game: &mut Game) {
                 & 0x3fffff as ::core::ffi::c_int) as isize,
         ) as *const uint8 as *mut uint16)
             .offset(v2 as isize);
-        (*E).base.spritemap_pointer = addr_kTorizo_ExtSprmap_87D0 as ::core::ffi::c_int as uint16;
+        (*E).base.spritemap_pointer = addr_kTorizo_ExtSprmap_87D0 as uint16;
         (*E).base.x_pos = g_word_AAC95F[v2 as usize] as uint16;
         (*E).base.y_pos = g_word_AAC963[v2 as usize] as uint16;
         (*E).toriz_var_A = 0 as uint16;
@@ -1664,8 +1604,7 @@ pub unsafe fn Torizo_Shot(game: &mut Game) {
             if (*E).base.health == 0 {
                 (*E).toriz_var_E =
                     (0xaac6ab as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-                (*E).base.current_instruction =
-                    addr_kTorizo_Ilist_B1C8 as ::core::ffi::c_int as uint16;
+                (*E).base.current_instruction = addr_kTorizo_Ilist_B1C8 as uint16;
                 (*E).base.instruction_timer = 1 as uint16;
                 (*E).toriz_parameter_2 = ((*E).toriz_parameter_2 as ::core::ffi::c_int
                     | 0xc000 as ::core::ffi::c_int)
@@ -1712,7 +1651,7 @@ pub unsafe fn Torizo_Instr_42(
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
     (*E).base.x_width = 18 as uint16;
     (*E).base.y_height = 48 as uint16;
-    SpawnPalfxObject(addr_stru_8DF75D as ::core::ffi::c_int as uint16, game);
+    SpawnPalfxObject(addr_stru_8DF75D as uint16, game);
     return jp;
 }
 pub unsafe fn Torizo_Instr_48(
@@ -1730,11 +1669,7 @@ pub unsafe fn Torizo_Instr_57(
     mut jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    SpawnEprojWithRoomGfx(
-        addr_stru_86B1C0 as ::core::ffi::c_int as uint16,
-        0 as uint16,
-        game,
-    );
+    SpawnEprojWithRoomGfx(addr_stru_86B1C0 as uint16, 0 as uint16, game);
     return jp;
 }
 pub unsafe fn Torizo_Instr_58(
@@ -1876,7 +1811,7 @@ pub unsafe fn Torizo_Instr_47(
     game: &mut Game,
 ) -> *const uint16 {
     SpawnEprojWithRoomGfx(
-        addr_kEproj_GoldenTorizoSuperMissile as ::core::ffi::c_int as uint16,
+        addr_kEproj_GoldenTorizoSuperMissile as uint16,
         0 as uint16,
         game,
     );
@@ -1927,7 +1862,7 @@ pub unsafe fn Torizo_Instr_61(
     game: &mut Game,
 ) -> *const uint16 {
     SpawnEprojWithRoomGfx(
-        addr_kEproj_GoldenTorizoEyeBeam as ::core::ffi::c_int as uint16,
+        addr_kEproj_GoldenTorizoEyeBeam as uint16,
         *jp.offset(0),
         game,
     );
@@ -2033,7 +1968,7 @@ pub unsafe fn Torizo_Instr_43(
     SpawnEprojWithGfx(
         0 as uint16,
         k,
-        addr_kEproj_GoldenTorizosChozoOrbs as ::core::ffi::c_int as uint16,
+        addr_kEproj_GoldenTorizosChozoOrbs as uint16,
         game,
     );
     return jp;
@@ -2174,9 +2109,9 @@ pub unsafe fn Torizo_D5F1(mut k: uint16, game: &mut Game) {
             if (*E).toriz_parameter_1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                 != 0 as ::core::ffi::c_int
             {
-                v6 = addr_off_AAC0F2 as ::core::ffi::c_int as uint16;
+                v6 = addr_off_AAC0F2 as uint16;
             } else {
-                v6 = addr_off_AABC78 as ::core::ffi::c_int as uint16;
+                v6 = addr_off_AABC78 as uint16;
             }
             (*E).base.current_instruction = v6;
             (*E).base.instruction_timer = 1 as uint16;
@@ -2189,9 +2124,9 @@ pub unsafe fn Torizo_D5F1(mut k: uint16, game: &mut Game) {
         if (*E).toriz_parameter_1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
         {
-            v4 = addr_kTorizo_Ilist_D203 as ::core::ffi::c_int as uint16;
+            v4 = addr_kTorizo_Ilist_D203 as uint16;
         } else {
-            v4 = addr_kTorizo_Ilist_D2BF as ::core::ffi::c_int as uint16;
+            v4 = addr_kTorizo_Ilist_D2BF as uint16;
         }
         (*E).base.current_instruction = v4;
         (*E).base.instruction_timer = 1 as uint16;
@@ -2271,7 +2206,7 @@ pub unsafe fn Torizo_D6A6(game: &mut Game) {
         game,
     );
     if (*E).base.health == 0 {
-        (*E).base.current_instruction = addr_kTorizo_Ilist_B1C8 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kTorizo_Ilist_B1C8 as uint16;
         (*E).base.instruction_timer = 1 as uint16;
         (*E).toriz_parameter_2 =
             ((*E).toriz_parameter_2 as ::core::ffi::c_int | 0xc000 as ::core::ffi::c_int) as uint16;
@@ -2290,9 +2225,9 @@ pub unsafe fn Torizo_D6D1(mut k: uint16, mut j: uint16, game: &mut Game) {
     if (*E).toriz_parameter_1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        v3 = addr_kTorizo_Ilist_D2AD as ::core::ffi::c_int as uint16;
+        v3 = addr_kTorizo_Ilist_D2AD as uint16;
     } else {
-        v3 = addr_kTorizo_Ilist_D1F1 as ::core::ffi::c_int as uint16;
+        v3 = addr_kTorizo_Ilist_D1F1 as uint16;
     }
     (*E).base.current_instruction = v3;
 }
@@ -2319,16 +2254,16 @@ pub unsafe fn Torizo_D6F7(mut k: uint16, mut j: uint16, game: &mut Game) {
             if (*E).toriz_parameter_1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                 != 0 as ::core::ffi::c_int
             {
-                v3 = addr_kTorizo_Ilist_CEFF as ::core::ffi::c_int as uint16;
+                v3 = addr_kTorizo_Ilist_CEFF as uint16;
             } else {
-                v3 = addr_kTorizo_Ilist_CE43 as ::core::ffi::c_int as uint16;
+                v3 = addr_kTorizo_Ilist_CE43 as uint16;
             }
         } else if (*E).toriz_parameter_1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
         {
-            v3 = addr_kTorizo_Ilist_CEA5 as ::core::ffi::c_int as uint16;
+            v3 = addr_kTorizo_Ilist_CEA5 as uint16;
         } else {
-            v3 = addr_kTorizo_Ilist_CDE1 as ::core::ffi::c_int as uint16;
+            v3 = addr_kTorizo_Ilist_CDE1 as uint16;
         }
         (*E).base.current_instruction = v3;
     } else {
@@ -2352,17 +2287,13 @@ pub unsafe fn TourianEntranceStatue_Init(game: &mut Game) {
     (*v0).current_instruction = v1;
     if (*v0).parameter_1 == 0 {
         SpawnEprojWithRoomGfx(
-            addr_kEproj_TourianStatueBaseDecoration as ::core::ffi::c_int as uint16,
+            addr_kEproj_TourianStatueBaseDecoration as uint16,
             0 as uint16,
             game,
         );
+        SpawnEprojWithRoomGfx(addr_kEproj_TourianStatueRidley as uint16, 0 as uint16, game);
         SpawnEprojWithRoomGfx(
-            addr_kEproj_TourianStatueRidley as ::core::ffi::c_int as uint16,
-            0 as uint16,
-            game,
-        );
-        SpawnEprojWithRoomGfx(
-            addr_kEproj_TourianStatuePhantoon as ::core::ffi::c_int as uint16,
+            addr_kEproj_TourianStatuePhantoon as uint16,
             0 as uint16,
             game,
         );
@@ -2477,19 +2408,19 @@ pub unsafe fn Shaktool_Func_2(mut k: uint16, game: &mut Game) {
     SpawnEprojWithGfx(
         0 as uint16,
         k,
-        addr_kEproj_ShaktoolAttackFrontCircle as ::core::ffi::c_int as uint16,
+        addr_kEproj_ShaktoolAttackFrontCircle as uint16,
         game,
     );
     SpawnEprojWithGfx(
         0 as uint16,
         k,
-        addr_kEproj_ShaktoolAttackMiddleCircle as ::core::ffi::c_int as uint16,
+        addr_kEproj_ShaktoolAttackMiddleCircle as uint16,
         game,
     );
     SpawnEprojWithGfx(
         0 as uint16,
         k,
-        addr_kEproj_ShaktoolAttackBackCircle as ::core::ffi::c_int as uint16,
+        addr_kEproj_ShaktoolAttackBackCircle as uint16,
         game,
     );
 }
@@ -3276,7 +3207,7 @@ pub unsafe fn Shaktool_Instr_10(
 pub unsafe fn sub_AAE445(mut k: uint16, game: &mut Game) {
     let mut v1: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);
     if (*v1).parameter_1 != 0 {
-        (*v1).current_instruction = addr_kShaktool_Ilist_E3A7 as ::core::ffi::c_int as uint16;
+        (*v1).current_instruction = addr_kShaktool_Ilist_E3A7 as uint16;
         (*v1).instruction_timer = 1 as uint16;
     }
 }
@@ -3316,9 +3247,9 @@ pub unsafe fn Shaktool_Instr_12(
         & 0xf000 as ::core::ffi::c_int
         == 0xa000 as ::core::ffi::c_int
     {
-        SpawnPLM(addr_kPlmHeader_D113 as ::core::ffi::c_int as uint16, game);
+        SpawnPLM(addr_kPlmHeader_D113 as uint16, game);
         SpawnEprojWithRoomGfx(
-            addr_kEproj_WreckedShipChozoSpikeFootsteps_1 as ::core::ffi::c_int as uint16,
+            addr_kEproj_WreckedShipChozoSpikeFootsteps_1 as uint16,
             arg,
             game,
         );
@@ -3433,7 +3364,7 @@ pub unsafe fn ChozoStatue_Init(game: &mut Game) {
         | (kEnemyProps_DisableSamusColl as ::core::ffi::c_int
             | kEnemyProps_ProcessedOffscreen as ::core::ffi::c_int
             | 0x8000 as ::core::ffi::c_int)) as uint16;
-    (*v0).spritemap_pointer = addr_kSpritemap_Nothing_AA as ::core::ffi::c_int as uint16;
+    (*v0).spritemap_pointer = addr_kSpritemap_Nothing_AA as uint16;
     (*v0).instruction_timer = 1 as uint16;
     (*v0).timer = 0 as uint16;
     (*v0).ai_preinstr = (0xaae7a6 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -3520,8 +3451,7 @@ pub unsafe fn Shaktool_PreInstr_0(mut k: uint16, game: &mut Game) {
     {
         let mut E: *mut Enemy_Shaktool = Get_Shaktool(k as ::core::ffi::c_int, game);
         if (*E).shakt_parameter_1 != 0 {
-            (*E).base.current_instruction =
-                addr_kShaktool_Ilist_E461 as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kShaktool_Ilist_E461 as uint16;
             (*E).base.instruction_timer = 1 as uint16;
             (*E).shakt_var_A = -(256 as ::core::ffi::c_int) as uint16;
             (*E).shakt_var_B = 256 as uint16;

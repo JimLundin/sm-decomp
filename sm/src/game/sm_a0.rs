@@ -1814,150 +1814,150 @@ pub fn EnemyInstr_DisableOffScreenProcessing(
     jp
 }
 static kRoomShakes: [uint16; 144] = [
-    1 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    3 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    3 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    3 as ::core::ffi::c_int as uint16,
-    3 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    3 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    3 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    3 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    3 as ::core::ffi::c_int as uint16,
-    3 as ::core::ffi::c_int as uint16,
-    3 as ::core::ffi::c_int as uint16,
-    3 as ::core::ffi::c_int as uint16,
-    3 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    3 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    3 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    3 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    3 as ::core::ffi::c_int as uint16,
-    3 as ::core::ffi::c_int as uint16,
-    3 as ::core::ffi::c_int as uint16,
-    3 as ::core::ffi::c_int as uint16,
-    3 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    3 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    3 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    3 as ::core::ffi::c_int as uint16,
-    3 as ::core::ffi::c_int as uint16,
+    1 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    1 as uint16,
+    0 as uint16,
+    0 as uint16,
+    1 as uint16,
+    1 as uint16,
+    0 as uint16,
+    0 as uint16,
+    2 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    2 as uint16,
+    0 as uint16,
+    0 as uint16,
+    2 as uint16,
+    2 as uint16,
+    0 as uint16,
+    0 as uint16,
+    3 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    3 as uint16,
+    0 as uint16,
+    0 as uint16,
+    3 as uint16,
+    3 as uint16,
+    0 as uint16,
+    0 as uint16,
+    1 as uint16,
+    0 as uint16,
+    1 as uint16,
+    0 as uint16,
+    0 as uint16,
+    1 as uint16,
+    0 as uint16,
+    1 as uint16,
+    1 as uint16,
+    1 as uint16,
+    1 as uint16,
+    1 as uint16,
+    2 as uint16,
+    0 as uint16,
+    2 as uint16,
+    0 as uint16,
+    0 as uint16,
+    2 as uint16,
+    0 as uint16,
+    2 as uint16,
+    2 as uint16,
+    2 as uint16,
+    2 as uint16,
+    2 as uint16,
+    3 as uint16,
+    0 as uint16,
+    3 as uint16,
+    0 as uint16,
+    0 as uint16,
+    3 as uint16,
+    0 as uint16,
+    3 as uint16,
+    3 as uint16,
+    3 as uint16,
+    3 as uint16,
+    3 as uint16,
+    1 as uint16,
+    0 as uint16,
+    1 as uint16,
+    0 as uint16,
+    0 as uint16,
+    1 as uint16,
+    0 as uint16,
+    1 as uint16,
+    1 as uint16,
+    1 as uint16,
+    1 as uint16,
+    1 as uint16,
+    2 as uint16,
+    0 as uint16,
+    2 as uint16,
+    0 as uint16,
+    0 as uint16,
+    2 as uint16,
+    0 as uint16,
+    2 as uint16,
+    2 as uint16,
+    2 as uint16,
+    2 as uint16,
+    2 as uint16,
+    3 as uint16,
+    0 as uint16,
+    3 as uint16,
+    0 as uint16,
+    0 as uint16,
+    3 as uint16,
+    0 as uint16,
+    3 as uint16,
+    3 as uint16,
+    3 as uint16,
+    3 as uint16,
+    3 as uint16,
+    0 as uint16,
+    0 as uint16,
+    1 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    1 as uint16,
+    0 as uint16,
+    0 as uint16,
+    1 as uint16,
+    1 as uint16,
+    0 as uint16,
+    0 as uint16,
+    2 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    2 as uint16,
+    0 as uint16,
+    0 as uint16,
+    2 as uint16,
+    2 as uint16,
+    0 as uint16,
+    0 as uint16,
+    3 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    3 as uint16,
+    0 as uint16,
+    0 as uint16,
+    3 as uint16,
+    3 as uint16,
 ];
 pub unsafe fn HandleRoomShaking(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) as ::core::ffi::c_int
@@ -2290,11 +2290,11 @@ pub unsafe fn InitializeEnemies(game: &mut Game) {
         if (*E).properties as ::core::ffi::c_int & 0x2000 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
         {
-            let mut v12: uint16 = addr_kSpritemap_Nothing_A4 as ::core::ffi::c_int as uint16;
+            let mut v12: uint16 = addr_kSpritemap_Nothing_A4 as uint16;
             if (*E).extra_properties as ::core::ffi::c_int & 4 as ::core::ffi::c_int
                 != 0 as ::core::ffi::c_int
             {
-                v12 = addr_kExtendedSpritemap_Nothing_A4 as ::core::ffi::c_int as uint16;
+                v12 = addr_kExtendedSpritemap_Nothing_A4 as uint16;
             }
             (*E).spritemap_pointer = v12;
         }
@@ -5785,12 +5785,7 @@ pub unsafe fn DecrementSamusTimers(game: &mut Game) {
 }
 pub unsafe fn SpawnEnemyDrops(mut a: uint16, mut k: uint16, mut varE20: uint16, game: &mut Game) {
     game.eproj_spawn_varE24 = a;
-    SpawnEprojWithGfx(
-        varE20,
-        k,
-        addr_kEproj_Pickup as ::core::ffi::c_int as uint16,
-        game,
-    );
+    SpawnEprojWithGfx(varE20, k, addr_kEproj_Pickup as uint16, game);
 }
 pub unsafe fn DeleteEnemyAndConnectedEnemies(game: &mut Game) {
     let mut v0: *mut EnemyData = gEnemyData(
@@ -5926,7 +5921,7 @@ pub unsafe fn SpawnEnemy(mut db: uint8, mut k: uint16, game: &mut Game) -> uint1
             if (*E).properties as ::core::ffi::c_int & 0x2000 as ::core::ffi::c_int
                 != 0 as ::core::ffi::c_int
             {
-                (*E).spritemap_pointer = addr_kSpritemap_Nothing_A0 as ::core::ffi::c_int as uint16;
+                (*E).spritemap_pointer = addr_kSpritemap_Nothing_A0 as uint16;
             }
             if varE26 == 0 || {
                 varE26 = varE26.wrapping_sub(1);
@@ -6275,8 +6270,7 @@ pub unsafe fn SamusProjectileInteractionHandler(game: &mut Game) {
                                             as isize,
                                     ) as ::core::ffi::c_int) as int16
                                 as ::core::ffi::c_int
-                                >= 0 as ::core::ffi::c_int)
-                                as ::core::ffi::c_int as uint16;
+                                >= 0 as ::core::ffi::c_int) as uint16;
                         return;
                     }
                     if *((&raw mut game.g_ram as *mut uint8).offset(0xc7c) as *mut uint16)
@@ -6414,7 +6408,7 @@ pub unsafe fn HandleEprojCollWithSamus(mut k: uint16, game: &mut Game) {
         ((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) as ::core::ffi::c_int
             - *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
                 .offset(v3 as isize) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
-            >= 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
+            >= 0 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn EprojProjCollDet(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xf378) as *mut uint16) = 12 as uint16;
@@ -7540,7 +7534,7 @@ pub unsafe fn EnemyDeathAnimation(mut k: uint16, mut a: uint16, game: &mut Game)
     SpawnEprojWithGfx(
         a,
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        addr_kEproj_EnemyDeathExplosion as ::core::ffi::c_int as uint16,
+        addr_kEproj_EnemyDeathExplosion as uint16,
         game,
     );
     let mut r18: uint16 =
@@ -7551,7 +7545,7 @@ pub unsafe fn EnemyDeathAnimation(mut k: uint16, mut a: uint16, game: &mut Game)
         64 as size_t,
     );
     if r18 != 0 {
-        (*E).enemy_ptr = addr_kEnemyDef_DAFF as ::core::ffi::c_int as uint16;
+        (*E).enemy_ptr = addr_kEnemyDef_DAFF as uint16;
         (*E).bank = 0xa3 as uint8;
     }
     let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0xe50) as *mut uint16);
@@ -7568,7 +7562,7 @@ pub unsafe fn RinkasDeathAnimation(mut a: uint16, game: &mut Game) {
     SpawnEprojWithGfx(
         a,
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        addr_kEproj_EnemyDeathExplosion as ::core::ffi::c_int as uint16,
+        addr_kEproj_EnemyDeathExplosion as uint16,
         game,
     );
     let mut r18: uint16 =
@@ -7579,7 +7573,7 @@ pub unsafe fn RinkasDeathAnimation(mut a: uint16, game: &mut Game) {
         64 as size_t,
     );
     if r18 != 0 {
-        (*E).enemy_ptr = addr_kEnemyDef_DAFF as ::core::ffi::c_int as uint16;
+        (*E).enemy_ptr = addr_kEnemyDef_DAFF as uint16;
         (*E).bank = 0xa3 as uint8;
     }
 }
@@ -7639,7 +7633,7 @@ pub unsafe fn NormalEnemyTouchAiSkipDeathAnim(game: &mut Game) {
             ((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
                 as ::core::ffi::c_int
                 - (*E).x_pos as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
-                >= 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
+                >= 0 as ::core::ffi::c_int) as uint16;
         return;
     }
     let mut r20: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa6e) as *mut uint16)
@@ -7875,7 +7869,7 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> uint16 {
     let mut vulnerability_ptr: uint16 =
         (*get_EnemyDef_A2((*j).enemy_ptr, game)).vulnerability_ptr as uint16;
     if vulnerability_ptr == 0 {
-        vulnerability_ptr = addr_stru_B4EC1C as ::core::ffi::c_int as uint16;
+        vulnerability_ptr = addr_stru_B4EC1C as uint16;
     }
     let mut r20: uint16 = vulnerability_ptr;
     if r18 as ::core::ffi::c_int & 0xf00 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
@@ -8877,26 +8871,26 @@ fn EnemyBlockCollVertReact_Slope(collision: &mut EnemyBlockCollInfo, game: &mut 
     }
 }
 static byte_A0C435: [uint8; 20] = [
-    0 as ::core::ffi::c_int as uint8,
-    1 as ::core::ffi::c_int as uint8,
-    0x82 as ::core::ffi::c_int as uint8,
-    0x83 as ::core::ffi::c_int as uint8,
-    0 as ::core::ffi::c_int as uint8,
-    0x81 as ::core::ffi::c_int as uint8,
-    2 as ::core::ffi::c_int as uint8,
-    0x83 as ::core::ffi::c_int as uint8,
-    0 as ::core::ffi::c_int as uint8,
-    1 as ::core::ffi::c_int as uint8,
-    2 as ::core::ffi::c_int as uint8,
-    0x83 as ::core::ffi::c_int as uint8,
-    0 as ::core::ffi::c_int as uint8,
-    0x81 as ::core::ffi::c_int as uint8,
-    0x82 as ::core::ffi::c_int as uint8,
-    0x83 as ::core::ffi::c_int as uint8,
-    0x80 as ::core::ffi::c_int as uint8,
-    0x81 as ::core::ffi::c_int as uint8,
-    0x82 as ::core::ffi::c_int as uint8,
-    0x83 as ::core::ffi::c_int as uint8,
+    0 as uint8,
+    1 as uint8,
+    0x82 as uint8,
+    0x83 as uint8,
+    0 as uint8,
+    0x81 as uint8,
+    2 as uint8,
+    0x83 as uint8,
+    0 as uint8,
+    1 as uint8,
+    2 as uint8,
+    0x83 as uint8,
+    0 as uint8,
+    0x81 as uint8,
+    0x82 as uint8,
+    0x83 as uint8,
+    0x80 as uint8,
+    0x81 as uint8,
+    0x82 as uint8,
+    0x83 as uint8,
 ];
 fn EnemyBlockCollHorizReact_Slope_Square(
     collision: &mut EnemyBlockCollInfo,

@@ -853,125 +853,103 @@ unsafe fn Get_ShitroidInCutscene(
         .offset(o as isize) as *mut Enemy_ShitroidInCutscene;
 }
 static g_word_A98B5D: [uint16; 5] = [
-    0x10 as ::core::ffi::c_int as uint16,
-    0x10 as ::core::ffi::c_int as uint16,
-    8 as ::core::ffi::c_int as uint16,
-    8 as ::core::ffi::c_int as uint16,
-    0x10 as ::core::ffi::c_int as uint16,
+    0x10 as uint16,
+    0x10 as uint16,
+    8 as uint16,
+    8 as uint16,
+    0x10 as uint16,
 ];
 static g_word_A98B67: [uint16; 5] = [
-    0x20 as ::core::ffi::c_int as uint16,
-    0x20 as ::core::ffi::c_int as uint16,
-    0x18 as ::core::ffi::c_int as uint16,
-    0x18 as ::core::ffi::c_int as uint16,
-    0x20 as ::core::ffi::c_int as uint16,
+    0x20 as uint16,
+    0x20 as uint16,
+    0x18 as uint16,
+    0x18 as uint16,
+    0x20 as uint16,
 ];
 static g_word_A98B71: [uint16; 5] = [
-    0xf8 as ::core::ffi::c_int as uint16,
-    0xf8 as ::core::ffi::c_int as uint16,
-    0xf0 as ::core::ffi::c_int as uint16,
-    0xf0 as ::core::ffi::c_int as uint16,
-    0xf6 as ::core::ffi::c_int as uint16,
+    0xf8 as uint16,
+    0xf8 as uint16,
+    0xf0 as uint16,
+    0xf0 as uint16,
+    0xf6 as uint16,
 ];
-static g_word_A98C61: [uint16; 4] = [
-    0xfff8 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    0xfffc as ::core::ffi::c_int as uint16,
-    6 as ::core::ffi::c_int as uint16,
-];
-static g_byte_A98F7D: [uint8; 2] = [
-    9 as ::core::ffi::c_int as uint8,
-    0x12 as ::core::ffi::c_int as uint8,
-];
+static g_word_A98C61: [uint16; 4] = [0xfff8 as uint16, 2 as uint16, 0xfffc as uint16, 6 as uint16];
+static g_byte_A98F7D: [uint8; 2] = [9 as uint8, 0x12 as uint8];
 static g_word_A98F7F: [uint16; 8] = [
-    0x3d as ::core::ffi::c_int as uint16,
-    0x54 as ::core::ffi::c_int as uint16,
-    0x20 as ::core::ffi::c_int as uint16,
-    0x35 as ::core::ffi::c_int as uint16,
-    0x5a as ::core::ffi::c_int as uint16,
-    0x43 as ::core::ffi::c_int as uint16,
-    0x67 as ::core::ffi::c_int as uint16,
-    0x29 as ::core::ffi::c_int as uint16,
+    0x3d as uint16,
+    0x54 as uint16,
+    0x20 as uint16,
+    0x35 as uint16,
+    0x5a as uint16,
+    0x43 as uint16,
+    0x67 as uint16,
+    0x29 as uint16,
 ];
 static g_word_A993BB: [int16; 4] = [
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
     -(1 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
-    1 as ::core::ffi::c_int as int16,
+    0 as int16,
+    1 as int16,
 ];
 static g_word_A993C3: [int16; 4] = [
-    0 as ::core::ffi::c_int as int16,
-    1 as ::core::ffi::c_int as int16,
+    0 as int16,
+    1 as int16,
     -(1 as ::core::ffi::c_int) as int16,
-    1 as ::core::ffi::c_int as int16,
+    1 as int16,
 ];
 static g_word_A99E0F: [uint16; 13] = [
-    0x6f as ::core::ffi::c_int as uint16,
-    0x6f as ::core::ffi::c_int as uint16,
-    0x6f as ::core::ffi::c_int as uint16,
-    0x7e as ::core::ffi::c_int as uint16,
-    0x6f as ::core::ffi::c_int as uint16,
-    0x6f as ::core::ffi::c_int as uint16,
-    0x7e as ::core::ffi::c_int as uint16,
-    0x6f as ::core::ffi::c_int as uint16,
-    0x6f as ::core::ffi::c_int as uint16,
-    0x7e as ::core::ffi::c_int as uint16,
-    0x7e as ::core::ffi::c_int as uint16,
-    0x6f as ::core::ffi::c_int as uint16,
-    0x6f as ::core::ffi::c_int as uint16,
+    0x6f as uint16,
+    0x6f as uint16,
+    0x6f as uint16,
+    0x7e as uint16,
+    0x6f as uint16,
+    0x6f as uint16,
+    0x7e as uint16,
+    0x6f as uint16,
+    0x6f as uint16,
+    0x7e as uint16,
+    0x7e as uint16,
+    0x6f as uint16,
+    0x6f as uint16,
 ];
 static g_word_A9B393: [uint16; 8] = [
-    8 as ::core::ffi::c_int as uint16,
-    0x6c as ::core::ffi::c_int as uint16,
-    0x18 as ::core::ffi::c_int as uint16,
-    0x80 as ::core::ffi::c_int as uint16,
-    9 as ::core::ffi::c_int as uint16,
-    0x90 as ::core::ffi::c_int as uint16,
-    0x18 as ::core::ffi::c_int as uint16,
-    0x74 as ::core::ffi::c_int as uint16,
+    8 as uint16,
+    0x6c as uint16,
+    0x18 as uint16,
+    0x80 as uint16,
+    9 as uint16,
+    0x90 as uint16,
+    0x18 as uint16,
+    0x74 as uint16,
 ];
 static g_byte_A9B546: [uint8; 8] = [
-    0 as ::core::ffi::c_int as uint8,
-    1 as ::core::ffi::c_int as uint8,
-    1 as ::core::ffi::c_int as uint8,
-    0 as ::core::ffi::c_int as uint8,
-    0 as ::core::ffi::c_int as uint8,
-    0 as ::core::ffi::c_int as uint8,
-    0 as ::core::ffi::c_int as uint8,
-    0 as ::core::ffi::c_int as uint8,
+    0 as uint8, 1 as uint8, 1 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8,
 ];
 static g_byte_A9B5A1: [uint8; 8] = [
-    2 as ::core::ffi::c_int as uint8,
-    1 as ::core::ffi::c_int as uint8,
-    1 as ::core::ffi::c_int as uint8,
-    0 as ::core::ffi::c_int as uint8,
-    0 as ::core::ffi::c_int as uint8,
-    0 as ::core::ffi::c_int as uint8,
-    0 as ::core::ffi::c_int as uint8,
-    0 as ::core::ffi::c_int as uint8,
+    2 as uint8, 1 as uint8, 1 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8,
 ];
 static g_word_A9B72C: [int16; 28] = [
     -(1 as ::core::ffi::c_int) as int16,
     -(17 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
+    0 as int16,
     -(1 as ::core::ffi::c_int) as int16,
     -(1 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
     -(1 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
+    0 as int16,
     -(1 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
+    0 as int16,
+    0 as int16,
     -(17 as ::core::ffi::c_int) as int16,
     -(1 as ::core::ffi::c_int) as int16,
     -(1 as ::core::ffi::c_int) as int16,
     -(1 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
+    0 as int16,
+    0 as int16,
     -(17 as ::core::ffi::c_int) as int16,
     -(1 as ::core::ffi::c_int) as int16,
     -(1 as ::core::ffi::c_int) as int16,
@@ -982,80 +960,80 @@ static g_word_A9B72C: [int16; 28] = [
 ];
 static g_word_A9BCA6: [int16; 8] = [
     -(8 as ::core::ffi::c_int) as int16,
-    6 as ::core::ffi::c_int as int16,
+    6 as int16,
     -(4 as ::core::ffi::c_int) as int16,
-    2 as ::core::ffi::c_int as int16,
-    3 as ::core::ffi::c_int as int16,
+    2 as int16,
+    3 as int16,
     -(6 as ::core::ffi::c_int) as int16,
-    8 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
+    8 as int16,
+    0 as int16,
 ];
 static g_word_A9BCB6: [int16; 8] = [
     -(7 as ::core::ffi::c_int) as int16,
-    2 as ::core::ffi::c_int as int16,
-    5 as ::core::ffi::c_int as int16,
+    2 as int16,
+    5 as int16,
     -(4 as ::core::ffi::c_int) as int16,
-    6 as ::core::ffi::c_int as int16,
+    6 as int16,
     -(2 as ::core::ffi::c_int) as int16,
     -(6 as ::core::ffi::c_int) as int16,
-    7 as ::core::ffi::c_int as int16,
+    7 as int16,
 ];
 static g_byte_A9BEEE: [uint8; 16] = [
-    2 as ::core::ffi::c_int as uint8,
-    0 as ::core::ffi::c_int as uint8,
-    2 as ::core::ffi::c_int as uint8,
-    0 as ::core::ffi::c_int as uint8,
-    6 as ::core::ffi::c_int as uint8,
-    0 as ::core::ffi::c_int as uint8,
-    6 as ::core::ffi::c_int as uint8,
-    0 as ::core::ffi::c_int as uint8,
-    8 as ::core::ffi::c_int as uint8,
-    0 as ::core::ffi::c_int as uint8,
-    8 as ::core::ffi::c_int as uint8,
-    0 as ::core::ffi::c_int as uint8,
-    10 as ::core::ffi::c_int as uint8,
-    0 as ::core::ffi::c_int as uint8,
-    10 as ::core::ffi::c_int as uint8,
-    0 as ::core::ffi::c_int as uint8,
+    2 as uint8,
+    0 as uint8,
+    2 as uint8,
+    0 as uint8,
+    6 as uint8,
+    0 as uint8,
+    6 as uint8,
+    0 as uint8,
+    8 as uint8,
+    0 as uint8,
+    8 as uint8,
+    0 as uint8,
+    10 as uint8,
+    0 as uint8,
+    10 as uint8,
+    0 as uint8,
 ];
 static g_word_A9BEFE: [uint16; 8] = [
-    0x500 as ::core::ffi::c_int as uint16,
-    0x500 as ::core::ffi::c_int as uint16,
-    0x200 as ::core::ffi::c_int as uint16,
-    0x200 as ::core::ffi::c_int as uint16,
-    0xc0 as ::core::ffi::c_int as uint16,
-    0xc0 as ::core::ffi::c_int as uint16,
-    0x40 as ::core::ffi::c_int as uint16,
-    0x40 as ::core::ffi::c_int as uint16,
+    0x500 as uint16,
+    0x500 as uint16,
+    0x200 as uint16,
+    0x200 as uint16,
+    0xc0 as uint16,
+    0xc0 as uint16,
+    0x40 as uint16,
+    0x40 as uint16,
 ];
 static g_word_A9C049: [int16; 8] = [
-    0x10 as ::core::ffi::c_int as int16,
-    0x10 as ::core::ffi::c_int as int16,
-    0x20 as ::core::ffi::c_int as int16,
-    0x20 as ::core::ffi::c_int as int16,
-    0x30 as ::core::ffi::c_int as int16,
-    0x30 as ::core::ffi::c_int as int16,
-    0x40 as ::core::ffi::c_int as int16,
-    0x40 as ::core::ffi::c_int as int16,
+    0x10 as int16,
+    0x10 as int16,
+    0x20 as int16,
+    0x20 as int16,
+    0x30 as int16,
+    0x30 as int16,
+    0x40 as int16,
+    0x40 as int16,
 ];
 static g_word_A9C544: uint16 = 1 as uint16;
 static g_byte_A9F56A: [int8; 16] = [
-    0x10 as ::core::ffi::c_int as int8,
-    0xf as ::core::ffi::c_int as int8,
-    0xe as ::core::ffi::c_int as int8,
-    0xd as ::core::ffi::c_int as int8,
-    0xc as ::core::ffi::c_int as int8,
-    0xb as ::core::ffi::c_int as int8,
-    0xa as ::core::ffi::c_int as int8,
-    9 as ::core::ffi::c_int as int8,
-    8 as ::core::ffi::c_int as int8,
-    7 as ::core::ffi::c_int as int8,
-    6 as ::core::ffi::c_int as int8,
-    5 as ::core::ffi::c_int as int8,
-    4 as ::core::ffi::c_int as int8,
-    3 as ::core::ffi::c_int as int8,
-    2 as ::core::ffi::c_int as int8,
-    1 as ::core::ffi::c_int as int8,
+    0x10 as int8,
+    0xf as int8,
+    0xe as int8,
+    0xd as int8,
+    0xc as int8,
+    0xb as int8,
+    0xa as int8,
+    9 as int8,
+    8 as int8,
+    7 as int8,
+    6 as int8,
+    5 as int8,
+    4 as int8,
+    3 as int8,
+    2 as int8,
+    1 as int8,
 ];
 pub unsafe fn CallCorpseRottingMove(mut ea: uint32, mut k: uint16, mut j: uint16, game: &mut Game) {
     match ea {
@@ -1762,10 +1740,7 @@ pub unsafe fn MotherBrainsBody_Init(game: &mut Game) {
             .offset((i >> 1 as ::core::ffi::c_int) as isize) = 824 as uint16;
         i -= 2 as ::core::ffi::c_int;
     }
-    MotherBrain_SetBodyInstrs(
-        addr_kMotherBrain_Ilist_9C13 as ::core::ffi::c_int as uint16,
-        game,
-    );
+    MotherBrain_SetBodyInstrs(addr_kMotherBrain_Ilist_9C13 as uint16, game);
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
     (*E).base.vram_tiles_index = 0 as uint16;
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
@@ -1798,11 +1773,7 @@ pub unsafe fn MotherBrainsBody_Init(game: &mut Game) {
     let mut v4: uint16 = 0;
     loop {
         v4 = v3;
-        SpawnEprojWithRoomGfx(
-            addr_kEproj_MotherBrainRoomTurrets as ::core::ffi::c_int as uint16,
-            v3,
-            game,
-        );
+        SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainRoomTurrets as uint16, v3, game);
         v3 = (v4 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16;
         if !(((v4 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int)
             < 0xc as ::core::ffi::c_int)
@@ -1812,17 +1783,10 @@ pub unsafe fn MotherBrainsBody_Init(game: &mut Game) {
     }
 }
 pub unsafe fn MotherBrainsBrain_Init(game: &mut Game) {
-    InitializeEnemyCorpseRotting(
-        0x40 as uint16,
-        addr_stru_A9DE08 as ::core::ffi::c_int as uint16,
-        game,
-    );
+    InitializeEnemyCorpseRotting(0x40 as uint16, addr_stru_A9DE08 as uint16, game);
     let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int, game);
     (*E1).base.health = 3000 as uint16;
-    MotherBrain_SetBrainUnusedInstrs(
-        addr_kMotherBrain_Ilist_9C13 as ::core::ffi::c_int as uint16,
-        game,
-    );
+    MotherBrain_SetBrainUnusedInstrs(addr_kMotherBrain_Ilist_9C13 as uint16, game);
     (*E1).base.vram_tiles_index = 0 as uint16;
     (*E1).base.properties =
         ((*E1).base.properties as ::core::ffi::c_int | 0x1100 as ::core::ffi::c_int) as uint16;
@@ -1830,7 +1794,7 @@ pub unsafe fn MotherBrainsBrain_Init(game: &mut Game) {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
     (*E).mbn_var_0C = 512 as uint16;
     (*E).mbn_var_0D = 512 as uint16;
-    MotherBrain_SetBrainInstrs(addr_stru_A99C21 as ::core::ffi::c_int as uint16, game);
+    MotherBrain_SetBrainInstrs(addr_stru_A99C21 as uint16, game);
     MotherBrain_SetupBrainNormalPal(game);
 }
 pub unsafe fn MotherBrainsBody_Hurt(game: &mut Game) {
@@ -2074,11 +2038,7 @@ pub unsafe fn MotherBrain_HandleFakeDeathExplosions(game: &mut Game) {
         } else {
             3 as ::core::ffi::c_int
         }) as uint16;
-        SpawnEprojWithRoomGfx(
-            addr_kEproj_DustCloudExplosion as ::core::ffi::c_int as uint16,
-            v4,
-            game,
-        );
+        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as uint16, v4, game);
         QueueSfx2_Max3(0x24 as uint16, game);
     } else {
         (*E).mbn_var_38 = v1 as uint16;
@@ -2105,11 +2065,7 @@ pub unsafe fn MotherBrainBody_0_Wait(game: &mut Game) {
     if (v1 as ::core::ffi::c_int - 4 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
         >= 0 as ::core::ffi::c_int
     {
-        SpawnEnemy(
-            0xa9 as uint8,
-            addr_stru_A98AE5 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        SpawnEnemy(0xa9 as uint8, addr_stru_A98AE5 as uint16, game);
         (*Get_MotherBrainBody(0x40 as ::core::ffi::c_int, game)).mbby_var_E =
             (0xa9896e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
@@ -2165,7 +2121,7 @@ pub unsafe fn MotherBrainBody_4_SpawnTopLeftTubeFalling(game: &mut Game) {
             y: 47 as uint16,
         };
         SpawnEprojWithRoomGfx(
-            addr_kEproj_MotherBrainTubeFalling_TopLeft as ::core::ffi::c_int as uint16,
+            addr_kEproj_MotherBrainTubeFalling_TopLeft as uint16,
             0x2f as uint16,
             game,
         );
@@ -2191,11 +2147,7 @@ pub unsafe fn MotherBrainBody_5_SpawnTubeFallingEnemy1(game: &mut Game) {
     if (*E).mbby_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        SpawnEnemy(
-            0xa9 as uint8,
-            addr_stru_A98AF5 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        SpawnEnemy(0xa9 as uint8, addr_stru_A98AF5 as uint16, game);
         (*E).mbby_var_E = (0xa989fa as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
@@ -2218,11 +2170,7 @@ pub unsafe fn MotherBrainBody_7_SpawnTubeFallingEnemy2(game: &mut Game) {
     if (*E).mbby_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        SpawnEnemy(
-            0xa9 as uint8,
-            addr_stru_A98B05 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        SpawnEnemy(0xa9 as uint8, addr_stru_A98B05 as uint16, game);
         (*E).mbby_var_E = (0xa98a22 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
@@ -2250,7 +2198,7 @@ pub unsafe fn MotherBrainBody_9_SpawnTopMiddleLeftFalling(game: &mut Game) {
             y: 59 as uint16,
         };
         SpawnEprojWithRoomGfx(
-            addr_kEproj_MotherBrainTubeFalling_TopMiddleLeft as ::core::ffi::c_int as uint16,
+            addr_kEproj_MotherBrainTubeFalling_TopMiddleLeft as uint16,
             0x3b as uint16,
             game,
         );
@@ -2281,7 +2229,7 @@ pub unsafe fn MotherBrainBody_11_SpawnTopMiddleRightFalling(game: &mut Game) {
             y: 59 as uint16,
         };
         SpawnEprojWithRoomGfx(
-            addr_kEproj_MotherBrainTubeFalling_TopMiddleRight as ::core::ffi::c_int as uint16,
+            addr_kEproj_MotherBrainTubeFalling_TopMiddleRight as uint16,
             0x3b as uint16,
             game,
         );
@@ -2334,11 +2282,7 @@ pub unsafe fn MotherBrainBody_15_SpawnTubeFallingEnemy4(game: &mut Game) {
     if (*E).mbby_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        SpawnEnemy(
-            0xa9 as uint8,
-            addr_stru_A98B25 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        SpawnEnemy(0xa9 as uint8, addr_stru_A98B25 as uint16, game);
         (*E).mbby_var_E = (0xa98ad6 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
@@ -2352,7 +2296,7 @@ pub unsafe fn MotherBrainBody_16_ClearBottomMiddleTubes(game: &mut Game) {
         game,
     );
     (*Get_MotherBrainBody(0x40 as ::core::ffi::c_int, game)).mbby_var_E =
-        addr_locret_A98AE4 as ::core::ffi::c_int as uint16;
+        addr_locret_A98AE4 as uint16;
 }
 pub unsafe fn MotherBrainsTubesFalling_Init(game: &mut Game) {
     let mut E: *mut Enemy_MotherBrainsTubesFalling = Get_MotherBrainsTubesFalling(
@@ -2437,11 +2381,7 @@ pub unsafe fn MotherBrainsTubesFalling_Explode(mut k: uint16, game: &mut Game) {
         x: (*E).base.x_pos,
         y: (*E).base.y_pos,
     };
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_DustCloudExplosion as ::core::ffi::c_int as uint16,
-        3 as uint16,
-        game,
-    );
+    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as uint16, 3 as uint16, game);
     QueueSfx2_Max3(0x24 as uint16, game);
 }
 pub unsafe fn MotherBrainsTubesFalling_WaitToFall(mut k: uint16, game: &mut Game) {
@@ -2509,11 +2449,7 @@ pub unsafe fn MotherBrainsTubesFalling_SpawnSmoke(mut k: uint16, game: &mut Game
             + g_word_A98C61[v2 as usize] as ::core::ffi::c_int) as uint16,
         y: 208 as uint16,
     };
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_DustCloudExplosion as ::core::ffi::c_int as uint16,
-        9 as uint16,
-        game,
-    );
+    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as uint16, 9 as uint16, game);
 }
 pub unsafe fn MotherBrainBody_FakeDeath_Ascent_0_DrawBG1Row23(game: &mut Game) {
     SpawnHardcodedPlm(
@@ -2693,19 +2629,14 @@ pub unsafe fn MotherBrainBody_FakeDeath_Ascent_9_PrepareRise(game: &mut Game) {
         let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int, game);
         (*E1).base.properties =
             ((*E1).base.properties as ::core::ffi::c_int | 0x100 as ::core::ffi::c_int) as uint16;
-        MotherBrain_SetBrainInstrs(addr_stru_A99C21 as ::core::ffi::c_int as uint16, game);
+        MotherBrain_SetBrainInstrs(addr_stru_A99C21 as uint16, game);
         (*E).mbn_var_A = (0xa98db4 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E).mbn_var_F = 256 as uint16;
         MotherBrainBody_FakeDeath_Ascent_10_LoadLegTiles(game);
     }
 }
 pub unsafe fn MotherBrainBody_FakeDeath_Ascent_10_LoadLegTiles(game: &mut Game) {
-    if ProcessSpriteTilesTransfers(
-        0xa9 as uint8,
-        addr_stru_A98F8F as ::core::ffi::c_int as uint16,
-        game,
-    ) != 0
-    {
+    if ProcessSpriteTilesTransfers(0xa9 as uint8, addr_stru_A98F8F as uint16, game) != 0 {
         (*Get_MotherBrainBody(0 as ::core::ffi::c_int, game)).mbby_var_A =
             (0xa98dc3 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         MotherBrainBody_FakeDeath_Ascent_11_ContinuePause(game);
@@ -2728,10 +2659,7 @@ pub unsafe fn MotherBrainBody_FakeDeath_Ascent_11_ContinuePause(game: &mut Game)
     }
 }
 pub unsafe fn MotherBrainBody_FakeDeath_Ascent_12_StartMusic(game: &mut Game) {
-    MotherBrain_SetBodyInstrs(
-        addr_kMotherBrain_Ilist_9A02 as ::core::ffi::c_int as uint16,
-        game,
-    );
+    MotherBrain_SetBodyInstrs(addr_kMotherBrain_Ilist_9A02 as uint16, game);
     let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int, game);
     (*E1).base.instruction_timer = 1 as uint16;
     let mut E0: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
@@ -2773,10 +2701,7 @@ pub unsafe fn MotherBrainBody_FakeDeath_Ascent_13_Raise(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x18b4) as *mut uint16)
             .offset(((*E).mbn_var_09 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
             0 as uint16;
-        MotherBrain_SetBodyInstrs(
-            addr_kMotherBrain_Ilist_99AA as ::core::ffi::c_int as uint16,
-            game,
-        );
+        MotherBrain_SetBodyInstrs(addr_kMotherBrain_Ilist_99AA as uint16, game);
         (*E).mbn_var_A = (0xa98e95 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         MotherBrainBody_FakeDeath_Ascent_14_WaitForUncouching(game);
     }
@@ -2825,10 +2750,7 @@ pub unsafe fn MotherBrainBody_2ndphase_16_ShakeHeadMenacingly(game: &mut Game) {
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        MotherBrain_SetBrainInstrs(
-            addr_kMotherBrain_Ilist_9B7F as ::core::ffi::c_int as uint16,
-            game,
-        );
+        MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9B7F as uint16, game);
         (*E).mbn_var_A = (0xa98f14 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*Get_MotherBrain(0x40 as ::core::ffi::c_int, game)).mbn_var_34 = 64 as uint16;
         (*E).mbn_var_F = 256 as uint16;
@@ -2872,7 +2794,7 @@ pub unsafe fn MotherBrain_SpawnDustCloudsForAscent(game: &mut Game) {
         y: 212 as uint16,
     };
     SpawnEprojWithRoomGfx(
-        addr_kEproj_DustCloudExplosion as ::core::ffi::c_int as uint16,
+        addr_kEproj_DustCloudExplosion as uint16,
         g_byte_A98F7D[((*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
             as ::core::ffi::c_int
             & 0x100 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
@@ -3183,7 +3105,7 @@ pub unsafe fn MotherBrain_DrawBrain(game: &mut Game) {
             == 0 as ::core::ffi::c_int
     {
         SpawnEprojWithRoomGfx(
-            addr_kEproj_MotherBrainPurpleBreathSmall as ::core::ffi::c_int as uint16,
+            addr_kEproj_MotherBrainPurpleBreathSmall as uint16,
             *((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16),
             game,
         );
@@ -3231,7 +3153,7 @@ pub unsafe fn MotherBrain_DrawNeckSegment(mut x: uint16, mut y: uint16, game: &m
         & 6 as ::core::ffi::c_int)
         >> 1 as ::core::ffi::c_int;
     MotherBrain_AddSpritemapToOam(
-        addr_kMotherBrain_Sprmap_A694 as ::core::ffi::c_int as uint16,
+        addr_kMotherBrain_Sprmap_A694 as uint16,
         (x as ::core::ffi::c_int + g_word_A993BB[v0 as usize] as ::core::ffi::c_int) as uint16,
         (y as ::core::ffi::c_int + g_word_A993C3[v0 as usize] as ::core::ffi::c_int) as uint16,
         (*Get_MotherBrain(0 as ::core::ffi::c_int, game)).mbn_var_0C,
@@ -3584,7 +3506,7 @@ pub unsafe fn MotherBrain_Instr_SpawnEprojToOffset(
         y: ((*E).base.y_pos as ::core::ffi::c_int + *jp.offset(1) as ::core::ffi::c_int) as uint16,
     };
     SpawnEprojWithRoomGfx(
-        addr_kEproj_DustCloudExplosion as ::core::ffi::c_int as uint16,
+        addr_kEproj_DustCloudExplosion as uint16,
         *jp.offset(2),
         game,
     );
@@ -3599,7 +3521,7 @@ pub unsafe fn MotherBrain_Instr_SpawnDeathBeamEproj(
     SpawnEprojWithGfx(
         0 as uint16,
         0x40 as uint16,
-        addr_kEproj_MotherBrainDeathBeamCharging as ::core::ffi::c_int as uint16,
+        addr_kEproj_MotherBrainDeathBeamCharging as uint16,
         game,
     );
     return jp;
@@ -3660,7 +3582,7 @@ pub unsafe fn MotherBrain_Instr_SpawnDroolEproj(mut k: uint16, game: &mut Game) 
 }
 pub unsafe fn MotherBrain_Instr_SpawnPurpleBreath(mut k: uint16, game: &mut Game) -> uint16 {
     SpawnEprojWithRoomGfx(
-        addr_kEproj_MotherBrainPurpleBreathBig as ::core::ffi::c_int as uint16,
+        addr_kEproj_MotherBrainPurpleBreathBig as uint16,
         0 as uint16,
         game,
     );
@@ -3671,12 +3593,12 @@ pub unsafe fn MotherBrain_Instr_SetMainShakeTimer50(mut k: uint16, game: &mut Ga
     return k;
 }
 pub unsafe fn MotherBrain_Instr_GotoEitherOr(mut k: uint16, game: &mut Game) -> uint16 {
-    let mut result: uint16 = addr_stru_A99C5F as ::core::ffi::c_int as uint16;
+    let mut result: uint16 = addr_stru_A99C5F as uint16;
     if *((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16) as ::core::ffi::c_int
         & 0xfff as ::core::ffi::c_int
         >= 0xfe0 as ::core::ffi::c_int
     {
-        return addr_stru_A99C47 as ::core::ffi::c_int as uint16;
+        return addr_stru_A99C47 as uint16;
     }
     return result;
 }
@@ -3684,7 +3606,7 @@ pub unsafe fn MotherBrain_Instr_MaybeGoto(mut k: uint16, game: &mut Game) -> uin
     if (*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16) as ::core::ffi::c_int)
         < 0xf000 as ::core::ffi::c_int
     {
-        return addr_stru_A99C9F as ::core::ffi::c_int as uint16;
+        return addr_stru_A99C9F as uint16;
     }
     return k;
 }
@@ -3706,12 +3628,12 @@ pub unsafe fn MotherBrain_Instr_QueueShitroidAttackSfx(mut k: uint16, game: &mut
     return k;
 }
 pub unsafe fn MotherBrain_Instr_Goto2(mut k: uint16) -> uint16 {
-    return addr_stru_A99CD1 as ::core::ffi::c_int as uint16;
+    return addr_stru_A99CD1 as uint16;
 }
 pub unsafe fn MotherBrain_Instr_SpawnBlueRingEproj(mut k: uint16, game: &mut Game) -> uint16 {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
     SpawnEprojWithRoomGfx(
-        addr_kEproj_MotherBrainBlueRingLasers as ::core::ffi::c_int as uint16,
+        addr_kEproj_MotherBrainBlueRingLasers as uint16,
         (*E).mbn_var_1A,
         game,
     );
@@ -3786,11 +3708,7 @@ pub unsafe fn MotherBrain_Instr_SetShitroidAttackCtr0(mut k: uint16, game: &mut 
 }
 pub unsafe fn MotherBrain_Instr_SpawnBombEproj(mut k: uint16, game: &mut Game) -> uint16 {
     let mut v2: *const uint16 = RomPtr_A9(k as uint16_t, game) as *const uint16;
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_MotherBrainBomb as ::core::ffi::c_int as uint16,
-        *v2,
-        game,
-    );
+    SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainBomb as uint16, *v2, game);
     return (k as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn MotherBrain_Instr_SpawnLaserEproj(mut k: uint16, game: &mut Game) -> uint16 {
@@ -3801,16 +3719,12 @@ pub unsafe fn MotherBrain_Instr_SpawnLaserEproj(mut k: uint16, game: &mut Game) 
         x: ((*E).base.x_pos as ::core::ffi::c_int + 16 as ::core::ffi::c_int) as uint16,
         y: ((*E).base.y_pos as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16,
     };
-    SpawnEprojWithRoomGfx(
-        addr_stru_86A17B as ::core::ffi::c_int as uint16,
-        1 as uint16,
-        game,
-    );
+    SpawnEprojWithRoomGfx(addr_stru_86A17B as uint16, 1 as uint16, game);
     return k;
 }
 pub unsafe fn MotherBrain_Instr_SpawnRainbowEproj(mut k: uint16, game: &mut Game) -> uint16 {
     SpawnEprojWithRoomGfx(
-        addr_kEproj_MotherBrainRainbowBeamCharging as ::core::ffi::c_int as uint16,
+        addr_kEproj_MotherBrainRainbowBeamCharging as uint16,
         0 as uint16,
         game,
     );
@@ -3855,10 +3769,7 @@ pub unsafe fn MotherBrain_Phase3_Death_2(game: &mut Game) {
         & 1 as ::core::ffi::c_int
         != 0
     {
-        MotherBrain_SetBrainInstrs(
-            addr_kMotherBrain_Ilist_9C39 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9C39 as uint16, game);
         let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int, game);
         (*E1).mbn_var_32 = 6 as uint16;
         (*E1).mbn_var_33 = 6 as uint16;
@@ -3961,18 +3872,13 @@ pub unsafe fn MotherBrain_Phase3_Death_6(game: &mut Game) {
 pub unsafe fn MotherBrain_GenerateSmokyExplosions(game: &mut Game) {
     MotherBrain_GenerateExplosions(
         0x10 as uint16,
-        addr_word_A9B10F as ::core::ffi::c_int as uint16,
+        addr_word_A9B10F as uint16,
         2 as uint16,
         game,
     );
 }
 pub unsafe fn MotherBrain_GenerateMixedExplosions(game: &mut Game) {
-    MotherBrain_GenerateExplosions(
-        8 as uint16,
-        addr_word_A9B109 as ::core::ffi::c_int as uint16,
-        4 as uint16,
-        game,
-    );
+    MotherBrain_GenerateExplosions(8 as uint16, addr_word_A9B109 as uint16, 4 as uint16, game);
 }
 pub unsafe fn MotherBrain_GenerateExplosions(
     mut a: uint16,
@@ -4024,11 +3930,7 @@ pub unsafe fn MotherBrain_GenerateExplosions(
                     v7 = *v6.offset(2);
                 }
             }
-            SpawnEprojWithRoomGfx(
-                addr_kEproj_MotherBrainDeathExplosion as ::core::ffi::c_int as uint16,
-                v7,
-                game,
-            );
+            SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainDeathExplosion as uint16, v7, game);
             v3 = (v3 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
             v4 = (v9 as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16;
             if !(v9 as ::core::ffi::c_int != 1 as ::core::ffi::c_int) {
@@ -4039,10 +3941,7 @@ pub unsafe fn MotherBrain_GenerateExplosions(
     }
 }
 pub unsafe fn MotherBrain_Phase3_Death_7(game: &mut Game) {
-    MotherBrain_SetBrainInstrs(
-        addr_kMotherBrain_Ilist_9C29 as ::core::ffi::c_int as uint16,
-        game,
-    );
+    MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9C29 as uint16, game);
     (*Get_MotherBrain(0x40 as ::core::ffi::c_int, game)).mbn_var_A =
         (0xa987d0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
@@ -4072,12 +3971,7 @@ pub unsafe fn MotherBrain_Phase3_Death_8(game: &mut Game) {
     (*E1).base.y_pos = v3 as uint16;
 }
 pub unsafe fn MotherBrain_Phase3_Death_9(game: &mut Game) {
-    if ProcessSpriteTilesTransfers(
-        0xa9 as uint8,
-        addr_stru_A99003 as ::core::ffi::c_int as uint16,
-        game,
-    ) != 0
-    {
+    if ProcessSpriteTilesTransfers(0xa9 as uint8, addr_stru_A99003 as uint16, game) != 0 {
         let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
         (*E).mbn_var_A = (0xa9b173 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E).mbn_var_F = 32 as uint16;
@@ -4110,10 +4004,7 @@ pub unsafe fn MotherBrain_Phase3_Death_11(game: &mut Game) {
             & 1 as ::core::ffi::c_int
             != 0
         {
-            MotherBrain_SetBrainInstrs(
-                addr_kMotherBrain_Ilist_9D25 as ::core::ffi::c_int as uint16,
-                game,
-            );
+            MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9D25 as uint16, game);
             (*E).mbn_var_A =
                 (0xa9b1b8 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
             (*E).mbn_var_F = 256 as uint16;
@@ -4179,7 +4070,7 @@ pub unsafe fn MotherBrain_CorpseRottingFinished(game: &mut Game) {
         y: ((*E1).base.y_pos as ::core::ffi::c_int + 16 as ::core::ffi::c_int) as uint16,
     };
     SpawnEprojWithRoomGfx(
-        addr_kEproj_DustCloudExplosion as ::core::ffi::c_int as uint16,
+        addr_kEproj_DustCloudExplosion as uint16,
         0xa as uint16,
         game,
     );
@@ -4191,24 +4082,14 @@ pub unsafe fn MotherBrain_CorpseRottingFinished(game: &mut Game) {
     }
 }
 pub unsafe fn MotherBrain_Phase3_Death_15_LoadEscapeTimerTiles(game: &mut Game) {
-    if ProcessSpriteTilesTransfers(
-        0xa6 as uint8,
-        addr_stru_A6C4CB as ::core::ffi::c_int as uint16,
-        game,
-    ) != 0
-    {
+    if ProcessSpriteTilesTransfers(0xa6 as uint8, addr_stru_A6C4CB as uint16, game) != 0 {
         (*Get_MotherBrain(0 as ::core::ffi::c_int, game)).mbn_var_A =
             (0xa9b26d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         MotherBrain_Phase3_Death_16_StartEscape(game);
     }
 }
 pub unsafe fn MotherBrain_Phase3_Death_16_StartEscape(game: &mut Game) {
-    if ProcessSpriteTilesTransfers(
-        0xa9 as uint8,
-        addr_stru_A9902F as ::core::ffi::c_int as uint16,
-        game,
-    ) != 0
-    {
+    if ProcessSpriteTilesTransfers(0xa9 as uint8, addr_stru_A9902F as uint16, game) != 0 {
         WriteColorsToPalette(
             0x122 as uint16,
             0xa9 as uint8,
@@ -4220,10 +4101,10 @@ pub unsafe fn MotherBrain_Phase3_Death_16_StartEscape(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = 5 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) =
             -(1 as ::core::ffi::c_int) as uint16;
-        SpawnPalfxObject(addr_kPalfx_FFC9 as ::core::ffi::c_int as uint16, game);
-        SpawnPalfxObject(addr_kPalfx_FFCD as ::core::ffi::c_int as uint16, game);
-        SpawnPalfxObject(addr_kPalfx_FFD1 as ::core::ffi::c_int as uint16, game);
-        SpawnPalfxObject(addr_kPalfx_FFD5 as ::core::ffi::c_int as uint16, game);
+        SpawnPalfxObject(addr_kPalfx_FFC9 as uint16, game);
+        SpawnPalfxObject(addr_kPalfx_FFCD as uint16, game);
+        SpawnPalfxObject(addr_kPalfx_FFD1 as uint16, game);
+        SpawnPalfxObject(addr_kPalfx_FFD5 as uint16, game);
         (*Get_MotherBrain(0x40 as ::core::ffi::c_int, game)).mbn_var_02 = 0 as uint16;
         SetupZebesEscapeTypewriter(game);
         let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
@@ -4244,7 +4125,7 @@ pub unsafe fn MotherBrain_Phase3_Death_17_SpawnTimeBomb(game: &mut Game) {
     {
         (*E).mbn_var_A = (0xa9b2e3 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         SpawnEprojWithRoomGfx(
-            addr_kEproj_TimeBombSetJapaneseText as ::core::ffi::c_int as uint16,
+            addr_kEproj_TimeBombSetJapaneseText as uint16,
             (0xa9b2e3 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16,
             game,
         );
@@ -4322,11 +4203,7 @@ pub unsafe fn MotherBrain_GenerateEscapeDoorExploding(game: &mut Game) {
         if (NextRandom(game) as ::core::ffi::c_int) < 0x4000 as ::core::ffi::c_int {
             v4 = 12 as uint16;
         }
-        SpawnEprojWithRoomGfx(
-            addr_kEproj_DustCloudExplosion as ::core::ffi::c_int as uint16,
-            v4,
-            game,
-        );
+        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as uint16, v4, game);
         QueueSfx2_Max3(0x24 as uint16, game);
     }
 }
@@ -4336,7 +4213,7 @@ pub unsafe fn MotherBrain_ExplodeEscapeDoor(game: &mut Game) {
     loop {
         v1 = v0;
         SpawnEprojWithRoomGfx(
-            addr_kEproj_MotherBrainExplodedEscapeDoor as ::core::ffi::c_int as uint16,
+            addr_kEproj_MotherBrainExplodedEscapeDoor as uint16,
             v0,
             game,
         );
@@ -4356,7 +4233,7 @@ pub unsafe fn MotherBrain_SamusCollDetect(game: &mut Game) {
     R26 = (R26 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
     if v1 == 0
         || MotherBrain_SamusCollDetectPart(
-            addr_word_A9B427 as ::core::ffi::c_int as uint16,
+            addr_word_A9B427 as uint16,
             (*E0).base.x_pos,
             (*E0).base.y_pos,
             game,
@@ -4619,7 +4496,7 @@ pub unsafe fn MotherBrain_HurtSamus(game: &mut Game) {
             ))
             .base
             .x_pos as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
-            >= 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
+            >= 0 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn MotherBrain_Body_Phase2_Thinking(game: &mut Game) {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
@@ -4691,7 +4568,7 @@ pub unsafe fn MotherBrain_Body_Phase2_TryAttack(game: &mut Game) {
         if MotherBrain_Phase2_DecideAttackStrategy_DoubleRet(game) != 0 {
             return;
         }
-        let mut v2: uint16 = addr_byte_A9B6DC as ::core::ffi::c_int as uint16;
+        let mut v2: uint16 = addr_byte_A9B6DC as uint16;
         let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int, game);
         if (abs16(
             ((*E1).base.y_pos as ::core::ffi::c_int + 4 as ::core::ffi::c_int
@@ -4700,7 +4577,7 @@ pub unsafe fn MotherBrain_Body_Phase2_TryAttack(game: &mut Game) {
         ) as ::core::ffi::c_int)
             < 0x20 as ::core::ffi::c_int
         {
-            v2 = addr_byte_A9B6DF as ::core::ffi::c_int as uint16;
+            v2 = addr_byte_A9B6DF as uint16;
         }
         let mut v4: uint16 = 0 as uint16;
         let mut v5: *const uint8 = RomPtr_A9(v2 as uint16_t, game);
@@ -4780,10 +4657,7 @@ pub unsafe fn MotherBrain_Phase2_DecideAttackStrategy_DoubleRet(game: &mut Game)
                 (0xa9b80e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
             MotherBomb_FiringLaser_PositionHead(game);
         } else {
-            MotherBrain_SetBrainInstrs(
-                addr_kMotherBrain_Ilist_9D3D as ::core::ffi::c_int as uint16,
-                game,
-            );
+            MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9D3D as uint16, game);
         }
         return 1 as uint8;
     };
@@ -4854,10 +4728,10 @@ pub unsafe fn MotherBrain_FiringBomb_Crouch(game: &mut Game) {
     }
 }
 pub unsafe fn MotherBrain_B7CB(game: &mut Game) {
-    let mut v0: uint16 = addr_kMotherBrain_Ilist_9ECC as ::core::ffi::c_int as uint16;
+    let mut v0: uint16 = addr_kMotherBrain_Ilist_9ECC as uint16;
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
     if (*E).mbn_var_1F != 0 {
-        v0 = addr_kMotherBrain_Ilist_9F00 as ::core::ffi::c_int as uint16;
+        v0 = addr_kMotherBrain_Ilist_9F00 as uint16;
     }
     MotherBrain_SetBrainInstrs(v0, game);
     (*E).mbn_var_A = (0xa9b7e8 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -4924,10 +4798,7 @@ pub unsafe fn MotherBomb_FiringLaser_PositionHeadSlowlyFire(game: &mut Game) {
             v2 = -(256 as ::core::ffi::c_int) as int16;
         }
         (*E1).mbn_var_34 = v2 as uint16;
-        MotherBrain_SetBrainInstrs(
-            addr_kMotherBrain_Ilist_9F34 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9F34 as uint16, game);
         (*E).mbn_var_A = (0xa9b863 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E).mbn_var_F = 16 as uint16;
     }
@@ -4972,20 +4843,14 @@ pub unsafe fn MotherBomb_FiringDeathBeam_0(game: &mut Game) {
 }
 pub unsafe fn MotherBomb_FiringDeathBeam_1(game: &mut Game) {
     if (*Get_MotherBrain(0x40 as ::core::ffi::c_int, game)).mbn_var_05 == 0 {
-        MotherBrain_SetBodyInstrs(
-            addr_kMotherBrain_Ilist_9A42 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        MotherBrain_SetBodyInstrs(addr_kMotherBrain_Ilist_9A42 as uint16, game);
         let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
         (*E).mbn_var_17 = (*E).mbn_var_17.wrapping_add(1);
     }
 }
 pub fn MotherBomb_FiringDeathBeam_2(game: &mut Game) {}
 pub unsafe fn MotherBomb_FiringDeathBeam_3(game: &mut Game) {
-    MotherBrain_SetBrainInstrs(
-        addr_kMotherBrain_Ilist_9C87 as ::core::ffi::c_int as uint16,
-        game,
-    );
+    MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9C87 as uint16, game);
     let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int, game);
     (*E1).mbn_var_32 = 2 as uint16;
     (*E1).mbn_var_33 = 4 as uint16;
@@ -4994,10 +4859,7 @@ pub unsafe fn MotherBomb_FiringDeathBeam_3(game: &mut Game) {
     (*E).mbn_var_A = (0xa9b605 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn MotherBomb_FiringRainbowBeam_0(game: &mut Game) {
-    MotherBrain_SetBrainInstrs(
-        addr_kMotherBrain_Ilist_9C87 as ::core::ffi::c_int as uint16,
-        game,
-    );
+    MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9C87 as uint16, game);
     let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int, game);
     (*E1).mbn_var_34 = 64 as uint16;
     (*E1).mbn_var_31 = 1 as uint16;
@@ -5013,10 +4875,7 @@ pub unsafe fn MotherBomb_FiringRainbowBeam_1_StartCharge(game: &mut Game) {
     if (*E).mbb_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        MotherBrain_SetBrainInstrs(
-            addr_kMotherBrain_Ilist_9F6C as ::core::ffi::c_int as uint16,
-            game,
-        );
+        MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9F6C as uint16, game);
         (*E).mbb_var_A = (0xa9b92b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         MotherBomb_FiringRainbowBeam_2_RetractNeck(game);
     }
@@ -5065,10 +4924,7 @@ pub unsafe fn MotherBomb_FiringRainbowBeam_5_StartFiring(game: &mut Game) {
         {
             *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) = 0 as uint16;
             MotherBrain_BodyRainbowBeamPalAnimIndex0(game);
-            MotherBrain_SetBrainInstrs(
-                addr_kMotherBrain_Ilist_9C77 as ::core::ffi::c_int as uint16,
-                game,
-            );
+            MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9C77 as uint16, game);
             (*E).mbn_var_33 = 512 as uint16;
             (*E).mbn_var_09 = SpawnMotherBrainRainbowBeamHdma(game);
             let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int, game);
@@ -5164,10 +5020,7 @@ pub unsafe fn MotherBomb_FiringRainbowBeam_10_FinishFiringRainbow(game: &mut Gam
             .offset(((*E).mbn_var_09 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
             0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 0 as uint16;
-        MotherBrain_SetBrainInstrs(
-            addr_kMotherBrain_Ilist_9C87 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9C87 as uint16, game);
         MotherBrain_SetupBrainNormalPal(game);
         MotherBrain_WriteDefaultPalette(game);
         QueueSfx1_Max6(2 as uint16, game);
@@ -5415,7 +5268,7 @@ pub unsafe fn MotherBrain_HandleRainbowBeamExplosions(game: &mut Game) {
             y: g_word_A9BCB6[v2 as usize] as uint16,
         };
         SpawnEprojWithRoomGfx(
-            addr_kEproj_MotherBrainRainbowBeamExplosion as ::core::ffi::c_int as uint16,
+            addr_kEproj_MotherBrainRainbowBeamExplosion as uint16,
             0 as uint16,
             game,
         );
@@ -5539,14 +5392,14 @@ pub unsafe fn MotherBrain_Phase2Cut_0(game: &mut Game) {
                 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
             >= 0 as ::core::ffi::c_int
             || {
-                v1 = addr_kMotherBrain_Ilist_9ECC as ::core::ffi::c_int as uint16;
+                v1 = addr_kMotherBrain_Ilist_9ECC as uint16;
                 (*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
                     as ::core::ffi::c_int
                     & 0xfff as ::core::ffi::c_int)
                     < 0xff0 as ::core::ffi::c_int
             }
         {
-            v1 = addr_kMotherBrain_Ilist_9D7F as ::core::ffi::c_int as uint16;
+            v1 = addr_kMotherBrain_Ilist_9D7F as uint16;
         }
         MotherBrain_SetBrainInstrs(v1, game);
     };
@@ -5565,10 +5418,7 @@ pub unsafe fn MotherBrain_Phase2Cut_2(game: &mut Game) {
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        MotherBrain_SetBrainInstrs(
-            addr_kMotherBrain_Ilist_9B7F as ::core::ffi::c_int as uint16,
-            game,
-        );
+        MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9B7F as uint16, game);
         (*E).mbn_var_A = (0xa9bdc1 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E).mbn_var_F = 256 as uint16;
     }
@@ -5579,21 +5429,13 @@ pub unsafe fn MotherBrain_Phase2Cut_3(game: &mut Game) {
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        MotherBrain_SetBrainInstrs(
-            addr_kMotherBrain_Ilist_9F6C as ::core::ffi::c_int as uint16,
-            game,
-        );
+        MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9F6C as uint16, game);
         (*E).mbn_var_A = (0xa9bdd2 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         MotherBrain_Phase2Cut_4(game);
     }
 }
 pub unsafe fn MotherBrain_Phase2Cut_4(game: &mut Game) {
-    if ProcessSpriteTilesTransfers(
-        0xa9 as uint8,
-        addr_stru_A98FE5 as ::core::ffi::c_int as uint16,
-        game,
-    ) != 0
-    {
+    if ProcessSpriteTilesTransfers(0xa9 as uint8, addr_stru_A98FE5 as uint16, game) != 0 {
         MotherBrain_RetractHead(game);
         MotherBrain_SpawnShitroidInCutscene(game);
         let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
@@ -5608,10 +5450,7 @@ pub unsafe fn MotherBrain_Phase2Cut_5(game: &mut Game) {
         != 0 as ::core::ffi::c_int
     {
         MotherBrain_BodyRainbowBeamPalAnimIndex0(game);
-        MotherBrain_SetBrainInstrs(
-            addr_kMotherBrain_Ilist_9C77 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9C77 as uint16, game);
         let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int, game);
         (*E1).mbn_var_32 = 6 as uint16;
         (*E1).mbn_var_33 = 6 as uint16;
@@ -5621,11 +5460,8 @@ pub unsafe fn MotherBrain_Phase2Cut_5(game: &mut Game) {
     }
 }
 pub unsafe fn MotherBrain_SpawnShitroidInCutscene(game: &mut Game) {
-    (*Get_MotherBrain(0x40 as ::core::ffi::c_int, game)).mbn_var_0A = SpawnEnemy(
-        0xa9 as uint8,
-        addr_stru_A9BE28 as ::core::ffi::c_int as uint16,
-        game,
-    );
+    (*Get_MotherBrain(0x40 as ::core::ffi::c_int, game)).mbn_var_0A =
+        SpawnEnemy(0xa9 as uint8, addr_stru_A9BE28 as uint16, game);
 }
 pub unsafe fn MotherBrain_DrainedByShitroid_0(game: &mut Game) {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
@@ -5715,10 +5551,7 @@ pub unsafe fn MotherBrain_DrainedByShitroid_3(game: &mut Game) {
         (*E1).mbn_var_34 = 64 as uint16;
         (*E1).mbn_var_32 = 8 as uint16;
         (*E1).mbn_var_33 = 8 as uint16;
-        MotherBrain_SetBrainInstrs(
-            addr_kMotherBrain_Ilist_9C39 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9C39 as uint16, game);
         (*Get_MotherBrain(0 as ::core::ffi::c_int, game)).mbn_var_A =
             (0xa9bf41 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         MotherBrain_DrainedByShitroid_4(game);
@@ -5742,10 +5575,7 @@ pub unsafe fn MotherBrain_DrainedByShitroid_5(game: &mut Game) {
             | (*E1).mbn_var_32 as ::core::ffi::c_int) as uint16;
         let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
         if (*E).mbn_var_02 == 0 {
-            MotherBrain_SetBodyInstrs(
-                addr_kMotherBrain_Ilist_9A26 as ::core::ffi::c_int as uint16,
-                game,
-            );
+            MotherBrain_SetBodyInstrs(addr_kMotherBrain_Ilist_9A26 as uint16, game);
             (*E).mbn_var_A =
                 (0xa9bf7d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
             (*E).mbn_var_F = 64 as uint16;
@@ -5902,10 +5732,7 @@ pub unsafe fn MotherBrain_Phase2_Revive_5(game: &mut Game) {
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        MotherBrain_SetBrainInstrs(
-            addr_kMotherBrain_Ilist_9BB3 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9BB3 as uint16, game);
         (*E).mbn_var_A = (0xa9c0fb as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E).mbn_var_F = 128 as uint16;
         MotherBrain_Phase2_Revive_6(game);
@@ -5951,9 +5778,9 @@ pub unsafe fn MotherBrain_Phase2_MurderShitroid_1(game: &mut Game) {
         & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        let mut v0: uint16 = addr_kMotherBrain_Ilist_9DBB as ::core::ffi::c_int as uint16;
+        let mut v0: uint16 = addr_kMotherBrain_Ilist_9DBB as uint16;
         if (*Get_MotherBrain(0x40 as ::core::ffi::c_int, game)).mbn_var_0A != 0 {
-            v0 = addr_kMotherBrain_Ilist_9DB1 as ::core::ffi::c_int as uint16;
+            v0 = addr_kMotherBrain_Ilist_9DB1 as uint16;
         }
         MotherBrain_SetBrainInstrs(v0, game);
         let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
@@ -5975,10 +5802,7 @@ pub unsafe fn MotherBrain_Phase2_PrepareForFinalShitroid(game: &mut Game) {
     MotherBrain_MakeWalkBackwards(0x40 as uint16, 4 as uint16, game);
 }
 pub unsafe fn MotherBrain_Phase2_ExecuteFinalkShitroid(game: &mut Game) {
-    MotherBrain_SetBrainInstrs(
-        addr_kMotherBrain_Ilist_9DB1 as ::core::ffi::c_int as uint16,
-        game,
-    );
+    MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9DB1 as uint16, game);
     (*Get_MotherBrain(0 as ::core::ffi::c_int, game)).mbn_var_A =
         (0xa9c1a6 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
@@ -6041,12 +5865,12 @@ pub unsafe fn MotherBrain_Phase3_Fighting_Main(game: &mut Game) {
                 & 0x8000 as ::core::ffi::c_int
                 != 0 as ::core::ffi::c_int
         {
-            let mut v1: uint16 = addr_kMotherBrain_Ilist_9F00 as ::core::ffi::c_int as uint16;
+            let mut v1: uint16 = addr_kMotherBrain_Ilist_9F00 as uint16;
             if *((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16) as uint8
                 as ::core::ffi::c_int
                 >= 0x80 as ::core::ffi::c_int
             {
-                v1 = addr_kMotherBrain_Ilist_9DBB as ::core::ffi::c_int as uint16;
+                v1 = addr_kMotherBrain_Ilist_9DBB as uint16;
             }
             MotherBrain_SetBrainInstrs(v1, game);
             (*E).mbn_var_A =
@@ -6200,7 +6024,7 @@ pub unsafe fn MotherBrain_Phase3_Neck_Normal(game: &mut Game) {
     (*E).mbn_var_34 = 128 as uint16;
     (*E).mbn_var_32 = 2 as uint16;
     (*E).mbn_var_33 = 4 as uint16;
-    (*E).mbn_var_18 = addr_locret_A9C353 as ::core::ffi::c_int as uint16;
+    (*E).mbn_var_18 = addr_locret_A9C353 as uint16;
 }
 pub unsafe fn MotherBrain_Phase3_Neck_SetupRecoilRecovery(game: &mut Game) {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int, game);
@@ -6217,10 +6041,7 @@ pub unsafe fn MotherBrain_Phase3_Neck_RecoilRecovery(game: &mut Game) {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int, game);
     v1 = ((*E).mbn_var_19 as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as int16;
     if (v1 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
-        MotherBrain_SetBrainInstrs(
-            addr_kMotherBrain_Ilist_9DBB as ::core::ffi::c_int as uint16,
-            game,
-        );
+        MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9DBB as uint16, game);
         (*E).mbn_var_18 = (0xa9c330 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     } else {
         (*E).mbn_var_19 = v1 as uint16;
@@ -6230,10 +6051,7 @@ pub unsafe fn MotherBrain_Phase3_Neck_SetupHyperBeamRecoil(game: &mut Game) {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int, game);
     (*E).mbn_var_31 = 1 as uint16;
     (*Get_MotherBrain(0 as ::core::ffi::c_int, game)).mbn_var_06 = 1 as uint16;
-    MotherBrain_SetBrainInstrs(
-        addr_kMotherBrain_Ilist_9BE7 as ::core::ffi::c_int as uint16,
-        game,
-    );
+    MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9BE7 as uint16, game);
     (*E).mbn_var_00 = 50 as uint16;
     (*E).mbn_var_34 = 2304 as uint16;
     (*E).mbn_var_32 = 8 as uint16;
@@ -6329,9 +6147,9 @@ pub unsafe fn sub_A9C46C(mut a: uint16, mut j: uint16, game: &mut Game) -> uint1
     let mut v2: uint16 = kSinCosTable8bit_Sext[((a as ::core::ffi::c_int
         & 0xff as ::core::ffi::c_int)
         + 64 as ::core::ffi::c_int) as usize] as uint16;
-    WriteReg(M7A as ::core::ffi::c_int as uint16, v2 as uint8, game);
+    WriteReg(M7A as uint16, v2 as uint8, game);
     WriteReg(
-        M7A as ::core::ffi::c_int as uint16,
+        M7A as uint16,
         *(&raw mut v2 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>() as usize)
                 .wrapping_div(::core::mem::size_of::<uint8>() as usize)
@@ -6339,8 +6157,8 @@ pub unsafe fn sub_A9C46C(mut a: uint16, mut j: uint16, game: &mut Game) -> uint1
         ),
         game,
     );
-    WriteReg(M7B as ::core::ffi::c_int as uint16, j as uint8, game);
-    return ReadRegWord(MPYM as ::core::ffi::c_int as uint16, game);
+    WriteReg(M7B as uint16, j as uint8, game);
+    return ReadRegWord(MPYM as uint16, game);
 }
 pub unsafe fn Enemy_IncreaseYpos(mut k: uint16, mut a: uint16, game: &mut Game) {
     let mut v2: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);
@@ -6592,12 +6410,12 @@ pub unsafe fn MotherBrain_MakeWalkBackwards(
 pub unsafe fn MotherBrain_MakeHerStandUp(game: &mut Game) -> uint8 {
     let mut mbn_var_02: uint16 = (*Get_MotherBrain(0 as ::core::ffi::c_int, game)).mbn_var_02;
     if mbn_var_02 != 0 {
-        let mut v1: uint16 = addr_kMotherBrain_Ilist_99C6 as ::core::ffi::c_int as uint16;
+        let mut v1: uint16 = addr_kMotherBrain_Ilist_99C6 as uint16;
         if mbn_var_02 as ::core::ffi::c_int != 3 as ::core::ffi::c_int {
             if mbn_var_02 as ::core::ffi::c_int != 6 as ::core::ffi::c_int {
                 return 0 as uint8;
             }
-            v1 = addr_kMotherBrain_Ilist_99E2 as ::core::ffi::c_int as uint16;
+            v1 = addr_kMotherBrain_Ilist_99E2 as uint16;
         }
         MotherBrain_SetBodyInstrs(v1, game);
         return 0 as uint8;
@@ -6611,10 +6429,7 @@ pub unsafe fn MotherBrain_MakeHerCrouch(game: &mut Game) -> uint8 {
             return 1 as uint8;
         }
     } else {
-        MotherBrain_SetBodyInstrs(
-            addr_kMotherBrain_Ilist_9A0A as ::core::ffi::c_int as uint16,
-            game,
-        );
+        MotherBrain_SetBodyInstrs(addr_kMotherBrain_Ilist_9A0A as uint16, game);
     }
     return 0 as uint8;
 }
@@ -6625,10 +6440,7 @@ pub unsafe fn MotherBrain_MakeHerLeanDown(game: &mut Game) -> uint8 {
             return 1 as uint8;
         }
     } else {
-        MotherBrain_SetBodyInstrs(
-            addr_kMotherBrain_Ilist_99F2 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        MotherBrain_SetBodyInstrs(addr_kMotherBrain_Ilist_99F2 as uint16, game);
     }
     return 0 as uint8;
 }
@@ -6659,10 +6471,7 @@ pub unsafe fn MotherBrain_HandleWalking(game: &mut Game) {
                 & 0x8000 as ::core::ffi::c_int
                 == 0
             {
-                MotherBrain_SetBodyInstrs(
-                    addr_kMotherBrain_Ilist_98C6 as ::core::ffi::c_int as uint16,
-                    game,
-                );
+                MotherBrain_SetBodyInstrs(addr_kMotherBrain_Ilist_98C6 as uint16, game);
                 return;
             }
             current_block_15 = 3512920355445576850;
@@ -6686,10 +6495,7 @@ pub unsafe fn MotherBrain_HandleWalking(game: &mut Game) {
             & 0x8000 as ::core::ffi::c_int
             != 0
         {
-            MotherBrain_SetBodyInstrs(
-                addr_kMotherBrain_Ilist_97A4 as ::core::ffi::c_int as uint16,
-                game,
-            );
+            MotherBrain_SetBodyInstrs(addr_kMotherBrain_Ilist_97A4 as uint16, game);
         }
         return;
     }
@@ -6704,7 +6510,7 @@ pub unsafe fn ShitroidInCutscene_Init(game: &mut Game) {
             | kEnemyProps_BlockPlasmaBeam as ::core::ffi::c_int))
         as uint16;
     (*E).base.palette_index = 3584 as uint16;
-    (*E).base.current_instruction = addr_kShitroid_Ilist_CFA2 as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_kShitroid_Ilist_CFA2 as uint16;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).sice_var_04 = 1 as uint16;
     (*E).base.timer = 0 as uint16;
@@ -7022,11 +6828,7 @@ pub unsafe fn ShitroidInCutscene_ActivateRainbowBeam(mut k: uint16, game: &mut G
         (*E).base.x_pos = (*E1).base.x_pos;
         (*E).base.y_pos =
             ((*E1).base.y_pos as ::core::ffi::c_int - 24 as ::core::ffi::c_int) as uint16;
-        Enemy_SetInstrList(
-            k,
-            addr_kShitroid_Ilist_CFB8 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        Enemy_SetInstrList(k, addr_kShitroid_Ilist_CFB8 as uint16, game);
         (*E).sice_var_A = (0xa9c8e2 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E).sice_var_E = 1 as uint16;
         let mut E0: *mut Enemy_ShitroidInCutscene =
@@ -7066,11 +6868,7 @@ pub unsafe fn ShitroidInCutscene_StopDraining(mut k: uint16, game: &mut Game) {
     if (*E).sice_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        Enemy_SetInstrList(
-            k,
-            addr_kShitroid_Ilist_CFA2 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        Enemy_SetInstrList(k, addr_kShitroid_Ilist_CFA2 as uint16, game);
         (*E).sice_var_E = 10 as uint16;
         (*E).sice_var_A = (0xa9c94b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E).sice_var_F = 32 as uint16;
@@ -7086,7 +6884,7 @@ pub unsafe fn ShitroidInCutscene_LetGoAndSpawnDust(mut k: uint16, game: &mut Gam
         != 0 as ::core::ffi::c_int
     {
         ShitroidInCutscene_SpawnThreeDustClouds(game);
-        (*E).sice_var_A = addr_loc_A9C959 as ::core::ffi::c_int as uint16;
+        (*E).sice_var_A = addr_loc_A9C959 as uint16;
     }
     ShitroidInCutscene_MoveUpToCeiling(k, game);
 }
@@ -7105,7 +6903,7 @@ pub unsafe fn ShitroidInCutscene_MoveUpToCeiling(mut k: uint16, game: &mut Game)
         let mut E: *mut Enemy_ShitroidInCutscene =
             Get_ShitdroidInCutscene(k as ::core::ffi::c_int, game);
         (*E).sice_var_A = (0xa9c9c3 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        (*E).sice_var_0E = addr_stru_A9CA24 as ::core::ffi::c_int as uint16;
+        (*E).sice_var_0E = addr_stru_A9CA24 as uint16;
     }
 }
 pub unsafe fn ShitroidInCutscene_SpawnOneDustCloudAt(
@@ -7119,11 +6917,7 @@ pub unsafe fn ShitroidInCutscene_SpawnOneDustCloudAt(
         x: ((*E).base.x_pos as ::core::ffi::c_int + xd as ::core::ffi::c_int) as uint16,
         y: ((*E).base.y_pos as ::core::ffi::c_int + yd as ::core::ffi::c_int) as uint16,
     };
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_DustCloudExplosion as ::core::ffi::c_int as uint16,
-        9 as uint16,
-        game,
-    );
+    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as uint16, 9 as uint16, game);
 }
 pub unsafe fn ShitroidInCutscene_SpawnThreeDustClouds(game: &mut Game) {
     ShitroidInCutscene_SpawnOneDustCloudAt(
@@ -7350,15 +7144,11 @@ pub unsafe fn ShitroidInCutscene_FinalCharge(mut k: uint16, game: &mut Game) {
         (*E).base.vram_tiles_index = 4256 as uint16;
         QueueSfx3_Max6(0x19 as uint16, game);
         TurnOffLightsForShitroidDeath(game);
-        Enemy_SetInstrList(
-            k,
-            addr_kShitroid_Ilist_CFCE as ::core::ffi::c_int as uint16,
-            game,
-        );
+        Enemy_SetInstrList(k, addr_kShitroid_Ilist_CFCE as uint16, game);
         (*E).sice_var_B = 0 as uint16;
         (*E).sice_var_C = 0 as uint16;
         (*Get_ShitdroidInCutscene(0 as ::core::ffi::c_int, game)).sice_var_A =
-            addr_locret_A9C18D as ::core::ffi::c_int as uint16;
+            addr_locret_A9C18D as uint16;
         QueueMusic_Delayed8(0 as uint16, game);
         (*E).sice_var_A = (0xa9cc3e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E).sice_var_F = 16 as uint16;
@@ -7435,11 +7225,8 @@ pub unsafe fn ShitroidInCutscene_UnloadShitroid(mut k: uint16, game: &mut Game) 
     let mut v2: bool = (*E).sice_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
     if v2
-        && ProcessSpriteTilesTransfers(
-            0xa9 as uint8,
-            addr_stru_A98FC7 as ::core::ffi::c_int as uint16,
-            game,
-        ) as ::core::ffi::c_int
+        && ProcessSpriteTilesTransfers(0xa9 as uint8, addr_stru_A98FC7 as uint16, game)
+            as ::core::ffi::c_int
             != 0
     {
         (*E).sice_var_A = (0xa9ccde as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -7619,11 +7406,7 @@ pub unsafe fn ShitroidInCutscene_HandleShitroidDeathExplosions(mut k: uint16, ga
                     .offset((v4 + 1 as ::core::ffi::c_int) as isize)
                     as ::core::ffi::c_int) as uint16,
         };
-        SpawnEprojWithRoomGfx(
-            addr_kEproj_DustCloudExplosion as ::core::ffi::c_int as uint16,
-            3 as uint16,
-            game,
-        );
+        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as uint16, 3 as uint16, game);
         QueueSfx3_Max3(0x13 as uint16, game);
     } else {
         (*E).sice_var_08 = v2 as uint16;
@@ -7877,14 +7660,14 @@ pub unsafe fn MotherBrain_Pal_ProcessInvincibility(game: &mut Game) {
 }
 pub unsafe fn MotherBrain_Pal_BeginScreenFlash(game: &mut Game) {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
-    (*E).mbn_var_0E = addr_stru_A9D046 as ::core::ffi::c_int as uint16;
+    (*E).mbn_var_0E = addr_stru_A9D046 as uint16;
     (*E).mbn_var_0F = 1 as uint16;
 }
 pub unsafe fn MotherBrain_Pal_EndScreenFlash(game: &mut Game) {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
     (*E).mbn_var_0E = 0 as uint16;
     (*E).mbn_var_0F = 0 as uint16;
-    MotherBrain_Pal_WriteRoomPal(addr_word_A9D082 as ::core::ffi::c_int as uint16, game);
+    MotherBrain_Pal_WriteRoomPal(addr_word_A9D082 as uint16, game);
 }
 pub unsafe fn MotherBrain_Pal_HandleRoomPal(game: &mut Game) {
     let mut j: uint16 = HandleMotherBrainInstructionList(
@@ -8093,7 +7876,7 @@ pub unsafe fn DeadTorizo_Init(game: &mut Game) {
     (*E).dto_var_A = (0xa9d3ad as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).base.properties =
         ((*E).base.properties as ::core::ffi::c_int | 0xa000 as ::core::ffi::c_int) as uint16;
-    (*E).base.current_instruction = addr_kDeadTorizo_Ilist_D6DC as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_kDeadTorizo_Ilist_D6DC as uint16;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
     (*E).base.palette_index = 512 as uint16;
@@ -8102,11 +7885,7 @@ pub unsafe fn DeadTorizo_Init(game: &mut Game) {
     (*E).dto_var_04 = 0 as uint16;
     (*E).dto_var_02 = 15 as uint16;
     (*E).dto_var_03 = 0 as uint16;
-    InitializeEnemyCorpseRotting(
-        0 as uint16,
-        addr_stru_A9DD58 as ::core::ffi::c_int as uint16,
-        game,
-    );
+    InitializeEnemyCorpseRotting(0 as uint16, addr_stru_A9DD58 as uint16, game);
 }
 pub unsafe fn CallDeadTorizoFuncA(mut ea: uint32, game: &mut Game) {
     match ea {
@@ -8153,7 +7932,7 @@ pub unsafe fn DeadTorizo_Main(game: &mut Game) {
 }
 pub unsafe fn DeadTorizo_MainGfxHook(game: &mut Game) {
     MotherBrain_AddSpritemapToOam(
-        addr_kDeadTorizo_Sprmap_D761 as ::core::ffi::c_int as uint16,
+        addr_kDeadTorizo_Sprmap_D761 as uint16,
         296 as uint16,
         187 as uint16,
         0 as uint16,
@@ -8233,10 +8012,7 @@ pub unsafe fn DeadTorizo_Func_0(game: &mut Game) -> uint8 {
     let mut E: *mut Enemy_DeadTorizo = Get_DeadTorizo(0 as ::core::ffi::c_int, game);
     let mut r18: uint16 = (*E).base.x_pos;
     let mut r20: uint16 = (*E).base.y_pos;
-    let mut p: *const uint8 = RomPtr_A9(
-        addr_kDeadTorizo_Hitbox_D77C as ::core::ffi::c_int as uint16_t,
-        game,
-    );
+    let mut p: *const uint8 = RomPtr_A9(addr_kDeadTorizo_Hitbox_D77C as uint16_t, game);
     let mut R22: ::core::ffi::c_int = *(p as *mut uint16) as ::core::ffi::c_int;
     let mut R24: uint16 = 0;
     p = p.offset(2);
@@ -8418,7 +8194,7 @@ pub unsafe fn DeadTorizo_CorpseRottingFinished(game: &mut Game) {
         y: 188 as uint16,
     };
     SpawnEprojWithRoomGfx(
-        addr_kEproj_DustCloudExplosion as ::core::ffi::c_int as uint16,
+        addr_kEproj_DustCloudExplosion as uint16,
         0xa as uint16,
         game,
     );
@@ -8648,12 +8424,12 @@ pub unsafe fn DeadSidehopper_Init_0(game: &mut Game) {
     (*E).base.y_height = 21 as uint16;
     Enemy_SetInstrList(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        addr_kDeadMonsters_Ilist_ECE3 as ::core::ffi::c_int as uint16,
+        addr_kDeadMonsters_Ilist_ECE3 as uint16,
         game,
     );
     InitializeEnemyCorpseRotting(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        addr_stru_A9DD68 as ::core::ffi::c_int as uint16,
+        addr_stru_A9DD68 as uint16,
         game,
     );
 }
@@ -8667,12 +8443,12 @@ pub unsafe fn DeadSidehopper_Init_1(game: &mut Game) {
     (*E).base.palette_index = 3584 as uint16;
     Enemy_SetInstrList(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        addr_kDeadMonsters_Ilist_ECEF as ::core::ffi::c_int as uint16,
+        addr_kDeadMonsters_Ilist_ECEF as uint16,
         game,
     );
     InitializeEnemyCorpseRotting(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        addr_stru_A9DD78 as ::core::ffi::c_int as uint16,
+        addr_stru_A9DD78 as uint16,
         game,
     );
 }
@@ -8889,11 +8665,7 @@ pub unsafe fn DeadSidehopper_Activated(mut k: uint16, game: &mut Game) {
         let mut E: *mut Enemy_DeadSidehopper = Get_DeadSidehopper(k as ::core::ffi::c_int, game);
         (*E).dsr_var_06 = ((*E).dsr_var_06 as ::core::ffi::c_int + 1 as ::core::ffi::c_int
             & 3 as ::core::ffi::c_int) as uint16;
-        Enemy_SetInstrList(
-            k,
-            addr_kDeadMonsters_Ilist_ECAC as ::core::ffi::c_int as uint16,
-            game,
-        );
+        Enemy_SetInstrList(k, addr_kDeadMonsters_Ilist_ECAC as uint16, game);
         (*E).dsr_var_A = (0xa9d90f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
@@ -8914,11 +8686,7 @@ pub unsafe fn DeadMonsters_Func_2(mut k: uint16, game: &mut Game) {
         } else {
             (*E).dms_var_A =
                 (0xa9d8f1 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-            Enemy_SetInstrList(
-                k,
-                addr_kDeadMonsters_Ilist_ECE3 as ::core::ffi::c_int as uint16,
-                game,
-            );
+            Enemy_SetInstrList(k, addr_kDeadMonsters_Ilist_ECE3 as uint16, game);
             let mut v3: ::core::ffi::c_int = (*E).dms_var_06 as ::core::ffi::c_int;
             (*E).dms_var_0B = *(game.g_rom.offset(
                 (((0xa9d951 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -8970,7 +8738,7 @@ pub unsafe fn DeadMonsters_Func_3(mut k: uint16, game: &mut Game) -> uint8 {
         (*E).base.y_pos = v12;
         return (v12 as ::core::ffi::c_int - 184 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
+            == 0 as ::core::ffi::c_int) as uint8;
     } else {
         return Enemy_MoveDown(k, (v3 as int16 as int32) << 8 as ::core::ffi::c_int, game);
     };
@@ -9020,11 +8788,7 @@ pub unsafe fn DeadMonsters_Func_5(mut k: uint16, game: &mut Game) {
             ((*E).dms_var_08 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16;
         (*E).dms_var_08 = v5;
         if v5 as ::core::ffi::c_int >= 8 as ::core::ffi::c_int {
-            Enemy_SetInstrList(
-                v3,
-                addr_kDeadMonsters_Ilist_ECE9 as ::core::ffi::c_int as uint16,
-                game,
-            );
+            Enemy_SetInstrList(v3, addr_kDeadMonsters_Ilist_ECE9 as uint16, game);
             (*E).dms_var_A =
                 (0xa9da64 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
             (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
@@ -9268,8 +9032,7 @@ pub unsafe fn ProcessCorpseRotting(mut k: uint16, game: &mut Game) -> uint8 {
         {
             return ((v15 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16
                 as ::core::ffi::c_int
-                >= (*E0).dms_var_45 as ::core::ffi::c_int) as ::core::ffi::c_int
-                as uint8;
+                >= (*E0).dms_var_45 as ::core::ffi::c_int) as uint8;
         }
     }
     return 0 as uint8;
@@ -9320,7 +9083,7 @@ pub unsafe fn CorpseRottingRotEntryFinishedHook(game: &mut Game) {
         y: ((*v0).y_pos as ::core::ffi::c_int + 16 as ::core::ffi::c_int) as uint16,
     };
     SpawnEprojWithRoomGfx(
-        addr_kEproj_DustCloudExplosion as ::core::ffi::c_int as uint16,
+        addr_kEproj_DustCloudExplosion as uint16,
         0xa as uint16,
         game,
     );
@@ -9493,10 +9256,7 @@ pub unsafe fn DeadSidehopper_Touch(game: &mut Game) {
     };
 }
 pub unsafe fn Torizo_CorpseRottingInitFunc(game: &mut Game) {
-    let mut p: *const uint8 = RomPtr_B7(
-        addr_kDeadTorizo_TileData as ::core::ffi::c_int as uint16_t,
-        game,
-    );
+    let mut p: *const uint8 = RomPtr_B7(addr_kDeadTorizo_TileData as uint16_t, game);
     MemCpy(
         (&raw mut game.g_ram as *mut uint8)
             .offset((0x2000 as ::core::ffi::c_int + 0x60 as ::core::ffi::c_int) as isize)
@@ -9583,10 +9343,7 @@ pub unsafe fn Torizo_CorpseRottingInitFunc(game: &mut Game) {
     );
 }
 pub unsafe fn Sidehopper_CorpseRottingInitFunc_0(game: &mut Game) {
-    let mut p: *const uint8 = RomPtr_B7(
-        addr_kDeadMonsters_TileData as ::core::ffi::c_int as uint16_t,
-        game,
-    );
+    let mut p: *const uint8 = RomPtr_B7(addr_kDeadMonsters_TileData as uint16_t, game);
     MemCpy(
         (&raw mut game.g_ram as *mut uint8)
             .offset((0x2000 as ::core::ffi::c_int + 0x40 as ::core::ffi::c_int) as isize)
@@ -9624,10 +9381,7 @@ pub unsafe fn Sidehopper_CorpseRottingInitFunc_0(game: &mut Game) {
     );
 }
 pub unsafe fn Sidehopper_CorpseRottingInitFunc_2(game: &mut Game) {
-    let mut p: *const uint8 = RomPtr_B7(
-        addr_kDeadMonsters_TileData as ::core::ffi::c_int as uint16_t,
-        game,
-    );
+    let mut p: *const uint8 = RomPtr_B7(addr_kDeadMonsters_TileData as uint16_t, game);
     MemCpy(
         (&raw mut game.g_ram as *mut uint8)
             .offset((0x2000 as ::core::ffi::c_int + 0x320 as ::core::ffi::c_int) as isize)
@@ -9665,10 +9419,7 @@ pub unsafe fn Sidehopper_CorpseRottingInitFunc_2(game: &mut Game) {
     );
 }
 pub unsafe fn Zoomer_CorpseRottingInitFunc_0(game: &mut Game) {
-    let mut p: *const uint8 = RomPtr_B7(
-        addr_kDeadMonsters_TileData as ::core::ffi::c_int as uint16_t,
-        game,
-    );
+    let mut p: *const uint8 = RomPtr_B7(addr_kDeadMonsters_TileData as uint16_t, game);
     MemCpy(
         (&raw mut game.g_ram as *mut uint8)
             .offset((0x2000 as ::core::ffi::c_int + 0x940 as ::core::ffi::c_int) as isize)
@@ -9685,10 +9436,7 @@ pub unsafe fn Zoomer_CorpseRottingInitFunc_0(game: &mut Game) {
     );
 }
 pub unsafe fn Zoomer_CorpseRottingInitFunc_2(game: &mut Game) {
-    let mut p: *const uint8 = RomPtr_B7(
-        addr_kDeadMonsters_TileData as ::core::ffi::c_int as uint16_t,
-        game,
-    );
+    let mut p: *const uint8 = RomPtr_B7(addr_kDeadMonsters_TileData as uint16_t, game);
     MemCpy(
         (&raw mut game.g_ram as *mut uint8)
             .offset((0x2000 as ::core::ffi::c_int + 0xa00 as ::core::ffi::c_int) as isize)
@@ -9705,10 +9453,7 @@ pub unsafe fn Zoomer_CorpseRottingInitFunc_2(game: &mut Game) {
     );
 }
 pub unsafe fn Zoomer_CorpseRottingInitFunc_4(game: &mut Game) {
-    let mut p: *const uint8 = RomPtr_B7(
-        addr_kDeadMonsters_TileData as ::core::ffi::c_int as uint16_t,
-        game,
-    );
+    let mut p: *const uint8 = RomPtr_B7(addr_kDeadMonsters_TileData as uint16_t, game);
     MemCpy(
         (&raw mut game.g_ram as *mut uint8)
             .offset((0x2000 as ::core::ffi::c_int + 0xac0 as ::core::ffi::c_int) as isize)
@@ -9725,10 +9470,7 @@ pub unsafe fn Zoomer_CorpseRottingInitFunc_4(game: &mut Game) {
     );
 }
 pub unsafe fn Ripper_CorpseRottingInitFunc_0(game: &mut Game) {
-    let mut p: *const uint8 = RomPtr_B7(
-        addr_kDeadMonsters_TileData as ::core::ffi::c_int as uint16_t,
-        game,
-    );
+    let mut p: *const uint8 = RomPtr_B7(addr_kDeadMonsters_TileData as uint16_t, game);
     MemCpy(
         (&raw mut game.g_ram as *mut uint8)
             .offset((0x2000 as ::core::ffi::c_int + 0xb80 as ::core::ffi::c_int) as isize)
@@ -9745,10 +9487,7 @@ pub unsafe fn Ripper_CorpseRottingInitFunc_0(game: &mut Game) {
     );
 }
 pub unsafe fn Ripper_CorpseRottingInitFunc_2(game: &mut Game) {
-    let mut p: *const uint8 = RomPtr_B7(
-        addr_kDeadMonsters_TileData as ::core::ffi::c_int as uint16_t,
-        game,
-    );
+    let mut p: *const uint8 = RomPtr_B7(addr_kDeadMonsters_TileData as uint16_t, game);
     MemCpy(
         (&raw mut game.g_ram as *mut uint8)
             .offset((0x2000 as ::core::ffi::c_int + 0xc40 as ::core::ffi::c_int) as isize)
@@ -9765,10 +9504,7 @@ pub unsafe fn Ripper_CorpseRottingInitFunc_2(game: &mut Game) {
     );
 }
 pub unsafe fn Skree_CorpseRottingInitFunc_0(game: &mut Game) {
-    let mut p: *const uint8 = RomPtr_B7(
-        addr_kDeadMonsters_TileData as ::core::ffi::c_int as uint16_t,
-        game,
-    );
+    let mut p: *const uint8 = RomPtr_B7(addr_kDeadMonsters_TileData as uint16_t, game);
     MemCpy(
         (&raw mut game.g_ram as *mut uint8)
             .offset((0x2000 as ::core::ffi::c_int + 0x640 as ::core::ffi::c_int) as isize)
@@ -9799,10 +9535,7 @@ pub unsafe fn Skree_CorpseRottingInitFunc_0(game: &mut Game) {
     );
 }
 pub unsafe fn Skree_CorpseRottingInitFunc_2(game: &mut Game) {
-    let mut p: *const uint8 = RomPtr_B7(
-        addr_kDeadMonsters_TileData as ::core::ffi::c_int as uint16_t,
-        game,
-    );
+    let mut p: *const uint8 = RomPtr_B7(addr_kDeadMonsters_TileData as uint16_t, game);
     MemCpy(
         (&raw mut game.g_ram as *mut uint8)
             .offset((0x2000 as ::core::ffi::c_int + 0x740 as ::core::ffi::c_int) as isize)
@@ -9833,10 +9566,7 @@ pub unsafe fn Skree_CorpseRottingInitFunc_2(game: &mut Game) {
     );
 }
 pub unsafe fn Skree_CorpseRottingInitFunc_4(game: &mut Game) {
-    let mut p: *const uint8 = RomPtr_B7(
-        addr_kDeadMonsters_TileData as ::core::ffi::c_int as uint16_t,
-        game,
-    );
+    let mut p: *const uint8 = RomPtr_B7(addr_kDeadMonsters_TileData as uint16_t, game);
     MemCpy(
         (&raw mut game.g_ram as *mut uint8)
             .offset((0x2000 as ::core::ffi::c_int + 0x840 as ::core::ffi::c_int) as isize)
@@ -9868,10 +9598,7 @@ pub unsafe fn Skree_CorpseRottingInitFunc_4(game: &mut Game) {
 }
 pub unsafe fn MotherBrain_CorpseRottingInitFunc(game: &mut Game) {
     let mut base: *mut uint8 = (&raw mut game.g_ram as *mut uint8).offset(0x9000) as *mut uint8;
-    let mut src: *const uint8 = RomPtr_B7(
-        addr_kMotherBrain_Misc_TileData as ::core::ffi::c_int as uint16_t,
-        game,
-    );
+    let mut src: *const uint8 = RomPtr_B7(addr_kMotherBrain_Misc_TileData as uint16_t, game);
     MemCpy(
         base as *mut ::core::ffi::c_void,
         src.offset(192) as *const ::core::ffi::c_void,
@@ -11642,7 +11369,7 @@ pub unsafe fn Shitroid_Func_1(mut k: uint16, mut j: uint16, game: &mut Game) -> 
             ((*E).base.y_pos as ::core::ffi::c_int - (*G).base.y_pos as ::core::ffi::c_int)
                 as uint16,
         ) as ::core::ffi::c_int
-            >= r18 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
+            >= r18 as ::core::ffi::c_int) as uint8;
     }
     return v5 as uint8;
 }
@@ -11661,7 +11388,7 @@ pub unsafe fn Shitroid_Func_2(mut k: uint16, mut rect: Rect16U, game: &mut Game)
         return (abs16(
             (rect.y as ::core::ffi::c_int - (*E).base.y_pos as ::core::ffi::c_int) as uint16,
         ) as ::core::ffi::c_int
-            >= R26 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
+            >= R26 as ::core::ffi::c_int) as uint8;
     }
     return v3 as uint8;
 }
@@ -11681,7 +11408,7 @@ pub unsafe fn Shitroid_Init(game: &mut Game) {
             | kEnemyProps_BlockPlasmaBeam as ::core::ffi::c_int))
         as uint16;
     (*E).base.palette_index = 1024 as uint16;
-    (*E).base.current_instruction = addr_kShitroid_Ilist_F90E as ::core::ffi::c_int as uint16;
+    (*E).base.current_instruction = addr_kShitroid_Ilist_F90E as uint16;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
     let mut v2: uint16 = (0xa9efe6 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -11703,21 +11430,21 @@ pub unsafe fn Shitroid_Init(game: &mut Game) {
     WriteColorsToTargetPalette(
         0xa9 as uint8,
         0x120 as uint16,
-        addr_word_A9F8C6 as ::core::ffi::c_int as uint16,
+        addr_word_A9F8C6 as uint16,
         0x10 as uint16,
         game,
     );
     WriteColorsToTargetPalette(
         0xa9 as uint8,
         0x140 as uint16,
-        addr_kShitroidInCutscene_Palette as ::core::ffi::c_int as uint16,
+        addr_kShitroidInCutscene_Palette as uint16,
         0x10 as uint16,
         game,
     );
     WriteColorsToTargetPalette(
         0xa9 as uint8,
         0x1e0 as uint16,
-        addr_kDeadSidehopper_Palette_0 as ::core::ffi::c_int as uint16,
+        addr_kDeadSidehopper_Palette_0 as uint16,
         0x10 as uint16,
         game,
     );
@@ -11967,7 +11694,7 @@ pub unsafe fn Shitroid_Func_9(mut k: uint16, game: &mut Game) {
         (*E).base.x_pos = (*E1).base.x_pos;
         (*E).base.y_pos =
             ((*E1).base.y_pos as ::core::ffi::c_int - 32 as ::core::ffi::c_int) as uint16;
-        (*E).base.current_instruction = addr_kShitroid_Ilist_F924 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kShitroid_Ilist_F924 as uint16;
         (*E).base.instruction_timer = 1 as uint16;
         (*E).base.timer = 0 as uint16;
         (*E).shitr_var_A =
@@ -11994,7 +11721,7 @@ pub unsafe fn Shitroid_Func_10(mut k: uint16, game: &mut Game) {
     if fresh13 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
         (*E).shitr_var_A =
             (0xa9f125 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        (*E).base.current_instruction = addr_kShitroid_Ilist_F906 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kShitroid_Ilist_F906 as uint16;
         (*E).base.instruction_timer = 1 as uint16;
         (*E).base.timer = 0 as uint16;
         (*E).shitr_var_E = 10 as uint16;
@@ -12136,11 +11863,7 @@ pub unsafe fn Shitroid_Func_16(mut k: uint16, game: &mut Game) {
             (0xa9f2a2 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E).shitr_var_B = 0 as uint16;
         (*E).shitr_var_C = 0 as uint16;
-        Enemy_SetInstrList(
-            k,
-            addr_kShitroid_Ilist_F906 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        Enemy_SetInstrList(k, addr_kShitroid_Ilist_F906 as uint16, game);
         (*E).shitr_var_E = 10 as uint16;
         CallSomeSamusCode(0x13 as uint16, game);
         SomeMotherBrainScripts(0 as uint16, game);
@@ -12208,7 +11931,7 @@ pub unsafe fn Shitroid_Func_19(mut k: uint16, game: &mut Game) {
         (*E).shitr_var_A =
             (0xa9f2fb as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E).shitr_var_F = 88 as uint16;
-        (*E).base.current_instruction = addr_kShitroid_Ilist_F924 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kShitroid_Ilist_F924 as uint16;
         (*E).base.instruction_timer = 1 as uint16;
         (*E).base.timer = 0 as uint16;
         Shitroid_Func_20(game);
@@ -12257,7 +11980,7 @@ pub unsafe fn Shitroid_Func_21(game: &mut Game) {
         (*E).shitr_var_A =
             (0xa9f3a3 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E).shitr_var_F = 256 as uint16;
-        (*E).base.current_instruction = addr_kShitroid_Ilist_F93A as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kShitroid_Ilist_F93A as uint16;
         (*E).base.instruction_timer = 1 as uint16;
         (*E).base.timer = 0 as uint16;
     }
@@ -12393,7 +12116,7 @@ pub unsafe fn Shitroid_Func_27(mut k: uint16, game: &mut Game) -> uint8 {
             as ::core::ffi::c_int
             - 128 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
-            != 0) as ::core::ffi::c_int as uint8;
+            != 0) as uint8;
 }
 pub unsafe fn Shitroid_GraduallyAccelerateTowardsPt(
     mut k: uint16,
@@ -12711,25 +12434,13 @@ pub unsafe fn Shitroid_AccelerateTowardsX(
     return result;
 }
 pub unsafe fn Shitroid_HandleNormalPalette(game: &mut Game) {
-    Shitroid_HandleCutscenePalette_Common(
-        addr_word_A9F6D1 as ::core::ffi::c_int as uint16,
-        330 as uint16,
-        game,
-    );
+    Shitroid_HandleCutscenePalette_Common(addr_word_A9F6D1 as uint16, 330 as uint16, game);
 }
 pub unsafe fn Shitroid_HandleCutscenePalette(game: &mut Game) {
-    Shitroid_HandleCutscenePalette_Common(
-        addr_word_A9F6D1 as ::core::ffi::c_int as uint16,
-        490 as uint16,
-        game,
-    );
+    Shitroid_HandleCutscenePalette_Common(addr_word_A9F6D1 as uint16, 490 as uint16, game);
 }
 pub unsafe fn Shitroid_HandleCutscenePalette_LowHealth(game: &mut Game) {
-    Shitroid_HandleCutscenePalette_Common(
-        addr_word_A9F711 as ::core::ffi::c_int as uint16,
-        490 as uint16,
-        game,
-    );
+    Shitroid_HandleCutscenePalette_Common(addr_word_A9F711 as uint16, 490 as uint16, game);
 }
 pub unsafe fn Shitroid_HandleCutscenePalette_Common(
     mut r22: uint16,
@@ -12852,8 +12563,7 @@ pub unsafe fn Shitroid_Touch(game: &mut Game) {
                 & 1 as ::core::ffi::c_int
                 != 0
             {
-                (*E).base.current_instruction =
-                    addr_kShitroid_Ilist_F924 as ::core::ffi::c_int as uint16;
+                (*E).base.current_instruction = addr_kShitroid_Ilist_F924 as uint16;
                 (*E).base.instruction_timer = 1 as uint16;
                 (*E).base.timer = 0 as uint16;
                 (*E).shitr_var_E = 1 as uint16;

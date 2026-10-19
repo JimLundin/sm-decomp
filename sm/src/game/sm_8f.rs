@@ -255,28 +255,13 @@ pub unsafe fn RoomSetup_ScrollingSkyOcean(game: &mut Game) {
     RoomSetupAsm_ScrollingSkyOcean(game);
 }
 pub unsafe fn RoomSetup_RunStatueUnlockAnims(game: &mut Game) {
-    SpawnAnimtiles(
-        addr_kAnimtiles_TourianStatue_Kraid as ::core::ffi::c_int as uint16,
-        game,
-    );
-    SpawnAnimtiles(
-        addr_kAnimtiles_TourianStatue_Phantoon as ::core::ffi::c_int as uint16,
-        game,
-    );
-    SpawnAnimtiles(
-        addr_kAnimtiles_TourianStatue_Draygon as ::core::ffi::c_int as uint16,
-        game,
-    );
-    SpawnAnimtiles(
-        addr_kAnimtiles_TourianStatue_Ridley as ::core::ffi::c_int as uint16,
-        game,
-    );
+    SpawnAnimtiles(addr_kAnimtiles_TourianStatue_Kraid as uint16, game);
+    SpawnAnimtiles(addr_kAnimtiles_TourianStatue_Phantoon as uint16, game);
+    SpawnAnimtiles(addr_kAnimtiles_TourianStatue_Draygon as uint16, game);
+    SpawnAnimtiles(addr_kAnimtiles_TourianStatue_Ridley as uint16, game);
 }
 pub unsafe fn DoorCode_StartWreckedShipTreadmillWest(game: &mut Game) {
-    SpawnAnimtiles(
-        addr_kAnimtiles_WreckedShipTradmillRight as ::core::ffi::c_int as uint16,
-        game,
-    );
+    SpawnAnimtiles(addr_kAnimtiles_WreckedShipTradmillRight as uint16, game);
     SpawnHardcodedPlm(
         SpawnHardcodedPlmArgs {
             field_0: 0x4 as uint8,
@@ -624,24 +609,24 @@ pub unsafe fn RoomCode_GenRandomExplodes_4th(game: &mut Game) {
 }
 pub unsafe fn RoomCode_GenRandomExplodes(mut x_r18: uint16, mut y_r20: uint16, game: &mut Game) {
     static kRoomCode_GenRandomExplodes_Sprite: [uint8; 8] = [
-        3 as ::core::ffi::c_int as uint8,
-        3 as ::core::ffi::c_int as uint8,
-        9 as ::core::ffi::c_int as uint8,
-        12 as ::core::ffi::c_int as uint8,
-        12 as ::core::ffi::c_int as uint8,
-        18 as ::core::ffi::c_int as uint8,
-        18 as ::core::ffi::c_int as uint8,
-        21 as ::core::ffi::c_int as uint8,
+        3 as uint8,
+        3 as uint8,
+        9 as uint8,
+        12 as uint8,
+        12 as uint8,
+        18 as uint8,
+        18 as uint8,
+        21 as uint8,
     ];
     static kRoomCode_GenRandomExplodes_Sfx: [uint8; 8] = [
-        0x24 as ::core::ffi::c_int as uint8,
-        0 as ::core::ffi::c_int as uint8,
-        0 as ::core::ffi::c_int as uint8,
-        0x25 as ::core::ffi::c_int as uint8,
-        0 as ::core::ffi::c_int as uint8,
-        0 as ::core::ffi::c_int as uint8,
-        0 as ::core::ffi::c_int as uint8,
-        0 as ::core::ffi::c_int as uint8,
+        0x24 as uint8,
+        0 as uint8,
+        0 as uint8,
+        0x25 as uint8,
+        0 as uint8,
+        0 as uint8,
+        0 as uint8,
+        0 as uint8,
     ];
     let mut v1: uint16 =
         (NextRandom(game) as ::core::ffi::c_int & 0xf as ::core::ffi::c_int) as uint16;
@@ -681,11 +666,7 @@ pub unsafe fn RoomCode_ScrollRightDachora(game: &mut Game) {
     }
 }
 pub unsafe fn RoomCode_8FC8C8(game: &mut Game) {
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_PrePhantomRoom as ::core::ffi::c_int as uint16,
-        0 as uint16,
-        game,
-    );
+    SpawnEprojWithRoomGfx(addr_kEproj_PrePhantomRoom as uint16, 0 as uint16, game);
 }
 pub unsafe fn RoomCode_SetupShaktoolRoomPlm(game: &mut Game) {
     SpawnHardcodedPlm(
@@ -786,10 +767,7 @@ pub unsafe fn RoomCode_CeresColorMathHdma_BgBase(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x7eb) as *mut uint16) = 9 as uint16;
 }
 pub unsafe fn DoorCode_StartWreckedSkipTreadmill_East(game: &mut Game) {
-    SpawnAnimtiles(
-        addr_kAnimtiles_WreckedShipTradmillLeft as ::core::ffi::c_int as uint16,
-        game,
-    );
+    SpawnAnimtiles(addr_kAnimtiles_WreckedShipTradmillLeft as uint16, game);
     SpawnHardcodedPlm(
         SpawnHardcodedPlmArgs {
             field_0: 0x4 as uint8,
@@ -986,7 +964,7 @@ pub unsafe fn DoorCode_SetScroll_65(game: &mut Game) {
 }
 pub unsafe fn DoorCode_CeresElevatorShaft(game: &mut Game) {
     *(&raw mut game.g_ram as *mut uint8).offset(0x56) = 7 as uint8;
-    WriteReg(BGMODE as ::core::ffi::c_int as uint16, 7 as uint8, game);
+    WriteReg(BGMODE as uint16, 7 as uint8, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x78) as *mut uint16) = 256 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x7e) as *mut uint16) = 256 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x7a) as *mut uint16) = 0 as uint16;
@@ -1012,22 +990,22 @@ pub unsafe fn RoomCode_CeresElevatorShaft_(game: &mut Game) {
     RoomCode_CeresElevatorShaft(game);
 }
 static kRoomCode_SpawnCeresFallingDebris_Tab: [uint16; 16] = [
-    0x50 as ::core::ffi::c_int as uint16,
-    0x60 as ::core::ffi::c_int as uint16,
-    0x70 as ::core::ffi::c_int as uint16,
-    0x80 as ::core::ffi::c_int as uint16,
-    0x90 as ::core::ffi::c_int as uint16,
-    0xa0 as ::core::ffi::c_int as uint16,
-    0xb0 as ::core::ffi::c_int as uint16,
-    0xc0 as ::core::ffi::c_int as uint16,
-    0xd0 as ::core::ffi::c_int as uint16,
-    0xe0 as ::core::ffi::c_int as uint16,
-    0xf0 as ::core::ffi::c_int as uint16,
-    0x110 as ::core::ffi::c_int as uint16,
-    0x130 as ::core::ffi::c_int as uint16,
-    0x150 as ::core::ffi::c_int as uint16,
-    0x170 as ::core::ffi::c_int as uint16,
-    0x190 as ::core::ffi::c_int as uint16,
+    0x50 as uint16,
+    0x60 as uint16,
+    0x70 as uint16,
+    0x80 as uint16,
+    0x90 as uint16,
+    0xa0 as uint16,
+    0xb0 as uint16,
+    0xc0 as uint16,
+    0xd0 as uint16,
+    0xe0 as uint16,
+    0xf0 as uint16,
+    0x110 as uint16,
+    0x130 as uint16,
+    0x150 as uint16,
+    0x170 as uint16,
+    0x190 as uint16,
 ];
 pub unsafe fn RoomCode_SpawnCeresFallingDebris(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x93f) as *mut uint16) as ::core::ffi::c_int
@@ -1730,11 +1708,11 @@ pub unsafe fn RoomCode_CrocomireShaking(game: &mut Game) {
     }
 }
 static kRoomCode_RidleyRoomShaking_X: [int16; 8] = [
-    0 as ::core::ffi::c_int as int16,
-    2 as ::core::ffi::c_int as int16,
-    2 as ::core::ffi::c_int as int16,
-    2 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
+    2 as int16,
+    2 as int16,
+    2 as int16,
+    0 as int16,
     -(2 as ::core::ffi::c_int) as int16,
     -(2 as ::core::ffi::c_int) as int16,
     -(2 as ::core::ffi::c_int) as int16,
@@ -1742,11 +1720,11 @@ static kRoomCode_RidleyRoomShaking_X: [int16; 8] = [
 static kRoomCode_RidleyRoomShaking_Y: [int16; 8] = [
     -(2 as ::core::ffi::c_int) as int16,
     -(2 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
-    2 as ::core::ffi::c_int as int16,
-    2 as ::core::ffi::c_int as int16,
-    2 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
+    2 as int16,
+    2 as int16,
+    2 as int16,
+    0 as int16,
     -(2 as ::core::ffi::c_int) as int16,
 ];
 pub unsafe fn RoomCode_RidleyRoomShaking(game: &mut Game) {

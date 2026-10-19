@@ -598,39 +598,39 @@ pub const fnSamus_Func15: ::core::ffi::c_int = 0x90e833;
 pub const fnSamusDrawHandler_Default: ::core::ffi::c_int = 0x90eb52;
 pub const fnlocret_8B9585: ::core::ffi::c_int = 0x8b9585;
 pub unsafe fn SetupPpuForTitleSequence(game: &mut Game) {
-    WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(INIDISP as uint16, 0x80 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x51) = 0x80 as uint8;
-    WriteReg(OBSEL as ::core::ffi::c_int as uint16, 3 as uint8, game);
+    WriteReg(OBSEL as uint16, 3 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x52) = 3 as uint8;
-    WriteReg(BGMODE as ::core::ffi::c_int as uint16, 7 as uint8, game);
+    WriteReg(BGMODE as uint16, 7 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x55) = 7 as uint8;
-    WriteReg(M7SEL as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(M7SEL as uint16, 0x80 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5f) = 0x80 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x58) = 0 as uint8;
-    WriteReg(BG1SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG1SC as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x59) = 0 as uint8;
-    WriteReg(BG2SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG2SC as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5a) = 0 as uint8;
-    WriteReg(BG3SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG3SC as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5c) = 0 as uint8;
-    WriteReg(BG4SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG4SC as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5d) = 0 as uint8;
-    WriteReg(BG12NBA as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG12NBA as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5e) = 0 as uint8;
-    WriteReg(BG34NBA as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(TM as ::core::ffi::c_int as uint16, 0x10 as uint8, game);
+    WriteReg(BG34NBA as uint16, 0 as uint8, game);
+    WriteReg(TM as uint16, 0x10 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 16 as uint8;
-    WriteReg(TS as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(TS as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x6b) = 0 as uint8;
-    WriteReg(TMW as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(TMW as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x6c) = 0 as uint8;
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(CGWSEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(VMAIN as uint16, 0 as uint8, game);
+    WriteReg(CGWSEL as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x6e) = 0 as uint8;
-    WriteReg(CGADSUB as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(CGADSUB as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x71) = 0 as uint8;
-    WriteReg(COLDATA as ::core::ffi::c_int as uint16, 0xe0 as uint8, game);
-    WriteReg(SETINI as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(COLDATA as uint16, 0xe0 as uint8, game);
+    WriteReg(SETINI as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x77) = 0 as uint8;
     memset(
         (&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut ::core::ffi::c_void,
@@ -670,39 +670,39 @@ pub unsafe fn SetupPpuForTitleSequence(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x199f) as *mut uint16) = 0 as uint16;
 }
 pub unsafe fn SetupPpu_Intro(game: &mut Game) {
-    WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(INIDISP as uint16, 0x80 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x51) = 0x80 as uint8;
-    WriteReg(OBSEL as ::core::ffi::c_int as uint16, 3 as uint8, game);
+    WriteReg(OBSEL as uint16, 3 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x52) = 3 as uint8;
-    WriteReg(BGMODE as ::core::ffi::c_int as uint16, 9 as uint8, game);
+    WriteReg(BGMODE as uint16, 9 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x55) = 9 as uint8;
-    WriteReg(M7SEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(M7SEL as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5f) = 0 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x58) = 80 as uint8;
-    WriteReg(BG1SC as ::core::ffi::c_int as uint16, 0x50 as uint8, game);
+    WriteReg(BG1SC as uint16, 0x50 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x59) = 72 as uint8;
-    WriteReg(BG2SC as ::core::ffi::c_int as uint16, 0x48 as uint8, game);
+    WriteReg(BG2SC as uint16, 0x48 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5a) = 76 as uint8;
-    WriteReg(BG3SC as ::core::ffi::c_int as uint16, 0x4c as uint8, game);
+    WriteReg(BG3SC as uint16, 0x4c as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5c) = 0 as uint8;
-    WriteReg(BG4SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG4SC as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5d) = 0 as uint8;
-    WriteReg(BG12NBA as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG12NBA as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5e) = 4 as uint8;
-    WriteReg(BG34NBA as ::core::ffi::c_int as uint16, 4 as uint8, game);
-    WriteReg(TM as ::core::ffi::c_int as uint16, 4 as uint8, game);
+    WriteReg(BG34NBA as uint16, 4 as uint8, game);
+    WriteReg(TM as uint16, 4 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 4 as uint8;
-    WriteReg(TS as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(TS as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x6b) = 0 as uint8;
-    WriteReg(TMW as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(TMW as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x6c) = 0 as uint8;
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(CGWSEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(VMAIN as uint16, 0 as uint8, game);
+    WriteReg(CGWSEL as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x6e) = 0 as uint8;
-    WriteReg(CGADSUB as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(CGADSUB as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x71) = 0 as uint8;
-    WriteReg(COLDATA as ::core::ffi::c_int as uint16, 0xe0 as uint8, game);
-    WriteReg(SETINI as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(COLDATA as uint16, 0xe0 as uint8, game);
+    WriteReg(SETINI as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x77) = 0 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x6f) = 0 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x72) = 0 as uint8;
@@ -733,38 +733,38 @@ pub unsafe fn SetupPpu_Intro(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xbb) as *mut uint16) = 0 as uint16;
 }
 pub unsafe fn SetupPpu_3_Mode7(game: &mut Game) {
-    WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(INIDISP as uint16, 0x80 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x51) = 0x80 as uint8;
-    WriteReg(OBSEL as ::core::ffi::c_int as uint16, 3 as uint8, game);
+    WriteReg(OBSEL as uint16, 3 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x52) = 3 as uint8;
-    WriteReg(BGMODE as ::core::ffi::c_int as uint16, 7 as uint8, game);
+    WriteReg(BGMODE as uint16, 7 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x55) = 7 as uint8;
-    WriteReg(M7SEL as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(M7SEL as uint16, 0x80 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5f) = 0x80 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x58) = 0 as uint8;
-    WriteReg(BG1SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG1SC as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x59) = 0 as uint8;
-    WriteReg(BG2SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG2SC as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5a) = 0 as uint8;
-    WriteReg(BG3SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG3SC as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5c) = 0 as uint8;
-    WriteReg(BG4SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG4SC as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5d) = 0 as uint8;
-    WriteReg(BG12NBA as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG12NBA as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5e) = 0 as uint8;
-    WriteReg(BG34NBA as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(TM as ::core::ffi::c_int as uint16, 0x11 as uint8, game);
+    WriteReg(BG34NBA as uint16, 0 as uint8, game);
+    WriteReg(TM as uint16, 0x11 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 17 as uint8;
-    WriteReg(TS as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(TS as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x6b) = 0 as uint8;
-    WriteReg(TMW as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(TMW as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x6c) = 0 as uint8;
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(CGWSEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(VMAIN as uint16, 0 as uint8, game);
+    WriteReg(CGWSEL as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x6e) = 0 as uint8;
-    WriteReg(CGADSUB as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(CGADSUB as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x71) = 0 as uint8;
-    WriteReg(COLDATA as ::core::ffi::c_int as uint16, 0xe0 as uint8, game);
+    WriteReg(COLDATA as uint16, 0xe0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x6f) = 0 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x72) = 0 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) = 32 as uint8;
@@ -782,29 +782,29 @@ pub unsafe fn SetupPpu_3_Mode7(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1982) as *mut uint16) = 0 as uint16;
 }
 pub unsafe fn SetupPpu_4_Mode1(game: &mut Game) {
-    WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(INIDISP as uint16, 0x80 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x51) = 0x80 as uint8;
-    WriteReg(OBSEL as ::core::ffi::c_int as uint16, 3 as uint8, game);
+    WriteReg(OBSEL as uint16, 3 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x52) = 3 as uint8;
-    WriteReg(BGMODE as ::core::ffi::c_int as uint16, 1 as uint8, game);
+    WriteReg(BGMODE as uint16, 1 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x55) = 1 as uint8;
-    WriteReg(M7SEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(M7SEL as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5f) = 0 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x58) = 92 as uint8;
-    WriteReg(BG1SC as ::core::ffi::c_int as uint16, 0x5c as uint8, game);
+    WriteReg(BG1SC as uint16, 0x5c as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x59) = 0 as uint8;
-    WriteReg(BG2SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG2SC as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5a) = 0 as uint8;
-    WriteReg(BG3SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG3SC as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5c) = 0 as uint8;
-    WriteReg(BG4SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG4SC as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5d) = 6 as uint8;
-    WriteReg(BG12NBA as ::core::ffi::c_int as uint16, 6 as uint8, game);
+    WriteReg(BG12NBA as uint16, 6 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5e) = 0 as uint8;
-    WriteReg(BG34NBA as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(TM as ::core::ffi::c_int as uint16, 0x11 as uint8, game);
+    WriteReg(BG34NBA as uint16, 0 as uint8, game);
+    WriteReg(TM as uint16, 0x11 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 17 as uint8;
-    WriteReg(TS as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(TS as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x6b) = 0 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x60) = 0 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x61) = 0 as uint8;
@@ -817,41 +817,41 @@ pub unsafe fn SetupPpu_4_Mode1(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) = 0 as uint16;
 }
 pub unsafe fn SetupPpu_5_Mode7(game: &mut Game) {
-    WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(INIDISP as uint16, 0x80 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x51) = 0x80 as uint8;
-    WriteReg(OBSEL as ::core::ffi::c_int as uint16, 0xa3 as uint8, game);
+    WriteReg(OBSEL as uint16, 0xa3 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x52) = -(93 as ::core::ffi::c_int) as uint8;
-    WriteReg(BGMODE as ::core::ffi::c_int as uint16, 7 as uint8, game);
+    WriteReg(BGMODE as uint16, 7 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x55) = 7 as uint8;
-    WriteReg(M7SEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(M7SEL as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5f) = 0 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x58) = 0 as uint8;
-    WriteReg(BG1SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG1SC as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x59) = 0 as uint8;
-    WriteReg(BG2SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG2SC as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5a) = 0 as uint8;
-    WriteReg(BG3SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG3SC as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5c) = 0 as uint8;
-    WriteReg(BG4SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG4SC as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5d) = 0 as uint8;
-    WriteReg(BG12NBA as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG12NBA as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5e) = 0 as uint8;
-    WriteReg(BG34NBA as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(TM as ::core::ffi::c_int as uint16, 0x11 as uint8, game);
+    WriteReg(BG34NBA as uint16, 0 as uint8, game);
+    WriteReg(TM as uint16, 0x11 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 17 as uint8;
-    WriteReg(TS as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(TS as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x6b) = 0 as uint8;
-    WriteReg(TMW as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(TMW as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x6c) = 0 as uint8;
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(CGWSEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(VMAIN as uint16, 0 as uint8, game);
+    WriteReg(CGWSEL as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x6e) = 0 as uint8;
-    WriteReg(CGADSUB as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(CGADSUB as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x71) = 0 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x6f) = 0 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x72) = 0 as uint8;
-    WriteReg(COLDATA as ::core::ffi::c_int as uint16, 0xe0 as uint8, game);
-    WriteReg(SETINI as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(COLDATA as uint16, 0xe0 as uint8, game);
+    WriteReg(SETINI as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x77) = 0 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) = 32 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) = 64 as uint8;
@@ -871,38 +871,38 @@ pub unsafe fn SetupPpu_5_Mode7(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x199f) as *mut uint16) = 0 as uint16;
 }
 pub unsafe fn SetupPpu_6_Mode1(game: &mut Game) {
-    WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(INIDISP as uint16, 0x80 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x51) = 0x80 as uint8;
-    WriteReg(OBSEL as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteReg(OBSEL as uint16, 2 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x52) = 2 as uint8;
-    WriteReg(BGMODE as ::core::ffi::c_int as uint16, 1 as uint8, game);
+    WriteReg(BGMODE as uint16, 1 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x55) = 1 as uint8;
-    WriteReg(M7SEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(M7SEL as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5f) = 0 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x58) = 112 as uint8;
-    WriteReg(BG1SC as ::core::ffi::c_int as uint16, 0x70 as uint8, game);
+    WriteReg(BG1SC as uint16, 0x70 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x59) = 120 as uint8;
-    WriteReg(BG2SC as ::core::ffi::c_int as uint16, 0x78 as uint8, game);
+    WriteReg(BG2SC as uint16, 0x78 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5a) = 0 as uint8;
-    WriteReg(BG3SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG3SC as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5c) = 0 as uint8;
-    WriteReg(BG4SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG4SC as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5d) = 68 as uint8;
-    WriteReg(BG12NBA as ::core::ffi::c_int as uint16, 0x44 as uint8, game);
+    WriteReg(BG12NBA as uint16, 0x44 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5e) = 0 as uint8;
-    WriteReg(BG34NBA as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(TM as ::core::ffi::c_int as uint16, 0x10 as uint8, game);
+    WriteReg(BG34NBA as uint16, 0 as uint8, game);
+    WriteReg(TM as uint16, 0x10 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 16 as uint8;
-    WriteReg(TS as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(TS as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x6b) = 0 as uint8;
-    WriteReg(TMW as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(TMW as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x6c) = 0 as uint8;
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(CGWSEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(VMAIN as uint16, 0 as uint8, game);
+    WriteReg(CGWSEL as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x6e) = 0 as uint8;
-    WriteReg(CGADSUB as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(CGADSUB as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x71) = 0 as uint8;
-    WriteReg(COLDATA as ::core::ffi::c_int as uint16, 0xe0 as uint8, game);
+    WriteReg(COLDATA as uint16, 0xe0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x6f) = 0 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x72) = 0 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) = 32 as uint8;
@@ -922,29 +922,29 @@ pub unsafe fn SetupPpu_6_Mode1(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16) = 0 as uint16;
 }
 pub unsafe fn SetupPpu_7_Mode1(game: &mut Game) {
-    WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(INIDISP as uint16, 0x80 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x51) = 0x80 as uint8;
-    WriteReg(OBSEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(OBSEL as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x52) = 0 as uint8;
-    WriteReg(BGMODE as ::core::ffi::c_int as uint16, 1 as uint8, game);
+    WriteReg(BGMODE as uint16, 1 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x55) = 1 as uint8;
-    WriteReg(M7SEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(M7SEL as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5f) = 0 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x58) = 72 as uint8;
-    WriteReg(BG1SC as ::core::ffi::c_int as uint16, 0x48 as uint8, game);
+    WriteReg(BG1SC as uint16, 0x48 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x59) = 76 as uint8;
-    WriteReg(BG2SC as ::core::ffi::c_int as uint16, 0x4c as uint8, game);
+    WriteReg(BG2SC as uint16, 0x4c as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5a) = 36 as uint8;
-    WriteReg(BG3SC as ::core::ffi::c_int as uint16, 0x24 as uint8, game);
+    WriteReg(BG3SC as uint16, 0x24 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5c) = 0 as uint8;
-    WriteReg(BG4SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG4SC as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5d) = 84 as uint8;
-    WriteReg(BG12NBA as ::core::ffi::c_int as uint16, 0x54 as uint8, game);
+    WriteReg(BG12NBA as uint16, 0x54 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5e) = 2 as uint8;
-    WriteReg(BG34NBA as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(TM as ::core::ffi::c_int as uint16, 1 as uint8, game);
+    WriteReg(BG34NBA as uint16, 2 as uint8, game);
+    WriteReg(TM as uint16, 1 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 1 as uint8;
-    WriteReg(TS as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(TS as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x6b) = 0 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x60) = 0 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x61) = 0 as uint8;
@@ -957,17 +957,17 @@ pub unsafe fn SetupPpu_7_Mode1(game: &mut Game) {
     *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) = 64 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2) = 0x80 as uint8;
     *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) = 0 as uint16;
-    WriteRegWord(M7A as ::core::ffi::c_int as uint16, 0x100 as uint16, game);
+    WriteRegWord(M7A as uint16, 0x100 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x78) as *mut uint16) = 256 as uint16;
-    WriteRegWord(M7B as ::core::ffi::c_int as uint16, 0 as uint16, game);
+    WriteRegWord(M7B as uint16, 0 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x7a) as *mut uint16) = 0 as uint16;
-    WriteRegWord(M7C as ::core::ffi::c_int as uint16, 0 as uint16, game);
+    WriteRegWord(M7C as uint16, 0 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x7c) as *mut uint16) = 0 as uint16;
-    WriteRegWord(M7D as ::core::ffi::c_int as uint16, 0x100 as uint16, game);
+    WriteRegWord(M7D as uint16, 0x100 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x7e) as *mut uint16) = 256 as uint16;
-    WriteRegWord(M7X as ::core::ffi::c_int as uint16, 0x80 as uint16, game);
+    WriteRegWord(M7X as uint16, 0x80 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x80) as *mut uint16) = 128 as uint16;
-    WriteRegWord(M7Y as ::core::ffi::c_int as uint16, 0x80 as uint16, game);
+    WriteRegWord(M7Y as uint16, 0x80 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x82) as *mut uint16) = 128 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x198d) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x198f) as *mut uint16) = 1 as uint16;
@@ -1186,7 +1186,7 @@ pub unsafe fn ProcessCinematicBgObject_DrawChar(
     let mut v3: int16 = 0;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1ba1) as *mut uint16) =
         (*((&raw mut game.g_ram as *mut uint8).offset(0x1ba1) as *mut uint16) as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
+            == 0 as ::core::ffi::c_int) as uint16;
     SpawnTextGlowObject(j, r18, game);
     let mut v2: *const uint8 = RomPtr_8C(
         *((&raw mut game.g_ram as *mut uint8).offset(0x19cd) as *mut uint16)
@@ -1812,14 +1812,14 @@ pub unsafe fn CalcSinMult(mut k: uint16, mut r24: uint16) -> uint16 {
             * r24 as uint8 as ::core::ffi::c_int) as uint16;
 }
 static kMoveUnusedSpritesMasks: [uint16; 8] = [
-    0x5555 as ::core::ffi::c_int as uint16,
-    0x5554 as ::core::ffi::c_int as uint16,
-    0x5550 as ::core::ffi::c_int as uint16,
-    0x5540 as ::core::ffi::c_int as uint16,
-    0x5500 as ::core::ffi::c_int as uint16,
-    0x5400 as ::core::ffi::c_int as uint16,
-    0x5000 as ::core::ffi::c_int as uint16,
-    0x4000 as ::core::ffi::c_int as uint16,
+    0x5555 as uint16,
+    0x5554 as uint16,
+    0x5550 as uint16,
+    0x5540 as uint16,
+    0x5500 as uint16,
+    0x5400 as uint16,
+    0x5000 as uint16,
+    0x4000 as uint16,
 ];
 pub unsafe fn MoveUnusedSpritesOffScreen(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) as ::core::ffi::c_int
@@ -1980,7 +1980,7 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
         let mut current_block_182: u64;
         match *_state_variable_ as ::core::ffi::c_int {
             0 => {
-                WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x8f as uint8, game);
+                WriteReg(INIDISP as uint16, 0x8f as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x51) = 0x8f as uint8;
                 *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) = 0 as uint16;
                 ClearOamExt(game);
@@ -1988,122 +1988,122 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
                 *((&raw mut game.g_ram as *mut uint8).offset(0x71d) as *mut uint16) = 0 as uint16;
                 *((&raw mut game.g_ram as *mut uint8).offset(0x71f) as *mut uint16) = 0 as uint16;
                 *((&raw mut game.g_ram as *mut uint8).offset(0x721) as *mut uint16) = 0 as uint16;
-                WriteReg(NMITIMEN as ::core::ffi::c_int as uint16, 1 as uint8, game);
+                WriteReg(NMITIMEN as uint16, 1 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x84) = 1 as uint8;
-                WriteReg(WRIO as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(WRMPYA as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(WRMPYB as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(WRDIVL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(WRDIVH as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(WRDIVB as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(HTIMEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(HTIMEH as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(VTIMEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(VTIMEH as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(HDMAEN as ::core::ffi::c_int as uint16, 0 as uint8, game);
+                WriteReg(WRIO as uint16, 0 as uint8, game);
+                WriteReg(WRMPYA as uint16, 0 as uint8, game);
+                WriteReg(WRMPYB as uint16, 0 as uint8, game);
+                WriteReg(WRDIVL as uint16, 0 as uint8, game);
+                WriteReg(WRDIVH as uint16, 0 as uint8, game);
+                WriteReg(WRDIVB as uint16, 0 as uint8, game);
+                WriteReg(HTIMEL as uint16, 0 as uint8, game);
+                WriteReg(HTIMEH as uint16, 0 as uint8, game);
+                WriteReg(VTIMEL as uint16, 0 as uint8, game);
+                WriteReg(VTIMEH as uint16, 0 as uint8, game);
+                WriteReg(MDMAEN as uint16, 0 as uint8, game);
+                WriteReg(HDMAEN as uint16, 0 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x85) = 0 as uint8;
-                WriteReg(MEMSEL as ::core::ffi::c_int as uint16, 1 as uint8, game);
+                WriteReg(MEMSEL as uint16, 1 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x86) = 1 as uint8;
-                WriteReg(OBSEL as ::core::ffi::c_int as uint16, 3 as uint8, game);
+                WriteReg(OBSEL as uint16, 3 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x52) = 3 as uint8;
-                WriteReg(OAMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
+                WriteReg(OAMADDL as uint16, 0 as uint8, game);
                 *((&raw mut game.g_ram as *mut uint8).offset(0x53) as *mut uint16 as *mut uint8)
                     .offset(0) = 0 as uint8;
-                WriteReg(OAMADDH as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+                WriteReg(OAMADDH as uint16, 0x80 as uint8, game);
                 *((&raw mut game.g_ram as *mut uint8).offset(0x53) as *mut uint16 as *mut uint8)
                     .offset(
                         (::core::mem::size_of::<uint16>() as usize)
                             .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                             .wrapping_sub(1 as usize) as isize,
                     ) = 0x80 as uint8;
-                WriteReg(OAMDATA as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(OAMDATA as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(BGMODE as ::core::ffi::c_int as uint16, 1 as uint8, game);
+                WriteReg(OAMDATA as uint16, 0 as uint8, game);
+                WriteReg(OAMDATA as uint16, 0 as uint8, game);
+                WriteReg(BGMODE as uint16, 1 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x55) = 1 as uint8;
-                WriteReg(MOSAIC as ::core::ffi::c_int as uint16, 0 as uint8, game);
+                WriteReg(MOSAIC as uint16, 0 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x57) = 0 as uint8;
-                WriteReg(BG1SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
+                WriteReg(BG1SC as uint16, 0 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x58) = 0 as uint8;
-                WriteReg(BG2SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
+                WriteReg(BG2SC as uint16, 0 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x59) = 0 as uint8;
-                WriteReg(BG3SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
+                WriteReg(BG3SC as uint16, 0 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x5a) = 0 as uint8;
-                WriteReg(BG4SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
+                WriteReg(BG4SC as uint16, 0 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x5c) = 0 as uint8;
-                WriteReg(BG12NBA as ::core::ffi::c_int as uint16, 0 as uint8, game);
+                WriteReg(BG12NBA as uint16, 0 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x5d) = 0 as uint8;
-                WriteReg(BG34NBA as ::core::ffi::c_int as uint16, 0 as uint8, game);
+                WriteReg(BG34NBA as uint16, 0 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x5e) = 0 as uint8;
-                WriteReg(BG1HOFS as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(BG1HOFS as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(BG1VOFS as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(BG1VOFS as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(BG2HOFS as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(BG2HOFS as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(BG2VOFS as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(BG2VOFS as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(BG3HOFS as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(BG3HOFS as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(BG3VOFS as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(BG3VOFS as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(BG4HOFS as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(BG4HOFS as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(BG4VOFS as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(BG4VOFS as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(M7SEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
+                WriteReg(BG1HOFS as uint16, 0 as uint8, game);
+                WriteReg(BG1HOFS as uint16, 0 as uint8, game);
+                WriteReg(BG1VOFS as uint16, 0 as uint8, game);
+                WriteReg(BG1VOFS as uint16, 0 as uint8, game);
+                WriteReg(BG2HOFS as uint16, 0 as uint8, game);
+                WriteReg(BG2HOFS as uint16, 0 as uint8, game);
+                WriteReg(BG2VOFS as uint16, 0 as uint8, game);
+                WriteReg(BG2VOFS as uint16, 0 as uint8, game);
+                WriteReg(BG3HOFS as uint16, 0 as uint8, game);
+                WriteReg(BG3HOFS as uint16, 0 as uint8, game);
+                WriteReg(BG3VOFS as uint16, 0 as uint8, game);
+                WriteReg(BG3VOFS as uint16, 0 as uint8, game);
+                WriteReg(BG4HOFS as uint16, 0 as uint8, game);
+                WriteReg(BG4HOFS as uint16, 0 as uint8, game);
+                WriteReg(BG4VOFS as uint16, 0 as uint8, game);
+                WriteReg(BG4VOFS as uint16, 0 as uint8, game);
+                WriteReg(VMAIN as uint16, 0 as uint8, game);
+                WriteReg(M7SEL as uint16, 0 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x5f) = 0 as uint8;
-                WriteReg(M7A as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(M7B as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(M7C as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(M7D as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(M7X as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(M7Y as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(W12SEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
+                WriteReg(M7A as uint16, 0 as uint8, game);
+                WriteReg(M7B as uint16, 0 as uint8, game);
+                WriteReg(M7C as uint16, 0 as uint8, game);
+                WriteReg(M7D as uint16, 0 as uint8, game);
+                WriteReg(M7X as uint16, 0 as uint8, game);
+                WriteReg(M7Y as uint16, 0 as uint8, game);
+                WriteReg(W12SEL as uint16, 0 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x60) = 0 as uint8;
-                WriteReg(W34SEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
+                WriteReg(W34SEL as uint16, 0 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x61) = 0 as uint8;
-                WriteReg(WOBJSEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
+                WriteReg(WOBJSEL as uint16, 0 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x62) = 0 as uint8;
-                WriteReg(WH0 as ::core::ffi::c_int as uint16, 0 as uint8, game);
+                WriteReg(WH0 as uint16, 0 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x63) = 0 as uint8;
-                WriteReg(WH1 as ::core::ffi::c_int as uint16, 0 as uint8, game);
+                WriteReg(WH1 as uint16, 0 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x64) = 0 as uint8;
-                WriteReg(WH2 as ::core::ffi::c_int as uint16, 0 as uint8, game);
+                WriteReg(WH2 as uint16, 0 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x65) = 0 as uint8;
-                WriteReg(WH3 as ::core::ffi::c_int as uint16, 0 as uint8, game);
+                WriteReg(WH3 as uint16, 0 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x66) = 0 as uint8;
-                WriteReg(WBGLOG as ::core::ffi::c_int as uint16, 0 as uint8, game);
+                WriteReg(WBGLOG as uint16, 0 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x67) = 0 as uint8;
-                WriteReg(WOBJLOG as ::core::ffi::c_int as uint16, 0 as uint8, game);
+                WriteReg(WOBJLOG as uint16, 0 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x68) = 0 as uint8;
-                WriteReg(TM as ::core::ffi::c_int as uint16, 0x10 as uint8, game);
+                WriteReg(TM as uint16, 0x10 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 16 as uint8;
-                WriteReg(TMW as ::core::ffi::c_int as uint16, 0 as uint8, game);
+                WriteReg(TMW as uint16, 0 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x6c) = 0 as uint8;
-                WriteReg(TS as ::core::ffi::c_int as uint16, 0 as uint8, game);
+                WriteReg(TS as uint16, 0 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x6b) = 0 as uint8;
-                WriteReg(TSW as ::core::ffi::c_int as uint16, 0 as uint8, game);
+                WriteReg(TSW as uint16, 0 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x6d) = 0 as uint8;
-                WriteReg(CGWSEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
+                WriteReg(CGWSEL as uint16, 0 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x6e) = 0 as uint8;
-                WriteReg(CGADSUB as ::core::ffi::c_int as uint16, 0 as uint8, game);
+                WriteReg(CGADSUB as uint16, 0 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x71) = 0 as uint8;
-                WriteReg(COLDATA as ::core::ffi::c_int as uint16, 0xe0 as uint8, game);
+                WriteReg(COLDATA as uint16, 0xe0 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) = 32 as uint8;
                 *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) = 64 as uint8;
                 *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2) = 0x80 as uint8;
-                WriteReg(SETINI as ::core::ffi::c_int as uint16, 0 as uint8, game);
+                WriteReg(SETINI as uint16, 0 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x77) = 0 as uint8;
                 DecompressToMem(
                     0x9580d8 as uint32,
                     (&raw mut game.g_ram as *mut uint8).offset(0x15000),
                     game,
                 );
-                WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-                WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8, game);
-                WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+                WriteReg(VMADDL as uint16, 0 as uint8, game);
+                WriteReg(VMADDH as uint16, 0x60 as uint8, game);
+                WriteReg(VMAIN as uint16, 0x80 as uint8, game);
                 static unk_8B92B9: StartDmaCopy = StartDmaCopy {
                     chan: 1 as uint8,
                     dmap: 1 as uint8,
@@ -2116,7 +2116,7 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
                     das: 0x4000 as VoidP,
                 };
                 SetupDmaTransfer(&raw const unk_8B92B9 as *const ::core::ffi::c_void, game);
-                WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+                WriteReg(MDMAEN as uint16, 2 as uint8, game);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x51) = 0x80 as uint8;
                 let mut v0: uint16 = 0 as uint16;
                 loop {
@@ -2240,7 +2240,7 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
                         *_state_variable_ = 6 as uint8;
                         return _coret__4 as CoroutineRet;
                     }
-                    WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x8f as uint8, game);
+                    WriteReg(INIDISP as uint16, 0x8f as uint8, game);
                     *(&raw mut game.g_ram as *mut uint8).offset(0x51) = 0x8f as uint8;
                     current_block_182 = 2222055338596505704;
                     continue;
@@ -2288,7 +2288,7 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
 pub unsafe fn AddNintentoLogoToOam(game: &mut Game) {
     DrawSpritemap(
         0x8c as uint8,
-        addr_kSpriteMap_NintendoLogo as ::core::ffi::c_int as uint16,
+        addr_kSpriteMap_NintendoLogo as uint16,
         128 as uint16,
         112 as uint16,
         0 as uint16,
@@ -3206,12 +3206,12 @@ pub unsafe fn HandleCinematicsTransitions_1(game: &mut Game) {
 pub unsafe fn HandleCinematicsTransitions_2(game: &mut Game) {
     ClearCinematicSprites(game);
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BA119 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BA119 as uint16,
         0 as uint16,
         game,
     );
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BA125 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BA125 as uint16,
         0x0400, // Palette left in A by the first sprite initializer.
         game,
     );
@@ -3251,8 +3251,8 @@ pub unsafe fn HandleCinematicsTransitions_2(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(202) =
         32128 as uint16;
     ClearPaletteFXObjects(game);
-    SpawnPalfxObject(addr_kPalfx_E1A0 as ::core::ffi::c_int as uint16, game);
-    SpawnPalfxObject(addr_kPalfx_E1A4 as ::core::ffi::c_int as uint16, game);
+    SpawnPalfxObject(addr_kPalfx_E1A0 as uint16, game);
+    SpawnPalfxObject(addr_kPalfx_E1A4 as uint16, game);
     SetPpuBackdropBlack(game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 17 as uint8;
     SpawnTitleScreenGradientObjs(game);
@@ -3312,7 +3312,7 @@ pub unsafe fn CinematicFunctionOpening(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
         (0x8b9a47 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BA0EF as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BA0EF as uint16,
         (0x8b9a47 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16,
         game,
     );
@@ -3362,9 +3362,9 @@ pub unsafe fn LoadTitleSequenceGraphics(game: &mut Game) {
         (&raw mut game.g_ram as *mut uint8).offset(0x19000),
         game,
     );
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8B9BFF: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 0 as uint8,
@@ -3376,21 +3376,21 @@ pub unsafe fn LoadTitleSequenceGraphics(game: &mut Game) {
         das: 0x4000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8B9BFF as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMAIN as uint16, 0 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0 as uint8, game);
     v1 = 0x4000 as int16;
     loop {
-        WriteReg(VMDATAL as ::core::ffi::c_int as uint16, 0xff as uint8, game);
+        WriteReg(VMDATAL as uint16, 0xff as uint8, game);
         v1 -= 1;
         if !(v1 != 0) {
             break;
         }
     }
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0 as uint8, game);
+    WriteReg(VMAIN as uint16, 0 as uint8, game);
     static unk_8B9C37: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 0 as uint8,
@@ -3402,10 +3402,10 @@ pub unsafe fn LoadTitleSequenceGraphics(game: &mut Game) {
         das: 0x1000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8B9C37 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x60 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8B9C57: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -3417,18 +3417,18 @@ pub unsafe fn LoadTitleSequenceGraphics(game: &mut Game) {
         das: 0x4000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8B9C57 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteRegWord(M7A as ::core::ffi::c_int as uint16, 0x100 as uint16, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteRegWord(M7A as uint16, 0x100 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x78) as *mut uint16) = 256 as uint16;
-    WriteRegWord(M7B as ::core::ffi::c_int as uint16, 0 as uint16, game);
+    WriteRegWord(M7B as uint16, 0 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x7a) as *mut uint16) = 0 as uint16;
-    WriteRegWord(M7C as ::core::ffi::c_int as uint16, 0 as uint16, game);
+    WriteRegWord(M7C as uint16, 0 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x7c) as *mut uint16) = 0 as uint16;
-    WriteRegWord(M7D as ::core::ffi::c_int as uint16, 0x100 as uint16, game);
+    WriteRegWord(M7D as uint16, 0x100 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x7e) as *mut uint16) = 256 as uint16;
-    WriteRegWord(M7X as ::core::ffi::c_int as uint16, 0x80 as uint16, game);
+    WriteRegWord(M7X as uint16, 0x80 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x80) as *mut uint16) = 128 as uint16;
-    WriteRegWord(M7Y as ::core::ffi::c_int as uint16, 0x80 as uint16, game);
+    WriteRegWord(M7Y as uint16, 0x80 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x82) as *mut uint16) = 128 as uint16;
     EnableNMI(game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 1 as uint16;
@@ -3436,10 +3436,10 @@ pub unsafe fn LoadTitleSequenceGraphics(game: &mut Game) {
     EnableHdmaObjects(game);
     EnablePaletteFx(game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1982) as *mut uint16) = 0 as uint16;
-    SpawnPalfxObject(addr_kPalfx_E1A0 as ::core::ffi::c_int as uint16, game);
-    SpawnPalfxObject(addr_kPalfx_E1A4 as ::core::ffi::c_int as uint16, game);
+    SpawnPalfxObject(addr_kPalfx_E1A0 as uint16, game);
+    SpawnPalfxObject(addr_kPalfx_E1A4 as uint16, game);
     SpawnMode7Object(
-        addr_kMode7ObjBabyMetroidInTitle as ::core::ffi::c_int as uint16,
+        addr_kMode7ObjBabyMetroidInTitle as uint16,
         0x000c, // The second title palette allocation leaves its slot offset in A.
         game,
     );
@@ -3492,7 +3492,7 @@ pub unsafe fn CinematicFunc_Func2(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
             (0x8b9a47 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BA0F5 as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BA0F5 as uint16,
             (0x8b9a47 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16,
             game,
         );
@@ -3541,7 +3541,7 @@ pub unsafe fn CinematicFunc_Func4(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
             (0x8b9a47 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BA0FB as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BA0FB as uint16,
             (0x8b9a47 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16,
             game,
         );
@@ -3593,7 +3593,7 @@ pub unsafe fn CinematicFunc_Func5(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
             (0x8b9a47 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BA101 as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BA101 as uint16,
             (0x8b9a47 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16,
             game,
         );
@@ -3645,7 +3645,7 @@ pub unsafe fn CinematicFunc_Func7(game: &mut Game) {
             *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
                 (0x8b9f28 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
             SpawnCinematicSpriteObject(
-                addr_kCinematicSpriteObjectDef_8BA107 as ::core::ffi::c_int as uint16,
+                addr_kCinematicSpriteObjectDef_8BA107 as uint16,
                 (0x8b9f28 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16,
                 game,
             );
@@ -3660,15 +3660,11 @@ pub unsafe fn CinematicSpriteInit_4(mut j: uint16, game: &mut Game) {
         48 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1abd) as *mut uint16).offset(v1 as isize) =
         1024 as uint16;
-    SpawnPalfxObject(addr_kPalfx_E194 as ::core::ffi::c_int as uint16, game);
+    SpawnPalfxObject(addr_kPalfx_E194 as uint16, game);
 }
 pub unsafe fn CinematicSprInstr_Func9(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     let mut v0: uint16 = 0x9ecd as uint16;
-    SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BA113 as ::core::ffi::c_int as uint16,
-        v0,
-        game,
-    );
+    SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BA113 as uint16, v0, game);
     return j;
 }
 pub unsafe fn CinematicSpriteInit_5(mut j: uint16, game: &mut Game) {
@@ -3679,7 +3675,7 @@ pub unsafe fn CinematicSpriteInit_5(mut j: uint16, game: &mut Game) {
         81 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1abd) as *mut uint16).offset(v1 as isize) =
         512 as uint16;
-    SpawnPalfxObject(addr_kPalfx_E198 as ::core::ffi::c_int as uint16, game);
+    SpawnPalfxObject(addr_kPalfx_E198 as uint16, game);
 }
 pub unsafe fn CinematicSprInstr_sub_8B9EF0(
     mut k: uint16,
@@ -3689,7 +3685,7 @@ pub unsafe fn CinematicSprInstr_sub_8B9EF0(
     *((&raw mut game.g_ram as *mut uint8).offset(0x1abd) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BA113 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BA113 as uint16,
         0 as uint16,
         game,
     );
@@ -3703,7 +3699,7 @@ pub unsafe fn CinematicSpriteInit_6(mut j: uint16, game: &mut Game) {
         196 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1abd) as *mut uint16).offset(v1 as isize) =
         2048 as uint16;
-    SpawnPalfxObject(addr_kPalfx_E19C as ::core::ffi::c_int as uint16, game);
+    SpawnPalfxObject(addr_kPalfx_E19C as uint16, game);
 }
 pub unsafe fn CinematicSprInstr_9F19(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1f53) as *mut uint16) = 900 as uint16;
@@ -3845,76 +3841,76 @@ pub unsafe fn PlayBabyMetroidCry3(mut k: uint16, mut j: uint16, game: &mut Game)
     return j;
 }
 static kCinematicPal1: [uint16; 16] = [
-    0x1000 as ::core::ffi::c_int as uint16,
-    0x6bf5 as ::core::ffi::c_int as uint16,
-    0x2e41 as ::core::ffi::c_int as uint16,
-    0x2da1 as ::core::ffi::c_int as uint16,
-    0x2d01 as ::core::ffi::c_int as uint16,
-    0x5e5f as ::core::ffi::c_int as uint16,
-    0x183f as ::core::ffi::c_int as uint16,
-    0x1014 as ::core::ffi::c_int as uint16,
-    0x80a as ::core::ffi::c_int as uint16,
-    0x404 as ::core::ffi::c_int as uint16,
-    0x4f9f as ::core::ffi::c_int as uint16,
-    0x3ed8 as ::core::ffi::c_int as uint16,
-    0x2e12 as ::core::ffi::c_int as uint16,
-    0x6f70 as ::core::ffi::c_int as uint16,
-    0x7fff as ::core::ffi::c_int as uint16,
-    0x5ee0 as ::core::ffi::c_int as uint16,
+    0x1000 as uint16,
+    0x6bf5 as uint16,
+    0x2e41 as uint16,
+    0x2da1 as uint16,
+    0x2d01 as uint16,
+    0x5e5f as uint16,
+    0x183f as uint16,
+    0x1014 as uint16,
+    0x80a as uint16,
+    0x404 as uint16,
+    0x4f9f as uint16,
+    0x3ed8 as uint16,
+    0x2e12 as uint16,
+    0x6f70 as uint16,
+    0x7fff as uint16,
+    0x5ee0 as uint16,
 ];
 static kCinematicPal2: [uint16; 16] = [
-    0x3800 as ::core::ffi::c_int as uint16,
-    0x6bf5 as ::core::ffi::c_int as uint16,
-    0x6e1 as ::core::ffi::c_int as uint16,
-    0x641 as ::core::ffi::c_int as uint16,
-    0x5a1 as ::core::ffi::c_int as uint16,
-    0x5e5f as ::core::ffi::c_int as uint16,
-    0x183f as ::core::ffi::c_int as uint16,
-    0x1014 as ::core::ffi::c_int as uint16,
-    0x80a as ::core::ffi::c_int as uint16,
-    0x404 as ::core::ffi::c_int as uint16,
-    0x4f9f as ::core::ffi::c_int as uint16,
-    0x3ed8 as ::core::ffi::c_int as uint16,
-    0x2e12 as ::core::ffi::c_int as uint16,
-    0x6f70 as ::core::ffi::c_int as uint16,
-    0x7fff as ::core::ffi::c_int as uint16,
-    0x5ee0 as ::core::ffi::c_int as uint16,
+    0x3800 as uint16,
+    0x6bf5 as uint16,
+    0x6e1 as uint16,
+    0x641 as uint16,
+    0x5a1 as uint16,
+    0x5e5f as uint16,
+    0x183f as uint16,
+    0x1014 as uint16,
+    0x80a as uint16,
+    0x404 as uint16,
+    0x4f9f as uint16,
+    0x3ed8 as uint16,
+    0x2e12 as uint16,
+    0x6f70 as uint16,
+    0x7fff as uint16,
+    0x5ee0 as uint16,
 ];
 static kCinematicPal3: [uint16; 16] = [
-    0x3800 as ::core::ffi::c_int as uint16,
-    0x77f8 as ::core::ffi::c_int as uint16,
-    0x1344 as ::core::ffi::c_int as uint16,
-    0x12a4 as ::core::ffi::c_int as uint16,
-    0x1204 as ::core::ffi::c_int as uint16,
-    0x6abf as ::core::ffi::c_int as uint16,
-    0x249f as ::core::ffi::c_int as uint16,
-    0x1c77 as ::core::ffi::c_int as uint16,
-    0x146d as ::core::ffi::c_int as uint16,
-    0x1067 as ::core::ffi::c_int as uint16,
-    0x5bff as ::core::ffi::c_int as uint16,
-    0x4b38 as ::core::ffi::c_int as uint16,
-    0x3a72 as ::core::ffi::c_int as uint16,
-    0x7bd3 as ::core::ffi::c_int as uint16,
-    0x7fff as ::core::ffi::c_int as uint16,
-    0x6b43 as ::core::ffi::c_int as uint16,
+    0x3800 as uint16,
+    0x77f8 as uint16,
+    0x1344 as uint16,
+    0x12a4 as uint16,
+    0x1204 as uint16,
+    0x6abf as uint16,
+    0x249f as uint16,
+    0x1c77 as uint16,
+    0x146d as uint16,
+    0x1067 as uint16,
+    0x5bff as uint16,
+    0x4b38 as uint16,
+    0x3a72 as uint16,
+    0x7bd3 as uint16,
+    0x7fff as uint16,
+    0x6b43 as uint16,
 ];
 static kCinematicPal4: [uint16; 16] = [
-    0x3800 as ::core::ffi::c_int as uint16,
-    0x7ffb as ::core::ffi::c_int as uint16,
-    0x1fa7 as ::core::ffi::c_int as uint16,
-    0x1f07 as ::core::ffi::c_int as uint16,
-    0x1e67 as ::core::ffi::c_int as uint16,
-    0x771f as ::core::ffi::c_int as uint16,
-    0x30ff as ::core::ffi::c_int as uint16,
-    0x28da as ::core::ffi::c_int as uint16,
-    0x20d0 as ::core::ffi::c_int as uint16,
-    0x1cca as ::core::ffi::c_int as uint16,
-    0x67ff as ::core::ffi::c_int as uint16,
-    0x579b as ::core::ffi::c_int as uint16,
-    0x46d5 as ::core::ffi::c_int as uint16,
-    0x7bd6 as ::core::ffi::c_int as uint16,
-    0x7fff as ::core::ffi::c_int as uint16,
-    0x77a6 as ::core::ffi::c_int as uint16,
+    0x3800 as uint16,
+    0x7ffb as uint16,
+    0x1fa7 as uint16,
+    0x1f07 as uint16,
+    0x1e67 as uint16,
+    0x771f as uint16,
+    0x30ff as uint16,
+    0x28da as uint16,
+    0x20d0 as uint16,
+    0x1cca as uint16,
+    0x67ff as uint16,
+    0x579b as uint16,
+    0x46d5 as uint16,
+    0x7bd6 as uint16,
+    0x7fff as uint16,
+    0x77a6 as uint16,
 ];
 pub unsafe fn CinematicSetPal1(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
@@ -4056,9 +4052,9 @@ pub unsafe fn CinematicFunction_Intro_Initial(game: &mut Game) {
         (&raw mut game.g_ram as *mut uint8).offset(0x1e000),
         game,
     );
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BA469: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -4070,10 +4066,10 @@ pub unsafe fn CinematicFunction_Intro_Initial(game: &mut Game) {
         das: 0x8000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BA469 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x40 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x40 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BA489: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -4085,10 +4081,10 @@ pub unsafe fn CinematicFunction_Intro_Initial(game: &mut Game) {
         das: 0x900 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BA489 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x48 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x48 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BA4A9: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -4100,10 +4096,10 @@ pub unsafe fn CinematicFunction_Intro_Initial(game: &mut Game) {
         das: 0x800 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BA4A9 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x4c as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x4c as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BA4C9: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -4115,10 +4111,10 @@ pub unsafe fn CinematicFunction_Intro_Initial(game: &mut Game) {
         das: 0x800 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BA4C9 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x50 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x50 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BA4E9: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -4130,10 +4126,10 @@ pub unsafe fn CinematicFunction_Intro_Initial(game: &mut Game) {
         das: 0x2000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BA4E9 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x60 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BA509: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -4145,10 +4141,10 @@ pub unsafe fn CinematicFunction_Intro_Initial(game: &mut Game) {
         das: 0x2000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BA509 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x6e as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x6e as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BA529: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -4160,7 +4156,7 @@ pub unsafe fn CinematicFunction_Intro_Initial(game: &mut Game) {
         das: 0x2400 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BA529 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
     DecompressToMem(
         0x95d713 as uint32,
         (&raw mut game.g_ram as *mut uint8).offset(0x1a000),
@@ -4299,9 +4295,9 @@ pub unsafe fn CinematicFunc_Intro_WaitForFadeOut(game: &mut Game) {
 }
 pub unsafe fn CinematicFunc_Intro_SetupTextPage2(game: &mut Game) {
     ClearJapaneseTextTiles(game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x41 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(VMADDL as uint16, 0x80 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x41 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BA689: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -4313,14 +4309,14 @@ pub unsafe fn CinematicFunc_Intro_SetupTextPage2(game: &mut Game) {
         das: 0x600 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BA689 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(TM as ::core::ffi::c_int as uint16, 0x16 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(TM as uint16, 0x16 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 22 as uint8;
     ClearCinematicBgObjects(0x2f as uint16, game);
     EnableCinematicBgObjects(game);
     EnableCinematicBgTilemapUpdates(game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x19f5) as *mut uint16) =
-        addr_unk_604C00 as ::core::ffi::c_int as uint16;
+        addr_unk_604C00 as uint16;
     let mut i: ::core::ffi::c_int = 127 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
@@ -4354,13 +4350,13 @@ pub unsafe fn CinematicFunc_Intro_SetupTextPage2(game: &mut Game) {
         .menu_tilemap as *mut uint8)
         .offset(286) as *mut uint8 as *mut uint32) = 472456233 as uint32;
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BCE6D as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BCE6D as uint16,
         0x1c29 as uint16,
         game,
     );
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a49) as *mut uint16) = 127 as uint16;
     SpawnCinematicBgObject(
-        addr_kCinematicBgObjectDef_8BCF63 as ::core::ffi::c_int as uint16,
+        addr_kCinematicBgObjectDef_8BCF63 as uint16,
         0x4c00 as uint16,
         game,
     );
@@ -4382,7 +4378,7 @@ pub unsafe fn CinematicFunc_Intro_WaitFadeinShowText(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 2 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 2 as uint16;
         SpawnCinematicBgObject(
-            addr_kCinematicBgObjectDef_8BCF3F as ::core::ffi::c_int as uint16,
+            addr_kCinematicBgObjectDef_8BCF3F as uint16,
             0x4c00 as uint16,
             game,
         );
@@ -4488,7 +4484,7 @@ pub unsafe fn SetSomeStuffForSpriteObject_4_MetroidEgg(mut k: uint16, game: &mut
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v1 as isize) =
-            addr_word_8BCB3B as ::core::ffi::c_int as uint16;
+            addr_word_8BCB3B as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b3d) as *mut uint16).offset(v1 as isize) =
             (0x8b93d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
@@ -4499,7 +4495,7 @@ pub unsafe fn CinematicSprPreInstr_A903(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v1 as isize) =
-            addr_off_8BCE53 as ::core::ffi::c_int as uint16;
+            addr_off_8BCE53 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a57) as *mut uint16) = 0 as uint16;
     }
 }
@@ -4509,32 +4505,32 @@ pub unsafe fn CinematicSprInstr_SpawnMetroidEggParticles(
     game: &mut Game,
 ) -> uint16 {
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BCECD as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BCECD as uint16,
         0 as uint16,
         game,
     );
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BCED3 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BCED3 as uint16,
         1 as uint16,
         game,
     );
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BCED9 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BCED9 as uint16,
         2 as uint16,
         game,
     );
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BCEDF as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BCEDF as uint16,
         3 as uint16,
         game,
     );
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BCEE5 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BCEE5 as uint16,
         4 as uint16,
         game,
     );
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BCEEB as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BCEEB as uint16,
         5 as uint16,
         game,
     );
@@ -4542,18 +4538,18 @@ pub unsafe fn CinematicSprInstr_SpawnMetroidEggParticles(
     return j;
 }
 static kSetSomeStuffForSpriteObject_6_Tab: [int16; 12] = [
-    0x5c as ::core::ffi::c_int as int16,
-    0x58 as ::core::ffi::c_int as int16,
-    0x63 as ::core::ffi::c_int as int16,
-    0x58 as ::core::ffi::c_int as int16,
-    0x59 as ::core::ffi::c_int as int16,
-    0x5d as ::core::ffi::c_int as int16,
-    0x60 as ::core::ffi::c_int as int16,
-    0x5b as ::core::ffi::c_int as int16,
-    0x66 as ::core::ffi::c_int as int16,
-    0x5e as ::core::ffi::c_int as int16,
-    0x63 as ::core::ffi::c_int as int16,
-    0x60 as ::core::ffi::c_int as int16,
+    0x5c as int16,
+    0x58 as int16,
+    0x63 as int16,
+    0x58 as int16,
+    0x59 as int16,
+    0x5d as int16,
+    0x60 as int16,
+    0x5b as int16,
+    0x66 as int16,
+    0x5e as int16,
+    0x63 as int16,
+    0x60 as int16,
 ];
 pub unsafe fn SetSomeStuffForSpriteObject_6(mut j: uint16, game: &mut Game) {
     let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x1b9d) as *mut uint16);
@@ -4575,101 +4571,101 @@ pub unsafe fn SetSomeStuffForSpriteObject_6(mut j: uint16, game: &mut Game) {
 }
 static kSetSomeStuffForSpriteObject_7_Tab0: [int16; 12] = [
     -(1 as ::core::ffi::c_int) as int16,
-    0x4000 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    0x4000 as ::core::ffi::c_int as int16,
+    0x4000 as int16,
+    0 as int16,
+    0x4000 as int16,
     -(1 as ::core::ffi::c_int) as int16,
     -(0x8000 as ::core::ffi::c_int) as int16,
     -(1 as ::core::ffi::c_int) as int16,
-    0x2000 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
+    0x2000 as int16,
+    0 as int16,
     -(0x8000 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
-    0x2000 as ::core::ffi::c_int as int16,
+    0 as int16,
+    0x2000 as int16,
 ];
 static kSetSomeStuffForSpriteObject_7_Tab1: [uint16; 82] = [
-    0xfffe as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0xfffe as ::core::ffi::c_int as uint16,
-    0xc000 as ::core::ffi::c_int as uint16,
-    0xfffe as ::core::ffi::c_int as uint16,
-    0xa000 as ::core::ffi::c_int as uint16,
-    0xfffe as ::core::ffi::c_int as uint16,
-    0x8000 as ::core::ffi::c_int as uint16,
-    0xfffe as ::core::ffi::c_int as uint16,
-    0x6000 as ::core::ffi::c_int as uint16,
-    0xfffe as ::core::ffi::c_int as uint16,
-    0x4000 as ::core::ffi::c_int as uint16,
-    0xfffe as ::core::ffi::c_int as uint16,
-    0x2000 as ::core::ffi::c_int as uint16,
-    0xffff as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0xffff as ::core::ffi::c_int as uint16,
-    0xc000 as ::core::ffi::c_int as uint16,
-    0xffff as ::core::ffi::c_int as uint16,
-    0xa000 as ::core::ffi::c_int as uint16,
-    0xffff as ::core::ffi::c_int as uint16,
-    0x8000 as ::core::ffi::c_int as uint16,
-    0xffff as ::core::ffi::c_int as uint16,
-    0x6000 as ::core::ffi::c_int as uint16,
-    0xffff as ::core::ffi::c_int as uint16,
-    0x4000 as ::core::ffi::c_int as uint16,
-    0xffff as ::core::ffi::c_int as uint16,
-    0x2000 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0x2000 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0x4000 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0x6000 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0x8000 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0xa000 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0xc000 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0xe000 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    0x2000 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    0x4000 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    0x6000 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    0x8000 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    0xa000 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    0xc000 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    0xe000 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    0x2000 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    0x4000 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    0x6000 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    0x8000 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    0xa000 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    0xc000 as ::core::ffi::c_int as uint16,
-    2 as ::core::ffi::c_int as uint16,
-    0xe000 as ::core::ffi::c_int as uint16,
-    0x9dad as ::core::ffi::c_int as uint16,
-    0x991b as ::core::ffi::c_int as uint16,
-    0x1b7d as ::core::ffi::c_int as uint16,
-    0x97ad as ::core::ffi::c_int as uint16,
-    0x991a as ::core::ffi::c_int as uint16,
-    0x1a7d as ::core::ffi::c_int as uint16,
+    0xfffe as uint16,
+    0 as uint16,
+    0xfffe as uint16,
+    0xc000 as uint16,
+    0xfffe as uint16,
+    0xa000 as uint16,
+    0xfffe as uint16,
+    0x8000 as uint16,
+    0xfffe as uint16,
+    0x6000 as uint16,
+    0xfffe as uint16,
+    0x4000 as uint16,
+    0xfffe as uint16,
+    0x2000 as uint16,
+    0xffff as uint16,
+    0 as uint16,
+    0xffff as uint16,
+    0xc000 as uint16,
+    0xffff as uint16,
+    0xa000 as uint16,
+    0xffff as uint16,
+    0x8000 as uint16,
+    0xffff as uint16,
+    0x6000 as uint16,
+    0xffff as uint16,
+    0x4000 as uint16,
+    0xffff as uint16,
+    0x2000 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0x2000 as uint16,
+    0 as uint16,
+    0x4000 as uint16,
+    0 as uint16,
+    0x6000 as uint16,
+    0 as uint16,
+    0x8000 as uint16,
+    0 as uint16,
+    0xa000 as uint16,
+    0 as uint16,
+    0xc000 as uint16,
+    0 as uint16,
+    0xe000 as uint16,
+    1 as uint16,
+    0 as uint16,
+    1 as uint16,
+    0x2000 as uint16,
+    1 as uint16,
+    0x4000 as uint16,
+    1 as uint16,
+    0x6000 as uint16,
+    1 as uint16,
+    0x8000 as uint16,
+    1 as uint16,
+    0xa000 as uint16,
+    1 as uint16,
+    0xc000 as uint16,
+    1 as uint16,
+    0xe000 as uint16,
+    2 as uint16,
+    0 as uint16,
+    2 as uint16,
+    0x2000 as uint16,
+    2 as uint16,
+    0x4000 as uint16,
+    2 as uint16,
+    0x6000 as uint16,
+    2 as uint16,
+    0x8000 as uint16,
+    2 as uint16,
+    0xa000 as uint16,
+    2 as uint16,
+    0xc000 as uint16,
+    2 as uint16,
+    0xe000 as uint16,
+    0x9dad as uint16,
+    0x991b as uint16,
+    0x1b7d as uint16,
+    0x97ad as uint16,
+    0x991a as uint16,
+    0x1a7d as uint16,
 ];
 pub unsafe fn SetSomeStuffForSpriteObject_7(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -4740,7 +4736,7 @@ pub unsafe fn SetSomeStuffForSpriteObject_7(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v1 as isize) =
-            addr_off_8BCE53 as ::core::ffi::c_int as uint16;
+            addr_off_8BCE53 as uint16;
     };
 }
 pub unsafe fn SetSomeStuffForSpriteObject_8(mut j: uint16, game: &mut Game) {
@@ -4756,19 +4752,19 @@ pub unsafe fn SetSomeStuffForSpriteObject_8(mut j: uint16, game: &mut Game) {
 }
 static kSetSomeStuffForSpriteObject_9_Tab0: [int16; 10] = [
     -(1 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
     -(1 as ::core::ffi::c_int) as int16,
     -(0x8000 as ::core::ffi::c_int) as int16,
-    1 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
+    1 as int16,
+    0 as int16,
+    0 as int16,
     -(0x8000 as ::core::ffi::c_int) as int16,
     -(1 as ::core::ffi::c_int) as int16,
     -(0x8000 as ::core::ffi::c_int) as int16,
 ];
 static kSetSomeStuffForSpriteObject_9_Tab2: [int16; 124] = [
     -(2 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
     -(2 as ::core::ffi::c_int) as int16,
     -(0x4000 as ::core::ffi::c_int) as int16,
     -(2 as ::core::ffi::c_int) as int16,
@@ -4776,13 +4772,13 @@ static kSetSomeStuffForSpriteObject_9_Tab2: [int16; 124] = [
     -(2 as ::core::ffi::c_int) as int16,
     -(0x8000 as ::core::ffi::c_int) as int16,
     -(2 as ::core::ffi::c_int) as int16,
-    0x6000 as ::core::ffi::c_int as int16,
+    0x6000 as int16,
     -(2 as ::core::ffi::c_int) as int16,
-    0x4000 as ::core::ffi::c_int as int16,
+    0x4000 as int16,
     -(2 as ::core::ffi::c_int) as int16,
-    0x2000 as ::core::ffi::c_int as int16,
+    0x2000 as int16,
     -(1 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
     -(1 as ::core::ffi::c_int) as int16,
     -(0x4000 as ::core::ffi::c_int) as int16,
     -(1 as ::core::ffi::c_int) as int16,
@@ -4790,111 +4786,111 @@ static kSetSomeStuffForSpriteObject_9_Tab2: [int16; 124] = [
     -(1 as ::core::ffi::c_int) as int16,
     -(0x8000 as ::core::ffi::c_int) as int16,
     -(1 as ::core::ffi::c_int) as int16,
-    0x6000 as ::core::ffi::c_int as int16,
+    0x6000 as int16,
     -(1 as ::core::ffi::c_int) as int16,
-    0x4000 as ::core::ffi::c_int as int16,
+    0x4000 as int16,
     -(1 as ::core::ffi::c_int) as int16,
-    0x2000 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    0x2000 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    0x4000 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    0x6000 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
+    0x2000 as int16,
+    0 as int16,
+    0 as int16,
+    0 as int16,
+    0x2000 as int16,
+    0 as int16,
+    0x4000 as int16,
+    0 as int16,
+    0x6000 as int16,
+    0 as int16,
     -(0x8000 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
     -(0x6000 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
     -(0x4000 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
     -(0x2000 as ::core::ffi::c_int) as int16,
-    1 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    1 as ::core::ffi::c_int as int16,
-    0x2000 as ::core::ffi::c_int as int16,
-    1 as ::core::ffi::c_int as int16,
-    0x4000 as ::core::ffi::c_int as int16,
-    1 as ::core::ffi::c_int as int16,
-    0x6000 as ::core::ffi::c_int as int16,
-    1 as ::core::ffi::c_int as int16,
+    1 as int16,
+    0 as int16,
+    1 as int16,
+    0x2000 as int16,
+    1 as int16,
+    0x4000 as int16,
+    1 as int16,
+    0x6000 as int16,
+    1 as int16,
     -(0x8000 as ::core::ffi::c_int) as int16,
-    1 as ::core::ffi::c_int as int16,
+    1 as int16,
     -(0x6000 as ::core::ffi::c_int) as int16,
-    1 as ::core::ffi::c_int as int16,
+    1 as int16,
     -(0x4000 as ::core::ffi::c_int) as int16,
-    1 as ::core::ffi::c_int as int16,
+    1 as int16,
     -(0x2000 as ::core::ffi::c_int) as int16,
-    2 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    2 as ::core::ffi::c_int as int16,
-    0x2000 as ::core::ffi::c_int as int16,
-    2 as ::core::ffi::c_int as int16,
-    0x4000 as ::core::ffi::c_int as int16,
-    2 as ::core::ffi::c_int as int16,
-    0x6000 as ::core::ffi::c_int as int16,
-    2 as ::core::ffi::c_int as int16,
+    2 as int16,
+    0 as int16,
+    2 as int16,
+    0x2000 as int16,
+    2 as int16,
+    0x4000 as int16,
+    2 as int16,
+    0x6000 as int16,
+    2 as int16,
     -(0x8000 as ::core::ffi::c_int) as int16,
-    2 as ::core::ffi::c_int as int16,
+    2 as int16,
     -(0x6000 as ::core::ffi::c_int) as int16,
-    2 as ::core::ffi::c_int as int16,
+    2 as int16,
     -(0x4000 as ::core::ffi::c_int) as int16,
-    2 as ::core::ffi::c_int as int16,
+    2 as int16,
     -(0x2000 as ::core::ffi::c_int) as int16,
-    3 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    3 as ::core::ffi::c_int as int16,
-    0x2000 as ::core::ffi::c_int as int16,
-    3 as ::core::ffi::c_int as int16,
-    0x4000 as ::core::ffi::c_int as int16,
-    3 as ::core::ffi::c_int as int16,
-    0x6000 as ::core::ffi::c_int as int16,
-    3 as ::core::ffi::c_int as int16,
+    3 as int16,
+    0 as int16,
+    3 as int16,
+    0x2000 as int16,
+    3 as int16,
+    0x4000 as int16,
+    3 as int16,
+    0x6000 as int16,
+    3 as int16,
     -(0x8000 as ::core::ffi::c_int) as int16,
-    3 as ::core::ffi::c_int as int16,
+    3 as int16,
     -(0x6000 as ::core::ffi::c_int) as int16,
-    3 as ::core::ffi::c_int as int16,
+    3 as int16,
     -(0x4000 as ::core::ffi::c_int) as int16,
-    3 as ::core::ffi::c_int as int16,
+    3 as int16,
     -(0x2000 as ::core::ffi::c_int) as int16,
-    4 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    4 as ::core::ffi::c_int as int16,
-    0x2000 as ::core::ffi::c_int as int16,
-    4 as ::core::ffi::c_int as int16,
-    0x4000 as ::core::ffi::c_int as int16,
-    4 as ::core::ffi::c_int as int16,
-    0x6000 as ::core::ffi::c_int as int16,
-    4 as ::core::ffi::c_int as int16,
+    4 as int16,
+    0 as int16,
+    4 as int16,
+    0x2000 as int16,
+    4 as int16,
+    0x4000 as int16,
+    4 as int16,
+    0x6000 as int16,
+    4 as int16,
     -(0x8000 as ::core::ffi::c_int) as int16,
-    4 as ::core::ffi::c_int as int16,
+    4 as int16,
     -(0x6000 as ::core::ffi::c_int) as int16,
-    4 as ::core::ffi::c_int as int16,
+    4 as int16,
     -(0x4000 as ::core::ffi::c_int) as int16,
-    4 as ::core::ffi::c_int as int16,
+    4 as int16,
     -(0x2000 as ::core::ffi::c_int) as int16,
-    5 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    5 as ::core::ffi::c_int as int16,
-    0x2000 as ::core::ffi::c_int as int16,
-    5 as ::core::ffi::c_int as int16,
-    0x4000 as ::core::ffi::c_int as int16,
-    5 as ::core::ffi::c_int as int16,
-    0x6000 as ::core::ffi::c_int as int16,
-    5 as ::core::ffi::c_int as int16,
+    5 as int16,
+    0 as int16,
+    5 as int16,
+    0x2000 as int16,
+    5 as int16,
+    0x4000 as int16,
+    5 as int16,
+    0x6000 as int16,
+    5 as int16,
     -(0x8000 as ::core::ffi::c_int) as int16,
-    5 as ::core::ffi::c_int as int16,
+    5 as int16,
     -(0x6000 as ::core::ffi::c_int) as int16,
-    5 as ::core::ffi::c_int as int16,
+    5 as int16,
     -(0x4000 as ::core::ffi::c_int) as int16,
-    5 as ::core::ffi::c_int as int16,
+    5 as int16,
     -(0x2000 as ::core::ffi::c_int) as int16,
 ];
 static kSetSomeStuffForSpriteObject_9_Tab1: [int16; 138] = [
     -(3 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
     -(3 as ::core::ffi::c_int) as int16,
     -(0x4000 as ::core::ffi::c_int) as int16,
     -(3 as ::core::ffi::c_int) as int16,
@@ -4902,13 +4898,13 @@ static kSetSomeStuffForSpriteObject_9_Tab1: [int16; 138] = [
     -(3 as ::core::ffi::c_int) as int16,
     -(0x8000 as ::core::ffi::c_int) as int16,
     -(3 as ::core::ffi::c_int) as int16,
-    0x6000 as ::core::ffi::c_int as int16,
+    0x6000 as int16,
     -(3 as ::core::ffi::c_int) as int16,
-    0x4000 as ::core::ffi::c_int as int16,
+    0x4000 as int16,
     -(3 as ::core::ffi::c_int) as int16,
-    0x2000 as ::core::ffi::c_int as int16,
+    0x2000 as int16,
     -(2 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
     -(2 as ::core::ffi::c_int) as int16,
     -(0x4000 as ::core::ffi::c_int) as int16,
     -(2 as ::core::ffi::c_int) as int16,
@@ -4916,13 +4912,13 @@ static kSetSomeStuffForSpriteObject_9_Tab1: [int16; 138] = [
     -(2 as ::core::ffi::c_int) as int16,
     -(0x8000 as ::core::ffi::c_int) as int16,
     -(2 as ::core::ffi::c_int) as int16,
-    0x6000 as ::core::ffi::c_int as int16,
+    0x6000 as int16,
     -(2 as ::core::ffi::c_int) as int16,
-    0x4000 as ::core::ffi::c_int as int16,
+    0x4000 as int16,
     -(2 as ::core::ffi::c_int) as int16,
-    0x2000 as ::core::ffi::c_int as int16,
+    0x2000 as int16,
     -(1 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
     -(1 as ::core::ffi::c_int) as int16,
     -(0x4000 as ::core::ffi::c_int) as int16,
     -(1 as ::core::ffi::c_int) as int16,
@@ -4930,106 +4926,106 @@ static kSetSomeStuffForSpriteObject_9_Tab1: [int16; 138] = [
     -(1 as ::core::ffi::c_int) as int16,
     -(0x8000 as ::core::ffi::c_int) as int16,
     -(1 as ::core::ffi::c_int) as int16,
-    0x6000 as ::core::ffi::c_int as int16,
+    0x6000 as int16,
     -(1 as ::core::ffi::c_int) as int16,
-    0x4000 as ::core::ffi::c_int as int16,
+    0x4000 as int16,
     -(1 as ::core::ffi::c_int) as int16,
-    0x2000 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    0x2000 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    0x4000 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    0x6000 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
+    0x2000 as int16,
+    0 as int16,
+    0 as int16,
+    0 as int16,
+    0x2000 as int16,
+    0 as int16,
+    0x4000 as int16,
+    0 as int16,
+    0x6000 as int16,
+    0 as int16,
     -(0x8000 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
     -(0x6000 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
     -(0x4000 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
     -(0x2000 as ::core::ffi::c_int) as int16,
-    1 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    1 as ::core::ffi::c_int as int16,
-    0x2000 as ::core::ffi::c_int as int16,
-    1 as ::core::ffi::c_int as int16,
-    0x4000 as ::core::ffi::c_int as int16,
-    1 as ::core::ffi::c_int as int16,
-    0x6000 as ::core::ffi::c_int as int16,
-    1 as ::core::ffi::c_int as int16,
+    1 as int16,
+    0 as int16,
+    1 as int16,
+    0x2000 as int16,
+    1 as int16,
+    0x4000 as int16,
+    1 as int16,
+    0x6000 as int16,
+    1 as int16,
     -(0x8000 as ::core::ffi::c_int) as int16,
-    1 as ::core::ffi::c_int as int16,
+    1 as int16,
     -(0x6000 as ::core::ffi::c_int) as int16,
-    1 as ::core::ffi::c_int as int16,
+    1 as int16,
     -(0x4000 as ::core::ffi::c_int) as int16,
-    1 as ::core::ffi::c_int as int16,
+    1 as int16,
     -(0x2000 as ::core::ffi::c_int) as int16,
-    2 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    2 as ::core::ffi::c_int as int16,
-    0x2000 as ::core::ffi::c_int as int16,
-    2 as ::core::ffi::c_int as int16,
-    0x4000 as ::core::ffi::c_int as int16,
-    2 as ::core::ffi::c_int as int16,
-    0x6000 as ::core::ffi::c_int as int16,
-    2 as ::core::ffi::c_int as int16,
+    2 as int16,
+    0 as int16,
+    2 as int16,
+    0x2000 as int16,
+    2 as int16,
+    0x4000 as int16,
+    2 as int16,
+    0x6000 as int16,
+    2 as int16,
     -(0x8000 as ::core::ffi::c_int) as int16,
-    2 as ::core::ffi::c_int as int16,
+    2 as int16,
     -(0x6000 as ::core::ffi::c_int) as int16,
-    2 as ::core::ffi::c_int as int16,
+    2 as int16,
     -(0x4000 as ::core::ffi::c_int) as int16,
-    2 as ::core::ffi::c_int as int16,
+    2 as int16,
     -(0x2000 as ::core::ffi::c_int) as int16,
-    3 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    3 as ::core::ffi::c_int as int16,
-    0x2000 as ::core::ffi::c_int as int16,
-    3 as ::core::ffi::c_int as int16,
-    0x4000 as ::core::ffi::c_int as int16,
-    3 as ::core::ffi::c_int as int16,
-    0x6000 as ::core::ffi::c_int as int16,
-    3 as ::core::ffi::c_int as int16,
+    3 as int16,
+    0 as int16,
+    3 as int16,
+    0x2000 as int16,
+    3 as int16,
+    0x4000 as int16,
+    3 as int16,
+    0x6000 as int16,
+    3 as int16,
     -(0x8000 as ::core::ffi::c_int) as int16,
-    3 as ::core::ffi::c_int as int16,
+    3 as int16,
     -(0x6000 as ::core::ffi::c_int) as int16,
-    3 as ::core::ffi::c_int as int16,
+    3 as int16,
     -(0x4000 as ::core::ffi::c_int) as int16,
-    3 as ::core::ffi::c_int as int16,
+    3 as int16,
     -(0x2000 as ::core::ffi::c_int) as int16,
-    4 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    4 as ::core::ffi::c_int as int16,
-    0x2000 as ::core::ffi::c_int as int16,
-    4 as ::core::ffi::c_int as int16,
-    0x4000 as ::core::ffi::c_int as int16,
-    4 as ::core::ffi::c_int as int16,
-    0x6000 as ::core::ffi::c_int as int16,
-    4 as ::core::ffi::c_int as int16,
+    4 as int16,
+    0 as int16,
+    4 as int16,
+    0x2000 as int16,
+    4 as int16,
+    0x4000 as int16,
+    4 as int16,
+    0x6000 as int16,
+    4 as int16,
     -(0x8000 as ::core::ffi::c_int) as int16,
-    4 as ::core::ffi::c_int as int16,
+    4 as int16,
     -(0x6000 as ::core::ffi::c_int) as int16,
-    4 as ::core::ffi::c_int as int16,
+    4 as int16,
     -(0x4000 as ::core::ffi::c_int) as int16,
-    4 as ::core::ffi::c_int as int16,
+    4 as int16,
     -(0x2000 as ::core::ffi::c_int) as int16,
-    5 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    5 as ::core::ffi::c_int as int16,
-    0x2000 as ::core::ffi::c_int as int16,
-    5 as ::core::ffi::c_int as int16,
-    0x4000 as ::core::ffi::c_int as int16,
-    5 as ::core::ffi::c_int as int16,
-    0x6000 as ::core::ffi::c_int as int16,
-    5 as ::core::ffi::c_int as int16,
+    5 as int16,
+    0 as int16,
+    5 as int16,
+    0x2000 as int16,
+    5 as int16,
+    0x4000 as int16,
+    5 as int16,
+    0x6000 as int16,
+    5 as int16,
     -(0x8000 as ::core::ffi::c_int) as int16,
-    5 as ::core::ffi::c_int as int16,
+    5 as int16,
     -(0x6000 as ::core::ffi::c_int) as int16,
-    5 as ::core::ffi::c_int as int16,
+    5 as int16,
     -(0x4000 as ::core::ffi::c_int) as int16,
-    5 as ::core::ffi::c_int as int16,
+    5 as int16,
     -(0x2000 as ::core::ffi::c_int) as int16,
 ];
 pub unsafe fn SetSomeStuffForSpriteObject_9(mut k: uint16, game: &mut Game) {
@@ -5135,7 +5131,7 @@ pub unsafe fn SetSomeStuffForSpriteObject_9(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v1 as isize) =
-            addr_word_8BCD71 as ::core::ffi::c_int as uint16;
+            addr_word_8BCD71 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b3d) as *mut uint16).offset(v1 as isize) =
             (0x8b93d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     } else {
@@ -5175,7 +5171,7 @@ pub unsafe fn SetSomeStuffForSpriteObject_11(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v1 as isize) =
-            addr_off_8BCE53 as ::core::ffi::c_int as uint16;
+            addr_off_8BCE53 as uint16;
     };
 }
 pub unsafe fn SetSomeStuffForSpriteObject_12(mut j: uint16, game: &mut Game) {
@@ -5214,7 +5210,7 @@ pub unsafe fn SetSomeStuffForSpriteObject_13(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v1 as isize) =
-            addr_off_8BCE53 as ::core::ffi::c_int as uint16;
+            addr_off_8BCE53 as uint16;
     };
 }
 pub unsafe fn CinematicBgInstr_SetSomeStuffForSpriteObject_14(
@@ -5223,7 +5219,7 @@ pub unsafe fn CinematicBgInstr_SetSomeStuffForSpriteObject_14(
     game: &mut Game,
 ) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(15) =
-        addr_unk_8BCC03 as ::core::ffi::c_int as uint16;
+        addr_unk_8BCC03 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(15) = 1 as uint16;
     return j;
 }
@@ -5235,7 +5231,7 @@ pub unsafe fn SetSomeStuffForSpriteObject_16(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a7d) as *mut uint16).offset(15) = 8 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a9d) as *mut uint16).offset(15) = 24 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(15) =
-        addr_word_8BCBFB as ::core::ffi::c_int as uint16;
+        addr_word_8BCBFB as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(15) = 1 as uint16;
 }
 pub unsafe fn SetSomeStuffForSpriteObject_17(mut j: uint16, game: &mut Game) {
@@ -5255,7 +5251,7 @@ pub unsafe fn SetSomeStuffForSpriteObject_18(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v1 as isize) =
-            addr_word_8BCC23 as ::core::ffi::c_int as uint16;
+            addr_word_8BCC23 as uint16;
     }
     if *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16) as ::core::ffi::c_int
         == 127 as ::core::ffi::c_int
@@ -5264,7 +5260,7 @@ pub unsafe fn SetSomeStuffForSpriteObject_18(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(v2 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v2 as isize) =
-            addr_off_8BCE53 as ::core::ffi::c_int as uint16;
+            addr_off_8BCE53 as uint16;
     }
 }
 pub unsafe fn CinematicBgInstr_HandleCreateJpnText_Page1(
@@ -5275,7 +5271,7 @@ pub unsafe fn CinematicBgInstr_HandleCreateJpnText_Page1(
     *((&raw mut game.g_ram as *mut uint8).offset(0x1ba1) as *mut uint16) = 0 as uint16;
     if *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16) != 0 {
         SpawnMode7Object(
-            addr_kMode7ObjectDef_8BD401 as ::core::ffi::c_int as uint16,
+            addr_kMode7ObjectDef_8BD401 as uint16,
             *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16),
             game,
         );
@@ -5290,7 +5286,7 @@ pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page1(
     j = CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j, game);
     if *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16) != 0 {
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCE73 as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BCE73 as uint16,
             *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16),
             game,
         );
@@ -5307,7 +5303,7 @@ pub unsafe fn CinematicBgInstr_HandleCreateJpnText_Page2(
     *((&raw mut game.g_ram as *mut uint8).offset(0x1ba1) as *mut uint16) = 0 as uint16;
     if *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16) != 0 {
         SpawnMode7Object(
-            addr_kMode7ObjectDef_8BD407 as ::core::ffi::c_int as uint16,
+            addr_kMode7ObjectDef_8BD407 as uint16,
             *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16),
             game,
         );
@@ -5322,15 +5318,11 @@ pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page2(
     j = CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j, game);
     if *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16) != 0 {
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCE73 as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BCE73 as uint16,
             *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16),
             game,
         );
-        SpawnMode7Object(
-            addr_kMode7ObjectDef_8BD40D as ::core::ffi::c_int as uint16,
-            0 as uint16,
-            game,
-        );
+        SpawnMode7Object(addr_kMode7ObjectDef_8BD40D as uint16, 0 as uint16, game);
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
             (0x8baf6c as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -5344,7 +5336,7 @@ pub unsafe fn CinematicFunction_Intro_WaitInputSetupMotherBrainFight(game: &mut 
     } else if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) != 0 {
         *(&raw mut game.g_ram as *mut uint8).offset(0x58) = 80 as uint8;
         *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-            kPose_02_FaceL_Normal as ::core::ffi::c_int as uint16;
+            kPose_02_FaceL_Normal as uint16;
         SamusFunc_F433(game);
         Samus_SetAnimationFrameIfPoseChanged(game);
         *((&raw mut game.g_ram as *mut uint8).offset(0xa24) as *mut uint16) =
@@ -5362,13 +5354,13 @@ pub unsafe fn CinematicFunction_Intro_WaitInputSetupMotherBrainFight(game: &mut 
         *((&raw mut game.g_ram as *mut uint8).offset(0x1993) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16) = 127 as uint16;
         SpawnCinematicSpriteObjectAtSlot(
-            addr_kCinematicSpriteObjectDef_8BCE55 as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BCE55 as uint16,
             0 as uint16,
             0x007f, // The preceding $1A4B store leaves $007F in A.
             game,
         );
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCF27 as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BCF27 as uint16,
             0x0e00, // Palette left in A by the first sprite initializer.
             game,
         );
@@ -5412,11 +5404,7 @@ pub unsafe fn CinematicFunction_Intro_WaitInputSetupMotherBrainFight(game: &mut 
         ResetDemoData(game);
         EnableDemoInput(game);
         // EnableDemoInput leaves $8000 in the ROM accumulator for the loader.
-        LoadDemoInputObject(
-            0x8000,
-            addr_stru_918784 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        LoadDemoInputObject(0x8000, addr_stru_918784 as uint16, game);
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a57) as *mut uint16) =
             -(1 as ::core::ffi::c_int) as uint16;
         CinematicFunction_Intro_SetupTransitionToGameplay(game);
@@ -5431,7 +5419,7 @@ pub unsafe fn CinematicFunction_Intro_WaitInputSetupBabyMetroid(game: &mut Game)
         *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) = 32 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x7a7) as *mut uint16) = 16 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-            kPose_02_FaceL_Normal as ::core::ffi::c_int as uint16;
+            kPose_02_FaceL_Normal as uint16;
         SamusFunc_F433(game);
         Samus_SetAnimationFrameIfPoseChanged(game);
         *((&raw mut game.g_ram as *mut uint8).offset(0xa24) as *mut uint16) =
@@ -5449,12 +5437,12 @@ pub unsafe fn CinematicFunction_Intro_WaitInputSetupBabyMetroid(game: &mut Game)
         *((&raw mut game.g_ram as *mut uint8).offset(0x1993) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16) = 127 as uint16;
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCE5B as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BCE5B as uint16,
             0x7f as uint16,
             game,
         );
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCE79 as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BCE79 as uint16,
             0x0e00, // Palette left in A by the first sprite initializer.
             game,
         );
@@ -5486,11 +5474,7 @@ pub unsafe fn CinematicFunction_Intro_WaitInputSetupBabyMetroid(game: &mut Game)
         ResetDemoData(game);
         EnableDemoInput(game);
         // EnableDemoInput leaves $8000 in the ROM accumulator for the loader.
-        LoadDemoInputObject(
-            0x8000,
-            addr_stru_91877E as ::core::ffi::c_int as uint16,
-            game,
-        );
+        LoadDemoInputObject(0x8000, addr_stru_91877E as uint16, game);
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a57) as *mut uint16) = 1 as uint16;
         CinematicFunction_Intro_SetupTransitionToGameplay(game);
     }
@@ -5539,7 +5523,7 @@ pub unsafe fn CinematicBgInstr_HandleCreateJpnText_Page3(
     *((&raw mut game.g_ram as *mut uint8).offset(0x1ba1) as *mut uint16) = 0 as uint16;
     if *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16) != 0 {
         SpawnMode7Object(
-            addr_kMode7ObjectDef_8BD413 as ::core::ffi::c_int as uint16,
+            addr_kMode7ObjectDef_8BD413 as uint16,
             *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16),
             game,
         );
@@ -5554,15 +5538,11 @@ pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page3(
     j = CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j, game);
     if *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16) != 0 {
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCE73 as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BCE73 as uint16,
             *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16),
             game,
         );
-        SpawnMode7Object(
-            addr_kMode7ObjectDef_8BD419 as ::core::ffi::c_int as uint16,
-            0 as uint16,
-            game,
-        );
+        SpawnMode7Object(addr_kMode7ObjectDef_8BD419 as uint16, 0 as uint16, game);
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
             (0x8bb0f2 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -5577,7 +5557,7 @@ pub unsafe fn CinematicBgInstr_HandleCreateJpnText_Page4(
     *((&raw mut game.g_ram as *mut uint8).offset(0x1ba1) as *mut uint16) = 0 as uint16;
     if *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16) != 0 {
         SpawnMode7Object(
-            addr_kMode7ObjectDef_8BD41F as ::core::ffi::c_int as uint16,
+            addr_kMode7ObjectDef_8BD41F as uint16,
             *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16),
             game,
         );
@@ -5592,15 +5572,11 @@ pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page4(
     j = CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j, game);
     if *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16) != 0 {
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCE73 as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BCE73 as uint16,
             *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16),
             game,
         );
-        SpawnMode7Object(
-            addr_kMode7ObjectDef_8BD425 as ::core::ffi::c_int as uint16,
-            0 as uint16,
-            game,
-        );
+        SpawnMode7Object(addr_kMode7ObjectDef_8BD425 as uint16, 0 as uint16, game);
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
             (0x8bb123 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -5617,7 +5593,7 @@ pub unsafe fn CinematicFunction_Intro_Func11(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16) = 8 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16) = 127 as uint16;
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCE61 as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BCE61 as uint16,
             0x7f as uint16,
             game,
         );
@@ -5635,7 +5611,7 @@ pub unsafe fn CinematicFunction_Intro_Func12(game: &mut Game) {
             -(24 as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16) = 127 as uint16;
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCE67 as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BCE67 as uint16,
             0x7f as uint16,
             game,
         );
@@ -5684,7 +5660,7 @@ pub unsafe fn CinematicBgInstr_HandleCreateJpnText_Page5(
     *((&raw mut game.g_ram as *mut uint8).offset(0x1ba1) as *mut uint16) = 0 as uint16;
     if *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16) != 0 {
         SpawnMode7Object(
-            addr_kMode7ObjectDef_8BD42B as ::core::ffi::c_int as uint16,
+            addr_kMode7ObjectDef_8BD42B as uint16,
             *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16),
             game,
         );
@@ -5699,15 +5675,11 @@ pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page5(
     j = CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j, game);
     if *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16) != 0 {
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCE73 as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BCE73 as uint16,
             *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16),
             game,
         );
-        SpawnMode7Object(
-            addr_kMode7ObjectDef_8BD431 as ::core::ffi::c_int as uint16,
-            0 as uint16,
-            game,
-        );
+        SpawnMode7Object(addr_kMode7ObjectDef_8BD431 as uint16, 0 as uint16, game);
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
             (0x8bb1da as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -5718,7 +5690,7 @@ pub unsafe fn CinematicFunction_Intro_Func15b(game: &mut Game) {
     EnableCinematicBgTilemapUpdates(game);
     ClearEnglishTextTilemap(game);
     SpawnCinematicBgObject(
-        addr_kCinematicBgObjectDef_8BCF5D as ::core::ffi::c_int as uint16,
+        addr_kCinematicBgObjectDef_8BCF5D as uint16,
         0x4c00 as uint16,
         game,
     );
@@ -5748,7 +5720,7 @@ pub unsafe fn CinematicBgInstr_Func16(mut k: uint16, mut j: uint16, game: &mut G
     *((&raw mut game.g_ram as *mut uint8).offset(0x1ba1) as *mut uint16) = 0 as uint16;
     if *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16) != 0 {
         SpawnMode7Object(
-            addr_kMode7ObjectDef_8BD437 as ::core::ffi::c_int as uint16,
+            addr_kMode7ObjectDef_8BD437 as uint16,
             *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16),
             game,
         );
@@ -5803,7 +5775,7 @@ pub unsafe fn CinematicFunction_Intro_XfadeGameplayFade(game: &mut Game) {
             & 0x8000 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
         {
-            SpawnPalfxObject(addr_kPalfx_E1BC as ::core::ffi::c_int as uint16, game);
+            SpawnPalfxObject(addr_kPalfx_E1BC as uint16, game);
         }
     }
 }
@@ -5924,7 +5896,7 @@ pub unsafe fn CinematicFunction_Intro_SetupStuff(game: &mut Game) {
 }
 pub unsafe fn CinematicFunction_Intro_Page2(game: &mut Game) {
     SpawnCinematicBgObject(
-        addr_kCinematicBgObjectDef_8BCF45 as ::core::ffi::c_int as uint16,
+        addr_kCinematicBgObjectDef_8BCF45 as uint16,
         0x4c00 as uint16,
         game,
     );
@@ -5934,7 +5906,7 @@ pub unsafe fn CinematicFunction_Intro_Page2(game: &mut Game) {
 }
 pub unsafe fn CinematicFunction_Intro_Page3(game: &mut Game) {
     SpawnCinematicBgObject(
-        addr_kCinematicBgObjectDef_8BCF4B as ::core::ffi::c_int as uint16,
+        addr_kCinematicBgObjectDef_8BCF4B as uint16,
         0x4c00 as uint16,
         game,
     );
@@ -5944,7 +5916,7 @@ pub unsafe fn CinematicFunction_Intro_Page3(game: &mut Game) {
 }
 pub unsafe fn CinematicFunction_Intro_Page4(game: &mut Game) {
     SpawnCinematicBgObject(
-        addr_kCinematicBgObjectDef_8BCF51 as ::core::ffi::c_int as uint16,
+        addr_kCinematicBgObjectDef_8BCF51 as uint16,
         0x4c00 as uint16,
         game,
     );
@@ -5954,7 +5926,7 @@ pub unsafe fn CinematicFunction_Intro_Page4(game: &mut Game) {
 }
 pub unsafe fn CinematicFunction_Intro_Page5(game: &mut Game) {
     SpawnCinematicBgObject(
-        addr_kCinematicBgObjectDef_8BCF57 as ::core::ffi::c_int as uint16,
+        addr_kCinematicBgObjectDef_8BCF57 as uint16,
         0x4c00 as uint16,
         game,
     );
@@ -6098,8 +6070,8 @@ pub unsafe fn CinematicFunction_Intro_Func18(game: &mut Game) {
                 & 0x3fffff as ::core::ffi::c_int) as isize,
         ) as *const uint8 as *mut uint16)
             .offset(19);
-    CinematicFunction_Intro_Func20(addr_word_8BD389 as ::core::ffi::c_int as uint16, game);
-    CinematicFunction_Intro_Func20(addr_word_8BD389 as ::core::ffi::c_int as uint16, game);
+    CinematicFunction_Intro_Func20(addr_word_8BD389 as uint16, game);
+    CinematicFunction_Intro_Func20(addr_word_8BD389 as uint16, game);
     TransferJapaneseTextTilesToVram(game);
 }
 pub unsafe fn sub_8BB51E(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
@@ -6129,8 +6101,8 @@ pub unsafe fn sub_8BB51E(mut k: uint16, mut j: uint16, game: &mut Game) -> uint1
         ) as *const uint8 as *mut uint16)
             .offset(19);
     ClearJapaneseTextTiles(game);
-    CinematicFunction_Intro_Func20(addr_word_8BCF75 as ::core::ffi::c_int as uint16, game);
-    CinematicFunction_Intro_Func20(addr_word_8BCFBD as ::core::ffi::c_int as uint16, game);
+    CinematicFunction_Intro_Func20(addr_word_8BCF75 as uint16, game);
+    CinematicFunction_Intro_Func20(addr_word_8BCFBD as uint16, game);
     TransferJapaneseTextTilesToVram(game);
     return j;
 }
@@ -6173,8 +6145,8 @@ pub unsafe fn CinematicFunction_Intro_Func21(
         ) as *const uint8 as *mut uint16)
             .offset(19);
     ClearJapaneseTextTiles(game);
-    CinematicFunction_Intro_Func20(addr_word_8BCFFD as ::core::ffi::c_int as uint16, game);
-    CinematicFunction_Intro_Func20(addr_word_8BD055 as ::core::ffi::c_int as uint16, game);
+    CinematicFunction_Intro_Func20(addr_word_8BCFFD as uint16, game);
+    CinematicFunction_Intro_Func20(addr_word_8BD055 as uint16, game);
     TransferJapaneseTextTilesToVram(game);
     return j;
 }
@@ -6189,8 +6161,8 @@ pub unsafe fn CinematicFunction_Intro_Func22(mut k: uint16, game: &mut Game) {
             (0x8b93d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         DisableCinematicBgTilemapUpdates(game);
         ClearJapaneseTextTiles(game);
-        CinematicFunction_Intro_Func20(addr_word_8BD085 as ::core::ffi::c_int as uint16, game);
-        CinematicFunction_Intro_Func20(addr_word_8BD0E1 as ::core::ffi::c_int as uint16, game);
+        CinematicFunction_Intro_Func20(addr_word_8BD085 as uint16, game);
+        CinematicFunction_Intro_Func20(addr_word_8BD0E1 as uint16, game);
         TransferJapaneseTextTilesToVram(game);
         *((&raw mut game.g_ram as *mut uint8).offset(0x1ba3) as *mut uint16) = 60 as uint16;
     }
@@ -6236,7 +6208,7 @@ pub unsafe fn CinematicFunction_Intro_Func23(
         ) as *const uint8 as *mut uint16)
             .offset(19);
     ClearJapaneseTextTiles(game);
-    CinematicFunction_Intro_Func20(addr_word_8BD0F9 as ::core::ffi::c_int as uint16, game);
+    CinematicFunction_Intro_Func20(addr_word_8BD0F9 as uint16, game);
     TransferJapaneseTextTilesToVram(game);
     return j;
 }
@@ -6251,7 +6223,7 @@ pub unsafe fn CinematicFunction_Intro_Func24(mut k: uint16, game: &mut Game) {
             (0x8b93d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         DisableCinematicBgTilemapUpdates(game);
         ClearJapaneseTextTiles(game);
-        CinematicFunction_Intro_Func20(addr_word_8BD15D as ::core::ffi::c_int as uint16, game);
+        CinematicFunction_Intro_Func20(addr_word_8BD15D as uint16, game);
         TransferJapaneseTextTilesToVram(game);
         *((&raw mut game.g_ram as *mut uint8).offset(0x1ba3) as *mut uint16) = 60 as uint16;
     }
@@ -6297,8 +6269,8 @@ pub unsafe fn CinematicFunction_Intro_Func26(
         ) as *const uint8 as *mut uint16)
             .offset(19);
     ClearJapaneseTextTiles(game);
-    CinematicFunction_Intro_Func20(addr_word_8BD1B9 as ::core::ffi::c_int as uint16, game);
-    CinematicFunction_Intro_Func20(addr_word_8BD215 as ::core::ffi::c_int as uint16, game);
+    CinematicFunction_Intro_Func20(addr_word_8BD1B9 as uint16, game);
+    CinematicFunction_Intro_Func20(addr_word_8BD215 as uint16, game);
     TransferJapaneseTextTilesToVram(game);
     return j;
 }
@@ -6313,8 +6285,8 @@ pub unsafe fn CinematicFunction_Intro_Func27(mut k: uint16, game: &mut Game) {
             (0x8b93d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         DisableCinematicBgTilemapUpdates(game);
         ClearJapaneseTextTiles(game);
-        CinematicFunction_Intro_Func20(addr_word_8BD259 as ::core::ffi::c_int as uint16, game);
-        CinematicFunction_Intro_Func20(addr_word_8BD2A5 as ::core::ffi::c_int as uint16, game);
+        CinematicFunction_Intro_Func20(addr_word_8BD259 as uint16, game);
+        CinematicFunction_Intro_Func20(addr_word_8BD2A5 as uint16, game);
         TransferJapaneseTextTilesToVram(game);
         *((&raw mut game.g_ram as *mut uint8).offset(0x1ba3) as *mut uint16) = 60 as uint16;
     }
@@ -6360,7 +6332,7 @@ pub unsafe fn CinematicFunction_Intro_Func29(
         ) as *const uint8 as *mut uint16)
             .offset(19);
     ClearJapaneseTextTiles(game);
-    CinematicFunction_Intro_Func20(addr_word_8BD2D5 as ::core::ffi::c_int as uint16, game);
+    CinematicFunction_Intro_Func20(addr_word_8BD2D5 as uint16, game);
     TransferJapaneseTextTilesToVram(game);
     return j;
 }
@@ -6368,14 +6340,14 @@ pub unsafe fn CinematicFunction_Intro_Func30(mut k: uint16, game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) != 0 {
         let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0x19a1) as *mut uint16).offset(v1 as isize) =
-            addr_off_8BD3E7 as ::core::ffi::c_int as uint16;
+            addr_off_8BD3E7 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x19a9) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x19a5) as *mut uint16).offset(v1 as isize) =
             (0x8b93d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         DisableCinematicBgTilemapUpdates(game);
         ClearJapaneseTextTiles(game);
-        CinematicFunction_Intro_Func20(addr_word_8BD30D as ::core::ffi::c_int as uint16, game);
+        CinematicFunction_Intro_Func20(addr_word_8BD30D as uint16, game);
         TransferJapaneseTextTilesToVram(game);
         *((&raw mut game.g_ram as *mut uint8).offset(0x1ba3) as *mut uint16) = 60 as uint16;
     }
@@ -6397,7 +6369,7 @@ pub unsafe fn CinematicFunction_Intro_Func32(
 ) -> uint16 {
     DisableCinematicBgTilemapUpdates(game);
     ClearJapaneseTextTiles(game);
-    CinematicFunction_Intro_Func20(addr_word_8BD371 as ::core::ffi::c_int as uint16, game);
+    CinematicFunction_Intro_Func20(addr_word_8BD371 as uint16, game);
     TransferJapaneseTextTilesToVram(game);
     return j;
 }
@@ -6493,42 +6465,42 @@ pub unsafe fn CinematicFunction_Intro_Func36(mut k: uint16, game: &mut Game) {
                 .offset(v2 as isize) =
                 (0x8bb80f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
             SpawnCinematicSpriteObject(
-                addr_kCinematicSpriteObjectDef_8BCF1B as ::core::ffi::c_int as uint16,
+                addr_kCinematicSpriteObjectDef_8BCF1B as uint16,
                 0 as uint16,
                 game,
             );
             SpawnCinematicSpriteObject(
-                addr_kCinematicSpriteObjectDef_8BCF1B as ::core::ffi::c_int as uint16,
+                addr_kCinematicSpriteObjectDef_8BCF1B as uint16,
                 1 as uint16,
                 game,
             );
             SpawnCinematicSpriteObject(
-                addr_kCinematicSpriteObjectDef_8BCF1B as ::core::ffi::c_int as uint16,
+                addr_kCinematicSpriteObjectDef_8BCF1B as uint16,
                 2 as uint16,
                 game,
             );
             SpawnCinematicSpriteObject(
-                addr_kCinematicSpriteObjectDef_8BCF15 as ::core::ffi::c_int as uint16,
+                addr_kCinematicSpriteObjectDef_8BCF15 as uint16,
                 0 as uint16,
                 game,
             );
             SpawnCinematicSpriteObject(
-                addr_kCinematicSpriteObjectDef_8BCF15 as ::core::ffi::c_int as uint16,
+                addr_kCinematicSpriteObjectDef_8BCF15 as uint16,
                 1 as uint16,
                 game,
             );
             SpawnCinematicSpriteObject(
-                addr_kCinematicSpriteObjectDef_8BCF15 as ::core::ffi::c_int as uint16,
+                addr_kCinematicSpriteObjectDef_8BCF15 as uint16,
                 2 as uint16,
                 game,
             );
             SpawnCinematicSpriteObject(
-                addr_kCinematicSpriteObjectDef_8BCF15 as ::core::ffi::c_int as uint16,
+                addr_kCinematicSpriteObjectDef_8BCF15 as uint16,
                 3 as uint16,
                 game,
             );
             SpawnCinematicSpriteObject(
-                addr_kCinematicSpriteObjectDef_8BCF15 as ::core::ffi::c_int as uint16,
+                addr_kCinematicSpriteObjectDef_8BCF15 as uint16,
                 4 as uint16,
                 game,
             );
@@ -6547,7 +6519,7 @@ pub unsafe fn CinematicFunction_Intro_Func39(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v1 as isize) =
-            addr_off_8BCB19 as ::core::ffi::c_int as uint16;
+            addr_off_8BCB19 as uint16;
     }
 }
 pub unsafe fn CinematicSprPreInstr_B82E(mut k: uint16, game: &mut Game) {
@@ -6557,7 +6529,7 @@ pub unsafe fn CinematicSprPreInstr_B82E(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v1 as isize) =
-            addr_off_8BCE53 as ::core::ffi::c_int as uint16;
+            addr_off_8BCE53 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a57) as *mut uint16) = 0 as uint16;
     }
 }
@@ -6612,16 +6584,16 @@ pub unsafe fn CinematicFunction_Intro_Func40(game: &mut Game) {
     };
 }
 static kCinematicFunction_Intro_Func42_Tab0: [uint16; 4] = [
-    0x70 as ::core::ffi::c_int as uint16,
-    0xc0 as ::core::ffi::c_int as uint16,
-    0x80 as ::core::ffi::c_int as uint16,
-    0xe8 as ::core::ffi::c_int as uint16,
+    0x70 as uint16,
+    0xc0 as uint16,
+    0x80 as uint16,
+    0xe8 as uint16,
 ];
 static kCinematicFunction_Intro_Func42_Tab1: [uint16; 4] = [
-    0x50 as ::core::ffi::c_int as uint16,
-    0x40 as ::core::ffi::c_int as uint16,
-    0x38 as ::core::ffi::c_int as uint16,
-    0x58 as ::core::ffi::c_int as uint16,
+    0x50 as uint16,
+    0x40 as uint16,
+    0x38 as uint16,
+    0x58 as uint16,
 ];
 pub unsafe fn CinematicFunction_Intro_Func42(mut j: uint16, game: &mut Game) {
     let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x1b9d) as *mut uint16);
@@ -6688,14 +6660,10 @@ pub unsafe fn CinematicFunction_Intro_Func44(mut k: uint16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(v1 as isize) =
         1 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v1 as isize) =
-        addr_off_8BCE53 as ::core::ffi::c_int as uint16;
+        addr_off_8BCE53 as uint16;
 }
-static kCinematicFunction_Intro_Func45_Tab0: [uint16; 4] = [
-    0 as ::core::ffi::c_int as uint16,
-    0xffff as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0xffff as ::core::ffi::c_int as uint16,
-];
+static kCinematicFunction_Intro_Func45_Tab0: [uint16; 4] =
+    [0 as uint16, 0xffff as uint16, 0 as uint16, 0xffff as uint16];
 pub unsafe fn CinematicFunction_Intro_Func45(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x1b7d)
@@ -6707,7 +6675,7 @@ pub unsafe fn CinematicFunction_Intro_Func45(mut k: uint16, game: &mut Game) {
         ((&raw mut game.g_ram as *mut uint8).offset(0x1add) as *mut uint16).offset(v1 as isize)
             as *mut uint16,
         (kCinematicFunction_Intro_Func45_Tab0[v2 as usize] as uint32) << 16 as ::core::ffi::c_int
-            | 0x8000 as ::core::ffi::c_int as uint16 as uint32,
+            | 0x8000 as uint16 as uint32,
     );
     AddToHiLo(
         ((&raw mut game.g_ram as *mut uint8).offset(0x1a9d) as *mut uint16).offset(v1 as isize)
@@ -6733,29 +6701,29 @@ pub unsafe fn CinematicFunction_Intro_Func45(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v1 as isize) =
-            addr_off_8BCE53 as ::core::ffi::c_int as uint16;
+            addr_off_8BCE53 as uint16;
     }
 }
 static kCinematicFunction_Intro_Func46_Tab0: [uint16; 5] = [
-    0 as ::core::ffi::c_int as uint16,
-    0x10 as ::core::ffi::c_int as uint16,
-    0xfff0 as ::core::ffi::c_int as uint16,
-    0xfff8 as ::core::ffi::c_int as uint16,
-    8 as ::core::ffi::c_int as uint16,
+    0 as uint16,
+    0x10 as uint16,
+    0xfff0 as uint16,
+    0xfff8 as uint16,
+    8 as uint16,
 ];
 static kCinematicFunction_Intro_Func46_Tab1: [uint16; 5] = [
-    0 as ::core::ffi::c_int as uint16,
-    0xfff0 as ::core::ffi::c_int as uint16,
-    8 as ::core::ffi::c_int as uint16,
-    0xfff0 as ::core::ffi::c_int as uint16,
-    8 as ::core::ffi::c_int as uint16,
+    0 as uint16,
+    0xfff0 as uint16,
+    8 as uint16,
+    0xfff0 as uint16,
+    8 as uint16,
 ];
 static kCinematicFunction_Intro_Func46_Tab2: [uint16; 5] = [
-    1 as ::core::ffi::c_int as uint16,
-    0x10 as ::core::ffi::c_int as uint16,
-    0x20 as ::core::ffi::c_int as uint16,
-    0x30 as ::core::ffi::c_int as uint16,
-    0x40 as ::core::ffi::c_int as uint16,
+    1 as uint16,
+    0x10 as uint16,
+    0x20 as uint16,
+    0x30 as uint16,
+    0x40 as uint16,
 ];
 pub unsafe fn CinematicFunction_Intro_Func46(mut j: uint16, game: &mut Game) {
     let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x1b9d) as *mut uint16);
@@ -6774,21 +6742,12 @@ pub unsafe fn CinematicFunction_Intro_Func46(mut j: uint16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1abd) as *mut uint16).offset(v2 as isize) =
         2560 as uint16;
 }
-static kCinematicFunction_Intro_Func47_Tab0: [uint16; 3] = [
-    0x10 as ::core::ffi::c_int as uint16,
-    0xfff0 as ::core::ffi::c_int as uint16,
-    0xfff0 as ::core::ffi::c_int as uint16,
-];
-static kCinematicFunction_Intro_Func47_Tab1: [uint16; 3] = [
-    0 as ::core::ffi::c_int as uint16,
-    4 as ::core::ffi::c_int as uint16,
-    0xfff8 as ::core::ffi::c_int as uint16,
-];
-static kCinematicFunction_Intro_Func47_Tab2: [uint16; 3] = [
-    1 as ::core::ffi::c_int as uint16,
-    8 as ::core::ffi::c_int as uint16,
-    0x10 as ::core::ffi::c_int as uint16,
-];
+static kCinematicFunction_Intro_Func47_Tab0: [uint16; 3] =
+    [0x10 as uint16, 0xfff0 as uint16, 0xfff0 as uint16];
+static kCinematicFunction_Intro_Func47_Tab1: [uint16; 3] =
+    [0 as uint16, 4 as uint16, 0xfff8 as uint16];
+static kCinematicFunction_Intro_Func47_Tab2: [uint16; 3] =
+    [1 as uint16, 8 as uint16, 0x10 as uint16];
 pub unsafe fn CinematicFunction_Intro_Func47(mut j: uint16, game: &mut Game) {
     let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x1b9d) as *mut uint16);
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -6812,7 +6771,7 @@ pub unsafe fn CinematicFunction_Intro_Func48(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v1 as isize) =
-            addr_off_8BCE53 as ::core::ffi::c_int as uint16;
+            addr_off_8BCE53 as uint16;
     }
 }
 pub unsafe fn CinematicSprInstr_SpawnIntroRinkas01(
@@ -6821,12 +6780,12 @@ pub unsafe fn CinematicSprInstr_SpawnIntroRinkas01(
     game: &mut Game,
 ) -> uint16 {
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BCF21 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BCF21 as uint16,
         0 as uint16,
         game,
     );
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BCF21 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BCF21 as uint16,
         1 as uint16,
         game,
     );
@@ -6838,12 +6797,12 @@ pub unsafe fn CinematicSprInstr_SpawnIntroRinkas23(
     game: &mut Game,
 ) -> uint16 {
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BCF21 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BCF21 as uint16,
         2 as uint16,
         game,
     );
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BCF21 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BCF21 as uint16,
         3 as uint16,
         game,
     );
@@ -6879,22 +6838,22 @@ pub unsafe fn CinematicFunction_Intro_Func51(mut k: uint16, game: &mut Game) {
         == 145 as ::core::ffi::c_int
     {
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCEF1 as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BCEF1 as uint16,
             0 as uint16,
             game,
         );
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCEF1 as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BCEF1 as uint16,
             1 as uint16,
             game,
         );
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCEF1 as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BCEF1 as uint16,
             2 as uint16,
             game,
         );
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCEF1 as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BCEF1 as uint16,
             3 as uint16,
             game,
         );
@@ -7064,7 +7023,7 @@ pub unsafe fn CinematicFunction_Intro_Func53(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(kh as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(kh as isize) =
-            addr_off_8BCE53 as ::core::ffi::c_int as uint16;
+            addr_off_8BCE53 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a57) as *mut uint16) = 0 as uint16;
     };
 }
@@ -7083,28 +7042,17 @@ pub unsafe fn ResetButtonAssignmentsToDefault(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x9bc) as *mut uint16);
     *((&raw mut game.g_ram as *mut uint8).offset(0xd8e) as *mut uint16) =
         *((&raw mut game.g_ram as *mut uint8).offset(0x9be) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9aa) as *mut uint16) =
-        kButton_Up as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9ac) as *mut uint16) =
-        kButton_Down as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9ae) as *mut uint16) =
-        kButton_Left as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9b0) as *mut uint16) =
-        kButton_Right as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9b2) as *mut uint16) =
-        kButton_X as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9b4) as *mut uint16) =
-        kButton_A as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9b6) as *mut uint16) =
-        kButton_B as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9b8) as *mut uint16) =
-        kButton_Y as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9ba) as *mut uint16) =
-        kButton_Select as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9bc) as *mut uint16) =
-        kButton_L as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9be) as *mut uint16) =
-        kButton_R as ::core::ffi::c_int as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9aa) as *mut uint16) = kButton_Up as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9ac) as *mut uint16) = kButton_Down as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9ae) as *mut uint16) = kButton_Left as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9b0) as *mut uint16) = kButton_Right as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9b2) as *mut uint16) = kButton_X as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9b4) as *mut uint16) = kButton_A as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9b6) as *mut uint16) = kButton_B as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9b8) as *mut uint16) = kButton_Y as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9ba) as *mut uint16) = kButton_Select as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9bc) as *mut uint16) = kButton_L as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9be) as *mut uint16) = kButton_R as uint16;
 }
 pub unsafe fn RevertButtonConfig(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x9b2) as *mut uint16) =
@@ -7162,8 +7110,8 @@ pub unsafe fn CinematicFunction_Intro_Func54(game: &mut Game) {
         (&raw mut game.g_ram as *mut uint8).offset(0x15000),
         game,
     );
-    WriteRegWord(VMADDL as ::core::ffi::c_int as uint16, 0 as uint16, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteRegWord(VMADDL as uint16, 0 as uint16, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BBD04: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 0 as uint8,
@@ -7175,19 +7123,19 @@ pub unsafe fn CinematicFunction_Intro_Func54(game: &mut Game) {
         das: 0x4000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BBD04 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteRegWord(VMADDL as ::core::ffi::c_int as uint16, 0 as uint16, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMAIN as uint16, 0 as uint8, game);
+    WriteRegWord(VMADDL as uint16, 0 as uint16, game);
     v1 = 0x4000 as int16;
     loop {
-        WriteReg(VMDATAL as ::core::ffi::c_int as uint16, 0x8c as uint8, game);
+        WriteReg(VMDATAL as uint16, 0x8c as uint8, game);
         v1 -= 1;
         if !(v1 != 0) {
             break;
         }
     }
-    WriteRegWord(VMADDL as ::core::ffi::c_int as uint16, 0 as uint16, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteRegWord(VMADDL as uint16, 0 as uint16, game);
+    WriteReg(VMAIN as uint16, 0 as uint8, game);
     static unk_8BBD3C: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 0 as uint8,
@@ -7199,13 +7147,9 @@ pub unsafe fn CinematicFunction_Intro_Func54(game: &mut Game) {
         das: 0x300 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BBD3C as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteRegWord(
-        VMADDL as ::core::ffi::c_int as uint16,
-        0x6000 as uint16,
-        game,
-    );
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteRegWord(VMADDL as uint16, 0x6000 as uint16, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BBD5C: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -7217,18 +7161,18 @@ pub unsafe fn CinematicFunction_Intro_Func54(game: &mut Game) {
         das: 0x4000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BBD5C as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteRegWord(M7A as ::core::ffi::c_int as uint16, 0x100 as uint16, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteRegWord(M7A as uint16, 0x100 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x78) as *mut uint16) = 256 as uint16;
-    WriteRegWord(M7B as ::core::ffi::c_int as uint16, 0 as uint16, game);
+    WriteRegWord(M7B as uint16, 0 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x7a) as *mut uint16) = 0 as uint16;
-    WriteRegWord(M7C as ::core::ffi::c_int as uint16, 0 as uint16, game);
+    WriteRegWord(M7C as uint16, 0 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x7c) as *mut uint16) = 0 as uint16;
-    WriteRegWord(M7D as ::core::ffi::c_int as uint16, 0x100 as uint16, game);
+    WriteRegWord(M7D as uint16, 0x100 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x7e) as *mut uint16) = 256 as uint16;
-    WriteRegWord(M7X as ::core::ffi::c_int as uint16, 0x38 as uint16, game);
+    WriteRegWord(M7X as uint16, 0x38 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x80) as *mut uint16) = 56 as uint16;
-    WriteRegWord(M7Y as ::core::ffi::c_int as uint16, 0x18 as uint16, game);
+    WriteRegWord(M7Y as uint16, 0x18 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x82) as *mut uint16) = 24 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1993) as *mut uint16) =
         -(72 as ::core::ffi::c_int) as uint16;
@@ -7242,7 +7186,7 @@ pub unsafe fn CinematicFunction_Intro_Func54(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x19f5) as *mut uint16) = 23552 as uint16;
     EnableNMI(game);
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BCF0F as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BCF0F as uint16,
         0 as uint16,
         game,
     );
@@ -7273,7 +7217,7 @@ pub unsafe fn CinematicFunction_Intro_Func56(game: &mut Game) {
         ClearCinematicSprites(game);
         QueueMode7Transfers(
             0x8b as uint8,
-            addr_kCinematicFunction_Intro_Func56_M7 as ::core::ffi::c_int as uint16,
+            addr_kCinematicFunction_Intro_Func56_M7 as uint16,
             game,
         );
         *((&raw mut game.g_ram as *mut uint8).offset(0x1993) as *mut uint16) =
@@ -7282,34 +7226,34 @@ pub unsafe fn CinematicFunction_Intro_Func56(game: &mut Game) {
             -(128 as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x198d) as *mut uint16) = 32 as uint16;
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCF39 as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BCF39 as uint16,
             0x0020, // The preceding $198D store leaves $0020 in A.
             game,
         );
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCE85 as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BCE85 as uint16,
             0x0800, // Palette left in A by the preceding sprite initializer.
             game,
         );
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCE8B as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BCE8B as uint16,
             0x0c00, // Palette left in A by the preceding sprite initializer.
             game,
         );
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCE91 as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BCE91 as uint16,
             1 as uint16,
             game,
         );
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCF0F as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BCF0F as uint16,
             1 as uint16,
             game,
         );
         *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
             (0x8bbfda as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        SpawnPalfxObject(addr_kPalfx_E1A8 as ::core::ffi::c_int as uint16, game);
-        SpawnPalfxObject(addr_kPalfx_E1AC as ::core::ffi::c_int as uint16, game);
+        SpawnPalfxObject(addr_kPalfx_E1A8 as uint16, game);
+        SpawnPalfxObject(addr_kPalfx_E1AC as uint16, game);
     } else {
         let ref mut fresh128 = *((&raw mut game.g_ram as *mut uint8).offset(0x198f) as *mut uint16);
         *fresh128 = (*fresh128 as ::core::ffi::c_int - 16 as ::core::ffi::c_int) as uint16;
@@ -7518,7 +7462,7 @@ pub unsafe fn CinematicFunction_Intro_Func67(game: &mut Game) {
         EnableCinematicBgObjects(game);
         EnableCinematicBgTilemapUpdates(game);
         SpawnCinematicBgObject(
-            addr_kCinematicBgObjectDef_8BCF69 as ::core::ffi::c_int as uint16,
+            addr_kCinematicBgObjectDef_8BCF69 as uint16,
             0x5c00 as uint16,
             game,
         );
@@ -7582,9 +7526,9 @@ pub unsafe fn CinematicFunction_Intro_Func72(game: &mut Game) {
 }
 pub unsafe fn CinematicFunction_Intro_Func73(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xd914) as *mut uint16) =
-        kGameState_31_SetUpNewGame as ::core::ffi::c_int as uint16;
+        kGameState_31_SetUpNewGame as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
-        kGameState_31_SetUpNewGame as ::core::ffi::c_int as uint16;
+        kGameState_31_SetUpNewGame as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) = 6 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x78b) as *mut uint16) = 0 as uint16;
     SaveToSram(
@@ -7639,9 +7583,9 @@ pub unsafe fn CinematicFunctionBlackoutFromCeres(game: &mut Game) {
         (&raw mut game.g_ram as *mut uint8).offset(0x15000),
         game,
     );
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BC19C: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 0 as uint8,
@@ -7653,21 +7597,21 @@ pub unsafe fn CinematicFunctionBlackoutFromCeres(game: &mut Game) {
         das: 0x4000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BC19C as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMAIN as uint16, 0 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0 as uint8, game);
     v3 = 0x4000 as int16;
     loop {
-        WriteReg(VMDATAL as ::core::ffi::c_int as uint16, 0x8c as uint8, game);
+        WriteReg(VMDATAL as uint16, 0x8c as uint8, game);
         v3 -= 1;
         if !(v3 != 0) {
             break;
         }
     }
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0 as uint8, game);
+    WriteReg(VMAIN as uint16, 0 as uint8, game);
     static unk_8BC1D4: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 0 as uint8,
@@ -7679,10 +7623,10 @@ pub unsafe fn CinematicFunctionBlackoutFromCeres(game: &mut Game) {
         das: 0x600 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BC1D4 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x60 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BC1F4: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -7694,10 +7638,10 @@ pub unsafe fn CinematicFunctionBlackoutFromCeres(game: &mut Game) {
         das: 0x4000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BC1F4 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x60 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BC214: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -7709,18 +7653,18 @@ pub unsafe fn CinematicFunctionBlackoutFromCeres(game: &mut Game) {
         das: 0x1a00 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BC214 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteRegWord(M7A as ::core::ffi::c_int as uint16, 0x100 as uint16, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteRegWord(M7A as uint16, 0x100 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x78) as *mut uint16) = 256 as uint16;
-    WriteRegWord(M7B as ::core::ffi::c_int as uint16, 0 as uint16, game);
+    WriteRegWord(M7B as uint16, 0 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x7a) as *mut uint16) = 0 as uint16;
-    WriteRegWord(M7C as ::core::ffi::c_int as uint16, 0 as uint16, game);
+    WriteRegWord(M7C as uint16, 0 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x7c) as *mut uint16) = 0 as uint16;
-    WriteRegWord(M7D as ::core::ffi::c_int as uint16, 0x100 as uint16, game);
+    WriteRegWord(M7D as uint16, 0x100 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x7e) as *mut uint16) = 256 as uint16;
-    WriteRegWord(M7X as ::core::ffi::c_int as uint16, 0x34 as uint16, game);
+    WriteRegWord(M7X as uint16, 0x34 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x80) as *mut uint16) = 52 as uint16;
-    WriteRegWord(M7Y as ::core::ffi::c_int as uint16, 0x30 as uint16, game);
+    WriteRegWord(M7Y as uint16, 0x30 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x82) as *mut uint16) = 48 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1993) as *mut uint16) =
         -(44 as ::core::ffi::c_int) as uint16;
@@ -7735,28 +7679,28 @@ pub unsafe fn CinematicFunctionBlackoutFromCeres(game: &mut Game) {
     ClearCinematicBgObjects(0x2f as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x19f5) as *mut uint16) = 0 as uint16;
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BCE7F as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BCE7F as uint16,
         0 as uint16,
         game,
     );
     SpawnCinematicSpriteObjectAtSlot(
-        addr_kCinematicSpriteObjectDef_8BCE8B as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BCE8B as uint16,
         2 as uint16,
         0x0002,
         game,
     );
     SpawnCinematicSpriteObjectAtSlot(
-        addr_kCinematicSpriteObjectDef_8BCE91 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BCE91 as uint16,
         0 as uint16,
         0x0000,
         game,
     );
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BCF33 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BCF33 as uint16,
         0x0800, // Palette left in A by the preceding sprite initializer.
         game,
     );
-    SpawnPalfxObject(addr_kPalfx_E1B8 as ::core::ffi::c_int as uint16, game);
+    SpawnPalfxObject(addr_kPalfx_E1B8 as uint16, game);
     EnableNMI(game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 1 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 1 as uint16;
@@ -7838,7 +7782,7 @@ pub unsafe fn CinematicFunction_Intro_Func76(game: &mut Game) {
         *(&raw mut game.g_ram as *mut uint8).offset(0x72) = 55 as uint8;
         *((&raw mut game.g_ram as *mut uint8).offset(0x198f) as *mut uint16) = 768 as uint16;
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCF2D as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BCF2D as uint16,
             0 as uint16,
             game,
         );
@@ -7847,19 +7791,19 @@ pub unsafe fn CinematicFunction_Intro_Func76(game: &mut Game) {
         {
             QueueMode7Transfers(
                 0x8b as uint8,
-                addr_kCinematicFunction_Intro_Func76_M7_2 as ::core::ffi::c_int as uint16,
+                addr_kCinematicFunction_Intro_Func76_M7_2 as uint16,
                 game,
             );
         } else {
             QueueMode7Transfers(
                 0x8b as uint8,
-                addr_kCinematicFunction_Intro_Func76_M7_0 as ::core::ffi::c_int as uint16,
+                addr_kCinematicFunction_Intro_Func76_M7_0 as uint16,
                 game,
             );
         }
         QueueMode7Transfers(
             0x8b as uint8,
-            addr_kCinematicFunction_Intro_Func76_M7_1 as ::core::ffi::c_int as uint16,
+            addr_kCinematicFunction_Intro_Func76_M7_1 as uint16,
             game,
         );
         *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
@@ -7872,52 +7816,52 @@ pub unsafe fn CinematicSprInstr_SpawnCeresExplosions1(
     game: &mut Game,
 ) -> uint16 {
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BCEBB as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BCEBB as uint16,
         0 as uint16,
         game,
     );
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BCEBB as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BCEBB as uint16,
         1 as uint16,
         game,
     );
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BCEBB as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BCEBB as uint16,
         2 as uint16,
         game,
     );
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BCEBB as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BCEBB as uint16,
         3 as uint16,
         game,
     );
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BCEBB as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BCEBB as uint16,
         4 as uint16,
         game,
     );
     return j;
 }
 static kCinematicFunction_Intro_Func78_Tab0: [uint16; 5] = [
-    1 as ::core::ffi::c_int as uint16,
-    16 as ::core::ffi::c_int as uint16,
-    32 as ::core::ffi::c_int as uint16,
-    48 as ::core::ffi::c_int as uint16,
-    64 as ::core::ffi::c_int as uint16,
+    1 as uint16,
+    16 as uint16,
+    32 as uint16,
+    48 as uint16,
+    64 as uint16,
 ];
 static kCinematicFunction_Intro_Func78_Tab1: [int16; 5] = [
-    16 as ::core::ffi::c_int as int16,
+    16 as int16,
     -(16 as ::core::ffi::c_int) as int16,
-    16 as ::core::ffi::c_int as int16,
+    16 as int16,
     -(16 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
 ];
 static kCinematicFunction_Intro_Func78_Tab2: [int16; 5] = [
     -(16 as ::core::ffi::c_int) as int16,
-    16 as ::core::ffi::c_int as int16,
-    16 as ::core::ffi::c_int as int16,
+    16 as int16,
+    16 as int16,
     -(16 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
 ];
 pub unsafe fn CinematicFunction_Intro_Func78(mut j: uint16, game: &mut Game) {
     let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x1b9d) as *mut uint16);
@@ -7956,7 +7900,7 @@ pub unsafe fn CinematicSprPreInstr_C489(mut k: uint16, game: &mut Game) {
             != 0 as ::core::ffi::c_int;
         if *((&raw mut game.g_ram as *mut uint8).offset(0x1a49) as *mut uint16) == 0 || v1 {
             SpawnCinematicSpriteObject(
-                addr_kCinematicSpriteObjectDef_8BCEC1 as ::core::ffi::c_int as uint16,
+                addr_kCinematicSpriteObjectDef_8BCEC1 as uint16,
                 *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16),
                 game,
             );
@@ -7970,40 +7914,36 @@ pub unsafe fn CinematicSprPreInstr_C489(mut k: uint16, game: &mut Game) {
     };
 }
 static g_word_8BC4EB: [int16; 16] = [
-    14 as ::core::ffi::c_int as int16,
+    14 as int16,
     -(8 as ::core::ffi::c_int) as int16,
-    8 as ::core::ffi::c_int as int16,
-    12 as ::core::ffi::c_int as int16,
+    8 as int16,
+    12 as int16,
     -(16 as ::core::ffi::c_int) as int16,
-    12 as ::core::ffi::c_int as int16,
+    12 as int16,
     -(8 as ::core::ffi::c_int) as int16,
     -(14 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
-    16 as ::core::ffi::c_int as int16,
-    14 as ::core::ffi::c_int as int16,
+    0 as int16,
+    0 as int16,
+    16 as int16,
+    14 as int16,
     -(12 as ::core::ffi::c_int) as int16,
-    4 as ::core::ffi::c_int as int16,
+    4 as int16,
     -(8 as ::core::ffi::c_int) as int16,
     -(16 as ::core::ffi::c_int) as int16,
 ];
-static kCinematicFunction_Intro_Func81_Tab0: [int16; 4] = [
-    1 as ::core::ffi::c_int as int16,
-    4 as ::core::ffi::c_int as int16,
-    8 as ::core::ffi::c_int as int16,
-    16 as ::core::ffi::c_int as int16,
-];
+static kCinematicFunction_Intro_Func81_Tab0: [int16; 4] =
+    [1 as int16, 4 as int16, 8 as int16, 16 as int16];
 static kCinematicFunction_Intro_Func81_Tab1: [int16; 4] = [
-    8 as ::core::ffi::c_int as int16,
-    12 as ::core::ffi::c_int as int16,
+    8 as int16,
+    12 as int16,
     -(8 as ::core::ffi::c_int) as int16,
     -(12 as ::core::ffi::c_int) as int16,
 ];
 static kCinematicFunction_Intro_Func81_Tab2: [int16; 4] = [
     -(4 as ::core::ffi::c_int) as int16,
-    8 as ::core::ffi::c_int as int16,
+    8 as int16,
     -(10 as ::core::ffi::c_int) as int16,
-    12 as ::core::ffi::c_int as int16,
+    12 as int16,
 ];
 pub unsafe fn CinematicFunction_Intro_Func80(mut j: uint16, game: &mut Game) {
     let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x1b9d) as *mut uint16);
@@ -8032,22 +7972,22 @@ pub unsafe fn CinematicSprInstr_SpawnCeresExplosions3(
     game: &mut Game,
 ) -> uint16 {
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BCEC7 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BCEC7 as uint16,
         0 as uint16,
         game,
     );
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BCEC7 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BCEC7 as uint16,
         1 as uint16,
         game,
     );
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BCEC7 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BCEC7 as uint16,
         2 as uint16,
         game,
     );
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BCEC7 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BCEC7 as uint16,
         3 as uint16,
         game,
     );
@@ -8174,7 +8114,7 @@ pub unsafe fn CinematicFunction_Intro_Func85(game: &mut Game) {
                 i -= 2 as ::core::ffi::c_int;
             }
             *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
-                kGameState_25_SamusNoHealth as ::core::ffi::c_int as uint16;
+                kGameState_25_SamusNoHealth as uint16;
         } else {
             *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
                 (0x8bc699 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -8199,9 +8139,9 @@ pub unsafe fn CinematicFunction_Intro_Func86(game: &mut Game) {
         (&raw mut game.g_ram as *mut uint8).offset(0x15000),
         game,
     );
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0 as uint8, game);
+    WriteReg(VMAIN as uint16, 0 as uint8, game);
     static unk_8BC6E4: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 0 as uint8,
@@ -8213,10 +8153,10 @@ pub unsafe fn CinematicFunction_Intro_Func86(game: &mut Game) {
         das: 0x300 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BC6E4 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x5c as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x5c as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BC704: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -8228,10 +8168,10 @@ pub unsafe fn CinematicFunction_Intro_Func86(game: &mut Game) {
         das: 0x800 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BC704 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x60 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BC724: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -8243,18 +8183,18 @@ pub unsafe fn CinematicFunction_Intro_Func86(game: &mut Game) {
         das: 0x4000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BC724 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteRegWord(M7A as ::core::ffi::c_int as uint16, 0x100 as uint16, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteRegWord(M7A as uint16, 0x100 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x78) as *mut uint16) = 256 as uint16;
-    WriteRegWord(M7B as ::core::ffi::c_int as uint16, 0 as uint16, game);
+    WriteRegWord(M7B as uint16, 0 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x7a) as *mut uint16) = 0 as uint16;
-    WriteRegWord(M7C as ::core::ffi::c_int as uint16, 0 as uint16, game);
+    WriteRegWord(M7C as uint16, 0 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x7c) as *mut uint16) = 0 as uint16;
-    WriteRegWord(M7D as ::core::ffi::c_int as uint16, 0x100 as uint16, game);
+    WriteRegWord(M7D as uint16, 0x100 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x7e) as *mut uint16) = 256 as uint16;
-    WriteRegWord(M7X as ::core::ffi::c_int as uint16, 0x38 as uint16, game);
+    WriteRegWord(M7X as uint16, 0x38 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x80) as *mut uint16) = 56 as uint16;
-    WriteRegWord(M7Y as ::core::ffi::c_int as uint16, 0x18 as uint16, game);
+    WriteRegWord(M7Y as uint16, 0x18 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x82) as *mut uint16) = 24 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1993) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16) = 0 as uint16;
@@ -8265,7 +8205,7 @@ pub unsafe fn CinematicFunction_Intro_Func86(game: &mut Game) {
     ClearPaletteFXObjects(game);
     EnablePaletteFx(game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x57) = -(127 as ::core::ffi::c_int) as uint8;
-    SpawnPalfxObject(addr_kPalfx_E1A8 as ::core::ffi::c_int as uint16, game);
+    SpawnPalfxObject(addr_kPalfx_E1A8 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
         (0x8bc79c as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     EnableNMI(game);
@@ -8312,32 +8252,32 @@ pub unsafe fn CinematicFunction_Intro_Func88(game: &mut Game) {
             *((&raw mut game.g_ram as *mut uint8).offset(0x198d) as *mut uint16) = 32 as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0x198f) as *mut uint16) = 256 as uint16;
             SpawnCinematicSpriteObject(
-                addr_kCinematicSpriteObjectDef_8BCEA3 as ::core::ffi::c_int as uint16,
+                addr_kCinematicSpriteObjectDef_8BCEA3 as uint16,
                 0x0100, // The preceding $198F store leaves $0100 in A.
                 game,
             );
             SpawnCinematicSpriteObject(
-                addr_kCinematicSpriteObjectDef_8BCEF7 as ::core::ffi::c_int as uint16,
+                addr_kCinematicSpriteObjectDef_8BCEF7 as uint16,
                 0x0e00, // Palette left in A by the preceding sprite initializer.
                 game,
             );
             SpawnCinematicSpriteObject(
-                addr_kCinematicSpriteObjectDef_8BCEFD as ::core::ffi::c_int as uint16,
+                addr_kCinematicSpriteObjectDef_8BCEFD as uint16,
                 0x0800, // Palette left in A by the preceding sprite initializer.
                 game,
             );
             SpawnCinematicSpriteObject(
-                addr_kCinematicSpriteObjectDef_8BCF03 as ::core::ffi::c_int as uint16,
+                addr_kCinematicSpriteObjectDef_8BCF03 as uint16,
                 0x0800, // Palette left in A by the preceding sprite initializer.
                 game,
             );
             SpawnCinematicSpriteObject(
-                addr_kCinematicSpriteObjectDef_8BCF09 as ::core::ffi::c_int as uint16,
+                addr_kCinematicSpriteObjectDef_8BCF09 as uint16,
                 0x0800, // Palette left in A by the preceding sprite initializer.
                 game,
             );
             SpawnCinematicSpriteObject(
-                addr_kCinematicSpriteObjectDef_8BCEAF as ::core::ffi::c_int as uint16,
+                addr_kCinematicSpriteObjectDef_8BCEAF as uint16,
                 0x0800, // Palette left in A by the preceding sprite initializer.
                 game,
             );
@@ -8387,7 +8327,7 @@ pub unsafe fn CinematicFunction_Intro_Func91(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v1 as isize) =
-            addr_off_8BCE53 as ::core::ffi::c_int as uint16;
+            addr_off_8BCE53 as uint16;
     }
 }
 pub unsafe fn CinematicFunction_Intro_Func92(mut j: uint16, game: &mut Game) {
@@ -8431,7 +8371,7 @@ pub unsafe fn CinematicFunction_Intro_Func94(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v1 as isize) =
-            addr_off_8BCE53 as ::core::ffi::c_int as uint16;
+            addr_off_8BCE53 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
             (0x8bcadf as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
@@ -8468,7 +8408,7 @@ pub unsafe fn CinematicFunction_Intro_Func97(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v1 as isize) =
-            addr_off_8BCE53 as ::core::ffi::c_int as uint16;
+            addr_off_8BCE53 as uint16;
     }
 }
 pub unsafe fn CinematicFunction_Intro_Func98(mut j: uint16, game: &mut Game) {
@@ -8517,13 +8457,13 @@ pub unsafe fn CinematicFunction_Intro_Func102(mut j: uint16, game: &mut Game) {
         0 as uint16;
 }
 pub unsafe fn CinematicSprInstr_C9A5(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
-    SpawnPalfxObject(addr_kPalfx_E1B0 as ::core::ffi::c_int as uint16, game);
+    SpawnPalfxObject(addr_kPalfx_E1B0 as uint16, game);
     return j;
 }
 pub unsafe fn CinematicSprInstr_C9AF(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16) != 0 {
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BCEB5 as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BCEB5 as uint16,
             *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16),
             game,
         );
@@ -8531,7 +8471,7 @@ pub unsafe fn CinematicSprInstr_C9AF(mut k: uint16, mut j: uint16, game: &mut Ga
     return j;
 }
 pub unsafe fn CinematicSprInstr_C9BD(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
-    SpawnPalfxObject(addr_loc_8BE1B4 as ::core::ffi::c_int as uint16, game);
+    SpawnPalfxObject(addr_loc_8BE1B4 as uint16, game);
     return j;
 }
 pub unsafe fn CinematicSprInstr_C9C7(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
@@ -8652,7 +8592,7 @@ pub unsafe fn CinematicFunction_Intro_Func95(game: &mut Game) {
         i -= 2 as ::core::ffi::c_int;
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
-        kGameState_6_LoadingGameData as ::core::ffi::c_int as uint16;
+        kGameState_6_LoadingGameData as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16) =
         *((&raw mut game.g_ram as *mut uint8).offset(0x9c4) as *mut uint16);
 }
@@ -8734,9 +8674,9 @@ pub unsafe fn CinematicFunctionEscapeFromCebes(game: &mut Game) {
         (&raw mut game.g_ram as *mut uint8).offset(0x18000),
         game,
     );
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BD4FC: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -8748,10 +8688,10 @@ pub unsafe fn CinematicFunctionEscapeFromCebes(game: &mut Game) {
         das: 0x4000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BD4FC as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x20 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x20 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BD51C: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -8763,10 +8703,10 @@ pub unsafe fn CinematicFunctionEscapeFromCebes(game: &mut Game) {
         das: 0x4000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BD51C as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x60 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BD53C: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -8778,10 +8718,10 @@ pub unsafe fn CinematicFunctionEscapeFromCebes(game: &mut Game) {
         das: 0x4000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BD53C as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BD55C: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 0 as uint8,
@@ -8793,7 +8733,7 @@ pub unsafe fn CinematicFunctionEscapeFromCebes(game: &mut Game) {
         das: 0x4000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BD55C as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
     DecompressToMem(
         0x988304 as uint32,
         (&raw mut game.g_ram as *mut uint8).offset(0x18000),
@@ -8856,17 +8796,17 @@ pub unsafe fn CinematicFunctionEscapeFromCebes(game: &mut Game) {
         (&raw mut game.g_ram as *mut uint8).offset(0x6000),
         game,
     );
-    WriteRegWord(M7A as ::core::ffi::c_int as uint16, 0x100 as uint16, game);
+    WriteRegWord(M7A as uint16, 0x100 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x78) as *mut uint16) = 256 as uint16;
-    WriteRegWord(M7B as ::core::ffi::c_int as uint16, 0 as uint16, game);
+    WriteRegWord(M7B as uint16, 0 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x7a) as *mut uint16) = 0 as uint16;
-    WriteRegWord(M7C as ::core::ffi::c_int as uint16, 0 as uint16, game);
+    WriteRegWord(M7C as uint16, 0 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x7c) as *mut uint16) = 0 as uint16;
-    WriteRegWord(M7D as ::core::ffi::c_int as uint16, 0x100 as uint16, game);
+    WriteRegWord(M7D as uint16, 0x100 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x7e) as *mut uint16) = 256 as uint16;
-    WriteRegWord(M7X as ::core::ffi::c_int as uint16, 0x80 as uint16, game);
+    WriteRegWord(M7X as uint16, 0x80 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x80) as *mut uint16) = 128 as uint16;
-    WriteRegWord(M7Y as ::core::ffi::c_int as uint16, 0x80 as uint16, game);
+    WriteRegWord(M7Y as uint16, 0x80 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x82) as *mut uint16) = 128 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x198d) as *mut uint16) = 32 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x198f) as *mut uint16) = 64 as uint16;
@@ -8884,22 +8824,22 @@ pub unsafe fn CinematicFunctionEscapeFromCebes(game: &mut Game) {
     *(&raw mut game.g_ram as *mut uint8).offset(0x6f) = 2 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x72) = 17 as uint8;
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BEEEB as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BEEEB as uint16,
         0 as uint16,
         game,
     );
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BEEF1 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BEEF1 as uint16,
         0 as uint16,
         game,
     );
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BEEEB as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BEEEB as uint16,
         1 as uint16,
         game,
     );
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BEEF1 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BEEF1 as uint16,
         1 as uint16,
         game,
     );
@@ -8913,8 +8853,8 @@ pub unsafe fn CinematicFunctionEscapeFromCebes(game: &mut Game) {
 }
 pub unsafe fn CinematicFunction_Intro_Func109(game: &mut Game) {
     if HasQueuedMusic(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
-        SpawnPalfxObject(addr_kPalfx_E1D8 as ::core::ffi::c_int as uint16, game);
-        SpawnPalfxObject(addr_kPalfx_E1DC as ::core::ffi::c_int as uint16, game);
+        SpawnPalfxObject(addr_kPalfx_E1D8 as uint16, game);
+        SpawnPalfxObject(addr_kPalfx_E1DC as uint16, game);
         *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
             (0x8bd6f2 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
@@ -8950,9 +8890,9 @@ pub unsafe fn CinematicFunction_Intro_Func111(game: &mut Game) {
     }
 }
 pub unsafe fn CinematicFunction_Intro_Func112(game: &mut Game) {
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BD746: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -8964,10 +8904,10 @@ pub unsafe fn CinematicFunction_Intro_Func112(game: &mut Game) {
         das: 0x4000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BD746 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x20 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x20 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BD766: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -8979,15 +8919,15 @@ pub unsafe fn CinematicFunction_Intro_Func112(game: &mut Game) {
         das: 0x4000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BD766 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
     DecompressToMem(
         0x98ed4f as uint32,
         (&raw mut game.g_ram as *mut uint8).offset(0x2000),
         game,
     );
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BD79B: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 0 as uint8,
@@ -8999,27 +8939,27 @@ pub unsafe fn CinematicFunction_Intro_Func112(game: &mut Game) {
         das: 0x4000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BD79B as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
     ClearPaletteFXObjects(game);
     ClearCinematicSprites(game);
-    SpawnPalfxObject(addr_kPalfx_E1E0 as ::core::ffi::c_int as uint16, game);
+    SpawnPalfxObject(addr_kPalfx_E1E0 as uint16, game);
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BEED3 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BEED3 as uint16,
         0 as uint16,
         game,
     );
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BEED9 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BEED9 as uint16,
         0 as uint16,
         game,
     );
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BEEDF as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BEEDF as uint16,
         0 as uint16,
         game,
     );
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BEEE5 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BEEE5 as uint16,
         0 as uint16,
         game,
     );
@@ -9061,9 +9001,9 @@ pub unsafe fn CinematicFunction_Intro_Func113(game: &mut Game) {
     }
 }
 pub unsafe fn CinematicFunction_Intro_Func115(game: &mut Game) {
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BD84C: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -9075,10 +9015,10 @@ pub unsafe fn CinematicFunction_Intro_Func115(game: &mut Game) {
         das: 0x4000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BD84C as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x20 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x20 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BD86C: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -9090,15 +9030,15 @@ pub unsafe fn CinematicFunction_Intro_Func115(game: &mut Game) {
         das: 0x4000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BD86C as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
     DecompressToMem(
         0x999101 as uint32,
         (&raw mut game.g_ram as *mut uint8).offset(0x6000),
         game,
     );
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BD8A1: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 0 as uint8,
@@ -9110,10 +9050,10 @@ pub unsafe fn CinematicFunction_Intro_Func115(game: &mut Game) {
         das: 0x4000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BD8A1 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x40 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x40 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BD8C1: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -9125,10 +9065,10 @@ pub unsafe fn CinematicFunction_Intro_Func115(game: &mut Game) {
         das: 0x6000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BD8C1 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x70 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x70 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BD8E1: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -9140,10 +9080,10 @@ pub unsafe fn CinematicFunction_Intro_Func115(game: &mut Game) {
         das: 0x800 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BD8E1 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x74 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x74 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BD901: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -9155,10 +9095,10 @@ pub unsafe fn CinematicFunction_Intro_Func115(game: &mut Game) {
         das: 0x800 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BD901 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x78 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x78 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BD921: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -9170,10 +9110,10 @@ pub unsafe fn CinematicFunction_Intro_Func115(game: &mut Game) {
         das: 0x800 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BD921 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x7c as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x7c as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BD941: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -9185,10 +9125,10 @@ pub unsafe fn CinematicFunction_Intro_Func115(game: &mut Game) {
         das: 0x800 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BD941 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x50 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x50 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BD961: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -9200,7 +9140,7 @@ pub unsafe fn CinematicFunction_Intro_Func115(game: &mut Game) {
         das: 0x1000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BD961 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x52) = 2 as uint8;
     ClearPaletteFXObjects(game);
     ClearCinematicSprites(game);
@@ -9225,22 +9165,22 @@ pub unsafe fn CinematicFunction_Intro_Func115(game: &mut Game) {
         }
     }
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BEE9D as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BEE9D as uint16,
         0 as uint16,
         game,
     );
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BEEAF as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BEEAF as uint16,
         0 as uint16,
         game,
     );
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BEEA3 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BEEA3 as uint16,
         0 as uint16,
         game,
     );
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BEEA9 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BEEA9 as uint16,
         0 as uint16,
         game,
     );
@@ -9325,7 +9265,7 @@ pub unsafe fn CinematicFunction_Intro_Func117(game: &mut Game) {
         *(&raw mut game.g_ram as *mut uint8).offset(0x71) = 0 as uint8;
         *(&raw mut game.g_ram as *mut uint8).offset(0x6f) = 0 as uint8;
         *(&raw mut game.g_ram as *mut uint8).offset(0x72) = 0 as uint8;
-        WriteReg(COLDATA as ::core::ffi::c_int as uint16, 0xe0 as uint8, game);
+        WriteReg(COLDATA as uint16, 0xe0 as uint8, game);
         *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) = 32 as uint8;
         *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) = 64 as uint8;
         *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2) = 0x80 as uint8;
@@ -9349,40 +9289,40 @@ pub unsafe fn CinematicFunction_Intro_Func117(game: &mut Game) {
     }
 }
 static kCinematicFunction_Intro_Func118_Tab0: [uint16; 16] = [
-    0 as ::core::ffi::c_int as uint16,
-    0x800 as ::core::ffi::c_int as uint16,
-    0x1000 as ::core::ffi::c_int as uint16,
-    0x1800 as ::core::ffi::c_int as uint16,
-    0x2000 as ::core::ffi::c_int as uint16,
-    0x2800 as ::core::ffi::c_int as uint16,
-    0x3000 as ::core::ffi::c_int as uint16,
-    0x3800 as ::core::ffi::c_int as uint16,
-    0x4000 as ::core::ffi::c_int as uint16,
-    0x4800 as ::core::ffi::c_int as uint16,
-    0x5000 as ::core::ffi::c_int as uint16,
-    0x5800 as ::core::ffi::c_int as uint16,
-    0x6000 as ::core::ffi::c_int as uint16,
-    0x6800 as ::core::ffi::c_int as uint16,
-    0x7000 as ::core::ffi::c_int as uint16,
-    0x7800 as ::core::ffi::c_int as uint16,
+    0 as uint16,
+    0x800 as uint16,
+    0x1000 as uint16,
+    0x1800 as uint16,
+    0x2000 as uint16,
+    0x2800 as uint16,
+    0x3000 as uint16,
+    0x3800 as uint16,
+    0x4000 as uint16,
+    0x4800 as uint16,
+    0x5000 as uint16,
+    0x5800 as uint16,
+    0x6000 as uint16,
+    0x6800 as uint16,
+    0x7000 as uint16,
+    0x7800 as uint16,
 ];
 static kCinematicFunction_Intro_Func118_Tab1: [uint16; 16] = [
-    0 as ::core::ffi::c_int as uint16,
-    0x800 as ::core::ffi::c_int as uint16,
-    0x1000 as ::core::ffi::c_int as uint16,
-    0x1800 as ::core::ffi::c_int as uint16,
-    0x2000 as ::core::ffi::c_int as uint16,
-    0x2800 as ::core::ffi::c_int as uint16,
-    0x3000 as ::core::ffi::c_int as uint16,
-    0x3800 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0x800 as ::core::ffi::c_int as uint16,
-    0x1000 as ::core::ffi::c_int as uint16,
-    0x1800 as ::core::ffi::c_int as uint16,
-    0x2000 as ::core::ffi::c_int as uint16,
-    0x2800 as ::core::ffi::c_int as uint16,
-    0x3000 as ::core::ffi::c_int as uint16,
-    0x3800 as ::core::ffi::c_int as uint16,
+    0 as uint16,
+    0x800 as uint16,
+    0x1000 as uint16,
+    0x1800 as uint16,
+    0x2000 as uint16,
+    0x2800 as uint16,
+    0x3000 as uint16,
+    0x3800 as uint16,
+    0 as uint16,
+    0x800 as uint16,
+    0x1000 as uint16,
+    0x1800 as uint16,
+    0x2000 as uint16,
+    0x2800 as uint16,
+    0x3000 as uint16,
+    0x3800 as uint16,
 ];
 pub unsafe fn CinematicFunction_Intro_Func118(game: &mut Game) {
     let mut v2: ::core::ffi::c_uint = 0;
@@ -9516,8 +9456,8 @@ pub unsafe fn CinematicFunction_Intro_Func120(game: &mut Game) {
             0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(128) =
             0 as uint16;
-        SpawnPalfxObject(addr_kPalfx_E1D4 as ::core::ffi::c_int as uint16, game);
-        SpawnPalfxObject(addr_kPalfx_E1E4 as ::core::ffi::c_int as uint16, game);
+        SpawnPalfxObject(addr_kPalfx_E1D4 as uint16, game);
+        SpawnPalfxObject(addr_kPalfx_E1E4 as uint16, game);
         *((&raw mut game.g_ram as *mut uint8).offset(0x80) as *mut uint16) = 56 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x82) as *mut uint16) = 24 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1993) as *mut uint16) =
@@ -9575,38 +9515,38 @@ pub unsafe fn CinematicFunction_Intro_Func122(game: &mut Game) {
     }
 }
 static kCinematicFunction_Intro_Func121_Tab0: [uint16; 32] = [
-    0 as ::core::ffi::c_int as uint16,
-    0x8000 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0x8000 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0x8000 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0x8000 as ::core::ffi::c_int as uint16,
-    0xffff as ::core::ffi::c_int as uint16,
-    0x8000 as ::core::ffi::c_int as uint16,
-    0xffff as ::core::ffi::c_int as uint16,
-    0x8000 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0x8000 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0x8000 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0x8000 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0x8000 as ::core::ffi::c_int as uint16,
-    0xffff as ::core::ffi::c_int as uint16,
-    0x8000 as ::core::ffi::c_int as uint16,
-    0xffff as ::core::ffi::c_int as uint16,
-    0x8000 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0x8000 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0x8000 as ::core::ffi::c_int as uint16,
-    0xffff as ::core::ffi::c_int as uint16,
-    0x8000 as ::core::ffi::c_int as uint16,
-    0xffff as ::core::ffi::c_int as uint16,
-    0x8000 as ::core::ffi::c_int as uint16,
+    0 as uint16,
+    0x8000 as uint16,
+    0 as uint16,
+    0x8000 as uint16,
+    0 as uint16,
+    0x8000 as uint16,
+    0 as uint16,
+    0x8000 as uint16,
+    0xffff as uint16,
+    0x8000 as uint16,
+    0xffff as uint16,
+    0x8000 as uint16,
+    0 as uint16,
+    0x8000 as uint16,
+    0 as uint16,
+    0x8000 as uint16,
+    0 as uint16,
+    0x8000 as uint16,
+    0 as uint16,
+    0x8000 as uint16,
+    0xffff as uint16,
+    0x8000 as uint16,
+    0xffff as uint16,
+    0x8000 as uint16,
+    0 as uint16,
+    0x8000 as uint16,
+    0 as uint16,
+    0x8000 as uint16,
+    0xffff as uint16,
+    0x8000 as uint16,
+    0xffff as uint16,
+    0x8000 as uint16,
 ];
 pub unsafe fn CinematicFunction_Intro_Func121(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16) != 0 {
@@ -9646,22 +9586,22 @@ pub unsafe fn CinematicFunction_Intro_Func121(game: &mut Game) {
     }
 }
 static kCinematicFunction_Intro_Func123_Tab0: [uint16; 16] = [
-    1 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0xffff as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0xffff as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    1 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0xffff as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
+    1 as uint16,
+    0 as uint16,
+    1 as uint16,
+    0 as uint16,
+    1 as uint16,
+    0 as uint16,
+    0xffff as uint16,
+    0 as uint16,
+    0xffff as uint16,
+    0 as uint16,
+    1 as uint16,
+    0 as uint16,
+    1 as uint16,
+    0 as uint16,
+    0xffff as uint16,
+    0 as uint16,
 ];
 pub unsafe fn CinematicFunction_Intro_Func123(game: &mut Game) {
     CinematicFunction_Intro_Func122(game);
@@ -9704,22 +9644,22 @@ pub unsafe fn CinematicFunction_Intro_Func123(game: &mut Game) {
     }
 }
 static g_word_8BDE43: [uint16; 16] = [
-    0 as ::core::ffi::c_int as uint16,
-    0x6f7b as ::core::ffi::c_int as uint16,
-    0x4a52 as ::core::ffi::c_int as uint16,
-    0x1ce7 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0x5ad6 as ::core::ffi::c_int as uint16,
-    0x4a52 as ::core::ffi::c_int as uint16,
-    0x35ad as ::core::ffi::c_int as uint16,
-    0x2529 as ::core::ffi::c_int as uint16,
-    0x7fff as ::core::ffi::c_int as uint16,
-    0x56b5 as ::core::ffi::c_int as uint16,
-    0x294a as ::core::ffi::c_int as uint16,
-    0x4210 as ::core::ffi::c_int as uint16,
-    0x2d6b as ::core::ffi::c_int as uint16,
-    0x18c6 as ::core::ffi::c_int as uint16,
-    0x7fff as ::core::ffi::c_int as uint16,
+    0 as uint16,
+    0x6f7b as uint16,
+    0x4a52 as uint16,
+    0x1ce7 as uint16,
+    0 as uint16,
+    0x5ad6 as uint16,
+    0x4a52 as uint16,
+    0x35ad as uint16,
+    0x2529 as uint16,
+    0x7fff as uint16,
+    0x56b5 as uint16,
+    0x294a as uint16,
+    0x4210 as uint16,
+    0x2d6b as uint16,
+    0x18c6 as uint16,
+    0x7fff as uint16,
 ];
 pub unsafe fn CinematicFunction_Intro_Func124(game: &mut Game) {
     CinematicFunction_Intro_Func122(game);
@@ -9758,7 +9698,7 @@ pub unsafe fn CinematicFunction_Intro_Func124(game: &mut Game) {
         != 0
     {
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BEEC7 as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BEEC7 as uint16,
             *((&raw mut game.g_ram as *mut uint8).offset(0x198f) as *mut uint16),
             game,
         );
@@ -9849,9 +9789,9 @@ pub unsafe fn CinematicFunction_Intro_Func126(game: &mut Game) {
         (&raw mut game.g_ram as *mut uint8).offset(0x1f000),
         game,
     );
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x20 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x20 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BDF39: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -9863,10 +9803,10 @@ pub unsafe fn CinematicFunction_Intro_Func126(game: &mut Game) {
         das: 0x100 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BDF39 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x24 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x24 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BDF59: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -9878,10 +9818,10 @@ pub unsafe fn CinematicFunction_Intro_Func126(game: &mut Game) {
         das: 0x800 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BDF59 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x40 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x40 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BDF79: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -9893,10 +9833,10 @@ pub unsafe fn CinematicFunction_Intro_Func126(game: &mut Game) {
         das: 0x1000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BDF79 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x60 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BDF99: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -9908,10 +9848,10 @@ pub unsafe fn CinematicFunction_Intro_Func126(game: &mut Game) {
         das: 0x4000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BDF99 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x50 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x50 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BDFB9: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -9923,10 +9863,10 @@ pub unsafe fn CinematicFunction_Intro_Func126(game: &mut Game) {
         das: 0x2000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BDFB9 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x4c as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x4c as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8BDFD9: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -9938,7 +9878,7 @@ pub unsafe fn CinematicFunction_Intro_Func126(game: &mut Game) {
         das: 0x800 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8BDFD9 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
     DecompressToMem(
         0x99e089 as uint32,
         (&raw mut game.g_ram as *mut uint8).offset(0x6000),
@@ -9954,9 +9894,9 @@ pub unsafe fn CinematicFunction_Intro_Func126(game: &mut Game) {
         & 0x8000 as ::core::ffi::c_int
         != 0
     {
-        WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-        WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8, game);
-        WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+        WriteReg(VMADDL as uint16, 0 as uint8, game);
+        WriteReg(VMADDH as uint16, 0 as uint8, game);
+        WriteReg(VMAIN as uint16, 0x80 as uint8, game);
         static unk_8BE027: StartDmaCopy = StartDmaCopy {
             chan: 1 as uint8,
             dmap: 1 as uint8,
@@ -9968,11 +9908,11 @@ pub unsafe fn CinematicFunction_Intro_Func126(game: &mut Game) {
             das: 0x4000 as VoidP,
         };
         SetupDmaTransfer(&raw const unk_8BE027 as *const ::core::ffi::c_void, game);
-        WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+        WriteReg(MDMAEN as uint16, 2 as uint8, game);
     } else {
-        WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-        WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8, game);
-        WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+        WriteReg(VMADDL as uint16, 0 as uint8, game);
+        WriteReg(VMADDH as uint16, 0 as uint8, game);
+        WriteReg(VMAIN as uint16, 0x80 as uint8, game);
         static unk_8BE04B: StartDmaCopy = StartDmaCopy {
             chan: 1 as uint8,
             dmap: 1 as uint8,
@@ -9984,19 +9924,19 @@ pub unsafe fn CinematicFunction_Intro_Func126(game: &mut Game) {
             das: 0x4000 as VoidP,
         };
         SetupDmaTransfer(&raw const unk_8BE04B as *const ::core::ffi::c_void, game);
-        WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+        WriteReg(MDMAEN as uint16, 2 as uint8, game);
     }
-    WriteRegWord(M7A as ::core::ffi::c_int as uint16, 0x100 as uint16, game);
+    WriteRegWord(M7A as uint16, 0x100 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x78) as *mut uint16) = 256 as uint16;
-    WriteRegWord(M7B as ::core::ffi::c_int as uint16, 0 as uint16, game);
+    WriteRegWord(M7B as uint16, 0 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x7a) as *mut uint16) = 0 as uint16;
-    WriteRegWord(M7C as ::core::ffi::c_int as uint16, 0 as uint16, game);
+    WriteRegWord(M7C as uint16, 0 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x7c) as *mut uint16) = 0 as uint16;
-    WriteRegWord(M7D as ::core::ffi::c_int as uint16, 0x100 as uint16, game);
+    WriteRegWord(M7D as uint16, 0x100 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x7e) as *mut uint16) = 256 as uint16;
-    WriteRegWord(M7X as ::core::ffi::c_int as uint16, 0x68 as uint16, game);
+    WriteRegWord(M7X as uint16, 0x68 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x80) as *mut uint16) = 104 as uint16;
-    WriteRegWord(M7Y as ::core::ffi::c_int as uint16, 0x70 as uint16, game);
+    WriteRegWord(M7Y as uint16, 0x70 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x82) as *mut uint16) = 112 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1993) as *mut uint16) =
         -(8 as ::core::ffi::c_int) as uint16;
@@ -10026,7 +9966,7 @@ pub unsafe fn CinematicFunction_Intro_Func126(game: &mut Game) {
     EnableTextGlowObjects_(game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 3 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 3 as uint16;
-    CreditsObject_Init(addr_stru_8BF6F8 as ::core::ffi::c_int as uint16, game);
+    CreditsObject_Init(addr_stru_8BF6F8 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
         (0x8bdb9d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
@@ -10132,12 +10072,12 @@ pub unsafe fn CinematicFunction_Intro_Func134(game: &mut Game) {
             CopyPalettesToFadingPalettes(game);
             DecomposePaletteDataForFading(game);
             SpawnCinematicSpriteObject(
-                addr_kCinematicSpriteObjectDef_8BEF27 as ::core::ffi::c_int as uint16,
+                addr_kCinematicSpriteObjectDef_8BEF27 as uint16,
                 0 as uint16,
                 game,
             );
             SpawnCinematicSpriteObject(
-                addr_kCinematicSpriteObjectDef_8BEF2D as ::core::ffi::c_int as uint16,
+                addr_kCinematicSpriteObjectDef_8BEF2D as uint16,
                 0 as uint16,
                 game,
             );
@@ -10149,12 +10089,12 @@ pub unsafe fn CinematicFunction_Intro_Func134(game: &mut Game) {
                 == 0
             {
                 SpawnCinematicSpriteObject(
-                    addr_kCinematicSpriteObjectDef_8BEF4B as ::core::ffi::c_int as uint16,
+                    addr_kCinematicSpriteObjectDef_8BEF4B as uint16,
                     0 as uint16,
                     game,
                 );
                 SpawnCinematicSpriteObject(
-                    addr_kCinematicSpriteObjectDef_8BEF45 as ::core::ffi::c_int as uint16,
+                    addr_kCinematicSpriteObjectDef_8BEF45 as uint16,
                     0 as uint16,
                     game,
                 );
@@ -10169,12 +10109,12 @@ pub unsafe fn CinematicFunction_Intro_Func134(game: &mut Game) {
             CopyPalettesToFadingPalettes(game);
             DecomposePaletteDataForFading(game);
             SpawnCinematicSpriteObject(
-                addr_kCinematicSpriteObjectDef_8BEF51 as ::core::ffi::c_int as uint16,
+                addr_kCinematicSpriteObjectDef_8BEF51 as uint16,
                 0 as uint16,
                 game,
             );
             SpawnCinematicSpriteObject(
-                addr_kCinematicSpriteObjectDef_8BEF45 as ::core::ffi::c_int as uint16,
+                addr_kCinematicSpriteObjectDef_8BEF45 as uint16,
                 0 as uint16,
                 game,
             );
@@ -10322,12 +10262,12 @@ pub unsafe fn CinematicFunction_Intro_Func145(game: &mut Game) {
             != 0
         {
             SpawnCinematicSpriteObject(
-                addr_kCinematicSpriteObjectDef_8BEF33 as ::core::ffi::c_int as uint16,
+                addr_kCinematicSpriteObjectDef_8BEF33 as uint16,
                 0 as uint16,
                 game,
             );
             SpawnCinematicSpriteObject(
-                addr_kCinematicSpriteObjectDef_8BEF39 as ::core::ffi::c_int as uint16,
+                addr_kCinematicSpriteObjectDef_8BEF39 as uint16,
                 0 as uint16,
                 game,
             );
@@ -10339,24 +10279,24 @@ pub unsafe fn CinematicFunction_Intro_Func145(game: &mut Game) {
                 != 0
             {
                 SpawnCinematicSpriteObject(
-                    addr_kCinematicSpriteObjectDef_8BEF69 as ::core::ffi::c_int as uint16,
+                    addr_kCinematicSpriteObjectDef_8BEF69 as uint16,
                     0 as uint16,
                     game,
                 );
             } else {
                 SpawnCinematicSpriteObject(
-                    addr_kCinematicSpriteObjectDef_8BEF63 as ::core::ffi::c_int as uint16,
+                    addr_kCinematicSpriteObjectDef_8BEF63 as uint16,
                     0 as uint16,
                     game,
                 );
             }
             SpawnCinematicSpriteObject(
-                addr_kCinematicSpriteObjectDef_8BEF5D as ::core::ffi::c_int as uint16,
+                addr_kCinematicSpriteObjectDef_8BEF5D as uint16,
                 0 as uint16,
                 game,
             );
             SpawnCinematicSpriteObject(
-                addr_kCinematicSpriteObjectDef_8BEF57 as ::core::ffi::c_int as uint16,
+                addr_kCinematicSpriteObjectDef_8BEF57 as uint16,
                 0 as uint16,
                 game,
             );
@@ -10560,22 +10500,22 @@ pub unsafe fn CinematicFunction_Intro_Func143(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16) = 256 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16) = 256 as uint16;
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BEF81 as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BEF81 as uint16,
             0 as uint16,
             game,
         );
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BEF87 as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BEF87 as uint16,
             0 as uint16,
             game,
         );
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BEF8D as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BEF8D as uint16,
             0 as uint16,
             game,
         );
         SpawnCinematicSpriteObject(
-            addr_kCinematicSpriteObjectDef_8BEF93 as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BEF93 as uint16,
             0 as uint16,
             game,
         );
@@ -10647,7 +10587,7 @@ pub unsafe fn CinematicFunction_Intro_Func144(game: &mut Game) {
             (0x8be7ba as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         ClearCinematicSprites(game);
         SpawnCinematicBgObject(
-            addr_kCinematicBgObjectDef_8BF74E as ::core::ffi::c_int as uint16,
+            addr_kCinematicBgObjectDef_8BF74E as uint16,
             0x4c00 as uint16,
             game,
         );
@@ -10859,7 +10799,7 @@ pub unsafe fn CinematicFunction_Intro_Func148(game: &mut Game) {
         != 0
     {
         SpawnCinematicBgObject(
-            addr_kCinematicBgObjectDef_8BF748 as ::core::ffi::c_int as uint16,
+            addr_kCinematicBgObjectDef_8BF748 as uint16,
             0x4c00 as uint16,
             game,
         );
@@ -11164,7 +11104,7 @@ pub unsafe fn CinematicFunction_Intro_Func151(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v1 as isize) =
-            addr_off_8BEE9B as ::core::ffi::c_int as uint16;
+            addr_off_8BEE9B as uint16;
     }
 }
 pub unsafe fn CinematicFunction_Intro_Func152(mut j: uint16, game: &mut Game) {
@@ -11441,7 +11381,7 @@ pub unsafe fn CinematicFunction_Intro_Func179(mut k: uint16, game: &mut Game) {
             367 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b3d) as *mut uint16).offset(v1 as isize) =
             (0x8b93d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        SpawnPalfxObject(addr_kPalfx_E200 as ::core::ffi::c_int as uint16, game);
+        SpawnPalfxObject(addr_kPalfx_E200 as uint16, game);
     } else {
         let ref mut fresh39 = *((&raw mut game.g_ram as *mut uint8).offset(0x1b7d) as *mut uint16)
             .offset(v1 as isize);
@@ -11486,17 +11426,13 @@ pub unsafe fn CinematicSprInstr_Func181(mut k: uint16, mut j: uint16, game: &mut
     return j;
 }
 pub unsafe fn CinematicSprInstr_Func182(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
-    SpawnPalfxObject(addr_kPalfx_E1C4 as ::core::ffi::c_int as uint16, game);
+    SpawnPalfxObject(addr_kPalfx_E1C4 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(254) = 1 as uint16;
     return j;
 }
 pub unsafe fn CinematicSprInstr_Func183(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     let mut v0: uint16 = 0 as uint16;
-    SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BEEB5 as ::core::ffi::c_int as uint16,
-        v0,
-        game,
-    );
+    SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEEB5 as uint16, v0, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(0) =
         0x7fff as uint16;
     return j;
@@ -11507,7 +11443,7 @@ pub unsafe fn CinematicFunction_Intro_Func184(mut j: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(v2 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v2 as isize) =
-            addr_off_8BEE9B as ::core::ffi::c_int as uint16;
+            addr_off_8BEE9B as uint16;
     }
 }
 pub unsafe fn CinematicSprInstr_Func185(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
@@ -11519,18 +11455,18 @@ pub unsafe fn CinematicSprInstr_Func185(mut k: uint16, mut j: uint16, game: &mut
     *(&raw mut v0 as *mut uint8).offset(0) = 124 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x59) = 124 as uint8;
     SpawnCinematicSpriteObjectToR18(
-        addr_kCinematicSpriteObjectDef_8BEEBB as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BEEBB as uint16,
         0 as uint16,
         game,
     );
     SpawnCinematicSpriteObjectToR18(
-        addr_kCinematicSpriteObjectDef_8BEEF7 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BEEF7 as uint16,
         2 as uint16,
         game,
     );
-    SpawnPalfxObject(addr_kPalfx_E1C8 as ::core::ffi::c_int as uint16, game);
-    SpawnPalfxObject(addr_kPalfx_E1D0 as ::core::ffi::c_int as uint16, game);
-    SpawnPalfxObject(addr_kPalfx_E1E8 as ::core::ffi::c_int as uint16, game);
+    SpawnPalfxObject(addr_kPalfx_E1C8 as uint16, game);
+    SpawnPalfxObject(addr_kPalfx_E1D0 as uint16, game);
+    SpawnPalfxObject(addr_kPalfx_E1E8 as uint16, game);
     return j;
 }
 pub unsafe fn CinematicSprInstr_Func186(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
@@ -11540,9 +11476,9 @@ pub unsafe fn CinematicSprInstr_Func186(mut k: uint16, mut j: uint16, game: &mut
     *(&raw mut game.g_ram as *mut uint8).offset(0x72) = 51 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x58) = 116 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x59) = 120 as uint8;
-    SpawnPalfxObject(addr_kPalfx_E1CC as ::core::ffi::c_int as uint16, game);
+    SpawnPalfxObject(addr_kPalfx_E1CC as uint16, game);
     SpawnCinematicSpriteObjectToR18(
-        addr_kCinematicSpriteObjectDef_8BEEC1 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BEEC1 as uint16,
         6 as uint16,
         game,
     );
@@ -11610,16 +11546,12 @@ pub unsafe fn CinematicFunction_Intro_Func189b(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(v5 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v5 as isize) =
-            addr_off_8BEE9B as ::core::ffi::c_int as uint16;
+            addr_off_8BEE9B as uint16;
     }
 }
 pub unsafe fn CinematicSprInstr_Func190(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     let mut v0: uint16 = 0 as uint16;
-    SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BEECD as ::core::ffi::c_int as uint16,
-        v0,
-        game,
-    );
+    SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEECD as uint16, v0, game);
     return j;
 }
 pub unsafe fn CinematicFunction_Intro_Func191(mut k: uint16, game: &mut Game) {
@@ -11630,12 +11562,12 @@ pub unsafe fn CinematicFunction_Intro_Func191(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v1 as isize) =
-            addr_off_8BEE9B as ::core::ffi::c_int as uint16;
+            addr_off_8BEE9B as uint16;
     }
 }
 pub unsafe fn CinematicSprInstr_Func192(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BEEFD as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BEEFD as uint16,
         0 as uint16,
         game,
     );
@@ -11659,7 +11591,7 @@ pub unsafe fn CinematicSprInstr_Func192(mut k: uint16, mut j: uint16, game: &mut
 }
 pub unsafe fn CinematicSprInstr_Func193(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BEF03 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BEF03 as uint16,
         0 as uint16,
         game,
     );
@@ -11667,7 +11599,7 @@ pub unsafe fn CinematicSprInstr_Func193(mut k: uint16, mut j: uint16, game: &mut
 }
 pub unsafe fn CinematicSprInstr_Func194(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BEF09 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BEF09 as uint16,
         0 as uint16,
         game,
     );
@@ -11675,7 +11607,7 @@ pub unsafe fn CinematicSprInstr_Func194(mut k: uint16, mut j: uint16, game: &mut
 }
 pub unsafe fn CinematicSprInstr_Func195(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BEF0F as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BEF0F as uint16,
         0 as uint16,
         game,
     );
@@ -11683,7 +11615,7 @@ pub unsafe fn CinematicSprInstr_Func195(mut k: uint16, mut j: uint16, game: &mut
 }
 pub unsafe fn CinematicSprInstr_Func196(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BEF15 as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BEF15 as uint16,
         0 as uint16,
         game,
     );
@@ -11691,7 +11623,7 @@ pub unsafe fn CinematicSprInstr_Func196(mut k: uint16, mut j: uint16, game: &mut
 }
 pub unsafe fn CinematicSprInstr_Func197(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     SpawnCinematicSpriteObject(
-        addr_kCinematicSpriteObjectDef_8BEF1B as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BEF1B as uint16,
         0 as uint16,
         game,
     );
@@ -11798,12 +11730,12 @@ pub unsafe fn CinematicFunction_Intro_Func207(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v1 as isize) =
-            addr_off_8BEE9B as ::core::ffi::c_int as uint16;
+            addr_off_8BEE9B as uint16;
     }
 }
 pub unsafe fn CinematicSprInstr_Func208(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     SpawnCinematicSpriteObjectToR18(
-        addr_kCinematicSpriteObjectDef_8BEF3F as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BEF3F as uint16,
         0 as uint16,
         game,
     );
@@ -11822,7 +11754,7 @@ pub unsafe fn CinematicSprPreInstr_F528(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v1 as isize) =
-            addr_word_8BED95 as ::core::ffi::c_int as uint16;
+            addr_word_8BED95 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b3d) as *mut uint16).offset(v1 as isize) =
             (0x8bf5dd as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1abd) as *mut uint16).offset(v1 as isize) =
@@ -11836,19 +11768,19 @@ pub unsafe fn CinematicSprInstr_Func211(mut k: uint16, mut j: uint16, game: &mut
         != 0
     {
         SpawnCinematicSpriteObjectToR18(
-            addr_kCinematicSpriteObjectDef_8BEF7B as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BEF7B as uint16,
             2 as uint16,
             game,
         );
     } else {
         SpawnCinematicSpriteObjectToR18(
-            addr_kCinematicSpriteObjectDef_8BEF75 as ::core::ffi::c_int as uint16,
+            addr_kCinematicSpriteObjectDef_8BEF75 as uint16,
             2 as uint16,
             game,
         );
     }
     SpawnCinematicSpriteObjectToR18(
-        addr_kCinematicSpriteObjectDef_8BEF6F as ::core::ffi::c_int as uint16,
+        addr_kCinematicSpriteObjectDef_8BEF6F as uint16,
         0 as uint16,
         game,
     );
@@ -11866,7 +11798,7 @@ pub unsafe fn CinematicSprPreInstr_F57F(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v1 as isize) =
-            addr_off_8BEE9B as ::core::ffi::c_int as uint16;
+            addr_off_8BEE9B as uint16;
     }
 }
 pub unsafe fn CinematicSprInstr_Func213(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
@@ -11920,7 +11852,7 @@ pub unsafe fn CinematicFunction_Intro_Func215(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v1 as isize) =
-            addr_word_8BED9D as ::core::ffi::c_int as uint16;
+            addr_word_8BED9D as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b3d) as *mut uint16).offset(v1 as isize) =
             (0x8b93d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }

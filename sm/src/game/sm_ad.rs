@@ -656,20 +656,12 @@ pub unsafe fn MotherBrain_SealWall(game: &mut Game) {
         x: 248 as uint16,
         y: 72 as uint16,
     };
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_DustCloudExplosion as ::core::ffi::c_int as uint16,
-        9 as uint16,
-        game,
-    );
+    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as uint16, 9 as uint16, game);
     game.eproj_spawn_pt = Point16U {
         x: 248 as uint16,
         y: 152 as uint16,
     };
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_DustCloudExplosion as ::core::ffi::c_int as uint16,
-        9 as uint16,
-        game,
-    );
+    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as uint16, 9 as uint16, game);
     SpawnHardcodedPlm(
         SpawnHardcodedPlmArgs {
             field_0: 0xf as uint8,
@@ -907,14 +899,14 @@ pub unsafe fn TurnOffLightsForShitroidDeath(game: &mut Game) {
     WriteColorsToPalette(
         0x62 as uint16,
         0xad as uint8,
-        addr_kTurnOffLightsForShitroidDeath as ::core::ffi::c_int as uint16,
+        addr_kTurnOffLightsForShitroidDeath as uint16,
         14 as uint16,
         game,
     );
     WriteColorsToPalette(
         0xa2 as uint16,
         0xad as uint8,
-        addr_kTurnOffLightsForShitroidDeath as ::core::ffi::c_int as uint16,
+        addr_kTurnOffLightsForShitroidDeath as uint16,
         14 as uint16,
         game,
     );

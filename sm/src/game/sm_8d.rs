@@ -260,7 +260,7 @@ pub unsafe fn PalInstr_SetPreInstr(mut k: uint16, mut j: uint16, game: &mut Game
 pub unsafe fn PalInstr_ClearPreInstr(mut k: uint16, mut j: uint16, game: &mut Game) -> PairU16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1ead) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-        addr_locret_8DC5E3 as ::core::ffi::c_int as uint16;
+        addr_locret_8DC5E3 as uint16;
     return MakePairU16(k, j);
 }
 pub unsafe fn PalInstr_Goto(mut k: uint16, mut j: uint16, game: &mut Game) -> PairU16 {
@@ -343,7 +343,7 @@ pub unsafe fn PalPreInstr_E1BC(mut k: uint16, game: &mut Game) {
     {
         let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1ebd) as *mut uint16).offset(v1 as isize) =
-            addr_off_8DE192 as ::core::ffi::c_int as uint16;
+            addr_off_8DE192 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1ecd) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
     }
@@ -393,15 +393,15 @@ pub unsafe fn PalPreInstr_SamusInHeat(mut k: uint16, game: &mut Game) {
             & 0x20 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
         {
-            v4 = addr_off_8DE3E0 as ::core::ffi::c_int as uint16;
+            v4 = addr_off_8DE3E0 as uint16;
         } else if *((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16)
             as ::core::ffi::c_int
             & 1 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
         {
-            v4 = addr_off_8DE400 as ::core::ffi::c_int as uint16;
+            v4 = addr_off_8DE400 as uint16;
         } else {
-            v4 = addr_off_8DE420 as ::core::ffi::c_int as uint16;
+            v4 = addr_off_8DE420 as uint16;
         }
         *((&raw mut game.g_ram as *mut uint8).offset(0x1ebd) as *mut uint16).offset(v3 as isize) =
             *((RomPtr_8D as unsafe fn(uint16_t, &mut Game) -> *const uint8)(v4 as uint16_t, game)
@@ -414,15 +414,15 @@ pub unsafe fn PalInit_F761_Norfair1(mut k: uint16, mut j: uint16, game: &mut Gam
         & 0x20 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        v2 = addr_off_8DE8B6 as ::core::ffi::c_int as uint16;
+        v2 = addr_off_8DE8B6 as uint16;
     } else if *((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16)
         as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        v2 = addr_off_8DE68A as ::core::ffi::c_int as uint16;
+        v2 = addr_off_8DE68A as uint16;
     } else {
-        v2 = addr_kPalfxInstrList_E45E as ::core::ffi::c_int as uint16;
+        v2 = addr_kPalfxInstrList_E45E as uint16;
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x1ebd) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = v2;
@@ -435,7 +435,7 @@ pub unsafe fn PalPreInstr_SwitchIfYpos(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1ecd) as *mut uint16).offset(v2 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1ebd) as *mut uint16).offset(v2 as isize) =
-            addr_word_8DEB43 as ::core::ffi::c_int as uint16;
+            addr_word_8DEB43 as uint16;
     }
 }
 pub unsafe fn PalPreInstr_SwitchIfYpos2(mut k: uint16, game: &mut Game) {
@@ -446,7 +446,7 @@ pub unsafe fn PalPreInstr_SwitchIfYpos2(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1ecd) as *mut uint16).offset(v2 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1ebd) as *mut uint16).offset(v2 as isize) =
-            addr_word_8DEC76 as ::core::ffi::c_int as uint16;
+            addr_word_8DEC76 as uint16;
     }
 }
 pub unsafe fn PalPreInstr_DeletePalfxIfMinibossDead(mut k: uint16, game: &mut Game) {

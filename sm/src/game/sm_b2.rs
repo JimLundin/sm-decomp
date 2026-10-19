@@ -284,7 +284,7 @@ pub unsafe fn WalkingSpacePirates_87C8(game: &mut Game) {
             .enemy_ptr;
             vulnerability_ptr = (*get_EnemyDef_A2(enemy_ptr, game)).vulnerability_ptr as uint16;
             if vulnerability_ptr == 0 {
-                vulnerability_ptr = addr_stru_B4EC1C as ::core::ffi::c_int as uint16;
+                vulnerability_ptr = addr_stru_B4EC1C as uint16;
             }
             r20 = vulnerability_ptr;
             if r18 as ::core::ffi::c_int & kProjectileType_TypeMask as ::core::ffi::c_int
@@ -462,7 +462,7 @@ pub unsafe fn SpacePirates_Instr_RandomNewDirFaceR(
     mut jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    let mut result: uint16 = addr_kSpacePirates_Ilist_ED36 as ::core::ffi::c_int as uint16;
+    let mut result: uint16 = addr_kSpacePirates_Ilist_ED36 as uint16;
     let mut v4: uint16 =
         (NextRandom(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int) as uint16;
     (*Get_SpacePirates(
@@ -480,7 +480,7 @@ pub unsafe fn SpacePirates_Instr_RandomNewDirFaceL(
     mut jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    let mut result: uint16 = addr_off_B2EDAC as ::core::ffi::c_int as uint16;
+    let mut result: uint16 = addr_off_B2EDAC as uint16;
     let mut v4: uint16 =
         (NextRandom(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int) as uint16;
     (*Get_SpacePirates(
@@ -545,11 +545,7 @@ pub unsafe fn SpacePirates_Instr_FireLaserL(
         y: ((*E).base.y_pos as ::core::ffi::c_int - 16 as ::core::ffi::c_int) as uint16,
     };
     game.eproj_spawn_r22 = 0 as uint16;
-    SpawnEprojWithRoomGfx(
-        addr_stru_86A17B as ::core::ffi::c_int as uint16,
-        0 as uint16,
-        game,
-    );
+    SpawnEprojWithRoomGfx(addr_stru_86A17B as uint16, 0 as uint16, game);
     return jp;
 }
 pub unsafe fn SpacePirates_Instr_FireLaserR(
@@ -566,11 +562,7 @@ pub unsafe fn SpacePirates_Instr_FireLaserR(
         y: ((*E).base.y_pos as ::core::ffi::c_int - 16 as ::core::ffi::c_int) as uint16,
     };
     game.eproj_spawn_r22 = 1 as uint16;
-    SpawnEprojWithRoomGfx(
-        addr_stru_86A17B as ::core::ffi::c_int as uint16,
-        1 as uint16,
-        game,
-    );
+    SpawnEprojWithRoomGfx(addr_stru_86A17B as uint16, 1 as uint16, game);
     return jp;
 }
 pub unsafe fn SpacePirates_Instr_SetEnemyFunc(
@@ -594,7 +586,7 @@ pub unsafe fn SpacePirates_Instr_PlaySfx(
     return jp;
 }
 pub unsafe fn WallSpacePirates_Init(game: &mut Game) {
-    let mut v0: uint16 = addr_kSpacePirates_Ilist_ED36 as ::core::ffi::c_int as uint16;
+    let mut v0: uint16 = addr_kSpacePirates_Ilist_ED36 as uint16;
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
@@ -602,7 +594,7 @@ pub unsafe fn WallSpacePirates_Init(game: &mut Game) {
     if (*E).sps_parameter_1 as ::core::ffi::c_int & 1 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        v0 = addr_off_B2EDAC as ::core::ffi::c_int as uint16;
+        v0 = addr_off_B2EDAC as uint16;
     }
     (*E).base.current_instruction = v0;
     (*E).sps_var_20 = 190 as uint16;
@@ -748,8 +740,7 @@ pub unsafe fn SpacePirates_Func_1(mut k: uint16, game: &mut Game) {
                 as ::core::ffi::c_int,
             game,
         );
-        (*E).base.current_instruction =
-            addr_kSpacePirates_Ilist_ED80 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kSpacePirates_Ilist_ED80 as uint16;
         (*E).base.instruction_timer = 1 as uint16;
     }
 }
@@ -775,8 +766,7 @@ pub unsafe fn SpacePirates_Func_2(mut k: uint16, game: &mut Game) {
         as uint8 as uint16;
     (*E).sps_var_F = v1;
     if v1 as ::core::ffi::c_int == (*E).sps_var_20 as ::core::ffi::c_int {
-        (*E).base.current_instruction =
-            addr_kSpacePirates_Ilist_EDA4 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kSpacePirates_Ilist_EDA4 as uint16;
         (*E).base.instruction_timer = 1 as uint16;
         let mut v2: uint16 = 0;
         if ((*E).base.x_pos as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
@@ -804,8 +794,7 @@ pub unsafe fn SpacePirates_Func_3(mut k: uint16, game: &mut Game) {
                 as ::core::ffi::c_int,
             game,
         );
-        (*E).base.current_instruction =
-            addr_kSpacePirates_Ilist_ECC0 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kSpacePirates_Ilist_ECC0 as uint16;
         (*E).base.instruction_timer = 1 as uint16;
     }
 }
@@ -831,8 +820,7 @@ pub unsafe fn SpacePirates_Func_4(mut k: uint16, game: &mut Game) {
         as uint8 as uint16;
     (*E).sps_var_F = v1;
     if v1 as ::core::ffi::c_int == (*E).sps_var_21 as ::core::ffi::c_int {
-        (*E).base.current_instruction =
-            addr_kSpacePirates_Ilist_ECE4 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kSpacePirates_Ilist_ECE4 as uint16;
         (*E).base.instruction_timer = 1 as uint16;
         let mut v2: uint16 = 0;
         if ((*E).base.x_pos as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
@@ -894,7 +882,7 @@ pub unsafe fn SpacePirates_Instr_15(
     SpawnEprojWithGfx(
         *jp.offset(0),
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        addr_kEproj_PirateClaw as ::core::ffi::c_int as uint16,
+        addr_kEproj_PirateClaw as uint16,
         game,
     );
     return jp.offset(3);
@@ -1084,8 +1072,7 @@ pub unsafe fn SpacePirates_Func_7(mut k: uint16, game: &mut Game) {
             {
                 return;
             }
-            (*E).base.current_instruction =
-                addr_kSpacePirates_Ilist_F15C as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kSpacePirates_Ilist_F15C as uint16;
         } else {
             if ((*E).base.x_pos as ::core::ffi::c_int
                 - *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
@@ -1094,8 +1081,7 @@ pub unsafe fn SpacePirates_Func_7(mut k: uint16, game: &mut Game) {
             {
                 return;
             }
-            (*E).base.current_instruction =
-                addr_kSpacePirates_Ilist_F34A as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kSpacePirates_Ilist_F34A as uint16;
         }
         (*E).base.instruction_timer = 1 as uint16;
     }
@@ -1160,9 +1146,9 @@ pub unsafe fn SpacePirates_Func_9(game: &mut Game) -> uint16 {
     {
         return 0 as uint16;
     }
-    let mut v1: uint16 = addr_kSpacePirates_Ilist_F1C4 as ::core::ffi::c_int as uint16;
+    let mut v1: uint16 = addr_kSpacePirates_Ilist_F1C4 as uint16;
     if (*E).base.x_pos as ::core::ffi::c_int == (*E).sps_var_E as ::core::ffi::c_int {
-        v1 = addr_kSpacePirates_Ilist_F3B2 as ::core::ffi::c_int as uint16;
+        v1 = addr_kSpacePirates_Ilist_F3B2 as uint16;
     }
     (*E).base.current_instruction = v1;
     (*E).base.instruction_timer = 1 as uint16;
@@ -1234,8 +1220,7 @@ pub unsafe fn SpacePirates_Func_12(mut k: uint16, game: &mut Game) {
     (*E).sps_var_00 = v2;
     if v2 == 0 {
         (*E).sps_var_A = (0xb2804b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        (*E).base.current_instruction =
-            addr_kSpacePirates_Ilist_F2F8 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kSpacePirates_Ilist_F2F8 as uint16;
         (*E).base.instruction_timer = 1 as uint16;
         (*E).base.x_pos = (*E).sps_var_E;
         SpacePirates_FB11(k, game);
@@ -1274,8 +1259,7 @@ pub unsafe fn SpacePirates_Func_14(mut k: uint16, game: &mut Game) {
     (*E).sps_var_00 = v2;
     if v2 == 0 {
         (*E).sps_var_A = (0xb2804b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        (*E).base.current_instruction =
-            addr_kSpacePirates_Ilist_F4EA as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kSpacePirates_Ilist_F4EA as uint16;
         (*E).base.instruction_timer = 1 as uint16;
         (*E).base.x_pos = (*E).sps_var_F;
         SpacePirates_FB11(k, game);
@@ -1347,8 +1331,7 @@ pub unsafe fn SpacePirates_F985(mut k: uint16, game: &mut Game) {
     (*E).sps_var_00 = v2 as uint16;
     if (v2 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
         (*E).sps_var_A = (0xb2f9c1 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        (*E).base.current_instruction =
-            addr_kSpacePirates_Ilist_F2A0 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kSpacePirates_Ilist_F2A0 as uint16;
         (*E).base.instruction_timer = 1 as uint16;
         (*E).sps_var_00 = 1536 as uint16;
     }
@@ -1378,8 +1361,7 @@ pub unsafe fn SpacePirates_F9C1(mut k: uint16, game: &mut Game) {
         || v2 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int == 0 as ::core::ffi::c_int
     {
         (*E).sps_var_A = (0xb2fa15 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        (*E).base.current_instruction =
-            addr_kSpacePirates_Ilist_F2B2 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kSpacePirates_Ilist_F2B2 as uint16;
         (*E).base.instruction_timer = 1 as uint16;
         (*E).base.y_pos = (*E).sps_var_08;
         SpacePirates_FB11(k, game);
@@ -1395,8 +1377,7 @@ pub unsafe fn SpacePirates_FA15(mut k: uint16, game: &mut Game) {
         < 0 as ::core::ffi::c_int
     {
         (*E).base.x_pos = (*E).sps_var_E;
-        (*E).base.current_instruction =
-            addr_kSpacePirates_Ilist_F2F8 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kSpacePirates_Ilist_F2F8 as uint16;
         (*E).base.instruction_timer = 1 as uint16;
         (*E).sps_var_A = (0xb2804b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
@@ -1427,8 +1408,7 @@ pub unsafe fn SpacePirates_FA59(mut k: uint16, game: &mut Game) {
     (*E).sps_var_00 = v2 as uint16;
     if (v2 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
         (*E).sps_var_A = (0xb2fa95 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        (*E).base.current_instruction =
-            addr_kSpacePirates_Ilist_F492 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kSpacePirates_Ilist_F492 as uint16;
         (*E).base.instruction_timer = 1 as uint16;
         (*E).sps_var_00 = 1536 as uint16;
     }
@@ -1458,8 +1438,7 @@ pub unsafe fn SpacePirates_FA95(mut k: uint16, game: &mut Game) {
         || v2 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int == 0 as ::core::ffi::c_int
     {
         (*E).sps_var_A = (0xb2fae9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        (*E).base.current_instruction =
-            addr_kSpacePirates_Ilist_F4A4 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kSpacePirates_Ilist_F4A4 as uint16;
         (*E).base.instruction_timer = 1 as uint16;
         (*E).base.y_pos = (*E).sps_var_08;
         SpacePirates_FB11(k, game);
@@ -1475,8 +1454,7 @@ pub unsafe fn SpacePirates_FAE9(mut k: uint16, game: &mut Game) {
         >= 0 as ::core::ffi::c_int
     {
         (*E).base.x_pos = (*E).sps_var_F;
-        (*E).base.current_instruction =
-            addr_kSpacePirates_Ilist_F4EA as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kSpacePirates_Ilist_F4EA as uint16;
         (*E).base.instruction_timer = 1 as uint16;
         (*E).sps_var_A = (0xb2804b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
@@ -1512,11 +1490,7 @@ pub unsafe fn SpacePirates_Instr_12(
         y: ((*E).base.y_pos as ::core::ffi::c_int - *jp.offset(0) as ::core::ffi::c_int) as uint16,
     };
     game.eproj_spawn_r22 = 0 as uint16;
-    SpawnEprojWithRoomGfx(
-        addr_stru_86A17B as ::core::ffi::c_int as uint16,
-        0 as uint16,
-        game,
-    );
+    SpawnEprojWithRoomGfx(addr_stru_86A17B as uint16, 0 as uint16, game);
     return jp.offset(1);
 }
 pub unsafe fn SpacePirates_Instr_14(
@@ -1533,11 +1507,7 @@ pub unsafe fn SpacePirates_Instr_14(
         y: ((*E).base.y_pos as ::core::ffi::c_int - *jp.offset(0) as ::core::ffi::c_int) as uint16,
     };
     game.eproj_spawn_r22 = 1 as uint16;
-    SpawnEprojWithRoomGfx(
-        addr_stru_86A17B as ::core::ffi::c_int as uint16,
-        1 as uint16,
-        game,
-    );
+    SpawnEprojWithRoomGfx(addr_stru_86A17B as uint16, 1 as uint16, game);
     return jp.offset(1);
 }
 pub unsafe fn SpacePirates_Instr_11(
@@ -1597,7 +1567,7 @@ pub unsafe fn SpacePirates_Instr_13(
     };
 }
 pub unsafe fn WalkingSpacePirates_Init(game: &mut Game) {
-    let mut v0: uint16 = addr_kSpacePirates_Ilist_FB64 as ::core::ffi::c_int as uint16;
+    let mut v0: uint16 = addr_kSpacePirates_Ilist_FB64 as uint16;
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
@@ -1605,7 +1575,7 @@ pub unsafe fn WalkingSpacePirates_Init(game: &mut Game) {
     if (*E).sps_parameter_1 as ::core::ffi::c_int & 1 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        v0 = addr_kSpacePirates_Ilist_FBE6 as ::core::ffi::c_int as uint16;
+        v0 = addr_kSpacePirates_Ilist_FBE6 as uint16;
     }
     (*E).base.current_instruction = v0;
     (*E).sps_var_A = (0xb2804b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -1641,19 +1611,19 @@ pub unsafe fn WalkingSpacePirates_FD44(game: &mut Game) {
         game,
     ) != 0
     {
-        let mut v1: uint16 = addr_kSpacePirates_Ilist_FB8C as ::core::ffi::c_int as uint16;
+        let mut v1: uint16 = addr_kSpacePirates_Ilist_FB8C as uint16;
         if (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
             as ::core::ffi::c_int
             - (*E).base.x_pos as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
             >= 0 as ::core::ffi::c_int
         {
-            v1 = addr_kSpacePirates_Ilist_FC0E as ::core::ffi::c_int as uint16;
+            v1 = addr_kSpacePirates_Ilist_FC0E as uint16;
         }
         (*E).base.current_instruction = v1;
         (*E).base.instruction_timer = 1 as uint16;
     } else if Enemy_MoveDown(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        (1 as ::core::ffi::c_int as int16 as int32) << 16 as ::core::ffi::c_int,
+        (1 as int16 as int32) << 16 as ::core::ffi::c_int,
         game,
     ) != 0
     {
@@ -1662,7 +1632,7 @@ pub unsafe fn WalkingSpacePirates_FD44(game: &mut Game) {
         (*E).base.x_pos = (x_pos as ::core::ffi::c_int - 17 as ::core::ffi::c_int) as uint16;
         let mut result: uint8 = Enemy_MoveDown(
             *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-            (1 as ::core::ffi::c_int as int16 as int32) << 16 as ::core::ffi::c_int,
+            (1 as int16 as int32) << 16 as ::core::ffi::c_int,
             game,
         );
         (*E).base.x_pos = (*E).sps_var_00;
@@ -1686,8 +1656,7 @@ pub unsafe fn WalkingSpacePirates_FD44(game: &mut Game) {
                 }
             }
         }
-        (*E).base.current_instruction =
-            addr_kSpacePirates_Ilist_FBC6 as ::core::ffi::c_int as uint16;
+        (*E).base.current_instruction = addr_kSpacePirates_Ilist_FBC6 as uint16;
         (*E).base.instruction_timer = 1 as uint16;
     }
 }
@@ -1702,19 +1671,19 @@ pub unsafe fn WalkingSpacePirates_FDCE(game: &mut Game) {
         game,
     ) != 0
     {
-        let mut v1: uint16 = addr_kSpacePirates_Ilist_FB8C as ::core::ffi::c_int as uint16;
+        let mut v1: uint16 = addr_kSpacePirates_Ilist_FB8C as uint16;
         if (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
             as ::core::ffi::c_int
             - (*E).base.x_pos as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
             >= 0 as ::core::ffi::c_int
         {
-            v1 = addr_kSpacePirates_Ilist_FC0E as ::core::ffi::c_int as uint16;
+            v1 = addr_kSpacePirates_Ilist_FC0E as uint16;
         }
         (*E).base.current_instruction = v1;
         (*E).base.instruction_timer = 1 as uint16;
     } else if Enemy_MoveDown(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        (1 as ::core::ffi::c_int as int16 as int32) << 16 as ::core::ffi::c_int,
+        (1 as int16 as int32) << 16 as ::core::ffi::c_int,
         game,
     ) != 0
     {
@@ -1723,7 +1692,7 @@ pub unsafe fn WalkingSpacePirates_FDCE(game: &mut Game) {
         (*E).base.x_pos = (x_pos as ::core::ffi::c_int + 16 as ::core::ffi::c_int) as uint16;
         let mut result: uint8 = Enemy_MoveDown(
             *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-            (1 as ::core::ffi::c_int as int16 as int32) << 16 as ::core::ffi::c_int,
+            (1 as int16 as int32) << 16 as ::core::ffi::c_int,
             game,
         );
         (*E).base.x_pos = (*E).sps_var_00;
@@ -1738,8 +1707,7 @@ pub unsafe fn WalkingSpacePirates_FDCE(game: &mut Game) {
                 as int16 as ::core::ffi::c_int
                 >= 0 as ::core::ffi::c_int
         {
-            (*E).base.current_instruction =
-                addr_kSpacePirates_Ilist_FC48 as ::core::ffi::c_int as uint16;
+            (*E).base.current_instruction = addr_kSpacePirates_Ilist_FC48 as uint16;
             (*E).base.instruction_timer = 1 as uint16;
         }
     }

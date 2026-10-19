@@ -337,11 +337,7 @@ pub unsafe fn AnimtilesInstr_SpawnTourianStatueEyeGlow(
     game: &mut Game,
 ) -> uint16 {
     let mut v2: *const uint16 = RomPtr_87(j as uint16_t, game) as *const uint16;
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_TourianStatueEyeGlow as ::core::ffi::c_int as uint16,
-        *v2,
-        game,
-    );
+    SpawnEprojWithRoomGfx(addr_kEproj_TourianStatueEyeGlow as uint16, *v2, game);
     return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn AnimtilesInstr_SpawnTourianStatueSoul(
@@ -350,11 +346,7 @@ pub unsafe fn AnimtilesInstr_SpawnTourianStatueSoul(
     game: &mut Game,
 ) -> uint16 {
     let mut v2: *const uint16 = RomPtr_87(j as uint16_t, game) as *const uint16;
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_TourianStatueSoul as ::core::ffi::c_int as uint16,
-        *v2,
-        game,
-    );
+    SpawnEprojWithRoomGfx(addr_kEproj_TourianStatueSoul as uint16, *v2, game);
     return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn AnimtilesInstr_GotoIfTourianStatueBusy(
@@ -424,14 +416,14 @@ pub unsafe fn AnimtilesInstr_Write8PaletteColors(
     game: &mut Game,
 ) -> uint16 {
     static kAnimtilesInstr_Write8PaletteColors: [uint16; 8] = [
-        0x3800 as ::core::ffi::c_int as uint16,
-        0x7f58 as ::core::ffi::c_int as uint16,
-        0x6ed5 as ::core::ffi::c_int as uint16,
-        0x5a71 as ::core::ffi::c_int as uint16,
-        0x49ee as ::core::ffi::c_int as uint16,
-        0x356a as ::core::ffi::c_int as uint16,
-        0x24e7 as ::core::ffi::c_int as uint16,
-        0x1083 as ::core::ffi::c_int as uint16,
+        0x3800 as uint16,
+        0x7f58 as uint16,
+        0x6ed5 as uint16,
+        0x5a71 as uint16,
+        0x49ee as uint16,
+        0x356a as uint16,
+        0x24e7 as uint16,
+        0x1083 as uint16,
     ];
     let mut v2: uint16 = *(RomPtr_87(j as uint16_t, game) as *mut uint16);
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;

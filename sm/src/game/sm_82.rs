@@ -628,7 +628,7 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                         continue;
                     }
                     *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
-                        kGameState_7_MainGameplayFadeIn as ::core::ffi::c_int as uint16;
+                        kGameState_7_MainGameplayFadeIn as uint16;
                     v4 = 512 as int16;
                     let mut v5: uint16 = 0 as uint16;
                     loop {
@@ -667,91 +667,91 @@ pub unsafe fn InitIoForGameplay(game: &mut Game) {
     InitPpuForGameplay(game);
 }
 pub unsafe fn InitCpuForGameplay(game: &mut Game) {
-    WriteReg(NMITIMEN as ::core::ffi::c_int as uint16, 1 as uint8, game);
+    WriteReg(NMITIMEN as uint16, 1 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x84) = 1 as uint8;
-    WriteReg(WRIO as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(WRMPYA as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(WRMPYB as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(WRDIVL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(WRDIVH as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(WRDIVB as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(HTIMEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(HTIMEH as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VTIMEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VTIMEH as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(HDMAEN as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(WRIO as uint16, 0 as uint8, game);
+    WriteReg(WRMPYA as uint16, 0 as uint8, game);
+    WriteReg(WRMPYB as uint16, 0 as uint8, game);
+    WriteReg(WRDIVL as uint16, 0 as uint8, game);
+    WriteReg(WRDIVH as uint16, 0 as uint8, game);
+    WriteReg(WRDIVB as uint16, 0 as uint8, game);
+    WriteReg(HTIMEL as uint16, 0 as uint8, game);
+    WriteReg(HTIMEH as uint16, 0 as uint8, game);
+    WriteReg(VTIMEL as uint16, 0 as uint8, game);
+    WriteReg(VTIMEH as uint16, 0 as uint8, game);
+    WriteReg(MDMAEN as uint16, 0 as uint8, game);
+    WriteReg(HDMAEN as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x85) = 0 as uint8;
-    WriteReg(MEMSEL as ::core::ffi::c_int as uint16, 1 as uint8, game);
+    WriteReg(MEMSEL as uint16, 1 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x86) = 1 as uint8;
 }
 pub unsafe fn InitPpuForGameplay(game: &mut Game) {
-    WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(INIDISP as uint16, 0x80 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x51) = 0x80 as uint8;
-    WriteReg(OBSEL as ::core::ffi::c_int as uint16, 3 as uint8, game);
+    WriteReg(OBSEL as uint16, 3 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x52) = 3 as uint8;
-    WriteReg(OAMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(OAMADDL as uint16, 0 as uint8, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x53) as *mut uint16 as *mut uint8).offset(0) =
         0 as uint8;
-    WriteReg(OAMADDH as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(OAMADDH as uint16, 0x80 as uint8, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x53) as *mut uint16 as *mut uint8).offset(
         (::core::mem::size_of::<uint16>() as usize)
             .wrapping_div(::core::mem::size_of::<uint8>() as usize)
             .wrapping_sub(1 as usize) as isize,
     ) = 0x80 as uint8;
-    WriteReg(OAMDATA as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(OAMDATA as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(BGMODE as ::core::ffi::c_int as uint16, 9 as uint8, game);
+    WriteReg(OAMDATA as uint16, 0 as uint8, game);
+    WriteReg(OAMDATA as uint16, 0 as uint8, game);
+    WriteReg(BGMODE as uint16, 9 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x55) = 9 as uint8;
-    WriteReg(MOSAIC as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(MOSAIC as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x57) = 0 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x5d) = 0 as uint8;
-    WriteReg(BG12NBA as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG12NBA as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5e) = 4 as uint8;
-    WriteReg(BG34NBA as ::core::ffi::c_int as uint16, 4 as uint8, game);
+    WriteReg(BG34NBA as uint16, 4 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x58) = 81 as uint8;
-    WriteReg(BG1SC as ::core::ffi::c_int as uint16, 0x51 as uint8, game);
+    WriteReg(BG1SC as uint16, 0x51 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x59) = 73 as uint8;
-    WriteReg(BG2SC as ::core::ffi::c_int as uint16, 0x49 as uint8, game);
+    WriteReg(BG2SC as uint16, 0x49 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5a) = 90 as uint8;
-    WriteReg(BG3SC as ::core::ffi::c_int as uint16, 0x5a as uint8, game);
+    WriteReg(BG3SC as uint16, 0x5a as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5c) = 0 as uint8;
-    WriteReg(BG4SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(W12SEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG4SC as uint16, 0 as uint8, game);
+    WriteReg(VMAIN as uint16, 0 as uint8, game);
+    WriteReg(W12SEL as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x60) = 0 as uint8;
-    WriteReg(W12SEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(W12SEL as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x60) = 0 as uint8;
-    WriteReg(W34SEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(W34SEL as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x61) = 0 as uint8;
-    WriteReg(WOBJSEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(WOBJSEL as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x62) = 0 as uint8;
-    WriteReg(WH0 as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(WH0 as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x63) = 0 as uint8;
-    WriteReg(WH1 as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(WH1 as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x64) = 0 as uint8;
-    WriteReg(WH2 as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(WH2 as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x65) = 0 as uint8;
-    WriteReg(WH3 as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(WH3 as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x66) = 0 as uint8;
-    WriteReg(WBGLOG as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(WBGLOG as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x67) = 0 as uint8;
-    WriteReg(WOBJLOG as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(WOBJLOG as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x68) = 0 as uint8;
-    WriteReg(TM as ::core::ffi::c_int as uint16, 0x17 as uint8, game);
+    WriteReg(TM as uint16, 0x17 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 23 as uint8;
-    WriteReg(TMW as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(TMW as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x6c) = 0 as uint8;
-    WriteReg(TS as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(TS as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x6b) = 0 as uint8;
-    WriteReg(TSW as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(TSW as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x6d) = 0 as uint8;
-    WriteReg(CGWSEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(CGWSEL as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x6e) = 0 as uint8;
-    WriteReg(CGADSUB as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(CGADSUB as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x71) = 0 as uint8;
-    WriteReg(COLDATA as ::core::ffi::c_int as uint16, 0xe0 as uint8, game);
-    WriteReg(SETINI as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(COLDATA as uint16, 0xe0 as uint8, game);
+    WriteReg(SETINI as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x77) = 0 as uint8;
     *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) = 0 as uint16;
     memset7E(
@@ -793,9 +793,9 @@ pub unsafe fn LoadInitialPalette(game: &mut Game) {
     }
 }
 pub unsafe fn LoadStdBG3andSpriteTilesClearTilemaps(game: &mut Game) {
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x40 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x40 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_8282F8: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -807,10 +807,10 @@ pub unsafe fn LoadStdBG3andSpriteTilesClearTilemaps(game: &mut Game) {
         das: 0x2000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8282F8 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x60 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_828318: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -822,10 +822,10 @@ pub unsafe fn LoadStdBG3andSpriteTilesClearTilemaps(game: &mut Game) {
         das: 0x2e00 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_828318 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x50 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x50 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_828338: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -837,10 +837,10 @@ pub unsafe fn LoadStdBG3andSpriteTilesClearTilemaps(game: &mut Game) {
         das: 0x1000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_828338 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x58 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x58 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_828358: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -852,7 +852,7 @@ pub unsafe fn LoadStdBG3andSpriteTilesClearTilemaps(game: &mut Game) {
         das: 0x800 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_828358 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
 }
 pub unsafe fn GameState_32_MadeItToCeresElevator(game: &mut Game) -> CoroutineRet {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x943) as *mut uint16) != 0 {
@@ -901,7 +901,7 @@ pub unsafe fn GameState_33_BlackoutFromCeres(game: &mut Game) -> CoroutineRet {
         *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0xd914) as *mut uint16) =
-            kLoadingGameState_22_EscapingCeres as ::core::ffi::c_int as uint16;
+            kLoadingGameState_22_EscapingCeres as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) = 34 as uint16;
         SaveToSram(
             *((&raw mut game.g_ram as *mut uint8).offset(0x952) as *mut uint16),
@@ -926,7 +926,7 @@ pub unsafe fn GameState_35_TimeUp(game: &mut Game) -> CoroutineRet {
     *((&raw mut game.g_ram as *mut uint8).offset(0xc402) as *mut uint16) = 8 as uint16;
     if AdvancePaletteFadeForAllPalettes(game) != 0 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
-            kGameState_36_WhitingOutFromTimeUp as ::core::ffi::c_int as uint16;
+            kGameState_36_WhitingOutFromTimeUp as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
     }
@@ -967,10 +967,10 @@ pub unsafe fn GameState_36_WhitingOutFromTimeUp(game: &mut Game) -> CoroutineRet
                 i -= 2 as ::core::ffi::c_int;
             }
             *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
-                kGameState_25_SamusNoHealth as ::core::ffi::c_int as uint16;
+                kGameState_25_SamusNoHealth as uint16;
         } else {
             *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
-                kGameState_37_CeresGoesBoomWithSamus as ::core::ffi::c_int as uint16;
+                kGameState_37_CeresGoesBoomWithSamus as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
                 (0x8bc11b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         }
@@ -1000,7 +1000,7 @@ pub unsafe fn GameState_38_SamusEscapesFromZebes(game: &mut Game) -> CoroutineRe
         *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
-            kGameState_39_EndingAndCredits as ::core::ffi::c_int as uint16;
+            kGameState_39_EndingAndCredits as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
             (0x8bd480 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x943) as *mut uint16) = 0 as uint16;
@@ -1143,13 +1143,13 @@ pub unsafe fn GameState_43_TransitionFromDemo(game: &mut Game) -> CoroutineRet {
 }
 pub unsafe fn GameState_44_TransitionFromDemo(game: &mut Game) -> CoroutineRet {
     *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
-        kGameState_1_OpeningCinematic as ::core::ffi::c_int as uint16;
+        kGameState_1_OpeningCinematic as uint16;
     if *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
-            kGameState_40_TransitionToDemo as ::core::ffi::c_int as uint16;
+            kGameState_40_TransitionToDemo as uint16;
     } else if *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) != 0 {
         LoadTitleSequenceGraphics(game);
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(4) =
@@ -1324,7 +1324,7 @@ pub unsafe fn LoadDemoRoomData(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x9c0) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xd914) as *mut uint16) =
-        kLoadingGameState_0_Intro as ::core::ffi::c_int as uint16;
+        kLoadingGameState_0_Intro as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x5f7) as *mut uint16) = 0 as uint16;
 }
 pub unsafe fn DemoRoom_ChargeBeamRoomScroll21(game: &mut Game) {
@@ -1500,11 +1500,11 @@ pub unsafe fn HandleSoundEffects(game: &mut Game) {
             .offset(0) = (*((&raw mut game.g_ram as *mut uint8).offset(0x686) as *mut uint16)
             as ::core::ffi::c_int
             - 1 as ::core::ffi::c_int) as uint8;
-        RtlApuWrite(APUI01 as ::core::ffi::c_int as uint32, 0 as uint8, game);
+        RtlApuWrite(APUI01 as uint32, 0 as uint8, game);
         *(&raw mut game.g_ram as *mut uint8).offset(0x64d).offset(0) = 0 as uint8;
-        RtlApuWrite(APUI02 as ::core::ffi::c_int as uint32, 0 as uint8, game);
+        RtlApuWrite(APUI02 as uint32, 0 as uint8, game);
         *(&raw mut game.g_ram as *mut uint8).offset(0x64d).offset(1) = 0 as uint8;
-        RtlApuWrite(APUI03 as ::core::ffi::c_int as uint32, 0 as uint8, game);
+        RtlApuWrite(APUI03 as uint32, 0 as uint8, game);
         *(&raw mut game.g_ram as *mut uint8).offset(0x64d).offset(2) = 0 as uint8;
     } else {
         let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -2055,7 +2055,7 @@ pub unsafe fn CallUnpauseHook_Async(mut ea: uint32, game: &mut Game) -> Coroutin
 pub unsafe fn GameState_13_Pausing_Async(game: &mut Game) -> CoroutineRet {
     DisableHdmaObjects(game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x85) = 0 as uint8;
-    WriteReg(HDMAEN as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(HDMAEN as uint16, 0 as uint8, game);
     DisableAnimtiles(game);
     BackupBG2TilemapForPauseMenu(game);
     CallPauseHook(
@@ -2082,41 +2082,33 @@ pub unsafe fn GameState_13_Pausing_Async(game: &mut Game) -> CoroutineRet {
 }
 pub unsafe fn BackupBG2TilemapForPauseMenu(game: &mut Game) {
     WriteRegWord(
-        VMADDL as ::core::ffi::c_int as uint16,
+        VMADDL as uint16,
         ((*(&raw mut game.g_ram as *mut uint8).offset(0x59) as ::core::ffi::c_int
             & 0xfc as ::core::ffi::c_int)
             << 8 as ::core::ffi::c_int
             | 1 as ::core::ffi::c_int) as uint16,
         game,
     );
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
-    WriteReg(DMAP1 as ::core::ffi::c_int as uint16, 0x81 as uint8, game);
-    WriteReg(BBAD1 as ::core::ffi::c_int as uint16, 0x39 as uint8, game);
-    WriteRegWord(
-        A1T1L as ::core::ffi::c_int as uint16,
-        0xdf5c as uint16,
-        game,
-    );
-    WriteReg(A1B1 as ::core::ffi::c_int as uint16, 0x7e as uint8, game);
-    WriteRegWord(
-        DAS1L as ::core::ffi::c_int as uint16,
-        0x1000 as uint16,
-        game,
-    );
-    WriteReg(DAS10 as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteRegWord(A2A1L as ::core::ffi::c_int as uint16, 0 as uint16, game);
-    WriteReg(NTRL1 as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
+    WriteReg(DMAP1 as uint16, 0x81 as uint8, game);
+    WriteReg(BBAD1 as uint16, 0x39 as uint8, game);
+    WriteRegWord(A1T1L as uint16, 0xdf5c as uint16, game);
+    WriteReg(A1B1 as uint16, 0x7e as uint8, game);
+    WriteRegWord(DAS1L as uint16, 0x1000 as uint16, game);
+    WriteReg(DAS10 as uint16, 0 as uint8, game);
+    WriteRegWord(A2A1L as uint16, 0 as uint16, game);
+    WriteReg(NTRL1 as uint16, 0 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
 }
 pub unsafe fn RestoreBG2TilemapFromPauseScreen(game: &mut Game) {
     WriteRegWord(
-        VMADDL as ::core::ffi::c_int as uint16,
+        VMADDL as uint16,
         ((*(&raw mut game.g_ram as *mut uint8).offset(0x59) as ::core::ffi::c_int
             & 0xfc as ::core::ffi::c_int)
             << 8 as ::core::ffi::c_int) as uint16,
         game,
     );
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_828DAE: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -2128,7 +2120,7 @@ pub unsafe fn RestoreBG2TilemapFromPauseScreen(game: &mut Game) {
         das: 0x1000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_828DAE as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
 }
 pub unsafe fn BackupSomeGfxStateForPause(game: &mut Game) {
     *(&raw mut game.g_ram as *mut uint8).offset(0x765) =
@@ -2203,9 +2195,9 @@ pub unsafe fn RestoreSomeGfxStateForPause(game: &mut Game) {
         *(&raw mut game.g_ram as *mut uint8).offset(0x775);
 }
 pub unsafe fn LoadPauseMenuTilesAndClearBG2(game: &mut Game) {
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_828E8B: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -2217,10 +2209,10 @@ pub unsafe fn LoadPauseMenuTilesAndClearBG2(game: &mut Game) {
         das: 0x4000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_828E8B as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x20 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x20 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_828EAB: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -2232,10 +2224,10 @@ pub unsafe fn LoadPauseMenuTilesAndClearBG2(game: &mut Game) {
         das: 0x2000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_828EAB as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x40 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x40 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_828ECB: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -2247,12 +2239,12 @@ pub unsafe fn LoadPauseMenuTilesAndClearBG2(game: &mut Game) {
         das: 0x2000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_828ECB as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
 }
 pub unsafe fn LoadPauseScreenBaseTilemaps(game: &mut Game) {
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x38 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x38 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_828EF0: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -2264,10 +2256,10 @@ pub unsafe fn LoadPauseScreenBaseTilemaps(game: &mut Game) {
         das: 0x800 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_828EF0 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(WMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(WMADDM as ::core::ffi::c_int as uint16, 0x34 as uint8, game);
-    WriteReg(WMADDH as ::core::ffi::c_int as uint16, 0x7e as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(WMADDL as uint16, 0 as uint8, game);
+    WriteReg(WMADDM as uint16, 0x34 as uint8, game);
+    WriteReg(WMADDH as uint16, 0x7e as uint8, game);
     static unk_828F10: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 0 as uint8,
@@ -2279,10 +2271,10 @@ pub unsafe fn LoadPauseScreenBaseTilemaps(game: &mut Game) {
         das: 0x400 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_828F10 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(WMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(WMADDM as ::core::ffi::c_int as uint16, 0x38 as uint8, game);
-    WriteReg(WMADDH as ::core::ffi::c_int as uint16, 0x7e as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(WMADDL as uint16, 0 as uint8, game);
+    WriteReg(WMADDM as uint16, 0x38 as uint8, game);
+    WriteReg(WMADDH as uint16, 0x7e as uint8, game);
     static unk_828F30: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 0 as uint8,
@@ -2294,8 +2286,8 @@ pub unsafe fn LoadPauseScreenBaseTilemaps(game: &mut Game) {
         das: 0x800 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_828F30 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    let mut v0: uint16 = addr_kDummySamusWireframeTilemap as ::core::ffi::c_int as uint16;
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    let mut v0: uint16 = addr_kDummySamusWireframeTilemap as uint16;
     let mut v1: uint16 = 236 as uint16;
     let mut m: ::core::ffi::c_int = 17 as ::core::ffi::c_int;
     loop {
@@ -2647,38 +2639,38 @@ pub unsafe fn MapScrolling_GetSpeedIndex(game: &mut Game) -> uint16 {
     return result;
 }
 static kMapScrollingSpeedTable: [uint16; 32] = [
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    8 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    8 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    8 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    8 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
+    0 as uint16,
 ];
 pub unsafe fn MapScrolling_1_Left(game: &mut Game) {
     let ref mut fresh105 = *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16);
@@ -2807,7 +2799,7 @@ pub unsafe fn GameState_18_Unpausing(game: &mut Game) -> CoroutineRet {
         *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
-            kGameState_8_MainGameplay as ::core::ffi::c_int as uint16;
+            kGameState_8_MainGameplay as uint16;
     }
     return kCoroutineNone as CoroutineRet;
 }
@@ -2816,9 +2808,9 @@ pub unsafe fn LoadPauseMenuMapTilemapAndAreaLabel(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xbd) as *mut uint16);
     *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) =
         *((&raw mut game.g_ram as *mut uint8).offset(0xbf) as *mut uint16);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x30 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x30 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     LoadPauseMenuMapTilemap(game);
     static unk_8293E9: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
@@ -2831,14 +2823,14 @@ pub unsafe fn LoadPauseMenuMapTilemapAndAreaLabel(game: &mut Game) {
         das: 0x1000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_8293E9 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0xaa as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x38 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
-    WriteReg(DMAP1 as ::core::ffi::c_int as uint16, 1 as uint8, game);
-    WriteReg(BBAD1 as ::core::ffi::c_int as uint16, 0x18 as uint8, game);
-    WriteReg(DAS1L as ::core::ffi::c_int as uint16, 0x18 as uint8, game);
-    WriteReg(DAS1H as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteReg(VMADDL as uint16, 0xaa as uint8, game);
+    WriteReg(VMADDH as uint16, 0x38 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
+    WriteReg(DMAP1 as uint16, 1 as uint8, game);
+    WriteReg(BBAD1 as uint16, 0x18 as uint8, game);
+    WriteReg(DAS1L as uint16, 0x18 as uint8, game);
+    WriteReg(DAS1H as uint16, 0 as uint8, game);
     let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16);
     if *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as ::core::ffi::c_int
         - 7 as ::core::ffi::c_int
@@ -2848,7 +2840,7 @@ pub unsafe fn LoadPauseMenuMapTilemapAndAreaLabel(game: &mut Game) {
         v0 = 0 as uint16;
     }
     WriteRegWord(
-        A1T1L as ::core::ffi::c_int as uint16,
+        A1T1L as uint16,
         *(game.g_rom.offset(
             (((0x82965f as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                 << 15 as ::core::ffi::c_int
@@ -2858,8 +2850,8 @@ pub unsafe fn LoadPauseMenuMapTilemapAndAreaLabel(game: &mut Game) {
             .offset(v0 as isize),
         game,
     );
-    WriteReg(A1B1 as ::core::ffi::c_int as uint16, 0x82 as uint8, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteReg(A1B1 as uint16, 0x82 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
 }
 pub unsafe fn LoadPauseMenuMapTilemap(game: &mut Game) {
     let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16);
@@ -3216,24 +3208,24 @@ pub unsafe fn SetupMapScrollingForPauseMenu(mut a: uint16, game: &mut Game) {
     }
 }
 static k0x80Shr: [uint8; 8] = [
-    0x80 as ::core::ffi::c_int as uint8,
-    0x40 as ::core::ffi::c_int as uint8,
-    0x20 as ::core::ffi::c_int as uint8,
-    0x10 as ::core::ffi::c_int as uint8,
-    8 as ::core::ffi::c_int as uint8,
-    4 as ::core::ffi::c_int as uint8,
-    2 as ::core::ffi::c_int as uint8,
-    1 as ::core::ffi::c_int as uint8,
+    0x80 as uint8,
+    0x40 as uint8,
+    0x20 as uint8,
+    0x10 as uint8,
+    8 as uint8,
+    4 as uint8,
+    2 as uint8,
+    1 as uint8,
 ];
 static k0x80Shr_0: [uint8; 8] = [
-    0x80 as ::core::ffi::c_int as uint8,
-    0x40 as ::core::ffi::c_int as uint8,
-    0x20 as ::core::ffi::c_int as uint8,
-    0x10 as ::core::ffi::c_int as uint8,
-    8 as ::core::ffi::c_int as uint8,
-    4 as ::core::ffi::c_int as uint8,
-    2 as ::core::ffi::c_int as uint8,
-    1 as ::core::ffi::c_int as uint8,
+    0x80 as uint8,
+    0x40 as uint8,
+    0x20 as uint8,
+    0x10 as uint8,
+    8 as uint8,
+    4 as uint8,
+    2 as uint8,
+    1 as uint8,
 ];
 unsafe fn DetermineLeftmostMapColumn(mut r0: *const uint8) -> uint16 {
     let mut r18: uint8 = 0;
@@ -3389,25 +3381,25 @@ pub unsafe fn DetermineMapScrollLimits(game: &mut Game) {
             * 8 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn SetupPpuForPauseMenu(game: &mut Game) {
-    WriteReg(OBSEL as ::core::ffi::c_int as uint16, 1 as uint8, game);
+    WriteReg(OBSEL as uint16, 1 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x52) = 1 as uint8;
-    WriteReg(BGMODE as ::core::ffi::c_int as uint16, 9 as uint8, game);
+    WriteReg(BGMODE as uint16, 9 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x55) = 9 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x5d) = 0 as uint8;
-    WriteReg(BG12NBA as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG12NBA as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5e) = 4 as uint8;
-    WriteReg(BG34NBA as ::core::ffi::c_int as uint16, 4 as uint8, game);
+    WriteReg(BG34NBA as uint16, 4 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x58) = 49 as uint8;
-    WriteReg(BG1SC as ::core::ffi::c_int as uint16, 0x31 as uint8, game);
+    WriteReg(BG1SC as uint16, 0x31 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x59) = 56 as uint8;
-    WriteReg(BG2SC as ::core::ffi::c_int as uint16, 0x38 as uint8, game);
+    WriteReg(BG2SC as uint16, 0x38 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5a) = 88 as uint8;
-    WriteReg(BG3SC as ::core::ffi::c_int as uint16, 0x58 as uint8, game);
+    WriteReg(BG3SC as uint16, 0x58 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5c) = 0 as uint8;
-    WriteReg(BG4SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(TM as ::core::ffi::c_int as uint16, 0x17 as uint8, game);
+    WriteReg(BG4SC as uint16, 0 as uint8, game);
+    WriteReg(TM as uint16, 0x17 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 23 as uint8;
-    WriteReg(MOSAIC as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(MOSAIC as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x57) = 0 as uint8;
     let ref mut fresh24 = *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0);
     *fresh24 = (*fresh24 as ::core::ffi::c_int & 0xe0 as ::core::ffi::c_int) as uint8;
@@ -3496,10 +3488,8 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
             14 as size_t,
         );
     }
-    let mut p: *const uint16 = RomPtr_82(
-        addr_kEquipmentTilemapOffs_Weapons as ::core::ffi::c_int as uint16_t,
-        game,
-    ) as *mut uint16;
+    let mut p: *const uint16 =
+        RomPtr_82(addr_kEquipmentTilemapOffs_Weapons as uint16_t, game) as *mut uint16;
     if *((&raw mut game.g_ram as *mut uint8).offset(0xa76) as *mut uint16) != 0 {
         let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
         while i < 5 as ::core::ffi::c_int {
@@ -3569,20 +3559,15 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
             } else {
                 memcpy(
                     target as *mut ::core::ffi::c_void,
-                    RomPtr_82(
-                        addr_kEquipmentScreenTilemap_Blank as ::core::ffi::c_int as uint16_t,
-                        game,
-                    ) as *const ::core::ffi::c_void,
+                    RomPtr_82(addr_kEquipmentScreenTilemap_Blank as uint16_t, game)
+                        as *const ::core::ffi::c_void,
                     10 as size_t,
                 );
             }
             i_0 += 1;
         }
     }
-    p = RomPtr_82(
-        addr_kEquipmentTilemapOffs_Suits as ::core::ffi::c_int as uint16_t,
-        game,
-    ) as *mut uint16;
+    p = RomPtr_82(addr_kEquipmentTilemapOffs_Suits as uint16_t, game) as *mut uint16;
     let mut i_1: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i_1 < 6 as ::core::ffi::c_int {
         let mut target_0: *mut uint16 = (&raw mut game.g_ram as *mut uint8)
@@ -3628,19 +3613,14 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
         } else {
             memcpy(
                 target_0 as *mut ::core::ffi::c_void,
-                RomPtr_82(
-                    addr_kEquipmentScreenTilemap_Blank as ::core::ffi::c_int as uint16_t,
-                    game,
-                ) as *const ::core::ffi::c_void,
+                RomPtr_82(addr_kEquipmentScreenTilemap_Blank as uint16_t, game)
+                    as *const ::core::ffi::c_void,
                 18 as size_t,
             );
         }
         i_1 += 1;
     }
-    p = RomPtr_82(
-        addr_kEquipmentTilemapOffs_Boots as ::core::ffi::c_int as uint16_t,
-        game,
-    ) as *mut uint16;
+    p = RomPtr_82(addr_kEquipmentTilemapOffs_Boots as uint16_t, game) as *mut uint16;
     let mut i_2: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i_2 < 3 as ::core::ffi::c_int {
         let mut target_1: *mut uint16 = (&raw mut game.g_ram as *mut uint8)
@@ -3686,10 +3666,8 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
         } else {
             memcpy(
                 target_1 as *mut ::core::ffi::c_void,
-                RomPtr_82(
-                    addr_kEquipmentScreenTilemap_Blank as ::core::ffi::c_int as uint16_t,
-                    game,
-                ) as *const ::core::ffi::c_void,
+                RomPtr_82(addr_kEquipmentScreenTilemap_Blank as uint16_t, game)
+                    as *const ::core::ffi::c_void,
                 18 as size_t,
             );
         }
@@ -3697,9 +3675,9 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
     }
 }
 pub unsafe fn ClearSamusBeamTiles(game: &mut Game) {
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x60 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_82A2D4: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -3711,7 +3689,7 @@ pub unsafe fn ClearSamusBeamTiles(game: &mut Game) {
         das: 0x1000 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_82A2D4 as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
 }
 pub unsafe fn ContinueInitGameplayResume(game: &mut Game) {
     let mut v0: int16 = 0;
@@ -3735,22 +3713,22 @@ pub unsafe fn ContinueInitGameplayResume(game: &mut Game) {
     CallSomeSamusCode(0xc as uint16, game);
 }
 pub unsafe fn SetupPpuForGameplayResume(game: &mut Game) {
-    WriteReg(OBSEL as ::core::ffi::c_int as uint16, 3 as uint8, game);
+    WriteReg(OBSEL as uint16, 3 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x52) = 3 as uint8;
-    WriteReg(BGMODE as ::core::ffi::c_int as uint16, 9 as uint8, game);
+    WriteReg(BGMODE as uint16, 9 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x55) = 9 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x5d) = 0 as uint8;
-    WriteReg(BG12NBA as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG12NBA as uint16, 0 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5e) = 4 as uint8;
-    WriteReg(BG34NBA as ::core::ffi::c_int as uint16, 4 as uint8, game);
+    WriteReg(BG34NBA as uint16, 4 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x58) = 81 as uint8;
-    WriteReg(BG1SC as ::core::ffi::c_int as uint16, 0x51 as uint8, game);
+    WriteReg(BG1SC as uint16, 0x51 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x59) = 73 as uint8;
-    WriteReg(BG2SC as ::core::ffi::c_int as uint16, 0x49 as uint8, game);
+    WriteReg(BG2SC as uint16, 0x49 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5a) = 90 as uint8;
-    WriteReg(BG3SC as ::core::ffi::c_int as uint16, 0x5a as uint8, game);
+    WriteReg(BG3SC as uint16, 0x5a as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5c) = 0 as uint8;
-    WriteReg(BG4SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
+    WriteReg(BG4SC as uint16, 0 as uint8, game);
 }
 pub unsafe fn CalculateBgScrolls_Unpause(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16) =
@@ -3838,10 +3816,10 @@ pub unsafe fn sub_82A42A(game: &mut Game) {
                 == 4 as ::core::ffi::c_int
             {
                 *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-                    kPose_1A_FaceL_SpinJump as ::core::ffi::c_int as uint16;
+                    kPose_1A_FaceL_SpinJump as uint16;
             } else {
                 *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-                    kPose_19_FaceR_SpinJump as ::core::ffi::c_int as uint16;
+                    kPose_19_FaceR_SpinJump as uint16;
             }
             SamusFunc_F433(game);
             Samus_SetAnimationFrameIfPoseChanged(game);
@@ -3858,10 +3836,10 @@ pub unsafe fn sub_82A47B(game: &mut Game) {
             == 4 as ::core::ffi::c_int
         {
             *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-                kPose_41_FaceL_Morphball_Ground as ::core::ffi::c_int as uint16;
+                kPose_41_FaceL_Morphball_Ground as uint16;
         } else {
             *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-                kPose_1D_FaceR_Morphball_Ground as ::core::ffi::c_int as uint16;
+                kPose_1D_FaceR_Morphball_Ground as uint16;
         }
         SamusFunc_F433(game);
         Samus_SetAnimationFrameIfPoseChanged(game);
@@ -3876,10 +3854,10 @@ pub unsafe fn sub_82A4A9(game: &mut Game) {
             == 4 as ::core::ffi::c_int
         {
             *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-                kPose_7A_FaceL_Springball_Ground as ::core::ffi::c_int as uint16;
+                kPose_7A_FaceL_Springball_Ground as uint16;
         } else {
             *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-                kPose_79_FaceR_Springball_Ground as ::core::ffi::c_int as uint16;
+                kPose_79_FaceR_Springball_Ground as uint16;
         }
         SamusFunc_F433(game);
         Samus_SetAnimationFrameIfPoseChanged(game);
@@ -3927,18 +3905,9 @@ pub unsafe fn HandlePauseScreenLrInput(game: &mut Game) {
         _ => {}
     };
 }
-static kPauseLrButtonPressedHighlight_Spritemap: [uint16; 2] = [
-    0x28 as ::core::ffi::c_int as uint16,
-    0x29 as ::core::ffi::c_int as uint16,
-];
-static kPauseLrButtonPressedHighlight_Y: [uint16; 2] = [
-    0x18 as ::core::ffi::c_int as uint16,
-    0xe8 as ::core::ffi::c_int as uint16,
-];
-static kPauseLrButtonPressedHighlight_X: [uint16; 2] = [
-    0xd0 as ::core::ffi::c_int as uint16,
-    0xd0 as ::core::ffi::c_int as uint16,
-];
+static kPauseLrButtonPressedHighlight_Spritemap: [uint16; 2] = [0x28 as uint16, 0x29 as uint16];
+static kPauseLrButtonPressedHighlight_Y: [uint16; 2] = [0x18 as uint16, 0xe8 as uint16];
+static kPauseLrButtonPressedHighlight_X: [uint16; 2] = [0xd0 as uint16, 0xd0 as uint16];
 pub unsafe fn HandlePauseMenuLRPressHighlight(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x729) as *mut uint16) != 0 {
         let ref mut fresh42 = *((&raw mut game.g_ram as *mut uint8).offset(0x729) as *mut uint16);
@@ -4693,9 +4662,9 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
     }
 }
 pub unsafe fn EquipmentScreenTransferBG1Tilemap(game: &mut Game) {
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x30 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x30 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_82AC3B: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -4707,7 +4676,7 @@ pub unsafe fn EquipmentScreenTransferBG1Tilemap(game: &mut Game) {
         das: 0x800 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_82AC3B as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) = 0 as uint16;
 }
 static kEquipmentScreenCategories: [Option<Func_V>; 4] = unsafe {
@@ -4817,72 +4786,72 @@ pub unsafe fn EquipmentScreenGlowingArrow(game: &mut Game) {
     };
 }
 static kEquipmentScreenGlowingArrowPalettes0: [uint16; 32] = [
-    0x39e as ::core::ffi::c_int as uint16,
-    0x77d as ::core::ffi::c_int as uint16,
-    0xb5c as ::core::ffi::c_int as uint16,
-    0xf5b as ::core::ffi::c_int as uint16,
-    0x133a as ::core::ffi::c_int as uint16,
-    0x171a as ::core::ffi::c_int as uint16,
-    0x1f19 as ::core::ffi::c_int as uint16,
-    0x22f8 as ::core::ffi::c_int as uint16,
-    0x26d7 as ::core::ffi::c_int as uint16,
-    0x2ad6 as ::core::ffi::c_int as uint16,
-    0x2eb6 as ::core::ffi::c_int as uint16,
-    0x3695 as ::core::ffi::c_int as uint16,
-    0x3a94 as ::core::ffi::c_int as uint16,
-    0x3e73 as ::core::ffi::c_int as uint16,
-    0x4253 as ::core::ffi::c_int as uint16,
-    0x4a52 as ::core::ffi::c_int as uint16,
-    0x4a52 as ::core::ffi::c_int as uint16,
-    0x4253 as ::core::ffi::c_int as uint16,
-    0x3e73 as ::core::ffi::c_int as uint16,
-    0x3a94 as ::core::ffi::c_int as uint16,
-    0x3695 as ::core::ffi::c_int as uint16,
-    0x2eb6 as ::core::ffi::c_int as uint16,
-    0x2ad6 as ::core::ffi::c_int as uint16,
-    0x26d7 as ::core::ffi::c_int as uint16,
-    0x22f8 as ::core::ffi::c_int as uint16,
-    0x1f19 as ::core::ffi::c_int as uint16,
-    0x171a as ::core::ffi::c_int as uint16,
-    0x133a as ::core::ffi::c_int as uint16,
-    0xf5b as ::core::ffi::c_int as uint16,
-    0xb5c as ::core::ffi::c_int as uint16,
-    0x77d as ::core::ffi::c_int as uint16,
-    0x39e as ::core::ffi::c_int as uint16,
+    0x39e as uint16,
+    0x77d as uint16,
+    0xb5c as uint16,
+    0xf5b as uint16,
+    0x133a as uint16,
+    0x171a as uint16,
+    0x1f19 as uint16,
+    0x22f8 as uint16,
+    0x26d7 as uint16,
+    0x2ad6 as uint16,
+    0x2eb6 as uint16,
+    0x3695 as uint16,
+    0x3a94 as uint16,
+    0x3e73 as uint16,
+    0x4253 as uint16,
+    0x4a52 as uint16,
+    0x4a52 as uint16,
+    0x4253 as uint16,
+    0x3e73 as uint16,
+    0x3a94 as uint16,
+    0x3695 as uint16,
+    0x2eb6 as uint16,
+    0x2ad6 as uint16,
+    0x26d7 as uint16,
+    0x22f8 as uint16,
+    0x1f19 as uint16,
+    0x171a as uint16,
+    0x133a as uint16,
+    0xf5b as uint16,
+    0xb5c as uint16,
+    0x77d as uint16,
+    0x39e as uint16,
 ];
 static kEquipmentScreenGlowingArrowPalettes1: [uint16; 32] = [
-    0x156 as ::core::ffi::c_int as uint16,
-    0x155 as ::core::ffi::c_int as uint16,
-    0x554 as ::core::ffi::c_int as uint16,
-    0x954 as ::core::ffi::c_int as uint16,
-    0xd53 as ::core::ffi::c_int as uint16,
-    0xd52 as ::core::ffi::c_int as uint16,
-    0x1152 as ::core::ffi::c_int as uint16,
-    0x1551 as ::core::ffi::c_int as uint16,
-    0x1970 as ::core::ffi::c_int as uint16,
-    0x1d70 as ::core::ffi::c_int as uint16,
-    0x1d6f as ::core::ffi::c_int as uint16,
-    0x216e as ::core::ffi::c_int as uint16,
-    0x256e as ::core::ffi::c_int as uint16,
-    0x296d as ::core::ffi::c_int as uint16,
-    0x296c as ::core::ffi::c_int as uint16,
-    0x318c as ::core::ffi::c_int as uint16,
-    0x318c as ::core::ffi::c_int as uint16,
-    0x296c as ::core::ffi::c_int as uint16,
-    0x296d as ::core::ffi::c_int as uint16,
-    0x256e as ::core::ffi::c_int as uint16,
-    0x216e as ::core::ffi::c_int as uint16,
-    0x1d6f as ::core::ffi::c_int as uint16,
-    0x1d70 as ::core::ffi::c_int as uint16,
-    0x1970 as ::core::ffi::c_int as uint16,
-    0x1551 as ::core::ffi::c_int as uint16,
-    0x1152 as ::core::ffi::c_int as uint16,
-    0xd52 as ::core::ffi::c_int as uint16,
-    0xd53 as ::core::ffi::c_int as uint16,
-    0x954 as ::core::ffi::c_int as uint16,
-    0x554 as ::core::ffi::c_int as uint16,
-    0x155 as ::core::ffi::c_int as uint16,
-    0x156 as ::core::ffi::c_int as uint16,
+    0x156 as uint16,
+    0x155 as uint16,
+    0x554 as uint16,
+    0x954 as uint16,
+    0xd53 as uint16,
+    0xd52 as uint16,
+    0x1152 as uint16,
+    0x1551 as uint16,
+    0x1970 as uint16,
+    0x1d70 as uint16,
+    0x1d6f as uint16,
+    0x216e as uint16,
+    0x256e as uint16,
+    0x296d as uint16,
+    0x296c as uint16,
+    0x318c as uint16,
+    0x318c as uint16,
+    0x296c as uint16,
+    0x296d as uint16,
+    0x256e as uint16,
+    0x216e as uint16,
+    0x1d6f as uint16,
+    0x1d70 as uint16,
+    0x1970 as uint16,
+    0x1551 as uint16,
+    0x1152 as uint16,
+    0xd52 as uint16,
+    0xd53 as uint16,
+    0x954 as uint16,
+    0x554 as uint16,
+    0x155 as uint16,
+    0x156 as uint16,
 ];
 pub unsafe fn EquipmentScreenGlowingArrowAnimated(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x9c0) as *mut uint16) as ::core::ffi::c_int
@@ -4971,16 +4940,16 @@ pub unsafe fn EquipmentScreenEnergyArrowGlow_Off(game: &mut Game) {
     }
 }
 static kEquipmentScreenTilemap_MANUAL: [uint16; 4] = [
-    0x3d46 as ::core::ffi::c_int as uint16,
-    0x3d47 as ::core::ffi::c_int as uint16,
-    0x3d48 as ::core::ffi::c_int as uint16,
-    0x3d49 as ::core::ffi::c_int as uint16,
+    0x3d46 as uint16,
+    0x3d47 as uint16,
+    0x3d48 as uint16,
+    0x3d49 as uint16,
 ];
 static kEquipmentScreenTilemap_AUTO: [uint16; 4] = [
-    0x3d56 as ::core::ffi::c_int as uint16,
-    0x3d57 as ::core::ffi::c_int as uint16,
-    0x3d58 as ::core::ffi::c_int as uint16,
-    0x3d59 as ::core::ffi::c_int as uint16,
+    0x3d56 as uint16,
+    0x3d57 as uint16,
+    0x3d58 as uint16,
+    0x3d59 as uint16,
 ];
 pub unsafe fn EquipmentScreenCategory_Tanks_0(game: &mut Game) {
     let mut v0: int16 = 0;
@@ -5535,31 +5504,31 @@ pub unsafe fn EquipmentScreenDisplayReserveTankAmount(game: &mut Game) {
     EquipmentScreenDisplayReserveTankAmount_(game);
 }
 static kEquipmentScreenReserveTank_X: [uint16; 6] = [
-    0x18 as ::core::ffi::c_int as uint16,
-    0x20 as ::core::ffi::c_int as uint16,
-    0x28 as ::core::ffi::c_int as uint16,
-    0x30 as ::core::ffi::c_int as uint16,
-    0x38 as ::core::ffi::c_int as uint16,
-    0x40 as ::core::ffi::c_int as uint16,
+    0x18 as uint16,
+    0x20 as uint16,
+    0x28 as uint16,
+    0x30 as uint16,
+    0x38 as uint16,
+    0x40 as uint16,
 ];
 static kEquipmentScreenReserveTank_Y: uint16 = 0x60 as uint16;
 static kPartialReserveTankSpritemapIds: [uint16; 16] = [
-    0x20 as ::core::ffi::c_int as uint16,
-    0x21 as ::core::ffi::c_int as uint16,
-    0x22 as ::core::ffi::c_int as uint16,
-    0x23 as ::core::ffi::c_int as uint16,
-    0x24 as ::core::ffi::c_int as uint16,
-    0x25 as ::core::ffi::c_int as uint16,
-    0x26 as ::core::ffi::c_int as uint16,
-    0x27 as ::core::ffi::c_int as uint16,
-    0x20 as ::core::ffi::c_int as uint16,
-    0x21 as ::core::ffi::c_int as uint16,
-    0x22 as ::core::ffi::c_int as uint16,
-    0x23 as ::core::ffi::c_int as uint16,
-    0x24 as ::core::ffi::c_int as uint16,
-    0x25 as ::core::ffi::c_int as uint16,
-    0x26 as ::core::ffi::c_int as uint16,
-    0x27 as ::core::ffi::c_int as uint16,
+    0x20 as uint16,
+    0x21 as uint16,
+    0x22 as uint16,
+    0x23 as uint16,
+    0x24 as uint16,
+    0x25 as uint16,
+    0x26 as uint16,
+    0x27 as uint16,
+    0x20 as uint16,
+    0x21 as uint16,
+    0x22 as uint16,
+    0x23 as uint16,
+    0x24 as uint16,
+    0x25 as uint16,
+    0x26 as uint16,
+    0x27 as uint16,
 ];
 pub unsafe fn EquipmentScreenDisplayReserveTankAmount_(game: &mut Game) {
     let mut r3: uint16 = EquipmentScreenDisplayReserves_PaletteSetup(game);
@@ -6008,29 +5977,25 @@ pub unsafe fn UNKNOWN_sub_82B650(game: &mut Game) {
     };
 }
 static kMap_Criteria_SavePoints: [uint16; 16] = [
-    0xd8 as ::core::ffi::c_int as uint16,
-    0x28 as ::core::ffi::c_int as uint16,
-    0x90 as ::core::ffi::c_int as uint16,
-    0x38 as ::core::ffi::c_int as uint16,
-    0xfffe as ::core::ffi::c_int as uint16,
-    0xfffe as ::core::ffi::c_int as uint16,
-    0xfffe as ::core::ffi::c_int as uint16,
-    0xfffe as ::core::ffi::c_int as uint16,
-    0xfffe as ::core::ffi::c_int as uint16,
-    0xfffe as ::core::ffi::c_int as uint16,
-    0xfffe as ::core::ffi::c_int as uint16,
-    0xfffe as ::core::ffi::c_int as uint16,
-    0xfffe as ::core::ffi::c_int as uint16,
-    0xfffe as ::core::ffi::c_int as uint16,
-    0xfffe as ::core::ffi::c_int as uint16,
-    0xfffe as ::core::ffi::c_int as uint16,
+    0xd8 as uint16,
+    0x28 as uint16,
+    0x90 as uint16,
+    0x38 as uint16,
+    0xfffe as uint16,
+    0xfffe as uint16,
+    0xfffe as uint16,
+    0xfffe as uint16,
+    0xfffe as uint16,
+    0xfffe as uint16,
+    0xfffe as uint16,
+    0xfffe as uint16,
+    0xfffe as uint16,
+    0xfffe as uint16,
+    0xfffe as uint16,
+    0xfffe as uint16,
 ];
 pub unsafe fn DrawMapIcons(game: &mut Game) {
-    DrawBossMapIcons(
-        9 as uint16,
-        addr_kMapIconDataPointers as ::core::ffi::c_int as uint16,
-        game,
-    );
+    DrawBossMapIcons(9 as uint16, addr_kMapIconDataPointers as uint16, game);
     DrawSimpleMapIcons(
         0xb as uint16,
         (addr_kMapIconDataPointers as ::core::ffi::c_int + 0x10 as ::core::ffi::c_int) as uint16,
@@ -6134,14 +6099,14 @@ pub unsafe fn DrawSaveStationMapIcon(
     game: &mut Game,
 ) {
     static kShlBit: [uint8; 8] = [
-        1 as ::core::ffi::c_int as uint8,
-        2 as ::core::ffi::c_int as uint8,
-        4 as ::core::ffi::c_int as uint8,
-        8 as ::core::ffi::c_int as uint8,
-        0x10 as ::core::ffi::c_int as uint8,
-        0x20 as ::core::ffi::c_int as uint8,
-        0x40 as ::core::ffi::c_int as uint8,
-        0x80 as ::core::ffi::c_int as uint8,
+        1 as uint8,
+        2 as uint8,
+        4 as uint8,
+        8 as uint8,
+        0x10 as uint8,
+        0x20 as uint8,
+        0x40 as uint8,
+        0x80 as uint8,
     ];
     let mut R34: uint16 = a;
     if *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as ::core::ffi::c_int
@@ -6264,14 +6229,14 @@ pub unsafe fn CheckIfMapPositionIsExplored(
     game: &mut Game,
 ) -> uint16 {
     static kBits0x80Shr: [uint8; 8] = [
-        0x80 as ::core::ffi::c_int as uint8,
-        0x40 as ::core::ffi::c_int as uint8,
-        0x20 as ::core::ffi::c_int as uint8,
-        0x10 as ::core::ffi::c_int as uint8,
-        8 as ::core::ffi::c_int as uint8,
-        4 as ::core::ffi::c_int as uint8,
-        2 as ::core::ffi::c_int as uint8,
-        1 as ::core::ffi::c_int as uint8,
+        0x80 as uint8,
+        0x40 as uint8,
+        0x20 as uint8,
+        0x10 as uint8,
+        8 as uint8,
+        4 as uint8,
+        2 as uint8,
+        1 as uint8,
     ];
     let mut r18: ::core::ffi::c_int = (k as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int)
         as uint16 as ::core::ffi::c_int
@@ -6285,7 +6250,7 @@ pub unsafe fn CheckIfMapPositionIsExplored(
         & *(&raw mut game.g_ram as *mut uint8)
             .offset(0x7f7)
             .offset(r18 as isize) as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
+        != 0 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn DrawBossMapIcons(mut a: uint16, mut k: uint16, game: &mut Game) {
     let mut bits: ::core::ffi::c_int = *(&raw mut game.g_ram as *mut uint8)
@@ -6386,11 +6351,7 @@ pub unsafe fn HandleMapScrollArrows(game: &mut Game) {
         & 0x8000 as ::core::ffi::c_int
         != 0
     {
-        DrawMapScrollArrowAndCheckToScroll(
-            0x82 as uint8,
-            addr_stru_82B9A0 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        DrawMapScrollArrowAndCheckToScroll(0x82 as uint8, addr_stru_82B9A0 as uint16, game);
     }
     if *((&raw mut game.g_ram as *mut uint8).offset(0x5ae) as *mut uint16) as ::core::ffi::c_int
         - 232 as ::core::ffi::c_int
@@ -6398,11 +6359,7 @@ pub unsafe fn HandleMapScrollArrows(game: &mut Game) {
         & 0x8000 as ::core::ffi::c_int
         == 0
     {
-        DrawMapScrollArrowAndCheckToScroll(
-            0x82 as uint8,
-            addr_stru_82B9AA as ::core::ffi::c_int as uint16,
-            game,
-        );
+        DrawMapScrollArrowAndCheckToScroll(0x82 as uint8, addr_stru_82B9AA as uint16, game);
     }
     if *((&raw mut game.g_ram as *mut uint8).offset(0x5b0) as *mut uint16) as ::core::ffi::c_int
         - 56 as ::core::ffi::c_int
@@ -6410,11 +6367,7 @@ pub unsafe fn HandleMapScrollArrows(game: &mut Game) {
         & 0x8000 as ::core::ffi::c_int
         != 0
     {
-        DrawMapScrollArrowAndCheckToScroll(
-            0x82 as uint8,
-            addr_stru_82B9B4 as ::core::ffi::c_int as uint16,
-            game,
-        );
+        DrawMapScrollArrowAndCheckToScroll(0x82 as uint8, addr_stru_82B9B4 as uint16, game);
     }
     if *((&raw mut game.g_ram as *mut uint8).offset(0x5b2) as *mut uint16) as ::core::ffi::c_int
         - 177 as ::core::ffi::c_int
@@ -6436,11 +6389,7 @@ pub unsafe fn HandleMapScrollArrows(game: &mut Game) {
             *((&raw mut game.g_ram as *mut uint8).offset(0x5ff) as *mut uint16) = 0 as uint16;
         }
     } else {
-        DrawMapScrollArrowAndCheckToScroll(
-            0x82 as uint8,
-            addr_stru_82B9BE as ::core::ffi::c_int as uint16,
-            game,
-        );
+        DrawMapScrollArrowAndCheckToScroll(0x82 as uint8, addr_stru_82B9BE as uint16, game);
     };
 }
 pub unsafe fn MapScreenDrawSamusPositionIndicator(game: &mut Game) {
@@ -6474,17 +6423,13 @@ pub unsafe fn MapScreenDrawSamusPositionIndicator(game: &mut Game) {
         game,
     );
 }
-static kMap_SamusPositionIndicator_Delays: [uint16; 4] = [
-    8 as ::core::ffi::c_int as uint16,
-    4 as ::core::ffi::c_int as uint16,
-    8 as ::core::ffi::c_int as uint16,
-    4 as ::core::ffi::c_int as uint16,
-];
+static kMap_SamusPositionIndicator_Delays: [uint16; 4] =
+    [8 as uint16, 4 as uint16, 8 as uint16, 4 as uint16];
 static kMap_SamusPositionIndicator_SpritemapIds: [uint16; 4] = [
-    0x5f as ::core::ffi::c_int as uint16,
-    0x60 as ::core::ffi::c_int as uint16,
-    0x61 as ::core::ffi::c_int as uint16,
-    0x60 as ::core::ffi::c_int as uint16,
+    0x5f as uint16,
+    0x60 as uint16,
+    0x61 as uint16,
+    0x60 as uint16,
 ];
 pub unsafe fn UpdateSamusPositionIndicatorAnimation(game: &mut Game) -> uint16 {
     let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x778) as *mut uint16);
@@ -6539,17 +6484,13 @@ pub unsafe fn DrawBorderAroundDataClearMode(game: &mut Game) {
         game,
     );
 }
-static kDrawMenuSelectionMissile_Enable: [uint16; 4] = [
-    8 as ::core::ffi::c_int as uint16,
-    8 as ::core::ffi::c_int as uint16,
-    8 as ::core::ffi::c_int as uint16,
-    8 as ::core::ffi::c_int as uint16,
-];
+static kDrawMenuSelectionMissile_Enable: [uint16; 4] =
+    [8 as uint16, 8 as uint16, 8 as uint16, 8 as uint16];
 static kDrawMenuSelectionMissile_SpriteMap: [uint16; 4] = [
-    0x37 as ::core::ffi::c_int as uint16,
-    0x36 as ::core::ffi::c_int as uint16,
-    0x35 as ::core::ffi::c_int as uint16,
-    0x34 as ::core::ffi::c_int as uint16,
+    0x37 as uint16,
+    0x36 as uint16,
+    0x35 as uint16,
+    0x34 as uint16,
 ];
 pub unsafe fn DrawMenuSelectionMissile(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x198d) as *mut uint16) != 0 {
@@ -6766,8 +6707,7 @@ pub unsafe fn sub_82BB7F(mut a: uint16, game: &mut Game) {
 }
 pub unsafe fn sub_82BBDD(game: &mut Game) {
     (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
-        .current_instruction =
-        addr_kgameOverBabyMetridInstructionList as ::core::ffi::c_int as uint16;
+        .current_instruction = addr_kgameOverBabyMetridInstructionList as uint16;
     (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
         .instruction_timer = 10 as uint16;
     sub_82BB7F(0xa as uint16, game);
@@ -7104,7 +7044,7 @@ pub unsafe fn HandleSamusOutOfHealthAndGameTile(game: &mut Game) {
         {
             *((&raw mut game.g_ram as *mut uint8).offset(0xa78) as *mut uint16) = 0x8000 as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
-                kGameState_27_ReserveTanksAuto as ::core::ffi::c_int as uint16;
+                kGameState_27_ReserveTanksAuto as uint16;
             CallSomeSamusCode(0x1b as uint16, game);
         } else {
             if *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16)
@@ -7116,7 +7056,7 @@ pub unsafe fn HandleSamusOutOfHealthAndGameTile(game: &mut Game) {
             *((&raw mut game.g_ram as *mut uint8).offset(0xa78) as *mut uint16) = 0x8000 as uint16;
             CallSomeSamusCode(0x11 as uint16, game);
             *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
-                kGameState_19_SamusNoHealth as ::core::ffi::c_int as uint16;
+                kGameState_19_SamusNoHealth as uint16;
         }
     }
     let ref mut fresh81 = *((&raw mut game.g_ram as *mut uint8).offset(0x9da) as *mut uint16);
@@ -7162,7 +7102,7 @@ pub unsafe fn GameState_27_ReserveTanksAuto(game: &mut Game) -> CoroutineRet {
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0xa78) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
-            kGameState_8_MainGameplay as ::core::ffi::c_int as uint16;
+            kGameState_8_MainGameplay as uint16;
         CallSomeSamusCode(0x10 as uint16, game);
     }
     let mut _coret_: uint8 = GameState_8_MainGameplay(game) as uint8;
@@ -7216,14 +7156,13 @@ pub unsafe fn RefillHealthFromReserveTanks(game: &mut Game) -> uint8 {
                 *((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16) = 0 as uint16;
                 return (*((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16)
                     as ::core::ffi::c_int
-                    == 0 as ::core::ffi::c_int) as ::core::ffi::c_int
-                    as uint8;
+                    == 0 as ::core::ffi::c_int) as uint8;
             }
         }
     }
     return (*((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16)
         as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
+        == 0 as ::core::ffi::c_int) as uint8;
 }
 pub unsafe fn GameState_19_SamusNoHealth(game: &mut Game) -> CoroutineRet {
     let mut _coret_: uint8 = GameState_8_MainGameplay(game) as uint8;
@@ -8181,18 +8120,14 @@ pub unsafe fn LoadDestinationRoomThings(game: &mut Game) {
 }
 pub unsafe fn LoadCRETilesTilesetTilesAndPalette(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xe16) as *mut uint16) = 0 as uint16;
-    WriteRegWord(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint16, game);
+    WriteRegWord(VMAIN as uint16, 0x80 as uint16, game);
     WriteRegWord(
-        VMADDL as ::core::ffi::c_int as uint16,
+        VMADDL as uint16,
         (addr_unk_605000 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16,
         game,
     );
-    DecompressToVRAM(
-        0xb98000 as uint32,
-        addr_unk_605000 as ::core::ffi::c_int as uint16,
-        game,
-    );
-    WriteRegWord(VMADDL as ::core::ffi::c_int as uint16, 0 as uint16, game);
+    DecompressToVRAM(0xb98000 as uint32, addr_unk_605000 as uint16, game);
+    WriteRegWord(VMADDL as uint16, 0 as uint16, game);
     DecompressToVRAM(
         Load24((&raw mut game.g_ram as *mut uint8).offset(0x7c3) as *mut LongPtr),
         0 as uint16,
@@ -8423,24 +8358,16 @@ pub unsafe fn LoadLibraryBackground(game: &mut Game) {
     ClearFXTilemap(game);
     if *((&raw mut game.g_ram as *mut uint8).offset(0x1964) as *mut uint16) != 0 {
         WriteRegWord(
-            A1T1L as ::core::ffi::c_int as uint16,
+            A1T1L as uint16,
             *((&raw mut game.g_ram as *mut uint8).offset(0x1964) as *mut uint16),
             game,
         );
-        WriteRegWord(
-            VMADDL as ::core::ffi::c_int as uint16,
-            addr_unk_605BE0 as ::core::ffi::c_int as uint16,
-            game,
-        );
-        WriteRegWord(
-            DMAP1 as ::core::ffi::c_int as uint16,
-            0x1801 as uint16,
-            game,
-        );
-        WriteRegWord(A1B1 as ::core::ffi::c_int as uint16, 0x8a as uint16, game);
-        WriteRegWord(DAS1L as ::core::ffi::c_int as uint16, 0x840 as uint16, game);
-        WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
-        WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+        WriteRegWord(VMADDL as uint16, addr_unk_605BE0 as uint16, game);
+        WriteRegWord(DMAP1 as uint16, 0x1801 as uint16, game);
+        WriteRegWord(A1B1 as uint16, 0x8a as uint16, game);
+        WriteRegWord(DAS1L as uint16, 0x840 as uint16, game);
+        WriteReg(VMAIN as uint16, 0x80 as uint8, game);
+        WriteReg(MDMAEN as uint16, 2 as uint8, game);
     }
     bg_data_ptr = (*get_RoomDefRoomstate(
         *((&raw mut game.g_ram as *mut uint8).offset(0x7bb) as *mut uint16),
@@ -8483,28 +8410,20 @@ pub unsafe fn LoadLibraryBackgroundFunc_E_DoorDependentTransferToVram(
 pub unsafe fn LoadLibraryBackgroundFunc_2_TransferToVram(mut j: uint16, game: &mut Game) -> uint16 {
     let mut LoadBg_28: *mut uint16 = RomPtr_8F(j as uint16_t, game) as *mut uint16;
     WriteRegWord(
-        VMADDL as ::core::ffi::c_int as uint16,
+        VMADDL as uint16,
         *((LoadBg_28 as *mut uint8).offset(3) as *mut uint16),
         game,
     );
+    WriteRegWord(DMAP1 as uint16, 0x1801 as uint16, game);
+    WriteRegWord(A1T1L as uint16, *LoadBg_28, game);
+    WriteRegWord(A1B1 as uint16, *LoadBg_28.offset(1), game);
     WriteRegWord(
-        DMAP1 as ::core::ffi::c_int as uint16,
-        0x1801 as uint16,
-        game,
-    );
-    WriteRegWord(A1T1L as ::core::ffi::c_int as uint16, *LoadBg_28, game);
-    WriteRegWord(
-        A1B1 as ::core::ffi::c_int as uint16,
-        *LoadBg_28.offset(1),
-        game,
-    );
-    WriteRegWord(
-        DAS1L as ::core::ffi::c_int as uint16,
+        DAS1L as uint16,
         *((LoadBg_28 as *mut uint8).offset(5) as *mut uint16),
         game,
     );
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
     return (j as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn LoadLibraryBackgroundFunc_4_Decompress(mut j: uint16, game: &mut Game) -> uint16 {
@@ -8737,7 +8656,7 @@ pub unsafe fn GameOptionsMenuFunc_0(game: &mut Game) {
             & 4 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
         {
-            CreateOptionsMenuObject_(v0, addr_stru_82F4D6 as ::core::ffi::c_int as uint16, game);
+            CreateOptionsMenuObject_(v0, addr_stru_82F4D6 as uint16, game);
         }
     }
 }
@@ -8752,9 +8671,9 @@ pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen(game: &mut Game) {
     *(&raw mut game.g_ram as *mut uint8).offset(0x71) = 0 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x6f) = 0 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x72) = 0 as uint8;
-    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x58 as uint8, game);
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+    WriteReg(VMADDL as uint16, 0 as uint8, game);
+    WriteReg(VMADDH as uint16, 0x58 as uint8, game);
+    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     static unk_82EC3D: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -8766,7 +8685,7 @@ pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen(game: &mut Game) {
         das: 0x800 as VoidP,
     };
     SetupDmaTransfer(&raw const unk_82EC3D as *const ::core::ffi::c_void, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
+    WriteReg(MDMAEN as uint16, 2 as uint8, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xb5) as *mut uint16) = 0 as uint16;
@@ -8822,17 +8741,9 @@ pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen(game: &mut Game) {
     let initial_tile = u16::from_le_bytes([game.g_ram[0x3000], game.g_ram[0x3001]]);
     *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) = 0 as uint16;
     DeleteAllOptionsMenuObjects_(game);
-    CreateOptionsMenuObject_(
-        initial_tile,
-        addr_stru_82F4B8 as ::core::ffi::c_int as uint16,
-        game,
-    );
+    CreateOptionsMenuObject_(initial_tile, addr_stru_82F4B8 as uint16, game);
     // The first initializer leaves its palette $0E00 in A for this call.
-    CreateOptionsMenuObject_(
-        0x0e00,
-        addr_stru_82F4C4 as ::core::ffi::c_int as uint16,
-        game,
-    );
+    CreateOptionsMenuObject_(0x0e00, addr_stru_82F4C4 as uint16, game);
     let ref mut fresh66 = *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16);
     *fresh66 = (*fresh66).wrapping_add(1);
     OptionsMenuFunc4(game);
@@ -8962,7 +8873,7 @@ pub unsafe fn GameOptionsMenuItemFunc_2_ToggleJapanese(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16) =
         (*((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16) as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
+            == 0 as ::core::ffi::c_int) as uint16;
     OptionsMenuFunc4(game);
 }
 pub unsafe fn OptionsMenuFunc4(game: &mut Game) {
@@ -8993,7 +8904,7 @@ pub unsafe fn GameOptionsMenu_B_TransitionBackToFileSelect(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
-            kGameState_4_FileSelectMenus as ::core::ffi::c_int as uint16;
+            kGameState_4_FileSelectMenus as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) = 0 as uint16;
     }
@@ -9018,13 +8929,13 @@ pub unsafe fn GameOptionsMenu_4_StartGame(game: &mut Game) {
             == 0 as ::core::ffi::c_int
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
-            kGameState_5_FileSelectMap as ::core::ffi::c_int as uint16;
+            kGameState_5_FileSelectMap as uint16;
         if *((&raw mut game.g_ram as *mut uint8).offset(0xd914) as *mut uint16)
             as ::core::ffi::c_int
             != kLoadingGameState_5_Main as ::core::ffi::c_int
         {
             *((&raw mut game.g_ram as *mut uint8).offset(0xd914) as *mut uint16) =
-                kGameState_5_FileSelectMap as ::core::ffi::c_int as uint16;
+                kGameState_5_FileSelectMap as uint16;
             SaveToSram(
                 *((&raw mut game.g_ram as *mut uint8).offset(0x952) as *mut uint16),
                 game,
@@ -9044,7 +8955,7 @@ pub unsafe fn GameOptionsMenu_4_StartGame(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) = 0 as uint16;
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
-            kGameState_30_IntroCinematic as ::core::ffi::c_int as uint16;
+            kGameState_30_IntroCinematic as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
             (0x8ba395 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) = 0 as uint16;
@@ -9108,11 +9019,7 @@ pub unsafe fn GameOptionsMenu_5_DissolveOutScreen(game: &mut Game) {
                 *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) = 1 as uint16;
                 OptionsMenuFunc7(game);
                 *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) = 4 as uint16;
-                CreateOptionsMenuObject_(
-                    4 as uint16,
-                    addr_stru_82F4D0 as ::core::ffi::c_int as uint16,
-                    game,
-                );
+                CreateOptionsMenuObject_(4 as uint16, addr_stru_82F4D0 as uint16, game);
             } else {
                 if *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16) != 0 {
                     k = 1023 as uint16;
@@ -9141,11 +9048,7 @@ pub unsafe fn GameOptionsMenu_5_DissolveOutScreen(game: &mut Game) {
                         m = m.wrapping_sub(1);
                     }
                 }
-                CreateOptionsMenuObject_(
-                    v1,
-                    addr_stru_82F4CA as ::core::ffi::c_int as uint16,
-                    game,
-                );
+                CreateOptionsMenuObject_(v1, addr_stru_82F4CA as uint16, game);
                 LoadControllerOptionsFromControllerBindings(game);
                 OptionsMenuFunc6(game);
             }
@@ -9161,7 +9064,7 @@ pub unsafe fn GameOptionsMenu_5_DissolveOutScreen(game: &mut Game) {
             }
             OptionsMenuFunc4(game);
             let mut v6: uint16 = 0 as uint16;
-            CreateOptionsMenuObject_(v6, addr_stru_82F4C4 as ::core::ffi::c_int as uint16, game);
+            CreateOptionsMenuObject_(v6, addr_stru_82F4C4 as uint16, game);
         }
     }
 }
@@ -9272,16 +9175,16 @@ pub unsafe fn GameOptionsMenuSpecialSettings_2(game: &mut Game) {
     GameOptionsMenuItemFunc_4(game);
 }
 static g_word_82F149: [uint16; 4] = [
-    0x1e0 as ::core::ffi::c_int as uint16,
-    0x220 as ::core::ffi::c_int as uint16,
-    0x360 as ::core::ffi::c_int as uint16,
-    0x3a0 as ::core::ffi::c_int as uint16,
+    0x1e0 as uint16,
+    0x220 as uint16,
+    0x360 as uint16,
+    0x3a0 as uint16,
 ];
 static g_word_82F151: [uint16; 4] = [
-    0x1ee as ::core::ffi::c_int as uint16,
-    0x22e as ::core::ffi::c_int as uint16,
-    0x36e as ::core::ffi::c_int as uint16,
-    0x3ae as ::core::ffi::c_int as uint16,
+    0x1ee as uint16,
+    0x22e as uint16,
+    0x36e as uint16,
+    0x3ae as uint16,
 ];
 pub unsafe fn OptionsMenuFunc7(game: &mut Game) {
     let mut v0: uint16 = (4 as ::core::ffi::c_int
@@ -9364,22 +9267,22 @@ pub unsafe fn OptionsMenuFunc7(game: &mut Game) {
     };
 }
 static word_82F204: [uint16; 16] = [
-    0x20 as ::core::ffi::c_int as uint16,
-    0x20 as ::core::ffi::c_int as uint16,
-    0x20 as ::core::ffi::c_int as uint16,
-    0x20 as ::core::ffi::c_int as uint16,
-    0x10 as ::core::ffi::c_int as uint16,
-    0x10 as ::core::ffi::c_int as uint16,
-    0x10 as ::core::ffi::c_int as uint16,
-    0x10 as ::core::ffi::c_int as uint16,
-    0x10 as ::core::ffi::c_int as uint16,
-    0x10 as ::core::ffi::c_int as uint16,
-    0x4000 as ::core::ffi::c_int as uint16,
-    0x40 as ::core::ffi::c_int as uint16,
-    0x40 as ::core::ffi::c_int as uint16,
-    0x80 as ::core::ffi::c_int as uint16,
-    0x80 as ::core::ffi::c_int as uint16,
-    0x80 as ::core::ffi::c_int as uint16,
+    0x20 as uint16,
+    0x20 as uint16,
+    0x20 as uint16,
+    0x20 as uint16,
+    0x10 as uint16,
+    0x10 as uint16,
+    0x10 as uint16,
+    0x10 as uint16,
+    0x10 as uint16,
+    0x10 as uint16,
+    0x4000 as uint16,
+    0x40 as uint16,
+    0x40 as uint16,
+    0x80 as uint16,
+    0x80 as uint16,
+    0x80 as uint16,
 ];
 pub unsafe fn GameOptionsMenu_7_ControllerSettings(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int
@@ -9555,8 +9458,7 @@ pub unsafe fn OptionsPreInstr_F2A9(mut v0: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16)
             .offset((v1 + 15 as ::core::ffi::c_int) as isize) = 1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16)
-            .offset((v1 + 17 as ::core::ffi::c_int) as isize) =
-            addr_off_82F4B6 as ::core::ffi::c_int as uint16;
+            .offset((v1 + 17 as ::core::ffi::c_int) as isize) = addr_off_82F4B6 as uint16;
     };
 }
 pub unsafe fn sub_82F34B(mut j: uint16, game: &mut Game) {
@@ -9602,8 +9504,7 @@ pub unsafe fn OptionsPreInstr_F376(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16)
             .offset((v1 + 15 as ::core::ffi::c_int) as isize) = 1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16)
-            .offset((v1 + 17 as ::core::ffi::c_int) as isize) =
-            addr_off_82F4B6 as ::core::ffi::c_int as uint16;
+            .offset((v1 + 17 as ::core::ffi::c_int) as isize) = addr_off_82F4B6 as uint16;
     }
 }
 pub unsafe fn OptionsPreInstr_F3A0(mut k: uint16, game: &mut Game) {
@@ -9683,8 +9584,7 @@ pub unsafe fn OptionsPreInstr_F42C(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16)
             .offset((v1 + 15 as ::core::ffi::c_int) as isize) = 1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16)
-            .offset((v1 + 17 as ::core::ffi::c_int) as isize) =
-            addr_off_82F4B6 as ::core::ffi::c_int as uint16;
+            .offset((v1 + 17 as ::core::ffi::c_int) as isize) = addr_off_82F4B6 as uint16;
     }
 }
 pub unsafe fn LoadControllerOptionsFromControllerBindings(game: &mut Game) {
@@ -9792,12 +9692,12 @@ pub unsafe fn OptionsMenuFunc8(game: &mut Game) -> uint8 {
     return 0 as uint8;
 }
 static g_word_82F6AD: [uint16; 6] = [
-    0 as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0xe as ::core::ffi::c_int as uint16,
-    0x10 as ::core::ffi::c_int as uint16,
-    0x1f as ::core::ffi::c_int as uint16,
-    0x1f as ::core::ffi::c_int as uint16,
+    0 as uint16,
+    0xe as uint16,
+    0xe as uint16,
+    0x10 as uint16,
+    0x1f as uint16,
+    0x1f as uint16,
 ];
 pub unsafe fn OptionsMenuFunc6(game: &mut Game) {
     let mut v0: uint16 = 0 as uint16;

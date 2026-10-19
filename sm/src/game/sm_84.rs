@@ -1478,7 +1478,7 @@ pub unsafe fn PlmInstr_IncrementArgumentAndJGE(
         *((&raw mut game.g_ram as *mut uint8).offset(0x1dc7) as *mut uint16).offset(v4 as isize) =
             -(1 as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1cd7) as *mut uint16).offset(v4 as isize) =
-            addr_locret_848AE0 as ::core::ffi::c_int as uint16;
+            addr_locret_848AE0 as uint16;
         return PlmInstr_Goto(plmp.offset(1), k);
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1dc7) as *mut uint16)
@@ -1785,7 +1785,7 @@ pub unsafe fn PlmInstr_ActivateSaveStationAndGotoIfNo(
         return *(plmp as *mut uint16) as uintptr_t as *const uint8;
     }
     SpawnEprojWithRoomGfx(
-        addr_kEproj_SaveStationElectricity as ::core::ffi::c_int as uint16,
+        addr_kEproj_SaveStationElectricity as uint16,
         0 as uint16,
         game,
     );
@@ -1928,8 +1928,8 @@ pub unsafe fn DrawPlm(mut k: uint16, game: &mut Game) {
     let mut r24: uint16 = 0;
     let mut r20: uint16 = 0;
     let mut r18: uint16 = 0;
-    let mut r9: uint16 = addr_unk_605000 as ::core::ffi::c_int as uint16;
-    let mut r12: uint16 = addr_unk_6053E0 as ::core::ffi::c_int as uint16;
+    let mut r9: uint16 = addr_unk_605000 as uint16;
+    let mut r12: uint16 = addr_unk_6053E0 as uint16;
     let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xde6c) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     let mut x: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x1c29) as *mut uint16);
@@ -2820,7 +2820,7 @@ pub unsafe fn PlmSetup_B6D3_MapStation(mut j: uint16, game: &mut Game) -> uint8 
         != 0
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1d27) as *mut uint16).offset(v1 as isize) =
-            addr_word_84AD76 as ::core::ffi::c_int as uint16;
+            addr_word_84AD76 as uint16;
     } else {
         WriteLevelDataBlockTypeAndBts(
             (*((&raw mut game.g_ram as *mut uint8).offset(0x1c87) as *mut uint16)
@@ -3497,16 +3497,16 @@ pub unsafe fn PlmPreInstr_WakePLMAndStartFxMotionSamusFarLeft(mut k: uint16, gam
 }
 pub unsafe fn PlmPreInstr_AdvanceLavaSamusMovesLeft(mut k: uint16, game: &mut Game) {
     static g_word_84B876: [uint16; 10] = [
-        0x72b as ::core::ffi::c_int as uint16,
-        0x1bf as ::core::ffi::c_int as uint16,
-        0xff50 as ::core::ffi::c_int as uint16,
-        0x50a as ::core::ffi::c_int as uint16,
-        0x167 as ::core::ffi::c_int as uint16,
-        0xff20 as ::core::ffi::c_int as uint16,
-        0x244 as ::core::ffi::c_int as uint16,
-        0x100 as ::core::ffi::c_int as uint16,
-        0xff20 as ::core::ffi::c_int as uint16,
-        0x8000 as ::core::ffi::c_int as uint16,
+        0x72b as uint16,
+        0x1bf as uint16,
+        0xff50 as uint16,
+        0x50a as uint16,
+        0x167 as uint16,
+        0xff20 as uint16,
+        0x244 as uint16,
+        0x100 as uint16,
+        0xff20 as uint16,
+        0x8000 as uint16,
     ];
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: uint16 =
@@ -3734,7 +3734,7 @@ pub unsafe fn PlmPreInstr_WakePlmIfTriggered(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xde1c) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1cd7) as *mut uint16).offset(v1 as isize) =
-            addr_locret_84BB6A as ::core::ffi::c_int as uint16;
+            addr_locret_84BB6A as uint16;
     }
 }
 pub unsafe fn PlmPreInstr_WakePlmIfTriggeredOrSamusBelowPlm(mut k: uint16, game: &mut Game) {
@@ -3794,7 +3794,7 @@ pub unsafe fn PlmPreInstr_WakePlmIfTriggeredOrSamusAbovePlm(mut k: uint16, game:
         *((&raw mut game.g_ram as *mut uint8).offset(0xde1c) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1cd7) as *mut uint16).offset(v1 as isize) =
-            addr_locret_84BBDC as ::core::ffi::c_int as uint16;
+            addr_locret_84BBDC as uint16;
     }
 }
 pub unsafe fn PlmInstr_ClearTrigger(
@@ -4703,7 +4703,7 @@ pub unsafe fn PlmSetup_D08C_SuperMissileBlockRespawning(mut j: uint16, game: &mu
     if v1 as ::core::ffi::c_int == 1280 as ::core::ffi::c_int {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1d27) as *mut uint16)
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-            addr_kPlmInstrList_C922 as ::core::ffi::c_int as uint16;
+            addr_kPlmInstrList_C922 as uint16;
     } else if v1 as ::core::ffi::c_int == 512 as ::core::ffi::c_int {
         let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         let mut v3: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x1c87)
@@ -5012,83 +5012,43 @@ pub unsafe fn PlmInstr_Spawn10shardsAnd6n00bs(
     mut k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
+    SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeShards as uint16, 0 as uint16, game);
+    SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeShards as uint16, 2 as uint16, game);
+    SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeShards as uint16, 4 as uint16, game);
+    SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeShards as uint16, 6 as uint16, game);
+    SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeShards as uint16, 8 as uint16, game);
+    SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeShards as uint16, 0xa as uint16, game);
+    SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeShards as uint16, 0xc as uint16, game);
+    SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeShards as uint16, 0xe as uint16, game);
+    SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeShards as uint16, 0x10 as uint16, game);
+    SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeShards as uint16, 0x12 as uint16, game);
     SpawnEprojWithRoomGfx(
-        addr_kEproj_N00bTubeShards as ::core::ffi::c_int as uint16,
+        addr_kEproj_N00bTubeReleasedAirBubbles as uint16,
         0 as uint16,
         game,
     );
     SpawnEprojWithRoomGfx(
-        addr_kEproj_N00bTubeShards as ::core::ffi::c_int as uint16,
+        addr_kEproj_N00bTubeReleasedAirBubbles as uint16,
         2 as uint16,
         game,
     );
     SpawnEprojWithRoomGfx(
-        addr_kEproj_N00bTubeShards as ::core::ffi::c_int as uint16,
+        addr_kEproj_N00bTubeReleasedAirBubbles as uint16,
         4 as uint16,
         game,
     );
     SpawnEprojWithRoomGfx(
-        addr_kEproj_N00bTubeShards as ::core::ffi::c_int as uint16,
+        addr_kEproj_N00bTubeReleasedAirBubbles as uint16,
         6 as uint16,
         game,
     );
     SpawnEprojWithRoomGfx(
-        addr_kEproj_N00bTubeShards as ::core::ffi::c_int as uint16,
+        addr_kEproj_N00bTubeReleasedAirBubbles as uint16,
         8 as uint16,
         game,
     );
     SpawnEprojWithRoomGfx(
-        addr_kEproj_N00bTubeShards as ::core::ffi::c_int as uint16,
-        0xa as uint16,
-        game,
-    );
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_N00bTubeShards as ::core::ffi::c_int as uint16,
-        0xc as uint16,
-        game,
-    );
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_N00bTubeShards as ::core::ffi::c_int as uint16,
-        0xe as uint16,
-        game,
-    );
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_N00bTubeShards as ::core::ffi::c_int as uint16,
-        0x10 as uint16,
-        game,
-    );
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_N00bTubeShards as ::core::ffi::c_int as uint16,
-        0x12 as uint16,
-        game,
-    );
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_N00bTubeReleasedAirBubbles as ::core::ffi::c_int as uint16,
-        0 as uint16,
-        game,
-    );
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_N00bTubeReleasedAirBubbles as ::core::ffi::c_int as uint16,
-        2 as uint16,
-        game,
-    );
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_N00bTubeReleasedAirBubbles as ::core::ffi::c_int as uint16,
-        4 as uint16,
-        game,
-    );
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_N00bTubeReleasedAirBubbles as ::core::ffi::c_int as uint16,
-        6 as uint16,
-        game,
-    );
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_N00bTubeReleasedAirBubbles as ::core::ffi::c_int as uint16,
-        8 as uint16,
-        game,
-    );
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_N00bTubeReleasedAirBubbles as ::core::ffi::c_int as uint16,
+        addr_kEproj_N00bTubeReleasedAirBubbles as uint16,
         0xa as uint16,
         game,
     );
@@ -5268,7 +5228,7 @@ pub unsafe fn PlmPreInstr_WakePlmIfRoomArgumentDoorIsSet(mut k: uint16, game: &m
     {
         let mut v3: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1cd7) as *mut uint16).offset(v3 as isize) =
-            addr_locret_84D779 as ::core::ffi::c_int as uint16;
+            addr_locret_84D779 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1d27) as *mut uint16).offset(v3 as isize) =
             *((&raw mut game.g_ram as *mut uint8).offset(0xdebc) as *mut uint16)
                 .offset(v3 as isize);
@@ -5282,7 +5242,7 @@ pub unsafe fn PlmInstr_ShootEyeDoorProjectileWithProjectileArg(
     game: &mut Game,
 ) -> *const uint8 {
     SpawnEprojWithRoomGfx(
-        addr_kEproj_EyeDoorProjectile as ::core::ffi::c_int as uint16,
+        addr_kEproj_EyeDoorProjectile as uint16,
         *(plmp as *mut uint16),
         game,
     );
@@ -5295,7 +5255,7 @@ pub unsafe fn PlmInstr_SpawnEyeDoorSweatEproj(
     game: &mut Game,
 ) -> *const uint8 {
     SpawnEprojWithRoomGfx(
-        addr_kEproj_EyeDoorSweat as ::core::ffi::c_int as uint16,
+        addr_kEproj_EyeDoorSweat as uint16,
         *(plmp as *mut uint16),
         game,
     );
@@ -5315,11 +5275,7 @@ pub unsafe fn PlmInstr_SpawnEyeDoorSmokeProjectile(
     mut k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_EyeDoorSmoke as ::core::ffi::c_int as uint16,
-        0xb as uint16,
-        game,
-    );
+    SpawnEprojWithRoomGfx(addr_kEproj_EyeDoorSmoke as uint16, 0xb as uint16, game);
     return plmp;
 }
 pub unsafe fn PlmInstr_MoveUpAndMakeBlueDoorFacingRight(

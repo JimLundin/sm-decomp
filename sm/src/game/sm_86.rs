@@ -1346,26 +1346,26 @@ unsafe fn EprojColl_85AD(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 
     };
 }
 static unk_868729: [uint8; 20] = [
-    0 as ::core::ffi::c_int as uint8,
-    1 as ::core::ffi::c_int as uint8,
-    0x82 as ::core::ffi::c_int as uint8,
-    0x83 as ::core::ffi::c_int as uint8,
-    0 as ::core::ffi::c_int as uint8,
-    0x81 as ::core::ffi::c_int as uint8,
-    2 as ::core::ffi::c_int as uint8,
-    0x83 as ::core::ffi::c_int as uint8,
-    0 as ::core::ffi::c_int as uint8,
-    1 as ::core::ffi::c_int as uint8,
-    2 as ::core::ffi::c_int as uint8,
-    0x83 as ::core::ffi::c_int as uint8,
-    0 as ::core::ffi::c_int as uint8,
-    0x81 as ::core::ffi::c_int as uint8,
-    0x82 as ::core::ffi::c_int as uint8,
-    0x83 as ::core::ffi::c_int as uint8,
-    0x80 as ::core::ffi::c_int as uint8,
-    0x81 as ::core::ffi::c_int as uint8,
-    0x82 as ::core::ffi::c_int as uint8,
-    0x83 as ::core::ffi::c_int as uint8,
+    0 as uint8,
+    1 as uint8,
+    0x82 as uint8,
+    0x83 as uint8,
+    0 as uint8,
+    0x81 as uint8,
+    2 as uint8,
+    0x83 as uint8,
+    0 as uint8,
+    1 as uint8,
+    2 as uint8,
+    0x83 as uint8,
+    0 as uint8,
+    0x81 as uint8,
+    0x82 as uint8,
+    0x83 as uint8,
+    0x80 as uint8,
+    0x81 as uint8,
+    0x82 as uint8,
+    0x83 as uint8,
 ];
 unsafe fn EprojColl_85C2(
     mut eci: *mut EprojCollInfo,
@@ -2220,12 +2220,7 @@ pub unsafe fn EprojInstr_SpawnEnemyDropsWithDraygonsEyeDrops(
         x: *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v1 as isize),
         y: *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize),
     };
-    SpawnEnemyDrops(
-        addr_kEnemyDef_DE7F as ::core::ffi::c_int as uint16,
-        k,
-        0 as uint16,
-        game,
-    );
+    SpawnEnemyDrops(addr_kEnemyDef_DE7F as uint16, k, 0 as uint16, game);
     return epjp;
 }
 pub unsafe fn EprojInstr_SetPreInstrA(
@@ -2532,82 +2527,51 @@ unsafe fn EprojInit_CrocomireSpikeWallPieces(mut j: uint16, game: &mut Game) {
         -(30720 as ::core::ffi::c_int) as uint16;
 }
 static CrocomireSpikeWallPieces_Tab2: [uint16; 18] = [
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0xff0 as ::core::ffi::c_int as uint16,
-    0xee0 as ::core::ffi::c_int as uint16,
-    0xcc0 as ::core::ffi::c_int as uint16,
-    0xaa0 as ::core::ffi::c_int as uint16,
-    0x880 as ::core::ffi::c_int as uint16,
-    0x660 as ::core::ffi::c_int as uint16,
-    0x440 as ::core::ffi::c_int as uint16,
-    0x220 as ::core::ffi::c_int as uint16,
-    0xff0 as ::core::ffi::c_int as uint16,
-    0xee0 as ::core::ffi::c_int as uint16,
-    0xcc0 as ::core::ffi::c_int as uint16,
-    0xaa0 as ::core::ffi::c_int as uint16,
-    0x880 as ::core::ffi::c_int as uint16,
-    0x660 as ::core::ffi::c_int as uint16,
-    0x440 as ::core::ffi::c_int as uint16,
-    0x220 as ::core::ffi::c_int as uint16,
+    0 as uint16,
+    0 as uint16,
+    0xff0 as uint16,
+    0xee0 as uint16,
+    0xcc0 as uint16,
+    0xaa0 as uint16,
+    0x880 as uint16,
+    0x660 as uint16,
+    0x440 as uint16,
+    0x220 as uint16,
+    0xff0 as uint16,
+    0xee0 as uint16,
+    0xcc0 as uint16,
+    0xaa0 as uint16,
+    0x880 as uint16,
+    0x660 as uint16,
+    0x440 as uint16,
+    0x220 as uint16,
 ];
 static CrocomireSpikeWallPieces_Tab1: [uint16; 18] = [
-    0 as ::core::ffi::c_int as uint16,
-    0 as ::core::ffi::c_int as uint16,
-    0xff00 as ::core::ffi::c_int as uint16,
-    0xee00 as ::core::ffi::c_int as uint16,
-    0xcc00 as ::core::ffi::c_int as uint16,
-    0xaa00 as ::core::ffi::c_int as uint16,
-    0x8800 as ::core::ffi::c_int as uint16,
-    0x6600 as ::core::ffi::c_int as uint16,
-    0x4400 as ::core::ffi::c_int as uint16,
-    0x2200 as ::core::ffi::c_int as uint16,
-    0xff00 as ::core::ffi::c_int as uint16,
-    0xee00 as ::core::ffi::c_int as uint16,
-    0xcc00 as ::core::ffi::c_int as uint16,
-    0xaa00 as ::core::ffi::c_int as uint16,
-    0x8800 as ::core::ffi::c_int as uint16,
-    0x6600 as ::core::ffi::c_int as uint16,
-    0x4400 as ::core::ffi::c_int as uint16,
-    0x2200 as ::core::ffi::c_int as uint16,
+    0 as uint16,
+    0 as uint16,
+    0xff00 as uint16,
+    0xee00 as uint16,
+    0xcc00 as uint16,
+    0xaa00 as uint16,
+    0x8800 as uint16,
+    0x6600 as uint16,
+    0x4400 as uint16,
+    0x2200 as uint16,
+    0xff00 as uint16,
+    0xee00 as uint16,
+    0xcc00 as uint16,
+    0xaa00 as uint16,
+    0x8800 as uint16,
+    0x6600 as uint16,
+    0x4400 as uint16,
+    0x2200 as uint16,
 ];
 static CrocomireSpikeWallPieces_Tab3: [int8; 36] = [
-    0 as ::core::ffi::c_int as int8,
-    0 as ::core::ffi::c_int as int8,
-    0 as ::core::ffi::c_int as int8,
-    0 as ::core::ffi::c_int as int8,
-    4 as ::core::ffi::c_int as int8,
-    0 as ::core::ffi::c_int as int8,
-    4 as ::core::ffi::c_int as int8,
-    0 as ::core::ffi::c_int as int8,
-    3 as ::core::ffi::c_int as int8,
-    0 as ::core::ffi::c_int as int8,
-    3 as ::core::ffi::c_int as int8,
-    0 as ::core::ffi::c_int as int8,
-    2 as ::core::ffi::c_int as int8,
-    0 as ::core::ffi::c_int as int8,
-    2 as ::core::ffi::c_int as int8,
-    0 as ::core::ffi::c_int as int8,
-    1 as ::core::ffi::c_int as int8,
-    0 as ::core::ffi::c_int as int8,
-    1 as ::core::ffi::c_int as int8,
-    0 as ::core::ffi::c_int as int8,
-    6 as ::core::ffi::c_int as int8,
-    0 as ::core::ffi::c_int as int8,
-    5 as ::core::ffi::c_int as int8,
-    0 as ::core::ffi::c_int as int8,
-    4 as ::core::ffi::c_int as int8,
-    0 as ::core::ffi::c_int as int8,
-    3 as ::core::ffi::c_int as int8,
-    0 as ::core::ffi::c_int as int8,
-    2 as ::core::ffi::c_int as int8,
-    0 as ::core::ffi::c_int as int8,
-    2 as ::core::ffi::c_int as int8,
-    0 as ::core::ffi::c_int as int8,
-    1 as ::core::ffi::c_int as int8,
-    0 as ::core::ffi::c_int as int8,
-    1 as ::core::ffi::c_int as int8,
-    0 as ::core::ffi::c_int as int8,
+    0 as int8, 0 as int8, 0 as int8, 0 as int8, 4 as int8, 0 as int8, 4 as int8, 0 as int8,
+    3 as int8, 0 as int8, 3 as int8, 0 as int8, 2 as int8, 0 as int8, 2 as int8, 0 as int8,
+    1 as int8, 0 as int8, 1 as int8, 0 as int8, 6 as int8, 0 as int8, 5 as int8, 0 as int8,
+    4 as int8, 0 as int8, 3 as int8, 0 as int8, 2 as int8, 0 as int8, 2 as int8, 0 as int8,
+    1 as int8, 0 as int8, 1 as int8, 0 as int8,
 ];
 pub unsafe fn EprojPreInstr_CrocomireSpikeWallPieces(mut k: uint16, game: &mut Game) {
     let mut v3: int8 = 0;
@@ -2727,7 +2691,7 @@ pub unsafe fn EprojPreInstr_CrocomireSpikeWallPieces(mut k: uint16, game: &mut G
                 .offset(v12 as isize),
         };
         SpawnEprojWithRoomGfx(
-            addr_kEproj_DustCloudExplosion as ::core::ffi::c_int as uint16,
+            addr_kEproj_DustCloudExplosion as uint16,
             0x15 as uint16,
             game,
         );
@@ -2744,12 +2708,7 @@ pub unsafe fn EprojInstr_9270(
         x: *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v1 as isize),
         y: *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize),
     };
-    SpawnEnemyDrops(
-        addr_kEnemyDef_DDBF as ::core::ffi::c_int as uint16,
-        k,
-        0 as uint16,
-        game,
-    );
+    SpawnEnemyDrops(addr_kEnemyDef_DDBF as uint16, k, 0 as uint16, game);
     return epjp;
 }
 unsafe fn EprojInit_CrocomireBridgeCrumbling(mut j: uint16, game: &mut Game) {
@@ -2861,12 +2820,8 @@ static kEprojInit_9634_Xvel: [int16; 4] = [
     -(0x1bc as ::core::ffi::c_int) as int16,
     -(0x16a as ::core::ffi::c_int) as int16,
 ];
-static kEprojInit_9634_Yvel: [int16; 4] = [
-    0 as ::core::ffi::c_int as int16,
-    0x88 as ::core::ffi::c_int as int16,
-    0xfc as ::core::ffi::c_int as int16,
-    0x16a as ::core::ffi::c_int as int16,
-];
+static kEprojInit_9634_Yvel: [int16; 4] =
+    [0 as int16, 0x88 as int16, 0xfc as int16, 0x16a as int16];
 unsafe fn EprojInit_9634(mut j: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16).offset(v1 as isize) =
@@ -2902,7 +2857,7 @@ pub unsafe fn EprojPreInstr_9634(mut k: uint16, game: &mut Game) {
             != 0
         {
             *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16)
-                .offset(v1 as isize) = addr_off_869574 as ::core::ffi::c_int as uint16;
+                .offset(v1 as isize) = addr_off_869574 as uint16;
             let ref mut fresh136 = *((&raw mut game.g_ram as *mut uint8).offset(0x1aff)
                 as *mut uint16)
                 .offset(v1 as isize);
@@ -2945,18 +2900,10 @@ unsafe fn EprojInit_9642_RidleysFireball(j: uint16, game: &mut Game) {
     let y_velocity = EprojState(&game.g_ram)
         .slot_word(0x7800 + core::mem::offset_of!(Ram7800_Default, var_1A), 0);
     EprojStateMut(&mut game.g_ram).write(0x1adb, slot, y_velocity);
-    SetAreaDependentEprojPropertiesEx(
-        addr_kRidleysFireball_Tab0 as ::core::ffi::c_int as uint16,
-        j,
-        game,
-    );
+    SetAreaDependentEprojPropertiesEx(addr_kRidleysFireball_Tab0 as uint16, j, game);
 }
 pub unsafe fn SetAreaDependentEprojProperties(mut j: uint16, game: &mut Game) {
-    SetAreaDependentEprojPropertiesEx(
-        addr_kRidleysFireball_Tab0 as ::core::ffi::c_int as uint16,
-        j,
-        game,
-    );
+    SetAreaDependentEprojPropertiesEx(addr_kRidleysFireball_Tab0 as uint16, j, game);
 }
 pub unsafe fn EprojPreInstr_9642_RidleysFireball(mut k: uint16, game: &mut Game) {
     let mut v1: uint16 = 0;
@@ -3048,7 +2995,7 @@ pub unsafe fn EprojPreInstr_966C(mut k: uint16, game: &mut Game) {
     {
         let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v1 as isize) =
-            addr_off_869574 as ::core::ffi::c_int as uint16;
+            addr_off_869574 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
     }
@@ -3058,7 +3005,7 @@ pub unsafe fn EprojPreInstr_9688(mut k: uint16, game: &mut Game) {
     if EprojBlockCollisition_Horiz(k, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v1 as isize) =
-            addr_off_869574 as ::core::ffi::c_int as uint16;
+            addr_off_869574 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
     }
@@ -3089,9 +3036,9 @@ pub unsafe fn EprojInstr_95BA(
     game: &mut Game,
 ) -> *const uint8 {
     EprojStateMut(&mut game.g_ram).write(0x1995, 0, 0);
-    SpawnEprojWithRoomGfx(addr_stru_86966C as ::core::ffi::c_int as uint16, k, game);
+    SpawnEprojWithRoomGfx(addr_stru_86966C as uint16, k, game);
     EprojStateMut(&mut game.g_ram).write(0x1995, 0, 0);
-    SpawnEprojWithRoomGfx(addr_stru_86967A as ::core::ffi::c_int as uint16, k, game);
+    SpawnEprojWithRoomGfx(addr_stru_86967A as uint16, k, game);
     return epjp;
 }
 pub unsafe fn EprojInstr_95ED(
@@ -3100,9 +3047,9 @@ pub unsafe fn EprojInstr_95ED(
     game: &mut Game,
 ) -> *const uint8 {
     EprojStateMut(&mut game.g_ram).write(0x1995, 0, 0);
-    SpawnEprojWithRoomGfx(addr_stru_869688 as ::core::ffi::c_int as uint16, k, game);
+    SpawnEprojWithRoomGfx(addr_stru_869688 as uint16, k, game);
     EprojStateMut(&mut game.g_ram).write(0x1995, 0, 0);
-    SpawnEprojWithRoomGfx(addr_stru_869696 as ::core::ffi::c_int as uint16, k, game);
+    SpawnEprojWithRoomGfx(addr_stru_869696 as uint16, k, game);
     return epjp;
 }
 pub unsafe fn EprojInstr_9620(k: uint16, epjp: *const uint8, game: &mut Game) -> *const uint8 {
@@ -3136,11 +3083,7 @@ pub unsafe fn EprojPreInstr_9734_CeresFallingDebris(mut k: uint16, game: &mut Ga
             x: game.enemy_projectile_x_pos(k),
             y: game.enemy_projectile_y_pos(k),
         };
-        SpawnEprojWithRoomGfx(
-            addr_kEproj_DustCloudExplosion as ::core::ffi::c_int as uint16,
-            9 as uint16,
-            game,
-        );
+        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as uint16, 9 as uint16, game);
         QueueSfx2_Max6(0x6d as uint16, game);
     }
 }
@@ -3154,52 +3097,47 @@ pub unsafe fn EprojInstr_980E(
         x: *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v2 as isize),
         y: *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v2 as isize),
     };
-    SpawnEnemyDrops(
-        addr_kEnemyDef_E4FF as ::core::ffi::c_int as uint16,
-        k,
-        0 as uint16,
-        game,
-    );
+    SpawnEnemyDrops(addr_kEnemyDef_E4FF as uint16, k, 0 as uint16, game);
     return epjp;
 }
 static byte_8698B4: [uint8; 16] = [
-    0x10 as ::core::ffi::c_int as uint8,
-    0x20 as ::core::ffi::c_int as uint8,
-    0x30 as ::core::ffi::c_int as uint8,
-    0x40 as ::core::ffi::c_int as uint8,
-    0x50 as ::core::ffi::c_int as uint8,
-    0x60 as ::core::ffi::c_int as uint8,
-    0x70 as ::core::ffi::c_int as uint8,
-    0x80 as ::core::ffi::c_int as uint8,
-    0xf0 as ::core::ffi::c_int as uint8,
-    0xe0 as ::core::ffi::c_int as uint8,
-    0xd0 as ::core::ffi::c_int as uint8,
-    0xc0 as ::core::ffi::c_int as uint8,
-    0xb0 as ::core::ffi::c_int as uint8,
-    0xa0 as ::core::ffi::c_int as uint8,
-    0x90 as ::core::ffi::c_int as uint8,
-    0x80 as ::core::ffi::c_int as uint8,
+    0x10 as uint8,
+    0x20 as uint8,
+    0x30 as uint8,
+    0x40 as uint8,
+    0x50 as uint8,
+    0x60 as uint8,
+    0x70 as uint8,
+    0x80 as uint8,
+    0xf0 as uint8,
+    0xe0 as uint8,
+    0xd0 as uint8,
+    0xc0 as uint8,
+    0xb0 as uint8,
+    0xa0 as uint8,
+    0x90 as uint8,
+    0x80 as uint8,
 ];
 static byte_8698F7: [uint8; 9] = [
-    0x30 as ::core::ffi::c_int as uint8,
-    0x44 as ::core::ffi::c_int as uint8,
-    0x58 as ::core::ffi::c_int as uint8,
-    0x6c as ::core::ffi::c_int as uint8,
-    0x80 as ::core::ffi::c_int as uint8,
-    0x94 as ::core::ffi::c_int as uint8,
-    0xa8 as ::core::ffi::c_int as uint8,
-    0xbc as ::core::ffi::c_int as uint8,
-    0xd0 as ::core::ffi::c_int as uint8,
+    0x30 as uint8,
+    0x44 as uint8,
+    0x58 as uint8,
+    0x6c as uint8,
+    0x80 as uint8,
+    0x94 as uint8,
+    0xa8 as uint8,
+    0xbc as uint8,
+    0xd0 as uint8,
 ];
 static byte_869979: [uint8; 8] = [
-    0 as ::core::ffi::c_int as uint8,
-    0x20 as ::core::ffi::c_int as uint8,
-    0x40 as ::core::ffi::c_int as uint8,
-    0x60 as ::core::ffi::c_int as uint8,
-    0x80 as ::core::ffi::c_int as uint8,
-    0xa0 as ::core::ffi::c_int as uint8,
-    0xc0 as ::core::ffi::c_int as uint8,
-    0xe0 as ::core::ffi::c_int as uint8,
+    0 as uint8,
+    0x20 as uint8,
+    0x40 as uint8,
+    0x60 as uint8,
+    0x80 as uint8,
+    0xa0 as uint8,
+    0xc0 as uint8,
+    0xe0 as uint8,
 ];
 unsafe fn EprojInit_PhantoonDestroyableFireballs(mut j: uint16, game: &mut Game) {
     let mut v1: int8 = 0;
@@ -3228,7 +3166,7 @@ unsafe fn EprojInit_PhantoonDestroyableFireballs(mut j: uint16, game: &mut Game)
                     .y_pos as ::core::ffi::c_int
                     + 32 as ::core::ffi::c_int) as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16)
-                .offset(v2 as isize) = addr_off_8697B4 as ::core::ffi::c_int as uint16;
+                .offset(v2 as isize) = addr_off_8697B4 as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16)
                 .offset(v2 as isize) = (*((&raw mut game.g_ram as *mut uint8).offset(0x1bd7)
                 as *mut uint16)
@@ -3368,7 +3306,7 @@ pub unsafe fn EprojPreInstr_PhantoonStartingFireballs(mut k: uint16, game: &mut 
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16).offset(v1 as isize) =
             (0x8699bf as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v1 as isize) =
-            addr_word_86976C as ::core::ffi::c_int as uint16;
+            addr_word_86976C as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16).offset(v1 as isize) =
@@ -3392,7 +3330,7 @@ pub unsafe fn EprojPreInstr_PhantoonStartingFireballs2(mut k: uint16, game: &mut
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16).offset(v1 as isize) =
             (0x869a01 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v1 as isize) =
-            addr_word_869772 as ::core::ffi::c_int as uint16;
+            addr_word_869772 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         let ref mut fresh132 = *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
@@ -3414,11 +3352,7 @@ pub unsafe fn EprojPreInstr_PhantoonStartingFireballs2(mut k: uint16, game: &mut
         }
     }
 }
-static word_869A3E: [uint16; 3] = [
-    0xfd00 as ::core::ffi::c_int as uint16,
-    0xfe00 as ::core::ffi::c_int as uint16,
-    0xff00 as ::core::ffi::c_int as uint16,
-];
+static word_869A3E: [uint16; 3] = [0xfd00 as uint16, 0xfe00 as uint16, 0xff00 as uint16];
 pub unsafe fn EprojPreInstr_PhantoonStartingFireballs3(mut k: uint16, game: &mut Game) {
     let mut current_block: u64;
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -3448,7 +3382,7 @@ pub unsafe fn EprojPreInstr_PhantoonStartingFireballs3(mut k: uint16, game: &mut
     match current_block {
         220575731145207134 => {
             *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16)
-                .offset(v1 as isize) = addr_word_869782 as ::core::ffi::c_int as uint16;
+                .offset(v1 as isize) = addr_word_869782 as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16)
                 .offset(v1 as isize) = 1 as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16)
@@ -3505,7 +3439,7 @@ pub unsafe fn EprojPreInstr_PhantoonDestroyableFireballs(mut k: uint16, game: &m
         || v5 as ::core::ffi::c_int - 256 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v1 as isize) =
-            addr_off_8697F8 as ::core::ffi::c_int as uint16;
+            addr_off_8697F8 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
     }
@@ -3547,7 +3481,7 @@ pub unsafe fn EprojPreInstr_PhantoonDestroyableFireballs_2(mut k: uint16, game: 
                 != 0
             {
                 *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16)
-                    .offset(v1 as isize) = addr_word_8697AC as ::core::ffi::c_int as uint16;
+                    .offset(v1 as isize) = addr_word_8697AC as uint16;
                 *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16)
                     .offset(v1 as isize) = 1 as uint16;
                 let ref mut fresh127 = *((&raw mut game.g_ram as *mut uint8).offset(0x1a93)
@@ -3608,7 +3542,7 @@ pub unsafe fn EprojPreInstr_PhantoonDestroyableFireballs_3(mut k: uint16, game: 
         || v5 as ::core::ffi::c_int - 256 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v1 as isize) =
-            addr_off_8697F8 as ::core::ffi::c_int as uint16;
+            addr_off_8697F8 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
     }
@@ -3656,7 +3590,7 @@ pub unsafe fn EprojPreInstr_PhantoonStartingFireballsB_2(mut k: uint16, game: &m
             *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16)
                 .offset(v1 as isize) = 1 as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16)
-                .offset(v1 as isize) = addr_off_8697F8 as ::core::ffi::c_int as uint16;
+                .offset(v1 as isize) = addr_off_8697F8 as uint16;
             return;
         }
     }
@@ -3894,8 +3828,8 @@ pub unsafe fn EprojPreInit_MiniKraidSpit(mut k: uint16, game: &mut Game) {
 }
 static kEprojInit_MiniKraidSpikes_Tab0: [int16; 3] = [
     -(2 as ::core::ffi::c_int) as int16,
-    12 as ::core::ffi::c_int as int16,
-    24 as ::core::ffi::c_int as int16,
+    12 as int16,
+    24 as int16,
 ];
 unsafe fn EprojInit_MiniKraidSpikes(mut j: uint16, mut a: uint16, game: &mut Game) {
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -3936,8 +3870,8 @@ pub unsafe fn EprojPreInstr_MiniKraidSpikes(mut k: uint16, game: &mut Game) {
 unsafe fn EprojInit_WalkingLavaSeahorseFireball(mut j: uint16, game: &mut Game) {
     static word_869EF9: [int16; 3] = [
         -(0x100 as ::core::ffi::c_int) as int16,
-        0 as ::core::ffi::c_int as int16,
-        0x100 as ::core::ffi::c_int as int16,
+        0 as int16,
+        0x100 as int16,
     ];
     let mut v1: *mut EnemyData = gEnemyData(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
@@ -4192,9 +4126,9 @@ pub unsafe fn EprojPreInstr_PirateClawThrownRight(mut k: uint16, game: &mut Game
     }
 }
 static word_86A2D6: [int16; 6] = [
-    64 as ::core::ffi::c_int as int16,
-    72 as ::core::ffi::c_int as int16,
-    80 as ::core::ffi::c_int as int16,
+    64 as int16,
+    72 as int16,
+    80 as int16,
     -(64 as ::core::ffi::c_int) as int16,
     -(72 as ::core::ffi::c_int) as int16,
     -(80 as ::core::ffi::c_int) as int16,
@@ -4290,7 +4224,7 @@ pub unsafe fn EprojPreInstr_CeresElevatorPad(mut k: uint16, game: &mut Game) {
             *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16)
                 .offset(v1 as isize) = 1 as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16)
-                .offset(v1 as isize) = addr_off_86A28B as ::core::ffi::c_int as uint16;
+                .offset(v1 as isize) = addr_off_86A28B as uint16;
             CallSomeSamusCode(0xe as uint16, game);
         }
     }
@@ -4301,7 +4235,7 @@ pub unsafe fn EprojPreInstr_CeresElevatorPlatform(mut k: uint16, game: &mut Game
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v1 as isize) =
-            addr_off_86A28B as ::core::ffi::c_int as uint16;
+            addr_off_86A28B as uint16;
     }
 }
 pub unsafe fn EprojPreInstr_PrePhantomRoom(mut j: uint16, game: &mut Game) {
@@ -4487,69 +4421,69 @@ static kEprojInit_BombTorizoExplosiveSwipe_Tab1: [int16; 11] = [
     -(52 as ::core::ffi::c_int) as int16,
     -(28 as ::core::ffi::c_int) as int16,
     -(11 as ::core::ffi::c_int) as int16,
-    9 as ::core::ffi::c_int as int16,
-    21 as ::core::ffi::c_int as int16,
-    20 as ::core::ffi::c_int as int16,
+    9 as int16,
+    21 as int16,
+    20 as int16,
     -(52 as ::core::ffi::c_int) as int16,
     -(27 as ::core::ffi::c_int) as int16,
     -(10 as ::core::ffi::c_int) as int16,
-    9 as ::core::ffi::c_int as int16,
-    20 as ::core::ffi::c_int as int16,
+    9 as int16,
+    20 as int16,
 ];
 static kEprojInit_BombTorizoStatueBreaking_Xpos: [int16; 16] = [
-    8 as ::core::ffi::c_int as int16,
-    0x18 as ::core::ffi::c_int as int16,
+    8 as int16,
+    0x18 as int16,
     -(8 as ::core::ffi::c_int) as int16,
-    8 as ::core::ffi::c_int as int16,
-    0x18 as ::core::ffi::c_int as int16,
+    8 as int16,
+    0x18 as int16,
     -(8 as ::core::ffi::c_int) as int16,
-    8 as ::core::ffi::c_int as int16,
-    0x18 as ::core::ffi::c_int as int16,
-    8 as ::core::ffi::c_int as int16,
+    8 as int16,
+    0x18 as int16,
+    8 as int16,
     -(8 as ::core::ffi::c_int) as int16,
-    0x18 as ::core::ffi::c_int as int16,
-    8 as ::core::ffi::c_int as int16,
+    0x18 as int16,
+    8 as int16,
     -(8 as ::core::ffi::c_int) as int16,
-    0x18 as ::core::ffi::c_int as int16,
-    8 as ::core::ffi::c_int as int16,
+    0x18 as int16,
+    8 as int16,
     -(8 as ::core::ffi::c_int) as int16,
 ];
 static kEprojInit_BombTorizoStatueBreaking_Ypos: [int16; 8] = [
     -(8 as ::core::ffi::c_int) as int16,
     -(8 as ::core::ffi::c_int) as int16,
-    8 as ::core::ffi::c_int as int16,
-    8 as ::core::ffi::c_int as int16,
-    8 as ::core::ffi::c_int as int16,
-    0x18 as ::core::ffi::c_int as int16,
-    0x18 as ::core::ffi::c_int as int16,
-    0x18 as ::core::ffi::c_int as int16,
+    8 as int16,
+    8 as int16,
+    8 as int16,
+    0x18 as int16,
+    0x18 as int16,
+    0x18 as int16,
 ];
 static kEprojInit_BombTorizoStatueBreaking_Yvel: [int16; 8] = [
-    256 as ::core::ffi::c_int as int16,
-    256 as ::core::ffi::c_int as int16,
-    256 as ::core::ffi::c_int as int16,
-    256 as ::core::ffi::c_int as int16,
-    256 as ::core::ffi::c_int as int16,
-    256 as ::core::ffi::c_int as int16,
-    256 as ::core::ffi::c_int as int16,
-    256 as ::core::ffi::c_int as int16,
+    256 as int16,
+    256 as int16,
+    256 as int16,
+    256 as int16,
+    256 as int16,
+    256 as int16,
+    256 as int16,
+    256 as int16,
 ];
 static kEprojInit_BombTorizoStatueBreaking_F: [int16; 8] = [
-    16 as ::core::ffi::c_int as int16,
-    16 as ::core::ffi::c_int as int16,
-    16 as ::core::ffi::c_int as int16,
-    16 as ::core::ffi::c_int as int16,
-    16 as ::core::ffi::c_int as int16,
-    16 as ::core::ffi::c_int as int16,
-    16 as ::core::ffi::c_int as int16,
-    16 as ::core::ffi::c_int as int16,
+    16 as int16,
+    16 as int16,
+    16 as int16,
+    16 as int16,
+    16 as int16,
+    16 as int16,
+    16 as int16,
+    16 as int16,
 ];
 static kEprojInit_BombTorizoLowHealthExplode_X: [int16; 6] = [
-    0 as ::core::ffi::c_int as int16,
-    12 as ::core::ffi::c_int as int16,
+    0 as int16,
+    12 as int16,
     -(12 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
-    16 as ::core::ffi::c_int as int16,
+    0 as int16,
+    16 as int16,
     -(16 as ::core::ffi::c_int) as int16,
 ];
 static kEprojInit_BombTorizoLowHealthExplode_Y: [int16; 6] = [
@@ -4937,7 +4871,7 @@ pub unsafe fn EprojPreInstr_BombTorizosChozoOrbs(mut k: uint16, game: &mut Game)
     if EprojBlockCollisition_Horiz(k, game) != 0 {
         let mut v3: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v3 as isize) =
-            addr_off_86AB25 as ::core::ffi::c_int as uint16;
+            addr_off_86AB25 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v3 as isize) =
             1 as uint16;
     } else {
@@ -4968,7 +4902,7 @@ pub unsafe fn EprojPreInstr_BombTorizosChozoOrbs(mut k: uint16, game: &mut Game)
                 | 8 as ::core::ffi::c_int)
                 - 2 as ::core::ffi::c_int) as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16)
-                .offset(v4 as isize) = addr_off_86AB41 as ::core::ffi::c_int as uint16;
+                .offset(v4 as isize) = addr_off_86AB41 as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16)
                 .offset(v4 as isize) = 1 as uint16;
         }
@@ -5020,7 +4954,7 @@ pub unsafe fn EprojPreInstr_GoldenTorizosChozoOrbs(mut k: uint16, game: &mut Gam
                 | 8 as ::core::ffi::c_int)
                 - 2 as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v5 as isize) =
-            addr_off_86AB41 as ::core::ffi::c_int as uint16;
+            addr_off_86AB41 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v5 as isize) =
             1 as uint16;
     } else {
@@ -5081,21 +5015,21 @@ unsafe fn EprojInit_TorizoSonicBoom(mut j: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(v3 as isize) =
             624 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v3 as isize) =
-            addr_off_86ADD2 as ::core::ffi::c_int as uint16;
+            addr_off_86ADD2 as uint16;
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v3 as isize) =
             ((*v2).x_pos as ::core::ffi::c_int - 32 as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(v3 as isize) =
             -(624 as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v3 as isize) =
-            addr_off_86ADBF as ::core::ffi::c_int as uint16;
+            addr_off_86ADBF as uint16;
     };
 }
 pub unsafe fn EprojPreInstr_TorizoSonicBoom(mut k: uint16, game: &mut Game) {
     if EprojBlockCollisition_Horiz(k, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         let mut v4: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v4 as isize) =
-            addr_off_86ADE5 as ::core::ffi::c_int as uint16;
+            addr_off_86ADE5 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v4 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16).offset(v4 as isize) =
@@ -5345,10 +5279,7 @@ pub unsafe fn sub_86B13E(mut k: uint16, mut epjp: *const uint8, game: &mut Game)
         addr_off_86B14B as ::core::ffi::c_int
     }) as uintptr_t as *const uint8;
 }
-static word_86B205: [int16; 2] = [
-    -(0x1e as ::core::ffi::c_int) as int16,
-    0x1e as ::core::ffi::c_int as int16,
-];
+static word_86B205: [int16; 2] = [-(0x1e as ::core::ffi::c_int) as int16, 0x1e as int16];
 unsafe fn EprojInit_GoldenTorizoSuperMissile(mut j: uint16, game: &mut Game) {
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16).offset(v2 as isize) =
@@ -5413,7 +5344,7 @@ pub unsafe fn EprojPreInstr_B237(mut k: uint16, game: &mut Game) {
     } {
         let mut v3: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v3 as isize) =
-            addr_off_86B2EF as ::core::ffi::c_int as uint16;
+            addr_off_86B2EF as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v3 as isize) =
             1 as uint16;
     } else {
@@ -5507,7 +5438,7 @@ pub unsafe fn EprojPreInstr_GoldenTorizoEyeBeam(mut k: uint16, game: &mut Game) 
     if EprojBlockCollisition_Horiz(k, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16)
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-            addr_off_86B3CD as ::core::ffi::c_int as uint16;
+            addr_off_86B3CD as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16)
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 1 as uint16;
         return;
@@ -5522,7 +5453,7 @@ pub unsafe fn EprojPreInstr_GoldenTorizoEyeBeam(mut k: uint16, game: &mut Game) 
                 | 8 as ::core::ffi::c_int)
                 - 2 as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v1 as isize) =
-            addr_off_86B3E5 as ::core::ffi::c_int as uint16;
+            addr_off_86B3E5 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         return;
@@ -5590,14 +5521,14 @@ unsafe fn EprojInit_LavaSeahorseFireball(mut j: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(v2 as isize) =
             704 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v2 as isize) =
-            addr_word_86B4CB as ::core::ffi::c_int as uint16;
+            addr_word_86B4CB as uint16;
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v2 as isize) =
             ((*v1).x_pos as ::core::ffi::c_int - 12 as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(v2 as isize) =
             -(704 as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v2 as isize) =
-            addr_word_86B4BF as ::core::ffi::c_int as uint16;
+            addr_word_86B4BF as uint16;
     };
 }
 pub unsafe fn sub_86B535(mut k: uint16, game: &mut Game) {
@@ -5661,24 +5592,24 @@ pub unsafe fn Eproj_DeleteIfYposOutside(mut k: uint16, game: &mut Game) {
 }
 static word_86B65B: [int16; 20] = [
     -(16 as ::core::ffi::c_int) as int16,
-    16 as ::core::ffi::c_int as int16,
+    16 as int16,
     -(96 as ::core::ffi::c_int) as int16,
     -(64 as ::core::ffi::c_int) as int16,
     -(128 as ::core::ffi::c_int) as int16,
     -(32 as ::core::ffi::c_int) as int16,
     -(96 as ::core::ffi::c_int) as int16,
-    64 as ::core::ffi::c_int as int16,
+    64 as int16,
     -(128 as ::core::ffi::c_int) as int16,
-    32 as ::core::ffi::c_int as int16,
-    16 as ::core::ffi::c_int as int16,
-    16 as ::core::ffi::c_int as int16,
-    96 as ::core::ffi::c_int as int16,
+    32 as int16,
+    16 as int16,
+    16 as int16,
+    96 as int16,
     -(64 as ::core::ffi::c_int) as int16,
-    112 as ::core::ffi::c_int as int16,
+    112 as int16,
     -(64 as ::core::ffi::c_int) as int16,
-    128 as ::core::ffi::c_int as int16,
+    128 as int16,
     -(64 as ::core::ffi::c_int) as int16,
-    144 as ::core::ffi::c_int as int16,
+    144 as int16,
     -(64 as ::core::ffi::c_int) as int16,
 ];
 unsafe fn EprojInit_EyeDoorProjectile(mut j: uint16, game: &mut Game) {
@@ -5709,9 +5640,9 @@ unsafe fn EprojInit_EyeDoorProjectile(mut j: uint16, game: &mut Game) {
 }
 static word_86B6B1: [int16; 4] = [
     -(64 as ::core::ffi::c_int) as int16,
-    512 as ::core::ffi::c_int as int16,
-    64 as ::core::ffi::c_int as int16,
-    512 as ::core::ffi::c_int as int16,
+    512 as int16,
+    64 as int16,
+    512 as int16,
 ];
 unsafe fn EprojInit_EyeDoorSweat(mut j: uint16, game: &mut Game) {
     CalculatePlmBlockCoords(
@@ -5777,7 +5708,7 @@ pub unsafe fn EprojPreInstr_EyeDoorProjectile(mut k: uint16, game: &mut Game) {
         }
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v3 as isize) =
-        addr_off_86B5F3 as ::core::ffi::c_int as uint16;
+        addr_off_86B5F3 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v3 as isize) =
         1 as uint16;
 }
@@ -5799,7 +5730,7 @@ pub unsafe fn EprojPreInstr_EyeDoorSweat(mut k: uint16, game: &mut Game) {
             .offset(v1 as isize);
         *fresh99 = (*fresh99 as ::core::ffi::c_int - 4 as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v1 as isize) =
-            addr_off_86B61D as ::core::ffi::c_int as uint16;
+            addr_off_86B61D as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
     };
@@ -5810,7 +5741,7 @@ pub unsafe fn EprojInstr_SpawnTourianStatueUnlockingParticle(
     game: &mut Game,
 ) -> *const uint8 {
     SpawnEprojWithRoomGfx(
-        addr_kEproj_TourianStatueUnlockingParticle as ::core::ffi::c_int as uint16,
+        addr_kEproj_TourianStatueUnlockingParticle as uint16,
         k,
         game,
     );
@@ -5832,7 +5763,7 @@ pub unsafe fn EprojInstr_SpawnTourianStatueUnlockingParticleTail(
     game: &mut Game,
 ) -> *const uint8 {
     SpawnEprojWithRoomGfx(
-        addr_kEproj_TourianStatueUnlockingParticleTail as ::core::ffi::c_int as uint16,
+        addr_kEproj_TourianStatueUnlockingParticleTail as uint16,
         k,
         game,
     );
@@ -5862,34 +5793,34 @@ unsafe fn EprojInit_TourianStatueUnlockingParticleWaterSplash(mut j: uint16, gam
             - 4 as ::core::ffi::c_int) as uint16;
 }
 static kEprojInit_TourianStatueEyeGlow_X: [uint16; 4] = [
-    0x84 as ::core::ffi::c_int as uint16,
-    0x7a as ::core::ffi::c_int as uint16,
-    0x9e as ::core::ffi::c_int as uint16,
-    0x68 as ::core::ffi::c_int as uint16,
+    0x84 as uint16,
+    0x7a as uint16,
+    0x9e as uint16,
+    0x68 as uint16,
 ];
 static kEprojInit_TourianStatueEyeGlow_Y: [uint16; 4] = [
-    0x90 as ::core::ffi::c_int as uint16,
-    0x51 as ::core::ffi::c_int as uint16,
-    0x80 as ::core::ffi::c_int as uint16,
-    0x72 as ::core::ffi::c_int as uint16,
+    0x90 as uint16,
+    0x51 as uint16,
+    0x80 as uint16,
+    0x72 as uint16,
 ];
 static kEprojInit_TourianStatueEyeGlow_Colors: [uint16; 16] = [
-    0x6bff as ::core::ffi::c_int as uint16,
-    0x33b as ::core::ffi::c_int as uint16,
-    0x216 as ::core::ffi::c_int as uint16,
-    0x173 as ::core::ffi::c_int as uint16,
-    0x7f5f as ::core::ffi::c_int as uint16,
-    0x7c1f as ::core::ffi::c_int as uint16,
-    0x5816 as ::core::ffi::c_int as uint16,
-    0x300c as ::core::ffi::c_int as uint16,
-    0x7f5a as ::core::ffi::c_int as uint16,
-    0x7ec0 as ::core::ffi::c_int as uint16,
-    0x6de0 as ::core::ffi::c_int as uint16,
-    0x54e0 as ::core::ffi::c_int as uint16,
-    0x6bfa as ::core::ffi::c_int as uint16,
-    0x3be0 as ::core::ffi::c_int as uint16,
-    0x2680 as ::core::ffi::c_int as uint16,
-    0x1580 as ::core::ffi::c_int as uint16,
+    0x6bff as uint16,
+    0x33b as uint16,
+    0x216 as uint16,
+    0x173 as uint16,
+    0x7f5f as uint16,
+    0x7c1f as uint16,
+    0x5816 as uint16,
+    0x300c as uint16,
+    0x7f5a as uint16,
+    0x7ec0 as uint16,
+    0x6de0 as uint16,
+    0x54e0 as uint16,
+    0x6bfa as uint16,
+    0x3be0 as uint16,
+    0x2680 as uint16,
+    0x1580 as uint16,
 ];
 unsafe fn EprojInit_TourianStatueEyeGlow(mut j: uint16, game: &mut Game) {
     let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x1993) as *mut uint16);
@@ -6031,7 +5962,7 @@ pub unsafe fn EprojPreInstr_TourianStatueUnlockingParticle(mut k: uint16, game: 
         & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        SpawnEprojWithRoomGfx(addr_stru_86BA5C as ::core::ffi::c_int as uint16, k, game);
+        SpawnEprojWithRoomGfx(addr_stru_86BA5C as uint16, k, game);
     }
     if *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize)
         as ::core::ffi::c_int
@@ -6039,7 +5970,7 @@ pub unsafe fn EprojPreInstr_TourianStatueUnlockingParticle(mut k: uint16, game: 
         == 256 as ::core::ffi::c_int
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v1 as isize) =
-            addr_off_86B79F as ::core::ffi::c_int as uint16;
+            addr_off_86B79F as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
     } else {
@@ -6066,7 +5997,7 @@ pub unsafe fn EprojPreInstr_TourianStatueSoul(mut k: uint16, game: &mut Game) {
         != 0 as ::core::ffi::c_int
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v1 as isize) =
-            addr_off_86B79F as ::core::ffi::c_int as uint16;
+            addr_off_86B79F as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
     }
@@ -6146,7 +6077,7 @@ unsafe fn EprojInit_NuclearWaffleBody(mut j: uint16, game: &mut Game) {
 unsafe fn EprojInit_NorfairLavaquakeRocks(mut j: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v1 as isize) =
-        addr_word_86BBD5 as ::core::ffi::c_int as uint16;
+        addr_word_86BBD5 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16).offset(v1 as isize) =
         (0x86bc16 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v1 as isize) =
@@ -6206,7 +6137,7 @@ pub unsafe fn EprojPreInstr_NorfairLavaquakeRocks_Inner2(mut k: uint16, game: &m
             - *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int) as int16
             as ::core::ffi::c_int)
-            < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
+            < 0 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn EprojPreInstr_NorfairLavaquakeRocks_Inner(mut k: uint16, game: &mut Game) {
     if EprojPreInstr_NorfairLavaquakeRocks_Inner2(k, game) != 0 {
@@ -6339,11 +6270,11 @@ pub unsafe fn Eproj_NorfairLavaquakeRocks_Func3(mut k: uint16, game: &mut Game) 
     );
 }
 static kEprojInit_ShaktoolAttackMiddleBackCircle_X: [int16; 8] = [
-    0 as ::core::ffi::c_int as int16,
-    12 as ::core::ffi::c_int as int16,
-    16 as ::core::ffi::c_int as int16,
-    12 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
+    12 as int16,
+    16 as int16,
+    12 as int16,
+    0 as int16,
     -(12 as ::core::ffi::c_int) as int16,
     -(16 as ::core::ffi::c_int) as int16,
     -(12 as ::core::ffi::c_int) as int16,
@@ -6351,11 +6282,11 @@ static kEprojInit_ShaktoolAttackMiddleBackCircle_X: [int16; 8] = [
 static kEprojInit_ShaktoolAttackMiddleBackCircle_Y: [int16; 8] = [
     -(16 as ::core::ffi::c_int) as int16,
     -(12 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
-    12 as ::core::ffi::c_int as int16,
-    16 as ::core::ffi::c_int as int16,
-    12 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
+    12 as int16,
+    16 as int16,
+    12 as int16,
+    0 as int16,
     -(12 as ::core::ffi::c_int) as int16,
 ];
 unsafe fn EprojInit_BDA2(mut j: uint16, game: &mut Game) {
@@ -6421,32 +6352,32 @@ pub unsafe fn EprojPreInstr_BE12(mut k: uint16, game: &mut Game) {
     };
 }
 static kEprojInit_MotherBrainRoomTurrets_X: [int16; 12] = [
-    0x398 as ::core::ffi::c_int as int16,
-    0x348 as ::core::ffi::c_int as int16,
-    0x328 as ::core::ffi::c_int as int16,
-    0x2d8 as ::core::ffi::c_int as int16,
-    0x288 as ::core::ffi::c_int as int16,
-    0x268 as ::core::ffi::c_int as int16,
-    0x218 as ::core::ffi::c_int as int16,
-    0x1c8 as ::core::ffi::c_int as int16,
-    0x1a8 as ::core::ffi::c_int as int16,
-    0x158 as ::core::ffi::c_int as int16,
-    0x108 as ::core::ffi::c_int as int16,
-    0xe8 as ::core::ffi::c_int as int16,
+    0x398 as int16,
+    0x348 as int16,
+    0x328 as int16,
+    0x2d8 as int16,
+    0x288 as int16,
+    0x268 as int16,
+    0x218 as int16,
+    0x1c8 as int16,
+    0x1a8 as int16,
+    0x158 as int16,
+    0x108 as int16,
+    0xe8 as int16,
 ];
 static EprojInit_MotherBrainRoomTurrets_Y: [int16; 12] = [
-    0x30 as ::core::ffi::c_int as int16,
-    0x40 as ::core::ffi::c_int as int16,
-    0x40 as ::core::ffi::c_int as int16,
-    0x30 as ::core::ffi::c_int as int16,
-    0x40 as ::core::ffi::c_int as int16,
-    0x40 as ::core::ffi::c_int as int16,
-    0x30 as ::core::ffi::c_int as int16,
-    0x40 as ::core::ffi::c_int as int16,
-    0x40 as ::core::ffi::c_int as int16,
-    0x30 as ::core::ffi::c_int as int16,
-    0x40 as ::core::ffi::c_int as int16,
-    0x40 as ::core::ffi::c_int as int16,
+    0x30 as int16,
+    0x40 as int16,
+    0x40 as int16,
+    0x30 as int16,
+    0x40 as int16,
+    0x40 as int16,
+    0x30 as int16,
+    0x40 as int16,
+    0x40 as int16,
+    0x30 as int16,
+    0x40 as int16,
+    0x40 as int16,
 ];
 unsafe fn EprojInit_MotherBrainRoomTurrets(mut j: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -6495,18 +6426,18 @@ unsafe fn EprojInit_MotherBrainRoomTurrets(mut j: uint16, game: &mut Game) {
 static kEproj_MotherBrainRoomTurretBullets_X: [int16; 8] = [
     -(17 as ::core::ffi::c_int) as int16,
     -(12 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
-    12 as ::core::ffi::c_int as int16,
-    17 as ::core::ffi::c_int as int16,
-    12 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
+    12 as int16,
+    17 as int16,
+    12 as int16,
+    0 as int16,
     -(12 as ::core::ffi::c_int) as int16,
 ];
 static kEproj_MotherBrainRoomTurretBullets_Y: [int16; 8] = [
     -(9 as ::core::ffi::c_int) as int16,
-    3 as ::core::ffi::c_int as int16,
-    7 as ::core::ffi::c_int as int16,
-    3 as ::core::ffi::c_int as int16,
+    3 as int16,
+    7 as int16,
+    3 as int16,
     -(9 as ::core::ffi::c_int) as int16,
     -(19 as ::core::ffi::c_int) as int16,
     -(21 as ::core::ffi::c_int) as int16,
@@ -6515,19 +6446,19 @@ static kEproj_MotherBrainRoomTurretBullets_Y: [int16; 8] = [
 static kEproj_MotherBrainRoomTurretBullets_Xvel: [int16; 8] = [
     -(704 as ::core::ffi::c_int) as int16,
     -(498 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
-    498 as ::core::ffi::c_int as int16,
-    704 as ::core::ffi::c_int as int16,
-    498 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
+    498 as int16,
+    704 as int16,
+    498 as int16,
+    0 as int16,
     -(498 as ::core::ffi::c_int) as int16,
 ];
 static kEproj_MotherBrainRoomTurretBullets_Yvel: [int16; 8] = [
-    0 as ::core::ffi::c_int as int16,
-    498 as ::core::ffi::c_int as int16,
-    704 as ::core::ffi::c_int as int16,
-    498 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
+    498 as int16,
+    704 as int16,
+    498 as int16,
+    0 as int16,
     -(498 as ::core::ffi::c_int) as int16,
     -(704 as ::core::ffi::c_int) as int16,
     -(498 as ::core::ffi::c_int) as int16,
@@ -6587,7 +6518,7 @@ pub unsafe fn EprojPreInstr_MotherBrainRoomTurrets(mut k: uint16, game: &mut Gam
                 .offset(v5 as isize),
         };
         SpawnEprojWithRoomGfx(
-            addr_kEproj_DustCloudExplosion as ::core::ffi::c_int as uint16,
+            addr_kEproj_DustCloudExplosion as uint16,
             0xc as uint16,
             game,
         );
@@ -6625,11 +6556,7 @@ pub unsafe fn EprojPreInstr_MotherBrainRoomTurrets(mut k: uint16, game: &mut Gam
         v2 = fresh93 as ::core::ffi::c_int == 1 as ::core::ffi::c_int;
         if v2 {
             Eproj_SetYvelRandom(k, game);
-            SpawnEprojWithRoomGfx(
-                addr_kEproj_MotherBrainRoomTurretBullets as ::core::ffi::c_int as uint16,
-                k,
-                game,
-            );
+            SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainRoomTurretBullets as uint16, k, game);
         }
     };
 }
@@ -6747,16 +6674,16 @@ pub unsafe fn EprojPreInstr_MotherBrainRoomTurretBullets(mut k: uint16, game: &m
     }
 }
 static kMotherBrainsBomb_Yaccel: [int16; 10] = [
-    7 as ::core::ffi::c_int as int16,
-    0x10 as ::core::ffi::c_int as int16,
-    0x20 as ::core::ffi::c_int as int16,
-    0x40 as ::core::ffi::c_int as int16,
-    0x70 as ::core::ffi::c_int as int16,
-    0xb0 as ::core::ffi::c_int as int16,
-    0xf0 as ::core::ffi::c_int as int16,
-    0x130 as ::core::ffi::c_int as int16,
-    0x170 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
+    7 as int16,
+    0x10 as int16,
+    0x20 as int16,
+    0x40 as int16,
+    0x70 as int16,
+    0xb0 as int16,
+    0xf0 as int16,
+    0x130 as int16,
+    0x170 as int16,
+    0 as int16,
 ];
 pub unsafe fn EprojPreInstr_MotherBrainBomb(mut k: uint16, game: &mut Game) {
     let mut v2: int16 = 0;
@@ -6793,7 +6720,7 @@ pub unsafe fn EprojPreInstr_MotherBrainBomb(mut k: uint16, game: &mut Game) {
                     .offset(v4 as isize),
             };
             SpawnEprojWithRoomGfx(
-                addr_stru_869650 as ::core::ffi::c_int as uint16,
+                addr_stru_869650 as uint16,
                 *(((&raw mut game.g_ram as *mut uint8).offset(0x1a27) as *mut uint16)
                     .offset(v4 as isize) as *mut uint16 as *mut uint8)
                     .offset(0) as uint16,
@@ -6805,11 +6732,7 @@ pub unsafe fn EprojPreInstr_MotherBrainBomb(mut k: uint16, game: &mut Game) {
                 y: *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
                     .offset(v4 as isize),
             };
-            SpawnEprojWithRoomGfx(
-                addr_kEproj_DustCloudExplosion as ::core::ffi::c_int as uint16,
-                3 as uint16,
-                game,
-            );
+            SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as uint16, 3 as uint16, game);
             QueueSfx3_Max6(0x13 as uint16, game);
             return;
         }
@@ -6940,7 +6863,7 @@ unsafe fn Eproj_CheckForEnemyCollisionWithRect(
         && (abs16(((*v1).y_pos as ::core::ffi::c_int - rect.y as ::core::ffi::c_int) as uint16)
             as ::core::ffi::c_int
             - (*v1).y_height as ::core::ffi::c_int)
-            < rect.h as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
+            < rect.h as ::core::ffi::c_int) as uint8;
 }
 unsafe fn Eproj_CheckForCollisionWithSamus(mut v0: uint16, game: &mut Game) -> uint8 {
     let mut rect: Rect16U = Eproj_GetCollDetectRect(v0, game);
@@ -7082,7 +7005,7 @@ pub unsafe fn Eproj_MoveToBlueRingSpawnPosition(mut k: uint16, game: &mut Game) 
                     - *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
                         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
                         as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
-                    >= 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
+                    >= 0 as ::core::ffi::c_int) as uint16;
         } else if CheckForBlueRingCollisionWithRoom(k, game) as ::core::ffi::c_int
             & 1 as ::core::ffi::c_int
             != 0
@@ -7185,11 +7108,7 @@ pub unsafe fn BlueRingContactExplosion(mut k: uint16, game: &mut Game) {
         x: *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v1 as isize),
         y: *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize),
     };
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_DustCloudExplosion as ::core::ffi::c_int as uint16,
-        3 as uint16,
-        game,
-    );
+    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as uint16, 3 as uint16, game);
     QueueSfx3_Max6(0x13 as uint16, game);
     sub_86C42E(k, game);
 }
@@ -7262,21 +7181,12 @@ pub unsafe fn MotherBrainBomb_Bomb_CollDetect_DoubleRet(mut k: uint16, game: &mu
         x: *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v1 as isize),
         y: *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize),
     };
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_DustCloudExplosion as ::core::ffi::c_int as uint16,
-        9 as uint16,
-        game,
-    );
+    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as uint16, 9 as uint16, game);
     game.eproj_spawn_pt = Point16U {
         x: *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v1 as isize),
         y: *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize),
     };
-    SpawnEnemyDrops(
-        addr_kEnemyDef_EC3F as ::core::ffi::c_int as uint16,
-        k,
-        0 as uint16,
-        game,
-    );
+    SpawnEnemyDrops(addr_kEnemyDef_EC3F as uint16, k, 0 as uint16, game);
     return 1 as uint8;
 }
 pub unsafe fn MoveMotherBrainBomb(mut k: uint16, mut a: uint16, game: &mut Game) -> uint8 {
@@ -7432,7 +7342,7 @@ unsafe fn EprojInit_MotherBrainDeathBeemFired(mut j: uint16, game: &mut Game) {
                 .offset(v1 as isize),
         };
         SpawnEprojWithRoomGfx(
-            addr_kEproj_DustCloudExplosion as ::core::ffi::c_int as uint16,
+            addr_kEproj_DustCloudExplosion as uint16,
             0x1d as uint16,
             game,
         );
@@ -7455,7 +7365,7 @@ unsafe fn EprojInit_MotherBrainDeathBeemFired(mut j: uint16, game: &mut Game) {
 }
 pub unsafe fn SpawnMotherBrainDeathBeam(mut x: uint16, game: &mut Game) {
     SpawnEprojWithRoomGfx(
-        addr_kEproj_MotherBrainDeathBeamFired as ::core::ffi::c_int as uint16,
+        addr_kEproj_MotherBrainDeathBeamFired as uint16,
         *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16)
             .offset((x as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize),
         game,
@@ -7479,18 +7389,18 @@ unsafe fn EprojInit_MotherBrainRainbowBeam(mut j: uint16, game: &mut Game) {
     EprojPreInstr_MotherBrainRainbowBeam(j, game);
 }
 static kEprojInit_MotherBrainsDrool: [int16; 12] = [
-    6 as ::core::ffi::c_int as int16,
-    0x14 as ::core::ffi::c_int as int16,
-    0xe as ::core::ffi::c_int as int16,
-    0x12 as ::core::ffi::c_int as int16,
-    8 as ::core::ffi::c_int as int16,
-    0x17 as ::core::ffi::c_int as int16,
-    0xa as ::core::ffi::c_int as int16,
-    0x13 as ::core::ffi::c_int as int16,
-    0xb as ::core::ffi::c_int as int16,
-    0x19 as ::core::ffi::c_int as int16,
-    0xc as ::core::ffi::c_int as int16,
-    0x12 as ::core::ffi::c_int as int16,
+    6 as int16,
+    0x14 as int16,
+    0xe as int16,
+    0x12 as int16,
+    8 as int16,
+    0x17 as int16,
+    0xa as int16,
+    0x13 as int16,
+    0xb as int16,
+    0x19 as int16,
+    0xc as int16,
+    0x12 as int16,
 ];
 pub unsafe fn EprojPreInstr_C84D(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -7531,7 +7441,7 @@ unsafe fn EprojInit_MotherBrainsDrool_Falling(mut k: uint16, game: &mut Game) {
             .offset(v1 as isize);
         *fresh80 = (*fresh80 as ::core::ffi::c_int - 4 as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v1 as isize) =
-            addr_off_86C8E1 as ::core::ffi::c_int as uint16;
+            addr_off_86C8E1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
     }
@@ -7607,40 +7517,40 @@ pub unsafe fn EprojPreInstr_MotherBrainsRainbowBeamExplosion(mut k: uint16, game
 }
 unsafe fn EprojInit_MotherBrainEscapeDoorParticles(mut j: uint16, game: &mut Game) {
     static kEprojInit_MotherBrainEscapeDoorParticles_X: [int16; 16] = [
-        0 as ::core::ffi::c_int as int16,
+        0 as int16,
         -(0x20 as ::core::ffi::c_int) as int16,
-        0 as ::core::ffi::c_int as int16,
+        0 as int16,
         -(0x18 as ::core::ffi::c_int) as int16,
-        0 as ::core::ffi::c_int as int16,
+        0 as int16,
         -(0x10 as ::core::ffi::c_int) as int16,
-        0 as ::core::ffi::c_int as int16,
+        0 as int16,
         -(8 as ::core::ffi::c_int) as int16,
-        0 as ::core::ffi::c_int as int16,
-        0 as ::core::ffi::c_int as int16,
-        0 as ::core::ffi::c_int as int16,
-        8 as ::core::ffi::c_int as int16,
-        0 as ::core::ffi::c_int as int16,
-        0x10 as ::core::ffi::c_int as int16,
-        0 as ::core::ffi::c_int as int16,
-        0x18 as ::core::ffi::c_int as int16,
+        0 as int16,
+        0 as int16,
+        0 as int16,
+        8 as int16,
+        0 as int16,
+        0x10 as int16,
+        0 as int16,
+        0x18 as int16,
     ];
     static kEprojInit_MotherBrainEscapeDoorParticles_Xvel: [int16; 16] = [
-        0x500 as ::core::ffi::c_int as int16,
+        0x500 as int16,
         -(0x200 as ::core::ffi::c_int) as int16,
-        0x500 as ::core::ffi::c_int as int16,
+        0x500 as int16,
         -(0x100 as ::core::ffi::c_int) as int16,
-        0x500 as ::core::ffi::c_int as int16,
+        0x500 as int16,
         -(0x100 as ::core::ffi::c_int) as int16,
-        0x500 as ::core::ffi::c_int as int16,
+        0x500 as int16,
         -(0x80 as ::core::ffi::c_int) as int16,
-        0x500 as ::core::ffi::c_int as int16,
+        0x500 as int16,
         -(0x80 as ::core::ffi::c_int) as int16,
-        0x500 as ::core::ffi::c_int as int16,
-        0x80 as ::core::ffi::c_int as int16,
-        0x500 as ::core::ffi::c_int as int16,
+        0x500 as int16,
+        0x80 as int16,
+        0x500 as int16,
         -(0x100 as ::core::ffi::c_int) as int16,
-        0x500 as ::core::ffi::c_int as int16,
-        0x200 as ::core::ffi::c_int as int16,
+        0x500 as int16,
+        0x200 as int16,
     ];
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0x19bb) as *mut uint16).offset(v1 as isize) =
@@ -7702,11 +7612,7 @@ pub unsafe fn EprojPreInstr_MotherBrainsExplodedDoorParticles(mut k: uint16, gam
             y: *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
                 .offset(v1 as isize),
         };
-        SpawnEprojWithRoomGfx(
-            addr_kEproj_DustCloudExplosion as ::core::ffi::c_int as uint16,
-            9 as uint16,
-            game,
-        );
+        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as uint16, 9 as uint16, game);
     }
 }
 unsafe fn EprojInit_MotherBrainPurpleBreathBig(mut j: uint16, game: &mut Game) {
@@ -7812,11 +7718,7 @@ pub unsafe fn MotherBrainTubeFallingFunc_GenerateExplosion(mut k: uint16, game: 
             as ::core::ffi::c_int
             + 8 as ::core::ffi::c_int) as uint16,
     };
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_DustCloudExplosion as ::core::ffi::c_int as uint16,
-        9 as uint16,
-        game,
-    );
+    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as uint16, 9 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16).offset(v1 as isize) =
         (0x86cc08 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     MotherBrainTubeFallingFunc_Falling(k, game);
@@ -7838,22 +7740,19 @@ pub unsafe fn MotherBrainTubeFallingFunc_Falling(mut k: uint16, game: &mut Game)
                 .offset(v1 as isize),
         };
         SpawnEprojWithRoomGfx(
-            addr_kEproj_DustCloudExplosion as ::core::ffi::c_int as uint16,
+            addr_kEproj_DustCloudExplosion as uint16,
             0xc as uint16,
             game,
         );
     }
 }
 static kEprojInit_MotherBrainGlassShatteringShard_X: [int16; 3] = [
-    8 as ::core::ffi::c_int as int16,
+    8 as int16,
     -(40 as ::core::ffi::c_int) as int16,
     -(16 as ::core::ffi::c_int) as int16,
 ];
-static kEprojInit_MotherBrainGlassShatteringShard_Y: [int16; 3] = [
-    32 as ::core::ffi::c_int as int16,
-    32 as ::core::ffi::c_int as int16,
-    32 as ::core::ffi::c_int as int16,
-];
+static kEprojInit_MotherBrainGlassShatteringShard_Y: [int16; 3] =
+    [32 as int16, 32 as int16, 32 as int16];
 unsafe fn EprojInit_MotherBrainGlassShatteringShard(mut j: uint16, game: &mut Game) {
     let mut v1: uint16 = (2 as ::core::ffi::c_int * NextRandom(game) as ::core::ffi::c_int
         & 0x1fe as ::core::ffi::c_int) as uint16;
@@ -7964,7 +7863,7 @@ pub unsafe fn EprojPreInstr_MotherBrainGlassShatteringShard(mut k: uint16, game:
             == 0 as ::core::ffi::c_int
         {
             SpawnEprojWithRoomGfx(
-                addr_kEproj_MotherBrainGlassShatteringSparkle as ::core::ffi::c_int as uint16,
+                addr_kEproj_MotherBrainGlassShatteringSparkle as uint16,
                 k,
                 game,
             );
@@ -8040,7 +7939,7 @@ pub unsafe fn sub_86CFF8(mut k: uint16, game: &mut Game) {
     if EprojBlockCollisition_Vertical(k, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v1 as isize) =
-            addr_off_86CF56 as ::core::ffi::c_int as uint16;
+            addr_off_86CF56 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
     } else if EprojBlockCollisition_Horiz(k, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
@@ -8117,7 +8016,7 @@ pub unsafe fn EprojPreInstr_KagosBugs(mut k: uint16, game: &mut Game) {
         *fresh71 = (*fresh71).wrapping_sub(1);
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v1 as isize) =
-            addr_word_86D052 as ::core::ffi::c_int as uint16;
+            addr_word_86D052 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16).offset(v1 as isize) =
@@ -8163,7 +8062,7 @@ pub unsafe fn EprojPreInstr_D0EC(mut k: uint16, game: &mut Game) {
         (0x86d128 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-        addr_word_86D04A as ::core::ffi::c_int as uint16;
+        addr_word_86D04A as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 1 as uint16;
 }
@@ -8181,7 +8080,7 @@ pub unsafe fn EprojPreInstr_D128(mut v0: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16).offset(v1 as isize) =
             (0x86d0eb as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v1 as isize) =
-            addr_word_86D03C as ::core::ffi::c_int as uint16;
+            addr_word_86D03C as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
     } else {
@@ -8260,12 +8159,7 @@ pub unsafe fn EprojInstr_D1CE(
         y: *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize),
     };
-    SpawnEnemyDrops(
-        addr_kEnemyDef_E7FF as ::core::ffi::c_int as uint16,
-        k,
-        0 as uint16,
-        game,
-    );
+    SpawnEnemyDrops(addr_kEnemyDef_E7FF as uint16, k, 0 as uint16, game);
     return epjp;
 }
 unsafe fn EprojInit_MaridiaFloatersSpikes(mut j: uint16, game: &mut Game) {
@@ -8290,11 +8184,11 @@ unsafe fn EprojInit_MaridiaFloatersSpikes(mut j: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1993) as *mut uint16);
 }
 static word_86D21A: [int16; 8] = [
-    0 as ::core::ffi::c_int as int16,
-    32 as ::core::ffi::c_int as int16,
-    32 as ::core::ffi::c_int as int16,
-    32 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
+    32 as int16,
+    32 as int16,
+    32 as int16,
+    0 as int16,
     -(32 as ::core::ffi::c_int) as int16,
     -(32 as ::core::ffi::c_int) as int16,
     -(32 as ::core::ffi::c_int) as int16,
@@ -8302,11 +8196,11 @@ static word_86D21A: [int16; 8] = [
 static word_86D22A: [int16; 8] = [
     -(32 as ::core::ffi::c_int) as int16,
     -(32 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
-    32 as ::core::ffi::c_int as int16,
-    32 as ::core::ffi::c_int as int16,
-    32 as ::core::ffi::c_int as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
+    32 as int16,
+    32 as int16,
+    32 as int16,
+    0 as int16,
     -(32 as ::core::ffi::c_int) as int16,
 ];
 pub unsafe fn EprojPreInstr_MaridiaFloatersSpikes(mut k: uint16, game: &mut Game) {
@@ -8330,7 +8224,7 @@ pub unsafe fn EprojPreInstr_MaridiaFloatersSpikes(mut k: uint16, game: &mut Game
         }
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v1 as isize) =
-            addr_off_86D218 as ::core::ffi::c_int as uint16;
+            addr_off_86D218 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
     }
@@ -8558,20 +8452,20 @@ static kEprojInit_N00bTubeShards_X: [int16; 10] = [
     -(48 as ::core::ffi::c_int) as int16,
     -(24 as ::core::ffi::c_int) as int16,
     -(40 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
     -(8 as ::core::ffi::c_int) as int16,
 ];
 static kEprojInit_N00bTubeShards_Y: [int16; 10] = [
-    8 as ::core::ffi::c_int as int16,
+    8 as int16,
     -(12 as ::core::ffi::c_int) as int16,
     -(26 as ::core::ffi::c_int) as int16,
     -(24 as ::core::ffi::c_int) as int16,
     -(32 as ::core::ffi::c_int) as int16,
-    28 as ::core::ffi::c_int as int16,
-    16 as ::core::ffi::c_int as int16,
+    28 as int16,
+    16 as int16,
     -(8 as ::core::ffi::c_int) as int16,
     -(24 as ::core::ffi::c_int) as int16,
-    16 as ::core::ffi::c_int as int16,
+    16 as int16,
 ];
 static kEprojInit_N00bTubeShards_Xvel: [int16; 10] = [
     -(384 as ::core::ffi::c_int) as int16,
@@ -8582,20 +8476,20 @@ static kEprojInit_N00bTubeShards_Xvel: [int16; 10] = [
     -(320 as ::core::ffi::c_int) as int16,
     -(96 as ::core::ffi::c_int) as int16,
     -(352 as ::core::ffi::c_int) as int16,
-    0 as ::core::ffi::c_int as int16,
+    0 as int16,
     -(64 as ::core::ffi::c_int) as int16,
 ];
 static kEprojInit_N00bTubeShards_Yvel: [int16; 10] = [
-    320 as ::core::ffi::c_int as int16,
+    320 as int16,
     -(256 as ::core::ffi::c_int) as int16,
     -(416 as ::core::ffi::c_int) as int16,
     -(288 as ::core::ffi::c_int) as int16,
     -(288 as ::core::ffi::c_int) as int16,
-    448 as ::core::ffi::c_int as int16,
-    576 as ::core::ffi::c_int as int16,
+    448 as int16,
+    576 as int16,
     -(96 as ::core::ffi::c_int) as int16,
     -(288 as ::core::ffi::c_int) as int16,
-    384 as ::core::ffi::c_int as int16,
+    384 as int16,
 ];
 unsafe fn EprojInit_N00bTubeShards(mut j: uint16, game: &mut Game) {
     CalculatePlmBlockCoords(
@@ -8634,20 +8528,20 @@ unsafe fn EprojInit_N00bTubeShards(mut j: uint16, game: &mut Game) {
         kEprojInit_N00bTubeShards_Yvel[v1 as usize] as uint16;
 }
 static kEprojInit_N00bTubeReleasedAirBubbles_X: [uint16; 6] = [
-    40 as ::core::ffi::c_int as uint16,
-    80 as ::core::ffi::c_int as uint16,
-    104 as ::core::ffi::c_int as uint16,
-    120 as ::core::ffi::c_int as uint16,
-    152 as ::core::ffi::c_int as uint16,
-    184 as ::core::ffi::c_int as uint16,
+    40 as uint16,
+    80 as uint16,
+    104 as uint16,
+    120 as uint16,
+    152 as uint16,
+    184 as uint16,
 ];
 static kEprojInit_N00bTubeReleasedAirBubbles_Y: [uint16; 6] = [
-    80 as ::core::ffi::c_int as uint16,
-    72 as ::core::ffi::c_int as uint16,
-    84 as ::core::ffi::c_int as uint16,
-    32 as ::core::ffi::c_int as uint16,
-    64 as ::core::ffi::c_int as uint16,
-    84 as ::core::ffi::c_int as uint16,
+    80 as uint16,
+    72 as uint16,
+    84 as uint16,
+    32 as uint16,
+    64 as uint16,
+    84 as uint16,
 ];
 unsafe fn EprojInit_N00bTubeReleasedAirBubbles(mut j: uint16, game: &mut Game) {
     CalculatePlmBlockCoords(
@@ -8697,7 +8591,7 @@ pub unsafe fn sub_86D7BF(mut k: uint16, game: &mut Game) {
 }
 pub unsafe fn sub_86D7DE(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut amt: int32 = (192 as ::core::ffi::c_int as int16 as int32) << 8 as ::core::ffi::c_int;
+    let mut amt: int32 = (192 as int16 as int32) << 8 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize)
             as *mut uint16,
@@ -8985,12 +8879,12 @@ pub fn EprojPreInstrHelper_SpikeShootingPlantSpikes_Func2(
             .wrapping_add(256)
             .wrapping_sub(game.enemy_projectile_y_pos(k)) as int16
             as ::core::ffi::c_int)
-            < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
+            < 0 as ::core::ffi::c_int) as uint16;
 }
 unsafe fn EprojInit_DBF2(mut j: uint16, game: &mut Game) {
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v2 as isize) =
-        addr_word_86DB0C as ::core::ffi::c_int as uint16;
+        addr_word_86DB0C as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16).offset(v2 as isize) =
         (0x86db62 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     if *((&raw mut game.g_ram as *mut uint8).offset(0x1993) as *mut uint16) != 0 {
@@ -9080,7 +8974,7 @@ pub unsafe fn EprojPreInstrHelper_DBF2_Func2(mut k: uint16, game: &mut Game) -> 
             - *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int) as int16
             as ::core::ffi::c_int)
-            < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
+            < 0 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn EprojInstr_DC5A(
     mut k: uint16,
@@ -9101,12 +8995,7 @@ pub unsafe fn EprojInstr_SpawnEnemyDrops_0(
         x: *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v2 as isize),
         y: *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v2 as isize),
     };
-    SpawnEnemyDrops(
-        addr_kEnemyDef_DF7F as ::core::ffi::c_int as uint16,
-        k,
-        0 as uint16,
-        game,
-    );
+    SpawnEnemyDrops(addr_kEnemyDef_DF7F as uint16, k, 0 as uint16, game);
     return epjp;
 }
 pub unsafe fn EprojInstr_SpawnSporesEproj(
@@ -9119,11 +9008,7 @@ pub unsafe fn EprojInstr_SpawnSporesEproj(
         x: *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v2 as isize),
         y: *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v2 as isize),
     };
-    SpawnEprojWithRoomGfx(
-        addr_kEproj_Spores as ::core::ffi::c_int as uint16,
-        0 as uint16,
-        game,
-    );
+    SpawnEprojWithRoomGfx(addr_kEproj_Spores as uint16, 0 as uint16, game);
     return epjp;
 }
 unsafe fn EprojInit_Spores(mut j: uint16, game: &mut Game) {
@@ -9165,12 +9050,8 @@ pub unsafe fn sub_86DCC3(mut v0: uint16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v1 as isize) =
         (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0)).x_pos;
 }
-static kEprojInit_SporeSpawners_X: [int16; 4] = [
-    0x20 as ::core::ffi::c_int as int16,
-    0x60 as ::core::ffi::c_int as int16,
-    0xa0 as ::core::ffi::c_int as int16,
-    0xe0 as ::core::ffi::c_int as int16,
-];
+static kEprojInit_SporeSpawners_X: [int16; 4] =
+    [0x20 as int16, 0x60 as int16, 0xa0 as int16, 0xe0 as int16];
 unsafe fn EprojInit_SporeSpawners(mut j: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v1 as isize) =
@@ -9240,7 +9121,7 @@ pub unsafe fn EprojPreInstr_SporeSpawners(mut k: uint16, game: &mut Game) {
             == 0
         {
             *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16)
-                .offset(v1 as isize) = addr_word_86DC06 as ::core::ffi::c_int as uint16;
+                .offset(v1 as isize) = addr_word_86DC06 as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16)
                 .offset(v1 as isize) = 1 as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16)
@@ -9255,12 +9136,12 @@ pub unsafe fn EprojPreInstr_SporeSpawners(mut k: uint16, game: &mut Game) {
 unsafe fn EprojInit_NamiFuneFireball(mut j: uint16, game: &mut Game) {
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v2 as isize) =
-        addr_word_86DE96 as ::core::ffi::c_int as uint16;
+        addr_word_86DE96 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16).offset(v2 as isize) =
         (0x86df40 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     if *((&raw mut game.g_ram as *mut uint8).offset(0x1993) as *mut uint16) != 0 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v2 as isize) =
-            addr_word_86DEA6 as ::core::ffi::c_int as uint16;
+            addr_word_86DEA6 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16).offset(v2 as isize) =
             (0x86df6a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
@@ -9373,7 +9254,7 @@ pub unsafe fn sub_86DFA0(mut k: uint16, game: &mut Game) -> uint16 {
             - *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int) as int16
             as ::core::ffi::c_int)
-            < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
+            < 0 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn EprojInstr_DFEA(
     mut k: uint16,
@@ -9385,23 +9266,18 @@ pub unsafe fn EprojInstr_DFEA(
         x: *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v1 as isize),
         y: *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize),
     };
-    SpawnEnemyDrops(
-        addr_kEnemyDef_E83F as ::core::ffi::c_int as uint16,
-        k,
-        0 as uint16,
-        game,
-    );
+    SpawnEnemyDrops(addr_kEnemyDef_E83F as uint16, k, 0 as uint16, game);
     return epjp;
 }
 unsafe fn EprojInit_LavaThrownByLavaman(mut j: uint16, game: &mut Game) {
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v2 as isize) =
-        addr_word_86DFD8 as ::core::ffi::c_int as uint16;
+        addr_word_86DFD8 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16).offset(v2 as isize) =
         (0x86e050 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     if *((&raw mut game.g_ram as *mut uint8).offset(0x1993) as *mut uint16) != 0 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v2 as isize) =
-            addr_word_86DFDE as ::core::ffi::c_int as uint16;
+            addr_word_86DFDE as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16).offset(v2 as isize) =
             (0x86e07a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
@@ -9503,7 +9379,7 @@ pub unsafe fn sub_86E0B0(mut k: uint16, game: &mut Game) -> uint16 {
             - *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int) as int16
             as ::core::ffi::c_int)
-            < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
+            < 0 as ::core::ffi::c_int) as uint16;
 }
 unsafe fn EprojInit_DustCloudOrExplosion(mut v0: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -10052,7 +9928,7 @@ pub unsafe fn Eproj_BotwonsBodyFunction_DyingFalling(mut v0: uint16, game: &mut 
         *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(v1 as isize) =
             (0x86eb93 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v1 as isize) =
-            addr_word_86E208 as ::core::ffi::c_int as uint16;
+            addr_word_86E208 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x19bb) as *mut uint16).offset(v1 as isize) =
             2560 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v1 as isize) =
@@ -10081,7 +9957,7 @@ unsafe fn EprojInit_BotwoonsSpit(mut j: uint16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v2 as isize) =
         (*v1).y_pos;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v2 as isize) =
-        addr_word_86EBAE as ::core::ffi::c_int as uint16;
+        addr_word_86EBAE as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x97dc) as *mut uint16).offset(v2 as isize) =
         *(&raw mut game.g_ram as *mut uint8).offset(0x60b) as uint16;
     let mut pt: Point32 = ConvertAngleToXy(
@@ -10133,7 +10009,7 @@ pub unsafe fn sub_86EC18(mut k: uint16, game: &mut Game) -> uint16 {
             - *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int) as int16
             as ::core::ffi::c_int)
-            < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
+            < 0 as ::core::ffi::c_int) as uint16;
 }
 unsafe fn EprojInit_YappingMawsBody(mut j: uint16, game: &mut Game) {
     let mut v2: *mut EnemyData = gEnemyData(game.cur_enemy_index() as ::core::ffi::c_int, game);
@@ -10143,10 +10019,10 @@ unsafe fn EprojInit_YappingMawsBody(mut j: uint16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v3 as isize) =
         (*v2).y_pos;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v3 as isize) =
-        addr_word_86EC5C as ::core::ffi::c_int as uint16;
+        addr_word_86EC5C as uint16;
     if (*v2).parameter_2 == 0 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v3 as isize) =
-            addr_word_86EC56 as ::core::ffi::c_int as uint16;
+            addr_word_86EC56 as uint16;
     }
     *((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x8800) as *mut ExtraEnemyRam8800)
         .offset(0))
@@ -10321,7 +10197,7 @@ unsafe fn EprojInit_F337(mut j: uint16, game: &mut Game) {
     } else {
         let mut v5: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v5 as isize) =
-            addr_word_86ECA3 as ::core::ffi::c_int as uint16;
+            addr_word_86ECA3 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v5 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16).offset(v5 as isize) =
@@ -10460,8 +10336,7 @@ pub unsafe fn EprojPreInstr_Pickup(mut k: uint16, game: &mut Game) {
                         let mut v11: ::core::ffi::c_int =
                             k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
                         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16)
-                            .offset(v11 as isize) =
-                            addr_word_86ECA3 as ::core::ffi::c_int as uint16;
+                            .offset(v11 as isize) = addr_word_86ECA3 as uint16;
                         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16)
                             .offset(v11 as isize) = 1 as uint16;
                         *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16)
@@ -10478,7 +10353,7 @@ pub unsafe fn EprojPreInstr_Pickup(mut k: uint16, game: &mut Game) {
     }
     let mut v4: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v4 as isize) =
-        addr_word_86ECA3 as ::core::ffi::c_int as uint16;
+        addr_word_86ECA3 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v4 as isize) =
         1 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16).offset(v4 as isize) =
@@ -10507,12 +10382,7 @@ pub unsafe fn Eproj_Pickup_SuperMissiles(game: &mut Game) {
     QueueSfx2_Max1(4 as uint16, game);
 }
 static byte_86F25E: [uint8; 6] = [
-    1 as ::core::ffi::c_int as uint8,
-    2 as ::core::ffi::c_int as uint8,
-    4 as ::core::ffi::c_int as uint8,
-    6 as ::core::ffi::c_int as uint8,
-    5 as ::core::ffi::c_int as uint8,
-    3 as ::core::ffi::c_int as uint8,
+    1 as uint8, 2 as uint8, 4 as uint8, 6 as uint8, 5 as uint8, 3 as uint8,
 ];
 pub unsafe fn RandomDropRoutine(mut k: uint16, game: &mut Game) -> uint16 {
     let mut v2: uint16 = 0;
@@ -10695,24 +10565,24 @@ pub unsafe fn RespawnEnemy(mut v0: uint16, game: &mut Game) {
 }
 unsafe fn EprojInit_Sparks(mut j: uint16, game: &mut Game) {
     static word_86F3D4: [uint16; 14] = [
-        0xffff as ::core::ffi::c_int as uint16,
-        0xb800 as ::core::ffi::c_int as uint16,
-        0xffff as ::core::ffi::c_int as uint16,
-        0xc000 as ::core::ffi::c_int as uint16,
-        0xffff as ::core::ffi::c_int as uint16,
-        0xe000 as ::core::ffi::c_int as uint16,
-        0xffff as ::core::ffi::c_int as uint16,
-        0xff00 as ::core::ffi::c_int as uint16,
-        0 as ::core::ffi::c_int as uint16,
-        0x100 as ::core::ffi::c_int as uint16,
-        0 as ::core::ffi::c_int as uint16,
-        0x2000 as ::core::ffi::c_int as uint16,
-        0 as ::core::ffi::c_int as uint16,
-        0x4000 as ::core::ffi::c_int as uint16,
+        0xffff as uint16,
+        0xb800 as uint16,
+        0xffff as uint16,
+        0xc000 as uint16,
+        0xffff as uint16,
+        0xe000 as uint16,
+        0xffff as uint16,
+        0xff00 as uint16,
+        0 as uint16,
+        0x100 as uint16,
+        0 as uint16,
+        0x2000 as uint16,
+        0 as uint16,
+        0x4000 as uint16,
     ];
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v2 as isize) =
-        addr_kEnemyDef_F353 as ::core::ffi::c_int as uint16;
+        addr_kEnemyDef_F353 as uint16;
     let mut v3: *mut EnemyData = gEnemyData(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
