@@ -27,15 +27,15 @@ pub struct ProjectileDataTable {
 pub use crate::types::{ProjectileInstr, ProjectileType};
 #[inline]
 unsafe fn RomPtr_93(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr((0x930000u32) | ((addr) as u32), game);
+    RomPtr((0x930000u32) | ((addr) as u32), game)
 }
 #[inline]
 unsafe fn get_ProjectileDataTable(mut a: uint16, game: &mut Game) -> *mut ProjectileDataTable {
-    return RomPtr((0x930000u32) | ((a) as u32), game) as *mut ProjectileDataTable;
+    RomPtr((0x930000u32) | ((a) as u32), game) as *mut ProjectileDataTable
 }
 #[inline]
 unsafe fn get_ProjectileInstr(mut a: uint16, game: &mut Game) -> *mut ProjectileInstr {
-    return RomPtr((0x930000u32) | ((a) as u32), game) as *mut ProjectileInstr;
+    RomPtr((0x930000u32) | ((a) as u32), game) as *mut ProjectileInstr
 }
 pub const fnProj93Instr_Delete: uint32 = 9667119;
 pub const fnProj93Instr_Goto: uint32 = 9667129;
@@ -290,7 +290,7 @@ pub unsafe fn ProjectileInsts_GetValue(mut k: uint16, game: &mut Game) -> uint16
     } else {
         -(8 as ::core::ffi::c_int)
     };
-    return (*get_ProjectileInstr((ip + delta) as uint16, game)).field_6;
+    (*get_ProjectileInstr((ip + delta) as uint16, game)).field_6
 }
 pub unsafe fn CallProj93Instr(
     mut ea: uint32,
@@ -299,10 +299,10 @@ pub unsafe fn CallProj93Instr(
     game: &mut Game,
 ) -> uint16 {
     match ea {
-        9667119 => return Proj93Instr_Delete(j, k, game),
-        9667129 => return Proj93Instr_Goto(j, k, game),
-        _ => return Unreachable(game) as uint16,
-    };
+        9667119 => Proj93Instr_Delete(j, k, game),
+        9667129 => Proj93Instr_Goto(j, k, game),
+        _ => Unreachable(game) as uint16,
+    }
 }
 pub unsafe fn RunProjectileInstructions(game: &mut Game) {
     let mut PI: *mut ProjectileInstr = ::core::ptr::null_mut::<ProjectileInstr>();
@@ -346,10 +346,10 @@ pub unsafe fn RunProjectileInstructions(game: &mut Game) {
 }
 pub unsafe fn Proj93Instr_Delete(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     ClearProjectile(k, game);
-    return 0 as uint16;
+    0 as uint16
 }
 pub unsafe fn Proj93Instr_Goto(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
-    return *(RomPtr_93(j, game) as *mut uint16);
+    *(RomPtr_93(j, game) as *mut uint16)
 }
 pub unsafe fn DrawPlayerExplosions2(game: &mut Game) {
     let mut v2: uint16 = 0;

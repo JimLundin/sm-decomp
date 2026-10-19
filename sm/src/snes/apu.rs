@@ -33,7 +33,7 @@ pub unsafe fn apu_init() -> *mut Apu {
     core::ptr::write_bytes(apu, 0, 1);
     (*apu).spc = spc_init(apu as *mut Apu);
     (*apu).dsp = dsp_init(&raw mut (*apu).ram as *mut uint8_t);
-    return apu;
+    apu
 }
 pub unsafe fn apu_free(mut apu: *mut Apu) {
     spc_free((*apu).spc);

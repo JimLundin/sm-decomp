@@ -99,7 +99,7 @@ enemy_layout! {
 
 #[inline]
 unsafe fn RomPtr_B3(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr((0xb30000u32) | ((addr) as u32), game);
+    RomPtr((0xb30000u32) | ((addr) as u32), game)
 }
 pub const fnnullsub_171_B3: ::core::ffi::c_int = 0xb3807b;
 pub const fnBrinstarPipeBug_PreInstr_1: ::core::ffi::c_int = 0xb38880;
@@ -142,39 +142,39 @@ pub const fnBotwoon_Func_32: ::core::ffi::c_int = 0xb3e250;
 pub const fnBotwoon_Func_33: uint32 = 11788940;
 #[inline]
 unsafe fn gEnemyData(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut EnemyData {
-    return (&raw mut game.g_ram as *mut uint8)
+    (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
-        .offset(o as isize) as *mut EnemyData;
+        .offset(o as isize) as *mut EnemyData
 }
 #[inline]
 unsafe fn Get_Botwoon(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_Botwoon {
-    return (&raw mut game.g_ram as *mut uint8)
+    (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Botwoon;
+        .offset(o as isize) as *mut Enemy_Botwoon
 }
 #[inline]
 unsafe fn Get_EscapeDachora(
     mut o: ::core::ffi::c_int,
     game: &mut Game,
 ) -> *mut Enemy_EscapeDachora {
-    return (&raw mut game.g_ram as *mut uint8)
+    (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_EscapeDachora;
+        .offset(o as isize) as *mut Enemy_EscapeDachora
 }
 #[inline]
 unsafe fn Get_EscapeEtecoon(
     mut o: ::core::ffi::c_int,
     game: &mut Game,
 ) -> *mut Enemy_EscapeEtecoon {
-    return (&raw mut game.g_ram as *mut uint8)
+    (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_EscapeEtecoon;
+        .offset(o as isize) as *mut Enemy_EscapeEtecoon
 }
 #[inline]
 unsafe fn Get_PipeBug(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_PipeBug {
-    return (&raw mut game.g_ram as *mut uint8)
+    (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_PipeBug;
+        .offset(o as isize) as *mut Enemy_PipeBug
 }
 static g_word_B39E77: [int16; 3] = [2, 3, 4];
 pub unsafe fn Enemy_GrappleReact_NoInteract_B3(game: &mut Game) {
@@ -210,7 +210,7 @@ pub unsafe fn Enemy_SetAiPreInstr_B3(
     game: &mut Game,
 ) -> *const uint16 {
     (*gEnemyData(k as ::core::ffi::c_int, game)).ai_preinstr = *jp.offset(0);
-    return jp.offset(1);
+    jp.offset(1)
 }
 pub unsafe fn Enemy_ClearAiPreInstr_B3(
     mut k: uint16,
@@ -218,7 +218,7 @@ pub unsafe fn Enemy_ClearAiPreInstr_B3(
     game: &mut Game,
 ) -> *const uint16 {
     (*gEnemyData(k as ::core::ffi::c_int, game)).ai_preinstr = ((0xb3807bi32) as u16) & (0xffffu16);
-    return jp;
+    jp
 }
 pub unsafe fn UnusedSpinningTurtleEye_Init(game: &mut Game) {
     let mut v0: *mut EnemyData = gEnemyData(
@@ -390,79 +390,62 @@ pub unsafe fn CallBugInstr(mut ea: uint32, mut k: uint16, game: &mut Game) {
     match ea {
         11766733 => {
             NorfairPipeBug_Func_1(game);
-            return;
         }
         11766783 => {
             NorfairPipeBug_Func_2(game);
-            return;
         }
         11766950 => {
             NorfairPipeBug_Func_4(game);
-            return;
         }
         11767039 => {
             NorfairPipeBug_Func_5(k, game);
-            return;
         }
         11767052 => {
             NorfairPipeBug_Func_6(game);
-            return;
         }
         11767118 => {
             NorfairPipeBug_Func_7(game);
-            return;
         }
         11767184 => {
             NorfairPipeBug_Func_8(game);
-            return;
         }
         11767250 => {
             NorfairPipeBug_Func_9(game);
-            return;
         }
         11767316 => {
             NorfairPipeBug_Func_10(game);
-            return;
         }
         11767349 => {
             NorfairPipeBug_Func_11(game);
-            return;
         }
         11767386 => {
             NorfairPipeBug_Func_12(game);
-            return;
         }
         11767733 => {
             BrinstarYellowPipeBug_Func_1(game);
-            return;
         }
         11767797 => {
             BrinstarYellowPipeBug_Func_2(
                 *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
                 game,
             );
-            return;
         }
         11767848 => {
             BrinstarYellowPipeBug_Func_3(game);
-            return;
         }
         11767997 => {
             BrinstarYellowPipeBug_Func_5(game);
-            return;
         }
         11768154 => {
             BrinstarYellowPipeBug_Func_7(game);
-            return;
         }
         11768280 => {
             BrinstarYellowPipeBug_Func_8(game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn NorfairPipeBug_Main(game: &mut Game) {
     let mut PipeBug: *mut Enemy_PipeBug = Get_PipeBug(
@@ -1167,7 +1150,7 @@ pub unsafe fn Botwoon_Instr_1(
     );
     (*E).base.x_width = 8 as uint16;
     (*E).base.y_height = 16 as uint16;
-    return jp;
+    jp
 }
 pub unsafe fn Botwoon_Instr_2(
     mut k: uint16,
@@ -1180,7 +1163,7 @@ pub unsafe fn Botwoon_Instr_2(
     );
     (*E).base.x_width = 12 as uint16;
     (*E).base.y_height = 12 as uint16;
-    return jp;
+    jp
 }
 pub unsafe fn Botwoon_Instr_3(
     mut k: uint16,
@@ -1193,7 +1176,7 @@ pub unsafe fn Botwoon_Instr_3(
     );
     (*E).base.x_width = 16 as uint16;
     (*E).base.y_height = 8 as uint16;
-    return jp;
+    jp
 }
 pub unsafe fn Botwoon_Instr_4(
     mut k: uint16,
@@ -1206,7 +1189,7 @@ pub unsafe fn Botwoon_Instr_4(
     );
     (*E).base.x_width = 12 as uint16;
     (*E).base.y_height = 12 as uint16;
-    return jp;
+    jp
 }
 pub unsafe fn Botwoon_Instr_5(
     mut k: uint16,
@@ -1219,7 +1202,7 @@ pub unsafe fn Botwoon_Instr_5(
     );
     (*E).base.x_width = 8 as uint16;
     (*E).base.y_height = 16 as uint16;
-    return jp;
+    jp
 }
 pub unsafe fn Botwoon_Instr_6(
     mut k: uint16,
@@ -1232,7 +1215,7 @@ pub unsafe fn Botwoon_Instr_6(
     );
     (*E).base.x_width = 8 as uint16;
     (*E).base.y_height = 16 as uint16;
-    return jp;
+    jp
 }
 pub unsafe fn Botwoon_Instr_7(
     mut k: uint16,
@@ -1245,7 +1228,7 @@ pub unsafe fn Botwoon_Instr_7(
     );
     (*E).base.x_width = 12 as uint16;
     (*E).base.y_height = 12 as uint16;
-    return jp;
+    jp
 }
 pub unsafe fn Botwoon_Instr_8(
     mut k: uint16,
@@ -1258,7 +1241,7 @@ pub unsafe fn Botwoon_Instr_8(
     );
     (*E).base.x_width = 16 as uint16;
     (*E).base.y_height = 8 as uint16;
-    return jp;
+    jp
 }
 pub unsafe fn Botwoon_Instr_9(
     mut k: uint16,
@@ -1271,7 +1254,7 @@ pub unsafe fn Botwoon_Instr_9(
     );
     (*E).base.x_width = 12 as uint16;
     (*E).base.y_height = 12 as uint16;
-    return jp;
+    jp
 }
 pub unsafe fn Botwoon_Instr_10(
     mut k: uint16,
@@ -1284,7 +1267,7 @@ pub unsafe fn Botwoon_Instr_10(
     );
     (*E).base.x_width = 8 as uint16;
     (*E).base.y_height = 16 as uint16;
-    return jp;
+    jp
 }
 pub unsafe fn Botwoon_Instr_SetSpitting(
     mut k: uint16,
@@ -1296,7 +1279,7 @@ pub unsafe fn Botwoon_Instr_SetSpitting(
         game,
     ))
     .botwoon_var_5A = 1 as uint16;
-    return jp;
+    jp
 }
 pub unsafe fn Botwoon_Instr_QueueSpitSfx(
     mut k: uint16,
@@ -1304,7 +1287,7 @@ pub unsafe fn Botwoon_Instr_QueueSpitSfx(
     game: &mut Game,
 ) -> *const uint16 {
     QueueSfx2_Max6(0x7c as uint16, game);
-    return jp;
+    jp
 }
 pub unsafe fn Botwoon_QueueExplosionSfx(game: &mut Game) {
     QueueSfx2_Max6(0x24 as uint16, game);
@@ -1389,59 +1372,48 @@ pub unsafe fn CallBotwoonFuncVarD(mut ea: uint32, mut k: uint16, game: &mut Game
     match ea {
         11769976 => {
             Botwoon_Func_6(game);
-            return;
         }
         11770013 => {
             Botwoon_Func_7(game);
-            return;
         }
         11770276 => {
             Botwoon_Func_12(game);
-            return;
         }
         11770340 => {
             Botwoon_Func_13(game);
-            return;
         }
         11770438 => {
             Botwoon_Func_14(game);
-            return;
         }
         11770462 => {
             Botwoon_Func_15(game);
-            return;
         }
         11770570 => {
             Botwoon_Func_16(game);
-            return;
         }
         11770617 => {
             Botwoon_Func_18(k, game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn CallBotwoonFuncVarE(mut ea: uint32, game: &mut Game) {
     match ea {
         11770807 => {
             Botwoon_Func_19(game);
-            return;
         }
         11788880 => {
             Botwoon_Func_32(game);
-            return;
         }
         11788940 => {
             Botwoon_Func_33(game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn Botwoon_Main(game: &mut Game) {
     Botwoon_Func_3(game);
@@ -1892,7 +1864,7 @@ pub unsafe fn Botwoon_Func_20(mut k: uint16, game: &mut Game) -> Point16U {
     } else {
         r20 = 255 as uint16;
     }
-    return Point16U { x: r18, y: r20 };
+    Point16U { x: r18, y: r20 }
 }
 pub unsafe fn Botwoon_Func_21(game: &mut Game) {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
@@ -2327,10 +2299,10 @@ pub unsafe fn EscapeEtecoon_Instr_1(
     game: &mut Game,
 ) -> *const uint16 {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16) >= 0xceu16 {
-        return jp.offset(1);
+        jp.offset(1)
     } else {
-        return *jp.offset(0) as uintptr_t as *const uint16;
-    };
+        *jp.offset(0) as uintptr_t as *const uint16
+    }
 }
 pub unsafe fn EscapeEtecoon_Instr_2(
     mut k: uint16,
@@ -2339,7 +2311,7 @@ pub unsafe fn EscapeEtecoon_Instr_2(
 ) -> *const uint16 {
     let mut E: *mut Enemy_EscapeEtecoon = Get_EscapeEtecoon(k as ::core::ffi::c_int, game);
     (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(*jp.offset(0));
-    return jp.offset(1);
+    jp.offset(1)
 }
 pub unsafe fn EscapeEtecoon_Main(game: &mut Game) {
     let mut E: *mut Enemy_EscapeEtecoon = Get_EscapeEtecoon(
@@ -2426,10 +2398,10 @@ pub unsafe fn EscapeDachora_Instr_2(
     game: &mut Game,
 ) -> *const uint16 {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16) >= 0xceu16 {
-        return jp.offset(1);
+        jp.offset(1)
     } else {
-        return *jp.offset(0) as uintptr_t as *const uint16;
-    };
+        *jp.offset(0) as uintptr_t as *const uint16
+    }
 }
 pub unsafe fn EscapeDachora_Instr_3(
     mut k: uint16,
@@ -2437,10 +2409,10 @@ pub unsafe fn EscapeDachora_Instr_3(
     game: &mut Game,
 ) -> *const uint16 {
     if CheckEventHappened(0xf as uint16, game) != 0 {
-        return *jp.offset(0) as uintptr_t as *const uint16;
+        *jp.offset(0) as uintptr_t as *const uint16
     } else {
-        return jp.offset(1);
-    };
+        jp.offset(1)
+    }
 }
 pub unsafe fn EscapeDachora_Instr_1(
     mut k: uint16,
@@ -2452,7 +2424,7 @@ pub unsafe fn EscapeDachora_Instr_1(
         game,
     );
     (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(6u16);
-    return jp;
+    jp
 }
 pub unsafe fn EscapeDachora_Instr_4(
     mut k: uint16,
@@ -2464,7 +2436,7 @@ pub unsafe fn EscapeDachora_Instr_4(
         game,
     );
     (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(6u16);
-    return jp;
+    jp
 }
 pub unsafe fn EscapeDachora_Init(game: &mut Game) {
     let mut E: *mut Enemy_EscapeDachora = Get_EscapeDachora(

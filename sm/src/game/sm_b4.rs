@@ -8,7 +8,7 @@ pub use crate::types::{
 };
 #[inline]
 unsafe fn RomPtr_B4(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr((0xb40000u32) | ((addr) as u32), game);
+    RomPtr((0xb40000u32) | ((addr) as u32), game)
 }
 pub const fnSpriteObject_Instr_RepeatLast: uint32 = 11844848;
 pub const fnSpriteObject_Instr_Terminate: uint32 = 11844871;
@@ -51,26 +51,23 @@ pub unsafe fn CreateSpriteAtPos(
     *((&raw mut game.g_ram as *mut uint8).offset(0xef78) as *mut uint16).offset(v1 as isize) = v2;
     *((&raw mut game.g_ram as *mut uint8).offset(0xeff8) as *mut uint16).offset(v1 as isize) =
         *(RomPtr_B4(v2, game) as *mut uint16);
-    return v0 as uint16;
+    v0 as uint16
 }
 pub unsafe fn CallSpriteObjectInstr(mut ea: uint32, game: &mut Game) {
     match ea {
         11844848 => {
             SpriteObject_Instr_RepeatLast(game);
-            return;
         }
         11844871 => {
             SpriteObject_Instr_Terminate(game);
-            return;
         }
         11844882 => {
             SpriteObject_Instr_Goto(game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn HandleSpriteObjects(game: &mut Game) {
     let mut v1: uint16 = 0;

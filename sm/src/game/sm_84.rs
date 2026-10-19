@@ -74,41 +74,41 @@ unsafe fn RomPtr_RAM(mut addr: uint16_t, game: &mut Game) -> *mut uint8 {
             );
         }
     };
-    return (&raw mut game.g_ram as *mut uint8).offset(addr as ::core::ffi::c_int as isize);
+    (&raw mut game.g_ram as *mut uint8).offset(addr as ::core::ffi::c_int as isize)
 }
 #[inline]
 unsafe fn RomPtr_84(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr((0x840000u32) | ((addr) as u32), game);
+    RomPtr((0x840000u32) | ((addr) as u32), game)
 }
 #[inline]
 unsafe fn RomPtr_8F(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr((0x8f0000u32) | ((addr) as u32), game);
+    RomPtr((0x8f0000u32) | ((addr) as u32), game)
 }
 #[inline]
 unsafe fn RomBankBase(mut bank: uint8, game: &mut Game) -> *const uint8 {
-    return RomPtr(
+    RomPtr(
         (((bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) + 0x8000 as ::core::ffi::c_int)
             as uint32_t,
         game,
     )
-    .offset(-(0x8000 as ::core::ffi::c_int as isize));
+    .offset(-(0x8000 as ::core::ffi::c_int as isize))
 }
 #[inline]
 unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int, game: &mut Game) -> *mut VramWriteEntry {
-    return (&raw mut game.g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
-        as *mut uint8 as *mut VramWriteEntry;
+    (&raw mut game.g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
+        as *mut uint8 as *mut VramWriteEntry
 }
 #[inline]
 unsafe fn get_RoomDefRoomstate(mut a: uint16, game: &mut Game) -> *mut RoomDefRoomstate {
-    return RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefRoomstate;
+    RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefRoomstate
 }
 #[inline]
 unsafe fn get_RoomPlmEntry(mut a: uint16, game: &mut Game) -> *mut RoomPlmEntry {
-    return RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomPlmEntry;
+    RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomPlmEntry
 }
 #[inline]
 unsafe fn get_PlmHeader_Size4(mut a: uint16, game: &mut Game) -> *mut PlmHeader_Size4 {
-    return RomPtr((0x840000u32) | ((a) as u32), game) as *mut PlmHeader_Size4;
+    RomPtr((0x840000u32) | ((a) as u32), game) as *mut PlmHeader_Size4
 }
 pub const fnPlmPreInstr_nullsub_60: uint32 = 8684649;
 pub const fnPlmPreInstr_Empty2: ::core::ffi::c_int = 0x8484e6;
@@ -948,12 +948,12 @@ pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
         }
     }
     *_state_variable_ = 0 as uint8;
-    return 0 as CoroutineRet;
+    0 as CoroutineRet
 }
 #[inline]
 unsafe fn RomPtr_84orRAM(mut addr: uint16_t, game: &mut Game) -> *mut uint8 {
     if addr as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
-        return RomPtr((0x840000u32) | ((addr) as u32), game) as *mut uint8;
+        RomPtr((0x840000u32) | ((addr) as u32), game) as *mut uint8
     } else {
         '_c2rust_label: {
             if addr < 0x2000u16 {
@@ -966,8 +966,8 @@ unsafe fn RomPtr_84orRAM(mut addr: uint16_t, game: &mut Game) -> *mut uint8 {
                 );
             }
         };
-        return RomPtr_RAM(addr, game);
-    };
+        RomPtr_RAM(addr, game)
+    }
 }
 pub unsafe fn ProcessPlmDrawInstruction(k: uint16, game: &mut Game) {
     let slot = usize::from(k >> 1) * 2;
@@ -1029,16 +1029,14 @@ pub unsafe fn CallPlmInstrFunc(mut ea: uint32, game: &mut Game) {
     match ea {
         9557220 => {
             VariaSuitPickup(game);
-            return;
         }
         9557434 => {
             GravitySuitPickup(game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn PlmInstr_CallFunction(
     mut plmp: *const uint8,
@@ -1046,7 +1044,7 @@ pub unsafe fn PlmInstr_CallFunction(
     game: &mut Game,
 ) -> *const uint8 {
     CallPlmInstrFunc(Load24(plmp as *mut LongPtr), game);
-    return plmp.offset(3);
+    plmp.offset(3)
 }
 pub unsafe fn PlmInstr_Goto(plmp: *const uint8, _k: uint16) -> *const uint8 {
     let target = (plmp as *const u16).read_unaligned();
@@ -1062,10 +1060,10 @@ pub unsafe fn PlmInstr_DecrementAndBranchNonzero(
     let fresh66 = *fresh65;
     *fresh65 = (*fresh65).wrapping_sub(1);
     if fresh66 == 1u16 {
-        return plmp.offset(2);
+        plmp.offset(2)
     } else {
-        return PlmInstr_Goto(plmp, k);
-    };
+        PlmInstr_Goto(plmp, k)
+    }
 }
 pub unsafe fn PlmInstr_SetTimer(plmp: *const uint8, k: uint16, game: &mut Game) -> *const uint8 {
     game.g_ram[0x1d77 + usize::from(k)] = *plmp; // Only one byte of plm_timers.
@@ -1133,10 +1131,10 @@ pub unsafe fn PlmInstr_GotoIfBossBitSet(
     game: &mut Game,
 ) -> *const uint8 {
     if CheckBossBitForCurArea(*plmp.offset(0) as uint16, game) != 0 {
-        return PlmInstr_Goto(plmp.offset(1), k);
+        PlmInstr_Goto(plmp.offset(1), k)
     } else {
-        return plmp.offset(3);
-    };
+        plmp.offset(3)
+    }
 }
 pub unsafe fn PlmInstr_GotoIfEventSet(
     mut plmp: *const uint8,
@@ -1144,10 +1142,10 @@ pub unsafe fn PlmInstr_GotoIfEventSet(
     game: &mut Game,
 ) -> *const uint8 {
     if CheckEventHappened(*(plmp as *mut uint16), game) != 0 {
-        return PlmInstr_Goto(plmp.offset(2), k);
+        PlmInstr_Goto(plmp.offset(2), k)
     } else {
-        return plmp.offset(4);
-    };
+        plmp.offset(4)
+    }
 }
 pub unsafe fn PlmInstr_SetEvent(
     mut plmp: *const uint8,
@@ -1155,7 +1153,7 @@ pub unsafe fn PlmInstr_SetEvent(
     game: &mut Game,
 ) -> *const uint8 {
     SetEventHappened(*(plmp as *mut uint16), game);
-    return plmp.offset(2);
+    plmp.offset(2)
 }
 pub unsafe fn PlmInstr_GotoIfChozoSet(
     mut plmp: *const uint8,
@@ -1173,10 +1171,10 @@ pub unsafe fn PlmInstr_GotoIfChozoSet(
                 .offset(idx as isize) as ::core::ffi::c_int)
             != 0i32
     {
-        return PlmInstr_Goto(plmp, k);
+        PlmInstr_Goto(plmp, k)
     } else {
-        return plmp.offset(2);
-    };
+        plmp.offset(2)
+    }
 }
 pub unsafe fn PlmInstr_SetRoomChozoBit(
     mut plmp: *const uint8,
@@ -1193,7 +1191,7 @@ pub unsafe fn PlmInstr_SetRoomChozoBit(
         *fresh64 = (*fresh64)
             | ((*((&raw mut game.g_ram as *mut uint8).offset(0x5e7) as *mut uint16)) as u8);
     }
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_GotoIfItemBitSet(
     mut plmp: *const uint8,
@@ -1209,7 +1207,7 @@ pub unsafe fn PlmInstr_GotoIfItemBitSet(
             return PlmInstr_Goto(plmp, k);
         }
     }
-    return plmp.offset(2);
+    plmp.offset(2)
 }
 pub unsafe fn PlmInstr_SetItemBit(
     mut plmp: *const uint8,
@@ -1223,7 +1221,7 @@ pub unsafe fn PlmInstr_SetItemBit(
         let bitmask = u16::from_le_bytes([game.g_ram[0x5e7], game.g_ram[0x5e8]]);
         game.g_ram[0xd870 + byte_index] |= bitmask as u8;
     }
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_PickupBeamAndShowMessage(
     plmp: *const uint8,
@@ -1272,7 +1270,7 @@ pub unsafe fn PlmInstr_PickupEquipmentAddGrappleShowMessage(
     AddGrappleToHudTilemap(game);
     PlayRoomMusicTrackAfterAFrames(0x168 as uint16, game);
     DisplayMessageBox(5 as uint16, game);
-    return plmp.offset(2);
+    plmp.offset(2)
 }
 pub unsafe fn PlmInstr_PickupEquipmentAddXrayShowMessage(
     mut plmp: *const uint8,
@@ -1287,7 +1285,7 @@ pub unsafe fn PlmInstr_PickupEquipmentAddXrayShowMessage(
     AddXrayToHudTilemap(game);
     PlayRoomMusicTrackAfterAFrames(0x168 as uint16, game);
     DisplayMessageBox(6 as uint16, game);
-    return plmp.offset(2);
+    plmp.offset(2)
 }
 pub unsafe fn PlmInstr_CollectHealthEnergyTank(
     plmp: *const uint8,
@@ -1314,7 +1312,7 @@ pub unsafe fn PlmInstr_CollectHealthReserveTank(
     }
     PlayRoomMusicTrackAfterAFrames(0x168 as uint16, game);
     DisplayMessageBox(0x19 as uint16, game);
-    return plmp.offset(2);
+    plmp.offset(2)
 }
 pub unsafe fn PlmInstr_CollectAmmoMissileTank(
     mut plmp: *const uint8,
@@ -1327,7 +1325,7 @@ pub unsafe fn PlmInstr_CollectAmmoMissileTank(
     AddMissilesToHudTilemap(game);
     PlayRoomMusicTrackAfterAFrames(0x168 as uint16, game);
     DisplayMessageBox(2 as uint16, game);
-    return plmp.offset(2);
+    plmp.offset(2)
 }
 pub unsafe fn PlmInstr_CollectAmmoSuperMissileTank(
     plmp: *const uint8,
@@ -1355,7 +1353,7 @@ pub unsafe fn PlmInstr_CollectAmmoPowerBombTank(
     AddPowerBombsToHudTilemap(game);
     PlayRoomMusicTrackAfterAFrames(0x168 as uint16, game);
     DisplayMessageBox(4 as uint16, game);
-    return plmp.offset(2);
+    plmp.offset(2)
 }
 pub unsafe fn PlmInstr_SetLinkReg(plmp: *const uint8, k: uint16, game: &mut Game) -> *const uint8 {
     let link = (plmp as *const u16).read_unaligned();
@@ -1440,12 +1438,12 @@ pub unsafe fn PlmInstr_IncrementArgumentAndJGE(
             -(1 as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1cd7) as *mut uint16).offset(v4 as isize) =
             addr_locret_848AE0 as uint16;
-        return PlmInstr_Goto(plmp.offset(1), k);
+        PlmInstr_Goto(plmp.offset(1), k)
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1dc7) as *mut uint16)
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = v2 as uint16;
-        return plmp.offset(3);
-    };
+        plmp.offset(3)
+    }
 }
 pub unsafe fn PlmInstr_SetBTS(plmp: *const uint8, k: uint16, game: &mut Game) -> *const uint8 {
     let bts = *plmp;
@@ -1483,7 +1481,7 @@ pub unsafe fn PlmInstr_DrawPlmBlock(
         game,
     );
     DrawPlm(v4, game);
-    return ::core::ptr::null::<uint8>();
+    ::core::ptr::null::<uint8>()
 }
 pub unsafe fn PlmInstr_ProcessAirScrollUpdate(
     plmp: *const uint8,
@@ -1537,7 +1535,7 @@ pub unsafe fn PlmInstr_ProcessSolidScrollUpdate(
             as ::core::ffi::c_int
             & 0xfff as ::core::ffi::c_int
             | 0xb000 as ::core::ffi::c_int) as uint16;
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_QueueMusic(
     mut plmp: *const uint8,
@@ -1545,7 +1543,7 @@ pub unsafe fn PlmInstr_QueueMusic(
     game: &mut Game,
 ) -> *const uint8 {
     QueueMusic_Delayed8(*plmp.offset(0) as uint16, game);
-    return plmp.offset(1);
+    plmp.offset(1)
 }
 pub unsafe fn PlmInstr_ClearMusicQueueAndQueueTrack(
     mut plmp: *const uint8,
@@ -1566,7 +1564,7 @@ pub unsafe fn PlmInstr_ClearMusicQueueAndQueueTrack(
     *((&raw mut game.g_ram as *mut uint8).offset(0x63f) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x63d) as *mut uint16) = 0 as uint16;
     QueueMusic_Delayed8(*plmp.offset(0) as uint16, game);
-    return plmp.offset(1);
+    plmp.offset(1)
 }
 pub unsafe fn PlmInstr_QueueSfx1_Max6(
     mut plmp: *const uint8,
@@ -1574,7 +1572,7 @@ pub unsafe fn PlmInstr_QueueSfx1_Max6(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx1_Max6(*plmp.offset(0) as uint16, game);
-    return plmp.offset(1);
+    plmp.offset(1)
 }
 pub unsafe fn PlmInstr_QueueSfx2_Max6(
     mut plmp: *const uint8,
@@ -1582,7 +1580,7 @@ pub unsafe fn PlmInstr_QueueSfx2_Max6(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx2_Max6(*plmp.offset(0) as uint16, game);
-    return plmp.offset(1);
+    plmp.offset(1)
 }
 pub unsafe fn PlmInstr_QueueSfx3_Max6(
     mut plmp: *const uint8,
@@ -1590,7 +1588,7 @@ pub unsafe fn PlmInstr_QueueSfx3_Max6(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx3_Max6(*plmp.offset(0) as uint16, game);
-    return plmp.offset(1);
+    plmp.offset(1)
 }
 pub unsafe fn PlmInstr_QueueSfx1_Max15(
     mut plmp: *const uint8,
@@ -1598,7 +1596,7 @@ pub unsafe fn PlmInstr_QueueSfx1_Max15(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx1_Max15(*plmp.offset(0) as uint16, game);
-    return plmp.offset(1);
+    plmp.offset(1)
 }
 pub unsafe fn PlmInstr_QueueSfx2_Max15(
     mut plmp: *const uint8,
@@ -1606,7 +1604,7 @@ pub unsafe fn PlmInstr_QueueSfx2_Max15(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx2_Max15(*plmp.offset(0) as uint16, game);
-    return plmp.offset(1);
+    plmp.offset(1)
 }
 pub unsafe fn PlmInstr_QueueSfx3_Max15(
     mut plmp: *const uint8,
@@ -1614,7 +1612,7 @@ pub unsafe fn PlmInstr_QueueSfx3_Max15(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx3_Max15(*plmp.offset(0) as uint16, game);
-    return plmp.offset(1);
+    plmp.offset(1)
 }
 pub unsafe fn PlmInstr_QueueSfx1_Max3(
     mut plmp: *const uint8,
@@ -1622,7 +1620,7 @@ pub unsafe fn PlmInstr_QueueSfx1_Max3(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx1_Max3(*plmp.offset(0) as uint16, game);
-    return plmp.offset(1);
+    plmp.offset(1)
 }
 pub unsafe fn PlmInstr_QueueSfx2_Max3(
     mut plmp: *const uint8,
@@ -1630,7 +1628,7 @@ pub unsafe fn PlmInstr_QueueSfx2_Max3(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx2_Max3(*plmp.offset(0) as uint16, game);
-    return plmp.offset(1);
+    plmp.offset(1)
 }
 pub unsafe fn PlmInstr_QueueSfx_Max3(
     mut plmp: *const uint8,
@@ -1638,7 +1636,7 @@ pub unsafe fn PlmInstr_QueueSfx_Max3(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx3_Max3(*plmp.offset(0) as uint16, game);
-    return plmp.offset(1);
+    plmp.offset(1)
 }
 pub unsafe fn PlmInstr_QueueSfx1_Max9(
     mut plmp: *const uint8,
@@ -1646,7 +1644,7 @@ pub unsafe fn PlmInstr_QueueSfx1_Max9(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx1_Max9(*plmp.offset(0) as uint16, game);
-    return plmp.offset(1);
+    plmp.offset(1)
 }
 pub unsafe fn PlmInstr_QueueSfx2_Max9(
     mut plmp: *const uint8,
@@ -1654,7 +1652,7 @@ pub unsafe fn PlmInstr_QueueSfx2_Max9(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx2_Max9(*plmp.offset(0) as uint16, game);
-    return plmp.offset(1);
+    plmp.offset(1)
 }
 pub unsafe fn PlmInstr_QueueSfx3_Max9(
     mut plmp: *const uint8,
@@ -1662,7 +1660,7 @@ pub unsafe fn PlmInstr_QueueSfx3_Max9(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx3_Max9(*plmp.offset(0) as uint16, game);
-    return plmp.offset(1);
+    plmp.offset(1)
 }
 pub unsafe fn PlmInstr_QueueSfx1_Max1(
     mut plmp: *const uint8,
@@ -1670,7 +1668,7 @@ pub unsafe fn PlmInstr_QueueSfx1_Max1(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx1_Max1(*plmp.offset(0) as uint16, game);
-    return plmp.offset(1);
+    plmp.offset(1)
 }
 pub unsafe fn PlmInstr_QueueSfx2_Max1(
     mut plmp: *const uint8,
@@ -1678,7 +1676,7 @@ pub unsafe fn PlmInstr_QueueSfx2_Max1(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx2_Max1(*plmp.offset(0) as uint16, game);
-    return plmp.offset(1);
+    plmp.offset(1)
 }
 pub unsafe fn PlmInstr_QueueSfx3_Max1(
     mut plmp: *const uint8,
@@ -1686,7 +1684,7 @@ pub unsafe fn PlmInstr_QueueSfx3_Max1(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx3_Max1(*plmp.offset(0) as uint16, game);
-    return plmp.offset(1);
+    plmp.offset(1)
 }
 pub unsafe fn PlmInstr_ActivateMapStation(
     plmp: *const uint8,
@@ -1713,7 +1711,7 @@ pub unsafe fn PlmInstr_ActivateEnergyStation(
             *((&raw mut game.g_ram as *mut uint8).offset(0x9c4) as *mut uint16);
     }
     CallSomeSamusCode(1 as uint16, game);
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_ActivateMissileStation(
     mut plmp: *const uint8,
@@ -1728,7 +1726,7 @@ pub unsafe fn PlmInstr_ActivateMissileStation(
             *((&raw mut game.g_ram as *mut uint8).offset(0x9c8) as *mut uint16);
     }
     CallSomeSamusCode(1 as uint16, game);
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_ActivateSaveStationAndGotoIfNo(
     mut plmp: *const uint8,
@@ -1768,7 +1766,7 @@ pub unsafe fn PlmInstr_ActivateSaveStationAndGotoIfNo(
         *((&raw mut game.g_ram as *mut uint8).offset(0x952) as *mut uint16),
         game,
     );
-    return plmp.offset(2);
+    plmp.offset(2)
 }
 pub unsafe fn PlmInstr_GotoIfSamusNear(
     mut plmp: *const uint8,
@@ -1791,10 +1789,10 @@ pub unsafe fn PlmInstr_GotoIfSamusNear(
                 as ::core::ffi::c_int) as uint16,
     ) as uint8;
     if v2 <= *plmp.offset(0) && v4 <= *plmp.offset(1) {
-        return *(plmp.offset(2) as *mut uint16) as uintptr_t as *const uint8;
+        *(plmp.offset(2) as *mut uint16) as uintptr_t as *const uint8
     } else {
-        return plmp.offset(4);
-    };
+        plmp.offset(4)
+    }
 }
 unsafe fn PartiallyQueueVramForSingleScreenPlm(
     mut a: uint16,
@@ -2457,12 +2455,12 @@ pub unsafe fn PlmInstr_MovePlmDownOneBlock(
         + 2 as ::core::ffi::c_int
             * *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16)
                 as ::core::ffi::c_int) as uint16;
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmSetup_CrumbleBotwoonWall(mut j: uint16, game: &mut Game) -> uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xde1c) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 64 as uint16;
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmInstr_Scroll_0_1_Blue(
     mut plmp: *const uint8,
@@ -2470,7 +2468,7 @@ pub unsafe fn PlmInstr_Scroll_0_1_Blue(
     game: &mut Game,
 ) -> *const uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xcd20) as *mut uint16) = 257 as uint16;
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_MovePlmDownOneBlock_0(
     mut plmp: *const uint8,
@@ -2483,7 +2481,7 @@ pub unsafe fn PlmInstr_MovePlmDownOneBlock_0(
         + 2 as ::core::ffi::c_int
             * *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16)
                 as ::core::ffi::c_int) as uint16;
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_ABD6(
     mut plmp: *const uint8,
@@ -2493,7 +2491,7 @@ pub unsafe fn PlmInstr_ABD6(
     let ref mut fresh31 = *((&raw mut game.g_ram as *mut uint8).offset(0x1c87) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh31 = (*fresh31).wrapping_add(2u16);
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmPreInstr_PositionSamusAndInvincible(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -2511,7 +2509,7 @@ pub unsafe fn PlmInstr_DealDamage_2(
 ) -> *const uint8 {
     let ref mut fresh37 = *((&raw mut game.g_ram as *mut uint8).offset(0xa50) as *mut uint16);
     *fresh37 = (*fresh37).wrapping_add(2u16);
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_GiveInvincibility(
     mut plmp: *const uint8,
@@ -2519,7 +2517,7 @@ pub unsafe fn PlmInstr_GiveInvincibility(
     game: &mut Game,
 ) -> *const uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) = 48 as uint16;
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_Draw0x38FramesOfRightTreadmill(
     mut plmp: *const uint8,
@@ -2527,7 +2525,7 @@ pub unsafe fn PlmInstr_Draw0x38FramesOfRightTreadmill(
     game: &mut Game,
 ) -> *const uint8 {
     WriteRowOfLevelDataBlockAndBTS(k, 0x30ff as uint16, 0x8 as uint16, 0x38 as uint16, game);
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_Draw0x38FramesOfLeftTreadmill(
     mut plmp: *const uint8,
@@ -2535,7 +2533,7 @@ pub unsafe fn PlmInstr_Draw0x38FramesOfLeftTreadmill(
     game: &mut Game,
 ) -> *const uint8 {
     WriteRowOfLevelDataBlockAndBTS(k, 0x30ff as uint16, 0x9 as uint16, 0x38 as uint16, game);
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_GotoIfSamusHealthFull(
     mut plmp: *const uint8,
@@ -2548,7 +2546,7 @@ pub unsafe fn PlmInstr_GotoIfSamusHealthFull(
         return plmp.offset(2);
     }
     CallSomeSamusCode(1 as uint16, game);
-    return *(plmp as *mut uint16) as uintptr_t as *const uint8;
+    *(plmp as *mut uint16) as uintptr_t as *const uint8
 }
 pub unsafe fn PlmInstr_GotoIfMissilesFull(
     mut plmp: *const uint8,
@@ -2561,7 +2559,7 @@ pub unsafe fn PlmInstr_GotoIfMissilesFull(
         return plmp.offset(2);
     }
     CallSomeSamusCode(1 as uint16, game);
-    return *(plmp as *mut uint16) as uintptr_t as *const uint8;
+    *(plmp as *mut uint16) as uintptr_t as *const uint8
 }
 pub unsafe fn PlmInstr_PlaceSamusOnSaveStation(
     mut plmp: *const uint8,
@@ -2573,7 +2571,7 @@ pub unsafe fn PlmInstr_PlaceSamusOnSaveStation(
             + 8 as ::core::ffi::c_int
             & 0xfff0 as ::core::ffi::c_int) as uint16;
     MakeSamusFaceForward(game);
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_DisplayGameSavedMessageBox(
     mut plmp: *const uint8,
@@ -2581,7 +2579,7 @@ pub unsafe fn PlmInstr_DisplayGameSavedMessageBox(
     game: &mut Game,
 ) -> *const uint8 {
     DisplayMessageBox(0x18 as uint16, game);
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_EnableMovementAndSetSaveStationUsed(
     mut plmp: *const uint8,
@@ -2590,7 +2588,7 @@ pub unsafe fn PlmInstr_EnableMovementAndSetSaveStationUsed(
 ) -> *const uint8 {
     CallSomeSamusCode(1 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1e75) as *mut uint16) = 1 as uint16;
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmSetup_SetrupWreckedShipEntrance(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v2: int16 = 0;
@@ -2606,7 +2604,7 @@ pub unsafe fn PlmSetup_SetrupWreckedShipEntrance(mut j: uint16, game: &mut Game)
             break;
         }
     }
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_BTS_Brinstar_0x80_Floorplant(mut j: uint16, game: &mut Game) -> uint8 {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16) as ::core::ffi::c_int
@@ -2633,7 +2631,7 @@ pub unsafe fn PlmSetup_BTS_Brinstar_0x80_Floorplant(mut j: uint16, game: &mut Ga
         *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_BTS_Brinstar_0x81_Ceilingplant(mut j: uint16, game: &mut Game) -> uint8 {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) as ::core::ffi::c_int
@@ -2659,7 +2657,7 @@ pub unsafe fn PlmSetup_BTS_Brinstar_0x81_Ceilingplant(mut j: uint16, game: &mut 
             (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16))
                 .wrapping_add(1u16);
     }
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn ActivateStationIfSamusCannonLinedUp(
     mut a: uint16,
@@ -2711,7 +2709,7 @@ pub unsafe fn ActivateStationIfSamusCannonLinedUp(
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-    return 1 as uint8;
+    1 as uint8
 }
 pub unsafe fn PlmSetup_B6D3_MapStation(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -2747,7 +2745,7 @@ pub unsafe fn PlmSetup_B6D3_MapStation(mut j: uint16, game: &mut Game) -> uint8 
             game,
         );
     }
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_Bts47_MapStationRightAccess(mut j: uint16, game: &mut Game) -> uint8 {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xb02) as *mut uint16) as ::core::ffi::c_int
@@ -2769,7 +2767,7 @@ pub unsafe fn PlmSetup_Bts47_MapStationRightAccess(mut j: uint16, game: &mut Gam
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-    return 1 as uint8;
+    1 as uint8
 }
 pub unsafe fn PlmSetup_Bts4_MapStationLeftAccess(mut j: uint16, game: &mut Game) -> uint8 {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xb02) as *mut uint16) as ::core::ffi::c_int
@@ -2791,7 +2789,7 @@ pub unsafe fn PlmSetup_Bts4_MapStationLeftAccess(mut j: uint16, game: &mut Game)
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-    return 1 as uint8;
+    1 as uint8
 }
 pub unsafe fn PlmSetup_PlmB6DF_EnergyStation(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -2816,7 +2814,7 @@ pub unsafe fn PlmSetup_PlmB6DF_EnergyStation(mut j: uint16, game: &mut Game) -> 
         ((0x84b04ai32) as u16) & (0xffffu16),
         game,
     );
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_PlmB6EB_EnergyStation(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -2841,7 +2839,7 @@ pub unsafe fn PlmSetup_PlmB6EB_EnergyStation(mut j: uint16, game: &mut Game) -> 
         0xb04c as uint16,
         game,
     );
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_B6E3_EnergyStationRightAccess(mut j: uint16, game: &mut Game) -> uint8 {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xb02) as *mut uint16) as ::core::ffi::c_int
@@ -2857,16 +2855,16 @@ pub unsafe fn PlmSetup_B6E3_EnergyStationRightAccess(mut j: uint16, game: &mut G
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-        return 1 as uint8;
+        1 as uint8
     } else {
-        return ActivateStationIfSamusCannonLinedUp(
+        ActivateStationIfSamusCannonLinedUp(
             (*((&raw mut game.g_ram as *mut uint8).offset(0x1c87) as *mut uint16)
                 .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize))
             .wrapping_sub(2u16),
             j,
             game,
-        );
-    };
+        )
+    }
 }
 pub unsafe fn PlmSetup_B6E7_EnergyStationLeftAccess(mut j: uint16, game: &mut Game) -> uint8 {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xb02) as *mut uint16) as ::core::ffi::c_int
@@ -2890,7 +2888,7 @@ pub unsafe fn PlmSetup_B6E7_EnergyStationLeftAccess(mut j: uint16, game: &mut Ga
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-    return 1 as uint8;
+    1 as uint8
 }
 pub unsafe fn PlmSetup_B6EF_MissileStationRightAccess(mut j: uint16, game: &mut Game) -> uint8 {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xb02) as *mut uint16) as ::core::ffi::c_int
@@ -2908,13 +2906,13 @@ pub unsafe fn PlmSetup_B6EF_MissileStationRightAccess(mut j: uint16, game: &mut 
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
         return 1 as uint8;
     }
-    return ActivateStationIfSamusCannonLinedUp(
+    ActivateStationIfSamusCannonLinedUp(
         (*((&raw mut game.g_ram as *mut uint8).offset(0x1c87) as *mut uint16)
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize))
         .wrapping_sub(2u16),
         j,
         game,
-    );
+    )
 }
 pub unsafe fn PlmSetup_B6F3_MissileStationLeftAccess(mut j: uint16, game: &mut Game) -> uint8 {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xb02) as *mut uint16) as ::core::ffi::c_int
@@ -2928,18 +2926,18 @@ pub unsafe fn PlmSetup_B6F3_MissileStationLeftAccess(mut j: uint16, game: &mut G
         && *((&raw mut game.g_ram as *mut uint8).offset(0x9c6) as *mut uint16)
             != *((&raw mut game.g_ram as *mut uint8).offset(0x9c8) as *mut uint16)
     {
-        return ActivateStationIfSamusCannonLinedUp(
+        ActivateStationIfSamusCannonLinedUp(
             (*((&raw mut game.g_ram as *mut uint8).offset(0x1c87) as *mut uint16)
                 .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize))
             .wrapping_add(2u16),
             j,
             game,
-        );
+        )
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-        return 1 as uint8;
-    };
+        1 as uint8
+    }
 }
 pub fn DeletePlm(j: uint16, game: &mut Game) {
     let header_offset = 0x1c37 + usize::from(j & !1);
@@ -3052,7 +3050,7 @@ pub unsafe fn UNUSED_sub_84B3E3(mut j: uint16) -> uint8 {
             b"uint8 UNUSED_sub_84B3E3(uint16)\0" as *const u8 as *const ::core::ffi::c_char,
         );
     };
-    return 0 as uint8;
+    0 as uint8
 }
 pub fn PlmSetup_B70F_IcePhysics(_j: uint16, game: &mut Game) -> uint8 {
     let y_radius = u16::from_le_bytes([game.g_ram[0xb00], game.g_ram[0xb01]]);
@@ -3208,7 +3206,7 @@ pub unsafe fn PlmSetup_ClearShitroidInvisibleWall(mut j: uint16, game: &mut Game
             break;
         }
     }
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_B767_ClearShitroidInvisibleWall(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v2: int16 = 0;
@@ -3232,7 +3230,7 @@ pub unsafe fn PlmSetup_B767_ClearShitroidInvisibleWall(mut j: uint16, game: &mut
             break;
         }
     }
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_B76B_SaveStationTrigger(j: uint16, game: &mut Game) -> uint8 {
     let read_word = |game: &Game, offset: usize| {
@@ -3276,7 +3274,7 @@ pub unsafe fn PlmSetup_B76F_SaveStation(mut j: uint16, game: &mut Game) -> uint8
         0xb04d as uint16,
         game,
     );
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_MotherBrainRoomEscapeDoor(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x1c87) as *mut uint16)
@@ -3299,7 +3297,7 @@ pub unsafe fn PlmSetup_MotherBrainRoomEscapeDoor(mut j: uint16, game: &mut Game)
         0xd0ff as uint16,
         game,
     );
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_B7EB_EnableSoundsIn32Frames(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: uint16 = 0;
@@ -3312,7 +3310,7 @@ pub unsafe fn PlmSetup_B7EB_EnableSoundsIn32Frames(mut j: uint16, game: &mut Gam
     *((&raw mut game.g_ram as *mut uint8).offset(0x1d77) as *mut uint16).offset(v2 as isize) = v1;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1cd7) as *mut uint16).offset(v2 as isize) =
         ((0x84b7ddi32) as u16) & (0xffffu16);
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmPreInstr_B7EB_DecTimerEnableSoundsDeletePlm(mut k: uint16, game: &mut Game) {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -3411,7 +3409,7 @@ pub unsafe fn PlmSetup_SpeedBoosterEscape(mut j: uint16, game: &mut Game) -> uin
         *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmPreInstr_ShaktoolsRoom(mut k: uint16, game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x592) as *mut uint16) != 0 {
@@ -3429,7 +3427,7 @@ pub unsafe fn PlmSetup_ShaktoolsRoom(mut j: uint16, game: &mut Game) -> uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xcd20) as *mut uint16) = 1 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xcd20).offset(2) as *mut uint8 as *mut uint16) =
         0 as uint16;
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn WakePlmIfSamusIsBelowAndRightOfTarget(
     mut k: uint16,
@@ -3448,7 +3446,7 @@ pub unsafe fn WakePlmIfSamusIsBelowAndRightOfTarget(
             1 as uint16;
         return false_0 as uint8;
     }
-    return true_0 as uint8;
+    true_0 as uint8
 }
 pub unsafe fn PlmPreInstr_OldTourianEscapeShaftEscape(mut k: uint16, game: &mut Game) {
     if WakePlmIfSamusIsBelowAndRightOfTarget(k, 240 as uint16, 2080 as uint16, game) == 0 {
@@ -3463,7 +3461,7 @@ pub unsafe fn PlmPreInstr_EscapeRoomBeforeOldTourianEscapeShaft(mut k: uint16, g
     }
 }
 pub fn PlmSetup_B974(mut j: uint16) -> uint8 {
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_B9C1_CrittersEscapeBlock(mut j: uint16, game: &mut Game) -> uint8 {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(
@@ -3488,7 +3486,7 @@ pub unsafe fn PlmSetup_B9C1_CrittersEscapeBlock(mut j: uint16, game: &mut Game) 
         *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmInstr_SetCrittersEscapedEvent(
     mut plmp: *const uint8,
@@ -3496,7 +3494,7 @@ pub unsafe fn PlmInstr_SetCrittersEscapedEvent(
     game: &mut Game,
 ) -> *const uint8 {
     SetEventHappened(0xf as uint16, game);
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmSetup_B9ED_CrittersEscapeBlock(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x1c87) as *mut uint16)
@@ -3514,7 +3512,7 @@ pub unsafe fn PlmSetup_B9ED_CrittersEscapeBlock(mut j: uint16, game: &mut Game) 
         0xd0ff as uint16,
         game,
     );
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn sub_84B9F1(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x1c87) as *mut uint16)
@@ -3536,7 +3534,7 @@ pub unsafe fn sub_84B9F1(mut j: uint16, game: &mut Game) -> uint8 {
             + v3 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
             >> 1 as ::core::ffi::c_int;
     update_level_block_bits(v4 as usize, 0xfff, 0x8000, game);
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmInstr_JumpIfSamusHasNoBombs(
     mut plmp: *const uint8,
@@ -3547,17 +3545,17 @@ pub unsafe fn PlmInstr_JumpIfSamusHasNoBombs(
         & 0x1000 as ::core::ffi::c_int)
         != 0i32
     {
-        return plmp.offset(2);
+        plmp.offset(2)
     } else {
-        return *(plmp as *mut uint16) as uintptr_t as *const uint8;
-    };
+        *(plmp as *mut uint16) as uintptr_t as *const uint8
+    }
 }
 pub unsafe fn PlmSetup_BB30_CrateriaMainstreetEscape(mut j: uint16, game: &mut Game) -> uint8 {
     if CheckEventHappened(0xf as uint16, game) == 0 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmInstr_MovePlmRight4Blocks(
     mut plmp: *const uint8,
@@ -3567,7 +3565,7 @@ pub unsafe fn PlmInstr_MovePlmRight4Blocks(
     let ref mut fresh36 = *((&raw mut game.g_ram as *mut uint8).offset(0x1c87) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh36 = (*fresh36).wrapping_add(8u16);
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmPreInstr_WakePlmIfTriggered(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -3646,7 +3644,7 @@ pub unsafe fn PlmInstr_ClearTrigger(
 ) -> *const uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1d77) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_SpawnEproj(
     mut plmp: *const uint8,
@@ -3654,7 +3652,7 @@ pub unsafe fn PlmInstr_SpawnEproj(
     game: &mut Game,
 ) -> *const uint8 {
     SpawnEprojWithRoomGfx(*(plmp as *mut uint16), 0 as uint16, game);
-    return plmp.offset(2);
+    plmp.offset(2)
 }
 pub unsafe fn PlmInstr_WakeEprojAtPlmPos(
     mut plmp: *const uint8,
@@ -3680,7 +3678,7 @@ pub unsafe fn PlmInstr_WakeEprojAtPlmPos(
     let ref mut fresh35 =
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v4 as isize);
     *fresh35 = (*fresh35).wrapping_add(2u16);
-    return plmp.offset(2);
+    plmp.offset(2)
 }
 pub unsafe fn PlmPreInstr_GoToLinkInstrIfShot(mut k: uint16, game: &mut Game) {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -3854,7 +3852,7 @@ pub unsafe fn PlmInstr_SetGreyDoorPreInstr(
                     as ::core::ffi::c_int
                     >> 1 as ::core::ffi::c_int) as isize,
             );
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmSetup_C806_LeftGreenGateTrigger(mut j: uint16, game: &mut Game) -> uint8 {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(
@@ -3869,7 +3867,7 @@ pub unsafe fn PlmSetup_C806_LeftGreenGateTrigger(mut j: uint16, game: &mut Game)
     QueueSfx2_Max6(0x57 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_C80A_RightGreenGateTrigger(mut j: uint16, game: &mut Game) -> uint8 {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(
@@ -3884,7 +3882,7 @@ pub unsafe fn PlmSetup_C80A_RightGreenGateTrigger(mut j: uint16, game: &mut Game
     QueueSfx2_Max6(0x57 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_C80E_LeftRedGateTrigger(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: int16 = 0;
@@ -3899,7 +3897,7 @@ pub unsafe fn PlmSetup_C80E_LeftRedGateTrigger(mut j: uint16, game: &mut Game) -
     QueueSfx2_Max6(0x57 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_C812_RightRedGateTrigger(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: int16 = 0;
@@ -3914,7 +3912,7 @@ pub unsafe fn PlmSetup_C812_RightRedGateTrigger(mut j: uint16, game: &mut Game) 
     QueueSfx2_Max6(0x57 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_C822_RightYellowGateTrigger(mut j: uint16, game: &mut Game) -> uint8 {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(
@@ -3929,7 +3927,7 @@ pub unsafe fn PlmSetup_C822_RightYellowGateTrigger(mut j: uint16, game: &mut Gam
     QueueSfx2_Max6(0x57 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_C81E_LeftYellowGateTrigger(mut j: uint16, game: &mut Game) -> uint8 {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(
@@ -3945,7 +3943,7 @@ pub unsafe fn PlmSetup_C81E_LeftYellowGateTrigger(mut j: uint16, game: &mut Game
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16).offset(v1 as isize) =
         0 as uint16;
-    return PlmSetup_C822_RightYellowGateTrigger(j, game);
+    PlmSetup_C822_RightYellowGateTrigger(j, game)
 }
 pub unsafe fn PlmSetup_C81A_RightBlueGateTrigger(mut j: uint16, game: &mut Game) -> uint8 {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(
@@ -3959,7 +3957,7 @@ pub unsafe fn PlmSetup_C81A_RightBlueGateTrigger(mut j: uint16, game: &mut Game)
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_C816_LeftBlueGateTrigger(mut j: uint16, game: &mut Game) -> uint8 {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(
@@ -3973,25 +3971,25 @@ pub unsafe fn PlmSetup_C816_LeftBlueGateTrigger(mut j: uint16, game: &mut Game) 
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-    return PlmSetup_C81A_RightBlueGateTrigger(j, game);
+    PlmSetup_C81A_RightBlueGateTrigger(j, game)
 }
 pub unsafe fn sub_84C63F(mut j: uint16, game: &mut Game) -> uint8 {
-    return sub_84C64C(
+    sub_84C64C(
         j,
         (*((&raw mut game.g_ram as *mut uint8).offset(0x1c87) as *mut uint16)
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize))
         .wrapping_add(2u16),
         game,
-    );
+    )
 }
 pub unsafe fn sub_84C647(mut j: uint16, game: &mut Game) -> uint8 {
-    return sub_84C64C(
+    sub_84C64C(
         j,
         (*((&raw mut game.g_ram as *mut uint8).offset(0x1c87) as *mut uint16)
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize))
         .wrapping_sub(2u16),
         game,
-    );
+    )
 }
 pub unsafe fn sub_84C64C(mut j: uint16, mut a: uint16, game: &mut Game) -> uint8 {
     let mut v3: ::core::ffi::c_int = 0;
@@ -4029,7 +4027,7 @@ pub unsafe fn sub_84C64C(mut j: uint16, mut a: uint16, game: &mut Game) -> uint8
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-    return 1 as uint8;
+    1 as uint8
 }
 pub unsafe fn SetBts0x10FiveStepsDown(mut j: uint16, game: &mut Game) {
     let mut v1: uint16 = SetBtsTo0x10AdvanceRow(
@@ -4054,7 +4052,7 @@ pub unsafe fn SetBtsTo0x10AdvanceRow(mut k: uint16, game: &mut Game) -> uint16 {
         << 8 as ::core::ffi::c_int
         | 0x10 as ::core::ffi::c_int)
         as uint16;
-    return (*((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16)).wrapping_add(k);
+    (*((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16)).wrapping_add(k)
 }
 pub unsafe fn SetBts0x10FiveStepsUp(mut j: uint16, game: &mut Game) {
     let mut v1: uint16 = SetBtsTo0x10AdvanceRowUp(
@@ -4079,7 +4077,7 @@ pub unsafe fn SetBtsTo0x10AdvanceRowUp(mut k: uint16, game: &mut Game) -> uint16
         << 8 as ::core::ffi::c_int
         | 0x10 as ::core::ffi::c_int)
         as uint16;
-    return (k).wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16));
+    (k).wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16))
 }
 pub unsafe fn PlmSetup_C82A_DownwardsClosedGate(
     mut j: uint16,
@@ -4088,20 +4086,20 @@ pub unsafe fn PlmSetup_C82A_DownwardsClosedGate(
 ) -> uint8 {
     SpawnEprojWithRoomGfx(0xe659 as uint16, setup_a, game);
     SetBts0x10FiveStepsDown(j, game);
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_C832_UpwardsClosedGate(mut j: uint16, game: &mut Game) -> uint8 {
     SpawnEprojWithRoomGfx(0xe675 as uint16, 0 as uint16, game);
     SetBts0x10FiveStepsUp(j, game);
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_C826_DownwardsOpenGate(mut j: uint16, game: &mut Game) -> uint8 {
     SetBts0x10FiveStepsDown(j, game);
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_C82E_UpwardsOpenGate(mut j: uint16, game: &mut Game) -> uint8 {
     SetBts0x10FiveStepsUp(j, game);
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_C836_DownwardsGateShootblock(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -4144,7 +4142,7 @@ pub unsafe fn PlmSetup_C836_DownwardsGateShootblock(mut j: uint16, game: &mut Ga
             game,
         );
     }
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_C73A_UpwardsGateShootblock(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -4187,7 +4185,7 @@ pub unsafe fn PlmSetup_C73A_UpwardsGateShootblock(mut j: uint16, game: &mut Game
             game,
         );
     }
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_C794_GreyDoor(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -4209,7 +4207,7 @@ pub unsafe fn PlmSetup_C794_GreyDoor(mut j: uint16, game: &mut Game) -> uint8 {
         0xc044 as uint16,
         game,
     );
-    return 0 as uint8;
+    0 as uint8
 }
 pub fn PlmSetup_Door_Colored(j: uint16, game: &mut Game) -> uint8 {
     let index = usize::from(j >> 1) * 2;
@@ -4242,7 +4240,7 @@ pub unsafe fn PlmSetup_Door_Blue(mut j: uint16, game: &mut Game) -> uint8 {
                 & 0xfff as ::core::ffi::c_int
                 | 0x8000 as ::core::ffi::c_int) as uint16;
     }
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_Door_Strange(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -4269,7 +4267,7 @@ pub unsafe fn PlmSetup_Door_Strange(mut j: uint16, game: &mut Game) -> uint8 {
         ) as ::core::ffi::c_int
             & 0x1fff as ::core::ffi::c_int
             | 0x8000 as ::core::ffi::c_int) as uint16;
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmInstr_SetBtsTo1(
     mut plmp: *const uint8,
@@ -4282,7 +4280,7 @@ pub unsafe fn PlmInstr_SetBtsTo1(
             as ::core::ffi::c_int
             >> 1 as ::core::ffi::c_int) as isize,
     ) = 1 as uint8;
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmSetup_D028_D02C_Unused(mut j: uint16, game: &mut Game) -> uint8 {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as ::core::ffi::c_int
@@ -4301,12 +4299,12 @@ pub unsafe fn PlmSetup_D028_D02C_Unused(mut j: uint16, game: &mut Game) -> uint8
             v3;
         *((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16).offset(v2 as isize) =
             (v3) & (0xfffu16);
-        return 0 as uint8;
+        0 as uint8
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-        return 1 as uint8;
-    };
+        1 as uint8
+    }
 }
 pub unsafe fn PlmSetup_RespawningSpeedBoostBlock(mut j: uint16, game: &mut Game) -> uint8 {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xb3e) as *mut uint16) as ::core::ffi::c_int
@@ -4338,12 +4336,12 @@ pub unsafe fn PlmSetup_RespawningSpeedBoostBlock(mut j: uint16, game: &mut Game)
             v3;
         *((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16).offset(v2 as isize) =
             (v3) & (0xfffu16);
-        return 0 as uint8;
+        0 as uint8
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-        return 1 as uint8;
-    };
+        1 as uint8
+    }
 }
 pub unsafe fn PlmSetup_RespawningCrumbleBlock(mut j: uint16, game: &mut Game) -> uint8 {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xb02) as *mut uint16) as ::core::ffi::c_int
@@ -4369,7 +4367,7 @@ pub unsafe fn PlmSetup_RespawningCrumbleBlock(mut j: uint16, game: &mut Game) ->
         *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
-    return 1 as uint8;
+    1 as uint8
 }
 pub unsafe fn PlmSetup_RespawningShotBlock(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -4384,7 +4382,7 @@ pub unsafe fn PlmSetup_RespawningShotBlock(mut j: uint16, game: &mut Game) -> ui
     *((&raw mut game.g_ram as *mut uint8).offset(0x1e17) as *mut uint16).offset(v1 as isize) = v3;
     *((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16).offset(v2 as isize) =
         (v3) & (0x8fffu16);
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_RespawningBombBlock(mut j: uint16, game: &mut Game) -> uint8 {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xb3e) as *mut uint16) as ::core::ffi::c_int
@@ -4420,12 +4418,12 @@ pub unsafe fn PlmSetup_RespawningBombBlock(mut j: uint16, game: &mut Game) -> ui
             v4;
         *((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16).offset(v3 as isize) =
             (v4) & (0xfffu16);
-        return 0 as uint8;
+        0 as uint8
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-        return 1 as uint8;
-    };
+        1 as uint8
+    }
 }
 pub unsafe fn PlmSetup_RespawningBombBlock2(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: int16 = 0;
@@ -4467,7 +4465,7 @@ pub unsafe fn PlmSetup_RespawningBombBlock2(mut j: uint16, game: &mut Game) -> u
         *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
-    return 0 as uint8;
+    0 as uint8
 }
 pub fn PlmSetup_RespawningPowerBombBlock(j: uint16, game: &mut Game) -> uint8 {
     let read_word = |game: &Game, offset: usize| {
@@ -4522,7 +4520,7 @@ pub unsafe fn PlmSetup_D08C_SuperMissileBlockRespawning(mut j: uint16, game: &mu
         *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_D08C_CrumbleBlock(mut j: uint16, game: &mut Game) -> uint8 {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(
@@ -4535,7 +4533,7 @@ pub unsafe fn PlmSetup_D08C_CrumbleBlock(mut j: uint16, game: &mut Game) -> uint
         *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_D0DC_BreakableGrappleBlock(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -4551,18 +4549,18 @@ pub unsafe fn PlmSetup_D0DC_BreakableGrappleBlock(mut j: uint16, game: &mut Game
         ((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 1 as ::core::ffi::c_int) as isize,
     ) as ::core::ffi::c_int)
         << 8 as ::core::ffi::c_int) as uint16;
-    return 0x41 as uint8;
+    0x41 as uint8
 }
 pub fn PlmSetup_D0D8_SetVFlag(mut j: uint16) -> uint8 {
-    return 0x41 as uint8;
+    0x41 as uint8
 }
 pub fn PlmSetup_D0D8_ClearVflag(mut j: uint16) -> uint8 {
-    return 1 as uint8;
+    1 as uint8
 }
 pub unsafe fn PlmSetup_D0E8_GiveSamusDamage(mut j: uint16, game: &mut Game) -> uint8 {
     let ref mut fresh4 = *((&raw mut game.g_ram as *mut uint8).offset(0xa50) as *mut uint16);
     *fresh4 = (*fresh4).wrapping_add(1);
-    return 0x41 as uint8;
+    0x41 as uint8
 }
 pub unsafe fn PlmSetup_D113_LowerNorfairChozoRoomPlug(mut j: uint16, game: &mut Game) -> uint8 {
     let mut a: uint16 = 0 as uint16;
@@ -4572,7 +4570,7 @@ pub unsafe fn PlmSetup_D113_LowerNorfairChozoRoomPlug(mut j: uint16, game: &mut 
             as ::core::ffi::c_int
             >> 1 as ::core::ffi::c_int) as isize,
     ) = (a) & (0xfffu16);
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_D127(mut j: uint16, game: &mut Game) -> uint8 {
     WriteLevelDataBlockTypeAndBts(
@@ -4581,7 +4579,7 @@ pub unsafe fn PlmSetup_D127(mut j: uint16, game: &mut Game) -> uint8 {
         0xc000 as uint16,
         game,
     );
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_D138(mut j: uint16, game: &mut Game) -> uint8 {
     WriteLevelDataBlockTypeAndBts(
@@ -4590,7 +4588,7 @@ pub unsafe fn PlmSetup_D138(mut j: uint16, game: &mut Game) -> uint8 {
         0xe000 as uint16,
         game,
     );
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmInstr_FxBaseYPos_0x2D2(
     mut plmp: *const uint8,
@@ -4598,7 +4596,7 @@ pub unsafe fn PlmInstr_FxBaseYPos_0x2D2(
     game: &mut Game,
 ) -> *const uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16) = 722 as uint16;
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmPreInstr_DeletePlmAndSpawnTriggerIfBlockDestroyed(mut k: uint16, game: &mut Game) {
     let mut prod: uint16 = (8u16).wrapping_mul(
@@ -4665,7 +4663,7 @@ pub unsafe fn PlmSetup_D6DA_LowerNorfairChozoHandTrigger(
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-    return 1 as uint8;
+    1 as uint8
 }
 pub unsafe fn PlmPreInstr_IncrementRoomArgIfShotBySuperMissile(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -4690,10 +4688,10 @@ pub unsafe fn PlmInstr_GotoIfRoomArgLess(
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
         >= *(plmp as *mut uint16)
     {
-        return plmp.offset(4);
+        plmp.offset(4)
     } else {
-        return *(plmp.offset(2) as *mut uint16) as uintptr_t as *const uint8;
-    };
+        *(plmp.offset(2) as *mut uint16) as uintptr_t as *const uint8
+    }
 }
 pub unsafe fn PlmInstr_SpawnFourMotherBrainGlass(
     mut plmp: *const uint8,
@@ -4705,7 +4703,7 @@ pub unsafe fn PlmInstr_SpawnFourMotherBrainGlass(
     SpawnMotherBrainGlassShatteringShard(*(plmp.offset(2) as *mut uint16), game);
     SpawnMotherBrainGlassShatteringShard(*(plmp.offset(4) as *mut uint16), game);
     SpawnMotherBrainGlassShatteringShard(*(plmp.offset(6) as *mut uint16), game);
-    return plmp.offset(8);
+    plmp.offset(8)
 }
 pub unsafe fn SpawnMotherBrainGlassShatteringShard(mut a: uint16, game: &mut Game) {
     SpawnEprojWithRoomGfx(0xcefc as uint16, a, game);
@@ -4729,7 +4727,7 @@ pub unsafe fn PlmInstr_SpawnTorizoStatueBreaking(
     game: &mut Game,
 ) -> *const uint8 {
     SpawnEprojWithRoomGfx(0xa993 as uint16, *(plmp as *mut uint16), game);
-    return plmp.offset(2);
+    plmp.offset(2)
 }
 pub unsafe fn PlmInstr_QueueSong1MusicTrack(
     mut plmp: *const uint8,
@@ -4737,7 +4735,7 @@ pub unsafe fn PlmInstr_QueueSong1MusicTrack(
     game: &mut Game,
 ) -> *const uint8 {
     QueueMusic_Delayed8(6 as uint16, game);
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_TransferWreckedShipChozoSpikesToSlopes(
     mut plmp: *const uint8,
@@ -4746,7 +4744,7 @@ pub unsafe fn PlmInstr_TransferWreckedShipChozoSpikesToSlopes(
 ) -> *const uint8 {
     WriteLevelDataBlockTypeAndBts(0x1608 as uint16, 0x1012 as uint16, game);
     WriteLevelDataBlockTypeAndBts(0x160a as uint16, 0x1013 as uint16, game);
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_TransferWreckedShipSlopesToChozoSpikes(
     mut plmp: *const uint8,
@@ -4755,7 +4753,7 @@ pub unsafe fn PlmInstr_TransferWreckedShipSlopesToChozoSpikes(
 ) -> *const uint8 {
     WriteLevelDataBlockTypeAndBts(0x1608 as uint16, 0xa000 as uint16, game);
     WriteLevelDataBlockTypeAndBts(0x160a as uint16, 0xa000 as uint16, game);
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmPreInstr_WakeOnKeyPress(mut k: uint16, game: &mut Game) {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int
@@ -4785,7 +4783,7 @@ pub unsafe fn PlmInstr_EnableWaterPhysics(
 ) -> *const uint8 {
     let ref mut fresh34 = *((&raw mut game.g_ram as *mut uint8).offset(0x197e) as *mut uint16);
     *fresh34 = (*fresh34 as ::core::ffi::c_int & !(4 as ::core::ffi::c_int)) as uint16;
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_SpawnN00bTubeCrackEproj(
     mut plmp: *const uint8,
@@ -4793,7 +4791,7 @@ pub unsafe fn PlmInstr_SpawnN00bTubeCrackEproj(
     game: &mut Game,
 ) -> *const uint8 {
     SpawnEprojWithRoomGfx(0xd904 as uint16, 0 as uint16, game);
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_DiagonalEarthquake(
     mut plmp: *const uint8,
@@ -4802,7 +4800,7 @@ pub unsafe fn PlmInstr_DiagonalEarthquake(
 ) -> *const uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = 11 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 64 as uint16;
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_Spawn10shardsAnd6n00bs(
     mut plmp: *const uint8,
@@ -4849,7 +4847,7 @@ pub unsafe fn PlmInstr_Spawn10shardsAnd6n00bs(
         0xa as uint16,
         game,
     );
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_DisableSamusControls(
     mut plmp: *const uint8,
@@ -4857,7 +4855,7 @@ pub unsafe fn PlmInstr_DisableSamusControls(
     game: &mut Game,
 ) -> *const uint8 {
     CallSomeSamusCode(0 as uint16, game);
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_EnableSamusControls(
     mut plmp: *const uint8,
@@ -4865,7 +4863,7 @@ pub unsafe fn PlmInstr_EnableSamusControls(
     game: &mut Game,
 ) -> *const uint8 {
     CallSomeSamusCode(1 as uint16, game);
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmSetup_MotherBrainGlass(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -4876,7 +4874,7 @@ pub unsafe fn PlmSetup_MotherBrainGlass(mut j: uint16, game: &mut Game) -> uint8
         0x8044 as uint16,
         game,
     );
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_DeletePlmIfAreaTorizoDead(mut j: uint16, game: &mut Game) -> uint8 {
     if CheckBossBitForCurArea(4 as uint16, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
@@ -4885,7 +4883,7 @@ pub unsafe fn PlmSetup_DeletePlmIfAreaTorizoDead(mut j: uint16, game: &mut Game)
         *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_MakeBllockChozoHandTrigger(mut j: uint16, game: &mut Game) -> uint8 {
     WriteLevelDataBlockTypeAndBts(
@@ -4894,7 +4892,7 @@ pub unsafe fn PlmSetup_MakeBllockChozoHandTrigger(mut j: uint16, game: &mut Game
         0xb080 as uint16,
         game,
     );
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_D6F2_WreckedShipChozoHandTrigger(
     mut j: uint16,
@@ -4945,7 +4943,7 @@ pub unsafe fn PlmSetup_D6F2_WreckedShipChozoHandTrigger(
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-    return 1 as uint8;
+    1 as uint8
 }
 pub unsafe fn PlmSetup_D700_MakePlmAirBlock_Unused(mut j: uint16, game: &mut Game) -> uint8 {
     WriteLevelDataBlockTypeAndBts(
@@ -4954,7 +4952,7 @@ pub unsafe fn PlmSetup_D700_MakePlmAirBlock_Unused(mut j: uint16, game: &mut Gam
         0x44 as uint16,
         game,
     );
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_D704_AlteranateLowerNorfairChozoHand_Unused(
     mut j: uint16,
@@ -4966,7 +4964,7 @@ pub unsafe fn PlmSetup_D704_AlteranateLowerNorfairChozoHand_Unused(
         0x8044 as uint16,
         game,
     );
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_D708_LowerNorfairChozoBlockUnused(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -5000,7 +4998,7 @@ pub unsafe fn PlmSetup_D708_LowerNorfairChozoBlockUnused(mut j: uint16, game: &m
         0xd0ff as uint16,
         game,
     );
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_D70C_NoobTube(mut j: uint16, game: &mut Game) -> uint8 {
     WriteLevelDataBlockTypeAndBts(
@@ -5009,7 +5007,7 @@ pub unsafe fn PlmSetup_D70C_NoobTube(mut j: uint16, game: &mut Game) -> uint8 {
         0x8044 as uint16,
         game,
     );
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmPreInstr_WakePlmIfRoomArgumentDoorIsSet(mut k: uint16, game: &mut Game) {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -5044,7 +5042,7 @@ pub unsafe fn PlmInstr_ShootEyeDoorProjectileWithProjectileArg(
         game,
     );
     QueueSfx2_Max6(0x4c as uint16, game);
-    return plmp.offset(2);
+    plmp.offset(2)
 }
 pub unsafe fn PlmInstr_SpawnEyeDoorSweatEproj(
     mut plmp: *const uint8,
@@ -5056,7 +5054,7 @@ pub unsafe fn PlmInstr_SpawnEyeDoorSweatEproj(
         *(plmp as *mut uint16),
         game,
     );
-    return plmp.offset(2);
+    plmp.offset(2)
 }
 pub unsafe fn PlmInstr_SpawnTwoEyeDoorSmoke(
     mut plmp: *const uint8,
@@ -5065,7 +5063,7 @@ pub unsafe fn PlmInstr_SpawnTwoEyeDoorSmoke(
 ) -> *const uint8 {
     SpawnEprojWithRoomGfx(0xe517 as uint16, 0x30a as uint16, game);
     SpawnEprojWithRoomGfx(0xe517 as uint16, 0x30a as uint16, game);
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_SpawnEyeDoorSmokeProjectile(
     mut plmp: *const uint8,
@@ -5073,7 +5071,7 @@ pub unsafe fn PlmInstr_SpawnEyeDoorSmokeProjectile(
     game: &mut Game,
 ) -> *const uint8 {
     SpawnEprojWithRoomGfx(addr_kEproj_EyeDoorSmoke as uint16, 0xb as uint16, game);
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_MoveUpAndMakeBlueDoorFacingRight(
     mut plmp: *const uint8,
@@ -5089,7 +5087,7 @@ pub unsafe fn PlmInstr_MoveUpAndMakeBlueDoorFacingRight(
     let mut blk: uint16 = *fresh33;
     WriteLevelDataBlockTypeAndBts(blk, 0xc041 as uint16, game);
     sub_84D7EF(blk, game);
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_MoveUpAndMakeBlueDoorFacingLeft(
     mut plmp: *const uint8,
@@ -5105,7 +5103,7 @@ pub unsafe fn PlmInstr_MoveUpAndMakeBlueDoorFacingLeft(
     let mut blk: uint16 = *fresh32;
     WriteLevelDataBlockTypeAndBts(blk, 0xc040 as uint16, game);
     sub_84D7EF(blk, game);
-    return plmp;
+    plmp
 }
 pub unsafe fn sub_84D7EF(mut k: uint16, game: &mut Game) {
     let mut v1: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16)
@@ -5155,7 +5153,7 @@ pub unsafe fn PlmSetup_EyeDoorEye(mut j: uint16, game: &mut Game) -> uint8 {
             game,
         );
     }
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_EyeDoor(mut j: uint16, game: &mut Game) -> uint8 {
     let mut idx: ::core::ffi::c_int = PrepareBitAccess(
@@ -5176,7 +5174,7 @@ pub unsafe fn PlmSetup_EyeDoor(mut j: uint16, game: &mut Game) -> uint8 {
             game,
         );
     }
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmPreInstr_SetMetroidsClearState_Ev0x10(mut k: uint16, game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xe50) as *mut uint16)
@@ -5216,7 +5214,7 @@ pub unsafe fn PlmSetup_SetMetroidRequiredClearState(mut j: uint16, game: &mut Ga
                     as ::core::ffi::c_int
                     >> 1 as ::core::ffi::c_int) as isize,
             );
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmPreInstr_GotoLinkIfShotWithSuperMissile(mut k: uint16, game: &mut Game) {
     let mut v1: int16 = 0;
@@ -5259,7 +5257,7 @@ pub unsafe fn PlmInstr_DamageDraygonTurret(
         0xa003 as uint16,
         game,
     );
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_DamageDraygonTurretFacingDownRight(
     mut plmp: *const uint8,
@@ -5283,7 +5281,7 @@ pub unsafe fn PlmInstr_DamageDraygonTurretFacingDownRight(
         + v3 as ::core::ffi::c_int) as uint16;
     WriteLevelDataBlockTypeAndBts(v4, 0xa003 as uint16, game);
     WriteLevelDataBlockTypeAndBts((v4).wrapping_add(2u16), 0 as uint16, game);
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_DamageDraygonTurretFacingUpRight(
     mut plmp: *const uint8,
@@ -5301,7 +5299,7 @@ pub unsafe fn PlmInstr_DamageDraygonTurretFacingUpRight(
         + v2 as ::core::ffi::c_int) as uint16;
     WriteLevelDataBlockTypeAndBts(v4, 0xa003 as uint16, game);
     WriteLevelDataBlockTypeAndBts((v4).wrapping_add(2u16), 0xa003 as uint16, game);
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_DamageDraygonTurret2(
     mut plmp: *const uint8,
@@ -5319,7 +5317,7 @@ pub unsafe fn PlmInstr_DamageDraygonTurret2(
         0xa003 as uint16,
         game,
     );
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_DamageDraygonTurretFacingDownLeft(
     mut plmp: *const uint8,
@@ -5337,7 +5335,7 @@ pub unsafe fn PlmInstr_DamageDraygonTurretFacingDownLeft(
         + v2 as ::core::ffi::c_int) as uint16;
     WriteLevelDataBlockTypeAndBts(v4, 0xa003 as uint16, game);
     WriteLevelDataBlockTypeAndBts((v4).wrapping_sub(2u16), 0 as uint16, game);
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_DamageDraygonTurretFacingUpLeft(
     mut plmp: *const uint8,
@@ -5354,7 +5352,7 @@ pub unsafe fn PlmInstr_DamageDraygonTurretFacingUpLeft(
             * 2 as ::core::ffi::c_int) as uint16;
     WriteLevelDataBlockTypeAndBts(v4, 0xa003 as uint16, game);
     WriteLevelDataBlockTypeAndBts((v4).wrapping_sub(2u16), 0xa003 as uint16, game);
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmSetup_DraygonCannonFacingRight(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -5372,7 +5370,7 @@ pub unsafe fn PlmSetup_DraygonCannonFacingRight(mut j: uint16, game: &mut Game) 
         0xd0ff as uint16,
         game,
     );
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_DraygonCannonFacingDiagonalRight(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -5390,7 +5388,7 @@ pub unsafe fn PlmSetup_DraygonCannonFacingDiagonalRight(mut j: uint16, game: &mu
         + v2 as ::core::ffi::c_int) as uint16;
     WriteLevelDataBlockTypeAndBts(v3, 0xd0ff as uint16, game);
     WriteLevelDataBlockTypeAndBts((v3).wrapping_add(2u16), 0xd0ff as uint16, game);
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_DraygonCannonFacingLeft(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -5408,7 +5406,7 @@ pub unsafe fn PlmSetup_DraygonCannonFacingLeft(mut j: uint16, game: &mut Game) -
         0xd0ff as uint16,
         game,
     );
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_DraygonCannonFacingDiagonalLeft(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -5426,7 +5424,7 @@ pub unsafe fn PlmSetup_DraygonCannonFacingDiagonalLeft(mut j: uint16, game: &mut
         + v2 as ::core::ffi::c_int) as uint16;
     WriteLevelDataBlockTypeAndBts(v3, 0xd0ff as uint16, game);
     WriteLevelDataBlockTypeAndBts((v3).wrapping_sub(2u16), 0xd0ff as uint16, game);
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmSetup_DraygonCannon(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -5434,7 +5432,7 @@ pub unsafe fn PlmSetup_DraygonCannon(mut j: uint16, game: &mut Game) -> uint8 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1dc7) as *mut uint16).offset(v1 as isize);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1dc7) as *mut uint16).offset(v1 as isize) =
         3 as uint16;
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn PlmPreInstr_GotoLinkIfTriggered(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -5482,7 +5480,7 @@ pub unsafe fn PlmInstr_DrawItemFrame_Common(
         game,
     );
     DrawPlm(v3, game);
-    return ::core::ptr::null::<uint8>();
+    ::core::ptr::null::<uint8>()
 }
 pub unsafe fn PlmInstr_DrawItemFrame0(
     mut plmp: *const uint8,
@@ -5498,7 +5496,7 @@ pub unsafe fn PlmInstr_DrawItemFrame0(
                     as ::core::ffi::c_int
                     >> 1 as ::core::ffi::c_int) as isize,
             );
-    return PlmInstr_DrawItemFrame_Common(plmp, k, game);
+    PlmInstr_DrawItemFrame_Common(plmp, k, game)
 }
 pub unsafe fn PlmInstr_DrawItemFrame1(
     mut plmp: *const uint8,
@@ -5514,7 +5512,7 @@ pub unsafe fn PlmInstr_DrawItemFrame1(
                     as ::core::ffi::c_int
                     >> 1 as ::core::ffi::c_int) as isize,
             );
-    return PlmInstr_DrawItemFrame_Common(plmp, k, game);
+    PlmInstr_DrawItemFrame_Common(plmp, k, game)
 }
 pub unsafe fn PlmInstr_ClearChargeBeamCounter(
     mut plmp: *const uint8,
@@ -5522,7 +5520,7 @@ pub unsafe fn PlmInstr_ClearChargeBeamCounter(
     game: &mut Game,
 ) -> *const uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 0 as uint16;
-    return plmp;
+    plmp
 }
 pub unsafe fn PlmInstr_E63B(
     mut plmp: *const uint8,
@@ -5531,24 +5529,24 @@ pub unsafe fn PlmInstr_E63B(
 ) -> *const uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16) =
         -(32 as ::core::ffi::c_int) as uint16;
-    return plmp;
+    plmp
 }
 pub unsafe fn sub_84EE4D(mut j: uint16, game: &mut Game) -> uint8 {
-    return sub_84EE5F(j, 8 as uint16, game);
+    sub_84EE5F(j, 8 as uint16, game)
 }
 pub unsafe fn sub_84EE52(mut j: uint16, game: &mut Game) -> uint8 {
-    return sub_84EE5F(j, 0xa as uint16, game);
+    sub_84EE5F(j, 0xa as uint16, game)
 }
 pub unsafe fn sub_84EE57(mut j: uint16, game: &mut Game) -> uint8 {
-    return sub_84EE5F(j, 0xc as uint16, game);
+    sub_84EE5F(j, 0xc as uint16, game)
 }
 pub unsafe fn sub_84EE5C(mut j: uint16, game: &mut Game) -> uint8 {
-    return sub_84EE5F(j, 0xe as uint16, game);
+    sub_84EE5F(j, 0xe as uint16, game)
 }
 pub unsafe fn sub_84EE5F(mut j: uint16, mut a: uint16, game: &mut Game) -> uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xdf0c) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = a;
-    return sub_84EE64(j, game);
+    sub_84EE64(j, game)
 }
 pub unsafe fn sub_84EE64(mut j: uint16, game: &mut Game) -> uint8 {
     WriteLevelDataBlockTypeAndBts(
@@ -5559,24 +5557,24 @@ pub unsafe fn sub_84EE64(mut j: uint16, game: &mut Game) -> uint8 {
     );
     let ref mut fresh1 = *((&raw mut game.g_ram as *mut uint8).offset(0xd91a) as *mut uint16);
     *fresh1 = (*fresh1).wrapping_add(1);
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn sub_84EE77(mut j: uint16, game: &mut Game) -> uint8 {
-    return sub_84EE89(j, 8 as uint16, game);
+    sub_84EE89(j, 8 as uint16, game)
 }
 pub unsafe fn sub_84EE7C(mut j: uint16, game: &mut Game) -> uint8 {
-    return sub_84EE89(j, 0xa as uint16, game);
+    sub_84EE89(j, 0xa as uint16, game)
 }
 pub unsafe fn sub_84EE81(mut j: uint16, game: &mut Game) -> uint8 {
-    return sub_84EE89(j, 0xc as uint16, game);
+    sub_84EE89(j, 0xc as uint16, game)
 }
 pub unsafe fn sub_84EE86(mut j: uint16, game: &mut Game) -> uint8 {
-    return sub_84EE89(j, 0xe as uint16, game);
+    sub_84EE89(j, 0xe as uint16, game)
 }
 pub unsafe fn sub_84EE89(mut j: uint16, mut a: uint16, game: &mut Game) -> uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xdf0c) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = a;
-    return sub_84EE8E(j, game);
+    sub_84EE8E(j, game)
 }
 pub unsafe fn sub_84EE8E(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -5593,7 +5591,7 @@ pub unsafe fn sub_84EE8E(mut j: uint16, game: &mut Game) -> uint8 {
         );
     let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0xd91a) as *mut uint16);
     *fresh0 = (*fresh0).wrapping_add(1);
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn sub_84EEAB(mut v0: uint16, game: &mut Game) -> uint8 {
     let mut i: ::core::ffi::c_int = 0;
@@ -5619,7 +5617,7 @@ pub unsafe fn sub_84EEAB(mut v0: uint16, game: &mut Game) -> uint8 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1d77) as *mut uint16)
             .offset((i >> 1 as ::core::ffi::c_int) as isize) = 255 as uint16;
     }
-    return 0 as uint8;
+    0 as uint8
 }
 /// Dispatch setup with the active collision displacement, or null outside collision.
 /// `setup_a` preserves the spawner accumulator for setup routines that consume it.
@@ -5635,286 +5633,247 @@ pub unsafe fn CallPlmHeaderFunc(
     game: &mut Game,
 ) -> uint8 {
     match ea {
-        8694567 | 8696783 | 8698095 | 8698618 | 8705782 | 8705783 | 8704398 => {
-            return 0 as uint8;
-        }
-        8694568 => return PlmSetup_CrumbleBotwoonWall(j, game),
-        8695882 => return PlmSetup_SetrupWreckedShipEntrance(j, game),
-        8696028 => return PlmSetup_BTS_Brinstar_0x80_Floorplant(j, game),
-        8696083 => return PlmSetup_BTS_Brinstar_0x81_Ceilingplant(j, game),
-        8696203 => return PlmSetup_B6D3_MapStation(j, game),
-        8696264 => return PlmSetup_Bts47_MapStationRightAccess(j, game),
-        8696304 => return PlmSetup_Bts4_MapStationLeftAccess(j, game),
-        8696349 => return PlmSetup_PlmB6DF_EnergyStation(j, game),
-        8696389 => return PlmSetup_PlmB6EB_EnergyStation(j, game),
-        8696429 => return PlmSetup_B6E3_EnergyStationRightAccess(j, game),
-        8696477 => return PlmSetup_B6E7_EnergyStationLeftAccess(j, game),
-        8696528 => return PlmSetup_B6EF_MissileStationRightAccess(j, game),
-        8696576 => return PlmSetup_B6F3_MissileStationLeftAccess(j, game),
-        8696634 => return PlmSetup_B638_Rightwards_Extension(j, game),
-        8696645 => return PlmSetup_B63F_Leftwards_Extension(j, game),
-        8696656 => return PlmSetup_B643_Downwards_Extension(j, game),
-        8696667 => return PlmSetup_B647_Upwards_Extension(j, game),
-        8696689 => return PlmSetup_B703_ScrollPLM(j, game),
-        8696706 => return PlmSetup_B707_SolidScrollPLM(j, game),
-        8696723 => return PlmSetup_B6FF_ScrollBlockTouch(j, game),
-        8696769 => return PlmSetup_DeactivatePlm(j, game),
-        8696784 => return PlmSetup_ReturnCarryClear(j),
-        8696786 => return PlmSetup_ReturnCarrySet(j),
-        8696788 => return PlmSetup_D094_EnemyBreakableBlock(j, game),
-        8696803 => return UNUSED_sub_84B3E3(j),
-        8696811 => return PlmSetup_B70F_IcePhysics(j, game),
-        8696840 => return PlmSetup_QuicksandSurface(j, game),
-        8696983 => return PlmSetup_B71F_SubmergingQuicksand(j, game),
-        8697000 => return PlmSetup_B723_SandfallsSlow(j, game),
-        8697014 => return PlmSetup_B727_SandFallsFast(j, game),
-        8697028 => return PlmSetup_QuicksandSurfaceB(j, displacement, game),
-        8697153 => return PlmSetup_B737_SubmergingQuicksand(j, game),
-        8697167 => return PlmSetup_B73B_B73F_SandFalls(j),
-        8697169 => return PlmSetup_ClearShitroidInvisibleWall(j, game),
-        8697199 => return PlmSetup_B767_ClearShitroidInvisibleWall(j, game),
-        8697232 => return PlmSetup_B76B_SaveStationTrigger(j, game),
-        8697326 => return PlmSetup_B76F_SaveStation(j, game),
-        8697336 => return PlmSetup_MotherBrainRoomEscapeDoor(j, game),
-        8697795 => return PlmSetup_B7EB_EnableSoundsIn32Frames(j, game),
-        8698012 => return PlmSetup_SpeedBoosterEscape(j, game),
-        8698076 => return PlmSetup_ShaktoolsRoom(j, game),
-        8698220 => return PlmSetup_B974(j),
-        8698232 => return PlmSetup_B9C1_CrittersEscapeBlock(j, game),
-        8698309 => return PlmSetup_B9ED_CrittersEscapeBlock(j, game),
-        8698353 => return sub_84B9F1(j, game),
-        8698633 => return PlmSetup_BB30_CrateriaMainstreetEscape(j, game),
-        8701261 => return PlmSetup_C806_LeftGreenGateTrigger(j, game),
-        8701292 => return PlmSetup_C80A_RightGreenGateTrigger(j, game),
-        8701323 => return PlmSetup_C80E_LeftRedGateTrigger(j, game),
-        8701359 => return PlmSetup_C812_RightRedGateTrigger(j, game),
-        8701395 => return PlmSetup_C81E_LeftYellowGateTrigger(j, game),
-        8701425 => return PlmSetup_C822_RightYellowGateTrigger(j, game),
-        8701456 => return PlmSetup_C816_LeftBlueGateTrigger(j, game),
-        8701479 => return PlmSetup_C81A_RightBlueGateTrigger(j, game),
-        8701630 => return PlmSetup_C82A_DownwardsClosedGate(j, setup_a, game),
-        8701643 => return PlmSetup_C832_UpwardsClosedGate(j, game),
-        8701656 => return PlmSetup_C826_DownwardsOpenGate(j, game),
-        8701660 => return PlmSetup_C82E_UpwardsOpenGate(j, game),
-        8701664 => return PlmSetup_C836_DownwardsGateShootblock(j, game),
-        8701754 => return PlmSetup_C73A_UpwardsGateShootblock(j, game),
-        8701844 => return PlmSetup_C794_GreyDoor(j, game),
-        8701873 => return PlmSetup_Door_Colored(j, game),
-        8701883 => return PlmSetup_Door_Blue(j, game),
-        8701922 => return PlmSetup_Door_Strange(j, game),
-        8703426 => return PlmSetup_D028_D02C_Unused(j, game),
-        8703466 => return PlmSetup_RespawningSpeedBoostBlock(j, game),
-        8703543 => return PlmSetup_RespawningCrumbleBlock(j, game),
-        8703595 => return PlmSetup_RespawningShotBlock(j, game),
-        8703619 => return PlmSetup_RespawningBombBlock(j, game),
-        8703706 => return PlmSetup_RespawningBombBlock2(j, game),
-        8703790 => return PlmSetup_RespawningPowerBombBlock(j, game),
-        8703847 => return PlmSetup_D08C_SuperMissileBlockRespawning(j, game),
-        8703904 => return PlmSetup_D08C_CrumbleBlock(j, game),
-        8703925 => return PlmSetup_D0DC_BreakableGrappleBlock(j, game),
-        8703949 => return PlmSetup_D0D8_SetVFlag(j),
-        8703953 => return PlmSetup_D0D8_ClearVflag(j),
-        8703957 => return PlmSetup_D0E8_GiveSamusDamage(j, game),
-        8704264 => return PlmSetup_D113_LowerNorfairChozoRoomPlug(j, game),
-        8704279 => return PlmSetup_D127(j, game),
-        8704299 => return PlmSetup_D138(j, game),
-        8704399 => return PlmSetup_D6DA_LowerNorfairChozoHandTrigger(j, displacement, game),
-        8705526 => return PlmSetup_MotherBrainGlass(j, game),
-        8705542 => return PlmSetup_DeletePlmIfAreaTorizoDead(j, game),
-        8705558 => return PlmSetup_MakeBllockChozoHandTrigger(j, game),
-        8705568 => return PlmSetup_D6F2_WreckedShipChozoHandTrigger(j, displacement, game),
-        8705663 => return PlmSetup_D700_MakePlmAirBlock_Unused(j, game),
-        8705673 => return PlmSetup_D704_AlteranateLowerNorfairChozoHand_Unused(j, game),
-        8705683 => return PlmSetup_D708_LowerNorfairChozoBlockUnused(j, game),
-        8705740 => return PlmSetup_D70C_NoobTube(j, game),
-        8706700 => return PlmSetup_EyeDoorEye(j, game),
-        8706745 => return PlmSetup_EyeDoor(j, game),
-        8706846 => return PlmSetup_SetMetroidRequiredClearState(j, game),
-        8707732 => return PlmSetup_DraygonCannonFacingRight(j, game),
-        8707769 => return PlmSetup_DraygonCannonFacingDiagonalRight(j, game),
-        8707824 => return PlmSetup_DraygonCannonFacingLeft(j, game),
-        8707861 => return PlmSetup_DraygonCannonFacingDiagonalLeft(j, game),
-        8707916 => return PlmSetup_DraygonCannon(j, game),
-        8711757 => return sub_84EE4D(j, game),
-        8711762 => return sub_84EE52(j, game),
-        8711767 => return sub_84EE57(j, game),
-        8711772 => return sub_84EE5C(j, game),
-        8711780 => return sub_84EE64(j, game),
-        8711799 => return sub_84EE77(j, game),
-        8711804 => return sub_84EE7C(j, game),
-        8711809 => return sub_84EE81(j, game),
-        8711814 => return sub_84EE86(j, game),
-        8711822 => return sub_84EE8E(j, game),
-        8711851 => return sub_84EEAB(j, game),
-        _ => return Unreachable(game) as uint8,
-    };
+        8694567 | 8696783 | 8698095 | 8698618 | 8705782 | 8705783 | 8704398 => 0 as uint8,
+        8694568 => PlmSetup_CrumbleBotwoonWall(j, game),
+        8695882 => PlmSetup_SetrupWreckedShipEntrance(j, game),
+        8696028 => PlmSetup_BTS_Brinstar_0x80_Floorplant(j, game),
+        8696083 => PlmSetup_BTS_Brinstar_0x81_Ceilingplant(j, game),
+        8696203 => PlmSetup_B6D3_MapStation(j, game),
+        8696264 => PlmSetup_Bts47_MapStationRightAccess(j, game),
+        8696304 => PlmSetup_Bts4_MapStationLeftAccess(j, game),
+        8696349 => PlmSetup_PlmB6DF_EnergyStation(j, game),
+        8696389 => PlmSetup_PlmB6EB_EnergyStation(j, game),
+        8696429 => PlmSetup_B6E3_EnergyStationRightAccess(j, game),
+        8696477 => PlmSetup_B6E7_EnergyStationLeftAccess(j, game),
+        8696528 => PlmSetup_B6EF_MissileStationRightAccess(j, game),
+        8696576 => PlmSetup_B6F3_MissileStationLeftAccess(j, game),
+        8696634 => PlmSetup_B638_Rightwards_Extension(j, game),
+        8696645 => PlmSetup_B63F_Leftwards_Extension(j, game),
+        8696656 => PlmSetup_B643_Downwards_Extension(j, game),
+        8696667 => PlmSetup_B647_Upwards_Extension(j, game),
+        8696689 => PlmSetup_B703_ScrollPLM(j, game),
+        8696706 => PlmSetup_B707_SolidScrollPLM(j, game),
+        8696723 => PlmSetup_B6FF_ScrollBlockTouch(j, game),
+        8696769 => PlmSetup_DeactivatePlm(j, game),
+        8696784 => PlmSetup_ReturnCarryClear(j),
+        8696786 => PlmSetup_ReturnCarrySet(j),
+        8696788 => PlmSetup_D094_EnemyBreakableBlock(j, game),
+        8696803 => UNUSED_sub_84B3E3(j),
+        8696811 => PlmSetup_B70F_IcePhysics(j, game),
+        8696840 => PlmSetup_QuicksandSurface(j, game),
+        8696983 => PlmSetup_B71F_SubmergingQuicksand(j, game),
+        8697000 => PlmSetup_B723_SandfallsSlow(j, game),
+        8697014 => PlmSetup_B727_SandFallsFast(j, game),
+        8697028 => PlmSetup_QuicksandSurfaceB(j, displacement, game),
+        8697153 => PlmSetup_B737_SubmergingQuicksand(j, game),
+        8697167 => PlmSetup_B73B_B73F_SandFalls(j),
+        8697169 => PlmSetup_ClearShitroidInvisibleWall(j, game),
+        8697199 => PlmSetup_B767_ClearShitroidInvisibleWall(j, game),
+        8697232 => PlmSetup_B76B_SaveStationTrigger(j, game),
+        8697326 => PlmSetup_B76F_SaveStation(j, game),
+        8697336 => PlmSetup_MotherBrainRoomEscapeDoor(j, game),
+        8697795 => PlmSetup_B7EB_EnableSoundsIn32Frames(j, game),
+        8698012 => PlmSetup_SpeedBoosterEscape(j, game),
+        8698076 => PlmSetup_ShaktoolsRoom(j, game),
+        8698220 => PlmSetup_B974(j),
+        8698232 => PlmSetup_B9C1_CrittersEscapeBlock(j, game),
+        8698309 => PlmSetup_B9ED_CrittersEscapeBlock(j, game),
+        8698353 => sub_84B9F1(j, game),
+        8698633 => PlmSetup_BB30_CrateriaMainstreetEscape(j, game),
+        8701261 => PlmSetup_C806_LeftGreenGateTrigger(j, game),
+        8701292 => PlmSetup_C80A_RightGreenGateTrigger(j, game),
+        8701323 => PlmSetup_C80E_LeftRedGateTrigger(j, game),
+        8701359 => PlmSetup_C812_RightRedGateTrigger(j, game),
+        8701395 => PlmSetup_C81E_LeftYellowGateTrigger(j, game),
+        8701425 => PlmSetup_C822_RightYellowGateTrigger(j, game),
+        8701456 => PlmSetup_C816_LeftBlueGateTrigger(j, game),
+        8701479 => PlmSetup_C81A_RightBlueGateTrigger(j, game),
+        8701630 => PlmSetup_C82A_DownwardsClosedGate(j, setup_a, game),
+        8701643 => PlmSetup_C832_UpwardsClosedGate(j, game),
+        8701656 => PlmSetup_C826_DownwardsOpenGate(j, game),
+        8701660 => PlmSetup_C82E_UpwardsOpenGate(j, game),
+        8701664 => PlmSetup_C836_DownwardsGateShootblock(j, game),
+        8701754 => PlmSetup_C73A_UpwardsGateShootblock(j, game),
+        8701844 => PlmSetup_C794_GreyDoor(j, game),
+        8701873 => PlmSetup_Door_Colored(j, game),
+        8701883 => PlmSetup_Door_Blue(j, game),
+        8701922 => PlmSetup_Door_Strange(j, game),
+        8703426 => PlmSetup_D028_D02C_Unused(j, game),
+        8703466 => PlmSetup_RespawningSpeedBoostBlock(j, game),
+        8703543 => PlmSetup_RespawningCrumbleBlock(j, game),
+        8703595 => PlmSetup_RespawningShotBlock(j, game),
+        8703619 => PlmSetup_RespawningBombBlock(j, game),
+        8703706 => PlmSetup_RespawningBombBlock2(j, game),
+        8703790 => PlmSetup_RespawningPowerBombBlock(j, game),
+        8703847 => PlmSetup_D08C_SuperMissileBlockRespawning(j, game),
+        8703904 => PlmSetup_D08C_CrumbleBlock(j, game),
+        8703925 => PlmSetup_D0DC_BreakableGrappleBlock(j, game),
+        8703949 => PlmSetup_D0D8_SetVFlag(j),
+        8703953 => PlmSetup_D0D8_ClearVflag(j),
+        8703957 => PlmSetup_D0E8_GiveSamusDamage(j, game),
+        8704264 => PlmSetup_D113_LowerNorfairChozoRoomPlug(j, game),
+        8704279 => PlmSetup_D127(j, game),
+        8704299 => PlmSetup_D138(j, game),
+        8704399 => PlmSetup_D6DA_LowerNorfairChozoHandTrigger(j, displacement, game),
+        8705526 => PlmSetup_MotherBrainGlass(j, game),
+        8705542 => PlmSetup_DeletePlmIfAreaTorizoDead(j, game),
+        8705558 => PlmSetup_MakeBllockChozoHandTrigger(j, game),
+        8705568 => PlmSetup_D6F2_WreckedShipChozoHandTrigger(j, displacement, game),
+        8705663 => PlmSetup_D700_MakePlmAirBlock_Unused(j, game),
+        8705673 => PlmSetup_D704_AlteranateLowerNorfairChozoHand_Unused(j, game),
+        8705683 => PlmSetup_D708_LowerNorfairChozoBlockUnused(j, game),
+        8705740 => PlmSetup_D70C_NoobTube(j, game),
+        8706700 => PlmSetup_EyeDoorEye(j, game),
+        8706745 => PlmSetup_EyeDoor(j, game),
+        8706846 => PlmSetup_SetMetroidRequiredClearState(j, game),
+        8707732 => PlmSetup_DraygonCannonFacingRight(j, game),
+        8707769 => PlmSetup_DraygonCannonFacingDiagonalRight(j, game),
+        8707824 => PlmSetup_DraygonCannonFacingLeft(j, game),
+        8707861 => PlmSetup_DraygonCannonFacingDiagonalLeft(j, game),
+        8707916 => PlmSetup_DraygonCannon(j, game),
+        8711757 => sub_84EE4D(j, game),
+        8711762 => sub_84EE52(j, game),
+        8711767 => sub_84EE57(j, game),
+        8711772 => sub_84EE5C(j, game),
+        8711780 => sub_84EE64(j, game),
+        8711799 => sub_84EE77(j, game),
+        8711804 => sub_84EE7C(j, game),
+        8711809 => sub_84EE81(j, game),
+        8711814 => sub_84EE86(j, game),
+        8711822 => sub_84EE8E(j, game),
+        8711851 => sub_84EEAB(j, game),
+        _ => Unreachable(game) as uint8,
+    }
 }
 pub unsafe fn CallPlmPreInstr(mut ea: uint32, mut k: uint16, game: &mut Game) {
     match ea {
-        8684649 => return,
-        8708008 => return,
-        8685264 => return,
-        8684774 => return,
-        8684861 => return,
-        8686246 => return,
-        8698787 => return,
-        8704854 => return,
-        8698618 => return,
+        8684649 => (),
+        8708008 => (),
+        8685264 => (),
+        8684774 => (),
+        8684861 => (),
+        8686246 => (),
+        8698787 => (),
+        8704854 => (),
+        8698618 => (),
         8696028 => {
             PlmSetup_BTS_Brinstar_0x80_Floorplant(k, game);
-            return;
         }
         8696083 => {
             PlmSetup_BTS_Brinstar_0x81_Ceilingplant(k, game);
-            return;
         }
         8697821 => {
             PlmPreInstr_B7EB_DecTimerEnableSoundsDeletePlm(k, game);
-            return;
         }
         8697839 => {
             PlmPreInstr_WakeAndLavaIfBoosterCollected(k, game);
-            return;
         }
         8697898 => {
             PlmPreInstr_WakePLMAndStartFxMotionSamusFarLeft(k, game);
-            return;
         }
         8697926 => {
             PlmPreInstr_AdvanceLavaSamusMovesLeft(k, game);
-            return;
         }
         8698032 => {
             PlmPreInstr_ShaktoolsRoom(k, game);
-            return;
         }
         8698151 => {
             PlmPreInstr_OldTourianEscapeShaftEscape(k, game);
-            return;
         }
         8698184 => {
             PlmPreInstr_EscapeRoomBeforeOldTourianEscapeShaft(k, game);
-            return;
         }
         8698706 => {
             PlmPreInstr_WakePlmIfTriggered(k, game);
-            return;
         }
         8698731 => {
             PlmPreInstr_WakePlmIfTriggeredOrSamusBelowPlm(k, game);
-            return;
         }
         8698788 => {
             PlmPreInstr_WakePlmIfTriggeredOrSamusAbovePlm(k, game);
-            return;
         }
         8704348 => {
             PlmPreInstr_DeletePlmAndSpawnTriggerIfBlockDestroyed(k, game);
-            return;
         }
         8704486 => {
             PlmPreInstr_IncrementRoomArgIfShotBySuperMissile(k, game);
-            return;
         }
         8704827 => {
             PlmPreInstr_WakePlmIfSamusHasBombs(k, game);
-            return;
         }
         8705875 => {
             PlmPreInstr_WakePlmIfRoomArgumentDoorIsSet(k, game);
-            return;
         }
         8706916 => {
             PlmPreInstr_GotoLinkIfShotWithSuperMissile(k, game);
-            return;
         }
         8707977 => {
             PlmPreInstr_GotoLinkIfTriggered(k, game);
-            return;
         }
         8708070 => {
             PlmPreInstr_WakeIfTriggered(k, game);
-            return;
         }
         8699151 => {
             PlmPreInstr_GoToLinkInstrIfShot(k, game);
-            return;
         }
         8699174 => {
             PlmPreInstr_GoToLinkInstrIfShotWithPowerBomb(k, game);
-            return;
         }
         8699216 => {
             PlmPreInstr_GoToLinkInstrIfShotWithAnyMissile(k, game);
-            return;
         }
         8699272 => {
             PlmPreInstr_GoToLinkInstrIfShotWithSuperMissile(k, game);
-            return;
         }
         8699314 => {
             PlmPreInstr_GoToLinkInstruction(k, game);
-            return;
         }
         8699420 => {
             PlmPreInstr_PlayDudSound(k, game);
-            return;
         }
         8699348 => {
             PlmPreInstr_GotoLinkIfBoss1Dead(k, game);
-            return;
         }
         8699363 => {
             PlmPreInstr_GotoLinkIfMiniBossDead(k, game);
-            return;
         }
         8699378 => {
             PlmPreInstr_GotoLinkIfTorizoDead(k, game);
-            return;
         }
         8699393 => {
             PlmPreInstr_GotoLinkIfEnemyDeathQuotaOk(k, game);
-            return;
         }
         8699423 => {
             PlmPreInstr_GotoLinkIfTourianStatueFinishedProcessing(k, game);
-            return;
         }
         8699440 => {
             PlmPreInstr_GotoLinkIfCrittersEscaped(k, game);
-            return;
         }
         8694921 => {
             PlmPreInstr_PositionSamusAndInvincible(k, game);
-            return;
         }
         8705215 => {
             PlmPreInstr_WakeOnKeyPress(k, game);
-            return;
         }
-        8698730 => return,
+        8698730 => (),
         8706773 | 8706774 | 8706775 | 8706776 | 8706777 | 8706778 | 8706779 | 8706780 | 8706781
-        | 8686304 => return,
+        | 8686304 => (),
         8706782 => {
             PlmPreInstr_SetMetroidsClearState_Ev0x10(k, game);
-            return;
         }
         8706798 => {
             PlmPreInstr_SetMetroidsClearState_Ev0x11(k, game);
-            return;
         }
         8706814 => {
             PlmPreInstr_SetMetroidsClearState_Ev0x12(k, game);
-            return;
         }
         8706830 => {
             PlmPreInstr_SetMetroidsClearState_Ev0x13(k, game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn CallPlmInstr(
     mut ea: uint32,
@@ -5923,119 +5882,119 @@ pub unsafe fn CallPlmInstr(
     game: &mut Game,
 ) -> *const uint8 {
     match ea {
-        8685236 => return PlmInstr_Sleep(j, k, game),
-        8685244 => return PlmInstr_Delete(j, k, game),
-        8685249 => return PlmInstr_PreInstr(j, k, game),
-        8685258 => return PlmInstr_ClearPreInstr(j, k, game),
-        8685323 => return PlmInstr_CallFunction(j, k, game),
-        8685348 => return PlmInstr_Goto(j, k),
-        8685375 => return PlmInstr_DecrementAndBranchNonzero(j, k, game),
-        8685390 => return PlmInstr_SetTimer(j, k, game),
-        8685412 => return PlmInstr_LoadItemPlmGfx(j, k, game),
-        8685541 => return PlmInstr_CopyFromRamToVram(j, k, game),
-        8685582 => return PlmInstr_GotoIfBossBitSet(j, k, game),
-        8685613 => return PlmInstr_GotoIfEventSet(j, k, game),
-        8685630 => return PlmInstr_SetEvent(j, k, game),
-        8685640 => return PlmInstr_GotoIfChozoSet(j, k, game),
-        8685669 => return PlmInstr_SetRoomChozoBit(j, k, game),
-        8685692 => return PlmInstr_GotoIfItemBitSet(j, k, game),
-        8685721 => return PlmInstr_SetItemBit(j, k, game),
-        8685744 => return PlmInstr_PickupBeamAndShowMessage(j, k, game),
-        8685811 => return PlmInstr_PickupEquipmentAndShowMessage(j, k, game),
-        8685850 => return PlmInstr_PickupEquipmentAddGrappleShowMessage(j, k, game),
-        8685889 => return PlmInstr_PickupEquipmentAddXrayShowMessage(j, k, game),
-        8685928 => return PlmInstr_CollectHealthEnergyTank(j, k, game),
-        8685958 => return PlmInstr_CollectHealthReserveTank(j, k, game),
-        8685993 => return PlmInstr_CollectAmmoMissileTank(j, k, game),
-        8686034 => return PlmInstr_CollectAmmoSuperMissileTank(j, k, game),
-        8686075 => return PlmInstr_CollectAmmoPowerBombTank(j, k, game),
-        8686116 => return PlmInstr_SetLinkReg(j, k, game),
-        8686126 => return PlmInstr_Call(j, k, game),
-        8686138 => return PlmInstr_Return(j, k, game),
-        8686194 => return PlmInstr_GotoIfDoorBitSet(j, k, game),
-        8686225 => return PlmInstr_IncrementDoorHitCounterAndJGE(j, k, game),
-        8686285 => return PlmInstr_IncrementArgumentAndJGE(j, k, game),
-        8686321 => return PlmInstr_SetBTS(j, k, game),
-        8686341 => return PlmInstr_DrawPlmBlock(j, k, game),
-        8686359 => return PlmInstr_DrawPlmBlock(j, k, game),
-        8686421 => return PlmInstr_ProcessAirScrollUpdate(j, k, game),
-        8686483 => return PlmInstr_ProcessSolidScrollUpdate(j, k, game),
-        8686545 => return PlmInstr_QueueMusic(j, k, game),
-        8686557 => return PlmInstr_ClearMusicQueueAndQueueTrack(j, k, game),
-        8686599 => return PlmInstr_QueueSfx1_Max6(j, k, game),
-        8686608 => return PlmInstr_QueueSfx2_Max6(j, k, game),
-        8686617 => return PlmInstr_QueueSfx3_Max6(j, k, game),
-        8686626 => return PlmInstr_QueueSfx1_Max15(j, k, game),
-        8686635 => return PlmInstr_QueueSfx2_Max15(j, k, game),
-        8686644 => return PlmInstr_QueueSfx3_Max15(j, k, game),
-        8686653 => return PlmInstr_QueueSfx1_Max3(j, k, game),
-        8686662 => return PlmInstr_QueueSfx2_Max3(j, k, game),
-        8686671 => return PlmInstr_QueueSfx_Max3(j, k, game),
-        8686680 => return PlmInstr_QueueSfx1_Max9(j, k, game),
-        8686689 => return PlmInstr_QueueSfx2_Max9(j, k, game),
-        8686698 => return PlmInstr_QueueSfx3_Max9(j, k, game),
-        8686707 => return PlmInstr_QueueSfx1_Max1(j, k, game),
-        8686716 => return PlmInstr_QueueSfx2_Max1(j, k, game),
-        8686725 => return PlmInstr_QueueSfx3_Max1(j, k, game),
-        8686735 => return PlmInstr_ActivateMapStation(j, k, game),
-        8686767 => return PlmInstr_ActivateEnergyStation(j, k, game),
-        8686800 => return PlmInstr_ActivateMissileStation(j, k, game),
-        8686833 => return PlmInstr_ActivateSaveStationAndGotoIfNo(j, k, game),
-        8686913 => return PlmInstr_GotoIfSamusNear(j, k, game),
-        8694528 => return PlmInstr_MovePlmDownOneBlock(j, k, game),
-        8694609 => return PlmInstr_Scroll_0_1_Blue(j, k, game),
-        8694617 => return PlmInstr_MovePlmDownOneBlock_0(j, k, game),
-        8694941 => return PlmInstr_DealDamage_2(j, k, game),
-        8694961 => return PlmInstr_GiveInvincibility(j, k, game),
-        8695107 => return PlmInstr_Draw0x38FramesOfRightTreadmill(j, k, game),
-        8695128 => return PlmInstr_Draw0x38FramesOfLeftTreadmill(j, k, game),
-        8695349 => return PlmInstr_GotoIfSamusHealthFull(j, k, game),
-        8695487 => return PlmInstr_GotoIfMissilesFull(j, k, game),
-        8695822 => return PlmInstr_PlaceSamusOnSaveStation(j, k, game),
-        8695844 => return PlmInstr_DisplayGameSavedMessageBox(j, k, game),
-        8695856 => return PlmInstr_EnableMovementAndSetSaveStationUsed(j, k, game),
-        8698297 => return PlmInstr_SetCrittersEscapedEvent(j, k, game),
-        8698479 => return PlmInstr_JumpIfSamusHasNoBombs(j, k, game),
-        8698661 => return PlmInstr_MovePlmRight4Blocks(j, k, game),
-        8698845 => return PlmInstr_ClearTrigger(j, k, game),
-        8698849 => return PlmInstr_SpawnEproj(j, k, game),
-        8698864 => return PlmInstr_WakeEprojAtPlmPos(j, k, game),
-        8699455 => return PlmInstr_SetGreyDoorPreInstr(j, k, game),
-        8704341 => return PlmInstr_FxBaseYPos_0x2D2(j, k, game),
-        8704761 => return PlmInstr_GotoIfRoomArgLess(j, k, game),
-        8704779 => return PlmInstr_SpawnFourMotherBrainGlass(j, k, game),
-        8704855 => return PlmInstr_SpawnTorizoStatueBreaking(j, k, game),
-        8704967 => return PlmInstr_QueueSong1MusicTrack(j, k, game),
-        8704983 => return PlmInstr_TransferWreckedShipChozoSpikesToSlopes(j, k, game),
-        8705012 => return PlmInstr_TransferWreckedShipSlopesToChozoSpikes(j, k, game),
-        8705317 => return PlmInstr_EnableWaterPhysics(j, k, game),
-        8705324 => return PlmInstr_SpawnN00bTubeCrackEproj(j, k, game),
-        8705334 => return PlmInstr_DiagonalEarthquake(j, k, game),
-        8705347 => return PlmInstr_Spawn10shardsAnd6n00bs(j, k, game),
-        8705914 => return PlmInstr_ShootEyeDoorProjectileWithProjectileArg(j, k, game),
-        8705936 => return PlmInstr_SpawnEyeDoorSweatEproj(j, k, game),
-        8705951 => return PlmInstr_SpawnTwoEyeDoorSmoke(j, k, game),
-        8705974 => return PlmInstr_SpawnEyeDoorSmokeProjectile(j, k, game),
-        8705987 => return PlmInstr_MoveUpAndMakeBlueDoorFacingRight(j, k, game),
-        8706010 => return PlmInstr_MoveUpAndMakeBlueDoorFacingLeft(j, k, game),
-        8706958 => return PlmInstr_DamageDraygonTurret(j, k, game),
-        8707000 => return PlmInstr_DamageDraygonTurretFacingDownRight(j, k, game),
-        8707063 => return PlmInstr_DamageDraygonTurretFacingUpRight(j, k, game),
-        8707126 => return PlmInstr_DamageDraygonTurret2(j, k, game),
-        8707168 => return PlmInstr_DamageDraygonTurretFacingDownLeft(j, k, game),
-        8707231 => return PlmInstr_DamageDraygonTurretFacingUpLeft(j, k, game),
-        8708175 => return PlmInstr_DrawItemFrame0(j, k, game),
-        8708199 => return PlmInstr_DrawItemFrame1(j, k, game),
-        8708223 => return PlmInstr_DrawItemFrame_Common(j, k, game),
-        8708765 => return PlmInstr_ClearChargeBeamCounter(j, k, game),
-        8694742 => return PlmInstr_ABD6(j, k, game),
-        8709691 => return PlmInstr_E63B(j, k, game),
-        8703379 => return PlmInstr_SetBtsTo1(j, k, game),
-        8705510 => return PlmInstr_DisableSamusControls(j, k, game),
-        8705518 => return PlmInstr_EnableSamusControls(j, k, game),
+        8685236 => PlmInstr_Sleep(j, k, game),
+        8685244 => PlmInstr_Delete(j, k, game),
+        8685249 => PlmInstr_PreInstr(j, k, game),
+        8685258 => PlmInstr_ClearPreInstr(j, k, game),
+        8685323 => PlmInstr_CallFunction(j, k, game),
+        8685348 => PlmInstr_Goto(j, k),
+        8685375 => PlmInstr_DecrementAndBranchNonzero(j, k, game),
+        8685390 => PlmInstr_SetTimer(j, k, game),
+        8685412 => PlmInstr_LoadItemPlmGfx(j, k, game),
+        8685541 => PlmInstr_CopyFromRamToVram(j, k, game),
+        8685582 => PlmInstr_GotoIfBossBitSet(j, k, game),
+        8685613 => PlmInstr_GotoIfEventSet(j, k, game),
+        8685630 => PlmInstr_SetEvent(j, k, game),
+        8685640 => PlmInstr_GotoIfChozoSet(j, k, game),
+        8685669 => PlmInstr_SetRoomChozoBit(j, k, game),
+        8685692 => PlmInstr_GotoIfItemBitSet(j, k, game),
+        8685721 => PlmInstr_SetItemBit(j, k, game),
+        8685744 => PlmInstr_PickupBeamAndShowMessage(j, k, game),
+        8685811 => PlmInstr_PickupEquipmentAndShowMessage(j, k, game),
+        8685850 => PlmInstr_PickupEquipmentAddGrappleShowMessage(j, k, game),
+        8685889 => PlmInstr_PickupEquipmentAddXrayShowMessage(j, k, game),
+        8685928 => PlmInstr_CollectHealthEnergyTank(j, k, game),
+        8685958 => PlmInstr_CollectHealthReserveTank(j, k, game),
+        8685993 => PlmInstr_CollectAmmoMissileTank(j, k, game),
+        8686034 => PlmInstr_CollectAmmoSuperMissileTank(j, k, game),
+        8686075 => PlmInstr_CollectAmmoPowerBombTank(j, k, game),
+        8686116 => PlmInstr_SetLinkReg(j, k, game),
+        8686126 => PlmInstr_Call(j, k, game),
+        8686138 => PlmInstr_Return(j, k, game),
+        8686194 => PlmInstr_GotoIfDoorBitSet(j, k, game),
+        8686225 => PlmInstr_IncrementDoorHitCounterAndJGE(j, k, game),
+        8686285 => PlmInstr_IncrementArgumentAndJGE(j, k, game),
+        8686321 => PlmInstr_SetBTS(j, k, game),
+        8686341 => PlmInstr_DrawPlmBlock(j, k, game),
+        8686359 => PlmInstr_DrawPlmBlock(j, k, game),
+        8686421 => PlmInstr_ProcessAirScrollUpdate(j, k, game),
+        8686483 => PlmInstr_ProcessSolidScrollUpdate(j, k, game),
+        8686545 => PlmInstr_QueueMusic(j, k, game),
+        8686557 => PlmInstr_ClearMusicQueueAndQueueTrack(j, k, game),
+        8686599 => PlmInstr_QueueSfx1_Max6(j, k, game),
+        8686608 => PlmInstr_QueueSfx2_Max6(j, k, game),
+        8686617 => PlmInstr_QueueSfx3_Max6(j, k, game),
+        8686626 => PlmInstr_QueueSfx1_Max15(j, k, game),
+        8686635 => PlmInstr_QueueSfx2_Max15(j, k, game),
+        8686644 => PlmInstr_QueueSfx3_Max15(j, k, game),
+        8686653 => PlmInstr_QueueSfx1_Max3(j, k, game),
+        8686662 => PlmInstr_QueueSfx2_Max3(j, k, game),
+        8686671 => PlmInstr_QueueSfx_Max3(j, k, game),
+        8686680 => PlmInstr_QueueSfx1_Max9(j, k, game),
+        8686689 => PlmInstr_QueueSfx2_Max9(j, k, game),
+        8686698 => PlmInstr_QueueSfx3_Max9(j, k, game),
+        8686707 => PlmInstr_QueueSfx1_Max1(j, k, game),
+        8686716 => PlmInstr_QueueSfx2_Max1(j, k, game),
+        8686725 => PlmInstr_QueueSfx3_Max1(j, k, game),
+        8686735 => PlmInstr_ActivateMapStation(j, k, game),
+        8686767 => PlmInstr_ActivateEnergyStation(j, k, game),
+        8686800 => PlmInstr_ActivateMissileStation(j, k, game),
+        8686833 => PlmInstr_ActivateSaveStationAndGotoIfNo(j, k, game),
+        8686913 => PlmInstr_GotoIfSamusNear(j, k, game),
+        8694528 => PlmInstr_MovePlmDownOneBlock(j, k, game),
+        8694609 => PlmInstr_Scroll_0_1_Blue(j, k, game),
+        8694617 => PlmInstr_MovePlmDownOneBlock_0(j, k, game),
+        8694941 => PlmInstr_DealDamage_2(j, k, game),
+        8694961 => PlmInstr_GiveInvincibility(j, k, game),
+        8695107 => PlmInstr_Draw0x38FramesOfRightTreadmill(j, k, game),
+        8695128 => PlmInstr_Draw0x38FramesOfLeftTreadmill(j, k, game),
+        8695349 => PlmInstr_GotoIfSamusHealthFull(j, k, game),
+        8695487 => PlmInstr_GotoIfMissilesFull(j, k, game),
+        8695822 => PlmInstr_PlaceSamusOnSaveStation(j, k, game),
+        8695844 => PlmInstr_DisplayGameSavedMessageBox(j, k, game),
+        8695856 => PlmInstr_EnableMovementAndSetSaveStationUsed(j, k, game),
+        8698297 => PlmInstr_SetCrittersEscapedEvent(j, k, game),
+        8698479 => PlmInstr_JumpIfSamusHasNoBombs(j, k, game),
+        8698661 => PlmInstr_MovePlmRight4Blocks(j, k, game),
+        8698845 => PlmInstr_ClearTrigger(j, k, game),
+        8698849 => PlmInstr_SpawnEproj(j, k, game),
+        8698864 => PlmInstr_WakeEprojAtPlmPos(j, k, game),
+        8699455 => PlmInstr_SetGreyDoorPreInstr(j, k, game),
+        8704341 => PlmInstr_FxBaseYPos_0x2D2(j, k, game),
+        8704761 => PlmInstr_GotoIfRoomArgLess(j, k, game),
+        8704779 => PlmInstr_SpawnFourMotherBrainGlass(j, k, game),
+        8704855 => PlmInstr_SpawnTorizoStatueBreaking(j, k, game),
+        8704967 => PlmInstr_QueueSong1MusicTrack(j, k, game),
+        8704983 => PlmInstr_TransferWreckedShipChozoSpikesToSlopes(j, k, game),
+        8705012 => PlmInstr_TransferWreckedShipSlopesToChozoSpikes(j, k, game),
+        8705317 => PlmInstr_EnableWaterPhysics(j, k, game),
+        8705324 => PlmInstr_SpawnN00bTubeCrackEproj(j, k, game),
+        8705334 => PlmInstr_DiagonalEarthquake(j, k, game),
+        8705347 => PlmInstr_Spawn10shardsAnd6n00bs(j, k, game),
+        8705914 => PlmInstr_ShootEyeDoorProjectileWithProjectileArg(j, k, game),
+        8705936 => PlmInstr_SpawnEyeDoorSweatEproj(j, k, game),
+        8705951 => PlmInstr_SpawnTwoEyeDoorSmoke(j, k, game),
+        8705974 => PlmInstr_SpawnEyeDoorSmokeProjectile(j, k, game),
+        8705987 => PlmInstr_MoveUpAndMakeBlueDoorFacingRight(j, k, game),
+        8706010 => PlmInstr_MoveUpAndMakeBlueDoorFacingLeft(j, k, game),
+        8706958 => PlmInstr_DamageDraygonTurret(j, k, game),
+        8707000 => PlmInstr_DamageDraygonTurretFacingDownRight(j, k, game),
+        8707063 => PlmInstr_DamageDraygonTurretFacingUpRight(j, k, game),
+        8707126 => PlmInstr_DamageDraygonTurret2(j, k, game),
+        8707168 => PlmInstr_DamageDraygonTurretFacingDownLeft(j, k, game),
+        8707231 => PlmInstr_DamageDraygonTurretFacingUpLeft(j, k, game),
+        8708175 => PlmInstr_DrawItemFrame0(j, k, game),
+        8708199 => PlmInstr_DrawItemFrame1(j, k, game),
+        8708223 => PlmInstr_DrawItemFrame_Common(j, k, game),
+        8708765 => PlmInstr_ClearChargeBeamCounter(j, k, game),
+        8694742 => PlmInstr_ABD6(j, k, game),
+        8709691 => PlmInstr_E63B(j, k, game),
+        8703379 => PlmInstr_SetBtsTo1(j, k, game),
+        8705510 => PlmInstr_DisableSamusControls(j, k, game),
+        8705518 => PlmInstr_EnableSamusControls(j, k, game),
         _ => {
             Unreachable(game);
-            return ::core::ptr::null::<uint8>();
+            ::core::ptr::null::<uint8>()
         }
-    };
+    }
 }

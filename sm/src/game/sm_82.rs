@@ -191,68 +191,68 @@ unsafe fn RomPtr_RAM(mut addr: uint16_t, game: &mut Game) -> *mut uint8 {
             );
         }
     };
-    return (&raw mut game.g_ram as *mut uint8).offset(addr as ::core::ffi::c_int as isize);
+    (&raw mut game.g_ram as *mut uint8).offset(addr as ::core::ffi::c_int as isize)
 }
 #[inline]
 unsafe fn RomPtr_82(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr((0x820000u32) | ((addr) as u32), game);
+    RomPtr((0x820000u32) | ((addr) as u32), game)
 }
 #[inline]
 unsafe fn RomPtr_8F(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr((0x8f0000u32) | ((addr) as u32), game);
+    RomPtr((0x8f0000u32) | ((addr) as u32), game)
 }
 #[inline]
 unsafe fn RomPtrWithBank(mut bank: uint8, mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr(
+    RomPtr(
         ((bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int | addr as ::core::ffi::c_int)
             as uint32_t,
         game,
-    );
+    )
 }
 #[inline]
 unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int, game: &mut Game) -> *mut VramWriteEntry {
-    return (&raw mut game.g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
-        as *mut uint8 as *mut VramWriteEntry;
+    (&raw mut game.g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
+        as *mut uint8 as *mut VramWriteEntry
 }
 #[inline]
 unsafe fn get_DoorDef(mut a: uint16, game: &mut Game) -> *mut DoorDef {
-    return RomPtr((0x830000u32) | ((a) as u32), game) as *mut DoorDef;
+    RomPtr((0x830000u32) | ((a) as u32), game) as *mut DoorDef
 }
 #[inline]
 unsafe fn get_RoomDefHeader(mut a: uint16, game: &mut Game) -> *mut RoomDefHeader {
-    return RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefHeader;
+    RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefHeader
 }
 #[inline]
 unsafe fn get_RoomDefRoomstate(mut a: uint16, game: &mut Game) -> *mut RoomDefRoomstate {
-    return RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefRoomstate;
+    RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefRoomstate
 }
 #[inline]
 unsafe fn get_TileSet(mut a: uint16, game: &mut Game) -> *mut TileSet {
-    return RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut TileSet;
+    RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut TileSet
 }
 #[inline]
 unsafe fn get_EnemyDef_A2(mut a: uint16, game: &mut Game) -> *mut EnemyDef {
-    return RomPtr((0xa00000u32) | ((a) as u32), game) as *mut EnemyDef;
+    RomPtr((0xa00000u32) | ((a) as u32), game) as *mut EnemyDef
 }
 #[inline]
 unsafe fn get_EnemyTileset(mut a: uint16, game: &mut Game) -> *mut EnemyTileset {
-    return RomPtr((0xb40000u32) | ((a) as u32), game) as *mut EnemyTileset;
+    RomPtr((0xb40000u32) | ((a) as u32), game) as *mut EnemyTileset
 }
 #[inline]
 unsafe fn get_RoomPlmEntry(mut a: uint16, game: &mut Game) -> *mut RoomPlmEntry {
-    return RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomPlmEntry;
+    RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomPlmEntry
 }
 #[inline]
 unsafe fn get_DemoRoomData(mut a: uint16, game: &mut Game) -> *mut DemoRoomData {
-    return RomPtr((0x820000u32) | ((a) as u32), game) as *mut DemoRoomData;
+    RomPtr((0x820000u32) | ((a) as u32), game) as *mut DemoRoomData
 }
 #[inline]
 unsafe fn get_LoadBg_E(mut a: uint16, game: &mut Game) -> *mut LoadBg_E {
-    return RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut LoadBg_E;
+    RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut LoadBg_E
 }
 #[inline]
 unsafe fn get_PlmHeader_Size6(mut a: uint16, game: &mut Game) -> *mut PlmHeader_Size6 {
-    return RomPtr((0x840000u32) | ((a) as u32), game) as *mut PlmHeader_Size6;
+    RomPtr((0x840000u32) | ((a) as u32), game) as *mut PlmHeader_Size6
 }
 pub const fnDemoRoom_ChargeBeamRoomScroll21: uint32 = 8554778;
 pub const fnnullsub_291: uint32 = 8554788;
@@ -314,25 +314,21 @@ pub unsafe fn CallDemoRoomDataFunc(mut ea: uint32, game: &mut Game) {
     match ea {
         8554778 => {
             DemoRoom_ChargeBeamRoomScroll21(game);
-            return;
         }
-        8554788 => return,
+        8554788 => (),
         8554789 => {
             DemoRoom_SetBG2TilemapBase(game);
-            return;
         }
         8554795 => {
             DemoRoom_SetKraidFunctionTimer(game);
-            return;
         }
         8554802 => {
             DemoRoom_SetBrinstarBossBits(game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
     let mut v0: int16 = 0;
@@ -616,7 +612,7 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
         }
     }
     *_state_variable_ = 0 as uint8;
-    return 0 as CoroutineRet;
+    0 as CoroutineRet
 }
 pub unsafe fn InitIoForGameplay(game: &mut Game) {
     InitCpuForGameplay(game);
@@ -786,7 +782,7 @@ pub unsafe fn GameState_32_MadeItToCeresElevator(game: &mut Game) -> CoroutineRe
         *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
     }
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_33_BlackoutFromCeres(game: &mut Game) -> CoroutineRet {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x943) as *mut uint16) != 0 {
@@ -828,7 +824,7 @@ pub unsafe fn GameState_33_BlackoutFromCeres(game: &mut Game) -> CoroutineRet {
         QueueSfx2_Max15(0x71 as uint16, game);
         QueueSfx3_Max15(1 as uint16, game);
     }
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_35_TimeUp(game: &mut Game) -> CoroutineRet {
     let mut _coret_: uint8 = GameState_8_MainGameplay(game);
@@ -842,7 +838,7 @@ pub unsafe fn GameState_35_TimeUp(game: &mut Game) -> CoroutineRet {
         *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
     }
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_36_WhitingOutFromTimeUp(game: &mut Game) -> CoroutineRet {
     HandleFadeOut(game);
@@ -885,7 +881,7 @@ pub unsafe fn GameState_36_WhitingOutFromTimeUp(game: &mut Game) -> CoroutineRet
                 ((0x8bc11bi32) as u16) & (0xffffu16);
         }
     }
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_38_SamusEscapesFromZebes(game: &mut Game) -> CoroutineRet {
     let mut _coret_: uint8 = GameState_8_MainGameplay(game);
@@ -917,7 +913,7 @@ pub unsafe fn GameState_38_SamusEscapesFromZebes(game: &mut Game) -> CoroutineRe
         QueueSfx2_Max15(0x71 as uint16, game);
         QueueSfx3_Max15(1 as uint16, game);
     }
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_41_TransitionToDemo(game: &mut Game) -> CoroutineRet {
     let mut _coret_: uint8 = GameState_8_MainGameplay(game);
@@ -928,7 +924,7 @@ pub unsafe fn GameState_41_TransitionToDemo(game: &mut Game) -> CoroutineRet {
     let ref mut fresh126 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
     *fresh126 = (*fresh126).wrapping_add(1);
     *(&raw mut game.g_ram as *mut uint8).offset(0x51) = 15 as uint8;
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_42_PlayingDemo_Async(game: &mut Game) -> CoroutineRet {
     let mut current_block: u64;
@@ -1009,7 +1005,7 @@ pub unsafe fn GameState_42_PlayingDemo_Async(game: &mut Game) -> CoroutineRet {
             }
         }
     }
-    return 0 as CoroutineRet;
+    0 as CoroutineRet
 }
 pub unsafe fn GameState_43_TransitionFromDemo(game: &mut Game) -> CoroutineRet {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) != 1u16 {
@@ -1045,7 +1041,7 @@ pub unsafe fn GameState_43_TransitionFromDemo(game: &mut Game) -> CoroutineRet {
     *(&raw mut game.g_ram as *mut uint8).offset(0x6b) = 0 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x6c) = 0 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x6d) = 0 as uint8;
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_44_TransitionFromDemo(game: &mut Game) -> CoroutineRet {
     *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
@@ -1068,7 +1064,7 @@ pub unsafe fn GameState_44_TransitionFromDemo(game: &mut Game) -> CoroutineRet {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
             ((0x8b9b68i32) as u16) & (0xffffu16);
     }
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn CheckForNextDemo(game: &mut Game) {
     if *(RomPtr_82(
@@ -1342,7 +1338,7 @@ pub unsafe fn RunOneFrameOfGameInner(game: &mut Game) -> CoroutineRet {
         Warning(b"Coroutine State is broken!\0" as *const u8 as *const ::core::ffi::c_char);
     }
     *(&raw mut game.g_ram as *mut uint8).offset(0x611) = 0 as uint8;
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn RunOneFrameOfGame(game: &mut Game) {
     let mut ret: CoroutineRet = RunOneFrameOfGameInner(game);
@@ -1353,19 +1349,19 @@ pub unsafe fn RunOneFrameOfGame(game: &mut Game) {
 }
 pub unsafe fn GameState_29_DebugGameOverMenu(game: &mut Game) -> CoroutineRet {
     DebugGameOverMenu();
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_26_GameOverMenu(game: &mut Game) -> CoroutineRet {
     GameOverMenu(game);
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_4_FileSelectMenus(game: &mut Game) -> CoroutineRet {
     FileSelectMenu(game);
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_5_FileSelectMap(game: &mut Game) -> CoroutineRet {
     FileSelectMap(game);
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 static kSfxHandlers: [Option<Func_Y_V>; 5] = unsafe {
     [
@@ -1510,19 +1506,19 @@ pub unsafe fn GameState_0_Reset_Async(game: &mut Game) -> CoroutineRet {
     }
     let ref mut fresh79 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
     *fresh79 = (*fresh79).wrapping_add(1);
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_1_OpeningCinematic(game: &mut Game) -> CoroutineRet {
-    return GameState_1_OpeningCinematic_(game);
+    GameState_1_OpeningCinematic_(game)
 }
 pub unsafe fn GameState_3_Null(game: &mut Game) -> CoroutineRet {
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_37_CeresGoesBoomWithSamus(game: &mut Game) -> CoroutineRet {
-    return GameState_37_CeresGoesBoomWithSamus_(game);
+    GameState_37_CeresGoesBoomWithSamus_(game)
 }
 pub unsafe fn GameState_39_EndingAndCredits(game: &mut Game) -> CoroutineRet {
-    return GameState_39_EndingAndCredits_(game);
+    GameState_39_EndingAndCredits_(game)
 }
 pub unsafe fn GameState_7_MainGameplayFadeIn(game: &mut Game) -> CoroutineRet {
     let mut _coret_: uint8 = GameState_8_MainGameplay(game);
@@ -1536,11 +1532,11 @@ pub unsafe fn GameState_7_MainGameplayFadeIn(game: &mut Game) -> CoroutineRet {
         let ref mut fresh131 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
         *fresh131 = (*fresh131).wrapping_add(1);
     }
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_28_Unused(game: &mut Game) -> CoroutineRet {
     GameState_28_Unused_(game);
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_8_MainGameplay(game: &mut Game) -> CoroutineRet {
     let mut _state_variable_: *mut uint8 = (&raw mut game.g_ram as *mut uint8).offset(0x612);
@@ -1623,7 +1619,7 @@ pub unsafe fn GameState_8_MainGameplay(game: &mut Game) -> CoroutineRet {
         _ => {}
     }
     *_state_variable_ = 0 as uint8;
-    return 0 as CoroutineRet;
+    0 as CoroutineRet
 }
 pub unsafe fn DeleteAllOptionsMenuObjects_(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 14 as ::core::ffi::c_int;
@@ -1640,32 +1636,26 @@ pub unsafe fn CallOptionsEntryFunc(mut ea: uint32, mut j: uint16, game: &mut Gam
     match ea {
         8581782 => {
             sub_82F296(j, game);
-            return;
         }
         8581963 => {
             sub_82F34B(j, game);
-            return;
         }
         8581971 => {
             sub_82F353(j, game);
-            return;
         }
         8581979 => {
             sub_82F35B(j, game);
-            return;
         }
         8581987 => {
             sub_82F363(j, game);
-            return;
         }
         8582169 => {
             sub_82F419(j, game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn CreateOptionsMenuObject_(mut a: uint16, mut j: uint16, game: &mut Game) -> uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16) = a;
@@ -1696,7 +1686,7 @@ pub unsafe fn CreateOptionsMenuObject_(mut a: uint16, mut j: uint16, game: &mut 
     *((&raw mut game.g_ram as *mut uint8).offset(0x1aed) as *mut uint16).offset(v6 as isize) =
         0 as uint16;
     CallOptionsEntryFunc(((*(v5 as *mut uint16)) as u32) | (0x820000u32), v3, game);
-    return 0 as uint8;
+    0 as uint8
 }
 pub fn OptionsPreInstr_nullsub_57(mut k: uint16) {}
 pub unsafe fn OptionsMenuFunc1(game: &mut Game) {
@@ -1718,32 +1708,26 @@ pub unsafe fn CallOptionsPreInstr(mut ea: uint32, mut k: uint16, game: &mut Game
     match ea {
         8555536 => {
             OptionsPreInstr_nullsub_57(k);
-            return;
         }
         8581801 => {
             OptionsPreInstr_F2A9(k, game);
-            return;
         }
         8582006 => {
             OptionsPreInstr_F376(k, game);
-            return;
         }
         8582048 => {
             OptionsPreInstr_F3A0(k, game);
-            return;
         }
         8582114 => {
             OptionsPreInstr_F3E2(k, game);
-            return;
         }
         8582188 => {
             OptionsPreInstr_F42C(k, game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn CallOptionsInstr(
     mut ea: uint32,
@@ -1752,15 +1736,15 @@ pub unsafe fn CallOptionsInstr(
     game: &mut Game,
 ) -> uint16 {
     match ea {
-        8555610 => return OptionsInstr_Destroy(k, j, game),
-        8555620 => return OptionsInstr_8C64(k, j, game),
-        8555630 => return OptionsInstr_SetPreInstr(k, j, game),
-        8555641 => return OptionsInstr_8C79(k, j, game),
-        8555650 => return OptionsInstr_Goto(k, j, game),
-        8555657 => return OptionsInstr_8C89(k, j, game),
-        8555667 => return OptionsInstr_8C93(k, j, game),
-        _ => return Unreachable(game) as uint16,
-    };
+        8555610 => OptionsInstr_Destroy(k, j, game),
+        8555620 => OptionsInstr_8C64(k, j, game),
+        8555630 => OptionsInstr_SetPreInstr(k, j, game),
+        8555641 => OptionsInstr_8C79(k, j, game),
+        8555650 => OptionsInstr_Goto(k, j, game),
+        8555657 => OptionsInstr_8C89(k, j, game),
+        8555667 => OptionsInstr_8C93(k, j, game),
+        _ => Unreachable(game) as uint16,
+    }
 }
 pub unsafe fn OptionsMenuFunc2(mut k: uint16, game: &mut Game) {
     CallOptionsPreInstr(
@@ -1813,28 +1797,28 @@ pub unsafe fn OptionsInstr_Destroy(mut k: uint16, mut j: uint16, game: &mut Game
         0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1afd) as *mut uint16).offset(v2 as isize) =
         0 as uint16;
-    return 0 as uint16;
+    0 as uint16
 }
 pub unsafe fn OptionsInstr_8C64(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1afd) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         (j).wrapping_sub(2u16);
-    return 0 as uint16;
+    0 as uint16
 }
 pub unsafe fn OptionsInstr_SetPreInstr(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b0d) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(RomPtr_82(j, game) as *mut uint16);
-    return (j).wrapping_add(2u16);
+    (j).wrapping_add(2u16)
 }
 pub unsafe fn OptionsInstr_8C79(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b0d) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         ((0x828c81i32) as u16) & (0xffffu16);
-    return j;
+    j
 }
 pub unsafe fn OptionsInstr_Goto(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
-    return *(RomPtr_82(j, game) as *mut uint16);
+    *(RomPtr_82(j, game) as *mut uint16)
 }
 pub unsafe fn OptionsInstr_8C89(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -1843,16 +1827,16 @@ pub unsafe fn OptionsInstr_8C89(mut k: uint16, mut j: uint16, game: &mut Game) -
     let fresh1 = *fresh0;
     *fresh0 = (*fresh0).wrapping_sub(1);
     if fresh1 == 1u16 {
-        return (j).wrapping_add(2u16);
+        (j).wrapping_add(2u16)
     } else {
-        return OptionsInstr_Goto(k, j, game);
-    };
+        OptionsInstr_Goto(k, j, game)
+    }
 }
 pub unsafe fn OptionsInstr_8C93(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b2d) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(RomPtr_82(j, game) as *mut uint16);
-    return (j).wrapping_add(2u16);
+    (j).wrapping_add(2u16)
 }
 pub unsafe fn DrawOptionsMenuSpritemaps(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 14 as ::core::ffi::c_int;
@@ -1895,37 +1879,35 @@ pub unsafe fn GameState_12_Pausing_Darkening_Async(game: &mut Game) -> Coroutine
         let ref mut fresh80 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
         *fresh80 = (*fresh80).wrapping_add(1);
     }
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn CallPauseHook(mut ea: uint32, game: &mut Game) {
     match ea {
-        8946657 => return,
+        8946657 => (),
         9423094 => {
             PauseHook_DraygonRoom(game);
-            return;
         }
         10994469 => {
             PauseHook_Kraid(game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn CallUnpauseHook_Async(mut ea: uint32, game: &mut Game) -> CoroutineRet {
     match ea {
-        8946657 => return kCoroutineNone as CoroutineRet,
-        9423100 => return UnpauseHook_DraygonRoom(game),
-        10994171 => return UnpauseHook_Kraid_IsDead(game),
-        10994254 => return UnpauseHook_Kraid_IsAlive(game),
-        10994336 => return Kraid_UnpauseHook_IsSinking(game),
-        11110243 => return MotherBrainsBody_UnpauseHook(game),
+        8946657 => kCoroutineNone as CoroutineRet,
+        9423100 => UnpauseHook_DraygonRoom(game),
+        10994171 => UnpauseHook_Kraid_IsDead(game),
+        10994254 => UnpauseHook_Kraid_IsAlive(game),
+        10994336 => Kraid_UnpauseHook_IsSinking(game),
+        11110243 => MotherBrainsBody_UnpauseHook(game),
         _ => {
             Unreachable(game);
-            return kCoroutineNone as CoroutineRet;
+            kCoroutineNone as CoroutineRet
         }
-    };
+    }
 }
 pub unsafe fn GameState_13_Pausing_Async(game: &mut Game) -> CoroutineRet {
     DisableHdmaObjects(game);
@@ -1953,7 +1935,7 @@ pub unsafe fn GameState_13_Pausing_Async(game: &mut Game) -> CoroutineRet {
     QueueClearingOfFxTilemap(game);
     let ref mut fresh85 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
     *fresh85 = (*fresh85).wrapping_add(1);
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn BackupBG2TilemapForPauseMenu(game: &mut Game) {
     WriteRegWord(
@@ -2263,14 +2245,14 @@ pub unsafe fn GameState_14_Paused_Async(game: &mut Game) -> CoroutineRet {
         let ref mut fresh93 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
         *fresh93 = (*fresh93).wrapping_add(1);
     }
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_15_Paused_Async(game: &mut Game) -> CoroutineRet {
     ReleaseButtonsFilter(3 as uint16, game);
     MainPauseRoutine(game);
     HandleHudTilemap(game);
     HandlePauseScreenPaletteAnimation(game);
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 static kPauseMenuFuncs: [Option<Func_V>; 8] = unsafe {
     [
@@ -2417,7 +2399,7 @@ pub unsafe fn MapScrolling_GetSpeedIndex(game: &mut Game) -> uint16 {
         return (*((&raw mut game.g_ram as *mut uint8).offset(0x5ff) as *mut uint16))
             .wrapping_add(32u16);
     }
-    return result;
+    result
 }
 static kMapScrollingSpeedTable: [uint16; 32] = [
     0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -2481,7 +2463,7 @@ pub unsafe fn GameState_16_Unpausing_Async(game: &mut Game) -> CoroutineRet {
         let ref mut fresh106 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
         *fresh106 = (*fresh106).wrapping_add(1);
     }
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn DrawPauseMenuDuringFadeout(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x763) as *mut uint16) == 1u16 {
@@ -2535,7 +2517,7 @@ pub unsafe fn GameState_17_Unpausing_Async(game: &mut Game) -> CoroutineRet {
         _ => {}
     }
     *_state_variable_ = 0 as uint8;
-    return 0 as CoroutineRet;
+    0 as CoroutineRet
 }
 pub unsafe fn GameState_18_Unpausing(game: &mut Game) -> CoroutineRet {
     let mut _coret_: uint8 = GameState_8_MainGameplay(game);
@@ -2549,7 +2531,7 @@ pub unsafe fn GameState_18_Unpausing(game: &mut Game) -> CoroutineRet {
         *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
             kGameState_8_MainGameplay as uint16;
     }
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn LoadPauseMenuMapTilemapAndAreaLabel(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16) =
@@ -2932,7 +2914,7 @@ unsafe fn DetermineLeftmostMapColumn(mut r0: *const uint8) -> uint16 {
             break;
         }
     }
-    return result;
+    result
 }
 unsafe fn DetermineRightmostMapColumn(mut r0: *const uint8) -> uint16 {
     let mut r18: uint8 = 0;
@@ -2964,7 +2946,7 @@ unsafe fn DetermineRightmostMapColumn(mut r0: *const uint8) -> uint16 {
             break;
         }
     }
-    return result;
+    result
 }
 unsafe fn DetermineTopmostMapColumn(mut r0: *const uint8) -> uint16 {
     let mut r3: *const uint8 = r0.offset(128);
@@ -2982,7 +2964,7 @@ unsafe fn DetermineTopmostMapColumn(mut r0: *const uint8) -> uint16 {
             }
         }
     }
-    return result;
+    result
 }
 unsafe fn DetermineBottommostMapColumn(mut r0: *const uint8) -> uint16 {
     let mut r3: *const uint8 = r0.offset(128);
@@ -3000,7 +2982,7 @@ unsafe fn DetermineBottommostMapColumn(mut r0: *const uint8) -> uint16 {
             }
         }
     }
-    return result;
+    result
 }
 pub unsafe fn DetermineMapScrollLimits(game: &mut Game) {
     let mut r6: *const uint8 = ::core::ptr::null::<uint8>();
@@ -4687,12 +4669,11 @@ pub unsafe fn EquipmentScreenDisplayReserves_PaletteSetup(game: &mut Game) -> ui
             }
             *((&raw mut game.g_ram as *mut uint8).offset(0x72f) as *mut uint16) = v1;
         }
-        return *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c0fa)) as *const uint8
-            as *mut uint16)
-            .offset(3);
+        *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c0fa)) as *const uint8 as *mut uint16)
+            .offset(3)
     } else {
-        return 1536 as uint16;
-    };
+        1536 as uint16
+    }
 }
 pub unsafe fn EquipmentScreenMoveToReserveTanks(game: &mut Game) -> uint16 {
     let mut result: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x9d4) as *mut uint16);
@@ -4701,7 +4682,7 @@ pub unsafe fn EquipmentScreenMoveToReserveTanks(game: &mut Game) -> uint16 {
         QueueSfx1_Max6(0x37 as uint16, game);
         return 1 as uint16;
     }
-    return result;
+    result
 }
 pub unsafe fn EquipmentScreenMoveToBeams(mut v0: uint16, mut r18: uint16, game: &mut Game) {
     let mut v1: int16 = 0;
@@ -4774,7 +4755,7 @@ pub unsafe fn EquipmentScreenMoveToBottomOfBeams(mut k: uint16, game: &mut Game)
         << 8 as ::core::ffi::c_int
         | 1 as ::core::ffi::c_int) as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) = result;
-    return result;
+    result
 }
 pub unsafe fn EquipmentScreenMoveLowerOnSuitsMisc(mut v0: uint16, game: &mut Game) -> uint16 {
     let mut v1: int16 = 0;
@@ -4801,7 +4782,7 @@ pub unsafe fn EquipmentScreenMoveLowerOnSuitsMisc(mut v0: uint16, game: &mut Gam
     *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) =
         (v1 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int | 2 as ::core::ffi::c_int)
             as uint16;
-    return 0 as uint16;
+    0 as uint16
 }
 pub unsafe fn EquipmentScreenMoveToScrewOrHigherOnSuits(
     mut v0: uint16,
@@ -4867,7 +4848,7 @@ pub unsafe fn EquipmentScreenCategory_Boots_MoveUpInBoots(
         << 8 as ::core::ffi::c_int
         | 3 as ::core::ffi::c_int) as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) = result;
-    return result;
+    result
 }
 pub unsafe fn EquipmentScreenCategory_ButtonResponse(mut r24: uint16, game: &mut Game) {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int
@@ -5174,11 +5155,11 @@ pub unsafe fn CheckIfMapPositionIsExplored(
     r18 += ((j) & (0xfff8u16)) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v3: uint16 =
         (k as ::core::ffi::c_int >> 3 as ::core::ffi::c_int & 7 as ::core::ffi::c_int) as uint16;
-    return ((kBits0x80Shr[v3 as usize] as ::core::ffi::c_int
+    ((kBits0x80Shr[v3 as usize] as ::core::ffi::c_int
         & *(&raw mut game.g_ram as *mut uint8)
             .offset(0x7f7)
             .offset(r18 as isize) as ::core::ffi::c_int)
-        != 0i32) as uint16;
+        != 0i32) as uint16
 }
 pub unsafe fn DrawBossMapIcons(mut a: uint16, mut k: uint16, game: &mut Game) {
     let mut bits: ::core::ffi::c_int = *(&raw mut game.g_ram as *mut uint8)
@@ -5367,10 +5348,9 @@ pub unsafe fn UpdateSamusPositionIndicatorAnimation(game: &mut Game) -> uint16 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x778) as *mut uint16) = v0;
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x778) as *mut uint16) = (v0).wrapping_sub(1u16);
-    return kMap_SamusPositionIndicator_SpritemapIds[(*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x776) as *mut uint16)
-        as ::core::ffi::c_int
-        >> 1 as ::core::ffi::c_int) as usize];
+    kMap_SamusPositionIndicator_SpritemapIds[(*((&raw mut game.g_ram as *mut uint8).offset(0x776)
+        as *mut uint16) as ::core::ffi::c_int
+        >> 1 as ::core::ffi::c_int) as usize]
 }
 pub unsafe fn DrawBorderAroundSamusData(game: &mut Game) {
     DrawMenuSpritemap(
@@ -5537,20 +5517,17 @@ pub unsafe fn CallBabyMetroidPlaySfx(mut ea: uint32, game: &mut Game) {
     match ea {
         8567820 => {
             BabyMetroidPlaySfx0x23(game);
-            return;
         }
         8567829 => {
             BabyMetroidPlaySfx0x26(game);
-            return;
         }
         8567838 => {
             BabyMetroidPlaySfx0x27(game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn sub_82BB7F(mut a: uint16, game: &mut Game) {
     let mut current_instruction: uint16 =
@@ -5679,7 +5656,7 @@ pub unsafe fn QueueSamusMovementSfx(game: &mut Game) {
 }
 pub unsafe fn AdvancePaletteFadeForAllPalettes_0xc(game: &mut Game) -> uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xc402) as *mut uint16) = 12 as uint16;
-    return AdvancePaletteFadeForAllPalettes(game);
+    AdvancePaletteFadeForAllPalettes(game)
 }
 pub unsafe fn AdvancePaletteFade_BgPalette6(game: &mut Game) -> uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xc402) as *mut uint16) = 12 as uint16;
@@ -5700,11 +5677,11 @@ pub unsafe fn AdvancePaletteFade_BgPalette6(game: &mut Game) -> uint8 {
         }
         let ref mut fresh5 = *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16);
         *fresh5 = (*fresh5).wrapping_add(1);
-        return 0 as uint8;
+        0 as uint8
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16) = 0 as uint16;
-        return 1 as uint8;
-    };
+        1 as uint8
+    }
 }
 pub unsafe fn AdvanceGradualColorChangeOfPalette(
     mut k: uint16,
@@ -5736,11 +5713,11 @@ pub unsafe fn AdvanceGradualColorChangeOfPalette(
         }
         let ref mut fresh3 = *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16);
         *fresh3 = (*fresh3).wrapping_add(1);
-        return 0 as uint8;
+        0 as uint8
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16) = 0 as uint16;
-        return 1 as uint8;
-    };
+        1 as uint8
+    }
 }
 pub unsafe fn AdvancePaletteFadeForAllPalettes(game: &mut Game) -> uint8 {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xc402) as *mut uint16)).wrapping_add(1u16)
@@ -5775,11 +5752,11 @@ pub unsafe fn AdvancePaletteFadeForAllPalettes(game: &mut Game) -> uint8 {
         }
         let ref mut fresh4 = *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16);
         *fresh4 = (*fresh4).wrapping_add(1);
-        return 0 as uint8;
+        0 as uint8
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16) = 0 as uint16;
-        return 1 as uint8;
-    };
+        1 as uint8
+    }
 }
 pub unsafe fn CalculateNthTransitionColorFromXtoY(
     mut a: uint16,
@@ -5787,7 +5764,7 @@ pub unsafe fn CalculateNthTransitionColorFromXtoY(
     mut j: uint16,
     game: &mut Game,
 ) -> uint16 {
-    return (CalculateNthTransitionColorComponentFromXtoY(a, (k) & (0x1fu16), (j) & (0x1fu16), game)
+    (CalculateNthTransitionColorComponentFromXtoY(a, (k) & (0x1fu16), (j) & (0x1fu16), game)
         as ::core::ffi::c_int
         | (CalculateNthTransitionColorComponentFromXtoY(
             a,
@@ -5806,7 +5783,7 @@ pub unsafe fn CalculateNthTransitionColorFromXtoY(
                 as uint16,
             game,
         ) as ::core::ffi::c_int)
-            << 10 as ::core::ffi::c_int) as uint16;
+            << 10 as ::core::ffi::c_int) as uint16
 }
 pub unsafe fn CalculateNthTransitionColorComponentFromXtoY(
     mut a: uint16,
@@ -5833,13 +5810,13 @@ pub unsafe fn CalculateNthTransitionColorComponentFromXtoY(
         } else {
             RegWord as ::core::ffi::c_int
         }) as uint16;
-    return ((r18 as ::core::ffi::c_int + ((k as ::core::ffi::c_int) << 8 as ::core::ffi::c_int))
-        as uint16 as ::core::ffi::c_int
-        >> 8 as ::core::ffi::c_int) as uint16;
+    ((r18 as ::core::ffi::c_int + ((k as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)) as uint16
+        as ::core::ffi::c_int
+        >> 8 as ::core::ffi::c_int) as uint16
 }
 pub unsafe fn sub_82DAF7(mut a: uint16, game: &mut Game) -> uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xc402) as *mut uint16) = 12 as uint16;
-    return sub_82DB0C(a, game);
+    sub_82DB0C(a, game)
 }
 pub unsafe fn sub_82DB0C(mut a: uint16, game: &mut Game) -> uint8 {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xc402) as *mut uint16)).wrapping_add(1u16)
@@ -5858,11 +5835,11 @@ pub unsafe fn sub_82DB0C(mut a: uint16, game: &mut Game) -> uint8 {
         }
         let ref mut fresh16 = *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16);
         *fresh16 = (*fresh16).wrapping_add(1);
-        return 0 as uint8;
+        0 as uint8
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16) = 0 as uint16;
-        return 1 as uint8;
-    };
+        1 as uint8
+    }
 }
 pub unsafe fn sub_82DB41(game: &mut Game) {
     let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xc404) as *mut uint16);
@@ -5969,7 +5946,7 @@ pub unsafe fn GameState_27_ReserveTanksAuto(game: &mut Game) -> CoroutineRet {
         return _coret_;
     }
     Samus_LowHealthCheck_0(game);
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn RefillHealthFromReserveTanks(game: &mut Game) -> uint8 {
     let mut current_block: u64;
@@ -6018,7 +5995,7 @@ pub unsafe fn RefillHealthFromReserveTanks(game: &mut Game) -> uint8 {
             }
         }
     }
-    return (*((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16) == 0u16) as uint8;
+    (*((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16) == 0u16) as uint8
 }
 pub unsafe fn GameState_19_SamusNoHealth(game: &mut Game) -> CoroutineRet {
     let mut _coret_: uint8 = GameState_8_MainGameplay(game);
@@ -6063,7 +6040,7 @@ pub unsafe fn GameState_19_SamusNoHealth(game: &mut Game) -> CoroutineRet {
     *((&raw mut game.g_ram as *mut uint8).offset(0x18aa) as *mut uint16) = 0 as uint16;
     let ref mut fresh109 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
     *fresh109 = (*fresh109).wrapping_add(1);
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_20_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineRet {
     let mut _coret_: uint8 = GameState_8_MainGameplay(game);
@@ -6107,7 +6084,7 @@ pub unsafe fn GameState_20_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineR
         QueueMusic_Delayed8(0xff39 as uint16, game);
         QueueMusic_DelayedY(5 as uint16, 0xe as uint16, game);
     }
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_21_SamusNoHealth(game: &mut Game) -> CoroutineRet {
     Samus_DrawWhenNotAnimatingOrDying(game);
@@ -6116,7 +6093,7 @@ pub unsafe fn GameState_21_SamusNoHealth(game: &mut Game) -> CoroutineRet {
         let ref mut fresh111 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
         *fresh111 = (*fresh111).wrapping_add(1);
     }
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_22_SamusNoHealth_Dying(game: &mut Game) -> CoroutineRet {
     DrawSamusStartingDeathAnim_(game);
@@ -6127,7 +6104,7 @@ pub unsafe fn GameState_22_SamusNoHealth_Dying(game: &mut Game) -> CoroutineRet 
         let ref mut fresh114 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
         *fresh114 = (*fresh114).wrapping_add(1);
     }
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_23_SamusNoHealth_Flashing(game: &mut Game) -> CoroutineRet {
     if HandleSamusDeathSequence(game) != 0 {
@@ -6136,7 +6113,7 @@ pub unsafe fn GameState_23_SamusNoHealth_Flashing(game: &mut Game) -> CoroutineR
     } else {
         Samus_DrawDuringDeathAnim(game);
     }
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_24_SamusNoHealth_Explosion(game: &mut Game) -> CoroutineRet {
     if GameState_24_SamusNoHealth_Explosion_Helper(game) != 0 {
@@ -6145,7 +6122,7 @@ pub unsafe fn GameState_24_SamusNoHealth_Explosion(game: &mut Game) -> Coroutine
         let ref mut fresh116 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
         *fresh116 = (*fresh116).wrapping_add(1);
     }
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_25_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineRet {
     HandleFadeOut(game);
@@ -6158,7 +6135,7 @@ pub unsafe fn GameState_25_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineR
         *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x5f5) as *mut uint16) = 0 as uint16;
     }
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn LoaadDesinationRoomCreBitset(game: &mut Game) {
     let destination_room = (*get_DoorDef(game.door_def_ptr(), game)).room_definition_ptr;
@@ -6394,23 +6371,23 @@ pub unsafe fn LoadColorsForSpritesBeamsAndEnemies(game: &mut Game) {
 }
 pub unsafe fn CallDoorTransitionFunction_Async(mut ea: uint32, game: &mut Game) -> CoroutineRet {
     match ea {
-        8577405 => return DoorTransitionFunction_HandleElevator(game),
-        8577439 => return DoorTransitionFunction_Wait48frames(game),
-        8577694 => return DoorTransitionFunction_WaitForSoundsToFinish(game),
-        8577755 => return DoorTransitionFunction_FadeOutScreen(game),
-        8577783 => return DoorTransitionFunction_LoadDoorHeaderEtc(game),
-        8577808 => return DoorTransitionFunction_ScrollScreenToAlignment(game),
-        8577875 => return DoorTransitionFunction_FixDoorsMovingUp(game),
-        8577902 => return DoorTransitionFunction_SetupNewRoom(game),
-        8577934 => return DoorTransitionFunction_SetupScrolling(game),
-        8577984 => return DoorTransitionFunction_PlaceSamusLoadTiles(game),
-        8578217 => return DoorTransitionFunction_LoadMoreThings_Async(game),
-        8578649 => return DoorTransition_C_HandleAnimTiles(game),
-        8578660 => return DoorTransition_WaitForMusicToClear(game),
-        8578722 => return DoorTransition_HandleTransition(game),
-        8578871 => return DoorTransition_FadeInScreenAndFinish(game),
-        _ => return Unreachable(game) as CoroutineRet,
-    };
+        8577405 => DoorTransitionFunction_HandleElevator(game),
+        8577439 => DoorTransitionFunction_Wait48frames(game),
+        8577694 => DoorTransitionFunction_WaitForSoundsToFinish(game),
+        8577755 => DoorTransitionFunction_FadeOutScreen(game),
+        8577783 => DoorTransitionFunction_LoadDoorHeaderEtc(game),
+        8577808 => DoorTransitionFunction_ScrollScreenToAlignment(game),
+        8577875 => DoorTransitionFunction_FixDoorsMovingUp(game),
+        8577902 => DoorTransitionFunction_SetupNewRoom(game),
+        8577934 => DoorTransitionFunction_SetupScrolling(game),
+        8577984 => DoorTransitionFunction_PlaceSamusLoadTiles(game),
+        8578217 => DoorTransitionFunction_LoadMoreThings_Async(game),
+        8578649 => DoorTransition_C_HandleAnimTiles(game),
+        8578660 => DoorTransition_WaitForMusicToClear(game),
+        8578722 => DoorTransition_HandleTransition(game),
+        8578871 => DoorTransition_FadeInScreenAndFinish(game),
+        _ => Unreachable(game) as CoroutineRet,
+    }
 }
 pub unsafe fn GameState_9_HitDoorBlock(game: &mut Game) -> CoroutineRet {
     CallDoorTransitionFunction_Async(u32::from(game.door_transition_function()) | 0x820000, game)
@@ -6433,7 +6410,7 @@ pub unsafe fn DoorTransitionFunction_HandleElevator(game: &mut Game) -> Coroutin
     *((&raw mut game.g_ram as *mut uint8).offset(0x92f) as *mut uint16) = 48 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x99c) as *mut uint16) =
         ((0x82e19fi32) as u16) & (0xffffu16);
-    return DoorTransitionFunction_Wait48frames(game);
+    DoorTransitionFunction_Wait48frames(game)
 }
 pub unsafe fn DoorTransitionFunction_Wait48frames(game: &mut Game) -> CoroutineRet {
     let ref mut fresh8 = *((&raw mut game.g_ram as *mut uint8).offset(0x92f) as *mut uint16);
@@ -6448,7 +6425,7 @@ pub unsafe fn DoorTransitionFunction_Wait48frames(game: &mut Game) -> CoroutineR
         DrawSamusEnemiesAndProjectiles(game);
         EnsureSamusDrawnEachFrame(game);
     }
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_10_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRet {
     *((&raw mut game.g_ram as *mut uint8).offset(0x797) as *mut uint16) = 1 as uint16;
@@ -6521,7 +6498,7 @@ pub unsafe fn GameState_10_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRe
         ((0x82e29ei32) as u16) & (0xffffu16);
     let ref mut fresh10 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
     *fresh10 = (*fresh10).wrapping_add(1);
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_11_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRet {
     let dispatch_result = CallDoorTransitionFunction_Async(
@@ -6786,7 +6763,7 @@ pub unsafe fn DoorTransitionFunction_LoadMoreThings_Async(game: &mut Game) -> Co
         }
     }
     game.set_coroutine_state_1(0);
-    return 0 as CoroutineRet;
+    0 as CoroutineRet
 }
 pub unsafe fn ClearFxTilemap(game: &mut Game) {
     for i in (0..960).rev() {
@@ -6817,7 +6794,7 @@ pub unsafe fn ClearKraidBg2Tilemap(game: &mut Game) {
     CopyToVramNow(0x4800 as uint16, 0x7e4000 as uint32, 0x1000 as uint16, game);
 }
 pub fn UpdateBackgroundCommand_0_Finish(mut y: uint16, game: &mut Game) -> uint16 {
-    return 0 as uint16;
+    0 as uint16
 }
 pub unsafe fn UpdateBackgroundCommand_E_DoorDependentTransferToVRAM(
     mut j: uint16,
@@ -6826,10 +6803,10 @@ pub unsafe fn UpdateBackgroundCommand_E_DoorDependentTransferToVRAM(
     if *((&raw mut game.g_ram as *mut uint8).offset(0x78d) as *mut uint16)
         == *(RomPtr_8F(j, game) as *mut uint16)
     {
-        return UpdateBackgroundCommand_2_TransferToVram((j).wrapping_add(2u16), game);
+        UpdateBackgroundCommand_2_TransferToVram((j).wrapping_add(2u16), game)
     } else {
-        return (j).wrapping_add(9u16);
-    };
+        (j).wrapping_add(9u16)
+    }
 }
 pub unsafe fn UpdateBackgroundCommand_2_TransferToVram(j: uint16, game: &mut Game) -> uint16 {
     let address = 0x8f0000 | u32::from(j);
@@ -6850,7 +6827,7 @@ pub unsafe fn UpdateBackgroundCommand_4_Decompression(j: uint16, game: &mut Game
 }
 pub unsafe fn UpdateBackgroundCommand_6_ClearFxTilemap(mut j: uint16, game: &mut Game) -> uint16 {
     ClearFxTilemap(game);
-    return j;
+    j
 }
 pub unsafe fn UpdateBackgroundCommand_8_TransferToVramAndSetBg3(
     mut j: uint16,
@@ -6858,7 +6835,7 @@ pub unsafe fn UpdateBackgroundCommand_8_TransferToVramAndSetBg3(
 ) -> uint16 {
     j = UpdateBackgroundCommand_2_TransferToVram(j, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5e) = 2 as uint8;
-    return j;
+    j
 }
 pub unsafe fn UpdateBackgroundCommand_A_ClearBg2Tilemap(j: uint16, game: &mut Game) -> uint16 {
     ClearBg2Tilemap(game);
@@ -6869,19 +6846,19 @@ pub unsafe fn UpdateBackgroundCommand_C_ClearKraidBg2Tilemap(
     game: &mut Game,
 ) -> uint16 {
     ClearKraidBg2Tilemap(game);
-    return j;
+    j
 }
 pub unsafe fn DoorTransition_C_HandleAnimTiles(game: &mut Game) -> CoroutineRet {
     AnimtilesHandler(game);
     game.set_door_transition_function(fnDoorTransition_WaitForMusicToClear as u16);
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn DoorTransition_WaitForMusicToClear(game: &mut Game) -> CoroutineRet {
     if HasQueuedMusic(game) == 0 {
         game.set_door_transition_function(fnDoorTransition_HandleTransition as u16);
         LoadNewMusicTrackIfChanged(game);
     }
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn DoorTransition_HandleTransition(game: &mut Game) -> CoroutineRet {
     let x = game.samus_x_pos();
@@ -7149,7 +7126,7 @@ pub unsafe fn CheckIfColoredDoorCapSpawned(game: &mut Game) -> uint8 {
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x1d27) as *mut uint16).offset(v5 as isize) =
         (*get_PlmHeader_Size6(v8, game)).instr_list_2_ptr;
-    return 1 as uint8;
+    1 as uint8
 }
 static kLoadLibraryBackgroundFuncs: [Option<Func_Y_Y>; 8] = unsafe {
     [
@@ -7207,7 +7184,7 @@ pub unsafe fn LoadLibraryBackground(game: &mut Game) {
     }
 }
 pub fn LoadLibraryBackgroundFunc_0_DONE(mut j: uint16, game: &mut Game) -> uint16 {
-    return 0 as uint16;
+    0 as uint16
 }
 pub unsafe fn LoadLibraryBackgroundFunc_E_DoorDependentTransferToVram(
     mut j: uint16,
@@ -7216,10 +7193,10 @@ pub unsafe fn LoadLibraryBackgroundFunc_E_DoorDependentTransferToVram(
     if *((&raw mut game.g_ram as *mut uint8).offset(0x78d) as *mut uint16)
         == (*get_LoadBg_E(j, game)).field_0
     {
-        return LoadLibraryBackgroundFunc_2_TransferToVram((j).wrapping_add(2u16), game);
+        LoadLibraryBackgroundFunc_2_TransferToVram((j).wrapping_add(2u16), game)
     } else {
-        return (j).wrapping_add(9u16);
-    };
+        (j).wrapping_add(9u16)
+    }
 }
 pub unsafe fn LoadLibraryBackgroundFunc_2_TransferToVram(mut j: uint16, game: &mut Game) -> uint16 {
     let mut LoadBg_28: *mut uint16 = RomPtr_8F(j, game) as *mut uint16;
@@ -7238,7 +7215,7 @@ pub unsafe fn LoadLibraryBackgroundFunc_2_TransferToVram(mut j: uint16, game: &m
     );
     WriteReg(VMAIN as uint16, 0x80 as uint8, game);
     WriteReg(MDMAEN as uint16, 2 as uint8, game);
-    return (j).wrapping_add(7u16);
+    (j).wrapping_add(7u16)
 }
 pub unsafe fn LoadLibraryBackgroundFunc_4_Decompress(mut j: uint16, game: &mut Game) -> uint16 {
     let mut p: *const uint8 = RomPtr_8F(j, game);
@@ -7248,25 +7225,25 @@ pub unsafe fn LoadLibraryBackgroundFunc_4_Decompress(mut j: uint16, game: &mut G
             .offset(*(p.offset(3) as *mut uint16) as ::core::ffi::c_int as isize),
         game,
     );
-    return (j).wrapping_add(5u16);
+    (j).wrapping_add(5u16)
 }
 pub unsafe fn LoadLibraryBackgroundFunc_6_ClearFxTilemap(mut j: uint16, game: &mut Game) -> uint16 {
     ClearFXTilemap(game);
-    return j;
+    j
 }
 pub unsafe fn LoadLibraryBackgroundFunc_A_ClearBG2Tilemap(
     mut j: uint16,
     game: &mut Game,
 ) -> uint16 {
     ClearBG2Tilemap(game);
-    return j;
+    j
 }
 pub unsafe fn LoadLibraryBackgroundFunc_C_ClearKraidLayer2(
     mut j: uint16,
     game: &mut Game,
 ) -> uint16 {
     ClearBG2Tilemap(game);
-    return j;
+    j
 }
 pub unsafe fn LoadLibraryBackgroundFunc_8_TransferToVramAndSetBg3(
     mut j: uint16,
@@ -7274,7 +7251,7 @@ pub unsafe fn LoadLibraryBackgroundFunc_8_TransferToVramAndSetBg3(
 ) -> uint16 {
     j = LoadLibraryBackgroundFunc_2_TransferToVram(j, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5e) = 2 as uint8;
-    return j;
+    j
 }
 pub unsafe fn LoadLevelScrollAndCre(game: &mut Game) {
     let mut rdf_scroll_ptr: int16 = 0;
@@ -7448,7 +7425,7 @@ pub unsafe fn GameState_2_GameOptionsMenu(game: &mut Game) -> CoroutineRet {
     {
         OptionsMenu_AddToVramQueue(game);
     }
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameOptionsMenuFunc_0(game: &mut Game) {
     HandleFadeOut(game);
@@ -8054,7 +8031,6 @@ pub unsafe fn GameOptionsMenu_7_ControllerSettings(game: &mut Game) {
         if v1 == 9u16 {
             *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) = 0 as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) = 10 as uint16;
-            return;
         }
     } else if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) != 0 {
         QueueSfx1_Max6(0x38 as uint16, game);
@@ -8379,7 +8355,7 @@ pub unsafe fn OptionsMenuFunc8(game: &mut Game) -> uint8 {
             break;
         }
     }
-    return 0 as uint8;
+    0 as uint8
 }
 static g_word_82F6AD: [uint16; 6] = [0, 0xe, 0xe, 0x10, 0x1f, 0x1f];
 pub unsafe fn OptionsMenuFunc6(game: &mut Game) {

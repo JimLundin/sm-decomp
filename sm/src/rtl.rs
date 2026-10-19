@@ -372,7 +372,7 @@ pub unsafe fn GetFileSize(mut f: *mut FILE) -> ::core::ffi::c_int {
     fseek(f, 0 as ::core::ffi::c_long, SEEK_END);
     let mut r: ::core::ffi::c_int = ftell(f) as ::core::ffi::c_int;
     fseek(f, 0 as ::core::ffi::c_long, SEEK_SET);
-    return r;
+    r
 }
 pub unsafe fn StateRecorder_Load(
     mut sr: *mut StateRecorder,
@@ -921,7 +921,7 @@ pub unsafe fn StateRecorder_ReadNextReplayState(
     if (*sr).replay_frame_counter >= (*sr).total_frames {
         (*sr).replay_mode = false_0 != 0;
     }
-    return (*sr).last_inputs;
+    (*sr).last_inputs
 }
 pub unsafe fn StateRecorder_StopReplay(mut sr: *mut StateRecorder) {
     if !(*sr).replay_mode {
@@ -997,7 +997,7 @@ pub unsafe fn RtlRunFrame(mut inputs: ::core::ffi::c_int, game: &mut Game) -> bo
     );
     game.snes_frame_counter += 1;
     RtlPushApuState(game);
-    return is_replay;
+    is_replay
 }
 pub unsafe fn RtlSaveSnapshot(
     mut filename: *const ::core::ffi::c_char,
@@ -1132,14 +1132,14 @@ pub unsafe fn MemCpy(
 }
 pub unsafe fn MakePairU16(mut k: uint16, mut j: uint16) -> PairU16 {
     let mut r: PairU16 = PairU16 { k: k, j: j };
-    return r;
+    r
 }
 pub unsafe fn mov24(mut a: *mut LongPtr, mut d: uint32) {
     (*a).addr = (d & 0xffff as uint32) as VoidP;
     (*a).bank = (d >> 16 as ::core::ffi::c_int) as uint8;
 }
 pub unsafe fn Load24(mut src: *const LongPtr) -> uint32 {
-    return *(src as *mut uint32) & 0xffffff as uint32;
+    *(src as *mut uint32) & 0xffffff as uint32
 }
 pub unsafe fn Unreachable(game: &mut Game) -> bool {
     printf(b"Unreachable!\n\0" as *const u8 as *const ::core::ffi::c_char);
@@ -1152,7 +1152,7 @@ pub unsafe fn Unreachable(game: &mut Game) -> bool {
         );
     };
     game.g_ram[0x1ffff as ::core::ffi::c_int as usize] = 1 as uint8;
-    return false_0 != 0;
+    false_0 != 0
 }
 /// Map a banked LoROM address to an offset in the ROM allocation.
 /// Callers keep their window/bounds checks and add linear table offsets afterward.
@@ -1169,7 +1169,7 @@ pub unsafe fn RomPtr(mut addr: uint32_t, game: &mut Game) -> *const uint8 {
         );
         game.g_fail = true_0 != 0;
     }
-    return game.g_rom.offset(crate::rtl::lorom_offset(addr)) as *const uint8;
+    game.g_rom.offset(crate::rtl::lorom_offset(addr)) as *const uint8
 }
 pub unsafe fn WriteReg(mut reg: uint16, mut value: uint8, game: &mut Game) {
     snes_write(
@@ -1211,24 +1211,24 @@ pub(crate) unsafe fn SetHiLo(hi: *mut u16, lo: *mut u16, value: u32) {
 }
 
 pub unsafe fn Mult8x8(mut a: uint8, mut b: uint8) -> uint16 {
-    return (a as ::core::ffi::c_int * b as ::core::ffi::c_int) as uint16;
+    (a as ::core::ffi::c_int * b as ::core::ffi::c_int) as uint16
 }
 pub unsafe fn SnesDivide(mut a: uint16, mut b: uint8) -> uint16 {
-    return (if b as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+    ((if b as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
         0xffff as ::core::ffi::c_int
     } else {
         a as ::core::ffi::c_int / b as ::core::ffi::c_int
-    }) as uint16;
+    }) as uint16)
 }
 pub unsafe fn SnesModulus(mut a: uint16, mut b: uint8) -> uint16 {
-    return (if b as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+    ((if b as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
         a as ::core::ffi::c_int
     } else {
         a as ::core::ffi::c_int % b as ::core::ffi::c_int
-    }) as uint16;
+    }) as uint16)
 }
 pub unsafe fn ReadReg(mut reg: uint16, game: &mut Game) -> uint8 {
-    return snes_read(game.g_snes as *mut Snes, reg as uint32_t, game) as uint8;
+    snes_read(game.g_snes as *mut Snes, reg as uint32_t, game) as uint8
 }
 pub unsafe fn ReadRegWord(mut reg: uint16, game: &mut Game) -> uint16 {
     let mut rv: uint16_t = ReadReg(reg, game) as uint16_t;
@@ -1238,7 +1238,7 @@ pub unsafe fn ReadRegWord(mut reg: uint16, game: &mut Game) -> uint16 {
             game,
         ) as ::core::ffi::c_int)
             << 8 as ::core::ffi::c_int) as uint16_t;
-    return rv as uint16;
+    rv as uint16
 }
 pub unsafe fn WriteRegWord(mut reg: uint16, mut value: uint16, game: &mut Game) {
     WriteReg(reg, value as uint8, game);
@@ -1271,14 +1271,13 @@ pub unsafe fn RtlApuWrite(mut adr: uint32, mut val: uint8, game: &mut Game) {
     game.g_apu_write.ports[(adr & 0x3 as uint32) as usize] = val;
 }
 unsafe fn IsFrameEmpty(mut w: *mut ApuWriteEnt) -> bool {
-    return (*w).ports[0 as ::core::ffi::c_int as usize] as ::core::ffi::c_int
-        == 255 as ::core::ffi::c_int
+    (*w).ports[0 as ::core::ffi::c_int as usize] as ::core::ffi::c_int == 255 as ::core::ffi::c_int
         && (*w).ports[1 as ::core::ffi::c_int as usize] as ::core::ffi::c_int
             == 255 as ::core::ffi::c_int
         && (*w).ports[2 as ::core::ffi::c_int as usize] as ::core::ffi::c_int
             == 255 as ::core::ffi::c_int
         && (*w).ports[3 as ::core::ffi::c_int as usize] as ::core::ffi::c_int
-            == 255 as ::core::ffi::c_int;
+            == 255 as ::core::ffi::c_int
 }
 pub unsafe fn RtlPushApuState(game: &mut Game) {
     RtlApuLock();

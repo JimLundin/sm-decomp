@@ -64,21 +64,21 @@ pub const true_0: ::core::ffi::c_int = 1;
 pub const false_0: ::core::ffi::c_int = 0;
 #[inline]
 unsafe fn RomPtr_88(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr((0x880000u32) | ((addr) as u32), game);
+    RomPtr((0x880000u32) | ((addr) as u32), game)
 }
 #[inline]
 unsafe fn RomBankBase(mut bank: uint8, game: &mut Game) -> *const uint8 {
-    return RomPtr(
+    RomPtr(
         (((bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) + 0x8000 as ::core::ffi::c_int)
             as uint32_t,
         game,
     )
-    .offset(-(0x8000 as ::core::ffi::c_int as isize));
+    .offset(-(0x8000 as ::core::ffi::c_int as isize))
 }
 #[inline]
 unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int, game: &mut Game) -> *mut VramWriteEntry {
-    return (&raw mut game.g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
-        as *mut uint8 as *mut VramWriteEntry;
+    (&raw mut game.g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
+        as *mut uint8 as *mut VramWriteEntry
 }
 pub const fnnullsub_56: uint32 = 8491739;
 pub const fnDoorTransitionFunction_FadeOutScreen: ::core::ffi::c_int = 0x82e2db;
@@ -200,7 +200,7 @@ pub const fnXray_SetupStage8_SetBackdropColor: uint32 = 9556668;
 pub const fnInitializeSuitPickupHdma: uint32 = 9557650;
 pub const fnnullsub_309: uint32 = 10785852;
 pub fn nullsub_9(mut j: uint16, game: &mut Game) -> uint16 {
-    return j;
+    j
 }
 pub unsafe fn InitializeLayerBlending(game: &mut Game) {
     *(&raw mut game.g_ram as *mut uint8).offset(0x60) = 0 as uint8;
@@ -216,59 +216,59 @@ pub unsafe fn InitializeLayerBlending(game: &mut Game) {
 pub unsafe fn LayerBlendFunc_4_PhantoonIntro(mut j: uint16, game: &mut Game) -> uint16 {
     *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 17 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x6b) = 4 as uint8;
-    return j;
+    j
 }
 pub unsafe fn LayerBlendFunc_6(mut j: uint16, game: &mut Game) -> uint16 {
     *(&raw mut game.g_ram as *mut uint8).offset(0x6b) = 20 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x71) = 39 as uint8;
-    return j;
+    j
 }
 pub unsafe fn LayerBlendFunc_8(mut j: uint16, game: &mut Game) -> uint16 {
     *(&raw mut game.g_ram as *mut uint8).offset(0x6b) = 20 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x71) = 34 as uint8;
-    return j;
+    j
 }
 pub unsafe fn LayerBlendFunc_A(mut j: uint16, game: &mut Game) -> uint16 {
     *(&raw mut game.g_ram as *mut uint8).offset(0x71) = 50 as uint8;
-    return j;
+    j
 }
 pub unsafe fn LayerBlendFunc_C(mut j: uint16, game: &mut Game) -> uint16 {
     *(&raw mut game.g_ram as *mut uint8).offset(0x6e) = 0 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x71) = -(94 as ::core::ffi::c_int) as uint8;
-    return j;
+    j
 }
 pub fn nullsub_10(mut j: uint16, game: &mut Game) -> uint16 {
-    return j;
+    j
 }
 pub unsafe fn LayerBlendFunc_10(mut j: uint16, game: &mut Game) -> uint16 {
     *(&raw mut game.g_ram as *mut uint8).offset(0x61) = 2 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x62) = 32 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x6d) = 4 as uint8;
-    return j;
+    j
 }
 pub unsafe fn LayerBlendFunc_14(mut j: uint16, game: &mut Game) -> uint16 {
     *(&raw mut game.g_ram as *mut uint8).offset(0x71) = -(77 as ::core::ffi::c_int) as uint8;
-    return j;
+    j
 }
 pub unsafe fn LayerBlendFunc_16(mut j: uint16, game: &mut Game) -> uint16 {
     *(&raw mut j as *mut uint8).offset(0) = 4 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 17 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x6b) = 6 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x71) = -(79 as ::core::ffi::c_int) as uint8;
-    return j;
+    j
 }
 pub unsafe fn LayerBlendFunc_1A(mut j: uint16, game: &mut Game) -> uint16 {
     *(&raw mut j as *mut uint8).offset(0) = 4 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 21 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x6b) = 2 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x71) = 53 as uint8;
-    return j;
+    j
 }
 pub unsafe fn LayerBlendFunc_1C(mut j: uint16, game: &mut Game) -> uint16 {
     *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 21 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x6b) = 2 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x71) = 85 as uint8;
-    return j;
+    j
 }
 pub unsafe fn LayerBlendFunc_18(mut j: uint16, game: &mut Game) -> uint16 {
     j = 2 as uint16;
@@ -280,14 +280,14 @@ pub unsafe fn LayerBlendFunc_18(mut j: uint16, game: &mut Game) -> uint16 {
         *(&raw mut game.g_ram as *mut uint8).offset(0x6b) = 19 as uint8;
         *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 4 as uint8;
     }
-    return j;
+    j
 }
 pub fn nullsub_11(mut j: uint16, game: &mut Game) -> uint16 {
-    return j;
+    j
 }
 pub unsafe fn LayerBlendFunc_26(mut j: uint16, game: &mut Game) -> uint16 {
     *(&raw mut game.g_ram as *mut uint8).offset(0x71) = 119 as uint8;
-    return j;
+    j
 }
 pub unsafe fn LayerBlendFunc_28(mut j: uint16, game: &mut Game) -> uint16 {
     *(&raw mut game.g_ram as *mut uint8).offset(0x6e) = 0 as uint8;
@@ -300,7 +300,7 @@ pub unsafe fn LayerBlendFunc_28(mut j: uint16, game: &mut Game) -> uint16 {
         *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) = 64 as uint8;
         *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2) = 0x80 as uint8;
     }
-    return j;
+    j
 }
 pub unsafe fn LayerBlendFunc_2A(mut j: uint16, game: &mut Game) -> uint16 {
     *(&raw mut game.g_ram as *mut uint8).offset(0x6e) = 0 as uint8;
@@ -313,24 +313,24 @@ pub unsafe fn LayerBlendFunc_2A(mut j: uint16, game: &mut Game) -> uint16 {
         *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) = 66 as uint8;
         *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2) = 0x80 as uint8;
     }
-    return j;
+    j
 }
 pub unsafe fn LayerBlendFunc_2C(mut j: uint16, game: &mut Game) -> uint16 {
     *(&raw mut game.g_ram as *mut uint8).offset(0x6e) = 0 as uint8;
-    return j;
+    j
 }
 pub unsafe fn LayerBlendFunc_2E(mut j: uint16, game: &mut Game) -> uint16 {
     *(&raw mut game.g_ram as *mut uint8).offset(0x71) = -(77 as ::core::ffi::c_int) as uint8;
-    return j;
+    j
 }
 pub unsafe fn LayerBlendFunc_32(mut j: uint16, game: &mut Game) -> uint16 {
     *(&raw mut game.g_ram as *mut uint8).offset(0x6b) = 68 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x71) = -(78 as ::core::ffi::c_int) as uint8;
-    return j;
+    j
 }
 pub unsafe fn LayerBlendFunc_34(mut j: uint16, game: &mut Game) -> uint16 {
     j = 6 as uint16;
-    return j;
+    j
 }
 pub unsafe fn LayerBlendFunc_24(mut j: uint16, game: &mut Game) -> uint16 {
     *(&raw mut game.g_ram as *mut uint8).offset(0x60) = 0 as uint8;
@@ -342,7 +342,7 @@ pub unsafe fn LayerBlendFunc_24(mut j: uint16, game: &mut Game) -> uint16 {
     *(&raw mut game.g_ram as *mut uint8).offset(0x6d) = 4 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x6e) = 16 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x71) = 51 as uint8;
-    return j;
+    j
 }
 pub unsafe fn HandleLayerBlendingXrayCanShowBlocks(game: &mut Game) {
     *(&raw mut game.g_ram as *mut uint8).offset(0x60) = -(56 as ::core::ffi::c_int) as uint8;
@@ -695,7 +695,7 @@ unsafe fn SpawnHdmaObjectInner(
         *p,
         game,
     );
-    return k;
+    k
 }
 pub unsafe fn SpawnHdmaObject(
     mut db: uint8,
@@ -858,7 +858,7 @@ pub unsafe fn HdmaobjInstr_Delete(
 ) -> *const uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x18b4) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-    return ::core::ptr::null::<uint8>();
+    ::core::ptr::null::<uint8>()
 }
 pub unsafe fn HdmaobjInstr_SetPreInstr(
     mut k: uint16,
@@ -870,7 +870,7 @@ pub unsafe fn HdmaobjInstr_SetPreInstr(
         *(hdp as *mut uint16);
     *((&raw mut game.g_ram as *mut uint8).offset(0x18fc) as *mut uint16 as *mut uint8)
         .offset(k as ::core::ffi::c_int as isize) = *hdp.offset(2);
-    return hdp.offset(3);
+    hdp.offset(3)
 }
 pub unsafe fn HdmaobjInstr_ClearPreInstr(
     mut k: uint16,
@@ -880,89 +880,71 @@ pub unsafe fn HdmaobjInstr_ClearPreInstr(
     *((&raw mut game.g_ram as *mut uint8).offset(0x18f0) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         addr_locret_88858A as uint16;
-    return hdp;
+    hdp
 }
 pub unsafe fn CallHdmaobjInstrFunc(mut ea: uint32, mut k: uint16, game: &mut Game) {
     match ea {
         8948500 => {
             Hdmaobj_PreExplodeWhite(game);
-            return;
         }
         8948530 => {
             Hdmaobj_PreExplodeYellow(game);
-            return;
         }
         8948537 => {
             Hdmaobj_ExplodeYellow(game);
-            return;
         }
         8948551 => {
             Hdmaobj_ExplodeWhite(game);
-            return;
         }
         8948558 => {
             Hdmaobj_CleanUpTryCrystalFlash(k, game);
-            return;
         }
         8954596 => {
             CrystalFlashSetupPart1(game);
-            return;
         }
         8954633 => {
             CrystalFlashSetupPart2(game);
-            return;
         }
         8954647 => {
             CrystalFlashCleanup(k, game);
-            return;
         }
-        8970129 => return,
-        8970130 => return,
-        8972070 => return,
+        8970129 => (),
+        8970130 => (),
+        8972070 => (),
         8972135 => {
             InitializeRainbowBeam(game);
-            return;
         }
         9554681 => {
             Xray_SetupStage1_FreezeTimeBackup(k, game);
-            return;
         }
         9554716 => {
             Xray_SetupStage2_ReadBg1_2ndScreen(game);
-            return;
         }
         9554775 => {
             Xray_SetupStage3_ReadBg1_1stScreen(game);
-            return;
         }
         9554830 => {
             Xray_SetupStage4(game);
-            return;
         }
         9556179 => {
             Xray_SetupStage5(game);
-            return;
         }
         9556339 => {
             Xray_SetupStage6(game);
-            return;
         }
         9556384 => {
             Xray_SetupStage7(game);
-            return;
         }
         9556668 => {
             Xray_SetupStage8_SetBackdropColor(game);
-            return;
         }
         9557650 => {
             InitializeSuitPickupHdma(game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn HdmaobjInstr_CallFarFunc(
     mut k: uint16,
@@ -970,13 +952,13 @@ pub unsafe fn HdmaobjInstr_CallFarFunc(
     game: &mut Game,
 ) -> *const uint8 {
     CallHdmaobjInstrFunc(Load24(hdp as *mut LongPtr), k, game);
-    return hdp.offset(3);
+    hdp.offset(3)
 }
 pub unsafe fn HdmaobjInstr_Goto(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
-    return *(hdp as *mut uint16) as uintptr_t as *const uint8;
+    *(hdp as *mut uint16) as uintptr_t as *const uint8
 }
 pub unsafe fn HdmaobjInstr_GotoRel(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
-    return hdp.offset(*hdp as int8 as ::core::ffi::c_int as isize);
+    hdp.offset(*hdp as int8 as ::core::ffi::c_int as isize)
 }
 pub unsafe fn HdmaobjInstr_DecrementAndGoto(
     mut k: uint16,
@@ -989,10 +971,10 @@ pub unsafe fn HdmaobjInstr_DecrementAndGoto(
     let fresh64 = *fresh63;
     *fresh63 = (*fresh63).wrapping_sub(1);
     if fresh64 == 1u16 {
-        return hdp.offset(2);
+        hdp.offset(2)
     } else {
-        return *(hdp as *mut uint16) as uintptr_t as *const uint8;
-    };
+        *(hdp as *mut uint16) as uintptr_t as *const uint8
+    }
 }
 pub unsafe fn HdmaobjInstr_DecrementAndGotoRel(
     mut k: uint16,
@@ -1005,10 +987,10 @@ pub unsafe fn HdmaobjInstr_DecrementAndGotoRel(
     let fresh62 = *fresh61;
     *fresh61 = (*fresh61).wrapping_sub(1);
     if fresh62 == 1u16 {
-        return hdp.offset(1);
+        hdp.offset(1)
     } else {
-        return hdp.offset(*hdp as int8 as ::core::ffi::c_int as isize);
-    };
+        hdp.offset(*hdp as int8 as ::core::ffi::c_int as isize)
+    }
 }
 pub unsafe fn HdmaobjInstr_SetTimer(
     mut k: uint16,
@@ -1017,7 +999,7 @@ pub unsafe fn HdmaobjInstr_SetTimer(
 ) -> *const uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1908) as *mut uint16 as *mut uint8)
         .offset(k as ::core::ffi::c_int as isize) = *hdp;
-    return hdp.offset(1);
+    hdp.offset(1)
 }
 pub unsafe fn HdmaobjInstr_SetHdmaControl(
     mut k: uint16,
@@ -1033,7 +1015,7 @@ pub unsafe fn HdmaobjInstr_SetHdmaControl(
         *hdp,
         game,
     );
-    return hdp.offset(1);
+    hdp.offset(1)
 }
 pub unsafe fn HdmaobjInstr_SetHdmaTarget(
     mut k: uint16,
@@ -1049,7 +1031,7 @@ pub unsafe fn HdmaobjInstr_SetHdmaTarget(
         *hdp,
         game,
     );
-    return hdp.offset(1);
+    hdp.offset(1)
 }
 pub unsafe fn HdmaobjInstr_SetHdmaTablePtr(
     mut k: uint16,
@@ -1059,7 +1041,7 @@ pub unsafe fn HdmaobjInstr_SetHdmaTablePtr(
     *((&raw mut game.g_ram as *mut uint8).offset(0x18d8) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(hdp as *mut uint16);
-    return hdp.offset(2);
+    hdp.offset(2)
 }
 pub unsafe fn HdmaobjInstr_SetHdmaTableBank(
     mut k: uint16,
@@ -1075,7 +1057,7 @@ pub unsafe fn HdmaobjInstr_SetHdmaTableBank(
         *hdp,
         game,
     );
-    return hdp.offset(1);
+    hdp.offset(1)
 }
 pub unsafe fn HdmaobjInstr_SetIndirectHdmaDataBank(
     mut k: uint16,
@@ -1091,7 +1073,7 @@ pub unsafe fn HdmaobjInstr_SetIndirectHdmaDataBank(
         *hdp,
         game,
     );
-    return hdp.offset(1);
+    hdp.offset(1)
 }
 pub unsafe fn HdmaobjInstr_Sleep(
     mut k: uint16,
@@ -1107,7 +1089,7 @@ pub unsafe fn HdmaobjInstr_Sleep(
     *((&raw mut game.g_ram as *mut uint8).offset(0x18cc) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         (hdp.offset_from(base) as ::core::ffi::c_long - 2 as ::core::ffi::c_long) as uint16;
-    return ::core::ptr::null::<uint8>();
+    ::core::ptr::null::<uint8>()
 }
 pub unsafe fn RaiseOrLowerFx(game: &mut Game) -> uint8 {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16) as ::core::ffi::c_int
@@ -1135,12 +1117,12 @@ pub unsafe fn RaiseOrLowerFx(game: &mut Game) -> uint8 {
         }
         *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16) = v2;
         if *((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16) >= v2 {
-            return 0 as uint8;
+            0 as uint8
         } else {
             *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16) =
                 *((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16);
             *((&raw mut game.g_ram as *mut uint8).offset(0x1976) as *mut uint16) = 0 as uint16;
-            return 1 as uint8;
+            1 as uint8
         }
     } else {
         let mut v0: uint16 = (r24_r22.wrapping_add(
@@ -1159,9 +1141,8 @@ pub unsafe fn RaiseOrLowerFx(game: &mut Game) -> uint8 {
                 *((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16);
             *((&raw mut game.g_ram as *mut uint8).offset(0x1976) as *mut uint16) = 0 as uint16;
         }
-        return (*((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16) >= v0)
-            as uint8;
-    };
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16) >= v0) as uint8
+    }
 }
 pub unsafe fn HdmaobjPreInstr_XrayFunc0_NoBeam(mut k: uint16, game: &mut Game) {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0x9b6) as *mut uint16) as ::core::ffi::c_int
@@ -1977,8 +1958,7 @@ pub unsafe fn CalculatePowerBombHdmaScaled_LeftOfScreen(
         }
     }
     game.k_out = *(&raw mut k as *mut uint8).offset(0) as uint16;
-    return ((v6 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | v7 as ::core::ffi::c_int)
-        as uint16;
+    ((v6 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | v7 as ::core::ffi::c_int) as uint16
 }
 pub unsafe fn CalculatePowerBombHdmaScaled_OnScreen(
     mut k: uint16,
@@ -2036,8 +2016,7 @@ pub unsafe fn CalculatePowerBombHdmaScaled_OnScreen(
         }
     }
     game.k_out = *(&raw mut k as *mut uint8).offset(0) as uint16;
-    return ((v6 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | v9 as ::core::ffi::c_int)
-        as uint16;
+    ((v6 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | v9 as ::core::ffi::c_int) as uint16
 }
 pub unsafe fn CalculatePowerBombHdmaScaled_RightOfScreen(
     mut k: uint16,
@@ -2096,8 +2075,7 @@ pub unsafe fn CalculatePowerBombHdmaScaled_RightOfScreen(
         }
     }
     game.k_out = *(&raw mut k as *mut uint8).offset(0) as uint16;
-    return ((v9 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | v8 as ::core::ffi::c_int)
-        as uint16;
+    ((v9 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | v8 as ::core::ffi::c_int) as uint16
 }
 pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionYellow(mut k: uint16, game: &mut Game) {
     let mut v2: uint16 = 0;
@@ -2775,8 +2753,8 @@ pub unsafe fn CalculateCrystalFlashHdmaDataTablesScaled_LeftOfScreen(
         }
     }
     game.k_out = *(&raw mut k as *mut uint8).offset(0) as uint16;
-    return ((right as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | left as ::core::ffi::c_int)
-        as uint16;
+    ((right as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | left as ::core::ffi::c_int)
+        as uint16
 }
 pub unsafe fn CalculateCrystalFlashHdmaDataTablesScaled_OnScreen(
     mut k: uint16,
@@ -2834,8 +2812,8 @@ pub unsafe fn CalculateCrystalFlashHdmaDataTablesScaled_OnScreen(
         }
     }
     game.k_out = *(&raw mut k as *mut uint8).offset(0) as uint16;
-    return ((right as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | left as ::core::ffi::c_int)
-        as uint16;
+    ((right as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | left as ::core::ffi::c_int)
+        as uint16
 }
 pub unsafe fn CalculateCrystalFlashHdmaDataTablesScaled_RightOfScreen(
     mut k: uint16,
@@ -2893,8 +2871,8 @@ pub unsafe fn CalculateCrystalFlashHdmaDataTablesScaled_RightOfScreen(
         }
     }
     game.k_out = *(&raw mut k as *mut uint8).offset(0) as uint16;
-    return ((right as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | left as ::core::ffi::c_int)
-        as uint16;
+    ((right as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | left as ::core::ffi::c_int)
+        as uint16
 }
 pub unsafe fn HdmaobjPreInstr_CrystalFlash_Stage1_Explosion(mut k: uint16, game: &mut Game) {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0x592) as *mut uint16) as ::core::ffi::c_int
@@ -3133,7 +3111,7 @@ unsafe fn SetupSomeHdmaTablesBG3(
                 .offset(v2 as isize) as *const uint8 as *mut uint16))
                 .wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0x598) as *mut uint16));
     }
-    return v0;
+    v0
 }
 pub unsafe fn HdmaobjPreInstr_FxType22_BG3Yscroll(mut k: uint16, game: &mut Game) {
     DamageSamusInTopRow(game);
@@ -3156,7 +3134,7 @@ pub unsafe fn HdmaobjInstr_SetFlagB(
 ) -> *const uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1920) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 1 as uint16;
-    return hdp;
+    hdp
 }
 static g_word_88C46E: [int16; 16] = [0, 1, 1, 0, 0, -(1), -(1), 0, 0, 1, 1, 0, 0, -(1), -(1), 0];
 pub unsafe fn HdmaobjPreInstr_BG3Xscroll(mut k: uint16, game: &mut Game) {
@@ -3375,7 +3353,7 @@ pub unsafe fn HdmaFunc_A786(
         .field_1)
             .offset(v0 as ::core::ffi::c_int as isize) as *mut uint16) = r20;
     }
-    return r18;
+    r18
 }
 static unk_88A7EF: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
     field_0: 0x42 as uint8,
@@ -3986,7 +3964,6 @@ pub unsafe fn FxRisingFunction_LavaAcid(game: &mut Game) {
         }
         *((&raw mut game.g_ram as *mut uint8).offset(0x196c) as *mut uint16) =
             ((0x88b367i32) as u16) & (0xffffu16);
-        return;
     }
 }
 pub unsafe fn FxRisingFunction_LavaAcid_WaitToRise(game: &mut Game) {
@@ -4019,38 +3996,32 @@ pub unsafe fn HdmaobjInstr_B3A9(
 ) -> *const uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x192c) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 112 as uint16;
-    return hdp;
+    hdp
 }
 pub unsafe fn CallFxRisingFunc(mut ea: uint32, game: &mut Game) {
     match ea {
         8958787 => {
             FxRisingFunction_LavaAcid(game);
-            return;
         }
         8958823 => {
             FxRisingFunction_LavaAcid_WaitToRise(game);
-            return;
         }
         8958850 => {
             FxRisingFunction_LavaAcid_Raising(game);
-            return;
         }
         8963112 => {
             FxRisingFunction_C428_WaterNormal(game);
-            return;
         }
         8963148 => {
             FxRisingFunction_WaterWaitToRise(game);
-            return;
         }
         8963160 => {
             FxRisingFunction_WaterRising(game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 static kLavaSoundEffects: [uint8; 8] = [0x12, 0x13, 0x14, 0x12, 0x13, 0x14, 0x12, 0x13];
 pub unsafe fn HdmaobjPreInstr_LavaAcidBG3YScroll(mut k: uint16, game: &mut Game) {
@@ -4186,10 +4157,8 @@ pub unsafe fn HdmaobjPreInstr_LavaAcidBG3YScroll(mut k: uint16, game: &mut Game)
             * ((v8 as ::core::ffi::c_int ^ 0x1ff as ::core::ffi::c_int) + 1 as ::core::ffi::c_int
                 & 0x3ff as ::core::ffi::c_int)
             + 0xb62a as ::core::ffi::c_int) as uint16;
-        return;
     } else {
-        return;
-    };
+    }
 }
 pub unsafe fn HdmaobjInstr_SetFlagB_Copy(
     mut k: uint16,
@@ -4198,7 +4167,7 @@ pub unsafe fn HdmaobjInstr_SetFlagB_Copy(
 ) -> *const uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1920) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 1 as uint16;
-    return hdp;
+    hdp
 }
 pub unsafe fn HdmaobjPreInstr_LavaAcidBG2YScroll(mut k: uint16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x9c44) as *mut uint16) =
@@ -4416,7 +4385,6 @@ pub unsafe fn FxRisingFunction_C428_WaterNormal(game: &mut Game) {
         }
         *((&raw mut game.g_ram as *mut uint8).offset(0x196c) as *mut uint16) =
             ((0x88c44ci32) as u16) & (0xffffu16);
-        return;
     }
 }
 pub unsafe fn FxRisingFunction_WaterWaitToRise(game: &mut Game) {
@@ -4441,38 +4409,32 @@ pub unsafe fn HdmaobjInstr_SetFlagB_Copy2(
 ) -> *const uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1920) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 1 as uint16;
-    return hdp;
+    hdp
 }
 pub unsafe fn CallFxRisingFunction(mut ea: uint32, game: &mut Game) {
     match ea {
         8958787 => {
             FxRisingFunction_LavaAcid(game);
-            return;
         }
         8958823 => {
             FxRisingFunction_LavaAcid_WaitToRise(game);
-            return;
         }
         8958850 => {
             FxRisingFunction_LavaAcid_Raising(game);
-            return;
         }
         8963112 => {
             FxRisingFunction_C428_WaterNormal(game);
-            return;
         }
         8963148 => {
             FxRisingFunction_WaterWaitToRise(game);
-            return;
         }
         8963160 => {
             FxRisingFunction_WaterRising(game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn HdmaobjPreInstr_WaterBG3XScroll(mut k: uint16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1986) as *mut uint16) =
@@ -4587,7 +4549,7 @@ pub unsafe fn HdmaobjInstr_SetFlagB_Copy3(
 ) -> *const uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1920) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 1 as uint16;
-    return hdp;
+    hdp
 }
 pub unsafe fn HdmaobjPreInstr_WaterBG2XScroll(mut k: uint16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x9c44) as *mut uint16) =
@@ -4747,7 +4709,7 @@ pub unsafe fn HdmaobjInstr_SetVideoMode1(
     game: &mut Game,
 ) -> *const uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x7eb) as *mut uint16) = 9 as uint16;
-    return hdp;
+    hdp
 }
 pub unsafe fn FxTypeFunc_A_Rain(game: &mut Game) {
     static unk_88D95C: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
@@ -4779,7 +4741,7 @@ pub unsafe fn HdmaobjInstr_1938_RandomNumber(
                     & 6 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
                     >> 1 as ::core::ffi::c_int) as isize,
             );
-    return hdp;
+    hdp
 }
 pub unsafe fn HdmaobjPreInstr_RainBg3Scroll(mut k: uint16, game: &mut Game) {
     *(&raw mut game.g_ram as *mut uint8).offset(0x5b) = 92 as uint8;
@@ -5116,7 +5078,7 @@ pub unsafe fn HdmaobjInstr_GotoIfEventHappened(
             as *mut ExpandingSquareTransitionHdma)
             .offset(0))
         .field_0 as *mut uint16) = -(240 as ::core::ffi::c_int) as uint16;
-        return *(hdp as *mut uint16) as uintptr_t as *const uint8;
+        *(hdp as *mut uint16) as uintptr_t as *const uint8
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1920) as *mut uint16).offset(v2 as isize) =
             0 as uint16;
@@ -5125,8 +5087,8 @@ pub unsafe fn HdmaobjInstr_GotoIfEventHappened(
             .offset(0))
         .field_0 as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0xcd20) as *mut uint16) = 1 as uint16;
-        return hdp.offset(2);
-    };
+        hdp.offset(2)
+    }
 }
 pub unsafe fn SpawnBombTorizoHaze(game: &mut Game) {
     static unk_88DD36: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
@@ -5480,7 +5442,7 @@ pub unsafe fn VariaSuitPickup_0_LightBeamAppears(game: &mut Game) -> uint8 {
         *fresh16 = (*fresh16).wrapping_add(1);
         *((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16) = 30840 as uint16;
     }
-    return 1 as uint8;
+    1 as uint8
 }
 pub unsafe fn VariaSuitPickup_1(game: &mut Game) -> uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16 as *mut uint8).offset(0) =
@@ -5522,7 +5484,7 @@ pub unsafe fn VariaSuitPickup_1(game: &mut Game) -> uint8 {
         *fresh18 = (*fresh18).wrapping_add(1);
         *((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16) = 0x846c as uint16;
     }
-    return 1 as uint8;
+    1 as uint8
 }
 pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> uint8 {
     let mut v1: int8 = 0;
@@ -5696,7 +5658,7 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> uint8 {
         *fresh21 = (*fresh21 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16) = 0 as uint16;
     }
-    return 1 as uint8;
+    1 as uint8
 }
 pub unsafe fn VariaSuitPickup_4_LightBeamShrinks(game: &mut Game) -> uint8 {
     if *(&raw mut game.g_ram as *mut uint8).offset(0xdf3) != 0 {
@@ -5754,7 +5716,7 @@ pub unsafe fn VariaSuitPickup_4_LightBeamShrinks(game: &mut Game) -> uint8 {
         *((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16) =
             -(1793 as ::core::ffi::c_int) as uint16;
     }
-    return 1 as uint8;
+    1 as uint8
 }
 pub unsafe fn VariaSuitPickup_5_LightBeamDissipates(game: &mut Game) -> uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16 as *mut uint8).offset(0) =
@@ -5778,11 +5740,11 @@ pub unsafe fn VariaSuitPickup_5_LightBeamDissipates(game: &mut Game) -> uint8 {
         let ref mut fresh29 = *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16);
         *fresh29 = (*fresh29).wrapping_add(1);
     }
-    return 1 as uint8;
+    1 as uint8
 }
 pub unsafe fn VariaSuitPickup_6(game: &mut Game) -> uint8 {
     QueueMusic_Delayed8(3 as uint16, game);
-    return GravitySuitPickup_6(game);
+    GravitySuitPickup_6(game)
 }
 pub unsafe fn GravitySuitPickup_6(game: &mut Game) -> uint8 {
     *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2) = 0x80 as uint8;
@@ -5811,7 +5773,7 @@ pub unsafe fn GravitySuitPickup_6(game: &mut Game) -> uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x18e4) as *mut uint16).offset(v0 as isize) =
         1 as uint16;
     CallSomeSamusCode(0xb as uint16, game);
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn AdvanceSuitPickupColorMathSubscreenToWhite(game: &mut Game) -> uint8 {
     if *(&raw mut game.g_ram as *mut uint8).offset(0xdf0) != 63u8 {
@@ -5848,7 +5810,7 @@ pub unsafe fn AdvanceSuitPickupColorMathSubscreenToWhite(game: &mut Game) -> uin
                 -(97 as ::core::ffi::c_int) as uint8;
         }
     }
-    return 1 as uint8;
+    1 as uint8
 }
 pub unsafe fn AdvanceSuitPickupColorMathToOrange(game: &mut Game) -> uint8 {
     if *(&raw mut game.g_ram as *mut uint8).offset(0xdf0) != 63u8 {
@@ -5863,7 +5825,7 @@ pub unsafe fn AdvanceSuitPickupColorMathToOrange(game: &mut Game) -> uint8 {
         let ref mut fresh8 = *(&raw mut game.g_ram as *mut uint8).offset(0xdf2);
         *fresh8 = (*fresh8).wrapping_sub(1);
     }
-    return 1 as uint8;
+    1 as uint8
 }
 pub unsafe fn VariaSuitPickup_3(game: &mut Game) -> uint8 {
     let ref mut fresh22 = *((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16);
@@ -5885,7 +5847,7 @@ pub unsafe fn VariaSuitPickup_3(game: &mut Game) -> uint8 {
     Samus_LoadSuitPalette(game);
     let ref mut fresh24 = *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16);
     *fresh24 = (*fresh24).wrapping_add(1);
-    return 1 as uint8;
+    1 as uint8
 }
 pub unsafe fn GravitySuitPickup_3(game: &mut Game) -> uint8 {
     let ref mut fresh9 = *((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16);
@@ -5907,7 +5869,7 @@ pub unsafe fn GravitySuitPickup_3(game: &mut Game) -> uint8 {
     Samus_LoadSuitPalette(game);
     let ref mut fresh11 = *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16);
     *fresh11 = (*fresh11).wrapping_add(1);
-    return 1 as uint8;
+    1 as uint8
 }
 pub unsafe fn AdvanceSuitPickupColorMathToBlue(game: &mut Game) -> uint8 {
     if *(&raw mut game.g_ram as *mut uint8).offset(0xdf0) != 48u8 {
@@ -5922,7 +5884,7 @@ pub unsafe fn AdvanceSuitPickupColorMathToBlue(game: &mut Game) -> uint8 {
         let ref mut fresh5 = *(&raw mut game.g_ram as *mut uint8).offset(0xdf2);
         *fresh5 = (*fresh5).wrapping_sub(1);
     }
-    return 1 as uint8;
+    1 as uint8
 }
 pub unsafe fn HdmaobjPreInstr_E449(mut k: uint16, game: &mut Game) {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0x1988) as *mut uint16) as ::core::ffi::c_int
@@ -6068,7 +6030,7 @@ pub unsafe fn HdmaobjInstr_E4BD(
         0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1938) as *mut uint16).offset(v6 as isize) =
         0 as uint16;
-    return hdp;
+    hdp
 }
 pub unsafe fn HdmaobjPreInstr_E567(mut v0: uint16, game: &mut Game) {
     let mut v7: int16 = 0;
@@ -6298,18 +6260,18 @@ static unk_88E74C: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
     addr: 0xe751 as VoidP,
 };
 pub unsafe fn MotherBrainRisingHdmaObject(game: &mut Game) -> uint16 {
-    return SpawnHdmaObject(
+    SpawnHdmaObject(
         0x88 as uint8,
         &raw const unk_88E722 as *const ::core::ffi::c_void,
         game,
-    );
+    )
 }
 pub unsafe fn SpawnMotherBrainRainbowBeamHdma(game: &mut Game) -> uint16 {
-    return SpawnHdmaObject(
+    SpawnHdmaObject(
         0x88 as uint8,
         &raw const unk_88E74C as *const ::core::ffi::c_void,
         game,
-    );
+    )
 }
 pub unsafe fn InitializeRainbowBeam(game: &mut Game) {
     *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) = 32 as uint8;
@@ -6592,7 +6554,7 @@ pub unsafe fn HdmaobjInsr_ConfigTitleSequenceGradientHDMA(
 ) -> *const uint8 {
     *(&raw mut game.g_ram as *mut uint8).offset(0x6f) = 0 as uint8;
     ConfigureTitleSequenceGradientHDMA(game);
-    return hdp;
+    hdp
 }
 pub unsafe fn HdmaobjPreInstr_Backdrop_TitleSequenceGradient(mut k: uint16, game: &mut Game) {
     ConfigureTitleSequenceGradientHDMA(game);
@@ -6703,7 +6665,7 @@ pub unsafe fn HdmaobjInstr_EC9F_ClearVars(
         0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1938) as *mut uint16).offset(v2 as isize) =
         0 as uint16;
-    return hdp;
+    hdp
 }
 pub unsafe fn HdmaobjPreInstr_ECB6(mut k: uint16, game: &mut Game) {
     let mut v7: int16 = 0;
@@ -6839,234 +6801,179 @@ pub unsafe fn HdmaobjPreInstr_ECB6(mut k: uint16, game: &mut Game) {
 }
 pub unsafe fn CallHdmaobjPreInstr(mut ea: uint32, mut k: uint16, game: &mut Game) {
     match ea {
-        8491739 => return,
-        8946872 => return,
-        10785852 => return,
+        8491739 => (),
+        8946872 => (),
+        10785852 => (),
         9556607 => {
             HdmaobjPreInstr_XraySetup(k, game);
-            return;
         }
         8947439 => {
             HdmaobjPreInstr_Xray(k, game);
-            return;
         }
         8947506 => {
             HdmaobjPreInstr_XrayFunc0_NoBeam(k, game);
-            return;
         }
         8947540 => {
             HdmaobjPreInstr_XrayFunc1_BeamWidening(k, game);
-            return;
         }
         8947627 => {
             HdmaobjPreInstr_XrayFunc2_FullBeam(k, game);
-            return;
         }
         8948020 => {
             HdmaobjPreInstr_XrayFunc3_DeactivateBeam(k, game);
-            return;
         }
         8948154 => {
             HdmaobjPreInstr_XrayFunc4_DeactivateBeam(k, game);
-            return;
         }
         8948232 => {
             HdmaobjPreInstr_XrayFunc5_DeactivateBeam(k, game);
-            return;
         }
         8948623 => {
             HdmaobjPreInstr_PowerBombExplode_SetWindowConf(k, game);
-            return;
         }
         8948632 => {
             HdmaobjPreInstr_PowerBombExplode_Stage5_Afterglow(k, game);
-            return;
         }
         8949225 => {
             HdmaobjPreInstr_PowerBombExplode_ExplosionYellow(k, game);
-            return;
         }
         8949426 => {
             HdmaobjPreInstr_PowerBombExplode_ExplosionWhite(k, game);
-            return;
         }
         8949983 => {
             HdmaobjPreInstr_PowerBombExplode_PreExplosionWhite(k, game);
-            return;
         }
         8950184 => {
             HdmaobjPreInstr_PowerBombExplode_PreExplosionYellow(k, game);
-            return;
         }
         8954681 => {
             HdmaobjPreInstr_CrystalFlash_CustomLayerBlend(k, game);
-            return;
         }
         8954717 => {
             HdmaobjPreInstr_CrystalFlash_Stage2_AfterGlow(k, game);
-            return;
         }
         8955218 => {
             HdmaobjPreInstr_CrystalFlash_Stage1_Explosion(k, game);
-            return;
         }
         8955459 => {
             HdmaobjPreInstr_FxType22_BG3Yscroll(k, game);
-            return;
         }
         8955507 => {
             HdmaobjPreInstr_BG3Xscroll(k, game);
-            return;
         }
         8957362 => {
             HdmaobjPreInstr_SkyLandBG2Xscroll(k, game);
-            return;
         }
         8957370 => {
             HdmaobjPreInstr_SkyLandBG2Xscroll2(k, game);
-            return;
         }
         8957378 => {
             HdmaobjPreInstr_SkyLandBG2XscrollInner(k, game);
-            return;
         }
         8958140 => {
             HdmaobjPreInstr_FirefleaBG3XScroll(k, game);
-            return;
         }
         8958896 => {
             HdmaobjPreInstr_LavaAcidBG3YScroll(k, game);
-            return;
         }
         8959189 => {
             HdmaobjPreInstr_LavaAcidBG2YScroll(k, game);
-            return;
         }
         8963214 => {
             HdmaobjPreInstr_WaterBG3XScroll(k, game);
-            return;
         }
         8963465 => {
             HdmaobjPreInstr_WaterBG2XScroll(k, game);
-            return;
         }
         8963556 => {
             HdmaobjPreInstr_WaterBG2XScroll_Func2(k, game);
-            return;
         }
         8963638 => {
             HdmaobjPreInstr_WaterBG2XScroll_Func1(k, game);
-            return;
         }
         8968609 => {
             HdmaobjPreInstr_RainBg3Scroll(k, game);
-            return;
         }
         8968775 => {
             HdmaobjPreInstr_SporesBG3Xscroll(k, game);
-            return;
         }
         8969014 => {
             HdmaobjPreInstr_FogBG3Scroll(k, game);
-            return;
         }
         8969175 => {
             HdmaobjPreInstr_CheckLotsOfEventsHappened(k, game);
-            return;
         }
         8969251 => {
             HdmaobjPreInstr_DC23(k, game);
-            return;
         }
         8969321 => {
             HdmaobjPreInstr_DC69(k, game);
-            return;
         }
         8969402 => {
             HdmaobjPreInstr_DCBA(k, game);
-            return;
         }
         8969539 => {
             HdmaobjPreInstr_BombTorizoHazeColorMathBgColor(k, game);
-            return;
         }
         8969744 => {
             HdmaobjPreInstr_HazeColorMathSubscreen_CeresRidleyAlive(k, game);
-            return;
         }
         8969749 => {
             HdmaobjPreInstr_HazeColorMathSubscreen_CeresRidleyDead(k, game);
-            return;
         }
         8969773 => {
             HdmaobjPreInstr_HazeColorMathSubscreen_FadingIn(k, game);
-            return;
         }
         8969844 => {
             HdmaobjPreInstr_HazeColorMathSubscreen_FadedIn(k, game);
-            return;
         }
         8969878 => {
             HdmaobjPreInstr_HazeColorMathSubscreen_FadingOut(k, game);
-            return;
         }
         8970132 => {
             HdmaobjPreInstr_DF94(k, game);
-            return;
         }
         8970278 => {
             HdmaobjPreInstr_VariaSuitPickup(k, game);
-            return;
         }
         8970332 => {
             HdmaobjPreInstr_GravitySuitPickup(k, game);
-            return;
         }
         8971337 => {
             HdmaobjPreInstr_E449(k, game);
-            return;
         }
         8971623 => {
             HdmaobjPreInstr_E567(k, game);
-            return;
         }
         8972220 => {
             HdmaobjPreInstr_E7BC(k, game);
-            return;
         }
         fnHdmaobjPreInstr_MorphBallEyeBeamWidening => {
             HdmaobjPreInstr_MorphBallEyeBeamWidening(k, game);
-            return;
         }
         fnHdmaobjPreInstr_MorphBallEyeBeamFull => {
             HdmaobjPreInstr_MorphBallEyeBeamFull(k, game);
-            return;
         }
         fnHdmaobjPreInstr_MorphBallEyeBeamFading => {
             HdmaobjPreInstr_MorphBallEyeBeamFading(k, game);
-            return;
         }
         8973232 => {
             HdmaobjPreInstr_Backdrop_TitleSequenceGradient(k, game);
-            return;
         }
         8973266 => {
             HdmaobjPreInstr_ColorMathControlB_TitleGradient(k, game);
-            return;
         }
         8973341 => {
             HdmaobjPreInstr_IntroCutsceneCrossfade(k, game);
-            return;
         }
-        8972070 => return,
+        8972070 => (),
         8973494 => {
             HdmaobjPreInstr_ECB6(k, game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn CallHdmaobjInstr(
     mut ea: uint32,
@@ -7075,43 +6982,43 @@ pub unsafe fn CallHdmaobjInstr(
     game: &mut Game,
 ) -> *const uint8 {
     match ea {
-        8969006 => return j,
-        8947049 => return HdmaobjInstr_Delete(k, j, game),
-        8947056 => return HdmaobjInstr_SetPreInstr(k, j, game),
-        8947076 => return HdmaobjInstr_ClearPreInstr(k, j, game),
-        8947124 => return HdmaobjInstr_CallFarFunc(k, j, game),
-        8947180 => return HdmaobjInstr_Goto(k, j),
-        8947185 => return HdmaobjInstr_GotoRel(k, j),
-        8947207 => return HdmaobjInstr_DecrementAndGoto(k, j, game),
-        8947215 => return HdmaobjInstr_DecrementAndGotoRel(k, j, game),
-        8947222 => return HdmaobjInstr_SetTimer(k, j, game),
-        8947234 => return HdmaobjInstr_SetHdmaControl(k, j, game),
-        8947255 => return HdmaobjInstr_SetHdmaTarget(k, j, game),
-        8947276 => return HdmaobjInstr_SetHdmaTablePtr(k, j, game),
-        8947285 => return HdmaobjInstr_SetHdmaTableBank(k, j, game),
-        8947306 => return HdmaobjInstr_SetIndirectHdmaDataBank(k, j, game),
-        8947330 => return HdmaobjInstr_Sleep(k, j, game),
-        8955500 => return HdmaobjInstr_SetFlagB(k, j, game),
-        8959182 => return HdmaobjInstr_SetFlagB_Copy(k, j, game),
-        8963175 => return HdmaobjInstr_SetFlagB_Copy2(k, j, game),
-        8963458 => return HdmaobjInstr_SetFlagB_Copy3(k, j, game),
-        8968521 => return HdmaobjInstr_SetVideoMode1(k, j, game),
-        8968577 => return HdmaobjInstr_1938_RandomNumber(k, j, game),
-        8969419 => return HdmaobjInstr_GotoIfEventHappened(k, j, game),
-        8971453 => return HdmaobjInstr_E4BD(k, j, game),
+        8969006 => j,
+        8947049 => HdmaobjInstr_Delete(k, j, game),
+        8947056 => HdmaobjInstr_SetPreInstr(k, j, game),
+        8947076 => HdmaobjInstr_ClearPreInstr(k, j, game),
+        8947124 => HdmaobjInstr_CallFarFunc(k, j, game),
+        8947180 => HdmaobjInstr_Goto(k, j),
+        8947185 => HdmaobjInstr_GotoRel(k, j),
+        8947207 => HdmaobjInstr_DecrementAndGoto(k, j, game),
+        8947215 => HdmaobjInstr_DecrementAndGotoRel(k, j, game),
+        8947222 => HdmaobjInstr_SetTimer(k, j, game),
+        8947234 => HdmaobjInstr_SetHdmaControl(k, j, game),
+        8947255 => HdmaobjInstr_SetHdmaTarget(k, j, game),
+        8947276 => HdmaobjInstr_SetHdmaTablePtr(k, j, game),
+        8947285 => HdmaobjInstr_SetHdmaTableBank(k, j, game),
+        8947306 => HdmaobjInstr_SetIndirectHdmaDataBank(k, j, game),
+        8947330 => HdmaobjInstr_Sleep(k, j, game),
+        8955500 => HdmaobjInstr_SetFlagB(k, j, game),
+        8959182 => HdmaobjInstr_SetFlagB_Copy(k, j, game),
+        8963175 => HdmaobjInstr_SetFlagB_Copy2(k, j, game),
+        8963458 => HdmaobjInstr_SetFlagB_Copy3(k, j, game),
+        8968521 => HdmaobjInstr_SetVideoMode1(k, j, game),
+        8968577 => HdmaobjInstr_1938_RandomNumber(k, j, game),
+        8969419 => HdmaobjInstr_GotoIfEventHappened(k, j, game),
+        8971453 => HdmaobjInstr_E4BD(k, j, game),
         fnHdmaobjInstr_InitMorphBallEyeBeamHdma => {
-            return HdmaobjInstr_InitMorphBallEyeBeamHdma(k, j, game)
+            HdmaobjInstr_InitMorphBallEyeBeamHdma(k, j, game)
         }
-        8973471 => return HdmaobjInstr_EC9F_ClearVars(k, j, game),
-        8958889 => return HdmaobjInstr_B3A9(k, j, game),
-        8973215 => return HdmaobjInsr_ConfigTitleSequenceGradientHDMA(k, j, game),
+        8973471 => HdmaobjInstr_EC9F_ClearVars(k, j, game),
+        8958889 => HdmaobjInstr_B3A9(k, j, game),
+        8973215 => HdmaobjInsr_ConfigTitleSequenceGradientHDMA(k, j, game),
         8968470 => {
             sub_88D916(game);
-            return j;
+            j
         }
         _ => {
             Unreachable(game);
-            return ::core::ptr::null::<uint8>();
+            ::core::ptr::null::<uint8>()
         }
-    };
+    }
 }

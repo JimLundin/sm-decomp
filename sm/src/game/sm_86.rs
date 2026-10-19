@@ -91,46 +91,46 @@ pub use crate::types::{Enemy_MotherBrain, Point32};
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 #[inline]
 unsafe fn RomPtr_86(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr((0x860000u32) | ((addr) as u32), game);
+    RomPtr((0x860000u32) | ((addr) as u32), game)
 }
 #[inline]
 unsafe fn RomPtr_A0(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr((0xa00000u32) | ((addr) as u32), game);
+    RomPtr((0xa00000u32) | ((addr) as u32), game)
 }
 #[inline]
 unsafe fn RomPtr_A1(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr((0xa10000u32) | ((addr) as u32), game);
+    RomPtr((0xa10000u32) | ((addr) as u32), game)
 }
 #[inline]
 unsafe fn RomPtr_B4(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr((0xb40000u32) | ((addr) as u32), game);
+    RomPtr((0xb40000u32) | ((addr) as u32), game)
 }
 #[inline]
 unsafe fn RomBankBase(mut bank: uint8, game: &mut Game) -> *const uint8 {
-    return RomPtr(
+    RomPtr(
         (((bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) as u32).wrapping_add(0x8000u32),
         game,
     )
-    .offset(-(0x8000 as ::core::ffi::c_int as isize));
+    .offset(-(0x8000 as ::core::ffi::c_int as isize))
 }
 #[inline]
 unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int, game: &mut Game) -> *mut VramWriteEntry {
-    return (&raw mut game.g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
-        as *mut uint8 as *mut VramWriteEntry;
+    (&raw mut game.g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
+        as *mut uint8 as *mut VramWriteEntry
 }
 #[inline]
 unsafe fn get_EnemyDef_A2(mut a: uint16, game: &mut Game) -> *mut EnemyDef {
-    return RomPtr((0xa00000u32) | ((a) as u32), game) as *mut EnemyDef;
+    RomPtr((0xa00000u32) | ((a) as u32), game) as *mut EnemyDef
 }
 #[inline]
 unsafe fn get_EprojDef(mut a: uint16, game: &mut Game) -> *mut EprojDef {
-    return RomPtr((0x860000u32) | ((a) as u32), game) as *mut EprojDef;
+    RomPtr((0x860000u32) | ((a) as u32), game) as *mut EprojDef
 }
 #[inline]
 unsafe fn gRam7800_Default(mut a: uint16, game: &mut Game) -> *mut Ram7800_Default {
-    return (&raw mut game.g_ram as *mut uint8)
-        .offset((0x7800 as ::core::ffi::c_int + a as ::core::ffi::c_int) as isize)
-        as *mut uint8 as *mut Ram7800_Default;
+    (&raw mut game.g_ram as *mut uint8)
+        .offset((0x7800 as ::core::ffi::c_int + a as ::core::ffi::c_int) as isize) as *mut uint8
+        as *mut Ram7800_Default
 }
 pub const fnEprojInstr_Delete: uint32 = 8814932;
 pub const fnEprojInstr_Sleep: uint32 = 8814937;
@@ -494,33 +494,33 @@ pub const fnEprojInit_Sparks: uint32 = 8844177;
 pub const fnEprojPreInstr_Sparks: uint32 = 8844272;
 #[inline]
 unsafe fn gEnemyData(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut EnemyData {
-    return (&raw mut game.g_ram as *mut uint8)
+    (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
-        .offset(o as isize) as *mut EnemyData;
+        .offset(o as isize) as *mut EnemyData
 }
 #[inline]
 unsafe fn gEnemySpawnData(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut EnemySpawnData {
-    return (&raw mut game.g_ram as *mut uint8)
+    (&raw mut game.g_ram as *mut uint8)
         .offset(0x7000)
-        .offset(o as isize) as *mut EnemySpawnData;
+        .offset(o as isize) as *mut EnemySpawnData
 }
 #[inline]
 unsafe fn gExtraEnemyRam7800(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut ExtraEnemyRam7800 {
-    return (&raw mut game.g_ram as *mut uint8)
+    (&raw mut game.g_ram as *mut uint8)
         .offset(0x7800)
-        .offset(o as isize) as *mut ExtraEnemyRam7800;
+        .offset(o as isize) as *mut ExtraEnemyRam7800
 }
 #[inline]
 unsafe fn gExtraEnemyRam8000(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut ExtraEnemyRam8000 {
-    return (&raw mut game.g_ram as *mut uint8)
+    (&raw mut game.g_ram as *mut uint8)
         .offset(0x8000)
-        .offset(o as isize) as *mut ExtraEnemyRam8000;
+        .offset(o as isize) as *mut ExtraEnemyRam8000
 }
 #[inline]
 unsafe fn Get_MotherBrain(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_MotherBrain {
-    return (&raw mut game.g_ram as *mut uint8)
+    (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_MotherBrain;
+        .offset(o as isize) as *mut Enemy_MotherBrain
 }
 
 // Shared projectile state stays backed by the original little-endian RAM bytes.
@@ -784,12 +784,11 @@ pub unsafe fn CallEprojFunc(mut ea: uint32, mut k: uint32, game: &mut Game) {
     match ea {
         8833019 => {
             SpawnMotherBrainDeathBeam(k as uint16, game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn EprojInstr_CallFunc(
     mut k: uint16,
@@ -797,13 +796,13 @@ pub unsafe fn EprojInstr_CallFunc(
     game: &mut Game,
 ) -> *const uint8 {
     CallEprojFunc(Load24(epjp as *mut LongPtr), k as uint32, game);
-    return epjp.offset(3);
+    epjp.offset(3)
 }
 pub unsafe fn EprojInstr_Goto(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
-    return *(epjp as *mut uint16) as uintptr_t as *const uint8;
+    *(epjp as *mut uint16) as uintptr_t as *const uint8
 }
 pub unsafe fn EprojInstr_GotoRel(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
-    return epjp.offset(*epjp as int8 as ::core::ffi::c_int as isize);
+    epjp.offset(*epjp as int8 as ::core::ffi::c_int as isize)
 }
 pub unsafe fn EprojInstr_DecTimerAndGotoIfNonZero(
     k: uint16,
@@ -827,10 +826,10 @@ pub unsafe fn EprojInstr_DecTimerAndGotoRelIfNonZero(
     let fresh47 = *fresh46;
     *fresh46 = (*fresh46).wrapping_sub(1);
     if fresh47 == 1u16 {
-        return epjp.offset(1);
+        epjp.offset(1)
     } else {
-        return EprojInstr_GotoRel(k, epjp);
-    };
+        EprojInstr_GotoRel(k, epjp)
+    }
 }
 pub unsafe fn EprojInstr_SetTimer(k: uint16, epjp: *const uint8, game: &mut Game) -> *const uint8 {
     let value = *(epjp as *mut uint16);
@@ -878,7 +877,7 @@ pub unsafe fn EprojInstr_MoveRandomlyWithinRadius(
     let ref mut fresh45 = *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh45 = (*fresh45).wrapping_add((v6) as u16);
-    return epjp.offset(4);
+    epjp.offset(4)
 }
 pub unsafe fn EprojInstr_SetProjectileProperties(
     k: uint16,
@@ -910,7 +909,7 @@ pub unsafe fn EprojInstr_EnableCollisionWithSamusProj(
     let ref mut fresh41 = *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh41 = (*fresh41 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_DisableCollisionWithSamusProj(
     mut k: uint16,
@@ -920,7 +919,7 @@ pub unsafe fn EprojInstr_DisableCollisionWithSamusProj(
     let ref mut fresh40 = *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh40 = (*fresh40 as ::core::ffi::c_int & !(0x8000 as ::core::ffi::c_int)) as uint16;
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_DisableCollisionWithSamus(
     mut k: uint16,
@@ -930,7 +929,7 @@ pub unsafe fn EprojInstr_DisableCollisionWithSamus(
     let ref mut fresh39 = *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh39 = (*fresh39 as ::core::ffi::c_int | 0x2000 as ::core::ffi::c_int) as uint16;
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_EnableCollisionWithSamus(
     mut k: uint16,
@@ -940,7 +939,7 @@ pub unsafe fn EprojInstr_EnableCollisionWithSamus(
     let ref mut fresh38 = *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh38 = (*fresh38 as ::core::ffi::c_int & !(0x2000 as ::core::ffi::c_int)) as uint16;
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_SetToNotDieOnContact(
     mut k: uint16,
@@ -950,7 +949,7 @@ pub unsafe fn EprojInstr_SetToNotDieOnContact(
     let ref mut fresh37 = *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh37 = (*fresh37 as ::core::ffi::c_int | 0x4000 as ::core::ffi::c_int) as uint16;
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_SetToDieOnContact(
     mut k: uint16,
@@ -960,7 +959,7 @@ pub unsafe fn EprojInstr_SetToDieOnContact(
     let ref mut fresh36 = *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh36 = (*fresh36 as ::core::ffi::c_int & !(0x4000 as ::core::ffi::c_int)) as uint16;
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_SetLowPriority(
     mut k: uint16,
@@ -970,7 +969,7 @@ pub unsafe fn EprojInstr_SetLowPriority(
     let ref mut fresh35 = *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh35 = (*fresh35 as ::core::ffi::c_int | 0x1000 as ::core::ffi::c_int) as uint16;
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_SetHighPriority(
     mut k: uint16,
@@ -980,7 +979,7 @@ pub unsafe fn EprojInstr_SetHighPriority(
     let ref mut fresh34 = *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh34 = (*fresh34 as ::core::ffi::c_int & !(0x1000 as ::core::ffi::c_int)) as uint16;
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_SetXyRadius(
     mut k: uint16,
@@ -990,7 +989,7 @@ pub unsafe fn EprojInstr_SetXyRadius(
     *((&raw mut game.g_ram as *mut uint8).offset(0x1bb3) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(epjp as *mut uint16);
-    return epjp.offset(2);
+    epjp.offset(2)
 }
 pub unsafe fn EprojInstr_SetXyRadiusZero(
     mut k: uint16,
@@ -999,7 +998,7 @@ pub unsafe fn EprojInstr_SetXyRadiusZero(
 ) -> *const uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1bb3) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_CalculateDirectionTowardsSamus(
     mut k: uint16,
@@ -1027,7 +1026,7 @@ pub unsafe fn EprojInstr_CalculateDirectionTowardsSamus(
         kSinCosTable8bit_Sext[(v5 + 64 as ::core::ffi::c_int) as usize] as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v4 as isize) =
         kSinCosTable8bit_Sext[v5 as usize] as uint16;
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_WriteColorsToPalette(
     mut k: uint16,
@@ -1048,7 +1047,7 @@ pub unsafe fn EprojInstr_WriteColorsToPalette(
             break;
         }
     }
-    return epjp.offset(5);
+    epjp.offset(5)
 }
 pub unsafe fn EprojInstr_QueueMusic(
     mut k: uint16,
@@ -1056,7 +1055,7 @@ pub unsafe fn EprojInstr_QueueMusic(
     game: &mut Game,
 ) -> *const uint8 {
     QueueMusic_Delayed8(*epjp as uint16, game);
-    return epjp.offset(1);
+    epjp.offset(1)
 }
 pub unsafe fn EprojInstr_QueueSfx1_Max6(
     mut k: uint16,
@@ -1064,7 +1063,7 @@ pub unsafe fn EprojInstr_QueueSfx1_Max6(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx1_Max6(*epjp as uint16, game);
-    return epjp.offset(1);
+    epjp.offset(1)
 }
 pub unsafe fn EprojInstr_QueueSfx2_Max6(
     mut k: uint16,
@@ -1072,7 +1071,7 @@ pub unsafe fn EprojInstr_QueueSfx2_Max6(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx2_Max6(*epjp as uint16, game);
-    return epjp.offset(1);
+    epjp.offset(1)
 }
 pub unsafe fn EprojInstr_QueueSfx3_Max6(
     mut k: uint16,
@@ -1080,7 +1079,7 @@ pub unsafe fn EprojInstr_QueueSfx3_Max6(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx3_Max6(*epjp as uint16, game);
-    return epjp.offset(1);
+    epjp.offset(1)
 }
 pub unsafe fn EprojInstr_QueueSfx1_Max15(
     mut k: uint16,
@@ -1088,7 +1087,7 @@ pub unsafe fn EprojInstr_QueueSfx1_Max15(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx1_Max15(*epjp as uint16, game);
-    return epjp.offset(1);
+    epjp.offset(1)
 }
 pub unsafe fn EprojInstr_QueueSfx2_Max15(
     mut k: uint16,
@@ -1096,7 +1095,7 @@ pub unsafe fn EprojInstr_QueueSfx2_Max15(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx2_Max15(*epjp as uint16, game);
-    return epjp.offset(1);
+    epjp.offset(1)
 }
 pub unsafe fn EprojInstr_QueueSfx3_Max15(
     mut k: uint16,
@@ -1104,7 +1103,7 @@ pub unsafe fn EprojInstr_QueueSfx3_Max15(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx3_Max15(*epjp as uint16, game);
-    return epjp.offset(1);
+    epjp.offset(1)
 }
 pub unsafe fn EprojInstr_QueueSfx1_Max3(
     mut k: uint16,
@@ -1112,7 +1111,7 @@ pub unsafe fn EprojInstr_QueueSfx1_Max3(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx1_Max3(*epjp as uint16, game);
-    return epjp.offset(1);
+    epjp.offset(1)
 }
 pub unsafe fn EprojInstr_QueueSfx2_Max3(
     mut k: uint16,
@@ -1120,7 +1119,7 @@ pub unsafe fn EprojInstr_QueueSfx2_Max3(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx2_Max3(*epjp as uint16, game);
-    return epjp.offset(1);
+    epjp.offset(1)
 }
 pub unsafe fn EprojInstr_QueueSfx3_Max3(
     mut k: uint16,
@@ -1128,7 +1127,7 @@ pub unsafe fn EprojInstr_QueueSfx3_Max3(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx3_Max3(*epjp as uint16, game);
-    return epjp.offset(1);
+    epjp.offset(1)
 }
 pub unsafe fn EprojInstr_QueueSfx1_Max9(
     mut k: uint16,
@@ -1136,7 +1135,7 @@ pub unsafe fn EprojInstr_QueueSfx1_Max9(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx1_Max9(*epjp as uint16, game);
-    return epjp.offset(1);
+    epjp.offset(1)
 }
 pub unsafe fn EprojInstr_QueueSfx2_Max9(
     mut k: uint16,
@@ -1144,7 +1143,7 @@ pub unsafe fn EprojInstr_QueueSfx2_Max9(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx2_Max9(*epjp as uint16, game);
-    return epjp.offset(1);
+    epjp.offset(1)
 }
 pub unsafe fn EprojInstr_QueueSfx3_Max9(
     mut k: uint16,
@@ -1152,7 +1151,7 @@ pub unsafe fn EprojInstr_QueueSfx3_Max9(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx3_Max9(*epjp as uint16, game);
-    return epjp.offset(1);
+    epjp.offset(1)
 }
 pub unsafe fn EprojInstr_QueueSfx1_Max1(
     mut k: uint16,
@@ -1160,7 +1159,7 @@ pub unsafe fn EprojInstr_QueueSfx1_Max1(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx1_Max1(*epjp as uint16, game);
-    return epjp.offset(1);
+    epjp.offset(1)
 }
 pub unsafe fn EprojInstr_QueueSfx2_Max1(
     mut k: uint16,
@@ -1168,7 +1167,7 @@ pub unsafe fn EprojInstr_QueueSfx2_Max1(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx2_Max1(*epjp as uint16, game);
-    return epjp.offset(1);
+    epjp.offset(1)
 }
 pub unsafe fn EprojInstr_QueueSfx3_Max1(
     mut k: uint16,
@@ -1176,7 +1175,7 @@ pub unsafe fn EprojInstr_QueueSfx3_Max1(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx3_Max1(*epjp as uint16, game);
-    return epjp.offset(1);
+    epjp.offset(1)
 }
 pub enum EprojPriority {
     Low,
@@ -1267,7 +1266,7 @@ pub unsafe fn GetValuesForScreenShaking(game: &mut Game) -> Point16U {
         R34 = 0 as uint16;
         R36 = 0 as uint16;
     }
-    return Point16U { x: R36, y: R34 };
+    Point16U { x: R36, y: R34 }
 }
 unsafe fn EprojColl_8506(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 {
     if *(&raw mut game.g_ram as *mut uint8)
@@ -1282,7 +1281,7 @@ unsafe fn EprojColl_8506(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 
             ) as int8 as ::core::ffi::c_int) as uint16;
         return 0xff as uint8;
     }
-    return 0 as uint8;
+    0 as uint8
 }
 unsafe fn EprojColl_Unknown8536(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 {
     if *(&raw mut game.g_ram as *mut uint8)
@@ -1299,13 +1298,13 @@ unsafe fn EprojColl_Unknown8536(mut eci: *mut EprojCollInfo, game: &mut Game) ->
                     as ::core::ffi::c_int) as uint16;
         return 0xff as uint8;
     }
-    return 0 as uint8;
+    0 as uint8
 }
 fn EprojColl_ClearCarry(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 {
-    return 0 as uint8;
+    0 as uint8
 }
 fn EprojColl_SetCarry(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 {
-    return 1 as uint8;
+    1 as uint8
 }
 unsafe fn EprojColl_858E(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 {
     let mut v0: uint16 = ((*(&raw mut game.g_ram as *mut uint8)
@@ -1324,7 +1323,7 @@ unsafe fn EprojColl_858E(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 
         *(&raw mut game.g_ram as *mut uint8)
             .offset(0x16402)
             .offset(game.cur_block_index() as isize) as uint16;
-    return EprojColl_873D();
+    EprojColl_873D()
 }
 unsafe fn EprojColl_85AD(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 {
     let mut v0: uint16 = ((*(&raw mut game.g_ram as *mut uint8)
@@ -1332,10 +1331,10 @@ unsafe fn EprojColl_85AD(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 
         .offset(game.cur_block_index() as isize)) as u16)
         & (0x1fu16);
     if v0 >= 5 {
-        return EprojColl_874E(eci, game);
+        EprojColl_874E(eci, game)
     } else {
-        return EprojColl_8676(eci, v0, game.cur_block_index(), 0 as uint16, game);
-    };
+        EprojColl_8676(eci, v0, game.cur_block_index(), 0 as uint16, game)
+    }
 }
 static unk_868729: [uint8; 20] = [
     0 as uint8,
@@ -1506,7 +1505,7 @@ unsafe fn EprojColl_85C2(
             - (*eci).eci_r28 as ::core::ffi::c_int) as uint16;
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v6 as isize) = v7;
-    return 1 as uint8;
+    1 as uint8
 }
 unsafe fn EprojColl_8676(
     mut eci: *mut EprojCollInfo,
@@ -1650,10 +1649,10 @@ unsafe fn EprojColl_8676(
             - (*eci).eci_r30 as ::core::ffi::c_int) as uint16;
     }
     EprojStateMut(&mut game.g_ram).write(0x1a93, v7 as usize, v8);
-    return 1 as uint8;
+    1 as uint8
 }
 pub fn EprojColl_873D() -> uint8 {
-    return 0 as uint8;
+    0 as uint8
 }
 unsafe fn EprojColl_874E(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 {
     let mut v3: int16 = 0;
@@ -1723,12 +1722,12 @@ unsafe fn EprojColl_874E(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 
                     ((*eci).eci_r24 as ::core::ffi::c_int - v15 as ::core::ffi::c_int) as uint16;
                 *((&raw mut game.g_ram as *mut uint8).offset(0x1a6f) as *mut uint16)
                     .offset(v10 as isize) = 0 as uint16;
-                return 1 as uint8;
+                1 as uint8
             } else {
-                return 0 as uint8;
+                0 as uint8
             }
         } else {
-            return 0 as uint8;
+            0 as uint8
         }
     } else {
         let mut v1: uint16 = game.cur_block_index();
@@ -1783,14 +1782,14 @@ unsafe fn EprojColl_874E(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 
                     v2 as usize,
                     -(1 as ::core::ffi::c_int) as uint16,
                 );
-                return 1 as uint8;
+                1 as uint8
             } else {
-                return 0 as uint8;
+                0 as uint8
             }
         } else {
-            return 0 as uint8;
+            0 as uint8
         }
-    };
+    }
 }
 static kEprojBlockCollisition_FuncA: [Option<Func_EprojCollInfo_U8>; 16] = unsafe {
     [
@@ -1852,7 +1851,7 @@ pub unsafe fn EprojBlockCollisition_CheckHorizontal(
             break;
         }
     }
-    return rv;
+    rv
 }
 pub unsafe fn EprojBlockCollisition_CheckVertical(
     mut eci: *mut EprojCollInfo,
@@ -1874,7 +1873,7 @@ pub unsafe fn EprojBlockCollisition_CheckVertical(
             break;
         }
     }
-    return rv;
+    rv
 }
 pub unsafe fn EprojBlockCollisition_Horiz(mut k: uint16, game: &mut Game) -> uint8 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -1952,7 +1951,7 @@ pub unsafe fn EprojBlockCollisition_Horiz(mut k: uint16, game: &mut Game) -> uin
             EprojStateMut(&mut game.g_ram).write(0x1a4b, v8 as usize, v9);
         }
     }
-    return 1 as uint8;
+    1 as uint8
 }
 pub unsafe fn EprojBlockCollisition_Vertical(mut k: uint16, game: &mut Game) -> uint8 {
     let mut v5: int16 = 0;
@@ -2029,7 +2028,7 @@ pub unsafe fn EprojBlockCollisition_Vertical(mut k: uint16, game: &mut Game) -> 
             EprojStateMut(&mut game.g_ram).write(0x1a93, v9 as usize, v10);
         }
     }
-    return 1 as uint8;
+    1 as uint8
 }
 unsafe fn Eproj_Init_0x8aaf(mut j: uint16, game: &mut Game) {
     NextRandom(game);
@@ -2156,7 +2155,7 @@ pub unsafe fn EprojInstr_SpawnEnemyDropsWithDraygonsEyeDrops(
         y: *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize),
     };
     SpawnEnemyDrops(addr_kEnemyDef_DE7F as uint16, k, 0 as uint16, game);
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_SetPreInstrA(
     mut k: uint16,
@@ -2166,7 +2165,7 @@ pub unsafe fn EprojInstr_SetPreInstrA(
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         (0x868dff as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_SetPreInstrB(
     mut k: uint16,
@@ -2176,7 +2175,7 @@ pub unsafe fn EprojInstr_SetPreInstrB(
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         (0x868dca as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    return epjp;
+    epjp
 }
 unsafe fn EprojInit_DraygonsGunk(mut j: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -2287,7 +2286,7 @@ pub unsafe fn EprojInstr_868D99(
         *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x18aa) as *mut uint16) = 0 as uint16;
     }
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojPreInstr_8DCA(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = 0;
@@ -2624,7 +2623,7 @@ pub unsafe fn EprojInstr_9270(
         y: *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize),
     };
     SpawnEnemyDrops(addr_kEnemyDef_DDBF as uint16, k, 0 as uint16, game);
-    return epjp;
+    epjp
 }
 unsafe fn EprojInit_CrocomireBridgeCrumbling(mut j: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -2678,7 +2677,7 @@ pub unsafe fn MoveEprojWithVelocity(mut k: uint16, game: &mut Game) -> uint16 {
     *fresh7 = (*fresh7 as ::core::ffi::c_int
         + ((v2 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as int8 as ::core::ffi::c_int
             + (carry >> 8 as ::core::ffi::c_int))) as uint16;
-    return MoveEprojWithVelocityY(k, game);
+    MoveEprojWithVelocityY(k, game)
 }
 pub unsafe fn MoveEprojWithVelocityY(mut k: uint16, game: &mut Game) -> uint16 {
     let v1 = usize::from(k >> 1);
@@ -2696,7 +2695,7 @@ pub unsafe fn MoveEprojWithVelocityY(mut k: uint16, game: &mut Game) -> uint16 {
         .wrapping_add_signed(((v2 as i16) >> 8) + carry as i16);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize) =
         result;
-    return result;
+    result
 }
 pub unsafe fn MoveEprojWithVelocityX(mut k: uint16, game: &mut Game) -> uint16 {
     let v1 = usize::from(k >> 1);
@@ -2714,7 +2713,7 @@ pub unsafe fn MoveEprojWithVelocityX(mut k: uint16, game: &mut Game) -> uint16 {
         .wrapping_add_signed(((v2 as i16) >> 8) + carry as i16);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v1 as isize) =
         result;
-    return result;
+    result
 }
 pub unsafe fn SetAreaDependentEprojPropertiesEx(mut k: uint16, mut j: uint16, game: &mut Game) {
     let mut v2: uint16 = 0;
@@ -2849,7 +2848,7 @@ pub unsafe fn EprojInstr_DisableCollisionsWithSamus(
     let ref mut fresh32 = *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh32 = (*fresh32 as ::core::ffi::c_int | 0x2000 as ::core::ffi::c_int) as uint16;
-    return epjp;
+    epjp
 }
 fn EprojInit_9660_FireballExplosion(j: uint16, game: &mut Game) {
     let slot = usize::from(j >> 1);
@@ -2947,7 +2946,7 @@ pub unsafe fn EprojInstr_95BA(
     SpawnEprojWithRoomGfx(addr_stru_86966C as uint16, k, game);
     EprojStateMut(&mut game.g_ram).write(0x1995, 0, 0);
     SpawnEprojWithRoomGfx(addr_stru_86967A as uint16, k, game);
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_95ED(
     mut k: uint16,
@@ -2958,7 +2957,7 @@ pub unsafe fn EprojInstr_95ED(
     SpawnEprojWithRoomGfx(addr_stru_869688 as uint16, k, game);
     EprojStateMut(&mut game.g_ram).write(0x1995, 0, 0);
     SpawnEprojWithRoomGfx(addr_stru_869696 as uint16, k, game);
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_9620(k: uint16, epjp: *const uint8, game: &mut Game) -> *const uint8 {
     let count = EprojStateMut(&mut game.g_ram).decrement_byte(0x1aff, usize::from(k));
@@ -3001,7 +3000,7 @@ pub unsafe fn EprojInstr_980E(
         y: *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v2 as isize),
     };
     SpawnEnemyDrops(addr_kEnemyDef_E4FF as uint16, k, 0 as uint16, game);
-    return epjp;
+    epjp
 }
 static byte_8698B4: [uint8; 16] = [
     0x10 as uint8,
@@ -3550,7 +3549,7 @@ pub unsafe fn Eproj_PhantomFireballs_Func1(mut j: uint16, mut a: uint16) -> Poin
         ) as ::core::ffi::c_int) as uint16;
     }
     let mut r22: uint16 = v4;
-    return Point16U { x: r20, y: r22 };
+    Point16U { x: r20, y: r22 }
 }
 pub unsafe fn Eproj_PhantomFireballs_Func2(mut k: uint16, mut r24: uint16) -> uint16 {
     let mut r18: uint16 = (Mult8x8(
@@ -3560,14 +3559,14 @@ pub unsafe fn Eproj_PhantomFireballs_Func2(mut k: uint16, mut r24: uint16) -> ui
         r24 as uint8,
     ) as ::core::ffi::c_int
         >> 8 as ::core::ffi::c_int) as uint16;
-    return (r18 as ::core::ffi::c_int
+    (r18 as ::core::ffi::c_int
         + Mult8x8(
             *((&raw const kSinCosTable8bit_Sext as *const int16).offset(64) as *const int16
                 as *mut uint8)
                 .offset(k as ::core::ffi::c_int as isize)
                 .offset(1),
             r24 as uint8,
-        ) as ::core::ffi::c_int) as uint16;
+        ) as ::core::ffi::c_int) as uint16
 }
 unsafe fn EprojInit_RocksKraidSpits(mut j: uint16, game: &mut Game) {
     let enemy_index = *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
@@ -3860,7 +3859,7 @@ pub unsafe fn EprojInstr_SetPreInstrAndRun(
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(epjp as *mut uint16);
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojPreInstr_PirateMotherBrainLaser_MoveLeft(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -4120,7 +4119,7 @@ pub unsafe fn EprojInstr_A3BE(
         *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16).offset(v1 as isize);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize) =
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16).offset(v1 as isize);
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_GotoWithProbability25(
     mut k: uint16,
@@ -4128,10 +4127,10 @@ pub unsafe fn EprojInstr_GotoWithProbability25(
     game: &mut Game,
 ) -> *const uint8 {
     if (NextRandom(game) as ::core::ffi::c_int & 0xc000 as ::core::ffi::c_int) == 0xc000i32 {
-        return *(epjp as *mut uint16) as uintptr_t as *const uint8;
+        *(epjp as *mut uint16) as uintptr_t as *const uint8
     } else {
-        return epjp.offset(2);
-    };
+        epjp.offset(2)
+    }
 }
 unsafe fn EprojInit_BombTorizoLowHealthDrool(mut j: uint16, game: &mut Game) {
     let mut parameter_1: int16 = 0;
@@ -4642,7 +4641,7 @@ pub unsafe fn EprojInstr_SpawnEnemyDrops(
         0 as uint16,
         game,
     );
-    return epjp.offset(4);
+    epjp.offset(4)
 }
 unsafe fn Eproj_InitXYVelRandom(mut j: uint16, mut k: uint16, mut pt: Point16U, game: &mut Game) {
     let mut v2: *const uint16 = RomPtr_86(k, game) as *const uint16;
@@ -4804,10 +4803,10 @@ pub unsafe fn EprojInstr_GotoDependingOnXDirection(
         & 0x8000 as ::core::ffi::c_int)
         == 0i32
     {
-        return *(epjp.offset(2) as *mut uint16) as uintptr_t as *const uint8;
+        *(epjp.offset(2) as *mut uint16) as uintptr_t as *const uint8
     } else {
-        return *(epjp as *mut uint16) as uintptr_t as *const uint8;
-    };
+        *(epjp as *mut uint16) as uintptr_t as *const uint8
+    }
 }
 unsafe fn EprojInit_TorizoSonicBoom(mut j: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int =
@@ -4900,7 +4899,7 @@ pub unsafe fn EprojInstr_ResetXYpos1(
         *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16).offset(v2 as isize);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v2 as isize) =
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16).offset(v2 as isize);
-    return epjp;
+    epjp
 }
 unsafe fn EprojInit_TourianStatueDustClouds(mut j: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -4923,7 +4922,7 @@ pub fn EprojInstr_MoveY_Minus4(
     game: &mut Game,
 ) -> *const uint8 {
     EprojStateMut(&mut game.g_ram).add_word(0x1a93, usize::from(k >> 1), (-4i16) as u16);
-    return epjp;
+    epjp
 }
 unsafe fn EprojInit_TorizoLandingDustCloudLeftFoot(mut j: uint16, game: &mut Game) {
     let enemy_index = game.cur_enemy_index();
@@ -5078,7 +5077,7 @@ pub unsafe fn sub_86B0DD(mut k: uint16, game: &mut Game) {
     };
 }
 pub unsafe fn sub_86B13E(mut k: uint16, mut epjp: *const uint8, game: &mut Game) -> *const uint8 {
-    return (if (*((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16)
+    ((if (*((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
         as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int)
@@ -5087,7 +5086,7 @@ pub unsafe fn sub_86B13E(mut k: uint16, mut epjp: *const uint8, game: &mut Game)
         addr_off_86B166 as ::core::ffi::c_int
     } else {
         addr_off_86B14B as ::core::ffi::c_int
-    }) as uintptr_t as *const uint8;
+    }) as uintptr_t as *const uint8)
 }
 static word_86B205: [int16; 2] = [-(0x1e as ::core::ffi::c_int) as int16, 0x1e as int16];
 unsafe fn EprojInit_GoldenTorizoSuperMissile(mut j: uint16, game: &mut Game) {
@@ -5181,7 +5180,7 @@ pub unsafe fn EprojInstr_SetVelTowardsSamus1(
             as uint16,
         game,
     );
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_SetVelTowardsSamus2(
     mut k: uint16,
@@ -5194,7 +5193,7 @@ pub unsafe fn EprojInstr_SetVelTowardsSamus2(
             as uint16,
         game,
     );
-    return epjp;
+    epjp
 }
 unsafe fn EprojInit_GoldenTorizoEyeBeam(mut j: uint16, game: &mut Game) {
     let mut E: *mut EnemyData = gEnemyData(
@@ -5254,7 +5253,6 @@ pub unsafe fn EprojPreInstr_GoldenTorizoEyeBeam(mut k: uint16, game: &mut Game) 
             addr_off_86B3E5 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
-        return;
     }
 }
 pub unsafe fn EprojInstr_GotoIfFunc1(
@@ -5273,10 +5271,10 @@ pub unsafe fn EprojInstr_GotoIfFunc1(
         & 0x8000 as ::core::ffi::c_int)
         == 0i32
     {
-        return *(epjp as *mut uint16) as uintptr_t as *const uint8;
+        *(epjp as *mut uint16) as uintptr_t as *const uint8
     } else {
-        return epjp.offset(2);
-    };
+        epjp.offset(2)
+    }
 }
 pub unsafe fn EprojInstr_ResetXYpos2(
     mut k: uint16,
@@ -5288,7 +5286,7 @@ pub unsafe fn EprojInstr_ResetXYpos2(
         *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16).offset(v2 as isize);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v2 as isize) =
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16).offset(v2 as isize);
-    return epjp;
+    epjp
 }
 unsafe fn EprojInit_TourianEscapeShaftFakeWallExplode(mut j: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -5515,7 +5513,7 @@ pub unsafe fn EprojInstr_SpawnTourianStatueUnlockingParticle(
         k,
         game,
     );
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_Earthquake(
     mut k: uint16,
@@ -5525,7 +5523,7 @@ pub unsafe fn EprojInstr_Earthquake(
     *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = 1 as uint16;
     let ref mut fresh29 = *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16);
     *fresh29 = (*fresh29 as ::core::ffi::c_int | 0x20 as ::core::ffi::c_int) as uint16;
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_SpawnTourianStatueUnlockingParticleTail(
     mut k: uint16,
@@ -5537,7 +5535,7 @@ pub unsafe fn EprojInstr_SpawnTourianStatueUnlockingParticleTail(
         k,
         game,
     );
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_AddToYpos(
     mut k: uint16,
@@ -5548,7 +5546,7 @@ pub unsafe fn EprojInstr_AddToYpos(
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh28 =
         (*fresh28 as ::core::ffi::c_int + *(epjp as *mut uint16) as ::core::ffi::c_int) as uint16;
-    return epjp.offset(2);
+    epjp.offset(2)
 }
 unsafe fn EprojInit_TourianStatueUnlockingParticleWaterSplash(mut j: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -5866,21 +5864,19 @@ pub unsafe fn CallNorfairLavaquakeRocksFunc(mut ea: uint32, mut k: uint16, game:
     match ea {
         8829974 => {
             Eproj_NorfairLavaquakeRocks_Func1(k, game);
-            return;
         }
         8830095 => {
             Eproj_NorfairLavaquakeRocks_Func2(k, game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn EprojPreInstr_NorfairLavaquakeRocks_Inner2(mut k: uint16, game: &mut Game) -> uint16 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    return (((*((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
-        .offset(v1 as isize) as ::core::ffi::c_int
+    (((*((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v1 as isize)
+        as ::core::ffi::c_int
         - *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16) as ::core::ffi::c_int)
         as int16)
         < 0i16
@@ -5900,7 +5896,7 @@ pub unsafe fn EprojPreInstr_NorfairLavaquakeRocks_Inner2(mut k: uint16, game: &m
             + 256 as ::core::ffi::c_int
             - *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int) as int16)
-            < 0i16) as uint16;
+            < 0i16) as uint16
 }
 pub unsafe fn EprojPreInstr_NorfairLavaquakeRocks_Inner(mut k: uint16, game: &mut Game) {
     if EprojPreInstr_NorfairLavaquakeRocks_Inner2(k, game) != 0 {
@@ -6377,7 +6373,7 @@ pub unsafe fn Eproj_MotherBrainRoomTurretBullets_CheckIfTurretOnScreen(
             }
         }
     }
-    return result;
+    result
 }
 pub unsafe fn EprojPreInstr_MotherBrainRoomTurretBullets(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -6511,11 +6507,11 @@ pub unsafe fn EprojInstr_SwitchJump(
     mut epjp: *const uint8,
     game: &mut Game,
 ) -> *const uint8 {
-    return *(epjp.offset(
+    *(epjp.offset(
         *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16)
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
             as ::core::ffi::c_int as isize,
-    ) as *mut uint16) as uintptr_t as *const uint8;
+    ) as *mut uint16) as uintptr_t as *const uint8
 }
 pub unsafe fn EprojInstr_UserPalette0(
     mut k: uint16,
@@ -6524,7 +6520,7 @@ pub unsafe fn EprojInstr_UserPalette0(
 ) -> *const uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x19bb) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-    return epjp;
+    epjp
 }
 unsafe fn Eproj_CheckForBombCollisionWithRect(mut rect: Rect16U, game: &mut Game) -> uint8 {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xcd2) as *mut uint16) == 0 {
@@ -6572,7 +6568,7 @@ unsafe fn Eproj_CheckForBombCollisionWithRect(mut rect: Rect16U, game: &mut Game
         }
         v1 += 2 as ::core::ffi::c_int;
     }
-    return 0 as uint8;
+    0 as uint8
 }
 unsafe fn Eproj_CheckForEnemyCollisionWithRect(
     mut k: uint16,
@@ -6580,14 +6576,14 @@ unsafe fn Eproj_CheckForEnemyCollisionWithRect(
     game: &mut Game,
 ) -> uint8 {
     let mut v1: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);
-    return ((abs16(((*v1).x_pos as ::core::ffi::c_int - rect.x as ::core::ffi::c_int) as uint16)
+    ((abs16(((*v1).x_pos as ::core::ffi::c_int - rect.x as ::core::ffi::c_int) as uint16)
         as ::core::ffi::c_int
         - (*v1).x_width as ::core::ffi::c_int)
         < rect.w as ::core::ffi::c_int
         && (abs16(((*v1).y_pos as ::core::ffi::c_int - rect.y as ::core::ffi::c_int) as uint16)
             as ::core::ffi::c_int
             - (*v1).y_height as ::core::ffi::c_int)
-            < rect.h as ::core::ffi::c_int) as uint8;
+            < rect.h as ::core::ffi::c_int) as uint8
 }
 unsafe fn Eproj_CheckForCollisionWithSamus(mut v0: uint16, game: &mut Game) -> uint8 {
     let mut rect: Rect16U = Eproj_GetCollDetectRect(v0, game);
@@ -6614,13 +6610,13 @@ unsafe fn Eproj_CheckForCollisionWithSamus(mut v0: uint16, game: &mut Game) -> u
             return 1 as uint8;
         }
     }
-    return result;
+    result
 }
 pub unsafe fn Math_MultBySin(mut a: uint16, mut r18: uint16) -> uint16 {
-    return Math_MultBySinCos(a, r18);
+    Math_MultBySinCos(a, r18)
 }
 pub unsafe fn Math_MultByCos(mut a: uint16, mut r18: uint16) -> uint16 {
-    return Math_MultBySinCos(a, r18.wrapping_add(64));
+    Math_MultBySinCos(a, r18.wrapping_add(64))
 }
 pub unsafe fn Math_MultBySinCos(mut r38: uint16, mut a: uint16) -> uint16 {
     let mut r46: uint16 = kSinCosTable8bit_Sext[((a as ::core::ffi::c_int
@@ -6628,11 +6624,11 @@ pub unsafe fn Math_MultBySinCos(mut r38: uint16, mut a: uint16) -> uint16 {
         + 64 as ::core::ffi::c_int) as usize] as uint16;
     let mut prod: uint16 =
         ((r38 as uint32).wrapping_mul(abs16(r46) as uint32) >> 8 as ::core::ffi::c_int) as uint16;
-    return (if r46 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
+    ((if r46 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         -(prod as ::core::ffi::c_int)
     } else {
         prod as ::core::ffi::c_int
-    }) as uint16;
+    }) as uint16)
 }
 pub unsafe fn Eproj_MotherBrainsBlueRingLasers(mut j: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -6764,7 +6760,7 @@ pub unsafe fn CheckForCollisionWithShitroid_DoubleRet(mut v0: uint16, game: &mut
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16)
         .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-    return 0xff as uint8;
+    0xff as uint8
 }
 pub unsafe fn CheckForBlueRingCollisionWithRoom(mut k: uint16, game: &mut Game) -> uint8 {
     let mut v2: int16 = 0;
@@ -6795,7 +6791,7 @@ pub unsafe fn CheckForBlueRingCollisionWithRoom(mut k: uint16, game: &mut Game) 
             }
         }
     }
-    return result;
+    result
 }
 unsafe fn Eproj_GetCollDetectRect(mut k: uint16, game: &mut Game) -> Rect16U {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -6813,7 +6809,7 @@ unsafe fn Eproj_GetCollDetectRect(mut k: uint16, game: &mut Game) -> Rect16U {
                     .wrapping_sub(1 as usize) as isize,
             ) as uint16,
     };
-    return rect;
+    rect
 }
 pub unsafe fn Eproj_Earthqhake5(mut k: uint16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 10 as uint16;
@@ -6907,7 +6903,7 @@ pub unsafe fn MotherBrainBomb_Bomb_CollDetect_DoubleRet(mut k: uint16, game: &mu
         y: *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize),
     };
     SpawnEnemyDrops(addr_kEnemyDef_EC3F as uint16, k, 0 as uint16, game);
-    return 1 as uint8;
+    1 as uint8
 }
 pub unsafe fn MoveMotherBrainBomb(mut k: uint16, mut a: uint16, game: &mut Game) -> uint8 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -6949,7 +6945,7 @@ pub unsafe fn MoveMotherBrainBomb(mut k: uint16, mut a: uint16, game: &mut Game)
         }) as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v2 as isize) =
         -(512 as ::core::ffi::c_int) as uint16;
-    return 1 as uint8;
+    1 as uint8
 }
 pub unsafe fn sub_86C605(mut j: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -7174,7 +7170,7 @@ pub unsafe fn EprojInstr_Add12ToY(
     let ref mut fresh27 = *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh27 = (*fresh27 as ::core::ffi::c_int + 12 as ::core::ffi::c_int) as uint16;
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojPreInit_MotherBrainsDeathExplosion_0(mut k: uint16, game: &mut Game) {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -7367,7 +7363,7 @@ pub unsafe fn EprojInstr_MotherBrainPurpleBreathIsActive(
     (*((&raw mut game.g_ram as *mut uint8).offset(0x7800) as *mut ExtraEnemyRam7800).offset(1))
         .kraid
         .kraid_hurt_frame = 0 as uint16;
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojPreInstr_TimeBombSetJapaneseText(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -7404,16 +7400,14 @@ pub unsafe fn CallMotherBrainTubeFallingFunc(mut ea: uint32, mut k: uint16, game
     match ea {
         8834026 => {
             MotherBrainTubeFallingFunc_GenerateExplosion(k, game);
-            return;
         }
         8834056 => {
             MotherBrainTubeFallingFunc_Falling(k, game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn EprojPreInstr_MotherBrainTubeFalling(mut k: uint16, game: &mut Game) {
     CallMotherBrainTubeFallingFunc(
@@ -7810,7 +7804,7 @@ pub unsafe fn EprojInstr_D15C(
     *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(v2 as isize) = v4;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16).offset(v2 as isize) =
         ((0x86d0eci32) as u16) & (0xffffu16);
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_D1B6(
     mut k: uint16,
@@ -7823,7 +7817,7 @@ pub unsafe fn EprojInstr_D1B6(
             .wrapping_add(1u16);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16).offset(v1 as isize) =
         ((0x86d0cai32) as u16) & (0xffffu16);
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_D1C7(
     mut k: uint16,
@@ -7832,7 +7826,7 @@ pub unsafe fn EprojInstr_D1C7(
 ) -> *const uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x19bb) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_D1CE(
     mut k: uint16,
@@ -7846,7 +7840,7 @@ pub unsafe fn EprojInstr_D1CE(
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize),
     };
     SpawnEnemyDrops(addr_kEnemyDef_E7FF as uint16, k, 0 as uint16, game);
-    return epjp;
+    epjp
 }
 unsafe fn EprojInit_MaridiaFloatersSpikes(mut j: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -8034,7 +8028,7 @@ pub unsafe fn EprojInstr_AssignNewN00bTubeShardVelocity(
             as *mut uint16);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v2 as isize) =
         192 as uint16;
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_SetN00bTubeShardX(
     mut k: uint16,
@@ -8065,7 +8059,7 @@ pub unsafe fn EprojInstr_SetN00bTubeShardX(
             + 4 as ::core::ffi::c_long) as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v2 as isize) =
         1 as uint16;
-    return ::core::ptr::null::<uint8>();
+    ::core::ptr::null::<uint8>()
 }
 pub unsafe fn EprojInstr_D62A(
     mut k: uint16,
@@ -8093,7 +8087,7 @@ pub unsafe fn EprojInstr_D62A(
             + 2 as ::core::ffi::c_long) as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v2 as isize) =
         1 as uint16;
-    return ::core::ptr::null::<uint8>();
+    ::core::ptr::null::<uint8>()
 }
 pub unsafe fn EprojInstr_SetXvelRandom(
     mut k: uint16,
@@ -8110,7 +8104,7 @@ pub unsafe fn EprojInstr_SetXvelRandom(
         as *mut uint8)
         .offset(1)
         as *mut uint16);
-    return epjp;
+    epjp
 }
 unsafe fn EprojInit_N00bTubeCrack(mut j: uint16, game: &mut Game) {
     CalculatePlmBlockCoords(
@@ -8520,7 +8514,7 @@ pub fn EprojPreInstrHelper_SpikeShootingPlantSpikes_Func2(
     mut k: uint16,
     game: &mut Game,
 ) -> uint16 {
-    return ((game
+    ((game
         .enemy_projectile_x_pos(k)
         .wrapping_sub(game.layer1_x_pos()) as int16)
         < 0i16
@@ -8537,7 +8531,7 @@ pub fn EprojPreInstrHelper_SpikeShootingPlantSpikes_Func2(
             .layer1_y_pos()
             .wrapping_add(256)
             .wrapping_sub(game.enemy_projectile_y_pos(k)) as int16)
-            < 0i16) as uint16;
+            < 0i16) as uint16
 }
 unsafe fn EprojInit_DBF2(mut j: uint16, game: &mut Game) {
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -8609,8 +8603,8 @@ pub unsafe fn EprojPreInstr_DBF2_MoveX2(mut k: uint16, game: &mut Game) {
 }
 pub unsafe fn EprojPreInstrHelper_DBF2_Func2(mut k: uint16, game: &mut Game) -> uint16 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    return (((*((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
-        .offset(v1 as isize) as ::core::ffi::c_int
+    (((*((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v1 as isize)
+        as ::core::ffi::c_int
         - *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16) as ::core::ffi::c_int)
         as int16)
         < 0i16
@@ -8630,7 +8624,7 @@ pub unsafe fn EprojPreInstrHelper_DBF2_Func2(mut k: uint16, game: &mut Game) -> 
             + 256 as ::core::ffi::c_int
             - *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int) as int16)
-            < 0i16) as uint16;
+            < 0i16) as uint16
 }
 pub unsafe fn EprojInstr_DC5A(
     mut k: uint16,
@@ -8639,7 +8633,7 @@ pub unsafe fn EprojInstr_DC5A(
 ) -> *const uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 12288 as uint16;
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_SpawnEnemyDrops_0(
     mut k: uint16,
@@ -8652,7 +8646,7 @@ pub unsafe fn EprojInstr_SpawnEnemyDrops_0(
         y: *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v2 as isize),
     };
     SpawnEnemyDrops(addr_kEnemyDef_DF7F as uint16, k, 0 as uint16, game);
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_SpawnSporesEproj(
     mut k: uint16,
@@ -8665,7 +8659,7 @@ pub unsafe fn EprojInstr_SpawnSporesEproj(
         y: *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v2 as isize),
     };
     SpawnEprojWithRoomGfx(addr_kEproj_Spores as uint16, 0 as uint16, game);
-    return epjp;
+    epjp
 }
 unsafe fn EprojInit_Spores(mut j: uint16, game: &mut Game) {
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -8847,16 +8841,14 @@ pub unsafe fn CallNamiFuneFireballFunc(mut ea: uint32, mut k: uint16, game: &mut
     match ea {
         8838976 => {
             EprojInit_NamiFuneFireball_MoveX1(k, game);
-            return;
         }
         8839018 => {
             EprojInit_NamiFuneFireball_MoveX2(k, game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn EprojPreInstr_NamiFuneFireball(mut v0: uint16, game: &mut Game) {
     CallNamiFuneFireballFunc(
@@ -8877,8 +8869,8 @@ pub unsafe fn Eproj_NamiFuneFireball_After(mut v0: uint16, game: &mut Game) {
 }
 pub unsafe fn sub_86DFA0(mut k: uint16, game: &mut Game) -> uint16 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    return (((*((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
-        .offset(v1 as isize) as ::core::ffi::c_int
+    (((*((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v1 as isize)
+        as ::core::ffi::c_int
         - *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16) as ::core::ffi::c_int)
         as int16)
         < 0i16
@@ -8887,7 +8879,7 @@ pub unsafe fn sub_86DFA0(mut k: uint16, game: &mut Game) -> uint16 {
             + 256 as ::core::ffi::c_int
             - *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int) as int16)
-            < 0i16) as uint16;
+            < 0i16) as uint16
 }
 pub unsafe fn EprojInstr_DFEA(
     mut k: uint16,
@@ -8900,7 +8892,7 @@ pub unsafe fn EprojInstr_DFEA(
         y: *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize),
     };
     SpawnEnemyDrops(addr_kEnemyDef_E83F as uint16, k, 0 as uint16, game);
-    return epjp;
+    epjp
 }
 unsafe fn EprojInit_LavaThrownByLavaman(mut j: uint16, game: &mut Game) {
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -8935,16 +8927,14 @@ pub unsafe fn CallLavamanFunc(mut ea: uint32, mut k: uint16, game: &mut Game) {
     match ea {
         8839248 => {
             Eproj_LavaThrownByLavaman_MoveX1(k, game);
-            return;
         }
         8839290 => {
             Eproj_LavaThrownByLavaman_MoveX2(k, game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn sub_86E049(mut v0: uint16, game: &mut Game) {
     CallLavamanFunc(
@@ -8989,8 +8979,8 @@ pub unsafe fn sub_86E0A4(mut v0: uint16, game: &mut Game) {
 }
 pub unsafe fn sub_86E0B0(mut k: uint16, game: &mut Game) -> uint16 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    return (((*((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
-        .offset(v1 as isize) as ::core::ffi::c_int
+    (((*((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v1 as isize)
+        as ::core::ffi::c_int
         - *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16) as ::core::ffi::c_int)
         as int16)
         < 0i16
@@ -9010,7 +9000,7 @@ pub unsafe fn sub_86E0B0(mut k: uint16, game: &mut Game) -> uint16 {
             + 256 as ::core::ffi::c_int
             - *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int) as int16)
-            < 0i16) as uint16;
+            < 0i16) as uint16
 }
 unsafe fn EprojInit_DustCloudOrExplosion(mut v0: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -9087,7 +9077,7 @@ pub unsafe fn EprojInstr_SetYVel(
     *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(epjp as *mut uint16);
-    return epjp.offset(2);
+    epjp.offset(2)
 }
 unsafe fn EprojInit_SpawnedGate_Common(mut j: uint16, mut v1: uint16, game: &mut Game) {
     let mut v2: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x1c27) as *mut uint16);
@@ -9191,7 +9181,7 @@ fn CheckIfEprojIsOffScreen(mut k: uint16, game: &mut Game) -> uint16 {
             }
         }
     }
-    return 1 as uint16;
+    1 as uint16
 }
 pub unsafe fn Eproj_FuncE722(mut k: uint16, game: &mut Game) -> uint16 {
     let mut v2: int16 = 0;
@@ -9215,7 +9205,7 @@ pub unsafe fn Eproj_FuncE722(mut k: uint16, game: &mut Game) -> uint16 {
             }
         }
     }
-    return result;
+    result
 }
 pub unsafe fn Eproj_FuncE73E_MoveXY(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -9350,25 +9340,21 @@ pub unsafe fn CallBotwoonEprojFunc(mut ea: uint32, mut k: uint16, game: &mut Gam
     match ea {
         8841880 => {
             Eproj_BotwoonsBody_Main(k, game);
-            return;
         }
         8841972 => {
             Eproj_BotwonsBodyFunction_Dying(k, game);
-            return;
         }
         8841988 => {
             Eproj_BotwonsBodyFunction_Dying2(k, game);
-            return;
         }
         8842015 => {
             Eproj_BotwonsBodyFunction_DyingFalling(k, game);
-            return;
         }
-        8842131 => return,
+        8842131 => (),
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn EprojPreInstr_BotwoonsBody(mut k: uint16, game: &mut Game) {
     if *((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x8000) as *mut ExtraEnemyRam8000)
@@ -9575,8 +9561,8 @@ pub unsafe fn sub_86EC0C(mut k: uint16, game: &mut Game) {
 }
 pub unsafe fn sub_86EC18(mut k: uint16, game: &mut Game) -> uint16 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    return (((*((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
-        .offset(v1 as isize) as ::core::ffi::c_int
+    (((*((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v1 as isize)
+        as ::core::ffi::c_int
         - *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16) as ::core::ffi::c_int)
         as int16)
         < 0i16
@@ -9596,7 +9582,7 @@ pub unsafe fn sub_86EC18(mut k: uint16, game: &mut Game) -> uint16 {
             + 256 as ::core::ffi::c_int
             - *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int) as int16)
-            < 0i16) as uint16;
+            < 0i16) as uint16
 }
 unsafe fn EprojInit_YappingMawsBody(mut j: uint16, game: &mut Game) {
     let mut v2: *mut EnemyData = gEnemyData(game.cur_enemy_index() as ::core::ffi::c_int, game);
@@ -9641,7 +9627,7 @@ pub unsafe fn EprojInstr_ECE3(
         as u16)
         .wrapping_sub(32u16);
     CreateSpriteAtPos(x, y, *(epjp as *mut uint16), 0 as uint16, game);
-    return epjp.offset(2);
+    epjp.offset(2)
 }
 pub unsafe fn EprojInstr_ED17(
     mut k: uint16,
@@ -9656,7 +9642,7 @@ pub unsafe fn EprojInstr_ED17(
         as u16)
         .wrapping_sub(16u16);
     CreateSpriteAtPos(x, y, *(epjp as *mut uint16), 0 as uint16, game);
-    return epjp.offset(2);
+    epjp.offset(2)
 }
 pub unsafe fn EprojInstr_QueueSfx2_9(
     mut k: uint16,
@@ -9664,7 +9650,7 @@ pub unsafe fn EprojInstr_QueueSfx2_9(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx2_Max1(9 as uint16, game);
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_QueueSfx2_24(
     mut k: uint16,
@@ -9672,7 +9658,7 @@ pub unsafe fn EprojInstr_QueueSfx2_24(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx2_Max1(0x24 as uint16, game);
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_QueueSfx2_B(
     mut k: uint16,
@@ -9680,7 +9666,7 @@ pub unsafe fn EprojInstr_QueueSfx2_B(
     game: &mut Game,
 ) -> *const uint8 {
     QueueSfx2_Max1(0xb as uint16, game);
-    return epjp;
+    epjp
 }
 pub unsafe fn EprojInstr_EEAF(
     mut k: uint16,
@@ -9707,8 +9693,8 @@ pub unsafe fn EprojInstr_EEAF(
         let ref mut fresh25 = *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16)
             .offset(v4 as isize);
         *fresh25 = (*fresh25) & ((!(0x4000 as ::core::ffi::c_int)) as u16);
-        return *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16)
-            .offset(v4 as isize) as uintptr_t as *const uint8;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v4 as isize)
+            as uintptr_t as *const uint8
     } else {
         let mut v6: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v6 as isize) =
@@ -9719,8 +9705,8 @@ pub unsafe fn EprojInstr_EEAF(
             ((0x86efdfi32) as u16) & (0xffffu16);
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v6 as isize) =
             0xeca3 as uint16;
-        return 0xeca3 as ::core::ffi::c_int as uintptr_t as *const uint8;
-    };
+        0xeca3 as ::core::ffi::c_int as uintptr_t as *const uint8
+    }
 }
 pub unsafe fn EprojInstr_HandleRespawningEnemy(
     mut k: uint16,
@@ -9738,7 +9724,7 @@ pub unsafe fn EprojInstr_HandleRespawningEnemy(
             game,
         );
     }
-    return epjp;
+    epjp
 }
 unsafe fn EprojInit_F337(mut j: uint16, game: &mut Game) {
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -10063,7 +10049,7 @@ pub unsafe fn RandomDropRoutine(mut k: uint16, game: &mut Game) -> uint16 {
         }
     }
     i = 3 as ::core::ffi::c_int;
-    return byte_86F25E[i as usize] as uint16;
+    byte_86F25E[i as usize] as uint16
 }
 pub unsafe fn RespawnEnemy(mut v0: uint16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) = v0;
@@ -10255,969 +10241,736 @@ unsafe fn CallEprojInit(mut ea: uint32, mut j: uint16, game: &mut Game) {
     match ea {
         8817209 => {
             Eproj_Init_0x8aaf(j, game);
-            return;
         }
         8817357 => {
             Eproj_Init_0x8bc2_SkreeDownRight(j, game);
-            return;
         }
         8817393 => {
             Eproj_Init_0x8bd0_SkreeUpRight(j, game);
-            return;
         }
         8817429 => {
             Eproj_Init_0x8bde_SkreeDownLeft(j, game);
-            return;
         }
         8817465 => {
             Eproj_Init_0x8bec_SkreeUpLeft(j, game);
-            return;
         }
         8817924 => {
             EprojInit_DraygonsGunk(j, game);
-            return;
         }
         8817984 => {
             EprojInit_DraygonsWallTurretProjs(j, game);
-            return;
         }
         8818723 => {
             EprojInit_CrocomireProjectile(j, game);
-            return;
         }
         8818895 => {
             EprojInit_CrocomireSpikeWallPieces(j, game);
-            return;
         }
         8819334 => {
             EprojInit_CrocomireBridgeCrumbling(j, game);
-            return;
         }
         8819533 => {
             EprojInit_9634(j, game);
-            return;
         }
         8819658 => {
             EprojInit_9642_RidleysFireball(j, game);
-            return;
         }
         8819839 => {
             EprojInit_9660_FireballExplosion(j, game);
-            return;
         }
         8819872 => {
             EprojInit_9688(j, game);
-            return;
         }
         8819892 => {
             EprojInit_9696(j, game);
-            return;
         }
         8819912 => {
             EprojInit_966C(j, game);
-            return;
         }
         8819932 => {
             EprojInit_967A(j, game);
-            return;
         }
         8820444 => {
             EprojInit_9734_CeresFallingDebris(j, game);
-            return;
         }
         8820772 => {
             EprojInit_PhantoonDestroyableFireballs(j, game);
-            return;
         }
         8821050 => {
             EprojInit_PhantoonStartingFireballs(j, game);
-            return;
         }
         8821923 => {
             EprojInit_RocksKraidSpits(j, game);
-            return;
         }
         8821976 => {
             EprojInit_RocksFallingKraidCeiling(j, game);
-            return;
         }
         8822028 => {
             EprojInit_RocksWhenKraidRises(j, game);
-            return;
         }
         8822252 => {
             EprojInit_MiniKraidSpit(j, game);
-            return;
         }
         8822342 => {
             EprojInit_MiniKraidSpikesLeft(j, game);
-            return;
         }
         8822347 => {
             EprojInit_MiniKraidSpikesRight(j, game);
-            return;
         }
         8822450 => {
             EprojInit_WalkingLavaSeahorseFireball(j, game);
-            return;
         }
         8822793 => {
             EprojInit_PirateMotherBrainLaser(j, game);
-            return;
         }
         8822936 => {
             EprojInit_PirateClaw(j, game);
-            return;
         }
         8823457 => {
             EprojInit_A379(j, game);
-            return;
         }
         8823534 => {
             EprojInit_CeresElevatorPad(j, game);
-            return;
         }
         8823579 => {
             EprojInit_CeresElevatorPlatform(j, game);
-            return;
         }
         8823715 => {
             EprojPreInstr_PrePhantomRoom(j, game);
-            return;
         }
         8824275 => {
             EprojInit_BombTorizoLowHealthDrool(j, game);
-            return;
         }
         8824413 => {
             EprojInit_BombTorizoLowHealthInitialDrool(j, game);
-            return;
         }
         8824519 => {
             EprojInit_A977(j, game);
-            return;
         }
         8824566 => {
             EprojInit_BombTorizoExplosiveSwipe(j, game);
-            return;
         }
         8824676 => {
             EprojInit_BombTorizoStatueBreaking(j, game);
-            return;
         }
         8824859 => {
             EprojInit_BombTorizoLowHealthExplode(j, game);
-            return;
         }
         8824945 => {
             EprojInit_BombTorizoDeathExplosion(j, game);
-            return;
         }
         8825405 => {
             EprojInit_AB07(j, game);
-            return;
         }
         8825835 => {
             EprojInit_BombTorizosChozoOrbs(j, game);
-            return;
         }
         8825980 => {
             EprojInit_GoldenTorizosChozoOrbs(j, game);
-            return;
         }
         8826389 => {
             EprojInit_TorizoSonicBoom(j, game);
-            return;
         }
         8826620 => {
             EprojInit_WreckedShipChozoSpikeFootsteps(j, game);
-            return;
         }
         8826691 => {
             EprojInit_TourianStatueDustClouds(j, game);
-            return;
         }
         8826704 => {
             EprojInit_TourianLandingDustCloudsRightFoot(j, game);
-            return;
         }
         8826829 => {
             EprojInit_TorizoLandingDustCloudLeftFoot(j, game);
-            return;
         }
         8826881 => {
             EprojInit_GoldenTorizoEgg(j, game);
-            return;
         }
         8827342 => {
             EprojInit_GoldenTorizoSuperMissile(j, game);
-            return;
         }
         8827688 => {
             EprojInit_GoldenTorizoEyeBeam(j, game);
-            return;
         }
         8828061 => {
             EprojInit_TourianEscapeShaftFakeWallExplode(j, game);
-            return;
         }
         8828143 => {
             EprojInit_LavaSeahorseFireball(j, game);
-            return;
         }
         8828461 => {
             EprojInit_EyeDoorProjectile(j, game);
-            return;
         }
         8828547 => {
             EprojInit_EyeDoorSweat(j, game);
-            return;
         }
         8829050 => {
             EprojInit_TourianStatueUnlockingParticleWaterSplash(j, game);
-            return;
         }
         8829070 => {
             EprojInit_TourianStatueEyeGlow(j, game);
-            return;
         }
         8829109 => {
             EprojInit_TourianStatueUnlockingParticle(j, game);
-            return;
         }
         8829160 => {
             EprojIni_TourianStatueUnlockingParticleTail(j, game);
-            return;
         }
         8829176 => {
             EprojInit_TourianStatueSoul(j, game);
-            return;
         }
         8829246 => {
             EprojInit_TourianStatueBaseDecoration(j, game);
-            return;
         }
         8829265 => {
             EprojInit_TourianStatueRidley(j, game);
-            return;
         }
         8829284 => {
             EprojInit_TourianStatuePhantoon(j, game);
-            return;
         }
         8829744 => {
             sub_86BB30(j, game);
-            return;
         }
         8829842 => {
             EprojInit_NuclearWaffleBody(j, game);
-            return;
         }
         8829915 => {
             EprojInit_NorfairLavaquakeRocks(j, game);
-            return;
         }
         8830364 => {
             EprojInit_ShaktoolAttackMiddleBackCircle(j, game);
-            return;
         }
         8830370 => {
             EprojInit_BDA2(j, game);
-            return;
         }
         8830543 => {
             EprojInit_MotherBrainRoomTurrets(j, game);
-            return;
         }
         8830809 => {
             EprojInit_MotherBrainRoomTurretBullets(j, game);
-            return;
         }
         8831731 => {
             Eproj_MotherBrainsBlueRingLasers(j, game);
-            return;
         }
         8832130 => {
             EprojInit_MotherBrainBomb(j, game);
-            return;
         }
         8832517 => {
             sub_86C605(j, game);
-            return;
         }
         8832644 => {
             EprojInit_MotherBrainDeathBeemFired(j, game);
-            return;
         }
         8833034 => {
             EprojInit_MotherBrainRainbowBeam(j, game);
-            return;
         }
         8833091 => {
             EprojInit_MotherBrainsDrool(j, game);
-            return;
         }
         8833269 => {
             EprojInit_MotherBrainsDeathExplosion(j, game);
-            return;
         }
         8833327 => {
             EprojInit_MotherBrainsRainbowBeamExplosion(j, game);
-            return;
         }
         8833377 => {
             EprojInit_MotherBrainEscapeDoorParticles(j, game);
-            return;
         }
         8833642 => {
             EprojInit_MotherBrainPurpleBreathBig(j, game);
-            return;
         }
         8833667 => {
             EprojInit_MotherBrainPurpleBreathSmall(j, game);
-            return;
         }
         8833782 => {
             EprojInit_TimeBombSetJapaneseText(j, game);
-            return;
         }
         8833993 => {
             EprojInit_MotherBrainTubeFalling(j, game);
-            return;
         }
         8834501 => {
             EprojInit_MotherBrainGlassShatteringShard(j, game);
-            return;
         }
         8834669 => {
             EprojInit_MotherBrainGlassShatteringSparkle(j, game);
-            return;
         }
         8834960 => {
             EprojInit_KiHunterAcidSpitLeft(j, game);
-            return;
         }
         8834982 => {
             EprojInit_KiHunterAcidSpitRight(j, game);
-            return;
         }
         8835208 => {
             EprojInit_KagosBugs(j, game);
-            return;
         }
         8835642 => {
             EprojInit_MaridiaFloatersSpikes(j, game);
-            return;
         }
         8835852 => {
             EprojInit_WreckedShipRobotLaserDown(j, game);
-            return;
         }
         8835886 => {
             EprojInit_WreckedShipRobotLaserHorizontal(j, game);
-            return;
         }
         8835905 => {
             EprojInit_WreckedShipRobotLaserUp(j, game);
-            return;
         }
         8836773 => {
             EprojInit_N00bTubeCrack(j, game);
-            return;
         }
         8836809 => {
             EprojInit_N00bTubeShards(j, game);
-            return;
         }
         8836980 => {
             EprojInit_N00bTubeReleasedAirBubbles(j, game);
-            return;
         }
         8837522 => {
             sub_86D992(j, game);
-            return;
         }
         8837912 => {
             EprojInit_DBF2(j, game);
-            return;
         }
         8838285 => {
             EprojInit_Spores(j, game);
-            return;
         }
         8838307 => {
             EprojInit_SporeSpawnStalk(j, game);
-            return;
         }
         8838356 => {
             EprojInit_SporeSpawners(j, game);
-            return;
         }
         8838870 => {
             EprojInit_NamiFuneFireball(j, game);
-            return;
         }
         8839168 => {
             EprojInit_LavaThrownByLavaman(j, game);
-            return;
         }
         8840296 => {
             EprojInit_DustCloudOrExplosion(j, game);
-            return;
         }
         8840358 => {
             EprojInit_EyeDoorSmoke(j, game);
-            return;
         }
         8840656 => {
             EprojInit_SpawnedShotGate(j, game);
-            return;
         }
         8840661 => {
             EprojInit_ClosedDownwardsShotGate(j, game);
-            return;
         }
         8840666 => {
             EprojInit_ClosedUpwardsShotGate(j, game);
-            return;
         }
         8840877 => {
             EprojInit_SaveStationElectricity(j, game);
-            return;
         }
         8841777 => {
             EprojInit_BotwoonsBody(j, game);
-            return;
         }
         8842182 => {
             EprojInit_BotwoonsSpit(j, game);
-            return;
         }
         8842338 => {
             EprojInit_YappingMawsBody(j, game);
-            return;
         }
         8843049 => {
             EprojInit_F337(j, game);
-            return;
         }
         8843145 => {
             EprojInit_EnemyDeathExplosion(j, game);
-            return;
         }
         8844177 => {
             EprojInit_Sparks(j, game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 unsafe fn CallEprojPreInstr(mut ea: uint32, mut k: uint16, game: &mut Game) {
     match ea {
-        8825112 => return,
-        8814960 => return,
-        8815867 => return,
+        8825112 => (),
+        8814960 => (),
+        8815867 => (),
         8817277 => {
             Eproj_PreInit_0x8aaf(k, game);
-            return;
         }
         8817501 => {
             Eproj_PreInstr_SkreeParticle(k, game);
-            return;
         }
-        8818004 => return,
+        8818004 => (),
         8818122 => {
             EprojPreInstr_8DCA(k, game);
-            return;
         }
         8818175 => {
             EprojPreInstr_DraygonsTurret_8DFF(k, game);
-            return;
         }
         8818191 => {
             EprojPreInstr_DraygonsGunk_8E0F(k, game);
-            return;
         }
         8818795 => {
             EprojPreInstr_CrocomireProjectile(k, game);
-            return;
         }
         8818867 => {
             sub_8690B3(k, game);
-            return;
         }
         8818965 => {
             EprojPreInstr_CrocomireSpikeWallPieces(k, game);
-            return;
         }
         8819386 => {
             EprojPreInstr_CrocomireBridgeCrumbling(k, game);
-            return;
         }
         8819602 => {
             EprojPreInstr_9634(k, game);
-            return;
         }
         8819726 => {
             EprojPreInstr_9642_RidleysFireball(k, game);
-            return;
         }
-        8819980 => return,
+        8819980 => (),
         8819981 => {
             EprojPreInstr_966C(k, game);
-            return;
         }
         8820002 => {
             EprojPreInstr_9688(k, game);
-            return;
         }
         8820023 => {
             EprojPreInstr_96A4(k, game);
-            return;
         }
         8820032 => {
             EprojPreInstr_96C0(k, game);
-            return;
         }
         8820041 => {
             EprojPreInstr_96CE(k, game);
-            return;
         }
         8820481 => {
             EprojPreInstr_9734_CeresFallingDebris(k, game);
-            return;
         }
         8821121 => {
             EprojPreInstr_PhantoonStartingFireballs(k, game);
-            return;
         }
         8821183 => {
             EprojPreInstr_PhantoonStartingFireballs2(k, game);
-            return;
         }
         8821249 => {
             EprojPreInstr_PhantoonStartingFireballs3(k, game);
-            return;
         }
-        8821316 => return,
+        8821316 => (),
         8821317 => {
             EprojPreInstr_PhantoonDestroyableFireballs(k, game);
-            return;
         }
         8821396 => {
             EprojPreInstr_PhantoonDestroyableFireballs_2(k, game);
-            return;
         }
         8821466 => {
             EprojPreInstr_PhantoonDestroyableFireballs_3(k, game);
-            return;
         }
         8821545 => {
             EprojPreInstr_PhantoonStartingFireballsB(k, game);
-            return;
         }
         8821569 => {
             EprojPreInstr_PhantoonStartingFireballsB_2(k, game);
-            return;
         }
         8822102 => {
             EprojPreInstr_KraidRocks(k, game);
-            return;
         }
         8822153 => {
             EprojPreInstr_RocksFallingKraidCeiling(k, game);
-            return;
         }
         8822181 => {
             sub_869DA5(k, game);
-            return;
         }
         8822302 => {
             EprojPreInit_MiniKraidSpit(k, game);
-            return;
         }
         8822403 => {
             EprojPreInstr_MiniKraidSpikes(k, game);
-            return;
         }
         8822527 => {
             EprojPreInstr_WalkingLavaSeahorseFireball(k, game);
-            return;
         }
-        8822875 => return,
+        8822875 => (),
         8822876 => {
             EprojPreInstr_PirateMotherBrainLaser_MoveLeft(k, game);
-            return;
         }
         8822906 => {
             EprojPreInstr_PirateMotherBrainLaser_MoveRight(k, game);
-            return;
         }
         8822993 => {
             EprojPreInstr_PirateClawThrownLeft(k, game);
-            return;
         }
         8823076 => {
             EprojPreInstr_PirateClawThrownRight(k, game);
-            return;
         }
-        8823591 => return,
+        8823591 => (),
         8823592 => {
             EprojPreInstr_CeresElevatorPad(k, game);
-            return;
         }
         8823652 => {
             EprojPreInstr_CeresElevatorPlatform(k, game);
-            return;
         }
         8823715 => {
             EprojPreInstr_PrePhantomRoom(k, game);
-            return;
         }
         8824967 => {
             sub_86A887(k, game);
-            return;
         }
         8825071 => {
             EprojPreInstr_A977(k, game);
-            return;
         }
-        8825113 => return,
+        8825113 => (),
         8825484 => {
             EprojPreInstr_AB07(k, game);
-            return;
         }
         8826029 => {
             EprojPreInstr_BombTorizosChozoOrbs(k, game);
-            return;
         }
         8826106 => {
             EprojPreInstr_GoldenTorizosChozoOrbs(k, game);
-            return;
         }
         8826476 => {
             EprojPreInstr_TorizoSonicBoom(k, game);
-            return;
         }
         8826947 => {
             EprojPreInstr_GoldenTorizoEgg(k, game);
-            return;
         }
         8827065 => {
             sub_86B0B9(k, game);
-            return;
         }
         8827101 => {
             sub_86B0DD(k, game);
-            return;
         }
         8827405 => {
             EprojPreInstr_GoldenTorizoSuperMissile(k, game);
-            return;
         }
         8827447 => {
             EprojPreInstr_B237(k, game);
-            return;
         }
         8827786 => {
             EprojPreInstr_GoldenTorizoEyeBeam(k, game);
-            return;
         }
-        8828080 => return,
+        8828080 => (),
         8828213 => {
             sub_86B535(k, game);
-            return;
         }
         8828601 => {
             EprojPreInstr_EyeDoorProjectile(k, game);
-            return;
         }
         8828692 => {
             EprojPreInstr_EyeDoorSweat(k, game);
-            return;
         }
         8829303 => {
             EprojPreInstr_TourianStatueUnlockingParticleWaterSplash(k, game);
-            return;
         }
         8829314 => {
             EprojPreInstr_TourianStatueUnlockingParticle(k, game);
-            return;
         }
         8829437 => {
             EprojPreInstr_TourianStatueSoul(k, game);
-            return;
         }
         8829495 => {
             EprojPreInstr_TourianStatueStuff(k, game);
-            return;
         }
         8829506 => {
             EprojPreInstr_BA42(k, game);
-            return;
         }
-        8829775 => return,
-        8829894 => return,
+        8829775 => (),
+        8829894 => (),
         8829967 => {
             EprojPreInstr_NorfairLavaquakeRocks(k, game);
-            return;
         }
         8830238 => {
             EprojPreInstr_NorfairLavaquakeRocks_Inner(k, game);
-            return;
         }
         8830250 => {
             EprojPreInstr_NorfairLavaquakeRocks_Inner2(k, game);
-            return;
         }
         8830467 => {
             EprojInit_ShaktoolAttackFrontCircle(k, game);
-            return;
         }
         8830482 => {
             EprojPreInstr_BE12(k, game);
-            return;
         }
         8830943 => {
             EprojPreInstr_MotherBrainRoomTurrets(k, game);
-            return;
         }
         8831200 => {
             EprojPreInstr_MotherBrainRoomTurretBullets(k, game);
-            return;
         }
         8831797 => {
             Eproj_MoveToBlueRingSpawnPosition(k, game);
-            return;
         }
         8832200 => {
             EprojPreInstr_MotherBrainBomb(k, game);
-            return;
         }
         8833044 => {
             EprojPreInstr_MotherBrainRainbowBeam(k, game);
-            return;
         }
         8833101 => {
             EprojPreInstr_C84D(k, game);
-            return;
         }
         8833158 => {
             EprojInit_MotherBrainsDrool_Falling(k, game);
-            return;
         }
         8833300 => {
             EprojPreInit_MotherBrainsDeathExplosion_0(k, game);
-            return;
         }
         8833356 => {
             EprojPreInstr_MotherBrainsRainbowBeamExplosion(k, game);
-            return;
         }
         8833490 => {
             EprojPreInstr_MotherBrainsExplodedDoorParticles(k, game);
-            return;
         }
-        8833699 => return,
+        8833699 => (),
         8833786 => {
             EprojPreInstr_TimeBombSetJapaneseText(k, game);
-            return;
         }
         8834023 => {
             EprojPreInstr_MotherBrainTubeFalling(k, game);
-            return;
         }
         8834715 => {
             EprojPreInstr_MotherBrainGlassShatteringShard(k, game);
-            return;
         }
         8835029 => {
             sub_86CFD5(k, game);
-            return;
         }
         8835046 => {
             sub_86CFE6(k, game);
-            return;
         }
-        8835063 => return,
+        8835063 => (),
         8835064 => {
             sub_86CFF8(k, game);
-            return;
         }
         8835251 => {
             EprojPreInstr_KagosBugs_Func1(k, game);
-            return;
         }
         8835274 => {
             EprojPreInstr_KagosBugs(k, game);
-            return;
         }
-        8835307 => return,
+        8835307 => (),
         8835308 => {
             EprojPreInstr_D0EC(k, game);
-            return;
         }
         8835368 => {
             EprojPreInstr_D128(k, game);
-            return;
         }
         8835556 => {
             EprojPreInstr_KagosBugs_Func2(k, game);
-            return;
         }
         8835683 => {
             EprojPreInstr_MaridiaFloatersSpikes(k, game);
-            return;
         }
         8836031 => {
             EprojPreInstr_WreckedShipRobotLaser(k, game);
-            return;
         }
         8837055 => {
             sub_86D7BF(k, game);
-            return;
         }
         8837086 => {
             sub_86D7DE(k, game);
-            return;
         }
         8837117 => {
             EprojPreInstr_N00bTubeShards(k, game);
-            return;
         }
         8837181 => {
             sub_86D83D(k, game);
-            return;
         }
         8837279 => {
             sub_86D89F(k, game);
-            return;
         }
         8837343 => {
             sub_86D8DF(k, game);
-            return;
         }
         8837595 => {
             EprojPreInstr_SpikeShootingPlantSpikes(k, game);
-            return;
         }
         8837606 => {
             EprojPreInstr_SpikeShootingPlantSpikes_MoveY1(k, game);
-            return;
         }
         8837648 => {
             EprojPreInstr_SpikeShootingPlantSpikes_MoveY2(k, game);
-            return;
         }
         8837690 => {
             EprojPreInstr_SpikeShootingPlantSpikes_MoveX1(k, game);
-            return;
         }
         8837732 => {
             EprojPreInstr_SpikeShootingPlantSpikes_MoveX2(k, game);
-            return;
         }
         8837774 => {
             EprojPreInstr_SpikeShootingPlantSpikes_0_MoveX1(k, game);
-            return;
         }
         8837779 => {
             EprojPreInstr_SpikeShootingPlantSpikes_2_MoveX2(k, game);
-            return;
         }
         8837784 => {
             EprojPreInstr_SpikeShootingPlantSpikes_1_MoveY1(k, game);
-            return;
         }
         8837789 => {
             EprojPreInstr_SpikeShootingPlantSpikes_4_MoveY2(k, game);
-            return;
         }
         8837794 => {
             EprojPreInstr_SpikeShootingPlantSpikes_6_MoveX1Y1(k, game);
-            return;
         }
         8837802 => {
             EprojPreInstr_SpikeShootingPlantSpikes_8_MoveX1Y2(k, game);
-            return;
         }
         8837810 => {
             EprojPreInstr_SpikeShootingPlantSpikes_7_MoveX2Y1(k, game);
-            return;
         }
         8837818 => {
             EprojPreInstr_SpikeShootingPlantSpikes_9_MoveX2Y2(k, game);
-            return;
         }
         8837979 => {
             EprojPreInstr_DBF2(k, game);
-            return;
         }
         8837986 => {
             EprojPreInstr_DBF2_MoveX1(k, game);
-            return;
         }
         8838028 => {
             EprojPreInstr_DBF2_MoveX2(k, game);
-            return;
         }
         8838070 => {
             EprojPreInstr_DBF2_Func1(k, game);
-            return;
         }
         8838382 => {
             EprojPreInstr_Spores(k, game);
-            return;
         }
-        8838468 => return,
+        8838468 => (),
         8838470 => {
             EprojPreInstr_SporeSpawners(k, game);
-            return;
         }
         8838969 => {
             EprojPreInstr_NamiFuneFireball(k, game);
-            return;
         }
         8839241 => {
             sub_86E049(k, game);
-            return;
         }
         8840446 => {
             EprojPreInstr_DustCloudOrExplosion(k, game);
-            return;
         }
-        8840456 => return,
-        8840708 => return,
+        8840456 => (),
+        8840708 => (),
         8840709 => {
             EprojPreInstr_E605(k, game);
-            return;
         }
-        8840913 => return,
+        8840913 => (),
         8841856 => {
             EprojPreInstr_BotwoonsBody(k, game);
-            return;
         }
         8842245 => {
             EprojPreInstr_BotwoonsSpit(k, game);
-            return;
         }
-        8842388 => return,
-        8843231 => return,
+        8842388 => (),
+        8843231 => (),
         8843232 => {
             EprojPreInstr_Pickup(k, game);
-            return;
         }
         8844272 => {
             EprojPreInstr_Sparks(k, game);
-            return;
         }
-        8832877 => return,
+        8832877 => (),
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 unsafe fn CallEprojInstr(
     mut ea: uint32,
@@ -11226,109 +10979,109 @@ unsafe fn CallEprojInstr(
     game: &mut Game,
 ) -> *const uint8 {
     match ea {
-        8814932 => return EprojInstr_Delete(k, j, game),
-        8814937 => return EprojInstr_Sleep(k, j, game),
-        8814945 => return EprojInstr_SetPreInstr_(k, j, game),
-        8814954 => return EprojInstr_ClearPreInstr(k, j, game),
-        8814961 => return EprojInstr_CallFunc(k, j, game),
-        8815019 => return EprojInstr_Goto(k, j),
-        8815024 => return EprojInstr_GotoRel(k, j),
-        8815046 => return EprojInstr_DecTimerAndGotoIfNonZero(k, j, game),
-        8815054 => return EprojInstr_DecTimerAndGotoRelIfNonZero(k, j, game),
-        8815061 => return EprojInstr_SetTimer(k, j, game),
-        8815071 => return EprojInstr_MoveRandomlyWithinRadius(k, j, game),
-        8815152 => return EprojInstr_SetProjectileProperties(k, j, game),
-        8815164 => return EprojInstr_ClearProjectileProperties(k, j, game),
-        8815176 => return EprojInstr_EnableCollisionWithSamusProj(k, j, game),
-        8815186 => return EprojInstr_DisableCollisionWithSamusProj(k, j, game),
-        8815196 => return EprojInstr_DisableCollisionWithSamus(k, j, game),
-        8815206 => return EprojInstr_EnableCollisionWithSamus(k, j, game),
-        8815216 => return EprojInstr_SetToNotDieOnContact(k, j, game),
-        8815226 => return EprojInstr_SetToDieOnContact(k, j, game),
-        8815236 => return EprojInstr_SetLowPriority(k, j, game),
-        8815246 => return EprojInstr_SetHighPriority(k, j, game),
-        8815256 => return EprojInstr_SetXyRadius(k, j, game),
-        8815265 => return EprojInstr_SetXyRadiusZero(k, j, game),
-        8815269 => return EprojInstr_CalculateDirectionTowardsSamus(k, j, game),
-        8815317 => return EprojInstr_WriteColorsToPalette(k, j, game),
-        8815357 => return EprojInstr_QueueMusic(k, j, game),
-        8815369 => return EprojInstr_QueueSfx1_Max6(k, j, game),
-        8815378 => return EprojInstr_QueueSfx2_Max6(k, j, game),
-        8815387 => return EprojInstr_QueueSfx3_Max6(k, j, game),
-        8815396 => return EprojInstr_QueueSfx1_Max15(k, j, game),
-        8815405 => return EprojInstr_QueueSfx2_Max15(k, j, game),
-        8815414 => return EprojInstr_QueueSfx3_Max15(k, j, game),
-        8815423 => return EprojInstr_QueueSfx1_Max3(k, j, game),
-        8815432 => return EprojInstr_QueueSfx2_Max3(k, j, game),
-        8815441 => return EprojInstr_QueueSfx3_Max3(k, j, game),
-        8815450 => return EprojInstr_QueueSfx1_Max9(k, j, game),
-        8815459 => return EprojInstr_QueueSfx2_Max9(k, j, game),
-        8815468 => return EprojInstr_QueueSfx3_Max9(k, j, game),
-        8815477 => return EprojInstr_QueueSfx1_Max1(k, j, game),
-        8815486 => return EprojInstr_QueueSfx2_Max1(k, j, game),
-        8815495 => return EprojInstr_QueueSfx3_Max1(k, j, game),
-        8817768 => return EprojInstr_SpawnEnemyDropsWithDraygonsEyeDrops(k, j, game),
-        8818073 => return EprojInstr_868D99(k, j, game),
-        8819829 => return EprojInstr_DisableCollisionsWithSamus(k, j, game),
-        8820154 => return EprojInstr_95BA(k, j, game),
-        8820205 => return EprojInstr_95ED(k, j, game),
-        8820256 => return EprojInstr_9620(k, j, game),
-        8820750 => return EprojInstr_980E(k, j, game),
-        8822864 => return EprojInstr_SetPreInstrAndRun(k, j, game),
-        8823894 => return EprojInstr_GotoWithProbability25(k, j, game),
-        8825738 => return EprojInstr_SpawnEnemyDrops(k, j, game),
-        8826258 => return EprojInstr_GotoDependingOnXDirection(k, j, game),
-        8826678 => return EprojInstr_ResetXYpos1(k, j, game),
-        8826770 => return EprojInstr_MoveY_Minus4(k, j, game),
-        8827497 => return EprojInstr_SetVelTowardsSamus1(k, j, game),
-        8827506 => return EprojInstr_SetVelTowardsSamus2(k, j, game),
-        8827832 => return EprojInstr_GotoIfFunc1(k, j, game),
-        8827958 => return EprojInstr_ResetXYpos2(k, j, game),
-        8828906 => return EprojInstr_SpawnTourianStatueUnlockingParticle(k, j, game),
-        8828917 => return EprojInstr_Earthquake(k, j, game),
-        8828952 => return EprojInstr_SpawnTourianStatueUnlockingParticleTail(k, j, game),
-        8828993 => return EprojInstr_AddToYpos(k, j, game),
-        8831347 => return EprojInstr_SwitchJump(k, j, game),
-        8831412 => return EprojInstr_UserPalette0(k, j, game),
-        8833232 => return EprojInstr_Add12ToY(k, j, game),
-        8833774 => return EprojInstr_MotherBrainPurpleBreathIsActive(k, j, game),
-        8835420 => return EprojInstr_D15C(k, j, game),
-        8835510 => return EprojInstr_D1B6(k, j, game),
-        8835527 => return EprojInstr_D1C7(k, j, game),
-        8835534 => return EprojInstr_D1CE(k, j, game),
-        8836577 => return EprojInstr_AssignNewN00bTubeShardVelocity(k, j, game),
-        8836594 => return EprojInstr_SetN00bTubeShardX(k, j, game),
-        8836650 => return EprojInstr_D62A(k, j, game),
-        8836762 => return EprojInstr_SetXvelRandom(k, j, game),
-        8838234 => return EprojInstr_DC5A(k, j, game),
-        8838241 => return EprojInstr_SpawnEnemyDrops_0(k, j, game),
-        8838263 => return EprojInstr_SpawnSporesEproj(k, j, game),
-        8839146 => return EprojInstr_DFEA(k, j, game),
-        8840499 => return EprojInstr_SetYVel(k, j, game),
-        8842467 => return EprojInstr_ECE3(k, j, game),
-        8842519 => return EprojInstr_ED17(k, j, game),
-        8842891 => return EprojInstr_QueueSfx2_9(k, j, game),
-        8842903 => return EprojInstr_QueueSfx2_24(k, j, game),
-        8842915 => return EprojInstr_QueueSfx2_B(k, j, game),
-        8842927 => return EprojInstr_EEAF(k, j, game),
-        8843024 => return EprojInstr_HandleRespawningEnemy(k, j, game),
-        8817910 => return EprojInstr_SetPreInstrA(k, j, game),
-        8817917 => return EprojInstr_SetPreInstrB(k, j, game),
+        8814932 => EprojInstr_Delete(k, j, game),
+        8814937 => EprojInstr_Sleep(k, j, game),
+        8814945 => EprojInstr_SetPreInstr_(k, j, game),
+        8814954 => EprojInstr_ClearPreInstr(k, j, game),
+        8814961 => EprojInstr_CallFunc(k, j, game),
+        8815019 => EprojInstr_Goto(k, j),
+        8815024 => EprojInstr_GotoRel(k, j),
+        8815046 => EprojInstr_DecTimerAndGotoIfNonZero(k, j, game),
+        8815054 => EprojInstr_DecTimerAndGotoRelIfNonZero(k, j, game),
+        8815061 => EprojInstr_SetTimer(k, j, game),
+        8815071 => EprojInstr_MoveRandomlyWithinRadius(k, j, game),
+        8815152 => EprojInstr_SetProjectileProperties(k, j, game),
+        8815164 => EprojInstr_ClearProjectileProperties(k, j, game),
+        8815176 => EprojInstr_EnableCollisionWithSamusProj(k, j, game),
+        8815186 => EprojInstr_DisableCollisionWithSamusProj(k, j, game),
+        8815196 => EprojInstr_DisableCollisionWithSamus(k, j, game),
+        8815206 => EprojInstr_EnableCollisionWithSamus(k, j, game),
+        8815216 => EprojInstr_SetToNotDieOnContact(k, j, game),
+        8815226 => EprojInstr_SetToDieOnContact(k, j, game),
+        8815236 => EprojInstr_SetLowPriority(k, j, game),
+        8815246 => EprojInstr_SetHighPriority(k, j, game),
+        8815256 => EprojInstr_SetXyRadius(k, j, game),
+        8815265 => EprojInstr_SetXyRadiusZero(k, j, game),
+        8815269 => EprojInstr_CalculateDirectionTowardsSamus(k, j, game),
+        8815317 => EprojInstr_WriteColorsToPalette(k, j, game),
+        8815357 => EprojInstr_QueueMusic(k, j, game),
+        8815369 => EprojInstr_QueueSfx1_Max6(k, j, game),
+        8815378 => EprojInstr_QueueSfx2_Max6(k, j, game),
+        8815387 => EprojInstr_QueueSfx3_Max6(k, j, game),
+        8815396 => EprojInstr_QueueSfx1_Max15(k, j, game),
+        8815405 => EprojInstr_QueueSfx2_Max15(k, j, game),
+        8815414 => EprojInstr_QueueSfx3_Max15(k, j, game),
+        8815423 => EprojInstr_QueueSfx1_Max3(k, j, game),
+        8815432 => EprojInstr_QueueSfx2_Max3(k, j, game),
+        8815441 => EprojInstr_QueueSfx3_Max3(k, j, game),
+        8815450 => EprojInstr_QueueSfx1_Max9(k, j, game),
+        8815459 => EprojInstr_QueueSfx2_Max9(k, j, game),
+        8815468 => EprojInstr_QueueSfx3_Max9(k, j, game),
+        8815477 => EprojInstr_QueueSfx1_Max1(k, j, game),
+        8815486 => EprojInstr_QueueSfx2_Max1(k, j, game),
+        8815495 => EprojInstr_QueueSfx3_Max1(k, j, game),
+        8817768 => EprojInstr_SpawnEnemyDropsWithDraygonsEyeDrops(k, j, game),
+        8818073 => EprojInstr_868D99(k, j, game),
+        8819829 => EprojInstr_DisableCollisionsWithSamus(k, j, game),
+        8820154 => EprojInstr_95BA(k, j, game),
+        8820205 => EprojInstr_95ED(k, j, game),
+        8820256 => EprojInstr_9620(k, j, game),
+        8820750 => EprojInstr_980E(k, j, game),
+        8822864 => EprojInstr_SetPreInstrAndRun(k, j, game),
+        8823894 => EprojInstr_GotoWithProbability25(k, j, game),
+        8825738 => EprojInstr_SpawnEnemyDrops(k, j, game),
+        8826258 => EprojInstr_GotoDependingOnXDirection(k, j, game),
+        8826678 => EprojInstr_ResetXYpos1(k, j, game),
+        8826770 => EprojInstr_MoveY_Minus4(k, j, game),
+        8827497 => EprojInstr_SetVelTowardsSamus1(k, j, game),
+        8827506 => EprojInstr_SetVelTowardsSamus2(k, j, game),
+        8827832 => EprojInstr_GotoIfFunc1(k, j, game),
+        8827958 => EprojInstr_ResetXYpos2(k, j, game),
+        8828906 => EprojInstr_SpawnTourianStatueUnlockingParticle(k, j, game),
+        8828917 => EprojInstr_Earthquake(k, j, game),
+        8828952 => EprojInstr_SpawnTourianStatueUnlockingParticleTail(k, j, game),
+        8828993 => EprojInstr_AddToYpos(k, j, game),
+        8831347 => EprojInstr_SwitchJump(k, j, game),
+        8831412 => EprojInstr_UserPalette0(k, j, game),
+        8833232 => EprojInstr_Add12ToY(k, j, game),
+        8833774 => EprojInstr_MotherBrainPurpleBreathIsActive(k, j, game),
+        8835420 => EprojInstr_D15C(k, j, game),
+        8835510 => EprojInstr_D1B6(k, j, game),
+        8835527 => EprojInstr_D1C7(k, j, game),
+        8835534 => EprojInstr_D1CE(k, j, game),
+        8836577 => EprojInstr_AssignNewN00bTubeShardVelocity(k, j, game),
+        8836594 => EprojInstr_SetN00bTubeShardX(k, j, game),
+        8836650 => EprojInstr_D62A(k, j, game),
+        8836762 => EprojInstr_SetXvelRandom(k, j, game),
+        8838234 => EprojInstr_DC5A(k, j, game),
+        8838241 => EprojInstr_SpawnEnemyDrops_0(k, j, game),
+        8838263 => EprojInstr_SpawnSporesEproj(k, j, game),
+        8839146 => EprojInstr_DFEA(k, j, game),
+        8840499 => EprojInstr_SetYVel(k, j, game),
+        8842467 => EprojInstr_ECE3(k, j, game),
+        8842519 => EprojInstr_ED17(k, j, game),
+        8842891 => EprojInstr_QueueSfx2_9(k, j, game),
+        8842903 => EprojInstr_QueueSfx2_24(k, j, game),
+        8842915 => EprojInstr_QueueSfx2_B(k, j, game),
+        8842927 => EprojInstr_EEAF(k, j, game),
+        8843024 => EprojInstr_HandleRespawningEnemy(k, j, game),
+        8817910 => EprojInstr_SetPreInstrA(k, j, game),
+        8817917 => EprojInstr_SetPreInstrB(k, j, game),
         8822906 => {
             EprojPreInstr_PirateMotherBrainLaser_MoveRight(k, game);
-            return j;
+            j
         }
         8822876 => {
             EprojPreInstr_PirateMotherBrainLaser_MoveLeft(k, game);
-            return j;
+            j
         }
-        8823742 => return EprojInstr_A3BE(k, j, game),
-        8819312 => return EprojInstr_9270(k, j, game),
-        8815070 => return j,
-        8827198 => return sub_86B13E(k, j, game),
+        8823742 => EprojInstr_A3BE(k, j, game),
+        8819312 => EprojInstr_9270(k, j, game),
+        8815070 => j,
+        8827198 => sub_86B13E(k, j, game),
         _ => {
             Unreachable(game);
-            return ::core::ptr::null::<uint8>();
+            ::core::ptr::null::<uint8>()
         }
-    };
+    }
 }

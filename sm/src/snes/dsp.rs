@@ -59,7 +59,7 @@ static gaussValues: [uint16_t; 512] = [
 pub unsafe fn dsp_init(mut ram: *mut uint8_t) -> *mut Dsp {
     let mut dsp: *mut Dsp = malloc(::core::mem::size_of::<Dsp>() as size_t) as *mut Dsp;
     (*dsp).apu_ram = ram;
-    return dsp;
+    dsp
 }
 pub unsafe fn dsp_free(mut dsp: *mut Dsp) {
     free(dsp as *mut ::core::ffi::c_void);
@@ -595,7 +595,7 @@ unsafe fn dsp_getSample(
     } else {
         out
     };
-    return (out >> 1 as ::core::ffi::c_int) as int16_t;
+    (out >> 1 as ::core::ffi::c_int) as int16_t
 }
 unsafe fn dsp_decodeBrr(mut dsp: *mut Dsp, mut ch: ::core::ffi::c_int) {
     (*dsp).channel[ch as usize].decodeBuffer[0 as ::core::ffi::c_int as usize] =
@@ -723,7 +723,7 @@ unsafe fn dsp_handleNoise(mut dsp: *mut Dsp) {
     }
 }
 pub unsafe fn dsp_read(mut dsp: *mut Dsp, mut adr: uint8_t) -> uint8_t {
-    return (*dsp).ram[adr as usize];
+    (*dsp).ram[adr as usize]
 }
 pub unsafe fn dsp_write(mut dsp: *mut Dsp, mut adr: uint8_t, mut val: uint8_t) {
     let mut ch: ::core::ffi::c_int = adr as ::core::ffi::c_int >> 4 as ::core::ffi::c_int;

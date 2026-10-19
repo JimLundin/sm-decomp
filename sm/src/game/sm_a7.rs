@@ -183,16 +183,16 @@ enemy_layout! {
 pub const kCoroutineNone: ::core::ffi::c_int = 0;
 #[inline]
 unsafe fn RomPtr_A7(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr((0xa70000u32) | ((addr) as u32), game);
+    RomPtr((0xa70000u32) | ((addr) as u32), game)
 }
 #[inline]
 unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int, game: &mut Game) -> *mut VramWriteEntry {
-    return (&raw mut game.g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
-        as *mut uint8 as *mut VramWriteEntry;
+    (&raw mut game.g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
+        as *mut uint8 as *mut VramWriteEntry
 }
 #[inline]
 unsafe fn get_EnemyDef_A2(mut a: uint16, game: &mut Game) -> *mut EnemyDef {
-    return RomPtr((0xa00000u32) | ((a) as u32), game) as *mut EnemyDef;
+    RomPtr((0xa00000u32) | ((a) as u32), game) as *mut EnemyDef
 }
 pub const fnnullsub_170_A7: ::core::ffi::c_int = 0xa7804c;
 pub const fnKraid_GetsBig_BreakCeilingPlatforms: ::core::ffi::c_int = 0xa7ac4d;
@@ -328,33 +328,33 @@ pub const fnDachora_Func_11: ::core::ffi::c_int = 0xa7f935;
 pub const fnDachora_Func_12: ::core::ffi::c_int = 0xa7f98c;
 #[inline]
 unsafe fn gEnemyData(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut EnemyData {
-    return (&raw mut game.g_ram as *mut uint8)
+    (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
-        .offset(o as isize) as *mut EnemyData;
+        .offset(o as isize) as *mut EnemyData
 }
 #[inline]
 unsafe fn Get_Dachora(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_Dachora {
-    return (&raw mut game.g_ram as *mut uint8)
+    (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Dachora;
+        .offset(o as isize) as *mut Enemy_Dachora
 }
 #[inline]
 unsafe fn Get_Etecoon(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_Etecoon {
-    return (&raw mut game.g_ram as *mut uint8)
+    (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Etecoon;
+        .offset(o as isize) as *mut Enemy_Etecoon
 }
 #[inline]
 unsafe fn Get_Kraid(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_Kraid {
-    return (&raw mut game.g_ram as *mut uint8)
+    (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Kraid;
+        .offset(o as isize) as *mut Enemy_Kraid
 }
 #[inline]
 unsafe fn Get_Phantoon(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_Phantoon {
-    return (&raw mut game.g_ram as *mut uint8)
+    (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Phantoon;
+        .offset(o as isize) as *mut Enemy_Phantoon
 }
 static g_word_A7A916: uint16 = 0x120 as uint16;
 static g_word_A7A918: uint16 = 0xa0 as uint16;
@@ -406,24 +406,20 @@ pub unsafe fn CallEnemyInstrExtFunc(mut ea: uint32, mut k: uint16, game: &mut Ga
     match ea {
         10997485 => {
             Phantoon_Func_1(game);
-            return;
         }
         10997598 => {
             Phantoon_Func_4(k, game);
-            return;
         }
         10997823 => {
             Phantoon_StartTrackingSamusAndInitEyeTimer(game);
-            return;
         }
         10997878 => {
             Phantoon_PickPatternForRound2(game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn EnemyInstr_Call_A7(
     mut k: uint16,
@@ -431,7 +427,7 @@ pub unsafe fn EnemyInstr_Call_A7(
     game: &mut Game,
 ) -> *const uint16 {
     CallEnemyInstrExtFunc(((*jp.offset(0)) as u32) | (0xa70000u32), k, game);
-    return jp.offset(1);
+    jp.offset(1)
 }
 pub unsafe fn Enemy_GrappleReact_NoInteract_A7(game: &mut Game) {
     SwitchEnemyAiToMainAi(game);
@@ -466,7 +462,7 @@ pub unsafe fn Kraid_Instr_9(
             return addr_kKraid_Ilist_8A41 as ::core::ffi::c_int as uintptr_t as *const uint16;
         }
     }
-    return jp;
+    jp
 }
 pub unsafe fn Kraid_Touch_ArmFoot(game: &mut Game) {
     NormalEnemyTouchAi(game);
@@ -500,12 +496,12 @@ pub unsafe fn sub_A7A92A(game: &mut Game) {
     Kraid_CheckIfDead(game);
 }
 pub unsafe fn Kraid_CheckIfDead(game: &mut Game) -> uint16 {
-    return ((*((&raw mut game.g_ram as *mut uint8)
+    ((*((&raw mut game.g_ram as *mut uint8)
         .offset(0xd828)
         .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize)
         as *mut uint8 as *mut uint16) as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int)
-        != 0i32) as uint16;
+        != 0i32) as uint16
 }
 pub unsafe fn Kraid_SetEnemyPropsToDead(game: &mut Game) {
     let mut E: *mut Enemy_Kraid = Get_Kraid(
@@ -1078,7 +1074,7 @@ pub unsafe fn Kraid_ProcessKraidInstr(game: &mut Game) -> uint16 {
             return Kraid_ExecuteInstr(game);
         }
     }
-    return result;
+    result
 }
 pub unsafe fn KraidInstr_PlayRoarSfx(game: &mut Game) {
     QueueSfx2_Max6(0x2d as uint16, game);
@@ -1090,16 +1086,14 @@ pub unsafe fn CallKraidInstr(mut ea: uint32, game: &mut Game) {
     match ea {
         10989460 => {
             KraidInstr_PlayRoarSfx(game);
-            return;
         }
         10989471 => {
             KraidInstr_PlayDyingSfx(game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn Kraid_ExecuteInstr(game: &mut Game) -> uint16 {
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int, game);
@@ -1600,7 +1594,7 @@ pub unsafe fn Kraid_HealthBasedPaletteHandling(game: &mut Game) {
     }
 }
 pub fn Kraid_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
-    return jp;
+    jp
 }
 pub unsafe fn Kraid_Instr_DecYpos(
     mut k: uint16,
@@ -1609,7 +1603,7 @@ pub unsafe fn Kraid_Instr_DecYpos(
 ) -> *const uint16 {
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int, game);
     (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
-    return jp;
+    jp
 }
 pub unsafe fn Kraid_Instr_IncrYpos_Shake(
     mut k: uint16,
@@ -1620,7 +1614,7 @@ pub unsafe fn Kraid_Instr_IncrYpos_Shake(
     (*E).base.y_pos = (*E).base.y_pos.wrapping_add(1);
     *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = 1 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 10 as uint16;
-    return jp;
+    jp
 }
 pub unsafe fn Kraid_Instr_PlaySound_0x76(
     mut k: uint16,
@@ -1628,7 +1622,7 @@ pub unsafe fn Kraid_Instr_PlaySound_0x76(
     game: &mut Game,
 ) -> *const uint16 {
     QueueSfx2_Max6(0x76 as uint16, game);
-    return jp;
+    jp
 }
 pub unsafe fn Kraid_Instr_XposMinus3(
     mut k: uint16,
@@ -1637,7 +1631,7 @@ pub unsafe fn Kraid_Instr_XposMinus3(
 ) -> *const uint16 {
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int, game);
     (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(g_word_A7A91C);
-    return jp;
+    jp
 }
 pub unsafe fn Kraid_Instr_XposMinus3b(
     mut k: uint16,
@@ -1646,7 +1640,7 @@ pub unsafe fn Kraid_Instr_XposMinus3b(
 ) -> *const uint16 {
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int, game);
     (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(g_word_A7A91C);
-    return jp;
+    jp
 }
 pub unsafe fn Kraid_Instr_XposPlus3(
     mut k: uint16,
@@ -1655,7 +1649,7 @@ pub unsafe fn Kraid_Instr_XposPlus3(
 ) -> *const uint16 {
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int, game);
     (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(g_word_A7A920);
-    return jp;
+    jp
 }
 pub unsafe fn Kraid_Instr_MoveHimRight(
     mut k: uint16,
@@ -1685,7 +1679,7 @@ pub unsafe fn Kraid_Instr_MoveHimRight(
             (*Get_Kraid(0x140 as ::core::ffi::c_int, game)).base.x_pos = x_pos;
         }
     }
-    return jp;
+    jp
 }
 pub unsafe fn Kraid_InitEyeGlowing(game: &mut Game) {
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int, game);
@@ -2641,7 +2635,7 @@ pub unsafe fn UnpauseHook_Kraid_IsDead(game: &mut Game) -> CoroutineRet {
     SetupDmaTransfer(&raw const unk_A7C23E as *const ::core::ffi::c_void, game);
     WriteReg(MDMAEN as uint16, 2 as uint8, game);
     Kraid_TransferTopHalfToVram(game);
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 static unk_A7C26B: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e5000, 0x400);
 static unk_A7C28D: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e2000, 0x800);
@@ -2657,7 +2651,7 @@ pub unsafe fn UnpauseHook_Kraid_IsAlive(game: &mut Game) -> CoroutineRet {
     SetupDmaTransfer(&raw const unk_A7C26B as *const ::core::ffi::c_void, game);
     WriteReg(MDMAEN as uint16, 2 as uint8, game);
     Kraid_TransferTopHalfToVram(game);
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn Kraid_TransferTopHalfToVram(game: &mut Game) {
     WriteReg(VMADDL as uint16, 0 as uint8, game);
@@ -2784,7 +2778,7 @@ pub unsafe fn Kraid_UnpauseHook_IsSinking(game: &mut Game) -> CoroutineRet {
         }
     }
     *_state_variable_ = 0 as uint8;
-    return 0 as CoroutineRet;
+    0 as CoroutineRet
 }
 pub unsafe fn PauseHook_Kraid(game: &mut Game) {
     let mut v1: ::core::ffi::c_uint = 0;
@@ -3175,33 +3169,27 @@ pub unsafe fn CallKraidSinkTableFunc(mut ea: uint32, game: &mut Game) {
     match ea {
         10995345 => {
             Kraid_CrumbleLeftPlatform_Left(game);
-            return;
         }
-        10995366 => return,
+        10995366 => (),
         10995367 => {
             Kraid_CrumbleRightPlatform_Middle(game);
-            return;
         }
         10995389 => {
             Kraid_CrumbleRightPlatform_Left(game);
-            return;
         }
         10995411 => {
             Kraid_CrumbleLeftPlatform_Right(game);
-            return;
         }
         10995433 => {
             Kraid_CrumbleLeftPlatform_Middle(game);
-            return;
         }
         10995455 => {
             Kraid_CrumbleRightPlatform_Right(game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn Kraid_FadeInBg_ClearBg2TilemapTopHalf(game: &mut Game) {
     let mut v2: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
@@ -3490,218 +3478,166 @@ pub unsafe fn CallKraidFunc(mut ea: uint32, game: &mut Game) {
     match ea {
         10988621 => {
             Kraid_GetsBig_BreakCeilingPlatforms(game);
-            return;
         }
         10988858 => {
             Kraid_GetsBig_SetBG2TilemapPrioBits(game);
-            return;
         }
         10988897 => {
             Kraid_GetsBig_FinishUpdateBg2Tilemap(game);
-            return;
         }
         10988942 => {
             Kraid_GetsBig_DrawRoomBg(game);
-            return;
         }
         10989091 => {
             Kraid_GetsBig_FadeInRoomBg(game);
-            return;
         }
         10989220 => {
             Kraid_Mainloop_Thinking(game);
-            return;
         }
         10989252 => {
             Kraid_GetsBig_Thinking(game);
-            return;
         }
         10989284 => {
             Kraid_Shot_MouthIsOpen(game);
-            return;
         }
         10991295 => {
             Kraid_InitEyeGlowing(game);
-            return;
         }
         10991319 => {
             Kraid_Shot_GlowHisEye(game);
-            return;
         }
         10991421 => {
             Kraid_Shot_UnglowEye(game);
-            return;
         }
         10991666 => {
             KraidLint_ProduceLint(k, game);
-            return;
         }
         10991771 => {
             KraidLint_FireLint(k, game);
-            return;
         }
         10991879 => {
             KraidFingernail_WaitForLintXpos(k, game);
-            return;
         }
         10991907 => {
             Kraid_AlignEnemyToKraid(k, game);
-            return;
         }
         10991917 => {
             KraidEnemy_HandleFunctionTimer(k, game);
-            return;
         }
         10991935 => {
             KraidEnemy_DecrementEnemyFunctionTimer(game);
-            return;
         }
         10991968 => {
             KraidFoot_FirstPhase_Thinking(k, game);
-            return;
         }
         10991973 => {
             KraidEnemy_ProcessInstrEnemyTimer(k, game);
-            return;
         }
         10992174 => {
             KraidsFoot_SecondPhase_Thinking(game);
-            return;
         }
         10992453 => {
             KraidsFoot_SecondPhase_WalkingBackwards(game);
-            return;
         }
         10992494 => {
             KraidsFoot_SecondPhaseSetup_WalkToStartPt(game);
-            return;
         }
         10992548 => {
             KraidsFoot_SecondPhase_Init(game);
-            return;
         }
         10992558 => {
             KraidsFoot_SecondPhase_WalkForward(game);
-            return;
         }
         10992618 => {
             Kraid_Main_AttackWithMouthOpen(game);
-            return;
         }
         10992992 => {
             KraidsFingernail_Init(game);
-            return;
         }
         10993294 => {
             KraidsFingernail_Fire(k, game);
-            return;
         }
         10993453 => {
             KraidsFoot_PrepareToLungeForward(game);
-            return;
         }
         10993579 => {
             KraidsFoot_FirstPhase_RetreatFromLunge(game);
-            return;
         }
         10993825 => {
             Kraid_GetsBig_ReleaseCamera(game);
-            return;
         }
         10994528 => {
             Kraid_Death_Init(game);
-            return;
         }
         10994681 => {
             Kraid_Death_Fadeout(game);
-            return;
         }
         10994852 => {
             Kraid_Death_UpdateBG2TilemapTopHalf(game);
-            return;
         }
         10994888 => {
             Kraid_Death_UpdateBG2TilemapBottomHalf(game);
-            return;
         }
         10994999 => {
             Kraid_Death_SinkThroughFloor(game);
-            return;
         }
         10995477 => {
             Kraid_FadeInBg_ClearBg2TilemapTopHalf(game);
-            return;
         }
         10995537 => {
             Kraid_FadeInBg_ClearBg2TilemapBottomHalf(game);
-            return;
         }
         10995575 => {
             Kraid_FadeInBg_LoadBg3Tiles1of4(game);
-            return;
         }
         10995619 => {
             Kraid_FadeInBg_LoadBg3Tiles2of4(game);
-            return;
         }
         10995657 => {
             Kraid_FadeInBg_LoadBg3Tiles3of4(game);
-            return;
         }
         10995695 => {
             Kraid_FadeInBg_LoadBg3Tiles4of4(game);
-            return;
         }
         10995733 => {
             Kraid_FadeInBg_FadeInBp6(game);
-            return;
         }
         10995779 => {
             Kraid_FadeInBg_SetEnemyDead_KraidWasAlive(game);
-            return;
         }
         10995793 => {
             Kraid_FadeInBg_SetEnemyDead_KraidWasDead(game);
-            return;
         }
         10995813 => {
             Kraid_RestrictSamusXtoFirstScreen(k, game);
-            return;
         }
         10995819 => {
             Kraid_RaiseKraidThroughFloor(k, game);
-            return;
         }
         10995866 => {
             Kraid_Raise_LoadTilemapBottomAndShake(game);
-            return;
         }
         10995936 => {
             Kraid_Raise_SpawnRandomEarthquakeProjs16(game);
-            return;
         }
         10995970 => {
             Kraid_Raise_SpawnRandomEarthquakeProjs8(game);
-            return;
         }
         10996004 => {
             Kraid_Raise_Handler(game);
-            return;
         }
         10991720 => {
             KraidLint_ChargeLint(k, game);
-            return;
         }
-        10992173 => return,
+        10992173 => (),
         10993501 => {
             KraidsFoot_FirstPhase_LungeForward(game);
-            return;
         }
-        10991665 => return,
+        10991665 => (),
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn Phantoon_Init(game: &mut Game) {
     let mut j: int16 = 0;
@@ -3869,7 +3805,7 @@ pub unsafe fn Phantoon_Func_3(mut amt: int32, game: &mut Game) -> uint8 {
             (*E).phant_var_D = r20;
         }
     }
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn Phantoon_Func_4(mut k: uint16, game: &mut Game) {
     SpawnEprojWithGfx(
@@ -5056,11 +4992,11 @@ pub unsafe fn Phantoon_Func_8(game: &mut Game) -> uint8 {
             i += 2 as ::core::ffi::c_int;
         }
         (*E).phant_var_E = (*E).phant_var_E.wrapping_add(1);
-        return 0 as uint8;
+        0 as uint8
     } else {
         (*E).phant_var_E = 0 as uint16;
-        return 1 as uint8;
-    };
+        1 as uint8
+    }
 }
 pub unsafe fn Phantoon_SetColorBasedOnHp(game: &mut Game) -> uint8 {
     let mut Entry: PairU16 = PairU16 { k: 0, j: 0 };
@@ -5087,11 +5023,11 @@ pub unsafe fn Phantoon_SetColorBasedOnHp(game: &mut Game) -> uint8 {
             }
         }
         (*E).phant_var_E = (*E).phant_var_E.wrapping_add(1);
-        return 0 as uint8;
+        0 as uint8
     } else {
         (*E).phant_var_E = 0 as uint16;
-        return 1 as uint8;
-    };
+        1 as uint8
+    }
 }
 pub unsafe fn Phantoon_SetColorBasedOnHp_FindEntry(mut k: uint16, game: &mut Game) -> PairU16 {
     let mut r24: uint16 = k;
@@ -5123,7 +5059,7 @@ pub unsafe fn Phantoon_SetColorBasedOnHp_FindEntry(mut k: uint16, game: &mut Gam
         ),
         game,
     ) as *const uint16;
-    return MakePairU16(r24, *v1);
+    MakePairU16(r24, *v1)
 }
 pub unsafe fn Phantoon_Func_9(game: &mut Game) -> uint8 {
     let mut E: *mut Enemy_Phantoon = Get_Phantoon(0x40 as ::core::ffi::c_int, game);
@@ -5144,11 +5080,11 @@ pub unsafe fn Phantoon_Func_9(game: &mut Game) -> uint8 {
             i += 2 as ::core::ffi::c_int;
         }
         (*E).phant_var_E = (*E).phant_var_E.wrapping_add(1);
-        return 0 as uint8;
+        0 as uint8
     } else {
         (*E).phant_var_E = 0 as uint16;
-        return 1 as uint8;
-    };
+        1 as uint8
+    }
 }
 pub unsafe fn Phantoon_Func_10_CalculateNthTransitionColorFromXtoY(
     mut a: uint16,
@@ -5156,7 +5092,7 @@ pub unsafe fn Phantoon_Func_10_CalculateNthTransitionColorFromXtoY(
     mut j: uint16,
     game: &mut Game,
 ) -> uint16 {
-    return (Phantoon_CalculateNthTransitionColorComponentFromXtoY(
+    (Phantoon_CalculateNthTransitionColorComponentFromXtoY(
         a,
         (k) & (0x1fu16),
         (j) & (0x1fu16),
@@ -5179,7 +5115,7 @@ pub unsafe fn Phantoon_Func_10_CalculateNthTransitionColorFromXtoY(
                 as uint16,
             game,
         ) as ::core::ffi::c_int)
-            << 10 as ::core::ffi::c_int)) as uint16;
+            << 10 as ::core::ffi::c_int)) as uint16
 }
 pub unsafe fn Phantoon_CalculateNthTransitionColorComponentFromXtoY(
     mut a: uint16,
@@ -5209,8 +5145,8 @@ pub unsafe fn Phantoon_CalculateNthTransitionColorComponentFromXtoY(
     } else {
         RegWord as ::core::ffi::c_int
     }) as uint16;
-    return (((r18).wrapping_add(u16::swap_bytes(k))) as ::core::ffi::c_int
-        >> 8 as ::core::ffi::c_int) as uint16;
+    (((r18).wrapping_add(u16::swap_bytes(k))) as ::core::ffi::c_int >> 8 as ::core::ffi::c_int)
+        as uint16
 }
 pub unsafe fn Phantoon_Hurt(game: &mut Game) {
     let mut Entry: PairU16 = PairU16 { k: 0, j: 0 };
@@ -5423,7 +5359,6 @@ pub unsafe fn Phantoon_Shot(game: &mut Game) {
                     _ => {}
                 }
                 (*Get_Phantoon(0x80 as ::core::ffi::c_int, game)).phant_parameter_2 = 2 as uint16;
-                return;
             }
         }
     }
@@ -5467,12 +5402,12 @@ pub unsafe fn Etecoon_Func_1(mut k: uint16, game: &mut Game) {
 }
 pub unsafe fn Etecoon_Func_2(mut k: uint16, game: &mut Game) -> uint8 {
     let mut E: *mut Enemy_Etecoon = Get_Etecoon(k as ::core::ffi::c_int, game);
-    return Enemy_MoveRight_IgnoreSlopes(
+    Enemy_MoveRight_IgnoreSlopes(
         k,
         (((*E).etecoon_var_C as uint32) << 16 as ::core::ffi::c_int | (*E).etecoon_var_D as uint32)
             as int32,
         game,
-    );
+    )
 }
 pub unsafe fn Etecoon_Func_3(mut k: uint16, game: &mut Game) -> uint8 {
     let mut E: *mut Enemy_Etecoon = Get_Etecoon(k as ::core::ffi::c_int, game);
@@ -5490,7 +5425,7 @@ pub unsafe fn Etecoon_Func_3(mut k: uint16, game: &mut Game) -> uint8 {
                 | *((&raw mut game.g_ram as *mut uint8).offset(0xb32) as *mut uint16) as uint32,
         );
     }
-    return Enemy_MoveDown(k, amt, game);
+    Enemy_MoveDown(k, amt, game)
 }
 pub unsafe fn Etecoon_Func_4(mut k: uint16, game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x797) as *mut uint16) == 0 {
@@ -6096,8 +6031,8 @@ pub unsafe fn Dachora_Func_6(mut k: uint16, game: &mut Game) -> int32 {
     if ((*E).dachor_var_A == 4u16 || (*E).dachor_var_A == 8u16) && (*E).dachor_var_B == 0 {
         (*E).base.current_instruction = ((*E).base.current_instruction).wrapping_add(28u16);
     }
-    return (((*E).dachor_var_A as uint32) << 16 as ::core::ffi::c_int | (*E).dachor_var_B as uint32)
-        as int32;
+    (((*E).dachor_var_A as uint32) << 16 as ::core::ffi::c_int | (*E).dachor_var_B as uint32)
+        as int32
 }
 pub unsafe fn Dachora_Func_7(mut k: uint16, game: &mut Game) {
     Dachora_Func_10(k, game);

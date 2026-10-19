@@ -91,12 +91,12 @@ enemy_layout! {
 
 #[inline]
 unsafe fn RomBankBase(mut bank: uint8, game: &mut Game) -> *const uint8 {
-    return RomPtr(
+    RomPtr(
         (((bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) + 0x8000 as ::core::ffi::c_int)
             as uint32_t,
         game,
     )
-    .offset(-(0x8000 as ::core::ffi::c_int as isize));
+    .offset(-(0x8000 as ::core::ffi::c_int as isize))
 }
 pub const fnnullsub_171_AA: ::core::ffi::c_int = 0xaa807b;
 pub const fnnullsub_270: ::core::ffi::c_int = 0xaac6ab;
@@ -110,21 +110,21 @@ pub const fnnullsub_274: ::core::ffi::c_int = 0xaadcaa;
 pub const fnnullsub_276: ::core::ffi::c_int = 0xaae7a6;
 #[inline]
 unsafe fn gEnemyData(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut EnemyData {
-    return (&raw mut game.g_ram as *mut uint8)
+    (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
-        .offset(o as isize) as *mut EnemyData;
+        .offset(o as isize) as *mut EnemyData
 }
 #[inline]
 unsafe fn Get_Shaktool(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_Shaktool {
-    return (&raw mut game.g_ram as *mut uint8)
+    (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Shaktool;
+        .offset(o as isize) as *mut Enemy_Shaktool
 }
 #[inline]
 unsafe fn Get_Torizo(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_Torizo {
-    return (&raw mut game.g_ram as *mut uint8)
+    (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Torizo;
+        .offset(o as isize) as *mut Enemy_Torizo
 }
 static g_word_AAB096: uint16 = 6 as uint16;
 static g_word_AAB098: uint16 = 5 as uint16;
@@ -307,7 +307,7 @@ pub unsafe fn Enemy_ClearAiPreInstr_AA(
     game: &mut Game,
 ) -> *const uint16 {
     (*gEnemyData(k as ::core::ffi::c_int, game)).ai_preinstr = ((0xaa807bi32) as u16) & (0xffffu16);
-    return jp;
+    jp
 }
 pub unsafe fn Enemy_SetAiPreInstr_AA(
     mut k: uint16,
@@ -315,7 +315,7 @@ pub unsafe fn Enemy_SetAiPreInstr_AA(
     game: &mut Game,
 ) -> *const uint16 {
     (*gEnemyData(k as ::core::ffi::c_int, game)).ai_preinstr = *jp.offset(0);
-    return jp.offset(1);
+    jp.offset(1)
 }
 pub unsafe fn Torizo_Instr_3(
     mut k: uint16,
@@ -323,7 +323,7 @@ pub unsafe fn Torizo_Instr_3(
     game: &mut Game,
 ) -> *const uint16 {
     (*Get_Torizo(k as ::core::ffi::c_int, game)).toriz_var_E = *jp.offset(0);
-    return jp.offset(1);
+    jp.offset(1)
 }
 pub unsafe fn Torizo_Instr_31(
     mut k: uint16,
@@ -339,7 +339,7 @@ pub unsafe fn Torizo_Instr_31(
     parameter = SpawnEprojWithGfx(parameter, k, addr_stru_86A95B as uint16, game);
     parameter = SpawnEprojWithGfx(parameter, k, addr_stru_86A95B as uint16, game);
     SpawnEprojWithGfx(parameter, k, addr_stru_86A95B as uint16, game);
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_33(
     mut k: uint16,
@@ -348,7 +348,7 @@ pub unsafe fn Torizo_Instr_33(
 ) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
     (*E).toriz_parameter_2 = ((*E).toriz_parameter_2) | (0x4000u16);
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_36(
     mut k: uint16,
@@ -358,7 +358,7 @@ pub unsafe fn Torizo_Instr_36(
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         & !(kEnemyProps_Invisible as ::core::ffi::c_int)) as uint16;
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_37(
     mut k: uint16,
@@ -367,7 +367,7 @@ pub unsafe fn Torizo_Instr_37(
 ) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
     (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_35(
     mut k: uint16,
@@ -383,7 +383,7 @@ pub unsafe fn Torizo_Instr_35(
             .offset((v3 + 144 as ::core::ffi::c_int) as isize) = 0 as uint16;
         i -= 2 as ::core::ffi::c_int;
     }
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_38(
     mut k: uint16,
@@ -397,7 +397,7 @@ pub unsafe fn Torizo_Instr_38(
     } else {
         Enemy_ItemDrop_BombTorizo(k, game);
     }
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_6(
     mut k: uint16,
@@ -405,7 +405,7 @@ pub unsafe fn Torizo_Instr_6(
     game: &mut Game,
 ) -> *const uint16 {
     sub_82DAF7(0x600 as uint16, game);
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_5(
     mut k: uint16,
@@ -413,7 +413,7 @@ pub unsafe fn Torizo_Instr_5(
     game: &mut Game,
 ) -> *const uint16 {
     Torizo_C268(game);
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_9(
     mut k: uint16,
@@ -422,7 +422,7 @@ pub unsafe fn Torizo_Instr_9(
 ) -> *const uint16 {
     QueueMusic_Delayed8(g_word_AAB098, game);
     SpawnPalfxObject(addr_stru_8DF759 as uint16, game);
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_C20A(mut k: uint16, game: &mut Game) {
     let mut v2: int16 = 0;
@@ -506,7 +506,7 @@ pub unsafe fn Torizo_C2B0(game: &mut Game) {
     }
 }
 pub fn Torizo_Instr_7(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_2(
     mut k: uint16,
@@ -514,7 +514,7 @@ pub unsafe fn Torizo_Instr_2(
     game: &mut Game,
 ) -> *const uint16 {
     (*Get_Torizo(k as ::core::ffi::c_int, game)).toriz_var_04 = 30583 as uint16;
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_8(
     mut k: uint16,
@@ -522,7 +522,7 @@ pub unsafe fn Torizo_Instr_8(
     game: &mut Game,
 ) -> *const uint16 {
     (*Get_Torizo(k as ::core::ffi::c_int, game)).toriz_var_04 = 0 as uint16;
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_25(
     mut k: uint16,
@@ -536,10 +536,10 @@ pub unsafe fn Torizo_Instr_25(
         return *jp.offset(0) as uintptr_t as *const uint16;
     }
     if *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) != 0 {
-        return *jp.offset(1) as uintptr_t as *const uint16;
+        *jp.offset(1) as uintptr_t as *const uint16
     } else {
-        return jp.offset(2);
-    };
+        jp.offset(2)
+    }
 }
 pub unsafe fn Torizo_Instr_22(
     mut k: uint16,
@@ -547,21 +547,21 @@ pub unsafe fn Torizo_Instr_22(
     game: &mut Game,
 ) -> *const uint16 {
     (*Get_Torizo(k as ::core::ffi::c_int, game)).toriz_var_00 = *jp.offset(0);
-    return jp.offset(1);
+    jp.offset(1)
 }
 pub unsafe fn Torizo_Instr_19(
     mut k: uint16,
     mut jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    return (*Get_Torizo(k as ::core::ffi::c_int, game)).toriz_var_00 as uintptr_t as *const uint16;
+    (*Get_Torizo(k as ::core::ffi::c_int, game)).toriz_var_00 as uintptr_t as *const uint16
 }
 pub unsafe fn Torizo_Instr_32(
     mut k: uint16,
     mut jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    return (*Get_Torizo(k as ::core::ffi::c_int, game)).toriz_var_01 as uintptr_t as *const uint16;
+    (*Get_Torizo(k as ::core::ffi::c_int, game)).toriz_var_01 as uintptr_t as *const uint16
 }
 pub unsafe fn Torizo_Instr_30(
     mut k: uint16,
@@ -581,7 +581,7 @@ pub unsafe fn Torizo_Instr_30(
     )) as ::core::ffi::c_long as uint16;
     (*E).base.flash_timer = 40 as uint16;
     (*E).base.instruction_timer = 40 as uint16;
-    return ::core::ptr::null::<uint16>();
+    ::core::ptr::null::<uint16>()
 }
 pub unsafe fn Torizo_Instr_34(
     mut k: uint16,
@@ -597,7 +597,7 @@ pub unsafe fn Torizo_Instr_34(
     )) as ::core::ffi::c_long as uint16;
     (*E).base.flash_timer = 1 as uint16;
     (*E).base.instruction_timer = 1 as uint16;
-    return ::core::ptr::null::<uint16>();
+    ::core::ptr::null::<uint16>()
 }
 pub unsafe fn Torizo_Instr_24(
     mut k: uint16,
@@ -610,7 +610,7 @@ pub unsafe fn Torizo_Instr_24(
         game,
     );
     SpawnEprojWithRoomGfx(addr_stru_86AFF3 as uint16, left_foot_parameter, game);
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_12(
     mut k: uint16,
@@ -626,7 +626,7 @@ pub unsafe fn Torizo_Instr_12(
             game,
         );
     }
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_10(
     mut k: uint16,
@@ -635,7 +635,7 @@ pub unsafe fn Torizo_Instr_10(
 ) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
     (*E).toriz_parameter_1 = ((*E).toriz_parameter_1) | (0x4000u16);
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_11(
     mut k: uint16,
@@ -645,7 +645,7 @@ pub unsafe fn Torizo_Instr_11(
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
     (*E).toriz_parameter_1 = ((*E).toriz_parameter_1) & (0x1fffu16);
     (*E).toriz_var_09 = (*E).toriz_var_09.wrapping_add(1);
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_29(
     mut k: uint16,
@@ -657,7 +657,7 @@ pub unsafe fn Torizo_Instr_29(
         & 0x1fff as ::core::ffi::c_int
         | 0x8000 as ::core::ffi::c_int) as uint16;
     (*E).toriz_var_09 = (*E).toriz_var_09.wrapping_add(1);
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_1(
     mut k: uint16,
@@ -669,7 +669,7 @@ pub unsafe fn Torizo_Instr_1(
         & 0x1fff as ::core::ffi::c_int
         | 0x2000 as ::core::ffi::c_int) as uint16;
     (*E).toriz_var_09 = (*E).toriz_var_09.wrapping_add(1);
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_28(
     mut k: uint16,
@@ -681,7 +681,7 @@ pub unsafe fn Torizo_Instr_28(
         & 0x1fff as ::core::ffi::c_int
         | 0xa000 as ::core::ffi::c_int) as uint16;
     (*E).toriz_var_09 = (*E).toriz_var_09.wrapping_add(1);
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_4(
     mut k: uint16,
@@ -697,7 +697,7 @@ pub unsafe fn Torizo_Instr_4(
         (g_word_AAC40E[((v2 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
             >> 1 as ::core::ffi::c_int) as usize]) as u16,
     );
-    return jp.offset(1);
+    jp.offset(1)
 }
 pub unsafe fn Torizo_Instr_40(
     mut k: uint16,
@@ -713,7 +713,7 @@ pub unsafe fn Torizo_Instr_40(
         (g_word_AAC460[((v2 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
             >> 1 as ::core::ffi::c_int) as usize]) as u16,
     );
-    return jp.offset(1);
+    jp.offset(1)
 }
 pub unsafe fn Torizo_Instr_16(
     mut k: uint16,
@@ -732,9 +732,9 @@ pub unsafe fn Torizo_Instr_16(
     {
         (*E).toriz_var_03 = 0 as uint16;
         if ((*E).toriz_parameter_1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
-            return addr_kTorizo_Ilist_B962 as ::core::ffi::c_int as uintptr_t as *const uint16;
+            addr_kTorizo_Ilist_B962 as ::core::ffi::c_int as uintptr_t as *const uint16
         } else {
-            return addr_kTorizo_Ilist_BDD8 as ::core::ffi::c_int as uintptr_t as *const uint16;
+            addr_kTorizo_Ilist_BDD8 as ::core::ffi::c_int as uintptr_t as *const uint16
         }
     } else {
         EnemyFunc_C8AD(k, game);
@@ -748,11 +748,11 @@ pub unsafe fn Torizo_Instr_16(
             if (*E).toriz_var_03 == 0 {
                 (*E).toriz_var_03 = 72 as uint16;
             }
-            return jp.offset(1);
+            jp.offset(1)
         } else {
-            return jp.offset(1);
+            jp.offset(1)
         }
-    };
+    }
 }
 pub unsafe fn Torizo_Instr_27(
     mut k: uint16,
@@ -771,9 +771,9 @@ pub unsafe fn Torizo_Instr_27(
     {
         (*E).toriz_var_03 = 0 as uint16;
         if ((*E).toriz_parameter_1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
-            return addr_kTorizo_Ilist_BD0E as ::core::ffi::c_int as uintptr_t as *const uint16;
+            addr_kTorizo_Ilist_BD0E as ::core::ffi::c_int as uintptr_t as *const uint16
         } else {
-            return addr_kTorizo_Ilist_C188 as ::core::ffi::c_int as uintptr_t as *const uint16;
+            addr_kTorizo_Ilist_C188 as ::core::ffi::c_int as uintptr_t as *const uint16
         }
     } else {
         EnemyFunc_C8AD(k, game);
@@ -787,11 +787,11 @@ pub unsafe fn Torizo_Instr_27(
             if (*E).toriz_var_03 == 0 {
                 (*E).toriz_var_03 = 72 as uint16;
             }
-            return jp.offset(1);
+            jp.offset(1)
         } else {
-            return jp.offset(1);
+            jp.offset(1)
         }
-    };
+    }
 }
 pub unsafe fn Torizo_Instr_23(
     mut k: uint16,
@@ -802,10 +802,10 @@ pub unsafe fn Torizo_Instr_23(
         & 0x8000 as ::core::ffi::c_int)
         != 0i32
     {
-        return *jp.offset(0) as uintptr_t as *const uint16;
+        *jp.offset(0) as uintptr_t as *const uint16
     } else {
-        return jp.offset(1);
-    };
+        jp.offset(1)
+    }
 }
 pub unsafe fn Torizo_Instr_14(
     mut k: uint16,
@@ -831,7 +831,7 @@ pub unsafe fn Torizo_Instr_14(
         (*gEnemyData(k as ::core::ffi::c_int, game)).bank,
         game,
     )) as ::core::ffi::c_long as uint16;
-    return *jp.offset(0) as uintptr_t as *const uint16;
+    *jp.offset(0) as uintptr_t as *const uint16
 }
 pub unsafe fn Torizo_Instr_15(
     mut k: uint16,
@@ -845,7 +845,7 @@ pub unsafe fn Torizo_Instr_15(
         return jp.offset(1);
     }
     Torizo_C22D(k, game);
-    return *jp.offset(0) as uintptr_t as *const uint16;
+    *jp.offset(0) as uintptr_t as *const uint16
 }
 pub unsafe fn Torizo_Instr_26(
     mut k: uint16,
@@ -869,10 +869,10 @@ pub unsafe fn Torizo_Instr_26(
             & 8 as ::core::ffi::c_int)
             != 0i32
     {
-        return *jp.offset(0) as uintptr_t as *const uint16;
+        *jp.offset(0) as uintptr_t as *const uint16
     } else {
-        return *jp.offset(1) as uintptr_t as *const uint16;
-    };
+        *jp.offset(1) as uintptr_t as *const uint16
+    }
 }
 pub unsafe fn Torizo_Instr_18(
     mut k: uint16,
@@ -894,7 +894,7 @@ pub unsafe fn Torizo_Instr_18(
         addr_kEproj_BombTorizosChozoOrbs as uint16,
         game,
     );
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_20(
     mut k: uint16,
@@ -907,7 +907,7 @@ pub unsafe fn Torizo_Instr_20(
         addr_kEproj_BombTorizoSonicBoom as uint16,
         game,
     );
-    return jp.offset(1);
+    jp.offset(1)
 }
 pub unsafe fn Torizo_Instr_44(
     mut k: uint16,
@@ -920,7 +920,7 @@ pub unsafe fn Torizo_Instr_44(
         addr_kEproj_GoldenTorizoSonicBoom as uint16,
         game,
     );
-    return jp.offset(1);
+    jp.offset(1)
 }
 pub unsafe fn Torizo_Instr_21(
     mut k: uint16,
@@ -932,7 +932,7 @@ pub unsafe fn Torizo_Instr_21(
         *jp.offset(0),
         game,
     );
-    return jp.offset(1);
+    jp.offset(1)
 }
 pub unsafe fn Torizo_Instr_17(
     mut k: uint16,
@@ -940,7 +940,7 @@ pub unsafe fn Torizo_Instr_17(
     game: &mut Game,
 ) -> *const uint16 {
     QueueSfx2_Max6(0x27 as uint16, game);
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_13(
     mut k: uint16,
@@ -948,7 +948,7 @@ pub unsafe fn Torizo_Instr_13(
     game: &mut Game,
 ) -> *const uint16 {
     QueueSfx2_Max6(0x4b as uint16, game);
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_C620(mut k: uint16, game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) == 0
@@ -1015,35 +1015,29 @@ pub unsafe fn Torizo_Hurt(game: &mut Game) {
 }
 pub unsafe fn CallTorizoFunc(mut ea: uint32, mut k: uint16, game: &mut Game) {
     match ea {
-        11191979 => return,
+        11191979 => (),
         11191999 => {
             Torizo_Func_3(k, game);
-            return;
         }
         11192006 => {
             Torizo_Func_4(k, game);
-            return;
         }
         11192063 => {
             Torizo_Func_1(k, game);
-            return;
         }
         11195842 => {
             Torizo_Func_9(k, game);
-            return;
         }
         11195871 => {
             Torizo_Func_10(k, game);
-            return;
         }
         11195878 => {
             Torizo_D5E6(k, game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn Torizo_Main(game: &mut Game) {
     let mut E: *mut Enemy_Torizo = Get_Torizo(
@@ -1327,10 +1321,10 @@ pub unsafe fn Torizo_Instr_39(
     game: &mut Game,
 ) -> *const uint16 {
     if (*Get_Torizo(k as ::core::ffi::c_int, game)).base.y_pos == 375u16 {
-        return jp.offset(1);
+        jp.offset(1)
     } else {
-        return *jp.offset(0) as uintptr_t as *const uint16;
-    };
+        *jp.offset(0) as uintptr_t as *const uint16
+    }
 }
 pub unsafe fn Torizo_Instr_41(
     mut k: uint16,
@@ -1338,7 +1332,7 @@ pub unsafe fn Torizo_Instr_41(
     game: &mut Game,
 ) -> *const uint16 {
     Torizo_C298(game);
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_42(
     mut k: uint16,
@@ -1350,7 +1344,7 @@ pub unsafe fn Torizo_Instr_42(
     (*E).base.x_width = 18 as uint16;
     (*E).base.y_height = 48 as uint16;
     SpawnPalfxObject(addr_stru_8DF75D as uint16, game);
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_48(
     mut k: uint16,
@@ -1360,7 +1354,7 @@ pub unsafe fn Torizo_Instr_48(
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
     (*E).toriz_parameter_2 =
         ((*E).toriz_parameter_2 as ::core::ffi::c_int & !(0x1000 as ::core::ffi::c_int)) as uint16;
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_57(
     mut k: uint16,
@@ -1368,7 +1362,7 @@ pub unsafe fn Torizo_Instr_57(
     game: &mut Game,
 ) -> *const uint16 {
     SpawnEprojWithRoomGfx(addr_stru_86B1C0 as uint16, 0 as uint16, game);
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_58(
     mut k: uint16,
@@ -1386,7 +1380,7 @@ pub unsafe fn Torizo_Instr_58(
             return jp.offset(1);
         }
     }
-    return *jp.offset(0) as uintptr_t as *const uint16;
+    *jp.offset(0) as uintptr_t as *const uint16
 }
 pub unsafe fn Torizo_Instr_59(
     mut k: uint16,
@@ -1396,7 +1390,7 @@ pub unsafe fn Torizo_Instr_59(
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
     (*E).toriz_var_06 =
         ((*E).toriz_var_06 as ::core::ffi::c_int & !(0x8000 as ::core::ffi::c_int)) as uint16;
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_62(
     mut k: uint16,
@@ -1405,7 +1399,7 @@ pub unsafe fn Torizo_Instr_62(
 ) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
     (*E).toriz_var_06 = ((*E).toriz_var_06) | (0x8000u16);
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_63(
     mut k: uint16,
@@ -1415,7 +1409,7 @@ pub unsafe fn Torizo_Instr_63(
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
     (*E).toriz_parameter_2 =
         ((*E).toriz_parameter_2 as ::core::ffi::c_int & !(0x2000 as ::core::ffi::c_int)) as uint16;
-    return jp;
+    jp
 }
 pub unsafe fn GoldTorizo_Main(game: &mut Game) {
     let mut E: *mut Enemy_Torizo = Get_Torizo(
@@ -1443,7 +1437,7 @@ pub unsafe fn Torizo_Instr_56(
     game: &mut Game,
 ) -> *const uint16 {
     QueueSfx2_Max6(0x34 as uint16, game);
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_60(
     mut k: uint16,
@@ -1451,7 +1445,7 @@ pub unsafe fn Torizo_Instr_60(
     game: &mut Game,
 ) -> *const uint16 {
     QueueSfx2_Max6(0x67 as uint16, game);
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_46(
     mut k: uint16,
@@ -1459,14 +1453,14 @@ pub unsafe fn Torizo_Instr_46(
     game: &mut Game,
 ) -> *const uint16 {
     QueueSfx2_Max6(0x48 as uint16, game);
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Func_12(mut k: uint16, game: &mut Game) -> uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
-    return ((*E).toriz_parameter_1 as ::core::ffi::c_int
+    ((*E).toriz_parameter_1 as ::core::ffi::c_int
         ^ (*E).base.x_pos as ::core::ffi::c_int
             - *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
-                as ::core::ffi::c_int) as uint16;
+                as ::core::ffi::c_int) as uint16
 }
 pub unsafe fn Torizo_Func_11(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
@@ -1511,7 +1505,7 @@ pub unsafe fn Torizo_Instr_47(
         0 as uint16,
         game,
     );
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_49(
     mut k: uint16,
@@ -1549,7 +1543,7 @@ pub unsafe fn Torizo_Instr_49(
         return jp.offset(1);
     }
     (*Get_Torizo(k as ::core::ffi::c_int, game)).toriz_var_09 = 0 as uint16;
-    return *jp.offset(0) as uintptr_t as *const uint16;
+    *jp.offset(0) as uintptr_t as *const uint16
 }
 pub unsafe fn Torizo_Instr_61(
     mut k: uint16,
@@ -1561,7 +1555,7 @@ pub unsafe fn Torizo_Instr_61(
         *jp.offset(0),
         game,
     );
-    return jp.offset(1);
+    jp.offset(1)
 }
 pub unsafe fn Torizo_Instr_53(
     mut k: uint16,
@@ -1584,7 +1578,7 @@ pub unsafe fn Torizo_Instr_53(
             (*gEnemyData(k as ::core::ffi::c_int, game)).bank,
             game,
         )) as ::core::ffi::c_long as uint16;
-    return *jp.offset(0) as uintptr_t as *const uint16;
+    *jp.offset(0) as uintptr_t as *const uint16
 }
 pub unsafe fn Torizo_Instr_55(
     mut k: uint16,
@@ -1602,7 +1596,7 @@ pub unsafe fn Torizo_Instr_55(
         (*gEnemyData(k as ::core::ffi::c_int, game)).bank,
         game,
     )) as ::core::ffi::c_long as uint16;
-    return *jp.offset(0) as uintptr_t as *const uint16;
+    *jp.offset(0) as uintptr_t as *const uint16
 }
 pub unsafe fn Torizo_Instr_52(
     mut k: uint16,
@@ -1619,7 +1613,7 @@ pub unsafe fn Torizo_Instr_52(
         (*gEnemyData(k as ::core::ffi::c_int, game)).bank,
         game,
     )) as ::core::ffi::c_long as uint16;
-    return *jp.offset(0) as uintptr_t as *const uint16;
+    *jp.offset(0) as uintptr_t as *const uint16
 }
 pub unsafe fn Torizo_Instr_50(
     mut k: uint16,
@@ -1646,7 +1640,7 @@ pub unsafe fn Torizo_Instr_50(
     }
     (*E).toriz_var_09 = 0 as uint16;
     Torizo_C20A(k, game);
-    return *jp.offset(0) as uintptr_t as *const uint16;
+    *jp.offset(0) as uintptr_t as *const uint16
 }
 pub unsafe fn Torizo_Instr_43(
     mut k: uint16,
@@ -1659,7 +1653,7 @@ pub unsafe fn Torizo_Instr_43(
         addr_kEproj_GoldenTorizosChozoOrbs as uint16,
         game,
     );
-    return jp;
+    jp
 }
 pub unsafe fn Torizo_Instr_51(
     mut k: uint16,
@@ -1678,7 +1672,7 @@ pub unsafe fn Torizo_Instr_51(
     }
     (*E).toriz_var_09 = 0 as uint16;
     Torizo_C22D(k, game);
-    return *jp.offset(0) as uintptr_t as *const uint16;
+    *jp.offset(0) as uintptr_t as *const uint16
 }
 pub unsafe fn Torizo_Instr_45(
     mut k: uint16,
@@ -1702,10 +1696,10 @@ pub unsafe fn Torizo_Instr_45(
             & 8 as ::core::ffi::c_int)
             != 0i32
     {
-        return *jp.offset(0) as uintptr_t as *const uint16;
+        *jp.offset(0) as uintptr_t as *const uint16
     } else {
-        return *jp.offset(1) as uintptr_t as *const uint16;
-    };
+        *jp.offset(1) as uintptr_t as *const uint16
+    }
 }
 pub unsafe fn Torizo_Instr_54(
     mut k: uint16,
@@ -1724,9 +1718,9 @@ pub unsafe fn Torizo_Instr_54(
     {
         (*E).toriz_var_03 = 0 as uint16;
         if ((*E).toriz_parameter_1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
-            return addr_kTorizo_Ilist_D203 as ::core::ffi::c_int as uintptr_t as *const uint16;
+            addr_kTorizo_Ilist_D203 as ::core::ffi::c_int as uintptr_t as *const uint16
         } else {
-            return addr_kTorizo_Ilist_D2BF as ::core::ffi::c_int as uintptr_t as *const uint16;
+            addr_kTorizo_Ilist_D2BF as ::core::ffi::c_int as uintptr_t as *const uint16
         }
     } else {
         EnemyFunc_C8AD(k, game);
@@ -1740,11 +1734,11 @@ pub unsafe fn Torizo_Instr_54(
             if (*E).toriz_var_03 == 0 {
                 (*E).toriz_var_03 = 16 as uint16;
             }
-            return jp.offset(1);
+            jp.offset(1)
         } else {
-            return jp.offset(1);
+            jp.offset(1)
         }
-    };
+    }
 }
 pub unsafe fn Torizo_Func_9(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_Torizo = Get_Torizo(
@@ -1979,7 +1973,7 @@ pub unsafe fn Shaktool_Instr_2(
         (*E).shakt_var_E as ::core::ffi::c_int + 192 as ::core::ffi::c_int,
         game,
     );
-    return Shaktool_D956(k, jp, ((*EX).shakt_var_D) ^ (0x80u16), game);
+    Shaktool_D956(k, jp, ((*EX).shakt_var_D) ^ (0x80u16), game)
 }
 pub unsafe fn Shaktool_Instr_3(
     mut k: uint16,
@@ -1991,7 +1985,7 @@ pub unsafe fn Shaktool_Instr_3(
         (*E).shakt_var_E as ::core::ffi::c_int + 192 as ::core::ffi::c_int,
         game,
     );
-    return Shaktool_D956(k, jp, (*EX).shakt_var_D, game);
+    Shaktool_D956(k, jp, (*EX).shakt_var_D, game)
 }
 pub unsafe fn Shaktool_Instr_4(
     mut k: uint16,
@@ -1999,12 +1993,12 @@ pub unsafe fn Shaktool_Instr_4(
     game: &mut Game,
 ) -> *const uint16 {
     let mut E: *mut Enemy_Shaktool = Get_Shaktool(k as ::core::ffi::c_int, game);
-    return Shaktool_D956(
+    Shaktool_D956(
         k,
         jp,
         (*((&raw mut (*E).shakt_var_A as *mut uint8).offset(1) as *mut uint16)) ^ (0x80u16),
         game,
-    );
+    )
 }
 pub unsafe fn Shaktool_Instr_5(
     mut k: uint16,
@@ -2012,12 +2006,12 @@ pub unsafe fn Shaktool_Instr_5(
     game: &mut Game,
 ) -> *const uint16 {
     let mut E: *mut Enemy_Shaktool = Get_Shaktool(k as ::core::ffi::c_int, game);
-    return Shaktool_D956(
+    Shaktool_D956(
         k,
         jp,
         *((&raw mut (*E).shakt_var_A as *mut uint8).offset(1) as *mut uint16),
         game,
-    );
+    )
 }
 pub unsafe fn Shaktool_D956(
     mut k: uint16,
@@ -2039,10 +2033,10 @@ pub unsafe fn Shaktool_D956(
         ((kSinCosTable8bit_Sext[v3 as usize] as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
             as uint32,
     );
-    return jp;
+    jp
 }
 pub fn Shaktool_Instr_6(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
-    return jp;
+    jp
 }
 pub unsafe fn Shaktool_Func_2(mut k: uint16, game: &mut Game) {
     SpawnEprojWithGfx(
@@ -2115,7 +2109,7 @@ pub unsafe fn Shaktool_Instr_1(
     .shakt_var_F = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadedb)) as *const uint8
         as *mut uint16)
         .offset(6);
-    return jp;
+    jp
 }
 pub unsafe fn Shaktool_DAE5(mut k: uint16, game: &mut Game) {
     if (NextRandom(game) as ::core::ffi::c_int & 0x8431 as ::core::ffi::c_int) == 0i32 {
@@ -2718,7 +2712,7 @@ pub unsafe fn Shaktool_Instr_9(
 ) -> *const uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1980) as *mut uint16) = 32 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16) = 64 as uint16;
-    return jp;
+    jp
 }
 pub unsafe fn Shaktool_Instr_11(
     mut k: uint16,
@@ -2726,7 +2720,7 @@ pub unsafe fn Shaktool_Instr_11(
     game: &mut Game,
 ) -> *const uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16) = 722 as uint16;
-    return jp;
+    jp
 }
 pub unsafe fn Shaktool_Instr_10(
     mut k: uint16,
@@ -2734,7 +2728,7 @@ pub unsafe fn Shaktool_Instr_10(
     game: &mut Game,
 ) -> *const uint16 {
     CallSomeSamusCode(1 as uint16, game);
-    return jp;
+    jp
 }
 pub unsafe fn sub_AAE445(mut k: uint16, game: &mut Game) {
     let mut v1: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);
@@ -2749,7 +2743,7 @@ pub unsafe fn Shaktool_Instr_8(
     game: &mut Game,
 ) -> *const uint16 {
     QueueSfx2_Max6(0x1c as uint16, game);
-    return jp;
+    jp
 }
 pub unsafe fn Shaktool_Instr_13(
     mut k: uint16,
@@ -2757,7 +2751,7 @@ pub unsafe fn Shaktool_Instr_13(
     game: &mut Game,
 ) -> *const uint16 {
     QueueSfx2_Max6(0x4b as uint16, game);
-    return jp;
+    jp
 }
 pub unsafe fn Shaktool_Instr_12(
     mut k: uint16,
@@ -2786,7 +2780,7 @@ pub unsafe fn Shaktool_Instr_12(
             game,
         );
     }
-    return jp.offset(1);
+    jp.offset(1)
 }
 pub unsafe fn Shaktool_Instr_7(
     mut k: uint16,
@@ -2825,7 +2819,7 @@ pub unsafe fn Shaktool_Instr_7(
         (*(game.g_rom.offset(crate::rtl::lorom_offset(0xaae6b0)) as *const uint8 as *mut uint16)
             .offset(v6 as isize))
         .wrapping_add((*E).base.y_pos);
-    return jp.offset(1);
+    jp.offset(1)
 }
 pub unsafe fn Shaktool_Instr_14(
     mut k: uint16,
@@ -2850,7 +2844,7 @@ pub unsafe fn Shaktool_Instr_14(
         },
         game,
     );
-    return jp;
+    jp
 }
 pub unsafe fn N00bTubeCracks_Init(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 62 as ::core::ffi::c_int;

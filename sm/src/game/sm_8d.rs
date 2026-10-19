@@ -17,11 +17,11 @@ pub struct PalFxDef {
 pub use crate::types::Consts_8D;
 #[inline]
 unsafe fn RomPtr_8D(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr((0x8d0000u32) | ((addr) as u32), game);
+    RomPtr((0x8d0000u32) | ((addr) as u32), game)
 }
 #[inline]
 unsafe fn get_PalFxDef(mut a: uint16, game: &mut Game) -> *mut PalFxDef {
-    return RomPtr((0x8d0000u32) | ((a) as u32), game) as *mut PalFxDef;
+    RomPtr((0x8d0000u32) | ((a) as u32), game) as *mut PalFxDef
 }
 pub const fnCinematicFunction_Intro_Page2: ::core::ffi::c_int = 0x8bb35f;
 pub const fnPalPreInstr_nullsub_129: ::core::ffi::c_int = 0x8dc526;
@@ -194,46 +194,46 @@ pub unsafe fn PalInstr_Wait(mut k: uint16, mut j: uint16, game: &mut Game) -> Pa
         (*((&raw mut game.g_ram as *mut uint8).offset(0x1e7b) as *mut uint16) as ::core::ffi::c_int
             >> 1 as ::core::ffi::c_int) as isize,
     ) = (j).wrapping_add(4u16);
-    return MakePairU16(0 as uint16, 0 as uint16);
+    MakePairU16(0 as uint16, 0 as uint16)
 }
 pub unsafe fn PalInstr_ColorPlus2(mut k: uint16, mut j: uint16) -> PairU16 {
-    return MakePairU16((k).wrapping_add(4u16), (j).wrapping_add(2u16));
+    MakePairU16((k).wrapping_add(4u16), (j).wrapping_add(2u16))
 }
 pub unsafe fn PalInstr_ColorPlus3(mut k: uint16, mut j: uint16) -> PairU16 {
-    return MakePairU16((k).wrapping_add(6u16), (j).wrapping_add(2u16));
+    MakePairU16((k).wrapping_add(6u16), (j).wrapping_add(2u16))
 }
 pub unsafe fn PalInstr_ColorPlus4(mut k: uint16, mut j: uint16) -> PairU16 {
-    return MakePairU16((k).wrapping_add(8u16), (j).wrapping_add(2u16));
+    MakePairU16((k).wrapping_add(8u16), (j).wrapping_add(2u16))
 }
 pub unsafe fn PalInstr_ColorPlus8(mut k: uint16, mut j: uint16) -> PairU16 {
-    return MakePairU16((k).wrapping_add(16u16), (j).wrapping_add(2u16));
+    MakePairU16((k).wrapping_add(16u16), (j).wrapping_add(2u16))
 }
 pub unsafe fn PalInstr_ColorPlus9(mut k: uint16, mut j: uint16) -> PairU16 {
-    return MakePairU16((k).wrapping_add(18u16), (j).wrapping_add(2u16));
+    MakePairU16((k).wrapping_add(18u16), (j).wrapping_add(2u16))
 }
 pub unsafe fn PalInstr_ColorPlus15(mut k: uint16, mut j: uint16) -> PairU16 {
-    return MakePairU16((k).wrapping_add(30u16), (j).wrapping_add(2u16));
+    MakePairU16((k).wrapping_add(30u16), (j).wrapping_add(2u16))
 }
 pub unsafe fn PalInstr_Delete(mut k: uint16, mut j: uint16, game: &mut Game) -> PairU16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1e7d) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-    return MakePairU16(k, 0 as uint16);
+    MakePairU16(k, 0 as uint16)
 }
 pub unsafe fn PalInstr_SetPreInstr(mut k: uint16, mut j: uint16, game: &mut Game) -> PairU16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1ead) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(RomPtr_8D(j, game) as *mut uint16);
-    return MakePairU16(k, (j).wrapping_add(2u16));
+    MakePairU16(k, (j).wrapping_add(2u16))
 }
 pub unsafe fn PalInstr_ClearPreInstr(mut k: uint16, mut j: uint16, game: &mut Game) -> PairU16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1ead) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         addr_locret_8DC5E3 as uint16;
-    return MakePairU16(k, j);
+    MakePairU16(k, j)
 }
 pub unsafe fn PalInstr_Goto(mut k: uint16, mut j: uint16, game: &mut Game) -> PairU16 {
     let mut v2: uint16 = *(RomPtr_8D(j, game) as *mut uint16);
-    return MakePairU16(k, v2);
+    MakePairU16(k, v2)
 }
 pub unsafe fn PalInstr_DecTimerGoto(mut k: uint16, mut j: uint16, game: &mut Game) -> PairU16 {
     let mut v4: PairU16 = PairU16 { k: 0, j: 0 };
@@ -246,38 +246,38 @@ pub unsafe fn PalInstr_DecTimerGoto(mut k: uint16, mut j: uint16, game: &mut Gam
         return MakePairU16(k, (j).wrapping_add(2u16));
     }
     v4 = PalInstr_Goto(k, j, game);
-    return MakePairU16(v4.k, v4.j);
+    MakePairU16(v4.k, v4.j)
 }
 pub unsafe fn PalInstr_SetTimer(mut k: uint16, mut j: uint16, game: &mut Game) -> PairU16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1edd) as *mut uint16 as *mut uint8)
         .offset(k as ::core::ffi::c_int as isize) = *RomPtr_8D(j, game);
-    return MakePairU16(k, (j).wrapping_add(1u16));
+    MakePairU16(k, (j).wrapping_add(1u16))
 }
 pub unsafe fn PalInstr_SetColorIndex(mut k: uint16, mut j: uint16, game: &mut Game) -> PairU16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1e8d) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(RomPtr_8D(j, game) as *mut uint16);
-    return MakePairU16(k, (j).wrapping_add(2u16));
+    MakePairU16(k, (j).wrapping_add(2u16))
 }
 pub unsafe fn PalInstr_QueueMusic(mut k: uint16, mut j: uint16, game: &mut Game) -> PairU16 {
     let mut v2: *const uint8 = RomPtr_8D(j, game);
     QueueMusic_Delayed8(*v2 as uint16, game);
-    return MakePairU16(k, (j).wrapping_add(1u16));
+    MakePairU16(k, (j).wrapping_add(1u16))
 }
 pub unsafe fn PalInstr_QueueSfx1(mut k: uint16, mut j: uint16, game: &mut Game) -> PairU16 {
     let mut v2: *const uint16 = RomPtr_8D(j, game) as *const uint16;
     QueueSfx1_Max6(*v2, game);
-    return MakePairU16(k, (j).wrapping_add(1u16));
+    MakePairU16(k, (j).wrapping_add(1u16))
 }
 pub unsafe fn PalInstr_QueueSfx2(mut k: uint16, mut j: uint16, game: &mut Game) -> PairU16 {
     let mut v2: *const uint16 = RomPtr_8D(j, game) as *const uint16;
     QueueSfx2_Max6(*v2, game);
-    return MakePairU16(k, (j).wrapping_add(1u16));
+    MakePairU16(k, (j).wrapping_add(1u16))
 }
 pub unsafe fn PalInstr_QueueSfx3(mut k: uint16, mut j: uint16, game: &mut Game) -> PairU16 {
     let mut v2: *const uint16 = RomPtr_8D(j, game) as *const uint16;
     QueueSfx3_Max6(*v2, game);
-    return MakePairU16(k, (j).wrapping_add(1u16));
+    MakePairU16(k, (j).wrapping_add(1u16))
 }
 pub unsafe fn PalInit_E1BC(mut k: uint16, mut j: uint16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1ead) as *mut uint16)
@@ -405,7 +405,7 @@ pub unsafe fn PalPreInstr_DeletePalfxIfMinibossDead(mut k: uint16, game: &mut Ga
 pub unsafe fn PalInstr_SetPalfxIndex(mut k: uint16, mut j: uint16, game: &mut Game) -> PairU16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1eed) as *mut uint16) =
         *RomPtr_8D(j, game) as uint16;
-    return MakePairU16(k, (j).wrapping_add(1u16));
+    MakePairU16(k, (j).wrapping_add(1u16))
 }
 pub unsafe fn PalPreInstr_F621(mut k: uint16, game: &mut Game) {
     if *(((&raw mut game.g_ram as *mut uint8).offset(0x1e79) as *mut uint16 as *mut uint8)
@@ -432,40 +432,32 @@ pub unsafe fn CallPalFxPreInstr(mut ea: uint32, mut k: uint16, game: &mut Game) 
     match ea {
         9291046 => {
             PalPreInstr_nullsub_129(k);
-            return;
         }
         9298443 => {
             PalPreInstr_E1BC(k, game);
-            return;
         }
         9298656 => {
             PalPreInstr_CheckEnemy0Health(k, game);
-            return;
         }
         9298809 => {
             PalPreInstr_SamusInHeat(k, game);
-            return;
         }
         9301701 => {
             PalPreInstr_DeletePalfxIfMinibossDead(k, game);
-            return;
         }
         9301081 => {
             PalPreInstr_SwitchIfYpos(k, game);
-            return;
         }
         9301380 => {
             PalPreInstr_SwitchIfYpos2(k, game);
-            return;
         }
         9303585 => {
             PalPreInstr_F621(k, game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn CallPalInstr(
     mut ea: uint32,
@@ -474,51 +466,48 @@ pub unsafe fn CallPalInstr(
     game: &mut Game,
 ) -> PairU16 {
     match ea {
-        9291157 => return PalInstr_Wait(k, j, game),
-        9291161 => return PalInstr_ColorPlus2(k, j),
-        9291170 => return PalInstr_ColorPlus3(k, j),
-        9291179 => return PalInstr_ColorPlus4(k, j),
-        9291188 => return PalInstr_ColorPlus8(k, j),
-        9291197 => return PalInstr_ColorPlus9(k, j),
-        9291206 => return PalInstr_ColorPlus15(k, j),
-        9291215 => return PalInstr_Delete(k, j, game),
-        9291220 => return PalInstr_SetPreInstr(k, j, game),
-        9291229 => return PalInstr_ClearPreInstr(k, j, game),
-        9291294 => return PalInstr_Goto(k, j, game),
-        9291321 => return PalInstr_DecTimerGoto(k, j, game),
-        9291336 => return PalInstr_SetTimer(k, j, game),
-        9291349 => return PalInstr_SetColorIndex(k, j, game),
-        9291358 => return PalInstr_QueueMusic(k, j, game),
-        9291370 => return PalInstr_QueueSfx1(k, j, game),
-        9291379 => return PalInstr_QueueSfx2(k, j, game),
-        9291388 => return PalInstr_QueueSfx3(k, j, game),
-        9302470 => return PalInstr_SetPalfxIndex(k, j, game),
+        9291157 => PalInstr_Wait(k, j, game),
+        9291161 => PalInstr_ColorPlus2(k, j),
+        9291170 => PalInstr_ColorPlus3(k, j),
+        9291179 => PalInstr_ColorPlus4(k, j),
+        9291188 => PalInstr_ColorPlus8(k, j),
+        9291197 => PalInstr_ColorPlus9(k, j),
+        9291206 => PalInstr_ColorPlus15(k, j),
+        9291215 => PalInstr_Delete(k, j, game),
+        9291220 => PalInstr_SetPreInstr(k, j, game),
+        9291229 => PalInstr_ClearPreInstr(k, j, game),
+        9291294 => PalInstr_Goto(k, j, game),
+        9291321 => PalInstr_DecTimerGoto(k, j, game),
+        9291336 => PalInstr_SetTimer(k, j, game),
+        9291349 => PalInstr_SetColorIndex(k, j, game),
+        9291358 => PalInstr_QueueMusic(k, j, game),
+        9291370 => PalInstr_QueueSfx1(k, j, game),
+        9291379 => PalInstr_QueueSfx2(k, j, game),
+        9291388 => PalInstr_QueueSfx3(k, j, game),
+        9302470 => PalInstr_SetPalfxIndex(k, j, game),
         _ => {
             Unreachable(game);
-            return PairU16 {
+            PairU16 {
                 k: 0 as uint16,
                 j: 0 as uint16,
-            };
+            }
         }
-    };
+    }
 }
 pub unsafe fn CallPalfxFunc(mut ea: uint32, mut k: uint16, mut j: uint16, game: &mut Game) {
     match ea {
-        9291397 => return,
+        9291397 => (),
         9298436 => {
             PalInit_E1BC(k, j, game);
-            return;
         }
         9299008 => {
             PalInit_F761_Norfair1(k, j, game);
-            return;
         }
         9303856 => {
             PalInit_F779_Brinstar8(k, j, game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }

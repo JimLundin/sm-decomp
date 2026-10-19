@@ -1801,11 +1801,11 @@ unsafe fn SpcDivHelper(mut a: ::core::ffi::c_int, mut b: uint8) -> uint16 {
         } else {
             0xff as ::core::ffi::c_int
         });
-    return (if org_a & 0x100 as ::core::ffi::c_int != 0 {
+    ((if org_a & 0x100 as ::core::ffi::c_int != 0 {
         -t
     } else {
         t
-    }) as uint16;
+    }) as uint16)
 }
 unsafe fn SetupEchoParameter_EDL(mut p: *mut SpcPlayer, mut a: uint8) {
     (*p).echo_parameter_EDL = a;
@@ -2923,8 +2923,7 @@ unsafe fn Music_HandleCmdFromSnes(mut p: *mut SpcPlayer) {
         (*p).counter_sf0c = 2 as uint16;
         (*p).key_OFF = ((*p).key_OFF as ::core::ffi::c_int
             | !((*p).is_chan_on as ::core::ffi::c_int)) as uint8;
-        return;
-    };
+    }
 }
 unsafe fn PlayNote(mut p: *mut SpcPlayer, mut c: *mut Channel, mut note: uint8) {
     if note as ::core::ffi::c_int >= 0xca as ::core::ffi::c_int {
@@ -3364,7 +3363,7 @@ pub unsafe fn Sfx3_HandleCmdFromSnes(mut p: *mut SpcPlayer) {
 pub unsafe fn SfxChan_GetByte(mut p: *mut SpcPlayer, mut s: *mut SfxChan) -> uint8 {
     let fresh31 = (*s).ptr_idx;
     (*s).ptr_idx = (*s).ptr_idx.wrapping_add(1);
-    return (*p).ram[((*s).ptr as ::core::ffi::c_int + fresh31 as ::core::ffi::c_int) as usize];
+    (*p).ram[((*s).ptr as ::core::ffi::c_int + fresh31 as ::core::ffi::c_int) as usize]
 }
 pub unsafe fn Sfx_RunChan(mut p: *mut SpcPlayer, mut sr: *mut SfxRegs, mut s: *mut SfxChan) {
     if (*s).disable as ::core::ffi::c_int == 0xff as ::core::ffi::c_int {
@@ -3722,7 +3721,7 @@ pub unsafe fn SpcPlayer_Create() -> *mut SpcPlayer {
     );
     (*p).dsp = dsp_init(&raw mut (*p).ram as *mut uint8_t);
     (*p).reg_write_history = ::core::ptr::null_mut::<DspRegWriteHistory>();
-    return p;
+    p
 }
 pub unsafe fn SpcPlayer_Initialize(mut p: *mut SpcPlayer) {
     Vector_Reset_Spc(p);

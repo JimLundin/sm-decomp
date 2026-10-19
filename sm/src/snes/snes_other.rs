@@ -190,7 +190,7 @@ pub unsafe fn snes_loadRom(
     );
     snes_reset(snes, true_0 != 0, game);
     free(newData as *mut ::core::ffi::c_void);
-    return true_0 != 0;
+    true_0 != 0
 }
 pub unsafe fn snes_setSamples(
     mut snes: *mut Snes,

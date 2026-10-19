@@ -57,7 +57,7 @@ pub unsafe fn snes_init(mut ram: *mut uint8_t) -> *mut Snes {
     (*snes).cart = cart_init(snes);
     (*snes).input1 = input_init(snes);
     (*snes).input2 = input_init(snes);
-    return snes;
+    snes
 }
 pub unsafe fn snes_free(mut snes: *mut Snes) {
     cpu_free((*snes).cpu);

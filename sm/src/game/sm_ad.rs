@@ -20,26 +20,26 @@ pub const addr_kTurnOffLightsForShitroidDeath: Consts_AD = 61999;
 pub use crate::types::{Enemy_MotherBrain, Func_CalcHdma, Ram8000_Default, SpawnHardcodedPlmArgs};
 #[inline]
 unsafe fn RomPtr_AD(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr((0xad0000u32) | ((addr) as u32), game);
+    RomPtr((0xad0000u32) | ((addr) as u32), game)
 }
 pub const fnMotherBrainBody_FakeDeath_Descent_0_Pause: ::core::ffi::c_int = 0xa9881d;
 #[inline]
 unsafe fn gEnemyData(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut EnemyData {
-    return (&raw mut game.g_ram as *mut uint8)
+    (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
-        .offset(o as isize) as *mut EnemyData;
+        .offset(o as isize) as *mut EnemyData
 }
 #[inline]
 unsafe fn gRam8000_Default(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Ram8000_Default {
-    return (&raw mut game.g_ram as *mut uint8)
+    (&raw mut game.g_ram as *mut uint8)
         .offset(0x8000)
-        .offset(o as isize) as *mut Ram8000_Default;
+        .offset(o as isize) as *mut Ram8000_Default
 }
 #[inline]
 unsafe fn Get_MotherBrain(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_MotherBrain {
-    return (&raw mut game.g_ram as *mut uint8)
+    (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_MotherBrain;
+        .offset(o as isize) as *mut Enemy_MotherBrain
 }
 pub fn nullsub_341(game: &mut Game) {}
 static funcs_BE56D: [Option<Func_V>; 16] = unsafe {
@@ -692,31 +692,31 @@ pub unsafe fn MotherBrain_FadePalToBlack(mut a: uint16, game: &mut Game) -> uint
         14 as uint16,
         game,
     );
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn MotherBrain_FadeToGray_FakeDeath(mut a: uint16, game: &mut Game) -> uint8 {
     let mut v1: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaded8a)) as *const uint8
         as *mut uint16)
         .offset(a as isize);
     if v1 != 0 {
-        return (MotherBrain_EEF6(v1, game)) & (1u8);
+        (MotherBrain_EEF6(v1, game)) & (1u8)
     } else {
-        return 1 as uint8;
-    };
+        1 as uint8
+    }
 }
 pub unsafe fn MotherBrain_FadeFromGray_FakeDeath(mut a: uint16, game: &mut Game) -> uint8 {
     let mut v1: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaded9c)) as *const uint8
         as *mut uint16)
         .offset(a as isize);
     if v1 != 0 {
-        return (MotherBrain_EEF6(v1, game)) & (1u8);
+        (MotherBrain_EEF6(v1, game)) & (1u8)
     } else {
-        return 1 as uint8;
-    };
+        1 as uint8
+    }
 }
 pub unsafe fn MotherBrain_EEF6(mut a: uint16, game: &mut Game) -> uint8 {
     WriteColorsToPalette(0x122 as uint16, 0xad as uint8, a, 3 as uint16, game);
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn MotherBrain_FadeFromGray_Drained(mut a: uint16, game: &mut Game) -> uint8 {
     let mut v1: ::core::ffi::c_int = a as ::core::ffi::c_int;
@@ -740,7 +740,7 @@ pub unsafe fn MotherBrain_FadeFromGray_Drained(mut a: uint16, game: &mut Game) -
     );
     *((&raw mut game.g_ram as *mut uint8).offset(0x17c) as *mut uint8 as *mut uint16) =
         *(RomPtr_AD((j).wrapping_add(36u16), game) as *mut uint16);
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn MotherBrain_FadeToGray_Drained(mut a: uint16, game: &mut Game) -> uint8 {
     let mut v1: ::core::ffi::c_int = a as ::core::ffi::c_int;
@@ -764,7 +764,7 @@ pub unsafe fn MotherBrain_FadeToGray_Drained(mut a: uint16, game: &mut Game) -> 
     );
     *((&raw mut game.g_ram as *mut uint8).offset(0x17c) as *mut uint8 as *mut uint16) =
         *(RomPtr_AD((j).wrapping_add(40u16), game) as *mut uint16);
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn MotherBrain_FadeToGray_RealDeath(mut a: uint16, game: &mut Game) -> uint8 {
     let mut v1: ::core::ffi::c_int = a as ::core::ffi::c_int;
@@ -782,7 +782,7 @@ pub unsafe fn MotherBrain_FadeToGray_RealDeath(mut a: uint16, game: &mut Game) -
         0xf as uint16,
         game,
     );
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn TurnOffLightsForShitroidDeath(game: &mut Game) {
     WriteColorsToPalette(
@@ -819,7 +819,7 @@ pub unsafe fn MotherBrain_Phase3_TurnLightsBackOn(mut a: uint16, game: &mut Game
         14 as uint16,
         game,
     );
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn EnableEarthquakeAframes(mut a: uint16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = a;

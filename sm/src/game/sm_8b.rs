@@ -229,29 +229,29 @@ unsafe fn RomPtr_RAM(mut addr: uint16_t, game: &mut Game) -> *mut uint8 {
             );
         }
     };
-    return (&raw mut game.g_ram as *mut uint8).offset(addr as ::core::ffi::c_int as isize);
+    (&raw mut game.g_ram as *mut uint8).offset(addr as ::core::ffi::c_int as isize)
 }
 #[inline]
 unsafe fn RomPtr_8B(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr((0x8b0000u32) | ((addr) as u32), game);
+    RomPtr((0x8b0000u32) | ((addr) as u32), game)
 }
 #[inline]
 unsafe fn RomPtr_8C(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr((0x8c0000u32) | ((addr) as u32), game);
+    RomPtr((0x8c0000u32) | ((addr) as u32), game)
 }
 #[inline]
 unsafe fn gOamEnt(mut v: ::core::ffi::c_int, game: &mut Game) -> *mut OamEnt {
-    return (&raw mut game.g_ram as *mut uint8).offset((0x370 as ::core::ffi::c_int + v) as isize)
-        as *mut uint8 as *mut OamEnt;
+    (&raw mut game.g_ram as *mut uint8).offset((0x370 as ::core::ffi::c_int + v) as isize)
+        as *mut uint8 as *mut OamEnt
 }
 #[inline]
 unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int, game: &mut Game) -> *mut VramWriteEntry {
-    return (&raw mut game.g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
-        as *mut uint8 as *mut VramWriteEntry;
+    (&raw mut game.g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
+        as *mut uint8 as *mut VramWriteEntry
 }
 #[inline]
 unsafe fn get_Mode7ObjectDef(mut a: uint16, game: &mut Game) -> *mut Mode7ObjectDef {
-    return RomPtr((0x8b0000u32) | ((a) as u32), game) as *mut Mode7ObjectDef;
+    RomPtr((0x8b0000u32) | ((a) as u32), game) as *mut Mode7ObjectDef
 }
 pub const fnProcessCinematicBgObject_Nothing: uint32 = 9144393;
 pub const fnProcessCinematicBgObject_DrawChar: uint32 = 9144397;
@@ -985,7 +985,7 @@ pub unsafe fn HandleMode7TransformationNoRotation(game: &mut Game) {
 }
 unsafe fn Smult16x16(mut r38: uint16, mut r40: uint16) -> uint32 {
     let mut t: uint32 = ((r38 as int16) as u32).wrapping_mul((r40 as int16) as u32);
-    return t;
+    t
 }
 pub unsafe fn HandleMode7TransformationMatrix(game: &mut Game) {
     let ref mut fresh152 = *((&raw mut game.g_ram as *mut uint8).offset(0x78) as *mut uint16);
@@ -1121,32 +1121,26 @@ pub unsafe fn CallProcessCinematicBgObject(
     match ea {
         9144393 => {
             ProcessCinematicBgObject_Nothing(k, j, r18);
-            return;
         }
         9144397 => {
             ProcessCinematicBgObject_DrawChar(k, j, r18, game);
-            return;
         }
         9144503 => {
             ProcessCinematicBgObject_DrawToTextTilemap(k, j, r18, game);
-            return;
         }
         9144573 => {
             ProcessCinematicBgObject_DrawToBgTilemap(k, j, r18, game);
-            return;
         }
         9144683 => {
             ProcessCinematicBgObject_Unk1(k, j, r18, game);
-            return;
         }
         9144783 => {
             ProcessCinematicBgObject_Unk2(k, j, r18, game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn ProcessCinematicBgObject(mut v0: uint16, mut r18: uint16, game: &mut Game) {
     let mut j: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x19b5) as *mut uint16)
@@ -1266,13 +1260,13 @@ pub unsafe fn ProcessCinematicBgObject_DrawToBgTilemap(
     }
 }
 pub unsafe fn CinematicGetTilemapOffsetForTile(mut r18: uint16) -> uint16 {
-    return (2 as ::core::ffi::c_int * r18 as uint8 as ::core::ffi::c_int
+    (2 as ::core::ffi::c_int * r18 as uint8 as ::core::ffi::c_int
         + *(&raw mut r18 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int
-            * 0x40 as ::core::ffi::c_int) as uint16;
+            * 0x40 as ::core::ffi::c_int) as uint16
 }
 pub unsafe fn ProcessCinematicBgObject_Unk1(
     mut k: uint16,
@@ -1385,13 +1379,13 @@ pub unsafe fn ProcessCinematicBgObject_Unk2(
     *((&raw mut game.g_ram as *mut uint8).offset(0x334) as *mut uint16) = v4;
 }
 pub unsafe fn Mult0x80Add(mut r18: uint16) -> uint16 {
-    return (r18 as uint8 as ::core::ffi::c_int
+    (r18 as uint8 as ::core::ffi::c_int
         + 0x80 as ::core::ffi::c_int
             * *(&raw mut r18 as *mut uint8).offset(
                 (::core::mem::size_of::<uint16>())
                     .wrapping_div(::core::mem::size_of::<uint8>())
                     .wrapping_sub(1 as usize) as isize,
-            ) as ::core::ffi::c_int) as uint16;
+            ) as ::core::ffi::c_int) as uint16
 }
 pub unsafe fn Samus_CalcPos_Mode7(game: &mut Game) {
     let mut r34: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16))
@@ -1462,7 +1456,7 @@ pub unsafe fn CalcExplosion_Mode7(mut k: uint16, game: &mut Game) -> Point16U {
         - r26 as ::core::ffi::c_int
         - *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16) as ::core::ffi::c_int)
         as uint16;
-    return Point16U { x: r20, y: r18 };
+    Point16U { x: r20, y: r18 }
 }
 pub unsafe fn CalcCeresSteamPos_Mode7(mut pt: Point16U, game: &mut Game) -> Point16U {
     let mut r34: uint16 =
@@ -1491,7 +1485,7 @@ pub unsafe fn CalcCeresSteamPos_Mode7(mut pt: Point16U, game: &mut Game) -> Poin
         ) >> 8 as ::core::ffi::c_int,
     ) as uint16;
     pt.y = (*((&raw mut game.g_ram as *mut uint8).offset(0x82) as *mut uint16)).wrapping_sub(r26);
-    return pt;
+    pt
 }
 pub unsafe fn CopyPalettesToFadingPalettes(game: &mut Game) {
     let mut v0: ::core::ffi::c_int = 256 as ::core::ffi::c_int;
@@ -1764,12 +1758,12 @@ pub unsafe fn CalcSinMult(mut k: uint16, mut r24: uint16) -> uint16 {
         r24 as uint8,
     ) as ::core::ffi::c_int
         >> 8 as ::core::ffi::c_int) as uint16;
-    return (r18 as ::core::ffi::c_int
+    (r18 as ::core::ffi::c_int
         + *((&raw const kSinCosTable8bit_Sext as *const int16).offset(64) as *const int16
             as *mut uint8)
             .offset(k as ::core::ffi::c_int as isize)
             .offset(1) as ::core::ffi::c_int
-            * r24 as uint8 as ::core::ffi::c_int) as uint16;
+            * r24 as uint8 as ::core::ffi::c_int) as uint16
 }
 static kMoveUnusedSpritesMasks: [uint16; 8] = [
     0x5555, 0x5554, 0x5550, 0x5540, 0x5500, 0x5400, 0x5000, 0x4000,
@@ -1824,7 +1818,7 @@ pub unsafe fn AdvanceFastScreenFadeOut(game: &mut Game) -> uint8 {
         }
         *(&raw mut game.g_ram as *mut uint8).offset(0x51) = 0x80 as uint8;
     }
-    return 1 as uint8;
+    1 as uint8
 }
 pub unsafe fn AdvanceSlowScreenFadeOut(game: &mut Game) -> uint8 {
     let mut v0: bool = ((*((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16))
@@ -1861,7 +1855,7 @@ pub unsafe fn AdvanceSlowScreenFadeOut(game: &mut Game) -> uint8 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16 as *mut uint8)
             .offset(0) = 0 as uint8;
     }
-    return 1 as uint8;
+    1 as uint8
 }
 pub unsafe fn AdvanceFastScreenFadeIn(game: &mut Game) -> uint8 {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) as ::core::ffi::c_int
@@ -1876,11 +1870,11 @@ pub unsafe fn AdvanceFastScreenFadeIn(game: &mut Game) -> uint8 {
                 as ::core::ffi::c_int
                 + *(&raw mut game.g_ram as *mut uint8).offset(0x51) as ::core::ffi::c_int
                 & 0x1f as ::core::ffi::c_int) as uint8;
-        return 0 as uint8;
+        0 as uint8
     } else {
         *(&raw mut game.g_ram as *mut uint8).offset(0x51) = 15 as uint8;
-        return 1 as uint8;
-    };
+        1 as uint8
+    }
 }
 pub unsafe fn AdvanceSlowScreenFadeIn(game: &mut Game) -> uint8 {
     let mut v0: bool = ((*((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16))
@@ -1915,7 +1909,7 @@ pub unsafe fn AdvanceSlowScreenFadeIn(game: &mut Game) -> uint8 {
         0 as uint8;
     *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16 as *mut uint8).offset(0) =
         0 as uint8;
-    return 1 as uint8;
+    1 as uint8
 }
 pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
     let mut _state_variable_: *mut uint8 = (&raw mut game.g_ram as *mut uint8).offset(0x612);
@@ -2208,7 +2202,7 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
         }
     }
     *_state_variable_ = 0 as uint8;
-    return 0 as CoroutineRet;
+    0 as CoroutineRet
 }
 pub unsafe fn AddNintentoLogoToOam(game: &mut Game) {
     DrawSpritemap(
@@ -2232,7 +2226,7 @@ pub unsafe fn SpawnCinematicSpriteObject(mut j: uint16, mut a: uint16, game: &mu
         }
         i -= 2 as ::core::ffi::c_int;
     }
-    return 1 as uint8;
+    1 as uint8
 }
 pub unsafe fn SpawnCinematicSpriteObjectAtSlot(
     j: uint16,
@@ -2249,7 +2243,7 @@ pub unsafe fn SpawnCinematicSpriteObjectToR18(
     game: &mut Game,
 ) -> uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b9d) as *mut uint16) = 0 as uint16;
-    return SpawnCimenaticSpriteObjectInner(j, r18, game);
+    SpawnCimenaticSpriteObjectInner(j, r18, game)
 }
 pub unsafe fn SpawnCimenaticSpriteObjectInner(
     mut k: uint16,
@@ -2273,7 +2267,7 @@ pub unsafe fn SpawnCimenaticSpriteObjectInner(
     *((&raw mut game.g_ram as *mut uint8).offset(0x1afd) as *mut uint16).offset(v3 as isize) =
         0 as uint16;
     CallCinematicSpriteObjectSetup(((*(v2 as *mut uint16)) as u32) | (0x8b0000u32), j, game);
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn ClearCinematicSprites(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
@@ -2353,13 +2347,13 @@ pub unsafe fn CinematicSprInstr_Delete(mut k: uint16, mut j: uint16, game: &mut 
         0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v2 as isize) =
         0 as uint16;
-    return 0 as uint16;
+    0 as uint16
 }
 pub unsafe fn CinematicSprInstr_Sleep(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         (j).wrapping_sub(2u16);
-    return 0 as uint16;
+    0 as uint16
 }
 pub unsafe fn CinematicSprInstr_SetPreInstr(
     mut k: uint16,
@@ -2369,7 +2363,7 @@ pub unsafe fn CinematicSprInstr_SetPreInstr(
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b3d) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(RomPtr_8B(j, game) as *mut uint16);
-    return (j).wrapping_add(2u16);
+    (j).wrapping_add(2u16)
 }
 pub unsafe fn CinematicSprInstr_ClearPreInstr(
     mut k: uint16,
@@ -2379,13 +2373,13 @@ pub unsafe fn CinematicSprInstr_ClearPreInstr(
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b3d) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         ((0x8b945fi32) as u16) & (0xffffu16);
-    return j;
+    j
 }
 pub unsafe fn CinematicSprInstr_GotoRel(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
-    return (j).wrapping_add((*RomPtr_8B(j, game) as int8) as u16);
+    (j).wrapping_add((*RomPtr_8B(j, game) as int8) as u16)
 }
 pub unsafe fn CinematicSprInstr_Goto(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
-    return *(RomPtr_8B(j, game) as *mut uint16);
+    *(RomPtr_8B(j, game) as *mut uint16)
 }
 pub unsafe fn CinematicSprInstr_DecTimerGoto(
     mut k: uint16,
@@ -2398,10 +2392,10 @@ pub unsafe fn CinematicSprInstr_DecTimerGoto(
     let fresh27 = *fresh26;
     *fresh26 = (*fresh26).wrapping_sub(1);
     if fresh27 == 1u16 {
-        return (j).wrapping_add(2u16);
+        (j).wrapping_add(2u16)
     } else {
-        return CinematicSprInstr_Goto(k, j, game);
-    };
+        CinematicSprInstr_Goto(k, j, game)
+    }
 }
 pub unsafe fn CinematicSprInstr_DecTimerGotoRel(
     mut k: uint16,
@@ -2414,16 +2408,16 @@ pub unsafe fn CinematicSprInstr_DecTimerGotoRel(
     let fresh25 = *fresh24;
     *fresh24 = (*fresh24).wrapping_sub(1);
     if fresh25 == 1u16 {
-        return (j).wrapping_add(1u16);
+        (j).wrapping_add(1u16)
     } else {
-        return CinematicSprInstr_GotoRel(k, j, game);
-    };
+        CinematicSprInstr_GotoRel(k, j, game)
+    }
 }
 pub unsafe fn CinematicSprInstr_SetTimer(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b7d) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(RomPtr_8B(j, game) as *mut uint16);
-    return (j).wrapping_add(2u16);
+    (j).wrapping_add(2u16)
 }
 pub fn sub_8B94E1() {}
 pub unsafe fn SpawnMode7Object(mut j: uint16, mut a: uint16, game: &mut Game) -> uint8 {
@@ -2454,7 +2448,7 @@ pub unsafe fn SpawnMode7Object(mut j: uint16, mut a: uint16, game: &mut Game) ->
         v6 as uint16,
         game,
     );
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn HandleMode7Objects(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 2 as ::core::ffi::c_int;
@@ -2520,22 +2514,22 @@ pub unsafe fn ProcessMode7ObjectInstructions(mut k: uint16, game: &mut Game) {
 pub unsafe fn Mode7Instr_Delete(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x19a1) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-    return 0 as uint16;
+    0 as uint16
 }
 pub unsafe fn Mode7Instr_SetPreInstr(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x19a5) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(RomPtr_8B(j, game) as *mut uint16);
-    return (j).wrapping_add(2u16);
+    (j).wrapping_add(2u16)
 }
 pub unsafe fn Mode7Instr_ClearPreInstr(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x19a5) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         ((0x8b9585i32) as u16) & (0xffffu16);
-    return j;
+    j
 }
 pub unsafe fn Mode7Instr_Goto(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
-    return *(RomPtr_8B(j, game) as *mut uint16);
+    *(RomPtr_8B(j, game) as *mut uint16)
 }
 pub unsafe fn Mode7Instr_DecTimerAndGoto(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -2544,16 +2538,16 @@ pub unsafe fn Mode7Instr_DecTimerAndGoto(mut k: uint16, mut j: uint16, game: &mu
     let fresh1 = *fresh0;
     *fresh0 = (*fresh0).wrapping_sub(1);
     if fresh1 == 1u16 {
-        return (j).wrapping_add(2u16);
+        (j).wrapping_add(2u16)
     } else {
-        return Mode7Instr_Goto(k, j, game);
-    };
+        Mode7Instr_Goto(k, j, game)
+    }
 }
 pub unsafe fn Mode7Instr_SetTimer(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x19ad) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(RomPtr_8B(j, game) as *mut uint16);
-    return (j).wrapping_add(2u16);
+    (j).wrapping_add(2u16)
 }
 pub unsafe fn EnableCinematicBgObjects(game: &mut Game) {
     let ref mut fresh13 = *((&raw mut game.g_ram as *mut uint8).offset(0x19f1) as *mut uint16);
@@ -2593,11 +2587,11 @@ pub unsafe fn ClearCinematicBgObjects(mut a: uint16, game: &mut Game) {
 }
 pub unsafe fn CallCinematicBgObjectSetup(mut ea: uint32, mut j: uint16, game: &mut Game) {
     match ea {
-        9147353 => return,
+        9147353 => (),
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn SpawnCinematicBgObject(mut j: uint16, mut a: uint16, game: &mut Game) -> uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x19f5) as *mut uint16) = a;
@@ -2624,7 +2618,7 @@ pub unsafe fn SpawnCinematicBgObject(mut j: uint16, mut a: uint16, game: &mut Ga
     *((&raw mut game.g_ram as *mut uint8).offset(0x19e5) as *mut uint16).offset(v6 as isize) =
         0 as uint16;
     CallCinematicBgObjectSetup(((*(v5 as *mut uint16)) as u32) | (0x8b0000u32), v3, game);
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn HandleCinematicBgObjects(game: &mut Game) {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0x19f1) as *mut uint16) as ::core::ffi::c_int
@@ -2708,10 +2702,10 @@ pub unsafe fn CinematicBgInstr_Delete(mut k: uint16, mut j: uint16, game: &mut G
         0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x19cd) as *mut uint16).offset(v2 as isize) =
         0 as uint16;
-    return 0 as uint16;
+    0 as uint16
 }
 pub unsafe fn CinematicBgInstr_Goto(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
-    return *(RomPtr_8C(j, game) as *mut uint16);
+    *(RomPtr_8C(j, game) as *mut uint16)
 }
 pub fn sub_8B9743() {}
 pub unsafe fn DrawCinematicSpriteObjects_Intro(game: &mut Game) {
@@ -3043,24 +3037,24 @@ pub unsafe fn CreditsObject_Func1(mut j: uint16, game: &mut Game) {
 }
 pub unsafe fn IntroObject_Delete(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x19f7) as *mut uint16) = 0 as uint16;
-    return 0 as uint16;
+    0 as uint16
 }
 pub unsafe fn IntroObject_Goto(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
-    return *(RomPtr_8C(j, game) as *mut uint16);
+    *(RomPtr_8C(j, game) as *mut uint16)
 }
 pub unsafe fn IntroObject_DecTimerGoto(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     let ref mut fresh8 = *((&raw mut game.g_ram as *mut uint8).offset(0x19fb) as *mut uint16);
     *fresh8 = (*fresh8).wrapping_sub(1);
     if *fresh8 != 0 {
-        return IntroObject_Goto(k, j, game);
+        IntroObject_Goto(k, j, game)
     } else {
-        return (j).wrapping_add(2u16);
-    };
+        (j).wrapping_add(2u16)
+    }
 }
 pub unsafe fn IntroObject_SetTimer(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x19fb) as *mut uint16) =
         *(RomPtr_8C(j, game) as *mut uint16);
-    return (j).wrapping_add(2u16);
+    (j).wrapping_add(2u16)
 }
 pub unsafe fn GameState_1_OpeningCinematic_(game: &mut Game) -> CoroutineRet {
     CallCinematicFunction(
@@ -3075,7 +3069,7 @@ pub unsafe fn GameState_1_OpeningCinematic_(game: &mut Game) -> CoroutineRet {
     MaybeSkipCinematics(game);
     HandleCinematicsTransitions(game);
     HandleMode7TransformationNoRotation(game);
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub fn CinematicFunctionNone() {}
 pub unsafe fn MaybeSkipCinematics(game: &mut Game) {
@@ -3331,7 +3325,7 @@ pub unsafe fn CinematicSprInstr_9CE1(mut k: uint16, mut j: uint16, game: &mut Ga
         -(2 as ::core::ffi::c_int) as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1999) as *mut uint16) = 0x8000 as uint16;
     SetPpuBackdropSomeColor(game);
-    return j;
+    j
 }
 pub unsafe fn CinematicFunc_Func2(game: &mut Game) {
     AddToHiLo(
@@ -3380,7 +3374,7 @@ pub unsafe fn CinematicSprInstr_9D5D(mut k: uint16, mut j: uint16, game: &mut Ga
     *((&raw mut game.g_ram as *mut uint8).offset(0x199b) as *mut uint16) =
         -(2 as ::core::ffi::c_int) as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1999) as *mut uint16) = 0x8000 as uint16;
-    return j;
+    j
 }
 pub unsafe fn CinematicFunc_Func4(game: &mut Game) {
     AddToHiLo(
@@ -3432,7 +3426,7 @@ pub unsafe fn CinematicSprInstr_9DD6(mut k: uint16, mut j: uint16, game: &mut Ga
     *((&raw mut game.g_ram as *mut uint8).offset(0x199f) as *mut uint16) = 1 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x199d) as *mut uint16) = 0x8000 as uint16;
     SetPpuBackdropSomeColor(game);
-    return j;
+    j
 }
 pub unsafe fn CinematicFunc_Func5(game: &mut Game) {
     AddToHiLo(
@@ -3482,7 +3476,7 @@ pub unsafe fn CinematicSprInstr_Func8(mut k: uint16, mut j: uint16, game: &mut G
     *((&raw mut game.g_ram as *mut uint8).offset(0x199f) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x199d) as *mut uint16) = 0 as uint16;
     SpawnTitleScreenGradientObjs(game);
-    return j;
+    j
 }
 pub unsafe fn CinematicFunc_Func7(game: &mut Game) {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0x5b6) as *mut uint16) as ::core::ffi::c_int
@@ -3523,7 +3517,7 @@ pub unsafe fn CinematicSpriteInit_4(mut j: uint16, game: &mut Game) {
 pub unsafe fn CinematicSprInstr_Func9(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     let mut v0: uint16 = 0x9ecd as uint16;
     SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BA113 as uint16, v0, game);
-    return j;
+    j
 }
 pub unsafe fn CinematicSpriteInit_5(mut j: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -3547,7 +3541,7 @@ pub unsafe fn CinematicSprInstr_sub_8B9EF0(
         0 as uint16,
         game,
     );
-    return j;
+    j
 }
 pub unsafe fn CinematicSpriteInit_6(mut j: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -3563,7 +3557,7 @@ pub unsafe fn CinematicSprInstr_9F19(mut k: uint16, mut j: uint16, game: &mut Ga
     *((&raw mut game.g_ram as *mut uint8).offset(0x1f53) as *mut uint16) = 900 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
         ((0x8b9f29i32) as u16) & (0xffffu16);
-    return j;
+    j
 }
 pub unsafe fn CinematicFunc_Func1(game: &mut Game) {
     let mut current_block: u64;
@@ -3684,15 +3678,15 @@ pub unsafe fn ConfigureTitleSequenceGradientHDMA(game: &mut Game) {
 }
 pub unsafe fn PlayBabyMetroidCry1(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     QueueSfx3_Max6(0x23 as uint16, game);
-    return j;
+    j
 }
 pub unsafe fn PlayBabyMetroidCry2(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     QueueSfx3_Max6(0x26 as uint16, game);
-    return j;
+    j
 }
 pub unsafe fn PlayBabyMetroidCry3(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     QueueSfx3_Max6(0x27 as uint16, game);
-    return j;
+    j
 }
 static kCinematicPal1: [uint16; 16] = [
     0x1000, 0x6bf5, 0x2e41, 0x2da1, 0x2d01, 0x5e5f, 0x183f, 0x1014, 0x80a, 0x404, 0x4f9f, 0x3ed8,
@@ -3718,7 +3712,7 @@ pub unsafe fn CinematicSetPal1(mut k: uint16, mut j: uint16, game: &mut Game) ->
             kCinematicPal1[(i >> 1 as ::core::ffi::c_int) as usize];
         i -= 2 as ::core::ffi::c_int;
     }
-    return j;
+    j
 }
 pub unsafe fn CinematicSetPal2(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
@@ -3728,7 +3722,7 @@ pub unsafe fn CinematicSetPal2(mut k: uint16, mut j: uint16, game: &mut Game) ->
             kCinematicPal2[(i >> 1 as ::core::ffi::c_int) as usize];
         i -= 2 as ::core::ffi::c_int;
     }
-    return j;
+    j
 }
 pub unsafe fn CinematicSetPal3(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
@@ -3738,7 +3732,7 @@ pub unsafe fn CinematicSetPal3(mut k: uint16, mut j: uint16, game: &mut Game) ->
             kCinematicPal3[(i >> 1 as ::core::ffi::c_int) as usize];
         i -= 2 as ::core::ffi::c_int;
     }
-    return j;
+    j
 }
 pub unsafe fn CinematicSetPal4(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
@@ -3748,7 +3742,7 @@ pub unsafe fn CinematicSetPal4(mut k: uint16, mut j: uint16, game: &mut Game) ->
             kCinematicPal4[(i >> 1 as ::core::ffi::c_int) as usize];
         i -= 2 as ::core::ffi::c_int;
     }
-    return j;
+    j
 }
 pub unsafe fn GameState_37_CeresGoesBoomWithSamus_(game: &mut Game) -> CoroutineRet {
     CallCinematicFunction(
@@ -3773,7 +3767,7 @@ pub unsafe fn GameState_37_CeresGoesBoomWithSamus_(game: &mut Game) -> Coroutine
     PaletteFxHandler(game);
     DrawIntroSprites(game);
     HandleMode7TransformationMatrix(game);
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub fn CinematicFunc_Nothing() {}
 pub unsafe fn CinematicFunction_Intro_Initial(game: &mut Game) {
@@ -4242,7 +4236,7 @@ pub unsafe fn CinematicSprInstr_SpawnMetroidEggParticles(
         game,
     );
     QueueSfx2_Max6(0xb as uint16, game);
-    return j;
+    j
 }
 static kSetSomeStuffForSpriteObject_6_Tab: [int16; 12] = [
     0x5c, 0x58, 0x63, 0x58, 0x59, 0x5d, 0x60, 0x5b, 0x66, 0x5e, 0x63, 0x60,
@@ -4838,7 +4832,7 @@ pub unsafe fn CinematicBgInstr_SetSomeStuffForSpriteObject_14(
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(15) =
         addr_unk_8BCC03 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b5d) as *mut uint16).offset(15) = 1 as uint16;
-    return j;
+    j
 }
 pub unsafe fn SetSomeStuffForSpriteObject_15(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a7d) as *mut uint16).offset(15) = 8 as uint16;
@@ -4889,7 +4883,7 @@ pub unsafe fn CinematicBgInstr_HandleCreateJpnText_Page1(
             game,
         );
     }
-    return j;
+    j
 }
 pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page1(
     mut k: uint16,
@@ -4906,7 +4900,7 @@ pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page1(
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
         ((0x8baeb8i32) as u16) & (0xffffu16);
-    return j;
+    j
 }
 pub unsafe fn CinematicBgInstr_HandleCreateJpnText_Page2(
     mut k: uint16,
@@ -4921,7 +4915,7 @@ pub unsafe fn CinematicBgInstr_HandleCreateJpnText_Page2(
             game,
         );
     }
-    return j;
+    j
 }
 pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page2(
     mut k: uint16,
@@ -4940,7 +4934,7 @@ pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page2(
         *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
             ((0x8baf6ci32) as u16) & (0xffffu16);
     }
-    return j;
+    j
 }
 pub unsafe fn CinematicFunction_Intro_WaitInputSetupMotherBrainFight(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x1ba3) as *mut uint16) != 0 {
@@ -5116,7 +5110,7 @@ pub unsafe fn CinematicBgInstr_HandleCreateJpnText_Page3(
             game,
         );
     }
-    return j;
+    j
 }
 pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page3(
     mut k: uint16,
@@ -5135,7 +5129,7 @@ pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page3(
         *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
             ((0x8bb0f2i32) as u16) & (0xffffu16);
     }
-    return j;
+    j
 }
 pub unsafe fn CinematicBgInstr_HandleCreateJpnText_Page4(
     mut k: uint16,
@@ -5150,7 +5144,7 @@ pub unsafe fn CinematicBgInstr_HandleCreateJpnText_Page4(
             game,
         );
     }
-    return j;
+    j
 }
 pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page4(
     mut k: uint16,
@@ -5169,7 +5163,7 @@ pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page4(
         *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
             ((0x8bb123i32) as u16) & (0xffffu16);
     }
-    return j;
+    j
 }
 pub unsafe fn CinematicFunction_Intro_Func11(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x1ba3) as *mut uint16) != 0 {
@@ -5245,7 +5239,7 @@ pub unsafe fn CinematicBgInstr_HandleCreateJpnText_Page5(
             game,
         );
     }
-    return j;
+    j
 }
 pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page5(
     mut k: uint16,
@@ -5264,7 +5258,7 @@ pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page5(
         *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
             ((0x8bb1dai32) as u16) & (0xffffu16);
     }
-    return j;
+    j
 }
 pub unsafe fn CinematicFunction_Intro_Func15b(game: &mut Game) {
     EnableCinematicBgTilemapUpdates(game);
@@ -5305,14 +5299,14 @@ pub unsafe fn CinematicBgInstr_Func16(mut k: uint16, mut j: uint16, game: &mut G
             game,
         );
     }
-    return j;
+    j
 }
 pub unsafe fn CinematicBgInstr_Func17(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
         ((0x8bb72fi32) as u16) & (0xffffu16);
     *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 1 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 1 as uint16;
-    return j;
+    j
 }
 pub unsafe fn CinematicFunction_Intro_XfadeGameplayFade(game: &mut Game) {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0x1a49) as *mut uint16) as ::core::ffi::c_int
@@ -5403,7 +5397,7 @@ pub unsafe fn CinematicSprInstr_StartIntroPage2(
     *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
         ((0x8bb35fi32) as u16) & (0xffffu16);
     Instr_StartIntroPage_Common(game);
-    return j;
+    j
 }
 pub unsafe fn CinematicSprInstr_StartIntroPage3(
     mut k: uint16,
@@ -5413,7 +5407,7 @@ pub unsafe fn CinematicSprInstr_StartIntroPage3(
     *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
         ((0x8bb370i32) as u16) & (0xffffu16);
     Instr_StartIntroPage_Common(game);
-    return j;
+    j
 }
 pub unsafe fn CinematicSprInstr_StartIntroPage4(
     mut k: uint16,
@@ -5423,7 +5417,7 @@ pub unsafe fn CinematicSprInstr_StartIntroPage4(
     *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
         ((0x8bb381i32) as u16) & (0xffffu16);
     Instr_StartIntroPage_Common(game);
-    return j;
+    j
 }
 pub unsafe fn CinematicSprInstr_StartIntroPage5(
     mut k: uint16,
@@ -5433,7 +5427,7 @@ pub unsafe fn CinematicSprInstr_StartIntroPage5(
     *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
         ((0x8bb392i32) as u16) & (0xffffu16);
     Instr_StartIntroPage_Common(game);
-    return j;
+    j
 }
 pub unsafe fn Instr_StartIntroPage_Common(game: &mut Game) {
     DisableCinematicBgTilemapUpdates(game);
@@ -5588,15 +5582,14 @@ pub unsafe fn CinematicBgPreInstr_SamusBlink(mut k: uint16, game: &mut Game) {
 }
 pub unsafe fn CallCreditsObjectFunc(mut ea: uint32, mut k: uint16, game: &mut Game) {
     match ea {
-        9147353 => return,
+        9147353 => (),
         9155772 => {
             CinematicBgPreInstr_SamusBlink(k, game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn CinematicFunction_Intro_Func19(mut k: uint16, game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(15)
@@ -5639,7 +5632,7 @@ pub unsafe fn sub_8BB51E(mut k: uint16, mut j: uint16, game: &mut Game) -> uint1
     CinematicFunction_Intro_Func20(addr_word_8BCF75 as uint16, game);
     CinematicFunction_Intro_Func20(addr_word_8BCFBD as uint16, game);
     TransferJapaneseTextTilesToVram(game);
-    return j;
+    j
 }
 pub unsafe fn EnableCinematicBgTilemapUpdates__0(
     mut k: uint16,
@@ -5647,7 +5640,7 @@ pub unsafe fn EnableCinematicBgTilemapUpdates__0(
     game: &mut Game,
 ) -> uint16 {
     EnableCinematicBgTilemapUpdates(game);
-    return j;
+    j
 }
 pub unsafe fn CinematicFunction_Intro_Func21(
     mut k: uint16,
@@ -5668,7 +5661,7 @@ pub unsafe fn CinematicFunction_Intro_Func21(
     CinematicFunction_Intro_Func20(addr_word_8BCFFD as uint16, game);
     CinematicFunction_Intro_Func20(addr_word_8BD055 as uint16, game);
     TransferJapaneseTextTilesToVram(game);
-    return j;
+    j
 }
 pub unsafe fn CinematicFunction_Intro_Func22(mut k: uint16, game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) != 0 {
@@ -5695,7 +5688,7 @@ pub unsafe fn CinematicFunction_Intro_ThenWaitInputSetupBabyMetroid(
     EnableCinematicBgTilemapUpdates(game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
         ((0x8baf6ci32) as u16) & (0xffffu16);
-    return j;
+    j
 }
 pub unsafe fn CinematicFunction_Intro_Func23(
     mut k: uint16,
@@ -5715,7 +5708,7 @@ pub unsafe fn CinematicFunction_Intro_Func23(
     ClearJapaneseTextTiles(game);
     CinematicFunction_Intro_Func20(addr_word_8BD0F9 as uint16, game);
     TransferJapaneseTextTilesToVram(game);
-    return j;
+    j
 }
 pub unsafe fn CinematicFunction_Intro_Func24(mut k: uint16, game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) != 0 {
@@ -5741,7 +5734,7 @@ pub unsafe fn CinematicFunction_Intro_Func25(
     EnableCinematicBgTilemapUpdates(game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
         ((0x8bb0f2i32) as u16) & (0xffffu16);
-    return j;
+    j
 }
 pub unsafe fn CinematicFunction_Intro_Func26(
     mut k: uint16,
@@ -5762,7 +5755,7 @@ pub unsafe fn CinematicFunction_Intro_Func26(
     CinematicFunction_Intro_Func20(addr_word_8BD1B9 as uint16, game);
     CinematicFunction_Intro_Func20(addr_word_8BD215 as uint16, game);
     TransferJapaneseTextTilesToVram(game);
-    return j;
+    j
 }
 pub unsafe fn CinematicFunction_Intro_Func27(mut k: uint16, game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) != 0 {
@@ -5789,7 +5782,7 @@ pub unsafe fn CinematicFunction_Intro_Func28(
     EnableCinematicBgTilemapUpdates(game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
         ((0x8bb123i32) as u16) & (0xffffu16);
-    return j;
+    j
 }
 pub unsafe fn CinematicFunction_Intro_Func29(
     mut k: uint16,
@@ -5809,7 +5802,7 @@ pub unsafe fn CinematicFunction_Intro_Func29(
     ClearJapaneseTextTiles(game);
     CinematicFunction_Intro_Func20(addr_word_8BD2D5 as uint16, game);
     TransferJapaneseTextTilesToVram(game);
-    return j;
+    j
 }
 pub unsafe fn CinematicFunction_Intro_Func30(mut k: uint16, game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) != 0 {
@@ -5835,7 +5828,7 @@ pub unsafe fn CinematicFunction_Intro_Func31(
     EnableCinematicBgTilemapUpdates(game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
         ((0x8bb1dai32) as u16) & (0xffffu16);
-    return j;
+    j
 }
 pub unsafe fn CinematicFunction_Intro_Func32(
     mut k: uint16,
@@ -5846,7 +5839,7 @@ pub unsafe fn CinematicFunction_Intro_Func32(
     ClearJapaneseTextTiles(game);
     CinematicFunction_Intro_Func20(addr_word_8BD371 as uint16, game);
     TransferJapaneseTextTilesToVram(game);
-    return j;
+    j
 }
 pub unsafe fn EnableCinematicBgTilemapUpdates__(
     mut k: uint16,
@@ -5854,7 +5847,7 @@ pub unsafe fn EnableCinematicBgTilemapUpdates__(
     game: &mut Game,
 ) -> uint16 {
     EnableCinematicBgTilemapUpdates(game);
-    return j;
+    j
 }
 pub unsafe fn CinematicFunction_Intro_Func33(game: &mut Game) {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0x5b6) as *mut uint16) as ::core::ffi::c_int
@@ -6075,7 +6068,7 @@ pub unsafe fn CinematicSprInstr_Func43(mut k: uint16, mut j: uint16, game: &mut 
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b3d) as *mut uint16).offset(v1 as isize) =
             ((0x8bb8d8i32) as u16) & (0xffffu16);
     }
-    return j;
+    j
 }
 pub unsafe fn CinematicFunction_Intro_Func44(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -6223,7 +6216,7 @@ pub unsafe fn CinematicSprInstr_SpawnIntroRinkas01(
         1 as uint16,
         game,
     );
-    return j;
+    j
 }
 pub unsafe fn CinematicSprInstr_SpawnIntroRinkas23(
     mut k: uint16,
@@ -6240,7 +6233,7 @@ pub unsafe fn CinematicSprInstr_SpawnIntroRinkas23(
         3 as uint16,
         game,
     );
-    return j;
+    j
 }
 pub unsafe fn CinematicFunction_Intro_Func49(mut j: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -6879,14 +6872,14 @@ pub unsafe fn CinematicCommonInstr_Func69(mut k: uint16, mut j: uint16, game: &m
     if *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16) == 0 {
         j = (j).wrapping_add(6u16);
     }
-    return j;
+    j
 }
 pub unsafe fn CinematicCommonInstr_Func70(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
         ((0x8bc0c5i32) as u16) & (0xffffu16);
     *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 1 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 1 as uint16;
-    return j;
+    j
 }
 pub unsafe fn CinematicFunction_Intro_Func71(mut j: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -7182,7 +7175,7 @@ pub unsafe fn CinematicSprInstr_SpawnCeresExplosions1(
         4 as uint16,
         game,
     );
-    return j;
+    j
 }
 static kCinematicFunction_Intro_Func78_Tab0: [uint16; 5] = [1, 16, 32, 48, 64];
 static kCinematicFunction_Intro_Func78_Tab1: [int16; 5] = [16, -(16), 16, -(16), 0];
@@ -7304,7 +7297,7 @@ pub unsafe fn CinematicSprInstr_SpawnCeresExplosions3(
         3 as uint16,
         game,
     );
-    return j;
+    j
 }
 pub unsafe fn CinematicFunction_Intro_Func81(mut j: uint16, game: &mut Game) {
     let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x1b9d) as *mut uint16);
@@ -7737,7 +7730,7 @@ pub unsafe fn CinematicFunction_Intro_Func102(mut j: uint16, game: &mut Game) {
 }
 pub unsafe fn CinematicSprInstr_C9A5(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     SpawnPalfxObject(addr_kPalfx_E1B0 as uint16, game);
-    return j;
+    j
 }
 pub unsafe fn CinematicSprInstr_C9AF(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16) != 0 {
@@ -7747,11 +7740,11 @@ pub unsafe fn CinematicSprInstr_C9AF(mut k: uint16, mut j: uint16, game: &mut Ga
             game,
         );
     }
-    return j;
+    j
 }
 pub unsafe fn CinematicSprInstr_C9BD(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     SpawnPalfxObject(addr_loc_8BE1B4 as uint16, game);
-    return j;
+    j
 }
 pub unsafe fn CinematicSprInstr_C9C7(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1993) as *mut uint16) = 62 as uint16;
@@ -7761,7 +7754,7 @@ pub unsafe fn CinematicSprInstr_C9C7(mut k: uint16, mut j: uint16, game: &mut Ga
     *((&raw mut game.g_ram as *mut uint8).offset(0x198f) as *mut uint16) = 16 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
         ((0x8bc9f9i32) as u16) & (0xffffu16);
-    return j;
+    j
 }
 pub unsafe fn CinematicFunction_Intro_Func104(mut j: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -7892,7 +7885,7 @@ pub unsafe fn GameState_39_EndingAndCredits_(game: &mut Game) -> CoroutineRet {
     DrawCinematicSpriteObjects_Ending(game);
     CinematicFunction_Intro_Func149(game);
     HandleMode7TransformationMatrix(game);
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn MaybeHandleCinematicBgObjects(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) as ::core::ffi::c_int
@@ -9574,7 +9567,7 @@ pub unsafe fn CalcItemPercentageCount(
         .pause_menu_map_tilemap[465 as ::core::ffi::c_int as usize] = 14442 as uint16;
     (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
         .pause_menu_map_tilemap[497 as ::core::ffi::c_int as usize] = 14458 as uint16;
-    return instrp;
+    instrp
 }
 pub unsafe fn CinematicFunction_Intro_Func146(
     mut k: uint16,
@@ -9592,7 +9585,7 @@ pub unsafe fn CinematicFunction_Intro_Func146(
             i -= 1;
         }
     }
-    return j;
+    j
 }
 pub unsafe fn CinematicFunction_Intro_Func147(
     mut k: uint16,
@@ -9609,7 +9602,7 @@ pub unsafe fn CinematicFunction_Intro_Func147(
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
         ((0x8be797i32) as u16) & (0xffffu16);
-    return j;
+    j
 }
 pub unsafe fn CinematicFunction_Intro_Func148(game: &mut Game) {
     let ref mut fresh67 = *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16);
@@ -10198,19 +10191,19 @@ pub unsafe fn CinematicSprInstr_Func181(mut k: uint16, mut j: uint16, game: &mut
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a49) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
         ((0x8be58ai32) as u16) & (0xffffu16);
-    return j;
+    j
 }
 pub unsafe fn CinematicSprInstr_Func182(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     SpawnPalfxObject(addr_kPalfx_E1C4 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(254) = 1 as uint16;
-    return j;
+    j
 }
 pub unsafe fn CinematicSprInstr_Func183(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     let mut v0: uint16 = 0 as uint16;
     SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEEB5 as uint16, v0, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(0) =
         0x7fff as uint16;
-    return j;
+    j
 }
 pub unsafe fn CinematicFunction_Intro_Func184(mut j: uint16, game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(15) == 0 {
@@ -10242,7 +10235,7 @@ pub unsafe fn CinematicSprInstr_Func185(mut k: uint16, mut j: uint16, game: &mut
     SpawnPalfxObject(addr_kPalfx_E1C8 as uint16, game);
     SpawnPalfxObject(addr_kPalfx_E1D0 as uint16, game);
     SpawnPalfxObject(addr_kPalfx_E1E8 as uint16, game);
-    return j;
+    j
 }
 pub unsafe fn CinematicSprInstr_Func186(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 3 as uint8;
@@ -10257,7 +10250,7 @@ pub unsafe fn CinematicSprInstr_Func186(mut k: uint16, mut j: uint16, game: &mut
         6 as uint16,
         game,
     );
-    return j;
+    j
 }
 pub unsafe fn CinematicSprInstr_Func187(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 0 as uint8;
@@ -10276,7 +10269,7 @@ pub unsafe fn CinematicSprInstr_Func187(mut k: uint16, mut j: uint16, game: &mut
     *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
         ((0x8bdb9ei32) as u16) & (0xffffu16);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a49) as *mut uint16) = 120 as uint16;
-    return j;
+    j
 }
 pub unsafe fn CinematicSprPreInstr_F35A(mut k: uint16, game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) as ::core::ffi::c_int
@@ -10327,7 +10320,7 @@ pub unsafe fn CinematicFunction_Intro_Func189b(mut k: uint16, game: &mut Game) {
 pub unsafe fn CinematicSprInstr_Func190(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     let mut v0: uint16 = 0 as uint16;
     SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEECD as uint16, v0, game);
-    return j;
+    j
 }
 pub unsafe fn CinematicFunction_Intro_Func191(mut k: uint16, game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) as ::core::ffi::c_int
@@ -10362,7 +10355,7 @@ pub unsafe fn CinematicSprInstr_Func192(mut k: uint16, mut j: uint16, game: &mut
         % 10 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0xdf0) as *mut uint16) = min1 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xdf2) as *mut uint16) = min2 as uint16;
-    return j;
+    j
 }
 pub unsafe fn CinematicSprInstr_Func193(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     SpawnCinematicSpriteObject(
@@ -10370,7 +10363,7 @@ pub unsafe fn CinematicSprInstr_Func193(mut k: uint16, mut j: uint16, game: &mut
         0 as uint16,
         game,
     );
-    return j;
+    j
 }
 pub unsafe fn CinematicSprInstr_Func194(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     SpawnCinematicSpriteObject(
@@ -10378,7 +10371,7 @@ pub unsafe fn CinematicSprInstr_Func194(mut k: uint16, mut j: uint16, game: &mut
         0 as uint16,
         game,
     );
-    return j;
+    j
 }
 pub unsafe fn CinematicSprInstr_Func195(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     SpawnCinematicSpriteObject(
@@ -10386,7 +10379,7 @@ pub unsafe fn CinematicSprInstr_Func195(mut k: uint16, mut j: uint16, game: &mut
         0 as uint16,
         game,
     );
-    return j;
+    j
 }
 pub unsafe fn CinematicSprInstr_Func196(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     SpawnCinematicSpriteObject(
@@ -10394,7 +10387,7 @@ pub unsafe fn CinematicSprInstr_Func196(mut k: uint16, mut j: uint16, game: &mut
         0 as uint16,
         game,
     );
-    return j;
+    j
 }
 pub unsafe fn CinematicSprInstr_Func197(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     SpawnCinematicSpriteObject(
@@ -10402,14 +10395,14 @@ pub unsafe fn CinematicSprInstr_Func197(mut k: uint16, mut j: uint16, game: &mut
         0 as uint16,
         game,
     );
-    return j;
+    j
 }
 pub unsafe fn CinematicSprInstr_Func198(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
         ((0x8bde64i32) as u16) & (0xffffu16);
-    return j;
+    j
 }
 pub unsafe fn CinematicFunction_Intro_Func199(mut k: uint16, game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x198f) as *mut uint16) as ::core::ffi::c_int
@@ -10514,7 +10507,7 @@ pub unsafe fn CinematicSprInstr_Func208(mut k: uint16, mut j: uint16, game: &mut
         0 as uint16,
         game,
     );
-    return j;
+    j
 }
 pub unsafe fn CinematicSprPreInstr_F528(mut k: uint16, game: &mut Game) {
     CinematicFunction_Intro_Func210_EndingSamusFall(k, game);
@@ -10559,7 +10552,7 @@ pub unsafe fn CinematicSprInstr_Func211(mut k: uint16, mut j: uint16, game: &mut
         0 as uint16,
         game,
     );
-    return j;
+    j
 }
 pub unsafe fn CinematicSprPreInstr_F57F(mut k: uint16, game: &mut Game) {
     CinematicFunction_Intro_Func210_EndingSamusFall(k, game);
@@ -10591,7 +10584,7 @@ pub unsafe fn CinematicSprInstr_Func213(mut k: uint16, mut j: uint16, game: &mut
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a9d) as *mut uint16)
         .offset((v1 + 1 as ::core::ffi::c_int) as isize) = 120 as uint16;
-    return j;
+    j
 }
 pub unsafe fn CinematicSprInstr_Func214(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -10610,7 +10603,7 @@ pub unsafe fn CinematicSprInstr_Func214(mut k: uint16, mut j: uint16, game: &mut
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a9d) as *mut uint16)
             .offset((v1 + 1 as ::core::ffi::c_int) as isize) = 114 as uint16;
     }
-    return j;
+    j
 }
 pub unsafe fn CinematicFunction_Intro_Func215(mut k: uint16, game: &mut Game) {
     CinematicFunction_Intro_Func216(game);
@@ -10651,13 +10644,13 @@ pub unsafe fn CinematicSprInstr_Func217(mut k: uint16, mut j: uint16, game: &mut
     CopyPalettesToFadingPalettes(game);
     DecomposePaletteDataForFading(game);
     QueueSfx1_Max15(0x22 as uint16, game);
-    return j;
+    j
 }
 pub unsafe fn CinematicSprInstr_Func218(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xb2c) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16) =
         -(16 as ::core::ffi::c_int) as uint16;
-    return j;
+    j
 }
 pub unsafe fn CinematicFunction_Intro_Func210_EndingSamusFall(mut k: uint16, game: &mut Game) {
     AddToHiLo(
@@ -10742,381 +10735,291 @@ pub unsafe fn CinematicFunction_Intro_Func219(
     *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
         ((0x8be0f4i32) as u16) & (0xffffu16);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a49) as *mut uint16) = 60 as uint16;
-    return j;
+    j
 }
 pub unsafe fn CallCinematicFunction(mut ea: uint32, game: &mut Game) {
     match ea {
         9148999 => {
             CinematicFunctionNone();
-            return;
         }
         9149288 => {
             CinematicFunctionOpening(game);
-            return;
         }
         9149719 => {
             CinematicFunc_Func2(game);
-            return;
         }
         9149840 => {
             CinematicFunc_Func4(game);
-            return;
         }
         9149970 => {
             CinematicFunc_Func5(game);
-            return;
         }
         9150091 => {
             CinematicFunc_Func7(game);
-            return;
         }
-        9150248 => return,
+        9150248 => (),
         9150249 => {
             CinematicFunc_Func1(game);
-            return;
         }
         9150290 => {
             CinematicFunc_Func10(game);
-            return;
         }
         9150382 => {
             CinematicFunc_Func9(game);
-            return;
         }
-        9151375 => return,
-        9151376 => return,
+        9151375 => (),
+        9151376 => (),
         9151377 => {
             CinematicFunc_Nothing();
-            return;
         }
         9151381 => {
             CinematicFunction_Intro_Initial(game);
-            return;
         }
         9151911 => {
             CinematicFunction_Intro_FadeIn(game);
-            return;
         }
         9151933 => {
             CinematicFunction_Intro_DrawInitJpn(game);
-            return;
         }
         9151992 => {
             CinematicFunction_Intro_LastMetroidCaptivity(game);
-            return;
         }
         9152019 => {
             CinematicFunc_Intro_QueueGalaxyIsAtPeace(game);
-            return;
         }
         9152057 => {
             CinematicFunc_Intro_WaitForQueueWait4secs(game);
-            return;
         }
         9152076 => {
             CinematicFunc_Intro_FadeOut(game);
-            return;
         }
         9152099 => {
             CinematicFunc_Intro_WaitForFadeOut(game);
-            return;
         }
         9152111 => {
             CinematicFunc_Intro_SetupTextPage2(game);
-            return;
         }
         9152555 => {
             CinematicFunc_Intro_WaitFadeinShowText(game);
-            return;
         }
         9152586 => {
             CinematicFunc_Intro_WaitForFadeinSleep(game);
-            return;
         }
         9154232 => {
             CinematicFunction_Intro_WaitInputSetupMotherBrainFight(game);
-            return;
         }
         9154412 => {
             CinematicFunction_Intro_WaitInputSetupBabyMetroid(game);
-            return;
         }
         9154802 => {
             CinematicFunction_Intro_Func11(game);
-            return;
         }
         9154851 => {
             CinematicFunction_Intro_Func12(game);
-            return;
         }
         9155034 => {
             CinematicFunction_Intro_Func15(game);
-            return;
         }
         9155079 => {
             CinematicFunction_Intro_Func15b(game);
-            return;
         }
         9155152 => {
             CinematicFunction_Intro_XfadeGameplayFade(game);
-            return;
         }
         9155282 => {
             CinematicFunction_Intro_XfadeScientistFade(game);
-            return;
         }
         9155423 => {
             CinematicFunction_Intro_Page2(game);
-            return;
         }
         9155440 => {
             CinematicFunction_Intro_Page3(game);
-            return;
         }
         9155457 => {
             CinematicFunction_Intro_Page4(game);
-            return;
         }
         9155474 => {
             CinematicFunction_Intro_Page5(game);
-            return;
         }
         9155572 => {
             CinematicFunction_Intro_Fadestuff(game);
-            return;
         }
         9155672 => {
             CinematicFunction_Intro_Fadestuff2(game);
-            return;
         }
         9156399 => {
             CinematicFunction_Intro_Func34(game);
-            return;
         }
         9157792 => {
             CinematicFunction_Intro_Func54(game);
-            return;
         }
         9158116 => {
             CinematicFunction_Intro_Func55(game);
-            return;
         }
         9158137 => {
             CinematicFunction_Intro_Func56(game);
-            return;
         }
         9158618 => {
             CinematicFunction_Intro_Func67(game);
-            return;
         }
         9158853 => {
             CinematicFunction_Intro_Func72(game);
-            return;
         }
         9158912 => {
             CinematicFunction_Intro_Func73(game);
-            return;
         }
         9158939 => {
             CinematicFunctionBlackoutFromCeres(game);
-            return;
         }
         9159396 => {
             CinematicFunction_Intro_Func74(game);
-            return;
         }
         9159409 => {
             CinematicFunction_Intro_Func75(game);
-            return;
         }
         9159493 => {
             CinematicFunction_Intro_Func76(game);
-            return;
         }
         9160138 => {
             CinematicFunction_Intro_Func77(game);
-            return;
         }
         9160208 => {
             CinematicFunction_Intro_Func84(game);
-            return;
         }
         9160231 => {
             CinematicFunction_Intro_Func85(game);
-            return;
         }
         9160345 => {
             CinematicFunction_Intro_Func86(game);
-            return;
         }
         9160604 => {
             CinematicFunction_Intro_Func87(game);
-            return;
         }
         9160650 => {
             CinematicFunction_Intro_Func88(game);
-            return;
         }
         9161209 => {
             CinematicFunction_Intro_Func105(game);
-            return;
         }
         9161270 => {
             CinematicFunction_Intro_Func106(game);
-            return;
         }
         9161349 => {
             CinematicFunction_Intro_Func107(game);
-            return;
         }
         9161424 => {
             CinematicFunction_Intro_Func108(game);
-            return;
         }
-        9161438 => return,
+        9161438 => (),
         9161439 => {
             CinematicFunction_Intro_Func95(game);
-            return;
         }
         9163904 => {
             CinematicFunctionEscapeFromCebes(game);
-            return;
         }
         9164503 => {
             CinematicFunction_Intro_Func109(game);
-            return;
         }
         9164530 => {
             CinematicFunction_Intro_Func110(game);
-            return;
         }
         9164545 => {
             CinematicFunction_Intro_Func111(game);
-            return;
         }
         9164593 => {
             CinematicFunction_Intro_Func112(game);
-            return;
         }
         9164792 => {
             CinematicFunction_Intro_Func113(game);
-            return;
         }
         9164807 => {
             CinematicFunction_Intro_Func114(game);
-            return;
         }
         9164855 => {
             CinematicFunction_Intro_Func115(game);
-            return;
         }
         9165314 => {
             CinematicFunction_Intro_Func116(game);
-            return;
         }
         9165338 => {
             CinematicFunction_Intro_Func117(game);
-            return;
         }
         9165523 => {
             CinematicFunction_Intro_Func118(game);
-            return;
         }
-        9165725 => return,
+        9165725 => (),
         9165726 => {
             CinematicFunction_Intro_Func119(game);
-            return;
         }
         9165764 => {
             CinematicFunction_Intro_Func120(game);
-            return;
         }
         9165989 => {
             CinematicFunction_Intro_Func121(game);
-            return;
         }
         9166146 => {
             CinematicFunction_Intro_Func123(game);
-            return;
         }
         9166285 => {
             CinematicFunction_Intro_Func124(game);
-            return;
         }
-        9166435 => return,
+        9166435 => (),
         9166436 => {
             CinematicFunction_Intro_Func125(game);
-            return;
         }
         9166464 => {
             CinematicFunction_Intro_Func126(game);
-            return;
         }
         9167092 => {
             CinematicFunction_Intro_Func129(game);
-            return;
         }
         9167120 => {
             CinematicFunction_Intro_Func130(game);
-            return;
         }
         9167192 => {
             CinematicFunction_Intro_Func131(game);
-            return;
         }
         9167248 => {
             CinematicFunction_Intro_Func132(game);
-            return;
         }
         9167314 => {
             CinematicFunction_Intro_Func134(game);
-            return;
         }
         9167461 => {
             CinematicFunction_Intro_Func136(game);
-            return;
         }
         9167507 => {
             CinematicFunction_Intro_Func135(game);
-            return;
         }
         9167581 => {
             CinematicFunction_Intro_Func137(game);
-            return;
         }
         9167636 => {
             CinematicFunction_Intro_Func138(game);
-            return;
         }
         9167682 => {
             CinematicFunction_Intro_Func145(game);
-            return;
         }
         9167790 => {
             CinematicFunction_Intro_Func139(game);
-            return;
         }
         9168010 => {
             CinematicFunction_Intro_Func141(game);
-            return;
         }
         9168132 => {
             CinematicFunction_Intro_Func143(game);
-            return;
         }
         9168266 => {
             CinematicFunction_Intro_Func144(game);
-            return;
         }
         9168791 => {
             CinematicFunction_Intro_Func148(game);
-            return;
         }
-        9168826 => return,
+        9168826 => (),
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn CallCinematicSprInstr(
     mut ea: uint32,
@@ -11125,288 +11028,236 @@ pub unsafe fn CallCinematicSprInstr(
     game: &mut Game,
 ) -> uint16 {
     match ea {
-        9147448 => return CinematicSprInstr_Delete(k, j, game),
-        9147458 => return CinematicSprInstr_Sleep(k, j, game),
-        9147468 => return CinematicSprInstr_SetPreInstr(k, j, game),
-        9147479 => return CinematicSprInstr_ClearPreInstr(k, j, game),
-        9147554 => return CinematicSprInstr_GotoRel(k, j, game),
-        9147580 => return CinematicSprInstr_Goto(k, j, game),
-        9147587 => return CinematicSprInstr_DecTimerGoto(k, j, game),
-        9147597 => return CinematicSprInstr_DecTimerGotoRel(k, j, game),
-        9147606 => return CinematicSprInstr_SetTimer(k, j, game),
-        9149665 => return CinematicSprInstr_9CE1(k, j, game),
-        9149789 => return CinematicSprInstr_9D5D(k, j, game),
-        9149910 => return CinematicSprInstr_9DD6(k, j, game),
-        9150040 => return CinematicSprInstr_Func8(k, j, game),
-        9150157 => return CinematicSprInstr_Func9(k, j, game),
-        9150192 => return CinematicSprInstr_sub_8B9EF0(k, j, game),
-        9150233 => return CinematicSprInstr_9F19(k, j, game),
-        9152792 => return CinematicSprInstr_SpawnMetroidEggParticles(k, j, game),
-        9155382 => return CinematicSprInstr_StartIntroPage2(k, j, game),
-        9155390 => return CinematicSprInstr_StartIntroPage3(k, j, game),
-        9155398 => return CinematicSprInstr_StartIntroPage4(k, j, game),
-        9155406 => return CinematicSprInstr_StartIntroPage5(k, j, game),
-        9156805 => return CinematicSprInstr_Func43(k, j, game),
-        9157153 => return CinematicSprInstr_SpawnIntroRinkas01(k, j, game),
-        9157174 => return CinematicSprInstr_SpawnIntroRinkas23(k, j, game),
-        9158806 => return CinematicCommonInstr_Func69(k, j, game),
-        9158818 => return CinematicCommonInstr_Func70(k, j, game),
-        9159684 => return CinematicSprInstr_SpawnCeresExplosions1(k, j, game),
-        9159948 => return CinematicSprInstr_SpawnCeresExplosions3(k, j, game),
-        9161125 => return CinematicSprInstr_C9A5(k, j, game),
-        9161135 => return CinematicSprInstr_C9AF(k, j, game),
-        9161149 => return CinematicSprInstr_C9BD(k, j, game),
-        9161159 => return CinematicSprInstr_C9C7(k, j, game),
-        9171550 => return CinematicSprInstr_Func181(k, j, game),
-        9171588 => return CinematicSprInstr_Func182(k, j, game),
-        9171605 => return CinematicSprInstr_Func183(k, j, game),
-        9171639 => return CinematicSprInstr_Func185(k, j, game),
-        9171706 => return CinematicSprInstr_Func186(k, j, game),
-        9171755 => return CinematicSprInstr_Func187(k, j, game),
-        9171888 => return CinematicSprInstr_Func190(k, j, game),
-        9171918 => return CinematicSprInstr_Func192(k, j, game),
-        9171995 => return CinematicSprInstr_Func193(k, j, game),
-        9172004 => return CinematicSprInstr_Func194(k, j, game),
-        9172013 => return CinematicSprInstr_Func195(k, j, game),
-        9172022 => return CinematicSprInstr_Func196(k, j, game),
-        9172031 => return CinematicSprInstr_Func197(k, j, game),
-        9172040 => return CinematicSprInstr_Func198(k, j, game),
-        9172253 => return CinematicSprInstr_Func208(k, j, game),
-        9172308 => return CinematicSprInstr_Func211(k, j, game),
-        9172375 => return CinematicSprInstr_Func213(k, j, game),
-        9172410 => return CinematicSprInstr_Func214(k, j, game),
-        9172484 => return CinematicSprInstr_Func217(k, j, game),
-        9172561 => return CinematicSprInstr_Func218(k, j, game),
-        _ => return Unreachable(game) as uint16,
-    };
+        9147448 => CinematicSprInstr_Delete(k, j, game),
+        9147458 => CinematicSprInstr_Sleep(k, j, game),
+        9147468 => CinematicSprInstr_SetPreInstr(k, j, game),
+        9147479 => CinematicSprInstr_ClearPreInstr(k, j, game),
+        9147554 => CinematicSprInstr_GotoRel(k, j, game),
+        9147580 => CinematicSprInstr_Goto(k, j, game),
+        9147587 => CinematicSprInstr_DecTimerGoto(k, j, game),
+        9147597 => CinematicSprInstr_DecTimerGotoRel(k, j, game),
+        9147606 => CinematicSprInstr_SetTimer(k, j, game),
+        9149665 => CinematicSprInstr_9CE1(k, j, game),
+        9149789 => CinematicSprInstr_9D5D(k, j, game),
+        9149910 => CinematicSprInstr_9DD6(k, j, game),
+        9150040 => CinematicSprInstr_Func8(k, j, game),
+        9150157 => CinematicSprInstr_Func9(k, j, game),
+        9150192 => CinematicSprInstr_sub_8B9EF0(k, j, game),
+        9150233 => CinematicSprInstr_9F19(k, j, game),
+        9152792 => CinematicSprInstr_SpawnMetroidEggParticles(k, j, game),
+        9155382 => CinematicSprInstr_StartIntroPage2(k, j, game),
+        9155390 => CinematicSprInstr_StartIntroPage3(k, j, game),
+        9155398 => CinematicSprInstr_StartIntroPage4(k, j, game),
+        9155406 => CinematicSprInstr_StartIntroPage5(k, j, game),
+        9156805 => CinematicSprInstr_Func43(k, j, game),
+        9157153 => CinematicSprInstr_SpawnIntroRinkas01(k, j, game),
+        9157174 => CinematicSprInstr_SpawnIntroRinkas23(k, j, game),
+        9158806 => CinematicCommonInstr_Func69(k, j, game),
+        9158818 => CinematicCommonInstr_Func70(k, j, game),
+        9159684 => CinematicSprInstr_SpawnCeresExplosions1(k, j, game),
+        9159948 => CinematicSprInstr_SpawnCeresExplosions3(k, j, game),
+        9161125 => CinematicSprInstr_C9A5(k, j, game),
+        9161135 => CinematicSprInstr_C9AF(k, j, game),
+        9161149 => CinematicSprInstr_C9BD(k, j, game),
+        9161159 => CinematicSprInstr_C9C7(k, j, game),
+        9171550 => CinematicSprInstr_Func181(k, j, game),
+        9171588 => CinematicSprInstr_Func182(k, j, game),
+        9171605 => CinematicSprInstr_Func183(k, j, game),
+        9171639 => CinematicSprInstr_Func185(k, j, game),
+        9171706 => CinematicSprInstr_Func186(k, j, game),
+        9171755 => CinematicSprInstr_Func187(k, j, game),
+        9171888 => CinematicSprInstr_Func190(k, j, game),
+        9171918 => CinematicSprInstr_Func192(k, j, game),
+        9171995 => CinematicSprInstr_Func193(k, j, game),
+        9172004 => CinematicSprInstr_Func194(k, j, game),
+        9172013 => CinematicSprInstr_Func195(k, j, game),
+        9172022 => CinematicSprInstr_Func196(k, j, game),
+        9172031 => CinematicSprInstr_Func197(k, j, game),
+        9172040 => CinematicSprInstr_Func198(k, j, game),
+        9172253 => CinematicSprInstr_Func208(k, j, game),
+        9172308 => CinematicSprInstr_Func211(k, j, game),
+        9172375 => CinematicSprInstr_Func213(k, j, game),
+        9172410 => CinematicSprInstr_Func214(k, j, game),
+        9172484 => CinematicSprInstr_Func217(k, j, game),
+        9172561 => CinematicSprInstr_Func218(k, j, game),
+        _ => Unreachable(game) as uint16,
+    }
 }
 pub unsafe fn CallCinematicSprPreInstr(mut ea: uint32, mut j: uint16, game: &mut Game) {
     match ea {
-        9158617 => return,
-        9147353 => return,
-        9147487 => return,
+        9158617 => (),
+        9147353 => (),
+        9147487 => (),
         9149647 => {
             sub_8B9CCF(j, game);
-            return;
         }
-        9152724 => return,
+        9152724 => (),
         9152744 => {
             SetSomeStuffForSpriteObject_4_MetroidEgg(j, game);
-            return;
         }
         9152771 => {
             CinematicSprPreInstr_A903(j, game);
-            return;
         }
         9152916 => {
             SetSomeStuffForSpriteObject_7(j, game);
-            return;
         }
         9153203 => {
             SetSomeStuffForSpriteObject_9(j, game);
-            return;
         }
         9153896 => {
             SetSomeStuffForSpriteObject_11(j, game);
-            return;
         }
         9153958 => {
             SetSomeStuffForSpriteObject_13(j, game);
-            return;
         }
         9154074 => {
             SetSomeStuffForSpriteObject_18(j, game);
-            return;
         }
         9156486 => {
             CinematicFunction_Intro_Func36(j, game);
-            return;
         }
         9156623 => {
             CinematicFunction_Intro_Func39(j, game);
-            return;
         }
         9156654 => {
             CinematicSprPreInstr_B82E(j, game);
-            return;
         }
         9156824 => {
             CinematicFunction_Intro_Func44(j, game);
-            return;
         }
         9156923 => {
             CinematicFunction_Intro_Func45(j, game);
-            return;
         }
         9157135 => {
             CinematicFunction_Intro_Func48(j, game);
-            return;
         }
         9157214 => {
             CinematicFunction_Intro_Func50(j, game);
-            return;
         }
         9157235 => {
             CinematicFunction_Intro_Func51(j, game);
-            return;
         }
         9157389 => {
             CinematicFunction_Intro_Func52(j, game);
-            return;
         }
         9157412 => {
             CinematicFunction_Intro_Func53(j, game);
-            return;
         }
         9158325 => {
             CinematicFunction_Intro_Func58(j, game);
-            return;
         }
         9158453 => {
             CinematicFunction_Intro_Func60(j, game);
-            return;
         }
         9158495 => {
             CinematicFunction_Intro_Func62(j, game);
-            return;
         }
         9158537 => {
             CinematicFunction_Intro_Func64(j, game);
-            return;
         }
         9158598 => {
             CinematicFunction_Intro_Func66(j, game);
-            return;
         }
         9159817 => {
             CinematicSprPreInstr_C489(j, game);
-            return;
         }
         9160066 => {
             CinematicFunction_Intro_Func82(j, game);
-            return;
         }
         9160782 => {
             CinematicFunction_Intro_Func90(j, game);
-            return;
         }
         9160797 => {
             CinematicFunction_Intro_Func91(j, game);
-            return;
         }
         9160874 => {
             CinematicFunction_Intro_Func93(j, game);
-            return;
         }
         9160889 => {
             CinematicFunction_Intro_Func94(j, game);
-            return;
         }
         9160953 => {
             CinematicFunction_Intro_Func96(j, game);
-            return;
         }
         9160968 => {
             CinematicFunction_Intro_Func97(j, game);
-            return;
         }
         9170866 => {
             CinematicFunction_Intro_Func151(j, game);
-            return;
         }
         9171431 => {
             CinematicFunction_Intro_Func179(j, game);
-            return;
         }
         9171495 => {
             CinematicFunction_Intro_Func180(j, game);
-            return;
         }
         9171621 => {
             CinematicFunction_Intro_Func184(j, game);
-            return;
         }
         9171802 => {
             CinematicSprPreInstr_F35A(j, game);
-            return;
         }
         9171829 => {
             CinematicFunction_Intro_Func189(j, game);
-            return;
         }
         9171867 => {
             CinematicFunction_Intro_Func189b(j, game);
-            return;
         }
         9171897 => {
             CinematicFunction_Intro_Func191(j, game);
-            return;
         }
         9172053 => {
             CinematicFunction_Intro_Func199(j, game);
-            return;
         }
         9172068 => {
             CinematicFunction_Intro_Func200(j, game);
-            return;
         }
         9172088 => {
             CinematicFunction_Intro_Func201(j, game);
-            return;
         }
         9172103 => {
             CinematicFunction_Intro_Func202(j, game);
-            return;
         }
         9172123 => {
             CinematicFunction_Intro_Func203(j, game);
-            return;
         }
         9172138 => {
             CinematicFunction_Intro_Func204(j, game);
-            return;
         }
         9172177 => {
             CinematicFunction_Intro_Func205(j, game);
-            return;
         }
         9172192 => {
             CinematicFunction_Intro_Func206(j, game);
-            return;
         }
         9172231 => {
             CinematicFunction_Intro_Func207(j, game);
-            return;
         }
-        9172252 => return,
+        9172252 => (),
         9172264 => {
             CinematicSprPreInstr_F528(j, game);
-            return;
         }
         9172351 => {
             CinematicSprPreInstr_F57F(j, game);
-            return;
         }
         9172445 => {
             CinematicFunction_Intro_Func215(j, game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn CallCinematicBgPreInstr(mut ea: uint32, mut j: uint16, game: &mut Game) {
     match ea {
-        9147353 => return,
+        9147353 => (),
         9155772 => {
             CinematicBgPreInstr_SamusBlink(j, game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn CallCinematicBgInstr(
     mut ea: uint32,
@@ -11415,304 +11266,237 @@ pub unsafe fn CallCinematicBgInstr(
     game: &mut Game,
 ) -> uint16 {
     match ea {
-        9148056 => return CinematicBgInstr_Delete(k, j, game),
-        9148190 => return CinematicBgInstr_Goto(k, j, game),
-        9154004 => return CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j, game),
-        9154115 => return CinematicBgInstr_HandleCreateJpnText_Page1(k, j, game),
-        9154139 => return CinematicBgInstr_SpawnMarkerWaitInput_Page1(k, j, game),
-        9154169 => return CinematicBgInstr_HandleCreateJpnText_Page2(k, j, game),
-        9154193 => return CinematicBgInstr_SpawnMarkerWaitInput_Page2(k, j, game),
-        9154676 => return CinematicBgInstr_HandleCreateJpnText_Page3(k, j, game),
-        9154700 => return CinematicBgInstr_SpawnMarkerWaitInput_Page3(k, j, game),
-        9154739 => return CinematicBgInstr_HandleCreateJpnText_Page4(k, j, game),
-        9154763 => return CinematicBgInstr_SpawnMarkerWaitInput_Page4(k, j, game),
-        9154971 => return CinematicBgInstr_HandleCreateJpnText_Page5(k, j, game),
-        9154995 => return CinematicBgInstr_SpawnMarkerWaitInput_Page5(k, j, game),
-        9155112 => return CinematicBgInstr_Func16(k, j, game),
-        9155136 => return CinematicBgInstr_Func17(k, j, game),
-        9158806 => return CinematicCommonInstr_Func69(k, j, game),
-        9158818 => return CinematicCommonInstr_Func70(k, j, game),
-        9168423 => return CalcItemPercentageCount(k, j, game),
-        9168745 => return CinematicFunction_Intro_Func146(k, j, game),
-        9168768 => return CinematicFunction_Intro_Func147(k, j, game),
-        _ => return Unreachable(game) as uint16,
-    };
+        9148056 => CinematicBgInstr_Delete(k, j, game),
+        9148190 => CinematicBgInstr_Goto(k, j, game),
+        9154004 => CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j, game),
+        9154115 => CinematicBgInstr_HandleCreateJpnText_Page1(k, j, game),
+        9154139 => CinematicBgInstr_SpawnMarkerWaitInput_Page1(k, j, game),
+        9154169 => CinematicBgInstr_HandleCreateJpnText_Page2(k, j, game),
+        9154193 => CinematicBgInstr_SpawnMarkerWaitInput_Page2(k, j, game),
+        9154676 => CinematicBgInstr_HandleCreateJpnText_Page3(k, j, game),
+        9154700 => CinematicBgInstr_SpawnMarkerWaitInput_Page3(k, j, game),
+        9154739 => CinematicBgInstr_HandleCreateJpnText_Page4(k, j, game),
+        9154763 => CinematicBgInstr_SpawnMarkerWaitInput_Page4(k, j, game),
+        9154971 => CinematicBgInstr_HandleCreateJpnText_Page5(k, j, game),
+        9154995 => CinematicBgInstr_SpawnMarkerWaitInput_Page5(k, j, game),
+        9155112 => CinematicBgInstr_Func16(k, j, game),
+        9155136 => CinematicBgInstr_Func17(k, j, game),
+        9158806 => CinematicCommonInstr_Func69(k, j, game),
+        9158818 => CinematicCommonInstr_Func70(k, j, game),
+        9168423 => CalcItemPercentageCount(k, j, game),
+        9168745 => CinematicFunction_Intro_Func146(k, j, game),
+        9168768 => CinematicFunction_Intro_Func147(k, j, game),
+        _ => Unreachable(game) as uint16,
+    }
 }
 pub unsafe fn CallCinematicSpriteObjectSetup(mut ea: uint32, mut j: uint16, game: &mut Game) {
     match ea {
-        9147353 => return,
+        9147353 => (),
         9149210 => {
             CinematicSpriteInit_7(j, game);
-            return;
         }
         9149229 => {
             CinematicSpriteInit_8(j, game);
-            return;
         }
         9149248 => {
             CinematicSpriteInit_9(j, game);
-            return;
         }
         9149628 => {
             CinematicSpriteInit_0(j, game);
-            return;
         }
         9149770 => {
             CinematicSpriteInit_1(j, game);
-            return;
         }
         9149891 => {
             CinematicSpriteInit_2(j, game);
-            return;
         }
         9150021 => {
             CinematicSpriteInit_3(j, game);
-            return;
         }
         9150131 => {
             CinematicSpriteInit_4(j, game);
-            return;
         }
         9150166 => {
             CinematicSpriteInit_5(j, game);
-            return;
         }
         9150207 => {
             CinematicSpriteInit_6(j, game);
-            return;
         }
         9152705 => {
             SetSomeStuffForSpriteObject_2(j, game);
-            return;
         }
         9152725 => {
             SetSomeStuffForSpriteObject_3(j, game);
-            return;
         }
         9152856 => {
             SetSomeStuffForSpriteObject_6(j, game);
-            return;
         }
         9153178 => {
             SetSomeStuffForSpriteObject_8(j, game);
-            return;
         }
         9153877 => {
             SetSomeStuffForSpriteObject_10(j, game);
-            return;
         }
         9153939 => {
             SetSomeStuffForSpriteObject_12(j, game);
-            return;
         }
         9154055 => {
             SetSomeStuffForSpriteObject_17(j, game);
-            return;
         }
         9156467 => {
             CinematicFunction_Intro_Func35(j, game);
-            return;
         }
         9156758 => {
             CinematicFunction_Intro_Func42(j, game);
-            return;
         }
         9157005 => {
             CinematicFunction_Intro_Func46(j, game);
-            return;
         }
         9157076 => {
             CinematicFunction_Intro_Func47(j, game);
-            return;
         }
         9157195 => {
             CinematicFunction_Intro_Func49(j, game);
-            return;
         }
         9158270 => {
             CinematicFunction_Intro_Func57(j, game);
-            return;
         }
         9158434 => {
             CinematicFunction_Intro_Func59(j, game);
-            return;
         }
         9158476 => {
             CinematicFunction_Intro_Func61(j, game);
-            return;
         }
         9158518 => {
             CinematicFunction_Intro_Func63(j, game);
-            return;
         }
         9158560 => {
             CinematicFunction_Intro_Func65(j, game);
-            return;
         }
         9158787 => {
             CinematicFunction_Intro_Func68(j, game);
-            return;
         }
         9158834 => {
             CinematicFunction_Intro_Func71(j, game);
-            return;
         }
         9159732 => {
             CinematicFunction_Intro_Func78(j, game);
-            return;
         }
         9159865 => {
             CinematicFunction_Intro_Func80(j, game);
-            return;
         }
         9159987 => {
             CinematicFunction_Intro_Func81(j, game);
-            return;
         }
         9160105 => {
             CinematicFunction_Intro_Func83(j, game);
-            return;
         }
         9160763 => {
             CinematicFunction_Intro_Func89(j, game);
-            return;
         }
         9160855 => {
             CinematicFunction_Intro_Func92(j, game);
-            return;
         }
         9161026 => {
             CinematicFunction_Intro_Func98(j, game);
-            return;
         }
         9161046 => {
             CinematicFunction_Intro_Func99(j, game);
-            return;
         }
         9161066 => {
             CinematicFunction_Intro_Func100(j, game);
-            return;
         }
         9161086 => {
             CinematicFunction_Intro_Func101(j, game);
-            return;
         }
         9161106 => {
             CinematicFunction_Intro_Func102(j, game);
-            return;
         }
         9161190 => {
             CinematicFunction_Intro_Func104(j, game);
-            return;
         }
         9170841 => {
             CinematicFunction_Intro_Func150(j, game);
-            return;
         }
         9170922 => {
             CinematicFunction_Intro_Func152(j, game);
-            return;
         }
         9170941 => {
             CinematicFunction_Intro_Func153(j, game);
-            return;
         }
         9170949 => {
             CinematicFunction_Intro_Func154(j, game);
-            return;
         }
         9170968 => {
             CinematicFunction_Intro_Func155(j, game);
-            return;
         }
         9170987 => {
             CinematicFunction_Intro_Func156(j, game);
-            return;
         }
         9171006 => {
             CinematicFunction_Intro_Func157(j, game);
-            return;
         }
         9171038 => {
             CinematicFunction_Intro_Func159(j, game);
-            return;
         }
         9171053 => {
             CinematicFunction_Intro_Func161(j, game);
-            return;
         }
         9171068 => {
             CinematicFunction_Intro_Func162(j, game);
-            return;
         }
         9171077 => {
             CinematicFunction_Intro_Func163(j, game);
-            return;
         }
         9171092 => {
             CinematicFunction_Intro_Func164(j, game);
-            return;
         }
         9171122 => {
             CinematicFunction_Intro_Func165(j, game);
-            return;
         }
         9171169 => {
             CinematicFunction_Intro_Func166(j, game);
-            return;
         }
         9171177 => {
             CinematicFunction_Intro_Func167(j, game);
-            return;
         }
         9171185 => {
             CinematicFunction_Intro_Func168(j, game);
-            return;
         }
         9171193 => {
             CinematicFunction_Intro_Func169(j, game);
-            return;
         }
         9171230 => {
             CinematicFunction_Intro_Func170(j, game);
-            return;
         }
         9171267 => {
             CinematicFunction_Intro_Func171(j, game);
-            return;
         }
         9171286 => {
             CinematicFunction_Intro_Func172(j, game);
-            return;
         }
         9171305 => {
             CinematicFunction_Intro_Func173(j, game);
-            return;
         }
         9171324 => {
             CinematicFunction_Intro_Func174(j, game);
-            return;
         }
         9171343 => {
             CinematicFunction_Intro_Func175(j, game);
-            return;
         }
         9171368 => {
             CinematicFunction_Intro_Func176(j, game);
-            return;
         }
         9171393 => {
             CinematicFunction_Intro_Func177(j, game);
-            return;
         }
         9171412 => {
             CinematicFunction_Intro_Func178(j, game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn CallIntroObjectInstr(
     mut ea: uint32,
@@ -11721,61 +11505,51 @@ pub unsafe fn CallIntroObjectInstr(
     game: &mut Game,
 ) -> uint16 {
     match ea {
-        9148926 => return IntroObject_Delete(k, j, game),
-        9148934 => return IntroObject_Goto(k, j, game),
-        9148941 => return IntroObject_DecTimerGoto(k, j, game),
-        9148951 => return IntroObject_SetTimer(k, j, game),
-        9172734 => return CinematicFunction_Intro_Func219(k, j, game),
-        _ => return Unreachable(game) as uint16,
-    };
+        9148926 => IntroObject_Delete(k, j, game),
+        9148934 => IntroObject_Goto(k, j, game),
+        9148941 => IntroObject_DecTimerGoto(k, j, game),
+        9148951 => IntroObject_SetTimer(k, j, game),
+        9172734 => CinematicFunction_Intro_Func219(k, j, game),
+        _ => Unreachable(game) as uint16,
+    }
 }
 pub unsafe fn CallCinematicSpriteInit(mut ea: uint32, mut j: uint16, game: &mut Game) {
     match ea {
         9149210 => {
             CinematicSpriteInit_7(j, game);
-            return;
         }
         9149229 => {
             CinematicSpriteInit_8(j, game);
-            return;
         }
         9149248 => {
             CinematicSpriteInit_9(j, game);
-            return;
         }
         9149628 => {
             CinematicSpriteInit_0(j, game);
-            return;
         }
         9149770 => {
             CinematicSpriteInit_1(j, game);
-            return;
         }
         9149891 => {
             CinematicSpriteInit_2(j, game);
-            return;
         }
         9150021 => {
             CinematicSpriteInit_3(j, game);
-            return;
         }
         9150131 => {
             CinematicSpriteInit_4(j, game);
-            return;
         }
         9150166 => {
             CinematicSpriteInit_5(j, game);
-            return;
         }
         9150207 => {
             CinematicSpriteInit_6(j, game);
-            return;
         }
-        9147353 => return,
+        9147353 => (),
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn CallMode7Instr(
     mut ea: uint32,
@@ -11784,55 +11558,51 @@ pub unsafe fn CallMode7Instr(
     game: &mut Game,
 ) -> uint16 {
     match ea {
-        9147755 => return Mode7Instr_Delete(k, j, game),
-        9147762 => return Mode7Instr_SetPreInstr(k, j, game),
-        9147773 => return Mode7Instr_ClearPreInstr(k, j, game),
-        9147782 => return Mode7Instr_Goto(k, j, game),
-        9147789 => return Mode7Instr_DecTimerAndGoto(k, j, game),
-        9147799 => return Mode7Instr_SetTimer(k, j, game),
-        9151067 => return PlayBabyMetroidCry1(k, j, game),
-        9151075 => return PlayBabyMetroidCry2(k, j, game),
-        9151083 => return PlayBabyMetroidCry3(k, j, game),
-        9151091 => return CinematicSetPal1(k, j, game),
-        9151108 => return CinematicSetPal2(k, j, game),
-        9151125 => return CinematicSetPal3(k, j, game),
-        9151142 => return CinematicSetPal4(k, j, game),
-        9155870 => return sub_8BB51E(k, j, game),
-        9155919 => return EnableCinematicBgTilemapUpdates__0(k, j, game),
-        9155924 => return CinematicFunction_Intro_Func21(k, j, game),
-        9156024 => return CinematicFunction_Intro_ThenWaitInputSetupBabyMetroid(k, j, game),
-        9156035 => return CinematicFunction_Intro_Func23(k, j, game),
-        9156123 => return CinematicFunction_Intro_Func25(k, j, game),
-        9156134 => return CinematicFunction_Intro_Func26(k, j, game),
-        9156234 => return CinematicFunction_Intro_Func28(k, j, game),
-        9156245 => return CinematicFunction_Intro_Func29(k, j, game),
-        9156333 => return CinematicFunction_Intro_Func31(k, j, game),
-        9156344 => return CinematicFunction_Intro_Func32(k, j, game),
-        9156363 => return EnableCinematicBgTilemapUpdates__(k, j, game),
-        _ => return Unreachable(game) as uint16,
-    };
+        9147755 => Mode7Instr_Delete(k, j, game),
+        9147762 => Mode7Instr_SetPreInstr(k, j, game),
+        9147773 => Mode7Instr_ClearPreInstr(k, j, game),
+        9147782 => Mode7Instr_Goto(k, j, game),
+        9147789 => Mode7Instr_DecTimerAndGoto(k, j, game),
+        9147799 => Mode7Instr_SetTimer(k, j, game),
+        9151067 => PlayBabyMetroidCry1(k, j, game),
+        9151075 => PlayBabyMetroidCry2(k, j, game),
+        9151083 => PlayBabyMetroidCry3(k, j, game),
+        9151091 => CinematicSetPal1(k, j, game),
+        9151108 => CinematicSetPal2(k, j, game),
+        9151125 => CinematicSetPal3(k, j, game),
+        9151142 => CinematicSetPal4(k, j, game),
+        9155870 => sub_8BB51E(k, j, game),
+        9155919 => EnableCinematicBgTilemapUpdates__0(k, j, game),
+        9155924 => CinematicFunction_Intro_Func21(k, j, game),
+        9156024 => CinematicFunction_Intro_ThenWaitInputSetupBabyMetroid(k, j, game),
+        9156035 => CinematicFunction_Intro_Func23(k, j, game),
+        9156123 => CinematicFunction_Intro_Func25(k, j, game),
+        9156134 => CinematicFunction_Intro_Func26(k, j, game),
+        9156234 => CinematicFunction_Intro_Func28(k, j, game),
+        9156245 => CinematicFunction_Intro_Func29(k, j, game),
+        9156333 => CinematicFunction_Intro_Func31(k, j, game),
+        9156344 => CinematicFunction_Intro_Func32(k, j, game),
+        9156363 => EnableCinematicBgTilemapUpdates__(k, j, game),
+        _ => Unreachable(game) as uint16,
+    }
 }
 pub unsafe fn CallMode7PreInstr(mut ea: uint32, mut k: uint16, game: &mut Game) {
     match ea {
-        9147353 => return,
+        9147353 => (),
         9155973 => {
             CinematicFunction_Intro_Func22(k, game);
-            return;
         }
         9156078 => {
             CinematicFunction_Intro_Func24(k, game);
-            return;
         }
         9156183 => {
             CinematicFunction_Intro_Func27(k, game);
-            return;
         }
         9156288 => {
             CinematicFunction_Intro_Func30(k, game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }

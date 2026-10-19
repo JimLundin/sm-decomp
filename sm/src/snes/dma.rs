@@ -40,7 +40,7 @@ static transferLength: [::core::ffi::c_int; 8] = [1, 2, 2, 4, 4, 4, 2, 4];
 pub unsafe fn dma_init(mut snes: *mut Snes) -> *mut Dma {
     let mut dma: *mut Dma = malloc(::core::mem::size_of::<Dma>() as size_t) as *mut Dma;
     (*dma).snes = snes;
-    return dma;
+    dma
 }
 pub unsafe fn dma_free(mut dma: *mut Dma) {
     free(dma as *mut ::core::ffi::c_void);

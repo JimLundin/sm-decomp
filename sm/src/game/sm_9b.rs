@@ -51,16 +51,16 @@ pub use crate::types::Buttons;
 pub use crate::types::Consts_9B;
 #[inline]
 unsafe fn RomPtr_9B(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr((0x9b0000u32) | ((addr) as u32), game);
+    RomPtr((0x9b0000u32) | ((addr) as u32), game)
 }
 #[inline]
 unsafe fn RomPtr_A0(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr((0xa00000u32) | ((addr) as u32), game);
+    RomPtr((0xa00000u32) | ((addr) as u32), game)
 }
 #[inline]
 unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int, game: &mut Game) -> *mut VramWriteEntry {
-    return (&raw mut game.g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
-        as *mut uint8 as *mut VramWriteEntry;
+    (&raw mut game.g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
+        as *mut uint8 as *mut VramWriteEntry
 }
 pub const fnSamus_MoveHandler_ReleaseFromGrapple: ::core::ffi::c_int = 0x90946e;
 pub const fnSamus_MovementHandler_Normal: ::core::ffi::c_int = 0x90a337;
@@ -258,7 +258,7 @@ pub unsafe fn HandleSamusDeathSequence(game: &mut Game) -> uint16 {
                 game,
             );
         }
-        return 0 as uint16;
+        0 as uint16
     } else {
         HandleSamusDeathSequence_Helper2(game);
         *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) =
@@ -268,8 +268,8 @@ pub unsafe fn HandleSamusDeathSequence(game: &mut Game) -> uint16 {
                 == kButton_A as ::core::ffi::c_int
                     | kButton_L as ::core::ffi::c_int
                     | kButton_R as ::core::ffi::c_int) as uint16;
-        return 1 as uint16;
-    };
+        1 as uint16
+    }
 }
 pub unsafe fn HandleSamusDeathSequence_Helper2(game: &mut Game) {
     let mut v0: *const uint16 = RomPtr_9B(
@@ -353,7 +353,7 @@ pub unsafe fn QueueTransferOfSamusDeathSequence(mut v0: uint16, game: &mut Game)
 }
 pub unsafe fn GameState_24_SamusNoHealth_Explosion_Helper(game: &mut Game) -> uint16 {
     GameState_24_SamusNoHealth_Explosion_1(game);
-    return GameState_24_SamusNoHealth_Explosion_2(game);
+    GameState_24_SamusNoHealth_Explosion_2(game)
 }
 pub unsafe fn GameState_24_SamusNoHealth_Explosion_1(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) == 0
@@ -440,7 +440,7 @@ pub unsafe fn GameState_24_SamusNoHealth_Explosion_2(game: &mut Game) -> uint16 
         }
     }
     DrawSamusSuitExploding(game);
-    return 0 as uint16;
+    0 as uint16
 }
 pub unsafe fn CancelGrappleBeamIfIncompatiblePose(game: &mut Game) {
     let mut v0: int16 = 0;
@@ -494,7 +494,7 @@ pub unsafe fn CheckIfGrappleIsConnectedToBlock(game: &mut Game) -> uint8 {
         return 0 as uint8;
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0xa64) as *mut uint16) = 1 as uint16;
-    return 1 as uint8;
+    1 as uint8
 }
 unsafe fn ProcessEnemyGrappleBeamColl(
     mut a: uint16,
@@ -502,9 +502,9 @@ unsafe fn ProcessEnemyGrappleBeamColl(
     game: &mut Game,
 ) -> ::core::ffi::c_int {
     match a as ::core::ffi::c_int {
-        0 | 2 => return -(1 as ::core::ffi::c_int),
-        3 => return 1 as ::core::ffi::c_int,
-        1 | 4 | 5 => return 0 as ::core::ffi::c_int,
+        0 | 2 => -(1 as ::core::ffi::c_int),
+        3 => 1 as ::core::ffi::c_int,
+        1 | 4 | 5 => 0 as ::core::ffi::c_int,
         6 => {
             r18 = *(RomPtr_A0(r18, game) as *mut uint16).offset(3);
             if (*((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16)
@@ -525,60 +525,50 @@ unsafe fn ProcessEnemyGrappleBeamColl(
             *((&raw mut game.g_ram as *mut uint8).offset(0x18aa) as *mut uint16) = 5 as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0xa54) as *mut uint16) =
                 (*(&raw mut game.g_ram as *mut uint8).offset(0xa1e) == 4u8) as uint16;
-            return 1 as ::core::ffi::c_int;
+            1 as ::core::ffi::c_int
         }
         _ => {
             Unreachable(game);
-            return 0 as ::core::ffi::c_int;
+            0 as ::core::ffi::c_int
         }
-    };
+    }
 }
 pub unsafe fn CallGrappleNextFunc(mut ea: uint32, game: &mut Game) {
     match ea {
         10205657 => {
             GrappleNext_SwingClockwise(game);
-            return;
         }
         10205666 => {
             GrappleNext_SwingAntiClockwise(game);
-            return;
         }
         10205674 => {
             GrappleNext_StandAimRight(game);
-            return;
         }
         10205683 => {
             GrappleNext_StandAimDownRight(game);
-            return;
         }
         10205692 => {
             GrappleNext_StandAimDownLeft(game);
-            return;
         }
         10205701 => {
             GrappleNext_StandAimLeft(game);
-            return;
         }
         10205710 => {
             GrappleNext_CrouchAimRight(game);
-            return;
         }
         10205719 => {
             GrappleNext_CrouchAimDownRight(game);
-            return;
         }
         10205728 => {
             GrappleNext_CrouchAimDownLeft(game);
-            return;
         }
         10205737 => {
             GrappleNext_CrouchAimLeft(game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn HandleConnectingGrapple(game: &mut Game) {
     if *(&raw mut game.g_ram as *mut uint8).offset(0xa1f) as ::core::ffi::c_int
@@ -803,7 +793,7 @@ pub unsafe fn HandleSpecialGrappleBeamAngles(game: &mut Game) -> uint8 {
             (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16))
                 .wrapping_sub(12u16);
     }
-    return 1 as uint8;
+    1 as uint8
 }
 pub unsafe fn GrappleBeamFunc_BB64(game: &mut Game) {
     let mut current_block: u64;
@@ -1764,10 +1754,10 @@ pub unsafe fn CheckBannedDraygonGrappleDirs(mut a: uint16, game: &mut Game) -> u
     {
         return 2 as uint16;
     }
-    return 1 as uint16;
+    1 as uint16
 }
 pub fn ClearCarry_12() -> uint8 {
-    return 0 as uint8;
+    0 as uint8
 }
 pub unsafe fn GrappleBeamFunc_Firing(game: &mut Game) {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0x9b2) as *mut uint16) as ::core::ffi::c_int
@@ -2261,82 +2251,63 @@ pub unsafe fn CallGrappleBeamFunc(mut ea: uint32, game: &mut Game) {
     match ea {
         10206052 => {
             GrappleBeamFunc_BB64(game);
-            return;
         }
         10206239 => {
             GrappleBeamFunc_BC1F(game);
-            return;
         }
         10206463 => {
             GrappleBeamFunc_BCFF(game);
-            return;
         }
         10206532 => {
             GrappleBeamFunc_BD44(game);
-            return;
         }
         10206613 => {
             GrappleBeamFunc_BD95(game);
-            return;
         }
         10206872 => {
             GrappleBeamFunc_BE98(game);
-            return;
         }
         10206955 => {
             GrappleBeamFunc_BEEB(game);
-            return;
         }
         10207003 => {
             GrappleBeamFunc_BF1B(game);
-            return;
         }
         10208496 => {
             GrappleBeamFunc_Inactive(game);
-            return;
         }
         10208542 => {
             GrappleBeamFunc_FireGoToCancel(game);
-            return;
         }
         10209027 => {
             GrappleBeamFunc_Firing(game);
-            return;
         }
         10209150 => {
             GrappleBeamFunc_ConnectedLockedInPlace(game);
-            return;
         }
         10209181 => {
             GrappleBeamFunc_Connected_Swinging(game);
-            return;
         }
         10209300 => {
             GrappleBeamFunc_Wallgrab(game);
-            return;
         }
         10209330 => {
             GrappleBeamFunc_C832(game);
-            return;
         }
         10209366 => {
             GrappleBeamFunc_Cancel(game);
-            return;
         }
         10209742 => {
             GrappleBeamFunc_C9CE(game);
-            return;
         }
         10210187 => {
             GrappleBeamFunc_ReleaseFromSwing(game);
-            return;
         }
         10209477 => {
             GrappleBeam_Func2(game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }

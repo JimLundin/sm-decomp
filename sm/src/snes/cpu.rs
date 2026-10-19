@@ -32,7 +32,7 @@ static CYCLES_PER_OPCODE: [u8; 256] = [
     2, 6, 3, 4, 3, 3, 5, 6, 2, 2, 2, 3, 4, 4, 6, 5, 2, 5, 5, 7, 5, 4, 6, 6, 2, 4, 4, 2, 8, 4, 7, 5,
 ];
 unsafe fn read_byte(cpu: *mut Cpu, adr: u32, game: &mut Game) -> u8 {
-    return snes_cpuRead((*cpu).mem as *mut Snes, adr, game);
+    snes_cpuRead((*cpu).mem as *mut Snes, adr, game)
 }
 unsafe fn write_byte(cpu: *mut Cpu, adr: u32, val: u8, game: &mut Game) {
     snes_cpuWrite((*cpu).mem as *mut Snes, adr, val, game);
@@ -46,7 +46,7 @@ pub unsafe fn cpu_init(mem: *mut ::core::ffi::c_void, memType: ::core::ffi::c_in
     );
     (*cpu).mem = mem;
     (*cpu).memType = memType as u8;
-    return cpu;
+    cpu
 }
 pub unsafe fn cpu_free(cpu: *mut Cpu) {
     free(cpu as *mut ::core::ffi::c_void);

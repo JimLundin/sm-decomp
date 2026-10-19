@@ -20,7 +20,7 @@ unsafe fn get_SamusTileAnimationDefs(
     mut a: uint16,
     game: &mut Game,
 ) -> *mut SamusTileAnimationDefs {
-    return RomPtr((0x920000u32) | ((a) as u32), game) as *mut SamusTileAnimationDefs;
+    RomPtr((0x920000u32) | ((a) as u32), game) as *mut SamusTileAnimationDefs
 }
 pub unsafe fn SetSamusTilesDefsForCurAnim(game: &mut Game) {
     let mut v0: uint16 = (4 as ::core::ffi::c_int
@@ -65,7 +65,7 @@ pub unsafe fn PlaySamusFanfare(game: &mut Game) -> uint8 {
     {
         let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16);
         *fresh0 = (*fresh0).wrapping_add(1);
-        return 0 as uint8;
+        0 as uint8
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0xa24) as *mut uint16) =
             *((&raw mut game.g_ram as *mut uint8).offset(0xa20) as *mut uint16);
@@ -76,8 +76,8 @@ pub unsafe fn PlaySamusFanfare(game: &mut Game) -> uint8 {
         *((&raw mut game.g_ram as *mut uint8).offset(0xa22) as *mut uint16) =
             *((&raw mut game.g_ram as *mut uint8).offset(0xa1e) as *mut uint16);
         *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) = 0 as uint16;
-        return 1 as uint8;
-    };
+        1 as uint8
+    }
 }
 pub unsafe fn Unused_SamusTileViewer(game: &mut Game) {
     DrawSamusSpritemap(0x182 as uint16, 0x40 as uint16, 0x40 as uint16, game);

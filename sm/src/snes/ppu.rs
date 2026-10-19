@@ -66,11 +66,19 @@ pub const __ASSERT_FUNCTION: [::core::ffi::c_char; 43] = unsafe {
 };
 #[inline]
 unsafe fn IntMin(mut a: ::core::ffi::c_int, mut b: ::core::ffi::c_int) -> ::core::ffi::c_int {
-    return if a < b { a } else { b };
+    if a < b {
+        a
+    } else {
+        b
+    }
 }
 #[inline]
 unsafe fn IntMax(mut a: ::core::ffi::c_int, mut b: ::core::ffi::c_int) -> ::core::ffi::c_int {
-    return if a > b { a } else { b };
+    if a > b {
+        a
+    } else {
+        b
+    }
 }
 static layersPerMode: [[::core::ffi::c_int; 12]; 10] = [
     [4, 0, 1, 4, 0, 1, 4, 2, 3, 4, 2, 3],
@@ -124,7 +132,7 @@ pub unsafe fn ppu_init(mut snes: *mut Snes) -> *mut Ppu {
     (*ppu).renderBuffer = core::ptr::null_mut();
     (*ppu).renderPitch = 0;
     (*ppu).snes = snes;
-    return ppu;
+    ppu
 }
 pub unsafe fn ppu_free(mut ppu: *mut Ppu) {
     free(ppu as *mut ::core::ffi::c_void);
@@ -200,7 +208,7 @@ pub unsafe fn PpuBeginDrawing(
 }
 pub unsafe fn ppu_checkOverscan(mut ppu: *mut Ppu) -> bool {
     (*ppu).frameOverscan = (*ppu).overscan;
-    return (*ppu).frameOverscan;
+    (*ppu).frameOverscan
 }
 pub unsafe fn ppu_handleVblank(mut ppu: *mut Ppu) {
     if !(*ppu).forcedBlank {
@@ -1406,7 +1414,7 @@ unsafe fn ppu_getPixel(
     if layer == 4 as ::core::ffi::c_int && pixel < 0xc0 as ::core::ffi::c_int {
         layer = 6 as ::core::ffi::c_int;
     }
-    return layer;
+    layer
 }
 unsafe fn ppu_handleOPT(
     mut ppu: *mut Ppu,
@@ -1515,7 +1523,7 @@ unsafe fn ppu_getOffsetValue(
                 0x400 as ::core::ffi::c_int
             }) as uint16_t;
     }
-    return (*ppu).vram[(tilemapAdr as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int) as usize];
+    (*ppu).vram[(tilemapAdr as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int) as usize]
 }
 unsafe fn ppu_getPixelForBgLayer(
     mut ppu: *mut Ppu,
@@ -1660,11 +1668,11 @@ unsafe fn ppu_getPixelForBgLayer(
             & 1 as ::core::ffi::c_int)
             << 7 as ::core::ffi::c_int;
     }
-    return if pixel == 0 as ::core::ffi::c_int {
+    if pixel == 0 as ::core::ffi::c_int {
         0 as ::core::ffi::c_int
     } else {
         paletteSize * paletteNum + pixel
-    };
+    }
 }
 unsafe fn ppu_calculateMode7Starts(mut ppu: *mut Ppu, mut y: ::core::ffi::c_int) {
     let (mut xCenter, mut yCenter, mut clippedH, mut clippedV) = ppu_mode7_coordinates(
@@ -1754,7 +1762,7 @@ unsafe fn ppu_getPixelForMode7(
         }
         return pixel as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int;
     }
-    return pixel as ::core::ffi::c_int;
+    pixel as ::core::ffi::c_int
 }
 unsafe fn ppu_getWindowState(
     mut ppu: *mut Ppu,
@@ -1805,7 +1813,7 @@ unsafe fn ppu_getWindowState(
         3 => return test1 as ::core::ffi::c_int == test2 as ::core::ffi::c_int,
         _ => {}
     }
-    return false_0 != 0;
+    false_0 != 0
 }
 unsafe fn ppu_evaluateSprites(mut ppu: *mut Ppu, mut line: ::core::ffi::c_int) -> bool {
     let mut index: uint8_t = (if (*ppu).objPriority as ::core::ffi::c_int != 0 {
@@ -1968,7 +1976,7 @@ unsafe fn ppu_evaluateSprites(mut ppu: *mut Ppu, mut line: ::core::ffi::c_int) -
         index = (index as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint8_t;
         i += 1;
     }
-    return tilesFound != 0 as ::core::ffi::c_int;
+    tilesFound != 0 as ::core::ffi::c_int
 }
 unsafe fn ppu_getVramRemap(mut ppu: *mut Ppu) -> uint16_t {
     let mut adr: uint16_t = (*ppu).vramPointer;
@@ -1997,12 +2005,12 @@ unsafe fn ppu_getVramRemap(mut ppu: *mut Ppu) -> uint16_t {
         }
         _ => {}
     }
-    return adr;
+    adr
 }
 pub unsafe fn ppu_read(mut ppu: *mut Ppu, mut adr: uint8_t) -> uint8_t {
     match adr as ::core::ffi::c_int {
         4 | 20 | 36 | 5 | 21 | 37 | 6 | 22 | 38 | 8 | 24 | 40 | 9 | 25 | 41 | 10 | 26 | 42 => {
-            return (*ppu).ppu1openBus
+            (*ppu).ppu1openBus
         }
         52 | 53 | 54 => {
             let mut result: ::core::ffi::c_int = (*ppu).m7matrix[0 as ::core::ffi::c_int as usize]
@@ -2013,14 +2021,14 @@ pub unsafe fn ppu_read(mut ppu: *mut Ppu, mut adr: uint8_t) -> uint8_t {
                 >> 8 as ::core::ffi::c_int
                     * (adr as ::core::ffi::c_int - 0x34 as ::core::ffi::c_int)
                 & 0xff as ::core::ffi::c_int) as uint8_t;
-            return (*ppu).ppu1openBus;
+            (*ppu).ppu1openBus
         }
         55 => {
             (*ppu).hCount =
                 ((*(*ppu).snes).hPos as ::core::ffi::c_int / 4 as ::core::ffi::c_int) as uint16_t;
             (*ppu).vCount = (*(*ppu).snes).vPos;
             (*ppu).countersLatched = true_0 != 0;
-            return (*(*ppu).snes).openBus;
+            (*(*ppu).snes).openBus
         }
         56 => {
             let mut ret: uint8_t = 0 as uint8_t;
@@ -2050,7 +2058,7 @@ pub unsafe fn ppu_read(mut ppu: *mut Ppu, mut adr: uint8_t) -> uint8_t {
             }
             (*ppu).oamSecondWrite = !(*ppu).oamSecondWrite;
             (*ppu).ppu1openBus = ret;
-            return ret;
+            ret
         }
         57 => {
             let mut val: uint16_t = (*ppu).vramReadBuffer;
@@ -2064,7 +2072,7 @@ pub unsafe fn ppu_read(mut ppu: *mut Ppu, mut adr: uint8_t) -> uint8_t {
             }
             (*ppu).ppu1openBus =
                 (val as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint8_t;
-            return (val as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint8_t;
+            (val as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint8_t
         }
         58 => {
             let mut val_0: uint16_t = (*ppu).vramReadBuffer;
@@ -2078,7 +2086,7 @@ pub unsafe fn ppu_read(mut ppu: *mut Ppu, mut adr: uint8_t) -> uint8_t {
             }
             (*ppu).ppu1openBus =
                 (val_0 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint8_t;
-            return (val_0 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint8_t;
+            (val_0 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint8_t
         }
         59 => {
             let mut ret_0: uint8_t = 0 as uint8_t;
@@ -2096,7 +2104,7 @@ pub unsafe fn ppu_read(mut ppu: *mut Ppu, mut adr: uint8_t) -> uint8_t {
             }
             (*ppu).cgramSecondWrite = !(*ppu).cgramSecondWrite;
             (*ppu).ppu2openBus = ret_0;
-            return ret_0;
+            ret_0
         }
         60 => {
             let mut val_1: uint8_t = 0 as uint8_t;
@@ -2111,7 +2119,7 @@ pub unsafe fn ppu_read(mut ppu: *mut Ppu, mut adr: uint8_t) -> uint8_t {
             }
             (*ppu).hCountSecond = !(*ppu).hCountSecond;
             (*ppu).ppu2openBus = val_1;
-            return val_1;
+            val_1
         }
         61 => {
             let mut val_2: uint8_t = 0 as uint8_t;
@@ -2126,7 +2134,7 @@ pub unsafe fn ppu_read(mut ppu: *mut Ppu, mut adr: uint8_t) -> uint8_t {
             }
             (*ppu).vCountSecond = !(*ppu).vCountSecond;
             (*ppu).ppu2openBus = val_2;
-            return val_2;
+            val_2
         }
         62 => {
             let mut val_3: uint8_t = 0x1 as uint8_t;
@@ -2140,7 +2148,7 @@ pub unsafe fn ppu_read(mut ppu: *mut Ppu, mut adr: uint8_t) -> uint8_t {
                 | ((*ppu).timeOver as ::core::ffi::c_int) << 7 as ::core::ffi::c_int)
                 as uint8_t;
             (*ppu).ppu1openBus = val_3;
-            return val_3;
+            val_3
         }
         63 => {
             let mut val_4: uint8_t = 0x3 as uint8_t;
@@ -2157,10 +2165,10 @@ pub unsafe fn ppu_read(mut ppu: *mut Ppu, mut adr: uint8_t) -> uint8_t {
             (*ppu).hCountSecond = false_0 != 0;
             (*ppu).vCountSecond = false_0 != 0;
             (*ppu).ppu2openBus = val_4;
-            return val_4;
+            val_4
         }
-        _ => return (*(*ppu).snes).openBus,
-    };
+        _ => (*(*ppu).snes).openBus,
+    }
 }
 pub unsafe fn ppu_write(mut ppu: *mut Ppu, mut adr: uint8_t, mut val: uint8_t) {
     let mut current_block_164: u64;
@@ -2558,7 +2566,7 @@ pub fn PpuGetCurrentRenderScale(
     mut ppu: *mut Ppu,
     mut render_flags: uint32_t,
 ) -> ::core::ffi::c_int {
-    return 1 as ::core::ffi::c_int;
+    1 as ::core::ffi::c_int
 }
 
 fn draw_palette_span(

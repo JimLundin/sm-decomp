@@ -405,52 +405,52 @@ unsafe fn RomPtr_RAM(mut addr: uint16_t, game: &mut Game) -> *mut uint8 {
             );
         }
     };
-    return (&raw mut game.g_ram as *mut uint8).offset(addr as ::core::ffi::c_int as isize);
+    (&raw mut game.g_ram as *mut uint8).offset(addr as ::core::ffi::c_int as isize)
 }
 #[inline]
 unsafe fn RomPtr_86(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr((0x860000u32) | ((addr) as u32), game);
+    RomPtr((0x860000u32) | ((addr) as u32), game)
 }
 #[inline]
 unsafe fn RomPtr_A1(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr((0xa10000u32) | ((addr) as u32), game);
+    RomPtr((0xa10000u32) | ((addr) as u32), game)
 }
 #[inline]
 unsafe fn RomPtr_B4(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr((0xb40000u32) | ((addr) as u32), game);
+    RomPtr((0xb40000u32) | ((addr) as u32), game)
 }
 #[inline]
 unsafe fn RomPtrWithBank(mut bank: uint8, mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr(
+    RomPtr(
         ((bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int | addr as ::core::ffi::c_int)
             as uint32_t,
         game,
-    );
+    )
 }
 #[inline]
 unsafe fn RomBankBase(mut bank: uint8, game: &mut Game) -> *const uint8 {
-    return RomPtr(
+    RomPtr(
         (((bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) + 0x8000 as ::core::ffi::c_int)
             as uint32_t,
         game,
     )
-    .offset(-(0x8000 as ::core::ffi::c_int as isize));
+    .offset(-(0x8000 as ::core::ffi::c_int as isize))
 }
 #[inline]
 unsafe fn get_EnemyDef_A2(mut a: uint16, game: &mut Game) -> *mut EnemyDef {
-    return RomPtr((0xa00000u32) | ((a) as u32), game) as *mut EnemyDef;
+    RomPtr((0xa00000u32) | ((a) as u32), game) as *mut EnemyDef
 }
 #[inline]
 unsafe fn get_EnemyTileset(mut a: uint16, game: &mut Game) -> *mut EnemyTileset {
-    return RomPtr((0xb40000u32) | ((a) as u32), game) as *mut EnemyTileset;
+    RomPtr((0xb40000u32) | ((a) as u32), game) as *mut EnemyTileset
 }
 #[inline]
 unsafe fn get_EprojDef(mut a: uint16, game: &mut Game) -> *mut EprojDef {
-    return RomPtr((0x860000u32) | ((a) as u32), game) as *mut EprojDef;
+    RomPtr((0x860000u32) | ((a) as u32), game) as *mut EprojDef
 }
 #[inline]
 unsafe fn get_Vulnerability(mut a: uint16, game: &mut Game) -> *mut Vulnerability {
-    return RomPtr((0xb40000u32) | ((a) as u32), game) as *mut Vulnerability;
+    RomPtr((0xb40000u32) | ((a) as u32), game) as *mut Vulnerability
 }
 #[inline]
 unsafe fn get_ExtendedSpriteMap(
@@ -458,11 +458,11 @@ unsafe fn get_ExtendedSpriteMap(
     mut a: uint16,
     game: &mut Game,
 ) -> *mut ExtendedSpriteMap {
-    return RomPtr(
+    RomPtr(
         ((db as ::core::ffi::c_int) << 16 as ::core::ffi::c_int | a as ::core::ffi::c_int)
             as uint32_t,
         game,
-    ) as *mut ExtendedSpriteMap;
+    ) as *mut ExtendedSpriteMap
 }
 #[inline]
 unsafe fn get_EnemyPopulation(
@@ -470,11 +470,11 @@ unsafe fn get_EnemyPopulation(
     mut a: uint16,
     game: &mut Game,
 ) -> *mut EnemyPopulation {
-    return RomPtr(
+    RomPtr(
         ((db as ::core::ffi::c_int) << 16 as ::core::ffi::c_int | a as ::core::ffi::c_int)
             as uint32_t,
         game,
-    ) as *mut EnemyPopulation;
+    ) as *mut EnemyPopulation
 }
 pub const fnEprojPreInstr_nullsub_83: ::core::ffi::c_int = 0x8684fb;
 pub const fnGrappleBeam_Func2: ::core::ffi::c_int = 0x9bc8c5;
@@ -1620,15 +1620,15 @@ pub const fnEscapeDachora_Init: uint32 = 11791077;
 pub const fnnullsub_54: uint32 = 11791130;
 #[inline]
 unsafe fn gEnemyData(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut EnemyData {
-    return (&raw mut game.g_ram as *mut uint8)
+    (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
-        .offset(o as isize) as *mut EnemyData;
+        .offset(o as isize) as *mut EnemyData
 }
 #[inline]
 unsafe fn gEnemySpawnData(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut EnemySpawnData {
-    return (&raw mut game.g_ram as *mut uint8)
+    (&raw mut game.g_ram as *mut uint8)
         .offset(0x7000)
-        .offset(o as isize) as *mut EnemySpawnData;
+        .offset(o as isize) as *mut EnemySpawnData
 }
 pub unsafe fn Enemy_GrappleReact_NoInteract_A0(game: &mut Game) {
     SwitchEnemyAiToMainAi(game);
@@ -1883,49 +1883,40 @@ pub unsafe fn SetAllEnemiesToShakeFor2Frames(game: &mut Game) {
 }
 pub unsafe fn CallEnemyGfxDrawHook(mut ea: uint32, game: &mut Game) {
     match ea {
-        10518604 => return,
+        10518604 => (),
         10738444 => {
             Reflec_Func_1(game);
-            return;
         }
         10851138 => {
             Draygon_Func_36(game);
-            return;
         }
         10920690 => {
             Ridley_A2F2(game);
-            return;
         }
-        11042892 => return,
+        11042892 => (),
         11055282 => {
             NorfairLavaMan_Func_6(game);
-            return;
         }
         11062375 => {
             WreckedShipRobot_Func_1(game);
-            return;
         }
         11069550 => {
             BlueBrinstarFaceBlock_Func_1(game);
-            return;
         }
-        11110278 => return,
+        11110278 => (),
         11110345 => {
             MotherBrain_DrawBrainNeck_EnemyGfxDrawHook(game);
-            return;
         }
         11110365 => {
             MotherBrainsBrain_GfxDrawHook(game);
-            return;
         }
         11129754 => {
             DeadTorizo_MainGfxHook(game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn DrawSamusEnemiesAndProjectiles(game: &mut Game) {
     DrawSpriteObjects(game);
@@ -2464,2403 +2455,1822 @@ pub unsafe fn CallEnemyAi(mut ea: uint32, game: &mut Game) {
     match ea {
         10649605 => {
             Enemy_GrappleReact_SamusLatchesOn_A2(game);
-            return;
         }
         10649610 => {
             Enemy_GrappleReact_KillEnemy_A2(game);
-            return;
         }
         10649615 => {
             Enemy_GrappleReact_CancelBeam_A2(game);
-            return;
         }
         10649635 => {
             Enemy_NormalTouchAI_A2(game);
-            return;
         }
         10649645 => {
             Enemy_NormalShotAI_A2(game);
-            return;
         }
         10649665 => {
             Enemy_NormalFrozenAI_A2(game);
-            return;
         }
-        10649676 => return,
+        10649676 => (),
         10651420 => {
             BouncingGoofball_Init(game);
-            return;
         }
         10651548 => {
             BouncingGoofball_Main(game);
-            return;
         }
         10652077 => {
             MiniCrocomire_Init(game);
-            return;
         }
         10652144 => {
             MiniCrocomire_Main(game);
-            return;
         }
         10653036 => {
             MaridiaBeybladeTurtle_Init(game);
-            return;
         }
         10653085 => {
             MiniMaridiaBeybladeTurtle_Init(game);
-            return;
         }
         10653138 => {
             MaridiaBeybladeTurtle_Main(game);
-            return;
         }
         10653998 => {
             MiniMaridiaBeybladeTurtle_Main(game);
-            return;
         }
         10654337 => {
             MaridiaBeybladeTurtle_Touch(game);
-            return;
         }
         10654367 => {
             MiniMaridiaBeybladeTurtle_Touch(game);
-            return;
         }
         10654479 => {
             MiniMaridiaBeybladeTurtle_Shot(game);
-            return;
         }
         10656319 => {
             ThinHoppingBlobs_Init(game);
-            return;
         }
         10656381 => {
             ThinHoppingBlobs_Main(game);
-            return;
         }
         10657608 => {
             SpikeShootingPlant_Init(game);
-            return;
         }
         10657715 => {
             SpikeShootingPlant_Main(game);
-            return;
         }
         10658809 => {
             MaridiaSpikeyShell_Init(game);
-            return;
         }
         10658942 => {
             MaridiaSpikeyShell_Main(game);
-            return;
         }
         10659193 => {
             MaridiaSpikeyShell_Shot(game);
-            return;
         }
         10659396 => {
             GunshipTop_Init(game);
-            return;
         }
         10659538 => {
             GunshipBottom_Init(game);
-            return;
         }
         10659673 => {
             GunshipTop_Main(game);
-            return;
         }
         10661995 => {
             Flies_Init(game);
-            return;
         }
         10662175 => {
             Flies_Main(game);
-            return;
         }
         10662880 => {
             NorfairErraticFireball_Init(game);
-            return;
         }
         10662927 => {
             NorfairErraticFireball_Main(game);
-            return;
         }
         10663280 => {
             LavaquakeRocks_Init(game);
-            return;
         }
         10663311 => {
             LavaquakeRocks_Main(game);
-            return;
         }
         10663426 => {
             Rinka_Init(game);
-            return;
         }
         10663876 => {
             Rinka_Main(game);
-            return;
         }
         10664233 => {
             Rinka_Frozen(
                 *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
                 game,
             );
-            return;
         }
         10664263 => {
             Rinka_Touch(game);
-            return;
         }
         10664269 => {
             Rinka_Shot(game);
-            return;
         }
         10664275 => {
             Rinka_Powerbomb(
                 *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
                 game,
             );
-            return;
         }
         10664909 => {
             Rio_Init(game);
-            return;
         }
         10664931 => {
             Rio_Main(game);
-            return;
         }
         10665625 => {
             NorfairLavajumpingEnemy_Init(game);
-            return;
         }
         10665682 => {
             NorfairLavajumpingEnemy_Main(game);
-            return;
         }
         10666562 => {
             NorfairRio_Init(game);
-            return;
         }
         10666615 => {
             NorfairRio_Main(game);
-            return;
         }
         10667763 => {
             LowerNorfairRio_Init(game);
-            return;
         }
         10667812 => {
             LowerNorfairRio_Main(game);
-            return;
         }
         10669268 => {
             MaridiaLargeSnail_Init(game);
-            return;
         }
         10669331 => {
             MaridiaLargeSnail_Main(game);
-            return;
         }
         10670988 => {
             MaridiaLargeSnail_Touch(game);
-            return;
         }
         10671028 => {
             MaridiaLargeSnail_Shot(game);
-            return;
         }
         10674038 => {
             HirisingSlowfalling_Init(game);
-            return;
         }
         10674222 => {
             HirisingSlowfalling_Main(game);
-            return;
         }
         10674643 => {
             Gripper_Init(game);
-            return;
         }
         10674721 => {
             Gripper_Main(game);
-            return;
         }
         10674968 => {
             JetPowerRipper_Init(game);
-            return;
         }
         10675027 => {
             JetPowerRipper_Main(game);
-            return;
         }
         10675113 => {
             JetPowerRipper_Shot(game);
-            return;
         }
         10675359 => {
             Ripper_Init(game);
-            return;
         }
         10675418 => {
             Ripper_Main(game);
-            return;
         }
         10675718 => {
             LavaSeahorse_Init(game);
-            return;
         }
         10675790 => {
             LavaSeahorse_Main(game);
-            return;
         }
         10676168 => {
             LavaSeahorse_Touch(game);
-            return;
         }
         10676174 => {
             LavaSeahorse_Shot(game);
-            return;
         }
         10676180 => {
             LavaSeahorse_Powerbomb(game);
-            return;
         }
         10676698 => {
             TimedShutter_Init(game);
-            return;
         }
         10676918 => {
             TimedShutter_Main(game);
-            return;
         }
         10677765 => {
             RisingFallingPlatform_Init(game);
-            return;
         }
         10677778 => {
             ShootableShutter_Init(game);
-            return;
         }
         10677969 => {
             RisingFallingPlatform_Main(game);
-            return;
         }
         10678429 => {
             RisingFallingPlatform_Touch(game);
-            return;
         }
         10678434 => {
             RisingFallingPlatform_Shot(game);
-            return;
         }
         10678442 => {
             ShootableShutter_Shot(game);
-            return;
         }
         10678454 => {
             RisingFallingPlatform_Powerbomb(game);
-            return;
         }
         10678545 => {
             HorizontalShootableShutter_Init(game);
-            return;
         }
         10678750 => {
             HorizontalShootableShutter_Main(game);
-            return;
         }
         10679256 => {
             HorizontalShootableShutter_Touch(game);
-            return;
         }
         10679310 => {
             HorizontalShootableShutter_Shot(game);
-            return;
         }
         10679322 => {
             HorizontalShootableShutter_Powerbomb(game);
-            return;
         }
         10715136 => {
             Enemy_GrappleReact_NoInteract_A3(game);
-            return;
         }
         10715146 => {
             Enemy_GrappleReact_KillEnemy_A3(game);
-            return;
         }
         10715151 => {
             Enemy_GrappleReact_CancelBeam_A3(game);
-            return;
         }
         10715171 => {
             Enemy_NormalTouchAI_A3(game);
-            return;
         }
         10715181 => {
             Enemy_NormalShotAI_A3(game);
-            return;
         }
         10715201 => {
             Enemy_NormalFrozenAI_A3(game);
-            return;
         }
-        10715212 => return,
+        10715212 => (),
         10716909 => {
             Waver_Init(game);
-            return;
         }
         10717004 => {
             Waver_Main(game);
-            return;
         }
         10717536 => {
             Metalee_Init(game);
-            return;
         }
         10717561 => {
             Metalee_Main(game);
-            return;
         }
         10717967 => {
             Metalee_Shot(game);
-            return;
         }
         10718509 => {
             Fireflea_Init(game);
-            return;
         }
         10718702 => {
             Fireflea_Main(game);
-            return;
         }
         10718827 => {
             Fireflea_Touch(
                 *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
                 game,
             );
-            return;
         }
         10718851 => {
             Fireflea_Powerbomb(game);
-            return;
         }
         10718857 => {
             Fireflea_Shot(game);
-            return;
         }
         10719413 => {
             MaridiaFish_Init(game);
-            return;
         }
         10719531 => {
             MaridiaFish_Main(game);
-            return;
         }
         10720486 => {
             Elevator_Init(game);
-            return;
         }
         10720554 => {
             Elevator_Frozen(game);
-            return;
         }
         10720995 => {
             Crab_Init(game);
-            return;
         }
         10721595 => {
             Slug_Init(game);
-            return;
         }
         10722463 => {
             PlatformThatFallsWithSamus_Init(game);
-            return;
         }
         10722490 => {
             FastMovingSlowSinkingPlatform_Init(game);
-            return;
         }
         10722582 => {
             PlatformThatFallsWithSamus_Main(game);
-            return;
         }
-        10723079 => return,
+        10723079 => (),
         10723080 => {
             FastMovingSlowSinkingPlatform_Shot(game);
-            return;
         }
         10723661 => {
             Roach_Init(game);
-            return;
         }
         10724048 => {
             Roach_Main(game);
-            return;
         }
         10725245 => {
             Mochtroid_Init(game);
-            return;
         }
         10725264 => {
             Mochtroid_Main(game);
-            return;
         }
         10725715 => {
             Mochtroid_Touch(game);
-            return;
         }
         10725800 => {
             Mochtroid_Shot(game);
-            return;
         }
         10726153 => {
             Sidehopper_Init(game);
-            return;
         }
         10726351 => {
             Sidehopper_Main(game);
-            return;
         }
         10728522 => {
             MaridiaRefillCandy_Init(game);
-            return;
         }
         10728572 => {
             MaridiaRefillCandy_Main(game);
-            return;
         }
         10729071 => {
             NorfairSlowFireball_Init(game);
-            return;
         }
         10730163 => {
             Bang_Init(game);
-            return;
         }
         10730277 => {
             Bang_Main(game);
-            return;
         }
         10731261 => {
             Bang_Shot(game);
-            return;
         }
         10733230 => {
             Skree_Init(game);
-            return;
         }
         10733255 => {
             Skree_Main(game);
-            return;
         }
         10733557 => {
             Skree_Shot(game);
-            return;
         }
         10735074 => {
             MaridiaSnail_Init(game);
-            return;
         }
         10735204 => {
             MaridiaSnail_Main(game);
-            return;
         }
         10736560 => {
             MaridiaSnail_Touch(game);
-            return;
         }
         10736745 => {
             MaridiaSnail_Shot(game);
-            return;
         }
         10738643 => {
             Reflec_Init(game);
-            return;
         }
-        10738715 => return,
+        10738715 => (),
         10738716 => {
             Reflec_Shot(game);
-            return;
         }
         10739779 => {
             WreckedShipOrangeZoomer_Init(game);
-            return;
         }
         10739851 => {
             WreckedShipOrangeZoomer_Main(game);
-            return;
         }
         10740436 => {
             BigEyeBugs_Init(game);
-            return;
         }
         10741148 => {
             FireZoomer_Init(game);
-            return;
         }
         10741353 => {
             StoneZoomer_Init(game);
-            return;
         }
         10741442 => {
             StoneZoomer_Main(game);
-            return;
         }
         10742351 => {
             Metroid_Init(game);
-            return;
         }
         10742502 => {
             Metroid_Frozen(game);
-            return;
         }
         10742579 => {
             Metroid_Hurt(game);
-            return;
         }
         10742680 => {
             Metroid_Main(game);
-            return;
         }
         10743275 => {
             Metroid_Touch(game);
-            return;
         }
         10743559 => {
             Metroid_Shot(game);
-            return;
         }
         10743874 => {
             Metroid_Powerbomb(
                 *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
                 game,
             );
-            return;
         }
         10780677 => {
             Enemy_GrappleReact_SamusLatchesOn_A4(game);
-            return;
         }
         10780707 => {
             Enemy_NormalTouchAI_A4(game);
-            return;
         }
         10780717 => {
             Enemy_NormalShotAI_A4(game);
-            return;
         }
         10780737 => {
             Enemy_NormalFrozenAI_A4(game);
-            return;
         }
-        10780748 => return,
+        10780748 => (),
         10782343 => {
             Crocomire_Hurt(game);
-            return;
         }
         10783322 => {
             Crocomire_Init(game);
-            return;
         }
         10783748 => {
             Crocomire_Main(game);
-            return;
         }
-        10795344 => return,
+        10795344 => (),
         10795410 => {
             Crocomire_Powerbomb(game);
-            return;
         }
         10811002 => {
             CrocomireTongue_Init(game);
-            return;
         }
         10811067 => {
             CrocomireTongue_Main();
-            return;
         }
         10846208 => {
             Enemy_GrappleReact_NoInteract_A5(game);
-            return;
         }
         10846223 => {
             Enemy_GrappleReact_CancelBeam_A5(game);
-            return;
         }
         10846243 => {
             Enemy_NormalTouchAI_A5(game);
-            return;
         }
         10846253 => {
             Enemy_NormalShotAI_A5(game);
-            return;
         }
         10846273 => {
             Enemy_NormalFrozenAI_A5(game);
-            return;
         }
-        10846284 => return,
+        10846284 => (),
         10847879 => {
             Draygon_Init(game);
-            return;
         }
         10847996 => {
             Draygon_Main(game);
-            return;
         }
         10851661 => {
             Draygon_Hurt(game);
-            return;
         }
         10851818 => {
             Draygon_Touch(game);
-            return;
         }
         10851824 => {
             Draygon_Shot(game);
-            return;
         }
         10851847 => {
             Draygon_Powerbomb(game);
-            return;
         }
         10863723 => {
             DraygonsEye_Init(game);
-            return;
         }
         10863750 => {
             DraygonsEye_Main(game);
-            return;
         }
         10864025 => {
             DraygonsTail_Init(game);
-            return;
         }
-        10864042 => return,
+        10864042 => (),
         10864045 => {
             DraygonsArms_Init(game);
-            return;
         }
-        10864068 => return,
+        10864068 => (),
         10873386 => {
             SporeSpawn_Init(game);
-            return;
         }
         10873619 => {
             SporeSpawn_Main(game);
-            return;
         }
         10874202 => {
             SporeSpawn_Shot(game);
-            return;
         }
         10874348 => {
             SporeSpawn_Touch(game);
-            return;
         }
-        10874354 => return,
+        10874354 => (),
         10911744 => {
             Enemy_GrappleReact_NoInteract_A6(game);
-            return;
         }
         10911759 => {
             Enemy_GrappleReact_CancelBeam_A6(game);
-            return;
         }
         10911779 => {
             Enemy_NormalTouchAI_A6(game);
-            return;
         }
         10911789 => {
             Enemy_NormalShotAI_A6(game);
-            return;
         }
         10911809 => {
             Enemy_NormalFrozenAI_A6(game);
-            return;
         }
-        10911820 => return,
+        10911820 => (),
         10913525 => {
             Boulder_Init(game);
-            return;
         }
         10913683 => {
             Boulder_Main(game);
-            return;
         }
         10914607 => {
             SpikeyPlatform_Init(game);
-            return;
         }
         10914693 => {
             SpikeyPlatform2ndEnemy_Init(game);
-            return;
         }
         10914713 => {
             SpikeyPlatform2ndEnemy_Main(game);
-            return;
         }
         10914733 => {
             SpikeyPlatform_Main(game);
-            return;
         }
         10915836 => {
             FireGeyser_Init(game);
-            return;
         }
         10915875 => {
             FireGeyser_Main(game);
-            return;
         }
         10917060 => {
             NuclearWaffle_Init(game);
-            return;
         }
         10917390 => {
             NuclearWaffle_Main(game);
-            return;
         }
         10918488 => {
             FakeKraid_Init(game);
-            return;
         }
         10918594 => {
             FakeKraid_Main(game);
-            return;
         }
         10918946 => {
             FakeKraid_Touch(game);
-            return;
         }
         10918969 => {
             FakeKraid_Shot(game);
-            return;
         }
         10920181 => {
             CeresRidley_Init(game);
-            return;
         }
         10920584 => {
             CeresRidley_Main(game);
-            return;
         }
         10920659 => {
             CeresRidley_Hurt(game);
-            return;
         }
         10924583 => {
             Ridley_Main(game);
-            return;
         }
         10924682 => {
             Ridley_Func_2(game);
-            return;
         }
         10924695 => {
             Ridley_Hurt(game);
-            return;
         }
         10929814 => {
             RidleysExplosion_Init(game);
-            return;
         }
         10930388 => {
             RidleysExplosion_Main(game);
-            return;
         }
         10936202 => {
             Ridley_Shot(game);
-            return;
         }
         10936242 => {
             Ridley_Powerbomb(game);
-            return;
         }
         10940337 => {
             CeresSteam_Init(game);
-            return;
         }
         10940429 => {
             CeresSteam_Main(game);
-            return;
         }
         10940479 => {
             CeresSteam_Touch(game);
-            return;
         }
         10942149 => {
             CeresDoor_Init(game);
-            return;
         }
         10942309 => {
             CeresDoor_Main(game);
-            return;
         }
-        10942752 => return,
+        10942752 => (),
         10943346 => {
             Zebetites_Init(game);
-            return;
         }
         10943539 => {
             Zebetites_Main(game);
-            return;
         }
         10943911 => {
             Zebetites_Touch(game);
-            return;
         }
         10943916 => {
             Zebetites_Shot(game);
-            return;
         }
         10977280 => {
             Enemy_GrappleReact_NoInteract_A7(game);
-            return;
         }
         10977295 => {
             Enemy_GrappleReact_CancelBeam_A7(game);
-            return;
         }
         10977325 => {
             Enemy_NormalShotAI_A7(game);
-            return;
         }
         10977340 => {
             Enemy_NormalPowerBombAI_SkipDeathAnim_A7(game);
-            return;
         }
         10977345 => {
             Enemy_NormalFrozenAI_A7(game);
-            return;
         }
-        10977356 => return,
-        10982543 => return,
+        10977356 => (),
+        10982543 => (),
         10982544 => {
             KraidsArm_Touch(game);
-            return;
         }
         10982559 => {
             Kraid_Touch(game);
-            return;
         }
-        10982581 => return,
+        10982581 => (),
         10987865 => {
             Kraid_Init(game);
-            return;
         }
         10988355 => {
             KraidsArm_Init(game);
-            return;
         }
         10988392 => {
             KraidsTopLint_Init(game);
-            return;
         }
         10988444 => {
             KraidsMiddleLint_Init(game);
-            return;
         }
         10988490 => {
             KraidsBottomLint_Init(game);
-            return;
         }
         10988536 => {
             KraidsFoot_Init(game);
-            return;
         }
         10988577 => {
             Kraid_Main(game);
-            return;
         }
         10991549 => {
             KraidsArm_Main(game);
-            return;
         }
         10991617 => {
             KraidsTopLint_Main(game);
-            return;
         }
         10991629 => {
             KraidsMiddleLint_Main(game);
-            return;
         }
         10991641 => {
             KraidsBottomLint_Main(game);
-            return;
         }
         10992118 => {
             KraidsFoot_Main(game);
-            return;
         }
         10992847 => {
             KraidsGoodFingernail_Touch(game);
-            return;
         }
         10992862 => {
             KraidsBadFingernail_Touch(game);
-            return;
         }
         10992879 => {
             KraidsGoodFingernail_Init(game);
-            return;
         }
         10992941 => {
             KraidsBadFingernail_Init(game);
-            return;
         }
         10992946 => {
             KraidsGoodFingernail_Main(game);
-            return;
         }
         10992969 => {
             KraidsBadFingernail_Main(game);
-            return;
         }
         10997235 => {
             Phantoon_Init(game);
-            return;
         }
         10997333 => {
             Phantoon2_Init(game);
-            return;
         }
         10997414 => {
             Phantoon_Main(game);
-            return;
         }
         11001151 => {
             Phantoon_Hurt(game);
-            return;
         }
         11001237 => {
             Phantoon_Touch(game);
-            return;
         }
-        11001242 => return,
+        11001242 => (),
         11001243 => {
             Phantoon_Shot(game);
-            return;
         }
-        11001873 => return,
+        11001873 => (),
         11004178 => {
             Etecoon_Init(game);
-            return;
         }
         11004224 => {
             Etecoon_Main(game);
-            return;
         }
         11007197 => {
             Dachora_Init(game);
-            return;
         }
         11007278 => {
             Dachora_Main(game);
-            return;
         }
         11042816 => {
             Enemy_GrappleReact_NoInteract_A8(game);
-            return;
         }
         11042826 => {
             Enemy_GrappleReact_KillEnemy_A8(game);
-            return;
         }
         11042831 => {
             Enemy_GrappleReact_CancelBeam_A8(game);
-            return;
         }
         11042836 => {
             Enemy_GrappleReact_SamusLatchesNoInvinc_A8(game);
-            return;
         }
         11042846 => {
             Enemy_GrappleReact_HurtSamus_A8(game);
-            return;
         }
         11042851 => {
             Enemy_NormalTouchAI_A8(game);
-            return;
         }
         11042861 => {
             Enemy_NormalShotAI_A8(game);
-            return;
         }
         11042881 => {
             Enemy_NormalFrozenAI_A8(game);
-            return;
         }
-        11042892 => return,
+        11042892 => (),
         11044832 => {
             MiniDraygon_Init(game);
-            return;
         }
         11045040 => {
             EvirProjectile_Init(game);
-            return;
         }
         11045147 => {
             MiniDraygon_Main(game);
-            return;
         }
         11045278 => {
             EvirProjectile_Main(game);
-            return;
         }
         11045638 => {
             MiniDraygon_Touch(game);
-            return;
         }
         11045644 => {
             MiniDraygon_Powerbomb(game);
-            return;
         }
         11045650 => {
             MiniDraygon_Shot(game);
-            return;
         }
         11047000 => {
             MorphBallEye_Init(game);
-            return;
         }
         11047138 => {
             MorphBallEye_Main(game);
-            return;
         }
         11048675 => {
             Fune_Init(game);
-            return;
         }
         11048752 => {
             Fune_Main(game);
-            return;
         }
         11049710 => {
             WreckedShipGhost_Init(game);
-            return;
         }
         11049788 => {
             WreckedShipGhost_Main(game);
-            return;
         }
         11051336 => {
             YappingMaw_Init(game);
-            return;
         }
         11051537 => {
             YappingMaw_Main(game);
-            return;
         }
         11052953 => {
             YappingMaw_Touch(game);
-            return;
         }
         11052989 => {
             YappingMaw_Shot(game);
-            return;
         }
         11053109 => {
             YappingMaw_Frozen(game);
-            return;
         }
         11053894 => {
             Kago_Init(game);
-            return;
         }
         11053941 => {
             Kago_Main(game);
-            return;
         }
         11053955 => {
             Kago_Shot(game);
-            return;
         }
         11054987 => {
             NorfairLavaMan_Init(game);
-            return;
         }
         11055370 => {
             NorfairLavaMan_Main(game);
-            return;
         }
         11056128 => {
             NorfairLavaMan_Powerbomb(game);
-            return;
         }
         11056134 => {
             NorfairLavaMan_Touch(game);
-            return;
         }
         11056140 => {
             NorfairLavaMan_Shot(game);
-            return;
         }
         11057014 => {
             Beetom_Init(game);
-            return;
         }
         11057165 => {
             Beetom_Main(game);
-            return;
         }
         11058734 => {
             Beetom_Touch(game);
-            return;
         }
         11058860 => {
             Beetom_Shot(game);
-            return;
         }
         11059657 => {
             MaridiaFloater_Init(game);
-            return;
         }
         11059740 => {
             MaridiaFloater_Main(game);
-            return;
         }
         11060670 => {
             MaridiaFloater_Touch(game);
-            return;
         }
         11060719 => {
             MaridiaFloater_Shot(game);
-            return;
         }
         11060799 => {
             MaridiaFloater_Powerbomb(game);
-            return;
         }
         11062135 => {
             WreckedShipRobot_Init(game);
-            return;
         }
         11062220 => {
             WreckedShipRobotDeactivated_Init(game);
-            return;
         }
         11062326 => {
             WreckedShipRobot_Main(game);
-            return;
         }
-        11062374 => return,
+        11062374 => (),
         11063668 => {
             WreckedShipRobotDeactivated_Touch(game);
-            return;
         }
         11063693 => {
             WreckedShipRobotDeactivated_Shot(game);
-            return;
         }
         11063698 => {
             WreckedShipRobot_Shot(game);
-            return;
         }
         11065545 => {
             MaridiaPuffer_Init(game);
-            return;
         }
         11065611 => {
             MaridiaPuffer_Main(game);
-            return;
         }
         11066132 => {
             MaridiaPuffer_Shot(game);
-            return;
         }
         11066573 => {
             WalkingLavaSeahorse_Init(game);
-            return;
         }
         11066731 => {
             WalkingLavaSeahorse_Main(game);
-            return;
         }
         11068296 => {
             WreckedShipOrbs_Init(game);
-            return;
         }
         11068355 => {
             WreckedShipOrbs_Main(game);
-            return;
         }
         11068983 => {
             WreckedShipSpark_Init(game);
-            return;
         }
         11069070 => {
             WreckedShipSpark_Main(game);
-            return;
         }
         11069198 => {
             WreckedShipSpark_Shot(game);
-            return;
         }
         11069486 => {
             BlueBrinstarFaceBlock_Init(game);
-            return;
         }
         11069614 => {
             BlueBrinstarFaceBlock_Main(game);
-            return;
         }
         11069725 => {
             BlueBrinstarFaceBlock_Shot(game);
-            return;
         }
         11071880 => {
             KiHunter_Init(game);
-            return;
         }
         11072020 => {
             KiHunterWings_Init(game);
-            return;
         }
         11072092 => {
             KiHunter_Main(game);
-            return;
         }
         11072098 => {
             KiHunterWings_Main(game);
-            return;
         }
         11073281 => {
             KiHunter_Shot(game);
-            return;
         }
         11108367 => {
             Enemy_GrappleReact_CancelBeam_A9(game);
-            return;
         }
         11108417 => {
             Enemy_NormalFrozenAI_A9(game);
-            return;
         }
-        11108428 => return,
+        11108428 => (),
         11110023 => {
             MotherBrainsBody_Init(game);
-            return;
         }
         11110149 => {
             MotherBrainsBrain_Init(game);
-            return;
         }
         11110206 => {
             MotherBrainsBody_Hurt(game);
-            return;
         }
         11110279 => {
             MotherBrainsBody_Powerbomb(game);
-            return;
         }
         11110283 => {
             MotherBrainsBrain_Hurt(game);
-            return;
         }
         11111221 => {
             MotherBrainsTubesFalling_Init(game);
-            return;
         }
         11111301 => {
             MotherBrainsTubesFalling_Main(
                 *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
                 game,
             );
-            return;
         }
         11121923 => {
             MotherBrainsBody_Shot(game);
-            return;
         }
         11121927 => {
             MotherBrainsBrain_Shot(game);
-            return;
         }
-        11122117 => return,
+        11122117 => (),
         11122118 => {
             MotherBrainsBrain_Touch(game);
-            return;
         }
         11126544 => {
             ShitroidInCutscene_Init(game);
-            return;
         }
         11126649 => {
             ShitroidInCutscene_Main(game);
-            return;
         }
         11128579 => {
             ShitroidInCutscene_Touch(game);
-            return;
         }
         11129608 => {
             DeadTorizo_Init(game);
-            return;
         }
         11129704 => {
             DeadTorizo_Main(game);
-            return;
         }
         11129898 => {
             DeadTorizo_Powerbomb(game);
-            return;
         }
         11129907 => {
             DeadTorizo_Shot(game);
-            return;
         }
         11130806 => {
             DeadSidehopper_Init(game);
-            return;
         }
         11130953 => {
             DeadZoomer_Init(game);
-            return;
         }
         11130998 => {
             DeadRipper_Init(game);
-            return;
         }
         11131039 => {
             DeadSkree_Init(game);
-            return;
         }
         11131084 => {
             DeadSidehopper_Powerbomb(game);
-            return;
         }
         11131099 => {
             DeadSidehopper_Main(game);
-            return;
         }
         11132141 => {
             DeadZoomer_Powerbomb(game);
-            return;
         }
         11132152 => {
             DeadZoomer_Shot(game);
-            return;
         }
         11132157 => {
             DeadRipper_Powerbomb(game);
-            return;
         }
         11132168 => {
             DeadRipper_Shot(game);
-            return;
         }
         11132173 => {
             DeadSkree_Powerbomb(game);
-            return;
         }
         11132184 => {
             DeadSkree_Shot(game);
-            return;
         }
         11132189 => {
             DeadSidehopper_Shot(game);
-            return;
         }
         11132228 => {
             DeadSidehopper_Touch(game);
-            return;
         }
         11136823 => {
             Shitroid_Init(game);
-            return;
         }
         11136954 => {
             Shitroid_Powerbomb(game);
-            return;
         }
         11136965 => {
             Shitroid_Main(game);
-            return;
         }
         11138953 => {
             Shitroid_Touch(game);
-            return;
         }
         11139138 => {
             Shitroid_Shot(game);
-            return;
         }
         11173903 => {
             Enemy_GrappleReact_CancelBeam_AA(game);
-            return;
         }
         11173953 => {
             Enemy_NormalFrozenAI_AA(game);
-            return;
         }
-        11173964 => return,
+        11173964 => (),
         11191934 => {
             Torizo_Hurt(game);
-            return;
         }
         11191972 => {
             Torizo_Main(game);
-            return;
         }
         11192447 => {
             Torizo_Init(game);
-            return;
         }
         11192695 => {
             GoldTorizo_Touch(game);
-            return;
         }
         11192700 => {
             Torizo_Shot(game);
-            return;
         }
         11195241 => {
             GoldTorizo_Main(game);
-            return;
         }
         11195322 => {
             GoldTorizo_Hurt(game);
-            return;
         }
         11196007 => {
             GoldTorizo_Shot(game);
-            return;
         }
-        11196359 => return,
+        11196359 => (),
         11196360 => {
             TourianEntranceStatue_Init(game);
-            return;
         }
         11197603 => {
             Shaktool_Hurt(game);
-            return;
         }
         11198019 => {
             Shaktool_Init(game);
-            return;
         }
         11198255 => {
             Shaktool_Touch(game);
-            return;
         }
         11198260 => {
             Shaktool_Shot(game);
-            return;
         }
         11200278 => {
             N00bTubeCracks_Init(game);
-            return;
         }
         11200293 => {
             ChozoStatue_Init(game);
-            return;
         }
         11200423 => {
             ChozoStatue_Main(game);
-            return;
         }
-        11200475 => return,
-        11200476 => return,
+        11200475 => (),
+        11200476 => (),
         11698191 => {
             Enemy_GrappleReact_CancelBeam_B2(game);
-            return;
         }
         11698241 => {
             Enemy_NormalFrozenAI_B2(game);
-            return;
         }
-        11698252 => return,
+        11698252 => (),
         11700071 => {
             WalkingSpacePirates_Powerbomb(game);
-            return;
         }
         11700076 => {
             WalkingSpacePirates_Touch(game);
-            return;
         }
         11700089 => {
             WalkingSpacePirates_Shot(game);
-            return;
         }
         11726751 => {
             WallSpacePirates_Init(game);
-            return;
         }
         11726893 => {
             WallSpacePirates_Main(game);
-            return;
         }
         11728350 => {
             NinjaSpacePirates_Init(game);
-            return;
         }
         11728546 => {
             NinjaSpacePirates_Main(game);
-            return;
         }
         11730178 => {
             WalkingSpacePirates_Init(game);
-            return;
         }
         11730226 => {
             WalkingSpacePirates_Main(game);
-            return;
         }
         11763712 => {
             Enemy_GrappleReact_NoInteract_B3(game);
-            return;
         }
         11763722 => {
             Enemy_GrappleReact_KillEnemy_B3(game);
-            return;
         }
         11763727 => {
             Enemy_GrappleReact_CancelBeam_B3(game);
-            return;
         }
         11763747 => {
             Enemy_NormalTouchAI_B3(game);
-            return;
         }
         11763757 => {
             Enemy_NormalShotAI_B3(game);
-            return;
         }
         11763777 => {
             Enemy_NormalFrozenAI_B3(game);
-            return;
         }
-        11763788 => return,
+        11763788 => (),
         11765499 => {
             UnusedSpinningTurtleEye_Init(game);
-            return;
         }
         11765518 => {
             UnusedSpinningTurtleEye_Main();
-            return;
         }
         11765819 => {
             BrinstarPipeBug_Init(game);
-            return;
         }
         11765882 => {
             BrinstarPipeBug_Main(game);
-            return;
         }
         11766625 => {
             NorfairPipeBug_Init(game);
-            return;
         }
         11766686 => {
             NorfairPipeBug_Main(game);
-            return;
         }
         11767628 => {
             BrinstarYellowPipeBug_Init(game);
-            return;
         }
         11767726 => {
             BrinstarYellowPipeBug_Main(game);
-            return;
         }
         11769219 => {
             Botwoon_Init(game);
-            return;
         }
         11769448 => {
             Botwoon_Main(game);
-            return;
         }
         11771903 => {
             Botwoon_Touch(game);
-            return;
         }
         11771926 => {
             Botwoon_Shot(game);
-            return;
         }
         11771969 => {
             Botwoon_Powerbomb(game);
-            return;
         }
         11789909 => {
             EscapeEtecoon_Main(game);
-            return;
         }
         11790027 => {
             EscapeEtecoon_Init(game);
-            return;
         }
         11791077 => {
             EscapeDachora_Init(game);
-            return;
         }
-        11791130 => return,
+        11791130 => (),
         10518583 | 10649655 | 10715191 | 10780727 | 10846263 | 10911799 | 10977335 | 11042871
         | 11108407 | 11173943 | 11698231 | 11763767 => {
             NormalEnemyPowerBombAi(game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn CallEnemyPreInstr(mut ea: uint32, game: &mut Game) {
     let mut k: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
     match ea {
-        10518651 => return,
-        10649723 => return,
+        10518651 => (),
+        10649723 => (),
         10652227 => {
             MiniCrocomire_PreInstr5(k, game);
-            return;
         }
         10652252 => {
             MiniCrocomire_PreInstr6(k, game);
-            return;
         }
-        10652277 => return,
+        10652277 => (),
         10657722 => {
             SpikeShootingPlant_2(k, game);
-            return;
         }
         10657772 => {
             SpikeShootingPlant_3(k, game);
-            return;
         }
-        10657819 => return,
-        10659799 => return,
+        10657819 => (),
+        10659799 => (),
         10659852 => {
             GunshipTop_3(k, game);
-            return;
         }
         10660048 => {
             GunshipTop_4(k, game);
-            return;
         }
         10660162 => {
             GunshipTop_5(k, game);
-            return;
         }
         10660176 => {
             GunshipTop_6(k, game);
-            return;
         }
         10660231 => {
             GunshipTop_7(k, game);
-            return;
         }
         10660285 => {
             GunshipTop_8(k, game);
-            return;
         }
         10660431 => {
             GunshipTop_9(k, game);
-            return;
         }
         10660445 => {
             GunshipTop_10(k, game);
-            return;
         }
         10660500 => {
             GunshipTop_11(k, game);
-            return;
         }
         10660514 => {
             GunshipTop_12(k, game);
-            return;
         }
         10660639 => {
             GunshipTop_13(k, game);
-            return;
         }
         10660704 => {
             GunshipTop_14(k, game);
-            return;
         }
         10660718 => {
             GunshipTop_15(k, game);
-            return;
         }
         10660773 => {
             GunshipTop_16(k, game);
-            return;
         }
         10660807 => {
             GunshipTop_17(k, game);
-            return;
         }
         10660891 => {
             GunshipTop_18(k, game);
-            return;
         }
         10661079 => {
             GunshipTop_19(k, game);
-            return;
         }
         10661134 => {
             GunshipTop_20(k, game);
-            return;
         }
         10661165 => {
             GunshipTop_21(k, game);
-            return;
         }
         10662222 => {
             Flies_4(k, game);
-            return;
         }
         10662268 => {
             Flies_5(k, game);
-            return;
         }
         10662314 => {
             Flies_6(k, game);
-            return;
         }
         10662354 => {
             Flies_7(k, game);
-            return;
         }
         10665692 => {
             NorfairLavajumpingEnemy_Func_1(k, game);
-            return;
         }
         10665754 => {
             NorfairLavajumpingEnemy_Func_2(k, game);
-            return;
         }
         10665790 => {
             NorfairLavajumpingEnemy_Func_3(k, game);
-            return;
         }
         10665852 => {
             NorfairLavajumpingEnemy_Func_4(k, game);
-            return;
         }
         10665916 => {
             NorfairLavajumpingEnemy_Func_5(k, game);
-            return;
         }
         10666625 => {
             NorfairRio_Func_1(k, game);
-            return;
         }
         10666727 => {
             NorfairRio_Func_2(k, game);
-            return;
         }
         10666815 => {
             NorfairRio_Func_3(k, game);
-            return;
         }
         10666849 => {
             NorfairRio_Func_4(k, game);
-            return;
         }
         10666929 => {
             NorfairRio_Func_5(k, game);
-            return;
         }
         10667014 => {
             NorfairRio_Func_6(k, game);
-            return;
         }
         10667822 => {
             LowerNorfairRio_Func_1(k, game);
-            return;
         }
         10667889 => {
             LowerNorfairRio_Func_2(k, game);
-            return;
         }
         10667963 => {
             LowerNorfairRio_Func_3(k, game);
-            return;
         }
         10667990 => {
             LowerNorfairRio_Func_4(k, game);
-            return;
         }
         10668077 => {
             LowerNorfairRio_Func_5(k, game);
-            return;
         }
         10668168 => {
             LowerNorfairRio_Func_6(k, game);
-            return;
         }
         10669926 => {
             MaridiaLargeSnail_Func_7(k, game);
-            return;
         }
         10669993 => {
             MaridiaLargeSnail_Func_8(k, game);
-            return;
         }
         10675796 => {
             LavaSeahorse_Func_1(k, game);
-            return;
         }
         10675885 => {
             LavaSeahorse_Func_2(k, game);
-            return;
         }
         10675953 => {
             LavaSeahorse_Func_3(k, game);
-            return;
         }
         10676020 => {
             LavaSeahorse_Func_4(k, game);
-            return;
         }
         10676041 => {
             LavaSeahorse_Func_5(k, game);
-            return;
         }
-        10676097 => return,
+        10676097 => (),
         10730661 => {
             Bang_Func_6(k, game);
-            return;
         }
         10730689 => {
             Bang_Func_7(k);
-            return;
         }
         10730693 => {
             Bang_Func_8(k, game);
-            return;
         }
         10730780 => {
             Bang_Func_10(k, game);
-            return;
         }
         10730796 => {
             Bang_Func_11(k, game);
-            return;
         }
-        10735455 => return,
+        10735455 => (),
         10736051 => {
             MaridiaSnail_Func_15(k, game);
-            return;
         }
-        10739850 => return,
+        10739850 => (),
         10739857 => {
             WreckedShipOrangeZoomer_Func_2(k, game);
-            return;
         }
-        10741441 => return,
+        10741441 => (),
         10741448 => {
             FireZoomer_Func_1(k, game);
-            return;
         }
         10741637 => {
             FireZoomer_Func_2(k, game);
-            return;
         }
         10741746 => {
             FireZoomer_Func_3(k, game);
-            return;
         }
-        10998952 => return,
+        10998952 => (),
         10998953 => {
             Phantoon_Spawn8FireballsInCircleAtStart(k, game);
-            return;
         }
         10999022 => {
             Phantoon_WaitBetweenSpawningAndSpinningFireballs(k, game);
-            return;
         }
         10999048 => {
             Phantoon_SpawnFireballsBeforeFight(k, game);
-            return;
         }
         10999114 => {
             Phantoon_WavyFadeIn(k, game);
-            return;
         }
         10999190 => {
             Phantoon_PickPatternForRound1(k, game);
-            return;
         }
         10999271 => {
             Phantoon_MovePhantoonInFigure8ThenOpenEye(k, game);
-            return;
         }
         10999309 => {
             Phantoon_EyeFollowsSamusUntilTimerRunsOut(k, game);
-            return;
         }
         10999388 => {
             Phantoon_BecomesSolidAndBodyVuln(k, game);
-            return;
         }
         10999416 => {
             Phantoon_IsSwooping(k, game);
-            return;
         }
         10999481 => {
             Phantoon_FadeoutWithSwoop(k, game);
-            return;
         }
         10999508 => {
             Phantoon_WaitAfterFadeOut(k, game);
-            return;
         }
         10999522 => {
             Phantoon_MoveLeftOrRightAndPickEyeOpenPatt(k, game);
-            return;
         }
         10999597 => {
             Phantoon_FadeInBeforeFigure8(k, game);
-            return;
         }
         10999615 => {
             Phantoon_BecomeSolidAfterRainingFireballs(k, game);
-            return;
         }
         10999655 => {
             Phantoon_FadeInDuringFireballRain(k, game);
-            return;
         }
         10999688 => {
             Phantoon_FollowSamusWithEyeDuringFireballRain(k, game);
-            return;
         }
         10999765 => {
             Phantoon_FadeOutDuringFireballRain(k, game);
-            return;
         }
         10999799 => {
             Phantoon_SpawnRainingFireballs(k, game);
-            return;
         }
         10999850 => {
             Phantoon_FadeOutBeforeFirstFireballRain(k, game);
-            return;
         }
         10999900 => {
             Phantoon_FadeOutBeforeEnrage(k, game);
-            return;
         }
         10999924 => {
             Phantoon_MoveEnragedPhantoonToTopCenter(k, game);
-            return;
         }
         10999953 => {
             Phantoon_FadeInEnragedPhantoon(k, game);
-            return;
         }
         10999980 => {
             Phantoon_Enraged(k, game);
-            return;
         }
         11000086 => {
             Phantoon_FadeoutAfterEnrage(k, game);
-            return;
         }
         11000110 => {
             Phantoon_CompleteSwoopAfterFatalShot(k, game);
-            return;
         }
         11000136 => {
             Phantoon_DyingPhantoonFadeInOut(k, game);
-            return;
         }
         11000203 => {
             Phantoon_DyingPhantoonExplosions(k, game);
-            return;
         }
         11000401 => {
             Phantoon_WavyDyingPhantoonAndCry(k, game);
-            return;
         }
         11000454 => {
             Phantoon_DyingFadeOut(k, game);
-            return;
         }
         11000535 => {
             Phantoon_AlmostDead(k, game);
-            return;
         }
         11000637 => {
             Phantoon_Dead(k, game);
-            return;
         }
         11004335 => {
             Etecoon_Func_4(k, game);
-            return;
         }
         11004416 => {
             Etecoon_Func_5(k, game);
-            return;
         }
         11004471 => {
             Etecoon_Func_6(k, game);
-            return;
         }
         11004597 => {
             Etecoon_Func_7(k, game);
-            return;
         }
         11004674 => {
             Etecoon_Func_8(k, game);
-            return;
         }
         11004716 => {
             Etecoon_Func_9(k, game);
-            return;
         }
         11004752 => {
             Etecoon_Func_10(k, game);
-            return;
         }
         11004877 => {
             Etecoon_Func_11(k, game);
-            return;
         }
         11004955 => {
             Etecoon_Func_12(k, game);
-            return;
         }
         11005079 => {
             Etecoon_Func_16(k, game);
-            return;
         }
         11005115 => {
             Etecoon_Func_17(k, game);
-            return;
         }
         11005151 => {
             Etecoon_Func_18(k, game);
-            return;
         }
         11005193 => {
             Etecoon_Func_19(k, game);
-            return;
         }
         11005226 => {
             Etecoon_Func_20(k, game);
-            return;
         }
         11005268 => {
             Etecoon_Func_21(k, game);
-            return;
         }
         11005301 => {
             Etecoon_Func_22(k, game);
-            return;
         }
         11005383 => {
             Etecoon_Func_23(k, game);
-            return;
         }
         11005502 => {
             Etecoon_Func_24(k, game);
-            return;
         }
         11005594 => {
             Etecoon_Func_25(k, game);
-            return;
         }
         11005624 => {
             Etecoon_Func_26(k, game);
-            return;
         }
         11007344 => {
             Dachora_Func_2(k, game);
-            return;
         }
         11007420 => {
             Dachora_Func_3(k, game);
-            return;
         }
         11007469 => {
             Dachora_Func_4(k, game);
-            return;
         }
         11007582 => {
             Dachora_Func_5(k, game);
-            return;
         }
         11007887 => {
             Dachora_Func_7(k, game);
-            return;
         }
         11008006 => {
             Dachora_Func_8(k, game);
-            return;
         }
         11008309 => {
             Dachora_Func_11(k, game);
-            return;
         }
         11008396 => {
             Dachora_Func_12(k, game);
-            return;
         }
         11047153 => {
             MorphBallEye_Func_1(k, game);
-            return;
         }
         11047214 => {
             MorphBallEye_Func_2(k, game);
-            return;
         }
         11047264 => {
             MorphBallEye_Func_3(k, game);
-            return;
         }
         11047374 => {
             MorphBallEye_Func_4(k, game);
-            return;
         }
-        11047388 => return,
+        11047388 => (),
         11055386 => {
             NorfairLavaMan_Func_7(k, game);
-            return;
         }
         11055477 => {
             NorfairLavaMan_Func_8(k, game);
-            return;
         }
         11055507 => {
             sub_A8B193(k, game);
-            return;
         }
         11055544 => {
             NorfairLavaMan_Func_9(k, game);
-            return;
         }
         11055581 => {
             NorfairLavaMan_Func_10(k, game);
-            return;
         }
         11055620 => {
             NorfairLavaMan_Func_11(k, game);
-            return;
         }
         11055761 => {
             sub_A8B291(k);
-            return;
         }
         11055765 => {
             NorfairLavaMan_Func_13(game);
-            return;
         }
         11055885 => {
             NorfairLavaMan_Func_15(k, game);
-            return;
         }
         11055903 => {
             NorfairLavaMan_Func_16(k, game);
-            return;
         }
         11055958 => {
             NorfairLavaMan_Func_17(k, game);
-            return;
         }
         11056039 => {
             NorfairLavaMan_Func_18(k, game);
-            return;
         }
         11059843 => {
             MaridiaFloater_Func_3(k, game);
-            return;
         }
         11059878 => {
             MaridiaFloater_Func_4(k, game);
-            return;
         }
         11059919 => {
             MaridiaFloater_Func_5(k, game);
-            return;
         }
         11060075 => {
             MaridiaFloater_Func_6(k, game);
-            return;
         }
         11060193 => {
             MaridiaFloater_Func_7(k, game);
-            return;
         }
         11060329 => {
             MaridiaFloater_Func_8(k, game);
-            return;
         }
         11060444 => {
             MaridiaFloater_Func_9(k, game);
-            return;
         }
         11060480 => {
             MaridiaFloater_Func_10(k, game);
-            return;
         }
         11060509 => {
             MaridiaFloater_Func_11(k, game);
-            return;
         }
-        11060584 => return,
+        11060584 => (),
         11060585 => {
             MaridiaFloater_Func_12(k, game);
-            return;
         }
         11060639 => {
             MaridiaFloater_Func_13(k, game);
-            return;
         }
-        11192670 => return,
-        11197610 => return,
-        11200422 => return,
-        11174011 => return,
-        11763835 => return,
+        11192670 => (),
+        11197610 => (),
+        11200422 => (),
+        11174011 => (),
+        11763835 => (),
         11765888 => {
             BrinstarPipeBug_PreInstr_1(k, game);
-            return;
         }
         11765904 => {
             BrinstarPipeBug_PreInstr_2(k, game);
-            return;
         }
         11765987 => {
             BrinstarPipeBug_PreInstr_3(k, game);
-            return;
         }
         11766044 => {
             BrinstarPipeBug_PreInstr_4(k, game);
-            return;
         }
         11766142 => {
             BrinstarPipeBug_PreInstr_5(k, game);
-            return;
         }
         11767039 => {
             NorfairPipeBug_Func_5(k, game);
-            return;
         }
         11771328 => {
             Botwoon_Func_26(k, game);
-            return;
         }
         11771517 => {
             Botwoon_Func_27(k, game);
-            return;
         }
         11771616 => {
             Botwoon_Func_28(k, game);
-            return;
         }
         11771700 => {
             Botwoon_Func_29(k, game);
-            return;
         }
         11771770 => {
             Botwoon_Func_30(k, game);
-            return;
         }
         11192146 => {
             Torizo_Func_5(k, game);
-            return;
         }
         11192360 => {
             Torizo_Func_6(k, game);
-            return;
         }
         11192364 => {
             Torizo_Func_7(k, game);
-            return;
         }
         11195885 => {
             Torizo_D5ED(k, game);
-            return;
         }
         11195889 => {
             Torizo_D5F1(k, game);
-            return;
         }
         11199557 => {
             sub_AAE445(k, game);
-            return;
         }
         11200430 => {
             Shaktool_PreInstr_0(k, game);
-            return;
         }
-        11200474 => return,
+        11200474 => (),
         11789916 => {
             EscapeEtecoon_E65C(k, game);
-            return;
         }
         11789936 => {
             EscapeEtecoon_E670(k, game);
-            return;
         }
         11789952 => {
             EscapeEtecoon_E680(k, game);
-            return;
         }
         10740072 => {
             sub_A3E168(k, game);
-            return;
         }
         10735456 => {
             MaridiaSnail_Func_7(k, game);
-            return;
         }
         10735526 => {
             MaridiaSnail_Func_9(k, game);
-            return;
         }
         10735543 => {
             MaridiaSnail_CFB7(k, game);
-            return;
         }
         10735549 => {
             MaridiaSnail_CFBD(k, game);
-            return;
         }
         10735566 => {
             MaridiaSnail_CFCE(k, game);
-            return;
         }
         10735572 => {
             MaridiaSnail_CFD4(k, game);
-            return;
         }
         10735589 => {
             MaridiaSnail_CFE5(k, game);
-            return;
         }
         10735595 => {
             MaridiaSnail_CFEB(k, game);
-            return;
         }
         10735612 => {
             MaridiaSnail_CFFC(k, game);
-            return;
         }
-        11197611 => return,
+        11197611 => (),
         11197612 => {
             Shaktool_DCAC(k, game);
-            return;
         }
         11197655 => {
             Shaktool_DCD7(k, game);
-            return;
         }
         11197733 => {
             Shaktool_DD25(k, game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn CallEnemyInstr(
     mut ea: uint32,
@@ -4869,477 +4279,477 @@ pub unsafe fn CallEnemyInstr(
     game: &mut Game,
 ) -> *const uint16 {
     match ea {
-        10649837 => return EnemyInstr_Goto(k, j),
-        10649872 => return EnemyInstr_DecTimerAndGoto(k, j, game),
-        10649891 => return EnemyInstr_SetTimer(k, j, game),
-        10649903 => return EnemyInstr_Sleep(k, j, game),
-        10649971 => return EnemyInstr_EnableOffScreenProcessing(k, j, game),
-        10649981 => return EnemyInstr_DisableOffScreenProcessing(k, j, game),
-        10651845 => return BouncingGoofball_Instr_88C5(k, j),
-        10651846 => return BouncingGoofball_Instr_88C6(k, j, game),
-        10652030 => return MiniCrocomire_Instr_897E(k, j, game),
-        10652048 => return MiniCrocomire_Instr_8990(k, j, game),
-        10652061 => return MiniCrocomire_Instr_899D(k, j, game),
-        10654593 => return MaridiaBeybladeTurtle_Instr_9381(k, j, game),
-        10654738 => return MaridiaBeybladeTurtle_Instr_9412(k, j, game),
-        10654791 => return MaridiaBeybladeTurtle_Instr_9447(k, j, game),
-        10654801 => return MaridiaBeybladeTurtle_Instr_9451(k, j, game),
-        10654827 => return MaridiaBeybladeTurtle_Instr_946B(k, j, game),
-        10654853 => return MaridiaBeybladeTurtle_Instr_9485(k, j, game),
-        10654881 => return MaridiaBeybladeTurtle_Instr_94A1(k, j, game),
-        10654919 => return MaridiaBeybladeTurtle_Instr_94C7(k, j, game),
-        10654929 => return MaridiaBeybladeTurtle_Instr_94D1(k, j, game),
-        10657578 => return SpikeShootingPlant_Instr_9F2A(k, j, game),
-        10657941 => return SpikeShootingPlant_Instr_A095(k, j, game),
-        10657959 => return SpikeShootingPlant_Instr_A0A7(k, j, game),
-        10659181 => return MaridiaSpikeyShell_Instr_A56D(k, j, game),
-        10659185 => return MaridiaSpikeyShell_Instr_A571(k, j, game),
-        10664371 => return Rinka_Instr_B9B3(k, j, game),
-        10664381 => return Rinka_Instr_B9BD(k, j, game),
-        10664391 => return Rinka_Instr_B9C7(k, j, game),
-        10664899 => return EnemyInstr_Rio_Instr_1(k, j, game),
-        10665614 => return NorfairLavajumpingEnemy_Instr_BE8E(k, j, game),
-        10666441 => return NorfairRio_Instr_C1C9(k, j, game),
-        10666452 => return NorfairRio_Instr_C1D4(k, j, game),
-        10666463 => return NorfairRio_Instr_C1DF(k, j, game),
-        10666474 => return NorfairRio_Instr_C1EA(k, j, game),
-        10666485 => return NorfairRio_Instr_C1F5(k, j, game),
-        10666496 => return NorfairRio_Instr_C200(k, j, game),
-        10666507 => return NorfairRio_Instr_C20B(k, j, game),
-        10666518 => return NorfairRio_Instr_C216(k, j, game),
-        10666529 => return NorfairRio_Instr_C221(k, j, game),
-        10666540 => return NorfairRio_Instr_C22C(k, j, game),
-        10666551 => return NorfairRio_Instr_C237(k, j, game),
-        10667730 => return LowerNorfairRio_Instr_C6D2(k, j, game),
-        10667741 => return LowerNorfairRio_Instr_C6DD(k, j, game),
-        10667752 => return LowerNorfairRio_Instr_C6E8(k, j, game),
-        10668907 => return MaridiaLargeSnail_Instr_CB6B(k, j, game),
-        10669235 => return MaridiaLargeSnail_Instr_CCB3(k, j, game),
-        10669246 => return MaridiaLargeSnail_Instr_CCBE(k, j, game),
-        10669257 => return MaridiaLargeSnail_Instr_CCC9(k, j, game),
-        10675707 => return LavaSeahorse_Instr_E5FB(k, j, game),
-        10715373 => return EnemyInstr_Goto(k, j),
-        10715439 => return EnemyInstr_Sleep(k, j, game),
-        10715507 => return EnemyInstr_EnableOffScreenProcessing(k, j, game),
-        10715517 => return EnemyInstr_DisableOffScreenProcessing(k, j, game),
-        10716899 => return Waver_Instr_1(k, j, game),
-        10717526 => return Metalee_Instr_1(k, j, game),
-        10719382 => return MaridiaFish_Instr_3(k, j, game),
-        10719392 => return MaridiaFish_Instr_1(k, j, game),
-        10719402 => return MaridiaFish_Instr_2(k, j, game),
-        10722411 => return PlatformThatFallsWithSamus_Instr_3(k, j, game),
-        10722422 => return PlatformThatFallsWithSamus_Instr_4(k, j, game),
-        10722433 => return PlatformThatFallsWithSamus_Instr_1(k, j, game),
-        10722444 => return PlatformThatFallsWithSamus_Instr_2(k, j, game),
-        10725992 => return Sidehopper_Func_1(k, j, game),
-        10726142 => return Sidehopper_Instr_1(k, j, game),
-        10728489 => return MaridiaRefillCandy_Instr_1(k, j, game),
-        10728500 => return MaridiaRefillCandy_Instr_2(k, j, game),
-        10728511 => return MaridiaRefillCandy_Instr_3(k, j, game),
-        10730104 => return Bang_Instr_1(k, j, game),
-        10730152 => return Bang_Instr_2(k, j, game),
-        10733220 => return Skree_Instr_1(k, j, game),
-        10734646 => return MaridiaSnail_Instr_1(k, j, game),
-        10734655 => return MaridiaSnail_Instr_2(k, j, game),
-        10734664 => return MaridiaSnail_Instr_4(k, j, game),
-        10734687 => return MaridiaSnail_Instr_3(k, j, game),
-        10734712 => return MaridiaSnail_Instr_5(k, j, game),
-        10738632 => return Reflec_Instr_1(k, j, game),
-        10739650 => return WreckedShipOrangeZoomer_Func_1(k, j, game),
-        10741344 => return Zoomer_Instr_SetPreinstr(k, j, game),
-        10742437 => return Metroid_Instr_2(k, j, game),
-        10742449 => return Metroid_Instr_1(k, j, game),
-        10780909 => return EnemyInstr_Goto(k, j),
-        10780975 => return EnemyInstr_Sleep(k, j, game),
-        10782374 => return Crocomire_Instr_1(k, j, game),
-        10782546 => return Crocomire_Instr_14(k, j, game),
-        10783995 => return Crocomire_Instr_11(k, j, game),
-        10784007 => return Crocomire_Instr_7(k, j, game),
-        10784019 => return Crocomire_Instr_19(k, j, game),
-        10784711 => return Crocomire_Instr_2(k, j, game),
-        10784735 => return Crocomire_Instr_4(k, j, game),
-        10784762 => return Crocomire_Instr_3(k, j, game),
-        10784767 => return Crocomire_Instr_15(k, j, game),
-        10784797 => return Crocomire_Instr_16(k, j, game),
-        10784859 => return Crocomire_Instr_13(k, j, game),
-        10784895 => return Crocomire_Instr_18(k, j, game),
-        10784911 => return Crocomire_Instr_12(k, j, game),
-        10784916 => return Crocomire_Instr_17(k, j, game),
-        10787483 => return Crocomire_Instr_8(k, j, game),
-        10787488 => return Crocomire_Instr_6(k, j, game),
-        10787493 => return Crocomire_Instr_9(k, j, game),
-        10787498 => return Crocomire_Instr_5(k, j, game),
-        10787503 => return Crocomire_Instr_20(k, j, game),
-        10787508 => return Crocomire_Instr_21(k, j, game),
-        10787513 => return Crocomire_Instr_22(k, j, game),
-        10787518 => return Crocomire_Instr_23(k, j, game),
-        10787523 => return Crocomire_Instr_24(k, j, game),
-        10787528 => return Crocomire_Instr_10(k, j, game),
-        10787533 => return Crocomire_Instr_25(k, j, game),
-        10787538 => return Crocomire_Instr_26(k, j, game),
-        10787543 => return Crocomire_Instr_27(k, j, game),
-        10846332 => return EnemyInstr_StopScript(k, j, game),
-        10846445 => return EnemyInstr_Goto(k, j),
-        10846480 => return EnemyInstr_DecTimerAndGoto(k, j, game),
-        10846499 => return EnemyInstr_SetTimer(k, j, game),
-        10846511 => return EnemyInstr_Sleep(k, j, game),
-        10846522 => return EnemyInstr_WaitNframes(k, j, game),
-        10851549 => return Draygon_Instr_1(k, j, game),
-        10852150 => return Draygon_Instr_13(k, j, game),
-        10852159 => return Draygon_Instr_8(k, j, game),
-        10852178 => return Draygon_Instr_7(k, j, game),
-        10852197 => return Draygon_Instr_6(k, j, game),
-        10852216 => return Draygon_Instr_9(k, j, game),
-        10852501 => return Draygon_Instr_2(k, j, game),
-        10852563 => return Draygon_Instr_11(k, j, game),
-        10852591 => return Draygon_Instr_5(k, j, game),
-        10853274 => return Draygon_Instr_15(k, j, game),
-        10853514 => return Draygon_Instr_17(k, j, game),
-        10853898 => return Draygon_Instr_14(k, j, game),
-        10854231 => return Draygon_Instr_16(k, j, game),
-        10854240 => return Draygon_Instr_10(k, j, game),
-        10854254 => return Draygon_Instr_4(k, j, game),
-        10854268 => return Draygon_Instr_12(k, j, game),
-        10854318 => return Draygon_Instr_18(k, j, game),
-        10863739 => return Draygon_Instr_3(k, j, game),
-        10872671 => return Draygon_Instr_25(k, j, game),
-        10872689 => return Draygon_Instr_24(k, j, game),
-        10872877 => return Draygon_Instr_21(k, j, game),
-        10872946 => return Draygon_Instr_22(k, j, game),
-        10872956 => return Draygon_Instr_27(k, j, game),
-        10872981 => return Draygon_Instr_23(k, j, game),
-        10873009 => return Draygon_Instr_30(k, j, game),
-        10873018 => return Draygon_Instr_20(k, j, game),
-        10873034 => return Draygon_Instr_29(k, j, game),
-        10873116 => return Draygon_Instr_19(k, j, game),
-        10873198 => return Draygon_Instr_28(k, j, game),
-        10873265 => return Draygon_Instr_26(k, j, game),
-        10911981 => return EnemyInstr_Goto(k, j),
-        10912047 => return EnemyInstr_Sleep(k, j, game),
-        10915247 => return FireGeyser_Instr_1(k, j, game),
-        10915347 => return FireGeyser_Instr_2(k, j, game),
-        10915373 => return FireGeyser_Instr_3(k, j, game),
-        10915393 => return FireGeyser_Instr_4(k, j, game),
-        10915413 => return FireGeyser_Instr_5(k, j, game),
-        10915433 => return FireGeyser_Instr_6(k, j, game),
-        10915453 => return FireGeyser_Instr_7(k, j, game),
-        10915473 => return FireGeyser_Instr_8(k, j, game),
-        10915493 => return FireGeyser_Instr_9(k, j, game),
-        10915513 => return FireGeyser_Instr_10(k, j, game),
-        10915533 => return FireGeyser_Instr_11(k, j, game),
-        10915553 => return FireGeyser_Instr_12(k, j, game),
-        10915573 => return FireGeyser_Instr_13(k, j, game),
-        10915593 => return FireGeyser_Instr_14(k, j, game),
-        10915613 => return FireGeyser_Instr_15(k, j, game),
-        10915633 => return FireGeyser_Instr_16(k, j, game),
-        10915653 => return FireGeyser_Instr_17(k, j, game),
-        10915673 => return FireGeyser_Instr_18(k, j, game),
-        10915693 => return FireGeyser_Instr_19(k, j, game),
-        10915713 => return FireGeyser_Instr_20(k, j, game),
-        10915733 => return FireGeyser_Instr_21(k, j, game),
-        10915753 => return FireGeyser_Instr_22(k, j, game),
-        10915773 => return FireGeyser_Instr_23(k, j, game),
-        10915793 => return FireGeyser_Instr_24(k, j, game),
-        10918694 => return FakeKraid_Instr_2(k, j, game),
-        10918772 => return FakeKraid_Instr_1(k, j, game),
-        10918834 => return FakeKraid_Instr_3(k, j, game),
-        10918852 => return FakeKraid_Instr_4(k, j, game),
-        10918914 => return FakeKraid_Instr_5(k, j, game),
-        10937534 => return Ridley_Instr_5(k, j, game),
-        10937546 => return Ridley_Instr_6(k, j, game),
-        10937554 => return Ridley_Instr_10(k, j, game),
-        10937582 => return Ridley_Instr_4(k, j, game),
-        10937592 => return Ridley_Instr_3(k, j, game),
-        10937601 => return Ridley_Instr_2(k, j, game),
-        10937623 => return Ridley_Instr_1(k, j, game),
-        10937631 => return Ridley_Instr_14(k, j, game),
-        10938140 => return Ridley_Instr_9(k, j, game),
-        10938151 => return Ridley_Instr_7(k, j, game),
-        10938159 => return Ridley_Instr_8(k, j, game),
-        10938445 => return Ridley_Instr_11(k, j, game),
-        10938628 => return Ridley_Instr_12(k, j, game),
-        10938633 => return Ridley_Instr_13(k, j, game),
-        10938729 => return Ridley_Instr_15(k, j, game),
-        10938742 => return Ridley_Instr_16(k, j, game),
-        10940701 => return CeresSteam_Instr_1(k, j, game),
-        10940711 => return CeresSteam_Instr_2(k, j, game),
-        10940725 => return CeresSteam_Instr_3(k, j, game),
-        10942014 => return CeresDoor_Instr_6(k, j, game),
-        10942058 => return CeresDoor_Instr_4(k, j, game),
-        10942072 => return CeresDoor_Instr_8(k, j, game),
-        10942091 => return CeresSteam_Instr_4(k, j, game),
-        10942101 => return CeresDoor_Instr_1(k, j, game),
-        10942111 => return CeresDoor_Instr_3(k, j, game),
-        10942118 => return CeresSteam_Instr_5(k, j, game),
-        10942128 => return CeresDoor_Instr_5(k, j, game),
-        10942131 => return CeresDoor_Instr_2(k, j, game),
-        10942141 => return CeresDoor_Instr_7(k, j, game),
-        10977418 => return EnemyInstr_Call_A7(k, j, game),
-        10977517 => return EnemyInstr_Goto(k, j),
-        10977552 => return EnemyInstr_DecTimerAndGoto(k, j, game),
-        10977571 => return EnemyInstr_SetTimer(k, j, game),
-        10977583 => return EnemyInstr_Sleep(k, j, game),
-        10979983 => return Kraid_Instr_9(k, j, game),
-        10991155 => return Kraid_Instr_1(k, j),
-        10991158 => return Kraid_Instr_DecYpos(k, j, game),
-        10991164 => return Kraid_Instr_IncrYpos_Shake(k, j, game),
-        10991182 => return Kraid_Instr_PlaySound_0x76(k, j, game),
-        10991194 => return Kraid_Instr_XposMinus3(k, j, game),
-        10991207 => return Kraid_Instr_XposMinus3b(k, j, game),
-        10991220 => return Kraid_Instr_XposPlus3(k, j, game),
-        10991235 => return Kraid_Instr_MoveHimRight(k, j, game),
-        11043053 => return EnemyInstr_Goto(k, j),
-        11043088 => return EnemyInstr_DecTimerAndGoto(k, j, game),
-        11043107 => return EnemyInstr_SetTimer(k, j, game),
-        11043119 => return EnemyInstr_Sleep(k, j, game),
-        11043187 => return EnemyInstr_EnableOffScreenProcessing(k, j, game),
-        11043197 => return EnemyInstr_DisableOffScreenProcessing(k, j, game),
-        11044751 => return MiniDraygon_Instr_2(k, j, game),
-        11044763 => return MiniDraygon_Instr_1(k, j, game),
-        11044790 => return MiniDraygon_Instr_3(k, j, game),
-        11044811 => return MiniDraygon_Instr_4(k, j, game),
-        11048485 => return Fune_Instr_2(k, j, game),
-        11048497 => return Fune_Instr_6(k, j, game),
-        11048522 => return Fune_Instr_7(k, j, game),
-        11048547 => return Fune_Instr_1(k, j, game),
-        11048572 => return Fune_Instr_4(k, j, game),
-        11048597 => return Fune_Instr_3(k, j, game),
-        11048628 => return Fune_Instr_5(k, j, game),
-        11051207 => return YappingMaw_Instr_2(k, j, game),
-        11051225 => return YappingMaw_Instr_4(k, j, game),
-        11051243 => return YappingMaw_Instr_5(k, j, game),
-        11051261 => return YappingMaw_Instr_7(k, j, game),
-        11051279 => return YappingMaw_Instr_3(k, j, game),
-        11051297 => return YappingMaw_Instr_6(k, j, game),
-        11051315 => return YappingMaw_Instr_1(k, j, game),
-        11054610 => return NorfairLavaMan_Instr_1(k, j, game),
-        11054630 => return NorfairLavaMan_Instr_8(k, j, game),
-        11054640 => return NorfairLavaMan_Instr_14(k, j, game),
-        11054650 => return NorfairLavaMan_Instr_2(k, j, game),
-        11054661 => return NorfairLavaMan_Instr_7(k, j, game),
-        11054672 => return NorfairLavaMan_Instr_10(k, j, game),
-        11054682 => return NorfairLavaMan_Instr_12(k, j, game),
-        11054692 => return NorfairLavaMan_Instr_9(k, j, game),
-        11054728 => return NorfairLavaMan_Instr_11(k, j, game),
-        11054742 => return NorfairLavaMan_Instr_13(k, j, game),
-        11054778 => return NorfairLavaMan_Instr_5(k, j, game),
-        11054794 => return NorfairLavaMan_Instr_15(k, j, game),
-        11054820 => return NorfairLavaMan_Instr_4(k, j, game),
-        11054846 => return NorfairLavaMan_Instr_16(k, j, game),
-        11054872 => return NorfairLavaMan_Instr_6(k, j, game),
-        11054916 => return NorfairLavaMan_Instr_3(k, j, game),
-        11056990 => return Beetom_Instr_1(k, j),
-        11062537 => return WreckedShipRobot_Instr_4(k, j, game),
-        11062692 => return WreckedShipRobot_Instr_9(k, j, game),
-        11062762 => return WreckedShipRobot_Instr_6(k, j, game),
-        11062917 => return WreckedShipRobot_Instr_8(k, j, game),
-        11062987 => return WreckedShipRobot_Instr_7(k, j),
-        11062991 => return WreckedShipRobot_Instr_15(k, j, game),
-        11063146 => return WreckedShipRobot_Instr_18(k, j, game),
-        11063216 => return WreckedShipRobot_Instr_16(k, j, game),
-        11063371 => return WreckedShipRobot_Instr_17(k, j, game),
-        11063441 => return WreckedShipRobot_Instr_3(k, j, game),
-        11063490 => return WreckedShipRobot_Instr_10(k, j),
-        11063494 => return WreckedShipRobot_Instr_14(k, j, game),
-        11063506 => return WreckedShipRobot_Instr_2(k, j, game),
-        11063552 => return WreckedShipRobot_Instr_13(k, j, game),
-        11063559 => return WreckedShipRobot_Instr_1(k, j, game),
-        11063601 => return WreckedShipRobot_Instr_12(k, j, game),
-        11063613 => return WreckedShipRobot_Instr_5(k, j, game),
-        11063659 => return WreckedShipRobot_Instr_11(k, j, game),
-        11067164 => return WalkingLavaSeahorse_Instr_4(k, j, game),
-        11067187 => return WalkingLavaSeahorse_Instr_3(k, j, game),
-        11067193 => return WalkingLavaSeahorse_Instr_5(k, j, game),
-        11067199 => return WalkingLavaSeahorse_Instr_6(k, j, game),
-        11067235 => return WalkingLavaSeahorse_Instr_2(k, j, game),
-        11067249 => return WalkingLavaSeahorse_Instr_1(k, j, game),
-        11068957 => return WreckedShipSpark_Instr_2(k, j, game),
-        11068970 => return WreckedShipSpark_Instr_1(k, j, game),
-        11072806 => return KiHunter_Instr_1(k, j, game),
-        11072996 => return KiHunter_Instr_2(k, j, game),
-        11073151 => return KiHunter_Instr_3(k, j, game),
-        11073234 => return KiHunter_Instr_4(k, j, game),
-        11073240 => return KiHunter_Instr_5(k, j, game),
-        11108655 => return EnemyInstr_Sleep(k, j, game),
-        11128756 => return Shitroid_Instr_1(k, j),
-        11128778 => return Shitroid_Instr_2(k, j),
-        11136208 => return sub_A9ECD0(k, j, game),
-        11139360 => return Shitroid_Instr_3(k, j),
-        11139382 => return Shitroid_Instr_4(k, j),
-        11139472 => return Shitroid_Instr_6(k, j),
-        11139476 => return Shitroid_Instr_5(k, j, game),
-        11173995 => return Enemy_SetAiPreInstr_AA(k, j, game),
-        11174004 => return Enemy_ClearAiPreInstr_AA(k, j, game),
-        11174012 => return EnemyInstr_StopScript(k, j, game),
-        11174125 => return EnemyInstr_Goto(k, j),
-        11174160 => return EnemyInstr_DecTimerAndGoto(k, j, game),
-        11174179 => return EnemyInstr_SetTimer(k, j, game),
-        11174191 => return EnemyInstr_Sleep(k, j, game),
-        11174202 => return EnemyInstr_WaitNframes(k, j, game),
-        11174219 => return EnemyInstr_CopyToVram(k, j, game),
-        11186332 => return Torizo_Instr_3(k, j, game),
-        11186461 => return Torizo_Instr_31(k, j, game),
-        11186622 => return Torizo_Instr_33(k, j, game),
-        11186724 => return Torizo_Instr_36(k, j, game),
-        11186734 => return Torizo_Instr_37(k, j, game),
-        11186744 => return Torizo_Instr_35(k, j, game),
-        11186765 => return Torizo_Instr_38(k, j, game),
-        11186801 => return Torizo_Instr_6(k, j, game),
-        11188557 => return Torizo_Instr_5(k, j, game),
-        11188561 => return Torizo_Instr_9(k, j, game),
-        11190984 => return Torizo_Instr_7(k, j),
-        11190985 => return Torizo_Instr_2(k, j, game),
-        11190993 => return Torizo_Instr_8(k, j, game),
-        11191001 => return Torizo_Instr_25(k, j, game),
-        11191021 => return Torizo_Instr_22(k, j, game),
-        11191031 => return Torizo_Instr_19(k, j, game),
-        11191037 => return Torizo_Instr_32(k, j, game),
-        11191043 => return Torizo_Instr_30(k, j, game),
-        11191087 => return Torizo_Instr_34(k, j, game),
-        11191114 => return Torizo_Instr_24(k, j, game),
-        11191131 => return Torizo_Instr_12(k, j, game),
-        11191149 => return Torizo_Instr_10(k, j, game),
-        11191159 => return Torizo_Instr_11(k, j, game),
-        11191178 => return Torizo_Instr_29(k, j, game),
-        11191200 => return Torizo_Instr_1(k, j, game),
-        11191222 => return Torizo_Instr_28(k, j, game),
-        11191244 => return Torizo_Instr_4(k, j, game),
-        11191326 => return Torizo_Instr_40(k, j, game),
-        11191408 => return Torizo_Instr_16(k, j, game),
-        11191525 => return Torizo_Instr_27(k, j, game),
-        11191642 => return Torizo_Instr_23(k, j, game),
-        11191655 => return Torizo_Instr_14(k, j, game),
-        11191691 => return Torizo_Instr_15(k, j, game),
-        11191716 => return Torizo_Instr_26(k, j, game),
-        11191755 => return Torizo_Instr_18(k, j, game),
-        11191779 => return Torizo_Instr_20(k, j, game),
-        11191794 => return Torizo_Instr_44(k, j, game),
-        11191809 => return Torizo_Instr_21(k, j, game),
-        11191824 => return Torizo_Instr_17(k, j, game),
-        11191832 => return Torizo_Instr_13(k, j, game),
-        11193038 => return Torizo_Instr_39(k, j, game),
-        11193054 => return Torizo_Instr_41(k, j, game),
-        11193058 => return Torizo_Instr_42(k, j, game),
-        11193815 => return Torizo_Instr_48(k, j, game),
-        11194601 => return Torizo_Instr_57(k, j, game),
-        11194611 => return Torizo_Instr_58(k, j, game),
-        11194747 => return Torizo_Instr_59(k, j, game),
-        11194759 => return Torizo_Instr_62(k, j, game),
-        11194855 => return Torizo_Instr_63(k, j, game),
-        11195279 => return Torizo_Instr_56(k, j, game),
-        11195287 => return Torizo_Instr_60(k, j, game),
-        11195295 => return Torizo_Instr_46(k, j, game),
-        11195360 => return Torizo_Instr_47(k, j, game),
-        11195370 => return Torizo_Instr_49(k, j, game),
-        11195446 => return Torizo_Instr_61(k, j, game),
-        11195461 => return Torizo_Instr_53(k, j, game),
-        11195508 => return Torizo_Instr_55(k, j, game),
-        11195547 => return Torizo_Instr_52(k, j, game),
-        11195578 => return Torizo_Instr_50(k, j, game),
-        11195635 => return Torizo_Instr_43(k, j, game),
-        11195645 => return Torizo_Instr_51(k, j, game),
-        11195686 => return Torizo_Instr_45(k, j, game),
-        11195725 => return Torizo_Instr_54(k, j, game),
-        11196721 => return Shaktool_Instr_2(k, j, game),
-        11196735 => return Shaktool_Instr_3(k, j, game),
-        11196746 => return Shaktool_Instr_4(k, j, game),
-        11196755 => return Shaktool_Instr_5(k, j, game),
-        11196831 => return Shaktool_Instr_6(k, j),
-        11196858 => return Shaktool_Instr_1(k, j, game),
-        11199529 => return Shaktool_Instr_9(k, j, game),
-        11199542 => return Shaktool_Instr_11(k, j, game),
-        11199549 => return Shaktool_Instr_10(k, j, game),
-        11199871 => return Shaktool_Instr_8(k, j, game),
-        11199879 => return Shaktool_Instr_13(k, j, game),
-        11199887 => return Shaktool_Instr_12(k, j, game),
-        11199960 => return Shaktool_Instr_7(k, j, game),
-        11200240 => return Shaktool_Instr_14(k, j, game),
-        11698413 => return EnemyInstr_Goto(k, j),
-        11698448 => return EnemyInstr_DecTimerAndGoto(k, j, game),
-        11698467 => return EnemyInstr_SetTimer(k, j, game),
-        11698479 => return EnemyInstr_Sleep(k, j, game),
-        11698490 => return EnemyInstr_WaitNframes(k, j, game),
-        11726400 => return SpacePirates_Instr_MovePixelsDownAndChangeDirFaceRight(k, j, game),
-        11726450 => return SpacePirates_Instr_MovePixelsDownAndChangeDirFaceLeft(k, j, game),
-        11726500 => return SpacePirates_Instr_RandomNewDirFaceR(k, j, game),
-        11726524 => return SpacePirates_Instr_RandomNewDirFaceL(k, j, game),
-        11726548 => return SpacePirates_Instr_PrepareWallJumpR(k, j, game),
-        11726589 => return SpacePirates_Instr_PrepareWallJumpL(k, j, game),
-        11726634 => return SpacePirates_Instr_FireLaserL(k, j, game),
-        11726685 => return SpacePirates_Instr_FireLaserR(k, j, game),
-        11726723 => return SpacePirates_Instr_SetEnemyFunc(k, j, game),
-        11726739 => return SpacePirates_Instr_PlaySfx(k, j, game),
-        11728182 => return SpacePirates_Instr_20(k, j, game),
-        11728198 => return SpacePirates_Instr_16(k, j, game),
-        11728228 => return SpacePirates_Instr_15(k, j, game),
-        11728272 => return SpacePirates_Instr_18(k, j, game),
-        11728342 => return SpacePirates_Instr_17(k, j, game),
-        11729257 => return SpacePirates_Instr_19(k, j, game),
-        11729469 => return SpacePirates_Instr_21(k, j, game),
-        11730024 => return SpacePirates_Instr_12(k, j, game),
-        11730064 => return SpacePirates_Instr_14(k, j, game),
-        11730104 => return SpacePirates_Instr_11(k, j, game),
-        11730120 => return SpacePirates_Instr_13(k, j, game),
-        11763819 => return Enemy_SetAiPreInstr_B3(k, j, game),
-        11763828 => return Enemy_ClearAiPreInstr_B3(k, j, game),
-        11763949 => return EnemyInstr_Goto(k, j),
-        11763984 => return EnemyInstr_DecTimerAndGoto(k, j, game),
-        11764003 => return EnemyInstr_SetTimer(k, j, game),
-        11764015 => return EnemyInstr_Sleep(k, j, game),
-        11769031 => return Botwoon_Instr_1(k, j, game),
-        11769047 => return Botwoon_Instr_2(k, j, game),
-        11769063 => return Botwoon_Instr_3(k, j, game),
-        11769079 => return Botwoon_Instr_4(k, j, game),
-        11769095 => return Botwoon_Instr_5(k, j, game),
-        11769111 => return Botwoon_Instr_6(k, j, game),
-        11769127 => return Botwoon_Instr_7(k, j, game),
-        11769143 => return Botwoon_Instr_8(k, j, game),
-        11769159 => return Botwoon_Instr_9(k, j, game),
-        11769175 => return Botwoon_Instr_10(k, j, game),
-        11769191 => return Botwoon_Instr_SetSpitting(k, j, game),
-        11769202 => return Botwoon_Instr_QueueSpitSfx(k, j, game),
-        11789637 => return EscapeEtecoon_Instr_1(k, j, game),
-        11789840 => return EscapeEtecoon_Instr_2(k, j, game),
-        11791016 => return EscapeDachora_Instr_2(k, j, game),
-        11791032 => return EscapeDachora_Instr_3(k, j, game),
-        11791049 => return EscapeDachora_Instr_1(k, j, game),
-        11791063 => return EscapeDachora_Instr_4(k, j, game),
-        11113910 => return MotherBrain_Instr_MoveBodyUp10Left4(k, j, game),
-        11113920 => return MotherBrain_Instr_MoveBodyUp16Left4(k, j, game),
-        11113930 => return MotherBrain_Instr_MoveBodyUp12Right2(k, j, game),
-        11113950 => return MotherBrain_Instr_MoveDown12Left4(k, j, game),
-        11113960 => return MotherBrain_Instr_MoveDown16Right2(k, j, game),
-        11113970 => return MotherBrain_Instr_MoveDown10Right2(k, j, game),
-        11113980 => return MotherBrain_Instr_MoveUp2Right1(k, j, game),
-        11113996 => return MotherBrain_Instr_MoveRight2(k, j, game),
-        11114012 => return MotherBrain_Instr_MoveUp1(k, j, game),
-        11114018 => return MotherBrain_Instr_MoveUp1Right3_Sfx(k, j, game),
-        11114040 => return MotherBrain_Instr_Down2Right15(k, j, game),
-        11114056 => return MotherBrain_Instr_Down4Right6(k, j, game),
-        11114072 => return MotherBrain_Instr_Up4Left2(k, j, game),
-        11114088 => return MotherBrain_Instr_Up2Left1_Sfx(k, j, game),
-        11114110 => return MotherBrain_Instr_Up2Left1_Sfx2(k, j, game),
-        11114132 => return MotherBrain_Instr_MoveLeft2(k, j, game),
-        11114148 => return MotherBrain_Instr_MoveDown1(k, j, game),
-        11114154 => return MotherBrain_Instr_MoveDown1Left3(k, j, game),
-        11114170 => return MotherBrain_Instr_MoveUp2Left15_Sfx(k, j, game),
-        11114192 => return MotherBrain_Instr_MoveUp4Left6(k, j, game),
-        11114208 => return MotherBrain_Instr_MoveDown4Right2(k, j, game),
-        11114224 => return MotherBrain_Instr_MoveDown2Right1(k, j, game),
-        11114240 => return MotherBrain_Instr_SetPose_Standing(k, j, game),
-        11114248 => return MotherBrain_Instr_SetPose_Walking(k, j, game),
-        11114256 => return MotherBrain_Instr_SetPose_Crouched(k, j, game),
-        11114264 => return MotherBrain_Instr_SetPose_CrouchedTrans(k, j, game),
-        11114272 => return MotherBrain_Instr_SetPose_DeathBeamMode(k, j, game),
-        11114280 => return MotherBrain_Instr_SetPose_LeaningDown(k, j, game),
-        11115208 => return MotherBrain_Instr_SpawnEprojToOffset(k, j, game),
-        11115247 => return MotherBrain_Instr_SpawnDeathBeamEproj(k, j, game),
-        11115269 => return MotherBrain_Instr_IncrBeamAttackPhase(k, j, game),
+        10649837 => EnemyInstr_Goto(k, j),
+        10649872 => EnemyInstr_DecTimerAndGoto(k, j, game),
+        10649891 => EnemyInstr_SetTimer(k, j, game),
+        10649903 => EnemyInstr_Sleep(k, j, game),
+        10649971 => EnemyInstr_EnableOffScreenProcessing(k, j, game),
+        10649981 => EnemyInstr_DisableOffScreenProcessing(k, j, game),
+        10651845 => BouncingGoofball_Instr_88C5(k, j),
+        10651846 => BouncingGoofball_Instr_88C6(k, j, game),
+        10652030 => MiniCrocomire_Instr_897E(k, j, game),
+        10652048 => MiniCrocomire_Instr_8990(k, j, game),
+        10652061 => MiniCrocomire_Instr_899D(k, j, game),
+        10654593 => MaridiaBeybladeTurtle_Instr_9381(k, j, game),
+        10654738 => MaridiaBeybladeTurtle_Instr_9412(k, j, game),
+        10654791 => MaridiaBeybladeTurtle_Instr_9447(k, j, game),
+        10654801 => MaridiaBeybladeTurtle_Instr_9451(k, j, game),
+        10654827 => MaridiaBeybladeTurtle_Instr_946B(k, j, game),
+        10654853 => MaridiaBeybladeTurtle_Instr_9485(k, j, game),
+        10654881 => MaridiaBeybladeTurtle_Instr_94A1(k, j, game),
+        10654919 => MaridiaBeybladeTurtle_Instr_94C7(k, j, game),
+        10654929 => MaridiaBeybladeTurtle_Instr_94D1(k, j, game),
+        10657578 => SpikeShootingPlant_Instr_9F2A(k, j, game),
+        10657941 => SpikeShootingPlant_Instr_A095(k, j, game),
+        10657959 => SpikeShootingPlant_Instr_A0A7(k, j, game),
+        10659181 => MaridiaSpikeyShell_Instr_A56D(k, j, game),
+        10659185 => MaridiaSpikeyShell_Instr_A571(k, j, game),
+        10664371 => Rinka_Instr_B9B3(k, j, game),
+        10664381 => Rinka_Instr_B9BD(k, j, game),
+        10664391 => Rinka_Instr_B9C7(k, j, game),
+        10664899 => EnemyInstr_Rio_Instr_1(k, j, game),
+        10665614 => NorfairLavajumpingEnemy_Instr_BE8E(k, j, game),
+        10666441 => NorfairRio_Instr_C1C9(k, j, game),
+        10666452 => NorfairRio_Instr_C1D4(k, j, game),
+        10666463 => NorfairRio_Instr_C1DF(k, j, game),
+        10666474 => NorfairRio_Instr_C1EA(k, j, game),
+        10666485 => NorfairRio_Instr_C1F5(k, j, game),
+        10666496 => NorfairRio_Instr_C200(k, j, game),
+        10666507 => NorfairRio_Instr_C20B(k, j, game),
+        10666518 => NorfairRio_Instr_C216(k, j, game),
+        10666529 => NorfairRio_Instr_C221(k, j, game),
+        10666540 => NorfairRio_Instr_C22C(k, j, game),
+        10666551 => NorfairRio_Instr_C237(k, j, game),
+        10667730 => LowerNorfairRio_Instr_C6D2(k, j, game),
+        10667741 => LowerNorfairRio_Instr_C6DD(k, j, game),
+        10667752 => LowerNorfairRio_Instr_C6E8(k, j, game),
+        10668907 => MaridiaLargeSnail_Instr_CB6B(k, j, game),
+        10669235 => MaridiaLargeSnail_Instr_CCB3(k, j, game),
+        10669246 => MaridiaLargeSnail_Instr_CCBE(k, j, game),
+        10669257 => MaridiaLargeSnail_Instr_CCC9(k, j, game),
+        10675707 => LavaSeahorse_Instr_E5FB(k, j, game),
+        10715373 => EnemyInstr_Goto(k, j),
+        10715439 => EnemyInstr_Sleep(k, j, game),
+        10715507 => EnemyInstr_EnableOffScreenProcessing(k, j, game),
+        10715517 => EnemyInstr_DisableOffScreenProcessing(k, j, game),
+        10716899 => Waver_Instr_1(k, j, game),
+        10717526 => Metalee_Instr_1(k, j, game),
+        10719382 => MaridiaFish_Instr_3(k, j, game),
+        10719392 => MaridiaFish_Instr_1(k, j, game),
+        10719402 => MaridiaFish_Instr_2(k, j, game),
+        10722411 => PlatformThatFallsWithSamus_Instr_3(k, j, game),
+        10722422 => PlatformThatFallsWithSamus_Instr_4(k, j, game),
+        10722433 => PlatformThatFallsWithSamus_Instr_1(k, j, game),
+        10722444 => PlatformThatFallsWithSamus_Instr_2(k, j, game),
+        10725992 => Sidehopper_Func_1(k, j, game),
+        10726142 => Sidehopper_Instr_1(k, j, game),
+        10728489 => MaridiaRefillCandy_Instr_1(k, j, game),
+        10728500 => MaridiaRefillCandy_Instr_2(k, j, game),
+        10728511 => MaridiaRefillCandy_Instr_3(k, j, game),
+        10730104 => Bang_Instr_1(k, j, game),
+        10730152 => Bang_Instr_2(k, j, game),
+        10733220 => Skree_Instr_1(k, j, game),
+        10734646 => MaridiaSnail_Instr_1(k, j, game),
+        10734655 => MaridiaSnail_Instr_2(k, j, game),
+        10734664 => MaridiaSnail_Instr_4(k, j, game),
+        10734687 => MaridiaSnail_Instr_3(k, j, game),
+        10734712 => MaridiaSnail_Instr_5(k, j, game),
+        10738632 => Reflec_Instr_1(k, j, game),
+        10739650 => WreckedShipOrangeZoomer_Func_1(k, j, game),
+        10741344 => Zoomer_Instr_SetPreinstr(k, j, game),
+        10742437 => Metroid_Instr_2(k, j, game),
+        10742449 => Metroid_Instr_1(k, j, game),
+        10780909 => EnemyInstr_Goto(k, j),
+        10780975 => EnemyInstr_Sleep(k, j, game),
+        10782374 => Crocomire_Instr_1(k, j, game),
+        10782546 => Crocomire_Instr_14(k, j, game),
+        10783995 => Crocomire_Instr_11(k, j, game),
+        10784007 => Crocomire_Instr_7(k, j, game),
+        10784019 => Crocomire_Instr_19(k, j, game),
+        10784711 => Crocomire_Instr_2(k, j, game),
+        10784735 => Crocomire_Instr_4(k, j, game),
+        10784762 => Crocomire_Instr_3(k, j, game),
+        10784767 => Crocomire_Instr_15(k, j, game),
+        10784797 => Crocomire_Instr_16(k, j, game),
+        10784859 => Crocomire_Instr_13(k, j, game),
+        10784895 => Crocomire_Instr_18(k, j, game),
+        10784911 => Crocomire_Instr_12(k, j, game),
+        10784916 => Crocomire_Instr_17(k, j, game),
+        10787483 => Crocomire_Instr_8(k, j, game),
+        10787488 => Crocomire_Instr_6(k, j, game),
+        10787493 => Crocomire_Instr_9(k, j, game),
+        10787498 => Crocomire_Instr_5(k, j, game),
+        10787503 => Crocomire_Instr_20(k, j, game),
+        10787508 => Crocomire_Instr_21(k, j, game),
+        10787513 => Crocomire_Instr_22(k, j, game),
+        10787518 => Crocomire_Instr_23(k, j, game),
+        10787523 => Crocomire_Instr_24(k, j, game),
+        10787528 => Crocomire_Instr_10(k, j, game),
+        10787533 => Crocomire_Instr_25(k, j, game),
+        10787538 => Crocomire_Instr_26(k, j, game),
+        10787543 => Crocomire_Instr_27(k, j, game),
+        10846332 => EnemyInstr_StopScript(k, j, game),
+        10846445 => EnemyInstr_Goto(k, j),
+        10846480 => EnemyInstr_DecTimerAndGoto(k, j, game),
+        10846499 => EnemyInstr_SetTimer(k, j, game),
+        10846511 => EnemyInstr_Sleep(k, j, game),
+        10846522 => EnemyInstr_WaitNframes(k, j, game),
+        10851549 => Draygon_Instr_1(k, j, game),
+        10852150 => Draygon_Instr_13(k, j, game),
+        10852159 => Draygon_Instr_8(k, j, game),
+        10852178 => Draygon_Instr_7(k, j, game),
+        10852197 => Draygon_Instr_6(k, j, game),
+        10852216 => Draygon_Instr_9(k, j, game),
+        10852501 => Draygon_Instr_2(k, j, game),
+        10852563 => Draygon_Instr_11(k, j, game),
+        10852591 => Draygon_Instr_5(k, j, game),
+        10853274 => Draygon_Instr_15(k, j, game),
+        10853514 => Draygon_Instr_17(k, j, game),
+        10853898 => Draygon_Instr_14(k, j, game),
+        10854231 => Draygon_Instr_16(k, j, game),
+        10854240 => Draygon_Instr_10(k, j, game),
+        10854254 => Draygon_Instr_4(k, j, game),
+        10854268 => Draygon_Instr_12(k, j, game),
+        10854318 => Draygon_Instr_18(k, j, game),
+        10863739 => Draygon_Instr_3(k, j, game),
+        10872671 => Draygon_Instr_25(k, j, game),
+        10872689 => Draygon_Instr_24(k, j, game),
+        10872877 => Draygon_Instr_21(k, j, game),
+        10872946 => Draygon_Instr_22(k, j, game),
+        10872956 => Draygon_Instr_27(k, j, game),
+        10872981 => Draygon_Instr_23(k, j, game),
+        10873009 => Draygon_Instr_30(k, j, game),
+        10873018 => Draygon_Instr_20(k, j, game),
+        10873034 => Draygon_Instr_29(k, j, game),
+        10873116 => Draygon_Instr_19(k, j, game),
+        10873198 => Draygon_Instr_28(k, j, game),
+        10873265 => Draygon_Instr_26(k, j, game),
+        10911981 => EnemyInstr_Goto(k, j),
+        10912047 => EnemyInstr_Sleep(k, j, game),
+        10915247 => FireGeyser_Instr_1(k, j, game),
+        10915347 => FireGeyser_Instr_2(k, j, game),
+        10915373 => FireGeyser_Instr_3(k, j, game),
+        10915393 => FireGeyser_Instr_4(k, j, game),
+        10915413 => FireGeyser_Instr_5(k, j, game),
+        10915433 => FireGeyser_Instr_6(k, j, game),
+        10915453 => FireGeyser_Instr_7(k, j, game),
+        10915473 => FireGeyser_Instr_8(k, j, game),
+        10915493 => FireGeyser_Instr_9(k, j, game),
+        10915513 => FireGeyser_Instr_10(k, j, game),
+        10915533 => FireGeyser_Instr_11(k, j, game),
+        10915553 => FireGeyser_Instr_12(k, j, game),
+        10915573 => FireGeyser_Instr_13(k, j, game),
+        10915593 => FireGeyser_Instr_14(k, j, game),
+        10915613 => FireGeyser_Instr_15(k, j, game),
+        10915633 => FireGeyser_Instr_16(k, j, game),
+        10915653 => FireGeyser_Instr_17(k, j, game),
+        10915673 => FireGeyser_Instr_18(k, j, game),
+        10915693 => FireGeyser_Instr_19(k, j, game),
+        10915713 => FireGeyser_Instr_20(k, j, game),
+        10915733 => FireGeyser_Instr_21(k, j, game),
+        10915753 => FireGeyser_Instr_22(k, j, game),
+        10915773 => FireGeyser_Instr_23(k, j, game),
+        10915793 => FireGeyser_Instr_24(k, j, game),
+        10918694 => FakeKraid_Instr_2(k, j, game),
+        10918772 => FakeKraid_Instr_1(k, j, game),
+        10918834 => FakeKraid_Instr_3(k, j, game),
+        10918852 => FakeKraid_Instr_4(k, j, game),
+        10918914 => FakeKraid_Instr_5(k, j, game),
+        10937534 => Ridley_Instr_5(k, j, game),
+        10937546 => Ridley_Instr_6(k, j, game),
+        10937554 => Ridley_Instr_10(k, j, game),
+        10937582 => Ridley_Instr_4(k, j, game),
+        10937592 => Ridley_Instr_3(k, j, game),
+        10937601 => Ridley_Instr_2(k, j, game),
+        10937623 => Ridley_Instr_1(k, j, game),
+        10937631 => Ridley_Instr_14(k, j, game),
+        10938140 => Ridley_Instr_9(k, j, game),
+        10938151 => Ridley_Instr_7(k, j, game),
+        10938159 => Ridley_Instr_8(k, j, game),
+        10938445 => Ridley_Instr_11(k, j, game),
+        10938628 => Ridley_Instr_12(k, j, game),
+        10938633 => Ridley_Instr_13(k, j, game),
+        10938729 => Ridley_Instr_15(k, j, game),
+        10938742 => Ridley_Instr_16(k, j, game),
+        10940701 => CeresSteam_Instr_1(k, j, game),
+        10940711 => CeresSteam_Instr_2(k, j, game),
+        10940725 => CeresSteam_Instr_3(k, j, game),
+        10942014 => CeresDoor_Instr_6(k, j, game),
+        10942058 => CeresDoor_Instr_4(k, j, game),
+        10942072 => CeresDoor_Instr_8(k, j, game),
+        10942091 => CeresSteam_Instr_4(k, j, game),
+        10942101 => CeresDoor_Instr_1(k, j, game),
+        10942111 => CeresDoor_Instr_3(k, j, game),
+        10942118 => CeresSteam_Instr_5(k, j, game),
+        10942128 => CeresDoor_Instr_5(k, j, game),
+        10942131 => CeresDoor_Instr_2(k, j, game),
+        10942141 => CeresDoor_Instr_7(k, j, game),
+        10977418 => EnemyInstr_Call_A7(k, j, game),
+        10977517 => EnemyInstr_Goto(k, j),
+        10977552 => EnemyInstr_DecTimerAndGoto(k, j, game),
+        10977571 => EnemyInstr_SetTimer(k, j, game),
+        10977583 => EnemyInstr_Sleep(k, j, game),
+        10979983 => Kraid_Instr_9(k, j, game),
+        10991155 => Kraid_Instr_1(k, j),
+        10991158 => Kraid_Instr_DecYpos(k, j, game),
+        10991164 => Kraid_Instr_IncrYpos_Shake(k, j, game),
+        10991182 => Kraid_Instr_PlaySound_0x76(k, j, game),
+        10991194 => Kraid_Instr_XposMinus3(k, j, game),
+        10991207 => Kraid_Instr_XposMinus3b(k, j, game),
+        10991220 => Kraid_Instr_XposPlus3(k, j, game),
+        10991235 => Kraid_Instr_MoveHimRight(k, j, game),
+        11043053 => EnemyInstr_Goto(k, j),
+        11043088 => EnemyInstr_DecTimerAndGoto(k, j, game),
+        11043107 => EnemyInstr_SetTimer(k, j, game),
+        11043119 => EnemyInstr_Sleep(k, j, game),
+        11043187 => EnemyInstr_EnableOffScreenProcessing(k, j, game),
+        11043197 => EnemyInstr_DisableOffScreenProcessing(k, j, game),
+        11044751 => MiniDraygon_Instr_2(k, j, game),
+        11044763 => MiniDraygon_Instr_1(k, j, game),
+        11044790 => MiniDraygon_Instr_3(k, j, game),
+        11044811 => MiniDraygon_Instr_4(k, j, game),
+        11048485 => Fune_Instr_2(k, j, game),
+        11048497 => Fune_Instr_6(k, j, game),
+        11048522 => Fune_Instr_7(k, j, game),
+        11048547 => Fune_Instr_1(k, j, game),
+        11048572 => Fune_Instr_4(k, j, game),
+        11048597 => Fune_Instr_3(k, j, game),
+        11048628 => Fune_Instr_5(k, j, game),
+        11051207 => YappingMaw_Instr_2(k, j, game),
+        11051225 => YappingMaw_Instr_4(k, j, game),
+        11051243 => YappingMaw_Instr_5(k, j, game),
+        11051261 => YappingMaw_Instr_7(k, j, game),
+        11051279 => YappingMaw_Instr_3(k, j, game),
+        11051297 => YappingMaw_Instr_6(k, j, game),
+        11051315 => YappingMaw_Instr_1(k, j, game),
+        11054610 => NorfairLavaMan_Instr_1(k, j, game),
+        11054630 => NorfairLavaMan_Instr_8(k, j, game),
+        11054640 => NorfairLavaMan_Instr_14(k, j, game),
+        11054650 => NorfairLavaMan_Instr_2(k, j, game),
+        11054661 => NorfairLavaMan_Instr_7(k, j, game),
+        11054672 => NorfairLavaMan_Instr_10(k, j, game),
+        11054682 => NorfairLavaMan_Instr_12(k, j, game),
+        11054692 => NorfairLavaMan_Instr_9(k, j, game),
+        11054728 => NorfairLavaMan_Instr_11(k, j, game),
+        11054742 => NorfairLavaMan_Instr_13(k, j, game),
+        11054778 => NorfairLavaMan_Instr_5(k, j, game),
+        11054794 => NorfairLavaMan_Instr_15(k, j, game),
+        11054820 => NorfairLavaMan_Instr_4(k, j, game),
+        11054846 => NorfairLavaMan_Instr_16(k, j, game),
+        11054872 => NorfairLavaMan_Instr_6(k, j, game),
+        11054916 => NorfairLavaMan_Instr_3(k, j, game),
+        11056990 => Beetom_Instr_1(k, j),
+        11062537 => WreckedShipRobot_Instr_4(k, j, game),
+        11062692 => WreckedShipRobot_Instr_9(k, j, game),
+        11062762 => WreckedShipRobot_Instr_6(k, j, game),
+        11062917 => WreckedShipRobot_Instr_8(k, j, game),
+        11062987 => WreckedShipRobot_Instr_7(k, j),
+        11062991 => WreckedShipRobot_Instr_15(k, j, game),
+        11063146 => WreckedShipRobot_Instr_18(k, j, game),
+        11063216 => WreckedShipRobot_Instr_16(k, j, game),
+        11063371 => WreckedShipRobot_Instr_17(k, j, game),
+        11063441 => WreckedShipRobot_Instr_3(k, j, game),
+        11063490 => WreckedShipRobot_Instr_10(k, j),
+        11063494 => WreckedShipRobot_Instr_14(k, j, game),
+        11063506 => WreckedShipRobot_Instr_2(k, j, game),
+        11063552 => WreckedShipRobot_Instr_13(k, j, game),
+        11063559 => WreckedShipRobot_Instr_1(k, j, game),
+        11063601 => WreckedShipRobot_Instr_12(k, j, game),
+        11063613 => WreckedShipRobot_Instr_5(k, j, game),
+        11063659 => WreckedShipRobot_Instr_11(k, j, game),
+        11067164 => WalkingLavaSeahorse_Instr_4(k, j, game),
+        11067187 => WalkingLavaSeahorse_Instr_3(k, j, game),
+        11067193 => WalkingLavaSeahorse_Instr_5(k, j, game),
+        11067199 => WalkingLavaSeahorse_Instr_6(k, j, game),
+        11067235 => WalkingLavaSeahorse_Instr_2(k, j, game),
+        11067249 => WalkingLavaSeahorse_Instr_1(k, j, game),
+        11068957 => WreckedShipSpark_Instr_2(k, j, game),
+        11068970 => WreckedShipSpark_Instr_1(k, j, game),
+        11072806 => KiHunter_Instr_1(k, j, game),
+        11072996 => KiHunter_Instr_2(k, j, game),
+        11073151 => KiHunter_Instr_3(k, j, game),
+        11073234 => KiHunter_Instr_4(k, j, game),
+        11073240 => KiHunter_Instr_5(k, j, game),
+        11108655 => EnemyInstr_Sleep(k, j, game),
+        11128756 => Shitroid_Instr_1(k, j),
+        11128778 => Shitroid_Instr_2(k, j),
+        11136208 => sub_A9ECD0(k, j, game),
+        11139360 => Shitroid_Instr_3(k, j),
+        11139382 => Shitroid_Instr_4(k, j),
+        11139472 => Shitroid_Instr_6(k, j),
+        11139476 => Shitroid_Instr_5(k, j, game),
+        11173995 => Enemy_SetAiPreInstr_AA(k, j, game),
+        11174004 => Enemy_ClearAiPreInstr_AA(k, j, game),
+        11174012 => EnemyInstr_StopScript(k, j, game),
+        11174125 => EnemyInstr_Goto(k, j),
+        11174160 => EnemyInstr_DecTimerAndGoto(k, j, game),
+        11174179 => EnemyInstr_SetTimer(k, j, game),
+        11174191 => EnemyInstr_Sleep(k, j, game),
+        11174202 => EnemyInstr_WaitNframes(k, j, game),
+        11174219 => EnemyInstr_CopyToVram(k, j, game),
+        11186332 => Torizo_Instr_3(k, j, game),
+        11186461 => Torizo_Instr_31(k, j, game),
+        11186622 => Torizo_Instr_33(k, j, game),
+        11186724 => Torizo_Instr_36(k, j, game),
+        11186734 => Torizo_Instr_37(k, j, game),
+        11186744 => Torizo_Instr_35(k, j, game),
+        11186765 => Torizo_Instr_38(k, j, game),
+        11186801 => Torizo_Instr_6(k, j, game),
+        11188557 => Torizo_Instr_5(k, j, game),
+        11188561 => Torizo_Instr_9(k, j, game),
+        11190984 => Torizo_Instr_7(k, j),
+        11190985 => Torizo_Instr_2(k, j, game),
+        11190993 => Torizo_Instr_8(k, j, game),
+        11191001 => Torizo_Instr_25(k, j, game),
+        11191021 => Torizo_Instr_22(k, j, game),
+        11191031 => Torizo_Instr_19(k, j, game),
+        11191037 => Torizo_Instr_32(k, j, game),
+        11191043 => Torizo_Instr_30(k, j, game),
+        11191087 => Torizo_Instr_34(k, j, game),
+        11191114 => Torizo_Instr_24(k, j, game),
+        11191131 => Torizo_Instr_12(k, j, game),
+        11191149 => Torizo_Instr_10(k, j, game),
+        11191159 => Torizo_Instr_11(k, j, game),
+        11191178 => Torizo_Instr_29(k, j, game),
+        11191200 => Torizo_Instr_1(k, j, game),
+        11191222 => Torizo_Instr_28(k, j, game),
+        11191244 => Torizo_Instr_4(k, j, game),
+        11191326 => Torizo_Instr_40(k, j, game),
+        11191408 => Torizo_Instr_16(k, j, game),
+        11191525 => Torizo_Instr_27(k, j, game),
+        11191642 => Torizo_Instr_23(k, j, game),
+        11191655 => Torizo_Instr_14(k, j, game),
+        11191691 => Torizo_Instr_15(k, j, game),
+        11191716 => Torizo_Instr_26(k, j, game),
+        11191755 => Torizo_Instr_18(k, j, game),
+        11191779 => Torizo_Instr_20(k, j, game),
+        11191794 => Torizo_Instr_44(k, j, game),
+        11191809 => Torizo_Instr_21(k, j, game),
+        11191824 => Torizo_Instr_17(k, j, game),
+        11191832 => Torizo_Instr_13(k, j, game),
+        11193038 => Torizo_Instr_39(k, j, game),
+        11193054 => Torizo_Instr_41(k, j, game),
+        11193058 => Torizo_Instr_42(k, j, game),
+        11193815 => Torizo_Instr_48(k, j, game),
+        11194601 => Torizo_Instr_57(k, j, game),
+        11194611 => Torizo_Instr_58(k, j, game),
+        11194747 => Torizo_Instr_59(k, j, game),
+        11194759 => Torizo_Instr_62(k, j, game),
+        11194855 => Torizo_Instr_63(k, j, game),
+        11195279 => Torizo_Instr_56(k, j, game),
+        11195287 => Torizo_Instr_60(k, j, game),
+        11195295 => Torizo_Instr_46(k, j, game),
+        11195360 => Torizo_Instr_47(k, j, game),
+        11195370 => Torizo_Instr_49(k, j, game),
+        11195446 => Torizo_Instr_61(k, j, game),
+        11195461 => Torizo_Instr_53(k, j, game),
+        11195508 => Torizo_Instr_55(k, j, game),
+        11195547 => Torizo_Instr_52(k, j, game),
+        11195578 => Torizo_Instr_50(k, j, game),
+        11195635 => Torizo_Instr_43(k, j, game),
+        11195645 => Torizo_Instr_51(k, j, game),
+        11195686 => Torizo_Instr_45(k, j, game),
+        11195725 => Torizo_Instr_54(k, j, game),
+        11196721 => Shaktool_Instr_2(k, j, game),
+        11196735 => Shaktool_Instr_3(k, j, game),
+        11196746 => Shaktool_Instr_4(k, j, game),
+        11196755 => Shaktool_Instr_5(k, j, game),
+        11196831 => Shaktool_Instr_6(k, j),
+        11196858 => Shaktool_Instr_1(k, j, game),
+        11199529 => Shaktool_Instr_9(k, j, game),
+        11199542 => Shaktool_Instr_11(k, j, game),
+        11199549 => Shaktool_Instr_10(k, j, game),
+        11199871 => Shaktool_Instr_8(k, j, game),
+        11199879 => Shaktool_Instr_13(k, j, game),
+        11199887 => Shaktool_Instr_12(k, j, game),
+        11199960 => Shaktool_Instr_7(k, j, game),
+        11200240 => Shaktool_Instr_14(k, j, game),
+        11698413 => EnemyInstr_Goto(k, j),
+        11698448 => EnemyInstr_DecTimerAndGoto(k, j, game),
+        11698467 => EnemyInstr_SetTimer(k, j, game),
+        11698479 => EnemyInstr_Sleep(k, j, game),
+        11698490 => EnemyInstr_WaitNframes(k, j, game),
+        11726400 => SpacePirates_Instr_MovePixelsDownAndChangeDirFaceRight(k, j, game),
+        11726450 => SpacePirates_Instr_MovePixelsDownAndChangeDirFaceLeft(k, j, game),
+        11726500 => SpacePirates_Instr_RandomNewDirFaceR(k, j, game),
+        11726524 => SpacePirates_Instr_RandomNewDirFaceL(k, j, game),
+        11726548 => SpacePirates_Instr_PrepareWallJumpR(k, j, game),
+        11726589 => SpacePirates_Instr_PrepareWallJumpL(k, j, game),
+        11726634 => SpacePirates_Instr_FireLaserL(k, j, game),
+        11726685 => SpacePirates_Instr_FireLaserR(k, j, game),
+        11726723 => SpacePirates_Instr_SetEnemyFunc(k, j, game),
+        11726739 => SpacePirates_Instr_PlaySfx(k, j, game),
+        11728182 => SpacePirates_Instr_20(k, j, game),
+        11728198 => SpacePirates_Instr_16(k, j, game),
+        11728228 => SpacePirates_Instr_15(k, j, game),
+        11728272 => SpacePirates_Instr_18(k, j, game),
+        11728342 => SpacePirates_Instr_17(k, j, game),
+        11729257 => SpacePirates_Instr_19(k, j, game),
+        11729469 => SpacePirates_Instr_21(k, j, game),
+        11730024 => SpacePirates_Instr_12(k, j, game),
+        11730064 => SpacePirates_Instr_14(k, j, game),
+        11730104 => SpacePirates_Instr_11(k, j, game),
+        11730120 => SpacePirates_Instr_13(k, j, game),
+        11763819 => Enemy_SetAiPreInstr_B3(k, j, game),
+        11763828 => Enemy_ClearAiPreInstr_B3(k, j, game),
+        11763949 => EnemyInstr_Goto(k, j),
+        11763984 => EnemyInstr_DecTimerAndGoto(k, j, game),
+        11764003 => EnemyInstr_SetTimer(k, j, game),
+        11764015 => EnemyInstr_Sleep(k, j, game),
+        11769031 => Botwoon_Instr_1(k, j, game),
+        11769047 => Botwoon_Instr_2(k, j, game),
+        11769063 => Botwoon_Instr_3(k, j, game),
+        11769079 => Botwoon_Instr_4(k, j, game),
+        11769095 => Botwoon_Instr_5(k, j, game),
+        11769111 => Botwoon_Instr_6(k, j, game),
+        11769127 => Botwoon_Instr_7(k, j, game),
+        11769143 => Botwoon_Instr_8(k, j, game),
+        11769159 => Botwoon_Instr_9(k, j, game),
+        11769175 => Botwoon_Instr_10(k, j, game),
+        11769191 => Botwoon_Instr_SetSpitting(k, j, game),
+        11769202 => Botwoon_Instr_QueueSpitSfx(k, j, game),
+        11789637 => EscapeEtecoon_Instr_1(k, j, game),
+        11789840 => EscapeEtecoon_Instr_2(k, j, game),
+        11791016 => EscapeDachora_Instr_2(k, j, game),
+        11791032 => EscapeDachora_Instr_3(k, j, game),
+        11791049 => EscapeDachora_Instr_1(k, j, game),
+        11791063 => EscapeDachora_Instr_4(k, j, game),
+        11113910 => MotherBrain_Instr_MoveBodyUp10Left4(k, j, game),
+        11113920 => MotherBrain_Instr_MoveBodyUp16Left4(k, j, game),
+        11113930 => MotherBrain_Instr_MoveBodyUp12Right2(k, j, game),
+        11113950 => MotherBrain_Instr_MoveDown12Left4(k, j, game),
+        11113960 => MotherBrain_Instr_MoveDown16Right2(k, j, game),
+        11113970 => MotherBrain_Instr_MoveDown10Right2(k, j, game),
+        11113980 => MotherBrain_Instr_MoveUp2Right1(k, j, game),
+        11113996 => MotherBrain_Instr_MoveRight2(k, j, game),
+        11114012 => MotherBrain_Instr_MoveUp1(k, j, game),
+        11114018 => MotherBrain_Instr_MoveUp1Right3_Sfx(k, j, game),
+        11114040 => MotherBrain_Instr_Down2Right15(k, j, game),
+        11114056 => MotherBrain_Instr_Down4Right6(k, j, game),
+        11114072 => MotherBrain_Instr_Up4Left2(k, j, game),
+        11114088 => MotherBrain_Instr_Up2Left1_Sfx(k, j, game),
+        11114110 => MotherBrain_Instr_Up2Left1_Sfx2(k, j, game),
+        11114132 => MotherBrain_Instr_MoveLeft2(k, j, game),
+        11114148 => MotherBrain_Instr_MoveDown1(k, j, game),
+        11114154 => MotherBrain_Instr_MoveDown1Left3(k, j, game),
+        11114170 => MotherBrain_Instr_MoveUp2Left15_Sfx(k, j, game),
+        11114192 => MotherBrain_Instr_MoveUp4Left6(k, j, game),
+        11114208 => MotherBrain_Instr_MoveDown4Right2(k, j, game),
+        11114224 => MotherBrain_Instr_MoveDown2Right1(k, j, game),
+        11114240 => MotherBrain_Instr_SetPose_Standing(k, j, game),
+        11114248 => MotherBrain_Instr_SetPose_Walking(k, j, game),
+        11114256 => MotherBrain_Instr_SetPose_Crouched(k, j, game),
+        11114264 => MotherBrain_Instr_SetPose_CrouchedTrans(k, j, game),
+        11114272 => MotherBrain_Instr_SetPose_DeathBeamMode(k, j, game),
+        11114280 => MotherBrain_Instr_SetPose_LeaningDown(k, j, game),
+        11115208 => MotherBrain_Instr_SpawnEprojToOffset(k, j, game),
+        11115247 => MotherBrain_Instr_SpawnDeathBeamEproj(k, j, game),
+        11115269 => MotherBrain_Instr_IncrBeamAttackPhase(k, j, game),
         _ => {
             Unreachable(game);
-            return ::core::ptr::null::<uint16>();
+            ::core::ptr::null::<uint16>()
         }
-    };
+    }
 }
 pub unsafe fn EnemyMain(game: &mut Game) {
     let mut ED: *mut EnemyDef = ::core::ptr::null_mut::<EnemyDef>();
@@ -5715,8 +5125,8 @@ pub unsafe fn SpawnEnemy(mut db: uint8, mut k: uint16, game: &mut Game) -> uint1
             new_enemy_index = (new_enemy_index).wrapping_add(64u16);
             varE20 = (varE20).wrapping_add(16u16);
         },
-        _ => return 0xffff as uint16,
-    };
+        _ => 0xffff as uint16,
+    }
 }
 pub unsafe fn DrawOneEnemy(game: &mut Game) {
     let mut varE34: uint16 = (2u16).wrapping_mul(
@@ -6267,169 +5677,133 @@ pub unsafe fn CallHitboxTouch(mut ea: uint32, game: &mut Game) {
     match ea {
         10518563 => {
             Enemy_NormalTouchAI_A0(game);
-            return;
         }
         10670984 => {
             MaridiaLargeSnail_Func_12(game);
-            return;
         }
         10670988 => {
             MaridiaLargeSnail_Touch(game);
-            return;
         }
         10780707 => {
             Enemy_NormalTouchAI_A4(game);
-            return;
         }
         10795325 => {
             Crocomire_Func_92(game);
-            return;
         }
-        10795344 => return,
-        10846284 => return,
+        10795344 => (),
+        10846284 => (),
         10851818 => {
             Draygon_Touch(game);
-            return;
         }
         10874348 => {
             SporeSpawn_Touch(game);
-            return;
         }
         10936153 => {
             sub_A6DF59(game);
-            return;
         }
         10940479 => {
             CeresSteam_Touch(game);
-            return;
         }
-        10977356 => return,
+        10977356 => (),
         10982539 => {
             Kraid_Touch_ArmFoot(game);
-            return;
         }
         10982544 => {
             KraidsArm_Touch(game);
-            return;
         }
         11001237 => {
             Phantoon_Touch(game);
-            return;
         }
-        11122117 => return,
+        11122117 => (),
         11122118 => {
             MotherBrainsBrain_Touch(game);
-            return;
         }
         11192695 => {
             GoldTorizo_Touch(game);
-            return;
         }
         11700076 => {
             WalkingSpacePirates_Touch(game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn CallHitboxShot(mut ea: uint32, mut j: uint16, game: &mut Game) {
     match ea {
         10518573 => {
             Enemy_NormalShotAI_A0(game);
-            return;
         }
-        10649676 => return,
+        10649676 => (),
         10671028 => {
             MaridiaLargeSnail_Shot(game);
-            return;
         }
         10780717 => {
             Enemy_NormalShotAI_A4(game);
-            return;
         }
         10795345 => {
             Crocomire_Func_93(game);
-            return;
         }
         10795368 => {
             Crocomire_Func_94(game);
-            return;
         }
         10795525 => {
             Crocomire_Func_95(game);
-            return;
         }
         10795700 => {
             Crocomire_Func_1(game);
-            return;
         }
         10846253 => {
             Enemy_NormalShotAI_A5(game);
-            return;
         }
         10846278 => {
             CreateADudShot(game);
-            return;
         }
-        10846284 => return,
+        10846284 => (),
         10851824 => {
             Draygon_Shot(game);
-            return;
         }
         10874202 => {
             SporeSpawn_Shot(game);
-            return;
         }
-        10911820 => return,
+        10911820 => (),
         10936202 => {
             Ridley_Shot(game);
-            return;
         }
-        10977356 => return,
-        10982581 => return,
+        10977356 => (),
+        10982581 => (),
         10982582 => {
             Kraid_Arm_Shot(j, game);
-            return;
         }
         11001243 => {
             Phantoon_Shot(game);
-            return;
         }
         11121923 => {
             MotherBrainsBody_Shot(game);
-            return;
         }
         11121927 => {
             MotherBrainsBrain_Shot(game);
-            return;
         }
         11192700 => {
             Torizo_Shot(game);
-            return;
         }
-        11192769 => return,
+        11192769 => (),
         11192770 => {
             Torizo_Func_8(game);
-            return;
         }
         11700089 => {
             WalkingSpacePirates_Shot(game);
-            return;
         }
         11700168 => {
             WalkingSpacePirates_87C8(game);
-            return;
         }
         11700286 => {
             WalkingSpacePirates_883E(game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn EnemySamusCollHandler_Multibox(game: &mut Game) {
     let mut E: *mut EnemyData = gEnemyData(
@@ -6851,10 +6225,10 @@ pub unsafe fn GrappleBeam_CollDetect_Enemy(game: &mut Game) -> PairU16 {
         *((&raw mut game.g_ram as *mut uint8).offset(0xd08) as *mut uint16) = (*v11).x_pos;
         *((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16) = (*v11).y_pos;
     }
-    return PairU16 {
+    PairU16 {
         k: v0,
         j: enemy_ptr,
-    };
+    }
 }
 pub unsafe fn SwitchEnemyAiToMainAi(game: &mut Game) {
     let mut E: *mut EnemyData = gEnemyData(
@@ -7287,7 +6661,7 @@ pub unsafe fn SuitDamageDivision(mut a: uint16, game: &mut Game) -> uint16 {
     {
         return (a as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
     }
-    return a;
+    a
 }
 pub unsafe fn NormalEnemyTouchAi(game: &mut Game) {
     NormalEnemyTouchAiSkipDeathAnim(game);
@@ -7701,7 +7075,7 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> uint16 {
         game,
     );
     QueueSfx1_Max3(0x3d as uint16, game);
-    return varE2E;
+    varE2E
 }
 pub unsafe fn CreateDudShot(game: &mut Game) {
     let mut v0: ::core::ffi::c_int =
@@ -8149,11 +7523,11 @@ pub fn EnemyFunc_B691(phase: uint16, pt: Point32, game: &mut Game) {
     add_enemy_vector_coordinate(&mut game.g_ram[offset..offset + 4], y);
 }
 pub unsafe fn EnemyFunc_Divide(mut a: uint32, mut b: uint32) -> uint32 {
-    return if a != 0 {
+    if a != 0 {
         b.wrapping_div(a)
     } else {
         0 as uint32
-    };
+    }
 }
 fn corrected_samus_previous_position(position: u16, previous: u16) -> Option<u16> {
     let delta = position.wrapping_sub(previous);
@@ -8660,21 +8034,21 @@ pub unsafe fn Enemy_MoveRight_SlopesAsWalls(
     mut amt: int32,
     game: &mut Game,
 ) -> uint8 {
-    return Enemy_MoveRight_IgnoreSlopes_Inner(k, amt, 0x4000 as uint16, game);
+    Enemy_MoveRight_IgnoreSlopes_Inner(k, amt, 0x4000 as uint16, game)
 }
 pub unsafe fn Enemy_MoveRight_ProcessSlopes(
     mut k: uint16,
     mut amt: int32,
     game: &mut Game,
 ) -> uint8 {
-    return Enemy_MoveRight_IgnoreSlopes_Inner(k, amt, 0x8000 as uint16, game);
+    Enemy_MoveRight_IgnoreSlopes_Inner(k, amt, 0x8000 as uint16, game)
 }
 pub unsafe fn Enemy_MoveRight_IgnoreSlopes(
     mut k: uint16,
     mut amt: int32,
     game: &mut Game,
 ) -> uint8 {
-    return Enemy_MoveRight_IgnoreSlopes_Inner(k, amt, 0 as uint16, game);
+    Enemy_MoveRight_IgnoreSlopes_Inner(k, amt, 0 as uint16, game)
 }
 unsafe fn Enemy_MoveRight_IgnoreSlopes_Inner(
     k: uint16,
@@ -9001,5 +8375,5 @@ pub unsafe fn EnemyFunc_C8AD(mut k: uint16, game: &mut Game) -> uint8 {
             }
         }
     }
-    return result;
+    result
 }

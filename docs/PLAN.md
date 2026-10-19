@@ -46,6 +46,26 @@ Keep each commit one invariant, but apply it across the complete eligible family
 Rank by net deletion including shared code, unsafe operations removed and
 edit/build/verification cost. Prefer this work over further isolated cleanup.
 
+Clippy return cleanup (2026-10-19): standard cargo clippy --fix with
+needless_return removes 5550 redundant returns across all 50 affected files,
+including the frontend and all Cargo targets. Net Rust lines -2227; casts,
+raw operations and unsafe functions are unchanged. The final Clippy pass has
+no remaining needless_return diagnostics.
+
+Frozen 3df620f0 plus this family includes the committed projectile arithmetic
+and SPC addressing changes. Normal release (21.35s), formatting/check and
+progress pass; the stable workspace release also passes. Full any% passes
+129712/0 (197.45s), native exit 0, with unchanged source/DLL/fixtures.
+The movie verifies core regression behavior; it does not exercise the frontend.
+Staged Rust matches this verified snapshot; independent pending work is preserved.
+
+The refreshed jscpd AST scan reports 337 pairs at 0.90 similarity/100 nodes,
+versus 456 in the original Rust: 306 retained, 150 absent and 31 new links.
+These are candidate relationships, not proof of drift or deletion estimates.
+Next expand the complete three-channel SFX queue family, including its fifteen
+wrappers; preserve its priority, limit writes and invalid-index behavior.
+Continue eligible Clippy families and the broader historical audit; it remains open.
+
 Clippy automatic parentheses cleanup (2026-10-19): cargo clippy --fix
 with unused_parens removes 8883 redundant parenthesis pairs across all
 32 affected gameplay files. Formatting removes 392 further Rust lines.
@@ -60,13 +80,10 @@ Staged Rust matches the fixed, verified source. A separate composition with
 pending projectile arithmetic adds 161 Clippy fixes and passes any% 129712/0
 (151.88s); those arithmetic changes retain their separate scope and checks.
 
-Next use Clippy for the complete needless_return family, then its other
-eligible automatic simplifications. Keep structural clone discovery with
-jscpd and ast-grep for larger shared implementations; the historical audit
-remains open. The initial core-library Clippy scan also found 5409 needless
-returns, 422 unnecessary casts, 397 assignment patterns, 430 nonminimal
-booleans and 1403 identity operations. These are diagnostic counts from that
-snapshot, not promised deletions or coverage of frontend-only code.
+Other candidates in the initial core-library Clippy scan: 422 unnecessary
+casts, 397 assignment patterns, 430 nonminimal booleans and 1403 identity
+operations. These diagnostic counts are not promised deletions or coverage
+of frontend-only code. Keep each eligible family in its own verified commit.
 
 Integer comparison family (2026-10-19): simplify 4657 comparisons across
 31 gameplay files using compiler-resolved types and value-preserving ranges.

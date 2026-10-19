@@ -34,11 +34,11 @@ pub struct FxDef {
 pub use crate::types::GameState;
 #[inline]
 unsafe fn RomPtr_83(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr((0x830000u32) | ((addr) as u32), game);
+    RomPtr((0x830000u32) | ((addr) as u32), game)
 }
 #[inline]
 unsafe fn get_FxDef(mut a: uint16, game: &mut Game) -> *mut FxDef {
-    return RomPtr((0x830000u32) | ((a) as u32), game) as *mut FxDef;
+    RomPtr((0x830000u32) | ((a) as u32), game) as *mut FxDef
 }
 pub unsafe fn LoadFxEntry(mut v0: uint16, game: &mut Game) {
     let mut FD: *mut FxDef = get_FxDef(

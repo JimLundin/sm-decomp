@@ -77,12 +77,11 @@ pub unsafe fn NextDelim(
             ::core::ptr::null_mut::<::core::ffi::c_char>()
         };
     }
-    return r;
+    r
 }
 #[inline]
 unsafe fn ToLower(mut a: ::core::ffi::c_int) -> ::core::ffi::c_int {
-    return a
-        + (a >= 'A' as i32 && a <= 'Z' as i32) as ::core::ffi::c_int * 32 as ::core::ffi::c_int;
+    a + (a >= 'A' as i32 && a <= 'Z' as i32) as ::core::ffi::c_int * 32 as ::core::ffi::c_int
 }
 pub unsafe fn StringEqualsNoCase(
     mut a: *const ::core::ffi::c_char,
@@ -144,7 +143,7 @@ pub unsafe fn ReadWholeFile(
     if !length.is_null() {
         *length = size;
     }
-    return buffer;
+    buffer
 }
 pub unsafe fn NextLineStripComments(
     mut s: *mut *mut ::core::ffi::c_char,
@@ -184,7 +183,7 @@ pub unsafe fn NextLineStripComments(
     {
         p = p.offset(1);
     }
-    return p;
+    p
 }
 pub unsafe fn NextPossiblyQuotedString(
     mut s: *mut *mut ::core::ffi::c_char,
@@ -218,7 +217,7 @@ pub unsafe fn NextPossiblyQuotedString(
         t = t.offset(1);
     }
     *s = t;
-    return r;
+    r
 }
 pub unsafe fn ReplaceFilenameWithNewPath(
     mut old_path: *const ::core::ffi::c_char,
@@ -246,7 +245,7 @@ pub unsafe fn ReplaceFilenameWithNewPath(
         new_path as *const ::core::ffi::c_void,
         nlen,
     );
-    return result;
+    result
 }
 pub unsafe fn SplitKeyValue(mut p: *mut ::core::ffi::c_char) -> *mut ::core::ffi::c_char {
     let mut equals: *mut ::core::ffi::c_char = strchr(p, '=' as i32);
@@ -267,7 +266,7 @@ pub unsafe fn SplitKeyValue(mut p: *mut ::core::ffi::c_char) -> *mut ::core::ffi
     {
         v = v.offset(1);
     }
-    return v;
+    v
 }
 pub unsafe fn SkipPrefix(
     mut big: *const ::core::ffi::c_char,
@@ -280,7 +279,7 @@ pub unsafe fn SkipPrefix(
         big = big.offset(1);
         little = little.offset(1);
     }
-    return big;
+    big
 }
 pub unsafe fn StrSet(mut rv: *mut *mut ::core::ffi::c_char, mut s: *const ::core::ffi::c_char) {
     let mut news: *mut ::core::ffi::c_char = strdup(s);

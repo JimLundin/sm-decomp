@@ -41,22 +41,22 @@ pub use crate::types::{Consts_86, DoorDef, RoomDefRoomstate};
 pub const kCoroutineNone: ::core::ffi::c_int = 0;
 #[inline]
 unsafe fn RomPtr_8F(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr((0x8f0000u32) | ((addr) as u32), game);
+    RomPtr((0x8f0000u32) | ((addr) as u32), game)
 }
 #[inline]
 unsafe fn get_DoorDef(mut a: uint16, game: &mut Game) -> *mut DoorDef {
-    return RomPtr((0x830000u32) | ((a) as u32), game) as *mut DoorDef;
+    RomPtr((0x830000u32) | ((a) as u32), game) as *mut DoorDef
 }
 #[inline]
 unsafe fn get_RoomDefRoomstate(mut a: uint16, game: &mut Game) -> *mut RoomDefRoomstate {
-    return RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefRoomstate;
+    RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefRoomstate
 }
 #[inline]
 unsafe fn get_RoomDefStateSelect_E6E5_Finish(
     mut a: uint16,
     game: &mut Game,
 ) -> *mut RoomDefStateSelect_E6E5_Finish {
-    return RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefStateSelect_E6E5_Finish;
+    RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefStateSelect_E6E5_Finish
 }
 pub const fnRoomSetup_AfterSavingAnimals: uint32 = 9408916;
 pub const fnRoomSetup_AutoDestroyWallAfterEscape: uint32 = 9408937;
@@ -660,7 +660,7 @@ pub unsafe fn UnpauseHook_DraygonRoom(game: &mut Game) -> CoroutineRet {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x18b4) as *mut uint16).offset(1) == 8u16 {
         *((&raw mut game.g_ram as *mut uint8).offset(0xa7) as *mut uint16) = 12 as uint16;
     }
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn RoomCode_SetCollectedMap(game: &mut Game) {
     let mut v0: uint16 = (*((&raw mut game.g_ram as *mut uint8)
@@ -1057,14 +1057,14 @@ pub unsafe fn RoomCode_ShakeScreenHorizDiagStrong(game: &mut Game) {
 }
 pub unsafe fn CallRoomDefStateSelect(mut ea: uint32, mut k: uint16, game: &mut Game) -> uint16 {
     match ea {
-        9430502 => return RoomDefStateSelect_Finish(k, game),
-        9430527 => return RoomDefStateSelect_TourianBoss01(k, game),
-        9430546 => return RoomDefStateSelect_IsEventSet(k, game),
-        9430569 => return RoomDefStateSelect_IsBossDead(k, game),
-        9430610 => return RoomDefStateSelect_MorphBallMissiles(k, game),
-        9430633 => return RoomDefStateSelect_PowerBombs(k, game),
-        _ => return Unreachable(game) as uint16,
-    };
+        9430502 => RoomDefStateSelect_Finish(k, game),
+        9430527 => RoomDefStateSelect_TourianBoss01(k, game),
+        9430546 => RoomDefStateSelect_IsEventSet(k, game),
+        9430569 => RoomDefStateSelect_IsBossDead(k, game),
+        9430610 => RoomDefStateSelect_MorphBallMissiles(k, game),
+        9430633 => RoomDefStateSelect_PowerBombs(k, game),
+        _ => Unreachable(game) as uint16,
+    }
 }
 pub unsafe fn HandleRoomDefStateSelect(mut k: uint16, game: &mut Game) {
     let mut v1: uint16 = (k).wrapping_add(11u16);
@@ -1082,7 +1082,7 @@ pub unsafe fn HandleRoomDefStateSelect(mut k: uint16, game: &mut Game) {
 }
 pub unsafe fn RoomDefStateSelect_Finish(mut k: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x7bb) as *mut uint16) = k;
-    return 0 as uint16;
+    0 as uint16
 }
 pub unsafe fn RoomDefStateSelect_TourianBoss01(mut k: uint16, game: &mut Game) -> uint16 {
     if CheckBossBitForCurArea(1 as uint16, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
@@ -1091,25 +1091,25 @@ pub unsafe fn RoomDefStateSelect_TourianBoss01(mut k: uint16, game: &mut Game) -
         return (k).wrapping_add(2u16);
     }
     let mut v1: *const uint16 = RomPtr_8F(k, game) as *const uint16;
-    return RoomDefStateSelect_Finish(*v1, game);
+    RoomDefStateSelect_Finish(*v1, game)
 }
 pub unsafe fn RoomDefStateSelect_IsEventSet(mut k: uint16, game: &mut Game) -> uint16 {
     let mut v1: *const uint8 = RomPtr_8F(k, game);
     if CheckEventHappened(*v1 as uint16, game) != 0 {
-        return RoomDefStateSelect_Finish(*(v1.offset(1) as *mut uint16), game);
+        RoomDefStateSelect_Finish(*(v1.offset(1) as *mut uint16), game)
     } else {
-        return (k).wrapping_add(3u16);
-    };
+        (k).wrapping_add(3u16)
+    }
 }
 pub unsafe fn RoomDefStateSelect_IsBossDead(mut k: uint16, game: &mut Game) -> uint16 {
     let mut v1: *const uint8 = RomPtr_8F(k, game);
     if CheckBossBitForCurArea(*v1 as uint16, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
         != 0
     {
-        return RoomDefStateSelect_Finish(*(v1.offset(1) as *mut uint16), game);
+        RoomDefStateSelect_Finish(*(v1.offset(1) as *mut uint16), game)
     } else {
-        return (k).wrapping_add(3u16);
-    };
+        (k).wrapping_add(3u16)
+    }
 }
 pub unsafe fn RoomDefStateSelect_MorphBallMissiles(mut k: uint16, game: &mut Game) -> uint16 {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0x9a4) as *mut uint16) as ::core::ffi::c_int
@@ -1120,95 +1120,77 @@ pub unsafe fn RoomDefStateSelect_MorphBallMissiles(mut k: uint16, game: &mut Gam
         return (k).wrapping_add(2u16);
     }
     let mut v1: *const uint16 = RomPtr_8F(k, game) as *const uint16;
-    return RoomDefStateSelect_Finish(*v1, game);
+    RoomDefStateSelect_Finish(*v1, game)
 }
 pub unsafe fn RoomDefStateSelect_PowerBombs(mut k: uint16, game: &mut Game) -> uint16 {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x9d0) as *mut uint16) == 0 {
         return (k).wrapping_add(2u16);
     }
     let mut v1: *const uint16 = RomPtr_8F(k, game) as *const uint16;
-    return RoomDefStateSelect_Finish(*v1, game);
+    RoomDefStateSelect_Finish(*v1, game)
 }
 pub unsafe fn CallRoomSetupCode(mut ea: uint32, game: &mut Game) {
     match ea {
         9408916 => {
             RoomSetup_AfterSavingAnimals(game);
-            return;
         }
         9408937 => {
             RoomSetup_AutoDestroyWallAfterEscape(game);
-            return;
         }
         9408946 => {
             RoomSetup_TurnWallIntoShotblocks(game);
-            return;
         }
         9408957 => {
             RoomSetup_ShakeDuringEscape(game);
-            return;
         }
         9408969 => {
             RoomSetup_ScrollingSkyLand(game);
-            return;
         }
         9408974 => {
             RoomSetup_ScrollingSkyOcean(game);
-            return;
         }
         9408983 => {
             RoomSetup_RunStatueUnlockAnims(game);
-            return;
         }
         9423048 => {
             RoomCode_8FC8C8(game);
-            return;
         }
         9423059 => {
             RoomCode_SetupShaktoolRoomPlm(game);
-            return;
         }
         9423069 => {
             RoomCode_SetPauseCodeForDraygon(game);
-            return;
         }
         9423114 => {
             RoomCode_SetCollectedMap(game);
-            return;
         }
         9408955 | 9408956 | 9408979 | 9408980 | 9408981 | 9408982 | 9409012 | 9409013 | 9409014
-        | 9409015 | 9423047 | 9423056 | 9423057 | 9423058 | 9423068 | 9423134 => return,
+        | 9409015 | 9423047 | 9423056 | 9423057 | 9423058 | 9423068 | 9423134 => (),
         9423135 => {
             RoomCode_SetZebesTimebombEvent(game);
-            return;
         }
         9423155 => {
             RoomCode_SetLightHorizRoomShake(game);
-            return;
         }
         9423174 => {
             RoomCode_SetMediumHorizRoomShake(game);
-            return;
         }
         9423187 => {
             RoomCode_Escape4_SetMediumHorizRoomShake(game);
-            return;
         }
         9423214 => {
             RoomCode_SetCeresDoorSolid(game);
-            return;
         }
         9423222 => {
             RoomCode_CeresColorMathHdma(game);
-            return;
         }
         9423227 => {
             RoomCode_CeresColorMathHdma_BgBase(game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn RunRoomSetupCode(game: &mut Game) {
     let mut RoomDefRoomstate: *mut RoomDefRoomstate = ::core::ptr::null_mut::<RoomDefRoomstate>();
@@ -1227,336 +1209,254 @@ pub unsafe fn CallDoorDefSetupCode(mut ea: uint32, game: &mut Game) {
     match ea {
         9419121 => {
             DoorCode_StartWreckedShipTreadmillWest(game);
-            return;
         }
         9419137 => {
             DoorCode_Scroll6_Green(game);
-            return;
         }
         9419148 => {
             DoorCode_Scroll0_Blue(game);
-            return;
         }
         9419159 => {
             DoorCode_Scroll13_Blue(game);
-            return;
         }
         9419170 => {
             DoorCode_Scroll_4Blue_8Green(game);
-            return;
         }
         9419187 => {
             DoorCode_Scroll_8toB_Red(game);
-            return;
         }
         9419210 => {
             DoorCode_Scroll_LotsRed(game);
-            return;
         }
         9419249 => {
             DoorCode_Scroll_1_4_Green(game);
-            return;
         }
         9419264 => {
             DoorCode_Scroll_2_Blue(game);
-            return;
         }
         9419275 => {
             DoorCode_Scroll_17_Blue(game);
-            return;
         }
         9419286 => {
             DoorCode_Scroll_4_Blue(game);
-            return;
         }
         9419297 => {
             DoorCode_Scroll_6_Green(game);
-            return;
         }
         9419308 => {
             DoorCode_Scroll_3_Green(game);
-            return;
         }
         9420039 => {
             DoorCode_SetScroll_0(game);
-            return;
         }
         9420054 => {
             DoorCode_SetScroll_1(game);
-            return;
         }
         9420069 => {
             DoorCode_SetScroll_2(game);
-            return;
         }
         9420080 => {
             DoorCode_SetScroll_3(game);
-            return;
         }
         9420095 => {
             DoorCode_SetScroll_4(game);
-            return;
         }
         9420112 => {
             DoorCode_SetScroll_5(game);
-            return;
         }
         9420123 => {
             DoorCode_SetScroll_6(game);
-            return;
         }
         9420140 => {
             DoorCode_SetScroll_7(game);
-            return;
         }
         9420151 => {
             DoorCode_SetScroll_8(game);
-            return;
         }
         9420170 => {
             DoorCode_SetScroll_9(game);
-            return;
         }
         9420181 => {
             DoorCode_SetScroll_10(game);
-            return;
         }
         9420192 => {
             DoorCode_SetScroll_11(game);
-            return;
         }
         9420207 => {
             DoorCode_SetScroll_12(game);
-            return;
         }
         9420224 => {
             DoorCode_SetScroll_13(game);
-            return;
         }
         9420241 => {
             DoorCode_SetScroll_14(game);
-            return;
         }
         9420258 => {
             DoorCode_SetScroll_15(game);
-            return;
         }
         9420273 => {
             DoorCode_SetScroll_16(game);
-            return;
         }
         9420288 => {
             DoorCode_SetScroll_17(game);
-            return;
         }
         9420299 => {
             DoorCode_SetScroll_18(game);
-            return;
         }
         9420314 => {
             DoorCode_SetScroll_19(game);
-            return;
         }
         9420325 => {
             DoorCode_SetScroll_20(game);
-            return;
         }
         9420342 => {
             DoorCode_SetScroll_21(game);
-            return;
         }
         9420702 => {
             DoorCode_SetScroll_22(game);
-            return;
         }
         9420731 => {
             DoorCode_SetScroll_23(game);
-            return;
         }
         9420762 => {
             DoorCode_SetScroll_24(game);
-            return;
         }
         9420777 => {
             DoorCode_SetScroll_25(game);
-            return;
         }
         9420794 => {
             DoorCode_SetScroll_26(game);
-            return;
         }
         9420822 => {
             DoorCode_SetScroll_28(game);
-            return;
         }
         9420837 => {
             DoorCode_SetScroll_29(game);
-            return;
         }
         9420858 => {
             DoorCode_SetScroll_30(game);
-            return;
         }
         9420875 => {
             DoorCode_SetScroll_31(game);
-            return;
         }
         9420886 => {
             DoorCode_SetScroll_32(game);
-            return;
         }
         9420903 => {
             DoorCode_SetScroll_33(game);
-            return;
         }
         9420920 => {
             DoorCode_SetScroll_34(game);
-            return;
         }
         9420937 => {
             DoorCode_SetScroll_35(game);
-            return;
         }
         9420962 => {
             DoorCode_SetScroll_36(game);
-            return;
         }
         9420973 => {
             DoorCode_SetScroll_37(game);
-            return;
         }
         9420994 => {
             DoorCode_SetScroll_38(game);
-            return;
         }
         9421011 => {
             DoorCode_SetScroll_39(game);
-            return;
         }
         9421022 => {
             DoorCode_SetScroll_40(game);
-            return;
         }
         9421039 => {
             DoorCode_SetScroll_41(game);
-            return;
         }
         9421050 => {
             DoorCode_SetScroll_42(game);
-            return;
         }
         9421067 => {
             DoorCode_SetScroll_43(game);
-            return;
         }
         9429464 => {
             DoorCode_StartWreckedSkipTreadmill_East(game);
-            return;
         }
         9429480 => {
             DoorCode_SetScroll_44(game);
-            return;
         }
         9429491 => {
             DoorCode_SetScroll_45(game);
-            return;
         }
         9429502 => {
             DoorCode_SetScroll_46(game);
-            return;
         }
         9429519 => {
             DoorCode_SetScroll_47(game);
-            return;
         }
         9429530 => {
             DoorCode_SetScroll_48(game);
-            return;
         }
         9429545 => {
             DoorCode_SetScroll_49(game);
-            return;
         }
         9429612 => {
             DoorCode_SetupElevatubeFromSouth(game);
-            return;
         }
         9429649 => {
             DoorCode_SetupElevatubeFromNorth(game);
-            return;
         }
         9429761 => {
             DoorCode_ResetElevatubeNorthExit(game);
-            return;
         }
         9429769 => {
             DoorCode_ResetElevatubeSouthExit(game);
-            return;
         }
         9429784 => {
             DoorCode_SetScroll_50(game);
-            return;
         }
         9429829 => {
             DoorCode_SetScroll_53(game);
-            return;
         }
         9429846 => {
             DoorCode_SetScroll_54(game);
-            return;
         }
         9429863 => {
             DoorCode_SetScroll_55(game);
-            return;
         }
         9429880 => {
             DoorCode_SetScroll_56(game);
-            return;
         }
         9429901 => {
             DoorCode_SetScroll_57(game);
-            return;
         }
         9429912 => {
             DoorCode_SetScroll_58(game);
-            return;
         }
         9429923 => {
             DoorCode_SetScroll_59(game);
-            return;
         }
         9429945 => {
             DoorCode_SetScroll_61(game);
-            return;
         }
         9429960 => {
             DoorCode_SetScroll_62(game);
-            return;
         }
         9429977 => {
             DoorCode_SetScroll_63(game);
-            return;
         }
         9430208 => {
             DoorCode_SetScroll_64(game);
-            return;
         }
         9430223 => {
             DoorCode_SetScroll_65(game);
-            return;
         }
         9430240 => {
             DoorCode_CeresElevatorShaft(game);
-            return;
         }
         9430291 => {
             DoorCode_CeresElevatorShaft_2(game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn RunDoorSetupCode(game: &mut Game) {
     let mut DD: *mut DoorDef = get_DoorDef(
@@ -1673,65 +1573,51 @@ pub unsafe fn CallRoomCode(mut ea: uint32, game: &mut Game) {
     match ea {
         9421078 => {
             RoomCode_ScrollingSkyLand_(game);
-            return;
         }
         9421083 => {
             RoomCode_ScrollingSkyOcean_(game);
-            return;
         }
         9421088 => {
             RoomCode_ScrollingSkyLand_Shakes(game);
-            return;
         }
         9421092 => {
             RoomCode_ExplodeShakes(game);
-            return;
         }
         9421286 => {
             RoomCode_ScrollRightDachora(game);
-            return;
         }
         9429686 => {
             RoomCode_Elevatube(game);
-            return;
         }
         9430303 => {
             RoomCode_CeresElevatorShaft_(game);
-            return;
         }
-        9430308 => return,
+        9430308 => (),
         9430309 => {
             RoomCode_SpawnCeresFallingDebris(game);
-            return;
         }
         9430385 => {
             RoomCode_HandleCeresRidleyGetaway(game);
-            return;
         }
         9430396 => {
             RoomCode_ShakeScreenHorizDiag(game);
-            return;
         }
         9430432 => {
             RoomCode_GenRandomExplodes_4th(game);
-            return;
         }
         9430436 => {
             RoomCode_ShakeScreenHorizDiagStrong(game);
-            return;
         }
         9431245 => {
             RoomCode_CrocomireShaking(game);
-            return;
         }
         9431376 => {
             RoomCode_RidleyRoomShaking(game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn RunRoomMainCode(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x7df) as *mut uint16) != 0 {

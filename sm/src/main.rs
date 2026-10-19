@@ -1040,11 +1040,19 @@ pub const SDL_INIT_GAMECONTROLLER: ::core::ffi::c_uint =
 pub const kDebugFlag: ::core::ffi::c_int = 0;
 #[inline]
 unsafe fn IntMin(mut a: ::core::ffi::c_int, mut b: ::core::ffi::c_int) -> ::core::ffi::c_int {
-    return if a < b { a } else { b };
+    if a < b {
+        a
+    } else {
+        b
+    }
 }
 #[inline]
 unsafe fn IntMax(mut a: ::core::ffi::c_int, mut b: ::core::ffi::c_int) -> ::core::ffi::c_int {
-    return if a > b { a } else { b };
+    if a > b {
+        a
+    } else {
+        b
+    }
 }
 pub static mut g_is_turbo: bool = false;
 pub static mut g_want_dump_memmap_flags: bool = false;
@@ -1227,7 +1235,7 @@ unsafe extern "C" fn HitTestCallback(
     } else if (*pt).x >= w - RESIZE_BORDER {
         return SDL_HITTEST_RESIZE_RIGHT;
     }
-    return SDL_HITTEST_NORMAL;
+    SDL_HITTEST_NORMAL
 }
 pub unsafe fn RtlDrawPpuFrame(
     mut pixel_buffer: *mut uint8,
@@ -1478,7 +1486,7 @@ unsafe fn SdlRenderer_Init(mut window: *mut SDL_Window, game: &mut Game) -> bool
         );
         return false_0 != 0;
     }
-    return true_0 != 0;
+    true_0 != 0
 }
 unsafe fn SdlRenderer_Destroy(game: &mut Game) {
     SDL_DestroyTexture(g_texture);
@@ -1504,7 +1512,6 @@ unsafe fn SdlRenderer_BeginDraw(
             b"Failed to lock texture: %s\n\0" as *const u8 as *const ::core::ffi::c_char,
             SDL_GetError(),
         );
-        return;
     }
 }
 unsafe fn SdlRenderer_EndDraw(game: &mut Game) {
@@ -1971,7 +1978,7 @@ unsafe fn main_0(
     owner.with(|game| g_renderer_funcs.Destroy.expect("non-null function pointer")(game));
     SDL_DestroyWindow(window as *mut SDL_Window);
     SDL_Quit();
-    return 0 as ::core::ffi::c_int;
+    0 as ::core::ffi::c_int
 }
 unsafe fn RenderDigit(
     mut dst: *mut uint8,
@@ -2239,23 +2246,23 @@ unsafe fn OpenOneGamepad(mut i: ::core::ffi::c_int) {
 }
 unsafe fn RemapSdlButton(mut button: ::core::ffi::c_int) -> ::core::ffi::c_int {
     match button {
-        0 => return kGamepadBtn_A as ::core::ffi::c_int,
-        1 => return kGamepadBtn_B as ::core::ffi::c_int,
-        2 => return kGamepadBtn_X as ::core::ffi::c_int,
-        3 => return kGamepadBtn_Y as ::core::ffi::c_int,
-        4 => return kGamepadBtn_Back as ::core::ffi::c_int,
-        5 => return kGamepadBtn_Guide as ::core::ffi::c_int,
-        6 => return kGamepadBtn_Start as ::core::ffi::c_int,
-        7 => return kGamepadBtn_L3 as ::core::ffi::c_int,
-        8 => return kGamepadBtn_R3 as ::core::ffi::c_int,
-        9 => return kGamepadBtn_L1 as ::core::ffi::c_int,
-        10 => return kGamepadBtn_R1 as ::core::ffi::c_int,
-        11 => return kGamepadBtn_DpadUp as ::core::ffi::c_int,
-        12 => return kGamepadBtn_DpadDown as ::core::ffi::c_int,
-        13 => return kGamepadBtn_DpadLeft as ::core::ffi::c_int,
-        14 => return kGamepadBtn_DpadRight as ::core::ffi::c_int,
-        _ => return -(1 as ::core::ffi::c_int),
-    };
+        0 => kGamepadBtn_A as ::core::ffi::c_int,
+        1 => kGamepadBtn_B as ::core::ffi::c_int,
+        2 => kGamepadBtn_X as ::core::ffi::c_int,
+        3 => kGamepadBtn_Y as ::core::ffi::c_int,
+        4 => kGamepadBtn_Back as ::core::ffi::c_int,
+        5 => kGamepadBtn_Guide as ::core::ffi::c_int,
+        6 => kGamepadBtn_Start as ::core::ffi::c_int,
+        7 => kGamepadBtn_L3 as ::core::ffi::c_int,
+        8 => kGamepadBtn_R3 as ::core::ffi::c_int,
+        9 => kGamepadBtn_L1 as ::core::ffi::c_int,
+        10 => kGamepadBtn_R1 as ::core::ffi::c_int,
+        11 => kGamepadBtn_DpadUp as ::core::ffi::c_int,
+        12 => kGamepadBtn_DpadDown as ::core::ffi::c_int,
+        13 => kGamepadBtn_DpadLeft as ::core::ffi::c_int,
+        14 => kGamepadBtn_DpadRight as ::core::ffi::c_int,
+        _ => -(1 as ::core::ffi::c_int),
+    }
 }
 unsafe fn HandleGamepadInput(mut button: ::core::ffi::c_int, mut pressed: bool, game: &mut Game) {
     if (g_gamepad_modifiers & ((1 as ::core::ffi::c_int) << button) as uint32 != 0)
@@ -2306,7 +2313,7 @@ unsafe fn ApproximateAtan2(
     let mut atan_1q: ::core::ffi::c_float = num / (x * x + bxy_a + num + 0.000001f32);
     let mut uatan_2q: uint32_t =
         ux_s as uint32_t ^ uy_s as uint32_t | *(&raw mut atan_1q as *mut uint32);
-    return q + *(&raw mut uatan_2q as *mut ::core::ffi::c_float);
+    q + *(&raw mut uatan_2q as *mut ::core::ffi::c_float)
 }
 unsafe fn HandleGamepadAxisInput(
     mut gamepad_id: ::core::ffi::c_int,

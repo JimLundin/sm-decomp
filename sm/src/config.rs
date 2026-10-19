@@ -420,11 +420,11 @@ pub struct KeyMapHashEnt {
 pub type C2RustUnnamed_4 = ::core::ffi::c_uint;
 #[inline]
 unsafe fn atoi(mut __nptr: *const ::core::ffi::c_char) -> ::core::ffi::c_int {
-    return strtol(
+    strtol(
         __nptr,
         NULL as *mut *mut ::core::ffi::c_char,
         10 as ::core::ffi::c_int,
-    ) as ::core::ffi::c_int;
+    ) as ::core::ffi::c_int
 }
 pub const SDLK_SCANCODE_MASK: ::core::ffi::c_int =
     (1 as ::core::ffi::c_int) << 30 as ::core::ffi::c_int;
@@ -624,7 +624,7 @@ unsafe fn KeyMapHash_Add(mut key: uint16, mut cmd: uint16) -> bool {
         cur = &raw mut (*ent_0).next;
     }
     *cur = (i + 1 as ::core::ffi::c_int) as uint16;
-    return true_0 != 0;
+    true_0 != 0
 }
 unsafe fn KeyMapHash_Find(mut key: uint16) -> ::core::ffi::c_int {
     let mut i: ::core::ffi::c_int = keymap_hash_first
@@ -638,7 +638,7 @@ unsafe fn KeyMapHash_Find(mut key: uint16) -> ::core::ffi::c_int {
         }
         i = (*ent).next as ::core::ffi::c_int;
     }
-    return 0 as ::core::ffi::c_int;
+    0 as ::core::ffi::c_int
 }
 pub unsafe fn FindCmdForSdlKey(mut code: SDL_Keycode, mut mod_0: SDL_Keymod) -> ::core::ffi::c_int {
     if code & !(SDLK_SCANCODE_MASK as SDL_Keycode | 0x1ff as SDL_Keycode) != 0 {
@@ -687,7 +687,7 @@ pub unsafe fn FindCmdForSdlKey(mut code: SDL_Keycode, mut mod_0: SDL_Keymod) -> 
         0 as SDL_Keycode
     }) | code & kKeyMod_ScanCode as ::core::ffi::c_int as SDL_Keycode - 1 as SDL_Keycode)
         as ::core::ffi::c_int;
-    return KeyMapHash_Find(key as uint16);
+    KeyMapHash_Find(key as uint16)
 }
 unsafe fn ParseKeyArray(
     mut value: *mut ::core::ffi::c_char,
@@ -773,7 +773,7 @@ unsafe fn CountBits32(mut n: uint32) -> ::core::ffi::c_int {
         n &= n.wrapping_sub(1 as uint32);
         count += 1;
     }
-    return count;
+    count
 }
 unsafe fn GamepadMap_Add(mut button: ::core::ffi::c_int, mut modifiers: uint32, mut cmd: uint16) {
     if joymap_size & 0xff as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
@@ -826,7 +826,7 @@ pub unsafe fn FindCmdForGamepadButton(
         }
         e = (*ent).next as ::core::ffi::c_int;
     }
-    return 0 as ::core::ffi::c_int;
+    0 as ::core::ffi::c_int
 }
 unsafe fn ParseGamepadButtonName(mut value: *mut *const ::core::ffi::c_char) -> ::core::ffi::c_int {
     let mut s: *const ::core::ffi::c_char = *value;
@@ -885,7 +885,7 @@ unsafe fn ParseGamepadButtonName(mut value: *mut *const ::core::ffi::c_char) -> 
         }
         i = i.wrapping_add(1);
     }
-    return kGamepadBtn_Invalid as ::core::ffi::c_int;
+    kGamepadBtn_Invalid as ::core::ffi::c_int
 }
 static mut kDefaultGamepadCmds: [uint8; 12] = [
     kGamepadBtn_DpadUp as ::core::ffi::c_int as uint8,
@@ -1005,7 +1005,7 @@ unsafe fn GetIniSection(mut s: *const ::core::ffi::c_char) -> ::core::ffi::c_int
     ) {
         return 5 as ::core::ffi::c_int;
     }
-    return -(1 as ::core::ffi::c_int);
+    -(1 as ::core::ffi::c_int)
 }
 pub unsafe fn ParseBool(mut value: *const ::core::ffi::c_char, mut result: *mut bool) -> bool {
     let mut rv: bool = false_0 != 0;
@@ -1064,7 +1064,7 @@ pub unsafe fn ParseBool(mut value: *const ::core::ffi::c_char, mut result: *mut 
         *result = rv;
         return true_0 != 0;
     }
-    return rv;
+    rv
 }
 unsafe fn HandleIniConfig(
     mut section: ::core::ffi::c_int,
@@ -1309,7 +1309,7 @@ unsafe fn HandleIniConfig(
     } else {
         section == 4 as ::core::ffi::c_int;
     }
-    return false_0 != 0;
+    false_0 != 0
 }
 unsafe fn ParseOneConfigFile(
     mut filename: *const ::core::ffi::c_char,
@@ -1393,7 +1393,7 @@ unsafe fn ParseOneConfigFile(
         }
         lineno += 1;
     }
-    return true_0 != 0;
+    true_0 != 0
 }
 pub unsafe fn ParseConfigFile(mut filename: *const ::core::ffi::c_char) {
     g_config.msuvolume = 100 as uint8;

@@ -267,7 +267,7 @@ unsafe fn OpenGLRenderer_Init(mut window: *mut SDL_Window, game: &mut Game) -> b
     if !g_config.shader.is_null() {
         g_glsl_shader = GlslShader_CreateFromFile(g_config.shader);
     }
-    return true_0 != 0;
+    true_0 != 0
 }
 unsafe fn OpenGLRenderer_Destroy(game: &mut Game) {}
 unsafe fn OpenGLRenderer_BeginDraw(

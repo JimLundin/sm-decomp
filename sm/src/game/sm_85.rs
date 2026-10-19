@@ -28,7 +28,7 @@ pub use crate::types::{
 };
 #[inline]
 unsafe fn RomPtr_85(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr((0x850000u32) | ((addr) as u32), game);
+    RomPtr((0x850000u32) | ((addr) as u32), game)
 }
 pub const fnWriteLargeMessageBoxTilemap: uint32 = 8749658;
 pub const fnWriteSmallMessageBoxTilemap: uint32 = 8749705;
@@ -162,16 +162,14 @@ unsafe fn CallMsgBoxDraw(mut ea: uint32, game: &mut Game) {
     match ea {
         8749658 => {
             WriteLargeMessageBoxTilemap(game);
-            return;
         }
         8749705 => {
             WriteSmallMessageBoxTilemap(game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 fn MsgBoxMakeHdmaTable(game: &mut Game) {
     let radius = u16::from_le_bytes([game.g_ram[0x5a2], game.g_ram[0x5a3]]);
@@ -259,24 +257,20 @@ unsafe fn CallMsgBoxModify(mut ea: uint32, game: &mut Game) {
     match ea {
         8750021 => {
             DrawShootButtonAndSetupPpuForLargeMessageBox(game);
-            return;
         }
         8750028 => {
             DrawRunButtonAndSetupPpuForLargeMessageBox(game);
-            return;
         }
         8750134 => {
             SetupPpuForSmallMessageBox(game);
-            return;
         }
         8750145 => {
             SetupPpuForLargeMessageBox(game);
-            return;
         }
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 unsafe fn InitializeMessageBox(game: &mut Game) {
     let index = u16::from_le_bytes([game.g_ram[0x1c1f], game.g_ram[0x1c20]]) as isize - 1;

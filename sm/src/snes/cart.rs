@@ -38,7 +38,7 @@ pub unsafe fn cart_init(mut snes: *mut Snes) -> *mut Cart {
     (*cart).romSize = 0 as uint32_t;
     (*cart).ram = ::core::ptr::null_mut::<uint8_t>();
     (*cart).ramSize = 0 as uint32_t;
-    return cart;
+    cart
 }
 pub unsafe fn cart_free(mut cart: *mut Cart) {
     free(cart as *mut ::core::ffi::c_void);
@@ -117,7 +117,7 @@ pub unsafe fn cart_read(cart: *mut Cart, bank: u8, adr: u16, game: &mut Game) ->
                 as *const ::core::ffi::c_char,
         );
     };
-    return (*(*cart).snes).openBus;
+    (*(*cart).snes).openBus
 }
 pub unsafe fn cart_write(cart: *mut Cart, bank: u8, adr: u16, val: u8) {
     match (*cart).type_0 {
@@ -162,7 +162,7 @@ unsafe fn cart_readLorom(cart: *mut Cart, mut bank: u8, adr: u16, game: &mut Gam
     eprintln!("Direct page $44..$50: {direct_page:02X?}");
     DumpCpuHistory(game);
     Die(b"The game crashed in cart_readLorom\0" as *const u8 as *const ::core::ffi::c_char);
-    return (*(*cart).snes).openBus;
+    (*(*cart).snes).openBus
 }
 unsafe fn cart_writeLorom(cart: *mut Cart, bank: u8, address: u16, value: u8) {
     if (matches!(bank, 0x70..=0x7d) || bank > 0xf0) && address < 0x8000 && (*cart).ramSize > 0 {
@@ -203,7 +203,7 @@ unsafe fn cart_readHirom(mut cart: *mut Cart, mut bank: uint8_t, mut adr: uint16
                 as *const ::core::ffi::c_char,
         );
     };
-    return (*(*cart).snes).openBus;
+    (*(*cart).snes).openBus
 }
 unsafe fn cart_writeHirom(
     mut cart: *mut Cart,

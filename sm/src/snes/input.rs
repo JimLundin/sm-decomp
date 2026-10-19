@@ -13,7 +13,7 @@ pub unsafe fn input_init(mut snes: *mut Snes) -> *mut Input {
     (*input).snes = snes;
     (*input).type_0 = 1 as uint8_t;
     (*input).currentState = 0 as uint16_t;
-    return input;
+    input
 }
 pub unsafe fn input_free(mut input: *mut Input) {
     free(input as *mut ::core::ffi::c_void);

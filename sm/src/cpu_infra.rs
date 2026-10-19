@@ -165,16 +165,16 @@ pub const true_0: ::core::ffi::c_int = 1;
 pub const false_0: ::core::ffi::c_int = 0;
 #[inline]
 unsafe fn get_ProjectileInstr(mut a: uint16, game: &mut Game) -> *mut ProjectileInstr {
-    return RomPtr(
+    RomPtr(
         (0x930000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t,
         game,
-    ) as *mut ProjectileInstr;
+    ) as *mut ProjectileInstr
 }
 #[inline]
 unsafe fn Get_Botwoon(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_Botwoon {
-    return (&raw mut game.g_ram as *mut uint8)
+    (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Botwoon;
+        .offset(o as isize) as *mut Enemy_Botwoon
 }
 
 pub unsafe fn Call(mut addr: uint32, game: &mut Game) {
@@ -199,7 +199,7 @@ pub unsafe fn Call(mut addr: uint32, game: &mut Game) {
     );
 }
 pub unsafe fn SnesRomPtr(mut v: uint32, game: &mut Game) -> *mut uint8_t {
-    return RomPtr(v as uint32_t, game) as *mut uint8_t;
+    RomPtr(v as uint32_t, game) as *mut uint8_t
 }
 pub unsafe fn ProcessHook(mut v: uint32, game: &mut Game) -> bool {
     let mut rombyte: *mut uint8_t = SnesRomPtr(v, game);
@@ -226,7 +226,7 @@ pub unsafe fn ProcessHook(mut v: uint32, game: &mut Game) -> bool {
         }
         _ => {}
     }
-    return false_0 != 0;
+    false_0 != 0
 }
 pub unsafe fn FixBugHook(mut addr: uint32, game: &mut Game) -> bool {
     match game.hookmode {
@@ -248,7 +248,7 @@ pub unsafe fn FixBugHook(mut addr: uint32, game: &mut Game) -> bool {
         }
         _ => {}
     }
-    return false_0 != 0;
+    false_0 != 0
 }
 static kPatchedCarrys: [uint32; 155] = [
     0xa7ac33, 0xa7ac36, 0xa7ac39, 0xa7ac42, 0xa7ac45, 0xa6d6d1, 0xa6d6d3, 0xa6d6d5, 0xa6d700,
@@ -476,7 +476,7 @@ pub unsafe fn PatchBugs(mut mode: uint32, mut addr: uint32, game: &mut Game) -> 
                 (*E_0).botwoon_var_45;
         }
     }
-    return 0 as uint32;
+    0 as uint32
 }
 pub unsafe fn RunPatchBugHook(mut addr: uint32, game: &mut Game) -> ::core::ffi::c_int {
     let mut new_pc: uint32 = PatchBugs(2 as uint32, addr, game);
@@ -489,7 +489,7 @@ pub unsafe fn RunPatchBugHook(mut addr: uint32, game: &mut Game) -> ::core::ffi:
             return *SnesRomPtr(new_pc, game) as ::core::ffi::c_int;
         }
     }
-    return -(1 as ::core::ffi::c_int);
+    -(1 as ::core::ffi::c_int)
 }
 pub unsafe fn CpuOpcodeHook(mut addr: uint32, game: &mut Game) -> ::core::ffi::c_int {
     let mut i: size_t = 0 as size_t;
@@ -514,7 +514,7 @@ pub unsafe fn CpuOpcodeHook(mut addr: uint32, game: &mut Game) -> ::core::ffi::c
             b"int CpuOpcodeHook(uint32)\0" as *const u8 as *const ::core::ffi::c_char,
         );
     };
-    return 0 as ::core::ffi::c_int;
+    0 as ::core::ffi::c_int
 }
 pub unsafe fn HookedFunctionRts(mut is_long: ::core::ffi::c_int, game: &mut Game) -> bool {
     if game.g_calling_asm_from_c {
@@ -530,7 +530,7 @@ pub unsafe fn HookedFunctionRts(mut is_long: ::core::ffi::c_int, game: &mut Game
             b"_Bool HookedFunctionRts(int)\0" as *const u8 as *const ::core::ffi::c_char,
         );
     };
-    return false_0 != 0;
+    false_0 != 0
 }
 fn brightness_cache_is_valid(ppu: &Ppu) -> bool {
     let brightness = ppu.lastBrightnessMult;
@@ -1574,7 +1574,7 @@ pub unsafe fn RunAsmCode(
     (*game.g_cpu).db = org_b as uint8_t;
     (*game.g_cpu).pc = org_pc as uint16_t;
     (*game.g_snes).debug_cycles = dc;
-    return game.g_calling_asm_from_c_ret;
+    game.g_calling_asm_from_c_ret
 }
 unsafe fn loadRom(
     mut name: *const ::core::ffi::c_char,
@@ -1591,7 +1591,7 @@ unsafe fn loadRom(
     let mut result: bool =
         snes_loadRom(snes as *mut Snes, file, length as ::core::ffi::c_int, game);
     free(file as *mut ::core::ffi::c_void);
-    return result;
+    result
 }
 pub unsafe fn PatchBytes(
     mut addr: uint32,
@@ -2864,7 +2864,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char, game: &mut Game
         i = i.wrapping_add(1);
     }
     PatchBugs(1 as uint32, 0 as uint32, game);
-    return game.g_snes;
+    game.g_snes
 }
 pub unsafe fn DebugGameOverMenu() {
     '_c2rust_label: {
