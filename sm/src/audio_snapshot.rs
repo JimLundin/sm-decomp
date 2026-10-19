@@ -293,7 +293,7 @@ impl AudioSnapshot {
     }
 
     /// The SNES and all three audio allocations must be initialized and live.
-    pub(crate) unsafe fn capture(&mut self, snes: *mut Snes) {
+    pub(crate) unsafe fn capture(&mut self, snes: *const Snes) {
         let apu = (*snes).apu;
         self.apu = *apu;
         self.spc = *(*apu).spc;

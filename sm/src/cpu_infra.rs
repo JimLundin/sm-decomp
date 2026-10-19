@@ -1,6 +1,7 @@
 use crate::game::sm_80::Vector_IRQ;
 use crate::game::sm_82::RunOneFrameOfGame;
 use crate::game_state::Game;
+use crate::types::SpcPlayer;
 
 use crate::rtl::{RomPtr, RtlSaveSnapshot, RtlSetupEmuCallbacks, WriteReg};
 use crate::snes::apu::apu_cycle;
@@ -1647,26 +1648,27 @@ unsafe fn VerifySnapshotsEq(
         );
     }
 }
-unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
-    (*s).player.capture(game.g_spc_player);
-    (*s).audio.capture(game.g_snes);
+// Snapshot storage is separate from the live emulator allocations. Narrow
+// borrows let the compiler retain that distinction across the bulk copies.
+unsafe fn MakeSnapshot(s: &mut Snapshot, snes: &Snes, c: &Cpu, player: *mut SpcPlayer) {
+    (*s).player.capture(player);
+    (*s).audio.capture(snes);
     (*s).write_latches = [
-        (*(*game.g_snes).ppu).scrollPrev,
-        (*(*game.g_snes).ppu).scrollPrev2,
-        (*(*game.g_snes).ppu).m7prev,
+        (*(*snes).ppu).scrollPrev,
+        (*(*snes).ppu).scrollPrev2,
+        (*(*snes).ppu).m7prev,
     ];
-    (*s).cgram = (*(*game.g_snes).ppu).cgram;
-    (*s).cgram_pointer = (*(*game.g_snes).ppu).cgramPointer;
-    (*s).cgram_second_write = (*(*game.g_snes).ppu).cgramSecondWrite;
-    (*s).cgram_buffer = (*(*game.g_snes).ppu).cgramBuffer;
-    (*s).ppu1_open_bus = (*(*game.g_snes).ppu).ppu1openBus;
-    (*s).ppu2_open_bus = (*(*game.g_snes).ppu).ppu2openBus;
-    (*s).vram_read_buffer = (*(*game.g_snes).ppu).vramReadBuffer;
-    (*s).vram_pointer = (*(*game.g_snes).ppu).vramPointer;
-    (*s).vram_increment = (*(*game.g_snes).ppu).vramIncrement;
-    (*s).vram_increment_on_high = (*(*game.g_snes).ppu).vramIncrementOnHigh;
-    (*s).vram_remap_mode = (*(*game.g_snes).ppu).vramRemapMode;
-    let mut c: *mut Cpu = game.g_cpu;
+    (*s).cgram = (*(*snes).ppu).cgram;
+    (*s).cgram_pointer = (*(*snes).ppu).cgramPointer;
+    (*s).cgram_second_write = (*(*snes).ppu).cgramSecondWrite;
+    (*s).cgram_buffer = (*(*snes).ppu).cgramBuffer;
+    (*s).ppu1_open_bus = (*(*snes).ppu).ppu1openBus;
+    (*s).ppu2_open_bus = (*(*snes).ppu).ppu2openBus;
+    (*s).vram_read_buffer = (*(*snes).ppu).vramReadBuffer;
+    (*s).vram_pointer = (*(*snes).ppu).vramPointer;
+    (*s).vram_increment = (*(*snes).ppu).vramIncrement;
+    (*s).vram_increment_on_high = (*(*snes).ppu).vramIncrementOnHigh;
+    (*s).vram_remap_mode = (*(*snes).ppu).vramRemapMode;
     (*s).a = (*c).a as uint16;
     (*s).x = (*c).x as uint16;
     (*s).y = (*c).y as uint16;
@@ -1681,7 +1683,6 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     (*s).cpu_stopped = (*c).stopped;
     (*s).cpu_irq_pending = (*c).irqWanted;
     (*s).cpu_nmi_pending = (*c).nmiWanted;
-    let snes = &*game.g_snes;
     (*s).video_clock = (snes.hPos, snes.vPos, snes.frames);
     (*s).interrupt_latches = (snes.inNmi, snes.inIrq, snes.inVblank);
     (*s).interrupt_enables = (snes.hIrqEnabled, snes.vIrqEnabled, snes.nmiEnabled);
@@ -1698,23 +1699,23 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
         snes.divideA,
         snes.divideResult,
     );
-    (*s).vTimer = (*game.g_snes).vTimer;
+    (*s).vTimer = (*snes).vTimer;
     memcpy(
         &raw mut (*s).ram as *mut uint8 as *mut ::core::ffi::c_void,
-        (*game.g_snes).ram as *const ::core::ffi::c_void,
+        (*snes).ram as *const ::core::ffi::c_void,
         0x20000 as ::core::ffi::c_int as size_t,
     );
     memcpy(
         &raw mut (*s).sram as *mut uint8 as *mut ::core::ffi::c_void,
-        (*(*game.g_snes).cart).ram as *const ::core::ffi::c_void,
-        (*(*game.g_snes).cart).ramSize as size_t,
+        (*(*snes).cart).ram as *const ::core::ffi::c_void,
+        (*(*snes).cart).ramSize as size_t,
     );
     memcpy(
         &raw mut (*s).vram as *mut uint16 as *mut ::core::ffi::c_void,
-        &raw mut (*(*game.g_snes).ppu).vram as *mut uint16_t as *const ::core::ffi::c_void,
+        &raw mut (*(*snes).ppu).vram as *mut uint16_t as *const ::core::ffi::c_void,
         (::core::mem::size_of::<uint16>() as size_t).wrapping_mul(0x8000 as size_t),
     );
-    let ppu = &*(*game.g_snes).ppu;
+    let ppu = &*(*snes).ppu;
     (*s).brightness = ppu.brightness;
     (*s).forced_blank = ppu.forcedBlank;
     (*s).fixed_color = [ppu.fixedColorR, ppu.fixedColorG, ppu.fixedColorB];
@@ -1799,9 +1800,9 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
         legacy_pixel_prefix: ppu.objPixelBufferXX[..19].try_into().unwrap(),
     };
 }
-unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
-    (*s).audio.restore(game.g_snes);
-    let ppu = &mut *(*game.g_snes).ppu;
+unsafe fn RestoreSnapshot(s: &Snapshot, snes: &mut Snes, c: &mut Cpu) {
+    (*s).audio.restore(snes);
+    let ppu = &mut *(*snes).ppu;
     ppu.brightness = (*s).brightness;
     ppu.forcedBlank = (*s).forced_blank;
     [ppu.fixedColorR, ppu.fixedColorG, ppu.fixedColorB] = (*s).fixed_color;
@@ -1877,18 +1878,17 @@ unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     ] = (*s).mode7_flags;
     [ppu.rangeOver, ppu.timeOver, ppu.evenFrame] = (*s).status_flags;
     [ppu.scrollPrev, ppu.scrollPrev2, ppu.m7prev] = (*s).write_latches;
-    (*(*game.g_snes).ppu).cgram = (*s).cgram;
-    (*(*game.g_snes).ppu).cgramPointer = (*s).cgram_pointer;
-    (*(*game.g_snes).ppu).cgramSecondWrite = (*s).cgram_second_write;
-    (*(*game.g_snes).ppu).cgramBuffer = (*s).cgram_buffer;
-    (*(*game.g_snes).ppu).ppu1openBus = (*s).ppu1_open_bus;
-    (*(*game.g_snes).ppu).ppu2openBus = (*s).ppu2_open_bus;
-    (*(*game.g_snes).ppu).vramReadBuffer = (*s).vram_read_buffer;
-    (*(*game.g_snes).ppu).vramPointer = (*s).vram_pointer;
-    (*(*game.g_snes).ppu).vramIncrement = (*s).vram_increment;
-    (*(*game.g_snes).ppu).vramIncrementOnHigh = (*s).vram_increment_on_high;
-    (*(*game.g_snes).ppu).vramRemapMode = (*s).vram_remap_mode;
-    let mut c: *mut Cpu = game.g_cpu;
+    (*(*snes).ppu).cgram = (*s).cgram;
+    (*(*snes).ppu).cgramPointer = (*s).cgram_pointer;
+    (*(*snes).ppu).cgramSecondWrite = (*s).cgram_second_write;
+    (*(*snes).ppu).cgramBuffer = (*s).cgram_buffer;
+    (*(*snes).ppu).ppu1openBus = (*s).ppu1_open_bus;
+    (*(*snes).ppu).ppu2openBus = (*s).ppu2_open_bus;
+    (*(*snes).ppu).vramReadBuffer = (*s).vram_read_buffer;
+    (*(*snes).ppu).vramPointer = (*s).vram_pointer;
+    (*(*snes).ppu).vramIncrement = (*s).vram_increment;
+    (*(*snes).ppu).vramIncrementOnHigh = (*s).vram_increment_on_high;
+    (*(*snes).ppu).vramRemapMode = (*s).vram_remap_mode;
     (*c).a = (*s).a as uint16_t;
     (*c).x = (*s).x as uint16_t;
     (*c).y = (*s).y as uint16_t;
@@ -1897,14 +1897,13 @@ unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     (*c).db = (*s).db as uint8_t;
     (*c).pc = (*s).pc as uint16_t;
     (*c).k = (*s).k as uint8_t;
-    (*game.g_snes).vTimer = (*s).vTimer;
+    (*snes).vTimer = (*s).vTimer;
     (*c).e = (*s).cpu_emulation;
     (*c).stopped = (*s).cpu_stopped;
     (*c).irqWanted = (*s).cpu_irq_pending;
     (*c).nmiWanted = (*s).cpu_nmi_pending;
     cpu_setFlags((*s).flags as uint8_t, &mut *c);
     (*c).waiting = (*s).cpu_waiting;
-    let snes = &mut *game.g_snes;
     (snes.hPos, snes.vPos, snes.frames) = (*s).video_clock;
     (snes.inNmi, snes.inIrq, snes.inVblank) = (*s).interrupt_latches;
     (snes.hIrqEnabled, snes.vIrqEnabled, snes.nmiEnabled) = (*s).interrupt_enables;
@@ -1922,21 +1921,21 @@ unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
         snes.divideResult,
     ) = (*s).arithmetic;
     memcpy(
-        (*game.g_snes).ram as *mut ::core::ffi::c_void,
-        &raw mut (*s).ram as *mut uint8 as *const ::core::ffi::c_void,
+        (*snes).ram as *mut ::core::ffi::c_void,
+        &raw const (*s).ram as *const uint8 as *const ::core::ffi::c_void,
         0x20000 as ::core::ffi::c_int as size_t,
     );
     memcpy(
-        (*(*game.g_snes).cart).ram as *mut ::core::ffi::c_void,
-        &raw mut (*s).sram as *mut uint8 as *const ::core::ffi::c_void,
+        (*(*snes).cart).ram as *mut ::core::ffi::c_void,
+        &raw const (*s).sram as *const uint8 as *const ::core::ffi::c_void,
         0x2000 as size_t,
     );
     memcpy(
-        &raw mut (*(*game.g_snes).ppu).vram as *mut uint16_t as *mut ::core::ffi::c_void,
-        &raw mut (*s).vram as *mut uint16 as *const ::core::ffi::c_void,
+        &raw mut (*(*snes).ppu).vram as *mut uint16_t as *mut ::core::ffi::c_void,
+        &raw const (*s).vram as *const uint16 as *const ::core::ffi::c_void,
         (::core::mem::size_of::<uint16>() as size_t).wrapping_mul(0x8000 as size_t),
     );
-    let ppu = &mut *(*game.g_snes).ppu;
+    let ppu = &mut *(*snes).ppu;
     ppu.hCount = (*s).counters.horizontal;
     ppu.vCount = (*s).counters.vertical;
     ppu.hCountSecond = (*s).counters.horizontal_second_byte;
@@ -3422,7 +3421,12 @@ unsafe fn report_first_verify_failure(game: &mut Game) {
 }
 pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
     (*game.g_snes).ppu = (*game.g_snes).snes_ppu;
-    MakeSnapshot(&raw mut game.g_snapshot_before, game);
+    MakeSnapshot(
+        &mut game.g_snapshot_before,
+        &*game.g_snes,
+        &*game.g_cpu,
+        game.g_spc_player,
+    );
     let queue_before = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
     let apu_before = queue_before.pending;
     let apu_queue_before = queue_before.size;
@@ -3434,7 +3438,12 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
         (*game.g_snes).runningWhichVersion = 1 as uint8_t;
         RunOneFrameOfGame_Emulated(game);
         DrawFrameToPpu(game);
-        MakeSnapshot(&raw mut game.g_snapshot_theirs, game);
+        MakeSnapshot(
+            &mut game.g_snapshot_theirs,
+            &*game.g_snes,
+            &*game.g_cpu,
+            game.g_spc_player,
+        );
         let queue_theirs = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
         let apu_theirs = queue_theirs.pending;
         queue_before.restore(game);
@@ -3442,12 +3451,17 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
         game.g_snapshot_mine.apu_upload_count = 0;
         game.g_snapshot_mine.apu_startup_upload = false;
         (*game.g_snes).ppu = (*game.g_snes).my_ppu;
-        RestoreSnapshot(&raw mut game.g_snapshot_before, game);
+        RestoreSnapshot(&game.g_snapshot_before, &mut *game.g_snes, &mut *game.g_cpu);
         (*game.g_snes).runningWhichVersion = 2 as uint8_t;
         RunOneFrameOfGame(game);
         DrawFrameToPpu(game);
         let queue_mine = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
-        MakeSnapshot(&raw mut game.g_snapshot_mine, game);
+        MakeSnapshot(
+            &mut game.g_snapshot_mine,
+            &*game.g_snes,
+            &*game.g_cpu,
+            game.g_spc_player,
+        );
         (*game.g_snes).runningWhichVersion = 0xff as uint8_t;
         VerifySnapshotsEq(
             &raw mut game.g_snapshot_mine,
@@ -3502,7 +3516,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
                 printf(b"Verify failure!\n\0" as *const u8 as *const ::core::ffi::c_char);
             }
             (*game.g_snes).ppu = (*game.g_snes).snes_ppu;
-            RestoreSnapshot(&raw mut game.g_snapshot_before, game);
+            RestoreSnapshot(&game.g_snapshot_before, &mut *game.g_snes, &mut *game.g_cpu);
             if game.g_use_my_apu_code {
                 game.g_snapshot_mine.player.restore(game.g_spc_player);
             } else {
@@ -3527,7 +3541,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
             break;
         } else {
             (*game.g_snes).ppu = (*game.g_snes).snes_ppu;
-            RestoreSnapshot(&raw mut game.g_snapshot_theirs, game);
+            RestoreSnapshot(&game.g_snapshot_theirs, &mut *game.g_snes, &mut *game.g_cpu);
             if game.g_use_my_apu_code {
                 game.g_snapshot_mine.player.restore(game.g_spc_player);
             } else {

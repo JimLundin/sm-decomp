@@ -12819,6 +12819,35 @@ complete gameplay/credits and hardware/audio coverage remain open.
 Nothing else should start until this works, because it is how every later
 change is judged.
 
+Snapshot capture/rewind throughput (2026-10-19): MakeSnapshot and
+RestoreSnapshot now borrow separate snapshot, SNES and CPU storage instead
+of accepting a raw snapshot pointer and the entire Game. Audio capture takes
+a read-only SNES pointer. This exposes disjoint storage to the optimizer;
+all copied fields, layouts, comparison masks and recovery order remain exact.
+The comparison and rendering function bodies are unchanged.
+
+Frozen 3d81e4d2 baseline/candidate/candidate/baseline any% prefixes all pass
+20000/0, native exit 0, with identical output after excluding timing. Replay
+wall seconds are 26.42/18.93/17.27/25.34; CPU seconds are
+23.5625/16.984375/16.03125/20.046875. Candidate means use 30.1% less wall time
+and 24.3% less CPU time. Full same-source any% improves from 201.92s to
+168.75s (CPU 174.828125 to 146.078125), about 16.4% less time. Both full
+runs pass 129712/0 with identical non-timing output. Benchmark children are
+pinned to logical CPU0; shared machine load and clocks remain variable.
+Rendering stays enabled throughout; existing route/audio coverage limits remain.
+
+Final fd932dd3 plus only this change passes the normal Python verifier CLI:
+any% 129712/0 (171.51s) and Waver 58109/0 (78.70s), native exits 0. Fault
+controls inject RAM, VRAM, SRAM, PPU-status and queued-audio differences at
+frames 200/300/400/500/600. Baseline and candidate each report exactly those
+five failing frames over 3600 frames, exit 1, and identical complete diagnostics
+and subsequent recovery under both custom and physical audio. The initialized,
+separate allocation contract and each field/call substitution were reviewed.
+Cargo fmt/check, release build with installed SDL2, and progress pass. Own
+Rust lines +14 spell out the narrower arguments; all other residue counts
+are unchanged. Concurrent window-bound/gameplay edits remain separate; no
+probe code, timing infrastructure or ROM-derived assets are committed.
+
 Windows verifier build reuse (2026-10-19): `tools/verify_dll.py` now retains
 separate rustc incremental caches for the library and DLL host. Both compiler
 commands still run on every normal invocation; rustc manages invalidation.
