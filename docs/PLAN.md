@@ -9106,6 +9106,26 @@ wrapper; other own counters unchanged. Full word Cartesian and decimal movie
 coverage, arbitrary MMIO mutation and full gameplay/render/audio remain open.
 Continue covered CPU cleanup.
 
+Snapshot throughput probes (2026-10-19): frozen e8878518-source DLLs compare
+baseline/candidate/candidate/baseline with rendering explicitly enabled and
+the same custom audio backend. Complete-array equality replacing the three
+RAM/SRAM/VRAM memcmp conditions passes 12,000/0 in all four runs, native
+exit 0: baseline 10.86/11.10s, candidate 10.76/11.31s. The candidate mean
+is 0.5% slower and the paired direction conflicts; no consistent gain.
+Selective player/audio capture passes 20,000/0 in all four runs, native
+exit 0, with identical 10,869 gameplay frames and three rooms: baseline
+21.67/19.98s, candidate 22.75/20.23s. Its mean is 3.2% slower and both
+adjacent pairs are slower. Neither candidate enters maintained source.
+The selective-capture recovery/fault checks were not performed because
+the candidate is rejected; source review alone does not establish recovery
+equivalence. SM_VERIFY environment variables were absent; both temporary
+hosts used the same explicit disableRender=false initialization. Timing
+claims cover these prefixes only; shared machine load limits precision.
+No oracle checks or consumed snapshots are skipped in maintained source.
+Own maintained-source/residue delta zero; peer CPU/DMA changes are separate.
+Next: profile actual color-math conversion and sprite evaluation with explicit
+rendering, as identified by palette-span work, then optimize measured costs.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
