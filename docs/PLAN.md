@@ -12113,6 +12113,24 @@ retained five missiles; floor Power Bomb requirement and earlier holds stay
 held. Credits, full gameplay/hardware, render/audio, masked RAM and ownership
 remain open. No probes, inputs, SRAM or ROM-derived assets are committed.
 
+Independent Waver offscreen-store review (2026-10-19): the retained fast
+repro again produces the exact frame28228 pixel(255,223), green00/84
+failure. Baseline diagnostics match all71 full Waver failures; the combined
+candidate repeats252 frames twice with zero pixels, raw9100/9800 table or
+window differences and identical branch counts. Baseline frame28365 has a
+raw-table difference without a pixel failure, so pixel counts alone remain
+insufficient. These are retained frozen candidates, not the current worktree.
+Expanded actual ROM-kernel comparison passes25,760 cases: every even display
+start0..458, both9100/9800 destinations, eight origins and seven gradient
+pairs. Ordered address/value vectors and independent final scratch model
+match. Swapping two expected stores fails immediately, nativeexit1; original
+nativeexit0. This strengthens terminal/crossing/wrapped-write coverage of
+the retained offscreen positive-edge helper; angle lookup, caller aliases,
+scratch-mask removal and current-source integration remain separate. No
+maintained source or residue changes, no ROM-derived artifacts committed.
+The quality session owns the Waver correction and full integration. Outbound
+cross-session messaging still fails its local MCP connection; incoming works.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
