@@ -1947,7 +1947,22 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): `11bc05a3` adds the identity-op
+Latest reviewed integration (2026-10-19): `240bb809` adds 422 direct
+primitive comparisons to the reviewed compiler and initializer work.
+All 74 committed source/configuration/host/progress inputs match the checked
+Boolean snapshot. Its normal release and full any% 129712/0 (162.35s)
+and Speed Booster 148406/0 (208.07s) pass, native exits 0; source/DLL/fixture
+bindings were checked and completed runs reused.
+
+Complete word diffs remove exactly 422 negations and complement exactly
+422 comparisons across 33 files, retaining every operand, call, short-circuit
+operator and RAM-read position. Rust lines fall by 7; casts, raw accesses and
+unsafe functions are unchanged. Formatting/check, workspace release and
+all-target/all-feature Clippy pass. Only two nonautomatic Boolean locations
+remain. These frontend compiler checks do not establish frontend execution.
+The subsequent named-RAM and single-match compositions await their own review.
+
+The prior `11bc05a3` adds the identity-op
 cleanup to the reviewed compiler and initializer work. The complete committed
 Rust inventory, Cargo configuration, original base and replay source copy
 match the checked snapshots. All 72 source/library/DLL/fixture pins match.
