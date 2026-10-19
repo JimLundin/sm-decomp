@@ -11147,6 +11147,26 @@ source; peer PPU/SNES work is outside this replay. All own progress counters
 unchanged. Prior holds and complete gameplay/render/audio remain open.
 Continue covered CPU cleanup.
 
+Post-map lower99BD descent reaches bottom door (2026-10-19).
+From map-waver-low-doorX158/Y1163, left/shoot90, left110, neutral30
+reach X37/Y1243. Alternating right/shoot80,right65,neutral50;
+left/shoot75,left65,neutral45; right/shoot75,right65,neutral45;
+left/shoot75,left65,neutral45; right/shoot90,right65,neutral45 descends
+the alternating shelf gaps. map99bd-down-left278900/71 (129.05s), native
+exit1, ends X219/Y1675 at the bottom-right door, health89/199,
+map1/station255, missiles1/10, equipment1004. Enemy contacts cost100health
+through this descent; normal-input tank pickup supplied the reserve.
+Read-only failure-counter replay78900/71 (137.56s), observed native exit1,
+matches all71 ordered baseline failed frames exactly, rendering enabled.
+No gameplay/RAM/inventory writes or new failures; source/residue delta0.
+Committed door-bit cleanup owns fmt/check, release, progress, contextual
+75665/71 and clean any%129712/0 (149.79s). Inputs, probes, SRAM and
+ROM-derived data stay ignored. Beam door trial79130/71 (142.42s), native exit1, remainsX219/Y1675 with
+89health. Right PLMC88A is a missile door; this route has one missile.
+Next: test the bottom-left exit toA5ED and continue item/boss coverage. Held upper99BD ascent stays held.
+Complete credits/gameplay/hardware, audio/render, masked RAM and ownership
+remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
