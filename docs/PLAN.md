@@ -1458,16 +1458,14 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `bea38871` passes
-uninterrupted full boot
-any% 129712/0 (196.83s) and Speed Booster 148406/0 (260.79s),
-native exits 0. This combines the completed shared layouts, property OR
-helper, five projectile wrapping updates and cross-bank word arithmetic.
-All 74 tested source/configuration/host/progress files match that commit.
-The exact committed source qualifies the completed runs without a rebuild.
+Latest reviewed integration (2026-10-19): frozen `ab00d7d6` passes
+uninterrupted full boot any% 129712/0 (162.73s) and Speed Booster
+148406/0 (209.54s), native exits 0. All 74 tested source/configuration/
+host/progress files match that commit. This integrates the arithmetic pass,
+spawn-point helper (9f9676a5) and constant-word updates (ab00d7d6).
 
-Both complete checkpoints, including all bindings and serialized payloads,
-are byte-identical to reviewed 8582a6ed. All bindings are independently
+Complete checkpoints, including all bindings and serialized payloads, are
+byte-identical to reviewed bea38871. All bindings are independently
 recomputed; runtime-source inputs, including the shared layout macro, match.
 Neither replay loads an earlier checkpoint. Coverage and non-timing
 diagnostics match, including the known fingernail diagnostic. Speed contains
@@ -1477,50 +1475,57 @@ X171/Y123, pose $0089, health 46/399, missiles 6/15, Supers 0/5,
 items $3105 and beams $1004 equipped/collected. Kraid is defeated,
 the eight coroutine bytes are zero and credits remain unexercised.
 
-Independent arithmetic review reconstructs all 6089 selected replacements
-in 31 banks from frozen 300bfd44. Exact source operands, literal conversions,
-nesting, formatted outputs and unformatted compiler-input pins agree.
-All 3649 arithmetic operations have independently recomputed ranges within
-their old i32/u32 intermediates. Casting and add/subtract/multiply/bitwise
-operations preserve the target low bits; operand order and existing pointer
-operations remain unchanged. Fresh streamed compiler checks confirm every
-selected input/intermediate/result type and all 698765 retained expression
-types, kinds and mapped spans. Added expressions stay within replacements.
+Independent constant-word review reconstructs the complete candidate and
+observed bank from their original Rust. It parses all 18 selected sites,
+including 16 updates, and confirms every original address, index, constant,
+captured value and result. The u16 helper is unchanged. Nonnegative rounded
+indices preserve signed pointer offsets; old additions/subtractions fit i32.
+The signed-velocity read remains before its guard and each branch uses that
+captured value. The Kago zero guard and conditional countdown write remain.
+Kraid preserves both stores around the clamp. No retained raw pointer or
+raw-place reference is used across a new state borrow. The Bomb initializer's
+earlier enemy pointer is unused after its selected update. MoveY_Minus4 now
+contains only a safe byte-backed update and returns its untouched pointer.
 
-The 6089 selections are an exact subset of the tested 6482-member family.
-Reconstructed test source and fresh compiled runs pass 51818253 comparisons
-across 116 type/operator signatures, 1515 literal expressions and 12125
-selected boundary pairs. The test rejects 2101692 overflowing intermediate
-cases as inadmissible; the source range proof independently excludes those
-cases for the selected expressions. A changed-result mutant fails the same
-comparison run. The other saturation/sign/order examples are distinguished
-values, not whole-harness mutation tests. These controls add no gameplay
-coverage; per-site hits were not collected for the arithmetic family.
+Fresh exact-helper controls pass 720896 complete-RAM/return cases across
+11 base/delta pairs. Another 589824 cases compare the complete signed-velocity,
+Kago countdown and Kraid-rock routines with their exact helpers and AddToHiLo
+in a reduced Game. Original word alignment is asserted. Each routine covers
+every word value at ordinary/high indices and every u16 argument with selected
+boundary values. Full RAM and callback traces agree. Synthetic callbacks
+alter fields and the live index, checking read/write placement. Saturation,
+returning the old word, changing the signed guard, changing the countdown
+guard and reading velocity before collision callbacks are all rejected.
+These constructed cases add no gameplay coverage.
 
-Independent projectile review reconstructs the complete 00a74e6e source
-change: one helper and five exact updates. Scalar/indexed addresses, wrapping
-+1/-1 values (delta 1/u16::MAX), returned new words, both gate writes,
-Ceres clamp and pickup callback order are preserved. No raw-place reference
-spans a new helper call: the other Ceres reference ends in its condition
-block, and the other gate references begin afterward. Dispatch callers
-retain no RAM pointer across these calls. Fresh exact-helper tests pass
-393216 complete-RAM/return cases, covering every rounded u16 slot and every
-word value for four base/delta pairs. Saturation, wrong scaling and returning
-the old word are rejected. The completed owner's clean/observed sources
-match the entire commit, and all saved source/binary/fixture pins remain
-fixed. Actual update hits are Ceres 73, Kago 86, gate 4/4 and pickup 27487;
-clean/observed non-timing diagnostics agree. Unvisited updates stay pending.
+All 74 dedicated clean/observed inputs reconstruct from frozen 00a74e6e.
+Their source/library/DLL/input/log pins remain fixed, and complete Speed
+checkpoints and non-timing diagnostics agree. The normal Speed movie reaches
+all 18 selected sites. Signed velocity has 961 reads and 594/367 branch writes;
+Kago has 336 reads and 23 guarded writes; both Kraid updates have 4683 hits.
+The rare eye-door subtraction executes twice and MoveY_Minus4 executes 18 times.
+These are actual selected-site counts, not routine-entry substitutions.
 
-All 74 integration inputs, fresh Cargo library/DLL and copied fixtures stay
-fixed. Only registry dependencies seed this checkout. Formatting, normal
-release (21.95s), host build (2.72s) and progress pass. Against
-8582a6ed, Rust lines fall 2848 and c_int casts fall 12178 across 7688 lines;
-unsafe-function counts are unchanged. Five raw accesses disappear from the
-projectile update pass. The raw-offset line count falls six because one
-additional arithmetic line change is formatting only. Frozen totals:
-209321 Rust lines, 21561 raw-offset lines, 53106 c_int casts across 41763
-lines and 6517 unsafe functions. This review changes no maintained Rust
-or assets; peer changes outside the frozen snapshot retain their own checks.
+Independent spawn-point review reconstructs the whole committed bank from
+the helper and two original accessor copies. X then Y are copied before the
+single point assignment and the original spawn/sound callbacks. Maintained
+getters match the harness's rounding for all u16 indices. The completed
+131072-case owner comparison and both observed routes are checked: six Ridley
+copies in any%, eleven Ceres copies in Speed. All other copies stay unchanged.
+That dedicated snapshot is based on 00a74e6e and predates the 31 arithmetic
+banks; this fresh integration establishes their combined result. Its earlier
+claim that all other frozen sources matched HEAD is corrected below.
+
+Only sm_86.rs differs from the prior reviewed integration. All 74 integration
+inputs, fresh Cargo library/DLL and copied fixtures stay fixed. Only registry
+dependencies seed this checkout. Formatting, normal release
+(26.26s), host build (2.92s) and progress pass. Across both new changes,
+Rust lines fall 41, raw accesses/offset lines fall 20, c_int casts fall 30
+across 18 lines and unsafe functions fall one. Frozen totals: 209280 Rust
+lines, 21541 raw-offset lines, 53076 c_int casts across 41745 lines and 6516
+unsafe functions. Earlier arithmetic/layout audits retain their coverage
+limits. This review changes no maintained Rust or assets; peer changes
+outside the frozen snapshot retain their own checks.
 
 Later source changes need their own integration. Remaining bosses, credits,
 persistence and broader hardware/audio coverage remain unfinished.
@@ -17294,8 +17299,9 @@ pass 129712/0 (162.41s) and 148406/0
 apart from probes/timing. Source/DLL/ROM/input hashes stay fixed and maintained
 regions match verified source. 131072 RAM/spawn-point comparisons cover every
 16-bit index and two backing patterns. Exact source reconstruction permits
-only the helper and two substitutions; other frozen sources match HEAD after
-newline normalization.
+only the helper and two substitutions in the dedicated frozen source. That
+snapshot predates the 31 arithmetic banks; their combined source is independently
+reviewed at ab00d7d6 above.
 
 Cargo fmt/check, normal release build and progress pass. Including helper,
 Rust lines -1; raw accesses, casts and unsafe functions remain unchanged.
