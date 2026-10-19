@@ -12607,6 +12607,30 @@ credits/gameplay, hardware/audio timing, remaining masks and ownership stay
 open. Probe/save/movie outputs remain outside tracked files; peer source
 and pending PLAN edits are preserved.
 
+Collected-item bit check (2026-10-19): PlmInstr_GotoIfItemBitSet now
+reads its bitmask word and item_bit_array byte without raw RAM pointers.
+PrepareBitAccess still runs before the high-bit gate, even for disabled
+items; the guarded reads and original branch/advance pointers retain their
+order. Frozen 3d81e4d2 plus only this change passes any%
+129712/0 (277.74s), native exit0, and the missile pickup route
+68606/0 (199.62s), native exit0. Separate observed route
+68606/0 (204.72s) executes 11 guarded reads, with 1
+taken branches. These hits establish only the observed paths. The complete
+argument-word arithmetic audit covers262144 gates and adds no gameplay
+coverage. Maintained source contains no observations. Cargo fmt/check and
+release build pass. Own raw offsets-2, cast lines-8, Rust lines-5; other
+own counters unchanged and peer source excluded from these replays.
+
+Super Missile passage hold (2026-10-19): accumulated access work reached
+the one-hour stop rule. Stop controller timing probes for the64/288 Bomb
+passage and64/96 tank. The verified missile pickup andX89/Y347 ledge remain
+valid, but no Super Missile was collected. Live block observations show
+B16E atrow18/column4 and special-air30FF atrow19/column4. Standing-width
+collision and adjacent ceiling geometry need actual collision evidence;
+resume only with materially new evidence. This hold does not block covered
+readability work or investigation of other oracle gaps. Complete credits,
+gameplay, hardware/audio timing, remaining masks and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

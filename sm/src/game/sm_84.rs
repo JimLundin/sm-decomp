@@ -1875,19 +1875,14 @@ pub unsafe fn PlmInstr_GotoIfItemBitSet(
 ) -> *const uint8 {
     let index = usize::from(k >> 1) * 2;
     let v2 = u16::from_le_bytes([game.g_ram[0x1dc7 + index], game.g_ram[0x1dc8 + index]]);
-    let mut idx: ::core::ffi::c_int = PrepareBitAccess(v2, game) as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x5e7 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            & *(&raw mut game.g_ram as *mut uint8)
-                .offset(0xd870 as ::core::ffi::c_int as isize)
-                .offset(idx as isize) as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
-    {
-        return PlmInstr_Goto(plmp, k);
-    } else {
-        return plmp.offset(2 as ::core::ffi::c_int as isize);
-    };
+    let byte_index = usize::from(PrepareBitAccess(v2, game));
+    if v2 & 0x8000 == 0 {
+        let bitmask = u16::from_le_bytes([game.g_ram[0x5e7], game.g_ram[0x5e8]]);
+        if bitmask & u16::from(game.g_ram[0xd870 + byte_index]) != 0 {
+            return PlmInstr_Goto(plmp, k);
+        }
+    }
+    return plmp.offset(2);
 }
 pub unsafe fn PlmInstr_SetItemBit(
     mut plmp: *const uint8,
