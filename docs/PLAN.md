@@ -10856,6 +10856,24 @@ CPU matches verified source; peer PPU work is outside this replay. Rust lines
 counters unchanged. Prior holds and complete gameplay/render/audio remain
 open. Continue covered CPU cleanup.
 
+Post-map Parlor ascent clears the ledge gap (2026-10-19).
+map-parlor-gap-settle76024/71 (84.70s), observed native exit1, ends
+X366/Y171, standing, health24/99, map1/station255, missiles1/10,
+equipment1004. It retains gap171@75885, X348/Y235 after one enemy contact;
+right19, shoot1, neutral15 settle X380/Y235. Jump25, left/jump18,
+Jump/shoot1, neutral60 clear the gap between the Y192 ledges and land on
+the left ledge. Earlier immediate jumps hit the enemy or ledge underside;
+those extensions are retired. No additional room or boss is claimed.
+Read-only failure-counter replay76024/71 (79.94s), observed native exit1,
+matches all71 ordered baseline failed frames exactly, rendering enabled.
+No gameplay/RAM/inventory writes or new failures; maintained source/residue
+delta0. Committed door-bit cleanup owns fmt/check, release, progress,
+contextual75665/71 and clean any%129712/0 (149.79s). Inputs, probes,
+SRAM and ROM-derived geometry remain ignored. Next: cross the upper left
+hall to Parlor's door and continue item/boss coverage. Existing holds,
+credits, complete gameplay/hardware, audio/render, masked RAM and ownership
+remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
