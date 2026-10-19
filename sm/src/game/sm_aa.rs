@@ -26,6 +26,8 @@ use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{RomPtr, Unreachable};
+use ::core::ffi::c_long;
+use ::core::ptr::null;
 
 pub use crate::types::Consts_84;
 pub use crate::types::Consts_86;
@@ -476,10 +478,10 @@ pub unsafe fn Torizo_Instr_30(k: u16, jp: *const u16, game: &mut Game) -> *const
     let E: *mut Enemy_Torizo = Get_Torizo(k as i32, game);
     (*E).base.current_instruction = (jp.offset(1) as *mut u8)
         .offset_from(RomBankBase((*gEnemyData(k as i32, game)).bank, game))
-        as ::core::ffi::c_long as u16;
+        as c_long as u16;
     (*E).base.flash_timer = 40u16;
     (*E).base.instruction_timer = 40u16;
-    ::core::ptr::null::<u16>()
+    null::<u16>()
 }
 pub unsafe fn Torizo_Instr_34(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     // The instruction dispatcher leaves this handler address in A.
@@ -487,10 +489,10 @@ pub unsafe fn Torizo_Instr_34(k: u16, jp: *const u16, game: &mut Game) -> *const
     let E: *mut Enemy_Torizo = Get_Torizo(k as i32, game);
     (*E).base.current_instruction = (jp as *mut u8)
         .offset_from(RomBankBase((*gEnemyData(k as i32, game)).bank, game))
-        as ::core::ffi::c_long as u16;
+        as c_long as u16;
     (*E).base.flash_timer = 1u16;
     (*E).base.instruction_timer = 1u16;
-    ::core::ptr::null::<u16>()
+    null::<u16>()
 }
 pub unsafe fn Torizo_Instr_24(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let left_foot_parameter = SpawnEprojWithRoomGfx(
@@ -633,7 +635,7 @@ pub unsafe fn Torizo_Instr_14(k: u16, jp: *const u16, game: &mut Game) -> *const
     }
     (*E).toriz_var_00 = (jp.offset(1) as *mut u8)
         .offset_from(RomBankBase((*gEnemyData(k as i32, game)).bank, game))
-        as ::core::ffi::c_long as u16;
+        as c_long as u16;
     *jp.offset(0) as usize as *const u16
 }
 pub unsafe fn Torizo_Instr_15(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
@@ -649,7 +651,7 @@ pub unsafe fn Torizo_Instr_26(k: u16, jp: *const u16, game: &mut Game) -> *const
     let E: *mut Enemy_Torizo = Get_Torizo(k as i32, game);
     (*E).toriz_var_00 = (jp.offset(2) as *mut u8)
         .offset_from(RomBankBase((*gEnemyData(k as i32, game)).bank, game))
-        as ::core::ffi::c_long as u16;
+        as c_long as u16;
     if ram_word!(game, samus_missiles) < 5u16
         || (ram_word!(game, nmi_frame_counter_word) as i32
             + (ram_word!(game, samus_x_pos) as i32 & 1i32)
@@ -1132,7 +1134,7 @@ pub unsafe fn Torizo_Instr_53(k: u16, jp: *const u16, game: &mut Game) -> *const
     }
     (*Get_Torizo(k as i32, game)).toriz_var_00 = (jp.offset(1) as *mut u8)
         .offset_from(RomBankBase((*gEnemyData(k as i32, game)).bank, game))
-        as ::core::ffi::c_long as u16;
+        as c_long as u16;
     *jp.offset(0) as usize as *const u16
 }
 pub unsafe fn Torizo_Instr_55(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
@@ -1143,7 +1145,7 @@ pub unsafe fn Torizo_Instr_55(k: u16, jp: *const u16, game: &mut Game) -> *const
     (*E).toriz_var_09 = 0u16;
     (*E).toriz_var_00 = (jp.offset(1) as *mut u8)
         .offset_from(RomBankBase((*gEnemyData(k as i32, game)).bank, game))
-        as ::core::ffi::c_long as u16;
+        as c_long as u16;
     *jp.offset(0) as usize as *const u16
 }
 pub unsafe fn Torizo_Instr_52(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
@@ -1153,7 +1155,7 @@ pub unsafe fn Torizo_Instr_52(k: u16, jp: *const u16, game: &mut Game) -> *const
     }
     (*E).toriz_var_00 = (jp.offset(1) as *mut u8)
         .offset_from(RomBankBase((*gEnemyData(k as i32, game)).bank, game))
-        as ::core::ffi::c_long as u16;
+        as c_long as u16;
     *jp.offset(0) as usize as *const u16
 }
 pub unsafe fn Torizo_Instr_50(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
@@ -1193,7 +1195,7 @@ pub unsafe fn Torizo_Instr_51(k: u16, jp: *const u16, game: &mut Game) -> *const
 pub unsafe fn Torizo_Instr_45(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     (*Get_Torizo(k as i32, game)).toriz_var_00 = (jp.offset(2) as *mut u8)
         .offset_from(RomBankBase((*gEnemyData(k as i32, game)).bank, game))
-        as ::core::ffi::c_long as u16;
+        as c_long as u16;
     if ram_word!(game, samus_missiles) < 0x20u16
         || (ram_word!(game, nmi_frame_counter_word) as i32
             + (ram_word!(game, samus_x_pos) as i32 & 1i32)

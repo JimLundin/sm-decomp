@@ -4,6 +4,9 @@ use crate::game_state::Game;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 pub use crate::snes::registers::*;
 use crate::types::SpcPlayer;
+use ::core::ffi::{c_char, c_void};
+use ::core::mem::size_of;
+use ::core::ptr::null_mut;
 
 use crate::rtl::{RomPtr, RtlSaveSnapshot, RtlSetupEmuCallbacks, WriteReg};
 use crate::snes::apu::apu_cycle;
@@ -16,34 +19,21 @@ pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data};
 use crate::util::ReadWholeFile;
 extern "C" {
 
-    fn free(__ptr: *mut ::core::ffi::c_void);
+    fn free(__ptr: *mut c_void);
     fn __assert_fail(
-        __assertion: *const ::core::ffi::c_char,
-        __file: *const ::core::ffi::c_char,
+        __assertion: *const c_char,
+        __file: *const c_char,
         __line: u32,
-        __function: *const ::core::ffi::c_char,
+        __function: *const c_char,
     ) -> !;
     static mut stderr: *mut FILE;
-    fn fprintf(__stream: *mut FILE, __format: *const ::core::ffi::c_char, ...) -> i32;
-    fn printf(__format: *const ::core::ffi::c_char, ...) -> i32;
-    fn snprintf(
-        __s: *mut ::core::ffi::c_char,
-        __maxlen: size_t,
-        __format: *const ::core::ffi::c_char,
-        ...
-    ) -> i32;
-    fn puts(__s: *const ::core::ffi::c_char) -> i32;
-    fn memcpy(
-        __dest: *mut ::core::ffi::c_void,
-        __src: *const ::core::ffi::c_void,
-        __n: size_t,
-    ) -> *mut ::core::ffi::c_void;
-    fn memset(__s: *mut ::core::ffi::c_void, __c: i32, __n: size_t) -> *mut ::core::ffi::c_void;
-    fn memcmp(
-        __s1: *const ::core::ffi::c_void,
-        __s2: *const ::core::ffi::c_void,
-        __n: size_t,
-    ) -> i32;
+    fn fprintf(__stream: *mut FILE, __format: *const c_char, ...) -> i32;
+    fn printf(__format: *const c_char, ...) -> i32;
+    fn snprintf(__s: *mut c_char, __maxlen: size_t, __format: *const c_char, ...) -> i32;
+    fn puts(__s: *const c_char) -> i32;
+    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
+    fn memset(__s: *mut c_void, __c: i32, __n: size_t) -> *mut c_void;
+    fn memcmp(__s1: *const c_void, __s2: *const c_void, __n: size_t) -> i32;
 
     fn time(__timer: *mut time_t) -> time_t;
 }
@@ -152,7 +142,7 @@ pub const RM_BOTH: RunMode = 0;
 pub const RM_THEIRS: RunMode = 2;
 pub use crate::types::RunMode;
 pub use crate::types::{RunFrameFunc, SnesRegs};
-pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
+pub const NULL: *mut c_void = null_mut::<c_void>();
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 #[inline]
@@ -171,10 +161,10 @@ pub unsafe fn Call(addr: u32, game: &mut Game) {
         if addr & 0x8000u32 != 0 {
         } else {
             __assert_fail(
-                b"addr & 0x8000\0" as *const u8 as *const ::core::ffi::c_char,
-                b"src/sm_cpu_infra.c\0" as *const u8 as *const ::core::ffi::c_char,
+                b"addr & 0x8000\0" as *const u8 as *const c_char,
+                b"src/sm_cpu_infra.c\0" as *const u8 as *const c_char,
                 54u32,
-                b"void Call(uint32)\0" as *const u8 as *const ::core::ffi::c_char,
+                b"void Call(uint32)\0" as *const u8 as *const c_char,
             );
         }
     };
@@ -368,7 +358,7 @@ pub unsafe fn PatchBugs(mode: u32, addr: u32, game: &mut Game) -> u32 {
             *((&raw mut game.g_ram as *mut u8).offset(22) as *mut u8 as *mut u16) = 1u16;
         } else if FixBugHook(0x94a85bu32, game) {
             memset(
-                (&raw mut game.g_ram as *mut u8).offset(0xd82) as *mut ::core::ffi::c_void,
+                (&raw mut game.g_ram as *mut u8).offset(0xd82) as *mut c_void,
                 0i32,
                 8 as size_t,
             );
@@ -377,8 +367,8 @@ pub unsafe fn PatchBugs(mode: u32, addr: u32, game: &mut Game) -> u32 {
                 game.REMOVED_R18 = *((&raw mut game.g_ram as *mut u8).offset(0xcea) as *mut u16
                     as *mut u8)
                     .offset(
-                        (::core::mem::size_of::<u16>() as usize)
-                            .wrapping_div(::core::mem::size_of::<u8>() as usize)
+                        (size_of::<u16>() as usize)
+                            .wrapping_div(size_of::<u8>() as usize)
                             .wrapping_sub(1_usize) as isize,
                     ) as u16
             );
@@ -426,10 +416,7 @@ pub unsafe fn RunPatchBugHook(addr: u32, game: &mut Game) -> i32 {
 }
 pub unsafe fn CpuOpcodeHook(addr: u32, game: &mut Game) -> i32 {
     let mut i: size_t = 0 as size_t;
-    while i
-        != (::core::mem::size_of::<[u32; 155]>() as usize)
-            .wrapping_div(::core::mem::size_of::<u32>() as usize)
-    {
+    while i != (size_of::<[u32; 155]>() as usize).wrapping_div(size_of::<u32>() as usize) {
         if addr == kPatchedCarrys[i as usize] {
             return game.kPatchedCarrysOrg[i as usize] as i32;
         }
@@ -441,10 +428,10 @@ pub unsafe fn CpuOpcodeHook(addr: u32, game: &mut Game) -> i32 {
     }
     '_c2rust_label: {
         __assert_fail(
-            b"0\0" as *const u8 as *const ::core::ffi::c_char,
-            b"src/sm_cpu_infra.c\0" as *const u8 as *const ::core::ffi::c_char,
+            b"0\0" as *const u8 as *const c_char,
+            b"src/sm_cpu_infra.c\0" as *const u8 as *const c_char,
             455u32,
-            b"int CpuOpcodeHook(uint32)\0" as *const u8 as *const ::core::ffi::c_char,
+            b"int CpuOpcodeHook(uint32)\0" as *const u8 as *const c_char,
         );
     };
     0i32
@@ -457,10 +444,10 @@ pub unsafe fn HookedFunctionRts(is_long: i32, game: &mut Game) -> bool {
     }
     '_c2rust_label: {
         __assert_fail(
-            b"0\0" as *const u8 as *const ::core::ffi::c_char,
-            b"src/sm_cpu_infra.c\0" as *const u8 as *const ::core::ffi::c_char,
+            b"0\0" as *const u8 as *const c_char,
+            b"src/sm_cpu_infra.c\0" as *const u8 as *const c_char,
             465u32,
-            b"_Bool HookedFunctionRts(int)\0" as *const u8 as *const ::core::ffi::c_char,
+            b"_Bool HookedFunctionRts(int)\0" as *const u8 as *const c_char,
         );
     };
     false_0 != 0
@@ -750,186 +737,185 @@ unsafe fn VerifySnapshotsEq(
         }
     }
     memcpy(
-        (&raw mut (*b).ram as *mut u8).offset(0) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*a).ram as *mut u8).offset(0) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0) as *mut u8 as *mut c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0) as *mut u8 as *const c_void,
         0x51 as size_t,
     );
     memcpy(
-        (&raw mut (*b).ram as *mut u8).offset(0x1f5b) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*a).ram as *mut u8).offset(0x1f5b) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x1f5b) as *mut u8 as *mut c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x1f5b) as *mut u8 as *const c_void,
         (0x100i32 - 0x5bi32) as size_t,
     );
     memcpy(
-        (&raw mut (*b).ram as *mut u8).offset(0xad) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*a).ram as *mut u8).offset(0xad) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xad) as *mut u8 as *mut c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xad) as *mut u8 as *const c_void,
         4 as size_t,
     );
     memcpy(
-        (&raw mut (*b).ram as *mut u8).offset(0x5ed) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*a).ram as *mut u8).offset(0x5ed) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x5ed) as *mut u8 as *mut c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x5ed) as *mut u8 as *const c_void,
         8 as size_t,
     );
     memcpy(
-        (&raw mut (*b).ram as *mut u8).offset(0x5bc) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*a).ram as *mut u8).offset(0x5bc) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x5bc) as *mut u8 as *mut c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x5bc) as *mut u8 as *const c_void,
         9 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x60b) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x60b) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x60b) as *mut u8 as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x60b) as *mut u8 as *const c_void,
         6 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x611) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x611) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x611) as *mut u8 as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x611) as *mut u8 as *const c_void,
         6 as size_t,
     );
     memcpy(
-        (&raw mut (*b).ram as *mut u8).offset(0x641) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*a).ram as *mut u8).offset(0x641) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x641) as *mut u8 as *mut c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x641) as *mut u8 as *const c_void,
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x77e) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x77e) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x77e) as *mut u8 as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x77e) as *mut u8 as *const c_void,
         5 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x78f) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x78f) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x78f) as *mut u8 as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x78f) as *mut u8 as *const c_void,
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x7b7) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x7b7) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x7b7) as *mut u8 as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x7b7) as *mut u8 as *const c_void,
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x933) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x933) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x933) as *mut u8 as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x933) as *mut u8 as *const c_void,
         10 as size_t,
     );
     memcpy(
-        (&raw mut (*b).ram as *mut u8).offset(0xb24) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*a).ram as *mut u8).offset(0xb24) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xb24) as *mut u8 as *mut c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xb24) as *mut u8 as *const c_void,
         4 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xd1e) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xd1e) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xd1e) as *mut u8 as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xd1e) as *mut u8 as *const c_void,
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xd82) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xd82) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xd82) as *mut u8 as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xd82) as *mut u8 as *const c_void,
         8 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xd9c) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xd9c) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xd9c) as *mut u8 as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xd9c) as *mut u8 as *const c_void,
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xdd2) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xdd2) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xdd2) as *mut u8 as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xdd2) as *mut u8 as *const c_void,
         6 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xd8a) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xd8a) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xd8a) as *mut u8 as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xd8a) as *mut u8 as *const c_void,
         6 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xe20) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xe20) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xe20) as *mut u8 as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xe20) as *mut u8 as *const c_void,
         (0xe46i32 - 0xe20i32) as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xe54) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xe54) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xe54) as *mut u8 as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xe54) as *mut u8 as *const c_void,
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xe02) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xe02) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xe02) as *mut u8 as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xe02) as *mut u8 as *const c_void,
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xe4a) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xe4a) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xe4a) as *mut u8 as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xe4a) as *mut u8 as *const c_void,
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xe56) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xe56) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xe56) as *mut u8 as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xe56) as *mut u8 as *const c_void,
         4 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x1784) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x1784) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x1784) as *mut u8 as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x1784) as *mut u8 as *const c_void,
         8 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x1790) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x1790) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x1790) as *mut u8 as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x1790) as *mut u8 as *const c_void,
         4 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x17a8) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x17a8) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x17a8) as *mut u8 as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x17a8) as *mut u8 as *const c_void,
         4 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x1834) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x1834) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x1834) as *mut u8 as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x1834) as *mut u8 as *const c_void,
         8 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x184a) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x184a) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x184a) as *mut u8 as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x184a) as *mut u8 as *const c_void,
         18 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x186e) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x186e) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x186e) as *mut u8 as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x186e) as *mut u8 as *const c_void,
         (16i32 + 8i32) as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x18a6) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x18a6) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x18a6) as *mut u8 as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x18a6) as *mut u8 as *const c_void,
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x189a) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x189a) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x189a) as *mut u8 as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x189a) as *mut u8 as *const c_void,
         12 as size_t,
     );
     memcpy(
-        (&raw mut (*b).ram as *mut u8).offset(0x1966) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*a).ram as *mut u8).offset(0x1966) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x1966) as *mut u8 as *mut c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x1966) as *mut u8 as *const c_void,
         6 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xef74) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xef74) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xef74) as *mut u8 as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xef74) as *mut u8 as *const c_void,
         4 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xf37a) as *mut u8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xf37a) as *mut u8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xf37a) as *mut u8 as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xf37a) as *mut u8 as *const c_void,
         6 as size_t,
     );
     if memcmp(
-        &raw mut (*b).ram as *mut u8 as *const ::core::ffi::c_void,
-        &raw mut (*a).ram as *mut u8 as *const ::core::ffi::c_void,
+        &raw mut (*b).ram as *mut u8 as *const c_void,
+        &raw mut (*a).ram as *mut u8 as *const c_void,
         0x20000i32 as size_t,
     ) != 0
     {
         game.g_fail = true_0 != 0;
         fprintf(
             stderr,
-            b"@%d: Memory compare failed (mine != theirs, prev):\n\0" as *const u8
-                as *const ::core::ffi::c_char,
+            b"@%d: Memory compare failed (mine != theirs, prev):\n\0" as *const u8 as *const c_char,
             game.snes_frame_counter,
         );
         let mut j: i32 = 0i32;
@@ -947,8 +933,7 @@ unsafe fn VerifySnapshotsEq(
                         };
                         fprintf(
                             stderr,
-                            b"0x%.6X: %.4X != %.4X (%.4X)\n\0" as *const u8
-                                as *const ::core::ffi::c_char,
+                            b"0x%.6X: %.4X != %.4X (%.4X)\n\0" as *const u8 as *const c_char,
                             i as i32,
                             read_word(&(*b).ram),
                             read_word(&(*a).ram),
@@ -959,8 +944,7 @@ unsafe fn VerifySnapshotsEq(
                     } else {
                         fprintf(
                             stderr,
-                            b"0x%.6X: %.2X != %.2X (%.2X)\n\0" as *const u8
-                                as *const ::core::ffi::c_char,
+                            b"0x%.6X: %.2X != %.2X (%.2X)\n\0" as *const u8 as *const c_char,
                             i as i32,
                             (*b).ram[i as usize] as i32,
                             (*a).ram[i as usize] as i32,
@@ -976,21 +960,20 @@ unsafe fn VerifySnapshotsEq(
         }
         fprintf(
             stderr,
-            b"  total of %d failed bytes\n\0" as *const u8 as *const ::core::ffi::c_char,
+            b"  total of %d failed bytes\n\0" as *const u8 as *const c_char,
             j,
         );
     }
     if memcmp(
-        &raw mut (*b).sram as *mut u8 as *const ::core::ffi::c_void,
-        &raw mut (*a).sram as *mut u8 as *const ::core::ffi::c_void,
+        &raw mut (*b).sram as *mut u8 as *const c_void,
+        &raw mut (*a).sram as *mut u8 as *const c_void,
         0x2000 as size_t,
     ) != 0
     {
         game.g_fail = true_0 != 0;
         fprintf(
             stderr,
-            b"@%d: SRAM compare failed (mine != theirs, prev):\n\0" as *const u8
-                as *const ::core::ffi::c_char,
+            b"@%d: SRAM compare failed (mine != theirs, prev):\n\0" as *const u8 as *const c_char,
             game.snes_frame_counter,
         );
         let mut j_0: i32 = 0i32;
@@ -1005,8 +988,7 @@ unsafe fn VerifySnapshotsEq(
                     {
                         fprintf(
                             stderr,
-                            b"0x%.6X: %.4X != %.4X (%.4X)\n\0" as *const u8
-                                as *const ::core::ffi::c_char,
+                            b"0x%.6X: %.4X != %.4X (%.4X)\n\0" as *const u8 as *const c_char,
                             i_0 as i32,
                             *((&raw mut (*b).sram as *mut u8).offset(i_0 as isize) as *mut u8
                                 as *mut u16) as i32,
@@ -1020,8 +1002,7 @@ unsafe fn VerifySnapshotsEq(
                     } else {
                         fprintf(
                             stderr,
-                            b"0x%.6X: %.2X != %.2X (%.2X)\n\0" as *const u8
-                                as *const ::core::ffi::c_char,
+                            b"0x%.6X: %.2X != %.2X (%.2X)\n\0" as *const u8 as *const c_char,
                             i_0 as i32,
                             (*b).sram[i_0 as usize] as i32,
                             (*a).sram[i_0 as usize] as i32,
@@ -1037,21 +1018,20 @@ unsafe fn VerifySnapshotsEq(
         }
         fprintf(
             stderr,
-            b"  total of %d failed bytes\n\0" as *const u8 as *const ::core::ffi::c_char,
+            b"  total of %d failed bytes\n\0" as *const u8 as *const c_char,
             j_0,
         );
     }
     if memcmp(
-        &raw mut (*b).vram as *mut u16 as *const ::core::ffi::c_void,
-        &raw mut (*a).vram as *mut u16 as *const ::core::ffi::c_void,
-        (::core::mem::size_of::<u16>() as size_t).wrapping_mul(0x8000 as size_t),
+        &raw mut (*b).vram as *mut u16 as *const c_void,
+        &raw mut (*a).vram as *mut u16 as *const c_void,
+        (size_of::<u16>() as size_t).wrapping_mul(0x8000 as size_t),
     ) != 0
     {
         game.g_fail = true_0 != 0;
         fprintf(
             stderr,
-            b"@%d: VRAM compare failed (mine != theirs, prev):\n\0" as *const u8
-                as *const ::core::ffi::c_char,
+            b"@%d: VRAM compare failed (mine != theirs, prev):\n\0" as *const u8 as *const c_char,
             game.snes_frame_counter,
         );
         let mut i_1: size_t = 0 as size_t;
@@ -1060,7 +1040,7 @@ unsafe fn VerifySnapshotsEq(
             if (*a).vram[i_1 as usize] as i32 != (*b).vram[i_1 as usize] as i32 {
                 fprintf(
                     stderr,
-                    b"0x%.6X: %.4X != %.4X (%.4X)\n\0" as *const u8 as *const ::core::ffi::c_char,
+                    b"0x%.6X: %.4X != %.4X (%.4X)\n\0" as *const u8 as *const c_char,
                     i_1 as i32,
                     (*b).vram[i_1 as usize] as i32,
                     (*a).vram[i_1 as usize] as i32,
@@ -1168,19 +1148,19 @@ unsafe fn MakeSnapshot(s: &mut Snapshot, snes: &Snes, c: &Cpu, player: *mut SpcP
     );
     (*s).vTimer = (*snes).vTimer;
     memcpy(
-        &raw mut (*s).ram as *mut u8 as *mut ::core::ffi::c_void,
-        (*snes).ram as *const ::core::ffi::c_void,
+        &raw mut (*s).ram as *mut u8 as *mut c_void,
+        (*snes).ram as *const c_void,
         0x20000i32 as size_t,
     );
     memcpy(
-        &raw mut (*s).sram as *mut u8 as *mut ::core::ffi::c_void,
-        (*(*snes).cart).ram as *const ::core::ffi::c_void,
+        &raw mut (*s).sram as *mut u8 as *mut c_void,
+        (*(*snes).cart).ram as *const c_void,
         (*(*snes).cart).ramSize as size_t,
     );
     memcpy(
-        &raw mut (*s).vram as *mut u16 as *mut ::core::ffi::c_void,
-        &raw mut (*(*snes).ppu).vram as *mut u16 as *const ::core::ffi::c_void,
-        (::core::mem::size_of::<u16>() as size_t).wrapping_mul(0x8000 as size_t),
+        &raw mut (*s).vram as *mut u16 as *mut c_void,
+        &raw mut (*(*snes).ppu).vram as *mut u16 as *const c_void,
+        (size_of::<u16>() as size_t).wrapping_mul(0x8000 as size_t),
     );
     let ppu = &*(*snes).ppu;
     (*s).brightness = ppu.brightness;
@@ -1400,19 +1380,19 @@ unsafe fn RestoreSnapshot(s: &Snapshot, snes: &mut Snes, c: &mut Cpu) {
         snes.divideResult,
     ) = (*s).arithmetic;
     memcpy(
-        (*snes).ram as *mut ::core::ffi::c_void,
-        &raw const (*s).ram as *const u8 as *const ::core::ffi::c_void,
+        (*snes).ram as *mut c_void,
+        &raw const (*s).ram as *const u8 as *const c_void,
         0x20000i32 as size_t,
     );
     memcpy(
-        (*(*snes).cart).ram as *mut ::core::ffi::c_void,
-        &raw const (*s).sram as *const u8 as *const ::core::ffi::c_void,
+        (*(*snes).cart).ram as *mut c_void,
+        &raw const (*s).sram as *const u8 as *const c_void,
         0x2000 as size_t,
     );
     memcpy(
-        &raw mut (*(*snes).ppu).vram as *mut u16 as *mut ::core::ffi::c_void,
-        &raw const (*s).vram as *const u16 as *const ::core::ffi::c_void,
-        (::core::mem::size_of::<u16>() as size_t).wrapping_mul(0x8000 as size_t),
+        &raw mut (*(*snes).ppu).vram as *mut u16 as *mut c_void,
+        &raw const (*s).vram as *const u16 as *const c_void,
+        (size_of::<u16>() as size_t).wrapping_mul(0x8000 as size_t),
     );
     let ppu = &mut *(*snes).ppu;
     ppu.hCount = (*s).counters.horizontal;
@@ -1439,7 +1419,7 @@ pub unsafe fn RunAsmCode(pc: u32, a: u16, x: u16, y: u16, flags: i32, game: &mut
     let org_pc: u16 = (*game.g_cpu).pc as u16;
     let org_b: u8 = (*game.g_cpu).db as u8;
     let org_dp: u16 = (*game.g_cpu).dp as u16;
-    printf(b"RunAsmCode!\n\0" as *const u8 as *const ::core::ffi::c_char);
+    printf(b"RunAsmCode!\n\0" as *const u8 as *const c_char);
     game.g_ram[0x1ffffi32 as usize] = 1u8;
     let dc: bool = (*game.g_snes).debug_cycles;
     (*game.g_cpu).db = (pc >> 16i32) as u8;
@@ -1456,10 +1436,10 @@ pub unsafe fn RunAsmCode(pc: u32, a: u16, x: u16, y: u16, flags: i32, game: &mut
         let pc_0: u32 =
             (((*(*game.g_snes).cpu).k as i32) << 16i32 | (*(*game.g_snes).cpu).pc as i32) as u32;
         if (*game.g_snes).debug_cycles {
-            let mut line: [::core::ffi::c_char; 80] = [0; 80];
-            getProcessorStateCpu(game.g_snes, &raw mut line as *mut ::core::ffi::c_char, game);
-            puts(&raw mut line as *mut ::core::ffi::c_char);
-            line[0i32 as usize] = 0 as ::core::ffi::c_char;
+            let mut line: [c_char; 80] = [0; 80];
+            getProcessorStateCpu(game.g_snes, &raw mut line as *mut c_char, game);
+            puts(&raw mut line as *mut c_char);
+            line[0i32 as usize] = 0 as c_char;
         }
         cpu_runOpcode(game.g_cpu, game);
         while (*(*game.g_snes).dma).dmaBusy {
@@ -1480,16 +1460,16 @@ pub unsafe fn RunAsmCode(pc: u32, a: u16, x: u16, y: u16, flags: i32, game: &mut
     (*game.g_snes).debug_cycles = dc;
     game.g_calling_asm_from_c_ret
 }
-unsafe fn loadRom(name: *const ::core::ffi::c_char, snes: *mut Snes, game: &mut Game) -> bool {
+unsafe fn loadRom(name: *const c_char, snes: *mut Snes, game: &mut Game) -> bool {
     let mut length: size_t = 0 as size_t;
-    let mut file: *mut u8 = ::core::ptr::null_mut::<u8>();
+    let mut file: *mut u8 = null_mut::<u8>();
     file = ReadWholeFile(name, &raw mut length) as *mut u8;
     if file.is_null() {
-        puts(b"Failed to read file\0" as *const u8 as *const ::core::ffi::c_char);
+        puts(b"Failed to read file\0" as *const u8 as *const c_char);
         return false_0 != 0;
     }
     let result: bool = snes_loadRom(snes as *mut Snes, file, length as i32, game);
-    free(file as *mut ::core::ffi::c_void);
+    free(file as *mut c_void);
     result
 }
 pub unsafe fn PatchBytes(addr: u32, bytes: &[u8], game: &mut Game) {
@@ -1531,18 +1511,18 @@ pub unsafe fn RtlUpdateSnesPatchForBugfix(game: &mut Game) {
     );
     PatchBytes(0x8584ccu32, &[0x18, 0x18], game);
 }
-pub unsafe fn SnesInit(filename: *const ::core::ffi::c_char, game: &mut Game) -> *mut Snes {
+pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
     game.g_snes = snes_init(&raw mut game.g_ram as *mut u8) as *mut Snes;
     game.g_cpu = (*game.g_snes).cpu;
     let loaded: bool = loadRom(filename, game.g_snes, game);
     if !loaded {
-        return ::core::ptr::null_mut::<Snes>();
+        return null_mut::<Snes>();
     }
     game.g_sram = (*(*game.g_snes).cart).ram as *mut u8;
     game.g_rom = (*(*game.g_snes).cart).rom;
     game.register_rom(game.g_rom, (*(*game.g_snes).cart).romSize as usize);
     RtlSetupEmuCallbacks(
-        ::core::ptr::null_mut::<u8>(),
+        null_mut::<u8>(),
         Some(RtlRunFrameCompare as unsafe fn(u16, i32, &mut Game) -> ()),
         None,
         game,
@@ -1748,17 +1728,14 @@ pub unsafe fn SnesInit(filename: *const ::core::ffi::c_char, game: &mut Game) ->
     PatchBytes(0xa7b03au32, &[0x22, 0x82, 0xff, 0xa7], game);
     RtlUpdateSnesPatchForBugfix(game);
     let mut i: size_t = 0 as size_t;
-    while i
-        != (::core::mem::size_of::<[u32; 155]>() as usize)
-            .wrapping_div(::core::mem::size_of::<u32>() as usize)
-    {
+    while i != (size_of::<[u32; 155]>() as usize).wrapping_div(size_of::<u32>() as usize) {
         let t_84: u8 = *SnesRomPtr(kPatchedCarrys[i as usize], game);
         if t_84 != 0 {
             game.kPatchedCarrysOrg[i as usize] = t_84;
             FixupCarry(kPatchedCarrys[i as usize], game);
         } else {
             printf(
-                b"0x%x double patched!\n\0" as *const u8 as *const ::core::ffi::c_char,
+                b"0x%x double patched!\n\0" as *const u8 as *const c_char,
                 kPatchedCarrys[i as usize],
             );
         }
@@ -1770,19 +1747,19 @@ pub unsafe fn SnesInit(filename: *const ::core::ffi::c_char, game: &mut Game) ->
 pub unsafe fn DebugGameOverMenu() {
     '_c2rust_label: {
         __assert_fail(
-            b"0\0" as *const u8 as *const ::core::ffi::c_char,
-            b"src/sm_cpu_infra.c\0" as *const u8 as *const ::core::ffi::c_char,
+            b"0\0" as *const u8 as *const c_char,
+            b"src/sm_cpu_infra.c\0" as *const u8 as *const c_char,
             914u32,
-            b"void DebugGameOverMenu(void)\0" as *const u8 as *const ::core::ffi::c_char,
+            b"void DebugGameOverMenu(void)\0" as *const u8 as *const c_char,
         );
     };
 }
 pub unsafe fn RunCpuUntilPC(pc1: u32, pc2: u32, game: &mut Game) -> u32 {
     loop {
         if (*game.g_snes).debug_cycles {
-            let mut line: [::core::ffi::c_char; 80] = [0; 80];
-            getProcessorStateCpu(game.g_snes, &raw mut line as *mut ::core::ffi::c_char, game);
-            puts(&raw mut line as *mut ::core::ffi::c_char);
+            let mut line: [c_char; 80] = [0; 80];
+            getProcessorStateCpu(game.g_snes, &raw mut line as *mut c_char, game);
+            puts(&raw mut line as *mut c_char);
         }
         cpu_runOpcode(game.g_cpu, game);
         let addr: u32 =
@@ -1827,18 +1804,14 @@ pub unsafe fn SaveBugSnapshot(game: &mut Game) {
         return;
     }
     if !game.g_debug_flag && game.g_got_mismatch_count == 0i32 {
-        let mut buffer: [::core::ffi::c_char; 64] = [0; 64];
+        let mut buffer: [c_char; 64] = [0; 64];
         snprintf(
-            &raw mut buffer as *mut ::core::ffi::c_char,
-            ::core::mem::size_of::<[::core::ffi::c_char; 64]>() as size_t,
-            b"saves/bug-%d.sav\0" as *const u8 as *const ::core::ffi::c_char,
-            time(::core::ptr::null_mut::<time_t>()) as i32,
+            &raw mut buffer as *mut c_char,
+            size_of::<[c_char; 64]>() as size_t,
+            b"saves/bug-%d.sav\0" as *const u8 as *const c_char,
+            time(null_mut::<time_t>()) as i32,
         );
-        RtlSaveSnapshot(
-            &raw mut buffer as *mut ::core::ffi::c_char,
-            true_0 != 0,
-            game,
-        );
+        RtlSaveSnapshot(&raw mut buffer as *mut c_char, true_0 != 0, game);
     }
     game.g_got_mismatch_count = 5i32 * 60i32;
 }
@@ -1976,7 +1949,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
             }
             game.g_fail = false_0 != 0;
             if !game.VERIFY_ACTIVE || game.VERIFY_FAILURES == 1 {
-                printf(b"Verify failure!\n\0" as *const u8 as *const ::core::ffi::c_char);
+                printf(b"Verify failure!\n\0" as *const u8 as *const c_char);
             }
         }
         // Headless recovery adopts the completed oracle frame, including the Rust
@@ -2035,7 +2008,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
         *(&raw mut game.g_ram as *mut u8).offset(0x611) = 3u8;
     }
     if ram_word!(game, menu_index) as i32 & 0xff00i32 != 0 {
-        printf(b"MENU INDEX TOO BIG!\n\0" as *const u8 as *const ::core::ffi::c_char);
+        printf(b"MENU INDEX TOO BIG!\n\0" as *const u8 as *const c_char);
         SaveBugSnapshot(game);
         update_ram_word!(game.menu_index, |fresh1| (fresh1 as i32 & 0xffi32) as u16);
     }

@@ -1,19 +1,17 @@
 use crate::game_state::Game;
+use ::core::ffi::{c_char, c_long, c_void};
+use ::core::mem::{size_of, transmute};
 
 extern "C" {
-    fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn free(__ptr: *mut ::core::ffi::c_void);
-    fn memcpy(
-        __dest: *mut ::core::ffi::c_void,
-        __src: *const ::core::ffi::c_void,
-        __n: size_t,
-    ) -> *mut ::core::ffi::c_void;
-    fn memset(__s: *mut ::core::ffi::c_void, __c: i32, __n: size_t) -> *mut ::core::ffi::c_void;
+    fn malloc(__size: size_t) -> *mut c_void;
+    fn free(__ptr: *mut c_void);
+    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
+    fn memset(__s: *mut c_void, __c: i32, __n: size_t) -> *mut c_void;
     fn __assert_fail(
-        __assertion: *const ::core::ffi::c_char,
-        __file: *const ::core::ffi::c_char,
+        __assertion: *const c_char,
+        __file: *const c_char,
         __line: u32,
-        __function: *const ::core::ffi::c_char,
+        __function: *const c_char,
     ) -> !;
 }
 pub use crate::types::{
@@ -53,10 +51,8 @@ pub type C2RustUnnamed_2 = u32;
 pub type C2RustUnnamed_3 = u32;
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
-pub const __ASSERT_FUNCTION: [::core::ffi::c_char; 43] = unsafe {
-    ::core::mem::transmute::<[u8; 43], [::core::ffi::c_char; 43]>(
-        *b"void PpuDrawBackgrounds(Ppu *, int, _Bool)\0",
-    )
+pub const __ASSERT_FUNCTION: [c_char; 43] = unsafe {
+    transmute::<[u8; 43], [c_char; 43]>(*b"void PpuDrawBackgrounds(Ppu *, int, _Bool)\0")
 };
 #[inline]
 unsafe fn IntMin(a: i32, b: i32) -> i32 {
@@ -122,23 +118,23 @@ static spriteSizes: [[i32; 2]; 8] = [
     [16, 32],
 ];
 pub unsafe fn ppu_init(snes: *mut Snes) -> *mut Ppu {
-    let ppu: *mut Ppu = malloc(::core::mem::size_of::<Ppu>() as size_t) as *mut Ppu;
+    let ppu: *mut Ppu = malloc(size_of::<Ppu>() as size_t) as *mut Ppu;
     (*ppu).renderBuffer = core::ptr::null_mut();
     (*ppu).renderPitch = 0;
     (*ppu).snes = snes;
     ppu
 }
 pub unsafe fn ppu_free(ppu: *mut Ppu) {
-    free(ppu as *mut ::core::ffi::c_void);
+    free(ppu as *mut c_void);
 }
 pub unsafe fn ppu_copy(ppu: *mut Ppu, ppu_src: *mut Ppu) {
     let snes: *mut Snes = (*ppu).snes;
     let pitch: size_t = (*ppu).renderPitch as size_t;
     let renderBuffer: *mut u8 = (*ppu).renderBuffer;
     memcpy(
-        ppu as *mut ::core::ffi::c_void,
-        ppu_src as *const ::core::ffi::c_void,
-        ::core::mem::size_of::<Ppu>() as size_t,
+        ppu as *mut c_void,
+        ppu_src as *const c_void,
+        size_of::<Ppu>() as size_t,
     );
     (*ppu).renderBuffer = renderBuffer;
     (*ppu).renderPitch = pitch as u32;
@@ -162,12 +158,12 @@ pub unsafe fn ppu_reset(ppu: *mut Ppu) {
 pub unsafe fn ppu_saveload(
     ppu: *mut Ppu,
     func: Option<SaveLoadFunc>,
-    ctx: *mut ::core::ffi::c_void,
+    ctx: *mut c_void,
     game: &mut Game,
 ) {
     func.expect("non-null function pointer")(
         ctx,
-        &raw mut (*ppu).vram as *mut ::core::ffi::c_void,
+        &raw mut (*ppu).vram as *mut c_void,
         (67313 as size_t).wrapping_sub(8 as size_t),
         game,
     );
@@ -760,7 +756,7 @@ unsafe fn PpuDrawBackground_mode7(ppu: *mut Ppu, mut y: u32, sub: bool, z: PpuZb
                 let mut w: i32 =
                     (*ppu).mosaicSize as i32 - (x - (*ppu).mosaicModulo[x as usize] as i32);
                 loop {
-                    w = IntMin(w, dstz_end.offset_from(dstz) as ::core::ffi::c_long as i32);
+                    w = IntMin(w, dstz_end.offset_from(dstz) as c_long as i32);
                     let pixel = ppu_mode7_sample(ppu, xpos, ypos, outside_value, char_fill);
                     if pixel != 0 {
                         let mut i: i32 = 0i32;
@@ -776,9 +772,7 @@ unsafe fn PpuDrawBackground_mode7(ppu: *mut Ppu, mut y: u32, sub: bool, z: PpuZb
                     ypos = ypos.wrapping_add(dy.wrapping_mul(w as u32));
                     dstz = dstz.offset(w as isize);
                     w = (*ppu).mosaicSize as i32;
-                    if (dstz_end.offset_from(dstz) as ::core::ffi::c_long
-                        == 0 as ::core::ffi::c_long)
-                    {
+                    if (dstz_end.offset_from(dstz) as c_long == 0 as c_long) {
                         break;
                     }
                 }
@@ -822,9 +816,9 @@ unsafe fn PpuDrawSprites(ppu: *mut Ppu, y: u32, sub: u32, clear_backdrop: bool) 
                 .offset(kPpuExtraLeftRight as i32 as isize);
             if clear_backdrop {
                 memcpy(
-                    dst as *mut ::core::ffi::c_void,
-                    src as *const ::core::ffi::c_void,
-                    (width as size_t).wrapping_mul(::core::mem::size_of::<u16>() as size_t),
+                    dst as *mut c_void,
+                    src as *const c_void,
+                    (width as size_t).wrapping_mul(size_of::<u16>() as size_t),
                 );
             } else {
                 loop {
@@ -851,8 +845,8 @@ unsafe fn PpuDrawBackgrounds(ppu: *mut Ppu, y: i32, sub: bool) {
         if (*ppu).mosaicEnabled as i32 & (1i32) << 0i32 != 0 {
             '_c2rust_label: {
                 __assert_fail(
-                    b"0\0" as *const u8 as *const ::core::ffi::c_char,
-                    b"src/snes/ppu.c\0" as *const u8 as *const ::core::ffi::c_char,
+                    b"0\0" as *const u8 as *const c_char,
+                    b"src/snes/ppu.c\0" as *const u8 as *const c_char,
                     679u32,
                     __ASSERT_FUNCTION.as_ptr(),
                 );
@@ -870,8 +864,8 @@ unsafe fn PpuDrawBackgrounds(ppu: *mut Ppu, y: i32, sub: bool) {
         if (*ppu).mosaicEnabled as i32 & (1i32) << 1i32 != 0 {
             '_c2rust_label_0: {
                 __assert_fail(
-                    b"0\0" as *const u8 as *const ::core::ffi::c_char,
-                    b"src/snes/ppu.c\0" as *const u8 as *const ::core::ffi::c_char,
+                    b"0\0" as *const u8 as *const c_char,
+                    b"src/snes/ppu.c\0" as *const u8 as *const c_char,
                     684u32,
                     __ASSERT_FUNCTION.as_ptr(),
                 );
@@ -889,8 +883,8 @@ unsafe fn PpuDrawBackgrounds(ppu: *mut Ppu, y: i32, sub: bool) {
         if (*ppu).mosaicEnabled as i32 & (1i32) << 2i32 != 0 {
             '_c2rust_label_1: {
                 __assert_fail(
-                    b"0\0" as *const u8 as *const ::core::ffi::c_char,
-                    b"src/snes/ppu.c\0" as *const u8 as *const ::core::ffi::c_char,
+                    b"0\0" as *const u8 as *const c_char,
+                    b"src/snes/ppu.c\0" as *const u8 as *const c_char,
                     689u32,
                     __ASSERT_FUNCTION.as_ptr(),
                 );
@@ -919,9 +913,9 @@ unsafe fn PpuDrawWholeLine(ppu: *mut Ppu, y: u32) {
                 .wrapping_sub(1u32)
                 .wrapping_mul((*ppu).renderPitch) as isize,
         ) as *mut u8;
-        let n: size_t = (::core::mem::size_of::<u32>() as size_t)
+        let n: size_t = (size_of::<u32>() as size_t)
             .wrapping_mul((256i32 + (*ppu).extraLeftRight as i32 * 2i32) as size_t);
-        memset(dst as *mut ::core::ffi::c_void, 0i32, n);
+        memset(dst as *mut c_void, 0i32, n);
         return;
     }
     ClearBackdrop(&mut (*ppu).bgBuffers[0]);

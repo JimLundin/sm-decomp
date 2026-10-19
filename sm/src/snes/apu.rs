@@ -4,11 +4,13 @@ use crate::snes::dsp::{
 };
 use crate::snes::spc::{spc_free, spc_init, spc_reset, spc_runOpcode, spc_saveload};
 use crate::tracing::getProcessorStateSpc;
+use ::core::ffi::{c_char, c_void};
+use ::core::mem::size_of;
 extern "C" {
-    fn puts(__s: *const ::core::ffi::c_char) -> i32;
-    fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn free(__ptr: *mut ::core::ffi::c_void);
-    fn memset(__s: *mut ::core::ffi::c_void, __c: i32, __n: size_t) -> *mut ::core::ffi::c_void;
+    fn puts(__s: *const c_char) -> i32;
+    fn malloc(__size: size_t) -> *mut c_void;
+    fn free(__ptr: *mut c_void);
+    fn memset(__s: *mut c_void, __c: i32, __n: size_t) -> *mut c_void;
 
 }
 pub use crate::types::{
@@ -24,7 +26,7 @@ static bootRom: [u8; 64] = [
     0xf6, 0xda, 0, 0xba, 0xf4, 0xc4, 0xf4, 0xdd, 0x5d, 0xd0, 0xdb, 0x1f, 0, 0, 0xc0, 0xff,
 ];
 pub unsafe fn apu_init() -> *mut Apu {
-    let apu: *mut Apu = malloc(::core::mem::size_of::<Apu>() as size_t) as *mut Apu;
+    let apu: *mut Apu = malloc(size_of::<Apu>() as size_t) as *mut Apu;
     core::ptr::write_bytes(apu, 0, 1);
     (*apu).spc = spc_init(apu as *mut Apu);
     (*apu).dsp = dsp_init(&raw mut (*apu).ram as *mut u8);
@@ -33,7 +35,7 @@ pub unsafe fn apu_init() -> *mut Apu {
 pub unsafe fn apu_free(apu: *mut Apu) {
     spc_free((*apu).spc);
     dsp_free((*apu).dsp);
-    free(apu as *mut ::core::ffi::c_void);
+    free(apu as *mut c_void);
 }
 pub unsafe fn apu_reset(apu: *mut Apu) {
     (*apu).romReadable = true;
@@ -57,12 +59,12 @@ pub unsafe fn apu_reset(apu: *mut Apu) {
 pub unsafe fn apu_saveload(
     apu: *mut Apu,
     func: Option<SaveLoadFunc>,
-    ctx: *mut ::core::ffi::c_void,
+    ctx: *mut c_void,
     game: &mut Game,
 ) {
     func.expect("non-null function pointer")(
         ctx,
-        &raw mut (*apu).ram as *mut u8 as *mut ::core::ffi::c_void,
+        &raw mut (*apu).ram as *mut u8 as *mut c_void,
         (65586 as size_t)
             .wrapping_add(6 as size_t)
             .wrapping_sub(16 as size_t),
@@ -75,7 +77,7 @@ pub unsafe fn apu_saveload(
 pub unsafe fn apu_cycle(apu: *mut Apu, game: &mut Game) {
     if (*apu).cpuCyclesLeft == 0 {
         if game.g_debug_apu_cycles {
-            let mut line: [::core::ffi::c_char; 80] = [0; 80];
+            let mut line: [c_char; 80] = [0; 80];
             getProcessorStateSpc(apu, line.as_mut_ptr());
             puts(line.as_mut_ptr());
         }

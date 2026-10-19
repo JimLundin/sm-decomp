@@ -23,16 +23,18 @@ use crate::game_state::Game;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::types::TileDrawOrder;
+use ::core::ffi::{c_char, c_long, c_void};
+use ::core::ptr::{null, null_mut};
 
 use crate::rtl::{Load24, Mult8x8, RomPtr, SnesDivide, SnesModulus, Unreachable};
 extern "C" {
     fn __assert_fail(
-        __assertion: *const ::core::ffi::c_char,
-        __file: *const ::core::ffi::c_char,
+        __assertion: *const c_char,
+        __file: *const c_char,
         __line: u32,
-        __function: *const ::core::ffi::c_char,
+        __function: *const c_char,
     ) -> !;
-    fn printf(__format: *const ::core::ffi::c_char, ...) -> i32;
+    fn printf(__format: *const c_char, ...) -> i32;
 
 }
 pub use crate::types::{CoroutineRet, Func_Y_V, LongPtr, VoidP, VramWriteEntry};
@@ -55,7 +57,7 @@ pub use crate::types::Consts_86;
 pub use crate::types::SpawnHardcodedPlmArgs;
 pub use crate::types::{Consts_60, RoomDefRoomstate, TileTable, TileTables};
 pub use crate::types::{EnemyData, RoomPlmEntry, SamusPose};
-pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
+pub const NULL: *mut c_void = null_mut::<c_void>();
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 pub const kCoroutineNone: i32 = 0;
@@ -65,10 +67,10 @@ unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
         if addr < 0x2000u16 {
         } else {
             __assert_fail(
-                b"addr < 0x2000\0" as *const u8 as *const ::core::ffi::c_char,
-                b"src/sm_rtl.h\0" as *const u8 as *const ::core::ffi::c_char,
+                b"addr < 0x2000\0" as *const u8 as *const c_char,
+                b"src/sm_rtl.h\0" as *const u8 as *const c_char,
                 51u32,
-                b"uint8 *RomPtr_RAM(uint16_t)\0" as *const u8 as *const ::core::ffi::c_char,
+                b"uint8 *RomPtr_RAM(uint16_t)\0" as *const u8 as *const c_char,
             );
         }
     };
@@ -694,8 +696,8 @@ pub unsafe fn SpawnPLMWithCollision(header: u16, displacement: *mut i32, game: &
 pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
     let mut _state_variable_: *mut u8 = (&raw mut game.g_ram as *mut u8).offset(0x613);
     's_158: {
-        let mut base: *const u8 = ::core::ptr::null::<u8>();
-        let mut v5: *const u8 = ::core::ptr::null::<u8>();
+        let mut base: *const u8 = null::<u8>();
+        let mut v5: *const u8 = null::<u8>();
         let mut current_block_28: u64;
         match *_state_variable_ as i32 {
             0 => {
@@ -744,7 +746,7 @@ pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
                                 current_block_28 = 735147466149431745;
                             } else {
                                 base = RomBankBase(0x84u8, game);
-                                v5 = ::core::ptr::null::<u8>();
+                                v5 = null::<u8>();
                                 v5 = base.offset(
                                     *((&raw mut game.g_ram as *mut u8).offset(0x1d27) as *mut u16)
                                         .offset((ram_word!(game, plm_id) as i32 >> 1i32) as isize)
@@ -793,7 +795,7 @@ pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
                             );
                             set_ram_word!(
                                 game.plm_instr_list_ptrs[v7] =
-                                    v5.offset(4).offset_from(base) as ::core::ffi::c_long as u16
+                                    v5.offset(4).offset_from(base) as c_long as u16
                             );
                             ProcessPlmDrawInstruction(ram_word!(game, plm_id), game);
                             CalculatePlmBlockCoords(ram_word!(game, plm_id), game);
@@ -824,7 +826,7 @@ pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
             }
             *((&raw mut game.g_ram as *mut u8).offset(0x1d27) as *mut u16)
                 .offset((ram_word!(game, plm_id) as i32 >> 1i32) as isize) =
-                v5.offset_from(base) as ::core::ffi::c_long as u16;
+                v5.offset_from(base) as c_long as u16;
             current_block_28 = 12780425637862113792;
         }
     }
@@ -840,10 +842,10 @@ unsafe fn RomPtr_84orRAM(addr: u16, game: &mut Game) -> *mut u8 {
             if addr < 0x2000u16 {
             } else {
                 __assert_fail(
-                    b"addr < 0x2000\0" as *const u8 as *const ::core::ffi::c_char,
-                    b"src/sm_84.c\0" as *const u8 as *const ::core::ffi::c_char,
+                    b"addr < 0x2000\0" as *const u8 as *const c_char,
+                    b"src/sm_84.c\0" as *const u8 as *const c_char,
                     265u32,
-                    b"uint8 *RomPtr_84orRAM(uint16_t)\0" as *const u8 as *const ::core::ffi::c_char,
+                    b"uint8 *RomPtr_84orRAM(uint16_t)\0" as *const u8 as *const c_char,
                 );
             }
         };
@@ -888,12 +890,12 @@ pub unsafe fn PlmInstr_Sleep(plmp: *const u8, k: u16, game: &mut Game) -> *const
     let instruction = (plmp.offset_from(RomBankBase(0x84, game)) as u16).wrapping_sub(2);
     let offset = 0x1d27 + usize::from(k >> 1) * 2; // plm_instruction_list_ptrs
     game.g_ram[offset..offset + 2].copy_from_slice(&instruction.to_le_bytes());
-    ::core::ptr::null()
+    null()
 }
 pub fn PlmInstr_Delete(_plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
     let offset = 0x1c37 + usize::from(k >> 1) * 2; // plm_header_ptr
     game.g_ram[offset..offset + 2].copy_from_slice(&0u16.to_le_bytes());
-    ::core::ptr::null()
+    null()
 }
 pub unsafe fn PlmInstr_PreInstr(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
     let pre_instruction = (plmp as *const u16).read_unaligned();
@@ -1294,7 +1296,7 @@ pub unsafe fn PlmInstr_DrawPlmBlock(plmp: *const u8, k: u16, game: &mut Game) ->
     let v4: u16 = ram_word!(game, plm_id);
     CalculatePlmBlockCoords(ram_word!(game, plm_id), game);
     DrawPlm(v4, game);
-    ::core::ptr::null::<u8>()
+    null::<u8>()
 }
 pub unsafe fn PlmInstr_ProcessAirScrollUpdate(
     plmp: *const u8,
@@ -1554,13 +1556,13 @@ pub unsafe fn DrawPlm(mut k: u16, game: &mut Game) {
     let mut v2: i16 = 0;
     let mut v5: i16 = 0;
     let mut v8: i16 = 0;
-    let mut v10: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
+    let mut v10: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
     let mut v12: VoidP = 0;
     let mut v13: VoidP = 0;
-    let mut v15: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
+    let mut v15: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
     let mut v20: i16 = 0;
     let mut v23: bool = false;
-    let mut v25: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
+    let mut v25: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
     let mut v31: i16 = 0;
     let mut v35: u16 = 0;
     let mut r26: u16 = 0;
@@ -1575,8 +1577,8 @@ pub unsafe fn DrawPlm(mut k: u16, game: &mut Game) {
     let mut x: u16 = ram_word!(game, plm_x_block);
     let mut y: u16 = ram_word!(game, plm_y_block);
     let mut r3: u16 = 0;
-    let mut r0: *mut u16 = ::core::ptr::null_mut::<u16>();
-    let mut r6: *mut u16 = ::core::ptr::null_mut::<u16>();
+    let mut r0: *mut u16 = null_mut::<u16>();
+    let mut r6: *mut u16 = null_mut::<u16>();
     '_LABEL_2: loop {
         r26 = (ram_word!(game, layer1_y_pos) as i32 >> 4i32) as u16;
         if (ram_word!(game, layer1_y_pos) as i32 >> 4i32) + 15i32 - y as i32 & 0x8000i32 != 0 {
@@ -2277,10 +2279,10 @@ fn retain_plm_block_bits(j: u16, mask: u16, game: &mut Game) {
 pub unsafe fn UNUSED_sub_84B3E3(j: u16) -> u8 {
     '_c2rust_label: {
         __assert_fail(
-            b"0\0" as *const u8 as *const ::core::ffi::c_char,
-            b"src/sm_84.c\0" as *const u8 as *const ::core::ffi::c_char,
+            b"0\0" as *const u8 as *const c_char,
+            b"src/sm_84.c\0" as *const u8 as *const c_char,
             1370u32,
-            b"uint8 UNUSED_sub_84B3E3(uint16)\0" as *const u8 as *const ::core::ffi::c_char,
+            b"uint8 UNUSED_sub_84B3E3(uint16)\0" as *const u8 as *const c_char,
         );
     };
     0u8
@@ -2373,10 +2375,7 @@ pub unsafe fn PlmSetup_QuicksandSurfaceB(_j: u16, displacement: *mut i32, game: 
         return 0;
     }
     if displacement.is_null() {
-        printf(
-            b"ERROR: PlmSetup_QuicksandSurfaceB is broken!!\n\0" as *const u8
-                as *const ::core::ffi::c_char,
-        );
+        printf(b"ERROR: PlmSetup_QuicksandSurfaceB is broken!!\n\0" as *const u8 as *const c_char);
         Unreachable(game);
         return 0u8;
     }
@@ -4060,14 +4059,13 @@ pub unsafe fn PlmInstr_DrawItemFrame_Common(plmp: *const u8, k: u16, game: &mut 
     let v2: i32 = k as i32 >> 1i32;
     set_ram_word!(game.plm_instruction_timer[v2] = 4u16);
     set_ram_word!(
-        game.plm_instr_list_ptrs[v2] =
-            plmp.offset_from(RomBankBase(0x84u8, game)) as ::core::ffi::c_long as u16
+        game.plm_instr_list_ptrs[v2] = plmp.offset_from(RomBankBase(0x84u8, game)) as c_long as u16
     );
     ProcessPlmDrawInstruction(k, game);
     let v3: u16 = ram_word!(game, plm_id);
     CalculatePlmBlockCoords(ram_word!(game, plm_id), game);
     DrawPlm(v3, game);
-    ::core::ptr::null::<u8>()
+    null::<u8>()
 }
 pub unsafe fn PlmInstr_DrawItemFrame0(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
     set_ram_word!(
@@ -4471,7 +4469,7 @@ pub unsafe fn CallPlmInstr(ea: u32, j: *const u8, k: u16, game: &mut Game) -> *c
         8705518 => PlmInstr_EnableSamusControls(j, k, game),
         _ => {
             Unreachable(game);
-            ::core::ptr::null::<u8>()
+            null::<u8>()
         }
     }
 }

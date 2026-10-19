@@ -29,18 +29,17 @@ use crate::game_state::Game;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{mov24, Mult8x8, RomPtr, Unreachable};
 use crate::rtl::{AddToHiLo, SetHiLo};
+use ::core::ffi::{c_char, c_long, c_void};
+use ::core::mem::transmute;
+use ::core::ptr::{null, null_mut};
 extern "C" {
     fn __assert_fail(
-        __assertion: *const ::core::ffi::c_char,
-        __file: *const ::core::ffi::c_char,
+        __assertion: *const c_char,
+        __file: *const c_char,
         __line: u32,
-        __function: *const ::core::ffi::c_char,
+        __function: *const c_char,
     ) -> !;
-    fn memcpy(
-        __dest: *mut ::core::ffi::c_void,
-        __src: *const ::core::ffi::c_void,
-        __n: size_t,
-    ) -> *mut ::core::ffi::c_void;
+    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
 
 }
 pub use crate::types::{
@@ -119,20 +118,19 @@ pub struct Pair_R18_R20 {
     pub r18: u16,
     pub r20: u16,
 }
-pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
+pub const NULL: *mut c_void = null_mut::<c_void>();
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
-pub const __ASSERT_FUNCTION: [::core::ffi::c_char; 28] = unsafe {
-    ::core::mem::transmute::<[u8; 28], [::core::ffi::c_char; 28]>(*b"uint8 *RomPtr_RAM(uint16_t)\0")
-};
+pub const __ASSERT_FUNCTION: [c_char; 28] =
+    unsafe { transmute::<[u8; 28], [c_char; 28]>(*b"uint8 *RomPtr_RAM(uint16_t)\0") };
 #[inline]
 unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
     '_c2rust_label: {
         if addr < 0x2000u16 {
         } else {
             __assert_fail(
-                b"addr < 0x2000\0" as *const u8 as *const ::core::ffi::c_char,
-                b"src/sm_rtl.h\0" as *const u8 as *const ::core::ffi::c_char,
+                b"addr < 0x2000\0" as *const u8 as *const c_char,
+                b"src/sm_rtl.h\0" as *const u8 as *const c_char,
                 51u32,
                 __ASSERT_FUNCTION.as_ptr(),
             );
@@ -1520,7 +1518,7 @@ pub unsafe fn XrayRunHandler(game: &mut Game) {
         SpawnHdmaObject(
             0x91u8,
             game.g_rom.offset(crate::rtl::lorom_offset(0x91caf2)) as *const u8
-                as *mut SpawnHdmaObject_Args as *const ::core::ffi::c_void,
+                as *mut SpawnHdmaObject_Args as *const c_void,
             game,
         );
     }
@@ -1565,8 +1563,8 @@ pub unsafe fn Xray_SetupStage2_ReadBg1_2ndScreen(game: &mut Game) {
     .addr as *mut u8)
         .offset(v0 as i32 as isize) as *mut VoidP) =
         (((&raw mut game.g_ram as *mut u8).offset(0x4000) as *mut Ram4000 as *mut u8)
-            .offset_from(&raw mut game.g_ram as *mut u8) as ::core::ffi::c_long
-            + 0x2800 as ::core::ffi::c_long) as VoidP;
+            .offset_from(&raw mut game.g_ram as *mut u8) as c_long
+            + 0x2800 as c_long) as VoidP;
     *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x340) as *mut VramReadQueueEnt)
         .offset(0))
     .src
@@ -1600,8 +1598,8 @@ pub unsafe fn Xray_SetupStage3_ReadBg1_1stScreen(game: &mut Game) {
     .addr as *mut u8)
         .offset(v0 as i32 as isize) as *mut VoidP) =
         (((&raw mut game.g_ram as *mut u8).offset(0x4000) as *mut Ram4000 as *mut u8)
-            .offset_from(&raw mut game.g_ram as *mut u8) as ::core::ffi::c_long
-            + 0x2000 as ::core::ffi::c_long) as VoidP;
+            .offset_from(&raw mut game.g_ram as *mut u8) as c_long
+            + 0x2000 as c_long) as VoidP;
     *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x340) as *mut VramReadQueueEnt)
         .offset(0))
     .src
@@ -1680,8 +1678,8 @@ pub unsafe fn Xray_SetupStage4(game: &mut Game) {
         if ((ram_word!(game, layer1_y_pos) as i32 >> 12i32) as u16) == 0u16 {
         } else {
             __assert_fail(
-                b"(uint16)(layer1_y_pos >> 12) == 0\0" as *const u8 as *const ::core::ffi::c_char,
-                b"src/sm_91.c\0" as *const u8 as *const ::core::ffi::c_char,
+                b"(uint16)(layer1_y_pos >> 12) == 0\0" as *const u8 as *const c_char,
+                b"src/sm_91.c\0" as *const u8 as *const c_char,
                 921u32,
                 __ASSERT_FUNCTION.as_ptr(),
             );
@@ -1816,11 +1814,11 @@ unsafe fn Xray_GetXrayedBlock(k: u16, game: &mut Game) -> *const u8 {
                 }
                 p = p.offset(4);
             }
-            return ::core::ptr::null::<u8>();
+            return null::<u8>();
         }
         i += 1;
     }
-    ::core::ptr::null::<u8>()
+    null::<u8>()
 }
 pub unsafe fn Xray_SetupStage4_Func2(dst_r22: u16, r34: u16, game: &mut Game) {
     if r34 == 0u16 {
@@ -2210,15 +2208,14 @@ pub unsafe fn CanXrayShowBlocks(game: &mut Game) -> bool {
     true_0 != 0
 }
 pub unsafe fn Xray_SetupStage6(game: &mut Game) {
-    let mut v1: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
+    let mut v1: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
     if CanXrayShowBlocks(game) {
         let v0: u16 = ram_word!(game, vram_write_queue_tail);
         v1 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
         (*v1).size = 2048u16;
-        (*v1).src.addr = ((&raw mut game.g_ram as *mut u8).offset(0x4000) as *mut Ram4000
-            as *mut u8)
-            .offset_from(&raw mut game.g_ram as *mut u8)
-            as ::core::ffi::c_long as VoidP;
+        (*v1).src.addr =
+            ((&raw mut game.g_ram as *mut u8).offset(0x4000) as *mut Ram4000 as *mut u8)
+                .offset_from(&raw mut game.g_ram as *mut u8) as c_long as VoidP;
         *(&raw mut (*v1).src.bank as *mut u16) = 126u16;
         (*v1).vram_dst =
             ((*(&raw mut game.g_ram as *mut u8).offset(0x59) as i32 & 0xfci32) << 8i32) as u16;
@@ -2226,7 +2223,7 @@ pub unsafe fn Xray_SetupStage6(game: &mut Game) {
     }
 }
 pub unsafe fn Xray_SetupStage7(game: &mut Game) {
-    let mut v1: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
+    let mut v1: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
     if CanXrayShowBlocks(game) {
         let v0: u16 = ram_word!(game, vram_write_queue_tail);
         v1 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
@@ -2344,11 +2341,7 @@ pub unsafe fn VariaSuitPickup(game: &mut Game) {
     QueueSfx2_Max6(0x56u16, game);
     static unk_91D59B: SpawnHdmaObject_Args =
         SpawnHdmaObject_Args::new(0x41u8, 0x26u8, 0xd5a2 as VoidP);
-    SpawnHdmaObject(
-        0x91u8,
-        &raw const unk_91D59B as *const ::core::ffi::c_void,
-        game,
-    );
+    SpawnHdmaObject(0x91u8, &raw const unk_91D59B as *const c_void, game);
 }
 pub unsafe fn GravitySuitPickup(game: &mut Game) {
     *(&raw mut game.g_ram as *mut u8).offset(0xdf0) = 48u8;
@@ -2398,11 +2391,7 @@ pub unsafe fn GravitySuitPickup(game: &mut Game) {
     QueueSfx2_Max6(0x56u16, game);
     static unk_91D673: SpawnHdmaObject_Args =
         SpawnHdmaObject_Args::new(0x41u8, 0x26u8, 0xd67a as VoidP);
-    SpawnHdmaObject(
-        0x91u8,
-        &raw const unk_91D673 as *const ::core::ffi::c_void,
-        game,
-    );
+    SpawnHdmaObject(0x91u8, &raw const unk_91D673 as *const c_void, game);
 }
 pub unsafe fn InitializeSuitPickupHdma(game: &mut Game) {
     *(&raw mut game.g_ram as *mut u8).offset(0x69) = 19u8;
@@ -2438,7 +2427,7 @@ static off_91D72D: [Option<Func_U8>; 11] = unsafe {
     [
         Some(Samus_HandleScrewAttackSpeedBoostingPals as unsafe fn(&mut Game) -> u8),
         Some(Samus_SpeedBoosterShinePals as unsafe fn(&mut Game) -> u8),
-        ::core::mem::transmute::<Option<unsafe fn(&mut Game) -> ()>, Option<Func_U8>>(Some(
+        transmute::<Option<unsafe fn(&mut Game) -> ()>, Option<Func_U8>>(Some(
             HandleMiscSamusPalette as unsafe fn(&mut Game) -> (),
         )),
         None,
@@ -2887,16 +2876,16 @@ pub unsafe fn Samus_HandleCrystalFlashPals(game: &mut Game) -> u8 {
 pub unsafe fn Samus_Copy10PalColors(v0: u16, game: &mut Game) {
     memcpy(
         ((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16).offset(224) as *mut u16
-            as *mut ::core::ffi::c_void,
-        RomPtr_9B(v0, game) as *const ::core::ffi::c_void,
+            as *mut c_void,
+        RomPtr_9B(v0, game) as *const c_void,
         20 as size_t,
     );
 }
 pub unsafe fn Samus_Copy6PalColors(j: u16, game: &mut Game) {
     memcpy(
         ((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16).offset(234) as *mut u16
-            as *mut ::core::ffi::c_void,
-        RomPtr_9B(j, game) as *const ::core::ffi::c_void,
+            as *mut c_void,
+        RomPtr_9B(j, game) as *const c_void,
         12 as size_t,
     );
 }
@@ -2963,16 +2952,16 @@ pub fn nullsub_164(game: &mut Game) -> u8 {
 pub unsafe fn CopyToSamusSuitPalette(k: u16, game: &mut Game) {
     memcpy(
         ((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16).offset(192) as *mut u16
-            as *mut ::core::ffi::c_void,
-        RomPtr_9B(k, game) as *mut u16 as *const ::core::ffi::c_void,
+            as *mut c_void,
+        RomPtr_9B(k, game) as *mut u16 as *const c_void,
         32 as size_t,
     );
 }
 pub unsafe fn CopyToSamusSuitTargetPalette(k: u16, game: &mut Game) {
     memcpy(
         ((&raw mut game.g_ram as *mut u8).offset(0xc200) as *mut u16).offset(192) as *mut u16
-            as *mut ::core::ffi::c_void,
-        RomPtr_9B(k, game) as *mut u16 as *const ::core::ffi::c_void,
+            as *mut c_void,
+        RomPtr_9B(k, game) as *mut u16 as *const c_void,
         32 as size_t,
     );
 }

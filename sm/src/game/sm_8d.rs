@@ -4,6 +4,7 @@ use crate::game_state::Game;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::AddToHiLo;
 use crate::rtl::{MakePairU16, RomPtr, Unreachable};
+use ::core::ptr::{null, null_mut};
 
 pub use crate::types::{EnemyData, PairU16, VoidP};
 #[derive(Copy, Clone)]
@@ -71,7 +72,7 @@ pub unsafe fn ClearPaletteFXObjects(game: &mut Game) {
     }
 }
 pub unsafe fn SpawnPalfxObject(j: u16, game: &mut Game) {
-    let mut PalFxDef: *mut PalFxDef = ::core::ptr::null_mut::<PalFxDef>();
+    let mut PalFxDef: *mut PalFxDef = null_mut::<PalFxDef>();
     let mut v1: u16 = 14u16;
     while ram_word!(game, palettefx_ids[(v1 as i32 >> 1i32)]) != 0 {
         v1 = (v1).wrapping_sub(2u16);
@@ -145,7 +146,7 @@ pub unsafe fn PalFx_ProcessOne(k: u16, game: &mut Game) {
     let v8: i32 = v1 as i32 >> 1i32;
     set_ram_word!(game.palettefx_instr_timers[v8] = v6);
     let mut color_idx: u16 = ram_word!(game, palettefx_color_indexes[v8]);
-    let mut v10: *const u8 = ::core::ptr::null::<u8>();
+    let mut v10: *const u8 = null::<u8>();
     let mut v11: u16 = 0;
     loop {
         loop {

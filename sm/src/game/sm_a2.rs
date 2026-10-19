@@ -35,6 +35,7 @@ use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{Mult8x8, RomPtr, Unreachable};
+use ::core::ptr::null_mut;
 
 pub use crate::types::Buttons;
 pub use crate::types::Consts_86;
@@ -3532,7 +3533,7 @@ pub unsafe fn Rinka_Init(game: &mut Game) {
     Rinka_Init3(ram_word!(game, cur_enemy_index), game);
 }
 pub unsafe fn Rinka_Init2(k: u16, game: &mut Game) {
-    let mut v2: *mut EnemySpawnData = ::core::ptr::null_mut::<EnemySpawnData>();
+    let mut v2: *mut EnemySpawnData = null_mut::<EnemySpawnData>();
     let E: *mut Enemy_Rinka = Get_Rinka(k as i32, game);
     if (*E).rinka_parameter_1 != 0 {
         Rinka_1(k, game);
@@ -3636,7 +3637,7 @@ pub unsafe fn Rinka_1(k: u16, game: &mut Game) {
     };
 }
 pub unsafe fn Rinka_2(k: u16, game: &mut Game) -> u16 {
-    let mut v3: *mut EnemySpawnData = ::core::ptr::null_mut::<EnemySpawnData>();
+    let mut v3: *mut EnemySpawnData = null_mut::<EnemySpawnData>();
     let mut v1: u16 = 0u16;
     loop {
         let v2: i32 = v1 as i32 >> 1i32;
@@ -4180,7 +4181,7 @@ pub unsafe fn NorfairRio_Main(game: &mut Game) {
 }
 pub unsafe fn NorfairRio_Func_1(k: u16, game: &mut Game) {
     let E: *mut Enemy_NorfairRio = Get_NorfairRio(k as i32, game);
-    let mut v6: *mut EnemySpawnData = ::core::ptr::null_mut::<EnemySpawnData>();
+    let mut v6: *mut EnemySpawnData = null_mut::<EnemySpawnData>();
     let v1: i32 = k as i32 >> 1i32;
     if ram_word!(game, enemy_drawing_queue[(v1 + 100i32)]) != 0 {
         let v3: u16 = ram_word!(game, enemy_drawing_queue[(v1 + 109i32)]);

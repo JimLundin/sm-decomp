@@ -17,12 +17,14 @@ use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::RomPtr;
 use crate::rtl::{AddToHiLo, SetHiLo};
+use ::core::ffi::{c_char, c_long, c_void};
+use ::core::ptr::{null, null_mut};
 extern "C" {
     fn __assert_fail(
-        __assertion: *const ::core::ffi::c_char,
-        __file: *const ::core::ffi::c_char,
+        __assertion: *const c_char,
+        __file: *const c_char,
         __line: u32,
-        __function: *const ::core::ffi::c_char,
+        __function: *const c_char,
     ) -> !;
 
 }
@@ -182,8 +184,8 @@ pub unsafe fn Crocomire_Func_5(k: u16, mut jp: *const u16, game: &mut Game) -> *
         jp = addr_kCrocomire_Ilist_BE7E as i32 as usize as *const u16;
         (*E).crocom_var_C = 10u16;
     } else if (((jp as *mut u8).offset_from(RomBankBase((*gEnemyData(0i32, game)).bank, game))
-        as ::core::ffi::c_long
-        - addr_kCrocomire_Ilist_BC34 as i32 as ::core::ffi::c_long) as i16)
+        as c_long
+        - addr_kCrocomire_Ilist_BC34 as i32 as c_long) as i16)
         >= 0i16
     {
         return addr_kCrocomire_Ilist_BBCE as i32 as usize as *const u16;
@@ -274,8 +276,8 @@ pub unsafe fn Crocomire_Func_13(k: u16, jp: *const u16, game: &mut Game) -> *con
         (*E).crocom_var_C = 20u16;
         return addr_kCrocomire_Ilist_BC30 as i32 as usize as *const u16;
     } else if (((jp as *mut u8).offset_from(RomBankBase((*gEnemyData(0i32, game)).bank, game))
-        as ::core::ffi::c_long
-        - addr_kCrocomire_Ilist_BDA2 as i32 as ::core::ffi::c_long) as i16)
+        as c_long
+        - addr_kCrocomire_Ilist_BDA2 as i32 as c_long) as i16)
         >= 0i16
     {
         return addr_kCrocomire_Ilist_BD2A as i32 as usize as *const u16;
@@ -289,8 +291,8 @@ pub unsafe fn Crocomire_Func_14(k: u16, jp: *const u16, game: &mut Game) -> *con
         (*E).crocom_var_C = 12u16;
         return addr_kCrocomire_Ilist_BC30 as i32 as usize as *const u16;
     } else if (((jp as *mut u8).offset_from(RomBankBase((*gEnemyData(0i32, game)).bank, game))
-        as ::core::ffi::c_long
-        - addr_kCrocomire_Ilist_BDA2 as i32 as ::core::ffi::c_long) as i16)
+        as c_long
+        - addr_kCrocomire_Ilist_BDA2 as i32 as c_long) as i16)
         >= 0i16
     {
         return addr_kCrocomire_Ilist_BD2A as i32 as usize as *const u16;
@@ -304,8 +306,8 @@ pub unsafe fn Crocomire_Func_15(k: u16, jp: *const u16, game: &mut Game) -> *con
         (*E).crocom_var_C = 12u16;
         return addr_kCrocomire_Ilist_BC30 as i32 as usize as *const u16;
     } else if (((jp as *mut u8).offset_from(RomBankBase((*gEnemyData(0i32, game)).bank, game))
-        as ::core::ffi::c_long
-        - addr_kCrocomire_Ilist_BDA2 as i32 as ::core::ffi::c_long) as i16)
+        as c_long
+        - addr_kCrocomire_Ilist_BDA2 as i32 as c_long) as i16)
         >= 0i16
     {
         return addr_kCrocomire_Ilist_BD2A as i32 as usize as *const u16;
@@ -462,7 +464,7 @@ pub unsafe fn Crocomire_Func_26(k: u16, jp: *const u16, game: &mut Game) -> *con
     jp
 }
 pub unsafe fn Crocomire_Init(game: &mut Game) {
-    let mut v7: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
+    let mut v7: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
     set_ram_word!(game.boss_id = 6u16);
     let mut v0: u16 = 0u16;
     loop {
@@ -959,7 +961,7 @@ pub unsafe fn Crocomire_Func_43(game: &mut Game) {
     if ((ram_word!(game, random_number)) as i16).wrapping_sub(4096i16) >= 0i16 {
         v1 = -(v1 as i32) as u16;
     }
-    Crocomire_Func_87(::core::ptr::null::<u16>(), v1, game);
+    Crocomire_Func_87(null::<u16>(), v1, game);
 }
 pub unsafe fn Crocomire_Instr_16(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     if Enemy_MoveRight_IgnoreSlopes(
@@ -1303,7 +1305,7 @@ pub unsafe fn Crocomire_Func_57(game: &mut Game) {
     Crocomire_93BE((i + 1024i32) as u16, game);
 }
 pub unsafe fn Crocomire_93BE(k: u16, game: &mut Game) {
-    let mut v3: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
+    let mut v3: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
     let v2: u16 = ram_word!(game, vram_write_queue_tail);
     v3 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
     (*v3).size = k;
@@ -1422,7 +1424,7 @@ pub unsafe fn Crocomire_Func_61(game: &mut Game) {
     Crocomire_Func_62(game);
 }
 pub unsafe fn Crocomire_Func_62(game: &mut Game) {
-    let mut v2: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
+    let mut v2: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
     let v0: u16 = ram_word!(game, g_word_7E068A);
     let v1: u16 = ram_word!(game, vram_write_queue_tail);
     if *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc5)) as *const u8 as *mut u16 as *mut u8)
@@ -1464,7 +1466,7 @@ pub unsafe fn Crocomire_9506(game: &mut Game) {
 pub unsafe fn Crocomire_950F(game: &mut Game) {
     static unk_A49559: SpawnHdmaObject_Args =
         SpawnHdmaObject_Args::new(0x42u8, 0x10u8, 0x9563 as VoidP);
-    let mut v4: *mut Enemy_Crocomire = ::core::ptr::null_mut::<Enemy_Crocomire>();
+    let mut v4: *mut Enemy_Crocomire = null_mut::<Enemy_Crocomire>();
     let mut v1: u16 = (2i32 * ((*Get_Crocomire(0x40i32, game)).base.y_pos as i32 - 72i32)) as u16;
     let v2: u16 = ram_word!(game, reg_BG2VOFS);
     loop {
@@ -1486,11 +1488,7 @@ pub unsafe fn Crocomire_950F(game: &mut Game) {
     *((&raw mut game.g_ram as *mut u8).offset(0xcae0).offset(4) as *mut u8 as *mut u16) =
         -(13330i32) as u16;
     *((&raw mut game.g_ram as *mut u8).offset(0xcae0).offset(6) as *mut u8 as *mut u16) = 0u16;
-    (*v4).crocom_var_1F = SpawnHdmaObject(
-        0xa4u8,
-        &raw const unk_A49559 as *const ::core::ffi::c_void,
-        game,
-    );
+    (*v4).crocom_var_1F = SpawnHdmaObject(0xa4u8, &raw const unk_A49559 as *const c_void, game);
 }
 pub unsafe fn Crocomire_Func_63(game: &mut Game) {
     let E: *mut Enemy_Crocomire = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
@@ -1581,7 +1579,7 @@ pub unsafe fn Crocomire_Func_65(game: &mut Game) {
     set_ram_word!(game.hdma_object_channels_bitmask[((*E0).crocom_var_1F as i32 >> 1i32)] = 0u16);
 }
 pub unsafe fn Crocomire_Func_66(game: &mut Game) {
-    let mut v3: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
+    let mut v3: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
     let E: *mut Enemy_Crocomire = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).crocom_var_E = 0u16;
     (*E).crocom_var_F = 0u16;
@@ -1628,10 +1626,10 @@ pub unsafe fn Crocomire_Func_67(game: &mut Game) -> u16 {
         if ram_word!(game, croco_cur_vline_idx) <= 48u16 {
         } else {
             __assert_fail(
-                b"croco_cur_vline_idx <= 48\0" as *const u8 as *const ::core::ffi::c_char,
-                b"src/sm_a4.c\0" as *const u8 as *const ::core::ffi::c_char,
+                b"croco_cur_vline_idx <= 48\0" as *const u8 as *const c_char,
+                b"src/sm_a4.c\0" as *const u8 as *const c_char,
                 1215u32,
-                b"uint16 Crocomire_Func_67(void)\0" as *const u8 as *const ::core::ffi::c_char,
+                b"uint16 Crocomire_Func_67(void)\0" as *const u8 as *const c_char,
             );
         }
     };
@@ -1808,7 +1806,7 @@ pub unsafe fn Crocomire_Func_70(game: &mut Game) {
 }
 pub unsafe fn Crocomire_Func_71(game: &mut Game) {
     let mut v3: i16 = 0;
-    let mut v6: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
+    let mut v6: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
     let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
     let crocom_var_D: u16 = (*E).crocom_var_D;
     if crocom_var_D != 0 {
@@ -2021,8 +2019,8 @@ pub unsafe fn Crocomire_9B86(game: &mut Game) {
         as *mut u16);
     *fresh10 = (*fresh10) | (2u16);
     QueueMusic_Delayed8(6u16, game);
-    Crocomire_Func_87(::core::ptr::null::<u16>(), 0xfff0u16, game);
-    Crocomire_Func_87(::core::ptr::null::<u16>(), 0x10u16, game);
+    Crocomire_Func_87(null::<u16>(), 0xfff0u16, game);
+    Crocomire_Func_87(null::<u16>(), 0x10u16, game);
     Crocomire_9BB3(game);
 }
 pub unsafe fn Crocomire_9BB3(game: &mut Game) {

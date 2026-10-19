@@ -5,78 +5,49 @@ use crate::util::{
     NextPossiblyQuotedString, ReadWholeFile, ReplaceFilenameWithNewPath, SkipPrefix, SplitKeyValue,
     StrSet, StringEqualsNoCase,
 };
+use ::core::ffi::{c_char, c_double, c_float, c_long, c_uchar, c_ulong, c_void};
+use ::core::mem::{size_of, transmute};
+use ::core::ptr::{null, null_mut};
 extern "C" {
 
-    fn strtod(
-        __nptr: *const ::core::ffi::c_char,
-        __endptr: *mut *mut ::core::ffi::c_char,
-    ) -> ::core::ffi::c_double;
-    fn strtol(
-        __nptr: *const ::core::ffi::c_char,
-        __endptr: *mut *mut ::core::ffi::c_char,
-        __base: i32,
-    ) -> ::core::ffi::c_long;
-    fn strtoul(
-        __nptr: *const ::core::ffi::c_char,
-        __endptr: *mut *mut ::core::ffi::c_char,
-        __base: i32,
-    ) -> ::core::ffi::c_ulong;
-    fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn free(__ptr: *mut ::core::ffi::c_void);
+    fn strtod(__nptr: *const c_char, __endptr: *mut *mut c_char) -> c_double;
+    fn strtol(__nptr: *const c_char, __endptr: *mut *mut c_char, __base: i32) -> c_long;
+    fn strtoul(__nptr: *const c_char, __endptr: *mut *mut c_char, __base: i32) -> c_ulong;
+    fn malloc(__size: size_t) -> *mut c_void;
+    fn calloc(__nmemb: size_t, __size: size_t) -> *mut c_void;
+    fn realloc(__ptr: *mut c_void, __size: size_t) -> *mut c_void;
+    fn free(__ptr: *mut c_void);
     fn abs(__x: i32) -> i32;
     fn __assert_fail(
-        __assertion: *const ::core::ffi::c_char,
-        __file: *const ::core::ffi::c_char,
+        __assertion: *const c_char,
+        __file: *const c_char,
         __line: u32,
-        __function: *const ::core::ffi::c_char,
+        __function: *const c_char,
     ) -> !;
 
     static mut stderr: *mut FILE;
     fn fclose(__stream: *mut FILE) -> i32;
-    fn fopen(
-        __filename: *const ::core::ffi::c_char,
-        __modes: *const ::core::ffi::c_char,
-    ) -> *mut FILE;
-    fn fprintf(__stream: *mut FILE, __format: *const ::core::ffi::c_char, ...) -> i32;
-    fn snprintf(
-        __s: *mut ::core::ffi::c_char,
-        __maxlen: size_t,
-        __format: *const ::core::ffi::c_char,
-        ...
-    ) -> i32;
+    fn fopen(__filename: *const c_char, __modes: *const c_char) -> *mut FILE;
+    fn fprintf(__stream: *mut FILE, __format: *const c_char, ...) -> i32;
+    fn snprintf(__s: *mut c_char, __maxlen: size_t, __format: *const c_char, ...) -> i32;
     fn fgetc(__stream: *mut FILE) -> i32;
     fn ungetc(__c: i32, __stream: *mut FILE) -> i32;
-    fn fread(
-        __ptr: *mut ::core::ffi::c_void,
-        __size: size_t,
-        __n: size_t,
-        __stream: *mut FILE,
-    ) -> ::core::ffi::c_ulong;
-    fn fseek(__stream: *mut FILE, __off: ::core::ffi::c_long, __whence: i32) -> i32;
-    fn ftell(__stream: *mut FILE) -> ::core::ffi::c_long;
+    fn fread(__ptr: *mut c_void, __size: size_t, __n: size_t, __stream: *mut FILE) -> c_ulong;
+    fn fseek(__stream: *mut FILE, __off: c_long, __whence: i32) -> i32;
+    fn ftell(__stream: *mut FILE) -> c_long;
     fn feof(__stream: *mut FILE) -> i32;
     fn ferror(__stream: *mut FILE) -> i32;
-    fn memcpy(
-        __dest: *mut ::core::ffi::c_void,
-        __src: *const ::core::ffi::c_void,
-        __n: size_t,
-    ) -> *mut ::core::ffi::c_void;
-    fn memset(__s: *mut ::core::ffi::c_void, __c: i32, __n: size_t) -> *mut ::core::ffi::c_void;
-    fn memcmp(
-        __s1: *const ::core::ffi::c_void,
-        __s2: *const ::core::ffi::c_void,
-        __n: size_t,
-    ) -> i32;
-    fn strcmp(__s1: *const ::core::ffi::c_char, __s2: *const ::core::ffi::c_char) -> i32;
-    fn strdup(__s: *const ::core::ffi::c_char) -> *mut ::core::ffi::c_char;
-    fn strlen(__s: *const ::core::ffi::c_char) -> size_t;
+    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
+    fn memset(__s: *mut c_void, __c: i32, __n: size_t) -> *mut c_void;
+    fn memcmp(__s1: *const c_void, __s2: *const c_void, __n: size_t) -> i32;
+    fn strcmp(__s1: *const c_char, __s2: *const c_char) -> i32;
+    fn strdup(__s: *const c_char) -> *mut c_char;
+    fn strlen(__s: *const c_char) -> size_t;
 
 }
 #[cfg_attr(unix, link(name = "m"))]
 extern "C" {
-    fn pow(__x: ::core::ffi::c_double, __y: ::core::ffi::c_double) -> ::core::ffi::c_double;
+    fn pow(__x: c_double, __y: c_double) -> c_double;
 }
 pub use crate::types::{
     __off64_t, __off_t, ptrdiff_t, size_t, GLboolean, GLchar, GLenum, GLfloat, GLint, GLsizei,
@@ -102,7 +73,7 @@ pub struct stbi__context {
     pub img_n: i32,
     pub img_out_n: i32,
     pub io: stbi_io_callbacks,
-    pub io_user_data: *mut ::core::ffi::c_void,
+    pub io_user_data: *mut c_void,
     pub read_from_callbacks: i32,
     pub buflen: i32,
     pub buffer_start: [stbi_uc; 128],
@@ -115,9 +86,9 @@ pub struct stbi__context {
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct stbi_io_callbacks {
-    pub read: Option<unsafe fn(*mut ::core::ffi::c_void, *mut ::core::ffi::c_char, i32) -> i32>,
-    pub skip: Option<unsafe fn(*mut ::core::ffi::c_void, i32) -> ()>,
-    pub eof: Option<unsafe fn(*mut ::core::ffi::c_void) -> i32>,
+    pub read: Option<unsafe fn(*mut c_void, *mut c_char, i32) -> i32>,
+    pub skip: Option<unsafe fn(*mut c_void, i32) -> ()>,
+    pub eof: Option<unsafe fn(*mut c_void) -> i32>,
 }
 pub use crate::types::stbi__uint32;
 #[derive(Copy, Clone)]
@@ -158,9 +129,9 @@ pub struct stbi__zbuf {
     pub zbuffer_end: *mut stbi_uc,
     pub num_bits: i32,
     pub code_buffer: stbi__uint32,
-    pub zout: *mut ::core::ffi::c_char,
-    pub zout_start: *mut ::core::ffi::c_char,
-    pub zout_end: *mut ::core::ffi::c_char,
+    pub zout: *mut c_char,
+    pub zout_start: *mut c_char,
+    pub zout_end: *mut c_char,
     pub z_expandable: i32,
     pub z_length: stbi__zhuffman,
     pub z_distance: stbi__zhuffman,
@@ -200,10 +171,10 @@ impl stbi__zhuffman {
 }
 impl stbi__png {
     const EMPTY: Self = stbi__png {
-        s: ::core::ptr::null_mut::<stbi__context>(),
-        idata: ::core::ptr::null_mut::<stbi_uc>(),
-        expanded: ::core::ptr::null_mut::<stbi_uc>(),
-        out: ::core::ptr::null_mut::<stbi_uc>(),
+        s: null_mut::<stbi__context>(),
+        idata: null_mut::<stbi_uc>(),
+        expanded: null_mut::<stbi_uc>(),
+        out: null_mut::<stbi_uc>(),
         depth: 0,
     };
 }
@@ -218,26 +189,26 @@ impl stbi__context {
             skip: None,
             eof: None,
         },
-        io_user_data: ::core::ptr::null_mut::<::core::ffi::c_void>(),
+        io_user_data: null_mut::<c_void>(),
         read_from_callbacks: 0,
         buflen: 0,
         buffer_start: [0; 128],
         callback_already_read: 0,
-        img_buffer: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_end: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original_end: ::core::ptr::null_mut::<stbi_uc>(),
+        img_buffer: null_mut::<stbi_uc>(),
+        img_buffer_end: null_mut::<stbi_uc>(),
+        img_buffer_original: null_mut::<stbi_uc>(),
+        img_buffer_original_end: null_mut::<stbi_uc>(),
     };
 }
 impl stbi__zbuf {
     const EMPTY: Self = stbi__zbuf {
-        zbuffer: ::core::ptr::null_mut::<stbi_uc>(),
-        zbuffer_end: ::core::ptr::null_mut::<stbi_uc>(),
+        zbuffer: null_mut::<stbi_uc>(),
+        zbuffer_end: null_mut::<stbi_uc>(),
         num_bits: 0,
         code_buffer: 0,
-        zout: ::core::ptr::null_mut::<::core::ffi::c_char>(),
-        zout_start: ::core::ptr::null_mut::<::core::ffi::c_char>(),
-        zout_end: ::core::ptr::null_mut::<::core::ffi::c_char>(),
+        zout: null_mut::<c_char>(),
+        zout_start: null_mut::<c_char>(),
+        zout_end: null_mut::<c_char>(),
         z_expandable: 0,
         z_length: stbi__zhuffman::EMPTY,
         z_distance: stbi__zhuffman::EMPTY,
@@ -286,12 +257,12 @@ pub const GL_FRAMEBUFFER_BINDING: i32 = gl::FRAMEBUFFER_BINDING as i32;
 pub const GL_FRAMEBUFFER_SRGB: i32 = gl::FRAMEBUFFER_SRGB as i32;
 pub const GL_RGBA32F: i32 = gl::RGBA32F as i32;
 #[inline]
-unsafe fn atoi(mut __nptr: *const ::core::ffi::c_char) -> i32 {
-    strtol(__nptr, NULL as *mut *mut ::core::ffi::c_char, 10i32) as i32
+unsafe fn atoi(mut __nptr: *const c_char) -> i32 {
+    strtol(__nptr, NULL as *mut *mut c_char, 10i32) as i32
 }
 #[inline]
-unsafe fn atof(mut __nptr: *const ::core::ffi::c_char) -> ::core::ffi::c_double {
-    strtod(__nptr, NULL as *mut *mut ::core::ffi::c_char)
+unsafe fn atof(mut __nptr: *const c_char) -> c_double {
+    strtod(__nptr, NULL as *mut *mut c_char)
 }
 pub const EOF: i32 = -(1i32);
 pub const SEEK_SET: i32 = 0;
@@ -308,11 +279,11 @@ unsafe fn stbi__start_mem(s: *mut stbi__context, buffer: *const stbi_uc, len: i3
 unsafe fn stbi__start_callbacks(
     s: *mut stbi__context,
     c: *mut stbi_io_callbacks,
-    user: *mut ::core::ffi::c_void,
+    user: *mut c_void,
 ) {
     (*s).io = *c;
     (*s).io_user_data = user;
-    (*s).buflen = ::core::mem::size_of::<[stbi_uc; 128]>() as i32;
+    (*s).buflen = size_of::<[stbi_uc; 128]>() as i32;
     (*s).read_from_callbacks = 1i32;
     (*s).callback_already_read = 0i32;
     (*s).img_buffer_original = &raw mut (*s).buffer_start as *mut stbi_uc;
@@ -320,56 +291,44 @@ unsafe fn stbi__start_callbacks(
     stbi__refill_buffer(s);
     (*s).img_buffer_original_end = (*s).img_buffer_end;
 }
-unsafe fn stbi__stdio_read(
-    user: *mut ::core::ffi::c_void,
-    data: *mut ::core::ffi::c_char,
-    size: i32,
-) -> i32 {
+unsafe fn stbi__stdio_read(user: *mut c_void, data: *mut c_char, size: i32) -> i32 {
     fread(
-        data as *mut ::core::ffi::c_void,
+        data as *mut c_void,
         1 as size_t,
         size as size_t,
         user as *mut FILE,
     ) as i32
 }
-unsafe fn stbi__stdio_skip(user: *mut ::core::ffi::c_void, n: i32) {
+unsafe fn stbi__stdio_skip(user: *mut c_void, n: i32) {
     let mut ch: i32 = 0;
-    fseek(user as *mut FILE, n as ::core::ffi::c_long, SEEK_CUR);
+    fseek(user as *mut FILE, n as c_long, SEEK_CUR);
     ch = fgetc(user as *mut FILE);
     if ch != EOF {
         ungetc(ch, user as *mut FILE);
     }
 }
-unsafe fn stbi__stdio_eof(user: *mut ::core::ffi::c_void) -> i32 {
+unsafe fn stbi__stdio_eof(user: *mut c_void) -> i32 {
     (feof(user as *mut FILE) != 0 || ferror(user as *mut FILE) != 0) as i32
 }
 static mut stbi__stdio_callbacks: stbi_io_callbacks = unsafe {
     stbi_io_callbacks {
-        read: Some(
-            stbi__stdio_read
-                as unsafe fn(*mut ::core::ffi::c_void, *mut ::core::ffi::c_char, i32) -> i32,
-        ),
-        skip: Some(stbi__stdio_skip as unsafe fn(*mut ::core::ffi::c_void, i32) -> ()),
-        eof: Some(stbi__stdio_eof as unsafe fn(*mut ::core::ffi::c_void) -> i32),
+        read: Some(stbi__stdio_read as unsafe fn(*mut c_void, *mut c_char, i32) -> i32),
+        skip: Some(stbi__stdio_skip as unsafe fn(*mut c_void, i32) -> ()),
+        eof: Some(stbi__stdio_eof as unsafe fn(*mut c_void) -> i32),
     }
 };
 unsafe fn stbi__start_file(s: *mut stbi__context, f: *mut FILE) {
-    stbi__start_callbacks(
-        s,
-        &raw mut stbi__stdio_callbacks,
-        f as *mut ::core::ffi::c_void,
-    );
+    stbi__start_callbacks(s, &raw mut stbi__stdio_callbacks, f as *mut c_void);
 }
 unsafe fn stbi__rewind(s: *mut stbi__context) {
     (*s).img_buffer = (*s).img_buffer_original;
     (*s).img_buffer_end = (*s).img_buffer_original_end;
 }
-static mut stbi__g_failure_reason: *const ::core::ffi::c_char =
-    ::core::ptr::null::<::core::ffi::c_char>();
-pub unsafe fn stbi_failure_reason() -> *const ::core::ffi::c_char {
+static mut stbi__g_failure_reason: *const c_char = null::<c_char>();
+pub unsafe fn stbi_failure_reason() -> *const c_char {
     stbi__g_failure_reason
 }
-unsafe fn stbi__malloc(size: size_t) -> *mut ::core::ffi::c_void {
+unsafe fn stbi__malloc(size: size_t) -> *mut c_void {
     malloc(size)
 }
 unsafe fn stbi__addsizes_valid(a: i32, b: i32) -> i32 {
@@ -401,25 +360,25 @@ unsafe fn stbi__mad4sizes_valid(a: i32, b: i32, c: i32, d: i32, add: i32) -> i32
         && stbi__mul2sizes_valid(a * b * c, d) != 0
         && stbi__addsizes_valid(a * b * c * d, add) != 0) as i32
 }
-unsafe fn stbi__malloc_mad2(a: i32, b: i32, add: i32) -> *mut ::core::ffi::c_void {
+unsafe fn stbi__malloc_mad2(a: i32, b: i32, add: i32) -> *mut c_void {
     if stbi__mad2sizes_valid(a, b, add) == 0 {
         return NULL_0;
     }
     stbi__malloc((a * b + add) as size_t)
 }
-unsafe fn stbi__malloc_mad3(a: i32, b: i32, c: i32, add: i32) -> *mut ::core::ffi::c_void {
+unsafe fn stbi__malloc_mad3(a: i32, b: i32, c: i32, add: i32) -> *mut c_void {
     if stbi__mad3sizes_valid(a, b, c, add) == 0 {
         return NULL_0;
     }
     stbi__malloc((a * b * c + add) as size_t)
 }
-unsafe fn stbi__malloc_mad4(a: i32, b: i32, c: i32, d: i32, add: i32) -> *mut ::core::ffi::c_void {
+unsafe fn stbi__malloc_mad4(a: i32, b: i32, c: i32, d: i32, add: i32) -> *mut c_void {
     if stbi__mad4sizes_valid(a, b, c, d, add) == 0 {
         return NULL_0;
     }
     stbi__malloc((a * b * c * d + add) as size_t)
 }
-pub unsafe fn stbi_image_free(retval_from_stbi_load: *mut ::core::ffi::c_void) {
+pub unsafe fn stbi_image_free(retval_from_stbi_load: *mut c_void) {
     free(retval_from_stbi_load);
 }
 static mut stbi__vertically_flip_on_load_global: i32 = 0i32;
@@ -434,11 +393,11 @@ unsafe fn stbi__load_main(
     req_comp: i32,
     ri: *mut stbi__result_info,
     bpc: i32,
-) -> *mut ::core::ffi::c_void {
+) -> *mut c_void {
     memset(
-        ri as *mut ::core::ffi::c_void,
+        ri as *mut c_void,
         0i32,
-        ::core::mem::size_of::<stbi__result_info>() as size_t,
+        size_of::<stbi__result_info>() as size_t,
     );
     (*ri).bits_per_channel = 8i32;
     (*ri).channel_order = STBI_ORDER_RGB as i32;
@@ -446,8 +405,7 @@ unsafe fn stbi__load_main(
     if stbi__png_test(s) != 0 {
         return stbi__png_load(s, x, y, comp, req_comp, ri);
     }
-    ((if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_uchar
-        as *mut ::core::ffi::c_void)
+    ((if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut c_uchar as *mut c_void)
 }
 unsafe fn stbi__convert_16_to_8(
     orig: *mut stbi__uint16,
@@ -457,7 +415,7 @@ unsafe fn stbi__convert_16_to_8(
 ) -> *mut stbi_uc {
     let mut i: i32 = 0;
     let img_len: i32 = w * h * channels;
-    let mut reduced: *mut stbi_uc = ::core::ptr::null_mut::<stbi_uc>();
+    let mut reduced: *mut stbi_uc = null_mut::<stbi_uc>();
     reduced = stbi__malloc(img_len as size_t) as *mut stbi_uc;
     if reduced.is_null() {
         return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut stbi_uc;
@@ -468,7 +426,7 @@ unsafe fn stbi__convert_16_to_8(
             (*orig.offset(i as isize) as i32 >> 8i32 & 0xffi32) as stbi_uc;
         i += 1;
     }
-    free(orig as *mut ::core::ffi::c_void);
+    free(orig as *mut c_void);
     reduced
 }
 unsafe fn stbi__convert_8_to_16(
@@ -479,10 +437,10 @@ unsafe fn stbi__convert_8_to_16(
 ) -> *mut stbi__uint16 {
     let mut i: i32 = 0;
     let img_len: i32 = w * h * channels;
-    let mut enlarged: *mut stbi__uint16 = ::core::ptr::null_mut::<stbi__uint16>();
+    let mut enlarged: *mut stbi__uint16 = null_mut::<stbi__uint16>();
     enlarged = stbi__malloc((img_len * 2i32) as size_t) as *mut stbi__uint16;
     if enlarged.is_null() {
-        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_uchar
+        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut c_uchar
             as *mut stbi__uint16;
     }
     i = 0i32;
@@ -492,15 +450,10 @@ unsafe fn stbi__convert_8_to_16(
             as stbi__uint16;
         i += 1;
     }
-    free(orig as *mut ::core::ffi::c_void);
+    free(orig as *mut c_void);
     enlarged
 }
-unsafe fn stbi__vertical_flip(
-    image: *mut ::core::ffi::c_void,
-    w: i32,
-    h: i32,
-    bytes_per_pixel: i32,
-) {
+unsafe fn stbi__vertical_flip(image: *mut c_void, w: i32, h: i32, bytes_per_pixel: i32) {
     let mut row: i32 = 0;
     let bytes_per_row: size_t = (w as size_t).wrapping_mul(bytes_per_pixel as size_t);
     let mut temp: [stbi_uc; 2048] = [0; 2048];
@@ -513,25 +466,20 @@ unsafe fn stbi__vertical_flip(
             bytes.offset(((h - row - 1i32) as size_t).wrapping_mul(bytes_per_row) as isize);
         let mut bytes_left: size_t = bytes_per_row;
         while bytes_left != 0 {
-            let bytes_copy: size_t =
-                if bytes_left < ::core::mem::size_of::<[stbi_uc; 2048]>() as usize {
-                    bytes_left
-                } else {
-                    ::core::mem::size_of::<[stbi_uc; 2048]>() as size_t
-                };
+            let bytes_copy: size_t = if bytes_left < size_of::<[stbi_uc; 2048]>() as usize {
+                bytes_left
+            } else {
+                size_of::<[stbi_uc; 2048]>() as size_t
+            };
             memcpy(
-                &raw mut temp as *mut stbi_uc as *mut ::core::ffi::c_void,
-                row0 as *const ::core::ffi::c_void,
+                &raw mut temp as *mut stbi_uc as *mut c_void,
+                row0 as *const c_void,
                 bytes_copy,
             );
+            memcpy(row0 as *mut c_void, row1 as *const c_void, bytes_copy);
             memcpy(
-                row0 as *mut ::core::ffi::c_void,
-                row1 as *const ::core::ffi::c_void,
-                bytes_copy,
-            );
-            memcpy(
-                row1 as *mut ::core::ffi::c_void,
-                &raw mut temp as *mut stbi_uc as *const ::core::ffi::c_void,
+                row1 as *mut c_void,
+                &raw mut temp as *mut stbi_uc as *const c_void,
                 bytes_copy,
             );
             row0 = row0.offset(bytes_copy as isize);
@@ -547,28 +495,27 @@ unsafe fn stbi__load_and_postprocess_8bit(
     y: *mut i32,
     comp: *mut i32,
     req_comp: i32,
-) -> *mut ::core::ffi::c_uchar {
+) -> *mut c_uchar {
     let mut ri: stbi__result_info = stbi__result_info {
         bits_per_channel: 0,
         num_channels: 0,
         channel_order: 0,
     };
-    let mut result: *mut ::core::ffi::c_void =
-        stbi__load_main(s, x, y, comp, req_comp, &raw mut ri, 8i32);
+    let mut result: *mut c_void = stbi__load_main(s, x, y, comp, req_comp, &raw mut ri, 8i32);
     if result.is_null() {
-        return ::core::ptr::null_mut::<::core::ffi::c_uchar>();
+        return null_mut::<c_uchar>();
     }
     '_c2rust_label: {
         if ri.bits_per_channel == 8i32 || ri.bits_per_channel == 16i32 {
         } else {
             __assert_fail(
                 b"ri.bits_per_channel == 8 || ri.bits_per_channel == 16\0" as *const u8
-                    as *const ::core::ffi::c_char,
+                    as *const c_char,
                 b"./third_party/stb/stb_image.h\0" as *const u8
-                    as *const ::core::ffi::c_char,
+                    as *const c_char,
                 1249u32,
                 b"unsigned char *stbi__load_and_postprocess_8bit(stbi__context *, int *, int *, int *, int)\0"
-                    as *const u8 as *const ::core::ffi::c_char,
+                    as *const u8 as *const c_char,
             );
         }
     };
@@ -578,7 +525,7 @@ unsafe fn stbi__load_and_postprocess_8bit(
             *x,
             *y,
             if req_comp == 0i32 { *comp } else { req_comp },
-        ) as *mut ::core::ffi::c_void;
+        ) as *mut c_void;
         ri.bits_per_channel = 8i32;
     }
     if stbi__vertically_flip_on_load_global != 0 {
@@ -587,10 +534,10 @@ unsafe fn stbi__load_and_postprocess_8bit(
             result,
             *x,
             *y,
-            (channels as usize).wrapping_mul(::core::mem::size_of::<stbi_uc>() as usize) as i32,
+            (channels as usize).wrapping_mul(size_of::<stbi_uc>() as usize) as i32,
         );
     }
-    result as *mut ::core::ffi::c_uchar
+    result as *mut c_uchar
 }
 unsafe fn stbi__load_and_postprocess_16bit(
     s: *mut stbi__context,
@@ -604,22 +551,21 @@ unsafe fn stbi__load_and_postprocess_16bit(
         num_channels: 0,
         channel_order: 0,
     };
-    let mut result: *mut ::core::ffi::c_void =
-        stbi__load_main(s, x, y, comp, req_comp, &raw mut ri, 16i32);
+    let mut result: *mut c_void = stbi__load_main(s, x, y, comp, req_comp, &raw mut ri, 16i32);
     if result.is_null() {
-        return ::core::ptr::null_mut::<stbi__uint16>();
+        return null_mut::<stbi__uint16>();
     }
     '_c2rust_label: {
         if ri.bits_per_channel == 8i32 || ri.bits_per_channel == 16i32 {
         } else {
             __assert_fail(
                 b"ri.bits_per_channel == 8 || ri.bits_per_channel == 16\0" as *const u8
-                    as *const ::core::ffi::c_char,
+                    as *const c_char,
                 b"./third_party/stb/stb_image.h\0" as *const u8
-                    as *const ::core::ffi::c_char,
+                    as *const c_char,
                 1275u32,
                 b"stbi__uint16 *stbi__load_and_postprocess_16bit(stbi__context *, int *, int *, int *, int)\0"
-                    as *const u8 as *const ::core::ffi::c_char,
+                    as *const u8 as *const c_char,
             );
         }
     };
@@ -629,7 +575,7 @@ unsafe fn stbi__load_and_postprocess_16bit(
             *x,
             *y,
             if req_comp == 0i32 { *comp } else { req_comp },
-        ) as *mut ::core::ffi::c_void;
+        ) as *mut c_void;
         ri.bits_per_channel = 16i32;
     }
     if stbi__vertically_flip_on_load_global != 0 {
@@ -638,33 +584,29 @@ unsafe fn stbi__load_and_postprocess_16bit(
             result,
             *x,
             *y,
-            (channels as usize).wrapping_mul(::core::mem::size_of::<stbi__uint16>() as usize)
-                as i32,
+            (channels as usize).wrapping_mul(size_of::<stbi__uint16>() as usize) as i32,
         );
     }
     result as *mut stbi__uint16
 }
-unsafe fn stbi__fopen(
-    filename: *const ::core::ffi::c_char,
-    mode: *const ::core::ffi::c_char,
-) -> *mut FILE {
-    let mut f: *mut FILE = ::core::ptr::null_mut::<FILE>();
+unsafe fn stbi__fopen(filename: *const c_char, mode: *const c_char) -> *mut FILE {
+    let mut f: *mut FILE = null_mut::<FILE>();
     f = fopen(filename, mode) as *mut FILE;
     f
 }
 pub unsafe fn stbi_load(
-    filename: *const ::core::ffi::c_char,
+    filename: *const c_char,
     x: *mut i32,
     y: *mut i32,
     comp: *mut i32,
     req_comp: i32,
 ) -> *mut stbi_uc {
-    let f: *mut FILE = stbi__fopen(filename, b"rb\0" as *const u8 as *const ::core::ffi::c_char);
-    let mut result: *mut ::core::ffi::c_uchar = ::core::ptr::null_mut::<::core::ffi::c_uchar>();
+    let f: *mut FILE = stbi__fopen(filename, b"rb\0" as *const u8 as *const c_char);
+    let mut result: *mut c_uchar = null_mut::<c_uchar>();
     if f.is_null() {
         return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut stbi_uc;
     }
-    result = stbi_load_from_file(f, x, y, comp, req_comp) as *mut ::core::ffi::c_uchar;
+    result = stbi_load_from_file(f, x, y, comp, req_comp) as *mut c_uchar;
     fclose(f);
     result as *mut stbi_uc
 }
@@ -675,15 +617,14 @@ pub unsafe fn stbi_load_from_file(
     comp: *mut i32,
     req_comp: i32,
 ) -> *mut stbi_uc {
-    let mut result: *mut ::core::ffi::c_uchar = ::core::ptr::null_mut::<::core::ffi::c_uchar>();
+    let mut result: *mut c_uchar = null_mut::<c_uchar>();
     let mut s: stbi__context = stbi__context::EMPTY;
     stbi__start_file(&raw mut s, f);
     result = stbi__load_and_postprocess_8bit(&raw mut s, x, y, comp, req_comp);
     if !result.is_null() {
         fseek(
             f,
-            -(s.img_buffer_end.offset_from(s.img_buffer) as ::core::ffi::c_long as i32)
-                as ::core::ffi::c_long,
+            -(s.img_buffer_end.offset_from(s.img_buffer) as c_long as i32) as c_long,
             SEEK_CUR,
         );
     }
@@ -696,32 +637,30 @@ pub unsafe fn stbi_load_from_file_16(
     comp: *mut i32,
     req_comp: i32,
 ) -> *mut stbi_us {
-    let mut result: *mut stbi__uint16 = ::core::ptr::null_mut::<stbi__uint16>();
+    let mut result: *mut stbi__uint16 = null_mut::<stbi__uint16>();
     let mut s: stbi__context = stbi__context::EMPTY;
     stbi__start_file(&raw mut s, f);
     result = stbi__load_and_postprocess_16bit(&raw mut s, x, y, comp, req_comp);
     if !result.is_null() {
         fseek(
             f,
-            -(s.img_buffer_end.offset_from(s.img_buffer) as ::core::ffi::c_long as i32)
-                as ::core::ffi::c_long,
+            -(s.img_buffer_end.offset_from(s.img_buffer) as c_long as i32) as c_long,
             SEEK_CUR,
         );
     }
     result as *mut stbi_us
 }
 pub unsafe fn stbi_load_16(
-    filename: *const ::core::ffi::c_char,
+    filename: *const c_char,
     x: *mut i32,
     y: *mut i32,
     comp: *mut i32,
     req_comp: i32,
 ) -> *mut stbi_us {
-    let f: *mut FILE = stbi__fopen(filename, b"rb\0" as *const u8 as *const ::core::ffi::c_char);
-    let mut result: *mut stbi__uint16 = ::core::ptr::null_mut::<stbi__uint16>();
+    let f: *mut FILE = stbi__fopen(filename, b"rb\0" as *const u8 as *const c_char);
+    let mut result: *mut stbi__uint16 = null_mut::<stbi__uint16>();
     if f.is_null() {
-        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_uchar
-            as *mut stbi_us;
+        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut c_uchar as *mut stbi_us;
     }
     result = stbi_load_from_file_16(f, x, y, comp, req_comp) as *mut stbi__uint16;
     fclose(f);
@@ -742,7 +681,7 @@ pub unsafe fn stbi_load_16_from_memory(
 }
 pub unsafe fn stbi_load_16_from_callbacks(
     clbk: *const stbi_io_callbacks,
-    user: *mut ::core::ffi::c_void,
+    user: *mut c_void,
     x: *mut i32,
     y: *mut i32,
     channels_in_file: *mut i32,
@@ -767,7 +706,7 @@ pub unsafe fn stbi_load_from_memory(
 }
 pub unsafe fn stbi_load_from_callbacks(
     clbk: *const stbi_io_callbacks,
-    user: *mut ::core::ffi::c_void,
+    user: *mut c_void,
     x: *mut i32,
     y: *mut i32,
     comp: *mut i32,
@@ -783,8 +722,8 @@ unsafe fn stbi__loadf_main(
     y: *mut i32,
     comp: *mut i32,
     req_comp: i32,
-) -> *mut ::core::ffi::c_float {
-    let mut data: *mut ::core::ffi::c_uchar = ::core::ptr::null_mut::<::core::ffi::c_uchar>();
+) -> *mut c_float {
+    let mut data: *mut c_uchar = null_mut::<c_uchar>();
     data = stbi__load_and_postprocess_8bit(s, x, y, comp, req_comp);
     if !data.is_null() {
         return stbi__ldr_to_hdr(
@@ -794,7 +733,7 @@ unsafe fn stbi__loadf_main(
             if req_comp != 0 { req_comp } else { *comp },
         );
     }
-    ((if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_float)
+    ((if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut c_float)
 }
 pub unsafe fn stbi_loadf_from_memory(
     buffer: *const stbi_uc,
@@ -803,34 +742,34 @@ pub unsafe fn stbi_loadf_from_memory(
     y: *mut i32,
     comp: *mut i32,
     req_comp: i32,
-) -> *mut ::core::ffi::c_float {
+) -> *mut c_float {
     let mut s: stbi__context = stbi__context::EMPTY;
     stbi__start_mem(&raw mut s, buffer, len);
     stbi__loadf_main(&raw mut s, x, y, comp, req_comp)
 }
 pub unsafe fn stbi_loadf_from_callbacks(
     clbk: *const stbi_io_callbacks,
-    user: *mut ::core::ffi::c_void,
+    user: *mut c_void,
     x: *mut i32,
     y: *mut i32,
     comp: *mut i32,
     req_comp: i32,
-) -> *mut ::core::ffi::c_float {
+) -> *mut c_float {
     let mut s: stbi__context = stbi__context::EMPTY;
     stbi__start_callbacks(&raw mut s, clbk as *mut stbi_io_callbacks, user);
     stbi__loadf_main(&raw mut s, x, y, comp, req_comp)
 }
 pub unsafe fn stbi_loadf(
-    filename: *const ::core::ffi::c_char,
+    filename: *const c_char,
     x: *mut i32,
     y: *mut i32,
     comp: *mut i32,
     req_comp: i32,
-) -> *mut ::core::ffi::c_float {
-    let mut result: *mut ::core::ffi::c_float = ::core::ptr::null_mut::<::core::ffi::c_float>();
-    let f: *mut FILE = stbi__fopen(filename, b"rb\0" as *const u8 as *const ::core::ffi::c_char);
+) -> *mut c_float {
+    let mut result: *mut c_float = null_mut::<c_float>();
+    let f: *mut FILE = stbi__fopen(filename, b"rb\0" as *const u8 as *const c_char);
     if f.is_null() {
-        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_float;
+        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut c_float;
     }
     result = stbi_loadf_from_file(f, x, y, comp, req_comp);
     fclose(f);
@@ -842,7 +781,7 @@ pub unsafe fn stbi_loadf_from_file(
     y: *mut i32,
     comp: *mut i32,
     req_comp: i32,
-) -> *mut ::core::ffi::c_float {
+) -> *mut c_float {
     let mut s: stbi__context = stbi__context::EMPTY;
     stbi__start_file(&raw mut s, f);
     stbi__loadf_main(&raw mut s, x, y, comp, req_comp)
@@ -850,8 +789,8 @@ pub unsafe fn stbi_loadf_from_file(
 pub fn stbi_is_hdr_from_memory(buffer: *const stbi_uc, len: i32) -> i32 {
     0i32
 }
-pub unsafe fn stbi_is_hdr(filename: *const ::core::ffi::c_char) -> i32 {
-    let f: *mut FILE = stbi__fopen(filename, b"rb\0" as *const u8 as *const ::core::ffi::c_char);
+pub unsafe fn stbi_is_hdr(filename: *const c_char) -> i32 {
+    let f: *mut FILE = stbi__fopen(filename, b"rb\0" as *const u8 as *const c_char);
     let mut result: i32 = 0i32;
     if !f.is_null() {
         result = stbi_is_hdr_from_file(f);
@@ -862,36 +801,33 @@ pub unsafe fn stbi_is_hdr(filename: *const ::core::ffi::c_char) -> i32 {
 pub fn stbi_is_hdr_from_file(f: *mut FILE) -> i32 {
     0i32
 }
-pub fn stbi_is_hdr_from_callbacks(
-    clbk: *const stbi_io_callbacks,
-    user: *mut ::core::ffi::c_void,
-) -> i32 {
+pub fn stbi_is_hdr_from_callbacks(clbk: *const stbi_io_callbacks, user: *mut c_void) -> i32 {
     0i32
 }
-static mut stbi__l2h_scale: ::core::ffi::c_float = 1.0f32;
-static mut stbi__l2h_gamma: ::core::ffi::c_float = 2.2f32;
-pub unsafe fn stbi_ldr_to_hdr_gamma(gamma: ::core::ffi::c_float) {
+static mut stbi__l2h_scale: c_float = 1.0f32;
+static mut stbi__l2h_gamma: c_float = 2.2f32;
+pub unsafe fn stbi_ldr_to_hdr_gamma(gamma: c_float) {
     stbi__l2h_gamma = gamma;
 }
-pub unsafe fn stbi_ldr_to_hdr_scale(scale: ::core::ffi::c_float) {
+pub unsafe fn stbi_ldr_to_hdr_scale(scale: c_float) {
     stbi__l2h_scale = scale;
 }
-static mut stbi__h2l_scale_i: ::core::ffi::c_float = 1.0f32;
-static mut stbi__h2l_gamma_i: ::core::ffi::c_float = 1.0f32 / 2.2f32;
-pub unsafe fn stbi_hdr_to_ldr_gamma(gamma: ::core::ffi::c_float) {
-    stbi__h2l_gamma_i = 1i32 as ::core::ffi::c_float / gamma;
+static mut stbi__h2l_scale_i: c_float = 1.0f32;
+static mut stbi__h2l_gamma_i: c_float = 1.0f32 / 2.2f32;
+pub unsafe fn stbi_hdr_to_ldr_gamma(gamma: c_float) {
+    stbi__h2l_gamma_i = 1i32 as c_float / gamma;
 }
-pub unsafe fn stbi_hdr_to_ldr_scale(scale: ::core::ffi::c_float) {
-    stbi__h2l_scale_i = 1i32 as ::core::ffi::c_float / scale;
+pub unsafe fn stbi_hdr_to_ldr_scale(scale: c_float) {
+    stbi__h2l_scale_i = 1i32 as c_float / scale;
 }
 unsafe fn stbi__refill_buffer(s: *mut stbi__context) {
     let n: i32 = (*s).io.read.expect("non-null function pointer")(
         (*s).io_user_data,
-        &raw mut (*s).buffer_start as *mut stbi_uc as *mut ::core::ffi::c_char,
+        &raw mut (*s).buffer_start as *mut stbi_uc as *mut c_char,
         (*s).buflen,
     );
     (*s).callback_already_read +=
-        (*s).img_buffer.offset_from((*s).img_buffer_original) as ::core::ffi::c_long as i32;
+        (*s).img_buffer.offset_from((*s).img_buffer_original) as c_long as i32;
     if n == 0i32 {
         (*s).read_from_callbacks = 0i32;
         (*s).img_buffer = &raw mut (*s).buffer_start as *mut stbi_uc;
@@ -925,8 +861,7 @@ unsafe fn stbi__skip(s: *mut stbi__context, n: i32) {
         return;
     }
     if (*s).io.read.is_some() {
-        let blen: i32 =
-            (*s).img_buffer_end.offset_from((*s).img_buffer) as ::core::ffi::c_long as i32;
+        let blen: i32 = (*s).img_buffer_end.offset_from((*s).img_buffer) as c_long as i32;
         if blen < n {
             (*s).img_buffer = (*s).img_buffer_end;
             (*s).io.skip.expect("non-null function pointer")((*s).io_user_data, n - blen);
@@ -937,19 +872,18 @@ unsafe fn stbi__skip(s: *mut stbi__context, n: i32) {
 }
 unsafe fn stbi__getn(s: *mut stbi__context, buffer: *mut stbi_uc, n: i32) -> i32 {
     if (*s).io.read.is_some() {
-        let blen: i32 =
-            (*s).img_buffer_end.offset_from((*s).img_buffer) as ::core::ffi::c_long as i32;
+        let blen: i32 = (*s).img_buffer_end.offset_from((*s).img_buffer) as c_long as i32;
         if blen < n {
             let mut res: i32 = 0;
             let mut count: i32 = 0;
             memcpy(
-                buffer as *mut ::core::ffi::c_void,
-                (*s).img_buffer as *const ::core::ffi::c_void,
+                buffer as *mut c_void,
+                (*s).img_buffer as *const c_void,
                 blen as size_t,
             );
             count = (*s).io.read.expect("non-null function pointer")(
                 (*s).io_user_data,
-                (buffer as *mut ::core::ffi::c_char).offset(blen as isize),
+                (buffer as *mut c_char).offset(blen as isize),
                 n - blen,
             );
             res = (count == n - blen) as i32;
@@ -959,8 +893,8 @@ unsafe fn stbi__getn(s: *mut stbi__context, buffer: *mut stbi_uc, n: i32) -> i32
     }
     if (*s).img_buffer.offset(n as isize) <= (*s).img_buffer_end {
         memcpy(
-            buffer as *mut ::core::ffi::c_void,
-            (*s).img_buffer as *const ::core::ffi::c_void,
+            buffer as *mut c_void,
+            (*s).img_buffer as *const c_void,
             n as size_t,
         );
         (*s).img_buffer = (*s).img_buffer.offset(n as isize);
@@ -1094,13 +1028,13 @@ unsafe fn convert_image_channels<T: ImageChannel>(
 }
 
 unsafe fn stbi__convert_format(
-    data: *mut ::core::ffi::c_uchar,
+    data: *mut c_uchar,
     img_n: i32,
     req_comp: i32,
     x: u32,
     y: u32,
-) -> *mut ::core::ffi::c_uchar {
-    let mut good: *mut ::core::ffi::c_uchar = ::core::ptr::null_mut::<::core::ffi::c_uchar>();
+) -> *mut c_uchar {
+    let mut good: *mut c_uchar = null_mut::<c_uchar>();
     if req_comp == img_n {
         return data;
     }
@@ -1109,36 +1043,36 @@ unsafe fn stbi__convert_format(
         } else {
             __assert_fail(
                 b"req_comp >= 1 && req_comp <= 4\0" as *const u8
-                    as *const ::core::ffi::c_char,
+                    as *const c_char,
                 b"./third_party/stb/stb_image.h\0" as *const u8
-                    as *const ::core::ffi::c_char,
+                    as *const c_char,
                 1741u32,
                 b"unsigned char *stbi__convert_format(unsigned char *, int, int, unsigned int, unsigned int)\0"
-                    as *const u8 as *const ::core::ffi::c_char,
+                    as *const u8 as *const c_char,
             );
         }
     };
-    good = stbi__malloc_mad3(req_comp, x as i32, y as i32, 0i32) as *mut ::core::ffi::c_uchar;
+    good = stbi__malloc_mad3(req_comp, x as i32, y as i32, 0i32) as *mut c_uchar;
     if good.is_null() {
-        free(data as *mut ::core::ffi::c_void);
-        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_uchar;
+        free(data as *mut c_void);
+        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut c_uchar;
     }
     if !convert_image_channels(data, good, img_n, req_comp, x, y) {
         '_c2rust_label_0: {
             __assert_fail(
-            b"0\0" as *const u8 as *const ::core::ffi::c_char,
+            b"0\0" as *const u8 as *const c_char,
             b"./third_party/stb/stb_image.h\0" as *const u8
-                as *const ::core::ffi::c_char,
+                as *const c_char,
             1770u32,
             b"unsigned char *stbi__convert_format(unsigned char *, int, int, unsigned int, unsigned int)\0"
-                as *const u8 as *const ::core::ffi::c_char,
+                as *const u8 as *const c_char,
         );
         };
-        free(data as *mut ::core::ffi::c_void);
-        free(good as *mut ::core::ffi::c_void);
-        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_uchar;
+        free(data as *mut c_void);
+        free(good as *mut c_void);
+        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut c_uchar;
     }
-    free(data as *mut ::core::ffi::c_void);
+    free(data as *mut c_void);
     good
 }
 unsafe fn stbi__convert_format16(
@@ -1148,7 +1082,7 @@ unsafe fn stbi__convert_format16(
     x: u32,
     y: u32,
 ) -> *mut stbi__uint16 {
-    let mut good: *mut stbi__uint16 = ::core::ptr::null_mut::<stbi__uint16>();
+    let mut good: *mut stbi__uint16 = null_mut::<stbi__uint16>();
     if req_comp == img_n {
         return data;
     }
@@ -1157,12 +1091,12 @@ unsafe fn stbi__convert_format16(
         } else {
             __assert_fail(
                 b"req_comp >= 1 && req_comp <= 4\0" as *const u8
-                    as *const ::core::ffi::c_char,
+                    as *const c_char,
                 b"./third_party/stb/stb_image.h\0" as *const u8
-                    as *const ::core::ffi::c_char,
+                    as *const c_char,
                 1798u32,
                 b"stbi__uint16 *stbi__convert_format16(stbi__uint16 *, int, int, unsigned int, unsigned int)\0"
-                    as *const u8 as *const ::core::ffi::c_char,
+                    as *const u8 as *const c_char,
             );
         }
     };
@@ -1173,52 +1107,41 @@ unsafe fn stbi__convert_format16(
             .wrapping_mul(2u32) as size_t,
     ) as *mut stbi__uint16;
     if good.is_null() {
-        free(data as *mut ::core::ffi::c_void);
-        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_uchar
+        free(data as *mut c_void);
+        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut c_uchar
             as *mut stbi__uint16;
     }
     if !convert_image_channels(data, good, img_n, req_comp, x, y) {
         '_c2rust_label_0: {
             __assert_fail(
-            b"0\0" as *const u8 as *const ::core::ffi::c_char,
+            b"0\0" as *const u8 as *const c_char,
             b"./third_party/stb/stb_image.h\0" as *const u8
-                as *const ::core::ffi::c_char,
+                as *const c_char,
             1827u32,
             b"stbi__uint16 *stbi__convert_format16(stbi__uint16 *, int, int, unsigned int, unsigned int)\0"
-                as *const u8 as *const ::core::ffi::c_char,
+                as *const u8 as *const c_char,
         );
         };
-        free(data as *mut ::core::ffi::c_void);
-        free(good as *mut ::core::ffi::c_void);
-        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_uchar
+        free(data as *mut c_void);
+        free(good as *mut c_void);
+        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut c_uchar
             as *mut stbi__uint16;
     }
-    free(data as *mut ::core::ffi::c_void);
+    free(data as *mut c_void);
     good
 }
-unsafe fn stbi__ldr_to_hdr(
-    data: *mut stbi_uc,
-    x: i32,
-    y: i32,
-    comp: i32,
-) -> *mut ::core::ffi::c_float {
+unsafe fn stbi__ldr_to_hdr(data: *mut stbi_uc, x: i32, y: i32, comp: i32) -> *mut c_float {
     let mut i: i32 = 0;
     let mut k: i32 = 0;
     let mut n: i32 = 0;
-    let mut output: *mut ::core::ffi::c_float = ::core::ptr::null_mut::<::core::ffi::c_float>();
+    let mut output: *mut c_float = null_mut::<c_float>();
     if data.is_null() {
-        return ::core::ptr::null_mut::<::core::ffi::c_float>();
+        return null_mut::<c_float>();
     }
-    output = stbi__malloc_mad4(
-        x,
-        y,
-        comp,
-        ::core::mem::size_of::<::core::ffi::c_float>() as i32,
-        0i32,
-    ) as *mut ::core::ffi::c_float;
+    output = stbi__malloc_mad4(x, y, comp, size_of::<c_float>() as i32, 0i32) as *mut c_float;
     if output.is_null() {
-        free(data as *mut ::core::ffi::c_void);
-        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_float;
+        free(data as *mut c_void);
+        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut c_float;
     }
     if comp & 1i32 != 0 {
         n = comp;
@@ -1230,11 +1153,10 @@ unsafe fn stbi__ldr_to_hdr(
         k = 0i32;
         while k < n {
             *output.offset((i * comp + k) as isize) = (pow(
-                (*data.offset((i * comp + k) as isize) as i32 as ::core::ffi::c_float / 255.0f32)
-                    as ::core::ffi::c_double,
-                stbi__l2h_gamma as ::core::ffi::c_double,
-            ) * stbi__l2h_scale as ::core::ffi::c_double)
-                as ::core::ffi::c_float;
+                (*data.offset((i * comp + k) as isize) as i32 as c_float / 255.0f32) as c_double,
+                stbi__l2h_gamma as c_double,
+            ) * stbi__l2h_scale as c_double)
+                as c_float;
             k += 1;
         }
         i += 1;
@@ -1243,11 +1165,11 @@ unsafe fn stbi__ldr_to_hdr(
         i = 0i32;
         while i < x * y {
             *output.offset((i * comp + n) as isize) =
-                *data.offset((i * comp + n) as isize) as i32 as ::core::ffi::c_float / 255.0f32;
+                *data.offset((i * comp + n) as isize) as i32 as c_float / 255.0f32;
             i += 1;
         }
     }
-    free(data as *mut ::core::ffi::c_void);
+    free(data as *mut c_void);
     output
 }
 pub const STBI__ZFAST_BITS: i32 = 9;
@@ -1265,10 +1187,10 @@ unsafe fn stbi__bit_reverse(v: i32, bits: i32) -> i32 {
         if bits <= 16i32 {
         } else {
             __assert_fail(
-                b"bits <= 16\0" as *const u8 as *const ::core::ffi::c_char,
-                b"./third_party/stb/stb_image.h\0" as *const u8 as *const ::core::ffi::c_char,
+                b"bits <= 16\0" as *const u8 as *const c_char,
+                b"./third_party/stb/stb_image.h\0" as *const u8 as *const c_char,
                 4061u32,
-                b"int stbi__bit_reverse(int, int)\0" as *const u8 as *const ::core::ffi::c_char,
+                b"int stbi__bit_reverse(int, int)\0" as *const u8 as *const c_char,
             );
         }
     };
@@ -1281,14 +1203,14 @@ unsafe fn stbi__zbuild_huffman(z: *mut stbi__zhuffman, sizelist: *const stbi_uc,
     let mut next_code: [i32; 16] = [0; 16];
     let mut sizes: [i32; 17] = [0; 17];
     memset(
-        &raw mut sizes as *mut i32 as *mut ::core::ffi::c_void,
+        &raw mut sizes as *mut i32 as *mut c_void,
         0i32,
-        ::core::mem::size_of::<[i32; 17]>() as size_t,
+        size_of::<[i32; 17]>() as size_t,
     );
     memset(
-        &raw mut (*z).fast as *mut stbi__uint16 as *mut ::core::ffi::c_void,
+        &raw mut (*z).fast as *mut stbi__uint16 as *mut c_void,
         0i32,
-        ::core::mem::size_of::<[stbi__uint16; 512]>() as size_t,
+        size_of::<[stbi__uint16; 512]>() as size_t,
     );
     i = 0i32;
     while i < num {
@@ -1418,8 +1340,8 @@ unsafe fn stbi__zhuffman_decode(a: *mut stbi__zbuf, z: *mut stbi__zhuffman) -> i
     }
     stbi__zhuffman_decode_slowpath(a, z)
 }
-unsafe fn stbi__zexpand(z: *mut stbi__zbuf, zout: *mut ::core::ffi::c_char, n: i32) -> i32 {
-    let mut q: *mut ::core::ffi::c_char = ::core::ptr::null_mut::<::core::ffi::c_char>();
+unsafe fn stbi__zexpand(z: *mut stbi__zbuf, zout: *mut c_char, n: i32) -> i32 {
+    let mut q: *mut c_char = null_mut::<c_char>();
     let mut cur: u32 = 0;
     let mut limit: u32 = 0;
     let mut old_limit: u32 = 0;
@@ -1427,8 +1349,8 @@ unsafe fn stbi__zexpand(z: *mut stbi__zbuf, zout: *mut ::core::ffi::c_char, n: i
     if (*z).z_expandable == 0 {
         return 0i32;
     }
-    cur = (*z).zout.offset_from((*z).zout_start) as ::core::ffi::c_long as u32;
-    old_limit = (*z).zout_end.offset_from((*z).zout_start) as ::core::ffi::c_long as u32;
+    cur = (*z).zout.offset_from((*z).zout_start) as c_long as u32;
+    old_limit = (*z).zout_end.offset_from((*z).zout_start) as c_long as u32;
     limit = old_limit;
     if UINT_MAX.wrapping_sub(cur) < n as u32 {
         return 0i32;
@@ -1439,8 +1361,7 @@ unsafe fn stbi__zexpand(z: *mut stbi__zbuf, zout: *mut ::core::ffi::c_char, n: i
         }
         limit = limit.wrapping_mul(2u32);
     }
-    q = realloc((*z).zout_start as *mut ::core::ffi::c_void, limit as size_t)
-        as *mut ::core::ffi::c_char;
+    q = realloc((*z).zout_start as *mut c_void, limit as size_t) as *mut c_char;
     if q.is_null() {
         return 0i32;
     }
@@ -1465,7 +1386,7 @@ static mut stbi__zdist_extra: [i32; 32] = [
     13, 0, 0,
 ];
 unsafe fn stbi__parse_huffman_block(a: *mut stbi__zbuf) -> i32 {
-    let mut zout: *mut ::core::ffi::c_char = (*a).zout;
+    let mut zout: *mut c_char = (*a).zout;
     loop {
         let mut z: i32 = stbi__zhuffman_decode(a, &raw mut (*a).z_length);
         if z < 256i32 {
@@ -1480,9 +1401,9 @@ unsafe fn stbi__parse_huffman_block(a: *mut stbi__zbuf) -> i32 {
             }
             let fresh45 = zout;
             zout = zout.offset(1);
-            *fresh45 = z as ::core::ffi::c_char;
+            *fresh45 = z as c_char;
         } else {
-            let mut p: *mut stbi_uc = ::core::ptr::null_mut::<stbi_uc>();
+            let mut p: *mut stbi_uc = null_mut::<stbi_uc>();
             let mut len: i32 = 0;
             let mut dist: i32 = 0;
             if z == 256i32 {
@@ -1504,9 +1425,7 @@ unsafe fn stbi__parse_huffman_block(a: *mut stbi__zbuf) -> i32 {
                 dist = (dist as u32).wrapping_add(stbi__zreceive(a, stbi__zdist_extra[z as usize]))
                     as i32 as i32;
             }
-            if (zout.offset_from((*a).zout_start) as ::core::ffi::c_long)
-                < dist as ::core::ffi::c_long
-            {
+            if (zout.offset_from((*a).zout_start) as c_long) < dist as c_long {
                 return 0i32;
             }
             if zout.offset(len as isize) > (*a).zout_end {
@@ -1522,7 +1441,7 @@ unsafe fn stbi__parse_huffman_block(a: *mut stbi__zbuf) -> i32 {
                     loop {
                         let fresh46 = zout;
                         zout = zout.offset(1);
-                        *fresh46 = v as ::core::ffi::c_char;
+                        *fresh46 = v as c_char;
                         len -= 1;
                         if (len == 0) {
                             break;
@@ -1535,7 +1454,7 @@ unsafe fn stbi__parse_huffman_block(a: *mut stbi__zbuf) -> i32 {
                     p = p.offset(1);
                     let fresh48 = zout;
                     zout = zout.offset(1);
-                    *fresh48 = *fresh47 as ::core::ffi::c_char;
+                    *fresh48 = *fresh47 as c_char;
                     len -= 1;
                     if (len == 0) {
                         break;
@@ -1559,9 +1478,9 @@ unsafe fn stbi__compute_huffman_codes(a: *mut stbi__zbuf) -> i32 {
     let hclen: i32 = stbi__zreceive(a, 4i32).wrapping_add(4u32) as i32;
     let ntot: i32 = hlit + hdist;
     memset(
-        &raw mut codelength_sizes as *mut stbi_uc as *mut ::core::ffi::c_void,
+        &raw mut codelength_sizes as *mut stbi_uc as *mut c_void,
         0i32,
-        ::core::mem::size_of::<[stbi_uc; 19]>() as size_t,
+        size_of::<[stbi_uc; 19]>() as size_t,
     );
     i = 0i32;
     while i < hclen {
@@ -1606,7 +1525,7 @@ unsafe fn stbi__compute_huffman_codes(a: *mut stbi__zbuf) -> i32 {
                 return 0i32;
             }
             memset(
-                (&raw mut lencodes as *mut stbi_uc).offset(n as isize) as *mut ::core::ffi::c_void,
+                (&raw mut lencodes as *mut stbi_uc).offset(n as isize) as *mut c_void,
                 fill as i32,
                 c as size_t,
             );
@@ -1670,8 +1589,8 @@ unsafe fn stbi__parse_uncompressed_block(a: *mut stbi__zbuf) -> i32 {
         return 0i32;
     }
     memcpy(
-        (*a).zout as *mut ::core::ffi::c_void,
-        (*a).zbuffer as *const ::core::ffi::c_void,
+        (*a).zout as *mut c_void,
+        (*a).zbuffer as *const c_void,
         len as size_t,
     );
     (*a).zbuffer = (*a).zbuffer.offset(len as isize);
@@ -1760,7 +1679,7 @@ unsafe fn stbi__parse_zlib(a: *mut stbi__zbuf, parse_header: i32) -> i32 {
 }
 unsafe fn stbi__do_zlib(
     a: *mut stbi__zbuf,
-    obuf: *mut ::core::ffi::c_char,
+    obuf: *mut c_char,
     olen: i32,
     exp: i32,
     parse_header: i32,
@@ -1772,49 +1691,48 @@ unsafe fn stbi__do_zlib(
     stbi__parse_zlib(a, parse_header)
 }
 pub unsafe fn stbi_zlib_decode_malloc_guesssize(
-    buffer: *const ::core::ffi::c_char,
+    buffer: *const c_char,
     len: i32,
     initial_size: i32,
     outlen: *mut i32,
-) -> *mut ::core::ffi::c_char {
+) -> *mut c_char {
     stbi_zlib_decode_malloc_guesssize_headerflag(buffer, len, initial_size, outlen, 1)
 }
 pub unsafe fn stbi_zlib_decode_malloc(
-    buffer: *const ::core::ffi::c_char,
+    buffer: *const c_char,
     len: i32,
     outlen: *mut i32,
-) -> *mut ::core::ffi::c_char {
+) -> *mut c_char {
     stbi_zlib_decode_malloc_guesssize(buffer, len, 16384i32, outlen)
 }
 pub unsafe fn stbi_zlib_decode_malloc_guesssize_headerflag(
-    buffer: *const ::core::ffi::c_char,
+    buffer: *const c_char,
     len: i32,
     initial_size: i32,
     outlen: *mut i32,
     parse_header: i32,
-) -> *mut ::core::ffi::c_char {
+) -> *mut c_char {
     let mut a: stbi__zbuf = stbi__zbuf::EMPTY;
-    let p: *mut ::core::ffi::c_char =
-        stbi__malloc(initial_size as size_t) as *mut ::core::ffi::c_char;
+    let p: *mut c_char = stbi__malloc(initial_size as size_t) as *mut c_char;
     if p.is_null() {
-        return ::core::ptr::null_mut::<::core::ffi::c_char>();
+        return null_mut::<c_char>();
     }
     a.zbuffer = buffer as *mut stbi_uc;
     a.zbuffer_end = (buffer as *mut stbi_uc).offset(len as isize);
     if stbi__do_zlib(&raw mut a, p, initial_size, 1i32, parse_header) != 0 {
         if !outlen.is_null() {
-            *outlen = a.zout.offset_from(a.zout_start) as ::core::ffi::c_long as i32;
+            *outlen = a.zout.offset_from(a.zout_start) as c_long as i32;
         }
         a.zout_start
     } else {
-        free(a.zout_start as *mut ::core::ffi::c_void);
-        ::core::ptr::null_mut::<::core::ffi::c_char>()
+        free(a.zout_start as *mut c_void);
+        null_mut::<c_char>()
     }
 }
 unsafe fn decode_zlib_buffer(
-    output: *mut ::core::ffi::c_char,
+    output: *mut c_char,
     output_len: i32,
-    input: *const ::core::ffi::c_char,
+    input: *const c_char,
     input_len: i32,
     parse_header: i32,
 ) -> i32 {
@@ -1822,30 +1740,30 @@ unsafe fn decode_zlib_buffer(
     state.zbuffer = input as *mut stbi_uc;
     state.zbuffer_end = (input as *mut stbi_uc).offset(input_len as isize);
     if stbi__do_zlib(&raw mut state, output, output_len, 0, parse_header) != 0 {
-        state.zout.offset_from(state.zout_start) as ::core::ffi::c_long as i32
+        state.zout.offset_from(state.zout_start) as c_long as i32
     } else {
         -1
     }
 }
 pub unsafe fn stbi_zlib_decode_buffer(
-    obuffer: *mut ::core::ffi::c_char,
+    obuffer: *mut c_char,
     olen: i32,
-    ibuffer: *const ::core::ffi::c_char,
+    ibuffer: *const c_char,
     ilen: i32,
 ) -> i32 {
     decode_zlib_buffer(obuffer, olen, ibuffer, ilen, 1)
 }
 pub unsafe fn stbi_zlib_decode_noheader_malloc(
-    buffer: *const ::core::ffi::c_char,
+    buffer: *const c_char,
     len: i32,
     outlen: *mut i32,
-) -> *mut ::core::ffi::c_char {
+) -> *mut c_char {
     stbi_zlib_decode_malloc_guesssize_headerflag(buffer, len, 16384, outlen, 0)
 }
 pub unsafe fn stbi_zlib_decode_noheader_buffer(
-    obuffer: *mut ::core::ffi::c_char,
+    obuffer: *mut c_char,
     olen: i32,
-    ibuffer: *const ::core::ffi::c_char,
+    ibuffer: *const c_char,
     ilen: i32,
 ) -> i32 {
     decode_zlib_buffer(obuffer, olen, ibuffer, ilen, 0)
@@ -1921,12 +1839,12 @@ unsafe fn stbi__create_png_image_raw(
         } else {
             __assert_fail(
                 b"out_n == s->img_n || out_n == s->img_n+1\0" as *const u8
-                    as *const ::core::ffi::c_char,
+                    as *const c_char,
                 b"./third_party/stb/stb_image.h\0" as *const u8
-                    as *const ::core::ffi::c_char,
+                    as *const c_char,
                 4607u32,
                 b"int stbi__create_png_image_raw(stbi__png *, stbi_uc *, stbi__uint32, int, stbi__uint32, stbi__uint32, int, int)\0"
-                    as *const u8 as *const ::core::ffi::c_char,
+                    as *const u8 as *const c_char,
             );
         }
     };
@@ -1951,7 +1869,7 @@ unsafe fn stbi__create_png_image_raw(
     j = 0 as stbi__uint32;
     while j < y {
         let mut cur: *mut stbi_uc = (*a).out.offset(stride.wrapping_mul(j) as isize);
-        let mut prior: *mut stbi_uc = ::core::ptr::null_mut::<stbi_uc>();
+        let mut prior: *mut stbi_uc = null_mut::<stbi_uc>();
         let fresh19 = raw;
         raw = raw.offset(1);
         let mut filter: i32 = *fresh19 as i32;
@@ -2031,11 +1949,7 @@ unsafe fn stbi__create_png_image_raw(
             let nk: i32 = (width - 1i32) * filter_bytes;
             match filter {
                 0 => {
-                    memcpy(
-                        cur as *mut ::core::ffi::c_void,
-                        raw as *const ::core::ffi::c_void,
-                        nk as size_t,
-                    );
+                    memcpy(cur as *mut c_void, raw as *const c_void, nk as size_t);
                 }
                 1 => {
                     k = 0i32;
@@ -2109,12 +2023,12 @@ unsafe fn stbi__create_png_image_raw(
                 if img_n + 1i32 == out_n {
                 } else {
                     __assert_fail(
-                        b"img_n+1 == out_n\0" as *const u8 as *const ::core::ffi::c_char,
+                        b"img_n+1 == out_n\0" as *const u8 as *const c_char,
                         b"./third_party/stb/stb_image.h\0" as *const u8
-                            as *const ::core::ffi::c_char,
+                            as *const c_char,
                         4691u32,
                         b"int stbi__create_png_image_raw(stbi__png *, stbi_uc *, stbi__uint32, int, stbi__uint32, stbi__uint32, int, int)\0"
-                            as *const u8 as *const ::core::ffi::c_char,
+                            as *const u8 as *const c_char,
                     );
                 }
             };
@@ -2410,12 +2324,12 @@ unsafe fn stbi__create_png_image_raw(
                         if img_n == 3i32 {
                         } else {
                             __assert_fail(
-                                b"img_n == 3\0" as *const u8 as *const ::core::ffi::c_char,
+                                b"img_n == 3\0" as *const u8 as *const c_char,
                                 b"./third_party/stb/stb_image.h\0" as *const u8
-                                    as *const ::core::ffi::c_char,
+                                    as *const c_char,
                                 4780u32,
                                 b"int stbi__create_png_image_raw(stbi__png *, stbi_uc *, stbi__uint32, int, stbi__uint32, stbi__uint32, int, int)\0"
-                                    as *const u8 as *const ::core::ffi::c_char,
+                                    as *const u8 as *const c_char,
                             );
                         }
                     };
@@ -2458,7 +2372,7 @@ unsafe fn stbi__create_png_image(
 ) -> i32 {
     let bytes: i32 = if depth == 16i32 { 2i32 } else { 1i32 };
     let out_bytes: i32 = out_n * bytes;
-    let mut final_0: *mut stbi_uc = ::core::ptr::null_mut::<stbi_uc>();
+    let mut final_0: *mut stbi_uc = null_mut::<stbi_uc>();
     let mut p: i32 = 0;
     if interlaced == 0 {
         return stbi__create_png_image_raw(
@@ -2517,7 +2431,7 @@ unsafe fn stbi__create_png_image(
                 color,
             ) == 0
             {
-                free(final_0 as *mut ::core::ffi::c_void);
+                free(final_0 as *mut c_void);
                 return 0i32;
             }
             j = 0i32;
@@ -2535,16 +2449,15 @@ unsafe fn stbi__create_png_image(
                                     as isize,
                             )
                             .offset((out_x * out_bytes) as isize)
-                            as *mut ::core::ffi::c_void,
-                        (*a).out.offset(((j * x + i) * out_bytes) as isize)
-                            as *const ::core::ffi::c_void,
+                            as *mut c_void,
+                        (*a).out.offset(((j * x + i) * out_bytes) as isize) as *const c_void,
                         out_bytes as size_t,
                     );
                     i += 1;
                 }
                 j += 1;
             }
-            free((*a).out as *mut ::core::ffi::c_void);
+            free((*a).out as *mut c_void);
             image_data = image_data.offset(img_len as isize);
             image_data_len = image_data_len.wrapping_sub(img_len);
         }
@@ -2562,11 +2475,11 @@ unsafe fn stbi__compute_transparency(z: *mut stbi__png, tc: *mut stbi_uc, out_n:
         if out_n == 2i32 || out_n == 4i32 {
         } else {
             __assert_fail(
-                b"out_n == 2 || out_n == 4\0" as *const u8 as *const ::core::ffi::c_char,
-                b"./third_party/stb/stb_image.h\0" as *const u8 as *const ::core::ffi::c_char,
+                b"out_n == 2 || out_n == 4\0" as *const u8 as *const c_char,
+                b"./third_party/stb/stb_image.h\0" as *const u8 as *const c_char,
                 4859u32,
                 b"int stbi__compute_transparency(stbi__png *, stbi_uc *, int)\0" as *const u8
-                    as *const ::core::ffi::c_char,
+                    as *const c_char,
             );
         }
     };
@@ -2609,11 +2522,11 @@ unsafe fn stbi__compute_transparency16(
         if out_n == 2i32 || out_n == 4i32 {
         } else {
             __assert_fail(
-                b"out_n == 2 || out_n == 4\0" as *const u8 as *const ::core::ffi::c_char,
-                b"./third_party/stb/stb_image.h\0" as *const u8 as *const ::core::ffi::c_char,
+                b"out_n == 2 || out_n == 4\0" as *const u8 as *const c_char,
+                b"./third_party/stb/stb_image.h\0" as *const u8 as *const c_char,
                 4884u32,
                 b"int stbi__compute_transparency16(stbi__png *, stbi__uint16 *, int)\0" as *const u8
-                    as *const ::core::ffi::c_char,
+                    as *const c_char,
             );
         }
     };
@@ -2651,8 +2564,8 @@ unsafe fn stbi__expand_png_palette(
 ) -> i32 {
     let mut i: stbi__uint32 = 0;
     let pixel_count: stbi__uint32 = (*(*a).s).img_x.wrapping_mul((*(*a).s).img_y);
-    let mut p: *mut stbi_uc = ::core::ptr::null_mut::<stbi_uc>();
-    let mut temp_out: *mut stbi_uc = ::core::ptr::null_mut::<stbi_uc>();
+    let mut p: *mut stbi_uc = null_mut::<stbi_uc>();
+    let mut temp_out: *mut stbi_uc = null_mut::<stbi_uc>();
     let orig: *mut stbi_uc = (*a).out;
     p = stbi__malloc_mad2(pixel_count as i32, pal_img_n, 0i32) as *mut stbi_uc;
     if p.is_null() {
@@ -2681,7 +2594,7 @@ unsafe fn stbi__expand_png_palette(
             i = i.wrapping_add(1);
         }
     }
-    free((*a).out as *mut ::core::ffi::c_void);
+    free((*a).out as *mut c_void);
     (*a).out = temp_out;
     1i32
 }
@@ -2712,11 +2625,10 @@ unsafe fn stbi__de_iphone(z: *mut stbi__png) {
             if (*s).img_out_n == 4i32 {
             } else {
                 __assert_fail(
-                    b"s->img_out_n == 4\0" as *const u8 as *const ::core::ffi::c_char,
-                    b"./third_party/stb/stb_image.h\0" as *const u8 as *const ::core::ffi::c_char,
+                    b"s->img_out_n == 4\0" as *const u8 as *const c_char,
+                    b"./third_party/stb/stb_image.h\0" as *const u8 as *const c_char,
                     4992u32,
-                    b"void stbi__de_iphone(stbi__png *)\0" as *const u8
-                        as *const ::core::ffi::c_char,
+                    b"void stbi__de_iphone(stbi__png *)\0" as *const u8 as *const c_char,
                 );
             }
         };
@@ -2767,9 +2679,9 @@ unsafe fn stbi__parse_png_file(z: *mut stbi__png, scan: i32, req_comp: i32) -> i
     let mut color: i32 = 0i32;
     let mut is_iphone: i32 = 0i32;
     let s: *mut stbi__context = (*z).s;
-    (*z).expanded = ::core::ptr::null_mut::<stbi_uc>();
-    (*z).idata = ::core::ptr::null_mut::<stbi_uc>();
-    (*z).out = ::core::ptr::null_mut::<stbi_uc>();
+    (*z).expanded = null_mut::<stbi_uc>();
+    (*z).idata = null_mut::<stbi_uc>();
+    (*z).out = null_mut::<stbi_uc>();
     if stbi__check_png_header(s) == 0 {
         return 0i32;
     }
@@ -2957,7 +2869,7 @@ unsafe fn stbi__parse_png_file(z: *mut stbi__png, scan: i32, req_comp: i32) -> i
                 }
                 if ioff.wrapping_add(c.length) > idata_limit {
                     let idata_limit_old: stbi__uint32 = idata_limit;
-                    let mut p: *mut stbi_uc = ::core::ptr::null_mut::<stbi_uc>();
+                    let mut p: *mut stbi_uc = null_mut::<stbi_uc>();
                     if idata_limit == 0 as stbi__uint32 {
                         idata_limit = if c.length > 4096 as stbi__uint32 {
                             c.length
@@ -2968,10 +2880,7 @@ unsafe fn stbi__parse_png_file(z: *mut stbi__png, scan: i32, req_comp: i32) -> i
                     while ioff.wrapping_add(c.length) > idata_limit {
                         idata_limit = idata_limit.wrapping_mul(2 as stbi__uint32);
                     }
-                    p = realloc(
-                        (*z).idata as *mut ::core::ffi::c_void,
-                        idata_limit as size_t,
-                    ) as *mut stbi_uc;
+                    p = realloc((*z).idata as *mut c_void, idata_limit as size_t) as *mut stbi_uc;
                     if p.is_null() {
                         return 0i32;
                     }
@@ -3004,7 +2913,7 @@ unsafe fn stbi__parse_png_file(z: *mut stbi__png, scan: i32, req_comp: i32) -> i
                     .wrapping_mul((*s).img_n as stbi__uint32)
                     .wrapping_add((*s).img_y);
                 (*z).expanded = stbi_zlib_decode_malloc_guesssize_headerflag(
-                    (*z).idata as *mut ::core::ffi::c_char,
+                    (*z).idata as *mut c_char,
                     ioff as i32,
                     raw_len as i32,
                     &raw mut raw_len as *mut i32,
@@ -3013,8 +2922,8 @@ unsafe fn stbi__parse_png_file(z: *mut stbi__png, scan: i32, req_comp: i32) -> i
                 if (*z).expanded.is_null() {
                     return 0i32;
                 }
-                free((*z).idata as *mut ::core::ffi::c_void);
-                (*z).idata = ::core::ptr::null_mut::<stbi_uc>();
+                free((*z).idata as *mut c_void);
+                (*z).idata = null_mut::<stbi_uc>();
                 if req_comp == (*s).img_n + 1i32 && req_comp != 3i32 && pal_img_n == 0
                     || has_trans as i32 != 0
                 {
@@ -3074,8 +2983,8 @@ unsafe fn stbi__parse_png_file(z: *mut stbi__png, scan: i32, req_comp: i32) -> i
                 } else if has_trans != 0 {
                     (*s).img_n += 1;
                 }
-                free((*z).expanded as *mut ::core::ffi::c_void);
-                (*z).expanded = ::core::ptr::null_mut::<stbi_uc>();
+                free((*z).expanded as *mut c_void);
+                (*z).expanded = null_mut::<stbi_uc>();
                 stbi__get32be(s);
                 return 1i32;
             }
@@ -3099,11 +3008,10 @@ unsafe fn stbi__do_png(
     n: *mut i32,
     req_comp: i32,
     ri: *mut stbi__result_info,
-) -> *mut ::core::ffi::c_void {
-    let mut result: *mut ::core::ffi::c_void = NULL_0;
+) -> *mut c_void {
+    let mut result: *mut c_void = NULL_0;
     if req_comp < 0i32 || req_comp > 4i32 {
-        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_uchar
-            as *mut ::core::ffi::c_void;
+        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut c_uchar as *mut c_void;
     }
     if stbi__parse_png_file(p, STBI__SCAN_load as i32, req_comp) != 0 {
         if (*p).depth <= 8i32 {
@@ -3111,20 +3019,20 @@ unsafe fn stbi__do_png(
         } else if (*p).depth == 16i32 {
             (*ri).bits_per_channel = 16i32;
         } else {
-            return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_uchar
-                as *mut ::core::ffi::c_void;
+            return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut c_uchar
+                as *mut c_void;
         }
-        result = (*p).out as *mut ::core::ffi::c_void;
-        (*p).out = ::core::ptr::null_mut::<stbi_uc>();
+        result = (*p).out as *mut c_void;
+        (*p).out = null_mut::<stbi_uc>();
         if req_comp != 0 && req_comp != (*(*p).s).img_out_n {
             if (*ri).bits_per_channel == 8i32 {
                 result = stbi__convert_format(
-                    result as *mut ::core::ffi::c_uchar,
+                    result as *mut c_uchar,
                     (*(*p).s).img_out_n,
                     req_comp,
                     (*(*p).s).img_x as u32,
                     (*(*p).s).img_y as u32,
-                ) as *mut ::core::ffi::c_void;
+                ) as *mut c_void;
             } else {
                 result = stbi__convert_format16(
                     result as *mut stbi__uint16,
@@ -3132,7 +3040,7 @@ unsafe fn stbi__do_png(
                     req_comp,
                     (*(*p).s).img_x as u32,
                     (*(*p).s).img_y as u32,
-                ) as *mut ::core::ffi::c_void;
+                ) as *mut c_void;
             }
             (*(*p).s).img_out_n = req_comp;
             if result.is_null() {
@@ -3145,12 +3053,12 @@ unsafe fn stbi__do_png(
             *n = (*(*p).s).img_n;
         }
     }
-    free((*p).out as *mut ::core::ffi::c_void);
-    (*p).out = ::core::ptr::null_mut::<stbi_uc>();
-    free((*p).expanded as *mut ::core::ffi::c_void);
-    (*p).expanded = ::core::ptr::null_mut::<stbi_uc>();
-    free((*p).idata as *mut ::core::ffi::c_void);
-    (*p).idata = ::core::ptr::null_mut::<stbi_uc>();
+    free((*p).out as *mut c_void);
+    (*p).out = null_mut::<stbi_uc>();
+    free((*p).expanded as *mut c_void);
+    (*p).expanded = null_mut::<stbi_uc>();
+    free((*p).idata as *mut c_void);
+    (*p).idata = null_mut::<stbi_uc>();
     result
 }
 unsafe fn stbi__png_load(
@@ -3160,7 +3068,7 @@ unsafe fn stbi__png_load(
     comp: *mut i32,
     req_comp: i32,
     ri: *mut stbi__result_info,
-) -> *mut ::core::ffi::c_void {
+) -> *mut c_void {
     let mut p: stbi__png = stbi__png::EMPTY;
     p.s = s;
     stbi__do_png(&raw mut p, x, y, comp, req_comp, ri)
@@ -3197,9 +3105,9 @@ unsafe fn stbi__png_is16(s: *mut stbi__context) -> i32 {
     p.s = s;
     if stbi__png_info_raw(
         &raw mut p,
-        ::core::ptr::null_mut::<i32>(),
-        ::core::ptr::null_mut::<i32>(),
-        ::core::ptr::null_mut::<i32>(),
+        null_mut::<i32>(),
+        null_mut::<i32>(),
+        null_mut::<i32>(),
     ) == 0
     {
         return 0i32;
@@ -3222,13 +3130,8 @@ unsafe fn stbi__is_16_main(s: *mut stbi__context) -> i32 {
     }
     0i32
 }
-pub unsafe fn stbi_info(
-    filename: *const ::core::ffi::c_char,
-    x: *mut i32,
-    y: *mut i32,
-    comp: *mut i32,
-) -> i32 {
-    let f: *mut FILE = stbi__fopen(filename, b"rb\0" as *const u8 as *const ::core::ffi::c_char);
+pub unsafe fn stbi_info(filename: *const c_char, x: *mut i32, y: *mut i32, comp: *mut i32) -> i32 {
+    let f: *mut FILE = stbi__fopen(filename, b"rb\0" as *const u8 as *const c_char);
     let mut result: i32 = 0;
     if f.is_null() {
         return 0i32;
@@ -3240,14 +3143,14 @@ pub unsafe fn stbi_info(
 pub unsafe fn stbi_info_from_file(f: *mut FILE, x: *mut i32, y: *mut i32, comp: *mut i32) -> i32 {
     let mut r: i32 = 0;
     let mut s: stbi__context = stbi__context::EMPTY;
-    let pos: ::core::ffi::c_long = ftell(f);
+    let pos: c_long = ftell(f);
     stbi__start_file(&raw mut s, f);
     r = stbi__info_main(&raw mut s, x, y, comp);
     fseek(f, pos, SEEK_SET);
     r
 }
-pub unsafe fn stbi_is_16_bit(filename: *const ::core::ffi::c_char) -> i32 {
-    let f: *mut FILE = stbi__fopen(filename, b"rb\0" as *const u8 as *const ::core::ffi::c_char);
+pub unsafe fn stbi_is_16_bit(filename: *const c_char) -> i32 {
+    let f: *mut FILE = stbi__fopen(filename, b"rb\0" as *const u8 as *const c_char);
     let mut result: i32 = 0;
     if f.is_null() {
         return 0i32;
@@ -3259,7 +3162,7 @@ pub unsafe fn stbi_is_16_bit(filename: *const ::core::ffi::c_char) -> i32 {
 pub unsafe fn stbi_is_16_bit_from_file(f: *mut FILE) -> i32 {
     let mut r: i32 = 0;
     let mut s: stbi__context = stbi__context::EMPTY;
-    let pos: ::core::ffi::c_long = ftell(f);
+    let pos: c_long = ftell(f);
     stbi__start_file(&raw mut s, f);
     r = stbi__is_16_main(&raw mut s);
     fseek(f, pos, SEEK_SET);
@@ -3278,7 +3181,7 @@ pub unsafe fn stbi_info_from_memory(
 }
 pub unsafe fn stbi_info_from_callbacks(
     c: *const stbi_io_callbacks,
-    user: *mut ::core::ffi::c_void,
+    user: *mut c_void,
     x: *mut i32,
     y: *mut i32,
     comp: *mut i32,
@@ -3292,67 +3195,53 @@ pub unsafe fn stbi_is_16_bit_from_memory(buffer: *const stbi_uc, len: i32) -> i3
     stbi__start_mem(&raw mut s, buffer, len);
     stbi__is_16_main(&raw mut s)
 }
-pub unsafe fn stbi_is_16_bit_from_callbacks(
-    c: *const stbi_io_callbacks,
-    user: *mut ::core::ffi::c_void,
-) -> i32 {
+pub unsafe fn stbi_is_16_bit_from_callbacks(c: *const stbi_io_callbacks, user: *mut c_void) -> i32 {
     let mut s: stbi__context = stbi__context::EMPTY;
     stbi__start_callbacks(&raw mut s, c as *mut stbi_io_callbacks, user);
     stbi__is_16_main(&raw mut s)
 }
 pub const STBI_MAX_DIMENSIONS: i32 = 4096;
-pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
-pub const NULL_0: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
+pub const NULL: *mut c_void = null_mut::<c_void>();
+pub const NULL_0: *mut c_void = null_mut::<c_void>();
 unsafe fn ParseConfigKeyPass(
     gs: *mut GlslShader,
-    mut key: *const ::core::ffi::c_char,
-    mut match_0: *const ::core::ffi::c_char,
+    mut key: *const c_char,
+    mut match_0: *const c_char,
 ) -> *mut GlslPass {
-    let mut endp: *mut ::core::ffi::c_char = ::core::ptr::null_mut::<::core::ffi::c_char>();
+    let mut endp: *mut c_char = null_mut::<c_char>();
     while *match_0 != 0 {
         if *key as i32 != *match_0 as i32 {
-            return ::core::ptr::null_mut::<GlslPass>();
+            return null_mut::<GlslPass>();
         }
         key = key.offset(1);
         match_0 = match_0.offset(1);
     }
     if (*key as i32 - '0' as i32) as u8 as i32 >= 10i32 {
-        return ::core::ptr::null_mut::<GlslPass>();
+        return null_mut::<GlslPass>();
     }
     let pass: u32 = strtoul(key, &raw mut endp, 10i32) as u32;
     if pass >= (*gs).n_pass as u32 || *endp as i32 != 0i32 {
-        return ::core::ptr::null_mut::<GlslPass>();
+        return null_mut::<GlslPass>();
     }
     (*gs).pass.offset(pass as isize).offset(1)
 }
-unsafe fn ParseScaleType(s: *const ::core::ffi::c_char) -> u8 {
-    ((if StringEqualsNoCase(s, b"source\0" as *const u8 as *const ::core::ffi::c_char) as i32 != 0 {
+unsafe fn ParseScaleType(s: *const c_char) -> u8 {
+    ((if StringEqualsNoCase(s, b"source\0" as *const u8 as *const c_char) as i32 != 0 {
         GLSL_SOURCE as i32
-    } else if StringEqualsNoCase(s, b"viewport\0" as *const u8 as *const ::core::ffi::c_char) as i32
-        != 0
-    {
+    } else if StringEqualsNoCase(s, b"viewport\0" as *const u8 as *const c_char) as i32 != 0 {
         GLSL_VIEWPORT as i32
-    } else if StringEqualsNoCase(s, b"absolute\0" as *const u8 as *const ::core::ffi::c_char) as i32
-        != 0
-    {
+    } else if StringEqualsNoCase(s, b"absolute\0" as *const u8 as *const c_char) as i32 != 0 {
         GLSL_ABSOLUTE as i32
     } else {
         GLSL_NONE as i32
     }) as u8)
 }
-unsafe fn ParseWrapMode(s: *const ::core::ffi::c_char) -> u32 {
-    ((if StringEqualsNoCase(s, b"repeat\0" as *const u8 as *const ::core::ffi::c_char) as i32 != 0 {
+unsafe fn ParseWrapMode(s: *const c_char) -> u32 {
+    ((if StringEqualsNoCase(s, b"repeat\0" as *const u8 as *const c_char) as i32 != 0 {
         GL_REPEAT
-    } else if StringEqualsNoCase(
-        s,
-        b"clamp_to_edge\0" as *const u8 as *const ::core::ffi::c_char,
-    ) as i32
-        != 0
-    {
+    } else if StringEqualsNoCase(s, b"clamp_to_edge\0" as *const u8 as *const c_char) as i32 != 0 {
         GL_CLAMP_TO_EDGE
-    } else if StringEqualsNoCase(s, b"clamp\0" as *const u8 as *const ::core::ffi::c_char) as i32
-        != 0
-    {
+    } else if StringEqualsNoCase(s, b"clamp\0" as *const u8 as *const c_char) as i32 != 0 {
         GL_CLAMP
     } else {
         GL_CLAMP_TO_BORDER
@@ -3363,8 +3252,8 @@ unsafe fn GlslPass_Initialize(pass: *mut GlslPass) {
     (*pass).scale_y = 1.0f32;
     (*pass).wrap_mode = GL_CLAMP_TO_BORDER as u32;
 }
-unsafe fn ParseTextures(gs: *mut GlslShader, mut value: *mut ::core::ffi::c_char) {
-    let mut id: *mut ::core::ffi::c_char = ::core::ptr::null_mut::<::core::ffi::c_char>();
+unsafe fn ParseTextures(gs: *mut GlslShader, mut value: *mut c_char) {
+    let mut id: *mut c_char = null_mut::<c_char>();
     let mut nextp: *mut *mut GlslTexture = &raw mut (*gs).first_texture;
     let mut num: i32 = 0i32;
     loop {
@@ -3373,8 +3262,7 @@ unsafe fn ParseTextures(gs: *mut GlslShader, mut value: *mut ::core::ffi::c_char
             break;
         }
         let t: *mut GlslTexture =
-            calloc(::core::mem::size_of::<GlslTexture>() as size_t, 1 as size_t)
-                as *mut GlslTexture;
+            calloc(size_of::<GlslTexture>() as size_t, 1 as size_t) as *mut GlslTexture;
         (*t).id = strdup(id);
         (*t).wrap_mode = GL_CLAMP_TO_BORDER as u32;
         (*t).filter = GL_NEAREST as u32;
@@ -3385,36 +3273,24 @@ unsafe fn ParseTextures(gs: *mut GlslShader, mut value: *mut ::core::ffi::c_char
 }
 unsafe fn ParseTextureKeyValue(
     gs: *mut GlslShader,
-    key: *const ::core::ffi::c_char,
-    value: *const ::core::ffi::c_char,
+    key: *const c_char,
+    value: *const c_char,
 ) -> bool {
     let mut t: *mut GlslTexture = (*gs).first_texture;
     while !t.is_null() {
-        let key2: *const ::core::ffi::c_char = SkipPrefix(key, (*t).id);
+        let key2: *const c_char = SkipPrefix(key, (*t).id);
         if !key2.is_null() {
             if *key2 as i32 == 0i32 {
                 StrSet(&raw mut (*t).filename, value);
                 return true_0 != 0;
-            } else if strcmp(
-                key2,
-                b"_wrap_mode\0" as *const u8 as *const ::core::ffi::c_char,
-            ) == 0
-            {
+            } else if strcmp(key2, b"_wrap_mode\0" as *const u8 as *const c_char) == 0 {
                 (*t).wrap_mode = ParseWrapMode(value);
                 return true_0 != 0;
-            } else if strcmp(
-                key2,
-                b"_mipmap\0" as *const u8 as *const ::core::ffi::c_char,
-            ) == 0
-            {
-                (*t).mipmap = ParseBool(value, ::core::ptr::null_mut::<bool>());
+            } else if strcmp(key2, b"_mipmap\0" as *const u8 as *const c_char) == 0 {
+                (*t).mipmap = ParseBool(value, null_mut::<bool>());
                 return true_0 != 0;
-            } else if strcmp(
-                key2,
-                b"_linear\0" as *const u8 as *const ::core::ffi::c_char,
-            ) == 0
-            {
-                (*t).filter = (if ParseBool(value, ::core::ptr::null_mut::<bool>()) as i32 != 0 {
+            } else if strcmp(key2, b"_linear\0" as *const u8 as *const c_char) == 0 {
+                (*t).filter = (if ParseBool(value, null_mut::<bool>()) as i32 != 0 {
                     GL_LINEAR
                 } else {
                     GL_NEAREST
@@ -3426,10 +3302,7 @@ unsafe fn ParseTextureKeyValue(
     }
     false_0 != 0
 }
-unsafe fn GlslShader_GetParam(
-    gs: *mut GlslShader,
-    id: *const ::core::ffi::c_char,
-) -> *mut GlslParam {
+unsafe fn GlslShader_GetParam(gs: *mut GlslShader, id: *const c_char) -> *mut GlslParam {
     let mut pp: *mut *mut GlslParam = &raw mut (*gs).first_param;
     while !(*pp).is_null() {
         if strcmp((**pp).id, id) == 0 {
@@ -3437,14 +3310,13 @@ unsafe fn GlslShader_GetParam(
         }
         pp = &raw mut (**pp).next as *mut *mut GlslParam;
     }
-    let p: *mut GlslParam =
-        calloc(1 as size_t, ::core::mem::size_of::<GlslParam>() as size_t) as *mut GlslParam;
+    let p: *mut GlslParam = calloc(1 as size_t, size_of::<GlslParam>() as size_t) as *mut GlslParam;
     *pp = p;
     (*p).id = strdup(id);
     p
 }
-unsafe fn ParseParameters(gs: *mut GlslShader, mut value: *mut ::core::ffi::c_char) {
-    let mut id: *mut ::core::ffi::c_char = ::core::ptr::null_mut::<::core::ffi::c_char>();
+unsafe fn ParseParameters(gs: *mut GlslShader, mut value: *mut c_char) {
+    let mut id: *mut c_char = null_mut::<c_char>();
     loop {
         id = NextDelim(&raw mut value, ';' as i32);
         if id.is_null() {
@@ -3455,13 +3327,13 @@ unsafe fn ParseParameters(gs: *mut GlslShader, mut value: *mut ::core::ffi::c_ch
 }
 unsafe fn ParseParameterKeyValue(
     gs: *mut GlslShader,
-    key: *const ::core::ffi::c_char,
-    value: *const ::core::ffi::c_char,
+    key: *const c_char,
+    value: *const c_char,
 ) -> bool {
     let mut p: *mut GlslParam = (*gs).first_param;
     while !p.is_null() {
         if strcmp((*p).id, key) == 0i32 {
-            (*p).value = atof(value) as ::core::ffi::c_float;
+            (*p).value = atof(value) as c_float;
             (*p).has_value = true_0 != 0;
             return true_0 != 0;
         }
@@ -3473,7 +3345,7 @@ unsafe fn GlslShader_InitializePasses(gs: *mut GlslShader, passes: i32) {
     (*gs).n_pass = passes;
     (*gs).pass = calloc(
         ((*gs).n_pass + 1i32) as size_t,
-        ::core::mem::size_of::<GlslPass>() as size_t,
+        size_of::<GlslPass>() as size_t,
     ) as *mut GlslPass;
     let mut i: i32 = 0i32;
     while i < (*gs).n_pass {
@@ -3481,15 +3353,11 @@ unsafe fn GlslShader_InitializePasses(gs: *mut GlslShader, passes: i32) {
         i += 1;
     }
 }
-unsafe fn GlslShader_ReadPresetFile(
-    gs: *mut GlslShader,
-    filename: *const ::core::ffi::c_char,
-) -> bool {
-    let mut data: *mut ::core::ffi::c_char =
-        ReadWholeFile(filename, ::core::ptr::null_mut::<size_t>()) as *mut ::core::ffi::c_char;
-    let data_org: *mut ::core::ffi::c_char = data;
-    let mut line: *mut ::core::ffi::c_char = ::core::ptr::null_mut::<::core::ffi::c_char>();
-    let mut pass: *mut GlslPass = ::core::ptr::null_mut::<GlslPass>();
+unsafe fn GlslShader_ReadPresetFile(gs: *mut GlslShader, filename: *const c_char) -> bool {
+    let mut data: *mut c_char = ReadWholeFile(filename, null_mut::<size_t>()) as *mut c_char;
+    let data_org: *mut c_char = data;
+    let mut line: *mut c_char = null_mut::<c_char>();
+    let mut pass: *mut GlslPass = null_mut::<GlslPass>();
     if data.is_null() {
         return false_0 != 0;
     }
@@ -3499,13 +3367,13 @@ unsafe fn GlslShader_ReadPresetFile(
         if line.is_null() {
             break;
         }
-        let mut value: *mut ::core::ffi::c_char = SplitKeyValue(line);
-        let mut t: *mut ::core::ffi::c_char = ::core::ptr::null_mut::<::core::ffi::c_char>();
+        let mut value: *mut c_char = SplitKeyValue(line);
+        let mut t: *mut c_char = null_mut::<c_char>();
         if value.is_null() {
             if *line != 0 {
                 fprintf(
                     stderr,
-                    b"%s:%d: Expecting key=value\n\0" as *const u8 as *const ::core::ffi::c_char,
+                    b"%s:%d: Expecting key=value\n\0" as *const u8 as *const c_char,
                     filename,
                     lineno,
                 );
@@ -3518,53 +3386,37 @@ unsafe fn GlslShader_ReadPresetFile(
                     t = t.offset(1);
                 }
                 if *t != 0 {
-                    *t = 0 as ::core::ffi::c_char;
+                    *t = 0 as c_char;
                 }
             }
             if (*gs).n_pass == 0i32 {
-                if strcmp(
-                    line,
-                    b"shaders\0" as *const u8 as *const ::core::ffi::c_char,
-                ) != 0i32
-                {
+                if strcmp(line, b"shaders\0" as *const u8 as *const c_char) != 0i32 {
                     fprintf(
                         stderr,
-                        b"%s:%d: Expecting 'shaders'\n\0" as *const u8
-                            as *const ::core::ffi::c_char,
+                        b"%s:%d: Expecting 'shaders'\n\0" as *const u8 as *const c_char,
                         filename,
                         lineno,
                     );
                     break;
                 } else {
-                    let passes: i32 = strtoul(
-                        value,
-                        ::core::ptr::null_mut::<*mut ::core::ffi::c_char>(),
-                        10i32,
-                    ) as i32;
+                    let passes: i32 = strtoul(value, null_mut::<*mut c_char>(), 10i32) as i32;
                     if passes < 1i32 || passes > kGlslMaxPasses as i32 {
                         break;
                     }
                     GlslShader_InitializePasses(gs, passes);
                 }
             } else {
-                pass = ParseConfigKeyPass(
-                    gs,
-                    line,
-                    b"filter_linear\0" as *const u8 as *const ::core::ffi::c_char,
-                );
+                pass =
+                    ParseConfigKeyPass(gs, line, b"filter_linear\0" as *const u8 as *const c_char);
                 if !pass.is_null() {
-                    (*pass).filter =
-                        (if ParseBool(value, ::core::ptr::null_mut::<bool>()) as i32 != 0 {
-                            GL_LINEAR
-                        } else {
-                            GL_NEAREST
-                        }) as u32;
+                    (*pass).filter = (if ParseBool(value, null_mut::<bool>()) as i32 != 0 {
+                        GL_LINEAR
+                    } else {
+                        GL_NEAREST
+                    }) as u32;
                 } else {
-                    pass = ParseConfigKeyPass(
-                        gs,
-                        line,
-                        b"scale_type\0" as *const u8 as *const ::core::ffi::c_char,
-                    );
+                    pass =
+                        ParseConfigKeyPass(gs, line, b"scale_type\0" as *const u8 as *const c_char);
                     if !pass.is_null() {
                         (*pass).scale_type_y = ParseScaleType(value);
                         (*pass).scale_type_x = (*pass).scale_type_y;
@@ -3572,7 +3424,7 @@ unsafe fn GlslShader_ReadPresetFile(
                         pass = ParseConfigKeyPass(
                             gs,
                             line,
-                            b"scale_type_x\0" as *const u8 as *const ::core::ffi::c_char,
+                            b"scale_type_x\0" as *const u8 as *const c_char,
                         );
                         if !pass.is_null() {
                             (*pass).scale_type_x = ParseScaleType(value);
@@ -3580,7 +3432,7 @@ unsafe fn GlslShader_ReadPresetFile(
                             pass = ParseConfigKeyPass(
                                 gs,
                                 line,
-                                b"scale_type_y\0" as *const u8 as *const ::core::ffi::c_char,
+                                b"scale_type_y\0" as *const u8 as *const c_char,
                             );
                             if !pass.is_null() {
                                 (*pass).scale_type_y = ParseScaleType(value);
@@ -3588,33 +3440,32 @@ unsafe fn GlslShader_ReadPresetFile(
                                 pass = ParseConfigKeyPass(
                                     gs,
                                     line,
-                                    b"scale\0" as *const u8 as *const ::core::ffi::c_char,
+                                    b"scale\0" as *const u8 as *const c_char,
                                 );
                                 if !pass.is_null() {
-                                    (*pass).scale_y = atof(value) as ::core::ffi::c_float;
+                                    (*pass).scale_y = atof(value) as c_float;
                                     (*pass).scale_x = (*pass).scale_y;
                                 } else {
                                     pass = ParseConfigKeyPass(
                                         gs,
                                         line,
-                                        b"scale_x\0" as *const u8 as *const ::core::ffi::c_char,
+                                        b"scale_x\0" as *const u8 as *const c_char,
                                     );
                                     if !pass.is_null() {
-                                        (*pass).scale_x = atof(value) as ::core::ffi::c_float;
+                                        (*pass).scale_x = atof(value) as c_float;
                                     } else {
                                         pass = ParseConfigKeyPass(
                                             gs,
                                             line,
-                                            b"scale_y\0" as *const u8 as *const ::core::ffi::c_char,
+                                            b"scale_y\0" as *const u8 as *const c_char,
                                         );
                                         if !pass.is_null() {
-                                            (*pass).scale_y = atof(value) as ::core::ffi::c_float;
+                                            (*pass).scale_y = atof(value) as c_float;
                                         } else {
                                             pass = ParseConfigKeyPass(
                                                 gs,
                                                 line,
-                                                b"shader\0" as *const u8
-                                                    as *const ::core::ffi::c_char,
+                                                b"shader\0" as *const u8 as *const c_char,
                                             );
                                             if !pass.is_null() {
                                                 StrSet(&raw mut (*pass).filename, value);
@@ -3622,8 +3473,7 @@ unsafe fn GlslShader_ReadPresetFile(
                                                 pass = ParseConfigKeyPass(
                                                     gs,
                                                     line,
-                                                    b"wrap_mode\0" as *const u8
-                                                        as *const ::core::ffi::c_char,
+                                                    b"wrap_mode\0" as *const u8 as *const c_char,
                                                 );
                                                 if !pass.is_null() {
                                                     (*pass).wrap_mode = ParseWrapMode(value);
@@ -3632,19 +3482,17 @@ unsafe fn GlslShader_ReadPresetFile(
                                                         gs,
                                                         line,
                                                         b"mipmap_input\0" as *const u8
-                                                            as *const ::core::ffi::c_char,
+                                                            as *const c_char,
                                                     );
                                                     if !pass.is_null() {
-                                                        (*pass).mipmap_input = ParseBool(
-                                                            value,
-                                                            ::core::ptr::null_mut::<bool>(),
-                                                        );
+                                                        (*pass).mipmap_input =
+                                                            ParseBool(value, null_mut::<bool>());
                                                     } else {
                                                         pass = ParseConfigKeyPass(
                                                             gs,
                                                             line,
                                                             b"frame_count_mod\0" as *const u8
-                                                                as *const ::core::ffi::c_char,
+                                                                as *const c_char,
                                                         );
                                                         if !pass.is_null() {
                                                             (*pass).frame_count_mod =
@@ -3654,48 +3502,46 @@ unsafe fn GlslShader_ReadPresetFile(
                                                                 gs,
                                                                 line,
                                                                 b"float_framebuffer\0" as *const u8
-                                                                    as *const ::core::ffi::c_char,
+                                                                    as *const c_char,
                                                             );
                                                             if !pass.is_null() {
                                                                 (*pass).float_framebuffer =
                                                                     ParseBool(
                                                                         value,
-                                                                        ::core::ptr::null_mut::<bool>(
-                                                                        ),
+                                                                        null_mut::<bool>(),
                                                                     );
                                                             } else {
                                                                 pass = ParseConfigKeyPass(
                                                                     gs,
                                                                     line,
-                                                                    b"srgb_framebuffer\0" as *const u8
-                                                                        as *const ::core::ffi::c_char,
+                                                                    b"srgb_framebuffer\0"
+                                                                        as *const u8
+                                                                        as *const c_char,
                                                                 );
                                                                 if !pass.is_null() {
                                                                     (*pass).srgb_framebuffer =
                                                                         ParseBool(
                                                                             value,
-                                                                            ::core::ptr::null_mut::<
-                                                                                bool,
-                                                                            >(
-                                                                            ),
+                                                                            null_mut::<bool>(),
                                                                         );
                                                                 } else {
                                                                     pass = ParseConfigKeyPass(
                                                                         gs,
                                                                         line,
-                                                                        b"alias\0" as *const u8 as *const ::core::ffi::c_char,
+                                                                        b"alias\0" as *const u8
+                                                                            as *const c_char,
                                                                     );
                                                                     if pass.is_null() {
                                                                         if strcmp(
                                                                             line,
-                                                                            b"textures\0" as *const u8 as *const ::core::ffi::c_char,
+                                                                            b"textures\0" as *const u8 as *const c_char,
                                                                         ) == 0i32
                                                                             && (*gs).first_texture.is_null()
                                                                         {
                                                                             ParseTextures(gs, value);
                                                                         } else if strcmp(
                                                                             line,
-                                                                            b"parameters\0" as *const u8 as *const ::core::ffi::c_char,
+                                                                            b"parameters\0" as *const u8 as *const c_char,
                                                                         ) == 0i32
                                                                         {
                                                                             ParseParameters(gs, value);
@@ -3705,7 +3551,7 @@ unsafe fn GlslShader_ReadPresetFile(
                                                                             fprintf(
                                                                                 stderr,
                                                                                 b"%s:%d: Unknown key '%s'\n\0" as *const u8
-                                                                                    as *const ::core::ffi::c_char,
+                                                                                    as *const c_char,
                                                                                 filename,
                                                                                 lineno,
                                                                                 line,
@@ -3729,22 +3575,21 @@ unsafe fn GlslShader_ReadPresetFile(
         }
         lineno += 1;
     }
-    free(data_org as *mut ::core::ffi::c_void);
+    free(data_org as *mut c_void);
     (*gs).n_pass != 0i32
 }
 pub unsafe fn GlslShader_ReadShaderFile(
     gs: *mut GlslShader,
-    filename: *const ::core::ffi::c_char,
+    filename: *const c_char,
     result: *mut ByteArray,
 ) {
-    let mut data: *mut ::core::ffi::c_char =
-        ReadWholeFile(filename, ::core::ptr::null_mut::<size_t>()) as *mut ::core::ffi::c_char;
-    let data_org: *mut ::core::ffi::c_char = data;
-    let mut line: *mut ::core::ffi::c_char = ::core::ptr::null_mut::<::core::ffi::c_char>();
+    let mut data: *mut c_char = ReadWholeFile(filename, null_mut::<size_t>()) as *mut c_char;
+    let data_org: *mut c_char = data;
+    let mut line: *mut c_char = null_mut::<c_char>();
     if data.is_null() {
         fprintf(
             stderr,
-            b"Unable to read file '%s'\n\0" as *const u8 as *const ::core::ffi::c_char,
+            b"Unable to read file '%s'\n\0" as *const u8 as *const c_char,
             filename,
         );
         return;
@@ -3757,89 +3602,80 @@ pub unsafe fn GlslShader_ReadShaderFile(
         let linelen: size_t = strlen(line);
         if linelen >= 8 as size_t
             && memcmp(
-                line as *const ::core::ffi::c_void,
-                b"#include\0" as *const u8 as *const ::core::ffi::c_char
-                    as *const ::core::ffi::c_void,
+                line as *const c_void,
+                b"#include\0" as *const u8 as *const c_char as *const c_void,
                 8 as size_t,
             ) == 0i32
         {
-            let mut tt: *mut ::core::ffi::c_char = line.offset(8);
-            let new_filename: *mut ::core::ffi::c_char =
+            let mut tt: *mut c_char = line.offset(8);
+            let new_filename: *mut c_char =
                 ReplaceFilenameWithNewPath(filename, NextPossiblyQuotedString(&raw mut tt));
             GlslShader_ReadShaderFile(gs, new_filename, result);
-            free(new_filename as *mut ::core::ffi::c_void);
+            free(new_filename as *mut c_void);
         } else if linelen >= 17 as size_t
             && memcmp(
-                line as *const ::core::ffi::c_void,
-                b"#pragma parameter\0" as *const u8 as *const ::core::ffi::c_char
-                    as *const ::core::ffi::c_void,
+                line as *const c_void,
+                b"#pragma parameter\0" as *const u8 as *const c_char as *const c_void,
                 17 as size_t,
             ) == 0i32
         {
-            let mut tt_0: *mut ::core::ffi::c_char = line.offset(17);
+            let mut tt_0: *mut c_char = line.offset(17);
             let param: *mut GlslParam =
                 GlslShader_GetParam(gs, NextPossiblyQuotedString(&raw mut tt_0));
             NextPossiblyQuotedString(&raw mut tt_0);
-            let value: ::core::ffi::c_float =
-                atof(NextPossiblyQuotedString(&raw mut tt_0)) as ::core::ffi::c_float;
+            let value: c_float = atof(NextPossiblyQuotedString(&raw mut tt_0)) as c_float;
             if !(*param).has_value {
                 (*param).value = value;
             }
-            (*param).min = atof(NextPossiblyQuotedString(&raw mut tt_0)) as ::core::ffi::c_float;
-            (*param).max = atof(NextPossiblyQuotedString(&raw mut tt_0)) as ::core::ffi::c_float;
+            (*param).min = atof(NextPossiblyQuotedString(&raw mut tt_0)) as c_float;
+            (*param).max = atof(NextPossiblyQuotedString(&raw mut tt_0)) as c_float;
         } else {
-            *line.offset(linelen as isize) = '\n' as i32 as ::core::ffi::c_char;
+            *line.offset(linelen as isize) = '\n' as i32 as c_char;
             ByteArray_AppendData(result, line as *mut u8, linelen.wrapping_add(1 as size_t));
         }
     }
-    free(data_org as *mut ::core::ffi::c_void);
+    free(data_org as *mut c_void);
 }
 unsafe fn GlslPass_Compile(p: *mut GlslPass, type_0: u32, data: *const u8, size: size_t) -> bool {
-    static mut kVertexPrefix: [::core::ffi::c_char; 42] = unsafe {
-        ::core::mem::transmute::<[u8; 42], [::core::ffi::c_char; 42]>(
-            *b"#define VERTEX\n#define PARAMETER_UNIFORM\n\0",
-        )
+    static mut kVertexPrefix: [c_char; 42] = unsafe {
+        transmute::<[u8; 42], [c_char; 42]>(*b"#define VERTEX\n#define PARAMETER_UNIFORM\n\0")
     };
-    static mut kFragmentPrefix: [::core::ffi::c_char; 44] = unsafe {
-        ::core::mem::transmute::<[u8; 44], [::core::ffi::c_char; 44]>(
-            *b"#define FRAGMENT\n#define PARAMETER_UNIFORM\n\0",
-        )
+    static mut kFragmentPrefix: [c_char; 44] = unsafe {
+        transmute::<[u8; 44], [c_char; 44]>(*b"#define FRAGMENT\n#define PARAMETER_UNIFORM\n\0")
     };
-    let mut strings: [*const GLchar; 3] = [::core::ptr::null::<GLchar>(); 3];
+    let mut strings: [*const GLchar; 3] = [null::<GLchar>(); 3];
     let mut lengths: [GLint; 3] = [0; 3];
-    let mut buffer: [::core::ffi::c_char; 256] = [0; 256];
+    let mut buffer: [c_char; 256] = [0; 256];
     let mut compile_status: GLint = 0 as GLint;
     let mut skip: size_t = 0 as size_t;
     if size < 8 as size_t
         || memcmp(
-            data as *const ::core::ffi::c_void,
-            b"#version\0" as *const u8 as *const ::core::ffi::c_char as *const ::core::ffi::c_void,
+            data as *const c_void,
+            b"#version\0" as *const u8 as *const c_char as *const c_void,
             8 as size_t,
         ) != 0i32
     {
-        strings[0i32 as usize] =
-            b"#version 330\n\0" as *const u8 as *const ::core::ffi::c_char as *const GLchar;
-        lengths[0i32 as usize] = (::core::mem::size_of::<[::core::ffi::c_char; 14]>() as usize)
-            .wrapping_sub(1_usize) as GLint;
+        strings[0i32 as usize] = b"#version 330\n\0" as *const u8 as *const c_char as *const GLchar;
+        lengths[0i32 as usize] =
+            (size_of::<[c_char; 14]>() as usize).wrapping_sub(1_usize) as GLint;
     } else {
         while skip < size && {
             let fresh53 = skip;
             skip = skip.wrapping_add(1);
             *data.offset(fresh53 as isize) as i32 != '\n' as i32
         } {}
-        strings[0i32 as usize] = data as *mut ::core::ffi::c_char;
+        strings[0i32 as usize] = data as *mut c_char;
         lengths[0i32 as usize] = skip as i32 as GLint;
     }
     strings[1i32 as usize] = (if type_0 == GL_VERTEX_SHADER as u32 {
-        &raw const kVertexPrefix as *const ::core::ffi::c_char as *mut ::core::ffi::c_char
-            as *const ::core::ffi::c_char
+        &raw const kVertexPrefix as *const c_char as *mut c_char as *const c_char
     } else {
-        &raw const kFragmentPrefix as *const ::core::ffi::c_char
+        &raw const kFragmentPrefix as *const c_char
     }) as *const GLchar;
     lengths[1i32 as usize] = (if type_0 == GL_VERTEX_SHADER as u32 {
-        (::core::mem::size_of::<[::core::ffi::c_char; 42]>() as usize).wrapping_sub(1_usize)
+        (size_of::<[c_char; 42]>() as usize).wrapping_sub(1_usize)
     } else {
-        (::core::mem::size_of::<[::core::ffi::c_char; 44]>() as usize).wrapping_sub(1_usize)
+        (size_of::<[c_char; 44]>() as usize).wrapping_sub(1_usize)
     }) as GLint;
     strings[2i32 as usize] = (data as *mut GLchar).offset(skip as isize);
     lengths[2i32 as usize] = size.wrapping_sub(skip) as i32 as GLint;
@@ -3856,30 +3692,29 @@ unsafe fn GlslPass_Compile(p: *mut GlslPass, type_0: u32, data: *const u8, size:
         GL_COMPILE_STATUS as GLenum,
         &raw mut compile_status,
     );
-    buffer[0i32 as usize] = 0 as ::core::ffi::c_char;
+    buffer[0i32 as usize] = 0 as c_char;
     gl::GetShaderInfoLog(
         shader as GLuint,
-        ::core::mem::size_of::<[::core::ffi::c_char; 256]>() as GLsizei,
-        ::core::ptr::null_mut::<GLsizei>(),
+        size_of::<[c_char; 256]>() as GLsizei,
+        null_mut::<GLsizei>(),
         &raw mut buffer as *mut GLchar,
     );
     if compile_status != GL_TRUE || buffer[0i32 as usize] as i32 != 0 {
         fprintf(
             stderr,
-            b"%s compiling %s shader in file '%s':\n%s\n\0" as *const u8
-                as *const ::core::ffi::c_char,
+            b"%s compiling %s shader in file '%s':\n%s\n\0" as *const u8 as *const c_char,
             if compile_status != GL_TRUE {
-                b"Error\0" as *const u8 as *const ::core::ffi::c_char
+                b"Error\0" as *const u8 as *const c_char
             } else {
-                b"While\0" as *const u8 as *const ::core::ffi::c_char
+                b"While\0" as *const u8 as *const c_char
             },
             if type_0 == GL_VERTEX_SHADER as u32 {
-                b"vertex\0" as *const u8 as *const ::core::ffi::c_char
+                b"vertex\0" as *const u8 as *const c_char
             } else {
-                b"fragment\0" as *const u8 as *const ::core::ffi::c_char
+                b"fragment\0" as *const u8 as *const c_char
             },
             (*p).filename,
-            &raw mut buffer as *mut ::core::ffi::c_char,
+            &raw mut buffer as *mut c_char,
         );
     }
     if compile_status == GL_TRUE {
@@ -3890,59 +3725,53 @@ unsafe fn GlslPass_Compile(p: *mut GlslPass, type_0: u32, data: *const u8, size:
 }
 unsafe fn GlslTextureUniform_Read(
     program: u32,
-    prefix: *const ::core::ffi::c_char,
+    prefix: *const c_char,
     i: i32,
     result: *mut GlslTextureUniform,
 ) {
-    let mut buf: [::core::ffi::c_char; 40] = [0; 40];
-    let e: *mut ::core::ffi::c_char = (&raw mut buf as *mut ::core::ffi::c_char).offset((snprintf
-        as unsafe extern "C" fn(
-            *mut ::core::ffi::c_char,
-            size_t,
-            *const ::core::ffi::c_char,
-            ...
-        ) -> i32)(
-        &raw mut buf as *mut ::core::ffi::c_char,
-        ::core::mem::size_of::<[::core::ffi::c_char; 40]>() as size_t,
+    let mut buf: [c_char; 40] = [0; 40];
+    let e: *mut c_char = (&raw mut buf as *mut c_char).offset((snprintf
+        as unsafe extern "C" fn(*mut c_char, size_t, *const c_char, ...) -> i32)(
+        &raw mut buf as *mut c_char,
+        size_of::<[c_char; 40]>() as size_t,
         if i >= 0i32 {
-            b"%s%u\0" as *const u8 as *const ::core::ffi::c_char
+            b"%s%u\0" as *const u8 as *const c_char
         } else {
-            b"%s\0" as *const u8 as *const ::core::ffi::c_char
+            b"%s\0" as *const u8 as *const c_char
         },
         prefix,
         i,
-    )
-        as isize) as *mut ::core::ffi::c_char;
+    ) as isize) as *mut c_char;
     memcpy(
-        e as *mut ::core::ffi::c_void,
-        b"Texture\0" as *const u8 as *const ::core::ffi::c_char as *const ::core::ffi::c_void,
+        e as *mut c_void,
+        b"Texture\0" as *const u8 as *const c_char as *const c_void,
         8 as size_t,
     );
     (*result).Texture =
-        gl::GetUniformLocation(program as GLuint, &raw mut buf as *mut ::core::ffi::c_char) as i32;
+        gl::GetUniformLocation(program as GLuint, &raw mut buf as *mut c_char) as i32;
     memcpy(
-        e as *mut ::core::ffi::c_void,
-        b"InputSize\0" as *const u8 as *const ::core::ffi::c_char as *const ::core::ffi::c_void,
+        e as *mut c_void,
+        b"InputSize\0" as *const u8 as *const c_char as *const c_void,
         10 as size_t,
     );
     (*result).InputSize =
-        gl::GetUniformLocation(program as GLuint, &raw mut buf as *mut ::core::ffi::c_char) as i32;
+        gl::GetUniformLocation(program as GLuint, &raw mut buf as *mut c_char) as i32;
     memcpy(
-        e as *mut ::core::ffi::c_void,
-        b"TextureSize\0" as *const u8 as *const ::core::ffi::c_char as *const ::core::ffi::c_void,
+        e as *mut c_void,
+        b"TextureSize\0" as *const u8 as *const c_char as *const c_void,
         12 as size_t,
     );
     (*result).TextureSize =
-        gl::GetUniformLocation(program as GLuint, &raw mut buf as *mut ::core::ffi::c_char) as i32;
+        gl::GetUniformLocation(program as GLuint, &raw mut buf as *mut c_char) as i32;
     memcpy(
-        e as *mut ::core::ffi::c_void,
-        b"TexCoord\0" as *const u8 as *const ::core::ffi::c_char as *const ::core::ffi::c_void,
+        e as *mut c_void,
+        b"TexCoord\0" as *const u8 as *const c_char as *const c_void,
         9 as size_t,
     );
     (*result).TexCoord =
-        gl::GetAttribLocation(program as GLuint, &raw mut buf as *mut ::core::ffi::c_char) as i32;
+        gl::GetAttribLocation(program as GLuint, &raw mut buf as *mut c_char) as i32;
 }
-static mut kMvpMatrixOrtho: [::core::ffi::c_float; 16] = [
+static mut kMvpMatrixOrtho: [c_float; 16] = [
     2.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 2.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, -1.0f32,
     0.0f32, -1.0f32, -1.0f32, 0.0f32, 1.0f32,
 ];
@@ -3968,7 +3797,7 @@ unsafe fn GlslShader_GetUniforms(gs: *mut GlslShader) {
         }
         GlslTextureUniform_Read(
             program,
-            b"\0" as *const u8 as *const ::core::ffi::c_char,
+            b"\0" as *const u8 as *const c_char,
             -(1i32),
             &raw mut (*p).unif.Top,
         );
@@ -3994,7 +3823,7 @@ unsafe fn GlslShader_GetUniforms(gs: *mut GlslShader) {
         ) as i32;
         GlslTextureUniform_Read(
             program,
-            b"Orig\0" as *const u8 as *const ::core::ffi::c_char,
+            b"Orig\0" as *const u8 as *const c_char,
             -(1i32),
             &raw mut (*p).unif.Orig,
         );
@@ -4002,7 +3831,7 @@ unsafe fn GlslShader_GetUniforms(gs: *mut GlslShader) {
         while j < 7i32 {
             GlslTextureUniform_Read(
                 program,
-                b"Prev\0" as *const u8 as *const ::core::ffi::c_char,
+                b"Prev\0" as *const u8 as *const c_char,
                 if j != 0 { j } else { -(1i32) },
                 (&raw mut (*p).unif.Prev as *mut GlslTextureUniform).offset(j as isize)
                     as *mut GlslTextureUniform,
@@ -4016,14 +3845,14 @@ unsafe fn GlslShader_GetUniforms(gs: *mut GlslShader) {
         while j_0 < (*gs).n_pass {
             GlslTextureUniform_Read(
                 program,
-                b"Pass\0" as *const u8 as *const ::core::ffi::c_char,
+                b"Pass\0" as *const u8 as *const c_char,
                 j_0,
                 (&raw mut (*p).unif.Pass as *mut GlslTextureUniform).offset(j_0 as isize)
                     as *mut GlslTextureUniform,
             );
             GlslTextureUniform_Read(
                 program,
-                b"PassPrev\0" as *const u8 as *const ::core::ffi::c_char,
+                b"PassPrev\0" as *const u8 as *const c_char,
                 j_0,
                 (&raw mut (*p).unif.PassPrev as *mut GlslTextureUniform).offset(j_0 as isize)
                     as *mut GlslTextureUniform,
@@ -4049,33 +3878,31 @@ unsafe fn GlslShader_GetUniforms(gs: *mut GlslShader) {
     }
     gl::UseProgram(0 as GLuint);
 }
-unsafe fn IsGlslFilename(filename: *const ::core::ffi::c_char) -> bool {
+unsafe fn IsGlslFilename(filename: *const c_char) -> bool {
     let len: size_t = strlen(filename);
     len >= 5 as size_t
         && memcmp(
-            filename.offset(len as isize).offset(-(5i32 as isize)) as *const ::core::ffi::c_void,
-            b".glsl\0" as *const u8 as *const ::core::ffi::c_char as *const ::core::ffi::c_void,
+            filename.offset(len as isize).offset(-(5i32 as isize)) as *const c_void,
+            b".glsl\0" as *const u8 as *const c_char as *const c_void,
             5 as size_t,
         ) == 0i32
 }
-pub unsafe fn GlslShader_CreateFromFile(
-    mut filename: *const ::core::ffi::c_char,
-) -> *mut GlslShader {
+pub unsafe fn GlslShader_CreateFromFile(mut filename: *const c_char) -> *mut GlslShader {
     static mut kTexCoords: [GLfloat; 16] = [
         0.0f32, 0.0f32, 1.0f32, 0.0f32, 0.0f32, 1.0f32, 1.0f32, 1.0f32, 0.0f32, 1.0f32, 1.0f32,
         1.0f32, 0.0f32, 0.0f32, 1.0f32, 0.0f32,
     ];
     let mut current_block: u64;
-    let mut buffer: [::core::ffi::c_char; 256] = [0; 256];
+    let mut buffer: [c_char; 256] = [0; 256];
     let mut link_status: GLint = 0;
     let mut shader_code: ByteArray = ByteArray {
-        data: ::core::ptr::null_mut::<u8>(),
+        data: null_mut::<u8>(),
         size: 0,
         capacity: 0,
     };
     let mut success: bool = false_0 != 0;
     let mut gs: *mut GlslShader =
-        calloc(::core::mem::size_of::<GlslShader>() as size_t, 1 as size_t) as *mut GlslShader;
+        calloc(size_of::<GlslShader>() as size_t, 1 as size_t) as *mut GlslShader;
     if gs.is_null() {
         return gs;
     }
@@ -4083,12 +3910,12 @@ pub unsafe fn GlslShader_CreateFromFile(
         GlslShader_InitializePasses(gs, 1i32);
         let ref mut fresh0 = (*(*gs).pass.offset(1)).filename;
         *fresh0 = strdup(filename);
-        filename = b"\0" as *const u8 as *const ::core::ffi::c_char;
+        filename = b"\0" as *const u8 as *const c_char;
         current_block = 1394248824506584008;
     } else if !GlslShader_ReadPresetFile(gs, filename) {
         fprintf(
             stderr,
-            b"Unable to read file '%s'\n\0" as *const u8 as *const ::core::ffi::c_char,
+            b"Unable to read file '%s'\n\0" as *const u8 as *const c_char,
             filename,
         );
         current_block = 13851546192323845927;
@@ -4107,21 +3934,19 @@ pub unsafe fn GlslShader_CreateFromFile(
             if (*p).filename.is_null() {
                 fprintf(
                     stderr,
-                    b"shader%d attribute missing\n\0" as *const u8 as *const ::core::ffi::c_char,
+                    b"shader%d attribute missing\n\0" as *const u8 as *const c_char,
                     i - 1i32,
                 );
                 current_block = 13851546192323845927;
                 break;
             } else {
-                let new_filename: *mut ::core::ffi::c_char =
-                    ReplaceFilenameWithNewPath(filename, (*p).filename);
+                let new_filename: *mut c_char = ReplaceFilenameWithNewPath(filename, (*p).filename);
                 GlslShader_ReadShaderFile(gs, new_filename, &raw mut shader_code);
-                free(new_filename as *mut ::core::ffi::c_void);
+                free(new_filename as *mut c_void);
                 if shader_code.size == 0 as size_t {
                     fprintf(
                         stderr,
-                        b"Couldn't read shader in file '%s'\n\0" as *const u8
-                            as *const ::core::ffi::c_char,
+                        b"Couldn't read shader in file '%s'\n\0" as *const u8 as *const c_char,
                         (*p).filename,
                     );
                     current_block = 13851546192323845927;
@@ -4148,25 +3973,25 @@ pub unsafe fn GlslShader_CreateFromFile(
                         GL_LINK_STATUS as GLenum,
                         &raw mut link_status,
                     );
-                    buffer[0i32 as usize] = 0 as ::core::ffi::c_char;
+                    buffer[0i32 as usize] = 0 as c_char;
                     gl::GetProgramInfoLog(
                         (*p).gl_program as GLuint,
-                        ::core::mem::size_of::<[::core::ffi::c_char; 256]>() as GLsizei,
-                        ::core::ptr::null_mut::<GLsizei>(),
+                        size_of::<[c_char; 256]>() as GLsizei,
+                        null_mut::<GLsizei>(),
                         &raw mut buffer as *mut GLchar,
                     );
                     if link_status != GL_TRUE || buffer[0i32 as usize] as i32 != 0 {
                         fprintf(
                             stderr,
                             b"%s linking shader in file '%s':\n%s\n\0" as *const u8
-                                as *const ::core::ffi::c_char,
+                                as *const c_char,
                             if link_status != GL_TRUE {
-                                b"Error\0" as *const u8 as *const ::core::ffi::c_char
+                                b"Error\0" as *const u8 as *const c_char
                             } else {
-                                b"While\0" as *const u8 as *const ::core::ffi::c_char
+                                b"While\0" as *const u8 as *const c_char
                             },
                             (*p).filename,
-                            &raw mut buffer as *mut ::core::ffi::c_char,
+                            &raw mut buffer as *mut c_char,
                         );
                     }
                     if link_status != GL_TRUE {
@@ -4214,24 +4039,22 @@ pub unsafe fn GlslShader_CreateFromFile(
                     }) as GLint,
                 );
                 if !(*t).filename.is_null() {
-                    let new_filename_0: *mut ::core::ffi::c_char =
+                    let new_filename_0: *mut c_char =
                         ReplaceFilenameWithNewPath(filename, (*t).filename);
                     let mut imw: i32 = 0;
                     let mut imh: i32 = 0;
                     let mut imn: i32 = 0;
-                    let data: *mut ::core::ffi::c_uchar = stbi_load(
+                    let data: *mut c_uchar = stbi_load(
                         new_filename_0,
                         &raw mut imw,
                         &raw mut imh,
                         &raw mut imn,
                         0i32,
-                    )
-                        as *mut ::core::ffi::c_uchar;
+                    ) as *mut c_uchar;
                     if data.is_null() {
                         fprintf(
                             stderr,
-                            b"Unable to read PNG '%s'\n\0" as *const u8
-                                as *const ::core::ffi::c_char,
+                            b"Unable to read PNG '%s'\n\0" as *const u8 as *const c_char,
                             new_filename_0,
                         );
                     } else {
@@ -4250,11 +4073,11 @@ pub unsafe fn GlslShader_CreateFromFile(
                                 GL_LUMINANCE
                             }) as GLenum,
                             GL_UNSIGNED_BYTE as GLenum,
-                            data as *const ::core::ffi::c_void,
+                            data as *const c_void,
                         );
                     }
-                    free(data as *mut ::core::ffi::c_void);
-                    free(new_filename_0 as *mut ::core::ffi::c_void);
+                    free(data as *mut c_void);
+                    free(new_filename_0 as *mut c_void);
                 }
                 if (*t).mipmap {
                     gl::GenerateMipmap(GL_TEXTURE_2D as GLenum);
@@ -4287,8 +4110,8 @@ pub unsafe fn GlslShader_CreateFromFile(
             gl::BindBuffer(GL_ARRAY_BUFFER as GLenum, (*gs).gl_vbo as GLuint);
             gl::BufferData(
                 GL_ARRAY_BUFFER as GLenum,
-                ::core::mem::size_of::<[GLfloat; 16]>() as GLsizeiptr,
-                &raw const kTexCoords as *const GLfloat as *const ::core::ffi::c_void,
+                size_of::<[GLfloat; 16]>() as GLsizeiptr,
+                &raw const kTexCoords as *const GLfloat as *const c_void,
                 GL_STATIC_DRAW as GLenum,
             );
             gl::BindBuffer(GL_ARRAY_BUFFER as GLenum, 0 as GLuint);
@@ -4297,7 +4120,7 @@ pub unsafe fn GlslShader_CreateFromFile(
     }
     if !success {
         GlslShader_Destroy(gs);
-        gs = ::core::ptr::null_mut::<GlslShader>();
+        gs = null_mut::<GlslShader>();
     }
     ByteArray_Destroy(&raw mut shader_code);
     gs
@@ -4309,11 +4132,11 @@ pub unsafe fn GlslShader_Destroy(gs: *mut GlslShader) {
         gl::DeleteProgram((*p).gl_program as GLuint);
         gl::DeleteTextures(1 as GLsizei, &raw mut (*p).gl_texture);
         gl::DeleteFramebuffers(1 as GLsizei, &raw mut (*p).gl_fbo);
-        free((*p).filename as *mut ::core::ffi::c_void);
+        free((*p).filename as *mut c_void);
         p = p.offset(1);
     }
-    free((*gs).pass as *mut ::core::ffi::c_void);
-    let mut t: *mut GlslTexture = ::core::ptr::null_mut::<GlslTexture>();
+    free((*gs).pass as *mut c_void);
+    let mut t: *mut GlslTexture = null_mut::<GlslTexture>();
     loop {
         t = (*gs).first_texture;
         if t.is_null() {
@@ -4321,19 +4144,19 @@ pub unsafe fn GlslShader_Destroy(gs: *mut GlslShader) {
         }
         (*gs).first_texture = (*t).next as *mut GlslTexture;
         gl::DeleteTextures(1 as GLsizei, &raw mut (*t).gl_texture);
-        free((*t).id as *mut ::core::ffi::c_void);
-        free((*t).filename as *mut ::core::ffi::c_void);
-        free(t as *mut ::core::ffi::c_void);
+        free((*t).id as *mut c_void);
+        free((*t).filename as *mut c_void);
+        free(t as *mut c_void);
     }
-    let mut pp: *mut GlslParam = ::core::ptr::null_mut::<GlslParam>();
+    let mut pp: *mut GlslParam = null_mut::<GlslParam>();
     loop {
         pp = (*gs).first_param;
         if pp.is_null() {
             break;
         }
         (*gs).first_param = (*pp).next as *mut GlslParam;
-        free((*pp).id as *mut ::core::ffi::c_void);
-        free(pp as *mut ::core::ffi::c_void);
+        free((*pp).id as *mut c_void);
+        free(pp as *mut c_void);
     }
     let mut i: i32 = 0i32;
     while i < 8i32 {
@@ -4345,7 +4168,7 @@ pub unsafe fn GlslShader_Destroy(gs: *mut GlslShader) {
         i += 1;
     }
     gl::DeleteBuffers(1 as GLsizei, &raw mut (*gs).gl_vbo);
-    free(gs as *mut ::core::ffi::c_void);
+    free(gs as *mut c_void);
 }
 unsafe fn RenderCtx_SetTexture(ctx: *mut RenderCtx, textureu: i32, texture_id: u32) {
     if textureu >= 0i32 {
@@ -4362,12 +4185,11 @@ unsafe fn RenderCtx_SetTexCoords(ctx: *mut RenderCtx, tex_coord: i32, offset: us
             if (*ctx).num_vaos < kMaxVaosInRenderCtx as i32 as u32 {
             } else {
                 __assert_fail(
-                    b"ctx->num_vaos < kMaxVaosInRenderCtx\0" as *const u8
-                        as *const ::core::ffi::c_char,
-                    b"src/glsl_shader.c\0" as *const u8 as *const ::core::ffi::c_char,
+                    b"ctx->num_vaos < kMaxVaosInRenderCtx\0" as *const u8 as *const c_char,
+                    b"src/glsl_shader.c\0" as *const u8 as *const c_char,
                     467u32,
                     b"void RenderCtx_SetTexCoords(RenderCtx *, int, uintptr_t)\0" as *const u8
-                        as *const ::core::ffi::c_char,
+                        as *const c_char,
                 );
             }
         };
@@ -4380,7 +4202,7 @@ unsafe fn RenderCtx_SetTexCoords(ctx: *mut RenderCtx, tex_coord: i32, offset: us
             GL_FLOAT as GLenum,
             GL_FALSE as GLboolean,
             0 as GLsizei,
-            offset as *mut ::core::ffi::c_void,
+            offset as *mut c_void,
         );
         gl::EnableVertexAttribArray(tex_coord as GLuint);
     }
@@ -4392,23 +4214,20 @@ unsafe fn RenderCtx_SetGlslTextureUniform(
     height: i32,
     texture: u32,
 ) {
-    let mut size: [::core::ffi::c_float; 2] = [
-        width as ::core::ffi::c_float,
-        height as ::core::ffi::c_float,
-    ];
+    let mut size: [c_float; 2] = [width as c_float, height as c_float];
     RenderCtx_SetTexture(ctx, (*u).Texture, texture);
     if (*u).InputSize >= 0i32 {
         gl::Uniform2fv(
             (*u).InputSize as GLint,
             1 as GLsizei,
-            &raw mut size as *mut ::core::ffi::c_float,
+            &raw mut size as *mut c_float,
         );
     }
     if (*u).TextureSize >= 0i32 {
         gl::Uniform2fv(
             (*u).TextureSize as GLint,
             1 as GLsizei,
-            &raw mut size as *mut ::core::ffi::c_float,
+            &raw mut size as *mut c_float,
         );
     }
     RenderCtx_SetTexCoords(ctx, (*u).TexCoord, (*ctx).offset as usize);
@@ -4423,14 +4242,14 @@ unsafe fn GlslShader_SetShaderVars(gs: *mut GlslShader, ctx: *mut RenderCtx, pas
         (*p.offset(-(1i32) as isize)).gl_texture,
     );
     if (*p).unif.OutputSize >= 0i32 {
-        let mut output_size: [::core::ffi::c_float; 2] = [
-            (*p.offset(0)).width as ::core::ffi::c_float,
-            (*p.offset(0)).height as ::core::ffi::c_float,
+        let mut output_size: [c_float; 2] = [
+            (*p.offset(0)).width as c_float,
+            (*p.offset(0)).height as c_float,
         ];
         gl::Uniform2fv(
             (*p).unif.OutputSize as GLint,
             1 as GLsizei,
-            &raw mut output_size as *mut ::core::ffi::c_float,
+            &raw mut output_size as *mut c_float,
         );
     }
     if (*p).unif.FrameCount >= 0i32 {
@@ -4464,11 +4283,11 @@ unsafe fn GlslShader_SetShaderVars(gs: *mut GlslShader, ctx: *mut RenderCtx, pas
             if (*t).gl_texture != 0u32 {
             } else {
                 __assert_fail(
-                    b"t->gl_texture != 0\0" as *const u8 as *const ::core::ffi::c_char,
-                    b"src/glsl_shader.c\0" as *const u8 as *const ::core::ffi::c_char,
+                    b"t->gl_texture != 0\0" as *const u8 as *const c_char,
+                    b"src/glsl_shader.c\0" as *const u8 as *const c_char,
                     504u32,
                     b"void GlslShader_SetShaderVars(GlslShader *, RenderCtx *, int)\0" as *const u8
-                        as *const ::core::ffi::c_char,
+                        as *const c_char,
                 );
             }
         };
@@ -4553,18 +4372,17 @@ pub unsafe fn GlslShader_Render(
                 (*p).width = (*p).scale_x as u16;
             }
             1 => {
-                (*p).width = ((*p.offset(-(1i32) as isize)).width as i32 as ::core::ffi::c_float
-                    * (*p).scale_x) as u16;
+                (*p).width =
+                    ((*p.offset(-(1i32) as isize)).width as i32 as c_float * (*p).scale_x) as u16;
             }
             2 => {
-                (*p).width = (viewport_width as ::core::ffi::c_float * (*p).scale_x) as u16;
+                (*p).width = (viewport_width as c_float * (*p).scale_x) as u16;
             }
             _ => {
                 (*p).width = (if last_pass as i32 != 0 {
-                    viewport_width as ::core::ffi::c_float
+                    viewport_width as c_float
                 } else {
-                    (*p.offset(-(1i32) as isize)).width as i32 as ::core::ffi::c_float
-                        * (*p).scale_x
+                    (*p.offset(-(1i32) as isize)).width as i32 as c_float * (*p).scale_x
                 }) as u16;
             }
         }
@@ -4573,18 +4391,17 @@ pub unsafe fn GlslShader_Render(
                 (*p).height = (*p).scale_y as u16;
             }
             1 => {
-                (*p).height = ((*p.offset(-(1i32) as isize)).height as i32 as ::core::ffi::c_float
-                    * (*p).scale_y) as u16;
+                (*p).height =
+                    ((*p.offset(-(1i32) as isize)).height as i32 as c_float * (*p).scale_y) as u16;
             }
             2 => {
-                (*p).height = (viewport_height as ::core::ffi::c_float * (*p).scale_y) as u16;
+                (*p).height = (viewport_height as c_float * (*p).scale_y) as u16;
             }
             _ => {
                 (*p).height = (if last_pass as i32 != 0 {
-                    viewport_height as ::core::ffi::c_float
+                    viewport_height as c_float
                 } else {
-                    (*p.offset(-(1i32) as isize)).height as i32 as ::core::ffi::c_float
-                        * (*p).scale_y
+                    (*p.offset(-(1i32) as isize)).height as i32 as c_float * (*p).scale_y
                 }) as u16;
             }
         }
@@ -4601,7 +4418,7 @@ pub unsafe fn GlslShader_Render(
                     0 as GLint,
                     GL_RGBA as GLenum,
                     GL_UNSIGNED_INT_8_8_8_8 as GLenum,
-                    ::core::ptr::null::<::core::ffi::c_void>(),
+                    null::<c_void>(),
                 );
             } else {
                 gl::TexImage2D(
@@ -4621,7 +4438,7 @@ pub unsafe fn GlslShader_Render(
                     } else {
                         GL_UNSIGNED_INT_8_8_8_8
                     }) as GLenum,
-                    ::core::ptr::null::<::core::ffi::c_void>(),
+                    null::<c_void>(),
                 );
             }
             gl::Viewport(
@@ -4701,7 +4518,7 @@ pub unsafe fn GlslShader_Render(
         ctx.num_vaos = 0u32;
         ctx.texture_unit = ctx.num_vaos;
         ctx.offset = (if last_pass as i32 != 0 {
-            (::core::mem::size_of::<::core::ffi::c_float>() as usize).wrapping_mul(8_usize)
+            (size_of::<c_float>() as usize).wrapping_mul(8_usize)
         } else {
             0_usize
         }) as u32;
@@ -4733,20 +4550,20 @@ pub unsafe fn GlslShader_Render(
             } else {
                 __assert_fail(
                     b"store_pos->gl_texture == 0\0" as *const u8
-                        as *const ::core::ffi::c_char,
-                    b"src/glsl_shader.c\0" as *const u8 as *const ::core::ffi::c_char,
+                        as *const c_char,
+                    b"src/glsl_shader.c\0" as *const u8 as *const c_char,
                     609u32,
                     b"void GlslShader_Render(GlslShader *, GlTextureWithSize *, int, int, int, int)\0"
-                        as *const u8 as *const ::core::ffi::c_char,
+                        as *const u8 as *const c_char,
                 );
             }
         };
         *store_pos = *tex;
         *tex = *load_pos;
         memset(
-            load_pos as *mut ::core::ffi::c_void,
+            load_pos as *mut c_void,
             0i32,
-            ::core::mem::size_of::<GlTextureWithSize>() as size_t,
+            size_of::<GlTextureWithSize>() as size_t,
         );
     }
     (*gs).frame_count = (*gs).frame_count.wrapping_add(1);

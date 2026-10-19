@@ -37,8 +37,10 @@ use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::AddToHiLo;
 use crate::rtl::{mov24, Mult8x8, RomPtr, SnesDivide, Unreachable};
+use ::core::ffi::{c_char, c_long};
+use ::core::ptr::{null, null_mut};
 extern "C" {
-    fn printf(__format: *const ::core::ffi::c_char, ...) -> i32;
+    fn printf(__format: *const c_char, ...) -> i32;
 
 }
 pub use crate::types::Consts_A6;
@@ -3382,8 +3384,8 @@ pub unsafe fn Ridley_Func_53(game: &mut Game) {
 pub unsafe fn DrawBabyMetroid_0(game: &mut Game) {
     let v0: i32 = BabyMetroid_DBCB_DoubleRetEx(
         (((&raw mut game.g_ram as *mut u8).offset(0x7800) as *mut ExtraEnemyRam7800 as *mut u8)
-            .offset_from(&raw mut game.g_ram as *mut u8) as ::core::ffi::c_long
-            + 6 as ::core::ffi::c_long) as u16,
+            .offset_from(&raw mut game.g_ram as *mut u8) as c_long
+            + 6 as c_long) as u16,
         game,
     );
     if v0 < 0i32 {
@@ -3521,7 +3523,7 @@ pub unsafe fn Ridley_Func_58(game: &mut Game) {
     SetBossBitForCurArea(1u16, game);
 }
 pub unsafe fn Ridley_Func_59(game: &mut Game) {
-    let mut v2: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
+    let mut v2: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
     let v0: u16 = ram_word!(game, vram_write_queue_tail);
     let v1: *const u8 = RomPtr_A6(addr_byte_A6C15D as u16, game);
     v2 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
@@ -3580,7 +3582,7 @@ pub unsafe fn SetupZebesEscapeTypewriter(game: &mut Game) {
     set_ram_word!(game.reg_BG2VOFS = 0u16);
 }
 pub unsafe fn ProcessEscapeTimerTileTransfers(game: &mut Game) -> u8 {
-    let mut v4: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
+    let mut v4: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
     let v0: *mut EnemyData = gEnemyData(0i32, game);
     let ai_var_E: u16 = (*v0).ai_var_E;
     let v2: u16 = ram_word!(game, vram_write_queue_tail);
@@ -3604,7 +3606,7 @@ pub unsafe fn ProcessEscapeTimerTileTransfers(game: &mut Game) -> u8 {
 pub unsafe fn HandleTypewriterText_Ext(a: u16, game: &mut Game) -> u8 {
     let r18: u16 = a;
     let mut v4: i16 = 0;
-    let mut v12: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
+    let mut v12: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
     let mbn_var_3D: u16 = (*E).mbn_var_3D;
     if mbn_var_3D != 0 {
@@ -3655,8 +3657,8 @@ pub unsafe fn HandleTypewriterText_Ext(a: u16, game: &mut Game) -> u8 {
             (*v12).src.addr = (((&raw mut game.g_ram as *mut u8).offset(0x8000)
                 as *mut ExtraEnemyRam8000 as *mut u8)
                 .offset_from(&raw mut game.g_ram as *mut u8)
-                as ::core::ffi::c_long
-                + 52 as ::core::ffi::c_long) as VoidP;
+                as c_long
+                + 52 as c_long) as VoidP;
             let mbn_var_3C: u16 = (*E).mbn_var_3C;
             (*v12).vram_dst = mbn_var_3C;
             (*E).mbn_var_3C = (mbn_var_3C).wrapping_add(1u16);
@@ -3677,7 +3679,7 @@ pub unsafe fn HandleTypewriterText_Ext(a: u16, game: &mut Game) -> u8 {
 }
 pub unsafe fn Ridley_Func_62(game: &mut Game) {
     let mut i: i32 = 0;
-    let mut v3: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
+    let mut v3: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
     let mut v0: u16 = addr_stru_A6C3B8 as u16;
     i = ram_word!(game, vram_write_queue_tail) as i32;
     loop {
@@ -3759,7 +3761,7 @@ pub unsafe fn Ridley_Func_67(game: &mut Game) {
     (*E).ridley_var_F = (*E).ridley_var_F.wrapping_sub(1);
     if ((*E).ridley_var_F as i32 & 0x8000i32) != 0i32 {
         let k: u16 = 0u16;
-        printf(b"Warning: X undefined\n\0" as *const u8 as *const ::core::ffi::c_char);
+        printf(b"Warning: X undefined\n\0" as *const u8 as *const c_char);
         SetBossBitForCurArea(1u16, game);
         Enemy_ItemDrop_Ridley(k, game);
         QueueMusic_Delayed8(3u16, game);
@@ -5201,9 +5203,9 @@ pub unsafe fn Ridley_Func_111(mut r18: u16, r20: u16, r22: u16, game: &mut Game)
     (*E).ridley_var_C = Math_MultByCos((*E).ridley_var_0B, r18);
 }
 pub unsafe fn Ridley_Func_112(game: &mut Game) {
-    let mut Ridley: *mut Enemy_Ridley = ::core::ptr::null_mut::<Enemy_Ridley>();
+    let mut Ridley: *mut Enemy_Ridley = null_mut::<Enemy_Ridley>();
     let mut v1: u16 = 0;
-    let mut v2: *mut Enemy_Ridley = ::core::ptr::null_mut::<Enemy_Ridley>();
+    let mut v2: *mut Enemy_Ridley = null_mut::<Enemy_Ridley>();
     let mut ridley_var_23: u16 = 0;
     let mut ridley_var_21: u16 = 0;
     Ridley = Get_Ridley(0i32, game);
@@ -5336,14 +5338,14 @@ pub unsafe fn Ridley_Func_117(game: &mut Game) {
     (*E).ridley_var_06 = 1u16;
 }
 pub unsafe fn Ridley_Func_118(game: &mut Game) {
-    let mut v7: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
+    let mut v7: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
     let E: *mut Enemy_Ridley = Get_Ridley(0i32, game);
     let v1: u16 = ((*E).ridley_var_06).wrapping_sub(1u16);
     (*E).ridley_var_06 = v1;
     if v1 == 0 {
         let mut i: i32 = 0;
         let mut v3: u16 = 0;
-        let mut v4: *mut u16 = ::core::ptr::null_mut::<u16>();
+        let mut v4: *mut u16 = null_mut::<u16>();
         i = (*E).ridley_var_05 as i32;
         loop {
             v3 = i as u16;
@@ -5372,7 +5374,7 @@ pub unsafe fn Ridley_Func_118(game: &mut Game) {
     }
 }
 pub unsafe fn Ridley_Func_119(carry: u8, game: &mut Game) {
-    let mut v3: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
+    let mut v3: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
     let mut v1: u16 = addr_off_A6DAD0 as u16;
     if carry != 0 {
         v1 = addr_off_A6DAD4 as u16;
@@ -6094,7 +6096,7 @@ pub unsafe fn CeresDoor_Init(game: &mut Game) {
     WriteColorsToTargetPalette(0xa6u8, 0x1e2u16, v3, 0xfu16, game);
 }
 pub unsafe fn CeresDoor_Func_1(k: u16, game: &mut Game) {
-    let mut v2: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
+    let mut v2: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
     if (*Get_CeresDoor(k as i32, game)).cdr_parameter_1 == 2u16 {
         let v1: u16 = ram_word!(game, vram_write_queue_tail);
         v2 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
@@ -6141,20 +6143,12 @@ pub unsafe fn CeresDoor_F773(j: u16, game: &mut Game) {
     }
 }
 pub unsafe fn CeresDoor_Func_4(game: &mut Game) {
-    CeresSteam_Instr_5(
-        ram_word!(game, cur_enemy_index),
-        ::core::ptr::null::<u16>(),
-        game,
-    );
+    CeresSteam_Instr_5(ram_word!(game, cur_enemy_index), null::<u16>(), game);
     if ram_word!(game, ceres_status) as i32 & 1i32 != 0 {
         (*Get_CeresDoor(ram_word!(game, cur_enemy_index) as i32, game))
             .base
             .palette_index = 3584u16;
-        CeresDoor_Instr_2(
-            ram_word!(game, cur_enemy_index),
-            ::core::ptr::null::<u16>(),
-            game,
-        );
+        CeresDoor_Instr_2(ram_word!(game, cur_enemy_index), null::<u16>(), game);
     }
 }
 pub unsafe fn CeresDoor_Func_5(k: u16, game: &mut Game) {

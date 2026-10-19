@@ -6,6 +6,8 @@ use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::AddToHiLo;
 pub use crate::snes::registers::*;
 use crate::types::TileDrawOrder;
+use ::core::ffi::{c_char, c_long, c_void};
+use ::core::mem::size_of;
 
 use crate::game::sm_81::{DrawSpritemap, LoadFromSram, SoftReset};
 use crate::game::sm_82::{
@@ -28,18 +30,10 @@ use crate::rtl::{
     SnesModulus, Unreachable, WriteReg, WriteRegWord,
 };
 extern "C" {
-    fn memcpy(
-        __dest: *mut ::core::ffi::c_void,
-        __src: *const ::core::ffi::c_void,
-        __n: size_t,
-    ) -> *mut ::core::ffi::c_void;
-    fn memset(__s: *mut ::core::ffi::c_void, __c: i32, __n: size_t) -> *mut ::core::ffi::c_void;
-    fn memcmp(
-        __s1: *const ::core::ffi::c_void,
-        __s2: *const ::core::ffi::c_void,
-        __n: size_t,
-    ) -> i32;
-    fn printf(__format: *const ::core::ffi::c_char, ...) -> i32;
+    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
+    fn memset(__s: *mut c_void, __c: i32, __n: size_t) -> *mut c_void;
+    fn memcmp(__s1: *const c_void, __s2: *const c_void, __n: size_t) -> i32;
+    fn printf(__format: *const c_char, ...) -> i32;
 
 }
 pub use crate::types::{
@@ -213,8 +207,8 @@ pub unsafe fn CheckEventHappened(a: u16, game: &mut Game) -> u16 {
 }
 pub unsafe fn CopySuperMetroidString(game: &mut Game) {
     memcpy(
-        game.g_sram.offset(0x1fe0) as *mut u8 as *mut ::core::ffi::c_void,
-        b"supermetroid\0" as *const u8 as *const ::core::ffi::c_char as *const ::core::ffi::c_void,
+        game.g_sram.offset(0x1fe0) as *mut u8 as *mut c_void,
+        b"supermetroid\0" as *const u8 as *const c_char as *const c_void,
         12 as size_t,
     );
     RtlWriteSram(game);
@@ -226,15 +220,14 @@ pub unsafe fn VerifySRAM(game: &mut Game) {
         && LoadFromSram(2u16, game) != 0u8
     {
         memcpy(
-            game.g_sram.offset(0x1fe0) as *mut u8 as *mut ::core::ffi::c_void,
-            b"madadameyohn\0" as *const u8 as *const ::core::ffi::c_char
-                as *const ::core::ffi::c_void,
+            game.g_sram.offset(0x1fe0) as *mut u8 as *mut c_void,
+            b"madadameyohn\0" as *const u8 as *const c_char as *const c_void,
             12 as size_t,
         );
         RtlWriteSram(game);
     } else if memcmp(
-        game.g_sram.offset(0x1fe0) as *mut u8 as *const ::core::ffi::c_void,
-        b"supermetroid\0" as *const u8 as *const ::core::ffi::c_char as *const ::core::ffi::c_void,
+        game.g_sram.offset(0x1fe0) as *mut u8 as *const c_void,
+        b"supermetroid\0" as *const u8 as *const c_char as *const c_void,
         12 as size_t,
     ) == 0
     {
@@ -310,7 +303,7 @@ pub unsafe fn Vector_RESET_Async(game: &mut Game) -> CoroutineRet {
             crate::rtl::write_register_and_mirror(MEMSEL as u16, 1, 0x86, false, game);
             bak = ram_word!(game, bug_fix_counter);
             memset(
-                &raw mut game.g_ram as *mut u8 as *mut ::core::ffi::c_void,
+                &raw mut game.g_ram as *mut u8 as *mut c_void,
                 0i32,
                 8192 as size_t,
             );
@@ -340,7 +333,7 @@ pub unsafe fn Vector_RESET_Async(game: &mut Game) -> CoroutineRet {
         WriteReg(INIDISP as u16, 0x8fu8, game);
         bak = ram_word!(game, bug_fix_counter);
         memset(
-            &raw mut game.g_ram as *mut u8 as *mut ::core::ffi::c_void,
+            &raw mut game.g_ram as *mut u8 as *mut c_void,
             0i32,
             0x10000i32 as size_t,
         );
@@ -399,7 +392,7 @@ pub unsafe fn Vector_RESET_Async(game: &mut Game) -> CoroutineRet {
     0 as CoroutineRet
 }
 pub unsafe fn InvalidInterrupt_Crash(game: &mut Game) {
-    printf(b"InvalidInterrupt_Crash\n\0" as *const u8 as *const ::core::ffi::c_char);
+    printf(b"InvalidInterrupt_Crash\n\0" as *const u8 as *const c_char);
     Unreachable(game);
     loop {}
 }
@@ -619,11 +612,7 @@ pub unsafe fn QueueMode7Transfers(db: u8, k: u16, game: &mut Game) {
         let f: i32 = *(p as *mut u8) as i32;
         if f & 0x80i32 != 0 {
             *dst.offset(9) = 0u8;
-            memcpy(
-                dst as *mut ::core::ffi::c_void,
-                p as *const ::core::ffi::c_void,
-                9 as size_t,
-            );
+            memcpy(dst as *mut c_void, p as *const c_void, 9 as size_t);
             p = p.offset(9);
             dst = dst.offset(9);
         } else {
@@ -631,11 +620,7 @@ pub unsafe fn QueueMode7Transfers(db: u8, k: u16, game: &mut Game) {
                 break;
             }
             *dst.offset(7) = 0u8;
-            memcpy(
-                dst as *mut ::core::ffi::c_void,
-                p as *const ::core::ffi::c_void,
-                7 as size_t,
-            );
+            memcpy(dst as *mut c_void, p as *const c_void, 7 as size_t);
             p = p.offset(7);
             dst = dst.offset(7);
         }
@@ -643,7 +628,7 @@ pub unsafe fn QueueMode7Transfers(db: u8, k: u16, game: &mut Game) {
     set_ram_word!(
         game.mode7_vram_write_queue_tail =
             dst.offset_from((&raw mut game.g_ram as *mut u8).offset(0x2d0)
-                as *mut Mode7VramWriteQueue as *mut u8) as ::core::ffi::c_long as u16
+                as *mut Mode7VramWriteQueue as *mut u8) as c_long as u16
     );
 }
 pub unsafe fn NMI_ProcessMode7Queue(game: &mut Game) {
@@ -679,7 +664,7 @@ pub unsafe fn NMI_ProcessMode7QueueInner(mut p: *const u8, game: &mut Game) {
             WriteRegWord(VMADDL as u16, (*v5).vram_addr, game);
             WriteReg(VMAIN as u16, (*v5).vmain, game);
             WriteReg(MDMAEN as u16, 2u8, game);
-            p = p.offset(::core::mem::size_of::<Mode7CgvmWriteQueue>() as isize);
+            p = p.offset(size_of::<Mode7CgvmWriteQueue>() as isize);
         }
         if v2 as i32 & 0x40i32 == 0 {
             break;
@@ -1057,7 +1042,7 @@ pub fn QueueSfx3_Internal(packed: u16, game: &mut Game) {
     let [max_queued, sound] = packed.to_le_bytes();
     queue_sfx(2, sound, max_queued, game);
 }
-pub unsafe fn SetupDmaTransfer(p: *const ::core::ffi::c_void, game: &mut Game) {
+pub unsafe fn SetupDmaTransfer(p: *const c_void, game: &mut Game) {
     let s: *const StartDmaCopy = p as *const StartDmaCopy;
     let v2: i32 = (*s).chan as i32 * 16i32;
     WriteRegWord(
@@ -1695,7 +1680,7 @@ pub unsafe fn InitializeHud(game: &mut Game) {
     WriteRegWord(VMADDL as u16, addr_unk_605800 as u16, game);
     WriteRegWord(VMAIN as u16, 0x80u16, game);
     static unk_809A8F: StartDmaCopy = StartDmaCopy::vram_words(1, 0x80988b, 0x40);
-    SetupDmaTransfer(&raw const unk_809A8F as *const ::core::ffi::c_void, game);
+    SetupDmaTransfer(&raw const unk_809A8F as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
     let mut i: i32 = 0i32;
     while i != 192i32 {
@@ -1858,7 +1843,7 @@ pub unsafe fn HandleHudTilemap(game: &mut Game) {
     v5 = (v5).wrapping_add(2u16);
     (*gVramWriteEntry(v5 as i32, game)).size =
         ((&raw mut game.g_ram as *mut u8).offset(0xc608) as *mut u16 as *mut u8)
-            .offset_from(&raw mut game.g_ram as *mut u8) as ::core::ffi::c_long as u16;
+            .offset_from(&raw mut game.g_ram as *mut u8) as c_long as u16;
     v5 = (v5).wrapping_add(2u16);
     let fresh71 = v5;
     v5 = v5.wrapping_add(1);
@@ -2317,8 +2302,7 @@ pub unsafe fn QueueClearingOfFxTilemap(game: &mut Game) {
         gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
     (*v2).size = 3840u16;
     (*v2).src.addr = ((&raw mut game.g_ram as *mut u8).offset(0x4000) as *mut Ram4000 as *mut u8)
-        .offset_from(&raw mut game.g_ram as *mut u8) as ::core::ffi::c_long
-        as VoidP;
+        .offset_from(&raw mut game.g_ram as *mut u8) as c_long as VoidP;
     *(&raw mut (*v2).src.bank as *mut u16) = 126u16;
     (*v2).vram_dst = addr_unk_605880 as u16;
     set_ram_word!(game.vram_write_queue_tail = (v1).wrapping_add(7u16));
@@ -2955,13 +2939,12 @@ pub unsafe fn UpdateLevelOrBackgroundDataColumn(k: u16, game: &mut Game) {
         .offset(k as i32 as isize) as *mut u16) =
         (var935 as i32 + var935 as i32 + var937 as i32) as u16;
     let mut v6: u16 = ((&raw mut game.g_ram as *mut u8).offset(0xc8c8) as *mut u16 as *mut u8)
-        .offset_from(&raw mut game.g_ram as *mut u8) as ::core::ffi::c_long
-        as u16;
+        .offset_from(&raw mut game.g_ram as *mut u8) as c_long as u16;
     let mut v7: u16 = 0u16;
     if k != 0 {
         v6 = (&raw mut game.g_ram as *mut u8)
             .offset(0xc9d0)
-            .offset_from(&raw mut game.g_ram as *mut u8) as ::core::ffi::c_long as u16;
+            .offset_from(&raw mut game.g_ram as *mut u8) as c_long as u16;
         v7 = 264u16;
     }
     let v8: u16 = (*(((&raw mut game.g_ram as *mut u8).offset(0x956) as *mut u16 as *mut u8)
@@ -3058,13 +3041,12 @@ pub unsafe fn UpdateLevelOrBackgroundDataRow(v0: u16, game: &mut Game) {
     *(((&raw mut game.g_ram as *mut u8).offset(0x96a) as *mut u16 as *mut u8)
         .offset(v0 as i32 as isize) as *mut u16) = (prod).wrapping_add(v5);
     let mut v6: u16 = ((&raw mut game.g_ram as *mut u8).offset(0xc948) as *mut u16 as *mut u8)
-        .offset_from(&raw mut game.g_ram as *mut u8) as ::core::ffi::c_long
-        as u16;
+        .offset_from(&raw mut game.g_ram as *mut u8) as c_long as u16;
     let mut v7: u16 = 0u16;
     if v0 != 0 {
         v6 = (&raw mut game.g_ram as *mut u8)
             .offset(0xca50)
-            .offset_from(&raw mut game.g_ram as *mut u8) as ::core::ffi::c_long as u16;
+            .offset_from(&raw mut game.g_ram as *mut u8) as c_long as u16;
         v7 = 264u16;
     }
     let v8: u16 = (*(((&raw mut game.g_ram as *mut u8).offset(0x964) as *mut u16 as *mut u8)

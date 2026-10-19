@@ -27,8 +27,9 @@ use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{RomPtr, SnesDivide, Unreachable};
+use ::core::ffi::c_char;
 extern "C" {
-    fn printf(__format: *const ::core::ffi::c_char, ...) -> i32;
+    fn printf(__format: *const c_char, ...) -> i32;
 
 }
 pub use crate::types::{
@@ -3599,7 +3600,7 @@ pub unsafe fn Reflec_Shot(game: &mut Game) {
             game.projectile_dir[(v0 as i32 >> 1i32)],
             |fresh16| (fresh16) | (0x10u16)
         );
-        printf(b"Possible bug. What is X?\n\0" as *const u8 as *const ::core::ffi::c_char);
+        printf(b"Possible bug. What is X?\n\0" as *const u8 as *const c_char);
         let ET: *mut Enemy_Reflec = Get_Reflec(v2 as i32, game);
         if (*ET).base.health != 0 {
             Enemy_NormalShotAI_SkipSomeParts_A3(game);

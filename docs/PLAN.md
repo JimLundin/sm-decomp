@@ -98,6 +98,25 @@ replay is claimed. The i32 cast-line count rises nine through formatting while
 all 15948 actual i32 casts remain. Raw RAM accesses are unchanged. Continue
 substantial shared implementations; broader pointer and alias safety remain open.
 
+Explicit core imports (2026-10-20): ast-grep replaces 3345 fully qualified
+core ffi/ptr/mem paths across 46 files with explicit grouped imports of the
+identical 14 items. All 3333 ordinary paths and 12 paths inside RAM macros
+are parsed and classified. Platform-dependent C types retain their core
+identities. Diagnostics, RAM metadata and macro-definition hygiene are exact;
+complete source/import/shadow reconstruction has no findings.
+
+Net Rust lines -804 on the LoROM composition; final Rust is 145868 lines.
+All casts, raw RAM operations and unsafe functions are unchanged by this
+spelling change. The two focused families together remove 1653 Rust lines.
+
+Combined verification with the 893-read LoROM family on b055358d passes
+normal release (23.49s), formatting/check, progress and full any%
+129712/0 (102.76s), native exit 0. All 73 source/config/host inputs
+match the frozen composition and all 78 replay pins remain fixed. Both focused
+commits share this run. Frontend imports are compiler-checked; the movie
+covers core gameplay. Continue large repeated implementations; the broader
+readability and boot-to-credits goals remain incomplete.
+
 Constant high-half indices (2026-10-20): all 352 repeated primitive
 size-of/divide/subtract index expressions become the identical 1isize. The
 325 u16/u8, 18 i16/u8 and nine u32/u16 ratios retain their value and type;

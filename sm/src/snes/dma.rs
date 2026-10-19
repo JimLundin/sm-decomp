@@ -1,15 +1,17 @@
 use crate::game_state::Game;
+use ::core::ffi::{c_char, c_void};
+use ::core::mem::{size_of, transmute};
 
 use crate::snes::snes::{snes_read, snes_readBBus, snes_write, snes_writeBBus};
 extern "C" {
-    fn printf(__format: *const ::core::ffi::c_char, ...) -> i32;
-    fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn free(__ptr: *mut ::core::ffi::c_void);
+    fn printf(__format: *const c_char, ...) -> i32;
+    fn malloc(__size: size_t) -> *mut c_void;
+    fn free(__ptr: *mut c_void);
     fn __assert_fail(
-        __assertion: *const ::core::ffi::c_char,
-        __file: *const ::core::ffi::c_char,
+        __assertion: *const c_char,
+        __file: *const c_char,
         __line: u32,
-        __function: *const ::core::ffi::c_char,
+        __function: *const c_char,
     ) -> !;
 
 }
@@ -20,11 +22,8 @@ pub use crate::types::{
 };
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
-pub const __ASSERT_FUNCTION: [::core::ffi::c_char; 34] = unsafe {
-    ::core::mem::transmute::<[u8; 34], [::core::ffi::c_char; 34]>(
-        *b"uint8_t dma_read(Dma *, uint16_t)\0",
-    )
-};
+pub const __ASSERT_FUNCTION: [c_char; 34] =
+    unsafe { transmute::<[u8; 34], [c_char; 34]>(*b"uint8_t dma_read(Dma *, uint16_t)\0") };
 static bAdrOffsets: [[i32; 4]; 8] = [
     [0, 0, 0, 0],
     [0, 1, 0, 1],
@@ -37,12 +36,12 @@ static bAdrOffsets: [[i32; 4]; 8] = [
 ];
 static transferLength: [i32; 8] = [1, 2, 2, 4, 4, 4, 2, 4];
 pub unsafe fn dma_init(snes: *mut Snes) -> *mut Dma {
-    let dma: *mut Dma = malloc(::core::mem::size_of::<Dma>() as size_t) as *mut Dma;
+    let dma: *mut Dma = malloc(size_of::<Dma>() as size_t) as *mut Dma;
     (*dma).snes = snes;
     dma
 }
 pub unsafe fn dma_free(dma: *mut Dma) {
-    free(dma as *mut ::core::ffi::c_void);
+    free(dma as *mut c_void);
 }
 pub unsafe fn dma_reset(dma: *mut Dma) {
     for i in 0..8 {
@@ -73,12 +72,12 @@ pub unsafe fn dma_reset(dma: *mut Dma) {
 pub unsafe fn dma_saveload(
     dma: *mut Dma,
     func: Option<SaveLoadFunc>,
-    ctx: *mut ::core::ffi::c_void,
+    ctx: *mut c_void,
     game: &mut Game,
 ) {
     func.expect("non-null function pointer")(
         ctx,
-        &raw mut (*dma).channel as *mut ::core::ffi::c_void,
+        &raw mut (*dma).channel as *mut c_void,
         (225 as size_t)
             .wrapping_add(7 as size_t)
             .wrapping_sub(8 as size_t),
@@ -109,8 +108,8 @@ pub unsafe fn dma_read(dma: *mut Dma, address: u16) -> u8 {
         11 | 15 => channel.unusedByte,
         _ => {
             __assert_fail(
-                b"0\0" as *const u8 as *const ::core::ffi::c_char,
-                b"src/snes/dma.c\0" as *const u8 as *const ::core::ffi::c_char,
+                b"0\0" as *const u8 as *const c_char,
+                b"src/snes/dma.c\0" as *const u8 as *const c_char,
                 118u32,
                 __ASSERT_FUNCTION.as_ptr(),
             );
@@ -164,7 +163,7 @@ pub unsafe fn dma_doDma(dma: *mut Dma, game: &mut Game) {
         && !game.g_fail
     {
         printf(
-            b"Warning! DMA from addr 0x%x\n\0" as *const u8 as *const ::core::ffi::c_char,
+            b"Warning! DMA from addr 0x%x\n\0" as *const u8 as *const c_char,
             ((*dma).channel[i].aBank as i32) << 16i32 | (*dma).channel[i].aAdr as i32,
         );
         game.g_fail = true_0 != 0;

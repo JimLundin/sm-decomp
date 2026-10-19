@@ -37,8 +37,10 @@ use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{mov24, MemCpy, ReadRegWord, RomPtr, SnesDivide, Unreachable, WriteReg};
 pub use crate::snes::registers::*;
+use ::core::ffi::{c_char, c_long};
+use ::core::ptr::null_mut;
 extern "C" {
-    fn printf(__format: *const ::core::ffi::c_char, ...) -> i32;
+    fn printf(__format: *const c_char, ...) -> i32;
 
 }
 pub use crate::types::Consts_8D;
@@ -1997,7 +1999,7 @@ pub unsafe fn MotherBrain_FootstepEffect(game: &mut Game) {
     set_ram_word!(game.earthquake_type = 1u16);
     set_ram_word!(game.earthquake_timer = 4u16);
     if (*Get_MotherBrain(0i32, game)).mbn_var_00 == 3u16 {
-        printf(b"Write to rom!\n\0" as *const u8 as *const ::core::ffi::c_char);
+        printf(b"Write to rom!\n\0" as *const u8 as *const c_char);
     }
 }
 pub unsafe fn MotherBrain_Instr_MoveBodyUp10Left4(
@@ -4352,7 +4354,7 @@ pub unsafe fn Samus_HealDueToShitroid(game: &mut Game) -> u8 {
     }
 }
 pub unsafe fn ProcessSpriteTilesTransfers(db: u8, k: u16, game: &mut Game) -> u8 {
-    let mut v7: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
+    let mut v7: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
     let mut src: u16 = (*E).mbn_var_22;
     if src == 0 {
@@ -5257,8 +5259,8 @@ pub unsafe fn MotherBrain_Pal_EndScreenFlash(game: &mut Game) {
 pub unsafe fn MotherBrain_Pal_HandleRoomPal(game: &mut Game) {
     let j: u16 = HandleMotherBrainInstructionList(
         (((&raw mut game.g_ram as *mut u8).offset(0x7800) as *mut ExtraEnemyRam7800 as *mut u8)
-            .offset_from(&raw mut game.g_ram as *mut u8) as ::core::ffi::c_long
-            + 28 as ::core::ffi::c_long) as u16,
+            .offset_from(&raw mut game.g_ram as *mut u8) as c_long
+            + 28 as c_long) as u16,
         game,
     );
     if j != 0 {
@@ -5547,8 +5549,8 @@ pub unsafe fn DeadTorizo_Func_0(game: &mut Game) -> u8 {
     0u8
 }
 pub unsafe fn DeadTorizo_Func_1(game: &mut Game) {
-    let mut v5: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
-    let mut v10: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
+    let mut v5: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
+    let mut v10: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
     let E: *mut Enemy_DeadTorizo = Get_DeadTorizo(0i32, game);
     let v1: u16 = ((*E).dto_var_00).wrapping_add(1u16);
     (*E).dto_var_00 = v1;
@@ -6000,11 +6002,11 @@ pub unsafe fn DeadSkree_Rotting(k: u16, game: &mut Game) {
     ProcessCorpseRottingVramTransfers(dms_var_53, game);
 }
 pub unsafe fn ProcessCorpseRotting(k: u16, game: &mut Game) -> u8 {
-    let mut E: *mut Enemy_DeadMonsters = ::core::ptr::null_mut::<Enemy_DeadMonsters>();
+    let mut E: *mut Enemy_DeadMonsters = null_mut::<Enemy_DeadMonsters>();
     let mut r18_0: u16 = 0;
-    let mut v11: *mut u16 = ::core::ptr::null_mut::<u16>();
+    let mut v11: *mut u16 = null_mut::<u16>();
     let mut v12: u16 = 0;
-    let mut v5: *mut i16 = ::core::ptr::null_mut::<i16>();
+    let mut v5: *mut i16 = null_mut::<i16>();
     let mut v7: i16 = 0;
     let mut v8: i16 = 0;
     let EK: *mut Enemy_DeadMonsters = Get_DeadMonsters(k as i32, game);
@@ -6020,7 +6022,7 @@ pub unsafe fn ProcessCorpseRotting(k: u16, game: &mut Game) -> u8 {
     let mut dms_var_52: u16 = (*EK).dms_var_52;
     let mut v4: u16 = 0u16;
     let mut v15: u16 = 0;
-    let mut v6: *mut u16 = ::core::ptr::null_mut::<u16>();
+    let mut v6: *mut u16 = null_mut::<u16>();
     loop {
         v15 = v4;
         v5 = (&raw mut game.g_ram as *mut u8).offset(dms_var_52 as i32 as isize) as *mut i16;

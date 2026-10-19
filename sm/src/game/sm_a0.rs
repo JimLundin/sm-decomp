@@ -313,19 +313,17 @@ use crate::game_state::Game;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{Load24, Mult8x8, RomPtr, SnesDivide, Unreachable};
+use ::core::ffi::{c_char, c_void};
+use ::core::ptr::{null, null_mut};
 extern "C" {
     fn __assert_fail(
-        __assertion: *const ::core::ffi::c_char,
-        __file: *const ::core::ffi::c_char,
+        __assertion: *const c_char,
+        __file: *const c_char,
         __line: u32,
-        __function: *const ::core::ffi::c_char,
+        __function: *const c_char,
     ) -> !;
-    fn memcpy(
-        __dest: *mut ::core::ffi::c_void,
-        __src: *const ::core::ffi::c_void,
-        __n: size_t,
-    ) -> *mut ::core::ffi::c_void;
-    fn memset(__s: *mut ::core::ffi::c_void, __c: i32, __n: size_t) -> *mut ::core::ffi::c_void;
+    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
+    fn memset(__s: *mut c_void, __c: i32, __n: size_t) -> *mut c_void;
 
 }
 pub use crate::types::{size_t, EnemyData, LongPtr, PairU16, Point16U, VoidP, VramWriteEntry};
@@ -384,17 +382,17 @@ pub struct EnemyBlockCollInfo {
 }
 pub type Func_EnemyBlockCollInfo_U8 = unsafe fn(&mut EnemyBlockCollInfo, &mut Game) -> u8;
 pub use crate::types::Point32;
-pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
+pub const NULL: *mut c_void = null_mut::<c_void>();
 #[inline]
 unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
     '_c2rust_label: {
         if addr < 0x2000u16 {
         } else {
             __assert_fail(
-                b"addr < 0x2000\0" as *const u8 as *const ::core::ffi::c_char,
-                b"src/sm_rtl.h\0" as *const u8 as *const ::core::ffi::c_char,
+                b"addr < 0x2000\0" as *const u8 as *const c_char,
+                b"src/sm_rtl.h\0" as *const u8 as *const c_char,
                 51u32,
-                b"uint8 *RomPtr_RAM(uint16_t)\0" as *const u8 as *const ::core::ffi::c_char,
+                b"uint8 *RomPtr_RAM(uint16_t)\0" as *const u8 as *const c_char,
             );
         }
     };
@@ -1853,8 +1851,8 @@ pub unsafe fn DrawSamusEnemiesAndProjectiles(game: &mut Game) {
     );
 }
 pub unsafe fn RecordEnemySpawnData(j: u16, game: &mut Game) {
-    let mut v2: *mut EnemySpawnData = ::core::ptr::null_mut::<EnemySpawnData>();
-    let mut v5: *mut EnemySpawnData = ::core::ptr::null_mut::<EnemySpawnData>();
+    let mut v2: *mut EnemySpawnData = null_mut::<EnemySpawnData>();
+    let mut v5: *mut EnemySpawnData = null_mut::<EnemySpawnData>();
     let v1: *mut EnemyData = gEnemyData(j as i32, game);
     v2 = gEnemySpawnData(j as i32, game);
     (*v2).id = (*v1).enemy_ptr;
@@ -1906,7 +1904,7 @@ pub unsafe fn LoadEnemies(game: &mut Game) {
 }
 pub unsafe fn ClearEnemyDataAndProcessEnemySet(game: &mut Game) {
     memset(
-        (&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut ::core::ffi::c_void,
+        (&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut c_void,
         0i32,
         2048 as size_t,
     );
@@ -1916,7 +1914,7 @@ pub unsafe fn ClearEnemyDataAndProcessEnemySet(game: &mut Game) {
 }
 pub unsafe fn InitializeEnemies(game: &mut Game) {
     memset(
-        (&raw mut game.g_ram as *mut u8).offset(0x7000) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut game.g_ram as *mut u8).offset(0x7000) as *mut u8 as *mut c_void,
         0i32,
         0x2800 as size_t,
     );
@@ -2035,8 +2033,8 @@ pub unsafe fn LoadEnemyTileData(game: &mut Game) {
             loop {
                 memcpy(
                     (&raw mut game.g_ram as *mut u8).offset((0x7000i32 + v3 as i32) as isize)
-                        as *mut u8 as *mut ::core::ffi::c_void,
-                    RomPtrWithBank(db, v2, game) as *const ::core::ffi::c_void,
+                        as *mut u8 as *mut c_void,
+                    RomPtrWithBank(db, v2, game) as *const c_void,
                     8 as size_t,
                 );
                 v3 = (v3).wrapping_add(8u16);
@@ -2112,8 +2110,8 @@ pub unsafe fn ProcessEnemyTilesets(game: &mut Game) {
         memcpy(
             ((&raw mut game.g_ram as *mut u8).offset(0xc200) as *mut u16).offset(
                 ((*(&raw mut (*ET).vram_dst as *mut u8).offset(0) as i32 + 8i32) * 16i32) as isize,
-            ) as *mut u16 as *mut ::core::ffi::c_void,
-            RomPtrWithBank((*ED).bank, (*ED).palette_ptr, game) as *const ::core::ffi::c_void,
+            ) as *mut u16 as *mut c_void,
+            RomPtrWithBank((*ED).bank, (*ED).palette_ptr, game) as *const c_void,
             32 as size_t,
         );
         (*LD).tile_data_size = ((*ED).tile_data_size) & (0x7fffu16);
@@ -3355,12 +3353,12 @@ pub unsafe fn CallEnemyInstr(ea: u32, k: u16, j: *const u16, game: &mut Game) ->
         11115269 => MotherBrain_Instr_IncrBeamAttackPhase(k, j, game),
         _ => {
             Unreachable(game);
-            ::core::ptr::null::<u16>()
+            null::<u16>()
         }
     }
 }
 pub unsafe fn EnemyMain(game: &mut Game) {
-    let mut ED: *mut EnemyDef = ::core::ptr::null_mut::<EnemyDef>();
+    let mut ED: *mut EnemyDef = null_mut::<EnemyDef>();
     let mut v6: i16 = 0;
     let mut v8: i8 = 0;
     if ram_word!(game, first_free_enemy_index) != 0 {
@@ -3757,8 +3755,8 @@ pub unsafe fn ProcessExtendedTilemap(db: u8, r22: u16, game: &mut Game) {
         let n: i32 = *(p as *mut u16).offset(1) as i32;
         p = p.offset(4);
         memcpy(
-            (&raw mut game.g_ram as *mut u8).offset(v2 as i32 as isize) as *mut ::core::ffi::c_void,
-            p as *const ::core::ffi::c_void,
+            (&raw mut game.g_ram as *mut u8).offset(v2 as i32 as isize) as *mut c_void,
+            p as *const c_void,
             (n * 2i32) as size_t,
         );
         p = p.offset((n * 2i32) as isize);
@@ -3844,11 +3842,11 @@ pub unsafe fn SamusProjectileInteractionHandler(game: &mut Game) {
                 set_ram_word!(game.samus_knockback_timer = 5u16);
                 '_c2rust_label: {
                     __assert_fail(
-                        b"0\0" as *const u8 as *const ::core::ffi::c_char,
-                        b"src/sm_a0.c\0" as *const u8 as *const ::core::ffi::c_char,
+                        b"0\0" as *const u8 as *const c_char,
+                        b"src/sm_a0.c\0" as *const u8 as *const c_char,
                         2048u32,
                         b"void SamusProjectileInteractionHandler(void)\0" as *const u8
-                            as *const ::core::ffi::c_char,
+                            as *const c_char,
                     );
                 };
                 let mut v0: u16 = 0u16;
@@ -4296,7 +4294,7 @@ pub unsafe fn EnemyBombCollHandler_Multibox(game: &mut Game) {
 }
 pub unsafe fn GrappleBeam_CollDetect_Enemy(game: &mut Game) -> PairU16 {
     let mut grapple_ai: VoidP = 0;
-    let mut E: *mut EnemyData = ::core::ptr::null_mut::<EnemyData>();
+    let mut E: *mut EnemyData = null_mut::<EnemyData>();
     CallSomeSamusCode(0xdu16, game);
     set_ram_word!(game.collision_detection_index = 0u16);
     let mut i: i32 = 0i32;
@@ -4598,7 +4596,7 @@ pub unsafe fn EnemyDeathAnimation(k: u16, mut a: u16, game: &mut Game) {
         game,
     );
     let r18: u16 = ((*E).properties) & (0x4000u16);
-    memset(E as *mut ::core::ffi::c_void, 0i32, 64 as size_t);
+    memset(E as *mut c_void, 0i32, 64 as size_t);
     if r18 != 0 {
         (*E).enemy_ptr = addr_kEnemyDef_DAFF as u16;
         (*E).bank = 0xa3u8;
@@ -4617,7 +4615,7 @@ pub unsafe fn RinkasDeathAnimation(mut a: u16, game: &mut Game) {
         game,
     );
     let r18: u16 = ((*E).properties) & (0x4000u16);
-    memset(E as *mut ::core::ffi::c_void, 0i32, 64 as size_t);
+    memset(E as *mut c_void, 0i32, 64 as size_t);
     if r18 != 0 {
         (*E).enemy_ptr = addr_kEnemyDef_DAFF as u16;
         (*E).bank = 0xa3u8;
@@ -4715,7 +4713,7 @@ pub unsafe fn NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game: &mut Game) {
     NormalEnemyPowerBombAiSkipDeathAnim(game);
 }
 pub unsafe fn NormalEnemyPowerBombAiSkipDeathAnim(game: &mut Game) {
-    let mut EnemyDef_A2: *mut EnemyDef = ::core::ptr::null_mut::<EnemyDef>();
+    let mut EnemyDef_A2: *mut EnemyDef = null_mut::<EnemyDef>();
     let mut hurt_ai_time: i16 = 0;
     let v0: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
     let mut vulnerability_ptr: u16 = (*get_EnemyDef_A2((*v0).enemy_ptr, game)).vulnerability_ptr;
@@ -4794,7 +4792,7 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
     let mut v5: i16 = 0;
     let mut v6: i16 = 0;
     let mut v9: i16 = 0;
-    let mut EnemyDef_A2: *mut EnemyDef = ::core::ptr::null_mut::<EnemyDef>();
+    let mut EnemyDef_A2: *mut EnemyDef = null_mut::<EnemyDef>();
     let mut hurt_ai_time: i16 = 0;
     let mut v20: i16 = 0;
     let mut varE32: u16 = 0;
@@ -5691,10 +5689,10 @@ pub unsafe fn ProcessEnemyInstructions(game: &mut Game) {
     }
     if game.enemy_instructions(index).current_instruction() & 0x8000 == 0 {
         __assert_fail(
-            b"E->current_instruction & 0x8000\0" as *const u8 as *const ::core::ffi::c_char,
-            b"src/sm_a0.c\0" as *const u8 as *const ::core::ffi::c_char,
+            b"E->current_instruction & 0x8000\0" as *const u8 as *const c_char,
+            b"src/sm_a0.c\0" as *const u8 as *const c_char,
             3399u32,
-            b"void ProcessEnemyInstructions(void)\0" as *const u8 as *const ::core::ffi::c_char,
+            b"void ProcessEnemyInstructions(void)\0" as *const u8 as *const c_char,
         );
     }
     let base_ptr = RomBankBase(game.enemy_instructions(index).bank(), game);

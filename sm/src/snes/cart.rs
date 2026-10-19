@@ -1,21 +1,20 @@
 use crate::game_state::Game;
 use crate::host::Die;
 use crate::snes::cpu::DumpCpuHistory;
+use ::core::ffi::{c_char, c_void};
+use ::core::mem::size_of;
+use ::core::ptr::null_mut;
 extern "C" {
-    fn printf(__format: *const ::core::ffi::c_char, ...) -> i32;
-    fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn free(__ptr: *mut ::core::ffi::c_void);
-    fn memcpy(
-        __dest: *mut ::core::ffi::c_void,
-        __src: *const ::core::ffi::c_void,
-        __n: size_t,
-    ) -> *mut ::core::ffi::c_void;
-    fn memset(__s: *mut ::core::ffi::c_void, __c: i32, __n: size_t) -> *mut ::core::ffi::c_void;
+    fn printf(__format: *const c_char, ...) -> i32;
+    fn malloc(__size: size_t) -> *mut c_void;
+    fn free(__ptr: *mut c_void);
+    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
+    fn memset(__s: *mut c_void, __c: i32, __n: size_t) -> *mut c_void;
     fn __assert_fail(
-        __assertion: *const ::core::ffi::c_char,
-        __file: *const ::core::ffi::c_char,
+        __assertion: *const c_char,
+        __file: *const c_char,
         __line: u32,
-        __function: *const ::core::ffi::c_char,
+        __function: *const c_char,
     ) -> !;
 
 }
@@ -24,30 +23,30 @@ pub use crate::types::{
     DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs, PpuZbufType, SaveLoadFunc, Snes, Spc,
     Timer, WindowLayer,
 };
-pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
+pub const NULL: *mut c_void = null_mut::<c_void>();
 pub unsafe fn cart_init(snes: *mut Snes) -> *mut Cart {
-    let cart: *mut Cart = malloc(::core::mem::size_of::<Cart>() as size_t) as *mut Cart;
+    let cart: *mut Cart = malloc(size_of::<Cart>() as size_t) as *mut Cart;
     (*cart).snes = snes;
     (*cart).type_0 = 0u8;
-    (*cart).rom = ::core::ptr::null_mut::<u8>();
+    (*cart).rom = null_mut::<u8>();
     (*cart).romSize = 0u32;
-    (*cart).ram = ::core::ptr::null_mut::<u8>();
+    (*cart).ram = null_mut::<u8>();
     (*cart).ramSize = 0u32;
     cart
 }
 pub unsafe fn cart_free(cart: *mut Cart) {
-    free(cart as *mut ::core::ffi::c_void);
+    free(cart as *mut c_void);
 }
 pub unsafe fn cart_reset(cart: *mut Cart) {}
 pub unsafe fn cart_saveload(
     cart: *mut Cart,
     func: Option<SaveLoadFunc>,
-    ctx: *mut ::core::ffi::c_void,
+    ctx: *mut c_void,
     game: &mut Game,
 ) {
     func.expect("non-null function pointer")(
         ctx,
-        (*cart).ram as *mut ::core::ffi::c_void,
+        (*cart).ram as *mut c_void,
         (*cart).ramSize as size_t,
         game,
     );
@@ -55,27 +54,23 @@ pub unsafe fn cart_saveload(
 pub unsafe fn cart_load(cart: *mut Cart, type_0: i32, rom: *mut u8, romSize: i32, ramSize: i32) {
     (*cart).type_0 = type_0 as u8;
     if !(*cart).rom.is_null() {
-        free((*cart).rom as *mut ::core::ffi::c_void);
+        free((*cart).rom as *mut c_void);
     }
     if !(*cart).ram.is_null() {
-        free((*cart).ram as *mut ::core::ffi::c_void);
+        free((*cart).ram as *mut c_void);
     }
     (*cart).rom = malloc(romSize as size_t) as *mut u8;
     (*cart).romSize = romSize as u32;
     if ramSize > 0i32 {
         (*cart).ram = malloc(ramSize as size_t) as *mut u8;
-        memset(
-            (*cart).ram as *mut ::core::ffi::c_void,
-            0i32,
-            ramSize as size_t,
-        );
+        memset((*cart).ram as *mut c_void, 0i32, ramSize as size_t);
     } else {
-        (*cart).ram = ::core::ptr::null_mut::<u8>();
+        (*cart).ram = null_mut::<u8>();
     }
     (*cart).ramSize = ramSize as u32;
     memcpy(
-        (*cart).rom as *mut ::core::ffi::c_void,
-        rom as *const ::core::ffi::c_void,
+        (*cart).rom as *mut c_void,
+        rom as *const c_void,
         romSize as size_t,
     );
 }
@@ -84,11 +79,10 @@ pub unsafe fn cart_read(cart: *mut Cart, bank: u8, adr: u16, game: &mut Game) ->
         0 => {
             '_c2rust_label: {
                 __assert_fail(
-                    b"0\0" as *const u8 as *const ::core::ffi::c_char,
-                    b"src/snes/cart.c\0" as *const u8 as *const ::core::ffi::c_char,
+                    b"0\0" as *const u8 as *const c_char,
+                    b"src/snes/cart.c\0" as *const u8 as *const c_char,
                     57u32,
-                    b"uint8_t cart_read(Cart *, uint8_t, uint16_t)\0" as *const u8
-                        as *const ::core::ffi::c_char,
+                    b"uint8_t cart_read(Cart *, uint8_t, uint16_t)\0" as *const u8 as *const c_char,
                 );
             };
             return (*(*cart).snes).openBus;
@@ -99,11 +93,10 @@ pub unsafe fn cart_read(cart: *mut Cart, bank: u8, adr: u16, game: &mut Game) ->
     }
     '_c2rust_label_0: {
         __assert_fail(
-            b"0\0" as *const u8 as *const ::core::ffi::c_char,
-            b"src/snes/cart.c\0" as *const u8 as *const ::core::ffi::c_char,
+            b"0\0" as *const u8 as *const c_char,
+            b"src/snes/cart.c\0" as *const u8 as *const c_char,
             62u32,
-            b"uint8_t cart_read(Cart *, uint8_t, uint16_t)\0" as *const u8
-                as *const ::core::ffi::c_char,
+            b"uint8_t cart_read(Cart *, uint8_t, uint16_t)\0" as *const u8 as *const c_char,
         );
     };
     (*(*cart).snes).openBus
@@ -129,7 +122,7 @@ unsafe fn cart_readLorom(cart: *mut Cart, mut bank: u8, adr: u16, game: &mut Gam
         return *(*cart).rom.offset(index as isize);
     }
     printf(
-        b"While trying to read from 0x%x\n\0" as *const u8 as *const ::core::ffi::c_char,
+        b"While trying to read from 0x%x\n\0" as *const u8 as *const c_char,
         (bank as i32) << 16i32 | adr as i32,
     );
     let snes = &*(*cart).snes;
@@ -150,7 +143,7 @@ unsafe fn cart_readLorom(cart: *mut Cart, mut bank: u8, adr: u16, game: &mut Gam
     }
     eprintln!("Direct page $44..$50: {direct_page:02X?}");
     DumpCpuHistory(game);
-    Die(b"The game crashed in cart_readLorom\0" as *const u8 as *const ::core::ffi::c_char);
+    Die(b"The game crashed in cart_readLorom\0" as *const u8 as *const c_char);
     (*(*cart).snes).openBus
 }
 unsafe fn cart_writeLorom(cart: *mut Cart, bank: u8, address: u16, value: u8) {
@@ -180,11 +173,10 @@ unsafe fn cart_readHirom(cart: *mut Cart, mut bank: u8, adr: u16) -> u8 {
     }
     '_c2rust_label: {
         __assert_fail(
-            b"0\0" as *const u8 as *const ::core::ffi::c_char,
-            b"src/snes/cart.c\0" as *const u8 as *const ::core::ffi::c_char,
+            b"0\0" as *const u8 as *const c_char,
+            b"src/snes/cart.c\0" as *const u8 as *const c_char,
             109u32,
-            b"uint8_t cart_readHirom(Cart *, uint8_t, uint16_t)\0" as *const u8
-                as *const ::core::ffi::c_char,
+            b"uint8_t cart_readHirom(Cart *, uint8_t, uint16_t)\0" as *const u8 as *const c_char,
         );
     };
     (*(*cart).snes).openBus

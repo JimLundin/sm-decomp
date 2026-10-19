@@ -23,8 +23,10 @@ use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{Mult8x8, RomPtr, Unreachable, WriteReg};
 pub use crate::snes::registers::*;
+use ::core::ffi::c_char;
+use ::core::ptr::null_mut;
 extern "C" {
-    fn printf(__format: *const ::core::ffi::c_char, ...) -> i32;
+    fn printf(__format: *const c_char, ...) -> i32;
 
 }
 pub use crate::types::Consts_86;
@@ -2532,7 +2534,7 @@ pub unsafe fn NorfairLavaMan_Func_12(k: u16, game: &mut Game) {
     let E: *mut Enemy_NorfairLavaMan = Get_NorfairLavaMan(k as i32, game);
     if -((*E).nlmn_var_E as i32) - 108i32 & 0x8000i32 == 0 {
         printf(
-            b"Y undefined %d!\n\0" as *const u8 as *const ::core::ffi::c_char,
+            b"Y undefined %d!\n\0" as *const u8 as *const c_char,
             -((*E).nlmn_var_E as i16 as i32),
         );
     }
@@ -2573,7 +2575,7 @@ pub unsafe fn NorfairLavaMan_Func_12(k: u16, game: &mut Game) {
 }
 pub fn sub_A8B291(k: u16) {}
 pub unsafe fn NorfairLavaMan_Func_13(game: &mut Game) {
-    let mut v2: *mut EnemySpawnData = ::core::ptr::null_mut::<EnemySpawnData>();
+    let mut v2: *mut EnemySpawnData = null_mut::<EnemySpawnData>();
     let E: *mut Enemy_NorfairLavaMan =
         Get_NorfairLavaMan(ram_word!(game, cur_enemy_index) as i32, game);
     v2 = gEnemySpawnData(ram_word!(game, cur_enemy_index) as i32, game);

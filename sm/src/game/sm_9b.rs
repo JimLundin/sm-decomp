@@ -25,12 +25,9 @@ use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::SetHiLo;
 use crate::rtl::{RomPtr, Unreachable};
+use ::core::ffi::c_void;
 extern "C" {
-    fn memcpy(
-        __dest: *mut ::core::ffi::c_void,
-        __src: *const ::core::ffi::c_void,
-        __n: size_t,
-    ) -> *mut ::core::ffi::c_void;
+    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
 
 }
 pub use crate::types::{size_t, LongPtr, PairU16, Point16U, SamusPose, VoidP, VramWriteEntry};
@@ -245,14 +242,14 @@ pub unsafe fn HandleSamusDeathSequence_Helper2(game: &mut Game) {
     ) as *const u16;
     memcpy(
         ((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16).offset(192) as *mut u16
-            as *mut ::core::ffi::c_void,
-        RomPtr_9B(*v0, game) as *const ::core::ffi::c_void,
+            as *mut c_void,
+        RomPtr_9B(*v0, game) as *const c_void,
         32 as size_t,
     );
     memcpy(
         ((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16).offset(240) as *mut u16
-            as *mut ::core::ffi::c_void,
-        RomPtr_9B(addr_word_9BA120 as u16, game) as *const ::core::ffi::c_void,
+            as *mut c_void,
+        RomPtr_9B(addr_word_9BA120 as u16, game) as *const c_void,
         32 as size_t,
     );
     QueueTransferOfSamusDeathSequence(8u16, game);
@@ -274,17 +271,17 @@ pub unsafe fn CopyPalettesForSamusDeath(v0: u16, game: &mut Game) {
     let v1: *const u16 = RomPtr_9B((r20 + v0 as i32) as u16, game) as *const u16;
     memcpy(
         ((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16).offset(192) as *mut u16
-            as *mut ::core::ffi::c_void,
-        RomPtr_9B(*v1, game) as *const ::core::ffi::c_void,
+            as *mut c_void,
+        RomPtr_9B(*v1, game) as *const c_void,
         32 as size_t,
     );
     memcpy(
         ((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16).offset(240) as *mut u16
-            as *mut ::core::ffi::c_void,
+            as *mut c_void,
         RomPtr_9B(
             crate::rtl::rom_table_word!(game, 0x9bb80f, (v0 as i32 >> 1i32) as isize),
             game,
-        ) as *const ::core::ffi::c_void,
+        ) as *const c_void,
         32 as size_t,
     );
 }

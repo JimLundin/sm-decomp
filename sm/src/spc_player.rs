@@ -1,19 +1,18 @@
 use crate::snes::dsp::{dsp_cycle, dsp_init, dsp_reset, dsp_write};
+use ::core::ffi::{c_char, c_void};
+use ::core::mem::size_of;
+use ::core::ptr::null_mut;
 extern "C" {
-    fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
+    fn malloc(__size: size_t) -> *mut c_void;
     fn __assert_fail(
-        __assertion: *const ::core::ffi::c_char,
-        __file: *const ::core::ffi::c_char,
+        __assertion: *const c_char,
+        __file: *const c_char,
         __line: u32,
-        __function: *const ::core::ffi::c_char,
+        __function: *const c_char,
     ) -> !;
-    fn printf(__format: *const ::core::ffi::c_char, ...) -> i32;
-    fn memcpy(
-        __dest: *mut ::core::ffi::c_void,
-        __src: *const ::core::ffi::c_void,
-        __n: size_t,
-    ) -> *mut ::core::ffi::c_void;
-    fn memset(__s: *mut ::core::ffi::c_void, __c: i32, __n: size_t) -> *mut ::core::ffi::c_void;
+    fn printf(__format: *const c_char, ...) -> i32;
+    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
+    fn memset(__s: *mut c_void, __c: i32, __n: size_t) -> *mut c_void;
 
 }
 pub use crate::types::{
@@ -510,13 +509,13 @@ unsafe fn Dsp_Write(p: *mut SpcPlayer, mut reg: u8, value: u8) {
 unsafe fn Not_Implemented() {
     '_c2rust_label: {
         __assert_fail(
-            b"0\0" as *const u8 as *const ::core::ffi::c_char,
-            b"src/spc_player.c\0" as *const u8 as *const ::core::ffi::c_char,
+            b"0\0" as *const u8 as *const c_char,
+            b"src/spc_player.c\0" as *const u8 as *const c_char,
             383u32,
-            b"void Not_Implemented(void)\0" as *const u8 as *const ::core::ffi::c_char,
+            b"void Not_Implemented(void)\0" as *const u8 as *const c_char,
         );
     };
-    printf(b"Not Implemented\n\0" as *const u8 as *const ::core::ffi::c_char);
+    printf(b"Not Implemented\n\0" as *const u8 as *const c_char);
 }
 unsafe fn SpcDivHelper(mut a: i32, b: u8) -> u16 {
     let org_a: i32 = a;
@@ -642,8 +641,8 @@ unsafe fn Music_ResetChan(p: *mut SpcPlayer) {
     (*p).cur_chan_bit = 0x80u8;
     loop {
         *(&raw mut (*c).channel_volume as *mut u8).offset(
-            (::core::mem::size_of::<u16>() as usize)
-                .wrapping_div(::core::mem::size_of::<u8>() as usize)
+            (size_of::<u16>() as usize)
+                .wrapping_div(size_of::<u8>() as usize)
                 .wrapping_sub(1_usize) as isize,
         ) = 0xffu8;
         (*c).pan_flag_with_phase_invert = 10u8;
@@ -668,13 +667,13 @@ unsafe fn Music_ResetChan(p: *mut SpcPlayer) {
     (*p).block_count = 0u8;
     (*p).percussion_base_id = 0u8;
     *(&raw mut (*p).master_volume as *mut u8).offset(
-        (::core::mem::size_of::<u16>() as usize)
-            .wrapping_div(::core::mem::size_of::<u8>() as usize)
+        (size_of::<u16>() as usize)
+            .wrapping_div(size_of::<u8>() as usize)
             .wrapping_sub(1_usize) as isize,
     ) = 0xc0u8;
     *(&raw mut (*p).tempo as *mut u8).offset(
-        (::core::mem::size_of::<u16>() as usize)
-            .wrapping_div(::core::mem::size_of::<u8>() as usize)
+        (size_of::<u16>() as usize)
+            .wrapping_div(size_of::<u8>() as usize)
             .wrapping_sub(1_usize) as isize,
     ) = 0x20u8;
 }
@@ -1192,7 +1191,7 @@ unsafe fn Chan_HandleTick(p: *mut SpcPlayer, c: *mut Channel) {
     }
 }
 unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
-    let mut c: *mut Channel = ::core::ptr::null_mut::<Channel>();
+    let mut c: *mut Channel = null_mut::<Channel>();
     let mut t: i32 = 0;
     let mut a: u8 = (*p).input_ports[0i32 as usize];
     (*p).input_ports[0i32 as usize] = 255u8;
@@ -1235,8 +1234,8 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
                         (*p).cur_chan_bit = 1u8;
                         loop {
                             if *(&raw mut (*c).pattern_order_ptr_for_chan as *mut u8).offset(
-                                (::core::mem::size_of::<u16>() as usize)
-                                    .wrapping_div(::core::mem::size_of::<u8>() as usize)
+                                (size_of::<u16>() as usize)
+                                    .wrapping_div(size_of::<u8>() as usize)
                                     .wrapping_sub(1_usize) as isize,
                             ) as i32
                                 != 0
@@ -1285,8 +1284,8 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
                     (*p).cur_chan_bit = 1u8;
                     loop {
                         if (*(&raw mut (*c).pattern_order_ptr_for_chan as *mut u8).offset(
-                            (::core::mem::size_of::<u16>() as usize)
-                                .wrapping_div(::core::mem::size_of::<u8>() as usize)
+                            (size_of::<u16>() as usize)
+                                .wrapping_div(size_of::<u8>() as usize)
                                 .wrapping_sub(1_usize) as isize,
                         ) != 0)
                         {
@@ -1399,8 +1398,8 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
                     (*p).cur_chan_bit = 1u8;
                     loop {
                         if *(&raw mut (*c).pattern_order_ptr_for_chan as *mut u8).offset(
-                            (::core::mem::size_of::<u16>() as usize)
-                                .wrapping_div(::core::mem::size_of::<u8>() as usize)
+                            (size_of::<u16>() as usize)
+                                .wrapping_div(size_of::<u8>() as usize)
                                 .wrapping_sub(1_usize) as isize,
                         ) != 0
                         {
@@ -1498,8 +1497,8 @@ unsafe fn Spc_Loop_Part2(p: *mut SpcPlayer, ticks: u8) {
     t = (*p).main_tempo_accum as i32
         + (ticks as i32
             * *(&raw mut (*p).tempo as *mut u8).offset(
-                (::core::mem::size_of::<u16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<u8>() as usize)
+                (size_of::<u16>() as usize)
+                    .wrapping_div(size_of::<u8>() as usize)
                     .wrapping_sub(1_usize) as isize,
             ) as i32) as u8 as i32;
     (*p).main_tempo_accum = t as u8;
@@ -1515,8 +1514,8 @@ unsafe fn Spc_Loop_Part2(p: *mut SpcPlayer, ticks: u8) {
         (*p).cur_chan_bit = 1u8;
         while (*p).cur_chan_bit as i32 != 0i32 {
             if *(&raw mut (*c).pattern_order_ptr_for_chan as *mut u8).offset(
-                (::core::mem::size_of::<u16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<u8>() as usize)
+                (size_of::<u16>() as usize)
+                    .wrapping_div(size_of::<u8>() as usize)
                     .wrapping_sub(1_usize) as isize,
             ) != 0
             {
@@ -1530,27 +1529,27 @@ unsafe fn Spc_Loop_Part2(p: *mut SpcPlayer, ticks: u8) {
 unsafe fn Vector_Reset_Spc(p: *mut SpcPlayer) {
     dsp_reset((*p).dsp);
     memset(
-        (&raw mut (*p).ram as *mut u8).offset(0x500) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*p).ram as *mut u8).offset(0x500) as *mut u8 as *mut c_void,
         0i32,
         0x1000 as size_t,
     );
     memset(
-        (&raw mut (*p).ram as *mut u8).offset(0x20) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*p).ram as *mut u8).offset(0x20) as *mut u8 as *mut c_void,
         0i32,
         0xf as size_t,
     );
     memset(
-        (&raw mut (*p).ram as *mut u8).offset(0xd0) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*p).ram as *mut u8).offset(0xd0) as *mut u8 as *mut c_void,
         0i32,
         0x1f as size_t,
     );
     memset(
-        (&raw mut (*p).ram as *mut u8).offset(0x391) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*p).ram as *mut u8).offset(0x391) as *mut u8 as *mut c_void,
         0i32,
         0x6f as size_t,
     );
     memset(
-        (&raw mut (*p).ram as *mut u8).offset(0x440) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*p).ram as *mut u8).offset(0x440) as *mut u8 as *mut c_void,
         0i32,
         0x7f as size_t,
     );
@@ -1566,8 +1565,8 @@ unsafe fn Vector_Reset_Spc(p: *mut SpcPlayer) {
     Dsp_Write(p, MVOLR as i32 as u8, 0x60u8);
     Dsp_Write(p, DIR as i32 as u8, 0x6du8);
     *(&raw mut (*p).tempo as *mut u8).offset(
-        (::core::mem::size_of::<u16>() as usize)
-            .wrapping_div(::core::mem::size_of::<u8>() as usize)
+        (size_of::<u16>() as usize)
+            .wrapping_div(size_of::<u8>() as usize)
             .wrapping_sub(1_usize) as isize,
     ) = 16u8;
     (*p).timer_cycles = 0u8;
@@ -2131,14 +2130,10 @@ pub unsafe fn Sfx3_Init(p: *mut SpcPlayer) {
     );
 }
 pub unsafe fn SpcPlayer_Create() -> *mut SpcPlayer {
-    let p: *mut SpcPlayer = malloc(::core::mem::size_of::<SpcPlayer>() as size_t) as *mut SpcPlayer;
-    memset(
-        p as *mut ::core::ffi::c_void,
-        0i32,
-        ::core::mem::size_of::<SpcPlayer>() as size_t,
-    );
+    let p: *mut SpcPlayer = malloc(size_of::<SpcPlayer>() as size_t) as *mut SpcPlayer;
+    memset(p as *mut c_void, 0i32, size_of::<SpcPlayer>() as size_t);
     (*p).dsp = dsp_init(&raw mut (*p).ram as *mut u8);
-    (*p).reg_write_history = ::core::ptr::null_mut::<DspRegWriteHistory>();
+    (*p).reg_write_history = null_mut::<DspRegWriteHistory>();
     p
 }
 pub unsafe fn SpcPlayer_Initialize(p: *mut SpcPlayer) {
@@ -2153,16 +2148,15 @@ pub unsafe fn SpcPlayer_CopyVariablesToRam(p: *mut SpcPlayer) {
             (&raw const kChannel_Maps as *const MemMap).offset(0) as *const MemMap;
         while m
             != (&raw const kChannel_Maps as *const MemMap).offset(
-                (::core::mem::size_of::<[MemMap; 47]>() as usize)
-                    .wrapping_div(::core::mem::size_of::<MemMap>() as usize)
+                (size_of::<[MemMap; 47]>() as usize).wrapping_div(size_of::<MemMap>() as usize)
                     as isize,
             ) as *const MemMap
         {
             memcpy(
                 (&raw mut (*p).ram as *mut u8)
                     .offset((((*m).org_off as i32 & 0x7fffi32) + i * 2i32) as isize)
-                    as *mut u8 as *mut ::core::ffi::c_void,
-                (c as *mut u8).offset((*m).off as i32 as isize) as *const ::core::ffi::c_void,
+                    as *mut u8 as *mut c_void,
+                (c as *mut u8).offset((*m).off as i32 as isize) as *const c_void,
                 (if (*m).org_off as i32 & 0x8000i32 != 0 {
                     2i32
                 } else {
@@ -2178,14 +2172,14 @@ pub unsafe fn SpcPlayer_CopyVariablesToRam(p: *mut SpcPlayer) {
         (&raw const kSpcPlayer_Maps as *const MemMapSized).offset(0) as *const MemMapSized;
     while m_0
         != (&raw const kSpcPlayer_Maps as *const MemMapSized).offset(
-            (::core::mem::size_of::<[MemMapSized; 283]>() as usize)
-                .wrapping_div(::core::mem::size_of::<MemMapSized>() as usize) as isize,
+            (size_of::<[MemMapSized; 283]>() as usize)
+                .wrapping_div(size_of::<MemMapSized>() as usize) as isize,
         ) as *const MemMapSized
     {
         memcpy(
             (&raw mut (*p).ram as *mut u8).offset((*m_0).org_off as isize) as *mut u8
-                as *mut ::core::ffi::c_void,
-            (p as *mut u8).offset((*m_0).off as i32 as isize) as *const ::core::ffi::c_void,
+                as *mut c_void,
+            (p as *mut u8).offset((*m_0).off as i32 as isize) as *const c_void,
             (*m_0).size as size_t,
         );
         m_0 = m_0.offset(1);
@@ -2199,16 +2193,15 @@ pub unsafe fn SpcPlayer_CopyVariablesFromRam(p: *mut SpcPlayer) {
             (&raw const kChannel_Maps as *const MemMap).offset(0) as *const MemMap;
         while m
             != (&raw const kChannel_Maps as *const MemMap).offset(
-                (::core::mem::size_of::<[MemMap; 47]>() as usize)
-                    .wrapping_div(::core::mem::size_of::<MemMap>() as usize)
+                (size_of::<[MemMap; 47]>() as usize).wrapping_div(size_of::<MemMap>() as usize)
                     as isize,
             ) as *const MemMap
         {
             memcpy(
-                (c as *mut u8).offset((*m).off as i32 as isize) as *mut ::core::ffi::c_void,
+                (c as *mut u8).offset((*m).off as i32 as isize) as *mut c_void,
                 (&raw mut (*p).ram as *mut u8)
                     .offset((((*m).org_off as i32 & 0x7fffi32) + i * 2i32) as isize)
-                    as *mut u8 as *const ::core::ffi::c_void,
+                    as *mut u8 as *const c_void,
                 (if (*m).org_off as i32 & 0x8000i32 != 0 {
                     2i32
                 } else {
@@ -2224,14 +2217,14 @@ pub unsafe fn SpcPlayer_CopyVariablesFromRam(p: *mut SpcPlayer) {
         (&raw const kSpcPlayer_Maps as *const MemMapSized).offset(0) as *const MemMapSized;
     while m_0
         != (&raw const kSpcPlayer_Maps as *const MemMapSized).offset(
-            (::core::mem::size_of::<[MemMapSized; 283]>() as usize)
-                .wrapping_div(::core::mem::size_of::<MemMapSized>() as usize) as isize,
+            (size_of::<[MemMapSized; 283]>() as usize)
+                .wrapping_div(size_of::<MemMapSized>() as usize) as isize,
         ) as *const MemMapSized
     {
         memcpy(
-            (p as *mut u8).offset((*m_0).off as i32 as isize) as *mut ::core::ffi::c_void,
+            (p as *mut u8).offset((*m_0).off as i32 as isize) as *mut c_void,
             (&raw mut (*p).ram as *mut u8).offset((*m_0).org_off as isize) as *mut u8
-                as *const ::core::ffi::c_void,
+                as *const c_void,
             (*m_0).size as size_t,
         );
         m_0 = m_0.offset(1);
@@ -2247,11 +2240,10 @@ pub unsafe fn SpcPlayer_GenerateSamples(p: *mut SpcPlayer) {
         if (*p).timer_cycles as i32 <= 64i32 {
         } else {
             __assert_fail(
-                b"p->timer_cycles <= 64\0" as *const u8 as *const ::core::ffi::c_char,
-                b"src/spc_player.c\0" as *const u8 as *const ::core::ffi::c_char,
+                b"p->timer_cycles <= 64\0" as *const u8 as *const c_char,
+                b"src/spc_player.c\0" as *const u8 as *const c_char,
                 1550u32,
-                b"void SpcPlayer_GenerateSamples(SpcPlayer *)\0" as *const u8
-                    as *const ::core::ffi::c_char,
+                b"void SpcPlayer_GenerateSamples(SpcPlayer *)\0" as *const u8 as *const c_char,
             );
         }
     };
@@ -2259,11 +2251,10 @@ pub unsafe fn SpcPlayer_GenerateSamples(p: *mut SpcPlayer) {
         if (*(*p).dsp).sampleOffset as i32 <= 534i32 {
         } else {
             __assert_fail(
-                b"p->dsp->sampleOffset <= 534\0" as *const u8 as *const ::core::ffi::c_char,
-                b"src/spc_player.c\0" as *const u8 as *const ::core::ffi::c_char,
+                b"p->dsp->sampleOffset <= 534\0" as *const u8 as *const c_char,
+                b"src/spc_player.c\0" as *const u8 as *const c_char,
                 1552u32,
-                b"void SpcPlayer_GenerateSamples(SpcPlayer *)\0" as *const u8
-                    as *const ::core::ffi::c_char,
+                b"void SpcPlayer_GenerateSamples(SpcPlayer *)\0" as *const u8 as *const c_char,
             );
         }
     };

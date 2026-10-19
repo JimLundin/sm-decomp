@@ -78,19 +78,18 @@ use crate::rtl::{
     Load24, Mult8x8, RomPtr, RtlApuWrite, SnesDivide, Unreachable, WriteReg, WriteRegWord,
 };
 pub use crate::snes::registers::*;
+use ::core::ffi::{c_char, c_long, c_void};
+use ::core::mem::transmute;
+use ::core::ptr::{null, null_mut};
 extern "C" {
     fn __assert_fail(
-        __assertion: *const ::core::ffi::c_char,
-        __file: *const ::core::ffi::c_char,
+        __assertion: *const c_char,
+        __file: *const c_char,
         __line: u32,
-        __function: *const ::core::ffi::c_char,
+        __function: *const c_char,
     ) -> !;
-    fn memcpy(
-        __dest: *mut ::core::ffi::c_void,
-        __src: *const ::core::ffi::c_void,
-        __n: size_t,
-    ) -> *mut ::core::ffi::c_void;
-    fn printf(__format: *const ::core::ffi::c_char, ...) -> i32;
+    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
+    fn printf(__format: *const c_char, ...) -> i32;
 
 }
 pub use crate::types::RoomPlmEntry;
@@ -174,9 +173,8 @@ pub use crate::types::{
 };
 pub const addr_kDoorDef_947a: Consts_83 = 38010;
 pub use crate::types::Consts_8F;
-pub const __ASSERT_FUNCTION: [::core::ffi::c_char; 28] = unsafe {
-    ::core::mem::transmute::<[u8; 28], [::core::ffi::c_char; 28]>(*b"uint8 *RomPtr_RAM(uint16_t)\0")
-};
+pub const __ASSERT_FUNCTION: [c_char; 28] =
+    unsafe { transmute::<[u8; 28], [c_char; 28]>(*b"uint8 *RomPtr_RAM(uint16_t)\0") };
 pub const kCoroutineNone: i32 = 0;
 #[inline]
 unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
@@ -184,8 +182,8 @@ unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
         if addr < 0x2000u16 {
         } else {
             __assert_fail(
-                b"addr < 0x2000\0" as *const u8 as *const ::core::ffi::c_char,
-                b"src/sm_rtl.h\0" as *const u8 as *const ::core::ffi::c_char,
+                b"addr < 0x2000\0" as *const u8 as *const c_char,
+                b"src/sm_rtl.h\0" as *const u8 as *const c_char,
                 51u32,
                 __ASSERT_FUNCTION.as_ptr(),
             );
@@ -640,25 +638,25 @@ pub unsafe fn LoadStdBG3andSpriteTilesClearTilemaps(game: &mut Game) {
     WriteReg(VMADDH as u16, 0x40u8, game);
     WriteReg(VMAIN as u16, 0x80u8, game);
     static unk_8282F8: StartDmaCopy = StartDmaCopy::vram_words(1, 0x9ab200, 0x2000);
-    SetupDmaTransfer(&raw const unk_8282F8 as *const ::core::ffi::c_void, game);
+    SetupDmaTransfer(&raw const unk_8282F8 as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
     WriteReg(VMADDL as u16, 0u8, game);
     WriteReg(VMADDH as u16, 0x60u8, game);
     WriteReg(VMAIN as u16, 0x80u8, game);
     static unk_828318: StartDmaCopy = StartDmaCopy::vram_words(1, 0x9ad200, 0x2e00);
-    SetupDmaTransfer(&raw const unk_828318 as *const ::core::ffi::c_void, game);
+    SetupDmaTransfer(&raw const unk_828318 as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
     WriteReg(VMADDL as u16, 0u8, game);
     WriteReg(VMADDH as u16, 0x50u8, game);
     WriteReg(VMAIN as u16, 0x80u8, game);
     static unk_828338: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e4000, 0x1000);
-    SetupDmaTransfer(&raw const unk_828338 as *const ::core::ffi::c_void, game);
+    SetupDmaTransfer(&raw const unk_828338 as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
     WriteReg(VMADDL as u16, 0u8, game);
     WriteReg(VMADDH as u16, 0x58u8, game);
     WriteReg(VMAIN as u16, 0x80u8, game);
     static unk_828358: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e4000, 0x800);
-    SetupDmaTransfer(&raw const unk_828358 as *const ::core::ffi::c_void, game);
+    SetupDmaTransfer(&raw const unk_828358 as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
 }
 pub unsafe fn GameState_32_MadeItToCeresElevator(game: &mut Game) -> CoroutineRet {
@@ -949,7 +947,7 @@ pub unsafe fn CheckForNextDemo(game: &mut Game) {
     };
 }
 pub unsafe fn LoadDemoRoomData(game: &mut Game) {
-    let mut drd: *mut DemoRoomData = ::core::ptr::null_mut::<DemoRoomData>();
+    let mut drd: *mut DemoRoomData = null_mut::<DemoRoomData>();
     set_ram_word!(game.door_def_ptr = 0u16);
     drd = get_DemoRoomData(
         (18i32 * ram_word!(game, demo_scene) as i32
@@ -1116,7 +1114,7 @@ pub unsafe fn RunOneFrameOfGameInner(game: &mut Game) -> CoroutineRet {
         current_block = 2185597630302572016;
     } else {
         if st != 0i32 {
-            Die(b"Incorrect coroutine_state_0\0" as *const u8 as *const ::core::ffi::c_char);
+            Die(b"Incorrect coroutine_state_0\0" as *const u8 as *const c_char);
         }
         current_block = 8515828400728868193;
     }
@@ -1154,13 +1152,13 @@ pub unsafe fn RunOneFrameOfGameInner(game: &mut Game) -> CoroutineRet {
         != 0
     {
         printf(
-            b"Coroutine state: %d, %d, %d, %d\n\0" as *const u8 as *const ::core::ffi::c_char,
+            b"Coroutine state: %d, %d, %d, %d\n\0" as *const u8 as *const c_char,
             *(&raw mut game.g_ram as *mut u8).offset(0x612) as i32,
             *(&raw mut game.g_ram as *mut u8).offset(0x613) as i32,
             *(&raw mut game.g_ram as *mut u8).offset(0x614) as i32,
             *(&raw mut game.g_ram as *mut u8).offset(0x615) as i32,
         );
-        Warning(b"Coroutine State is broken!\0" as *const u8 as *const ::core::ffi::c_char);
+        Warning(b"Coroutine State is broken!\0" as *const u8 as *const c_char);
     }
     *(&raw mut game.g_ram as *mut u8).offset(0x611) = 0u8;
     kCoroutineNone as CoroutineRet
@@ -1512,7 +1510,7 @@ pub unsafe fn OptionsMenuFunc2(k: u16, game: &mut Game) {
     *fresh119 = (*fresh119).wrapping_sub(1);
     if fresh120 == 1u16 {
         let mut v4: u16 = ram_word!(game, cinematicspr_arr7[v2]);
-        let mut v5: *mut u16 = ::core::ptr::null_mut::<u16>();
+        let mut v5: *mut u16 = null_mut::<u16>();
         loop {
             v5 = RomPtr_82(v4, game) as *mut u16;
             if (*v5.offset(0) as i32 & 0x8000i32) == 0i32 {
@@ -1678,7 +1676,7 @@ pub unsafe fn RestoreBG2TilemapFromPauseScreen(game: &mut Game) {
     );
     WriteReg(VMAIN as u16, 0x80u8, game);
     static unk_828DAE: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7edf5c, 0x1000);
-    SetupDmaTransfer(&raw const unk_828DAE as *const ::core::ffi::c_void, game);
+    SetupDmaTransfer(&raw const unk_828DAE as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
 }
 pub unsafe fn BackupSomeGfxStateForPause(game: &mut Game) {
@@ -1752,19 +1750,19 @@ pub unsafe fn LoadPauseMenuTilesAndClearBG2(game: &mut Game) {
     WriteReg(VMADDH as u16, 0u8, game);
     WriteReg(VMAIN as u16, 0x80u8, game);
     static unk_828E8B: StartDmaCopy = StartDmaCopy::vram_words(1, 0xb68000, 0x4000);
-    SetupDmaTransfer(&raw const unk_828E8B as *const ::core::ffi::c_void, game);
+    SetupDmaTransfer(&raw const unk_828E8B as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
     WriteReg(VMADDL as u16, 0u8, game);
     WriteReg(VMADDH as u16, 0x20u8, game);
     WriteReg(VMAIN as u16, 0x80u8, game);
     static unk_828EAB: StartDmaCopy = StartDmaCopy::vram_words(1, 0xb6c000, 0x2000);
-    SetupDmaTransfer(&raw const unk_828EAB as *const ::core::ffi::c_void, game);
+    SetupDmaTransfer(&raw const unk_828EAB as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
     WriteReg(VMADDL as u16, 0u8, game);
     WriteReg(VMADDH as u16, 0x40u8, game);
     WriteReg(VMAIN as u16, 0x80u8, game);
     static unk_828ECB: StartDmaCopy = StartDmaCopy::vram_words(1, 0x9ab200, 0x2000);
-    SetupDmaTransfer(&raw const unk_828ECB as *const ::core::ffi::c_void, game);
+    SetupDmaTransfer(&raw const unk_828ECB as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
 }
 pub unsafe fn LoadPauseScreenBaseTilemaps(game: &mut Game) {
@@ -1772,19 +1770,19 @@ pub unsafe fn LoadPauseScreenBaseTilemaps(game: &mut Game) {
     WriteReg(VMADDH as u16, 0x38u8, game);
     WriteReg(VMAIN as u16, 0x80u8, game);
     static unk_828EF0: StartDmaCopy = StartDmaCopy::vram_words(1, 0xb6e000, 0x800);
-    SetupDmaTransfer(&raw const unk_828EF0 as *const ::core::ffi::c_void, game);
+    SetupDmaTransfer(&raw const unk_828EF0 as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
     WriteReg(WMADDL as u16, 0u8, game);
     WriteReg(WMADDM as u16, 0x34u8, game);
     WriteReg(WMADDH as u16, 0x7eu8, game);
     static unk_828F10: StartDmaCopy = StartDmaCopy::wram_bytes(1, 0xb6e400, 0x400);
-    SetupDmaTransfer(&raw const unk_828F10 as *const ::core::ffi::c_void, game);
+    SetupDmaTransfer(&raw const unk_828F10 as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
     WriteReg(WMADDL as u16, 0u8, game);
     WriteReg(WMADDM as u16, 0x38u8, game);
     WriteReg(WMADDH as u16, 0x7eu8, game);
     static unk_828F30: StartDmaCopy = StartDmaCopy::wram_bytes(1, 0xb6e800, 0x800);
-    SetupDmaTransfer(&raw const unk_828F30 as *const ::core::ffi::c_void, game);
+    SetupDmaTransfer(&raw const unk_828F30 as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
     let mut v0: u16 = addr_kDummySamusWireframeTilemap as u16;
     let mut v1: u16 = 236u16;
@@ -2201,7 +2199,7 @@ pub unsafe fn LoadPauseMenuMapTilemapAndAreaLabel(game: &mut Game) {
     WriteReg(VMAIN as u16, 0x80u8, game);
     LoadPauseMenuMapTilemap(game);
     static unk_8293E9: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e4000, 0x1000);
-    SetupDmaTransfer(&raw const unk_8293E9 as *const ::core::ffi::c_void, game);
+    SetupDmaTransfer(&raw const unk_8293E9 as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
     WriteReg(VMADDL as u16, 0xaau8, game);
     WriteReg(VMADDH as u16, 0x38u8, game);
@@ -2421,8 +2419,7 @@ pub unsafe fn DrawRoomSelectMap(game: &mut Game) {
         gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
     (*v17).size = 4096u16;
     (*v17).src.addr = ((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000 as *mut u8)
-        .offset_from(&raw mut game.g_ram as *mut u8) as ::core::ffi::c_long
-        as VoidP;
+        .offset_from(&raw mut game.g_ram as *mut u8) as c_long as VoidP;
     (*v17).src.bank = 126u8;
     (*v17).vram_dst =
         ((*(&raw mut game.g_ram as *mut u8).offset(0x58) as i32 & 0xfci32) << 8i32) as u16;
@@ -2584,7 +2581,7 @@ unsafe fn DetermineBottommostMapColumn(mut r0: *const u8) -> u16 {
     result
 }
 pub unsafe fn DetermineMapScrollLimits(game: &mut Game) {
-    let mut r6: *const u8 = ::core::ptr::null::<u8>();
+    let mut r6: *const u8 = null::<u8>();
     if ram_word!(game, has_area_map) != 0 {
         r6 = RomPtr_82(
             *(RomPtr_82(
@@ -2660,17 +2657,15 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
         memcpy(
             (&raw mut game.g_ram as *mut u8)
                 .offset(crate::rtl::rom_table_word!(game, 0x82c068, 0) as i32 as isize)
-                as *mut ::core::ffi::c_void,
-            RomPtr_82(crate::rtl::rom_table_word!(game, 0x82c088, 0), game)
-                as *const ::core::ffi::c_void,
+                as *mut c_void,
+            RomPtr_82(crate::rtl::rom_table_word!(game, 0x82c088, 0), game) as *const c_void,
             14 as size_t,
         );
         memcpy(
             (&raw mut game.g_ram as *mut u8)
                 .offset(crate::rtl::rom_table_word!(game, 0x82c068, 1) as i32 as isize)
-                as *mut ::core::ffi::c_void,
-            RomPtr_82(crate::rtl::rom_table_word!(game, 0x82c088, 1), game)
-                as *const ::core::ffi::c_void,
+                as *mut c_void,
+            RomPtr_82(crate::rtl::rom_table_word!(game, 0x82c088, 1), game) as *const c_void,
             14 as size_t,
         );
     }
@@ -2680,11 +2675,11 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
         while i < 5i32 {
             memcpy(
                 (&raw mut game.g_ram as *mut u8).offset(*p.offset(i as isize) as i32 as isize)
-                    as *mut ::core::ffi::c_void,
+                    as *mut c_void,
                 RomPtr_82(
                     crate::rtl::rom_table_word!(game, 0x82c0a8, i as isize),
                     game,
-                ) as *const ::core::ffi::c_void,
+                ) as *const c_void,
                 10 as size_t,
             );
             i += 1;
@@ -2700,11 +2695,11 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
                 != 0i32
             {
                 memcpy(
-                    target as *mut ::core::ffi::c_void,
+                    target as *mut c_void,
                     RomPtr_82(
                         crate::rtl::rom_table_word!(game, 0x82c08c, i_0 as isize),
                         game,
-                    ) as *const ::core::ffi::c_void,
+                    ) as *const c_void,
                     10 as size_t,
                 );
                 if (ram_word!(game, equipped_beams) as i32
@@ -2715,9 +2710,8 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
                 }
             } else {
                 memcpy(
-                    target as *mut ::core::ffi::c_void,
-                    RomPtr_82(addr_kEquipmentScreenTilemap_Blank as u16, game)
-                        as *const ::core::ffi::c_void,
+                    target as *mut c_void,
+                    RomPtr_82(addr_kEquipmentScreenTilemap_Blank as u16, game) as *const c_void,
                     10 as size_t,
                 );
             }
@@ -2735,11 +2729,11 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
             != 0i32
         {
             memcpy(
-                target_0 as *mut ::core::ffi::c_void,
+                target_0 as *mut c_void,
                 RomPtr_82(
                     crate::rtl::rom_table_word!(game, 0x82c096, i_1 as isize),
                     game,
-                ) as *const ::core::ffi::c_void,
+                ) as *const c_void,
                 18 as size_t,
             );
             if (ram_word!(game, equipped_items) as i32
@@ -2750,9 +2744,8 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
             }
         } else {
             memcpy(
-                target_0 as *mut ::core::ffi::c_void,
-                RomPtr_82(addr_kEquipmentScreenTilemap_Blank as u16, game)
-                    as *const ::core::ffi::c_void,
+                target_0 as *mut c_void,
+                RomPtr_82(addr_kEquipmentScreenTilemap_Blank as u16, game) as *const c_void,
                 18 as size_t,
             );
         }
@@ -2769,11 +2762,11 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
             != 0i32
         {
             memcpy(
-                target_1 as *mut ::core::ffi::c_void,
+                target_1 as *mut c_void,
                 RomPtr_82(
                     crate::rtl::rom_table_word!(game, 0x82c0a2, i_2 as isize),
                     game,
-                ) as *const ::core::ffi::c_void,
+                ) as *const c_void,
                 18 as size_t,
             );
             if (ram_word!(game, equipped_items) as i32
@@ -2784,9 +2777,8 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
             }
         } else {
             memcpy(
-                target_1 as *mut ::core::ffi::c_void,
-                RomPtr_82(addr_kEquipmentScreenTilemap_Blank as u16, game)
-                    as *const ::core::ffi::c_void,
+                target_1 as *mut c_void,
+                RomPtr_82(addr_kEquipmentScreenTilemap_Blank as u16, game) as *const c_void,
                 18 as size_t,
             );
         }
@@ -2798,7 +2790,7 @@ pub unsafe fn ClearSamusBeamTiles(game: &mut Game) {
     WriteReg(VMADDH as u16, 0x60u8, game);
     WriteReg(VMAIN as u16, 0x80u8, game);
     static unk_82A2D4: StartDmaCopy = StartDmaCopy::vram_words(1, 0x9ad200, 0x1000);
-    SetupDmaTransfer(&raw const unk_82A2D4 as *const ::core::ffi::c_void, game);
+    SetupDmaTransfer(&raw const unk_82A2D4 as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
 }
 pub unsafe fn ContinueInitGameplayResume(game: &mut Game) {
@@ -3267,7 +3259,7 @@ pub unsafe fn EquipmentScreenTransferBG1Tilemap(game: &mut Game) {
     WriteReg(VMADDH as u16, 0x30u8, game);
     WriteReg(VMAIN as u16, 0x80u8, game);
     static unk_82AC3B: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e3800, 0x800);
-    SetupDmaTransfer(&raw const unk_82AC3B as *const ::core::ffi::c_void, game);
+    SetupDmaTransfer(&raw const unk_82AC3B as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
     set_ram_word!(game.reg_BG1VOFS = 0u16);
 }
@@ -3713,8 +3705,8 @@ pub unsafe fn WriteSamusWireframeTilemapAndQueue(game: &mut Game) {
     v0 = (v0).wrapping_add(2u16);
     (*gVramWriteEntry(v0 as i32, game)).size =
         (((&raw mut game.g_ram as *mut u8).offset(0x3800) as *mut Ram3800 as *mut u8)
-            .offset_from(&raw mut game.g_ram as *mut u8) as ::core::ffi::c_long
-            + 256 as ::core::ffi::c_long) as u16;
+            .offset_from(&raw mut game.g_ram as *mut u8) as c_long
+            + 256 as c_long) as u16;
     v0 = (v0).wrapping_add(2u16);
     let fresh63 = v0;
     v0 = v0.wrapping_add(1);
@@ -4059,8 +4051,8 @@ pub unsafe fn EquipmentScreenCategory_ButtonResponse(r24: u16, game: &mut Game) 
                 game,
             ) as *mut u16);
             memcpy(
-                target as *mut ::core::ffi::c_void,
-                RomPtr_82(src, game) as *const ::core::ffi::c_void,
+                target as *mut c_void,
+                RomPtr_82(src, game) as *const c_void,
                 r24 as size_t,
             );
         }
@@ -5113,7 +5105,7 @@ pub unsafe fn EnsureSamusDrawnEachFrame(game: &mut Game) {
     }
 }
 pub unsafe fn LoadEnemyGfxToVram(game: &mut Game) {
-    let mut ED: *mut EnemyDef = ::core::ptr::null_mut::<EnemyDef>();
+    let mut ED: *mut EnemyDef = null_mut::<EnemyDef>();
     let mut dst: u16 = 0x7000u16;
     let mut v0: u16 = ram_word!(game, room_enemy_tilesets_ptr);
     if ram_word!(game, room_enemy_tilesets_ptr) != 0 {
@@ -5760,16 +5752,16 @@ pub unsafe fn LoadLevelDataAndOtherThings(game: &mut Game) {
     );
     let size: u16 = ram_word!(game, ram7F_start);
     memcpy(
-        (&raw mut game.g_ram as *mut u8).offset(0x19602) as *mut u16 as *mut ::core::ffi::c_void,
+        (&raw mut game.g_ram as *mut u8).offset(0x19602) as *mut u16 as *mut c_void,
         ((&raw mut game.g_ram as *mut u8).offset(0x10002) as *mut u16 as *mut u8)
             .offset(size as i32 as isize)
-            .offset((size as i32 >> 1i32) as isize) as *const ::core::ffi::c_void,
+            .offset((size as i32 >> 1i32) as isize) as *const c_void,
         size as size_t,
     );
     memcpy(
-        (&raw mut game.g_ram as *mut u8).offset(0x16402) as *mut ::core::ffi::c_void,
+        (&raw mut game.g_ram as *mut u8).offset(0x16402) as *mut c_void,
         ((&raw mut game.g_ram as *mut u8).offset(0x10002) as *mut u16 as *mut u8)
-            .offset(size as i32 as isize) as *const ::core::ffi::c_void,
+            .offset(size as i32 as isize) as *const c_void,
         (size as i32 >> 1i32) as size_t,
     );
     if ram_word!(game, area_index) == 6u16 {
@@ -6029,16 +6021,16 @@ pub unsafe fn LoadLevelScrollAndCre(game: &mut Game) {
     );
     let size: u16 = ram_word!(game, ram7F_start);
     memcpy(
-        (&raw mut game.g_ram as *mut u8).offset(0x19602) as *mut u16 as *mut ::core::ffi::c_void,
+        (&raw mut game.g_ram as *mut u8).offset(0x19602) as *mut u16 as *mut c_void,
         ((&raw mut game.g_ram as *mut u8).offset(0x10002) as *mut u16 as *mut u8)
             .offset(size as i32 as isize)
-            .offset((size as i32 >> 1i32) as isize) as *const ::core::ffi::c_void,
+            .offset((size as i32 >> 1i32) as isize) as *const c_void,
         size as size_t,
     );
     memcpy(
-        (&raw mut game.g_ram as *mut u8).offset(0x16402) as *mut ::core::ffi::c_void,
+        (&raw mut game.g_ram as *mut u8).offset(0x16402) as *mut c_void,
         ((&raw mut game.g_ram as *mut u8).offset(0x10002) as *mut u16 as *mut u8)
-            .offset(size as i32 as isize) as *const ::core::ffi::c_void,
+            .offset(size as i32 as isize) as *const c_void,
         (size as i32 >> 1i32) as size_t,
     );
     if ram_word!(game, area_index) == 6u16 {
@@ -6105,7 +6097,7 @@ pub unsafe fn LoadLevelScrollAndCre(game: &mut Game) {
     };
 }
 pub unsafe fn CreatePlmsExecuteDoorAsmRoomSetup(game: &mut Game) {
-    let mut RoomDefRoomstate: *mut RoomDefRoomstate = ::core::ptr::null_mut::<RoomDefRoomstate>();
+    let mut RoomDefRoomstate: *mut RoomDefRoomstate = null_mut::<RoomDefRoomstate>();
     RoomDefRoomstate = get_RoomDefRoomstate(ram_word!(game, roomdefroomstate_ptr), game);
     if (*RoomDefRoomstate).room_plm_header_ptr != 0 {
         let mut i: i32 = (*RoomDefRoomstate).room_plm_header_ptr as i32;
@@ -6175,7 +6167,7 @@ pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen(game: &mut Game) {
     WriteReg(VMADDH as u16, 0x58u8, game);
     WriteReg(VMAIN as u16, 0x80u8, game);
     static unk_82EC3D: StartDmaCopy = StartDmaCopy::vram_words(1, 0x8edc00, 0x800);
-    SetupDmaTransfer(&raw const unk_82EC3D as *const ::core::ffi::c_void, game);
+    SetupDmaTransfer(&raw const unk_82EC3D as *const c_void, game);
     WriteReg(MDMAEN as u16, 2u8, game);
     set_ram_word!(game.reg_BG1HOFS = 0u16);
     set_ram_word!(game.reg_BG1VOFS = 0u16);

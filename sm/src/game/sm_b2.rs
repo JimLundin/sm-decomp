@@ -17,6 +17,7 @@ use crate::game_state::Game;
 use crate::ram_map::{ram_word, set_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{RomPtr, Unreachable};
+use ::core::ptr::null_mut;
 
 pub use crate::types::Consts_A0;
 pub use crate::types::Consts_B2;
@@ -185,9 +186,9 @@ pub unsafe fn WalkingSpacePirates_87C8(game: &mut Game) {
     let mut vulnerability_ptr: u16 = 0;
     let mut r20: u16 = 0;
     let mut current_block: u64;
-    let mut v2: *mut Vulnerability = ::core::ptr::null_mut::<Vulnerability>();
+    let mut v2: *mut Vulnerability = null_mut::<Vulnerability>();
     let mut v3: i16 = 0;
-    let mut v: *mut Vulnerability = ::core::ptr::null_mut::<Vulnerability>();
+    let mut v: *mut Vulnerability = null_mut::<Vulnerability>();
     if ((*Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game))
         .base
         .enemy_ptr as i32

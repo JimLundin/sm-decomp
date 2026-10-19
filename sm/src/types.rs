@@ -2,6 +2,7 @@
 
 use crate::game::enemy_layouts::enemy_layout;
 use crate::game_state::Game;
+use ::core::ffi::{c_char, c_double, c_float, c_long, c_schar, c_short, c_uchar, c_ushort, c_void};
 
 pub type VoidP = u16;
 
@@ -135,7 +136,7 @@ pub type GLDEBUGPROC = Option<
         GLenum,
         GLsizei,
         *const GLchar,
-        *const ::core::ffi::c_void,
+        *const c_void,
     ) -> (),
 >;
 
@@ -143,17 +144,17 @@ pub type GLSLScaleType = u32;
 
 pub type GLbitfield = u32;
 
-pub type GLboolean = ::core::ffi::c_uchar;
+pub type GLboolean = c_uchar;
 
-pub type GLbyte = ::core::ffi::c_schar;
+pub type GLbyte = c_schar;
 
-pub type GLchar = ::core::ffi::c_char;
+pub type GLchar = c_char;
 
-pub type GLdouble = ::core::ffi::c_double;
+pub type GLdouble = c_double;
 
 pub type GLenum = u32;
 
-pub type GLfloat = ::core::ffi::c_float;
+pub type GLfloat = c_float;
 
 pub type GLint = i32;
 
@@ -161,17 +162,17 @@ pub type GLint64 = i64;
 
 pub type GLintptr = ptrdiff_t;
 
-pub type GLshort = ::core::ffi::c_short;
+pub type GLshort = c_short;
 
 pub type GLsizei = i32;
 
 pub type GLsizeiptr = ptrdiff_t;
 
-pub type GLubyte = ::core::ffi::c_uchar;
+pub type GLubyte = c_uchar;
 
 pub type GLuint = u32;
 
-pub type GLushort = ::core::ffi::c_ushort;
+pub type GLushort = c_ushort;
 
 pub type GameState = u32;
 
@@ -191,8 +192,7 @@ pub type RunFrameFunc = unsafe fn(u16, i32, &mut Game) -> ();
 
 pub type RunMode = u32;
 
-pub type SDL_AudioCallback =
-    Option<unsafe extern "C" fn(*mut ::core::ffi::c_void, *mut Uint8, i32) -> ()>;
+pub type SDL_AudioCallback = Option<unsafe extern "C" fn(*mut c_void, *mut Uint8, i32) -> ()>;
 
 pub type SDL_AudioDeviceID = Uint32;
 
@@ -200,7 +200,7 @@ pub type SDL_AudioFormat = Uint16;
 
 pub type SDL_FingerID = Sint64;
 
-pub type SDL_GLContext = *mut ::core::ffi::c_void;
+pub type SDL_GLContext = *mut c_void;
 
 pub type SDL_GLattr = u32;
 
@@ -226,8 +226,7 @@ pub type SamusMovementType = u32;
 
 pub type SamusPose = u32;
 
-pub type SaveLoadFunc =
-    unsafe fn(*mut ::core::ffi::c_void, *mut ::core::ffi::c_void, size_t, &mut Game) -> ();
+pub type SaveLoadFunc = unsafe fn(*mut c_void, *mut c_void, size_t, &mut Game) -> ();
 
 pub type Sint16 = i16;
 
@@ -251,11 +250,11 @@ pub type _IO_lock_t = ();
 
 pub type __mode_t = u32;
 
-pub type __off64_t = ::core::ffi::c_long;
+pub type __off64_t = c_long;
 
-pub type __off_t = ::core::ffi::c_long;
+pub type __off_t = c_long;
 
-pub type __time_t = ::core::ffi::c_long;
+pub type __time_t = c_long;
 
 pub type ogl_LoadStatus = u32;
 
@@ -267,9 +266,9 @@ pub type stbi__uint16 = u16;
 
 pub type stbi__uint32 = u32;
 
-pub type stbi_uc = ::core::ffi::c_uchar;
+pub type stbi_uc = c_uchar;
 
-pub type stbi_us = ::core::ffi::c_ushort;
+pub type stbi_us = c_ushort;
 
 pub type time_t = __time_t;
 
@@ -1038,7 +1037,7 @@ pub struct Apu {
 #[repr(C)]
 pub union ApuHistory {
     pub hist: DspRegWriteHistory,
-    pub padpad: *mut ::core::ffi::c_void,
+    pub padpad: *mut c_void,
 }
 
 #[derive(Copy, Clone)]
@@ -1121,7 +1120,7 @@ pub struct Channel {
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Cpu {
-    pub mem: *mut ::core::ffi::c_void,
+    pub mem: *mut c_void,
     pub memType: u8,
     pub a: u16,
     pub x: u16,
@@ -1447,7 +1446,7 @@ pub struct Snes {
     pub cpuCyclesLeft: u8,
     pub cpuMemOps: u8,
     pub padpad: [u8; 2],
-    pub apuCatchupCycles: ::core::ffi::c_double,
+    pub apuCatchupCycles: c_double,
     pub hIrqEnabled: bool,
     pub vIrqEnabled: bool,
     pub nmiEnabled: bool,
@@ -1611,10 +1610,10 @@ pub struct Config {
     pub disable_frame_delay: bool,
     pub msuvolume: u8,
     pub features0: u32,
-    pub link_graphics: *const ::core::ffi::c_char,
-    pub memory_buffer: *mut ::core::ffi::c_char,
-    pub shader: *const ::core::ffi::c_char,
-    pub msu_path: *const ::core::ffi::c_char,
+    pub link_graphics: *const c_char,
+    pub memory_buffer: *mut c_char,
+    pub shader: *const c_char,
+    pub msu_path: *const c_char,
 }
 
 #[derive(Copy, Clone)]
@@ -1629,25 +1628,25 @@ pub struct GlTextureWithSize {
 #[repr(C)]
 pub struct GlslParam {
     pub next: *mut GlslParam,
-    pub id: *mut ::core::ffi::c_char,
+    pub id: *mut c_char,
     pub has_value: bool,
-    pub value: ::core::ffi::c_float,
-    pub min: ::core::ffi::c_float,
-    pub max: ::core::ffi::c_float,
+    pub value: c_float,
+    pub min: c_float,
+    pub max: c_float,
     pub uniform: [u32; 20],
 }
 
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct GlslPass {
-    pub filename: *mut ::core::ffi::c_char,
+    pub filename: *mut c_char,
     pub scale_type_x: u8,
     pub scale_type_y: u8,
     pub float_framebuffer: bool,
     pub srgb_framebuffer: bool,
     pub mipmap_input: bool,
-    pub scale_x: ::core::ffi::c_float,
-    pub scale_y: ::core::ffi::c_float,
+    pub scale_x: c_float,
+    pub scale_y: c_float,
     pub wrap_mode: u32,
     pub frame_count_mod: u32,
     pub frame_count: u32,
@@ -1678,8 +1677,8 @@ pub struct GlslShader {
 #[repr(C)]
 pub struct GlslTexture {
     pub next: *mut GlslTexture,
-    pub id: *mut ::core::ffi::c_char,
-    pub filename: *mut ::core::ffi::c_char,
+    pub id: *mut c_char,
+    pub filename: *mut c_char,
     pub filter: u32,
     pub gl_texture: u32,
     pub wrap_mode: u32,

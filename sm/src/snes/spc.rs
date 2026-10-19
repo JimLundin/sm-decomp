@@ -1,8 +1,10 @@
 use crate::game_state::Game;
 use crate::snes::apu::{apu_cpuRead, apu_cpuWrite};
+use ::core::ffi::c_void;
+use ::core::mem::size_of;
 extern "C" {
-    fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn free(__ptr: *mut ::core::ffi::c_void);
+    fn malloc(__size: size_t) -> *mut c_void;
+    fn free(__ptr: *mut c_void);
 
 }
 pub use crate::types::{
@@ -29,12 +31,12 @@ unsafe fn spc_write(spc: *mut Spc, adr: u16, val: u8) {
     apu_cpuWrite((*spc).apu, adr, val);
 }
 pub unsafe fn spc_init(apu: *mut Apu) -> *mut Spc {
-    let spc: *mut Spc = malloc(::core::mem::size_of::<Spc>() as size_t) as *mut Spc;
+    let spc: *mut Spc = malloc(size_of::<Spc>() as size_t) as *mut Spc;
     (*spc).apu = apu;
     spc
 }
 pub unsafe fn spc_free(spc: *mut Spc) {
-    free(spc as *mut ::core::ffi::c_void);
+    free(spc as *mut c_void);
 }
 pub unsafe fn spc_reset(spc: *mut Spc) {
     (*spc).a = 0u8;
@@ -57,12 +59,12 @@ pub unsafe fn spc_reset(spc: *mut Spc) {
 pub unsafe fn spc_saveload(
     spc: *mut Spc,
     func: Option<SaveLoadFunc>,
-    ctx: *mut ::core::ffi::c_void,
+    ctx: *mut c_void,
     game: &mut Game,
 ) {
     func.expect("non-null function pointer")(
         ctx,
-        &raw mut (*spc).a as *mut ::core::ffi::c_void,
+        &raw mut (*spc).a as *mut c_void,
         (23 as size_t).wrapping_sub(8 as size_t),
         game,
     );

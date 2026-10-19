@@ -24,13 +24,11 @@ use crate::game_state::Game;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{RomPtr, Unreachable};
+use ::core::ffi::{c_char, c_void};
+use ::core::ptr::null_mut;
 extern "C" {
-    fn memcpy(
-        __dest: *mut ::core::ffi::c_void,
-        __src: *const ::core::ffi::c_void,
-        __n: size_t,
-    ) -> *mut ::core::ffi::c_void;
-    fn printf(__format: *const ::core::ffi::c_char, ...) -> i32;
+    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
+    fn printf(__format: *const c_char, ...) -> i32;
 
 }
 pub use crate::types::Consts_A5;
@@ -359,7 +357,7 @@ pub unsafe fn Draygon_Main(game: &mut Game) {
     (*E3).base.y_pos = y_pos;
 }
 pub unsafe fn Draygon_Func_1(game: &mut Game) {
-    let mut v2: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
+    let mut v2: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
     Draygon_Func_3(game);
     let E: *mut Enemy_Draygon = Get_Draygon(0i32, game);
     if (*E).draygon_var_B as i32 - 256i32 & 0x8000i32 != 0 {
@@ -531,7 +529,7 @@ pub unsafe fn Draygon_Func_9(game: &mut Game) {
 pub unsafe fn Draygon_Func_10(game: &mut Game) {
     Draygon_Func_3(game);
     let E: *mut Enemy_Draygon = Get_Draygon(0i32, game);
-    printf(b"Wtf is varE26?\n\0" as *const u8 as *const ::core::ffi::c_char);
+    printf(b"Wtf is varE26?\n\0" as *const u8 as *const c_char);
     let varE26: u16 = 0u16;
     let t: u32 = EnemyFunc_Divide(
         (varE26 as i32 >> 2i32) as u32,
@@ -1310,8 +1308,8 @@ pub unsafe fn Draygon_Hurt(game: &mut Game) {
     memcpy(
         (&raw mut game.g_ram as *mut u8)
             .offset(addr_kDraygon_BigSprmap_C08F as i32 as isize)
-            .offset(17) as *mut ::core::ffi::c_void,
-        RomPtr_A5(v0, game) as *const ::core::ffi::c_void,
+            .offset(17) as *mut c_void,
+        RomPtr_A5(v0, game) as *const c_void,
         32 as size_t,
     );
     if ((*Get_Draygon(ram_word!(game, cur_enemy_index) as i32, game))
@@ -1343,8 +1341,8 @@ pub unsafe fn Draygon_Hurt(game: &mut Game) {
     memcpy(
         (&raw mut game.g_ram as *mut u8)
             .offset(addr_kDraygon_BigSprmap_C11B as i32 as isize)
-            .offset(197) as *mut ::core::ffi::c_void,
-        RomPtr_A5(v5, game) as *const ::core::ffi::c_void,
+            .offset(197) as *mut c_void,
+        RomPtr_A5(v5, game) as *const c_void,
         32 as size_t,
     );
     if (ram_word!(game, samus_grapple_flags) as i32 & 1i32) != 0i32 {

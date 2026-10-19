@@ -1,8 +1,10 @@
 use crate::game_state::Game;
+use ::core::ffi::{c_double, c_void};
+use ::core::mem::size_of;
 extern "C" {
-    fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn free(__ptr: *mut ::core::ffi::c_void);
-    fn memset(__s: *mut ::core::ffi::c_void, __c: i32, __n: size_t) -> *mut ::core::ffi::c_void;
+    fn malloc(__size: size_t) -> *mut c_void;
+    fn free(__ptr: *mut c_void);
+    fn memset(__s: *mut c_void, __c: i32, __n: size_t) -> *mut c_void;
 }
 pub use crate::types::{size_t, Dsp, DspChannel, SaveLoadFunc};
 pub const true_0: i32 = 1;
@@ -50,18 +52,18 @@ static gaussValues: [u16; 512] = [
     0x519, 0x519,
 ];
 pub unsafe fn dsp_init(ram: *mut u8) -> *mut Dsp {
-    let dsp: *mut Dsp = malloc(::core::mem::size_of::<Dsp>() as size_t) as *mut Dsp;
+    let dsp: *mut Dsp = malloc(size_of::<Dsp>() as size_t) as *mut Dsp;
     (*dsp).apu_ram = ram;
     dsp
 }
 pub unsafe fn dsp_free(dsp: *mut Dsp) {
-    free(dsp as *mut ::core::ffi::c_void);
+    free(dsp as *mut c_void);
 }
 pub unsafe fn dsp_reset(dsp: *mut Dsp) {
     memset(
-        &raw mut (*dsp).ram as *mut u8 as *mut ::core::ffi::c_void,
+        &raw mut (*dsp).ram as *mut u8 as *mut c_void,
         0i32,
-        ::core::mem::size_of::<[u8; 128]>() as size_t,
+        size_of::<[u8; 128]>() as size_t,
     );
     (*dsp).ram[0x7ci32 as usize] = 0xffu8;
     let mut i: i32 = 0i32;
@@ -71,9 +73,9 @@ pub unsafe fn dsp_reset(dsp: *mut Dsp) {
         (*dsp).channel[i as usize].pitchModulation = false_0 != 0;
         memset(
             &raw mut (*(&raw mut (*dsp).channel as *mut DspChannel).offset(i as isize)).decodeBuffer
-                as *mut i16 as *mut ::core::ffi::c_void,
+                as *mut i16 as *mut c_void,
             0i32,
-            ::core::mem::size_of::<[i16; 19]>() as size_t,
+            size_of::<[i16; 19]>() as size_t,
         );
         (*dsp).channel[i as usize].srcn = 0u8;
         (*dsp).channel[i as usize].decodeOffset = 0u16;
@@ -83,9 +85,9 @@ pub unsafe fn dsp_reset(dsp: *mut Dsp) {
         (*dsp).channel[i as usize].useNoise = false_0 != 0;
         memset(
             &raw mut (*(&raw mut (*dsp).channel as *mut DspChannel).offset(i as isize)).adsrRates
-                as *mut u16 as *mut ::core::ffi::c_void,
+                as *mut u16 as *mut c_void,
             0i32,
-            ::core::mem::size_of::<[u16; 4]>() as size_t,
+            size_of::<[u16; 4]>() as size_t,
         );
         (*dsp).channel[i as usize].rateCounter = 0u16;
         (*dsp).channel[i as usize].adsrState = 0u8;
@@ -122,37 +124,37 @@ pub unsafe fn dsp_reset(dsp: *mut Dsp) {
     (*dsp).echoBufferIndex = 0u16;
     (*dsp).firBufferIndex = 0u8;
     memset(
-        &raw mut (*dsp).firValues as *mut i8 as *mut ::core::ffi::c_void,
+        &raw mut (*dsp).firValues as *mut i8 as *mut c_void,
         0i32,
-        ::core::mem::size_of::<[i8; 8]>() as size_t,
+        size_of::<[i8; 8]>() as size_t,
     );
     memset(
-        &raw mut (*dsp).firBufferL as *mut i16 as *mut ::core::ffi::c_void,
+        &raw mut (*dsp).firBufferL as *mut i16 as *mut c_void,
         0i32,
-        ::core::mem::size_of::<[i16; 8]>() as size_t,
+        size_of::<[i16; 8]>() as size_t,
     );
     memset(
-        &raw mut (*dsp).firBufferR as *mut i16 as *mut ::core::ffi::c_void,
+        &raw mut (*dsp).firBufferR as *mut i16 as *mut c_void,
         0i32,
-        ::core::mem::size_of::<[i16; 8]>() as size_t,
+        size_of::<[i16; 8]>() as size_t,
     );
     memset(
-        &raw mut (*dsp).sampleBuffer as *mut i16 as *mut ::core::ffi::c_void,
+        &raw mut (*dsp).sampleBuffer as *mut i16 as *mut c_void,
         0i32,
-        ::core::mem::size_of::<[i16; 1068]>() as size_t,
+        size_of::<[i16; 1068]>() as size_t,
     );
     (*dsp).sampleOffset = 0u16;
 }
 pub unsafe fn dsp_saveload(
     dsp: *mut Dsp,
     func: Option<SaveLoadFunc>,
-    ctx: *mut ::core::ffi::c_void,
+    ctx: *mut c_void,
     game: &mut Game,
 ) {
     func.expect("non-null function pointer")(
         ctx,
-        &raw mut (*dsp).ram as *mut ::core::ffi::c_void,
-        (::core::mem::size_of::<Dsp>() as size_t).wrapping_sub(8 as size_t),
+        &raw mut (*dsp).ram as *mut c_void,
+        (size_of::<Dsp>() as size_t).wrapping_sub(8 as size_t),
         game,
     );
 }
@@ -682,10 +684,9 @@ pub unsafe fn dsp_write(dsp: *mut Dsp, adr: u8, mut val: u8) {
                     memset(
                         &raw mut (*(&raw mut (*dsp).channel as *mut DspChannel)
                             .offset(ch_0 as isize))
-                        .decodeBuffer as *mut i16
-                            as *mut ::core::ffi::c_void,
+                        .decodeBuffer as *mut i16 as *mut c_void,
                         0i32,
-                        ::core::mem::size_of::<[i16; 19]>() as size_t,
+                        size_of::<[i16; 19]>() as size_t,
                     );
                     (*dsp).channel[ch_0 as usize].gain = 0u16;
                     (*dsp).channel[ch_0 as usize].adsrState =
@@ -761,8 +762,8 @@ pub unsafe fn dsp_write(dsp: *mut Dsp, adr: u8, mut val: u8) {
     (*dsp).ram[adr as usize] = val;
 }
 pub unsafe fn dsp_getSamples(dsp: *mut Dsp, sampleData: *mut i16, samplesPerFrame: i32) {
-    let adder: ::core::ffi::c_double = 534.0f64 / samplesPerFrame as ::core::ffi::c_double;
-    let mut location: ::core::ffi::c_double = 0.0f64;
+    let adder: c_double = 534.0f64 / samplesPerFrame as c_double;
+    let mut location: c_double = 0.0f64;
     let mut i: i32 = 0i32;
     while i < samplesPerFrame {
         *sampleData.offset((i * 2i32) as isize) =

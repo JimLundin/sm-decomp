@@ -19,11 +19,10 @@ use crate::game_state::Game;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{mov24, Mult8x8, RomPtr, Unreachable, WriteReg};
 pub use crate::snes::registers::*;
+use ::core::ffi::c_char;
+use ::core::ptr::null_mut;
 extern "C" {
-    fn strcpy(
-        __dest: *mut ::core::ffi::c_char,
-        __src: *const ::core::ffi::c_char,
-    ) -> *mut ::core::ffi::c_char;
+    fn strcpy(__dest: *mut c_char, __src: *const c_char) -> *mut c_char;
 
 }
 pub use crate::types::EnemyData;
@@ -659,14 +658,12 @@ pub unsafe fn DoorCode_SetupElevatubeFromSouth(game: &mut Game) {
 pub unsafe fn DoorCode_SetupElevatubeFromNorth(game: &mut Game) {
     *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(4) as *mut u8 as *mut u16) = 256u16;
     strcpy(
-        (&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u8
-            as *mut ::core::ffi::c_char,
-        b"@\0" as *const u8 as *const ::core::ffi::c_char,
+        (&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u8 as *mut c_char,
+        b"@\0" as *const u8 as *const c_char,
     );
     strcpy(
-        (&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(6) as *mut u8
-            as *mut ::core::ffi::c_char,
-        b" \0" as *const u8 as *const ::core::ffi::c_char,
+        (&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(6) as *mut u8 as *mut c_char,
+        b" \0" as *const u8 as *const c_char,
     );
     CallSomeSamusCode(0u16, game);
     SpawnHardcodedPlm(
@@ -776,13 +773,12 @@ pub unsafe fn DoorCode_CeresElevatorShaft(game: &mut Game) {
     set_ram_word!(game.reg_M7Y = 1008u16);
     set_ram_word!(game.irq_enable_mode7 = 1u16);
     strcpy(
-        (&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut ::core::ffi::c_char,
-        b"\"\0" as *const u8 as *const ::core::ffi::c_char,
+        (&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut c_char,
+        b"\"\0" as *const u8 as *const c_char,
     );
     strcpy(
-        (&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u8
-            as *mut ::core::ffi::c_char,
-        b"<\0" as *const u8 as *const ::core::ffi::c_char,
+        (&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u8 as *mut c_char,
+        b"<\0" as *const u8 as *const c_char,
     );
 }
 pub unsafe fn DoorCode_CeresElevatorShaft_2(game: &mut Game) {
@@ -836,8 +832,8 @@ pub unsafe fn RoomCode_ShakeScreenHorizDiag(game: &mut Game) {
         }
     } else if NextRandom(game) < 0x200u16 {
         strcpy(
-            (&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut ::core::ffi::c_char,
-            b"*\0" as *const u8 as *const ::core::ffi::c_char,
+            (&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut c_char,
+            b"*\0" as *const u8 as *const c_char,
         );
         v0 = 23u16;
         current_block_3 = 10175730460759437497;
@@ -863,8 +859,8 @@ pub unsafe fn RoomCode_ShakeScreenHorizDiagStrong(game: &mut Game) {
         }
     } else if NextRandom(game) < 0x180u16 {
         strcpy(
-            (&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut ::core::ffi::c_char,
-            b"*\0" as *const u8 as *const ::core::ffi::c_char,
+            (&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut c_char,
+            b"*\0" as *const u8 as *const c_char,
         );
         v0 = 26i16;
         current_block_3 = 1544504899801662111;
@@ -977,7 +973,7 @@ pub unsafe fn CallRoomSetupCode(ea: u32, game: &mut Game) {
     }
 }
 pub unsafe fn RunRoomSetupCode(game: &mut Game) {
-    let mut RoomDefRoomstate: *mut RoomDefRoomstate = ::core::ptr::null_mut::<RoomDefRoomstate>();
+    let mut RoomDefRoomstate: *mut RoomDefRoomstate = null_mut::<RoomDefRoomstate>();
     RoomDefRoomstate = get_RoomDefRoomstate(ram_word!(game, roomdefroomstate_ptr), game);
     if (*RoomDefRoomstate).room_setup_code != 0 {
         CallRoomSetupCode(

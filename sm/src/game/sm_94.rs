@@ -11,6 +11,8 @@ use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{Mult8x8, RomPtr, SnesDivide, SnesModulus, Unreachable};
 use crate::snes::snes::snes_read;
+use ::core::ffi::c_void;
+use ::core::ptr::{null, null_mut};
 
 pub use crate::types::Consts_84;
 pub use crate::types::Consts_90;
@@ -41,7 +43,7 @@ struct PostGrappleCollisionSample {
     initial_span: u16,
     edge_position: u16,
 }
-pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
+pub const NULL: *mut c_void = null_mut::<c_void>();
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 #[inline]
@@ -3239,7 +3241,7 @@ pub unsafe fn HandleGrappleBeamGfx(game: &mut Game) {
         let fresh18 = *fresh17;
         *fresh17 = (*fresh17).wrapping_sub(1);
         if fresh18 == 1u16 {
-            let mut v9: *const u16 = ::core::ptr::null::<u16>();
+            let mut v9: *const u16 = null::<u16>();
             i = ram_word!(game, grapple_segment_anim_instr_ptrs[q]) as i32;
             loop {
                 v9 = RomPtr_94(i as u16, game) as *const u16;

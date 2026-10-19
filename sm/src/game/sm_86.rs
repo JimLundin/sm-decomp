@@ -25,6 +25,8 @@ use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::AddToHiLo;
 use crate::rtl::{Load24, Mult8x8, RomPtr, SnesDivide, SnesModulus, Unreachable};
+use ::core::ffi::{c_long, c_void};
+use ::core::ptr::{null, null_mut};
 
 pub use crate::types::{
     EnemyBase, EnemyData, EnemyDef, EnemySpawnData, EprojDef, ExpandingSquareTransitionHdma,
@@ -87,7 +89,7 @@ pub struct EprojCollInfo {
 }
 pub type Func_EprojCollInfo_U8 = unsafe fn(*mut EprojCollInfo, &mut Game) -> u8;
 pub use crate::types::{Enemy_MotherBrain, Point32};
-pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
+pub const NULL: *mut c_void = null_mut::<c_void>();
 #[inline]
 unsafe fn RomPtr_86(addr: u16, game: &mut Game) -> *const u8 {
     RomPtr((0x860000u32) | ((addr) as u32), game)
@@ -735,7 +737,7 @@ unsafe fn EprojRunOne(k: u16, game: &mut Game) {
         EprojStateMut(&mut game.g_ram).set_instruction_timer(v7, value);
         let value = *(p.offset(2) as *mut u16);
         EprojStateMut(&mut game.g_ram).set_spritemap(v7, value);
-        let value = p.offset(4).offset_from(base) as ::core::ffi::c_long as u16;
+        let value = p.offset(4).offset_from(base) as c_long as u16;
         EprojStateMut(&mut game.g_ram).set_instruction(v7, value);
     }
 }
@@ -754,13 +756,12 @@ pub unsafe fn EprojRunAll(game: &mut Game) {
 }
 pub fn EprojInstr_Delete(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
     EprojStateMut(&mut game.g_ram).set_id(usize::from(k >> 1), 0);
-    ::core::ptr::null()
+    null()
 }
 pub unsafe fn EprojInstr_Sleep(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
-    let value = (epjp.offset_from(RomBankBase(0x86u8, game)) as ::core::ffi::c_long
-        - 2 as ::core::ffi::c_long) as u16;
+    let value = (epjp.offset_from(RomBankBase(0x86u8, game)) as c_long - 2 as c_long) as u16;
     EprojStateMut(&mut game.g_ram).set_instruction(usize::from(k >> 1), value);
-    ::core::ptr::null()
+    null()
 }
 pub unsafe fn EprojInstr_SetPreInstr_(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
     let value = *(epjp as *mut u16);
@@ -6013,12 +6014,11 @@ pub unsafe fn EprojInstr_SetN00bTubeShardX(k: u16, epjp: *const u8, game: &mut G
         set_ram_word!(game.eproj_spritemap_ptr[v2] = *(epjp.offset(2) as *mut u16));
     }
     set_ram_word!(
-        game.eproj_instr_list_ptr[v2] = (epjp.offset_from(RomBankBase(0x86u8, game))
-            as ::core::ffi::c_long
-            + 4 as ::core::ffi::c_long) as u16
+        game.eproj_instr_list_ptr[v2] =
+            (epjp.offset_from(RomBankBase(0x86u8, game)) as c_long + 4 as c_long) as u16
     );
     set_ram_word!(game.eproj_instr_timers[v2] = 1u16);
-    ::core::ptr::null::<u8>()
+    null::<u8>()
 }
 pub unsafe fn EprojInstr_D62A(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
     if ram_word!(game, nmi_frame_counter_word) as i32 & 1i32 != 0 {
@@ -6031,12 +6031,11 @@ pub unsafe fn EprojInstr_D62A(k: u16, epjp: *const u8, game: &mut Game) -> *cons
     let v2: i32 = k as i32 >> 1i32;
     set_ram_word!(game.eproj_spritemap_ptr[v2] = *(epjp as *mut u16));
     set_ram_word!(
-        game.eproj_instr_list_ptr[v2] = (epjp.offset_from(RomBankBase(0x86u8, game))
-            as ::core::ffi::c_long
-            + 2 as ::core::ffi::c_long) as u16
+        game.eproj_instr_list_ptr[v2] =
+            (epjp.offset_from(RomBankBase(0x86u8, game)) as c_long + 2 as c_long) as u16
     );
     set_ram_word!(game.eproj_instr_timers[v2] = 1u16);
-    ::core::ptr::null::<u8>()
+    null::<u8>()
 }
 pub unsafe fn EprojInstr_SetXvelRandom(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
     NextRandom(game);
@@ -7336,7 +7335,7 @@ pub unsafe fn RandomDropRoutine(k: u16, game: &mut Game) -> u16 {
     let mut v2: u16 = 0;
     let mut Random: u8 = 0;
     let mut v5: u16 = 0;
-    let mut v7: *const u8 = ::core::ptr::null::<u8>();
+    let mut v7: *const u8 = null::<u8>();
     let mut i: i32 = 0;
     let current_block: u64;
     let mut v9: i8 = 0;
@@ -7958,7 +7957,7 @@ unsafe fn CallEprojInstr(ea: u32, k: u16, j: *const u8, game: &mut Game) -> *con
         8827198 => sub_86B13E(k, j, game),
         _ => {
             Unreachable(game);
-            ::core::ptr::null::<u8>()
+            null::<u8>()
         }
     }
 }

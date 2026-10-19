@@ -7,8 +7,9 @@ use crate::game::sm_a9::WriteColorsToPalette;
 use crate::game_state::Game;
 use crate::ram_map::set_ram_word;
 use crate::rtl::RomPtr;
+use ::core::ffi::c_char;
 extern "C" {
-    fn printf(__format: *const ::core::ffi::c_char, ...) -> i32;
+    fn printf(__format: *const c_char, ...) -> i32;
 
 }
 pub use crate::types::Consts_86;
@@ -186,7 +187,7 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedUp(game: &mut Game) {
     *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(4) as *mut u8 as *mut u16) =
         -(25342i32) as u16;
     let v2: u16 = ((*E).mbn_var_3D).wrapping_sub(32u16);
-    printf(b"Carry crap!\n\0" as *const u8 as *const ::core::ffi::c_char);
+    printf(b"Carry crap!\n\0" as *const u8 as *const c_char);
     if v2 >= 0x80u16 {
         *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(6) as *mut u8 as *mut u16) =
             (v2 as i32 - 127i32 | 0x80i32) as u16;

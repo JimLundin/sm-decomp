@@ -8,6 +8,7 @@ use crate::game::sm_90::{
 use crate::game_state::Game;
 use crate::ram_map::{ram_word, set_ram_word};
 use crate::rtl::{RomPtr, Unreachable};
+use ::core::ptr::null_mut;
 
 pub use crate::types::{Point16U, VoidP};
 #[derive(Copy, Clone)]
@@ -237,7 +238,7 @@ pub unsafe fn CallProj93Instr(ea: u32, j: u16, k: u16, game: &mut Game) -> u16 {
     }
 }
 pub unsafe fn RunProjectileInstructions(game: &mut Game) {
-    let mut PI: *mut ProjectileInstr = ::core::ptr::null_mut::<ProjectileInstr>();
+    let mut PI: *mut ProjectileInstr = null_mut::<ProjectileInstr>();
     let v0: u16 = ram_word!(game, projectile_index);
     let v1: i32 = ram_word!(game, projectile_index) as i32 >> 1i32;
     let ref mut fresh0 =

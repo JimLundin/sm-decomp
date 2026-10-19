@@ -53,6 +53,7 @@ use crate::rtl::{Load24, MakePairU16, Mult8x8, RomPtr, Unreachable};
 pub use crate::types::{
     FuncXY_V, Func_U8, Func_V, Func_V_A, Func_Y_V, HandlerFunc, LongPtr, PairU16, Point16U, VoidP,
 };
+use ::core::ptr::null_mut;
 pub type Func_Y_To_PairU16 = unsafe fn(u16, &mut Game) -> PairU16;
 pub use crate::types::LiquidPhysicsType;
 pub use crate::types::{OamEnt, SamusPose, VramWriteEntry};
@@ -715,7 +716,7 @@ pub unsafe fn SamusBottomDrawn_4(game: &mut Game) -> u8 {
     0u8
 }
 pub unsafe fn SamusBottomDrawn_0_Standing(game: &mut Game) -> u8 {
-    let mut v1: *mut OamEnt = ::core::ptr::null_mut::<OamEnt>();
+    let mut v1: *mut OamEnt = null_mut::<OamEnt>();
     if ram_word!(game, samus_pose) as i32 == kPose_00_FaceF_Powersuit as i32 {
         let v0: u16 = ram_word!(game, oam_next_ptr);
         v1 = gOamEnt(ram_word!(game, oam_next_ptr) as i32, game);
@@ -1127,7 +1128,7 @@ pub unsafe fn HandleAtmosphericEffects(game: &mut Game) {
 }
 pub unsafe fn AtmosphericTypeFunc_1_FootstepSplash(k: u16, j: u16, game: &mut Game) {
     let mut v4: i16 = 0;
-    let mut v5: *mut OamEnt = ::core::ptr::null_mut::<OamEnt>();
+    let mut v5: *mut OamEnt = null_mut::<OamEnt>();
     let mut v6: i16 = 0;
     let v2: i32 = j as i32 >> 1i32;
     let r18: u16 = (2u16).wrapping_mul(
@@ -4478,18 +4479,18 @@ pub unsafe fn CallProjInstr(ea: u32, j: u16, game: &mut Game) {
 pub unsafe fn HandleProjectileTrails(game: &mut Game) {
     let mut i: i32 = 0;
     let mut v10: i16 = 0;
-    let mut v11: *mut OamEnt = ::core::ptr::null_mut::<OamEnt>();
+    let mut v11: *mut OamEnt = null_mut::<OamEnt>();
     let mut v12: i16 = 0;
     let mut j: u16 = 0;
     let mut v22: i16 = 0;
-    let mut v23: *mut OamEnt = ::core::ptr::null_mut::<OamEnt>();
+    let mut v23: *mut OamEnt = null_mut::<OamEnt>();
     let mut v24: i16 = 0;
     let mut k: u16 = 0;
     let mut v28: i16 = 0;
-    let mut v29: *mut OamEnt = ::core::ptr::null_mut::<OamEnt>();
+    let mut v29: *mut OamEnt = null_mut::<OamEnt>();
     let mut v30: i16 = 0;
     let mut v33: i16 = 0;
-    let mut v34: *mut OamEnt = ::core::ptr::null_mut::<OamEnt>();
+    let mut v34: *mut OamEnt = null_mut::<OamEnt>();
     let mut v35: i16 = 0;
     let mut v6: u16 = 0;
     let mut v18: u16 = 0;

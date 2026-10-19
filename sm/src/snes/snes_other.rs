@@ -2,16 +2,14 @@ use crate::game_state::Game;
 use crate::snes::cart::cart_load;
 use crate::snes::dsp::dsp_getSamples;
 use crate::snes::snes::snes_reset;
+use ::core::ffi::{c_char, c_void};
+use ::core::mem::size_of;
 extern "C" {
-    fn printf(__format: *const ::core::ffi::c_char, ...) -> i32;
-    fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn free(__ptr: *mut ::core::ffi::c_void);
-    fn memcpy(
-        __dest: *mut ::core::ffi::c_void,
-        __src: *const ::core::ffi::c_void,
-        __n: size_t,
-    ) -> *mut ::core::ffi::c_void;
-    fn memset(__s: *mut ::core::ffi::c_void, __c: i32, __n: size_t) -> *mut ::core::ffi::c_void;
+    fn printf(__format: *const c_char, ...) -> i32;
+    fn malloc(__size: size_t) -> *mut c_void;
+    fn free(__ptr: *mut c_void);
+    fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
+    fn memset(__s: *mut c_void, __c: i32, __n: size_t) -> *mut c_void;
 
 }
 pub use crate::types::{
@@ -23,7 +21,7 @@ pub use crate::types::{
 #[repr(C)]
 pub struct CartHeader {
     pub headerVersion: u8,
-    pub name: [::core::ffi::c_char; 22],
+    pub name: [c_char; 22],
     pub speed: u8,
     pub type_0: u8,
     pub coprocessor: u8,
@@ -35,8 +33,8 @@ pub struct CartHeader {
     pub version: u8,
     pub checksumComplement: u16,
     pub checksum: u16,
-    pub makerCode: [::core::ffi::c_char; 3],
-    pub gameCode: [::core::ffi::c_char; 5],
+    pub makerCode: [c_char; 3],
+    pub gameCode: [c_char; 5],
     pub flashSize: u32,
     pub exRamSize: u32,
     pub specialVersion: u8,
@@ -55,8 +53,7 @@ pub unsafe fn snes_loadRom(
 ) -> bool {
     if length < 0x8000i32 {
         printf(
-            b"Failed to load rom: rom to small (%d bytes)\n\0" as *const u8
-                as *const ::core::ffi::c_char,
+            b"Failed to load rom: rom to small (%d bytes)\n\0" as *const u8 as *const c_char,
             length,
         );
         return false_0 != 0;
@@ -86,9 +83,9 @@ pub unsafe fn snes_loadRom(
         cartType: 0,
     }; 4];
     memset(
-        &raw mut headers as *mut CartHeader as *mut ::core::ffi::c_void,
+        &raw mut headers as *mut CartHeader as *mut c_void,
         0i32,
-        ::core::mem::size_of::<[CartHeader; 4]>() as size_t,
+        size_of::<[CartHeader; 4]>() as size_t,
     );
     let mut i: i32 = 0i32;
     while i < 4i32 {
@@ -143,8 +140,7 @@ pub unsafe fn snes_loadRom(
     }
     if headers[used as usize].cartType as i32 > 2i32 {
         printf(
-            b"Failed to load rom: unsupported type (%d)\n\0" as *const u8
-                as *const ::core::ffi::c_char,
+            b"Failed to load rom: unsupported type (%d)\n\0" as *const u8 as *const c_char,
             headers[used as usize].cartType as i32,
         );
         return false_0 != 0;
@@ -155,17 +151,16 @@ pub unsafe fn snes_loadRom(
     }
     let newData: *mut u8 = malloc(newLength as size_t) as *mut u8;
     memcpy(
-        newData as *mut ::core::ffi::c_void,
-        data as *const ::core::ffi::c_void,
+        newData as *mut c_void,
+        data as *const c_void,
         length as size_t,
     );
     let mut test: i32 = 1i32;
     while length != newLength {
         if length & test != 0 {
             memcpy(
-                newData.offset(length as isize) as *mut ::core::ffi::c_void,
-                newData.offset(length as isize).offset(-(test as isize))
-                    as *const ::core::ffi::c_void,
+                newData.offset(length as isize) as *mut c_void,
+                newData.offset(length as isize).offset(-(test as isize)) as *const c_void,
                 test as size_t,
             );
             length += test;
@@ -184,7 +179,7 @@ pub unsafe fn snes_loadRom(
         }) as i32,
     );
     snes_reset(snes, true_0 != 0, game);
-    free(newData as *mut ::core::ffi::c_void);
+    free(newData as *mut c_void);
     true_0 != 0
 }
 pub unsafe fn snes_setSamples(snes: *mut Snes, sampleData: *mut i16, samplesPerFrame: i32) {
@@ -195,13 +190,13 @@ unsafe fn readHeader(data: *const u8, length: i32, location: i32, header: *mut C
     while i < 21i32 {
         let ch: u8 = *data.offset((location + i) as isize);
         if ch as i32 >= 0x20i32 && (ch as i32) < 0x7fi32 {
-            (*header).name[i as usize] = ch as ::core::ffi::c_char;
+            (*header).name[i as usize] = ch as c_char;
         } else {
-            (*header).name[i as usize] = '.' as i32 as ::core::ffi::c_char;
+            (*header).name[i as usize] = '.' as i32 as c_char;
         }
         i += 1;
     }
-    (*header).name[21i32 as usize] = 0 as ::core::ffi::c_char;
+    (*header).name[21i32 as usize] = 0 as c_char;
     (*header).speed = (*data.offset((location + 0x15i32) as isize) as i32 >> 4i32) as u8;
     (*header).type_0 = (*data.offset((location + 0x15i32) as isize) as i32 & 0xfi32) as u8;
     (*header).coprocessor = (*data.offset((location + 0x16i32) as isize) as i32 >> 4i32) as u8;
@@ -223,24 +218,24 @@ unsafe fn readHeader(data: *const u8, length: i32, location: i32, header: *mut C
         while i_0 < 2i32 {
             let ch_0: u8 = *data.offset((location - 0x10i32 + i_0) as isize);
             if ch_0 as i32 >= 0x20i32 && (ch_0 as i32) < 0x7fi32 {
-                (*header).makerCode[i_0 as usize] = ch_0 as ::core::ffi::c_char;
+                (*header).makerCode[i_0 as usize] = ch_0 as c_char;
             } else {
-                (*header).makerCode[i_0 as usize] = '.' as i32 as ::core::ffi::c_char;
+                (*header).makerCode[i_0 as usize] = '.' as i32 as c_char;
             }
             i_0 += 1;
         }
-        (*header).makerCode[2i32 as usize] = 0 as ::core::ffi::c_char;
+        (*header).makerCode[2i32 as usize] = 0 as c_char;
         let mut i_1: i32 = 0i32;
         while i_1 < 4i32 {
             let ch_1: u8 = *data.offset((location - 0xei32 + i_1) as isize);
             if ch_1 as i32 >= 0x20i32 && (ch_1 as i32) < 0x7fi32 {
-                (*header).gameCode[i_1 as usize] = ch_1 as ::core::ffi::c_char;
+                (*header).gameCode[i_1 as usize] = ch_1 as c_char;
             } else {
-                (*header).gameCode[i_1 as usize] = '.' as i32 as ::core::ffi::c_char;
+                (*header).gameCode[i_1 as usize] = '.' as i32 as c_char;
             }
             i_1 += 1;
         }
-        (*header).gameCode[4i32 as usize] = 0 as ::core::ffi::c_char;
+        (*header).gameCode[4i32 as usize] = 0 as c_char;
         (*header).flashSize =
             ((0x400i32) << *data.offset((location - 4i32) as isize) as i32) as u32;
         (*header).exRamSize =
