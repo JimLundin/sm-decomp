@@ -1592,26 +1592,60 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `65052d38` passes
-uninterrupted full boot any% 129712/0 (216.00s) and Speed Booster
-148406/0 (280.66s), native exits 0. All 74 source/configuration/host/
-progress files match that commit. The independently reconstructed seven-call
-projectile change is integrated with b65e22ef's liquid and both PLM families.
-This also includes the two decoder initializer commits through 26880181.
-Concurrent enemy-initializer and PPU work is outside this snapshot.
+Latest reviewed integration (2026-10-19): frozen `6ea1ddb6` passes
+uninterrupted full boot any% 129712/0 (192.32s) and Speed Booster
+148406/0 (249.29s), native exits 0. All 74 source/configuration/host/
+progress inputs match that commit. This integrates the PPU window setup and
+all 72 DMA descriptor initializers with the reviewed projectile, decoder,
+liquid and PLM families. Later background-row and enemy-initializer changes
+are outside this snapshot.
 
-Complete checkpoints, including all bindings and serialized payloads, are
-byte-identical to reviewed b65e22ef. All bindings are independently recomputed;
-runtime-source inputs, including the shared layout macro, match. Neither replay
-loads an earlier checkpoint. Coverage and non-timing diagnostics match,
-including the known fingernail diagnostic. Speed contains the exact Bubble
-Mountain, Warehouse, Varia and Hi-Jump prefixes and reaches 55 rooms and 53
-enemy definitions. It ends in state 8, room $AD1B, X171/Y123, pose $0089,
-health 46/399, missiles 6/15, Supers 0/5, items $3105 and beams $1004
-equipped/collected. Kraid is defeated, the eight coroutine bytes are zero and
-credits remain unexercised.
+Serialized checkpoint payloads are byte-identical to reviewed 65052d38.
+The only changed header field is the runtime-source fingerprint, independently
+recomputed from the actual inputs. Only types.rs and snes/ppu.rs differ among
+those inputs; the structure layouts and checkpoint codec remain unchanged.
+All other bindings, including the payload checksum, agree. No compatibility
+hash is patched and neither replay loads an earlier checkpoint. Complete
+non-timing diagnostics and coverage agree, including the known fingernail
+diagnostic. Speed reaches 55 rooms and 53 enemy definitions, ending in state 8,
+room $AD1B, X171/Y123, pose $0089, health 46/399, missiles 6/15, Supers 0/5,
+items $3105 and beams $1004 equipped/collected. Kraid is defeated and all eight
+coroutine bytes are zero. Credits remain unexercised.
 
-Independent source review reconstructs the entire final projectile bank from
+Independent PPU source reconstruction covers all five shared window initial
+values and four complete setup sequences. Each enabled-layer return remains
+before setup; drawing suffixes and the direct color-window layer-5 calculation
+remain exact. Calc and Clear are unchanged. All four private helper callers
+have layers 0/1/2/4 and screen indices 0/1, so the narrowed mask expression
+agrees with the original promoted expression throughout the actual domain.
+The helper returns the complete initialized window; no window pointer escapes
+Calc/Clear or survives into the caller's drawing accesses.
+
+Fresh tests execute the exact helper and extracted original setup with the
+actual Ppu type and unchanged Calc/Clear routines. All 524288 comparisons of
+six edges, segment count and mask bits pass: both screens, every byte mask,
+all four actual layers, all 16 local window flag patterns, eight edge layouts
+and zero/maximum margins. Wrong screen, wrong layer bit, forced Clear, stale
+unused edges and inverted selection are rejected by the same comparator.
+These compare window fields, not whole PPU memory or pixels. The owner's
+separate 2560 comparisons execute five actual draw paths with constructed
+PPU state and pixel buffers. Their frozen source, libraries and full-route
+logs are independently checked. These are constructed path tests; movie
+call-site coverage, including mode7, is not established by their passing counts.
+
+Independent DMA reconstruction covers all 67 Rust files of its candidate:
+72 statics across five banks use 60 VRAM-word, four VRAM-low-byte, six
+VRAM-high-byte and two WRAM-byte constructors. Original channel, mode,
+register, 24-bit source and transfer size derive the exact eight packed bytes.
+Every static name and all setup/trigger calls remain in place. The shared
+type declaration, size/alignment and register values are unchanged. The
+compiled descriptor driver is checked against all 72 independently parsed
+original expressions and expected byte arrays. Its existing DLL returns
+72 matches; flipping the emitted mode byte gives zero. That control changes
+the comparison input, not the constructor implementation. These statics are
+constant-evaluated; byte equality does not claim runtime transfer coverage.
+
+Earlier projectile review reconstructs the entire final bank from
 the original Rust, then all 74 inputs of the clean candidate and integration.
 Seven AddToHiLo calls in five routines use the shared split-word operation;
 35 unexercised calls retain their original implementation. All velocity reads,
@@ -1655,15 +1689,16 @@ dedicated 5544-case API checks and 24/24 site observations are recorded by
 implementation; this review verifies the source transformation. The movie
 replays do not establish frontend decoder execution coverage.
 
-The normal Cargo integration is independently built from frozen 26880181 plus
-the reconstructed bank; its full source agrees with 65052d38. All 74 inputs,
-the fresh library/DLL and copied fixtures stay fixed. Only registry dependencies
-seed this checkout. Formatting, normal release (37.13s), host build
-(3.80s) and progress pass. Net Rust lines -22, raw-offset lines -21,
-unsafe functions -9; c_int casts and cast lines are unchanged. Frozen totals:
-208428 Rust lines, 21415 raw-offset lines, 52780 c_int casts across 41455 lines
-and 6507 unsafe functions. This audit changes no maintained Rust or assets;
-peer edits retain their own verification.
+The normal Cargo integration is independently built from frozen 6ea1ddb6.
+All 74 inputs, the fresh library/DLL and copied fixtures stay fixed. Only
+registry dependencies seed this checkout. Formatting, normal release
+(25.00s), host build (3.29s) and progress pass. These two families remove
+625 Rust lines and 152 c_int casts across 80 lines; raw-offset lines are
+unchanged. Unsafe functions increase by one because the shared PPU helper
+owns the four repeated raw setup sequences. Frozen totals: 207803 Rust lines,
+21415 raw-offset lines, 52628 c_int casts across 41375 lines and 6508 unsafe
+functions. This audit changes no maintained Rust or assets; later peer work
+retains its own verification.
 
 The prior PLM block-mask review remains valid: all six helper sites execute,
 with 2082 air-scroll updates, 105 shared retain updates and one each for four
