@@ -500,6 +500,43 @@ change and no new replay result belong to this cleanup.
 
 ## The oracle
 
+Multiplication operand scratch (2026-10-19): restore the two ROM operand
+words at $05E9/$05EB in Multiply16x16 and Samus's inlined horizontal slope
+calculation. Pass Game through the helper's nine callers. Existing product
+arithmetic and sign handling stay exact; narrow normalization to $05ED..$05F4
+so all four operand bytes are compared. The first missing stores occur at
+Spazer index 11643 (0180 * 00C0) and any% index 17693 (0100 * 00C0).
+All four bytes naturally become nonzero in both routes.
+
+Frozen 7d0d2050 plus the candidate passes strict observed any% 129712/0
+(353.98s) and Spazer 90706/0 (249.34s). All 5840/23168 ordered ROM/Rust
+entry/exit events agree on caller class, operands and four scratch bytes;
+raw operand mismatches are zero. Samus executes 2920/1217 multiplications,
+covering both signs. Spazer also executes 10367 shared-helper calls through
+both FireZoomer signs. The seven direct grapple call sites are unexercised;
+their only change is the added Game argument.
+
+The enemy inline branch has zero calls in both full routes, so its eight
+proposed lines are removed. The other five files remain exactly the observed
+candidate after stripping instrumentation. This final clean source passes
+any% 129712/0 (263.09s) and the 42600-frame Spazer prefix/0 (100.16s) on one
+unchanged DLL. The full Spazer observation above precedes removal of that
+unexecuted branch; the clean prefix exercises the retained shared helper.
+
+Eleven final-source controls each run 10204 frames. Faults in each exposed
+byte and lower neighbor $05E8 cause exactly one failure at index 10000;
+clean, four exact old-mask negatives and retained masked neighbor $05ED pass.
+Every final 128 KiB RAM dump equals clean execution. Independent ordered-log,
+source/observer stripping, live-hunk, DLL and input hash reviews pass.
+
+Product scratch remains masked. The ROM's extreme-operand carry quirk is
+unchanged; all observed products equal ordinary multiplication. The enemy
+operand omission awaits a Maridia Snail or Wrecked Ship Orange Zoomer actually
+using Enemy_MoveRight_ProcessSlopes on a non-square slope. Formatting/check,
+normal Cargo release (1m35s) and progress pass. Own Rust lines +9 restore
+operand storage and magnitude derivation; other counters are unchanged.
+Broader gameplay/credits, audio, remaining masks and ownership stay open.
+
 Boss-mask/recovery integration (2026-10-19): frozen 7d0d2050 combines
 the boss-byte correction with the headless recovery repair. Clean any%
 passes 129712/0 (333.50s), Spazer 90706/0 (296.20s), native exits 0.

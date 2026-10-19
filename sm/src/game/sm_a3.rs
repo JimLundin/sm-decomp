@@ -7250,9 +7250,9 @@ pub unsafe fn FireZoomer_E8A5(mut k: uint16, game: &mut Game) -> int32 {
                     >> 1 as ::core::ffi::c_int) as isize,
             );
         if (*E).fzr_var_A as int16 as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
-            return Multiply16x16((*E).fzr_var_A, v1) as int32;
+            return Multiply16x16((*E).fzr_var_A, v1, game) as int32;
         } else {
-            return -(Multiply16x16(-((*E).fzr_var_A as ::core::ffi::c_int) as uint16, v1)
+            return -(Multiply16x16(-((*E).fzr_var_A as ::core::ffi::c_int) as uint16, v1, game)
                 as int32);
         }
     } else {

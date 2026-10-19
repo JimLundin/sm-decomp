@@ -1759,6 +1759,13 @@ unsafe fn BlockColl_Horiz_Slope_NonSquare(ci: *mut CollInfo, game: &mut Game) ->
     // Keep the middle sixteen bits of the arithmetic right shift.
     let shifted = (displacement >> 8) as u16;
     let factor = u32::from(kBlockColl_Horiz_Slope_NonSquare_Tab[usize::from(bts & 0x1f) * 2 + 1]);
+    let multiplicand = if displacement < 0 {
+        shifted.wrapping_neg()
+    } else {
+        shifted
+    };
+    game.g_ram[0x5e9..0x5eb].copy_from_slice(&multiplicand.to_le_bytes());
+    game.g_ram[0x5eb..0x5ed].copy_from_slice(&(factor as u16).to_le_bytes());
     (*ci).ci_r18_r20 = if displacement >= 0 {
         (u32::from(shifted) * factor) as i32
     } else {
@@ -5373,7 +5380,7 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> uint8 {
             as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
         >= 0 as ::core::ffi::c_int
     {
-        prod16 = (Multiply16x16(v1, v0) >> 8 as ::core::ffi::c_int) as uint16;
+        prod16 = (Multiply16x16(v1, v0, game) >> 8 as ::core::ffi::c_int) as uint16;
         if prod16 == 0 {
             return 0 as uint8;
         }
@@ -5526,7 +5533,7 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> uint8 {
             }
         }
     } else {
-        prod16 = (Multiply16x16(-(v1 as ::core::ffi::c_int) as uint16, v0)
+        prod16 = (Multiply16x16(-(v1 as ::core::ffi::c_int) as uint16, v0, game)
             >> 8 as ::core::ffi::c_int) as uint16;
         if prod16 == 0 {
             return 0 as uint8;

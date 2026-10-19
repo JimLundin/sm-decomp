@@ -606,7 +606,9 @@ pub unsafe fn VerifySRAM(game: &mut Game) {
             as *mut uint16) = 4 as uint16;
     }
 }
-pub unsafe fn Multiply16x16(mut a: uint16, mut j: uint16) -> uint32 {
+pub unsafe fn Multiply16x16(mut a: uint16, mut j: uint16, game: &mut Game) -> uint32 {
+    game.g_ram[0x5e9..0x5eb].copy_from_slice(&a.to_le_bytes());
+    game.g_ram[0x5eb..0x5ed].copy_from_slice(&j.to_le_bytes());
     let mut result: uint32 = (a as uint32).wrapping_mul(j as uint32);
     return result;
 }

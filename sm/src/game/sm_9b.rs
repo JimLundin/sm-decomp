@@ -3379,7 +3379,7 @@ pub unsafe fn PropelSamusFromGrappleSwing(game: &mut Game) {
                     as *mut uint16,
                 (&raw mut game.g_ram as *mut uint8).offset(0xb2c as ::core::ffi::c_int as isize)
                     as *mut uint16,
-                Multiply16x16(v2 as uint16, v0),
+                Multiply16x16(v2 as uint16, v0, game),
             );
             *((&raw mut game.g_ram as *mut uint8).offset(0xb36 as ::core::ffi::c_int as isize)
                 as *mut uint16) = 2 as uint16;
@@ -3389,7 +3389,7 @@ pub unsafe fn PropelSamusFromGrappleSwing(game: &mut Game) {
                     as *mut uint16,
                 (&raw mut game.g_ram as *mut uint8).offset(0xb2c as ::core::ffi::c_int as isize)
                     as *mut uint16,
-                Multiply16x16(-(v2 as ::core::ffi::c_int) as uint16, v0),
+                Multiply16x16(-(v2 as ::core::ffi::c_int) as uint16, v0, game),
             );
             *((&raw mut game.g_ram as *mut uint8).offset(0xb36 as ::core::ffi::c_int as isize)
                 as *mut uint16) = 1 as uint16;
@@ -3413,7 +3413,7 @@ pub unsafe fn PropelSamusFromGrappleSwing(game: &mut Game) {
                     as *mut uint16,
                 (&raw mut game.g_ram as *mut uint8).offset(0xb2c as ::core::ffi::c_int as isize)
                     as *mut uint16,
-                Multiply16x16(-(v1 as ::core::ffi::c_int) as uint16, v0),
+                Multiply16x16(-(v1 as ::core::ffi::c_int) as uint16, v0, game),
             );
             *((&raw mut game.g_ram as *mut uint8).offset(0xb36 as ::core::ffi::c_int as isize)
                 as *mut uint16) = 2 as uint16;
@@ -3423,7 +3423,7 @@ pub unsafe fn PropelSamusFromGrappleSwing(game: &mut Game) {
                     as *mut uint16,
                 (&raw mut game.g_ram as *mut uint8).offset(0xb2c as ::core::ffi::c_int as isize)
                     as *mut uint16,
-                Multiply16x16(v1 as uint16, v0),
+                Multiply16x16(v1 as uint16, v0, game),
             );
             *((&raw mut game.g_ram as *mut uint8).offset(0xb36 as ::core::ffi::c_int as isize)
                 as *mut uint16) = 1 as uint16;
@@ -3447,7 +3447,7 @@ pub unsafe fn PropelSamusFromGrappleSwing(game: &mut Game) {
             as *mut uint16,
         (&raw mut game.g_ram as *mut uint8).offset(0xb48 as ::core::ffi::c_int as isize)
             as *mut uint16,
-        Multiply16x16(v3, v0),
+        Multiply16x16(v3, v0, game),
     );
 }
 pub unsafe fn GrappleBeamFunc_ReleaseFromSwing(game: &mut Game) {
