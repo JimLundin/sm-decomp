@@ -171,6 +171,31 @@ change and no new replay result belong to this cleanup.
 
 ## The oracle
 
+Independent X-ray table-mask controls (2026-10-19): frozen a761a09e plus
+prototype sm_91 SHA-256 6f03c19fd0018148dff98f66029fee0374651074c79c26067008491a359c541a
+passes full any% 129712/0 (196.67s) and Waver 58109/0 (87.12s), native
+exits 0, with the 9100..92CD, 9800..99CD and overlapping 99CC..99CD
+normalizations bypassed. Normal rendering, hardware/audio comparisons,
+recovery and the existing complete RAM comparison stay enabled. Both complete
+tables are therefore checked on every frame, not only raw observed deltas.
+The prototype fixes all 71 rendered failures on this route; this is evidence
+for the frozen prototype, not approval of untested corner-case revisions.
+
+Saved frame28228 controls take 0.01..0.04s each. On the baseline, bypassing
+the masks exposes natural 92BF 00/FF. Injecting bit0 independently at 9100,
+92CD, 9800 and 99CD is hidden by the masks and detected with them bypassed.
+On the prototype the clean frame passes; each masked fault incorrectly
+passes and each unmasked fault yields one failing frame/native exit1 with
+the exact byte diagnostic. The outside-mask 9000 control fails in both
+modes. All 24 baseline/prototype controls pass their expected assertions.
+Removing temporary injection and mask-bypass guards restores frozen
+cpu_infra.rs exactly; the replayed sm_91 matches the recorded prototype.
+No maintained Rust, layouts or residue counters change in this review.
+Temporary save/probe/ROM-derived outputs remain outside tracked files.
+Keep the final source revision and coverage limits separate; remove table
+masks only after its full raw-state checks pass. Complete credits/gameplay,
+audio timing and other masked state remain unproved.
+
 Independent Waver prototype QC (2026-10-19): frozen a761a09e plus the
 proposed sm_91 change passes any% 129712/0 (245.94s) and Waver 58109/0
 (125.15s), native exits 0, with rendering and standard comparisons enabled.
