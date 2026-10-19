@@ -4169,32 +4169,26 @@ unsafe fn EprojInit_A379(mut j: uint16, game: &mut Game) {
             .offset(v3 as isize);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16).offset(v1 as isize) = v2;
 }
-unsafe fn EprojInit_CeresElevatorPad(mut j: uint16, game: &mut Game) {
+fn EprojInit_CeresElevatorPad(mut j: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize) =
-        game.samus_y_pos().wrapping_add(28);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16).offset(v1 as isize) =
-        60 as uint16;
+    let eproj_y_pos: uint16 = game.samus_y_pos().wrapping_add(28);
+    EprojStateMut(&mut game.g_ram).write(0x1a93, v1 as usize, eproj_y_pos);
+    EprojStateMut(&mut game.g_ram).write(0x1aff, v1 as usize, 60 as uint16);
     sub_86A301(j, game);
 }
-pub unsafe fn sub_86A301(mut j: uint16, game: &mut Game) {
+pub fn sub_86A301(mut j: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a27) as *mut uint16).offset(v1 as isize) =
-        0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a6f) as *mut uint16).offset(v1 as isize) =
-        0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(v1 as isize) =
-        0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v1 as isize) =
-        0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x19bb) as *mut uint16).offset(v1 as isize) =
-        0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v1 as isize) =
-        game.samus_x_pos();
+    EprojStateMut(&mut game.g_ram).write(0x1a27, v1 as usize, 0 as uint16);
+    EprojStateMut(&mut game.g_ram).write(0x1a6f, v1 as usize, 0 as uint16);
+    EprojStateMut(&mut game.g_ram).write(0x1ab7, v1 as usize, 0 as uint16);
+    EprojStateMut(&mut game.g_ram).write(0x1adb, v1 as usize, 0 as uint16);
+    EprojStateMut(&mut game.g_ram).write(0x19bb, v1 as usize, 0 as uint16);
+    let eproj_x_pos: uint16 = game.samus_x_pos();
+    EprojStateMut(&mut game.g_ram).write(0x1a4b, v1 as usize, eproj_x_pos);
 }
-unsafe fn EprojInit_CeresElevatorPlatform(mut j: uint16, game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
-        .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 97 as uint16;
+fn EprojInit_CeresElevatorPlatform(mut j: uint16, game: &mut Game) {
+    let eproj_word_index = (j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize;
+    EprojStateMut(&mut game.g_ram).write(0x1a93, eproj_word_index, 97 as uint16);
     sub_86A301(j, game);
 }
 pub unsafe fn EprojPreInstr_CeresElevatorPad(mut k: uint16, game: &mut Game) {

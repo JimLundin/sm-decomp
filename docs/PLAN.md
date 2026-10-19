@@ -17096,6 +17096,44 @@ counters unchanged. No probes or ROM-derived artifacts committed. Continue
 indexed projectile state/handler families; broader gameplay/credits,
 hardware/audio/masks and ownership remain unfinished.
 
+Ceres elevator initialization (2026-10-19): nine stores in
+EprojInit_CeresElevatorPad, sub_86A301 and EprojInit_CeresElevatorPlatform
+use the existing byte-backed writer. All three routines are safe Rust.
+Pad Y/E and platform Y precede the shared setup; that setup clears X/Y
+fractions, X/Y velocities and graphics before reading/storing live Samus X.
+The live Samus Y read, wrapping Y+28 and original half-index expressions
+retain their positions and values. No state method is added.
+
+Observed Speed Booster passes 148406/0 (246.55s), native exit 0. All nine
+stores execute at input 8323: two pad stores once each, six shared stores
+twice each, and the platform store once. Both complete-RAM comparisons
+pass after each of the 15 writes. Independent source and caller-provenance review passes.
+
+Exact old/new routines pass 393216 constructed cases: every u16 byte index
+and every Samus X/Y word via bijections over two backing patterns. These
+are individual sweeps, not their Cartesian product. Each case checks four
+complete-RAM results and surrounding guards; original/candidate traces each
+match 524288 reads and 2752512 stores. Original word stores use explicitly
+checked aligned addresses; byte-backed stores run on both backing parities.
+Reordered clears, early X reads, one-byte writes, wrong index scaling and
+saturating Y arithmetic fail as intended. All three candidate functions
+compile as safe function pointers; an unsafe-signature control is rejected.
+
+Frozen 1579f6be plus only this change passes clean full-boot any%
+129712/0 (209.75s) and Speed Booster 148406/0 (272.39s),
+native exits 0. Complete non-timing Speed diagnostics and final checkpoint
+bytes match the observed run. Source, library, DLL, host, configuration,
+ROM and inputs remain fixed. No shorter included route is replayed separately.
+
+Formatting/check, normal release and progress pass with stable workspace
+source. Frozen release takes 35.04s; workspace release takes 42.30s; these
+shared-load timings do not establish a compilation speedup. Net Rust lines
+-6, raw accesses -9, pointer-offset calls -18 and unsafe functions -3;
+cast counts/lines are unchanged. Concurrent edits/staging remain preserved
+and keep their separate checks. No probes, fixtures, checkpoints or temporary
+scripts are committed. Continue shared projectile state/handler families;
+gameplay through credits and broader hardware/audio coverage remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
