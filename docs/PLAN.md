@@ -12308,6 +12308,25 @@ prototype results remain any%129712/0 and Waver58109/0. Final revised-source
 replays and mask removal remain the implementation session's work. Complete
 gameplay/credits, hardware/audio timing, other masks and ownership stay open.
 
+Independent revised X-ray onward replay (2026-10-19): the frozen
+b670ec87 source plus revised sm_91 and table-mask removal passes
+the normal-input pink-brinstar-jump route72823/0 (80.98s), nativeexit0.
+Rendering and standard hardware/audio/RAM comparisons remain enabled;
+both complete X-ray tables are compared. The old identical route failed
+71 frames. This run extends the green revised-candidate Waver prefix through
+the later colored-door code, room9CB3 and the existing oracle-matched death.
+It establishes additional regression coverage, not onward gameplay progress.
+
+Frozen sm_91 SHA256 3cec8bd00ef4aa66c9f49a4bdf13ec1460ee763b36c1ee9f109c9bf037202c8f;
+cpu_infra SHA256 a8ac6afb6515d0a96ef9960f02f71957d4298cc894226e919d96c85a12357c78. The source archive and replay
+outputs remain outside tracked files. Owning-session clean full replays of
+this frozen candidate pass any%129712/0 (216.93s) and Waver58109/0 (76.95s)
+with masks removed. Source ownership and final integration stay separate.
+No maintained source or own residue change; cargo fmt/check, release and
+progress passed during the preceding read audit. Peer pending source/PLAN
+edits are preserved. Complete gameplay/credits, hardware/audio timing,
+remaining masked state and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
