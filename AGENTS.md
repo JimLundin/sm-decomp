@@ -17,6 +17,8 @@ is archived in the branch `archive/pre-transpile-2026-10-17`.
 
 ## Rules
 
+- Never reserve or hold Git commit locks. Follow the Git concurrency rule
+  at the top of `docs/PLAN.md` before any Git write.
 - `sm/src` is the source of truth. There is no C to consult or regenerate
   from. When the meaning of code is unclear, use the oracle and the
   `ram_map.rs` names, and the bank logs at https://patrickjohnston.org/bank/.

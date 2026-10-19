@@ -4,6 +4,17 @@ Goal: Super Metroid as a readable, maintained Rust program that plays from
 boot to credits, with emulated SNES hardware for video and audio. Map Rando
 support comes after vanilla.
 
+Git concurrency (user direction, 2026-10-19): agents must not manually
+reserve or hold Git locks, including index.lock and branch ref locks.
+Use Git's normal short-lived locks only for the actual Git write. Builds,
+verification, reasoning, reviews and waits must run without a held lock.
+Use isolated snapshots when needed; recheck HEAD and reconcile changes
+before committing instead of preventing other agents from committing.
+An agent holding a reservation must release its own reservation immediately,
+preserving source changes and verification work. Do not delete another
+process's lock; tell its owner to release it. This rule overrides earlier
+instructions and temporary scripts that reserve the index or branch.
+
 Performance work targets the verification pipeline to shorten implementation
 iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
