@@ -12742,6 +12742,18 @@ Keep it this small. Add a crate only when the game code itself needs one.
 
 ## Phase 1: make the oracle a one-command check
 
+Animation debug-output cleanup (2026-10-19): remove the unconditional
+`v1=%x` print from Samus_HandleAnimDelay and its unused printf extern block.
+Frozen fd932dd3 before/after replays both pass any% 129712/0 (208.07s /
+209.16s), native exits 0. The baseline executes the print 5,191 times;
+the candidate emits none. Complete stdout/stderr match after removing only
+those debug lines and elapsed times, including all coverage and comparison
+diagnostics. Callback arguments, RAM access and gameplay expressions are
+unchanged. Maintained source matches the verified candidate. Cargo format,
+release build and progress checks pass. Own extern blocks -1, cast lines -1,
+Rust lines -8; all other counters unchanged. Temporary builds were removed
+after verification; ongoing gameplay/hardware changes remain separate.
+
 Known verifier configuration (2026-10-19): `sm/Cargo.toml` declares
 `sm_verify_dll` for `unexpected_cfgs`, retaining warnings for unknown names.
 Direct full-library metadata checks for the headless and frontend variants

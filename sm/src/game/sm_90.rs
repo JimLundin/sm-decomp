@@ -39,10 +39,6 @@ use crate::game::sm_9b::{
 use crate::game::sm_a0::Samus_CheckSolidEnemyColl;
 use crate::game_state::Game;
 use crate::rtl::{Load24, MakePairU16, Mult8x8, RomPtr, Unreachable};
-extern "C" {
-    fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
-
-}
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
     int32_t, int8, int8_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, FuncXY_V, Func_U8,
@@ -1795,10 +1791,6 @@ unsafe fn Samus_HandleAnimDelay(game: &mut Game) {
                     as *mut uint16) as ::core::ffi::c_int as isize,
             ),
             game,
-        );
-        printf(
-            b"v1=%x\n\0" as *const u8 as *const ::core::ffi::c_char,
-            v1 as ::core::ffi::c_int,
         );
         if kAnimDelayFuncs[(v1 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int) as usize]
             .expect("non-null function pointer")(
