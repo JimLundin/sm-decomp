@@ -42,6 +42,19 @@ outputs remain in `target/`; there are zero C-family source files in the
 checkout. The documented archive branch stays intact. This audit changes no
 Rust source; residue counters are unchanged.
 
+Workspace quality audit (2026-10-19): main is the only local branch and
+worktree; no stashes or tracked C-family source, ROMs or movie inputs exist.
+Moved five retired probe/build directories (oracle-palette, oracle-render-final,
+oracle-sound-classify, oracle-slope-mask and oracle-ppu-review), 358 files /
+250.8 MiB, from target to the local temporary directory
+sm-workspace-retired-builds-20261019. Active compiler/replay command lines and
+current route/build scripts have no references to those directories. Current
+release/verifier builds, route inputs, baseline diagnostics and live probes
+remain available. More obsolete target residue remains; this is partial cleanup.
+Explicit installed-toolchain cargo fmt --check and cargo build --release pass.
+No maintained source changes or new replay result belong to this audit; peer
+CPU/PPU edits remain separately owned and their integration replay is running.
+
 ## The oracle
 
 The binary contains two complete implementations of each frame:
