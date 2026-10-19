@@ -142,6 +142,21 @@ the pre-step alignment gate, wrapping coordinate step and callback/store order.
 
 ## The oracle
 
+Complete verifier diagnostics (2026-10-19): the normal verifier now reports
+every mismatch instead of suppressing details after the first failing frame.
+Comparison gates, failure counting, recovery and per-frame memory dump bounds
+are unchanged; first-failure RAM context still prints once. Actual before/after
+controls inject PPU status failures at frames 100/300 and an APU queued-port
+failure at 200. Both count exactly those three failures and exit 1; the new
+version prints all three diagnostics, with first-frame context once.
+Frozen 77a8a6f9 plus only this change passes any% 129712/0 (182.76s), native
+exit 0, and Waver 58109/71 (94.62s), native exit 1. All 71 full ordered Waver
+diagnostics match baseline without a temporary reporting patch. Maintained
+source equals the clean candidate. Cargo fmt/check, release build and progress
+pass. Rust lines -61; other own counters unchanged. Later CPU, door and PPU
+commits are outside these replays. Existing 71 rendered failures and complete
+gameplay/audio coverage remain open.
+
 APU allocation validity QC (2026-10-19): apu_init zero-initializes its
 allocation before constructing the child devices. The first reset previously
 formed array/timer references over uninitialized storage, including bools.
