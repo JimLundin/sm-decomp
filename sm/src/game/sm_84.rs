@@ -1993,20 +1993,16 @@ pub unsafe fn PlmInstr_PickupEquipmentAddXrayShowMessage(
     return plmp.offset(2 as ::core::ffi::c_int as isize);
 }
 pub unsafe fn PlmInstr_CollectHealthEnergyTank(
-    mut plmp: *const uint8,
-    mut k: uint16,
+    plmp: *const uint8,
+    k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
-    let ref mut fresh52 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9c4 as ::core::ffi::c_int as isize) as *mut uint16);
-    *fresh52 =
-        (*fresh52 as ::core::ffi::c_int + *(plmp as *mut uint16) as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9c2 as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9c4 as ::core::ffi::c_int as isize) as *mut uint16);
-    PlayRoomMusicTrackAfterAFrames(0x168 as uint16, game);
-    DisplayMessageBox(1 as uint16, game);
-    return plmp.offset(2 as ::core::ffi::c_int as isize);
+    let amount = (plmp as *const u16).read_unaligned();
+    game.set_samus_max_health(game.samus_max_health().wrapping_add(amount));
+    game.set_samus_health(game.samus_max_health());
+    PlayRoomMusicTrackAfterAFrames(0x168, game);
+    DisplayMessageBox(1, game);
+    plmp.add(2)
 }
 pub unsafe fn PlmInstr_CollectHealthReserveTank(
     mut plmp: *const uint8,

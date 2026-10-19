@@ -11310,6 +11310,28 @@ any%129712/0 (149.79s), fmt/check, release and progress. Inputs/probes,
 SRAM and ROM-derived assets stay ignored. Complete credits/gameplay/
 hardware, audio/render, masked RAM and ownership remain open.
 
+Energy Tank collection uses named RAM accessors (2026-10-19).
+PlmInstr_CollectHealthEnergyTank reads the instruction amount unaligned,
+adds it to maximum health with word wrapping, then refills current health
+from the updated live maximum. Music scheduling, message1 and two-byte
+instruction advance retain their order. Existing accessors preserve the
+SNES byte layout; unsafe remains at instruction-pointer and callback calls.
+
+Instrumented normal-input Waver route executes the actual callback at77102,
+slot78, amount100, health19/99 before collection. Baseline77139/71
+(153.69s), clean77139/71 (134.94s), observed native exits1, match all71
+ordered failure frames exactly. This covers100-point collection/refill;
+wrapping is preserved by source arithmetic rather than claimed gameplay hits.
+Clean explicit-render any%129712/0 (195.69s), observed native exit0.
+Pinned7fcc20d6 host plus committed gameplay cleanups isolates this change;
+peer hardware/gameplay edits are excluded. Only the maintained callback
+changes, and its body matches the clean build. Cargo fmt/check, fullrelease
+build and progress pass. Own raw offsets-3, cast lines-5, Rust lines-4;
+other own counters unchanged. No ROM-derived data, inputs, SRAM or probes
+are committed. Next: complete normal-input9938 entry after the verified
+9969 obstacle jumps, then onward item/boss coverage. Credits, complete
+gameplay/hardware, render/audio, masked RAM and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
