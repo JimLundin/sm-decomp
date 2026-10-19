@@ -9514,6 +9514,52 @@ boundary and formatter reflow while removing repeated bus handling. Other own
 counters unchanged. Full word Cartesian, arbitrary MMIO and complete gameplay/
 render/audio remain open. Continue covered CPU cleanup; TSX/ROR stay held.
 
+Lower99BD missile exit reachesA5ED andA66A (2026-10-19): use
+refilled-9969.inputs retainedthrough65000,99BDX69/Y1675 equipment1004,
+missiles5/5. Right/shoot70,neutral60,Select1,neutral20,fivefresh
+right/shoot1 presses eachfollowedbyneutral90,right/shoot100,neutral120.
+Ammo5->0,transition65618,A5EDload65636,gameplay65723; finalX55/Y139.
+lower-east-missiles65826/71 (159.22s),observednativeexit1. Earlierbeam-only
+lower-doorobstacle is resolvedwithretainedgunshipammo; noheldupper99BD
+ascent/oldenemy-dropammoexperiment is resumed. A5ED isnewroomcoverage.
+Healthwasnotobservedbythatfirsthostbefore67270; do notinventahealthvalue.
+
+Right/shoot1,right/run/jump/shoot80,right/run/shoot180,right/shoot80,
+neutral120 crossesA5EDcorridor toX1211/Y171 butdoesnotreachdoor:
+lower-east-gap66287/71 (148.96s). Freshright/shoot1,right/jump/shoot35,
+right/shoot80,neutral120 clearsdoorledge:transition66368,A66Aload66386,
+gameplay66473,finalX46/Y139health99/199,missiles0/5,equipment1004.
+lower-east-door66523/71 (161.48s). Retaininputforsecondnewroomcoverage.
+
+Right/shoot32,neutral180,Down1,neutral1200 stopsX93/Y176,crouchedpose27,
+health99;67936/71 (161.19s). Right24,neutral120,Down1,neutral1200 stops
+X113/Y176,samehealth/pose;69281/71 (171.38s). Noelevatortransition.
+Read-onlystatecapture identifies Tourian entrance statues (EFFF);
+finished1E6D=8000,animstate1E6F=0,bossbytesD828..D82F=[4,0,0,0,0,0,1,0].
+Majorbossbit1unset in relevantareas; onlyBombTorizobit4inCrateria observed.
+Topfloorremains solid atY192; endpointY176isnotlower-elevatorarrival.
+DAAE is a room-definitiondestination only, notcrossed. Statuefinishedbit
+alone doesnotestablishfloorunlock; do notassumeaDownsuffixcan bypassit.
+SourceAnimtilesInstr_GotoIfBossBitSetInArea checksarea/maskoperands, and
+Tourianstatueflagconsumersdo notsupplya demonstrated routewithoutbossprogress.
+Stopdescentshere; inspectearlieravailableitem/bossroute instead ofrepeating.
+
+Allfiveordereddiagnosticstreams exactlymatchfrozenexplicit-renderWaver71;
+no new failing frames, allobservednativeexit1. IndependentrouteQCconfirms
+firstdoor/ammo/A5EDentry; final owncomparisoncoversfivecomplete streams.
+Frozenalternate.dlland lower/statueobserveDLLslinkexisting d217ea15-session
+render-comparison/libsm.rlib; newhosts addread-onlyobservations. Thisisinput
+coverage, notverificationofconcurrenthardware. Frozenany%129712/0 (414.98s)
+remainsmatchingcorebaseline; currentpeerhardwareowns its source replays.
+Cargo fmt --check andfullreleasebuildpass(10.80s)usingexternalSDL2.
+Progress22691raw,39extern,3CABI,5no_mangle,6721unsafe,85562casts,
+257519Rustlines reflectspeerchanges; ownmaintainedsource/residue delta0.
+No ROM,input,SRAM,geometryorprobeassetscommitted. PeerPPUWIP/remote sync
+remainseparate. Held upper99BD,clifftuning,old9AD9dropammoandHDMAremainheld.
+Next: inspectaccessibleuncollecteditems/bossprogression usingretainedrefill
+prefixes; do notclaimTourian/credits fromA66A. Fullcredits,hardware/render/
+audiofidelity,maskedRAM andownership remainunfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
