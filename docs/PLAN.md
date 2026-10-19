@@ -2055,31 +2055,31 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): `6fffab58` combines four tile-flip
-writers with image channel conversion in parent `9eb79d78`. Independent
-complete-source reconstruction accounts for all edits. Tile corner selection,
-row/column write order, live source reads and PLM wrapping before the word-index
-shift remain exact. The actual helper and RAM macros match their comparison
-sources: 819200 factored full-RAM cases pass; wrong-order and eager-prefetch
-controls fail. These checks do not prove every joint state.
+Latest reviewed integration (2026-10-19): `c7b1abbf` combines the 330 SPC
+mapping descriptors with all 22 Fire Geyser shape callbacks in `000c619e`.
+Independent complete-source reconstruction accounts for both changes.
+The 47 channel and 283 player mappings retain every value, encoded width
+flag and row position. Exact original/candidate declarations bind compiled
+const assertions over all 943 fields and both layouts; all existing runtime
+functions remain unchanged. No runtime descriptor harness is needed.
 
-Both image allocation/failure wrappers and all 24 original pixel bodies
-match the shared implementation, including chained destination reads and
-fixed per-case strides. Exact converter nodes pass 6144 width/channel/size/
-allocation cases. Actual decoder libraries pass 5472 PNG API cases comparing
-pixels, float bits, metadata, callback traces and file positions. The candidate
-target with copied game artifacts was discarded; fresh registry-only builds
-and the final source rebuild completed before the accepted API/direct runs.
-Original and candidate inputs, direct nodes and committed sources match.
+All 22 expanded Geyser helpers match their original bodies. Both live enemy
+index reads, the unwrapped child index plus 64, wrapping position subtraction,
+y/height store order and callback 2's width write remain exact. Original
+nodes and actual-library callbacks pass 2883584 full-RAM/returned-pointer
+comparisons. The test's RAM base and index offsets match maintained code;
+final committed Geyser source matches the tested version. These factored
+checks do not prove every joint state or broader alias safety.
 
-All 72 committed source/configuration/host inputs match the final composition;
-all 77 source/DLL/fixture pins remain stable. Normal release (15.48s),
-formatting/check and progress pass. Full any% 129712/0 (111.02s replay,
-111.17s wall), native exit 0, covers both commits together; completed checks
-were reused without another build or replay. Net Rust lines -640, total
-168118; unsafe-function count is unchanged. PNG conversion has direct runtime
-coverage; broader frontend execution, readability, full credits and global
-alias safety retain the limits below. Independent review has no findings.
+All 73 committed source/configuration/tool inputs match the final composition;
+all 76 source/DLL/fixture pins remain stable after completion. Normal release
+(12.86s), formatting/check and progress pass. Full any% 129712/0
+(115.16s replay, 115.27s wall), native exit 0, covers both changes together.
+Completed checks were reused; no duplicate root build or replay was run.
+Net Rust lines -1416, total 166702; the one added unsafe function is the shared
+Geyser helper. Independent review has no findings. Prior frontend checks
+retain their limited scope; broader frontend execution, readability, full
+credits and global alias safety retain the limitations below.
 
 The prior `2ddf3af0` shares all twelve corpse
 tile initializers. Independent reconstruction accounts for all 50 ordered
