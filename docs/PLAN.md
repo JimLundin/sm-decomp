@@ -12735,10 +12735,10 @@ Direct full-library metadata checks for the headless and frontend variants
 accept the declaration with zero unexpected-cfg warnings, native exits 0.
 Formatting and whitespace checks pass; maintained Rust and residue counts
 are unchanged. The full DLL workflow result is recorded in Workspace discipline.
-The initial Cargo release build passed, but subsequent builds fail executing
-the package build script (Windows OS error 5), including with the original
-manifest restored. Normal Cargo verification of this declaration remains
-outstanding until build-script execution works. Other compiler warnings,
+Normal Cargo release verification now passes with the installed stable
+compiler and external SDL2 (38.68s), with zero unexpected-cfg warnings.
+Earlier Windows build-script execution denials (OS error 5) did not reproduce
+on this revalidation; no linker or build-script change was needed. Other compiler warnings,
 complete gameplay/credits and hardware/audio coverage remain open.
 
 Nothing else should start until this works, because it is how every later
