@@ -10198,6 +10198,88 @@ matches verified source; peer PPU work is outside this replay. Rust lines -7;
 other own counters unchanged. Indexed-indirect/TSX/accumulator ROR remain
 held. Complete gameplay/render/audio remain open. Continue covered CPU cleanup.
 
+Parlor east door opened with missiles; room98E2 reached (2026-10-19).
+The earlier blue-cap/green-door inferences were incorrect. Actual live block
+atX480/Y864 isC008 withBTS44. Its active PLM header isC88A, instruction
+C328, preinstructionBD50, room argument5. HeaderC88A maps to C318,
+which installsBD50 (GoToLinkInstrIfShotWithAnyMissile). C328 contains
+IncrementDoorHitCounterAndJGE with threshold5. Ordinary missiles work;
+no Super Missile requirement is established here. Do not infer a door's
+requirement from a nearby definition, cap graphics, or header name alone.
+
+The previous SAVE observer used1D27 as though it were PLM identity; ram_map
+identifies it as instruction-list pointer. Actual headers are1C37, blocks
+1C87, preinstructions1CD7, timers1D77, arguments1DC7. A corrected read-only
+observer captures these plus live level/BTS blocks and projectiles. Initial
+diagonal trial fires left/down during the turn. Horizontal turn-in-air trial
+fires atY904, belowcap; settled right-facing vertical jump fires atY881.
+HoldingJump and delaying fire fourframes hitsX483/Y865; beam leaves cap
+closed. All these are measured controller outcomes, not gameplay modifications.
+
+Successful missile prefix starts tank-map-backstep through70842 atX441/Y923,
+health49/99,8missiles: Select1,right5,neutral1,Jump14,Jump/shoot1,Jump15,
+right/shoot90,neutral120. It advances door hit animation but returnsclosed;
+two missiles are spent, including a later shot outside the cap row. Then
+right1,right/jump1,right/shoot1,right/jump/shoot20,right/shoot1,neutral90,
+four fresh right/shoot1 presses eachfollowedbyneutral90,right/shoot80,
+neutral120 opens the five-hit cap. tank-cap-five-hits71676/71 (87.32s).
+Transition71488/71489, 98E2load71506, gameplay71620; finalX55/Y139,
+health49/99,missiles1/10,equipment1004. Roomcoverage19,enemydefinitions17.
+Retain this successful input. The trial name alone does not count hits;
+observed door progression and actual room transition establish success.
+
+Map passage traversal remains unfinished. Itemcancel1,right/shoot1,
+right/jump/shoot40,right/run/shoot200,right/shoot50,neutral120 stopsX189/Y171,
+health19/99. It reachesX187/Y187 with49health at71770 before enemy contacts.
+Shorter jump reachesX168/Y187,health34. Fresh jump from retained71770 is
+hit by an enemy at71780,losing8health; endsX189/Y171,health11. No9994 entry
+or map acquisition. Retain the49health prefix for the next focused enemy/
+rise obstacle; do not extend the low-health endpoints as though they progressed.
+
+All22 completed trials return nativeexit1 with71 existing failures; first
+diagnostic line matches the pinned baseline (later diagnostics suppressed):
+tank-central-morph: 71221/71 (64.27s)
+tank-central-ball: 71157/71 (70.91s)
+tank-central-timed-shot: 71277/71 (73.73s)
+tank-live-grid: 70962/71 (73.57s)
+tank-cap-fresh-down: 71037/71 (84.76s)
+tank-cap-jump-fire: 71037/71 (88.08s)
+tank-cap-from-left: 71055/71 (94.76s)
+tank-door-bomb-hop: 71398/71 (74.78s)
+tank-cap-diagonal-left: 71112/71 (90.43s)
+tank-cap-projectile-trace: 71113/71 (90.09s)
+tank-cap-turn-then-fire: 71105/71 (70.58s)
+tank-cap-turn-horizontal: 71054/71 (67.03s)
+tank-cap-settled-jump: 71069/71 (78.45s)
+tank-cap-settled-high: 71088/71 (67.87s)
+tank-cap-live-bts: 70872/71 (70.39s)
+tank-cap-missile: 71089/71 (75.00s)
+tank-cap-open-cross: 71303/71 (82.16s)
+tank-cap-second-hit: 71312/71 (86.48s)
+tank-cap-five-hits: 71676/71 (87.32s)
+crateria-map-corridor: 72088/71 (67.42s)
+crateria-map-short-jump: 71953/71 (88.27s)
+crateria-map-rise: 72021/71 (91.80s)
+
+Final independent read-only failure-counter replay of crateria-map-rise
+passes72021/71 (67.21s), observed nativeexit1. All71 ordered failing frame
+numbers exactly match the same-core pickup baseline; no new failing frames.
+Observer DLLs explicitly link target/tank-cleanup/libclean.rlib, the pinned
+7fcc20d6 core plus committed Missile Tank accessors. Same-core explicit-render
+any%129712/0 (136.88s),nativeexit0 remains the no-source-change regression.
+No RAM/map/health/ammunition writes were injected. Concurrent CPU/PPU edits
+are excluded; peer owns current-source replays. Probes/ROM-derived blocks,
+inputs and SRAM stay ignored; only this plan note is committed.
+
+Cargo fmt/check, full release with externalSDL2 and progress pass. Own
+maintainedsource/residue delta0. Progress22689raw,39extern,3CABI,5no_mangle,
+6716unsafe,85558casts,257185Rustlines includes peer changes; unsafe+2 and
+line reductions belong to that separate work. This item completes inunder
+onehour. Next: cross98E2 from retained71770 before enemy contact, enter9994
+and prove map acquisition if physically accessible; onward boss/item coverage
+still needed. Held upper99BD ascent,clifftuning,old9AD9dropammoandHDMAstayheld.
+Credits,fullgameplay/hardware,render/audio,maskedRAM andownership remainopen.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
