@@ -1947,7 +1947,23 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): `4474383b` adds 7082 named scalar
+Latest reviewed integration (2026-10-19): `05234716` combines the 121
+single-match simplifications with the Boolean and named-RAM changes.
+A fresh normal release (37.15s) and full any% 129712/0 (163.09s replay,
+163.26s wall) pass, native exit 0. Formatting/check and progress pass;
+all source/library/DLL/configuration/fixture hashes remain stable. Only
+registry dependencies were reused; game and host were compiled afresh.
+
+Complete source reconstruction confirms 121 local-u64 matches become equality
+tests with every branch body and other token retained, except formatting-only
+trailing commas. All 70 owner Rust/Cargo inputs match the committed baseline
+and candidate. All-target/all-feature Clippy has no single_match diagnostics.
+The composed batch removes 415 Rust lines; casts, raw accesses and unsafe
+functions are unchanged. The cast-line counter falls by three through wrapping.
+Earlier single-match-only any% 129712/0 and Speed Booster 148406/0 runs retain
+their separate scope. Frontend execution and full credits remain unverified.
+
+The prior `4474383b` adds 7082 named scalar
 word reads to the reviewed Boolean composition. Exact reconstruction covers
 all 32 caller files; all 1169 RAM table rows retain their address, name, type,
 shape and order. The caller macro uses unaligned little-endian loads without
@@ -1960,7 +1976,6 @@ not establish global alias safety. Normal release (24.98s), workspace release
 (18.70s), formatting/check and progress pass. Full any% passes 129712/0
 (107.90s replay, 108.07s wall), native exit 0; the completed run was reused.
 Net Rust lines -7308 and casts -14164; unsafe-function count is unchanged.
-The subsequent single-match composition awaits its own integration review.
 
 The prior `240bb809` adds 422 direct
 primitive comparisons to the reviewed compiler and initializer work.
