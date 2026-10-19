@@ -13570,6 +13570,36 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Samus animation countdown (2026-10-19): merge the duplicated timer decrement
+and frame-advance paths in Samus_Animate. Named pose/frame accessors and a
+byte-backed timer retain the two jump poses' special hold, which selects 4
+and immediately decrements to 3. Word wrapping, zero-or-bit-15 expiry and
+frame increment before the delay callback remain exact. The FX dispatch and
+all callees are unchanged; animation state is read after the FX callback.
+
+Frozen 8b40c5ac plus this source passes clean any% 129712/0 (321.30s).
+Contextual comparisons match complete 128 KiB RAM and g_fail at delay-callback
+entry and on routine return, including callback counts: any% 97219 animation
+calls / 129712 frames (330.84s), Waver 43356 / 58109 frames (160.52s),
+native exits 0. Special-pose calls are 3269/631 and hold extensions 178/99.
+Zero/sign-bit expirations are 17420/9 in any% and 8556/2 in Waver. Clean and
+observed any% non-timing diagnostics match; maintained-candidate identity
+and exact observation stripping pass. The called FX/delay closure mutates
+RAM and g_fail only, which are restored between old/current executions.
+
+786496 constructed comparisons replace only the FX and delay callbacks.
+Complete RAM, callback-entry RAM, g_fail and callback order match across all
+timer, pose, direction and frame words, wrapping boundaries and 64 cases
+where FX changes the animation state. The delay stub changes pose/frame/timer
+on return to expose late stores. Ignoring the sign bit, shortening the jump
+hold and storing the timer after the callback are detected at cases 0, 10
+and 0 respectively. These checks supplement actual movie execution.
+
+Cargo format/check, release --locked and progress pass. Own raw offsets -12,
+cast lines -28 and Rust lines -40; other counters are unchanged. Temporary
+scripts/builds are removed; no probes or ROM-derived fixtures are committed.
+Remaining animation/FX cleanup and broader gameplay coverage stay open.
+
 Super Missile Tank collection (2026-10-19): the collector reads its operand
 as two little-endian bytes and uses named maximum/current ammunition accessors
 with explicit word wrapping. Operand capture before writes, maximum before

@@ -918,62 +918,22 @@ pub unsafe fn Samus_Animate(game: &mut Game) {
         & 0xf as ::core::ffi::c_int)
         >> 1 as ::core::ffi::c_int) as usize]
         .expect("non-null function pointer")(game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        == kPose_4D_FaceR_Jump_NoAim_NoMove_NoGun as ::core::ffi::c_int
-        || *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            == kPose_4E_FaceL_Jump_NoAim_NoMove_NoGun as ::core::ffi::c_int
+    let pose = game.samus_pose();
+    let mut timer = u16::from_le_bytes([game.g_ram[0xa94], game.g_ram[0xa95]]);
+    if (pose == kPose_4D_FaceR_Jump_NoAim_NoMove_NoGun as u16
+        || pose == kPose_4E_FaceL_Jump_NoAim_NoMove_NoGun as u16)
+        && u16::from_le_bytes([game.g_ram[0xb36], game.g_ram[0xb37]]) != 2
+        && game.samus_anim_frame() == 1
+        && timer == 1
     {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xb36 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            != 2 as ::core::ffi::c_int
-            && *((&raw mut game.g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                == 1 as ::core::ffi::c_int
-            && *((&raw mut game.g_ram as *mut uint8).offset(0xa94 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                == 1 as ::core::ffi::c_int
-        {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa94 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 4 as uint16;
-        }
-        let ref mut fresh87 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xa94 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        *fresh87 = (*fresh87).wrapping_sub(1);
-        let mut v1: bool = *fresh87 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xa94 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            == 0
-            || v1 as ::core::ffi::c_int != 0
-        {
-            let ref mut fresh88 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xa96 as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            *fresh88 = (*fresh88).wrapping_add(1);
-            Samus_HandleAnimDelay(game);
-        }
-    } else {
-        let ref mut fresh90 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xa94 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        *fresh90 = (*fresh90).wrapping_sub(1);
-        let mut v0: bool = *fresh90 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xa94 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            == 0
-            || v0 as ::core::ffi::c_int != 0
-        {
-            let ref mut fresh91 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xa96 as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            *fresh91 = (*fresh91).wrapping_add(1);
-            Samus_HandleAnimDelay(game);
-        }
-    };
+        timer = 4;
+    }
+    timer = timer.wrapping_sub(1);
+    game.set_samus_anim_frame_timer(timer);
+    if timer == 0 || timer & 0x8000 != 0 {
+        game.set_samus_anim_frame(game.samus_anim_frame().wrapping_add(1));
+        Samus_HandleAnimDelay(game);
+    }
 }
 pub unsafe fn Samus_Animate_NoFx(game: &mut Game) {
     let mut r18: uint16 = Samus_GetBottom_R18(game);
