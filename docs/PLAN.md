@@ -72,10 +72,31 @@ Formatting/check, normal release (21.32s), stable workspace release and
 progress pass. The two staged files match the verified source; concurrent
 projectile and SPC work remains separate.
 
-Next finish the refreshed historical-pair triage, including functions that
-fell below the AST size threshold, before selecting the next shared
-implementation. The broader readability audit and eligible Clippy families
-remain open.
+Refreshed historical-link triage (2026-10-19): the committed 8caf32e0
+snapshot reports 335 AST pairs at 0.90/100 nodes and 744 at 0.90/50 nodes.
+Of the original Rust's 456 pairs, 304 retain the standard link and 82 more
+retain a lower-threshold link. All remaining 70 pairs were read: 24 already
+use shared cores/adapters, 10 map to replacement implementations, 11 have
+distinct behavior and 25 suggest families to expand. These are pair counts,
+with overlap between families; retained links are not equivalence proofs.
+
+The short functions account for SFX, scroll-block, fireball-child, block-mask
+and nearby/area enemy-drop adapters. Missing declarations map to pause label
+modes, projectile impact points, directional grapple traversal, spike damage,
+the gl crate loader, indexed CPU addressing and shared CPU comparison.
+The unreported current families include respawning block gates/reveal writes,
+robot movement instructions, Ceres explosion spawning, allocated zlib decode,
+turnaround speed transfers, collision extension retries, landing particles,
+VRAM queue entries, ammo restoration and scroll callback writes. Preserve
+source-axis quirks (X spike movement reads Y velocity), byte-only far-edge
+collision tests, overlapping reset stores and callback/read/write order.
+
+Next expand and rank these complete families, including unreported short
+wrappers and statement/dispatch variants, by net deletion, unsafe removal
+and verification cost. The historical-link accounting is complete for this
+fixed inventory; broader readability and eligible Clippy work remain open.
+This source-only triage adds no runtime change or replay claim. Temporary
+scans and assessments stay outside the repository.
 
 Clippy return cleanup (2026-10-19): standard cargo clippy --fix with
 needless_return removes 5550 redundant returns across all 50 affected files,
