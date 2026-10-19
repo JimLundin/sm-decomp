@@ -16874,6 +16874,32 @@ counters unchanged. No probes or ROM-derived artifacts committed. Continue
 indexed projectile state/handler families; broader gameplay/credits,
 hardware/audio/masks and ownership remain unfinished.
 
+Ceres debris velocity update (2026-10-19): the borrowed raw word
+update now uses existing byte-backed reads/writes and an explicit wrapping
+add of sixteen. The slot is captured before collision and remains selected
+for the subsequent ID clear. Velocity update, collision, ID clear, live
+coordinate reads/spawn-point setup, spawn and sound callbacks retain order.
+Existing unsafe callback boundaries remain.
+
+Frozen 95ff9cef plus only this change passes
+any% 129712/0 (267.37s) and Warehouse 128547/0
+(290.00s), native exits 0. Observed Warehouse 128547/0
+(320.65s) reaches the velocity update 1048 times.
+Every byte-backed word write matches the original unaligned store over
+complete RAM. Clean/observed non-timing route diagnostics match; source/DLL/
+ROM/input hashes remain fixed and maintained function matches verified source.
+Extracted old/current routines match complete RAM, callback trace and spawn
+coordinates in 393216 cases: every 16-bit index, six collision return bytes
+and callbacks that mutate the live index. Wrapping addition matches at all
+65536 word values. Other frozen sources match HEAD after newline normalization;
+only this function differs in the bank.
+
+Cargo fmt/check, normal release build and progress pass. Net raw offsets -1,
+cast lines -2; Rust lines +1 names the read/update/write sequence. Unsafe
+functions and other own counters unchanged. No probes or ROM-derived artifacts
+committed. Continue indexed projectile state/handler families; broader
+gameplay/credits, hardware/audio/masks and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

@@ -3067,14 +3067,15 @@ fn EprojInit_9734_CeresFallingDebris(j: uint16, game: &mut Game) {
     EprojStateMut(&mut game.g_ram).write(0x1a93, slot, 42);
     EprojStateMut(&mut game.g_ram).write(0x1adb, slot, 16);
 }
-pub unsafe fn EprojPreInstr_9734_CeresFallingDebris(mut k: uint16, game: &mut Game) {
-    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let ref mut fresh135 =
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v1 as isize);
-    *fresh135 = (*fresh135 as ::core::ffi::c_int + 16 as ::core::ffi::c_int) as uint16;
+pub unsafe fn EprojPreInstr_9734_CeresFallingDebris(k: uint16, game: &mut Game) {
+    let slot = usize::from(k >> 1);
+    let velocity = EprojState(&game.g_ram)
+        .slot_word(0x1adb, slot)
+        .wrapping_add(16);
+    EprojStateMut(&mut game.g_ram).write(0x1adb, slot, velocity);
     if EprojBlockCollisition_Vertical(k, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
     {
-        EprojStateMut(&mut game.g_ram).set_id(v1 as usize, 0);
+        EprojStateMut(&mut game.g_ram).set_id(slot, 0);
         game.eproj_spawn_pt = Point16U {
             x: game.enemy_projectile_x_pos(k),
             y: game.enemy_projectile_y_pos(k),
