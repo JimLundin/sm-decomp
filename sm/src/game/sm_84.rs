@@ -1056,10 +1056,10 @@ pub unsafe fn LoadXrayBlocks(game: &mut Game) {
         }
     }
 }
-pub unsafe fn EnablePLMs(game: &mut Game) {
-    let ref mut fresh25 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1c23 as ::core::ffi::c_int as isize) as *mut uint16);
-    *fresh25 = (*fresh25 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
+pub fn EnablePLMs(game: &mut Game) {
+    // plm_flag: enable bit 15 while preserving the other flag bits.
+    let flags = u16::from_le_bytes([game.g_ram[0x1c23], game.g_ram[0x1c24]]);
+    game.g_ram[0x1c23..0x1c25].copy_from_slice(&(flags | 0x8000).to_le_bytes());
 }
 pub unsafe fn DisablePLMs(game: &mut Game) {
     let ref mut fresh22 = *((&raw mut game.g_ram as *mut uint8)

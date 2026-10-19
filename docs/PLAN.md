@@ -13495,6 +13495,24 @@ unsafe functions-1, cast lines-6 and Rust lines-4; other own counters unchanged.
 Peer edits remain preserved. Complete credits/gameplay/hardware/audio/masks/
 ownership and uncovered PLM routine holds remain open.
 
+PLM enable flag (2026-10-19): EnablePLMs now uses a safe
+little-endian word read/store for plm_flag. Bit15 is set while every other
+flag bit and adjacent RAM byte remains unchanged.
+
+Frozen 8140ac30 plus only this function passes any%129712/0
+(234.89s) and pickup68606/0 (122.12s), native exits0.
+Observed pickup68606/0 (124.54s) compares all128KiB RAM
+against the original after 2 actual calls, restoring the current
+result before continuing. The routine has no effects outside RAM. Clean and
+observed non-timing diagnostics match after stripping observers. Frozen
+scope and maintained routine identity pass; no observers are committed.
+
+Cargo fmt/check, normal release build and progress pass. Own raw offsets-1,
+unsafe functions-1, cast lines-2; Rust lines and other own counters unchanged.
+Peer edits remain preserved. DisablePLMs remains unchanged pending separate
+X-ray-path coverage. Full credits/gameplay/hardware/audio/masks/ownership
+remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
