@@ -11210,6 +11210,24 @@ gameplay/PPU work is outside this replay. Unsafe functions -2 and Rust lines
 -4; other own counters unchanged. Prior holds and complete gameplay/render/
 audio remain open. Continue covered CPU cleanup.
 
+Post-map lower99BD left exit reaches9969 (2026-10-19).
+From map99bd-down-left2X219/Y1675, left/shoot110, left120, neutral30
+cross the bottom-left door. Room changes to9969 at79003; control returns
+79090. map99bd-bottom-left-door79160/71 (130.19s), native exit1, ends
+9969X869/Y169, standing, health89/199, map1/station255, missiles1/10,
+equipment1004. This corrects the previous bottom-door interpretation:
+the working bottom-left exit reaches9969; the right missile door is separate.
+No extra ammo is required for this crossing, and health remains89.
+Read-only failure-counter replay79160/71 (103.08s), observed native exit1,
+matches all71 ordered baseline failed frames exactly, rendering enabled.
+No gameplay/RAM/inventory writes or new failures; source/residue delta0.
+Committed door-bit cleanup owns fmt/check, release, progress, contextual
+75665/71 and clean any%129712/0 (149.79s). Inputs, probes, SRAM and
+ROM-derived data remain ignored. Next: continue normal inputs from9969
+through9938 toward wider item/boss coverage, with map and Energy Tank held.
+Held upper99BD ascent and earlier holds remain held. Complete credits,
+gameplay/hardware, audio/render, masked RAM and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
