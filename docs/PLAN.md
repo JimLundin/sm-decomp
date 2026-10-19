@@ -1613,17 +1613,17 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `6ea1ddb6` passes
-uninterrupted full boot any% 129712/0 (192.32s) and Speed Booster
-148406/0 (249.29s), native exits 0. All 74 source/configuration/host/
-progress inputs match that commit. This integrates the PPU window setup and
-all 72 DMA descriptor initializers with the reviewed projectile, decoder,
-liquid and PLM families. Later background-row and enemy-initializer changes
-are outside this snapshot.
+Latest reviewed integration (2026-10-19): frozen `83f68b03` passes
+uninterrupted full boot any% 129712/0 (193.20s) and Speed Booster
+148406/0 (264.59s), native exits 0. All 74 source/configuration/host/
+progress inputs match that commit. This adds the eight-direction projectile
+impact family and shared PPU background-row setup to the reviewed window,
+DMA, projectile movement, decoder, liquid and PLM families. Later integer-
+table, LoROM mapping, enemy-initializer and PPU changes are outside this snapshot.
 
-Serialized checkpoint payloads are byte-identical to reviewed 65052d38.
+Serialized checkpoint payloads are byte-identical to reviewed 6ea1ddb6.
 The only changed header field is the runtime-source fingerprint, independently
-recomputed from the actual inputs. Only types.rs and snes/ppu.rs differ among
+recomputed from the actual inputs. Only snes/ppu.rs differs among
 those inputs; the structure layouts and checkpoint codec remain unchanged.
 All other bindings, including the payload checksum, agree. No compatibility
 hash is patched and neither replay loads an earlier checkpoint. Complete
@@ -1632,6 +1632,45 @@ diagnostic. Speed reaches 55 rooms and 53 enemy definitions, ending in state 8,
 room $AD1B, X171/Y123, pose $0089, health 46/399, missiles 6/15, Supers 0/5,
 items $3105 and beams $1004 equipped/collected. Kraid is defeated and all eight
 coroutine bytes are zero. Credits remain unexercised.
+
+Independent impact reconstruction restores all eight original handlers,
+their ten-entry table and the complete bank. The shared safe helper preserves
+word-rounded indices, wrapping u16 coordinates, X-before-Y order and each
+active axis's position-read, radius-read, write sequence. Inactive axes remain
+untouched. Direction lookup precedes RAM operations; invalid entries 10..15
+still panic without writes. The original dispatch operand, gates and suffix
+remain exact. Computed RAM addresses stay within the 128 KiB allocation for
+every u16 index; all references to the removed handlers/table are accounted for.
+
+Fresh impact tests pass 7840 full-RAM and ordered word-access comparisons:
+eight boundary indices, ten directions and coordinate/radius edge pairs.
+The original trace is derived from reviewed source operations; both traces
+are cross-checked against the uninstrumented original and candidate over
+all RAM. Reversed axis order, redundant inactive-axis accesses, unrounded
+indices, saturation and a wrong Y-radius source are rejected. Six invalid-
+direction cases pass. These are not exhaustive value combinations. The owner's
+separate 663200-case full-RAM sweep covers every u16 index and ten directions
+plus boundary cases; its exact source and results were reviewed, not rerun.
+
+The impact observer strips exactly to the clean candidate across all 67
+source files. Its full any% run passes 129712/0, native exit 0, reaching
+groups 0/1/2/3/4/6/7/8 exactly 22/45/224/73/26/52/303/65 times. All eight
+groups execute, with count and frame ranges checked against the pinned logs.
+Entries 5 and 9 share labels with 4 and 0; ten separate table-entry counts
+are not established. Clean and observed diagnostics retain the prior results.
+
+Independent PPU row reconstruction proves the complete 4bpp and 2bpp setup
+blocks are identical after removing a side-effect-free local initialization.
+The private helper copies those calculations exactly and returns the original
+tile-row pointers and offset. Vertical-scroll wrapping, tilemap halves,
+$7FFF word masks and normal/flipped rows stay unchanged. Both enable gates,
+window setup and drawing suffixes are exact; removed locals have no later
+uses. Returned pointers refer to the original PPU VRAM, and the extraction
+introduces no wider mutable borrow. All 67 candidate source files agree.
+The owner's 2560 whole-PPU/pixel comparisons include changed 4bpp, 2bpp and
+whole-line paths plus unchanged mode7/sprite controls. Their source, libraries,
+inputs and full-boot results were checked. Not every constructed case calls
+the changed helper, and these counts do not establish movie call-site coverage.
 
 Independent PPU source reconstruction covers all five shared window initial
 values and four complete setup sequences. Each enabled-layer return remains
@@ -1710,16 +1749,18 @@ dedicated 5544-case API checks and 24/24 site observations are recorded by
 implementation; this review verifies the source transformation. The movie
 replays do not establish frontend decoder execution coverage.
 
-The normal Cargo integration is independently built from frozen 6ea1ddb6.
-All 74 inputs, the fresh library/DLL and copied fixtures stay fixed. Only
-registry dependencies seed this checkout. Formatting, normal release
-(25.00s), host build (3.29s) and progress pass. These two families remove
-625 Rust lines and 152 c_int casts across 80 lines; raw-offset lines are
-unchanged. Unsafe functions increase by one because the shared PPU helper
-owns the four repeated raw setup sequences. Frozen totals: 207803 Rust lines,
-21415 raw-offset lines, 52628 c_int casts across 41375 lines and 6508 unsafe
-functions. This audit changes no maintained Rust or assets; later peer work
-retains its own verification.
+The normal Cargo integration is independently built from frozen 83f68b03.
+All 74 inputs, the fresh game library/DLL and copied fixtures stay fixed.
+An initial registry-cache failure was resolved by reusing only registry
+artifacts, including hard links to existing build-script executables. No
+game or host artifact was reused. Formatting, normal release
+(43.60s), host build (4.63s) and progress pass. These two families remove
+75 Rust lines, 24 raw-offset lines and 40 c_int casts across 27 lines.
+Eight unsafe impact handlers are replaced by safe code; one private unsafe
+PPU helper is added, for seven fewer unsafe functions. Other progress counters
+are unchanged. Frozen totals: 207728 Rust lines, 21391 raw-offset lines,
+52588 c_int casts across 41348 lines and 6501 unsafe functions. This audit
+changes no maintained Rust or assets; later peer work retains its own checks.
 
 The prior PLM block-mask review remains valid: all six helper sites execute,
 with 2082 air-scroll updates, 105 shared retain updates and one each for four
