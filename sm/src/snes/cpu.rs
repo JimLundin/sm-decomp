@@ -824,6 +824,18 @@ pub unsafe fn DumpCpuHistory(game: &mut Game) {
         i += 1;
     }
 }
+fn shift_accumulator_left(rotate: bool, cpu: &mut Cpu) {
+    let value = cpu.a;
+    let result = value << 1 | u16::from(rotate && cpu.c);
+    if cpu.mf {
+        cpu.c = value & 0x80 != 0;
+        cpu.a = value & 0xff00 | result & 0xff;
+    } else {
+        cpu.c = value & 0x8000 != 0;
+        cpu.a = result;
+    }
+    set_zero_negative(cpu.a, cpu.mf, cpu);
+}
 unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
     // Preserve the inherited history value of 0xffffffff when PC is zero.
     let cur_pc = (i32::from((*cpu).k) << 16 | (i32::from((*cpu).pc) - 1)) as u32;
@@ -908,14 +920,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0x0a => {
-                if (*cpu).mf {
-                    (*cpu).c = (*cpu).a & 0x80 != 0;
-                    (*cpu).a = (*cpu).a & 0xff00 | ((*cpu).a << 1 & 0xff);
-                } else {
-                    (*cpu).c = (*cpu).a & 0x8000 != 0;
-                    (*cpu).a <<= 1;
-                }
-                set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
+                shift_accumulator_left(false, &mut *cpu);
                 break;
             }
             0x0b => {
@@ -1078,15 +1083,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0x2a => {
-                let result = (u32::from((*cpu).a) << 1) | u32::from((*cpu).c);
-                if (*cpu).mf {
-                    (*cpu).c = result & 0x100 != 0;
-                    (*cpu).a = (*cpu).a & 0xff00 | (result as u16 & 0xff);
-                } else {
-                    (*cpu).c = result & 0x10000 != 0;
-                    (*cpu).a = result as u16;
-                }
-                set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
+                shift_accumulator_left(true, &mut *cpu);
                 break;
             }
             0x2b => {

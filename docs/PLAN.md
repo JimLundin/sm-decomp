@@ -9126,6 +9126,23 @@ Own maintained-source/residue delta zero; peer CPU/DMA changes are separate.
 Next: profile actual color-math conversion and sprite evaluation with explicit
 rendering, as identified by palette-span work, then optimize measured costs.
 
+CPU safe accumulator left shifts (2026-10-19): ASL and ROL call one safe
+shift_accumulator_left helper. A captured accumulator word supplies the shifted
+result and carry bit; ROL inserts the old carry. Byte mode preserves high A,
+word mode wraps, and carry/A/Z/N retain their order. Memory shift paths are
+unchanged. Independent source/arithmetic review finds no differences. Frozen
+HEAD `ca9b7692` plus this change passes 524,288 actual old/current dispatcher
+cases across every A word, both widths and both incoming carry values, checking
+flags, cycles, named CPU/bus fields and PC history. The initial temporary probe
+copied the whole Snes over uninitialized explicit padding; corrected probe
+saves/restores only three named bus fields and reruns all cases successfully.
+Corrected prefix 3,600/0 (1.48s) executes ASL/ROL 121,402/2,016 times. Clean full
+any% 129,712/0 (74.52s), native exit 0. Cargo fmt/check, full release and release-
+library builds with external SDL2, normal metadata and optimized frozen core/DLL
+builds pass. Live CPU matches verified source; Rust lines -3, other own counters
+unchanged. Arbitrary device mutations and full gameplay/render/audio coverage
+remain open. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
