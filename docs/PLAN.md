@@ -220,7 +220,7 @@ and 34 enemy definitions, on frozen 5680cde1 plus title Mode 7 fix e4ed0170.
 It includes the Energy Station refill and ends with Charge plus Spazer,
 189/199 health and 2/5 Supers. Credits remain unvisited.
 The Hi-Jump extension passes 99,191 frames with zero failures, 39 rooms
-and 37 enemy definitions, on frozen 7d0d2050 plus operand fix a0912a84.
+and 37 enemy definitions, on reviewed integration 81b2e60e.
 It reaches the Warehouse Entrance, detours through Norfair, and collects
 Hi-Jump Boots and another Energy Tank. It ends with 299/299 health,
 Charge plus Spazer and 1/5 Supers. Credits remain unvisited.
@@ -232,6 +232,29 @@ User-prioritized Waver rendering repair (2026-10-19) is complete for the
 reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
+
+Latest reviewed integration: frozen `81b2e60e` passes any% 129712/0
+(180.70s) and Hi-Jump 99191/0 (158.87s), both native exits 0. Hi-Jump
+visits 39 rooms and 37 enemy definitions; its first 90706 controller frames
+exactly equal Spazer. The same DLL resumes the previously verified Spazer
+checkpoint for the final 8485 frames (13.45s). That runtime's compatibility
+inputs match, and the newly verified full boot establishes reachability:
+both runs produce byte-identical complete continuation files at 99191.
+
+The checkpoint RAM confirms room $A9E5, state 8, X78/Y187, health 299/299,
+missiles 0/10, Supers 1/5, items 1104, beams 1004 and pose 0001, with all
+$0611..$0618 bytes zero. Hi-Jump and the Energy Tank are collected, and the
+pickup message is dismissed. Credits remain unvisited. The prior milestone's
+host observation strips exactly to its 62 reviewed source files and unchanged
+core library; its inputs and recorded hashes also pass independent inspection.
+
+All 70 new source/config/host files match Git after newline normalization.
+Source, DLL, ROM and copied inputs retain their hashes; saves are isolated
+and SM_* overrides cleared. Complete non-timing any% and Hi-Jump diagnostics
+match the reviewed routes. Formatting/check, normal Cargo release (0.39s)
+and progress pass. This check changes no maintained Rust or residue counts.
+Later gameplay cleanup retains separate verification; full credits,
+persistence and broader hardware/audio coverage remain unfinished.
 
 Waver-priority integration (2026-10-19): frozen `c1d11581` passes Waver
 58109/0 (121.00s), Spazer 90706/0 (191.24s) and any% 129712/0 (230.39s),
