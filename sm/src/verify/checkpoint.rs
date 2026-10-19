@@ -25,6 +25,7 @@ fn compatibility() -> u64 {
     let mut source = concat!(
         include_str!("checkpoint.rs"),
         include_str!("../types.rs"),
+        include_str!("../game/enemy_layouts.rs"),
         include_str!("../verify.rs"),
         include_str!("../verify_dll.rs"),
         include_str!("../main.rs"),

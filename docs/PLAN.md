@@ -51,30 +51,36 @@ state operations. Use the existing subsystem interfaces and coordinate with
 the projectile and Samus work. Temporary discovery scripts stay outside
 maintained code.
 
-Shared enemy layouts (2026-10-19): all 94 bank-local Copy/Clone repr(C)
-enemy overlays use one field-declaration template. Preserve all 3501 public
-field names and types, their order, base fields, explicit padding and arrays.
-This includes Kraid's extra word arrays and Waver's renamed fields, so earlier
-local cleanup does not exclude those variants. All 12 banks/modules retain
-their original public type paths. No gameplay operation or pointer helper moves
-into the macro. Net Rust lines -2146, including the shared template, imports
-and module registration; cast, unsafe and raw-access counts are unchanged.
+Shared enemy layouts (2026-10-19): all 96 public enemy overlays in the
+12 bank modules and types.rs use one Copy/Clone repr(C) declaration template.
+All 3684 public field names, types, order, base fields, padding and arrays
+remain exact. This includes Kraid's extra word arrays, Waver's renamed
+fields and the shared Botwoon/Mother Brain declarations. Existing public
+type paths remain intact; gameplay operations and pointer helpers stay at
+their callers.
 
-Compiler checks compare each actual new public type with the exact old Rust
-declaration: every size/alignment and all 3501 field offsets/types match. A
-deliberately wrong offset is rejected. Source/configuration audit across all
-72 original files permits only selected declarations, imports, registration
-and formatting; the shared template declares only the original structs and
-their Copy/Clone implementations. All checkpoint fingerprint inputs remain
-byte-identical. This is source consolidation, not new gameplay coverage.
+Independent review reconstructs the original 94-layout commit and checks
+every remaining source line after restoring the declarations. The two
+shared overlays reconstruct separately from their exact original Rust.
+Fresh compiler checks against the actual release library compare all 96
+sizes/alignments and 3684 offsets/types, plus Copy/Clone bounds. Deliberately
+wrong offset, field type and array length controls all fail. Net Rust lines
+-2266 across the complete family (-2146 original pass, -120 completion,
+including the checkpoint dependency); cast, unsafe and raw-access counts
+are unchanged.
 
-Frozen 9edc009c plus this pass passes full any% 129712/0
-(184.68s) and Speed Booster 148406/0 (238.75s), native exits 0,
-with stable source, DLL and fixtures. Final checkpoints remain local. The
-longer route includes Bubble Mountain, Warehouse and Varia; no shorter prefix
-is replayed separately. Formatting/check, normal release builds (33.93s frozen,
-23.13s stable workspace) and progress pass. These timings do not establish
-a build-time gain. Concurrent gameplay changes retain their own verification.
+Checkpoint compatibility now includes the shared declaration macro used
+by types.rs. Full checkpoint payloads remain byte-identical; only the
+runtime-source binding changes. An earlier-runtime checkpoint is correctly
+rejected and must be regenerated from boot. No compatibility hash is patched.
+
+Frozen 300bfd44 plus the two shared declarations and macro fingerprint
+dependency passes full any% 129712/0 (168.70s) and Speed Booster
+148406/0 (225.78s), native exits 0, with fixed source/library/DLL/fixtures.
+Formatting/check, normal release (22.25s frozen,
+39.59s stable workspace) and progress pass. The longer route contains
+the Bubble Mountain, Warehouse and Varia prefixes. This consolidation adds
+no gameplay coverage; later source changes retain their own verification.
 
 The inspected workspace has about 256,000 Rust lines, 83,800 lines containing
 `c_int` casts and 6,700 unsafe functions. Against the transpilation baseline,
@@ -1425,65 +1431,55 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `bba03350` passes
-uninterrupted full boot any% 129712/0 (144.38s) and Speed Booster
-148406/0 (192.91s), native exits 0. This adds area-dependent projectile
-properties (6fff47a8) and Ceres elevator initialization (bba03350) to reviewed
-9edc009c. Speed includes the exact Bubble Mountain, Warehouse, Varia and
-Hi-Jump prefixes; no shorter duplicate replay is run. Coverage remains
-55 rooms and 53 enemy definitions.
+Latest reviewed integration (2026-10-19): frozen `300bfd44` plus the
+two shared types.rs overlays and checkpoint macro dependency passes full
+boot any% 129712/0 (168.70s) and Speed Booster 148406/0
+(225.78s), native exits 0. This combines the reviewed area/Ceres work,
+the original 94 layouts and completion of the two shared overlays. Later
+projectile-property changes are outside this frozen source. Speed contains
+the exact Bubble Mountain, Warehouse, Varia and Hi-Jump prefixes; no shorter
+duplicate replay is run. Coverage remains 55 rooms and 53 enemy definitions.
 
-Both complete checkpoints, including every binding and serialized payload,
-are byte-identical to the reviewed 9edc009c full-boot endpoints. Runtime
-source inputs and compatibility code remain unchanged. Neither replay loads
-an earlier checkpoint. Non-timing diagnostics and coverage match exactly,
-including the known fingernail diagnostic. Speed ends in state 8, room
-$AD1B, X171/Y123, pose $0089, health 46/399, missiles 6/15, Supers 0/5,
-items $3105 and beams $1004 equipped/collected. Kraid is defeated and all
-eight coroutine bytes are zero; credits remain unexercised.
+Both complete serialized checkpoint payloads are byte-identical to the
+reviewed 300bfd44 endpoints. All ROM/input/frame/encoding/payload bindings
+match. Only the runtime-source binding changes: compatibility now includes
+the shared macro, and types.rs/checkpoint.rs reflect that dependency. All
+bindings are independently recomputed and validated. The old-runtime load
+control fails with the expected regenerate-from-boot diagnostic. Neither
+full replay loads an earlier checkpoint or patches a compatibility value.
+Non-timing diagnostics and coverage match, including the known fingernail
+diagnostic. Speed ends in state 8, room $AD1B, X171/Y123, pose $0089,
+health 46/399, missiles 6/15, Supers 0/5, items $3105 and beams $1004
+equipped/collected. Kraid is defeated and all eight coroutine bytes are zero.
 
-Independent area-property review reconstructs the complete one-store
-commit. ROM pointer selection, repeated area reads and the selected word
-load precede the same captured-slot property write. The pointer derives
-from the separate ROM allocation. Fresh exact-routine controls pass 655360
-full-RAM/read-trace cases over two patterns, sweeping all slot/table indices,
-all area words and all selected property words individually. These are not
-their Cartesian product. Wrong scaling, one-byte writes, caching the area
-read and selecting the wrong table word each fail. Raw original accesses
-retain the native x86-64 qualification. The dedicated retained source
-reconstructs from its frozen base; all 73 pins match. Its 62 observed
-store hits pass with native exit 0 and matching non-timing diagnostics.
+The original 94 bank-local declarations reconstruct with every field and
+all surrounding source intact, including Kraid arrays and Waver renames.
+The wider inventory found two equivalent declarations in types.rs; both
+now use the same template. Independent expansion recovers those exact
+183 fields and all other type definitions. Only these two declarations,
+their macro import and one checkpoint source dependency change in this
+completion. The macro emits only the same public repr(C) structs and
+Copy/Clone derives. It contains no gameplay or RAM operations.
 
-Independent Ceres review reconstructs all three committed routines and
-the entire observed source. Existing controls and all mutant sources
-reconstruct exactly; their pinned binaries, logs and exits match. The
-393216 cases make 1572864 full-RAM comparisons and check surrounding guards,
-with 524288 reads and 2752512 ordered stores in each original/candidate
-trace. Original word targets have asserted alignment; candidate RAM uses
-both parities. Slot indices and Samus X/Y words are exhaustive individually.
-Reordered clears, early X reads, byte writes, wrong scaling and saturating
-Y arithmetic fail. All three safe function pointers compile, while the
-unsafe-signature control fails. Caller review finds only direct dispatch;
-the pointer carried through spawn setup refers to ROM, not RAM.
+Fresh compiler checks cover all 96 actual public types: every size,
+alignment, all 3684 field offsets/types and Copy/Clone bounds agree with
+the old declarations. Wrong-offset, wrong-field-type and wrong-array-length
+controls fail as intended. The unextended 300bfd44 integration separately
+passed any% 129712/0 and Speed Booster 148406/0 with identical whole
+checkpoints. Source consolidation supplies no new gameplay coverage.
 
-All nine Ceres sites execute at input 8323: pad/platform stores once each
-and shared stores twice each, 15 writes total. Both complete-RAM comparisons
-pass at every observed store. Clean/observed non-timing diagnostics agree,
-and all dedicated complete checkpoints equal the earlier reviewed endpoints.
-All 191 checked Ceres source, control, binary, fixture and result pins match.
+All 74 frozen source/configuration/host/progress files, Cargo library,
+DLL and copied fixtures stay fixed. Only registry dependencies seed the
+checkout. Formatting, normal release (22.25s), host build
+(5.25s) and progress pass. Workspace format/build/progress also pass
+with unchanged source during the checks. Completion removes another 120
+Rust lines, including the checkpoint dependency, for 2266 across this
+family. Frozen totals: 212169 Rust lines, 21569 raw-offset lines, 65288
+c_int casts across 49453 lines and 6517 unsafe functions. No probes,
+fixtures, ROM-derived data or temporary audit scripts are committed.
 
-All 73 integration source/configuration/host/progress files, Cargo library,
-DLL and copied fixtures stay fixed. Only registry dependencies seed this
-checkout. Formatting, normal release (29.07s), host build
-(2.30s) and progress pass. Net change: seven fewer Rust lines, ten
-fewer raw-offset lines, two fewer c_int casts and three fewer unsafe
-functions. Frozen totals: 214435 Rust lines, 21569 raw-offset lines, 65288
-c_int casts across 49453 lines and 6517 unsafe functions. This audit changes
-no maintained Rust or committed assets. Earlier reviews retain their
-recorded coverage limits.
-
-Later source changes, including the enemy-layout consolidation, need their
-own integration. Remaining bosses, credits, persistence and broader
+Later source changes need their own integration. Earlier reviews retain
+their coverage limits. Remaining bosses, credits, persistence and broader
 hardware/audio coverage remain unfinished.
 
 Earlier reviewed integration: frozen `64e8d165` passes full any% 129712/0
