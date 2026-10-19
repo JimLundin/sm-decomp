@@ -12144,6 +12144,23 @@ behavior. No maintained source/residue changes or ROM-derived assets belong
 to this review. The owner has applied the candidate and is verifying full
 movies; that integration remains separate from these frozen kernel checks.
 
+Independent X-ray mask boundary/recovery controls (2026-10-19): retained
+a761a09e plus the final Waver candidate and temporary mask bypass passes12
+actual252-frame controls. Injecting one snapshot-byte fault at9101/92CC/
+9801/99CC remains hidden by the existing masks; faults at92CE/99CE are
+detected with masks active. Bypassing the three table copies detects each
+of those six offsets exactly once at28228, with no cascade through28479.
+This proves boundary detection and recovery in the retained snapshot repro,
+not full normal-boot mask-removal equivalence. The quality session owns
+the full mask-bypass movies and production decision. Final candidate clean
+standard any%129712/0 (245.10s) and Waver58109/0 (118.39s) both exit0;
+the separate full instrumented Waver reports zero raw9100/9800/window
+differences on58109 frames, on/offscreen177/75. Source identity/integration
+remain owned by implementation. The newly poisoned scratch review qualifies
+earlier store-order claims; zero-scratch kernels do not prove unconditional
+intermediate write equivalence. No maintained Rust/residue changes or
+ROM-derived assets committed by this review.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
