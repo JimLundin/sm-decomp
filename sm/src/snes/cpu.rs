@@ -418,14 +418,15 @@ unsafe fn address_absolute_y(cpu: *mut Cpu, write: bool, game: &mut Game) -> (u3
     (low, low.wrapping_add(1) & 0xffffff)
 }
 unsafe fn address_absolute_long(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
-    let mut adr = u32::from(fetch_word(cpu, game));
-    adr |= u32::from(fetch_byte(cpu, game)) << 16;
-    let low = adr;
-    (low, adr.wrapping_add(1) & 0xffffff)
+    let offset = fetch_word(cpu, game);
+    let bank = fetch_byte(cpu, game);
+    let low = u32::from(bank) << 16 | u32::from(offset);
+    (low, low.wrapping_add(1) & 0xffffff)
 }
 unsafe fn address_absolute_long_x(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
-    let mut adr = u32::from(fetch_word(cpu, game));
-    adr |= u32::from(fetch_byte(cpu, game)) << 16;
+    let offset = fetch_word(cpu, game);
+    let bank = fetch_byte(cpu, game);
+    let adr = u32::from(bank) << 16 | u32::from(offset);
     let low = adr.wrapping_add(u32::from((*cpu).x)) & 0xffffff;
     (low, low.wrapping_add(1) & 0xffffff)
 }

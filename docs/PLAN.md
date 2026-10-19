@@ -8983,6 +8983,21 @@ lines and 257,471 Rust lines. This documentation-only change adds no source
 residue. Gameplay coverage still spans six rooms/three enemy definitions;
 credits, renderer/audio fidelity and masked RAM remain unfinished.
 
+CPU long-address operand assembly (2026-10-19): absolute-long and long-X
+helpers fetch named immutable offset and bank values, then assemble the address.
+Word-before-bank fetch order, live X read after both fetches and 24-bit wrapping
+remain exact. Frozen HEAD `e8878518` plus this change passes 41,418,752 actual
+old/current helper cases over every 24-bit operand and full boundary indexes,
+checking PC/cycle wrapping and named CPU/bus state. Prefix 3,600/0 (1.17s)
+executes the helpers 2,418/293,365 times. Clean full any% 129,712/0 (64.67s),
+native exit 0. Independent session source/probe review finds no differences.
+Cargo fmt/check, full release and release-library builds with the external SDL2
+library path, normal metadata and optimized frozen core/DLL builds pass. Live
+CPU matches verified source; peer DMA/SNES edits are outside this replay.
+Rust lines +1 name both operand components; other own counters unchanged.
+Full operand/index Cartesian coverage, arbitrary device mutation, gameplay and
+rendering/audio completion remain open. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
