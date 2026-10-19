@@ -15970,6 +15970,31 @@ Rust lines-5; raw offsets, unsafe functions and other own counters unchanged.
 No probes/artifacts committed. Further projectile cleanup and broader
 gameplay/credits, hardware/audio/masks and ownership remain unfinished.
 
+Enemy-projectile slot loop (2026-10-19): EprojRunAll uses optional u16
+slots and checked subtraction instead of promoted signed integers. Stores
+still precede ID reads, callbacks still precede live index rereads, and the
+next slot uses that reread. No18-slot bounds restriction is introduced.
+Callback values0/1 terminate exactly as negative old-loop subtraction did;
+all other u16 values preserve the descending next slot.
+
+Frozen 21d35ef3 plus only this change passes
+any%129712/0 (255.18s) and Warehouse128547/0 (276.06s),
+native exits0. Observed Warehouse128547/0 (330.54s) executes
+1854468 slot iterations and 107845 callback/index rereads;
+enabled/disabled gate observations 103026/0, next/end
+1751442/103026. Each next-slot result matches the original
+i32 subtraction predicate in context. All65536 returned indices also pass
+that equivalence;20 exact-loop controls compare complete RAM and callback
+traces for empty/active slots and odd/high callback indices with a controlled
+callback. These controls supplement actual gameplay, not replace it.
+
+Clean/observed non-timing diagnostics match after stripping; frozen source,
+DLL/ROM/input hashes remain stable and maintained body matches. Cargo
+fmt/check, normal release build and progress pass. Cast lines-4; Rust lines,
+raw offsets, unsafe functions and other own counters unchanged. No probes
+or artifacts committed. Broader gameplay/credits, hardware/audio/masks and
+ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

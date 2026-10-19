@@ -914,14 +914,14 @@ unsafe fn EprojRunOne(k: uint16, game: &mut Game) {
 }
 pub unsafe fn EprojRunAll(game: &mut Game) {
     if EprojState(&game.g_ram).enabled() {
-        let mut i: ::core::ffi::c_int = 34 as ::core::ffi::c_int;
-        while i >= 0 as ::core::ffi::c_int {
-            EprojStateMut(&mut game.g_ram).set_index(i as u16);
-            if EprojState(&game.g_ram).id((i >> 1) as usize) != 0 {
-                EprojRunOne(i as uint16, game);
-                i = EprojState(&game.g_ram).index() as ::core::ffi::c_int;
+        let mut index = Some(34u16);
+        while let Some(mut slot) = index {
+            EprojStateMut(&mut game.g_ram).set_index(slot);
+            if EprojState(&game.g_ram).id(usize::from(slot >> 1)) != 0 {
+                EprojRunOne(slot, game);
+                slot = EprojState(&game.g_ram).index();
             }
-            i -= 2 as ::core::ffi::c_int;
+            index = slot.checked_sub(2);
         }
     }
 }
