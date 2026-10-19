@@ -18007,6 +18007,38 @@ and actual raw accesses are unchanged. Neither fixture reaches credits.
 No probes or ROM-derived assets committed. Continue larger coherent families
 and normal-input coverage; hardware/audio/masks and ownership remain open.
 
+PPU tile-row loading family (2026-10-19): jscpd normalized clone
+discovery and ast-grep complete CST draw routines select all six repeated
+priority/row/load sequences across 2bpp/4bpp leading/full/trailing paths.
+One private const-generic helper chooses the normal/flipped row and priority,
+computes the wrapping tile offset with the original 0x7fff mask, then reads
+the first word and, for four planes, the second word at +8. Returned bits
+and priority replace caller temporaries; the two unused addr declarations
+are removed. Palette updates, transparency/priority tests and pixel stores
+retain their positions. The second plane address remains unmasked exactly
+as before; valid hardware row alignment controls that access.
+
+Extracted original/current load sequences and an independent widened address
+model agree in 1048576 comparisons: every tile word, eight row boundaries,
+both bit depths, distinct VRAM words and varied priorities. Synthetic padding
+permits arithmetic-boundary probes beyond valid hardware row alignments;
+this is not proof of arbitrary caller pointer validity. Actual original/current
+draw routines agree in 12288 complete initialized PPU-state/pixel comparisons
+across six paths, 1024 seeds and masked/unmasked screens, including both
+changed bit-depth paths and complete-line drawing. Their resulting pixels
+match with varying tile/window/scroll inputs and flips.
+
+Frozen bf562b75 plus only this change passes full any% 129712/0
+(208.55s) and Speed Booster 148406/0 (281.86s), native exits 0,
+with stable source/library/DLL/ROM/movie hashes. Complete-source reconstruction
+permits only these sequences, helper and unused declarations; all other
+frozen sources match. Cargo fmt/check, normal release (14.7s, native exit 0),
+diff check and progress pass. Own Rust lines -70, c_int cast lines -18;
+unsafe functions +1 because one helper centralizes six raw load sequences.
+No RAM/layout change, temporary probe or ROM-derived asset is committed.
+Neither movie reaches credits; broader readability, hardware/audio/masks,
+ownership and normal-input coverage remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

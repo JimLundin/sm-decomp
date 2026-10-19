@@ -461,6 +461,28 @@ fn ppu_planar_pixel<const PLANES: u32>(bits: u32, shift: u32) -> i32 {
         pixel as i32
     }
 }
+unsafe fn ppu_load_tile_row<const PLANES: u32>(
+    ppu: *mut Ppu,
+    tile: u32,
+    tileadr0: i32,
+    tileadr1: i32,
+    zhi: PpuZbufType,
+    zlo: PpuZbufType,
+) -> (PpuZbufType, u32) {
+    let row = if tile & 0x8000 != 0 {
+        tileadr1
+    } else {
+        tileadr0
+    };
+    let priority = if tile & 0x2000 != 0 { zhi } else { zlo };
+    let address = (row as u32).wrapping_add((tile & 0x3ff).wrapping_mul(PLANES * 4)) & 0x7fff;
+    let words = (&raw mut (*ppu).vram as *mut uint16_t).offset(address as isize);
+    let mut bits = *words as u32;
+    if PLANES == 4 {
+        bits |= (*words.offset(8) as u32) << 16;
+    }
+    (priority, bits)
+}
 unsafe fn PpuDrawBackground_4bpp(
     mut ppu: *mut Ppu,
     mut y: uint,
@@ -479,7 +501,6 @@ unsafe fn PpuDrawBackground_4bpp(
         (&raw mut (*ppu).bgLayer as *mut BgLayer).offset(layer as isize) as *mut BgLayer;
     let (mut tps, mut tileadr0, mut tileadr1) = ppu_background_row(ppu, bglayer, y, layer);
     let mut pixel: ::core::ffi::c_int = 0;
-    let mut addr: *const uint16 = ::core::ptr::null::<uint16>();
     let mut windex: size_t = 0 as size_t;
     while windex < win.nr as size_t {
         if !(win.bits as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << windex != 0) {
@@ -514,24 +535,8 @@ unsafe fn PpuDrawBackground_4bpp(
                     tp_next = tp_last.offset(-(31 as ::core::ffi::c_int as isize));
                     tp_last = tp.offset(31);
                 }
-                let mut ta: ::core::ffi::c_int = if tile & 0x8000 as uint32 != 0 {
-                    tileadr1
-                } else {
-                    tileadr0
-                };
-                let mut z: PpuZbufType = (if tile & 0x2000 as uint32 != 0 {
-                    zhi as ::core::ffi::c_int
-                } else {
-                    zlo as ::core::ffi::c_int
-                }) as PpuZbufType;
-                addr = (&raw mut (*ppu).vram as *mut uint16_t).offset(
-                    ((ta as uint32)
-                        .wrapping_add((tile & 0x3ff as uint32).wrapping_mul(16 as uint32))
-                        & 0x7fff as uint32) as isize,
-                ) as *mut uint16_t;
-                let mut bits: uint32 = (*addr.offset(0) as ::core::ffi::c_int
-                    | (*addr.offset(8) as ::core::ffi::c_int) << 16 as ::core::ffi::c_int)
-                    as uint32;
+                let (mut z, mut bits) =
+                    ppu_load_tile_row::<4>(ppu, tile, tileadr0, tileadr1, zhi, zlo);
                 if bits != 0 {
                     z = (z as uint32).wrapping_add(
                         (tile & 0x1c00 as uint32) >> kPaletteShift_0 as ::core::ffi::c_int,
@@ -587,24 +592,8 @@ unsafe fn PpuDrawBackground_4bpp(
                     tp_next = tp_last.offset(-(31 as ::core::ffi::c_int as isize));
                     tp_last = tp.offset(31);
                 }
-                let mut ta_0: ::core::ffi::c_int = if tile_0 & 0x8000 as uint32 != 0 {
-                    tileadr1
-                } else {
-                    tileadr0
-                };
-                let mut z_0: PpuZbufType = (if tile_0 & 0x2000 as uint32 != 0 {
-                    zhi as ::core::ffi::c_int
-                } else {
-                    zlo as ::core::ffi::c_int
-                }) as PpuZbufType;
-                addr = (&raw mut (*ppu).vram as *mut uint16_t).offset(
-                    ((ta_0 as uint32)
-                        .wrapping_add((tile_0 & 0x3ff as uint32).wrapping_mul(16 as uint32))
-                        & 0x7fff as uint32) as isize,
-                ) as *mut uint16_t;
-                let mut bits_0: uint32 = (*addr.offset(0) as ::core::ffi::c_int
-                    | (*addr.offset(8) as ::core::ffi::c_int) << 16 as ::core::ffi::c_int)
-                    as uint32;
+                let (mut z_0, mut bits_0) =
+                    ppu_load_tile_row::<4>(ppu, tile_0, tileadr0, tileadr1, zhi, zlo);
                 if bits_0 != 0 {
                     z_0 = (z_0 as uint32).wrapping_add(
                         (tile_0 & 0x1c00 as uint32) >> kPaletteShift_0 as ::core::ffi::c_int,
@@ -738,24 +727,8 @@ unsafe fn PpuDrawBackground_4bpp(
             }
             if w != 0 {
                 let mut tile_1: uint32 = *tp as uint32;
-                let mut ta_1: ::core::ffi::c_int = if tile_1 & 0x8000 as uint32 != 0 {
-                    tileadr1
-                } else {
-                    tileadr0
-                };
-                let mut z_1: PpuZbufType = (if tile_1 & 0x2000 as uint32 != 0 {
-                    zhi as ::core::ffi::c_int
-                } else {
-                    zlo as ::core::ffi::c_int
-                }) as PpuZbufType;
-                addr = (&raw mut (*ppu).vram as *mut uint16_t).offset(
-                    ((ta_1 as uint32)
-                        .wrapping_add((tile_1 & 0x3ff as uint32).wrapping_mul(16 as uint32))
-                        & 0x7fff as uint32) as isize,
-                ) as *mut uint16_t;
-                let mut bits_1: uint32 = (*addr.offset(0) as ::core::ffi::c_int
-                    | (*addr.offset(8) as ::core::ffi::c_int) << 16 as ::core::ffi::c_int)
-                    as uint32;
+                let (mut z_1, mut bits_1) =
+                    ppu_load_tile_row::<4>(ppu, tile_1, tileadr0, tileadr1, zhi, zlo);
                 if bits_1 != 0 {
                     z_1 = (z_1 as uint32).wrapping_add(
                         (tile_1 & 0x1c00 as uint32) >> kPaletteShift_0 as ::core::ffi::c_int,
@@ -820,7 +793,6 @@ unsafe fn PpuDrawBackground_2bpp(
         (&raw mut (*ppu).bgLayer as *mut BgLayer).offset(layer as isize) as *mut BgLayer;
     let (mut tps, mut tileadr0, mut tileadr1) = ppu_background_row(ppu, bglayer, y, layer);
     let mut pixel: ::core::ffi::c_int = 0;
-    let mut addr: *const uint16 = ::core::ptr::null::<uint16>();
     let mut windex: size_t = 0 as size_t;
     while windex < win.nr as size_t {
         if !(win.bits as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << windex != 0) {
@@ -855,22 +827,8 @@ unsafe fn PpuDrawBackground_2bpp(
                     tp_next = tp_last.offset(-(31 as ::core::ffi::c_int as isize));
                     tp_last = tp.offset(31);
                 }
-                let mut ta: ::core::ffi::c_int = if tile & 0x8000 as uint32 != 0 {
-                    tileadr1
-                } else {
-                    tileadr0
-                };
-                let mut z: PpuZbufType = (if tile & 0x2000 as uint32 != 0 {
-                    zhi as ::core::ffi::c_int
-                } else {
-                    zlo as ::core::ffi::c_int
-                }) as PpuZbufType;
-                addr = (&raw mut (*ppu).vram as *mut uint16_t).offset(
-                    ((ta as uint32)
-                        .wrapping_add((tile & 0x3ff as uint32).wrapping_mul(8 as uint32))
-                        & 0x7fff as uint32) as isize,
-                ) as *mut uint16_t;
-                let mut bits: uint32 = *addr.offset(0) as uint32;
+                let (mut z, mut bits) =
+                    ppu_load_tile_row::<2>(ppu, tile, tileadr0, tileadr1, zhi, zlo);
                 if bits != 0 {
                     z = (z as uint32).wrapping_add(
                         (tile & 0x1c00 as uint32) >> kPaletteShift as ::core::ffi::c_int,
@@ -923,22 +881,8 @@ unsafe fn PpuDrawBackground_2bpp(
                     tp_next = tp_last.offset(-(31 as ::core::ffi::c_int as isize));
                     tp_last = tp.offset(31);
                 }
-                let mut ta_0: ::core::ffi::c_int = if tile_0 & 0x8000 as uint32 != 0 {
-                    tileadr1
-                } else {
-                    tileadr0
-                };
-                let mut z_0: PpuZbufType = (if tile_0 & 0x2000 as uint32 != 0 {
-                    zhi as ::core::ffi::c_int
-                } else {
-                    zlo as ::core::ffi::c_int
-                }) as PpuZbufType;
-                addr = (&raw mut (*ppu).vram as *mut uint16_t).offset(
-                    ((ta_0 as uint32)
-                        .wrapping_add((tile_0 & 0x3ff as uint32).wrapping_mul(8 as uint32))
-                        & 0x7fff as uint32) as isize,
-                ) as *mut uint16_t;
-                let mut bits_0: uint32 = *addr.offset(0) as uint32;
+                let (mut z_0, mut bits_0) =
+                    ppu_load_tile_row::<2>(ppu, tile_0, tileadr0, tileadr1, zhi, zlo);
                 if bits_0 != 0 {
                     z_0 = (z_0 as uint32).wrapping_add(
                         (tile_0 & 0x1c00 as uint32) >> kPaletteShift as ::core::ffi::c_int,
@@ -1048,22 +992,8 @@ unsafe fn PpuDrawBackground_2bpp(
             }
             if w != 0 {
                 let mut tile_1: uint32 = *tp as uint32;
-                let mut ta_1: ::core::ffi::c_int = if tile_1 & 0x8000 as uint32 != 0 {
-                    tileadr1
-                } else {
-                    tileadr0
-                };
-                let mut z_1: PpuZbufType = (if tile_1 & 0x2000 as uint32 != 0 {
-                    zhi as ::core::ffi::c_int
-                } else {
-                    zlo as ::core::ffi::c_int
-                }) as PpuZbufType;
-                addr = (&raw mut (*ppu).vram as *mut uint16_t).offset(
-                    ((ta_1 as uint32)
-                        .wrapping_add((tile_1 & 0x3ff as uint32).wrapping_mul(8 as uint32))
-                        & 0x7fff as uint32) as isize,
-                ) as *mut uint16_t;
-                let mut bits_1: uint32 = *addr.offset(0) as uint32;
+                let (mut z_1, mut bits_1) =
+                    ppu_load_tile_row::<2>(ppu, tile_1, tileadr0, tileadr1, zhi, zlo);
                 if bits_1 != 0 {
                     z_1 = (z_1 as uint32).wrapping_add(
                         (tile_1 & 0x1c00 as uint32) >> kPaletteShift as ::core::ffi::c_int,
