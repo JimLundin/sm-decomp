@@ -475,16 +475,16 @@ unsafe fn xor_accumulator(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
 unsafe fn add_with_carry(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
         let value: u8 = read_byte(cpu, low, game);
-        let mut result: i32;
-        if (*cpu).d {
-            result = (i32::from((*cpu).a) & 0xf) + (i32::from(value) & 0xf) + i32::from((*cpu).c);
+        let mut result = if (*cpu).d {
+            let mut result =
+                (i32::from((*cpu).a) & 0xf) + (i32::from(value) & 0xf) + i32::from((*cpu).c);
             if result > 0x9 {
                 result = (result + 0x6 & 0xf) + 0x10;
             }
-            result = (i32::from((*cpu).a) & 0xf0) + (i32::from(value) & 0xf0) + result;
+            (i32::from((*cpu).a) & 0xf0) + (i32::from(value) & 0xf0) + result
         } else {
-            result = (i32::from((*cpu).a) & 0xff) + i32::from(value) + i32::from((*cpu).c);
-        }
+            (i32::from((*cpu).a) & 0xff) + i32::from(value) + i32::from((*cpu).c)
+        };
         (*cpu).v = i32::from((*cpu).a) & 0x80 == i32::from(value) & 0x80
             && i32::from(value) & 0x80 != result & 0x80;
         if (*cpu).d && result > 0x9f {
@@ -495,9 +495,9 @@ unsafe fn add_with_carry(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
         let value: u16 = read_word(cpu, low, high, game);
-        let mut result: i32;
-        if (*cpu).d {
-            result = (i32::from((*cpu).a) & 0xf) + (i32::from(value) & 0xf) + i32::from((*cpu).c);
+        let mut result = if (*cpu).d {
+            let mut result =
+                (i32::from((*cpu).a) & 0xf) + (i32::from(value) & 0xf) + i32::from((*cpu).c);
             if result > 0x9 {
                 result = (result + 0x6 & 0xf) + 0x10;
             }
@@ -509,10 +509,10 @@ unsafe fn add_with_carry(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
             if result > 0x9ff {
                 result = (result + 0x600 & 0xfff) + 0x1000;
             }
-            result = (i32::from((*cpu).a) & 0xf000) + (i32::from(value) & 0xf000) + result;
+            (i32::from((*cpu).a) & 0xf000) + (i32::from(value) & 0xf000) + result
         } else {
-            result = i32::from((*cpu).a) + i32::from(value) + i32::from((*cpu).c);
-        }
+            i32::from((*cpu).a) + i32::from(value) + i32::from((*cpu).c)
+        };
         (*cpu).v = i32::from((*cpu).a) & 0x8000 == i32::from(value) & 0x8000
             && i32::from(value) & 0x8000 != result & 0x8000;
         if (*cpu).d && result > 0x9fff {
@@ -526,16 +526,16 @@ unsafe fn add_with_carry(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
 unsafe fn subtract_with_carry(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
         let value = !read_byte(cpu, low, game);
-        let mut result: i32;
-        if (*cpu).d {
-            result = (i32::from((*cpu).a) & 0xf) + (i32::from(value) & 0xf) + i32::from((*cpu).c);
+        let mut result = if (*cpu).d {
+            let mut result =
+                (i32::from((*cpu).a) & 0xf) + (i32::from(value) & 0xf) + i32::from((*cpu).c);
             if result < 0x10 {
                 result = result - 0x6 & (if (result - 0x6) < 0 { 0xf } else { 0x1f });
             }
-            result = (i32::from((*cpu).a) & 0xf0) + (i32::from(value) & 0xf0) + result;
+            (i32::from((*cpu).a) & 0xf0) + (i32::from(value) & 0xf0) + result
         } else {
-            result = (i32::from((*cpu).a) & 0xff) + i32::from(value) + i32::from((*cpu).c);
-        }
+            (i32::from((*cpu).a) & 0xff) + i32::from(value) + i32::from((*cpu).c)
+        };
         (*cpu).v = i32::from((*cpu).a) & 0x80 == i32::from(value) & 0x80
             && i32::from(value) & 0x80 != result & 0x80;
         if (*cpu).d && result < 0x100 {
@@ -546,9 +546,9 @@ unsafe fn subtract_with_carry(cpu: *mut Cpu, low: u32, high: u32, game: &mut Gam
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
         let value = !read_word(cpu, low, high, game);
-        let mut result: i32;
-        if (*cpu).d {
-            result = (i32::from((*cpu).a) & 0xf) + (i32::from(value) & 0xf) + i32::from((*cpu).c);
+        let mut result = if (*cpu).d {
+            let mut result =
+                (i32::from((*cpu).a) & 0xf) + (i32::from(value) & 0xf) + i32::from((*cpu).c);
             if result < 0x10 {
                 result = result - 0x6 & (if (result - 0x6) < 0 { 0xf } else { 0x1f });
             }
@@ -560,10 +560,10 @@ unsafe fn subtract_with_carry(cpu: *mut Cpu, low: u32, high: u32, game: &mut Gam
             if result < 0x1000 {
                 result = result - 0x600 & (if (result - 0x600) < 0 { 0xfff } else { 0x1fff });
             }
-            result = (i32::from((*cpu).a) & 0xf000) + (i32::from(value) & 0xf000) + result;
+            (i32::from((*cpu).a) & 0xf000) + (i32::from(value) & 0xf000) + result
         } else {
-            result = i32::from((*cpu).a) + i32::from(value) + i32::from((*cpu).c);
-        }
+            i32::from((*cpu).a) + i32::from(value) + i32::from((*cpu).c)
+        };
         (*cpu).v = i32::from((*cpu).a) & 0x8000 == i32::from(value) & 0x8000
             && i32::from(value) & 0x8000 != result & 0x8000;
         if (*cpu).d && result < 0x10000 {
