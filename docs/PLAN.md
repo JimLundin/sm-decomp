@@ -107,6 +107,14 @@ word 8 store at $00A7 and E310 transition at $099C, preserving byte-backed layou
 This verifies the frozen change; subsequent door-alignment and CPU edits
 remain separate work.
 
+Independent door-alignment QC (2026-10-19): commit 78d0c0c8 matches the
+verified source snapshots after removing temporary counters. A separate
+Waver replay with complete diagnostics passes 58109/71 (100.79s), native
+exit 1; all 71 ordered failure diagnostics match the explicit-render baseline.
+It executes 85 alignment calls, including four already-aligned X calls.
+X movement remains unexercised by these movies. Source review preserves
+the pre-step alignment gate, wrapping coordinate step and callback/store order.
+
 ## The oracle
 
 Verifier SRAM isolation (2026-10-19): RtlWriteSram now skips host file writes
