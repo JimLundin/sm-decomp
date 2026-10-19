@@ -369,6 +369,24 @@ sprite tile frequency and an early return inside the span helper, preserving
 caller sprite limits, overflow flags and VRAM reads. Existing oracle and
 complete gameplay/audio coverage gaps remain.
 
+Transparent sprite shortcut experiment (2026-10-19): a temporary plane-zero
+return inside draw_sprite_tile_span preserves caller tile/sprite counts, VRAM
+reads and overflow handling. Frozen 46de2654 actual old/current evaluation
+passes 20000/0 with 8,887,424 complete object-buffer, overflow-flag and return
+comparisons. It counts 1,344,556 transparent spans versus 12,757,770 nonzero
+spans, skipping 10,662,082 pixel iterations. Only initialized object data and
+the two sticky flags are copied; the safe backdrop fill remains in both paths.
+Independent source/probe review passes. Counter-free baseline/candidate/
+candidate/baseline runs, each pinned to eligible logical CPU0, all pass 20000/0.
+Wall seconds 19.091/20.353/21.124/18.500 and process CPU seconds
+18.046875/18.171875/18.906250/17.515625 favor the baseline in both pairs:
+candidate means are 10.34% slower elapsed and 4.26% higher CPU cost. Shared
+load, SMT and clocks remain uncontrolled. The candidate is not adopted;
+maintained Rust and residue counters are unchanged. Temporary checks and
+timing outputs stay outside the checkout. This experiment adds no full-movie
+claim. Next: refresh the committed renderer profile before choosing another
+optimization; branch overhead cannot be inferred from these timings alone.
+
 The binary contains two complete implementations of each frame:
 
 - **theirs**: the original ROM code, run on the emulated 65816 in `sm/src/snes`.
