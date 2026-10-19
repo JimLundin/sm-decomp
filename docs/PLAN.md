@@ -947,37 +947,50 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `1458fe46` passes
-uninterrupted full boot any% 129712/0 (220.92s) and Bubble Mountain
-138749/0 (289.81s), native exits 0. This closes five source commits since
-83b7ac7e: projectile spawn stores, fixed word declarations, instruction
-widths, message-box coroutines and Boolean truth tests. Bubble Mountain
-includes the exact Warehouse/Varia/Hi-Jump prefixes, visiting 52 rooms and
-52 enemy definitions. Kraid is defeated and Varia remains equipped.
+Latest reviewed integration (2026-10-19): frozen `59d9066a` passes
+uninterrupted full boot any% 129712/0 (223.51s) and Bubble Mountain
+138749/0 (268.10s), native exits 0. This closes seven source commits
+since 1458fe46: live enemy fields, slot iteration, shared SNES registers,
+projectile child initialization, priority drawing, collision state and
+fireball child velocities. Bubble Mountain includes the exact Warehouse,
+Varia and Hi-Jump prefixes, visiting 52 rooms and 52 enemy definitions.
 
-Final state 8 is room $ACB3, X55/Y651, pose $0001, health 3/399,
-missiles 12/15, Supers 1/5, items $1105 and beams $1004. The Warehouse
-Energy Tank is retained, Kraid's defeated bit stays set and all eight
-coroutine bytes are zero. Both complete serialized continuation payloads
-match the prior verified endpoints: any% on 83b7ac7e, and Bubble Mountain
-on 40b4f9fa plus the message-box coroutine change. The latter was reached
-through its own full-boot Warehouse checkpoint and 10202-frame suffix;
-the new uninterrupted replay reaches the same state from boot.
-All checkpoint bindings agree. Neither new run loads a checkpoint.
+Both complete serialized continuation payloads match the prior 1458fe46
+endpoints byte for byte. All bindings validate; the runtime fingerprint
+changes with the shared-register source binding. Neither replay loads an
+earlier checkpoint. Bubble Mountain still ends in state 8, room $ACB3,
+X55/Y651, pose $0001, health 3/399, missiles 12/15, Supers 1/5,
+items $1105 and beams $1004. The Warehouse Energy Tank is retained and
+Kraid's defeated bit stays set; all eight coroutine bytes are zero. Non-timing
+diagnostics match both prior runs, including the known fingernail warning.
 
-All 70 source/configuration/host files, Cargo library, DLL and copied fixtures
-stay fixed. Only registry dependencies seed the isolated checkout. Formatting,
-normal release (29.65s), host build (2.66s) and progress pass. The batch removes
-889 Rust lines, 45 raw-access expressions, 190 promotion casts and two
-unsafe functions. Independent source comparison confirms the six committed
-message-box bodies exactly match their exercised clean candidate, with no
-other source change in that commit. This audit changes no maintained Rust.
+Independent slot-loop review reconstructs 44b8acc7 and its frozen source.
+The extracted old/new loops match complete RAM and callback traces in
+458762 cases: every gate word, every callback-returned index with both
+terminal values, callback-created slots and callback changes to the enable
+flag. Skipped-index-reread and signed-high-index variants fail. Every one
+of the recorded 1854468 slot transitions follows the original subtraction
+rule, including 107845 callback rereads. Natural disabled-gate coverage
+remains zero; the constructed cases cover that gate separately.
 
-The known fingernail warning remains; credits are unvisited. Earlier probes
-retain their caller/branch coverage limits. Newer enemy-field, slot-loop and
-hardware changes retain separate integration checks. Route continuation needs
-health recovery before Speed Booster; remaining bosses, credits, persistence
-and broader hardware/audio coverage remain unfinished.
+Independent register review preserves all 2496 public names, SnesRegs types
+and values across 12 modules. Each original public path compiles against
+the integration library; a deliberately wrong expected value fails. Source
+comparison permits only shared declarations/reexports, formatting, module
+registration and the checkpoint source binding.
+
+All 72 source/configuration/host/progress files, Cargo library, DLL and
+copied fixtures stay fixed. Only registry dependencies seed this checkout.
+Formatting, normal release (42.41s), host build
+(2.14s) and progress pass. The batch removes 2305 Rust
+lines, 37 raw-offset lines and 51 promotion casts (43 cast lines); unsafe
+function count is unchanged. This audit changes no maintained Rust.
+
+Credits remain unvisited, and earlier observations retain their branch and
+caller coverage limits. Newer gameplay-definition and projectile changes
+need their own integration. Route continuation needs health recovery before
+Speed Booster; remaining bosses, credits, persistence and broader hardware/
+audio coverage remain unfinished.
 
 Earlier reviewed integration: frozen `64e8d165` passes full any% 129712/0
 (184.20s) and Kraid phase two 119823/0 (195.59s), native exits 0. This
