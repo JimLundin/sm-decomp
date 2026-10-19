@@ -23,6 +23,14 @@ Complete gameplay, audio timing and masked RAM remain unverified. Historical
 zero-failure Waver runs made before the render initialization fix do not
 establish rendering equivalence.
 
+Latest integrated check: frozen `7551cdf8` combines the committed CPU long
+address wrappers, door scrolling setup, color-math span and SNES initialization
+fixes. With only full failure reporting enabled, it passes any% 129712/0
+(162.73s), native exit 0, and Waver 58109/71 (85.80s), native exit 1. All 71
+ordered Waver failure diagnostics match the explicit-render baseline. Format,
+release build and progress checks pass. Later CPU-history and Samus-placement
+edits are outside this integration run; no source change belongs to this check.
+
 Everything that existed before is in the branch `archive/pre-transpile-2026-10-17`.
 
 ## Workspace discipline
