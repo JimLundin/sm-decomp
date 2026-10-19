@@ -12070,6 +12070,24 @@ X759 near the Speed Booster blocks in9CB3;72598/71 (138.16s), nativeexit1,
 all71 ordered diagnostics equal baseline. The normal-jump trial is pending. Prior holds and complete gameplay/credits,
 hardware/render/audio, masked RAM and ownership gaps stay open.
 
+CPU safe data-bank load (2026-10-19): PLB reads its stack byte before
+calling load_data_bank, which owns the data-bank store and byte Z/N update
+through a safe CPU reference. Stack restrictions, bus ordering and other
+CPU fields remain unchanged. Frozen 24d1f2c6 plus only this CPU change
+passes 744,438 actual old/current dispatcher comparisons: every native
+WRAM stack pointer and emulation stack pointer with boundary byte values,
+every byte at stack boundaries, named CPU/bus state and byte flags across
+both accumulator widths. Device stack reads remain outside this matrix.
+Instrumented any% prefix passes 3600/0 (3.96s), native exit 0, executing
+127,435 native PLB calls and zero emulation calls. Clean full any% passes
+129712/0 (221.78s), native exit 0. Cargo fmt/check, full release and
+release-library builds, frozen normal metadata and optimized core/DLL pass.
+Live CPU matches the verified candidate; later peer changes are outside
+that replay. Progress passes; CPU Rust lines +4 provide the safe register
+boundary, other own counters unchanged. Concurrent timings do not establish
+performance. Emulation movie coverage, prior holds, rendered failures,
+complete gameplay/audio and credits remain open. Continue covered CPU work.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

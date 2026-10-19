@@ -849,6 +849,10 @@ fn load_direct_page(value: u16, cpu: &mut Cpu) {
     cpu.dp = value;
     set_zero_negative(value, false, cpu);
 }
+fn load_data_bank(value: u8, cpu: &mut Cpu) {
+    cpu.db = value;
+    set_zero_negative(u16::from(value), true, cpu);
+}
 fn record_opcode_history(bank: u8, pc: u16, game: &mut Game) {
     // Preserve the inherited history value of 0xffffffff when PC is zero.
     let cur_pc = (i32::from(bank) << 16 | (i32::from(pc) - 1)) as u32;
@@ -1637,8 +1641,8 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             IndexRegister::X.load((*cpu).a, &mut *cpu);
         }
         0xab => {
-            (*cpu).db = pull_byte(cpu, game);
-            set_zero_negative(u16::from((*cpu).db), true, &mut *cpu);
+            let value = pull_byte(cpu, game);
+            load_data_bank(value, &mut *cpu);
         }
         0xac => {
             let (low, high) = address_absolute(cpu, game);
