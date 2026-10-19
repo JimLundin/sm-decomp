@@ -9612,6 +9612,24 @@ are outside this replay. Unsafe functions -1, Rust lines -13; other own counters
 unchanged. Arbitrary MMIO mutation and full gameplay/render/audio remain open.
 Continue covered CPU cleanup; TSX/ROR stay held for contextual execution.
 
+CPU shared memory ASL/ROL (2026-10-19): shift_memory_left selects carry input
+after the operand read, with short-circuiting that avoids a carry read for ASL.
+Byte overflow remains widened; carry stores before memory writes, word cycle
+increments and high-before-low writes, and final live-MF Z/N retain their order.
+Frozen `b4413a8c` plus this change passes 1,048,576 actual old/current cases:
+every input word, both widths/carry values, aliased/disjoint byte addresses,
+named CPU/bus state, RAM writes, flags and cycles. Full instrumented any%
+129,712/0 (57.08s), native exit 0, executes word ASL 4,117,166 and ROL 697,844
+times; neither byte path executes in this movie. Byte comparisons are supporting
+evidence only. The initial prefix had 3,600/0 but its overly strict all-width
+coverage assertion aborted afterward; it is not counted as a successful run.
+Clean full any% 129,712/0 (49.98s), native exit 0. Cargo fmt/check, full release
+and release-library builds with external SDL2, normal metadata and optimized
+frozen core/DLL builds pass. Live CPU matches verified source; peer PPU work is
+outside this replay. Unsafe functions -1, Rust lines -15; other own counters
+unchanged. Arbitrary MMIO mutation and full gameplay/render/audio remain open.
+Continue covered CPU cleanup; TSX/ROR stay held for contextual execution.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

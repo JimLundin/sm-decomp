@@ -724,16 +724,17 @@ unsafe fn rotate_memory_right(cpu: *mut Cpu, low: u32, high: u32, game: &mut Gam
     set_zero_negative(result, (*cpu).mf, &mut *cpu);
     (*cpu).c = carry;
 }
-unsafe fn rotate_memory_left(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
+unsafe fn shift_memory_left(cpu: *mut Cpu, low: u32, high: u32, rotate: bool, game: &mut Game) {
     let result = if (*cpu).mf {
-        let result = (u16::from(read_byte(cpu, low, game)) << 1) | u16::from((*cpu).c);
+        let value = read_byte(cpu, low, game);
+        let result = (u16::from(value) << 1) | u16::from(rotate && (*cpu).c);
         (*cpu).c = result & 0x100 != 0;
         write_byte(cpu, low, result as u8, game);
         result
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(2);
         let value = read_word(cpu, low, high, game);
-        let result = value << 1 | u16::from((*cpu).c);
+        let result = value << 1 | u16::from(rotate && (*cpu).c);
         (*cpu).c = value & 0x8000 != 0;
         write_word(cpu, low, high, result, true, game);
         result
@@ -752,22 +753,6 @@ unsafe fn shift_memory_right(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game
         let value = read_word(cpu, low, high, game);
         (*cpu).c = value & 1 != 0;
         let result = value >> 1;
-        write_word(cpu, low, high, result, true, game);
-        result
-    };
-    set_zero_negative(result, (*cpu).mf, &mut *cpu);
-}
-unsafe fn shift_memory_left(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
-    let result = if (*cpu).mf {
-        let result = u16::from(read_byte(cpu, low, game)) << 1;
-        (*cpu).c = result & 0x100 != 0;
-        write_byte(cpu, low, result as u8, game);
-        result
-    } else {
-        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(2);
-        let value = read_word(cpu, low, high, game);
-        let result = value << 1;
-        (*cpu).c = value & 0x8000 != 0;
         write_word(cpu, low, high, result, true, game);
         result
     };
@@ -943,7 +928,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x06 => {
                 let (low, high) = address_direct_page(cpu, game);
-                shift_memory_left(cpu, low, high, game);
+                shift_memory_left(cpu, low, high, false, game);
                 break;
             }
             0x07 => {
@@ -980,7 +965,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x0e => {
                 let (low, high) = address_absolute(cpu, game);
-                shift_memory_left(cpu, low, high, game);
+                shift_memory_left(cpu, low, high, false, game);
                 break;
             }
             0x0f => {
@@ -1019,7 +1004,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x16 => {
                 let (low, high) = address_direct_page_x(cpu, game);
-                shift_memory_left(cpu, low, high, game);
+                shift_memory_left(cpu, low, high, false, game);
                 break;
             }
             0x17 => {
@@ -1056,7 +1041,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x1e => {
                 let (low, high) = address_absolute_x(cpu, true, game);
-                shift_memory_left(cpu, low, high, game);
+                shift_memory_left(cpu, low, high, false, game);
                 break;
             }
             0x1f => {
@@ -1101,7 +1086,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x26 => {
                 let (low, high) = address_direct_page(cpu, game);
-                rotate_memory_left(cpu, low, high, game);
+                shift_memory_left(cpu, low, high, true, game);
                 break;
             }
             0x27 => {
@@ -1139,7 +1124,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x2e => {
                 let (low, high) = address_absolute(cpu, game);
-                rotate_memory_left(cpu, low, high, game);
+                shift_memory_left(cpu, low, high, true, game);
                 break;
             }
             0x2f => {
@@ -1178,7 +1163,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x36 => {
                 let (low, high) = address_direct_page_x(cpu, game);
-                rotate_memory_left(cpu, low, high, game);
+                shift_memory_left(cpu, low, high, true, game);
                 break;
             }
             0x37 => {
@@ -1216,7 +1201,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x3e => {
                 let (low, high) = address_absolute_x(cpu, true, game);
-                rotate_memory_left(cpu, low, high, game);
+                shift_memory_left(cpu, low, high, true, game);
                 break;
             }
             0x3f => {
