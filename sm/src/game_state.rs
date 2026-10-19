@@ -277,6 +277,16 @@ impl Game {
         u16::from_le_bytes([self.g_ram[0x791], self.g_ram[0x792]])
     }
 
+    /// cre_bitset ($7E:07B3 in ram_map).
+    pub fn cre_bitset(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x7b3], self.g_ram[0x7b4]])
+    }
+
+    /// door_def_ptr ($7E:078D in ram_map).
+    pub fn door_def_ptr(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x78d], self.g_ram[0x78e]])
+    }
+
     /// reg_BG1VOFS ($7E:00B3 in ram_map).
     pub fn reg_bg1vofs(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0xb3], self.g_ram[0xb4]])

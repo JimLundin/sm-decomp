@@ -9822,14 +9822,7 @@ pub unsafe fn DoorTransitionFunction_PlaceSamusLoadTiles(game: &mut Game) -> Cor
     };
     game.set_irqhandler_next_handler(irq_handler);
     WaitUntilEndOfVblankAndEnableIrq(game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x7b3 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 2 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x78d as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            != addr_kDoorDef_947a as ::core::ffi::c_int
-    {
+    if game.cre_bitset() & 2 != 0 && game.door_def_ptr() != addr_kDoorDef_947a as u16 {
         DecompressToMem(
             0xb98000 as uint32,
             (&raw mut game.g_ram as *mut uint8).offset(0x7000 as ::core::ffi::c_int as isize),
@@ -9855,29 +9848,16 @@ pub unsafe fn DoorTransitionFunction_PlaceSamusLoadTiles(game: &mut Game) -> Cor
     CopyToVramNow(0 as uint16, 0x7e2000 as uint32, 0x2000 as uint16, game);
     CopyToVramNow(0x1000 as uint16, 0x7e4000 as uint32, 0x2000 as uint16, game);
     CopyToVramNow(0x2000 as uint16, 0x7e6000 as uint32, 0x1000 as uint16, game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x7b3 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 6 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x78d as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            != addr_kDoorDef_947a as ::core::ffi::c_int
-    {
+    if game.cre_bitset() & 6 != 0 && game.door_def_ptr() != addr_kDoorDef_947a as u16 {
         CopyToVramNow(0x2800 as uint16, 0x7e7000 as uint32, 0x1000 as uint16, game);
         CopyToVramNow(0x3000 as uint16, 0x7e8000 as uint32, 0x2000 as uint16, game);
         CopyToVramNow(0x4000 as uint16, 0x9ab200 as uint32, 0x1000 as uint16, game);
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x791 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 3 as ::core::ffi::c_int
-        == 3 as ::core::ffi::c_int
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa7 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 16 as uint16;
+    if game.door_direction() & 3 == 3 {
+        game.set_irqhandler_next_handler(16);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x99c as ::core::ffi::c_int as isize)
-        as *mut uint16) = (0x82e4a9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    return kCoroutineNone as CoroutineRet;
+    game.set_door_transition_function(0xe4a9);
+    kCoroutineNone as CoroutineRet
 }
 static kUpdateBackgroundCommands: [Option<Func_Y_Y>; 8] = unsafe {
     [

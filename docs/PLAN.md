@@ -12000,6 +12000,26 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Door placement loading gates (2026-10-19): PlaceSamusLoadTiles uses named
+byte-backed CRE/door-pointer reads and final IRQ/transition writes. Masks 2
+and 6 retain independent short-circuit live reads after their respective
+callbacks; all decompression and VRAM-copy arguments are unchanged. Final
+live direction 3 overrides IRQ to 16 before E4A9 stores. Independent source
+review confirms order, widths and unchanged loading bodies. Cargo fmt/check
+and release build pass, native exit 0. Frozen f2cb05a4 plus only these two
+source files passes any% 129,712/0 (185.18s), native exit 0: 61 calls,
+gate counts [0 CRE decompress,11 extra copy,0 IRQ override]. Waver
+58,109/71 (71.40s), native exit 1, executes 28 calls with gates [0,2,2];
+all 71 ordered failure diagnostics equal the explicit-render baseline.
+The CRE-decompression taken path remains unexercised; obtain normal-input
+coverage before further cleanup there. Observations strip exactly to the
+maintained source. Own raw offsets -7, cast lines -21, Rust lines -10;
+two named accessors account for added state-view lines. Other counters
+unchanged. No probes or ROM-derived assets committed. Next: covered door
+room-setup callbacks and async loading state, retaining callback order.
+Held X-alignment movement and complete gameplay/credits/audio/hardware gaps
+remain open.
+
 Door Samus placement prefix (2026-10-19): PlaceSamusLoadTiles uses named
 byte-backed coordinate/previous-position and door-flag writes. Layer-one X
 plus Samus X low byte wraps into X before previous X copies; Y then previous
