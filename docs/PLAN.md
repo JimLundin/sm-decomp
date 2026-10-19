@@ -9,6 +9,41 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+Independent checkpoint quality review (2026-10-19): frozen `78e60d32`
+plus the six final checkpoint/probe source and host files passes any%
+129712/0 (306.91s) and Spazer 90706/0 (242.39s), both native exits 0.
+The separate 70-file snapshot contains only one additional read-only
+`CheckBossBitForCurArea` entry probe; exact removal recovers its base source.
+Full non-timing stdout/stderr match the previously reviewed routes. Source,
+DLL, ROM and copied input hashes stay unchanged through verification.
+Later concurrent gameplay edits retain separate verification.
+
+The final serializer includes recorder logs. Independent boot and resumed
+checkpoints at input 8500 are byte-identical in both normal and physical-audio
+modes. Resume 8296..8500 passes 204/0 in 0.60s / 0.73s; a one-frame resume
+and chained continuation reach the same complete state. The required helper
+probe reports exactly one call at input 8296. A separate gameplay-fault DLL
+loads that checkpoint, detects exactly one failure at 8296 and recovers for
+the remaining frames. The failed run creates no checkpoint.
+
+Corrupt payload/header, old runtime, ROM/prefix/audio metadata changes,
+actual changed controller prefix or audio mode, and segment overrun are
+rejected. Recomputed-checksum controls reject oversized recorder/base-buffer
+lengths, truncated state and extra state bytes. Missing probes and missing
+credits return 2 without writing a checkpoint; an actual frame failure plus
+a missing probe returns 1 and also writes none. The CLI's audio finalizer
+only destroys its host mutex; captured continuation state is preserved.
+
+The implementation agent's final clean copy matches its stated `49b6ac06`
+base plus those same six files at inspection, with a stable recorded DLL.
+Its complete boot/resumed checkpoint files match at Waver inputs 28550 and
+58109, including the entire 29909-frame remainder. All 28550 controller
+words in the README's Charge example match that tested Waver prefix.
+Workspace formatting/check, normal Cargo release (1.15s), whitespace and
+progress checks pass. This review changes no maintained Rust or residue
+counters. Earlier-state reachability after gameplay edits, full credits,
+disk-save persistence and wider hardware/audio coverage remain unfinished.
+
 ## Where we are (2026-10-19)
 
 `sm/` contains the maintained Rust program. It was transpiled once from
