@@ -2355,47 +2355,47 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `a4a6efa7` shares 92 cinematic
-loads and `392705fa` shares 3593 inline RAM pointer constructions. Independent
-composition review binds all 74 source/config/host inputs of each focused
-commit to its reviewed stage; the final tree matches the shared replay.
-All 80 replay pins remain stable after completion.
+Latest reviewed integration (2026-10-20): `19eb90a9` shares all 114 eligible
+address-dispatch functions in 105 declaration groups across 23 callers.
+Independent AST inventory finds the complete family among 166 functions
+containing Unreachable; the other control-flow shapes retain their source.
+All signatures, 2102 selected arm bodies, selector names, caller-resolved
+fallbacks and declaration positions remain exact. No selected declaration
+has an adjacent attribute. Reverse reconstruction reproduces all 70 inputs.
 
-The complete pointer family has 3465 ordinary expressions and 128 expressions
-inside known macros: 110 set_ram_word, eight update_ram_word and ten qualified
-rom_table_word uses. AST spans bind to the normalized source, with no overlaps
-or unclassified contexts. All 2932 single offsets, 661 successive-offset pairs
-and 2067 target casts remain exact; primitive-u8 bindings have no shadows.
-Independent reconstruction reproduces all 74 composed inputs and leaves the
-entire original ram_map prefix and metadata exact.
+Independent token comparison of the complete actual library expansions needs
+only the new helper definition/export and whitespace/comments removed: no
+commas, parentheses, literals or other tokens change. The baseline expansion
+is byte-identical to the previously reviewed inline-pointer expansion. The
+actual helper and both expansion hashes remain stable. All 70 committed
+Rust/Cargo inputs match the candidate, all 67 replay sources match the commit,
+and all 72 replay pins remain exact after completion.
 
-Both actual verification-crate expansions completed successfully. Independent
-token comparison binds the actual helper and every expanded expression: only
-33 imports, the helper declaration, whitespace and 3593 qualified-u8 spellings
-are normalized. Parentheses, casts, blocks, literal payloads and evaluation
-order are exact. No new function call, whole-Game borrow or temporary scope is
-introduced. Net pointer lines -2449; its raw-counter drop of 3593 reflects macro
-syntax, not fewer runtime unsafe operations. The counter omits the helper.
+Normal release (30.35s wall), formatting and progress pass. The completed
+any% replay passes 129712/0 (107.40s), native exit 0; review reused these
+checks. Net Rust lines -344, total 139990. The unsafe-text count rises two
+for the macro matcher/template; compiled signatures, bodies and unsafe
+operations remain unchanged. Raw-access and cast counts are unchanged.
 
-The cinematic source review is reused and independently bound through the
-same-type-cast rebase and pointer composition. Its 92 operations retain all
-230 payload values, register/callback order and the post-MDMAEN RAM mirror
-store. The two packed-word loads use read_unaligned in their original positions.
-The focused check binds 92 operation slices, nine actual helper/layout sections
-and seven source inputs. All 3904 operation/sequence/mirror comparisons pass;
-256 early-mirror and two swapped-register controls are detected. Both sides use
-the corrected packed reader. Decompression and hardware callbacks are mocked;
-this verifies factoring/order at that boundary, not complete hardware behavior.
+Included `a4a6efa7` cinematic and `392705fa` inline-pointer reviews retain
+independent composition bindings for all 74 inputs of each stage and 80 stable
+replay pins. The 3593 pointer expressions (3465 ordinary, 128 in known macros)
+retain their ordered offsets, 2067 target casts and expression lifetimes;
+complete actual expansion equality includes the helper and all callers.
+The raw-counter drop represents shared syntax, not removed unsafe operations.
 
-Windows denied both standalone checker launches before any comparisons ran.
-Recovery retained compare.rs as an exact byte prefix and appended only an
-export calling its original main. The DLL-hosted check passed with all eight
-artifact hashes stable; it did not require another release build or movie.
-Normal release (22.53s), formatting/check, progress and the single shared any%
-129712/0 (101.36s wall, 101.21s replay), native exit 0, pass. Cinematic lines
-fall 368 and unsafe functions rise one; combined Rust is 140334 lines. The
-movie has zero ending/credits-state frames. Broader readability, frontend
-execution, full credits coverage and pointer/alias safety remain incomplete.
+The 92 cinematic operations retain all 230 payload values and callback/register
+order. Two packed-word reads use read_unaligned in their original positions.
+All 3904 operation/sequence/mirror comparisons and 258 negative controls pass
+at the mocked hardware boundary. The exact original checker was hosted through
+an appended DLL entry after two Windows-denied executable launches; all eight
+recovery artifact hashes remained stable. Both focused commits share release
+22.53s and any% 129712/0 (101.36s wall, 101.21s replay), native exit 0.
+
+These any% movies contain zero ending/credits-state frames. Broader readability,
+frontend execution, full credits coverage and pointer/alias safety remain
+incomplete; neither macro consolidation nor callback-boundary comparisons
+establish complete gameplay or hardware coverage.
 
 Included `07e30047` cast review retains its independent reconstruction of all
 70 inputs, 67 replay sources and 72 pins: 1070 pointer and 149 scalar casts
