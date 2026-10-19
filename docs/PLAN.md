@@ -12088,6 +12088,31 @@ boundary, other own counters unchanged. Concurrent timings do not establish
 performance. Emulation movie coverage, prior holds, rendered failures,
 complete gameplay/audio and credits remain open. Continue covered CPU work.
 
+Colored door setup no longer requires unsafe (2026-10-19).
+The preceding cleanup overlooked that WriteLevelDataBlockTypeAndBts is
+already safe. Remove the caller's unsafe qualifier; its body is unchanged.
+Actual prior instrumented route executes27 setup calls, including9AD9 slot58
+at71445 reading block13058. Baseline onward72823/71 (159.42s), clean72823/71
+(125.37s), observed native exits1, match all71 ordered baseline failure
+frames. Clean explicit-render any%129712/0 (214.38s), observed native
+exit0. Pinned host/gameplay snapshot excludes peer edits and the clean
+sm_84.rs matches maintained source. Cargo fmt/check, release and progress
+pass. Own unsafe functions-1; all other own residue counters unchanged.
+
+Normal-input9CB3 onward jump fails: from72598, right35, neutral20,
+right/jump50, right30, neutral90 reaches spike-type blocks atX939 and dies.
+State19at72685, death animation20..24 follows; no onward room/item/boss.
+72823/71 (159.42s), observed nativeexit1, exact71 diagnostics unchanged.
+Stop this path with the current equipment/health; do not mistake the matched
+oracle death for progression. An initial normal-input alignment trial67535/71 (136.47s), nativeexit1,
+misses that level and descends toY1383 without spending missiles. Its
+observer omits ordered failure diagnostics; no new verify equivalence or
+onward milestone is claimed. Next: earlier refilled shaft eastY1120 red
+door leads9BC8 with Super Missile pickup candidates. Verify access using its
+retained five missiles; floor Power Bomb requirement and earlier holds stay
+held. Credits, full gameplay/hardware, render/audio, masked RAM and ownership
+remain open. No probes, inputs, SRAM or ROM-derived assets are committed.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
