@@ -528,54 +528,59 @@ unsafe fn add_with_carry(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     }
     set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
 }
-unsafe fn subtract_with_carry(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
-    if (*cpu).mf {
-        let value = !read_byte(cpu, low, game);
-        let mut result = if (*cpu).d {
-            let mut result =
-                (i32::from((*cpu).a) & 0xf) + (i32::from(value) & 0xf) + i32::from((*cpu).c);
+fn subtract_from_accumulator(value: u16, byte: bool, cpu: &mut Cpu) {
+    if byte {
+        let mut result = if cpu.d {
+            let mut result = (i32::from(cpu.a) & 0xf) + (i32::from(value) & 0xf) + i32::from(cpu.c);
             if result < 0x10 {
                 result = result - 0x6 & (if (result - 0x6) < 0 { 0xf } else { 0x1f });
             }
-            (i32::from((*cpu).a) & 0xf0) + (i32::from(value) & 0xf0) + result
+            (i32::from(cpu.a) & 0xf0) + (i32::from(value) & 0xf0) + result
         } else {
-            (i32::from((*cpu).a) & 0xff) + i32::from(value) + i32::from((*cpu).c)
+            (i32::from(cpu.a) & 0xff) + i32::from(value) + i32::from(cpu.c)
         };
-        (*cpu).v = i32::from((*cpu).a) & 0x80 == i32::from(value) & 0x80
+        cpu.v = i32::from(cpu.a) & 0x80 == i32::from(value) & 0x80
             && i32::from(value) & 0x80 != result & 0x80;
-        if (*cpu).d && result < 0x100 {
+        if cpu.d && result < 0x100 {
             result -= 0x60;
         }
-        (*cpu).c = result > 0xff;
-        (*cpu).a = (i32::from((*cpu).a) & 0xff00 | result & 0xff) as u16;
+        cpu.c = result > 0xff;
+        cpu.a = (i32::from(cpu.a) & 0xff00 | result & 0xff) as u16;
     } else {
-        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        let value = !read_word(cpu, low, high, game);
-        let mut result = if (*cpu).d {
-            let mut result =
-                (i32::from((*cpu).a) & 0xf) + (i32::from(value) & 0xf) + i32::from((*cpu).c);
+        let mut result = if cpu.d {
+            let mut result = (i32::from(cpu.a) & 0xf) + (i32::from(value) & 0xf) + i32::from(cpu.c);
             if result < 0x10 {
                 result = result - 0x6 & (if (result - 0x6) < 0 { 0xf } else { 0x1f });
             }
-            result = (i32::from((*cpu).a) & 0xf0) + (i32::from(value) & 0xf0) + result;
+            result = (i32::from(cpu.a) & 0xf0) + (i32::from(value) & 0xf0) + result;
             if result < 0x100 {
                 result = result - 0x60 & (if (result - 0x60) < 0 { 0xff } else { 0x1ff });
             }
-            result = (i32::from((*cpu).a) & 0xf00) + (i32::from(value) & 0xf00) + result;
+            result = (i32::from(cpu.a) & 0xf00) + (i32::from(value) & 0xf00) + result;
             if result < 0x1000 {
                 result = result - 0x600 & (if (result - 0x600) < 0 { 0xfff } else { 0x1fff });
             }
-            (i32::from((*cpu).a) & 0xf000) + (i32::from(value) & 0xf000) + result
+            (i32::from(cpu.a) & 0xf000) + (i32::from(value) & 0xf000) + result
         } else {
-            i32::from((*cpu).a) + i32::from(value) + i32::from((*cpu).c)
+            i32::from(cpu.a) + i32::from(value) + i32::from(cpu.c)
         };
-        (*cpu).v = i32::from((*cpu).a) & 0x8000 == i32::from(value) & 0x8000
+        cpu.v = i32::from(cpu.a) & 0x8000 == i32::from(value) & 0x8000
             && i32::from(value) & 0x8000 != result & 0x8000;
-        if (*cpu).d && result < 0x10000 {
+        if cpu.d && result < 0x10000 {
             result -= 0x6000;
         }
-        (*cpu).c = result > 0xffff;
-        (*cpu).a = result as u16;
+        cpu.c = result > 0xffff;
+        cpu.a = result as u16;
+    }
+}
+unsafe fn subtract_with_carry(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
+    if (*cpu).mf {
+        let value = u16::from(!read_byte(cpu, low, game));
+        subtract_from_accumulator(value, true, &mut *cpu);
+    } else {
+        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
+        let value = !read_word(cpu, low, high, game);
+        subtract_from_accumulator(value, false, &mut *cpu);
     }
     set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
 }

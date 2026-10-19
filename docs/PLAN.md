@@ -9085,6 +9085,27 @@ the live Rust-line increase of five belongs to the separate SBC work. No probe
 or ROM-derived assets enter the commit. Other whole-allocation validity,
 arbitrary MMIO, renderer/audio, masked RAM and boot-to-credits gaps remain open.
 
+CPU safe SBC arithmetic (2026-10-19): subtract_from_accumulator owns the
+callback-free arithmetic through a safe mutable Cpu reference. The unsafe
+wrapper retains pre-fetch width selection, word cycle increment and operand
+reads. Byte complement occurs as u8 before widening; word complement is u16.
+Post-fetch A/C/D reads, signed decimal corrections, overflow before the final
+adjustment, C/A stores and final live-width Z/N update retain their order.
+Independent source review finds no differences. Frozen HEAD `f0c4ec27` plus
+this change passes 144,179,200 actual old/current ADC/SBC comparisons (ADC is
+unchanged): every byte operand/register word, nineteen word boundary/decimal/
+sign entries including duplicates, both carry and decimal flags. Named CPU/bus
+state, cycles, high-A and binary A/C assertions pass; decimal results compare
+against the old helper. Prefix 3,600/0 (1.05s) executes word/byte SBC 38,340/169
+times, all binary; constructed real-helper cases exercise decimal. Clean full
+any% 129,712/0 (62.07s), native exit 0. Cargo fmt/check, full release and release-
+library builds with external SDL2, normal metadata and optimized frozen core/DLL
+builds pass. Live CPU matches verified source; the later DMA snapshot commit
+is outside this replay. Rust lines +5 introduce the safe helper and bus-reading
+wrapper; other own counters unchanged. Full word Cartesian and decimal movie
+coverage, arbitrary MMIO mutation and full gameplay/render/audio remain open.
+Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
