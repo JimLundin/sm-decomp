@@ -289,6 +289,26 @@ Timings have different cache/load conditions and do not establish a build-time
 gain. Concurrent subsystem edits retain their own validation; temporary
 comparisons and assets remain uncommitted.
 
+Independent gameplay-definition audit (2026-10-19): reconstruct 020a52d4
+and the owning 155da8a2-based snapshot independently of its inventory.
+All 7175 original declarations match the 834 definitions in 22 namespaces;
+each of 30 bank modules exports exactly its former sets. All original public
+paths compile against the tested library with their original types and
+values; a deliberately wrong expected value fails. The remaining source
+matches after formatting, including imports and declaration attributes.
+All 22 checkpoint source inputs remain byte-identical after newline
+normalization; the existing gameplay compatibility policy is unchanged.
+
+All 72 frozen source/configuration/host files match the reconstructed
+candidate. Formatting, normal release and progress pass, with the original
+library and DLL unchanged. The measured delta is 6118 fewer Rust lines and
+no change to the other progress counters. Reuse the qualified full-boot
+any% 129712/0 and Bubble Mountain 138749/0 results, native exits 0;
+complete non-timing diagnostics match the reviewed integration, including
+the known Kraid warning. Source, libraries, fixtures and logs retain their
+hashes. This audit adds no maintained Rust or gameplay coverage. Later
+projectile/safety changes and broader gameplay/hardware gaps remain open.
+
 Next disjoint safety audit: 57 gameplay callbacks have empty bodies but still
 declare unsafe. Check their signatures and function-pointer uses, then make
 the compiler verify that removing those unnecessary qualifiers needs no new
