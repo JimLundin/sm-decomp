@@ -1767,28 +1767,57 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `92af785a` passes
-uninterrupted full boot any% 129712/0 (167.68s) and Speed Booster
-148406/0 (201.24s), native exits 0. All 74 source/configuration/host/
-progress inputs match that commit. This adds the shared SPC logical-addressing
-helpers to the reviewed families below. Later projectile, return and
-hardware work retains its own checks outside this snapshot.
+Latest reviewed integration (2026-10-19): frozen `1a5db11a` passes
+uninterrupted full boot any% 129712/0 (162.97s) and Speed Booster
+148406/0 (234.55s), native exits 0. All 74 source/configuration/host/
+progress inputs are bound to that commit. This adds the 104 projectile
+arithmetic expressions to the reviewed families below. Later return cleanup
+and SPC work retain their own checks outside this snapshot.
 
-Serialized checkpoint payloads are byte-identical to reviewed a0c36eb7.
-The only changed header field is the runtime-source fingerprint, independently
-recomputed from its actual inputs; only snes/spc.rs changes among those inputs.
-The Game declaration and checkpoint codec are unchanged. All other bindings,
-including the payload checksum, agree. No compatibility hash is patched and
-neither replay loads an earlier checkpoint. Complete non-timing diagnostics
-and coverage agree, including the known fingernail diagnostic. Speed reaches
-55 rooms and 53 enemy definitions, ending in state 8, room $AD1B, X171/Y123,
-pose $0089, health 46/399, missiles 6/15, Supers 0/5, items $3105 and
-beams $1004 equipped/collected. Kraid is defeated and all eight coroutine
-bytes are zero. Credits remain unexercised. The same build passes the full-boot
-pause route 40836/0 (56.02s), native exit 0, returning to gameplay in
-room $96BA. Its payload and every non-runtime binding match the prior pause
-run, as do complete non-timing logs. Earlier mode observations retain their
-scope below.
+Complete serialized checkpoints are byte-identical to reviewed 92af785a,
+including the independently recomputed runtime-source fingerprint and every
+input/payload binding. The Game declaration and checkpoint codec are unchanged.
+No compatibility hash is patched and neither replay loads an earlier checkpoint.
+Complete non-timing diagnostics and coverage agree, including the known
+fingernail diagnostic. Speed reaches 55 rooms and 53 enemy definitions, ending
+in state 8, room $AD1B, X171/Y123, pose $0089, health 46/399, missiles 6/15,
+Supers 0/5, items $3105 and beams $1004 equipped/collected. Kraid is defeated
+and all eight coroutine bytes are zero. Credits remain unexercised. The same
+build passes the full-boot pause route 40836/0 (68.87s), native exit 0,
+returning to gameplay in room $96BA. Its entire checkpoint and non-timing logs
+match the prior pause run. Earlier mode observations retain their scope below.
+
+Independent projectile arithmetic reconstruction binds the original 104
+selected expression roots, including 23 compounds and two nested pairs, to
+all 60 committed routines. The LoROM, integer-comparison and Clippy composition
+bridges preserve each arithmetic replacement and every other source byte or
+qualified formatting change. Fresh syntax-tree and ordered-token checks bind
+the parenthesis variants. Owner integration inputs match after CRLF
+normalization; their recorded raw hashes, libraries and full-boot logs are
+also checked. No enemy RAM interface changes belong to this commit.
+
+A separately compiled numerical driver substitutes only 137 exactly retained
+primitive input occurrences into the original and replacement expressions.
+All 104 roots agree with an independent wide-integer model in 109713160
+component-sweep evaluations, with overflow checks enabled and every original
+intermediate within its bounds. Each input takes its full primitive range
+while the other occurrences take Cartesian boundary values; repeated boundary
+cases are counted. All 104 changed-result controls fail as expected. These
+sweeps establish neither every input tuple nor gameplay execution.
+
+The original 442-root compiler comparison, its raw inputs and final subset
+mapping remain bound: 53712 candidate expression records, 10488 Cast/Use
+transfers and 2009 binary records match. The final subset preserves 26215
+protected expression records, including 516 inside selected roots. Source
+partition and probe insertion checks were rerun; there is no fresh final-subset
+compiler extraction. Scope nodes, erased lifetimes and truncated callable
+metadata retain the previously documented limits; this is no global alias
+or provenance proof. Original full-route probe logs independently establish
+that the selected 104 equal the recommendation/observed-hit intersection.
+Those superset probe runs report zero failing frames but exit 2 for unhit
+required probes, with the expected diagnostics and absent checkpoints.
+281 recommended expressions remain unobserved. The clean integration replays
+above are separate runs with native exits 0.
 
 Independent SPC logical-addressing reconstruction covers all 74 integration
 inputs and all 67 owner sources, which match the committed integration.
@@ -2393,16 +2422,16 @@ dedicated 5544-case API checks and 24/24 site observations are recorded by
 implementation; this review verifies the source transformation. The movie
 replays do not establish frontend decoder execution coverage.
 
-The normal Cargo integration is independently built from frozen 92af785a.
+The normal Cargo integration is independently built from frozen 1a5db11a.
 All 74 inputs, the fresh game library/DLL and copied fixtures stay fixed.
 Only registry dependencies seed this checkout, including existing registry
 build-script executable links. Formatting, normal release
-(35.20s), host build (3.76s) and progress pass. This family removes
-98 Rust lines, 12 c_int casts across six lines and four unsafe functions;
-other progress counters remain unchanged. Frozen totals: 192307 Rust lines,
-21355 raw-offset lines, 34302 c_int casts across 27373 lines and 6498 unsafe
-functions. This audit changes no maintained Rust or assets; later peer work
-retains its own checks.
+(21.72s), host build (2.62s) and progress pass. This family removes
+59 Rust lines, 229 casts overall and 185 c_int casts across 128 lines;
+raw operations, offsets and unsafe-function counts remain unchanged. Frozen
+totals: 192248 Rust lines, 21355 raw-offset lines, 34117 c_int casts across
+27245 lines and 6498 unsafe functions. This audit changes no maintained Rust
+or assets; later peer work retains its own checks.
 
 The prior PLM block-mask review remains valid: all six helper sites execute,
 with 2082 air-scroll updates, 105 shared retain updates and one each for four
