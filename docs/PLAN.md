@@ -11353,6 +11353,27 @@ replay contention prevents treating timings as performance measurements.
 Prior holds and complete gameplay/render/audio remain open. Continue
 covered CPU cleanup.
 
+Post-map9969 obstacle jumps reach9938 (2026-10-19).
+From map9969-leftX549/Y171, health74/199, left/jump/shoot48,
+left/shoot1, left/run/shoot130, left40, neutral25 clear the first obstacle
+and landX279/Y159, health74. Then left/jump/shoot42, left/shoot1,
+left/run/shoot70, left70, neutral30 clear the second obstacle and cross.
+Transition starts79872, room becomes9938 at79890. map9969-hop27979947/71
+(156.86s), native exit1, ends during the door transition at9938X231/Y139,
+health54/199, map1/station255, missiles1/10, equipment1004. Controlled
+jumps resolve the earlier unfinished floor-obstacle crossing; control return
+in9938 is pending, so this is a transition checkpoint rather than a stable
+standing endpoint.
+Read-only failure-counter replay79947/71 (118.67s), observed native exit1,
+matches all71 ordered baseline failed frames exactly, rendering enabled.
+No gameplay/RAM/inventory writes or new failures; source/residue delta0.
+Committed Energy Tank callback cleanup owns fmt/check, release, progress,
+contextual77139/71 and clean any%129712/0 (195.69s). Inputs, probes, SRAM
+and ROM-derived assets remain ignored. Next: finish9938 entry and continue
+onward item/boss coverage. Held upper99BD ascent and earlier holds stay held.
+Complete credits/gameplay/hardware, render/audio, masked RAM and ownership
+remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
