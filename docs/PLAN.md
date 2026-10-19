@@ -1431,56 +1431,63 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `300bfd44` plus the
-two shared types.rs overlays and checkpoint macro dependency passes full
-boot any% 129712/0 (168.70s) and Speed Booster 148406/0
-(225.78s), native exits 0. This combines the reviewed area/Ceres work,
-the original 94 layouts and completion of the two shared overlays. Later
-projectile-property changes are outside this frozen source. Speed contains
+Latest reviewed integration (2026-10-19): frozen `8582a6ed` passes
+uninterrupted full boot any% 129712/0 (170.83s) and Speed Booster
+148406/0 (219.52s), native exits 0. This combines the completed 96-layout
+family with the projectile property OR helper (3e4bdfc2). Speed contains
 the exact Bubble Mountain, Warehouse, Varia and Hi-Jump prefixes; no shorter
 duplicate replay is run. Coverage remains 55 rooms and 53 enemy definitions.
 
-Both complete serialized checkpoint payloads are byte-identical to the
-reviewed 300bfd44 endpoints. All ROM/input/frame/encoding/payload bindings
-match. Only the runtime-source binding changes: compatibility now includes
-the shared macro, and types.rs/checkpoint.rs reflect that dependency. All
-bindings are independently recomputed and validated. The old-runtime load
-control fails with the expected regenerate-from-boot diagnostic. Neither
-full replay loads an earlier checkpoint or patches a compatibility value.
-Non-timing diagnostics and coverage match, including the known fingernail
-diagnostic. Speed ends in state 8, room $AD1B, X171/Y123, pose $0089,
-health 46/399, missiles 6/15, Supers 0/5, items $3105 and beams $1004
-equipped/collected. Kraid is defeated and all eight coroutine bytes are zero.
+Both complete checkpoints, including every binding and serialized payload,
+are byte-identical to the reviewed complete-layout endpoints. Runtime-source
+inputs remain fixed, including the shared layout macro added in that pass.
+All bindings are independently recomputed and validated. Neither replay
+loads an earlier checkpoint. Non-timing diagnostics and coverage match,
+including the known fingernail diagnostic. Speed ends in state 8, room
+$AD1B, X171/Y123, pose $0089, health 46/399, missiles 6/15, Supers 0/5,
+items $3105 and beams $1004 equipped/collected. Kraid is defeated and all
+eight coroutine bytes are zero; credits remain unexercised.
 
-The original 94 bank-local declarations reconstruct with every field and
-all surrounding source intact, including Kraid arrays and Waver renames.
-The wider inventory found two equivalent declarations in types.rs; both
-now use the same template. Independent expansion recovers those exact
-183 fields and all other type definitions. Only these two declarations,
-their macro import and one checkpoint source dependency change in this
-completion. The macro emits only the same public repr(C) structs and
-Copy/Clone derives. It contains no gameplay or RAM operations.
+Independent property review reconstructs the entire commit from the exact
+two original OR sequences and the four-line helper. Only sm_86.rs differs
+from the reviewed complete-layout source. The captured half-indices,
+0x1000/0x8000 masks, final Bomb Torizo store and conditional Kago store keep
+their positions. Caller review checks the live borrows; pointers carried
+through spawn and instruction dispatch derive from ROM. Nine unvisited
+fixed-bit handlers and both operand-based handlers remain unchanged.
 
-Fresh compiler checks cover all 96 actual public types: every size,
-alignment, all 3684 field offsets/types and Copy/Clone bounds agree with
-the old declarations. Wrong-offset, wrong-field-type and wrong-array-length
-controls fail as intended. The unextended 300bfd44 integration separately
-passed any% 129712/0 and Speed Booster 148406/0 with identical whole
-checkpoints. Source consolidation supplies no new gameplay coverage.
+Fresh controls pass 524288 cases: 262144 helper cases, 131072 complete
+Bomb Torizo routines and 131072 complete Kago routines. Each sweep includes
+every u16 slot argument. Helper cases vary all property words for both masks
+on two backing offsets. Whole-routine controls use exact bodies, maintained
+getters/EnemyData layout and abs16 in a reduced Game harness. Original word
+targets and the synthetic ROM table have asserted alignment. Full RAM,
+guards and callback traces agree. Bomb callbacks change properties, live
+index, parameter and coordinates; Kago cases vary relative positions and
+exercise the conditional store. These are constructed cases, not additional
+gameplay coverage. XOR, byte writes, wrong scaling, early property reads,
+the changed live index and a changed distance condition all fail.
 
-All 74 frozen source/configuration/host/progress files, Cargo library,
-DLL and copied fixtures stay fixed. Only registry dependencies seed the
-checkout. Formatting, normal release (22.25s), host build
-(5.25s) and progress pass. Workspace format/build/progress also pass
-with unchanged source during the checks. Completion removes another 120
-Rust lines, including the checkpoint dependency, for 2266 across this
-family. Frozen totals: 212169 Rust lines, 21569 raw-offset lines, 65288
-c_int casts across 49453 lines and 6517 unsafe functions. No probes,
-fixtures, ROM-derived data or temporary audit scripts are committed.
+The dedicated retained source reconstructs from its frozen base. All
+102 checked source, binary, fixture and control pins match. Observation
+logs record eight Bomb updates and 199 Kago updates, native exit 0 and
+matching clean/observed non-timing diagnostics. Full-RAM write comparisons
+pass. Discovery recorded 336 Kago routine entries; that is distinct from
+the conditional update count. Its nine fixed-bit handlers had no recorded
+hits and remain pending.
 
-Later source changes need their own integration. Earlier reviews retain
-their coverage limits. Remaining bosses, credits, persistence and broader
-hardware/audio coverage remain unfinished.
+All 74 integration source/configuration/host/progress files, Cargo library,
+DLL and copied fixtures stay fixed. Only registry dependencies seed this
+checkout. Formatting, normal release (27.09s), host build
+(2.40s) and progress pass. Including its helper, the property change
+removes two raw-offset lines and four c_int casts across two lines; Rust
+line and unsafe-function totals stay unchanged. Frozen totals: 212169 Rust
+lines, 21567 raw-offset lines, 65284 c_int casts across 49451 lines and 6517
+unsafe functions. This audit changes no maintained Rust or committed assets.
+The 96-layout review and earlier audits retain their recorded coverage limits.
+
+Later source changes need their own integration. Remaining bosses, credits,
+persistence and broader hardware/audio coverage remain unfinished.
 
 Earlier reviewed integration: frozen `64e8d165` passes full any% 129712/0
 (184.20s) and Kraid phase two 119823/0 (195.59s), native exits 0. This
