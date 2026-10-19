@@ -221,6 +221,19 @@ impl Game {
         self.g_ram[0x99c..0x99e].copy_from_slice(&value.to_le_bytes());
     }
 
+    /// hdma_objects_enable_flag ($7E:18B0 in ram_map).
+    pub fn hdma_objects_enable_flag(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x18b0], self.g_ram[0x18b1]])
+    }
+    pub fn set_hdma_objects_enable_flag(&mut self, value: u16) {
+        self.g_ram[0x18b0..0x18b2].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// irqhandler_next_handler ($7E:00A7 in ram_map).
+    pub fn set_irqhandler_next_handler(&mut self, value: u16) {
+        self.g_ram[0xa7..0xa9].copy_from_slice(&value.to_le_bytes());
+    }
+
     /// debug_disable_sounds ($7E:05F5 in ram_map).
     pub fn set_debug_disable_sounds(&mut self, value: u16) {
         self.g_ram[0x5f5..0x5f7].copy_from_slice(&value.to_le_bytes());

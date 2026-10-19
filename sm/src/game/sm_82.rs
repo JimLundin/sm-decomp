@@ -9735,14 +9735,10 @@ pub unsafe fn DoorTransitionFunction_FadeOutScreen(game: &mut Game) -> Coroutine
 pub unsafe fn DoorTransitionFunction_LoadDoorHeaderEtc(game: &mut Game) -> CoroutineRet {
     LoadDoorHeader(game);
     sub_8882AC(game);
-    let ref mut fresh27 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x18b0 as ::core::ffi::c_int as isize) as *mut uint16);
-    *fresh27 = (*fresh27 as ::core::ffi::c_int & !(0x8000 as ::core::ffi::c_int)) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa7 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 8 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x99c as ::core::ffi::c_int as isize)
-        as *mut uint16) = (0x82e310 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    return kCoroutineNone as CoroutineRet;
+    game.set_hdma_objects_enable_flag(game.hdma_objects_enable_flag() & 0x7fff);
+    game.set_irqhandler_next_handler(8);
+    game.set_door_transition_function(0xe310);
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn DoorTransitionFunction_ScrollScreenToAlignment(game: &mut Game) -> CoroutineRet {
     let mut current_block_7: u64;

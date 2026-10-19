@@ -11778,6 +11778,23 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Door-header transition fields (2026-10-19):
+DoorTransitionFunction_LoadDoorHeaderEtc uses named byte-backed HDMA enable
+and next-IRQ-handler fields. Header load and HDMA-object clear callbacks
+precede the live enable-word read; bit 15 clears before IRQ handler 8 and
+transition E310 store. Callback/store order, coroutine return and RAM layout
+remain exact. All 65,536 enable words retain the original mask result.
+Cargo fmt/check and full release build pass, native exit 0. Frozen 27835e26
+plus only these two source files passes any% 129,712/0 (181.84s), native
+exit 0. The actual routine executes 61 times, with bit 15 set before all 61
+clears. Observations strip exactly to maintained source. Later SRAM/CPU
+peer changes are excluded; no probes or ROM-derived assets are committed.
+Own raw offsets -3, cast lines -5; Rust lines +9 provide three reusable
+byte-backed accessors. Other counters unchanged. Next: door alignment
+coordinates and direction gates, preserving signed/low-byte tests and
+callback order. Complete credits/gameplay, audio timing and hardware gaps
+remain open.
+
 Door fade transition fields (2026-10-19): fade-out now writes E2F7 through
 the named door-transition setter. Fade-in uses byte-backed sound-disable,
 elevator/Zebetite flag, enemy flag and game-state setters. All processing/
