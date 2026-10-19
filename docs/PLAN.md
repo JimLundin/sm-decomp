@@ -232,6 +232,22 @@ change and no new replay result belong to this cleanup.
 
 ## The oracle
 
+Independent window/door QC (2026-10-19): audited the actual WH0..WH3
+capture, comparison and restore controls: 16 injected faults, 2,048 byte
+continuations and 16 rendered continuations across both PPUs/renderers.
+The old verifier misses these faults; the candidate detects them and
+restores the rendered row. Temporary probes only append helpers; maintained
+snapshot routines match the tested candidate after newline normalization.
+Frozen 3d81e4d plus only sm_82.rs and cpu_infra.rs passes any% 129712/0
+(204.46s) and Waver 58109/0 (118.21s), native exits 0. Every frozen source
+hash matches, with exactly those two overlays and no weakened comparisons.
+The separate door observer strips exactly to maintained source and passes
+both movies, covering FX zero/nonzero, flag wait/ready and all four door
+directions. Coroutine state 2 is not observed. Later gameplay edits are
+excluded. Cargo fmt and progress pass; the current Cargo release attempt
+is blocked executing sm's generated build script (OS error 5), confirmed by
+Defender event 1121. No new source or own residue change belongs to this audit.
+
 Combined committed-main QC (2026-10-19): frozen d196375a passes full any%
 129712/0 (234.77s), Waver 58109/0 (113.47s) and the 9BC8 left-ledge route
 69714/0 (136.79s), all native exits 0. The committed verifier build function
