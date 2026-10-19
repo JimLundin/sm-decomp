@@ -163,6 +163,10 @@ fn exchange_carry_emulation(cpu: &mut Cpu) {
     std::mem::swap(&mut cpu.c, &mut cpu.e);
     cpu_setFlags(cpu_getFlags(cpu), cpu);
 }
+fn exchange_accumulator_bytes(cpu: &mut Cpu) {
+    cpu.a = cpu.a.swap_bytes();
+    set_zero_negative(cpu.a, true, cpu);
+}
 fn set_zero_negative(value: u16, byte: bool, cpu: &mut Cpu) {
     if byte {
         cpu.z = value & 0xff == 0;
@@ -2138,8 +2142,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0xeb => {
-                (*cpu).a = (*cpu).a.swap_bytes();
-                set_zero_negative((*cpu).a, true, &mut *cpu);
+                exchange_accumulator_bytes(&mut *cpu);
                 break;
             }
             0xec => {

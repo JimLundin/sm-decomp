@@ -9834,6 +9834,21 @@ Block moves remain without any% movie hits as previously recorded; this turn
 leaves them untouched. Complete gameplay/render/audio remain open. Continue
 covered CPU cleanup; TSX/ROR stay held for contextual execution.
 
+CPU safe XBA completion (2026-10-19): exchange_accumulator_bytes owns the
+callback-free accumulator byte swap and byte-sized Z/N update. MF does not
+affect these flags; all other CPU fields remain exact. Frozen `7fcc20d6` plus
+this change passes 33,554,432 actual old/current completion cases: every
+accumulator word, all 256 flag masks and both modes. Independent byte assembly
+and Z/N expectations match full named CPU state. Prefix 3,600/0 (1.20s), native
+exit 0, executes the helper 55,209 times in native mode; emulation behavior is
+covered by constructed comparisons, not this prefix. Clean full any%
+129,712/0 (59.34s), native exit 0. Cargo fmt/check, full release/release-library
+builds with external SDL2, normal metadata and optimized frozen core/DLL pass.
+Live CPU matches verified source; peer gameplay/PPU work is outside this replay.
+Rust lines +3 introduces the safe helper while removing dispatcher pointer
+operations; other own counters unchanged. Complete gameplay/render/audio
+remain open. Continue covered CPU cleanup; TSX/ROR stay held.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
