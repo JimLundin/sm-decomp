@@ -31,18 +31,19 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest focused check: frozen `626b0b7e` plus X-ray word arithmetic and
-ROM reads passes any% 129712/0 (301.11s) and Waver 58109/0 (197.31s),
-both native exit 0. Named u16 inputs and wrapping operations retain angle
-256 and the signed boundary tests; checked ROM reads retain linear offsets
-and edge order. The 252-frame checkpoint executes the builder 252 times.
-All 156 actual old/current builder comparisons match complete RAM and 312
-ordered ROM reads across all ten handlers. Full-range component checks and
-1,376,256 composed cases pass; a shifted angle-256 cutoff is rejected.
-All 924 window-table bytes remain enforced. Maintained source equals the
-verified snapshot. Format, normal/core-only Cargo release, optimized DLL
-builds and progress pass after the separate native-linkage repair. Own cast
-lines -36 and Rust lines -47; other residue counters unchanged.
+Latest focused check: frozen `fe496675` plus shared down-beam contexts
+passes any% 129712/0 (205.66s) and Waver 58109/0 (126.03s), native exits 0.
+The two covered down-facing X-ray handlers now accept read-only context
+references; arithmetic, handler choice and table writes retain their order.
+The 252-frame checkpoint passes with 177 on-screen and 38 offscreen calls
+to those handlers. All 156 old/current builder comparisons and 36 direct
+handler comparisons match complete RAM; the context fields and destination
+pointer remain unchanged through early returns and both ramped branches.
+All 924 window-table bytes remain enforced. Maintained source and the probe
+with observations removed exactly match the verified candidate. Source review,
+formatting, release build and progress pass. Forty raw context dereferences
+are removed; formatting reduces cast lines by one and Rust lines by four.
+Other residue counters are unchanged.
 
 Everything that existed before is in the branch `archive/pre-transpile-2026-10-17`.
 

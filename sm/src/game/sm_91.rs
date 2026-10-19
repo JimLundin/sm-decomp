@@ -1832,48 +1832,47 @@ fn xray_offscreen_positive_stores(
     }
 }
 
-unsafe fn XrayHdmaFunc_BeamAimedD(mut ctx: *mut XrayHdmaCtx, game: &mut Game) {
-    let mut p: ::core::ffi::c_int = 2 as ::core::ffi::c_int * (*ctx).r24 as ::core::ffi::c_int;
-    if (*ctx).r28 as ::core::ffi::c_int - 128 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-        != 0
+unsafe fn XrayHdmaFunc_BeamAimedD(ctx: &XrayHdmaCtx, game: &mut Game) {
+    let mut p: ::core::ffi::c_int = 2 as ::core::ffi::c_int * ctx.r24 as ::core::ffi::c_int;
+    if ctx.r28 as ::core::ffi::c_int - 128 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0
     {
         // Current callers pass the $9100 or $9800 table inside this g_ram.
-        let base = 0x7e0000u32 + (*ctx).dest.cast::<u8>().offset_from(game.g_ram.as_ptr()) as u32;
+        let base = 0x7e0000u32 + ctx.dest.cast::<u8>().offset_from(game.g_ram.as_ptr()) as u32;
         xray_offscreen_positive_stores(
             |address, value| game.g_ram[(address - 0x7e0000) as usize] = value,
             base,
-            (*ctx).r24.wrapping_mul(2),
-            (*ctx).r22,
-            (*ctx).r32,
-            (*ctx).r30,
+            ctx.r24.wrapping_mul(2),
+            ctx.r22,
+            ctx.r32,
+            ctx.r30,
         );
         return;
-    } else if (*ctx).r26 as ::core::ffi::c_int - 128 as ::core::ffi::c_int
+    } else if ctx.r26 as ::core::ffi::c_int - 128 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0
     {
         XrayFillDownRamped(
-            (*ctx).dest,
+            ctx.dest,
             p,
-            ((*ctx).r22 as ::core::ffi::c_int + 0x10000 as ::core::ffi::c_int) as uint32,
-            -((*ctx).r32 as ::core::ffi::c_int) as uint32,
-            ((*ctx).r22 as ::core::ffi::c_int - 0x10000 as ::core::ffi::c_int) as uint32,
-            (*ctx).r30 as uint32,
+            (ctx.r22 as ::core::ffi::c_int + 0x10000 as ::core::ffi::c_int) as uint32,
+            -(ctx.r32 as ::core::ffi::c_int) as uint32,
+            (ctx.r22 as ::core::ffi::c_int - 0x10000 as ::core::ffi::c_int) as uint32,
+            ctx.r30 as uint32,
             0 as ::core::ffi::c_int,
         );
     } else {
         XrayFillDownRamped(
-            (*ctx).dest,
+            ctx.dest,
             p,
-            ((*ctx).r22 as ::core::ffi::c_int + 0x10000 as ::core::ffi::c_int) as uint32,
-            -((*ctx).r32 as ::core::ffi::c_int) as uint32,
-            ((*ctx).r22 as ::core::ffi::c_int + 0x10000 as ::core::ffi::c_int) as uint32,
-            -((*ctx).r30 as ::core::ffi::c_int) as uint32,
+            (ctx.r22 as ::core::ffi::c_int + 0x10000 as ::core::ffi::c_int) as uint32,
+            -(ctx.r32 as ::core::ffi::c_int) as uint32,
+            (ctx.r22 as ::core::ffi::c_int + 0x10000 as ::core::ffi::c_int) as uint32,
+            -(ctx.r30 as ::core::ffi::c_int) as uint32,
             0 as ::core::ffi::c_int,
         );
     }
     XrayFillUp(
-        (*ctx).dest,
+        ctx.dest,
         0xff as uint16,
         (p - 2 as ::core::ffi::c_int) as uint16,
     );
@@ -2030,16 +2029,15 @@ fn fill_xray_onscreen_positive_table(
     }
 }
 
-unsafe fn XrayHdmaOnScreen_BeamAimedD(mut ctx: *mut XrayHdmaCtx, game: &mut Game) {
-    if (*ctx).r28 as ::core::ffi::c_int - 128 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-        != 0
+unsafe fn XrayHdmaOnScreen_BeamAimedD(ctx: &XrayHdmaCtx, game: &mut Game) {
+    if ctx.r28 as ::core::ffi::c_int - 128 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0
     {
         // Current callers pass the $9100 or $9800 table inside this g_ram.
-        let table = (*ctx).dest.cast::<u8>().offset_from(game.g_ram.as_ptr()) as usize;
-        let start = (*ctx).r24.wrapping_mul(2);
-        let origin = (*ctx).r22;
-        let low_step = (*ctx).r32;
-        let high_step = (*ctx).r30;
+        let table = ctx.dest.cast::<u8>().offset_from(game.g_ram.as_ptr()) as usize;
+        let start = ctx.r24.wrapping_mul(2);
+        let origin = ctx.r22;
+        let low_step = ctx.r32;
+        let high_step = ctx.r30;
         fill_xray_onscreen_positive_table(
             &mut game.g_ram,
             table,
@@ -2050,37 +2048,35 @@ unsafe fn XrayHdmaOnScreen_BeamAimedD(mut ctx: *mut XrayHdmaCtx, game: &mut Game
         );
         return;
     }
-    let mut v0: ::core::ffi::c_int = 2 as ::core::ffi::c_int * (*ctx).r24 as ::core::ffi::c_int;
-    *(*ctx)
-        .dest
+    let mut v0: ::core::ffi::c_int = 2 as ::core::ffi::c_int * ctx.r24 as ::core::ffi::c_int;
+    *ctx.dest
         .offset((v0 - 2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-        (((*ctx).r22 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int)
-            * 0x101 as ::core::ffi::c_int) as uint16;
-    if (*ctx).r26 as ::core::ffi::c_int - 128 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-        != 0
+        ((ctx.r22 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) * 0x101 as ::core::ffi::c_int)
+            as uint16;
+    if ctx.r26 as ::core::ffi::c_int - 128 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0
     {
         XrayFillDownRamped(
-            (*ctx).dest,
+            ctx.dest,
             v0,
-            (*ctx).r22 as uint32,
-            -((*ctx).r32 as ::core::ffi::c_int) as uint32,
-            (*ctx).r22 as uint32,
-            (*ctx).r30 as uint32,
+            ctx.r22 as uint32,
+            -(ctx.r32 as ::core::ffi::c_int) as uint32,
+            ctx.r22 as uint32,
+            ctx.r30 as uint32,
             0 as ::core::ffi::c_int,
         );
     } else {
         XrayFillDownRamped(
-            (*ctx).dest,
+            ctx.dest,
             v0,
-            (*ctx).r22 as uint32,
-            -((*ctx).r32 as ::core::ffi::c_int) as uint32,
-            (*ctx).r22 as uint32,
-            -((*ctx).r30 as ::core::ffi::c_int) as uint32,
+            ctx.r22 as uint32,
+            -(ctx.r32 as ::core::ffi::c_int) as uint32,
+            ctx.r22 as uint32,
+            -(ctx.r30 as ::core::ffi::c_int) as uint32,
             0 as ::core::ffi::c_int,
         );
     }
     XrayFillUp(
-        (*ctx).dest,
+        ctx.dest,
         0xff as uint16,
         (v0 - 4 as ::core::ffi::c_int) as uint16,
     );
@@ -2168,12 +2164,12 @@ pub unsafe fn CalculateXrayHdmaTableInner(
     match (off_screen, direction) {
         (true, XrayBeamDirection::Right) => XrayHdmaFunc_BeamAimedR(&raw mut ctx, game),
         (true, XrayBeamDirection::Up) => XrayHdmaFunc_BeamAimedU(&raw mut ctx, game),
-        (true, XrayBeamDirection::Down) => XrayHdmaFunc_BeamAimedD(&raw mut ctx, game),
+        (true, XrayBeamDirection::Down) => XrayHdmaFunc_BeamAimedD(&ctx, game),
         (true, XrayBeamDirection::Left) => XrayHdmaFunc_BeamAimedL(&raw mut ctx, game),
         (true, XrayBeamDirection::Horizontal) => XrayHdmaFunc_BeamHoriz(&raw mut ctx, game),
         (false, XrayBeamDirection::Right) => XrayHdmaOnScreen_BeamAimedR(&raw mut ctx, game),
         (false, XrayBeamDirection::Up) => XrayHdmaOnScreen_BeamAimedU(&raw mut ctx, game),
-        (false, XrayBeamDirection::Down) => XrayHdmaOnScreen_BeamAimedD(&raw mut ctx, game),
+        (false, XrayBeamDirection::Down) => XrayHdmaOnScreen_BeamAimedD(&ctx, game),
         (false, XrayBeamDirection::Left) => XrayHdmaOnScreen_BeamAimedL(&raw mut ctx, game),
         (false, XrayBeamDirection::Horizontal) => XrayHdmaOnScreen_BeamHoriz(&raw mut ctx, game),
     }
