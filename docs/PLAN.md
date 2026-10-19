@@ -9241,6 +9241,81 @@ Rust lines -2; other counters unchanged. Full source/accumulator Cartesian,
 arbitrary MMIO and complete gameplay/render/audio remain open. ROR stays held
 for contextual execution. Continue covered CPU cleanup.
 
+A201 Save Station room and runtime save completed (2026-10-19):
+from Missile Station return71534, six measured lower-shaft jumps/wall-jumps
+hit ledge undersides or fall back; no ascent towestY1376 is established.
+Those trials retain health43 and5missiles. Separate coverage uses the earlier
+gunship-refill branch: retain alternate-lower-door.inputs through67435,
+X88/Y1216 health69 missiles5; left18, neutral100 landsX68/Y1419 beside
+save door. Extra vertical jump hits an enemy for10damage; retain the living
+69health descent before that jump, through67553 in save-descent-align.
+
+Select1, neutral1, five fresh left/shoot1 presses each followed byneutral90,
+left/shoot100, neutral120 opens westY1376 red cap. Missiles5->4->3->2->1->0;
+state9frame68031, A201load68050, gameplay68162; finalX200/Y139 health69.
+save-red-five68230/71 (172.29s) proves a new room, not onward credits.
+Left38 endsX142/Y171, anotherleft21 endsX117/Y171 against platform;
+left15 cannot move there. Left/jump16, neutral180 landsX103/Y155 atop it.
+Longer walk crosses toX75/Y171; right-hop and counter-steered jump overshoot.
+
+Successful activation uses save-platform-hop.inputs70051 X103/Y155:
+left4, neutral120, Jump1, neutral240, Jump1, neutral180.
+Message23 appears70060 X97/Y155; confirm70175; load_station_index1 at70190
+X96/Y152 forwardpose0; saved message24 appears70360; confirm70416;
+save_station_lockout_flag1 at70430, normal handler/coroutines at70440.
+save-platform-step70597/71 (166.62s). Right/jump50, right20, neutral60
+proves subsequent movement: finalX155/Y171 health69, used1/load1.
+save-station-release70727/71 (180.56s), nativeexit1. Retain both inputs.
+Station slot78 is actualB76F, blockbyteindex362 = block5,11; instructionAFEC.
+Earlier speculation that AFEC was a door is superseded by header capture.
+Runtime SaveToSram path and completion are proved; persistent file contents
+and fresh-process reload are not independently verified. No such reload claim.
+
+All17 ordered diagnostic streams exactly match frozen explicit-render
+Waver71; no new failing frames. Completed replays, observed nativeexit1:
+save-shaft-rise: 71610/71 (155.53s)
+save-right-rise: 71751/71 (178.85s)
+save-clear-rise: 71760/71 (169.18s)
+save-gap-rise: 71923/71 (194.41s)
+save-ledge-wall: 71697/71 (223.70s)
+save-delayed-wall: 71724/71 (173.32s)
+save-descent-align: 67628/71 (205.24s)
+save-red-five: 68230/71 (172.29s)
+save-station-prompt: 68870/71 (154.86s)
+save-station-center: 69493/71 (194.69s)
+save-station-trigger: 70110/71 (171.19s)
+save-platform-hop: 70051/71 (172.87s)
+save-platform-center: 70665/71 (169.81s)
+save-right-hop: 71283/71 (172.42s)
+save-stop-landing: 71290/71 (170.53s)
+save-platform-step: 70597/71 (166.62s)
+save-station-release: 70727/71 (180.56s)
+
+Independent session review confirms door/ammunition/room, saved-message,
+load/used flags and exact diagnostic streams. Historical replay provenance:
+existing alternate.dll was built against frozen render-comparison/libsm.rlib
+(session identifies d217ea15); that association and direct subprocess exits
+were observed in tool calls, not encoded by retained logs. New save-observe.dll
+was explicitly built this turn with rustc --extern sm pointing to that same
+frozen rlib; read-only host adds SAVE observations only. Logs alone cannot bind
+historical source/DLL or native exits. All probes/ROM-derived assets stay ignored.
+
+Cargo fmt --check and full cargo build --release now pass: a separate session
+fixed local SDL2 prerequisites outside the repo. Progress passes:22691 raw,
+39 extern blocks,3 extern fns,5 no_mangle,6723 unsafe,85576 casts,257471Rust
+lines. Own source/residue delta zero; peer changes separately account for line
+changes. Frozen same-DLL any%129712/0 (414.98s) remains input-only regression;
+peer hardware owns its current-source replays. No maintained gameplay change
+is justified by these routes. No injected RAM/map/health/ammunition writes.
+
+This item completed in under one hour. Next: choose accessible onward coverage
+from retained refilled shaft route, inspect actual requirements before spending
+ammunition; A201 is a save dead end and not a credits route. The ascent from
+Missile Station return remains unproved; do not confuse this separate descent
+branch with it. Held upper99BD ascent, cliff tuning, old9AD9 enemy-drop ammo and
+HDMA remain held. Peer cleanup and remote sync remain separate. Credits, full
+gameplay/hardware, render/audio fidelity, masked RAM and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
