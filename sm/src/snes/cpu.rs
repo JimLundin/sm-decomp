@@ -840,11 +840,14 @@ fn load_accumulator(value: u16, cpu: &mut Cpu) {
     };
     set_zero_negative(cpu.a, cpu.mf, cpu);
 }
-unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
+fn record_opcode_history(bank: u8, pc: u16, game: &mut Game) {
     // Preserve the inherited history value of 0xffffffff when PC is zero.
-    let cur_pc = (i32::from((*cpu).k) << 16 | (i32::from((*cpu).pc) - 1)) as u32;
+    let cur_pc = (i32::from(bank) << 16 | (i32::from(pc) - 1)) as u32;
     game.pc_hist[game.pc_hist_ctr as usize] = cur_pc;
     game.pc_hist_ctr = game.pc_hist_ctr.wrapping_add(1) & 7;
+}
+unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
+    record_opcode_history((*cpu).k, (*cpu).pc, game);
     if opcode == 0 {
         let addr = (u32::from((*cpu).k) << 16) | u32::from((*cpu).pc) | 0x800000;
         opcode = CpuOpcodeHook(addr.wrapping_sub(1), game) as u8;

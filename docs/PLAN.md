@@ -11639,6 +11639,24 @@ replays prevent interpreting timings as performance measurements. Prior
 holds and complete gameplay/render/audio remain open. Continue covered CPU
 cleanup.
 
+CPU safe opcode history recording (2026-10-19): record_opcode_history takes
+explicit bank/PC values and owns ring writes/cursor advance. Dispatch calls
+it at the same point before opcode hooks; the inherited PC-zero ffffffff
+history value and cursor wrapping remain unchanged. Frozen `da32f202` plus
+this change passes 134,217,728 actual old/current history cases: every bank,
+PC and valid ring cursor, checking all eight history slots and next cursor.
+The temporary coverage counter initially needed an unsafe block in the new
+safe helper; correcting probe-only instrumentation resolves compilation.
+Prefix 3,600/0 (2.74s), native exit 0, executes 10,363,030 helper calls.
+Clean full any% passes 129,712/0 (176.20s), native exit 0. Cargo fmt/check,
+full release/release-library builds with external SDL2, normal metadata and
+frozen optimized core/DLL pass. Live CPU matches verified source; subsequent
+peer color-math commit and uncommitted gameplay work are outside this replay.
+Rust lines +3 isolate history mutation in safe code; other own counters
+unchanged. Concurrent replays prevent interpreting timings as performance
+measurements. Prior holds and complete gameplay/render/audio remain open.
+Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
