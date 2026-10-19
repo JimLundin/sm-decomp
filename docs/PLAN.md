@@ -9685,6 +9685,25 @@ is outside this replay. Unsafe functions -1; other own counters unchanged,
 including Rust lines. Complete gameplay/render/audio remain open.
 Continue covered CPU cleanup; TSX/ROR stay held for contextual execution.
 
+CPU shared register pushes (2026-10-19): PHA/PHX/PHY call push_register with
+the existing CpuRegister selector. Width selection precedes bus writes; word
+cycle increment precedes the register read. Existing push_word/push_byte keep
+high-before-low writes, post-write SP decrements and live emulation wrapping.
+Safe selector references end before callbacks. Frozen `ada05681` plus this
+change passes 12,582,912 actual old/current cases: every selected word,
+independent MF/XF, distinct A/X/Y values, native/emulation modes and eight
+ordinary-RAM stack positions (0001/0002/00FF/0100/0101/01FF/0200/1FFF).
+Named CPU/bus fields, both written bytes, final SP and wrapping cycles match.
+Native SP-zero word pushes into ROM and arbitrary MMIO are outside this probe.
+Prefix 3,600/0 (1.01s), native exit 0, executes word/byte PHA 11,004/18,467,
+PHX 97,549/7,200 and PHY 22,995/10,047 times. Clean full any% 129,712/0
+(49.80s), native exit 0. Cargo fmt/check, full release and release-library
+builds with external SDL2, normal metadata and optimized frozen core/DLL
+builds pass. Live CPU matches verified source; peer PPU work is outside this
+replay. Rust lines -7; unsafe functions +1 centralizes the repeated stack bus
+boundary. Other own counters unchanged. Complete gameplay/render/audio remain
+open. Continue covered CPU cleanup; TSX/ROR stay held for contextual execution.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

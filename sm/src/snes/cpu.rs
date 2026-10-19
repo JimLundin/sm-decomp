@@ -669,6 +669,14 @@ unsafe fn load_register(
     }
     set_zero_negative(value, register.byte(&*cpu), &mut *cpu);
 }
+unsafe fn push_register(cpu: *mut Cpu, register: CpuRegister, game: &mut Game) {
+    if register.byte(&*cpu) {
+        push_byte(cpu, register.value(&*cpu) as u8, game);
+    } else {
+        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
+        push_word(cpu, register.value(&*cpu), game);
+    }
+}
 unsafe fn store_register(
     cpu: *mut Cpu,
     low: u32,
@@ -1255,12 +1263,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0x48 => {
-                if (*cpu).mf {
-                    push_byte(cpu, (*cpu).a as u8, game);
-                } else {
-                    (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-                    push_word(cpu, (*cpu).a, game);
-                }
+                push_register(cpu, CpuRegister::Accumulator, game);
                 break;
             }
             0x49 => {
@@ -1361,12 +1364,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0x5a => {
-                if (*cpu).xf {
-                    push_byte(cpu, (*cpu).y as u8, game);
-                } else {
-                    (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-                    push_word(cpu, (*cpu).y, game);
-                }
+                push_register(cpu, CpuRegister::Y, game);
                 break;
             }
             0x5b => {
@@ -2055,12 +2053,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0xda => {
-                if (*cpu).xf {
-                    push_byte(cpu, (*cpu).x as u8, game);
-                } else {
-                    (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-                    push_word(cpu, (*cpu).x, game);
-                }
+                push_register(cpu, CpuRegister::X, game);
                 break;
             }
             0xdb => {
