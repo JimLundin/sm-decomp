@@ -166,6 +166,39 @@ raw accesses unchanged. No new module, wrapper family or test artifact is
 added. Continue the shared state and handler work above; keep pure arithmetic
 separate from pointer helpers whose aliasing and ordered writes still matter.
 
+Split-word helpers (2026-10-19): consolidated 19 AddToHiLo and 12 SetHiLo
+copies into two shared rtl helpers. Ordinary word dereferences required
+alignment that odd RAM addresses do not provide. The helpers now explicitly
+read/write unaligned words, keeping raw pointer arguments and allowing aliases.
+Addition reads low then high, assembles the same 32-bit value, wraps the add,
+and writes low then high. Set retains that write order too. No caller argument
+or live-read timing changes; the documented contracts still require valid
+memory and exclude concurrent access. This repairs these helper accesses,
+not every remaining raw dereference in the codebase.
+
+An ordered byte model passes 18350080 addition and 2621440 store cases:
+every low word, four high-word boundaries, seven increments for addition,
+and ten aligned/unaligned/disjoint/overlapping layouts. Whole backing arrays
+match, including untouched bytes. On aligned layouts, 6291456 comparisons
+with the exact former helpers also pass. Reversed alias stores and omitted
+carry are rejected. These boundary/layout checks do not enumerate every
+combination of all 32-bit inputs.
+
+A separate observed any% prefix passes 30000/0: AddToHiLo executes 48021
+times at 2308..29999, including 13361 unaligned calls at 2323..29974;
+SetHiLo executes 82660 times at 2218..29999. Contract checks and probes
+remain temporary. Frozen e8592193 plus the clean change passes full any%
+129712/0 (192.42s) and Varia Suit 122732/0 (207.05s), native exits 0,
+with stable source, DLL and fixtures. The Varia route includes the exact
+earlier Kraid/Hi-Jump prefixes; no duplicate shorter replay is run.
+
+The source audit across all 64 files permits only the shared helpers,
+removed copies, corresponding imports and formatting. Formatting/check and
+normal release pass (98.12s frozen, 25.31s workspace); shared load and cache
+state differ, so these are not a before/after speedup measurement. Net Rust
+lines -187, unsafe functions -29, c_int cast lines -69; raw RAM access count
+unchanged. Concurrent subsystem work retains its own validation.
+
 Projectile word arithmetic (2026-10-19): replaced 27 exercised addition/
 subtraction expressions across 12 routines with u16 wrapping operations.
 All operands are u16 values or in-range literals; the original i32

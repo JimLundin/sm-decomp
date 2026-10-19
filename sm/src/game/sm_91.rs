@@ -18,6 +18,7 @@ use crate::game::sm_9b::{GrappleBeamFunc_BD95, GrappleBeamFunc_BEEB};
 use crate::game::sm_a0::Samus_CheckSolidEnemyColl;
 use crate::game_state::Game;
 use crate::rtl::{mov24, Mult8x8, RomPtr, Unreachable};
+use crate::rtl::{AddToHiLo, SetHiLo};
 extern "C" {
     fn __assert_fail(
         __assertion: *const ::core::ffi::c_char,
@@ -515,20 +516,6 @@ unsafe fn get_PoseEntry(mut a: uint16, game: &mut Game) -> *mut PoseEntry {
         (0x910000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t,
         game,
     ) as *mut PoseEntry;
-}
-#[inline]
-unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
-    let mut t: uint32 = ((*lo as ::core::ffi::c_int
-        + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
-        as uint32)
-        .wrapping_add(v);
-    *lo = t as uint16;
-    *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
-}
-#[inline]
-unsafe fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
-    *lo = t as uint16;
-    *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
 pub const fnSamus_MovementHandler_Normal: ::core::ffi::c_int = 0x90a337;
 pub const fnProjPreInstr_Empty: ::core::ffi::c_int = 0x90b169;

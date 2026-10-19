@@ -39,6 +39,7 @@ use crate::game::sm_9b::{
 use crate::game::sm_a0::Samus_CheckSolidEnemyColl;
 use crate::game_state::Game;
 use crate::rtl::abs16;
+use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{Load24, MakePairU16, Mult8x8, RomPtr, Unreachable};
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
@@ -651,20 +652,6 @@ unsafe fn get_SamusSpeedTableEntry(mut a: uint16, game: &mut Game) -> *mut Samus
         (0x900000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t,
         game,
     ) as *mut SamusSpeedTableEntry;
-}
-#[inline]
-unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
-    let mut t: uint32 = ((*lo as ::core::ffi::c_int
-        + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
-        as uint32)
-        .wrapping_add(v);
-    *lo = t as uint16;
-    *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
-}
-#[inline]
-unsafe fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
-    *lo = t as uint16;
-    *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
 pub const fnSamus_MoveHandler_ReleaseFromGrapple: uint32 = 9475182;
 pub const fnSamus_HandleMovement_DrainedCrouching: ::core::ffi::c_int = 0x9094cb;

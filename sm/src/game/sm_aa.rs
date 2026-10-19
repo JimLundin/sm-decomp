@@ -17,6 +17,7 @@ use crate::game::sm_a0::{
 };
 use crate::game_state::Game;
 use crate::rtl::abs16;
+use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{RomPtr, Unreachable};
 
 pub use crate::types::{
@@ -565,20 +566,6 @@ unsafe fn RomBankBase(mut bank: uint8, game: &mut Game) -> *const uint8 {
         game,
     )
     .offset(-(0x8000 as ::core::ffi::c_int as isize));
-}
-#[inline]
-unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
-    let mut t: uint32 = ((*lo as ::core::ffi::c_int
-        + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
-        as uint32)
-        .wrapping_add(v);
-    *lo = t as uint16;
-    *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
-}
-#[inline]
-unsafe fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
-    *lo = t as uint16;
-    *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
 pub const fnnullsub_171_AA: ::core::ffi::c_int = 0xaa807b;
 pub const fnnullsub_270: ::core::ffi::c_int = 0xaac6ab;

@@ -15,6 +15,7 @@ use crate::game::sm_a0::{
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
 use crate::rtl::abs16;
+use crate::rtl::AddToHiLo;
 use crate::rtl::{RomPtr, Unreachable};
 
 pub use crate::types::{
@@ -336,15 +337,6 @@ unsafe fn RomPtr_B3(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
         (0xb30000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t,
         game,
     );
-}
-#[inline]
-unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
-    let mut t: uint32 = ((*lo as ::core::ffi::c_int
-        + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
-        as uint32)
-        .wrapping_add(v);
-    *lo = t as uint16;
-    *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
 pub const fnnullsub_171_B3: ::core::ffi::c_int = 0xb3807b;
 pub const fnBrinstarPipeBug_PreInstr_1: ::core::ffi::c_int = 0xb38880;

@@ -3,6 +3,7 @@ use crate::game::sm_84::{SpawnPLM, SpawnPLMWithCollision};
 use crate::game::sm_90::KillProjectile;
 use crate::game::sm_a0::CalculateAngleFromXY;
 use crate::game_state::Game;
+use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{Mult8x8, RomPtr, SnesDivide, SnesModulus, Unreachable};
 use crate::snes::snes::snes_read;
 
@@ -346,20 +347,6 @@ unsafe fn get_DoorDef(mut a: uint16, game: &mut Game) -> *mut DoorDef {
         (0x830000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t,
         game,
     ) as *mut DoorDef;
-}
-#[inline]
-unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
-    let mut t: uint32 = ((*lo as ::core::ffi::c_int
-        + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
-        as uint32)
-        .wrapping_add(v);
-    *lo = t as uint16;
-    *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
-}
-#[inline]
-unsafe fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
-    *lo = t as uint16;
-    *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
 pub const fnDoorTransitionFunction_HandleElevator: ::core::ffi::c_int = 0x82e17d;
 pub const fnGrappleInstr_Goto: uint32 = 9744628;

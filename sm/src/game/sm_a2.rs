@@ -24,6 +24,7 @@ use crate::game::sm_a0::{
 use crate::game::sm_a9::MoveEnemyWithVelocity;
 use crate::game_state::Game;
 use crate::rtl::abs16;
+use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{Mult8x8, RomPtr, Unreachable};
 
 pub use crate::types::{
@@ -1936,20 +1937,6 @@ unsafe fn Get_TimedShutter(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut E
     return (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
         .offset(o as isize) as *mut Enemy_TimedShutter;
-}
-#[inline]
-unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
-    let mut t: uint32 = ((*lo as ::core::ffi::c_int
-        + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
-        as uint32)
-        .wrapping_add(v);
-    *lo = t as uint16;
-    *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
-}
-#[inline]
-unsafe fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
-    *lo = t as uint16;
-    *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
 static g_word_A28D50: uint16 = 0x30 as uint16;
 static g_word_A28D52: uint16 = 1 as uint16;

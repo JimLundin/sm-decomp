@@ -1,4 +1,5 @@
 use crate::game_state::Game;
+use crate::rtl::AddToHiLo;
 
 use crate::game::sm_81::{DrawSpritemap, LoadFromSram, SoftReset};
 use crate::game::sm_82::{
@@ -394,15 +395,6 @@ unsafe fn get_RoomDefHeader(mut a: uint16, game: &mut Game) -> *mut RoomDefHeade
         (0x8f0000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t,
         game,
     ) as *mut RoomDefHeader;
-}
-#[inline]
-unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
-    let mut t: uint32 = ((*lo as ::core::ffi::c_int
-        + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
-        as uint32)
-        .wrapping_add(v);
-    *lo = t as uint16;
-    *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
 pub const fnDoorTransition_FadeInScreenAndFinish: ::core::ffi::c_int = 0x82e737;
 pub unsafe fn APU_UploadBank(mut addr: uint32, game: &mut Game) {

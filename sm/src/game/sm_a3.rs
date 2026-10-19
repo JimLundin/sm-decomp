@@ -20,6 +20,7 @@ use crate::game::sm_b4::CreateSpriteAtPos;
 pub use crate::game::waver::{Enemy_Waver, Waver_Func_1, Waver_Init, Waver_Instr_1, Waver_Main};
 use crate::game_state::Game;
 use crate::rtl::abs16;
+use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{RomPtr, SnesDivide, Unreachable};
 extern "C" {
     fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
@@ -1064,20 +1065,6 @@ unsafe fn get_EnemyDef_A2(mut a: uint16, game: &mut Game) -> *mut EnemyDef {
         (0xa00000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t,
         game,
     ) as *mut EnemyDef;
-}
-#[inline]
-unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
-    let mut t: uint32 = ((*lo as ::core::ffi::c_int
-        + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
-        as uint32)
-        .wrapping_add(v);
-    *lo = t as uint16;
-    *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
-}
-#[inline]
-unsafe fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
-    *lo = t as uint16;
-    *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
 pub const fnMetalee_Func_1: ::core::ffi::c_int = 0xa38987;
 pub const fnMetalee_Func_3: ::core::ffi::c_int = 0xa389d4;

@@ -20,6 +20,7 @@ use crate::game::sm_a6::Ridley_Func_103;
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
 use crate::rtl::abs16;
+use crate::rtl::AddToHiLo;
 use crate::rtl::{Load24, Mult8x8, RomPtr, SnesDivide, SnesModulus, Unreachable};
 
 pub use crate::types::{
@@ -351,15 +352,6 @@ unsafe fn gRam7800_Default(mut a: uint16, game: &mut Game) -> *mut Ram7800_Defau
     return (&raw mut game.g_ram as *mut uint8)
         .offset((0x7800 as ::core::ffi::c_int + a as ::core::ffi::c_int) as isize)
         as *mut uint8 as *mut Ram7800_Default;
-}
-#[inline]
-unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
-    let mut t: uint32 = ((*lo as ::core::ffi::c_int
-        + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
-        as uint32)
-        .wrapping_add(v);
-    *lo = t as uint16;
-    *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
 pub const fnEprojInstr_Delete: uint32 = 8814932;
 pub const fnEprojInstr_Sleep: uint32 = 8814937;

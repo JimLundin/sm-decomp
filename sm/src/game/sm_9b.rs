@@ -18,6 +18,7 @@ use crate::game::sm_94::{
 use crate::game::sm_a0::{CalculateAngleFromXY, GrappleBeam_CollDetect_Enemy};
 use crate::game_state::Game;
 use crate::rtl::abs16;
+use crate::rtl::SetHiLo;
 use crate::rtl::{RomPtr, Unreachable};
 extern "C" {
     fn memcpy(
@@ -320,11 +321,6 @@ unsafe fn RomPtr_A0(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
 unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int, game: &mut Game) -> *mut VramWriteEntry {
     return (&raw mut game.g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
         as *mut uint8 as *mut VramWriteEntry;
-}
-#[inline]
-unsafe fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
-    *lo = t as uint16;
-    *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
 pub const fnSamus_MoveHandler_ReleaseFromGrapple: ::core::ffi::c_int = 0x90946e;
 pub const fnSamus_MovementHandler_Normal: ::core::ffi::c_int = 0x90a337;

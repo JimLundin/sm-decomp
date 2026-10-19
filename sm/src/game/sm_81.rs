@@ -13,6 +13,7 @@ use crate::game::sm_88::{
     DisableHdmaObjects, EnableHdmaObjects, SpawnHdmaObject, WaitUntilEndOfVblankAndClearHdma,
 };
 use crate::game_state::Game;
+use crate::rtl::AddToHiLo;
 use crate::rtl::{RomPtr, RtlWriteSram, Unreachable, WriteReg};
 extern "C" {
     fn memcpy(
@@ -432,15 +433,6 @@ unsafe fn get_RoomDefHeader(mut a: uint16, game: &mut Game) -> *mut RoomDefHeade
         (0x8f0000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t,
         game,
     ) as *mut RoomDefHeader;
-}
-#[inline]
-unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
-    let mut t: uint32 = ((*lo as ::core::ffi::c_int
-        + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
-        as uint32)
-        .wrapping_add(v);
-    *lo = t as uint16;
-    *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
 static kFileSelectMap_AreaIndexes: [uint16; 6] = [
     0 as ::core::ffi::c_int as uint16,

@@ -24,6 +24,7 @@ use crate::game::sm_91::{
 use crate::game::sm_93::DrawPlayerExplosions2;
 use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game_state::Game;
+use crate::rtl::AddToHiLo;
 use crate::rtl::{Mult8x8, RomPtr, SnesDivide, Unreachable, WriteReg, WriteRegWord};
 extern "C" {
     fn __assert_fail(
@@ -1130,15 +1131,6 @@ pub const fnSamus_FrameHandlerAlfa_Func12: ::core::ffi::c_int = 0x90e6c9;
 pub const fnSamus_Func15: ::core::ffi::c_int = 0x90e833;
 pub const fnSamusDrawHandler_Default: ::core::ffi::c_int = 0x90eb52;
 pub const fnlocret_8B9585: ::core::ffi::c_int = 0x8b9585;
-#[inline]
-unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
-    let mut t: uint32 = ((*lo as ::core::ffi::c_int
-        + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
-        as uint32)
-        .wrapping_add(v);
-    *lo = t as uint16;
-    *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
-}
 pub unsafe fn SetupPpuForTitleSequence(game: &mut Game) {
     WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
     *(&raw mut game.g_ram as *mut uint8).offset(0x51) = 0x80 as uint8;

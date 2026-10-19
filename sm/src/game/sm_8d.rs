@@ -1,5 +1,6 @@
 use crate::game::sm_80::{QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game_state::Game;
+use crate::rtl::AddToHiLo;
 use crate::rtl::{MakePairU16, RomPtr, Unreachable};
 
 pub use crate::types::{
@@ -68,15 +69,6 @@ unsafe fn get_PalFxDef(mut a: uint16, game: &mut Game) -> *mut PalFxDef {
         (0x8d0000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t,
         game,
     ) as *mut PalFxDef;
-}
-#[inline]
-unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
-    let mut t: uint32 = ((*lo as ::core::ffi::c_int
-        + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
-        as uint32)
-        .wrapping_add(v);
-    *lo = t as uint16;
-    *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
 pub const fnCinematicFunction_Intro_Page2: ::core::ffi::c_int = 0x8bb35f;
 pub const fnPalPreInstr_nullsub_129: ::core::ffi::c_int = 0x8dc526;

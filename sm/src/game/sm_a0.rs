@@ -750,15 +750,6 @@ unsafe fn get_EnemyPopulation(
         game,
     ) as *mut EnemyPopulation;
 }
-#[inline]
-unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
-    let mut t: uint32 = ((*lo as ::core::ffi::c_int
-        + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
-        as uint32)
-        .wrapping_add(v);
-    *lo = t as uint16;
-    *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
-}
 pub const fnEprojPreInstr_nullsub_83: ::core::ffi::c_int = 0x8684fb;
 pub const fnGrappleBeam_Func2: ::core::ffi::c_int = 0x9bc8c5;
 pub const fnEnemy_GrappleReact_NoInteract_A0: ::core::ffi::c_int = 0xa08000;

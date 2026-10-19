@@ -1389,6 +1389,31 @@ pub(crate) fn abs16(value: u16) -> u16 {
     (value as i16).unsigned_abs()
 }
 
+/// Add to a split word pair, reading low then high and writing low then high.
+///
+/// # Safety
+/// Both pointers must allow initialized word reads and word writes. They may
+/// be unaligned or overlap; neither pointee may be concurrently accessed.
+#[inline]
+pub(crate) unsafe fn AddToHiLo(hi: *mut u16, lo: *mut u16, value: u32) {
+    let low = u32::from(lo.read_unaligned());
+    let high = u32::from(hi.read_unaligned());
+    let sum = (low | (high << 16)).wrapping_add(value);
+    lo.write_unaligned(sum as u16);
+    hi.write_unaligned((sum >> 16) as u16);
+}
+
+/// Set a split word pair, writing low before high even when the words overlap.
+///
+/// # Safety
+/// Both pointers must allow word writes. They may be unaligned or overlap;
+/// neither pointee may be concurrently accessed.
+#[inline]
+pub(crate) unsafe fn SetHiLo(hi: *mut u16, lo: *mut u16, value: u32) {
+    lo.write_unaligned(value as u16);
+    hi.write_unaligned((value >> 16) as u16);
+}
+
 pub unsafe fn Mult8x8(mut a: uint8, mut b: uint8) -> uint16 {
     return (a as ::core::ffi::c_int * b as ::core::ffi::c_int) as uint16;
 }
