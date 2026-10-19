@@ -630,73 +630,28 @@ unsafe fn CallMsgBoxDraw(mut ea: uint32, game: &mut Game) {
         }
     };
 }
-unsafe fn MsgBoxMakeHdmaTable(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x5a8) as *mut uint16) =
-        ((31488 as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x5a2) as *mut uint16)
-                as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
-            >> 8 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x5aa) as *mut uint16) = 99 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x5a4) as *mut uint16) =
-        ((*((&raw mut game.g_ram as *mut uint8).offset(0x5a2) as *mut uint16) as ::core::ffi::c_int
-            + 31744 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
-            >> 8 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x5a6) as *mut uint16) = 148 as uint16;
-    let mut v0: uint16 = 123 as uint16;
-    let mut v1: uint16 = 124 as uint16;
-    let mut r20: uint16 = 30 as uint16;
-    loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap[v0 as usize] = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x5aa) as *mut uint16)
-            as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x5a8) as *mut uint16)
-                as ::core::ffi::c_int) as uint16;
-        let ref mut fresh2 = *((&raw mut game.g_ram as *mut uint8).offset(0x5aa) as *mut uint16);
-        *fresh2 = (*fresh2).wrapping_sub(1);
-        let ref mut fresh3 = *((&raw mut game.g_ram as *mut uint8).offset(0x5a8) as *mut uint16);
-        *fresh3 = (*fresh3).wrapping_sub(1);
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap[v1 as usize] = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x5a6) as *mut uint16)
-            as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x5a4) as *mut uint16)
-                as ::core::ffi::c_int) as uint16;
-        v0 = v0.wrapping_sub(1);
-        let ref mut fresh4 = *((&raw mut game.g_ram as *mut uint8).offset(0x5a6) as *mut uint16);
-        *fresh4 = (*fresh4).wrapping_add(1);
-        let ref mut fresh5 = *((&raw mut game.g_ram as *mut uint8).offset(0x5a4) as *mut uint16);
-        *fresh5 = (*fresh5).wrapping_add(1);
-        v1 = v1.wrapping_add(1);
-        r20 = r20.wrapping_sub(1);
-        if !(r20 != 0) {
-            break;
-        }
+fn MsgBoxMakeHdmaTable(game: &mut Game) {
+    let radius = u16::from_le_bytes([game.g_ram[0x5a2], game.g_ram[0x5a3]]);
+    let upper = 0x7b00u16.wrapping_sub(radius) >> 8;
+    let lower = radius.wrapping_add(0x7c00) >> 8;
+
+    // Each scanline and its edge move together, so their difference stays constant.
+    for word in game.g_ram[0x30bc..0x30f8].chunks_exact_mut(2) {
+        word.copy_from_slice(&99u16.wrapping_sub(upper).to_le_bytes());
     }
-    let mut v2: uint16 = (v1 as ::core::ffi::c_int * 2 as ::core::ffi::c_int) as uint16;
-    loop {
-        *((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap as *mut uint16 as *mut uint8)
-            .offset(v2 as ::core::ffi::c_int as isize) as *mut uint16) = 0 as uint16;
-        v2 = (v2 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
-        if !(((v2 as ::core::ffi::c_int - 480 as ::core::ffi::c_int) as int16
-            as ::core::ffi::c_int)
-            < 0 as ::core::ffi::c_int)
-        {
-            break;
-        }
+    for word in game.g_ram[0x30f8..0x3134].chunks_exact_mut(2) {
+        word.copy_from_slice(&148u16.wrapping_sub(lower).to_le_bytes());
     }
+    game.g_ram[0x3134..0x31e0].fill(0);
+
+    // Preserve the scratch words left after all 30 scanlines.
+    game.g_ram[0x5a4..0x5a6].copy_from_slice(&lower.wrapping_add(30).to_le_bytes());
+    game.g_ram[0x5a6..0x5a8].copy_from_slice(&178u16.to_le_bytes());
+    game.g_ram[0x5a8..0x5aa].copy_from_slice(&upper.wrapping_sub(30).to_le_bytes());
+    game.g_ram[0x5aa..0x5ac].copy_from_slice(&69u16.to_le_bytes());
 }
 unsafe fn SetupMessageBoxBg3YscrollHdma(game: &mut Game) {
-    *((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-        .menu
-        .palette_backup_in_menu as *mut uint16)
-        .offset(64) as *mut uint16 as *mut uint32) = -(516947713 as ::core::ffi::c_int) as uint32;
-    (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-        .pause_menu_map_tilemap[450 as ::core::ffi::c_int as usize] = 12542 as uint16;
-    (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-        .msgbox
-        .indirect_hdma[6 as ::core::ffi::c_int as usize] = 0 as uint8;
+    game.g_ram[0x3380..0x3387].copy_from_slice(&[0xff, 0x00, 0x30, 0xe1, 0xfe, 0x30, 0x00]);
     WriteReg(DMAP6 as ::core::ffi::c_int as uint16, 0x42 as uint8, game);
     WriteReg(BBAD6 as ::core::ffi::c_int as uint16, 0x12 as uint8, game);
     WriteReg(A1T6L as ::core::ffi::c_int as uint16, 0x80 as uint8, game);

@@ -236,6 +236,32 @@ A dash means unexercised on that route, not absent behavior.
 | RandomDropRoutine / `samus_reserve_health().wrapping_add(samus_health())` | - | 55 @ 35502..119764 |
 | RandomDropRoutine / `v2.wrapping_add(4)` | - | 4 @ 35502..36233 |
 
+Message-box window tables (2026-10-19): generate the two constant scroll
+regions and zero tail through byte slices, with explicit wrapping word
+arithmetic. Preserve the final four scratch words and seven-byte indirect
+descriptor. The generator has no callbacks and its RAM ranges are disjoint,
+so intermediate scratch stores can be folded into their final values.
+All twelve hardware register writes retain their order and preparation state.
+
+Extracted maintained Rust before/after bodies pass 262144 complete-RAM
+comparisons: all 65536 radii, two sentinel patterns, both generator and setup.
+Untouched bytes, layouts and register-event snapshots agree. Deliberately
+wrong scratch, descriptor and compiled table-boundary controls all fail.
+Control compilation takes 1.24s and exhaustive execution 7.76s. An observed
+30000/0 prefix (40.75s) executes 27 table generations, descriptor setup,
+13 opening and 13 closing steps at 27563..28193, including zero/full radii.
+Independent review strips all probes back to the exact clean candidate.
+
+Frozen c7856316 plus this change passes full any% 129712/0 (313.19s)
+and Varia 122732/0 (327.64s), native exits 0, with fixed source, DLL
+and fixture hashes. Varia's endpoint retains the defeated-Kraid flag and
+equipped/collected items $1105; the known fingernail warning remains.
+Formatting/check, normal release (46.38s), Cargo host (2.64s) and progress
+pass. Net Rust lines -45, raw-access lines -20, c_int cast lines -19,
+borrowed raw places -4 and unsafe functions -1; no helper layer is added.
+Concurrent gameplay changes retain separate verification. No temporary
+controls, probes, checkpoints or ROM-derived assets are committed.
+
 ## Validation strategy (2026-10-19)
 
 User priority: shorten the complete edit/build/result cycle. Replaying the
