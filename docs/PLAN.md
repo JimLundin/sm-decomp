@@ -45,16 +45,18 @@ passes. The maintained correction preserves their 16-bit carry behavior.
 
 Latest reviewed integration: frozen `a85ff831` plus the two cinematic
 source files from `d610b820` passes any% 129712/0 (320.11s), Waver
-58109/0 (157.06s), Super Missile 69700/0 (201.64s) and Green Brinstar
-Save Room 71800/0 (235.55s), all native exits 0. Complete non-timing
-stdout/stderr diagnostics match the reviewed 19d550a3 integration.
+58109/0 (157.06s), Super Missile 69700/0 (201.64s), Green Brinstar
+Save Room 71800/0 (235.55s) and Charge Beam 78380/0 (178.76s), all native
+exits 0. The first four routes' complete non-timing stdout/stderr diagnostics
+match the reviewed 19d550a3 integration. Charge Beam diagnostics match its
+original full-boot milestone after removing the read-only final-state logging.
 This combines the subsequent reviewed PLM, door and DMA changes with the
 cinematic spawn correction and $1B9D/$1B9E comparison enforcement.
 All 68 source/config/host files match that exact scope and retain their
 hashes through replay; the maintained CLI/DLL host is unchanged, and the
 DLL retains its hash. Copied inputs match the maintained fixtures, with
 separate save directories and SM_* overrides cleared. Formatting/check,
-normal Cargo release (36.36s) and progress pass. This quality check changes
+normal Cargo release (42.11s) and progress pass. This quality check changes
 no maintained source or own residue counters. Other changes after a85ff831
 retain separate verification. Full gameplay/credits, disk-save persistence,
 hardware/audio coverage, remaining cinematic arguments and masks stay open.
@@ -378,6 +380,16 @@ on the clean cinematic library, 40/0 (0.23s), native exit 0. Loaded and final
 position/inventory/beam/coroutine values match the milestone above; source,
 library, original/copied checkpoint and original input hashes stay unchanged.
 This establishes checkpoint compatibility for that short suffix.
+
+Independent QC replays all 78380 frames on the unchanged a85ff831 integration
+DLL with the two cinematic source files from d610b820: zero failures
+(178.76s), native exit 0. Its 25 rooms, 31 enemy definitions and all diagnostics
+match the original full-boot run after removing only timing and FINAL/BEAMS logging.
+Independent source/host review confirms those additions only read final RAM
+and preserve the verifier result. All 68 frozen source/config/host files,
+the DLL, ROM and copied input retain their hashes through replay. The fixture
+contains only ordinary controller words and its first 71800 frames exactly
+match the save-room route.
 
 Formatting, normal Cargo release and progress passed with the cinematic
 source used here. This milestone changes no maintained Rust or own residue
