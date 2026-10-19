@@ -804,6 +804,31 @@ Full gameplay/credits and wider hardware/audio coverage remain unfinished.
 | EprojPreInstrHelper_SpikeShootingPlantSpikes_Func1 | - | 13 @ 84915..91814 |
 | EprojPreInstr_DustCloudOrExplosion | - | 11 @ 18226..120071 |
 
+Independent removal review (2026-10-19): reconstructed all of 345d35f5
+and both frozen candidates, including captured-index positions and exact
+probe stripping. The raw survey records contain 317 complete-RAM store
+comparisons across all twelve selected sites; all 34 unvisited surveyed
+stores remain unchanged. Source/configuration/library/fixture pins matched
+at audit time. The observer directory was subsequently reused by another
+pass; the retained final candidate, libraries and raw logs still match.
+
+The actual two now-safe helpers, predicates and ID writer, linked to the
+qualified Game/accessors, pass 655360 independent complete-RAM cases.
+These cover every u16 slot index, odd and high indices, every X/Y distance
+and camera wrapping. Dust/explosion retains distances 0..255; spike-plant
+retains 0..256. Wrong condition and wrong stride variants fail at the
+expected cases. Conditions and their distinct edge behavior are preserved.
+
+Qualified final full-boot results remain any% 129712/0 and Bubble Mountain
+138749/0, native exits 0; complete non-probe, non-timing diagnostics match
+the surveys. Copied inputs and ROM match their recorded hashes. Fresh
+private-source formatting, normal release (39.86s) and progress pass.
+Only registry artifacts are reused after Windows denied the SDL build
+script; game artifacts are built in this checkout. The measured delta is
+Rust -12, raw offsets -12, promotion casts -12 (cast lines -6), unsafe
+functions -2. This audit changes no maintained Rust and adds no assets.
+Later workspace changes retain separate integration coverage.
+
 ## Validation strategy (2026-10-19)
 
 User priority: shorten the complete edit/build/result cycle. Replaying the
