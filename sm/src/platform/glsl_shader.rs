@@ -210,6 +210,52 @@ pub struct RenderCtx {
 }
 pub const kMaxVaosInRenderCtx: C2RustUnnamed_3 = 51;
 pub use crate::types::{stbi_us, Config};
+impl stbi__context {
+    const EMPTY: Self = stbi__context {
+        img_x: 0,
+        img_y: 0,
+        img_n: 0,
+        img_out_n: 0,
+        io: stbi_io_callbacks {
+            read: None,
+            skip: None,
+            eof: None,
+        },
+        io_user_data: ::core::ptr::null_mut::<::core::ffi::c_void>(),
+        read_from_callbacks: 0,
+        buflen: 0,
+        buffer_start: [0; 128],
+        callback_already_read: 0,
+        img_buffer: ::core::ptr::null_mut::<stbi_uc>(),
+        img_buffer_end: ::core::ptr::null_mut::<stbi_uc>(),
+        img_buffer_original: ::core::ptr::null_mut::<stbi_uc>(),
+        img_buffer_original_end: ::core::ptr::null_mut::<stbi_uc>(),
+    };
+}
+impl stbi__zhuffman {
+    const EMPTY: Self = stbi__zhuffman {
+        fast: [0; 512],
+        firstcode: [0; 16],
+        maxcode: [0; 17],
+        firstsymbol: [0; 16],
+        size: [0; 288],
+        value: [0; 288],
+    };
+}
+impl stbi__zbuf {
+    const EMPTY: Self = stbi__zbuf {
+        zbuffer: ::core::ptr::null_mut::<stbi_uc>(),
+        zbuffer_end: ::core::ptr::null_mut::<stbi_uc>(),
+        num_bits: 0,
+        code_buffer: 0,
+        zout: ::core::ptr::null_mut::<::core::ffi::c_char>(),
+        zout_start: ::core::ptr::null_mut::<::core::ffi::c_char>(),
+        zout_end: ::core::ptr::null_mut::<::core::ffi::c_char>(),
+        z_expandable: 0,
+        z_length: stbi__zhuffman::EMPTY,
+        z_distance: stbi__zhuffman::EMPTY,
+    };
+}
 pub type C2RustUnnamed_0 = ::core::ffi::c_uint;
 pub const STBI_ORDER_BGR: C2RustUnnamed_0 = 1;
 pub type C2RustUnnamed_1 = ::core::ffi::c_uint;
@@ -744,26 +790,7 @@ pub unsafe fn stbi_load_from_file(
     mut req_comp: ::core::ffi::c_int,
 ) -> *mut stbi_uc {
     let mut result: *mut ::core::ffi::c_uchar = ::core::ptr::null_mut::<::core::ffi::c_uchar>();
-    let mut s: stbi__context = stbi__context {
-        img_x: 0,
-        img_y: 0,
-        img_n: 0,
-        img_out_n: 0,
-        io: stbi_io_callbacks {
-            read: None,
-            skip: None,
-            eof: None,
-        },
-        io_user_data: ::core::ptr::null_mut::<::core::ffi::c_void>(),
-        read_from_callbacks: 0,
-        buflen: 0,
-        buffer_start: [0; 128],
-        callback_already_read: 0,
-        img_buffer: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_end: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original_end: ::core::ptr::null_mut::<stbi_uc>(),
-    };
+    let mut s: stbi__context = stbi__context::EMPTY;
     stbi__start_file(&raw mut s, f);
     result = stbi__load_and_postprocess_8bit(&raw mut s, x, y, comp, req_comp);
     if !result.is_null() {
@@ -784,26 +811,7 @@ pub unsafe fn stbi_load_from_file_16(
     mut req_comp: ::core::ffi::c_int,
 ) -> *mut stbi_us {
     let mut result: *mut stbi__uint16 = ::core::ptr::null_mut::<stbi__uint16>();
-    let mut s: stbi__context = stbi__context {
-        img_x: 0,
-        img_y: 0,
-        img_n: 0,
-        img_out_n: 0,
-        io: stbi_io_callbacks {
-            read: None,
-            skip: None,
-            eof: None,
-        },
-        io_user_data: ::core::ptr::null_mut::<::core::ffi::c_void>(),
-        read_from_callbacks: 0,
-        buflen: 0,
-        buffer_start: [0; 128],
-        callback_already_read: 0,
-        img_buffer: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_end: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original_end: ::core::ptr::null_mut::<stbi_uc>(),
-    };
+    let mut s: stbi__context = stbi__context::EMPTY;
     stbi__start_file(&raw mut s, f);
     result = stbi__load_and_postprocess_16bit(&raw mut s, x, y, comp, req_comp);
     if !result.is_null() {
@@ -845,26 +853,7 @@ pub unsafe fn stbi_load_16_from_memory(
     mut channels_in_file: *mut ::core::ffi::c_int,
     mut desired_channels: ::core::ffi::c_int,
 ) -> *mut stbi_us {
-    let mut s: stbi__context = stbi__context {
-        img_x: 0,
-        img_y: 0,
-        img_n: 0,
-        img_out_n: 0,
-        io: stbi_io_callbacks {
-            read: None,
-            skip: None,
-            eof: None,
-        },
-        io_user_data: ::core::ptr::null_mut::<::core::ffi::c_void>(),
-        read_from_callbacks: 0,
-        buflen: 0,
-        buffer_start: [0; 128],
-        callback_already_read: 0,
-        img_buffer: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_end: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original_end: ::core::ptr::null_mut::<stbi_uc>(),
-    };
+    let mut s: stbi__context = stbi__context::EMPTY;
     stbi__start_mem(&raw mut s, buffer, len);
     return stbi__load_and_postprocess_16bit(&raw mut s, x, y, channels_in_file, desired_channels)
         as *mut stbi_us;
@@ -877,26 +866,7 @@ pub unsafe fn stbi_load_16_from_callbacks(
     mut channels_in_file: *mut ::core::ffi::c_int,
     mut desired_channels: ::core::ffi::c_int,
 ) -> *mut stbi_us {
-    let mut s: stbi__context = stbi__context {
-        img_x: 0,
-        img_y: 0,
-        img_n: 0,
-        img_out_n: 0,
-        io: stbi_io_callbacks {
-            read: None,
-            skip: None,
-            eof: None,
-        },
-        io_user_data: ::core::ptr::null_mut::<::core::ffi::c_void>(),
-        read_from_callbacks: 0,
-        buflen: 0,
-        buffer_start: [0; 128],
-        callback_already_read: 0,
-        img_buffer: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_end: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original_end: ::core::ptr::null_mut::<stbi_uc>(),
-    };
+    let mut s: stbi__context = stbi__context::EMPTY;
     stbi__start_callbacks(&raw mut s, clbk as *mut stbi_io_callbacks, user);
     return stbi__load_and_postprocess_16bit(&raw mut s, x, y, channels_in_file, desired_channels)
         as *mut stbi_us;
@@ -909,26 +879,7 @@ pub unsafe fn stbi_load_from_memory(
     mut comp: *mut ::core::ffi::c_int,
     mut req_comp: ::core::ffi::c_int,
 ) -> *mut stbi_uc {
-    let mut s: stbi__context = stbi__context {
-        img_x: 0,
-        img_y: 0,
-        img_n: 0,
-        img_out_n: 0,
-        io: stbi_io_callbacks {
-            read: None,
-            skip: None,
-            eof: None,
-        },
-        io_user_data: ::core::ptr::null_mut::<::core::ffi::c_void>(),
-        read_from_callbacks: 0,
-        buflen: 0,
-        buffer_start: [0; 128],
-        callback_already_read: 0,
-        img_buffer: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_end: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original_end: ::core::ptr::null_mut::<stbi_uc>(),
-    };
+    let mut s: stbi__context = stbi__context::EMPTY;
     stbi__start_mem(&raw mut s, buffer, len);
     return stbi__load_and_postprocess_8bit(&raw mut s, x, y, comp, req_comp) as *mut stbi_uc;
 }
@@ -940,26 +891,7 @@ pub unsafe fn stbi_load_from_callbacks(
     mut comp: *mut ::core::ffi::c_int,
     mut req_comp: ::core::ffi::c_int,
 ) -> *mut stbi_uc {
-    let mut s: stbi__context = stbi__context {
-        img_x: 0,
-        img_y: 0,
-        img_n: 0,
-        img_out_n: 0,
-        io: stbi_io_callbacks {
-            read: None,
-            skip: None,
-            eof: None,
-        },
-        io_user_data: ::core::ptr::null_mut::<::core::ffi::c_void>(),
-        read_from_callbacks: 0,
-        buflen: 0,
-        buffer_start: [0; 128],
-        callback_already_read: 0,
-        img_buffer: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_end: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original_end: ::core::ptr::null_mut::<stbi_uc>(),
-    };
+    let mut s: stbi__context = stbi__context::EMPTY;
     stbi__start_callbacks(&raw mut s, clbk as *mut stbi_io_callbacks, user);
     return stbi__load_and_postprocess_8bit(&raw mut s, x, y, comp, req_comp) as *mut stbi_uc;
 }
@@ -994,26 +926,7 @@ pub unsafe fn stbi_loadf_from_memory(
     mut comp: *mut ::core::ffi::c_int,
     mut req_comp: ::core::ffi::c_int,
 ) -> *mut ::core::ffi::c_float {
-    let mut s: stbi__context = stbi__context {
-        img_x: 0,
-        img_y: 0,
-        img_n: 0,
-        img_out_n: 0,
-        io: stbi_io_callbacks {
-            read: None,
-            skip: None,
-            eof: None,
-        },
-        io_user_data: ::core::ptr::null_mut::<::core::ffi::c_void>(),
-        read_from_callbacks: 0,
-        buflen: 0,
-        buffer_start: [0; 128],
-        callback_already_read: 0,
-        img_buffer: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_end: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original_end: ::core::ptr::null_mut::<stbi_uc>(),
-    };
+    let mut s: stbi__context = stbi__context::EMPTY;
     stbi__start_mem(&raw mut s, buffer, len);
     return stbi__loadf_main(&raw mut s, x, y, comp, req_comp);
 }
@@ -1025,26 +938,7 @@ pub unsafe fn stbi_loadf_from_callbacks(
     mut comp: *mut ::core::ffi::c_int,
     mut req_comp: ::core::ffi::c_int,
 ) -> *mut ::core::ffi::c_float {
-    let mut s: stbi__context = stbi__context {
-        img_x: 0,
-        img_y: 0,
-        img_n: 0,
-        img_out_n: 0,
-        io: stbi_io_callbacks {
-            read: None,
-            skip: None,
-            eof: None,
-        },
-        io_user_data: ::core::ptr::null_mut::<::core::ffi::c_void>(),
-        read_from_callbacks: 0,
-        buflen: 0,
-        buffer_start: [0; 128],
-        callback_already_read: 0,
-        img_buffer: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_end: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original_end: ::core::ptr::null_mut::<stbi_uc>(),
-    };
+    let mut s: stbi__context = stbi__context::EMPTY;
     stbi__start_callbacks(&raw mut s, clbk as *mut stbi_io_callbacks, user);
     return stbi__loadf_main(&raw mut s, x, y, comp, req_comp);
 }
@@ -1076,26 +970,7 @@ pub unsafe fn stbi_loadf_from_file(
     mut comp: *mut ::core::ffi::c_int,
     mut req_comp: ::core::ffi::c_int,
 ) -> *mut ::core::ffi::c_float {
-    let mut s: stbi__context = stbi__context {
-        img_x: 0,
-        img_y: 0,
-        img_n: 0,
-        img_out_n: 0,
-        io: stbi_io_callbacks {
-            read: None,
-            skip: None,
-            eof: None,
-        },
-        io_user_data: ::core::ptr::null_mut::<::core::ffi::c_void>(),
-        read_from_callbacks: 0,
-        buflen: 0,
-        buffer_start: [0; 128],
-        callback_already_read: 0,
-        img_buffer: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_end: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original_end: ::core::ptr::null_mut::<stbi_uc>(),
-    };
+    let mut s: stbi__context = stbi__context::EMPTY;
     stbi__start_file(&raw mut s, f);
     return stbi__loadf_main(&raw mut s, x, y, comp, req_comp);
 }
@@ -2248,14 +2123,7 @@ unsafe fn stbi__compute_huffman_codes(mut a: *mut stbi__zbuf) -> ::core::ffi::c_
         1 as ::core::ffi::c_int as stbi_uc,
         15 as ::core::ffi::c_int as stbi_uc,
     ];
-    let mut z_codelength: stbi__zhuffman = stbi__zhuffman {
-        fast: [0; 512],
-        firstcode: [0; 16],
-        maxcode: [0; 17],
-        firstsymbol: [0; 16],
-        size: [0; 288],
-        value: [0; 288],
-    };
+    let mut z_codelength: stbi__zhuffman = stbi__zhuffman::EMPTY;
     let mut lencodes: [stbi_uc; 455] = [0; 455];
     let mut codelength_sizes: [stbi_uc; 19] = [0; 19];
     let mut i: ::core::ffi::c_int = 0;
@@ -2818,32 +2686,7 @@ pub unsafe fn stbi_zlib_decode_malloc_guesssize(
     mut initial_size: ::core::ffi::c_int,
     mut outlen: *mut ::core::ffi::c_int,
 ) -> *mut ::core::ffi::c_char {
-    let mut a: stbi__zbuf = stbi__zbuf {
-        zbuffer: ::core::ptr::null_mut::<stbi_uc>(),
-        zbuffer_end: ::core::ptr::null_mut::<stbi_uc>(),
-        num_bits: 0,
-        code_buffer: 0,
-        zout: ::core::ptr::null_mut::<::core::ffi::c_char>(),
-        zout_start: ::core::ptr::null_mut::<::core::ffi::c_char>(),
-        zout_end: ::core::ptr::null_mut::<::core::ffi::c_char>(),
-        z_expandable: 0,
-        z_length: stbi__zhuffman {
-            fast: [0; 512],
-            firstcode: [0; 16],
-            maxcode: [0; 17],
-            firstsymbol: [0; 16],
-            size: [0; 288],
-            value: [0; 288],
-        },
-        z_distance: stbi__zhuffman {
-            fast: [0; 512],
-            firstcode: [0; 16],
-            maxcode: [0; 17],
-            firstsymbol: [0; 16],
-            size: [0; 288],
-            value: [0; 288],
-        },
-    };
+    let mut a: stbi__zbuf = stbi__zbuf::EMPTY;
     let mut p: *mut ::core::ffi::c_char =
         stbi__malloc(initial_size as size_t) as *mut ::core::ffi::c_char;
     if p.is_null() {
@@ -2882,32 +2725,7 @@ pub unsafe fn stbi_zlib_decode_malloc_guesssize_headerflag(
     mut outlen: *mut ::core::ffi::c_int,
     mut parse_header: ::core::ffi::c_int,
 ) -> *mut ::core::ffi::c_char {
-    let mut a: stbi__zbuf = stbi__zbuf {
-        zbuffer: ::core::ptr::null_mut::<stbi_uc>(),
-        zbuffer_end: ::core::ptr::null_mut::<stbi_uc>(),
-        num_bits: 0,
-        code_buffer: 0,
-        zout: ::core::ptr::null_mut::<::core::ffi::c_char>(),
-        zout_start: ::core::ptr::null_mut::<::core::ffi::c_char>(),
-        zout_end: ::core::ptr::null_mut::<::core::ffi::c_char>(),
-        z_expandable: 0,
-        z_length: stbi__zhuffman {
-            fast: [0; 512],
-            firstcode: [0; 16],
-            maxcode: [0; 17],
-            firstsymbol: [0; 16],
-            size: [0; 288],
-            value: [0; 288],
-        },
-        z_distance: stbi__zhuffman {
-            fast: [0; 512],
-            firstcode: [0; 16],
-            maxcode: [0; 17],
-            firstsymbol: [0; 16],
-            size: [0; 288],
-            value: [0; 288],
-        },
-    };
+    let mut a: stbi__zbuf = stbi__zbuf::EMPTY;
     let mut p: *mut ::core::ffi::c_char =
         stbi__malloc(initial_size as size_t) as *mut ::core::ffi::c_char;
     if p.is_null() {
@@ -2938,32 +2756,7 @@ pub unsafe fn stbi_zlib_decode_buffer(
     mut ibuffer: *const ::core::ffi::c_char,
     mut ilen: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
-    let mut a: stbi__zbuf = stbi__zbuf {
-        zbuffer: ::core::ptr::null_mut::<stbi_uc>(),
-        zbuffer_end: ::core::ptr::null_mut::<stbi_uc>(),
-        num_bits: 0,
-        code_buffer: 0,
-        zout: ::core::ptr::null_mut::<::core::ffi::c_char>(),
-        zout_start: ::core::ptr::null_mut::<::core::ffi::c_char>(),
-        zout_end: ::core::ptr::null_mut::<::core::ffi::c_char>(),
-        z_expandable: 0,
-        z_length: stbi__zhuffman {
-            fast: [0; 512],
-            firstcode: [0; 16],
-            maxcode: [0; 17],
-            firstsymbol: [0; 16],
-            size: [0; 288],
-            value: [0; 288],
-        },
-        z_distance: stbi__zhuffman {
-            fast: [0; 512],
-            firstcode: [0; 16],
-            maxcode: [0; 17],
-            firstsymbol: [0; 16],
-            size: [0; 288],
-            value: [0; 288],
-        },
-    };
+    let mut a: stbi__zbuf = stbi__zbuf::EMPTY;
     a.zbuffer = ibuffer as *mut stbi_uc;
     a.zbuffer_end = (ibuffer as *mut stbi_uc).offset(ilen as isize);
     if stbi__do_zlib(
@@ -2984,32 +2777,7 @@ pub unsafe fn stbi_zlib_decode_noheader_malloc(
     mut len: ::core::ffi::c_int,
     mut outlen: *mut ::core::ffi::c_int,
 ) -> *mut ::core::ffi::c_char {
-    let mut a: stbi__zbuf = stbi__zbuf {
-        zbuffer: ::core::ptr::null_mut::<stbi_uc>(),
-        zbuffer_end: ::core::ptr::null_mut::<stbi_uc>(),
-        num_bits: 0,
-        code_buffer: 0,
-        zout: ::core::ptr::null_mut::<::core::ffi::c_char>(),
-        zout_start: ::core::ptr::null_mut::<::core::ffi::c_char>(),
-        zout_end: ::core::ptr::null_mut::<::core::ffi::c_char>(),
-        z_expandable: 0,
-        z_length: stbi__zhuffman {
-            fast: [0; 512],
-            firstcode: [0; 16],
-            maxcode: [0; 17],
-            firstsymbol: [0; 16],
-            size: [0; 288],
-            value: [0; 288],
-        },
-        z_distance: stbi__zhuffman {
-            fast: [0; 512],
-            firstcode: [0; 16],
-            maxcode: [0; 17],
-            firstsymbol: [0; 16],
-            size: [0; 288],
-            value: [0; 288],
-        },
-    };
+    let mut a: stbi__zbuf = stbi__zbuf::EMPTY;
     let mut p: *mut ::core::ffi::c_char = stbi__malloc(16384 as size_t) as *mut ::core::ffi::c_char;
     if p.is_null() {
         return ::core::ptr::null_mut::<::core::ffi::c_char>();
@@ -3039,32 +2807,7 @@ pub unsafe fn stbi_zlib_decode_noheader_buffer(
     mut ibuffer: *const ::core::ffi::c_char,
     mut ilen: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
-    let mut a: stbi__zbuf = stbi__zbuf {
-        zbuffer: ::core::ptr::null_mut::<stbi_uc>(),
-        zbuffer_end: ::core::ptr::null_mut::<stbi_uc>(),
-        num_bits: 0,
-        code_buffer: 0,
-        zout: ::core::ptr::null_mut::<::core::ffi::c_char>(),
-        zout_start: ::core::ptr::null_mut::<::core::ffi::c_char>(),
-        zout_end: ::core::ptr::null_mut::<::core::ffi::c_char>(),
-        z_expandable: 0,
-        z_length: stbi__zhuffman {
-            fast: [0; 512],
-            firstcode: [0; 16],
-            maxcode: [0; 17],
-            firstsymbol: [0; 16],
-            size: [0; 288],
-            value: [0; 288],
-        },
-        z_distance: stbi__zhuffman {
-            fast: [0; 512],
-            firstcode: [0; 16],
-            maxcode: [0; 17],
-            firstsymbol: [0; 16],
-            size: [0; 288],
-            value: [0; 288],
-        },
-    };
+    let mut a: stbi__zbuf = stbi__zbuf::EMPTY;
     a.zbuffer = ibuffer as *mut stbi_uc;
     a.zbuffer_end = (ibuffer as *mut stbi_uc).offset(ilen as isize);
     if stbi__do_zlib(
@@ -4738,26 +4481,7 @@ pub unsafe fn stbi_info_from_file(
     mut comp: *mut ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
     let mut r: ::core::ffi::c_int = 0;
-    let mut s: stbi__context = stbi__context {
-        img_x: 0,
-        img_y: 0,
-        img_n: 0,
-        img_out_n: 0,
-        io: stbi_io_callbacks {
-            read: None,
-            skip: None,
-            eof: None,
-        },
-        io_user_data: ::core::ptr::null_mut::<::core::ffi::c_void>(),
-        read_from_callbacks: 0,
-        buflen: 0,
-        buffer_start: [0; 128],
-        callback_already_read: 0,
-        img_buffer: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_end: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original_end: ::core::ptr::null_mut::<stbi_uc>(),
-    };
+    let mut s: stbi__context = stbi__context::EMPTY;
     let mut pos: ::core::ffi::c_long = ftell(f);
     stbi__start_file(&raw mut s, f);
     r = stbi__info_main(&raw mut s, x, y, comp);
@@ -4777,26 +4501,7 @@ pub unsafe fn stbi_is_16_bit(mut filename: *const ::core::ffi::c_char) -> ::core
 }
 pub unsafe fn stbi_is_16_bit_from_file(mut f: *mut FILE) -> ::core::ffi::c_int {
     let mut r: ::core::ffi::c_int = 0;
-    let mut s: stbi__context = stbi__context {
-        img_x: 0,
-        img_y: 0,
-        img_n: 0,
-        img_out_n: 0,
-        io: stbi_io_callbacks {
-            read: None,
-            skip: None,
-            eof: None,
-        },
-        io_user_data: ::core::ptr::null_mut::<::core::ffi::c_void>(),
-        read_from_callbacks: 0,
-        buflen: 0,
-        buffer_start: [0; 128],
-        callback_already_read: 0,
-        img_buffer: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_end: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original_end: ::core::ptr::null_mut::<stbi_uc>(),
-    };
+    let mut s: stbi__context = stbi__context::EMPTY;
     let mut pos: ::core::ffi::c_long = ftell(f);
     stbi__start_file(&raw mut s, f);
     r = stbi__is_16_main(&raw mut s);
@@ -4810,26 +4515,7 @@ pub unsafe fn stbi_info_from_memory(
     mut y: *mut ::core::ffi::c_int,
     mut comp: *mut ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
-    let mut s: stbi__context = stbi__context {
-        img_x: 0,
-        img_y: 0,
-        img_n: 0,
-        img_out_n: 0,
-        io: stbi_io_callbacks {
-            read: None,
-            skip: None,
-            eof: None,
-        },
-        io_user_data: ::core::ptr::null_mut::<::core::ffi::c_void>(),
-        read_from_callbacks: 0,
-        buflen: 0,
-        buffer_start: [0; 128],
-        callback_already_read: 0,
-        img_buffer: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_end: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original_end: ::core::ptr::null_mut::<stbi_uc>(),
-    };
+    let mut s: stbi__context = stbi__context::EMPTY;
     stbi__start_mem(&raw mut s, buffer, len);
     return stbi__info_main(&raw mut s, x, y, comp);
 }
@@ -4840,26 +4526,7 @@ pub unsafe fn stbi_info_from_callbacks(
     mut y: *mut ::core::ffi::c_int,
     mut comp: *mut ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
-    let mut s: stbi__context = stbi__context {
-        img_x: 0,
-        img_y: 0,
-        img_n: 0,
-        img_out_n: 0,
-        io: stbi_io_callbacks {
-            read: None,
-            skip: None,
-            eof: None,
-        },
-        io_user_data: ::core::ptr::null_mut::<::core::ffi::c_void>(),
-        read_from_callbacks: 0,
-        buflen: 0,
-        buffer_start: [0; 128],
-        callback_already_read: 0,
-        img_buffer: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_end: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original_end: ::core::ptr::null_mut::<stbi_uc>(),
-    };
+    let mut s: stbi__context = stbi__context::EMPTY;
     stbi__start_callbacks(&raw mut s, c as *mut stbi_io_callbacks, user);
     return stbi__info_main(&raw mut s, x, y, comp);
 }
@@ -4867,26 +4534,7 @@ pub unsafe fn stbi_is_16_bit_from_memory(
     mut buffer: *const stbi_uc,
     mut len: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
-    let mut s: stbi__context = stbi__context {
-        img_x: 0,
-        img_y: 0,
-        img_n: 0,
-        img_out_n: 0,
-        io: stbi_io_callbacks {
-            read: None,
-            skip: None,
-            eof: None,
-        },
-        io_user_data: ::core::ptr::null_mut::<::core::ffi::c_void>(),
-        read_from_callbacks: 0,
-        buflen: 0,
-        buffer_start: [0; 128],
-        callback_already_read: 0,
-        img_buffer: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_end: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original_end: ::core::ptr::null_mut::<stbi_uc>(),
-    };
+    let mut s: stbi__context = stbi__context::EMPTY;
     stbi__start_mem(&raw mut s, buffer, len);
     return stbi__is_16_main(&raw mut s);
 }
@@ -4894,26 +4542,7 @@ pub unsafe fn stbi_is_16_bit_from_callbacks(
     mut c: *const stbi_io_callbacks,
     mut user: *mut ::core::ffi::c_void,
 ) -> ::core::ffi::c_int {
-    let mut s: stbi__context = stbi__context {
-        img_x: 0,
-        img_y: 0,
-        img_n: 0,
-        img_out_n: 0,
-        io: stbi_io_callbacks {
-            read: None,
-            skip: None,
-            eof: None,
-        },
-        io_user_data: ::core::ptr::null_mut::<::core::ffi::c_void>(),
-        read_from_callbacks: 0,
-        buflen: 0,
-        buffer_start: [0; 128],
-        callback_already_read: 0,
-        img_buffer: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_end: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original: ::core::ptr::null_mut::<stbi_uc>(),
-        img_buffer_original_end: ::core::ptr::null_mut::<stbi_uc>(),
-    };
+    let mut s: stbi__context = stbi__context::EMPTY;
     stbi__start_callbacks(&raw mut s, c as *mut stbi_io_callbacks, user);
     return stbi__is_16_main(&raw mut s);
 }

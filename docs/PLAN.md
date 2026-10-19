@@ -17584,6 +17584,40 @@ Own Rust lines -21, raw accesses -8, cast lines -18; unsafe functions unchanged.
 No probe/report or ROM-derived assets committed. Continue coherent RAM families;
 corpse coverage, full gameplay/credits, hardware/audio/masks and ownership remain.
 
+Image-decoder initializer family (2026-10-19): jscpd exact clone
+discovery and ast-grep complete CST expressions select all 15 identical
+stbi__context and five identical stbi__zbuf initializers. Share explicit
+associated EMPTY constants; retain every field value/type and local initializer
+position. Normalize indentation to include the separate dynamic-Huffman table
+initializer with the two nested zlib table initializers. All three use the same
+explicit six-array initial value. No zeroed allocation, layout change or decoder
+control-flow rewrite; each local still receives its own mutable value.
+
+Direct original/current execution of actual frontend source passes 230 cases
+across all 15 context entry points and five zlib entry points. File, memory
+and callback load/info/16-bit queries cover generated 8/16-bit RGB PNGs and
+all requested channel counts 0..4; dimensions/components, pixel bytes, floating
+outputs, callback read/skip/eof counts and file positions agree. Invalid memory/
+callback headers fail identically. Wrapped/raw deflate covers empty, patterned,
+repetitive and mixed input with compression levels 0/1/9, including stored and
+dynamic-Huffman blocks. Successful inflation equals the independent original
+payload. Both old/current raw decoders reject the same repetitive level-1
+input; preserve that failure. This is decoder coverage, not gameplay coverage.
+
+Exact source reconstruction permits only the three constants and all selected
+substitutions, including nested/standalone Huffman forms. Probe sources match
+the maintained candidate and original; source/library/DLL/ROM/movie hashes
+stay fixed. Frozen f52034bd plus the candidate passes full any% 129712/0
+(170.35s) and Speed Booster 148406/0 (215.22s), native exits 0.
+Headless builds exclude frontend texture decoding; the direct comparisons
+above exercise the changed paths. Neither movie reaches credits.
+
+Cargo fmt/check, normal release (29.08s final, native exit 0), and progress
+pass. Own Rust lines -371 including constants; all other residue counters
+unchanged. No tests, reports or generated image/data assets enter maintained
+source. Continue larger initializer/state families; gameplay/credits coverage,
+hardware/audio/masks and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
