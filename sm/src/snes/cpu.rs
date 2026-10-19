@@ -716,18 +716,20 @@ unsafe fn store_register(
 unsafe fn store_zero(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     write_operand(cpu, low, high, 0, (*cpu).mf, game);
 }
+fn rotated_right_result(value: u16, byte: bool, carry: bool) -> (u16, bool) {
+    let result = value >> 1 | (u16::from(carry) << if byte { 7 } else { 15 });
+    (result, value & 1 != 0)
+}
 unsafe fn rotate_memory_right(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let (result, carry) = if (*cpu).mf {
         let value = read_byte(cpu, low, game);
-        let carry = value & 1 != 0;
-        let result = u16::from(value >> 1) | (u16::from((*cpu).c) << 7);
+        let (result, carry) = rotated_right_result(u16::from(value), true, (*cpu).c);
         write_byte(cpu, low, result as u8, game);
         (result, carry)
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(2);
         let value = read_word(cpu, low, high, game);
-        let carry = value & 1 != 0;
-        let result = value >> 1 | (u16::from((*cpu).c) << 15);
+        let (result, carry) = rotated_right_result(value, false, (*cpu).c);
         write_word(cpu, low, high, result, true, game);
         (result, carry)
     };

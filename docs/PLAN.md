@@ -11681,6 +11681,26 @@ unchanged. Concurrent replays prevent interpreting timings as performance
 measurements. Prior holds and complete gameplay/render/audio remain open.
 Continue covered CPU cleanup.
 
+CPU safe memory ROR arithmetic (2026-10-19): rotated_right_result computes
+the result and outgoing carry without mutating CPU. Memory callers retain
+post-read carry sampling, byte/word write order, extra two word cycles,
+live-width Z/N after writes and final carry assignment. The byte caller
+zero-extends read_byte; accumulator ROR remains held and unchanged. Frozen
+`f2cb05a4` plus this change passes 1,572,864 actual old/current memory cases:
+every word value, both widths/carry, disjoint/aliased destinations and cycle
+counts 0/254/255. Named CPU/bus state and written bytes match; constructed
+WRAM cases do not exhaust MMIO/callback mutation. Independent peer source
+review confirms input-width and side-effect order. Full instrumented any%
+passes 129,712/0 (180.27s), native exit 0, with 66 word/zero byte memory ROR
+calls; byte mode remains comparison-covered. Clean full any% passes
+129,712/0 (144.68s), native exit 0. Cargo fmt/check, full release/release-library
+builds with external SDL2, normal metadata and frozen optimized core/DLL pass.
+Live CPU matches verified source; uncommitted peer gameplay work is outside
+this replay. Rust lines +2 move arithmetic into safe code; other own counters
+unchanged. Concurrent replays prevent interpreting timings as performance
+measurements. Prior holds and complete gameplay/render/audio remain open.
+Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
