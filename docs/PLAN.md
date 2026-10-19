@@ -88,6 +88,22 @@ Everything that existed before is in the branch `archive/pre-transpile-2026-10-1
 
 ## Workspace discipline
 
+Retired PLM graphics commit helpers (2026-10-19): moved five completed
+commit scripts and their five temporary Git indexes out of
+target/xray-read-audit. Their selection/pointer/table/queue/tile changes and
+notes are already committed. The 1215 retained repository and top-level
+temporary scripts/documents have no filename references; no live process
+uses these files. Recovery is at temporary
+sm-workspace-retired-plm-committers-20261019-120245-349, preserving relative
+paths. Independent verification confirms all 10 files / 58,047 bytes retain
+their SHA-256 hashes and the original paths are absent.
+
+Formatting/check, normal Cargo release (0.45s) and progress pass. This
+cleanup changes no maintained source or own residue counts and requires no
+new movie replay; the reviewed 19d550a3 integration retains any% 129712/0
+and its three additional zero-failure routes. Current build/replay helpers,
+inputs and active implementation checks remain available.
+
 Retired route-note writers (2026-10-19): moved the 23 top-level
 route *plan.py helpers out of target. These one-time writers have already
 recorded their notes in the committed plan; 1,168 retained repository and
