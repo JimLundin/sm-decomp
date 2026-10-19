@@ -1460,102 +1460,50 @@ fn Samus_AnimDelayFunc_15_GotoStart(game: &mut Game) -> bool {
     game.set_samus_anim_frame(0);
     true
 }
-unsafe fn Samus_HandleSpeedBoosterAnimDelay(mut jp: *const uint8, game: &mut Game) -> uint8 {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xb3c as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        == 0
-        || *((&raw mut game.g_ram as *mut uint8).offset(0x9b6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            & *((&raw mut game.g_ram as *mut uint8).offset(0x8b as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
-        || *(&raw mut game.g_ram as *mut uint8).offset(0xa1f as ::core::ffi::c_int as isize)
-            as ::core::ffi::c_int
-            != 1 as ::core::ffi::c_int
+unsafe fn Samus_HandleSpeedBoosterAnimDelay(jp: *const uint8, game: &mut Game) -> uint8 {
+    let has_momentum = u16::from_le_bytes([game.g_ram[0xb3c], game.g_ram[0xb3d]]);
+    let run_button = u16::from_le_bytes([game.g_ram[0x9b6], game.g_ram[0x9b7]]);
+    if has_momentum == 0
+        || run_button & game.joypad1_lastkeys() == 0
+        || game.samus_movement_type() != 1
     {
-        return *jp.offset(0 as ::core::ffi::c_int as isize);
+        return *jp;
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 0x2000 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa94 as ::core::ffi::c_int as isize)
-            as *mut uint16) = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0xa9c as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + *RomPtr_91(
-                *(game.g_rom.offset(
-                    (((0x91b5d1 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                        << 15 as ::core::ffi::c_int
-                        | 0x91b5d1 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                        & 0x3fffff as ::core::ffi::c_int) as isize,
-                ) as *const uint8 as *mut uint16),
-                game,
-            )
-            .offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int)
-            as uint16;
-        return 0 as uint8;
+    let equipped_items = u16::from_le_bytes([game.g_ram[0x9a2], game.g_ram[0x9a3]]);
+    if equipped_items & 0x2000 == 0 {
+        game.set_samus_anim_frame(0);
+        let frame_buffer = u16::from_le_bytes([game.g_ram[0xa9c], game.g_ram[0xa9d]]);
+        let animation_list = game.read_rom_word(0x91b5d1, 0);
+        let delay = *RomPtr_91(animation_list, game);
+        game.set_samus_anim_frame_timer(frame_buffer.wrapping_add(u16::from(delay)));
+        return 0;
     }
-    let ref mut fresh92 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb3e as ::core::ffi::c_int as isize) as *mut uint16);
-    *fresh92 = (*fresh92).wrapping_sub(1);
-    if *fresh92 as uint8 != 0 {
-        return *jp.offset(0 as ::core::ffi::c_int as isize);
+    let counter = u16::from_le_bytes([game.g_ram[0xb3e], game.g_ram[0xb3f]]).wrapping_sub(1);
+    game.g_ram[0xb3e..0xb40].copy_from_slice(&counter.to_le_bytes());
+    if counter as u8 != 0 {
+        return *jp;
     }
-    let mut v2: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb3e as ::core::ffi::c_int as isize) as *mut uint16);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xb3e as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 0x400 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
-    {
-        v2 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb3e as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + 256 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb3e as ::core::ffi::c_int as isize)
-            as *mut uint16) = v2;
-        if v2 as ::core::ffi::c_int & 0x400 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb40 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 1 as uint16;
-            QueueSfx3_Max6(3 as uint16, game);
+    let mut staged_counter = counter;
+    if counter & 0x400 == 0 {
+        staged_counter = counter.wrapping_add(0x100);
+        game.g_ram[0xb3e..0xb40].copy_from_slice(&staged_counter.to_le_bytes());
+        if staged_counter & 0x400 != 0 {
+            game.g_ram[0xb40..0xb42].copy_from_slice(&1u16.to_le_bytes());
+            QueueSfx3_Max6(3, game);
         }
     }
-    let mut v3: ::core::ffi::c_int = *(&raw mut v2 as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-            .wrapping_sub(1 as usize) as isize,
-    ) as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb3e as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*(game.g_rom.offset(
-        (((0x91b61f as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x91b61f as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
-        .offset(v3 as isize) as ::core::ffi::c_int
-        | *((&raw mut game.g_ram as *mut uint8).offset(0xb3e as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            & 0xff00 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa94 as ::core::ffi::c_int as isize)
-        as *mut uint16) =
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xa9c as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + *RomPtr_91(
-                *(game.g_rom.offset(
-                    (((0x91b5de as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                        << 15 as ::core::ffi::c_int
-                        | 0x91b5de as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                        & 0x3fffff as ::core::ffi::c_int) as isize,
-                ) as *const uint8 as *mut uint16)
-                    .offset(v3 as isize) as uint16_t,
-                game,
-            )
-            .offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int) as uint16;
-    return 0 as uint8;
+    // The table stage is captured before sound; the counter is read again afterward.
+    let stage_offset = usize::from(staged_counter >> 8) * 2;
+    let stage_duration = game.read_rom_word(0x91b61f, stage_offset);
+    let live_counter = u16::from_le_bytes([game.g_ram[0xb3e], game.g_ram[0xb3f]]);
+    let reloaded_counter = stage_duration | (live_counter & 0xff00);
+    game.g_ram[0xb3e..0xb40].copy_from_slice(&reloaded_counter.to_le_bytes());
+    game.set_samus_anim_frame(0);
+    let frame_buffer = u16::from_le_bytes([game.g_ram[0xa9c], game.g_ram[0xa9d]]);
+    let animation_list = game.read_rom_word(0x91b5de, stage_offset);
+    let delay = *RomPtr_91(animation_list, game);
+    game.set_samus_anim_frame_timer(frame_buffer.wrapping_add(u16::from(delay)));
+    0
 }
 unsafe fn Samus_HandleAnimDelay(game: &mut Game) {
     let animation_list = game.read_rom_word(0x91b010, usize::from(game.samus_pose()) * 2);

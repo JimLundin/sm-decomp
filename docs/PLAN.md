@@ -14347,6 +14347,36 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Samus running animation delay (2026-10-19): replace the speed-booster
+helper's raw RAM casts with byte-backed reads, named animation accessors
+and explicit wrapping arithmetic. Preserve whole-word decrement with low-byte
+expiry, sticky stage bit, sound-before-reload ordering, captured table stage
+and live counter high byte, full ROM-word OR, frame reset before delay reads,
+and RomPtr_91's invalid-window diagnostic.
+
+Frozen 05223df6 plus this source passes clean any% 129712/0 (226.69s)
+and Charge 78380/0 (152.14s), native exits 0. Observed Charge passes
+78380/0 (155.48s). All 4038 actual calls match original complete RAM,
+g_fail, return values and ordered callback-entry RAM/arguments: 3803 have
+no momentum, 4 have Run released, 82 are not running, and 149 reset the
+normal running timer. Booster-equipped paths have no movie hits.
+
+198145 constructed comparisons pass with the real ROM resolver and sound
+queue, including every counter, equipment and timer-buffer word, all movement
+bytes and stages, callback mutations and an invalid-ROM diagnostic. Six
+controls detect low-byte-only decrement, truncated reload, stale counter,
+live-stage substitution, late frame reset and saturated timer addition.
+ROM/RAM/g_fail are restored before the 10000-frame prefix passes with zero
+failures (23.35s); constructed calls are excluded from natural hit counts.
+Clean/observed non-timing diagnostics match, observer stripping is exact,
+and source/DLL/fixture hashes remain stable throughout the frozen checks.
+
+Cargo fmt/check, release --locked (25.01s) and progress pass. Own raw offsets
+-19, cast lines -54 and Rust lines -52; other counters are unchanged.
+Temporary checks/builds are removed; no probes or ROM-derived files are
+committed. Commands 7/10/12 remain held. Booster-equipped movie coverage,
+complete gameplay/credits and broader hardware/audio coverage remain open.
+
 Destination-room CRE cleanup (2026-10-19): the loader uses named word
 setters, retaining the captured door destination, full current-to-previous
 word copy and later zero-extended room-header byte. Both ROM lookups retain
