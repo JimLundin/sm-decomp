@@ -62,6 +62,14 @@ renaming `c_int`, changing formatting or moving unsafe into blocks is not
 semantic cleanup. No new cleanup framework, generated mirror or evidence
 store. Keep temporary transformation/check scripts outside maintained code.
 
+Before starting a pass, inspect the current diff and live build/replay
+processes. Do not duplicate a pass already running in another session;
+take disjoint work. A leftover log or directory is not proof of a live job.
+Reuse completed verification only when its source, settings and inputs match.
+Keep game/host Cargo artifacts with their checkout; external dependency
+caches can be reused separately. Never copy a different checkout's game
+library or package fingerprints as a shortcut to a fresh build.
+
 ## Validation strategy (2026-10-19)
 
 User priority: shorten the complete edit/build/result cycle. Replaying the
@@ -166,6 +174,33 @@ unsafe functions, one C ABI export and one no_mangle symbol; gameplay
 residue is unchanged. This addition buys complete-state resume and rejection
 checks in the existing verifier. No ROM,
 checkpoint, diagnostic helper or benchmark data is committed.
+
+Cargo host reuse (2026-10-19): the Windows host is an example target in the
+existing sm package. Cargo now tracks the library, host and included verifier
+sources; the Python launcher copies a changed DLL to the existing --no-build
+path and leaves identical bytes untouched. Package artifacts stay in the
+checkout's target directory even with an external CARGO_TARGET_DIR override.
+A second checkout containing a backdated compile_error was incorrectly
+accepted with the shared package cache (exit 0); checkout-local artifacts
+correctly reject it (exit 101). External dependency caches can be reused;
+game/host artifacts and fingerprints must not be transplanted between copies.
+
+Actual gameplay edits execute their new probe 176 times at 8324..8499.
+Included verifier and checkpoint edits reach the DLL; game/host compile errors
+stop before replay without replacing the cached DLL. Explicit --no-build and
+fresh reuse while another process holds the DLL both pass. The normal Cargo
+example build also passes. Three unchanged CLI invocations take 1.26..1.76s
+with the final cache safeguard versus 1.69..4.83s before, under variable shared
+load. This measures unchanged invocations; edit/recompile timing is separate.
+No custom build fingerprint or new package is introduced.
+
+Fresh checkout-local build of frozen 9173c4b8 plus this host change and the
+RAM metadata consolidation passes any% 129712/0 (289.75s) and Hi-Jump
+99191/0 (258.57s), native exits 0, with one stable DLL. Formatting/check,
+normal release build, whitespace and progress pass. The host adds one Rust
+line for Windows-only target compilation; its unsafe/cast counts are unchanged.
+The combined Rust-line delta is -5832. Concurrent gameplay changes retain
+their own verification.
 
 Four repaired-codec cycles each make a real gameplay-probe edit, run normal
 Cargo release build and then the Python `--cargo` verifier command. Order is

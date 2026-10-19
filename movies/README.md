@@ -42,8 +42,14 @@ cargo build --release
 python tools/verify_dll.py rom/sm.smc movies/any.inputs --cargo
 ```
 
-Cargo checks sources and dependencies on every build. Build errors stop
-before replay. Keep the SDL2 environment for subsequent `--no-build` runs.
+Cargo checks the game and DLL host, including the verifier's included source
+files. Unchanged runs reuse both compilations and leave the cached DLL intact.
+Build errors stop before replay. Keep the SDL2 environment for subsequent
+`--no-build` runs.
+
+The Cargo verifier keeps game and host artifacts in this checkout's `target/`,
+including when `CARGO_TARGET_DIR` points elsewhere. Sharing package artifacts
+between checkouts can make older source timestamps incorrectly appear fresh.
 
 For a late gameplay change, the verifier can save a local checkpoint and
 replay a short suffix with the same oracle, rendered-frame checks and audio

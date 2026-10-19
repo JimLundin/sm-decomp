@@ -10,39 +10,39 @@ import subprocess
 import sys
 
 
-def cargo_library(root, rustc):
-    env = dict(os.environ, RUSTC=rustc)
+def cargo_host(root, rustc, linker, output):
     cargo = shutil.which("cargo") or str(Path(rustc).with_name("cargo.exe"))
-    # Cargo fingerprints can reuse stale package artifacts across checkouts.
+    sdk = [arg for path in os.environ.get("LIBRARY_PATH", "").split(os.pathsep)
+           if path for arg in ("-L", f"native={path}")]
+    # Backdated files in another checkout can look fresh in a shared target
+    # directory. Keep this game's and host's artifacts with their source.
     result = subprocess.run(
-        [cargo, "build", "--release", "--lib", "--locked",
-         "--target-dir", str(root / "target"), "--message-format=json"],
-        cwd=root, env=env, text=True, encoding="utf-8", stdout=subprocess.PIPE,
+        [cargo, "rustc", "-p", "sm", "--release", "--example", "sm_verify", "--locked",
+         "--target-dir", str(root / "target"), "--message-format=json",
+         "--", "-C", f"linker={linker}",
+         "-C", "linker-flavor=ld", "-C", "debuginfo=0", "-A", "warnings"] + sdk,
+        cwd=root, env=dict(os.environ, RUSTC=rustc), text=True, encoding="utf-8",
+        stdout=subprocess.PIPE,
     )
-    library = None
-    search_paths = []
+    dll = None
     for line in result.stdout.splitlines():
         message = json.loads(line)
         if message["reason"] == "compiler-message":
-            # Like the standalone build, omit warnings but retain build errors.
             if message["message"]["level"] in ("error", "failure-note"):
                 print(message["message"]["rendered"] or "", end="", file=sys.stderr)
-        elif message["reason"] == "build-script-executed":
-            search_paths.extend(message["linked_paths"])
         elif (message["reason"] == "compiler-artifact"
-              and Path(message["manifest_path"]) == root / "sm" / "Cargo.toml"):
-            library = next((Path(name) for name in message["filenames"]
-                            if name.endswith(".rlib")), None)
+              and message["target"]["name"] == "sm_verify"):
+            dll = next((Path(name) for name in message["filenames"]
+                        if name.endswith(".dll")), None)
     result.check_returncode()
-    if library is None:
-        raise RuntimeError("Cargo did not report the sm release library")
-    dependencies = library.parent
-    if dependencies.name != "deps":
-        dependencies = dependencies / "deps"
-    search_paths.append(f"dependency={dependencies}")
-    search_paths.extend(f"native={path}" for path in
-                        os.environ.get("LIBRARY_PATH", "").split(os.pathsep) if path)
-    return library, [arg for path in search_paths for arg in ("-L", path)]
+    if dll is None:
+        raise RuntimeError("Cargo did not report the verifier DLL")
+    # Preserve --no-build's existing path. An unchanged DLL can still be loaded
+    # by another replay; do not overwrite it merely to refresh its timestamp.
+    cached = output / "sm_verify.dll"
+    if not cached.exists() or cached.read_bytes() != dll.read_bytes():
+        shutil.copyfile(dll, cached)
+    return cached
 
 
 def build(root, rustc, use_cargo=False):
@@ -53,16 +53,6 @@ def build(root, rustc, use_cargo=False):
     # Retain 16 codegen units; incremental compilation otherwise defaults to 256.
     common = [rustc, "--edition=2021", "-C", "opt-level=3",
               "-C", "codegen-units=16", "-A", "warnings"]
-    link_paths = []
-    if use_cargo:
-        library, link_paths = cargo_library(root, rustc)
-    else:
-        subprocess.run(
-            common + ["--crate-name", "sm", "--crate-type", "rlib", "--cfg",
-                      "sm_verify_dll", "-C", f"incremental={output / 'incremental-sm'}",
-                      "sm/src/lib.rs", "-o", str(library)],
-            cwd=root, check=True,
-        )
     sysroot = Path(subprocess.check_output(
         [rustc, "--print", "sysroot"], cwd=root, text=True).strip())
     host = next(line.removeprefix("host: ") for line in subprocess.check_output(
@@ -72,11 +62,19 @@ def build(root, rustc, use_cargo=False):
     # The bundled GNU linker cannot read bigobj emitted for the large game;
     # Rust's bundled lld handles those object files without external tools.
     linker = sysroot / "lib" / "rustlib" / host / "bin" / "gcc-ld" / "ld.lld.exe"
+    if use_cargo:
+        return cargo_host(root, rustc, linker, output)
+    subprocess.run(
+        common + ["--crate-name", "sm", "--crate-type", "rlib", "--cfg",
+                  "sm_verify_dll", "-C", f"incremental={output / 'incremental-sm'}",
+                  "sm/src/lib.rs", "-o", str(library)],
+        cwd=root, check=True,
+    )
     subprocess.run(
         common + ["--crate-name", "sm_verify", "--crate-type", "cdylib",
                   "-C", f"linker={linker}", "-C", "linker-flavor=ld",
                   "-C", f"incremental={output / 'incremental-host'}", "sm/src/verify_dll.rs",
-                  "--extern", f"sm={library}", "-o", str(dll)] + link_paths,
+                  "--extern", f"sm={library}", "-o", str(dll)],
         cwd=root, check=True,
     )
     return dll

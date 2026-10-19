@@ -1,5 +1,6 @@
-//! Windows headless host, built directly with rustc and loaded by Python.
+//! Windows headless host, built by Cargo or rustc and loaded by Python.
 //! Each process runs one replay with explicitly owned Game state.
+#![cfg(target_os = "windows")]
 #![allow(non_snake_case, non_upper_case_globals, dead_code)]
 
 use sm::game_state::Game;
