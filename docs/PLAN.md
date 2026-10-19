@@ -64,6 +64,21 @@ Everything that existed before is in the branch `archive/pre-transpile-2026-10-1
 
 ## Workspace discipline
 
+Retired route-note writers (2026-10-19): moved the 23 top-level
+route *plan.py helpers out of target. These one-time writers have already
+recorded their notes in the committed plan; 1,168 retained repository and
+top-level temporary scripts/documents have no references to their filenames,
+and no live process uses them. Recovery is at temporary
+sm-workspace-retired-route-recorders-20261019-112743-104, preserving relative
+paths. Independent verification confirms all 23 files / 86,051 bytes retain
+their SHA-256 hashes and all original paths are absent. Route inputs,
+replay/build helpers and current outputs remain available.
+
+Format/check, normal Cargo release (57.55s) and progress pass. This cleanup
+changes no maintained source or own residue counts and requires no new
+movie replay; the reviewed any% 129712/0 remains the baseline. Concurrent
+gameplay checks and the new Super Missile integration remain separate.
+
 Retired upper99BD probes (2026-10-19): moved route-left-observe and
 route-all-bombs out of target with their sixteen helper scripts. Recovery is
 at temporary sm-workspace-retired-upper99bd-20261019-110248-551, preserving
