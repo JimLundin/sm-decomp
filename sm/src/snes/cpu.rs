@@ -1379,9 +1379,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             0x5c => {
                 let value_1: u16 = fetch_word(cpu, game);
                 let new_k: u8 = fetch_byte(cpu, game);
-                if new_k as ::core::ffi::c_int == 0x80 as ::core::ffi::c_int
-                    && value_1 as ::core::ffi::c_int == 0x8573 as ::core::ffi::c_int
-                {
+                if new_k == 0x80 && value_1 == 0x8573 {
                     printf(
                         b"Current PC = 0x%x\n\0" as *const u8 as *const ::core::ffi::c_char,
                         ((*cpu).k as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
@@ -2252,8 +2250,8 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0xf4 => {
                 let w: u16 = fetch_word(cpu, game);
-                if w as ::core::ffi::c_int == 0xc2ae as ::core::ffi::c_int {
-                    (*cpu).y = 0 as u16;
+                if w == 0xc2ae {
+                    (*cpu).y = 0;
                 }
                 push_word(cpu, w, game);
                 break;

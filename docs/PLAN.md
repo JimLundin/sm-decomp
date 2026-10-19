@@ -8757,6 +8757,19 @@ library, normal metadata and optimized core/DLL builds pass; full frontend
 linking still lacks SDL2. Live CPU matches verified source. All progress
 counters unchanged. Complete gameplay and rendering/audio remain open.
 
+CPU native JML/PEA checks (2026-10-19): JML's crash-address predicate and
+PEA's conditional Y-clear use native byte/word equality; the Y-clear stores
+plain zero. Operand reads, diagnostics and stack writes are unchanged.
+Frozen HEAD `70d2b155` plus this change reverses exactly through the recorded
+predicate replacement. All 16,842,752 promoted/native predicate cases match
+(all bank/address pairs plus every PEA word); this is arithmetic supporting
+evidence. Prefix 3,600/0 (1.17s) executes 3,664 JML and 22,680 PEA instructions;
+diagnostic crash execution is not claimed. Clean full any% 129,712/0 (58.18s),
+native exit 0. Cargo fmt/check, release library, normal metadata and optimized
+core/DLL builds pass; full frontend linking still lacks SDL2. Live CPU matches
+verified source. Cast lines -3, Rust lines -2; other counters unchanged.
+Complete gameplay and rendering/audio remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
