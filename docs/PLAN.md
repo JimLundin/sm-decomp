@@ -12037,6 +12037,22 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Door room-setup callback fields (2026-10-19): FixDoorsMovingUp reads the
+named direction gate and writes E36E through the named transition setter;
+SetupNewRoom writes E38E after its unchanged six callbacks. Callback/store
+order, low-two-bit direction gate and coroutine returns remain exact.
+Cargo fmt/check and release build pass, native exit 0. Frozen 77a8a6f9 plus
+only this source file passes any% 129,712/0 (162.68s), native exit 0:
+61 calls to each routine, no upward-door callback. Waver 58,109/71
+(85.54s), native exit 1, executes each routine 28 times and the upward-door
+callback twice; all 71 ordered failure diagnostics equal the explicit-render
+baseline. Observations strip exactly to maintained source. Own raw offsets
+-3, cast lines -8, Rust lines -6; other counters unchanged. No probes or
+ROM-derived assets committed. Next: async door loading state and background
+command reads, preserving yield/callback order. Held X-alignment movement,
+CRE-decompression taken coverage and complete gameplay/credits/audio/hardware
+gaps remain open.
+
 Door placement loading gates (2026-10-19): PlaceSamusLoadTiles uses named
 byte-backed CRE/door-pointer reads and final IRQ/transition writes. Masks 2
 and 6 retain independent short-circuit live reads after their respective

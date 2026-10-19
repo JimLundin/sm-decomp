@@ -9767,16 +9767,11 @@ pub unsafe fn DoorTransitionFunction_ScrollScreenToAlignment(game: &mut Game) ->
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn DoorTransitionFunction_FixDoorsMovingUp(game: &mut Game) -> CoroutineRet {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x791 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 3 as ::core::ffi::c_int
-        == 3 as ::core::ffi::c_int
-    {
+    if game.door_direction() & 3 == 3 {
         FixDoorsMovingUp(game);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x99c as ::core::ffi::c_int as isize)
-        as *mut uint16) = (0x82e36e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    return kCoroutineNone as CoroutineRet;
+    game.set_door_transition_function(0xe36e);
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn DoorTransitionFunction_SetupNewRoom(game: &mut Game) -> CoroutineRet {
     SaveMapExploredifElevator(game);
@@ -9785,9 +9780,8 @@ pub unsafe fn DoorTransitionFunction_SetupNewRoom(game: &mut Game) -> CoroutineR
     LoadMapExploredIfElevator(game);
     InitializeSpecialEffectsForNewRoom(game);
     LoadLevelScrollAndCre(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x99c as ::core::ffi::c_int as isize)
-        as *mut uint16) = (0x82e38e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    return kCoroutineNone as CoroutineRet;
+    game.set_door_transition_function(0xe38e);
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn DoorTransitionFunction_SetupScrolling(game: &mut Game) -> CoroutineRet {
     game.set_reg_bg2hofs(0);
