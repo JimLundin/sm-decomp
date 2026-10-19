@@ -561,11 +561,11 @@ pub unsafe fn UnpauseHook_DraygonRoom(game: &mut Game) -> CoroutineRet {
 pub unsafe fn RoomCode_SetCollectedMap(game: &mut Game) {
     let v0: u16 = (*((&raw mut game.g_ram as *mut u8)
         .offset(0xd908)
-        .offset(ram_word!(game, area_index) as isize) as *mut u8 as *mut u16))
+        .offset(ram_word!(game, area_index) as isize) as *mut u16))
         | (1u16);
     *((&raw mut game.g_ram as *mut u8)
         .offset(0xd908)
-        .offset(ram_word!(game, area_index) as isize) as *mut u8 as *mut u16) = v0;
+        .offset(ram_word!(game, area_index) as isize) as *mut u16) = v0;
     set_ram_word!(game.has_area_map = v0);
 }
 pub unsafe fn RoomCode_SetZebesTimebombEvent(game: &mut Game) {
@@ -575,7 +575,7 @@ pub unsafe fn RoomCode_SetZebesTimebombEvent(game: &mut Game) {
 }
 pub unsafe fn RoomCode_SetLightHorizRoomShake(game: &mut Game) {
     set_ram_word!(game.earthquake_type = 18u16);
-    *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u8 as *mut u16) = 18u16;
+    *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u16) = 18u16;
     *((&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut u16) = 0u16;
     set_ram_word!(game.earthquake_timer = -1i32 as u16);
 }
@@ -589,7 +589,7 @@ pub unsafe fn RoomCode_Escape4_SetMediumHorizRoomShake(game: &mut Game) {
         game,
     );
     set_ram_word!(game.earthquake_type = 21u16);
-    *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u8 as *mut u16) = 21u16;
+    *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u16) = 21u16;
     *((&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut u16) = 0u16;
     set_ram_word!(game.earthquake_timer = -1i32 as u16);
 }
@@ -641,11 +641,9 @@ pub unsafe fn DoorCode_SetScroll_49(game: &mut Game) {
     *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(11) = 0u8;
 }
 pub unsafe fn DoorCode_SetupElevatubeFromSouth(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(4) as *mut u8 as *mut u16) =
-        -256i32 as u16;
-    *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u8 as *mut u16) = 2496u16;
-    *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(6) as *mut u8 as *mut u16) =
-        -32i32 as u16;
+    *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(4) as *mut u16) = -256i32 as u16;
+    *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u16) = 2496u16;
+    *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(6) as *mut u16) = -32i32 as u16;
     CallSomeSamusCode(0u16, game);
     SpawnHardcodedPlm(
         SpawnHardcodedPlmArgs::new(0x1u8, 0u8, 0xb8f9 as VoidP),
@@ -653,13 +651,13 @@ pub unsafe fn DoorCode_SetupElevatubeFromSouth(game: &mut Game) {
     );
 }
 pub unsafe fn DoorCode_SetupElevatubeFromNorth(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(4) as *mut u8 as *mut u16) = 256u16;
+    *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(4) as *mut u16) = 256u16;
     strcpy(
-        (&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u8 as *mut c_char,
+        (&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut c_char,
         b"@\0" as *const u8 as *const c_char,
     );
     strcpy(
-        (&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(6) as *mut u8 as *mut c_char,
+        (&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(6) as *mut c_char,
         b" \0" as *const u8 as *const c_char,
     );
     CallSomeSamusCode(0u16, game);
@@ -672,25 +670,24 @@ pub unsafe fn RoomCode_Elevatube(game: &mut Game) {
     let mut v0: u16 = 0;
     set_ram_word!(game.samus_x_pos = 128u16);
     set_ram_word!(game.samus_x_subpos = 0u16);
-    let amt: i32 = (*((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(4) as *mut u8
-        as *mut u16) as i16 as i32)
+    let amt: i32 = (*((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(4) as *mut u16) as i16
+        as i32)
         << 8i32;
     v0 = ((amt as u32).wrapping_add(*((&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut u32))
         >> 16i32) as u16;
     let ref mut fresh13 = *((&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut u16);
-    *fresh13 = (*fresh13 as i32 + amt as i32) as u16;
-    *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u8 as *mut u16) = v0;
+    *fresh13 = (*fresh13 as i32 + amt) as u16;
+    *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u16) = v0;
     Samus_MoveDown_NoSolidColl(amt, game);
-    if ((*((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(6) as *mut u8 as *mut u16) as i32
-        + *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(4) as *mut u8 as *mut u16) as i32
+    if ((*((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(6) as *mut u16) as i32
+        + *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(4) as *mut u16) as i32
         + 3616i32) as u16)
         < 0x1c41u16
     {
         let ref mut fresh14 =
-            *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(4) as *mut u8 as *mut u16);
-        *fresh14 = (*fresh14).wrapping_add(
-            *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(6) as *mut u8 as *mut u16),
-        );
+            *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(4) as *mut u16);
+        *fresh14 = (*fresh14)
+            .wrapping_add(*((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(6) as *mut u16));
     }
 }
 pub unsafe fn DoorCode_ResetElevatubeNorthExit(game: &mut Game) {
@@ -774,7 +771,7 @@ pub unsafe fn DoorCode_CeresElevatorShaft(game: &mut Game) {
         b"\"\0" as *const u8 as *const c_char,
     );
     strcpy(
-        (&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u8 as *mut c_char,
+        (&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut c_char,
         b"<\0" as *const u8 as *const c_char,
     );
 }
@@ -865,12 +862,11 @@ pub unsafe fn RoomCode_ShakeScreenHorizDiagStrong(game: &mut Game) {
         current_block_3 = 11006700562992250127;
     }
     if current_block_3 == 1544504899801662111 {
-        *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u8 as *mut u16) =
-            v0 as u16;
+        *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u16) = v0 as u16;
     }
     set_ram_word!(
         game.earthquake_type =
-            *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u8 as *mut u16)
+            *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u16)
     );
     RoomCode_GenRandomExplodes_4th(game);
 }

@@ -233,22 +233,19 @@ pub unsafe fn HandleSamusDeathSequence_Helper2(game: &mut Game) {
         game,
     ) as *const u16;
     memcpy(
-        ((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16).offset(192) as *mut u16
-            as *mut c_void,
+        ((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16).offset(192) as *mut c_void,
         RomPtr_9B(*v0, game) as *const c_void,
         32 as size_t,
     );
     memcpy(
-        ((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16).offset(240) as *mut u16
-            as *mut c_void,
+        ((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16).offset(240) as *mut c_void,
         RomPtr_9B(addr_word_9BA120 as u16, game) as *const c_void,
         32 as size_t,
     );
     QueueTransferOfSamusDeathSequence(8u16, game);
     set_ram_word!(
-        game.game_options_screen_index = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bb823))
-            as *const u8 as *mut u8)
-            .offset(0) as u16
+        game.game_options_screen_index =
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bb823)) as *mut u8).offset(0) as u16
     );
     set_ram_word!(game.g_word_7E0DE4 = 0u16);
     set_ram_word!(game.g_word_7E0DE6 = 0u16);
@@ -262,14 +259,12 @@ pub unsafe fn CopyPalettesForSamusDeath(v0: u16, game: &mut Game) {
     ) as i32;
     let v1: *const u16 = RomPtr_9B((r20 + v0 as i32) as u16, game) as *const u16;
     memcpy(
-        ((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16).offset(192) as *mut u16
-            as *mut c_void,
+        ((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16).offset(192) as *mut c_void,
         RomPtr_9B(*v1, game) as *const c_void,
         32 as size_t,
     );
     memcpy(
-        ((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16).offset(240) as *mut u16
-            as *mut c_void,
+        ((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16).offset(240) as *mut c_void,
         RomPtr_9B(
             crate::rtl::rom_table_word!(game, 0x9bb80f, (v0 as i32 >> 1i32) as isize),
             game,
@@ -336,17 +331,14 @@ pub unsafe fn GameState_24_SamusNoHealth_Explosion_2(game: &mut Game) -> u16 {
             || ram_word!(game, g_word_7E0DE4) as i32 - 2i32 & 0x8000i32 != 0
         {
             set_ram_word!(
-                game.game_options_screen_index = *(game
-                    .g_rom
-                    .offset(crate::rtl::lorom_offset(0x9bb823))
-                    as *const u8 as *mut u8)
-                    .offset((2i32 * ram_word!(game, g_word_7E0DE4) as i32) as isize,)
-                    as u16
+                game.game_options_screen_index =
+                    *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bb823)) as *mut u8)
+                        .offset((2i32 * ram_word!(game, g_word_7E0DE4) as i32) as isize,)
+                        as u16
             );
             CopyPalettesForSamusDeath(
                 (2u16).wrapping_mul(
-                    (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bb823)) as *const u8
-                        as *mut u8)
+                    (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bb823)) as *mut u8)
                         .offset((2i32 * ram_word!(game, g_word_7E0DE4) as i32 + 1i32) as isize))
                         as u16,
                 ),
@@ -354,12 +346,10 @@ pub unsafe fn GameState_24_SamusNoHealth_Explosion_2(game: &mut Game) -> u16 {
             );
         } else {
             set_ram_word!(
-                game.game_options_screen_index = *(game
-                    .g_rom
-                    .offset(crate::rtl::lorom_offset(0x9bb823))
-                    as *const u8 as *mut u8)
-                    .offset((2i32 * ram_word!(game, g_word_7E0DE4) as i32) as isize,)
-                    as u16
+                game.game_options_screen_index =
+                    *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bb823)) as *mut u8)
+                        .offset((2i32 * ram_word!(game, g_word_7E0DE4) as i32) as isize,)
+                        as u16
             );
         }
     }
@@ -374,8 +364,7 @@ pub unsafe fn CancelGrappleBeamIfIncompatiblePose(game: &mut Game) {
         if ram_word!(game, grapple_beam_function) as i32 != 0x9bc4f0i32 & 0xffffi32
             && ram_word!(game, grapple_beam_function) as i32 + 0x3882i32 & 0x8000i32 != 0
         {
-            v0 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const u8
-                as *mut SamusPoseParams)
+            v0 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *mut SamusPoseParams)
                 .offset(ram_word!(game, samus_pose) as isize))
             .direction_shots_fired as i16;
             if (v0 as i32 & 0xf0i32) == 0i32 {
@@ -563,7 +552,7 @@ pub unsafe fn HandleConnectingGrapple_StuckInPlace(game: &mut Game) {
 pub unsafe fn HandleSpecialGrappleBeamAngles(game: &mut Game) -> u8 {
     let mut v0: u16 = 7u16;
     while ram_word!(game, grapple_beam_end_angle16)
-        != (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc43e)) as *const u8
+        != (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc43e))
             as *mut GrappleBeamSpecialAngles)
             .offset(v0 as isize))
         .field_0
@@ -575,14 +564,13 @@ pub unsafe fn HandleSpecialGrappleBeamAngles(game: &mut Game) -> u8 {
     }
     set_ram_word!(
         game.samus_new_pose_interrupted = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc43e))
-            as *const u8
             as *mut GrappleBeamSpecialAngles)
             .offset(v0 as isize))
         .field_2
     );
     set_ram_word!(
         game.samus_x_pos = (ram_word!(game, grapple_beam_end_x_pos)).wrapping_add(
-            (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc43e)) as *const u8
+            (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc43e))
                 as *mut GrappleBeamSpecialAngles)
                 .offset(v0 as isize))
             .field_4,
@@ -590,7 +578,7 @@ pub unsafe fn HandleSpecialGrappleBeamAngles(game: &mut Game) -> u8 {
     );
     set_ram_word!(
         game.samus_y_pos = (ram_word!(game, grapple_beam_end_y_pos)).wrapping_add(
-            (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc43e)) as *const u8
+            (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc43e))
                 as *mut GrappleBeamSpecialAngles)
                 .offset(v0 as isize))
             .field_6,
@@ -598,7 +586,7 @@ pub unsafe fn HandleSpecialGrappleBeamAngles(game: &mut Game) -> u8 {
     );
     set_ram_word!(
         game.grapple_beam_function = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc43e))
-            as *const u8 as *mut GrappleBeamSpecialAngles)
+            as *mut GrappleBeamSpecialAngles)
             .offset(v0 as isize))
         .field_8
     );
@@ -811,21 +799,19 @@ pub unsafe fn GrappleBeamFunc_BD95(game: &mut Game) {
                 set_ram_word!(game.samus_anim_frame_timer = 8u16);
                 set_ram_word!(game.samus_anim_frame = 64u16);
             }
-            v1 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc1c2)) as *const u8 as *mut u8)
-                .offset(
-                    *((&raw mut game.g_ram as *mut u8).offset(0xcfc) as *mut u16 as *mut u8)
-                        .offset(1isize) as isize,
-                ) as u16;
+            v1 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc1c2)) as *mut u8).offset(
+                *((&raw mut game.g_ram as *mut u8).offset(0xcfc) as *mut u16 as *mut u8)
+                    .offset(1isize) as isize,
+            ) as u16;
             current_block = 13536709405535804910;
         }
     }
     if current_block == 8418170951678595278 {
         set_ram_word!(game.samus_anim_frame_timer = 15u16);
-        v1 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc1c2)) as *const u8 as *mut u8)
-            .offset(
-                *((&raw mut game.g_ram as *mut u8).offset(0xcfc) as *mut u16 as *mut u8)
-                    .offset(1isize) as isize,
-            ) as u16;
+        v1 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc1c2)) as *mut u8).offset(
+            *((&raw mut game.g_ram as *mut u8).offset(0xcfc) as *mut u16 as *mut u8).offset(1isize)
+                as isize,
+        ) as u16;
         set_ram_word!(game.samus_anim_frame = v1);
     }
     let v2: u16 = (2u16).wrapping_mul(v1);
@@ -839,26 +825,26 @@ pub unsafe fn GrappleBeamFunc_BD95(game: &mut Game) {
     if *(&raw mut game.g_ram as *mut u8).offset(0xa1e) == 4u8 {
         set_ram_word!(
             game.samus_x_pos = (ram_word!(game, x_pos_of_start_of_grapple_beam)).wrapping_add(
-                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc2c2)) as *const u8 as *mut u8)
+                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc2c2)) as *mut u8)
                     .offset(v2 as isize) as i8) as u16,
             )
         );
         set_ram_word!(
             game.samus_y_pos = (ram_word!(game, y_pos_of_start_of_grapple_beam)).wrapping_add(
-                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc2c2)) as *const u8 as *mut u8)
+                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc2c2)) as *mut u8)
                     .offset((v2 as i32 + 1i32) as isize) as i8) as u16,
             )
         );
     } else {
         set_ram_word!(
             game.samus_x_pos = (ram_word!(game, x_pos_of_start_of_grapple_beam)).wrapping_add(
-                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc302)) as *const u8 as *mut u8)
+                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc302)) as *mut u8)
                     .offset(v2 as isize) as i8) as u16,
             )
         );
         set_ram_word!(
             game.samus_y_pos = (ram_word!(game, y_pos_of_start_of_grapple_beam)).wrapping_add(
-                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc302)) as *const u8 as *mut u8)
+                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc302)) as *mut u8)
                     .offset((v2 as i32 + 1i32) as isize) as i8) as u16,
             )
         );
@@ -927,7 +913,7 @@ pub unsafe fn GrappleBeamFunc_BEEB(game: &mut Game) {
     );
 }
 pub unsafe fn GrappleBeamFunc_BF1B(game: &mut Game) {
-    let r22: u16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const u8
+    let r22: u16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629))
         as *mut SamusPoseParams)
         .offset(ram_word!(game, samus_pose) as isize))
     .y_offset_to_gfx as u16;
@@ -1050,15 +1036,14 @@ pub unsafe fn HandleGrappleBeamFlare(game: &mut Game) {
             != 0i32
         {
             let mut v0: u16 = update_ram_word!(game.flare_animation_frame, wrapping_add(1), reread);
-            if *(game.g_rom.offset(crate::rtl::lorom_offset(0x90c487)) as *const u8 as *mut u8)
+            if *(game.g_rom.offset(crate::rtl::lorom_offset(0x90c487)) as *mut u8)
                 .offset(ram_word!(game, flare_animation_frame) as isize)
                 == 254u8
             {
                 update_ram_word!(
                     game.flare_animation_frame,
                     wrapping_sub(
-                        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x90c487)) as *const u8
-                            as *mut u8)
+                        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x90c487)) as *mut u8)
                             .offset(
                                 ((ram_word!(game, flare_animation_frame)).wrapping_add(1u16))
                                     as isize,
@@ -1069,7 +1054,7 @@ pub unsafe fn HandleGrappleBeamFlare(game: &mut Game) {
             }
             set_ram_word!(
                 game.flare_animation_timer = *(game.g_rom.offset(crate::rtl::lorom_offset(0x90c487))
-                    as *const u8 as *mut u8)
+                    as *mut u8)
                     .offset(v0 as isize) as u16
             );
         }
@@ -1153,12 +1138,10 @@ pub unsafe fn GrappleBeamFunc_FireGoToCancel(game: &mut Game) {
         v0 = CheckBannedDraygonGrappleDirs(ram_word!(game, samus_pose), game) as i32;
         r22 = 6u16;
     } else {
-        r22 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const u8
-            as *mut SamusPoseParams)
+        r22 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *mut SamusPoseParams)
             .offset(ram_word!(game, samus_pose) as isize))
         .y_offset_to_gfx as u16;
-        v0 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const u8
-            as *mut SamusPoseParams)
+        v0 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *mut SamusPoseParams)
             .offset(ram_word!(game, samus_pose) as isize))
         .direction_shots_fired as i32;
         if (v0 & 0xf0i32) != 0i32 {
@@ -1474,8 +1457,7 @@ pub unsafe fn GrappleBeam_Func2(game: &mut Game) {
         if ram_word!(game, samus_pose) as i32 == kPose_B3_FaceL_Grapple_Air as i32 {
             current_block = 13151459208701579741;
         } else if ram_word!(game, samus_y_radius) as i32 - 17i32 & 0x8000i32 != 0 {
-            if ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const u8
-                as *mut SamusPoseParams)
+            if ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *mut SamusPoseParams)
                 .offset(ram_word!(game, samus_pose) as isize))
             .direction_shots_fired as i32
                 & 0xf0i32)
@@ -1488,14 +1470,9 @@ pub unsafe fn GrappleBeam_Func2(game: &mut Game) {
                 }
             } else {
                 set_ram_word!(
-                    game.samus_new_pose_transitional = *(game
-                        .g_rom
-                        .offset(crate::rtl::lorom_offset(0x9bc9c4))
-                        as *const u8
-                        as *mut u8)
-                        .offset(
+                    game.samus_new_pose_transitional =
+                        *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc9c4)) as *mut u8).offset(
                             *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629))
-                                as *const u8
                                 as *mut SamusPoseParams)
                                 .offset(0))
                             .direction_shots_fired)
@@ -1505,7 +1482,7 @@ pub unsafe fn GrappleBeam_Func2(game: &mut Game) {
                 );
             }
             current_block = 8968942556654489080;
-        } else if ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const u8
+        } else if ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629))
             as *mut SamusPoseParams)
             .offset(ram_word!(game, samus_pose) as isize))
         .direction_shots_fired as i32
@@ -1519,13 +1496,9 @@ pub unsafe fn GrappleBeam_Func2(game: &mut Game) {
             }
         } else {
             set_ram_word!(
-                game.samus_new_pose_transitional = *(game
-                    .g_rom
-                    .offset(crate::rtl::lorom_offset(0x9bc9ba))
-                    as *const u8 as *mut u8)
-                    .offset(
+                game.samus_new_pose_transitional =
+                    *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc9ba)) as *mut u8).offset(
                         *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629))
-                            as *const u8
                             as *mut SamusPoseParams)
                             .offset(0))
                         .direction_shots_fired)

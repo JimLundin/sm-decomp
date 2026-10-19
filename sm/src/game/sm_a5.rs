@@ -1094,7 +1094,7 @@ pub unsafe fn Draygon_Func_33(game: &mut Game) {
         let v2: u16 = ram_word!(game, area_index);
         let ref mut fresh3 = *((&raw mut game.g_ram as *mut u8)
             .offset(0xd828)
-            .offset(ram_word!(game, area_index) as isize) as *mut u8
+            .offset(ram_word!(game, area_index) as isize)
             as *mut u16);
         *fresh3 = (*fresh3) | (1u16);
         Enemy_ItemDrop_Draygon(v2, game);
@@ -1551,18 +1551,14 @@ pub unsafe fn Draygon_Func_42(varE24: u16, game: &mut Game) {
             != 0i32
         {
             AddToHiLo(
-                ((&raw mut game.g_ram as *mut u8).offset(0xf0f8) as *mut u16).offset(v3 as isize)
-                    as *mut u16,
-                ((&raw mut game.g_ram as *mut u8).offset(0xf178) as *mut u16).offset(v3 as isize)
-                    as *mut u16,
+                ((&raw mut game.g_ram as *mut u8).offset(0xf0f8) as *mut u16).offset(v3 as isize),
+                ((&raw mut game.g_ram as *mut u8).offset(0xf178) as *mut u16).offset(v3 as isize),
                 crate::rtl::rom_table_word!(game, 0xa5a1af, v2 as isize) as u32,
             );
         } else {
             AddToHiLo(
-                ((&raw mut game.g_ram as *mut u8).offset(0xf0f8) as *mut u16).offset(v3 as isize)
-                    as *mut u16,
-                ((&raw mut game.g_ram as *mut u8).offset(0xf178) as *mut u16).offset(v3 as isize)
-                    as *mut u16,
+                ((&raw mut game.g_ram as *mut u8).offset(0xf0f8) as *mut u16).offset(v3 as isize),
+                ((&raw mut game.g_ram as *mut u8).offset(0xf178) as *mut u16).offset(v3 as isize),
                 (-(crate::rtl::rom_table_word!(game, 0xa5a1af, v2 as isize) as i32)
                     - ((varE24 as i32) << 16i32)) as u32,
             );
@@ -1572,18 +1568,14 @@ pub unsafe fn Draygon_Func_42(varE24: u16, game: &mut Game) {
             != 0i32
         {
             AddToHiLo(
-                ((&raw mut game.g_ram as *mut u8).offset(0xf1f8) as *mut u16).offset(v3 as isize)
-                    as *mut u16,
-                ((&raw mut game.g_ram as *mut u8).offset(0xf278) as *mut u16).offset(v3 as isize)
-                    as *mut u16,
+                ((&raw mut game.g_ram as *mut u8).offset(0xf1f8) as *mut u16).offset(v3 as isize),
+                ((&raw mut game.g_ram as *mut u8).offset(0xf278) as *mut u16).offset(v3 as isize),
                 crate::rtl::rom_table_word!(game, 0xa5a1af, (v2 + 1i32) as isize) as u32,
             );
         } else {
             AddToHiLo(
-                ((&raw mut game.g_ram as *mut u8).offset(0xf1f8) as *mut u16).offset(v3 as isize)
-                    as *mut u16,
-                ((&raw mut game.g_ram as *mut u8).offset(0xf278) as *mut u16).offset(v3 as isize)
-                    as *mut u16,
+                ((&raw mut game.g_ram as *mut u8).offset(0xf1f8) as *mut u16).offset(v3 as isize),
+                ((&raw mut game.g_ram as *mut u8).offset(0xf278) as *mut u16).offset(v3 as isize),
                 -(crate::rtl::rom_table_word!(game, 0xa5a1af, (v2 + 1i32) as isize) as i32) as u32,
             );
         }
@@ -1654,8 +1646,8 @@ pub unsafe fn Draygon_Func_46(game: &mut Game) {
             ));
         if (v1 as i32 & 0x8000i32) == 0i32 {
             let v2: u16 = v1;
-            if *((game.g_rom.offset(crate::rtl::lorom_offset(0xa5ce07)) as *const u8 as *mut u8)
-                .offset(v1 as isize) as *mut u8 as *mut u16)
+            if *((game.g_rom.offset(crate::rtl::lorom_offset(0xa5ce07)) as *mut u8)
+                .offset(v1 as isize) as *mut u16)
                 == 0x8080u16
             {
                 set_ram_word!(game.sprite_instr_list_ptrs[(v0 as i32 >> 1i32)] = 0u16);
@@ -1664,16 +1656,14 @@ pub unsafe fn Draygon_Func_46(game: &mut Game) {
                 update_ram_word!(
                     game.sprite_x_pos[v3],
                     wrapping_add(SignExtend8(
-                        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5ce07)) as *const u8
-                            as *mut u8)
+                        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5ce07)) as *mut u8)
                             .offset(v1 as isize) as u16,
                     ))
                 );
                 update_ram_word!(
                     game.sprite_y_pos[v3],
                     wrapping_add(SignExtend8(
-                        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5ce07)) as *const u8
-                            as *mut u8)
+                        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5ce07)) as *mut u8)
                             .offset((v2 as i32 + 1i32) as isize) as u16,
                     ))
                 );
@@ -2226,7 +2216,7 @@ pub unsafe fn SporeSpawn_Func_6(game: &mut Game) {
         (*E0).base.instruction_timer = 1u16;
         let ref mut fresh5 = *((&raw mut game.g_ram as *mut u8)
             .offset(0xd828)
-            .offset(ram_word!(game, area_index) as isize) as *mut u8
+            .offset(ram_word!(game, area_index) as isize)
             as *mut u16);
         *fresh5 = (*fresh5) | (2u16);
         set_ram_word!(game.scrolling_finished_hook = 0u16);

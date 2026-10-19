@@ -999,15 +999,15 @@ pub const kDefaultFullscreen: C2RustUnnamed_13 = 0;
 pub const AUDIO_S16LSB: i32 = sdl2_sys::AUDIO_S16LSB as i32;
 pub const AUDIO_S16: i32 = sdl2_sys::AUDIO_S16 as i32;
 pub const SDL_MIX_MAXVOLUME: i32 = sdl2_sys::SDL_MIX_MAXVOLUME as i32;
-pub const SDL_WINDOWPOS_UNDEFINED_MASK: u32 = sdl2_sys::SDL_WINDOWPOS_UNDEFINED_MASK as u32;
+pub const SDL_WINDOWPOS_UNDEFINED_MASK: u32 = sdl2_sys::SDL_WINDOWPOS_UNDEFINED_MASK;
 pub const SDL_WINDOWPOS_UNDEFINED: u32 = SDL_WINDOWPOS_UNDEFINED_MASK | 0u32;
-pub const SDL_WINDOWPOS_CENTERED_MASK: u32 = sdl2_sys::SDL_WINDOWPOS_CENTERED_MASK as u32;
+pub const SDL_WINDOWPOS_CENTERED_MASK: u32 = sdl2_sys::SDL_WINDOWPOS_CENTERED_MASK;
 pub const SDL_WINDOWPOS_CENTERED: u32 = SDL_WINDOWPOS_CENTERED_MASK | 0u32;
 pub const SDL_BUTTON_LEFT: i32 = sdl2_sys::SDL_BUTTON_LEFT as i32;
 pub const SDL_PRESSED: i32 = sdl2_sys::SDL_PRESSED as i32;
-pub const SDL_INIT_AUDIO: u32 = sdl2_sys::SDL_INIT_AUDIO as u32;
-pub const SDL_INIT_VIDEO: u32 = sdl2_sys::SDL_INIT_VIDEO as u32;
-pub const SDL_INIT_GAMECONTROLLER: u32 = sdl2_sys::SDL_INIT_GAMECONTROLLER as u32;
+pub const SDL_INIT_AUDIO: u32 = sdl2_sys::SDL_INIT_AUDIO;
+pub const SDL_INIT_VIDEO: u32 = sdl2_sys::SDL_INIT_VIDEO;
+pub const SDL_INIT_GAMECONTROLLER: u32 = sdl2_sys::SDL_INIT_GAMECONTROLLER;
 pub const kDebugFlag: i32 = 0;
 #[inline]
 unsafe fn IntMin(a: i32, b: i32) -> i32 {
@@ -1081,7 +1081,7 @@ unsafe fn host_warning(error: *const c_char) {
     );
 }
 pub unsafe fn ChangeWindowScale(scale_step: i32) {
-    if SDL_GetWindowFlags(g_window as *mut SDL_Window)
+    if SDL_GetWindowFlags(g_window)
         & (SDL_WINDOW_FULLSCREEN_DESKTOP as i32
             | SDL_WINDOW_FULLSCREEN as i32
             | SDL_WINDOW_MINIMIZED as i32
@@ -1090,7 +1090,7 @@ pub unsafe fn ChangeWindowScale(scale_step: i32) {
     {
         return;
     }
-    let mut screen: i32 = SDL_GetWindowDisplayIndex(g_window as *mut SDL_Window);
+    let mut screen: i32 = SDL_GetWindowDisplayIndex(g_window);
     if screen < 0i32 {
         screen = 0i32;
     }
@@ -1106,13 +1106,8 @@ pub unsafe fn ChangeWindowScale(scale_step: i32) {
     let mut bb: i32 = 0;
     let mut br: i32 = 0;
     if SDL_GetDisplayUsableBounds(screen, &raw mut bounds) == 0i32 {
-        if SDL_GetWindowBordersSize(
-            g_window as *mut SDL_Window,
-            &raw mut bt,
-            &raw mut bl,
-            &raw mut bb,
-            &raw mut br,
-        ) != 0i32
+        if SDL_GetWindowBordersSize(g_window, &raw mut bt, &raw mut bl, &raw mut bb, &raw mut br)
+            != 0i32
         {
             bb = 1i32;
             br = bb;
@@ -1130,7 +1125,7 @@ pub unsafe fn ChangeWindowScale(scale_step: i32) {
     g_current_window_scale = new_scale as u8;
     let w: i32 = new_scale * g_snes_width;
     let h: i32 = new_scale * g_snes_height;
-    SDL_SetWindowSize(g_window as *mut SDL_Window, w, h);
+    SDL_SetWindowSize(g_window, w, h);
     if bt >= 0i32 {
         let mut mx: i32 = 0;
         let mut my: i32 = 0;
@@ -1143,10 +1138,10 @@ pub unsafe fn ChangeWindowScale(scale_step: i32) {
             IntMin(my - h / 2i32, bounds.y + bounds.h - bt - bb - h),
             bounds.y + bt,
         );
-        SDL_SetWindowPosition(g_window as *mut SDL_Window, wx, wy);
+        SDL_SetWindowPosition(g_window, wx, wy);
     } else {
         SDL_SetWindowPosition(
-            g_window as *mut SDL_Window,
+            g_window,
             SDL_WINDOWPOS_CENTERED as i32,
             SDL_WINDOWPOS_CENTERED as i32,
         );
@@ -1158,7 +1153,7 @@ unsafe extern "C" fn HitTestCallback(
     pt: *const SDL_Point,
     data: *mut c_void,
 ) -> SDL_HitTestResult {
-    let flags: u32 = SDL_GetWindowFlags(win as *mut SDL_Window) as u32;
+    let flags: u32 = SDL_GetWindowFlags(win) as u32;
     if flags & SDL_WINDOW_FULLSCREEN_DESKTOP as i32 as u32 != 0u32
         || flags & SDL_WINDOW_FULLSCREEN as i32 as u32 != 0u32
     {
@@ -1169,7 +1164,7 @@ unsafe extern "C" fn HitTestCallback(
     }
     let mut w: i32 = 0;
     let mut h: i32 = 0;
-    SDL_GetWindowSize(win as *mut SDL_Window, &raw mut w, &raw mut h);
+    SDL_GetWindowSize(win, &raw mut w, &raw mut h);
     if (*pt).y < RESIZE_BORDER {
         return if (*pt).x < RESIZE_BORDER {
             SDL_HITTEST_RESIZE_TOPLEFT
@@ -1207,7 +1202,7 @@ pub unsafe fn RtlDrawPpuFrame(
     let mut y: size_t = 0 as size_t;
     while y < 240 as size_t {
         memcpy(
-            (pixel_buffer as *mut u8).offset(y.wrapping_mul(pitch) as isize) as *mut c_void,
+            (pixel_buffer).offset(y.wrapping_mul(pitch) as isize) as *mut c_void,
             ppu_pixels.offset(y.wrapping_mul(256 as size_t).wrapping_mul(4 as size_t) as isize)
                 as *const c_void,
             (256i32 * 4i32) as size_t,
@@ -1367,7 +1362,7 @@ unsafe fn SdlRenderer_Init(window: *mut SDL_Window, game: &mut Game) -> bool {
         );
     }
     let renderer: *mut SDL_Renderer = SDL_CreateRenderer(
-        g_window as *mut SDL_Window,
+        g_window,
         -1i32,
         (if g_config.output_method as i32 == kOutputMethod_SDLSoftware as i32 {
             SDL_RENDERER_SOFTWARE as i32
@@ -1563,7 +1558,7 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -
         window_width,
         window_height,
         g_win_flags as Uint32,
-    ) as *mut SDL_Window;
+    );
     if window.is_null() {
         printf(
             b"Failed to create window: %s\n\0" as *const u8 as *const c_char,
@@ -1573,7 +1568,7 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -
     }
     g_window = window;
     SDL_SetWindowHitTest(
-        window as *mut SDL_Window,
+        window,
         Some(
             HitTestCallback
                 as unsafe extern "C" fn(
@@ -1595,8 +1590,8 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -
     if g_audio_mutex.is_null() {
         Die(b"No mutex\0" as *const u8 as *const c_char);
     }
-    owner.with(|game| game.g_spc_player = SpcPlayer_Create() as *mut SpcPlayer);
-    owner.with(|game| SpcPlayer_Initialize(game.g_spc_player as *mut SpcPlayer));
+    owner.with(|game| game.g_spc_player = SpcPlayer_Create());
+    owner.with(|game| SpcPlayer_Initialize(game.g_spc_player));
     let enable_audio: bool = true_0 != 0;
     if enable_audio {
         let mut want: SDL_AudioSpec = SDL_AudioSpec {
@@ -1677,12 +1672,12 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -
         while SDL_PollEvent(&raw mut event) != 0 {
             match event.type_ {
                 1619 => {
-                    OpenOneGamepad(event.cdevice.which as i32);
+                    OpenOneGamepad(event.cdevice.which);
                 }
                 1616 => {
                     owner.with(|game| {
                         HandleGamepadAxisInput(
-                            event.caxis.which as i32,
+                            event.caxis.which,
                             event.caxis.axis as i32,
                             event.caxis.value as i32,
                             game,
@@ -1722,8 +1717,8 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -
                     {
                         g_win_flags ^= SDL_WINDOW_BORDERLESS as i32 as u32;
                         SDL_SetWindowBordered(
-                            g_window as *mut SDL_Window,
-                            if g_win_flags & SDL_WINDOW_BORDERLESS as u32 == 0u32 {
+                            g_window,
+                            if g_win_flags & SDL_WINDOW_BORDERLESS == 0u32 {
                                 SDL_TRUE
                             } else {
                                 SDL_FALSE
@@ -1734,7 +1729,7 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -
                 768 => {
                     owner.with(|game| {
                         HandleInput(
-                            event.key.keysym.sym as i32,
+                            event.key.keysym.sym,
                             event.key.keysym.mod_ as i32,
                             true_0 != 0,
                             game,
@@ -1744,7 +1739,7 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -
                 769 => {
                     owner.with(|game| {
                         HandleInput(
-                            event.key.keysym.sym as i32,
+                            event.key.keysym.sym,
                             event.key.keysym.mod_ as i32,
                             false_0 != 0,
                             game,
@@ -1796,12 +1791,9 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -
                         b"%s | BUG FOUND!\0" as *const u8 as *const c_char,
                         &raw const kWindowTitle as *const c_char,
                     );
-                    SDL_SetWindowTitle(g_window as *mut SDL_Window, &raw mut title as *mut c_char);
+                    SDL_SetWindowTitle(g_window, &raw mut title as *mut c_char);
                 } else {
-                    SDL_SetWindowTitle(
-                        g_window as *mut SDL_Window,
-                        &raw const kWindowTitle as *const c_char,
-                    );
+                    SDL_SetWindowTitle(g_window, &raw const kWindowTitle as *const c_char);
                 }
             }
             curTick = SDL_GetTicks() as u32;
@@ -1830,7 +1822,7 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -
     SDL_DestroyMutex(g_audio_mutex);
     free(g_audiobuffer as *mut c_void);
     owner.with(|game| g_renderer_funcs.Destroy.expect("non-null function pointer")(game));
-    SDL_DestroyWindow(window as *mut SDL_Window);
+    SDL_DestroyWindow(window);
     SDL_Quit();
     0i32
 }
@@ -1993,7 +1985,7 @@ unsafe fn HandleCommand(j: u32, pressed: bool, game: &mut Game) {
             118 => {
                 g_win_flags ^= SDL_WINDOW_FULLSCREEN_DESKTOP as i32 as u32;
                 SDL_SetWindowFullscreen(
-                    g_window as *mut SDL_Window,
+                    g_window,
                     g_win_flags as Uint32 & SDL_WINDOW_FULLSCREEN_DESKTOP as i32 as Uint32,
                 );
                 g_cursor = (g_cursor == 0) as i32 as u8;
@@ -2065,21 +2057,21 @@ unsafe fn OpenOneGamepad(i: i32) {
 }
 unsafe fn RemapSdlButton(button: i32) -> i32 {
     match button {
-        0 => kGamepadBtn_A as i32,
-        1 => kGamepadBtn_B as i32,
-        2 => kGamepadBtn_X as i32,
-        3 => kGamepadBtn_Y as i32,
-        4 => kGamepadBtn_Back as i32,
-        5 => kGamepadBtn_Guide as i32,
-        6 => kGamepadBtn_Start as i32,
-        7 => kGamepadBtn_L3 as i32,
-        8 => kGamepadBtn_R3 as i32,
-        9 => kGamepadBtn_L1 as i32,
-        10 => kGamepadBtn_R1 as i32,
-        11 => kGamepadBtn_DpadUp as i32,
-        12 => kGamepadBtn_DpadDown as i32,
-        13 => kGamepadBtn_DpadLeft as i32,
-        14 => kGamepadBtn_DpadRight as i32,
+        0 => kGamepadBtn_A,
+        1 => kGamepadBtn_B,
+        2 => kGamepadBtn_X,
+        3 => kGamepadBtn_Y,
+        4 => kGamepadBtn_Back,
+        5 => kGamepadBtn_Guide,
+        6 => kGamepadBtn_Start,
+        7 => kGamepadBtn_L3,
+        8 => kGamepadBtn_R3,
+        9 => kGamepadBtn_L1,
+        10 => kGamepadBtn_R1,
+        11 => kGamepadBtn_DpadUp,
+        12 => kGamepadBtn_DpadDown,
+        13 => kGamepadBtn_DpadLeft,
+        14 => kGamepadBtn_DpadRight,
         _ => -1i32,
     }
 }
@@ -2121,14 +2113,14 @@ unsafe fn ApproximateAtan2(mut y: c_float, mut x: c_float) -> c_float {
     }
     let num: c_float = bxy_a + y * y;
     let mut atan_1q: c_float = num / (x * x + bxy_a + num + 0.000001f32);
-    let mut uatan_2q: u32 = ux_s as u32 ^ uy_s as u32 | *(&raw mut atan_1q as *mut u32);
+    let mut uatan_2q: u32 = ux_s ^ uy_s | *(&raw mut atan_1q as *mut u32);
     q + *(&raw mut uatan_2q as *mut c_float)
 }
 unsafe fn HandleGamepadAxisInput(gamepad_id: i32, axis: i32, value: i32, game: &mut Game) {
     static mut last_gamepad_id: i32 = 0;
     static mut last_x: i32 = 0;
     static mut last_y: i32 = 0;
-    if axis == SDL_CONTROLLER_AXIS_LEFTX as i32 || axis == SDL_CONTROLLER_AXIS_LEFTY as i32 {
+    if axis == SDL_CONTROLLER_AXIS_LEFTX || axis == SDL_CONTROLLER_AXIS_LEFTY {
         if last_gamepad_id != gamepad_id {
             if value > -16000i32 && value < 16000i32 {
                 return;
@@ -2137,7 +2129,7 @@ unsafe fn HandleGamepadAxisInput(gamepad_id: i32, axis: i32, value: i32, game: &
             last_y = 0i32;
             last_x = last_y;
         }
-        *if axis == SDL_CONTROLLER_AXIS_LEFTX as i32 {
+        *if axis == SDL_CONTROLLER_AXIS_LEFTX {
             &raw mut last_x
         } else {
             &raw mut last_y
@@ -2161,15 +2153,14 @@ unsafe fn HandleGamepadAxisInput(gamepad_id: i32, axis: i32, value: i32, game: &
                 as i32;
         }
         g_gamepad_buttons = buttons as u8;
-    } else if (axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT as i32
-        || axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT as i32)
+    } else if (axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT || axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT)
         && (value < 12000i32 || value >= 16000i32)
     {
         HandleGamepadInput(
-            if axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT as i32 {
-                kGamepadBtn_L2 as i32
+            if axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT {
+                kGamepadBtn_L2
             } else {
-                kGamepadBtn_R2 as i32
+                kGamepadBtn_R2
             },
             value >= 12000i32,
             game,
@@ -2280,10 +2271,8 @@ pub fn main() {
         .chain(::core::iter::once(null_mut()))
         .collect();
     unsafe {
-        ::std::process::exit(main_0(
-            (args_ptrs.len() - 1) as i32,
-            args_ptrs.as_mut_ptr() as *mut *mut c_char,
-            &owner,
-        ) as i32)
+        ::std::process::exit(
+            main_0((args_ptrs.len() - 1) as i32, args_ptrs.as_mut_ptr(), &owner) as i32,
+        )
     }
 }

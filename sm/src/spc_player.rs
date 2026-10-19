@@ -499,11 +499,11 @@ unsafe fn Dsp_Write(p: *mut SpcPlayer, mut reg: u8, value: u8) {
             reg = (reg as i32 + 0i32) as u8;
         }
         (*hist).addr[(*hist).count as usize] = reg;
-        (*hist).val[(*hist).count as usize] = value as u8;
+        (*hist).val[(*hist).count as usize] = value;
         (*hist).count = (*hist).count.wrapping_add(1);
     }
     if !(*p).dsp.is_null() {
-        dsp_write((*p).dsp, reg, value as u8);
+        dsp_write((*p).dsp, reg, value);
     }
 }
 unsafe fn Not_Implemented() {
@@ -637,7 +637,7 @@ unsafe fn WritePitch(p: *mut SpcPlayer, c: *mut Channel, mut pitch: u16) {
     WritePitchInner(p, c, pitch);
 }
 unsafe fn Music_ResetChan(p: *mut SpcPlayer) {
-    let mut c: *mut Channel = (&raw mut (*p).channel as *mut Channel).offset(7) as *mut Channel;
+    let mut c: *mut Channel = (&raw mut (*p).channel as *mut Channel).offset(7);
     (*p).cur_chan_bit = 0x80u8;
     loop {
         *(&raw mut (*c).channel_volume as *mut u8).offset(
@@ -1189,14 +1189,13 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
             '_label_a: loop {
                 if current_block_83 == 12349973810996921269 {
                     t = *((&raw mut (*p).ram as *mut u8).offset((*p).music_ptr_toplevel as isize)
-                        as *mut u8 as *mut u16) as i32;
+                        as *mut u16) as i32;
                     (*p).music_ptr_toplevel = ((*p).music_ptr_toplevel as i32 + 2i32) as u16;
                     if t >> 8i32 != 0i32 {
                         let mut i: i32 = 0i32;
                         while i < 8i32 {
                             (*p).channel[i as usize].pattern_order_ptr_for_chan =
-                                *((&raw mut (*p).ram as *mut u8).offset(t as isize) as *mut u8
-                                    as *mut u16);
+                                *((&raw mut (*p).ram as *mut u8).offset(t as isize) as *mut u16);
                             t += 2i32;
                             i += 1;
                         }
@@ -1239,7 +1238,7 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
                             }
                             t = *((&raw mut (*p).ram as *mut u8)
                                 .offset((*p).music_ptr_toplevel as isize)
-                                as *mut u8 as *mut u16) as i32;
+                                as *mut u16) as i32;
                             (*p).music_ptr_toplevel =
                                 ((*p).music_ptr_toplevel as i32 + 2i32) as u16;
                             if (*p).block_count as i32 != 0i32 {
@@ -1388,7 +1387,7 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
         (*p).port_to_snes[0i32 as usize] = a;
         (*p).music_ptr_toplevel = *((&raw mut (*p).ram as *mut u8)
             .offset((0x5820i32 + (a as i32 - 1i32) * 2i32) as isize)
-            as *mut u8 as *mut u16);
+            as *mut u16);
         (*p).counter_sf0c = 2u16;
         (*p).key_OFF = ((*p).key_OFF as i32 | !((*p).is_chan_on as i32)) as u8;
     }
@@ -1499,27 +1498,27 @@ unsafe fn Spc_Loop_Part2(p: *mut SpcPlayer, ticks: u8) {
 unsafe fn Vector_Reset_Spc(p: *mut SpcPlayer) {
     dsp_reset((*p).dsp);
     memset(
-        (&raw mut (*p).ram as *mut u8).offset(0x500) as *mut u8 as *mut c_void,
+        (&raw mut (*p).ram as *mut u8).offset(0x500) as *mut c_void,
         0i32,
         0x1000 as size_t,
     );
     memset(
-        (&raw mut (*p).ram as *mut u8).offset(0x20) as *mut u8 as *mut c_void,
+        (&raw mut (*p).ram as *mut u8).offset(0x20) as *mut c_void,
         0i32,
         0xf as size_t,
     );
     memset(
-        (&raw mut (*p).ram as *mut u8).offset(0xd0) as *mut u8 as *mut c_void,
+        (&raw mut (*p).ram as *mut u8).offset(0xd0) as *mut c_void,
         0i32,
         0x1f as size_t,
     );
     memset(
-        (&raw mut (*p).ram as *mut u8).offset(0x391) as *mut u8 as *mut c_void,
+        (&raw mut (*p).ram as *mut u8).offset(0x391) as *mut c_void,
         0i32,
         0x6f as size_t,
     );
     memset(
-        (&raw mut (*p).ram as *mut u8).offset(0x440) as *mut u8 as *mut c_void,
+        (&raw mut (*p).ram as *mut u8).offset(0x440) as *mut c_void,
         0i32,
         0x7f as size_t,
     );
@@ -1548,9 +1547,8 @@ pub unsafe fn Sfx_Chan_Reset(p: *mut SpcPlayer, sr: *mut SfxRegs, s: *mut SfxCha
     (*p).is_chan_on = ((*p).is_chan_on as i32 & (*s).channel_mask as i32) as u8;
     (*p).cur_chan_bit = ((*p).cur_chan_bit as i32 | (*s).voice_bitset as i32) as u8;
     (*p).key_OFF = ((*p).key_OFF as i32 | (*s).voice_bitset as i32) as u8;
-    let c: *mut Channel = (&raw mut (*p).channel as *mut Channel)
-        .offset(((*s).voice_index as i32 >> 1i32) as isize)
-        as *mut Channel;
+    let c: *mut Channel =
+        (&raw mut (*p).channel as *mut Channel).offset(((*s).voice_index as i32 >> 1i32) as isize);
     Channel_SetInstrument_NoSetId(p, c, (*c).instrument_id);
     (*c).final_volume = (*s).volume;
     (*c).pan_flag_with_phase_invert = (*s).phase_invert;
@@ -1590,22 +1588,22 @@ pub unsafe fn Sfx1_HandleCmdFromSnes(p: *mut SpcPlayer) {
         Sfx_Chan_Reset(
             p,
             &raw mut (*p).sfx1,
-            (&raw mut (*p).sfx_chans_1 as *mut SfxChan).offset(0) as *mut SfxChan,
+            (&raw mut (*p).sfx_chans_1 as *mut SfxChan).offset(0),
         );
         Sfx_Chan_Reset(
             p,
             &raw mut (*p).sfx1,
-            (&raw mut (*p).sfx_chans_1 as *mut SfxChan).offset(1) as *mut SfxChan,
+            (&raw mut (*p).sfx_chans_1 as *mut SfxChan).offset(1),
         );
         Sfx_Chan_Reset(
             p,
             &raw mut (*p).sfx1,
-            (&raw mut (*p).sfx_chans_1 as *mut SfxChan).offset(2) as *mut SfxChan,
+            (&raw mut (*p).sfx_chans_1 as *mut SfxChan).offset(2),
         );
         Sfx_Chan_Reset(
             p,
             &raw mut (*p).sfx1,
-            (&raw mut (*p).sfx_chans_1 as *mut SfxChan).offset(3) as *mut SfxChan,
+            (&raw mut (*p).sfx_chans_1 as *mut SfxChan).offset(3),
         );
     }
     let mut i: i32 = 0i32;
@@ -1680,12 +1678,12 @@ pub unsafe fn Sfx2_HandleCmdFromSnes(p: *mut SpcPlayer) {
         Sfx_Chan_Reset(
             p,
             &raw mut (*p).sfx2,
-            (&raw mut (*p).sfx_chans_2 as *mut SfxChan).offset(0) as *mut SfxChan,
+            (&raw mut (*p).sfx_chans_2 as *mut SfxChan).offset(0),
         );
         Sfx_Chan_Reset(
             p,
             &raw mut (*p).sfx2,
-            (&raw mut (*p).sfx_chans_2 as *mut SfxChan).offset(1) as *mut SfxChan,
+            (&raw mut (*p).sfx_chans_2 as *mut SfxChan).offset(1),
         );
     }
     let mut i: i32 = 0i32;
@@ -1745,12 +1743,12 @@ pub unsafe fn Sfx3_HandleCmdFromSnes(p: *mut SpcPlayer) {
         Sfx_Chan_Reset(
             p,
             &raw mut (*p).sfx3,
-            (&raw mut (*p).sfx_chans_3 as *mut SfxChan).offset(0) as *mut SfxChan,
+            (&raw mut (*p).sfx_chans_3 as *mut SfxChan).offset(0),
         );
         Sfx_Chan_Reset(
             p,
             &raw mut (*p).sfx3,
-            (&raw mut (*p).sfx_chans_3 as *mut SfxChan).offset(1) as *mut SfxChan,
+            (&raw mut (*p).sfx_chans_3 as *mut SfxChan).offset(1),
         );
     }
     let mut i: i32 = 0i32;
@@ -1867,8 +1865,7 @@ pub unsafe fn Sfx_RunChan(p: *mut SpcPlayer, sr: *mut SfxRegs, s: *mut SfxChan) 
             }
         }
         let c: *mut Channel = (&raw mut (*p).channel as *mut Channel)
-            .offset(((*s).voice_index as i32 >> 1i32) as isize)
-            as *mut Channel;
+            .offset(((*s).voice_index as i32 >> 1i32) as isize);
         Channel_SetInstrument_NoSetId(p, c, a);
         (*c).final_volume = SfxChan_GetByte(p, s);
         (*c).pan_flag_with_phase_invert = 0u8;
@@ -1929,8 +1926,7 @@ pub unsafe fn Sfx_RunChan(p: *mut SpcPlayer, sr: *mut SfxRegs, s: *mut SfxChan) 
     }
     WritePitchInner(
         p,
-        (&raw mut (*p).channel as *mut Channel).offset(((*s).voice_index as i32 >> 1i32) as isize)
-            as *mut Channel,
+        (&raw mut (*p).channel as *mut Channel).offset(((*s).voice_index as i32 >> 1i32) as isize),
         (((*s).note as i32) << 8i32 | (*s).subnote as i32) as u16,
     );
 }
@@ -1939,11 +1935,10 @@ pub unsafe fn Sfx1_Process(p: *mut SpcPlayer) {
         Sfx1_Init(p);
         let mut i: i32 = 0i32;
         while i < 4i32 {
-            let s: *mut SfxChan =
-                (&raw mut (*p).sfx_chans_1 as *mut SfxChan).offset(i as isize) as *mut SfxChan;
+            let s: *mut SfxChan = (&raw mut (*p).sfx_chans_1 as *mut SfxChan).offset(i as isize);
             (*s).ptr = *((&raw mut (*p).ram as *mut u8)
                 .offset(((*p).sfx1.cur_ptr as i32 + i * 2i32) as isize)
-                as *mut u8 as *mut u16);
+                as *mut u16);
             (*s).voice_index_mult8 = ((*s).voice_index as i32 * 8i32) as u8;
             (*s).ptr_idx = 0u8;
             (*s).instr_timer = 1u8;
@@ -1955,7 +1950,7 @@ pub unsafe fn Sfx1_Process(p: *mut SpcPlayer) {
         Sfx_RunChan(
             p,
             &raw mut (*p).sfx1,
-            (&raw mut (*p).sfx_chans_1 as *mut SfxChan).offset(i_0 as isize) as *mut SfxChan,
+            (&raw mut (*p).sfx_chans_1 as *mut SfxChan).offset(i_0 as isize),
         );
         i_0 += 1;
     }
@@ -1965,11 +1960,10 @@ pub unsafe fn Sfx2_Process(p: *mut SpcPlayer) {
         Sfx2_Init(p);
         let mut i: i32 = 0i32;
         while i < 2i32 {
-            let s: *mut SfxChan =
-                (&raw mut (*p).sfx_chans_2 as *mut SfxChan).offset(i as isize) as *mut SfxChan;
+            let s: *mut SfxChan = (&raw mut (*p).sfx_chans_2 as *mut SfxChan).offset(i as isize);
             (*s).ptr = *((&raw mut (*p).ram as *mut u8)
                 .offset(((*p).sfx2.cur_ptr as i32 + i * 2i32) as isize)
-                as *mut u8 as *mut u16);
+                as *mut u16);
             (*s).voice_index_mult8 = ((*s).voice_index as i32 * 8i32) as u8;
             (*s).ptr_idx = 0u8;
             (*s).instr_timer = 1u8;
@@ -1981,7 +1975,7 @@ pub unsafe fn Sfx2_Process(p: *mut SpcPlayer) {
         Sfx_RunChan(
             p,
             &raw mut (*p).sfx2,
-            (&raw mut (*p).sfx_chans_2 as *mut SfxChan).offset(i_0 as isize) as *mut SfxChan,
+            (&raw mut (*p).sfx_chans_2 as *mut SfxChan).offset(i_0 as isize),
         );
         i_0 += 1;
     }
@@ -1991,11 +1985,10 @@ pub unsafe fn Sfx3_Process(p: *mut SpcPlayer) {
         Sfx3_Init(p);
         let mut i: i32 = 0i32;
         while i < 2i32 {
-            let s: *mut SfxChan =
-                (&raw mut (*p).sfx_chans_3 as *mut SfxChan).offset(i as isize) as *mut SfxChan;
+            let s: *mut SfxChan = (&raw mut (*p).sfx_chans_3 as *mut SfxChan).offset(i as isize);
             (*s).ptr = *((&raw mut (*p).ram as *mut u8)
                 .offset(((*p).sfx3.cur_ptr as i32 + i * 2i32) as isize)
-                as *mut u8 as *mut u16);
+                as *mut u16);
             (*s).voice_index_mult8 = ((*s).voice_index as i32 * 8i32) as u8;
             (*s).ptr_idx = 0u8;
             (*s).instr_timer = 1u8;
@@ -2007,7 +2000,7 @@ pub unsafe fn Sfx3_Process(p: *mut SpcPlayer) {
         Sfx_RunChan(
             p,
             &raw mut (*p).sfx3,
-            (&raw mut (*p).sfx_chans_3 as *mut SfxChan).offset(i_0 as isize) as *mut SfxChan,
+            (&raw mut (*p).sfx_chans_3 as *mut SfxChan).offset(i_0 as isize),
         );
         i_0 += 1;
     }
@@ -2049,7 +2042,7 @@ pub unsafe fn Sfx_Init(
                 return;
             }
             (*sr).voices_to_setup = (*sr).voices_to_setup.wrapping_sub(1);
-            let c: *mut SfxChan = channels.offset((*sr).chan_idx as isize) as *mut SfxChan;
+            let c: *mut SfxChan = channels.offset((*sr).chan_idx as isize);
             (*c).disable = 0u8;
             (*sr).chan_voice_bitset_ptr = (kSomeAddrs[which_sfx as usize][0i32 as usize] as i32
                 + (*sr).chan_idx as i32) as u16;
@@ -2114,18 +2107,17 @@ pub unsafe fn SpcPlayer_CopyVariablesToRam(p: *mut SpcPlayer) {
     let mut c: *mut Channel = &raw mut (*p).channel as *mut Channel;
     let mut i: i32 = 0i32;
     while i < 8i32 {
-        let mut m: *const MemMap =
-            (&raw const kChannel_Maps as *const MemMap).offset(0) as *const MemMap;
+        let mut m: *const MemMap = (&raw const kChannel_Maps as *const MemMap).offset(0);
         while m
             != (&raw const kChannel_Maps as *const MemMap).offset(
                 (size_of::<[MemMap; 47]>() as usize).wrapping_div(size_of::<MemMap>() as usize)
                     as isize,
-            ) as *const MemMap
+            )
         {
             memcpy(
                 (&raw mut (*p).ram as *mut u8)
                     .offset((((*m).org_off as i32 & 0x7fffi32) + i * 2i32) as isize)
-                    as *mut u8 as *mut c_void,
+                    as *mut c_void,
                 (c as *mut u8).offset((*m).off as i32 as isize) as *const c_void,
                 (if (*m).org_off as i32 & 0x8000i32 != 0 {
                     2i32
@@ -2138,17 +2130,15 @@ pub unsafe fn SpcPlayer_CopyVariablesToRam(p: *mut SpcPlayer) {
         i += 1;
         c = c.offset(1);
     }
-    let mut m_0: *const MemMapSized =
-        (&raw const kSpcPlayer_Maps as *const MemMapSized).offset(0) as *const MemMapSized;
+    let mut m_0: *const MemMapSized = (&raw const kSpcPlayer_Maps as *const MemMapSized).offset(0);
     while m_0
         != (&raw const kSpcPlayer_Maps as *const MemMapSized).offset(
             (size_of::<[MemMapSized; 283]>() as usize)
                 .wrapping_div(size_of::<MemMapSized>() as usize) as isize,
-        ) as *const MemMapSized
+        )
     {
         memcpy(
-            (&raw mut (*p).ram as *mut u8).offset((*m_0).org_off as isize) as *mut u8
-                as *mut c_void,
+            (&raw mut (*p).ram as *mut u8).offset((*m_0).org_off as isize) as *mut c_void,
             (p as *mut u8).offset((*m_0).off as i32 as isize) as *const c_void,
             (*m_0).size as size_t,
         );
@@ -2159,19 +2149,18 @@ pub unsafe fn SpcPlayer_CopyVariablesFromRam(p: *mut SpcPlayer) {
     let mut c: *mut Channel = &raw mut (*p).channel as *mut Channel;
     let mut i: i32 = 0i32;
     while i < 8i32 {
-        let mut m: *const MemMap =
-            (&raw const kChannel_Maps as *const MemMap).offset(0) as *const MemMap;
+        let mut m: *const MemMap = (&raw const kChannel_Maps as *const MemMap).offset(0);
         while m
             != (&raw const kChannel_Maps as *const MemMap).offset(
                 (size_of::<[MemMap; 47]>() as usize).wrapping_div(size_of::<MemMap>() as usize)
                     as isize,
-            ) as *const MemMap
+            )
         {
             memcpy(
                 (c as *mut u8).offset((*m).off as i32 as isize) as *mut c_void,
                 (&raw mut (*p).ram as *mut u8)
                     .offset((((*m).org_off as i32 & 0x7fffi32) + i * 2i32) as isize)
-                    as *mut u8 as *const c_void,
+                    as *const c_void,
                 (if (*m).org_off as i32 & 0x8000i32 != 0 {
                     2i32
                 } else {
@@ -2183,18 +2172,16 @@ pub unsafe fn SpcPlayer_CopyVariablesFromRam(p: *mut SpcPlayer) {
         i += 1;
         c = c.offset(1);
     }
-    let mut m_0: *const MemMapSized =
-        (&raw const kSpcPlayer_Maps as *const MemMapSized).offset(0) as *const MemMapSized;
+    let mut m_0: *const MemMapSized = (&raw const kSpcPlayer_Maps as *const MemMapSized).offset(0);
     while m_0
         != (&raw const kSpcPlayer_Maps as *const MemMapSized).offset(
             (size_of::<[MemMapSized; 283]>() as usize)
                 .wrapping_div(size_of::<MemMapSized>() as usize) as isize,
-        ) as *const MemMapSized
+        )
     {
         memcpy(
             (p as *mut u8).offset((*m_0).off as i32 as isize) as *mut c_void,
-            (&raw mut (*p).ram as *mut u8).offset((*m_0).org_off as isize) as *mut u8
-                as *const c_void,
+            (&raw mut (*p).ram as *mut u8).offset((*m_0).org_off as isize) as *const c_void,
             (*m_0).size as size_t,
         );
         m_0 = m_0.offset(1);
@@ -2265,7 +2252,7 @@ pub unsafe fn SpcPlayer_Upload(p: *mut SpcPlayer, mut data: *const u8) {
             data = data.offset(1);
             let fresh33 = target;
             target = target + 1;
-            (*p).ram[(fresh33 & 0xffffi32) as usize] = *fresh32 as u8;
+            (*p).ram[(fresh33 & 0xffffi32) as usize] = *fresh32;
             numbytes -= 1;
             if (numbytes == 0) {
                 break;
@@ -2277,8 +2264,7 @@ pub unsafe fn SpcPlayer_Upload(p: *mut SpcPlayer, mut data: *const u8) {
     (*p).input_ports[2i32 as usize] = (*p).input_ports[3i32 as usize];
     (*p).input_ports[1i32 as usize] = (*p).input_ports[2i32 as usize];
     (*p).input_ports[0i32 as usize] = (*p).input_ports[1i32 as usize];
-    (*p).music_ptr_toplevel =
-        *((&raw mut (*p).ram as *mut u8).offset(0x581e) as *mut u8 as *mut u16);
+    (*p).music_ptr_toplevel = *((&raw mut (*p).ram as *mut u8).offset(0x581e) as *mut u16);
     (*p).counter_sf0c = 2u16;
     (*p).key_OFF = ((*p).key_OFF as i32 | !((*p).is_chan_on as i32)) as u8;
 }

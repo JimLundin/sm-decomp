@@ -78,7 +78,7 @@ pub unsafe fn InitializeInstrForSuperMissile(v0: u16, game: &mut Game) {
             game,
             0x93842b,
             (*(((&raw mut game.g_ram as *mut u8).offset(0xc18) as *mut u16).offset(v1 as isize)
-                as *mut u16 as *mut u8)
+                as *mut u8)
                 .offset(1isize) as i32
                 & 0xfi32) as isize,
         ),
@@ -99,7 +99,7 @@ pub unsafe fn InitializeInstrForMissile(v0: u16, game: &mut Game) {
             game,
             0x9383f1,
             (*(((&raw mut game.g_ram as *mut u8).offset(0xc18) as *mut u16).offset(v1 as isize)
-                as *mut u16 as *mut u8)
+                as *mut u8)
                 .offset(1isize) as i32
                 & 0xfi32) as isize,
         ),
@@ -123,26 +123,21 @@ pub unsafe fn KillProjectileInner(k: u16, game: &mut Game) {
         set_ram_word!(game.projectile_type[v1] = (v2 as i32 & 0xf0ffi32 | 0x800i32) as u16);
         if (v2 as i32 & 0x200i32) != 0i32 {
             set_ram_word!(
-                game.projectile_bomb_instruction_ptr[v1] = *(&raw mut (*(game
-                    .g_rom
-                    .offset(crate::rtl::lorom_offset(0x938691))
-                    as *const u8
-                    as *mut ProjectileDamagesAndInstrPtr))
-                    .damages
-                    as *mut u16)
-                    .offset(1isize,)
+                game.projectile_bomb_instruction_ptr[v1] =
+                    *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x938691))
+                        as *mut ProjectileDamagesAndInstrPtr))
+                        .damages as *mut u16)
+                        .offset(1isize,)
             );
             set_ram_word!(game.earthquake_type = 20u16);
             set_ram_word!(game.earthquake_timer = 30u16);
         } else {
             set_ram_word!(
-                game.projectile_bomb_instruction_ptr[v1] = *(&raw mut (*(game
-                    .g_rom
-                    .offset(crate::rtl::lorom_offset(0x938679))
-                    as *const u8
-                    as *mut ProjectileDamagesAndInstrPtr))
-                    .instr_ptr)
-                    .offset(1)
+                game.projectile_bomb_instruction_ptr[v1] =
+                    *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x938679))
+                        as *mut ProjectileDamagesAndInstrPtr))
+                        .instr_ptr)
+                        .offset(1)
             );
         }
         if ram_word!(game, cooldown_timer) as i32 - 21i32 & 0x8000i32 == 0 {
@@ -155,7 +150,7 @@ pub unsafe fn KillProjectileInner(k: u16, game: &mut Game) {
         );
         set_ram_word!(
             game.projectile_bomb_instruction_ptr[v1] =
-                *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x938679)) as *const u8
+                *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x938679))
                     as *mut ProjectileDamagesAndInstrPtr))
                     .damages as *mut u16)
                     .offset(1isize,)
@@ -169,7 +164,7 @@ pub unsafe fn InitializeBombExplosion(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
     set_ram_word!(
         game.projectile_bomb_instruction_ptr[v1] =
-            *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x938681)) as *const u8
+            *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x938681))
                 as *mut ProjectileDamagesAndInstrPtr))
                 .damages as *mut u16)
                 .offset(1isize,)
@@ -184,7 +179,7 @@ pub unsafe fn InitializeShinesparkEchoOrSpazerSba(k: u16, game: &mut Game) {
             game,
             0x938403,
             (*(((&raw mut game.g_ram as *mut u8).offset(0xc18) as *mut u16).offset(v1 as isize)
-                as *mut u16 as *mut u8)
+                as *mut u8)
                 .offset(0) as i32
                 - 34i32) as isize,
         ),

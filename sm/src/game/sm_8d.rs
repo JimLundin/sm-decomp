@@ -296,7 +296,7 @@ pub unsafe fn PalPreInstr_SamusInHeat(k: u16, game: &mut Game) {
         set_ram_word!(
             game.palettefx_instr_list_ptrs[v3] =
                 *((RomPtr_8D as unsafe fn(u16, &mut Game) -> *const u8)(v4, game)
-                    .offset(v2 as isize) as *const u8 as *mut u16)
+                    .offset(v2 as isize) as *mut u16)
         );
     }
 }
@@ -328,7 +328,7 @@ pub unsafe fn PalPreInstr_SwitchIfYpos2(k: u16, game: &mut Game) {
 pub unsafe fn PalPreInstr_DeletePalfxIfMinibossDead(k: u16, game: &mut Game) {
     if (*((&raw mut game.g_ram as *mut u8)
         .offset(0xd828)
-        .offset(ram_word!(game, area_index) as isize) as *mut u8 as *mut u16) as i32
+        .offset(ram_word!(game, area_index) as isize) as *mut u16) as i32
         & 2i32)
         != 0i32
     {
@@ -350,7 +350,7 @@ pub unsafe fn PalPreInstr_F621(k: u16, game: &mut Game) {
 pub unsafe fn PalInit_F779_Brinstar8(k: u16, j: u16, game: &mut Game) {
     if (*((&raw mut game.g_ram as *mut u8)
         .offset(0xd828)
-        .offset(ram_word!(game, area_index) as isize) as *mut u8 as *mut u16) as i32
+        .offset(ram_word!(game, area_index) as isize) as *mut u16) as i32
         & 2i32)
         != 0i32
     {

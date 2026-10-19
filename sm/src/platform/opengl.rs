@@ -138,7 +138,7 @@ unsafe extern "C" fn MessageCallback(
 }
 unsafe fn OpenGLRenderer_Init(window: *mut SDL_Window, game: &mut Game) -> bool {
     g_window = window;
-    let context: SDL_GLContext = SDL_GL_CreateContext(window as *mut SDL_Window);
+    let context: SDL_GLContext = SDL_GL_CreateContext(window);
     SDL_GL_SetSwapInterval(1i32);
     gl::load_with(|name| {
         sdl2_sys::SDL_GL_GetProcAddress(std::ffi::CString::new(name).expect("GL symbol").as_ptr())
@@ -282,11 +282,7 @@ unsafe fn OpenGLRenderer_BeginDraw(
 unsafe fn OpenGLRenderer_EndDraw(game: &mut Game) {
     let mut drawable_width: i32 = 0;
     let mut drawable_height: i32 = 0;
-    SDL_GL_GetDrawableSize(
-        g_window as *mut SDL_Window,
-        &raw mut drawable_width,
-        &raw mut drawable_height,
-    );
+    SDL_GL_GetDrawableSize(g_window, &raw mut drawable_width, &raw mut drawable_height);
     let mut viewport_width: i32 = drawable_width;
     let mut viewport_height: i32 = drawable_height;
     if !g_config.ignore_aspect_ratio {
@@ -363,7 +359,7 @@ unsafe fn OpenGLRenderer_EndDraw(game: &mut Game) {
             viewport_height,
         );
     }
-    SDL_GL_SwapWindow(g_window as *mut SDL_Window);
+    SDL_GL_SwapWindow(g_window);
 }
 static mut kOpenGLRendererFuncs: RendererFuncs = RendererFuncs {
     Initialize: Some(OpenGLRenderer_Init as unsafe fn(*mut SDL_Window, &mut Game) -> bool),

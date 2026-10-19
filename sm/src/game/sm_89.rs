@@ -153,7 +153,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
         let mut j: i32 = 0i32;
         while j != 16i32 {
             if bits & 1i32 != 0 {
-                SpawnPalfxObject(*(v11.offset(j as isize) as *const u8 as *mut u16), game);
+                SpawnPalfxObject(*(v11.offset(j as isize) as *mut u16), game);
             }
             j += 2i32;
             bits >>= 1i32;
@@ -168,7 +168,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
         let mut k: i32 = 0i32;
         while k != 16i32 {
             if bits_0 & 1i32 != 0 {
-                SpawnAnimtiles(*(v14.offset(k as isize) as *const u8 as *mut u16), game);
+                SpawnAnimtiles(*(v14.offset(k as isize) as *mut u16), game);
             }
             k += 2i32;
             bits_0 >>= 1i32;
@@ -192,15 +192,14 @@ pub unsafe fn RoomCode_CeresElevatorShaft(game: &mut Game) {
             set_ram_word!(game.game_state = 32u16);
         }
         let ref mut fresh0 =
-            *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u8 as *mut u16);
+            *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u16);
         *fresh0 = (*fresh0).wrapping_sub(1);
-        if *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u8 as *mut i16) < 0i16
-        {
+        if *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut i16) < 0i16 {
             let v0: i32 = ((6u16)
                 .wrapping_mul(*((&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut u16)))
                 as i32
                 >> 1i32;
-            *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u8 as *mut u16) =
+            *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u16) =
                 crate::rtl::rom_table_word!(game, 0x89ad5f, v0 as isize);
             set_ram_word!(
                 game.reg_M7B = crate::rtl::rom_table_word!(game, 0x89ad5f, (v0 + 1i32) as isize)

@@ -168,7 +168,7 @@ pub unsafe fn Call(addr: u32, game: &mut Game) {
     RunAsmCode(addr, 0u16, 0u16, 0u16, 0i32, game);
 }
 pub unsafe fn SnesRomPtr(v: u32, game: &mut Game) -> *mut u8 {
-    RomPtr(v as u32, game) as *mut u8
+    RomPtr(v, game) as *mut u8
 }
 pub unsafe fn ProcessHook(v: u32, game: &mut Game) -> bool {
     let rombyte: *mut u8 = SnesRomPtr(v, game);
@@ -176,13 +176,13 @@ pub unsafe fn ProcessHook(v: u32, game: &mut Game) -> bool {
         0 => {
             let fresh2 = game.hookcnt;
             game.hookcnt = game.hookcnt.wrapping_add(1);
-            *rombyte = game.hook_orgbyte[fresh2 as usize] as u8;
+            *rombyte = game.hook_orgbyte[fresh2 as usize];
             return false_0 != 0;
         }
         1 => {
             let fresh3 = game.hookcnt;
             game.hookcnt = game.hookcnt.wrapping_add(1);
-            game.hook_orgbyte[fresh3 as usize] = *rombyte as u8;
+            game.hook_orgbyte[fresh3 as usize] = *rombyte;
             *rombyte = 0u8;
             return false_0 != 0;
         }
@@ -203,7 +203,7 @@ pub unsafe fn FixBugHook(addr: u32, game: &mut Game) -> bool {
             let rombyte: *mut u8 = SnesRomPtr(addr, game);
             let fresh0 = game.hookcnt;
             game.hookcnt = game.hookcnt.wrapping_add(1);
-            game.hook_fixbug_orgbyte[fresh0 as usize] = *rombyte as u8;
+            game.hook_fixbug_orgbyte[fresh0 as usize] = *rombyte;
             *rombyte = 0u8;
             return false_0 != 0;
         }
@@ -255,28 +255,28 @@ pub unsafe fn PatchBugs(mode: u32, addr: u32, game: &mut Game) -> u32 {
     } else if FixBugHook(0xa794bau32, game) {
         (*game.g_cpu).y = (*game.g_cpu).x;
     } else if FixBugHook(0xa7b968u32, game) {
-        (*game.g_cpu).x = ram_word!(game, cur_enemy_index) as u16;
+        (*game.g_cpu).x = ram_word!(game, cur_enemy_index);
     } else if FixBugHook(0xa7b963u32, game) {
-        (*game.g_cpu).x = ram_word!(game, cur_enemy_index) as u16;
+        (*game.g_cpu).x = ram_word!(game, cur_enemy_index);
     } else if FixBugHook(0xa496c8u32, game) {
         (*game.g_cpu).a = 0u16;
     } else if FixBugHook(0x9085aau32, game) {
-        (*game.g_cpu).a = ram_word!(game, speed_boost_counter) as u16;
+        (*game.g_cpu).a = ram_word!(game, speed_boost_counter);
     } else if FixBugHook(0xa29044u32, game) as i32 != 0 || FixBugHook(0xa2905du32, game) as i32 != 0
     {
         (*game.g_cpu).c = (*game.g_cpu).a as i32 == 0i32;
     } else if FixBugHook(0xa29051u32, game) {
         (*game.g_cpu).a = (*game.g_cpu).a.wrapping_sub(1);
     } else if FixBugHook(0xa5931cu32, game) {
-        (*game.g_cpu).x = ram_word!(game, cur_enemy_index) as u16;
+        (*game.g_cpu).x = ram_word!(game, cur_enemy_index);
     } else if FixBugHook(0x80ada4u32, game) {
-        (*game.g_cpu).a = ram_word!(game, layer2_y_pos) as u16;
+        (*game.g_cpu).a = ram_word!(game, layer2_y_pos);
     } else if FixBugHook(0x80add9u32, game) {
-        (*game.g_cpu).a = ram_word!(game, layer2_y_pos) as u16;
+        (*game.g_cpu).a = ram_word!(game, layer2_y_pos);
     } else if FixBugHook(0x80ad4du32, game) {
-        (*game.g_cpu).a = ram_word!(game, layer2_x_pos) as u16;
+        (*game.g_cpu).a = ram_word!(game, layer2_x_pos);
     } else if FixBugHook(0x80ad77u32, game) {
-        (*game.g_cpu).a = ram_word!(game, layer2_x_pos) as u16;
+        (*game.g_cpu).a = ram_word!(game, layer2_x_pos);
     } else if FixBugHook(0x9381dbu32, game) {
         let k: i32 = (*game.g_cpu).x as i32;
         let ip: i32 = ram_word!(game, projectile_bomb_instruction_ptr[(k >> 1i32)]) as i32;
@@ -299,7 +299,7 @@ pub unsafe fn PatchBugs(mode: u32, addr: u32, game: &mut Game) -> u32 {
         } else if FixBugHook(0x848acdu32, game) {
             (*game.g_cpu).a = 0u16;
         } else if FixBugHook(0xa7ceb2u32, game) {
-            (*game.g_cpu).x = ram_word!(game, cur_enemy_index) as u16;
+            (*game.g_cpu).x = ram_word!(game, cur_enemy_index);
         } else if FixBugHook(0x91cd44u32, game) {
             if (*game.g_cpu).x as i32 == 0i32 {
                 (*game.g_cpu).pc = 0xcd52u16;
@@ -317,13 +317,13 @@ pub unsafe fn PatchBugs(mode: u32, addr: u32, game: &mut Game) -> u32 {
                 return 0x82afd9u32;
             }
         } else if FixBugHook(0xa2d38cu32, game) {
-            (*game.g_cpu).x = ram_word!(game, cur_enemy_index) as u16;
+            (*game.g_cpu).x = ram_word!(game, cur_enemy_index);
         } else if FixBugHook(0xa4970fu32, game) {
             (*game.g_cpu).a = ((*game.g_cpu).a as i32 & 0xffi32) as u16;
             (*game.g_cpu).y = ((*game.g_cpu).x as i32 & 0x7i32) as u16;
         } else if FixBugHook(0xa496e0u32, game) {
             if (*game.g_cpu).x as i32 > 48i32 {
-                set_ram_word!(game.croco_cur_vline_idx = (*game.g_cpu).x as u16);
+                set_ram_word!(game.croco_cur_vline_idx = (*game.g_cpu).x);
                 (*game.g_cpu).mf = 0i32 != 0;
                 return 0xa497ceu32;
             }
@@ -348,11 +348,11 @@ pub unsafe fn PatchBugs(mode: u32, addr: u32, game: &mut Game) -> u32 {
         } else if FixBugHook(0xa29bc1u32, game) {
             (*game.g_cpu).a = 1u16;
         } else if FixBugHook(0x82e910u32, game) {
-            *((&raw mut game.g_ram as *mut u8).offset(22) as *mut u8 as *mut u16) = 0u16;
+            *((&raw mut game.g_ram as *mut u8).offset(22) as *mut u16) = 0u16;
         } else if FixBugHook(0x90a4c8u32, game) {
-            *((&raw mut game.g_ram as *mut u8).offset(18) as *mut u8 as *mut u16) = 0u16;
+            *((&raw mut game.g_ram as *mut u8).offset(18) as *mut u16) = 0u16;
         } else if FixBugHook(0xa99f60u32, game) {
-            *((&raw mut game.g_ram as *mut u8).offset(22) as *mut u8 as *mut u16) = 1u16;
+            *((&raw mut game.g_ram as *mut u8).offset(22) as *mut u16) = 1u16;
         } else if FixBugHook(0x94a85bu32, game) {
             memset(
                 (&raw mut game.g_ram as *mut u8).offset(0xd82) as *mut c_void,
@@ -734,173 +734,173 @@ unsafe fn VerifySnapshotsEq(
         }
     }
     memcpy(
-        (&raw mut (*b).ram as *mut u8).offset(0) as *mut u8 as *mut c_void,
-        (&raw mut (*a).ram as *mut u8).offset(0) as *mut u8 as *const c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0) as *mut c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0) as *const c_void,
         0x51 as size_t,
     );
     memcpy(
-        (&raw mut (*b).ram as *mut u8).offset(0x1f5b) as *mut u8 as *mut c_void,
-        (&raw mut (*a).ram as *mut u8).offset(0x1f5b) as *mut u8 as *const c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x1f5b) as *mut c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x1f5b) as *const c_void,
         (0x100i32 - 0x5bi32) as size_t,
     );
     memcpy(
-        (&raw mut (*b).ram as *mut u8).offset(0xad) as *mut u8 as *mut c_void,
-        (&raw mut (*a).ram as *mut u8).offset(0xad) as *mut u8 as *const c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xad) as *mut c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xad) as *const c_void,
         4 as size_t,
     );
     memcpy(
-        (&raw mut (*b).ram as *mut u8).offset(0x5ed) as *mut u8 as *mut c_void,
-        (&raw mut (*a).ram as *mut u8).offset(0x5ed) as *mut u8 as *const c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x5ed) as *mut c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x5ed) as *const c_void,
         8 as size_t,
     );
     memcpy(
-        (&raw mut (*b).ram as *mut u8).offset(0x5bc) as *mut u8 as *mut c_void,
-        (&raw mut (*a).ram as *mut u8).offset(0x5bc) as *mut u8 as *const c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x5bc) as *mut c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x5bc) as *const c_void,
         9 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x60b) as *mut u8 as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x60b) as *mut u8 as *const c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x60b) as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x60b) as *const c_void,
         6 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x611) as *mut u8 as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x611) as *mut u8 as *const c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x611) as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x611) as *const c_void,
         6 as size_t,
     );
     memcpy(
-        (&raw mut (*b).ram as *mut u8).offset(0x641) as *mut u8 as *mut c_void,
-        (&raw mut (*a).ram as *mut u8).offset(0x641) as *mut u8 as *const c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x641) as *mut c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x641) as *const c_void,
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x77e) as *mut u8 as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x77e) as *mut u8 as *const c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x77e) as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x77e) as *const c_void,
         5 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x78f) as *mut u8 as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x78f) as *mut u8 as *const c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x78f) as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x78f) as *const c_void,
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x7b7) as *mut u8 as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x7b7) as *mut u8 as *const c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x7b7) as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x7b7) as *const c_void,
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x933) as *mut u8 as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x933) as *mut u8 as *const c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x933) as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x933) as *const c_void,
         10 as size_t,
     );
     memcpy(
-        (&raw mut (*b).ram as *mut u8).offset(0xb24) as *mut u8 as *mut c_void,
-        (&raw mut (*a).ram as *mut u8).offset(0xb24) as *mut u8 as *const c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xb24) as *mut c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xb24) as *const c_void,
         4 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xd1e) as *mut u8 as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xd1e) as *mut u8 as *const c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xd1e) as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xd1e) as *const c_void,
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xd82) as *mut u8 as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xd82) as *mut u8 as *const c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xd82) as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xd82) as *const c_void,
         8 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xd9c) as *mut u8 as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xd9c) as *mut u8 as *const c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xd9c) as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xd9c) as *const c_void,
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xdd2) as *mut u8 as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xdd2) as *mut u8 as *const c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xdd2) as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xdd2) as *const c_void,
         6 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xd8a) as *mut u8 as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xd8a) as *mut u8 as *const c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xd8a) as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xd8a) as *const c_void,
         6 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xe20) as *mut u8 as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xe20) as *mut u8 as *const c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xe20) as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xe20) as *const c_void,
         (0xe46i32 - 0xe20i32) as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xe54) as *mut u8 as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xe54) as *mut u8 as *const c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xe54) as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xe54) as *const c_void,
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xe02) as *mut u8 as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xe02) as *mut u8 as *const c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xe02) as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xe02) as *const c_void,
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xe4a) as *mut u8 as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xe4a) as *mut u8 as *const c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xe4a) as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xe4a) as *const c_void,
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xe56) as *mut u8 as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xe56) as *mut u8 as *const c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xe56) as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xe56) as *const c_void,
         4 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x1784) as *mut u8 as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x1784) as *mut u8 as *const c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x1784) as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x1784) as *const c_void,
         8 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x1790) as *mut u8 as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x1790) as *mut u8 as *const c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x1790) as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x1790) as *const c_void,
         4 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x17a8) as *mut u8 as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x17a8) as *mut u8 as *const c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x17a8) as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x17a8) as *const c_void,
         4 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x1834) as *mut u8 as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x1834) as *mut u8 as *const c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x1834) as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x1834) as *const c_void,
         8 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x184a) as *mut u8 as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x184a) as *mut u8 as *const c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x184a) as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x184a) as *const c_void,
         18 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x186e) as *mut u8 as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x186e) as *mut u8 as *const c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x186e) as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x186e) as *const c_void,
         (16i32 + 8i32) as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x18a6) as *mut u8 as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x18a6) as *mut u8 as *const c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x18a6) as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x18a6) as *const c_void,
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0x189a) as *mut u8 as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0x189a) as *mut u8 as *const c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x189a) as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x189a) as *const c_void,
         12 as size_t,
     );
     memcpy(
-        (&raw mut (*b).ram as *mut u8).offset(0x1966) as *mut u8 as *mut c_void,
-        (&raw mut (*a).ram as *mut u8).offset(0x1966) as *mut u8 as *const c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x1966) as *mut c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x1966) as *const c_void,
         6 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xef74) as *mut u8 as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xef74) as *mut u8 as *const c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xef74) as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xef74) as *const c_void,
         4 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut u8).offset(0xf37a) as *mut u8 as *mut c_void,
-        (&raw mut (*b).ram as *mut u8).offset(0xf37a) as *mut u8 as *const c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xf37a) as *mut c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xf37a) as *const c_void,
         6 as size_t,
     );
     if memcmp(
@@ -987,12 +987,12 @@ unsafe fn VerifySnapshotsEq(
                             stderr,
                             b"0x%.6X: %.4X != %.4X (%.4X)\n\0" as *const u8 as *const c_char,
                             i_0 as i32,
-                            *((&raw mut (*b).sram as *mut u8).offset(i_0 as isize) as *mut u8
-                                as *mut u16) as i32,
-                            *((&raw mut (*a).sram as *mut u8).offset(i_0 as isize) as *mut u8
-                                as *mut u16) as i32,
-                            *((&raw mut (*prev).sram as *mut u8).offset(i_0 as isize) as *mut u8
-                                as *mut u16) as i32,
+                            *((&raw mut (*b).sram as *mut u8).offset(i_0 as isize) as *mut u16)
+                                as i32,
+                            *((&raw mut (*a).sram as *mut u8).offset(i_0 as isize) as *mut u16)
+                                as i32,
+                            *((&raw mut (*prev).sram as *mut u8).offset(i_0 as isize) as *mut u16)
+                                as i32,
                         );
                         i_0 = i_0.wrapping_add(1);
                         j_0 += 1;
@@ -1113,15 +1113,15 @@ unsafe fn MakeSnapshot(s: &mut Snapshot, snes: &Snes, c: &Cpu, player: *mut SpcP
     (*s).vram_increment = (*(*snes).ppu).vramIncrement;
     (*s).vram_increment_on_high = (*(*snes).ppu).vramIncrementOnHigh;
     (*s).vram_remap_mode = (*(*snes).ppu).vramRemapMode;
-    (*s).a = (*c).a as u16;
-    (*s).x = (*c).x as u16;
-    (*s).y = (*c).y as u16;
-    (*s).sp = (*c).sp as u16;
-    (*s).dp = (*c).dp as u16;
-    (*s).db = (*c).db as u8;
-    (*s).pc = (*c).pc as u16;
-    (*s).k = (*c).k as u8;
-    (*s).flags = cpu_getFlags(&*c) as u8;
+    (*s).a = (*c).a;
+    (*s).x = (*c).x;
+    (*s).y = (*c).y;
+    (*s).sp = (*c).sp;
+    (*s).dp = (*c).dp;
+    (*s).db = (*c).db;
+    (*s).pc = (*c).pc;
+    (*s).k = (*c).k;
+    (*s).flags = cpu_getFlags(&*c);
     (*s).cpu_waiting = (*c).waiting;
     (*s).cpu_emulation = (*c).e;
     (*s).cpu_stopped = (*c).stopped;
@@ -1345,20 +1345,20 @@ unsafe fn RestoreSnapshot(s: &Snapshot, snes: &mut Snes, c: &mut Cpu) {
     (*(*snes).ppu).vramIncrement = (*s).vram_increment;
     (*(*snes).ppu).vramIncrementOnHigh = (*s).vram_increment_on_high;
     (*(*snes).ppu).vramRemapMode = (*s).vram_remap_mode;
-    (*c).a = (*s).a as u16;
-    (*c).x = (*s).x as u16;
-    (*c).y = (*s).y as u16;
-    (*c).sp = (*s).sp as u16;
-    (*c).dp = (*s).dp as u16;
-    (*c).db = (*s).db as u8;
-    (*c).pc = (*s).pc as u16;
-    (*c).k = (*s).k as u8;
+    (*c).a = (*s).a;
+    (*c).x = (*s).x;
+    (*c).y = (*s).y;
+    (*c).sp = (*s).sp;
+    (*c).dp = (*s).dp;
+    (*c).db = (*s).db;
+    (*c).pc = (*s).pc;
+    (*c).k = (*s).k;
     (*snes).vTimer = (*s).vTimer;
     (*c).e = (*s).cpu_emulation;
     (*c).stopped = (*s).cpu_stopped;
     (*c).irqWanted = (*s).cpu_irq_pending;
     (*c).nmiWanted = (*s).cpu_nmi_pending;
-    cpu_setFlags((*s).flags as u8, &mut *c);
+    cpu_setFlags((*s).flags, &mut *c);
     (*c).waiting = (*s).cpu_waiting;
     (snes.hPos, snes.vPos, snes.frames) = (*s).video_clock;
     (snes.inNmi, snes.inIrq, snes.inVblank) = (*s).interrupt_latches;
@@ -1412,17 +1412,17 @@ unsafe fn RestoreSnapshot(s: &Snapshot, snes: &mut Snes, c: &mut Cpu) {
     ppu.objPixelBufferXX[..19].copy_from_slice(&(*s).sprite.legacy_pixel_prefix);
 }
 pub unsafe fn RunAsmCode(pc: u32, a: u16, x: u16, y: u16, flags: i32, game: &mut Game) -> i32 {
-    let org_sp: u16 = (*game.g_cpu).sp as u16;
-    let org_pc: u16 = (*game.g_cpu).pc as u16;
-    let org_b: u8 = (*game.g_cpu).db as u8;
-    let org_dp: u16 = (*game.g_cpu).dp as u16;
+    let org_sp: u16 = (*game.g_cpu).sp;
+    let org_pc: u16 = (*game.g_cpu).pc;
+    let org_b: u8 = (*game.g_cpu).db;
+    let org_dp: u16 = (*game.g_cpu).dp;
     printf(b"RunAsmCode!\n\0" as *const u8 as *const c_char);
     game.g_ram[0x1ffffi32 as usize] = 1u8;
     let dc: bool = (*game.g_snes).debug_cycles;
     (*game.g_cpu).db = (pc >> 16i32) as u8;
-    (*game.g_cpu).a = a as u16;
-    (*game.g_cpu).x = x as u16;
-    (*game.g_cpu).y = y as u16;
+    (*game.g_cpu).a = a;
+    (*game.g_cpu).x = x;
+    (*game.g_cpu).y = y;
     (*game.g_cpu).spBreakpoint = (*game.g_cpu).sp;
     (*game.g_cpu).k = (pc >> 16i32) as u8;
     (*game.g_cpu).pc = (pc & 0xffffu32) as u16;
@@ -1450,22 +1450,22 @@ pub unsafe fn RunAsmCode(pc: u32, a: u16, x: u16, y: u16, flags: i32, game: &mut
             }
         }
     }
-    (*game.g_cpu).dp = org_dp as u16;
-    (*game.g_cpu).sp = org_sp as u16;
-    (*game.g_cpu).db = org_b as u8;
-    (*game.g_cpu).pc = org_pc as u16;
+    (*game.g_cpu).dp = org_dp;
+    (*game.g_cpu).sp = org_sp;
+    (*game.g_cpu).db = org_b;
+    (*game.g_cpu).pc = org_pc;
     (*game.g_snes).debug_cycles = dc;
     game.g_calling_asm_from_c_ret
 }
 unsafe fn loadRom(name: *const c_char, snes: *mut Snes, game: &mut Game) -> bool {
     let mut length: size_t = 0 as size_t;
     let mut file: *mut u8 = null_mut::<u8>();
-    file = ReadWholeFile(name, &raw mut length) as *mut u8;
+    file = ReadWholeFile(name, &raw mut length);
     if file.is_null() {
         puts(b"Failed to read file\0" as *const u8 as *const c_char);
         return false_0 != 0;
     }
-    let result: bool = snes_loadRom(snes as *mut Snes, file, length as i32, game);
+    let result: bool = snes_loadRom(snes, file, length as i32, game);
     free(file as *mut c_void);
     result
 }
@@ -1509,13 +1509,13 @@ pub unsafe fn RtlUpdateSnesPatchForBugfix(game: &mut Game) {
     PatchBytes(0x8584ccu32, &[0x18, 0x18], game);
 }
 pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
-    game.g_snes = snes_init(&raw mut game.g_ram as *mut u8) as *mut Snes;
+    game.g_snes = snes_init(&raw mut game.g_ram as *mut u8);
     game.g_cpu = (*game.g_snes).cpu;
     let loaded: bool = loadRom(filename, game.g_snes, game);
     if !loaded {
         return null_mut::<Snes>();
     }
-    game.g_sram = (*(*game.g_snes).cart).ram as *mut u8;
+    game.g_sram = (*(*game.g_snes).cart).ram;
     game.g_rom = (*(*game.g_snes).cart).rom;
     game.register_rom(game.g_rom, (*(*game.g_snes).cart).romSize as usize);
     RtlSetupEmuCallbacks(
@@ -2014,7 +2014,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
     }
 }
 pub unsafe fn RtlRunFrameCompare(input: u16, run_what: i32, game: &mut Game) {
-    (*(*game.g_snes).input1).currentState = input as u16;
+    (*(*game.g_snes).input1).currentState = input;
     if game.g_runmode as i32 == RM_THEIRS as i32 {
         RunOneFrameOfGame_Emulated(game);
         DrawFrameToPpu(game);

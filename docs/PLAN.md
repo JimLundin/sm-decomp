@@ -31,6 +31,22 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Same-type casts (2026-10-20): release Clippy across all targets identifies
+1219 redundant primitive-integer/raw-pointer casts across 36 files. Removing
+only each cast suffix retains the exact operand, grouping, pointer constness,
+macro invocation and evaluation position. Eight platform-dependent c_long
+chains and two unsuffixed-literal casts remain outside this batch. Duplicate
+library/example diagnostics are deduplicated by source span.
+
+Whole-source reconstruction and release Clippy pass; only the deliberate
+exclusions remain. Normal release (24.12s), formatting and progress pass.
+Net Rust lines -412 (143151 total), cast lines -65; raw RAM accesses and
+unsafe-function counts are unchanged. Final composition includes f173c9e4
+typed RAM getters. Full any% passes 129712/0 (109.64s), native exit 0;
+all 70 source/Cargo inputs, 67 replay sources and 72 pins remain exact.
+Frontend is compiler-checked; the movie exercises core gameplay. Continue
+substantial shared implementations; boot-to-credits and hardware/audio remain open.
+
 User priority: the amount of Rust, unsafe code and C promotion boilerplate
 requires a change in approach. This order replaces the older isolated
 "next function" cleanup suggestions below. Preserve the maintained Rust and

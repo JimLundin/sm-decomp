@@ -183,7 +183,7 @@ pub unsafe fn loadFunc(ctx: *mut c_void, data: *mut c_void, data_size: size_t, g
     (*st).p = (*st).p.offset(data_size as isize);
 }
 unsafe fn LoadSnesState(func: Option<SaveLoadFunc>, ctx: *mut c_void, game: &mut Game) {
-    snes_saveload(game.g_snes as *mut Snes, func, ctx, game);
+    snes_saveload(game.g_snes, func, ctx, game);
     crate::snes::ppu::PpuRestoreRenderRouting(&mut *(*game.g_snes).ppu);
     (*(*game.g_snes).cpu).e = false_0 != 0;
     let next: u32 = ((*(*game.g_snes)
@@ -211,7 +211,7 @@ unsafe fn LoadSnesState(func: Option<SaveLoadFunc>, ctx: *mut c_void, game: &mut
     RtlSynchronizeWholeState(game);
 }
 unsafe fn SaveSnesState(func: Option<SaveLoadFunc>, ctx: *mut c_void, game: &mut Game) {
-    snes_saveload(game.g_snes as *mut Snes, func, ctx, game);
+    snes_saveload(game.g_snes, func, ctx, game);
 }
 
 pub unsafe fn StateRecorder_Init(sr: *mut StateRecorder) {
@@ -296,7 +296,7 @@ pub unsafe fn ReadFromFile(f: *mut FILE, data: *mut c_void, n: size_t) {
 }
 pub unsafe fn RtlReset(mode: i32, game: &mut Game) {
     game.snes_frame_counter = 0i32;
-    snes_reset(game.g_snes as *mut Snes, true_0 != 0, game);
+    snes_reset(game.g_snes, true_0 != 0, game);
     if mode & 1i32 == 0 {
         memset(game.g_sram as *mut c_void, 0i32, 0x2000 as size_t);
     }
@@ -702,7 +702,7 @@ pub unsafe fn StateRecorder_ReadNextReplayState(sr: *mut StateRecorder, game: &m
                         *(*sr).log.data.offset(fresh6 as isize);
                     RtlSyncMemoryRegion(
                         (&raw mut game.g_ram as *mut u8).offset((addr & 0x1ffffu32) as isize)
-                            as *mut u8 as *mut c_void,
+                            as *mut c_void,
                         1 as size_t,
                         game,
                     );
@@ -981,7 +981,7 @@ pub unsafe fn RomPtr(addr: u32, game: &mut Game) -> *const u8 {
         );
         game.g_fail = true_0 != 0;
     }
-    game.g_rom.offset(crate::rtl::lorom_offset(addr)) as *const u8
+    game.g_rom.offset(crate::rtl::lorom_offset(addr))
 }
 /// Preserve the setup sequence's explicit RAM mirror and bus-write order.
 pub(crate) unsafe fn write_register_and_mirror(
@@ -1001,7 +1001,7 @@ pub(crate) unsafe fn write_register_and_mirror(
 }
 
 pub unsafe fn WriteReg(reg: u16, value: u8, game: &mut Game) {
-    snes_write(game.g_snes as *mut Snes, reg as u32, value as u8, game);
+    snes_write(game.g_snes, reg as u32, value, game);
 }
 /// Magnitude of a signed SNES word; 0x8000 remains the unsigned value 0x8000.
 #[inline]
@@ -1052,12 +1052,12 @@ pub unsafe fn SnesModulus(a: u16, b: u8) -> u16 {
     }) as u16)
 }
 pub unsafe fn ReadReg(reg: u16, game: &mut Game) -> u8 {
-    snes_read(game.g_snes as *mut Snes, reg as u32, game) as u8
+    snes_read(game.g_snes, reg as u32, game)
 }
 pub unsafe fn ReadRegWord(reg: u16, game: &mut Game) -> u16 {
     let mut rv: u16 = ReadReg(reg, game) as u16;
     rv = (rv as i32 | (ReadReg((reg as i32 + 1i32) as u16, game) as i32) << 8i32) as u16;
-    rv as u16
+    rv
 }
 pub unsafe fn WriteRegWord(reg: u16, value: u16, game: &mut Game) {
     WriteReg(reg, value as u8, game);
@@ -1081,8 +1081,8 @@ pub unsafe fn RtlApuWrite(adr: u32, val: u8, game: &mut Game) {
         }
     };
     if ram_word!(game, is_uploading_apu) != 0 {
-        snes_catchupApu(game.g_snes as *mut Snes, game);
-        (*(*game.g_snes).apu).inPorts[(adr & 0x3u32) as usize] = val as u8;
+        snes_catchupApu(game.g_snes, game);
+        (*(*game.g_snes).apu).inPorts[(adr & 0x3u32) as usize] = val;
         return;
     }
     game.g_apu_write.ports[(adr & 0x3u32) as usize] = val;
@@ -1111,12 +1111,11 @@ pub unsafe fn RtlPushApuState(game: &mut Game) {
         let fresh2 = game.g_apu_write_ent_pos;
         game.g_apu_write_ent_pos = game.g_apu_write_ent_pos.wrapping_add(1);
         let w0: *mut ApuWriteEnt = (&raw mut game.g_apu_write_ents as *mut ApuWriteEnt)
-            .offset((fresh2 as i32 & kApuMaxQueueSize as i32 - 1i32) as isize)
-            as *mut ApuWriteEnt;
+            .offset((fresh2 as i32 & kApuMaxQueueSize as i32 - 1i32) as isize);
         if game.g_apu_queue_size as i32 == kApuMaxQueueSize as i32 {
-            let w1: *mut ApuWriteEnt = (&raw mut game.g_apu_write_ents as *mut ApuWriteEnt)
-                .offset((game.g_apu_write_ent_pos as i32 & kApuMaxQueueSize as i32 - 1i32) as isize)
-                as *mut ApuWriteEnt;
+            let w1: *mut ApuWriteEnt = (&raw mut game.g_apu_write_ents as *mut ApuWriteEnt).offset(
+                (game.g_apu_write_ent_pos as i32 & kApuMaxQueueSize as i32 - 1i32) as isize,
+            );
             let mut i: i32 = 0i32;
             while i < 4i32 {
                 if (*w1).ports[i as usize] as i32 == 255i32 {
@@ -1153,7 +1152,7 @@ unsafe fn RtlPopApuState_Locked(game: &mut Game) {
         let w: *mut ApuWriteEnt = (&raw mut game.g_apu_write_ents as *mut ApuWriteEnt).offset(
             (game.g_apu_write_ent_pos as i32 - fresh1 as i32 & kApuMaxQueueSize as i32 - 1i32)
                 as isize,
-        ) as *mut ApuWriteEnt;
+        );
         let mut i: i32 = 0i32;
         while i != 4i32 {
             if (*w).ports[i as usize] as i32 != 255i32 {
@@ -1191,7 +1190,7 @@ pub unsafe fn RtlApuUpload(p: *const u8, game: &mut Game) {
     }
     RtlApuLock();
     RtlResetApuQueue(game);
-    SpcPlayer_Upload(game.g_spc_player as *mut SpcPlayer, p as *const u8);
+    SpcPlayer_Upload(game.g_spc_player, p);
     RtlApuUnlock();
 }
 unsafe fn RtlRestoreMusicAfterLoad_Locked(is_reset: bool, game: &mut Game) {
@@ -1206,16 +1205,16 @@ unsafe fn RtlRestoreMusicAfterLoad_Locked(is_reset: bool, game: &mut Game) {
             &raw mut (*(*(*game.g_snes).apu).dsp).ram as *mut u8 as *const c_void,
             (size_of::<Dsp>() as size_t).wrapping_sub(8 as size_t),
         );
-        SpcPlayer_CopyVariablesFromRam(game.g_spc_player as *mut SpcPlayer);
+        SpcPlayer_CopyVariablesFromRam(game.g_spc_player);
     }
     if is_reset {
-        SpcPlayer_Initialize(game.g_spc_player as *mut SpcPlayer);
+        SpcPlayer_Initialize(game.g_spc_player);
     }
     RtlResetApuQueue(game);
 }
 unsafe fn RtlSaveMusicStateToRam_Locked(game: &mut Game, include_queued_commands: bool) {
     if game.g_use_my_apu_code {
-        let spc_player: *mut SpcPlayer = game.g_spc_player as *mut SpcPlayer;
+        let spc_player: *mut SpcPlayer = game.g_spc_player;
         let mut i: i32 = if include_queued_commands {
             game.g_apu_queue_size as i32
         } else {
@@ -1224,7 +1223,7 @@ unsafe fn RtlSaveMusicStateToRam_Locked(game: &mut Game, include_queued_commands
         while i != 0 {
             let we: *mut ApuWriteEnt = (&raw mut game.g_apu_write_ents as *mut ApuWriteEnt).offset(
                 (game.g_apu_write_ent_pos as i32 - i & kApuMaxQueueSize as i32 - 1i32) as isize,
-            ) as *mut ApuWriteEnt;
+            );
             let mut j: i32 = 0i32;
             while j < 4i32 {
                 if (*we).ports[j as usize] as i32 != 255i32 {
@@ -1234,7 +1233,7 @@ unsafe fn RtlSaveMusicStateToRam_Locked(game: &mut Game, include_queued_commands
             }
             i -= 1;
         }
-        SpcPlayer_CopyVariablesToRam(game.g_spc_player as *mut SpcPlayer);
+        SpcPlayer_CopyVariablesToRam(game.g_spc_player);
         memcpy(
             &raw mut (*(*(*game.g_snes).apu).dsp).ram as *mut u8 as *mut c_void,
             &raw mut (*(*game.g_spc_player).dsp).ram as *mut u8 as *const c_void,
@@ -1266,11 +1265,11 @@ pub unsafe fn RtlRenderAudio(audio_buffer: *mut i16, samples: i32, channels: i32
             while ((*(*(*game.g_snes).apu).dsp).sampleOffset as i32) < 534i32 {
                 apu_cycle((*game.g_snes).apu, game);
             }
-            dsp_getSamples((*(*game.g_snes).apu).dsp, audio_buffer as *mut i16, samples);
+            dsp_getSamples((*(*game.g_snes).apu).dsp, audio_buffer, samples);
         }
     } else {
-        SpcPlayer_GenerateSamples(game.g_spc_player as *mut SpcPlayer);
-        dsp_getSamples((*game.g_spc_player).dsp, audio_buffer as *mut i16, samples);
+        SpcPlayer_GenerateSamples(game.g_spc_player);
+        dsp_getSamples((*game.g_spc_player).dsp, audio_buffer, samples);
     }
     RtlApuUnlock();
 }

@@ -1679,8 +1679,8 @@ pub unsafe fn Shaktool_Init(game: &mut Game) {
         ((*E).base.properties) | (crate::rtl::rom_table_word!(game, 0xaade95, v3 as isize));
     (*E).shakt_var_E = (ram_word!(game, cur_enemy_index))
         .wrapping_sub(crate::rtl::rom_table_word!(game, 0xaadea3, v3 as isize));
-    (*E).shakt_var_F = *((game.g_rom.offset(crate::rtl::lorom_offset(0xaadedb)) as *const u8
-        as *mut u16 as *mut u8)
+    (*E).shakt_var_F = *((game.g_rom.offset(crate::rtl::lorom_offset(0xaadedb)) as *mut u16
+        as *mut u8)
         .offset(shakto_parameter_2 as i32 as isize) as *mut u16);
     (*E).shakt_var_C = (*((&raw const g_word_AADEE9 as *const u16 as *mut u8)
         .offset(shakto_parameter_2 as i32 as isize) as *mut u16))
@@ -1808,10 +1808,10 @@ pub unsafe fn Shaktool_Instr_7(k: u16, jp: *const u16, game: &mut Game) -> *cons
 }
 pub unsafe fn Shaktool_Instr_14(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     CallSomeSamusCode(1u16, game);
-    *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(6) as *mut u8 as *mut u16) = 0u16;
-    *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(8) as *mut u8 as *mut u16) = 0u16;
-    *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(9) as *mut u8 as *mut u16) = 0u16;
-    *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(13) as *mut u8 as *mut u16) = 1u16;
+    *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(6) as *mut u16) = 0u16;
+    *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(8) as *mut u16) = 0u16;
+    *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(9) as *mut u16) = 0u16;
+    *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(13) as *mut u16) = 1u16;
     SpawnHardcodedPlm(
         SpawnHardcodedPlmArgs::new(0x17u8, 0x1du8, 0xd6fc as VoidP),
         game,
@@ -1889,7 +1889,7 @@ pub unsafe fn ChozoStatue_Main(game: &mut Game) {
 pub unsafe fn Shaktool_PreInstr_0(k: u16, game: &mut Game) {
     if (*((&raw mut game.g_ram as *mut u8)
         .offset(0xd828)
-        .offset(ram_word!(game, area_index) as isize) as *mut u8 as *mut u16) as i32
+        .offset(ram_word!(game, area_index) as isize) as *mut u16) as i32
         & 1i32)
         != 0i32
     {

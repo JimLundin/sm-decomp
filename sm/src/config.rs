@@ -588,15 +588,14 @@ unsafe fn KeyMapHash_Add(key: u16, cmd: u16) -> bool {
     let fresh1 = keymap_hash_size;
     keymap_hash_size = keymap_hash_size + 1;
     let i: i32 = fresh1;
-    let ent: *mut KeyMapHashEnt = keymap_hash.offset(i as isize) as *mut KeyMapHashEnt;
+    let ent: *mut KeyMapHashEnt = keymap_hash.offset(i as isize);
     (*ent).key = key;
     (*ent).cmd = cmd;
     (*ent).next = 0u16;
     let j: i32 = (key as u32).wrapping_rem(255u32) as i32;
-    let mut cur: *mut u16 = (&raw mut keymap_hash_first as *mut u16).offset(j as isize) as *mut u16;
+    let mut cur: *mut u16 = (&raw mut keymap_hash_first as *mut u16).offset(j as isize);
     while *cur != 0 {
-        let ent_0: *mut KeyMapHashEnt =
-            keymap_hash.offset((*cur as i32 - 1i32) as isize) as *mut KeyMapHashEnt;
+        let ent_0: *mut KeyMapHashEnt = keymap_hash.offset((*cur as i32 - 1i32) as isize);
         if (*ent_0).key as i32 == key as i32 {
             return false_0 != 0;
         }
@@ -608,7 +607,7 @@ unsafe fn KeyMapHash_Add(key: u16, cmd: u16) -> bool {
 unsafe fn KeyMapHash_Find(key: u16) -> i32 {
     let mut i: i32 = keymap_hash_first[(key as i32 % 255i32) as usize] as i32;
     while i != 0 {
-        let ent: *mut KeyMapHashEnt = keymap_hash.offset((i - 1i32) as isize) as *mut KeyMapHashEnt;
+        let ent: *mut KeyMapHashEnt = keymap_hash.offset((i - 1i32) as isize);
         if (*ent).key as i32 == key as i32 {
             return (*ent).cmd as i32;
         }
@@ -622,21 +621,21 @@ pub unsafe fn FindCmdForSdlKey(code: SDL_Keycode, mod_0: SDL_Keymod) -> i32 {
     }
     let mut key: i32 = 0i32;
     if code != SDLK_LALT as i32 as SDL_Keycode && code != SDLK_RALT as i32 as SDL_Keycode {
-        key |= if mod_0 as u32 & KMOD_ALT as i32 as u32 != 0 {
+        key |= if mod_0 & KMOD_ALT as i32 as u32 != 0 {
             kKeyMod_Alt as i32
         } else {
             0i32
         };
     }
     if code != SDLK_LCTRL as i32 as SDL_Keycode && code != SDLK_RCTRL as i32 as SDL_Keycode {
-        key |= if mod_0 as u32 & KMOD_CTRL as i32 as u32 != 0 {
+        key |= if mod_0 & KMOD_CTRL as i32 as u32 != 0 {
             kKeyMod_Ctrl as i32
         } else {
             0i32
         };
     }
     if code != SDLK_LSHIFT as i32 as SDL_Keycode && code != SDLK_RSHIFT as i32 as SDL_Keycode {
-        key |= if mod_0 as u32 & KMOD_SHIFT as i32 as u32 != 0 {
+        key |= if mod_0 & KMOD_SHIFT as i32 as u32 != 0 {
             kKeyMod_Shift as i32
         } else {
             0i32
@@ -646,7 +645,7 @@ pub unsafe fn FindCmdForSdlKey(code: SDL_Keycode, mod_0: SDL_Keymod) -> i32 {
         kKeyMod_ScanCode as i32 as SDL_Keycode
     } else {
         0 as SDL_Keycode
-    }) | code & kKeyMod_ScanCode as i32 as SDL_Keycode - 1 as SDL_Keycode) as i32;
+    }) | code & kKeyMod_ScanCode as i32 as SDL_Keycode - 1 as SDL_Keycode);
     KeyMapHash_Find(key as u16)
 }
 unsafe fn ParseKeyArray(mut value: *mut c_char, mut cmd: i32, size: i32) {
@@ -730,7 +729,7 @@ unsafe fn GamepadMap_Add(button: i32, modifiers: u32, cmd: u16) {
             Die(b"realloc failure\0" as *const u8 as *const c_char);
         }
     }
-    let mut p: *mut u16 = (&raw mut joymap_first as *mut u16).offset(button as isize) as *mut u16;
+    let mut p: *mut u16 = (&raw mut joymap_first as *mut u16).offset(button as isize);
     let cb: i32 = CountBits32(modifiers);
     while *p as i32 != 0
         && cb < CountBits32((*joymap_ents.offset((*p as i32 - 1i32) as isize)).modifiers)
@@ -740,7 +739,7 @@ unsafe fn GamepadMap_Add(button: i32, modifiers: u32, cmd: u16) {
     let fresh0 = joymap_size;
     joymap_size = joymap_size + 1;
     let i: i32 = fresh0;
-    let ent: *mut GamepadMapEnt = joymap_ents.offset(i as isize) as *mut GamepadMapEnt;
+    let ent: *mut GamepadMapEnt = joymap_ents.offset(i as isize);
     (*ent).modifiers = modifiers;
     (*ent).cmd = cmd;
     (*ent).next = *p;
@@ -750,7 +749,7 @@ pub unsafe fn FindCmdForGamepadButton(button: i32, modifiers: u32) -> i32 {
     let mut ent: *mut GamepadMapEnt = null_mut::<GamepadMapEnt>();
     let mut e: i32 = joymap_first[button as usize] as i32;
     while e != 0i32 {
-        ent = joymap_ents.offset((e - 1i32) as isize) as *mut GamepadMapEnt;
+        ent = joymap_ents.offset((e - 1i32) as isize);
         if modifiers & (*ent).modifiers == (*ent).modifiers {
             return (*ent).cmd as i32;
         }
@@ -782,25 +781,25 @@ unsafe fn ParseGamepadButtonName(value: *mut *const c_char) -> i32 {
         b"Y\0" as *const u8 as *const c_char,
     ];
     static mut kGamepadKeyIds: [u8; 19] = [
-        kGamepadBtn_Back as i32 as u8,
-        kGamepadBtn_Guide as i32 as u8,
-        kGamepadBtn_Start as i32 as u8,
-        kGamepadBtn_L3 as i32 as u8,
-        kGamepadBtn_R3 as i32 as u8,
-        kGamepadBtn_L1 as i32 as u8,
-        kGamepadBtn_R1 as i32 as u8,
-        kGamepadBtn_DpadUp as i32 as u8,
-        kGamepadBtn_DpadDown as i32 as u8,
-        kGamepadBtn_DpadLeft as i32 as u8,
-        kGamepadBtn_DpadRight as i32 as u8,
-        kGamepadBtn_L2 as i32 as u8,
-        kGamepadBtn_R2 as i32 as u8,
-        kGamepadBtn_L1 as i32 as u8,
-        kGamepadBtn_R1 as i32 as u8,
-        kGamepadBtn_A as i32 as u8,
-        kGamepadBtn_B as i32 as u8,
-        kGamepadBtn_X as i32 as u8,
-        kGamepadBtn_Y as i32 as u8,
+        kGamepadBtn_Back as u8,
+        kGamepadBtn_Guide as u8,
+        kGamepadBtn_Start as u8,
+        kGamepadBtn_L3 as u8,
+        kGamepadBtn_R3 as u8,
+        kGamepadBtn_L1 as u8,
+        kGamepadBtn_R1 as u8,
+        kGamepadBtn_DpadUp as u8,
+        kGamepadBtn_DpadDown as u8,
+        kGamepadBtn_DpadLeft as u8,
+        kGamepadBtn_DpadRight as u8,
+        kGamepadBtn_L2 as u8,
+        kGamepadBtn_R2 as u8,
+        kGamepadBtn_L1 as u8,
+        kGamepadBtn_R1 as u8,
+        kGamepadBtn_A as u8,
+        kGamepadBtn_B as u8,
+        kGamepadBtn_X as u8,
+        kGamepadBtn_Y as u8,
     ];
     let mut i: size_t = 0 as size_t;
     while i
@@ -814,21 +813,21 @@ unsafe fn ParseGamepadButtonName(value: *mut *const c_char) -> i32 {
         }
         i = i.wrapping_add(1);
     }
-    kGamepadBtn_Invalid as i32
+    kGamepadBtn_Invalid
 }
 static mut kDefaultGamepadCmds: [u8; 12] = [
-    kGamepadBtn_DpadUp as i32 as u8,
-    kGamepadBtn_DpadDown as i32 as u8,
-    kGamepadBtn_DpadLeft as i32 as u8,
-    kGamepadBtn_DpadRight as i32 as u8,
-    kGamepadBtn_Back as i32 as u8,
-    kGamepadBtn_Start as i32 as u8,
-    kGamepadBtn_B as i32 as u8,
-    kGamepadBtn_A as i32 as u8,
-    kGamepadBtn_Y as i32 as u8,
-    kGamepadBtn_X as i32 as u8,
-    kGamepadBtn_L1 as i32 as u8,
-    kGamepadBtn_R1 as i32 as u8,
+    kGamepadBtn_DpadUp as u8,
+    kGamepadBtn_DpadDown as u8,
+    kGamepadBtn_DpadLeft as u8,
+    kGamepadBtn_DpadRight as u8,
+    kGamepadBtn_Back as u8,
+    kGamepadBtn_Start as u8,
+    kGamepadBtn_B as u8,
+    kGamepadBtn_A as u8,
+    kGamepadBtn_Y as u8,
+    kGamepadBtn_X as u8,
+    kGamepadBtn_L1 as u8,
+    kGamepadBtn_R1 as u8,
 ];
 unsafe fn ParseGamepadArray(mut value: *mut c_char, mut cmd: i32, size: i32) {
     let mut s: *mut c_char = null_mut::<c_char>();
@@ -842,7 +841,7 @@ unsafe fn ParseGamepadArray(mut value: *mut c_char, mut cmd: i32, size: i32) {
             let mut ss: *const c_char = s;
             loop {
                 let button: i32 = ParseGamepadButtonName(&raw mut ss);
-                if (button != kGamepadBtn_Invalid as i32) {
+                if (button != kGamepadBtn_Invalid) {
                     while *ss as i32 == ' ' as i32 || *ss as i32 == '\t' as i32 {
                         ss = ss.offset(1);
                     }

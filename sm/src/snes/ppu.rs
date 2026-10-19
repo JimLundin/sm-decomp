@@ -188,7 +188,7 @@ pub fn PpuRestoreRenderRouting(ppu: &mut Ppu) {
     }
 }
 pub unsafe fn PpuBeginDrawing(ppu: *mut Ppu, pixels: *mut u8, pitch: size_t, render_flags: u32) {
-    (*ppu).renderPitch = pitch as u32 as u32;
+    (*ppu).renderPitch = pitch as u32;
     (*ppu).renderBuffer = pixels;
 }
 pub unsafe fn ppu_checkOverscan(ppu: *mut Ppu) -> bool {
@@ -290,7 +290,7 @@ fn ppu_window_bits(edges: &[i16; 6], left: &u8, right: &u8) -> u8 {
     (((1i32 << end.wrapping_sub(start)) - 1) << start) as u8
 }
 unsafe fn PpuWindows_Calc(win: *mut PpuWindows, ppu: *mut Ppu, layer: u32) {
-    let winflags: u32 = (*ppu).windowsel as u32 >> layer.wrapping_mul(4u32);
+    let winflags: u32 = (*ppu).windowsel >> layer.wrapping_mul(4u32);
     let mut nr: u32 = 1u32;
     let window_right: i32 = 256i32
         + (if layer != 2u32 {
@@ -401,8 +401,7 @@ unsafe fn ppu_background_row(
         };
     }
     let tps: [*const u16; 2] = [
-        (&raw mut (*ppu).vram as *mut u16).offset((sc_offs & 0x7fffi32) as isize) as *mut u16
-            as *const u16,
+        (&raw mut (*ppu).vram as *mut u16).offset((sc_offs & 0x7fffi32) as isize) as *const u16,
         (&raw mut (*ppu).vram as *mut u16).offset(
             (sc_offs
                 + (if (*bglayer).tilemapWider as i32 != 0 {
@@ -411,7 +410,7 @@ unsafe fn ppu_background_row(
                     0i32
                 })
                 & 0x7fffi32) as isize,
-        ) as *mut u16 as *const u16,
+        ) as *const u16,
     ];
     let tileadr: i32 = (*ppu).bgLayer[layer as usize].tileAdr as i32;
     let tileadr1: i32 = ((tileadr + 7i32) as u32).wrapping_sub(y & 0x7u32) as i32;
@@ -522,8 +521,7 @@ unsafe fn ppu_draw_planar_background<const PLANES: u32, const PALETTE_SHIFT: u32
         return;
     }
     let win = ppu_windows_for_layer(ppu, sub as usize, layer);
-    let bglayer: *mut BgLayer =
-        (&raw mut (*ppu).bgLayer as *mut BgLayer).offset(layer as isize) as *mut BgLayer;
+    let bglayer: *mut BgLayer = (&raw mut (*ppu).bgLayer as *mut BgLayer).offset(layer as isize);
     let (tps, tileadr0, tileadr1) = ppu_background_row(ppu, bglayer, y, layer);
     let mut pixel: i32 = 0;
     let mut windex: size_t = 0 as size_t;
@@ -698,9 +696,9 @@ unsafe fn PpuDrawBackground_mode7(ppu: *mut Ppu, mut y: u32, sub: bool, z: PpuZb
         y = (*ppu).mosaicModulo[y as usize] as u32;
     }
     let ry: u32 = if (*ppu).m7yFlip as i32 != 0 {
-        (255u32).wrapping_sub(y as u32)
+        (255u32).wrapping_sub(y)
     } else {
-        y as u32
+        y
     };
     let m7startX: u32 = (((*ppu).m7matrix[0i32 as usize] as i32 * clippedH & !(63i32)) as u32)
         .wrapping_add(((*ppu).m7matrix[1i32 as usize] as u32).wrapping_mul(ry) & !(63i32) as u32)
@@ -908,11 +906,9 @@ unsafe fn PpuDrawBackgrounds(ppu: *mut Ppu, y: i32, sub: bool) {
 }
 unsafe fn PpuDrawWholeLine(ppu: *mut Ppu, y: u32) {
     if (*ppu).forcedBlank {
-        let dst: *mut u8 = (*ppu).renderBuffer.offset(
-            (y as u32)
-                .wrapping_sub(1u32)
-                .wrapping_mul((*ppu).renderPitch) as isize,
-        ) as *mut u8;
+        let dst: *mut u8 = (*ppu)
+            .renderBuffer
+            .offset((y).wrapping_sub(1u32).wrapping_mul((*ppu).renderPitch) as isize);
         let n: size_t = (size_of::<u32>() as size_t)
             .wrapping_mul((256i32 + (*ppu).extraLeftRight as i32 * 2i32) as size_t);
         memset(dst as *mut c_void, 0i32, n);
@@ -943,11 +939,10 @@ unsafe fn PpuDrawWholeLine(ppu: *mut Ppu, y: u32) {
         | (cwin.bits as i32 & kCwBitsMod[(*ppu).preventMathMode as usize] as i32
             ^ kCwBitsMod[((*ppu).preventMathMode as i32 + 4i32) as usize] as i32)
             << 8i32) as u32;
-    let mut dst_0: *mut u32 = (*ppu).renderBuffer.offset(
-        (y as u32)
-            .wrapping_sub(1u32)
-            .wrapping_mul((*ppu).renderPitch) as isize,
-    ) as *mut u8 as *mut u32;
+    let mut dst_0: *mut u32 = (*ppu)
+        .renderBuffer
+        .offset((y).wrapping_sub(1u32).wrapping_mul((*ppu).renderPitch) as isize)
+        as *mut u32;
     let dst_org: *mut u32 = dst_0;
     dst_0 = dst_0.offset(((*ppu).extraLeftRight as i32 - (*ppu).extraLeftCur as i32) as isize);
     let mut windex: u32 = 0u32;
@@ -1139,7 +1134,7 @@ unsafe fn ppu_handlePixel(ppu: *mut Ppu, x: i32, y: i32) {
         (row as u32)
             .wrapping_mul((*ppu).renderPitch)
             .wrapping_add(((x + (*ppu).extraLeftRight as i32) * 4i32) as u32) as isize,
-    ) as *mut u8 as *mut u8;
+    );
     *pixelBuffer.offset(0) = ((b << 3i32 | b >> 2i32) * (*ppu).brightness as i32 / 15i32) as u8;
     *pixelBuffer.offset(1) = ((g << 3i32 | g >> 2i32) * (*ppu).brightness as i32 / 15i32) as u8;
     *pixelBuffer.offset(2) = ((r << 3i32 | r >> 2i32) * (*ppu).brightness as i32 / 15i32) as u8;
@@ -1449,11 +1444,11 @@ unsafe fn ppu_calculateMode7Starts(ppu: *mut Ppu, mut y: i32) {
     (*ppu).m7startX = (((*ppu).m7matrix[0i32 as usize] as i32 * clippedH & !(63i32))
         + ((*ppu).m7matrix[1i32 as usize] as i32 * ry as i32 & !(63i32))
         + ((*ppu).m7matrix[1i32 as usize] as i32 * clippedV & !(63i32))
-        + (xCenter << 8i32)) as i32;
+        + (xCenter << 8i32));
     (*ppu).m7startY = (((*ppu).m7matrix[2i32 as usize] as i32 * clippedH & !(63i32))
         + ((*ppu).m7matrix[3i32 as usize] as i32 * ry as i32 & !(63i32))
         + ((*ppu).m7matrix[3i32 as usize] as i32 * clippedV & !(63i32))
-        + (yCenter << 8i32)) as i32;
+        + (yCenter << 8i32));
 }
 unsafe fn ppu_getPixelForMode7(ppu: *mut Ppu, x: i32, layer: i32, priority: bool) -> i32 {
     let rx: u8 = (if (*ppu).m7xFlip as i32 != 0 {
@@ -1461,10 +1456,8 @@ unsafe fn ppu_getPixelForMode7(ppu: *mut Ppu, x: i32, layer: i32, priority: bool
     } else {
         x
     }) as u8;
-    let mut xPos: i32 =
-        (*ppu).m7startX as i32 + (*ppu).m7matrix[0i32 as usize] as i32 * rx as i32 >> 8i32;
-    let mut yPos: i32 =
-        (*ppu).m7startY as i32 + (*ppu).m7matrix[2i32 as usize] as i32 * rx as i32 >> 8i32;
+    let mut xPos: i32 = (*ppu).m7startX + (*ppu).m7matrix[0i32 as usize] as i32 * rx as i32 >> 8i32;
+    let mut yPos: i32 = (*ppu).m7startY + (*ppu).m7matrix[2i32 as usize] as i32 * rx as i32 >> 8i32;
     let mut outsideMap: bool = xPos < 0i32 || xPos >= 1024i32 || yPos < 0i32 || yPos >= 1024i32;
     xPos &= 0x3ffi32;
     yPos &= 0x3ffi32;
@@ -1613,7 +1606,7 @@ unsafe fn ppu_evaluateSprites(ppu: *mut Ppu, line: i32) -> bool {
                                 let addr: *mut u16 = (&raw mut (*ppu).vram as *mut u16).offset(
                                     (objAdr + usedTile * 16i32 + (row as i32 & 0x7i32) & 0x7fffi32)
                                         as isize,
-                                ) as *mut u16;
+                                );
                                 let plane: u32 = (*addr.offset(0) as i32
                                     | (*addr.offset(8) as i32) << 16i32)
                                     as u32;

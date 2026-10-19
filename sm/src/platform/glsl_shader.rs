@@ -1282,7 +1282,7 @@ unsafe fn stbi__fill_bits(z: *mut stbi__zbuf) {
             return;
         }
         (*z).code_buffer =
-            ((*z).code_buffer as u32 | (stbi__zget8(z) as u32) << (*z).num_bits) as stbi__uint32;
+            ((*z).code_buffer | (stbi__zget8(z) as u32) << (*z).num_bits) as stbi__uint32;
         (*z).num_bits += 8i32;
         if ((*z).num_bits > 24i32) {
             break;
@@ -1294,7 +1294,7 @@ unsafe fn stbi__zreceive(z: *mut stbi__zbuf, n: i32) -> u32 {
     if (*z).num_bits < n {
         stbi__fill_bits(z);
     }
-    k = ((*z).code_buffer & (((1i32) << n) - 1i32) as stbi__uint32) as u32;
+    k = ((*z).code_buffer & (((1i32) << n) - 1i32) as stbi__uint32);
     (*z).code_buffer >>= n;
     (*z).num_bits -= n;
     k
@@ -1414,7 +1414,7 @@ unsafe fn stbi__parse_huffman_block(a: *mut stbi__zbuf) -> i32 {
             len = stbi__zlength_base[z as usize];
             if stbi__zlength_extra[z as usize] != 0 {
                 len = (len as u32).wrapping_add(stbi__zreceive(a, stbi__zlength_extra[z as usize]))
-                    as i32 as i32;
+                    as i32;
             }
             z = stbi__zhuffman_decode(a, &raw mut (*a).z_distance);
             if z < 0i32 {
@@ -1423,7 +1423,7 @@ unsafe fn stbi__parse_huffman_block(a: *mut stbi__zbuf) -> i32 {
             dist = stbi__zdist_base[z as usize];
             if stbi__zdist_extra[z as usize] != 0 {
                 dist = (dist as u32).wrapping_add(stbi__zreceive(a, stbi__zdist_extra[z as usize]))
-                    as i32 as i32;
+                    as i32;
             }
             if (zout.offset_from((*a).zout_start) as c_long) < dist as c_long {
                 return 0i32;
@@ -3030,16 +3030,16 @@ unsafe fn stbi__do_png(
                     result as *mut c_uchar,
                     (*(*p).s).img_out_n,
                     req_comp,
-                    (*(*p).s).img_x as u32,
-                    (*(*p).s).img_y as u32,
+                    (*(*p).s).img_x,
+                    (*(*p).s).img_y,
                 ) as *mut c_void;
             } else {
                 result = stbi__convert_format16(
                     result as *mut stbi__uint16,
                     (*(*p).s).img_out_n,
                     req_comp,
-                    (*(*p).s).img_x as u32,
-                    (*(*p).s).img_y as u32,
+                    (*(*p).s).img_x,
+                    (*(*p).s).img_y,
                 ) as *mut c_void;
             }
             (*(*p).s).img_out_n = req_comp;
@@ -3267,7 +3267,7 @@ unsafe fn ParseTextures(gs: *mut GlslShader, mut value: *mut c_char) {
         (*t).wrap_mode = GL_CLAMP_TO_BORDER as u32;
         (*t).filter = GL_NEAREST as u32;
         *nextp = t;
-        nextp = &raw mut (*t).next as *mut *mut GlslTexture;
+        nextp = &raw mut (*t).next;
         num += 1;
     }
 }
@@ -3298,7 +3298,7 @@ unsafe fn ParseTextureKeyValue(
                 return true_0 != 0;
             }
         }
-        t = (*t).next as *mut GlslTexture;
+        t = (*t).next;
     }
     false_0 != 0
 }
@@ -3308,7 +3308,7 @@ unsafe fn GlslShader_GetParam(gs: *mut GlslShader, id: *const c_char) -> *mut Gl
         if strcmp((**pp).id, id) == 0 {
             return *pp;
         }
-        pp = &raw mut (**pp).next as *mut *mut GlslParam;
+        pp = &raw mut (**pp).next;
     }
     let p: *mut GlslParam = calloc(1 as size_t, size_of::<GlslParam>() as size_t) as *mut GlslParam;
     *pp = p;
@@ -3337,7 +3337,7 @@ unsafe fn ParseParameterKeyValue(
             (*p).has_value = true_0 != 0;
             return true_0 != 0;
         }
-        p = (*p).next as *mut GlslParam;
+        p = (*p).next;
     }
     false_0 != 0
 }
@@ -3833,8 +3833,7 @@ unsafe fn GlslShader_GetUniforms(gs: *mut GlslShader) {
                 program,
                 b"Prev\0" as *const u8 as *const c_char,
                 if j != 0 { j } else { -1i32 },
-                (&raw mut (*p).unif.Prev as *mut GlslTextureUniform).offset(j as isize)
-                    as *mut GlslTextureUniform,
+                (&raw mut (*p).unif.Prev as *mut GlslTextureUniform).offset(j as isize),
             );
             if (*p).unif.Prev[j as usize].Texture >= 0i32 {
                 (*gs).max_prev_frame = j + 1i32;
@@ -3847,15 +3846,13 @@ unsafe fn GlslShader_GetUniforms(gs: *mut GlslShader) {
                 program,
                 b"Pass\0" as *const u8 as *const c_char,
                 j_0,
-                (&raw mut (*p).unif.Pass as *mut GlslTextureUniform).offset(j_0 as isize)
-                    as *mut GlslTextureUniform,
+                (&raw mut (*p).unif.Pass as *mut GlslTextureUniform).offset(j_0 as isize),
             );
             GlslTextureUniform_Read(
                 program,
                 b"PassPrev\0" as *const u8 as *const c_char,
                 j_0,
-                (&raw mut (*p).unif.PassPrev as *mut GlslTextureUniform).offset(j_0 as isize)
-                    as *mut GlslTextureUniform,
+                (&raw mut (*p).unif.PassPrev as *mut GlslTextureUniform).offset(j_0 as isize),
             );
             j_0 += 1;
         }
@@ -3864,14 +3861,14 @@ unsafe fn GlslShader_GetUniforms(gs: *mut GlslShader) {
         while !t.is_null() {
             (*p).unif.Texture[j_1 as usize] =
                 gl::GetUniformLocation(program as GLuint, (*t).id) as i32;
-            t = (*t).next as *mut GlslTexture;
+            t = (*t).next;
             j_1 += 1;
         }
         let mut pa: *mut GlslParam = (*gs).first_param;
         while !pa.is_null() {
             (*pa).uniform[pass_idx as usize] =
                 gl::GetUniformLocation(program as GLuint, (*pa).id) as u32;
-            pa = (*pa).next as *mut GlslParam;
+            pa = (*pa).next;
         }
         p = p.offset(1);
         pass_idx += 1;
@@ -4082,7 +4079,7 @@ pub unsafe fn GlslShader_CreateFromFile(mut filename: *const c_char) -> *mut Gls
                 if (*t).mipmap {
                     gl::GenerateMipmap(GL_TEXTURE_2D as GLenum);
                 }
-                t = (*t).next as *mut GlslTexture;
+                t = (*t).next;
             }
             let mut p_0: *mut GlslParam = (*gs).first_param;
             while !p_0.is_null() {
@@ -4093,7 +4090,7 @@ pub unsafe fn GlslShader_CreateFromFile(mut filename: *const c_char) -> *mut Gls
                 } else {
                     (*p_0).value
                 };
-                p_0 = (*p_0).next as *mut GlslParam;
+                p_0 = (*p_0).next;
             }
             GlslShader_GetUniforms(gs);
             let mut i_0: i32 = 0i32;
@@ -4142,7 +4139,7 @@ pub unsafe fn GlslShader_Destroy(gs: *mut GlslShader) {
         if t.is_null() {
             break;
         }
-        (*gs).first_texture = (*t).next as *mut GlslTexture;
+        (*gs).first_texture = (*t).next;
         gl::DeleteTextures(1 as GLsizei, &raw mut (*t).gl_texture);
         free((*t).id as *mut c_void);
         free((*t).filename as *mut c_void);
@@ -4154,7 +4151,7 @@ pub unsafe fn GlslShader_Destroy(gs: *mut GlslShader) {
         if pp.is_null() {
             break;
         }
-        (*gs).first_param = (*pp).next as *mut GlslParam;
+        (*gs).first_param = (*pp).next;
         free((*pp).id as *mut c_void);
         free(pp as *mut c_void);
     }
@@ -4233,7 +4230,7 @@ unsafe fn RenderCtx_SetGlslTextureUniform(
     RenderCtx_SetTexCoords(ctx, (*u).TexCoord, (*ctx).offset as usize);
 }
 unsafe fn GlslShader_SetShaderVars(gs: *mut GlslShader, ctx: *mut RenderCtx, pass: i32) {
-    let p: *mut GlslPass = (*gs).pass.offset(pass as isize) as *mut GlslPass;
+    let p: *mut GlslPass = (*gs).pass.offset(pass as isize);
     RenderCtx_SetGlslTextureUniform(
         ctx,
         &raw mut (*p).unif.Top,
@@ -4277,8 +4274,7 @@ unsafe fn GlslShader_SetShaderVars(gs: *mut GlslShader, ctx: *mut RenderCtx, pas
     let mut i: i32 = 0i32;
     while i < (*gs).max_prev_frame {
         let t: *mut GlTextureWithSize = (&raw mut (*gs).prev_frame as *mut GlTextureWithSize)
-            .offset(((*gs).frame_count.wrapping_sub(1u32).wrapping_sub(i as u32) & 7u32) as isize)
-            as *mut GlTextureWithSize;
+            .offset(((*gs).frame_count.wrapping_sub(1u32).wrapping_sub(i as u32) & 7u32) as isize);
         '_c2rust_label: {
             if (*t).gl_texture != 0u32 {
             } else {
@@ -4294,8 +4290,7 @@ unsafe fn GlslShader_SetShaderVars(gs: *mut GlslShader, ctx: *mut RenderCtx, pas
         if (*t).width != 0 {
             RenderCtx_SetGlslTextureUniform(
                 ctx,
-                (&raw mut (*p).unif.Prev as *mut GlslTextureUniform).offset(i as isize)
-                    as *mut GlslTextureUniform,
+                (&raw mut (*p).unif.Prev as *mut GlslTextureUniform).offset(i as isize),
                 (*t).width as i32,
                 (*t).height as i32,
                 (*t).gl_texture,
@@ -4307,15 +4302,14 @@ unsafe fn GlslShader_SetShaderVars(gs: *mut GlslShader, ctx: *mut RenderCtx, pas
     let mut t_0: *mut GlslTexture = (*gs).first_texture;
     while !t_0.is_null() {
         RenderCtx_SetTexture(ctx, (*p).unif.Texture[tctr as usize], (*t_0).gl_texture);
-        t_0 = (*t_0).next as *mut GlslTexture;
+        t_0 = (*t_0).next;
         tctr += 1;
     }
     let mut i_0: i32 = 1i32;
     while i_0 < pass {
         RenderCtx_SetGlslTextureUniform(
             ctx,
-            (&raw mut (*p).unif.Pass as *mut GlslTextureUniform).offset(i_0 as isize)
-                as *mut GlslTextureUniform,
+            (&raw mut (*p).unif.Pass as *mut GlslTextureUniform).offset(i_0 as isize),
             (*(*gs).pass.offset(i_0 as isize)).width as i32,
             (*(*gs).pass.offset(i_0 as isize)).height as i32,
             (*(*gs).pass.offset(i_0 as isize)).gl_texture,
@@ -4326,8 +4320,7 @@ unsafe fn GlslShader_SetShaderVars(gs: *mut GlslShader, ctx: *mut RenderCtx, pas
     while i_1 < pass {
         RenderCtx_SetGlslTextureUniform(
             ctx,
-            (&raw mut (*p).unif.PassPrev as *mut GlslTextureUniform).offset((pass - i_1) as isize)
-                as *mut GlslTextureUniform,
+            (&raw mut (*p).unif.PassPrev as *mut GlslTextureUniform).offset((pass - i_1) as isize),
             (*(*gs).pass.offset(i_1 as isize)).width as i32,
             (*(*gs).pass.offset(i_1 as isize)).height as i32,
             (*(*gs).pass.offset(i_1 as isize)).gl_texture,
@@ -4342,7 +4335,7 @@ unsafe fn GlslShader_SetShaderVars(gs: *mut GlslShader, ctx: *mut RenderCtx, pas
                 (*pa).value as GLfloat,
             );
         }
-        pa = (*pa).next as *mut GlslParam;
+        pa = (*pa).next;
     }
     gl::ActiveTexture(GL_TEXTURE0 as GLenum);
 }
@@ -4539,12 +4532,12 @@ pub unsafe fn GlslShader_Render(
     gl::BindTexture(GL_TEXTURE_2D as GLenum, 0 as GLuint);
     gl::BindBuffer(GL_ARRAY_BUFFER as GLenum, 0 as GLuint);
     if (*gs).max_prev_frame != 0i32 {
-        let store_pos: *mut GlTextureWithSize =
-            (&raw mut (*gs).prev_frame as *mut GlTextureWithSize)
-                .offset(((*gs).frame_count & 7u32) as isize) as *mut GlTextureWithSize;
-        let load_pos: *mut GlTextureWithSize = (&raw mut (*gs).prev_frame as *mut GlTextureWithSize)
-            .offset(((*gs).frame_count.wrapping_sub((*gs).max_prev_frame as u32) & 7u32) as isize)
-            as *mut GlTextureWithSize;
+        let store_pos: *mut GlTextureWithSize = (&raw mut (*gs).prev_frame
+            as *mut GlTextureWithSize)
+            .offset(((*gs).frame_count & 7u32) as isize);
+        let load_pos: *mut GlTextureWithSize = (&raw mut (*gs).prev_frame
+            as *mut GlTextureWithSize)
+            .offset(((*gs).frame_count.wrapping_sub((*gs).max_prev_frame as u32) & 7u32) as isize);
         '_c2rust_label: {
             if (*store_pos).gl_texture == 0u32 {
             } else {

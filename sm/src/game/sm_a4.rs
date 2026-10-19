@@ -458,13 +458,12 @@ pub unsafe fn Crocomire_Init(game: &mut Game) {
     }
     if (*((&raw mut game.g_ram as *mut u8)
         .offset(0xd828)
-        .offset(ram_word!(game, area_index) as isize) as *mut u8 as *mut u16) as i32
+        .offset(ram_word!(game, area_index) as isize) as *mut u16) as i32
         & 2i32)
         != 0i32
     {
         *((&raw mut game.g_ram as *mut u8).offset(0xcd20) as *mut u16) = 257u16;
-        *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(2) as *mut u8 as *mut u16) =
-            257u16;
+        *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(2) as *mut u16) = 257u16;
         set_ram_word!(game.croco_target_0688 = 0u16);
         let E: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
         (*E).base.properties = ((*E).base.properties as i32 & 0x7bffi32 | 0x400i32) as u16;
@@ -645,10 +644,9 @@ pub unsafe fn Crocomire_Main(game: &mut Game) {
 }
 pub unsafe fn Crocomire_Func_28(game: &mut Game) {
     Crocomire_Func_37(game);
-    *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(4) as *mut u8 as *mut u16) = 257u16;
+    *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(4) as *mut u16) = 257u16;
     if ram_word!(game, samus_x_pos) as i32 - 1312i32 & 0x8000i32 == 0 {
-        *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(4) as *mut u8 as *mut u16) =
-            256u16;
+        *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(4) as *mut u16) = 256u16;
     }
     Crocomire_Func_27(ram_word!(game, cur_enemy_index), game);
 }
@@ -1003,8 +1001,7 @@ pub unsafe fn Crocomire_Func_49(game: &mut Game) {
         QueueMusic_Delayed8(6u16, game);
         (*E).crocom_var_A = 88u16;
         (*E).base.current_instruction = addr_kCrocomire_Ilist_E1D2 as u16;
-        *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(4) as *mut u8 as *mut u16) =
-            257u16;
+        *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(4) as *mut u16) = 257u16;
         set_ram_word!(game.debug_disable_minimap = 0u16);
         let fresh12 = &raw mut (*Get_Crocomire(0x40i32, game)).base.properties;
         fresh12.write_unaligned((fresh12.read_unaligned()) | (0x200u16));
@@ -1344,44 +1341,43 @@ pub unsafe fn Crocomire_Func_60(game: &mut Game) {
     set_ram_word!(game.g_word_7E0692 = 256u16);
     set_ram_word!(game.croco_cur_vline_idx = 0u16);
     set_ram_word!(
-        game.g_word_7E0698 = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc5)) as *const u8
-            as *mut u16 as *mut u8)
+        game.g_word_7E0698 = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc5)) as *mut u16
+            as *mut u8)
             .offset(ram_word!(game, croco_word_7E069A) as i32 as isize)
             as *mut u16)
     );
     set_ram_word!(game.g_word_7E0694 = ram_word!(game, g_word_7E0698));
     set_ram_word!(
-        game.g_word_7E0696 = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc7)) as *const u8
-            as *mut u16 as *mut u8)
+        game.g_word_7E0696 = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc7)) as *mut u16
+            as *mut u8)
             .offset(ram_word!(game, croco_word_7E069A) as i32 as isize)
             as *mut u16)
     );
     set_ram_word!(
-        game.g_word_7E068E = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc9)) as *const u8
-            as *mut u16 as *mut u8)
+        game.g_word_7E068E = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc9)) as *mut u16
+            as *mut u8)
             .offset(ram_word!(game, croco_word_7E069A) as i32 as isize)
             as *mut u16)
     );
-    let bank: u8 = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bcb)) as *const u8 as *mut u16
-        as *mut u8)
+    let bank: u8 = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bcb)) as *mut u16 as *mut u8)
         .offset(ram_word!(game, croco_word_7E069A) as i32 as isize)
         as *mut u16) as u8;
     let mut v6: u16 = 0;
     i = ram_word!(game, croco_word_7E069A) as i32 + 8i32;
     loop {
-        let mut v2: u16 = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc5)) as *const u8
-            as *mut u16 as *mut u8)
+        let mut v2: u16 = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc5)) as *mut u16
+            as *mut u8)
             .offset(i as isize) as *mut u16);
         if v2 == 0xffffu16 {
             break;
         }
         v6 = i as u16;
-        let mut v3: u16 = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc7)) as *const u8
-            as *mut u16 as *mut u8)
+        let mut v3: u16 = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc7)) as *mut u16
+            as *mut u8)
             .offset(i as isize) as *mut u16);
         let mut n: i32 = ram_word!(game, g_word_7E068E) as i32;
         loop {
-            *((&raw mut game.g_ram as *mut u8).offset(v3 as isize) as *mut u8 as *mut u16) =
+            *((&raw mut game.g_ram as *mut u8).offset(v3 as isize) as *mut u16) =
                 *(RomPtrWithBank(bank, v2, game) as *mut u16);
             v3 = (v3).wrapping_add(2u16);
             v2 = (v2).wrapping_add(2u16);
@@ -1398,7 +1394,7 @@ pub unsafe fn Crocomire_Func_60(game: &mut Game) {
     while j >= 0i32 {
         *((&raw mut game.g_ram as *mut u8)
             .offset(0x69c)
-            .offset(j as u16 as isize) as *mut u8 as *mut u16) = 0u16;
+            .offset(j as u16 as isize) as *mut u16) = 0u16;
         j -= 2i32;
     }
 }
@@ -1409,7 +1405,7 @@ pub unsafe fn Crocomire_Func_62(game: &mut Game) {
     let mut v2: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
     let v0: u16 = ram_word!(game, g_word_7E068A);
     let v1: u16 = ram_word!(game, vram_write_queue_tail);
-    if *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc5)) as *const u8 as *mut u16 as *mut u8)
+    if *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc5)) as *mut u16 as *mut u8)
         .offset(ram_word!(game, g_word_7E068A) as i32 as isize) as *mut u16)
         == 0xffffu16
     {
@@ -1419,19 +1415,17 @@ pub unsafe fn Crocomire_Func_62(game: &mut Game) {
         set_ram_word!(game.g_word_7E068A = 0u16);
     } else {
         v2 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
-        (*v2).size = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc5)) as *const u8
-            as *mut u16 as *mut u8)
-            .offset(ram_word!(game, g_word_7E068A) as i32 as isize)
-            as *mut u16);
-        (*v2).src.addr = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bcb)) as *const u8
-            as *mut u16 as *mut u8)
+        (*v2).size =
+            *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc5)) as *mut u16 as *mut u8)
+                .offset(ram_word!(game, g_word_7E068A) as i32 as isize) as *mut u16);
+        (*v2).src.addr = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bcb)) as *mut u16
+            as *mut u8)
             .offset(v0 as i32 as isize) as *mut u16);
         *(&raw mut (*v2).src.bank as *mut u16) =
-            *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc9)) as *const u8 as *mut u16
-                as *mut u8)
+            *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc9)) as *mut u16 as *mut u8)
                 .offset(v0 as i32 as isize) as *mut u16);
-        (*v2).vram_dst = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc7)) as *const u8
-            as *mut u16 as *mut u8)
+        (*v2).vram_dst = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc7)) as *mut u16
+            as *mut u8)
             .offset(v0 as i32 as isize) as *mut u16);
         set_ram_word!(game.g_word_7E068A = (v0).wrapping_add(8u16));
         set_ram_word!(game.vram_write_queue_tail = (v1).wrapping_add(7u16));
@@ -1464,12 +1458,10 @@ pub unsafe fn Crocomire_950F(game: &mut Game) {
     v4 = Get_Crocomire(0i32, game);
     (*Get_Crocomire(0x80i32, game)).crocom_var_D = (*v4).base.x_pos;
     *((&raw mut game.g_ram as *mut u8).offset(0xcae0) as *mut u16) = 255u16;
-    *((&raw mut game.g_ram as *mut u8).offset(0xcae0).offset(1) as *mut u8 as *mut u16) =
-        -13584i32 as u16;
-    *((&raw mut game.g_ram as *mut u8).offset(0xcae0).offset(3) as *mut u8 as *mut u16) = 225u16;
-    *((&raw mut game.g_ram as *mut u8).offset(0xcae0).offset(4) as *mut u8 as *mut u16) =
-        -13330i32 as u16;
-    *((&raw mut game.g_ram as *mut u8).offset(0xcae0).offset(6) as *mut u8 as *mut u16) = 0u16;
+    *((&raw mut game.g_ram as *mut u8).offset(0xcae0).offset(1) as *mut u16) = -13584i32 as u16;
+    *((&raw mut game.g_ram as *mut u8).offset(0xcae0).offset(3) as *mut u16) = 225u16;
+    *((&raw mut game.g_ram as *mut u8).offset(0xcae0).offset(4) as *mut u16) = -13330i32 as u16;
+    *((&raw mut game.g_ram as *mut u8).offset(0xcae0).offset(6) as *mut u16) = 0u16;
     (*v4).crocom_var_1F = SpawnHdmaObject(0xa4u8, &raw const unk_A49559 as *const c_void, game);
 }
 pub unsafe fn Crocomire_Func_63(game: &mut Game) {
@@ -1550,8 +1542,7 @@ pub unsafe fn Crocomire_Func_65(game: &mut Game) {
     let EK: *mut Enemy_Crocomire = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
     (*EK).crocom_var_A = ((*EK).crocom_var_A).wrapping_add(2u16);
     i = ram_word!(game, croco_word_7E069A) as i32;
-    while *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc5)) as *const u8 as *mut u16
-        as *mut u8)
+    while *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc5)) as *mut u16 as *mut u8)
         .offset(i as isize) as *mut u16)
         != 0xffffu16
     {
@@ -1588,8 +1579,7 @@ pub unsafe fn Crocomire_Func_67(game: &mut Game) -> u16 {
         if ram_word!(game, croco_cur_vline_idx) > 48u16 {
             return 1u16;
         }
-        let rr: i32 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa49697)) as *const u8
-            as *mut u8)
+        let rr: i32 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa49697)) as *mut u8)
             .offset(ram_word!(game, croco_cur_vline_idx) as isize) as i32;
         if ((*(&raw mut game.g_ram as *mut u8)
             .offset(0x69c)
@@ -1615,8 +1605,7 @@ pub unsafe fn Crocomire_Func_67(game: &mut Game) -> u16 {
             );
         }
     };
-    let vline_idx: i32 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa49697)) as *const u8
-        as *mut u8)
+    let vline_idx: i32 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa49697)) as *mut u8)
         .offset(ram_word!(game, croco_cur_vline_idx) as isize) as i32;
     let mask: u8 = kCrocoEraseLineMasks[(vline_idx & 7i32) as usize];
     loop {
@@ -1661,8 +1650,7 @@ pub unsafe fn Crocomire_Func_67(game: &mut Game) -> u16 {
     loop {
         v7 = (ram_word!(game, g_word_7E068A)).wrapping_add(ram_word!(game, croco_word_7E069A));
         v8 = ram_word!(game, vram_write_queue_tail);
-        if *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc5)) as *const u8 as *mut u16
-            as *mut u8)
+        if *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc5)) as *mut u16 as *mut u8)
             .offset(v7 as i32 as isize) as *mut u16)
             != 0xffffu16
         {
@@ -1672,18 +1660,16 @@ pub unsafe fn Crocomire_Func_67(game: &mut Game) -> u16 {
     }
     let v9: *mut VramWriteEntry =
         gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
-    (*v9).size = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc5)) as *const u8 as *mut u16
+    (*v9).size = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc5)) as *mut u16 as *mut u8)
+        .offset(v7 as i32 as isize) as *mut u16);
+    (*v9).src.addr = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bcb)) as *mut u16
         as *mut u8)
         .offset(v7 as i32 as isize) as *mut u16);
-    (*v9).src.addr = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bcb)) as *const u8
-        as *mut u16 as *mut u8)
-        .offset(v7 as i32 as isize) as *mut u16);
     *(&raw mut (*v9).src.bank as *mut u16) =
-        *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc9)) as *const u8 as *mut u16
-            as *mut u8)
+        *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc9)) as *mut u16 as *mut u8)
             .offset(v7 as i32 as isize) as *mut u16);
-    (*v9).vram_dst = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc7)) as *const u8
-        as *mut u16 as *mut u8)
+    (*v9).vram_dst = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa49bc7)) as *mut u16
+        as *mut u8)
         .offset(v7 as i32 as isize) as *mut u16);
     set_ram_word!(game.vram_write_queue_tail = (v8).wrapping_add(7u16));
     update_ram_word!(game.g_word_7E068A, wrapping_add(8u16));
@@ -1692,8 +1678,7 @@ pub unsafe fn Crocomire_Func_67(game: &mut Game) -> u16 {
 pub unsafe fn Crocomire_Func_68(game: &mut Game) {
     if ram_word!(game, samus_x_pos) as i32 - 640i32 & 0x8000i32 != 0 {
         QueueMusic_Delayed8(5u16, game);
-        *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(3) as *mut u8 as *mut u16) =
-            256u16;
+        *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(3) as *mut u16) = 256u16;
         SpawnHardcodedPlm(
             SpawnHardcodedPlmArgs::new(0x30u8, 0x3u8, 0xb757 as VoidP),
             game,
@@ -1976,7 +1961,7 @@ pub unsafe fn Crocomire_Func_88(game: &mut Game) {
 }
 pub unsafe fn Crocomire_9B65(game: &mut Game) {
     *((&raw mut game.g_ram as *mut u8).offset(0xcd20) as *mut u16) = 257u16;
-    *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(2) as *mut u8 as *mut u16) = 257u16;
+    *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(2) as *mut u16) = 257u16;
     SpawnHardcodedPlm(
         SpawnHardcodedPlmArgs::new(0x1eu8, 0x3u8, 0xb753 as VoidP),
         game,
@@ -1997,8 +1982,7 @@ pub unsafe fn Crocomire_9B86(game: &mut Game) {
     set_ram_word!(game.camera_distance_index = 0u16);
     let ref mut fresh10 = *((&raw mut game.g_ram as *mut u8)
         .offset(0xd828)
-        .offset(ram_word!(game, area_index) as isize) as *mut u8
-        as *mut u16);
+        .offset(ram_word!(game, area_index) as isize) as *mut u16);
     *fresh10 = (*fresh10) | (2u16);
     QueueMusic_Delayed8(6u16, game);
     Crocomire_Func_87(null::<u16>(), 0xfff0u16, game);
@@ -2158,7 +2142,7 @@ pub unsafe fn CrocomireTongue_Init(game: &mut Game) {
     let E: *mut Enemy_Crocomire = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
     if (*((&raw mut game.g_ram as *mut u8)
         .offset(0xd828)
-        .offset(ram_word!(game, area_index) as isize) as *mut u8 as *mut u16) as i32
+        .offset(ram_word!(game, area_index) as isize) as *mut u16) as i32
         & 2i32)
         != 0i32
     {

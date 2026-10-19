@@ -1861,11 +1861,11 @@ pub unsafe fn RecordEnemySpawnData(j: u16, game: &mut Game) {
     }
     v5 = gEnemySpawnData(j as i32, game);
     *(&raw mut (*v5).name as *mut u8 as *mut u16) = r18;
-    *((&raw mut (*v5).name as *mut u8).offset(2) as *mut u8 as *mut u16) = r20;
-    *((&raw mut (*v5).name as *mut u8).offset(4) as *mut u8 as *mut u16) = r22;
-    *((&raw mut (*v5).name as *mut u8).offset(6) as *mut u8 as *mut u16) = r24;
-    *((&raw mut (*v5).name as *mut u8).offset(8) as *mut u8 as *mut u16) = R26;
-    *((&raw mut (*v5).name as *mut u8).offset(10) as *mut u8 as *mut u16) = R28;
+    *((&raw mut (*v5).name as *mut u8).offset(2) as *mut u16) = r20;
+    *((&raw mut (*v5).name as *mut u8).offset(4) as *mut u16) = r22;
+    *((&raw mut (*v5).name as *mut u8).offset(6) as *mut u16) = r24;
+    *((&raw mut (*v5).name as *mut u8).offset(8) as *mut u16) = R26;
+    *((&raw mut (*v5).name as *mut u8).offset(10) as *mut u16) = R28;
 }
 pub unsafe fn LoadEnemies(game: &mut Game) {
     set_ram_word!(game.debug_time_frozen_for_enemies = 0u16);
@@ -1894,7 +1894,7 @@ pub unsafe fn ClearEnemyDataAndProcessEnemySet(game: &mut Game) {
 }
 pub unsafe fn InitializeEnemies(game: &mut Game) {
     memset(
-        (&raw mut game.g_ram as *mut u8).offset(0x7000) as *mut u8 as *mut c_void,
+        (&raw mut game.g_ram as *mut u8).offset(0x7000) as *mut c_void,
         0i32,
         0x2800 as size_t,
     );
@@ -2013,7 +2013,7 @@ pub unsafe fn LoadEnemyTileData(game: &mut Game) {
             loop {
                 memcpy(
                     (&raw mut game.g_ram as *mut u8).offset((0x7000i32 + v3 as i32) as isize)
-                        as *mut u8 as *mut c_void,
+                        as *mut c_void,
                     RomPtrWithBank(db, v2, game) as *const c_void,
                     8 as size_t,
                 );
@@ -2090,7 +2090,7 @@ pub unsafe fn ProcessEnemyTilesets(game: &mut Game) {
         memcpy(
             ((&raw mut game.g_ram as *mut u8).offset(0xc200) as *mut u16).offset(
                 ((*(&raw mut (*ET).vram_dst as *mut u8).offset(0) as i32 + 8i32) * 16i32) as isize,
-            ) as *mut u16 as *mut c_void,
+            ) as *mut c_void,
             RomPtrWithBank((*ED).bank, (*ED).palette_ptr, game) as *const c_void,
             32 as size_t,
         );
@@ -3872,10 +3872,10 @@ pub unsafe fn EprojSamusCollDetect(game: &mut Game) {
             && ram_word!(game, eproj_radius[i]) != 0u16
         {
             let varE20: u16 = *(((&raw mut game.g_ram as *mut u8).offset(0x1bb3) as *mut u16)
-                .offset(i as isize) as *mut u16 as *mut u8)
+                .offset(i as isize) as *mut u8)
                 .offset(0) as u16;
             let varE22: u16 = *(((&raw mut game.g_ram as *mut u8).offset(0x1bb3) as *mut u16)
-                .offset(i as isize) as *mut u16 as *mut u8)
+                .offset(i as isize) as *mut u8)
                 .offset(1isize) as u16;
             if (abs16((ram_word!(game, samus_x_pos)).wrapping_sub(ram_word!(game, eproj_x_pos[i])))
                 as i32
@@ -4738,7 +4738,7 @@ pub unsafe fn NormalEnemyShotAi(game: &mut Game) {
     if (*E).health == 0 {
         let j: u16 = ((*(((&raw mut game.g_ram as *mut u8).offset(0xc18) as *mut u16)
             .offset(ram_word!(game, collision_detection_index) as isize)
-            as *mut u16 as *mut u8)
+            as *mut u8)
             .offset(1isize)) as u16)
             & (0xfu16);
         (*gEnemySpawnData(ram_word!(game, cur_enemy_index) as i32, game)).cause_of_death = j;
@@ -6097,8 +6097,7 @@ pub unsafe fn EnemyFunc_C8AD(k: u16, game: &mut Game) -> u8 {
             } else {
                 (*E).x_pos as i32
             }) as u16;
-            let v4: i16 = ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b)) as *const u8
-                as *mut u8)
+            let v4: i16 = ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b)) as *mut u8)
                 .offset((temp_collision_DD6 as i32 + (j as i32 & 0xfi32)) as isize)
                 as i32
                 & 0x1fi32)
@@ -6142,8 +6141,7 @@ pub unsafe fn EnemyFunc_C8AD(k: u16, game: &mut Game) -> u8 {
             } else {
                 (*E).x_pos as i32
             }) as u16;
-            let v7: i16 = ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b)) as *const u8
-                as *mut u8)
+            let v7: i16 = ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b)) as *mut u8)
                 .offset((temp_collision_DD6_0 as i32 + (j_0 as i32 & 0xfi32)) as isize)
                 as i32
                 & 0x1fi32)

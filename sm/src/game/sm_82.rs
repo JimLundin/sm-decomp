@@ -970,29 +970,29 @@ pub unsafe fn LoadDemoRoomData(game: &mut Game) {
         let v2: i32 = v1 as i32 >> 1i32;
         *((&raw mut game.g_ram as *mut u8)
             .offset(0xd830)
-            .offset(v1 as isize) as *mut u8 as *mut u16) = -1i32 as u16;
+            .offset(v1 as isize) as *mut u16) = -1i32 as u16;
         *((&raw mut game.g_ram as *mut u8)
             .offset(0xd870)
-            .offset(v1 as isize) as *mut u8 as *mut u16) = -1i32 as u16;
+            .offset(v1 as isize) as *mut u16) = -1i32 as u16;
         set_ram_word!(game.UNUSED_word_7ED8F0[v2] = -1i32 as u16);
         *((&raw mut game.g_ram as *mut u8)
             .offset(0xd908)
-            .offset(v1 as isize) as *mut u8 as *mut u16) = -1i32 as u16;
+            .offset(v1 as isize) as *mut u16) = -1i32 as u16;
         *((&raw mut game.g_ram as *mut u8)
             .offset(0xd8f8)
-            .offset(v1 as isize) as *mut u8 as *mut u16) = -1i32 as u16;
+            .offset(v1 as isize) as *mut u16) = -1i32 as u16;
         *((&raw mut game.g_ram as *mut u8)
             .offset(0xd8f8)
-            .offset((v1 as i32 + 8i32) as isize) as *mut u8 as *mut u16) = -1i32 as u16;
+            .offset((v1 as i32 + 8i32) as isize) as *mut u16) = -1i32 as u16;
         *((&raw mut game.g_ram as *mut u8)
             .offset(0xd8b0)
-            .offset(v1 as isize) as *mut u8 as *mut u16) = 0u16;
+            .offset(v1 as isize) as *mut u16) = 0u16;
         *((&raw mut game.g_ram as *mut u8)
             .offset(0xd820)
-            .offset(v1 as isize) as *mut u8 as *mut u16) = 0u16;
+            .offset(v1 as isize) as *mut u16) = 0u16;
         *((&raw mut game.g_ram as *mut u8)
             .offset(0xd828)
-            .offset(v1 as isize) as *mut u8 as *mut u16) = 0u16;
+            .offset(v1 as isize) as *mut u16) = 0u16;
         v1 = (v1).wrapping_add(2u16);
         if (((v1) as i16).wrapping_sub(8i16) >= 0i16) {
             break;
@@ -1002,13 +1002,13 @@ pub unsafe fn LoadDemoRoomData(game: &mut Game) {
         let v3: i32 = v1 as i32 >> 1i32;
         *((&raw mut game.g_ram as *mut u8)
             .offset(0xd830)
-            .offset(v1 as isize) as *mut u8 as *mut u16) = -1i32 as u16;
+            .offset(v1 as isize) as *mut u16) = -1i32 as u16;
         *((&raw mut game.g_ram as *mut u8)
             .offset(0xd870)
-            .offset(v1 as isize) as *mut u8 as *mut u16) = -1i32 as u16;
+            .offset(v1 as isize) as *mut u16) = -1i32 as u16;
         *((&raw mut game.g_ram as *mut u8)
             .offset(0xd8b0)
-            .offset(v1 as isize) as *mut u8 as *mut u16) = 0u16;
+            .offset(v1 as isize) as *mut u16) = 0u16;
         v1 = (v1).wrapping_add(2u16);
         if (((v1) as i16).wrapping_sub(64i16) >= 0i16) {
             break;
@@ -1284,8 +1284,8 @@ pub unsafe fn SfxHandlers_4_Reset(j: u16, game: &mut Game) {
 }
 pub unsafe fn ResetSoundQueues(game: &mut Game) {
     *((&raw mut game.g_ram as *mut u8).offset(0x643) as *mut u16) = 0u16;
-    *((&raw mut game.g_ram as *mut u8).offset(0x643).offset(2) as *mut u8 as *mut u16) = 0u16;
-    *((&raw mut game.g_ram as *mut u8).offset(0x646).offset(1) as *mut u8 as *mut u16) = 0u16;
+    *((&raw mut game.g_ram as *mut u8).offset(0x643).offset(2) as *mut u16) = 0u16;
+    *((&raw mut game.g_ram as *mut u8).offset(0x646).offset(1) as *mut u16) = 0u16;
     *((&raw mut game.g_ram as *mut u8).offset(0x649) as *mut u16) = 0u16;
     *(&raw mut game.g_ram as *mut u8).offset(0x649).offset(2) = 0u8;
 }
@@ -1979,8 +1979,8 @@ pub unsafe fn PauseMenu_3_MapToEquipment_Load(game: &mut Game) {
     SetPauseScreenButtonLabelPalettes(game);
     set_ram_word!(game.pausemenu_lr_animation_frame = 0u16);
     set_ram_word!(
-        game.pausemenu_lr_animation_timer = *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c10c))
-            as *const u8 as *mut u8 as *mut u16)
+        game.pausemenu_lr_animation_timer =
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c10c)) as *mut u8 as *mut u16)
     );
     set_ram_word!(game.screen_fade_delay = 1u16);
     set_ram_word!(game.screen_fade_counter = 1u16);
@@ -1992,8 +1992,8 @@ pub unsafe fn PauseMenu_6_EquipmentToMap_Load(game: &mut Game) {
     SetPauseScreenButtonLabelPalettes(game);
     set_ram_word!(game.pausemenu_lr_animation_frame = 0u16);
     set_ram_word!(
-        game.pausemenu_lr_animation_timer = *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c10c))
-            as *const u8 as *mut u8 as *mut u16)
+        game.pausemenu_lr_animation_timer =
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c10c)) as *mut u8 as *mut u16)
     );
     set_ram_word!(game.screen_fade_delay = 1u16);
     set_ram_word!(game.screen_fade_counter = 1u16);
@@ -2216,8 +2216,8 @@ pub unsafe fn LoadPauseMenuMapTilemap(game: &mut Game) {
     }
     let r0: *const u16 = RomPtr(
         Load24(
-            (game.g_rom.offset(crate::rtl::lorom_offset(0x82964a)) as *const u8 as *mut LongPtr)
-                .offset(v0 as isize) as *mut LongPtr,
+            (game.g_rom.offset(crate::rtl::lorom_offset(0x82964a)) as *mut LongPtr)
+                .offset(v0 as isize),
         ),
         game,
     ) as *const u16;
@@ -2315,8 +2315,8 @@ pub unsafe fn DrawRoomSelectMap(game: &mut Game) {
     }
     let r0: *const u16 = RomPtr(
         Load24(
-            (game.g_rom.offset(crate::rtl::lorom_offset(0x82964a)) as *const u8 as *mut LongPtr)
-                .offset(v0 as isize) as *mut LongPtr,
+            (game.g_rom.offset(crate::rtl::lorom_offset(0x82964a)) as *mut LongPtr)
+                .offset(v0 as isize),
         ),
         game,
     ) as *const u16;
@@ -2627,8 +2627,8 @@ pub unsafe fn ResetPauseMenuAnimations(game: &mut Game) {
     set_ram_word!(game.samus_position_indicator_animation_timer = 0u16);
     set_ram_word!(game.samus_position_indicator_animation_loop_counter = 0u16);
     set_ram_word!(
-        game.pausemenu_lr_animation_timer = *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c10c))
-            as *const u8 as *mut u8 as *mut u16)
+        game.pausemenu_lr_animation_timer =
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c10c)) as *mut u8 as *mut u16)
     );
     set_ram_word!(game.pausemenu_palette_animation_timer = 1u16);
     set_ram_word!(game.pausemenu_palette_animation_frame = 0u16);
@@ -3046,19 +3046,19 @@ pub unsafe fn UpdatePauseMenuLRStartVramTilemap(game: &mut Game) {
 pub unsafe fn DrawPauseScreenSpriteAnim(a: u16, input_k: u16, input_j: u16, game: &mut Game) {
     let t: i32 = a as i32 - 1i32;
     let v8: *mut u16 = RomPtr_RAM(
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c0c4)) as *const u8
+        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c0c4))
             as *mut PauseScreenSpriteAnimationData))
             .arr[t as usize],
         game,
     ) as *mut u16;
     let v5: *mut u16 = RomPtr_RAM(
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c0b2)) as *const u8
+        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c0b2))
             as *mut PauseScreenSpriteAnimationData))
             .arr[t as usize],
         game,
     ) as *mut u16;
     let v3: *const u8 = RomPtr_82(
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c0e8)) as *const u8
+        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c0e8))
             as *mut PauseScreenSpriteAnimationData))
             .arr[t as usize],
         game,
@@ -3077,7 +3077,7 @@ pub unsafe fn DrawPauseScreenSpriteAnim(a: u16, input_k: u16, input_j: u16, game
     let r24: i32 = *v3.offset((3i32 * *v8 as i32 + 2i32) as isize) as i32;
     let r26: i32 = 2i32
         * *RomPtr_RAM(
-            (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c0d6)) as *const u8
+            (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c0d6))
                 as *mut PauseScreenSpriteAnimationData))
                 .arr[t as usize],
             game,
@@ -3106,8 +3106,7 @@ pub unsafe fn HandlePauseScreenPaletteAnimation(game: &mut Game) {
             loop {
                 *((&raw mut game.g_ram as *mut u8).offset(0x74f) as *mut u16 as *mut u8)
                     .offset(0) = i as u8;
-                v1 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c10c)) as *const u8
-                    as *mut u8)
+                v1 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c10c)) as *mut u8)
                     .offset((3i32 * i) as isize);
                 if v1 != 0xffu8 {
                     break;
@@ -3163,14 +3162,12 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
     set_ram_word!(game.pausemenu_item_selector_animation_frame = 0u16);
     set_ram_word!(
         game.pausemenu_item_selector_animation_timer =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c10c)) as *const u8 as *mut u8)
-                .offset(0) as u16
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c10c)) as *mut u8).offset(0) as u16
     );
     set_ram_word!(game.pausemenu_reserve_tank_animation_frame = 0u16);
     set_ram_word!(
         game.pausemenu_reserve_tank_animation_timer =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c165)) as *const u8 as *mut u8)
-                .offset(0) as u16
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c165)) as *mut u8).offset(0) as u16
     );
     if ram_word!(game, samus_max_reserve_health) != 0 {
         set_ram_word!(game.pausemenu_equipment_category_item = 0u16);
@@ -3862,17 +3859,15 @@ pub unsafe fn EquipmentScreenDisplayReserves_PaletteSetup(game: &mut Game) -> u1
             != 0i32;
         if ram_word!(game, pausemenu_reserve_tank_animation_timer) == 0 || v0 {
             update_ram_word!(game.pausemenu_reserve_tank_animation_frame, wrapping_add(1));
-            let mut v1: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c165)) as *const u8
-                as *mut u8)
+            let mut v1: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c165)) as *mut u8)
                 .offset(
                     (2i32 * ram_word!(game, pausemenu_reserve_tank_animation_frame) as i32)
                         as isize,
                 ) as u16;
             if v1 == 255u16 {
                 set_ram_word!(game.pausemenu_reserve_tank_animation_frame = 0u16);
-                v1 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c165)) as *const u8
-                    as *mut u8)
-                    .offset(0) as u16;
+                v1 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c165)) as *mut u8).offset(0)
+                    as u16;
             }
             set_ram_word!(game.pausemenu_reserve_tank_animation_timer = v1);
         }
@@ -4113,7 +4108,7 @@ pub unsafe fn DrawFileSelectMapIcons(game: &mut Game) {
     DrawSimpleMapIcons(0x4eu16, 0xc7fbu16, 3584u16, game);
     let a: u16 = UpdateSamusPositionIndicatorAnimation(game);
     let data: *const u16 = (RomPtr_82(
-        *((&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c7cb)) as *const u8
+        *((&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c7cb))
             as *mut MapIconDataPointers)
             .offset(4))
         .crateria as *mut u8)
@@ -4149,7 +4144,7 @@ pub unsafe fn DrawSaveStationMapIcon(a: u16, k: u16, r3: u16, game: &mut Game) {
         let mut R36: u16 = *((&raw mut game.g_ram as *mut u8)
             .offset(0xd8f8)
             .offset((2i32 * ram_word!(game, area_index) as i32) as isize)
-            as *mut u8 as *mut u16);
+            as *mut u16);
         *(&raw mut R36 as *mut u8).offset(0) =
             ((R36) as u8) & (kShlBit[ram_word!(game, load_station_index) as usize]);
         let v2: u16 = *(RomPtr_82(
@@ -4166,7 +4161,7 @@ pub unsafe fn DrawDebugSaveMapIcons(a: u16, k: u16, r3: u16, game: &mut Game) {
     let R36: u16 = *((&raw mut game.g_ram as *mut u8)
         .offset(0xd8f8)
         .offset((2i32 * ram_word!(game, area_index) as i32) as isize)
-        as *mut u8 as *mut u16);
+        as *mut u16);
     let v2: u16 = *(RomPtr_82(
         (k as i32 + 2i32 * ram_word!(game, area_index) as i32) as u16,
         game,
@@ -4180,7 +4175,7 @@ pub unsafe fn DrawDebugElevatorMapIcons(a: u16, k: u16, r3: u16, game: &mut Game
     let R36: u16 = *((&raw mut game.g_ram as *mut u8)
         .offset(0xd8f8)
         .offset((2i32 * ram_word!(game, area_index) as i32 + 1i32) as isize)
-        as *mut u8 as *mut u16);
+        as *mut u16);
     let v2: u16 = *(RomPtr_82(
         (k as i32 + 2i32 * ram_word!(game, area_index) as i32) as u16,
         game,
@@ -4330,8 +4325,7 @@ pub unsafe fn HandleMapScrollArrows(game: &mut Game) {
         != 0
     {
         if ram_word!(game, map_scrolling_direction)
-            == (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82b9be)) as *const u8
-                as *mut MapScrollArrowData))
+            == (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82b9be)) as *mut MapScrollArrowData))
                 .map_scroll_dir
         {
             set_ram_word!(game.map_scrolling_gear_switch_timer = 0u16);
@@ -4399,7 +4393,7 @@ pub unsafe fn DrawMenuSelectionMissile(game: &mut Game) {
         if update_ram_word!(game.cinematic_var5, wrapping_sub(1), reread) == 0 {
             set_ram_word!(
                 game.eproj_id[0] = (*(((&raw mut game.g_ram as *mut u8).offset(0x1997) as *mut u16)
-                    .offset(0) as *mut u16 as *mut u8)
+                    .offset(0) as *mut u8)
                     .offset(0) as i32
                     + 1i32
                     & 3i32) as u16
@@ -4446,16 +4440,13 @@ pub unsafe fn DrawFileCopyArrow(game: &mut Game) {
         }
     }
     DrawMenuSpritemap(
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82bb0c)) as *const u8
-            as *mut FileCopyArrowStuff)
+        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82bb0c)) as *mut FileCopyArrowStuff)
             .offset(v0 as isize))
         .spritemap,
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82bb0c)) as *const u8
-            as *mut FileCopyArrowStuff)
+        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82bb0c)) as *mut FileCopyArrowStuff)
             .offset(v0 as isize))
         .xpos,
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82bb0c)) as *const u8
-            as *mut FileCopyArrowStuff)
+        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82bb0c)) as *mut FileCopyArrowStuff)
             .offset(v0 as isize))
         .ypos,
         512u16,
@@ -5719,7 +5710,7 @@ pub unsafe fn LoadCRETilesTilesetTilesAndPalette(game: &mut Game) {
     );
     DecompressToMem(
         Load24((&raw mut game.g_ram as *mut u8).offset(0x7c6) as *mut LongPtr),
-        (&raw mut game.g_ram as *mut u8).offset(0xc200) as *mut u8,
+        (&raw mut game.g_ram as *mut u8).offset(0xc200),
         game,
     );
 }
@@ -5806,7 +5797,7 @@ pub unsafe fn LoadLevelDataAndOtherThings(game: &mut Game) {
         while m != 50u16 {
             *((&raw mut game.g_ram as *mut u8)
                 .offset(0xcd20)
-                .offset(m as isize) as *mut u8 as *mut u16) =
+                .offset(m as isize) as *mut u16) =
                 *(RomPtr_8F(rdf_scroll_ptr as u16, game) as *mut u16);
             rdf_scroll_ptr = (rdf_scroll_ptr).wrapping_add(2i16);
             m = (m).wrapping_add(2u16);
@@ -6078,7 +6069,7 @@ pub unsafe fn LoadLevelScrollAndCre(game: &mut Game) {
         while m != 50u16 {
             *((&raw mut game.g_ram as *mut u8)
                 .offset(0xcd20)
-                .offset(m as isize) as *mut u8 as *mut u16) =
+                .offset(m as isize) as *mut u16) =
                 *(RomPtr_8F(rdf_scroll_ptr as u16, game) as *mut u16);
             rdf_scroll_ptr = (rdf_scroll_ptr).wrapping_add(2i16);
             m = (m).wrapping_add(2u16);
@@ -6808,7 +6799,7 @@ pub unsafe fn LoadControllerOptionsFromControllerBindings(game: &mut Game) {
             game,
             0x82f54a,
             v1 as isize
-        ) as isize) as *mut u8 as *mut u16) as i16;
+        ) as isize) as *mut u16) as i16;
         if (v2 as i32 & kButton_X as i32) != 0i32 {
             current_block_13 = 4528428927647462225;
         } else if (v2 as i32 & kButton_A as i32) != 0i32 {
@@ -6861,7 +6852,7 @@ pub unsafe fn OptionsMenuFunc8(game: &mut Game) -> u8 {
             game,
             0x82f54a,
             (v0 >> 1i32) as isize
-        ) as isize) as *mut u8 as *mut u16) =
+        ) as isize) as *mut u16) =
             word_82F575[ram_word!(game, eproj_F[((v0 >> 1i32) + 13i32)]) as usize] as u16;
         v0 += 2i32;
         if (v2 >= 12i32) {
@@ -6891,23 +6882,23 @@ pub unsafe fn OptionsMenuFunc6(game: &mut Game) {
             .offset(v2 as i32 as isize) as *mut u16) = *v3;
         *(((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap as *mut u16)
-            .offset(1) as *mut u16 as *mut u8)
+            .offset(1) as *mut u8)
             .offset(v2 as i32 as isize) as *mut u16) = *v3.offset(1);
         *(((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap as *mut u16)
-            .offset(2) as *mut u16 as *mut u8)
+            .offset(2) as *mut u8)
             .offset(v2 as i32 as isize) as *mut u16) = *v3.offset(2);
         *(((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap as *mut u16)
-            .offset(32) as *mut u16 as *mut u8)
+            .offset(32) as *mut u8)
             .offset(v2 as i32 as isize) as *mut u16) = *v3.offset(3);
         *(((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap as *mut u16)
-            .offset(33) as *mut u16 as *mut u8)
+            .offset(33) as *mut u8)
             .offset(v2 as i32 as isize) as *mut u16) = *v3.offset(4);
         *(((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap as *mut u16)
-            .offset(34) as *mut u16 as *mut u8)
+            .offset(34) as *mut u8)
             .offset(v2 as i32 as isize) as *mut u16) = *v3.offset(5);
         v0 = (v4).wrapping_add(2u16);
         if (((v4) as i16).wrapping_sub(12i16) >= 0i16) {
@@ -6920,15 +6911,14 @@ pub unsafe fn OptionsMenuFunc6(game: &mut Game) {
         *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
             .menu
             .backup_of_io_registers_in_gameover as *mut u8)
-            .offset(46) as *mut u8 as *mut u32) =
-            *(&raw const g_word_82F6AD as *const u16 as *mut u32);
+            .offset(46) as *mut u32) = *(&raw const g_word_82F6AD as *const u16 as *mut u32);
         (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap[665i32 as usize] = g_word_82F6AD[2i32 as usize];
         *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
             .menu
             .field_536 as *mut u8)
-            .offset(56) as *mut u8 as *mut u32) =
-            *((&raw const g_word_82F6AD as *const u16).offset(3) as *const u16 as *mut u32);
+            .offset(56) as *mut u32) =
+            *((&raw const g_word_82F6AD as *const u16).offset(3) as *mut u32);
         (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap[697i32 as usize] = g_word_82F6AD[5i32 as usize];
     }
@@ -6938,23 +6928,21 @@ pub unsafe fn OptionsMenuFunc6(game: &mut Game) {
         *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
             .menu
             .field_536 as *mut u8)
-            .offset(184) as *mut u8 as *mut u32) =
-            *(&raw const g_word_82F6AD as *const u16 as *mut u32);
+            .offset(184) as *mut u32) = *(&raw const g_word_82F6AD as *const u16 as *mut u32);
         (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap[761i32 as usize] = g_word_82F6AD[2i32 as usize];
         *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
             .menu
             .menu_tilemap as *mut u8)
-            .offset(46) as *mut u8 as *mut u32) =
-            *((&raw const g_word_82F6AD as *const u16).offset(3) as *const u16 as *mut u32);
+            .offset(46) as *mut u32) =
+            *((&raw const g_word_82F6AD as *const u16).offset(3) as *mut u32);
         (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap[793i32 as usize] = g_word_82F6AD[5i32 as usize];
     }
 }
 pub unsafe fn OptionsMenuControllerFunc_0(game: &mut Game) {
     let mut v0: u16 = 12u16;
-    while (word_82F575[(v0 as i32 >> 1i32) as usize] as u32
-        & ram_word!(game, joypad1_newkeys) as u32)
+    while (word_82F575[(v0 as i32 >> 1i32) as usize] & ram_word!(game, joypad1_newkeys) as u32)
         == 0u32
     {
         v0 = (v0).wrapping_sub(2u16);

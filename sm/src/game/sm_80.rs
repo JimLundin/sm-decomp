@@ -196,7 +196,7 @@ pub unsafe fn CheckEventHappened(a: u16, game: &mut Game) -> u16 {
 }
 pub unsafe fn CopySuperMetroidString(game: &mut Game) {
     memcpy(
-        game.g_sram.offset(0x1fe0) as *mut u8 as *mut c_void,
+        game.g_sram.offset(0x1fe0) as *mut c_void,
         b"supermetroid\0" as *const u8 as *const c_char as *const c_void,
         12 as size_t,
     );
@@ -209,13 +209,13 @@ pub unsafe fn VerifySRAM(game: &mut Game) {
         && LoadFromSram(2u16, game) != 0u8
     {
         memcpy(
-            game.g_sram.offset(0x1fe0) as *mut u8 as *mut c_void,
+            game.g_sram.offset(0x1fe0) as *mut c_void,
             b"madadameyohn\0" as *const u8 as *const c_char as *const c_void,
             12 as size_t,
         );
         RtlWriteSram(game);
     } else if memcmp(
-        game.g_sram.offset(0x1fe0) as *mut u8 as *const c_void,
+        game.g_sram.offset(0x1fe0) as *const c_void,
         b"supermetroid\0" as *const u8 as *const c_char as *const c_void,
         12 as size_t,
     ) == 0
@@ -391,7 +391,7 @@ pub unsafe fn LoadMirrorOfExploredMapTiles(game: &mut Game) {
     loop {
         *((&raw mut game.g_ram as *mut u8)
             .offset(0x7f7)
-            .offset(v2 as isize) as *mut u8 as *mut u16) =
+            .offset(v2 as isize) as *mut u16) =
             ram_word!(game, explored_map_tiles_saved[(v1 as i32 >> 1i32)]);
         v1 = (v1).wrapping_add(2u16);
         v2 = (v2).wrapping_add(2u16);
@@ -410,10 +410,10 @@ pub unsafe fn SaveExploredMapTilesToSaved(game: &mut Game) {
     let mut v2: u16 = 0u16;
     loop {
         set_ram_word!(
-            game.explored_map_tiles_saved[(v1 as i32 >> 1i32)] =
-                *((&raw mut game.g_ram as *mut u8)
-                    .offset(0x7f7)
-                    .offset(v2 as isize) as *mut u8 as *mut u16)
+            game.explored_map_tiles_saved[(v1 as i32 >> 1i32)] = *((&raw mut game.g_ram as *mut u8)
+                .offset(0x7f7)
+                .offset(v2 as isize)
+                as *mut u16)
         );
         v1 = (v1).wrapping_add(2u16);
         v2 = (v2).wrapping_add(2u16);
@@ -424,7 +424,7 @@ pub unsafe fn SaveExploredMapTilesToSaved(game: &mut Game) {
     if ram_word!(game, has_area_map) != 0 {
         let ref mut fresh88 = *((&raw mut game.g_ram as *mut u8)
             .offset(0xd908)
-            .offset(ram_word!(game, area_index) as isize) as *mut u8
+            .offset(ram_word!(game, area_index) as isize)
             as *mut u16);
         *fresh88 = (*fresh88) | (0xffu16);
     }
@@ -622,10 +622,7 @@ pub unsafe fn QueueMode7Transfers(db: u8, k: u16, game: &mut Game) {
 }
 pub unsafe fn NMI_ProcessMode7Queue(game: &mut Game) {
     if ram_word!(game, mode7_vram_write_queue_tail) != 0 {
-        NMI_ProcessMode7QueueInner(
-            (&raw mut game.g_ram as *mut u8).offset(0x2d0) as *mut u8,
-            game,
-        );
+        NMI_ProcessMode7QueueInner((&raw mut game.g_ram as *mut u8).offset(0x2d0), game);
         *(&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x2d0) as *mut Mode7VramWriteQueue)
             .offset(0))
         .field_0 as *mut u16) = 0u16;
@@ -873,8 +870,8 @@ pub unsafe fn HandleMusicQueue(game: &mut Game) {
             *(&raw mut game.g_ram as *mut u8).offset(0x64c) = -1i32 as u8;
             APU_UploadBank(
                 Load24(
-                    (game.g_rom.offset(crate::rtl::lorom_offset(0x8fe7e1)) as *const u8
-                        as *mut LongPtr as *mut u8)
+                    (game.g_rom.offset(crate::rtl::lorom_offset(0x8fe7e1)) as *mut LongPtr
+                        as *mut u8)
                         .offset(ram_word!(game, music_entry) as u8 as i32 as isize)
                         as *mut LongPtr,
                 ),

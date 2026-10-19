@@ -97,7 +97,7 @@ pub unsafe fn snes_loadRom(
             data,
             length,
             0x7fc0i32,
-            (&raw mut headers as *mut CartHeader).offset(0) as *mut CartHeader,
+            (&raw mut headers as *mut CartHeader).offset(0),
         );
     }
     if length >= 0x8200i32 {
@@ -105,7 +105,7 @@ pub unsafe fn snes_loadRom(
             data,
             length,
             0x81c0i32,
-            (&raw mut headers as *mut CartHeader).offset(1) as *mut CartHeader,
+            (&raw mut headers as *mut CartHeader).offset(1),
         );
     }
     if length >= 0x10000i32 {
@@ -113,7 +113,7 @@ pub unsafe fn snes_loadRom(
             data,
             length,
             0xffc0i32,
-            (&raw mut headers as *mut CartHeader).offset(2) as *mut CartHeader,
+            (&raw mut headers as *mut CartHeader).offset(2),
         );
     }
     if length >= 0x10200i32 {
@@ -121,7 +121,7 @@ pub unsafe fn snes_loadRom(
             data,
             length,
             0x101c0i32,
-            (&raw mut headers as *mut CartHeader).offset(3) as *mut CartHeader,
+            (&raw mut headers as *mut CartHeader).offset(3),
         );
     }
     let mut max: i32 = 0i32;

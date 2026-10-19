@@ -884,8 +884,7 @@ pub unsafe fn Samus_DrawEchoes(game: &mut Game) {
 pub unsafe fn Samus_DrawEcho(j: u16, game: &mut Game) {
     let v1: i32 = j as i32 >> 1i32;
     let v2: i16 = (ram_word!(game, speed_echo_ypos[v1]) as i32
-        - (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const u8
-            as *mut SamusPoseParams)
+        - (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *mut SamusPoseParams)
             .offset(ram_word!(game, samus_pose) as isize))
         .y_offset_to_gfx as i32
         - ram_word!(game, layer1_y_pos) as i32) as i16;
@@ -914,8 +913,7 @@ pub unsafe fn Samus_DrawShinesparkCrashEchoes(k: u16, game: &mut Game) {
             ram_word!(game, samus_pose) as isize
         ));
         let v2: i16 = (ram_word!(game, speed_echo_ypos[(k as i32 >> 1i32)]) as i32
-            - (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const u8
-                as *mut SamusPoseParams)
+            - (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *mut SamusPoseParams)
                 .offset(ram_word!(game, samus_pose) as isize))
             .y_offset_to_gfx as i32
             - ram_word!(game, layer1_y_pos) as i32) as i16;
@@ -1119,7 +1117,7 @@ pub unsafe fn AtmosphericTypeFunc_1_FootstepSplash(k: u16, j: u16, game: &mut Ga
     let v2: i32 = j as i32 >> 1i32;
     let r18: u16 = (2u16).wrapping_mul(
         (*(((&raw mut game.g_ram as *mut u8).offset(0xaec) as *mut u16).offset(v2 as isize)
-            as *mut u16 as *mut u8)
+            as *mut u8)
             .offset(0)) as u16,
     );
     let v3: u16 = ram_word!(game, oam_next_ptr);
@@ -1177,7 +1175,7 @@ pub unsafe fn AtmosphericTypeFunc_Common(j: u16, a: u16, game: &mut Game) {
 pub unsafe fn AtmosphericTypeFunc_3_DivingSplash(k: u16, j: u16, game: &mut Game) {
     let v2: i32 = j as i32 >> 1i32;
     let r18: u16 = *(((&raw mut game.g_ram as *mut u8).offset(0xaec) as *mut u16)
-        .offset(v2 as isize) as *mut u16 as *mut u8)
+        .offset(v2 as isize) as *mut u8)
         .offset(0) as u16;
     set_ram_word!(game.atmospheric_gfx_y_pos[v2] = ram_word!(game, fx_y_pos));
     AtmosphericTypeFunc_Common(j, (r18).wrapping_add(399u16), game);
@@ -1206,7 +1204,7 @@ pub unsafe fn AtmosphericTypeFunc_67_Dust(k: u16, j: u16, game: &mut Game) {
 }
 pub unsafe fn AtmosphericTypeFunc_5_Bubbles(k: u16, j: u16, game: &mut Game) {
     let r18: u16 = *(((&raw mut game.g_ram as *mut u8).offset(0xaec) as *mut u16)
-        .offset((j as i32 >> 1i32) as isize) as *mut u16 as *mut u8)
+        .offset((j as i32 >> 1i32) as isize) as *mut u8)
         .offset(0) as u16;
     AtmosphericTypeFunc_Common(j, (r18).wrapping_add(390u16), game);
 }
@@ -1257,7 +1255,7 @@ pub unsafe fn Samus_CalcSpritemapPos(k: u16, game: &mut Game) -> PairU16 {
     MakePairU16(v1.k, v1.j)
 }
 pub unsafe fn Samus_CalcSpritemapPos_Default(j: u16, game: &mut Game) -> PairU16 {
-    let v1: i32 = *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const u8
+    let v1: i32 = *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629))
         as *mut SamusPoseParams)
         .offset(0))
     .y_offset_to_gfx)
@@ -1305,7 +1303,7 @@ pub unsafe fn Samus_CalcSpritemapPos_Standing(j: u16, game: &mut Game) -> PairU1
         let r18: u16 = *((&raw const g_byte_908D28 as *const u8).offset(
             (ram_word!(game, samus_anim_frame) as i32 + 4i32 * (v1 as i32 - 164i32)) as u16
                 as isize,
-        ) as *const u8 as *mut u16);
+        ) as *mut u16);
         set_ram_word!(
             game.samus_spritemap_y_pos = (ram_word!(game, samus_y_pos) as i32
                 - r18 as i32
@@ -2869,8 +2867,11 @@ pub unsafe fn Samus_Movement_03_SpinJumping(game: &mut Game) {
             set_ram_word!(game.samus_contact_damage_index = 4u16);
         }
     } else if ram_word!(game, samus_anim_frame_timer) == 1u16
-        && *(game.g_rom.offset(crate::rtl::lorom_offset(0x90a514)) as *const u8 as *mut u8)
-            .offset(ram_word!(game, samus_anim_frame) as isize)
+        && *(game.g_rom.offset(crate::rtl::lorom_offset(0x90a514)) as *mut u8).offset(ram_word!(
+            game,
+            samus_anim_frame
+        )
+            as isize)
             != 0u8
     {
         QueueSfx1_Max6(0x2fu16, game);
@@ -3171,7 +3172,7 @@ pub unsafe fn DisableMinimapAndMarkBossRoomAsExplored(game: &mut Game) {
     }
     let mut v2: u16 = 5u16;
     while ram_word!(game, boss_id)
-        != (*(game.g_rom.offset(crate::rtl::lorom_offset(0x90a83a)) as *const u8
+        != (*(game.g_rom.offset(crate::rtl::lorom_offset(0x90a83a))
             as *mut DisableMinimapAndMarkBossRoomAsExploredEnt)
             .offset(v2 as isize))
         .boss_id_
@@ -3181,7 +3182,7 @@ pub unsafe fn DisableMinimapAndMarkBossRoomAsExplored(game: &mut Game) {
             return;
         }
     }
-    let mut i: i32 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x90a83a)) as *const u8
+    let mut i: i32 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x90a83a))
         as *mut DisableMinimapAndMarkBossRoomAsExploredEnt)
         .offset(v2 as isize))
     .ptrs as i32;
@@ -3239,19 +3240,19 @@ pub unsafe fn UpdateMinimap(game: &mut Game) {
         & (u16::swap_bytes(
             *((&raw mut game.g_ram as *mut u8)
                 .offset(0x7f7)
-                .offset(v3 as isize) as *mut u8 as *mut u16),
+                .offset(v3 as isize) as *mut u16),
         ));
     let mut r26: u16 = (kShr0xFc00[v6 as usize])
         & (u16::swap_bytes(
             *((&raw mut game.g_ram as *mut u8)
                 .offset(0x7f7)
-                .offset((v3 as i32 + 4i32) as isize) as *mut u8 as *mut u16),
+                .offset((v3 as i32 + 4i32) as isize) as *mut u16),
         ));
     let mut r28: u16 = (kShr0xFc00[v6 as usize])
         & (u16::swap_bytes(
             *((&raw mut game.g_ram as *mut u8)
                 .offset(0x7f7)
-                .offset((v3 as i32 + 8i32) as isize) as *mut u8 as *mut u16),
+                .offset((v3 as i32 + 8i32) as isize) as *mut u16),
         ));
     let mut r9: *const u8 = RomPtr_82(
         crate::rtl::rom_table_word!(game, 0x829717, ram_word!(game, area_index) as isize),
@@ -3357,8 +3358,8 @@ pub unsafe fn UpdateMinimapInside(
     let mut v2: u16 = (2u16).wrapping_mul((v1) as u16);
     let r0: *const u16 = RomPtr(
         Load24(
-            (game.g_rom.offset(crate::rtl::lorom_offset(0x82964a)) as *const u8 as *mut LongPtr)
-                .offset(ram_word!(game, area_index) as isize) as *mut LongPtr,
+            (game.g_rom.offset(crate::rtl::lorom_offset(0x82964a)) as *mut LongPtr)
+                .offset(ram_word!(game, area_index) as isize),
         ),
         game,
     ) as *const u16;
@@ -3662,7 +3663,7 @@ pub unsafe fn KillProjectile(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
     if (ram_word!(game, projectile_type[v1]) as i32 & 0xf00i32) != 0i32 {
         if (*(((&raw mut game.g_ram as *mut u8).offset(0xc18) as *mut u16).offset(v1 as isize)
-            as *mut u16 as *mut u8)
+            as *mut u8)
             .offset(1isize) as i32
             & 0xfi32)
             - 3i32
@@ -4868,13 +4869,13 @@ pub unsafe fn InitProjectilePositionDirection(r20: u16, game: &mut Game) -> u8 {
         set_ram_word!(game.new_projectile_direction_changed_pose = 0u16);
     } else {
         direction_shots_fired = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629))
-            as *const u8 as *mut SamusPoseParams)
+            as *mut SamusPoseParams)
             .offset(v0 as isize))
         .direction_shots_fired as u16;
         if (direction_shots_fired as i32 & 0xf0i32) != 0i32 {
             if direction_shots_fired != 16u16 || {
                 *(&raw mut direction_shots_fired as *mut u8).offset(0) =
-                    (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const u8
+                    (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629))
                         as *mut SamusPoseParams)
                         .offset(ram_word!(game, samus_last_different_pose) as isize))
                     .direction_shots_fired;
@@ -4889,7 +4890,7 @@ pub unsafe fn InitProjectilePositionDirection(r20: u16, game: &mut Game) -> u8 {
     }
     let v2: i32 = r20 as i32 >> 1i32;
     set_ram_word!(game.projectile_dir[v2] = direction_shots_fired);
-    let r22: u16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const u8
+    let r22: u16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629))
         as *mut SamusPoseParams)
         .offset(v0 as isize))
     .y_offset_to_gfx as u16;
@@ -5043,12 +5044,11 @@ pub unsafe fn DrawFlareAnimationComponent(k: u16, game: &mut Game) {
         v1 = word_93A225[(k as i32 >> 1i32) as usize];
     }
     let r22: u16 = (r18).wrapping_add(v1);
-    let r24: u16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const u8
+    let r24: u16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629))
         as *mut SamusPoseParams)
         .offset(ram_word!(game, samus_pose) as isize))
     .y_offset_to_gfx as u16;
-    v2 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const u8
-        as *mut SamusPoseParams)
+    v2 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *mut SamusPoseParams)
         .offset(ram_word!(game, samus_pose) as isize))
     .direction_shots_fired as i16;
     if v2 != 255i16 && v2 != 16i16 {
@@ -5223,7 +5223,7 @@ pub unsafe fn ProjectileReflection(r20: u16, game: &mut Game) {
         let k: u16 = r20;
         ClearProjectile(
             *(((&raw mut game.g_ram as *mut u8).offset(0xc7c) as *mut u16).offset(v1 as isize)
-                as *mut u16 as *mut u8)
+                as *mut u8)
                 .offset(0) as u16,
             game,
         );
@@ -5729,8 +5729,7 @@ pub unsafe fn Samus_ArmCannon_Draw(game: &mut Game) {
         );
         let r18: u16 = *v4.offset(0) as i8 as u16;
         let r20: u16 = *v4.offset(1) as i8 as u16;
-        r22 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const u8
-            as *mut SamusPoseParams)
+        r22 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *mut SamusPoseParams)
             .offset(ram_word!(game, samus_pose) as isize))
         .y_offset_to_gfx as u16;
         let v7: u16 = ram_word!(game, oam_next_ptr);
@@ -5783,13 +5782,13 @@ pub unsafe fn Samus_ArmCannon_Draw(game: &mut Game) {
 }
 unsafe fn Projectile_SinLookup_Inner(k: u16, r24: u16) -> u16 {
     let mut prod: u16 = Mult8x8(
-        *((&raw const kSinCosTable8bit_Sext as *const i16).offset(64) as *const i16 as *mut u8)
+        *((&raw const kSinCosTable8bit_Sext as *const i16).offset(64) as *mut u8)
             .offset(k as i32 as isize),
         r24 as u8,
     );
     let r18: u16 = (prod as i32 >> 8i32) as u16;
     prod = Mult8x8(
-        *((&raw const kSinCosTable8bit_Sext as *const i16).offset(64) as *const i16 as *mut u8)
+        *((&raw const kSinCosTable8bit_Sext as *const i16).offset(64) as *mut u8)
             .offset(k as i32 as isize)
             .offset(1),
         r24 as u8,
@@ -6376,26 +6375,24 @@ pub unsafe fn Samus_MoveHandler_ShinesparkCrash_0(game: &mut Game) {
 }
 pub unsafe fn Samus_MoveHandler_ShinesparkCrash_1(game: &mut Game) {
     set_ram_word!(
-        game.speed_echo_xspeed[0] = ((*(((&raw mut game.g_ram as *mut u8).offset(0xab0)
-            as *mut u16)
-            .offset(2) as *mut u16 as *mut u8)
-            .offset(0))
-        .wrapping_add(
-            *(((&raw mut game.g_ram as *mut u8).offset(0xac0) as *mut u16).offset(0)
-                as *mut u16 as *mut u8)
-                .offset(0),
-        )) as u16
+        game.speed_echo_xspeed[0] =
+            ((*(((&raw mut game.g_ram as *mut u8).offset(0xab0) as *mut u16).offset(2) as *mut u8)
+                .offset(0))
+            .wrapping_add(
+                *(((&raw mut game.g_ram as *mut u8).offset(0xac0) as *mut u16).offset(0)
+                    as *mut u8)
+                    .offset(0),
+            )) as u16
     );
     set_ram_word!(
-        game.speed_echo_xspeed[1] = ((*(((&raw mut game.g_ram as *mut u8).offset(0xab0)
-            as *mut u16)
-            .offset(2) as *mut u16 as *mut u8)
-            .offset(0))
-        .wrapping_add(
-            *(((&raw mut game.g_ram as *mut u8).offset(0xac0) as *mut u16).offset(1)
-                as *mut u16 as *mut u8)
-                .offset(0),
-        )) as u16
+        game.speed_echo_xspeed[1] =
+            ((*(((&raw mut game.g_ram as *mut u8).offset(0xab0) as *mut u16).offset(2) as *mut u8)
+                .offset(0))
+            .wrapping_add(
+                *(((&raw mut game.g_ram as *mut u8).offset(0xac0) as *mut u16).offset(1)
+                    as *mut u8)
+                    .offset(0),
+            )) as u16
     );
     update_ram_word!(game.speed_echo_ypos[2], wrapping_add(4u16));
     if ram_word!(game, speed_echo_ypos[2]) as i32 - 128i32 & 0x8000i32 == 0 {
@@ -6485,7 +6482,7 @@ pub unsafe fn ProjPreInstr_SpeedEcho(k: u16, game: &mut Game) {
     let pt: Point16U = Projectile_SinLookup(
         ram_word!(game, projectile_variables[v1]),
         *(((&raw mut game.g_ram as *mut u8).offset(0xbdc) as *mut u16).offset(v1 as isize)
-            as *mut u16 as *mut u8)
+            as *mut u8)
             .offset(0) as u16,
     );
     let v2: u16 = (pt.x).wrapping_add(ram_word!(game, samus_x_pos));
@@ -6792,27 +6789,21 @@ pub unsafe fn ProjPreInstr_SpreadBomb(k: u16, game: &mut Game) {
     Bomb_Func2(game);
     if ram_word!(game, projectile_variables[v1]) != 0 {
         AddToHiLo(
-            ((&raw mut game.g_ram as *mut u8).offset(0xbf0) as *mut u16).offset(v1 as isize)
-                as *mut u16,
-            ((&raw mut game.g_ram as *mut u8).offset(0xc90) as *mut u16).offset(v1 as isize)
-                as *mut u16,
+            ((&raw mut game.g_ram as *mut u8).offset(0xbf0) as *mut u16).offset(v1 as isize),
+            ((&raw mut game.g_ram as *mut u8).offset(0xc90) as *mut u16).offset(v1 as isize),
             (ram_word!(game, samus_y_accel) as u32) << 16i32
                 | ram_word!(game, samus_y_subaccel) as u32,
         );
         AddToHiLo(
-            ((&raw mut game.g_ram as *mut u8).offset(0xb78) as *mut u16).offset(v1 as isize)
-                as *mut u16,
-            ((&raw mut game.g_ram as *mut u8).offset(0xba0) as *mut u16).offset(v1 as isize)
-                as *mut u16,
+            ((&raw mut game.g_ram as *mut u8).offset(0xb78) as *mut u16).offset(v1 as isize),
+            ((&raw mut game.g_ram as *mut u8).offset(0xba0) as *mut u16).offset(v1 as isize),
             (ram_word!(game, projectile_bomb_y_speed[v1]) as u32) << 16i32
                 | ram_word!(game, projectile_timers[v1]) as u32,
         );
         if BlockCollSpreadBomb(k, game) as i32 & 1i32 != 0 {
             AddToHiLo(
-                ((&raw mut game.g_ram as *mut u8).offset(0xb78) as *mut u16).offset(v1 as isize)
-                    as *mut u16,
-                ((&raw mut game.g_ram as *mut u8).offset(0xba0) as *mut u16).offset(v1 as isize)
-                    as *mut u16,
+                ((&raw mut game.g_ram as *mut u8).offset(0xb78) as *mut u16).offset(v1 as isize),
+                ((&raw mut game.g_ram as *mut u8).offset(0xba0) as *mut u16).offset(v1 as isize),
                 -((ram_word!(game, projectile_bomb_y_speed[v1]) as i32) << 16i32
                     | ram_word!(game, projectile_timers[v1]) as i32) as u32,
             );
@@ -6830,18 +6821,14 @@ pub unsafe fn ProjPreInstr_SpreadBomb(k: u16, game: &mut Game) {
         let t: u16 = ram_word!(game, projectile_bomb_x_speed[v1]);
         if t as i32 & 0x8000i32 != 0 {
             AddToHiLo(
-                ((&raw mut game.g_ram as *mut u8).offset(0xb64) as *mut u16).offset(v1 as isize)
-                    as *mut u16,
-                ((&raw mut game.g_ram as *mut u8).offset(0xb8c) as *mut u16).offset(v1 as isize)
-                    as *mut u16,
+                ((&raw mut game.g_ram as *mut u8).offset(0xb64) as *mut u16).offset(v1 as isize),
+                ((&raw mut game.g_ram as *mut u8).offset(0xb8c) as *mut u16).offset(v1 as isize),
                 -(((((t) as i16) & (0x7fffi16)) as i32) << 8i32) as u32,
             );
         } else {
             AddToHiLo(
-                ((&raw mut game.g_ram as *mut u8).offset(0xb64) as *mut u16).offset(v1 as isize)
-                    as *mut u16,
-                ((&raw mut game.g_ram as *mut u8).offset(0xb8c) as *mut u16).offset(v1 as isize)
-                    as *mut u16,
+                ((&raw mut game.g_ram as *mut u8).offset(0xb64) as *mut u16).offset(v1 as isize),
+                ((&raw mut game.g_ram as *mut u8).offset(0xb8c) as *mut u16).offset(v1 as isize),
                 ((t as i16 as i32) << 8i32) as u32,
             );
         }
@@ -6852,18 +6839,14 @@ pub unsafe fn ProjPreInstr_SpreadBomb(k: u16, game: &mut Game) {
             ^ (0x8000u16));
         if t_0 as i32 & 0x8000i32 == 0 {
             AddToHiLo(
-                ((&raw mut game.g_ram as *mut u8).offset(0xb64) as *mut u16).offset(v1 as isize)
-                    as *mut u16,
-                ((&raw mut game.g_ram as *mut u8).offset(0xb8c) as *mut u16).offset(v1 as isize)
-                    as *mut u16,
+                ((&raw mut game.g_ram as *mut u8).offset(0xb64) as *mut u16).offset(v1 as isize),
+                ((&raw mut game.g_ram as *mut u8).offset(0xb8c) as *mut u16).offset(v1 as isize),
                 -((t_0 as i16 as i32) << 8i32) as u32,
             );
         } else {
             AddToHiLo(
-                ((&raw mut game.g_ram as *mut u8).offset(0xb64) as *mut u16).offset(v1 as isize)
-                    as *mut u16,
-                ((&raw mut game.g_ram as *mut u8).offset(0xb8c) as *mut u16).offset(v1 as isize)
-                    as *mut u16,
+                ((&raw mut game.g_ram as *mut u8).offset(0xb64) as *mut u16).offset(v1 as isize),
+                ((&raw mut game.g_ram as *mut u8).offset(0xb8c) as *mut u16).offset(v1 as isize),
                 (((((t_0) as i16) & (0x7fffi16)) as i32) << 8i32) as u32,
             );
         }
@@ -6908,10 +6891,8 @@ pub unsafe fn ProjPreInstr_WaveSba(mut k: u16, game: &mut Game) {
         update_ram_word!(game.projectile_bomb_x_speed[v1], wrapping_add(64u16));
     }
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0xb64) as *mut u16).offset(v1 as isize)
-            as *mut u16,
-        ((&raw mut game.g_ram as *mut u8).offset(0xb8c) as *mut u16).offset(v1 as isize)
-            as *mut u16,
+        ((&raw mut game.g_ram as *mut u8).offset(0xb64) as *mut u16).offset(v1 as isize),
+        ((&raw mut game.g_ram as *mut u8).offset(0xb8c) as *mut u16).offset(v1 as isize),
         ((ram_word!(game, projectile_bomb_x_speed[v1]) as i16 as i32) << 8i32) as u32,
     );
     if ((ram_word!(game, samus_y_pos)) as i16)
@@ -6925,10 +6906,8 @@ pub unsafe fn ProjPreInstr_WaveSba(mut k: u16, game: &mut Game) {
         update_ram_word!(game.projectile_variables[v1], wrapping_add(64u16));
     }
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0xb78) as *mut u16).offset(v1 as isize)
-            as *mut u16,
-        ((&raw mut game.g_ram as *mut u8).offset(0xba0) as *mut u16).offset(v1 as isize)
-            as *mut u16,
+        ((&raw mut game.g_ram as *mut u8).offset(0xb78) as *mut u16).offset(v1 as isize),
+        ((&raw mut game.g_ram as *mut u8).offset(0xba0) as *mut u16).offset(v1 as isize),
         ((ram_word!(game, projectile_variables[v1]) as i16 as i32) << 8i32) as u32,
     );
     if k == 6u16 {
@@ -6975,8 +6954,7 @@ pub unsafe fn BombSpread(game: &mut Game) {
             game.cooldown_timer =
                 kNonBeamProjectileCooldowns[(*(((&raw mut game.g_ram as *mut u8).offset(0xc18)
                     as *mut u16)
-                    .offset(5) as *mut u16
-                    as *mut u8)
+                    .offset(5) as *mut u8)
                     .offset(1isize,) as i32
                     & 0xfi32) as usize] as u16
         );
@@ -7050,11 +7028,11 @@ pub unsafe fn ProjPreInstr_SpazerSba_FuncB_0(j: u16, r22: u16, game: &mut Game) 
     let v1: i32 = j as i32 >> 1i32;
     set_ram_word!(game.projectile_y_pos[v1] = (r22).wrapping_add(ram_word!(game, samus_y_pos)));
     let v2: u16 = ((*(((&raw mut game.g_ram as *mut u8).offset(0xbf0) as *mut u16)
-        .offset(v1 as isize) as *mut u16 as *mut u8)
+        .offset(v1 as isize) as *mut u8)
         .offset(0))
     .wrapping_add(
         *(((&raw mut game.g_ram as *mut u8).offset(0xc7c) as *mut u16).offset(v1 as isize)
-            as *mut u16 as *mut u8)
+            as *mut u8)
             .offset(0),
     )) as u16;
     set_ram_word!(game.projectile_variables[v1] = v2);
@@ -7078,12 +7056,11 @@ pub unsafe fn ProjPreInstr_SpazerSba_FuncB_1(j: u16, r22: u16, game: &mut Game) 
         set_ram_word!(
             game.projectile_variables[v2] = ((*(((&raw mut game.g_ram as *mut u8).offset(0xbf0)
                 as *mut u16)
-                .offset(v2 as isize) as *mut u16
-                as *mut u8)
+                .offset(v2 as isize) as *mut u8)
                 .offset(0))
             .wrapping_add(
                 *(((&raw mut game.g_ram as *mut u8).offset(0xc7c) as *mut u16).offset(v2 as isize)
-                    as *mut u16 as *mut u8)
+                    as *mut u8)
                     .offset(0),
             )) as u16
         );
@@ -7115,12 +7092,11 @@ pub unsafe fn ProjPreInstr_SpazerSba_FuncB_2(j: u16, r22: u16, game: &mut Game) 
         set_ram_word!(
             game.projectile_variables[v2] = ((*(((&raw mut game.g_ram as *mut u8).offset(0xbf0)
                 as *mut u16)
-                .offset(v2 as isize) as *mut u16
-                as *mut u8)
+                .offset(v2 as isize) as *mut u8)
                 .offset(0))
             .wrapping_add(
                 *(((&raw mut game.g_ram as *mut u8).offset(0xc7c) as *mut u16).offset(v2 as isize)
-                    as *mut u16 as *mut u8)
+                    as *mut u8)
                     .offset(0),
             )) as u16
         );
@@ -8374,7 +8350,7 @@ pub unsafe fn Samus_Func10(game: &mut Game) {
         game.UNUSED_word_7E0DFA,
         |fresh27| ((fresh27 as i32) << 8i32) as u16
     );
-    *((&raw mut game.g_ram as *mut u8).offset(0xa10) as *mut u8 as *mut u16) =
+    *((&raw mut game.g_ram as *mut u8).offset(0xa10) as *mut u16) =
         *((&raw mut game.g_ram as *mut u8).offset(0xa1e) as *mut u16);
 }
 pub unsafe fn DrawSamusAndProjectiles(game: &mut Game) {

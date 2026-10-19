@@ -2827,7 +2827,7 @@ pub unsafe fn MotherBrainsBrain_Shot(game: &mut Game) {
     } else {
         let v1: u16 = ((*(((&raw mut game.g_ram as *mut u8).offset(0xc18) as *mut u16)
             .offset(ram_word!(game, collision_detection_index) as isize)
-            as *mut u16 as *mut u8)
+            as *mut u8)
             .offset(1isize)) as u16)
             & (7u16);
         if g_byte_A9B546[v1 as usize] != 0 {
@@ -2867,7 +2867,7 @@ pub unsafe fn MotherBrain_DetermineShotReactionType(game: &mut Game) -> u16 {
         game,
         collision_detection_index
     )
-        as isize) as *mut u16 as *mut u8)
+        as isize) as *mut u8)
         .offset(1isize) as i32
         & 7i32) as usize] as u16
 }
@@ -3550,8 +3550,7 @@ pub unsafe fn MotherBrain_HandleRainbowBeamPalette(game: &mut Game) {
         let v2: u16 = (v1).wrapping_add(2u16);
         (*Get_MotherBrain(0x40i32, game)).mbn_var_01 = v2;
         MotherBrain_WritePalette(
-            *((game.g_rom.offset(crate::rtl::lorom_offset(0xade434)) as *const u8 as *mut u16
-                as *mut u8)
+            *((game.g_rom.offset(crate::rtl::lorom_offset(0xade434)) as *mut u16 as *mut u8)
                 .offset(v2 as i32 as isize)
                 .offset(-(2i32 as isize)) as *mut u16),
             game,
@@ -3789,7 +3788,7 @@ pub unsafe fn MotherBrain_PainfulWalkingBackwards(game: &mut Game) {
 pub unsafe fn MotherBrain_SetPainfulWalkingTimer(game: &mut Game) {
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40i32, game);
     (*E).mbn_var_09 = *((&raw const g_word_A9C049 as *const i16).offset((*E).mbn_var_06 as isize)
-        as *const i16 as *mut u8)
+        as *mut u8)
         .offset(0) as u16;
 }
 pub unsafe fn MotherBrain_Phase2_Revive_0(game: &mut Game) {
@@ -5173,8 +5172,8 @@ pub unsafe fn MotherBrain_Pal_WriteRoomPal(j: u16, game: &mut Game) {
 }
 pub unsafe fn HandleMotherBrainInstructionList(a: u16, game: &mut Game) -> u16 {
     let mut current_block: u64;
-    let st: *mut MotherBrainInstrExecState = (&raw mut game.g_ram as *mut u8).offset(a as isize)
-        as *mut u8 as *mut MotherBrainInstrExecState;
+    let st: *mut MotherBrainInstrExecState =
+        (&raw mut game.g_ram as *mut u8).offset(a as isize) as *mut MotherBrainInstrExecState;
     if ((*st).ip as i32 & 0x8000i32) == 0i32 {
         return 0u16;
     }
@@ -6572,7 +6571,7 @@ pub unsafe fn Shitroid_Func_4(game: &mut Game) {
         set_ram_word!(game.layer1_x_pos = 512u16);
         *((&raw mut game.g_ram as *mut u8).offset(0xcd20) as *mut u16) =
             *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(0) as u16;
-        *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(2) as *mut u8 as *mut u16) =
+        *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(2) as *mut u16) =
             *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(2) as u16;
         SpawnHardcodedPlm(
             SpawnHardcodedPlmArgs::new(0x30u8, 0x3u8, 0xb767 as VoidP),
@@ -6686,7 +6685,7 @@ pub unsafe fn Shitroid_Func_12(k: u16, game: &mut Game) {
         let ref mut fresh14 = *((&raw mut game.g_ram as *mut u8).offset(0xcd20) as *mut u16);
         *fresh14 = (*fresh14) | (0x100u16);
         let ref mut fresh15 =
-            *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(2) as *mut u8 as *mut u16);
+            *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(2) as *mut u16);
         *fresh15 = (*fresh15) | (0x100u16);
         SpawnHardcodedPlm(
             SpawnHardcodedPlmArgs::new(0x30u8, 0x3u8, 0xb763 as VoidP),
