@@ -12258,6 +12258,31 @@ prototype integration only; the pending reversed-gradient/start-zero helper
 revision needs its own source identity, corner checks and full replays.
 Complete credits/gameplay, hardware/audio timing and other masks remain open.
 
+Independent actual-ROM destination-read audit (2026-10-19).
+Extend the retained poisoned-scratch offscreen probe with read_byte observation
+while the actual C27F..C2B6 kernel runs. All243,344 cases pass, nativeexit0
+(49.02s), executing763,558,672 opcodes and checking125,584,694 ordered stores.
+There are zero CPU reads from7E/7F destination banks in any case. An actual
+LDA long7E9100 control records that read, proving the detector can reject it.
+The detector includes instruction/operand fetches in those banks; ordinary
+ROM-bank fetches and mirrored direct-page/return-stack reads remain allowed.
+
+The existing12,130,670 temporary scratch26-dependent high-byte differences
+remain visible and are replaced by the next same-address write with the
+candidate value. Final full RAM/scratch checks still pass. This confirms
+the temporary bytes are not consumed by the actual kernel in tested cases.
+Both9100/9800 bases, all visible starts, caller origins/angles, wrapped-bank
+and adjacent-tail cases retain prior scope. Arbitrary destination aliases,
+asynchronous DMA and untested on-screen corner cases remain separate.
+
+No maintained source or own residue change; read instrumentation is isolated
+and quality-session source/PLAN edits remain untouched. Cargo fmt/check,
+release and progress pass. Latest independent full frozen prototype checks
+remain Waver58109/0 and any%129712/0; no new full replay or final-source
+verification is claimed. Quality session owns final on-screen replacement
+and integration. Complete gameplay/credits, hardware/audio, masked RAM and
+ownership remain open. No probe/ROM-derived assets are committed.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
