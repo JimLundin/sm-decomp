@@ -2113,7 +2113,7 @@ pub unsafe fn CalculateXrayHdmaTableInner(
     game: &mut Game,
 ) {
     let mut v3: ::core::ffi::c_int = 0;
-    let mut ctx: [XrayHdmaCtx; 1] = [XrayHdmaCtx {
+    let mut ctx = XrayHdmaCtx {
         r22: 0,
         r24: 0,
         r26: 0,
@@ -2122,67 +2122,55 @@ pub unsafe fn CalculateXrayHdmaTableInner(
         r32: 0,
         r18_avoid: 0,
         dest: ::core::ptr::null_mut::<uint16>(),
-    }; 1];
-    let ref mut fresh28 = (*(&raw mut ctx as *mut XrayHdmaCtx)).dest;
-    *fresh28 = dest_addr;
-    (*(&raw mut ctx as *mut XrayHdmaCtx)).r18_avoid = r18;
-    (*(&raw mut ctx as *mut XrayHdmaCtx)).r22 =
-        ((k as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16;
-    (*(&raw mut ctx as *mut XrayHdmaCtx)).r24 = j;
-    (*(&raw mut ctx as *mut XrayHdmaCtx)).r26 =
-        (r18 as ::core::ffi::c_int - r20 as ::core::ffi::c_int) as uint16;
-    let ref mut fresh29 = (*(&raw mut ctx as *mut XrayHdmaCtx)).r26;
-    *fresh29 = (*fresh29 as ::core::ffi::c_int
-        + if (*(&raw mut ctx as *mut XrayHdmaCtx)).r26 as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
+    };
+    ctx.dest = dest_addr;
+    ctx.r18_avoid = r18;
+    ctx.r22 = ((k as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16;
+    ctx.r24 = j;
+    ctx.r26 = (r18 as ::core::ffi::c_int - r20 as ::core::ffi::c_int) as uint16;
+    ctx.r26 = (ctx.r26 as ::core::ffi::c_int
+        + if ctx.r26 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int
         {
             0x100 as ::core::ffi::c_int
         } else {
             0 as ::core::ffi::c_int
         }) as uint16;
-    (*(&raw mut ctx as *mut XrayHdmaCtx)).r28 =
-        (r20 as ::core::ffi::c_int + r18 as ::core::ffi::c_int) as uint16;
+    ctx.r28 = (r20 as ::core::ffi::c_int + r18 as ::core::ffi::c_int) as uint16;
     if r20 as ::core::ffi::c_int + r18 as ::core::ffi::c_int - 257 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         == 0
     {
-        (*(&raw mut ctx as *mut XrayHdmaCtx)).r28 =
-            (r20 as ::core::ffi::c_int + r18 as ::core::ffi::c_int - 256 as ::core::ffi::c_int)
-                as uint16;
+        ctx.r28 = (r20 as ::core::ffi::c_int + r18 as ::core::ffi::c_int
+            - 256 as ::core::ffi::c_int) as uint16;
     }
-    (*(&raw mut ctx as *mut XrayHdmaCtx)).r30 = *(game.g_rom.offset(
+    ctx.r30 = *(game.g_rom.offset(
         (((0x91c9d4 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0x91c9d4 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
             & 0x3fffff as ::core::ffi::c_int) as isize,
     ) as *const uint8 as *mut uint16)
         .offset(
-            (if (*(&raw mut ctx as *mut XrayHdmaCtx)).r26 as ::core::ffi::c_int
-                - 128 as ::core::ffi::c_int
+            (if ctx.r26 as ::core::ffi::c_int - 128 as ::core::ffi::c_int
                 & 0x8000 as ::core::ffi::c_int
                 != 0
             {
-                (*(&raw mut ctx as *mut XrayHdmaCtx)).r26 as ::core::ffi::c_int
+                ctx.r26 as ::core::ffi::c_int
             } else {
-                (*(&raw mut ctx as *mut XrayHdmaCtx)).r26 as ::core::ffi::c_int
-                    - 128 as ::core::ffi::c_int
+                ctx.r26 as ::core::ffi::c_int - 128 as ::core::ffi::c_int
             }) as isize,
         );
-    (*(&raw mut ctx as *mut XrayHdmaCtx)).r32 = *(game.g_rom.offset(
+    ctx.r32 = *(game.g_rom.offset(
         (((0x91c9d4 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0x91c9d4 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
             & 0x3fffff as ::core::ffi::c_int) as isize,
     ) as *const uint8 as *mut uint16)
         .offset(
-            (if (*(&raw mut ctx as *mut XrayHdmaCtx)).r28 as ::core::ffi::c_int
-                - 128 as ::core::ffi::c_int
+            (if ctx.r28 as ::core::ffi::c_int - 128 as ::core::ffi::c_int
                 & 0x8000 as ::core::ffi::c_int
                 != 0
             {
-                (*(&raw mut ctx as *mut XrayHdmaCtx)).r28 as ::core::ffi::c_int
+                ctx.r28 as ::core::ffi::c_int
             } else {
-                (*(&raw mut ctx as *mut XrayHdmaCtx)).r28 as ::core::ffi::c_int
-                    - 128 as ::core::ffi::c_int
+                ctx.r28 as ::core::ffi::c_int - 128 as ::core::ffi::c_int
             }) as isize,
         );
     if r20 == 0
@@ -2190,19 +2178,15 @@ pub unsafe fn CalculateXrayHdmaTableInner(
             || r18 as ::core::ffi::c_int == 192 as ::core::ffi::c_int)
     {
         v3 = 8 as ::core::ffi::c_int;
-    } else if (*(&raw mut ctx as *mut XrayHdmaCtx)).r26 as ::core::ffi::c_int
-        - 128 as ::core::ffi::c_int
+    } else if ctx.r26 as ::core::ffi::c_int - 128 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0
     {
-        if (*(&raw mut ctx as *mut XrayHdmaCtx)).r26 as ::core::ffi::c_int
-            - 64 as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
+        if ctx.r26 as ::core::ffi::c_int - 64 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             == 0
         {
             v3 = 4 as ::core::ffi::c_int;
-        } else if (*(&raw mut ctx as *mut XrayHdmaCtx)).r28 as ::core::ffi::c_int
-            - 64 as ::core::ffi::c_int
+        } else if ctx.r28 as ::core::ffi::c_int - 64 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             == 0
         {
@@ -2210,14 +2194,12 @@ pub unsafe fn CalculateXrayHdmaTableInner(
         } else {
             v3 = 2 as ::core::ffi::c_int;
         }
-    } else if (*(&raw mut ctx as *mut XrayHdmaCtx)).r26 as ::core::ffi::c_int
-        - 192 as ::core::ffi::c_int
+    } else if ctx.r26 as ::core::ffi::c_int - 192 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         == 0
     {
         v3 = 2 as ::core::ffi::c_int;
-    } else if (*(&raw mut ctx as *mut XrayHdmaCtx)).r28 as ::core::ffi::c_int
-        - 192 as ::core::ffi::c_int
+    } else if ctx.r28 as ::core::ffi::c_int - 192 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         == 0
     {
@@ -2236,7 +2218,7 @@ pub unsafe fn CalculateXrayHdmaTableInner(
             ]
         };
         kXrayHdmaFuncs[(v3 >> 1 as ::core::ffi::c_int) as usize]
-            .expect("non-null function pointer")(&raw mut ctx as *mut XrayHdmaCtx, game);
+            .expect("non-null function pointer")(&raw mut ctx, game);
     } else {
         static kXrayHdmaOnScreen_Funcs: [Option<XrayHdma0Func>; 5] = unsafe {
             [
@@ -2248,7 +2230,7 @@ pub unsafe fn CalculateXrayHdmaTableInner(
             ]
         };
         kXrayHdmaOnScreen_Funcs[(v3 >> 1 as ::core::ffi::c_int) as usize]
-            .expect("non-null function pointer")(&raw mut ctx as *mut XrayHdmaCtx, game);
+            .expect("non-null function pointer")(&raw mut ctx, game);
     };
 }
 pub unsafe fn XrayRunHandler(game: &mut Game) {
