@@ -1583,78 +1583,31 @@ static kSamusIsBottomDrawnFuncs: [Option<Func_U8>; 28] = unsafe {
     ]
 };
 pub unsafe fn Samus_Draw(game: &mut Game) {
-    let mut v0: PairU16 = PairU16 { k: 0, j: 0 };
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x18aa as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        != 0
-        || *((&raw mut game.g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            == 0
-        || *((&raw mut game.g_ram as *mut uint8).offset(0xa68 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            != 0
-        || *((&raw mut game.g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            & 1 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
-    {
-        let mut v2: uint16 = (2 as ::core::ffi::c_int
-            * *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xac8 as ::core::ffi::c_int as isize)
-            as *mut uint16) = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0xa96 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + *(game.g_rom.offset(
-                (((0x929263 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x929263 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
-                .offset(
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xa1c as ::core::ffi::c_int as isize)
-                        as *mut uint16) as isize,
-                ) as ::core::ffi::c_int) as uint16;
-        let mut a: uint16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xac8 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        v0 = Samus_CalcSpritemapPos(
-            (2 as ::core::ffi::c_int
-                * *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int) as uint16,
-            game,
-        );
-        DrawSamusSpritemap(a, v0.k, v0.j, game);
-        let mut R36: uint16 = v2;
-        if kSamusIsBottomDrawnFuncs[*(&raw mut game.g_ram as *mut uint8)
-            .offset(0xa1f as ::core::ffi::c_int as isize)
-            as usize]
-            .expect("non-null function pointer")(game) as ::core::ffi::c_int
-            & 1 as ::core::ffi::c_int
+    let knockback_timer = u16::from_le_bytes([game.g_ram[0x18aa], game.g_ram[0x18ab]]);
+    let invincibility_timer = u16::from_le_bytes([game.g_ram[0x18a8], game.g_ram[0x18a9]]);
+    let shine_timer = u16::from_le_bytes([game.g_ram[0xa68], game.g_ram[0xa69]]);
+    let nmi_frame = u16::from_le_bytes([game.g_ram[0x5b6], game.g_ram[0x5b7]]);
+    if knockback_timer != 0 || invincibility_timer == 0 || shine_timer != 0 || nmi_frame & 1 == 0 {
+        let doubled_pose = game.samus_pose().wrapping_mul(2);
+        let frame = game.samus_anim_frame();
+        let top_base = game.read_rom_word(0x929263, usize::from(game.samus_pose()) * 2);
+        let top_spritemap = frame.wrapping_add(top_base);
+        game.g_ram[0xac8..0xaca].copy_from_slice(&top_spritemap.to_le_bytes());
+        let position = Samus_CalcSpritemapPos(game.samus_pose().wrapping_mul(2), game);
+        DrawSamusSpritemap(top_spritemap, position.k, position.j, game);
+        if kSamusIsBottomDrawnFuncs[usize::from(game.samus_movement_type())]
+            .expect("non-null function pointer")(game)
+            & 1
             != 0
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xaca as ::core::ffi::c_int as isize)
-                as *mut uint16) = (*((&raw mut game.g_ram as *mut uint8)
-                .offset(0xa96 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                + *(game.g_rom.offset(
-                    (((0x92945d as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                        << 15 as ::core::ffi::c_int
-                        | 0x92945d as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                        & 0x3fffff as ::core::ffi::c_int) as isize,
-                ) as *const uint8 as *mut uint16)
-                    .offset((R36 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-                    as ::core::ffi::c_int) as uint16;
-            DrawSamusSpritemap(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xaca as ::core::ffi::c_int as isize)
-                    as *mut uint16),
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb04 as ::core::ffi::c_int as isize)
-                    as *mut uint16),
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb06 as ::core::ffi::c_int as isize)
-                    as *mut uint16),
-                game,
-            );
+            // The lower table keeps the captured, word-wrapped pose; frame and position stay live.
+            let frame = game.samus_anim_frame();
+            let bottom_base = game.read_rom_word(0x92945d, usize::from(doubled_pose >> 1) * 2);
+            let bottom_spritemap = frame.wrapping_add(bottom_base);
+            game.g_ram[0xaca..0xacc].copy_from_slice(&bottom_spritemap.to_le_bytes());
+            let x_pos = u16::from_le_bytes([game.g_ram[0xb04], game.g_ram[0xb05]]);
+            let y_pos = u16::from_le_bytes([game.g_ram[0xb06], game.g_ram[0xb07]]);
+            DrawSamusSpritemap(bottom_spritemap, x_pos, y_pos, game);
         }
     }
     SetSamusTilesDefsForCurAnim(game);
