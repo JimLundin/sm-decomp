@@ -199,6 +199,22 @@ pub unsafe fn dma_doDma(mut dma: *mut Dma, game: &mut Game) {
         (*dma).dmaTimer = (*dma).dmaTimer.wrapping_add(8);
     }
 }
+// Advance the table pointer before the bus read, as HDMA does for every byte.
+unsafe fn hdma_read_table_byte(dma: *mut Dma, channel: usize, game: &mut Game) -> u8 {
+    let address = (*dma).channel[channel].tableAdr;
+    (*dma).channel[channel].tableAdr = address.wrapping_add(1);
+    snes_read(
+        (*dma).snes,
+        (u32::from((*dma).channel[channel].aBank) << 16) | u32::from(address),
+        game,
+    )
+}
+unsafe fn hdma_load_indirect_address(dma: *mut Dma, channel: usize, game: &mut Game) {
+    (*dma).channel[channel].size = u16::from(hdma_read_table_byte(dma, channel, game));
+    (*dma).channel[channel].size =
+        (*dma).channel[channel].size | (u16::from(hdma_read_table_byte(dma, channel, game)) << 8);
+    (*dma).hdmaTimer = (*dma).hdmaTimer.wrapping_add(16);
+}
 pub unsafe fn dma_initHdma(mut dma: *mut Dma, game: &mut Game) {
     (*dma).hdmaTimer = 0 as uint16_t;
     let mut hdmaHappened: bool = false_0 != 0;
@@ -210,16 +226,7 @@ pub unsafe fn dma_initHdma(mut dma: *mut Dma, game: &mut Game) {
             (*dma).channel[i as usize].dmaActive = false_0 != 0;
             (*dma).channel[i as usize].offIndex = 0 as uint8_t;
             (*dma).channel[i as usize].tableAdr = (*dma).channel[i as usize].aAdr;
-            let fresh1 = (*dma).channel[i as usize].tableAdr;
-            (*dma).channel[i as usize].tableAdr =
-                (*dma).channel[i as usize].tableAdr.wrapping_add(1);
-            (*dma).channel[i as usize].repCount = snes_read(
-                (*dma).snes,
-                (((*dma).channel[i as usize].aBank as ::core::ffi::c_int)
-                    << 16 as ::core::ffi::c_int
-                    | fresh1 as ::core::ffi::c_int) as uint32_t,
-                game,
-            );
+            (*dma).channel[i as usize].repCount = hdma_read_table_byte(dma, i as usize, game);
             if (*dma).channel[i as usize].repCount as ::core::ffi::c_int == 0 as ::core::ffi::c_int
             {
                 (*dma).channel[i as usize].terminated = true_0 != 0;
@@ -228,33 +235,7 @@ pub unsafe fn dma_initHdma(mut dma: *mut Dma, game: &mut Game) {
                 (*dma).hdmaTimer =
                     ((*dma).hdmaTimer as ::core::ffi::c_int + 8 as ::core::ffi::c_int) as uint16_t;
                 if (*dma).channel[i as usize].indirect {
-                    let fresh2 = (*dma).channel[i as usize].tableAdr;
-                    (*dma).channel[i as usize].tableAdr =
-                        (*dma).channel[i as usize].tableAdr.wrapping_add(1);
-                    (*dma).channel[i as usize].size = snes_read(
-                        (*dma).snes,
-                        (((*dma).channel[i as usize].aBank as ::core::ffi::c_int)
-                            << 16 as ::core::ffi::c_int
-                            | fresh2 as ::core::ffi::c_int) as uint32_t,
-                        game,
-                    ) as uint16_t;
-                    let fresh3 = (*dma).channel[i as usize].tableAdr;
-                    (*dma).channel[i as usize].tableAdr =
-                        (*dma).channel[i as usize].tableAdr.wrapping_add(1);
-                    (*dma).channel[i as usize].size =
-                        ((*dma).channel[i as usize].size as ::core::ffi::c_int
-                            | (snes_read(
-                                (*dma).snes,
-                                (((*dma).channel[i as usize].aBank as ::core::ffi::c_int)
-                                    << 16 as ::core::ffi::c_int
-                                    | fresh3 as ::core::ffi::c_int)
-                                    as uint32_t,
-                                game,
-                            ) as ::core::ffi::c_int)
-                                << 8 as ::core::ffi::c_int) as uint16_t;
-                    (*dma).hdmaTimer = ((*dma).hdmaTimer as ::core::ffi::c_int
-                        + 16 as ::core::ffi::c_int)
-                        as uint16_t;
+                    hdma_load_indirect_address(dma, i as usize, game);
                 }
                 (*dma).channel[i as usize].doTransfer = true_0 != 0;
                 current_block_16 = 7976072742316086414;
@@ -337,44 +318,9 @@ pub unsafe fn dma_doHdma(mut dma: *mut Dma, game: &mut Game) {
                 & 0x7f as ::core::ffi::c_int
                 == 0 as ::core::ffi::c_int
             {
-                let fresh6 = (*dma).channel[i as usize].tableAdr;
-                (*dma).channel[i as usize].tableAdr =
-                    (*dma).channel[i as usize].tableAdr.wrapping_add(1);
-                (*dma).channel[i as usize].repCount = snes_read(
-                    (*dma).snes,
-                    (((*dma).channel[i as usize].aBank as ::core::ffi::c_int)
-                        << 16 as ::core::ffi::c_int
-                        | fresh6 as ::core::ffi::c_int) as uint32_t,
-                    game,
-                );
+                (*dma).channel[i as usize].repCount = hdma_read_table_byte(dma, i as usize, game);
                 if (*dma).channel[i as usize].indirect {
-                    let fresh7 = (*dma).channel[i as usize].tableAdr;
-                    (*dma).channel[i as usize].tableAdr =
-                        (*dma).channel[i as usize].tableAdr.wrapping_add(1);
-                    (*dma).channel[i as usize].size = snes_read(
-                        (*dma).snes,
-                        (((*dma).channel[i as usize].aBank as ::core::ffi::c_int)
-                            << 16 as ::core::ffi::c_int
-                            | fresh7 as ::core::ffi::c_int) as uint32_t,
-                        game,
-                    ) as uint16_t;
-                    let fresh8 = (*dma).channel[i as usize].tableAdr;
-                    (*dma).channel[i as usize].tableAdr =
-                        (*dma).channel[i as usize].tableAdr.wrapping_add(1);
-                    (*dma).channel[i as usize].size =
-                        ((*dma).channel[i as usize].size as ::core::ffi::c_int
-                            | (snes_read(
-                                (*dma).snes,
-                                (((*dma).channel[i as usize].aBank as ::core::ffi::c_int)
-                                    << 16 as ::core::ffi::c_int
-                                    | fresh8 as ::core::ffi::c_int)
-                                    as uint32_t,
-                                game,
-                            ) as ::core::ffi::c_int)
-                                << 8 as ::core::ffi::c_int) as uint16_t;
-                    (*dma).hdmaTimer = ((*dma).hdmaTimer as ::core::ffi::c_int
-                        + 16 as ::core::ffi::c_int)
-                        as uint16_t;
+                    hdma_load_indirect_address(dma, i as usize, game);
                 }
                 if (*dma).channel[i as usize].repCount as ::core::ffi::c_int
                     == 0 as ::core::ffi::c_int

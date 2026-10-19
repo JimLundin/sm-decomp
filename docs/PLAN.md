@@ -18417,6 +18417,40 @@ other broad count changes belong to concurrent gameplay cleanup outside this
 commit. No probes or ROM-derived assets committed. Neither movie reaches
 credits; the broader family audit and full project goal remain open.
 
+HDMA table-read family (2026-10-19): normalized jscpd discovery and
+complete CST selection identify the paired indirect-address loads in HDMA
+initialization and line reload. One raw-pointer helper owns their low/high
+reads and 16-cycle timer increment; another owns all six table-byte fetches,
+including both line-repeat descriptors. The table pointer advances before
+each bus read, the bank is read at its original point, and size receives the
+low byte before the high read. Size is read before that high-byte callback;
+no mutable DMA/channel borrow spans a bus operation. Initial zero descriptors
+still skip indirect loading, while reload zero descriptors still load it.
+The callers retain their distinct termination/doTransfer behavior.
+
+Complete source reconstruction permits only these four selected sequences and
+the two helpers; all other frozen sources match. Compiled original/current
+loads agree in 1048576 cases spanning all 16-bit table addresses, eight
+channels and both passive/mutating bus callbacks. Ordered read traces include
+tableAdr, size and hdmaTimer observed inside each callback; mutations of bank,
+pointer, size and timer also agree. This synthetic bus supports order checking.
+Actual SNES/HDMA routines agree in 3072 constructed contexts over both entries,
+all 256 flag seeds and six address/repeat configurations. RAM-bank cases run
+four successive HDMA steps; DMA-register cases run one to keep the constructed
+register window valid. Complete initialized DMA, PPU, WRAM and ramAdr match;
+DMA-register reads exercise pointer and partial-size visibility. Invalid test
+B-bus addresses in the first harness were corrected before these results.
+
+Frozen fef00db2 plus only this family passes any% 129712/0
+(174.06s) and Speed Booster 148406/0 (221.31s), native exits 0.
+Only final-verify replays count; earlier overlapping replays were superseded
+when the comparison libraries were rebuilt. Final source/library/DLL/ROM/movie
+hashes are fixed. Cargo fmt/check, normal release (1.05s), progress and diff
+check pass. Own Rust lines -54 and c_int cast lines -28; unsafe functions +2
+because helpers own the repeated raw bus operations. No RAM layout change or
+probe/ROM-derived artifact committed. Concurrent gameplay edits retain their
+own checks. Full project readability, hardware/audio and credits remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
