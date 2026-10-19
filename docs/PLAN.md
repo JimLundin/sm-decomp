@@ -85,8 +85,8 @@ definitions; full gameplay and credits remain unverified.
 
 A separate observed Charge replay passes 78380/0 (167.43s). Animation
 commands 7/10/11/12 execute 0/0/5/0 times, establishing movie
-coverage for command 11. Only entry hits were counted; its branch
-coverage still needs measurement during cleanup. Commands 7/10/12 remain
+coverage for command 11. Only entry hits were counted in that run; later
+command 11 cleanup records branch coverage. Commands 7/10/12 remain
 held. All 131 alignment calls have zero adjustment; complete RAM/g_fail
 match the original routine. Nonzero alignment still has only constructed
 coverage.
@@ -14285,6 +14285,41 @@ every step makes the next one easier.
    https://github.com/JimLundin/sm-decomp/actions/runs/39070035812.
 
 ## Phase 3: readable gameplay, one subsystem at a time
+
+Samus wall-jump animation command (2026-10-19): replace command 11's
+generated numeric control-flow blocks with a liquid restriction check and
+explicit sound/frame choices: normal 0x31/+1, Screw Attack 0x33/+21 and
+Space Jump 0x3E/+11. Gravity Suit bypasses the top/liquid test;
+Screw Attack retains priority over Space Jump. Valid water prevents the lava fallback, liquid
+differences retain their wrapped sign-bit tests, and the animation frame
+is read after queuing sound. The unused instruction-pointer argument is
+removed from the routine and its sole dispatcher call; return remains true.
+
+Frozen 0eae3392 plus this source passes clean any% 129712/0 (219.78s)
+and Charge 78380/0 (142.51s), native exits 0. Observed Charge passes
+78380/0 (146.43s), with 5 actual command calls. All five skip inactive
+water, find no lava restriction and choose normal animation (sound 0x31,
+frame +1). Other branches have only constructed coverage.
+Complete 128 KiB RAM, g_fail, return value and callback order match the
+original on each call, including RAM at top/sound callback entry, the top
+result and sound argument. Clean/observed Charge non-timing diagnostics
+match; exact observation stripping and maintained source identity pass.
+
+460752 constructed comparisons pass using the actual unchanged top and
+sound callees. These cover every equipment, water/lava level and option
+word, every frame word with all three advances, and 2000 crossed boundary
+cases. Queue positions and sound gates vary; callback-entry RAM is compared
+as well as final RAM. The restored 10000-frame movie prefix passes with
+zero failures (85.05s). Wrong upgrade priority, unsigned liquid comparison,
+saturated frame addition and moving the frame store before sound are all
+detected. Reordering the frame store preserves final RAM but changes the
+frame seen by the sound callback. Constructed calls do not count as movie hits.
+
+Cargo format/check, release --locked and progress pass. Own raw offsets -11,
+cast lines -38 and Rust lines -61; other counters are unchanged. Temporary
+scripts/builds are removed; no probes or ROM-derived fixtures are committed.
+Commands 7/10/12 remain held for movie coverage. Broader gameplay/credits
+and the unobserved command 11 branches remain unfinished.
 
 Room-header cleanup (2026-10-19): LoadRoomHeader uses named word
 accessors for all twelve stores. Packed reads, live scroll dimensions,

@@ -1405,97 +1405,36 @@ unsafe fn UNUSED_Samus_AnimDelayFunc_10(mut jp: *const uint8, game: &mut Game) -
         as *mut uint16) = 3 as uint16;
     return false_0 != 0;
 }
-unsafe fn Samus_AnimDelayFunc_11_SelectDelaySequenceWalljump(
-    mut jp: *const uint8,
-    game: &mut Game,
-) -> bool {
-    let mut current_block: u64;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 0x20 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
-    {
-        let mut r20: uint16 = Samus_GetTop_R20(game);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x195e as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
-        {
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x1962 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                & 0x8000 as ::core::ffi::c_int
-                == 0 as ::core::ffi::c_int
-                && *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x1962 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
-                    - r20 as ::core::ffi::c_int
-                    & 0x8000 as ::core::ffi::c_int
-                    != 0
-            {
-                current_block = 16256859414872971286;
-            } else {
-                current_block = 15427931788582360902;
-            }
-        } else if *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x195e as ::core::ffi::c_int as isize) as *mut uint16)
-            as ::core::ffi::c_int
-            - r20 as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            != 0
-            && *((&raw mut game.g_ram as *mut uint8).offset(0x197e as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                & 4 as ::core::ffi::c_int
-                == 0 as ::core::ffi::c_int
-        {
-            current_block = 16256859414872971286;
-        } else {
-            current_block = 15427931788582360902;
-        }
+unsafe fn Samus_AnimDelayFunc_11_SelectDelaySequenceWalljump(game: &mut Game) -> bool {
+    let gravity_suit = u16::from_le_bytes([game.g_ram[0x9a2], game.g_ram[0x9a3]]) & 0x20 != 0;
+    let liquid_limits_animation = if gravity_suit {
+        false
     } else {
-        current_block = 15427931788582360902;
-    }
-    match current_block {
-        15427931788582360902 => {
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                & 8 as ::core::ffi::c_int
-                != 0 as ::core::ffi::c_int
-            {
-                QueueSfx1_Max6(0x33 as uint16, game);
-                let ref mut fresh94 = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0xa96 as ::core::ffi::c_int as isize)
-                    as *mut uint16);
-                *fresh94 = (*fresh94 as ::core::ffi::c_int + 21 as ::core::ffi::c_int) as uint16;
-                current_block = 12349973810996921269;
-            } else if *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x9a2 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                & 0x200 as ::core::ffi::c_int
-                == 0 as ::core::ffi::c_int
-            {
-                current_block = 16256859414872971286;
-            } else {
-                QueueSfx1_Max6(0x3e as uint16, game);
-                let ref mut fresh96 = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0xa96 as ::core::ffi::c_int as isize)
-                    as *mut uint16);
-                *fresh96 = (*fresh96 as ::core::ffi::c_int + 11 as ::core::ffi::c_int) as uint16;
-                current_block = 12349973810996921269;
-            }
+        let top = Samus_GetTop_R20(game);
+        let water_level = u16::from_le_bytes([game.g_ram[0x195e], game.g_ram[0x195f]]);
+        if water_level & 0x8000 != 0 {
+            let lava_level = u16::from_le_bytes([game.g_ram[0x1962], game.g_ram[0x1963]]);
+            lava_level & 0x8000 == 0 && lava_level.wrapping_sub(top) & 0x8000 != 0
+        } else {
+            water_level.wrapping_sub(top) & 0x8000 != 0
+                && u16::from_le_bytes([game.g_ram[0x197e], game.g_ram[0x197f]]) & 4 == 0
         }
-        _ => {}
-    }
-    match current_block {
-        16256859414872971286 => {
-            QueueSfx1_Max6(0x31 as uint16, game);
-            let ref mut fresh95 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xa96 as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            *fresh95 = (*fresh95 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16;
+    };
+    let (sound, frame_advance) = if liquid_limits_animation {
+        (0x31, 1)
+    } else {
+        let equipped_items = u16::from_le_bytes([game.g_ram[0x9a2], game.g_ram[0x9a3]]);
+        if equipped_items & 8 != 0 {
+            (0x33, 21)
+        } else if equipped_items & 0x200 != 0 {
+            (0x3e, 11)
+        } else {
+            (0x31, 1)
         }
-        _ => {}
-    }
-    return true_0 != 0;
+    };
+    QueueSfx1_Max6(sound, game);
+    game.set_samus_anim_frame(game.samus_anim_frame().wrapping_add(frame_advance));
+    true
 }
 unsafe fn Samus_AnimDelayFunc_12_TransToPose(mut jp: *const uint8, game: &mut Game) -> bool {
     if *(jp.offset(1 as ::core::ffi::c_int as isize) as *mut uint16) as ::core::ffi::c_int
@@ -1634,7 +1573,7 @@ unsafe fn Samus_HandleAnimDelay(game: &mut Game) {
             8 => Samus_AnimDelayFunc_8_AutoJumpHack(instruction, game),
             9 => Samus_AnimDelayFunc_9_TransToPose(instruction, game),
             10 => UNUSED_Samus_AnimDelayFunc_10(instruction, game),
-            11 => Samus_AnimDelayFunc_11_SelectDelaySequenceWalljump(instruction, game),
+            11 => Samus_AnimDelayFunc_11_SelectDelaySequenceWalljump(game),
             12 => Samus_AnimDelayFunc_12_TransToPose(instruction, game),
             13 => Samus_AnimDelayFunc_13_TransToPose(*instruction.add(1), game),
             14 => Samus_AnimDelayFunc_14_Goto(*instruction.add(1), game),
