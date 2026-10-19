@@ -767,6 +767,17 @@ unsafe fn Get_MotherBrain(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut En
         .offset(o as isize) as *mut Enemy_MotherBrain;
 }
 
+// Shared projectile state stays backed by the original little-endian RAM bytes.
+struct EprojState<'a>(&'a [u8]);
+impl EprojState<'_> {
+    fn enabled(&self) -> bool {
+        u16::from_le_bytes([self.0[0x198d], self.0[0x198e]]) & 0x8000 != 0
+    }
+    fn index(&self) -> u16 {
+        u16::from_le_bytes([self.0[0x1991], self.0[0x1992]])
+    }
+}
+
 pub unsafe fn EnableEprojs(game: &mut Game) {
     let ref mut fresh18 = *((&raw mut game.g_ram as *mut uint8)
         .offset(0x198d as ::core::ffi::c_int as isize) as *mut uint16);
@@ -874,12 +885,9 @@ unsafe fn EprojRunOne(mut k: uint16, game: &mut Game) {
         k,
         game,
     );
-    let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1991 as ::core::ffi::c_int as isize) as *mut uint16);
-    let mut v2: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1991 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        >> 1 as ::core::ffi::c_int;
+    let mut v1: uint16 = EprojState(&game.g_ram).index();
+    let mut v2: ::core::ffi::c_int =
+        EprojState(&game.g_ram).index() as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh19 = *((&raw mut game.g_ram as *mut uint8)
         .offset(0x1b8f as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(v2 as isize);
@@ -923,11 +931,7 @@ unsafe fn EprojRunOne(mut k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn EprojRunAll(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
-    {
+    if EprojState(&game.g_ram).enabled() {
         let mut i: ::core::ffi::c_int = 34 as ::core::ffi::c_int;
         while i >= 0 as ::core::ffi::c_int {
             *((&raw mut game.g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize)
@@ -938,9 +942,7 @@ pub unsafe fn EprojRunAll(game: &mut Game) {
                 != 0
             {
                 EprojRunOne(i as uint16, game);
-                i = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x1991 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int;
+                i = EprojState(&game.g_ram).index() as ::core::ffi::c_int;
             }
             i -= 2 as ::core::ffi::c_int;
         }

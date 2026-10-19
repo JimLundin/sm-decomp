@@ -14359,6 +14359,29 @@ cast lines-16 and Rust lines-16; other own counters unchanged. Peer edits
 remain preserved. Remaining hardcoded-PLM reads and broader gameplay/credits/
 hardware/audio/masks/ownership remain unfinished.
 
+Enemy-projectile scalar state interface (2026-10-19): introduce a
+small read-only byte-backed EprojState interface for the enable word and live
+index. Replace the repeated scalar read pattern in EprojRunAll/EprojRunOne.
+The enable gate and three live-index reads retain their original positions,
+including separate reads after preinstruction and after the running callback.
+No mutable word references or independent Game getters are added.
+
+Frozen 7a290c4e plus only this change passes
+any%129712/0 (153.43s) and Spazer90706/0 (130.64s),
+native exits0. Observed Spazer90706/0 (133.45s) records
+49379 actual EprojRunOne calls; live-index reads compare byte-backed
+values against the original word at each operation. The enable read executes70043 times and
+index reads execute148137 times; remaining dispatch, stores and callbacks are
+unchanged. Clean/observed non-timing diagnostics match after probe stripping.
+Frozen scope and maintained region identity pass; no observers are committed.
+These scenarios establish only their exercised projectile states.
+
+Cargo fmt/check, normal release build and progress pass. Net shared-definition
+counts: raw offsets-4, cast lines-8, Rust lines+2 for the small shared interface;
+unsafe functions and other counters unchanged. This begins the prioritized
+subsystem approach; broader indexed-field/update consolidation remains open,
+as do gameplay/credits, hardware/audio/masks and ownership.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
