@@ -113,6 +113,23 @@ Everything that existed before is in the branch `archive/pre-transpile-2026-10-1
 
 ## Workspace discipline
 
+Retired PLM command commit helpers (2026-10-19): moved five completed
+copy/jump/draw/coordinate/clear commit scripts and their five temporary Git
+indexes out of target/xray-read-audit. Their changes and notes are already
+committed. The 1275 retained repository and top-level temporary
+scripts/documents have no filename references, and no live process uses the
+selected files. Recovery is at temporary
+sm-workspace-retired-plm-command-committers-20261019-123655-230,
+preserving relative paths. Independent verification confirms all ten files /
+59,156 bytes retain their SHA-256 hashes and the original paths are absent.
+Current builders, replay helpers and active PLM work remain available.
+
+Formatting/check, normal Cargo release (0.18s) and progress pass. This
+cleanup changes no maintained source or own residue counters and requires no
+new movie replay; the reviewed integration retains any% 129712/0 and four
+additional zero-failure routes. Newer implementation changes retain their
+separate verification.
+
 Retired PLM graphics commit helpers (2026-10-19): moved five completed
 commit scripts and their five temporary Git indexes out of
 target/xray-read-audit. Their selection/pointer/table/queue/tile changes and
