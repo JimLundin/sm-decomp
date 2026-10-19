@@ -18838,6 +18838,36 @@ committed. Concurrent gameplay/Clippy changes retain their own checks. Neither
 movie reaches credits; broader readability, progression and hardware/audio
 completion remain unfinished.
 
+SPC arithmetic-addressing family (2026-10-19): normalized jscpd
+and complete CST function/dispatch selection identify twelve paired ADC/SBC
+addressing forms. All 24 arms agree after operation, opcode and local-name
+substitution. Twelve shared arms retain every addressing call, operand fetch
+and cycle entry. Opcode bit 5 selects subtraction, and four destination
+routines become two shared accumulator/memory routines around the already
+verified carry adder. Subtraction complements its source immediately after
+reading it, before destination reads. Accumulator is read after its source;
+memory reads source before destination, updates V/H/C before the bus write,
+and sets Z/N after it. Unrelated word arithmetic/comparisons stay separate.
+
+Complete source reconstruction permits only the four routines, 24 arms,
+shared helpers and formatting; other frozen sources match. Actual original/
+current destination routines agree on all 524288 byte-pair/carry cases,
+with independent result/carry/half-carry/overflow/Z/N expectations. Actual
+spc_runOpcode agrees in 24576 constructed bus contexts over all 24 affected
+opcodes and 1024 flags/registers/operand seeds, RAM, timer counters, ports
+and every selected addressing form. Complete initialized SPC/APU/DSP state
+and cycle counts match. This does not cover every possible hardware state.
+
+Frozen 92af785a plus only this family passes any% 129712/0
+(176.27s) and Speed Booster 148406/0 (230.95s), native exits 0,
+with fixed source/library/DLL/ROM/movie hashes. Cargo fmt/check, normal live
+release (42.60s), progress and diff check pass. Live source preserves the
+concurrent Clippy needless_return edits; those source differences have their
+separate full-source verification and publication. Own Rust lines -55, c_int
+cast lines -2 and unsafe functions -2. No RAM/layout change or probe/ROM-
+derived artifact committed. Full progression/readability/hardware/audio
+completion remains open; neither movie reaches credits.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
