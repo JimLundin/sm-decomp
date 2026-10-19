@@ -9919,18 +9919,14 @@ pub unsafe fn DoorTransitionFunction_LoadMoreThings_Async(game: &mut Game) -> Co
                     game,
                 ))
                 .bg_data_ptr as uint16;
-                if bg_data_ptr as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
+                if bg_data_ptr & 0x8000 != 0 {
                     loop {
-                        let mut v1: ::core::ffi::c_int = *(RomPtr_8F(bg_data_ptr as uint16_t, game)
-                            as *mut uint16)
-                            as ::core::ffi::c_int
-                            >> 1 as ::core::ffi::c_int;
-                        bg_data_ptr = kUpdateBackgroundCommands[v1 as usize]
+                        let command = game.read_rom_word(0x8f0000 | u32::from(bg_data_ptr), 0);
+                        bg_data_ptr = kUpdateBackgroundCommands[usize::from(command >> 1)]
                             .expect("non-null function pointer")(
-                            (bg_data_ptr as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16,
-                            game,
+                            bg_data_ptr.wrapping_add(2), game
                         );
-                        if !(bg_data_ptr != 0) {
+                        if bg_data_ptr == 0 {
                             break;
                         }
                     }

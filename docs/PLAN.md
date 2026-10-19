@@ -12193,6 +12193,23 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Async door background command reads (2026-10-19): the command loop uses
+the checked live-ROM word reader, native word masks/index shifts, wrapping
+argument advance and a direct zero-return exit. Function-table dispatch,
+read-before-callback order and the initial high-bit gate remain unchanged.
+Cargo fmt/check and release build pass, native exit 0. Frozen 05ab44c8
+plus this source change passes any% 129,712/0 (184.94s), native exit 0;
+actual command counts for 0/2/4/6/8/A/C/E are [41,68,34,0,0,7,0,0].
+Waver 58,109/71 (91.50s), native exit 1, counts [23,44,22,0,0,1,0,0];
+all 71 ordered failure diagnostics match the explicit-render baseline.
+Commands 0/2/4/A execute through the changed reader; other command types
+remain unexercised. Observations strip exactly to maintained source. Own
+cast lines -4, Rust lines -4; other counters unchanged. No probes or
+ROM-derived assets committed. Next: background-command callback argument
+reads for the executed commands, preserving live ROM and callback ordering.
+Existing held coverage and complete gameplay/credits/audio/hardware gaps
+remain open.
+
 Async door-loading state byte (2026-10-19): LoadMoreThings_Async now reads
 and writes coroutine_state_1 through named byte-backed accessors at 0612.
 Dispatch, loops, callbacks and yields remain unchanged; state 1 stores after
