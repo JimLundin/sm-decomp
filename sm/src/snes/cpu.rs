@@ -290,7 +290,7 @@ unsafe fn address_direct_page_indirect(cpu: *mut Cpu, game: &mut Game) -> (u32, 
         game,
     ));
     let low = (u32::from((*cpu).db) << 16) + pointer;
-    (low, ((u32::from((*cpu).db) << 16) + pointer + 1) & 0xffffff)
+    (low, low.wrapping_add(1) & 0xffffff)
 }
 unsafe fn address_direct_page_indexed_indirect(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
     let adr = u16::from(cpu_readOpcode(cpu, game));
@@ -331,10 +331,7 @@ unsafe fn address_direct_page_indirect_y(
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
     }
     let low = ((u32::from((*cpu).db) << 16) + pointer + u32::from((*cpu).y)) & 0xffffff;
-    (
-        low,
-        ((u32::from((*cpu).db) << 16) + pointer + u32::from((*cpu).y) + 1) & 0xffffff,
-    )
+    (low, low.wrapping_add(1) & 0xffffff)
 }
 unsafe fn address_direct_page_indirect_long(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
     let adr = u16::from(cpu_readOpcode(cpu, game));
@@ -372,10 +369,7 @@ unsafe fn address_direct_page_indirect_long_y(cpu: *mut Cpu, game: &mut Game) ->
         game,
     )) << 16;
     let low = pointer.wrapping_add(u32::from((*cpu).y)) & 0xffffff;
-    (
-        low,
-        pointer.wrapping_add(u32::from((*cpu).y)).wrapping_add(1) & 0xffffff,
-    )
+    (low, low.wrapping_add(1) & 0xffffff)
 }
 unsafe fn address_stack_relative(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
     let adr = u16::from(cpu_readOpcode(cpu, game));

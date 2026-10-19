@@ -8590,6 +8590,20 @@ frontend linking still lacks SDL2. Live CPU source matches frozen verified
 source. Rust lines -9; other counters unchanged. Complete gameplay and
 rendering/audio remain open.
 
+CPU indirect-address reuse (2026-10-19): direct-page indirect, indirect-Y
+and indirect-long-Y helpers derive their second-byte address from the computed
+low address with 24-bit wrapping. Pointer reads and cycle penalties retain
+their order. Frozen HEAD `03491c20` plus this change passes 60,817,408 actual
+old/current comparisons: every bank/pointer pair, full indexes at boundary
+pointers, write/width/mode flags, DP penalties, PC/cycle/bank wrapping and named
+CPU/bus state. Prefix 3,600/0 (0.97s) executes 34,066 / 4,362 / 143,578 calls
+respectively. Clean full any% 129,712/0 (51.06s), native exit 0. Cargo fmt/check,
+release library, normal metadata and optimized core/DLL builds pass; full
+frontend linking still lacks SDL2. Live CPU source matches frozen verified
+source. Rust lines -6; other counters unchanged. Uncovered indexed-indirect,
+indirect-long and stack-relative-indirect-Y helpers remain held for coverage.
+Complete gameplay and rendering/audio remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
