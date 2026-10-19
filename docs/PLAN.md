@@ -87,6 +87,11 @@ The Spazer extension passes 90,706 frames with zero failures, 32 rooms
 and 34 enemy definitions, on frozen 5680cde1 plus title Mode 7 fix e4ed0170.
 It includes the Energy Station refill and ends with Charge plus Spazer,
 189/199 health and 2/5 Supers. Credits remain unvisited.
+The Hi-Jump extension passes 99,191 frames with zero failures, 39 rooms
+and 37 enemy definitions, on frozen 7d0d2050 plus operand fix a0912a84.
+It reaches the Warehouse Entrance, detours through Norfair, and collects
+Hi-Jump Boots and another Energy Tank. It ends with 299/299 health,
+Charge plus Spazer and 1/5 Supers. Credits remain unvisited.
 Rendering starts enabled deterministically. Complete gameplay, audio timing
 and other masked RAM remain unverified. Historical zero-failure Waver runs
 made before the render initialization fix do not establish rendering equivalence.
@@ -528,6 +533,32 @@ sessions own the adjacent cleanup above. No maintained source or residue
 change and no new replay result belong to this cleanup.
 
 ## The oracle
+
+Hi-Jump milestone (2026-10-19): extend the Spazer route through the Maridia
+tunnels to the Warehouse Entrance, then take the Norfair detour for Hi-Jump
+Boots and an Energy Tank. Full boot passes 99191/0 (201.27s), native exit 0:
+82313 gameplay frames, 39 rooms, 37 enemy definitions and zero credits frames.
+Final state 8 is room $A9E5, X78/Y187, health 299/299, missiles 0/10 and
+Supers 1/5. Equipped/collected items are 1104 and beams 1004; pose is 0001,
+the pickup message is dismissed, and all eight $0611..$0618 bytes are zero.
+
+Ignored movies/hi-jump.inputs contains 99191 ordinary controller frames,
+SHA-256 5be5e8d961fd775a85663163585c4c58a6e4b44fc051f2b5c8c644a43ca244ee.
+Its first 90706 frames exactly equal the Spazer fixture. The unchanged
+compiled library uses frozen 7d0d2050 plus the five-file operand correction
+committed in a0912a84. The host adds only read-only final-state logging after
+the ordinary verifier and preserves its return status. Independent host,
+source, input and result review passes; hashes remain stable through replay,
+with isolated saves and SM_* overrides cleared.
+
+The original route library, frozen 438e7755 plus the menu fix, independently
+continues save171 at frame 90706 through 99191 for 8485/0. Save230 records
+that endpoint on the original library; compatibility with newer libraries
+is not claimed by this full-boot run. No maintained Rust, own residue counts
+or committed assets change. Formatting, release and progress checks pass
+with the preceding operand fix. Next: collect the nearby Missile Tank and
+return toward Kraid with Hi-Jump; those steps remain unverified here.
+Full gameplay/credits, audio, remaining masks and ownership stay unfinished.
 
 Multiplication operand scratch (2026-10-19): restore the two ROM operand
 words at $05E9/$05EB in Multiply16x16 and Samus's inlined horizontal slope
