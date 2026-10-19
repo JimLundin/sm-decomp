@@ -2267,41 +2267,42 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `037d589f` shares all 51 fixed-bank
-and six dynamic-bank ROM pointer wrappers through two helpers. Independent
-whole-source reconstruction covers all 31 changed files and preserves the exact
-bank/address assembly and maintained RomPtr validation. All 360 direct calls
-and 11 cast-then-call uses retain their arguments; selected function pointers
-do not escape or undergo address comparisons. RAM/hybrid helpers are unchanged.
+Latest reviewed integration (2026-10-20): `f173c9e4` shares 147 typed RAM-getter
+declarations through one macro, in 33 groups across 25 callers. Independent
+whole-source reconstruction accounts for all 26 changed files and the complete
+AST inventory of eligible getter bodies. All signatures, private visibility,
+inline attributes, return types and ordered byte offsets remain exact: 123
+successive-offset and 24 single-offset bodies, with 146 i32 indices and one u16.
 
-The final composition retains the identical 57 declarations and helpers after
-the HDMA and negative-constant commits. All 70 committed Rust/Cargo inputs
-match the reviewed candidate; all 67 replay Rust files match that source, and
-all 72 replay pins remain stable after completion. Normal release (16.83s),
-formatting/check and progress pass. Full any% passes 129712/0 (109.05s replay),
-native exit 0. Earlier wrapper replays retain their earlier source bindings;
-the completed final build and replay were reused for review.
+The saved compiler expansion is independently bound to the actual macro and
+all declarations. Every generated function matches its original tokens after
+24 identity byte-pointer casts, six optional signature commas and qualified
+Game/u8 names are normalized. All caller Game imports bind the maintained
+type, with no Game/u8 declaration or import shadows. The complete original
+ram_map prefix, including metadata and existing macros, remains unchanged.
 
-Net Rust lines -159, total 144205; unsafe functions fall 55 to 6390 and raw
-RAM-offset expressions remain 3823. AST counting confirms 69 cast expressions
-removed. The spelling counter falls only 63 because six new import aliases
-also contain `as`; those aliases are not casts. Shared-helper and validator
-trace checks remain scoped to address assembly, not general pointer validity.
+All 73 committed inputs match the reviewed candidate; all 78 replay pins and
+the actual-helper hash remain stable. Normal release (23.32s), formatting/check
+and progress pass. Full any% passes 129712/0 (109.28s wall, 109.14s replay),
+native exit 0. Disk exhaustion stopped the first host-build attempt before any
+movie started; recovery retained the completed release and enabled the single
+successful replay. Review reused those completed checks.
 
-The included `b9655531` negative-constant review retains all 1318 selections,
-366 compiler equalities and its independent source/type/context reconstruction.
-Its release (22.67s) and any% 129712/0 (137.00s wall, 136.85s replay) pass;
-all 73 committed inputs and 78 replay pins match the reviewed snapshot.
-The included `72072fd5` HDMA review retains all 17 functions, five transition
-tails, 202 unchanged functions and 778700 focused comparison cases. Its release
-(24.57s) and any% 129712/0 (115.13s wall, 114.97s replay) pass; all 73 committed
-inputs, 79 replay pins, ten focused-check pins and focused DLL remain matched.
+Net Rust lines -642, total 143563. Source counters fall 146 unsafe declarations,
+147 raw-offset expressions and 316 cast spellings through shared declaration
+syntax. All 147 generated getters and raw pointer constructions remain; this
+is not a reduction in runtime unsafe operations. The expansion drops only the
+24 identity pointer casts. No additional whole-Game borrow or RAM-layout change
+is introduced, and general pointer validity and alias safety remain open.
 
-These earlier scoped checks retain their limits, including ExplosionYellow's
-excluded out-of-allocation i32 tail domain and incomplete joint-state coverage.
-Broader readability, frontend execution, full credits and general alias safety
-remain incomplete. The any% movie has zero ending/credits-state frames and does
-not establish execution coverage for every explosion variant or ROM-bank caller.
+The included `037d589f` ROM-wrapper, `b9655531` negative-constant and `72072fd5`
+HDMA reviews retain their independent source bindings and successful builds and
+any% runs. The wrapper batch removes 69 actual casts, versus 63 `as` spellings
+because six import aliases were added. Earlier focused checks retain their
+limits, including HDMA's excluded out-of-allocation i32 tail domain and incomplete
+joint-state coverage. Broader readability, frontend execution and full credits
+remain incomplete. This movie has zero ending/credits-state frames and does not
+establish execution coverage for every getter, explosion variant or ROM caller.
 
 The prior `2ddf3af0` shares all twelve corpse
 tile initializers. Independent reconstruction accounts for all 50 ordered
