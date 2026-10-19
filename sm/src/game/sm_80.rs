@@ -5,6 +5,7 @@ use crate::game_state::Game;
 use crate::ram_map::{ram_word, set_ram_word};
 use crate::rtl::AddToHiLo;
 pub use crate::snes::registers::*;
+use crate::types::TileDrawOrder;
 
 use crate::game::sm_81::{DrawSpritemap, LoadFromSram, SoftReset};
 use crate::game::sm_82::{
@@ -3422,142 +3423,24 @@ pub unsafe fn UpdateLevelOrBackgroundDataColumn(k: uint16, game: &mut Game) {
     loop {
         let var93B: uint16 =
             *r54.offset((v9 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
-        let v10: uint16 = (var93B) & (0x3ffu16);
         let v17: uint16 = v9;
         let v11: uint16 = var937;
-        let v12: uint16 = (var93B) & (0xc00u16);
-        if (var93B as ::core::ffi::c_int & 0xc00 as ::core::ffi::c_int) != 0i32 {
-            if v12 == 1024u16 {
-                let v14: uint16 =
-                    (var937 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
-                set_ram_word!(
-                    game.bg1_column_update_tilemap_left_halves[v14] =
-                        ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v10 as usize]
-                            .top_right)
-                            ^ (0x4000u16)
-                );
-                set_ram_word!(
-                    game.bg1_column_update_tilemap_right_halves[v14] =
-                        ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v10 as usize]
-                            .top_left)
-                            ^ (0x4000u16)
-                );
-                set_ram_word!(
-                    game.bg1_column_update_tilemap_left_halves[(v14 as i32 + 1i32)] =
-                        ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v10 as usize]
-                            .bottom_right)
-                            ^ (0x4000u16)
-                );
-                set_ram_word!(
-                    game.bg1_column_update_tilemap_right_halves[(v14 as i32 + 1i32)] =
-                        ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v10 as usize]
-                            .bottom_left)
-                            ^ (0x4000u16)
-                );
-            } else {
-                let v15: uint16 =
-                    (var937 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
-                let mut v16: uint16 = 0;
-                if v12 == 2048u16 {
-                    set_ram_word!(
-                        game.bg1_column_update_tilemap_left_halves[v15] =
-                            ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                                as *mut TileTables))
-                                .tables[v10 as usize]
-                                .bottom_left)
-                                ^ (0x8000u16)
-                    );
-                    set_ram_word!(
-                        game.bg1_column_update_tilemap_right_halves[v15] =
-                            ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                                as *mut TileTables))
-                                .tables[v10 as usize]
-                                .bottom_right)
-                                ^ (0x8000u16)
-                    );
-                    set_ram_word!(
-                        game.bg1_column_update_tilemap_left_halves[(v15 as i32 + 1i32)] =
-                            ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                                as *mut TileTables))
-                                .tables[v10 as usize]
-                                .top_left)
-                                ^ (0x8000u16)
-                    );
-                    v16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                        as *mut TileTables))
-                        .tables[v10 as usize]
-                        .top_right)
-                        ^ (0x8000u16);
-                } else {
-                    set_ram_word!(
-                        game.bg1_column_update_tilemap_left_halves[v15] =
-                            ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                                as *mut TileTables))
-                                .tables[v10 as usize]
-                                .bottom_right)
-                                ^ (0xc000u16)
-                    );
-                    set_ram_word!(
-                        game.bg1_column_update_tilemap_right_halves[v15] =
-                            ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                                as *mut TileTables))
-                                .tables[v10 as usize]
-                                .bottom_left)
-                                ^ (0xc000u16)
-                    );
-                    set_ram_word!(
-                        game.bg1_column_update_tilemap_left_halves[(v15 as i32 + 1i32)] =
-                            ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                                as *mut TileTables))
-                                .tables[v10 as usize]
-                                .top_right)
-                                ^ (0xc000u16)
-                    );
-                    v16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                        as *mut TileTables))
-                        .tables[v10 as usize]
-                        .top_left)
-                        ^ (0xc000u16);
-                }
-                set_ram_word!(
-                    game.bg1_column_update_tilemap_right_halves[(v15 as i32 + 1i32)] = v16
-                );
-            }
-        } else {
-            let v13: uint16 = (var937 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
-            set_ram_word!(
-                game.bg1_column_update_tilemap_left_halves[v13] =
-                    (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
-                        .tables[v10 as usize]
-                        .top_left
-            );
-            set_ram_word!(
-                game.bg1_column_update_tilemap_right_halves[v13] =
-                    (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
-                        .tables[v10 as usize]
-                        .top_right
-            );
-            set_ram_word!(
-                game.bg1_column_update_tilemap_left_halves[(v13 as i32 + 1i32)] =
-                    (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
-                        .tables[v10 as usize]
-                        .bottom_left
-            );
-            set_ram_word!(
-                game.bg1_column_update_tilemap_right_halves[(v13 as i32 + 1i32)] =
-                    (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
-                        .tables[v10 as usize]
-                        .bottom_right
-            );
-        }
+        let tile_index = (var937 >> 1) as usize;
+        let ram = (&raw mut game.g_ram).cast::<u8>();
+        let first = ram
+            .add(crate::ram_map::word_arrays::bg1_column_update_tilemap_left_halves)
+            .cast::<u16>()
+            .add(tile_index);
+        let second = ram
+            .add(crate::ram_map::word_arrays::bg1_column_update_tilemap_right_halves)
+            .cast::<u16>()
+            .add(tile_index);
+        TileTables::draw_block(
+            ram.add(0xa000).cast(),
+            var93B,
+            [first, second, first.add(1), second.add(1)],
+            TileDrawOrder::Rows,
+        );
         var937 = (v11).wrapping_add(4u16);
         v9 = (ram_word!(game, room_width_in_blocks) as ::core::ffi::c_int * 2 as ::core::ffi::c_int
             + v17 as ::core::ffi::c_int) as uint16;
@@ -3655,142 +3538,24 @@ pub unsafe fn UpdateLevelOrBackgroundDataRow(v0: uint16, game: &mut Game) {
     loop {
         let var93B: uint16 =
             *r54.offset((v9 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
-        let v10: uint16 = (var93B) & (0x3ffu16);
         let v17: uint16 = v9;
         let v11: uint16 = var937;
-        let v12: uint16 = (var93B) & (0xc00u16);
-        if (var93B as ::core::ffi::c_int & 0xc00 as ::core::ffi::c_int) != 0i32 {
-            if v12 == 1024u16 {
-                let v14: uint16 =
-                    (var937 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
-                set_ram_word!(
-                    game.bg1_column_update_tilemap_top_halves[v14] =
-                        ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v10 as usize]
-                            .top_right)
-                            ^ (0x4000u16)
-                );
-                set_ram_word!(
-                    game.bg1_column_update_tilemap_top_halves[(v14 as i32 + 1i32)] =
-                        ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v10 as usize]
-                            .top_left)
-                            ^ (0x4000u16)
-                );
-                set_ram_word!(
-                    game.bg1_column_update_tilemap_bottom_halves[v14] =
-                        ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v10 as usize]
-                            .bottom_right)
-                            ^ (0x4000u16)
-                );
-                set_ram_word!(
-                    game.bg1_column_update_tilemap_bottom_halves[(v14 as i32 + 1i32)] =
-                        ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v10 as usize]
-                            .bottom_left)
-                            ^ (0x4000u16)
-                );
-            } else {
-                let v15: uint16 =
-                    (var937 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
-                let mut v16: uint16 = 0;
-                if v12 == 2048u16 {
-                    set_ram_word!(
-                        game.bg1_column_update_tilemap_top_halves[v15] =
-                            ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                                as *mut TileTables))
-                                .tables[v10 as usize]
-                                .bottom_left)
-                                ^ (0x8000u16)
-                    );
-                    set_ram_word!(
-                        game.bg1_column_update_tilemap_top_halves[(v15 as i32 + 1i32)] =
-                            ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                                as *mut TileTables))
-                                .tables[v10 as usize]
-                                .bottom_right)
-                                ^ (0x8000u16)
-                    );
-                    set_ram_word!(
-                        game.bg1_column_update_tilemap_bottom_halves[v15] =
-                            ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                                as *mut TileTables))
-                                .tables[v10 as usize]
-                                .top_left)
-                                ^ (0x8000u16)
-                    );
-                    v16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                        as *mut TileTables))
-                        .tables[v10 as usize]
-                        .top_right)
-                        ^ (0x8000u16);
-                } else {
-                    set_ram_word!(
-                        game.bg1_column_update_tilemap_top_halves[v15] =
-                            ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                                as *mut TileTables))
-                                .tables[v10 as usize]
-                                .bottom_right)
-                                ^ (0xc000u16)
-                    );
-                    set_ram_word!(
-                        game.bg1_column_update_tilemap_top_halves[(v15 as i32 + 1i32)] =
-                            ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                                as *mut TileTables))
-                                .tables[v10 as usize]
-                                .bottom_left)
-                                ^ (0xc000u16)
-                    );
-                    set_ram_word!(
-                        game.bg1_column_update_tilemap_bottom_halves[v15] =
-                            ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                                as *mut TileTables))
-                                .tables[v10 as usize]
-                                .top_right)
-                                ^ (0xc000u16)
-                    );
-                    v16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                        as *mut TileTables))
-                        .tables[v10 as usize]
-                        .top_left)
-                        ^ (0xc000u16);
-                }
-                set_ram_word!(
-                    game.bg1_column_update_tilemap_bottom_halves[(v15 as i32 + 1i32)] = v16
-                );
-            }
-        } else {
-            let v13: uint16 = (var937 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
-            set_ram_word!(
-                game.bg1_column_update_tilemap_top_halves[v13] =
-                    (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
-                        .tables[v10 as usize]
-                        .top_left
-            );
-            set_ram_word!(
-                game.bg1_column_update_tilemap_top_halves[(v13 as i32 + 1i32)] =
-                    (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
-                        .tables[v10 as usize]
-                        .top_right
-            );
-            set_ram_word!(
-                game.bg1_column_update_tilemap_bottom_halves[v13] =
-                    (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
-                        .tables[v10 as usize]
-                        .bottom_left
-            );
-            set_ram_word!(
-                game.bg1_column_update_tilemap_bottom_halves[(v13 as i32 + 1i32)] =
-                    (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
-                        .tables[v10 as usize]
-                        .bottom_right
-            );
-        }
+        let tile_index = (var937 >> 1) as usize;
+        let ram = (&raw mut game.g_ram).cast::<u8>();
+        let first = ram
+            .add(crate::ram_map::word_arrays::bg1_column_update_tilemap_top_halves)
+            .cast::<u16>()
+            .add(tile_index);
+        let second = ram
+            .add(crate::ram_map::word_arrays::bg1_column_update_tilemap_bottom_halves)
+            .cast::<u16>()
+            .add(tile_index);
+        TileTables::draw_block(
+            ram.add(0xa000).cast(),
+            var93B,
+            [first, first.add(1), second, second.add(1)],
+            TileDrawOrder::Rows,
+        );
         var937 = (v11).wrapping_add(4u16);
         v9 = (v17).wrapping_add(2u16);
         var939 = var939.wrapping_sub(1);

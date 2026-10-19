@@ -22,6 +22,7 @@ use crate::game::sm_91::{
 use crate::game_state::Game;
 use crate::ram_map::{ram_word, set_ram_word};
 use crate::rtl::abs16;
+use crate::types::TileDrawOrder;
 
 use crate::rtl::{Load24, Mult8x8, RomPtr, SnesDivide, SnesModulus, Unreachable};
 extern "C" {
@@ -1748,7 +1749,6 @@ unsafe fn CalculatePlmDrawTilemapVramDst(
 pub unsafe fn DrawPlm(mut k: uint16, game: &mut Game) {
     let mut v24: uint16 = 0;
     let mut v26: uint16 = 0;
-    let mut v27: uint16 = 0;
     let mut v29: uint16 = 0;
     let mut v2: int16 = 0;
     let mut v5: int16 = 0;
@@ -1757,11 +1757,9 @@ pub unsafe fn DrawPlm(mut k: uint16, game: &mut Game) {
     let mut v12: VoidP = 0;
     let mut v13: VoidP = 0;
     let mut v15: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
-    let mut v18: int16 = 0;
     let mut v20: int16 = 0;
     let mut v23: bool = false;
     let mut v25: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
-    let mut v28: int16 = 0;
     let mut v31: int16 = 0;
     let mut v35: uint16 = 0;
     let mut r26: uint16 = 0;
@@ -1879,121 +1877,19 @@ pub unsafe fn DrawPlm(mut k: uint16, game: &mut Game) {
             v26 = 0 as uint16;
             loop {
                 x = *(RomPtr_84orRAM(r3, game) as *mut uint16);
-                v27 = 0;
                 v29 = 0;
-                v27 = (x) & (0x3ffu16);
-                v28 = ((x) as i16) & (0xc00i16);
-                if (x as ::core::ffi::c_int & 0xc00 as ::core::ffi::c_int) != 0i32 {
-                    if v28 == 1024i16 {
-                        *r0.offset(
-                            (v26 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                        ) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v27 as usize]
-                            .top_right)
-                            ^ (0x4000u16);
-                        *r6.offset(
-                            (v26 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                        ) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v27 as usize]
-                            .top_left)
-                            ^ (0x4000u16);
-                        v29 = (v26).wrapping_add(2u16);
-                        *r0.offset(
-                            (v29 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                        ) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v27 as usize]
-                            .bottom_right)
-                            ^ (0x4000u16);
-                        *r6.offset(
-                            (v29 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                        ) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v27 as usize]
-                            .bottom_left)
-                            ^ (0x4000u16);
-                    } else if v28 == 2048i16 {
-                        *r0.offset(
-                            (v26 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                        ) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v27 as usize]
-                            .bottom_left)
-                            ^ (0x8000u16);
-                        *r6.offset(
-                            (v26 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                        ) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v27 as usize]
-                            .bottom_right)
-                            ^ (0x8000u16);
-                        v29 = (v26).wrapping_add(2u16);
-                        *r0.offset(
-                            (v29 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                        ) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v27 as usize]
-                            .top_left)
-                            ^ (0x8000u16);
-                        *r6.offset(
-                            (v29 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                        ) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v27 as usize]
-                            .top_right)
-                            ^ (0x8000u16);
-                    } else {
-                        *r0.offset(
-                            (v26 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                        ) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v27 as usize]
-                            .bottom_right)
-                            ^ (0xc000u16);
-                        *r6.offset(
-                            (v26 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                        ) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v27 as usize]
-                            .bottom_left)
-                            ^ (0xc000u16);
-                        v29 = (v26).wrapping_add(2u16);
-                        *r0.offset(
-                            (v29 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                        ) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v27 as usize]
-                            .top_right)
-                            ^ (0xc000u16);
-                        *r6.offset(
-                            (v29 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                        ) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v27 as usize]
-                            .top_left)
-                            ^ (0xc000u16);
-                    }
-                } else {
-                    *r0.offset((v26 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-                        (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
-                            .tables[v27 as usize]
-                            .top_left;
-                    *r6.offset((v26 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-                        (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
-                            .tables[v27 as usize]
-                            .top_right;
-                    v29 = (v26).wrapping_add(2u16);
-                    *r0.offset((v29 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-                        (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
-                            .tables[v27 as usize]
-                            .bottom_left;
-                    *r6.offset((v29 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-                        (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
-                            .tables[v27 as usize]
-                            .bottom_right;
-                }
+                v29 = (v26).wrapping_add(2u16);
+                TileTables::draw_block(
+                    (&raw const game.g_ram).cast::<u8>().add(0xa000).cast(),
+                    x,
+                    [
+                        r0.add((v26 >> 1) as usize),
+                        r6.add((v26 >> 1) as usize),
+                        r0.add((v29 >> 1) as usize),
+                        r6.add((v29 >> 1) as usize),
+                    ],
+                    TileDrawOrder::Rows,
+                );
                 v26 = (v29).wrapping_add(2u16);
                 r3 = r3.wrapping_add(1);
                 r3 = r3.wrapping_add(1);
@@ -2155,120 +2051,19 @@ pub unsafe fn DrawPlm(mut k: uint16, game: &mut Game) {
             let mut v16: uint16 = 0 as uint16;
             loop {
                 x = *(RomPtr_84orRAM(r3, game) as *mut uint16);
-                let v17: uint16 = (x) & (0x3ffu16);
                 let mut v19: uint16 = 0;
-                v18 = ((x) as i16) & (0xc00i16);
-                if (x as ::core::ffi::c_int & 0xc00 as ::core::ffi::c_int) != 0i32 {
-                    if v18 == 1024i16 {
-                        *r0.offset(
-                            (v16 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                        ) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v17 as usize]
-                            .top_right)
-                            ^ (0x4000u16);
-                        *r6.offset(
-                            (v16 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                        ) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v17 as usize]
-                            .bottom_right)
-                            ^ (0x4000u16);
-                        v19 = (v16).wrapping_add(2u16);
-                        *r0.offset(
-                            (v19 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                        ) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v17 as usize]
-                            .top_left)
-                            ^ (0x4000u16);
-                        *r6.offset(
-                            (v19 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                        ) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v17 as usize]
-                            .bottom_left)
-                            ^ (0x4000u16);
-                    } else if v18 == 2048i16 {
-                        *r0.offset(
-                            (v16 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                        ) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v17 as usize]
-                            .bottom_left)
-                            ^ (0x8000u16);
-                        *r6.offset(
-                            (v16 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                        ) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v17 as usize]
-                            .top_left)
-                            ^ (0x8000u16);
-                        v19 = (v16).wrapping_add(2u16);
-                        *r0.offset(
-                            (v19 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                        ) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v17 as usize]
-                            .bottom_right)
-                            ^ (0x8000u16);
-                        *r6.offset(
-                            (v19 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                        ) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v17 as usize]
-                            .top_right)
-                            ^ (0x8000u16);
-                    } else {
-                        *r0.offset(
-                            (v16 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                        ) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v17 as usize]
-                            .bottom_right)
-                            ^ (0xc000u16);
-                        *r6.offset(
-                            (v16 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                        ) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v17 as usize]
-                            .top_right)
-                            ^ (0xc000u16);
-                        v19 = (v16).wrapping_add(2u16);
-                        *r0.offset(
-                            (v19 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                        ) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v17 as usize]
-                            .bottom_left)
-                            ^ (0xc000u16);
-                        *r6.offset(
-                            (v19 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                        ) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v17 as usize]
-                            .top_left)
-                            ^ (0xc000u16);
-                    }
-                } else {
-                    *r0.offset((v16 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-                        (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
-                            .tables[v17 as usize]
-                            .top_left;
-                    *r6.offset((v16 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-                        (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
-                            .tables[v17 as usize]
-                            .bottom_left;
-                    v19 = (v16).wrapping_add(2u16);
-                    *r0.offset((v19 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-                        (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
-                            .tables[v17 as usize]
-                            .top_right;
-                    *r6.offset((v19 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-                        (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
-                            .tables[v17 as usize]
-                            .bottom_right;
-                }
+                v19 = (v16).wrapping_add(2u16);
+                TileTables::draw_block(
+                    (&raw const game.g_ram).cast::<u8>().add(0xa000).cast(),
+                    x,
+                    [
+                        r0.add((v16 >> 1) as usize),
+                        r6.add((v16 >> 1) as usize),
+                        r0.add((v19 >> 1) as usize),
+                        r6.add((v19 >> 1) as usize),
+                    ],
+                    TileDrawOrder::Columns,
+                );
                 v16 = (v19).wrapping_add(2u16);
                 r3 = (r3).wrapping_add(2u16);
                 let ref mut fresh24 =

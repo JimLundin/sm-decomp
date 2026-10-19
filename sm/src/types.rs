@@ -971,6 +971,43 @@ pub struct TileTables {
     pub tables: [TileTable; 1024],
 }
 
+/// Order in which the four destinations of a block are written.
+pub(crate) enum TileDrawOrder {
+    Rows,
+    Columns,
+}
+
+impl TileTables {
+    /// Draw a block's four tiles with its horizontal and vertical flips.
+    ///
+    /// Destinations follow `order`. Read each source immediately before its
+    /// store: a destination may overlap a source needed by a later tile.
+    ///
+    /// # Safety
+    /// `table` must point to a readable tile table and each destination must
+    /// be writable for two bytes. Pointers may overlap and be unaligned.
+    #[inline]
+    pub(crate) unsafe fn draw_block(
+        table: *const Self,
+        block: u16,
+        destinations: [*mut u16; 4],
+        order: TileDrawOrder,
+    ) {
+        let corners = match order {
+            TileDrawOrder::Rows => [0, 1, 2, 3],
+            TileDrawOrder::Columns => [0, 2, 1, 3],
+        };
+        let flip = ((block >> 10) & 3) as usize;
+        let tile_flip = (block & 0x0c00) << 4;
+        let first = (block & 0x03ff) as usize * 4;
+        for (destination, corner) in destinations.into_iter().zip(corners) {
+            let source = table.cast::<u16>().add(first + (corner ^ flip));
+            let tile = u16::from_le(source.read_unaligned()) ^ tile_flip;
+            destination.write_unaligned(tile.to_le());
+        }
+    }
+}
+
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct VramReadQueueEnt {

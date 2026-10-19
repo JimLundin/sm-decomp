@@ -58,6 +58,25 @@ Retain targeted comparisons for state/control-flow changes. Preserve read
 and write order; compound-assignment suggestions need alias/order review.
 Keep plan updates concise. The broader readability goal remains incomplete.
 
+Tile flip writers (2026-10-19): four repeated scrolling/PLM drawing
+branches share TileTables::draw_block. Horizontal/vertical flip selection,
+row/column store order, live source reads between stores and PLM wrapped
+byte offsets remain exact. X-ray's captured reads retain separate semantics.
+Net Rust lines -403; raw-offset lines -64 and C-int cast lines -42. Unsafe
+functions +1 is the shared raw writer; this consolidation does not prove
+broader alias safety.
+
+The four extracted original/candidate branches, using the actual helper and
+RAM macros with a mock Game RAM, match all RAM bytes in 819200 factored
+descriptor/offset/overlap cases. Wrong-order and eager-prefetch controls fail.
+These checks do not prove every joint state. The frozen composition includes
+image conversion 9eb79d78 and passes any% 129712/0 (111.17s),
+native exit 0, normal release (15.48s), formatting/check and progress.
+All source/DLL/fixture pins remain fixed; final committed inputs match the
+verified composition. Independent complete-source review has no findings.
+Total Rust is 168118 lines. Continue large repeated
+families; the broader readability goal remains open.
+
 ROM patch byte buffers (2026-10-19): all 88 stack arrays and raw borrows
 become borrowed byte slices. All 510 byte expressions, addresses, write order
 and fresh per-byte ROM lookups remain exact; the helper derives the length.
