@@ -14979,6 +14979,33 @@ offset pattern counter is unchanged because these loads use pointer methods.
 Continue with exercised subsystem cleanup; provenance of retained pointers,
 main Kraid/credits, persistence and broader hardware/audio remain unfinished.
 
+Enemy-projectile script timers (2026-10-19): share byte-backed wrapping
+decrement between instruction and script timer fields; reuse it in both
+absolute conditional jump handler and add the script timer setter. Branches still
+test the old value against one after decrement; zero wraps to65535. ROM
+operands retain read-before-store and decrement-before-jump order. Unsigned
+word slot indices retain full width; returned pointers and offsets stay exact.
+
+Frozen c08ce284 plus only this change passes
+any%129712/0 (175.25s) and Hi-Jump99191/0 (156.52s),
+native exits0. Observed Hi-Jump99191/0 (170.93s) compares
+all byte-backed stores with original unaligned word writes over complete RAM,
+and old countdown reads with original words. Actual script hits: absolute
+208 (old-one 65, other 143),
+set 65. Both absolute branch outcomes execute. The relative
+handler had zero Hi-Jump calls in the earlier observed candidate (99191/0)
+and its original body is restored; that movie is not accepted for its cleanup. Exact-helper boundaries pass
+all65536 old timer words at both bases plus72 complete-RAM high-index cases.
+Clean/observed non-timing diagnostics match; frozen source/DLL/input hashes
+remain stable. Later committed literal-offset simplification is retained;
+changed sections match after exact literal-offset normalization. The
+uncovered relative handler retains its exact current-HEAD body. No probes are committed.
+
+Cargo fmt/check, normal release build and progress pass. Including helpers:
+raw offsets-2, cast lines-5, Rust lines-1; unsafe functions and other own
+counters unchanged. Broader gameplay/credits, hardware/audio/masks and
+ownership remain open; further projectile cleanup requires actual coverage.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

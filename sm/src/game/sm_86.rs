@@ -792,10 +792,19 @@ impl EprojStateMut<'_> {
         let address = base + word_index * 2;
         self.0[address..address + 2].copy_from_slice(&value.to_le_bytes());
     }
-    fn decrement_instruction_timer(&mut self, word_index: usize) -> u16 {
-        let timer = EprojState(self.0).slot_word(0x1b8f, word_index);
-        self.write(0x1b8f, word_index, timer.wrapping_sub(1));
+    fn decrement(&mut self, base: usize, word_index: usize) -> u16 {
+        let timer = EprojState(self.0).slot_word(base, word_index);
+        self.write(base, word_index, timer.wrapping_sub(1));
         timer
+    }
+    fn decrement_instruction_timer(&mut self, word_index: usize) -> u16 {
+        self.decrement(0x1b8f, word_index)
+    }
+    fn decrement_timer(&mut self, word_index: usize) -> u16 {
+        self.decrement(0x19df, word_index)
+    }
+    fn set_timer(&mut self, word_index: usize, value: u16) {
+        self.write(0x19df, word_index, value);
     }
     fn set_instruction_timer(&mut self, word_index: usize, value: u16) {
         self.write(0x1b8f, word_index, value);
@@ -986,20 +995,15 @@ pub unsafe fn EprojInstr_GotoRel(mut k: uint16, mut epjp: *const uint8) -> *cons
     return epjp.offset(*epjp as int8 as ::core::ffi::c_int as isize);
 }
 pub unsafe fn EprojInstr_DecTimerAndGotoIfNonZero(
-    mut k: uint16,
-    mut epjp: *const uint8,
+    k: uint16,
+    epjp: *const uint8,
     game: &mut Game,
 ) -> *const uint8 {
-    let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let ref mut fresh48 =
-        *((&raw mut game.g_ram as *mut uint8).offset(0x19df) as *mut uint16).offset(v2 as isize);
-    let fresh49 = *fresh48;
-    *fresh48 = (*fresh48).wrapping_sub(1);
-    if fresh49 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
-        return epjp.offset(2);
+    if EprojStateMut(&mut game.g_ram).decrement_timer(usize::from(k >> 1)) == 1 {
+        epjp.offset(2)
     } else {
-        return EprojInstr_Goto(k, epjp);
-    };
+        EprojInstr_Goto(k, epjp)
+    }
 }
 pub unsafe fn EprojInstr_DecTimerAndGotoRelIfNonZero(
     mut k: uint16,
@@ -1017,15 +1021,10 @@ pub unsafe fn EprojInstr_DecTimerAndGotoRelIfNonZero(
         return EprojInstr_GotoRel(k, epjp);
     };
 }
-pub unsafe fn EprojInstr_SetTimer(
-    mut k: uint16,
-    mut epjp: *const uint8,
-    game: &mut Game,
-) -> *const uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x19df) as *mut uint16)
-        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-        *(epjp as *mut uint16);
-    return epjp.offset(2);
+pub unsafe fn EprojInstr_SetTimer(k: uint16, epjp: *const uint8, game: &mut Game) -> *const uint8 {
+    let value = *(epjp as *mut uint16);
+    EprojStateMut(&mut game.g_ram).set_timer(usize::from(k >> 1), value);
+    epjp.offset(2)
 }
 pub unsafe fn EprojInstr_MoveRandomlyWithinRadius(
     mut k: uint16,
