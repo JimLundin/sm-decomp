@@ -1765,102 +1765,38 @@ unsafe fn Samus_HandleSpeedBoosterAnimDelay(mut jp: *const uint8, game: &mut Gam
     return 0 as uint8;
 }
 unsafe fn Samus_HandleAnimDelay(game: &mut Game) {
-    let mut p: *const uint8 = RomPtr_91(
-        *(game.g_rom.offset(
-            (((0x91b010 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x91b010 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
-            .offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
-            ) as uint16_t,
-        game,
-    );
-    if *p.offset(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize)
-            as *mut uint16) as isize,
-    ) as ::core::ffi::c_int
-        & 0x80 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
-    {
-        let mut v1: uint8 = Samus_HandleSpeedBoosterAnimDelay(
-            p.offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int as isize,
-            ),
+    let animation_list = game.read_rom_word(0x91b010, usize::from(game.samus_pose()) * 2);
+    let mut delays = RomPtr_91(animation_list, game);
+    if *delays.add(usize::from(game.samus_anim_frame())) & 0x80 != 0 {
+        let command = Samus_HandleSpeedBoosterAnimDelay(
+            delays.add(usize::from(game.samus_anim_frame())),
             game,
         );
-        if kAnimDelayFuncs[(v1 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int) as usize]
-            .expect("non-null function pointer")(
-            p.offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int as isize,
-            ),
+        // Keep the captured list and reread the frame after each callback.
+        if !kAnimDelayFuncs[usize::from(command & 0xf)].expect("non-null function pointer")(
+            delays.add(usize::from(game.samus_anim_frame())),
             game,
         ) {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa94 as ::core::ffi::c_int as isize)
-                as *mut uint16) = (*((&raw mut game.g_ram as *mut uint8)
-                .offset(0xa9c as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                + *p.offset(
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xa96 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as isize,
-                ) as ::core::ffi::c_int) as uint16;
+            return;
         }
     } else {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xb3c as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            != 0
-            && *(&raw mut game.g_ram as *mut uint8).offset(0xa1f as ::core::ffi::c_int as isize)
-                as ::core::ffi::c_int
-                == 1 as ::core::ffi::c_int
-        {
-            let mut addr: uint16 = (if *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x9a2 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                & 0x2000 as ::core::ffi::c_int
-                != 0 as ::core::ffi::c_int
-            {
-                *(game.g_rom.offset(
-                    (((0x91b5de as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                        << 15 as ::core::ffi::c_int
-                        | 0x91b5de as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                        & 0x3fffff as ::core::ffi::c_int) as isize,
-                ) as *const uint8 as *mut uint16)
-                    .offset(
-                        *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xb3e as ::core::ffi::c_int as isize)
-                            as *mut uint16 as *mut uint8)
-                            .offset(
-                                (::core::mem::size_of::<uint16>() as usize)
-                                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                                    .wrapping_sub(1 as usize)
-                                    as isize,
-                            ) as isize,
-                    ) as ::core::ffi::c_int
+        let has_momentum = u16::from_le_bytes([game.g_ram[0xb3c], game.g_ram[0xb3d]]);
+        if has_momentum != 0 && game.samus_movement_type() == 1 {
+            let equipped_items = u16::from_le_bytes([game.g_ram[0x9a2], game.g_ram[0x9a3]]);
+            let animation_list = if equipped_items & 0x2000 != 0 {
+                let speed_boost_stage = usize::from(game.g_ram[0xb3f]);
+                game.read_rom_word(0x91b5de, speed_boost_stage * 2)
             } else {
-                *(game.g_rom.offset(
-                    (((0x91b5d1 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                        << 15 as ::core::ffi::c_int
-                        | 0x91b5d1 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                        & 0x3fffff as ::core::ffi::c_int) as isize,
-                ) as *const uint8 as *mut uint16) as ::core::ffi::c_int
-            }) as uint16;
-            p = RomPtr_91(addr as uint16_t, game);
+                game.read_rom_word(0x91b5d1, 0)
+            };
+            delays = RomPtr_91(animation_list, game);
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa94 as ::core::ffi::c_int as isize)
-            as *mut uint16) = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0xa9c as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + *p.offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
-            ) as ::core::ffi::c_int) as uint16;
-    };
+    }
+    let frame_buffer = u16::from_le_bytes([game.g_ram[0xa9c], game.g_ram[0xa9d]]);
+    let delay = *delays.add(usize::from(game.samus_anim_frame()));
+    game.set_samus_anim_frame_timer(frame_buffer.wrapping_add(u16::from(delay)));
 }
+
 static kSamusIsBottomDrawnFuncs: [Option<Func_U8>; 28] = unsafe {
     [
         Some(SamusBottomDrawn_0_Standing as unsafe fn(&mut Game) -> uint8),

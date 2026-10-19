@@ -13184,6 +13184,29 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Samus animation-delay reads (2026-10-19): the handler now uses safe live-ROM
+table reads, named pose/frame accessors and byte-backed scalar reads. It
+retains the captured delay list, rereads the frame after both callbacks, and
+combines the two timer stores with explicit word wrapping. RomPtr_91 retains
+its existing invalid-address behavior; dispatch and its callees are unchanged.
+
+Frozen 7581f2d7 plus this handler passes clean any% 129712/0 (213.69s).
+Contextual old/current comparisons pass all 128 KiB RAM and g_fail on every
+call: any% 17429 calls / 129712 frames (215.83s), Waver 8558 calls / 58109
+frames (112.60s), both zero failures and native exits 0. Normal delays,
+command dispatch, retained-timer returns and post-callback frame changes are
+exercised. A stale-frame control fails on call 4 at timer byte 0A94 (10 vs 246).
+Clean and observed any% non-timing diagnostics match exactly.
+
+Neither movie takes the Speed Booster table branch. A separate live-ROM
+control on frozen fe496675 plus the same handler matches complete RAM and
+g_fail for all 256 stage-byte values and four timer buffers (1024 cases),
+including word-wrap boundaries. Its restored 10000-frame replay passes with
+zero failures. These constructed inputs supplement, not establish, natural
+Speed Booster coverage. Cargo format/check, release and progress pass.
+Own raw offsets -14, cast lines -44, Rust lines -64; other counters unchanged.
+No temporary observations or ROM-derived fixtures enter the maintained source.
+
 Async door-loading RAM fields (2026-10-19):
 DoorTransitionFunction_LoadMoreThings_Async now uses byte-backed FX/flag
 reads, the palette-buffer word at C188 and existing named HDMA/direction/
