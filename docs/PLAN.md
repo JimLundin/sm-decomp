@@ -1343,60 +1343,59 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `ee52ea08` passes
-uninterrupted full boot any% 129712/0 (229.78s) and Speed Booster
-148406/0 (303.24s), native exits 0. This closes four source commits
-since 8ccedfcb: 39 constant/identity callback qualifiers, projectile slope
-collision accesses, message-box layouts and fireball spawn resets. Speed
-includes the exact Bubble Mountain, Warehouse, Varia and Hi-Jump prefixes;
-no shorter duplicate replay is run. It visits 55 rooms and 53 enemy definitions.
+Latest reviewed integration (2026-10-19): frozen `95ff9cef` passes
+uninterrupted full boot any% 129712/0 (250.89s) and Speed Booster
+148406/0 (300.99s), native exits 0. This batch covers four source
+commits since ee52ea08: intermediate integer casts, projectile velocity
+arithmetic, fireball child countdown and fireball collision transitions.
+Speed includes the exact Bubble Mountain, Warehouse, Varia and Hi-Jump
+prefixes; no shorter duplicate replay is run. Coverage remains 55 rooms
+and 53 enemy definitions.
 
-Both complete serialized payloads match the prior 8ccedfcb endpoints byte
-for byte, including the separately reviewed Speed continuation. Every
-checkpoint binding validates. Only the runtime fingerprint differs: the
-callback qualifier changed the PPU source input; compatibility code is
-unchanged. Neither new replay loads an earlier checkpoint. Speed ends in
-state 8, room $AD1B, X171/Y123, pose $0089, health 46/399, missiles 6/15,
-Supers 0/5, items $3105 and beams $1004 equipped/collected. Kraid remains
-defeated and all eight coroutine bytes are zero. Diagnostics match; Speed's
-state counts and room/enemy sets equal the reviewed prefix plus continuation.
+Both complete checkpoints, including every binding and serialized payload,
+are byte-identical to the reviewed ee52ea08 full-boot endpoints. Runtime
+source inputs and compatibility code remain unchanged. Neither replay loads
+an earlier checkpoint. Non-timing diagnostics and coverage match exactly,
+including the known fingernail diagnostic. Speed ends in state 8, room
+$AD1B, X171/Y123, pose $0089, health 46/399, missiles 6/15, Supers 0/5,
+items $3105 and beams $1004 equipped/collected. Kraid is defeated and all
+eight coroutine bytes are zero; credits remain unexercised.
 
-Independent callback review reconstructs all 39 qualifier removals: 32
-literal returns and seven unchanged argument returns. Bodies and callers
-remain exact, including four undereferenced pointer returns. All 31 public
-paths compile against this library as both safe and original unsafe function
-pointers; private callbacks retain their existing compiler-checked tables.
+Independent cast review reconstructs all 28 committed banks by applying
+only the 7442 selected deletions, the signed literal suffix and rustfmt.
+Fresh before/after compiler output confirms every operand span and final
+type: 4784 i32, 2596 u32 and 62 bool inputs, with no wider integer or float.
+All nonliteral input types remain exact. Normal-lint constant comparisons
+cover all 849 distinct inferred literal conversions; the additional
+0x8000i32 explicitly retains -32768. Fresh byte-model controls pass 3145732
+comparisons across all ten observed type pairs. Float saturation and 64-bit
+widening remain excluded. These identities cover the selected transformations;
+the movies do not establish execution of every changed gameplay routine.
 
-Independent layout review reconstructs the entire eight-function/helper
-commit and its control source. Fresh controls pass 393631 cases and 1448543
-complete-RAM comparisons, including 1054912 callback snapshots, 129736
-expected bounds/index failures and 49398 mapper diagnostics. Zero-length
-skipping, widened bounds and cached pre-draw ROM-base variants fail. This
-characterizes legacy native unaligned behavior, not Rust alignment validity.
+Independent arithmetic review reconstructs both velocity functions and the
+unchanged combined caller. Rebuilt controls use the maintained position
+getters and pass 213888 full-RAM/return cases plus 87818240 arithmetic
+comparisons. Carry, signed high byte, byte/word index distinction and store
+order are retained; omitted carry, unsigned high byte and rounded fraction
+index variants fail. Historical probe source is reconstructed against all
+66 recorded source pins: X executes 25 times and Y 13 times. Its subsequently
+reused build outputs are not reused for this integration.
 
-Independent collision review reconstructs all nine selected accesses and
-the observed source. Raw logs confirm 53 live reads and 16 complete-RAM
-stores; all 13 unhit candidates remain unchanged. The in-repository caller
-graph supplies a separate stack collision record, and no retained RAM
-pointer crosses the new views. Exact getter/writer controls pass 65616 reads
-and 131232 full-RAM stores; wrong odd-index rounding and destination fail.
-These controls cover the accesses, not every collision-handler branch.
-
-Independent spawn-reset controls pass 262144 cases using the actual Game:
-every u16 child index, both handlers and two backing patterns. All 524288
-callback snapshots and final RAM match; callback scratch/index mutations,
-argument order and unchanged instruction pointers are checked. Removing
-the second reset or shifting its address fails. The four stores reconstruct
-exactly, retaining their positions before both child-spawn callbacks.
-Retained observations execute the two handlers four and two times.
+Independent fireball controls reconstruct both commits and helper bodies.
+They pass 69120 countdown and 786432 collision full-RAM/trace cases, including
+every u16 index, wrapping byte gates, callback index mutation and returned
+instruction pointers. Wrong byte rounding, unsigned gating, live-index slot
+selection and missing timer variants fail. Dedicated observation sources,
+libraries and fixtures still match their pins: countdown spawns 26 times
+and skips six; collision store branches execute four and two times.
+Legacy unaligned accesses are characterized on x86-64, not made Rust-valid.
 
 All 73 source/configuration/host/progress files, Cargo library, DLL and
 copied fixtures stay fixed. Only registry dependencies seed this checkout.
-Formatting, normal release (49.36s), host build
-(3.31s) and progress pass. The batch removes 122 Rust lines,
-34 raw-offset lines, 101 c_int casts (66 cast lines) and 39 unsafe functions.
-This audit changes no maintained Rust or committed assets. Earlier source
-audits retain their recorded branch and caller coverage limits.
+Formatting, normal release (52.19s), host build
+(3.64s) and progress pass. The batch removes 2123 Rust lines,
+six raw-offset lines and 7475 c_int casts (7364 cast lines); unsafe functions
+remain 6520. This audit changes no maintained Rust or committed assets.
 
 Later source changes need their own integration. Remaining bosses, credits,
 persistence and broader hardware/audio coverage remain unfinished.
