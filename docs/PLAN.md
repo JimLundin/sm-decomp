@@ -29,6 +29,11 @@ findings before further unrelated cleanup. The current first failure is
 frame 28,228, pixel (255,223), green byte 00 versus 84, with zero RAM
 differences. Keep rendering and all comparisons enabled.
 
+The current prototype clears full any% and Waver replays, but remains
+uncommitted: the implementation team is revising the on-screen helper after
+additional corner-case findings. Independent prototype results and the
+offscreen temporary-byte classification are recorded under The oracle below.
+
 Latest integrated check: frozen `f69e97c9` plus the committed brightness-table
 cleanup and PPU reset simplification passes any% 129712/0 (233.05s), native
 exit 0, and Waver 58109/71 (108.52s), native exit 1. Complete ordered Waver
@@ -165,6 +170,35 @@ sessions own the adjacent cleanup above. No maintained source or residue
 change and no new replay result belong to this cleanup.
 
 ## The oracle
+
+Independent Waver prototype QC (2026-10-19): frozen a761a09e plus the
+proposed sm_91 change passes any% 129712/0 (245.94s) and Waver 58109/0
+(125.15s), native exits 0, with rendering and standard comparisons enabled.
+The exact on-screen candidate passes 19,680 actual C822..C873 ROM-function
+cases; the original fails 8,472 identical cases. Cases cover both table
+destinations, boundary rows and every caller-representable down-right angle
+pair at selected origins/rows. Complete RAM comparisons exclude only the
+ROM's named scratch registers and return-stack storage. A separate full-route
+observer also reports zero raw-table/window differences. Format, release and
+progress checks pass. These results describe the current prototype, not a
+final correction: the implementation team is replacing its on-screen helper
+after reversed-gradient/start-zero corner findings. Recheck the final source.
+
+Independent offscreen scratch-byte classification (2026-10-19): the fresh
+poisoned ROM probe exposes intermediate high-byte values from direct-page
+0026; the retained helper writes zero there. A separate observer preserves
+that discrepancy and passes 243,344 actual-ROM cases with 125,584,694 exact
+ordered store addresses. All 12,130,670 differing values, across 125,889
+cases, are replaced by the next same-address store, whose address/value equals
+the candidate. Final complete RAM and independently predicted scratch match;
+return-stack writes are accounted for separately. Both destinations include
+2,656 wrapped-bank cases and 58,525 adjacent-tail cases. The run executes
+763,558,672 opcodes in 59.13s, native exit 0. Thus earlier zero-scratch
+address/value-vector results must not be generalized to arbitrary scratch.
+Static kernel review finds no destination reads between these writes; an
+actual read trace and the pending final integration remain separate checks.
+No maintained source or own residue change belongs to either review; all
+probes, snapshots and ROM-derived outputs remain outside tracked files.
 
 RAM diagnostic alignment fix (2026-10-19): paired mismatch words now use
 little-endian byte reads. The inherited grouping permits odd offsets below
