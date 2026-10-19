@@ -9445,6 +9445,26 @@ verified source. Rust lines +2 make branch results explicit; other own counters
 unchanged. Arbitrary MMIO mutation and full gameplay/render/audio remain open.
 Continue covered CPU cleanup; TSX/ROR remain held for contextual execution.
 
+CPU shared addition overflow (2026-10-19): ADC/SBC arithmetic calls safe
+addition_overflow with the selected sign mask. SBC still supplies its width-
+correct complemented operand; V uses the pre-final-decimal result and remains
+before final correction and C/A stores. Independent source/probe review finds
+no differences. Frozen `01f73424` plus this change passes 144,179,200 actual
+current-wrapper/old-arithmetic comparisons across every A word/byte operand,
+nineteen word boundary/decimal/sign entries including duplicates, both carry
+values and decimal flags. Old safe arithmetic bodies retain all four original
+overflow expressions; they execute after restoring CPU state with already-read
+operand and wrapper cycle count. Named CPU fields match; bus reads are performed
+only by the current wrapper, not independently compared against an old wrapper.
+Prefix 3,600/0 (1.21s), native exit 0, executes word/byte ADC 195,798/37,613
+and SBC 38,340/169 times, all binary; constructed helper cases cover decimal.
+Clean full any% 129,712/0 (54.60s), native exit 0. Cargo fmt/check, full release
+and release-library builds with external SDL2, normal metadata and optimized
+frozen core/DLL builds pass. Live CPU matches verified source. Rust lines +1
+introduce the shared safe predicate; other counters unchanged. Full word
+Cartesian, arbitrary MMIO and complete gameplay/render/audio remain open.
+Continue covered CPU cleanup; TSX/ROR remain held for contextual execution.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

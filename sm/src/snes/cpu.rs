@@ -472,6 +472,11 @@ unsafe fn xor_accumulator(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     }
     set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
 }
+fn addition_overflow(register: u16, value: u16, result: i32, byte: bool) -> bool {
+    let sign = if byte { 0x80 } else { 0x8000 };
+    i32::from(register) & sign == i32::from(value) & sign
+        && i32::from(value) & sign != result & sign
+}
 fn add_to_accumulator(value: u16, byte: bool, cpu: &mut Cpu) {
     if byte {
         let mut result = if cpu.d {
@@ -483,8 +488,7 @@ fn add_to_accumulator(value: u16, byte: bool, cpu: &mut Cpu) {
         } else {
             (i32::from(cpu.a) & 0xff) + i32::from(value) + i32::from(cpu.c)
         };
-        cpu.v = i32::from(cpu.a) & 0x80 == i32::from(value) & 0x80
-            && i32::from(value) & 0x80 != result & 0x80;
+        cpu.v = addition_overflow(cpu.a, value, result, true);
         if cpu.d && result > 0x9f {
             result += 0x60;
         }
@@ -508,8 +512,7 @@ fn add_to_accumulator(value: u16, byte: bool, cpu: &mut Cpu) {
         } else {
             i32::from(cpu.a) + i32::from(value) + i32::from(cpu.c)
         };
-        cpu.v = i32::from(cpu.a) & 0x8000 == i32::from(value) & 0x8000
-            && i32::from(value) & 0x8000 != result & 0x8000;
+        cpu.v = addition_overflow(cpu.a, value, result, false);
         if cpu.d && result > 0x9fff {
             result += 0x6000;
         }
@@ -539,8 +542,7 @@ fn subtract_from_accumulator(value: u16, byte: bool, cpu: &mut Cpu) {
         } else {
             (i32::from(cpu.a) & 0xff) + i32::from(value) + i32::from(cpu.c)
         };
-        cpu.v = i32::from(cpu.a) & 0x80 == i32::from(value) & 0x80
-            && i32::from(value) & 0x80 != result & 0x80;
+        cpu.v = addition_overflow(cpu.a, value, result, true);
         if cpu.d && result < 0x100 {
             result -= 0x60;
         }
@@ -564,8 +566,7 @@ fn subtract_from_accumulator(value: u16, byte: bool, cpu: &mut Cpu) {
         } else {
             i32::from(cpu.a) + i32::from(value) + i32::from(cpu.c)
         };
-        cpu.v = i32::from(cpu.a) & 0x8000 == i32::from(value) & 0x8000
-            && i32::from(value) & 0x8000 != result & 0x8000;
+        cpu.v = addition_overflow(cpu.a, value, result, false);
         if cpu.d && result < 0x10000 {
             result -= 0x6000;
         }
