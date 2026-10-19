@@ -277,13 +277,26 @@ unsafe fn address_direct_page(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
 }
 unsafe fn address_direct_page_x(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
     let adr = u16::from(fetch_byte(cpu, game));
-    direct_page_address(adr, Some(CpuRegister::X), &mut *cpu)
+    direct_page_address(adr, Some(IndexRegister::X), &mut *cpu)
 }
 unsafe fn address_direct_page_y(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
     let adr = u16::from(fetch_byte(cpu, game));
-    direct_page_address(adr, Some(CpuRegister::Y), &mut *cpu)
+    direct_page_address(adr, Some(IndexRegister::Y), &mut *cpu)
 }
-fn direct_page_address(offset: u16, index: Option<CpuRegister>, cpu: &mut Cpu) -> (u32, u32) {
+#[derive(Clone, Copy)]
+enum IndexRegister {
+    X,
+    Y,
+}
+impl IndexRegister {
+    fn value(self, cpu: &Cpu) -> u16 {
+        match self {
+            Self::X => cpu.x,
+            Self::Y => cpu.y,
+        }
+    }
+}
+fn direct_page_address(offset: u16, index: Option<IndexRegister>, cpu: &mut Cpu) -> (u32, u32) {
     if cpu.dp & 0xff != 0 {
         cpu.cyclesUsed = cpu.cyclesUsed.wrapping_add(1);
     }
@@ -330,7 +343,7 @@ unsafe fn address_direct_page_indirect_y(
     game: &mut Game,
 ) -> (u32, u32) {
     let pointer = read_direct_page_pointer(cpu, game);
-    absolute_indexed_address(pointer, CpuRegister::Y, write, &mut *cpu)
+    absolute_indexed_address(pointer, IndexRegister::Y, write, &mut *cpu)
 }
 unsafe fn read_direct_page_long_pointer(cpu: *mut Cpu, game: &mut Game) -> u32 {
     let adr = u16::from(fetch_byte(cpu, game));
@@ -378,15 +391,15 @@ unsafe fn address_absolute(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
 }
 unsafe fn address_absolute_x(cpu: *mut Cpu, write: bool, game: &mut Game) -> (u32, u32) {
     let adr = u32::from(fetch_word(cpu, game));
-    absolute_indexed_address(adr, CpuRegister::X, write, &mut *cpu)
+    absolute_indexed_address(adr, IndexRegister::X, write, &mut *cpu)
 }
 unsafe fn address_absolute_y(cpu: *mut Cpu, write: bool, game: &mut Game) -> (u32, u32) {
     let adr = u32::from(fetch_word(cpu, game));
-    absolute_indexed_address(adr, CpuRegister::Y, write, &mut *cpu)
+    absolute_indexed_address(adr, IndexRegister::Y, write, &mut *cpu)
 }
 fn absolute_indexed_address(
     offset: u32,
-    index: CpuRegister,
+    index: IndexRegister,
     write: bool,
     cpu: &mut Cpu,
 ) -> (u32, u32) {

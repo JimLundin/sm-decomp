@@ -10131,6 +10131,24 @@ the duplicated word-pointer bus sequence. Other own counters unchanged.
 Indexed-indirect/TSX/accumulator ROR remain held. Complete gameplay/render/
 audio remain open. Continue covered CPU cleanup.
 
+CPU typed address indexes (2026-10-19): safe direct-page and absolute-indexed
+helpers now accept IndexRegister (X/Y), excluding the accumulator from their
+interfaces. CpuRegister remains for load/store/compare operations. Index reads,
+short-circuiting, cycles and address arithmetic retain their order. Frozen
+`870e5a27` plus this change passes 100,663,296 actual old/current direct-page,
+37,748,736 absolute-indexed and 134,201,344 indirect-Y cases using the preceding
+bus probes. Previous safe helper bodies and enum remain in the old paths;
+named CPU/bus state, RAM, addresses, PC and cycles match. Existing Cartesian/
+MMIO limits remain. Prefix 3,600/0 (0.98s), native exit 0, executes all six
+affected wrappers: direct/DP-X/DP-Y 1,152,945/26,579/5,963; absolute X/Y
+535,840/244,974; indirect-Y 4,362. Clean full any% 129,712/0 (48.26s), native
+exit 0. Cargo fmt/check, full release/release-library builds with external SDL2,
+normal metadata and frozen optimized core/DLL pass. Live CPU matches verified
+source; peer PPU work is outside this replay. Rust lines +13 adds the narrower
+enum and accessor; other own counters unchanged. Indexed-indirect/TSX/
+accumulator ROR remain held. Complete gameplay/render/audio remain open.
+Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
