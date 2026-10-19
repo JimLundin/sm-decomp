@@ -15529,6 +15529,30 @@ Only registry dependencies are shared across checkouts. No observer, ROM,
 input or checkpoint is committed. Concurrent comparison/enable edits retain
 their own verification; broader gameplay/credits and ownership remain open.
 
+Enemy-projectile property updates (2026-10-19): operand-based set/clear
+handlers use captured byte-backed properties followed by the original ROM
+mask read and byte-backed store. Set remains OR; Clear remains AND with the
+operand, including its original quirks. Reuse the setter for spawn properties.
+Word indices remain unsigned half-slots; callback and operand order is exact.
+
+Discovery Varia122732/0 executes Set111 and Clear59. The other ten fixed-bit
+or radius handlers have zero calls and remain unchanged. Final frozen
+11c3e0e7 plus only this change passes any%129712/0
+(190.58s) and Varia122732/0 (206.71s), native exits0.
+Observed Varia122732/0 (209.10s) checks all changed stores
+against original unaligned writes over complete RAM: spawn 565,
+set 111, clear 59; handler reads also match original
+words. Complete non-timing clean/observed diagnostics match after stripping.
+Frozen source/DLL/ROM/input hashes remain stable; maintained sections match.
+
+Exact-handler controls pass420 complete-RAM/return-pointer cases with odd
+and maximum indices plus1179648 OR/AND comparisons spanning all65536 old
+words and nine masks. Cargo fmt/check, normal release and progress pass.
+Including setter: raw offsets-3, cast lines-4, Rust lines+3 provide a reusable
+property store and explicit read ordering; unsafe functions/other counters
+unchanged. No probes/artifacts committed. Further projectile updates and
+broader gameplay/credits, hardware/audio/masks and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

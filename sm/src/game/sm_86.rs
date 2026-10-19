@@ -803,6 +803,9 @@ impl EprojStateMut<'_> {
     fn set_spritemap(&mut self, word_index: usize, value: u16) {
         self.write(0x1b6b, word_index, value);
     }
+    fn set_properties(&mut self, word_index: usize, value: u16) {
+        self.write(0x1bd7, word_index, value);
+    }
     fn set_preinstruction(&mut self, word_index: usize, value: u16) {
         self.write(0x1a03, word_index, value);
     }
@@ -855,8 +858,8 @@ unsafe fn SpawnEprojInner(mut j: uint16, mut gfx_idx: uint16, game: &mut Game) -
     EprojStateMut(&mut game.g_ram).set_instruction(v4, value);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1bb3) as *mut uint16).offset(v4 as isize) =
         (*Edef).radius;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16).offset(v4 as isize) =
-        (*Edef).properties;
+    let value = (*Edef).properties;
+    EprojStateMut(&mut game.g_ram).set_properties(v4, value);
     EprojStateMut(&mut game.g_ram).set_instruction_timer(v4, 1);
     EprojStateMut(&mut game.g_ram).set_spritemap(v4, 0x8000);
     EprojStateMut(&mut game.g_ram).clear_spawn_variables(v4 as usize);
@@ -1061,26 +1064,26 @@ pub unsafe fn EprojInstr_MoveRandomlyWithinRadius(
     return epjp.offset(4);
 }
 pub unsafe fn EprojInstr_SetProjectileProperties(
-    mut k: uint16,
-    mut epjp: *const uint8,
+    k: uint16,
+    epjp: *const uint8,
     game: &mut Game,
 ) -> *const uint8 {
-    let ref mut fresh43 = *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16)
-        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
-    *fresh43 =
-        (*fresh43 as ::core::ffi::c_int | *(epjp as *mut uint16) as ::core::ffi::c_int) as uint16;
-    return epjp.offset(2);
+    let slot = usize::from(k >> 1);
+    let properties = EprojState(&game.g_ram).slot_word(0x1bd7, slot);
+    let mask = *(epjp as *mut uint16);
+    EprojStateMut(&mut game.g_ram).set_properties(slot, properties | mask);
+    epjp.offset(2)
 }
 pub unsafe fn EprojInstr_ClearProjectileProperties(
-    mut k: uint16,
-    mut epjp: *const uint8,
+    k: uint16,
+    epjp: *const uint8,
     game: &mut Game,
 ) -> *const uint8 {
-    let ref mut fresh42 = *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16)
-        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
-    *fresh42 =
-        (*fresh42 as ::core::ffi::c_int & *(epjp as *mut uint16) as ::core::ffi::c_int) as uint16;
-    return epjp.offset(2);
+    let slot = usize::from(k >> 1);
+    let properties = EprojState(&game.g_ram).slot_word(0x1bd7, slot);
+    let mask = *(epjp as *mut uint16);
+    EprojStateMut(&mut game.g_ram).set_properties(slot, properties & mask);
+    epjp.offset(2)
 }
 pub unsafe fn EprojInstr_EnableCollisionWithSamusProj(
     mut k: uint16,
