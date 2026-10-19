@@ -2336,28 +2336,55 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `07e30047` removes 1219 same-type
-casts across 36 files: 1070 raw-pointer casts and 149 scalar casts (25 u32,
-35 u16, 72 i32 and 17 u8). Independent reconstruction binds all 70 committed
-Rust/Cargo inputs to the frozen candidate and all 67 replay sources. Every
-edit removes only a cast suffix and preserves operand grouping, macro calls
-and evaluation position; all 72 replay pins remain exact.
+Latest reviewed integration (2026-10-20): `a4a6efa7` shares 92 cinematic
+loads and `392705fa` shares 3593 inline RAM pointer constructions. Independent
+composition review binds all 74 source/config/host inputs of each focused
+commit to its reviewed stage; the final tree matches the shared replay.
+All 80 replay pins remain stable after completion.
 
-Clippy marks 139 selected suggestions MachineApplicable and 1080
-MaybeIncorrect: all 1070 pointer suggestions and ten RAM-word expansions.
-The latter retain their original ram_word invocations, whose result is u16;
-Clippy's expanded replacement text is not inserted. Pointer types/constness
-match, and scalar declarations, SDL aliases and fixed-width fields retain
-their types. The eight platform-dependent c_long chains and two integer-literal
-casts remain excluded; final release Clippy reports only those ten sites.
+The complete pointer family has 3465 ordinary expressions and 128 expressions
+inside known macros: 110 set_ram_word, eight update_ram_word and ten qualified
+rom_table_word uses. AST spans bind to the normalized source, with no overlaps
+or unclassified contexts. All 2932 single offsets, 661 successive-offset pairs
+and 2067 target casts remain exact; primitive-u8 bindings have no shadows.
+Independent reconstruction reproduces all 74 composed inputs and leaves the
+entire original ram_map prefix and metadata exact.
 
-Normal release, formatting and progress pass. The completed any% replay passes
-129712/0 (109.64s), native exit 0; review reused the build and replay. Net Rust
-lines -412, total 143151, with 1219 actual casts removed; the cast-line counter
-falls only 65. Raw RAM accesses and unsafe-function counts remain unchanged.
-The movie covers core gameplay, with zero ending/credits-state frames; frontend
-changes are compiler-checked. Broader readability, frontend execution, credits
-coverage and pointer/alias safety remain incomplete.
+Both actual verification-crate expansions completed successfully. Independent
+token comparison binds the actual helper and every expanded expression: only
+33 imports, the helper declaration, whitespace and 3593 qualified-u8 spellings
+are normalized. Parentheses, casts, blocks, literal payloads and evaluation
+order are exact. No new function call, whole-Game borrow or temporary scope is
+introduced. Net pointer lines -2449; its raw-counter drop of 3593 reflects macro
+syntax, not fewer runtime unsafe operations. The counter omits the helper.
+
+The cinematic source review is reused and independently bound through the
+same-type-cast rebase and pointer composition. Its 92 operations retain all
+230 payload values, register/callback order and the post-MDMAEN RAM mirror
+store. The two packed-word loads use read_unaligned in their original positions.
+The focused check binds 92 operation slices, nine actual helper/layout sections
+and seven source inputs. All 3904 operation/sequence/mirror comparisons pass;
+256 early-mirror and two swapped-register controls are detected. Both sides use
+the corrected packed reader. Decompression and hardware callbacks are mocked;
+this verifies factoring/order at that boundary, not complete hardware behavior.
+
+Windows denied both standalone checker launches before any comparisons ran.
+Recovery retained compare.rs as an exact byte prefix and appended only an
+export calling its original main. The DLL-hosted check passed with all eight
+artifact hashes stable; it did not require another release build or movie.
+Normal release (22.53s), formatting/check, progress and the single shared any%
+129712/0 (101.36s wall, 101.21s replay), native exit 0, pass. Cinematic lines
+fall 368 and unsafe functions rise one; combined Rust is 140334 lines. The
+movie has zero ending/credits-state frames. Broader readability, frontend
+execution, full credits coverage and pointer/alias safety remain incomplete.
+
+Included `07e30047` cast review retains its independent reconstruction of all
+70 inputs, 67 replay sources and 72 pins: 1070 pointer and 149 scalar casts
+removed. The ten ram_word invocations retain their original syntax, and all
+fixed-width scalar/SDL bindings were checked. Eight c_long chains and two
+integer-literal casts remain excluded. Release and any% 129712/0 (109.64s)
+passed; net Rust lines -412. Clippy's 139 MachineApplicable and 1080
+MaybeIncorrect suggestions were explicitly distinguished in that review.
 
 Included `f173c9e4` getter declarations retain their independent whole-source,
 complete-family AST and actual compiler-expansion review: 147 private inline
