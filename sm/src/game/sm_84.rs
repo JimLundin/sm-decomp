@@ -2057,16 +2057,11 @@ pub unsafe fn PlmInstr_CollectAmmoPowerBombTank(
     DisplayMessageBox(4 as uint16, game);
     return plmp.offset(2 as ::core::ffi::c_int as isize);
 }
-pub unsafe fn PlmInstr_SetLinkReg(
-    mut plmp: *const uint8,
-    mut k: uint16,
-    game: &mut Game,
-) -> *const uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdebc as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-        *(plmp as *mut uint16);
-    return plmp.offset(2 as ::core::ffi::c_int as isize);
+pub unsafe fn PlmInstr_SetLinkReg(plmp: *const uint8, k: uint16, game: &mut Game) -> *const uint8 {
+    let link = (plmp as *const u16).read_unaligned();
+    let offset = 0xdebc + usize::from(k >> 1) * 2; // plm_instruction_list_link_reg
+    game.g_ram[offset..offset + 2].copy_from_slice(&link.to_le_bytes());
+    plmp.add(2)
 }
 pub unsafe fn PlmInstr_Call(
     mut plmp: *const uint8,
@@ -2080,15 +2075,10 @@ pub unsafe fn PlmInstr_Call(
             + 2 as ::core::ffi::c_long) as uint16;
     return *(plmp as *mut uint16) as uintptr_t as *const uint8;
 }
-pub unsafe fn PlmInstr_Return(
-    mut plmp: *const uint8,
-    mut k: uint16,
-    game: &mut Game,
-) -> *const uint8 {
-    return *((&raw mut game.g_ram as *mut uint8).offset(0xdebc as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-        as uintptr_t as *const uint8;
+pub fn PlmInstr_Return(_plmp: *const uint8, k: uint16, game: &mut Game) -> *const uint8 {
+    let offset = 0xdebc + usize::from(k >> 1) * 2; // plm_instruction_list_link_reg
+    let link = u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]]);
+    usize::from(link) as *const uint8
 }
 pub unsafe fn PlmInstr_GotoIfDoorBitSet(
     plmp: *const uint8,

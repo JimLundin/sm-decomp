@@ -12797,6 +12797,25 @@ remains preserved. Chozo guarded reads and Super Missile passage remain
 held; complete credits, gameplay, hardware/audio, masks and ownership stay
 open. Continue covered PLM cleanup.
 
+PLM link-register RAM (2026-10-19): PlmInstr_SetLinkReg and
+PlmInstr_Return now store/read the little-endian plm_instruction_list_link_reg
+word through byte-backed RAM. The k>>1 word index retains its full width,
+including high/odd slots. SetLinkReg reads the unaligned operand before
+writing, then advances two bytes. Return preserves the bank-relative pointer
+value and is now safe. PlmInstr_Call remains unchanged.
+
+Frozen fe496675 plus only this change passes any%129712/0
+(193.67s), native exit0, and pickup route68606/0
+(132.35s), native exit0. Observed pickup route68606/0
+(135.71s) executes 41 link writes and 2 link returns.
+These are contextual oracle comparisons, not proof of every slot or alias;
+all65536 slot address calculations match separately. Maintained source has
+no observers. Cargo fmt/check and release build pass. Own raw offsets-2,
+unsafe functions-1, cast lines-5, Rust lines-10; other own counters unchanged.
+Peer source is excluded from frozen replays and preserved in the checkout.
+Chozo guarded reads, Super Missile passage and previous holds remain held;
+complete credits, gameplay, hardware/audio, masks and ownership stay open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
