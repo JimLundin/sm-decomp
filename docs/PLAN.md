@@ -220,6 +220,26 @@ duplicated. Source audit, formatting/check and normal release builds pass
 changes retain separate validation. Continue shared subsystem state and
 handler-family work to remove operations and unsafe boundaries.
 
+Independent fixed-field audit (2026-10-19): compiler expansion of the
+actual ee575103 macro and declarations matches all 232 former method bodies,
+documentation and public types after resolving constant byte-address sums.
+Two local setter parameter names, index and bts, become value; their types
+and uses are unchanged. Separately compiled function-pointer tables accept
+all 82 getters and 150 setters with the original callable types. No other
+item appears in the expansion. Exact source comparison preserves Game's
+layout, initialization and every unselected method.
+
+All 64 Rust files and six configuration/host files match the owning
+a91d1a4a-based candidate plus this declaration change. Independent stripping
+removes only the two temporary probes and appended checks; all 232 observer
+reference methods match the original bodies. Its 10000/0 prefix records
+237534 reads and 79557 writes at frames 0..9999. Reuse the qualified clean
+any% 129712/0 and Warehouse 128547/0 replays, with native exits 0 and the
+known fingernail warning retained. Formatting, normal release and progress
+pass; source, libraries, DLLs, fixtures and logs retain their pinned hashes.
+This audit adds no maintained Rust, residue or gameplay coverage. Later
+subsystem and hardware edits keep their separate validation and integration.
+
 Independent split-word audit (2026-10-19): reconstruct e23ad2ee from
 its parent and the owning e8592193-based candidate across all 64 Rust files
 and six configuration/host files. The 19 addition and 12 store copies have
