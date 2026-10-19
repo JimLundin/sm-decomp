@@ -915,6 +915,55 @@ Rust -12, raw offsets -12, promotion casts -12 (cast lines -6), unsafe
 functions -2. This audit changes no maintained Rust and adds no assets.
 Later workspace changes retain separate integration coverage.
 
+Projectile velocity arithmetic (2026-10-19): the standalone X and Y
+movement routines use byte overflow and signed wrapping word addition.
+Fraction sums are 0..=510; their low byte and carry match overflowing_add.
+The signed high velocity byte plus carry is -128..=128, so the i16 delta
+cannot overflow; wrapping_add_signed preserves the old u16 truncation.
+Word indices still round down while fraction-byte indices retain the full
+original k. Fraction writes precede position reads/writes; X precedes Y.
+Return values, raw accesses and existing pointer/borrow order are unchanged.
+The Mother Brain death-beam caller retains a raw enemy pointer across these
+calls, so adding a whole-RAM mutable view remains a separate provenance task.
+
+Extracted original/candidate bodies pass 213888 complete-RAM/return
+comparisons, including every u16 index in both changed routines, their
+unchanged combined caller and boundary combinations. Arithmetic passes
+87818240 comparisons: every velocity/
+fraction pair at five positions, plus every position at selected boundaries.
+This is not the full Cartesian product; the arithmetic identity above covers
+the general case. Omitted carry, unsigned high byte and rounded fraction-index
+mutants all fail. Native build 0.35s, execution 2.48s.
+Legacy unaligned word accesses are characterized on x86-64, not made valid.
+
+Observed bf505920 plus the change passes any% 129712/0
+(194.41s) and Bubble Mountain 138749/0
+(222.41s). Exits 2 report unvisited required
+probes: the combined movement arithmetic remains unchanged, and this longer
+route executes neither standalone helper. Carry/completed-store probe counts
+and frame ranges match for each exercised routine:
+
+| Routine | Any% calls @ frames | Bubble Mountain calls @ frames |
+| --- | --- | --- |
+| MoveEprojWithVelocityY | 13 @ 70720..70847 | - |
+| MoveEprojWithVelocityX | 25 @ 36789..89544 | - |
+
+Removing observers and excluding the unvisited combined helper recovers the
+exact selected change. Rebased onto frozen
+823689c5, final any% passes 129712/0 (247.45s)
+and Bubble Mountain 138749/0 (302.78s),
+native exits 0. Source/configuration, DLL/library, ROM and input hashes stay
+fixed. The longer route includes the Warehouse prefix and retains its known
+fingernail diagnostic. Unvisited surrounding gameplay, including the death
+beam and credits, is not established by these replays.
+
+Survey/final builds 32.43s/15.7s; formatting/check,
+normal workspace release (44.10s) and progress pass. Net Rust lines -2,
+c_int casts -24 (cast-containing lines -16), all casts -32; raw accesses,
+borrowed raw places and unsafe-function counts unchanged. Maintained edit
+to final result 340.05s. Concurrent changes retain separate checks;
+temporary controls/probes and input assets remain uncommitted.
+
 ## Validation strategy (2026-10-19)
 
 User priority: shorten the complete edit/build/result cycle. Replaying the

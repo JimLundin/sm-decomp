@@ -2807,39 +2807,37 @@ pub unsafe fn MoveEprojWithVelocity(mut k: uint16, game: &mut Game) -> uint16 {
     return MoveEprojWithVelocityY(k, game);
 }
 pub unsafe fn MoveEprojWithVelocityY(mut k: uint16, game: &mut Game) -> uint16 {
-    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let v1 = usize::from(k >> 1);
     let mut v2: uint16 =
         *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v1 as isize);
-    let mut carry: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x1a6f)
-        as *mut uint16 as *mut uint8)
-        .offset(k as ::core::ffi::c_int as isize)
-        .offset(1) as ::core::ffi::c_int
-        + (v2 as ::core::ffi::c_int & 0xff as ::core::ffi::c_int);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a6f) as *mut uint16 as *mut uint8)
-        .offset(k as ::core::ffi::c_int as isize)
-        .offset(1) = carry as uint8;
-    let mut result: uint16 = (game.enemy_projectile_y_pos(k) as ::core::ffi::c_int
-        + (v2 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as int8 as ::core::ffi::c_int
-        + (carry >> 8 as ::core::ffi::c_int)) as uint16;
+    let (fraction, carry) = (*((&raw mut game.g_ram as *mut uint8).offset(0x1a6f))
+        .offset(k as isize)
+        .offset(1))
+    .overflowing_add(v2 as u8);
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1a6f))
+        .offset(k as isize)
+        .offset(1) = fraction;
+    let result = game
+        .enemy_projectile_y_pos(k)
+        .wrapping_add_signed(((v2 as i16) >> 8) + carry as i16);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize) =
         result;
     return result;
 }
 pub unsafe fn MoveEprojWithVelocityX(mut k: uint16, game: &mut Game) -> uint16 {
-    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let v1 = usize::from(k >> 1);
     let mut v2: uint16 =
         *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(v1 as isize);
-    let mut carry: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x1a27)
-        as *mut uint16 as *mut uint8)
-        .offset(k as ::core::ffi::c_int as isize)
-        .offset(1) as ::core::ffi::c_int
-        + (v2 as ::core::ffi::c_int & 0xff as ::core::ffi::c_int);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a27) as *mut uint16 as *mut uint8)
-        .offset(k as ::core::ffi::c_int as isize)
-        .offset(1) = carry as uint8;
-    let mut result: uint16 = (game.enemy_projectile_x_pos(k) as ::core::ffi::c_int
-        + (v2 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as int8 as ::core::ffi::c_int
-        + (carry >> 8 as ::core::ffi::c_int)) as uint16;
+    let (fraction, carry) = (*((&raw mut game.g_ram as *mut uint8).offset(0x1a27))
+        .offset(k as isize)
+        .offset(1))
+    .overflowing_add(v2 as u8);
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1a27))
+        .offset(k as isize)
+        .offset(1) = fraction;
+    let result = game
+        .enemy_projectile_x_pos(k)
+        .wrapping_add_signed(((v2 as i16) >> 8) + carry as i16);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v1 as isize) =
         result;
     return result;
