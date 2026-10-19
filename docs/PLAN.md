@@ -21,7 +21,7 @@ checks. Earlier successful scenarios, including `7de53cc1`, describe the
 earlier codec. This source review adds no replay result.
 
 Independent checkpoint quality review (2026-10-19): frozen `78e60d32`
-plus the six final checkpoint/probe source and host files passes any%
+plus the six reviewed checkpoint/probe source and host files passes any%
 129712/0 (306.91s) and Spazer 90706/0 (242.39s), both native exits 0.
 The separate 70-file snapshot contains only one additional read-only
 `CheckBossBitForCurArea` entry probe; exact removal recovers its base source.
@@ -29,7 +29,7 @@ Full non-timing stdout/stderr match the previously reviewed routes. Source,
 DLL, ROM and copied input hashes stay unchanged through verification.
 Later concurrent gameplay edits retain separate verification.
 
-The final serializer includes recorder logs. Independent boot and resumed
+That serializer includes recorder logs. Independent boot and resumed
 checkpoints at input 8500 are byte-identical in both normal and physical-audio
 modes. Resume 8296..8500 passes 204/0 in 0.60s / 0.73s; a one-frame resume
 and chained continuation reach the same complete state. The required helper
@@ -533,6 +533,42 @@ sessions own the adjacent cleanup above. No maintained source or residue
 change and no new replay result belong to this cleanup.
 
 ## The oracle
+
+Independent operand/checkpoint integration (2026-10-19): frozen `7de53cc1`
+plus the operand patch in `a0912a84` and the revised checkpoint codec passes
+any% 129712/0 (289.71s) and Spazer 90706/0 (215.87s), native exits 0.
+All five operand source files match the committed change. All 70 frozen
+source/config/host files, the reused core library, final DLL, ROM and copied
+inputs retain their hashes. Complete non-timing diagnostics match the reviewed
+routes. Later concurrent gameplay edits retain separate verification.
+
+Independent source stripping recovers all 62 files in the operand observer
+and fault-control builds. Complete ordered ROM/Rust events match for 2920
+any% and 11584 Spazer multiplication calls. All four exposed bytes are
+naturally nonzero with zero raw mismatches. Eleven mask controls confirm
+four operand-byte faults and the lower neighbor fail once at input 10000;
+clean, four exact old-mask negatives and the retained upper neighbor pass.
+Every final 128 KiB RAM image matches clean. Direct grapple and enemy-slope
+paths remain unexecuted; product bytes and arithmetic remain unchanged.
+
+The newer codec excludes seven uninitialized DMA pad bytes using raw field
+projections, and omits twelve unused APU/SNES pad bytes. Allocation/reset
+review confirms initialization of the other serialized hardware members.
+This closes a limitation of the earlier checkpoint audit: byte equality did
+not establish that unused bytes were initialized. Revised boot/resume files
+match completely at input 8500 in both audio modes; one-frame and chained
+resumes also match. Suffix 8296..8500 passes 204/0 in 0.40s / 0.28s.
+Old codec checkpoints, oversized log lengths, missing probes and unmet
+credits are rejected without producing checkpoints. The checkpoint file
+shrinks by exactly 19 bytes, with the layout fingerprint invalidating reuse.
+
+Workspace release initially reused a stale library whose dependency list
+omitted `verify_probe.rs` despite its live export. Refreshing only `lib.rs`'s
+timestamp forces reconstruction without changing source bytes; the normal
+Cargo release then passes (93.89s) and records the probe dependency.
+Formatting/check and progress pass. This audit changes no maintained Rust
+or residue counters; credits, persistence and broader hardware/audio
+coverage remain unfinished.
 
 Hi-Jump milestone (2026-10-19): extend the Spazer route through the Maridia
 tunnels to the Warehouse Entrance, then take the Norfair detour for Hi-Jump
