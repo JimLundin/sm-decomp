@@ -16110,6 +16110,70 @@ cast lines-2, Rust lines-2; unsafe functions/other counters unchanged.
 No probes/artifacts committed. Further projectile cleanup, gameplay/credits,
 hardware/audio/masks and ownership remain unfinished.
 
+Projectile collision state (2026-10-19): six word reads and ten stores in
+EprojBlockCollisition_Horiz/Vertical use the existing byte-backed reader and
+writer. Captured indices, casts, arithmetic, separate reads and callback
+order remain unchanged. Fraction writes still precede position writes.
+The collision record is a separate stack allocation; no retained RAM
+pointer crosses a new borrow. No helper is added.
+
+Observed Warehouse passes 128547/0 (237.02s), native exit 0, with all
+16 changed sites exercised: 146322 word comparisons and 97540 complete-RAM
+store comparisons. Counts below apply to each access grouped in a row.
+
+| Access | Horizontal calls / input frames | Vertical calls / input frames |
+| --- | --- | --- |
+| Velocity and two separate subposition reads | 37045 / 50634..127180 | 11729 / 18120..126729 |
+| Unblocked fraction and position stores | 37002 / 50634..127180 | 11493 / 18120..126728 |
+| Collision fraction clear | 43 / 50749..127152 | 236 / 18189..126729 |
+| Negative-direction position store | 33 / 110898..127152 | 1 / 65527..65527 |
+| Positive-direction position store | 6 / 50749..124818 | 231 / 18189..126729 |
+
+Observed any% verifies 129712/0 (215.57s), with 5214 read and 3470 store
+comparisons. Its native exit 2 reports the unhit horizontal positive and
+vertical negative stores; Warehouse covers both. It saves no checkpoint.
+Exact observer stripping and independent source/provenance review pass.
+
+The existing helper bodies pass 262464 read comparisons and 262464
+complete-RAM store cases: every u16 index paired with a bijective word per
+base, plus ten boundary words at eight selected indices. Odd indices and
+backing-RAM aliases are included; this is not a Cartesian sweep or full
+collision-routine execution. Wrong read scaling and store addresses fail
+at their expected assertions.
+
+Frozen ea300c56 plus only this change passes clean full-boot any%
+129712/0 (272.25s) and Warehouse 128547/0 (297.94s), native exits 0.
+Complete non-timing diagnostics match the observed runs, including the
+existing Warehouse X undefined diagnostic. Exact probe/status/checkpoint
+message counts are checked before removing those temporary differences.
+Warehouse checkpoint bytes match; observed any% has no checkpoint to compare.
+Source, DLL, host, configuration, ROM and inputs remain fixed.
+
+The newly available Bubble Mountain movie extends the exact Warehouse byte
+prefix. The same clean DLL resumes its own checkpoint for the remaining
+10202/0 (23.28s), native exit 0, reaching input 138749 in state 8, room
+$ACB3. Source, DLL, library, fixtures and checkpoint bindings stay fixed.
+This completes a same-build boot-and-resume chain, with no new diagnostics,
+rebuild or repeated prefix.
+
+Formatting/check, normal release and progress pass. Frozen release takes
+48.15s; the frozen-source-to-clean-result interval is 764.90s under shared
+load. Workspace release takes 59.72s; a refreshed check reuses its cache in
+0.15s with stable source. These timings do not establish a compilation gain.
+Net Rust lines -16, raw accesses -16, pointer-offset calls -32; promotion
+casts and unsafe-function counts are unchanged. Concurrent drawing helpers
+and other edits retain their own verification. No probe, input, checkpoint
+or temporary script is committed. Broader gameplay/credits remain unfinished.
+
+Radius instruction stores deferred (2026-10-19): EprojInstr_SetXyRadius
+and EprojInstr_SetXyRadiusZero have zero calls in both observed any%
+129712/0 (295.03s) and Warehouse 128547/0 (343.21s). Both native exits are
+2 for missing probes. Neither proposed gameplay rewrite is retained.
+The extracted candidate bodies pass 131232 full-RAM/return cases and reject
+a wrong zero-store destination; those checks do not establish movie coverage.
+Frozen a91d1a4a source, DLL and inputs stay fixed. Keep both handlers pending
+until ordinary inputs execute them; no clean replay or residue change follows.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
