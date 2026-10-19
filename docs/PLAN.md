@@ -19765,6 +19765,24 @@ pass. Movies supply regression coverage; direct comparisons exercise corpse
 transfers. Full credits/readability remain open. Continue large repeated-body
 consolidation, including coherent initialization families.
 
+Corpse tile-initialization family (2026-10-19): all twelve initializers
+share one ordered ROM-to-RAM copy implementation with 50 explicit segments.
+Each wrapper retains its bank-B7 source address, RAM base, source/destination
+offsets, lengths and copy order. The same MemCpy primitive remains in use.
+Complete ast-grep declarations select the family; no other function contains
+multiple MemCpy calls. Net Rust lines -215, raw-offset lines -45, casts -371
+and c_int cast lines -94. Unsafe functions +1 is the shared pointer-copy helper;
+the public initialization pointer/ROM contracts remain unchanged.
+
+Compiled original Rust and actual optimized library functions match full RAM
+and g_fail in 3072 synthetic-ROM cases across all twelve initializers. No
+ROM-derived data is retained. Frozen 71a3d58a plus this batch passes any%
+129712/0 (138.67s) and Speed Booster 148406/0 (170.12s), native
+exits 0, with fixed source/library/fixture pins. Formatting/check, normal
+release (35.40s snapshot, 14.35s workspace), progress and diff check pass.
+Movies supply regression coverage; direct comparisons exercise initialization.
+Full credits/readability remain open. Continue complete large repeated families.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

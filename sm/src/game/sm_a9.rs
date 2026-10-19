@@ -7134,379 +7134,164 @@ pub unsafe fn DeadSidehopper_Touch(game: &mut Game) {
         DeadSidehopper_DD31(game);
     };
 }
+unsafe fn initialize_corpse_tiles(
+    rom_address: u16,
+    tile_base: usize,
+    segments: &[(usize, usize, i32)],
+    game: &mut Game,
+) {
+    let source = RomPtr_B7(rom_address, game);
+    let destination = (&raw mut game.g_ram as *mut u8).add(tile_base);
+    for &(destination_offset, source_offset, length) in segments {
+        MemCpy(
+            destination.add(destination_offset).cast(),
+            source.add(source_offset).cast(),
+            length,
+        );
+    }
+}
+
 pub unsafe fn Torizo_CorpseRottingInitFunc(game: &mut Game) {
-    let p: *const uint8 = RomPtr_B7(addr_kDeadTorizo_TileData as uint16_t, game);
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x60 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(288) as *const ::core::ffi::c_void,
-        0xc0 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x1a0 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(800) as *const ::core::ffi::c_void,
-        0xc0 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x2c0 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(1280) as *const ::core::ffi::c_void,
-        0x100 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x400 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(1792) as *const ::core::ffi::c_void,
-        0x100 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x540 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(2304) as *const ::core::ffi::c_void,
-        0x100 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x680 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(2816) as *const ::core::ffi::c_void,
-        0x100 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x7c0 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(3328) as *const ::core::ffi::c_void,
-        0x100 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x900 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(3840) as *const ::core::ffi::c_void,
-        0x100 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0xa40 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(4352) as *const ::core::ffi::c_void,
-        0x100 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0xb60 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(4832) as *const ::core::ffi::c_void,
-        0x120 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0xc80 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(5312) as *const ::core::ffi::c_void,
-        0x140 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0xdc0 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(5824) as *const ::core::ffi::c_void,
-        0x140 as ::core::ffi::c_int,
+    initialize_corpse_tiles(
+        addr_kDeadTorizo_TileData as u16,
+        0x2000,
+        &[
+            (0x60, 0x120, 0xc0),
+            (0x1a0, 0x320, 0xc0),
+            (0x2c0, 0x500, 0x100),
+            (0x400, 0x700, 0x100),
+            (0x540, 0x900, 0x100),
+            (0x680, 0xb00, 0x100),
+            (0x7c0, 0xd00, 0x100),
+            (0x900, 0xf00, 0x100),
+            (0xa40, 0x1100, 0x100),
+            (0xb60, 0x12e0, 0x120),
+            (0xc80, 0x14c0, 0x140),
+            (0xdc0, 0x16c0, 0x140),
+        ],
+        game,
     );
 }
 pub unsafe fn Sidehopper_CorpseRottingInitFunc_0(game: &mut Game) {
-    let p: *const uint8 = RomPtr_B7(addr_kDeadMonsters_TileData as uint16_t, game);
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x40 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(64) as *const ::core::ffi::c_void,
-        0x60 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0xa0 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(512) as *const ::core::ffi::c_void,
-        0xa0 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x140 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(1024) as *const ::core::ffi::c_void,
-        0xa0 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x1e0 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(1536) as *const ::core::ffi::c_void,
-        0xa0 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x280 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(2048) as *const ::core::ffi::c_void,
-        0xa0 as ::core::ffi::c_int,
+    initialize_corpse_tiles(
+        addr_kDeadMonsters_TileData as u16,
+        0x2000,
+        &[
+            (0x40, 0x40, 0x60),
+            (0xa0, 0x200, 0xa0),
+            (0x140, 0x400, 0xa0),
+            (0x1e0, 0x600, 0xa0),
+            (0x280, 0x800, 0xa0),
+        ],
+        game,
     );
 }
 pub unsafe fn Sidehopper_CorpseRottingInitFunc_2(game: &mut Game) {
-    let p: *const uint8 = RomPtr_B7(addr_kDeadMonsters_TileData as uint16_t, game);
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x320 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(288) as *const ::core::ffi::c_void,
-        0x40 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x3c0 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(800) as *const ::core::ffi::c_void,
-        0xa0 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x460 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(1312) as *const ::core::ffi::c_void,
-        0xa0 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x500 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(1824) as *const ::core::ffi::c_void,
-        0xa0 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x5a0 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(2336) as *const ::core::ffi::c_void,
-        0xa0 as ::core::ffi::c_int,
+    initialize_corpse_tiles(
+        addr_kDeadMonsters_TileData as u16,
+        0x2000,
+        &[
+            (0x320, 0x120, 0x40),
+            (0x3c0, 0x320, 0xa0),
+            (0x460, 0x520, 0xa0),
+            (0x500, 0x720, 0xa0),
+            (0x5a0, 0x920, 0xa0),
+        ],
+        game,
     );
 }
 pub unsafe fn Zoomer_CorpseRottingInitFunc_0(game: &mut Game) {
-    let p: *const uint8 = RomPtr_B7(addr_kDeadMonsters_TileData as uint16_t, game);
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x940 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(2656) as *const ::core::ffi::c_void,
-        0x60 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x9a0 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(3168) as *const ::core::ffi::c_void,
-        0x60 as ::core::ffi::c_int,
+    initialize_corpse_tiles(
+        addr_kDeadMonsters_TileData as u16,
+        0x2000,
+        &[(0x940, 0xa60, 0x60), (0x9a0, 0xc60, 0x60)],
+        game,
     );
 }
 pub unsafe fn Zoomer_CorpseRottingInitFunc_2(game: &mut Game) {
-    let p: *const uint8 = RomPtr_B7(addr_kDeadMonsters_TileData as uint16_t, game);
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0xa00 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(2752) as *const ::core::ffi::c_void,
-        0x60 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0xa60 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(3264) as *const ::core::ffi::c_void,
-        0x60 as ::core::ffi::c_int,
+    initialize_corpse_tiles(
+        addr_kDeadMonsters_TileData as u16,
+        0x2000,
+        &[(0xa00, 0xac0, 0x60), (0xa60, 0xcc0, 0x60)],
+        game,
     );
 }
 pub unsafe fn Zoomer_CorpseRottingInitFunc_4(game: &mut Game) {
-    let p: *const uint8 = RomPtr_B7(addr_kDeadMonsters_TileData as uint16_t, game);
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0xac0 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(2848) as *const ::core::ffi::c_void,
-        0x60 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0xb20 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(3360) as *const ::core::ffi::c_void,
-        0x60 as ::core::ffi::c_int,
+    initialize_corpse_tiles(
+        addr_kDeadMonsters_TileData as u16,
+        0x2000,
+        &[(0xac0, 0xb20, 0x60), (0xb20, 0xd20, 0x60)],
+        game,
     );
 }
 pub unsafe fn Ripper_CorpseRottingInitFunc_0(game: &mut Game) {
-    let p: *const uint8 = RomPtr_B7(addr_kDeadMonsters_TileData as uint16_t, game);
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0xb80 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(2560) as *const ::core::ffi::c_void,
-        0x60 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0xbe0 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(3072) as *const ::core::ffi::c_void,
-        0x60 as ::core::ffi::c_int,
+    initialize_corpse_tiles(
+        addr_kDeadMonsters_TileData as u16,
+        0x2000,
+        &[(0xb80, 0xa00, 0x60), (0xbe0, 0xc00, 0x60)],
+        game,
     );
 }
 pub unsafe fn Ripper_CorpseRottingInitFunc_2(game: &mut Game) {
-    let p: *const uint8 = RomPtr_B7(addr_kDeadMonsters_TileData as uint16_t, game);
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0xc40 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(2944) as *const ::core::ffi::c_void,
-        0x60 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0xca0 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(3456) as *const ::core::ffi::c_void,
-        0x60 as ::core::ffi::c_int,
+    initialize_corpse_tiles(
+        addr_kDeadMonsters_TileData as u16,
+        0x2000,
+        &[(0xc40, 0xb80, 0x60), (0xca0, 0xd80, 0x60)],
+        game,
     );
 }
 pub unsafe fn Skree_CorpseRottingInitFunc_0(game: &mut Game) {
-    let p: *const uint8 = RomPtr_B7(addr_kDeadMonsters_TileData as uint16_t, game);
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x640 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(672) as *const ::core::ffi::c_void,
-        0x40 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x680 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(1184) as *const ::core::ffi::c_void,
-        0x40 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x6c0 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(1696) as *const ::core::ffi::c_void,
-        0x40 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x700 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(2208) as *const ::core::ffi::c_void,
-        0x40 as ::core::ffi::c_int,
+    initialize_corpse_tiles(
+        addr_kDeadMonsters_TileData as u16,
+        0x2000,
+        &[
+            (0x640, 0x2a0, 0x40),
+            (0x680, 0x4a0, 0x40),
+            (0x6c0, 0x6a0, 0x40),
+            (0x700, 0x8a0, 0x40),
+        ],
+        game,
     );
 }
 pub unsafe fn Skree_CorpseRottingInitFunc_2(game: &mut Game) {
-    let p: *const uint8 = RomPtr_B7(addr_kDeadMonsters_TileData as uint16_t, game);
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x740 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(224) as *const ::core::ffi::c_void,
-        0x40 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x780 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(736) as *const ::core::ffi::c_void,
-        0x40 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x7c0 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(1248) as *const ::core::ffi::c_void,
-        0x40 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x800 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(1760) as *const ::core::ffi::c_void,
-        0x40 as ::core::ffi::c_int,
+    initialize_corpse_tiles(
+        addr_kDeadMonsters_TileData as u16,
+        0x2000,
+        &[
+            (0x740, 0xe0, 0x40),
+            (0x780, 0x2e0, 0x40),
+            (0x7c0, 0x4e0, 0x40),
+            (0x800, 0x6e0, 0x40),
+        ],
+        game,
     );
 }
 pub unsafe fn Skree_CorpseRottingInitFunc_4(game: &mut Game) {
-    let p: *const uint8 = RomPtr_B7(addr_kDeadMonsters_TileData as uint16_t, game);
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x840 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(448) as *const ::core::ffi::c_void,
-        0x40 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x880 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(960) as *const ::core::ffi::c_void,
-        0x40 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x8c0 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(1472) as *const ::core::ffi::c_void,
-        0x40 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        (&raw mut game.g_ram as *mut uint8)
-            .offset((0x2000 as ::core::ffi::c_int + 0x900 as ::core::ffi::c_int) as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        p.offset(1984) as *const ::core::ffi::c_void,
-        0x40 as ::core::ffi::c_int,
+    initialize_corpse_tiles(
+        addr_kDeadMonsters_TileData as u16,
+        0x2000,
+        &[
+            (0x840, 0x1c0, 0x40),
+            (0x880, 0x3c0, 0x40),
+            (0x8c0, 0x5c0, 0x40),
+            (0x900, 0x7c0, 0x40),
+        ],
+        game,
     );
 }
 pub unsafe fn MotherBrain_CorpseRottingInitFunc(game: &mut Game) {
-    let base: *mut uint8 = (&raw mut game.g_ram as *mut uint8).offset(0x9000) as *mut uint8;
-    let src: *const uint8 = RomPtr_B7(addr_kMotherBrain_Misc_TileData as uint16_t, game);
-    MemCpy(
-        base as *mut ::core::ffi::c_void,
-        src.offset(192) as *const ::core::ffi::c_void,
-        0xc0 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        base.offset(0xe0) as *mut ::core::ffi::c_void,
-        src.offset(704) as *const ::core::ffi::c_void,
-        0xc0 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        base.offset(0x1c0) as *mut ::core::ffi::c_void,
-        src.offset(1216) as *const ::core::ffi::c_void,
-        0xc0 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        base.offset(0x2a0) as *mut ::core::ffi::c_void,
-        src.offset(1728) as *const ::core::ffi::c_void,
-        0xc0 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        base.offset(0x380) as *mut ::core::ffi::c_void,
-        src.offset(2240) as *const ::core::ffi::c_void,
-        0xe0 as ::core::ffi::c_int,
-    );
-    MemCpy(
-        base.offset(0x460) as *mut ::core::ffi::c_void,
-        src.offset(2752) as *const ::core::ffi::c_void,
-        0xe0 as ::core::ffi::c_int,
+    initialize_corpse_tiles(
+        addr_kMotherBrain_Misc_TileData as u16,
+        0x9000,
+        &[
+            (0x0, 0xc0, 0xc0),
+            (0xe0, 0x2c0, 0xc0),
+            (0x1c0, 0x4c0, 0xc0),
+            (0x2a0, 0x6c0, 0xc0),
+            (0x380, 0x8c0, 0xe0),
+            (0x460, 0xac0, 0xe0),
+        ],
+        game,
     );
 }
 // Each descriptor lists row gates in transfer order. A move copies each row
