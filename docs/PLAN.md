@@ -30,8 +30,9 @@ Latest focused check: frozen `b670ec87` plus the final `sm_91.rs` correction
 passes any% 129712/0 (182.74s) and Waver 58109/0 (104.21s), both native
 exit 0. A separate full Waver run observes both raw window tables and all
 four window boundaries before normalization: 58109/0 (120.90s), zero raw
-differences. Format, release build and progress checks pass. Concurrent
-comparison-mask changes are separate from this verified source snapshot.
+differences. Format, release build and progress checks pass. The separate
+table-mask removal below also passes both full movies and enables comparison
+of the complete repaired tables.
 
 Everything that existed before is in the branch `archive/pre-transpile-2026-10-17`.
 
@@ -162,6 +163,23 @@ sessions own the adjacent cleanup above. No maintained source or residue
 change and no new replay result belong to this cleanup.
 
 ## The oracle
+
+Window-table comparisons enabled (2026-10-19): remove the normalizations
+over 9100..92CD and 9800..99CD, including the redundant 99CC..99CD copy.
+The existing full-RAM comparison now enforces all 924 table bytes on every
+frame. Other comparisons and recovery retain their behavior. The previously
+recorded boundary/fault controls establish detection at both table ends and
+retain outside-boundary detection and recovery.
+
+Frozen b670ec87 plus the revised down-right helpers and these deletions
+passes any% 129712/0 (216.93s) and Waver 58109/0 (76.95s), native exits 0.
+The current verifier exactly matches that tested candidate after newline
+normalization; the final sm_91 differs only by five explanatory comment lines.
+An independent 72823/0 onward replay also includes these comparisons.
+Cargo fmt/check, release and progress pass. Focused cast lines -8 and Rust
+lines -21; other counters unchanged. This completes the verified pending
+mask removal after the beam repair. Other masked state and complete
+gameplay/credits and audio timing remain open.
 
 Waver rendering repair (2026-10-19): replace only the two down-right
 X-ray ramp branches with safe byte-store helpers. The on-screen helper keeps
