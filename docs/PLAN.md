@@ -14180,6 +14180,30 @@ Rust lines+3 make packed header reads explicit. Other own counters unchanged.
 Peer edits remain preserved. Broader PLM/gameplay/credits/hardware/audio/masks/
 ownership remain unfinished.
 
+Hardcoded PLM field stores (2026-10-19): spawn_hardcoded_plm now
+uses byte-backed word writes for block/header/argument/variable/preinstruction,
+instruction/timer/draw pointer and live ID. All ten store positions, word
+block-index truncation and the live header instruction read remain exact.
+Slot search, multiply helper and setup callback including the inherited
+collision displacement remain unchanged.
+
+Frozen ed4300c2 plus only these stores passes
+any%129712/0 (296.87s) and Spazer90706/0 (258.60s),
+native exits0. Observed Spazer90706/0 (259.12s) compares all
+128KiB RAM and setup address/slot against the original on 3 actual
+calls before invoking setup once with the original displacement. Initializer
+has no effects outside RAM. Clean and observed non-timing diagnostics match
+after stripping observers. Frozen scope and maintained routine identity pass;
+no observers are committed. Arbitrary aliases and full-table cases are not
+inferred from these movie calls.
+
+Cargo fmt/check and progress pass. Normal Cargo release on the isolated
+candidate passes (79s); shared-workspace release encountered peer verifier
+verify_probe visibility errors, excluded from this candidate. Own raw offsets-10,
+cast lines-16 and Rust lines-16; other own counters unchanged. Peer edits
+remain preserved. Remaining hardcoded-PLM reads and broader gameplay/credits/
+hardware/audio/masks/ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
