@@ -11332,6 +11332,27 @@ are committed. Next: complete normal-input9938 entry after the verified
 9969 obstacle jumps, then onward item/boss coverage. Credits, complete
 gameplay/hardware, render/audio, masked RAM and ownership remain open.
 
+CPU direct-page pointer address reuse (2026-10-19): read_direct_page_pointer
+uses the shared address_direct_page wrapper with no index instead of
+duplicating fetch/address calculation. Operand fetch, live DP read/cycle
+adjustment and two pointer-byte reads retain their order. Long pointers
+retain their separate later live-DP bank-byte read. Frozen `88d4de1e` plus
+this change passes 52,690,944 actual old/current pointer/helper-caller
+comparisons across every word offset/bank, sampled Y boundaries and both
+write/index widths. Named CPU/bus state, wrapping and cycles match;
+constructed WRAM cases do not exhaust MMIO/callback mutation. Prefix
+3,600/0 (3.90s), native exit 0, executes helper 38,428, plain indirect
+34,066 and indirect-Y 4,362 calls. Clean full any% passes 129,712/0
+(196.89s), native exit 0. Cargo fmt/check and full release/release-library
+builds with external SDL2 pass after restoring a concurrent gameplay
+candidate's existing CoroutineRet conversion; that candidate owns its
+separate integration/commit. Normal metadata and frozen optimized core/DLL
+pass. Live CPU matches verified source; uncommitted peer gameplay work is
+outside this replay. Rust lines -1; other own counters unchanged. Concurrent
+replay contention prevents treating timings as performance measurements.
+Prior holds and complete gameplay/render/audio remain open. Continue
+covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

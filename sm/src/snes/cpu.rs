@@ -316,8 +316,7 @@ fn direct_page_address(offset: u16, index: Option<IndexRegister>, cpu: &mut Cpu)
     (u32::from(address), u32::from(address.wrapping_add(1)))
 }
 unsafe fn read_direct_page_pointer(cpu: *mut Cpu, game: &mut Game) -> u16 {
-    let adr = u16::from(fetch_byte(cpu, game));
-    let (pointer_low, pointer_high) = direct_page_address(adr, None, &mut *cpu);
+    let (pointer_low, pointer_high) = address_direct_page(cpu, None, game);
     read_word(cpu, pointer_low, pointer_high, game)
 }
 unsafe fn address_direct_page_indirect(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
