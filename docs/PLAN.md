@@ -10643,6 +10643,24 @@ and onward item/boss coverage. Held upper99BD ascent,cliff tuning,old9AD9
 ammo and HDMA stay held. Credits,fullgameplay/hardware,render/audio,maskedRAM
 andownership remain open.
 
+CPU shared left-shift arithmetic (2026-10-19): shifted_left_result shares
+ASL/ROL result and carry between accumulator and memory callers. Old carry
+is read before the carry store; memory writes and final live-width Z/N stay
+in the wrapper, while accumulator assignment uses load_accumulator. Frozen
+`9086aac2` plus this change passes 1,048,576 actual old/current memory cases
+(every word, both widths/carry/operations, aliased/disjoint addresses) and
+524,288 accumulator cases (every word and widths/carry/operations). Named
+CPU/bus state and writes match; static-WRAM cases do not exhaust MMIO.
+Prefix 3,600/0 (1.21s), native exit 0, executes memory ASL/ROL word paths
+1/5,089 times and accumulator ASL word/byte 110,634/10,768, ROL word 2,016.
+Byte memory and byte accumulator ROL are comparison-covered rather than
+prefix-executed. Clean full any% 129,712/0 (72.71s), native exit 0. Cargo
+fmt/check, full release/release-library builds with external SDL2, normal
+metadata and frozen optimized core/DLL pass. Live CPU matches verified
+source; peer gameplay/PPU work is outside this replay. Rust lines -3; other
+own counters unchanged. Prior holds and complete gameplay/render/audio
+remain open. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

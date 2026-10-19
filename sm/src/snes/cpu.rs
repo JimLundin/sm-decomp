@@ -738,18 +738,21 @@ unsafe fn rotate_memory_right(cpu: *mut Cpu, low: u32, high: u32, game: &mut Gam
     set_zero_negative(result, (*cpu).mf, &mut *cpu);
     (*cpu).c = carry;
 }
+fn shifted_left_result(value: u16, byte: bool, rotate: bool, cpu: &mut Cpu) -> u16 {
+    let result = value << 1 | u16::from(rotate && cpu.c);
+    cpu.c = value & if byte { 0x80 } else { 0x8000 } != 0;
+    result
+}
 unsafe fn shift_memory_left(cpu: *mut Cpu, low: u32, high: u32, rotate: bool, game: &mut Game) {
     let result = if (*cpu).mf {
         let value = read_byte(cpu, low, game);
-        let result = (u16::from(value) << 1) | u16::from(rotate && (*cpu).c);
-        (*cpu).c = result & 0x100 != 0;
+        let result = shifted_left_result(u16::from(value), true, rotate, &mut *cpu);
         write_byte(cpu, low, result as u8, game);
         result
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(2);
         let value = read_word(cpu, low, high, game);
-        let result = value << 1 | u16::from(rotate && (*cpu).c);
-        (*cpu).c = value & 0x8000 != 0;
+        let result = shifted_left_result(value, false, rotate, &mut *cpu);
         write_word(cpu, low, high, result, true, game);
         result
     };
@@ -818,13 +821,7 @@ pub unsafe fn DumpCpuHistory(game: &mut Game) {
     }
 }
 fn shift_accumulator_left(rotate: bool, cpu: &mut Cpu) {
-    let value = cpu.a;
-    let result = value << 1 | u16::from(rotate && cpu.c);
-    if cpu.mf {
-        cpu.c = value & 0x80 != 0;
-    } else {
-        cpu.c = value & 0x8000 != 0;
-    }
+    let result = shifted_left_result(cpu.a, cpu.mf, rotate, cpu);
     load_accumulator(result, cpu);
 }
 fn shift_accumulator_right(cpu: &mut Cpu) {
