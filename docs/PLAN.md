@@ -17303,6 +17303,63 @@ No probes or ROM-derived artifacts committed. Continue coherent state/update
 families; broader gameplay/credits, hardware/audio/masks and ownership remain
 unfinished.
 
+Projectile constant word-update family (2026-10-19): consolidate 16
+exercised updates in 12 routines through the existing byte-backed state
+interface. Thirteen immediate updates reuse add_word with its existing u16
+delta; signed increments retain explicit two's-complement encodings.
+Captured signed velocity and guarded Kagos countdown retain their original
+reads, branch stores and callbacks. Kraid retains both writes around its
+clamp. MoveY_Minus4 becomes safe. No new helper is added; the five earlier
+wrapping-update callers and decrement helpers remain unchanged.
+
+The 61-update discovery has 65 probes; only 18 probes execute on Speed
+Booster. Retain only their 16 updates. The other sites remain pending,
+including the NamiFune initializer whose earlier enemy pointer remains live
+across the proposed write. Observed Speed Booster 148406/0 (235.16s),
+native exit 0, compares each selected operation's returned value and complete
+RAM against the original arithmetic and independently retained signed index.
+Actual calls and inclusive controller-input indexes:
+
+| Operation | Calls | Input indexes |
+| --- | ---: | --- |
+| Skree particle acceleration | 1590 | 46050..147040 |
+| Ceres falling-debris acceleration | 1048 | 18120..18286 |
+| Kraid rocks X increment | 4683 | 118352..119526 |
+| Kraid rocks Y acceleration | 4683 | 118352..119526 |
+| Pirate laser left movement | 1281 | 37102..125356 |
+| Pirate laser right movement | 601 | 36825..125043 |
+| Bomb Torizo low-health scalar increment | 12 | 51016..51375 |
+| sub_86A887 acceleration | 1458 | 51057..51531 |
+| sub_86A887 landing adjustment | 36 | 51092..51532 |
+| Bomb Torizo Chozo-orb acceleration | 2086 | 50634..51313 |
+| MoveY_Minus4 instruction | 18 | 50574..51151 |
+| sub_86B535 signed velocity read | 961 | 137639..138596 |
+| sub_86B535 nonnegative-branch store | 594 | 137670..138596 |
+| sub_86B535 negative-branch store | 367 | 137639..138542 |
+| Eye-door sweat acceleration | 28 | 117314..117570 |
+| Eye-door sweat landing adjustment | 2 | 117328..117571 |
+| Kagos guarded countdown read | 336 | 65326..65687 |
+| Kagos guarded countdown store | 23 | 65326..65551 |
+
+Frozen 00a74e6e plus only this change passes clean any% 129712/0
+(148.58s) and Speed Booster 148406/0 (198.14s), native exits 0. Complete
+non-timing Speed diagnostics and observed/clean endpoint checkpoints match.
+All source, library, DLL and input hashes stay fixed. Independent
+reconstruction checks all 18 primitive spans, observer placement and all
+74 frozen source/configuration files. Boundary checks pass 655360 exhaustive
+value/delta comparisons, 65536 signed-capture cases, 851968 index
+comparisons, 832 full-RAM layouts and 408 guard/clamp/callback cases;
+four deliberate faults are rejected.
+
+Formatting/check, clean release (21.76s), workspace release (31.06s) and
+progress pass. Source remains stable during workspace checks. Net Rust
+lines -40, raw accesses/offset lines -20, pointer-offset calls -39,
+actual c_int casts -30, cast lines -18 and unsafe functions -1. The narrow
+workspace merge preserves the concurrent Ceres spawn-point and Bomb Torizo
+enemy-field reads. Later arithmetic/spawn-point changes retain their own
+validation; check the combined main batch next. Broader gameplay/credits,
+hardware/audio/masks and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
