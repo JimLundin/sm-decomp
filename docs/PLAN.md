@@ -11167,6 +11167,25 @@ Next: test the bottom-left exit toA5ED and continue item/boss coverage. Held upp
 Complete credits/gameplay/hardware, audio/render, masked RAM and ownership
 remain open.
 
+CPU shared direct-page addressing wrapper (2026-10-19): address_direct_page
+takes Option<IndexRegister> instead of three duplicated fetch wrappers.
+All 45 opcode calls retain their choices: 25 plain, 18 X and two Y. The
+operand fetch remains before live DP/index reads and safe address arithmetic;
+word wrapping, DP low-byte cycle adjustment and bus order remain exact.
+Frozen `6ef8ca9b` plus this change passes 55,574,528 actual old/current
+wrapper comparisons: every DP/operand pair across plain/X/Y and every index
+word with sampled DP/operand boundaries. Named CPU/bus state, address pairs,
+wrapping and cycles match; arbitrary MMIO/callback mutations remain outside
+the constructed WRAM cases. Exact source reconstruction checks all call
+replacements and excludes other CPU changes. Prefix 3,600/0 (5.67s), native
+exit 0, executes plain 1,152,945, X 26,579 and Y 5,963 calls. Clean full any%
+passes 129,712/0 (190.45s), native exit 0. Cargo fmt/check, full release/
+release-library builds with external SDL2, normal metadata and frozen
+optimized core/DLL pass. Live CPU matches verified source; uncommitted peer
+gameplay/PPU work is outside this replay. Unsafe functions -2 and Rust lines
+-4; other own counters unchanged. Prior holds and complete gameplay/render/
+audio remain open. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

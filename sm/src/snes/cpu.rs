@@ -272,17 +272,13 @@ fn address_immediate(cpu: &mut Cpu, register: CpuRegister) -> (u32, u32) {
     let high = if byte { 0 } else { next_program_address(cpu) };
     (low, high)
 }
-unsafe fn address_direct_page(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
-    let adr = u16::from(fetch_byte(cpu, game));
-    direct_page_address(adr, None, &mut *cpu)
-}
-unsafe fn address_direct_page_x(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
-    let adr = u16::from(fetch_byte(cpu, game));
-    direct_page_address(adr, Some(IndexRegister::X), &mut *cpu)
-}
-unsafe fn address_direct_page_y(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
-    let adr = u16::from(fetch_byte(cpu, game));
-    direct_page_address(adr, Some(IndexRegister::Y), &mut *cpu)
+unsafe fn address_direct_page(
+    cpu: *mut Cpu,
+    index: Option<IndexRegister>,
+    game: &mut Game,
+) -> (u32, u32) {
+    let offset = u16::from(fetch_byte(cpu, game));
+    direct_page_address(offset, index, &mut *cpu)
 }
 #[derive(Clone, Copy)]
 enum IndexRegister {
@@ -890,15 +886,15 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             logical_accumulator(cpu, low, high, LogicOperation::Or, game);
         }
         0x04 => {
-            let (low, high) = address_direct_page(cpu, game);
+            let (low, high) = address_direct_page(cpu, None, game);
             test_and_update_bits(cpu, low, high, true, game);
         }
         0x05 => {
-            let (low, high) = address_direct_page(cpu, game);
+            let (low, high) = address_direct_page(cpu, None, game);
             logical_accumulator(cpu, low, high, LogicOperation::Or, game);
         }
         0x06 => {
-            let (low, high) = address_direct_page(cpu, game);
+            let (low, high) = address_direct_page(cpu, None, game);
             modify_memory(cpu, low, high, MemoryOperation::ShiftLeft, game);
         }
         0x07 => {
@@ -950,15 +946,15 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             logical_accumulator(cpu, low, high, LogicOperation::Or, game);
         }
         0x14 => {
-            let (low, high) = address_direct_page(cpu, game);
+            let (low, high) = address_direct_page(cpu, None, game);
             test_and_update_bits(cpu, low, high, false, game);
         }
         0x15 => {
-            let (low, high) = address_direct_page_x(cpu, game);
+            let (low, high) = address_direct_page(cpu, Some(IndexRegister::X), game);
             logical_accumulator(cpu, low, high, LogicOperation::Or, game);
         }
         0x16 => {
-            let (low, high) = address_direct_page_x(cpu, game);
+            let (low, high) = address_direct_page(cpu, Some(IndexRegister::X), game);
             modify_memory(cpu, low, high, MemoryOperation::ShiftLeft, game);
         }
         0x17 => {
@@ -1017,15 +1013,15 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             logical_accumulator(cpu, low, high, LogicOperation::And, game);
         }
         0x24 => {
-            let (low, high) = address_direct_page(cpu, game);
+            let (low, high) = address_direct_page(cpu, None, game);
             test_accumulator_bits(cpu, low, high, game);
         }
         0x25 => {
-            let (low, high) = address_direct_page(cpu, game);
+            let (low, high) = address_direct_page(cpu, None, game);
             logical_accumulator(cpu, low, high, LogicOperation::And, game);
         }
         0x26 => {
-            let (low, high) = address_direct_page(cpu, game);
+            let (low, high) = address_direct_page(cpu, None, game);
             modify_memory(cpu, low, high, MemoryOperation::RotateLeft, game);
         }
         0x27 => {
@@ -1078,15 +1074,15 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             logical_accumulator(cpu, low, high, LogicOperation::And, game);
         }
         0x34 => {
-            let (low, high) = address_direct_page_x(cpu, game);
+            let (low, high) = address_direct_page(cpu, Some(IndexRegister::X), game);
             test_accumulator_bits(cpu, low, high, game);
         }
         0x35 => {
-            let (low, high) = address_direct_page_x(cpu, game);
+            let (low, high) = address_direct_page(cpu, Some(IndexRegister::X), game);
             logical_accumulator(cpu, low, high, LogicOperation::And, game);
         }
         0x36 => {
-            let (low, high) = address_direct_page_x(cpu, game);
+            let (low, high) = address_direct_page(cpu, Some(IndexRegister::X), game);
             modify_memory(cpu, low, high, MemoryOperation::RotateLeft, game);
         }
         0x37 => {
@@ -1164,11 +1160,11 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
         }
         0x45 => {
-            let (low, high) = address_direct_page(cpu, game);
+            let (low, high) = address_direct_page(cpu, None, game);
             logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
         }
         0x46 => {
-            let (low, high) = address_direct_page(cpu, game);
+            let (low, high) = address_direct_page(cpu, None, game);
             modify_memory(cpu, low, high, MemoryOperation::ShiftRight, game);
         }
         0x47 => {
@@ -1240,11 +1236,11 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
         }
         0x55 => {
-            let (low, high) = address_direct_page_x(cpu, game);
+            let (low, high) = address_direct_page(cpu, Some(IndexRegister::X), game);
             logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
         }
         0x56 => {
-            let (low, high) = address_direct_page_x(cpu, game);
+            let (low, high) = address_direct_page(cpu, Some(IndexRegister::X), game);
             modify_memory(cpu, low, high, MemoryOperation::ShiftRight, game);
         }
         0x57 => {
@@ -1325,15 +1321,15 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             add_with_carry(cpu, low, high, game);
         }
         0x64 => {
-            let (low, high) = address_direct_page(cpu, game);
+            let (low, high) = address_direct_page(cpu, None, game);
             store_zero(cpu, low, high, game);
         }
         0x65 => {
-            let (low, high) = address_direct_page(cpu, game);
+            let (low, high) = address_direct_page(cpu, None, game);
             add_with_carry(cpu, low, high, game);
         }
         0x66 => {
-            let (low, high) = address_direct_page(cpu, game);
+            let (low, high) = address_direct_page(cpu, None, game);
             rotate_memory_right(cpu, low, high, game);
         }
         0x67 => {
@@ -1409,15 +1405,15 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             add_with_carry(cpu, low, high, game);
         }
         0x74 => {
-            let (low, high) = address_direct_page_x(cpu, game);
+            let (low, high) = address_direct_page(cpu, Some(IndexRegister::X), game);
             store_zero(cpu, low, high, game);
         }
         0x75 => {
-            let (low, high) = address_direct_page_x(cpu, game);
+            let (low, high) = address_direct_page(cpu, Some(IndexRegister::X), game);
             add_with_carry(cpu, low, high, game);
         }
         0x76 => {
-            let (low, high) = address_direct_page_x(cpu, game);
+            let (low, high) = address_direct_page(cpu, Some(IndexRegister::X), game);
             rotate_memory_right(cpu, low, high, game);
         }
         0x77 => {
@@ -1471,15 +1467,15 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             store_register(cpu, low, high, CpuRegister::Accumulator, game);
         }
         0x84 => {
-            let (low, high) = address_direct_page(cpu, game);
+            let (low, high) = address_direct_page(cpu, None, game);
             store_register(cpu, low, high, CpuRegister::Y, game);
         }
         0x85 => {
-            let (low, high) = address_direct_page(cpu, game);
+            let (low, high) = address_direct_page(cpu, None, game);
             store_register(cpu, low, high, CpuRegister::Accumulator, game);
         }
         0x86 => {
-            let (low, high) = address_direct_page(cpu, game);
+            let (low, high) = address_direct_page(cpu, None, game);
             store_register(cpu, low, high, CpuRegister::X, game);
         }
         0x87 => {
@@ -1537,15 +1533,15 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             store_register(cpu, low, high, CpuRegister::Accumulator, game);
         }
         0x94 => {
-            let (low, high) = address_direct_page_x(cpu, game);
+            let (low, high) = address_direct_page(cpu, Some(IndexRegister::X), game);
             store_register(cpu, low, high, CpuRegister::Y, game);
         }
         0x95 => {
-            let (low, high) = address_direct_page_x(cpu, game);
+            let (low, high) = address_direct_page(cpu, Some(IndexRegister::X), game);
             store_register(cpu, low, high, CpuRegister::Accumulator, game);
         }
         0x96 => {
-            let (low, high) = address_direct_page_y(cpu, game);
+            let (low, high) = address_direct_page(cpu, Some(IndexRegister::Y), game);
             store_register(cpu, low, high, CpuRegister::X, game);
         }
         0x97 => {
@@ -1598,15 +1594,15 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             load_register(cpu, low, high, CpuRegister::Accumulator, game);
         }
         0xa4 => {
-            let (low, high) = address_direct_page(cpu, game);
+            let (low, high) = address_direct_page(cpu, None, game);
             load_register(cpu, low, high, CpuRegister::Y, game);
         }
         0xa5 => {
-            let (low, high) = address_direct_page(cpu, game);
+            let (low, high) = address_direct_page(cpu, None, game);
             load_register(cpu, low, high, CpuRegister::Accumulator, game);
         }
         0xa6 => {
-            let (low, high) = address_direct_page(cpu, game);
+            let (low, high) = address_direct_page(cpu, None, game);
             load_register(cpu, low, high, CpuRegister::X, game);
         }
         0xa7 => {
@@ -1659,15 +1655,15 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             load_register(cpu, low, high, CpuRegister::Accumulator, game);
         }
         0xb4 => {
-            let (low, high) = address_direct_page_x(cpu, game);
+            let (low, high) = address_direct_page(cpu, Some(IndexRegister::X), game);
             load_register(cpu, low, high, CpuRegister::Y, game);
         }
         0xb5 => {
-            let (low, high) = address_direct_page_x(cpu, game);
+            let (low, high) = address_direct_page(cpu, Some(IndexRegister::X), game);
             load_register(cpu, low, high, CpuRegister::Accumulator, game);
         }
         0xb6 => {
-            let (low, high) = address_direct_page_y(cpu, game);
+            let (low, high) = address_direct_page(cpu, Some(IndexRegister::Y), game);
             load_register(cpu, low, high, CpuRegister::X, game);
         }
         0xb7 => {
@@ -1724,15 +1720,15 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             compare_register(cpu, low, high, CpuRegister::Accumulator, game);
         }
         0xc4 => {
-            let (low, high) = address_direct_page(cpu, game);
+            let (low, high) = address_direct_page(cpu, None, game);
             compare_register(cpu, low, high, CpuRegister::Y, game);
         }
         0xc5 => {
-            let (low, high) = address_direct_page(cpu, game);
+            let (low, high) = address_direct_page(cpu, None, game);
             compare_register(cpu, low, high, CpuRegister::Accumulator, game);
         }
         0xc6 => {
-            let (low, high) = address_direct_page(cpu, game);
+            let (low, high) = address_direct_page(cpu, None, game);
             modify_memory(cpu, low, high, MemoryOperation::Decrement, game);
         }
         0xc7 => {
@@ -1784,15 +1780,15 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             compare_register(cpu, low, high, CpuRegister::Accumulator, game);
         }
         0xd4 => {
-            let (low, high) = address_direct_page(cpu, game);
+            let (low, high) = address_direct_page(cpu, None, game);
             push_word(cpu, read_word(cpu, low, high, game), game);
         }
         0xd5 => {
-            let (low, high) = address_direct_page_x(cpu, game);
+            let (low, high) = address_direct_page(cpu, Some(IndexRegister::X), game);
             compare_register(cpu, low, high, CpuRegister::Accumulator, game);
         }
         0xd6 => {
-            let (low, high) = address_direct_page_x(cpu, game);
+            let (low, high) = address_direct_page(cpu, Some(IndexRegister::X), game);
             modify_memory(cpu, low, high, MemoryOperation::Decrement, game);
         }
         0xd7 => {
@@ -1845,15 +1841,15 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             subtract_with_carry(cpu, low, high, game);
         }
         0xe4 => {
-            let (low, high) = address_direct_page(cpu, game);
+            let (low, high) = address_direct_page(cpu, None, game);
             compare_register(cpu, low, high, CpuRegister::X, game);
         }
         0xe5 => {
-            let (low, high) = address_direct_page(cpu, game);
+            let (low, high) = address_direct_page(cpu, None, game);
             subtract_with_carry(cpu, low, high, game);
         }
         0xe6 => {
-            let (low, high) = address_direct_page(cpu, game);
+            let (low, high) = address_direct_page(cpu, None, game);
             modify_memory(cpu, low, high, MemoryOperation::Increment, game);
         }
         0xe7 => {
@@ -1909,11 +1905,11 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             push_word(cpu, w, game);
         }
         0xf5 => {
-            let (low, high) = address_direct_page_x(cpu, game);
+            let (low, high) = address_direct_page(cpu, Some(IndexRegister::X), game);
             subtract_with_carry(cpu, low, high, game);
         }
         0xf6 => {
-            let (low, high) = address_direct_page_x(cpu, game);
+            let (low, high) = address_direct_page(cpu, Some(IndexRegister::X), game);
             modify_memory(cpu, low, high, MemoryOperation::Increment, game);
         }
         0xf7 => {
