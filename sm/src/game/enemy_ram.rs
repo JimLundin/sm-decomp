@@ -1,12 +1,41 @@
-//! Byte-backed position and size fields in an enemy's original RAM slot.
+//! Byte-backed views of enemy slots in the original RAM layout.
 use crate::game_state::Game;
 use crate::types::EnemyData;
+
+/// Copied fields from a live enemy slot; callers retain the index between reads.
+pub(crate) struct EnemyState<'a> {
+    bytes: &'a [u8],
+}
+
+impl EnemyState<'_> {
+    fn read(&self, offset: usize) -> u16 {
+        u16::from_le_bytes([self.bytes[offset], self.bytes[offset + 1]])
+    }
+    pub(crate) fn enemy_ptr(&self) -> u16 {
+        self.read(core::mem::offset_of!(EnemyData, enemy_ptr))
+    }
+    pub(crate) fn x_pos(&self) -> u16 {
+        self.read(core::mem::offset_of!(EnemyData, x_pos))
+    }
+    pub(crate) fn y_pos(&self) -> u16 {
+        self.read(core::mem::offset_of!(EnemyData, y_pos))
+    }
+    pub(crate) fn properties(&self) -> u16 {
+        self.read(core::mem::offset_of!(EnemyData, properties))
+    }
+}
 
 pub(crate) struct EnemyCoordinates<'a> {
     bytes: &'a mut [u8],
 }
 
 impl Game {
+    pub(crate) fn enemy_state(&self, index: u16) -> EnemyState<'_> {
+        let start = 0xf78 + usize::from(index);
+        EnemyState {
+            bytes: &self.g_ram[start..start + core::mem::size_of::<EnemyData>()],
+        }
+    }
     pub(crate) fn enemy_coordinates(&mut self, index: u16) -> EnemyCoordinates<'_> {
         let start = 0xf78 + usize::from(index);
         EnemyCoordinates {

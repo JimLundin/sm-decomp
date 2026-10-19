@@ -15151,6 +15151,63 @@ offset pattern counter is unchanged because these loads use pointer methods.
 Continue with exercised subsystem cleanup; provenance of retained pointers,
 main Kraid/credits, persistence and broader hardware/audio remain unfinished.
 
+Live enemy fields during death-explosion initialization (2026-10-19): add
+a private byte-backed EnemyState view for enemy_ptr, x_pos, y_pos and
+properties. EprojInit_EnemyDeathExplosion retains an enemy byte index instead
+of a callee-derived raw pointer, and reads each copied word through a fresh
+temporary view at its original expression. This resolves its two interim
+caller-side index loads: the two named current-index reads no longer cross
+a retained enemy pointer. Other routines keep their existing reads.
+
+The captured slot and later live current-index reads remain distinct.
+X read/store still precedes Y, owner metadata precedes the properties test,
+and the definition pointer is read after the optional owner update. Odd byte
+indices, aliases, little-endian words and the full u16 index range retain
+their addresses; the largest view ends at $10FB7 within RAM. Each accessor
+returns a copied word; no borrowed view is retained for later use after a
+write or callback. The initializer still has other unsafe operations.
+
+The earlier broader observation passes 92000 replay frames with zero
+failures and 13 constructed controls, but its native exit is 2 because one
+Drool arm is unhit. This final change reuses only the independently matched
+Death body/view: four field sites execute 49 times each at 35462..91739,
+with properties bit $4000 set 14 times and clear 35. Seven Death controls
+check full RAM against literal expected writes and restore it before play
+resumes. Cases cover odd/max indices, X-to-Y and X-to-properties aliases
+(both outcomes), and owner-to-definition aliasing. No old pointer-based
+initializer supplies their expected results.
+
+Defer the entire proposed BombTorizoLowHealthInitialDrool conversion.
+Natural X-arm counts are bit-$4000 0, negative 28 and nonnegative 2;
+constructed coverage does not establish ordinary input coverage of the
+missing arm. The final source leaves that routine exactly at the committed
+baseline, including its three caller-side raw RNG reads. Its older retained
+pointer span across NextRandom remains a separate legacy aliasing question.
+Longer Kraid fixtures repeat the same early fight and cannot fill this gap.
+
+Frozen 2a826849 plus only this source passes clean full-boot any%
+129712/0 (223.56s including startup) and Kraid phase two
+119823/0 (233.07s), native exits 0. Complete non-timing diagnostics
+match the reviewed baselines, including the known single Kraid X undefined
+message. All 70 source/config/host files plus progress.sh, the DLL, library,
+ROM and copied inputs retain their hashes. Independent source and raw-result
+audits pass. No shorter fixture repeating the Kraid prefix is replayed.
+
+Cargo fmt/check, normal release (52.83s), verifier link (3.77s)
+and progress pass. The final source-to-result interval is
+325.38s under shared load. Game and host artifacts stay with their checkout;
+only registry dependencies are reused. The prior broader observation remains
+separate from these final clean boot results.
+
+Including the reusable interface, own Rust lines rise by 16 and source by
+568 bytes. Four raw enemy field reads, two raw scalar reads, one retained
+pointer and one unsafe gEnemyData call disappear. Actual c_int casts and
+cast-containing lines fall by one; coarse raw-offset and unsafe-function
+counters are unchanged. The added lines define the reusable interface and
+explicit byte reads. No probes, controls or temporary
+artifacts enter maintained source. Other sessions retain their own checks.
+Broader gameplay/credits, hardware/audio/masks and ownership remain open.
+
 Enemy-projectile script timers (2026-10-19): share byte-backed wrapping
 decrement between instruction and script timer fields; reuse it in both
 absolute conditional jump handler and add the script timer setter. Branches still

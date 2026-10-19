@@ -10632,36 +10632,23 @@ unsafe fn EprojInit_F337(mut j: uint16, game: &mut Game) {
     };
 }
 unsafe fn EprojInit_EnemyDeathExplosion(mut j: uint16, game: &mut Game) {
-    let mut v1: *mut EnemyData = gEnemyData(game.cur_enemy_index() as ::core::ffi::c_int, game);
-    // Avoid a shared Game reference while the returned enemy pointer remains live.
+    let enemy_index = game.cur_enemy_index();
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v2 as isize) =
-        (*v1).x_pos;
+        game.enemy_state(enemy_index).x_pos();
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v2 as isize) =
-        (*v1).y_pos;
+        game.enemy_state(enemy_index).y_pos();
     *((&raw mut game.g_ram as *mut uint8).offset(0xf410) as *mut uint16).offset(v2 as isize) =
-        u16::from_le(
-            (&raw const game.g_ram)
-                .cast::<u8>()
-                .add(0xe54)
-                .cast::<u16>()
-                .read_unaligned(),
-        );
-    if (*v1).properties as ::core::ffi::c_int & 0x4000 as ::core::ffi::c_int
+        game.cur_enemy_index();
+    if game.enemy_state(enemy_index).properties() as ::core::ffi::c_int
+        & 0x4000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0xf410) as *mut uint16).offset(v2 as isize) =
-            (u16::from_le(
-                (&raw const game.g_ram)
-                    .cast::<u8>()
-                    .add(0xe54)
-                    .cast::<u16>()
-                    .read_unaligned(),
-            ) as ::core::ffi::c_int
-                | 0x8000 as ::core::ffi::c_int) as uint16;
+            (game.cur_enemy_index() as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0xf3c8) as *mut uint16).offset(v2 as isize) =
-        (*v1).enemy_ptr;
+        game.enemy_state(enemy_index).enemy_ptr();
     *((&raw mut game.g_ram as *mut uint8).offset(0x19bb) as *mut uint16).offset(v2 as isize) =
         0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v2 as isize) =
