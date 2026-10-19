@@ -31,6 +31,24 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Immutable string-pointer tables (2026-10-20): all four existing tables
+share a literal-only declaration macro. The three opcode-format tables and
+seven bug-save paths retain all 775 ordered slots: 531 exact NUL-terminated
+byte literals and 244 null pointers. The original ImmutableCStringPointers
+constructor, raw pointer casts, static storage and caller behavior remain.
+No allocation, conversion or new runtime operation is introduced.
+
+Complete source reconstruction and all four expanded initializers pass.
+Whole-library expansion matches after removing the new macro/import and
+normalizing qualified null/c_char names; every comma remains exact. Compiler
+typecheck, normal release (30.20s), formatting and progress pass. Final
+composition includes a61a5376 SDL declarations. Full any% passes 129712/0
+(104.22s), native exit 0; all 70 inputs, 67 replay sources and 72 pins
+remain fixed. Net Rust lines -575 (138548 total); raw offsets, unsafe
+functions and cast-line counters are unchanged. Any% covers core gameplay;
+this refactor claims no broader tracing/UI coverage. Continue substantial
+shared implementations; boot-to-credits and hardware/audio remain open.
+
 SDL enum declarations (2026-10-20): one macro declares 741 existing public
 constant aliases in 26 groups across configuration, frontend and OpenGL.
 All names and caller-resolved types remain exact: 701 enum-to-integer casts

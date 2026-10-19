@@ -1782,3 +1782,17 @@ impl<const N: usize> core::ops::Deref for ImmutableCStringPointers<N> {
         &self.0
     }
 }
+
+// Declare immutable string-pointer tables, retaining literal bytes and null slots.
+macro_rules! immutable_c_strings {
+    (@pointer None) => { ::core::ptr::null::<::core::ffi::c_char>() };
+    (@pointer $bytes:literal) => { $bytes as *const u8 as *const ::core::ffi::c_char };
+    ($($entry:tt),* $(,)?) => {
+        unsafe {
+            $crate::types::ImmutableCStringPointers::new([
+                $($crate::types::immutable_c_strings!(@pointer $entry)),*
+            ])
+        }
+    };
+}
+pub(crate) use immutable_c_strings;

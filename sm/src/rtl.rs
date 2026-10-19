@@ -830,16 +830,9 @@ pub unsafe fn RtlSaveSnapshot(filename: *const c_char, saving_with_bug: bool, ga
     RtlApuUnlock();
     fclose(f);
 }
-static kBugSaves: crate::types::ImmutableCStringPointers<7> = unsafe {
-    crate::types::ImmutableCStringPointers::new([
-        b"Before Kraid\0" as *const u8 as *const c_char,
-        b"Before Golden Torizo\0" as *const u8 as *const c_char,
-        b"After Crocomire\0" as *const u8 as *const c_char,
-        b"Baby Metroid\0" as *const u8 as *const c_char,
-        b"Tourian Statue\0" as *const u8 as *const c_char,
-        b"Before Ridley\0" as *const u8 as *const c_char,
-        b"Enter Mother Brain\0" as *const u8 as *const c_char,
-    ])
+static kBugSaves: crate::types::ImmutableCStringPointers<7> = crate::types::immutable_c_strings! {
+    b"Before Kraid\0", b"Before Golden Torizo\0", b"After Crocomire\0", b"Baby Metroid\0",
+    b"Tourian Statue\0", b"Before Ridley\0", b"Enter Mother Brain\0",
 };
 pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, game: &mut Game) {
     let mut name: [c_char; 128] = [0; 128];
