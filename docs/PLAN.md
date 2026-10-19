@@ -10164,6 +10164,24 @@ peer PPU work is outside this replay. All own progress counters unchanged.
 Indexed-indirect/TSX/accumulator ROR remain held. Complete gameplay/render/
 audio remain open. Continue covered CPU cleanup.
 
+CPU direct opcode dispatch (2026-10-19): removes the generated dispatcher
+loop and 255 normal/default arm breaks. A zero opcode handles its hook once:
+zero/RTS/RTL replacements return, carry patches update carry before the
+replacement instruction, and other replacements reach the ordinary match.
+History remains recorded once before hook handling. Token comparisons confirm
+all ordinary arm bodies are unchanged except exits/indentation; hook statements
+are unchanged except break-to-return exits. This includes uncovered opcode
+arms mechanically, without claiming movie execution for those arms.
+Frozen `65902693` plus this change passes prefix 3,600/0 (1.02s), native exit 0,
+with 10,363,030 dispatcher calls and hook replacements 38/69/6D/B9/ED observed
+16/256/161/1,423/1,195 times. Hook zero/RTS/RTL exits are not observed in this
+prefix. Clean full any% 129,712/0 (49.79s), native exit 0. Cargo fmt/check,
+full release/release-library builds with external SDL2, normal metadata and
+frozen optimized core/DLL pass. Live CPU matches verified source; peer PPU
+work is outside this replay. Rust lines -260; other own counters unchanged.
+Indexed-indirect/TSX/accumulator ROR remain held. Complete gameplay/render/
+audio remain open. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

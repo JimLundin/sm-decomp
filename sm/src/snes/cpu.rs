@@ -865,1370 +865,1110 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
     let cur_pc = (i32::from((*cpu).k) << 16 | (i32::from((*cpu).pc) - 1)) as u32;
     game.pc_hist[game.pc_hist_ctr as usize] = cur_pc;
     game.pc_hist_ctr = game.pc_hist_ctr.wrapping_add(1) & 7;
-    loop {
+    if opcode == 0 {
+        let addr = (u32::from((*cpu).k) << 16) | u32::from((*cpu).pc) | 0x800000;
+        opcode = CpuOpcodeHook(addr.wrapping_sub(1), game) as u8;
         match opcode {
             0x00 => {
-                let addr = (u32::from((*cpu).k) << 16) | u32::from((*cpu).pc) | 0x800000;
-                opcode = CpuOpcodeHook(addr.wrapping_sub(1), game) as u8;
-                match opcode {
-                    0x00 => {
-                        break;
-                    }
-                    0x01 => {
-                        (*cpu).pc = pull_word(cpu, game).wrapping_add(1);
-                        break;
-                    }
-                    0x02 => {
-                        (*cpu).pc = pull_word(cpu, game).wrapping_add(1);
-                        (*cpu).k = pull_byte(cpu, game);
-                        break;
-                    }
-                    0xe5 | 0xe9 | 0xed => {
-                        (*cpu).c = true;
-                    }
-                    0x65 | 0x6d | 0x69 | 0x7d | 0x7f => {
-                        (*cpu).c = false;
-                    }
-                    _ => {}
-                }
+                return;
             }
             0x01 => {
-                let (low, high) = address_direct_page_indexed_indirect(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
-                break;
+                (*cpu).pc = pull_word(cpu, game).wrapping_add(1);
+                return;
             }
             0x02 => {
-                fetch_byte(cpu, game);
-                push_byte(cpu, (*cpu).k, game);
-                push_word(cpu, (*cpu).pc, game);
-                push_byte(cpu, cpu_getFlags(&*cpu), game);
-                (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-                (*cpu).i = true;
-                (*cpu).d = false;
-                (*cpu).k = 0 as u8;
-                (*cpu).pc = read_word(cpu, 0xffe4 as u32, 0xffe5 as u32, game);
-                break;
-            }
-            0x03 => {
-                let (low, high) = address_stack_relative(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
-                break;
-            }
-            0x04 => {
-                let (low, high) = address_direct_page(cpu, game);
-                test_and_update_bits(cpu, low, high, true, game);
-                break;
-            }
-            0x05 => {
-                let (low, high) = address_direct_page(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
-                break;
-            }
-            0x06 => {
-                let (low, high) = address_direct_page(cpu, game);
-                shift_memory_left(cpu, low, high, false, game);
-                break;
-            }
-            0x07 => {
-                let (low, high) = address_direct_page_indirect_long(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
-                break;
-            }
-            0x08 => {
-                push_byte(cpu, cpu_getFlags(&*cpu), game);
-                break;
-            }
-            0x09 => {
-                let (low, high) = address_immediate(&mut *cpu, false);
-                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
-                break;
-            }
-            0x0a => {
-                shift_accumulator_left(false, &mut *cpu);
-                break;
-            }
-            0x0b => {
-                push_word(cpu, (*cpu).dp, game);
-                break;
-            }
-            0x0c => {
-                let (low, high) = address_absolute(cpu, game);
-                test_and_update_bits(cpu, low, high, true, game);
-                break;
-            }
-            0x0d => {
-                let (low, high) = address_absolute(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
-                break;
-            }
-            0x0e => {
-                let (low, high) = address_absolute(cpu, game);
-                shift_memory_left(cpu, low, high, false, game);
-                break;
-            }
-            0x0f => {
-                let (low, high) = address_absolute_long(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
-                break;
-            }
-            0x10 => {
-                branch_relative(fetch_byte(cpu, game), !(*cpu).n, &mut *cpu);
-                break;
-            }
-            0x11 => {
-                let (low, high) = address_direct_page_indirect_y(cpu, false, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
-                break;
-            }
-            0x12 => {
-                let (low, high) = address_direct_page_indirect(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
-                break;
-            }
-            0x13 => {
-                let (low, high) = address_stack_relative_indirect_y(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
-                break;
-            }
-            0x14 => {
-                let (low, high) = address_direct_page(cpu, game);
-                test_and_update_bits(cpu, low, high, false, game);
-                break;
-            }
-            0x15 => {
-                let (low, high) = address_direct_page_x(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
-                break;
-            }
-            0x16 => {
-                let (low, high) = address_direct_page_x(cpu, game);
-                shift_memory_left(cpu, low, high, false, game);
-                break;
-            }
-            0x17 => {
-                let (low, high) = address_direct_page_indirect_long_y(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
-                break;
-            }
-            0x18 => {
-                (*cpu).c = false;
-                break;
-            }
-            0x19 => {
-                let (low, high) = address_absolute_y(cpu, false, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
-                break;
-            }
-            0x1a => {
-                update_accumulator(1, &mut *cpu);
-                break;
-            }
-            0x1b => {
-                (*cpu).sp = (*cpu).a;
-                break;
-            }
-            0x1c => {
-                let (low, high) = address_absolute(cpu, game);
-                test_and_update_bits(cpu, low, high, false, game);
-                break;
-            }
-            0x1d => {
-                let (low, high) = address_absolute_x(cpu, false, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
-                break;
-            }
-            0x1e => {
-                let (low, high) = address_absolute_x(cpu, true, game);
-                shift_memory_left(cpu, low, high, false, game);
-                break;
-            }
-            0x1f => {
-                let (low, high) = address_absolute_long_x(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
-                break;
-            }
-            0x20 => {
-                let value = fetch_word(cpu, game);
-                push_word(cpu, (*cpu).pc.wrapping_sub(1), game);
-                (*cpu).pc = value;
-                break;
-            }
-            0x21 => {
-                let (low, high) = address_direct_page_indexed_indirect(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::And, game);
-                break;
-            }
-            0x22 => {
-                let target = fetch_word(cpu, game);
-                let newK = fetch_byte(cpu, game);
-                push_byte(cpu, (*cpu).k, game);
-                push_word(cpu, (*cpu).pc.wrapping_sub(1), game);
-                (*cpu).pc = target;
-                (*cpu).k = newK;
-                break;
-            }
-            0x23 => {
-                let (low, high) = address_stack_relative(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::And, game);
-                break;
-            }
-            0x24 => {
-                let (low, high) = address_direct_page(cpu, game);
-                test_accumulator_bits(cpu, low, high, game);
-                break;
-            }
-            0x25 => {
-                let (low, high) = address_direct_page(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::And, game);
-                break;
-            }
-            0x26 => {
-                let (low, high) = address_direct_page(cpu, game);
-                shift_memory_left(cpu, low, high, true, game);
-                break;
-            }
-            0x27 => {
-                let (low, high) = address_direct_page_indirect_long(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::And, game);
-                break;
-            }
-            0x28 => {
-                cpu_setFlags(pull_byte(cpu, game), &mut *cpu);
-                break;
-            }
-            0x29 => {
-                let (low, high) = address_immediate(&mut *cpu, false);
-                logical_accumulator(cpu, low, high, LogicOperation::And, game);
-                break;
-            }
-            0x2a => {
-                shift_accumulator_left(true, &mut *cpu);
-                break;
-            }
-            0x2b => {
-                (*cpu).dp = pull_word(cpu, game);
-                set_zero_negative((*cpu).dp, false, &mut *cpu);
-                break;
-            }
-            0x2c => {
-                let (low, high) = address_absolute(cpu, game);
-                test_accumulator_bits(cpu, low, high, game);
-                break;
-            }
-            0x2d => {
-                let (low, high) = address_absolute(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::And, game);
-                break;
-            }
-            0x2e => {
-                let (low, high) = address_absolute(cpu, game);
-                shift_memory_left(cpu, low, high, true, game);
-                break;
-            }
-            0x2f => {
-                let (low, high) = address_absolute_long(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::And, game);
-                break;
-            }
-            0x30 => {
-                branch_relative(fetch_byte(cpu, game), (*cpu).n, &mut *cpu);
-                break;
-            }
-            0x31 => {
-                let (low, high) = address_direct_page_indirect_y(cpu, false, game);
-                logical_accumulator(cpu, low, high, LogicOperation::And, game);
-                break;
-            }
-            0x32 => {
-                let (low, high) = address_direct_page_indirect(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::And, game);
-                break;
-            }
-            0x33 => {
-                let (low, high) = address_stack_relative_indirect_y(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::And, game);
-                break;
-            }
-            0x34 => {
-                let (low, high) = address_direct_page_x(cpu, game);
-                test_accumulator_bits(cpu, low, high, game);
-                break;
-            }
-            0x35 => {
-                let (low, high) = address_direct_page_x(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::And, game);
-                break;
-            }
-            0x36 => {
-                let (low, high) = address_direct_page_x(cpu, game);
-                shift_memory_left(cpu, low, high, true, game);
-                break;
-            }
-            0x37 => {
-                let (low, high) = address_direct_page_indirect_long_y(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::And, game);
-                break;
-            }
-            0x38 => {
-                (*cpu).c = true;
-                break;
-            }
-            0x39 => {
-                let (low, high) = address_absolute_y(cpu, false, game);
-                logical_accumulator(cpu, low, high, LogicOperation::And, game);
-                break;
-            }
-            0x3a => {
-                update_accumulator(u16::MAX, &mut *cpu);
-                break;
-            }
-            0x3b => {
-                (*cpu).a = (*cpu).sp;
-                set_zero_negative((*cpu).a, false, &mut *cpu);
-                break;
-            }
-            0x3c => {
-                let (low, high) = address_absolute_x(cpu, false, game);
-                test_accumulator_bits(cpu, low, high, game);
-                break;
-            }
-            0x3d => {
-                let (low, high) = address_absolute_x(cpu, false, game);
-                logical_accumulator(cpu, low, high, LogicOperation::And, game);
-                break;
-            }
-            0x3e => {
-                let (low, high) = address_absolute_x(cpu, true, game);
-                shift_memory_left(cpu, low, high, true, game);
-                break;
-            }
-            0x3f => {
-                let (low, high) = address_absolute_long_x(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::And, game);
-                break;
-            }
-            0x40 => {
-                cpu_setFlags(pull_byte(cpu, game), &mut *cpu);
-                (*cpu).pc = pull_word(cpu, game);
-                if !(*cpu).e {
-                    (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-                    (*cpu).k = pull_byte(cpu, game);
-                }
-                break;
-            }
-            0x41 => {
-                let (low, high) = address_direct_page_indexed_indirect(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
-                break;
-            }
-            0x42 => {
-                fetch_byte(cpu, game);
-                break;
-            }
-            0x43 => {
-                let (low, high) = address_stack_relative(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
-                break;
-            }
-            0x44 => {
-                let dest = fetch_byte(cpu, game);
-                let src = fetch_byte(cpu, game);
-                (*cpu).db = dest;
-                write_byte(
-                    cpu,
-                    u32::from(dest) << 16 | u32::from((*cpu).y),
-                    read_byte(cpu, u32::from(src) << 16 | u32::from((*cpu).x), game),
-                    game,
-                );
-                (*cpu).a = (*cpu).a.wrapping_sub(1);
-                (*cpu).x = (*cpu).x.wrapping_sub(1);
-                (*cpu).y = (*cpu).y.wrapping_sub(1);
-                if (*cpu).a != 0xffff {
-                    (*cpu).pc = (*cpu).pc.wrapping_sub(3);
-                }
-                if (*cpu).xf {
-                    (*cpu).x &= 0xff;
-                    (*cpu).y &= 0xff;
-                }
-                break;
-            }
-            0x45 => {
-                let (low, high) = address_direct_page(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
-                break;
-            }
-            0x46 => {
-                let (low, high) = address_direct_page(cpu, game);
-                shift_memory_right(cpu, low, high, game);
-                break;
-            }
-            0x47 => {
-                let (low, high) = address_direct_page_indirect_long(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
-                break;
-            }
-            0x48 => {
-                push_register(cpu, CpuRegister::Accumulator, game);
-                break;
-            }
-            0x49 => {
-                let (low, high) = address_immediate(&mut *cpu, false);
-                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
-                break;
-            }
-            0x4a => {
-                shift_accumulator_right(&mut *cpu);
-                break;
-            }
-            0x4b => {
-                push_byte(cpu, (*cpu).k, game);
-                break;
-            }
-            0x4c => {
-                (*cpu).pc = fetch_word(cpu, game);
-                break;
-            }
-            0x4d => {
-                let (low, high) = address_absolute(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
-                break;
-            }
-            0x4e => {
-                let (low, high) = address_absolute(cpu, game);
-                shift_memory_right(cpu, low, high, game);
-                break;
-            }
-            0x4f => {
-                let (low, high) = address_absolute_long(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
-                break;
-            }
-            0x50 => {
-                branch_relative(fetch_byte(cpu, game), !(*cpu).v, &mut *cpu);
-                break;
-            }
-            0x51 => {
-                let (low, high) = address_direct_page_indirect_y(cpu, false, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
-                break;
-            }
-            0x52 => {
-                let (low, high) = address_direct_page_indirect(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
-                break;
-            }
-            0x53 => {
-                let (low, high) = address_stack_relative_indirect_y(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
-                break;
-            }
-            0x54 => {
-                let dest_0 = fetch_byte(cpu, game);
-                let src_0 = fetch_byte(cpu, game);
-                (*cpu).db = dest_0;
-                write_byte(
-                    cpu,
-                    u32::from(dest_0) << 16 | u32::from((*cpu).y),
-                    read_byte(cpu, u32::from(src_0) << 16 | u32::from((*cpu).x), game),
-                    game,
-                );
-                (*cpu).a = (*cpu).a.wrapping_sub(1);
-                (*cpu).x = (*cpu).x.wrapping_add(1);
-                (*cpu).y = (*cpu).y.wrapping_add(1);
-                if (*cpu).a != 0xffff {
-                    (*cpu).pc = (*cpu).pc.wrapping_sub(3);
-                }
-                if (*cpu).xf {
-                    (*cpu).x &= 0xff;
-                    (*cpu).y &= 0xff;
-                }
-                break;
-            }
-            0x55 => {
-                let (low, high) = address_direct_page_x(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
-                break;
-            }
-            0x56 => {
-                let (low, high) = address_direct_page_x(cpu, game);
-                shift_memory_right(cpu, low, high, game);
-                break;
-            }
-            0x57 => {
-                let (low, high) = address_direct_page_indirect_long_y(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
-                break;
-            }
-            0x58 => {
-                (*cpu).i = false;
-                break;
-            }
-            0x59 => {
-                let (low, high) = address_absolute_y(cpu, false, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
-                break;
-            }
-            0x5a => {
-                push_register(cpu, CpuRegister::Y, game);
-                break;
-            }
-            0x5b => {
-                (*cpu).dp = (*cpu).a;
-                set_zero_negative((*cpu).dp, false, &mut *cpu);
-                break;
-            }
-            0x5c => {
-                let target: u16 = fetch_word(cpu, game);
-                let target_bank: u8 = fetch_byte(cpu, game);
-                if target_bank == 0x80 && target == 0x8573 {
-                    printf(
-                        b"Current PC = 0x%x\n\0" as *const u8 as *const ::core::ffi::c_char,
-                        ((*cpu).k as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                            | (*cpu).pc as ::core::ffi::c_int,
-                    );
-                    DumpCpuHistory(game);
-                    Die(b"The game has crashed!\n\0" as *const u8 as *const ::core::ffi::c_char);
-                }
-                (*cpu).k = target_bank;
-                (*cpu).pc = target;
-                break;
-            }
-            0x5d => {
-                let (low, high) = address_absolute_x(cpu, false, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
-                break;
-            }
-            0x5e => {
-                let (low, high) = address_absolute_x(cpu, true, game);
-                shift_memory_right(cpu, low, high, game);
-                break;
-            }
-            0x5f => {
-                let (low, high) = address_absolute_long_x(cpu, game);
-                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
-                break;
-            }
-            0x60 => {
-                if (*cpu).sp >= (*cpu).spBreakpoint && (*cpu).spBreakpoint != 0 {
-                    let delta = (*cpu).sp - (*cpu).spBreakpoint;
-                    if delta != 0 && delta != 2 {
-                        __assert_fail(
-                            b"delta == 0 || delta == 2\0" as *const u8
-                                as *const ::core::ffi::c_char,
-                            b"src/snes/cpu.c\0" as *const u8 as *const ::core::ffi::c_char,
-                            1386 as ::core::ffi::c_uint,
-                            b"void cpu_doOpcode(Cpu *, uint8_t)\0" as *const u8
-                                as *const ::core::ffi::c_char,
-                        );
-                    }
-                    (*cpu).spBreakpoint = 0;
-                    if HookedFunctionRts(i32::from(delta == 2), game) {
-                        return;
-                    }
-                }
-                (*cpu).pc = pull_word(cpu, game).wrapping_add(1);
-                break;
-            }
-            0x61 => {
-                let (low, high) = address_direct_page_indexed_indirect(cpu, game);
-                add_with_carry(cpu, low, high, game);
-                break;
-            }
-            0x62 => {
-                let displacement = fetch_word(cpu, game) as i16;
-                push_word(cpu, (*cpu).pc.wrapping_add_signed(displacement), game);
-                break;
-            }
-            0x63 => {
-                let (low, high) = address_stack_relative(cpu, game);
-                add_with_carry(cpu, low, high, game);
-                break;
-            }
-            0x64 => {
-                let (low, high) = address_direct_page(cpu, game);
-                store_zero(cpu, low, high, game);
-                break;
-            }
-            0x65 => {
-                let (low, high) = address_direct_page(cpu, game);
-                add_with_carry(cpu, low, high, game);
-                break;
-            }
-            0x66 => {
-                let (low, high) = address_direct_page(cpu, game);
-                rotate_memory_right(cpu, low, high, game);
-                break;
-            }
-            0x67 => {
-                let (low, high) = address_direct_page_indirect_long(cpu, game);
-                add_with_carry(cpu, low, high, game);
-                break;
-            }
-            0x68 => {
-                pull_register(cpu, CpuRegister::Accumulator, game);
-                break;
-            }
-            0x69 => {
-                let (low, high) = address_immediate(&mut *cpu, false);
-                add_with_carry(cpu, low, high, game);
-                break;
-            }
-            0x6a => {
-                let carry = (*cpu).a & 1 != 0;
-                if (*cpu).mf {
-                    (*cpu).a =
-                        (*cpu).a & 0xff00 | ((*cpu).a >> 1 & 0x7f) | (u16::from((*cpu).c) << 7);
-                } else {
-                    (*cpu).a = (*cpu).a >> 1 | (u16::from((*cpu).c) << 15);
-                }
-                (*cpu).c = carry;
-                set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
-                break;
-            }
-            0x6b => {
-                if (*cpu).sp >= (*cpu).spBreakpoint && (*cpu).spBreakpoint != 0 {
-                    if (*cpu).sp != (*cpu).spBreakpoint {
-                        __assert_fail(
-                            b"cpu->sp == cpu->spBreakpoint\0" as *const u8
-                                as *const ::core::ffi::c_char,
-                            b"src/snes/cpu.c\0" as *const u8 as *const ::core::ffi::c_char,
-                            1464 as ::core::ffi::c_uint,
-                            b"void cpu_doOpcode(Cpu *, uint8_t)\0" as *const u8
-                                as *const ::core::ffi::c_char,
-                        );
-                    }
-                    (*cpu).spBreakpoint = 0;
-                    if HookedFunctionRts(0, game) {
-                        return;
-                    }
-                }
                 (*cpu).pc = pull_word(cpu, game).wrapping_add(1);
                 (*cpu).k = pull_byte(cpu, game);
-                break;
-            }
-            0x6c => {
-                let adr = fetch_word(cpu, game);
-                (*cpu).pc = read_word(cpu, u32::from(adr), u32::from(adr.wrapping_add(1)), game);
-                break;
-            }
-            0x6d => {
-                let (low, high) = address_absolute(cpu, game);
-                add_with_carry(cpu, low, high, game);
-                break;
-            }
-            0x6e => {
-                let (low, high) = address_absolute(cpu, game);
-                rotate_memory_right(cpu, low, high, game);
-                break;
-            }
-            0x6f => {
-                let (low, high) = address_absolute_long(cpu, game);
-                add_with_carry(cpu, low, high, game);
-                break;
-            }
-            0x70 => {
-                branch_relative(fetch_byte(cpu, game), (*cpu).v, &mut *cpu);
-                break;
-            }
-            0x71 => {
-                let (low, high) = address_direct_page_indirect_y(cpu, false, game);
-                add_with_carry(cpu, low, high, game);
-                break;
-            }
-            0x72 => {
-                let (low, high) = address_direct_page_indirect(cpu, game);
-                add_with_carry(cpu, low, high, game);
-                break;
-            }
-            0x73 => {
-                let (low, high) = address_stack_relative_indirect_y(cpu, game);
-                add_with_carry(cpu, low, high, game);
-                break;
-            }
-            0x74 => {
-                let (low, high) = address_direct_page_x(cpu, game);
-                store_zero(cpu, low, high, game);
-                break;
-            }
-            0x75 => {
-                let (low, high) = address_direct_page_x(cpu, game);
-                add_with_carry(cpu, low, high, game);
-                break;
-            }
-            0x76 => {
-                let (low, high) = address_direct_page_x(cpu, game);
-                rotate_memory_right(cpu, low, high, game);
-                break;
-            }
-            0x77 => {
-                let (low, high) = address_direct_page_indirect_long_y(cpu, game);
-                add_with_carry(cpu, low, high, game);
-                break;
-            }
-            0x78 => {
-                (*cpu).i = true;
-                break;
-            }
-            0x79 => {
-                let (low, high) = address_absolute_y(cpu, false, game);
-                add_with_carry(cpu, low, high, game);
-                break;
-            }
-            0x7a => {
-                pull_register(cpu, CpuRegister::Y, game);
-                break;
-            }
-            0x7b => {
-                (*cpu).a = (*cpu).dp;
-                set_zero_negative((*cpu).a, false, &mut *cpu);
-                break;
-            }
-            0x7c => {
-                (*cpu).pc = address_absolute_indexed_indirect(cpu, game);
-                break;
-            }
-            0x7d => {
-                let (low, high) = address_absolute_x(cpu, false, game);
-                add_with_carry(cpu, low, high, game);
-                break;
-            }
-            0x7e => {
-                let (low, high) = address_absolute_x(cpu, true, game);
-                rotate_memory_right(cpu, low, high, game);
-                break;
-            }
-            0x7f => {
-                let (low, high) = address_absolute_long_x(cpu, game);
-                add_with_carry(cpu, low, high, game);
-                break;
-            }
-            0x80 => {
-                // Relative branches start after the displacement operand.
-                let displacement = fetch_byte(cpu, game) as i8;
-                (*cpu).pc = (*cpu).pc.wrapping_add_signed(displacement as i16);
-                break;
-            }
-            0x81 => {
-                let (low, high) = address_direct_page_indexed_indirect(cpu, game);
-                store_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0x82 => {
-                let displacement = fetch_word(cpu, game) as i16;
-                (*cpu).pc = (*cpu).pc.wrapping_add_signed(displacement);
-                break;
-            }
-            0x83 => {
-                let (low, high) = address_stack_relative(cpu, game);
-                store_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0x84 => {
-                let (low, high) = address_direct_page(cpu, game);
-                store_register(cpu, low, high, CpuRegister::Y, game);
-                break;
-            }
-            0x85 => {
-                let (low, high) = address_direct_page(cpu, game);
-                store_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0x86 => {
-                let (low, high) = address_direct_page(cpu, game);
-                store_register(cpu, low, high, CpuRegister::X, game);
-                break;
-            }
-            0x87 => {
-                let (low, high) = address_direct_page_indirect_long(cpu, game);
-                store_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0x88 => {
-                update_y(u16::MAX, &mut *cpu);
-                break;
-            }
-            0x89 => {
-                if (*cpu).mf {
-                    let result = (*cpu).a as u8 & fetch_byte(cpu, game);
-                    (*cpu).z = result == 0;
-                } else {
-                    (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-                    let result = (*cpu).a & fetch_word(cpu, game);
-                    (*cpu).z = result == 0;
-                }
-                break;
-            }
-            0x8a => {
-                transfer_to_accumulator((*cpu).x, &mut *cpu);
-                break;
-            }
-            0x8b => {
-                push_byte(cpu, (*cpu).db, game);
-                break;
-            }
-            0x8c => {
-                let (low, high) = address_absolute(cpu, game);
-                store_register(cpu, low, high, CpuRegister::Y, game);
-                break;
-            }
-            0x8d => {
-                let (low, high) = address_absolute(cpu, game);
-                store_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0x8e => {
-                let (low, high) = address_absolute(cpu, game);
-                store_register(cpu, low, high, CpuRegister::X, game);
-                break;
-            }
-            0x8f => {
-                let (low, high) = address_absolute_long(cpu, game);
-                store_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0x90 => {
-                branch_relative(fetch_byte(cpu, game), !(*cpu).c, &mut *cpu);
-                break;
-            }
-            0x91 => {
-                let (low, high) = address_direct_page_indirect_y(cpu, true, game);
-                store_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0x92 => {
-                let (low, high) = address_direct_page_indirect(cpu, game);
-                store_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0x93 => {
-                let (low, high) = address_stack_relative_indirect_y(cpu, game);
-                store_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0x94 => {
-                let (low, high) = address_direct_page_x(cpu, game);
-                store_register(cpu, low, high, CpuRegister::Y, game);
-                break;
-            }
-            0x95 => {
-                let (low, high) = address_direct_page_x(cpu, game);
-                store_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0x96 => {
-                let (low, high) = address_direct_page_y(cpu, game);
-                store_register(cpu, low, high, CpuRegister::X, game);
-                break;
-            }
-            0x97 => {
-                let (low, high) = address_direct_page_indirect_long_y(cpu, game);
-                store_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0x98 => {
-                transfer_to_accumulator((*cpu).y, &mut *cpu);
-                break;
-            }
-            0x99 => {
-                let (low, high) = address_absolute_y(cpu, true, game);
-                store_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0x9a => {
-                (*cpu).sp = (*cpu).x;
-                break;
-            }
-            0x9b => {
-                transfer_to_y((*cpu).x, &mut *cpu);
-                break;
-            }
-            0x9c => {
-                let (low, high) = address_absolute(cpu, game);
-                store_zero(cpu, low, high, game);
-                break;
-            }
-            0x9d => {
-                let (low, high) = address_absolute_x(cpu, true, game);
-                store_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0x9e => {
-                let (low, high) = address_absolute_x(cpu, true, game);
-                store_zero(cpu, low, high, game);
-                break;
-            }
-            0x9f => {
-                let (low, high) = address_absolute_long_x(cpu, game);
-                store_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xa0 => {
-                let (low, high) = address_immediate(&mut *cpu, true);
-                load_register(cpu, low, high, CpuRegister::Y, game);
-                break;
-            }
-            0xa1 => {
-                let (low, high) = address_direct_page_indexed_indirect(cpu, game);
-                load_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xa2 => {
-                let (low, high) = address_immediate(&mut *cpu, true);
-                load_register(cpu, low, high, CpuRegister::X, game);
-                break;
-            }
-            0xa3 => {
-                let (low, high) = address_stack_relative(cpu, game);
-                load_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xa4 => {
-                let (low, high) = address_direct_page(cpu, game);
-                load_register(cpu, low, high, CpuRegister::Y, game);
-                break;
-            }
-            0xa5 => {
-                let (low, high) = address_direct_page(cpu, game);
-                load_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xa6 => {
-                let (low, high) = address_direct_page(cpu, game);
-                load_register(cpu, low, high, CpuRegister::X, game);
-                break;
-            }
-            0xa7 => {
-                let (low, high) = address_direct_page_indirect_long(cpu, game);
-                load_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xa8 => {
-                transfer_to_y((*cpu).a, &mut *cpu);
-                break;
-            }
-            0xa9 => {
-                let (low, high) = address_immediate(&mut *cpu, false);
-                load_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xaa => {
-                transfer_to_x((*cpu).a, &mut *cpu);
-                break;
-            }
-            0xab => {
-                (*cpu).db = pull_byte(cpu, game);
-                set_zero_negative(u16::from((*cpu).db), true, &mut *cpu);
-                break;
-            }
-            0xac => {
-                let (low, high) = address_absolute(cpu, game);
-                load_register(cpu, low, high, CpuRegister::Y, game);
-                break;
-            }
-            0xad => {
-                let (low, high) = address_absolute(cpu, game);
-                load_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xae => {
-                let (low, high) = address_absolute(cpu, game);
-                load_register(cpu, low, high, CpuRegister::X, game);
-                break;
-            }
-            0xaf => {
-                let (low, high) = address_absolute_long(cpu, game);
-                load_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xb0 => {
-                branch_relative(fetch_byte(cpu, game), (*cpu).c, &mut *cpu);
-                break;
-            }
-            0xb1 => {
-                let (low, high) = address_direct_page_indirect_y(cpu, false, game);
-                load_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xb2 => {
-                let (low, high) = address_direct_page_indirect(cpu, game);
-                load_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xb3 => {
-                let (low, high) = address_stack_relative_indirect_y(cpu, game);
-                load_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xb4 => {
-                let (low, high) = address_direct_page_x(cpu, game);
-                load_register(cpu, low, high, CpuRegister::Y, game);
-                break;
-            }
-            0xb5 => {
-                let (low, high) = address_direct_page_x(cpu, game);
-                load_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xb6 => {
-                let (low, high) = address_direct_page_y(cpu, game);
-                load_register(cpu, low, high, CpuRegister::X, game);
-                break;
-            }
-            0xb7 => {
-                let (low, high) = address_direct_page_indirect_long_y(cpu, game);
-                load_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xb8 => {
-                (*cpu).v = false;
-                break;
-            }
-            0xb9 => {
-                let (low, high) = address_absolute_y(cpu, false, game);
-                load_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xba => {
-                if (*cpu).xf {
-                    (*cpu).x = (*cpu).sp & 0xff;
-                } else {
-                    (*cpu).x = (*cpu).sp;
-                }
-                set_zero_negative((*cpu).x, (*cpu).xf, &mut *cpu);
-                break;
-            }
-            0xbb => {
-                transfer_to_x((*cpu).y, &mut *cpu);
-                break;
-            }
-            0xbc => {
-                let (low, high) = address_absolute_x(cpu, false, game);
-                load_register(cpu, low, high, CpuRegister::Y, game);
-                break;
-            }
-            0xbd => {
-                let (low, high) = address_absolute_x(cpu, false, game);
-                load_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xbe => {
-                let (low, high) = address_absolute_y(cpu, false, game);
-                load_register(cpu, low, high, CpuRegister::X, game);
-                break;
-            }
-            0xbf => {
-                let (low, high) = address_absolute_long_x(cpu, game);
-                load_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xc0 => {
-                let (low, high) = address_immediate(&mut *cpu, true);
-                compare_register(cpu, low, high, CpuRegister::Y, game);
-                break;
-            }
-            0xc1 => {
-                let (low, high) = address_direct_page_indexed_indirect(cpu, game);
-                compare_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xc2 => {
-                cpu_setFlags(cpu_getFlags(&*cpu) & !fetch_byte(cpu, game), &mut *cpu);
-                break;
-            }
-            0xc3 => {
-                let (low, high) = address_stack_relative(cpu, game);
-                compare_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xc4 => {
-                let (low, high) = address_direct_page(cpu, game);
-                compare_register(cpu, low, high, CpuRegister::Y, game);
-                break;
-            }
-            0xc5 => {
-                let (low, high) = address_direct_page(cpu, game);
-                compare_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xc6 => {
-                let (low, high) = address_direct_page(cpu, game);
-                update_memory(cpu, low, high, u16::MAX, game);
-                break;
-            }
-            0xc7 => {
-                let (low, high) = address_direct_page_indirect_long(cpu, game);
-                compare_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xc8 => {
-                update_y(1, &mut *cpu);
-                break;
-            }
-            0xc9 => {
-                let (low, high) = address_immediate(&mut *cpu, false);
-                compare_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xca => {
-                update_x(u16::MAX, &mut *cpu);
-                break;
-            }
-            0xcb => {
-                (*cpu).waiting = true;
-                break;
-            }
-            0xcc => {
-                let (low, high) = address_absolute(cpu, game);
-                compare_register(cpu, low, high, CpuRegister::Y, game);
-                break;
-            }
-            0xcd => {
-                let (low, high) = address_absolute(cpu, game);
-                compare_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xce => {
-                let (low, high) = address_absolute(cpu, game);
-                update_memory(cpu, low, high, u16::MAX, game);
-                break;
-            }
-            0xcf => {
-                let (low, high) = address_absolute_long(cpu, game);
-                compare_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xd0 => {
-                branch_relative(fetch_byte(cpu, game), !(*cpu).z, &mut *cpu);
-                break;
-            }
-            0xd1 => {
-                let (low, high) = address_direct_page_indirect_y(cpu, false, game);
-                compare_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xd2 => {
-                let (low, high) = address_direct_page_indirect(cpu, game);
-                compare_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xd3 => {
-                let (low, high) = address_stack_relative_indirect_y(cpu, game);
-                compare_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xd4 => {
-                let (low, high) = address_direct_page(cpu, game);
-                push_word(cpu, read_word(cpu, low, high, game), game);
-                break;
-            }
-            0xd5 => {
-                let (low, high) = address_direct_page_x(cpu, game);
-                compare_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xd6 => {
-                let (low, high) = address_direct_page_x(cpu, game);
-                update_memory(cpu, low, high, u16::MAX, game);
-                break;
-            }
-            0xd7 => {
-                let (low, high) = address_direct_page_indirect_long_y(cpu, game);
-                compare_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xd8 => {
-                (*cpu).d = false;
-                break;
-            }
-            0xd9 => {
-                let (low, high) = address_absolute_y(cpu, false, game);
-                compare_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xda => {
-                push_register(cpu, CpuRegister::X, game);
-                break;
-            }
-            0xdb => {
-                (*cpu).stopped = true;
-                break;
-            }
-            0xdc => {
-                let adr = fetch_word(cpu, game);
-                (*cpu).pc = read_word(cpu, u32::from(adr), u32::from(adr.wrapping_add(1)), game);
-                (*cpu).k = read_byte(cpu, u32::from(adr.wrapping_add(2)), game);
-                break;
-            }
-            0xdd => {
-                let (low, high) = address_absolute_x(cpu, false, game);
-                compare_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xde => {
-                let (low, high) = address_absolute_x(cpu, true, game);
-                update_memory(cpu, low, high, u16::MAX, game);
-                break;
-            }
-            0xdf => {
-                let (low, high) = address_absolute_long_x(cpu, game);
-                compare_register(cpu, low, high, CpuRegister::Accumulator, game);
-                break;
-            }
-            0xe0 => {
-                let (low, high) = address_immediate(&mut *cpu, true);
-                compare_register(cpu, low, high, CpuRegister::X, game);
-                break;
-            }
-            0xe1 => {
-                let (low, high) = address_direct_page_indexed_indirect(cpu, game);
-                subtract_with_carry(cpu, low, high, game);
-                break;
-            }
-            0xe2 => {
-                cpu_setFlags(cpu_getFlags(&*cpu) | fetch_byte(cpu, game), &mut *cpu);
-                break;
-            }
-            0xe3 => {
-                let (low, high) = address_stack_relative(cpu, game);
-                subtract_with_carry(cpu, low, high, game);
-                break;
-            }
-            0xe4 => {
-                let (low, high) = address_direct_page(cpu, game);
-                compare_register(cpu, low, high, CpuRegister::X, game);
-                break;
-            }
-            0xe5 => {
-                let (low, high) = address_direct_page(cpu, game);
-                subtract_with_carry(cpu, low, high, game);
-                break;
-            }
-            0xe6 => {
-                let (low, high) = address_direct_page(cpu, game);
-                update_memory(cpu, low, high, 1, game);
-                break;
-            }
-            0xe7 => {
-                let (low, high) = address_direct_page_indirect_long(cpu, game);
-                subtract_with_carry(cpu, low, high, game);
-                break;
-            }
-            0xe8 => {
-                update_x(1, &mut *cpu);
-                break;
-            }
-            0xe9 => {
-                let (low, high) = address_immediate(&mut *cpu, false);
-                subtract_with_carry(cpu, low, high, game);
-                break;
-            }
-            0xeb => {
-                exchange_accumulator_bytes(&mut *cpu);
-                break;
-            }
-            0xec => {
-                let (low, high) = address_absolute(cpu, game);
-                compare_register(cpu, low, high, CpuRegister::X, game);
-                break;
-            }
-            0xed => {
-                let (low, high) = address_absolute(cpu, game);
-                subtract_with_carry(cpu, low, high, game);
-                break;
-            }
-            0xee => {
-                let (low, high) = address_absolute(cpu, game);
-                update_memory(cpu, low, high, 1, game);
-                break;
-            }
-            0xef => {
-                let (low, high) = address_absolute_long(cpu, game);
-                subtract_with_carry(cpu, low, high, game);
-                break;
-            }
-            0xf0 => {
-                branch_relative(fetch_byte(cpu, game), (*cpu).z, &mut *cpu);
-                break;
-            }
-            0xf1 => {
-                let (low, high) = address_direct_page_indirect_y(cpu, false, game);
-                subtract_with_carry(cpu, low, high, game);
-                break;
-            }
-            0xf2 => {
-                let (low, high) = address_direct_page_indirect(cpu, game);
-                subtract_with_carry(cpu, low, high, game);
-                break;
-            }
-            0xf3 => {
-                let (low, high) = address_stack_relative_indirect_y(cpu, game);
-                subtract_with_carry(cpu, low, high, game);
-                break;
-            }
-            0xf4 => {
-                let w: u16 = fetch_word(cpu, game);
-                if w == 0xc2ae {
-                    (*cpu).y = 0;
-                }
-                push_word(cpu, w, game);
-                break;
-            }
-            0xf5 => {
-                let (low, high) = address_direct_page_x(cpu, game);
-                subtract_with_carry(cpu, low, high, game);
-                break;
-            }
-            0xf6 => {
-                let (low, high) = address_direct_page_x(cpu, game);
-                update_memory(cpu, low, high, 1, game);
-                break;
-            }
-            0xf7 => {
-                let (low, high) = address_direct_page_indirect_long_y(cpu, game);
-                subtract_with_carry(cpu, low, high, game);
-                break;
-            }
-            0xf8 => {
-                (*cpu).d = true;
-                break;
-            }
-            0xf9 => {
-                let (low, high) = address_absolute_y(cpu, false, game);
-                subtract_with_carry(cpu, low, high, game);
-                break;
-            }
-            0xfa => {
-                pull_register(cpu, CpuRegister::X, game);
-                break;
-            }
-            0xfb => {
-                exchange_carry_emulation(&mut *cpu);
-                break;
-            }
-            0xfc => {
-                let target = address_absolute_indexed_indirect(cpu, game);
-                push_word(cpu, (*cpu).pc.wrapping_sub(1), game);
-                (*cpu).pc = target;
-                break;
-            }
-            0xfd => {
-                let (low, high) = address_absolute_x(cpu, false, game);
-                subtract_with_carry(cpu, low, high, game);
-                break;
-            }
-            0xfe => {
-                let (low, high) = address_absolute_x(cpu, true, game);
-                update_memory(cpu, low, high, 1, game);
-                break;
-            }
-            0xff => {
-                let (low, high) = address_absolute_long_x(cpu, game);
-                subtract_with_carry(cpu, low, high, game);
-                break;
-            }
-            0xea | _ => {
-                break;
+                return;
+            }
+            0xe5 | 0xe9 | 0xed => {
+                (*cpu).c = true;
+            }
+            0x65 | 0x6d | 0x69 | 0x7d | 0x7f => {
+                (*cpu).c = false;
+            }
+            _ => {}
+        }
+    }
+    match opcode {
+        0x01 => {
+            let (low, high) = address_direct_page_indexed_indirect(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Or, game);
+        }
+        0x02 => {
+            fetch_byte(cpu, game);
+            push_byte(cpu, (*cpu).k, game);
+            push_word(cpu, (*cpu).pc, game);
+            push_byte(cpu, cpu_getFlags(&*cpu), game);
+            (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
+            (*cpu).i = true;
+            (*cpu).d = false;
+            (*cpu).k = 0 as u8;
+            (*cpu).pc = read_word(cpu, 0xffe4 as u32, 0xffe5 as u32, game);
+        }
+        0x03 => {
+            let (low, high) = address_stack_relative(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Or, game);
+        }
+        0x04 => {
+            let (low, high) = address_direct_page(cpu, game);
+            test_and_update_bits(cpu, low, high, true, game);
+        }
+        0x05 => {
+            let (low, high) = address_direct_page(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Or, game);
+        }
+        0x06 => {
+            let (low, high) = address_direct_page(cpu, game);
+            shift_memory_left(cpu, low, high, false, game);
+        }
+        0x07 => {
+            let (low, high) = address_direct_page_indirect_long(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Or, game);
+        }
+        0x08 => {
+            push_byte(cpu, cpu_getFlags(&*cpu), game);
+        }
+        0x09 => {
+            let (low, high) = address_immediate(&mut *cpu, false);
+            logical_accumulator(cpu, low, high, LogicOperation::Or, game);
+        }
+        0x0a => {
+            shift_accumulator_left(false, &mut *cpu);
+        }
+        0x0b => {
+            push_word(cpu, (*cpu).dp, game);
+        }
+        0x0c => {
+            let (low, high) = address_absolute(cpu, game);
+            test_and_update_bits(cpu, low, high, true, game);
+        }
+        0x0d => {
+            let (low, high) = address_absolute(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Or, game);
+        }
+        0x0e => {
+            let (low, high) = address_absolute(cpu, game);
+            shift_memory_left(cpu, low, high, false, game);
+        }
+        0x0f => {
+            let (low, high) = address_absolute_long(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Or, game);
+        }
+        0x10 => {
+            branch_relative(fetch_byte(cpu, game), !(*cpu).n, &mut *cpu);
+        }
+        0x11 => {
+            let (low, high) = address_direct_page_indirect_y(cpu, false, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Or, game);
+        }
+        0x12 => {
+            let (low, high) = address_direct_page_indirect(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Or, game);
+        }
+        0x13 => {
+            let (low, high) = address_stack_relative_indirect_y(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Or, game);
+        }
+        0x14 => {
+            let (low, high) = address_direct_page(cpu, game);
+            test_and_update_bits(cpu, low, high, false, game);
+        }
+        0x15 => {
+            let (low, high) = address_direct_page_x(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Or, game);
+        }
+        0x16 => {
+            let (low, high) = address_direct_page_x(cpu, game);
+            shift_memory_left(cpu, low, high, false, game);
+        }
+        0x17 => {
+            let (low, high) = address_direct_page_indirect_long_y(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Or, game);
+        }
+        0x18 => {
+            (*cpu).c = false;
+        }
+        0x19 => {
+            let (low, high) = address_absolute_y(cpu, false, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Or, game);
+        }
+        0x1a => {
+            update_accumulator(1, &mut *cpu);
+        }
+        0x1b => {
+            (*cpu).sp = (*cpu).a;
+        }
+        0x1c => {
+            let (low, high) = address_absolute(cpu, game);
+            test_and_update_bits(cpu, low, high, false, game);
+        }
+        0x1d => {
+            let (low, high) = address_absolute_x(cpu, false, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Or, game);
+        }
+        0x1e => {
+            let (low, high) = address_absolute_x(cpu, true, game);
+            shift_memory_left(cpu, low, high, false, game);
+        }
+        0x1f => {
+            let (low, high) = address_absolute_long_x(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Or, game);
+        }
+        0x20 => {
+            let value = fetch_word(cpu, game);
+            push_word(cpu, (*cpu).pc.wrapping_sub(1), game);
+            (*cpu).pc = value;
+        }
+        0x21 => {
+            let (low, high) = address_direct_page_indexed_indirect(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::And, game);
+        }
+        0x22 => {
+            let target = fetch_word(cpu, game);
+            let newK = fetch_byte(cpu, game);
+            push_byte(cpu, (*cpu).k, game);
+            push_word(cpu, (*cpu).pc.wrapping_sub(1), game);
+            (*cpu).pc = target;
+            (*cpu).k = newK;
+        }
+        0x23 => {
+            let (low, high) = address_stack_relative(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::And, game);
+        }
+        0x24 => {
+            let (low, high) = address_direct_page(cpu, game);
+            test_accumulator_bits(cpu, low, high, game);
+        }
+        0x25 => {
+            let (low, high) = address_direct_page(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::And, game);
+        }
+        0x26 => {
+            let (low, high) = address_direct_page(cpu, game);
+            shift_memory_left(cpu, low, high, true, game);
+        }
+        0x27 => {
+            let (low, high) = address_direct_page_indirect_long(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::And, game);
+        }
+        0x28 => {
+            cpu_setFlags(pull_byte(cpu, game), &mut *cpu);
+        }
+        0x29 => {
+            let (low, high) = address_immediate(&mut *cpu, false);
+            logical_accumulator(cpu, low, high, LogicOperation::And, game);
+        }
+        0x2a => {
+            shift_accumulator_left(true, &mut *cpu);
+        }
+        0x2b => {
+            (*cpu).dp = pull_word(cpu, game);
+            set_zero_negative((*cpu).dp, false, &mut *cpu);
+        }
+        0x2c => {
+            let (low, high) = address_absolute(cpu, game);
+            test_accumulator_bits(cpu, low, high, game);
+        }
+        0x2d => {
+            let (low, high) = address_absolute(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::And, game);
+        }
+        0x2e => {
+            let (low, high) = address_absolute(cpu, game);
+            shift_memory_left(cpu, low, high, true, game);
+        }
+        0x2f => {
+            let (low, high) = address_absolute_long(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::And, game);
+        }
+        0x30 => {
+            branch_relative(fetch_byte(cpu, game), (*cpu).n, &mut *cpu);
+        }
+        0x31 => {
+            let (low, high) = address_direct_page_indirect_y(cpu, false, game);
+            logical_accumulator(cpu, low, high, LogicOperation::And, game);
+        }
+        0x32 => {
+            let (low, high) = address_direct_page_indirect(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::And, game);
+        }
+        0x33 => {
+            let (low, high) = address_stack_relative_indirect_y(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::And, game);
+        }
+        0x34 => {
+            let (low, high) = address_direct_page_x(cpu, game);
+            test_accumulator_bits(cpu, low, high, game);
+        }
+        0x35 => {
+            let (low, high) = address_direct_page_x(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::And, game);
+        }
+        0x36 => {
+            let (low, high) = address_direct_page_x(cpu, game);
+            shift_memory_left(cpu, low, high, true, game);
+        }
+        0x37 => {
+            let (low, high) = address_direct_page_indirect_long_y(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::And, game);
+        }
+        0x38 => {
+            (*cpu).c = true;
+        }
+        0x39 => {
+            let (low, high) = address_absolute_y(cpu, false, game);
+            logical_accumulator(cpu, low, high, LogicOperation::And, game);
+        }
+        0x3a => {
+            update_accumulator(u16::MAX, &mut *cpu);
+        }
+        0x3b => {
+            (*cpu).a = (*cpu).sp;
+            set_zero_negative((*cpu).a, false, &mut *cpu);
+        }
+        0x3c => {
+            let (low, high) = address_absolute_x(cpu, false, game);
+            test_accumulator_bits(cpu, low, high, game);
+        }
+        0x3d => {
+            let (low, high) = address_absolute_x(cpu, false, game);
+            logical_accumulator(cpu, low, high, LogicOperation::And, game);
+        }
+        0x3e => {
+            let (low, high) = address_absolute_x(cpu, true, game);
+            shift_memory_left(cpu, low, high, true, game);
+        }
+        0x3f => {
+            let (low, high) = address_absolute_long_x(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::And, game);
+        }
+        0x40 => {
+            cpu_setFlags(pull_byte(cpu, game), &mut *cpu);
+            (*cpu).pc = pull_word(cpu, game);
+            if !(*cpu).e {
+                (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
+                (*cpu).k = pull_byte(cpu, game);
             }
         }
+        0x41 => {
+            let (low, high) = address_direct_page_indexed_indirect(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
+        }
+        0x42 => {
+            fetch_byte(cpu, game);
+        }
+        0x43 => {
+            let (low, high) = address_stack_relative(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
+        }
+        0x44 => {
+            let dest = fetch_byte(cpu, game);
+            let src = fetch_byte(cpu, game);
+            (*cpu).db = dest;
+            write_byte(
+                cpu,
+                u32::from(dest) << 16 | u32::from((*cpu).y),
+                read_byte(cpu, u32::from(src) << 16 | u32::from((*cpu).x), game),
+                game,
+            );
+            (*cpu).a = (*cpu).a.wrapping_sub(1);
+            (*cpu).x = (*cpu).x.wrapping_sub(1);
+            (*cpu).y = (*cpu).y.wrapping_sub(1);
+            if (*cpu).a != 0xffff {
+                (*cpu).pc = (*cpu).pc.wrapping_sub(3);
+            }
+            if (*cpu).xf {
+                (*cpu).x &= 0xff;
+                (*cpu).y &= 0xff;
+            }
+        }
+        0x45 => {
+            let (low, high) = address_direct_page(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
+        }
+        0x46 => {
+            let (low, high) = address_direct_page(cpu, game);
+            shift_memory_right(cpu, low, high, game);
+        }
+        0x47 => {
+            let (low, high) = address_direct_page_indirect_long(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
+        }
+        0x48 => {
+            push_register(cpu, CpuRegister::Accumulator, game);
+        }
+        0x49 => {
+            let (low, high) = address_immediate(&mut *cpu, false);
+            logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
+        }
+        0x4a => {
+            shift_accumulator_right(&mut *cpu);
+        }
+        0x4b => {
+            push_byte(cpu, (*cpu).k, game);
+        }
+        0x4c => {
+            (*cpu).pc = fetch_word(cpu, game);
+        }
+        0x4d => {
+            let (low, high) = address_absolute(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
+        }
+        0x4e => {
+            let (low, high) = address_absolute(cpu, game);
+            shift_memory_right(cpu, low, high, game);
+        }
+        0x4f => {
+            let (low, high) = address_absolute_long(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
+        }
+        0x50 => {
+            branch_relative(fetch_byte(cpu, game), !(*cpu).v, &mut *cpu);
+        }
+        0x51 => {
+            let (low, high) = address_direct_page_indirect_y(cpu, false, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
+        }
+        0x52 => {
+            let (low, high) = address_direct_page_indirect(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
+        }
+        0x53 => {
+            let (low, high) = address_stack_relative_indirect_y(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
+        }
+        0x54 => {
+            let dest_0 = fetch_byte(cpu, game);
+            let src_0 = fetch_byte(cpu, game);
+            (*cpu).db = dest_0;
+            write_byte(
+                cpu,
+                u32::from(dest_0) << 16 | u32::from((*cpu).y),
+                read_byte(cpu, u32::from(src_0) << 16 | u32::from((*cpu).x), game),
+                game,
+            );
+            (*cpu).a = (*cpu).a.wrapping_sub(1);
+            (*cpu).x = (*cpu).x.wrapping_add(1);
+            (*cpu).y = (*cpu).y.wrapping_add(1);
+            if (*cpu).a != 0xffff {
+                (*cpu).pc = (*cpu).pc.wrapping_sub(3);
+            }
+            if (*cpu).xf {
+                (*cpu).x &= 0xff;
+                (*cpu).y &= 0xff;
+            }
+        }
+        0x55 => {
+            let (low, high) = address_direct_page_x(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
+        }
+        0x56 => {
+            let (low, high) = address_direct_page_x(cpu, game);
+            shift_memory_right(cpu, low, high, game);
+        }
+        0x57 => {
+            let (low, high) = address_direct_page_indirect_long_y(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
+        }
+        0x58 => {
+            (*cpu).i = false;
+        }
+        0x59 => {
+            let (low, high) = address_absolute_y(cpu, false, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
+        }
+        0x5a => {
+            push_register(cpu, CpuRegister::Y, game);
+        }
+        0x5b => {
+            (*cpu).dp = (*cpu).a;
+            set_zero_negative((*cpu).dp, false, &mut *cpu);
+        }
+        0x5c => {
+            let target: u16 = fetch_word(cpu, game);
+            let target_bank: u8 = fetch_byte(cpu, game);
+            if target_bank == 0x80 && target == 0x8573 {
+                printf(
+                    b"Current PC = 0x%x\n\0" as *const u8 as *const ::core::ffi::c_char,
+                    ((*cpu).k as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
+                        | (*cpu).pc as ::core::ffi::c_int,
+                );
+                DumpCpuHistory(game);
+                Die(b"The game has crashed!\n\0" as *const u8 as *const ::core::ffi::c_char);
+            }
+            (*cpu).k = target_bank;
+            (*cpu).pc = target;
+        }
+        0x5d => {
+            let (low, high) = address_absolute_x(cpu, false, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
+        }
+        0x5e => {
+            let (low, high) = address_absolute_x(cpu, true, game);
+            shift_memory_right(cpu, low, high, game);
+        }
+        0x5f => {
+            let (low, high) = address_absolute_long_x(cpu, game);
+            logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
+        }
+        0x60 => {
+            if (*cpu).sp >= (*cpu).spBreakpoint && (*cpu).spBreakpoint != 0 {
+                let delta = (*cpu).sp - (*cpu).spBreakpoint;
+                if delta != 0 && delta != 2 {
+                    __assert_fail(
+                        b"delta == 0 || delta == 2\0" as *const u8 as *const ::core::ffi::c_char,
+                        b"src/snes/cpu.c\0" as *const u8 as *const ::core::ffi::c_char,
+                        1386 as ::core::ffi::c_uint,
+                        b"void cpu_doOpcode(Cpu *, uint8_t)\0" as *const u8
+                            as *const ::core::ffi::c_char,
+                    );
+                }
+                (*cpu).spBreakpoint = 0;
+                if HookedFunctionRts(i32::from(delta == 2), game) {
+                    return;
+                }
+            }
+            (*cpu).pc = pull_word(cpu, game).wrapping_add(1);
+        }
+        0x61 => {
+            let (low, high) = address_direct_page_indexed_indirect(cpu, game);
+            add_with_carry(cpu, low, high, game);
+        }
+        0x62 => {
+            let displacement = fetch_word(cpu, game) as i16;
+            push_word(cpu, (*cpu).pc.wrapping_add_signed(displacement), game);
+        }
+        0x63 => {
+            let (low, high) = address_stack_relative(cpu, game);
+            add_with_carry(cpu, low, high, game);
+        }
+        0x64 => {
+            let (low, high) = address_direct_page(cpu, game);
+            store_zero(cpu, low, high, game);
+        }
+        0x65 => {
+            let (low, high) = address_direct_page(cpu, game);
+            add_with_carry(cpu, low, high, game);
+        }
+        0x66 => {
+            let (low, high) = address_direct_page(cpu, game);
+            rotate_memory_right(cpu, low, high, game);
+        }
+        0x67 => {
+            let (low, high) = address_direct_page_indirect_long(cpu, game);
+            add_with_carry(cpu, low, high, game);
+        }
+        0x68 => {
+            pull_register(cpu, CpuRegister::Accumulator, game);
+        }
+        0x69 => {
+            let (low, high) = address_immediate(&mut *cpu, false);
+            add_with_carry(cpu, low, high, game);
+        }
+        0x6a => {
+            let carry = (*cpu).a & 1 != 0;
+            if (*cpu).mf {
+                (*cpu).a = (*cpu).a & 0xff00 | ((*cpu).a >> 1 & 0x7f) | (u16::from((*cpu).c) << 7);
+            } else {
+                (*cpu).a = (*cpu).a >> 1 | (u16::from((*cpu).c) << 15);
+            }
+            (*cpu).c = carry;
+            set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
+        }
+        0x6b => {
+            if (*cpu).sp >= (*cpu).spBreakpoint && (*cpu).spBreakpoint != 0 {
+                if (*cpu).sp != (*cpu).spBreakpoint {
+                    __assert_fail(
+                        b"cpu->sp == cpu->spBreakpoint\0" as *const u8
+                            as *const ::core::ffi::c_char,
+                        b"src/snes/cpu.c\0" as *const u8 as *const ::core::ffi::c_char,
+                        1464 as ::core::ffi::c_uint,
+                        b"void cpu_doOpcode(Cpu *, uint8_t)\0" as *const u8
+                            as *const ::core::ffi::c_char,
+                    );
+                }
+                (*cpu).spBreakpoint = 0;
+                if HookedFunctionRts(0, game) {
+                    return;
+                }
+            }
+            (*cpu).pc = pull_word(cpu, game).wrapping_add(1);
+            (*cpu).k = pull_byte(cpu, game);
+        }
+        0x6c => {
+            let adr = fetch_word(cpu, game);
+            (*cpu).pc = read_word(cpu, u32::from(adr), u32::from(adr.wrapping_add(1)), game);
+        }
+        0x6d => {
+            let (low, high) = address_absolute(cpu, game);
+            add_with_carry(cpu, low, high, game);
+        }
+        0x6e => {
+            let (low, high) = address_absolute(cpu, game);
+            rotate_memory_right(cpu, low, high, game);
+        }
+        0x6f => {
+            let (low, high) = address_absolute_long(cpu, game);
+            add_with_carry(cpu, low, high, game);
+        }
+        0x70 => {
+            branch_relative(fetch_byte(cpu, game), (*cpu).v, &mut *cpu);
+        }
+        0x71 => {
+            let (low, high) = address_direct_page_indirect_y(cpu, false, game);
+            add_with_carry(cpu, low, high, game);
+        }
+        0x72 => {
+            let (low, high) = address_direct_page_indirect(cpu, game);
+            add_with_carry(cpu, low, high, game);
+        }
+        0x73 => {
+            let (low, high) = address_stack_relative_indirect_y(cpu, game);
+            add_with_carry(cpu, low, high, game);
+        }
+        0x74 => {
+            let (low, high) = address_direct_page_x(cpu, game);
+            store_zero(cpu, low, high, game);
+        }
+        0x75 => {
+            let (low, high) = address_direct_page_x(cpu, game);
+            add_with_carry(cpu, low, high, game);
+        }
+        0x76 => {
+            let (low, high) = address_direct_page_x(cpu, game);
+            rotate_memory_right(cpu, low, high, game);
+        }
+        0x77 => {
+            let (low, high) = address_direct_page_indirect_long_y(cpu, game);
+            add_with_carry(cpu, low, high, game);
+        }
+        0x78 => {
+            (*cpu).i = true;
+        }
+        0x79 => {
+            let (low, high) = address_absolute_y(cpu, false, game);
+            add_with_carry(cpu, low, high, game);
+        }
+        0x7a => {
+            pull_register(cpu, CpuRegister::Y, game);
+        }
+        0x7b => {
+            (*cpu).a = (*cpu).dp;
+            set_zero_negative((*cpu).a, false, &mut *cpu);
+        }
+        0x7c => {
+            (*cpu).pc = address_absolute_indexed_indirect(cpu, game);
+        }
+        0x7d => {
+            let (low, high) = address_absolute_x(cpu, false, game);
+            add_with_carry(cpu, low, high, game);
+        }
+        0x7e => {
+            let (low, high) = address_absolute_x(cpu, true, game);
+            rotate_memory_right(cpu, low, high, game);
+        }
+        0x7f => {
+            let (low, high) = address_absolute_long_x(cpu, game);
+            add_with_carry(cpu, low, high, game);
+        }
+        0x80 => {
+            // Relative branches start after the displacement operand.
+            let displacement = fetch_byte(cpu, game) as i8;
+            (*cpu).pc = (*cpu).pc.wrapping_add_signed(displacement as i16);
+        }
+        0x81 => {
+            let (low, high) = address_direct_page_indexed_indirect(cpu, game);
+            store_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0x82 => {
+            let displacement = fetch_word(cpu, game) as i16;
+            (*cpu).pc = (*cpu).pc.wrapping_add_signed(displacement);
+        }
+        0x83 => {
+            let (low, high) = address_stack_relative(cpu, game);
+            store_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0x84 => {
+            let (low, high) = address_direct_page(cpu, game);
+            store_register(cpu, low, high, CpuRegister::Y, game);
+        }
+        0x85 => {
+            let (low, high) = address_direct_page(cpu, game);
+            store_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0x86 => {
+            let (low, high) = address_direct_page(cpu, game);
+            store_register(cpu, low, high, CpuRegister::X, game);
+        }
+        0x87 => {
+            let (low, high) = address_direct_page_indirect_long(cpu, game);
+            store_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0x88 => {
+            update_y(u16::MAX, &mut *cpu);
+        }
+        0x89 => {
+            if (*cpu).mf {
+                let result = (*cpu).a as u8 & fetch_byte(cpu, game);
+                (*cpu).z = result == 0;
+            } else {
+                (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
+                let result = (*cpu).a & fetch_word(cpu, game);
+                (*cpu).z = result == 0;
+            }
+        }
+        0x8a => {
+            transfer_to_accumulator((*cpu).x, &mut *cpu);
+        }
+        0x8b => {
+            push_byte(cpu, (*cpu).db, game);
+        }
+        0x8c => {
+            let (low, high) = address_absolute(cpu, game);
+            store_register(cpu, low, high, CpuRegister::Y, game);
+        }
+        0x8d => {
+            let (low, high) = address_absolute(cpu, game);
+            store_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0x8e => {
+            let (low, high) = address_absolute(cpu, game);
+            store_register(cpu, low, high, CpuRegister::X, game);
+        }
+        0x8f => {
+            let (low, high) = address_absolute_long(cpu, game);
+            store_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0x90 => {
+            branch_relative(fetch_byte(cpu, game), !(*cpu).c, &mut *cpu);
+        }
+        0x91 => {
+            let (low, high) = address_direct_page_indirect_y(cpu, true, game);
+            store_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0x92 => {
+            let (low, high) = address_direct_page_indirect(cpu, game);
+            store_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0x93 => {
+            let (low, high) = address_stack_relative_indirect_y(cpu, game);
+            store_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0x94 => {
+            let (low, high) = address_direct_page_x(cpu, game);
+            store_register(cpu, low, high, CpuRegister::Y, game);
+        }
+        0x95 => {
+            let (low, high) = address_direct_page_x(cpu, game);
+            store_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0x96 => {
+            let (low, high) = address_direct_page_y(cpu, game);
+            store_register(cpu, low, high, CpuRegister::X, game);
+        }
+        0x97 => {
+            let (low, high) = address_direct_page_indirect_long_y(cpu, game);
+            store_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0x98 => {
+            transfer_to_accumulator((*cpu).y, &mut *cpu);
+        }
+        0x99 => {
+            let (low, high) = address_absolute_y(cpu, true, game);
+            store_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0x9a => {
+            (*cpu).sp = (*cpu).x;
+        }
+        0x9b => {
+            transfer_to_y((*cpu).x, &mut *cpu);
+        }
+        0x9c => {
+            let (low, high) = address_absolute(cpu, game);
+            store_zero(cpu, low, high, game);
+        }
+        0x9d => {
+            let (low, high) = address_absolute_x(cpu, true, game);
+            store_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0x9e => {
+            let (low, high) = address_absolute_x(cpu, true, game);
+            store_zero(cpu, low, high, game);
+        }
+        0x9f => {
+            let (low, high) = address_absolute_long_x(cpu, game);
+            store_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xa0 => {
+            let (low, high) = address_immediate(&mut *cpu, true);
+            load_register(cpu, low, high, CpuRegister::Y, game);
+        }
+        0xa1 => {
+            let (low, high) = address_direct_page_indexed_indirect(cpu, game);
+            load_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xa2 => {
+            let (low, high) = address_immediate(&mut *cpu, true);
+            load_register(cpu, low, high, CpuRegister::X, game);
+        }
+        0xa3 => {
+            let (low, high) = address_stack_relative(cpu, game);
+            load_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xa4 => {
+            let (low, high) = address_direct_page(cpu, game);
+            load_register(cpu, low, high, CpuRegister::Y, game);
+        }
+        0xa5 => {
+            let (low, high) = address_direct_page(cpu, game);
+            load_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xa6 => {
+            let (low, high) = address_direct_page(cpu, game);
+            load_register(cpu, low, high, CpuRegister::X, game);
+        }
+        0xa7 => {
+            let (low, high) = address_direct_page_indirect_long(cpu, game);
+            load_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xa8 => {
+            transfer_to_y((*cpu).a, &mut *cpu);
+        }
+        0xa9 => {
+            let (low, high) = address_immediate(&mut *cpu, false);
+            load_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xaa => {
+            transfer_to_x((*cpu).a, &mut *cpu);
+        }
+        0xab => {
+            (*cpu).db = pull_byte(cpu, game);
+            set_zero_negative(u16::from((*cpu).db), true, &mut *cpu);
+        }
+        0xac => {
+            let (low, high) = address_absolute(cpu, game);
+            load_register(cpu, low, high, CpuRegister::Y, game);
+        }
+        0xad => {
+            let (low, high) = address_absolute(cpu, game);
+            load_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xae => {
+            let (low, high) = address_absolute(cpu, game);
+            load_register(cpu, low, high, CpuRegister::X, game);
+        }
+        0xaf => {
+            let (low, high) = address_absolute_long(cpu, game);
+            load_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xb0 => {
+            branch_relative(fetch_byte(cpu, game), (*cpu).c, &mut *cpu);
+        }
+        0xb1 => {
+            let (low, high) = address_direct_page_indirect_y(cpu, false, game);
+            load_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xb2 => {
+            let (low, high) = address_direct_page_indirect(cpu, game);
+            load_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xb3 => {
+            let (low, high) = address_stack_relative_indirect_y(cpu, game);
+            load_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xb4 => {
+            let (low, high) = address_direct_page_x(cpu, game);
+            load_register(cpu, low, high, CpuRegister::Y, game);
+        }
+        0xb5 => {
+            let (low, high) = address_direct_page_x(cpu, game);
+            load_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xb6 => {
+            let (low, high) = address_direct_page_y(cpu, game);
+            load_register(cpu, low, high, CpuRegister::X, game);
+        }
+        0xb7 => {
+            let (low, high) = address_direct_page_indirect_long_y(cpu, game);
+            load_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xb8 => {
+            (*cpu).v = false;
+        }
+        0xb9 => {
+            let (low, high) = address_absolute_y(cpu, false, game);
+            load_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xba => {
+            if (*cpu).xf {
+                (*cpu).x = (*cpu).sp & 0xff;
+            } else {
+                (*cpu).x = (*cpu).sp;
+            }
+            set_zero_negative((*cpu).x, (*cpu).xf, &mut *cpu);
+        }
+        0xbb => {
+            transfer_to_x((*cpu).y, &mut *cpu);
+        }
+        0xbc => {
+            let (low, high) = address_absolute_x(cpu, false, game);
+            load_register(cpu, low, high, CpuRegister::Y, game);
+        }
+        0xbd => {
+            let (low, high) = address_absolute_x(cpu, false, game);
+            load_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xbe => {
+            let (low, high) = address_absolute_y(cpu, false, game);
+            load_register(cpu, low, high, CpuRegister::X, game);
+        }
+        0xbf => {
+            let (low, high) = address_absolute_long_x(cpu, game);
+            load_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xc0 => {
+            let (low, high) = address_immediate(&mut *cpu, true);
+            compare_register(cpu, low, high, CpuRegister::Y, game);
+        }
+        0xc1 => {
+            let (low, high) = address_direct_page_indexed_indirect(cpu, game);
+            compare_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xc2 => {
+            cpu_setFlags(cpu_getFlags(&*cpu) & !fetch_byte(cpu, game), &mut *cpu);
+        }
+        0xc3 => {
+            let (low, high) = address_stack_relative(cpu, game);
+            compare_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xc4 => {
+            let (low, high) = address_direct_page(cpu, game);
+            compare_register(cpu, low, high, CpuRegister::Y, game);
+        }
+        0xc5 => {
+            let (low, high) = address_direct_page(cpu, game);
+            compare_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xc6 => {
+            let (low, high) = address_direct_page(cpu, game);
+            update_memory(cpu, low, high, u16::MAX, game);
+        }
+        0xc7 => {
+            let (low, high) = address_direct_page_indirect_long(cpu, game);
+            compare_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xc8 => {
+            update_y(1, &mut *cpu);
+        }
+        0xc9 => {
+            let (low, high) = address_immediate(&mut *cpu, false);
+            compare_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xca => {
+            update_x(u16::MAX, &mut *cpu);
+        }
+        0xcb => {
+            (*cpu).waiting = true;
+        }
+        0xcc => {
+            let (low, high) = address_absolute(cpu, game);
+            compare_register(cpu, low, high, CpuRegister::Y, game);
+        }
+        0xcd => {
+            let (low, high) = address_absolute(cpu, game);
+            compare_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xce => {
+            let (low, high) = address_absolute(cpu, game);
+            update_memory(cpu, low, high, u16::MAX, game);
+        }
+        0xcf => {
+            let (low, high) = address_absolute_long(cpu, game);
+            compare_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xd0 => {
+            branch_relative(fetch_byte(cpu, game), !(*cpu).z, &mut *cpu);
+        }
+        0xd1 => {
+            let (low, high) = address_direct_page_indirect_y(cpu, false, game);
+            compare_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xd2 => {
+            let (low, high) = address_direct_page_indirect(cpu, game);
+            compare_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xd3 => {
+            let (low, high) = address_stack_relative_indirect_y(cpu, game);
+            compare_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xd4 => {
+            let (low, high) = address_direct_page(cpu, game);
+            push_word(cpu, read_word(cpu, low, high, game), game);
+        }
+        0xd5 => {
+            let (low, high) = address_direct_page_x(cpu, game);
+            compare_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xd6 => {
+            let (low, high) = address_direct_page_x(cpu, game);
+            update_memory(cpu, low, high, u16::MAX, game);
+        }
+        0xd7 => {
+            let (low, high) = address_direct_page_indirect_long_y(cpu, game);
+            compare_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xd8 => {
+            (*cpu).d = false;
+        }
+        0xd9 => {
+            let (low, high) = address_absolute_y(cpu, false, game);
+            compare_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xda => {
+            push_register(cpu, CpuRegister::X, game);
+        }
+        0xdb => {
+            (*cpu).stopped = true;
+        }
+        0xdc => {
+            let adr = fetch_word(cpu, game);
+            (*cpu).pc = read_word(cpu, u32::from(adr), u32::from(adr.wrapping_add(1)), game);
+            (*cpu).k = read_byte(cpu, u32::from(adr.wrapping_add(2)), game);
+        }
+        0xdd => {
+            let (low, high) = address_absolute_x(cpu, false, game);
+            compare_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xde => {
+            let (low, high) = address_absolute_x(cpu, true, game);
+            update_memory(cpu, low, high, u16::MAX, game);
+        }
+        0xdf => {
+            let (low, high) = address_absolute_long_x(cpu, game);
+            compare_register(cpu, low, high, CpuRegister::Accumulator, game);
+        }
+        0xe0 => {
+            let (low, high) = address_immediate(&mut *cpu, true);
+            compare_register(cpu, low, high, CpuRegister::X, game);
+        }
+        0xe1 => {
+            let (low, high) = address_direct_page_indexed_indirect(cpu, game);
+            subtract_with_carry(cpu, low, high, game);
+        }
+        0xe2 => {
+            cpu_setFlags(cpu_getFlags(&*cpu) | fetch_byte(cpu, game), &mut *cpu);
+        }
+        0xe3 => {
+            let (low, high) = address_stack_relative(cpu, game);
+            subtract_with_carry(cpu, low, high, game);
+        }
+        0xe4 => {
+            let (low, high) = address_direct_page(cpu, game);
+            compare_register(cpu, low, high, CpuRegister::X, game);
+        }
+        0xe5 => {
+            let (low, high) = address_direct_page(cpu, game);
+            subtract_with_carry(cpu, low, high, game);
+        }
+        0xe6 => {
+            let (low, high) = address_direct_page(cpu, game);
+            update_memory(cpu, low, high, 1, game);
+        }
+        0xe7 => {
+            let (low, high) = address_direct_page_indirect_long(cpu, game);
+            subtract_with_carry(cpu, low, high, game);
+        }
+        0xe8 => {
+            update_x(1, &mut *cpu);
+        }
+        0xe9 => {
+            let (low, high) = address_immediate(&mut *cpu, false);
+            subtract_with_carry(cpu, low, high, game);
+        }
+        0xeb => {
+            exchange_accumulator_bytes(&mut *cpu);
+        }
+        0xec => {
+            let (low, high) = address_absolute(cpu, game);
+            compare_register(cpu, low, high, CpuRegister::X, game);
+        }
+        0xed => {
+            let (low, high) = address_absolute(cpu, game);
+            subtract_with_carry(cpu, low, high, game);
+        }
+        0xee => {
+            let (low, high) = address_absolute(cpu, game);
+            update_memory(cpu, low, high, 1, game);
+        }
+        0xef => {
+            let (low, high) = address_absolute_long(cpu, game);
+            subtract_with_carry(cpu, low, high, game);
+        }
+        0xf0 => {
+            branch_relative(fetch_byte(cpu, game), (*cpu).z, &mut *cpu);
+        }
+        0xf1 => {
+            let (low, high) = address_direct_page_indirect_y(cpu, false, game);
+            subtract_with_carry(cpu, low, high, game);
+        }
+        0xf2 => {
+            let (low, high) = address_direct_page_indirect(cpu, game);
+            subtract_with_carry(cpu, low, high, game);
+        }
+        0xf3 => {
+            let (low, high) = address_stack_relative_indirect_y(cpu, game);
+            subtract_with_carry(cpu, low, high, game);
+        }
+        0xf4 => {
+            let w: u16 = fetch_word(cpu, game);
+            if w == 0xc2ae {
+                (*cpu).y = 0;
+            }
+            push_word(cpu, w, game);
+        }
+        0xf5 => {
+            let (low, high) = address_direct_page_x(cpu, game);
+            subtract_with_carry(cpu, low, high, game);
+        }
+        0xf6 => {
+            let (low, high) = address_direct_page_x(cpu, game);
+            update_memory(cpu, low, high, 1, game);
+        }
+        0xf7 => {
+            let (low, high) = address_direct_page_indirect_long_y(cpu, game);
+            subtract_with_carry(cpu, low, high, game);
+        }
+        0xf8 => {
+            (*cpu).d = true;
+        }
+        0xf9 => {
+            let (low, high) = address_absolute_y(cpu, false, game);
+            subtract_with_carry(cpu, low, high, game);
+        }
+        0xfa => {
+            pull_register(cpu, CpuRegister::X, game);
+        }
+        0xfb => {
+            exchange_carry_emulation(&mut *cpu);
+        }
+        0xfc => {
+            let target = address_absolute_indexed_indirect(cpu, game);
+            push_word(cpu, (*cpu).pc.wrapping_sub(1), game);
+            (*cpu).pc = target;
+        }
+        0xfd => {
+            let (low, high) = address_absolute_x(cpu, false, game);
+            subtract_with_carry(cpu, low, high, game);
+        }
+        0xfe => {
+            let (low, high) = address_absolute_x(cpu, true, game);
+            update_memory(cpu, low, high, 1, game);
+        }
+        0xff => {
+            let (low, high) = address_absolute_long_x(cpu, game);
+            subtract_with_carry(cpu, low, high, game);
+        }
+        0xea | _ => {}
     }
 }
