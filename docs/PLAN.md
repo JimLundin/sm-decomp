@@ -13264,6 +13264,33 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Morph Ball eye-beam initialization (2026-10-19): E917 now uses safe
+byte-backed stores and its named dispatch constant. Ordered object/register
+color pairs retain byte indexing; width words retain rounded indexing.
+Folding the constant descriptor stores preserves all eleven bytes through
+900A, including the extra zero after the terminator. Activation, whole-before-
+fraction width clearing, speed/index clearing and the unchanged opaque
+instruction-pointer return retain their original order and alias behavior.
+
+Frozen 50be5476 plus only sm_88.rs passes any% 129712/0 (255.44s) and
+Waver 58109/0 (158.09s), native exits 0. A fresh Waver capture verifies
+the first 28,000 frames with no failures; its 1,000-frame replay passes
+and executes initialization at frame 28227, slot 0. All 128 KiB RAM and
+the returned pointer match baseline. A deliberate extra-byte fault is
+detected at frame 28227, byte 900A.
+
+Independent controls pass 133,088 comparisons: every u16 slot with two
+sentinel RAM patterns, plus 84 alias slots crossed with twelve opaque
+pointer variants and both patterns. Every byte and returned pointer matches;
+no ROM is loaded. Omitted-extra-byte, rounded-color-slot and premature-width-
+clear mutants are rejected. Instrumentation strips exactly to frozen source;
+maintained-candidate identity and independent source review pass.
+Cargo fmt, fmt --check, release --locked (9.72s, native exit 0) and progress
+pass. Own raw offsets -20, cast lines -35, unsafe functions -1 and Rust lines
+-50; other counters unchanged. No probes or ROM-derived assets committed.
+The beam initialization/update/widening/full/fading callbacks are now readable;
+the shared spawn interface and wider Phase 3 work remain open.
+
 Samus animation-command dispatch (2026-10-19): replace the nullable callback
 table and its expect with a direct match on the command's low nibble. Remove
 the shared function alias and the no-op callback for commands 0..5; all ten
