@@ -70,6 +70,26 @@ Frontend changes are compiler-checked; the movies exercise core gameplay.
 For subsequent assignment cleanup, retain hdma_load_indirect_address's size
 read before its bus callback; RomPtr operands can also write g_fail.
 
+Named scalar RAM reads (2026-10-19): ast-grep replaces all 7082 eligible
+literal u16 value loads across 535 named fields, including 185 reads inside
+other accesses' address calculations. The caller-side ram_word! macro uses
+unaligned little-endian loads and creates no whole-Game/RAM reference across
+retained raw pointers. Scalar identifiers in RAM_VARS generate the offsets;
+all table names, addresses, types, shapes and ordering remain exact.
+
+Net Rust lines -7308 (179900 total), casts -14164, repeated raw offsets -7082.
+The underlying unsafe loads are consolidated, not eliminated; unsafe-function
+counts are unchanged. Writes, borrowed words, unnamed/other-width reads and
+the documented legacy pointer questions retain separate scope.
+
+All 535 fields pass all 65536 word values (35061760 checks). Formatting/check,
+normal release (24.98s), stable workspace release and progress pass. The
+candidate includes the committed Boolean and identity cleanups and passes
+any% 129712/0 (108.07s), native exit 0, with fixed sources/DLL/fixtures.
+The frozen baseline matches the integrated committed source. Next: complete
+named scalar writes, preserving RHS-before-store order, then further compiler
+batches and larger repeated families. The broader readability goal is open.
+
 Live enemy parameter reads (2026-10-19): finish the five pending projectile
 initializers using captured indices and live byte-backed fields. Six retained
 pointers, 16 raw field reads and six casts are removed. The parameter readers
@@ -94,9 +114,9 @@ diagnostics. Formatting/check, normal release, stable workspace build and
 progress pass. Frozen 3ea98cae plus this batch passes any% 129712/0
 (163.71s), native exit 0, with fixed source/DLL/fixtures.
 The already-verified unnecessary-cast batch is included in this snapshot.
-Initializer/accessor work has separate verification. Next: complete the
-bulk scalar-RAM context/type audit, then replace eligible reads by named
-accessors; continue the remaining compiler simplifications in focused batches.
+Initializer/accessor work has separate verification. The scalar-RAM read family is now
+completed above with caller-side macros that preserve the raw-pointer boundary;
+continue named writes and remaining compiler simplifications in focused batches.
 
 Block-reaction dispatch family (2026-10-19): fourteen retry paths across
 Samus, enemies and enemy projectiles now share the live-block retry loop.

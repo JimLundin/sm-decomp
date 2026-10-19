@@ -21,6 +21,7 @@ use crate::game::sm_a0::{
 };
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
+use crate::ram_map::ram_word;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{RomPtr, Unreachable};
 extern "C" {
@@ -274,12 +275,9 @@ pub unsafe fn Draygon_Init(game: &mut Game) {
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 824 as uint16;
         j = (j).wrapping_sub(2u16);
     }
-    (*Get_Draygon(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .base
-    .palette_index = 0xe00 as uint16;
+    (*Get_Draygon(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+        .base
+        .palette_index = 0xe00 as uint16;
     *(&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x178c) as *mut LongPtr)).bank
         as *mut uint16) = 165 as uint16;
     (*((&raw mut game.g_ram as *mut uint8).offset(0x178c) as *mut LongPtr)).addr =
@@ -299,11 +297,8 @@ pub unsafe fn Draygon_Init(game: &mut Game) {
         .base
         .current_instruction = addr_kDraygon_Ilist_9813 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x179a) as *mut uint16) = 1024 as uint16;
-    (*Get_Draygon(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .draygon_var_A = ((0xa5871bi32) as u16);
+    (*Get_Draygon(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).draygon_var_A =
+        ((0xa5871bi32) as u16);
     sub_88DF34(game);
     *((&raw mut game.g_ram as *mut uint8).offset(0xa9) as *mut uint16) = 12 as uint16;
     SpawnBG3ScrollHdmaObject(game);
@@ -428,13 +423,11 @@ pub unsafe fn CallDraygonFunc(ea: uint32, k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn Draygon_Main(game: &mut Game) {
-    let EK: *mut Enemy_Draygon = Get_Draygon(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let EK: *mut Enemy_Draygon =
+        Get_Draygon(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     CallDraygonFunc(
         (((*EK).draygon_var_A) as u32) | (0xa50000u32),
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+        ram_word!(game, cur_enemy_index),
         game,
     );
     let E0: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
@@ -460,8 +453,7 @@ pub unsafe fn Draygon_Func_1(game: &mut Game) {
     {
         if (*E).draygon_var_B == 0 {
             v2 = gVramWriteEntry(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16)
-                    as ::core::ffi::c_int,
+                ram_word!(game, vram_write_queue_tail) as ::core::ffi::c_int,
                 game,
             );
             (*v2).size = 1536 as uint16;
@@ -502,8 +494,7 @@ pub unsafe fn Draygon_Func_2(game: &mut Game) {
 }
 pub unsafe fn Draygon_Func_3(game: &mut Game) {
     let mut Random: int8 = 0;
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x5b6) as *mut uint16) as ::core::ffi::c_int
-        & 0x3f as ::core::ffi::c_int)
+    if (ram_word!(game, nmi_frame_counter_word) as ::core::ffi::c_int & 0x3f as ::core::ffi::c_int)
         == 0i32
     {
         Random = NextRandom(game) as int8;
@@ -575,10 +566,8 @@ pub unsafe fn Draygon_Func_5(game: &mut Game) {
     }
     let t: uint32 = EnemyFunc_Divide(
         (varE26 as ::core::ffi::c_int >> 2 as ::core::ffi::c_int) as uint32,
-        ((Abs16(
-            ((*E).draygon_var_00)
-                .wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)),
-        ) as ::core::ffi::c_int)
+        ((Abs16(((*E).draygon_var_00).wrapping_sub(ram_word!(game, samus_x_pos)))
+            as ::core::ffi::c_int)
             << 16 as ::core::ffi::c_int) as uint32,
     );
     SetHiLo(&raw mut (*E).draygon_var_D, &raw mut (*E).draygon_var_E, t);
@@ -598,12 +587,9 @@ pub unsafe fn Draygon_Func_6(game: &mut Game) {
         (*E3).base.current_instruction = addr_kDraygon_Ilist_9C06 as uint16;
         (*E3).base.instruction_timer = 1 as uint16;
     }
-    (*Get_Draygon(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .base
-    .y_pos = *(((&raw mut game.g_ram as *mut uint8).offset(0x9002) as *mut uint16 as *mut uint8)
+    (*Get_Draygon(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+        .base
+        .y_pos = *(((&raw mut game.g_ram as *mut uint8).offset(0x9002) as *mut uint16 as *mut uint8)
         .offset(draygon_var_B as ::core::ffi::c_int as isize) as *mut uint16);
     (*E).draygon_var_B = ((*E).draygon_var_B).wrapping_sub(4u16);
     if (*E).draygon_var_B != 0 {
@@ -619,8 +605,7 @@ pub unsafe fn Draygon_Func_6(game: &mut Game) {
 }
 pub unsafe fn Draygon_Func_7(game: &mut Game) {
     let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x5b6) as *mut uint16) as ::core::ffi::c_int
-        & 0xf as ::core::ffi::c_int)
+    if (ram_word!(game, nmi_frame_counter_word) as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
         == 0i32
     {
         (*E).base.current_instruction = addr_kDraygon_Ilist_98FE as uint16;
@@ -650,20 +635,14 @@ pub unsafe fn Draygon_Func_9(game: &mut Game) {
         (*E3).base.current_instruction = addr_kDraygon_Ilist_9BDA as uint16;
         (*E3).base.instruction_timer = 1 as uint16;
     }
-    (*Get_Draygon(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .base
-    .y_pos = *(((&raw mut game.g_ram as *mut uint8).offset(0x9002) as *mut uint16 as *mut uint8)
+    (*Get_Draygon(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+        .base
+        .y_pos = *(((&raw mut game.g_ram as *mut uint8).offset(0x9002) as *mut uint16 as *mut uint8)
         .offset(draygon_var_B as ::core::ffi::c_int as isize) as *mut uint16);
     (*E).draygon_var_B = ((*E).draygon_var_B).wrapping_add(4u16);
     if (*E).draygon_var_B == (*E).draygon_var_C {
         (*E).draygon_var_B = 0 as uint16;
-        if (*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
-            as ::core::ffi::c_int
-            & 1 as ::core::ffi::c_int)
-            != 0i32
+        if (ram_word!(game, random_number) as ::core::ffi::c_int & 1 as ::core::ffi::c_int) != 0i32
         {
             (*E).draygon_var_A = ((0xa589b3i32) as u16);
         } else {
@@ -685,10 +664,8 @@ pub unsafe fn Draygon_Func_10(game: &mut Game) {
     let varE26: uint16 = 0 as uint16;
     let t: uint32 = EnemyFunc_Divide(
         (varE26 as ::core::ffi::c_int >> 2 as ::core::ffi::c_int) as uint32,
-        ((Abs16(
-            ((*E).draygon_var_02)
-                .wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)),
-        ) as ::core::ffi::c_int)
+        ((Abs16(((*E).draygon_var_02).wrapping_sub(ram_word!(game, samus_x_pos)))
+            as ::core::ffi::c_int)
             << 16 as ::core::ffi::c_int) as uint32,
     );
     SetHiLo(&raw mut (*E).draygon_var_D, &raw mut (*E).draygon_var_E, t);
@@ -708,12 +685,9 @@ pub unsafe fn Draygon_Func_11(game: &mut Game) {
         (*E3).base.current_instruction = addr_kDraygon_Ilist_9813 as uint16;
         (*E3).base.instruction_timer = 1 as uint16;
     }
-    (*Get_Draygon(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .base
-    .y_pos = *(((&raw mut game.g_ram as *mut uint8).offset(0x9002) as *mut uint16 as *mut uint8)
+    (*Get_Draygon(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+        .base
+        .y_pos = *(((&raw mut game.g_ram as *mut uint8).offset(0x9002) as *mut uint16 as *mut uint8)
         .offset(draygon_var_B as ::core::ffi::c_int as isize) as *mut uint16);
     (*E).draygon_var_B = ((*E).draygon_var_B).wrapping_sub(4u16);
     if (*E).draygon_var_B != 0 {
@@ -749,19 +723,13 @@ pub unsafe fn Draygon_Func_13(game: &mut Game) {
         (*E3).base.current_instruction = addr_kDraygon_Ilist_97E7 as uint16;
         (*E3).base.instruction_timer = 1 as uint16;
     }
-    (*Get_Draygon(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .base
-    .y_pos = *(((&raw mut game.g_ram as *mut uint8).offset(0x9002) as *mut uint16 as *mut uint8)
+    (*Get_Draygon(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+        .base
+        .y_pos = *(((&raw mut game.g_ram as *mut uint8).offset(0x9002) as *mut uint16 as *mut uint8)
         .offset(draygon_var_B as ::core::ffi::c_int as isize) as *mut uint16);
     (*E).draygon_var_B = ((*E).draygon_var_B).wrapping_add(4u16);
     if (*E).draygon_var_B == (*E).draygon_var_C {
-        if (*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
-            as ::core::ffi::c_int
-            & 1 as ::core::ffi::c_int)
-            != 0i32
+        if (ram_word!(game, random_number) as ::core::ffi::c_int & 1 as ::core::ffi::c_int) != 0i32
         {
             (*E).draygon_var_A = ((0xa587f4i32) as u16);
             (*E).draygon_var_B = 0 as uint16;
@@ -800,10 +768,7 @@ pub unsafe fn Draygon_Func_15(game: &mut Game) {
     Draygon_Func_3(game);
     Draygon_Func_35(game);
     let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
-    let v2: uint16 = Abs16(
-        ((*E).base.x_pos)
-            .wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)),
-    );
+    let v2: uint16 = Abs16(((*E).base.x_pos).wrapping_sub(ram_word!(game, samus_x_pos)));
     if v2 as ::core::ffi::c_int - 208 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         (*E).draygon_var_A = ((0xa58baei32) as u16);
         (*E).draygon_var_03 = 16 as uint16;
@@ -823,12 +788,10 @@ pub unsafe fn Draygon_Func_16(game: &mut Game) {
     let mut current_block: u64;
     let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
     Draygon_Func_3(game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa66) as *mut uint16) != 0 {
+    if ram_word!(game, samus_x_speed_divisor) != 0 {
         current_block = 1399980599923904196;
     } else {
-        if (*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
-            as ::core::ffi::c_int
-            & 0xf as ::core::ffi::c_int)
+        if (ram_word!(game, random_number) as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
             == 0i32
         {
             let v1: uint16 = ((*E).draygon_var_03).wrapping_sub(1u16);
@@ -869,7 +832,7 @@ pub unsafe fn Draygon_Func_16(game: &mut Game) {
         match current_block {
             7976072742316086414 => {}
             _ => {
-                if *((&raw mut game.g_ram as *mut uint8).offset(0xa66) as *mut uint16) == 0 {
+                if ram_word!(game, samus_x_speed_divisor) == 0 {
                     let E3: *mut Enemy_Draygon = Get_Draygon(0xc0 as ::core::ffi::c_int, game);
                     (*E3).base.current_instruction = addr_kDraygon_Ilist_9BDA as uint16;
                     (*E3).base.instruction_timer = 1 as uint16;
@@ -928,10 +891,7 @@ pub unsafe fn Draygon_Func_19(game: &mut Game) {
     Draygon_Func_3(game);
     Draygon_Func_35(game);
     let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
-    let v2: uint16 = Abs16(
-        ((*E).base.x_pos)
-            .wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)),
-    );
+    let v2: uint16 = Abs16(((*E).base.x_pos).wrapping_sub(ram_word!(game, samus_x_pos)));
     if v2 as ::core::ffi::c_int - 208 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         (*E).draygon_var_A = ((0xa58d30i32) as u16);
         (*E).draygon_var_03 = 16 as uint16;
@@ -950,12 +910,10 @@ pub unsafe fn Draygon_Func_19(game: &mut Game) {
 pub unsafe fn Draygon_Func_20(game: &mut Game) {
     let mut current_block: u64;
     let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa66) as *mut uint16) != 0 {
+    if ram_word!(game, samus_x_speed_divisor) != 0 {
         current_block = 11384386367536015713;
     } else {
-        if (*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
-            as ::core::ffi::c_int
-            & 0xf as ::core::ffi::c_int)
+        if (ram_word!(game, random_number) as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
             == 0i32
         {
             let v1: uint16 = ((*E).draygon_var_03).wrapping_sub(1u16);
@@ -996,7 +954,7 @@ pub unsafe fn Draygon_Func_20(game: &mut Game) {
         match current_block {
             10048703153582371463 => {}
             _ => {
-                if *((&raw mut game.g_ram as *mut uint8).offset(0xa66) as *mut uint16) == 0 {
+                if ram_word!(game, samus_x_speed_divisor) == 0 {
                     let E3: *mut Enemy_Draygon = Get_Draygon(0xc0 as ::core::ffi::c_int, game);
                     (*E3).base.current_instruction = addr_kDraygon_Ilist_97E7 as uint16;
                     (*E3).base.instruction_timer = 1 as uint16;
@@ -1018,7 +976,7 @@ pub unsafe fn Draygon_Func_20(game: &mut Game) {
 pub unsafe fn Draygon_Func_21(k: uint16, game: &mut Game) {
     let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
     Draygon_Func_35(game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa66) as *mut uint16) != 0 {
+    if ram_word!(game, samus_x_speed_divisor) != 0 {
         (*E).draygon_var_A = ((0xa58e19i32) as u16);
     } else {
         (*E).base.y_pos =
@@ -1047,7 +1005,7 @@ pub unsafe fn Draygon_Func_22(game: &mut Game) {
     let mut v2: int16 = 0;
     let mut v4: uint16 = 0;
     Draygon_Func_3(game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa66) as *mut uint16) != 0 {
+    if ram_word!(game, samus_x_speed_divisor) != 0 {
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
         v2 = 8 as int16;
         if (*E).draygon_var_20 == 0 {
@@ -1055,14 +1013,11 @@ pub unsafe fn Draygon_Func_22(game: &mut Game) {
         }
         let v3: uint16 = Abs16(
             ((*E).base.x_pos as ::core::ffi::c_int + v2 as ::core::ffi::c_int
-                - *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
-                    as ::core::ffi::c_int) as uint16,
+                - ram_word!(game, samus_x_pos) as ::core::ffi::c_int) as uint16,
         );
         if v3 as ::core::ffi::c_int - 8 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0
             && {
-                v4 = Abs16(((*E).base.y_pos).wrapping_sub(
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16),
-                ));
+                v4 = Abs16(((*E).base.y_pos).wrapping_sub(ram_word!(game, samus_y_pos)));
                 v4 as ::core::ffi::c_int - 8 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                     != 0
             }
@@ -1089,10 +1044,8 @@ pub unsafe fn Draygon_Func_22(game: &mut Game) {
         } else {
             let varE20: uint16 = ((64u8).wrapping_sub(
                 (CalculateAngleFromXY(
-                    (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16))
-                        .wrapping_sub((*E).base.x_pos),
-                    (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16))
-                        .wrapping_sub((*E).base.y_pos),
+                    (ram_word!(game, samus_x_pos)).wrapping_sub((*E).base.x_pos),
+                    (ram_word!(game, samus_y_pos)).wrapping_sub((*E).base.y_pos),
                     game,
                 )) as u8,
             )) as uint16;
@@ -1110,8 +1063,7 @@ pub unsafe fn Draygon_Func_23(game: &mut Game) {
 pub unsafe fn Draygon_Func_24(k: uint16, game: &mut Game) {
     let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
     let mut v5: uint16 = 0;
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0xa64) as *mut uint16) as ::core::ffi::c_int
-        & 1 as ::core::ffi::c_int)
+    if (ram_word!(game, samus_grapple_flags) as ::core::ffi::c_int & 1 as ::core::ffi::c_int)
         != 0i32
     {
         (*E).base.flash_timer = (((*get_EnemyDef_A2((*E).base.enemy_ptr, game)).hurt_ai_time)
@@ -1153,15 +1105,14 @@ pub unsafe fn Draygon_Func_24(k: uint16, game: &mut Game) {
 pub unsafe fn Draygon_Func_25(k: uint16, game: &mut Game) {
     let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
     let mut v6: uint16 = 0;
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0xa64) as *mut uint16) as ::core::ffi::c_int
-        & 1 as ::core::ffi::c_int)
+    if (ram_word!(game, samus_grapple_flags) as ::core::ffi::c_int & 1 as ::core::ffi::c_int)
         != 0i32
     {
         (*E).base.flash_timer = (((*get_EnemyDef_A2((*E).base.enemy_ptr, game)).hurt_ai_time)
             as u16)
             .wrapping_add(8u16);
         (*E).base.ai_handler_bits = ((*E).base.ai_handler_bits) | (2u16);
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16) as uint8 != 0 {
+    } else if ram_word!(game, random_number) as uint8 != 0 {
         (*E).base.x_pos = ((*E).draygon_var_06).wrapping_add(CosineMult8bit(
             (*E).draygon_var_08,
             (*E).draygon_var_05,
@@ -1295,12 +1246,9 @@ pub unsafe fn Draygon_Func_30(game: &mut Game) {
 }
 pub unsafe fn Draygon_Func_31(game: &mut Game) {
     let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
-    if ((*Get_Draygon(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .base
-    .frame_counter as ::core::ffi::c_int
+    if ((*Get_Draygon(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+        .base
+        .frame_counter as ::core::ffi::c_int
         & 0xf as ::core::ffi::c_int)
         == 0i32
     {
@@ -1387,10 +1335,10 @@ pub unsafe fn Draygon_Func_33(game: &mut Game) {
         (*Get_Draygon(0x40 as ::core::ffi::c_int, game))
             .base
             .properties = v1;
-        let v2: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16);
+        let v2: uint16 = ram_word!(game, area_index);
         let ref mut fresh3 = *((&raw mut game.g_ram as *mut uint8)
             .offset(0xd828)
-            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize)
+            .offset(ram_word!(game, area_index) as isize)
             as *mut uint8 as *mut uint16);
         *fresh3 = (*fresh3) | (1u16);
         Enemy_ItemDrop_Draygon(v2, game);
@@ -1398,24 +1346,20 @@ pub unsafe fn Draygon_Func_33(game: &mut Game) {
     }
 }
 pub unsafe fn Draygon_Func_34(game: &mut Game) {
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x5b6) as *mut uint16) as ::core::ffi::c_int
-        & 7 as ::core::ffi::c_int)
+    if (ram_word!(game, nmi_frame_counter_word) as ::core::ffi::c_int & 7 as ::core::ffi::c_int)
         == 0i32
     {
         let x: uint16 = ((NextRandom(game) as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int)
             + 192 as ::core::ffi::c_int) as uint16;
-        let y: uint16 = ((((*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16))
-            & (0x3f00u16)) as ::core::ffi::c_int
+        let y: uint16 = ((((ram_word!(game, random_number)) & (0x3f00u16)) as ::core::ffi::c_int
             >> 8 as ::core::ffi::c_int)
             + 400 as ::core::ffi::c_int) as uint16;
         CreateSpriteAtPos(x, y, 21 as uint16, 0 as uint16, game);
     }
 }
 pub unsafe fn Draygon_Func_35(game: &mut Game) {
-    let mut Draygon: *mut Enemy_Draygon = Get_Draygon(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let mut Draygon: *mut Enemy_Draygon =
+        Get_Draygon(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if ((*Draygon).base.frame_counter as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int) == 0i32 {
         Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
         CreateSpriteAtPos(
@@ -1429,31 +1373,25 @@ pub unsafe fn Draygon_Func_35(game: &mut Game) {
 }
 pub unsafe fn Draygon_Func_36(game: &mut Game) {
     let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb5) as *mut uint16) = ((*E).draygon_var_5E
-        as ::core::ffi::c_int
-        + *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16) as ::core::ffi::c_int
-        - (*E).base.x_pos as ::core::ffi::c_int
-        - 450 as ::core::ffi::c_int)
-        as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16) = ((*E).draygon_var_5F
-        as ::core::ffi::c_int
-        + *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16) as ::core::ffi::c_int
-        - (*E).base.y_pos as ::core::ffi::c_int
-        - 192 as ::core::ffi::c_int)
-        as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb5) as *mut uint16) =
+        ((*E).draygon_var_5E as ::core::ffi::c_int
+            + ram_word!(game, layer1_x_pos) as ::core::ffi::c_int
+            - (*E).base.x_pos as ::core::ffi::c_int
+            - 450 as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16) =
+        ((*E).draygon_var_5F as ::core::ffi::c_int
+            + ram_word!(game, layer1_y_pos) as ::core::ffi::c_int
+            - (*E).base.y_pos as ::core::ffi::c_int
+            - 192 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn Draygon_Func_37(game: &mut Game) {
     let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x8d) as *mut uint16) as ::core::ffi::c_int
-        & 0x40 as ::core::ffi::c_int)
-        != 0i32
-    {
+    if (ram_word!(game, joypad2_last) as ::core::ffi::c_int & 0x40 as ::core::ffi::c_int) != 0i32 {
         Draygon_Func_39(game);
     } else {
         Draygon_Func_38(game);
     }
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x91) as *mut uint16) as ::core::ffi::c_int
-        & 0x4000 as ::core::ffi::c_int)
+    if (ram_word!(game, joypad2_new_keys) as ::core::ffi::c_int & 0x4000 as ::core::ffi::c_int)
         != 0i32
     {
         let mut v0: uint16 = addr_kDraygon_Ilist_98FE as uint16;
@@ -1462,14 +1400,11 @@ pub unsafe fn Draygon_Func_37(game: &mut Game) {
         }
         (*E).base.current_instruction = v0;
         (*E).base.instruction_timer = 1 as uint16;
-    } else if (*((&raw mut game.g_ram as *mut uint8).offset(0x91) as *mut uint16)
-        as ::core::ffi::c_int
+    } else if (ram_word!(game, joypad2_new_keys) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int)
         == 0i32
     {
-        if (*((&raw mut game.g_ram as *mut uint8).offset(0x91) as *mut uint16)
-            as ::core::ffi::c_int
-            & 0x80 as ::core::ffi::c_int)
+        if (ram_word!(game, joypad2_new_keys) as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int)
             != 0i32
         {
             let mut v4: uint16 = addr_kDraygon_Ilist_9825 as uint16;
@@ -1493,21 +1428,19 @@ pub unsafe fn Draygon_Func_37(game: &mut Game) {
 pub unsafe fn Draygon_Func_38(game: &mut Game) {
     let current_block: u64;
     let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
-    let v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x8d) as *mut uint16);
+    let v0: uint16 = ram_word!(game, joypad2_last);
     let mut v2: uint16 = 0;
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x8d) as *mut uint16) as ::core::ffi::c_int
-        & 0x200 as ::core::ffi::c_int)
-        == 0i32
+    if (ram_word!(game, joypad2_last) as ::core::ffi::c_int & 0x200 as ::core::ffi::c_int) == 0i32
         || {
             (*E).base.x_pos = (*E).base.x_pos.wrapping_sub(1);
-            v0 == *((&raw mut game.g_ram as *mut uint8).offset(0x1866) as *mut uint16)
+            v0 == ram_word!(game, debug_enemy_population_pointer)
         }
     {
         if (v0 as ::core::ffi::c_int & 0x100 as ::core::ffi::c_int) == 0i32 {
             current_block = 1196177745739367891;
         } else {
             (*E).base.x_pos = (*E).base.x_pos.wrapping_add(1);
-            if v0 == *((&raw mut game.g_ram as *mut uint8).offset(0x1866) as *mut uint16) {
+            if v0 == ram_word!(game, debug_enemy_population_pointer) {
                 current_block = 1196177745739367891;
             } else {
                 *((&raw mut game.g_ram as *mut uint8).offset(0x1866) as *mut uint16) = v0;
@@ -1529,14 +1462,9 @@ pub unsafe fn Draygon_Func_38(game: &mut Game) {
         }
         _ => {}
     }
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x8d) as *mut uint16) as ::core::ffi::c_int
-        & 0x800 as ::core::ffi::c_int)
-        != 0i32
-    {
+    if (ram_word!(game, joypad2_last) as ::core::ffi::c_int & 0x800 as ::core::ffi::c_int) != 0i32 {
         (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
-    } else if (*((&raw mut game.g_ram as *mut uint8).offset(0x8d) as *mut uint16)
-        as ::core::ffi::c_int
-        & 0x400 as ::core::ffi::c_int)
+    } else if (ram_word!(game, joypad2_last) as ::core::ffi::c_int & 0x400 as ::core::ffi::c_int)
         != 0i32
     {
         (*E).base.y_pos = (*E).base.y_pos.wrapping_add(1);
@@ -1545,29 +1473,24 @@ pub unsafe fn Draygon_Func_38(game: &mut Game) {
 pub unsafe fn Draygon_Func_39(game: &mut Game) {
     let current_block: u64;
     let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
-    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x8d) as *mut uint16);
+    let mut v0: uint16 = ram_word!(game, joypad2_last);
     let mut v2: uint16 = 0;
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x8d) as *mut uint16) as ::core::ffi::c_int
-        & 0x200 as ::core::ffi::c_int)
-        == 0i32
+    if (ram_word!(game, joypad2_last) as ::core::ffi::c_int & 0x200 as ::core::ffi::c_int) == 0i32
         || {
             (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(4u16);
-            v0 = *((&raw mut game.g_ram as *mut uint8).offset(0x8d) as *mut uint16);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x8d) as *mut uint16)
-                == *((&raw mut game.g_ram as *mut uint8).offset(0x1866) as *mut uint16)
+            v0 = ram_word!(game, joypad2_last);
+            ram_word!(game, joypad2_last) == ram_word!(game, debug_enemy_population_pointer)
         }
     {
         if (v0 as ::core::ffi::c_int & 0x100 as ::core::ffi::c_int) == 0i32 {
             current_block = 18201098939790280272;
         } else {
             (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(4u16);
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x8d) as *mut uint16)
-                == *((&raw mut game.g_ram as *mut uint8).offset(0x1866) as *mut uint16)
-            {
+            if ram_word!(game, joypad2_last) == ram_word!(game, debug_enemy_population_pointer) {
                 current_block = 18201098939790280272;
             } else {
                 *((&raw mut game.g_ram as *mut uint8).offset(0x1866) as *mut uint16) =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x8d) as *mut uint16);
+                    ram_word!(game, joypad2_last);
                 v2 = addr_kDraygon_Ilist_97D1 as uint16;
                 (*E).draygon_var_20 = 1 as uint16;
                 current_block = 3276175668257526147;
@@ -1575,7 +1498,7 @@ pub unsafe fn Draygon_Func_39(game: &mut Game) {
         }
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1866) as *mut uint16) =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x8d) as *mut uint16);
+            ram_word!(game, joypad2_last);
         v2 = addr_kDraygon_Ilist_97BB as uint16;
         (*E).draygon_var_20 = 0 as uint16;
         current_block = 3276175668257526147;
@@ -1587,14 +1510,9 @@ pub unsafe fn Draygon_Func_39(game: &mut Game) {
         }
         _ => {}
     }
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x8d) as *mut uint16) as ::core::ffi::c_int
-        & 0x800 as ::core::ffi::c_int)
-        != 0i32
-    {
+    if (ram_word!(game, joypad2_last) as ::core::ffi::c_int & 0x800 as ::core::ffi::c_int) != 0i32 {
         (*E).base.y_pos = ((*E).base.y_pos).wrapping_sub(4u16);
-    } else if (*((&raw mut game.g_ram as *mut uint8).offset(0x8d) as *mut uint16)
-        as ::core::ffi::c_int
-        & 0x400 as ::core::ffi::c_int)
+    } else if (ram_word!(game, joypad2_last) as ::core::ffi::c_int & 0x400 as ::core::ffi::c_int)
         != 0i32
     {
         (*E).base.y_pos = (*E).base.y_pos.wrapping_add(1);
@@ -1613,8 +1531,7 @@ pub unsafe fn Draygon_Func_40(k: uint16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) =
         ((*E).base.y_pos).wrapping_add(40u16);
     EnemyFunc_B7A1(game);
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0xa64) as *mut uint16) as ::core::ffi::c_int
-        & 2 as ::core::ffi::c_int)
+    if (ram_word!(game, samus_grapple_flags) as ::core::ffi::c_int & 2 as ::core::ffi::c_int)
         != 0i32
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0xa64) as *mut uint16) = 0 as uint16;
@@ -1650,12 +1567,9 @@ pub unsafe fn Draygon_Instr_1(k: uint16, jp: *const uint16, game: &mut Game) -> 
 }
 pub unsafe fn Draygon_Hurt(game: &mut Game) {
     let mut v0: uint16 = addr_kDraygon_MorePalettes2 as uint16;
-    if ((*Get_Draygon(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .base
-    .flash_timer as ::core::ffi::c_int
+    if ((*Get_Draygon(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+        .base
+        .flash_timer as ::core::ffi::c_int
         & 2 as ::core::ffi::c_int)
         != 0i32
     {
@@ -1668,12 +1582,9 @@ pub unsafe fn Draygon_Hurt(game: &mut Game) {
         RomPtr_A5(v0, game) as *const ::core::ffi::c_void,
         32 as size_t,
     );
-    if ((*Get_Draygon(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .base
-    .flash_timer as ::core::ffi::c_int
+    if ((*Get_Draygon(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+        .base
+        .flash_timer as ::core::ffi::c_int
         & 2 as ::core::ffi::c_int)
         == 0i32
     {
@@ -1691,12 +1602,9 @@ pub unsafe fn Draygon_Hurt(game: &mut Game) {
         }
     }
     let mut v5: uint16 = addr_kDraygon_Palette as uint16;
-    if ((*Get_Draygon(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .base
-    .flash_timer as ::core::ffi::c_int
+    if ((*Get_Draygon(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+        .base
+        .flash_timer as ::core::ffi::c_int
         & 2 as ::core::ffi::c_int)
         != 0i32
     {
@@ -1709,8 +1617,7 @@ pub unsafe fn Draygon_Hurt(game: &mut Game) {
         RomPtr_A5(v5, game) as *const ::core::ffi::c_void,
         32 as size_t,
     );
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0xa64) as *mut uint16) as ::core::ffi::c_int
-        & 1 as ::core::ffi::c_int)
+    if (ram_word!(game, samus_grapple_flags) as ::core::ffi::c_int & 1 as ::core::ffi::c_int)
         != 0i32
     {
         let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
@@ -1744,12 +1651,9 @@ pub unsafe fn Draygon_Powerbomb(game: &mut Game) {
     sub_A5960D(game);
 }
 pub unsafe fn sub_A5960D(game: &mut Game) {
-    if (*Get_Draygon(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .base
-    .health
+    if (*Get_Draygon(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+        .base
+        .health
         != 0
     {
         Draygon_Func_41(game);
@@ -1827,12 +1731,10 @@ pub unsafe fn Draygon_Instr_13(k: uint16, jp: *const uint16, game: &mut Game) ->
 unsafe fn Draygon_Func_47(game: &mut Game) -> Point16U {
     NextRandom(game);
     let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
-    let r18: uint16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
-        as ::core::ffi::c_int
+    let r18: uint16 = ((ram_word!(game, random_number) as ::core::ffi::c_int
         & 0x7f as ::core::ffi::c_int)
         - 64 as ::core::ffi::c_int) as uint16;
-    let r20: uint16 = (((*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
-        as ::core::ffi::c_int
+    let r20: uint16 = (((ram_word!(game, random_number) as ::core::ffi::c_int
         & 0x7f00 as ::core::ffi::c_int)
         >> 8 as ::core::ffi::c_int)
         - 64 as ::core::ffi::c_int) as uint16;
@@ -1890,8 +1792,8 @@ pub unsafe fn Draygon_Instr_15(k: uint16, jp: *const uint16, game: &mut Game) ->
     *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 32 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = 7 as uint16;
     CreateSpriteAtPos(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16),
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)).wrapping_add(16u16),
+        ram_word!(game, samus_x_pos),
+        (ram_word!(game, samus_y_pos)).wrapping_add(16u16),
         21 as uint16,
         0 as uint16,
         game,
@@ -1931,7 +1833,7 @@ pub unsafe fn Draygon_Instr_12(k: uint16, jp: *const uint16, game: &mut Game) ->
             + 128 as ::core::ffi::c_int) as uint16;
     SpawnEprojWithGfx(
         2 as uint16,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+        ram_word!(game, cur_enemy_index),
         addr_stru_868E50 as uint16,
         game,
     );
@@ -1948,7 +1850,7 @@ pub unsafe fn Draygon_Instr_18(k: uint16, jp: *const uint16, game: &mut Game) ->
             + 192 as ::core::ffi::c_int) as uint16;
     SpawnEprojWithGfx(
         2 as uint16,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+        ram_word!(game, cur_enemy_index),
         addr_stru_868E50 as uint16,
         game,
     );
@@ -2155,10 +2057,8 @@ pub unsafe fn Draygon_Func_46(game: &mut Game) {
     (*E).draygon_var_46 = ((*E).draygon_var_46).wrapping_add(4u16);
 }
 pub unsafe fn DraygonsEye_Init(game: &mut Game) {
-    let E: *mut Enemy_Draygon = Get_Draygon(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_Draygon =
+        Get_Draygon(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).base.current_instruction = addr_kDraygon_Ilist_9944 as uint16;
     (*E).draygon_var_A = ((0xa5804bi32) as u16);
 }
@@ -2167,13 +2067,11 @@ pub unsafe fn Draygon_Instr_3(k: uint16, jp: *const uint16, game: &mut Game) -> 
     jp.offset(1)
 }
 pub unsafe fn DraygonsEye_Main(game: &mut Game) {
-    let E: *mut Enemy_Draygon = Get_Draygon(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_Draygon =
+        Get_Draygon(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     CallDraygonFunc(
         (((*E).draygon_var_A) as u32) | (0xa50000u32),
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+        ram_word!(game, cur_enemy_index),
         game,
     );
 }
@@ -2197,18 +2095,16 @@ pub unsafe fn Draygon_Func_48(k: uint16, game: &mut Game) {
     }
     let E0: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
     let v4: uint16 = CalculateAngleFromXY(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) as ::core::ffi::c_int
+        (ram_word!(game, samus_x_pos) as ::core::ffi::c_int
             - ((*E0).base.x_pos as ::core::ffi::c_int - 24 as ::core::ffi::c_int))
             as uint16,
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) as ::core::ffi::c_int
+        (ram_word!(game, samus_y_pos) as ::core::ffi::c_int
             - ((*E0).base.y_pos as ::core::ffi::c_int - 32 as ::core::ffi::c_int))
             as uint16,
         game,
     );
-    let E: *mut Enemy_Draygon = Get_Draygon(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_Draygon =
+        Get_Draygon(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if v4 != (*E).draygon_var_F {
         let mut v6: uint16 = addr_kDraygon_Ilist_99BA as uint16;
         if v4 as ::core::ffi::c_int - 32 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
@@ -2256,18 +2152,16 @@ pub unsafe fn Draygon_Func_49(k: uint16, game: &mut Game) {
         );
     }
     let v4: uint16 = CalculateAngleFromXY(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) as ::core::ffi::c_int
+        (ram_word!(game, samus_x_pos) as ::core::ffi::c_int
             - ((*E0).base.x_pos as ::core::ffi::c_int + 24 as ::core::ffi::c_int))
             as uint16,
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) as ::core::ffi::c_int
+        (ram_word!(game, samus_y_pos) as ::core::ffi::c_int
             - ((*E0).base.y_pos as ::core::ffi::c_int - 32 as ::core::ffi::c_int))
             as uint16,
         game,
     );
-    let E: *mut Enemy_Draygon = Get_Draygon(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_Draygon =
+        Get_Draygon(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if v4 != (*E).draygon_var_F {
         let mut v6: uint16 = addr_kDraygon_Ilist_9D5C as uint16;
         if v4 as ::core::ffi::c_int - 32 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
@@ -2297,18 +2191,14 @@ pub unsafe fn Draygon_Func_49(k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn DraygonsTail_Init(game: &mut Game) {
-    let v0: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let v0: *mut EnemyData =
+        gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*v0).current_instruction = addr_kDraygon_Ilist_99FC as uint16;
     (*v0).palette_index = 0xe00 as uint16;
 }
 pub unsafe fn DraygonsArms_Init(game: &mut Game) {
-    let v0: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let v0: *mut EnemyData =
+        gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*v0).current_instruction = addr_kDraygon_Ilist_97E7 as uint16;
     (*v0).palette_index = 0xe00 as uint16;
     (*v0).layer = 2 as uint16;
@@ -2375,11 +2265,8 @@ pub unsafe fn Draygon_Instr_30(k: uint16, jp: *const uint16, game: &mut Game) ->
     jp
 }
 pub unsafe fn Draygon_Instr_20(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
-    (*Get_Draygon(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .draygon_var_A = *jp.offset(0);
+    (*Get_Draygon(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).draygon_var_A =
+        *jp.offset(0);
     jp.offset(1)
 }
 pub unsafe fn Draygon_Instr_29(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
@@ -2440,14 +2327,12 @@ pub unsafe fn Draygon_Instr_19(k: uint16, jp: *const uint16, game: &mut Game) ->
 }
 pub unsafe fn Draygon_Instr_28(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
     NextRandom(game);
-    let mut r18: uint16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
-        as ::core::ffi::c_int
+    let mut r18: uint16 = ((ram_word!(game, random_number) as ::core::ffi::c_int
         & 0x7f as ::core::ffi::c_int)
         - 64 as ::core::ffi::c_int) as uint16;
     let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
     r18 = (r18).wrapping_add((*E).base.x_pos);
-    let mut r20: uint16 = ((((*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16))
-        & (0x7f00u16)) as ::core::ffi::c_int
+    let mut r20: uint16 = ((((ram_word!(game, random_number)) & (0x7f00u16)) as ::core::ffi::c_int
         >> 8 as ::core::ffi::c_int)
         - 64 as ::core::ffi::c_int) as uint16;
     r20 = (r20).wrapping_add((*E).base.y_pos);
@@ -2460,13 +2345,10 @@ pub unsafe fn Draygon_Instr_26(k: uint16, jp: *const uint16, game: &mut Game) ->
     NextRandom(game);
     let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
     let x: uint16 = ((*E).base.x_pos as ::core::ffi::c_int
-        + (*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
-            as ::core::ffi::c_int
-            & 0x7f as ::core::ffi::c_int)
+        + (ram_word!(game, random_number) as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int)
         - 64 as ::core::ffi::c_int) as uint16;
     let y: uint16 = ((*E).base.y_pos as ::core::ffi::c_int
-        + (((*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)) & (0x3f00u16))
-            as ::core::ffi::c_int
+        + (((ram_word!(game, random_number)) & (0x3f00u16)) as ::core::ffi::c_int
             >> 8 as ::core::ffi::c_int)
         - 32 as ::core::ffi::c_int) as uint16;
     CreateSpriteAtPos(x, y, 3 as uint16, 0 as uint16, game);
@@ -2474,17 +2356,14 @@ pub unsafe fn Draygon_Instr_26(k: uint16, jp: *const uint16, game: &mut Game) ->
     jp
 }
 pub unsafe fn sub_A5E9F5(game: &mut Game) {
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x5b6) as *mut uint16) as ::core::ffi::c_int
-        & 0xf as ::core::ffi::c_int)
+    if (ram_word!(game, nmi_frame_counter_word) as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
         == 0i32
     {
         NextRandom(game);
-        let x: uint16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
-            as ::core::ffi::c_int
+        let x: uint16 = ((ram_word!(game, random_number) as ::core::ffi::c_int
             & 0x3f as ::core::ffi::c_int)
             + 96 as ::core::ffi::c_int) as uint16;
-        let y: uint16 = ((((*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16))
-            & (0xf00u16)) as ::core::ffi::c_int
+        let y: uint16 = ((((ram_word!(game, random_number)) & (0xf00u16)) as ::core::ffi::c_int
             >> 8 as ::core::ffi::c_int)
             + 480 as ::core::ffi::c_int) as uint16;
         CreateSpriteAtPos(x, y, 21 as uint16, 0 as uint16, game);
@@ -2503,32 +2382,30 @@ pub unsafe fn SporeSpawn_Init(game: &mut Game) {
     }
     SpawnEprojWithGfx(
         0 as uint16,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+        ram_word!(game, cur_enemy_index),
         addr_kEproj_SporeSpawnsStalk as uint16,
         game,
     );
     SpawnEprojWithGfx(
         1 as uint16,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+        ram_word!(game, cur_enemy_index),
         addr_kEproj_SporeSpawnsStalk as uint16,
         game,
     );
     SpawnEprojWithGfx(
         2 as uint16,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+        ram_word!(game, cur_enemy_index),
         addr_kEproj_SporeSpawnsStalk as uint16,
         game,
     );
     SpawnEprojWithGfx(
         3 as uint16,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+        ram_word!(game, cur_enemy_index),
         addr_kEproj_SporeSpawnsStalk as uint16,
         game,
     );
-    let E: *mut Enemy_SporeSpawn = Get_SporeSpawn(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_SporeSpawn =
+        Get_SporeSpawn(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let E0: *mut Enemy_SporeSpawn = Get_SporeSpawn(0 as ::core::ffi::c_int, game);
     (*E).ssn_var_04 = (*E).base.x_pos;
     (*E).ssn_var_05 = ((*E).base.y_pos).wrapping_sub(72u16);
@@ -2537,8 +2414,7 @@ pub unsafe fn SporeSpawn_Init(game: &mut Game) {
     (*E).ssn_var_F = 0 as uint16;
     if (*(&raw mut game.g_ram as *mut uint8)
         .offset(0xd828)
-        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize)
-        as ::core::ffi::c_int
+        .offset(ram_word!(game, area_index) as isize) as ::core::ffi::c_int
         & 2 as ::core::ffi::c_int)
         != 0i32
     {
@@ -2559,7 +2435,7 @@ pub unsafe fn SporeSpawn_Init(game: &mut Game) {
         (*E0).base.current_instruction = addr_kDraygon_Ilist_E6C7 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x183c) as *mut uint16) =
             -(1 as ::core::ffi::c_int) as uint16;
-        let v5: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
+        let v5: uint16 = ram_word!(game, cur_enemy_index);
         (*E).ssn_var_A = ((0xa5eb1ai32) as u16);
         *((&raw mut game.g_ram as *mut uint8).offset(0x7e9) as *mut uint16) =
             ((0x909589i32) as u16);
@@ -2578,10 +2454,7 @@ pub unsafe fn CallSporeSpawnFunc(ea: uint32, game: &mut Game) {
             SporeSpawn_Func_1(game);
         }
         10873682 => {
-            SporeSpawn_Func_2(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-                game,
-            );
+            SporeSpawn_Func_2(ram_word!(game, cur_enemy_index), game);
         }
         10873755 => {
             SporeSpawn_Func_3(game);
@@ -2595,18 +2468,14 @@ pub unsafe fn CallSporeSpawnFunc(ea: uint32, game: &mut Game) {
     }
 }
 pub unsafe fn SporeSpawn_Main(game: &mut Game) {
-    let E: *mut Enemy_SporeSpawn = Get_SporeSpawn(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_SporeSpawn =
+        Get_SporeSpawn(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     CallSporeSpawnFunc((((*E).ssn_var_A) as u32) | (0xa50000u32), game);
 }
 pub unsafe fn SporeSpawn_Func_1(game: &mut Game) {
     SporeSpawn_Func_5(game);
-    let E: *mut Enemy_SporeSpawn = Get_SporeSpawn(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_SporeSpawn =
+        Get_SporeSpawn(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let v1: uint16 = ((*E).base.y_pos).wrapping_add(1u16);
     (*E).base.y_pos = v1;
     if v1 as ::core::ffi::c_int - 624 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
@@ -2643,10 +2512,8 @@ pub unsafe fn SporeSpawn_Func_3(game: &mut Game) {
             game,
         )) as u8,
     )) as uint16;
-    let E: *mut Enemy_SporeSpawn = Get_SporeSpawn(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_SporeSpawn =
+        Get_SporeSpawn(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let pt: Point32 = ConvertAngleToXy(
         *(&raw mut (*E0).ssn_var_43 as *mut uint8).offset(0) as uint16,
         1 as uint16,
@@ -2658,10 +2525,8 @@ pub unsafe fn SporeSpawn_Func_3(game: &mut Game) {
     (*E).ssn_var_2B = pt.y as uint16;
 }
 pub unsafe fn SporeSpawn_Func_4(game: &mut Game) {
-    let E: *mut Enemy_SporeSpawn = Get_SporeSpawn(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_SporeSpawn =
+        Get_SporeSpawn(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let E0: *mut Enemy_SporeSpawn = Get_SporeSpawn(0 as ::core::ffi::c_int, game);
     let varE20: uint16 = *(&raw mut (*E0).ssn_var_43 as *mut uint8).offset(0) as uint16;
     EnemyFunc_B691(
@@ -2772,15 +2637,14 @@ pub unsafe fn SporeSpawn_Func_5(game: &mut Game) {
 }
 pub unsafe fn SporeSpawn_Shot(game: &mut Game) {
     let mut v4: int16 = 0;
-    let mut v0: uint16 =
-        (2u16).wrapping_mul(*((&raw mut game.g_ram as *mut uint8).offset(0x18a6) as *mut uint16));
+    let mut v0: uint16 = (2u16).wrapping_mul(ram_word!(game, collision_detection_index));
     let v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
-        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x18a6) as *mut uint16) as isize);
+        .offset(ram_word!(game, collision_detection_index) as isize);
     if (v1 as ::core::ffi::c_int & 0x700 as ::core::ffi::c_int) != 0i32
         || (v1 as ::core::ffi::c_int & 0x10 as ::core::ffi::c_int) != 0i32
     {
         EnemyFunc_A6B4_UsedBySporeSpawn(game);
-        v0 = *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
+        v0 = ram_word!(game, cur_enemy_index);
         let EK: *mut Enemy_SporeSpawn = Get_SporeSpawn(v0 as ::core::ffi::c_int, game);
         if (*EK).base.flash_timer != 0 {
             let E: *mut Enemy_SporeSpawn = Get_SporeSpawn(0 as ::core::ffi::c_int, game);
@@ -2834,19 +2698,13 @@ pub unsafe fn SporeSpawn_Touch(game: &mut Game) {
     SporeSpawn_Func_6(game);
 }
 pub unsafe fn SporeSpawn_Func_6(game: &mut Game) {
-    if (*Get_SporeSpawn(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .base
-    .health
+    if (*Get_SporeSpawn(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+        .base
+        .health
         == 0
     {
-        let E: *mut Enemy_SporeSpawn = Get_SporeSpawn(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                as ::core::ffi::c_int,
-            game,
-        );
+        let E: *mut Enemy_SporeSpawn =
+            Get_SporeSpawn(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
         let E0: *mut Enemy_SporeSpawn = Get_SporeSpawn(0 as ::core::ffi::c_int, game);
         (*E0).ssn_var_0E = 0 as uint16;
         (*E).base.invincibility_timer = 0 as uint16;
@@ -2863,7 +2721,7 @@ pub unsafe fn SporeSpawn_Func_6(game: &mut Game) {
         (*E0).base.instruction_timer = 1 as uint16;
         let ref mut fresh5 = *((&raw mut game.g_ram as *mut uint8)
             .offset(0xd828)
-            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize)
+            .offset(ram_word!(game, area_index) as isize)
             as *mut uint8 as *mut uint16);
         *fresh5 = (*fresh5) | (2u16);
         *((&raw mut game.g_ram as *mut uint8).offset(0x7e9) as *mut uint16) = 0 as uint16;

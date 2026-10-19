@@ -9,6 +9,7 @@ use crate::game::sm_88::{
 use crate::game::sm_8d::SpawnPalfxObject;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game_state::Game;
+use crate::ram_map::ram_word;
 use crate::rtl::RomPtr;
 
 pub use crate::types::{
@@ -42,7 +43,7 @@ unsafe fn get_FxDef(a: uint16, game: &mut Game) -> *mut FxDef {
 }
 pub unsafe fn LoadFxEntry(v0: uint16, game: &mut Game) {
     let FD: *mut FxDef = get_FxDef(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x7cd) as *mut uint16) as ::core::ffi::c_int
+        (ram_word!(game, room_layer3_asm_ptr) as ::core::ffi::c_int
             + 16 as ::core::ffi::c_int * (v0 as ::core::ffi::c_int & 7 as ::core::ffi::c_int))
             as uint16,
         game,
@@ -103,7 +104,7 @@ static kFxTypeFuncPtrs: [Option<Func_V>; 23] = unsafe {
     ]
 };
 pub unsafe fn LoadFXHeader(game: &mut Game) {
-    let mut entry_ptr: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x7cd) as *mut uint16);
+    let mut entry_ptr: uint16 = ram_word!(game, room_layer3_asm_ptr);
     if entry_ptr == 0u16 {
         return;
     }
@@ -115,7 +116,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
         if door_ptr == 0xffffu16 {
             return;
         }
-        if door_ptr == *((&raw mut game.g_ram as *mut uint8).offset(0x78d) as *mut uint16) {
+        if door_ptr == ram_word!(game, door_def_ptr) {
             break;
         }
         entry_ptr = (entry_ptr).wrapping_add(16u16);
@@ -159,9 +160,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
         let mut bits: ::core::ffi::c_int = (*FD).palette_fx_bitset as ::core::ffi::c_int;
         let v11: *const uint8 = RomPtr_83(
             *(game.g_rom.offset(crate::rtl::lorom_offset(0x83ac46)) as *const uint8 as *mut uint16)
-                .offset(
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize,
-                ),
+                .offset(ram_word!(game, area_index) as isize),
             game,
         );
         let mut j: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -180,9 +179,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
         let mut bits_0: ::core::ffi::c_int = (*FD).animtiles_bitset as ::core::ffi::c_int;
         let v14: *const uint8 = RomPtr_83(
             *(game.g_rom.offset(crate::rtl::lorom_offset(0x83ac56)) as *const uint8 as *mut uint16)
-                .offset(
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize,
-                ),
+                .offset(ram_word!(game, area_index) as isize),
             game,
         );
         let mut k: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -200,30 +197,19 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
 }
 pub unsafe fn RoomCode_CeresElevatorShaft(game: &mut Game) {
     let mut v1: int16 = 0;
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x93f) as *mut uint16) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int)
-        != 0i32
+    if (ram_word!(game, ceres_status) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32
     {
-        if (112i16).wrapping_sub(
-            (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)) as i16,
-        ) < 0i16
-            && (144i16).wrapping_sub(
-                (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)) as i16,
-            ) >= 0i16
-            && *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)
-                as ::core::ffi::c_int
-                - 128 as ::core::ffi::c_int
+        if (112i16).wrapping_sub((ram_word!(game, samus_x_pos)) as i16) < 0i16
+            && (144i16).wrapping_sub((ram_word!(game, samus_x_pos)) as i16) >= 0i16
+            && ram_word!(game, samus_y_pos) as ::core::ffi::c_int - 128 as ::core::ffi::c_int
                 & 0x8000 as ::core::ffi::c_int
                 != 0
-            && *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)
-                as ::core::ffi::c_int
-                - 75 as ::core::ffi::c_int
+            && ram_word!(game, samus_y_pos) as ::core::ffi::c_int - 75 as ::core::ffi::c_int
                 & 0x8000 as ::core::ffi::c_int
                 == 0
-            && *((&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16) == 0
-            && *((&raw mut game.g_ram as *mut uint8).offset(0xb2c) as *mut uint16) == 0
-            && *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16)
-                as ::core::ffi::c_int
+            && ram_word!(game, samus_y_speed) == 0
+            && ram_word!(game, samus_y_subspeed) == 0
+            && ram_word!(game, game_state) as ::core::ffi::c_int
                 == kGameState_8_MainGameplay as ::core::ffi::c_int
         {
             CallSomeSamusCode(2 as uint16, game);
@@ -251,14 +237,13 @@ pub unsafe fn RoomCode_CeresElevatorShaft(game: &mut Game) {
                     as *mut uint16)
                     .offset((v0 + 1 as ::core::ffi::c_int) as isize);
             *((&raw mut game.g_ram as *mut uint8).offset(0x7c) as *mut uint16) =
-                -(*((&raw mut game.g_ram as *mut uint8).offset(0x7a) as *mut uint16)
-                    as ::core::ffi::c_int) as uint16;
+                -(ram_word!(game, reg_M7B) as ::core::ffi::c_int) as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0x78) as *mut uint16) =
                 *(game.g_rom.offset(crate::rtl::lorom_offset(0x89ad5f)) as *const uint8
                     as *mut uint16)
                     .offset((v0 + 2 as ::core::ffi::c_int) as isize);
             *((&raw mut game.g_ram as *mut uint8).offset(0x7e) as *mut uint16) =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x78) as *mut uint16);
+                ram_word!(game, reg_M7A);
             if *((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut int16) < 0i16 {
                 v1 = ((*((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint16)) as i16)
                     .wrapping_sub(1i16);

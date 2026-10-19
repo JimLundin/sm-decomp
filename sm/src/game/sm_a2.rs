@@ -31,6 +31,7 @@ use crate::game::sm_a0::{
 };
 use crate::game::sm_a9::MoveEnemyWithVelocity;
 use crate::game_state::Game;
+use crate::ram_map::ram_word;
 use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{Mult8x8, RomPtr, Unreachable};
@@ -1667,10 +1668,7 @@ pub unsafe fn MaridiaBeybladeTurtle_Func5(k: uint16, game: &mut Game) {
     let mut v1: uint16 = addr_kMaridiaBeybladeTurtle_Ilist_8C1C as uint16;
     let E: *mut Enemy_MaridiaBeybladeTurtle =
         Get_MaridiaBeybladeTurtle(k as ::core::ffi::c_int, game);
-    if (((*E).base.x_pos) as i16)
-        .wrapping_sub((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)) as i16)
-        < 0i16
-    {
+    if (((*E).base.x_pos) as i16).wrapping_sub((ram_word!(game, samus_x_pos)) as i16) < 0i16 {
         v1 = addr_kMaridiaBeybladeTurtle_Ilist_8D00 as uint16;
     }
     (*E).base.current_instruction = v1;
@@ -1687,7 +1685,7 @@ pub unsafe fn MaridiaBeybladeTurtle_Func6(k: uint16, game: &mut Game) {
             -(((*E).mte_var_E as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
                 | (*E).mte_var_03 as ::core::ffi::c_int) as uint32,
         );
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16) as ::core::ffi::c_int
+        if ram_word!(game, extra_samus_x_displacement) as ::core::ffi::c_int
             + 16 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             != 0
@@ -1715,9 +1713,7 @@ pub unsafe fn MaridiaBeybladeTurtle_Func7(k: uint16, game: &mut Game) {
         (*E).mte_var_00 = v2;
         if v2 == 0 {
             let mut v3: uint16 = 0 as uint16;
-            if (((*E).base.x_pos) as i16).wrapping_sub(
-                (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)) as i16,
-            ) < 0i16
+            if (((*E).base.x_pos) as i16).wrapping_sub((ram_word!(game, samus_x_pos)) as i16) < 0i16
             {
                 v3 = 4 as uint16;
             }
@@ -1952,30 +1948,18 @@ pub unsafe fn MiniMaridiaBeybladeTurtle_Func6(k: uint16, game: &mut Game) {
     };
 }
 pub unsafe fn MiniMaridiaBeybladeTurtle_Func7(game: &mut Game) {
-    let E: *mut Enemy_MiniMaridiaTurtle = Get_MiniMaridiaTurtle(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_MiniMaridiaTurtle =
+        Get_MiniMaridiaTurtle(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*Get_MiniMaridiaTurtle((*E).mmte_var_B as ::core::ffi::c_int, game)).mmte_var_06 =
         (*E).base.y_height;
-    if CheckIfEnemyTouchesSamus(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        game,
-    ) == 0
-    {
-        (*Get_MiniMaridiaTurtle(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                as ::core::ffi::c_int,
-            game,
-        ))
-        .mmte_var_A = ((0xa29142i32) as u16);
+    if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) == 0 {
+        (*Get_MiniMaridiaTurtle(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+            .mmte_var_A = ((0xa29142i32) as u16);
     }
 }
 pub unsafe fn MaridiaBeybladeTurtle_Touch(game: &mut Game) {
-    let E: *mut Enemy_MiniMaridiaTurtle = Get_MiniMaridiaTurtle(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_MiniMaridiaTurtle =
+        Get_MiniMaridiaTurtle(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if ((*E).base.properties as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32 {
         Enemy_NormalTouchAI_A2(game);
         (*E).mmte_var_A = ((0xa290e1i32) as u16);
@@ -1984,10 +1968,8 @@ pub unsafe fn MaridiaBeybladeTurtle_Touch(game: &mut Game) {
 }
 pub unsafe fn MiniMaridiaBeybladeTurtle_Touch(game: &mut Game) {
     let mut v2: int16 = 0;
-    let E: *mut Enemy_MiniMaridiaBeybladeTurtle = Get_MiniMaridiaBeybladeTurtle(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_MiniMaridiaBeybladeTurtle =
+        Get_MiniMaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if (*E).mmbte_var_A != 0x925eu16 {
         if ((*E).mmbte_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
             (*E).base.current_instruction = addr_kMaridiaBeybladeTurtle_Ilist_8C72 as uint16;
@@ -1999,34 +1981,25 @@ pub unsafe fn MiniMaridiaBeybladeTurtle_Touch(game: &mut Game) {
         (*E).mmbte_var_E = v2 as uint16;
         (*E).base.instruction_timer = 1 as uint16;
         let mut v3: uint16 = 0;
-        if (((*E).base.x_pos) as i16).wrapping_sub(
-            (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)) as i16,
-        ) >= 0i16
-        {
+        if (((*E).base.x_pos) as i16).wrapping_sub((ram_word!(game, samus_x_pos)) as i16) >= 0i16 {
             v3 = ((*E).base.x_width as ::core::ffi::c_int
-                + *((&raw mut game.g_ram as *mut uint8).offset(0xafe) as *mut uint16)
-                    as ::core::ffi::c_int
-                + *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
-                    as ::core::ffi::c_int) as uint16;
+                + ram_word!(game, samus_x_radius) as ::core::ffi::c_int
+                + ram_word!(game, samus_x_pos) as ::core::ffi::c_int) as uint16;
         } else {
-            v3 = (((((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16))
-                as u32)
-                .wrapping_sub(
-                    (*((&raw mut game.g_ram as *mut uint8).offset(0xafe) as *mut uint16)) as u32,
-                ))
+            v3 = (((((ram_word!(game, samus_x_pos)) as u32)
+                .wrapping_sub((ram_word!(game, samus_x_radius)) as u32))
                 << 16 as ::core::ffi::c_int
-                | *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) as uint32)
+                | ram_word!(game, samus_x_pos) as uint32)
                 .wrapping_sub(
                     ((*E).base.x_width as uint32) << 16 as ::core::ffi::c_int
-                        | *((&raw mut game.g_ram as *mut uint8).offset(0xafe) as *mut uint16)
-                            as uint32,
+                        | ram_word!(game, samus_x_radius) as uint32,
                 )
                 >> 16 as ::core::ffi::c_int) as uint16;
         }
         (*E).base.x_pos = v3;
         (*E).mmbte_var_A = ((0xa29142i32) as u16);
         Enemy_MoveRight_IgnoreSlopes(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+            ram_word!(game, cur_enemy_index),
             (((*E).mmbte_var_E as uint32) << 16 as ::core::ffi::c_int | 0 as uint16 as uint32)
                 as int32,
             game,
@@ -2035,11 +2008,9 @@ pub unsafe fn MiniMaridiaBeybladeTurtle_Touch(game: &mut Game) {
     }
 }
 pub unsafe fn MaridiaBeybladeTurtle_Func21(game: &mut Game) {
-    let mbte_var_B: uint16 = (*Get_MaridiaBeybladeTurtle(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .mbte_var_B;
+    let mbte_var_B: uint16 =
+        (*Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+            .mbte_var_B;
     let E: *mut Enemy_MaridiaBeybladeTurtle =
         Get_MaridiaBeybladeTurtle(mbte_var_B as ::core::ffi::c_int, game);
     if (*E).mbte_var_F != 0 {
@@ -2065,32 +2036,29 @@ pub unsafe fn MaridiaBeybladeTurtle_Func4(game: &mut Game) {
     let r24: uint16 = ((*E).base.y_height as ::core::ffi::c_int
         + (*E).base.y_pos as ::core::ffi::c_int
         - 4 as ::core::ffi::c_int) as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0xafe) as *mut uint16) as ::core::ffi::c_int
+    if ram_word!(game, samus_x_pos) as ::core::ffi::c_int
+        - ram_word!(game, samus_x_radius) as ::core::ffi::c_int
         - 1 as ::core::ffi::c_int
         - r20 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0
-        && *((&raw mut game.g_ram as *mut uint8).offset(0xafe) as *mut uint16) as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
-                as ::core::ffi::c_int
+        && ram_word!(game, samus_x_radius) as ::core::ffi::c_int
+            + ram_word!(game, samus_x_pos) as ::core::ffi::c_int
             - r18 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             == 0
-        && *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16)
-                as ::core::ffi::c_int
+        && ram_word!(game, samus_y_pos) as ::core::ffi::c_int
+            - ram_word!(game, samus_y_radius) as ::core::ffi::c_int
             + 1 as ::core::ffi::c_int
             - r24 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             != 0
-        && *((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16) as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)
-                as ::core::ffi::c_int
+        && ram_word!(game, samus_y_radius) as ::core::ffi::c_int
+            + ram_word!(game, samus_y_pos) as ::core::ffi::c_int
             - r22 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             == 0
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) == 0
+        && ram_word!(game, samus_invincibility_timer) == 0
     {
         NormalEnemyTouchAi(game);
     }
@@ -2101,30 +2069,23 @@ pub unsafe fn MaridiaBeybladeTurtle_Instr_9381(
     game: &mut Game,
 ) -> *const uint16 {
     let mut R48: uint16 = 0 as uint16;
-    if CheckIfEnemyTouchesSamus(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        game,
-    ) != 0
-    {
+    if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
         let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16);
         *fresh0 = (*fresh0).wrapping_add(
             (*Get_MaridiaBeybladeTurtle(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                    as ::core::ffi::c_int,
+                ram_word!(game, cur_enemy_index) as ::core::ffi::c_int,
                 game,
             ))
             .mbte_var_E,
         );
         R48 = 1 as uint16;
     }
-    let E: *mut Enemy_MaridiaBeybladeTurtle = Get_MaridiaBeybladeTurtle(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_MaridiaBeybladeTurtle =
+        Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let R50: uint16 = (*E).base.y_pos;
     (*E).base.y_pos = (*E).mbte_var_D;
     Enemy_MoveRight_IgnoreSlopes(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+        ram_word!(game, cur_enemy_index),
         ((*E).mbte_var_E as int16 as int32) << 16 as ::core::ffi::c_int,
         game,
     );
@@ -2147,7 +2108,7 @@ pub unsafe fn MaridiaBeybladeTurtle_Instr_9381(
             v8 = 1 as uint16;
         }
         Enemy_MoveDown(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+            ram_word!(game, cur_enemy_index),
             (v8 as int16 as int32) << 16 as ::core::ffi::c_int,
             game,
         );
@@ -2156,8 +2117,7 @@ pub unsafe fn MaridiaBeybladeTurtle_Instr_9381(
                 *((&raw mut game.g_ram as *mut uint8).offset(0xb5c) as *mut uint16);
             *fresh1 = (*fresh1 as ::core::ffi::c_int
                 + ((*Get_MaridiaBeybladeTurtle(
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                        as ::core::ffi::c_int,
+                    ram_word!(game, cur_enemy_index) as ::core::ffi::c_int,
                     game,
                 ))
                 .base
@@ -2173,10 +2133,8 @@ pub unsafe fn MaridiaBeybladeTurtle_Instr_9412(
     game: &mut Game,
 ) -> *const uint16 {
     let mut v4: int16 = 0;
-    let E: *mut Enemy_MaridiaBeybladeTurtle = Get_MaridiaBeybladeTurtle(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_MaridiaBeybladeTurtle =
+        Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let xd: uint16 = ((*E).mbte_var_C).wrapping_sub((*E).base.x_pos);
     if ((abs16(xd)) as i16).wrapping_sub((g_word_A28D50) as i16) >= 0i16 {
         if xd as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
@@ -2186,11 +2144,8 @@ pub unsafe fn MaridiaBeybladeTurtle_Instr_9412(
         }
         (*E).mbte_var_E = v4 as uint16;
     }
-    if ((*Get_MaridiaBeybladeTurtle(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .mbte_var_E as ::core::ffi::c_int
+    if ((*Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+        .mbte_var_E as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int)
         != 0i32
     {
@@ -2204,11 +2159,8 @@ pub unsafe fn MaridiaBeybladeTurtle_Instr_9447(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*Get_MaridiaBeybladeTurtle(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .mbte_var_A = ((0xa28f3fi32) as u16);
+    (*Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+        .mbte_var_A = ((0xa28f3fi32) as u16);
     jp
 }
 pub unsafe fn MaridiaBeybladeTurtle_Instr_9451(
@@ -2216,10 +2168,8 @@ pub unsafe fn MaridiaBeybladeTurtle_Instr_9451(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    let E: *mut Enemy_MaridiaTurtle = Get_MaridiaTurtle(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_MaridiaTurtle =
+        Get_MaridiaTurtle(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).mte_var_A = ((0xa28f8di32) as u16);
     (*E).mte_var_E = -(1 as ::core::ffi::c_int) as uint16;
     (*E).mte_var_00 = 16 as uint16;
@@ -2230,10 +2180,8 @@ pub unsafe fn MaridiaBeybladeTurtle_Instr_946B(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    let E: *mut Enemy_MaridiaTurtle = Get_MaridiaTurtle(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_MaridiaTurtle =
+        Get_MaridiaTurtle(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).mte_var_A = ((0xa28f8di32) as u16);
     (*E).mte_var_E = 1 as uint16;
     (*E).mte_var_00 = 16 as uint16;
@@ -2244,14 +2192,9 @@ pub unsafe fn MaridiaBeybladeTurtle_Instr_9485(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    if CheckIfEnemyTouchesSamus(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        game,
-    ) != 0
-    {
+    if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
         if ((*Get_MaridiaBeybladeTurtle(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                as ::core::ffi::c_int,
+            ram_word!(game, cur_enemy_index) as ::core::ffi::c_int,
             game,
         ))
         .mbte_var_E as ::core::ffi::c_int
@@ -2272,15 +2215,9 @@ pub unsafe fn MaridiaBeybladeTurtle_Instr_94A1(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    let E: *mut Enemy_MaridiaBeybladeTurtle = Get_MaridiaBeybladeTurtle(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    if CheckIfEnemyTouchesSamus(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        game,
-    ) != 0
-    {
+    let E: *mut Enemy_MaridiaBeybladeTurtle =
+        Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
+    if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
         (*E).mbte_var_A = ((0xa2925ei32) as u16);
     } else {
         (*E).mbte_var_A = ((0xa29142i32) as u16);
@@ -2296,10 +2233,8 @@ pub unsafe fn MaridiaBeybladeTurtle_Instr_94C7(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    let E: *mut Enemy_MaridiaBeybladeTurtle = Get_MaridiaBeybladeTurtle(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_MaridiaBeybladeTurtle =
+        Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).mbte_var_A = ((0xa29239i32) as u16);
     jp
 }
@@ -2312,10 +2247,8 @@ pub unsafe fn MaridiaBeybladeTurtle_Instr_94D1(
     jp
 }
 pub unsafe fn ThinHoppingBlobs_Init(game: &mut Game) {
-    let E: *mut Enemy_ThinHoppingBlobs = Get_ThinHoppingBlobs(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_ThinHoppingBlobs =
+        Get_ThinHoppingBlobs(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A2 as uint16;
     (*E).thbs_var_A = 0 as uint16;
     sub_A29A6C(addr_kThinHoppingBlobs_Ilist_99AD as uint16, game);
@@ -2325,10 +2258,8 @@ pub unsafe fn ThinHoppingBlobs_Init(game: &mut Game) {
     (*E).thbs_var_04 = 0 as uint16;
 }
 pub unsafe fn sub_A29A6C(a: uint16, game: &mut Game) {
-    let v1: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let v1: *mut EnemyData =
+        gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*v1).current_instruction = a;
     (*v1).instruction_timer = 1 as uint16;
     (*v1).timer = 0 as uint16;
@@ -2336,10 +2267,7 @@ pub unsafe fn sub_A29A6C(a: uint16, game: &mut Game) {
 pub unsafe fn CallThinHoppingBlobs(ea: uint32, game: &mut Game) {
     match ea {
         10656613 => {
-            ThinHoppingBlobs_Func6(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-                game,
-            );
+            ThinHoppingBlobs_Func6(ram_word!(game, cur_enemy_index), game);
         }
         10656641 => {
             ThinHoppingBlobs_Func7(game);
@@ -2350,10 +2278,8 @@ pub unsafe fn CallThinHoppingBlobs(ea: uint32, game: &mut Game) {
     }
 }
 pub unsafe fn ThinHoppingBlobs_Main(game: &mut Game) {
-    let E: *mut Enemy_ThinHoppingBlobs = Get_ThinHoppingBlobs(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_ThinHoppingBlobs =
+        Get_ThinHoppingBlobs(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     CallThinHoppingBlobs((((*E).thbs_var_D) as u32) | (0xa20000u32), game);
 }
 pub unsafe fn ThinHoppingBlobs_Func1(k: uint16, game: &mut Game) {
@@ -2368,26 +2294,19 @@ pub unsafe fn ThinHoppingBlobs_Func1(k: uint16, game: &mut Game) {
     ThinHoppingBlobs_Func5(game);
 }
 pub unsafe fn TwinHoppingBlobs_Func2(game: &mut Game) {
-    let E: *mut Enemy_ThinHoppingBlobs = Get_ThinHoppingBlobs(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_ThinHoppingBlobs =
+        Get_ThinHoppingBlobs(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).thbs_var_00 = IsSamusWithinEnemy_X(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+        ram_word!(game, cur_enemy_index),
         (*E).thbs_parameter_2,
         game,
     );
 }
 pub unsafe fn ThinHoppingBlobs_Func3(game: &mut Game) {
-    let E: *mut Enemy_ThinHoppingBlobs = Get_ThinHoppingBlobs(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_ThinHoppingBlobs =
+        Get_ThinHoppingBlobs(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).thbs_var_02 = 1 as uint16;
-    if (GetSamusEnemyDelta_X(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        game,
-    ) as ::core::ffi::c_int
+    if (GetSamusEnemyDelta_X(ram_word!(game, cur_enemy_index), game) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int)
         == 0i32
     {
@@ -2418,21 +2337,16 @@ pub unsafe fn ThinHoppingBlobs_Func3(game: &mut Game) {
 }
 pub unsafe fn ThinHoppingBlobs_Func4(game: &mut Game) -> uint16 {
     NextRandom(game);
-    ((*Get_ThinHoppingBlobs(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .base
-    .frame_counter as ::core::ffi::c_int
-        + *((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16) as ::core::ffi::c_int
+    ((*Get_ThinHoppingBlobs(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+        .base
+        .frame_counter as ::core::ffi::c_int
+        + ram_word!(game, random_number) as ::core::ffi::c_int
         & 7 as ::core::ffi::c_int) as uint16
 }
 pub unsafe fn ThinHoppingBlobs_Func5(game: &mut Game) {
     let mut v2: uint16 = 0;
-    let E: *mut Enemy_ThinHoppingBlobs = Get_ThinHoppingBlobs(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_ThinHoppingBlobs =
+        Get_ThinHoppingBlobs(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let mut thbs_var_F: uint16 = (*E).thbs_var_F;
     let mut r22: uint16 = 0 as uint16;
     let mut r24: uint16 = 0 as uint16;
@@ -2507,17 +2421,13 @@ pub unsafe fn CallThinHoppingBlobsVarE(ea: uint32, game: &mut Game) {
     }
 }
 pub unsafe fn ThinHoppingBlobs_Func7(game: &mut Game) {
-    let E: *mut Enemy_ThinHoppingBlobs = Get_ThinHoppingBlobs(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_ThinHoppingBlobs =
+        Get_ThinHoppingBlobs(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     CallThinHoppingBlobsVarE((((*E).thbs_var_E) as u32) | (0xa20000u32), game);
 }
 pub unsafe fn ThinHoppingBlobs_Func8(game: &mut Game) {
-    let E: *mut Enemy_ThinHoppingBlobs = Get_ThinHoppingBlobs(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_ThinHoppingBlobs =
+        Get_ThinHoppingBlobs(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let mut thbs_var_B: uint16 = (*E).thbs_var_B;
     if thbs_var_B as ::core::ffi::c_int - 0x4000 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -2532,7 +2442,7 @@ pub unsafe fn ThinHoppingBlobs_Func8(game: &mut Game) {
         v6 = (v6).wrapping_add(4u16);
     }
     if Enemy_MoveDown(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+        ram_word!(game, cur_enemy_index),
         *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *const uint8 as *mut uint32)
             .offset((v6 as ::core::ffi::c_int >> 2 as ::core::ffi::c_int) as isize)
             as int32,
@@ -2581,7 +2491,7 @@ pub unsafe fn ThinHoppingBlobs_Func8(game: &mut Game) {
             R20 = -(R20 as ::core::ffi::c_int) as uint16;
         }
         if Enemy_MoveRight_IgnoreSlopes(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+            ram_word!(game, cur_enemy_index),
             (R20 as int16 as int32) << 16 as ::core::ffi::c_int,
             game,
         ) != 0
@@ -2595,10 +2505,8 @@ pub unsafe fn ThinHoppingBlobs_Func8(game: &mut Game) {
     };
 }
 pub unsafe fn ThinHoppingBlobs_Func9(game: &mut Game) {
-    let E: *mut Enemy_ThinHoppingBlobs = Get_ThinHoppingBlobs(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_ThinHoppingBlobs =
+        Get_ThinHoppingBlobs(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let mut v2: uint16 = 0;
     if (*E).thbs_var_02 != 0 {
         let thbs_var_B: uint16 = (*E).thbs_var_B;
@@ -2622,10 +2530,8 @@ pub unsafe fn ThinHoppingBlobs_Func9(game: &mut Game) {
     sub_A29A6C(v2, game);
 }
 pub unsafe fn ThinHoppingBlobs_Func10(game: &mut Game) {
-    let E: *mut Enemy_ThinHoppingBlobs = Get_ThinHoppingBlobs(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_ThinHoppingBlobs =
+        Get_ThinHoppingBlobs(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let mut v2: uint16 = 0;
     if (*E).thbs_var_02 != 0 {
         let thbs_var_B: uint16 = (*E).thbs_var_B;
@@ -2650,10 +2556,8 @@ pub unsafe fn ThinHoppingBlobs_Func10(game: &mut Game) {
 }
 pub unsafe fn ThinHoppingBlobs_Func11(game: &mut Game) {
     ThinHoppingBlobs_Func8(game);
-    let E: *mut Enemy_ThinHoppingBlobs = Get_ThinHoppingBlobs(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_ThinHoppingBlobs =
+        Get_ThinHoppingBlobs(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if (*E).thbs_var_04 != 0u16 || (*E).thbs_var_01 == 0 {
         (*E).thbs_var_01 = 0 as uint16;
         sub_A29A6C(addr_kThinHoppingBlobs_Ilist_99D5 as uint16, game);
@@ -2661,10 +2565,8 @@ pub unsafe fn ThinHoppingBlobs_Func11(game: &mut Game) {
 }
 pub unsafe fn ThinHoppingBlobs_Func12(game: &mut Game) {
     ThinHoppingBlobs_Func8(game);
-    let E: *mut Enemy_ThinHoppingBlobs = Get_ThinHoppingBlobs(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_ThinHoppingBlobs =
+        Get_ThinHoppingBlobs(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if (*E).thbs_var_04 != 0u16 || (*E).thbs_var_01 == 0 {
         (*E).thbs_var_01 = 0 as uint16;
         sub_A29A6C(addr_kThinHoppingBlobs_Ilist_99C1 as uint16, game);
@@ -2672,10 +2574,8 @@ pub unsafe fn ThinHoppingBlobs_Func12(game: &mut Game) {
 }
 pub unsafe fn ThinHoppingBlobs_Func13(game: &mut Game) {
     ThinHoppingBlobs_Func8(game);
-    let E: *mut Enemy_ThinHoppingBlobs = Get_ThinHoppingBlobs(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_ThinHoppingBlobs =
+        Get_ThinHoppingBlobs(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if (*E).thbs_var_04 != 0u16 || (*E).thbs_var_01 == 0 {
         (*E).thbs_var_01 = 0 as uint16;
         sub_A29A6C(addr_kThinHoppingBlobs_Ilist_99AD as uint16, game);
@@ -2683,10 +2583,8 @@ pub unsafe fn ThinHoppingBlobs_Func13(game: &mut Game) {
 }
 pub unsafe fn ThinHoppingBlobs_Func14(game: &mut Game) {
     ThinHoppingBlobs_Func8(game);
-    let E: *mut Enemy_ThinHoppingBlobs = Get_ThinHoppingBlobs(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_ThinHoppingBlobs =
+        Get_ThinHoppingBlobs(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if (*E).thbs_var_04 == 0 {
         if (*E).thbs_var_01 != 0 {
             return;
@@ -2698,10 +2596,8 @@ pub unsafe fn ThinHoppingBlobs_Func14(game: &mut Game) {
     sub_A29A6C(addr_kThinHoppingBlobs_Ilist_99D5 as uint16, game);
 }
 pub unsafe fn ThinHoppingBlobs_Func15(game: &mut Game) {
-    let E: *mut Enemy_ThinHoppingBlobs = Get_ThinHoppingBlobs(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_ThinHoppingBlobs =
+        Get_ThinHoppingBlobs(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let thbs_var_F: uint16 = (*E).thbs_var_F;
     let R20: uint16 = ((*((game.g_rom.offset(crate::rtl::lorom_offset(0xa29a0b)) as *const uint8
         as *mut uint16 as *mut uint8)
@@ -2715,7 +2611,7 @@ pub unsafe fn ThinHoppingBlobs_Func15(game: &mut Game) {
         as ::core::ffi::c_int)
         << 8 as ::core::ffi::c_int) as uint16;
     if Enemy_MoveDown(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+        ram_word!(game, cur_enemy_index),
         ((R20 as uint32) << 16 as ::core::ffi::c_int | R18 as uint32) as int32,
         game,
     ) != 0
@@ -2728,10 +2624,8 @@ pub unsafe fn ThinHoppingBlobs_Func15(game: &mut Game) {
 }
 pub unsafe fn ThinHoppingBlobs_Func16(game: &mut Game) {
     ThinHoppingBlobs_Func8(game);
-    let E: *mut Enemy_ThinHoppingBlobs = Get_ThinHoppingBlobs(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_ThinHoppingBlobs =
+        Get_ThinHoppingBlobs(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if (*E).thbs_var_01 == 0 {
         (*E).thbs_var_01 = 0 as uint16;
         (*E).thbs_var_00 = 3 as uint16;
@@ -2748,10 +2642,8 @@ pub unsafe fn SpikeShootingPlant_Instr_9F2A(
     jp
 }
 pub unsafe fn SpikeShootingPlant_Init(game: &mut Game) {
-    let E: *mut Enemy_SpikeShootingPlant = Get_SpikeShootingPlant(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_SpikeShootingPlant =
+        Get_SpikeShootingPlant(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A2 as uint16;
     if *(&raw mut (*E).sspt_parameter_1 as *mut uint8).offset(
         (::core::mem::size_of::<uint16>())
@@ -2800,17 +2692,13 @@ pub unsafe fn SpikeShootingPlant_Init(game: &mut Game) {
         .offset((v3 + 3 as ::core::ffi::c_int) as isize);
 }
 pub unsafe fn SpikeShootingPlant_Main(game: &mut Game) {
-    let E: *mut Enemy_SpikeShootingPlant = Get_SpikeShootingPlant(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_SpikeShootingPlant =
+        Get_SpikeShootingPlant(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     CallEnemyPreInstr((((*E).sspt_var_F) as u32) | (0xa20000u32), game);
 }
 pub unsafe fn SpikeShootingPlant_2(k: uint16, game: &mut Game) {
-    let E: *mut Enemy_SpikeShootingPlant = Get_SpikeShootingPlant(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_SpikeShootingPlant =
+        Get_SpikeShootingPlant(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     AddToHiLo(
         &raw mut (*E).base.x_pos,
         &raw mut (*E).base.x_subpos,
@@ -2823,10 +2711,8 @@ pub unsafe fn SpikeShootingPlant_2(k: uint16, game: &mut Game) {
     SpikeShootingPlant_4(game);
 }
 pub unsafe fn SpikeShootingPlant_3(k: uint16, game: &mut Game) {
-    let E: *mut Enemy_SpikeShootingPlant = Get_SpikeShootingPlant(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_SpikeShootingPlant =
+        Get_SpikeShootingPlant(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     AddToHiLo(
         &raw mut (*E).base.x_pos,
         &raw mut (*E).base.x_subpos,
@@ -2840,13 +2726,10 @@ pub unsafe fn SpikeShootingPlant_3(k: uint16, game: &mut Game) {
 }
 pub unsafe fn SpikeShootingPlant_4(game: &mut Game) {
     NextRandom(game);
-    let E: *mut Enemy_SpikeShootingPlant = Get_SpikeShootingPlant(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_SpikeShootingPlant =
+        Get_SpikeShootingPlant(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if ((*(&raw mut (*E).base.frame_counter as *mut uint8).offset(0))
-        .wrapping_add((*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)) as u8))
-        as ::core::ffi::c_int
+        .wrapping_add((ram_word!(game, random_number)) as u8)) as ::core::ffi::c_int
         - 3 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0
@@ -2865,37 +2748,29 @@ pub unsafe fn SpikeShootingPlant_4(game: &mut Game) {
     }
 }
 pub unsafe fn SpikeShootingPlant_5(game: &mut Game) {
-    let E: *mut Enemy_SpikeShootingPlant = Get_SpikeShootingPlant(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_SpikeShootingPlant =
+        Get_SpikeShootingPlant(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).base.current_instruction = addr_kSpikeShootingPlant_Ilist_9E8A as uint16;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
 }
 pub unsafe fn SpikeShootingPlant_6(game: &mut Game) {
-    let E: *mut Enemy_SpikeShootingPlant = Get_SpikeShootingPlant(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_SpikeShootingPlant =
+        Get_SpikeShootingPlant(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).base.current_instruction = addr_kSpikeShootingPlant_Ilist_9EB0 as uint16;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
 }
 pub unsafe fn SpikeShootingPlant_7(game: &mut Game) {
-    let E: *mut Enemy_SpikeShootingPlant = Get_SpikeShootingPlant(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_SpikeShootingPlant =
+        Get_SpikeShootingPlant(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).base.current_instruction = addr_kSpikeShootingPlant_Ilist_9EDA as uint16;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
 }
 pub unsafe fn SpikeShootingPlant_8(game: &mut Game) {
-    let E: *mut Enemy_SpikeShootingPlant = Get_SpikeShootingPlant(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_SpikeShootingPlant =
+        Get_SpikeShootingPlant(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).base.current_instruction = addr_kSpikeShootingPlant_Ilist_9F00 as uint16;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
@@ -2919,7 +2794,7 @@ pub unsafe fn SpikeShootingPlant_Instr_A0A7(
 ) -> *const uint16 {
     SpawnEprojWithGfx(
         *jp,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+        ram_word!(game, cur_enemy_index),
         addr_kEproj_SpikeShootingPlantSpikes as uint16,
         game,
     );
@@ -2937,10 +2812,8 @@ static off_A2A3D3: [Option<Func_V>; 7] = unsafe {
     ]
 };
 pub unsafe fn MaridiaSpikeyShell_Init(game: &mut Game) {
-    let E: *mut Enemy_MaridiaSpikeyShell = Get_MaridiaSpikeyShell(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_MaridiaSpikeyShell =
+        Get_MaridiaSpikeyShell(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A2 as uint16;
     let mssl_parameter_1_low: uint16 =
         *(&raw mut (*E).mssl_parameter_1 as *mut uint8).offset(0) as uint16;
@@ -2990,36 +2863,28 @@ pub unsafe fn MaridiaSpikeyShell_Init(game: &mut Game) {
     }
 }
 pub unsafe fn MaridiaSpikeyShell_Main(game: &mut Game) {
-    let e: *mut Enemy_MaridiaSpikeyShell = Get_MaridiaSpikeyShell(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let e: *mut Enemy_MaridiaSpikeyShell =
+        Get_MaridiaSpikeyShell(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     off_A2A3D3[((*e).mssl_var_E as int16 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as usize]
         .expect("non-null function pointer")(game);
 }
 pub unsafe fn MaridiaSpikeyShell_1(game: &mut Game) {
-    let E: *mut Enemy_MaridiaSpikeyShell = Get_MaridiaSpikeyShell(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_MaridiaSpikeyShell =
+        Get_MaridiaSpikeyShell(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).base.current_instruction = addr_kMaridiaSpikeyShell_Ilist_A3AB as uint16;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
 }
 pub unsafe fn MaridiaSpikeyShell_2(game: &mut Game) {
-    let E: *mut Enemy_MaridiaSpikeyShell = Get_MaridiaSpikeyShell(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_MaridiaSpikeyShell =
+        Get_MaridiaSpikeyShell(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).base.current_instruction = addr_kMaridiaSpikeyShell_Ilist_A3BD as uint16;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
 }
 pub unsafe fn MaridiaSpikeyShell_3(game: &mut Game) {
-    let E: *mut Enemy_MaridiaSpikeyShell = Get_MaridiaSpikeyShell(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_MaridiaSpikeyShell =
+        Get_MaridiaSpikeyShell(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     AddToHiLo(
         &raw mut (*E).base.x_pos,
         &raw mut (*E).base.x_subpos,
@@ -3028,16 +2893,11 @@ pub unsafe fn MaridiaSpikeyShell_3(game: &mut Game) {
     if (((*E).base.x_pos) as i16).wrapping_sub(((*E).mssl_var_01) as i16) < 0i16 {
         (*E).mssl_var_E = (*E).mssl_var_E.wrapping_sub(1);
     }
-    MaridiaSpikeyShell_8(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        game,
-    );
+    MaridiaSpikeyShell_8(ram_word!(game, cur_enemy_index), game);
 }
 pub unsafe fn MaridiaSpikeyShell_4(game: &mut Game) {
-    let E: *mut Enemy_MaridiaSpikeyShell = Get_MaridiaSpikeyShell(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_MaridiaSpikeyShell =
+        Get_MaridiaSpikeyShell(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     AddToHiLo(
         &raw mut (*E).base.x_pos,
         &raw mut (*E).base.x_subpos,
@@ -3046,16 +2906,11 @@ pub unsafe fn MaridiaSpikeyShell_4(game: &mut Game) {
     if (((*E).base.x_pos) as i16).wrapping_sub(((*E).mssl_var_02) as i16) >= 0i16 {
         (*E).mssl_var_E = 0 as uint16;
     }
-    MaridiaSpikeyShell_8(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        game,
-    );
+    MaridiaSpikeyShell_8(ram_word!(game, cur_enemy_index), game);
 }
 pub unsafe fn MaridiaSpikeyShell_5(game: &mut Game) {
-    let E: *mut Enemy_MaridiaSpikeyShell = Get_MaridiaSpikeyShell(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_MaridiaSpikeyShell =
+        Get_MaridiaSpikeyShell(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let v1: uint16 = ((*E).mssl_var_00).wrapping_sub(1u16);
     (*E).mssl_var_00 = v1;
     if v1 == 0 {
@@ -3063,10 +2918,8 @@ pub unsafe fn MaridiaSpikeyShell_5(game: &mut Game) {
     }
 }
 pub unsafe fn MaridiaSpikeyShell_6(game: &mut Game) {
-    let E: *mut Enemy_MaridiaSpikeyShell = Get_MaridiaSpikeyShell(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_MaridiaSpikeyShell =
+        Get_MaridiaSpikeyShell(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).base.y_pos = (*E).base.y_pos.wrapping_add(1);
     (*E).mssl_var_F = (*E).mssl_var_F.wrapping_add(1);
     if (*E).mssl_var_F as ::core::ffi::c_int - 16 as ::core::ffi::c_int
@@ -3086,10 +2939,8 @@ pub unsafe fn MaridiaSpikeyShell_6(game: &mut Game) {
     }
 }
 pub unsafe fn MaridiaSpikeyShell_7(game: &mut Game) {
-    let E: *mut Enemy_MaridiaSpikeyShell = Get_MaridiaSpikeyShell(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_MaridiaSpikeyShell =
+        Get_MaridiaSpikeyShell(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
     let fresh29 = (*E).mssl_var_F;
     (*E).mssl_var_F = (*E).mssl_var_F.wrapping_sub(1);
@@ -3108,8 +2959,7 @@ pub unsafe fn MaridiaSpikeyShell_8(k: uint16, game: &mut Game) {
     NextRandom(game);
     let E: *mut Enemy_MaridiaSpikeyShell = Get_MaridiaSpikeyShell(k as ::core::ffi::c_int, game);
     if ((*(&raw mut (*E).base.frame_counter as *mut uint8).offset(0))
-        .wrapping_add((*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)) as u8))
-        as ::core::ffi::c_int
+        .wrapping_add((ram_word!(game, random_number)) as u8)) as ::core::ffi::c_int
         - 6 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0
@@ -3134,10 +2984,8 @@ pub unsafe fn MaridiaSpikeyShell_Instr_A571(
     jp
 }
 pub unsafe fn MaridiaSpikeyShell_Shot(game: &mut Game) {
-    let E: *mut Enemy_MaridiaSpikeyShell = Get_MaridiaSpikeyShell(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_MaridiaSpikeyShell =
+        Get_MaridiaSpikeyShell(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if (*E).mssl_var_E as ::core::ffi::c_int - 1 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0
@@ -3146,10 +2994,8 @@ pub unsafe fn MaridiaSpikeyShell_Shot(game: &mut Game) {
     }
 }
 pub unsafe fn GunshipTop_Init(game: &mut Game) {
-    let E: *mut Enemy_GunshipTop = Get_GunshipTop(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_GunshipTop =
+        Get_GunshipTop(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         | (kEnemyProps_DisableSamusColl as ::core::ffi::c_int
             | kEnemyProps_Tangible as ::core::ffi::c_int)) as uint16;
@@ -3157,15 +3003,11 @@ pub unsafe fn GunshipTop_Init(game: &mut Game) {
     (*E).base.timer = 0 as uint16;
     (*E).base.current_instruction = addr_kGunshipTop_Ilist_A616 as uint16;
     (*E).base.palette_index = 3584 as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) != 40u16
-        || *((&raw mut game.g_ram as *mut uint8).offset(0x1f55) as *mut uint16) != 0u16
-    {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xd914) as *mut uint16)
-            as ::core::ffi::c_int
+    if ram_word!(game, game_state) != 40u16 || ram_word!(game, demo_set) != 0u16 {
+        if ram_word!(game, loading_game_state) as ::core::ffi::c_int
             == kLoadingGameState_22_EscapingCeres as ::core::ffi::c_int
         {
-            (*E).base.y_pos = (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16))
-                .wrapping_sub(17u16);
+            (*E).base.y_pos = (ram_word!(game, samus_y_pos)).wrapping_sub(17u16);
             (*E).gtp_var_F = ((0xa2a80ci32) as u16);
         } else {
             let v3: uint16 = ((*E).base.y_pos).wrapping_sub(25u16);
@@ -3182,18 +3024,13 @@ pub unsafe fn GunshipTop_Init(game: &mut Game) {
         (*Get_GunshipTop(0 as ::core::ffi::c_int, game)).gtp_var_A = 144 as uint16;
     }
     SpawnPalfxObject(addr_stru_8DE1C0 as uint16, game);
-    (*Get_GunshipTop(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .gtp_var_D = 1 as uint16;
+    (*Get_GunshipTop(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).gtp_var_D =
+        1 as uint16;
     (*Get_GunshipTop(0 as ::core::ffi::c_int, game)).gtp_var_C = 0 as uint16;
 }
 pub unsafe fn GunshipBottom_Init(game: &mut Game) {
-    let E: *mut Enemy_GunshipBottom = Get_GunshipBottom(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_GunshipBottom =
+        Get_GunshipBottom(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         | (kEnemyProps_DisableSamusColl as ::core::ffi::c_int
             | kEnemyProps_Tangible as ::core::ffi::c_int)) as uint16;
@@ -3204,9 +3041,8 @@ pub unsafe fn GunshipBottom_Init(game: &mut Game) {
     } else {
         (*E).base.current_instruction = addr_kGunshipTop_Ilist_A61C as uint16;
     }
-    let v2: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-        as ::core::ffi::c_int
-        >> 1 as ::core::ffi::c_int;
+    let v2: ::core::ffi::c_int =
+        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     (*E).base.vram_tiles_index = *((&raw mut game.g_ram as *mut uint8).offset(0xe84)
         as *mut uint16)
         .offset((v2 + 106 as ::core::ffi::c_int) as isize);
@@ -3215,19 +3051,17 @@ pub unsafe fn GunshipBottom_Init(game: &mut Game) {
         (*E).base.y_pos = (*((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
             .offset((v2 + 61 as ::core::ffi::c_int) as isize))
         .wrapping_sub(1u16);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) as ::core::ffi::c_int
+        if ram_word!(game, game_state) as ::core::ffi::c_int
             == kPose_28_FaceL_Crouch as ::core::ffi::c_int
-            && *((&raw mut game.g_ram as *mut uint8).offset(0x1f55) as *mut uint16) == 0
+            && ram_word!(game, demo_set) == 0
         {
             (*E).base.instruction_timer = 1 as uint16;
             (*E).base.current_instruction = addr_kGunshipTop_Ilist_A5BE as uint16;
         }
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0xd914) as *mut uint16)
-        as ::core::ffi::c_int
+    } else if ram_word!(game, loading_game_state) as ::core::ffi::c_int
         == kGameState_34_CeresGoesBoom as ::core::ffi::c_int
     {
-        (*E).base.y_pos = (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16))
-            .wrapping_add(23u16);
+        (*E).base.y_pos = (ram_word!(game, samus_y_pos)).wrapping_add(23u16);
     } else {
         (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(15u16);
         (*E).gbm_var_D = 71 as uint16;
@@ -3236,8 +3070,7 @@ pub unsafe fn GunshipBottom_Init(game: &mut Game) {
 }
 pub unsafe fn GunshipTop_Main(game: &mut Game) {
     let E1: *mut Enemy_GunshipTop = Get_GunshipTop(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int
-            + 64 as ::core::ffi::c_int,
+        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
         game,
     );
     let v2: bool = (*E1).gtp_var_D == 1u16;
@@ -3247,10 +3080,8 @@ pub unsafe fn GunshipTop_Main(game: &mut Game) {
         QueueSfx2_Max6(0x4d as uint16, game);
         (*E1).gtp_var_D = 70 as uint16;
     }
-    let E0: *mut Enemy_GunshipTop = Get_GunshipTop(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E0: *mut Enemy_GunshipTop =
+        Get_GunshipTop(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if (*E0).gtp_var_F as ::core::ffi::c_int + 0x56be as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         == 0
@@ -3258,10 +3089,7 @@ pub unsafe fn GunshipTop_Main(game: &mut Game) {
             & 0x8000 as ::core::ffi::c_int
             != 0
     {
-        GunshipTop_1(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-            game,
-        );
+        GunshipTop_1(ram_word!(game, cur_enemy_index), game);
     }
     CallEnemyPreInstr((((*E0).gtp_var_F) as u32) | (0xa20000u32), game);
 }
@@ -3410,7 +3238,7 @@ pub unsafe fn GunshipTop_4(k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) =
             ((*GunshipTop).base.x_pos).wrapping_add(1u16);
         *((&raw mut game.g_ram as *mut uint8).offset(0xb10) as *mut uint16) =
-            *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16);
+            ram_word!(game, samus_x_pos);
         let v7: *mut Enemy_GunshipTop =
             Get_GunshipTop(k as ::core::ffi::c_int + 128 as ::core::ffi::c_int, game);
         (*v7).base.instruction_timer = 1 as uint16;
@@ -3461,47 +3289,39 @@ pub unsafe fn GunshipTop_7(k: uint16, game: &mut Game) {
         let ref mut fresh11 = *((&raw mut game.g_ram as *mut uint8).offset(0xd8f8) as *mut uint16);
         *fresh11 = (*fresh11) | (1u16);
         *((&raw mut game.g_ram as *mut uint8).offset(0x78b) as *mut uint16) = 0 as uint16;
-        SaveToSram(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x952) as *mut uint16),
-            game,
-        );
+        SaveToSram(ram_word!(game, selected_save_slot), game);
     }
 }
 pub unsafe fn GunshipTop_8(k: uint16, game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) == 8u16
-        && *((&raw mut game.g_ram as *mut uint8).offset(0xa42) as *mut uint16) as ::core::ffi::c_int
+    if ram_word!(game, game_state) == 8u16
+        && ram_word!(game, frame_handler_alfa) as ::core::ffi::c_int
             == 0x90e695 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
     {
         let E: *mut Enemy_GunshipTop = Get_GunshipTop(k as ::core::ffi::c_int, game);
         if (((*E).base.x_pos as ::core::ffi::c_int
             - 8 as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
-                as ::core::ffi::c_int) as int16)
+            - ram_word!(game, samus_x_pos) as ::core::ffi::c_int) as int16)
             < 0i16
             && (((*E).base.x_pos as ::core::ffi::c_int + 8 as ::core::ffi::c_int
-                - *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
-                    as ::core::ffi::c_int) as int16)
+                - ram_word!(game, samus_x_pos) as ::core::ffi::c_int) as int16)
                 >= 0i16
             && (((*E).base.y_pos as ::core::ffi::c_int
                 - 64 as ::core::ffi::c_int
-                - *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)
-                    as ::core::ffi::c_int) as int16)
+                - ram_word!(game, samus_y_pos) as ::core::ffi::c_int) as int16)
                 < 0i16
-            && (((*E).base.y_pos) as i16).wrapping_sub(
-                (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)) as i16,
-            ) >= 0i16
+            && (((*E).base.y_pos) as i16).wrapping_sub((ram_word!(game, samus_y_pos)) as i16)
+                >= 0i16
             && *(&raw mut game.g_ram as *mut uint8).offset(0xa1f) == 0
-            && (*((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16)
-                as ::core::ffi::c_int
+            && (ram_word!(game, joypad1_newkeys) as ::core::ffi::c_int
                 & kButton_Down as ::core::ffi::c_int)
                 != 0i32
         {
             (*E).gtp_var_F = ((0xa2aa4fi32) as u16);
-            if *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) != 1152u16 {
+            if ram_word!(game, samus_x_pos) != 1152u16 {
                 *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) =
                     (*E).base.x_pos;
                 *((&raw mut game.g_ram as *mut uint8).offset(0xb10) as *mut uint16) =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16);
+                    ram_word!(game, samus_x_pos);
             }
             MakeSamusFaceForward(game);
             CallSomeSamusCode(0x1a as uint16, game);
@@ -3531,8 +3351,7 @@ pub unsafe fn GunshipTop_10(k: uint16, game: &mut Game) {
     let r18: uint16 = ((*E).gtp_var_E).wrapping_add(18u16);
     let ref mut fresh2 = *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16);
     *fresh2 = (*fresh2).wrapping_add(2u16);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) as ::core::ffi::c_int
-        - r18 as ::core::ffi::c_int
+    if ram_word!(game, samus_y_pos) as ::core::ffi::c_int - r18 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         == 0
     {
@@ -3571,30 +3390,20 @@ pub unsafe fn GunshipTop_12(k: uint16, game: &mut Game) {
         Samus_RestoreMissiles(2 as uint16, game);
         Samus_RestoreSuperMissiles(2 as uint16, game);
         Samus_RestorePowerBombs(2 as uint16, game);
-        if ((*((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16)) as i16)
-            .wrapping_sub(
-                (*((&raw mut game.g_ram as *mut uint8).offset(0x9d4) as *mut uint16)) as i16,
-            )
+        if ((ram_word!(game, samus_reserve_health)) as i16)
+            .wrapping_sub((ram_word!(game, samus_max_reserve_health)) as i16)
             >= 0i16
-            && ((*((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16)) as i16)
-                .wrapping_sub(
-                    (*((&raw mut game.g_ram as *mut uint8).offset(0x9c4) as *mut uint16)) as i16,
-                )
+            && ((ram_word!(game, samus_health)) as i16)
+                .wrapping_sub((ram_word!(game, samus_max_health)) as i16)
                 >= 0i16
-            && ((*((&raw mut game.g_ram as *mut uint8).offset(0x9c6) as *mut uint16)) as i16)
-                .wrapping_sub(
-                    (*((&raw mut game.g_ram as *mut uint8).offset(0x9c8) as *mut uint16)) as i16,
-                )
+            && ((ram_word!(game, samus_missiles)) as i16)
+                .wrapping_sub((ram_word!(game, samus_max_missiles)) as i16)
                 >= 0i16
-            && ((*((&raw mut game.g_ram as *mut uint8).offset(0x9ca) as *mut uint16)) as i16)
-                .wrapping_sub(
-                    (*((&raw mut game.g_ram as *mut uint8).offset(0x9cc) as *mut uint16)) as i16,
-                )
+            && ((ram_word!(game, samus_super_missiles)) as i16)
+                .wrapping_sub((ram_word!(game, samus_max_super_missiles)) as i16)
                 >= 0i16
-            && ((*((&raw mut game.g_ram as *mut uint8).offset(0x9ce) as *mut uint16)) as i16)
-                .wrapping_sub(
-                    (*((&raw mut game.g_ram as *mut uint8).offset(0x9d0) as *mut uint16)) as i16,
-                )
+            && ((ram_word!(game, samus_power_bombs)) as i16)
+                .wrapping_sub((ram_word!(game, samus_max_power_bombs)) as i16)
                 >= 0i16
         {
             (*Get_GunshipTop(k as ::core::ffi::c_int, game)).gtp_var_F = ((0xa2ab1fi32) as u16);
@@ -3610,10 +3419,7 @@ pub unsafe fn GunshipTop_13(k: uint16, game: &mut Game) {
         let ref mut fresh3 = *((&raw mut game.g_ram as *mut uint8).offset(0xd8f8) as *mut uint16);
         *fresh3 = (*fresh3) | (1u16);
         *((&raw mut game.g_ram as *mut uint8).offset(0x78b) as *mut uint16) = 0 as uint16;
-        SaveToSram(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x952) as *mut uint16),
-            game,
-        );
+        SaveToSram(ram_word!(game, selected_save_slot), game);
     }
     (*Get_GunshipTop(k as ::core::ffi::c_int, game)).gtp_var_F = ((0xa2ab60i32) as u16);
     let E: *mut Enemy_GunshipTop =
@@ -3637,8 +3443,7 @@ pub unsafe fn GunshipTop_15(k: uint16, game: &mut Game) {
     let r18: uint16 = ((*E).gtp_var_E).wrapping_sub(30u16);
     let ref mut fresh4 = *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16);
     *fresh4 = (*fresh4).wrapping_sub(2u16);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) as ::core::ffi::c_int
-        - r18 as ::core::ffi::c_int
+    if ram_word!(game, samus_y_pos) as ::core::ffi::c_int - r18 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0
     {
@@ -3658,7 +3463,7 @@ pub unsafe fn GunshipTop_16(k: uint16, game: &mut Game) {
     let v3: bool = ((*E).gtp_var_A as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32;
     if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
         (*Get_GunshipTop(k as ::core::ffi::c_int, game)).gtp_var_F = ((0xa2a9bdi32) as u16);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) as ::core::ffi::c_int
+        if ram_word!(game, game_state) as ::core::ffi::c_int
             - kGameState_40_TransitionToDemo as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             != 0
@@ -3671,10 +3476,10 @@ pub unsafe fn GunshipTop_16(k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn GunshipTop_17(k: uint16, game: &mut Game) {
-    let v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16);
-    let mut v2: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
+    let v1: uint16 = ram_word!(game, substate);
+    let mut v2: uint16 = ram_word!(game, vram_write_queue_tail);
     (*gVramWriteEntry(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) as ::core::ffi::c_int,
+        ram_word!(game, vram_write_queue_tail) as ::core::ffi::c_int,
         game,
     ))
     .size = 1024 as uint16;
@@ -3699,8 +3504,7 @@ pub unsafe fn GunshipTop_17(k: uint16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) = (v2).wrapping_add(2u16);
     let ref mut fresh6 = *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16);
     *fresh6 = (*fresh6).wrapping_add(2u16);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) as ::core::ffi::c_int
-        - 10 as ::core::ffi::c_int
+    if ram_word!(game, substate) as ::core::ffi::c_int - 10 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         == 0
     {
@@ -3718,36 +3522,29 @@ pub unsafe fn GunshipTop_18(k: uint16, game: &mut Game) {
     {
         let mut v3: uint16 = 0;
         if (gtp_var_E as ::core::ffi::c_int & 1 as ::core::ffi::c_int) != 0i32 {
-            v3 = (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16))
-                .wrapping_add(1u16);
+            v3 = (ram_word!(game, samus_y_pos)).wrapping_add(1u16);
         } else {
-            v3 = (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16))
-                .wrapping_sub(1u16);
+            v3 = (ram_word!(game, samus_y_pos)).wrapping_sub(1u16);
         }
         *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) = v3;
         *((&raw mut game.g_ram as *mut uint8).offset(0xb14) as *mut uint16) = v3;
     } else {
         let mut v4: uint16 = 0;
         if (gtp_var_E as ::core::ffi::c_int & 1 as ::core::ffi::c_int) != 0i32 {
-            v4 = (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16))
-                .wrapping_add(2u16);
+            v4 = (ram_word!(game, samus_y_pos)).wrapping_add(2u16);
         } else {
-            v4 = (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16))
-                .wrapping_sub(2u16);
+            v4 = (ram_word!(game, samus_y_pos)).wrapping_sub(2u16);
         }
         *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) = v4;
         *((&raw mut game.g_ram as *mut uint8).offset(0xb14) as *mut uint16) = v4;
     }
-    v5 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)) as i16)
-        .wrapping_sub(17i16);
+    v5 = ((ram_word!(game, samus_y_pos)) as i16).wrapping_sub(17i16);
     let E0: *mut Enemy_GunshipTop = Get_GunshipTop(k as ::core::ffi::c_int, game);
-    (*E0).base.y_pos =
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)).wrapping_sub(17u16);
+    (*E0).base.y_pos = (ram_word!(game, samus_y_pos)).wrapping_sub(17u16);
     (*Get_GunshipTop(k as ::core::ffi::c_int + 128 as ::core::ffi::c_int, game))
         .base
         .y_pos = ((v5) as u16).wrapping_sub(1u16);
-    (*E1).base.y_pos =
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)).wrapping_add(23u16);
+    (*E1).base.y_pos = (ram_word!(game, samus_y_pos)).wrapping_add(23u16);
     let v7: uint16 = ((*E1).gtp_var_E).wrapping_add(1u16);
     (*E1).gtp_var_E = v7;
     if v7 as ::core::ffi::c_int - 128 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
@@ -3768,18 +3565,15 @@ pub unsafe fn GunshipTop_19(k: uint16, game: &mut Game) {
     let mut v1: int16 = 0;
     let ref mut fresh7 = *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16);
     *fresh7 = (*fresh7).wrapping_sub(2u16);
-    v1 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)) as i16)
-        .wrapping_sub(17i16);
+    v1 = ((ram_word!(game, samus_y_pos)) as i16).wrapping_sub(17i16);
     let E0: *mut Enemy_GunshipTop = Get_GunshipTop(k as ::core::ffi::c_int, game);
-    (*E0).base.y_pos =
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)).wrapping_sub(17u16);
+    (*E0).base.y_pos = (ram_word!(game, samus_y_pos)).wrapping_sub(17u16);
     (*Get_GunshipTop(k as ::core::ffi::c_int + 128 as ::core::ffi::c_int, game))
         .base
         .y_pos = ((v1) as u16).wrapping_sub(1u16);
     let E1: *mut Enemy_GunshipTop =
         Get_GunshipTop(k as ::core::ffi::c_int + 64 as ::core::ffi::c_int, game);
-    (*E1).base.y_pos =
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)).wrapping_add(23u16);
+    (*E1).base.y_pos = (ram_word!(game, samus_y_pos)).wrapping_add(23u16);
     if (*E0).base.y_pos as ::core::ffi::c_int - 896 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0
@@ -3812,10 +3606,8 @@ pub unsafe fn GunshipTop_21(k: uint16, game: &mut Game) {
     {
         (*E).gtp_var_F = 2304 as uint16;
     }
-    let v6: uint32 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)
-        as uint32)
-        << 16 as ::core::ffi::c_int
-        | *((&raw mut game.g_ram as *mut uint8).offset(0xafc) as *mut uint16) as uint32)
+    let v6: uint32 = ((ram_word!(game, samus_y_pos) as uint32) << 16 as ::core::ffi::c_int
+        | ram_word!(game, samus_y_subpos) as uint32)
         .wrapping_sub(
             (((*E).gtp_var_F as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint32)
                 << 16 as ::core::ffi::c_int
@@ -3825,20 +3617,16 @@ pub unsafe fn GunshipTop_21(k: uint16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xafc) as *mut uint16) = v6 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) =
         (v6 >> 16 as ::core::ffi::c_int) as uint16;
-    let v5: uint16 =
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)).wrapping_sub(17u16);
+    let v5: uint16 = (ram_word!(game, samus_y_pos)).wrapping_sub(17u16);
     (*Get_GunshipTop(k as ::core::ffi::c_int, game)).base.y_pos = v5;
     (*Get_GunshipTop(k as ::core::ffi::c_int + 128 as ::core::ffi::c_int, game))
         .base
         .y_pos = (v5).wrapping_sub(1u16);
-    (*E).base.y_pos =
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)).wrapping_add(23u16);
+    (*E).base.y_pos = (ram_word!(game, samus_y_pos)).wrapping_add(23u16);
 }
 pub unsafe fn Flies_Init(game: &mut Game) {
-    let E: *mut Enemy_Flies = Get_Flies(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_Flies =
+        Get_Flies(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).flies_var_E = 0 as uint16;
     (*E).flies_var_F = ((0xa2b14ei32) as u16);
     (*E).base.current_instruction = addr_kFlies_Ilist_B013 as uint16;
@@ -3920,10 +3708,8 @@ pub unsafe fn Flies_2(k: uint16, game: &mut Game) -> uint16 {
 }
 pub unsafe fn Flies_Main(game: &mut Game) {
     NextRandom(game);
-    let E: *mut Enemy_Flies = Get_Flies(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_Flies =
+        Get_Flies(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     CallEnemyPreInstr((((*E).flies_var_F) as u32) | (0xa20000u32), game);
 }
 pub unsafe fn Flies_3(k: uint16, game: &mut Game) {
@@ -3932,7 +3718,7 @@ pub unsafe fn Flies_3(k: uint16, game: &mut Game) {
     (*E).flies_var_B = (2u16)
         .wrapping_mul((kSinCosTable8bit_Sext[(v1 + 64 as ::core::ffi::c_int) as usize]) as u16);
     (*E).flies_var_C = (4u16).wrapping_mul((kSinCosTable8bit_Sext[v1 as usize]) as u16);
-    (*E).flies_var_D = *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16);
+    (*E).flies_var_D = ram_word!(game, samus_y_pos);
     (*E).flies_var_F = ((0xa2b1aai32) as u16);
 }
 pub unsafe fn Flies_4(k: uint16, game: &mut Game) {
@@ -4012,10 +3798,8 @@ pub unsafe fn Flies_7(k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn NorfairErraticFireball_Init(game: &mut Game) {
-    let E: *mut Enemy_NorfairErraticFireball = Get_NorfairErraticFireball(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_NorfairErraticFireball =
+        Get_NorfairErraticFireball(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let pt: Point32 = ConvertAngleToXy(
         (*E).nefl_parameter_1,
         *(&raw mut (*E).nefl_parameter_2 as *mut uint8).offset(0) as uint16,
@@ -4028,10 +3812,8 @@ pub unsafe fn NorfairErraticFireball_Init(game: &mut Game) {
     (*E).base.current_instruction = addr_kNorfairErraticFireball_Ilist_B2DC as uint16;
 }
 pub unsafe fn NorfairErraticFireball_Main(game: &mut Game) {
-    let E: *mut Enemy_NorfairErraticFireball = Get_NorfairErraticFireball(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_NorfairErraticFireball =
+        Get_NorfairErraticFireball(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let pt: Point32 = ConvertAngleToXy(
         (*E).nefl_parameter_1,
         *(&raw mut (*E).nefl_parameter_2 as *mut uint8).offset(0) as uint16,
@@ -4049,7 +3831,7 @@ pub unsafe fn NorfairErraticFireball_Main(game: &mut Game) {
         (*E).nefl_var_D = -((*E).nefl_var_D as ::core::ffi::c_int) as uint16;
     }
     if Enemy_MoveRight_IgnoreSlopes(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+        ram_word!(game, cur_enemy_index),
         (((*E).nefl_var_C as uint32) << 16 as ::core::ffi::c_int | (*E).nefl_var_D as uint32)
             as int32,
         game,
@@ -4065,7 +3847,7 @@ pub unsafe fn NorfairErraticFireball_Main(game: &mut Game) {
             (*E).nefl_var_F = -((*E).nefl_var_F as ::core::ffi::c_int) as uint16;
         }
         if Enemy_MoveDown(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+            ram_word!(game, cur_enemy_index),
             (((*E).nefl_var_E as uint32) << 16 as ::core::ffi::c_int | (*E).nefl_var_F as uint32)
                 as int32,
             game,
@@ -4076,10 +3858,8 @@ pub unsafe fn NorfairErraticFireball_Main(game: &mut Game) {
     };
 }
 pub unsafe fn LavaquakeRocks_Init(game: &mut Game) {
-    let E: *mut Enemy_LavaquakeRocks = Get_LavaquakeRocks(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_LavaquakeRocks =
+        Get_LavaquakeRocks(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).base.current_instruction = addr_kNorfairErraticFireball_Ilist_B51A as uint16;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
@@ -4103,31 +3883,15 @@ pub unsafe fn CallLavaQuakeRocksFunc(ea: uint32, game: &mut Game) {
     }
 }
 pub unsafe fn LavaquakeRocks_Main(game: &mut Game) {
-    let E: *mut Enemy_LavaquakeRocks = Get_LavaquakeRocks(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_LavaquakeRocks =
+        Get_LavaquakeRocks(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     CallLavaQuakeRocksFunc((((*E).lrs_var_A) as u32) | (0xa20000u32), game);
 }
 pub unsafe fn LavaquakeRocks_1(game: &mut Game) {
-    if IsSamusWithinEnemy_X(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        0x40 as uint16,
-        game,
-    ) != 0
-    {
-        if IsSamusWithinEnemy_Y(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-            0x40 as uint16,
-            game,
-        ) != 0
-        {
-            (*Get_LavaquakeRocks(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                    as ::core::ffi::c_int,
-                game,
-            ))
-            .lrs_var_A = ((0xa2b5b2i32) as u16);
+    if IsSamusWithinEnemy_X(ram_word!(game, cur_enemy_index), 0x40 as uint16, game) != 0 {
+        if IsSamusWithinEnemy_Y(ram_word!(game, cur_enemy_index), 0x40 as uint16, game) != 0 {
+            (*Get_LavaquakeRocks(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+                .lrs_var_A = ((0xa2b5b2i32) as u16);
         }
     }
 }
@@ -4144,14 +3908,12 @@ pub unsafe fn LavaquakeRocks_2(game: &mut Game) {
     SpawnEprojWithGfx(
         *(game.g_rom.offset(crate::rtl::lorom_offset(0xa2b530)) as *const uint8 as *mut uint16)
             .offset(v1 as isize),
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+        ram_word!(game, cur_enemy_index),
         addr_stru_86BD5A as uint16,
         game,
     );
-    let E: *mut Enemy_LavaquakeRocks = Get_LavaquakeRocks(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_LavaquakeRocks =
+        Get_LavaquakeRocks(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).lrs_var_A = ((0xa2b5eai32) as u16);
     (*E).lrs_var_B = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa2b520)) as *const uint8
         as *mut uint16)
@@ -4161,25 +3923,18 @@ pub unsafe fn LavaquakeRocks_2(game: &mut Game) {
         );
 }
 pub unsafe fn LavaquakeRocks_3(game: &mut Game) {
-    let E: *mut Enemy_LavaquakeRocks = Get_LavaquakeRocks(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_LavaquakeRocks =
+        Get_LavaquakeRocks(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).lrs_var_B = (*E).lrs_var_B.wrapping_sub(1);
     if ((*E).lrs_var_B as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
         (*E).lrs_var_A = ((0xa2b596i32) as u16);
     }
 }
 pub unsafe fn Rinka_Init(game: &mut Game) {
-    let E: *mut Enemy_Rinka = Get_Rinka(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_Rinka =
+        Get_Rinka(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if (*E).rinka_parameter_1 != 0 {
-        Rinka_1(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-            game,
-        );
+        Rinka_1(ram_word!(game, cur_enemy_index), game);
         (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
             & !(kEnemyProps_RespawnIfKilled as ::core::ffi::c_int
                 | kEnemyProps_DisableSamusColl as ::core::ffi::c_int
@@ -4195,10 +3950,7 @@ pub unsafe fn Rinka_Init(game: &mut Game) {
             | 0x6400 as ::core::ffi::c_int) as uint16;
     }
     (*E).base.palette_index = 1024 as uint16;
-    Rinka_Init3(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        game,
-    );
+    Rinka_Init3(ram_word!(game, cur_enemy_index), game);
 }
 pub unsafe fn Rinka_Init2(k: uint16, game: &mut Game) {
     let mut v2: *mut EnemySpawnData = ::core::ptr::null_mut::<EnemySpawnData>();
@@ -4378,27 +4130,19 @@ pub unsafe fn CallRinkaFunc(ea: uint32, k: uint16, game: &mut Game) {
 }
 pub unsafe fn Rinka_Main(game: &mut Game) {
     let mut v2: uint16 = 0;
-    let E: *mut Enemy_Rinka = Get_Rinka(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_Rinka =
+        Get_Rinka(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if (*E).rinka_parameter_1 != 0u16
         && (*Get_Rinka(0 as ::core::ffi::c_int, game)).rinka_var_1D != 0u16
     {
-        Rinka_6(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-            game,
-        );
-        Rinka_8(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-            game,
-        );
+        Rinka_6(ram_word!(game, cur_enemy_index), game);
+        Rinka_8(ram_word!(game, cur_enemy_index), game);
         v2 = 0 as uint16;
         RinkasDeathAnimation(v2, game);
     } else {
         CallRinkaFunc(
             (((*E).rinka_var_A) as u32) | (0xa20000u32),
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+            ram_word!(game, cur_enemy_index),
             game,
         );
     };
@@ -4418,10 +4162,8 @@ pub unsafe fn Rinka_3(k: uint16, game: &mut Game) {
         }
         (*E).base.properties = v3;
         let r18: uint16 = -(CalculateAngleFromXY(
-            (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16))
-                .wrapping_sub((*E).base.x_pos),
-            (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16))
-                .wrapping_sub((*E).base.y_pos),
+            (ram_word!(game, samus_x_pos)).wrapping_sub((*E).base.x_pos),
+            (ram_word!(game, samus_y_pos)).wrapping_sub((*E).base.y_pos),
             game,
         ) as ::core::ffi::c_int
             + 0x80 as ::core::ffi::c_int) as uint8 as uint16;
@@ -4478,8 +4220,7 @@ pub unsafe fn Rinka_6(k: uint16, game: &mut Game) {
 }
 pub unsafe fn Rinka_7(k: uint16, game: &mut Game) {
     let E: *mut Enemy_Rinka = Get_Rinka(k as ::core::ffi::c_int, game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xe44) as *mut uint16) as ::core::ffi::c_int
-        & 3 as ::core::ffi::c_int
+    if ram_word!(game, random_enemy_counter) as ::core::ffi::c_int & 3 as ::core::ffi::c_int
         == (*E).rinka_parameter_1 as ::core::ffi::c_int
     {
         (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
@@ -4510,8 +4251,7 @@ pub unsafe fn Rinka_9(k: uint16, game: &mut Game) -> uint8 {
     let result: uint8 = 1 as uint8;
     if y_pos >= 0i16 {
         v3 = (y_pos as ::core::ffi::c_int + 16 as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16)
-                as ::core::ffi::c_int) as int16;
+            - ram_word!(game, layer1_y_pos) as ::core::ffi::c_int) as int16;
         if v3 >= 0i16 {
             if v3 as ::core::ffi::c_int - 256 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                 != 0
@@ -4519,8 +4259,8 @@ pub unsafe fn Rinka_9(k: uint16, game: &mut Game) -> uint8 {
                 x_pos = (*E).base.x_pos as int16;
                 if x_pos >= 0i16 {
                     v5 = (x_pos as ::core::ffi::c_int + 16 as ::core::ffi::c_int
-                        - *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16)
-                            as ::core::ffi::c_int) as int16;
+                        - ram_word!(game, layer1_x_pos) as ::core::ffi::c_int)
+                        as int16;
                     if v5 >= 0i16 {
                         if v5 as ::core::ffi::c_int - 288 as ::core::ffi::c_int
                             & 0x8000 as ::core::ffi::c_int
@@ -4537,22 +4277,16 @@ pub unsafe fn Rinka_9(k: uint16, game: &mut Game) -> uint8 {
 }
 pub unsafe fn Rinka_10(r18: uint16, r20: uint16, game: &mut Game) -> bool {
     (r20 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32
-        || ((r20) as i16).wrapping_sub(
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16)) as i16,
-        ) < 0i16
+        || ((r20) as i16).wrapping_sub((ram_word!(game, layer1_y_pos)) as i16) < 0i16
         || r20 as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16)
-                as ::core::ffi::c_int
+            - ram_word!(game, layer1_y_pos) as ::core::ffi::c_int
             - 224 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             == 0
         || (r20 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32
-        || ((r18) as i16).wrapping_sub(
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16)) as i16,
-        ) < 0i16
+        || ((r18) as i16).wrapping_sub((ram_word!(game, layer1_x_pos)) as i16) < 0i16
         || r18 as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16)
-                as ::core::ffi::c_int
+            - ram_word!(game, layer1_x_pos) as ::core::ffi::c_int
             - 256 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             == 0
@@ -4573,17 +4307,11 @@ pub unsafe fn Rinka_Frozen(k: uint16, game: &mut Game) {
 }
 pub unsafe fn Rinka_Touch(game: &mut Game) {
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
-    Rinka_B960(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        game,
-    );
+    Rinka_B960(ram_word!(game, cur_enemy_index), game);
 }
 pub unsafe fn Rinka_Shot(game: &mut Game) {
     NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
-    Rinka_B960(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        game,
-    );
+    Rinka_B960(ram_word!(game, cur_enemy_index), game);
 }
 pub unsafe fn Rinka_Powerbomb(k: uint16, game: &mut Game) {
     if ((*Get_Rinka(k as ::core::ffi::c_int, game)).base.properties as ::core::ffi::c_int
@@ -4657,25 +4385,19 @@ pub unsafe fn EnemyInstr_Rio_Instr_1(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*Get_Rio(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .rio_var_E = 1 as uint16;
+    (*Get_Rio(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).rio_var_E =
+        1 as uint16;
     jp
 }
 pub unsafe fn Rio_Init(game: &mut Game) {
-    let E: *mut Enemy_Rio = Get_Rio(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_Rio = Get_Rio(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).rio_var_E = 0 as uint16;
     (*E).rio_var_F = 0 as uint16;
     (*E).base.current_instruction = addr_kRio_Ilist_BB4B as uint16;
     (*E).rio_var_B = ((0xa2bbedi32) as u16);
 }
 pub unsafe fn CallRioFunc(ea: uint32, game: &mut Game) {
-    let k: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
+    let k: uint16 = ram_word!(game, cur_enemy_index);
     match ea {
         10664941 => {
             Rio_1(k, game);
@@ -4699,10 +4421,7 @@ pub unsafe fn CallRioFunc(ea: uint32, game: &mut Game) {
 }
 pub unsafe fn Rio_Main(game: &mut Game) {
     NextRandom(game);
-    let E: *mut Enemy_Rio = Get_Rio(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_Rio = Get_Rio(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     CallRioFunc((((*E).rio_var_B) as u32) | (0xa20000u32), game);
 }
 pub unsafe fn Rio_1(k: uint16, game: &mut Game) {
@@ -4714,10 +4433,7 @@ pub unsafe fn Rio_1(k: uint16, game: &mut Game) {
             *(game.g_rom.offset(crate::rtl::lorom_offset(0xa2bbbb)) as *const uint8 as *mut uint16);
         (*E).rio_var_D =
             *(game.g_rom.offset(crate::rtl::lorom_offset(0xa2bbbf)) as *const uint8 as *mut uint16);
-        if ((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)) as i16)
-            .wrapping_sub(((*E).base.x_pos) as i16)
-            < 0i16
-        {
+        if ((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(((*E).base.x_pos) as i16) < 0i16 {
             (*E).rio_var_D = -((*E).rio_var_D as ::core::ffi::c_int) as uint16;
         }
         Rio_6(addr_kRio_Ilist_BB7F as uint16, game);
@@ -4792,7 +4508,7 @@ pub unsafe fn Rio_4(k: uint16, game: &mut Game) {
 pub unsafe fn Rio_5(k: uint16, game: &mut Game) {
     let E: *mut Enemy_Rio = Get_Rio(k as ::core::ffi::c_int, game);
     if (((*Get_Rio(k as ::core::ffi::c_int, game)).base.y_pos) as i16)
-        .wrapping_sub((*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)) as i16)
+        .wrapping_sub((ram_word!(game, samus_y_pos)) as i16)
         >= 0i16
     {
         (*E).rio_var_D = (*E).rio_var_A;
@@ -4815,10 +4531,7 @@ pub unsafe fn Rio_5(k: uint16, game: &mut Game) {
     };
 }
 pub unsafe fn Rio_6(a: uint16, game: &mut Game) {
-    let E: *mut Enemy_Rio = Get_Rio(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_Rio = Get_Rio(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if a != (*E).rio_var_F {
         (*E).rio_var_F = a;
         (*E).base.current_instruction = a;
@@ -4831,18 +4544,13 @@ pub unsafe fn NorfairLavajumpingEnemy_Instr_BE8E(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*Get_NorfairLavajumpingEnemy(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .nley_var_00 = 1 as uint16;
+    (*Get_NorfairLavajumpingEnemy(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+        .nley_var_00 = 1 as uint16;
     jp
 }
 pub unsafe fn NorfairLavajumpingEnemy_Init(game: &mut Game) {
-    let E: *mut Enemy_NorfairLavajumpingEnemy = Get_NorfairLavajumpingEnemy(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_NorfairLavajumpingEnemy =
+        Get_NorfairLavajumpingEnemy(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).nley_var_00 = 0 as uint16;
     (*E).nley_var_01 = 0 as uint16;
     if ((*E).nley_parameter_1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
@@ -4857,10 +4565,8 @@ pub unsafe fn NorfairLavajumpingEnemy_Init(game: &mut Game) {
 }
 pub unsafe fn NorfairLavajumpingEnemy_Main(game: &mut Game) {
     NextRandom(game);
-    let E: *mut Enemy_NorfairLavajumpingEnemy = Get_NorfairLavajumpingEnemy(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_NorfairLavajumpingEnemy =
+        Get_NorfairLavajumpingEnemy(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     CallEnemyPreInstr((((*E).nley_var_F) as u32) | (0xa20000u32), game);
 }
 pub unsafe fn NorfairLavajumpingEnemy_Func_1(k: uint16, game: &mut Game) {
@@ -4980,10 +4686,8 @@ pub unsafe fn NorfairLavajumpingEnemy_Func_5(k: uint16, game: &mut Game) {
     };
 }
 pub unsafe fn NorfairLavajumpingEnemy_Func_6(a: uint16, game: &mut Game) {
-    let E: *mut Enemy_NorfairLavajumpingEnemy = Get_NorfairLavajumpingEnemy(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_NorfairLavajumpingEnemy =
+        Get_NorfairLavajumpingEnemy(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if a != (*E).nley_var_01 {
         (*E).nley_var_01 = a;
         (*E).base.current_instruction = a;
@@ -4996,11 +4700,8 @@ pub unsafe fn NorfairRio_Instr_C1C9(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*Get_NorfairRio(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .nro_var_01 = 1 as uint16;
+    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).nro_var_01 =
+        1 as uint16;
     jp
 }
 pub unsafe fn NorfairRio_Instr_C1D4(
@@ -5008,11 +4709,8 @@ pub unsafe fn NorfairRio_Instr_C1D4(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*Get_NorfairRio(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .nro_var_02 = 8 as uint16;
+    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).nro_var_02 =
+        8 as uint16;
     jp
 }
 pub unsafe fn NorfairRio_Instr_C1DF(
@@ -5020,11 +4718,8 @@ pub unsafe fn NorfairRio_Instr_C1DF(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*Get_NorfairRio(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .nro_var_02 = 8 as uint16;
+    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).nro_var_02 =
+        8 as uint16;
     jp
 }
 pub unsafe fn NorfairRio_Instr_C1EA(
@@ -5032,11 +4727,8 @@ pub unsafe fn NorfairRio_Instr_C1EA(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*Get_NorfairRio(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .nro_var_02 = 12 as uint16;
+    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).nro_var_02 =
+        12 as uint16;
     jp
 }
 pub unsafe fn NorfairRio_Instr_C1F5(
@@ -5044,11 +4736,8 @@ pub unsafe fn NorfairRio_Instr_C1F5(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*Get_NorfairRio(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .nro_var_02 = -(12 as ::core::ffi::c_int) as uint16;
+    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).nro_var_02 =
+        -(12 as ::core::ffi::c_int) as uint16;
     jp
 }
 pub unsafe fn NorfairRio_Instr_C200(
@@ -5056,11 +4745,8 @@ pub unsafe fn NorfairRio_Instr_C200(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*Get_NorfairRio(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .nro_var_02 = 4 as uint16;
+    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).nro_var_02 =
+        4 as uint16;
     jp
 }
 pub unsafe fn NorfairRio_Instr_C20B(
@@ -5068,11 +4754,8 @@ pub unsafe fn NorfairRio_Instr_C20B(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*Get_NorfairRio(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .nro_var_02 = 0 as uint16;
+    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).nro_var_02 =
+        0 as uint16;
     jp
 }
 pub unsafe fn NorfairRio_Instr_C216(
@@ -5080,11 +4763,8 @@ pub unsafe fn NorfairRio_Instr_C216(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*Get_NorfairRio(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .nro_var_02 = -(4 as ::core::ffi::c_int) as uint16;
+    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).nro_var_02 =
+        -(4 as ::core::ffi::c_int) as uint16;
     jp
 }
 pub unsafe fn NorfairRio_Instr_C221(
@@ -5092,11 +4772,8 @@ pub unsafe fn NorfairRio_Instr_C221(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*Get_NorfairRio(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .nro_var_02 = -(12 as ::core::ffi::c_int) as uint16;
+    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).nro_var_02 =
+        -(12 as ::core::ffi::c_int) as uint16;
     jp
 }
 pub unsafe fn NorfairRio_Instr_C22C(
@@ -5104,11 +4781,8 @@ pub unsafe fn NorfairRio_Instr_C22C(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*Get_NorfairRio(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .nro_var_02 = -(16 as ::core::ffi::c_int) as uint16;
+    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).nro_var_02 =
+        -(16 as ::core::ffi::c_int) as uint16;
     jp
 }
 pub unsafe fn NorfairRio_Instr_C237(
@@ -5116,18 +4790,13 @@ pub unsafe fn NorfairRio_Instr_C237(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*Get_NorfairRio(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .nro_var_02 = 12 as uint16;
+    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).nro_var_02 =
+        12 as uint16;
     jp
 }
 pub unsafe fn NorfairRio_Init(game: &mut Game) {
-    let E: *mut Enemy_NorfairRio = Get_NorfairRio(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_NorfairRio =
+        Get_NorfairRio(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).nro_var_01 = 0 as uint16;
     (*E).nro_var_02 = 0 as uint16;
     if ((*E).nro_parameter_1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
@@ -5142,10 +4811,8 @@ pub unsafe fn NorfairRio_Init(game: &mut Game) {
 }
 pub unsafe fn NorfairRio_Main(game: &mut Game) {
     NextRandom(game);
-    let E: *mut Enemy_NorfairRio = Get_NorfairRio(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_NorfairRio =
+        Get_NorfairRio(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     CallEnemyPreInstr((((*E).nro_var_F) as u32) | (0xa20000u32), game);
 }
 pub unsafe fn NorfairRio_Func_1(k: uint16, game: &mut Game) {
@@ -5193,9 +4860,7 @@ pub unsafe fn NorfairRio_Func_1(k: uint16, game: &mut Game) {
 }
 pub unsafe fn NorfairRio_Func_2(k: uint16, game: &mut Game) {
     let E: *mut Enemy_NorfairRio = Get_NorfairRio(k as ::core::ffi::c_int, game);
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16) as ::core::ffi::c_int
-        & 0x101 as ::core::ffi::c_int)
-        != 0i32
+    if (ram_word!(game, random_number) as ::core::ffi::c_int & 0x101 as ::core::ffi::c_int) != 0i32
         && CompareDistToSamus_X(k, 0xc0 as uint16, game) as ::core::ffi::c_int
             & 1 as ::core::ffi::c_int
             == 0
@@ -5203,18 +4868,13 @@ pub unsafe fn NorfairRio_Func_2(k: uint16, game: &mut Game) {
         (*E).nro_var_A = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa2c1c1)) as *const uint8
             as *mut uint16)
             .offset(
-                ((*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
-                    as ::core::ffi::c_int
-                    >> 1 as ::core::ffi::c_int
+                ((ram_word!(game, random_number) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int
                     & 2 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
                     >> 1 as ::core::ffi::c_int) as isize,
             );
         (*E).nro_var_B =
             *(game.g_rom.offset(crate::rtl::lorom_offset(0xa2c1c5)) as *const uint8 as *mut uint16);
-        if ((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)) as i16)
-            .wrapping_sub(((*E).base.x_pos) as i16)
-            < 0i16
-        {
+        if ((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(((*E).base.x_pos) as i16) < 0i16 {
             (*E).nro_var_B = -((*E).nro_var_B as ::core::ffi::c_int) as uint16;
         }
         NorfairRio_Func_7(addr_kNorfairRio_Ilist_C107 as uint16, game);
@@ -5289,10 +4949,8 @@ pub unsafe fn NorfairRio_Func_6(k: uint16, game: &mut Game) {
     (*Get_NorfairRio(k as ::core::ffi::c_int, game)).nro_var_F = ((0xa2c2e7i32) as u16);
 }
 pub unsafe fn NorfairRio_Func_7(a: uint16, game: &mut Game) {
-    let E: *mut Enemy_NorfairRio = Get_NorfairRio(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_NorfairRio =
+        Get_NorfairRio(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if a != (*E).nro_var_00 {
         (*E).nro_var_00 = a;
         (*E).base.current_instruction = a;
@@ -5305,11 +4963,8 @@ pub unsafe fn LowerNorfairRio_Instr_C6D2(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*Get_NorfairRio(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .nro_var_01 = 1 as uint16;
+    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).nro_var_01 =
+        1 as uint16;
     jp
 }
 pub unsafe fn LowerNorfairRio_Instr_C6DD(
@@ -5317,11 +4972,8 @@ pub unsafe fn LowerNorfairRio_Instr_C6DD(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*Get_NorfairRio(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .nro_var_02 = 0 as uint16;
+    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).nro_var_02 =
+        0 as uint16;
     jp
 }
 pub unsafe fn LowerNorfairRio_Instr_C6E8(
@@ -5329,18 +4981,13 @@ pub unsafe fn LowerNorfairRio_Instr_C6E8(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*Get_NorfairRio(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .nro_var_02 = 1 as uint16;
+    (*Get_NorfairRio(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).nro_var_02 =
+        1 as uint16;
     jp
 }
 pub unsafe fn LowerNorfairRio_Init(game: &mut Game) {
-    let E: *mut Enemy_NorfairRio = Get_NorfairRio(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_NorfairRio =
+        Get_NorfairRio(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).nro_var_01 = 0 as uint16;
     if ((*E).nro_parameter_1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32 {
         (*E).nro_var_F = ((0xa2c771i32) as u16);
@@ -5354,10 +5001,8 @@ pub unsafe fn LowerNorfairRio_Init(game: &mut Game) {
 }
 pub unsafe fn LowerNorfairRio_Main(game: &mut Game) {
     NextRandom(game);
-    let E: *mut Enemy_LowerNorfairRio = Get_LowerNorfairRio(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_LowerNorfairRio =
+        Get_LowerNorfairRio(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     CallEnemyPreInstr((((*E).lnro_var_F) as u32) | (0xa20000u32), game);
 }
 pub unsafe fn LowerNorfairRio_Func_1(k: uint16, game: &mut Game) {
@@ -5388,9 +5033,7 @@ pub unsafe fn LowerNorfairRio_Func_1(k: uint16, game: &mut Game) {
 }
 pub unsafe fn LowerNorfairRio_Func_2(k: uint16, game: &mut Game) {
     let E: *mut Enemy_NorfairRio = Get_NorfairRio(k as ::core::ffi::c_int, game);
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16) as ::core::ffi::c_int
-        & 0x101 as ::core::ffi::c_int)
-        != 0i32
+    if (ram_word!(game, random_number) as ::core::ffi::c_int & 0x101 as ::core::ffi::c_int) != 0i32
         && CompareDistToSamus_X(k, 0x70 as uint16, game) as ::core::ffi::c_int
             & 1 as ::core::ffi::c_int
             == 0
@@ -5399,10 +5042,7 @@ pub unsafe fn LowerNorfairRio_Func_2(k: uint16, game: &mut Game) {
             *(game.g_rom.offset(crate::rtl::lorom_offset(0xa2c6ca)) as *const uint8 as *mut uint16);
         (*E).nro_var_D =
             *(game.g_rom.offset(crate::rtl::lorom_offset(0xa2c6ce)) as *const uint8 as *mut uint16);
-        if ((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)) as i16)
-            .wrapping_sub(((*E).base.x_pos) as i16)
-            < 0i16
-        {
+        if ((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(((*E).base.x_pos) as i16) < 0i16 {
             (*E).nro_var_D = -((*E).nro_var_D as ::core::ffi::c_int) as uint16;
         }
         LowerNorfairRio_Func_7(addr_kLowerNorfairRio_Ilist_C630 as uint16, game);
@@ -5483,10 +5123,8 @@ pub unsafe fn LowerNorfairRio_Func_6(k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn LowerNorfairRio_Func_7(a: uint16, game: &mut Game) {
-    let E: *mut Enemy_NorfairRio = Get_NorfairRio(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_NorfairRio =
+        Get_NorfairRio(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if a != (*E).nro_var_00 {
         (*E).nro_var_00 = a;
         (*E).base.current_instruction = a;
@@ -5507,11 +5145,8 @@ pub unsafe fn MaridiaLargeSnail_Instr_CCB3(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*Get_MaridiaLargeSnail(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .mlsl_var_02 = 1 as uint16;
+    (*Get_MaridiaLargeSnail(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+        .mlsl_var_02 = 1 as uint16;
     jp
 }
 pub unsafe fn MaridiaLargeSnail_Instr_CCBE(
@@ -5519,11 +5154,8 @@ pub unsafe fn MaridiaLargeSnail_Instr_CCBE(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*Get_MaridiaLargeSnail(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .mlsl_var_03 = 1 as uint16;
+    (*Get_MaridiaLargeSnail(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+        .mlsl_var_03 = 1 as uint16;
     jp
 }
 pub unsafe fn MaridiaLargeSnail_Instr_CCC9(
@@ -5531,18 +5163,13 @@ pub unsafe fn MaridiaLargeSnail_Instr_CCC9(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*Get_MaridiaLargeSnail(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .mlsl_var_03 = 0 as uint16;
+    (*Get_MaridiaLargeSnail(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+        .mlsl_var_03 = 0 as uint16;
     jp
 }
 pub unsafe fn MaridiaLargeSnail_Init(game: &mut Game) {
-    let E: *mut Enemy_MaridiaLargeSnail = Get_MaridiaLargeSnail(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_MaridiaLargeSnail =
+        Get_MaridiaLargeSnail(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).mlsl_var_B = 0 as uint16;
     (*E).mlsl_var_D = 0 as uint16;
     (*E).mlsl_var_00 = 0 as uint16;
@@ -5573,23 +5200,12 @@ pub unsafe fn CallMaridiaLargeSnailFunc(ea: uint32, game: &mut Game) {
     }
 }
 pub unsafe fn MaridiaLargeSnail_Main(game: &mut Game) {
-    MaridiaLargeSnail_Func_1(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        game,
-    );
-    let E: *mut Enemy_MaridiaLargeSnail = Get_MaridiaLargeSnail(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    MaridiaLargeSnail_Func_1(ram_word!(game, cur_enemy_index), game);
+    let E: *mut Enemy_MaridiaLargeSnail =
+        Get_MaridiaLargeSnail(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     CallMaridiaLargeSnailFunc((((*E).mlsl_var_A) as u32) | (0xa20000u32), game);
-    MaridiaLargeSnail_Func_2(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        game,
-    );
-    MaridiaLargeSnail_Func_3(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        game,
-    );
+    MaridiaLargeSnail_Func_2(ram_word!(game, cur_enemy_index), game);
+    MaridiaLargeSnail_Func_3(ram_word!(game, cur_enemy_index), game);
 }
 pub unsafe fn MaridiaLargeSnail_Func_1(k: uint16, game: &mut Game) {
     MaridiaLargeSnail_Func_11(game);
@@ -5625,16 +5241,14 @@ pub unsafe fn MaridiaLargeSnail_Func_3(k: uint16, game: &mut Game) {
         if v2 == 0 {
             if (*E).mlsl_var_05 != 0 {
                 if (*E).mlsl_var_D == 0
-                    || (*((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16)
-                        as ::core::ffi::c_int
+                    || (ram_word!(game, joypad1_lastkeys) as ::core::ffi::c_int
                         & 0x100 as ::core::ffi::c_int)
                         == 0i32
                 {
                     return;
                 }
             } else if (*E).mlsl_var_D != 0u16
-                || (*((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16)
-                    as ::core::ffi::c_int
+                || (ram_word!(game, joypad1_lastkeys) as ::core::ffi::c_int
                     & 0x200 as ::core::ffi::c_int)
                     == 0i32
             {
@@ -5645,16 +5259,14 @@ pub unsafe fn MaridiaLargeSnail_Func_3(k: uint16, game: &mut Game) {
             return;
         }
         if v2 < 0i16 {
-            if (*((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16)
-                as ::core::ffi::c_int
+            if (ram_word!(game, joypad1_lastkeys) as ::core::ffi::c_int
                 & 0x100 as ::core::ffi::c_int)
                 != 0i32
             {
                 (*E).mlsl_var_0B = 1 as uint16;
                 (*E).base.x_pos = (*E).mlsl_var_06;
             }
-        } else if (*((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16)
-            as ::core::ffi::c_int
+        } else if (ram_word!(game, joypad1_lastkeys) as ::core::ffi::c_int
             & 0x200 as ::core::ffi::c_int)
             != 0i32
         {
@@ -5664,52 +5276,34 @@ pub unsafe fn MaridiaLargeSnail_Func_3(k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn MaridiaLargeSnail_Func_4(game: &mut Game) {
-    let E: *mut Enemy_MaridiaLargeSnail = Get_MaridiaLargeSnail(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_MaridiaLargeSnail =
+        Get_MaridiaLargeSnail(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if (*E).mlsl_var_E != 0 {
         CallEnemyPreInstr((((*E).mlsl_var_F) as u32) | (0xa20000u32), game);
     } else {
         (*E).mlsl_var_00 = 0 as uint16;
-        if (GetSamusEnemyDelta_X(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-            game,
-        ) as ::core::ffi::c_int
+        if (GetSamusEnemyDelta_X(ram_word!(game, cur_enemy_index), game) as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int)
             != 0i32
         {
             (*E).mlsl_var_D = 1 as uint16;
             (*E).mlsl_var_00 = 1 as uint16;
         }
-        MaridiaLargeSnail_Func_10(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-            game,
-        );
-        if IsSamusWithinEnemy_X(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-            0x18 as uint16,
-            game,
-        ) != 0
-        {
+        MaridiaLargeSnail_Func_10(ram_word!(game, cur_enemy_index), game);
+        if IsSamusWithinEnemy_X(ram_word!(game, cur_enemy_index), 0x18 as uint16, game) != 0 {
             (*E).mlsl_var_00 = ((*E).mlsl_var_00) | (2u16);
-            MaridiaLargeSnail_Func_10(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-                game,
-            );
+            MaridiaLargeSnail_Func_10(ram_word!(game, cur_enemy_index), game);
             (*E).mlsl_var_A = ((0xa2ce2bi32) as u16);
         }
     };
 }
 pub unsafe fn MaridiaLargeSnail_Func_5(game: &mut Game) {
-    let E: *mut Enemy_MaridiaLargeSnail = Get_MaridiaLargeSnail(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_MaridiaLargeSnail =
+        Get_MaridiaLargeSnail(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if (*E).mlsl_var_E != 0 {
         CallEnemyPreInstr((((*E).mlsl_var_F) as u32) | (0xa20000u32), game);
     } else if Enemy_MoveDown(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+        ram_word!(game, cur_enemy_index),
         (1 as int16 as int32) << 16 as ::core::ffi::c_int,
         game,
     ) == 0
@@ -5726,21 +5320,14 @@ pub unsafe fn MaridiaLargeSnail_Func_5(game: &mut Game) {
         if v4
             && {
                 (*E).mlsl_var_C = 0 as uint16;
-                IsSamusWithinEnemy_X(
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-                    0x20 as uint16,
-                    game,
-                ) != 0u16
+                IsSamusWithinEnemy_X(ram_word!(game, cur_enemy_index), 0x20 as uint16, game) != 0u16
             }
             && (*E).mlsl_var_03 != 0u16
             && (*E).mlsl_var_E == 0
         {
             (*E).mlsl_var_00 = 0 as uint16;
             (*E).mlsl_var_D = 0 as uint16;
-            if (GetSamusEnemyDelta_X(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-                game,
-            ) as ::core::ffi::c_int
+            if (GetSamusEnemyDelta_X(ram_word!(game, cur_enemy_index), game) as ::core::ffi::c_int
                 & 0x8000 as ::core::ffi::c_int)
                 != 0i32
             {
@@ -5750,10 +5337,7 @@ pub unsafe fn MaridiaLargeSnail_Func_5(game: &mut Game) {
             (*E).mlsl_var_C = 128 as uint16;
             (*E).mlsl_var_00 = ((*E).mlsl_var_00 as ::core::ffi::c_int & 1 as ::core::ffi::c_int
                 | 4 as ::core::ffi::c_int) as uint16;
-            MaridiaLargeSnail_Func_10(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-                game,
-            );
+            MaridiaLargeSnail_Func_10(ram_word!(game, cur_enemy_index), game);
             (*E).mlsl_var_A = ((0xa2cf40i32) as u16);
         } else {
             let mut v5: uint16 = 128 as uint16;
@@ -5775,7 +5359,7 @@ pub unsafe fn MaridiaLargeSnail_Func_5(game: &mut Game) {
                 }
             }
             if Enemy_MoveRight_SlopesAsWalls(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+                ram_word!(game, cur_enemy_index),
                 ((r20 as uint32) << 16 as ::core::ffi::c_int | r18 as uint32) as int32,
                 game,
             ) != 0
@@ -5794,26 +5378,18 @@ pub unsafe fn MaridiaLargeSnail_Func_5(game: &mut Game) {
             if R36 != 0 {
                 (*E).mlsl_var_D = ((*E).mlsl_var_D) ^ (1u16);
                 (*E).mlsl_var_00 = ((*E).mlsl_var_00) ^ (4u16);
-                MaridiaLargeSnail_Func_10(
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-                    game,
-                );
+                MaridiaLargeSnail_Func_10(ram_word!(game, cur_enemy_index), game);
             }
         }
     }
 }
 pub unsafe fn MaridiaLargeSnail_Func_6(game: &mut Game) {
-    let E: *mut Enemy_MaridiaLargeSnail = Get_MaridiaLargeSnail(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_MaridiaLargeSnail =
+        Get_MaridiaLargeSnail(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if (*E).mlsl_var_02 != 0 {
         (*E).mlsl_var_02 = 0 as uint16;
         (*E).mlsl_var_00 = ((*E).mlsl_var_00).wrapping_sub(2u16);
-        MaridiaLargeSnail_Func_10(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-            game,
-        );
+        MaridiaLargeSnail_Func_10(ram_word!(game, cur_enemy_index), game);
         (*E).mlsl_var_A = ((0xa2ce2bi32) as u16);
     }
 }
@@ -5880,28 +5456,15 @@ pub unsafe fn MaridiaLargeSnail_Func_10(k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn MaridiaLargeSnail_Func_11(game: &mut Game) {
-    let E: *mut Enemy_MaridiaLargeSnail = Get_MaridiaLargeSnail(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_MaridiaLargeSnail =
+        Get_MaridiaLargeSnail(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).mlsl_var_04 = 0 as uint16;
     (*E).mlsl_var_05 = 0 as uint16;
-    if IsSamusWithinEnemy_Y(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        0x20 as uint16,
-        game,
-    ) != 0u16
-        && IsSamusWithinEnemy_X(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-            0x18 as uint16,
-            game,
-        ) != 0u16
+    if IsSamusWithinEnemy_Y(ram_word!(game, cur_enemy_index), 0x20 as uint16, game) != 0u16
+        && IsSamusWithinEnemy_X(ram_word!(game, cur_enemy_index), 0x18 as uint16, game) != 0u16
     {
         (*E).mlsl_var_04 = 1 as uint16;
-        if (GetSamusEnemyDelta_X(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-            game,
-        ) as ::core::ffi::c_int
+        if (GetSamusEnemyDelta_X(ram_word!(game, cur_enemy_index), game) as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int)
             != 0i32
         {
@@ -5914,19 +5477,13 @@ pub unsafe fn MaridiaLargeSnail_Func_12(game: &mut Game) {
     MaridiaLargeSnail_Touch(game);
 }
 pub unsafe fn MaridiaLargeSnail_Touch(game: &mut Game) {
-    let k: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
+    let k: uint16 = ram_word!(game, cur_enemy_index);
     if CheckIfEnemyTouchesSamus(k, game) == 0 {
-        if ((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)) as i16)
-            .wrapping_sub(
-                ((*Get_MaridiaLargeSnail(
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                        as ::core::ffi::c_int,
-                    game,
-                ))
+        if ((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(
+            ((*Get_MaridiaLargeSnail(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
                 .base
                 .x_pos) as i16,
-            )
-            < 0i16
+        ) < 0i16
         {
             let ref mut fresh26 =
                 *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16);
@@ -5948,10 +5505,8 @@ unsafe fn HirisingSlowfalling_Func_1(k: uint16, game: &mut Game) -> uint16 {
 }
 pub unsafe fn HirisingSlowfalling_Init(game: &mut Game) {
     HirisingSlowfalling_Func_3(addr_kHirisingSlowfalling_Ilist_D82C as uint16, game);
-    let E: *mut Enemy_HirisingSlowfalling = Get_HirisingSlowfalling(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_HirisingSlowfalling =
+        Get_HirisingSlowfalling(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).hsg_var_A = ((0xa2e035i32) as u16);
     (*E).hsg_var_00 = (*E).base.x_pos;
     (*E).hsg_var_01 = (*E).base.y_pos;
@@ -5968,15 +5523,8 @@ pub unsafe fn HirisingSlowfalling_Init(game: &mut Game) {
             .offset(v2 as isize),
         game,
     ) as *mut uint16);
-    let r18: uint16 = HirisingSlowfalling_Func_1(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        game,
-    );
-    HirisingSlowfalling_Func_2(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        r18,
-        game,
-    );
+    let r18: uint16 = HirisingSlowfalling_Func_1(ram_word!(game, cur_enemy_index), game);
+    HirisingSlowfalling_Func_2(ram_word!(game, cur_enemy_index), r18, game);
     (*E).hsg_var_03 = ((*E).hsg_var_01).wrapping_sub(r18);
     (*E).hsg_var_02 = (*E).hsg_var_00;
     (*E).hsg_var_B = (*E).hsg_var_06;
@@ -6003,10 +5551,8 @@ pub unsafe fn HirisingSlowfalling_Func_2(k: uint16, r18: uint16, game: &mut Game
     (*Get_HirisingSlowfalling(k as ::core::ffi::c_int, game)).hsg_var_06 = r24;
 }
 pub unsafe fn HirisingSlowfalling_Func_3(a: uint16, game: &mut Game) {
-    let E: *mut Enemy_HirisingSlowfalling = Get_HirisingSlowfalling(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_HirisingSlowfalling =
+        Get_HirisingSlowfalling(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).base.current_instruction = a;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
@@ -6031,33 +5577,21 @@ pub unsafe fn CallHirisingSlowfalling(ea: uint32, game: &mut Game) {
     }
 }
 pub unsafe fn HirisingSlowfalling_Main(game: &mut Game) {
-    let E: *mut Enemy_HirisingSlowfalling = Get_HirisingSlowfalling(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_HirisingSlowfalling =
+        Get_HirisingSlowfalling(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     CallHirisingSlowfalling((((*E).hsg_var_A) as u32) | (0xa20000u32), game);
 }
 pub unsafe fn HirisingSlowfalling_Func_4(game: &mut Game) {
-    if IsSamusWithinEnemy_X(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        0x50 as uint16,
-        game,
-    ) != 0
-    {
-        let E: *mut Enemy_HirisingSlowfalling = Get_HirisingSlowfalling(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                as ::core::ffi::c_int,
-            game,
-        );
+    if IsSamusWithinEnemy_X(ram_word!(game, cur_enemy_index), 0x50 as uint16, game) != 0 {
+        let E: *mut Enemy_HirisingSlowfalling =
+            Get_HirisingSlowfalling(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
         (*E).hsg_var_07 = (*E).hsg_parameter_2;
         (*E).hsg_var_A = ((0xa2e04fi32) as u16);
     }
 }
 pub unsafe fn HirisingSlowfalling_Func_5(game: &mut Game) {
-    let E: *mut Enemy_HirisingSlowfalling = Get_HirisingSlowfalling(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_HirisingSlowfalling =
+        Get_HirisingSlowfalling(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let v1: int16 = (((*E).hsg_var_07) as i16).wrapping_sub(1i16);
     (*E).hsg_var_07 = v1 as uint16;
     if v1 < 0i16 {
@@ -6066,10 +5600,8 @@ pub unsafe fn HirisingSlowfalling_Func_5(game: &mut Game) {
     }
 }
 pub unsafe fn HirisingSlowfalling_Func_6(game: &mut Game) {
-    let E: *mut Enemy_HirisingSlowfalling = Get_HirisingSlowfalling(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_HirisingSlowfalling =
+        Get_HirisingSlowfalling(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let v2: ::core::ffi::c_int = 4 as ::core::ffi::c_int
         * *(&raw mut (*E).hsg_var_B as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
@@ -6101,10 +5633,8 @@ pub unsafe fn HirisingSlowfalling_Func_6(game: &mut Game) {
     }
 }
 pub unsafe fn HirisingSlowfalling_Func_7(game: &mut Game) {
-    let E: *mut Enemy_HirisingSlowfalling = Get_HirisingSlowfalling(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_HirisingSlowfalling =
+        Get_HirisingSlowfalling(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let v1: *const uint8 = RomPtr_A2(
         ((*E).hsg_var_E as ::core::ffi::c_int
             + 4 as ::core::ffi::c_int
@@ -6135,10 +5665,8 @@ pub unsafe fn HirisingSlowfalling_Func_7(game: &mut Game) {
     };
 }
 pub unsafe fn Gripper_Init(game: &mut Game) {
-    let E: *mut Enemy_Gripper = Get_Gripper(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_Gripper =
+        Get_Gripper(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let v1: uint16 = (8u16)
         .wrapping_mul((*(&raw mut (*E).base.current_instruction as *mut uint8).offset(0)) as u16);
     (*E).gripper_var_E = v1;
@@ -6170,26 +5698,18 @@ pub unsafe fn Gripper_Init(game: &mut Game) {
     (*E).gripper_var_B = (*E).gripper_parameter_2;
 }
 pub unsafe fn Gripper_Main(game: &mut Game) {
-    let E: *mut Enemy_Gripper = Get_Gripper(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_Gripper =
+        Get_Gripper(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if Enemy_MoveRight_IgnoreSlopes(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+        ram_word!(game, cur_enemy_index),
         (((*E).gripper_var_D as uint32) << 16 as ::core::ffi::c_int | (*E).gripper_var_C as uint32)
             as int32,
         game,
     ) != 0u8
-        || Gripper_Func_1(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-            game,
-        ) as ::core::ffi::c_int
+        || Gripper_Func_1(ram_word!(game, cur_enemy_index), game) as ::core::ffi::c_int
             & 1 as ::core::ffi::c_int
             != 0
-        || Gripper_Func_2(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-            game,
-        ) as ::core::ffi::c_int
+        || Gripper_Func_2(ram_word!(game, cur_enemy_index), game) as ::core::ffi::c_int
             & 1 as ::core::ffi::c_int
             != 0
     {
@@ -6234,10 +5754,8 @@ pub unsafe fn Gripper_Func_3(game: &mut Game) {
 }
 pub unsafe fn Gripper_Func_4(game: &mut Game) {
     NormalEnemyShotAi(game);
-    let E: *mut Enemy_Gripper = Get_Gripper(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_Gripper =
+        Get_Gripper(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if (*E).base.frozen_timer != 0 {
         let mut v1: uint16 = addr_kGripper_Sprmap_E43F as uint16;
         if ((*E).gripper_var_D as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32 {
@@ -6248,10 +5766,8 @@ pub unsafe fn Gripper_Func_4(game: &mut Game) {
 }
 pub unsafe fn JetPowerRipper_Init(game: &mut Game) {
     let mut v0: uint16 = addr_kRipper_Ilist_E2E0 as uint16;
-    let E: *mut Enemy_JetPowerRipper = Get_JetPowerRipper(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_JetPowerRipper =
+        Get_JetPowerRipper(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if (*E).jprr_parameter_2 != 0 {
         v0 = addr_kRipper_Ilist_E2F4 as uint16;
     }
@@ -6279,12 +5795,10 @@ pub unsafe fn JetPowerRipper_Init(game: &mut Game) {
 }
 pub unsafe fn JetPowerRipper_Main(game: &mut Game) {
     let mut v3: int16 = 0;
-    let E: *mut Enemy_JetPowerRipper = Get_JetPowerRipper(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_JetPowerRipper =
+        Get_JetPowerRipper(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if Enemy_MoveRight_IgnoreSlopes(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+        ram_word!(game, cur_enemy_index),
         (((*E).jprr_var_D as uint32) << 16 as ::core::ffi::c_int | (*E).jprr_var_C as uint32)
             as int32,
         game,
@@ -6320,10 +5834,8 @@ pub unsafe fn Ripper_Func_1(game: &mut Game) {
 pub unsafe fn JetPowerRipper_Shot(game: &mut Game) {
     let mut v1: int16 = 0;
     NormalEnemyShotAi(game);
-    let E: *mut Enemy_JetPowerRipper = Get_JetPowerRipper(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_JetPowerRipper =
+        Get_JetPowerRipper(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if (*E).base.frozen_timer != 0 {
         v1 = -(7105 as ::core::ffi::c_int) as int16;
         if ((*E).jprr_var_D as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32 {
@@ -6334,10 +5846,8 @@ pub unsafe fn JetPowerRipper_Shot(game: &mut Game) {
 }
 pub unsafe fn Ripper_Init(game: &mut Game) {
     let mut v0: uint16 = addr_kRipper_Ilist_E477 as uint16;
-    let E: *mut Enemy_Ripper = Get_Ripper(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_Ripper =
+        Get_Ripper(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if (*E).ripper_parameter_2 == 0 {
         v0 = addr_kRipper_Ilist_E48B as uint16;
     }
@@ -6365,12 +5875,10 @@ pub unsafe fn Ripper_Init(game: &mut Game) {
 }
 pub unsafe fn Ripper_Main(game: &mut Game) {
     let mut v3: int16 = 0;
-    let E: *mut Enemy_Ripper = Get_Ripper(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_Ripper =
+        Get_Ripper(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if Enemy_MoveRight_IgnoreSlopes(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+        ram_word!(game, cur_enemy_index),
         (((*E).ripper_var_D as uint32) << 16 as ::core::ffi::c_int | (*E).ripper_var_C as uint32)
             as int32,
         game,
@@ -6405,18 +5913,13 @@ pub unsafe fn LavaSeahorse_Instr_E5FB(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*Get_LavaSeahorse(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .lse_var_02 = 1 as uint16;
+    (*Get_LavaSeahorse(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).lse_var_02 =
+        1 as uint16;
     jp
 }
 pub unsafe fn LavaSeahorse_Init(game: &mut Game) {
-    let E: *mut Enemy_LavaSeahorse = Get_LavaSeahorse(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_LavaSeahorse =
+        Get_LavaSeahorse(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).lse_var_02 = 0 as uint16;
     if (*E).lse_parameter_1 != 0 {
         (*E).lse_var_00 = 2 as uint16;
@@ -6432,10 +5935,8 @@ pub unsafe fn LavaSeahorse_Init(game: &mut Game) {
     };
 }
 pub unsafe fn LavaSeahorse_Main(game: &mut Game) {
-    let E: *mut Enemy_LavaSeahorse = Get_LavaSeahorse(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_LavaSeahorse =
+        Get_LavaSeahorse(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     CallEnemyPreInstr((((*E).lse_var_F) as u32) | (0xa20000u32), game);
 }
 pub unsafe fn LavaSeahorse_Func_1(k: uint16, game: &mut Game) {
@@ -6525,10 +6026,8 @@ pub unsafe fn LavaSeahorse_Func_5(k: uint16, game: &mut Game) {
     (*E1).base.y_pos = (*E1).base.y_pos.wrapping_add(1);
 }
 pub unsafe fn LavaSeahorse_Func_6(game: &mut Game) {
-    let E: *mut Enemy_LavaSeahorse = Get_LavaSeahorse(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_LavaSeahorse =
+        Get_LavaSeahorse(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let lse_var_00: uint16 = (*E).lse_var_00;
     if lse_var_00 != (*E).lse_var_01 {
         (*E).lse_var_01 = lse_var_00;
@@ -6541,8 +6040,7 @@ pub unsafe fn LavaSeahorse_Func_6(game: &mut Game) {
 }
 pub unsafe fn LavaSeahorse_Func_7(game: &mut Game) {
     let E: *mut Enemy_LavaSeahorse = Get_LavaSeahorse(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int
-            + 64 as ::core::ffi::c_int,
+        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
         game,
     );
     let lse_var_00: uint16 = (*E).lse_var_00;
@@ -6568,16 +6066,12 @@ pub unsafe fn LavaSeahorse_Powerbomb(game: &mut Game) {
     LavaSeahorse_E7DA(game);
 }
 pub unsafe fn LavaSeahorse_E7DA(game: &mut Game) {
-    let E: *mut Enemy_LavaSeahorse = Get_LavaSeahorse(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_LavaSeahorse =
+        Get_LavaSeahorse(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if (*E).base.health != 0 {
         let shake_timer: uint16 = (*E).base.shake_timer;
         let E1: *mut Enemy_LavaSeahorse = Get_LavaSeahorse(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                as ::core::ffi::c_int
-                + 64 as ::core::ffi::c_int,
+            ram_word!(game, cur_enemy_index) as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
             game,
         );
         (*E1).base.shake_timer = shake_timer;
@@ -6587,19 +6081,15 @@ pub unsafe fn LavaSeahorse_E7DA(game: &mut Game) {
         (*E1).base.ai_handler_bits = (*E).base.ai_handler_bits;
     } else {
         let E1_0: *mut Enemy_LavaSeahorse = Get_LavaSeahorse(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                as ::core::ffi::c_int
-                + 64 as ::core::ffi::c_int,
+            ram_word!(game, cur_enemy_index) as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
             game,
         );
         (*E1_0).base.properties = ((*E1_0).base.properties) | (0x200u16);
     };
 }
 pub unsafe fn TimedShutter_Init(game: &mut Game) {
-    let E: *mut Enemy_TimedShutter = Get_TimedShutter(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_TimedShutter =
+        Get_TimedShutter(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).tsr_var_A = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa2ea4e)) as *const uint8
         as *mut uint16)
         .offset(
@@ -6665,13 +6155,11 @@ pub unsafe fn CallTimedShutterFunc(ea: uint32, k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn TimedShutter_Main(game: &mut Game) {
-    let E: *mut Enemy_TimedShutter = Get_TimedShutter(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_TimedShutter =
+        Get_TimedShutter(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     CallTimedShutterFunc(
         (((*E).tsr_var_A) as u32) | (0xa20000u32),
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+        ram_word!(game, cur_enemy_index),
         game,
     );
 }
@@ -6725,10 +6213,8 @@ pub unsafe fn TimedShutter_Func_5(k: uint16, game: &mut Game) {
     off_A2EB1A[v1 as usize].expect("non-null function pointer")(game);
 }
 pub unsafe fn TimedShutter_Func_6(game: &mut Game) {
-    let E: *mut Enemy_TimedShutter = Get_TimedShutter(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_TimedShutter =
+        Get_TimedShutter(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     AddToHiLo(
         &raw mut (*E).base.y_pos,
         &raw mut (*E).base.y_subpos,
@@ -6746,10 +6232,8 @@ pub unsafe fn TimedShutter_Func_6(game: &mut Game) {
     }
 }
 pub unsafe fn TimedShutter_Func_7(game: &mut Game) {
-    let E: *mut Enemy_TimedShutter = Get_TimedShutter(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_TimedShutter =
+        Get_TimedShutter(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     AddToHiLo(
         &raw mut (*E).base.y_pos,
         &raw mut (*E).base.y_subpos,
@@ -6767,10 +6251,8 @@ pub unsafe fn TimedShutter_Func_7(game: &mut Game) {
     }
 }
 pub unsafe fn TimedShutter_Func_8(game: &mut Game) {
-    let E: *mut Enemy_TimedShutter = Get_TimedShutter(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_TimedShutter =
+        Get_TimedShutter(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     AddToHiLo(
         &raw mut (*E).base.y_pos,
         &raw mut (*E).base.y_subpos,
@@ -6788,10 +6270,8 @@ pub unsafe fn TimedShutter_Func_8(game: &mut Game) {
     }
 }
 pub unsafe fn TimedShutter_Func_9(game: &mut Game) {
-    let E: *mut Enemy_TimedShutter = Get_TimedShutter(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_TimedShutter =
+        Get_TimedShutter(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     AddToHiLo(
         &raw mut (*E).base.y_pos,
         &raw mut (*E).base.y_subpos,
@@ -6829,10 +6309,8 @@ pub unsafe fn TimedShutter_Func_10(k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn TimedShutter_Func_11(game: &mut Game) {
-    let E: *mut Enemy_TimedShutter = Get_TimedShutter(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_TimedShutter =
+        Get_TimedShutter(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     AddToHiLo(
         &raw mut (*E).base.y_pos,
         &raw mut (*E).base.y_subpos,
@@ -6849,10 +6327,8 @@ pub unsafe fn TimedShutter_Func_11(game: &mut Game) {
     }
 }
 pub unsafe fn TimedShutter_Func_12(game: &mut Game) {
-    let E: *mut Enemy_TimedShutter = Get_TimedShutter(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_TimedShutter =
+        Get_TimedShutter(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     AddToHiLo(
         &raw mut (*E).base.y_pos,
         &raw mut (*E).base.y_subpos,
@@ -6869,10 +6345,8 @@ pub unsafe fn TimedShutter_Func_12(game: &mut Game) {
     }
 }
 pub unsafe fn TimedShutter_Func_13(game: &mut Game) {
-    let E: *mut Enemy_TimedShutter = Get_TimedShutter(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_TimedShutter =
+        Get_TimedShutter(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     AddToHiLo(
         &raw mut (*E).base.y_pos,
         &raw mut (*E).base.y_subpos,
@@ -6889,10 +6363,8 @@ pub unsafe fn TimedShutter_Func_13(game: &mut Game) {
     }
 }
 pub unsafe fn TimedShutter_Func_14(game: &mut Game) {
-    let E: *mut Enemy_TimedShutter = Get_TimedShutter(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_TimedShutter =
+        Get_TimedShutter(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     AddToHiLo(
         &raw mut (*E).base.y_pos,
         &raw mut (*E).base.y_subpos,
@@ -6907,27 +6379,15 @@ pub unsafe fn TimedShutter_Func_14(game: &mut Game) {
 }
 pub fn TimedShutter_Func_15() {}
 pub unsafe fn RisingFallingPlatform_Init(game: &mut Game) {
-    RisingFallingPlatform_Func_1(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        game,
-    );
-    (*Get_RisingFallingPlatform(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .base
-    .current_instruction = addr_kRisingFallingPlatform_Ilist_EDE7 as uint16;
+    RisingFallingPlatform_Func_1(ram_word!(game, cur_enemy_index), game);
+    (*Get_RisingFallingPlatform(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+        .base
+        .current_instruction = addr_kRisingFallingPlatform_Ilist_EDE7 as uint16;
 }
 pub unsafe fn ShootableShutter_Init(game: &mut Game) {
-    RisingFallingPlatform_Func_1(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        game,
-    );
-    (*gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .current_instruction = addr_kTimedShutter_Ilist_E9AA as uint16;
+    RisingFallingPlatform_Func_1(ram_word!(game, cur_enemy_index), game);
+    (*gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+        .current_instruction = addr_kTimedShutter_Ilist_E9AA as uint16;
 }
 pub unsafe fn RisingFallingPlatform_Func_1(k: uint16, game: &mut Game) {
     let E: *mut Enemy_RisingFallingPlatform =
@@ -7043,10 +6503,8 @@ pub unsafe fn CallRisingFallingPlatformFunc(ea: uint32, game: &mut Game) {
     }
 }
 pub unsafe fn RisingFallingPlatform_Main(game: &mut Game) {
-    let E: *mut Enemy_RisingFallingPlatform = Get_RisingFallingPlatform(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_RisingFallingPlatform =
+        Get_RisingFallingPlatform(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     CallRisingFallingPlatformFunc((((*E).rfpm_var_A) as u32) | (0xa20000u32), game);
     if (*E).rfpm_var_A as ::core::ffi::c_int
         != 0xa2ef68 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
@@ -7069,10 +6527,9 @@ pub unsafe fn RisingFallingPlatform_Main(game: &mut Game) {
                     as ::core::ffi::c_int
                 & *((&raw mut game.g_ram as *mut uint8).offset(0x182c) as *mut uint16).offset(0)
                     as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
-            == *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                as ::core::ffi::c_int
+            == ram_word!(game, cur_enemy_index) as ::core::ffi::c_int
     {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xa6e) as *mut uint16) != 0 {
+        if ram_word!(game, samus_contact_damage_index) != 0 {
             RisingFallingPlatform_Powerbomb(game);
         }
     }
@@ -7087,51 +6544,31 @@ static off_A2EDFB: [Option<Func_V>; 5] = unsafe {
     ]
 };
 pub unsafe fn RisingFallingPlatform_Func_2(game: &mut Game) {
-    let v0: ::core::ffi::c_int = (*Get_RisingFallingPlatform(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .rfpm_var_07 as ::core::ffi::c_int
-        >> 1 as ::core::ffi::c_int;
+    let v0: ::core::ffi::c_int =
+        (*Get_RisingFallingPlatform(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+            .rfpm_var_07 as ::core::ffi::c_int
+            >> 1 as ::core::ffi::c_int;
     off_A2EDFB[v0 as usize].expect("non-null function pointer")(game);
 }
 pub unsafe fn RisingFallingPlatform_Func_3(game: &mut Game) {
-    let E: *mut Enemy_RisingFallingPlatform = Get_RisingFallingPlatform(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_RisingFallingPlatform =
+        Get_RisingFallingPlatform(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let fresh15 = (*E).rfpm_var_B;
     (*E).rfpm_var_B = (*E).rfpm_var_B.wrapping_sub(1);
     if fresh15 == 1u16 {
         (*E).rfpm_var_B = (*E).rfpm_var_06;
-        RisingFallingPlatform_Func_7(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-            game,
-        );
+        RisingFallingPlatform_Func_7(ram_word!(game, cur_enemy_index), game);
     }
 }
 pub unsafe fn RisingFallingPlatform_Func_4(game: &mut Game) {
-    let E: *mut Enemy_RisingFallingPlatform = Get_RisingFallingPlatform(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    if IsSamusWithinEnemy_X(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        (*E).rfpm_var_06,
-        game,
-    ) != 0
-    {
-        RisingFallingPlatform_Func_7(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-            game,
-        );
+    let E: *mut Enemy_RisingFallingPlatform =
+        Get_RisingFallingPlatform(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
+    if IsSamusWithinEnemy_X(ram_word!(game, cur_enemy_index), (*E).rfpm_var_06, game) != 0 {
+        RisingFallingPlatform_Func_7(ram_word!(game, cur_enemy_index), game);
     }
 }
 pub unsafe fn RisingFallingPlatform_Func_5(game: &mut Game) {
-    RisingFallingPlatform_Func_7(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        game,
-    );
+    RisingFallingPlatform_Func_7(ram_word!(game, cur_enemy_index), game);
 }
 pub fn RisingFallingPlatform_Func_6(game: &mut Game) {}
 pub unsafe fn RisingFallingPlatform_Func_7(k: uint16, game: &mut Game) {
@@ -7149,17 +6586,11 @@ pub unsafe fn RisingFallingPlatform_Func_8(game: &mut Game) {
     }
 }
 pub unsafe fn RisingFallingPlatform_Func_9(game: &mut Game) {
-    let E: *mut Enemy_RisingFallingPlatform = Get_RisingFallingPlatform(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_RisingFallingPlatform =
+        Get_RisingFallingPlatform(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).rfpm_var_0E = (*E).base.y_pos;
     (*E).rfpm_var_0A = 0 as uint16;
-    if CheckIfEnemyTouchesSamus(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        game,
-    ) != 0
-    {
+    if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
         (*E).rfpm_var_0A = 1 as uint16;
     }
     AddToHiLo(
@@ -7181,17 +6612,11 @@ pub unsafe fn RisingFallingPlatform_Func_9(game: &mut Game) {
     }
 }
 pub unsafe fn RisingFallingPlatform_Func_10(game: &mut Game) {
-    let E: *mut Enemy_RisingFallingPlatform = Get_RisingFallingPlatform(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_RisingFallingPlatform =
+        Get_RisingFallingPlatform(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).rfpm_var_0E = (*E).base.y_pos;
     (*E).rfpm_var_0A = 0 as uint16;
-    if CheckIfEnemyTouchesSamus(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        game,
-    ) != 0
-    {
+    if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
         (*E).rfpm_var_0A = 1 as uint16;
     }
     AddToHiLo(
@@ -7213,10 +6638,8 @@ pub unsafe fn RisingFallingPlatform_Func_10(game: &mut Game) {
     }
 }
 pub unsafe fn RisingFallingPlatform_Func_11(game: &mut Game) {
-    let E: *mut Enemy_RisingFallingPlatform = Get_RisingFallingPlatform(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_RisingFallingPlatform =
+        Get_RisingFallingPlatform(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).rfpm_var_B = (*E).rfpm_var_B.wrapping_sub(1);
     if ((*E).rfpm_var_B as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
         (*E).rfpm_var_A = ((0xa2efd4i32) as u16);
@@ -7224,8 +6647,7 @@ pub unsafe fn RisingFallingPlatform_Func_11(game: &mut Game) {
             (*E).rfpm_var_A = ((0xa2ef28i32) as u16);
         }
         if (*Get_RisingFallingPlatform(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                as ::core::ffi::c_int,
+            ram_word!(game, cur_enemy_index) as ::core::ffi::c_int,
             game,
         ))
         .base
@@ -7237,10 +6659,8 @@ pub unsafe fn RisingFallingPlatform_Func_11(game: &mut Game) {
     }
 }
 pub unsafe fn RisingFallingPlatform_Func_12(game: &mut Game) {
-    let E: *mut Enemy_RisingFallingPlatform = Get_RisingFallingPlatform(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_RisingFallingPlatform =
+        Get_RisingFallingPlatform(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).rfpm_var_B = (*E).rfpm_var_B.wrapping_sub(1);
     if ((*E).rfpm_var_B as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
         RisingFallingPlatform_Func_8(game);
@@ -7262,10 +6682,8 @@ pub unsafe fn ShootableShutter_Shot(game: &mut Game) {
     RisingFallingPlatform_Powerbomb(game);
 }
 pub unsafe fn RisingFallingPlatform_Powerbomb(game: &mut Game) {
-    let E: *mut Enemy_RisingFallingPlatform = Get_RisingFallingPlatform(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_RisingFallingPlatform =
+        Get_RisingFallingPlatform(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if ((*E).rfpm_var_07 as ::core::ffi::c_int - 6 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         == 0)
@@ -7293,12 +6711,9 @@ pub unsafe fn RisingFallingPlatform_Powerbomb(game: &mut Game) {
     RisingFallingPlatform_Func_8(game);
 }
 pub unsafe fn HorizontalShootableShutter_Init(game: &mut Game) {
-    HorizontalShootableShutter_Func_1(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        game,
-    );
+    HorizontalShootableShutter_Func_1(ram_word!(game, cur_enemy_index), game);
     (*Get_HorizontalShootableShutter(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
+        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int,
         game,
     ))
     .base
@@ -7365,16 +6780,14 @@ pub unsafe fn HorizontalShootableShutter_Func_1(k: uint16, game: &mut Game) {
         (*E).rfpm_var_11 = (v10).wrapping_sub((*E).rfpm_var_05);
     }
     (*E).rfpm_var_A = ((0xa2f224i32) as u16);
-    (*E).rfpm_var_15 = *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16);
+    (*E).rfpm_var_15 = ram_word!(game, samus_x_pos);
     (*E).base.extra_properties = 0 as uint16;
     (*E).rfpm_var_0A = 0 as uint16;
     (*E).rfpm_var_0B = 0 as uint16;
 }
 pub unsafe fn HorizontalShootableShutter_Main(game: &mut Game) {
-    let E: *mut Enemy_RisingFallingPlatform = Get_RisingFallingPlatform(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_RisingFallingPlatform =
+        Get_RisingFallingPlatform(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     CallRisingFallingPlatformFunc((((*E).rfpm_var_A) as u32) | (0xa20000u32), game);
     if (*E).rfpm_var_A as ::core::ffi::c_int
         != 0xa2f272 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
@@ -7397,14 +6810,13 @@ pub unsafe fn HorizontalShootableShutter_Main(game: &mut Game) {
                     as ::core::ffi::c_int
                 & *((&raw mut game.g_ram as *mut uint8).offset(0x182c) as *mut uint16).offset(0)
                     as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
-            == *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                as ::core::ffi::c_int
-        && *((&raw mut game.g_ram as *mut uint8).offset(0xa6e) as *mut uint16) != 0u16
+            == ram_word!(game, cur_enemy_index) as ::core::ffi::c_int
+        && ram_word!(game, samus_contact_damage_index) != 0u16
     {
         HorizontalShootableShutter_Powerbomb(game);
     }
-    (*E).rfpm_var_15 = *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16);
-    (*E).rfpm_var_16 = *((&raw mut game.g_ram as *mut uint8).offset(0xaf8) as *mut uint16);
+    (*E).rfpm_var_15 = ram_word!(game, samus_x_pos);
+    (*E).rfpm_var_16 = ram_word!(game, samus_x_subpos);
 }
 static off_A2F107: [Option<Func_V>; 5] = unsafe {
     [
@@ -7416,51 +6828,31 @@ static off_A2F107: [Option<Func_V>; 5] = unsafe {
     ]
 };
 pub unsafe fn HorizontalShootableShutter_Func_2(game: &mut Game) {
-    let v0: ::core::ffi::c_int = (*Get_RisingFallingPlatform(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .rfpm_var_07 as ::core::ffi::c_int
-        >> 1 as ::core::ffi::c_int;
+    let v0: ::core::ffi::c_int =
+        (*Get_RisingFallingPlatform(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+            .rfpm_var_07 as ::core::ffi::c_int
+            >> 1 as ::core::ffi::c_int;
     off_A2F107[v0 as usize].expect("non-null function pointer")(game);
 }
 pub unsafe fn HorizontalShootableShutter_Func_3(game: &mut Game) {
-    let E: *mut Enemy_RisingFallingPlatform = Get_RisingFallingPlatform(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_RisingFallingPlatform =
+        Get_RisingFallingPlatform(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let fresh14 = (*E).rfpm_var_B;
     (*E).rfpm_var_B = (*E).rfpm_var_B.wrapping_sub(1);
     if fresh14 == 1u16 {
         (*E).rfpm_var_B = (*E).rfpm_var_06;
-        HorizontalShootableShutter_Func_7(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-            game,
-        );
+        HorizontalShootableShutter_Func_7(ram_word!(game, cur_enemy_index), game);
     }
 }
 pub unsafe fn HorizontalShootableShutter_Func_4(game: &mut Game) {
-    let E: *mut Enemy_RisingFallingPlatform = Get_RisingFallingPlatform(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    if IsSamusWithinEnemy_X(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        (*E).rfpm_var_06,
-        game,
-    ) != 0
-    {
-        HorizontalShootableShutter_Func_7(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-            game,
-        );
+    let E: *mut Enemy_RisingFallingPlatform =
+        Get_RisingFallingPlatform(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
+    if IsSamusWithinEnemy_X(ram_word!(game, cur_enemy_index), (*E).rfpm_var_06, game) != 0 {
+        HorizontalShootableShutter_Func_7(ram_word!(game, cur_enemy_index), game);
     }
 }
 pub unsafe fn HorizontalShootableShutter_Func_5(game: &mut Game) {
-    HorizontalShootableShutter_Func_7(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        game,
-    );
+    HorizontalShootableShutter_Func_7(ram_word!(game, cur_enemy_index), game);
 }
 pub fn HorizontalShootableShutter_Func_6(game: &mut Game) {}
 pub unsafe fn HorizontalShootableShutter_Func_7(k: uint16, game: &mut Game) {
@@ -7472,19 +6864,12 @@ pub unsafe fn HorizontalShootableShutter_Func_7(k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn HorizontalShootableShutter_Func_8(game: &mut Game) {
-    let E: *mut Enemy_RisingFallingPlatform = Get_RisingFallingPlatform(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_RisingFallingPlatform =
+        Get_RisingFallingPlatform(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).rfpm_var_0D = (*E).base.x_pos;
     (*E).rfpm_var_13 = 0 as uint16;
-    if EnemyFunc_AC67(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        game,
-    ) != 0u16
-        && ((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)) as i16)
-            .wrapping_sub(((*E).base.x_pos) as i16)
-            < 0i16
+    if EnemyFunc_AC67(ram_word!(game, cur_enemy_index), game) != 0u16
+        && ((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(((*E).base.x_pos) as i16) < 0i16
     {
         (*E).rfpm_var_13 = 1 as uint16;
     }
@@ -7496,10 +6881,7 @@ pub unsafe fn HorizontalShootableShutter_Func_8(game: &mut Game) {
     if (*E).rfpm_var_13 != 0 {
         *((&raw mut game.g_ram as *mut uint8).offset(0xb56) as *mut uint16) = (*E).rfpm_var_E;
         *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16) = (*E).rfpm_var_F;
-        HorizontalShootableShutter_Func_10(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-            game,
-        );
+        HorizontalShootableShutter_Func_10(ram_word!(game, cur_enemy_index), game);
     }
     if (((*E).rfpm_var_11) as i16).wrapping_sub(((*E).base.x_pos) as i16) >= 0i16 {
         if (*E).rfpm_var_08 == 4080u16 {
@@ -7511,19 +6893,12 @@ pub unsafe fn HorizontalShootableShutter_Func_8(game: &mut Game) {
     }
 }
 pub unsafe fn HorizontalShootableShutter_Func_9(game: &mut Game) {
-    let E: *mut Enemy_RisingFallingPlatform = Get_RisingFallingPlatform(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_RisingFallingPlatform =
+        Get_RisingFallingPlatform(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).rfpm_var_0D = (*E).base.x_pos;
     (*E).rfpm_var_13 = 0 as uint16;
-    if EnemyFunc_AC67(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        game,
-    ) != 0u16
-        && ((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)) as i16)
-            .wrapping_sub(((*E).base.x_pos) as i16)
-            >= 0i16
+    if EnemyFunc_AC67(ram_word!(game, cur_enemy_index), game) != 0u16
+        && ((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(((*E).base.x_pos) as i16) >= 0i16
     {
         (*E).rfpm_var_13 = 1 as uint16;
     }
@@ -7535,10 +6910,7 @@ pub unsafe fn HorizontalShootableShutter_Func_9(game: &mut Game) {
     if (*E).rfpm_var_13 != 0 {
         *((&raw mut game.g_ram as *mut uint8).offset(0xb56) as *mut uint16) = (*E).rfpm_var_C;
         *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16) = (*E).rfpm_var_D;
-        HorizontalShootableShutter_Func_11(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-            game,
-        );
+        HorizontalShootableShutter_Func_11(ram_word!(game, cur_enemy_index), game);
     }
     if (((*E).base.x_pos) as i16).wrapping_sub(((*E).rfpm_var_12) as i16) >= 0i16 {
         if (*E).rfpm_var_09 == 4080u16 {
@@ -7551,9 +6923,7 @@ pub unsafe fn HorizontalShootableShutter_Func_9(game: &mut Game) {
 }
 pub unsafe fn HorizontalShootableShutter_Func_10(k: uint16, game: &mut Game) {
     if (*Get_RisingFallingPlatform(k as ::core::ffi::c_int, game)).rfpm_var_13 != 0 {
-        if (*((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16)
-            as ::core::ffi::c_int
-            & 0x100 as ::core::ffi::c_int)
+        if (ram_word!(game, joypad1_lastkeys) as ::core::ffi::c_int & 0x100 as ::core::ffi::c_int)
             != 0i32
         {
             let ref mut fresh12 =
@@ -7565,9 +6935,7 @@ pub unsafe fn HorizontalShootableShutter_Func_10(k: uint16, game: &mut Game) {
 }
 pub unsafe fn HorizontalShootableShutter_Func_11(k: uint16, game: &mut Game) {
     if (*Get_RisingFallingPlatform(k as ::core::ffi::c_int, game)).rfpm_var_13 != 0 {
-        if (*((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16)
-            as ::core::ffi::c_int
-            & 0x200 as ::core::ffi::c_int)
+        if (ram_word!(game, joypad1_lastkeys) as ::core::ffi::c_int & 0x200 as ::core::ffi::c_int)
             != 0i32
         {
             let ref mut fresh13 =
@@ -7578,10 +6946,8 @@ pub unsafe fn HorizontalShootableShutter_Func_11(k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn HorizontalShootableShutter_Func_12(game: &mut Game) {
-    let E: *mut Enemy_RisingFallingPlatform = Get_RisingFallingPlatform(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_RisingFallingPlatform =
+        Get_RisingFallingPlatform(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).rfpm_var_B = (*E).rfpm_var_B.wrapping_sub(1);
     if ((*E).rfpm_var_B as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
         (*E).rfpm_var_A = ((0xa2f2e4i32) as u16);
@@ -7593,10 +6959,8 @@ pub unsafe fn HorizontalShootableShutter_Func_12(game: &mut Game) {
     }
 }
 pub unsafe fn HorizontalShootableShutter_Func_13(game: &mut Game) {
-    let E: *mut Enemy_RisingFallingPlatform = Get_RisingFallingPlatform(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_RisingFallingPlatform =
+        Get_RisingFallingPlatform(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).rfpm_var_B = (*E).rfpm_var_B.wrapping_sub(1);
     if ((*E).rfpm_var_B as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
         (*E).rfpm_var_A = ((0xa2f272i32) as u16);
@@ -7608,26 +6972,21 @@ pub unsafe fn HorizontalShootableShutter_Func_13(game: &mut Game) {
 pub fn HorizontalShootableShutter_Func_14() {}
 pub unsafe fn HorizontalShootableShutter_Touch(game: &mut Game) {
     let E: *mut Enemy_HorizontalShootableShutter = Get_HorizontalShootableShutter(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
+        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int,
         game,
     );
     if (*E).hssr_var_A as ::core::ffi::c_int
         == 0xa2f3d4 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
     {
-        if ((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)) as i16)
-            .wrapping_sub(((*E).base.x_pos) as i16)
-            >= 0i16
-        {
-            if (*((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16)
-                as ::core::ffi::c_int
+        if ((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(((*E).base.x_pos) as i16) >= 0i16 {
+            if (ram_word!(game, joypad1_lastkeys) as ::core::ffi::c_int
                 & 0x200 as ::core::ffi::c_int)
                 != 0i32
             {
                 *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16) = 4 as uint16;
                 *((&raw mut game.g_ram as *mut uint8).offset(0xb5a) as *mut uint16) = 0 as uint16;
             }
-        } else if (*((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16)
-            as ::core::ffi::c_int
+        } else if (ram_word!(game, joypad1_lastkeys) as ::core::ffi::c_int
             & 0x100 as ::core::ffi::c_int)
             != 0i32
         {
@@ -7642,10 +7001,8 @@ pub unsafe fn HorizontalShootableShutter_Shot(game: &mut Game) {
     HorizontalShootableShutter_Powerbomb(game);
 }
 pub unsafe fn HorizontalShootableShutter_Powerbomb(game: &mut Game) {
-    let E: *mut Enemy_RisingFallingPlatform = Get_RisingFallingPlatform(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut Enemy_RisingFallingPlatform =
+        Get_RisingFallingPlatform(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if (*E).rfpm_var_07 as ::core::ffi::c_int - 6 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         == 0

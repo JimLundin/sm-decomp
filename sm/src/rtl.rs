@@ -1,6 +1,7 @@
 use crate::cpu_infra::RtlUpdateSnesPatchForBugfix;
 use crate::game_state::Game;
 use crate::host::{Die, RtlApuLock, RtlApuUnlock};
+use crate::ram_map::ram_word;
 use crate::snes::apu::apu_cycle;
 use crate::snes::dsp::dsp_getSamples;
 use crate::snes::ppu::ppu_copy;
@@ -951,20 +952,17 @@ pub unsafe fn RtlRunFrame(mut inputs: ::core::ffi::c_int, game: &mut Game) -> bo
         if game.state_recorder.snapshot_flags & 1 as uint32 != 0 {
             game.state_recorder.snapshot_flags &= !(1 as ::core::ffi::c_int) as uint32;
             inputs = game.state_recorder.last_inputs as ::core::ffi::c_int;
-        } else if *((&raw mut game.g_ram as *mut uint8).offset(0xc2) as *mut uint16)
-            as ::core::ffi::c_int
+        } else if ram_word!(game, bug_fix_counter) as ::core::ffi::c_int
             != kCurrentBugFixCounter as ::core::ffi::c_int
         {
             if game.g_debug_flag {
                 printf(
                     b"bug_fix_counter %d => %d\n\0" as *const u8 as *const ::core::ffi::c_char,
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xc2) as *mut uint16)
-                        as ::core::ffi::c_int,
+                    ram_word!(game, bug_fix_counter) as ::core::ffi::c_int,
                     kCurrentBugFixCounter as ::core::ffi::c_int,
                 );
             }
-            if (*((&raw mut game.g_ram as *mut uint8).offset(0xc2) as *mut uint16)
-                as ::core::ffi::c_int)
+            if (ram_word!(game, bug_fix_counter) as ::core::ffi::c_int)
                 < kCurrentBugFixCounter as ::core::ffi::c_int
             {
                 *((&raw mut game.g_ram as *mut uint8).offset(0xc2) as *mut uint16) =
@@ -981,7 +979,7 @@ pub unsafe fn RtlRunFrame(mut inputs: ::core::ffi::c_int, game: &mut Game) -> bo
         }
         StateRecorder_Record(&raw mut game.state_recorder, inputs as uint16);
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xc2) as *mut uint16) as ::core::ffi::c_int
+    if ram_word!(game, bug_fix_counter) as ::core::ffi::c_int
         != game.currently_installed_bug_fix_counter as ::core::ffi::c_int
     {
         RtlUpdateSnesPatchForBugfix(game);
@@ -1097,15 +1095,12 @@ pub unsafe fn RtlSaveLoad(cmd: ::core::ffi::c_int, slot: ::core::ffi::c_int, gam
             == 4 as ::core::ffi::c_int
         {
             *(&raw mut game.g_ram as *mut uint8).offset(0x611) = (10 as ::core::ffi::c_int
-                + *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16)
-                    as ::core::ffi::c_int)
+                + ram_word!(game, game_state) as ::core::ffi::c_int)
                 as uint8;
         }
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xc2) as *mut uint16) as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
-        {
+        if ram_word!(game, bug_fix_counter) as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
             *((&raw mut game.g_ram as *mut uint8).offset(0xc2) as *mut uint16) =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1ff00) as *mut uint16);
+                ram_word!(game, bug_fix_counter_BAD);
         }
     } else {
         RtlSaveSnapshot(
@@ -1255,7 +1250,7 @@ pub unsafe fn RtlApuWrite(adr: uint32, val: uint8, game: &mut Game) {
             );
         }
     };
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x617) as *mut uint16) != 0 {
+    if ram_word!(game, is_uploading_apu) != 0 {
         snes_catchupApu(game.g_snes as *mut Snes, game);
         (*(*game.g_snes).apu).inPorts[(adr & 0x3 as uint32) as usize] = val as uint8_t;
         return;
@@ -1273,7 +1268,7 @@ unsafe fn IsFrameEmpty(w: *mut ApuWriteEnt) -> bool {
 }
 pub unsafe fn RtlPushApuState(game: &mut Game) {
     RtlApuLock();
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x617) as *mut uint16) == 0 {
+    if ram_word!(game, is_uploading_apu) == 0 {
         if game.g_apu_queue_size as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
             game.g_apu_time_since_empty = 0 as uint8;
         } else {
@@ -1323,7 +1318,7 @@ pub unsafe fn RtlPushApuState(game: &mut Game) {
     RtlApuUnlock();
 }
 unsafe fn RtlPopApuState_Locked(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x617) as *mut uint16) != 0 {
+    if ram_word!(game, is_uploading_apu) != 0 {
         return;
     }
     let input_ports: *mut uint8 = if game.g_use_my_apu_code as ::core::ffi::c_int != 0 {
@@ -1455,7 +1450,7 @@ pub unsafe fn RtlRenderAudio(
     RtlApuLock();
     RtlPopApuState_Locked(game);
     if !game.g_use_my_apu_code {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x617) as *mut uint16) == 0 {
+        if ram_word!(game, is_uploading_apu) == 0 {
             while ((*(*(*game.g_snes).apu).dsp).sampleOffset as ::core::ffi::c_int)
                 < 534 as ::core::ffi::c_int
             {
@@ -1480,7 +1475,7 @@ pub unsafe fn RtlRenderAudio(
 pub unsafe fn RtlCheat(c: ::core::ffi::c_char, game: &mut Game) {
     if c as ::core::ffi::c_int == 'w' as i32 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16) =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x9c4) as *mut uint16);
+            ram_word!(game, samus_max_health);
         StateRecorder_RecordPatchByte(
             &raw mut game.state_recorder,
             0x9c2 as uint32,
@@ -1507,8 +1502,7 @@ pub unsafe fn RtlCheat(c: ::core::ffi::c_char, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16) = 0 as uint16;
     } else if c as ::core::ffi::c_int == 'q' as i32 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16) =
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16) == 0)
-                as ::core::ffi::c_int as uint16;
+            (ram_word!(game, japanese_text_flag) == 0) as ::core::ffi::c_int as uint16;
         StateRecorder_RecordPatchByte(
             &raw mut game.state_recorder,
             0x9e2 as uint32,

@@ -310,6 +310,7 @@ use crate::game::sm_b4::{
     ClearSpriteObjects, CreateSpriteAtPos, DrawSpriteObjects, HandleSpriteObjects,
 };
 use crate::game_state::Game;
+use crate::ram_map::ram_word;
 use crate::rtl::abs16;
 use crate::rtl::{Load24, Mult8x8, RomPtr, SnesDivide, Unreachable};
 extern "C" {
@@ -1792,21 +1793,16 @@ static kRoomShakes: [uint16; 144] = [
     0, 0, 2, 2, 0, 0, 3, 0, 0, 0, 0, 3, 0, 0, 3, 3,
 ];
 pub unsafe fn HandleRoomShaking(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) != 0u16
-        && *((&raw mut game.g_ram as *mut uint8).offset(0xa78) as *mut uint16) == 0
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16)
-            as ::core::ffi::c_int
-            - 36 as ::core::ffi::c_int
+    if ram_word!(game, earthquake_timer) != 0u16
+        && ram_word!(game, time_is_frozen_flag) == 0
+        && ram_word!(game, earthquake_type) as ::core::ffi::c_int - 36 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             != 0
     {
         let v0: ::core::ffi::c_int = 8 as ::core::ffi::c_int
-            * *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16)
-                as ::core::ffi::c_int
+            * ram_word!(game, earthquake_type) as ::core::ffi::c_int
             >> 1 as ::core::ffi::c_int;
-        if (*((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16)
-            as ::core::ffi::c_int
-            & 2 as ::core::ffi::c_int)
+        if (ram_word!(game, earthquake_timer) as ::core::ffi::c_int & 2 as ::core::ffi::c_int)
             != 0i32
         {
             let ref mut fresh32 =
@@ -1843,9 +1839,7 @@ pub unsafe fn HandleRoomShaking(game: &mut Game) {
         }
         let ref mut fresh40 = *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16);
         *fresh40 = (*fresh40).wrapping_sub(1);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16)
-            as ::core::ffi::c_int
-            - 18 as ::core::ffi::c_int
+        if ram_word!(game, earthquake_type) as ::core::ffi::c_int - 18 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             == 0
         {
@@ -2015,12 +2009,7 @@ pub unsafe fn ClearEnemyDataAndProcessEnemySet(game: &mut Game) {
         0 as ::core::ffi::c_int,
         2048 as size_t,
     );
-    if *(RomPtr_A1(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7cf) as *mut uint16),
-        game,
-    ) as *mut uint16)
-        != 0xffffu16
-    {
+    if *(RomPtr_A1(ram_word!(game, room_enemy_population_ptr), game) as *mut uint16) != 0xffffu16 {
         ProcessEnemyTilesets(game);
     }
 }
@@ -2046,10 +2035,10 @@ pub unsafe fn InitializeEnemies(game: &mut Game) {
             .offset((j >> 1 as ::core::ffi::c_int) as isize) = -(1 as ::core::ffi::c_int) as uint16;
         j -= 2 as ::core::ffi::c_int;
     }
-    let mut v4: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x7cf) as *mut uint16);
+    let mut v4: uint16 = ram_word!(game, room_enemy_population_ptr);
     if (*get_EnemyPopulation(
         0xa1 as uint8,
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7cf) as *mut uint16),
+        ram_word!(game, room_enemy_population_ptr),
         game,
     ))
     .enemy_ptr
@@ -2115,7 +2104,7 @@ pub unsafe fn InitializeEnemies(game: &mut Game) {
 pub unsafe fn LoadEnemyGfxIndexes(k: uint16, j: uint16, game: &mut Game) {
     let E: *mut EnemyData = gEnemyData(j as ::core::ffi::c_int, game);
     let ES: *mut EnemySpawnData = gEnemySpawnData(j as ::core::ffi::c_int, game);
-    let mut e: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x7d1) as *mut uint16);
+    let mut e: uint16 = ram_word!(game, room_enemy_tilesets_ptr);
     let mut f: uint16 = 0 as uint16;
     loop {
         let ET: *mut EnemyTileset = get_EnemyTileset(e, game);
@@ -2149,7 +2138,7 @@ pub unsafe fn LoadEnemyTileData(game: &mut Game) {
                 .offset(((i >> 1 as ::core::ffi::c_int) + 3072 as ::core::ffi::c_int) as isize);
         i -= 2 as ::core::ffi::c_int;
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xe7a) as *mut uint16) != 0 {
+    if ram_word!(game, enemy_tile_load_data_write_pos) != 0 {
         let mut v1: uint16 = 0 as uint16;
         let mut load_data: *mut EnemyTileLoadData =
             (&raw mut game.g_ram as *mut uint8).offset(0xe5a) as *mut EnemyTileLoadData;
@@ -2174,7 +2163,7 @@ pub unsafe fn LoadEnemyTileData(game: &mut Game) {
             }
             load_data = load_data.offset(1);
             v1 = (v1).wrapping_add(7u16);
-            if (v1 == *((&raw mut game.g_ram as *mut uint8).offset(0xe7a) as *mut uint16)) {
+            if (v1 == ram_word!(game, enemy_tile_load_data_write_pos)) {
                 break;
             }
         }
@@ -2230,10 +2219,8 @@ pub unsafe fn ProcessEnemyTilesets(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xef6c) as *mut uint16).offset(3) = 0 as uint16;
     let mut enemy_gfx_data_write_ptr: uint16 = 0 as uint16;
     let mut next_enemy_tiles_index: uint16 = 0 as uint16;
-    let mut ET: *mut EnemyTileset = get_EnemyTileset(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7d1) as *mut uint16),
-        game,
-    );
+    let mut ET: *mut EnemyTileset =
+        get_EnemyTileset(ram_word!(game, room_enemy_tilesets_ptr), game);
     let mut LD: *mut EnemyTileLoadData =
         (&raw mut game.g_ram as *mut uint8).offset(0xe5a) as *mut EnemyTileLoadData;
     while (*ET).enemy_def != 0xffffu16 {
@@ -2282,14 +2269,11 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x17a4) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x17a6) as *mut uint16) = 0 as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x183c) as *mut uint16) != 0 {
+    if ram_word!(game, flag_process_all_enemies) != 0 {
         loop {
-            let v5: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
-            let v6: *mut EnemyData = gEnemyData(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                    as ::core::ffi::c_int,
-                game,
-            );
+            let v5: uint16 = ram_word!(game, cur_enemy_index);
+            let v6: *mut EnemyData =
+                gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
             if (*v6).enemy_ptr != 0u16
                 && (*v6).enemy_ptr as ::core::ffi::c_int
                     != addr_kEnemyDef_DAFF as ::core::ffi::c_int
@@ -2297,15 +2281,12 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
                 if ((*v6).properties as ::core::ffi::c_int & 0x200 as ::core::ffi::c_int) != 0i32 {
                     (*v6).enemy_ptr = 0 as uint16;
                 } else {
-                    let v7: uint16 =
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x17a4) as *mut uint16);
-                    let v8: ::core::ffi::c_int =
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x17a4) as *mut uint16)
-                            as ::core::ffi::c_int
-                            >> 1 as ::core::ffi::c_int;
+                    let v7: uint16 = ram_word!(game, active_enemy_indexes_write_ptr);
+                    let v8: ::core::ffi::c_int = ram_word!(game, active_enemy_indexes_write_ptr)
+                        as ::core::ffi::c_int
+                        >> 1 as ::core::ffi::c_int;
                     *((&raw mut game.g_ram as *mut uint8).offset(0x17ac) as *mut uint16)
-                        .offset(v8 as isize) =
-                        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
+                        .offset(v8 as isize) = ram_word!(game, cur_enemy_index);
                     *((&raw mut game.g_ram as *mut uint8).offset(0x17ec) as *mut uint16)
                         .offset(v8 as isize) = v5;
                     *((&raw mut game.g_ram as *mut uint8).offset(0x17a4) as *mut uint16) =
@@ -2313,12 +2294,10 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
                     if ((*v6).properties as ::core::ffi::c_int & 0x400 as ::core::ffi::c_int)
                         == 0i32
                     {
-                        let v9: uint16 =
-                            *((&raw mut game.g_ram as *mut uint8).offset(0x17a6) as *mut uint16);
+                        let v9: uint16 = ram_word!(game, interactive_enemy_indexes_write_ptr);
                         *((&raw mut game.g_ram as *mut uint8).offset(0x17ec) as *mut uint16)
                             .offset(
-                                (*((&raw mut game.g_ram as *mut uint8).offset(0x17a6)
-                                    as *mut uint16)
+                                (ram_word!(game, interactive_enemy_indexes_write_ptr)
                                     as ::core::ffi::c_int
                                     >> 1 as ::core::ffi::c_int)
                                     as isize,
@@ -2331,9 +2310,7 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
             let ref mut fresh19 =
                 *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
             *fresh19 = (*fresh19).wrapping_add(64u16);
-            if (*((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                as ::core::ffi::c_int
-                - 2048 as ::core::ffi::c_int
+            if (ram_word!(game, cur_enemy_index) as ::core::ffi::c_int - 2048 as ::core::ffi::c_int
                 & 0x8000 as ::core::ffi::c_int
                 == 0)
             {
@@ -2341,23 +2318,18 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
             }
         }
         *((&raw mut game.g_ram as *mut uint8).offset(0x17ac) as *mut uint16).offset(
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x17a4) as *mut uint16)
-                as ::core::ffi::c_int
+            (ram_word!(game, active_enemy_indexes_write_ptr) as ::core::ffi::c_int
                 >> 1 as ::core::ffi::c_int) as isize,
         ) = -(1 as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x17ec) as *mut uint16).offset(
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x17a6) as *mut uint16)
-                as ::core::ffi::c_int
+            (ram_word!(game, interactive_enemy_indexes_write_ptr) as ::core::ffi::c_int
                 >> 1 as ::core::ffi::c_int) as isize,
         ) = -(1 as ::core::ffi::c_int) as uint16;
     } else {
         loop {
-            let v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
-            let v1: *mut EnemyData = gEnemyData(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                    as ::core::ffi::c_int,
-                game,
-            );
+            let v0: uint16 = ram_word!(game, cur_enemy_index);
+            let v1: *mut EnemyData =
+                gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
             if (*v1).enemy_ptr != 0u16
                 && (*v1).enemy_ptr as ::core::ffi::c_int
                     != addr_kEnemyDef_DAFF as ::core::ffi::c_int
@@ -2369,45 +2341,39 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
                     || ((*v1).ai_handler_bits as ::core::ffi::c_int & 4 as ::core::ffi::c_int)
                         != 0i32
                     || (((*v1).x_width as ::core::ffi::c_int + (*v1).x_pos as ::core::ffi::c_int
-                        - *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16)
-                            as ::core::ffi::c_int) as int16)
+                        - ram_word!(game, layer1_x_pos) as ::core::ffi::c_int)
+                        as int16)
                         >= 0i16
                         && (((*v1).x_width as ::core::ffi::c_int
-                            + *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16)
-                                as ::core::ffi::c_int
+                            + ram_word!(game, layer1_x_pos) as ::core::ffi::c_int
                             + 256 as ::core::ffi::c_int
                             - (*v1).x_pos as ::core::ffi::c_int)
                             as int16)
                             >= 0i16
                         && (((*v1).y_pos as ::core::ffi::c_int + 8 as ::core::ffi::c_int
-                            - *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16)
-                                as ::core::ffi::c_int) as int16)
+                            - ram_word!(game, layer1_y_pos) as ::core::ffi::c_int)
+                            as int16)
                             >= 0i16
-                        && ((*((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16)
-                            as ::core::ffi::c_int
+                        && ((ram_word!(game, layer1_y_pos) as ::core::ffi::c_int
                             + 248 as ::core::ffi::c_int
                             - (*v1).y_pos as ::core::ffi::c_int)
                             as int16)
                             >= 0i16
                 {
-                    let v3: uint16 =
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x17a4) as *mut uint16);
+                    let v3: uint16 = ram_word!(game, active_enemy_indexes_write_ptr);
                     *((&raw mut game.g_ram as *mut uint8).offset(0x17ac) as *mut uint16).offset(
-                        (*((&raw mut game.g_ram as *mut uint8).offset(0x17a4) as *mut uint16)
-                            as ::core::ffi::c_int
+                        (ram_word!(game, active_enemy_indexes_write_ptr) as ::core::ffi::c_int
                             >> 1 as ::core::ffi::c_int) as isize,
-                    ) = *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
+                    ) = ram_word!(game, cur_enemy_index);
                     *((&raw mut game.g_ram as *mut uint8).offset(0x17a4) as *mut uint16) =
                         (v3).wrapping_add(2u16);
                     if ((*v1).properties as ::core::ffi::c_int & 0x400 as ::core::ffi::c_int)
                         == 0i32
                     {
-                        let v4: uint16 =
-                            *((&raw mut game.g_ram as *mut uint8).offset(0x17a6) as *mut uint16);
+                        let v4: uint16 = ram_word!(game, interactive_enemy_indexes_write_ptr);
                         *((&raw mut game.g_ram as *mut uint8).offset(0x17ec) as *mut uint16)
                             .offset(
-                                (*((&raw mut game.g_ram as *mut uint8).offset(0x17a6)
-                                    as *mut uint16)
+                                (ram_word!(game, interactive_enemy_indexes_write_ptr)
                                     as ::core::ffi::c_int
                                     >> 1 as ::core::ffi::c_int)
                                     as isize,
@@ -2420,9 +2386,7 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
             let ref mut fresh20 =
                 *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
             *fresh20 = (*fresh20).wrapping_add(64u16);
-            if (*((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                as ::core::ffi::c_int
-                - 2048 as ::core::ffi::c_int
+            if (ram_word!(game, cur_enemy_index) as ::core::ffi::c_int - 2048 as ::core::ffi::c_int
                 & 0x8000 as ::core::ffi::c_int
                 == 0)
             {
@@ -2430,13 +2394,11 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
             }
         }
         *((&raw mut game.g_ram as *mut uint8).offset(0x17ac) as *mut uint16).offset(
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x17a4) as *mut uint16)
-                as ::core::ffi::c_int
+            (ram_word!(game, active_enemy_indexes_write_ptr) as ::core::ffi::c_int
                 >> 1 as ::core::ffi::c_int) as isize,
         ) = -(1 as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x17ec) as *mut uint16).offset(
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x17a6) as *mut uint16)
-                as ::core::ffi::c_int
+            (ram_word!(game, interactive_enemy_indexes_write_ptr) as ::core::ffi::c_int
                 >> 1 as ::core::ffi::c_int) as isize,
         ) = -(1 as ::core::ffi::c_int) as uint16;
     };
@@ -2550,10 +2512,7 @@ pub unsafe fn CallEnemyAi(ea: uint32, game: &mut Game) {
             Rinka_Main(game);
         }
         10664233 => {
-            Rinka_Frozen(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-                game,
-            );
+            Rinka_Frozen(ram_word!(game, cur_enemy_index), game);
         }
         10664263 => {
             Rinka_Touch(game);
@@ -2562,10 +2521,7 @@ pub unsafe fn CallEnemyAi(ea: uint32, game: &mut Game) {
             Rinka_Shot(game);
         }
         10664275 => {
-            Rinka_Powerbomb(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-                game,
-            );
+            Rinka_Powerbomb(ram_word!(game, cur_enemy_index), game);
         }
         10664909 => {
             Rio_Init(game);
@@ -2728,10 +2684,7 @@ pub unsafe fn CallEnemyAi(ea: uint32, game: &mut Game) {
             Fireflea_Main(game);
         }
         10718827 => {
-            Fireflea_Touch(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-                game,
-            );
+            Fireflea_Touch(ram_word!(game, cur_enemy_index), game);
         }
         10718851 => {
             Fireflea_Powerbomb(game);
@@ -2877,10 +2830,7 @@ pub unsafe fn CallEnemyAi(ea: uint32, game: &mut Game) {
             Metroid_Shot(game);
         }
         10743874 => {
-            Metroid_Powerbomb(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-                game,
-            );
+            Metroid_Powerbomb(ram_word!(game, cur_enemy_index), game);
         }
         10780677 => {
             Enemy_GrappleReact_SamusLatchesOn_A4(game);
@@ -3430,10 +3380,7 @@ pub unsafe fn CallEnemyAi(ea: uint32, game: &mut Game) {
             MotherBrainsTubesFalling_Init(game);
         }
         11111301 => {
-            MotherBrainsTubesFalling_Main(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-                game,
-            );
+            MotherBrainsTubesFalling_Main(ram_word!(game, cur_enemy_index), game);
         }
         11121923 => {
             MotherBrainsBody_Shot(game);
@@ -3693,7 +3640,7 @@ pub unsafe fn CallEnemyAi(ea: uint32, game: &mut Game) {
     }
 }
 pub unsafe fn CallEnemyPreInstr(ea: uint32, game: &mut Game) {
-    let k: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
+    let k: uint16 = ram_word!(game, cur_enemy_index);
     match ea {
         10518651 => (),
         10649723 => (),
@@ -4745,11 +4692,10 @@ pub unsafe fn EnemyMain(game: &mut Game) {
     let mut ED: *mut EnemyDef = ::core::ptr::null_mut::<EnemyDef>();
     let mut v6: int16 = 0;
     let mut v8: int8 = 0;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xe4c) as *mut uint16) != 0 {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xe1c) as *mut uint16) != 0xffffu16 {
+    if ram_word!(game, first_free_enemy_index) != 0 {
+        if ram_word!(game, enemy_index_to_shake) != 0xffffu16 {
             (*gEnemyData(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe1c) as *mut uint16)
-                    as ::core::ffi::c_int,
+                ram_word!(game, enemy_index_to_shake) as ::core::ffi::c_int,
                 game,
             ))
             .shake_timer = 64 as uint16;
@@ -4765,20 +4711,15 @@ pub unsafe fn EnemyMain(game: &mut Game) {
                 break;
             }
             *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) = v1;
-            let E: *mut EnemyData = gEnemyData(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                    as ::core::ffi::c_int,
-                game,
-            );
+            let E: *mut EnemyData =
+                gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
             if ((*E).properties as ::core::ffi::c_int & 0x400 as ::core::ffi::c_int) == 0i32 {
                 if (*E).invincibility_timer != 0 {
                     (*E).invincibility_timer = (*E).invincibility_timer.wrapping_sub(1);
                     current_block_39 = 8457315219000651999;
-                } else if *((&raw mut game.g_ram as *mut uint8).offset(0xe12) as *mut uint16) == 0 {
-                    if *((&raw mut game.g_ram as *mut uint8).offset(0x185e) as *mut uint16)
-                        as ::core::ffi::c_int
-                        | *((&raw mut game.g_ram as *mut uint8).offset(0xa78) as *mut uint16)
-                            as ::core::ffi::c_int
+                } else if ram_word!(game, debug_disable_sprite_interact) == 0 {
+                    if ram_word!(game, debug_time_frozen_for_enemies) as ::core::ffi::c_int
+                        | ram_word!(game, time_is_frozen_flag) as ::core::ffi::c_int
                         == 0
                     {
                         EnemyCollisionHandler(game);
@@ -4813,10 +4754,8 @@ pub unsafe fn EnemyMain(game: &mut Game) {
                 8457315219000651999 => {
                     *((&raw mut game.g_ram as *mut uint8).offset(0x17a2) as *mut uint16) =
                         0 as uint16;
-                    if *((&raw mut game.g_ram as *mut uint8).offset(0x185e) as *mut uint16)
-                        as ::core::ffi::c_int
-                        | *((&raw mut game.g_ram as *mut uint8).offset(0xa78) as *mut uint16)
-                            as ::core::ffi::c_int
+                    if ram_word!(game, debug_time_frozen_for_enemies) as ::core::ffi::c_int
+                        | ram_word!(game, time_is_frozen_flag) as ::core::ffi::c_int
                         == 0
                     {
                         v6 = 0 as int16;
@@ -4863,11 +4802,8 @@ pub unsafe fn EnemyMain(game: &mut Game) {
                     match current_block_39 {
                         1836292691772056875 => {}
                         _ => {
-                            if *((&raw mut game.g_ram as *mut uint8).offset(0x185e) as *mut uint16)
-                                as ::core::ffi::c_int
-                                | *((&raw mut game.g_ram as *mut uint8).offset(0xa78)
-                                    as *mut uint16)
-                                    as ::core::ffi::c_int
+                            if ram_word!(game, debug_time_frozen_for_enemies) as ::core::ffi::c_int
+                                | ram_word!(game, time_is_frozen_flag) as ::core::ffi::c_int
                                 == 0
                             {
                                 (*E).frame_counter = (*E).frame_counter.wrapping_add(1);
@@ -4893,24 +4829,18 @@ pub unsafe fn EnemyMain(game: &mut Game) {
                         && ((*E).flash_timer == 1u16 || (*E).frozen_timer == 1u16)
                     {
                         (*gEnemySpawnData(
-                            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                                as ::core::ffi::c_int,
+                            ram_word!(game, cur_enemy_index) as ::core::ffi::c_int,
                             game,
                         ))
                         .cause_of_death = 0 as uint16;
-                        EnemyDeathAnimation(
-                            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-                            0 as uint16,
-                            game,
-                        );
+                        EnemyDeathAnimation(ram_word!(game, cur_enemy_index), 0 as uint16, game);
                     }
                     if (((*E).extra_properties as ::core::ffi::c_int & 4 as ::core::ffi::c_int)
                         != 0i32
                         || EnemyWithNormalSpritesIsOffScreen(game) == 0)
                         && ((*E).properties as ::core::ffi::c_int & 0x300 as ::core::ffi::c_int)
                             == 0i32
-                        && (*((&raw mut game.g_ram as *mut uint8).offset(0x17a2) as *mut uint16)
-                            as ::core::ffi::c_int
+                        && (ram_word!(game, UNUSED_word_7E17A2) as ::core::ffi::c_int
                             & 1 as ::core::ffi::c_int)
                             == 0i32
                     {
@@ -4920,10 +4850,8 @@ pub unsafe fn EnemyMain(game: &mut Game) {
                 _ => {}
             }
             if (*E).flash_timer != 0u16
-                && *((&raw mut game.g_ram as *mut uint8).offset(0x185e) as *mut uint16)
-                    as ::core::ffi::c_int
-                    | *((&raw mut game.g_ram as *mut uint8).offset(0xa78) as *mut uint16)
-                        as ::core::ffi::c_int
+                && ram_word!(game, debug_time_frozen_for_enemies) as ::core::ffi::c_int
+                    | ram_word!(game, time_is_frozen_flag) as ::core::ffi::c_int
                     == 0
             {
                 (*E).flash_timer = (*E).flash_timer.wrapping_sub(1);
@@ -4952,15 +4880,15 @@ pub unsafe fn EnemyMain(game: &mut Game) {
         -(1 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn DecrementSamusTimers(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) != 0 {
+    if ram_word!(game, samus_invincibility_timer) != 0 {
         let ref mut fresh14 = *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16);
         *fresh14 = (*fresh14).wrapping_sub(1);
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x18aa) as *mut uint16) != 0 {
+    if ram_word!(game, samus_knockback_timer) != 0 {
         let ref mut fresh15 = *((&raw mut game.g_ram as *mut uint8).offset(0x18aa) as *mut uint16);
         *fresh15 = (*fresh15).wrapping_sub(1);
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x18ac) as *mut uint16) != 0 {
+    if ram_word!(game, projectile_invincibility_timer) != 0 {
         let ref mut fresh16 = *((&raw mut game.g_ram as *mut uint8).offset(0x18ac) as *mut uint16);
         *fresh16 = (*fresh16).wrapping_sub(1);
     }
@@ -4974,22 +4902,16 @@ pub unsafe fn SpawnEnemyDrops(a: uint16, k: uint16, varE20: uint16, game: &mut G
     SpawnEprojWithGfx(varE20, k, addr_kEproj_Pickup as uint16, game);
 }
 pub unsafe fn DeleteEnemyAndConnectedEnemies(game: &mut Game) {
-    let v0: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let v0: *mut EnemyData =
+        gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let mut num_parts: uint16 = (*get_EnemyDef_A2((*v0).enemy_ptr, game)).num_parts;
     if num_parts == 0 {
         num_parts = 1 as uint16;
     }
     let mut v2: uint16 = num_parts;
     loop {
-        (*gEnemyData(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                as ::core::ffi::c_int,
-            game,
-        ))
-        .enemy_ptr = 0 as uint16;
+        (*gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).enemy_ptr =
+            0 as uint16;
         let ref mut fresh17 = *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
         *fresh17 = (*fresh17).wrapping_add(64u16);
         v2 = v2.wrapping_sub(1);
@@ -5001,8 +4923,7 @@ pub unsafe fn DeleteEnemyAndConnectedEnemies(game: &mut Game) {
 pub unsafe fn SpawnEnemy(db: uint8, k: uint16, game: &mut Game) -> uint16 {
     let current_block: u64;
     let mut varE20: uint16 = k;
-    let cur_enemy_index_backup: uint16 =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
+    let cur_enemy_index_backup: uint16 = ram_word!(game, cur_enemy_index);
     let enemy_ptr: uint16 = (*get_EnemyPopulation(db, k, game)).enemy_ptr;
     let mut v3: int16 = (((*get_EnemyDef_A2(enemy_ptr, game)).num_parts) as i16).wrapping_sub(1i16);
     if v3 < 0i16 {
@@ -5119,12 +5040,7 @@ pub unsafe fn SpawnEnemy(db: uint8, k: uint16, game: &mut Game) -> uint16 {
 }
 pub unsafe fn DrawOneEnemy(game: &mut Game) {
     let varE34: uint16 = (2u16).wrapping_mul(
-        (*gEnemyData(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                as ::core::ffi::c_int,
-            game,
-        ))
-        .layer,
+        (*gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).layer,
     );
     *(RomPtr_RAM(
         (*((&raw mut game.g_ram as *mut uint8).offset(0xf68) as *mut uint16)
@@ -5134,27 +5050,21 @@ pub unsafe fn DrawOneEnemy(game: &mut Game) {
                 .offset((varE34 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize),
         ),
         game,
-    ) as *mut uint16) = *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
+    ) as *mut uint16) = ram_word!(game, cur_enemy_index);
     let ref mut fresh21 = *((&raw mut game.g_ram as *mut uint8).offset(0xf68) as *mut uint16)
         .offset((varE34 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh21 = (*fresh21).wrapping_add(2u16);
 }
 pub unsafe fn WriteEnemyOams(game: &mut Game) {
     let mut palette_index: VoidP = 0;
-    let E: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    let ES: *mut EnemySpawnData = gEnemySpawnData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut EnemyData =
+        gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
+    let ES: *mut EnemySpawnData =
+        gEnemySpawnData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let mut x2: uint16 = ((*ES).xpos2 as ::core::ffi::c_int + (*E).x_pos as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16) as ::core::ffi::c_int)
-        as uint16;
+        - ram_word!(game, layer1_x_pos) as ::core::ffi::c_int) as uint16;
     let y2: uint16 = ((*ES).ypos2 as ::core::ffi::c_int + (*E).y_pos as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16) as ::core::ffi::c_int)
-        as uint16;
+        - ram_word!(game, layer1_y_pos) as ::core::ffi::c_int) as uint16;
     if (*E).shake_timer != 0 {
         x2 = (x2 as ::core::ffi::c_int
             + if ((*E).frame_counter as ::core::ffi::c_int & 2 as ::core::ffi::c_int) == 0i32 {
@@ -5167,9 +5077,7 @@ pub unsafe fn WriteEnemyOams(game: &mut Game) {
     let mut x: uint16 = x2;
     let mut y: uint16 = y2;
     if (*E).flash_timer != 0u16
-        && (*((&raw mut game.g_ram as *mut uint8).offset(0xe44) as *mut uint16)
-            as ::core::ffi::c_int
-            & 2 as ::core::ffi::c_int)
+        && (ram_word!(game, random_enemy_counter) as ::core::ffi::c_int & 2 as ::core::ffi::c_int)
             != 0i32
     {
         palette_index = 0 as VoidP;
@@ -5242,16 +5150,12 @@ pub unsafe fn WriteEnemyOams(game: &mut Game) {
     };
 }
 pub unsafe fn NormalEnemyFrozenAI(game: &mut Game) {
-    let v0: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let v0: *mut EnemyData =
+        gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*v0).flash_timer = 0 as uint16;
     if (*v0).frozen_timer == 0 || {
         (*v0).frozen_timer = (*v0).frozen_timer.wrapping_sub(1);
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x9a6) as *mut uint16) as ::core::ffi::c_int
-            & 2 as ::core::ffi::c_int)
-            == 0i32
+        (ram_word!(game, equipped_beams) as ::core::ffi::c_int & 2 as ::core::ffi::c_int) == 0i32
     } {
         let v1: uint16 = ((*v0).ai_handler_bits) & (0xfffbu16);
         (*v0).ai_handler_bits = v1;
@@ -5295,11 +5199,8 @@ pub fn QueueEnemyBG2TilemapTransfers(game: &mut Game) {
     game.set_nmi_flag_bg2_enemy_vram_transfer(0);
 }
 pub unsafe fn EnemyCollisionHandler(game: &mut Game) {
-    if ((*gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .extra_properties as ::core::ffi::c_int
+    if ((*gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).extra_properties
+        as ::core::ffi::c_int
         & 4 as ::core::ffi::c_int)
         != 0i32
     {
@@ -5315,17 +5216,17 @@ pub unsafe fn EnemyCollisionHandler(game: &mut Game) {
 pub fn func_nullsub_4() {}
 pub unsafe fn SamusProjectileInteractionHandler(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xf378) as *mut uint16) = 10 as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x18ae) as *mut uint16) != 0 {
+    if ram_word!(game, flag_disable_projectile_interaction) != 0 {
         return;
     }
     let mut num_colls_to_check: ::core::ffi::c_int = 5 as ::core::ffi::c_int;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xcd2) as *mut uint16) != 0 {
+    if ram_word!(game, bomb_counter) != 0 {
         num_colls_to_check = 10 as ::core::ffi::c_int;
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0xcce) as *mut uint16) == 0 {
+    } else if ram_word!(game, projectile_counter) == 0 {
         return;
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x18ac) as *mut uint16) != 0u16
-        || *((&raw mut game.g_ram as *mut uint8).offset(0xa6e) as *mut uint16) != 0u16
+    if ram_word!(game, projectile_invincibility_timer) != 0u16
+        || ram_word!(game, samus_contact_damage_index) != 0u16
     {
         return;
     }
@@ -5354,25 +5255,19 @@ pub unsafe fn SamusProjectileInteractionHandler(game: &mut Game) {
                 if (abs16(
                     (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
                         .offset(pidx as isize))
-                    .wrapping_sub(
-                        *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16),
-                    ),
+                    .wrapping_sub(ram_word!(game, samus_x_pos)),
                 ) as ::core::ffi::c_int
                     - *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16)
                         .offset(pidx as isize) as ::core::ffi::c_int)
-                    < *((&raw mut game.g_ram as *mut uint8).offset(0xafe) as *mut uint16)
-                        as ::core::ffi::c_int
+                    < ram_word!(game, samus_x_radius) as ::core::ffi::c_int
                     && (abs16(
                         (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
                             .offset(pidx as isize))
-                        .wrapping_sub(
-                            *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16),
-                        ),
+                        .wrapping_sub(ram_word!(game, samus_y_pos)),
                     ) as ::core::ffi::c_int
                         - *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
                             .offset(pidx as isize) as ::core::ffi::c_int)
-                        < *((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16)
-                            as ::core::ffi::c_int
+                        < ram_word!(game, samus_y_radius) as ::core::ffi::c_int
                 {
                     if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
                         .offset(pidx as isize) as ::core::ffi::c_int
@@ -5411,17 +5306,14 @@ pub unsafe fn SamusProjectileInteractionHandler(game: &mut Game) {
                         };
                         let mut v0: uint16 = 0 as uint16;
                         *((&raw mut game.g_ram as *mut uint8).offset(0xa54) as *mut uint16) =
-                            (((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16))
-                                as i16)
-                                .wrapping_sub(
-                                    (*((&raw mut game.g_ram as *mut uint8).offset(0x1a4b)
-                                        as *mut uint16)
-                                        .offset(
-                                            (v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
-                                                as isize,
-                                        )) as i16,
-                                )
-                                >= 0i16) as uint16;
+                            (((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(
+                                (*((&raw mut game.g_ram as *mut uint8).offset(0x1a4b)
+                                    as *mut uint16)
+                                    .offset(
+                                        (v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
+                                            as isize,
+                                    )) as i16,
+                            ) >= 0i16) as uint16;
                         return;
                     }
                     if *((&raw mut game.g_ram as *mut uint8).offset(0xc7c) as *mut uint16)
@@ -5429,21 +5321,17 @@ pub unsafe fn SamusProjectileInteractionHandler(game: &mut Game) {
                         == 8u16
                     {
                         *((&raw mut game.g_ram as *mut uint8).offset(0xa56) as *mut uint16) =
-                            (if *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
+                            (if ram_word!(game, samus_x_pos)
                                 == *((&raw mut game.g_ram as *mut uint8).offset(0xb64)
                                     as *mut uint16)
                                     .offset(pidx as isize)
                             {
                                 2 as ::core::ffi::c_int
-                            } else if ((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6)
-                                as *mut uint16)) as i16)
-                                .wrapping_sub(
-                                    (*((&raw mut game.g_ram as *mut uint8).offset(0xb64)
-                                        as *mut uint16)
-                                        .offset(pidx as isize))
-                                        as i16,
-                                )
-                                < 0i16
+                            } else if ((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(
+                                (*((&raw mut game.g_ram as *mut uint8).offset(0xb64)
+                                    as *mut uint16)
+                                    .offset(pidx as isize)) as i16,
+                            ) < 0i16
                             {
                                 1 as ::core::ffi::c_int
                             } else {
@@ -5458,8 +5346,8 @@ pub unsafe fn SamusProjectileInteractionHandler(game: &mut Game) {
 }
 pub unsafe fn EprojSamusCollDetect(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xf378) as *mut uint16) = 11 as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) != 0u16
-        || *((&raw mut game.g_ram as *mut uint8).offset(0xa6e) as *mut uint16) != 0u16
+    if ram_word!(game, samus_invincibility_timer) != 0u16
+        || ram_word!(game, samus_contact_damage_index) != 0u16
     {
         return;
     }
@@ -5488,23 +5376,20 @@ pub unsafe fn EprojSamusCollDetect(game: &mut Game) {
                         .wrapping_sub(1_usize) as isize,
                 ) as uint16;
             if (abs16(
-                (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)).wrapping_sub(
+                (ram_word!(game, samus_x_pos)).wrapping_sub(
                     *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
                         .offset(i as isize),
                 ),
             ) as ::core::ffi::c_int
-                - *((&raw mut game.g_ram as *mut uint8).offset(0xafe) as *mut uint16)
-                    as ::core::ffi::c_int)
+                - ram_word!(game, samus_x_radius) as ::core::ffi::c_int)
                 < varE20 as ::core::ffi::c_int
                 && (abs16(
-                    (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16))
-                        .wrapping_sub(
-                            *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
-                                .offset(i as isize),
-                        ),
+                    (ram_word!(game, samus_y_pos)).wrapping_sub(
+                        *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
+                            .offset(i as isize),
+                    ),
                 ) as ::core::ffi::c_int
-                    - *((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16)
-                        as ::core::ffi::c_int)
+                    - ram_word!(game, samus_y_radius) as ::core::ffi::c_int)
                     < varE22 as ::core::ffi::c_int
             {
                 *((&raw mut game.g_ram as *mut uint8).offset(0x18a6) as *mut uint16) =
@@ -5550,16 +5435,14 @@ pub unsafe fn HandleEprojCollWithSamus(k: uint16, game: &mut Game) {
         game,
     );
     *((&raw mut game.g_ram as *mut uint8).offset(0xa54) as *mut uint16) =
-        (((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)) as i16)
-            .wrapping_sub(
-                (*((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
-                    .offset(v3 as isize)) as i16,
-            )
-            >= 0i16) as uint16;
+        (((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(
+            (*((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
+                .offset(v3 as isize)) as i16,
+        ) >= 0i16) as uint16;
 }
 pub unsafe fn EprojProjCollDet(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xf378) as *mut uint16) = 12 as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xcce) as *mut uint16) == 0 {
+    if ram_word!(game, projectile_counter) == 0 {
         return;
     }
     let mut i: ::core::ffi::c_int = 17 as ::core::ffi::c_int;
@@ -5795,10 +5678,8 @@ pub unsafe fn CallHitboxShot(ea: uint32, j: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn EnemySamusCollHandler_Multibox(game: &mut Game) {
-    let E: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut EnemyData =
+        gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0xf378) as *mut uint16) = 6 as uint16;
     if (*E).spritemap_pointer == 0 {
         return;
@@ -5811,26 +5692,22 @@ pub unsafe fn EnemySamusCollHandler_Multibox(game: &mut Game) {
     {
         return;
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa6e) as *mut uint16) != 0 {
+    if ram_word!(game, samus_contact_damage_index) != 0 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) = 0 as uint16;
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) != 0 {
+    } else if ram_word!(game, samus_invincibility_timer) != 0 {
         return;
     }
     if (*E).spritemap_pointer as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
         return;
     }
-    let samus_right_border_coll: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xafe)
-        as *mut uint16))
-        .wrapping_add(*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16));
-    let samus_left_border_coll: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6)
-        as *mut uint16))
-        .wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0xafe) as *mut uint16));
-    let samus_bottom_border_coll: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb00)
-        as *mut uint16))
-        .wrapping_add(*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16));
-    let samus_top_border_coll: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xafa)
-        as *mut uint16))
-        .wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16));
+    let samus_right_border_coll: uint16 =
+        (ram_word!(game, samus_x_radius)).wrapping_add(ram_word!(game, samus_x_pos));
+    let samus_left_border_coll: uint16 =
+        (ram_word!(game, samus_x_pos)).wrapping_sub(ram_word!(game, samus_x_radius));
+    let samus_bottom_border_coll: uint16 =
+        (ram_word!(game, samus_y_radius)).wrapping_add(ram_word!(game, samus_y_pos));
+    let samus_top_border_coll: uint16 =
+        (ram_word!(game, samus_y_pos)).wrapping_sub(ram_word!(game, samus_y_radius));
     let mut n: ::core::ffi::c_int =
         *RomPtrWithBank((*E).bank, (*E).spritemap_pointer, game) as ::core::ffi::c_int;
     let mut enemy_spritemap_entry_pointer: uint16 = ((*E).spritemap_pointer).wrapping_add(2u16);
@@ -5874,12 +5751,10 @@ pub unsafe fn EnemySamusCollHandler_Multibox(game: &mut Game) {
     }
 }
 pub unsafe fn EprojCollHandler_Multibox(game: &mut Game) {
-    let E: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut EnemyData =
+        gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0xf378) as *mut uint16) = 3 as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xcce) as *mut uint16) == 0
+    if ram_word!(game, projectile_counter) == 0
         || (*E).spritemap_pointer == 0
         || (*E).spritemap_pointer as ::core::ffi::c_int
             == addr_kExtendedSpritemap_Nothing_A0 as ::core::ffi::c_int
@@ -6007,10 +5882,8 @@ pub unsafe fn EprojCollHandler_Multibox(game: &mut Game) {
     }
 }
 pub unsafe fn EnemyBombCollHandler_Multibox(game: &mut Game) {
-    let E: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut EnemyData =
+        gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0xf378) as *mut uint16) = 4 as uint16;
     if (*E).spritemap_pointer == 0
         || ((*E).properties as ::core::ffi::c_int & 0x400 as ::core::ffi::c_int) != 0i32
@@ -6023,7 +5896,7 @@ pub unsafe fn EnemyBombCollHandler_Multibox(game: &mut Game) {
         == 0xa0804c as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
         || shot_ai as ::core::ffi::c_int
             == 0xa0804b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
-        || *((&raw mut game.g_ram as *mut uint8).offset(0xcd2) as *mut uint16) == 0
+        || ram_word!(game, bomb_counter) == 0
     {
         return;
     }
@@ -6133,28 +6006,21 @@ pub unsafe fn GrappleBeam_CollDetect_Enemy(game: &mut Game) -> PairU16 {
     loop {
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) =
             *((&raw mut game.g_ram as *mut uint8).offset(0x17ec) as *mut uint16).offset(i as isize);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) == 0xffffu16 {
+        if ram_word!(game, cur_enemy_index) == 0xffffu16 {
             return PairU16 {
                 k: 0 as uint16,
                 j: 0 as uint16,
             };
         }
-        E = gEnemyData(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                as ::core::ffi::c_int,
-            game,
-        );
+        E = gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
         if (*E).invincibility_timer == 0 {
             let v5: uint16 =
-                abs16(((*E).x_pos).wrapping_sub(
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xd08) as *mut uint16),
-                ));
+                abs16(((*E).x_pos).wrapping_sub(ram_word!(game, grapple_beam_end_x_pos)));
             let mut v6: bool = v5 < (*E).x_width;
             let v7: uint16 = (v5).wrapping_sub((*E).x_width);
             if v6 || v7 < 8u16 {
-                let v8: uint16 = abs16(((*E).y_pos).wrapping_sub(
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16),
-                ));
+                let v8: uint16 =
+                    abs16(((*E).y_pos).wrapping_sub(ram_word!(game, grapple_beam_end_y_pos)));
                 v6 = v8 < (*E).y_height;
                 let v9: uint16 = (v8).wrapping_sub((*E).y_height);
                 if v6 || v9 < 8u16 {
@@ -6204,11 +6070,8 @@ pub unsafe fn GrappleBeam_CollDetect_Enemy(game: &mut Game) -> PairU16 {
         }
     }
     if v0 == 1u16 || v0 == 4u16 || v0 == 5u16 {
-        let v11: *mut EnemyData = gEnemyData(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                as ::core::ffi::c_int,
-            game,
-        );
+        let v11: *mut EnemyData =
+            gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
         *((&raw mut game.g_ram as *mut uint8).offset(0xd08) as *mut uint16) = (*v11).x_pos;
         *((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16) = (*v11).y_pos;
     }
@@ -6218,20 +6081,16 @@ pub unsafe fn GrappleBeam_CollDetect_Enemy(game: &mut Game) -> PairU16 {
     }
 }
 pub unsafe fn SwitchEnemyAiToMainAi(game: &mut Game) {
-    let E: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut EnemyData =
+        gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     (*E).ai_handler_bits = 0 as uint16;
     (*E).invincibility_timer = 0 as uint16;
     (*E).frozen_timer = 0 as uint16;
     (*E).shake_timer = 0 as uint16;
 }
 pub unsafe fn SamusLatchesOnWithGrapple(game: &mut Game) {
-    let E: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut EnemyData =
+        gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0xd08) as *mut uint16) = (*E).x_pos;
     *((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16) = (*E).y_pos;
     if (*E).frozen_timer != 0 {
@@ -6247,34 +6106,19 @@ pub unsafe fn SamusLatchesOnWithGrapple(game: &mut Game) {
     };
 }
 pub unsafe fn EnemyGrappleDeath(game: &mut Game) {
-    (*gEnemySpawnData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .cause_of_death = 4 as uint16;
-    EnemyDeathAnimation(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-        0 as uint16,
-        game,
-    );
-    (*gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .ai_handler_bits = 0 as uint16;
+    (*gEnemySpawnData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+        .cause_of_death = 4 as uint16;
+    EnemyDeathAnimation(ram_word!(game, cur_enemy_index), 0 as uint16, game);
+    (*gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).ai_handler_bits =
+        0 as uint16;
 }
 pub unsafe fn Enemy_SwitchToFrozenAi(game: &mut Game) {
-    (*gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .ai_handler_bits = 4 as uint16;
+    (*gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).ai_handler_bits =
+        4 as uint16;
 }
 pub unsafe fn SamusLatchesOnWithGrappleNoInvinc(game: &mut Game) {
-    let E: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut EnemyData =
+        gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if (*E).frozen_timer != 0 {
         (*E).ai_handler_bits = 4 as uint16;
     } else {
@@ -6290,10 +6134,8 @@ pub unsafe fn SamusLatchesOnWithGrappleNoInvinc(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16) = (*E).y_pos;
 }
 pub unsafe fn SamusLatchesOnWithGrappleParalyze(game: &mut Game) {
-    let E: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut EnemyData =
+        gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let ED: *mut EnemyDef = get_EnemyDef_A2((*E).enemy_ptr, game);
     (*E).flash_timer = (if (*ED).hurt_ai_time != 0u8 {
         (*ED).hurt_ai_time as ::core::ffi::c_int
@@ -6304,33 +6146,25 @@ pub unsafe fn SamusLatchesOnWithGrappleParalyze(game: &mut Game) {
     (*E).extra_properties = ((*E).extra_properties) | (1u16);
 }
 pub unsafe fn SamusHurtFromGrapple(game: &mut Game) {
-    (*gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .ai_handler_bits = 4 as uint16;
+    (*gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).ai_handler_bits =
+        4 as uint16;
 }
 pub unsafe fn EnemySamusCollHandler(game: &mut Game) {
-    let E: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut EnemyData =
+        gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0xf378) as *mut uint16) = 9 as uint16;
     if (*E).spritemap_pointer == 0 {
         return;
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa6e) as *mut uint16) != 0 {
+    if ram_word!(game, samus_contact_damage_index) != 0 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) = 0 as uint16;
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) != 0 {
+    } else if ram_word!(game, samus_invincibility_timer) != 0 {
         if (*E).enemy_ptr as ::core::ffi::c_int != addr_kEnemyDef_DAFF as ::core::ffi::c_int {
             return;
         }
-        let some_flag: uint16 = (*gEnemySpawnData(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                as ::core::ffi::c_int,
-            game,
-        ))
-        .some_flag;
+        let some_flag: uint16 =
+            (*gEnemySpawnData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+                .some_flag;
         if some_flag == 0u16 || some_flag == 8u16 {
             return;
         }
@@ -6343,18 +6177,11 @@ pub unsafe fn EnemySamusCollHandler(game: &mut Game) {
     {
         return;
     }
-    if (abs16(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16))
-            .wrapping_sub((*E).x_pos),
-    ) as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0xafe) as *mut uint16) as ::core::ffi::c_int)
+    if (abs16((ram_word!(game, samus_x_pos)).wrapping_sub((*E).x_pos)) as ::core::ffi::c_int
+        - ram_word!(game, samus_x_radius) as ::core::ffi::c_int)
         < (*E).x_width as ::core::ffi::c_int
-        && (abs16(
-            (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16))
-                .wrapping_sub((*E).y_pos),
-        ) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16)
-                as ::core::ffi::c_int)
+        && (abs16((ram_word!(game, samus_y_pos)).wrapping_sub((*E).y_pos)) as ::core::ffi::c_int
+            - ram_word!(game, samus_y_radius) as ::core::ffi::c_int)
             < (*E).y_height as ::core::ffi::c_int
     {
         if (*E).enemy_ptr as ::core::ffi::c_int == addr_kEnemyDef_DAFF as ::core::ffi::c_int
@@ -6369,12 +6196,10 @@ pub unsafe fn EnemySamusCollHandler(game: &mut Game) {
     }
 }
 pub unsafe fn EprojCollHandler(game: &mut Game) {
-    let E: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut EnemyData =
+        gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0xf378) as *mut uint16) = 7 as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xcce) as *mut uint16) == 0 {
+    if ram_word!(game, projectile_counter) == 0 {
         return;
     }
     if (*E).spritemap_pointer == 0
@@ -6456,12 +6281,10 @@ pub unsafe fn EprojCollHandler(game: &mut Game) {
     }
 }
 pub unsafe fn EnemyBombCollHandler(game: &mut Game) {
-    let E: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut EnemyData =
+        gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0xf378) as *mut uint16) = 8 as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xcd2) as *mut uint16) == 0
+    if ram_word!(game, bomb_counter) == 0
         || (*E).spritemap_pointer == 0
         || (*E).invincibility_timer != 0u16
         || (*E).enemy_ptr as ::core::ffi::c_int == addr_kEnemyDef_DAFF as ::core::ffi::c_int
@@ -6551,14 +6374,10 @@ pub unsafe fn ProcessEnemyPowerBombInteraction(game: &mut Game) {
                 & 0x7f as ::core::ffi::c_int)
                 != 0i32)
             {
-                if abs16(
-                    (*((&raw mut game.g_ram as *mut uint8).offset(0xce2) as *mut uint16))
-                        .wrapping_sub((*E).x_pos),
-                ) < rx
-                    && abs16(
-                        (*((&raw mut game.g_ram as *mut uint8).offset(0xce4) as *mut uint16))
-                            .wrapping_sub((*E).y_pos),
-                    ) < ry
+                if abs16((ram_word!(game, power_bomb_explosion_x_pos)).wrapping_sub((*E).x_pos))
+                    < rx
+                    && abs16((ram_word!(game, power_bomb_explosion_y_pos)).wrapping_sub((*E).y_pos))
+                        < ry
                 {
                     *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) =
                         i as uint16;
@@ -6580,10 +6399,8 @@ pub unsafe fn ProcessEnemyPowerBombInteraction(game: &mut Game) {
     }
 }
 pub unsafe fn EnemyDeathAnimation(k: uint16, mut a: uint16, game: &mut Game) {
-    let E: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut EnemyData =
+        gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if (*E).ai_handler_bits == 1u16 {
         *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
             ((0x9bc8c5i32) as u16);
@@ -6593,7 +6410,7 @@ pub unsafe fn EnemyDeathAnimation(k: uint16, mut a: uint16, game: &mut Game) {
     }
     SpawnEprojWithGfx(
         a,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+        ram_word!(game, cur_enemy_index),
         addr_kEproj_EnemyDeathExplosion as uint16,
         game,
     );
@@ -6611,16 +6428,14 @@ pub unsafe fn EnemyDeathAnimation(k: uint16, mut a: uint16, game: &mut Game) {
     *fresh0 = (*fresh0).wrapping_add(1);
 }
 pub unsafe fn RinkasDeathAnimation(mut a: uint16, game: &mut Game) {
-    let E: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut EnemyData =
+        gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if a as ::core::ffi::c_int - 3 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
         a = 0 as uint16;
     }
     SpawnEprojWithGfx(
         a,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
+        ram_word!(game, cur_enemy_index),
         addr_kEproj_EnemyDeathExplosion as uint16,
         game,
     );
@@ -6636,73 +6451,50 @@ pub unsafe fn RinkasDeathAnimation(mut a: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn SuitDamageDivision(a: uint16, game: &mut Game) -> uint16 {
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16) as ::core::ffi::c_int
-        & 0x20 as ::core::ffi::c_int)
-        != 0i32
+    if (ram_word!(game, equipped_items) as ::core::ffi::c_int & 0x20 as ::core::ffi::c_int) != 0i32
     {
         return (a as ::core::ffi::c_int >> 2 as ::core::ffi::c_int) as uint16;
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16) as ::core::ffi::c_int
-        & 1 as ::core::ffi::c_int
-        != 0
-    {
+    if ram_word!(game, equipped_items) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         return (a as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
     }
     a
 }
 pub unsafe fn NormalEnemyTouchAi(game: &mut Game) {
     NormalEnemyTouchAiSkipDeathAnim(game);
-    if (*gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .health
-        == 0
-    {
-        (*gEnemySpawnData(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                as ::core::ffi::c_int,
-            game,
-        ))
-        .cause_of_death = 6 as uint16;
-        EnemyDeathAnimation(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-            1 as uint16,
-            game,
-        );
+    if (*gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).health == 0 {
+        (*gEnemySpawnData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+            .cause_of_death = 6 as uint16;
+        EnemyDeathAnimation(ram_word!(game, cur_enemy_index), 1 as uint16, game);
     }
 }
 pub unsafe fn NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game: &mut Game) {
     NormalEnemyTouchAiSkipDeathAnim(game);
 }
 pub unsafe fn NormalEnemyTouchAiSkipDeathAnim(game: &mut Game) {
-    let E: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut EnemyData =
+        gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let ED: *mut EnemyDef = get_EnemyDef_A2((*E).enemy_ptr, game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa6e) as *mut uint16) == 0u16 {
+    if ram_word!(game, samus_contact_damage_index) == 0u16 {
         Samus_DealDamage(SuitDamageDivision((*ED).damage, game), game);
         *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) = 96 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x18aa) as *mut uint16) = 5 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0xa54) as *mut uint16) =
-            (((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)) as i16)
-                .wrapping_sub(((*E).x_pos) as i16)
-                >= 0i16) as uint16;
+            (((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(((*E).x_pos) as i16) >= 0i16)
+                as uint16;
         return;
     }
-    let mut r20: uint16 =
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xa6e) as *mut uint16)).wrapping_add(15u16);
+    let mut r20: uint16 = (ram_word!(game, samus_contact_damage_index)).wrapping_add(15u16);
     let mut r22: uint16 = 0;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa6e) as *mut uint16) == 1u16 {
+    if ram_word!(game, samus_contact_damage_index) == 1u16 {
         r22 = 500 as uint16;
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0xa6e) as *mut uint16) == 2u16 {
+    } else if ram_word!(game, samus_contact_damage_index) == 2u16 {
         r22 = 300 as uint16;
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0xa6e) as *mut uint16) == 3u16 {
+    } else if ram_word!(game, samus_contact_damage_index) == 3u16 {
         r22 = 2000 as uint16;
     } else {
         r20 = r20.wrapping_add(1);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xa6e) as *mut uint16) == 4u16 {
+        if ram_word!(game, samus_contact_damage_index) == 4u16 {
             CallSomeSamusCode(4 as uint16, game);
         }
         r22 = 200 as uint16;
@@ -6718,10 +6510,8 @@ pub unsafe fn NormalEnemyTouchAiSkipDeathAnim(game: &mut Game) {
             game,
         ))
         .power as *mut uint16);
-    let varE32: uint16 =
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xe40) as *mut uint16)) & (0x7fu16);
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0xe40) as *mut uint16) as ::core::ffi::c_int
-        & 0x7f as ::core::ffi::c_int)
+    let varE32: uint16 = (ram_word!(game, last_enemy_power)) & (0x7fu16);
+    if (ram_word!(game, last_enemy_power) as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int)
         != 0i32
     {
         let dmg: uint16 = ((r22 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
@@ -6746,24 +6536,10 @@ pub unsafe fn NormalEnemyTouchAiSkipDeathAnim(game: &mut Game) {
 }
 pub unsafe fn NormalEnemyPowerBombAi(game: &mut Game) {
     NormalEnemyPowerBombAiSkipDeathAnim(game);
-    if (*gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .health
-        == 0
-    {
-        (*gEnemySpawnData(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                as ::core::ffi::c_int,
-            game,
-        ))
-        .cause_of_death = 3 as uint16;
-        EnemyDeathAnimation(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
-            0 as uint16,
-            game,
-        );
+    if (*gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game)).health == 0 {
+        (*gEnemySpawnData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+            .cause_of_death = 3 as uint16;
+        EnemyDeathAnimation(ram_word!(game, cur_enemy_index), 0 as uint16, game);
     }
 }
 pub unsafe fn NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game: &mut Game) {
@@ -6772,10 +6548,8 @@ pub unsafe fn NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game: &mut Game) {
 pub unsafe fn NormalEnemyPowerBombAiSkipDeathAnim(game: &mut Game) {
     let mut EnemyDef_A2: *mut EnemyDef = ::core::ptr::null_mut::<EnemyDef>();
     let mut hurt_ai_time: int16 = 0;
-    let v0: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let v0: *mut EnemyData =
+        gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let mut vulnerability_ptr: uint16 = (*get_EnemyDef_A2((*v0).enemy_ptr, game)).vulnerability_ptr;
     if vulnerability_ptr == 0 {
         vulnerability_ptr = -(5092 as ::core::ffi::c_int) as uint16;
@@ -6786,27 +6560,17 @@ pub unsafe fn NormalEnemyPowerBombAiSkipDeathAnim(game: &mut Game) {
         if (power_bomb as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int) != 0i32 {
             let ttt: uint32 = (100u32).wrapping_mul((varE32) as u32);
             if ttt != 0 {
-                (*gEnemyData(
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                        as ::core::ffi::c_int,
-                    game,
-                ))
-                .invincibility_timer = 48 as uint16;
-                let j: *mut EnemyData = gEnemyData(
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                        as ::core::ffi::c_int,
-                    game,
-                );
+                (*gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+                    .invincibility_timer = 48 as uint16;
+                let j: *mut EnemyData =
+                    gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
                 EnemyDef_A2 = get_EnemyDef_A2((*j).enemy_ptr, game);
                 hurt_ai_time = (*EnemyDef_A2).hurt_ai_time as int16;
                 if (*EnemyDef_A2).hurt_ai_time == 0 {
                     hurt_ai_time = 4 as int16;
                 }
-                let v6: *mut EnemyData = gEnemyData(
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                        as ::core::ffi::c_int,
-                    game,
-                );
+                let v6: *mut EnemyData =
+                    gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
                 (*v6).flash_timer = ((hurt_ai_time) as u16).wrapping_add(8u16);
                 (*v6).ai_handler_bits = ((*v6).ai_handler_bits) | (2u16);
                 let health: uint16 = (*v6).health;
@@ -6823,16 +6587,14 @@ pub unsafe fn NormalEnemyPowerBombAiSkipDeathAnim(game: &mut Game) {
 }
 pub unsafe fn NormalEnemyShotAi(game: &mut Game) {
     let varE2E: uint16 = NormalEnemyShotAiSkipDeathAnim(game);
-    let E: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let E: *mut EnemyData =
+        gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if varE2E != 0 {
         CreateSpriteAtPos((*E).x_pos, (*E).y_pos, 55 as uint16, 0 as uint16, game);
     }
     if (*E).health == 0 {
         let j: uint16 = ((*(((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
-            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x18a6) as *mut uint16) as isize)
+            .offset(ram_word!(game, collision_detection_index) as isize)
             as *mut uint16 as *mut uint8)
             .offset(
                 (::core::mem::size_of::<uint16>())
@@ -6840,12 +6602,8 @@ pub unsafe fn NormalEnemyShotAi(game: &mut Game) {
                     .wrapping_sub(1_usize) as isize,
             )) as u16)
             & (0xfu16);
-        (*gEnemySpawnData(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                as ::core::ffi::c_int,
-            game,
-        ))
-        .cause_of_death = j;
+        (*gEnemySpawnData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+            .cause_of_death = j;
         let mut death_anim: uint16 = 2 as uint16;
         if j == 2u16 {
             let ED: *mut EnemyDef = get_EnemyDef_A2((*E).enemy_ptr, game);
@@ -6867,11 +6625,8 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim_CurEnemy(game: &mut Game) {
 pub unsafe fn EnemyFunc_A6B4_UsedBySporeSpawn(game: &mut Game) {
     let varE2E: uint16 = NormalEnemyShotAiSkipDeathAnim(game);
     if varE2E != 0 {
-        let ED: *mut EnemyData = gEnemyData(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                as ::core::ffi::c_int,
-            game,
-        );
+        let ED: *mut EnemyData =
+            gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
         CreateSpriteAtPos((*ED).x_pos, (*ED).y_pos, 55 as uint16, 0 as uint16, game);
     }
 }
@@ -6887,16 +6642,13 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> uint16 {
     let mut hurt_ai_time: int16 = 0;
     let mut v20: int16 = 0;
     let mut varE32: uint16 = 0;
-    let v0: ::core::ffi::c_int =
-        *((&raw mut game.g_ram as *mut uint8).offset(0x18a6) as *mut uint16) as ::core::ffi::c_int;
+    let v0: ::core::ffi::c_int = ram_word!(game, collision_detection_index) as ::core::ffi::c_int;
     let mut pd: uint16 =
         *((&raw mut game.g_ram as *mut uint8).offset(0xc2c) as *mut uint16).offset(v0 as isize);
     let r18: uint16 =
         *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(v0 as isize);
-    let j: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let j: *mut EnemyData =
+        gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let mut vulnerability_ptr: uint16 = (*get_EnemyDef_A2((*j).enemy_ptr, game)).vulnerability_ptr;
     if vulnerability_ptr == 0 {
         vulnerability_ptr = addr_stru_B4EC1C as uint16;
@@ -6928,8 +6680,8 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> uint16 {
         ))
         .power
             as uint16;
-        varE32 = (*((&raw mut game.g_ram as *mut uint8).offset(0xe40) as *mut uint16)) & (0x7fu16);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xe40) as *mut uint16) != 255u16 {
+        varE32 = (ram_word!(game, last_enemy_power)) & (0x7fu16);
+        if ram_word!(game, last_enemy_power) != 255u16 {
             if (r18 as ::core::ffi::c_int & 0x10 as ::core::ffi::c_int) != 0i32 {
                 let charged_beam: uint8 = (*get_Vulnerability(r20, game)).charged_beam;
                 if charged_beam == 255u8 {
@@ -6947,16 +6699,13 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> uint16 {
                 current_block = 5143058163439228106;
             }
         } else {
-            let v8: *mut EnemyData = gEnemyData(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                    as ::core::ffi::c_int,
-                game,
-            );
+            let v8: *mut EnemyData =
+                gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
             if (*v8).frozen_timer == 0 {
                 QueueSfx3_Max3(0xa as uint16, game);
             }
             v9 = 400 as int16;
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) == 2u16 {
+            if ram_word!(game, area_index) == 2u16 {
                 v9 = 300 as int16;
             }
             (*v8).frozen_timer = v9 as uint16;
@@ -6972,21 +6721,15 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> uint16 {
             r42 = ttt as uint16;
             if r42 != 0 {
                 pd = r42;
-                let v10: *mut EnemyData = gEnemyData(
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                        as ::core::ffi::c_int,
-                    game,
-                );
+                let v10: *mut EnemyData =
+                    gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
                 EnemyDef_A2 = get_EnemyDef_A2((*v10).enemy_ptr, game);
                 hurt_ai_time = (*EnemyDef_A2).hurt_ai_time as int16;
                 if (*EnemyDef_A2).hurt_ai_time == 0 {
                     hurt_ai_time = 4 as int16;
                 }
-                let v13: *mut EnemyData = gEnemyData(
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                        as ::core::ffi::c_int,
-                    game,
-                );
+                let v13: *mut EnemyData =
+                    gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
                 (*v13).flash_timer = ((hurt_ai_time) as u16).wrapping_add(8u16);
                 (*v13).ai_handler_bits = ((*v13).ai_handler_bits) | (2u16);
                 if (*v13).frozen_timer == 0 {
@@ -6996,20 +6739,15 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> uint16 {
                     }
                     varE2E = varE2E.wrapping_add(1);
                 }
-                let v15: uint16 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
-                if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x18a6) as *mut uint16) as isize,
-                ) as ::core::ffi::c_int
+                let v15: uint16 = ram_word!(game, cur_enemy_index);
+                if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
+                    .offset(ram_word!(game, collision_detection_index) as isize)
+                    as ::core::ffi::c_int
                     & 8 as ::core::ffi::c_int)
                     != 0i32
                 {
-                    (*gEnemyData(
-                        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
-                            as ::core::ffi::c_int,
-                        game,
-                    ))
-                    .invincibility_timer = 16 as uint16;
+                    (*gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+                        .invincibility_timer = 16 as uint16;
                 }
                 let v16: *mut EnemyData = gEnemyData(v15 as ::core::ffi::c_int, game);
                 let health: uint16 = (*v16).health;
@@ -7017,22 +6755,18 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> uint16 {
                 let mut v18: uint16 = (health).wrapping_sub(pd);
                 v19 = !v19;
                 if v18 == 0 || !v19 {
-                    if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x18a6) as *mut uint16)
-                            as isize,
-                    ) as ::core::ffi::c_int
+                    if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
+                        .offset(ram_word!(game, collision_detection_index) as isize)
+                        as ::core::ffi::c_int
                         & 2 as ::core::ffi::c_int)
                         != 0i32
-                        && (*((&raw mut game.g_ram as *mut uint8).offset(0xe40) as *mut uint16)
-                            as ::core::ffi::c_int
+                        && (ram_word!(game, last_enemy_power) as ::core::ffi::c_int
                             & 0xf0 as ::core::ffi::c_int)
                             != 128i32
                         && (*v16).frozen_timer == 0
                     {
                         v20 = 400 as int16;
-                        if *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16)
-                            == 2u16
-                        {
+                        if ram_word!(game, area_index) == 2u16 {
                             v20 = 300 as int16;
                         }
                         (*v16).frozen_timer = v20 as uint16;
@@ -7049,8 +6783,7 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> uint16 {
         }
         _ => {}
     }
-    let v7: ::core::ffi::c_int =
-        *((&raw mut game.g_ram as *mut uint8).offset(0x18a6) as *mut uint16) as ::core::ffi::c_int;
+    let v7: ::core::ffi::c_int = ram_word!(game, collision_detection_index) as ::core::ffi::c_int;
     let ref mut fresh25 =
         *((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16).offset(v7 as isize);
     *fresh25 = (*fresh25) | (0x10u16);
@@ -7065,8 +6798,7 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> uint16 {
     varE2E
 }
 pub unsafe fn CreateDudShot(game: &mut Game) {
-    let v0: ::core::ffi::c_int =
-        *((&raw mut game.g_ram as *mut uint8).offset(0x18a6) as *mut uint16) as ::core::ffi::c_int;
+    let v0: ::core::ffi::c_int = ram_word!(game, collision_detection_index) as ::core::ffi::c_int;
     CreateSpriteAtPos(
         *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v0 as isize),
         *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v0 as isize),
@@ -7076,7 +6808,7 @@ pub unsafe fn CreateDudShot(game: &mut Game) {
     );
     QueueSfx1_Max3(0x3d as uint16, game);
     let ref mut fresh13 = *((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16)
-        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x18a6) as *mut uint16) as isize);
+        .offset(ram_word!(game, collision_detection_index) as isize);
     *fresh13 = (*fresh13) | (0x10u16);
 }
 fn solid_enemy_probe_coordinate(position: u16, fraction: u16, amount: i32, negative: bool) -> u16 {
@@ -8206,7 +7938,7 @@ unsafe fn EnemyBlockCollReact_Vert(
 pub unsafe fn CalculateBlockContainingPixelPos(xpos: uint16, ypos: uint16, game: &mut Game) {
     let prod: uint16 = Mult8x8(
         (ypos as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint8,
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as uint8,
+        ram_word!(game, room_width_in_blocks) as uint8,
     );
     *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) =
         (prod as ::core::ffi::c_int + (xpos as ::core::ffi::c_int >> 4 as ::core::ffi::c_int))
@@ -8222,14 +7954,12 @@ pub unsafe fn EnemyFunc_C8AD(k: uint16, game: &mut Game) -> uint8 {
         game,
     );
     if (*((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16)
-        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
-        as ::core::ffi::c_int
+        .offset(ram_word!(game, cur_block_index) as isize) as ::core::ffi::c_int
         & 0xf000 as ::core::ffi::c_int)
         == 4096i32
         && (*(&raw mut game.g_ram as *mut uint8)
             .offset(0x16402)
-            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
-            as ::core::ffi::c_int
+            .offset(ram_word!(game, cur_block_index) as isize) as ::core::ffi::c_int
             & 0x1f as ::core::ffi::c_int)
             >= 5i32
     {
@@ -8239,20 +7969,21 @@ pub unsafe fn EnemyFunc_C8AD(k: uint16, game: &mut Game) -> uint8 {
             - 1 as ::core::ffi::c_int
             & 0xf as ::core::ffi::c_int) as uint16;
         let temp_collision_DD6: uint16 = (16 as ::core::ffi::c_int
-            * (*(&raw mut game.g_ram as *mut uint8).offset(0x16402).offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize,
-            ) as ::core::ffi::c_int
+            * (*(&raw mut game.g_ram as *mut uint8)
+                .offset(0x16402)
+                .offset(ram_word!(game, cur_block_index) as isize)
+                as ::core::ffi::c_int
                 & 0x1f as ::core::ffi::c_int)) as uint16;
         if (*(&raw mut game.g_ram as *mut uint8)
             .offset(0x16402)
-            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
-            as ::core::ffi::c_int
+            .offset(ram_word!(game, cur_block_index) as isize) as ::core::ffi::c_int
             & 0x80 as ::core::ffi::c_int)
             == 0i32
         {
-            let j: uint16 = (if (*(&raw mut game.g_ram as *mut uint8).offset(0x16402).offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize,
-            ) as ::core::ffi::c_int
+            let j: uint16 = (if (*(&raw mut game.g_ram as *mut uint8)
+                .offset(0x16402)
+                .offset(ram_word!(game, cur_block_index) as isize)
+                as ::core::ffi::c_int
                 & 0x40 as ::core::ffi::c_int)
                 != 0i32
             {
@@ -8277,14 +8008,12 @@ pub unsafe fn EnemyFunc_C8AD(k: uint16, game: &mut Game) -> uint8 {
     }
     CalculateBlockContainingPixelPos((*E).x_pos, ((*E).y_pos).wrapping_sub((*E).y_height), game);
     if (*((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16)
-        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
-        as ::core::ffi::c_int
+        .offset(ram_word!(game, cur_block_index) as isize) as ::core::ffi::c_int
         & 0xf000 as ::core::ffi::c_int)
         == 4096i32
         && (*(&raw mut game.g_ram as *mut uint8)
             .offset(0x16402)
-            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
-            as ::core::ffi::c_int
+            .offset(ram_word!(game, cur_block_index) as isize) as ::core::ffi::c_int
             & 0x1f as ::core::ffi::c_int)
             >= 5i32
     {
@@ -8294,20 +8023,21 @@ pub unsafe fn EnemyFunc_C8AD(k: uint16, game: &mut Game) -> uint8 {
             & 0xf as ::core::ffi::c_int
             ^ 0xf as ::core::ffi::c_int) as uint16;
         let temp_collision_DD6_0: uint16 = (16 as ::core::ffi::c_int
-            * (*(&raw mut game.g_ram as *mut uint8).offset(0x16402).offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize,
-            ) as ::core::ffi::c_int
+            * (*(&raw mut game.g_ram as *mut uint8)
+                .offset(0x16402)
+                .offset(ram_word!(game, cur_block_index) as isize)
+                as ::core::ffi::c_int
                 & 0x1f as ::core::ffi::c_int)) as uint16;
         if *(&raw mut game.g_ram as *mut uint8)
             .offset(0x16402)
-            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
-            as ::core::ffi::c_int
+            .offset(ram_word!(game, cur_block_index) as isize) as ::core::ffi::c_int
             & 0x80 as ::core::ffi::c_int
             != 0
         {
-            let j_0: uint16 = (if (*(&raw mut game.g_ram as *mut uint8).offset(0x16402).offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize,
-            ) as ::core::ffi::c_int
+            let j_0: uint16 = (if (*(&raw mut game.g_ram as *mut uint8)
+                .offset(0x16402)
+                .offset(ram_word!(game, cur_block_index) as isize)
+                as ::core::ffi::c_int
                 & 0x40 as ::core::ffi::c_int)
                 != 0i32
             {

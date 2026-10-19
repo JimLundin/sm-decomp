@@ -7,6 +7,7 @@ use crate::game::sm_86::SpawnEprojWithRoomGfx;
 use crate::game::sm_8d::SpawnPalfxObject;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game_state::Game;
+use crate::ram_map::ram_word;
 use crate::rtl::{RomPtr, Unreachable};
 
 pub use crate::types::{
@@ -85,8 +86,7 @@ pub unsafe fn SpawnAnimtiles(j: uint16, game: &mut Game) {
         1 as uint16;
 }
 pub unsafe fn AnimtilesHandler(game: &mut Game) {
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x1ef1) as *mut uint16) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int)
+    if (ram_word!(game, animtiles_enable_flag) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int)
         != 0i32
     {
         let mut i: ::core::ffi::c_int = 10 as ::core::ffi::c_int;
@@ -97,8 +97,7 @@ pub unsafe fn AnimtilesHandler(game: &mut Game) {
                 != 0
             {
                 ProcessAnimtilesObject(game);
-                i = *((&raw mut game.g_ram as *mut uint8).offset(0x1ef3) as *mut uint16)
-                    as ::core::ffi::c_int;
+                i = ram_word!(game, animtiles_object_index) as ::core::ffi::c_int;
             }
             i -= 2 as ::core::ffi::c_int;
         }
@@ -134,10 +133,9 @@ pub unsafe fn CallAnimtilesInstr(ea: uint32, j: uint16, k: uint16, game: &mut Ga
     }
 }
 pub unsafe fn ProcessAnimtilesObject(game: &mut Game) {
-    let v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x1ef3) as *mut uint16);
-    let v1: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x1ef3)
-        as *mut uint16) as ::core::ffi::c_int
-        >> 1 as ::core::ffi::c_int;
+    let v0: uint16 = ram_word!(game, animtiles_object_index);
+    let v1: ::core::ffi::c_int =
+        ram_word!(game, animtiles_object_index) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh6 =
         *((&raw mut game.g_ram as *mut uint8).offset(0x1f19) as *mut uint16).offset(v1 as isize);
     let fresh7 = *fresh6;
@@ -333,7 +331,7 @@ pub unsafe fn AnimtilesInstr_GotoIfTourianStatueBusy(
     j: uint16,
     game: &mut Game,
 ) -> uint16 {
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x1e6f) as *mut uint16) as ::core::ffi::c_int
+    if (ram_word!(game, tourian_entrance_statue_animstate) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int)
         == 0i32
     {

@@ -2,6 +2,7 @@ use crate::game::sm_80::QueueMusic_DelayedY;
 use crate::game::sm_81::DrawSamusSpritemap;
 use crate::game::sm_82::PlayRoomMusicTrackAfterAFrames;
 use crate::game_state::Game;
+use crate::ram_map::ram_word;
 use crate::rtl::RomPtr;
 
 pub use crate::types::{
@@ -21,10 +22,10 @@ unsafe fn get_SamusTileAnimationDefs(a: uint16, game: &mut Game) -> *mut SamusTi
 }
 pub unsafe fn SetSamusTilesDefsForCurAnim(game: &mut Game) {
     let v0: uint16 = (4 as ::core::ffi::c_int
-        * *((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16) as ::core::ffi::c_int
+        * ram_word!(game, samus_anim_frame) as ::core::ffi::c_int
         + *(game.g_rom.offset(crate::rtl::lorom_offset(0x92d94e)) as *const uint8 as *mut uint16)
-            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as isize)
-            as ::core::ffi::c_int) as uint16;
+            .offset(ram_word!(game, samus_pose) as isize) as ::core::ffi::c_int)
+        as uint16;
     let AD: *mut SamusTileAnimationDefs = get_SamusTileAnimationDefs(v0, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x71f) as *mut uint16) = (7 as ::core::ffi::c_int
         * (*AD).top_half_pos as ::core::ffi::c_int
@@ -48,15 +49,14 @@ pub unsafe fn SetSamusTilesDefsForCurAnim(game: &mut Game) {
     }
 }
 pub unsafe fn PlaySamusFanfare(game: &mut Game) -> uint8 {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) != 0 {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) == 5u16 {
+    if ram_word!(game, substate) != 0 {
+        if ram_word!(game, substate) == 5u16 {
             PlayRoomMusicTrackAfterAFrames(0x168 as uint16, game);
         }
     } else {
         QueueMusic_DelayedY(1 as uint16, 0xe as uint16, game);
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) as ::core::ffi::c_int
-        - 359 as ::core::ffi::c_int
+    if ram_word!(game, substate) as ::core::ffi::c_int - 359 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0
     {
@@ -65,11 +65,11 @@ pub unsafe fn PlaySamusFanfare(game: &mut Game) -> uint8 {
         0 as uint8
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0xa24) as *mut uint16) =
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa20) as *mut uint16);
+            ram_word!(game, samus_prev_pose);
         *((&raw mut game.g_ram as *mut uint8).offset(0xa26) as *mut uint16) =
             *((&raw mut game.g_ram as *mut uint8).offset(0xa22) as *mut uint16);
         *((&raw mut game.g_ram as *mut uint8).offset(0xa20) as *mut uint16) =
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16);
+            ram_word!(game, samus_pose);
         *((&raw mut game.g_ram as *mut uint8).offset(0xa22) as *mut uint16) =
             *((&raw mut game.g_ram as *mut uint8).offset(0xa1e) as *mut uint16);
         *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) = 0 as uint16;
@@ -84,16 +84,14 @@ pub unsafe fn Unused_SamusTileViewer(game: &mut Game) {
 }
 pub unsafe fn DrawSamusSuitExploding(game: &mut Game) {
     let r18: uint16 = (if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) == 4u8 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xde4) as *mut uint16) as ::core::ffi::c_int
-            + 2085 as ::core::ffi::c_int
+        ram_word!(game, g_word_7E0DE4) as ::core::ffi::c_int + 2085 as ::core::ffi::c_int
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xde4) as *mut uint16) as ::core::ffi::c_int
-            + 2076 as ::core::ffi::c_int
+        ram_word!(game, g_word_7E0DE4) as ::core::ffi::c_int + 2076 as ::core::ffi::c_int
     }) as uint16;
     DrawSamusSpritemap(
         r18,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16),
-        *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16),
+        ram_word!(game, samus_x_pos),
+        ram_word!(game, samus_y_pos),
         game,
     );
 }

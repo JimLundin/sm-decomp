@@ -1,5 +1,6 @@
 use crate::game::sm_81::DrawSpritemapWithBaseTile;
 use crate::game_state::Game;
+use crate::ram_map::ram_word;
 use crate::rtl::{RomPtr, Unreachable};
 
 pub use crate::types::{
@@ -71,8 +72,8 @@ pub unsafe fn CallSpriteObjectInstr(ea: uint32, game: &mut Game) {
 }
 pub unsafe fn HandleSpriteObjects(game: &mut Game) {
     let mut v1: uint16 = 0;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x185e) as *mut uint16) as ::core::ffi::c_int
-        | *((&raw mut game.g_ram as *mut uint8).offset(0xa78) as *mut uint16) as ::core::ffi::c_int
+    if ram_word!(game, debug_time_frozen_for_enemies) as ::core::ffi::c_int
+        | ram_word!(game, time_is_frozen_flag) as ::core::ffi::c_int
         != 0
     {
         return;
@@ -81,9 +82,7 @@ pub unsafe fn HandleSpriteObjects(game: &mut Game) {
     let mut current_block_9: u64;
     loop {
         let mut v0: ::core::ffi::c_int = 0;
-        v0 = *((&raw mut game.g_ram as *mut uint8).offset(0x1844) as *mut uint16)
-            as ::core::ffi::c_int
-            >> 1 as ::core::ffi::c_int;
+        v0 = ram_word!(game, sprite_object_index) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         if !(*((&raw mut game.g_ram as *mut uint8).offset(0xef78) as *mut uint16)
             .offset(v0 as isize)
             == 0
@@ -112,9 +111,7 @@ pub unsafe fn HandleSpriteObjects(game: &mut Game) {
                     } else {
                         *((&raw mut game.g_ram as *mut uint8).offset(0xeff8) as *mut uint16)
                             .offset(
-                                (*((&raw mut game.g_ram as *mut uint8).offset(0x1844)
-                                    as *mut uint16)
-                                    as ::core::ffi::c_int
+                                (ram_word!(game, sprite_object_index) as ::core::ffi::c_int
                                     >> 1 as ::core::ffi::c_int)
                                     as isize,
                             ) = v1;
@@ -139,9 +136,8 @@ pub unsafe fn HandleSpriteObjects(game: &mut Game) {
     }
 }
 pub unsafe fn SpriteObject_Instr_RepeatLast(game: &mut Game) {
-    let v2: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x1844)
-        as *mut uint16) as ::core::ffi::c_int
-        >> 1 as ::core::ffi::c_int;
+    let v2: ::core::ffi::c_int =
+        ram_word!(game, sprite_object_index) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh1 =
         *((&raw mut game.g_ram as *mut uint8).offset(0xef78) as *mut uint16).offset(v2 as isize);
     *fresh1 = (*fresh1).wrapping_sub(4u16);
@@ -150,27 +146,26 @@ pub unsafe fn SpriteObject_Instr_RepeatLast(game: &mut Game) {
 }
 pub unsafe fn SpriteObject_Instr_Terminate(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xef78) as *mut uint16).offset(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x1844) as *mut uint16) as ::core::ffi::c_int
-            >> 1 as ::core::ffi::c_int) as isize,
+        (ram_word!(game, sprite_object_index) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
+            as isize,
     ) = 0 as uint16;
 }
 pub unsafe fn SpriteObject_Instr_Goto(game: &mut Game) {
     let v2: uint16 = *(RomPtr_B4(
         *((&raw mut game.g_ram as *mut uint8).offset(0xef78) as *mut uint16).offset(
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x1844) as *mut uint16)
-                as ::core::ffi::c_int
-                >> 1 as ::core::ffi::c_int) as isize,
+            (ram_word!(game, sprite_object_index) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
+                as isize,
         ),
         game,
     )
     .offset(2) as *mut uint16);
     *((&raw mut game.g_ram as *mut uint8).offset(0xef78) as *mut uint16).offset(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x1844) as *mut uint16) as ::core::ffi::c_int
-            >> 1 as ::core::ffi::c_int) as isize,
+        (ram_word!(game, sprite_object_index) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
+            as isize,
     ) = v2;
     *((&raw mut game.g_ram as *mut uint8).offset(0xeff8) as *mut uint16).offset(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x1844) as *mut uint16) as ::core::ffi::c_int
-            >> 1 as ::core::ffi::c_int) as isize,
+        (ram_word!(game, sprite_object_index) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
+            as isize,
     ) = *(RomPtr_B4(v2, game) as *mut uint16);
 }
 pub unsafe fn DrawSpriteObjects(game: &mut Game) {
@@ -182,7 +177,7 @@ pub unsafe fn DrawSpriteObjects(game: &mut Game) {
         {
             let x: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xf0f8) as *mut uint16)
                 .offset(v1 as isize))
-            .wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16));
+            .wrapping_sub(ram_word!(game, layer1_x_pos));
             if ((x) as i16).wrapping_add(16i16) >= 0i16 {
                 if x as ::core::ffi::c_int - 272 as ::core::ffi::c_int
                     & 0x8000 as ::core::ffi::c_int
@@ -191,10 +186,7 @@ pub unsafe fn DrawSpriteObjects(game: &mut Game) {
                     let y: int16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xf1f8)
                         as *mut uint16)
                         .offset(v1 as isize)) as i16)
-                        .wrapping_sub(
-                            (*((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16))
-                                as i16,
-                        );
+                        .wrapping_sub((ram_word!(game, layer1_y_pos)) as i16);
                     if y >= 0i16 {
                         if y as ::core::ffi::c_int - 272 as ::core::ffi::c_int
                             & 0x8000 as ::core::ffi::c_int
