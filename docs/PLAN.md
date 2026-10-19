@@ -31,7 +31,19 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest focused check: frozen `69b844d9` plus non-null IRQ callbacks passes
+Latest reviewed integration: frozen `620a6ac6` passes any% 129712/0
+(234.56s), Waver 58109/0 (108.46s) and pickup route 68606/0
+(131.50s), all native exits 0. This combines the committed gameplay
+cleanup, verifier pixel clears and demo-accumulator correction with A82/A83
+enforcement since the previous reviewed integration at `50be5476`.
+All 68 source/config/build files match the frozen commit and retain their
+hashes through replay; copied inputs and save directories are separate.
+Formatting, normal workspace Cargo release (20.70s) and progress pass.
+No maintained source or own residue counters change in this quality check.
+Later Cargo-profile and gameplay changes retain separate verification;
+full gameplay/credits, hardware/audio coverage and remaining masks stay open.
+
+IRQ callback check: frozen `69b844d9` plus non-null IRQ callbacks passes
 any% 129712/0 (229.46s) and Waver 58109/0 (117.06s), both native exits 0.
 The fourteen callbacks retain their order, handler bodies and selector
 expression; direct dispatch removes the impossible null case. A shared
