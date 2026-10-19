@@ -10576,6 +10576,36 @@ verified source; peer PPU work is outside this replay. All own progress
 counters unchanged. Prior CPU holds and complete gameplay/render/audio remain
 open. Continue covered CPU cleanup.
 
+Post-map Parlor ascent reaches the Y731 platform (2026-10-19).
+From retained map-parlor-shelf-rise X353/Y795,health34,map1,missiles1/10:
+right1,right/jump45,Jump1,left/jump30,neutral75 reaches X414/Y684 near74795
+but counter-steering returns X357/Y795. map-parlor-rise-diagonal74901/71
+(81.16s),native exit1. A left-shifted launch lands X383/Y795 unchangedhealth:
+map-parlor-rise-left-edge74901/71 (83.26s). Its next rightward jump returns
+below platform and later contact costs5health: map-parlor-right-shelf75021/71
+(83.48s). Holding Jump without horizontal input after diagonal frame74795
+retains spin momentum and drifts toX480/Y795: map-parlor-land-upper-right
+74906/71 (84.62s). Releasing direction alone does not stop a spinning jump.
+
+Successful landing retains map-parlor-rise-diagonal through74796, then
+Jump/shoot1,Jump65,neutral60. The beam exits the spin pose and stops lateral
+drift over the next platform. map-parlor-stop-spin74922/71 (79.33s),native
+exit1; final92FDX415/Y731,standing,health34/99,map1/station255,missiles1/10,
+equipment1004. This is a higher stable checkpoint; no new room/boss claimed.
+Read-only full failure-counter replay74922/71 (81.73s),observed native exit1,
+matches all71 ordered baseline failing frames exactly; no new failures.
+Same pinned7fcc20d6 core plus committed Missile Tank accessors with rendering
+explicitly enabled. No maintained source, RAM, health or inventory injection.
+Retain this successful prefix and continue upward before additional travel.
+
+Own source/residue delta0; Cargo fmt/check,release and progress pass with the
+preceding missile-door cleanup, whose separate contextual replay74373/71 and
+any%129712/0 (151.38s) verify its source. Inputs/probes/ROM-derived geometry
+and SRAM stay ignored. Peer hardware work and remote sync remain separate.
+Next: clear the upper-platform overhang from retainedX415/Y731; obtain further
+item/boss coverage. Held upper99BD ascent,cliff tuning,old9AD9dropammoandHDMA
+stay held. Credits,gameplay/hardware,render/audio,maskedRAM andownership open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
