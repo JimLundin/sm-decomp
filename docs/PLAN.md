@@ -316,6 +316,31 @@ Formatting/check, normal Cargo release and progress pass. No maintained
 source or own residue counts change in this quality check. Other concurrent
 changes, complete gameplay and broader hardware/audio coverage remain open.
 
+Options-menu accumulator correction and 1A93 enforcement (2026-10-19):
+loading the options screen now preserves the ROM accumulator for both object
+spawns. The first argument is the final copied tile word, captured before
+clearing objects; the second is the first initializer's final palette0E00.
+The shared constructor and other callers remain unchanged. Remove only the
+two-byte1A93/1A94 normalization, exposing the menu parameter for comparison.
+
+Without the caller fix, the unmasked frozen e1a9a3d3 baseline fails11 any%
+frames and one Super Missile frame. The first failure is frame265, high
+byte1A94:00 != 0E. Actual ROM/Rust tracing and independent instruction review
+establish both lost arguments and their sources. Fixed266/0 and1000/0
+controls pass. Each newly enforced byte fault and both neighboring faults
+are detected once; the exact former mask hides both internal faults. All
+seven1000-frame final RAM dumps match clean execution, including recovery.
+
+Frozen438e7755 plus only this function and mask removal passes clean any%
+129712/0 (233.88s), Waver58109/0 (102.78s) and Super Missile69700/0
+(140.59s), all native exits0. Independent source isolation, exact control
+stripping, input/source hash checks, Cargo format check, normal release build
+and progress pass. Own cast lines-2 and Rust lines-4; other counters unchanged.
+Short controls execute one menu load and its two spawns. Enemy-projectile
+slot0 shares this word but has no established active gameplay execution in
+these fixtures. Other masked state, audio timing and full credits remain
+open. No diagnostic tooling or ROM-derived assets are committed.
+
 Super Missile integration QC (2026-10-19): frozen e1a9a3d3 passes the
 maintained Windows verifier CLI over all 69,700 controller frames: zero
 failures (147.04s), native exit 0, 22 rooms and 28 enemy definitions.

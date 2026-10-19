@@ -10920,16 +10920,19 @@ pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen(game: &mut Game) {
             .offset((j as ::core::ffi::c_int + 5375 as ::core::ffi::c_int) as isize);
         j = j.wrapping_sub(1);
     }
+    // The ROM keeps the final copied tile in A through the object clear.
+    let initial_tile = u16::from_le_bytes([game.g_ram[0x3000], game.g_ram[0x3001]]);
     *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
     DeleteAllOptionsMenuObjects_(game);
     CreateOptionsMenuObject_(
-        0 as uint16,
+        initial_tile,
         addr_stru_82F4B8 as ::core::ffi::c_int as uint16,
         game,
     );
+    // The first initializer leaves its palette $0E00 in A for this call.
     CreateOptionsMenuObject_(
-        0 as uint16,
+        0x0e00,
         addr_stru_82F4C4 as ::core::ffi::c_int as uint16,
         game,
     );
