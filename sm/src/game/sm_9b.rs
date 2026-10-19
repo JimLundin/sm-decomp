@@ -126,19 +126,25 @@ pub unsafe fn ProjectileTrail_Func5(k: u16, j: u16, game: &mut Game) {
     let v4: u16 = ram_word!(game, projectile_type[v3]);
     let mut v5: u16 = 0;
     if (v4 as i32 & 0x20i32) != 0i32 {
-        v5 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9ba4e3)) as *const u8 as *mut u16)
-            .offset((ram_word!(game, projectile_type[v3]) as i32 & 0xfi32) as isize)
-            as i32
+        v5 = (crate::rtl::rom_table_word!(
+            game,
+            0x9ba4e3,
+            (ram_word!(game, projectile_type[v3]) as i32 & 0xfi32) as isize
+        ) as i32
             + 2i32 * (ram_word!(game, projectile_dir[v3]) as i32 & 0xfi32)) as u16;
     } else if (v4 as i32 & 0x10i32) != 0i32 {
-        v5 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9ba4cb)) as *const u8 as *mut u16)
-            .offset((ram_word!(game, projectile_type[v3]) as i32 & 0xfi32) as isize)
-            as i32
+        v5 = (crate::rtl::rom_table_word!(
+            game,
+            0x9ba4cb,
+            (ram_word!(game, projectile_type[v3]) as i32 & 0xfi32) as isize
+        ) as i32
             + 2i32 * (ram_word!(game, projectile_dir[v3]) as i32 & 0xfi32)) as u16;
     } else {
-        v5 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9ba4b3)) as *const u8 as *mut u16)
-            .offset((ram_word!(game, projectile_type[v3]) as i32 & 0xfi32) as isize)
-            as i32
+        v5 = (crate::rtl::rom_table_word!(
+            game,
+            0x9ba4b3,
+            (ram_word!(game, projectile_type[v3]) as i32 & 0xfi32) as isize
+        ) as i32
             + 2i32 * (ram_word!(game, projectile_dir[v3]) as i32 & 0xfi32)) as u16;
     }
     let v6: u16 = (*(RomPtr_9B(v5, game) as *mut u16) as i32 + 4i32 * R22 as i32) as u16;
@@ -230,8 +236,11 @@ pub unsafe fn HandleSamusDeathSequence(game: &mut Game) -> u16 {
 }
 pub unsafe fn HandleSamusDeathSequence_Helper2(game: &mut Game) {
     let v0: *const u16 = RomPtr_9B(
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bb5c8)) as *const u8 as *mut u16)
-            .offset((ram_word!(game, samus_suit_palette_index) as i32 >> 1i32) as isize),
+        crate::rtl::rom_table_word!(
+            game,
+            0x9bb5c8,
+            (ram_word!(game, samus_suit_palette_index) as i32 >> 1i32) as isize
+        ),
         game,
     ) as *const u16;
     memcpy(
@@ -257,9 +266,11 @@ pub unsafe fn HandleSamusDeathSequence_Helper2(game: &mut Game) {
     GameState_24_SamusNoHealth_Explosion_2(game);
 }
 pub unsafe fn CopyPalettesForSamusDeath(v0: u16, game: &mut Game) {
-    let r20: i32 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bb6d2)) as *const u8 as *mut u16)
-        .offset((ram_word!(game, samus_suit_palette_index) as i32 >> 1i32) as isize)
-        as i32;
+    let r20: i32 = crate::rtl::rom_table_word!(
+        game,
+        0x9bb6d2,
+        (ram_word!(game, samus_suit_palette_index) as i32 >> 1i32) as isize
+    ) as i32;
     let v1: *const u16 = RomPtr_9B((r20 + v0 as i32) as u16, game) as *const u16;
     memcpy(
         ((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16).offset(192) as *mut u16
@@ -271,8 +282,7 @@ pub unsafe fn CopyPalettesForSamusDeath(v0: u16, game: &mut Game) {
         ((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16).offset(240) as *mut u16
             as *mut ::core::ffi::c_void,
         RomPtr_9B(
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bb80f)) as *const u8 as *mut u16)
-                .offset((v0 as i32 >> 1i32) as isize),
+            crate::rtl::rom_table_word!(game, 0x9bb80f, (v0 as i32 >> 1i32) as isize),
             game,
         ) as *const ::core::ffi::c_void,
         32 as size_t,
@@ -461,39 +471,30 @@ pub unsafe fn HandleConnectingGrapple(game: &mut Game) {
         if ram_word!(game, samus_y_speed) != 0u16 || ram_word!(game, samus_y_subspeed) != 0u16 {
             set_ram_word!(
                 game.grapple_beam_function =
-                    *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc3ee)) as *const u8
-                        as *mut u16)
-                        .offset(v1 as isize)
+                    crate::rtl::rom_table_word!(game, 0x9bc3ee, v1 as isize)
             );
             CallGrappleNextFunc(
-                ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc3ee)) as *const u8 as *mut u16)
-                    .offset((v1 + 1i32) as isize)) as u32)
+                ((crate::rtl::rom_table_word!(game, 0x9bc3ee, (v1 + 1i32) as isize)) as u32)
                     | (0x9b0000u32),
                 game,
             );
         } else if *(&raw mut game.g_ram as *mut u8).offset(0xa1f) == 5u8 {
             set_ram_word!(
                 game.grapple_beam_function =
-                    *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc416)) as *const u8
-                        as *mut u16)
-                        .offset(v1 as isize)
+                    crate::rtl::rom_table_word!(game, 0x9bc416, v1 as isize)
             );
             CallGrappleNextFunc(
-                ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc416)) as *const u8 as *mut u16)
-                    .offset((v1 + 1i32) as isize)) as u32)
+                ((crate::rtl::rom_table_word!(game, 0x9bc416, (v1 + 1i32) as isize)) as u32)
                     | (0x9b0000u32),
                 game,
             );
         } else {
             set_ram_word!(
                 game.grapple_beam_function =
-                    *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc3c6)) as *const u8
-                        as *mut u16)
-                        .offset(v1 as isize)
+                    crate::rtl::rom_table_word!(game, 0x9bc3c6, v1 as isize)
             );
             CallGrappleNextFunc(
-                ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc3c6)) as *const u8 as *mut u16)
-                    .offset((v1 + 1i32) as isize)) as u32)
+                ((crate::rtl::rom_table_word!(game, 0x9bc3c6, (v1 + 1i32) as isize)) as u32)
                     | (0x9b0000u32),
                 game,
             );
@@ -918,28 +919,22 @@ pub unsafe fn GrappleBeamFunc_BE98(game: &mut Game) {
 pub unsafe fn GrappleBeamFunc_BEEB(game: &mut Game) {
     let v0: i32 = ram_word!(game, grapple_beam_direction) as i32;
     set_ram_word!(
-        game.samus_x_pos = (ram_word!(game, x_pos_of_start_of_grapple_beam)).wrapping_sub(
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc122)) as *const u8 as *mut u16)
-                .offset(v0 as isize),
-        )
+        game.samus_x_pos = (ram_word!(game, x_pos_of_start_of_grapple_beam))
+            .wrapping_sub(crate::rtl::rom_table_word!(game, 0x9bc122, v0 as isize),)
     );
     set_ram_word!(
         game.x_pos_of_start_of_grapple_beam_prevframe =
-            (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc14a)) as *const u8 as *mut u16)
-                .offset(v0 as isize))
-            .wrapping_add(ram_word!(game, samus_x_pos))
+            (crate::rtl::rom_table_word!(game, 0x9bc14a, v0 as isize))
+                .wrapping_add(ram_word!(game, samus_x_pos))
     );
     set_ram_word!(
-        game.samus_y_pos = (ram_word!(game, y_pos_of_start_of_grapple_beam)).wrapping_sub(
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc136)) as *const u8 as *mut u16)
-                .offset(v0 as isize),
-        )
+        game.samus_y_pos = (ram_word!(game, y_pos_of_start_of_grapple_beam))
+            .wrapping_sub(crate::rtl::rom_table_word!(game, 0x9bc136, v0 as isize),)
     );
     set_ram_word!(
         game.y_pos_of_start_of_grapple_beam_prevframe =
-            (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc15e)) as *const u8 as *mut u16)
-                .offset(v0 as isize))
-            .wrapping_add(ram_word!(game, samus_y_pos))
+            (crate::rtl::rom_table_word!(game, 0x9bc15e, v0 as isize))
+                .wrapping_add(ram_word!(game, samus_y_pos))
     );
 }
 pub unsafe fn GrappleBeamFunc_BF1B(game: &mut Game) {
@@ -955,27 +950,23 @@ pub unsafe fn GrappleBeamFunc_BF1B(game: &mut Game) {
         let v1: i32 = v0 as i32 >> 1i32;
         set_ram_word!(
             game.x_pos_of_start_of_grapple_beam =
-                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc122)) as *const u8 as *mut u16)
-                    .offset(v1 as isize))
-                .wrapping_add(ram_word!(game, samus_x_pos))
+                (crate::rtl::rom_table_word!(game, 0x9bc122, v1 as isize))
+                    .wrapping_add(ram_word!(game, samus_x_pos))
         );
         set_ram_word!(
             game.x_pos_of_start_of_grapple_beam_prevframe =
-                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc14a)) as *const u8 as *mut u16)
-                    .offset(v1 as isize))
-                .wrapping_add(ram_word!(game, samus_x_pos))
+                (crate::rtl::rom_table_word!(game, 0x9bc14a, v1 as isize))
+                    .wrapping_add(ram_word!(game, samus_x_pos))
         );
         set_ram_word!(
             game.y_pos_of_start_of_grapple_beam =
-                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc136)) as *const u8 as *mut u16)
-                    .offset(v1 as isize) as i32
+                (crate::rtl::rom_table_word!(game, 0x9bc136, v1 as isize) as i32
                     + ram_word!(game, samus_y_pos) as i32
                     - r22 as i32) as u16
         );
         set_ram_word!(
             game.y_pos_of_start_of_grapple_beam_prevframe =
-                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc15e)) as *const u8 as *mut u16)
-                    .offset(v1 as isize) as i32
+                (crate::rtl::rom_table_word!(game, 0x9bc15e, v1 as isize) as i32
                     + ram_word!(game, samus_y_pos) as i32
                     - r22 as i32) as u16
         );
@@ -983,27 +974,23 @@ pub unsafe fn GrappleBeamFunc_BF1B(game: &mut Game) {
         let v2: i32 = v0 as i32 >> 1i32;
         set_ram_word!(
             game.x_pos_of_start_of_grapple_beam =
-                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc172)) as *const u8 as *mut u16)
-                    .offset(v2 as isize))
-                .wrapping_add(ram_word!(game, samus_x_pos))
+                (crate::rtl::rom_table_word!(game, 0x9bc172, v2 as isize))
+                    .wrapping_add(ram_word!(game, samus_x_pos))
         );
         set_ram_word!(
             game.x_pos_of_start_of_grapple_beam_prevframe =
-                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc19a)) as *const u8 as *mut u16)
-                    .offset(v2 as isize))
-                .wrapping_add(ram_word!(game, samus_x_pos))
+                (crate::rtl::rom_table_word!(game, 0x9bc19a, v2 as isize))
+                    .wrapping_add(ram_word!(game, samus_x_pos))
         );
         set_ram_word!(
             game.y_pos_of_start_of_grapple_beam =
-                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc186)) as *const u8 as *mut u16)
-                    .offset(v2 as isize) as i32
+                (crate::rtl::rom_table_word!(game, 0x9bc186, v2 as isize) as i32
                     + ram_word!(game, samus_y_pos) as i32
                     - r22 as i32) as u16
         );
         set_ram_word!(
             game.y_pos_of_start_of_grapple_beam_prevframe =
-                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc1ae)) as *const u8 as *mut u16)
-                    .offset(v2 as isize) as i32
+                (crate::rtl::rom_table_word!(game, 0x9bc1ae, v2 as isize) as i32
                     + ram_word!(game, samus_y_pos) as i32
                     - r22 as i32) as u16
         );
@@ -1021,15 +1008,12 @@ pub unsafe fn UpdateGrappleBeamTiles(game: &mut Game) {
     {
         set_ram_word!(game.grapple_point_anim_timer = 5u16);
         update_ram_word!(game.grapple_point_anim_ptr, wrapping_add(512u16));
-        if ((ram_word!(game, grapple_point_anim_ptr)) as i16).wrapping_sub(
-            (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc344)) as *const u8 as *mut u16))
-                as i16,
-        ) >= 0i16
+        if ((ram_word!(game, grapple_point_anim_ptr)) as i16)
+            .wrapping_sub((crate::rtl::rom_table_word!(game, 0x9bc344, 0isize)) as i16)
+            >= 0i16
         {
             set_ram_word!(
-                game.grapple_point_anim_ptr =
-                    *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc342)) as *const u8
-                        as *mut u16)
+                game.grapple_point_anim_ptr = crate::rtl::rom_table_word!(game, 0x9bc342, 0isize)
             );
         }
     }
@@ -1053,8 +1037,7 @@ pub unsafe fn UpdateGrappleBeamTiles(game: &mut Game) {
     (*gVramWriteEntry(v0 as i32, game)).size = 128u16;
     v0 = (v0).wrapping_add(2u16);
     (*gVramWriteEntry(v0 as i32, game)).size =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc346)) as *const u8 as *mut u16)
-            .offset((v1 as i32 >> 1i32) as isize);
+        crate::rtl::rom_table_word!(game, 0x9bc346, (v1 as i32 >> 1i32) as isize);
     v0 = (v0).wrapping_add(2u16);
     let fresh28 = v0;
     v0 = v0.wrapping_add(1);
@@ -1103,15 +1086,11 @@ pub unsafe fn HandleGrappleBeamFlare(game: &mut Game) {
         }
         let mut r22: u16 = 0;
         if *(&raw mut game.g_ram as *mut u8).offset(0xa1e) == 4u8 {
-            r22 = (ram_word!(game, flare_animation_frame)).wrapping_add(
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0x93a22b)) as *const u8 as *mut u16)
-                    .offset(0),
-            );
+            r22 = (ram_word!(game, flare_animation_frame))
+                .wrapping_add(crate::rtl::rom_table_word!(game, 0x93a22b, 0));
         } else {
-            r22 = (ram_word!(game, flare_animation_frame)).wrapping_add(
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0x93a225)) as *const u8 as *mut u16)
-                    .offset(0),
-            );
+            r22 = (ram_word!(game, flare_animation_frame))
+                .wrapping_add(crate::rtl::rom_table_word!(game, 0x93a225, 0));
         }
         let r20: u16 = (ram_word!(game, x_pos_of_start_of_grapple_beam_prevframe))
             .wrapping_sub(ram_word!(game, layer1_x_pos));
@@ -1202,18 +1181,14 @@ pub unsafe fn GrappleBeamFunc_FireGoToCancel(game: &mut Game) {
     let v1: i32 = v0;
     set_ram_word!(
         game.grapple_beam_extension_x_velocity =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc0db)) as *const u8 as *mut u16)
-                .offset(v1 as isize)
+            crate::rtl::rom_table_word!(game, 0x9bc0db, v1 as isize)
     );
     set_ram_word!(
         game.grapple_beam_extension_y_velocity =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc0ef)) as *const u8 as *mut u16)
-                .offset(v1 as isize)
+            crate::rtl::rom_table_word!(game, 0x9bc0ef, v1 as isize)
     );
     set_ram_word!(
-        game.grapple_beam_end_angle16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc104))
-            as *const u8 as *mut u16)
-            .offset(v1 as isize)
+        game.grapple_beam_end_angle16 = crate::rtl::rom_table_word!(game, 0x9bc104, v1 as isize)
     );
     set_ram_word!(game.grapple_beam_end_angles_mirror = ram_word!(game, grapple_beam_end_angle16));
     set_ram_word!(game.grapple_varCF6 = 10u16);
@@ -1223,34 +1198,28 @@ pub unsafe fn GrappleBeamFunc_FireGoToCancel(game: &mut Game) {
     {
         set_ram_word!(
             game.grapple_beam_origin_x_offset =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc122)) as *const u8 as *mut u16)
-                    .offset(v1 as isize)
+                crate::rtl::rom_table_word!(game, 0x9bc122, v1 as isize)
         );
         set_ram_word!(
             game.grapple_beam_origin_y_offset =
-                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc136)) as *const u8 as *mut u16)
-                    .offset(v1 as isize))
-                .wrapping_sub(r22)
+                (crate::rtl::rom_table_word!(game, 0x9bc136, v1 as isize)).wrapping_sub(r22)
         );
         set_ram_word!(
-            game.grapple_beam_end_x_pos = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc122))
-                as *const u8 as *mut u16)
-                .offset(v1 as isize))
-            .wrapping_add(ram_word!(game, samus_x_pos))
+            game.grapple_beam_end_x_pos =
+                (crate::rtl::rom_table_word!(game, 0x9bc122, v1 as isize))
+                    .wrapping_add(ram_word!(game, samus_x_pos))
         );
         set_ram_word!(
             game.x_pos_of_start_of_grapple_beam = ram_word!(game, grapple_beam_end_x_pos)
         );
         set_ram_word!(
             game.x_pos_of_start_of_grapple_beam_prevframe =
-                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc14a)) as *const u8 as *mut u16)
-                    .offset(v1 as isize))
-                .wrapping_add(ram_word!(game, samus_x_pos))
+                (crate::rtl::rom_table_word!(game, 0x9bc14a, v1 as isize))
+                    .wrapping_add(ram_word!(game, samus_x_pos))
         );
         set_ram_word!(
-            game.grapple_beam_end_y_pos = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc136))
-                as *const u8 as *mut u16)
-                .offset(v1 as isize) as i32
+            game.grapple_beam_end_y_pos = (crate::rtl::rom_table_word!(game, 0x9bc136, v1 as isize)
+                as i32
                 + ram_word!(game, samus_y_pos) as i32
                 - r22 as i32) as u16
         );
@@ -1259,42 +1228,35 @@ pub unsafe fn GrappleBeamFunc_FireGoToCancel(game: &mut Game) {
         );
         set_ram_word!(
             game.y_pos_of_start_of_grapple_beam_prevframe =
-                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc15e)) as *const u8 as *mut u16)
-                    .offset(v1 as isize) as i32
+                (crate::rtl::rom_table_word!(game, 0x9bc15e, v1 as isize) as i32
                     + ram_word!(game, samus_y_pos) as i32
                     - r22 as i32) as u16
         );
     } else {
         set_ram_word!(
             game.grapple_beam_origin_x_offset =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc172)) as *const u8 as *mut u16)
-                    .offset(v1 as isize)
+                crate::rtl::rom_table_word!(game, 0x9bc172, v1 as isize)
         );
         set_ram_word!(
             game.grapple_beam_origin_y_offset =
-                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc186)) as *const u8 as *mut u16)
-                    .offset(v1 as isize))
-                .wrapping_sub(r22)
+                (crate::rtl::rom_table_word!(game, 0x9bc186, v1 as isize)).wrapping_sub(r22)
         );
         set_ram_word!(
-            game.grapple_beam_end_x_pos = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc172))
-                as *const u8 as *mut u16)
-                .offset(v1 as isize))
-            .wrapping_add(ram_word!(game, samus_x_pos))
+            game.grapple_beam_end_x_pos =
+                (crate::rtl::rom_table_word!(game, 0x9bc172, v1 as isize))
+                    .wrapping_add(ram_word!(game, samus_x_pos))
         );
         set_ram_word!(
             game.x_pos_of_start_of_grapple_beam = ram_word!(game, grapple_beam_end_x_pos)
         );
         set_ram_word!(
             game.x_pos_of_start_of_grapple_beam_prevframe =
-                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc19a)) as *const u8 as *mut u16)
-                    .offset(v1 as isize))
-                .wrapping_add(ram_word!(game, samus_x_pos))
+                (crate::rtl::rom_table_word!(game, 0x9bc19a, v1 as isize))
+                    .wrapping_add(ram_word!(game, samus_x_pos))
         );
         set_ram_word!(
-            game.grapple_beam_end_y_pos = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc186))
-                as *const u8 as *mut u16)
-                .offset(v1 as isize) as i32
+            game.grapple_beam_end_y_pos = (crate::rtl::rom_table_word!(game, 0x9bc186, v1 as isize)
+                as i32
                 + ram_word!(game, samus_y_pos) as i32
                 - r22 as i32) as u16
         );
@@ -1303,8 +1265,7 @@ pub unsafe fn GrappleBeamFunc_FireGoToCancel(game: &mut Game) {
         );
         set_ram_word!(
             game.y_pos_of_start_of_grapple_beam_prevframe =
-                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc1ae)) as *const u8 as *mut u16)
-                    .offset(v1 as isize) as i32
+                (crate::rtl::rom_table_word!(game, 0x9bc1ae, v1 as isize) as i32
                     + ram_word!(game, samus_y_pos) as i32
                     - r22 as i32) as u16
         );
@@ -1330,8 +1291,7 @@ pub unsafe fn GrappleBeamFunc_FireGoToCancel(game: &mut Game) {
     set_ram_word!(game.grapple_beam_unkD3C = 0u16);
     set_ram_word!(game.grapple_point_anim_timer = 5u16);
     set_ram_word!(
-        game.grapple_point_anim_ptr =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc342)) as *const u8 as *mut u16)
+        game.grapple_point_anim_ptr = crate::rtl::rom_table_word!(game, 0x9bc342, 0isize)
     );
     set_ram_word!(game.grapple_beam_grapple_start_x = 0u16);
     set_ram_word!(game.grapple_beam_unkD38 = 0u16);

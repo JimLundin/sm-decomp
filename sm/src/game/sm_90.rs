@@ -921,10 +921,11 @@ pub unsafe fn Samus_DrawEcho(j: u16, game: &mut Game) {
 }
 pub unsafe fn Samus_DrawShinesparkCrashEchoes(k: u16, game: &mut Game) {
     if (ram_word!(game, nmi_frame_counter_word) as i32 & 1i32) != 0i32 {
-        let a: u16 = (ram_word!(game, samus_anim_frame)).wrapping_add(
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x929263)) as *const u8 as *mut u16)
-                .offset(ram_word!(game, samus_pose) as isize),
-        );
+        let a: u16 = (ram_word!(game, samus_anim_frame)).wrapping_add(crate::rtl::rom_table_word!(
+            game,
+            0x929263,
+            ram_word!(game, samus_pose) as isize
+        ));
         let v2: i16 = (ram_word!(game, speed_echo_ypos[(k as i32 >> 1i32)]) as i32
             - (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const u8
                 as *mut SamusPoseParams)
@@ -944,11 +945,12 @@ pub unsafe fn Samus_DrawShinesparkCrashEchoes(k: u16, game: &mut Game) {
                 & 1i32
                 != 0
             {
-                let v5: u16 = (ram_word!(game, samus_anim_frame)).wrapping_add(
-                    *(game.g_rom.offset(crate::rtl::lorom_offset(0x92945d)) as *const u8
-                        as *mut u16)
-                        .offset(ram_word!(game, samus_pose) as isize),
-                );
+                let v5: u16 =
+                    (ram_word!(game, samus_anim_frame)).wrapping_add(crate::rtl::rom_table_word!(
+                        game,
+                        0x92945d,
+                        ram_word!(game, samus_pose) as isize
+                    ));
                 DrawSamusSpritemap(
                     v5,
                     (ram_word!(game, speed_echo_xpos[(k as i32 >> 1i32)]))
@@ -982,10 +984,11 @@ pub unsafe fn Samus_DrawStartingDeathAnim(game: &mut Game) {
 }
 pub unsafe fn Samus_DrawDuringDeathAnim(game: &mut Game) {
     let v1: u16 = (2u16).wrapping_mul(ram_word!(game, samus_pose));
-    let a: u16 = (ram_word!(game, samus_anim_frame)).wrapping_add(
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0x929263)) as *const u8 as *mut u16)
-            .offset(ram_word!(game, samus_pose) as isize),
-    );
+    let a: u16 = (ram_word!(game, samus_anim_frame)).wrapping_add(crate::rtl::rom_table_word!(
+        game,
+        0x929263,
+        ram_word!(game, samus_pose) as isize
+    ));
     Samus_CalcSpritemapPos((2u16).wrapping_mul(ram_word!(game, samus_pose)), game);
     DrawSamusSpritemap(
         a,
@@ -1000,10 +1003,11 @@ pub unsafe fn Samus_DrawDuringDeathAnim(game: &mut Game) {
         != 0
     {
         DrawSamusSpritemap(
-            (ram_word!(game, samus_anim_frame)).wrapping_add(
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0x92945d)) as *const u8 as *mut u16)
-                    .offset((R36 as i32 >> 1i32) as isize),
-            ),
+            (ram_word!(game, samus_anim_frame)).wrapping_add(crate::rtl::rom_table_word!(
+                game,
+                0x92945d,
+                (R36 as i32 >> 1i32) as isize
+            )),
             (ram_word!(game, layer1_x_pos)).wrapping_add(ram_word!(game, samus_spritemap_x_pos)),
             (ram_word!(game, layer1_y_pos)).wrapping_add(ram_word!(game, samus_spritemap_y_pos)),
             game,
@@ -1014,10 +1018,11 @@ pub unsafe fn Samus_DrawDuringDeathAnim(game: &mut Game) {
 pub unsafe fn Samus_DrawWhenNotAnimatingOrDying(game: &mut Game) {
     let mut v0: PairU16 = PairU16 { k: 0, j: 0 };
     let v2: u16 = (2u16).wrapping_mul(ram_word!(game, samus_pose));
-    let a: u16 = (ram_word!(game, samus_anim_frame)).wrapping_add(
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0x929263)) as *const u8 as *mut u16)
-            .offset(ram_word!(game, samus_pose) as isize),
-    );
+    let a: u16 = (ram_word!(game, samus_anim_frame)).wrapping_add(crate::rtl::rom_table_word!(
+        game,
+        0x929263,
+        ram_word!(game, samus_pose) as isize
+    ));
     v0 = Samus_CalcSpritemapPos((2u16).wrapping_mul(ram_word!(game, samus_pose)), game);
     DrawSamusSpritemap(a, v0.k, v0.j, game);
     let R36: u16 = v2;
@@ -1027,10 +1032,11 @@ pub unsafe fn Samus_DrawWhenNotAnimatingOrDying(game: &mut Game) {
         != 0
     {
         DrawSamusSpritemap(
-            (ram_word!(game, samus_anim_frame)).wrapping_add(
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0x92945d)) as *const u8 as *mut u16)
-                    .offset((R36 as i32 >> 1i32) as isize),
-            ),
+            (ram_word!(game, samus_anim_frame)).wrapping_add(crate::rtl::rom_table_word!(
+                game,
+                0x92945d,
+                (R36 as i32 >> 1i32) as isize
+            )),
             ram_word!(game, samus_spritemap_x_pos),
             ram_word!(game, samus_spritemap_y_pos),
             game,
@@ -1069,12 +1075,11 @@ pub unsafe fn HandleAtmosphericEffects(game: &mut Game) {
                     } else {
                         set_ram_word!(
                             game.atmospheric_gfx_anim_timer[v1] = *(RomPtr_90(
-                                (r18).wrapping_add(
-                                    *(game.g_rom.offset(crate::rtl::lorom_offset(0x908b93))
-                                        as *const u8
-                                        as *mut u16)
-                                        .offset((v3 as i32 >> 1i32) as isize,),
-                                ),
+                                (r18).wrapping_add(crate::rtl::rom_table_word!(
+                                    game,
+                                    0x908b93,
+                                    (v3 as i32 >> 1i32) as isize,
+                                ),),
                                 game,
                             )
                                 as *mut u16)
@@ -1087,11 +1092,11 @@ pub unsafe fn HandleAtmosphericEffects(game: &mut Game) {
             } else {
                 set_ram_word!(
                     game.atmospheric_gfx_anim_timer[v1] = *(RomPtr_90(
-                        (r18).wrapping_add(
-                            *(game.g_rom.offset(crate::rtl::lorom_offset(0x908b93)) as *const u8
-                                as *mut u16)
-                                .offset((v3 as i32 >> 1i32) as isize),
-                        ),
+                        (r18).wrapping_add(crate::rtl::rom_table_word!(
+                            game,
+                            0x908b93,
+                            (v3 as i32 >> 1i32) as isize
+                        ),),
                         game,
                     ) as *mut u16)
                 );
@@ -1099,9 +1104,8 @@ pub unsafe fn HandleAtmosphericEffects(game: &mut Game) {
                     (ram_word!(game, atmospheric_gfx_frame_and_type[v1])).wrapping_add(1u16);
                 set_ram_word!(game.atmospheric_gfx_frame_and_type[v1] = v5);
                 if ((v5 as u8) as i16).wrapping_sub(
-                    (*(game.g_rom.offset(crate::rtl::lorom_offset(0x908bef)) as *const u8
-                        as *mut u16)
-                        .offset((v3 as i32 >> 1i32) as isize)) as i16,
+                    (crate::rtl::rom_table_word!(game, 0x908bef, (v3 as i32 >> 1i32) as isize))
+                        as i16,
                 ) >= 0i16
                 {
                     set_ram_word!(game.atmospheric_gfx_frame_and_type[v1] = 0u16);
@@ -1156,11 +1160,11 @@ pub unsafe fn AtmosphericTypeFunc_1_FootstepSplash(k: u16, j: u16, game: &mut Ga
         {
             (*v5).ycoord = v6 as u8;
             *(&raw mut (*v5).charnum as *mut u16) = *(RomPtr_90(
-                (r18).wrapping_add(
-                    *(game.g_rom.offset(crate::rtl::lorom_offset(0x908bff)) as *const u8
-                        as *mut u16)
-                        .offset((k as i32 >> 1i32) as isize),
-                ),
+                (r18).wrapping_add(crate::rtl::rom_table_word!(
+                    game,
+                    0x908bff,
+                    (k as i32 >> 1i32) as isize
+                )),
                 game,
             ) as *mut u16);
             set_ram_word!(game.oam_next_ptr = (v3).wrapping_add(4u16));
@@ -2241,10 +2245,7 @@ pub unsafe fn Samus_HandleExtraRunspeedX(game: &mut Game) {
                     set_ram_word!(game.special_samus_palette_timer = 1u16);
                     set_ram_word!(game.special_samus_palette_frame = 0u16);
                     set_ram_word!(
-                        game.speed_boost_counter =
-                            *(game.g_rom.offset(crate::rtl::lorom_offset(0x91b61f)) as *const u8
-                                as *mut u16)
-                                .offset(0)
+                        game.speed_boost_counter = crate::rtl::rom_table_word!(game, 0x91b61f, 0)
                     );
                 }
                 if ((ram_word!(game, samus_x_extra_run_speed)) as i16)
@@ -3319,8 +3320,7 @@ pub unsafe fn UpdateMinimap(game: &mut Game) {
                 .offset((v3 as i32 + 8i32) as isize) as *mut u8 as *mut u16),
         ));
     let mut r9: *const u8 = RomPtr_82(
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0x829717)) as *const u8 as *mut u16)
-            .offset(ram_word!(game, area_index) as isize),
+        crate::rtl::rom_table_word!(game, 0x829717, ram_word!(game, area_index) as isize),
         game,
     );
     let r15: *const u8 = r9;
@@ -3552,8 +3552,7 @@ pub unsafe fn UpdateBeamTilesAndPalette(game: &mut Game) {
     (*gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game)).size = 256u16;
     v1 = (v1).wrapping_add(2u16);
     (*gVramWriteEntry(v1 as i32, game)).size =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0x90c3b1)) as *const u8 as *mut u16)
-            .offset((v0 as i32 >> 1i32) as isize);
+        crate::rtl::rom_table_word!(game, 0x90c3b1, (v0 as i32 >> 1i32) as isize);
     v1 = (v1).wrapping_add(2u16);
     let fresh155 = v1;
     v1 = v1.wrapping_add(1);
@@ -3571,8 +3570,7 @@ pub unsafe fn WriteBeamPalette_A(a: u16, game: &mut Game) {
     WriteBeamPalette_Y((2i32 * (a as i32 & 0xfffi32)) as u16, game);
 }
 pub unsafe fn WriteBeamPalette_Y(j: u16, game: &mut Game) {
-    let r0: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x90c3c9)) as *const u8 as *mut u16)
-        .offset((j as i32 >> 1i32) as isize);
+    let r0: u16 = crate::rtl::rom_table_word!(game, 0x90c3c9, (j as i32 >> 1i32) as isize);
     let mut v1: u16 = 0u16;
     let mut v2: u16 = 0u16;
     loop {
@@ -3587,8 +3585,7 @@ pub unsafe fn WriteBeamPalette_Y(j: u16, game: &mut Game) {
     }
 }
 pub unsafe fn LoadProjectilePalette(a: u16, game: &mut Game) {
-    let r0: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x90c3c9)) as *const u8 as *mut u16)
-        .offset((a as i32 & 0xfffi32) as isize);
+    let r0: u16 = crate::rtl::rom_table_word!(game, 0x90c3c9, (a as i32 & 0xfffi32) as isize);
     let mut v1: u16 = 0u16;
     let mut v2: u16 = 0u16;
     loop {
@@ -4460,13 +4457,11 @@ pub unsafe fn SpawnProjectileTrail(k: u16, game: &mut Game) {
     let v6: i32 = v2 as i32;
     set_ram_word!(
         game.projectiletrail_left_instr_list_ptr[v5] =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x90b5bb)) as *const u8 as *mut u16)
-                .offset(v6 as isize)
+            crate::rtl::rom_table_word!(game, 0x90b5bb, v6 as isize)
     );
     set_ram_word!(
         game.projectiletrail_right_instr_list_ptr[v5] =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x90b609)) as *const u8 as *mut u16)
-                .offset(v6 as isize)
+            crate::rtl::rom_table_word!(game, 0x90b609, v6 as isize)
     );
     ProjectileTrail_Func5(ram_word!(game, projectile_index), v4, game);
 }
@@ -5061,9 +5056,7 @@ pub unsafe fn HandleChargingBeamGfxAudio(game: &mut Game) {
                         .offset(v0 as i32 as isize) as *mut u16) = v2;
                     let mut v3: u16 = v2;
                     let r0: *const u8 = RomPtr_90(
-                        *(game.g_rom.offset(crate::rtl::lorom_offset(0x90c481)) as *const u8
-                            as *mut u16)
-                            .offset((v0 as i32 >> 1i32) as isize),
+                        crate::rtl::rom_table_word!(game, 0x90c481, (v0 as i32 >> 1i32) as isize),
                         game,
                     );
                     v4 = *r0.offset(v2 as isize) as i16;
@@ -5757,8 +5750,7 @@ pub unsafe fn HandleArmCannonOpenState(game: &mut Game) {
     }
     set_ram_word!(
         game.arm_cannon_drawing_mode = *RomPtr_90(
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x90c7df)) as *const u8 as *mut u16)
-                .offset(ram_word!(game, samus_pose) as isize),
+            crate::rtl::rom_table_word!(game, 0x90c7df, ram_word!(game, samus_pose) as isize),
             game,
         )
         .offset(1) as u16
@@ -5810,9 +5802,8 @@ pub unsafe fn Samus_ArmCannon_Draw(game: &mut Game) {
         && (ram_word!(game, samus_invincibility_timer) == 0
             || (ram_word!(game, nmi_frame_counter_word) as i32 & 1i32) == 0i32)
     {
-        let v0: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x90c7df)) as *const u8
-            as *mut u16)
-            .offset(ram_word!(game, samus_pose) as isize);
+        let v0: u16 =
+            crate::rtl::rom_table_word!(game, 0x90c7df, ram_word!(game, samus_pose) as isize);
         let v1: *const u8 = RomPtr_90(v0, game);
         let v2: i16 = *v1 as i16;
         if (v2 as i32 & 0x80i32) != 0i32 {
@@ -5853,8 +5844,7 @@ pub unsafe fn Samus_ArmCannon_Draw(game: &mut Game) {
             }
         }
         let v11: *const u8 = RomPtr_90(
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x90c7df)) as *const u8 as *mut u16)
-                .offset(ram_word!(game, samus_pose) as isize),
+            crate::rtl::rom_table_word!(game, 0x90c7df, ram_word!(game, samus_pose) as isize),
             game,
         );
         let mut v12: u8 = *v11;
@@ -5865,9 +5855,8 @@ pub unsafe fn Samus_ArmCannon_Draw(game: &mut Game) {
                 *v11.offset(0) as i32
             }) as u8;
         }
-        let v13: u16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x90c7a5)) as *const u8
-            as *mut u16)
-            .offset((v12 as i32 & 0x7fi32) as isize) as i32
+        let v13: u16 = (crate::rtl::rom_table_word!(game, 0x90c7a5, (v12 as i32 & 0x7fi32) as isize)
+            as i32
             + 2i32 * ram_word!(game, arm_cannon_frame) as i32) as u16;
         let mut v14: u16 = ram_word!(game, vram_write_queue_tail);
         (*gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game)).size = 32u16;

@@ -397,13 +397,11 @@ pub unsafe fn SetGoldenTorizoPalette(mut a: u16, game: &mut Game) {
         let v5: i32 = i >> 1i32;
         set_ram_word!(
             game.palette_buffer[(v5 + 160i32)] =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0x848132)) as *const u8 as *mut u16)
-                    .offset(v4 as isize)
+                crate::rtl::rom_table_word!(game, 0x848132, v4 as isize)
         );
         set_ram_word!(
             game.palette_buffer[(v5 + 144i32)] =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0x848032)) as *const u8 as *mut u16)
-                    .offset(v4 as isize)
+                crate::rtl::rom_table_word!(game, 0x848032, v4 as isize)
         );
         v2 = (v2).wrapping_sub(2u16);
         i -= 2i32;
@@ -498,14 +496,13 @@ pub unsafe fn LoadXrayBlocks(game: &mut Game) {
             if (ram_word!(game, bitmask) as i32 & v2 as i32) == 0i32 {
                 CalculatePlmBlockCoords(k, game);
                 let v3: *const u8 = RomPtr_84(
-                    *(game.g_rom.offset(crate::rtl::lorom_offset(0x84839d)) as *const u8
-                        as *mut u16)
-                        .offset(
-                            (*((&raw mut game.g_ram as *mut u8).offset(0xdf0c) as *mut u16)
-                                .offset((k as i32 >> 1i32) as isize)
-                                as i32
-                                >> 1i32) as isize,
-                        ),
+                    crate::rtl::rom_table_word!(
+                        game,
+                        0x84839d,
+                        (*((&raw mut game.g_ram as *mut u8).offset(0xdf0c) as *mut u16)
+                            .offset((k as i32 >> 1i32) as isize) as i32
+                            >> 1i32) as isize,
+                    ),
                     game,
                 );
                 LoadBlockToXrayTilemap(
@@ -3101,12 +3098,17 @@ pub unsafe fn PlmSetup_C82E_UpwardsOpenGate(j: u16, game: &mut Game) -> u8 {
 pub unsafe fn PlmSetup_C836_DownwardsGateShootblock(j: u16, game: &mut Game) -> u8 {
     let v1: i32 = j as i32 >> 1i32;
     set_ram_word!(
-        game.plm_instr_list_ptrs[v1] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x84c70a))
-            as *const u8 as *mut u16)
-            .offset((ram_word!(game, plm_room_arguments[v1]) as i32 >> 1i32) as isize,)
+        game.plm_instr_list_ptrs[v1] = crate::rtl::rom_table_word!(
+            game,
+            0x84c70a,
+            (ram_word!(game, plm_room_arguments[v1]) as i32 >> 1i32) as isize,
+        )
     );
-    let v2: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x84c71a)) as *const u8 as *mut u16)
-        .offset((ram_word!(game, plm_room_arguments[v1]) as i32 >> 1i32) as isize);
+    let v2: u16 = crate::rtl::rom_table_word!(
+        game,
+        0x84c71a,
+        (ram_word!(game, plm_room_arguments[v1]) as i32 >> 1i32) as isize
+    );
     if v2 != 0 {
         WriteLevelDataBlockTypeAndBts(
             (ram_word!(game, plm_block_indices[v1])).wrapping_sub(2u16),
@@ -3114,8 +3116,11 @@ pub unsafe fn PlmSetup_C836_DownwardsGateShootblock(j: u16, game: &mut Game) -> 
             game,
         );
     }
-    let v3: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x84c72a)) as *const u8 as *mut u16)
-        .offset((ram_word!(game, plm_room_arguments[v1]) as i32 >> 1i32) as isize);
+    let v3: u16 = crate::rtl::rom_table_word!(
+        game,
+        0x84c72a,
+        (ram_word!(game, plm_room_arguments[v1]) as i32 >> 1i32) as isize
+    );
     if v3 != 0 {
         WriteLevelDataBlockTypeAndBts(
             (ram_word!(game, plm_block_indices[v1])).wrapping_add(2u16),
@@ -3128,12 +3133,17 @@ pub unsafe fn PlmSetup_C836_DownwardsGateShootblock(j: u16, game: &mut Game) -> 
 pub unsafe fn PlmSetup_C73A_UpwardsGateShootblock(j: u16, game: &mut Game) -> u8 {
     let v1: i32 = j as i32 >> 1i32;
     set_ram_word!(
-        game.plm_instr_list_ptrs[v1] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x84c764))
-            as *const u8 as *mut u16)
-            .offset((ram_word!(game, plm_room_arguments[v1]) as i32 >> 1i32) as isize,)
+        game.plm_instr_list_ptrs[v1] = crate::rtl::rom_table_word!(
+            game,
+            0x84c764,
+            (ram_word!(game, plm_room_arguments[v1]) as i32 >> 1i32) as isize,
+        )
     );
-    let v2: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x84c774)) as *const u8 as *mut u16)
-        .offset((ram_word!(game, plm_room_arguments[v1]) as i32 >> 1i32) as isize);
+    let v2: u16 = crate::rtl::rom_table_word!(
+        game,
+        0x84c774,
+        (ram_word!(game, plm_room_arguments[v1]) as i32 >> 1i32) as isize
+    );
     if v2 != 0 {
         WriteLevelDataBlockTypeAndBts(
             (ram_word!(game, plm_block_indices[v1])).wrapping_sub(2u16),
@@ -3141,8 +3151,11 @@ pub unsafe fn PlmSetup_C73A_UpwardsGateShootblock(j: u16, game: &mut Game) -> u8
             game,
         );
     }
-    let v3: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x84c784)) as *const u8 as *mut u16)
-        .offset((ram_word!(game, plm_room_arguments[v1]) as i32 >> 1i32) as isize);
+    let v3: u16 = crate::rtl::rom_table_word!(
+        game,
+        0x84c784,
+        (ram_word!(game, plm_room_arguments[v1]) as i32 >> 1i32) as isize
+    );
     if v3 != 0 {
         WriteLevelDataBlockTypeAndBts(
             (ram_word!(game, plm_block_indices[v1])).wrapping_add(2u16),
@@ -3855,12 +3868,11 @@ pub unsafe fn PlmPreInstr_SetMetroidsClearState_Ev0x13(k: u16, game: &mut Game) 
 }
 pub unsafe fn PlmSetup_SetMetroidRequiredClearState(j: u16, game: &mut Game) -> u8 {
     set_ram_word!(
-        game.plm_pre_instrs[(j as i32 >> 1i32)] =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x84db28)) as *const u8 as *mut u16)
-                .offset(
-                    (ram_word!(game, plm_room_arguments[(j as i32 >> 1i32)]) as i32 >> 1i32)
-                        as isize,
-                )
+        game.plm_pre_instrs[(j as i32 >> 1i32)] = crate::rtl::rom_table_word!(
+            game,
+            0x84db28,
+            (ram_word!(game, plm_room_arguments[(j as i32 >> 1i32)]) as i32 >> 1i32) as isize,
+        )
     );
     0u8
 }

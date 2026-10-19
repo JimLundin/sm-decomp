@@ -53,19 +53,15 @@ pub unsafe fn LoadFxEntry(v0: u16, game: &mut Game) {
     if (*FD).palette_blend != 0 {
         let v2: i32 = (*FD).palette_blend as i32 >> 1i32;
         set_ram_word!(
-            game.palette_buffer[25] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x89aa02))
-                as *const u8 as *mut u16)
-                .offset(v2 as isize)
+            game.palette_buffer[25] = crate::rtl::rom_table_word!(game, 0x89aa02, v2 as isize)
         );
         set_ram_word!(
-            game.palette_buffer[26] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x89aa02))
-                as *const u8 as *mut u16)
-                .offset((v2 + 1i32) as isize)
+            game.palette_buffer[26] =
+                crate::rtl::rom_table_word!(game, 0x89aa02, (v2 + 1i32) as isize)
         );
         set_ram_word!(
-            game.palette_buffer[27] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x89aa02))
-                as *const u8 as *mut u16)
-                .offset((v2 + 2i32) as isize)
+            game.palette_buffer[27] =
+                crate::rtl::rom_table_word!(game, 0x89aa02, (v2 + 2i32) as isize)
         );
     } else {
         set_ram_word!(game.palette_buffer[27] = 0u16);
@@ -128,19 +124,15 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
     if (*FD).palette_blend != 0 {
         let v4: i32 = (*FD).palette_blend as i32 >> 1i32;
         set_ram_word!(
-            game.target_palettes[25] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x89aa02))
-                as *const u8 as *mut u16)
-                .offset(v4 as isize)
+            game.target_palettes[25] = crate::rtl::rom_table_word!(game, 0x89aa02, v4 as isize)
         );
         set_ram_word!(
-            game.target_palettes[26] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x89aa02))
-                as *const u8 as *mut u16)
-                .offset((v4 + 1i32) as isize)
+            game.target_palettes[26] =
+                crate::rtl::rom_table_word!(game, 0x89aa02, (v4 + 1i32) as isize)
         );
         set_ram_word!(
-            game.target_palettes[27] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x89aa02))
-                as *const u8 as *mut u16)
-                .offset((v4 + 2i32) as isize)
+            game.target_palettes[27] =
+                crate::rtl::rom_table_word!(game, 0x89aa02, (v4 + 2i32) as isize)
         );
     } else {
         set_ram_word!(game.target_palettes[27] = 0u16);
@@ -148,9 +140,8 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
     set_ram_word!(game.fx_type = (*FD).type_0 as u16);
     if (*FD).type_0 != 0 {
         set_ram_word!(
-            game.fx_tilemap_ptr = *(game.g_rom.offset(crate::rtl::lorom_offset(0x83abf0))
-                as *const u8 as *mut u16)
-                .offset(((*FD).type_0 as i32 >> 1i32) as isize)
+            game.fx_tilemap_ptr =
+                crate::rtl::rom_table_word!(game, 0x83abf0, ((*FD).type_0 as i32 >> 1i32) as isize)
         );
         kFxTypeFuncPtrs[((*FD).type_0 as i32 >> 1i32) as usize].expect("non-null function pointer")(
             game,
@@ -159,8 +150,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
     if (*FD).palette_fx_bitset != 0 {
         let mut bits: i32 = (*FD).palette_fx_bitset as i32;
         let v11: *const u8 = RomPtr_83(
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x83ac46)) as *const u8 as *mut u16)
-                .offset(ram_word!(game, area_index) as isize),
+            crate::rtl::rom_table_word!(game, 0x83ac46, ram_word!(game, area_index) as isize),
             game,
         );
         let mut j: i32 = 0i32;
@@ -175,8 +165,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
     if (*FD).animtiles_bitset != 0 {
         let mut bits_0: i32 = (*FD).animtiles_bitset as i32;
         let v14: *const u8 = RomPtr_83(
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x83ac56)) as *const u8 as *mut u16)
-                .offset(ram_word!(game, area_index) as isize),
+            crate::rtl::rom_table_word!(game, 0x83ac56, ram_word!(game, area_index) as isize),
             game,
         );
         let mut k: i32 = 0i32;
@@ -215,18 +204,13 @@ pub unsafe fn RoomCode_CeresElevatorShaft(game: &mut Game) {
                 as i32
                 >> 1i32;
             *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u8 as *mut u16) =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0x89ad5f)) as *const u8 as *mut u16)
-                    .offset(v0 as isize);
+                crate::rtl::rom_table_word!(game, 0x89ad5f, v0 as isize);
             set_ram_word!(
-                game.reg_M7B = *(game.g_rom.offset(crate::rtl::lorom_offset(0x89ad5f)) as *const u8
-                    as *mut u16)
-                    .offset((v0 + 1i32) as isize)
+                game.reg_M7B = crate::rtl::rom_table_word!(game, 0x89ad5f, (v0 + 1i32) as isize)
             );
             set_ram_word!(game.reg_M7C = -(ram_word!(game, reg_M7B) as i32) as u16);
             set_ram_word!(
-                game.reg_M7A = *(game.g_rom.offset(crate::rtl::lorom_offset(0x89ad5f)) as *const u8
-                    as *mut u16)
-                    .offset((v0 + 2i32) as isize)
+                game.reg_M7A = crate::rtl::rom_table_word!(game, 0x89ad5f, (v0 + 2i32) as isize)
             );
             set_ram_word!(game.reg_M7D = ram_word!(game, reg_M7A));
             if *((&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut i16) < 0i16 {

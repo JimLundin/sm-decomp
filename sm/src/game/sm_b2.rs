@@ -662,8 +662,7 @@ pub unsafe fn NinjaSpacePirates_Init(game: &mut Game) {
     loop {
         *((&raw mut game.g_ram as *mut u8).offset(0xc200) as *mut u16)
             .offset(((v7 as i32 >> 1i32) + 240i32) as isize) =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xb28727)) as *const u8 as *mut u16)
-                .offset((v6 as i32 >> 1i32) as isize);
+            crate::rtl::rom_table_word!(game, 0xb28727, (v6 as i32 >> 1i32) as isize);
         v6 = (v6).wrapping_add(2u16);
         v7 = (v7).wrapping_add(2u16);
         n -= 1;
@@ -873,9 +872,8 @@ pub unsafe fn SpacePirates_Func_16(game: &mut Game) {
         if (*E).base.x_pos == (*E).sps_var_E {
             v3 = 4i16;
         }
-        (*E).base.current_instruction = *(game.g_rom.offset(crate::rtl::lorom_offset(0xb2f959))
-            as *const u8 as *mut u16)
-            .offset((v2 as i32 + v3 as i32) as isize);
+        (*E).base.current_instruction =
+            crate::rtl::rom_table_word!(game, 0xb2f959, (v2 as i32 + v3 as i32) as isize);
         (*E).base.instruction_timer = 1u16;
     }
 }

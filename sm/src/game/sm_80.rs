@@ -2097,14 +2097,12 @@ pub unsafe fn DrawTimer(game: &mut Game) {
 pub unsafe fn DrawTwoTimerDigits(a: u16, k: u16, game: &mut Game) {
     DrawTimerSpritemap(
         k,
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0x809fd4)) as *const u8 as *mut u16)
-            .offset(((a as i32 & 0xf0i32) >> 4i32) as isize),
+        crate::rtl::rom_table_word!(game, 0x809fd4, ((a as i32 & 0xf0i32) >> 4i32) as isize),
         game,
     );
     DrawTimerSpritemap(
         (k).wrapping_add(8u16),
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0x809fd4)) as *const u8 as *mut u16)
-            .offset((a as i32 & 0xfi32) as isize),
+        crate::rtl::rom_table_word!(game, 0x809fd4, (a as i32 & 0xfi32) as isize),
         game,
     );
 }
@@ -3607,8 +3605,7 @@ pub unsafe fn DecompressToVRAM(src: u32, dst_addr: u16, game: &mut Game) {
 pub unsafe fn LoadFromLoadStation(game: &mut Game) {
     set_ram_word!(game.save_station_lockout_flag = 1u16);
     let L: *const LoadStationList = RomPtr_80(
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x80c4b5)) as *const u8 as *mut u16)
-            .offset(ram_word!(game, area_index) as isize) as i32
+        (crate::rtl::rom_table_word!(game, 0x80c4b5, ram_word!(game, area_index) as isize) as i32
             + 14i32 * ram_word!(game, load_station_index) as i32) as u16,
         game,
     ) as *mut LoadStationList;
@@ -3637,8 +3634,7 @@ pub unsafe fn LoadFromLoadStation(game: &mut Game) {
 }
 pub unsafe fn SetElevatorsAsUsed(game: &mut Game) {
     let v0: *const u8 = RomPtr_80(
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x80cd46)) as *const u8 as *mut u16)
-            .offset(ram_word!(game, area_index) as isize) as i32
+        (crate::rtl::rom_table_word!(game, 0x80cd46, ram_word!(game, area_index) as isize) as i32
             + 4i32
                 * ((ram_word!(game, elevator_door_properties_orientation) as i32 & 0xfi32) - 1i32))
             as u16,

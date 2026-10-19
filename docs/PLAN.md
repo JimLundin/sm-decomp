@@ -72,6 +72,32 @@ all 76 source/DLL/fixture pins remain fixed. Independent descriptor/source
 review has no findings. Continue substantial repeated families; the broader
 readability and boot-to-credits goals remain open.
 
+Fixed LoROM word-table reads (2026-10-20): 893 complete expressions across
+27 gameplay banks share one raw reader and caller-side macro: 718 ordinary
+AST expressions and 175 reads inside known RAM macros. The macro captures
+g_rom before the original signed word-index expression, adds the word offset
+after LoROM mapping, and preserves temporaries through the outer statement.
+No whole-Game borrow is introduced. All literal addresses, index tokens and
+signed-result casts remain exact. AST place/reference review confirms these
+are reads, including reads within destination-address calculations.
+Expansion reconstructs all 28 changed files. Net Rust lines -849, actual
+casts -1786; unsafe functions +1 for the shared raw reader.
+
+The exact final macro/reader passes 60030976 synthetic mapped-address,
+signed-index and pointer-change comparisons over all 458 selected addresses.
+Synthetic reference loads use read_unaligned. 65536 borrowed-temporary/later-
+argument controls preserve cleanup timing; eager-index and late-pointer
+controls fail as intended. These controls verify the shared read operation,
+not every caller's gameplay execution or broader pointer validity.
+Independent complete-source, place-context and shared-reader review passes.
+Combined verification with explicit core imports on b055358d passes normal
+release (23.49s), formatting/check, progress and full any% 129712/0
+(102.76s), native exit 0. Both focused commits share this composed
+run. The final import commit source matches the frozen composition; no ROM-only
+replay is claimed. The i32 cast-line count rises nine through formatting while
+all 15948 actual i32 casts remain. Raw RAM accesses are unchanged. Continue
+substantial shared implementations; broader pointer and alias safety remain open.
+
 Constant high-half indices (2026-10-20): all 352 repeated primitive
 size-of/divide/subtract index expressions become the identical 1isize. The
 325 u16/u8, 18 i16/u8 and nine u32/u16 ratios retain their value and type;

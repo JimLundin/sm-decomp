@@ -1099,10 +1099,8 @@ pub unsafe fn MotherBrain_HandleFakeDeathExplosions(game: &mut Game) {
         (*E).mbn_var_39 = v2 as u16;
         let v3: i32 = ((4u16).wrapping_mul((v2) as u16)) as i32 >> 1i32;
         game.eproj_spawn_pt = Point16U {
-            x: *(game.g_rom.offset(crate::rtl::lorom_offset(0xa98929)) as *const u8 as *mut u16)
-                .offset(v3 as isize),
-            y: *(game.g_rom.offset(crate::rtl::lorom_offset(0xa98929)) as *const u8 as *mut u16)
-                .offset((v3 + 1i32) as isize),
+            x: crate::rtl::rom_table_word!(game, 0xa98929, v3 as isize),
+            y: crate::rtl::rom_table_word!(game, 0xa98929, (v3 + 1i32) as isize),
         };
         let v4: u16 = (if ram_word!(game, random_number) < 0x4000u16 {
             12i32
@@ -1317,9 +1315,7 @@ pub unsafe fn MotherBrainsTubesFalling_Init(game: &mut Game) {
     (*E).mbtfg_var_D = 0u16;
     (*E).mbtfg_var_E = 0u16;
     (*E).mbtfg_var_C = 0u16;
-    (*E).mbtfg_var_A = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa98b7b)) as *const u8
-        as *mut u16)
-        .offset(v1 as isize);
+    (*E).mbtfg_var_A = crate::rtl::rom_table_word!(game, 0xa98b7b, v1 as isize);
 }
 pub unsafe fn CallMotherBrainsTubesFalling(ea: u32, k: u16, game: &mut Game) {
     match ea {
@@ -2566,12 +2562,8 @@ pub unsafe fn MotherBrain_GenerateExplosions(a: u16, r22: u16, r24: u16, game: &
             v9 = v4;
             let v5: i32 = v3 as i32 >> 1i32;
             game.eproj_spawn_pt = Point16U {
-                x: *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9b099)) as *const u8
-                    as *mut u16)
-                    .offset(v5 as isize),
-                y: *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9b099)) as *const u8
-                    as *mut u16)
-                    .offset((v5 + 1i32) as isize),
+                x: crate::rtl::rom_table_word!(game, 0xa9b099, v5 as isize),
+                y: crate::rtl::rom_table_word!(game, 0xa9b099, (v5 + 1i32) as isize),
             };
             let v6: *const u16 = RomPtr_A9(r22, game) as *const u16;
             let mut v7: u16 = *v6;
@@ -3083,9 +3075,7 @@ pub unsafe fn MotherBrain_Body_Phase2_TryAttack(game: &mut Game) {
                 }
             }
         }
-        let v6: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9b6d4)) as *const u8
-            as *mut u16)
-            .offset((v4 as i32 >> 1i32) as isize);
+        let v6: u16 = crate::rtl::rom_table_word!(game, 0xa9b6d4, (v4 as i32 >> 1i32) as isize);
         if v6 as i32 == addr_kMotherBrain_Ilist_9ECC as i32 {
             if (*E1).mbn_var_05 as i32 - 1i32 & 0x8000i32 != 0 {
                 (*E).mbn_var_A = ((0xa9b781i32) as u16);
@@ -3642,10 +3632,7 @@ pub unsafe fn MotherBrain_WriteDefaultPalette(game: &mut Game) {
     );
 }
 pub unsafe fn MotherBrain_WritePhase2DeathPalette(game: &mut Game) {
-    MotherBrain_WritePalette(
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xade434)) as *const u8 as *mut u16).offset(6),
-        game,
-    );
+    MotherBrain_WritePalette(crate::rtl::rom_table_word!(game, 0xade434, 6), game);
 }
 pub unsafe fn MotherBrain_HandleRainbowBeamPalette(game: &mut Game) {
     if ((*Get_MotherBrain(0i32, game)).base.frame_counter as i32 & 2i32) != 0i32 {
@@ -3653,9 +3640,8 @@ pub unsafe fn MotherBrain_HandleRainbowBeamPalette(game: &mut Game) {
         let mut v1: u16 = 0;
         loop {
             v1 = mbn_var_01;
-            mbn_var_01 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xade434)) as *const u8
-                as *mut u16)
-                .offset((mbn_var_01 as i32 >> 1i32) as isize);
+            mbn_var_01 =
+                crate::rtl::rom_table_word!(game, 0xade434, (mbn_var_01 as i32 >> 1i32) as isize);
             if (mbn_var_01 != 0) {
                 break;
             }
@@ -4400,8 +4386,7 @@ pub unsafe fn MotherBrain_MakeWalkForwards(j: u16, a: u16, game: &mut Game) -> u
         }
         if (*E).base.x_pos as i32 - 128i32 & 0x8000i32 != 0 {
             MotherBrain_SetBodyInstrs(
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9c61e)) as *const u8 as *mut u16)
-                    .offset((j as i32 >> 1i32) as isize),
+                crate::rtl::rom_table_word!(game, 0xa9c61e, (j as i32 >> 1i32) as isize),
                 game,
             );
             return 0u8;
@@ -4417,8 +4402,7 @@ pub unsafe fn MotherBrain_MakeWalkBackwards(a: u16, j: u16, game: &mut Game) -> 
         }
         if (*E).base.x_pos as i32 - 48i32 & 0x8000i32 == 0 {
             MotherBrain_SetBodyInstrs(
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9c664)) as *const u8 as *mut u16)
-                    .offset((j as i32 >> 1i32) as isize),
+                crate::rtl::rom_table_word!(game, 0xa9c664, (j as i32 >> 1i32) as isize),
                 game,
             );
             return 0u8;
@@ -5066,8 +5050,7 @@ pub unsafe fn ShitroidInCutscene_FadeShitroidToBlack(k: u16, game: &mut Game) ->
     WriteColorsToPalette(
         0x1e2u16,
         0xadu8,
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xade8e2)) as *const u8 as *mut u16)
-            .offset(v4 as isize),
+        crate::rtl::rom_table_word!(game, 0xade8e2, v4 as isize),
         0xeu16,
         game,
     );
@@ -5086,14 +5069,16 @@ pub unsafe fn ShitroidInCutscene_HandleShitroidDeathExplosions(k: u16, game: &mu
         (*E).sice_var_07 = v3;
         let v4: i32 = ((4u16).wrapping_mul(v3)) as i32 >> 1i32;
         game.eproj_spawn_pt = Point16U {
-            x: (((*E).base.x_pos).wrapping_add(
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9cdfc)) as *const u8 as *mut u16)
-                    .offset(v4 as isize),
-            )),
-            y: (((*E).base.y_pos).wrapping_add(
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9cdfc)) as *const u8 as *mut u16)
-                    .offset((v4 + 1i32) as isize),
-            )),
+            x: (((*E).base.x_pos).wrapping_add(crate::rtl::rom_table_word!(
+                game,
+                0xa9cdfc,
+                v4 as isize
+            ))),
+            y: (((*E).base.y_pos).wrapping_add(crate::rtl::rom_table_word!(
+                game,
+                0xa9cdfc,
+                (v4 + 1i32) as isize
+            ))),
         };
         SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 3u16, game);
         QueueSfx3_Max3(0x13u16, game);
@@ -5149,16 +5134,13 @@ pub unsafe fn ShitroidInCutscene_HandleHealthBasedPalette(k: u16, game: &mut Gam
                 }
             }
             let v5: u16 = v3;
-            let v4: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xade7e2)) as *const u8
-                as *mut u16)
-                .offset((v3 as i32 >> 1i32) as isize);
+            let v4: u16 = crate::rtl::rom_table_word!(game, 0xade7e2, (v3 as i32 >> 1i32) as isize);
             WriteColorsToPalette(0x1e2u16, 0xadu8, v4, 4u16, game);
             WriteColorsToPalette(0x1f4u16, 0xadu8, (v4).wrapping_add(8u16), 5u16, game);
             WriteColorsToPalette(
                 0x1eau16,
                 0xadu8,
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0xade882)) as *const u8 as *mut u16)
-                    .offset((v5 as i32 >> 1i32) as isize),
+                crate::rtl::rom_table_word!(game, 0xade882, (v5 as i32 >> 1i32) as isize),
                 5u16,
                 game,
             );
@@ -5359,11 +5341,11 @@ pub unsafe fn MotherBrain_HandleBrainPal(game: &mut Game) {
             *(&raw mut (*E).mbn_var_D as *mut u8).offset(1isize) =
                 ((mbn_var_D_high) as u8).wrapping_sub(1u8);
         } else {
-            let r18: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9d260)) as *const u8
-                as *mut u16)
-                .offset(
-                    (*(&raw mut (*E).mbn_var_E as *mut u8).offset(1isize) as i32 >> 1i32) as isize,
-                );
+            let r18: u16 = crate::rtl::rom_table_word!(
+                game,
+                0xa9d260,
+                (*(&raw mut (*E).mbn_var_E as *mut u8).offset(1isize) as i32 >> 1i32) as isize,
+            );
             *(&raw mut (*E).mbn_var_D as *mut u8).offset(1isize) = (*E).mbn_var_E as u8;
             mbn_var_D = (*E).mbn_var_D as i8;
             if mbn_var_D != 0i8
@@ -5573,52 +5555,36 @@ pub unsafe fn DeadTorizo_Func_1(game: &mut Game) {
     let mut v3: u16 = ram_word!(game, vram_write_queue_tail);
     if v1 as i32 & 1i32 != 0 {
         let mut v8: u16 = 0u16;
-        let mut v9: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9d583)) as *const u8
-            as *mut u16)
-            .offset(0);
+        let mut v9: u16 = crate::rtl::rom_table_word!(game, 0xa9d583, 0);
         loop {
             v10 = gVramWriteEntry(v3 as i32, game);
             (*v10).size = v9;
             let v11: i32 = v8 as i32 >> 1i32;
             *((&raw mut (*v10).src.addr as *mut u8).offset(1) as *mut VoidP) =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9d583)) as *const u8 as *mut u16)
-                    .offset((v11 + 1i32) as isize);
-            (*v10).src.addr = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9d583)) as *const u8
-                as *mut u16)
-                .offset((v11 + 2i32) as isize);
-            (*v10).vram_dst = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9d583)) as *const u8
-                as *mut u16)
-                .offset((v11 + 3i32) as isize);
+                crate::rtl::rom_table_word!(game, 0xa9d583, (v11 + 1i32) as isize);
+            (*v10).src.addr = crate::rtl::rom_table_word!(game, 0xa9d583, (v11 + 2i32) as isize);
+            (*v10).vram_dst = crate::rtl::rom_table_word!(game, 0xa9d583, (v11 + 3i32) as isize);
             v3 = (v3).wrapping_add(7u16);
             v8 = (v8).wrapping_add(8u16);
-            v9 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9d583)) as *const u8 as *mut u16)
-                .offset((v8 as i32 >> 1i32) as isize);
+            v9 = crate::rtl::rom_table_word!(game, 0xa9d583, (v8 as i32 >> 1i32) as isize);
             if (v9 == 0) {
                 break;
             }
         }
     } else {
         let mut v2: u16 = 0u16;
-        let mut v4: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9d549)) as *const u8
-            as *mut u16)
-            .offset(0);
+        let mut v4: u16 = crate::rtl::rom_table_word!(game, 0xa9d549, 0);
         loop {
             v5 = gVramWriteEntry(v3 as i32, game);
             (*v5).size = v4;
             let v6: i32 = v2 as i32 >> 1i32;
             *((&raw mut (*v5).src.addr as *mut u8).offset(1) as *mut VoidP) =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9d549)) as *const u8 as *mut u16)
-                    .offset((v6 + 1i32) as isize);
-            (*v5).src.addr = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9d549)) as *const u8
-                as *mut u16)
-                .offset((v6 + 2i32) as isize);
-            (*v5).vram_dst = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9d549)) as *const u8
-                as *mut u16)
-                .offset((v6 + 3i32) as isize);
+                crate::rtl::rom_table_word!(game, 0xa9d549, (v6 + 1i32) as isize);
+            (*v5).src.addr = crate::rtl::rom_table_word!(game, 0xa9d549, (v6 + 2i32) as isize);
+            (*v5).vram_dst = crate::rtl::rom_table_word!(game, 0xa9d549, (v6 + 3i32) as isize);
             v3 = (v3).wrapping_add(7u16);
             v2 = (v2).wrapping_add(8u16);
-            v4 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9d549)) as *const u8 as *mut u16)
-                .offset((v2 as i32 >> 1i32) as isize);
+            v4 = crate::rtl::rom_table_word!(game, 0xa9d549, (v2 as i32 >> 1i32) as isize);
             if (v4 == 0) {
                 break;
             }
@@ -5638,101 +5604,80 @@ pub unsafe fn DeadTorizo_CorpseRottingFinished(game: &mut Game) {
     }
 }
 pub unsafe fn DeadTorizo_CopyLineOfSandHeapTileData(a: u16, game: &mut Game) {
-    let v1: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9d67c)) as *const u8 as *mut u16)
-        .offset(a as isize);
-    let v2: i32 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9d69c)) as *const u8 as *mut u16)
-        .offset(a as isize) as i32
-        >> 1i32;
+    let v1: u16 = crate::rtl::rom_table_word!(game, 0xa9d67c, a as isize);
+    let v2: i32 = crate::rtl::rom_table_word!(game, 0xa9d69c, a as isize) as i32 >> 1i32;
     *((&raw mut game.g_ram as *mut u8)
         .offset(0x9500)
         .offset(v1 as i32 as isize) as *mut u16) =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xb7a800)) as *const u8 as *mut u16)
-            .offset(v2 as isize);
+        crate::rtl::rom_table_word!(game, 0xb7a800, v2 as isize);
     *((&raw mut game.g_ram as *mut u8)
         .offset(0x9510)
         .offset(v1 as i32 as isize) as *mut u16) =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xb7a800)) as *const u8 as *mut u16)
-            .offset((v2 + 8i32) as isize);
+        crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 8i32) as isize);
     *((&raw mut game.g_ram as *mut u8)
         .offset(0x9520)
         .offset(v1 as i32 as isize) as *mut u16) =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xb7a800)) as *const u8 as *mut u16)
-            .offset((v2 + 16i32) as isize);
+        crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 16i32) as isize);
     *((&raw mut game.g_ram as *mut u8)
         .offset(0x9530)
         .offset(v1 as i32 as isize) as *mut u16) =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xb7a800)) as *const u8 as *mut u16)
-            .offset((v2 + 24i32) as isize);
+        crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 24i32) as isize);
     *((&raw mut game.g_ram as *mut u8)
         .offset(0x9540)
         .offset(v1 as i32 as isize) as *mut u16) =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xb7a800)) as *const u8 as *mut u16)
-            .offset((v2 + 32i32) as isize);
+        crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 32i32) as isize);
     *((&raw mut game.g_ram as *mut u8)
         .offset(0x9550)
         .offset(v1 as i32 as isize) as *mut u16) =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xb7a800)) as *const u8 as *mut u16)
-            .offset((v2 + 40i32) as isize);
+        crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 40i32) as isize);
     *((&raw mut game.g_ram as *mut u8)
         .offset(0x9560)
         .offset(v1 as i32 as isize) as *mut u16) =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xb7a800)) as *const u8 as *mut u16)
-            .offset((v2 + 48i32) as isize);
+        crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 48i32) as isize);
     *((&raw mut game.g_ram as *mut u8)
         .offset(0x9570)
         .offset(v1 as i32 as isize) as *mut u16) =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xb7a800)) as *const u8 as *mut u16)
-            .offset((v2 + 56i32) as isize);
+        crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 56i32) as isize);
     *((&raw mut game.g_ram as *mut u8)
         .offset(0x9580)
         .offset(v1 as i32 as isize) as *mut u16) =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xb7a800)) as *const u8 as *mut u16)
-            .offset((v2 + 64i32) as isize);
+        crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 64i32) as isize);
     *((&raw mut game.g_ram as *mut u8)
         .offset(0x9590)
         .offset(v1 as i32 as isize) as *mut u16) =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xb7a800)) as *const u8 as *mut u16)
-            .offset((v2 + 72i32) as isize);
+        crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 72i32) as isize);
     *((&raw mut game.g_ram as *mut u8)
         .offset(0x95a0)
         .offset(v1 as i32 as isize) as *mut u16) =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xb7a800)) as *const u8 as *mut u16)
-            .offset((v2 + 80i32) as isize);
+        crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 80i32) as isize);
     *((&raw mut game.g_ram as *mut u8)
         .offset(0x95b0)
         .offset(v1 as i32 as isize) as *mut u16) =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xb7a800)) as *const u8 as *mut u16)
-            .offset((v2 + 88i32) as isize);
+        crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 88i32) as isize);
     *((&raw mut game.g_ram as *mut u8)
         .offset(0x95c0)
         .offset(v1 as i32 as isize) as *mut u16) =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xb7a800)) as *const u8 as *mut u16)
-            .offset((v2 + 96i32) as isize);
+        crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 96i32) as isize);
     *((&raw mut game.g_ram as *mut u8)
         .offset(0x95d0)
         .offset(v1 as i32 as isize) as *mut u16) =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xb7a800)) as *const u8 as *mut u16)
-            .offset((v2 + 104i32) as isize);
+        crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 104i32) as isize);
     *((&raw mut game.g_ram as *mut u8)
         .offset(0x95e0)
         .offset(v1 as i32 as isize) as *mut u16) =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xb7a800)) as *const u8 as *mut u16)
-            .offset((v2 + 112i32) as isize);
+        crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 112i32) as isize);
     *((&raw mut game.g_ram as *mut u8)
         .offset(0x95f0)
         .offset(v1 as i32 as isize) as *mut u16) =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xb7a800)) as *const u8 as *mut u16)
-            .offset((v2 + 120i32) as isize);
+        crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 120i32) as isize);
     *((&raw mut game.g_ram as *mut u8)
         .offset(0x9600)
         .offset(v1 as i32 as isize) as *mut u16) =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xb7a800)) as *const u8 as *mut u16)
-            .offset((v2 + 128i32) as isize);
+        crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 128i32) as isize);
     *((&raw mut game.g_ram as *mut u8)
         .offset(0x9610)
         .offset(v1 as i32 as isize) as *mut u16) =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xb7a800)) as *const u8 as *mut u16)
-            .offset((v2 + 136i32) as isize);
+        crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 136i32) as isize);
 }
 pub unsafe fn DeadSidehopper_Init(game: &mut Game) {
     let dsr_parameter_1: u16 =
@@ -5799,14 +5744,12 @@ pub unsafe fn DeadZoomer_Init(game: &mut Game) {
     let v2: i32 = (*v1).parameter_1 as i32 >> 1i32;
     Enemy_SetInstrList(
         ram_word!(game, cur_enemy_index),
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9d86a)) as *const u8 as *mut u16)
-            .offset(v2 as isize),
+        crate::rtl::rom_table_word!(game, 0xa9d86a, v2 as isize),
         game,
     );
     InitializeEnemyCorpseRotting(
         ram_word!(game, cur_enemy_index),
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9d870)) as *const u8 as *mut u16)
-            .offset(v2 as isize),
+        crate::rtl::rom_table_word!(game, 0xa9d870, v2 as isize),
         game,
     );
 }
@@ -5817,14 +5760,12 @@ pub unsafe fn DeadRipper_Init(game: &mut Game) {
     let v2: i32 = (*v1).parameter_1 as i32 >> 1i32;
     Enemy_SetInstrList(
         ram_word!(game, cur_enemy_index),
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9d897)) as *const u8 as *mut u16)
-            .offset(v2 as isize),
+        crate::rtl::rom_table_word!(game, 0xa9d897, v2 as isize),
         game,
     );
     InitializeEnemyCorpseRotting(
         ram_word!(game, cur_enemy_index),
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9d89b)) as *const u8 as *mut u16)
-            .offset(v2 as isize),
+        crate::rtl::rom_table_word!(game, 0xa9d89b, v2 as isize),
         game,
     );
 }
@@ -5835,14 +5776,12 @@ pub unsafe fn DeadSkree_Init(game: &mut Game) {
     let v2: i32 = (*v1).parameter_1 as i32 >> 1i32;
     Enemy_SetInstrList(
         ram_word!(game, cur_enemy_index),
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9d8c0)) as *const u8 as *mut u16)
-            .offset(v2 as isize),
+        crate::rtl::rom_table_word!(game, 0xa9d8c0, v2 as isize),
         game,
     );
     InitializeEnemyCorpseRotting(
         ram_word!(game, cur_enemy_index),
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9d8c6)) as *const u8 as *mut u16)
-            .offset(v2 as isize),
+        crate::rtl::rom_table_word!(game, 0xa9d8c6, v2 as isize),
         game,
     );
 }
@@ -5917,12 +5856,8 @@ pub unsafe fn DeadMonsters_Func_2(k: u16, game: &mut Game) {
             (*E).dms_var_A = ((0xa9d8f1i32) as u16);
             Enemy_SetInstrList(k, addr_kDeadMonsters_Ilist_ECE3 as u16, game);
             let v3: i32 = (*E).dms_var_06 as i32;
-            (*E).dms_var_0B = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9d951)) as *const u8
-                as *mut u16)
-                .offset(v3 as isize);
-            (*E).dms_var_0A = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9d959)) as *const u8
-                as *mut u16)
-                .offset(v3 as isize);
+            (*E).dms_var_0B = crate::rtl::rom_table_word!(game, 0xa9d951, v3 as isize);
+            (*E).dms_var_0A = crate::rtl::rom_table_word!(game, 0xa9d959, v3 as isize);
         }
     }
 }

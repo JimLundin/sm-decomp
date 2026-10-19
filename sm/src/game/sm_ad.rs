@@ -100,12 +100,16 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(mut r22: u16, mut r24: u16, ga
     set_ram_word!(game.hdma_table_2[0] = 255u16);
     set_ram_word!(game.hdma_table_2[1] = 255u16);
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
-    let r18: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91c9d4)) as *const u8
-        as *mut u16)
-        .offset(*(&raw mut (*E).mbn_var_3A as *mut u8).offset(0) as isize);
-    let r20: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91c9d4)) as *const u8
-        as *mut u16)
-        .offset(*(&raw mut (*E).mbn_var_3B as *mut u8).offset(0) as isize);
+    let r18: u16 = crate::rtl::rom_table_word!(
+        game,
+        0x91c9d4,
+        *(&raw mut (*E).mbn_var_3A as *mut u8).offset(0) as isize
+    );
+    let r20: u16 = crate::rtl::rom_table_word!(
+        game,
+        0x91c9d4,
+        *(&raw mut (*E).mbn_var_3B as *mut u8).offset(0) as isize
+    );
     let mut mbn_var_3F: u16 = (*E).mbn_var_3F;
     let mut v2: *mut u16 = ((&raw mut game.g_ram as *mut u8).offset(0x9d00) as *mut u16)
         .offset((mbn_var_3F as i32 - 32i32) as isize)
@@ -213,12 +217,16 @@ pub unsafe fn MotherBrain_CalcHdma_Up_UpRight(mut r22: u16, mut r24: u16, game: 
     set_ram_word!(game.hdma_table_2[0] = 255u16);
     set_ram_word!(game.hdma_table_2[1] = 255u16);
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
-    let r18: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91c9d4)) as *const u8
-        as *mut u16)
-        .offset(*(&raw mut (*E).mbn_var_3B as *mut u8).offset(0) as isize);
-    let r20: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91c9d4)) as *const u8
-        as *mut u16)
-        .offset(*(&raw mut (*E).mbn_var_3A as *mut u8).offset(0) as isize);
+    let r18: u16 = crate::rtl::rom_table_word!(
+        game,
+        0x91c9d4,
+        *(&raw mut (*E).mbn_var_3B as *mut u8).offset(0) as isize
+    );
+    let r20: u16 = crate::rtl::rom_table_word!(
+        game,
+        0x91c9d4,
+        *(&raw mut (*E).mbn_var_3A as *mut u8).offset(0) as isize
+    );
     let mut mbn_var_3D: u16 = (*E).mbn_var_3D;
     let mut v2: *mut u16 = ((&raw mut game.g_ram as *mut u8).offset(0x9d00) as *mut u16)
         .offset((mbn_var_3D as i32 - 32i32) as isize)
@@ -254,12 +262,16 @@ pub unsafe fn MotherBrain_CalcHdma_Up_Up(mut r22: u16, mut r24: u16, game: &mut 
     set_ram_word!(game.hdma_table_2[0] = 255u16);
     set_ram_word!(game.hdma_table_2[1] = 255u16);
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
-    let r18: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91c9d4)) as *const u8
-        as *mut u16)
-        .offset(-(*(&raw mut (*E).mbn_var_3B as *mut u8).offset(0) as i32) as u8 as isize);
-    let r20: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91c9d4)) as *const u8
-        as *mut u16)
-        .offset(*(&raw mut (*E).mbn_var_3A as *mut u8).offset(0) as isize);
+    let r18: u16 = crate::rtl::rom_table_word!(
+        game,
+        0x91c9d4,
+        -(*(&raw mut (*E).mbn_var_3B as *mut u8).offset(0) as i32) as u8 as isize
+    );
+    let r20: u16 = crate::rtl::rom_table_word!(
+        game,
+        0x91c9d4,
+        *(&raw mut (*E).mbn_var_3A as *mut u8).offset(0) as isize
+    );
     let mut mbn_var_3D: u16 = (*E).mbn_var_3D;
     let mut v2: *mut u16 = ((&raw mut game.g_ram as *mut u8).offset(0x9d00) as *mut u16)
         .offset((mbn_var_3D as i32 - 32i32) as isize)
@@ -295,12 +307,16 @@ pub unsafe fn MotherBrain_CalcHdma_Up_UpLeft(mut r22: u16, mut r24: u16, game: &
     set_ram_word!(game.hdma_table_2[0] = 255u16);
     set_ram_word!(game.hdma_table_2[1] = 255u16);
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
-    let r18: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91c9d4)) as *const u8
-        as *mut u16)
-        .offset(-(*(&raw mut (*E).mbn_var_3B as *mut u8).offset(0) as i32) as u8 as isize);
-    let r20: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91c9d4)) as *const u8
-        as *mut u16)
-        .offset(-(*(&raw mut (*E).mbn_var_3A as *mut u8).offset(0) as i32) as u8 as isize);
+    let r18: u16 = crate::rtl::rom_table_word!(
+        game,
+        0x91c9d4,
+        -(*(&raw mut (*E).mbn_var_3B as *mut u8).offset(0) as i32) as u8 as isize
+    );
+    let r20: u16 = crate::rtl::rom_table_word!(
+        game,
+        0x91c9d4,
+        -(*(&raw mut (*E).mbn_var_3A as *mut u8).offset(0) as i32) as u8 as isize
+    );
     let mut mbn_var_3D: u16 = (*E).mbn_var_3D;
     let mut v2: *mut u16 = ((&raw mut game.g_ram as *mut u8).offset(0x9d00) as *mut u16)
         .offset((mbn_var_3D as i32 - 32i32) as isize)
@@ -363,12 +379,16 @@ pub unsafe fn MotherBrain_CalcHdma_Down_DownRight(mut r22: u16, mut r24: u16, ga
     set_ram_word!(game.hdma_table_2[0] = 255u16);
     set_ram_word!(game.hdma_table_2[1] = 255u16);
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
-    let r18: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91c9d4)) as *const u8
-        as *mut u16)
-        .offset(*(&raw mut (*E).mbn_var_3A as *mut u8).offset(0) as isize);
-    let r20: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91c9d4)) as *const u8
-        as *mut u16)
-        .offset(*(&raw mut (*E).mbn_var_3B as *mut u8).offset(0) as isize);
+    let r18: u16 = crate::rtl::rom_table_word!(
+        game,
+        0x91c9d4,
+        *(&raw mut (*E).mbn_var_3A as *mut u8).offset(0) as isize
+    );
+    let r20: u16 = crate::rtl::rom_table_word!(
+        game,
+        0x91c9d4,
+        *(&raw mut (*E).mbn_var_3B as *mut u8).offset(0) as isize
+    );
     let mut v1: u16 = ((*E).mbn_var_3D).wrapping_sub(32u16);
     let mut dst: *mut u16 = ((&raw mut game.g_ram as *mut u8).offset(0x9d00) as *mut u16).offset(2);
     loop {
@@ -410,12 +430,16 @@ pub unsafe fn MotherBrain_CalcHdma_Down_Down(mut r22: u16, mut r24: u16, game: &
     set_ram_word!(game.hdma_table_2[0] = 255u16);
     set_ram_word!(game.hdma_table_2[1] = 255u16);
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
-    let r18: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91c9d4)) as *const u8
-        as *mut u16)
-        .offset(-(*(&raw mut (*E).mbn_var_3A as *mut u8).offset(0) as i32) as u8 as isize);
-    let r20: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91c9d4)) as *const u8
-        as *mut u16)
-        .offset(*(&raw mut (*E).mbn_var_3B as *mut u8).offset(0) as isize);
+    let r18: u16 = crate::rtl::rom_table_word!(
+        game,
+        0x91c9d4,
+        -(*(&raw mut (*E).mbn_var_3A as *mut u8).offset(0) as i32) as u8 as isize
+    );
+    let r20: u16 = crate::rtl::rom_table_word!(
+        game,
+        0x91c9d4,
+        *(&raw mut (*E).mbn_var_3B as *mut u8).offset(0) as isize
+    );
     let mut v1: u16 = ((*E).mbn_var_3D).wrapping_sub(32u16);
     let mut dst: *mut u16 = ((&raw mut game.g_ram as *mut u8).offset(0x9d00) as *mut u16).offset(2);
     loop {
@@ -457,12 +481,16 @@ pub unsafe fn MotherBrain_CalcHdma_Down_DownLeft(mut r22: u16, mut r24: u16, gam
     set_ram_word!(game.hdma_table_2[0] = 255u16);
     set_ram_word!(game.hdma_table_2[1] = 255u16);
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
-    let r18: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91c9d4)) as *const u8
-        as *mut u16)
-        .offset(-(*(&raw mut (*E).mbn_var_3A as *mut u8).offset(0) as i32) as u8 as isize);
-    let r20: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91c9d4)) as *const u8
-        as *mut u16)
-        .offset(-(*(&raw mut (*E).mbn_var_3B as *mut u8).offset(0) as i32) as u8 as isize);
+    let r18: u16 = crate::rtl::rom_table_word!(
+        game,
+        0x91c9d4,
+        -(*(&raw mut (*E).mbn_var_3A as *mut u8).offset(0) as i32) as u8 as isize
+    );
+    let r20: u16 = crate::rtl::rom_table_word!(
+        game,
+        0x91c9d4,
+        -(*(&raw mut (*E).mbn_var_3B as *mut u8).offset(0) as i32) as u8 as isize
+    );
     let mut v1: u16 = ((*E).mbn_var_3D).wrapping_sub(32u16);
     let mut dst: *mut u16 = ((&raw mut game.g_ram as *mut u8).offset(0x9d00) as *mut u16).offset(2);
     loop {
@@ -538,24 +566,21 @@ pub unsafe fn MotherBrain_HealthBasedPaletteHandling(game: &mut Game) {
         WriteColorsToPalette(
             0x82u16,
             0xadu8,
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xade6a2)) as *const u8 as *mut u16)
-                .offset((v0 as i32 >> 1i32) as isize),
+            crate::rtl::rom_table_word!(game, 0xade6a2, (v0 as i32 >> 1i32) as isize),
             0xfu16,
             game,
         );
         WriteColorsToPalette(
             0x122u16,
             0xadu8,
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xade6a2)) as *const u8 as *mut u16)
-                .offset((v0 as i32 >> 1i32) as isize),
+            crate::rtl::rom_table_word!(game, 0xade6a2, (v0 as i32 >> 1i32) as isize),
             0xfu16,
             game,
         );
         WriteColorsToPalette(
             0x162u16,
             0xadu8,
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xade742)) as *const u8 as *mut u16)
-                .offset((v0 as i32 >> 1i32) as isize),
+            crate::rtl::rom_table_word!(game, 0xade742, (v0 as i32 >> 1i32) as isize),
             0xfu16,
             game,
         );
@@ -563,22 +588,17 @@ pub unsafe fn MotherBrain_HealthBasedPaletteHandling(game: &mut Game) {
 }
 pub unsafe fn MotherBrain_FadePalToBlack(a: u16, game: &mut Game) -> u8 {
     let v1: i32 = a as i32;
-    if *(game.g_rom.offset(crate::rtl::lorom_offset(0xade9e8)) as *const u8 as *mut u16)
-        .offset(v1 as isize)
-        == 0
-    {
+    if crate::rtl::rom_table_word!(game, 0xade9e8, v1 as isize) == 0 {
         return 1u8;
     }
-    let j: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xade9e8)) as *const u8 as *mut u16)
-        .offset(v1 as isize);
+    let j: u16 = crate::rtl::rom_table_word!(game, 0xade9e8, v1 as isize);
     WriteColorsToPalette(0x82u16, 0xadu8, j, 14u16, game);
     WriteColorsToPalette(0x122u16, 0xadu8, j, 14u16, game);
     WriteColorsToPalette(0x162u16, 0xadu8, (j).wrapping_add(28u16), 14u16, game);
     0u8
 }
 pub unsafe fn MotherBrain_FadeToGray_FakeDeath(a: u16, game: &mut Game) -> u8 {
-    let v1: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaded8a)) as *const u8 as *mut u16)
-        .offset(a as isize);
+    let v1: u16 = crate::rtl::rom_table_word!(game, 0xaded8a, a as isize);
     if v1 != 0 {
         (MotherBrain_EEF6(v1, game)) & (1u8)
     } else {
@@ -586,8 +606,7 @@ pub unsafe fn MotherBrain_FadeToGray_FakeDeath(a: u16, game: &mut Game) -> u8 {
     }
 }
 pub unsafe fn MotherBrain_FadeFromGray_FakeDeath(a: u16, game: &mut Game) -> u8 {
-    let v1: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaded9c)) as *const u8 as *mut u16)
-        .offset(a as isize);
+    let v1: u16 = crate::rtl::rom_table_word!(game, 0xaded9c, a as isize);
     if v1 != 0 {
         (MotherBrain_EEF6(v1, game)) & (1u8)
     } else {
@@ -600,14 +619,10 @@ pub unsafe fn MotherBrain_EEF6(a: u16, game: &mut Game) -> u8 {
 }
 pub unsafe fn MotherBrain_FadeFromGray_Drained(a: u16, game: &mut Game) -> u8 {
     let v1: i32 = a as i32;
-    if *(game.g_rom.offset(crate::rtl::lorom_offset(0xaded9c)) as *const u8 as *mut u16)
-        .offset(v1 as isize)
-        == 0
-    {
+    if crate::rtl::rom_table_word!(game, 0xaded9c, v1 as isize) == 0 {
         return 1u8;
     }
-    let j: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaded9c)) as *const u8 as *mut u16)
-        .offset(v1 as isize);
+    let j: u16 = crate::rtl::rom_table_word!(game, 0xaded9c, v1 as isize);
     WriteColorsToPalette(0x82u16, 0xadu8, j, 13u16, game);
     WriteColorsToPalette(0x122u16, 0xadu8, j, 13u16, game);
     WriteColorsToPalette(0x168u16, 0xadu8, (j).wrapping_add(26u16), 5u16, game);
@@ -617,14 +632,10 @@ pub unsafe fn MotherBrain_FadeFromGray_Drained(a: u16, game: &mut Game) -> u8 {
 }
 pub unsafe fn MotherBrain_FadeToGray_Drained(a: u16, game: &mut Game) -> u8 {
     let v1: i32 = a as i32;
-    if *(game.g_rom.offset(crate::rtl::lorom_offset(0xadef87)) as *const u8 as *mut u16)
-        .offset(v1 as isize)
-        == 0
-    {
+    if crate::rtl::rom_table_word!(game, 0xadef87, v1 as isize) == 0 {
         return 1u8;
     }
-    let j: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xadef87)) as *const u8 as *mut u16)
-        .offset(v1 as isize);
+    let j: u16 = crate::rtl::rom_table_word!(game, 0xadef87, v1 as isize);
     WriteColorsToPalette(0x82u16, 0xadu8, j, 15u16, game);
     WriteColorsToPalette(0x122u16, 0xadu8, j, 15u16, game);
     WriteColorsToPalette(0x168u16, 0xadu8, (j).wrapping_add(30u16), 5u16, game);
@@ -634,17 +645,13 @@ pub unsafe fn MotherBrain_FadeToGray_Drained(a: u16, game: &mut Game) -> u8 {
 }
 pub unsafe fn MotherBrain_FadeToGray_RealDeath(a: u16, game: &mut Game) -> u8 {
     let v1: i32 = a as i32;
-    if *(game.g_rom.offset(crate::rtl::lorom_offset(0xadf107)) as *const u8 as *mut u16)
-        .offset(v1 as isize)
-        == 0
-    {
+    if crate::rtl::rom_table_word!(game, 0xadf107, v1 as isize) == 0 {
         return 1u8;
     }
     WriteColorsToPalette(
         0x1e2u16,
         0xadu8,
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xadf107)) as *const u8 as *mut u16)
-            .offset(v1 as isize),
+        crate::rtl::rom_table_word!(game, 0xadf107, v1 as isize),
         0xfu16,
         game,
     );
@@ -668,14 +675,10 @@ pub unsafe fn TurnOffLightsForShitroidDeath(game: &mut Game) {
 }
 pub unsafe fn MotherBrain_Phase3_TurnLightsBackOn(a: u16, game: &mut Game) -> u8 {
     let v1: i32 = a as i32;
-    if *(game.g_rom.offset(crate::rtl::lorom_offset(0xadf273)) as *const u8 as *mut u16)
-        .offset(v1 as isize)
-        == 0
-    {
+    if crate::rtl::rom_table_word!(game, 0xadf273, v1 as isize) == 0 {
         return 1u8;
     }
-    let v3: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xadf273)) as *const u8 as *mut u16)
-        .offset(v1 as isize);
+    let v3: u16 = crate::rtl::rom_table_word!(game, 0xadf273, v1 as isize);
     WriteColorsToPalette(0x62u16, 0xadu8, v3, 14u16, game);
     WriteColorsToPalette(0xa2u16, 0xadu8, (v3).wrapping_add(28u16), 14u16, game);
     0u8

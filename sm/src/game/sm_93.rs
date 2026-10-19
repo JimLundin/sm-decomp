@@ -43,14 +43,23 @@ pub unsafe fn InitializeProjectile(k: u16, game: &mut Game) {
     let mut v2: u16 = ram_word!(game, projectile_type[v1]);
     let mut v3: u16 = 0;
     if (v2 as i32 & 0xf00i32) != 0i32 {
-        v3 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9383f1)) as *const u8 as *mut u16)
-            .offset((*(&raw mut v2 as *mut u8).offset(1isize) as i32 & 0xfi32) as isize);
+        v3 = crate::rtl::rom_table_word!(
+            game,
+            0x9383f1,
+            (*(&raw mut v2 as *mut u8).offset(1isize) as i32 & 0xfi32) as isize
+        );
     } else if (v2 as i32 & 0x10i32) != 0i32 {
-        v3 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9383d9)) as *const u8 as *mut u16)
-            .offset((ram_word!(game, projectile_type[v1]) as i32 & 0xfi32) as isize);
+        v3 = crate::rtl::rom_table_word!(
+            game,
+            0x9383d9,
+            (ram_word!(game, projectile_type[v1]) as i32 & 0xfi32) as isize
+        );
     } else {
-        v3 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9383c1)) as *const u8 as *mut u16)
-            .offset((ram_word!(game, projectile_type[v1]) as i32 & 0xfi32) as isize);
+        v3 = crate::rtl::rom_table_word!(
+            game,
+            0x9383c1,
+            (ram_word!(game, projectile_type[v1]) as i32 & 0xfi32) as isize
+        );
     }
     let PD: *mut ProjectileDataTable = get_ProjectileDataTable(v3, game);
     if (*PD).damage as i32 & 0x8000i32 != 0 {
@@ -67,7 +76,9 @@ pub unsafe fn InitializeProjectile(k: u16, game: &mut Game) {
 pub unsafe fn InitializeInstrForSuperMissile(v0: u16, game: &mut Game) {
     let v1: i32 = v0 as i32 >> 1i32;
     let v3: *const u8 = RomPtr_93(
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0x93842b)) as *const u8 as *mut u16).offset(
+        crate::rtl::rom_table_word!(
+            game,
+            0x93842b,
             (*(((&raw mut game.g_ram as *mut u8).offset(0xc18) as *mut u16).offset(v1 as isize)
                 as *mut u16 as *mut u8)
                 .offset(1isize) as i32
@@ -86,7 +97,9 @@ pub unsafe fn InitializeInstrForSuperMissile(v0: u16, game: &mut Game) {
 pub unsafe fn InitializeInstrForMissile(v0: u16, game: &mut Game) {
     let v1: i32 = v0 as i32 >> 1i32;
     let v3: *const u8 = RomPtr_93(
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0x9383f1)) as *const u8 as *mut u16).offset(
+        crate::rtl::rom_table_word!(
+            game,
+            0x9383f1,
             (*(((&raw mut game.g_ram as *mut u8).offset(0xc18) as *mut u16).offset(v1 as isize)
                 as *mut u16 as *mut u8)
                 .offset(1isize) as i32
@@ -169,7 +182,9 @@ pub unsafe fn InitializeShinesparkEchoOrSpazerSba(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
     let r18: i32 = ram_word!(game, projectile_dir[v1]) as i32 & 0xfi32;
     let PD: *mut ProjectileDataTable = get_ProjectileDataTable(
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0x938403)) as *const u8 as *mut u16).offset(
+        crate::rtl::rom_table_word!(
+            game,
+            0x938403,
             (*(((&raw mut game.g_ram as *mut u8).offset(0xc18) as *mut u16).offset(v1 as isize)
                 as *mut u16 as *mut u8)
                 .offset(0) as i32
@@ -187,8 +202,11 @@ pub unsafe fn InitializeShinesparkEchoOrSpazerSba(k: u16, game: &mut Game) {
 pub unsafe fn InitializeSbaProjectile(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
     let v2: *const u8 = RomPtr_93(
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0x938413)) as *const u8 as *mut u16)
-            .offset((ram_word!(game, projectile_type[v1]) as i32 & 0xfi32) as isize),
+        crate::rtl::rom_table_word!(
+            game,
+            0x938413,
+            (ram_word!(game, projectile_type[v1]) as i32 & 0xfi32) as isize
+        ),
         game,
     );
     let v3: u16 = *(v2 as *mut u16);

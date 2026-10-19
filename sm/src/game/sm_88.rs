@@ -2522,9 +2522,7 @@ pub unsafe fn HdmaobjPreInstr_BG3Xscroll(k: u16, game: &mut Game) {
         loop {
             set_ram_word!(
                 game.g_word_7E9E80[(v2 as i32 >> 1i32)] =
-                    *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a938)) as *const u8
-                        as *mut u16)
-                        .offset((v1 as i32 >> 1i32) as isize)
+                    crate::rtl::rom_table_word!(game, 0x88a938, (v1 as i32 >> 1i32) as isize)
             );
             v2 = (v2).wrapping_add(2u16);
             v1 = (v1).wrapping_add(2u16);
@@ -3326,8 +3324,7 @@ pub unsafe fn Handle_LavaAcidBG2YScroll_Func2(v0: u16, game: &mut Game) {
     loop {
         set_ram_word!(
             game.g_word_7E9C46[(v4 as i32 >> 1i32)] =
-                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x88b589)) as *const u8 as *mut u16)
-                    .offset((v3 as i32 >> 1i32) as isize) as i32
+                (crate::rtl::rom_table_word!(game, 0x88b589, (v3 as i32 >> 1i32) as isize) as i32
                     + ram_word!(game, reg_BG2HOFS) as i32
                     & 0x1ffi32) as u16
         );
@@ -3370,8 +3367,7 @@ pub unsafe fn Handle_LavaAcidBG2YScroll_Func3(v0: u16, game: &mut Game) {
     loop {
         set_ram_word!(
             game.g_word_7E9C46[(v4 as i32 >> 1i32)] =
-                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x88b60a)) as *const u8 as *mut u16)
-                    .offset((v3 as i32 >> 1i32) as isize) as i32
+                (crate::rtl::rom_table_word!(game, 0x88b60a, (v3 as i32 >> 1i32) as isize) as i32
                     + ram_word!(game, reg_BG2VOFS) as i32
                     & 0x1ffi32) as u16
         );
@@ -3655,12 +3651,11 @@ pub unsafe fn FxTypeFunc_A_Rain(game: &mut Game) {
 }
 pub unsafe fn HdmaobjInstr_1938_RandomNumber(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
     set_ram_word!(
-        game.hdma_object_D[(k as i32 >> 1i32)] =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88d992)) as *const u8 as *mut u16)
-                .offset(
-                    ((ram_word!(game, random_number) as i32 >> 1i32 & 6i32) as u16 as i32 >> 1i32)
-                        as isize,
-                )
+        game.hdma_object_D[(k as i32 >> 1i32)] = crate::rtl::rom_table_word!(
+            game,
+            0x88d992,
+            ((ram_word!(game, random_number) as i32 >> 1i32 & 6i32) as u16 as i32 >> 1i32) as isize,
+        )
     );
     hdp
 }
@@ -4792,9 +4787,11 @@ pub unsafe fn HdmaobjPreInstr_E7BC(k: u16, game: &mut Game) {
     };
 }
 pub unsafe fn sub_88E7ED(game: &mut Game) {
-    let mut v0: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x88e833)) as *const u8
-        as *mut u16)
-        .offset((ram_word!(game, hdma_object_A[0]) as i32 >> 1i32) as isize);
+    let mut v0: u16 = crate::rtl::rom_table_word!(
+        game,
+        0x88e833,
+        (ram_word!(game, hdma_object_A[0]) as i32 >> 1i32) as isize
+    );
     if (v0 as i32 & 0x8000i32) == 0i32 {
         update_ram_word!(game.hdma_object_A[0], wrapping_add(1));
         update_ram_word!(game.hdma_object_A[0], wrapping_add(1));
@@ -4802,8 +4799,7 @@ pub unsafe fn sub_88E7ED(game: &mut Game) {
         update_ram_word!(game.hdma_object_A[0], wrapping_add(1));
     } else {
         set_ram_word!(game.hdma_object_A[0] = 0u16);
-        v0 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x88e833)) as *const u8 as *mut u16)
-            .offset(0);
+        v0 = crate::rtl::rom_table_word!(game, 0x88e833, 0);
     }
     *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0) =
         (v0 as i32 & 0x1fi32 | 0x20i32) as u8;

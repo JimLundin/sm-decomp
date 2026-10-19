@@ -928,9 +928,7 @@ pub unsafe fn Torizo_Init(game: &mut Game) {
         (*E).base.timer = 0u16;
         (*E).base.palette_index = 0u16;
         (*E).toriz_var_F = addr_locret_AAC95E as u16;
-        (*E).base.current_instruction = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaac967))
-            as *const u8 as *mut u16)
-            .offset(v2 as isize);
+        (*E).base.current_instruction = crate::rtl::rom_table_word!(game, 0xaac967, v2 as isize);
         (*E).base.spritemap_pointer = addr_kTorizo_ExtSprmap_87D0 as u16;
         (*E).base.x_pos = g_word_AAC95F[v2 as usize] as u16;
         (*E).base.y_pos = g_word_AAC963[v2 as usize] as u16;
@@ -1391,8 +1389,8 @@ pub unsafe fn TourianEntranceStatue_Init(game: &mut Game) {
     (*v0).palette_index = 0u16;
     (*v0).instruction_timer = 1u16;
     (*v0).timer = 0u16;
-    let v1: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaad810)) as *const u8 as *mut u16)
-        .offset(((*v0).parameter_1 as i32 >> 1i32) as isize);
+    let v1: u16 =
+        crate::rtl::rom_table_word!(game, 0xaad810, ((*v0).parameter_1 as i32 >> 1i32) as isize);
     (*v0).current_instruction = v1;
     if (*v0).parameter_1 == 0 {
         SpawnEprojWithRoomGfx(addr_kEproj_TourianStatueBaseDecoration as u16, 0u16, game);
@@ -1404,13 +1402,11 @@ pub unsafe fn TourianEntranceStatue_Init(game: &mut Game) {
         let v5: i32 = i >> 1i32;
         set_ram_word!(
             game.target_palettes[(v5 + 240i32)] =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0xaad785)) as *const u8 as *mut u16)
-                    .offset(v5 as isize)
+                crate::rtl::rom_table_word!(game, 0xaad785, v5 as isize)
         );
         set_ram_word!(
             game.target_palettes[(v5 + 160i32)] =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0xaad765)) as *const u8 as *mut u16)
-                    .offset(v5 as isize)
+                crate::rtl::rom_table_word!(game, 0xaad765, v5 as isize)
         );
         i -= 2i32;
     }
@@ -1469,19 +1465,19 @@ pub unsafe fn Shaktool_Func_2(k: u16, game: &mut Game) {
 pub unsafe fn Shaktool_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let shakt_var_E: u16 = (*Get_Shaktool(k as i32, game)).shakt_var_E;
     (*Get_Shaktool(shakt_var_E as i32, game)).shakt_var_F =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadedb)) as *const u8 as *mut u16).offset(0);
+        crate::rtl::rom_table_word!(game, 0xaadedb, 0);
     (*Get_Shaktool(shakt_var_E as i32 + 64i32, game)).shakt_var_F =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadedb)) as *const u8 as *mut u16).offset(1);
+        crate::rtl::rom_table_word!(game, 0xaadedb, 1);
     (*Get_Shaktool(shakt_var_E as i32 + 128i32, game)).shakt_var_F =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadedb)) as *const u8 as *mut u16).offset(2);
+        crate::rtl::rom_table_word!(game, 0xaadedb, 2);
     (*Get_Shaktool(shakt_var_E as i32 + 192i32, game)).shakt_var_F =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadedb)) as *const u8 as *mut u16).offset(3);
+        crate::rtl::rom_table_word!(game, 0xaadedb, 3);
     (*Get_Shaktool(shakt_var_E as i32 + 256i32, game)).shakt_var_F =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadedb)) as *const u8 as *mut u16).offset(4);
+        crate::rtl::rom_table_word!(game, 0xaadedb, 4);
     (*Get_Shaktool(shakt_var_E as i32 + 320i32, game)).shakt_var_F =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadedb)) as *const u8 as *mut u16).offset(5);
+        crate::rtl::rom_table_word!(game, 0xaadedb, 5);
     (*Get_Shaktool(shakt_var_E as i32 + 384i32, game)).shakt_var_F =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadedb)) as *const u8 as *mut u16).offset(6);
+        crate::rtl::rom_table_word!(game, 0xaadedb, 6);
     jp
 }
 pub unsafe fn Shaktool_DAE5(mut k: u16, game: &mut Game) {
@@ -1490,9 +1486,8 @@ pub unsafe fn Shaktool_DAE5(mut k: u16, game: &mut Game) {
         while i >= 0i32 {
             let E: *mut Enemy_Shaktool = Get_Shaktool(k as i32, game);
             (*E).shakt_var_F = ((0xaadcaai32) as u16);
-            (*E).base.current_instruction = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadf21))
-                as *const u8 as *mut u16)
-                .offset((i >> 1i32) as isize);
+            (*E).base.current_instruction =
+                crate::rtl::rom_table_word!(game, 0xaadf21, (i >> 1i32) as isize);
             (*E).base.instruction_timer = 1u16;
             k = (k).wrapping_sub(64u16);
             i -= 2i32;
@@ -1618,9 +1613,7 @@ pub unsafe fn Shaktool_DC2A(k: u16, game: &mut Game) {
     SetHiLo(
         &raw mut (*E).base.x_pos,
         &raw mut (*E).base.x_subpos,
-        (((*(game.g_rom.offset(crate::rtl::lorom_offset(0xaae0bd)) as *const u8 as *mut u16)
-            .offset(v3 as isize) as i16 as i32)
-            << 8i32) as u32)
+        (((crate::rtl::rom_table_word!(game, 0xaae0bd, v3 as isize) as i16 as i32) << 8i32) as u32)
             .wrapping_add(
                 (ram_word!(game, enemy_drawing_queue[(v5 + 91i32)]) as u32) << 16i32
                     | ram_word!(game, enemy_drawing_queue[(v5 + 92i32)]) as u32,
@@ -1629,9 +1622,7 @@ pub unsafe fn Shaktool_DC2A(k: u16, game: &mut Game) {
     SetHiLo(
         &raw mut (*E).base.y_pos,
         &raw mut (*E).base.y_subpos,
-        (((*(game.g_rom.offset(crate::rtl::lorom_offset(0xaae03d)) as *const u8 as *mut u16)
-            .offset(v3 as isize) as i16 as i32)
-            << 8i32) as u32)
+        (((crate::rtl::rom_table_word!(game, 0xaae03d, v3 as isize) as i16 as i32) << 8i32) as u32)
             .wrapping_add(
                 (ram_word!(game, enemy_drawing_queue[(v5 + 93i32)]) as u32) << 16i32
                     | ram_word!(game, enemy_drawing_queue[(v5 + 94i32)]) as u32,
@@ -1684,9 +1675,11 @@ pub unsafe fn Shaktool_DCD7(k: u16, game: &mut Game) {
     }
     let v3: u16 = (*(&raw mut v2 as *mut u8).offset(1isize) as i32 + 8i32 & 0xe0i32) as u16;
     *(&raw mut (*E).shakt_var_D as *mut u8).offset(0) = v3 as u8;
-    (*E).base.current_instruction = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadd15))
-        as *const u8 as *mut u16)
-        .offset(((v3 as i32 >> 4i32) as u16 as i32 >> 1i32) as isize);
+    (*E).base.current_instruction = crate::rtl::rom_table_word!(
+        game,
+        0xaadd15,
+        ((v3 as i32 >> 4i32) as u16 as i32 >> 1i32) as isize
+    );
     (*E).base.instruction_timer = 1u16;
 }
 pub unsafe fn Shaktool_DD25(mut k: u16, game: &mut Game) {
@@ -1750,8 +1743,7 @@ pub unsafe fn Shaktool_DD25(mut k: u16, game: &mut Game) {
             let EK: *mut Enemy_Shaktool = Get_Shaktool(k as i32, game);
             (*EK).shakt_var_F = ((0xaadcaai32) as u16);
             (*EK).base.current_instruction =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadf13)) as *const u8 as *mut u16)
-                    .offset((i >> 1i32) as isize);
+                crate::rtl::rom_table_word!(game, 0xaadf13, (i >> 1i32) as isize);
             (*EK).base.instruction_timer = 1u16;
             k = (k).wrapping_sub(64u16);
             i -= 2i32;
@@ -1785,31 +1777,20 @@ pub unsafe fn Shaktool_Init(game: &mut Game) {
     (*E).shakt_var_D = 0u16;
     let shakto_parameter_2: u16 = (*E).shakt_parameter_2;
     let v3: i32 = shakto_parameter_2 as i32 >> 1i32;
-    (*E).base.properties = ((*E).base.properties)
-        | (*(game.g_rom.offset(crate::rtl::lorom_offset(0xaade95)) as *const u8 as *mut u16)
-            .offset(v3 as isize));
-    (*E).shakt_var_E = (ram_word!(game, cur_enemy_index)).wrapping_sub(
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadea3)) as *const u8 as *mut u16)
-            .offset(v3 as isize),
-    );
+    (*E).base.properties =
+        ((*E).base.properties) | (crate::rtl::rom_table_word!(game, 0xaade95, v3 as isize));
+    (*E).shakt_var_E = (ram_word!(game, cur_enemy_index))
+        .wrapping_sub(crate::rtl::rom_table_word!(game, 0xaadea3, v3 as isize));
     (*E).shakt_var_F = *((game.g_rom.offset(crate::rtl::lorom_offset(0xaadedb)) as *const u8
         as *mut u16 as *mut u8)
         .offset(shakto_parameter_2 as i32 as isize) as *mut u16);
     (*E).shakt_var_C = (*((&raw const g_word_AADEE9 as *const u16 as *mut u8)
         .offset(shakto_parameter_2 as i32 as isize) as *mut u16))
-        .wrapping_sub(
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadef7)) as *const u8 as *mut u16)
-                .offset(v3 as isize),
-        );
-    (*E).shakt_var_B = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadeb1)) as *const u8
-        as *mut u16)
-        .offset(v3 as isize);
-    (*E).base.current_instruction = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadeb1))
-        as *const u8 as *mut u16)
-        .offset((v3 + 7i32) as isize);
-    (*E).base.layer = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadecd)) as *const u8
-        as *mut u16)
-        .offset(v3 as isize);
+        .wrapping_sub(crate::rtl::rom_table_word!(game, 0xaadef7, v3 as isize));
+    (*E).shakt_var_B = crate::rtl::rom_table_word!(game, 0xaadeb1, v3 as isize);
+    (*E).base.current_instruction =
+        crate::rtl::rom_table_word!(game, 0xaadeb1, (v3 + 7i32) as isize);
+    (*E).base.layer = crate::rtl::rom_table_word!(game, 0xaadecd, v3 as isize);
     if shakto_parameter_2 != 0 {
         Shaktool_DC2A(ram_word!(game, cur_enemy_index), game);
     }
@@ -1900,33 +1881,30 @@ pub unsafe fn Shaktool_Instr_7(k: u16, jp: *const u16, game: &mut Game) -> *cons
     (*E).shakt_var_C = *jp.offset(0);
     Enemy_MoveRight_IgnoreSlopes(
         k,
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0xaae630)) as *const u8 as *mut u16)
-            .offset(((*E).shakt_var_C as i32 >> 1i32) as isize) as i16 as i32)
+        (crate::rtl::rom_table_word!(game, 0xaae630, ((*E).shakt_var_C as i32 >> 1i32) as isize)
+            as i16 as i32)
             << 8i32,
         game,
     );
     Enemy_MoveDown(
         k,
-        (abs16(
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xaae630)) as *const u8 as *mut u16)
-                .offset(((*E).shakt_var_C as i32 >> 1i32) as isize),
-        ) as i16 as i32)
+        (abs16(crate::rtl::rom_table_word!(
+            game,
+            0xaae630,
+            ((*E).shakt_var_C as i32 >> 1i32) as isize
+        )) as i16 as i32)
             << 8i32,
         game,
     );
     EnemyFunc_C8AD(k, game);
     let v6: i32 = (*E).shakt_var_C as i32 >> 1i32;
     set_ram_word!(
-        game.samus_x_pos = (*(game.g_rom.offset(crate::rtl::lorom_offset(0xaae670)) as *const u8
-            as *mut u16)
-            .offset(v6 as isize))
-        .wrapping_add((*E).base.x_pos)
+        game.samus_x_pos = (crate::rtl::rom_table_word!(game, 0xaae670, v6 as isize))
+            .wrapping_add((*E).base.x_pos)
     );
     set_ram_word!(
-        game.samus_y_pos = (*(game.g_rom.offset(crate::rtl::lorom_offset(0xaae6b0)) as *const u8
-            as *mut u16)
-            .offset(v6 as isize))
-        .wrapping_add((*E).base.y_pos)
+        game.samus_y_pos = (crate::rtl::rom_table_word!(game, 0xaae6b0, v6 as isize))
+            .wrapping_add((*E).base.y_pos)
     );
     jp.offset(1)
 }
@@ -1947,8 +1925,7 @@ pub unsafe fn N00bTubeCracks_Init(game: &mut Game) {
     while i >= 0i32 {
         set_ram_word!(
             game.target_palettes[((i >> 1i32) + 144i32)] =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0xaae2dd)) as *const u8 as *mut u16)
-                    .offset((i >> 1i32) as isize)
+                crate::rtl::rom_table_word!(game, 0xaae2dd, (i >> 1i32) as isize)
         );
         i -= 2i32;
     }
@@ -1967,8 +1944,7 @@ pub unsafe fn ChozoStatue_Init(game: &mut Game) {
     (*gEnemyData(0i32, game)).layer = 0u16;
     let parameter_2: u16 = (*v0).parameter_2;
     (*v0).current_instruction =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xaae7a2)) as *const u8 as *mut u16)
-            .offset((parameter_2 as i32 >> 1i32) as isize);
+        crate::rtl::rom_table_word!(game, 0xaae7a2, (parameter_2 as i32 >> 1i32) as isize);
     if parameter_2 != 0 {
         sub_AAE784(game);
     } else {

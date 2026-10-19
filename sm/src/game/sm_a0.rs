@@ -1828,9 +1828,7 @@ pub unsafe fn DrawSamusEnemiesAndProjectiles(game: &mut Game) {
         }
         if ram_word!(game, enemy_drawing_queue_sizes[phase_varE32]) != 0 {
             let varE36: u16 = ram_word!(game, enemy_drawing_queue_sizes[phase_varE32]);
-            let varE3A: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0b133)) as *const u8
-                as *mut u16)
-                .offset(phase_varE32 as isize);
+            let varE3A: u16 = crate::rtl::rom_table_word!(game, 0xa0b133, phase_varE32 as isize);
             let mut v1: u16 = 0u16;
             let mut varE38: u16 = 0;
             set_ram_word!(game.enemy_drawing_queue_sizes[phase_varE32] = 0u16);
@@ -2022,8 +2020,7 @@ pub unsafe fn LoadEnemyTileData(game: &mut Game) {
     let mut i: i32 = 510i32;
     while i >= 0i32 {
         (*gEnemySpawnData(i, game)).some_flag =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x9ad200)) as *const u8 as *mut u16)
-                .offset(((i >> 1i32) + 3072i32) as isize);
+            crate::rtl::rom_table_word!(game, 0x9ad200, ((i >> 1i32) + 3072i32) as isize);
         i -= 2i32;
     }
     if ram_word!(game, enemy_tile_load_data_write_pos) != 0 {
@@ -3653,8 +3650,7 @@ pub unsafe fn DrawOneEnemy(game: &mut Game) {
         (2u16).wrapping_mul((*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).layer);
     *(RomPtr_RAM(
         (ram_word!(game, enemy_drawing_queue_sizes[(varE34 as i32 >> 1i32)])).wrapping_add(
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0b133)) as *const u8 as *mut u16)
-                .offset((varE34 as i32 >> 1i32) as isize),
+            crate::rtl::rom_table_word!(game, 0xa0b133, (varE34 as i32 >> 1i32) as isize),
         ),
         game,
     ) as *mut u16) = ram_word!(game, cur_enemy_index);

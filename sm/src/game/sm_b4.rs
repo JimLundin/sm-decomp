@@ -32,8 +32,7 @@ pub unsafe fn CreateSpriteAtPos(
     set_ram_word!(game.sprite_x_pos[v1] = x_r18);
     set_ram_word!(game.sprite_y_pos[v1] = y_r20);
     set_ram_word!(game.sprite_palettes[v1] = pal_r24);
-    let v2: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xb4bda8)) as *const u8 as *mut u16)
-        .offset(ilist_r22 as isize);
+    let v2: u16 = crate::rtl::rom_table_word!(game, 0xb4bda8, ilist_r22 as isize);
     set_ram_word!(game.sprite_instr_list_ptrs[v1] = v2);
     set_ram_word!(game.sprite_instr_timer[v1] = *(RomPtr_B4(v2, game) as *mut u16));
     v0 as u16

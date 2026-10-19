@@ -19,22 +19,20 @@ unsafe fn get_SamusTileAnimationDefs(a: u16, game: &mut Game) -> *mut SamusTileA
 }
 pub unsafe fn SetSamusTilesDefsForCurAnim(game: &mut Game) {
     let v0: u16 = (4i32 * ram_word!(game, samus_anim_frame) as i32
-        + *(game.g_rom.offset(crate::rtl::lorom_offset(0x92d94e)) as *const u8 as *mut u16)
-            .offset(ram_word!(game, samus_pose) as isize) as i32) as u16;
+        + crate::rtl::rom_table_word!(game, 0x92d94e, ram_word!(game, samus_pose) as isize) as i32)
+        as u16;
     let AD: *mut SamusTileAnimationDefs = get_SamusTileAnimationDefs(v0, game);
     set_ram_word!(
         game.nmi_copy_samus_top_half_src = (7i32 * (*AD).top_half_pos as i32
-            + *(game.g_rom.offset(crate::rtl::lorom_offset(0x92d91e)) as *const u8 as *mut u16)
-                .offset((*AD).top_half_idx as isize) as i32)
+            + crate::rtl::rom_table_word!(game, 0x92d91e, (*AD).top_half_idx as isize) as i32)
             as u16
     );
     *((&raw mut game.g_ram as *mut u8).offset(0x71d) as *mut u16 as *mut u8).offset(0) = 1u8;
     if (*AD).bottom_half_idx != 255u8 {
         set_ram_word!(
             game.nmi_copy_samus_bottom_half_src = (7i32 * (*AD).bottom_half_pos as i32
-                + *(game.g_rom.offset(crate::rtl::lorom_offset(0x92d938)) as *const u8 as *mut u16)
-                    .offset((*AD).bottom_half_idx as isize) as i32)
-                as u16
+                + crate::rtl::rom_table_word!(game, 0x92d938, (*AD).bottom_half_idx as isize)
+                    as i32) as u16
         );
         *((&raw mut game.g_ram as *mut u8).offset(0x71d) as *mut u16 as *mut u8).offset(1isize) =
             1u8;

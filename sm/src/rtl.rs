@@ -1,3 +1,22 @@
+/// Read a word from a fixed LoROM table, retaining pointer-before-index order.
+macro_rules! rom_table_word {
+    ($game:ident, $address:literal, $index:expr $(,)?) => {
+        $crate::rtl::read_rom_table_word(
+            $game
+                .g_rom
+                .offset($crate::rtl::lorom_offset($address))
+                .cast::<u16>(),
+            $index,
+        )
+    };
+}
+pub(crate) use rom_table_word;
+
+#[inline]
+pub(crate) unsafe fn read_rom_table_word(table: *const u16, index: isize) -> u16 {
+    table.offset(index).read_unaligned()
+}
+
 use crate::cpu_infra::RtlUpdateSnesPatchForBugfix;
 use crate::game_state::Game;
 use crate::host::{Die, RtlApuLock, RtlApuUnlock};

@@ -497,9 +497,7 @@ pub unsafe fn Kraid_Init(game: &mut Game) {
         loop {
             set_ram_word!(
                 game.target_palettes[(v0 as i32 >> 1i32)] =
-                    *(game.g_rom.offset(crate::rtl::lorom_offset(0xa786c7)) as *const u8
-                        as *mut u16)
-                        .offset((v1 as i32 >> 1i32) as isize)
+                    crate::rtl::rom_table_word!(game, 0xa786c7, (v1 as i32 >> 1i32) as isize)
             );
             v0 = (v0).wrapping_add(2u16);
             v1 = (v1).wrapping_add(2u16);
@@ -573,8 +571,7 @@ pub unsafe fn Kraid_Init(game: &mut Game) {
         loop {
             *((&raw mut game.g_ram as *mut u8).offset(0xc200) as *mut u16)
                 .offset(((v14 as i32 >> 1i32) + 176i32) as isize) =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7aaa6)) as *const u8 as *mut u16)
-                    .offset((v14 as i32 >> 1i32) as isize);
+                crate::rtl::rom_table_word!(game, 0xa7aaa6, (v14 as i32 >> 1i32) as isize);
             v14 = (v14).wrapping_add(2u16);
             if (((v14) as i16).wrapping_sub(32i16) >= 0i16) {
                 break;
@@ -718,8 +715,7 @@ pub unsafe fn Kraid_GetsBig_BreakCeilingPlatforms(game: &mut Game) {
         ((kraid_var_F) as i16).wrapping_sub(18i16) >= 0i16
     }) {
         SpawnEprojWithGfx(
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7acb3)) as *const u8 as *mut u16)
-                .offset((kraid_var_F as i32 >> 1i32) as isize),
+            crate::rtl::rom_table_word!(game, 0xa7acb3, (kraid_var_F as i32 >> 1i32) as isize),
             ram_word!(game, cur_enemy_index),
             addr_kEproj_RocksFallingKraidCeiling as u16,
             game,
@@ -825,8 +821,7 @@ pub unsafe fn Kraid_DrawRoomBg(game: &mut Game) {
     loop {
         set_ram_word!(
             game.target_palettes[(v0 as i32 >> 1i32)] =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0xa786c7)) as *const u8 as *mut u16)
-                    .offset((v1 as i32 >> 1i32) as isize)
+                crate::rtl::rom_table_word!(game, 0xa786c7, (v1 as i32 >> 1i32) as isize)
         );
         v0 = (v0).wrapping_add(2u16);
         v1 = (v1).wrapping_add(2u16);
@@ -1151,14 +1146,10 @@ pub unsafe fn Kraid_Enemy_Touch(game: &mut Game) {
         i = 0i32;
         loop {
             let v3: i32 = i >> 1i32;
-            if (v1).wrapping_sub(
-                (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa7b161)) as *const u8 as *mut u16)
-                    .offset(v3 as isize)) as i16,
-            ) >= 0i16
+            if (v1).wrapping_sub((crate::rtl::rom_table_word!(game, 0xa7b161, v3 as isize)) as i16)
+                >= 0i16
                 || (v1).wrapping_sub(
-                    (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa7b161)) as *const u8
-                        as *mut u16)
-                        .offset((v3 + 2i32) as isize)) as i16,
+                    (crate::rtl::rom_table_word!(game, 0xa7b161, (v3 + 2i32) as isize)) as i16,
                 ) >= 0i16
             {
                 break;
@@ -1166,8 +1157,7 @@ pub unsafe fn Kraid_Enemy_Touch(game: &mut Game) {
             i += 4i32;
         }
         if (((*E).base.x_pos as i32
-            + *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7b161)) as *const u8 as *mut u16)
-                .offset(((i >> 1i32) + 1i32) as isize) as i32
+            + crate::rtl::rom_table_word!(game, 0xa7b161, ((i >> 1i32) + 1i32) as isize) as i32
             - r18 as i32) as i16)
             < 0i16
         {
@@ -1243,14 +1233,10 @@ pub unsafe fn Kraid_Shot_Body(game: &mut Game) {
                     loop {
                         let v13: i32 = j as i32 >> 1i32;
                         if (v11).wrapping_sub(
-                            (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa7b161)) as *const u8
-                                as *mut u16)
-                                .offset(v13 as isize)) as i16,
+                            (crate::rtl::rom_table_word!(game, 0xa7b161, v13 as isize)) as i16,
                         ) >= 0i16
                             || (v11).wrapping_sub(
-                                (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa7b161))
-                                    as *const u8 as *mut u16)
-                                    .offset((v13 + 2i32) as isize))
+                                (crate::rtl::rom_table_word!(game, 0xa7b161, (v13 + 2i32) as isize))
                                     as i16,
                             ) >= 0i16
                         {
@@ -1259,10 +1245,11 @@ pub unsafe fn Kraid_Shot_Body(game: &mut Game) {
                         j = (j).wrapping_add(4u16);
                     }
                     if (((*E).base.x_pos as i32
-                        + *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7b161)) as *const u8
-                            as *mut u16)
-                            .offset(((j as i32 >> 1i32) + 1i32) as isize)
-                            as i32
+                        + crate::rtl::rom_table_word!(
+                            game,
+                            0xa7b161,
+                            ((j as i32 >> 1i32) + 1i32) as isize
+                        ) as i32
                         - r18 as i32) as i16)
                         < 0i16
                     {
@@ -1330,8 +1317,7 @@ pub unsafe fn Kraid_HurtFlash_Handling(game: &mut Game) {
     loop {
         *((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16)
             .offset(((v1 as i32 >> 1i32) + 240i32) as isize) =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7b513)) as *const u8 as *mut u16)
-                .offset((v0 as i32 >> 1i32) as isize);
+            crate::rtl::rom_table_word!(game, 0xa7b513, (v0 as i32 >> 1i32) as isize);
         v1 = (v1).wrapping_add(2u16);
         v0 = (v0).wrapping_add(2u16);
         if (((v1) as i16).wrapping_sub(32i16) >= 0i16) {
@@ -1362,13 +1348,11 @@ pub unsafe fn Kraid_HealthBasedPaletteHandling(game: &mut Game) {
         let v6: i32 = v4 as i32 >> 1i32;
         set_ram_word!(
             game.palette_buffer[(v6 + 112i32)] =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7b3d3)) as *const u8 as *mut u16)
-                    .offset(v5 as isize)
+                crate::rtl::rom_table_word!(game, 0xa7b3d3, v5 as isize)
         );
         set_ram_word!(
             game.palette_buffer[(v6 + 240i32)] =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7b513)) as *const u8 as *mut u16)
-                    .offset(v5 as isize)
+                crate::rtl::rom_table_word!(game, 0xa7b513, v5 as isize)
         );
         v0 = (v0).wrapping_add(2u16);
         v4 = (v4).wrapping_add(2u16);
@@ -1490,18 +1474,14 @@ pub unsafe fn Kraid_Shot_UnglowEye(game: &mut Game) {
         let v4: i32 = v3 as i32 >> 1i32;
         r18 = (ram_word!(game, palette_buffer[v4])) & (0x1fu16);
         let v5: i32 = v2 as i32 >> 1i32;
-        if *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7b3d3)) as *const u8 as *mut u16)
-            .offset((v5 + 1i32) as isize) as i32
-            & 0x1fi32
+        if crate::rtl::rom_table_word!(game, 0xa7b3d3, (v5 + 1i32) as isize) as i32 & 0x1fi32
             != r18 as i32
         {
             r20 = r20.wrapping_add(1);
             update_ram_word!(game.palette_buffer[v4], wrapping_sub(1));
         }
         r18 = (ram_word!(game, palette_buffer[v4])) & (0x3e0u16);
-        if *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7b3d3)) as *const u8 as *mut u16)
-            .offset((v5 + 1i32) as isize) as i32
-            & 0x3e0i32
+        if crate::rtl::rom_table_word!(game, 0xa7b3d3, (v5 + 1i32) as isize) as i32 & 0x3e0i32
             != r18 as i32
         {
             r20 = r20.wrapping_add(1);
@@ -1757,8 +1737,7 @@ pub unsafe fn KraidsFoot_SecondPhase_Thinking(game: &mut Game) {
         loop {
             E0 = Get_Kraid(0i32, game);
             if (*E0).base.x_pos
-                == *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7ba7d)) as *const u8 as *mut u16)
-                    .offset((v2 as i32 >> 1i32) as isize)
+                == crate::rtl::rom_table_word!(game, 0xa7ba7d, (v2 as i32 >> 1i32) as isize)
             {
                 break;
             }
@@ -1774,9 +1753,8 @@ pub unsafe fn KraidsFoot_SecondPhase_Thinking(game: &mut Game) {
             v4 = 16i16;
         }
         let v5: *const u16 = RomPtr_A7(
-            (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa7ba7d)) as *const u8 as *mut u16)
-                .offset(((v2 as i32 >> 1i32) + 1i32) as isize))
-            .wrapping_add((v4) as u16),
+            (crate::rtl::rom_table_word!(game, 0xa7ba7d, ((v2 as i32 >> 1i32) + 1i32) as isize))
+                .wrapping_add((v4) as u16),
             game,
         ) as *const u16;
         let v6: u16 = *v5.offset(1);
@@ -1867,8 +1845,11 @@ pub unsafe fn Kraid_Main_AttackWithMouthOpen(game: &mut Game) {
         && ((*E).kraid_var_C as i32 & 0xfi32) == 0i32
     {
         SpawnEprojWithGfx(
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7bc65)) as *const u8 as *mut u16)
-                .offset(((ram_word!(game, random_number) as i32 & 0xei32) >> 1i32) as isize),
+            crate::rtl::rom_table_word!(
+                game,
+                0xa7bc65,
+                ((ram_word!(game, random_number) as i32 & 0xei32) >> 1i32) as isize
+            ),
             (ram_word!(game, random_number)) & (0xeu16),
             addr_kEproj_RocksKraidSpits as u16,
             game,
@@ -1944,11 +1925,17 @@ pub unsafe fn KraidsFingernail_Init(game: &mut Game) {
         kraid_var_E = (*Get_Kraid(0x1c0i32, game)).kraid_var_E;
     }
     if kraid_var_E as i32 & 0x8000i32 != 0 {
-        v2 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7be3e)) as *const u8 as *mut u16)
-            .offset(((ram_word!(game, random_number) as i32 & 6i32) >> 1i32) as isize);
+        v2 = crate::rtl::rom_table_word!(
+            game,
+            0xa7be3e,
+            ((ram_word!(game, random_number) as i32 & 6i32) >> 1i32) as isize
+        );
     } else {
-        v2 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7be46)) as *const u8 as *mut u16)
-            .offset(((ram_word!(game, random_number) as i32 & 6i32) >> 1i32) as isize);
+        v2 = crate::rtl::rom_table_word!(
+            game,
+            0xa7be46,
+            ((ram_word!(game, random_number) as i32 & 6i32) >> 1i32) as isize
+        );
     }
     let v3: *const u8 = RomPtr_A7(v2, game);
     let E: *mut Enemy_Kraid = Get_Kraid(ram_word!(game, cur_enemy_index) as i32, game);
@@ -2016,8 +2003,7 @@ pub unsafe fn KraidsFingernail_Fire(k: u16, game: &mut Game) {
         loop {
             v3 = gEnemyData(0i32, game);
             v4 = gEnemyData(k as i32, game);
-            if ((*(game.g_rom.offset(crate::rtl::lorom_offset(0xa7bf1d)) as *const u8 as *mut u16)
-                .offset(((i >> 1i32) + 1i32) as isize) as i32
+            if ((crate::rtl::rom_table_word!(game, 0xa7bf1d, ((i >> 1i32) + 1i32) as isize) as i32
                 + (*v3).y_pos as i32
                 - (*v4).y_pos as i32) as i16)
                 < 0i16
@@ -2026,10 +2012,8 @@ pub unsafe fn KraidsFingernail_Fire(k: u16, game: &mut Game) {
             }
             i += 4i32;
         }
-        let r18: u16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa7bf1d)) as *const u8
-            as *mut u16)
-            .offset((i >> 1i32) as isize))
-        .wrapping_add((*v3).x_pos);
+        let r18: u16 = (crate::rtl::rom_table_word!(game, 0xa7bf1d, (i >> 1i32) as isize))
+            .wrapping_add((*v3).x_pos);
         if (*v4).x_width as i32 + (*v4).x_pos as i32 - r18 as i32 & 0x8000i32 == 0
             && ((*v4).ai_var_C as i32 & 0x8000i32) == 0i32
         {
@@ -2361,9 +2345,7 @@ pub unsafe fn Kraid_Death_Init(game: &mut Game) {
         while i >= 0i32 {
             set_ram_word!(
                 game.palette_buffer[((i >> 1i32) + 112i32)] =
-                    *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7b4f3)) as *const u8
-                        as *mut u16)
-                        .offset((i >> 1i32) as isize)
+                    crate::rtl::rom_table_word!(game, 0xa7b4f3, (i >> 1i32) as isize)
             );
             i -= 2i32;
         }
@@ -2973,8 +2955,7 @@ pub unsafe fn Phantoon2_Init(game: &mut Game) {
     (*v6).palette_index = (*v7).palette_index;
     (*v6).vram_tiles_index = (*v7).vram_tiles_index;
     (*v6).current_instruction =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7ce8e)) as *const u8 as *mut u16)
-            .offset((*v6).parameter_2 as isize);
+        crate::rtl::rom_table_word!(game, 0xa7ce8e, (*v6).parameter_2 as isize);
     (*v6).ai_preinstr = ((0xa7d4a9i32) as u16);
     (*v7.offset(3)).parameter_1 = 0u16;
     (*v7.offset(3)).ai_var_C = -(1i32) as u16;
@@ -3010,8 +2991,7 @@ pub unsafe fn Phantoon_Main(game: &mut Game) {
 }
 pub unsafe fn Phantoon_Func_1(game: &mut Game) {
     QueueSfx2_Max6(
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7cded)) as *const u8 as *mut u16)
-            .offset(ram_word!(game, g_word_7E9032) as isize),
+        crate::rtl::rom_table_word!(game, 0xa7cded, ram_word!(game, g_word_7E9032) as isize),
         game,
     );
     let mut v0: u16 = (ram_word!(game, g_word_7E9032)).wrapping_add(1u16);
@@ -3115,18 +3095,15 @@ pub unsafe fn Phantoon_Func_7(k: u16, game: &mut Game) {
             if v3 || v8 {
                 (*E).phant_var_C = -(1i32) as u16;
                 (*E).phant_var_B = *(RomPtr_A7(
-                    *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7ccfd)) as *const u8
-                        as *mut u16)
-                        .offset((*E).phant_var_A as isize),
+                    crate::rtl::rom_table_word!(game, 0xa7ccfd, (*E).phant_var_A as isize),
                     game,
                 ) as *mut u16)
                     .offset(1);
             } else {
                 (*E).phant_var_B = *(RomPtr_A7(
                     (2i32 * (*E).phant_var_C as i32
-                        + *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7ccfd)) as *const u8
-                            as *mut u16)
-                            .offset((*E).phant_var_A as isize) as i32) as u16,
+                        + crate::rtl::rom_table_word!(game, 0xa7ccfd, (*E).phant_var_A as isize)
+                            as i32) as u16,
                     game,
                 ) as *mut u16)
                     .offset(1);
@@ -3136,9 +3113,7 @@ pub unsafe fn Phantoon_Func_7(k: u16, game: &mut Game) {
         } else {
             let v5: u16 = (NextRandom(game)) & (3u16);
             (*E).phant_var_A = v5;
-            let v6: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7ccfd)) as *const u8
-                as *mut u16)
-                .offset(v5 as isize);
+            let v6: u16 = crate::rtl::rom_table_word!(game, 0xa7ccfd, v5 as isize);
             let v7: u16 = *(RomPtr_A7(v6, game) as *mut u16);
             (*E).phant_var_C = v7;
             (*E).phant_var_B =
@@ -3152,9 +3127,8 @@ pub unsafe fn Phantoon_StartTrackingSamusAndInitEyeTimer(game: &mut Game) {
     (*E).base.instruction_timer = 1u16;
     (*E).base.current_instruction = addr_kKraid_Ilist_CC4D as u16;
     (*E).base.properties = ((*E).base.properties as i32 & !(kEnemyProps_Tangible as i32)) as u16;
-    (*E).phant_var_E = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7cd41)) as *const u8
-        as *mut u16)
-        .offset((NextRandom(game) as i32 & 7i32) as isize);
+    (*E).phant_var_E =
+        crate::rtl::rom_table_word!(game, 0xa7cd41, (NextRandom(game) as i32 & 7i32) as isize);
     (*E).phant_var_F = ((0xa7d60di32) as u16);
     let E1: *mut Enemy_Phantoon = Get_Phantoon(0x40i32, game);
     (*E1).base.instruction_timer = 1u16;
@@ -3164,8 +3138,8 @@ pub unsafe fn Phantoon_PickPatternForRound2(game: &mut Game) {
     let mut v4: i16 = 0;
     let E: *mut Enemy_Phantoon = Get_Phantoon(0i32, game);
     (*E).phant_var_E = 60u16;
-    let v1: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7cd53)) as *const u8 as *mut u16)
-        .offset((NextRandom(game) as i32 & 7i32) as isize);
+    let v1: u16 =
+        crate::rtl::rom_table_word!(game, 0xa7cd53, (NextRandom(game) as i32 & 7i32) as isize);
     let E1: *mut Enemy_Phantoon = Get_Phantoon(0x40i32, game);
     (*E1).phant_var_A = v1;
     if (ram_word!(game, nmi_frame_counter_word) as i32 & 1i32) != 0i32 {
@@ -3402,9 +3376,8 @@ pub unsafe fn Phantoon_ChangeEyeSpriteBasedOnSamusDist(game: &mut Game) {
     let v0: u16 = (2u16).wrapping_mul(DetermineDirectionOfSamusFromEnemy(game));
     let E: *mut Enemy_Phantoon = Get_Phantoon(0x40i32, game);
     (*E).base.instruction_timer = 1u16;
-    (*E).base.current_instruction = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7d40d))
-        as *const u8 as *mut u16)
-        .offset((v0 as i32 >> 1i32) as isize);
+    (*E).base.current_instruction =
+        crate::rtl::rom_table_word!(game, 0xa7d40d, (v0 as i32 >> 1i32) as isize);
 }
 pub unsafe fn Phantoon_StartDeathSequence(k: u16, game: &mut Game) {
     let mut v3: i16 = 0;
@@ -3545,9 +3518,11 @@ pub unsafe fn Phantoon_PickPatternForRound1(k: u16, game: &mut Game) {
         let E1: *mut Enemy_Phantoon = Get_Phantoon(0x40i32, game);
         (*E1).phant_parameter_1 = 0u16;
         (*EK).phant_var_F = ((0xa7d5e7i32) as u16);
-        (*E1).phant_var_A = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7cd53)) as *const u8
-            as *mut u16)
-            .offset((ram_word!(game, nmi_frame_counter_word) as i32 >> 1i32 & 3i32) as isize);
+        (*E1).phant_var_A = crate::rtl::rom_table_word!(
+            game,
+            0xa7cd53,
+            (ram_word!(game, nmi_frame_counter_word) as i32 >> 1i32 & 3i32) as isize
+        );
         if (NextRandom(game) as i32 & 1i32) != 0i32 {
             let E: *mut Enemy_Phantoon = Get_Phantoon(0i32, game);
             (*E).phant_var_C = 0u16;
@@ -3738,9 +3713,8 @@ pub unsafe fn Phantoon_FadeOutDuringFireballRain(k: u16, game: &mut Game) {
     if (*Get_Phantoon(0x40i32, game)).phant_var_F != 0 {
         let E: *mut Enemy_Phantoon = Get_Phantoon(k as i32, game);
         (*E).phant_var_F = ((0xa7d7f7i32) as u16);
-        (*E).phant_var_E = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7cd63)) as *const u8
-            as *mut u16)
-            .offset((NextRandom(game) as i32 & 7i32) as isize);
+        (*E).phant_var_E =
+            crate::rtl::rom_table_word!(game, 0xa7cd63, (NextRandom(game) as i32 & 7i32) as isize);
     }
 }
 pub unsafe fn Phantoon_SpawnRainingFireballs(k: u16, game: &mut Game) {
@@ -3752,15 +3726,9 @@ pub unsafe fn Phantoon_SpawnRainingFireballs(k: u16, game: &mut Game) {
         let a: u16 = (NextRandom(game)) & (7u16);
         let v4: i32 = 8i32 * a as i32 >> 1i32;
         let E0: *mut Enemy_Phantoon = Get_Phantoon(0i32, game);
-        (*E0).phant_var_A = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7cdad)) as *const u8
-            as *mut u16)
-            .offset(v4 as isize);
-        (*E0).base.x_pos = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7cdad)) as *const u8
-            as *mut u16)
-            .offset((v4 + 1i32) as isize);
-        (*E0).base.y_pos = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7cdad)) as *const u8
-            as *mut u16)
-            .offset((v4 + 2i32) as isize);
+        (*E0).phant_var_A = crate::rtl::rom_table_word!(game, 0xa7cdad, v4 as isize);
+        (*E0).base.x_pos = crate::rtl::rom_table_word!(game, 0xa7cdad, (v4 + 1i32) as isize);
+        (*E0).base.y_pos = crate::rtl::rom_table_word!(game, 0xa7cdad, (v4 + 2i32) as isize);
         (*Get_Phantoon(0x40i32, game)).phant_var_C = 0u16;
         (*EK).phant_var_F = ((0xa7d73fi32) as u16);
         Phantoon_Func_6(k, a, game);
@@ -4063,9 +4031,7 @@ pub unsafe fn Phantoon_Func_8(game: &mut Game) -> u8 {
                         (*E).phant_var_E,
                         *((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16)
                             .offset(((i >> 1i32) + 112i32) as isize,),
-                        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7ca41)) as *const u8
-                            as *mut u16)
-                            .offset((i >> 1i32) as isize),
+                        crate::rtl::rom_table_word!(game, 0xa7ca41, (i >> 1i32) as isize),
                         game,
                     )
             );
@@ -4123,10 +4089,7 @@ pub unsafe fn Phantoon_SetColorBasedOnHp_FindEntry(k: u16, game: &mut Game) -> P
         }
     }
     let v1: *const u16 = RomPtr_A7(
-        (r24).wrapping_add(
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7dc4a)) as *const u8 as *mut u16)
-                .offset(r22 as isize),
-        ),
+        (r24).wrapping_add(crate::rtl::rom_table_word!(game, 0xa7dc4a, r22 as isize)),
         game,
     ) as *const u16;
     MakePairU16(r24, *v1)
@@ -4141,9 +4104,7 @@ pub unsafe fn Phantoon_Func_9(game: &mut Game) -> u8 {
                     Phantoon_Func_10_CalculateNthTransitionColorFromXtoY(
                         (*E).phant_var_E,
                         ram_word!(game, palette_buffer[(i >> 1i32)]),
-                        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7ca61)) as *const u8
-                            as *mut u16)
-                            .offset((i >> 1i32) as isize),
+                        crate::rtl::rom_table_word!(game, 0xa7ca61, (i >> 1i32) as isize),
                         game,
                     )
             );
@@ -4816,10 +4777,11 @@ pub unsafe fn Dachora_Func_1(j: u16, k: u16, game: &mut Game) {
     let E: *mut Enemy_Dachora = Get_Dachora(k as i32, game);
     let v3: u16 = u16::swap_bytes((*E).base.palette_index);
     memcpy(
-        (&raw mut game.g_ram as *mut u8).offset(
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7f55f)) as *const u8 as *mut u16)
-                .offset((v3 as i32 >> 1i32) as isize) as i32 as isize,
-        ) as *mut ::core::ffi::c_void,
+        (&raw mut game.g_ram as *mut u8).offset(crate::rtl::rom_table_word!(
+            game,
+            0xa7f55f,
+            (v3 as i32 >> 1i32) as isize
+        ) as i32 as isize) as *mut ::core::ffi::c_void,
         RomPtr_A7(j, game) as *const ::core::ffi::c_void,
         32 as size_t,
     );
@@ -4910,8 +4872,11 @@ pub unsafe fn Dachora_Func_6(k: u16, game: &mut Game) -> i32 {
         (*E).dachor_var_E = v2;
         if v2 as u8 == 0 {
             Dachora_Func_1(
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7f787)) as *const u8 as *mut u16)
-                    .offset(*(&raw mut (*E).dachor_var_E as *mut u8).offset(1isize) as isize),
+                crate::rtl::rom_table_word!(
+                    game,
+                    0xa7f787,
+                    *(&raw mut (*E).dachor_var_E as *mut u8).offset(1isize) as isize
+                ),
                 k,
                 game,
             );
@@ -5075,8 +5040,11 @@ pub unsafe fn Dachora_Func_9(k: u16, game: &mut Game) {
 pub unsafe fn Dachora_Func_10(k: u16, game: &mut Game) {
     let E: *mut Enemy_Dachora = Get_Dachora(k as i32, game);
     Dachora_Func_1(
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7f92d)) as *const u8 as *mut u16)
-            .offset(*(&raw mut (*E).dachor_var_E as *mut u8).offset(1isize) as isize),
+        crate::rtl::rom_table_word!(
+            game,
+            0xa7f92d,
+            *(&raw mut (*E).dachor_var_E as *mut u8).offset(1isize) as isize
+        ),
         k,
         game,
     );

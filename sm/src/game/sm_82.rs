@@ -466,10 +466,11 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                         continue;
                     }
                     let r18: u16 = (*get_DemoRoomData(
-                        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82876c)) as *const u8
-                            as *mut u16)
-                            .offset(ram_word!(game, demo_set) as isize)
-                            as i32
+                        (crate::rtl::rom_table_word!(
+                            game,
+                            0x82876c,
+                            ram_word!(game, demo_set) as isize
+                        ) as i32
                             + 18i32 * (ram_word!(game, demo_scene) as i32 - 1i32))
                             as u16,
                         game,
@@ -625,8 +626,7 @@ pub unsafe fn LoadInitialPalette(game: &mut Game) {
     loop {
         set_ram_word!(
             game.palette_buffer[(v1 as i32 >> 1i32)] =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0x9a8000)) as *const u8 as *mut u16)
-                    .offset((v1 as i32 >> 1i32) as isize)
+                crate::rtl::rom_table_word!(game, 0x9a8000, (v1 as i32 >> 1i32) as isize)
         );
         v1 = (v1).wrapping_add(2u16);
         v0 = (v0).wrapping_sub(2i16);
@@ -931,8 +931,7 @@ pub unsafe fn GameState_44_TransitionFromDemo(game: &mut Game) -> CoroutineRet {
 }
 pub unsafe fn CheckForNextDemo(game: &mut Game) {
     if *(RomPtr_82(
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82876c)) as *const u8 as *mut u16)
-            .offset(ram_word!(game, demo_set) as isize) as i32
+        (crate::rtl::rom_table_word!(game, 0x82876c, ram_word!(game, demo_set) as isize) as i32
             + 18i32 * ram_word!(game, demo_scene) as i32) as u16,
         game,
     ) as *mut u16)
@@ -954,8 +953,8 @@ pub unsafe fn LoadDemoRoomData(game: &mut Game) {
     set_ram_word!(game.door_def_ptr = 0u16);
     drd = get_DemoRoomData(
         (18i32 * ram_word!(game, demo_scene) as i32
-            + *(game.g_rom.offset(crate::rtl::lorom_offset(0x82876c)) as *const u8 as *mut u16)
-                .offset(ram_word!(game, demo_set) as isize) as i32) as u16,
+            + crate::rtl::rom_table_word!(game, 0x82876c, ram_word!(game, demo_set) as isize)
+                as i32) as u16,
         game,
     );
     set_ram_word!(game.room_ptr = (*drd).room_ptr_);
@@ -1846,8 +1845,7 @@ pub unsafe fn BackupGameplayPalettesAndLoadForPause(game: &mut Game) {
     loop {
         set_ram_word!(
             game.palette_buffer[(v3 as i32 >> 1i32)] =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0xb6f000)) as *const u8 as *mut u16)
-                    .offset((v3 as i32 >> 1i32) as isize)
+                crate::rtl::rom_table_word!(game, 0xb6f000, (v3 as i32 >> 1i32) as isize)
         );
         v3 = (v3).wrapping_add(2u16);
         v2 = (v2).wrapping_sub(2i16);
@@ -2218,8 +2216,7 @@ pub unsafe fn LoadPauseMenuMapTilemapAndAreaLabel(game: &mut Game) {
     }
     WriteRegWord(
         A1T1L as u16,
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0x82965f)) as *const u8 as *mut u16)
-            .offset(v0 as isize),
+        crate::rtl::rom_table_word!(game, 0x82965f, v0 as isize),
         game,
     );
     WriteReg(A1B1 as u16, 0x82u8, game);
@@ -2239,8 +2236,7 @@ pub unsafe fn LoadPauseMenuMapTilemap(game: &mut Game) {
     ) as *const u16;
     let r3: *mut u16 = (&raw mut game.g_ram as *mut u8).offset(0x4000) as *mut Ram4000 as *mut u16;
     let mut r6: *const u16 = RomPtr_82(
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0x829717)) as *const u8 as *mut u16)
-            .offset(v0 as isize),
+        crate::rtl::rom_table_word!(game, 0x829717, v0 as isize),
         game,
     ) as *const u16;
     let mut r9: *const u16 = (&raw mut game.g_ram as *mut u8).offset(0x7f7) as *const u16;
@@ -2339,8 +2335,7 @@ pub unsafe fn DrawRoomSelectMap(game: &mut Game) {
     ) as *const u16;
     let r3: *mut u16 = (&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000 as *mut u16;
     let mut r6: *const u16 = RomPtr_82(
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0x829717)) as *const u8 as *mut u16)
-            .offset(v0 as isize),
+        crate::rtl::rom_table_word!(game, 0x829717, v0 as isize),
         game,
     ) as *const u16;
     let mut r9: *const u16 = (&raw mut game.g_ram as *mut u8).offset(0x7f7) as *const u16;
@@ -2435,8 +2430,7 @@ pub unsafe fn DrawRoomSelectMap(game: &mut Game) {
 }
 pub unsafe fn DrawRoomSelectMapAreaLabel(dst: *mut u16, game: &mut Game) {
     let v2: *const u16 = RomPtr_82(
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0x82965f)) as *const u8 as *mut u16)
-            .offset(ram_word!(game, area_index) as isize),
+        crate::rtl::rom_table_word!(game, 0x82965f, ram_word!(game, area_index) as isize),
         game,
     ) as *const u16;
     let mut i: i32 = 0i32;
@@ -2664,27 +2658,19 @@ unsafe fn ChangePaletteValues(target: *mut u16, new_color: u16, n: size_t) {
 pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
     if ram_word!(game, samus_max_reserve_health) != 0 {
         memcpy(
-            (&raw mut game.g_ram as *mut u8).offset(
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c068)) as *const u8 as *mut u16)
-                    .offset(0) as i32 as isize,
-            ) as *mut ::core::ffi::c_void,
-            RomPtr_82(
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c088)) as *const u8 as *mut u16)
-                    .offset(0),
-                game,
-            ) as *const ::core::ffi::c_void,
+            (&raw mut game.g_ram as *mut u8)
+                .offset(crate::rtl::rom_table_word!(game, 0x82c068, 0) as i32 as isize)
+                as *mut ::core::ffi::c_void,
+            RomPtr_82(crate::rtl::rom_table_word!(game, 0x82c088, 0), game)
+                as *const ::core::ffi::c_void,
             14 as size_t,
         );
         memcpy(
-            (&raw mut game.g_ram as *mut u8).offset(
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c068)) as *const u8 as *mut u16)
-                    .offset(1) as i32 as isize,
-            ) as *mut ::core::ffi::c_void,
-            RomPtr_82(
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c088)) as *const u8 as *mut u16)
-                    .offset(1),
-                game,
-            ) as *const ::core::ffi::c_void,
+            (&raw mut game.g_ram as *mut u8)
+                .offset(crate::rtl::rom_table_word!(game, 0x82c068, 1) as i32 as isize)
+                as *mut ::core::ffi::c_void,
+            RomPtr_82(crate::rtl::rom_table_word!(game, 0x82c088, 1), game)
+                as *const ::core::ffi::c_void,
             14 as size_t,
         );
     }
@@ -2696,9 +2682,7 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
                 (&raw mut game.g_ram as *mut u8).offset(*p.offset(i as isize) as i32 as isize)
                     as *mut ::core::ffi::c_void,
                 RomPtr_82(
-                    *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c0a8)) as *const u8
-                        as *mut u16)
-                        .offset(i as isize),
+                    crate::rtl::rom_table_word!(game, 0x82c0a8, i as isize),
                     game,
                 ) as *const ::core::ffi::c_void,
                 10 as size_t,
@@ -2712,24 +2696,19 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
                 .offset(*p.offset(i_0 as isize) as i32 as isize)
                 as *mut u16;
             if (ram_word!(game, collected_beams) as i32
-                & *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c04c)) as *const u8 as *mut u16)
-                    .offset(i_0 as isize) as i32)
+                & crate::rtl::rom_table_word!(game, 0x82c04c, i_0 as isize) as i32)
                 != 0i32
             {
                 memcpy(
                     target as *mut ::core::ffi::c_void,
                     RomPtr_82(
-                        *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c08c)) as *const u8
-                            as *mut u16)
-                            .offset(i_0 as isize),
+                        crate::rtl::rom_table_word!(game, 0x82c08c, i_0 as isize),
                         game,
                     ) as *const ::core::ffi::c_void,
                     10 as size_t,
                 );
                 if (ram_word!(game, equipped_beams) as i32
-                    & *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c04c)) as *const u8
-                        as *mut u16)
-                        .offset(i_0 as isize) as i32)
+                    & crate::rtl::rom_table_word!(game, 0x82c04c, i_0 as isize) as i32)
                     == 0i32
                 {
                     ChangePaletteValues(target, 3072u16, 5 as size_t);
@@ -2752,23 +2731,19 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
             .offset(*p.offset(i_1 as isize) as i32 as isize)
             as *mut u16;
         if (ram_word!(game, collected_items) as i32
-            & *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c056)) as *const u8 as *mut u16)
-                .offset(i_1 as isize) as i32)
+            & crate::rtl::rom_table_word!(game, 0x82c056, i_1 as isize) as i32)
             != 0i32
         {
             memcpy(
                 target_0 as *mut ::core::ffi::c_void,
                 RomPtr_82(
-                    *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c096)) as *const u8
-                        as *mut u16)
-                        .offset(i_1 as isize),
+                    crate::rtl::rom_table_word!(game, 0x82c096, i_1 as isize),
                     game,
                 ) as *const ::core::ffi::c_void,
                 18 as size_t,
             );
             if (ram_word!(game, equipped_items) as i32
-                & *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c056)) as *const u8 as *mut u16)
-                    .offset(i_1 as isize) as i32)
+                & crate::rtl::rom_table_word!(game, 0x82c056, i_1 as isize) as i32)
                 == 0i32
             {
                 ChangePaletteValues(target_0, 3072u16, 9 as size_t);
@@ -2790,23 +2765,19 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
             .offset(*p.offset(i_2 as isize) as i32 as isize)
             as *mut u16;
         if (ram_word!(game, collected_items) as i32
-            & *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c062)) as *const u8 as *mut u16)
-                .offset(i_2 as isize) as i32)
+            & crate::rtl::rom_table_word!(game, 0x82c062, i_2 as isize) as i32)
             != 0i32
         {
             memcpy(
                 target_1 as *mut ::core::ffi::c_void,
                 RomPtr_82(
-                    *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c0a2)) as *const u8
-                        as *mut u16)
-                        .offset(i_2 as isize),
+                    crate::rtl::rom_table_word!(game, 0x82c0a2, i_2 as isize),
                     game,
                 ) as *const ::core::ffi::c_void,
                 18 as size_t,
             );
             if (ram_word!(game, equipped_items) as i32
-                & *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c062)) as *const u8 as *mut u16)
-                    .offset(i_2 as isize) as i32)
+                & crate::rtl::rom_table_word!(game, 0x82c062, i_2 as isize) as i32)
                 == 0i32
             {
                 ChangePaletteValues(target_1, 3072u16, 9 as size_t);
@@ -3121,8 +3092,7 @@ pub unsafe fn DrawPauseScreenSpriteAnim(a: u16, input_k: u16, input_j: u16, game
         }
         *v5 = v10;
     }
-    let r3: u16 =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c0fa)) as *const u8 as *mut u16).offset(3);
+    let r3: u16 = crate::rtl::rom_table_word!(game, 0x82c0fa, 3);
     let r24: i32 = *v3.offset((3i32 * *v8 as i32 + 2i32) as isize) as i32;
     let r26: i32 = 2i32
         * *RomPtr_RAM(
@@ -3132,8 +3102,7 @@ pub unsafe fn DrawPauseScreenSpriteAnim(a: u16, input_k: u16, input_j: u16, game
             game,
         ) as i32;
     let v11: *const u8 = RomPtr_82(
-        (r26 + *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c1e4)) as *const u8 as *mut u16)
-            .offset(t as isize) as i32) as u16,
+        (r26 + crate::rtl::rom_table_word!(game, 0x82c1e4, t as isize) as i32) as u16,
         game,
     );
     DrawMenuSpritemap(
@@ -3174,9 +3143,7 @@ pub unsafe fn HandlePauseScreenPaletteAnimation(game: &mut Game) {
             while (j as i32 & 0x8000i32) == 0i32 {
                 *((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16)
                     .offset(((j as i32 >> 1i32) + 176i32) as isize) =
-                    *(game.g_rom.offset(crate::rtl::lorom_offset(0x82a987)) as *const u8
-                        as *mut u16)
-                        .offset((v3 as i32 >> 1i32) as isize);
+                    crate::rtl::rom_table_word!(game, 0x82a987, (v3 as i32 >> 1i32) as isize);
                 v3 = (v3).wrapping_sub(2u16);
                 j = (j).wrapping_sub(2u16);
             }
@@ -3232,9 +3199,8 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
         } else {
             let mut v4: u16 = 0u16;
             loop {
-                if ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c04c)) as *const u8
-                    as *mut u16)
-                    .offset((v4 as i32 >> 1i32) as isize) as i32
+                if ((crate::rtl::rom_table_word!(game, 0x82c04c, (v4 as i32 >> 1i32) as isize)
+                    as i32
                     & ram_word!(game, collected_beams) as i32)
                     != 0i32)
                 {
@@ -3260,9 +3226,8 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
         } else {
             let mut v6: u16 = 0u16;
             loop {
-                if (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c056)) as *const u8
-                    as *mut u16)
-                    .offset((v6 as i32 >> 1i32) as isize) as i32
+                if (crate::rtl::rom_table_word!(game, 0x82c056, (v6 as i32 >> 1i32) as isize)
+                    as i32
                     & ram_word!(game, collected_items) as i32)
                     != 0i32
                 {
@@ -3634,11 +3599,9 @@ pub unsafe fn EquipmentScreenCategory_Weapons_PlazmaSpazerCheck(R36: u16, game: 
             update_ram_word!(game.equipped_beams, |fresh59| (fresh59 as i32 & !(8i32))
                 as u16);
             ChangePaletteValues(
-                (&raw mut game.g_ram as *mut u8).offset(
-                    *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c06c)) as *const u8
-                        as *mut u16)
-                        .offset(4) as i32 as isize,
-                ) as *mut u16,
+                (&raw mut game.g_ram as *mut u8)
+                    .offset(crate::rtl::rom_table_word!(game, 0x82c06c, 4) as i32 as isize)
+                    as *mut u16,
                 3072u16,
                 5 as size_t,
             );
@@ -3650,10 +3613,9 @@ pub unsafe fn EquipmentScreenCategory_Weapons_PlazmaSpazerCheck(R36: u16, game: 
         update_ram_word!(game.equipped_beams, |fresh60| (fresh60 as i32 & !(4i32))
             as u16);
         ChangePaletteValues(
-            (&raw mut game.g_ram as *mut u8).offset(
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c06c)) as *const u8 as *mut u16)
-                    .offset(3) as i32 as isize,
-            ) as *mut u16,
+            (&raw mut game.g_ram as *mut u8)
+                .offset(crate::rtl::rom_table_word!(game, 0x82c06c, 3) as i32 as isize)
+                as *mut u16,
             3072u16,
             5 as size_t,
         );
@@ -3769,14 +3731,12 @@ pub unsafe fn WriteSamusWireframeTilemap(game: &mut Game) {
     let mut i: u16 = 0;
     i = 0u16;
     while ram_word!(game, equipped_items) as i32 & 0x101i32
-        != *(game.g_rom.offset(crate::rtl::lorom_offset(0x82b257)) as *const u8 as *mut u16)
-            .offset((i as i32 >> 1i32) as isize) as i32
+        != crate::rtl::rom_table_word!(game, 0x82b257, (i as i32 >> 1i32) as isize) as i32
     {
         i = (i).wrapping_add(2u16);
     }
     let mut src: *const u16 = RomPtr_82(
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0x82b25f)) as *const u8 as *mut u16)
-            .offset((i as i32 >> 1i32) as isize),
+        crate::rtl::rom_table_word!(game, 0x82b25f, (i as i32 >> 1i32) as isize),
         game,
     ) as *const u16;
     let mut m: i32 = 17i32;
@@ -3810,9 +3770,11 @@ pub unsafe fn EquipmentScreenDrawItemSelector(game: &mut Game) {
         != 0
     {
         let t: *mut u16 = RomPtr_82(
-            (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c18e)) as *const u8 as *mut u16)
-                .offset(ram_word!(game, pausemenu_equipment_category_item) as u8 as isize)
-                as i32
+            (crate::rtl::rom_table_word!(
+                game,
+                0x82c18e,
+                ram_word!(game, pausemenu_equipment_category_item) as u8 as isize
+            ) as i32
                 + 4i32
                     * *((&raw mut game.g_ram as *mut u8).offset(0x755) as *mut u16 as *mut u8)
                         .offset(1isize) as i32) as u16,
@@ -3933,7 +3895,7 @@ pub unsafe fn EquipmentScreenDisplayReserves_PaletteSetup(game: &mut Game) -> u1
             }
             set_ram_word!(game.pausemenu_reserve_tank_animation_timer = v1);
         }
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c0fa)) as *const u8 as *mut u16).offset(3)
+        crate::rtl::rom_table_word!(game, 0x82c0fa, 3)
     } else {
         1536u16
     }
@@ -3954,8 +3916,7 @@ pub unsafe fn EquipmentScreenMoveToBeams(mut v0: u16, r18: u16, game: &mut Game)
         current_block_5 = 16475780731721606008;
     } else {
         loop {
-            if ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c04c)) as *const u8 as *mut u16)
-                .offset((v0 as i32 >> 1i32) as isize) as i32
+            if ((crate::rtl::rom_table_word!(game, 0x82c04c, (v0 as i32 >> 1i32) as isize) as i32
                 & ram_word!(game, collected_beams) as i32)
                 != 0i32)
             {
@@ -3987,8 +3948,7 @@ pub unsafe fn EquipmentScreenMoveToBottomOfBeams(mut k: u16, game: &mut Game) ->
     if ram_word!(game, hyper_beam_flag) != 0 {
         return -(1i32) as u16;
     }
-    while (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c04c)) as *const u8 as *mut u16)
-        .offset((k as i32 >> 1i32) as isize) as i32
+    while (crate::rtl::rom_table_word!(game, 0x82c04c, (k as i32 >> 1i32) as isize) as i32
         & ram_word!(game, collected_beams) as i32)
         == 0i32
     {
@@ -4004,8 +3964,7 @@ pub unsafe fn EquipmentScreenMoveToBottomOfBeams(mut k: u16, game: &mut Game) ->
 }
 pub unsafe fn EquipmentScreenMoveLowerOnSuitsMisc(mut v0: u16, game: &mut Game) -> u16 {
     let mut v1: i16 = 0;
-    while (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c056)) as *const u8 as *mut u16)
-        .offset((v0 as i32 >> 1i32) as isize) as i32
+    while (crate::rtl::rom_table_word!(game, 0x82c056, (v0 as i32 >> 1i32) as isize) as i32
         & ram_word!(game, collected_items) as i32)
         == 0i32
     {
@@ -4021,8 +3980,7 @@ pub unsafe fn EquipmentScreenMoveLowerOnSuitsMisc(mut v0: u16, game: &mut Game) 
     0u16
 }
 pub unsafe fn EquipmentScreenMoveToScrewOrHigherOnSuits(mut v0: u16, r18: u16, game: &mut Game) {
-    while (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c056)) as *const u8 as *mut u16)
-        .offset((v0 as i32 >> 1i32) as isize) as i32
+    while (crate::rtl::rom_table_word!(game, 0x82c056, (v0 as i32 >> 1i32) as isize) as i32
         & ram_word!(game, collected_items) as i32)
         == 0i32
     {
@@ -4038,8 +3996,7 @@ pub unsafe fn EquipmentScreenMoveToScrewOrHigherOnSuits(mut v0: u16, r18: u16, g
     );
 }
 pub unsafe fn EquipmentScreenMoveToHighJumpOrLowerInBoots(mut v0: u16, r18: u16, game: &mut Game) {
-    while (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c062)) as *const u8 as *mut u16)
-        .offset((v0 as i32 >> 1i32) as isize) as i32
+    while (crate::rtl::rom_table_word!(game, 0x82c062, (v0 as i32 >> 1i32) as isize) as i32
         & ram_word!(game, collected_items) as i32)
         == 0i32
     {
@@ -4055,8 +4012,7 @@ pub unsafe fn EquipmentScreenMoveToHighJumpOrLowerInBoots(mut v0: u16, r18: u16,
     );
 }
 pub unsafe fn EquipmentScreenCategory_Boots_MoveUpInBoots(mut k: u16, game: &mut Game) -> u16 {
-    while (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c062)) as *const u8 as *mut u16)
-        .offset((k as i32 >> 1i32) as isize) as i32
+    while (crate::rtl::rom_table_word!(game, 0x82c062, (k as i32 >> 1i32) as isize) as i32
         & ram_word!(game, collected_items) as i32)
         == 0i32
     {
@@ -4078,21 +4034,18 @@ pub unsafe fn EquipmentScreenCategory_ButtonResponse(r24: u16, game: &mut Game) 
         let category: i32 = ram_word!(game, pausemenu_equipment_category_item) as u8 as i32;
         let target: *mut u8 = (&raw mut game.g_ram as *mut u8).offset(
             *(RomPtr_82(
-                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c02c)) as *const u8 as *mut u16)
-                    .offset(category as isize) as i32
+                (crate::rtl::rom_table_word!(game, 0x82c02c, category as isize) as i32
                     + item * 2i32) as u16,
                 game,
             ) as *mut u16) as i32 as isize,
         );
         let var: *mut u16 = RomPtr_RAM(
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c03c)) as *const u8 as *mut u16)
-                .offset(category as isize),
+            crate::rtl::rom_table_word!(game, 0x82c03c, category as isize),
             game,
         ) as *mut u16;
         let mask: u16 = *(RomPtr_82(
-            (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c034)) as *const u8 as *mut u16)
-                .offset(category as isize) as i32
-                + item * 2i32) as u16,
+            (crate::rtl::rom_table_word!(game, 0x82c034, category as isize) as i32 + item * 2i32)
+                as u16,
             game,
         ) as *mut u16);
         if (*var as i32 & mask as i32) != 0i32 {
@@ -4101,8 +4054,7 @@ pub unsafe fn EquipmentScreenCategory_ButtonResponse(r24: u16, game: &mut Game) 
         } else {
             *var = (*var) | (mask);
             let src: u16 = *(RomPtr_82(
-                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c044)) as *const u8 as *mut u16)
-                    .offset(category as isize) as i32
+                (crate::rtl::rom_table_word!(game, 0x82c044, category as isize) as i32
                     + item * 2i32) as u16,
                 game,
             ) as *mut u16);
@@ -4535,9 +4487,9 @@ pub unsafe fn DisplayMapElevatorDestinations(game: &mut Game) {
         .offset(ram_word!(game, area_index) as isize)
         != 0
     {
-        let mut i: i32 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c74d)) as *const u8
-            as *mut u16)
-            .offset(ram_word!(game, area_index) as isize) as i32;
+        let mut i: i32 =
+            crate::rtl::rom_table_word!(game, 0x82c74d, ram_word!(game, area_index) as isize)
+                as i32;
         loop {
             let v1: *const u8 = RomPtr_82(i as u16, game);
             if *(v1 as *mut u16) == 0xffffu16 {
@@ -5242,8 +5194,7 @@ pub unsafe fn LoadColorsForSpritesBeamsAndEnemies(game: &mut Game) {
     while i >= 0i32 {
         set_ram_word!(
             game.target_palettes[((i >> 1i32) + 208i32)] =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0x9a8000)) as *const u8 as *mut u16)
-                    .offset(((i >> 1i32) + 208i32) as isize)
+                crate::rtl::rom_table_word!(game, 0x9a8000, ((i >> 1i32) + 208i32) as isize)
         );
         i -= 2i32;
     }
@@ -5259,8 +5210,7 @@ pub unsafe fn LoadColorsForSpritesBeamsAndEnemies(game: &mut Game) {
     while (k as i32 & 0x8000i32) == 0i32 {
         *((&raw mut game.g_ram as *mut u8).offset(0xc200) as *mut u16)
             .offset(((k as i32 >> 1i32) + 128i32) as isize) =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x9afc00)) as *const u8 as *mut u16)
-                .offset((k as i32 >> 1i32) as isize);
+            crate::rtl::rom_table_word!(game, 0x9afc00, (k as i32 >> 1i32) as isize);
         k = (k).wrapping_sub(2u16);
     }
 }
@@ -6236,8 +6186,7 @@ pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen(game: &mut Game) {
     while i >= 0i32 {
         set_ram_word!(
             game.palette_buffer[(i >> 1i32)] =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0x8ee400)) as *const u8 as *mut u16)
-                    .offset((i >> 1i32) as isize)
+                crate::rtl::rom_table_word!(game, 0x8ee400, (i >> 1i32) as isize)
         );
         i -= 2i32;
     }
@@ -6579,8 +6528,7 @@ pub unsafe fn GameOptionsMenu_8_SpecialSettings(game: &mut Game) {
 }
 pub unsafe fn GameOptionsMenuSpecialSettings_0(game: &mut Game) {
     let v0: *mut u8 = RomPtr_RAM(
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0x82f0ae)) as *const u8 as *mut u16)
-            .offset(ram_word!(game, menu_option_index) as isize),
+        crate::rtl::rom_table_word!(game, 0x82f0ae, ram_word!(game, menu_option_index) as isize),
         game,
     );
     if *(v0 as *mut u16) != 0 {
@@ -6599,8 +6547,7 @@ static g_word_82F151: [u16; 4] = [0x1ee, 0x22e, 0x36e, 0x3ae];
 pub unsafe fn OptionsMenuFunc7(game: &mut Game) {
     let v0: u16 = (4u16).wrapping_mul(ram_word!(game, menu_option_index));
     if *(RomPtr_RAM(
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0x82f0ae)) as *const u8 as *mut u16)
-            .offset(ram_word!(game, menu_option_index) as isize),
+        crate::rtl::rom_table_word!(game, 0x82f0ae, ram_word!(game, menu_option_index) as isize),
         game,
     ) as *mut u16)
         != 0
@@ -6762,9 +6709,7 @@ pub unsafe fn sub_82F296(j: u16, game: &mut Game) {
 pub unsafe fn OptionsPreInstr_F2A9(v0: u16, game: &mut Game) {
     if ram_word!(game, game_state) as i32 == kGameState_2_GameOptionsMenu as i32 {
         let v2: i32 = ram_word!(game, game_options_screen_index) as i32;
-        let v3: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x82f2ed)) as *const u8
-            as *mut u16)
-            .offset(v2 as isize);
+        let v3: u16 = crate::rtl::rom_table_word!(game, 0x82f2ed, v2 as isize);
         if v3 != 0 {
             let v4: *const u16 = RomPtr_82(
                 (v3 as i32 + 4i32 * ram_word!(game, menu_option_index) as i32) as u16,
@@ -6878,10 +6823,11 @@ pub unsafe fn LoadControllerOptionsFromControllerBindings(game: &mut Game) {
     loop {
         let current_block_13: u64;
         let v1: i32 = v0 as i32 >> 1i32;
-        v2 = *((&raw mut game.g_ram as *mut u8).offset(
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x82f54a)) as *const u8 as *mut u16)
-                .offset(v1 as isize) as isize,
-        ) as *mut u8 as *mut u16) as i16;
+        v2 = *((&raw mut game.g_ram as *mut u8).offset(crate::rtl::rom_table_word!(
+            game,
+            0x82f54a,
+            v1 as isize
+        ) as isize) as *mut u8 as *mut u16) as i16;
         if (v2 as i32 & kButton_X as i32) != 0i32 {
             current_block_13 = 4528428927647462225;
         } else if (v2 as i32 & kButton_A as i32) != 0i32 {
@@ -6930,10 +6876,11 @@ pub unsafe fn OptionsMenuFunc8(game: &mut Game) -> u8 {
     let mut v2: i32 = 0;
     loop {
         v2 = v0;
-        *((&raw mut game.g_ram as *mut u8).offset(
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x82f54a)) as *const u8 as *mut u16)
-                .offset((v0 >> 1i32) as isize) as isize,
-        ) as *mut u8 as *mut u16) =
+        *((&raw mut game.g_ram as *mut u8).offset(crate::rtl::rom_table_word!(
+            game,
+            0x82f54a,
+            (v0 >> 1i32) as isize
+        ) as isize) as *mut u8 as *mut u16) =
             word_82F575[ram_word!(game, eproj_F[((v0 >> 1i32) + 13i32)]) as usize] as u16;
         v0 += 2i32;
         if (v2 >= 12i32) {
@@ -6949,12 +6896,13 @@ pub unsafe fn OptionsMenuFunc6(game: &mut Game) {
     loop {
         v4 = v0;
         let v1: i32 = v0 as i32 >> 1i32;
-        let v2: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x82f639)) as *const u8
-            as *mut u16)
-            .offset(v1 as isize);
+        let v2: u16 = crate::rtl::rom_table_word!(game, 0x82f639, v1 as isize);
         let v3: *const u16 = RomPtr_82(
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x82f647)) as *const u8 as *mut u16)
-                .offset(ram_word!(game, eproj_F[(v1 + 13i32)]) as isize),
+            crate::rtl::rom_table_word!(
+                game,
+                0x82f647,
+                ram_word!(game, eproj_F[(v1 + 13i32)]) as isize
+            ),
             game,
         ) as *const u16;
         *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
