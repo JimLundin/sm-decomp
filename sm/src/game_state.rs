@@ -290,6 +290,19 @@ impl Game {
         u16::from_le_bytes([self.g_ram[0x791], self.g_ram[0x792]])
     }
 
+    pub fn set_door_direction(&mut self, value: u16) {
+        self.g_ram[0x791..0x793].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// elevator_door_properties_orientation ($7E:0793 in ram_map).
+    pub fn elevator_door_properties_orientation(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x793], self.g_ram[0x794]])
+    }
+
+    pub fn set_elevator_door_properties_orientation(&mut self, value: u16) {
+        self.g_ram[0x793..0x795].copy_from_slice(&value.to_le_bytes());
+    }
+
     /// elevator_direction ($7E:0799 in ram_map).
     pub fn elevator_direction(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0x799], self.g_ram[0x79a]])
@@ -300,6 +313,10 @@ impl Game {
         u16::from_le_bytes([self.g_ram[0xe16], self.g_ram[0xe17]])
     }
 
+    pub fn set_elevator_flags(&mut self, value: u16) {
+        self.g_ram[0xe16..0xe18].copy_from_slice(&value.to_le_bytes());
+    }
+
     /// cre_bitset ($7E:07B3 in ram_map).
     pub fn cre_bitset(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0x7b3], self.g_ram[0x7b4]])
@@ -308,6 +325,11 @@ impl Game {
     /// door_def_ptr ($7E:078D in ram_map).
     pub fn door_def_ptr(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0x78d], self.g_ram[0x78e]])
+    }
+
+    /// room_ptr ($7E:079B in ram_map).
+    pub fn set_room_ptr(&mut self, value: u16) {
+        self.g_ram[0x79b..0x79d].copy_from_slice(&value.to_le_bytes());
     }
 
     /// roomdefroomstate_ptr ($7E:07BB in ram_map).
@@ -409,6 +431,26 @@ impl Game {
     /// door_transition_frame_counter ($7E:0925 in ram_map).
     pub fn set_door_transition_frame_counter(&mut self, value: u16) {
         self.g_ram[0x925..0x927].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// door_destination_x_pos ($7E:0927 in ram_map).
+    pub fn set_door_destination_x_pos(&mut self, value: u16) {
+        self.g_ram[0x927..0x929].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// door_destination_y_pos ($7E:0929 in ram_map).
+    pub fn set_door_destination_y_pos(&mut self, value: u16) {
+        self.g_ram[0x929..0x92b].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_door_transition_subspeed ($7E:092B in ram_map).
+    pub fn set_samus_door_transition_subspeed(&mut self, value: u16) {
+        self.g_ram[0x92b..0x92d].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_door_transition_speed ($7E:092D in ram_map).
+    pub fn set_samus_door_transition_speed(&mut self, value: u16) {
+        self.g_ram[0x92d..0x92f].copy_from_slice(&value.to_le_bytes());
     }
 
     /// samus_x_pos ($7E:0AF6 in ram_map).

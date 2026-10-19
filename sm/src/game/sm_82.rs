@@ -9091,48 +9091,26 @@ pub unsafe fn LoaadDesinationRoomCreBitset(game: &mut Game) {
         as *mut uint16) = (*get_RoomDefHeader(room_definition_ptr, game)).cre_bitset_ as uint16;
 }
 pub unsafe fn LoadDoorHeader(game: &mut Game) {
-    let mut DoorDef: *mut DoorDef = ::core::ptr::null_mut::<DoorDef>();
-    let mut samus_distance_from_door: int16 = 0;
-    DoorDef = get_DoorDef(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x78d as ::core::ffi::c_int as isize)
-            as *mut uint16),
-        game,
-    );
-    *((&raw mut game.g_ram as *mut uint8).offset(0x79b as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*DoorDef).room_definition_ptr as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x793 as ::core::ffi::c_int as isize)
-        as *mut uint16) = *(&raw mut (*DoorDef).door_bitflags as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xe16 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x793 as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
-        & 0x80 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x791 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*DoorDef).door_orientation as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x927 as ::core::ffi::c_int as isize)
-        as *mut uint16) =
-        (((*DoorDef).x_pos_in_room as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x929 as ::core::ffi::c_int as isize)
-        as *mut uint16) =
-        (((*DoorDef).y_pos_in_room as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16;
-    samus_distance_from_door = (*DoorDef).samus_distance_from_door as int16;
-    if (samus_distance_from_door as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x791 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            & 2 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
-        {
-            samus_distance_from_door = 384 as int16;
+    let door = get_DoorDef(game.door_def_ptr(), game);
+    game.set_room_ptr((*door).room_definition_ptr);
+    // The properties word includes the adjacent orientation byte.
+    let properties = u16::from_le_bytes([(*door).door_bitflags, (*door).door_orientation]);
+    game.set_elevator_door_properties_orientation(properties);
+    game.set_elevator_flags(game.elevator_door_properties_orientation() & 0x0080);
+    game.set_door_direction(u16::from((*door).door_orientation));
+    game.set_door_destination_x_pos(u16::from((*door).x_pos_in_room) << 8);
+    game.set_door_destination_y_pos(u16::from((*door).y_pos_in_room) << 8);
+    let mut distance = (*door).samus_distance_from_door as i16;
+    if distance < 0 {
+        distance = if game.door_direction() & 2 != 0 {
+            384
         } else {
-            samus_distance_from_door = 200 as int16;
-        }
+            200
+        };
     }
-    let mut t: uint32 =
-        ((samus_distance_from_door as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint32;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x92b as ::core::ffi::c_int as isize)
-        as *mut uint16) = (t & 0xffff as uint32) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x92d as ::core::ffi::c_int as isize)
-        as *mut uint16) = (t >> 16 as ::core::ffi::c_int) as uint16;
+    let speed = (i32::from(distance) << 8) as u32;
+    game.set_samus_door_transition_subspeed(speed as u16);
+    game.set_samus_door_transition_speed((speed >> 16) as u16);
 }
 pub unsafe fn LoadRoomHeader(game: &mut Game) {
     let mut RoomDefHeader: *mut RoomDefHeader = ::core::ptr::null_mut::<RoomDefHeader>();

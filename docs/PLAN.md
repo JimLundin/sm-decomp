@@ -14120,6 +14120,24 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Door-header cleanup (2026-10-19): LoadDoorHeader uses named word
+accessors, retaining the combined flags/orientation word, live properties and
+direction reads, signed distance defaults and low-before-high speed stores.
+Frozen 5680cde1 plus this change passes any% 129712/0 (280.18s) and Waver
+58109/0 (148.47s), native exits 0. Observed prefix 20000/0 and Waver 58109/0
+match full RAM/g_fail, lookup arguments/results and all eight intermediate
+stores on 38 actual calls. Waver covers three explicit distances, 25 default
+200 and two default 384 paths, including two elevator doors. Twelve targeted
+cases also match independent expected words and unchanged surrounding RAM,
+with complemented destinations, guarded ROM bytes and alternating g_fail.
+Original ROM and natural candidate state are restored before continuation.
+An orientation-byte fault is caught at 794 on frame 8256. Independent source,
+control/observer, exact-stripping and frozen-identity reviews pass; complete
+clean/observed Waver non-timing diagnostics match. Formatting, release build
+and progress pass. Own raw offsets -11 and cast lines -21; Rust lines +20
+provide eight named setters and a getter. Other counters unchanged. Next:
+LoadRoomHeader, preserving state selection and post-callback size calculation.
+
 Beam pickup cleanup (2026-10-19): PlmInstr_PickupBeamAndShowMessage now
 reads its little-endian operand and beam words as bytes, uses existing beam
 setters, and names the beam/message values. The collected OR, equipped OR
