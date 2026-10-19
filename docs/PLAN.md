@@ -2203,33 +2203,37 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `a15b86f9` replaces 29178 integer
-literal casts with typed literals across 51 files. Independent complete-source
-reconstruction verifies every value, radix, target type and AST span. All
-selected values are unsuffixed, nonnegative and in range; negative expressions,
-pre-suffixed literals and platform-width targets remain outside this batch.
-The 4900 macro occurrences are confined to reviewed RAM expression macros;
-metadata, diagnostic strings and comments remain exact.
+Latest reviewed integration (2026-10-20): `fc340e34` replaces 3345 core paths
+with explicit imports of the identical 14 items across 46 files. Independent
+complete-source reconstruction verifies all 3333 ordinary paths and 12 RAM-macro
+paths, imports and name resolution. No shadows, unclassified contexts or
+protected-text changes remain; macro-definition hygiene stays exact.
 
-Its parent `c91b404c` simplifies 352 high-half index expressions in 27 files:
-325 u16/u8, 18 i16/u8 and 9 u32/u16 size ratios each yield exactly 1isize.
-All original expressions and composed source files reconstruct independently;
-the three compiled constant comparisons pass. The 23 macro occurrences retain
-their expression context. The final literal selection preserves the same
-ordered edits after this composition; source review has no findings.
+Its parent `19214770` shares 893 LoROM word reads: 718 ordinary expressions
+and 175 reads within known RAM macros. Independent reconstruction covers all
+28 changed files, 458 addresses, signed index tokens and 20 implicit zero
+indices. Place/reference review confirms selected expressions are value reads.
+The exact shared reader preserves pointer capture before index evaluation and
+caller temporary lifetimes. Scoped synthetic checks pass 60030976 address/index/
+pointer-change cases and 65536 borrowed-temporary cases; deliberately incorrect
+pointer-order and cleanup controls are distinguished. These do not establish
+every caller's pointer validity or general Game alias safety.
 
-All 73 input files in each focused commit match the corresponding reviewed
-snapshot, and all 78 final source/DLL/fixture pins remain stable. The commits
-share one normal registry-only release (28.47s) and full any% run: 129712/0
-(112.65s wall, 112.49s replay), native exit 0. Formatting and progress pass;
-completed checks were reused without another runtime comparison harness.
-The composition includes the previously reviewed register/mirror, RAM-update,
-native-alias and HDMA work, whose scoped checks retain their limits.
+All 73 inputs in each focused commit match its reviewed snapshot. The final
+composition preserves the same ordered 3345 import edits; all 78 replay pins,
+70 ROM-candidate inputs and seven focused-check pins remain stable. The commits
+share one normal release (23.49s) and full any% run: 129712/0
+(102.76s wall, 102.60s replay), native exit 0. Formatting and progress pass;
+the completed build and replay were reused. This run verifies the composition;
+no separate ROM-only replay is claimed. Previously reviewed indices, literals,
+register/mirror pairs, RAM updates, native aliases and HDMA remain included.
 
-Net Rust lines -1436 for indices and -1497 for literals, total 147521.
-The literal batch removes exactly 29178 cast tokens; raw-access expressions
-stay 3871 and unsafe functions stay 6451. Broader readability, frontend
-execution, full credits and global alias safety remain incomplete.
+Net Rust lines -849 for ROM reads and -804 for imports, total 145868.
+ROM reads remove 1786 cast tokens; raw-access expressions remain 3871.
+Unsafe functions rise one to 6452 for the shared raw reader. The i32 cast-line
+count rises nine through formatting, with all 15948 actual i32 casts preserved.
+Broader readability, frontend execution, full credits and global alias safety
+remain incomplete; this movie contains zero ending/credits-state frames.
 
 The prior `2ddf3af0` shares all twelve corpse
 tile initializers. Independent reconstruction accounts for all 50 ordered
