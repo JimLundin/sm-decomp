@@ -981,6 +981,40 @@ separately passes both ordinary-input continuations with zero failures.
 No Rust, residue counters or committed assets change. Remaining bosses,
 credits, broader integration and hardware/audio coverage remain unfinished.
 
+Independent timer audit and Varia integration (2026-10-19): frozen
+f44151b9 passes uninterrupted full boot any% 129712/0 (235.37s) and
+Varia Suit 122732/0 (252.17s), native exits 0. The longer route covers
+47 rooms and 48 enemy definitions, defeats Kraid and ends standing in
+$A6E2 with Varia equipped and collected. Final X124/Y139, pose $0001,
+health 205/299, missiles 8/15, Supers 0/5, items $1105, beams $1004,
+$D829 bit 0 and all eight zero coroutine bytes match the earlier endpoint.
+The sole previously attributed fingernail warning remains; credits are unvisited.
+
+Both complete serialized continuation payloads are byte-identical to the
+previously verified any% endpoint and qualified 64e8d165 Varia continuation.
+ROM/input/frame/audio/payload bindings match too. The source-based runtime
+fingerprint differs after literal-offset cleanup; these are independently
+reached full-boot states, with no checkpoint loading or fingerprint override.
+All 70 source/configuration/host files, the Cargo library, DLL and copied
+fixtures stay fixed. Registry dependencies alone seed the fresh checkout;
+normal Cargo release (40.27s), host build and formatting/check pass.
+
+Independent reconstruction confirms the timer commit changes only its state
+helper and two exercised handlers. Exact extracted helpers and handlers pass
+393216 complete-RAM/returned-value checks across every timer word and byte
+slot index, including odd/max indices and zero wrap. A deliberately wrong
+branch fails. Review preserves the operand-read/store order and the separate
+ROM allocation used by the interpreter. The owning clean/observed source
+hashes remain fixed; its 208 absolute-handler calls include 65 old-one and
+143 other outcomes, plus 65 setters. Trace records bound those calls within
+35451..71600; they do not establish exact per-call frame numbers. The
+unexercised relative handler is unchanged in the committed timer pass.
+
+Workspace formatting, whitespace and progress checks pass. This review adds
+no Rust or residue; later projectile/word-helper changes retain separate
+verification. Remaining bosses, credits, persistence and broader hardware/audio
+coverage are still unfinished.
+
 Kraid second-phase milestone (2026-10-19): preserve the ordinary-input
 extension through frame 119823 when the combat timebox ends. Main Kraid is
 not defeated. Full boot on the previously reviewed immutable baseline
