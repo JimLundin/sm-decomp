@@ -1987,7 +1987,24 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): `1be1fa9c` shares all 24 corpse
+Latest reviewed integration (2026-10-19): `2ddf3af0` shares all twelve corpse
+tile initializers. Independent reconstruction accounts for all 50 ordered
+destination/source/length triples and unchanged ROM-address constants. Each
+initializer performs one ROM lookup followed by the same MemCpy calls. Moving
+Mother Brain's pure RAM-base calculation after the lookup adds no RAM access
+or whole-Game borrow across the copies. Original/actual-library bindings pass;
+3072 synthetic-ROM cases compare all RAM bytes and g_fail.
+
+All 70 committed Rust/Cargo inputs match the candidate; its 67 Rust files
+match the replay copy and all 72 source/library/DLL/fixture pins remain stable.
+Normal/workspace release, formatting/check and progress pass. Completed any%
+129712/0 (138.67s) and Speed Booster 148406/0 (170.12s) pass, native exits 0;
+the existing runs were reused. Rust lines fall by 215 and raw-offset lines by
+45; one unsafe helper consolidates the existing pointer-copy operations.
+Broader readability, frontend execution, full credits and global alias safety
+retain the limitations below.
+
+The prior `1be1fa9c` shares all 24 corpse
 tile-transfer bodies. Independent source normalization matches all 288 word
 assignments to the descriptors, preserving row gates, copy-copy-clear-clear
 order, rounded small-corpse indices and Mother Brain's byte indices. Progress
