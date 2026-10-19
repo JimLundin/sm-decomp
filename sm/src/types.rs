@@ -111,8 +111,6 @@ pub type EnemyProps = ::core::ffi::c_uint;
 
 pub type FuncXY_V = unsafe fn(uint16, uint16, &mut Game) -> ();
 
-pub type Func_AnimDelay = unsafe fn(*const uint8, &mut Game) -> bool;
-
 pub type Func_CalcHdma = unsafe fn(uint16, uint16, &mut Game) -> ();
 
 pub type Func_SpazerSba_V = unsafe fn(uint16, uint16, &mut Game) -> ();

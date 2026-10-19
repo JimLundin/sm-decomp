@@ -13264,6 +13264,29 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Samus animation-command dispatch (2026-10-19): replace the nullable callback
+table and its expect with a direct match on the command's low nibble. Remove
+the shared function alias and the no-op callback for commands 0..5; all ten
+retained callbacks are unchanged. Captured-list use, post-helper frame reads,
+callback order and retained-timer returns remain unchanged.
+
+Frozen 50be5476 plus this cleanup passes clean any% 129712/0 (301.21s).
+Contextual old/current comparisons match all 128 KiB RAM, g_fail and actual
+callback targets on every call: any% 17429 calls / 129712 frames (296.53s)
+and Waver 8558 calls / 58109 frames (145.38s), native exits 0. Commands
+0/6/8/9/13/14/15 have respective counts 105/613/1348/0/668/1600/857 in
+any% and 66/95/305/6/148/1879/643 in Waver; other commands lack natural
+coverage. An additional 2048 constructed cases cover all 256 command bytes
+across eight state/payload variants, comparing callback targets, return
+values, complete RAM and g_fail. Misrouting command 15 to the no-op path is
+detected on call 83. Clean/observed any% non-timing diagnostics match.
+
+Cargo format/check, release --locked and progress pass. Own unsafe functions
+-1 and Rust lines -20; other residue counters are unchanged. Temporary
+verification scripts/builds are removed; no probes or ROM-derived fixtures
+are committed. Remaining callback cleanup and broader gameplay coverage
+stay open.
+
 FX tilemap clear (2026-10-19): ClearFxTilemap uses byte-backed stores for
 the same 960 descending word pairs and subsequent VRAM upload. Frozen
 999bd9c4 plus this routine passes any% 129712/0 (276.86s) and Waver

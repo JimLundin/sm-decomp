@@ -609,8 +609,7 @@ pub const addr_stru_909F31: Consts_90 = 40753;
 pub const addr_stru_909F25: Consts_90 = 40741;
 pub const addr_loc_908029: Consts_90 = 32809;
 pub use crate::types::{
-    CheckEnemyColl_Result, CheckSolidEnemyColl_Result, Func_AnimDelay, Func_SpazerSba_V,
-    Pair_Bool_Amt,
+    CheckEnemyColl_Result, CheckSolidEnemyColl_Result, Func_SpazerSba_V, Pair_Bool_Amt,
 };
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -1401,9 +1400,6 @@ pub unsafe fn Samus_Animate_SubmergedLavaAcid(game: &mut Game) {
             as *mut uint16) = 0 as uint16;
     }
 }
-unsafe fn Samus_AnimDelayFunc_0to5(mut jp: *const uint8, game: &mut Game) -> bool {
-    return false_0 != 0;
-}
 unsafe fn Samus_AnimDelayFunc_6_GotoStartIfLittleHealth(
     mut jp: *const uint8,
     game: &mut Game,
@@ -1641,32 +1637,6 @@ unsafe fn Samus_AnimDelayFunc_15_GotoStart(mut jp: *const uint8, game: &mut Game
         as *mut uint16) = 0 as uint16;
     return true_0 != 0;
 }
-static kAnimDelayFuncs: [Option<Func_AnimDelay>; 16] = unsafe {
-    [
-        Some(Samus_AnimDelayFunc_0to5 as unsafe fn(*const uint8, &mut Game) -> bool),
-        Some(Samus_AnimDelayFunc_0to5 as unsafe fn(*const uint8, &mut Game) -> bool),
-        Some(Samus_AnimDelayFunc_0to5 as unsafe fn(*const uint8, &mut Game) -> bool),
-        Some(Samus_AnimDelayFunc_0to5 as unsafe fn(*const uint8, &mut Game) -> bool),
-        Some(Samus_AnimDelayFunc_0to5 as unsafe fn(*const uint8, &mut Game) -> bool),
-        Some(Samus_AnimDelayFunc_0to5 as unsafe fn(*const uint8, &mut Game) -> bool),
-        Some(
-            Samus_AnimDelayFunc_6_GotoStartIfLittleHealth
-                as unsafe fn(*const uint8, &mut Game) -> bool,
-        ),
-        Some(Samus_AnimDelayFunc_7 as unsafe fn(*const uint8, &mut Game) -> bool),
-        Some(Samus_AnimDelayFunc_8_AutoJumpHack as unsafe fn(*const uint8, &mut Game) -> bool),
-        Some(Samus_AnimDelayFunc_9_TransToPose as unsafe fn(*const uint8, &mut Game) -> bool),
-        Some(UNUSED_Samus_AnimDelayFunc_10 as unsafe fn(*const uint8, &mut Game) -> bool),
-        Some(
-            Samus_AnimDelayFunc_11_SelectDelaySequenceWalljump
-                as unsafe fn(*const uint8, &mut Game) -> bool,
-        ),
-        Some(Samus_AnimDelayFunc_12_TransToPose as unsafe fn(*const uint8, &mut Game) -> bool),
-        Some(Samus_AnimDelayFunc_13_TransToPose as unsafe fn(*const uint8, &mut Game) -> bool),
-        Some(Samus_AnimDelayFunc_14_Goto as unsafe fn(*const uint8, &mut Game) -> bool),
-        Some(Samus_AnimDelayFunc_15_GotoStart as unsafe fn(*const uint8, &mut Game) -> bool),
-    ]
-};
 unsafe fn Samus_HandleSpeedBoosterAnimDelay(mut jp: *const uint8, game: &mut Game) -> uint8 {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xb3c as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -1773,10 +1743,22 @@ unsafe fn Samus_HandleAnimDelay(game: &mut Game) {
             game,
         );
         // Keep the captured list and reread the frame after each callback.
-        if !kAnimDelayFuncs[usize::from(command & 0xf)].expect("non-null function pointer")(
-            delays.add(usize::from(game.samus_anim_frame())),
-            game,
-        ) {
+        let instruction = delays.add(usize::from(game.samus_anim_frame()));
+        let update_timer = match command & 0xf {
+            6 => Samus_AnimDelayFunc_6_GotoStartIfLittleHealth(instruction, game),
+            7 => Samus_AnimDelayFunc_7(instruction, game),
+            8 => Samus_AnimDelayFunc_8_AutoJumpHack(instruction, game),
+            9 => Samus_AnimDelayFunc_9_TransToPose(instruction, game),
+            10 => UNUSED_Samus_AnimDelayFunc_10(instruction, game),
+            11 => Samus_AnimDelayFunc_11_SelectDelaySequenceWalljump(instruction, game),
+            12 => Samus_AnimDelayFunc_12_TransToPose(instruction, game),
+            13 => Samus_AnimDelayFunc_13_TransToPose(instruction, game),
+            14 => Samus_AnimDelayFunc_14_Goto(instruction, game),
+            15 => Samus_AnimDelayFunc_15_GotoStart(instruction, game),
+            // Commands 0..=5 retain the timer selected by the speed helper.
+            _ => false,
+        };
+        if !update_timer {
             return;
         }
     } else {
