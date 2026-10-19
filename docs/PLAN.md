@@ -1576,6 +1576,48 @@ unsafe functions. The earlier arithmetic, layout, spawn-point and constant-
 word audits retain their stated scope and coverage limits. This review changes
 no maintained Rust or assets; peer edits retain their own verification.
 
+Independent review of the pending previous-position clamp family (2026-10-19):
+the candidate derived from 1b5149f8 reconstructs exactly across all 74 inputs.
+Its five original copies agree, including the special grapple declaration
+variant. B_9 retains its grapple callback before delegating the exact original
+reset suffix to B_9B. X is corrected before Y; each correction uses signed
+wrapping distance and preserves no write at -12 through +12. The existing
+accessor macro and all six field addresses are checked. No retained raw local
+crosses the new borrow. The similar sm_a0 enemy correction stays separate:
+it writes at distance 12, uses the opposite correction direction and runs Y first.
+
+Fresh controls pass 1048576 cases against the complete original clamp,
+comparing a 4096-byte RAM region and the exact conditional write sequence.
+The original reference instrumentation is separately checked against unchanged
+raw code. Word alignment is asserted and the actual accessor macro supplies
+the byte operations. Nonwrapping distance, extra writes at either 12-pixel
+boundary, reversed axis writes and saturation all fail the same comparison.
+These cases sweep every word against boundaries; they do not cover every
+four-word combination. The owner's earlier nonwrapping check distinguishes
+one example rather than executing a full mutated implementation.
+
+The fixed clean candidate builds normally (43.70s) and passes any%
+129712/0 (194.77s) and Speed Booster 148406/0 (264.17s), native exits 0.
+Its source, Cargo library, DLL, ROM and movies remain fixed. All checkpoint
+bindings are independently recomputed; complete checkpoints and non-timing
+diagnostics equal reviewed 1b5149f8. This audit reuses those exact clean runs.
+
+Fresh call-site observations reach none of the five rewritten locations:
+
+- `Samus_HandleTransitionsB_9`.
+- `Samus_HandleTransitionsB_9B`.
+- `Samus_HandleTransitionsC_7`.
+- `HandleSpecialGrappleBeamAngles`.
+- `GrappleBeamFunc_BE98`.
+
+Both observations report zero failing frames, then exit 2 for missing required
+probes. Their 74 inputs reconstruct from the candidate plus only those probes;
+non-probe diagnostics agree with clean runs. This is no gameplay execution
+coverage for the family. Keep the complete family pending rather than calling
+its source equivalence or green replays gameplay validation. Candidate net
+Rust lines -212, raw-offset lines -86, c_int casts -80 across 40 lines, unsafe
+functions -2. This candidate is outside the committed integration above.
+
 Later source changes need their own integration. Remaining bosses, credits,
 persistence and broader hardware/audio coverage remain unfinished.
 
