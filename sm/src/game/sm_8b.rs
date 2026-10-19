@@ -4619,10 +4619,9 @@ pub unsafe fn LoadTitleSequenceGraphics(game: &mut Game) {
         as *mut uint16) = 0 as uint16;
     SpawnPalfxObject(addr_kPalfx_E1A0 as ::core::ffi::c_int as uint16, game);
     SpawnPalfxObject(addr_kPalfx_E1A4 as ::core::ffi::c_int as uint16, game);
-    let mut v2: uint16 = 0 as uint16;
     SpawnMode7Object(
         addr_kMode7ObjBabyMetroidInTitle as ::core::ffi::c_int as uint16,
-        v2,
+        0x000c, // The second title palette allocation leaves its slot offset in A.
         game,
     );
 }

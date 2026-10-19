@@ -359,6 +359,46 @@ change and no new replay result belong to this cleanup.
 
 ## The oracle
 
+Title Mode 7 spawn argument (2026-10-19): LoadTitleSequenceGraphics now
+passes $000C instead of a zero local, retaining the incoming A left by its
+second palette-effect allocation. Remove only the $19B3/$19B4 comparison
+normalization. The mask-only reproduction completed 152 frames with one
+failure at frame index 151: Rust wrote $0000 while ROM wrote $000C.
+
+Every supported title-loader path starts with an empty palette-effect pool:
+boot clears low 64 KiB RAM, other opening selectors clear the pool, and demo
+state 43 clears it before state 44. The loader's only palette allocations
+are E1A0 and E1A4, selecting offsets 14 then 12. Both ROM initializers are
+RTS; the allocator and epilogue preserve the selected offset in A. Independent
+ROM callsite, reset-path and candidate review confirms this invariant.
+
+Frozen a31170d6 plus this candidate passes observed any% 129712/0 (312.25s)
+and Charge 78380/0 (195.03s), native exits 0. All 12 any% and one Charge
+ordered ROM/Rust Mode 7 tuples match, each object A355 / argument 000C.
+Actual title entries assert the empty pool and selected offsets 14/12.
+Raw-word comparisons cover every frame, with 7207/1953 nonzero words per
+side and zero mismatches. Repeated any% title entries are boot/soft resets;
+demo-entry paths and the other ten Mode 7 callsites remain unexecuted and
+unchanged. Credits remain unvisited.
+
+Clean final integration is frozen 5680cde1 plus only these two source files:
+any% 129712/0 (295.77s) and Charge 78380/0 (206.94s), native exits 0.
+All 68 frozen files match the stated scope after newline normalization and
+retain their hashes; copied inputs are hashed and saves are isolated.
+
+Clean 1000-frame control passes. Low/high-byte $19B3/$19B4 faults and
+neighbor $19B2/$19B5 faults each produce exactly one failure at injected
+frame 159. Restoring the exact old mask hides the two target-byte faults.
+All seven final 128 KiB RAM dumps match clean, with $000C restored after
+the injected frame. These controls are distinct from the original frame-151
+reproduction. Independent fault-source/result review and exact observation
+stripping pass; observed source/DLL hashes remain unchanged.
+
+Formatting, normal Cargo release (1m 12s) and progress pass. Own cast lines
+-2 and Rust lines -8; other counters unchanged. No probes or ROM-derived
+assets are committed. Broader cinematic/gameplay coverage, credits, audio
+timing, remaining masks and ownership stay unfinished.
+
 Red Tower milestone (2026-10-19): extend the normal-input Charge route
 through Green Hill Zone $9E52 and Noob Bridge $9FBA into Red Tower $A253.
 The route farms the respawning Geega from 19 to 104 health and one to five
