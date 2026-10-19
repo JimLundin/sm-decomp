@@ -4,16 +4,24 @@ Goal: Super Metroid as a readable, maintained Rust program that plays from
 boot to credits, with emulated SNES hardware for video and audio. Map Rando
 support comes after vanilla.
 
-## Where we are (2026-10-17)
+## Where we are (2026-10-19)
 
-`sm/` is a complete Rust version of the game. It was transpiled once from
+`sm/` contains the maintained Rust program. It was transpiled once from
 snesrev/sm with c2rust; there is no C left in this repository and we do not go
 back to it. See `tools/transpile/README.md` for exactly how.
 
-The code is correct but ugly: raw pointer offsets into `g_ram`, C integer
-casts everywhere, `unsafe` on every function, and modules that find each other
-through `extern "C"` declarations instead of `use`. The work from here is to
-turn it into good Rust without changing what it does.
+The code still contains raw pointer offsets into `g_ram`, C integer casts
+and many unsafe functions. The remaining work makes it readable Rust without
+changing what it does.
+
+Current verification has limits: the any% fixture runs 129,712 frames with
+zero failures, but visits only six rooms and does not reach credits. The
+58,109-frame Waver route has 71 known rendered failures. Compare every ordered
+failure diagnostic against the baseline; matching totals alone cannot prove
+that a change adds no failures. Rendering now starts enabled deterministically.
+Complete gameplay, audio timing and masked RAM remain unverified. Historical
+zero-failure Waver runs made before the render initialization fix do not
+establish rendering equivalence.
 
 Everything that existed before is in the branch `archive/pre-transpile-2026-10-17`.
 
@@ -98,6 +106,15 @@ retired probes. Current builds, route inputs and diagnostic baselines remain.
 No maintained source changed; own residue counts are unchanged. Formatting
 check, release build and progress script pass; concurrent source edits remain
 owned by their implementation sessions.
+
+Further retired-probe cleanup (2026-10-19): moved ppu-sprite-finish,
+demo-init-coverage, demo-exit-coverage and coverage-probe, plus their four
+retired root-level build/run scripts, out of target into temporary
+sm-workspace-retired-builds-20261019-e. All 214 files / 69.6 MiB are preserved.
+No live compiler/replay or current script uses them. Retained the map/door
+cleanup and independent-coverage directories because other route scripts
+still reference them. No maintained source or residue change belongs to this
+cleanup; active route inputs, current builds and baselines remain available.
 
 Independent door-header QC (2026-10-19): commit 980d5899 matches both
 verified source snapshots after line-ending normalization. The actual replay
