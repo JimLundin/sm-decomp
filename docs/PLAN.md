@@ -2041,26 +2041,31 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): `a089d66c` combines 4429 indexed
-RAM accesses with the 88 patch buffers in parent `1a0fceb5`. Independent
-reconstruction accounts for all edits, including the composed cpu_infra/sm_a9
-files and sm_b3 macro import. Patch addresses, all 510 byte expressions and
-fresh per-byte ROM lookups remain exact. The 1169 RAM metadata rows retain
-their names, addresses, types, shapes and order across 162 named arrays.
+Latest reviewed integration (2026-10-19): `6fffab58` combines four tile-flip
+writers with image channel conversion in parent `9eb79d78`. Independent
+complete-source reconstruction accounts for all edits. Tile corner selection,
+row/column write order, live source reads and PLM wrapping before the word-index
+shift remain exact. The actual helper and RAM macros match their comparison
+sources: 819200 factored full-RAM cases pass; wrong-order and eager-prefetch
+controls fail. These checks do not prove every joint state.
 
-Signed element offsets, word widths, RHS-before-index/store order and temporary
-lifetimes are preserved without whole-Game/RAM borrows. The 3470 shared index
-casts, 848 typed literals and 434 i32 aliases preserve the original arithmetic.
-The unchanged macro/field set reuses 10616832 value cases, 10616767 valid signed
-index cases and RHS/index/drop controls; its source hash matches the final code.
+Both image allocation/failure wrappers and all 24 original pixel bodies
+match the shared implementation, including chained destination reads and
+fixed per-case strides. Exact converter nodes pass 6144 width/channel/size/
+allocation cases. Actual decoder libraries pass 5472 PNG API cases comparing
+pixels, float bits, metadata, callback traces and file positions. The candidate
+target with copied game artifacts was discarded; fresh registry-only builds
+and the final source rebuild completed before the accepted API/direct runs.
+Original and candidate inputs, direct nodes and committed sources match.
 
-All 72 committed source/configuration/host inputs match the tested composition;
-all 77 source/DLL/fixture pins remain stable. Normal release (23.96s), workspace
-release (26.08s), formatting/check and progress pass. Full any% 129712/0
-(118.49s replay, 118.64s wall), native exit 0, covers both focused commits
-together; the completed run was reused. Net Rust lines -3952, unsafe-function
-count unchanged. Raw operations are consolidated. Broader readability,
-frontend execution, full credits and global alias safety retain the limits below.
+All 72 committed source/configuration/host inputs match the final composition;
+all 77 source/DLL/fixture pins remain stable. Normal release (15.48s),
+formatting/check and progress pass. Full any% 129712/0 (111.02s replay,
+111.17s wall), native exit 0, covers both commits together; completed checks
+were reused without another build or replay. Net Rust lines -640, total
+168118; unsafe-function count is unchanged. PNG conversion has direct runtime
+coverage; broader frontend execution, readability, full credits and global
+alias safety retain the limits below. Independent review has no findings.
 
 The prior `2ddf3af0` shares all twelve corpse
 tile initializers. Independent reconstruction accounts for all 50 ordered
