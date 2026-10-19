@@ -27,65 +27,16 @@ pub const __ASSERT_FUNCTION: [::core::ffi::c_char; 34] = unsafe {
     )
 };
 static bAdrOffsets: [[::core::ffi::c_int; 4]; 8] = [
-    [
-        0 as ::core::ffi::c_int,
-        0 as ::core::ffi::c_int,
-        0 as ::core::ffi::c_int,
-        0 as ::core::ffi::c_int,
-    ],
-    [
-        0 as ::core::ffi::c_int,
-        1 as ::core::ffi::c_int,
-        0 as ::core::ffi::c_int,
-        1 as ::core::ffi::c_int,
-    ],
-    [
-        0 as ::core::ffi::c_int,
-        0 as ::core::ffi::c_int,
-        0 as ::core::ffi::c_int,
-        0 as ::core::ffi::c_int,
-    ],
-    [
-        0 as ::core::ffi::c_int,
-        0 as ::core::ffi::c_int,
-        1 as ::core::ffi::c_int,
-        1 as ::core::ffi::c_int,
-    ],
-    [
-        0 as ::core::ffi::c_int,
-        1 as ::core::ffi::c_int,
-        2 as ::core::ffi::c_int,
-        3 as ::core::ffi::c_int,
-    ],
-    [
-        0 as ::core::ffi::c_int,
-        1 as ::core::ffi::c_int,
-        0 as ::core::ffi::c_int,
-        1 as ::core::ffi::c_int,
-    ],
-    [
-        0 as ::core::ffi::c_int,
-        0 as ::core::ffi::c_int,
-        0 as ::core::ffi::c_int,
-        0 as ::core::ffi::c_int,
-    ],
-    [
-        0 as ::core::ffi::c_int,
-        0 as ::core::ffi::c_int,
-        1 as ::core::ffi::c_int,
-        1 as ::core::ffi::c_int,
-    ],
+    [0, 0, 0, 0],
+    [0, 1, 0, 1],
+    [0, 0, 0, 0],
+    [0, 0, 1, 1],
+    [0, 1, 2, 3],
+    [0, 1, 0, 1],
+    [0, 0, 0, 0],
+    [0, 0, 1, 1],
 ];
-static transferLength: [::core::ffi::c_int; 8] = [
-    1 as ::core::ffi::c_int,
-    2 as ::core::ffi::c_int,
-    2 as ::core::ffi::c_int,
-    4 as ::core::ffi::c_int,
-    4 as ::core::ffi::c_int,
-    4 as ::core::ffi::c_int,
-    2 as ::core::ffi::c_int,
-    4 as ::core::ffi::c_int,
-];
+static transferLength: [::core::ffi::c_int; 8] = [1, 2, 2, 4, 4, 4, 2, 4];
 pub unsafe fn dma_init(mut snes: *mut Snes) -> *mut Dma {
     let mut dma: *mut Dma = malloc(::core::mem::size_of::<Dma>() as size_t) as *mut Dma;
     (*dma).snes = snes;

@@ -17822,6 +17822,33 @@ access expressions decrease by eight; no RAM accesses or layout changes.
 Neither fixture reaches credits. Continue coherent setup/state families and
 normal-input coverage; no temporary code or ROM-derived artifacts committed.
 
+Integer table initializer family (2026-10-19): jscpd declaration
+clone discovery and ast-grep complete CST static declarations select all 15
+literal-only c_int arrays across PPU, DMA, DSP, SPC, tracing and decoder code.
+Remove 1270 casts repeating the declared element type; retain every static
+name, mutability, array dimension, element order and value. The final two
+uncast decoder distance entries participate in the complete table comparison.
+No table sharing or operation macro is introduced. Rustfmt can now present
+the tables as compact rows: net Rust lines -1262, c_int cast lines -1262.
+Unsafe functions, actual raw accesses, pointer offsets and runtime operations
+are unchanged. This expands the earlier scalar-constant audit to arrays.
+
+Fresh original/current frontend libraries agree on all 1272 compiled i32
+elements, including all four decoder tables excluded by the headless build.
+Independent literal parsing supplies expected values and verifies c_int
+bounds; complete-source reconstruction permits only these declarations and
+rustfmt. All other frozen source files match. These are static-value checks,
+not a claim of runtime hits in all modes or decoder paths.
+
+Frozen 98c132e2 plus only this family passes full any% 129712/0
+(151.43s) and Speed Booster 148406/0 (207.49s), native exits 0,
+with stable source/library/DLL/ROM/movie hashes. Cargo fmt/check, normal
+release (29.1s, native exit 0), diff check and progress pass. Neither movie
+reaches credits; hardware/audio/masks and ownership remain unfinished.
+Other concurrent gameplay changes retain their own checks. No probes,
+temporary tooling, ROM or derived assets are committed. Continue larger
+coherent state/handler families and normal-input route coverage.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
