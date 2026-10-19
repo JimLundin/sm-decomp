@@ -10962,6 +10962,28 @@ and onward route/item/boss coverage; held upper99BD ascent stays held.
 Complete credits/gameplay/hardware, render/audio, masked RAM and ownership
 remain open.
 
+CPU shared memory modification (2026-10-19): MemoryOperation and
+modify_memory consolidate ASL/ROL/LSR/INC/DEC read-modify-write sequences.
+Twenty opcode calls retain their original operation/address calculation.
+Captured width, extra two word cycles before reads, carry-before-write,
+high-before-low word writes and final live-width Z/N remain exact. Safe
+operation arithmetic reuses the shift helpers and wrapping increments.
+ROR's distinct delayed carry update remains separate. Frozen `8b74526d`
+plus this change passes 7,864,320 actual old/current comparisons: every word
+value, both widths/carry, five operations, cycle counts 0/254/255 and
+distinct/aliased destinations. Named CPU/bus state and written bytes match;
+static-WRAM comparisons do not exhaust MMIO. Exact source reconstruction
+checks all twenty call replacements and excludes other CPU changes.
+Full instrumented any% passes 129,712/0 (53.25s), native exit 0, with
+word/byte calls ASL 4,117,166/0, ROL 697,844/0, LSR 23,214/0,
+INC 3,374,255/15,355 and DEC 8,906,767/30,788. Byte memory shifts remain
+comparison-covered. Clean full any% passes 129,712/0 (56.76s), native exit 0.
+Cargo fmt/check, full release/release-library builds with external SDL2,
+normal metadata and frozen optimized core/DLL pass. Live CPU matches verified
+source; peer PPU work is outside this replay. Unsafe functions -2 and Rust
+lines -2; other own counters unchanged. Prior holds and complete gameplay/
+render/audio remain open. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

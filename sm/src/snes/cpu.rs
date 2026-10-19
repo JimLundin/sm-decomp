@@ -738,21 +738,6 @@ fn shifted_left_result(value: u16, byte: bool, rotate: bool, cpu: &mut Cpu) -> u
     cpu.c = value & if byte { 0x80 } else { 0x8000 } != 0;
     result
 }
-unsafe fn shift_memory_left(cpu: *mut Cpu, low: u32, high: u32, rotate: bool, game: &mut Game) {
-    let result = if (*cpu).mf {
-        let value = read_byte(cpu, low, game);
-        let result = shifted_left_result(u16::from(value), true, rotate, &mut *cpu);
-        write_byte(cpu, low, result as u8, game);
-        result
-    } else {
-        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(2);
-        let value = read_word(cpu, low, high, game);
-        let result = shifted_left_result(value, false, rotate, &mut *cpu);
-        write_word(cpu, low, high, result, true, game);
-        result
-    };
-    set_zero_negative(result, (*cpu).mf, &mut *cpu);
-}
 fn shifted_right_result(value: u16, byte: bool, cpu: &mut Cpu) -> u16 {
     cpu.c = value & 1 != 0;
     if byte {
@@ -761,32 +746,45 @@ fn shifted_right_result(value: u16, byte: bool, cpu: &mut Cpu) -> u16 {
         value >> 1
     }
 }
-unsafe fn shift_memory_right(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
-    let result = if (*cpu).mf {
-        let value = read_byte(cpu, low, game);
-        let result = shifted_right_result(u16::from(value), true, &mut *cpu);
-        write_byte(cpu, low, result as u8, game);
-        result
-    } else {
-        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(2);
-        let value = read_word(cpu, low, high, game);
-        let result = shifted_right_result(value, false, &mut *cpu);
-        write_word(cpu, low, high, result, true, game);
-        result
-    };
-    set_zero_negative(result, (*cpu).mf, &mut *cpu);
+#[derive(Clone, Copy)]
+enum MemoryOperation {
+    ShiftLeft,
+    RotateLeft,
+    ShiftRight,
+    Increment,
+    Decrement,
 }
-unsafe fn update_memory(cpu: *mut Cpu, low: u32, high: u32, delta: u16, game: &mut Game) {
-    let result = if (*cpu).mf {
-        let result = u16::from(read_byte(cpu, low, game)).wrapping_add(delta);
-        write_byte(cpu, low, result as u8, game);
-        result
+impl MemoryOperation {
+    fn apply(self, value: u16, byte: bool, cpu: &mut Cpu) -> u16 {
+        match self {
+            Self::ShiftLeft => shifted_left_result(value, byte, false, cpu),
+            Self::RotateLeft => shifted_left_result(value, byte, true, cpu),
+            Self::ShiftRight => shifted_right_result(value, byte, cpu),
+            Self::Increment => value.wrapping_add(1),
+            Self::Decrement => value.wrapping_sub(1),
+        }
+    }
+}
+unsafe fn modify_memory(
+    cpu: *mut Cpu,
+    low: u32,
+    high: u32,
+    operation: MemoryOperation,
+    game: &mut Game,
+) {
+    let byte = (*cpu).mf;
+    let value = if byte {
+        u16::from(read_byte(cpu, low, game))
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(2);
-        let result = read_word(cpu, low, high, game).wrapping_add(delta);
-        write_word(cpu, low, high, result, true, game);
-        result
+        read_word(cpu, low, high, game)
     };
+    let result = operation.apply(value, byte, &mut *cpu);
+    if byte {
+        write_byte(cpu, low, result as u8, game);
+    } else {
+        write_word(cpu, low, high, result, true, game);
+    }
     set_zero_negative(result, (*cpu).mf, &mut *cpu);
 }
 fn tested_bit_result(value: u16, byte: bool, set: bool, cpu: &mut Cpu) -> u16 {
@@ -901,7 +899,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
         }
         0x06 => {
             let (low, high) = address_direct_page(cpu, game);
-            shift_memory_left(cpu, low, high, false, game);
+            modify_memory(cpu, low, high, MemoryOperation::ShiftLeft, game);
         }
         0x07 => {
             let (low, high) = address_direct_page_indirect_long(cpu, game);
@@ -930,7 +928,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
         }
         0x0e => {
             let (low, high) = address_absolute(cpu, game);
-            shift_memory_left(cpu, low, high, false, game);
+            modify_memory(cpu, low, high, MemoryOperation::ShiftLeft, game);
         }
         0x0f => {
             let (low, high) = address_absolute_long(cpu, game);
@@ -961,7 +959,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
         }
         0x16 => {
             let (low, high) = address_direct_page_x(cpu, game);
-            shift_memory_left(cpu, low, high, false, game);
+            modify_memory(cpu, low, high, MemoryOperation::ShiftLeft, game);
         }
         0x17 => {
             let (low, high) = address_direct_page_indirect_long_y(cpu, game);
@@ -990,7 +988,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
         }
         0x1e => {
             let (low, high) = address_absolute_x(cpu, true, game);
-            shift_memory_left(cpu, low, high, false, game);
+            modify_memory(cpu, low, high, MemoryOperation::ShiftLeft, game);
         }
         0x1f => {
             let (low, high) = address_absolute_long_x(cpu, game);
@@ -1028,7 +1026,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
         }
         0x26 => {
             let (low, high) = address_direct_page(cpu, game);
-            shift_memory_left(cpu, low, high, true, game);
+            modify_memory(cpu, low, high, MemoryOperation::RotateLeft, game);
         }
         0x27 => {
             let (low, high) = address_direct_page_indirect_long(cpu, game);
@@ -1058,7 +1056,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
         }
         0x2e => {
             let (low, high) = address_absolute(cpu, game);
-            shift_memory_left(cpu, low, high, true, game);
+            modify_memory(cpu, low, high, MemoryOperation::RotateLeft, game);
         }
         0x2f => {
             let (low, high) = address_absolute_long(cpu, game);
@@ -1089,7 +1087,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
         }
         0x36 => {
             let (low, high) = address_direct_page_x(cpu, game);
-            shift_memory_left(cpu, low, high, true, game);
+            modify_memory(cpu, low, high, MemoryOperation::RotateLeft, game);
         }
         0x37 => {
             let (low, high) = address_direct_page_indirect_long_y(cpu, game);
@@ -1119,7 +1117,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
         }
         0x3e => {
             let (low, high) = address_absolute_x(cpu, true, game);
-            shift_memory_left(cpu, low, high, true, game);
+            modify_memory(cpu, low, high, MemoryOperation::RotateLeft, game);
         }
         0x3f => {
             let (low, high) = address_absolute_long_x(cpu, game);
@@ -1171,7 +1169,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
         }
         0x46 => {
             let (low, high) = address_direct_page(cpu, game);
-            shift_memory_right(cpu, low, high, game);
+            modify_memory(cpu, low, high, MemoryOperation::ShiftRight, game);
         }
         0x47 => {
             let (low, high) = address_direct_page_indirect_long(cpu, game);
@@ -1199,7 +1197,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
         }
         0x4e => {
             let (low, high) = address_absolute(cpu, game);
-            shift_memory_right(cpu, low, high, game);
+            modify_memory(cpu, low, high, MemoryOperation::ShiftRight, game);
         }
         0x4f => {
             let (low, high) = address_absolute_long(cpu, game);
@@ -1247,7 +1245,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
         }
         0x56 => {
             let (low, high) = address_direct_page_x(cpu, game);
-            shift_memory_right(cpu, low, high, game);
+            modify_memory(cpu, low, high, MemoryOperation::ShiftRight, game);
         }
         0x57 => {
             let (low, high) = address_direct_page_indirect_long_y(cpu, game);
@@ -1289,7 +1287,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
         }
         0x5e => {
             let (low, high) = address_absolute_x(cpu, true, game);
-            shift_memory_right(cpu, low, high, game);
+            modify_memory(cpu, low, high, MemoryOperation::ShiftRight, game);
         }
         0x5f => {
             let (low, high) = address_absolute_long_x(cpu, game);
@@ -1735,7 +1733,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
         }
         0xc6 => {
             let (low, high) = address_direct_page(cpu, game);
-            update_memory(cpu, low, high, u16::MAX, game);
+            modify_memory(cpu, low, high, MemoryOperation::Decrement, game);
         }
         0xc7 => {
             let (low, high) = address_direct_page_indirect_long(cpu, game);
@@ -1764,7 +1762,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
         }
         0xce => {
             let (low, high) = address_absolute(cpu, game);
-            update_memory(cpu, low, high, u16::MAX, game);
+            modify_memory(cpu, low, high, MemoryOperation::Decrement, game);
         }
         0xcf => {
             let (low, high) = address_absolute_long(cpu, game);
@@ -1795,7 +1793,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
         }
         0xd6 => {
             let (low, high) = address_direct_page_x(cpu, game);
-            update_memory(cpu, low, high, u16::MAX, game);
+            modify_memory(cpu, low, high, MemoryOperation::Decrement, game);
         }
         0xd7 => {
             let (low, high) = address_direct_page_indirect_long_y(cpu, game);
@@ -1825,7 +1823,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
         }
         0xde => {
             let (low, high) = address_absolute_x(cpu, true, game);
-            update_memory(cpu, low, high, u16::MAX, game);
+            modify_memory(cpu, low, high, MemoryOperation::Decrement, game);
         }
         0xdf => {
             let (low, high) = address_absolute_long_x(cpu, game);
@@ -1856,7 +1854,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
         }
         0xe6 => {
             let (low, high) = address_direct_page(cpu, game);
-            update_memory(cpu, low, high, 1, game);
+            modify_memory(cpu, low, high, MemoryOperation::Increment, game);
         }
         0xe7 => {
             let (low, high) = address_direct_page_indirect_long(cpu, game);
@@ -1882,7 +1880,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
         }
         0xee => {
             let (low, high) = address_absolute(cpu, game);
-            update_memory(cpu, low, high, 1, game);
+            modify_memory(cpu, low, high, MemoryOperation::Increment, game);
         }
         0xef => {
             let (low, high) = address_absolute_long(cpu, game);
@@ -1916,7 +1914,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
         }
         0xf6 => {
             let (low, high) = address_direct_page_x(cpu, game);
-            update_memory(cpu, low, high, 1, game);
+            modify_memory(cpu, low, high, MemoryOperation::Increment, game);
         }
         0xf7 => {
             let (low, high) = address_direct_page_indirect_long_y(cpu, game);
@@ -1946,7 +1944,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
         }
         0xfe => {
             let (low, high) = address_absolute_x(cpu, true, game);
-            update_memory(cpu, low, high, 1, game);
+            modify_memory(cpu, low, high, MemoryOperation::Increment, game);
         }
         0xff => {
             let (low, high) = address_absolute_long_x(cpu, game);
