@@ -848,7 +848,7 @@ pub fn ClearEprojs(game: &mut Game) {
 unsafe fn SpawnEprojInner(mut j: uint16, mut gfx_idx: uint16, game: &mut Game) -> Option<uint16> {
     let mut v3: uint16 = 34 as uint16;
     while EprojState(&game.g_ram).id(usize::from(v3 >> 1)) != 0 {
-        v3 = (v3 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
+        v3 = v3.wrapping_sub(2);
         if v3 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
             return None;
         }
@@ -2159,14 +2159,14 @@ pub unsafe fn EprojBlockCollisition_Horiz(mut k: uint16, game: &mut Game) -> uin
     let mut r26: uint16 = (game.enemy_projectile_y_pos(k) as ::core::ffi::c_int
         - R30 as ::core::ffi::c_int
         & 0xfff0 as ::core::ffi::c_int) as uint16;
-    r26 = ((R30 as ::core::ffi::c_int + game.enemy_projectile_y_pos(k) as ::core::ffi::c_int
-        - 1 as ::core::ffi::c_int
-        - r26 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
+    r26 = (R30
+        .wrapping_add(game.enemy_projectile_y_pos(k))
+        .wrapping_sub(1)
+        .wrapping_sub(r26) as ::core::ffi::c_int
         >> 4 as ::core::ffi::c_int) as uint16;
     let mut R32: uint16 = r26;
     let mut prod: uint16 = Mult8x8(
-        ((game.enemy_projectile_y_pos(k) as ::core::ffi::c_int - R30 as ::core::ffi::c_int)
-            as uint16 as ::core::ffi::c_int
+        (game.enemy_projectile_y_pos(k).wrapping_sub(R30) as ::core::ffi::c_int
             >> 4 as ::core::ffi::c_int) as uint8,
         game.room_width_in_blocks() as uint8,
     );
@@ -2181,10 +2181,9 @@ pub unsafe fn EprojBlockCollisition_Horiz(mut k: uint16, game: &mut Game) -> uin
     let mut r24: uint16 = v3;
     let mut v4: uint16 = 0;
     if amt < 0 as int32 {
-        v4 = (v3 as ::core::ffi::c_int - R28 as ::core::ffi::c_int) as uint16;
+        v4 = v3.wrapping_sub(R28);
     } else {
-        v4 = (R28 as ::core::ffi::c_int + v3 as ::core::ffi::c_int - 1 as ::core::ffi::c_int)
-            as uint16;
+        v4 = R28.wrapping_add(v3).wrapping_sub(1);
     }
     let mut eci: EprojCollInfo = EprojCollInfo {
         eci_r20: (amt >> 16 as ::core::ffi::c_int) as uint16,
@@ -2257,9 +2256,10 @@ pub unsafe fn EprojBlockCollisition_Vertical(mut k: uint16, game: &mut Game) -> 
     let mut r26: uint16 = (game.enemy_projectile_x_pos(k) as ::core::ffi::c_int
         - R28 as ::core::ffi::c_int
         & 0xfff0 as ::core::ffi::c_int) as uint16;
-    r26 = ((R28 as ::core::ffi::c_int + game.enemy_projectile_x_pos(k) as ::core::ffi::c_int
-        - 1 as ::core::ffi::c_int
-        - r26 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
+    r26 = (R28
+        .wrapping_add(game.enemy_projectile_x_pos(k))
+        .wrapping_sub(1)
+        .wrapping_sub(r26) as ::core::ffi::c_int
         >> 4 as ::core::ffi::c_int) as uint16;
     let mut R32: uint16 = r26;
     let mut v3: uint16 = ((amt as uint32).wrapping_add(
@@ -2273,10 +2273,9 @@ pub unsafe fn EprojBlockCollisition_Vertical(mut k: uint16, game: &mut Game) -> 
     let mut r24: uint16 = v3;
     let mut v4: uint16 = 0;
     if amt < 0 as int32 {
-        v4 = (v3 as ::core::ffi::c_int - R30 as ::core::ffi::c_int) as uint16;
+        v4 = v3.wrapping_sub(R30);
     } else {
-        v4 = (R30 as ::core::ffi::c_int + v3 as ::core::ffi::c_int - 1 as ::core::ffi::c_int)
-            as uint16;
+        v4 = R30.wrapping_add(v3).wrapping_sub(1);
     }
     let mut eci: EprojCollInfo = EprojCollInfo {
         eci_r20: (amt >> 16 as ::core::ffi::c_int) as uint16,
@@ -2291,8 +2290,7 @@ pub unsafe fn EprojBlockCollisition_Vertical(mut k: uint16, game: &mut Game) -> 
         (v4 as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint8,
         game.room_width_in_blocks() as uint8,
     );
-    v5 = ((game.enemy_projectile_x_pos(k) as ::core::ffi::c_int - R28 as ::core::ffi::c_int)
-        as uint16 as ::core::ffi::c_int
+    v5 = (game.enemy_projectile_x_pos(k).wrapping_sub(R28) as ::core::ffi::c_int
         >> 4 as ::core::ffi::c_int) as int16;
     let mut i: ::core::ffi::c_int =
         2 as ::core::ffi::c_int * (prod as ::core::ffi::c_int + v5 as ::core::ffi::c_int);
@@ -4536,7 +4534,7 @@ unsafe fn EprojInit_A379(mut j: uint16, game: &mut Game) {
 unsafe fn EprojInit_CeresElevatorPad(mut j: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize) =
-        (game.samus_y_pos() as ::core::ffi::c_int + 28 as ::core::ffi::c_int) as uint16;
+        game.samus_y_pos().wrapping_add(28);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16).offset(v1 as isize) =
         60 as uint16;
     sub_86A301(j, game);
@@ -4583,7 +4581,7 @@ pub unsafe fn EprojPreInstr_CeresElevatorPad(mut k: uint16, game: &mut Game) {
         || v3 as ::core::ffi::c_int != 0
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize) =
-            (game.samus_y_pos() as ::core::ffi::c_int + 28 as ::core::ffi::c_int) as uint16;
+            game.samus_y_pos().wrapping_add(28);
         let ref mut fresh113 = *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16);
         *fresh113 = (*fresh113).wrapping_add(1);
         if *fresh113 as ::core::ffi::c_int - 73 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -7278,10 +7276,7 @@ pub unsafe fn Math_MultBySin(mut a: uint16, mut r18: uint16) -> uint16 {
     return Math_MultBySinCos(a, r18);
 }
 pub unsafe fn Math_MultByCos(mut a: uint16, mut r18: uint16) -> uint16 {
-    return Math_MultBySinCos(
-        a,
-        (r18 as ::core::ffi::c_int + 64 as ::core::ffi::c_int) as uint16,
-    );
+    return Math_MultBySinCos(a, r18.wrapping_add(64));
 }
 pub unsafe fn Math_MultBySinCos(mut r38: uint16, mut a: uint16) -> uint16 {
     let mut r46: uint16 = kSinCosTable8bit_Sext[((a as ::core::ffi::c_int
@@ -8380,7 +8375,7 @@ unsafe fn EprojInit_KagosBugs(mut j: uint16, game: &mut Game) {
         + 1 as ::core::ffi::c_int) as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1bfb) as *mut uint16).offset(v2 as isize) = v4;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16).offset(v2 as isize) =
-        (v4 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
+        v4.wrapping_add(4);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16).offset(v2 as isize) =
         (0x86d0ca as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
@@ -8389,7 +8384,7 @@ pub unsafe fn EprojPreInstr_KagosBugs_Func1(mut k: uint16, game: &mut Game) {
     let mut v2: uint16 =
         *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16).offset(v1 as isize);
     if v2 != 0 {
-        let mut v3: uint16 = (v2 as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16;
+        let mut v3: uint16 = v2.wrapping_sub(1);
         *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16).offset(v1 as isize) =
             v3;
         if v3 == 0 {
@@ -9278,19 +9273,24 @@ pub fn EprojPreInstrHelper_SpikeShootingPlantSpikes_Func2(
     mut k: uint16,
     game: &mut Game,
 ) -> uint16 {
-    return (((game.enemy_projectile_x_pos(k) as ::core::ffi::c_int
-        - game.layer1_x_pos() as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
+    return ((game
+        .enemy_projectile_x_pos(k)
+        .wrapping_sub(game.layer1_x_pos()) as int16 as ::core::ffi::c_int)
         < 0 as ::core::ffi::c_int
-        || ((game.layer1_x_pos() as ::core::ffi::c_int + 256 as ::core::ffi::c_int
-            - game.enemy_projectile_x_pos(k) as ::core::ffi::c_int) as int16
+        || (game
+            .layer1_x_pos()
+            .wrapping_add(256)
+            .wrapping_sub(game.enemy_projectile_x_pos(k)) as int16
             as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int
-        || ((game.enemy_projectile_y_pos(k) as ::core::ffi::c_int
-            - game.layer1_y_pos() as ::core::ffi::c_int) as int16
-            as ::core::ffi::c_int)
+        || (game
+            .enemy_projectile_y_pos(k)
+            .wrapping_sub(game.layer1_y_pos()) as int16 as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int
-        || ((game.layer1_y_pos() as ::core::ffi::c_int + 256 as ::core::ffi::c_int
-            - game.enemy_projectile_y_pos(k) as ::core::ffi::c_int) as int16
+        || (game
+            .layer1_y_pos()
+            .wrapping_add(256)
+            .wrapping_sub(game.enemy_projectile_y_pos(k)) as int16
             as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
 }
@@ -10001,17 +10001,18 @@ unsafe fn EprojInit_SaveStationElectricity(mut j: uint16, game: &mut Game) {
                 - 2 as ::core::ffi::c_int)) as uint16;
 }
 fn CheckIfEprojIsOffScreen(mut k: uint16, game: &mut Game) -> uint16 {
-    if (game.enemy_projectile_x_pos(k) as ::core::ffi::c_int
-        - game.layer1_x_pos() as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
+    if game
+        .enemy_projectile_x_pos(k)
+        .wrapping_sub(game.layer1_x_pos()) as int16 as ::core::ffi::c_int
         >= 0 as ::core::ffi::c_int
     {
         if ((game.enemy_projectile_x_pos(k) as ::core::ffi::c_int
             - (game.layer1_x_pos() as ::core::ffi::c_int + 256 as ::core::ffi::c_int))
             as int16 as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int
-            && (game.enemy_projectile_y_pos(k) as ::core::ffi::c_int
-                - game.layer1_y_pos() as ::core::ffi::c_int) as int16
-                as ::core::ffi::c_int
+            && game
+                .enemy_projectile_y_pos(k)
+                .wrapping_sub(game.layer1_y_pos()) as int16 as ::core::ffi::c_int
                 >= 0 as ::core::ffi::c_int
         {
             if ((game.enemy_projectile_y_pos(k) as ::core::ffi::c_int
@@ -10767,27 +10768,21 @@ pub unsafe fn EprojPreInstr_Pickup(mut k: uint16, game: &mut Game) {
                                 .wrapping_sub(1 as usize) as isize,
                         ) as uint16;
                 let mut v6: uint16 = abs16(
-                    (game.samus_x_pos() as ::core::ffi::c_int
-                        - game.enemy_projectile_x_pos(k) as ::core::ffi::c_int)
-                        as uint16,
+                    game.samus_x_pos()
+                        .wrapping_sub(game.enemy_projectile_x_pos(k)),
                 );
                 let mut v7: bool =
                     (v6 as ::core::ffi::c_int) < game.samus_x_radius() as ::core::ffi::c_int;
-                let mut v8: uint16 = (v6 as ::core::ffi::c_int
-                    - game.samus_x_radius() as ::core::ffi::c_int)
-                    as uint16;
+                let mut v8: uint16 = v6.wrapping_sub(game.samus_x_radius());
                 if v7 as ::core::ffi::c_int != 0
                     || (v8 as ::core::ffi::c_int) < varE20 as ::core::ffi::c_int
                 {
                     let mut v9: uint16 = abs16(
-                        (game.samus_y_pos() as ::core::ffi::c_int
-                            - game.enemy_projectile_y_pos(k) as ::core::ffi::c_int)
-                            as uint16,
+                        game.samus_y_pos()
+                            .wrapping_sub(game.enemy_projectile_y_pos(k)),
                     );
                     v7 = (v9 as ::core::ffi::c_int) < game.samus_y_radius() as ::core::ffi::c_int;
-                    let mut v10: uint16 = (v9 as ::core::ffi::c_int
-                        - game.samus_y_radius() as ::core::ffi::c_int)
-                        as uint16;
+                    let mut v10: uint16 = v9.wrapping_sub(game.samus_y_radius());
                     if v7 as ::core::ffi::c_int != 0
                         || (v10 as ::core::ffi::c_int) < varE22 as ::core::ffi::c_int
                     {
@@ -10885,14 +10880,14 @@ pub unsafe fn RandomDropRoutine(mut k: uint16, game: &mut Game) -> uint16 {
             r24 = 0 as uint16;
             v5 = 0;
             v5 = 1 as uint16;
-            if (game.samus_reserve_health() as ::core::ffi::c_int
-                + game.samus_health() as ::core::ffi::c_int) as uint16
-                as ::core::ffi::c_int
+            if game
+                .samus_reserve_health()
+                .wrapping_add(game.samus_health()) as ::core::ffi::c_int
                 >= 0x1e as ::core::ffi::c_int
             {
-                if ((game.samus_reserve_health() as ::core::ffi::c_int
-                    + game.samus_health() as ::core::ffi::c_int) as uint16
-                    as ::core::ffi::c_int)
+                if (game
+                    .samus_reserve_health()
+                    .wrapping_add(game.samus_health()) as ::core::ffi::c_int)
                     < 0x32 as ::core::ffi::c_int
                 {
                     current_block = 4166486009154926805;
@@ -10953,7 +10948,7 @@ pub unsafe fn RandomDropRoutine(mut k: uint16, game: &mut Game) -> uint16 {
             while i != 4 as ::core::ffi::c_int {
                 if r18 == 0 {
                     r22 = (r22 as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint8;
-                    v2 = (v2 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
+                    v2 = v2.wrapping_add(4);
                     i = 4 as ::core::ffi::c_int;
                     break;
                 } else {

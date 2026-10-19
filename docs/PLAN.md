@@ -142,6 +142,76 @@ Next: continue the shared state and handler-family work above to remove
 operations and unsafe boundaries. Other sessions own the current projectile
 state/handler changes; avoid duplicating them.
 
+Projectile word arithmetic (2026-10-19): replaced 27 exercised addition/
+subtraction expressions across 12 routines with u16 wrapping operations.
+All operands are u16 values or in-range literals; the original i32
+intermediates cannot overflow. Reducing each addition/subtraction modulo
+65536 preserves the original final word truncation. Signed results retain
+their int16 cast before comparisons; operand evaluation, live reads and
+subsequent shifts/byte truncations remain in place. No carry or borrow
+tests are replaced. Eleven unexercised candidate expressions remain pending.
+
+The survey compiled old/new expressions side by side at their actual call
+sites and passed any% 129712/0 (237.99s) and Kraid phase two 119823/0
+(247.06s). The union hit 27 of 38 sites; require-hit intentionally returned
+2 for uncovered sites, with all arithmetic assertions passing. Seventeen
+arithmetic templates also passed 16056320 native boundary comparisons:
+every first u16 operand, crossed with 13 boundary values for each remaining
+operand, including 0, 32767, 32768 and 65535. This supplements ordinary
+movie execution; it is not all combinations of every multivariable input.
+
+The final frozen source is 76891aed plus only the 27 substitutions, recovered
+exactly by stripping survey assertions/probes and the boundary helper.
+Clean build 25.75s; full-boot any% 129712/0 (264.75s)
+and Kraid phase two 119823/0 (269.63s), native
+exits 0, with stable source, DLL, ROM and movie hashes. The Kraid fixture
+retains its separately attributed fingernail diagnostic and does not defeat
+main Kraid. Maintained routines differ from the frozen candidate only by
+the independently verified literal pointer-offset cleanup. Concurrent state
+and helper passes keep their separate validation; these results do not
+claim verification of their integration.
+
+Formatting/check and the workspace release build pass (56.57s reported by
+Cargo, after waiting for its build lock). The rebased arithmetic change
+removes 62 promotion casts, 39 cast-containing lines and 5 Rust lines;
+raw accesses and unsafe function counts are unchanged. No helper or macro
+is added. First maintained edit to final replay result:
+567.61s, including the concurrent-edit merge.
+
+Observed expression calls and first/last absolute movie frames follow.
+Rows are in source order; the two health sums are distinct comparison sites.
+A dash means unexercised on that route, not absent behavior.
+
+| Routine / expression | Any% calls @ frames | Kraid calls @ frames |
+| --- | --- | --- |
+| SpawnEprojInner / `v3.wrapping_sub(2)` | 180 @ 8323..97830 | 1981 @ 8323..119484 |
+| EprojBlockCollisition_Horiz / `R30.wrapping_add(enemy_projectile_y_pos(k)).wrapping_sub(1).wrapping_sub(r26)` | 867 @ 36745..89539 | 13178 @ 50634..119527 |
+| EprojBlockCollisition_Horiz / `enemy_projectile_y_pos(k).wrapping_sub(R30)` | 867 @ 36745..89539 | 13178 @ 50634..119527 |
+| EprojBlockCollisition_Horiz / `v3.wrapping_sub(R28)` | 854 @ 36745..89539 | 7960 @ 65349..119527 |
+| EprojBlockCollisition_Horiz / `R28.wrapping_add(v3).wrapping_sub(1)` | 13 @ 70720..70847 | 5218 @ 50634..119519 |
+| EprojBlockCollisition_Vertical / `R28.wrapping_add(enemy_projectile_x_pos(k)).wrapping_sub(1).wrapping_sub(r26)` | 871 @ 36745..89544 | 10473 @ 18120..119527 |
+| EprojBlockCollisition_Vertical / `v3.wrapping_sub(R30)` | 105 @ 70787..70835 | 3078 @ 50634..119503 |
+| EprojBlockCollisition_Vertical / `R30.wrapping_add(v3).wrapping_sub(1)` | 766 @ 36745..89544 | 7395 @ 18120..119527 |
+| EprojBlockCollisition_Vertical / `enemy_projectile_x_pos(k).wrapping_sub(R28)` | 871 @ 36745..89544 | 10473 @ 18120..119527 |
+| EprojInit_CeresElevatorPad / `samus_y_pos().wrapping_add(28)` | 4 @ 8323..97830 | 1 @ 8323..8323 |
+| EprojPreInstr_CeresElevatorPad / `samus_y_pos().wrapping_add(28)` | 292 @ 8383..97962 | 73 @ 8383..8455 |
+| Math_MultByCos / `r18.wrapping_add(64)` | 659 @ 36745..89500 | - |
+| EprojInit_KagosBugs / `v4.wrapping_add(4)` | - | 3 @ 65326..65522 |
+| EprojPreInstr_KagosBugs_Func1 / `v2.wrapping_sub(1)` | - | 23 @ 65326..65551 |
+| EprojPreInstrHelper_SpikeShootingPlantSpikes_Func2 / `enemy_projectile_x_pos(k).wrapping_sub(layer1_x_pos()) as int16` | - | 1215 @ 84850..91814 |
+| EprojPreInstrHelper_SpikeShootingPlantSpikes_Func2 / `layer1_x_pos().wrapping_add(256).wrapping_sub(enemy_projectile_x_pos(k)) as int16` | - | 1209 @ 84850..91814 |
+| EprojPreInstrHelper_SpikeShootingPlantSpikes_Func2 / `enemy_projectile_y_pos(k).wrapping_sub(layer1_y_pos()) as int16` | - | 1206 @ 84850..91813 |
+| EprojPreInstrHelper_SpikeShootingPlantSpikes_Func2 / `layer1_y_pos().wrapping_add(256).wrapping_sub(enemy_projectile_y_pos(k)) as int16` | - | 1202 @ 84850..91813 |
+| CheckIfEprojIsOffScreen / `enemy_projectile_x_pos(k).wrapping_sub(layer1_x_pos()) as int16` | - | 2987 @ 18190..119723 |
+| CheckIfEprojIsOffScreen / `enemy_projectile_y_pos(k).wrapping_sub(layer1_y_pos()) as int16` | - | 2945 @ 18190..119723 |
+| EprojPreInstr_Pickup / `samus_x_pos().wrapping_sub(enemy_projectile_x_pos(k))` | - | 18021 @ 37943..119822 |
+| EprojPreInstr_Pickup / `v6.wrapping_sub(samus_x_radius())` | - | 18021 @ 37943..119822 |
+| EprojPreInstr_Pickup / `samus_y_pos().wrapping_sub(enemy_projectile_y_pos(k))` | - | 2062 @ 40434..116692 |
+| EprojPreInstr_Pickup / `v9.wrapping_sub(samus_y_radius())` | - | 2062 @ 40434..116692 |
+| RandomDropRoutine / `samus_reserve_health().wrapping_add(samus_health())` | - | 78 @ 35502..119764 |
+| RandomDropRoutine / `samus_reserve_health().wrapping_add(samus_health())` | - | 55 @ 35502..119764 |
+| RandomDropRoutine / `v2.wrapping_add(4)` | - | 4 @ 35502..36233 |
+
 ## Validation strategy (2026-10-19)
 
 User priority: shorten the complete edit/build/result cycle. Replaying the
