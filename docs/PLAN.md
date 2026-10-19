@@ -12892,6 +12892,31 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Morph Ball eye-beam HDMA (2026-10-19): rename sub_88E987 to
+UpdateMorphBallEyeBeamHdma and use byte-backed angle/width/color reads plus
+existing enemy/camera coordinate accessors. Enemy slot 1, wrapping positions,
+rounded width index and byte color index remain exact. The three color
+read/store pairs retain their order after table generation.
+
+Frozen d64ef0e7 contextual Waver replay executes 252 updater calls on frames
+28228..28479 (E9E6 6, EA3C 246): 252/0, complete old/current RAM identical.
+A deliberate color fault is detected at frame 28228, byte 0074. Independent
+controls match all 128 KiB RAM and ordered call/return traces in 917,504
+constructed pairs and 69,632 pairs using the actual table generator. They
+cover all slot indices, wrapping coordinates and table/color aliases;
+wrong odd-slot width indexing and premature color reads are both rejected.
+EACB remains without demonstrated movie execution; its only change is the
+callee rename. Independent source review finds no behavior regression.
+
+Frozen 3c6dded7 plus only sm_88.rs passes any% 129712/0 (121.45s) and
+Waver 58109/0 (67.14s), native exits 0, including the newly committed outer
+X-ray corrections. The maintained updater matches the tested source. Cargo
+fmt/check, release build and progress pass. Own raw offsets -18, cast lines
+-42, Rust lines -52; other counters unchanged. The unsafe table-call boundary
+remains. No probes or ROM-derived assets committed. Next: the executed
+eye-beam widening caller HdmaobjPreInstr_E9E6; remaining Phase 3 gameplay
+and later ownership work stay open.
+
 Async room-background pointer (2026-10-19): the state-0 loading path reads
 roomdefroomstate_ptr through its named little-endian RAM accessor, then
 reads bg_data_ptr from live ROM at the packed room-state field offset.
