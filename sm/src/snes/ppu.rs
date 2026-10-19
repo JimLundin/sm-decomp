@@ -732,22 +732,13 @@ unsafe fn PpuWindows_Calc(mut win: *mut PpuWindows, mut ppu: *mut Ppu, mut layer
     }
     (*win).bits = (w1_bits as ::core::ffi::c_int | w2_bits as ::core::ffi::c_int) as uint8;
 }
-unsafe fn PpuDrawBackground_4bpp(
-    mut ppu: *mut Ppu,
+// Select the tilemap halves and normal/flipped tile rows for both bit depths.
+unsafe fn ppu_background_row(
+    ppu: *mut Ppu,
+    bglayer: *mut BgLayer,
     mut y: uint,
-    mut sub: bool,
-    mut layer: uint,
-    mut zhi: PpuZbufType,
-    mut zlo: PpuZbufType,
-) {
-    if (*ppu).screenEnabled[sub as usize] as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << layer
-        == 0
-    {
-        return;
-    }
-    let mut win = ppu_windows_for_layer(ppu, sub as usize, layer);
-    let mut bglayer: *mut BgLayer =
-        (&raw mut (*ppu).bgLayer as *mut BgLayer).offset(layer as isize) as *mut BgLayer;
+    layer: uint,
+) -> ([*const uint16; 2], ::core::ffi::c_int, ::core::ffi::c_int) {
     y = y.wrapping_add((*bglayer).vScroll as uint);
     let mut sc_offs: ::core::ffi::c_int = ((*bglayer).tilemapAdr as uint)
         .wrapping_add((y >> 3 as ::core::ffi::c_int & 0x1f as uint) << 5 as ::core::ffi::c_int)
@@ -775,12 +766,31 @@ unsafe fn PpuDrawBackground_4bpp(
     ];
     let mut tileadr: ::core::ffi::c_int =
         (*ppu).bgLayer[layer as usize].tileAdr as ::core::ffi::c_int;
-    let mut pixel: ::core::ffi::c_int = 0;
     let mut tileadr1: ::core::ffi::c_int = ((tileadr + 7 as ::core::ffi::c_int) as uint)
         .wrapping_sub(y & 0x7 as uint)
         as ::core::ffi::c_int;
     let mut tileadr0: ::core::ffi::c_int =
         (tileadr as uint).wrapping_add(y & 0x7 as uint) as ::core::ffi::c_int;
+    (tps, tileadr0, tileadr1)
+}
+unsafe fn PpuDrawBackground_4bpp(
+    mut ppu: *mut Ppu,
+    mut y: uint,
+    mut sub: bool,
+    mut layer: uint,
+    mut zhi: PpuZbufType,
+    mut zlo: PpuZbufType,
+) {
+    if (*ppu).screenEnabled[sub as usize] as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << layer
+        == 0
+    {
+        return;
+    }
+    let mut win = ppu_windows_for_layer(ppu, sub as usize, layer);
+    let mut bglayer: *mut BgLayer =
+        (&raw mut (*ppu).bgLayer as *mut BgLayer).offset(layer as isize) as *mut BgLayer;
+    let (mut tps, mut tileadr0, mut tileadr1) = ppu_background_row(ppu, bglayer, y, layer);
+    let mut pixel: ::core::ffi::c_int = 0;
     let mut addr: *const uint16 = ::core::ptr::null::<uint16>();
     let mut windex: size_t = 0 as size_t;
     while windex < win.nr as size_t {
@@ -1270,39 +1280,8 @@ unsafe fn PpuDrawBackground_2bpp(
     let mut win = ppu_windows_for_layer(ppu, sub as usize, layer);
     let mut bglayer: *mut BgLayer =
         (&raw mut (*ppu).bgLayer as *mut BgLayer).offset(layer as isize) as *mut BgLayer;
-    y = y.wrapping_add((*bglayer).vScroll as uint);
-    let mut sc_offs: ::core::ffi::c_int = ((*bglayer).tilemapAdr as uint)
-        .wrapping_add((y >> 3 as ::core::ffi::c_int & 0x1f as uint) << 5 as ::core::ffi::c_int)
-        as ::core::ffi::c_int;
-    if y & 0x100 as uint != 0 && (*bglayer).tilemapHigher as ::core::ffi::c_int != 0 {
-        sc_offs += if (*bglayer).tilemapWider as ::core::ffi::c_int != 0 {
-            0x800 as ::core::ffi::c_int
-        } else {
-            0x400 as ::core::ffi::c_int
-        };
-    }
-    let mut tps: [*const uint16; 2] = [
-        (&raw mut (*ppu).vram as *mut uint16_t)
-            .offset((sc_offs & 0x7fff as ::core::ffi::c_int) as isize) as *mut uint16_t
-            as *const uint16,
-        (&raw mut (*ppu).vram as *mut uint16_t).offset(
-            (sc_offs
-                + (if (*bglayer).tilemapWider as ::core::ffi::c_int != 0 {
-                    0x400 as ::core::ffi::c_int
-                } else {
-                    0 as ::core::ffi::c_int
-                })
-                & 0x7fff as ::core::ffi::c_int) as isize,
-        ) as *mut uint16_t as *const uint16,
-    ];
-    let mut tileadr: ::core::ffi::c_int =
-        (*ppu).bgLayer[layer as usize].tileAdr as ::core::ffi::c_int;
+    let (mut tps, mut tileadr0, mut tileadr1) = ppu_background_row(ppu, bglayer, y, layer);
     let mut pixel: ::core::ffi::c_int = 0;
-    let mut tileadr1: ::core::ffi::c_int = ((tileadr + 7 as ::core::ffi::c_int) as uint)
-        .wrapping_sub(y & 0x7 as uint)
-        as ::core::ffi::c_int;
-    let mut tileadr0: ::core::ffi::c_int =
-        (tileadr as uint).wrapping_add(y & 0x7 as uint) as ::core::ffi::c_int;
     let mut addr: *const uint16 = ::core::ptr::null::<uint16>();
     let mut windex: size_t = 0 as size_t;
     while windex < win.nr as size_t {

@@ -17772,6 +17772,35 @@ observations pass any% 129712/0 (200.53s) and Speed Booster 148406/0
 (275.52s), native exits 0, but all 22 handlers have zero hits. Leave this
 family unchanged and pending until normal-input coverage reaches it.
 
+PPU tile-row setup family (2026-10-19): jscpd discovers the exact
+2bpp/4bpp setup pair; ast-grep complete CST functions select both callers.
+Share their tilemap-half pointers and normal/flipped tile-row addresses in
+one private helper. Keep the enabled-layer gate, window setup and BgLayer
+pointer capture before the call. Vertical scroll addition wraps at the same
+unsigned width; tilemap-higher/wider tests, VRAM masks and all PPU reads
+retain their order. The caller's scrolled Y had no uses after this sequence.
+Moving the independent local pixel-zero initialization crosses no observable
+operation. Returned pointers derive from PPU VRAM, not helper-local storage.
+
+Actual original/current draw routines agree in 2560 complete initialized
+PPU-state/pixel comparisons: all five drawing paths with masked/unmasked
+screens and 256 seeds. The two changed paths contribute 1024 comparisons
+with varied horizontal/vertical scroll, tilemap half flags/addresses, tile
+addresses and large unsigned Y values; the complete-line path also exercises
+both bit depths. Fully initialized allocations avoid padding uncertainty.
+These are constructed hardware checks, not new gameplay or SNES accuracy.
+
+Frozen 6ea1ddb6 plus only this change passes full any% 129712/0
+(185.96s) and Speed Booster 148406/0 (254.86s), native exits 0,
+with stable source/library/DLL/ROM/movie hashes. Exact reconstruction permits
+only the shared sequence and its two calls; all other frozen sources match.
+Cargo fmt/check, normal release (47.41s, native exit 0), diff check and
+progress pass. Own Rust lines -21, c_int cast lines -15; unsafe functions
++1 because one helper owns the two repeated raw setup sequences. Raw PPU
+access expressions decrease by eight; no RAM accesses or layout changes.
+Neither fixture reaches credits. Continue coherent setup/state families and
+normal-input coverage; no temporary code or ROM-derived artifacts committed.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
