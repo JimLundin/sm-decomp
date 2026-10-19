@@ -9178,6 +9178,21 @@ variants shared that baseline. No maintained renderer instrumentation is
 added. Next: isolate color-math conversion with separate pixel slices,
 measure its speed, and compare actual row output before adopting a change.
 
+CPU safe accumulator INC/DEC (2026-10-19): both opcodes call safe
+update_accumulator with word deltas 1/MAX. Wrapping addition by MAX preserves
+subtraction by one. Byte mode preserves high A, word mode wraps, and Z/N use
+the live width; carry, overflow and cycles remain unchanged. Independent source/
+probe review finds no differences. Frozen HEAD `26424a54` plus this change
+passes 524,288 actual old/current dispatcher cases across every A word, both
+widths and incoming carry values, checking flags, cycles, named CPU/bus fields
+and PC history. Prefix 3,600/0 (1.17s), native exit 0, executes INC/DEC
+11,273/18,758 times. Clean full any% 129,712/0 (51.18s), native exit 0. Cargo
+fmt/check, full release and release-library builds with external SDL2, normal
+metadata and optimized frozen core/DLL builds pass. Live CPU matches verified
+source; Rust lines -1, other own counters unchanged. Arbitrary MMIO and full
+gameplay/render/audio coverage remain open; ROR stays held for movie coverage.
+Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
