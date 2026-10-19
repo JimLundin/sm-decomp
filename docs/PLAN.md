@@ -13700,6 +13700,19 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Door-transition HDMA clear (2026-10-19): replace the raw pointer loop with
+safe two-byte stores for the same 256 descending pairs. All 512 destinations
+and their 9C00-before-9E00 order remain exact; field_0 retains byte indexing
+and overlapping RAM aliases keep the same cleared bytes. Frozen fbaea1d1
+plus this loop passes any% 129712/0 (324.74s) and Waver 58109/0 (158.57s),
+native exits 0, including the earlier door and menu changes in that baseline.
+An observed 20000/0 prefix executes seven actual old/current clear blocks;
+all 128 KiB RAM matches on return. A final-byte fault at 9FFF is detected
+on frame 11612. Source/address and observer reviews, exact stripping,
+formatting, release build using the workspace dependency cache and progress
+pass. Own raw offsets -2, cast lines -6, Rust lines -9; other counters
+unchanged. Remaining transition fields and broader Phase 3 stay open.
+
 Samus animation FX dispatch (2026-10-19): replace the nullable handler
 table with a direct match on the little-endian FX word's low-nibble selector.
 Kinds 0..3 retain their NoFx/lava/acid/water handlers; kinds 4..7 remain

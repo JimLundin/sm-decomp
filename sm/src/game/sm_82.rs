@@ -10100,18 +10100,9 @@ pub unsafe fn DoorTransition_HandleTransition(game: &mut Game) -> CoroutineRet {
             | 0xf as ::core::ffi::c_int)
             + 8 as ::core::ffi::c_int) as uint16;
     }
-    let mut i: ::core::ffi::c_int = 510 as ::core::ffi::c_int;
-    while i >= 0 as ::core::ffi::c_int {
-        *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x9c00 as ::core::ffi::c_int as isize)
-            .offset(i as isize) as *mut uint8 as *mut uint16) = 0 as uint16;
-        *((&raw mut (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x9e00 as ::core::ffi::c_int as isize)
-            as *mut ExpandingSquareTransitionHdma)
-            .offset(0 as ::core::ffi::c_int as isize))
-        .field_0)
-            .offset(i as isize) as *mut uint16) = 0 as uint16;
-        i -= 2 as ::core::ffi::c_int;
+    for offset in (0..512).step_by(2).rev() {
+        game.g_ram[0x9c00 + offset..0x9c02 + offset].copy_from_slice(&[0, 0]);
+        game.g_ram[0x9e00 + offset..0x9e02 + offset].copy_from_slice(&[0, 0]);
     }
     let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8)
         .offset(0xa9 as ::core::ffi::c_int as isize) as *mut uint16);
