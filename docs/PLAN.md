@@ -9931,6 +9931,21 @@ Rust lines +4 introduces the safe shared helper and formatter reflow; other
 own counters unchanged. Complete gameplay/render/audio remain open. Continue
 covered CPU cleanup; TSX/ROR stay held for contextual execution.
 
+CPU indexed-indirect coverage hold (2026-10-19): candidate reuse of
+direct_page_address for address_direct_page_indexed_indirect passes 33,554,432
+actual old/current RAM-bus cases, covering all pointer/bank pairs with varied
+DP/X/MF/XF/E and PC wrapping. Source order retains pointer address capture
+before the two reads and live DB after them. Cargo fmt/check, full release/
+release-library builds with external SDL2, normal metadata and frozen optimized
+core/DLL pass. However, prefix 3,600 and full any% 129,712 both execute this
+helper zero times. Both report zero gameplay failures (1.11s/52.67s), then the
+coverage assertion aborts with native exit 3221226505; neither is a successful
+verification process. Constructed comparisons do not replace movie execution.
+The entire candidate is restored; no maintained CPU change or own counter
+delta remains. Hold indexed-indirect direct-page cleanup until contextual
+execution is available, alongside TSX/accumulator ROR. Continue covered CPU
+work; complete gameplay/render/audio remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
