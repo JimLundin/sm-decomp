@@ -17560,6 +17560,46 @@ Temporary reports/probes remain outside the repo. Next: continue an exercised
 coherent RAM-update family or the PPU initializer audit; full progression
 coverage is needed before returning to corpse movement/copies.
 
+PLM block bit-update family (2026-10-19): jscpd discovery and complete
+ast-grep update selection, followed by near-match inspection, survey five
+borrowed mask updates, ten immediate mask/OR updates and three safe variants.
+Frozen 399a111d original-site probes pass any% 129712/0
+(204.53s) and Speed Booster 148406/0 (265.14s);
+expanded probes pass both full fixtures (187.43s,
+256.68s), native exits 0. Eleven unhit raw sites remain
+unchanged. Captured-value stores around another write are distinct and excluded.
+
+One safe little-endian level-block read/mask/OR/write operation now serves
+all six exercised calls: four ordered solid-block stores in sub_84B9F1,
+air-scroll's final block update and the existing retain helper's update.
+Retain each call's original position, rereads of width and slot fields,
+callback/scroll-table order and full in-bounds odd/high index rounding.
+No retained raw RAM pointer is used across the new shared borrow. Existing
+unhit callers of the retain helper are unchanged; mask-only semantics also
+pass the boundary checks below.
+
+Frozen 399a111d plus only this change passes clean any% 129712/0
+(196.85s) and Speed Booster 148406/0 (256.88s),
+native exits 0. Observed replays pass both (201.17s,
+254.56s); each of the four solid-block stores executes
+1 time(s), air-scroll 2082, retain 105.
+Every helper call compares all RAM against the original unaligned word
+operation. Clean/observed non-timing diagnostics and output agree. Independent
+integration of 8f1f545d plus the exact PLM source passes
+any% 129712/0 (188.37s) and Speed Booster 148406/0
+(266.82s), native exits 0, with frozen source/library/
+DLL/ROM/movie hashes. Neither fixture reaches credits.
+
+786416 boundary comparisons cover every old word across four mask/bit pairs,
+and every in-bounds 16-bit byte index across two full-RAM patterns. FFFE/FFFF
+block byte indexes address beyond the 128 KiB allocation in the original;
+no defined behavior is claimed for those accesses. Exact source reconstruction
+permits only the helper and six substitutions; other frozen sources match HEAD.
+Cargo fmt/check, normal release (40.53s, native exit 0) and progress pass.
+Own Rust lines -21, raw accesses -8, cast lines -18; unsafe functions unchanged.
+No probe/report or ROM-derived assets committed. Continue coherent RAM families;
+corpse coverage, full gameplay/credits, hardware/audio/masks and ownership remain.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

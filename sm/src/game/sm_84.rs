@@ -1519,9 +1519,7 @@ pub unsafe fn PlmInstr_ProcessAirScrollUpdate(
         entries = entries.add(2);
     }
     let block_index = read_word(game, 0x1c87 + index); // plm_block_indices
-    let block_addr = 0x10002 + usize::from(block_index >> 1) * 2;
-    let block = read_word(game, block_addr);
-    write_word(game, block_addr, (block & 0x0fff) | 0x3000);
+    update_level_block_bits(usize::from(block_index >> 1), 0x0fff, 0x3000, game);
     plmp
 }
 pub unsafe fn PlmInstr_ProcessSolidScrollUpdate(
@@ -3076,13 +3074,16 @@ pub fn PlmSetup_D094_EnemyBreakableBlock(j: uint16, game: &mut Game) -> uint8 {
     retain_plm_block_bits(j, 0x0fff, game);
     0
 }
+fn update_level_block_bits(word_index: usize, mask: u16, bits: u16, game: &mut Game) {
+    let offset = 0x10002 + word_index * 2;
+    let block = u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]]);
+    game.g_ram[offset..offset + 2].copy_from_slice(&((block & mask) | bits).to_le_bytes());
+}
 fn retain_plm_block_bits(j: uint16, mask: u16, game: &mut Game) {
     // Both indices are byte offsets; the original word indexing rounds them down.
     let slot_offset = 0x1c87 + usize::from(j & !1);
     let block_index = u16::from_le_bytes([game.g_ram[slot_offset], game.g_ram[slot_offset + 1]]);
-    let block_offset = 0x10002 + usize::from(block_index & !1);
-    let block = u16::from_le_bytes([game.g_ram[block_offset], game.g_ram[block_offset + 1]]);
-    game.g_ram[block_offset..block_offset + 2].copy_from_slice(&(block & mask).to_le_bytes());
+    update_level_block_bits(usize::from(block_index >> 1), mask, 0, game);
 }
 pub unsafe fn UNUSED_sub_84B3E3(mut j: uint16) -> uint8 {
     '_c2rust_label: {
@@ -3581,45 +3582,23 @@ pub unsafe fn PlmSetup_B9ED_CrittersEscapeBlock(mut j: uint16, game: &mut Game) 
 pub unsafe fn sub_84B9F1(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x1c87) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16)
-        .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16)
-            .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-            as ::core::ffi::c_int
-            & 0xfff as ::core::ffi::c_int
-            | 0x8000 as ::core::ffi::c_int) as uint16;
+    update_level_block_bits((v1 >> 1) as usize, 0xfff, 0x8000, game);
     let mut v2: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16)
         as ::core::ffi::c_int
         * 2 as ::core::ffi::c_int
         + v1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16)
-        .offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16)
-            .offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-            as ::core::ffi::c_int
-            & 0xfff as ::core::ffi::c_int
-            | 0x8000 as ::core::ffi::c_int) as uint16;
+    update_level_block_bits((v2 >> 1) as usize, 0xfff, 0x8000, game);
     let mut v3: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16)
         as ::core::ffi::c_int
         + *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as ::core::ffi::c_int
         + v2 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16)
-        .offset((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16)
-            .offset((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-            as ::core::ffi::c_int
-            & 0xfff as ::core::ffi::c_int
-            | 0x8000 as ::core::ffi::c_int) as uint16;
+    update_level_block_bits((v3 >> 1) as usize, 0xfff, 0x8000, game);
     let mut v4: ::core::ffi::c_int =
         (*((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as ::core::ffi::c_int
             * 2 as ::core::ffi::c_int
             + v3 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
             >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16).offset(v4 as isize) =
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16).offset(v4 as isize)
-            as ::core::ffi::c_int
-            & 0xfff as ::core::ffi::c_int
-            | 0x8000 as ::core::ffi::c_int) as uint16;
+    update_level_block_bits(v4 as usize, 0xfff, 0x8000, game);
     return 0 as uint8;
 }
 pub unsafe fn PlmInstr_JumpIfSamusHasNoBombs(
