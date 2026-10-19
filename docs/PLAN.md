@@ -14402,6 +14402,86 @@ definitions: raw offsets-4, cast lines-7; Rust lines, unsafe functions and
 other own counters unchanged. Broader indexed-field/update consolidation
 remains open, as do gameplay/credits, hardware/audio/masks and ownership.
 
+Enemy-projectile named scalar reads (2026-10-19): replace 80 raw word
+reads across 38 routines with 22 existing Game accessors. This complementary
+pass reuses the shared named state reads without adding getters or changing
+the separately maintained EprojState work. Every replacement reads the same
+two RAM bytes in little-endian order at the original expression position.
+Repeated reads, short-circuit evaluation, callbacks, writes and arithmetic
+truncations remain in place. No live mutable word reference spans a replaced
+read. Scalar stores, borrowed places and indexed reads are outside this pass.
+
+A frozen 785a701e survey checks all 194 eligible read sites against
+their existing byte-backed accessor at the live read. Any% passes 129712/0
+(194.52s), with 36283 comparisons at 14 sites; Hi-Jump passes 99191/0
+(161.18s), with 212478 comparisons at 78 sites. All compared values match.
+The survey requests every site, so both native exits are 2 for missing
+probes; this intentionally distinguishes uncovered sites from failing frames.
+The union contains 80 exercised sites; the other 114 retain their old code.
+Counts below are scalar-read checks, not inferred function-entry counts;
+parentheses give changed read sites, followed by checks / absolute input range.
+Each changed site has a nonzero explicit probe on at least one route.
+
+| Routine (read sites) | Any% checks / inputs | Hi-Jump checks / inputs |
+| --- | --- | --- |
+| `DrawEprojs` (2) | 6156 / 8324..97961 | 106867 / 8324..92663 |
+| `GetValuesForScreenShaking` (1) | 23050 / 37517..94118 | 7300 / 15188..93062 |
+| `EprojColl_858E` (2) | 0 | 16 / 65377..65681 |
+| `EprojColl_85AD` (2) | 0 | 36 / 18186..65646 |
+| `EprojColl_874E` (3) | 0 | 102 / 18186..65646 |
+| `EprojBlockCollisition_CheckHorizontal` (1) | 1470 / 36745..89539 | 5831 / 50634..65687 |
+| `EprojBlockCollisition_CheckVertical` (1) | 1457 / 36745..89544 | 7827 / 18120..65687 |
+| `EprojBlockCollisition_Horiz` (2) | 2327 / 36745..89539 | 9661 / 50634..65687 |
+| `EprojBlockCollisition_Vertical` (1) | 871 / 36745..89544 | 4998 / 18120..65687 |
+| `Eproj_Init_0x8bc2_SkreeDownRight` (1) | 0 | 11 / 46050..88495 |
+| `Eproj_Init_0x8bd0_SkreeUpRight` (1) | 0 | 11 / 46050..88495 |
+| `Eproj_Init_0x8bde_SkreeDownLeft` (1) | 0 | 11 / 46050..88495 |
+| `Eproj_Init_0x8bec_SkreeUpLeft` (1) | 0 | 11 / 46050..88495 |
+| `SetAreaDependentEprojPropertiesEx` (2) | 124 / 36745..89543 | 0 |
+| `EprojInit_PirateMotherBrainLaser` (1) | 0 | 26 / 36819..64987 |
+| `EprojInit_CeresElevatorPad` (1) | 4 / 8323..97830 | 1 / 8323..8323 |
+| `sub_86A301` (1) | 8 / 8323..97830 | 2 / 8323..8323 |
+| `EprojPreInstr_CeresElevatorPad` (1) | 292 / 8383..97962 | 73 / 8383..8455 |
+| `EprojPreInstr_CeresElevatorPlatform` (1) | 524 / 8324..97961 | 131 / 8324..8454 |
+| `EprojInit_BombTorizoLowHealthDrool` (3) | 0 | 18 / 51056..51056 |
+| `EprojInit_BombTorizoLowHealthInitialDrool` (4) | 0 | 120 / 51056..51494 |
+| `EprojInit_BombTorizoExplosiveSwipe` (1) | 0 | 6 / 51485..51492 |
+| `EprojInit_BombTorizoLowHealthExplode` (1) | 0 | 12 / 51016..51375 |
+| `EprojInit_BombTorizoDeathExplosion` (1) | 0 | 36 / 51500..51795 |
+| `EprojInit_BombTorizosChozoOrbs` (1) | 0 | 27 / 50634..51235 |
+| `EprojInit_TourianLandingDustCloudsRightFoot` (1) | 0 | 3 / 50570..51139 |
+| `EprojInit_TorizoLandingDustCloudLeftFoot` (1) | 0 | 3 / 50570..51139 |
+| `EprojInit_KagosBugs` (3) | 0 | 9 / 65326..65522 |
+| `EprojInstr_D15C` (1) | 0 | 11 / 65348..65680 |
+| `EprojInstr_D1B6` (1) | 0 | 9 / 65382..65651 |
+| `sub_86D992` (1) | 0 | 15 / 84850..91686 |
+| `EprojPreInstrHelper_SpikeShootingPlantSpikes_Func2` (4) | 0 | 4832 / 84850..91814 |
+| `CheckIfEprojIsOffScreen` (4) | 0 | 10852 / 18190..88532 |
+| `EprojInit_YappingMawsBody` (3) | 0 | 48 / 88836..90886 |
+| `EprojInstr_ED17` (1) | 0 | 160 / 35462..41377 |
+| `EprojInit_EnemyDeathExplosion` (3) | 0 | 112 / 35462..91739 |
+| `EprojPreInstr_Pickup` (6) | 0 | 52740 / 37943..91953 |
+| `RandomDropRoutine` (14) | 0 | 550 / 35502..91769 |
+
+The final frozen build contains only these 80 replacements on 785a701e.
+Removing the survey probes and selecting the exercised replacements recovers
+that exact source before formatting. Clean full-boot any% passes 129712/0
+(242.65s) and Hi-Jump passes 99191/0 (217.17s), both native exits 0.
+These full routes include subsequent callbacks, frames and transitions;
+no checkpoint substitutes for initialization or earlier shared reads.
+All final source, DLL and fixture hashes remain stable during replay, with
+isolated saves. No probes or diagnostic helpers enter maintained code.
+
+Cargo fmt/check, normal release build (64.62s), whitespace and progress pass.
+Final verifier build takes 29.78s; edit-to-final-result takes
+293.80s under shared-machine load. Net own Rust lines -196,
+raw accesses -80, unsafe word dereferences -80 and pointer-offset calls -80.
+Actual c_int casts fall by 80; cast-containing lines fall by 95 after fmt.
+Unsafe-function, ABI and no_mangle counts are unchanged. The frozen checks
+qualify this change independently of concurrent projectile-interface edits.
+Unexercised reads, indexed fields/updates, arithmetic cleanup, broader
+gameplay/credits, hardware/audio/masks and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
