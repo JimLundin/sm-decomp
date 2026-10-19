@@ -2405,11 +2405,8 @@ pub unsafe fn VariaSuitPickup(game: &mut Game) {
     set_ram_word!(game.samus_y_pos = (ram_word!(game, layer1_y_pos)).wrapping_add(136u16));
     set_ram_word!(game.samus_prev_y_pos = (ram_word!(game, layer1_y_pos)).wrapping_add(136u16));
     QueueSfx2_Max6(0x56 as uint16, game);
-    static unk_91D59B: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0x41 as uint8,
-        field_1: 0x26 as uint8,
-        addr: 0xd5a2 as VoidP,
-    };
+    static unk_91D59B: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0x41 as uint8, 0x26 as uint8, 0xd5a2 as VoidP);
     SpawnHdmaObject(
         0x91 as uint8,
         &raw const unk_91D59B as *const ::core::ffi::c_void,
@@ -2463,11 +2460,8 @@ pub unsafe fn GravitySuitPickup(game: &mut Game) {
     set_ram_word!(game.samus_y_pos = (ram_word!(game, layer1_y_pos)).wrapping_add(136u16));
     set_ram_word!(game.samus_prev_y_pos = (ram_word!(game, layer1_y_pos)).wrapping_add(136u16));
     QueueSfx2_Max6(0x56 as uint16, game);
-    static unk_91D673: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0x41 as uint8,
-        field_1: 0x26 as uint8,
-        addr: 0xd67a as VoidP,
-    };
+    static unk_91D673: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0x41 as uint8, 0x26 as uint8, 0xd67a as VoidP);
     SpawnHdmaObject(
         0x91 as uint8,
         &raw const unk_91D673 as *const ::core::ffi::c_void,

@@ -892,9 +892,19 @@ impl SpawnHardcodedPlmArgs {
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct SpawnHdmaObject_Args {
-    pub field_0: uint8,
-    pub field_1: uint8,
-    pub addr: VoidP,
+    pub dma_control: uint8,
+    pub target_register: uint8,
+    pub instruction_list: VoidP,
+}
+
+impl SpawnHdmaObject_Args {
+    pub const fn new(dma_control: uint8, target_register: uint8, instruction_list: VoidP) -> Self {
+        Self {
+            dma_control,
+            target_register,
+            instruction_list,
+        }
+    }
 }
 
 #[derive(Copy, Clone)]

@@ -1640,11 +1640,8 @@ pub unsafe fn Crocomire_9506(game: &mut Game) {
     Crocomire_950F(game);
 }
 pub unsafe fn Crocomire_950F(game: &mut Game) {
-    static unk_A49559: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0x42 as uint8,
-        field_1: 0x10 as uint8,
-        addr: 0x9563 as VoidP,
-    };
+    static unk_A49559: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0x42 as uint8, 0x10 as uint8, 0x9563 as VoidP);
     let mut v4: *mut Enemy_Crocomire = ::core::ptr::null_mut::<Enemy_Crocomire>();
     let mut v1: uint16 =
         (2 as i32 * ((*Get_Crocomire(0x40 as i32, game)).base.y_pos as i32 - 72 as i32)) as uint16;

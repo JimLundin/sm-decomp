@@ -19991,6 +19991,21 @@ The final composition includes the committed integer-spelling batch.
 Continue substantial shared implementations;
 readability and full boot-to-credits coverage remain incomplete.
 
+HDMA spawn-descriptor family (2026-10-20): all 48 literal descriptors
+across five caller files use one const constructor. The packed four-byte
+layout retains DMA control, target register and instruction-list pointer in
+that order; fields now carry those names. All 144 operand expressions, static
+locations, pointer consumers and call sites remain exact. Complete ast-grep
+expressions and expansion reconstruct all six files. Net Rust lines -134;
+casts, raw operations, unsafe functions and ABI counts unchanged.
+
+Formatting/check, normal registry-only release (36.30s), source reconstruction,
+progress and diff checks pass. Frozen 2e7706c5 plus this family passes full
+any% 129712/0 (118.02s), native exit 0, with fixed source/library/fixture pins.
+This constructor/field-name transformation does not change spawn control flow.
+Continue substantial shared implementations;
+readability and full boot-to-credits coverage remain incomplete.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

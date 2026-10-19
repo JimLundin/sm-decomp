@@ -3047,11 +3047,8 @@ pub unsafe fn Phantoon_Init(game: &mut Game) {
     (*E1).phant_parameter_2 = 0 as uint16;
     let E0: *mut Enemy_Phantoon = Get_Phantoon(0 as i32, game);
     (*E0).base.properties = ((*E0).base.properties) | ((kEnemyProps_Tangible) as u16);
-    static unk_A7CE51: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0x1 as uint8,
-        field_1: 0x14 as uint8,
-        addr: 0xce96 as VoidP,
-    };
+    static unk_A7CE51: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0x1 as uint8, 0x14 as uint8, 0xce96 as VoidP);
     SpawnHdmaObject(
         0xa7 as uint8,
         &raw const unk_A7CE51 as *const ::core::ffi::c_void,

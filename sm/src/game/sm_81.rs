@@ -1039,16 +1039,10 @@ pub unsafe fn GameOverMenu_1_Init(game: &mut Game) {
     DisableHdmaObjects(game);
     WaitUntilEndOfVblankAndClearHdma(game);
     EnableHdmaObjects(game);
-    static unk_819254: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0 as uint8,
-        field_1: 0x32 as uint8,
-        addr: 0x927d as VoidP,
-    };
-    static unk_81925C: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0 as uint8,
-        field_1: 0x31 as uint8,
-        addr: 0x928d as VoidP,
-    };
+    static unk_819254: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0 as uint8, 0x32 as uint8, 0x927d as VoidP);
+    static unk_81925C: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0 as uint8, 0x31 as uint8, 0x928d as VoidP);
     SpawnHdmaObject(
         0x81 as uint8,
         &raw const unk_819254 as *const ::core::ffi::c_void,

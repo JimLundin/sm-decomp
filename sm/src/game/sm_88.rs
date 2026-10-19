@@ -654,16 +654,10 @@ pub unsafe fn HdmaObjectHandler(game: &mut Game) {
         && (ram_word!(game, power_bomb_explosion_status) as i32 & 0x4000 as i32) != 0i32
     {
         set_ram_word!(game.power_bomb_explosion_status = 0x8000 as uint16);
-        static unk_8884D5: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-            field_0: 0x40 as uint8,
-            field_1: 0x28 as uint8,
-            addr: 0x8ace as VoidP,
-        };
-        static unk_8884DD: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-            field_0: 0x40 as uint8,
-            field_1: 0x29 as uint8,
-            addr: 0x8b80 as VoidP,
-        };
+        static unk_8884D5: SpawnHdmaObject_Args =
+            SpawnHdmaObject_Args::new(0x40 as uint8, 0x28 as uint8, 0x8ace as VoidP);
+        static unk_8884DD: SpawnHdmaObject_Args =
+            SpawnHdmaObject_Args::new(0x40 as uint8, 0x29 as uint8, 0x8b80 as VoidP);
         SpawnHdmaObject(
             0x88 as uint8,
             &raw const unk_8884D5 as *const ::core::ffi::c_void,
@@ -1337,16 +1331,10 @@ pub unsafe fn SpawnPowerBombExplosion(game: &mut Game) {
     } else {
         QueueSfx1_Max15(1 as uint16, game);
         set_ram_word!(game.power_bomb_explosion_status = 0x8000 as uint16);
-        static unk_888ABA: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-            field_0: 0x40 as uint8,
-            field_1: 0x28 as uint8,
-            addr: 0x8ace as VoidP,
-        };
-        static unk_888AC2: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-            field_0: 0x40 as uint8,
-            field_1: 0x29 as uint8,
-            addr: 0x8b80 as VoidP,
-        };
+        static unk_888ABA: SpawnHdmaObject_Args =
+            SpawnHdmaObject_Args::new(0x40 as uint8, 0x28 as uint8, 0x8ace as VoidP);
+        static unk_888AC2: SpawnHdmaObject_Args =
+            SpawnHdmaObject_Args::new(0x40 as uint8, 0x29 as uint8, 0x8b80 as VoidP);
         SpawnHdmaObject(
             0x88 as uint8,
             &raw const unk_888ABA as *const ::core::ffi::c_void,
@@ -2144,16 +2132,10 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionYellow(k: uint16, gam
 }
 pub unsafe fn SpawnCrystalFlashHdmaObjs(game: &mut Game) {
     set_ram_word!(game.power_bomb_explosion_status = ((0x888000i32) as u16));
-    static unk_88A2B0: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0x40 as uint8,
-        field_1: 0x28 as uint8,
-        addr: 0xa2bd as VoidP,
-    };
-    static unk_88A2B8: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0x40 as uint8,
-        field_1: 0x29 as uint8,
-        addr: 0xa32a as VoidP,
-    };
+    static unk_88A2B0: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0x40 as uint8, 0x28 as uint8, 0xa2bd as VoidP);
+    static unk_88A2B8: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0x40 as uint8, 0x29 as uint8, 0xa32a as VoidP);
     SpawnHdmaObject(
         0x88 as uint8,
         &raw const unk_88A2B0 as *const ::core::ffi::c_void,
@@ -2541,21 +2523,12 @@ pub unsafe fn HdmaobjPreInstr_CrystalFlash_Stage1_Explosion(k: uint16, game: &mu
 pub unsafe fn FxTypeFunc_22_ScrollingSky(game: &mut Game) {
     set_ram_word!(game.fx_y_pos = 1248 as uint16);
     set_ram_word!(game.fx_type = 6 as uint16);
-    static unk_88A62E: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0x2 as uint8,
-        field_1: 0x12 as uint8,
-        addr: 0xad63 as VoidP,
-    };
-    static unk_88A636: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0x42 as uint8,
-        field_1: 0x11 as uint8,
-        addr: 0xad4e as VoidP,
-    };
-    static unk_88A63E: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0x42 as uint8,
-        field_1: 0xd as uint8,
-        addr: 0xad39 as VoidP,
-    };
+    static unk_88A62E: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0x2 as uint8, 0x12 as uint8, 0xad63 as VoidP);
+    static unk_88A636: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0x42 as uint8, 0x11 as uint8, 0xad4e as VoidP);
+    static unk_88A63E: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0x42 as uint8, 0xd as uint8, 0xad39 as VoidP);
     SpawnHdmaObject(
         0x88 as uint8,
         &raw const unk_88A62E as *const ::core::ffi::c_void,
@@ -2868,16 +2841,10 @@ pub unsafe fn HdmaFunc_A786(
     }
     r18
 }
-static unk_88A7EF: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-    field_0: 0x42 as uint8,
-    field_1: 0xf as uint8,
-    addr: 0xad76 as VoidP,
-};
-static unk_88A80B: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-    field_0: 0x42 as uint8,
-    field_1: 0xf as uint8,
-    addr: 0xad89 as VoidP,
-};
+static unk_88A7EF: SpawnHdmaObject_Args =
+    SpawnHdmaObject_Args::new(0x42 as uint8, 0xf as uint8, 0xad76 as VoidP);
+static unk_88A80B: SpawnHdmaObject_Args =
+    SpawnHdmaObject_Args::new(0x42 as uint8, 0xf as uint8, 0xad89 as VoidP);
 pub unsafe fn FxTypeFunc_20(game: &mut Game) {
     let ref mut fresh47 = *(&raw mut game.g_ram as *mut uint8).offset(0x91b);
     *fresh47 = (*fresh47) | (1u8);
@@ -3105,11 +3072,8 @@ pub unsafe fn RoomMainAsm_ScrollingSkyOcean(game: &mut Game) {
         game,
     );
 }
-static unk_88B08C: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-    field_0: 0x42 as uint8,
-    field_1: 0x11 as uint8,
-    addr: 0xb0ac as VoidP,
-};
+static unk_88B08C: SpawnHdmaObject_Args =
+    SpawnHdmaObject_Args::new(0x42 as uint8, 0x11 as uint8, 0xb0ac as VoidP);
 static kFirefleaFlashingShades: [uint16; 12] = [
     0, 0x100, 0x200, 0x300, 0x400, 0x500, 0x600, 0x500, 0x400, 0x300, 0x200, 0x100,
 ];
@@ -3262,26 +3226,14 @@ pub unsafe fn HandleEarthquakeSoundEffect(game: &mut Game) {
         set_ram_word!(game.earthquake_sfx_index = (v0).wrapping_add(4u16));
     }
 }
-static unk_88B289: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-    field_0: 0x42 as uint8,
-    field_1: 0x12 as uint8,
-    addr: 0xc3e1 as VoidP,
-};
-static unk_88B291: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-    field_0: 0x42 as uint8,
-    field_1: 0x10 as uint8,
-    addr: 0xc3f0 as VoidP,
-};
-static unk_88B2B1: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-    field_0: 0x42 as uint8,
-    field_1: 0x12 as uint8,
-    addr: 0xc3e1 as VoidP,
-};
-static unk_88B2B9: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-    field_0: 0x42 as uint8,
-    field_1: 0x10 as uint8,
-    addr: 0xc3f0 as VoidP,
-};
+static unk_88B289: SpawnHdmaObject_Args =
+    SpawnHdmaObject_Args::new(0x42 as uint8, 0x12 as uint8, 0xc3e1 as VoidP);
+static unk_88B291: SpawnHdmaObject_Args =
+    SpawnHdmaObject_Args::new(0x42 as uint8, 0x10 as uint8, 0xc3f0 as VoidP);
+static unk_88B2B1: SpawnHdmaObject_Args =
+    SpawnHdmaObject_Args::new(0x42 as uint8, 0x12 as uint8, 0xc3e1 as VoidP);
+static unk_88B2B9: SpawnHdmaObject_Args =
+    SpawnHdmaObject_Args::new(0x42 as uint8, 0x10 as uint8, 0xc3f0 as VoidP);
 pub unsafe fn FxTypeFunc_2_Lava(game: &mut Game) {
     set_ram_word!(game.fx_rising_function_bank_88 = ((0x88b343i32) as u16));
     set_ram_word!(game.lava_acid_y_pos = ram_word!(game, fx_base_y_pos));
@@ -3654,16 +3606,10 @@ pub unsafe fn Handle_LavaAcidBG2YScroll_Func3(v0: uint16, game: &mut Game) {
         }
     }
 }
-static unk_88C40F: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-    field_0: 0x42 as uint8,
-    field_1: 0x11 as uint8,
-    addr: 0xd856 as VoidP,
-};
-static unk_88C41F: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-    field_0: 0x42 as uint8,
-    field_1: 0xf as uint8,
-    addr: 0xd847 as VoidP,
-};
+static unk_88C40F: SpawnHdmaObject_Args =
+    SpawnHdmaObject_Args::new(0x42 as uint8, 0x11 as uint8, 0xd856 as VoidP);
+static unk_88C41F: SpawnHdmaObject_Args =
+    SpawnHdmaObject_Args::new(0x42 as uint8, 0xf as uint8, 0xd847 as VoidP);
 pub unsafe fn FxTypeFunc_6_Water(game: &mut Game) {
     set_ram_word!(game.fx_rising_function_bank_88 = ((0x88c428i32) as u16));
     set_ram_word!(game.fx_y_pos = ram_word!(game, fx_base_y_pos));
@@ -3899,11 +3845,8 @@ pub unsafe fn HdmaobjPreInstr_WaterBG2XScroll_Func1(k: uint16, game: &mut Game) 
     }
 }
 pub unsafe fn SpawnBG3ScrollHdmaObject(game: &mut Game) {
-    static unk_88D869: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0x43 as uint8,
-        field_1: 0x11 as uint8,
-        addr: 0xd8d0 as VoidP,
-    };
+    static unk_88D869: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0x43 as uint8, 0x11 as uint8, 0xd8d0 as VoidP);
     SpawnHdmaObjectToSlot0xA(
         0x88 as uint8,
         &raw const unk_88D869 as *const ::core::ffi::c_void,
@@ -3911,16 +3854,10 @@ pub unsafe fn SpawnBG3ScrollHdmaObject(game: &mut Game) {
     );
 }
 pub unsafe fn FxTypeFunc_28_CeresRidley(game: &mut Game) {
-    static unk_88D8E2: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0x40 as uint8,
-        field_1: 0x5 as uint8,
-        addr: 0xd906 as VoidP,
-    };
-    static unk_88D8EA: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0 as uint8,
-        field_1: 0x2c as uint8,
-        addr: 0xd91d as VoidP,
-    };
+    static unk_88D8E2: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0x40 as uint8, 0x5 as uint8, 0xd906 as VoidP);
+    static unk_88D8EA: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0 as uint8, 0x2c as uint8, 0xd91d as VoidP);
     SpawnHdmaObject(
         0x88 as uint8,
         &raw const unk_88D8E2 as *const ::core::ffi::c_void,
@@ -3936,11 +3873,8 @@ pub unsafe fn sub_88D916(game: &mut Game) {
     set_ram_word!(game.hdma_data_table_in_ceres = 9 as uint16);
 }
 pub unsafe fn FxTypeFunc_CeresElevator(game: &mut Game) {
-    static unk_88D92C: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0x40 as uint8,
-        field_1: 0x5 as uint8,
-        addr: 0xd939 as VoidP,
-    };
+    static unk_88D92C: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0x40 as uint8, 0x5 as uint8, 0xd939 as VoidP);
     SpawnHdmaObject(
         0x88 as uint8,
         &raw const unk_88D92C as *const ::core::ffi::c_void,
@@ -3956,11 +3890,8 @@ pub unsafe fn HdmaobjInstr_SetVideoMode1(
     hdp
 }
 pub unsafe fn FxTypeFunc_A_Rain(game: &mut Game) {
-    static unk_88D95C: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0x43 as uint8,
-        field_1: 0x11 as uint8,
-        addr: 0xd96c as VoidP,
-    };
+    static unk_88D95C: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0x43 as uint8, 0x11 as uint8, 0xd96c as VoidP);
     *(&raw mut game.g_ram as *mut uint8).offset(0x5b) = 92 as uint8;
     SpawnHdmaObject(
         0x88 as uint8,
@@ -4025,11 +3956,8 @@ pub unsafe fn HdmaobjPreInstr_RainBg3Scroll(k: uint16, game: &mut Game) {
 }
 pub unsafe fn FxTypeFunc_8_Spores(game: &mut Game) {
     *(&raw mut game.g_ram as *mut uint8).offset(0x5b) = 92 as uint8;
-    static unk_88DA1D: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0x42 as uint8,
-        field_1: 0x11 as uint8,
-        addr: 0xda2d as VoidP,
-    };
+    static unk_88DA1D: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0x42 as uint8, 0x11 as uint8, 0xda2d as VoidP);
     SpawnHdmaObject(
         0x88 as uint8,
         &raw const unk_88DA1D as *const ::core::ffi::c_void,
@@ -4072,11 +4000,8 @@ pub unsafe fn HdmaobjPreInstr_SporesBG3Xscroll(k: uint16, game: &mut Game) {
 }
 pub unsafe fn FxTypeFunc_C(game: &mut Game) {
     *(&raw mut game.g_ram as *mut uint8).offset(0x5b) = 92 as uint8;
-    static unk_88DB14: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0x43 as uint8,
-        field_1: 0x11 as uint8,
-        addr: 0xdb19 as VoidP,
-    };
+    static unk_88DB14: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0x43 as uint8, 0x11 as uint8, 0xdb19 as VoidP);
     SpawnHdmaObject(
         0x88 as uint8,
         &raw const unk_88DB14 as *const ::core::ffi::c_void,
@@ -4119,16 +4044,10 @@ pub unsafe fn HdmaobjPreInstr_FogBG3Scroll(k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn FxTypeFunc_26_TourianEntranceStatue(game: &mut Game) {
-    static unk_88DBBA: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0x42 as uint8,
-        field_1: 0x11 as uint8,
-        addr: 0xd856 as VoidP,
-    };
-    static unk_88DBC2: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0x42 as uint8,
-        field_1: 0x10 as uint8,
-        addr: 0xdcfa as VoidP,
-    };
+    static unk_88DBBA: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0x42 as uint8, 0x11 as uint8, 0xd856 as VoidP);
+    static unk_88DBC2: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0x42 as uint8, 0x10 as uint8, 0xdcfa as VoidP);
     if CheckEventHappened(0xa as uint16, game) as i32 & 1 as i32 != 0 {
         SpawnHardcodedPlm(
             SpawnHardcodedPlmArgs::new(0x6 as uint8, 0xc as uint8, 0xb777 as VoidP),
@@ -4277,16 +4196,10 @@ pub unsafe fn HdmaobjInstr_GotoIfEventHappened(
     }
 }
 pub unsafe fn SpawnBombTorizoHaze(game: &mut Game) {
-    static unk_88DD36: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0x2 as uint8,
-        field_1: 0x32 as uint8,
-        addr: 0xdd4a as VoidP,
-    };
-    static unk_88DD3E: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0 as uint8,
-        field_1: 0x32 as uint8,
-        addr: 0xdd62 as VoidP,
-    };
+    static unk_88DD36: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0x2 as uint8, 0x32 as uint8, 0xdd4a as VoidP);
+    static unk_88DD3E: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0 as uint8, 0x32 as uint8, 0xdd62 as VoidP);
     SpawnHdmaObject(
         0x88 as uint8,
         &raw const unk_88DD36 as *const ::core::ffi::c_void,
@@ -4302,16 +4215,10 @@ pub unsafe fn HdmaobjPreInstr_BombTorizoHazeColorMathBgColor(k: uint16, game: &m
     set_ram_word!(game.fx_layer_blending_config_c = 44 as uint16);
 }
 pub unsafe fn FxTypeFunc_2C_Haze(game: &mut Game) {
-    static unk_88DDD4: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0x40 as uint8,
-        field_1: 0x32 as uint8,
-        addr: 0xded3 as VoidP,
-    };
-    static unk_88DDDD: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0x40 as uint8,
-        field_1: 0x32 as uint8,
-        addr: 0xdeeb as VoidP,
-    };
+    static unk_88DDD4: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0x40 as uint8, 0x32 as uint8, 0xded3 as VoidP);
+    static unk_88DDDD: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0x40 as uint8, 0x32 as uint8, 0xdeeb as VoidP);
     if CheckBossBitForCurArea(1 as uint16, game) as i32 & 1 as i32 != 0 {
         SpawnHdmaObject(
             0x88 as uint8,
@@ -4414,21 +4321,12 @@ pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_FadingOut(k: uint16, game: 
         *fresh83 = (*fresh83).wrapping_sub(1);
     }
 }
-static unk_88DF38: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-    field_0: 0 as uint8,
-    field_1: 0x2c as uint8,
-    addr: 0xdf4f as VoidP,
-};
-static unk_88DF41: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-    field_0: 0 as uint8,
-    field_1: 0x2c as uint8,
-    addr: 0xdf6b as VoidP,
-};
-static unk_88DF4A: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-    field_0: 0x2 as uint8,
-    field_1: 0x12 as uint8,
-    addr: 0xdf77 as VoidP,
-};
+static unk_88DF38: SpawnHdmaObject_Args =
+    SpawnHdmaObject_Args::new(0 as uint8, 0x2c as uint8, 0xdf4f as VoidP);
+static unk_88DF41: SpawnHdmaObject_Args =
+    SpawnHdmaObject_Args::new(0 as uint8, 0x2c as uint8, 0xdf6b as VoidP);
+static unk_88DF4A: SpawnHdmaObject_Args =
+    SpawnHdmaObject_Args::new(0x2 as uint8, 0x12 as uint8, 0xdf77 as VoidP);
 pub unsafe fn sub_88DF34(game: &mut Game) {
     SpawnHdmaObject(
         0x88 as uint8,
@@ -5012,11 +4910,8 @@ pub unsafe fn HdmaobjPreInstr_E449(k: uint16, game: &mut Game) {
         set_ram_word!(game.fx_layer_blending_config_c = 4 as uint16);
     };
 }
-static unk_88E4A0: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-    field_0: 0x42 as uint8,
-    field_1: 0xf as uint8,
-    addr: 0xe4a8 as VoidP,
-};
+static unk_88E4A0: SpawnHdmaObject_Args =
+    SpawnHdmaObject_Args::new(0x42 as uint8, 0xf as uint8, 0xe4a8 as VoidP);
 pub unsafe fn sub_88E487(v0: uint16, r22: uint16, game: &mut Game) {
     (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(2))
         .parameter_1 = v0;
@@ -5310,16 +5205,10 @@ pub unsafe fn HdmaobjPreInstr_E567(v0: uint16, game: &mut Game) {
         set_ram_word!(game.hdma_object_instruction_timers[v1] = 1 as uint16);
     };
 }
-static unk_88E722: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-    field_0: 0 as uint8,
-    field_1: 0x2c as uint8,
-    addr: 0xe727 as VoidP,
-};
-static unk_88E74C: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-    field_0: 0x41 as uint8,
-    field_1: 0x26 as uint8,
-    addr: 0xe751 as VoidP,
-};
+static unk_88E722: SpawnHdmaObject_Args =
+    SpawnHdmaObject_Args::new(0 as uint8, 0x2c as uint8, 0xe727 as VoidP);
+static unk_88E74C: SpawnHdmaObject_Args =
+    SpawnHdmaObject_Args::new(0x41 as uint8, 0x26 as uint8, 0xe751 as VoidP);
 pub unsafe fn MotherBrainRisingHdmaObject(game: &mut Game) -> uint16 {
     SpawnHdmaObject(
         0x88 as uint8,
@@ -5392,11 +5281,8 @@ pub unsafe fn sub_88E7ED(game: &mut Game) {
         ((v0 as i32 >> 2 as i32) as uint16 as i32 >> 8 as i32 & 0x1f as i32 | 0x80 as i32) as uint8;
 }
 pub unsafe fn SpawnMorphBallEyeBeamHdma(game: &mut Game) {
-    static unk_88E8E4: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0x41 as uint8,
-        field_1: 0x26 as uint8,
-        addr: 0xe8ec as VoidP,
-    };
+    static unk_88E8E4: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0x41 as uint8, 0x26 as uint8, 0xe8ec as VoidP);
     SpawnHdmaObject(
         0x88 as uint8,
         &raw const unk_88E8E4 as *const ::core::ffi::c_void,
@@ -5573,16 +5459,10 @@ pub unsafe fn HdmaobjPreInstr_MorphBallEyeBeamFading(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn SpawnTitleScreenGradientObjs(game: &mut Game) {
-    static unk_88EB6B: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0 as uint8,
-        field_1: 0x31 as uint8,
-        addr: 0xeb85 as VoidP,
-    };
-    static unk_88EB63: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0 as uint8,
-        field_1: 0x32 as uint8,
-        addr: 0xeb73 as VoidP,
-    };
+    static unk_88EB6B: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0 as uint8, 0x31 as uint8, 0xeb85 as VoidP);
+    static unk_88EB63: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0 as uint8, 0x32 as uint8, 0xeb73 as VoidP);
     SpawnHdmaObject(
         0x88 as uint8,
         &raw const unk_88EB63 as *const ::core::ffi::c_void,
@@ -5623,11 +5503,8 @@ pub unsafe fn HdmaobjPreInstr_ColorMathControlB_TitleGradient(k: uint16, game: &
     }
 }
 pub unsafe fn SpawnIntroCutsceneCrossfadeHdma(game: &mut Game) {
-    static unk_88EBFB: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0 as uint8,
-        field_1: 0x31 as uint8,
-        addr: 0xec03 as VoidP,
-    };
+    static unk_88EBFB: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0 as uint8, 0x31 as uint8, 0xec03 as VoidP);
     SpawnHdmaObject(
         0x88 as uint8,
         &raw const unk_88EBFB as *const ::core::ffi::c_void,
@@ -5672,11 +5549,8 @@ pub unsafe fn CinematicFunction_Intro_Func133(game: &mut Game) {
         as *mut uint16) = v1 as uint16;
     set_ram_word!(game.button_config_aim_down_L_saved = -(26496 as i32) as uint16);
     set_ram_word!(game.button_config_aim_up_R_saved = 0 as uint16);
-    static unk_88EC82: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
-        field_0: 0x42 as uint8,
-        field_1: 0x11 as uint8,
-        addr: 0xec8a as VoidP,
-    };
+    static unk_88EC82: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0x42 as uint8, 0x11 as uint8, 0xec8a as VoidP);
     SpawnHdmaObject(
         0x88 as uint8,
         &raw const unk_88EC82 as *const ::core::ffi::c_void,
