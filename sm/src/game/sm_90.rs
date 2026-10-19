@@ -926,43 +926,25 @@ pub unsafe fn Samus_Animate(game: &mut Game) {
     }
 }
 pub unsafe fn Samus_Animate_NoFx(game: &mut Game) {
-    let mut r18: uint16 = Samus_GetBottom_R18(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa9c as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xa66 as ::core::ffi::c_int as isize) as *mut uint16);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xad2 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xad2 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            & 1 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
-        {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xad2 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
-            QueueSfx2_Max6(0xe as uint16, game);
-            if *((&raw mut game.g_ram as *mut uint8).offset(0xa74 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                & 4 as ::core::ffi::c_int
-                == 0 as ::core::ffi::c_int
-                && (*(&raw mut game.g_ram as *mut uint8)
-                    .offset(0xa1f as ::core::ffi::c_int as isize)
-                    as ::core::ffi::c_int
-                    == 3 as ::core::ffi::c_int
-                    || *(&raw mut game.g_ram as *mut uint8)
-                        .offset(0xa1f as ::core::ffi::c_int as isize)
-                        as ::core::ffi::c_int
-                        == 20 as ::core::ffi::c_int)
-            {
-                QueueSfx1_Max6(0x30 as uint16, game);
-            }
-            Samus_SpawnWaterSplash(r18, game);
-        } else {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xad2 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
-        }
+    let bottom = Samus_GetBottom_R18(game);
+    let speed_divisor = u16::from_le_bytes([game.g_ram[0xa66], game.g_ram[0xa67]]);
+    game.g_ram[0xa9c..0xa9e].copy_from_slice(&speed_divisor.to_le_bytes());
+
+    let liquid_physics = u16::from_le_bytes([game.g_ram[0xad2], game.g_ram[0xad3]]);
+    if liquid_physics == 0 {
+        return;
     }
+    game.g_ram[0xad2..0xad4].copy_from_slice(&0u16.to_le_bytes());
+    if liquid_physics & 1 == 0 {
+        return;
+    }
+
+    QueueSfx2_Max6(0xe, game);
+    let suit_palette = u16::from_le_bytes([game.g_ram[0xa74], game.g_ram[0xa75]]);
+    if suit_palette & 4 == 0 && matches!(game.samus_movement_type(), 3 | 20) {
+        QueueSfx1_Max6(0x30, game);
+    }
+    Samus_SpawnWaterSplash(bottom, game);
 }
 pub unsafe fn Samus_Animate_WaterFx(game: &mut Game) {
     static kSamusPhys_AnimDelayInWater: uint16 = 3 as uint16;

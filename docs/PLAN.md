@@ -13743,6 +13743,38 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Samus no-FX animation state (2026-10-19): use byte-backed word reads and
+writes for the animation buffer, liquid state and suit palette, plus the
+existing movement-byte accessor. The bottom-position call still precedes
+the animation-buffer store. Zero liquid exits immediately; nonzero liquid
+is cleared before testing its saved low bit. Sound 2 precedes the live
+palette/movement test, optional spin sound and splash, in the original order.
+All called routines and the other animation handlers remain unchanged.
+
+Frozen 665841c5 plus this source passes clean any% 129712/0 (191.48s).
+Contextual old/current comparisons match complete 128 KiB RAM, g_fail and
+complete RAM at each direct callback entry, including order and arguments:
+any% 45824 calls / 129712 frames (196.01s), Waver 34147 calls /
+58109 frames (99.04s), native exits 0. All movie calls take the dry branch;
+liquid reset, splash and spin-sound paths have only constructed coverage.
+Clean and observed any% non-timing diagnostics match; exact observation
+stripping and maintained source identity pass. The call closure reads ROM
+and mutates RAM/g_fail only, which are restored between old/current calls.
+
+262592 constructed comparisons pass using actual unchanged callees: every
+16-bit liquid value across four state profiles, plus all 28 valid movement
+bytes with four liquid and four palette values. The cases cover buffer
+word boundaries, sound gates, splash/bubble effects and high liquid bits.
+The restored movie continues for 10000 frames with zero failures (47.22s).
+Testing liquid equality instead of its low bit, inverting the sound gate
+and moving the buffer store before the bottom callback are all detected;
+the last fault preserves final RAM but changes callback-entry RAM.
+
+Cargo format/check, release --locked and progress pass. Own raw offsets -9,
+cast lines -19 and Rust lines -18; other counters are unchanged. Temporary
+scripts/builds are removed; no probes or ROM-derived fixtures are committed.
+Remaining animation cleanup and broader gameplay/credits coverage stay open.
+
 Save-station trigger cleanup (2026-10-19): PlmSetup_B76B_SaveStationTrigger
 now uses byte-backed words and named Samus accessors, with an explicit
 descending40-slot search. Power-bomb-status, pose, lockout and collision
