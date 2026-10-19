@@ -148,29 +148,33 @@ No maintained source or own residue counters change in this quality check.
 Later Cargo-profile and gameplay changes retain separate verification;
 full gameplay/credits, hardware/audio coverage and remaining masks stay open.
 
-Latest focused check: frozen `6fc29b99` plus the byte-backed six-slot
-NMI HDMA pointer loop passes any% 129712/0 (260.99s) and Waver 58109/0
-(123.86s), both native exits 0. Full-word active masks, low-byte bank-slot
-offsets, live table-pointer reads and ordered A1T low/high writes retain
-their meaning. No enable gate, channel masking or DMA execution is added.
-The 15000/0 Waver prefix passes 15000 actual old/current loop comparisons:
-18437 pointer writes and 36874 register-byte writes, with active slot counts
-9344/4631/1347/0/0/3115. RAM and captured hardware state match after checked
-restoration; the loop performs no bus reads. All 270 constructed controls
-pass 328 pointer writes and 656 bytes, including 300 ignored-register writes.
-They cover all 256 low/high bank-slot byte values, 255 high-only masks,
-duplicate/overlapping targets and register-boundary crossings. Slots 3/4 and
-unusual register offsets have constructed coverage only.
+Latest focused check: frozen `f5779bd3` plus named byte-backed NMI gates
+and counters passes any% 129712/0 (244.74s) and Waver 58109/0 (103.08s),
+both native exits 0. Entry-branch selection, exact-byte Mode 7 tests, late
+HDMA-enable/counter reads and ordered independent byte/word wraps are retained.
+Constructed old/current controls compare full RAM, g_fail and callback/register
+traces: all 65536 missed/max byte pairs and 16 targeted cases pass. They cover
+independent wraps, exact 7 versus 0x87 gates, callback mutations and a real empty
+write-queue sentinel at tail 0x04E4 that clears waiting and the byte counter.
 
-Separate full baseline replays pass any% 129712/0 and Waver 58109/0.
-Their 129712/56100 read-queue calls have zero tails, entries and DMA bytes;
-player X-ray and Kraid-pause read-queue cleanup remains held for actual route
-coverage. The read-queue implementation is unchanged. Frozen source/input
-hashes, exact observation stripping and independent review pass. The live
-HDMA loop equals the tested source; concurrent boss-mask scratch stores are
-outside this frozen check and retain separate verification. Formatting,
-release build (35.72s) and progress pass. Own raw offsets -3, cast lines -8
-and Rust lines -12; other own counters unchanged.
+The observed Waver replay passes 58109/0 (122.76s): 2009 waiting-false and
+56100 active NMIs, with all 58109 actual eight-byte epilogues matching expected
+updates. Mode bins none/current-7/fake-7/both-7 are 14493/455/39378/1774;
+41607 Mode 7 calls execute. Natural byte/missed-counter wraps are 218/6,
+and missed/max comparisons below/equal/above are 1749/5/255. Word wraps,
+raw 0x87 gates and callback changes to waiting/the byte counter have constructed
+coverage only. This distinguishes controls using substituted callbacks from actual
+movie epilogue observation. Full hardware callbacks are unchanged.
+
+Frozen source/input/DLL hashes, exact observation stripping, live Vector_NMI
+identity and independent review pass. Prior full-route observation found no
+VRAM read-queue transfers; that cleanup remains held for actual player X-ray
+or Kraid-pause coverage. Formatting, release build (1m06s) and progress pass.
+Own raw offsets -13, cast lines -20 and Rust lines -3; other own counters are
+unchanged. Shared export/no_mangle/unsafe totals rise from concurrent verifier
+checkpoint and execution-requirement work (+1/+1/+6), with additional Rust
+source for those features. That work and concurrent boss-state edits are
+outside this frozen check and retain separate verification.
 
 Independent quality audit (2026-10-19): the room-header clean snapshot's
 68 source/config/host files match frozen 60e3fb2a plus exactly c1554368's

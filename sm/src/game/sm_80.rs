@@ -2371,7 +2371,17 @@ pub unsafe fn ReadJoypadInputs(game: &mut Game) {
     }
 }
 pub unsafe fn Vector_NMI(game: &mut Game) {
-    if *(&raw mut game.g_ram as *mut uint8).offset(0x5b4 as ::core::ffi::c_int as isize) != 0 {
+    const BG_MODE: usize = 0x55;
+    const BG_MODE_FAKE: usize = 0x56;
+    const HDMA_ENABLE: usize = 0x85;
+    const WAITING_FOR_NMI: usize = 0x5b4;
+    const FRAME_COUNTER_BYTE: usize = 0x5b5;
+    const FRAME_COUNTER_WORD: usize = 0x5b6;
+    const FRAME_COUNTER_INCLUDING_LAG: usize = 0x5b8;
+    const FRAMES_MISSED: usize = 0x5ba;
+    const FRAMES_MISSED_MAX: usize = 0x5bb;
+
+    if game.g_ram[WAITING_FOR_NMI] != 0 {
         NmiUpdatePalettesAndOam(game);
         NmiTransferSamusToVram(game);
         NmiProcessAnimtilesVramTransfers(game);
@@ -2388,48 +2398,35 @@ pub unsafe fn Vector_NMI(game: &mut Game) {
                 WriteRegWord(A1T0L as u16 + bank_slot, table_pointer, game);
             }
         }
-        if *(&raw mut game.g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize)
-            as ::core::ffi::c_int
-            == 7 as ::core::ffi::c_int
-            || *(&raw mut game.g_ram as *mut uint8).offset(0x56 as ::core::ffi::c_int as isize)
-                as ::core::ffi::c_int
-                == 7 as ::core::ffi::c_int
-        {
+        if game.g_ram[BG_MODE] == 7 || game.g_ram[BG_MODE_FAKE] == 7 {
             NMI_ProcessMode7Queue(game);
         }
         NMI_ProcessVramWriteQueue(game);
         NMI_ProcessVramReadQueue(game);
-        WriteReg(
-            HDMAEN as ::core::ffi::c_int as uint16,
-            *(&raw mut game.g_ram as *mut uint8).offset(0x85 as ::core::ffi::c_int as isize),
-            game,
-        );
-        *(&raw mut game.g_ram as *mut uint8).offset(0x5b4 as ::core::ffi::c_int as isize) =
-            0 as uint8;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x5ba as ::core::ffi::c_int as isize) =
-            0 as uint8;
-        let ref mut fresh95 =
-            *(&raw mut game.g_ram as *mut uint8).offset(0x5b5 as ::core::ffi::c_int as isize);
-        *fresh95 = (*fresh95).wrapping_add(1);
-        let ref mut fresh96 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x5b6 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        *fresh96 = (*fresh96).wrapping_add(1);
+        WriteReg(HDMAEN as u16, game.g_ram[HDMA_ENABLE], game);
+        game.g_ram[WAITING_FOR_NMI] = 0;
+        game.g_ram[FRAMES_MISSED] = 0;
+        game.g_ram[FRAME_COUNTER_BYTE] = game.g_ram[FRAME_COUNTER_BYTE].wrapping_add(1);
+        let frame_counter = u16::from_le_bytes([
+            game.g_ram[FRAME_COUNTER_WORD],
+            game.g_ram[FRAME_COUNTER_WORD + 1],
+        ])
+        .wrapping_add(1);
+        game.g_ram[FRAME_COUNTER_WORD..FRAME_COUNTER_WORD + 2]
+            .copy_from_slice(&frame_counter.to_le_bytes());
     } else {
-        let ref mut fresh97 =
-            *(&raw mut game.g_ram as *mut uint8).offset(0x5ba as ::core::ffi::c_int as isize);
-        *fresh97 = (*fresh97).wrapping_add(1);
-        if *fresh97 as ::core::ffi::c_int
-            >= *(&raw mut game.g_ram as *mut uint8).offset(0x5bb as ::core::ffi::c_int as isize)
-                as ::core::ffi::c_int
-        {
-            *(&raw mut game.g_ram as *mut uint8).offset(0x5bb as ::core::ffi::c_int as isize) =
-                *(&raw mut game.g_ram as *mut uint8).offset(0x5ba as ::core::ffi::c_int as isize);
+        game.g_ram[FRAMES_MISSED] = game.g_ram[FRAMES_MISSED].wrapping_add(1);
+        if game.g_ram[FRAMES_MISSED] >= game.g_ram[FRAMES_MISSED_MAX] {
+            game.g_ram[FRAMES_MISSED_MAX] = game.g_ram[FRAMES_MISSED];
         }
     }
-    let ref mut fresh98 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x5b8 as ::core::ffi::c_int as isize) as *mut uint16);
-    *fresh98 = (*fresh98).wrapping_add(1);
+    let frame_counter = u16::from_le_bytes([
+        game.g_ram[FRAME_COUNTER_INCLUDING_LAG],
+        game.g_ram[FRAME_COUNTER_INCLUDING_LAG + 1],
+    ])
+    .wrapping_add(1);
+    game.g_ram[FRAME_COUNTER_INCLUDING_LAG..FRAME_COUNTER_INCLUDING_LAG + 2]
+        .copy_from_slice(&frame_counter.to_le_bytes());
 }
 pub unsafe fn CopyToVramNow(
     mut vram_dst: uint16,
