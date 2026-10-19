@@ -31,10 +31,10 @@ static cyclesPerOpcode: [u8; 256] = [
     2, 6, 3, 4, 3, 3, 5, 6, 2, 2, 2, 3, 4, 4, 6, 5, 2, 5, 5, 7, 6, 4, 6, 6, 2, 4, 3, 3, 6, 4, 7, 5,
     2, 6, 3, 4, 3, 3, 5, 6, 2, 2, 2, 3, 4, 4, 6, 5, 2, 5, 5, 7, 5, 4, 6, 6, 2, 4, 4, 2, 8, 4, 7, 5,
 ];
-unsafe fn read_byte(mut cpu: *mut Cpu, mut adr: u32, game: &mut Game) -> u8 {
+unsafe fn read_byte(cpu: *mut Cpu, adr: u32, game: &mut Game) -> u8 {
     return snes_cpuRead((*cpu).mem as *mut Snes, adr, game);
 }
-unsafe fn write_byte(mut cpu: *mut Cpu, mut adr: u32, mut val: u8, game: &mut Game) {
+unsafe fn write_byte(cpu: *mut Cpu, adr: u32, val: u8, game: &mut Game) {
     snes_cpuWrite((*cpu).mem as *mut Snes, adr, val, game);
 }
 pub unsafe fn cpu_init(
@@ -1377,8 +1377,8 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0x5c => {
-                let mut value_1: u16 = fetch_word(cpu, game);
-                let mut new_k: u8 = fetch_byte(cpu, game);
+                let value_1: u16 = fetch_word(cpu, game);
+                let new_k: u8 = fetch_byte(cpu, game);
                 if new_k as ::core::ffi::c_int == 0x80 as ::core::ffi::c_int
                     && value_1 as ::core::ffi::c_int == 0x8573 as ::core::ffi::c_int
                 {
@@ -2251,7 +2251,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0xf4 => {
-                let mut w: u16 = fetch_word(cpu, game);
+                let w: u16 = fetch_word(cpu, game);
                 if w as ::core::ffi::c_int == 0xc2ae as ::core::ffi::c_int {
                     (*cpu).y = 0 as u16;
                 }

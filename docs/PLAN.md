@@ -8747,6 +8747,16 @@ still lacks SDL2. Live CPU matches verified source; intervening `291deeea`
 changes only PLAN. Cast lines -9, Rust lines -4; other counters unchanged.
 Complete gameplay and rendering/audio remain open.
 
+CPU immutable bus/operand bindings (2026-10-19): remove eight unnecessary
+mutable bindings from read_byte/write_byte arguments and JML/PEA fetched
+operands. Restoring those eight tokens reproduces frozen HEAD `6cfb1761`
+exactly; expressions and access order are unchanged. Prefix 3,600/0 (1.11s)
+executes read/write byte 26,857,057/4,295,895 and JML/PEA 3,664/22,680 times.
+Clean full any% 129,712/0 (59.63s), native exit 0. Cargo fmt/check, release
+library, normal metadata and optimized core/DLL builds pass; full frontend
+linking still lacks SDL2. Live CPU matches verified source. All progress
+counters unchanged. Complete gameplay and rendering/audio remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
