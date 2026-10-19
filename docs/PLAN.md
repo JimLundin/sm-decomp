@@ -35,7 +35,7 @@ Same-type casts (2026-10-20): release Clippy across all targets identifies
 1219 redundant primitive-integer/raw-pointer casts across 36 files. Removing
 only each cast suffix retains the exact operand, grouping, pointer constness,
 macro invocation and evaluation position. Eight platform-dependent c_long
-chains and two unsuffixed-literal casts remain outside this batch. Duplicate
+chains and two integer-literal casts remain outside this batch. Duplicate
 library/example diagnostics are deduplicated by source span.
 
 Whole-source reconstruction and release Clippy pass; only the deliberate
@@ -2283,42 +2283,45 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `f173c9e4` shares 147 typed RAM-getter
-declarations through one macro, in 33 groups across 25 callers. Independent
-whole-source reconstruction accounts for all 26 changed files and the complete
-AST inventory of eligible getter bodies. All signatures, private visibility,
-inline attributes, return types and ordered byte offsets remain exact: 123
-successive-offset and 24 single-offset bodies, with 146 i32 indices and one u16.
+Latest reviewed integration (2026-10-20): `07e30047` removes 1219 same-type
+casts across 36 files: 1070 raw-pointer casts and 149 scalar casts (25 u32,
+35 u16, 72 i32 and 17 u8). Independent reconstruction binds all 70 committed
+Rust/Cargo inputs to the frozen candidate and all 67 replay sources. Every
+edit removes only a cast suffix and preserves operand grouping, macro calls
+and evaluation position; all 72 replay pins remain exact.
 
-The saved compiler expansion is independently bound to the actual macro and
-all declarations. Every generated function matches its original tokens after
-24 identity byte-pointer casts, six optional signature commas and qualified
-Game/u8 names are normalized. All caller Game imports bind the maintained
-type, with no Game/u8 declaration or import shadows. The complete original
-ram_map prefix, including metadata and existing macros, remains unchanged.
+Clippy marks 139 selected suggestions MachineApplicable and 1080
+MaybeIncorrect: all 1070 pointer suggestions and ten RAM-word expansions.
+The latter retain their original ram_word invocations, whose result is u16;
+Clippy's expanded replacement text is not inserted. Pointer types/constness
+match, and scalar declarations, SDL aliases and fixed-width fields retain
+their types. The eight platform-dependent c_long chains and two integer-literal
+casts remain excluded; final release Clippy reports only those ten sites.
 
-All 73 committed inputs match the reviewed candidate; all 78 replay pins and
-the actual-helper hash remain stable. Normal release (23.32s), formatting/check
-and progress pass. Full any% passes 129712/0 (109.28s wall, 109.14s replay),
-native exit 0. Disk exhaustion stopped the first host-build attempt before any
-movie started; recovery retained the completed release and enabled the single
-successful replay. Review reused those completed checks.
+Normal release, formatting and progress pass. The completed any% replay passes
+129712/0 (109.64s), native exit 0; review reused the build and replay. Net Rust
+lines -412, total 143151, with 1219 actual casts removed; the cast-line counter
+falls only 65. Raw RAM accesses and unsafe-function counts remain unchanged.
+The movie covers core gameplay, with zero ending/credits-state frames; frontend
+changes are compiler-checked. Broader readability, frontend execution, credits
+coverage and pointer/alias safety remain incomplete.
 
-Net Rust lines -642, total 143563. Source counters fall 146 unsafe declarations,
-147 raw-offset expressions and 316 cast spellings through shared declaration
-syntax. All 147 generated getters and raw pointer constructions remain; this
-is not a reduction in runtime unsafe operations. The expansion drops only the
-24 identity pointer casts. No additional whole-Game borrow or RAM-layout change
-is introduced, and general pointer validity and alias safety remain open.
+Included `f173c9e4` getter declarations retain their independent whole-source,
+complete-family AST and actual compiler-expansion review: 147 private inline
+getters in 33 groups, 123 successive-offset and 24 single-offset bodies. Their
+signatures, ordered offsets and caller types are exact; the macro removes only
+24 identity byte-pointer casts. All 73 getter inputs and 78 replay pins were
+stable; release and any% 129712/0 (109.28s wall, 109.14s replay) passed. Its
+source-counter reductions represent shared syntax, not fewer runtime unsafe
+operations. The original ram_map prefix and metadata remain exact.
 
 The included `037d589f` ROM-wrapper, `b9655531` negative-constant and `72072fd5`
 HDMA reviews retain their independent source bindings and successful builds and
-any% runs. The wrapper batch removes 69 actual casts, versus 63 `as` spellings
+any% runs. The wrapper batch removes 69 actual casts, versus 63 as spellings
 because six import aliases were added. Earlier focused checks retain their
 limits, including HDMA's excluded out-of-allocation i32 tail domain and incomplete
-joint-state coverage. Broader readability, frontend execution and full credits
-remain incomplete. This movie has zero ending/credits-state frames and does not
-establish execution coverage for every getter, explosion variant or ROM caller.
+joint-state coverage. No execution coverage for every getter, explosion variant
+or ROM caller is claimed.
 
 The prior `2ddf3af0` shares all twelve corpse
 tile initializers. Independent reconstruction accounts for all 50 ordered
