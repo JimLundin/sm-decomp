@@ -346,17 +346,11 @@ unsafe fn spc_shift_memory<const RIGHT: bool, const ROTATE: bool>(spc: *mut Spc,
     spc_write(spc, address, result);
     spc_setZN(spc, result);
 }
-unsafe fn spc_inc(mut spc: *mut Spc, mut adr: uint16_t) {
-    let mut val: uint8_t =
-        (spc_read(spc, adr) as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint8_t;
-    spc_write(spc, adr, val);
-    spc_setZN(spc, val);
-}
-unsafe fn spc_dec(mut spc: *mut Spc, mut adr: uint16_t) {
-    let mut val: uint8_t =
-        (spc_read(spc, adr) as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint8_t;
-    spc_write(spc, adr, val);
-    spc_setZN(spc, val);
+unsafe fn spc_step_memory(spc: *mut Spc, address: u16, increment: bool) {
+    let value = spc_read(spc, address);
+    let result = value.wrapping_add_signed(if increment { 1 } else { -1 });
+    spc_write(spc, address, result);
+    spc_setZN(spc, result);
 }
 unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
     match opcode as ::core::ffi::c_int {
@@ -485,14 +479,15 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
             let mut dst_1: uint16_t = spc_adrIndInd(spc, &raw mut src_1);
             spc_logic_memory(spc, dst_1, src_1, opcode);
         }
-        26 => {
-            let mut low: uint16_t = 0 as uint16_t;
-            let mut high: uint16_t = spc_adrDpWord(spc, &raw mut low);
-            let mut value: uint16_t = (spc_readWord(spc, low, high) as ::core::ffi::c_int
-                - 1 as ::core::ffi::c_int) as uint16_t;
-            (*spc).z = value as ::core::ffi::c_int == 0 as ::core::ffi::c_int;
-            (*spc).n = value as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0;
-            spc_writeWord(spc, low, high, value);
+        26 | 58 => {
+            let mut low = 0;
+            let high = spc_adrDpWord(spc, &raw mut low);
+            let value = spc_readWord(spc, low, high);
+            let result = value.wrapping_add_signed(if opcode & 0x20 != 0 { 1 } else { -1 });
+            // Word steps update flags before the low/high bus writes.
+            (*spc).z = result == 0;
+            (*spc).n = result & 0x8000 != 0;
+            spc_writeWord(spc, low, high, result);
         }
         27 => {
             spc_shift_memory::<false, false>(spc, spc_adrDpx(spc));
@@ -503,8 +498,10 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
             (*spc).a = result;
             spc_setZN(spc, (*spc).a);
         }
-        29 => {
-            (*spc).x = (*spc).x.wrapping_sub(1);
+        29 | 61 => {
+            (*spc).x = (*spc)
+                .x
+                .wrapping_add_signed(if opcode & 0x20 != 0 { 1 } else { -1 });
             spc_setZN(spc, (*spc).x);
         }
         30 => {
@@ -554,15 +551,6 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
         48 => {
             spc_doBranch(spc, spc_readOpcode(spc), (*spc).n);
         }
-        58 => {
-            let mut low_0: uint16_t = 0 as uint16_t;
-            let mut high_0: uint16_t = spc_adrDpWord(spc, &raw mut low_0);
-            let mut value_0: uint16_t = (spc_readWord(spc, low_0, high_0) as ::core::ffi::c_int
-                + 1 as ::core::ffi::c_int) as uint16_t;
-            (*spc).z = value_0 as ::core::ffi::c_int == 0 as ::core::ffi::c_int;
-            (*spc).n = value_0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0;
-            spc_writeWord(spc, low_0, high_0, value_0);
-        }
         59 => {
             spc_shift_memory::<false, true>(spc, spc_adrDpx(spc));
         }
@@ -571,10 +559,6 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
             (*spc).a = result;
             (*spc).c = carry;
             spc_setZN(spc, (*spc).a);
-        }
-        61 => {
-            (*spc).x = (*spc).x.wrapping_add(1);
-            spc_setZN(spc, (*spc).x);
         }
         62 => {
             spc_compare_register::<1>(spc, spc_adrDp(spc));
@@ -787,11 +771,11 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
             let mut dst_13: uint16_t = spc_adrDpDp(spc, &raw mut src_11);
             spc_arithmetic_memory(spc, dst_13, src_11, opcode & 0x20 != 0);
         }
-        139 => {
-            spc_dec(spc, spc_adrDp(spc));
+        139 | 171 => {
+            spc_step_memory(spc, spc_adrDp(spc), opcode & 0x20 != 0);
         }
-        140 => {
-            spc_dec(spc, spc_adrAbs(spc));
+        140 | 172 => {
+            spc_step_memory(spc, spc_adrAbs(spc), opcode & 0x20 != 0);
         }
         141 => {
             spc_move_memory::<2>(spc, spc_adrImm(spc), false);
@@ -856,11 +840,13 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
             (*spc).a = (result_5 & 0xff as ::core::ffi::c_int) as uint8_t;
             (*spc).y = (result_5 >> 8 as ::core::ffi::c_int) as uint8_t;
         }
-        155 => {
-            spc_dec(spc, spc_adrDpx(spc));
+        155 | 187 => {
+            spc_step_memory(spc, spc_adrDpx(spc), opcode & 0x20 != 0);
         }
-        156 => {
-            (*spc).a = (*spc).a.wrapping_sub(1);
+        156 | 188 => {
+            (*spc).a = (*spc)
+                .a
+                .wrapping_add_signed(if opcode & 0x20 != 0 { 1 } else { -1 });
             spc_setZN(spc, (*spc).a);
         }
         157 => {
@@ -893,12 +879,6 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
         160 => {
             (*spc).i = true_0 != 0;
         }
-        171 => {
-            spc_inc(spc, spc_adrDp(spc));
-        }
-        172 => {
-            spc_inc(spc, spc_adrAbs(spc));
-        }
         173 => {
             spc_compare_register::<2>(spc, spc_adrImm(spc));
         }
@@ -920,13 +900,6 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
             (*spc).y = (val_5 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint8_t;
             (*spc).z = val_5 as ::core::ffi::c_int == 0 as ::core::ffi::c_int;
             (*spc).n = val_5 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0;
-        }
-        187 => {
-            spc_inc(spc, spc_adrDpx(spc));
-        }
-        188 => {
-            (*spc).a = (*spc).a.wrapping_add(1);
-            spc_setZN(spc, (*spc).a);
         }
         189 => {
             (*spc).sp = (*spc).x;
@@ -1018,8 +991,10 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
         219 | 251 => {
             spc_move_memory::<2>(spc, spc_adrDpx(spc), opcode & 0x20 == 0);
         }
-        220 => {
-            (*spc).y = (*spc).y.wrapping_sub(1);
+        220 | 252 => {
+            (*spc).y = (*spc)
+                .y
+                .wrapping_add_signed(if opcode & 0x20 != 0 { 1 } else { -1 });
             spc_setZN(spc, (*spc).y);
         }
         221 => {
@@ -1076,10 +1051,6 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
             let mut dst_20: uint16_t = spc_adrDpDp(spc, &raw mut src_18);
             let mut val_7: uint8_t = spc_read(spc, src_18);
             spc_write(spc, dst_20, val_7);
-        }
-        252 => {
-            (*spc).y = (*spc).y.wrapping_add(1);
-            spc_setZN(spc, (*spc).y);
         }
         253 => {
             (*spc).y = (*spc).a;

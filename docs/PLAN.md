@@ -19321,6 +19321,35 @@ block-reaction and projectile work retains its own verification. No probe
 or ROM-derived artifact committed. Neither movie reaches credits; broader
 readability, full progression and hardware/audio completion remain open.
 
+SPC increment/decrement family (2026-10-19): normalized jscpd and
+complete CST routines/dispatch arms select both byte-memory helpers and
+all fourteen byte-memory/register/word opcode arms. Seven paired arms use
+opcode bit 5 for increment versus decrement. Native wrapping addition of
+signed one preserves byte and word truncation. One byte-memory core replaces
+two copies and retains read/write/Z/N order. Register steps assign before
+Z/N. Word steps retain address/read order and set Z/N before low/high writes.
+Cycle entries and all other flags/registers remain exact. Decrement-and-branch
+instructions have different flag/branch behavior and remain separate.
+
+Complete source reconstruction permits only two routines, fourteen arms and
+formatting; other frozen sources match. Both compiled implementations pass
+34078720 independent value/flag checks: every word value and flag byte for
+word increment/decrement, and every byte value and flags for A/X/Y and
+representative memory forms. Registers, RAM, flags, PC and cycles agree with
+independent expectations. Actual spc_runOpcode agrees in 14336 constructed
+SPC/APU/DSP/cycle contexts over all fourteen opcodes and 1024 seeds, RAM,
+ports, timers, direct-page/absolute/indexed addresses and byte/word forms.
+These contexts are finite coverage, not every possible hardware state.
+
+Frozen 8810a6cb plus only this family passes any% 129712/0
+(193.85s) and Speed Booster 148406/0 (245.22s), native exits 0,
+with fixed source/library/DLL/ROM/movie hashes. Cargo fmt/check, normal live
+release (19.73s), progress and diff check pass. Own Rust lines -29, c_int
+cast lines -10 and unsafe functions -1; raw/layout counts unchanged.
+Concurrent block-reaction/projectile work keeps its own verification.
+No probe or ROM-derived artifact committed. Neither movie reaches credits;
+full progression, readability and hardware/audio completion remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
