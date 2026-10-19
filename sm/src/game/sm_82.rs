@@ -9876,11 +9876,9 @@ static kUpdateBackgroundCommands: [Option<Func_Y_Y>; 8] = unsafe {
 };
 pub unsafe fn DoorTransitionFunction_LoadMoreThings_Async(game: &mut Game) -> CoroutineRet {
     let mut bg_data_ptr: uint16 = 0;
-    let mut _state_variable_: *mut uint8 =
-        (&raw mut game.g_ram as *mut uint8).offset(0x612 as ::core::ffi::c_int as isize);
     's_188: {
         let mut current_block_45: u64;
-        match *_state_variable_ as ::core::ffi::c_int {
+        match game.coroutine_state_1() {
             0 => {
                 LoadEnemyGfxToVram(game);
                 LoadRoomMusic(game);
@@ -9979,7 +9977,7 @@ pub unsafe fn DoorTransitionFunction_LoadMoreThings_Async(game: &mut Game) -> Co
                 16864618877125483552 => {
                     let mut _coret_: uint8 = WaitForNMI_Async(game) as uint8;
                     if _coret_ != 0 {
-                        *_state_variable_ = 1 as uint8;
+                        game.set_coroutine_state_1(1);
                         return _coret_ as CoroutineRet;
                     }
                     current_block_45 = 2370887241019905314;
@@ -9987,7 +9985,7 @@ pub unsafe fn DoorTransitionFunction_LoadMoreThings_Async(game: &mut Game) -> Co
                 _ => {
                     let mut _coret__0: uint8 = PlmHandler_Async(game) as uint8;
                     if _coret__0 != 0 {
-                        *_state_variable_ = 2 as uint8;
+                        game.set_coroutine_state_1(2);
                         return _coret__0 as CoroutineRet;
                     }
                     if *((&raw mut game.g_ram as *mut uint8)
@@ -10025,7 +10023,7 @@ pub unsafe fn DoorTransitionFunction_LoadMoreThings_Async(game: &mut Game) -> Co
             }
         }
     }
-    *_state_variable_ = 0 as uint8;
+    game.set_coroutine_state_1(0);
     return 0 as CoroutineRet;
 }
 pub unsafe fn ClearFxTilemap(game: &mut Game) {

@@ -216,6 +216,14 @@ impl Game {
         self.g_ram[0x646 + channel].wrapping_sub(self.g_ram[0x643 + channel]) & 0xf == 0
     }
 
+    /// coroutine_state_1 ($7E:0612 in ram_map).
+    pub fn coroutine_state_1(&self) -> u8 {
+        self.g_ram[0x612]
+    }
+    pub fn set_coroutine_state_1(&mut self, value: u8) {
+        self.g_ram[0x612] = value;
+    }
+
     /// door_transition_function ($7E:099C in ram_map).
     pub fn set_door_transition_function(&mut self, value: u16) {
         self.g_ram[0x99c..0x99e].copy_from_slice(&value.to_le_bytes());

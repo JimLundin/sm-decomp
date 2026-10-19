@@ -11819,6 +11819,20 @@ Keep old9AD9 enemy-drop ammo, upper99BD ascent and earlier holds held.
 Complete credits/gameplay/hardware, audio/render, masked RAM and ownership
 remain open.
 
+CPU TSC/TDC coverage hold (2026-10-19): candidate shared full-word
+accumulator assignment between opcodes 3B/7B. Actual dispatcher comparisons
+pass 8,388,608 cases (every source word, both MF/emulation choices and all
+initial Z/N/C/V combinations). Cargo fmt/check, full release/release-library
+builds, normal metadata and frozen optimized core/DLL pass. However prefix
+3,600/0 (5.09s) and full instrumented any% 129,712/0 (144.39s) both count
+zero TSC and zero TDC calls on frozen `46de2654` plus candidate. Contextual
+coverage assertions correctly abort, so those runs are not successful native
+verification exits. Restored both arms and removed the candidate helper;
+no CPU source or residue delta remains. Hold this cleanup until contextual
+execution is demonstrated; comparison cases do not replace movie coverage.
+Continue other covered CPU work. Prior holds and complete gameplay/render/
+audio remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
@@ -12137,6 +12151,23 @@ every step makes the next one easier.
    https://github.com/JimLundin/sm-decomp/actions/runs/39070035812.
 
 ## Phase 3: readable gameplay, one subsystem at a time
+
+Async door-loading state byte (2026-10-19): LoadMoreThings_Async now reads
+and writes coroutine_state_1 through named byte-backed accessors at 0612.
+Dispatch, loops, callbacks and yields remain unchanged; state 1 stores after
+NMI yield, state 2 after PLM yield, and completion clears the byte. Cargo
+fmt/check and release build pass, native exit 0. Frozen 46de2654 plus these
+two source files passes any% 129,712/0 (172.98s), native exit 0; state
+entries/stores [61,3843,0]. Waver 58,109/71 (64.50s), native exit 1,
+entries/stores [28,1734,0]; all 71 ordered failure diagnostics match the
+explicit-render baseline. Completion and NMI continuation execute; PLM
+state-2 yield/resume remains uncovered and needs normal-input coverage
+before further cleanup there. Observations strip exactly to maintained
+source. Own raw offsets -1, cast lines -2; Rust lines +6 provide two named
+byte accessors. Other counters unchanged. No probes or ROM-derived assets
+committed. Next: executed background command reads in async door loading,
+retaining live ROM reads and callback order. Existing held coverage and
+complete gameplay/credits/audio/hardware gaps remain open.
 
 Door room-setup callback fields (2026-10-19): FixDoorsMovingUp reads the
 named direction gate and writes E36E through the named transition setter;
