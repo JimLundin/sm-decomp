@@ -240,6 +240,37 @@ pass; source, libraries, DLLs, fixtures and logs retain their pinned hashes.
 This audit adds no maintained Rust, residue or gameplay coverage. Later
 subsystem and hardware edits keep their separate validation and integration.
 
+Shared hardware registers (2026-10-19): replace 2496 repeated declarations
+in 12 modules with 208 constants in snes::registers. Public reexports preserve
+every existing module path, name, SnesRegs type and value. All 12 original
+sets agree; source audit permits only those declarations, reexports, the
+module declaration, checkpoint source binding and formatting. Net Rust lines
+-2271; unsafe functions, cast lines and raw accesses unchanged.
+
+All 2496 compiled public constants match the exact original declarations;
+a changed-value control fails. Frozen ee575103 plus this change passes
+full-boot any% 129712/0 (278.61s) and Warehouse return 128547/0
+(300.92s), native exits 0, with stable source, DLL and inputs.
+Warehouse includes the Varia prefix, so no shorter clean replay is duplicated.
+Formatting/check, normal release builds (62.57s initial frozen build,
+11.34s workspace) and progress pass. This reduces repeated source;
+a build-time speedup has not been established. Concurrent gameplay changes
+retain separate validation. Temporary comparison scripts remain uncommitted.
+
+Checkpoint compatibility now includes the new register file, preserving the
+former coverage through cpu_infra/rtl. The final any% checkpoint resumes one
+extra normal-input frame with zero failures; a register-file comment change
+is rejected before replay, exit 2. Source and the verified DLL are restored.
+This tests source-binding sensitivity, not a changed hardware implementation.
+The game library remains byte-identical when adding this host binding; the
+final replays above include it.
+
+Next disjoint definition survey: 173 Consts_86 values repeat in 19 modules,
+212 Samus poses in 10, 45 game states in 10 and 42 Consts_8D values in seven.
+Audit these repeated gameplay definitions together for the next consolidation,
+preserving public paths and types. Subsystem operations remain the route to
+reducing unsafe code; definition sharing alone does not remove those calls.
+
 Independent split-word audit (2026-10-19): reconstruct e23ad2ee from
 its parent and the owning e8592193-based candidate across all 64 Rust files
 and six configuration/host files. The 19 addition and 12 store copies have

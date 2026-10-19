@@ -62,6 +62,7 @@ pub mod snes {
     pub mod dsp;
     pub mod input;
     pub mod ppu;
+    pub mod registers;
     pub mod snes;
     pub mod snes_other;
     pub mod spc;

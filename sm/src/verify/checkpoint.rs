@@ -36,6 +36,7 @@ fn compatibility() -> u64 {
         include_str!("../snes/snes.rs"),
         include_str!("../snes/cpu.rs"),
         include_str!("../snes/ppu.rs"),
+        include_str!("../snes/registers.rs"),
         include_str!("../snes/apu.rs"),
         include_str!("../snes/spc.rs"),
         include_str!("../snes/dsp.rs"),
