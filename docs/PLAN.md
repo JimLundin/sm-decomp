@@ -12742,6 +12742,17 @@ Keep it this small. Add a crate only when the game code itself needs one.
 
 ## Phase 1: make the oracle a one-command check
 
+Native library linkage (2026-10-19): remove the redundant sm/build.rs.
+The sdl2-sys dependency already supplies SDL2; the only native libm
+import, pow, now owns its unchanged Unix linkage in platform/glsl_shader.rs.
+Normal and locked core-only Cargo release builds pass on Windows, without
+the denied package build-script executable. Formatting and progress pass.
+This repair leaves DLL-compiled code unchanged; the concurrent frozen
+X-ray candidate passes any% 129712/0 and Waver 58109/0. A Unix frontend
+link has not been run. Own extern blocks +1 and Rust lines +3 isolate the
+math declaration; other residue counters are unchanged. Deleting build.rs
+removes eight further lines outside the sm/src counters.
+
 Animation debug-output cleanup (2026-10-19): remove the unconditional
 `v1=%x` print from Samus_HandleAnimDelay and its unused printf extern block.
 Frozen fd932dd3 before/after replays both pass any% 129712/0 (208.07s /

@@ -87,8 +87,11 @@ extern "C" {
     ) -> ::core::ffi::c_int;
     fn strdup(__s: *const ::core::ffi::c_char) -> *mut ::core::ffi::c_char;
     fn strlen(__s: *const ::core::ffi::c_char) -> size_t;
-    fn pow(__x: ::core::ffi::c_double, __y: ::core::ffi::c_double) -> ::core::ffi::c_double;
 
+}
+#[cfg_attr(unix, link(name = "m"))]
+extern "C" {
+    fn pow(__x: ::core::ffi::c_double, __y: ::core::ffi::c_double) -> ::core::ffi::c_double;
 }
 pub use crate::types::{
     __off64_t, __off_t, __uint16_t, __uint32_t, __uint8_t, ptrdiff_t, size_t, uint, uint16,
