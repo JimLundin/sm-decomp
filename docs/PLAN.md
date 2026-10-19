@@ -1767,14 +1767,14 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `a0c36eb7` passes
-uninterrupted full boot any% 129712/0 (174.43s) and Speed Booster
-148406/0 (244.50s), native exits 0. All 74 source/configuration/host/
-progress inputs match that commit. This adds the shared SPC shift/rotate
+Latest reviewed integration (2026-10-19): frozen `92af785a` passes
+uninterrupted full boot any% 129712/0 (167.68s) and Speed Booster
+148406/0 (201.24s), native exits 0. All 74 source/configuration/host/
+progress inputs match that commit. This adds the shared SPC logical-addressing
 helpers to the reviewed families below. Later projectile, return and
 hardware work retains its own checks outside this snapshot.
 
-Serialized checkpoint payloads are byte-identical to reviewed 65d70fb8.
+Serialized checkpoint payloads are byte-identical to reviewed a0c36eb7.
 The only changed header field is the runtime-source fingerprint, independently
 recomputed from its actual inputs; only snes/spc.rs changes among those inputs.
 The Game declaration and checkpoint codec are unchanged. All other bindings,
@@ -1785,10 +1785,52 @@ and coverage agree, including the known fingernail diagnostic. Speed reaches
 pose $0089, health 46/399, missiles 6/15, Supers 0/5, items $3105 and
 beams $1004 equipped/collected. Kraid is defeated and all eight coroutine
 bytes are zero. Credits remain unexercised. The same build passes the full-boot
-pause route 40836/0 (57.69s), native exit 0, returning to gameplay in
+pause route 40836/0 (56.02s), native exit 0, returning to gameplay in
 room $96BA. Its payload and every non-runtime binding match the prior pause
 run, as do complete non-timing logs. Earlier mode observations retain their
 scope below.
+
+Independent SPC logical-addressing reconstruction covers all 74 integration
+inputs and all 67 owner sources, which match the committed integration.
+Only snes/spc.rs differs from reviewed a0c36eb7. Replacing the six logical
+routines and 36 complete opcode arms with the three helpers and twelve
+shared arms reconstructs the entire file. All twelve original addressing
+triples match after normalizing local names and the operation call. Every
+merged opcode's selector bits choose its original OR, AND or EOR operation;
+no merged path reaches the helper's invalid-selector branch. Other opcode
+arms, bus functions, Z/N updates, shift/carry helpers and cycle handling stay
+exact. Accumulator forms read A before the bus operand; memory forms read
+source before destination and write the bus before Z/N. No wider mutable
+borrow or RAM/hardware layout change is introduced.
+
+Fresh actual release-library opcode checks pass 4718592 cases: every byte
+operand pair for all 36 affected opcodes, with initially clear and set flags.
+The exact original SPC module uses the same fresh library types and bus.
+Both versions agree with an independent per-bit boolean truth-table model
+on results, all flags, preserved registers/accumulator, memory destination,
+PC and cycles. The twelve addressing forms include indexed byte wraparound.
+Another 73728 complete SPC/APU/DSP-state comparisons cross every flag pattern
+and all 36 opcodes with eight byte-boundary pairs. These are constructed
+operand/address fixtures, not every combination of pairs, flags and addresses.
+
+Another 76800 actual memory-opcode cases cross both direct-memory addressing
+forms, all $f0..$ff source/destination registers plus four ordinary RAM bytes,
+both pages and carries, eight timer/port fixtures and all three operations.
+Old/new execution and an explicit ordered bus model agree on complete
+initialized SPC/APU/DSP bytes and cycles, including timer read-clear effects.
+A further 49152 memory-immediate cases cross every DSP address, four history
+counts including 255/256, eight operand boundaries, two flag patterns and
+all three operations. Sample-memory pointers connect to actual APU RAM;
+key-on accesses, history saturation and suppressed DSP writes at addresses
+>= $80 agree. A separate deterministic stream supplies 18432 complete opcode
+contexts with varied flags, operands and indirect/indexed addresses.
+
+The owner's 393216 routine and 36864 opcode comparisons retain checked
+source/library/fixture pins and full-boot logs. Its opcode fixture correlates
+several inputs and fixes DSP address zero; the fresh checks supplement that
+scope. Constructed instruction checks do not establish universal hardware/
+audio accuracy or movie call-site coverage. Earlier coverage and alias
+limitations remain.
 
 Independent SPC shift/rotate reconstruction covers all 74 integration
 inputs. Only snes/spc.rs differs from reviewed 65d70fb8. Replacing the four
@@ -2351,14 +2393,14 @@ dedicated 5544-case API checks and 24/24 site observations are recorded by
 implementation; this review verifies the source transformation. The movie
 replays do not establish frontend decoder execution coverage.
 
-The normal Cargo integration is independently built from frozen a0c36eb7.
+The normal Cargo integration is independently built from frozen 92af785a.
 All 74 inputs, the fresh game library/DLL and copied fixtures stay fixed.
 Only registry dependencies seed this checkout, including existing registry
 build-script executable links. Formatting, normal release
-(29.16s), host build (12.80s) and progress pass. This family removes
-16 Rust lines, 38 c_int casts across 19 lines and three unsafe functions;
-other progress counters remain unchanged. Frozen totals: 192405 Rust lines,
-21355 raw-offset lines, 34314 c_int casts across 27379 lines and 6502 unsafe
+(35.20s), host build (3.76s) and progress pass. This family removes
+98 Rust lines, 12 c_int casts across six lines and four unsafe functions;
+other progress counters remain unchanged. Frozen totals: 192307 Rust lines,
+21355 raw-offset lines, 34302 c_int casts across 27373 lines and 6498 unsafe
 functions. This audit changes no maintained Rust or assets; later peer work
 retains its own checks.
 
