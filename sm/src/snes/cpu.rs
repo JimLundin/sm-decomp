@@ -453,7 +453,7 @@ unsafe fn and_accumulator(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
 unsafe fn or_accumulator(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
         let value = u16::from(read_byte(cpu, low, game));
-        (*cpu).a = (*cpu).a & 0xff00 | ((*cpu).a | value) & 0xff;
+        (*cpu).a |= value;
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
         let value = read_word(cpu, low, high, game);
@@ -464,7 +464,7 @@ unsafe fn or_accumulator(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
 unsafe fn xor_accumulator(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
         let value = u16::from(read_byte(cpu, low, game));
-        (*cpu).a = (*cpu).a & 0xff00 | ((*cpu).a ^ value) & 0xff;
+        (*cpu).a ^= value;
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
         let value = read_word(cpu, low, high, game);

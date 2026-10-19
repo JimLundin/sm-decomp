@@ -9465,6 +9465,21 @@ introduce the shared safe predicate; other counters unchanged. Full word
 Cartesian, arbitrary MMIO and complete gameplay/render/audio remain open.
 Continue covered CPU cleanup; TSX/ROR remain held for contextual execution.
 
+CPU byte OR/XOR assignments (2026-10-19): zero-extended byte operands allow
+direct |=/^= accumulator updates while preserving high A. Pre-fetch MF branch
+selection, live A after reads, word cycle accounting and final live-MF Z/N
+updates are unchanged. Independent source review finds no differences. Frozen
+`60d836d4` plus this change passes 34,471,936 actual old/current bus-reading
+helper comparisons: every A word/byte operand pair and seven sampled word
+boundary/source entries including duplicates. Named CPU/bus fields, flags and
+cycles match. Prefix 3,600/0 (1.29s), native exit 0, executes word/byte OR
+88,666/814 and XOR 10,863/527 times. Clean full any% 129,712/0 (60.62s), native
+exit 0. Cargo fmt/check, full release and release-library builds with external
+SDL2, normal metadata and optimized frozen core/DLL builds pass. Live CPU
+matches verified source; all own progress counters unchanged. Full word
+Cartesian, arbitrary MMIO and complete gameplay/render/audio remain open.
+Continue covered CPU cleanup; TSX/ROR remain held for contextual execution.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
