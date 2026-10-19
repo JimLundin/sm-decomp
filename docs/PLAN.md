@@ -11404,6 +11404,26 @@ unchanged. Concurrent replays prevent interpreting timings as performance
 measurements. Prior holds and complete gameplay/render/audio remain open.
 Continue covered CPU cleanup.
 
+Post-map9938 elevator reaches9AD9 (2026-10-19).
+map9938-entry extends9969-hop279 with neutral100,left/shoot80,left40,
+neutral20 and endsX21/Y139 at the solid left wall, health54. The actual
+exit is the center elevator: right48, neutral15, Down1, neutral230 align
+and activate it. Room becomes9AD9 and control returns80467.
+map9938-elevator80481/71 (147.06s), native exit1, ends during arrival at
+X128/Y18, health54/199, missiles1/10, equipment1004. map0/station0 is
+9AD9's current-area state, not reversal of collected Crateria map coverage.
+Arrival settling remains pending; no boss or new room definition claimed.
+Read-only failure-counter replay80481/71 (144.26s), observed native exit1,
+matches all71 ordered baseline failed frames exactly, rendering enabled.
+No gameplay/RAM/inventory writes or new failures; source/residue delta0.
+Committed Energy Tank callback cleanup owns fmt/check, release, progress,
+contextual77139/71 and clean any%129712/0 (195.69s). Inputs, probes, SRAM
+and ROM-derived assets stay ignored. Next: finish normal9AD9 elevator
+arrival and choose onward item/boss coverage using this map/tank route.
+Old9AD9 enemy-drop ammunition trials, upper99BD ascent and earlier holds
+remain held. Complete credits/gameplay/hardware, render/audio, masked RAM
+and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
