@@ -2204,7 +2204,7 @@ pub unsafe fn ContinueInitPauseMenu(game: &mut Game) {
     SetupPpuForPauseMenu(game);
     ResetPauseMenuAnimations(game);
     LoadEquipmentScreenEquipmentTilemaps(game);
-    SetPauseScreenButtonLabelPalettes_0(game);
+    set_pause_label_palettes(0, game);
     UpdatePauseMenuLRStartVramTilemap(game);
     DetermineMapScrollLimits(game);
     SetupMapScrollingForPauseMenu(0x80 as uint16, game);
@@ -3648,366 +3648,35 @@ pub unsafe fn HighlightPauseScreenButton(game: &mut Game) {
         );
     }
 }
-static kSetPauseScreenButtonLabelPalettes_Funcs: [Option<Func_V>; 3] = unsafe {
-    [
-        Some(SetPauseScreenButtonLabelPalettes_0 as unsafe fn(&mut Game) -> ()),
-        Some(SetPauseScreenButtonLabelPalettes_1 as unsafe fn(&mut Game) -> ()),
-        Some(SetPauseScreenButtonLabelPalettes_2 as unsafe fn(&mut Game) -> ()),
-    ]
-};
-pub unsafe fn SetPauseScreenButtonLabelPalettes(game: &mut Game) {
-    kSetPauseScreenButtonLabelPalettes_Funcs
-        [*((&raw mut game.g_ram as *mut uint8).offset(0x753) as *mut uint16) as usize]
-        .expect("non-null function pointer")(game);
+pub fn SetPauseScreenButtonLabelPalettes(game: &mut Game) {
+    set_pause_label_palettes(game.pausemenu_button_label_mode(), game);
 }
-pub unsafe fn SetPauseScreenButtonLabelPalettes_2(game: &mut Game) {
-    let mut v0: int16 = 0;
-    let mut v2: int16 = 0;
-    let mut v4: int16 = 0;
-    let mut v6: int16 = 0;
-    let mut v8: int16 = 0;
-    let mut v10: int16 = 0;
-    v0 = 10 as int16;
-    let mut v1: uint16 = 0 as uint16;
-    loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap
-            [(v1 as ::core::ffi::c_int + 805 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap
-                [(v1 as ::core::ffi::c_int + 805 as ::core::ffi::c_int) as usize]
-                as ::core::ffi::c_int
-                & 0xe3ff as ::core::ffi::c_int
-                | 0x800 as ::core::ffi::c_int) as uint16;
-        v1 = v1.wrapping_add(1);
-        v0 = ((v0).wrapping_sub((2i16)));
-        if !(v0 != 0) {
-            break;
-        }
-    }
-    v2 = 10 as int16;
-    let mut v3: uint16 = 0 as uint16;
-    loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap
-            [(v3 as ::core::ffi::c_int + 837 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap
-                [(v3 as ::core::ffi::c_int + 837 as ::core::ffi::c_int) as usize]
-                as ::core::ffi::c_int
-                & 0xe3ff as ::core::ffi::c_int
-                | 0x800 as ::core::ffi::c_int) as uint16;
-        v3 = v3.wrapping_add(1);
-        v2 = ((v2).wrapping_sub((2i16)));
-        if !(v2 != 0) {
-            break;
-        }
-    }
-    v4 = 8 as int16;
-    let mut v5: uint16 = 0 as uint16;
-    loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap
-            [(v5 as ::core::ffi::c_int + 812 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap
-                [(v5 as ::core::ffi::c_int + 812 as ::core::ffi::c_int) as usize]
-                as ::core::ffi::c_int
-                & 0xe3ff as ::core::ffi::c_int
-                | 0x800 as ::core::ffi::c_int) as uint16;
-        v5 = v5.wrapping_add(1);
-        v4 = ((v4).wrapping_sub((2i16)));
-        if !(v4 != 0) {
-            break;
-        }
-    }
-    v6 = 8 as int16;
-    let mut v7: uint16 = 0 as uint16;
-    loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap
-            [(v7 as ::core::ffi::c_int + 844 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap
-                [(v7 as ::core::ffi::c_int + 844 as ::core::ffi::c_int) as usize]
-                as ::core::ffi::c_int
-                & 0xe3ff as ::core::ffi::c_int
-                | 0x800 as ::core::ffi::c_int) as uint16;
-        v7 = v7.wrapping_add(1);
-        v6 = ((v6).wrapping_sub((2i16)));
-        if !(v6 != 0) {
-            break;
-        }
-    }
-    v8 = 10 as int16;
-    let mut v9: uint16 = 0 as uint16;
-    loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap
-            [(v9 as ::core::ffi::c_int + 822 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap
-                [(v9 as ::core::ffi::c_int + 822 as ::core::ffi::c_int) as usize]
-                as ::core::ffi::c_int
-                & 0xe3ff as ::core::ffi::c_int
-                | 0x1400 as ::core::ffi::c_int) as uint16;
-        v9 = v9.wrapping_add(1);
-        v8 = ((v8).wrapping_sub((2i16)));
-        if !(v8 != 0) {
-            break;
-        }
-    }
-    v10 = 10 as int16;
-    let mut v11: uint16 = 0 as uint16;
-    loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap
-            [(v11 as ::core::ffi::c_int + 854 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap
-                [(v11 as ::core::ffi::c_int + 854 as ::core::ffi::c_int) as usize]
-                as ::core::ffi::c_int
-                & 0xe3ff as ::core::ffi::c_int
-                | 0x1400 as ::core::ffi::c_int) as uint16;
-        v11 = v11.wrapping_add(1);
-        v10 = ((v10).wrapping_sub((2i16)));
-        if !(v10 != 0) {
-            break;
+
+fn set_pause_label_palettes(mode: u16, game: &mut Game) {
+    // First tile and width of each two-row label in the pause tilemap.
+    const LEFT: (usize, usize) = (805, 5);
+    const START: (usize, usize) = (812, 4);
+    const RIGHT: (usize, usize) = (822, 5);
+    const TILEMAP: usize = 0x3000;
+
+    // Modes retain the original label order, including the unpause mode (1).
+    let labels = [
+        [(RIGHT, 0x0800), (START, 0x0800), (LEFT, 0x1400)],
+        [(START, 0x0800), (LEFT, 0x1400), (RIGHT, 0x1400)],
+        [(LEFT, 0x0800), (START, 0x0800), (RIGHT, 0x1400)],
+    ][usize::from(mode)];
+    for ((first_tile, width), palette) in labels {
+        for row in [first_tile, first_tile + 32] {
+            for tile in row..row + width {
+                let address = TILEMAP + 2 * tile;
+                let word = u16::from_le_bytes([game.g_ram[address], game.g_ram[address + 1]]);
+                let word = (word & !0x1c00) | palette;
+                game.g_ram[address..address + 2].copy_from_slice(&word.to_le_bytes());
+            }
         }
     }
 }
-pub unsafe fn SetPauseScreenButtonLabelPalettes_1(game: &mut Game) {
-    let mut v0: int16 = 0;
-    let mut v2: int16 = 0;
-    let mut v4: int16 = 0;
-    let mut v6: int16 = 0;
-    let mut v8: int16 = 0;
-    let mut v10: int16 = 0;
-    v0 = 8 as int16;
-    let mut v1: uint16 = 0 as uint16;
-    loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap
-            [(v1 as ::core::ffi::c_int + 812 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap
-                [(v1 as ::core::ffi::c_int + 812 as ::core::ffi::c_int) as usize]
-                as ::core::ffi::c_int
-                & 0xe3ff as ::core::ffi::c_int
-                | 0x800 as ::core::ffi::c_int) as uint16;
-        v1 = v1.wrapping_add(1);
-        v0 = ((v0).wrapping_sub((2i16)));
-        if !(v0 != 0) {
-            break;
-        }
-    }
-    v2 = 8 as int16;
-    let mut v3: uint16 = 0 as uint16;
-    loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap
-            [(v3 as ::core::ffi::c_int + 844 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap
-                [(v3 as ::core::ffi::c_int + 844 as ::core::ffi::c_int) as usize]
-                as ::core::ffi::c_int
-                & 0xe3ff as ::core::ffi::c_int
-                | 0x800 as ::core::ffi::c_int) as uint16;
-        v3 = v3.wrapping_add(1);
-        v2 = ((v2).wrapping_sub((2i16)));
-        if !(v2 != 0) {
-            break;
-        }
-    }
-    v4 = 10 as int16;
-    let mut v5: uint16 = 0 as uint16;
-    loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap
-            [(v5 as ::core::ffi::c_int + 805 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap
-                [(v5 as ::core::ffi::c_int + 805 as ::core::ffi::c_int) as usize]
-                as ::core::ffi::c_int
-                & 0xe3ff as ::core::ffi::c_int
-                | 0x1400 as ::core::ffi::c_int) as uint16;
-        v5 = v5.wrapping_add(1);
-        v4 = ((v4).wrapping_sub((2i16)));
-        if !(v4 != 0) {
-            break;
-        }
-    }
-    v6 = 10 as int16;
-    let mut v7: uint16 = 0 as uint16;
-    loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap
-            [(v7 as ::core::ffi::c_int + 837 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap
-                [(v7 as ::core::ffi::c_int + 837 as ::core::ffi::c_int) as usize]
-                as ::core::ffi::c_int
-                & 0xe3ff as ::core::ffi::c_int
-                | 0x1400 as ::core::ffi::c_int) as uint16;
-        v7 = v7.wrapping_add(1);
-        v6 = ((v6).wrapping_sub((2i16)));
-        if !(v6 != 0) {
-            break;
-        }
-    }
-    v8 = 10 as int16;
-    let mut v9: uint16 = 0 as uint16;
-    loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap
-            [(v9 as ::core::ffi::c_int + 822 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap
-                [(v9 as ::core::ffi::c_int + 822 as ::core::ffi::c_int) as usize]
-                as ::core::ffi::c_int
-                & 0xe3ff as ::core::ffi::c_int
-                | 0x1400 as ::core::ffi::c_int) as uint16;
-        v9 = v9.wrapping_add(1);
-        v8 = ((v8).wrapping_sub((2i16)));
-        if !(v8 != 0) {
-            break;
-        }
-    }
-    v10 = 10 as int16;
-    let mut v11: uint16 = 0 as uint16;
-    loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap
-            [(v11 as ::core::ffi::c_int + 854 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap
-                [(v11 as ::core::ffi::c_int + 854 as ::core::ffi::c_int) as usize]
-                as ::core::ffi::c_int
-                & 0xe3ff as ::core::ffi::c_int
-                | 0x1400 as ::core::ffi::c_int) as uint16;
-        v11 = v11.wrapping_add(1);
-        v10 = ((v10).wrapping_sub((2i16)));
-        if !(v10 != 0) {
-            break;
-        }
-    }
-}
-pub unsafe fn SetPauseScreenButtonLabelPalettes_0(game: &mut Game) {
-    let mut v0: int16 = 0;
-    let mut v2: int16 = 0;
-    let mut v4: int16 = 0;
-    let mut v6: int16 = 0;
-    let mut v8: int16 = 0;
-    let mut v10: int16 = 0;
-    v0 = 10 as int16;
-    let mut v1: uint16 = 0 as uint16;
-    loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap
-            [(v1 as ::core::ffi::c_int + 822 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap
-                [(v1 as ::core::ffi::c_int + 822 as ::core::ffi::c_int) as usize]
-                as ::core::ffi::c_int
-                & 0xe3ff as ::core::ffi::c_int
-                | 0x800 as ::core::ffi::c_int) as uint16;
-        v1 = v1.wrapping_add(1);
-        v0 = ((v0).wrapping_sub((2i16)));
-        if !(v0 != 0) {
-            break;
-        }
-    }
-    v2 = 10 as int16;
-    let mut v3: uint16 = 0 as uint16;
-    loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap
-            [(v3 as ::core::ffi::c_int + 854 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap
-                [(v3 as ::core::ffi::c_int + 854 as ::core::ffi::c_int) as usize]
-                as ::core::ffi::c_int
-                & 0xe3ff as ::core::ffi::c_int
-                | 0x800 as ::core::ffi::c_int) as uint16;
-        v3 = v3.wrapping_add(1);
-        v2 = ((v2).wrapping_sub((2i16)));
-        if !(v2 != 0) {
-            break;
-        }
-    }
-    v4 = 8 as int16;
-    let mut v5: uint16 = 0 as uint16;
-    loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap
-            [(v5 as ::core::ffi::c_int + 812 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap
-                [(v5 as ::core::ffi::c_int + 812 as ::core::ffi::c_int) as usize]
-                as ::core::ffi::c_int
-                & 0xe3ff as ::core::ffi::c_int
-                | 0x800 as ::core::ffi::c_int) as uint16;
-        v5 = v5.wrapping_add(1);
-        v4 = ((v4).wrapping_sub((2i16)));
-        if !(v4 != 0) {
-            break;
-        }
-    }
-    v6 = 8 as int16;
-    let mut v7: uint16 = 0 as uint16;
-    loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap
-            [(v7 as ::core::ffi::c_int + 844 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap
-                [(v7 as ::core::ffi::c_int + 844 as ::core::ffi::c_int) as usize]
-                as ::core::ffi::c_int
-                & 0xe3ff as ::core::ffi::c_int
-                | 0x800 as ::core::ffi::c_int) as uint16;
-        v7 = v7.wrapping_add(1);
-        v6 = ((v6).wrapping_sub((2i16)));
-        if !(v6 != 0) {
-            break;
-        }
-    }
-    v8 = 10 as int16;
-    let mut v9: uint16 = 0 as uint16;
-    loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap
-            [(v9 as ::core::ffi::c_int + 805 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap
-                [(v9 as ::core::ffi::c_int + 805 as ::core::ffi::c_int) as usize]
-                as ::core::ffi::c_int
-                & 0xe3ff as ::core::ffi::c_int
-                | 0x1400 as ::core::ffi::c_int) as uint16;
-        v9 = v9.wrapping_add(1);
-        v8 = ((v8).wrapping_sub((2i16)));
-        if !(v8 != 0) {
-            break;
-        }
-    }
-    v10 = 10 as int16;
-    let mut v11: uint16 = 0 as uint16;
-    loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap
-            [(v11 as ::core::ffi::c_int + 837 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap
-                [(v11 as ::core::ffi::c_int + 837 as ::core::ffi::c_int) as usize]
-                as ::core::ffi::c_int
-                & 0xe3ff as ::core::ffi::c_int
-                | 0x1400 as ::core::ffi::c_int) as uint16;
-        v11 = v11.wrapping_add(1);
-        v10 = ((v10).wrapping_sub((2i16)));
-        if !(v10 != 0) {
-            break;
-        }
-    }
-}
+
 pub unsafe fn UpdatePauseMenuLRStartVramTilemap(game: &mut Game) {
     let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
     (*gVramWriteEntry(

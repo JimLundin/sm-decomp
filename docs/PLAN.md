@@ -35,6 +35,38 @@ Keep each commit one invariant, but apply it across the complete eligible family
 Rank by net deletion including shared code, unsafe operations removed and
 edit/build/verification cost. Prefer this work over further isolated cleanup.
 
+Pause-label family (2026-10-19): all three label modes and their 18 row
+loops now use one safe, ordered tile-palette update. The direct initialization
+call and function-pointer dispatch are included. Named left/start/right label
+widths replace counters; the mode read uses the existing byte-backed accessor
+macro. Label order, top-before-bottom rows, ascending word writes, palette bits
+and invalid-mode panics remain exact. Net Rust lines -330, raw-offset lines
+-37, unsafe functions -4, c_int cast lines -90 and all casts -294.
+
+The historical AST scan finds the same 18-loop family in the original Rust.
+A whole-source palette-mask scan also finds HUD, options-menu and text-glow
+updates; their gates, variable byte offsets and wrapping lengths differ.
+Complete source reconstruction permits only this family and its named accessor.
+Compiled old functions and the actual new release-library entry agree on all
+128 KiB of RAM in 196608 cases: every word value at each of the 28 label tiles,
+for all three modes. Independent palette expectations agree; a wrong-mask
+control fails. All 65533 invalid modes still panic before writes. Expanding
+the final label table independently preserves the 18 ordered row descriptors.
+
+Both original full movies reach 0/3 label modes. A new normal-input route uses
+40000 Speed Booster frames, then neutral 8, Start 12, neutral 180, R 12,
+neutral 180, L 12, neutral 180, Start 12 and neutral 240. All three modes
+execute in both old and final-source observations with identical counts
+(3/1/2), and both return to gameplay: 40836/0 (65.74s/67.04s), native exits 0.
+This extends actual menu coverage; temporary inputs and probes stay outside
+maintained source. The earlier four-frame presses missed the release filter.
+
+Frozen bf562b75 plus this family passes any% 129712/0 (206.50s) and Speed
+Booster 148406/0 (272.28s), native exits 0, with fixed source/DLL/fixtures.
+Formatting/check, normal release (43.54s frozen, 39.14s stable
+workspace) and progress pass. Other concurrent projectile and PPU work keeps
+its own checks. Continue the broader retrospective family audit; it is open.
+
 LoROM address-mapping family (2026-10-19): 1169 repeated literal mappings,
 two variable-address implementations and three historically folded message-box
 offsets now use one pure lorom_offset function. All pointer operations, later
