@@ -221,6 +221,26 @@ impl Game {
         self.g_ram[0x99c..0x99e].copy_from_slice(&value.to_le_bytes());
     }
 
+    /// debug_disable_sounds ($7E:05F5 in ram_map).
+    pub fn set_debug_disable_sounds(&mut self, value: u16) {
+        self.g_ram[0x5f5..0x5f7].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// door_transition_flag_elevator_zebetites ($7E:0795 in ram_map).
+    pub fn set_door_transition_flag_elevator_zebetites(&mut self, value: u16) {
+        self.g_ram[0x795..0x797].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// door_transition_flag_enemies ($7E:0797 in ram_map).
+    pub fn set_door_transition_flag_enemies(&mut self, value: u16) {
+        self.g_ram[0x797..0x799].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// game_state ($7E:0998 in ram_map).
+    pub fn set_game_state(&mut self, value: u16) {
+        self.g_ram[0x998..0x99a].copy_from_slice(&value.to_le_bytes());
+    }
+
     /// layer1_x_pos ($7E:0911 in ram_map).
     pub fn layer1_x_pos(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0x911], self.g_ram[0x912]])

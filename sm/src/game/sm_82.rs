@@ -9723,16 +9723,14 @@ pub unsafe fn DoorTransitionFunction_WaitForSoundsToFinish(game: &mut Game) -> C
 }
 pub unsafe fn DoorTransitionFunction_FadeOutScreen(game: &mut Game) -> CoroutineRet {
     if AdvancePaletteFadeForAllPalettes_0xc(game) != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x99c as ::core::ffi::c_int as isize)
-            as *mut uint16) =
-            (0x82e2f7 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        game.set_door_transition_function(0xe2f7);
     } else {
         DetermineWhichEnemiesToProcess(game);
         EnemyMain(game);
         DrawSamusEnemiesAndProjectiles(game);
         EnsureSamusDrawnEachFrame(game);
     }
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn DoorTransitionFunction_LoadDoorHeaderEtc(game: &mut Game) -> CoroutineRet {
     LoadDoorHeader(game);
@@ -10340,17 +10338,13 @@ pub unsafe fn DoorTransition_FadeInScreenAndFinish(game: &mut Game) -> Coroutine
     EnsureSamusDrawnEachFrame(game);
     QueueEnemyBG2TilemapTransfers(game);
     if AdvancePaletteFadeForAllPalettes_0xc(game) != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x5f5 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        game.set_debug_disable_sounds(0);
         PlaySpinJumpSoundIfSpinJumping(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x795 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x797 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16) = kGameState_8_MainGameplay as ::core::ffi::c_int as uint16;
+        game.set_door_transition_flag_elevator_zebetites(0);
+        game.set_door_transition_flag_enemies(0);
+        game.set_game_state(kGameState_8_MainGameplay as u16);
     }
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn LoadDestinationRoomThings(game: &mut Game) {
     LoaadDesinationRoomCreBitset(game);

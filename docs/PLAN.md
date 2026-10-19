@@ -11705,6 +11705,22 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Door fade transition fields (2026-10-19): fade-out now writes E2F7 through
+the named door-transition setter. Fade-in uses byte-backed sound-disable,
+elevator/Zebetite flag, enemy flag and game-state setters. All processing/
+drawing callbacks remain ordered; sound-disable clears before the spin-jump
+sound callback, then the two door flags clear before gameplay state 8 stores.
+RAM layout and coroutine returns remain unchanged. Cargo fmt/check and full
+release build pass, native exit 0. Frozen 8acaa909 plus only these two source
+files passes any% 129,712/0 (208.76s), native exit 0. Each actual fade routine
+executes 915 times: 854 incomplete and 61 complete branches. Temporary
+observations strip exactly to maintained source; later peer CPU/SRAM changes
+are excluded. Own raw offsets -5, cast lines -7; Rust lines +14 provide four
+reusable named word setters. Other counters unchanged. No probes or ROM-
+derived assets committed. Next: door-header transition fields, retaining
+callback-before-read order; normal-input gameplay coverage remains separate.
+Complete credits/gameplay, audio timing and hardware gaps remain open.
+
 Door sound-queue wait (2026-10-19):
 DoorTransitionFunction_WaitForSoundsToFinish now uses named byte-backed
 SFX queue checks and a named door-transition word store. Enemy processing,
