@@ -4427,18 +4427,16 @@ pub unsafe fn Samus_HandleTransitions(game: &mut Game) {
         } else {
             current_block = 13536709405535804910;
         }
-        match current_block {
-            13536709405535804910 => {}
-            _ => {
-                if current_block == 6038634297008360266 {
-                    set_ram_word!(game.samus_pose = ram_word!(game, samus_new_pose_transitional));
-                    SamusFunc_F433(game);
-                    Samus_SetAnimationFrameIfPoseChanged(game);
-                }
-                kSamus_HandleTransitionsC[ram_word!(game, samus_hurt_switch_index) as usize]
-                    .expect("non-null function pointer")(game);
-                current_block = 10476341332908994874;
+        if current_block == 13536709405535804910 {
+        } else {
+            if current_block == 6038634297008360266 {
+                set_ram_word!(game.samus_pose = ram_word!(game, samus_new_pose_transitional));
+                SamusFunc_F433(game);
+                Samus_SetAnimationFrameIfPoseChanged(game);
             }
+            kSamus_HandleTransitionsC[ram_word!(game, samus_hurt_switch_index) as usize]
+                .expect("non-null function pointer")(game);
+            current_block = 10476341332908994874;
         }
     } else {
         current_block = 13536709405535804910;
@@ -5020,12 +5018,10 @@ pub unsafe fn HandleLandingGraphics_Crateria(game: &mut Game) {
             } else {
                 current_block = 18265313692946425332;
             }
-            match current_block {
-                4562832191328891483 => {}
-                _ => {
-                    HandleLandingGraphics_Maridia(game);
-                    return;
-                }
+            if current_block == 4562832191328891483 {
+            } else {
+                HandleLandingGraphics_Maridia(game);
+                return;
             }
         }
     }
@@ -5496,53 +5492,50 @@ pub unsafe fn SamusFunc_F468_NormalJump(game: &mut Game) -> uint8 {
             current_block = 10164294398894088689;
         }
     }
-    match current_block {
-        13140864810214251092 => {
-            Projectile_Func7_Shinespark(game);
-            if *(&raw mut game.g_ram as *mut uint8).offset(0xa23) as ::core::ffi::c_int
-                == kMovementType_02_NormalJumping as ::core::ffi::c_int
-            {
-                let ref mut fresh2 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16);
-                *fresh2 = (*fresh2).wrapping_sub(1);
-                set_ram_word!(game.samus_prev_y_pos = *fresh2);
-            }
-            1 as uint8
+    if current_block == 13140864810214251092 {
+        Projectile_Func7_Shinespark(game);
+        if *(&raw mut game.g_ram as *mut uint8).offset(0xa23) as ::core::ffi::c_int
+            == kMovementType_02_NormalJumping as ::core::ffi::c_int
+        {
+            let ref mut fresh2 =
+                *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16);
+            *fresh2 = (*fresh2).wrapping_sub(1);
+            set_ram_word!(game.samus_prev_y_pos = *fresh2);
         }
-        _ => {
-            if ram_word!(game, samus_x_extra_run_speed) != 0u16
-                || ram_word!(game, samus_x_extra_run_subspeed) != 0u16
-            {
-                set_ram_word!(game.samus_x_accel_mode = 2 as uint16);
-            } else {
-                set_ram_word!(game.samus_x_accel_mode = 0 as uint16);
-            }
-            if (ram_word!(game, samus_pose) as ::core::ffi::c_int
-                == kPose_15_FaceR_Jump_AimU as ::core::ffi::c_int
-                || ram_word!(game, samus_pose) as ::core::ffi::c_int
-                    == kPose_16_FaceL_Jump_AimU as ::core::ffi::c_int)
-                && (ram_word!(game, samus_prev_pose) as ::core::ffi::c_int
-                    == kPose_55_FaceR_Jumptrans_AimU as ::core::ffi::c_int
-                    || ram_word!(game, samus_prev_pose) as ::core::ffi::c_int
-                        == kPose_56_FaceL_Jumptrans_AimU as ::core::ffi::c_int)
-            {
-                set_ram_word!(game.samus_anim_frame_skip = 1 as uint16);
-            }
-            if (ram_word!(game, button_config_shoot_x) as ::core::ffi::c_int
-                & ram_word!(game, joypad1_newkeys) as ::core::ffi::c_int)
-                != 0i32
-            {
-                set_ram_word!(
-                    game.new_projectile_direction_changed_pose =
-                        (((*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const uint8
-                            as *mut SamusPoseParams)
-                            .offset(ram_word!(game, samus_pose) as isize))
-                        .direction_shots_fired) as u16)
-                            | (0x8000u16)
-                );
-            }
-            0 as uint8
+        1 as uint8
+    } else {
+        if ram_word!(game, samus_x_extra_run_speed) != 0u16
+            || ram_word!(game, samus_x_extra_run_subspeed) != 0u16
+        {
+            set_ram_word!(game.samus_x_accel_mode = 2 as uint16);
+        } else {
+            set_ram_word!(game.samus_x_accel_mode = 0 as uint16);
         }
+        if (ram_word!(game, samus_pose) as ::core::ffi::c_int
+            == kPose_15_FaceR_Jump_AimU as ::core::ffi::c_int
+            || ram_word!(game, samus_pose) as ::core::ffi::c_int
+                == kPose_16_FaceL_Jump_AimU as ::core::ffi::c_int)
+            && (ram_word!(game, samus_prev_pose) as ::core::ffi::c_int
+                == kPose_55_FaceR_Jumptrans_AimU as ::core::ffi::c_int
+                || ram_word!(game, samus_prev_pose) as ::core::ffi::c_int
+                    == kPose_56_FaceL_Jumptrans_AimU as ::core::ffi::c_int)
+        {
+            set_ram_word!(game.samus_anim_frame_skip = 1 as uint16);
+        }
+        if (ram_word!(game, button_config_shoot_x) as ::core::ffi::c_int
+            & ram_word!(game, joypad1_newkeys) as ::core::ffi::c_int)
+            != 0i32
+        {
+            set_ram_word!(
+                game.new_projectile_direction_changed_pose =
+                    (((*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const uint8
+                        as *mut SamusPoseParams)
+                        .offset(ram_word!(game, samus_pose) as isize))
+                    .direction_shots_fired) as u16)
+                        | (0x8000u16)
+            );
+        }
+        0 as uint8
     }
 }
 pub unsafe fn SamusFunc_F468_Crouching(game: &mut Game) -> uint8 {
@@ -5595,24 +5588,21 @@ pub unsafe fn SamusFunc_F468_SpinJump(game: &mut Game) -> uint8 {
         } else {
             current_block = 820271813250567934;
         }
-        match current_block {
-            12119026790781926931 => {}
-            _ => {
-                AddToHiLo(
-                    (&raw mut game.g_ram as *mut uint8).offset(0xb46) as *mut uint16,
-                    (&raw mut game.g_ram as *mut uint8).offset(0xb48) as *mut uint16,
-                    (ram_word!(game, samus_x_extra_run_speed) as uint32)
-                        << 16 as ::core::ffi::c_int
-                        | ram_word!(game, samus_x_extra_run_subspeed) as uint32,
-                );
-                Samus_CancelSpeedBoost(game);
-                SetHiLo(
-                    (&raw mut game.g_ram as *mut uint8).offset(0xb42) as *mut uint16,
-                    (&raw mut game.g_ram as *mut uint8).offset(0xb44) as *mut uint16,
-                    0 as uint32,
-                );
-                set_ram_word!(game.samus_x_accel_mode = 1 as uint16);
-            }
+        if current_block == 12119026790781926931 {
+        } else {
+            AddToHiLo(
+                (&raw mut game.g_ram as *mut uint8).offset(0xb46) as *mut uint16,
+                (&raw mut game.g_ram as *mut uint8).offset(0xb48) as *mut uint16,
+                (ram_word!(game, samus_x_extra_run_speed) as uint32) << 16 as ::core::ffi::c_int
+                    | ram_word!(game, samus_x_extra_run_subspeed) as uint32,
+            );
+            Samus_CancelSpeedBoost(game);
+            SetHiLo(
+                (&raw mut game.g_ram as *mut uint8).offset(0xb42) as *mut uint16,
+                (&raw mut game.g_ram as *mut uint8).offset(0xb44) as *mut uint16,
+                0 as uint32,
+            );
+            set_ram_word!(game.samus_x_accel_mode = 1 as uint16);
         }
     }
     if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) == 4u8 {
@@ -5674,17 +5664,14 @@ pub unsafe fn SamusFunc_F468_SpinJump(game: &mut Game) -> uint8 {
             current_block = 807399161326926732;
         }
     }
-    match current_block {
-        807399161326926732 => {
-            QueueSfx1_Max6(0x31 as uint16, game);
-            0 as uint8
+    if current_block == 807399161326926732 {
+        QueueSfx1_Max6(0x31 as uint16, game);
+        0 as uint8
+    } else {
+        if ram_word!(game, samus_anim_frame_skip) == 0 {
+            QueueSfx1_Max6(0x33 as uint16, game);
         }
-        _ => {
-            if ram_word!(game, samus_anim_frame_skip) == 0 {
-                QueueSfx1_Max6(0x33 as uint16, game);
-            }
-            0 as uint8
-        }
+        0 as uint8
     }
 }
 static off_91F790: [Option<Func_U8>; 12] = unsafe {

@@ -1786,13 +1786,11 @@ pub unsafe fn GrappleBeamFunc_Connected_Swinging(game: &mut Game) {
         } else {
             current_block = 11650488183268122163;
         }
-        match current_block {
-            4881625112085436895 => {}
-            _ => {
-                BlockFunc_AC11(game);
-                GrappleBeamFunc_BD95(game);
-                return;
-            }
+        if current_block == 4881625112085436895 {
+        } else {
+            BlockFunc_AC11(game);
+            GrappleBeamFunc_BD95(game);
+            return;
         }
     }
     if ram_word!(game, grapple_beam_unkD26) != 0u16

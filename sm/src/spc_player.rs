@@ -2636,245 +2636,23 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
                 current_block_83 = 12349973810996921269;
             }
             '_label_a: loop {
-                match current_block_83 {
-                    12349973810996921269 => {
-                        t = *((&raw mut (*p).ram as *mut uint8)
-                            .offset((*p).music_ptr_toplevel as isize)
-                            as *mut uint8 as *mut uint16)
-                            as ::core::ffi::c_int;
-                        (*p).music_ptr_toplevel = ((*p).music_ptr_toplevel as ::core::ffi::c_int
-                            + 2 as ::core::ffi::c_int)
-                            as uint16;
-                        if t >> 8 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
-                            let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-                            while i < 8 as ::core::ffi::c_int {
-                                (*p).channel[i as usize].pattern_order_ptr_for_chan =
-                                    *((&raw mut (*p).ram as *mut uint8).offset(t as isize)
-                                        as *mut uint8
-                                        as *mut uint16);
-                                t += 2 as ::core::ffi::c_int;
-                                i += 1;
-                            }
-                            c = &raw mut (*p).channel as *mut Channel;
-                            (*p).cur_chan_bit = 1 as uint8;
-                            loop {
-                                if *(&raw mut (*c).pattern_order_ptr_for_chan as *mut uint8).offset(
-                                    (::core::mem::size_of::<uint16>() as usize)
-                                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                                        .wrapping_sub(1_usize)
-                                        as isize,
-                                ) as ::core::ffi::c_int
-                                    != 0
-                                    && (*c).instrument_id as ::core::ffi::c_int
-                                        == 0 as ::core::ffi::c_int
-                                {
-                                    Channel_SetInstrument(p, c, 0 as uint8);
-                                }
-                                (*c).subroutine_num_loops = 0 as uint8;
-                                (*c).volume_fade_ticks = 0 as uint8;
-                                (*c).pan_num_ticks = 0 as uint8;
-                                (*c).note_ticks_left = 1 as uint8;
-                                c = c.offset(1);
-                                (*p).cur_chan_bit = (((*p).cur_chan_bit as ::core::ffi::c_int)
-                                    << 1 as ::core::ffi::c_int)
-                                    as uint8;
-                                if ((*p).cur_chan_bit == 0) {
-                                    break;
-                                }
-                            }
-                            current_block_83 = 7829208624863839112;
-                        } else if t == 0 as ::core::ffi::c_int {
-                            a = 0 as uint8;
-                            break;
-                        } else {
-                            if t == 0x80 as ::core::ffi::c_int {
-                                (*p).fast_forward = 0x80 as uint8;
-                            } else if t == 0x81 as ::core::ffi::c_int {
-                                (*p).fast_forward = 0 as uint8;
-                            } else {
-                                (*p).block_count = (*p).block_count.wrapping_sub(1);
-                                if (*p).block_count as ::core::ffi::c_int
-                                    & 0x80 as ::core::ffi::c_int
-                                    != 0
-                                {
-                                    (*p).block_count = t as uint8;
-                                }
-                                t = *((&raw mut (*p).ram as *mut uint8)
-                                    .offset((*p).music_ptr_toplevel as isize)
-                                    as *mut uint8
-                                    as *mut uint16)
-                                    as ::core::ffi::c_int;
-                                (*p).music_ptr_toplevel = ((*p).music_ptr_toplevel
-                                    as ::core::ffi::c_int
-                                    + 2 as ::core::ffi::c_int)
-                                    as uint16;
-                                if (*p).block_count as ::core::ffi::c_int != 0 as ::core::ffi::c_int
-                                {
-                                    (*p).music_ptr_toplevel = t as uint16;
-                                }
-                            }
-                            current_block_83 = 12349973810996921269;
-                        }
-                    }
-                    _ => {
-                        (*p).vol_dirty = 0 as uint8;
-                        c = &raw mut (*p).channel as *mut Channel;
-                        (*p).cur_chan_bit = 1 as uint8;
-                        loop {
-                            if (*(&raw mut (*c).pattern_order_ptr_for_chan as *mut uint8).offset(
-                                (::core::mem::size_of::<uint16>() as usize)
-                                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                                    .wrapping_sub(1_usize) as isize,
-                            ) != 0)
-                            {
-                                (*c).note_ticks_left = (*c).note_ticks_left.wrapping_sub(1);
-                                if (*c).note_ticks_left == 0 {
-                                    loop {
-                                        let fresh0 = (*c).pattern_order_ptr_for_chan;
-                                        (*c).pattern_order_ptr_for_chan =
-                                            (*c).pattern_order_ptr_for_chan.wrapping_add(1);
-                                        let mut cmd: uint8 = (*p).ram[fresh0 as usize];
-                                        if cmd as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-                                            if (*c).subroutine_num_loops == 0 {
-                                                current_block_83 = 12349973810996921269;
-                                                continue '_label_a;
-                                            }
-                                            (*c).subroutine_num_loops =
-                                                (*c).subroutine_num_loops.wrapping_sub(1);
-                                            (*c).pattern_order_ptr_for_chan =
-                                                (if (*c).subroutine_num_loops as ::core::ffi::c_int
-                                                    == 0 as ::core::ffi::c_int
-                                                {
-                                                    (*c).saved_pattern_ptr as ::core::ffi::c_int
-                                                } else {
-                                                    (*c).pattern_start_ptr as ::core::ffi::c_int
-                                                })
-                                                    as uint16;
-                                        } else {
-                                            if cmd as ::core::ffi::c_int
-                                                & 0x80 as ::core::ffi::c_int
-                                                == 0
-                                            {
-                                                static kNoteVol: [uint8; 16] = [
-                                                    25, 50, 76, 101, 114, 127, 140, 152, 165, 178,
-                                                    191, 203, 216, 229, 242, 252,
-                                                ];
-                                                static kNoteGateOffPct: [uint8; 8] =
-                                                    [50, 101, 127, 152, 178, 203, 229, 252];
-                                                (*c).note_length = cmd;
-                                                let fresh1 = (*c).pattern_order_ptr_for_chan;
-                                                (*c).pattern_order_ptr_for_chan =
-                                                    (*c).pattern_order_ptr_for_chan.wrapping_add(1);
-                                                cmd = (*p).ram[fresh1 as usize];
-                                                if cmd as ::core::ffi::c_int
-                                                    & 0x80 as ::core::ffi::c_int
-                                                    == 0
-                                                {
-                                                    (*c).note_gate_off_fixedpt = kNoteGateOffPct
-                                                        [(cmd as ::core::ffi::c_int
-                                                            >> 4 as ::core::ffi::c_int
-                                                            & 7 as ::core::ffi::c_int)
-                                                            as usize];
-                                                    (*c).channel_volume_master = kNoteVol[(cmd
-                                                        as ::core::ffi::c_int
-                                                        & 0xf as ::core::ffi::c_int)
-                                                        as usize];
-                                                    let fresh2 = (*c).pattern_order_ptr_for_chan;
-                                                    (*c).pattern_order_ptr_for_chan = (*c)
-                                                        .pattern_order_ptr_for_chan
-                                                        .wrapping_add(1);
-                                                    cmd = (*p).ram[fresh2 as usize];
-                                                }
-                                            }
-                                            if cmd as ::core::ffi::c_int
-                                                >= 0xe0 as ::core::ffi::c_int
-                                            {
-                                                HandleEffect(p, c, cmd);
-                                            } else {
-                                                if (*c).cutk as ::core::ffi::c_int
-                                                    | (*p).fast_forward as ::core::ffi::c_int
-                                                    == 0 as ::core::ffi::c_int
-                                                {
-                                                    PlayNote(p, c, cmd);
-                                                }
-                                                (*c).note_ticks_left = (*c).note_length;
-                                                t = (*c).note_ticks_left as ::core::ffi::c_int
-                                                    * (*c).note_gate_off_fixedpt
-                                                        as ::core::ffi::c_int
-                                                    >> 8 as ::core::ffi::c_int;
-                                                (*c).note_keyoff_ticks_left =
-                                                    (if t != 0 as ::core::ffi::c_int {
-                                                        t
-                                                    } else {
-                                                        1 as ::core::ffi::c_int
-                                                    })
-                                                        as uint8;
-                                                PitchSlideToNote_Check(p, c);
-                                                break;
-                                            }
-                                        }
-                                    }
-                                } else if (*p).fast_forward == 0 {
-                                    HandleNoteTick(p, c);
-                                    PitchSlideToNote_Check(p, c);
-                                }
-                            }
-                            c = c.offset(1);
-                            (*p).cur_chan_bit = (((*p).cur_chan_bit as ::core::ffi::c_int)
-                                << 1 as ::core::ffi::c_int)
-                                as uint8;
-                            if ((*p).cur_chan_bit == 0) {
-                                break;
-                            }
-                        }
-                        if (*p).tempo_fade_num_ticks != 0 {
-                            (*p).tempo_fade_num_ticks = (*p).tempo_fade_num_ticks.wrapping_sub(1);
-                            (*p).tempo = (if (*p).tempo_fade_num_ticks as ::core::ffi::c_int
-                                == 0 as ::core::ffi::c_int
-                            {
-                                ((*p).tempo_fade_final as ::core::ffi::c_int)
-                                    << 8 as ::core::ffi::c_int
-                            } else {
-                                (*p).tempo as ::core::ffi::c_int
-                                    + (*p).tempo_fade_add as ::core::ffi::c_int
-                            }) as uint16;
-                        }
-                        if (*p).echo_volume_fade_ticks != 0 {
-                            (*p).echo_volume_left = ((*p).echo_volume_left as ::core::ffi::c_int
-                                + (*p).echo_volume_fade_add_left as ::core::ffi::c_int)
-                                as uint16;
-                            (*p).echo_volume_right = ((*p).echo_volume_right as ::core::ffi::c_int
-                                + (*p).echo_volume_fade_add_right as ::core::ffi::c_int)
-                                as uint16;
-                            (*p).echo_volume_fade_ticks =
-                                (*p).echo_volume_fade_ticks.wrapping_sub(1);
-                            if (*p).echo_volume_fade_ticks as ::core::ffi::c_int
-                                == 0 as ::core::ffi::c_int
-                            {
-                                (*p).echo_volume_left = (((*p).echo_volume_fade_target_left
-                                    as ::core::ffi::c_int)
-                                    << 8 as ::core::ffi::c_int)
-                                    as uint16;
-                                (*p).echo_volume_right = (((*p).echo_volume_fade_target_right
-                                    as ::core::ffi::c_int)
-                                    << 8 as ::core::ffi::c_int)
-                                    as uint16;
-                            }
-                        }
-                        if (*p).master_volume_fade_ticks != 0 {
-                            (*p).master_volume_fade_ticks =
-                                (*p).master_volume_fade_ticks.wrapping_sub(1);
-                            (*p).master_volume = (if (*p).master_volume_fade_ticks
-                                as ::core::ffi::c_int
-                                == 0 as ::core::ffi::c_int
-                            {
-                                ((*p).master_volume_fade_target as ::core::ffi::c_int)
-                                    << 8 as ::core::ffi::c_int
-                            } else {
-                                (*p).master_volume as ::core::ffi::c_int
-                                    + (*p).master_volume_fade_add_per_tick as ::core::ffi::c_int
-                            }) as uint16;
-                            (*p).vol_dirty = 0xff as uint8;
+                if current_block_83 == 12349973810996921269 {
+                    t = *((&raw mut (*p).ram as *mut uint8).offset((*p).music_ptr_toplevel as isize)
+                        as *mut uint8 as *mut uint16) as ::core::ffi::c_int;
+                    (*p).music_ptr_toplevel = ((*p).music_ptr_toplevel as ::core::ffi::c_int
+                        + 2 as ::core::ffi::c_int)
+                        as uint16;
+                    if t >> 8 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
+                        let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+                        while i < 8 as ::core::ffi::c_int {
+                            (*p).channel[i as usize].pattern_order_ptr_for_chan = *((&raw mut (*p)
+                                .ram
+                                as *mut uint8)
+                                .offset(t as isize)
+                                as *mut uint8
+                                as *mut uint16);
+                            t += 2 as ::core::ffi::c_int;
+                            i += 1;
                         }
                         c = &raw mut (*p).channel as *mut Channel;
                         (*p).cur_chan_bit = 1 as uint8;
@@ -2883,10 +2661,17 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
                                 (::core::mem::size_of::<uint16>() as usize)
                                     .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                                     .wrapping_sub(1_usize) as isize,
-                            ) != 0
+                            ) as ::core::ffi::c_int
+                                != 0
+                                && (*c).instrument_id as ::core::ffi::c_int
+                                    == 0 as ::core::ffi::c_int
                             {
-                                Chan_HandleTick(p, c);
+                                Channel_SetInstrument(p, c, 0 as uint8);
                             }
+                            (*c).subroutine_num_loops = 0 as uint8;
+                            (*c).volume_fade_ticks = 0 as uint8;
+                            (*c).pan_num_ticks = 0 as uint8;
+                            (*c).note_ticks_left = 1 as uint8;
                             c = c.offset(1);
                             (*p).cur_chan_bit = (((*p).cur_chan_bit as ::core::ffi::c_int)
                                 << 1 as ::core::ffi::c_int)
@@ -2895,8 +2680,208 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
                                 break;
                             }
                         }
-                        return;
+                        current_block_83 = 7829208624863839112;
+                    } else if t == 0 as ::core::ffi::c_int {
+                        a = 0 as uint8;
+                        break;
+                    } else {
+                        if t == 0x80 as ::core::ffi::c_int {
+                            (*p).fast_forward = 0x80 as uint8;
+                        } else if t == 0x81 as ::core::ffi::c_int {
+                            (*p).fast_forward = 0 as uint8;
+                        } else {
+                            (*p).block_count = (*p).block_count.wrapping_sub(1);
+                            if (*p).block_count as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
+                                != 0
+                            {
+                                (*p).block_count = t as uint8;
+                            }
+                            t = *((&raw mut (*p).ram as *mut uint8)
+                                .offset((*p).music_ptr_toplevel as isize)
+                                as *mut uint8 as *mut uint16)
+                                as ::core::ffi::c_int;
+                            (*p).music_ptr_toplevel = ((*p).music_ptr_toplevel
+                                as ::core::ffi::c_int
+                                + 2 as ::core::ffi::c_int)
+                                as uint16;
+                            if (*p).block_count as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
+                                (*p).music_ptr_toplevel = t as uint16;
+                            }
+                        }
+                        current_block_83 = 12349973810996921269;
                     }
+                } else {
+                    (*p).vol_dirty = 0 as uint8;
+                    c = &raw mut (*p).channel as *mut Channel;
+                    (*p).cur_chan_bit = 1 as uint8;
+                    loop {
+                        if (*(&raw mut (*c).pattern_order_ptr_for_chan as *mut uint8).offset(
+                            (::core::mem::size_of::<uint16>() as usize)
+                                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                                .wrapping_sub(1_usize) as isize,
+                        ) != 0)
+                        {
+                            (*c).note_ticks_left = (*c).note_ticks_left.wrapping_sub(1);
+                            if (*c).note_ticks_left == 0 {
+                                loop {
+                                    let fresh0 = (*c).pattern_order_ptr_for_chan;
+                                    (*c).pattern_order_ptr_for_chan =
+                                        (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+                                    let mut cmd: uint8 = (*p).ram[fresh0 as usize];
+                                    if cmd as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+                                        if (*c).subroutine_num_loops == 0 {
+                                            current_block_83 = 12349973810996921269;
+                                            continue '_label_a;
+                                        }
+                                        (*c).subroutine_num_loops =
+                                            (*c).subroutine_num_loops.wrapping_sub(1);
+                                        (*c).pattern_order_ptr_for_chan =
+                                            (if (*c).subroutine_num_loops as ::core::ffi::c_int
+                                                == 0 as ::core::ffi::c_int
+                                            {
+                                                (*c).saved_pattern_ptr as ::core::ffi::c_int
+                                            } else {
+                                                (*c).pattern_start_ptr as ::core::ffi::c_int
+                                            })
+                                                as uint16;
+                                    } else {
+                                        if cmd as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
+                                            == 0
+                                        {
+                                            static kNoteVol: [uint8; 16] = [
+                                                25, 50, 76, 101, 114, 127, 140, 152, 165, 178, 191,
+                                                203, 216, 229, 242, 252,
+                                            ];
+                                            static kNoteGateOffPct: [uint8; 8] =
+                                                [50, 101, 127, 152, 178, 203, 229, 252];
+                                            (*c).note_length = cmd;
+                                            let fresh1 = (*c).pattern_order_ptr_for_chan;
+                                            (*c).pattern_order_ptr_for_chan =
+                                                (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+                                            cmd = (*p).ram[fresh1 as usize];
+                                            if cmd as ::core::ffi::c_int
+                                                & 0x80 as ::core::ffi::c_int
+                                                == 0
+                                            {
+                                                (*c).note_gate_off_fixedpt = kNoteGateOffPct[(cmd
+                                                    as ::core::ffi::c_int
+                                                    >> 4 as ::core::ffi::c_int
+                                                    & 7 as ::core::ffi::c_int)
+                                                    as usize];
+                                                (*c).channel_volume_master = kNoteVol[(cmd
+                                                    as ::core::ffi::c_int
+                                                    & 0xf as ::core::ffi::c_int)
+                                                    as usize];
+                                                let fresh2 = (*c).pattern_order_ptr_for_chan;
+                                                (*c).pattern_order_ptr_for_chan =
+                                                    (*c).pattern_order_ptr_for_chan.wrapping_add(1);
+                                                cmd = (*p).ram[fresh2 as usize];
+                                            }
+                                        }
+                                        if cmd as ::core::ffi::c_int >= 0xe0 as ::core::ffi::c_int {
+                                            HandleEffect(p, c, cmd);
+                                        } else {
+                                            if (*c).cutk as ::core::ffi::c_int
+                                                | (*p).fast_forward as ::core::ffi::c_int
+                                                == 0 as ::core::ffi::c_int
+                                            {
+                                                PlayNote(p, c, cmd);
+                                            }
+                                            (*c).note_ticks_left = (*c).note_length;
+                                            t = (*c).note_ticks_left as ::core::ffi::c_int
+                                                * (*c).note_gate_off_fixedpt as ::core::ffi::c_int
+                                                >> 8 as ::core::ffi::c_int;
+                                            (*c).note_keyoff_ticks_left =
+                                                (if t != 0 as ::core::ffi::c_int {
+                                                    t
+                                                } else {
+                                                    1 as ::core::ffi::c_int
+                                                })
+                                                    as uint8;
+                                            PitchSlideToNote_Check(p, c);
+                                            break;
+                                        }
+                                    }
+                                }
+                            } else if (*p).fast_forward == 0 {
+                                HandleNoteTick(p, c);
+                                PitchSlideToNote_Check(p, c);
+                            }
+                        }
+                        c = c.offset(1);
+                        (*p).cur_chan_bit = (((*p).cur_chan_bit as ::core::ffi::c_int)
+                            << 1 as ::core::ffi::c_int)
+                            as uint8;
+                        if ((*p).cur_chan_bit == 0) {
+                            break;
+                        }
+                    }
+                    if (*p).tempo_fade_num_ticks != 0 {
+                        (*p).tempo_fade_num_ticks = (*p).tempo_fade_num_ticks.wrapping_sub(1);
+                        (*p).tempo = (if (*p).tempo_fade_num_ticks as ::core::ffi::c_int
+                            == 0 as ::core::ffi::c_int
+                        {
+                            ((*p).tempo_fade_final as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
+                        } else {
+                            (*p).tempo as ::core::ffi::c_int
+                                + (*p).tempo_fade_add as ::core::ffi::c_int
+                        }) as uint16;
+                    }
+                    if (*p).echo_volume_fade_ticks != 0 {
+                        (*p).echo_volume_left = ((*p).echo_volume_left as ::core::ffi::c_int
+                            + (*p).echo_volume_fade_add_left as ::core::ffi::c_int)
+                            as uint16;
+                        (*p).echo_volume_right = ((*p).echo_volume_right as ::core::ffi::c_int
+                            + (*p).echo_volume_fade_add_right as ::core::ffi::c_int)
+                            as uint16;
+                        (*p).echo_volume_fade_ticks = (*p).echo_volume_fade_ticks.wrapping_sub(1);
+                        if (*p).echo_volume_fade_ticks as ::core::ffi::c_int
+                            == 0 as ::core::ffi::c_int
+                        {
+                            (*p).echo_volume_left = (((*p).echo_volume_fade_target_left
+                                as ::core::ffi::c_int)
+                                << 8 as ::core::ffi::c_int)
+                                as uint16;
+                            (*p).echo_volume_right = (((*p).echo_volume_fade_target_right
+                                as ::core::ffi::c_int)
+                                << 8 as ::core::ffi::c_int)
+                                as uint16;
+                        }
+                    }
+                    if (*p).master_volume_fade_ticks != 0 {
+                        (*p).master_volume_fade_ticks =
+                            (*p).master_volume_fade_ticks.wrapping_sub(1);
+                        (*p).master_volume = (if (*p).master_volume_fade_ticks as ::core::ffi::c_int
+                            == 0 as ::core::ffi::c_int
+                        {
+                            ((*p).master_volume_fade_target as ::core::ffi::c_int)
+                                << 8 as ::core::ffi::c_int
+                        } else {
+                            (*p).master_volume as ::core::ffi::c_int
+                                + (*p).master_volume_fade_add_per_tick as ::core::ffi::c_int
+                        }) as uint16;
+                        (*p).vol_dirty = 0xff as uint8;
+                    }
+                    c = &raw mut (*p).channel as *mut Channel;
+                    (*p).cur_chan_bit = 1 as uint8;
+                    loop {
+                        if *(&raw mut (*c).pattern_order_ptr_for_chan as *mut uint8).offset(
+                            (::core::mem::size_of::<uint16>() as usize)
+                                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                                .wrapping_sub(1_usize) as isize,
+                        ) != 0
+                        {
+                            Chan_HandleTick(p, c);
+                        }
+                        c = c.offset(1);
+                        (*p).cur_chan_bit = (((*p).cur_chan_bit as ::core::ffi::c_int)
+                            << 1 as ::core::ffi::c_int)
+                            as uint8;
+                        if ((*p).cur_chan_bit == 0) {
+                            break;
+                        }
+                    }
+                    return;
                 }
             }
         }

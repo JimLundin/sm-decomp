@@ -2072,36 +2072,32 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
                     continue;
                 }
             }
-            match current_block_182 {
-                18425699056680496821 => {
-                    ClearOamExt(game);
-                    set_ram_word!(game.oam_next_ptr = 0 as uint16);
-                    AddNintentoLogoToOam(game);
-                    let ref mut fresh168 =
-                        *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16);
-                    *fresh168 = (*fresh168).wrapping_sub(1);
-                    if *fresh168 == 0 {
-                        ClearUnusedOam(game);
-                        current_block_182 = 17628988452808763652;
-                    } else {
-                        ClearUnusedOam(game);
-                        current_block_182 = 2371591747199196472;
-                    }
+            if current_block_182 == 18425699056680496821 {
+                ClearOamExt(game);
+                set_ram_word!(game.oam_next_ptr = 0 as uint16);
+                AddNintentoLogoToOam(game);
+                let ref mut fresh168 =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16);
+                *fresh168 = (*fresh168).wrapping_sub(1);
+                if *fresh168 == 0 {
+                    ClearUnusedOam(game);
+                    current_block_182 = 17628988452808763652;
+                } else {
+                    ClearUnusedOam(game);
+                    current_block_182 = 2371591747199196472;
                 }
-                _ => {
-                    ClearOamExt(game);
-                    set_ram_word!(game.oam_next_ptr = 0 as uint16);
-                    AddNintentoLogoToOam(game);
-                    if AdvanceFastScreenFadeOut(game) as ::core::ffi::c_int
-                        & 1 as ::core::ffi::c_int
-                        != 0
-                    {
-                        ClearUnusedOam(game);
-                        current_block_182 = 2484129932066553195;
-                    } else {
-                        ClearUnusedOam(game);
-                        current_block_182 = 17952583510507278934;
-                    }
+            } else {
+                ClearOamExt(game);
+                set_ram_word!(game.oam_next_ptr = 0 as uint16);
+                AddNintentoLogoToOam(game);
+                if AdvanceFastScreenFadeOut(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
+                    != 0
+                {
+                    ClearUnusedOam(game);
+                    current_block_182 = 2484129932066553195;
+                } else {
+                    ClearUnusedOam(game);
+                    current_block_182 = 17952583510507278934;
                 }
             }
         }

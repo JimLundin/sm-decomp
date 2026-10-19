@@ -3294,26 +3294,22 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> uint8 {
                     break;
                 }
             }
-            match current_block {
-                16784897620381762466 => {}
-                _ => {
-                    *(&raw mut v4 as *mut uint8).offset(0) = 0 as uint8;
-                    *(&raw mut v4 as *mut uint8).offset(
-                        (::core::mem::size_of::<int16>())
-                            .wrapping_div(::core::mem::size_of::<uint8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ) = (grapple_beam_tmpD86 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
-                        as uint8;
-                    set_ram_word!(game.grapple_beam_end_angle16 = ((v4) as u16) | (0x80u16));
-                    set_ram_word!(game.grapple_beam_end_angles_mirror = ((v4) as u16) | (0x80u16));
-                    if ram_word!(game, g_word_7E0D98) != 6u16
-                        && ram_word!(game, g_word_7E0D98) != 5u16
-                        || ram_word!(game, grapple_beam_length) != 8u16
-                    {
-                        current_block = 15145243721762997867;
-                    } else {
-                        current_block = 4207414038393540328;
-                    }
+            if current_block == 16784897620381762466 {
+            } else {
+                *(&raw mut v4 as *mut uint8).offset(0) = 0 as uint8;
+                *(&raw mut v4 as *mut uint8).offset(
+                    (::core::mem::size_of::<int16>())
+                        .wrapping_div(::core::mem::size_of::<uint8>())
+                        .wrapping_sub(1_usize) as isize,
+                ) = (grapple_beam_tmpD86 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint8;
+                set_ram_word!(game.grapple_beam_end_angle16 = ((v4) as u16) | (0x80u16));
+                set_ram_word!(game.grapple_beam_end_angles_mirror = ((v4) as u16) | (0x80u16));
+                if ram_word!(game, g_word_7E0D98) != 6u16 && ram_word!(game, g_word_7E0D98) != 5u16
+                    || ram_word!(game, grapple_beam_length) != 8u16
+                {
+                    current_block = 15145243721762997867;
+                } else {
+                    current_block = 4207414038393540328;
                 }
             }
         } else {
@@ -3383,75 +3379,69 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> uint8 {
             current_block = 11777552016271000781;
         }
         loop {
-            match current_block {
-                11777552016271000781 => {
-                    grapple_beam_tmpD86 = v5;
-                    let grapple_beam_tmpD82_0: uint16 =
-                        (v5 as ::core::ffi::c_int - 2 as ::core::ffi::c_int
-                            & 0x1ff as ::core::ffi::c_int) as uint16;
-                    if BlockFunc_ABE6(grapple_beam_tmpD82_0, game) as ::core::ffi::c_int
-                        & 1 as ::core::ffi::c_int
-                        != 0
+            if current_block == 11777552016271000781 {
+                grapple_beam_tmpD86 = v5;
+                let grapple_beam_tmpD82_0: uint16 =
+                    (v5 as ::core::ffi::c_int - 2 as ::core::ffi::c_int
+                        & 0x1ff as ::core::ffi::c_int) as uint16;
+                if BlockFunc_ABE6(grapple_beam_tmpD82_0, game) as ::core::ffi::c_int
+                    & 1 as ::core::ffi::c_int
+                    != 0
+                {
+                    *(&raw mut v7 as *mut uint8).offset(0) = 0 as uint8;
+                    *(&raw mut v7 as *mut uint8).offset(
+                        (::core::mem::size_of::<int16>())
+                            .wrapping_div(::core::mem::size_of::<uint8>())
+                            .wrapping_sub(1_usize) as isize,
+                    ) = (grapple_beam_tmpD86 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
+                        as uint8;
+                    set_ram_word!(game.grapple_beam_end_angle16 = ((v7) as u16) | (0x80u16));
+                    set_ram_word!(game.grapple_beam_end_angles_mirror = ((v7) as u16) | (0x80u16));
+                    if (ram_word!(game, g_word_7E0D98) == 6u16
+                        || ram_word!(game, g_word_7E0D98) == 5u16)
+                        && ram_word!(game, grapple_beam_length) == 8u16
                     {
-                        *(&raw mut v7 as *mut uint8).offset(0) = 0 as uint8;
-                        *(&raw mut v7 as *mut uint8).offset(
-                            (::core::mem::size_of::<int16>())
-                                .wrapping_div(::core::mem::size_of::<uint8>())
-                                .wrapping_sub(1_usize) as isize,
-                        ) = (grapple_beam_tmpD86 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
-                            as uint8;
-                        set_ram_word!(game.grapple_beam_end_angle16 = ((v7) as u16) | (0x80u16));
-                        set_ram_word!(
-                            game.grapple_beam_end_angles_mirror = ((v7) as u16) | (0x80u16)
-                        );
-                        if (ram_word!(game, g_word_7E0D98) == 6u16
-                            || ram_word!(game, g_word_7E0D98) == 5u16)
-                            && ram_word!(game, grapple_beam_length) == 8u16
-                        {
-                            current_block = 4207414038393540328;
-                            break;
-                        } else {
-                            current_block = 15145243721762997867;
-                            break;
-                        }
+                        current_block = 4207414038393540328;
+                        break;
                     } else {
-                        v5 = (grapple_beam_tmpD86 as ::core::ffi::c_int - 2 as ::core::ffi::c_int
-                            & 0x1ff as ::core::ffi::c_int) as uint16;
-                        if v5 == grapple_beam_tmpD88 {
-                            current_block = 5091811861639934416;
-                        } else {
-                            current_block = 11777552016271000781;
-                        }
+                        current_block = 15145243721762997867;
+                        break;
+                    }
+                } else {
+                    v5 = (grapple_beam_tmpD86 as ::core::ffi::c_int - 2 as ::core::ffi::c_int
+                        & 0x1ff as ::core::ffi::c_int) as uint16;
+                    if v5 == grapple_beam_tmpD88 {
+                        current_block = 5091811861639934416;
+                    } else {
+                        current_block = 11777552016271000781;
                     }
                 }
-                _ => {
-                    let ref mut fresh7 =
-                        *((&raw mut game.g_ram as *mut uint8).offset(0xcfa) as *mut uint16);
-                    *fresh7 = (*fresh7).wrapping_add(tmpD9C);
-                    set_ram_word!(
-                        game.grapple_beam_end_angles_mirror =
-                            ram_word!(game, grapple_beam_end_angle16)
-                    );
-                    let ref mut fresh8 =
-                        *((&raw mut game.g_ram as *mut uint8).offset(0xd36) as *mut uint16);
-                    *fresh8 =
-                        (*fresh8 as ::core::ffi::c_int & !(0x8000 as ::core::ffi::c_int)) as uint16;
-                    let ref mut fresh9 =
-                        *((&raw mut game.g_ram as *mut uint8).offset(0xd30) as *mut uint16);
-                    *fresh9 = (*fresh9).wrapping_sub(1);
-                    if (*fresh9 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
-                        set_ram_word!(game.grapple_beam_unkD30 = 0 as uint16);
-                    }
-                    if (ram_word!(game, grapple_beam_unkD2E) as ::core::ffi::c_int
-                        & 0x8000 as ::core::ffi::c_int)
-                        == 0i32
-                    {
-                        current_block = 12997042908615822766;
-                        break;
-                    } else {
-                        current_block = 10399321362245223758;
-                        break;
-                    }
+            } else {
+                let ref mut fresh7 =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xcfa) as *mut uint16);
+                *fresh7 = (*fresh7).wrapping_add(tmpD9C);
+                set_ram_word!(
+                    game.grapple_beam_end_angles_mirror = ram_word!(game, grapple_beam_end_angle16)
+                );
+                let ref mut fresh8 =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xd36) as *mut uint16);
+                *fresh8 =
+                    (*fresh8 as ::core::ffi::c_int & !(0x8000 as ::core::ffi::c_int)) as uint16;
+                let ref mut fresh9 =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xd30) as *mut uint16);
+                *fresh9 = (*fresh9).wrapping_sub(1);
+                if (*fresh9 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
+                    set_ram_word!(game.grapple_beam_unkD30 = 0 as uint16);
+                }
+                if (ram_word!(game, grapple_beam_unkD2E) as ::core::ffi::c_int
+                    & 0x8000 as ::core::ffi::c_int)
+                    == 0i32
+                {
+                    current_block = 12997042908615822766;
+                    break;
+                } else {
+                    current_block = 10399321362245223758;
+                    break;
                 }
             }
         }
@@ -3459,25 +3449,19 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> uint8 {
             15145243721762997867 => {}
             4207414038393540328 => {}
             _ => {
-                match current_block {
-                    10399321362245223758 => {
-                        v6 = (ram_word!(game, grapple_beam_unkD2E)).wrapping_add(6u16);
-                        if ((ram_word!(game, grapple_beam_unkD2E)) as i16).wrapping_add(6i16) < 0i16
-                        {
-                            current_block = 9815132409580070441;
-                        } else {
-                            current_block = 13619784596304402172;
-                        }
+                if current_block == 10399321362245223758 {
+                    v6 = (ram_word!(game, grapple_beam_unkD2E)).wrapping_add(6u16);
+                    if ((ram_word!(game, grapple_beam_unkD2E)) as i16).wrapping_add(6i16) < 0i16 {
+                        current_block = 9815132409580070441;
+                    } else {
+                        current_block = 13619784596304402172;
                     }
-                    _ => {
-                        v6 = (ram_word!(game, grapple_beam_unkD2E)).wrapping_sub(6u16);
-                        if ((ram_word!(game, grapple_beam_unkD2E)) as i16).wrapping_sub(6i16)
-                            >= 0i16
-                        {
-                            current_block = 9815132409580070441;
-                        } else {
-                            current_block = 13619784596304402172;
-                        }
+                } else {
+                    v6 = (ram_word!(game, grapple_beam_unkD2E)).wrapping_sub(6u16);
+                    if ((ram_word!(game, grapple_beam_unkD2E)) as i16).wrapping_sub(6i16) >= 0i16 {
+                        current_block = 9815132409580070441;
+                    } else {
+                        current_block = 13619784596304402172;
                     }
                 }
                 if current_block == 13619784596304402172 {
@@ -3488,29 +3472,25 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> uint8 {
             }
         }
     }
-    match current_block {
-        15145243721762997867 => {
-            set_ram_word!(game.grapple_beam_unkD30 = 16 as uint16);
-            set_ram_word!(
-                game.grapple_beam_unkD26 =
-                    -(ram_word!(game, grapple_beam_unkD26) as int16 as ::core::ffi::c_int
-                        >> 1 as ::core::ffi::c_int) as uint16
-            );
-            set_ram_word!(
-                game.grapple_beam_unkD2E =
-                    -(ram_word!(game, grapple_beam_unkD2E) as int16 as ::core::ffi::c_int
-                        >> 1 as ::core::ffi::c_int) as uint16
-            );
-            1 as uint8
-        }
-        _ => {
-            let ref mut fresh3 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0xd36) as *mut uint16);
-            *fresh3 = (*fresh3) | (0x8000u16);
-            set_ram_word!(game.grapple_beam_unkD26 = 0 as uint16);
-            set_ram_word!(game.grapple_beam_unkD2E = 0 as uint16);
-            1 as uint8
-        }
+    if current_block == 15145243721762997867 {
+        set_ram_word!(game.grapple_beam_unkD30 = 16 as uint16);
+        set_ram_word!(
+            game.grapple_beam_unkD26 = -(ram_word!(game, grapple_beam_unkD26) as int16
+                as ::core::ffi::c_int
+                >> 1 as ::core::ffi::c_int) as uint16
+        );
+        set_ram_word!(
+            game.grapple_beam_unkD2E = -(ram_word!(game, grapple_beam_unkD2E) as int16
+                as ::core::ffi::c_int
+                >> 1 as ::core::ffi::c_int) as uint16
+        );
+        1 as uint8
+    } else {
+        let ref mut fresh3 = *((&raw mut game.g_ram as *mut uint8).offset(0xd36) as *mut uint16);
+        *fresh3 = (*fresh3) | (0x8000u16);
+        set_ram_word!(game.grapple_beam_unkD26 = 0 as uint16);
+        set_ram_word!(game.grapple_beam_unkD2E = 0 as uint16);
+        1 as uint8
     }
 }
 pub unsafe fn BlockFunc_AEE3(game: &mut Game) -> uint8 {

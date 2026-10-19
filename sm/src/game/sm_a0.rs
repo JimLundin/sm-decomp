@@ -4794,24 +4794,21 @@ pub unsafe fn EnemyMain(game: &mut Game) {
                         current_block_39 = 1836292691772056875;
                     }
                 }
-                match current_block_39 {
-                    1836292691772056875 => {}
-                    _ => {
-                        if ram_word!(game, debug_time_frozen_for_enemies) as ::core::ffi::c_int
-                            | ram_word!(game, time_is_frozen_flag) as ::core::ffi::c_int
-                            == 0
+                if current_block_39 == 1836292691772056875 {
+                } else {
+                    if ram_word!(game, debug_time_frozen_for_enemies) as ::core::ffi::c_int
+                        | ram_word!(game, time_is_frozen_flag) as ::core::ffi::c_int
+                        == 0
+                    {
+                        (*E).frame_counter = (*E).frame_counter.wrapping_add(1);
+                        if ((*E).properties as ::core::ffi::c_int & 0x2000 as ::core::ffi::c_int)
+                            != 0i32
                         {
-                            (*E).frame_counter = (*E).frame_counter.wrapping_add(1);
-                            if ((*E).properties as ::core::ffi::c_int
-                                & 0x2000 as ::core::ffi::c_int)
-                                != 0i32
-                            {
-                                set_ram_word!(game.enemy_processing_stage = 2 as uint16);
-                                ProcessEnemyInstructions(game);
-                            }
+                            set_ram_word!(game.enemy_processing_stage = 2 as uint16);
+                            ProcessEnemyInstructions(game);
                         }
-                        current_block_39 = 1836292691772056875;
                     }
+                    current_block_39 = 1836292691772056875;
                 }
             }
             if current_block_39 == 1836292691772056875 {

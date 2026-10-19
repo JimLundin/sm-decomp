@@ -3604,22 +3604,20 @@ pub unsafe fn MaridiaSnail_Func_5(k: uint16, game: &mut Game) {
             } else {
                 current_block = 6873731126896040597;
             }
-            match current_block {
-                3898722140564953443 => {}
-                _ => {
-                    if (*E).msl_var_08 == 2u16 {
-                        return;
-                    }
-                    if (*E).msl_var_D as ::core::ffi::c_int
-                        != 0xa3cf5f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
-                    {
-                        (*E).base.current_instruction = (*E).msl_var_D;
-                        (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A3 as uint16;
-                        (*E).base.instruction_timer = 1 as uint16;
-                        (*E).base.timer = 0 as uint16;
-                        (*E).msl_var_08 = 2 as uint16;
-                        return;
-                    }
+            if current_block == 3898722140564953443 {
+            } else {
+                if (*E).msl_var_08 == 2u16 {
+                    return;
+                }
+                if (*E).msl_var_D as ::core::ffi::c_int
+                    != 0xa3cf5f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
+                {
+                    (*E).base.current_instruction = (*E).msl_var_D;
+                    (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A3 as uint16;
+                    (*E).base.instruction_timer = 1 as uint16;
+                    (*E).base.timer = 0 as uint16;
+                    (*E).msl_var_08 = 2 as uint16;
+                    return;
                 }
             }
         }
@@ -3651,12 +3649,10 @@ pub unsafe fn MaridiaSnail_Func_6(k: uint16, game: &mut Game) {
         } else {
             current_block = 2304351028894610342;
         }
-        match current_block {
-            2304351028894610342 => {}
-            _ => {
-                (*E).base.properties = ((*E).base.properties) | (0x8000u16);
-                return;
-            }
+        if current_block == 2304351028894610342 {
+        } else {
+            (*E).base.properties = ((*E).base.properties) | (0x8000u16);
+            return;
         }
     }
     (*E).base.properties = ((*E).base.properties) & (0x7fffu16);

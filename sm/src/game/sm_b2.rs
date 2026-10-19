@@ -252,12 +252,10 @@ pub unsafe fn WalkingSpacePirates_87C8(game: &mut Game) {
                     current_block = 17407779659766490442;
                 }
             }
-            match current_block {
-                1528265894032410192 => {}
-                _ => {
-                    WalkingSpacePirates_883E(game);
-                    current_block = 15976848397966268834;
-                }
+            if current_block == 1528265894032410192 {
+            } else {
+                WalkingSpacePirates_883E(game);
+                current_block = 15976848397966268834;
             }
         } else {
             current_block = 15976848397966268834;

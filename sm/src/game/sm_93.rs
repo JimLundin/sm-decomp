@@ -409,35 +409,33 @@ pub unsafe fn DrawPlayerExplosions2(game: &mut Game) {
             } else {
                 current_block = 7149356873433890176;
             }
-            match current_block {
-                10261563330130345889 => {}
-                _ => {
-                    if (ram_word!(game, ceres_status) as ::core::ffi::c_int
-                        & 0x8000 as ::core::ffi::c_int)
-                        == 0i32
-                    {
-                        r20 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
-                            .offset(v1 as isize))
-                        .wrapping_sub(ram_word!(game, layer1_x_pos));
-                        v3 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
-                            .offset(v1 as isize))
-                        .wrapping_sub(ram_word!(game, layer1_y_pos));
-                        r18 = v3;
-                    } else {
-                        let pt: Point16U = CalcExplosion_Mode7(v0, game);
-                        v3 = pt.y;
-                        r20 = pt.x;
-                    }
-                    if (v3 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int) == 0i32
-                        && (*((&raw mut game.g_ram as *mut uint8).offset(0xcb8) as *mut uint16)
-                            .offset(v1 as isize) as ::core::ffi::c_int
-                            & 0x8000 as ::core::ffi::c_int)
-                            != 0i32
-                    {
-                        DrawProjectileSpritemap(v0, r20, r18, game);
-                    }
-                    v0 = ram_word!(game, projectile_index);
+            if current_block == 10261563330130345889 {
+            } else {
+                if (ram_word!(game, ceres_status) as ::core::ffi::c_int
+                    & 0x8000 as ::core::ffi::c_int)
+                    == 0i32
+                {
+                    r20 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
+                        .offset(v1 as isize))
+                    .wrapping_sub(ram_word!(game, layer1_x_pos));
+                    v3 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
+                        .offset(v1 as isize))
+                    .wrapping_sub(ram_word!(game, layer1_y_pos));
+                    r18 = v3;
+                } else {
+                    let pt: Point16U = CalcExplosion_Mode7(v0, game);
+                    v3 = pt.y;
+                    r20 = pt.x;
                 }
+                if (v3 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int) == 0i32
+                    && (*((&raw mut game.g_ram as *mut uint8).offset(0xcb8) as *mut uint16)
+                        .offset(v1 as isize) as ::core::ffi::c_int
+                        & 0x8000 as ::core::ffi::c_int)
+                        != 0i32
+                {
+                    DrawProjectileSpritemap(v0, r20, r18, game);
+                }
+                v0 = ram_word!(game, projectile_index);
             }
         }
         v0 = (v0).wrapping_sub(2u16);
@@ -528,41 +526,36 @@ pub unsafe fn DrawBombAndProjectileExplosions(game: &mut Game) {
                 v2 = r18;
                 current_block = 2311960645627505036;
             }
-            match current_block {
-                2612600445040741303 => {}
-                _ => {
-                    if current_block == 11875828834189669668 {
-                        let v3: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb64)
-                            as *mut uint16)
-                            .offset(v1 as isize))
-                        .wrapping_sub(ram_word!(game, layer1_x_pos));
-                        r20 = v3;
-                        if v3 as ::core::ffi::c_int - 304 as ::core::ffi::c_int
+            if current_block == 2612600445040741303 {
+            } else {
+                if current_block == 11875828834189669668 {
+                    let v3: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb64)
+                        as *mut uint16)
+                        .offset(v1 as isize))
+                    .wrapping_sub(ram_word!(game, layer1_x_pos));
+                    r20 = v3;
+                    if v3 as ::core::ffi::c_int - 304 as ::core::ffi::c_int
+                        & 0x8000 as ::core::ffi::c_int
+                        == 0
+                        || v3 as ::core::ffi::c_int + 48 as ::core::ffi::c_int
                             & 0x8000 as ::core::ffi::c_int
-                            == 0
-                            || v3 as ::core::ffi::c_int + 48 as ::core::ffi::c_int
-                                & 0x8000 as ::core::ffi::c_int
-                                != 0
-                        {
-                            current_block = 2612600445040741303;
-                        } else {
-                            v2 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb78)
-                                as *mut uint16)
-                                .offset(v1 as isize))
-                            .wrapping_sub(ram_word!(game, layer1_y_pos));
-                            r18 = v2;
-                            current_block = 2311960645627505036;
-                        }
+                            != 0
+                    {
+                        current_block = 2612600445040741303;
+                    } else {
+                        v2 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
+                            .offset(v1 as isize))
+                        .wrapping_sub(ram_word!(game, layer1_y_pos));
+                        r18 = v2;
+                        current_block = 2311960645627505036;
                     }
-                    match current_block {
-                        2612600445040741303 => {}
-                        _ => {
-                            if ((v2 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int) == 0i32) {
-                                DrawProjectileSpritemap(v0, r20, r18, game);
-                            }
-                            v0 = ram_word!(game, projectile_index);
-                        }
+                }
+                if current_block == 2612600445040741303 {
+                } else {
+                    if ((v2 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int) == 0i32) {
+                        DrawProjectileSpritemap(v0, r20, r18, game);
                     }
+                    v0 = ram_word!(game, projectile_index);
                 }
             }
         }

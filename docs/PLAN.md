@@ -19653,6 +19653,21 @@ source/library/fixture pins. Formatting/check, normal release (22.35s snapshot,
 coverage; frontend conditions are compiler checked. Full credits/readability
 remain open. Continue named byte accesses and larger compiler families.
 
+Compiler match/else cleanup (2026-10-19): standard Clippy single_match_else
+fixes simplify 61 two-arm matches across 22 files. Integer state comparisons
+retain both branches; two verifier Result matches become if let/else with
+the same argument/error handling. Final all-target/all-feature check has zero
+single_match_else diagnostics. Net Rust lines -189; raw RAM accesses, unsafe
+functions and cast tokens are unchanged. The c_int cast-line counter falls by
+ten through formatting.
+
+Frozen fe86b814 plus this batch passes full any% 129712/0 (148.43s)
+and Speed Booster 148406/0 (183.26s), native exits 0, with fixed
+source/library/fixture pins. Formatting/check, normal release (23.35s snapshot,
+20.88s workspace), progress and diff check pass. Movies supply core regression
+coverage; frontend branches are compiler checked. Full credits/readability
+remain open. Continue named byte accesses and larger compiler families.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

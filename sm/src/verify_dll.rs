@@ -74,12 +74,11 @@ pub unsafe extern "C" fn sm_verify(
     }
     let mut args = Vec::new();
     for path in [rom, inputs] {
-        match CStr::from_ptr(path).to_str() {
-            Ok(path) => args.push(path.to_owned()),
-            Err(_) => {
-                eprintln!("verify: path is not valid UTF-8");
-                return 2;
-            }
+        if let Ok(path) = CStr::from_ptr(path).to_str() {
+            args.push(path.to_owned())
+        } else {
+            eprintln!("verify: path is not valid UTF-8");
+            return 2;
         }
     }
     if frames != 0 {
@@ -101,12 +100,11 @@ pub unsafe extern "C" fn sm_verify_args(argc: u32, argv: *const *const c_char) -
             eprintln!("verify: null argument");
             return 2;
         }
-        match CStr::from_ptr(arg).to_str() {
-            Ok(arg) => args.push(arg.to_owned()),
-            Err(_) => {
-                eprintln!("verify: argument is not valid UTF-8");
-                return 2;
-            }
+        if let Ok(arg) = CStr::from_ptr(arg).to_str() {
+            args.push(arg.to_owned())
+        } else {
+            eprintln!("verify: argument is not valid UTF-8");
+            return 2;
         }
     }
     run(&args)

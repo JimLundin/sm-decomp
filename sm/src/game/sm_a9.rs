@@ -2377,23 +2377,16 @@ pub unsafe fn MotherBrain_Func_1_DoubleRet(game: &mut Game) -> ::core::ffi::c_in
         current_block = 1917311967535052937;
     }
     loop {
-        match current_block {
-            87389992155768869 => {
-                pc = CallMotherBrainInstr(
-                    ((v5) as u32) | (0xa90000u32),
-                    (pc).wrapping_add(2u16),
-                    game,
-                );
-                current_block = 1917311967535052937;
-            }
-            _ => {
-                p = RomPtr_A9(pc, game);
-                v5 = *(p as *mut uint16);
-                if v5 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
-                    break;
-                } else {
-                    current_block = 87389992155768869;
-                }
+        if current_block == 87389992155768869 {
+            pc = CallMotherBrainInstr(((v5) as u32) | (0xa90000u32), (pc).wrapping_add(2u16), game);
+            current_block = 1917311967535052937;
+        } else {
+            p = RomPtr_A9(pc, game);
+            v5 = *(p as *mut uint16);
+            if v5 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
+                break;
+            } else {
+                current_block = 87389992155768869;
             }
         }
     }
@@ -6458,22 +6451,19 @@ pub unsafe fn HandleMotherBrainInstructionList(a: uint16, game: &mut Game) -> ui
         current_block = 6937071982253665452;
     }
     loop {
-        match current_block {
-            2809726207655838168 => {
-                v2 = CallMotherBrainInstr(
-                    ((*v3.offset(0)) as u32) | (0xa90000u32),
-                    (v2).wrapping_add(2u16),
-                    game,
-                );
-                current_block = 6937071982253665452;
-            }
-            _ => {
-                v3 = RomPtr_A9(v2, game) as *mut uint16;
-                if *v3.offset(0) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
-                    break;
-                } else {
-                    current_block = 2809726207655838168;
-                }
+        if current_block == 2809726207655838168 {
+            v2 = CallMotherBrainInstr(
+                ((*v3.offset(0)) as u32) | (0xa90000u32),
+                (v2).wrapping_add(2u16),
+                game,
+            );
+            current_block = 6937071982253665452;
+        } else {
+            v3 = RomPtr_A9(v2, game) as *mut uint16;
+            if *v3.offset(0) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
+                break;
+            } else {
+                current_block = 2809726207655838168;
             }
         }
     }

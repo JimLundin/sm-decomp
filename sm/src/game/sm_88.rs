@@ -1316,20 +1316,18 @@ pub unsafe fn CalculateXrayHdmaTable(game: &mut Game) {
             current_block_11 = 10599921512955367680;
         }
     }
-    match current_block_11 {
-        10599921512955367680 => {}
-        _ => {
-            CalculateXrayHdmaTableInner(
-                v0 as uint16,
-                v1,
-                ram_word!(game, xray_angle),
-                ram_word!(game, demo_input),
-                true_0 != 0,
-                (&raw mut game.g_ram as *mut uint8).offset(0x9800) as *mut uint16,
-                game,
-            );
-            return;
-        }
+    if current_block_11 == 10599921512955367680 {
+    } else {
+        CalculateXrayHdmaTableInner(
+            v0 as uint16,
+            v1,
+            ram_word!(game, xray_angle),
+            ram_word!(game, demo_input),
+            true_0 != 0,
+            (&raw mut game.g_ram as *mut uint8).offset(0x9800) as *mut uint16,
+            game,
+        );
+        return;
     }
     let mut i: ::core::ffi::c_int = 510 as ::core::ffi::c_int;
     while i >= 0i32 {

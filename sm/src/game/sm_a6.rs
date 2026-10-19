@@ -5851,23 +5851,17 @@ pub unsafe fn Ridley_Func_88(k: uint16, game: &mut Game) {
                     current_block = 2873832966593178012;
                 }
             }
-            match current_block {
-                5689001924483802034 => {}
-                _ => {
-                    match current_block {
-                        2873832966593178012 => {
-                            v2 = ((v6) as u16).wrapping_add(1u16);
-                        }
-                        _ => {
-                            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                                .offset((v4 + 18 as ::core::ffi::c_int) as isize) = 0 as uint16;
-                            v2 = *((&raw mut game.g_ram as *mut uint8).offset(0x2000)
-                                as *mut uint16)
-                                .offset(11);
-                        }
-                    }
-                    current_block = 4216153537599944117;
+            if current_block == 5689001924483802034 {
+            } else {
+                if current_block == 2873832966593178012 {
+                    v2 = ((v6) as u16).wrapping_add(1u16);
+                } else {
+                    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
+                        .offset((v4 + 18 as ::core::ffi::c_int) as isize) = 0 as uint16;
+                    v2 = *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
+                        .offset(11);
                 }
+                current_block = 4216153537599944117;
             }
         }
         match current_block {
@@ -6901,22 +6895,19 @@ unsafe fn BabyMetroid_DBCB_DoubleRetEx(a: uint16, game: &mut Game) -> ::core::ff
         current_block = 6937071982253665452;
     }
     loop {
-        match current_block {
-            14076424727262896545 => {
-                v2 = CallBabyMetroidInstr(
-                    ((*v3.offset(0)) as u32) | (0xa60000u32),
-                    (v2).wrapping_add(2u16),
-                    game,
-                );
-                current_block = 6937071982253665452;
-            }
-            _ => {
-                v3 = RomPtr_A6(v2, game) as *mut uint16;
-                if *v3.offset(0) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
-                    break;
-                } else {
-                    current_block = 14076424727262896545;
-                }
+        if current_block == 14076424727262896545 {
+            v2 = CallBabyMetroidInstr(
+                ((*v3.offset(0)) as u32) | (0xa60000u32),
+                (v2).wrapping_add(2u16),
+                game,
+            );
+            current_block = 6937071982253665452;
+        } else {
+            v3 = RomPtr_A6(v2, game) as *mut uint16;
+            if *v3.offset(0) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
+                break;
+            } else {
+                current_block = 14076424727262896545;
             }
         }
     }

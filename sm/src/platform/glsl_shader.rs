@@ -4909,123 +4909,121 @@ pub unsafe fn GlslShader_CreateFromFile(
                 }
             }
         }
-        match current_block {
-            13851546192323845927 => {}
-            _ => {
-                let mut t: *mut GlslTexture = (*gs).first_texture;
-                while !t.is_null() {
-                    gl::GenTextures(1 as GLsizei, &raw mut (*t).gl_texture);
-                    gl::BindTexture(GL_TEXTURE_2D as GLenum, (*t).gl_texture as GLuint);
-                    gl::TexParameteri(
-                        GL_TEXTURE_2D as GLenum,
-                        GL_TEXTURE_WRAP_S as GLenum,
-                        (*t).wrap_mode as GLint,
-                    );
-                    gl::TexParameteri(
-                        GL_TEXTURE_2D as GLenum,
-                        GL_TEXTURE_WRAP_T as GLenum,
-                        (*t).wrap_mode as GLint,
-                    );
-                    gl::TexParameteri(
-                        GL_TEXTURE_2D as GLenum,
-                        GL_TEXTURE_MAG_FILTER as GLenum,
-                        (*t).filter as GLint,
-                    );
-                    gl::TexParameteri(
-                        GL_TEXTURE_2D as GLenum,
-                        GL_TEXTURE_MIN_FILTER as GLenum,
-                        (if (*t).mipmap as ::core::ffi::c_int != 0 {
-                            (if (*t).filter == GL_LINEAR as uint {
-                                GL_LINEAR_MIPMAP_LINEAR
-                            } else {
-                                GL_NEAREST_MIPMAP_NEAREST
-                            }) as uint
-                        } else {
-                            (*t).filter
-                        }) as GLint,
-                    );
-                    if !(*t).filename.is_null() {
-                        let new_filename_0: *mut ::core::ffi::c_char =
-                            ReplaceFilenameWithNewPath(filename, (*t).filename);
-                        let mut imw: ::core::ffi::c_int = 0;
-                        let mut imh: ::core::ffi::c_int = 0;
-                        let mut imn: ::core::ffi::c_int = 0;
-                        let data: *mut ::core::ffi::c_uchar = stbi_load(
-                            new_filename_0,
-                            &raw mut imw,
-                            &raw mut imh,
-                            &raw mut imn,
-                            0 as ::core::ffi::c_int,
-                        )
-                            as *mut ::core::ffi::c_uchar;
-                        if data.is_null() {
-                            fprintf(
-                                stderr,
-                                b"Unable to read PNG '%s'\n\0" as *const u8
-                                    as *const ::core::ffi::c_char,
-                                new_filename_0,
-                            );
-                        } else {
-                            gl::TexImage2D(
-                                GL_TEXTURE_2D as GLenum,
-                                0 as GLint,
-                                GL_RGBA,
-                                imw as GLsizei,
-                                imh as GLsizei,
-                                0 as GLint,
-                                (if imn == 4 as ::core::ffi::c_int {
-                                    GL_RGBA
-                                } else if imn == 3 as ::core::ffi::c_int {
-                                    GL_RGB
-                                } else {
-                                    GL_LUMINANCE
-                                }) as GLenum,
-                                GL_UNSIGNED_BYTE as GLenum,
-                                data as *const ::core::ffi::c_void,
-                            );
-                        }
-                        free(data as *mut ::core::ffi::c_void);
-                        free(new_filename_0 as *mut ::core::ffi::c_void);
-                    }
-                    if (*t).mipmap {
-                        gl::GenerateMipmap(GL_TEXTURE_2D as GLenum);
-                    }
-                    t = (*t).next as *mut GlslTexture;
-                }
-                let mut p_0: *mut GlslParam = (*gs).first_param;
-                while !p_0.is_null() {
-                    (*p_0).value = if (*p_0).value < (*p_0).min {
-                        (*p_0).min
-                    } else if (*p_0).value > (*p_0).max {
-                        (*p_0).max
-                    } else {
-                        (*p_0).value
-                    };
-                    p_0 = (*p_0).next as *mut GlslParam;
-                }
-                GlslShader_GetUniforms(gs);
-                let mut i_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-                while i_0 < (*gs).max_prev_frame {
-                    gl::GenTextures(
-                        1 as GLsizei,
-                        &raw mut (*(&raw mut (*gs).prev_frame as *mut GlTextureWithSize).offset(
-                            (-i_0 - 1 as ::core::ffi::c_int & 7 as ::core::ffi::c_int) as isize,
-                        ))
-                        .gl_texture,
-                    );
-                    i_0 += 1;
-                }
-                gl::GenBuffers(1 as GLsizei, &raw mut (*gs).gl_vbo);
-                gl::BindBuffer(GL_ARRAY_BUFFER as GLenum, (*gs).gl_vbo as GLuint);
-                gl::BufferData(
-                    GL_ARRAY_BUFFER as GLenum,
-                    ::core::mem::size_of::<[GLfloat; 16]>() as GLsizeiptr,
-                    &raw const kTexCoords as *const GLfloat as *const ::core::ffi::c_void,
-                    GL_STATIC_DRAW as GLenum,
+        if current_block == 13851546192323845927 {
+        } else {
+            let mut t: *mut GlslTexture = (*gs).first_texture;
+            while !t.is_null() {
+                gl::GenTextures(1 as GLsizei, &raw mut (*t).gl_texture);
+                gl::BindTexture(GL_TEXTURE_2D as GLenum, (*t).gl_texture as GLuint);
+                gl::TexParameteri(
+                    GL_TEXTURE_2D as GLenum,
+                    GL_TEXTURE_WRAP_S as GLenum,
+                    (*t).wrap_mode as GLint,
                 );
-                gl::BindBuffer(GL_ARRAY_BUFFER as GLenum, 0 as GLuint);
-                success = true_0 != 0;
+                gl::TexParameteri(
+                    GL_TEXTURE_2D as GLenum,
+                    GL_TEXTURE_WRAP_T as GLenum,
+                    (*t).wrap_mode as GLint,
+                );
+                gl::TexParameteri(
+                    GL_TEXTURE_2D as GLenum,
+                    GL_TEXTURE_MAG_FILTER as GLenum,
+                    (*t).filter as GLint,
+                );
+                gl::TexParameteri(
+                    GL_TEXTURE_2D as GLenum,
+                    GL_TEXTURE_MIN_FILTER as GLenum,
+                    (if (*t).mipmap as ::core::ffi::c_int != 0 {
+                        (if (*t).filter == GL_LINEAR as uint {
+                            GL_LINEAR_MIPMAP_LINEAR
+                        } else {
+                            GL_NEAREST_MIPMAP_NEAREST
+                        }) as uint
+                    } else {
+                        (*t).filter
+                    }) as GLint,
+                );
+                if !(*t).filename.is_null() {
+                    let new_filename_0: *mut ::core::ffi::c_char =
+                        ReplaceFilenameWithNewPath(filename, (*t).filename);
+                    let mut imw: ::core::ffi::c_int = 0;
+                    let mut imh: ::core::ffi::c_int = 0;
+                    let mut imn: ::core::ffi::c_int = 0;
+                    let data: *mut ::core::ffi::c_uchar = stbi_load(
+                        new_filename_0,
+                        &raw mut imw,
+                        &raw mut imh,
+                        &raw mut imn,
+                        0 as ::core::ffi::c_int,
+                    )
+                        as *mut ::core::ffi::c_uchar;
+                    if data.is_null() {
+                        fprintf(
+                            stderr,
+                            b"Unable to read PNG '%s'\n\0" as *const u8
+                                as *const ::core::ffi::c_char,
+                            new_filename_0,
+                        );
+                    } else {
+                        gl::TexImage2D(
+                            GL_TEXTURE_2D as GLenum,
+                            0 as GLint,
+                            GL_RGBA,
+                            imw as GLsizei,
+                            imh as GLsizei,
+                            0 as GLint,
+                            (if imn == 4 as ::core::ffi::c_int {
+                                GL_RGBA
+                            } else if imn == 3 as ::core::ffi::c_int {
+                                GL_RGB
+                            } else {
+                                GL_LUMINANCE
+                            }) as GLenum,
+                            GL_UNSIGNED_BYTE as GLenum,
+                            data as *const ::core::ffi::c_void,
+                        );
+                    }
+                    free(data as *mut ::core::ffi::c_void);
+                    free(new_filename_0 as *mut ::core::ffi::c_void);
+                }
+                if (*t).mipmap {
+                    gl::GenerateMipmap(GL_TEXTURE_2D as GLenum);
+                }
+                t = (*t).next as *mut GlslTexture;
             }
+            let mut p_0: *mut GlslParam = (*gs).first_param;
+            while !p_0.is_null() {
+                (*p_0).value = if (*p_0).value < (*p_0).min {
+                    (*p_0).min
+                } else if (*p_0).value > (*p_0).max {
+                    (*p_0).max
+                } else {
+                    (*p_0).value
+                };
+                p_0 = (*p_0).next as *mut GlslParam;
+            }
+            GlslShader_GetUniforms(gs);
+            let mut i_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+            while i_0 < (*gs).max_prev_frame {
+                gl::GenTextures(
+                    1 as GLsizei,
+                    &raw mut (*(&raw mut (*gs).prev_frame as *mut GlTextureWithSize).offset(
+                        (-i_0 - 1 as ::core::ffi::c_int & 7 as ::core::ffi::c_int) as isize,
+                    ))
+                    .gl_texture,
+                );
+                i_0 += 1;
+            }
+            gl::GenBuffers(1 as GLsizei, &raw mut (*gs).gl_vbo);
+            gl::BindBuffer(GL_ARRAY_BUFFER as GLenum, (*gs).gl_vbo as GLuint);
+            gl::BufferData(
+                GL_ARRAY_BUFFER as GLenum,
+                ::core::mem::size_of::<[GLfloat; 16]>() as GLsizeiptr,
+                &raw const kTexCoords as *const GLfloat as *const ::core::ffi::c_void,
+                GL_STATIC_DRAW as GLenum,
+            );
+            gl::BindBuffer(GL_ARRAY_BUFFER as GLenum, 0 as GLuint);
+            success = true_0 != 0;
         }
     }
     if !success {

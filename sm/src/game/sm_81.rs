@@ -1579,16 +1579,14 @@ pub unsafe fn FileSelectMenu_8(game: &mut Game) {
         } else {
             current_block_18 = 1109700713171191020;
         }
-        match current_block_18 {
-            1109700713171191020 => {}
-            _ => {
-                *(((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(15)
-                    as *mut uint16 as *mut uint8)
-                    .offset(0) = v0;
-                QueueSfx1_Max6(0x37 as uint16, game);
-                SetFileCopyMenuSelectionMissilePosition(game);
-                return;
-            }
+        if current_block_18 == 1109700713171191020 {
+        } else {
+            *(((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(15)
+                as *mut uint16 as *mut uint8)
+                .offset(0) = v0;
+            QueueSfx1_Max6(0x37 as uint16, game);
+            SetFileCopyMenuSelectionMissilePosition(game);
+            return;
         }
         SetFileCopyMenuSelectionMissilePosition(game);
     };
@@ -1736,13 +1734,10 @@ pub unsafe fn FileSelectMenu_10_FileCopySelectDest(game: &mut Game) {
         } else {
             current_block = 16545170798630791882;
         }
-        match current_block {
-            16545170798630791882 => {}
-            _ => {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(15) =
-                    v0;
-                current_block = 16545170798630791882;
-            }
+        if current_block == 16545170798630791882 {
+        } else {
+            *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(15) = v0;
+            current_block = 16545170798630791882;
         }
     } else {
         let ref mut fresh71 = *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16);
@@ -1753,16 +1748,14 @@ pub unsafe fn FileSelectMenu_10_FileCopySelectDest(game: &mut Game) {
         FileSelectMenu_Func1(game);
         current_block = 16203760046146113240;
     }
-    match current_block {
-        16203760046146113240 => {}
-        _ => {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(10) =
-                kFileCopySelectDest_MissileY[*((&raw mut game.g_ram as *mut uint8).offset(0x1997)
-                    as *mut uint16)
-                    .offset(15) as usize];
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(5) =
-                22 as uint16;
-        }
+    if current_block == 16203760046146113240 {
+    } else {
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(10) =
+            kFileCopySelectDest_MissileY[*((&raw mut game.g_ram as *mut uint8).offset(0x1997)
+                as *mut uint16)
+                .offset(15) as usize];
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(5) =
+            22 as uint16;
     }
 }
 pub unsafe fn FileSelectMenu_11_InitializeConfirm(game: &mut Game) {
@@ -2157,17 +2150,15 @@ pub unsafe fn FileSelectMenu_22_FileClearSelectSlot(game: &mut Game) {
         } else {
             current_block_18 = 11307063007268554308;
         }
-        match current_block_18 {
-            11307063007268554308 => {}
-            _ => {
-                *(((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(15)
-                    as *mut uint16 as *mut uint8)
-                    .offset(0) = v1;
-                *(&raw mut v0 as *mut uint8).offset(0) = 55 as uint8;
-                QueueSfx1_Max6(v0, game);
-                SetFileClearMenuMissilePos(game);
-                return;
-            }
+        if current_block_18 == 11307063007268554308 {
+        } else {
+            *(((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(15)
+                as *mut uint16 as *mut uint8)
+                .offset(0) = v1;
+            *(&raw mut v0 as *mut uint8).offset(0) = 55 as uint8;
+            QueueSfx1_Max6(v0, game);
+            SetFileClearMenuMissilePos(game);
+            return;
         }
         SetFileClearMenuMissilePos(game);
         return;
@@ -2238,18 +2229,16 @@ pub unsafe fn FileSelectMenu_24_FileClearConfirm(game: &mut Game) {
                 return;
             }
         }
-        match current_block {
-            504450154722759016 => {}
-            _ => {
-                let ref mut fresh53 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16);
-                *fresh53 = (*fresh53).wrapping_sub(2u16);
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(15) =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(16);
-                QueueSfx1_Max6(0x37 as uint16, game);
-                InitFileSelectMenuFileClear(game);
-                return;
-            }
+        if current_block == 504450154722759016 {
+        } else {
+            let ref mut fresh53 =
+                *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16);
+            *fresh53 = (*fresh53).wrapping_sub(2u16);
+            *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(15) =
+                *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(16);
+            QueueSfx1_Max6(0x37 as uint16, game);
+            InitFileSelectMenuFileClear(game);
+            return;
         }
     }
     v0 = 184 as uint16;
@@ -3444,14 +3433,12 @@ pub unsafe fn FileSelectMap_6_AreaSelectMap(game: &mut Game) {
                     break;
                 }
             }
-            match current_block {
-                4115184416633590978 => {}
-                _ => {
-                    SwitchActiveFileSelectMapArea(R28_0, game);
-                    QueueSfx1_Max6(0x37 as uint16, game);
-                    DrawAreaSelectMapLabels(game);
-                    return;
-                }
+            if current_block == 4115184416633590978 {
+            } else {
+                SwitchActiveFileSelectMapArea(R28_0, game);
+                QueueSfx1_Max6(0x37 as uint16, game);
+                DrawAreaSelectMapLabels(game);
+                return;
             }
         }
     }
@@ -3984,26 +3971,23 @@ pub unsafe fn FileSelectMap_10_RoomSelectMap(game: &mut Game) {
             current_block_32 = 12800627514080957624;
         }
         loop {
-            match current_block_32 {
-                12800627514080957624 => {
-                    let ref mut fresh26 =
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x78b) as *mut uint16);
-                    *fresh26 = (*fresh26).wrapping_add(1);
-                    if *fresh26 as ::core::ffi::c_int - 16 as ::core::ffi::c_int
-                        & 0x8000 as ::core::ffi::c_int
-                        == 0
-                    {
-                        current_block_32 = 8236137900636309791;
-                    } else {
-                        current_block_32 = 5601891728916014340;
-                    }
-                }
-                _ => {
-                    let ref mut fresh27 =
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x78b) as *mut uint16);
-                    *fresh27 = (*fresh27).wrapping_add(1);
+            if current_block_32 == 12800627514080957624 {
+                let ref mut fresh26 =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0x78b) as *mut uint16);
+                *fresh26 = (*fresh26).wrapping_add(1);
+                if *fresh26 as ::core::ffi::c_int - 16 as ::core::ffi::c_int
+                    & 0x8000 as ::core::ffi::c_int
+                    == 0
+                {
                     current_block_32 = 8236137900636309791;
+                } else {
+                    current_block_32 = 5601891728916014340;
                 }
+            } else {
+                let ref mut fresh27 =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0x78b) as *mut uint16);
+                *fresh27 = (*fresh27).wrapping_add(1);
+                current_block_32 = 8236137900636309791;
             }
             if current_block_32 == 8236137900636309791 {
                 v5 = *r0.offset(

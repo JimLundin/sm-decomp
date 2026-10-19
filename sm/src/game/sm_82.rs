@@ -3597,67 +3597,59 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
                     break;
                 }
             }
-            match current_block {
-                15976848397966268834 => {}
-                _ => {
-                    *(&raw mut v5 as *mut uint8).offset(0) =
-                        ((v4 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16
+            if current_block == 15976848397966268834 {
+            } else {
+                *(&raw mut v5 as *mut uint8).offset(0) =
+                    ((v4 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16
+                        as ::core::ffi::c_int
+                        >> 8 as ::core::ffi::c_int) as uint8;
+                *(&raw mut v5 as *mut uint8).offset(
+                    (::core::mem::size_of::<int16>())
+                        .wrapping_div(::core::mem::size_of::<uint8>())
+                        .wrapping_sub(1_usize) as isize,
+                ) = (v4 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint8;
+                set_ram_word!(game.pausemenu_equipment_category_item = ((v5) as u16) | (1u16));
+                current_block = 9932683223035187777;
+            }
+        }
+        if current_block == 9932683223035187777 {
+        } else {
+            let mut v6: uint16 = 0 as uint16;
+            loop {
+                if (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c056)) as *const uint8
+                    as *mut uint16)
+                    .offset((v6 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
+                    as ::core::ffi::c_int
+                    & ram_word!(game, collected_items) as ::core::ffi::c_int)
+                    != 0i32
+                {
+                    *(&raw mut v7 as *mut uint8).offset(0) =
+                        ((v6 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16
                             as ::core::ffi::c_int
                             >> 8 as ::core::ffi::c_int) as uint8;
-                    *(&raw mut v5 as *mut uint8).offset(
+                    *(&raw mut v7 as *mut uint8).offset(
                         (::core::mem::size_of::<int16>())
                             .wrapping_div(::core::mem::size_of::<uint8>())
                             .wrapping_sub(1_usize) as isize,
-                    ) = (v4 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint8;
-                    set_ram_word!(game.pausemenu_equipment_category_item = ((v5) as u16) | (1u16));
+                    ) = (v6 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint8;
+                    set_ram_word!(game.pausemenu_equipment_category_item = ((v7) as u16) | (2u16));
                     current_block = 9932683223035187777;
-                }
-            }
-        }
-        match current_block {
-            9932683223035187777 => {}
-            _ => {
-                let mut v6: uint16 = 0 as uint16;
-                loop {
-                    if (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c056)) as *const uint8
-                        as *mut uint16)
-                        .offset((v6 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-                        as ::core::ffi::c_int
-                        & ram_word!(game, collected_items) as ::core::ffi::c_int)
-                        != 0i32
-                    {
-                        *(&raw mut v7 as *mut uint8).offset(0) =
-                            ((v6 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16
-                                as ::core::ffi::c_int
-                                >> 8 as ::core::ffi::c_int) as uint8;
-                        *(&raw mut v7 as *mut uint8).offset(
-                            (::core::mem::size_of::<int16>())
-                                .wrapping_div(::core::mem::size_of::<uint8>())
-                                .wrapping_sub(1_usize) as isize,
-                        ) = (v6 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint8;
-                        set_ram_word!(
-                            game.pausemenu_equipment_category_item = ((v7) as u16) | (2u16)
-                        );
-                        current_block = 9932683223035187777;
+                    break;
+                } else {
+                    v6 = (v6).wrapping_add(2u16);
+                    if (((v6) as i16).wrapping_sub(12i16) >= 0i16) {
+                        current_block = 1109700713171191020;
                         break;
-                    } else {
-                        v6 = (v6).wrapping_add(2u16);
-                        if (((v6) as i16).wrapping_sub(12i16) >= 0i16) {
-                            current_block = 1109700713171191020;
-                            break;
-                        }
                     }
                 }
-                match current_block {
-                    9932683223035187777 => {}
-                    _ => {
-                        v8 = 0 as int16;
-                        loop {
-                            v8 = (v8).wrapping_add(2i16);
-                            if ((v8).wrapping_sub(6i16) >= 0i16) {
-                                break;
-                            }
-                        }
+            }
+            if current_block == 9932683223035187777 {
+            } else {
+                v8 = 0 as int16;
+                loop {
+                    v8 = (v8).wrapping_add(2i16);
+                    if ((v8).wrapping_sub(6i16) >= 0i16) {
+                        break;
                     }
                 }
             }
@@ -4503,26 +4495,24 @@ pub unsafe fn EquipmentScreenMoveToBeams(mut v0: uint16, r18: uint16, game: &mut
                 break;
             }
         }
-        match current_block_5 {
-            16475780731721606008 => {}
-            _ => {
-                *(&raw mut v1 as *mut uint8).offset(0) =
-                    ((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16
-                        as ::core::ffi::c_int
-                        >> 8 as ::core::ffi::c_int) as uint8;
-                *(&raw mut v1 as *mut uint8).offset(
-                    (::core::mem::size_of::<int16>())
-                        .wrapping_div(::core::mem::size_of::<uint8>())
-                        .wrapping_sub(1_usize) as isize,
-                ) = (v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint8;
-                set_ram_word!(
-                    game.pausemenu_equipment_category_item =
-                        (v1 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int
-                            | 1 as ::core::ffi::c_int) as uint16
-                );
-                QueueSfx1_Max6(0x37 as uint16, game);
-                current_block_5 = 13513818773234778473;
-            }
+        if current_block_5 == 16475780731721606008 {
+        } else {
+            *(&raw mut v1 as *mut uint8).offset(0) =
+                ((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16
+                    as ::core::ffi::c_int
+                    >> 8 as ::core::ffi::c_int) as uint8;
+            *(&raw mut v1 as *mut uint8).offset(
+                (::core::mem::size_of::<int16>())
+                    .wrapping_div(::core::mem::size_of::<uint8>())
+                    .wrapping_sub(1_usize) as isize,
+            ) = (v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint8;
+            set_ram_word!(
+                game.pausemenu_equipment_category_item =
+                    (v1 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int
+                        | 1 as ::core::ffi::c_int) as uint16
+            );
+            QueueSfx1_Max6(0x37 as uint16, game);
+            current_block_5 = 13513818773234778473;
         }
     }
     if current_block_5 == 16475780731721606008 {
@@ -5702,12 +5692,10 @@ pub unsafe fn RefillHealthFromReserveTanks(game: &mut Game) -> uint8 {
                 current_block = 13183875560443969876;
             }
         }
-        match current_block {
-            13183875560443969876 => {}
-            _ => {
-                set_ram_word!(game.samus_reserve_health = 0 as uint16);
-                return (ram_word!(game, samus_reserve_health) == 0u16) as uint8;
-            }
+        if current_block == 13183875560443969876 {
+        } else {
+            set_ram_word!(game.samus_reserve_health = 0 as uint16);
+            return (ram_word!(game, samus_reserve_health) == 0u16) as uint8;
         }
     }
     (ram_word!(game, samus_reserve_health) == 0u16) as uint8

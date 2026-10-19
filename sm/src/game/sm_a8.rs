@@ -1719,28 +1719,23 @@ pub unsafe fn WreckedShipGhost_Func_7(k: uint16, game: &mut Game) {
             current_block_26 = 3437258052017859086;
         }
     }
-    match current_block_26 {
-        3437258052017859086 => {}
-        _ => {
-            (*E).wsgt_var_A = ((0xa89b42i32) as u16);
-            (*E).wsgt_var_0D = g_word_A89A9E;
-            (*E).wsgt_var_0E = g_word_A89A9C;
-            let v6: ::core::ffi::c_int = (((*E).wsgt_var_09).wrapping_add((*E).wsgt_var_05))
-                as ::core::ffi::c_int
-                >> 1 as ::core::ffi::c_int;
-            (*E).base.x_pos = (g_word_A89AA8[v6 as usize]).wrapping_add(
-                *(((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16 as *mut uint8)
-                    .offset(k as ::core::ffi::c_int as isize) as *mut uint16),
-            );
-            (*E).base.y_pos = (g_word_A89AA8[(v6 + 1 as ::core::ffi::c_int) as usize])
-                .wrapping_add(
-                    *(((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16
-                        as *mut uint8)
-                        .offset(k as ::core::ffi::c_int as isize)
-                        as *mut uint16),
-                );
-            return;
-        }
+    if current_block_26 == 3437258052017859086 {
+    } else {
+        (*E).wsgt_var_A = ((0xa89b42i32) as u16);
+        (*E).wsgt_var_0D = g_word_A89A9E;
+        (*E).wsgt_var_0E = g_word_A89A9C;
+        let v6: ::core::ffi::c_int = (((*E).wsgt_var_09).wrapping_add((*E).wsgt_var_05))
+            as ::core::ffi::c_int
+            >> 1 as ::core::ffi::c_int;
+        (*E).base.x_pos = (g_word_A89AA8[v6 as usize]).wrapping_add(
+            *(((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16 as *mut uint8)
+                .offset(k as ::core::ffi::c_int as isize) as *mut uint16),
+        );
+        (*E).base.y_pos = (g_word_A89AA8[(v6 + 1 as ::core::ffi::c_int) as usize]).wrapping_add(
+            *(((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16 as *mut uint8)
+                .offset(k as ::core::ffi::c_int as isize) as *mut uint16),
+        );
+        return;
     }
     let v11: uint16 = ram_word!(game, samus_x_pos);
     (*E).wsgt_var_06 = ram_word!(game, samus_x_pos);

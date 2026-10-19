@@ -825,18 +825,16 @@ pub unsafe fn Draygon_Func_16(game: &mut Game) {
                 current_block = 7976072742316086414;
             }
         }
-        match current_block {
-            7976072742316086414 => {}
-            _ => {
-                if ram_word!(game, samus_x_speed_divisor) == 0 {
-                    let E3: *mut Enemy_Draygon = Get_Draygon(0xc0 as ::core::ffi::c_int, game);
-                    (*E3).base.current_instruction = addr_kDraygon_Ilist_9BDA as uint16;
-                    (*E3).base.instruction_timer = 1 as uint16;
-                    (*E).draygon_var_A = ((0xa58c33i32) as u16);
-                    return;
-                }
-                current_block = 1399980599923904196;
+        if current_block == 7976072742316086414 {
+        } else {
+            if ram_word!(game, samus_x_speed_divisor) == 0 {
+                let E3: *mut Enemy_Draygon = Get_Draygon(0xc0 as ::core::ffi::c_int, game);
+                (*E3).base.current_instruction = addr_kDraygon_Ilist_9BDA as uint16;
+                (*E3).base.instruction_timer = 1 as uint16;
+                (*E).draygon_var_A = ((0xa58c33i32) as u16);
+                return;
             }
+            current_block = 1399980599923904196;
         }
     }
     if current_block == 1399980599923904196 {
@@ -941,19 +939,17 @@ pub unsafe fn Draygon_Func_20(game: &mut Game) {
                 current_block = 10048703153582371463;
             }
         }
-        match current_block {
-            10048703153582371463 => {}
-            _ => {
-                if ram_word!(game, samus_x_speed_divisor) == 0 {
-                    let E3: *mut Enemy_Draygon = Get_Draygon(0xc0 as ::core::ffi::c_int, game);
-                    (*E3).base.current_instruction = addr_kDraygon_Ilist_97E7 as uint16;
-                    (*E3).base.instruction_timer = 1 as uint16;
-                    (*Get_Draygon(0 as ::core::ffi::c_int, game)).draygon_var_A =
-                        ((0xa58db2i32) as u16);
-                    return;
-                }
-                current_block = 11384386367536015713;
+        if current_block == 10048703153582371463 {
+        } else {
+            if ram_word!(game, samus_x_speed_divisor) == 0 {
+                let E3: *mut Enemy_Draygon = Get_Draygon(0xc0 as ::core::ffi::c_int, game);
+                (*E3).base.current_instruction = addr_kDraygon_Ilist_97E7 as uint16;
+                (*E3).base.instruction_timer = 1 as uint16;
+                (*Get_Draygon(0 as ::core::ffi::c_int, game)).draygon_var_A =
+                    ((0xa58db2i32) as u16);
+                return;
             }
+            current_block = 11384386367536015713;
         }
     }
     if current_block == 11384386367536015713 {

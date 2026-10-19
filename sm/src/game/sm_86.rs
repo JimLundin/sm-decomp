@@ -1413,40 +1413,36 @@ unsafe fn EprojColl_85C2(eci: *mut EprojCollInfo, a: uint16, k: uint16, game: &m
         } else {
             current_block = 3512920355445576850;
         }
-        match current_block {
-            12039483399334584727 => {}
-            _ => {
-                if current_block == 2204372562120708137 {
-                    if (if unk_868729[v2 as usize] as ::core::ffi::c_int
+        if current_block == 12039483399334584727 {
+        } else {
+            if current_block == 2204372562120708137 {
+                if (if unk_868729[v2 as usize] as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
+                    != 0
+                {
+                    -(1 as ::core::ffi::c_int)
+                } else {
+                    0 as ::core::ffi::c_int
+                }) < 0i32
+                {
+                    current_block = 12039483399334584727;
+                } else {
+                    current_block = 3512920355445576850;
+                }
+            }
+            match current_block {
+                12039483399334584727 => {}
+                _ => {
+                    if (if unk_868729[(v2 as ::core::ffi::c_int ^ 2 as ::core::ffi::c_int) as usize]
+                        as ::core::ffi::c_int
                         & 0x80 as ::core::ffi::c_int
                         != 0
                     {
                         -(1 as ::core::ffi::c_int)
                     } else {
                         0 as ::core::ffi::c_int
-                    }) < 0i32
+                    }) >= 0i32
                     {
-                        current_block = 12039483399334584727;
-                    } else {
-                        current_block = 3512920355445576850;
-                    }
-                }
-                match current_block {
-                    12039483399334584727 => {}
-                    _ => {
-                        if (if unk_868729
-                            [(v2 as ::core::ffi::c_int ^ 2 as ::core::ffi::c_int) as usize]
-                            as ::core::ffi::c_int
-                            & 0x80 as ::core::ffi::c_int
-                            != 0
-                        {
-                            -(1 as ::core::ffi::c_int)
-                        } else {
-                            0 as ::core::ffi::c_int
-                        }) >= 0i32
-                        {
-                            return 0 as uint8;
-                        }
+                        return 0 as uint8;
                     }
                 }
             }
@@ -1553,40 +1549,36 @@ unsafe fn EprojColl_8676(
         } else {
             current_block = 12349973810996921269;
         }
-        match current_block {
-            5143058163439228106 => {}
-            _ => {
-                if current_block == 8777407941634159499 {
-                    if (if unk_868729[v3 as usize] as ::core::ffi::c_int
+        if current_block == 5143058163439228106 {
+        } else {
+            if current_block == 8777407941634159499 {
+                if (if unk_868729[v3 as usize] as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
+                    != 0
+                {
+                    -(1 as ::core::ffi::c_int)
+                } else {
+                    0 as ::core::ffi::c_int
+                }) < 0i32
+                {
+                    current_block = 5143058163439228106;
+                } else {
+                    current_block = 12349973810996921269;
+                }
+            }
+            match current_block {
+                5143058163439228106 => {}
+                _ => {
+                    if (if unk_868729[(v3 as ::core::ffi::c_int ^ 1 as ::core::ffi::c_int) as usize]
+                        as ::core::ffi::c_int
                         & 0x80 as ::core::ffi::c_int
                         != 0
                     {
                         -(1 as ::core::ffi::c_int)
                     } else {
                         0 as ::core::ffi::c_int
-                    }) < 0i32
+                    }) >= 0i32
                     {
-                        current_block = 5143058163439228106;
-                    } else {
-                        current_block = 12349973810996921269;
-                    }
-                }
-                match current_block {
-                    5143058163439228106 => {}
-                    _ => {
-                        if (if unk_868729
-                            [(v3 as ::core::ffi::c_int ^ 1 as ::core::ffi::c_int) as usize]
-                            as ::core::ffi::c_int
-                            & 0x80 as ::core::ffi::c_int
-                            != 0
-                        {
-                            -(1 as ::core::ffi::c_int)
-                        } else {
-                            0 as ::core::ffi::c_int
-                        }) >= 0i32
-                        {
-                            return 0 as uint8;
-                        }
+                        return 0 as uint8;
                     }
                 }
             }
@@ -9316,40 +9308,38 @@ pub unsafe fn EprojPreInstr_Pickup(k: uint16, game: &mut Game) {
         } else {
             current_block = 11050875288958768710;
         }
-        match current_block {
-            4906268039856690917 => {}
-            _ => {
-                let v5: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-                let varE20: uint16 = EprojState(&game.g_ram).x_radius(v5 as usize) as uint16;
-                let varE22: uint16 = EprojState(&game.g_ram).y_radius(v5 as usize) as uint16;
-                let v6: uint16 = abs16(
-                    game.samus_x_pos()
-                        .wrapping_sub(game.enemy_projectile_x_pos(k)),
+        if current_block == 4906268039856690917 {
+        } else {
+            let v5: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+            let varE20: uint16 = EprojState(&game.g_ram).x_radius(v5 as usize) as uint16;
+            let varE22: uint16 = EprojState(&game.g_ram).y_radius(v5 as usize) as uint16;
+            let v6: uint16 = abs16(
+                game.samus_x_pos()
+                    .wrapping_sub(game.enemy_projectile_x_pos(k)),
+            );
+            let mut v7: bool = v6 < game.samus_x_radius();
+            let v8: uint16 = v6.wrapping_sub(game.samus_x_radius());
+            if v7 || v8 < varE20 {
+                let v9: uint16 = abs16(
+                    game.samus_y_pos()
+                        .wrapping_sub(game.enemy_projectile_y_pos(k)),
                 );
-                let mut v7: bool = v6 < game.samus_x_radius();
-                let v8: uint16 = v6.wrapping_sub(game.samus_x_radius());
-                if v7 || v8 < varE20 {
-                    let v9: uint16 = abs16(
-                        game.samus_y_pos()
-                            .wrapping_sub(game.enemy_projectile_y_pos(k)),
-                    );
-                    v7 = v9 < game.samus_y_radius();
-                    let v10: uint16 = v9.wrapping_sub(game.samus_y_radius());
-                    if v7 || v10 < varE22 {
-                        off_86F0AD[(*((&raw mut game.g_ram as *mut uint8).offset(0x1aff)
-                            as *mut uint16)
-                            .offset(v5 as isize)
-                            as ::core::ffi::c_int
-                            >> 1 as ::core::ffi::c_int)
-                            as usize]
-                            .expect("non-null function pointer")(game);
-                        let v11: ::core::ffi::c_int =
-                            k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-                        EprojStateMut(&mut game.g_ram).finish_pickup(v11 as usize);
-                    }
+                v7 = v9 < game.samus_y_radius();
+                let v10: uint16 = v9.wrapping_sub(game.samus_y_radius());
+                if v7 || v10 < varE22 {
+                    off_86F0AD[(*((&raw mut game.g_ram as *mut uint8).offset(0x1aff)
+                        as *mut uint16)
+                        .offset(v5 as isize)
+                        as ::core::ffi::c_int
+                        >> 1 as ::core::ffi::c_int)
+                        as usize]
+                        .expect("non-null function pointer")(game);
+                    let v11: ::core::ffi::c_int =
+                        k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+                    EprojStateMut(&mut game.g_ram).finish_pickup(v11 as usize);
                 }
-                return;
             }
+            return;
         }
     }
     let v4: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;

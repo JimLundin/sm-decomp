@@ -1191,24 +1191,19 @@ pub unsafe fn Kraid_Shot_Mouth(game: &mut Game) {
                     } else {
                         current_block = 2822809649030392525;
                     }
-                    match current_block {
-                        2822809649030392525 => {}
-                        _ => {
-                            set_ram_word!(
-                                game.collision_detection_index =
-                                    (v6 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16
-                            );
-                            NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
-                            let ref mut fresh15 = *((&raw mut game.g_ram as *mut uint8)
-                                .offset(0xc04)
-                                as *mut uint16)
-                                .offset(
-                                    (v6 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                                );
-                            *fresh15 = (*fresh15) | (0x10u16);
-                            v3 = 1 as int16;
-                            v6 = 0 as uint16;
-                        }
+                    if current_block == 2822809649030392525 {
+                    } else {
+                        set_ram_word!(
+                            game.collision_detection_index =
+                                (v6 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16
+                        );
+                        NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
+                        let ref mut fresh15 = *((&raw mut game.g_ram as *mut uint8).offset(0xc04)
+                            as *mut uint16)
+                            .offset((v6 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+                        *fresh15 = (*fresh15) | (0x10u16);
+                        v3 = 1 as int16;
+                        v6 = 0 as uint16;
                     }
                 }
                 v6 = (v6).wrapping_sub(2u16);
@@ -5123,32 +5118,29 @@ pub unsafe fn Phantoon_Shot(game: &mut Game) {
                 }
             }
         }
-        match current_block {
-            6450597802325118133 => {}
-            _ => {
-                if current_block == 1670498606268217318 {
-                    (*EK).phant_var_F = ((0xa7d85ci32) as u16);
-                    current_block = 4949463109084628481;
-                }
-                if current_block == 4949463109084628481 {
-                    (*EK).phant_var_E = 0 as uint16;
-                    (*Get_Phantoon(0x80 as ::core::ffi::c_int, game)).phant_var_A = 0 as uint16;
-                    (*Get_Phantoon(v1 as ::core::ffi::c_int + 0x80 as ::core::ffi::c_int, game))
-                        .phant_var_B = 0 as uint16;
-                    let ref mut fresh28 =
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x1988) as *mut uint16);
-                    *fresh28 = (*fresh28) | (0x4000u16);
-                    (*E0).base.instruction_timer = 1 as uint16;
-                    let E1: *mut Enemy_Phantoon = Get_Phantoon(0x40 as ::core::ffi::c_int, game);
-                    (*E1).base.instruction_timer = 1 as uint16;
-                    (*E0).base.current_instruction = addr_kKraid_Ilist_CC41 as uint16;
-                    (*E1).base.current_instruction = addr_kKraid_Ilist_CC91 as uint16;
-                    (*E0).base.properties =
-                        ((*E0).base.properties) | ((kEnemyProps_Tangible) as u16);
-                    (*E1).phant_var_F = 0 as uint16;
-                }
-                (*Get_Phantoon(0x80 as ::core::ffi::c_int, game)).phant_parameter_2 = 2 as uint16;
+        if current_block == 6450597802325118133 {
+        } else {
+            if current_block == 1670498606268217318 {
+                (*EK).phant_var_F = ((0xa7d85ci32) as u16);
+                current_block = 4949463109084628481;
             }
+            if current_block == 4949463109084628481 {
+                (*EK).phant_var_E = 0 as uint16;
+                (*Get_Phantoon(0x80 as ::core::ffi::c_int, game)).phant_var_A = 0 as uint16;
+                (*Get_Phantoon(v1 as ::core::ffi::c_int + 0x80 as ::core::ffi::c_int, game))
+                    .phant_var_B = 0 as uint16;
+                let ref mut fresh28 =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0x1988) as *mut uint16);
+                *fresh28 = (*fresh28) | (0x4000u16);
+                (*E0).base.instruction_timer = 1 as uint16;
+                let E1: *mut Enemy_Phantoon = Get_Phantoon(0x40 as ::core::ffi::c_int, game);
+                (*E1).base.instruction_timer = 1 as uint16;
+                (*E0).base.current_instruction = addr_kKraid_Ilist_CC41 as uint16;
+                (*E1).base.current_instruction = addr_kKraid_Ilist_CC91 as uint16;
+                (*E0).base.properties = ((*E0).base.properties) | ((kEnemyProps_Tangible) as u16);
+                (*E1).phant_var_F = 0 as uint16;
+            }
+            (*Get_Phantoon(0x80 as ::core::ffi::c_int, game)).phant_parameter_2 = 2 as uint16;
         }
     }
 }
@@ -6020,14 +6012,12 @@ pub unsafe fn Dachora_Func_12(k: uint16, game: &mut Game) {
         } else {
             current_block = 7351195479953500246;
         }
-        match current_block {
-            6459227026555017041 => {}
-            _ => {
-                (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
-                    & !(kEnemyProps_Invisible as ::core::ffi::c_int))
-                    as uint16;
-                return;
-            }
+        if current_block == 6459227026555017041 {
+        } else {
+            (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
+                & !(kEnemyProps_Invisible as ::core::ffi::c_int))
+                as uint16;
+            return;
         }
     }
     (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);

@@ -1938,61 +1938,55 @@ pub unsafe fn Crocomire_Func_65(game: &mut Game) {
         } else {
             current_block = 15652330335145281839;
         }
-        match current_block {
-            11812396948646013369 => {}
-            _ => {
-                set_ram_word!(game.g_word_7E0694 = v4);
-                let mut v5: uint16 = (ram_word!(game, g_word_7E0692)).wrapping_add(384u16);
-                if ram_word!(game, g_word_7E0692) as ::core::ffi::c_int
-                    - 20096 as ::core::ffi::c_int
-                    & 0x8000 as ::core::ffi::c_int
-                    == 0
-                {
-                    v5 = 20480 as uint16;
+        if current_block == 11812396948646013369 {
+        } else {
+            set_ram_word!(game.g_word_7E0694 = v4);
+            let mut v5: uint16 = (ram_word!(game, g_word_7E0692)).wrapping_add(384u16);
+            if ram_word!(game, g_word_7E0692) as ::core::ffi::c_int - 20096 as ::core::ffi::c_int
+                & 0x8000 as ::core::ffi::c_int
+                == 0
+            {
+                v5 = 20480 as uint16;
+            }
+            set_ram_word!(game.g_word_7E0692 = v5);
+            let mut r18: uint16 = 0 as uint16;
+            let mut v6: uint16 = (2 as ::core::ffi::c_int
+                * ((*E1).base.y_pos as ::core::ffi::c_int - 72 as ::core::ffi::c_int))
+                as uint16;
+            let mut v7: uint16 = ram_word!(game, g_word_7E0694);
+            set_ram_word!(game.message_box_animation_y1 = ram_word!(game, g_word_7E0694));
+            loop {
+                *((&raw mut game.g_ram as *mut uint8).offset(0xcaf0) as *mut uint16)
+                    .offset((v6 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+                    (ram_word!(game, reg_BG2VOFS) as ::core::ffi::c_int + v7 as ::core::ffi::c_int
+                        - ram_word!(game, message_box_animation_y1) as ::core::ffi::c_int)
+                        as uint16;
+                let v8: bool = u16::overflowing_add(ram_word!(game, g_word_7E0692), r18).1;
+                r18 = (r18).wrapping_add(ram_word!(game, g_word_7E0692));
+                if !v8 {
+                    v7 = v7.wrapping_add(1);
                 }
-                set_ram_word!(game.g_word_7E0692 = v5);
-                let mut r18: uint16 = 0 as uint16;
-                let mut v6: uint16 = (2 as ::core::ffi::c_int
-                    * ((*E1).base.y_pos as ::core::ffi::c_int - 72 as ::core::ffi::c_int))
-                    as uint16;
-                let mut v7: uint16 = ram_word!(game, g_word_7E0694);
-                set_ram_word!(game.message_box_animation_y1 = ram_word!(game, g_word_7E0694));
+                let ref mut fresh18 =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0x5a6) as *mut uint16);
+                *fresh18 = (*fresh18).wrapping_add(1);
+                v6 = (v6).wrapping_add(2u16);
+                if (((v7) as i16).wrapping_sub((ram_word!(game, g_word_7E0698)) as i16) >= 0i16) {
+                    break;
+                }
+            }
+            if ((v6) as i16).wrapping_sub(512i16) < 0i16 {
+                let v9: uint16 = ram_word!(game, reg_BG2VOFS);
                 loop {
                     *((&raw mut game.g_ram as *mut uint8).offset(0xcaf0) as *mut uint16)
                         .offset((v6 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-                        (ram_word!(game, reg_BG2VOFS) as ::core::ffi::c_int
-                            + v7 as ::core::ffi::c_int
-                            - ram_word!(game, message_box_animation_y1) as ::core::ffi::c_int)
-                            as uint16;
-                    let v8: bool = u16::overflowing_add(ram_word!(game, g_word_7E0692), r18).1;
-                    r18 = (r18).wrapping_add(ram_word!(game, g_word_7E0692));
-                    if !v8 {
-                        v7 = v7.wrapping_add(1);
-                    }
-                    let ref mut fresh18 =
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x5a6) as *mut uint16);
-                    *fresh18 = (*fresh18).wrapping_add(1);
+                        v9;
                     v6 = (v6).wrapping_add(2u16);
-                    if (((v7) as i16).wrapping_sub((ram_word!(game, g_word_7E0698)) as i16) >= 0i16)
-                    {
+                    if (((v6) as i16).wrapping_sub(512i16) >= 0i16) {
                         break;
                     }
                 }
-                if ((v6) as i16).wrapping_sub(512i16) < 0i16 {
-                    let v9: uint16 = ram_word!(game, reg_BG2VOFS);
-                    loop {
-                        *((&raw mut game.g_ram as *mut uint8).offset(0xcaf0) as *mut uint16)
-                            .offset(
-                                (v6 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                            ) = v9;
-                        v6 = (v6).wrapping_add(2u16);
-                        if (((v6) as i16).wrapping_sub(512i16) >= 0i16) {
-                            break;
-                        }
-                    }
-                }
-                return;
             }
+            return;
         }
     }
     let EK: *mut Enemy_Crocomire =
