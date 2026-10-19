@@ -599,6 +599,12 @@ impl CpuRegister {
             Self::Y => cpu.y,
         }
     }
+    fn byte_load_upper(self, cpu: &Cpu) -> u16 {
+        match self {
+            Self::Accumulator => cpu.a & 0xff00,
+            Self::X | Self::Y => 0,
+        }
+    }
     fn load(self, value: u16, cpu: &mut Cpu) {
         match self {
             Self::Accumulator => cpu.a = value,
@@ -650,10 +656,7 @@ unsafe fn load_register(
     game: &mut Game,
 ) {
     let value = if register.byte(&*cpu) {
-        let upper = match register {
-            CpuRegister::Accumulator => (*cpu).a & 0xff00,
-            CpuRegister::X | CpuRegister::Y => 0,
-        };
+        let upper = register.byte_load_upper(&*cpu);
         upper | u16::from(read_byte(cpu, low, game))
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
@@ -663,10 +666,7 @@ unsafe fn load_register(
 }
 unsafe fn pull_register(cpu: *mut Cpu, register: CpuRegister, game: &mut Game) {
     let value = if register.byte(&*cpu) {
-        let upper = match register {
-            CpuRegister::Accumulator => (*cpu).a & 0xff00,
-            CpuRegister::X | CpuRegister::Y => 0,
-        };
+        let upper = register.byte_load_upper(&*cpu);
         upper | u16::from(pull_byte(cpu, game))
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);

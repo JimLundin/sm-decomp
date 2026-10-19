@@ -10149,6 +10149,21 @@ enum and accessor; other own counters unchanged. Indexed-indirect/TSX/
 accumulator ROR remain held. Complete gameplay/render/audio remain open.
 Continue covered CPU cleanup.
 
+CPU byte-load upper bits (2026-10-19): safe CpuRegister::byte_load_upper
+shares A-high preservation and X/Y-high clearing for memory loads and stack
+pulls. The decision remains before bus reads; live-width register assignment
+and flags remain afterward. Frozen `4f2cfd10` plus this change passes 1,572,864
+actual old/current memory loads and 12,582,912 stack pulls, comparing named
+CPU/bus state and RAM across widths, values, stack positions and emulation
+modes. Existing static-RAM/MMIO limits remain. Prefix 3,600/0 (1.01s) executes
+both wrappers for A/X/Y; byte PLX is absent from this prefix and has prior
+full-movie coverage. Clean full any% 129,712/0 (49.77s), native exit 0. Cargo
+fmt/check, full release/release-library builds with external SDL2, normal
+metadata and frozen optimized core/DLL pass. Live CPU matches verified source;
+peer PPU work is outside this replay. All own progress counters unchanged.
+Indexed-indirect/TSX/accumulator ROR remain held. Complete gameplay/render/
+audio remain open. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
