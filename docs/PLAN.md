@@ -13442,6 +13442,27 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Pose callback contextual QC (2026-10-19): independent replays of frozen
+7745edfc plus the proposed commands 8/9/13 cleanup pass any% 129712/0
+(241.72s) and Waver 58109/0 (96.52s), native exits 0. Actual
+old/current animation handlers match all 128 KiB RAM and g_fail on 17,429
+any% calls and 8,558 Waver calls. Command 8 executes 1,348/305 times;
+command 13 executes 2,011/448 times, including calls from command 8.
+
+Command 9 has zero any% calls and six Waver calls: operand offset 3 is
+selected five times and offset 4 once. Offsets 5/6 have no movie coverage in
+these runs. The 20,000-frame any% prefix also has zero command-9 calls.
+Keep Waver in verification for this routine; a nonzero overall animation
+handler count alone does not establish its execution.
+
+Independent source audit checks all 62 frozen files, exact old callback and
+handler bodies, and exact candidate recovery after removing the specified
+observers and disabled fault switches. Copied DLL/source/input hashes remain
+unchanged, and maintained sm90 matches the checked candidate. Formatting,
+normal workspace Cargo release (35.87s) and progress pass. This review changes
+no maintained source or own residue counts. The newer constructed-control
+harness and subsequent integration remain separate checks.
+
 Door tileset source pointers (2026-10-19): two safe, named 24-bit RAM
 getters replace the unconditional Load24 reads in PlaceSamusLoadTiles.
 The palette read remains after tiles decompression; destinations, callbacks
