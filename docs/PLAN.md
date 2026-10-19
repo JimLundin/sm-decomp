@@ -11082,6 +11082,25 @@ concurrent CPU, PPU and render-initialization changes; their owners retain
 integration verification. Continue the coordinated lower-shaft route,
 respecting the existing upper99BD and ammunition holds. Credits remain open.
 
+Independent sprite candidate audit (2026-10-19): the current byte-spread
+sprite helper passes 2,474,560 old/current span cases covering bitplanes,
+clipping, flips, transparency, occupied destinations and wrapping Z values.
+A frozen host explicitly enables rendering and compares the actual previous
+and current sprite evaluators on every call. Its 16,000-frame any% prefix
+passes with zero failures (44.77s), native exit 0, including 7,435 gameplay
+frames in DF45/DF8D. All 7,095,424 evaluator calls match the 256 object
+buffer words, overflow flags and return value; 11,268,972 helper spans draw
+89,739,760 pixels. Five 400,000-call evaluator benchmarks favor the candidate
+in every pass: median 614.4ms before versus 395.3ms after; concurrent machine
+load limits precision. The frozen evaluator/helper bodies match the live
+candidate and the independently running full-render probe's PPU SHA256
+2cfd0077e212f2c3b0c477335d8e45aa942ec47e1e8f707cd2bc1746e494a003.
+Earlier standard-host replays with zero evaluator calls are excluded from
+execution evidence. This audit changes no maintained Rust; the sprite and
+render-initialization owners must finish full integration replays before
+committing their source changes. Expected sprite delta: cast lines -14,
+Rust lines +25 for the table and safe span helper; other counters unchanged.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
