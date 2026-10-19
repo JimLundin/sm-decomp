@@ -12381,6 +12381,29 @@ progress passed during the preceding read audit. Peer pending source/PLAN
 edits are preserved. Complete gameplay/credits, hardware/audio timing,
 remaining masked state and ownership remain open.
 
+Blue-door PLM block read (2026-10-19): PlmSetup_Door_Blue now reads
+plm_block_indices through its byte-backed little-endian word. Keep the
+projectile gate and subsequent block update in their original order; odd
+slots retain j>>1 indexing. Frozen b61e4e11 plus only this change passes
+any%129712/0 (151.01s), nativeexit0, and the new normal-input
+upper-east route68096/0 (99.26s), nativeexit0. A separate
+observed full route68096/0 (100.71s) executes the changed
+branch 20 times. Instrumentation is absent from maintained source.
+Cargo fmt/check and release build pass. Progress: own raw offsets-1,
+cast lines-2, Rust lines-2; other counters unchanged. Peer changes excluded.
+
+The new route reaches9BC8 from9AD9's upper-east red door using five missiles.
+From retained refilled-upper-east-land prefix67300: right75, neutral30,
+Select1, neutral20, five sequences of jump3, jump/shoot1, neutral90,
+then right80, neutral120. Full boot replay confirms entry around67930 and
+gameplay by68045, endingX42/Y427, health59/199, missiles0/5. Prior exact
+source boot check68096/0 (65.32s) agrees with the resumed796-frame probe.
+No injected gameplay RAM/health/ammo writes; save-state probes and movie
+inputs remain untracked outside the checkout. This advances room coverage,
+not credits. Next:9BC8 missile tank at304/432, then its Bomb passage toward
+the Super Missile tank64/96; confirm access with current equipment. Complete
+gameplay/credits, hardware/audio timing, remaining masks and ownership stay open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
