@@ -898,26 +898,16 @@ static kBeamAutoFireCooldowns: [uint8; 12] = [
     0x19 as ::core::ffi::c_int as uint8,
     0x19 as ::core::ffi::c_int as uint8,
 ];
-pub unsafe fn nullsub_12(game: &mut Game) {}
-static kSamusFxHandlers: [Option<Func_V>; 8] = unsafe {
-    [
-        Some(Samus_Animate_NoFx as unsafe fn(&mut Game) -> ()),
-        Some(Samus_Animate_LavaFx as unsafe fn(&mut Game) -> ()),
-        Some(Samus_Animate_AcidFx as unsafe fn(&mut Game) -> ()),
-        Some(Samus_Animate_WaterFx as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_12 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_12 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_12 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_12 as unsafe fn(&mut Game) -> ()),
-    ]
-};
 pub unsafe fn Samus_Animate(game: &mut Game) {
-    kSamusFxHandlers[((*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x196e as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
-        & 0xf as ::core::ffi::c_int)
-        >> 1 as ::core::ffi::c_int) as usize]
-        .expect("non-null function pointer")(game);
+    let fx_type = u16::from_le_bytes([game.g_ram[0x196e], game.g_ram[0x196f]]);
+    match (fx_type & 0xf) >> 1 {
+        0 => Samus_Animate_NoFx(game),
+        1 => Samus_Animate_LavaFx(game),
+        2 => Samus_Animate_AcidFx(game),
+        3 => Samus_Animate_WaterFx(game),
+        // FX kinds 4..=7 leave the animation FX state unchanged.
+        _ => {}
+    }
     let pose = game.samus_pose();
     let mut timer = u16::from_le_bytes([game.g_ram[0xa94], game.g_ram[0xa95]]);
     if (pose == kPose_4D_FaceR_Jump_NoAim_NoMove_NoGun as u16

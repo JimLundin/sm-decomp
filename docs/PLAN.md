@@ -13700,6 +13700,34 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Samus animation FX dispatch (2026-10-19): replace the nullable handler
+table with a direct match on the little-endian FX word's low-nibble selector.
+Kinds 0..3 retain their NoFx/lava/acid/water handlers; kinds 4..7 remain
+no-ops. Remove the unused no-op function. The countdown tail and all retained
+FX handlers are unchanged, including nested fallback calls.
+
+Frozen fbaea1d1 plus this source passes clean any% 129712/0 (279.69s).
+Contextual old/current comparisons match complete 128 KiB RAM, g_fail and
+actual callback sequences: any% 97219 animation calls / 129712 frames (290.98s),
+Waver 43356 / 58109 frames (118.44s), native exits 0. Clean and observed
+any% non-timing diagnostics match; maintained source identity and exact
+observation stripping pass. Natural FX kinds are 0/4/5 in any% and 0/4/5/6
+in Waver. Lava, acid, water and kind 7 have no demonstrated movie coverage;
+their dispatch is checked by the supplemental cases below.
+
+All 65536 selector words across eight live-ROM state profiles pass 524288
+old/current comparisons using the actual unchanged handlers. Complete RAM,
+g_fail and callback traces match; the restored replay continues for 10000
+frames with zero failures (35.88s). Swapped selector bytes, omitted right
+shift and an incorrect default callback all fail their controls. The default
+fault leaves RAM equal, demonstrating why callback tracing matters.
+
+Cargo format/check, release --locked and progress pass. Own raw offsets -1,
+unsafe functions -1, cast lines -4 and Rust lines -10; other counters are
+unchanged. Temporary scripts/builds are removed; no probes or ROM-derived
+fixtures are committed. Remaining animation cleanup, uncovered liquid paths
+and broader gameplay/credits verification stay open.
+
 Door completion state stores (2026-10-19): the animation, music-ready and
 transition handlers use the existing byte-backed setter and named callback
 constants for E664/E6A2/E737. Their stores retain the original callback/gate
