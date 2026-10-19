@@ -12294,6 +12294,22 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Background transfer/decompression arguments (2026-10-19): commands 2 and 4
+read argument words/bytes through the checked live-ROM accessor and return
+wrapping word advances. Transfer retains destination/source/size read order;
+decompression retains source/destination order. Field offsets are applied
+after mapping the ROM base; callback arguments and RAM destination stay exact.
+Cargo fmt/check and release build pass, native exit 0. Frozen 46477fcd plus
+this source change passes any% 129,712/0 (273.64s), native exit 0, with
+68 transfer and 34 decompression calls. Waver 58,109/71 (103.36s), native
+exit 1, executes 44/22 calls; all 71 ordered failure diagnostics match the
+explicit-render baseline. Observations strip exactly to maintained source.
+Own raw offsets -1, cast lines -5, Rust lines -5; other counters unchanged.
+No probes or ROM-derived assets committed. Next: executed finish/BG2-clear
+callbacks and remaining async room-background fields, retaining callback order.
+Existing held coverage and complete gameplay/credits/audio/hardware gaps
+remain open.
+
 Async door background command reads (2026-10-19): the command loop uses
 the checked live-ROM word reader, native word masks/index shifts, wrapping
 argument advance and a direct zero-return exit. Function-table dispatch,

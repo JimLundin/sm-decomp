@@ -10081,27 +10081,22 @@ pub unsafe fn UpdateBackgroundCommand_E_DoorDependentTransferToVRAM(
         return (j as ::core::ffi::c_int + 9 as ::core::ffi::c_int) as uint16;
     };
 }
-pub unsafe fn UpdateBackgroundCommand_2_TransferToVram(mut j: uint16, game: &mut Game) -> uint16 {
-    let mut v1: *const uint8 = RomPtr_8F(j as uint16_t, game);
-    CopyToVramNow(
-        *(v1.offset(3 as ::core::ffi::c_int as isize) as *mut uint16),
-        Load24(v1 as *mut LongPtr),
-        *(v1.offset(5 as ::core::ffi::c_int as isize) as *mut uint16),
-        game,
-    );
-    return (j as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
+pub unsafe fn UpdateBackgroundCommand_2_TransferToVram(j: uint16, game: &mut Game) -> uint16 {
+    let address = 0x8f0000 | u32::from(j);
+    let destination = game.read_rom_word(address, 3);
+    let source = u32::from(game.read_rom_word(address, 0))
+        | (u32::from(game.read_rom_byte(address, 2)) << 16);
+    let size = game.read_rom_word(address, 5);
+    CopyToVramNow(destination, source, size, game);
+    j.wrapping_add(7)
 }
-pub unsafe fn UpdateBackgroundCommand_4_Decompression(mut j: uint16, game: &mut Game) -> uint16 {
-    let mut v1: *const uint8 = RomPtr_8F(j as uint16_t, game);
-    DecompressToMem(
-        Load24(v1 as *mut LongPtr),
-        (&raw mut game.g_ram as *mut uint8).offset(
-            *(v1.offset(3 as ::core::ffi::c_int as isize) as *mut uint16) as ::core::ffi::c_int
-                as isize,
-        ),
-        game,
-    );
-    return (j as ::core::ffi::c_int + 5 as ::core::ffi::c_int) as uint16;
+pub unsafe fn UpdateBackgroundCommand_4_Decompression(j: uint16, game: &mut Game) -> uint16 {
+    let address = 0x8f0000 | u32::from(j);
+    let source = u32::from(game.read_rom_word(address, 0))
+        | (u32::from(game.read_rom_byte(address, 2)) << 16);
+    let destination = usize::from(game.read_rom_word(address, 3));
+    DecompressToMem(source, game.g_ram.as_mut_ptr().add(destination), game);
+    j.wrapping_add(5)
 }
 pub unsafe fn UpdateBackgroundCommand_6_ClearFxTilemap(mut j: uint16, game: &mut Game) -> uint16 {
     ClearFxTilemap(game);
