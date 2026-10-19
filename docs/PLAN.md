@@ -689,6 +689,29 @@ change and no new replay result belong to this cleanup.
 
 ## The oracle
 
+Pre-Kraid refill milestone (2026-10-19): extend the Hi-Jump route through
+the Warehouse Entrance, collect the Missile Tank, defeat Mini-Kraid and
+the three pirates, then refill before main Kraid. Full boot passes
+115663/0 (221.48s), native exit 0: 97677 gameplay frames, 45 rooms,
+40 enemy definitions and zero credits frames. Final state 8 is room $A641,
+X181/Y171, health 299/299, missiles 15/15 and Supers 3/5. Items are 1104
+equipped/collected, beams are 1004 equipped/collected, pose is 0002, and
+all eight $0611..$0618 bytes are zero. Main Kraid remains unfinished here.
+
+Ignored movies/kraid-refilled.inputs contains 115663 ordinary controller
+frames, SHA-256
+1751584f3ddf82d414ba65dd2caee9a18d1a80529124742927c97a76a8032366.
+Its first 99191 and 90706 frames exactly equal Hi-Jump and Spazer. Reuse
+the independently reviewed immutable Hi-Jump DLL: frozen 7d0d2050 plus
+the final operand correction committed in a0912a84, with read-only final
+state logging. All 62 source files, 67 reference artifacts, copied run
+files, ROM and input hashes remain unchanged; saves are isolated and
+SM_/QC_ overrides cleared. The original 438e7755 plus menu-fix route
+library independently passes the continuous 90706..115663 interval for
+24957/0. Its save49 checkpoint is not claimed compatible with newer code.
+No maintained Rust, residue counts or committed assets change. Full credits,
+audio, remaining comparison masks and ownership remain unfinished.
+
 Independent operand/checkpoint integration (2026-10-19): frozen `7de53cc1`
 plus the operand patch in `a0912a84` and the revised checkpoint codec passes
 any% 129712/0 (289.71s) and Spazer 90706/0 (215.87s), native exits 0.
