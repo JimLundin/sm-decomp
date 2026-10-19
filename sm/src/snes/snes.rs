@@ -40,6 +40,7 @@ pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 
 pub unsafe fn snes_init(mut ram: *mut uint8_t) -> *mut Snes {
     let mut snes: *mut Snes = malloc(::core::mem::size_of::<Snes>() as size_t) as *mut Snes;
+    core::ptr::write_bytes(snes, 0, 1);
     (*snes).ram = ram;
     (*snes).debug_cycles = false_0 != 0;
     (*snes).debug_apu_cycles = false_0 != 0;

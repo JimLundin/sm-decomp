@@ -23,13 +23,13 @@ Complete gameplay, audio timing and masked RAM remain unverified. Historical
 zero-failure Waver runs made before the render initialization fix do not
 establish rendering equivalence.
 
-Latest integrated check: frozen `7551cdf8` combines the committed CPU long
-address wrappers, door scrolling setup, color-math span and SNES initialization
-fixes. With only full failure reporting enabled, it passes any% 129712/0
-(162.73s), native exit 0, and Waver 58109/71 (85.80s), native exit 1. All 71
-ordered Waver failure diagnostics match the explicit-render baseline. Format,
-release build and progress checks pass. Later CPU-history and Samus-placement
-edits are outside this integration run; no source change belongs to this check.
+Latest integrated check: frozen `05ab44c8` plus SNES allocation initialization
+includes the committed CPU direct-page load helper, async door state, safe
+backdrop clearing and complete verifier diagnostics. Any% passes 129712/0
+(190.00s), native exit 0; Waver passes 58109/71 (96.95s), native exit 1. All
+71 ordered Waver failure diagnostics match the explicit-render baseline.
+Formatting, release build and progress checks pass. Later gameplay and CPU
+edits are outside this snapshot and are not verified by this run.
 
 Everything that existed before is in the branch `archive/pre-transpile-2026-10-17`.
 
@@ -141,6 +141,23 @@ X movement remains unexercised by these movies. Source review preserves
 the pre-step alignment gate, wrapping coordinate step and callback/store order.
 
 ## The oracle
+
+SNES allocation validity QC (2026-10-19): snes_init now zero-initializes its
+allocation before constructing child devices. The named padx/padpad arrays
+previously retained six uninitialized bytes even after reset, while snapshot
+code borrowed the whole Snes. Poisoned-allocation controls inspect those bytes
+as A5 before and 00 after; they do not interpret invalid pre-reset bools.
+First-reset named hardware state, the actual synthetic reset-vector reads and
+child bindings match. All 512 seeded soft/hard reset pairs preserve host flags,
+explicit padding and the existing WRAM retention/clearing rules. A 3600/0
+movie prefix executes the changed constructor once. Frozen 05ab44c8 plus only
+this line passes any% 129712/0 (190.00s), native exit 0, and Waver 58109/71
+(96.95s), native exit 1; all 71 full ordered diagnostics match baseline.
+Maintained source equals the clean candidate; cargo fmt/check, release and
+progress pass. Rust lines +1 initialize allocation storage; other own counters
+and SNES/RAM/save layouts are unchanged. New allocations start zeroed; warm
+resets continue preserving loaded padding. Later peer edits, existing rendered
+failures and complete gameplay/audio coverage remain outside these checks.
 
 Complete verifier diagnostics (2026-10-19): the normal verifier now reports
 every mismatch instead of suppressing details after the first failing frame.
