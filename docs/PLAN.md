@@ -14327,6 +14327,23 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Destination-room CRE cleanup (2026-10-19): the loader uses named word
+setters, retaining the captured door destination, full current-to-previous
+word copy and later zero-extended room-header byte. Both ROM lookups retain
+their order and diagnostics. Frozen c1554368 plus this change passes any%
+129712/0 (254.65s) and Waver 58109/0 (120.50s), native exits 0. Observed
+prefix 20000/0 and Waver 58109/0 match full RAM/g_fail, both store points and
+lookup arguments/results on 38 actual calls across 17 rooms. Natural CRE
+transitions use 00 and 05; six guarded cases additionally cover high old
+words and other destination bytes, with independent expected RAM and checked
+ROM/natural-state restoration. A transient overwrite is caught at 7B3 on
+frame 8256. Independent source/observer review, exact stripping, frozen
+identity and clean/observed Waver non-timing diagnostics pass. Copied inputs,
+ROM and DLL hashes remain stable. Formatting, release build and progress
+pass. Own raw offsets -4 and cast lines -4; Rust lines +2 provide two named
+setters. Other counters unchanged. Next: map save/load gates at elevator
+transitions; broader gameplay/credits and ownership remain unfinished.
+
 Samus wall-jump animation command (2026-10-19): replace command 11's
 generated numeric control-flow blocks with a liquid restriction check and
 explicit sound/frame choices: normal 0x31/+1, Screw Attack 0x33/+21 and

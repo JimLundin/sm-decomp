@@ -317,9 +317,18 @@ impl Game {
         self.g_ram[0xe16..0xe18].copy_from_slice(&value.to_le_bytes());
     }
 
+    /// previous_cre_bitset ($7E:07B1 in ram_map).
+    pub fn set_previous_cre_bitset(&mut self, value: u16) {
+        self.g_ram[0x7b1..0x7b3].copy_from_slice(&value.to_le_bytes());
+    }
+
     /// cre_bitset ($7E:07B3 in ram_map).
     pub fn cre_bitset(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0x7b3], self.g_ram[0x7b4]])
+    }
+
+    pub fn set_cre_bitset(&mut self, value: u16) {
+        self.g_ram[0x7b3..0x7b5].copy_from_slice(&value.to_le_bytes());
     }
 
     /// door_def_ptr ($7E:078D in ram_map).

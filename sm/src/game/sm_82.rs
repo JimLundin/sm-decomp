@@ -9078,17 +9078,10 @@ pub unsafe fn GameState_25_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineR
     return kCoroutineNone as CoroutineRet;
 }
 pub unsafe fn LoaadDesinationRoomCreBitset(game: &mut Game) {
-    let mut room_definition_ptr: uint16 = (*get_DoorDef(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x78d as ::core::ffi::c_int as isize)
-            as *mut uint16),
-        game,
-    ))
-    .room_definition_ptr as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7b1 as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x7b3 as ::core::ffi::c_int as isize) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7b3 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*get_RoomDefHeader(room_definition_ptr, game)).cre_bitset_ as uint16;
+    let destination_room = (*get_DoorDef(game.door_def_ptr(), game)).room_definition_ptr;
+    game.set_previous_cre_bitset(game.cre_bitset());
+    let room = get_RoomDefHeader(destination_room, game);
+    game.set_cre_bitset(u16::from((*room).cre_bitset_));
 }
 pub unsafe fn LoadDoorHeader(game: &mut Game) {
     let door = get_DoorDef(game.door_def_ptr(), game);
