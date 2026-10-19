@@ -9984,6 +9984,25 @@ matches verified source; peer PPU work is outside these replays. Rust lines -7;
 other own counters unchanged. Indexed-indirect/TSX/accumulator ROR stay held.
 Complete gameplay/render/audio remain open. Continue covered CPU cleanup.
 
+CPU long-indirect direct-page pointer setup (2026-10-19): long/long-Y helpers
+reuse safe direct_page_address for alignment cycles and the first two captured
+pointer-byte addresses. Safe reference ends before read_word; the third byte
+still rereads live DP afterward, and long-Y reads Y after that byte. Frozen
+`fa18c8d3` plus this change passes 67,092,480 actual old/current RAM-bus cases:
+24-bit pointers excluding locations 1FFE/1FFF whose three-byte fetch enters
+MMIO, both helpers, correlated Y values, varied DP/MF/XF/E and PC 8000/FFFF.
+Address pairs, named CPU/bus state, all pointer/operand bytes, PC and cycles
+match. Independent pointer/Y/address Cartesian and arbitrary MMIO mutation
+remain unproven. Full instrumented any% 129,712/0 (49.21s), native exit 0,
+executes long/long-Y 275,433/4,292,721 times. Initial prefix reports 3,600/0
+(0.96s) but no long calls, then aborts on coverage; not a successful process.
+Clean full any% 129,712/0 (52.77s), native exit 0. Cargo fmt/check, full release/
+release-library builds with external SDL2, normal metadata and frozen optimized
+core/DLL pass. Live CPU matches verified source; peer PPU work is outside these
+replays. Rust lines -14; other own counters unchanged. Indexed-indirect/TSX/
+accumulator ROR stay held. Complete gameplay/render/audio remain open.
+Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
