@@ -10182,6 +10182,22 @@ work is outside this replay. Rust lines -260; other own counters unchanged.
 Indexed-indirect/TSX/accumulator ROR remain held. Complete gameplay/render/
 audio remain open. Continue covered CPU cleanup.
 
+CPU shared index operations (2026-10-19): IndexRegister::load/update replace
+the four separate X/Y transfer/update helpers. XF width masking, wrapping
+addition, assignment and zero/negative flags retain their order. The eight
+TAY/TAX/TXY/TYX/DEY/INY/DEX/INX dispatch arms use the typed destination;
+TSX remains untouched and held. Frozen `d92010ff` plus this change passes
+2,097,152 actual old/current dispatcher cases: every word, both index widths
+and carry values, named CPU/bus state, cycles and history. The previous helper
+bodies remain in the comparison paths. Prefix 3,600/0 (1.03s), native exit 0,
+executes all eight changed arms, with respective counts 48,330/108,749/727/
+10,367/107,452/204,419/561,929/331,161. Clean full any% 129,712/0 (51.35s),
+native exit 0. Cargo fmt/check, full release/release-library builds with
+external SDL2, normal metadata and frozen optimized core/DLL pass. Live CPU
+matches verified source; peer PPU work is outside this replay. Rust lines -7;
+other own counters unchanged. Indexed-indirect/TSX/accumulator ROR remain
+held. Complete gameplay/render/audio remain open. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
