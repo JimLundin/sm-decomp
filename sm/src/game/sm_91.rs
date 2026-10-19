@@ -2110,104 +2110,57 @@ unsafe fn XrayHdmaOnScreen_BeamHoriz(mut ctx: *mut XrayHdmaCtx, game: &mut Game)
     );
 }
 pub unsafe fn CalculateXrayHdmaTableInner(
-    mut k: uint16,
-    mut j: uint16,
-    mut r18: uint16,
-    mut r20: uint16,
-    mut off_screen: bool,
-    mut dest_addr: *mut uint16,
+    relative_x: u16,
+    relative_y: u16,
+    angle: u16,
+    width: u16,
+    off_screen: bool,
+    dest_addr: *mut u16,
     game: &mut Game,
 ) {
-    let mut ctx = XrayHdmaCtx {
-        r22: 0,
-        r24: 0,
-        r26: 0,
-        r28: 0,
-        r30: 0,
-        r32: 0,
-        r18_avoid: 0,
-        dest: ::core::ptr::null_mut::<uint16>(),
-    };
-    ctx.dest = dest_addr;
-    ctx.r18_avoid = r18;
-    ctx.r22 = ((k as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16;
-    ctx.r24 = j;
-    ctx.r26 = (r18 as ::core::ffi::c_int - r20 as ::core::ffi::c_int) as uint16;
-    ctx.r26 = (ctx.r26 as ::core::ffi::c_int
-        + if ctx.r26 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int
-        {
-            0x100 as ::core::ffi::c_int
+    fn gradient_index(angle: u16) -> usize {
+        let half_turn_offset = angle.wrapping_sub(128);
+        usize::from(if half_turn_offset & 0x8000 != 0 {
+            angle
         } else {
-            0 as ::core::ffi::c_int
-        }) as uint16;
-    ctx.r28 = (r20 as ::core::ffi::c_int + r18 as ::core::ffi::c_int) as uint16;
-    if r20 as ::core::ffi::c_int + r18 as ::core::ffi::c_int - 257 as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        == 0
-    {
-        ctx.r28 = (r20 as ::core::ffi::c_int + r18 as ::core::ffi::c_int
-            - 256 as ::core::ffi::c_int) as uint16;
+            half_turn_offset
+        })
     }
-    ctx.r30 = *(game.g_rom.offset(
-        (((0x91c9d4 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x91c9d4 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
-        .offset(
-            (if ctx.r26 as ::core::ffi::c_int - 128 as ::core::ffi::c_int
-                & 0x8000 as ::core::ffi::c_int
-                != 0
-            {
-                ctx.r26 as ::core::ffi::c_int
-            } else {
-                ctx.r26 as ::core::ffi::c_int - 128 as ::core::ffi::c_int
-            }) as isize,
-        );
-    ctx.r32 = *(game.g_rom.offset(
-        (((0x91c9d4 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x91c9d4 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
-        .offset(
-            (if ctx.r28 as ::core::ffi::c_int - 128 as ::core::ffi::c_int
-                & 0x8000 as ::core::ffi::c_int
-                != 0
-            {
-                ctx.r28 as ::core::ffi::c_int
-            } else {
-                ctx.r28 as ::core::ffi::c_int - 128 as ::core::ffi::c_int
-            }) as isize,
-        );
-    let direction = if r20 == 0
-        && (r18 as ::core::ffi::c_int == 64 as ::core::ffi::c_int
-            || r18 as ::core::ffi::c_int == 192 as ::core::ffi::c_int)
-    {
+
+    // Preserve the SNES sign-bit tests; angle 256 stays distinct from zero.
+    let mut lower_angle = angle.wrapping_sub(width);
+    if lower_angle & 0x8000 != 0 {
+        lower_angle = lower_angle.wrapping_add(256);
+    }
+    let mut upper_angle = angle.wrapping_add(width);
+    if upper_angle.wrapping_sub(257) & 0x8000 == 0 {
+        upper_angle = upper_angle.wrapping_sub(256);
+    }
+    let lower_gradient = game.read_rom_word(0x91c9d4, gradient_index(lower_angle) * 2);
+    let upper_gradient = game.read_rom_word(0x91c9d4, gradient_index(upper_angle) * 2);
+    let mut ctx = XrayHdmaCtx {
+        r22: relative_x << 8,
+        r24: relative_y,
+        r26: lower_angle,
+        r28: upper_angle,
+        r30: lower_gradient,
+        r32: upper_gradient,
+        r18_avoid: angle,
+        dest: dest_addr,
+    };
+    let direction = if width == 0 && (angle == 64 || angle == 192) {
         XrayBeamDirection::Horizontal
-    } else if ctx.r26 as ::core::ffi::c_int - 128 as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        != 0
-    {
-        if ctx.r26 as ::core::ffi::c_int - 64 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-            == 0
-        {
+    } else if lower_angle.wrapping_sub(128) & 0x8000 != 0 {
+        if lower_angle.wrapping_sub(64) & 0x8000 == 0 {
             XrayBeamDirection::Down
-        } else if ctx.r28 as ::core::ffi::c_int - 64 as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            == 0
-        {
+        } else if upper_angle.wrapping_sub(64) & 0x8000 == 0 {
             XrayBeamDirection::Right
         } else {
             XrayBeamDirection::Up
         }
-    } else if ctx.r26 as ::core::ffi::c_int - 192 as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        == 0
-    {
+    } else if lower_angle.wrapping_sub(192) & 0x8000 == 0 {
         XrayBeamDirection::Up
-    } else if ctx.r28 as ::core::ffi::c_int - 192 as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        == 0
-    {
+    } else if upper_angle.wrapping_sub(192) & 0x8000 == 0 {
         XrayBeamDirection::Left
     } else {
         XrayBeamDirection::Down

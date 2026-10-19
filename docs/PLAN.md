@@ -31,16 +31,18 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest focused check: frozen `3d81e4d` plus typed X-ray direction
-dispatch passes any% 129712/0 (296.20s) and Waver 58109/0 (128.42s),
-both native exit 0. A private enum and exhaustive match replace the
-numeric selector and two nullable function-pointer tables; context setup,
-predicates, ROM reads and handler arguments are unchanged. The 252-frame
-checkpoint executes the builder 252 times with zero failures; 24 actual
-old/current comparisons match all 128 KiB RAM and cover all ten handler
-choices. All 924 window-table bytes remain enforced. The final maintained
-source equals the verified snapshot. Format, release build and progress
-checks pass; own cast lines -9 and Rust lines -8, other counters unchanged.
+Latest focused check: frozen `626b0b7e` plus X-ray word arithmetic and
+ROM reads passes any% 129712/0 (301.11s) and Waver 58109/0 (197.31s),
+both native exit 0. Named u16 inputs and wrapping operations retain angle
+256 and the signed boundary tests; checked ROM reads retain linear offsets
+and edge order. The 252-frame checkpoint executes the builder 252 times.
+All 156 actual old/current builder comparisons match complete RAM and 312
+ordered ROM reads across all ten handlers. Full-range component checks and
+1,376,256 composed cases pass; a shifted angle-256 cutoff is rejected.
+All 924 window-table bytes remain enforced. Maintained source equals the
+verified snapshot. Format, normal/core-only Cargo release, optimized DLL
+builds and progress pass after the separate native-linkage repair. Own cast
+lines -36 and Rust lines -47; other residue counters unchanged.
 
 Everything that existed before is in the branch `archive/pre-transpile-2026-10-17`.
 
