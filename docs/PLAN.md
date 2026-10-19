@@ -10501,6 +10501,50 @@ gameplay/PPU work is outside this replay. Rust lines -4; other own counters
 unchanged. Prior CPU holds and complete gameplay/render/audio remain open.
 Continue covered CPU cleanup.
 
+Missile door preinstruction uses byte-backed RAM and direct projectile match
+(2026-10-19). PlmPreInstr_GoToLinkInstrIfShotWithAnyMissile reads the same
+slot timer, masks projectile class with 0F00, and accepts normal missiles or
+Super Missiles. Super still writes 119 to plm_variables before clearing the
+shot; accepted hits clear plm_timers, read the live link, store the instruction
+pointer, then set instruction timer 1. Other nonzero shots queue SFX 57 before
+clearing the timer; zero shots still clear it. k >> 1 retains truncation of an
+odd slot index before computing the byte offset. No RAM borrow spans sound
+callbacks. Unsafe remains at that legacy runtime boundary.
+
+Read-only instrumented normal-input route observes 29 nonzero callback hits:
+19 rejected 8000 beam values and 10 accepted 8100 missile values. Five Parlor
+slot58 hits at frames 70873, 71091, 71203, 71294 and 71385 open its cap.
+No Super Missile hit is observed; that branch is preserved by source comparison,
+not claimed as contextual coverage. Before uses pinned 7fcc20d6 plus committed
+Missile Tank and map-activation changes; after adds only this callback change.
+Fresh baseline 74373/71 (96.38s), instrumented 74373/71 (108.37s), clean
+74373/71 (109.48s), observed native exits 1. All 71 ordered failing frame
+numbers match exactly across the three runs. Hosts explicitly enable rendering
+and record every failure-counter increment. Clean explicit-render any%
+129712/0 (151.38s), observed native exit 0. Built gameplay source matches
+maintained source; peer CPU/PPU edits are excluded from pinned replays.
+
+Cargo fmt/check, full release build and progress pass. Own residue delta:
+raw offsets -7, cast lines -14, Rust lines -10; other counters unchanged.
+Whole-workspace progress 22679 raw, 39 extern, 3 C ABI, 5 no_mangle, 6717 unsafe,
+85540 casts, 257170 Rust lines includes separately owned CPU/PPU changes.
+Only sm_84.rs and this note are committed; probes, ROM-derived geometry, input
+movies and SRAM remain ignored. No gameplay state or inventory was injected.
+
+Post-map central Parlor ascent remains unfinished. First leftward launch falls
+to X290/Y1179, health34; immediate vertical trial returns X472/Y915, health39.
+Settling20, left12, neutral5, Jump35, left/jump12, neutral60 reaches X386/Y859
+with39 health: map-parlor-ledge 74517/71 (99.04s). Longer left20 setup misses
+the shelf and falls to X420/Y1211. From the successful ledge: Jump22,
+right/jump24, neutral60, Jump24, left/jump32, neutral70 reaches X353/Y795,
+health34: map-parlor-shelf-rise 74749/71 (82.81s). Retain this stronger prefix.
+A launch shifted right returns below it; subsequent alternating jumps return
+X375/Y795 with29 health, not a higher shelf. No new room or boss progression
+is proved by these trials. Next: continue from retained X353/Y795, clear the
+next platform underside, and obtain onward item/boss coverage. Held upper99BD
+ascent, cliff tuning, old9AD9 drop ammo and HDMA remain held. Credits, full
+gameplay/hardware, rendering/audio, masked RAM and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

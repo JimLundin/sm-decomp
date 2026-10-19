@@ -5057,42 +5057,32 @@ pub unsafe fn PlmPreInstr_GoToLinkInstrIfShotWithPowerBomb(mut k: uint16, game: 
         as *mut uint16)
         .offset(v2 as isize) = 0 as uint16;
 }
-pub unsafe fn PlmPreInstr_GoToLinkInstrIfShotWithAnyMissile(mut k: uint16, game: &mut Game) {
-    let mut v3: int16 = 0;
-    let mut v2: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1d77 as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
-    if v2 != 0 {
-        's_49: {
-            v3 = (v2 as ::core::ffi::c_int & 0xf00 as ::core::ffi::c_int) as int16;
-            if v3 as ::core::ffi::c_int == 512 as ::core::ffi::c_int {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdf0c as ::core::ffi::c_int as isize)
-                    as *mut uint16)
-                    .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-                    119 as uint16;
-            } else if !(v3 as ::core::ffi::c_int == 256 as ::core::ffi::c_int) {
-                QueueSfx2_Max6(0x57 as uint16, game);
-                break 's_49;
+pub unsafe fn PlmPreInstr_GoToLinkInstrIfShotWithAnyMissile(k: uint16, game: &mut Game) {
+    let index = usize::from(k >> 1) * 2;
+    let read_word = |game: &Game, offset: usize| {
+        u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
+    };
+    let write_word = |game: &mut Game, offset: usize, value: u16| {
+        game.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+    };
+    let shot = read_word(game, 0x1d77 + index); // plm_timers
+    if shot != 0 {
+        match shot & 0x0f00 {
+            0x0200 => write_word(game, 0xdf0c + index, 119), // plm_variables
+            0x0100 => {}
+            _ => {
+                QueueSfx2_Max6(0x57, game);
+                write_word(game, 0x1d77 + index, 0);
+                return;
             }
-            let mut v4: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1d77 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v4 as isize) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1d27 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v4 as isize) = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xdebc as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v4 as isize);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xde1c as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v4 as isize) = 1 as uint16;
-            return;
         }
+        write_word(game, 0x1d77 + index, 0);
+        let link = read_word(game, 0xdebc + index); // plm_instruction_list_link_reg
+        write_word(game, 0x1d27 + index, link); // plm_instr_list_ptrs
+        write_word(game, 0xde1c + index, 1); // plm_instruction_timer
+        return;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1d77 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
+    write_word(game, 0x1d77 + index, 0);
 }
 pub unsafe fn PlmPreInstr_GoToLinkInstrIfShotWithSuperMissile(mut k: uint16, game: &mut Game) {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
