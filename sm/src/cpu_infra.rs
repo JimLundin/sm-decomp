@@ -132,6 +132,7 @@ pub struct Snapshot {
     pub bg_address: [(bool, bool, uint16, uint16); 4],
     pub screen_routing: ([uint8; 2], [uint8; 2], [[bool; 4]; 5]),
     pub window_select: (uint32, [(bool, bool, bool, bool, uint8); 6]),
+    pub window_bounds: [uint8; 4],
     pub fixed_color: [uint8; 3],
     pub color_math: (bool, bool, [bool; 6]),
     pub color_selection: (uint8, uint8, bool, bool),
@@ -1018,6 +1019,15 @@ unsafe fn VerifySnapshotsEq(
             (*a).fixed_color
         );
     }
+    if (*b).window_bounds != (*a).window_bounds {
+        game.g_fail = true;
+        eprintln!(
+            "@{}: Window boundaries (WH0, WH1, WH2, WH3) compare failed: mine {:?} != theirs {:?}",
+            game.snes_frame_counter,
+            (*b).window_bounds,
+            (*a).window_bounds
+        );
+    }
     if (*b).window_select != (*a).window_select {
         game.g_fail = true;
         eprintln!(
@@ -1734,6 +1744,12 @@ unsafe fn MakeSnapshot(s: &mut Snapshot, snes: &Snes, c: &Cpu, player: *mut SpcP
         ppu.addSubscreen,
         ppu.directColor,
     );
+    (*s).window_bounds = [
+        ppu.window1left,
+        ppu.window1right,
+        ppu.window2left,
+        ppu.window2right,
+    ];
     (*s).window_select = (
         ppu.windowsel,
         ppu.windowLayer.map(|w| {
@@ -1821,6 +1837,12 @@ unsafe fn RestoreSnapshot(s: &Snapshot, snes: &mut Snes, c: &mut Cpu) {
         ppu.addSubscreen,
         ppu.directColor,
     ) = (*s).color_selection;
+    [
+        ppu.window1left,
+        ppu.window1right,
+        ppu.window2left,
+        ppu.window2right,
+    ] = (*s).window_bounds;
     let (raw, windows) = (*s).window_select;
     ppu.windowsel = raw;
     for (w, (enabled1, enabled2, inverted1, inverted2, logic)) in

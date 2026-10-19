@@ -247,6 +247,26 @@ change and no new replay result belong to this cleanup.
 
 ## The oracle
 
+Window-boundary snapshot enforcement (2026-10-19): capture, compare and
+restore all four WH0..WH3 bytes. The prior hold depended on the X-ray producer
+repair, which is now complete. Full byte values, including reversed bounds,
+remain exact; persistent PPU/save layouts do not change.
+
+Actual controls across both PPUs and both renderers reject all 16 injected
+boundary faults, restore all 2,048 byte/register cases and reproduce all 16
+saved rendered rows after rewind. Baseline controls expose each former
+omission. Independent review confirms the updated narrowed-API control source
+matches maintained CPU/audio/PPU code after removing temporary probes.
+
+Frozen 4510a3f0 plus these fields and the separately committed async-door
+cleanup passes clean any% 129712/0 (267.39s) and Waver 58109/0 (136.37s),
+both native exit 0. Maintained changed files match the verified snapshot.
+Cargo fmt/check, release build and progress pass. Own Rust lines +22 add the
+new snapshot field and its capture/comparison/restore; other counters unchanged.
+No masks, probes or ROM-derived assets are added. Other sessions' uncommitted
+source is excluded. Next: remaining omitted/masked state, audio timing and
+actual boot-to-credits coverage; those broader requirements remain unfinished.
+
 9BC8 passage geometry confirmed (2026-10-19): frozen 3d81e4d2 resumes the
 retained pre-frame-67300 checkpoint through the 69714 ledge and one bounded
 ordinary-input jump suffix. All 2,497 frames pass with zero failures, native
