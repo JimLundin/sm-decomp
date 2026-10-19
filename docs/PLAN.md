@@ -167,6 +167,24 @@ Retained explicit-render profiling measured2.109460s/11,245,988 calls in a
 execution and compare complete old/current background outputs before timing;
 preserve the background z>destination gate, tile reads and partial spans.
 
+4bpp full-tile decoding experiment (2026-10-19): frozen8acaa909 plus a
+temporary packed eight-pixel helper passes20,000/0, native exit0 (34.55s).
+Actual old/current PpuDrawBackground_4bpp execution compares both complete
+background buffers in11,245,988 calls. Only initialized buffer arrays are
+saved/restored; no whole-Ppu copy. The135,118,516 nonempty full spans cover
+both flips on mainBG0/mainBG1/subBG0. Aggregated pixel outcomes are31,499,108
+transparent,980,702,658 written and68,746,362 priority rejects; subBG1 has no
+demonstrated changed-span coverage. Independent candidate/probe review
+confirms unchanged partial spans, tile reads, priority gate and wrapping.
+Clean explicit-render baseline/candidate/candidate/baseline runs each pass
+20,000/0, native exit0, in31.942/30.845/30.747/28.157s. Candidate mean30.796s
+is2.48% slower than baseline30.050s, with conflicting paired directions under
+concurrent load. No consistent replay gain is established, so the candidate
+does not enter maintained source. No source/residue change; later CPU,
+gameplay and SRAM changes are excluded from these frozen runs. Next: the
+measured color-math conversion branch, using separate pixel slices and actual
+row-output comparison before timing. Existing full-game/oracle gaps remain.
+
 The binary contains two complete implementations of each frame:
 
 - **theirs**: the original ROM code, run on the emulated 65816 in `sm/src/snes`.
