@@ -2076,31 +2076,33 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): `c7b1abbf` combines the 330 SPC
-mapping descriptors with all 22 Fire Geyser shape callbacks in `000c619e`.
-Independent complete-source reconstruction accounts for both changes.
-The 47 channel and 283 player mappings retain every value, encoded width
-flag and row position. Exact original/candidate declarations bind compiled
-const assertions over all 943 fields and both layouts; all existing runtime
-functions remain unchanged. No runtime descriptor harness is needed.
+Latest reviewed integration (2026-10-20): `1db62808` combines native integer
+type names with eight robot movement callbacks in `a71b97d2`. Independent
+complete-source reconstruction accounts for all edits. The 34754 replacements
+are 33108 ordinary type paths and 1646 paths in 829 set_ram_word! invocations.
+Compiler checks confirm c_int/i32 and c_uint/u32 type identity on the build
+target. No type-name shadows, literal/comment edits or other macro contexts
+are present; macro expression evaluation remains unchanged.
 
-All 22 expanded Geyser helpers match their original bodies. Both live enemy
-index reads, the unwrapped child index plus 64, wrapping position subtraction,
-y/height store order and callback 2's width write remain exact. Original
-nodes and actual-library callbacks pass 2883584 full-RAM/returned-pointer
-comparisons. The test's RAM base and index offsets match maintained code;
-final committed Geyser source matches the tested version. These factored
-checks do not prove every joint state or broader alias safety.
+All eight robot parameter sets, callback arguments and instruction addresses
+match the original code. Captured robot pointers, live enemy-index rereads,
+coordinate saves/restores and instruction 16's y-before-x order are retained.
+Exact original/candidate nodes bind 442368 actual-collision full-RAM/return
+comparisons and 589824 mutating-callback full-RAM/trace/return comparisons.
+Test RAM offsets match maintained names. These factored checks do not prove
+every joint state or broader alias safety.
 
 All 73 committed source/configuration/tool inputs match the final composition;
-all 76 source/DLL/fixture pins remain stable after completion. Normal release
-(12.86s), formatting/check and progress pass. Full any% 129712/0
-(115.16s replay, 115.27s wall), native exit 0, covers both changes together.
-Completed checks were reused; no duplicate root build or replay was run.
-Net Rust lines -1416, total 166702; the one added unsafe function is the shared
-Geyser helper. Independent review has no findings. Prior frontend checks
-retain their limited scope; broader frontend execution, readability, full
-credits and global alias safety retain the limitations below.
+all 78 source/DLL/fixture pins remain stable after completion. Normal release
+(27.09s), formatting/check and progress pass. Full any% 129712/0
+(127.69s replay, 127.84s wall), native exit 0, covers both changes together.
+Completed checks were reused without another root build or replay.
+Net Rust lines -11634, total 155068; one shared robot helper adds an unsafe
+function. The spelling cleanup removes no casts or unsafe operations. Its
+updated cast-line counter recognizes both spellings; the raw-offset counter's
+one-line decrease is wrapping only (4976 accesses remain). Broader readability,
+frontend execution, full credits and global alias safety retain the limitations
+below. Independent review has no findings.
 
 The prior `2ddf3af0` shares all twelve corpse
 tile initializers. Independent reconstruction accounts for all 50 ordered
