@@ -2246,42 +2246,41 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `b9655531` simplifies 1318 negative
-constants across 38 files: 366 in-range i32-to-signed casts become identical
-typed negatives, and 952 redundant operand parentheses disappear. Independent
-whole-source reconstruction verifies values, source/result types, AST spans
-and protected contexts. All 1120 ordinary expressions and 198 known RAM-macro
-expressions retain their context; unsigned and out-of-range casts are unchanged.
-The 366 compiler constant equalities pass, with no primitive-name shadows.
+Latest reviewed integration (2026-10-20): `037d589f` shares all 51 fixed-bank
+and six dynamic-bank ROM pointer wrappers through two helpers. Independent
+whole-source reconstruction covers all 31 changed files and preserves the exact
+bank/address assembly and maintained RomPtr validation. All 360 direct calls
+and 11 cast-then-call uses retain their arguments; selected function pointers
+do not escape or undergo address comparisons. RAM/hybrid helpers are unchanged.
 
-All 73 committed inputs match the reviewed candidate. Its base is the exact
-reviewed HDMA source; only seven obsolete sm_88 selections disappear from the
-preliminary batch. All 78 replay pins remain stable. Normal release (22.67s),
-formatting/check and progress pass. Full any% passes 129712/0
-(137.00s wall, 136.85s replay), native exit 0. A disk-full build attempt was
-retried successfully without source changes; the completed final build and
-replay were reused for review. Net Rust lines -1129, total 144364; 366 cast
-tokens disappear, with all 15857 i32 casts retained. Raw-offset expressions
-remain 3823 and unsafe functions remain 6445.
+The final composition retains the identical 57 declarations and helpers after
+the HDMA and negative-constant commits. All 70 committed Rust/Cargo inputs
+match the reviewed candidate; all 67 replay Rust files match that source, and
+all 72 replay pins remain stable after completion. Normal release (16.83s),
+formatting/check and progress pass. Full any% passes 129712/0 (109.05s replay),
+native exit 0. Earlier wrapper replays retain their earlier source bindings;
+the completed final build and replay were reused for review.
 
-The included `72072fd5` shares all 17 Power Bomb / Crystal Flash renderer and
-stage functions (-375 lines, seven fewer unsafe functions). Independent source
-review preserves live reads, clipping sentinels, row-store order, pointer setup,
-counter widths and all five transition tails; 202 unselected functions stay
-exact. Its independent three-way composition reproduces the complete source.
-All 73 committed inputs and 79 replay pins match its reviewed snapshot;
-release (24.57s) and any% 129712/0 (115.13s wall, 114.97s replay) pass.
+Net Rust lines -159, total 144205; unsafe functions fall 55 to 6390 and raw
+RAM-offset expressions remain 3823. AST counting confirms 69 cast expressions
+removed. The spelling counter falls only 63 because six new import aliases
+also contain `as`; those aliases are not casts. Shared-helper and validator
+trace checks remain scoped to address assembly, not general pointer validity.
 
-The HDMA comparison passes 778700 scoped cases for byte clipping, side selection,
-full-RAM traversal, pointer boundaries and five stages. Both u8 wrapping tails
-are exercised; ExplosionYellow's out-of-allocation i32 tail domain is excluded.
-All ten focused-check pins and its DLL hash remain stable. The completed
-reviewers' work was reused; these checks do not establish every joint state or
-general Game alias safety. Earlier LoROM/import reviews and scoped pointer-order
-and lifetime checks remain included. Concurrent ROM-bank-wrapper edits are
-outside this committed snapshot and its verification. Broader readability,
-frontend execution and full credits remain incomplete; the any% movie has zero
-ending/credits-state frames and does not prove every explosion variant.
+The included `b9655531` negative-constant review retains all 1318 selections,
+366 compiler equalities and its independent source/type/context reconstruction.
+Its release (22.67s) and any% 129712/0 (137.00s wall, 136.85s replay) pass;
+all 73 committed inputs and 78 replay pins match the reviewed snapshot.
+The included `72072fd5` HDMA review retains all 17 functions, five transition
+tails, 202 unchanged functions and 778700 focused comparison cases. Its release
+(24.57s) and any% 129712/0 (115.13s wall, 114.97s replay) pass; all 73 committed
+inputs, 79 replay pins, ten focused-check pins and focused DLL remain matched.
+
+These earlier scoped checks retain their limits, including ExplosionYellow's
+excluded out-of-allocation i32 tail domain and incomplete joint-state coverage.
+Broader readability, frontend execution, full credits and general alias safety
+remain incomplete. The any% movie has zero ending/credits-state frames and does
+not establish execution coverage for every explosion variant or ROM-bank caller.
 
 The prior `2ddf3af0` shares all twelve corpse
 tile initializers. Independent reconstruction accounts for all 50 ordered
@@ -20222,8 +20221,9 @@ distinct behavior. Complete wrapper expansion reconstructs all 31 files.
 21102592 address/validator-trace comparisons pass, covering every word in
 each fixed bank with both initial failure states and all 256 dynamic banks
 times 65536 words. The checks bind the actual helper and address tuples;
-they do not establish broader pointer validity. Net Rust lines -159, casts
--63 and unsafe functions -55; raw RAM and ABI counts remain unchanged.
+they do not establish broader pointer validity. Net Rust lines -159, actual
+cast expressions -69 and unsafe functions -55; raw RAM and ABI counts remain
+unchanged. The `as` spelling count falls 63 because six import aliases are added.
 
 Formatting/check, normal registry-only release (16.83s), source/order checks,
 progress and diff checks pass. Frozen b9655531 plus this family passes full
