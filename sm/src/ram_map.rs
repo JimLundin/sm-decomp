@@ -1330,3 +1330,18 @@ ram_vars! {
     0x19602, custom_background, uint16, Array;
     0x1FF00, bug_fix_counter_BAD, uint16, Scalar;
 }
+
+// Declare typed views of RAM without changing the getter's borrow or pointer type.
+// Each list retains successive byte offsets, including the original integer casts.
+macro_rules! ram_pointer_functions {
+    ($($name:ident($index:ident: $index_type:ty) -> $target:ty = [$($offset:expr),+ $(,)?];)*) => {
+        $(
+            #[inline]
+            unsafe fn $name($index: $index_type, game: &mut $crate::game_state::Game) -> *mut $target {
+                (&raw mut game.g_ram as *mut ::core::primitive::u8)
+                    $(.offset($offset))+ as *mut $target
+            }
+        )*
+    };
+}
+pub(crate) use ram_pointer_functions;

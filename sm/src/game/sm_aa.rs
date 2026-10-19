@@ -102,23 +102,10 @@ pub const fnTorizo_Func_10: u32 = 11195871;
 pub const fnTorizo_D5E6: u32 = 11195878;
 pub const fnnullsub_274: i32 = 0xaadcaa;
 pub const fnnullsub_276: i32 = 0xaae7a6;
-#[inline]
-unsafe fn gEnemyData(o: i32, game: &mut Game) -> *mut EnemyData {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut EnemyData
-}
-#[inline]
-unsafe fn Get_Shaktool(o: i32, game: &mut Game) -> *mut Enemy_Shaktool {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Shaktool
-}
-#[inline]
-unsafe fn Get_Torizo(o: i32, game: &mut Game) -> *mut Enemy_Torizo {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Torizo
+crate::ram_map::ram_pointer_functions! {
+    gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
+    Get_Shaktool(o: i32) -> Enemy_Shaktool = [0xf78, o as isize];
+    Get_Torizo(o: i32) -> Enemy_Torizo = [0xf78, o as isize];
 }
 static g_word_AAB096: u16 = 6u16;
 static g_word_AAB098: u16 = 5u16;

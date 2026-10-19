@@ -166,10 +166,8 @@ enemy_layout! {
 
 const RomPtr_A0: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa0>;
 const RomPtr_A5: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa5>;
-#[inline]
-unsafe fn gVramWriteEntry(a: i32, game: &mut Game) -> *mut VramWriteEntry {
-    (&raw mut game.g_ram as *mut u8).offset((0xd0i32 + a) as isize) as *mut u8
-        as *mut VramWriteEntry
+crate::ram_map::ram_pointer_functions! {
+    gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0i32 + a) as isize];
 }
 #[inline]
 unsafe fn get_EnemyDef_A2(a: u16, game: &mut Game) -> *mut EnemyDef {
@@ -216,23 +214,10 @@ pub const fnSporeSpawn_Func_1: u32 = 10873627;
 pub const fnSporeSpawn_Func_2: i32 = 0xa5eb52;
 pub const fnSporeSpawn_Func_3: u32 = 10873755;
 pub const fnSporeSpawn_Func_4: u32 = 10873838;
-#[inline]
-unsafe fn gEnemyData(o: i32, game: &mut Game) -> *mut EnemyData {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut EnemyData
-}
-#[inline]
-unsafe fn Get_Draygon(o: i32, game: &mut Game) -> *mut Enemy_Draygon {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Draygon
-}
-#[inline]
-unsafe fn Get_SporeSpawn(o: i32, game: &mut Game) -> *mut Enemy_SporeSpawn {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_SporeSpawn
+crate::ram_map::ram_pointer_functions! {
+    gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
+    Get_Draygon(o: i32) -> Enemy_Draygon = [0xf78, o as isize];
+    Get_SporeSpawn(o: i32) -> Enemy_SporeSpawn = [0xf78, o as isize];
 }
 pub unsafe fn Enemy_GrappleReact_NoInteract_A5(game: &mut Game) {
     SwitchEnemyAiToMainAi(game);

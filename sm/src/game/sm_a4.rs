@@ -72,22 +72,10 @@ use crate::rtl::rom_ptr_with_bank as RomPtrWithBank;
 unsafe fn RomBankBase(bank: u8, game: &mut Game) -> *const u8 {
     RomPtr((((bank as i32) << 16i32) + 0x8000i32) as u32, game).offset(-(0x8000i32 as isize))
 }
-#[inline]
-unsafe fn gVramWriteEntry(a: i32, game: &mut Game) -> *mut VramWriteEntry {
-    (&raw mut game.g_ram as *mut u8).offset((0xd0i32 + a) as isize) as *mut u8
-        as *mut VramWriteEntry
-}
-#[inline]
-unsafe fn gEnemyData(o: i32, game: &mut Game) -> *mut EnemyData {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut EnemyData
-}
-#[inline]
-unsafe fn Get_Crocomire(o: i32, game: &mut Game) -> *mut Enemy_Crocomire {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Crocomire
+crate::ram_map::ram_pointer_functions! {
+    gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0i32 + a) as isize];
+    gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
+    Get_Crocomire(o: i32) -> Enemy_Crocomire = [0xf78, o as isize];
 }
 static g_word_A48692: u16 = 8u16;
 static g_word_A48694: u16 = 8u16;

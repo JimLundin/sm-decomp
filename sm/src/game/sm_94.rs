@@ -48,9 +48,8 @@ pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 const RomPtr_8F: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8f>;
 const RomPtr_94: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x94>;
-#[inline]
-unsafe fn gOamEnt(v: i32, game: &mut Game) -> *mut OamEnt {
-    (&raw mut game.g_ram as *mut u8).offset((0x370i32 + v) as isize) as *mut u8 as *mut OamEnt
+crate::ram_map::ram_pointer_functions! {
+    gOamEnt(v: i32) -> OamEnt = [(0x370i32 + v) as isize];
 }
 #[inline]
 unsafe fn get_DoorDef(a: u16, game: &mut Game) -> *mut DoorDef {

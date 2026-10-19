@@ -45,10 +45,8 @@ pub use crate::types::Buttons;
 pub use crate::types::Consts_9B;
 const RomPtr_9B: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x9b>;
 const RomPtr_A0: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa0>;
-#[inline]
-unsafe fn gVramWriteEntry(a: i32, game: &mut Game) -> *mut VramWriteEntry {
-    (&raw mut game.g_ram as *mut u8).offset((0xd0i32 + a) as isize) as *mut u8
-        as *mut VramWriteEntry
+crate::ram_map::ram_pointer_functions! {
+    gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0i32 + a) as isize];
 }
 pub const fnSamus_MoveHandler_ReleaseFromGrapple: i32 = 0x90946e;
 pub const fnSamus_MovementHandler_Normal: i32 = 0x90a337;

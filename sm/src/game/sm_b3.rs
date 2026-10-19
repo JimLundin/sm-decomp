@@ -134,35 +134,12 @@ pub const fnBotwoon_Func_29: i32 = 0xb39f34;
 pub const fnBotwoon_Func_30: i32 = 0xb39f7a;
 pub const fnBotwoon_Func_32: i32 = 0xb3e250;
 pub const fnBotwoon_Func_33: u32 = 11788940;
-#[inline]
-unsafe fn gEnemyData(o: i32, game: &mut Game) -> *mut EnemyData {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut EnemyData
-}
-#[inline]
-unsafe fn Get_Botwoon(o: i32, game: &mut Game) -> *mut Enemy_Botwoon {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Botwoon
-}
-#[inline]
-unsafe fn Get_EscapeDachora(o: i32, game: &mut Game) -> *mut Enemy_EscapeDachora {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_EscapeDachora
-}
-#[inline]
-unsafe fn Get_EscapeEtecoon(o: i32, game: &mut Game) -> *mut Enemy_EscapeEtecoon {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_EscapeEtecoon
-}
-#[inline]
-unsafe fn Get_PipeBug(o: i32, game: &mut Game) -> *mut Enemy_PipeBug {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_PipeBug
+crate::ram_map::ram_pointer_functions! {
+    gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
+    Get_Botwoon(o: i32) -> Enemy_Botwoon = [0xf78, o as isize];
+    Get_EscapeDachora(o: i32) -> Enemy_EscapeDachora = [0xf78, o as isize];
+    Get_EscapeEtecoon(o: i32) -> Enemy_EscapeEtecoon = [0xf78, o as isize];
+    Get_PipeBug(o: i32) -> Enemy_PipeBug = [0xf78, o as isize];
 }
 static g_word_B39E77: [i16; 3] = [2, 3, 4];
 pub unsafe fn Enemy_GrappleReact_NoInteract_B3(game: &mut Game) {

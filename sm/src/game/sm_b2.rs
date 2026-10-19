@@ -118,17 +118,9 @@ pub const fnSpacePirates_FAE9: i32 = 0xb2fae9;
 pub const fnWalkingSpacePirates_FD44: u32 = 11730244;
 pub const fnWalkingSpacePirates_FDCE: u32 = 11730382;
 pub const fnnullsub_282: u32 = 11730506;
-#[inline]
-unsafe fn gEnemyData(o: i32, game: &mut Game) -> *mut EnemyData {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut EnemyData
-}
-#[inline]
-unsafe fn Get_SpacePirates(o: i32, game: &mut Game) -> *mut Enemy_SpacePirates {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_SpacePirates
+crate::ram_map::ram_pointer_functions! {
+    gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
+    Get_SpacePirates(o: i32) -> Enemy_SpacePirates = [0xf78, o as isize];
 }
 pub unsafe fn Enemy_GrappleReact_CancelBeam_B2(game: &mut Game) {
     Enemy_SwitchToFrozenAi(game);

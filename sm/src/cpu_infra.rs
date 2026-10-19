@@ -149,11 +149,8 @@ pub const false_0: i32 = 0;
 unsafe fn get_ProjectileInstr(a: u16, game: &mut Game) -> *mut ProjectileInstr {
     RomPtr((0x930000i32 | a as i32) as u32, game) as *mut ProjectileInstr
 }
-#[inline]
-unsafe fn Get_Botwoon(o: i32, game: &mut Game) -> *mut Enemy_Botwoon {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Botwoon
+crate::ram_map::ram_pointer_functions! {
+    Get_Botwoon(o: i32) -> Enemy_Botwoon = [0xf78, o as isize];
 }
 
 pub unsafe fn Call(addr: u32, game: &mut Game) {

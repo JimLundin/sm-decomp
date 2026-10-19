@@ -102,10 +102,8 @@ unsafe fn RomBankBase(bank: u8, game: &mut Game) -> *const u8 {
     )
     .offset(-(0x8000i32 as isize))
 }
-#[inline]
-unsafe fn gVramWriteEntry(a: i32, game: &mut Game) -> *mut VramWriteEntry {
-    (&raw mut game.g_ram as *mut u8).offset((0xd0i32 + a) as isize) as *mut u8
-        as *mut VramWriteEntry
+crate::ram_map::ram_pointer_functions! {
+    gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0i32 + a) as isize];
 }
 #[inline]
 unsafe fn get_EnemyDef_A2(a: u16, game: &mut Game) -> *mut EnemyDef {
@@ -115,10 +113,8 @@ unsafe fn get_EnemyDef_A2(a: u16, game: &mut Game) -> *mut EnemyDef {
 unsafe fn get_EprojDef(a: u16, game: &mut Game) -> *mut EprojDef {
     RomPtr((0x860000u32) | ((a) as u32), game) as *mut EprojDef
 }
-#[inline]
-unsafe fn gRam7800_Default(a: u16, game: &mut Game) -> *mut Ram7800_Default {
-    (&raw mut game.g_ram as *mut u8).offset((0x7800i32 + a as i32) as isize) as *mut u8
-        as *mut Ram7800_Default
+crate::ram_map::ram_pointer_functions! {
+    gRam7800_Default(a: u16) -> Ram7800_Default = [(0x7800i32 + a as i32) as isize];
 }
 pub const fnEprojInstr_Delete: u32 = 8814932;
 pub const fnEprojInstr_Sleep: u32 = 8814937;
@@ -480,35 +476,12 @@ pub const fnEprojPreInstr_Empty: i32 = 0x86efdf;
 pub const fnEprojPreInstr_Pickup: i32 = 0x86efe0;
 pub const fnEprojInit_Sparks: u32 = 8844177;
 pub const fnEprojPreInstr_Sparks: u32 = 8844272;
-#[inline]
-unsafe fn gEnemyData(o: i32, game: &mut Game) -> *mut EnemyData {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut EnemyData
-}
-#[inline]
-unsafe fn gEnemySpawnData(o: i32, game: &mut Game) -> *mut EnemySpawnData {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0x7000)
-        .offset(o as isize) as *mut EnemySpawnData
-}
-#[inline]
-unsafe fn gExtraEnemyRam7800(o: i32, game: &mut Game) -> *mut ExtraEnemyRam7800 {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0x7800)
-        .offset(o as isize) as *mut ExtraEnemyRam7800
-}
-#[inline]
-unsafe fn gExtraEnemyRam8000(o: i32, game: &mut Game) -> *mut ExtraEnemyRam8000 {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0x8000)
-        .offset(o as isize) as *mut ExtraEnemyRam8000
-}
-#[inline]
-unsafe fn Get_MotherBrain(o: i32, game: &mut Game) -> *mut Enemy_MotherBrain {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_MotherBrain
+crate::ram_map::ram_pointer_functions! {
+    gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
+    gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];
+    gExtraEnemyRam7800(o: i32) -> ExtraEnemyRam7800 = [0x7800, o as isize];
+    gExtraEnemyRam8000(o: i32) -> ExtraEnemyRam8000 = [0x8000, o as isize];
+    Get_MotherBrain(o: i32) -> Enemy_MotherBrain = [0xf78, o as isize];
 }
 
 // Shared projectile state stays backed by the original little-endian RAM bytes.

@@ -410,10 +410,8 @@ enemy_layout! {
 }
 
 const RomPtr_A8: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa8>;
-#[inline]
-unsafe fn gVramWriteEntry(a: i32, game: &mut Game) -> *mut VramWriteEntry {
-    (&raw mut game.g_ram as *mut u8).offset((0xd0i32 + a) as isize) as *mut u8
-        as *mut VramWriteEntry
+crate::ram_map::ram_pointer_functions! {
+    gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0i32 + a) as isize];
 }
 pub const fnnullsub_152: i32 = 0x90e90e;
 pub const fnSamus_InputHandler_E913: i32 = 0x90e913;
@@ -530,107 +528,24 @@ pub const fnKiHunter_Func_9: i32 = 0xa8f6f3;
 pub const fnKiHunter_Func_10: i32 = 0xa8f7cf;
 pub const fnKiHunter_Func_11: i32 = 0xa8f7db;
 pub const fnKiHunter_Func_14: i32 = 0xa8f8ad;
-#[inline]
-unsafe fn gEnemyData(o: i32, game: &mut Game) -> *mut EnemyData {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut EnemyData
-}
-#[inline]
-unsafe fn gEnemySpawnData(o: i32, game: &mut Game) -> *mut EnemySpawnData {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0x7000)
-        .offset(o as isize) as *mut EnemySpawnData
-}
-#[inline]
-unsafe fn Get_Beetom(o: i32, game: &mut Game) -> *mut Enemy_Beetom {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Beetom
-}
-#[inline]
-unsafe fn Get_Fune(o: i32, game: &mut Game) -> *mut Enemy_Fune {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Fune
-}
-#[inline]
-unsafe fn Get_Kago(o: i32, game: &mut Game) -> *mut Enemy_Kago {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Kago
-}
-#[inline]
-unsafe fn Get_KiHunter(o: i32, game: &mut Game) -> *mut Enemy_KiHunter {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_KiHunter
-}
-#[inline]
-unsafe fn Get_MaridiaFloater(o: i32, game: &mut Game) -> *mut Enemy_MaridiaFloater {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_MaridiaFloater
-}
-#[inline]
-unsafe fn Get_MaridiaPuffer(o: i32, game: &mut Game) -> *mut Enemy_MaridiaPuffer {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_MaridiaPuffer
-}
-#[inline]
-unsafe fn Get_MiniDraygon(o: i32, game: &mut Game) -> *mut Enemy_MiniDraygon {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_MiniDraygon
-}
-#[inline]
-unsafe fn Get_MorphBallEye(o: i32, game: &mut Game) -> *mut Enemy_MorphBallEye {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_MorphBallEye
-}
-#[inline]
-unsafe fn Get_NorfairLavaMan(o: i32, game: &mut Game) -> *mut Enemy_NorfairLavaMan {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_NorfairLavaMan
-}
-#[inline]
-unsafe fn Get_WalkingLavaSeahorse(o: i32, game: &mut Game) -> *mut Enemy_WalkingLavaSeahorse {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_WalkingLavaSeahorse
-}
-#[inline]
-unsafe fn Get_WreckedShipGhost(o: i32, game: &mut Game) -> *mut Enemy_WreckedShipGhost {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_WreckedShipGhost
-}
-#[inline]
-unsafe fn Get_WreckedShipOrbs(o: i32, game: &mut Game) -> *mut Enemy_WreckedShipOrbs {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_WreckedShipOrbs
-}
-#[inline]
-unsafe fn Get_WreckedShipRobot(o: i32, game: &mut Game) -> *mut Enemy_WreckedShipRobot {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_WreckedShipRobot
-}
-#[inline]
-unsafe fn Get_WreckedShipSpark(o: i32, game: &mut Game) -> *mut Enemy_WreckedShipSpark {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_WreckedShipSpark
-}
-#[inline]
-unsafe fn Get_YappingMaw(o: i32, game: &mut Game) -> *mut Enemy_YappingMaw {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_YappingMaw
+crate::ram_map::ram_pointer_functions! {
+    gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
+    gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];
+    Get_Beetom(o: i32) -> Enemy_Beetom = [0xf78, o as isize];
+    Get_Fune(o: i32) -> Enemy_Fune = [0xf78, o as isize];
+    Get_Kago(o: i32) -> Enemy_Kago = [0xf78, o as isize];
+    Get_KiHunter(o: i32) -> Enemy_KiHunter = [0xf78, o as isize];
+    Get_MaridiaFloater(o: i32) -> Enemy_MaridiaFloater = [0xf78, o as isize];
+    Get_MaridiaPuffer(o: i32) -> Enemy_MaridiaPuffer = [0xf78, o as isize];
+    Get_MiniDraygon(o: i32) -> Enemy_MiniDraygon = [0xf78, o as isize];
+    Get_MorphBallEye(o: i32) -> Enemy_MorphBallEye = [0xf78, o as isize];
+    Get_NorfairLavaMan(o: i32) -> Enemy_NorfairLavaMan = [0xf78, o as isize];
+    Get_WalkingLavaSeahorse(o: i32) -> Enemy_WalkingLavaSeahorse = [0xf78, o as isize];
+    Get_WreckedShipGhost(o: i32) -> Enemy_WreckedShipGhost = [0xf78, o as isize];
+    Get_WreckedShipOrbs(o: i32) -> Enemy_WreckedShipOrbs = [0xf78, o as isize];
+    Get_WreckedShipRobot(o: i32) -> Enemy_WreckedShipRobot = [0xf78, o as isize];
+    Get_WreckedShipSpark(o: i32) -> Enemy_WreckedShipSpark = [0xf78, o as isize];
+    Get_YappingMaw(o: i32) -> Enemy_YappingMaw = [0xf78, o as isize];
 }
 static g_word_A890CA: [i16; 4] = [-8, 8, 0, 0];
 static g_word_A890D2: [i16; 4] = [0, 0, -8, 8];

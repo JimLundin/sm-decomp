@@ -301,14 +301,9 @@ pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 const RomPtr_A0: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa0>;
 const RomPtr_A6: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa6>;
-#[inline]
-unsafe fn gOamEnt(v: i32, game: &mut Game) -> *mut OamEnt {
-    (&raw mut game.g_ram as *mut u8).offset((0x370i32 + v) as isize) as *mut u8 as *mut OamEnt
-}
-#[inline]
-unsafe fn gVramWriteEntry(a: i32, game: &mut Game) -> *mut VramWriteEntry {
-    (&raw mut game.g_ram as *mut u8).offset((0xd0i32 + a) as isize) as *mut u8
-        as *mut VramWriteEntry
+crate::ram_map::ram_pointer_functions! {
+    gOamEnt(v: i32) -> OamEnt = [(0x370i32 + v) as isize];
+    gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0i32 + a) as isize];
 }
 pub const fnBoulder_Func_1: i32 = 0xa6879a;
 pub const fnBoulder_Func_2: i32 = 0xa687ed;
@@ -406,95 +401,22 @@ pub const fnCeresDoor_Func_7: i32 = 0xa6f850;
 pub const fnZebetites_Func_1: i32 = 0xa6fc41;
 pub const fnZebetites_Func_2: i32 = 0xa6fc5b;
 pub const fnZebetites_Func_3: i32 = 0xa6fc67;
-#[inline]
-unsafe fn gEnemyData(o: i32, game: &mut Game) -> *mut EnemyData {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut EnemyData
-}
-#[inline]
-unsafe fn gEnemySpawnData(o: i32, game: &mut Game) -> *mut EnemySpawnData {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0x7000)
-        .offset(o as isize) as *mut EnemySpawnData
-}
-#[inline]
-unsafe fn gRam8800_Default(o: i32, game: &mut Game) -> *mut Ram8800_Default {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0x8800)
-        .offset(o as isize) as *mut Ram8800_Default
-}
-#[inline]
-unsafe fn Get_Boulder(o: i32, game: &mut Game) -> *mut Enemy_Boulder {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Boulder
-}
-#[inline]
-unsafe fn Get_CeresDoor(o: i32, game: &mut Game) -> *mut Enemy_CeresDoor {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_CeresDoor
-}
-#[inline]
-unsafe fn Get_CeresRidley(o: i32, game: &mut Game) -> *mut Enemy_CeresRidley {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_CeresRidley
-}
-#[inline]
-unsafe fn Get_CeresSteam(o: i32, game: &mut Game) -> *mut Enemy_CeresSteam {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_CeresSteam
-}
-#[inline]
-unsafe fn Get_FakeKraid(o: i32, game: &mut Game) -> *mut Enemy_FakeKraid {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_FakeKraid
-}
-#[inline]
-unsafe fn Get_FireGeyser(o: i32, game: &mut Game) -> *mut Enemy_FireGeyser {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_FireGeyser
-}
-#[inline]
-unsafe fn Get_MotherBrain(o: i32, game: &mut Game) -> *mut Enemy_MotherBrain {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_MotherBrain
-}
-#[inline]
-unsafe fn Get_NuclearWaffle(o: i32, game: &mut Game) -> *mut Enemy_NuclearWaffle {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_NuclearWaffle
-}
-#[inline]
-unsafe fn Get_Ridley(o: i32, game: &mut Game) -> *mut Enemy_Ridley {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Ridley
-}
-#[inline]
-unsafe fn Get_RidleysExplosion(o: i32, game: &mut Game) -> *mut Enemy_RidleysExplosion {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_RidleysExplosion
-}
-#[inline]
-unsafe fn Get_SpikeyPlatform(o: i32, game: &mut Game) -> *mut Enemy_SpikeyPlatform {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_SpikeyPlatform
-}
-#[inline]
-unsafe fn Get_Zebetites(o: i32, game: &mut Game) -> *mut Enemy_Zebetites {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Zebetites
+crate::ram_map::ram_pointer_functions! {
+    gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
+    gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];
+    gRam8800_Default(o: i32) -> Ram8800_Default = [0x8800, o as isize];
+    Get_Boulder(o: i32) -> Enemy_Boulder = [0xf78, o as isize];
+    Get_CeresDoor(o: i32) -> Enemy_CeresDoor = [0xf78, o as isize];
+    Get_CeresRidley(o: i32) -> Enemy_CeresRidley = [0xf78, o as isize];
+    Get_CeresSteam(o: i32) -> Enemy_CeresSteam = [0xf78, o as isize];
+    Get_FakeKraid(o: i32) -> Enemy_FakeKraid = [0xf78, o as isize];
+    Get_FireGeyser(o: i32) -> Enemy_FireGeyser = [0xf78, o as isize];
+    Get_MotherBrain(o: i32) -> Enemy_MotherBrain = [0xf78, o as isize];
+    Get_NuclearWaffle(o: i32) -> Enemy_NuclearWaffle = [0xf78, o as isize];
+    Get_Ridley(o: i32) -> Enemy_Ridley = [0xf78, o as isize];
+    Get_RidleysExplosion(o: i32) -> Enemy_RidleysExplosion = [0xf78, o as isize];
+    Get_SpikeyPlatform(o: i32) -> Enemy_SpikeyPlatform = [0xf78, o as isize];
+    Get_Zebetites(o: i32) -> Enemy_Zebetites = [0xf78, o as isize];
 }
 static g_word_A686F1: [u16; 2] = [0x1000, 0x1800];
 static g_word_A68DBB: u16 = 5u16;

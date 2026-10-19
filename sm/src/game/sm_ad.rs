@@ -19,23 +19,10 @@ pub const addr_kTurnOffLightsForShitroidDeath: Consts_AD = 61999;
 pub use crate::types::{Enemy_MotherBrain, Func_CalcHdma, Ram8000_Default, SpawnHardcodedPlmArgs};
 const RomPtr_AD: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xad>;
 pub const fnMotherBrainBody_FakeDeath_Descent_0_Pause: i32 = 0xa9881d;
-#[inline]
-unsafe fn gEnemyData(o: i32, game: &mut Game) -> *mut EnemyData {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut EnemyData
-}
-#[inline]
-unsafe fn gRam8000_Default(o: i32, game: &mut Game) -> *mut Ram8000_Default {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0x8000)
-        .offset(o as isize) as *mut Ram8000_Default
-}
-#[inline]
-unsafe fn Get_MotherBrain(o: i32, game: &mut Game) -> *mut Enemy_MotherBrain {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_MotherBrain
+crate::ram_map::ram_pointer_functions! {
+    gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
+    gRam8000_Default(o: i32) -> Ram8000_Default = [0x8000, o as isize];
+    Get_MotherBrain(o: i32) -> Enemy_MotherBrain = [0xf78, o as isize];
 }
 pub fn nullsub_341(game: &mut Game) {}
 static funcs_BE56D: [Option<Func_V>; 16] = unsafe {

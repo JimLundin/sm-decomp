@@ -230,14 +230,9 @@ pub const kCoroutineNone: i32 = 0;
 const RomPtr_A9: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa9>;
 const RomPtr_B7: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xb7>;
 use crate::rtl::rom_ptr_with_bank as RomPtrWithBank;
-#[inline]
-unsafe fn gOamEnt(v: i32, game: &mut Game) -> *mut OamEnt {
-    (&raw mut game.g_ram as *mut u8).offset((0x370i32 + v) as isize) as *mut u8 as *mut OamEnt
-}
-#[inline]
-unsafe fn gVramWriteEntry(a: i32, game: &mut Game) -> *mut VramWriteEntry {
-    (&raw mut game.g_ram as *mut u8).offset((0xd0i32 + a) as isize) as *mut u8
-        as *mut VramWriteEntry
+crate::ram_map::ram_pointer_functions! {
+    gOamEnt(v: i32) -> OamEnt = [(0x370i32 + v) as isize];
+    gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0i32 + a) as isize];
 }
 pub const fnEproj_Init_0x8bde_SkreeDownLeft: i32 = 0x868b15;
 pub const fnMotherBrainsBody_UnpauseHook: i32 = 0xa98763;
@@ -529,80 +524,19 @@ pub const fnShitroid_GraduallyAccelerateTowards0x8: u32 = 11138143;
 pub const fnShitroid_GraduallyAccelerateTowards0x10: u32 = 11138150;
 pub const fnShitroid_HandleCutscenePalette: i32 = 0xa9f683;
 pub const fnShitroid_HandleCutscenePalette_LowHealth: i32 = 0xa9f68f;
-#[inline]
-unsafe fn gEnemyData(o: i32, game: &mut Game) -> *mut EnemyData {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut EnemyData
-}
-#[inline]
-unsafe fn Get_DeadEnemy(o: i32, game: &mut Game) -> *mut Enemy_DeadEnemy {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_DeadEnemy
-}
-#[inline]
-unsafe fn Get_DeadMonsters(o: i32, game: &mut Game) -> *mut Enemy_DeadMonsters {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_DeadMonsters
-}
-#[inline]
-unsafe fn Get_DeadSidehopper(o: i32, game: &mut Game) -> *mut Enemy_DeadSidehopper {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_DeadSidehopper
-}
-#[inline]
-unsafe fn Get_DeadTorizo(o: i32, game: &mut Game) -> *mut Enemy_DeadTorizo {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_DeadTorizo
-}
-#[inline]
-unsafe fn Get_MotherBomb(o: i32, game: &mut Game) -> *mut Enemy_MotherBomb {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_MotherBomb
-}
-#[inline]
-unsafe fn Get_MotherBrain(o: i32, game: &mut Game) -> *mut Enemy_MotherBrain {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_MotherBrain
-}
-#[inline]
-unsafe fn Get_MotherBrainBody(o: i32, game: &mut Game) -> *mut Enemy_MotherBrainBody {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_MotherBrainBody
-}
-#[inline]
-unsafe fn Get_MotherBrainsTubesFalling(
-    o: i32,
-    game: &mut Game,
-) -> *mut Enemy_MotherBrainsTubesFalling {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_MotherBrainsTubesFalling
-}
-#[inline]
-unsafe fn Get_ShitdroidInCutscene(o: i32, game: &mut Game) -> *mut Enemy_ShitroidInCutscene {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_ShitroidInCutscene
-}
-#[inline]
-unsafe fn Get_Shitroid(o: i32, game: &mut Game) -> *mut Enemy_Shitroid {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Shitroid
-}
-#[inline]
-unsafe fn Get_ShitroidInCutscene(o: i32, game: &mut Game) -> *mut Enemy_ShitroidInCutscene {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_ShitroidInCutscene
+crate::ram_map::ram_pointer_functions! {
+    gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
+    Get_DeadEnemy(o: i32) -> Enemy_DeadEnemy = [0xf78, o as isize];
+    Get_DeadMonsters(o: i32) -> Enemy_DeadMonsters = [0xf78, o as isize];
+    Get_DeadSidehopper(o: i32) -> Enemy_DeadSidehopper = [0xf78, o as isize];
+    Get_DeadTorizo(o: i32) -> Enemy_DeadTorizo = [0xf78, o as isize];
+    Get_MotherBomb(o: i32) -> Enemy_MotherBomb = [0xf78, o as isize];
+    Get_MotherBrain(o: i32) -> Enemy_MotherBrain = [0xf78, o as isize];
+    Get_MotherBrainBody(o: i32) -> Enemy_MotherBrainBody = [0xf78, o as isize];
+    Get_MotherBrainsTubesFalling(o: i32) -> Enemy_MotherBrainsTubesFalling = [0xf78, o as isize];
+    Get_ShitdroidInCutscene(o: i32) -> Enemy_ShitroidInCutscene = [0xf78, o as isize];
+    Get_Shitroid(o: i32) -> Enemy_Shitroid = [0xf78, o as isize];
+    Get_ShitroidInCutscene(o: i32) -> Enemy_ShitroidInCutscene = [0xf78, o as isize];
 }
 static g_word_A98B5D: [u16; 5] = [0x10, 0x10, 8, 8, 0x10];
 static g_word_A98B67: [u16; 5] = [0x20, 0x20, 0x18, 0x18, 0x20];

@@ -580,10 +580,8 @@ enemy_layout! {
 }
 
 const RomPtr_A2: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa2>;
-#[inline]
-unsafe fn gVramWriteEntry(a: i32, game: &mut Game) -> *mut VramWriteEntry {
-    (&raw mut game.g_ram as *mut u8).offset((0xd0i32 + a) as isize) as *mut u8
-        as *mut VramWriteEntry
+crate::ram_map::ram_pointer_functions! {
+    gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0i32 + a) as isize];
 }
 pub const fnSamus_FrameHandlerAlfa_Func11: i32 = 0x90e695;
 pub const fnSamus_FrameHandlerBeta_Func17: i32 = 0x90e725;
@@ -705,188 +703,36 @@ pub const fnHorizontalShootableShutter_Func_9: i32 = 0xa2f2e4;
 pub const fnHorizontalShootableShutter_Func_12: i32 = 0xa2f38c;
 pub const fnHorizontalShootableShutter_Func_13: i32 = 0xa2f3b0;
 pub const fnHorizontalShootableShutter_Func_14: i32 = 0xa2f3d4;
-#[inline]
-unsafe fn gEnemyData(o: i32, game: &mut Game) -> *mut EnemyData {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut EnemyData
-}
-#[inline]
-unsafe fn gEnemySpawnData(o: i32, game: &mut Game) -> *mut EnemySpawnData {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0x7000)
-        .offset(o as isize) as *mut EnemySpawnData
-}
-#[inline]
-unsafe fn gRam8000_Default(o: i32, game: &mut Game) -> *mut Ram8000_Default {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0x8000)
-        .offset(o as isize) as *mut Ram8000_Default
-}
-#[inline]
-unsafe fn Get_Flies(o: i32, game: &mut Game) -> *mut Enemy_Flies {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Flies
-}
-#[inline]
-unsafe fn Get_Gripper(o: i32, game: &mut Game) -> *mut Enemy_Gripper {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Gripper
-}
-#[inline]
-unsafe fn Get_GunshipBottom(o: i32, game: &mut Game) -> *mut Enemy_GunshipBottom {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_GunshipBottom
-}
-#[inline]
-unsafe fn Get_GunshipTop(o: i32, game: &mut Game) -> *mut Enemy_GunshipTop {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_GunshipTop
-}
-#[inline]
-unsafe fn Get_HirisingSlowfalling(o: i32, game: &mut Game) -> *mut Enemy_HirisingSlowfalling {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_HirisingSlowfalling
-}
-#[inline]
-unsafe fn Get_HorizontalShootableShutter(
-    o: i32,
-    game: &mut Game,
-) -> *mut Enemy_HorizontalShootableShutter {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_HorizontalShootableShutter
-}
-#[inline]
-unsafe fn Get_JetPowerRipper(o: i32, game: &mut Game) -> *mut Enemy_JetPowerRipper {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_JetPowerRipper
-}
-#[inline]
-unsafe fn Get_LavaSeahorse(o: i32, game: &mut Game) -> *mut Enemy_LavaSeahorse {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_LavaSeahorse
-}
-#[inline]
-unsafe fn Get_LavaquakeRocks(o: i32, game: &mut Game) -> *mut Enemy_LavaquakeRocks {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_LavaquakeRocks
-}
-#[inline]
-unsafe fn Get_LowerNorfairRio(o: i32, game: &mut Game) -> *mut Enemy_LowerNorfairRio {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_LowerNorfairRio
-}
-#[inline]
-unsafe fn Get_MaridiaBeybladeTurtle(o: i32, game: &mut Game) -> *mut Enemy_MaridiaBeybladeTurtle {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_MaridiaBeybladeTurtle
-}
-#[inline]
-unsafe fn Get_MaridiaLargeSnail(o: i32, game: &mut Game) -> *mut Enemy_MaridiaLargeSnail {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_MaridiaLargeSnail
-}
-#[inline]
-unsafe fn Get_MaridiaSpikeyShell(o: i32, game: &mut Game) -> *mut Enemy_MaridiaSpikeyShell {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_MaridiaSpikeyShell
-}
-#[inline]
-unsafe fn Get_MaridiaTurtle(o: i32, game: &mut Game) -> *mut Enemy_MaridiaTurtle {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_MaridiaTurtle
-}
-#[inline]
-unsafe fn Get_MiniMaridiaBeybladeTurtle(
-    o: i32,
-    game: &mut Game,
-) -> *mut Enemy_MiniMaridiaBeybladeTurtle {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_MiniMaridiaBeybladeTurtle
-}
-#[inline]
-unsafe fn Get_MiniMaridiaTurtle(o: i32, game: &mut Game) -> *mut Enemy_MiniMaridiaTurtle {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_MiniMaridiaTurtle
-}
-#[inline]
-unsafe fn Get_NorfairErraticFireball(o: i32, game: &mut Game) -> *mut Enemy_NorfairErraticFireball {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_NorfairErraticFireball
-}
-#[inline]
-unsafe fn Get_NorfairLavajumpingEnemy(
-    o: i32,
-    game: &mut Game,
-) -> *mut Enemy_NorfairLavajumpingEnemy {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_NorfairLavajumpingEnemy
-}
-#[inline]
-unsafe fn Get_NorfairRio(o: i32, game: &mut Game) -> *mut Enemy_NorfairRio {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_NorfairRio
-}
-#[inline]
-unsafe fn Get_Rinka(o: i32, game: &mut Game) -> *mut Enemy_Rinka {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Rinka
-}
-#[inline]
-unsafe fn Get_Rio(o: i32, game: &mut Game) -> *mut Enemy_Rio {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Rio
-}
-#[inline]
-unsafe fn Get_Ripper(o: i32, game: &mut Game) -> *mut Enemy_Ripper {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Ripper
-}
-#[inline]
-unsafe fn Get_RisingFallingPlatform(o: i32, game: &mut Game) -> *mut Enemy_RisingFallingPlatform {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_RisingFallingPlatform
-}
-#[inline]
-unsafe fn Get_SpikeShootingPlant(o: i32, game: &mut Game) -> *mut Enemy_SpikeShootingPlant {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_SpikeShootingPlant
-}
-#[inline]
-unsafe fn Get_ThinHoppingBlobs(o: i32, game: &mut Game) -> *mut Enemy_ThinHoppingBlobs {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_ThinHoppingBlobs
-}
-#[inline]
-unsafe fn Get_TimedShutter(o: i32, game: &mut Game) -> *mut Enemy_TimedShutter {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_TimedShutter
+crate::ram_map::ram_pointer_functions! {
+    gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
+    gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];
+    gRam8000_Default(o: i32) -> Ram8000_Default = [0x8000, o as isize];
+    Get_Flies(o: i32) -> Enemy_Flies = [0xf78, o as isize];
+    Get_Gripper(o: i32) -> Enemy_Gripper = [0xf78, o as isize];
+    Get_GunshipBottom(o: i32) -> Enemy_GunshipBottom = [0xf78, o as isize];
+    Get_GunshipTop(o: i32) -> Enemy_GunshipTop = [0xf78, o as isize];
+    Get_HirisingSlowfalling(o: i32) -> Enemy_HirisingSlowfalling = [0xf78, o as isize];
+    Get_HorizontalShootableShutter(o: i32) -> Enemy_HorizontalShootableShutter = [0xf78, o as isize];
+    Get_JetPowerRipper(o: i32) -> Enemy_JetPowerRipper = [0xf78, o as isize];
+    Get_LavaSeahorse(o: i32) -> Enemy_LavaSeahorse = [0xf78, o as isize];
+    Get_LavaquakeRocks(o: i32) -> Enemy_LavaquakeRocks = [0xf78, o as isize];
+    Get_LowerNorfairRio(o: i32) -> Enemy_LowerNorfairRio = [0xf78, o as isize];
+    Get_MaridiaBeybladeTurtle(o: i32) -> Enemy_MaridiaBeybladeTurtle = [0xf78, o as isize];
+    Get_MaridiaLargeSnail(o: i32) -> Enemy_MaridiaLargeSnail = [0xf78, o as isize];
+    Get_MaridiaSpikeyShell(o: i32) -> Enemy_MaridiaSpikeyShell = [0xf78, o as isize];
+    Get_MaridiaTurtle(o: i32) -> Enemy_MaridiaTurtle = [0xf78, o as isize];
+    Get_MiniMaridiaBeybladeTurtle(o: i32) -> Enemy_MiniMaridiaBeybladeTurtle = [0xf78, o as isize];
+    Get_MiniMaridiaTurtle(o: i32) -> Enemy_MiniMaridiaTurtle = [0xf78, o as isize];
+    Get_NorfairErraticFireball(o: i32) -> Enemy_NorfairErraticFireball = [0xf78, o as isize];
+    Get_NorfairLavajumpingEnemy(o: i32) -> Enemy_NorfairLavajumpingEnemy = [0xf78, o as isize];
+    Get_NorfairRio(o: i32) -> Enemy_NorfairRio = [0xf78, o as isize];
+    Get_Rinka(o: i32) -> Enemy_Rinka = [0xf78, o as isize];
+    Get_Rio(o: i32) -> Enemy_Rio = [0xf78, o as isize];
+    Get_Ripper(o: i32) -> Enemy_Ripper = [0xf78, o as isize];
+    Get_RisingFallingPlatform(o: i32) -> Enemy_RisingFallingPlatform = [0xf78, o as isize];
+    Get_SpikeShootingPlant(o: i32) -> Enemy_SpikeShootingPlant = [0xf78, o as isize];
+    Get_ThinHoppingBlobs(o: i32) -> Enemy_ThinHoppingBlobs = [0xf78, o as isize];
+    Get_TimedShutter(o: i32) -> Enemy_TimedShutter = [0xf78, o as isize];
 }
 static g_word_A28D50: u16 = 0x30u16;
 static g_word_A28D52: u16 = 1u16;

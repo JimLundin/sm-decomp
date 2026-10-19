@@ -68,10 +68,8 @@ const RomPtr_88: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_p
 unsafe fn RomBankBase(bank: u8, game: &mut Game) -> *const u8 {
     RomPtr((((bank as i32) << 16i32) + 0x8000i32) as u32, game).offset(-(0x8000i32 as isize))
 }
-#[inline]
-unsafe fn gVramWriteEntry(a: i32, game: &mut Game) -> *mut VramWriteEntry {
-    (&raw mut game.g_ram as *mut u8).offset((0xd0i32 + a) as isize) as *mut u8
-        as *mut VramWriteEntry
+crate::ram_map::ram_pointer_functions! {
+    gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0i32 + a) as isize];
 }
 pub const fnnullsub_56: u32 = 8491739;
 pub const fnDoorTransitionFunction_FadeOutScreen: i32 = 0x82e2db;

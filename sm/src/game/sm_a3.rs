@@ -485,125 +485,26 @@ pub const fnReflec_Func_1: i32 = 0xa3db0c;
 pub const fnnullsub_304: i32 = 0xa3e6c1;
 pub const fnFireZoomer_Func_1: i32 = 0xa3e6c8;
 pub const fnFireZoomer_Func_2: i32 = 0xa3e785;
-#[inline]
-unsafe fn gEnemyData(o: i32, game: &mut Game) -> *mut EnemyData {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut EnemyData
-}
-#[inline]
-unsafe fn gEnemySpawnData(o: i32, game: &mut Game) -> *mut EnemySpawnData {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0x7000)
-        .offset(o as isize) as *mut EnemySpawnData
-}
-#[inline]
-unsafe fn Get_Bang(o: i32, game: &mut Game) -> *mut Enemy_Bang {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Bang
-}
-#[inline]
-unsafe fn Get_Elevator(o: i32, game: &mut Game) -> *mut Enemy_Elevator {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Elevator
-}
-#[inline]
-unsafe fn Get_FireFlea(o: i32, game: &mut Game) -> *mut Enemy_FireFlea {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_FireFlea
-}
-#[inline]
-unsafe fn Get_FireZoomer(o: i32, game: &mut Game) -> *mut Enemy_FireZoomer {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_FireZoomer
-}
-#[inline]
-unsafe fn Get_MaridiaFish(o: i32, game: &mut Game) -> *mut Enemy_MaridiaFish {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_MaridiaFish
-}
-#[inline]
-unsafe fn Get_MaridiaRefillCandy(o: i32, game: &mut Game) -> *mut Enemy_MaridiaRefillCandy {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_MaridiaRefillCandy
-}
-#[inline]
-unsafe fn Get_MaridiaSnail(o: i32, game: &mut Game) -> *mut Enemy_MaridiaSnail {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_MaridiaSnail
-}
-#[inline]
-unsafe fn Get_Metalee(o: i32, game: &mut Game) -> *mut Enemy_Metalee {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Metalee
-}
-#[inline]
-unsafe fn Get_Metroid(o: i32, game: &mut Game) -> *mut Enemy_Metroid {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Metroid
-}
-#[inline]
-unsafe fn Get_Mochtroid(o: i32, game: &mut Game) -> *mut Enemy_Mochtroid {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Mochtroid
-}
-#[inline]
-unsafe fn Get_PlatformThatFallsWithSamus(
-    o: i32,
-    game: &mut Game,
-) -> *mut Enemy_PlatformThatFallsWithSamus {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_PlatformThatFallsWithSamus
-}
-#[inline]
-unsafe fn Get_Reflec(o: i32, game: &mut Game) -> *mut Enemy_Reflec {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Reflec
-}
-#[inline]
-unsafe fn Get_Roach(o: i32, game: &mut Game) -> *mut Enemy_Roach {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Roach
-}
-#[inline]
-unsafe fn Get_Sidehopper(o: i32, game: &mut Game) -> *mut Enemy_Sidehopper {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Sidehopper
-}
-#[inline]
-unsafe fn Get_Skree(o: i32, game: &mut Game) -> *mut Enemy_Skree {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Skree
-}
-#[inline]
-unsafe fn Get_StoneZoomer(o: i32, game: &mut Game) -> *mut Enemy_StoneZoomer {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_StoneZoomer
-}
-#[inline]
-unsafe fn Get_WreckedShipOrangeZoomer(
-    o: i32,
-    game: &mut Game,
-) -> *mut Enemy_WreckedShipOrangeZoomer {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_WreckedShipOrangeZoomer
+crate::ram_map::ram_pointer_functions! {
+    gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
+    gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];
+    Get_Bang(o: i32) -> Enemy_Bang = [0xf78, o as isize];
+    Get_Elevator(o: i32) -> Enemy_Elevator = [0xf78, o as isize];
+    Get_FireFlea(o: i32) -> Enemy_FireFlea = [0xf78, o as isize];
+    Get_FireZoomer(o: i32) -> Enemy_FireZoomer = [0xf78, o as isize];
+    Get_MaridiaFish(o: i32) -> Enemy_MaridiaFish = [0xf78, o as isize];
+    Get_MaridiaRefillCandy(o: i32) -> Enemy_MaridiaRefillCandy = [0xf78, o as isize];
+    Get_MaridiaSnail(o: i32) -> Enemy_MaridiaSnail = [0xf78, o as isize];
+    Get_Metalee(o: i32) -> Enemy_Metalee = [0xf78, o as isize];
+    Get_Metroid(o: i32) -> Enemy_Metroid = [0xf78, o as isize];
+    Get_Mochtroid(o: i32) -> Enemy_Mochtroid = [0xf78, o as isize];
+    Get_PlatformThatFallsWithSamus(o: i32) -> Enemy_PlatformThatFallsWithSamus = [0xf78, o as isize];
+    Get_Reflec(o: i32) -> Enemy_Reflec = [0xf78, o as isize];
+    Get_Roach(o: i32) -> Enemy_Roach = [0xf78, o as isize];
+    Get_Sidehopper(o: i32) -> Enemy_Sidehopper = [0xf78, o as isize];
+    Get_Skree(o: i32) -> Enemy_Skree = [0xf78, o as isize];
+    Get_StoneZoomer(o: i32) -> Enemy_StoneZoomer = [0xf78, o as isize];
+    Get_WreckedShipOrangeZoomer(o: i32) -> Enemy_WreckedShipOrangeZoomer = [0xf78, o as isize];
 }
 static g_word_A3A76D: [i16; 4] = [2, 0, -2, 0];
 static g_word_A3A775: [i16; 4] = [0, -2, 0, 2];

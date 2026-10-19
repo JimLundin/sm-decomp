@@ -179,10 +179,8 @@ enemy_layout! {
 
 pub const kCoroutineNone: i32 = 0;
 const RomPtr_A7: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa7>;
-#[inline]
-unsafe fn gVramWriteEntry(a: i32, game: &mut Game) -> *mut VramWriteEntry {
-    (&raw mut game.g_ram as *mut u8).offset((0xd0i32 + a) as isize) as *mut u8
-        as *mut VramWriteEntry
+crate::ram_map::ram_pointer_functions! {
+    gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0i32 + a) as isize];
 }
 #[inline]
 unsafe fn get_EnemyDef_A2(a: u16, game: &mut Game) -> *mut EnemyDef {
@@ -320,35 +318,12 @@ pub const fnDachora_Func_7: i32 = 0xa7f78f;
 pub const fnDachora_Func_8: i32 = 0xa7f806;
 pub const fnDachora_Func_11: i32 = 0xa7f935;
 pub const fnDachora_Func_12: i32 = 0xa7f98c;
-#[inline]
-unsafe fn gEnemyData(o: i32, game: &mut Game) -> *mut EnemyData {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut EnemyData
-}
-#[inline]
-unsafe fn Get_Dachora(o: i32, game: &mut Game) -> *mut Enemy_Dachora {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Dachora
-}
-#[inline]
-unsafe fn Get_Etecoon(o: i32, game: &mut Game) -> *mut Enemy_Etecoon {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Etecoon
-}
-#[inline]
-unsafe fn Get_Kraid(o: i32, game: &mut Game) -> *mut Enemy_Kraid {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Kraid
-}
-#[inline]
-unsafe fn Get_Phantoon(o: i32, game: &mut Game) -> *mut Enemy_Phantoon {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut Enemy_Phantoon
+crate::ram_map::ram_pointer_functions! {
+    gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
+    Get_Dachora(o: i32) -> Enemy_Dachora = [0xf78, o as isize];
+    Get_Etecoon(o: i32) -> Enemy_Etecoon = [0xf78, o as isize];
+    Get_Kraid(o: i32) -> Enemy_Kraid = [0xf78, o as isize];
+    Get_Phantoon(o: i32) -> Enemy_Phantoon = [0xf78, o as isize];
 }
 static g_word_A7A916: u16 = 0x120u16;
 static g_word_A7A918: u16 = 0xa0u16;

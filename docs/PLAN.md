@@ -94,6 +94,27 @@ all 76 source/DLL/fixture pins remain fixed. Independent descriptor/source
 review has no findings. Continue substantial repeated families; the broader
 readability and boot-to-credits goals remain open.
 
+Typed RAM getter declarations (2026-10-20): one macro replaces 147 repeated
+private inline definitions in 33 groups across 25 callers. Their signatures,
+123 successive base/index pairs and 24 single byte offsets remain exact;
+24 identity byte-pointer casts disappear. No caller or argument order changes.
+The complete previous ram_map.rs, including all metadata, remains an exact prefix.
+
+Net Rust lines -642, to 143563. Written-source counters fall by 146 unsafe
+functions, 147 raw-offset lines and 316 casts through macro consolidation.
+All 147 generated functions and pointer constructions remain; runtime unsafe
+operations are unchanged. The raw counter omits the qualified-u8 macro body.
+All 15845 actual i32 casts remain. Broader pointer/alias safety stays open.
+
+Actual compiler expansion reconstructs all signatures/bodies modulo identity
+casts, qualification and six optional parameter commas. Independent source,
+full-family AST inventory and expansion review pass. Normal release
+(23.32s), formatting/check, progress and full any% 129712/0
+(109.28s), native exit 0, pass on committed ROM/negative source.
+All 73 committed inputs match the frozen candidate; all 78 replay pins are
+stable. Continue substantial shared implementations; the broader readability
+and boot-to-credits goals remain incomplete.
+
 Negative integer constants (2026-10-20): ast-grep simplifies the complete
 eligible family of 1318 expressions across 38 files. All 366 in-range casts
 from negative i32 constants become identically valued i16/i8 literals; 952

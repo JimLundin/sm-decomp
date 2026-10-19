@@ -1572,17 +1572,9 @@ pub const fnEscapeDachora_Instr_1: u32 = 11791049;
 pub const fnEscapeDachora_Instr_4: u32 = 11791063;
 pub const fnEscapeDachora_Init: u32 = 11791077;
 pub const fnnullsub_54: u32 = 11791130;
-#[inline]
-unsafe fn gEnemyData(o: i32, game: &mut Game) -> *mut EnemyData {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0xf78)
-        .offset(o as isize) as *mut EnemyData
-}
-#[inline]
-unsafe fn gEnemySpawnData(o: i32, game: &mut Game) -> *mut EnemySpawnData {
-    (&raw mut game.g_ram as *mut u8)
-        .offset(0x7000)
-        .offset(o as isize) as *mut EnemySpawnData
+crate::ram_map::ram_pointer_functions! {
+    gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
+    gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];
 }
 pub unsafe fn Enemy_GrappleReact_NoInteract_A0(game: &mut Game) {
     SwitchEnemyAiToMainAi(game);
