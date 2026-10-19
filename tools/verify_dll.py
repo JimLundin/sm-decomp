@@ -13,8 +13,10 @@ import sys
 def cargo_library(root, rustc):
     env = dict(os.environ, RUSTC=rustc)
     cargo = shutil.which("cargo") or str(Path(rustc).with_name("cargo.exe"))
+    # Cargo fingerprints can reuse stale package artifacts across checkouts.
     result = subprocess.run(
-        [cargo, "build", "--release", "--lib", "--locked", "--message-format=json"],
+        [cargo, "build", "--release", "--lib", "--locked",
+         "--target-dir", str(root / "target"), "--message-format=json"],
         cwd=root, env=env, text=True, encoding="utf-8", stdout=subprocess.PIPE,
     )
     library = None

@@ -99,6 +99,36 @@ Use three levels of validation, with explicit limits on what each proves:
    Full boot checks remain the regression check for history and interactions;
    they do not replace changed-code execution evidence.
 
+Cargo cache isolation repair (2026-10-19): two checkouts with identical
+package identity and older source timestamps can share a target directory
+and silently reuse the wrong library as Fresh. A minimal two-checkout
+control returned the first checkout's value from both builds; refreshing
+only the second frontend timestamp then caused a missing-export error.
+This reproduces the workspace's missing verify_probe build failure.
+
+The Python verifier now explicitly selects its checkout's target directory
+for Cargo, overriding inherited CARGO_TARGET_DIR. Normal builds still reuse
+the local release cache. The same two-checkout test returns distinct correct
+values on first and repeated builds; the unrelated inherited cache remains
+untouched. The pending Cargo-built host passes that check too. Eight old
+temporary builders were corrected to stop targeting the main workspace.
+
+Frozen b57b966e plus only this host fix passes any% 129712/0 (270.45s)
+and pre-Kraid refill 115663/0 (270.55s), native exits 0. The latter includes
+the exact Hi-Jump prefix. All 70 source/config/host files match that commit
+plus the patch after newline normalization, and source, DLL, ROM and input
+hashes remain stable. Pre-Kraid ends in $A641 with health 299/299, missiles
+15/15 and Supers 3/5; credits remain unvisited. Any% diagnostics match the
+previous reviewed run. Constructed cache checks supplement these full boot
+replays; full gameplay/credits and hardware coverage remain unfinished.
+
+A cold Cargo build is still denied executing Windows dependency build
+scripts. This frozen build reuses only registry dependency artifacts and
+compiles sm afresh in its own target directory (40.30s including DLL link).
+No workspace-package artifact is copied or shared. Formatting/check, normal
+workspace Cargo release (37.89s) and progress pass. This change adds no Rust
+or gameplay residue; no temporary helper, asset or checkpoint is committed.
+
 The existing verifier now supports `--checkpoint-out`, `--checkpoint-in`
 and repeatable `--require-hit` options. A required explicit function/branch
 probe with zero calls fails the run; labels do not infer execution from room
