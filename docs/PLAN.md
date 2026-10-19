@@ -11529,6 +11529,19 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Low-health callback QC (2026-10-19): Samus_LowHealthCheck_ uses the
+byte-backed samus_health_warning latch and a wrapping word subtraction.
+Activation still queues sound2 before setting the latch; deactivation clears
+it before queuing sound1. Independent source review confirms the complete
+word domain, callback order and RAM offsets. The implementing agent's
+495,616 actual old/current complete-RAM queue comparisons pass. Any%
+129,712/0 (199.54s), native exit0; Waver/tank58,857/71, native exits1 before
+and after. Independent audit confirms all71 failing frame numbers identical.
+Actual branch counts[31040,1,3,10394] include both transitions; warning clears
+at frame41371, room96BA, health44. Cargo format and release pass. Raw offsets
+-5, cast lines-8, Rust lines-4; unsafe boundary remains at the sound queue.
+Probe builds isolate peer CPU/PPU work; complete game coverage remains open.
+
 Health restoration now uses safe named byte-backed health/reserve accessors
 and word-wrapping arithmetic. Initial health store, signed wrapped health/
 reserve gates, reserve store, conditional mode update and final maximum-

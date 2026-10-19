@@ -16320,27 +16320,14 @@ pub unsafe fn Samus_PauseCheck(game: &mut Game) {
     }
 }
 pub unsafe fn Samus_LowHealthCheck_(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9c2 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        - 31 as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        != 0
-    {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xa6a as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            == 0
-        {
-            QueueSfx3_Max6(2 as uint16, game);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa6a as ::core::ffi::c_int as isize)
-                as *mut uint16) = 1 as uint16;
+    if game.samus_health().wrapping_sub(31) & 0x8000 != 0 {
+        if game.samus_health_warning() == 0 {
+            QueueSfx3_Max6(2, game);
+            game.set_samus_health_warning(1);
         }
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0xa6a as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa6a as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        QueueSfx3_Max6(1 as uint16, game);
+    } else if game.samus_health_warning() != 0 {
+        game.set_samus_health_warning(0);
+        QueueSfx3_Max6(1, game);
     }
 }
 pub unsafe fn Samus_LowHealthCheck_0(game: &mut Game) {

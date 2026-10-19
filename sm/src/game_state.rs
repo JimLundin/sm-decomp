@@ -97,6 +97,15 @@ impl Game {
         u16::from_le_bytes([self.g_ram[0x9c2], self.g_ram[0x9c3]])
     }
 
+    /// Low-health sound latch ($7E:0A6A in ram_map).
+    pub fn samus_health_warning(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xa6a], self.g_ram[0xa6b]])
+    }
+
+    pub fn set_samus_health_warning(&mut self, value: u16) {
+        self.g_ram[0xa6a..0xa6c].copy_from_slice(&value.to_le_bytes());
+    }
+
     /// Missile fields in ram_map at $7E:09C6/09C8/09D8.
     pub fn samus_missiles(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0x9c6], self.g_ram[0x9c7]])
