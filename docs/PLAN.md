@@ -13938,6 +13938,24 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Room-state header cleanup (2026-10-19): LoadStateHeader uses named
+byte-backed setters for all eleven stores and a safe fixed-table lookup.
+Four pointers remain exactly three bytes; music data precedes track, and the
+scroll word retains both bytes. Dynamic ROM-pointer diagnostics are preserved.
+Frozen f846b9f0 plus this change passes any% 129712/0 (290.15s) and Waver
+58109/0 (145.67s), native exits 0. Observed prefix 20000/0 and Waver 58109/0
+match full RAM/g_fail, lookup arguments/results and all eleven intermediate
+stores on 38 actual calls spanning 27 room-state headers. All 256 constructed
+graphics-byte cases pass with filled destination/gap bytes; 109 retain the
+old diagnostic flag. ROM and entry state are restored before continuation.
+A fourth-byte overwrite is caught at 7C3 on frame 8256 before a later store
+can hide it. Independent source/footprint/observer reviews, exact stripping,
+source identity and clean/observed Waver non-timing diagnostics pass.
+Formatting, release build and progress pass. Own raw offsets -12 and cast
+lines -16; Rust lines +37 supply eleven named setters and their three-byte
+encoder. Other counters unchanged. Next: complete LoadDoorHeader cleanup;
+broader gameplay/credits coverage and ownership remain unfinished.
+
 Samus pose radius/alignment (2026-10-19): make Samus_SetRadius and
 Samus_AlignBottomWithPrevPose safe functions. Live ROM byte reads retain
 eight-byte pose records and byte-6 radii, with full linear pose offsets.

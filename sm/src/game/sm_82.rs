@@ -9182,43 +9182,22 @@ pub unsafe fn LoadRoomHeader(game: &mut Game) {
         as *mut uint16) = (2 as ::core::ffi::c_int * prod as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn LoadStateHeader(game: &mut Game) {
-    let mut RD: *mut RoomDefRoomstate = get_RoomDefRoomstate(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7bb as ::core::ffi::c_int as isize)
-            as *mut uint16),
-        game,
-    );
-    let mut TS_0: *mut TileSet = get_TileSet(
-        *(game.g_rom.offset(
-            (((0x8fe7a7 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x8fe7a7 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
-            .offset((*RD).graphics_set as isize),
-        game,
-    );
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7c0 as ::core::ffi::c_int as isize)
-        as *mut LongPtr) = (*TS_0).tile_table_ptr;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7c3 as ::core::ffi::c_int as isize)
-        as *mut LongPtr) = (*TS_0).tiles_ptr;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7c6 as ::core::ffi::c_int as isize)
-        as *mut LongPtr) = (*TS_0).palette_ptr;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7bd as ::core::ffi::c_int as isize)
-        as *mut LongPtr) = (*RD).compressed_room_map_ptr;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7cb as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*RD).music_track as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7c9 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*RD).music_control as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7cd as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*RD).room_layer3_fx_ptr as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7cf as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*RD).enemy_population_ptr_ as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7d1 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*RD).enemy_tilesets_ptr as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x91b as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*RD).vertical_screen_nudge_limit;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7df as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*RD).main_code_ptr as uint16;
+    let room_state = get_RoomDefRoomstate(game.roomdefroomstate_ptr(), game);
+    let graphics_set = usize::from((*room_state).graphics_set);
+    let tileset_ptr = game.read_rom_word(0x8fe7a7, 2 * graphics_set);
+    let tileset = get_TileSet(tileset_ptr, game);
+    game.set_tileset_tile_table_pointer((*tileset).tile_table_ptr);
+    game.set_tileset_tiles_pointer((*tileset).tiles_ptr);
+    game.set_tileset_compr_palette_ptr((*tileset).palette_ptr);
+    game.set_room_compr_level_data_ptr((*room_state).compressed_room_map_ptr);
+    game.set_room_music_data_index(u16::from((*room_state).music_track));
+    game.set_room_music_track_index(u16::from((*room_state).music_control));
+    game.set_room_layer3_asm_ptr((*room_state).room_layer3_fx_ptr);
+    game.set_room_enemy_population_ptr((*room_state).enemy_population_ptr_);
+    game.set_room_enemy_tilesets_ptr((*room_state).enemy_tilesets_ptr);
+    let [scroll_x, scroll_y] = (*room_state).vertical_screen_nudge_limit.to_le_bytes();
+    game.set_layer2_scroll_x_and_y(scroll_x, scroll_y);
+    game.set_room_main_code_ptr((*room_state).main_code_ptr);
 }
 pub unsafe fn WaitUntilEndOfVblankAndEnableIrq(game: &mut Game) {
     if *(&raw mut game.g_ram as *mut uint8).offset(0x84 as ::core::ffi::c_int as isize)

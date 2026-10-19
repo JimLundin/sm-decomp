@@ -315,14 +315,72 @@ impl Game {
         u16::from_le_bytes([self.g_ram[0x7bb], self.g_ram[0x7bc]])
     }
 
+    fn long_pointer_bytes(pointer: LongPtr) -> [u8; 3] {
+        let [low, high] = pointer.addr.to_le_bytes();
+        [low, high, pointer.bank]
+    }
+
+    /// room_compr_level_data_ptr ($7E:07BD in ram_map).
+    pub fn set_room_compr_level_data_ptr(&mut self, value: LongPtr) {
+        self.g_ram[0x7bd..0x7c0].copy_from_slice(&Self::long_pointer_bytes(value));
+    }
+
+    /// tileset_tile_table_pointer ($7E:07C0 in ram_map).
+    pub fn set_tileset_tile_table_pointer(&mut self, value: LongPtr) {
+        self.g_ram[0x7c0..0x7c3].copy_from_slice(&Self::long_pointer_bytes(value));
+    }
+
     /// Compressed tileset graphics address ($7E:07C3 in ram_map).
     pub fn tileset_tiles_pointer(&self) -> u32 {
         u32::from_le_bytes([self.g_ram[0x7c3], self.g_ram[0x7c4], self.g_ram[0x7c5], 0])
     }
 
+    pub fn set_tileset_tiles_pointer(&mut self, value: LongPtr) {
+        self.g_ram[0x7c3..0x7c6].copy_from_slice(&Self::long_pointer_bytes(value));
+    }
+
     /// Compressed tileset palette address ($7E:07C6 in ram_map).
     pub fn tileset_compr_palette_ptr(&self) -> u32 {
         u32::from_le_bytes([self.g_ram[0x7c6], self.g_ram[0x7c7], self.g_ram[0x7c8], 0])
+    }
+
+    pub fn set_tileset_compr_palette_ptr(&mut self, value: LongPtr) {
+        self.g_ram[0x7c6..0x7c9].copy_from_slice(&Self::long_pointer_bytes(value));
+    }
+
+    /// room_music_track_index ($7E:07C9 in ram_map).
+    pub fn set_room_music_track_index(&mut self, value: u16) {
+        self.g_ram[0x7c9..0x7cb].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// room_music_data_index ($7E:07CB in ram_map).
+    pub fn set_room_music_data_index(&mut self, value: u16) {
+        self.g_ram[0x7cb..0x7cd].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// room_layer3_asm_ptr ($7E:07CD in ram_map).
+    pub fn set_room_layer3_asm_ptr(&mut self, value: u16) {
+        self.g_ram[0x7cd..0x7cf].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// room_enemy_population_ptr ($7E:07CF in ram_map).
+    pub fn set_room_enemy_population_ptr(&mut self, value: u16) {
+        self.g_ram[0x7cf..0x7d1].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// room_enemy_tilesets_ptr ($7E:07D1 in ram_map).
+    pub fn set_room_enemy_tilesets_ptr(&mut self, value: u16) {
+        self.g_ram[0x7d1..0x7d3].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// room_main_code_ptr ($7E:07DF in ram_map).
+    pub fn set_room_main_code_ptr(&mut self, value: u16) {
+        self.g_ram[0x7df..0x7e1].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// layer2_scroll_x/y ($7E:091B/091C in ram_map).
+    pub fn set_layer2_scroll_x_and_y(&mut self, x: u8, y: u8) {
+        self.g_ram[0x91b..0x91d].copy_from_slice(&[x, y]);
     }
 
     /// reg_BG1VOFS ($7E:00B3 in ram_map).
