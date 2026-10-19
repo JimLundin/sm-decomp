@@ -1,4 +1,5 @@
 use crate::host::Die;
+use crate::sdl_constants;
 pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data};
 use crate::util::{
     NextDelim, NextLineStripComments, NextPossiblyQuotedString, ReadWholeFile,
@@ -24,307 +25,55 @@ pub use crate::types::{
     _IO_lock_t, __off64_t, __off_t, size_t, SDL_Keycode, Sint32, _IO_FILE, FILE,
 };
 pub type C2RustUnnamed = u32;
-pub const SDLK_ENDCALL: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_ENDCALL as C2RustUnnamed;
-pub const SDLK_CALL: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_CALL as C2RustUnnamed;
-pub const SDLK_SOFTRIGHT: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_SOFTRIGHT as C2RustUnnamed;
-pub const SDLK_SOFTLEFT: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_SOFTLEFT as C2RustUnnamed;
-pub const SDLK_AUDIOFASTFORWARD: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_AUDIOFASTFORWARD as C2RustUnnamed;
-pub const SDLK_AUDIOREWIND: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_AUDIOREWIND as C2RustUnnamed;
-pub const SDLK_APP2: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_APP2 as C2RustUnnamed;
-pub const SDLK_APP1: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_APP1 as C2RustUnnamed;
-pub const SDLK_SLEEP: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_SLEEP as C2RustUnnamed;
-pub const SDLK_EJECT: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_EJECT as C2RustUnnamed;
-pub const SDLK_KBDILLUMUP: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KBDILLUMUP as C2RustUnnamed;
-pub const SDLK_KBDILLUMDOWN: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_KBDILLUMDOWN as C2RustUnnamed;
-pub const SDLK_KBDILLUMTOGGLE: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_KBDILLUMTOGGLE as C2RustUnnamed;
-pub const SDLK_DISPLAYSWITCH: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_DISPLAYSWITCH as C2RustUnnamed;
-pub const SDLK_BRIGHTNESSUP: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_BRIGHTNESSUP as C2RustUnnamed;
-pub const SDLK_BRIGHTNESSDOWN: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_BRIGHTNESSDOWN as C2RustUnnamed;
-pub const SDLK_AC_BOOKMARKS: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_AC_BOOKMARKS as C2RustUnnamed;
-pub const SDLK_AC_REFRESH: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_AC_REFRESH as C2RustUnnamed;
-pub const SDLK_AC_STOP: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_AC_STOP as C2RustUnnamed;
-pub const SDLK_AC_FORWARD: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_AC_FORWARD as C2RustUnnamed;
-pub const SDLK_AC_BACK: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_AC_BACK as C2RustUnnamed;
-pub const SDLK_AC_HOME: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_AC_HOME as C2RustUnnamed;
-pub const SDLK_AC_SEARCH: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_AC_SEARCH as C2RustUnnamed;
-pub const SDLK_COMPUTER: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_COMPUTER as C2RustUnnamed;
-pub const SDLK_CALCULATOR: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_CALCULATOR as C2RustUnnamed;
-pub const SDLK_MAIL: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_MAIL as C2RustUnnamed;
-pub const SDLK_WWW: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_WWW as C2RustUnnamed;
-pub const SDLK_MEDIASELECT: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_MEDIASELECT as C2RustUnnamed;
-pub const SDLK_AUDIOMUTE: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_AUDIOMUTE as C2RustUnnamed;
-pub const SDLK_AUDIOPLAY: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_AUDIOPLAY as C2RustUnnamed;
-pub const SDLK_AUDIOSTOP: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_AUDIOSTOP as C2RustUnnamed;
-pub const SDLK_AUDIOPREV: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_AUDIOPREV as C2RustUnnamed;
-pub const SDLK_AUDIONEXT: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_AUDIONEXT as C2RustUnnamed;
-pub const SDLK_MODE: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_MODE as C2RustUnnamed;
-pub const SDLK_RGUI: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_RGUI as C2RustUnnamed;
-pub const SDLK_RALT: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_RALT as C2RustUnnamed;
-pub const SDLK_RSHIFT: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_RSHIFT as C2RustUnnamed;
-pub const SDLK_RCTRL: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_RCTRL as C2RustUnnamed;
-pub const SDLK_LGUI: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_LGUI as C2RustUnnamed;
-pub const SDLK_LALT: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_LALT as C2RustUnnamed;
-pub const SDLK_LSHIFT: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_LSHIFT as C2RustUnnamed;
-pub const SDLK_LCTRL: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_LCTRL as C2RustUnnamed;
-pub const SDLK_KP_HEXADECIMAL: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_KP_HEXADECIMAL as C2RustUnnamed;
-pub const SDLK_KP_DECIMAL: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_DECIMAL as C2RustUnnamed;
-pub const SDLK_KP_OCTAL: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_OCTAL as C2RustUnnamed;
-pub const SDLK_KP_BINARY: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_BINARY as C2RustUnnamed;
-pub const SDLK_KP_CLEARENTRY: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_KP_CLEARENTRY as C2RustUnnamed;
-pub const SDLK_KP_CLEAR: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_CLEAR as C2RustUnnamed;
-pub const SDLK_KP_PLUSMINUS: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_KP_PLUSMINUS as C2RustUnnamed;
-pub const SDLK_KP_MEMDIVIDE: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_KP_MEMDIVIDE as C2RustUnnamed;
-pub const SDLK_KP_MEMMULTIPLY: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_KP_MEMMULTIPLY as C2RustUnnamed;
-pub const SDLK_KP_MEMSUBTRACT: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_KP_MEMSUBTRACT as C2RustUnnamed;
-pub const SDLK_KP_MEMADD: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_MEMADD as C2RustUnnamed;
-pub const SDLK_KP_MEMCLEAR: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_KP_MEMCLEAR as C2RustUnnamed;
-pub const SDLK_KP_MEMRECALL: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_KP_MEMRECALL as C2RustUnnamed;
-pub const SDLK_KP_MEMSTORE: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_KP_MEMSTORE as C2RustUnnamed;
-pub const SDLK_KP_EXCLAM: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_EXCLAM as C2RustUnnamed;
-pub const SDLK_KP_AT: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_AT as C2RustUnnamed;
-pub const SDLK_KP_SPACE: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_SPACE as C2RustUnnamed;
-pub const SDLK_KP_HASH: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_HASH as C2RustUnnamed;
-pub const SDLK_KP_COLON: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_COLON as C2RustUnnamed;
-pub const SDLK_KP_DBLVERTICALBAR: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_KP_DBLVERTICALBAR as C2RustUnnamed;
-pub const SDLK_KP_VERTICALBAR: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_KP_VERTICALBAR as C2RustUnnamed;
-pub const SDLK_KP_DBLAMPERSAND: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_KP_DBLAMPERSAND as C2RustUnnamed;
-pub const SDLK_KP_AMPERSAND: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_KP_AMPERSAND as C2RustUnnamed;
-pub const SDLK_KP_GREATER: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_GREATER as C2RustUnnamed;
-pub const SDLK_KP_LESS: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_LESS as C2RustUnnamed;
-pub const SDLK_KP_PERCENT: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_PERCENT as C2RustUnnamed;
-pub const SDLK_KP_POWER: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_POWER as C2RustUnnamed;
-pub const SDLK_KP_XOR: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_XOR as C2RustUnnamed;
-pub const SDLK_KP_F: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_F as C2RustUnnamed;
-pub const SDLK_KP_E: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_E as C2RustUnnamed;
-pub const SDLK_KP_D: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_D as C2RustUnnamed;
-pub const SDLK_KP_C: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_C as C2RustUnnamed;
-pub const SDLK_KP_B: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_B as C2RustUnnamed;
-pub const SDLK_KP_A: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_A as C2RustUnnamed;
-pub const SDLK_KP_BACKSPACE: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_KP_BACKSPACE as C2RustUnnamed;
-pub const SDLK_KP_TAB: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_TAB as C2RustUnnamed;
-pub const SDLK_KP_RIGHTBRACE: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_KP_RIGHTBRACE as C2RustUnnamed;
-pub const SDLK_KP_LEFTBRACE: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_KP_LEFTBRACE as C2RustUnnamed;
-pub const SDLK_KP_RIGHTPAREN: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_KP_RIGHTPAREN as C2RustUnnamed;
-pub const SDLK_KP_LEFTPAREN: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_KP_LEFTPAREN as C2RustUnnamed;
-pub const SDLK_CURRENCYSUBUNIT: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_CURRENCYSUBUNIT as C2RustUnnamed;
-pub const SDLK_CURRENCYUNIT: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_CURRENCYUNIT as C2RustUnnamed;
-pub const SDLK_DECIMALSEPARATOR: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_DECIMALSEPARATOR as C2RustUnnamed;
-pub const SDLK_THOUSANDSSEPARATOR: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_THOUSANDSSEPARATOR as C2RustUnnamed;
-pub const SDLK_KP_000: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_000 as C2RustUnnamed;
-pub const SDLK_KP_00: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_00 as C2RustUnnamed;
-pub const SDLK_EXSEL: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_EXSEL as C2RustUnnamed;
-pub const SDLK_CRSEL: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_CRSEL as C2RustUnnamed;
-pub const SDLK_CLEARAGAIN: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_CLEARAGAIN as C2RustUnnamed;
-pub const SDLK_OPER: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_OPER as C2RustUnnamed;
-pub const SDLK_OUT: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_OUT as C2RustUnnamed;
-pub const SDLK_SEPARATOR: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_SEPARATOR as C2RustUnnamed;
-pub const SDLK_RETURN2: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_RETURN2 as C2RustUnnamed;
-pub const SDLK_PRIOR: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_PRIOR as C2RustUnnamed;
-pub const SDLK_CLEAR: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_CLEAR as C2RustUnnamed;
-pub const SDLK_CANCEL: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_CANCEL as C2RustUnnamed;
-pub const SDLK_SYSREQ: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_SYSREQ as C2RustUnnamed;
-pub const SDLK_ALTERASE: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_ALTERASE as C2RustUnnamed;
-pub const SDLK_KP_EQUALSAS400: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_KP_EQUALSAS400 as C2RustUnnamed;
-pub const SDLK_KP_COMMA: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_COMMA as C2RustUnnamed;
-pub const SDLK_VOLUMEDOWN: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_VOLUMEDOWN as C2RustUnnamed;
-pub const SDLK_VOLUMEUP: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_VOLUMEUP as C2RustUnnamed;
-pub const SDLK_MUTE: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_MUTE as C2RustUnnamed;
-pub const SDLK_FIND: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_FIND as C2RustUnnamed;
-pub const SDLK_PASTE: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_PASTE as C2RustUnnamed;
-pub const SDLK_COPY: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_COPY as C2RustUnnamed;
-pub const SDLK_CUT: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_CUT as C2RustUnnamed;
-pub const SDLK_UNDO: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_UNDO as C2RustUnnamed;
-pub const SDLK_AGAIN: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_AGAIN as C2RustUnnamed;
-pub const SDLK_STOP: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_STOP as C2RustUnnamed;
-pub const SDLK_SELECT: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_SELECT as C2RustUnnamed;
-pub const SDLK_MENU: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_MENU as C2RustUnnamed;
-pub const SDLK_HELP: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_HELP as C2RustUnnamed;
-pub const SDLK_EXECUTE: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_EXECUTE as C2RustUnnamed;
-pub const SDLK_F24: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_F24 as C2RustUnnamed;
-pub const SDLK_F23: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_F23 as C2RustUnnamed;
-pub const SDLK_F22: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_F22 as C2RustUnnamed;
-pub const SDLK_F21: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_F21 as C2RustUnnamed;
-pub const SDLK_F20: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_F20 as C2RustUnnamed;
-pub const SDLK_F19: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_F19 as C2RustUnnamed;
-pub const SDLK_F18: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_F18 as C2RustUnnamed;
-pub const SDLK_F17: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_F17 as C2RustUnnamed;
-pub const SDLK_F16: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_F16 as C2RustUnnamed;
-pub const SDLK_F15: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_F15 as C2RustUnnamed;
-pub const SDLK_F14: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_F14 as C2RustUnnamed;
-pub const SDLK_F13: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_F13 as C2RustUnnamed;
-pub const SDLK_KP_EQUALS: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_EQUALS as C2RustUnnamed;
-pub const SDLK_POWER: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_POWER as C2RustUnnamed;
-pub const SDLK_APPLICATION: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_APPLICATION as C2RustUnnamed;
-pub const SDLK_KP_PERIOD: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_PERIOD as C2RustUnnamed;
-pub const SDLK_KP_0: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_0 as C2RustUnnamed;
-pub const SDLK_KP_9: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_9 as C2RustUnnamed;
-pub const SDLK_KP_8: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_8 as C2RustUnnamed;
-pub const SDLK_KP_7: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_7 as C2RustUnnamed;
-pub const SDLK_KP_6: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_6 as C2RustUnnamed;
-pub const SDLK_KP_5: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_5 as C2RustUnnamed;
-pub const SDLK_KP_4: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_4 as C2RustUnnamed;
-pub const SDLK_KP_3: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_3 as C2RustUnnamed;
-pub const SDLK_KP_2: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_2 as C2RustUnnamed;
-pub const SDLK_KP_1: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_1 as C2RustUnnamed;
-pub const SDLK_KP_ENTER: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_ENTER as C2RustUnnamed;
-pub const SDLK_KP_PLUS: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_PLUS as C2RustUnnamed;
-pub const SDLK_KP_MINUS: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_MINUS as C2RustUnnamed;
-pub const SDLK_KP_MULTIPLY: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_KP_MULTIPLY as C2RustUnnamed;
-pub const SDLK_KP_DIVIDE: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_KP_DIVIDE as C2RustUnnamed;
-pub const SDLK_NUMLOCKCLEAR: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_NUMLOCKCLEAR as C2RustUnnamed;
-pub const SDLK_UP: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_UP as C2RustUnnamed;
-pub const SDLK_DOWN: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_DOWN as C2RustUnnamed;
-pub const SDLK_LEFT: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_LEFT as C2RustUnnamed;
-pub const SDLK_RIGHT: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_RIGHT as C2RustUnnamed;
-pub const SDLK_PAGEDOWN: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_PAGEDOWN as C2RustUnnamed;
-pub const SDLK_END: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_END as C2RustUnnamed;
-pub const SDLK_DELETE: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_DELETE as C2RustUnnamed;
-pub const SDLK_PAGEUP: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_PAGEUP as C2RustUnnamed;
-pub const SDLK_HOME: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_HOME as C2RustUnnamed;
-pub const SDLK_INSERT: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_INSERT as C2RustUnnamed;
-pub const SDLK_PAUSE: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_PAUSE as C2RustUnnamed;
-pub const SDLK_SCROLLLOCK: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_SCROLLLOCK as C2RustUnnamed;
-pub const SDLK_PRINTSCREEN: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_PRINTSCREEN as C2RustUnnamed;
-pub const SDLK_F12: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_F12 as C2RustUnnamed;
-pub const SDLK_F11: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_F11 as C2RustUnnamed;
-pub const SDLK_F10: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_F10 as C2RustUnnamed;
-pub const SDLK_F9: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_F9 as C2RustUnnamed;
-pub const SDLK_F8: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_F8 as C2RustUnnamed;
-pub const SDLK_F7: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_F7 as C2RustUnnamed;
-pub const SDLK_F6: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_F6 as C2RustUnnamed;
-pub const SDLK_F5: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_F5 as C2RustUnnamed;
-pub const SDLK_F4: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_F4 as C2RustUnnamed;
-pub const SDLK_F3: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_F3 as C2RustUnnamed;
-pub const SDLK_F2: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_F2 as C2RustUnnamed;
-pub const SDLK_F1: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_F1 as C2RustUnnamed;
-pub const SDLK_CAPSLOCK: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_CAPSLOCK as C2RustUnnamed;
-pub const SDLK_z: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_z as C2RustUnnamed;
-pub const SDLK_y: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_y as C2RustUnnamed;
-pub const SDLK_x: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_x as C2RustUnnamed;
-pub const SDLK_w: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_w as C2RustUnnamed;
-pub const SDLK_v: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_v as C2RustUnnamed;
-pub const SDLK_u: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_u as C2RustUnnamed;
-pub const SDLK_t: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_t as C2RustUnnamed;
-pub const SDLK_s: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_s as C2RustUnnamed;
-pub const SDLK_r: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_r as C2RustUnnamed;
-pub const SDLK_q: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_q as C2RustUnnamed;
-pub const SDLK_p: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_p as C2RustUnnamed;
-pub const SDLK_o: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_o as C2RustUnnamed;
-pub const SDLK_n: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_n as C2RustUnnamed;
-pub const SDLK_m: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_m as C2RustUnnamed;
-pub const SDLK_l: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_l as C2RustUnnamed;
-pub const SDLK_k: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_k as C2RustUnnamed;
-pub const SDLK_j: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_j as C2RustUnnamed;
-pub const SDLK_i: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_i as C2RustUnnamed;
-pub const SDLK_h: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_h as C2RustUnnamed;
-pub const SDLK_g: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_g as C2RustUnnamed;
-pub const SDLK_f: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_f as C2RustUnnamed;
-pub const SDLK_e: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_e as C2RustUnnamed;
-pub const SDLK_d: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_d as C2RustUnnamed;
-pub const SDLK_c: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_c as C2RustUnnamed;
-pub const SDLK_b: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_b as C2RustUnnamed;
-pub const SDLK_a: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_a as C2RustUnnamed;
-pub const SDLK_BACKQUOTE: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_BACKQUOTE as C2RustUnnamed;
-pub const SDLK_UNDERSCORE: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_UNDERSCORE as C2RustUnnamed;
-pub const SDLK_CARET: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_CARET as C2RustUnnamed;
-pub const SDLK_RIGHTBRACKET: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_RIGHTBRACKET as C2RustUnnamed;
-pub const SDLK_BACKSLASH: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_BACKSLASH as C2RustUnnamed;
-pub const SDLK_LEFTBRACKET: C2RustUnnamed =
-    sdl2_sys::SDL_KeyCode::SDLK_LEFTBRACKET as C2RustUnnamed;
-pub const SDLK_AT: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_AT as C2RustUnnamed;
-pub const SDLK_QUESTION: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_QUESTION as C2RustUnnamed;
-pub const SDLK_GREATER: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_GREATER as C2RustUnnamed;
-pub const SDLK_EQUALS: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_EQUALS as C2RustUnnamed;
-pub const SDLK_LESS: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_LESS as C2RustUnnamed;
-pub const SDLK_SEMICOLON: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_SEMICOLON as C2RustUnnamed;
-pub const SDLK_COLON: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_COLON as C2RustUnnamed;
-pub const SDLK_9: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_9 as C2RustUnnamed;
-pub const SDLK_8: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_8 as C2RustUnnamed;
-pub const SDLK_7: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_7 as C2RustUnnamed;
-pub const SDLK_6: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_6 as C2RustUnnamed;
-pub const SDLK_5: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_5 as C2RustUnnamed;
-pub const SDLK_4: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_4 as C2RustUnnamed;
-pub const SDLK_3: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_3 as C2RustUnnamed;
-pub const SDLK_2: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_2 as C2RustUnnamed;
-pub const SDLK_1: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_1 as C2RustUnnamed;
-pub const SDLK_0: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_0 as C2RustUnnamed;
-pub const SDLK_SLASH: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_SLASH as C2RustUnnamed;
-pub const SDLK_PERIOD: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_PERIOD as C2RustUnnamed;
-pub const SDLK_MINUS: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_MINUS as C2RustUnnamed;
-pub const SDLK_COMMA: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_COMMA as C2RustUnnamed;
-pub const SDLK_PLUS: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_PLUS as C2RustUnnamed;
-pub const SDLK_ASTERISK: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_ASTERISK as C2RustUnnamed;
-pub const SDLK_RIGHTPAREN: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_RIGHTPAREN as C2RustUnnamed;
-pub const SDLK_LEFTPAREN: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_LEFTPAREN as C2RustUnnamed;
-pub const SDLK_QUOTE: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_QUOTE as C2RustUnnamed;
-pub const SDLK_AMPERSAND: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_AMPERSAND as C2RustUnnamed;
-pub const SDLK_DOLLAR: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_DOLLAR as C2RustUnnamed;
-pub const SDLK_PERCENT: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_PERCENT as C2RustUnnamed;
-pub const SDLK_HASH: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_HASH as C2RustUnnamed;
-pub const SDLK_QUOTEDBL: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_QUOTEDBL as C2RustUnnamed;
-pub const SDLK_EXCLAIM: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_EXCLAIM as C2RustUnnamed;
-pub const SDLK_SPACE: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_SPACE as C2RustUnnamed;
-pub const SDLK_TAB: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_TAB as C2RustUnnamed;
-pub const SDLK_BACKSPACE: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_BACKSPACE as C2RustUnnamed;
-pub const SDLK_ESCAPE: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_ESCAPE as C2RustUnnamed;
-pub const SDLK_RETURN: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_RETURN as C2RustUnnamed;
-pub const SDLK_UNKNOWN: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_UNKNOWN as C2RustUnnamed;
+sdl_constants! {
+    SDL_KeyCode as C2RustUnnamed;
+    SDLK_ENDCALL, SDLK_CALL, SDLK_SOFTRIGHT, SDLK_SOFTLEFT, SDLK_AUDIOFASTFORWARD,
+    SDLK_AUDIOREWIND, SDLK_APP2, SDLK_APP1, SDLK_SLEEP, SDLK_EJECT, SDLK_KBDILLUMUP,
+    SDLK_KBDILLUMDOWN, SDLK_KBDILLUMTOGGLE, SDLK_DISPLAYSWITCH, SDLK_BRIGHTNESSUP,
+    SDLK_BRIGHTNESSDOWN, SDLK_AC_BOOKMARKS, SDLK_AC_REFRESH, SDLK_AC_STOP, SDLK_AC_FORWARD,
+    SDLK_AC_BACK, SDLK_AC_HOME, SDLK_AC_SEARCH, SDLK_COMPUTER, SDLK_CALCULATOR, SDLK_MAIL,
+    SDLK_WWW, SDLK_MEDIASELECT, SDLK_AUDIOMUTE, SDLK_AUDIOPLAY, SDLK_AUDIOSTOP, SDLK_AUDIOPREV,
+    SDLK_AUDIONEXT, SDLK_MODE, SDLK_RGUI, SDLK_RALT, SDLK_RSHIFT, SDLK_RCTRL, SDLK_LGUI,
+    SDLK_LALT, SDLK_LSHIFT, SDLK_LCTRL, SDLK_KP_HEXADECIMAL, SDLK_KP_DECIMAL, SDLK_KP_OCTAL,
+    SDLK_KP_BINARY, SDLK_KP_CLEARENTRY, SDLK_KP_CLEAR, SDLK_KP_PLUSMINUS, SDLK_KP_MEMDIVIDE,
+    SDLK_KP_MEMMULTIPLY, SDLK_KP_MEMSUBTRACT, SDLK_KP_MEMADD, SDLK_KP_MEMCLEAR,
+    SDLK_KP_MEMRECALL, SDLK_KP_MEMSTORE, SDLK_KP_EXCLAM, SDLK_KP_AT, SDLK_KP_SPACE,
+    SDLK_KP_HASH, SDLK_KP_COLON, SDLK_KP_DBLVERTICALBAR, SDLK_KP_VERTICALBAR,
+    SDLK_KP_DBLAMPERSAND, SDLK_KP_AMPERSAND, SDLK_KP_GREATER, SDLK_KP_LESS, SDLK_KP_PERCENT,
+    SDLK_KP_POWER, SDLK_KP_XOR, SDLK_KP_F, SDLK_KP_E, SDLK_KP_D, SDLK_KP_C, SDLK_KP_B,
+    SDLK_KP_A, SDLK_KP_BACKSPACE, SDLK_KP_TAB, SDLK_KP_RIGHTBRACE, SDLK_KP_LEFTBRACE,
+    SDLK_KP_RIGHTPAREN, SDLK_KP_LEFTPAREN, SDLK_CURRENCYSUBUNIT, SDLK_CURRENCYUNIT,
+    SDLK_DECIMALSEPARATOR, SDLK_THOUSANDSSEPARATOR, SDLK_KP_000, SDLK_KP_00, SDLK_EXSEL,
+    SDLK_CRSEL, SDLK_CLEARAGAIN, SDLK_OPER, SDLK_OUT, SDLK_SEPARATOR, SDLK_RETURN2, SDLK_PRIOR,
+    SDLK_CLEAR, SDLK_CANCEL, SDLK_SYSREQ, SDLK_ALTERASE, SDLK_KP_EQUALSAS400, SDLK_KP_COMMA,
+    SDLK_VOLUMEDOWN, SDLK_VOLUMEUP, SDLK_MUTE, SDLK_FIND, SDLK_PASTE, SDLK_COPY, SDLK_CUT,
+    SDLK_UNDO, SDLK_AGAIN, SDLK_STOP, SDLK_SELECT, SDLK_MENU, SDLK_HELP, SDLK_EXECUTE, SDLK_F24,
+    SDLK_F23, SDLK_F22, SDLK_F21, SDLK_F20, SDLK_F19, SDLK_F18, SDLK_F17, SDLK_F16, SDLK_F15,
+    SDLK_F14, SDLK_F13, SDLK_KP_EQUALS, SDLK_POWER, SDLK_APPLICATION, SDLK_KP_PERIOD, SDLK_KP_0,
+    SDLK_KP_9, SDLK_KP_8, SDLK_KP_7, SDLK_KP_6, SDLK_KP_5, SDLK_KP_4, SDLK_KP_3, SDLK_KP_2,
+    SDLK_KP_1, SDLK_KP_ENTER, SDLK_KP_PLUS, SDLK_KP_MINUS, SDLK_KP_MULTIPLY, SDLK_KP_DIVIDE,
+    SDLK_NUMLOCKCLEAR, SDLK_UP, SDLK_DOWN, SDLK_LEFT, SDLK_RIGHT, SDLK_PAGEDOWN, SDLK_END,
+    SDLK_DELETE, SDLK_PAGEUP, SDLK_HOME, SDLK_INSERT, SDLK_PAUSE, SDLK_SCROLLLOCK,
+    SDLK_PRINTSCREEN, SDLK_F12, SDLK_F11, SDLK_F10, SDLK_F9, SDLK_F8, SDLK_F7, SDLK_F6, SDLK_F5,
+    SDLK_F4, SDLK_F3, SDLK_F2, SDLK_F1, SDLK_CAPSLOCK, SDLK_z, SDLK_y, SDLK_x, SDLK_w, SDLK_v,
+    SDLK_u, SDLK_t, SDLK_s, SDLK_r, SDLK_q, SDLK_p, SDLK_o, SDLK_n, SDLK_m, SDLK_l, SDLK_k,
+    SDLK_j, SDLK_i, SDLK_h, SDLK_g, SDLK_f, SDLK_e, SDLK_d, SDLK_c, SDLK_b, SDLK_a,
+    SDLK_BACKQUOTE, SDLK_UNDERSCORE, SDLK_CARET, SDLK_RIGHTBRACKET, SDLK_BACKSLASH,
+    SDLK_LEFTBRACKET, SDLK_AT, SDLK_QUESTION, SDLK_GREATER, SDLK_EQUALS, SDLK_LESS,
+    SDLK_SEMICOLON, SDLK_COLON, SDLK_9, SDLK_8, SDLK_7, SDLK_6, SDLK_5, SDLK_4, SDLK_3, SDLK_2,
+    SDLK_1, SDLK_0, SDLK_SLASH, SDLK_PERIOD, SDLK_MINUS, SDLK_COMMA, SDLK_PLUS, SDLK_ASTERISK,
+    SDLK_RIGHTPAREN, SDLK_LEFTPAREN, SDLK_QUOTE, SDLK_AMPERSAND, SDLK_DOLLAR, SDLK_PERCENT,
+    SDLK_HASH, SDLK_QUOTEDBL, SDLK_EXCLAIM, SDLK_SPACE, SDLK_TAB, SDLK_BACKSPACE, SDLK_ESCAPE,
+    SDLK_RETURN, SDLK_UNKNOWN,
+}
 pub use crate::types::SDL_Keymod;
 pub const KMOD_RESERVED: SDL_Keymod = 32768;
-pub const KMOD_GUI: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_GUI as SDL_Keymod;
-pub const KMOD_ALT: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_ALT as SDL_Keymod;
-pub const KMOD_SHIFT: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_SHIFT as SDL_Keymod;
-pub const KMOD_CTRL: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_CTRL as SDL_Keymod;
-pub const KMOD_SCROLL: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_SCROLL as SDL_Keymod;
-pub const KMOD_MODE: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_MODE as SDL_Keymod;
-pub const KMOD_CAPS: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_CAPS as SDL_Keymod;
-pub const KMOD_NUM: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_NUM as SDL_Keymod;
-pub const KMOD_RGUI: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_RGUI as SDL_Keymod;
-pub const KMOD_LGUI: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_LGUI as SDL_Keymod;
-pub const KMOD_RALT: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_RALT as SDL_Keymod;
-pub const KMOD_LALT: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_LALT as SDL_Keymod;
-pub const KMOD_RCTRL: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_RCTRL as SDL_Keymod;
-pub const KMOD_LCTRL: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_LCTRL as SDL_Keymod;
-pub const KMOD_RSHIFT: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_RSHIFT as SDL_Keymod;
-pub const KMOD_LSHIFT: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_LSHIFT as SDL_Keymod;
-pub const KMOD_NONE: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_NONE as SDL_Keymod;
+sdl_constants! {
+    SDL_Keymod as SDL_Keymod;
+    KMOD_GUI, KMOD_ALT, KMOD_SHIFT, KMOD_CTRL, KMOD_SCROLL, KMOD_MODE, KMOD_CAPS, KMOD_NUM,
+    KMOD_RGUI, KMOD_LGUI, KMOD_RALT, KMOD_LALT, KMOD_RCTRL, KMOD_LCTRL, KMOD_RSHIFT,
+    KMOD_LSHIFT, KMOD_NONE,
+}
 pub use crate::types::KeyAction as C2RustUnnamed_0;
 pub const kKeys_Total: C2RustUnnamed_0 = 130;
 pub const kKeys_VolumeDown: C2RustUnnamed_0 = 129;

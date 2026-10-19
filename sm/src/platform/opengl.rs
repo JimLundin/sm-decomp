@@ -2,6 +2,7 @@ use crate::config::g_config;
 use crate::game_state::Game;
 use crate::host::Die;
 use crate::platform::glsl_shader::{GlslShader_CreateFromFile, GlslShader_Render};
+use crate::sdl_constants;
 pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data, SDL_Window};
 use ::core::ffi::{c_char, c_float, c_void};
 use ::core::mem::size_of;
@@ -24,48 +25,24 @@ pub use crate::types::{
     _IO_lock_t, __off64_t, __off_t, ptrdiff_t, size_t, GLbitfield, GLboolean, GLchar, GLenum,
     GLfloat, GLint, GLsizei, GLsizeiptr, GLuint, SDL_GLContext, _IO_FILE, FILE, GLDEBUGPROC,
 };
-pub const SDL_GL_FLOATBUFFERS: SDL_GLattr = sdl2_sys::SDL_GLattr::SDL_GL_FLOATBUFFERS;
-pub const SDL_GL_CONTEXT_NO_ERROR: SDL_GLattr = sdl2_sys::SDL_GLattr::SDL_GL_CONTEXT_NO_ERROR;
-pub const SDL_GL_CONTEXT_RESET_NOTIFICATION: SDL_GLattr =
-    sdl2_sys::SDL_GLattr::SDL_GL_CONTEXT_RESET_NOTIFICATION;
-pub const SDL_GL_CONTEXT_RELEASE_BEHAVIOR: SDL_GLattr =
-    sdl2_sys::SDL_GLattr::SDL_GL_CONTEXT_RELEASE_BEHAVIOR;
-pub const SDL_GL_FRAMEBUFFER_SRGB_CAPABLE: SDL_GLattr =
-    sdl2_sys::SDL_GLattr::SDL_GL_FRAMEBUFFER_SRGB_CAPABLE;
-pub const SDL_GL_SHARE_WITH_CURRENT_CONTEXT: SDL_GLattr =
-    sdl2_sys::SDL_GLattr::SDL_GL_SHARE_WITH_CURRENT_CONTEXT;
-pub const SDL_GL_CONTEXT_PROFILE_MASK: SDL_GLattr =
-    sdl2_sys::SDL_GLattr::SDL_GL_CONTEXT_PROFILE_MASK;
-pub const SDL_GL_CONTEXT_FLAGS: SDL_GLattr = sdl2_sys::SDL_GLattr::SDL_GL_CONTEXT_FLAGS;
-pub const SDL_GL_CONTEXT_EGL: SDL_GLattr = sdl2_sys::SDL_GLattr::SDL_GL_CONTEXT_EGL;
-pub const SDL_GL_CONTEXT_MINOR_VERSION: SDL_GLattr =
-    sdl2_sys::SDL_GLattr::SDL_GL_CONTEXT_MINOR_VERSION;
-pub const SDL_GL_CONTEXT_MAJOR_VERSION: SDL_GLattr =
-    sdl2_sys::SDL_GLattr::SDL_GL_CONTEXT_MAJOR_VERSION;
-pub const SDL_GL_RETAINED_BACKING: SDL_GLattr = sdl2_sys::SDL_GLattr::SDL_GL_RETAINED_BACKING;
-pub const SDL_GL_ACCELERATED_VISUAL: SDL_GLattr = sdl2_sys::SDL_GLattr::SDL_GL_ACCELERATED_VISUAL;
-pub const SDL_GL_MULTISAMPLESAMPLES: SDL_GLattr = sdl2_sys::SDL_GLattr::SDL_GL_MULTISAMPLESAMPLES;
-pub const SDL_GL_MULTISAMPLEBUFFERS: SDL_GLattr = sdl2_sys::SDL_GLattr::SDL_GL_MULTISAMPLEBUFFERS;
-pub const SDL_GL_STEREO: SDL_GLattr = sdl2_sys::SDL_GLattr::SDL_GL_STEREO;
-pub const SDL_GL_ACCUM_ALPHA_SIZE: SDL_GLattr = sdl2_sys::SDL_GLattr::SDL_GL_ACCUM_ALPHA_SIZE;
-pub const SDL_GL_ACCUM_BLUE_SIZE: SDL_GLattr = sdl2_sys::SDL_GLattr::SDL_GL_ACCUM_BLUE_SIZE;
-pub const SDL_GL_ACCUM_GREEN_SIZE: SDL_GLattr = sdl2_sys::SDL_GLattr::SDL_GL_ACCUM_GREEN_SIZE;
-pub const SDL_GL_ACCUM_RED_SIZE: SDL_GLattr = sdl2_sys::SDL_GLattr::SDL_GL_ACCUM_RED_SIZE;
-pub const SDL_GL_STENCIL_SIZE: SDL_GLattr = sdl2_sys::SDL_GLattr::SDL_GL_STENCIL_SIZE;
-pub const SDL_GL_DEPTH_SIZE: SDL_GLattr = sdl2_sys::SDL_GLattr::SDL_GL_DEPTH_SIZE;
-pub const SDL_GL_DOUBLEBUFFER: SDL_GLattr = sdl2_sys::SDL_GLattr::SDL_GL_DOUBLEBUFFER;
-pub const SDL_GL_BUFFER_SIZE: SDL_GLattr = sdl2_sys::SDL_GLattr::SDL_GL_BUFFER_SIZE;
-pub const SDL_GL_ALPHA_SIZE: SDL_GLattr = sdl2_sys::SDL_GLattr::SDL_GL_ALPHA_SIZE;
-pub const SDL_GL_BLUE_SIZE: SDL_GLattr = sdl2_sys::SDL_GLattr::SDL_GL_BLUE_SIZE;
-pub const SDL_GL_GREEN_SIZE: SDL_GLattr = sdl2_sys::SDL_GLattr::SDL_GL_GREEN_SIZE;
-pub const SDL_GL_RED_SIZE: SDL_GLattr = sdl2_sys::SDL_GLattr::SDL_GL_RED_SIZE;
+sdl_constants! {
+    SDL_GLattr: SDL_GLattr;
+    SDL_GL_FLOATBUFFERS, SDL_GL_CONTEXT_NO_ERROR, SDL_GL_CONTEXT_RESET_NOTIFICATION,
+    SDL_GL_CONTEXT_RELEASE_BEHAVIOR, SDL_GL_FRAMEBUFFER_SRGB_CAPABLE,
+    SDL_GL_SHARE_WITH_CURRENT_CONTEXT, SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_FLAGS,
+    SDL_GL_CONTEXT_EGL, SDL_GL_CONTEXT_MINOR_VERSION, SDL_GL_CONTEXT_MAJOR_VERSION,
+    SDL_GL_RETAINED_BACKING, SDL_GL_ACCELERATED_VISUAL, SDL_GL_MULTISAMPLESAMPLES,
+    SDL_GL_MULTISAMPLEBUFFERS, SDL_GL_STEREO, SDL_GL_ACCUM_ALPHA_SIZE, SDL_GL_ACCUM_BLUE_SIZE,
+    SDL_GL_ACCUM_GREEN_SIZE, SDL_GL_ACCUM_RED_SIZE, SDL_GL_STENCIL_SIZE, SDL_GL_DEPTH_SIZE,
+    SDL_GL_DOUBLEBUFFER, SDL_GL_BUFFER_SIZE, SDL_GL_ALPHA_SIZE, SDL_GL_BLUE_SIZE,
+    SDL_GL_GREEN_SIZE, SDL_GL_RED_SIZE,
+}
 pub type C2RustUnnamed = u32;
-pub const SDL_GL_CONTEXT_PROFILE_ES: C2RustUnnamed =
-    sdl2_sys::SDL_GLprofile::SDL_GL_CONTEXT_PROFILE_ES as C2RustUnnamed;
-pub const SDL_GL_CONTEXT_PROFILE_COMPATIBILITY: C2RustUnnamed =
-    sdl2_sys::SDL_GLprofile::SDL_GL_CONTEXT_PROFILE_COMPATIBILITY as C2RustUnnamed;
-pub const SDL_GL_CONTEXT_PROFILE_CORE: C2RustUnnamed =
-    sdl2_sys::SDL_GLprofile::SDL_GL_CONTEXT_PROFILE_CORE as C2RustUnnamed;
+sdl_constants! {
+    SDL_GLprofile as C2RustUnnamed;
+    SDL_GL_CONTEXT_PROFILE_ES, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY,
+    SDL_GL_CONTEXT_PROFILE_CORE,
+}
 pub use crate::types::{
     Config, GlTextureWithSize, GlslParam, GlslPass, GlslShader, GlslTexture, GlslTextureUniform,
     GlslUniforms, RendererFuncs,

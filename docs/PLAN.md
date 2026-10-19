@@ -31,6 +31,29 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+SDL enum declarations (2026-10-20): one macro declares 741 existing public
+constant aliases in 26 groups across configuration, frontend and OpenGL.
+All names and caller-resolved types remain exact: 701 enum-to-integer casts
+and 40 direct enum constants retain their values and declaration order.
+All 741 eligible AST declarations are accounted for, with no adjacent
+attributes, hidden macro contexts or sdl2_sys name shadows.
+
+Actual frontend library and binary compiler expansions match every remaining
+token after only the helper module/imports and absolute SDL path spelling
+are accounted for. The binary's existing checkpoint source fingerprint
+contains the exact updated main.rs within its 22 unchanged include paths;
+other diagnostic strings and every function body remain exact.
+Independent complete-source and expansion review passes.
+
+Net Rust lines -867, to 139123; all other progress counters are unchanged.
+Normal release (22.76s), formatting/check, progress and full
+any% 129712/0 (104.39s), native exit 0, pass on committed
+dispatch source 19eb90a9. All 75 source/config/host inputs match the frozen
+candidate and all 81 replay pins remain stable. Frontend aliases are
+compiler-checked; the movie exercises core gameplay. No new frontend route
+coverage is claimed. Continue substantial shared implementations; broader
+readability and boot-to-credits remain open.
+
 Address dispatch declarations (2026-10-20): all 114 complete functions
 with a direct selector match and Unreachable fallback share one declaration
 macro across 23 callers. All signatures, visibility, return types, selector

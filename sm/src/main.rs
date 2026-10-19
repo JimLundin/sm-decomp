@@ -12,6 +12,7 @@ use ::core::ptr::{null, null_mut};
 #[allow(unused_imports)]
 use ::sm as _;
 use sm::game_state::{Game, GameOwner};
+use sm::sdl_constants;
 mod verify;
 pub use sdl2_sys::{
     SDL_AudioDeviceEvent, SDL_AudioSpec, SDL_CloseAudioDevice, SDL_CommonEvent,
@@ -77,29 +78,21 @@ extern "C" {
 
 }
 pub use sm::types::{_IO_lock_t, __mode_t, __off64_t, __off_t, size_t, _IO_FILE, FILE};
-pub const SDL_TRUE: SDL_bool = sdl2_sys::SDL_bool::SDL_TRUE;
-pub const SDL_FALSE: SDL_bool = sdl2_sys::SDL_bool::SDL_FALSE;
+sdl_constants! {
+    SDL_bool: SDL_bool;
+    SDL_TRUE, SDL_FALSE,
+}
 pub use sm::types::SDL_AudioDeviceID;
 pub use sm::types::{
     SDL_AudioCallback, SDL_AudioFormat, Sint16, Sint32, Sint64, Uint16, Uint32, Uint64, Uint8,
 };
 pub type C2RustUnnamed = u32;
-pub const SDL_PIXELFORMAT_EXTERNAL_OES: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_EXTERNAL_OES as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_NV21: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_NV21 as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_NV12: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_NV12 as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_YVYU: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_YVYU as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_UYVY: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_UYVY as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_YUY2: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_YUY2 as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_IYUV: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_IYUV as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_YV12: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_YV12 as C2RustUnnamed;
+sdl_constants! {
+    SDL_PixelFormatEnum as C2RustUnnamed;
+    SDL_PIXELFORMAT_EXTERNAL_OES, SDL_PIXELFORMAT_NV21, SDL_PIXELFORMAT_NV12,
+    SDL_PIXELFORMAT_YVYU, SDL_PIXELFORMAT_UYVY, SDL_PIXELFORMAT_YUY2, SDL_PIXELFORMAT_IYUV,
+    SDL_PIXELFORMAT_YV12,
+}
 pub const SDL_PIXELFORMAT_XBGR32: C2RustUnnamed = 371595268;
 pub const SDL_PIXELFORMAT_BGRX32: C2RustUnnamed = 370546692;
 pub const SDL_PIXELFORMAT_XRGB32: C2RustUnnamed = 375789572;
@@ -108,817 +101,219 @@ pub const SDL_PIXELFORMAT_ABGR32: C2RustUnnamed = 373694468;
 pub const SDL_PIXELFORMAT_BGRA32: C2RustUnnamed = 372645892;
 pub const SDL_PIXELFORMAT_ARGB32: C2RustUnnamed = 377888772;
 pub const SDL_PIXELFORMAT_RGBA32: C2RustUnnamed = 376840196;
-pub const SDL_PIXELFORMAT_ARGB2101010: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_ARGB2101010 as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_BGRA8888: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_BGRA8888 as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_ABGR8888: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_ABGR8888 as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_RGBA8888: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_RGBA8888 as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_ARGB8888: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_ARGB8888 as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_BGRX8888: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_BGRX8888 as C2RustUnnamed;
+sdl_constants! {
+    SDL_PixelFormatEnum as C2RustUnnamed;
+    SDL_PIXELFORMAT_ARGB2101010, SDL_PIXELFORMAT_BGRA8888, SDL_PIXELFORMAT_ABGR8888,
+    SDL_PIXELFORMAT_RGBA8888, SDL_PIXELFORMAT_ARGB8888, SDL_PIXELFORMAT_BGRX8888,
+}
 pub const SDL_PIXELFORMAT_BGR888: C2RustUnnamed = 374740996;
-pub const SDL_PIXELFORMAT_XBGR8888: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_XBGR8888 as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_RGBX8888: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_RGBX8888 as C2RustUnnamed;
+sdl_constants! {
+    SDL_PixelFormatEnum as C2RustUnnamed;
+    SDL_PIXELFORMAT_XBGR8888, SDL_PIXELFORMAT_RGBX8888,
+}
 pub const SDL_PIXELFORMAT_RGB888: C2RustUnnamed = 370546692;
-pub const SDL_PIXELFORMAT_XRGB8888: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_XRGB8888 as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_BGR24: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_BGR24 as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_RGB24: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_RGB24 as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_BGR565: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_BGR565 as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_RGB565: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_RGB565 as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_BGRA5551: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_BGRA5551 as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_ABGR1555: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_ABGR1555 as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_RGBA5551: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_RGBA5551 as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_ARGB1555: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_ARGB1555 as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_BGRA4444: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_BGRA4444 as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_ABGR4444: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_ABGR4444 as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_RGBA4444: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_RGBA4444 as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_ARGB4444: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_ARGB4444 as C2RustUnnamed;
+sdl_constants! {
+    SDL_PixelFormatEnum as C2RustUnnamed;
+    SDL_PIXELFORMAT_XRGB8888, SDL_PIXELFORMAT_BGR24, SDL_PIXELFORMAT_RGB24,
+    SDL_PIXELFORMAT_BGR565, SDL_PIXELFORMAT_RGB565, SDL_PIXELFORMAT_BGRA5551,
+    SDL_PIXELFORMAT_ABGR1555, SDL_PIXELFORMAT_RGBA5551, SDL_PIXELFORMAT_ARGB1555,
+    SDL_PIXELFORMAT_BGRA4444, SDL_PIXELFORMAT_ABGR4444, SDL_PIXELFORMAT_RGBA4444,
+    SDL_PIXELFORMAT_ARGB4444,
+}
 pub const SDL_PIXELFORMAT_BGR555: C2RustUnnamed = 357764866;
-pub const SDL_PIXELFORMAT_XBGR1555: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_XBGR1555 as C2RustUnnamed;
+sdl_constants! {
+    SDL_PixelFormatEnum as C2RustUnnamed;
+    SDL_PIXELFORMAT_XBGR1555,
+}
 pub const SDL_PIXELFORMAT_RGB555: C2RustUnnamed = 353570562;
-pub const SDL_PIXELFORMAT_XRGB1555: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_XRGB1555 as C2RustUnnamed;
+sdl_constants! {
+    SDL_PixelFormatEnum as C2RustUnnamed;
+    SDL_PIXELFORMAT_XRGB1555,
+}
 pub const SDL_PIXELFORMAT_BGR444: C2RustUnnamed = 357698562;
-pub const SDL_PIXELFORMAT_XBGR4444: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_XBGR4444 as C2RustUnnamed;
+sdl_constants! {
+    SDL_PixelFormatEnum as C2RustUnnamed;
+    SDL_PIXELFORMAT_XBGR4444,
+}
 pub const SDL_PIXELFORMAT_RGB444: C2RustUnnamed = 353504258;
-pub const SDL_PIXELFORMAT_XRGB4444: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_XRGB4444 as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_RGB332: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_RGB332 as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_INDEX8: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_INDEX8 as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_INDEX4MSB: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_INDEX4MSB as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_INDEX4LSB: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_INDEX4LSB as C2RustUnnamed;
+sdl_constants! {
+    SDL_PixelFormatEnum as C2RustUnnamed;
+    SDL_PIXELFORMAT_XRGB4444, SDL_PIXELFORMAT_RGB332, SDL_PIXELFORMAT_INDEX8,
+    SDL_PIXELFORMAT_INDEX4MSB, SDL_PIXELFORMAT_INDEX4LSB,
+}
 pub const SDL_PIXELFORMAT_INDEX2MSB: C2RustUnnamed = 471859712;
 pub const SDL_PIXELFORMAT_INDEX2LSB: C2RustUnnamed = 470811136;
-pub const SDL_PIXELFORMAT_INDEX1MSB: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_INDEX1MSB as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_INDEX1LSB: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_INDEX1LSB as C2RustUnnamed;
-pub const SDL_PIXELFORMAT_UNKNOWN: C2RustUnnamed =
-    sdl2_sys::SDL_PixelFormatEnum::SDL_PIXELFORMAT_UNKNOWN as C2RustUnnamed;
+sdl_constants! {
+    SDL_PixelFormatEnum as C2RustUnnamed;
+    SDL_PIXELFORMAT_INDEX1MSB, SDL_PIXELFORMAT_INDEX1LSB, SDL_PIXELFORMAT_UNKNOWN,
+}
 pub type C2RustUnnamed_0 = u32;
 pub const SDL_WINDOW_INPUT_GRABBED: C2RustUnnamed_0 = 256;
-pub const SDL_WINDOW_METAL: C2RustUnnamed_0 =
-    sdl2_sys::SDL_WindowFlags::SDL_WINDOW_METAL as C2RustUnnamed_0;
-pub const SDL_WINDOW_VULKAN: C2RustUnnamed_0 =
-    sdl2_sys::SDL_WindowFlags::SDL_WINDOW_VULKAN as C2RustUnnamed_0;
-pub const SDL_WINDOW_KEYBOARD_GRABBED: C2RustUnnamed_0 =
-    sdl2_sys::SDL_WindowFlags::SDL_WINDOW_KEYBOARD_GRABBED as C2RustUnnamed_0;
-pub const SDL_WINDOW_POPUP_MENU: C2RustUnnamed_0 =
-    sdl2_sys::SDL_WindowFlags::SDL_WINDOW_POPUP_MENU as C2RustUnnamed_0;
-pub const SDL_WINDOW_TOOLTIP: C2RustUnnamed_0 =
-    sdl2_sys::SDL_WindowFlags::SDL_WINDOW_TOOLTIP as C2RustUnnamed_0;
-pub const SDL_WINDOW_UTILITY: C2RustUnnamed_0 =
-    sdl2_sys::SDL_WindowFlags::SDL_WINDOW_UTILITY as C2RustUnnamed_0;
-pub const SDL_WINDOW_SKIP_TASKBAR: C2RustUnnamed_0 =
-    sdl2_sys::SDL_WindowFlags::SDL_WINDOW_SKIP_TASKBAR as C2RustUnnamed_0;
-pub const SDL_WINDOW_ALWAYS_ON_TOP: C2RustUnnamed_0 =
-    sdl2_sys::SDL_WindowFlags::SDL_WINDOW_ALWAYS_ON_TOP as C2RustUnnamed_0;
-pub const SDL_WINDOW_MOUSE_CAPTURE: C2RustUnnamed_0 =
-    sdl2_sys::SDL_WindowFlags::SDL_WINDOW_MOUSE_CAPTURE as C2RustUnnamed_0;
-pub const SDL_WINDOW_ALLOW_HIGHDPI: C2RustUnnamed_0 =
-    sdl2_sys::SDL_WindowFlags::SDL_WINDOW_ALLOW_HIGHDPI as C2RustUnnamed_0;
-pub const SDL_WINDOW_FOREIGN: C2RustUnnamed_0 =
-    sdl2_sys::SDL_WindowFlags::SDL_WINDOW_FOREIGN as C2RustUnnamed_0;
-pub const SDL_WINDOW_FULLSCREEN_DESKTOP: C2RustUnnamed_0 =
-    sdl2_sys::SDL_WindowFlags::SDL_WINDOW_FULLSCREEN_DESKTOP as C2RustUnnamed_0;
-pub const SDL_WINDOW_MOUSE_FOCUS: C2RustUnnamed_0 =
-    sdl2_sys::SDL_WindowFlags::SDL_WINDOW_MOUSE_FOCUS as C2RustUnnamed_0;
-pub const SDL_WINDOW_INPUT_FOCUS: C2RustUnnamed_0 =
-    sdl2_sys::SDL_WindowFlags::SDL_WINDOW_INPUT_FOCUS as C2RustUnnamed_0;
-pub const SDL_WINDOW_MOUSE_GRABBED: C2RustUnnamed_0 =
-    sdl2_sys::SDL_WindowFlags::SDL_WINDOW_MOUSE_GRABBED as C2RustUnnamed_0;
-pub const SDL_WINDOW_MAXIMIZED: C2RustUnnamed_0 =
-    sdl2_sys::SDL_WindowFlags::SDL_WINDOW_MAXIMIZED as C2RustUnnamed_0;
-pub const SDL_WINDOW_MINIMIZED: C2RustUnnamed_0 =
-    sdl2_sys::SDL_WindowFlags::SDL_WINDOW_MINIMIZED as C2RustUnnamed_0;
-pub const SDL_WINDOW_RESIZABLE: C2RustUnnamed_0 =
-    sdl2_sys::SDL_WindowFlags::SDL_WINDOW_RESIZABLE as C2RustUnnamed_0;
-pub const SDL_WINDOW_BORDERLESS: C2RustUnnamed_0 =
-    sdl2_sys::SDL_WindowFlags::SDL_WINDOW_BORDERLESS as C2RustUnnamed_0;
-pub const SDL_WINDOW_HIDDEN: C2RustUnnamed_0 =
-    sdl2_sys::SDL_WindowFlags::SDL_WINDOW_HIDDEN as C2RustUnnamed_0;
-pub const SDL_WINDOW_SHOWN: C2RustUnnamed_0 =
-    sdl2_sys::SDL_WindowFlags::SDL_WINDOW_SHOWN as C2RustUnnamed_0;
-pub const SDL_WINDOW_OPENGL: C2RustUnnamed_0 =
-    sdl2_sys::SDL_WindowFlags::SDL_WINDOW_OPENGL as C2RustUnnamed_0;
-pub const SDL_WINDOW_FULLSCREEN: C2RustUnnamed_0 =
-    sdl2_sys::SDL_WindowFlags::SDL_WINDOW_FULLSCREEN as C2RustUnnamed_0;
-pub const SDL_HITTEST_RESIZE_LEFT: SDL_HitTestResult =
-    sdl2_sys::SDL_HitTestResult::SDL_HITTEST_RESIZE_LEFT;
-pub const SDL_HITTEST_RESIZE_BOTTOMLEFT: SDL_HitTestResult =
-    sdl2_sys::SDL_HitTestResult::SDL_HITTEST_RESIZE_BOTTOMLEFT;
-pub const SDL_HITTEST_RESIZE_BOTTOM: SDL_HitTestResult =
-    sdl2_sys::SDL_HitTestResult::SDL_HITTEST_RESIZE_BOTTOM;
-pub const SDL_HITTEST_RESIZE_BOTTOMRIGHT: SDL_HitTestResult =
-    sdl2_sys::SDL_HitTestResult::SDL_HITTEST_RESIZE_BOTTOMRIGHT;
-pub const SDL_HITTEST_RESIZE_RIGHT: SDL_HitTestResult =
-    sdl2_sys::SDL_HitTestResult::SDL_HITTEST_RESIZE_RIGHT;
-pub const SDL_HITTEST_RESIZE_TOPRIGHT: SDL_HitTestResult =
-    sdl2_sys::SDL_HitTestResult::SDL_HITTEST_RESIZE_TOPRIGHT;
-pub const SDL_HITTEST_RESIZE_TOP: SDL_HitTestResult =
-    sdl2_sys::SDL_HitTestResult::SDL_HITTEST_RESIZE_TOP;
-pub const SDL_HITTEST_RESIZE_TOPLEFT: SDL_HitTestResult =
-    sdl2_sys::SDL_HitTestResult::SDL_HITTEST_RESIZE_TOPLEFT;
-pub const SDL_HITTEST_DRAGGABLE: SDL_HitTestResult =
-    sdl2_sys::SDL_HitTestResult::SDL_HITTEST_DRAGGABLE;
-pub const SDL_HITTEST_NORMAL: SDL_HitTestResult = sdl2_sys::SDL_HitTestResult::SDL_HITTEST_NORMAL;
+sdl_constants! {
+    SDL_WindowFlags as C2RustUnnamed_0;
+    SDL_WINDOW_METAL, SDL_WINDOW_VULKAN, SDL_WINDOW_KEYBOARD_GRABBED, SDL_WINDOW_POPUP_MENU,
+    SDL_WINDOW_TOOLTIP, SDL_WINDOW_UTILITY, SDL_WINDOW_SKIP_TASKBAR, SDL_WINDOW_ALWAYS_ON_TOP,
+    SDL_WINDOW_MOUSE_CAPTURE, SDL_WINDOW_ALLOW_HIGHDPI, SDL_WINDOW_FOREIGN,
+    SDL_WINDOW_FULLSCREEN_DESKTOP, SDL_WINDOW_MOUSE_FOCUS, SDL_WINDOW_INPUT_FOCUS,
+    SDL_WINDOW_MOUSE_GRABBED, SDL_WINDOW_MAXIMIZED, SDL_WINDOW_MINIMIZED, SDL_WINDOW_RESIZABLE,
+    SDL_WINDOW_BORDERLESS, SDL_WINDOW_HIDDEN, SDL_WINDOW_SHOWN, SDL_WINDOW_OPENGL,
+    SDL_WINDOW_FULLSCREEN,
+}
+sdl_constants! {
+    SDL_HitTestResult: SDL_HitTestResult;
+    SDL_HITTEST_RESIZE_LEFT, SDL_HITTEST_RESIZE_BOTTOMLEFT, SDL_HITTEST_RESIZE_BOTTOM,
+    SDL_HITTEST_RESIZE_BOTTOMRIGHT, SDL_HITTEST_RESIZE_RIGHT, SDL_HITTEST_RESIZE_TOPRIGHT,
+    SDL_HITTEST_RESIZE_TOP, SDL_HITTEST_RESIZE_TOPLEFT, SDL_HITTEST_DRAGGABLE,
+    SDL_HITTEST_NORMAL,
+}
 pub use sm::types::SDL_Scancode;
-pub const SDL_NUM_SCANCODES: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_NUM_SCANCODES as SDL_Scancode;
-pub const SDL_SCANCODE_ENDCALL: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_ENDCALL as SDL_Scancode;
-pub const SDL_SCANCODE_CALL: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_CALL as SDL_Scancode;
-pub const SDL_SCANCODE_SOFTRIGHT: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_SOFTRIGHT as SDL_Scancode;
-pub const SDL_SCANCODE_SOFTLEFT: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_SOFTLEFT as SDL_Scancode;
-pub const SDL_SCANCODE_AUDIOFASTFORWARD: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_AUDIOFASTFORWARD as SDL_Scancode;
-pub const SDL_SCANCODE_AUDIOREWIND: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_AUDIOREWIND as SDL_Scancode;
-pub const SDL_SCANCODE_APP2: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_APP2 as SDL_Scancode;
-pub const SDL_SCANCODE_APP1: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_APP1 as SDL_Scancode;
-pub const SDL_SCANCODE_SLEEP: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_SLEEP as SDL_Scancode;
-pub const SDL_SCANCODE_EJECT: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_EJECT as SDL_Scancode;
-pub const SDL_SCANCODE_KBDILLUMUP: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KBDILLUMUP as SDL_Scancode;
-pub const SDL_SCANCODE_KBDILLUMDOWN: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KBDILLUMDOWN as SDL_Scancode;
-pub const SDL_SCANCODE_KBDILLUMTOGGLE: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KBDILLUMTOGGLE as SDL_Scancode;
-pub const SDL_SCANCODE_DISPLAYSWITCH: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_DISPLAYSWITCH as SDL_Scancode;
-pub const SDL_SCANCODE_BRIGHTNESSUP: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_BRIGHTNESSUP as SDL_Scancode;
-pub const SDL_SCANCODE_BRIGHTNESSDOWN: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_BRIGHTNESSDOWN as SDL_Scancode;
-pub const SDL_SCANCODE_AC_BOOKMARKS: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_AC_BOOKMARKS as SDL_Scancode;
-pub const SDL_SCANCODE_AC_REFRESH: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_AC_REFRESH as SDL_Scancode;
-pub const SDL_SCANCODE_AC_STOP: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_AC_STOP as SDL_Scancode;
-pub const SDL_SCANCODE_AC_FORWARD: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_AC_FORWARD as SDL_Scancode;
-pub const SDL_SCANCODE_AC_BACK: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_AC_BACK as SDL_Scancode;
-pub const SDL_SCANCODE_AC_HOME: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_AC_HOME as SDL_Scancode;
-pub const SDL_SCANCODE_AC_SEARCH: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_AC_SEARCH as SDL_Scancode;
-pub const SDL_SCANCODE_COMPUTER: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_COMPUTER as SDL_Scancode;
-pub const SDL_SCANCODE_CALCULATOR: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_CALCULATOR as SDL_Scancode;
-pub const SDL_SCANCODE_MAIL: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_MAIL as SDL_Scancode;
-pub const SDL_SCANCODE_WWW: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_WWW as SDL_Scancode;
-pub const SDL_SCANCODE_MEDIASELECT: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_MEDIASELECT as SDL_Scancode;
-pub const SDL_SCANCODE_AUDIOMUTE: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_AUDIOMUTE as SDL_Scancode;
-pub const SDL_SCANCODE_AUDIOPLAY: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_AUDIOPLAY as SDL_Scancode;
-pub const SDL_SCANCODE_AUDIOSTOP: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_AUDIOSTOP as SDL_Scancode;
-pub const SDL_SCANCODE_AUDIOPREV: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_AUDIOPREV as SDL_Scancode;
-pub const SDL_SCANCODE_AUDIONEXT: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_AUDIONEXT as SDL_Scancode;
-pub const SDL_SCANCODE_MODE: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_MODE as SDL_Scancode;
-pub const SDL_SCANCODE_RGUI: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_RGUI as SDL_Scancode;
-pub const SDL_SCANCODE_RALT: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_RALT as SDL_Scancode;
-pub const SDL_SCANCODE_RSHIFT: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_RSHIFT as SDL_Scancode;
-pub const SDL_SCANCODE_RCTRL: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_RCTRL as SDL_Scancode;
-pub const SDL_SCANCODE_LGUI: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_LGUI as SDL_Scancode;
-pub const SDL_SCANCODE_LALT: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_LALT as SDL_Scancode;
-pub const SDL_SCANCODE_LSHIFT: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_LSHIFT as SDL_Scancode;
-pub const SDL_SCANCODE_LCTRL: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_LCTRL as SDL_Scancode;
-pub const SDL_SCANCODE_KP_HEXADECIMAL: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_HEXADECIMAL as SDL_Scancode;
-pub const SDL_SCANCODE_KP_DECIMAL: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_DECIMAL as SDL_Scancode;
-pub const SDL_SCANCODE_KP_OCTAL: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_OCTAL as SDL_Scancode;
-pub const SDL_SCANCODE_KP_BINARY: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_BINARY as SDL_Scancode;
-pub const SDL_SCANCODE_KP_CLEARENTRY: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_CLEARENTRY as SDL_Scancode;
-pub const SDL_SCANCODE_KP_CLEAR: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_CLEAR as SDL_Scancode;
-pub const SDL_SCANCODE_KP_PLUSMINUS: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_PLUSMINUS as SDL_Scancode;
-pub const SDL_SCANCODE_KP_MEMDIVIDE: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_MEMDIVIDE as SDL_Scancode;
-pub const SDL_SCANCODE_KP_MEMMULTIPLY: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_MEMMULTIPLY as SDL_Scancode;
-pub const SDL_SCANCODE_KP_MEMSUBTRACT: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_MEMSUBTRACT as SDL_Scancode;
-pub const SDL_SCANCODE_KP_MEMADD: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_MEMADD as SDL_Scancode;
-pub const SDL_SCANCODE_KP_MEMCLEAR: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_MEMCLEAR as SDL_Scancode;
-pub const SDL_SCANCODE_KP_MEMRECALL: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_MEMRECALL as SDL_Scancode;
-pub const SDL_SCANCODE_KP_MEMSTORE: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_MEMSTORE as SDL_Scancode;
-pub const SDL_SCANCODE_KP_EXCLAM: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_EXCLAM as SDL_Scancode;
-pub const SDL_SCANCODE_KP_AT: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_AT as SDL_Scancode;
-pub const SDL_SCANCODE_KP_SPACE: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_SPACE as SDL_Scancode;
-pub const SDL_SCANCODE_KP_HASH: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_HASH as SDL_Scancode;
-pub const SDL_SCANCODE_KP_COLON: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_COLON as SDL_Scancode;
-pub const SDL_SCANCODE_KP_DBLVERTICALBAR: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_DBLVERTICALBAR as SDL_Scancode;
-pub const SDL_SCANCODE_KP_VERTICALBAR: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_VERTICALBAR as SDL_Scancode;
-pub const SDL_SCANCODE_KP_DBLAMPERSAND: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_DBLAMPERSAND as SDL_Scancode;
-pub const SDL_SCANCODE_KP_AMPERSAND: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_AMPERSAND as SDL_Scancode;
-pub const SDL_SCANCODE_KP_GREATER: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_GREATER as SDL_Scancode;
-pub const SDL_SCANCODE_KP_LESS: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_LESS as SDL_Scancode;
-pub const SDL_SCANCODE_KP_PERCENT: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_PERCENT as SDL_Scancode;
-pub const SDL_SCANCODE_KP_POWER: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_POWER as SDL_Scancode;
-pub const SDL_SCANCODE_KP_XOR: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_XOR as SDL_Scancode;
-pub const SDL_SCANCODE_KP_F: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_F as SDL_Scancode;
-pub const SDL_SCANCODE_KP_E: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_E as SDL_Scancode;
-pub const SDL_SCANCODE_KP_D: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_D as SDL_Scancode;
-pub const SDL_SCANCODE_KP_C: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_C as SDL_Scancode;
-pub const SDL_SCANCODE_KP_B: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_B as SDL_Scancode;
-pub const SDL_SCANCODE_KP_A: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_A as SDL_Scancode;
-pub const SDL_SCANCODE_KP_BACKSPACE: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_BACKSPACE as SDL_Scancode;
-pub const SDL_SCANCODE_KP_TAB: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_TAB as SDL_Scancode;
-pub const SDL_SCANCODE_KP_RIGHTBRACE: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_RIGHTBRACE as SDL_Scancode;
-pub const SDL_SCANCODE_KP_LEFTBRACE: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_LEFTBRACE as SDL_Scancode;
-pub const SDL_SCANCODE_KP_RIGHTPAREN: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_RIGHTPAREN as SDL_Scancode;
-pub const SDL_SCANCODE_KP_LEFTPAREN: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_LEFTPAREN as SDL_Scancode;
-pub const SDL_SCANCODE_CURRENCYSUBUNIT: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_CURRENCYSUBUNIT as SDL_Scancode;
-pub const SDL_SCANCODE_CURRENCYUNIT: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_CURRENCYUNIT as SDL_Scancode;
-pub const SDL_SCANCODE_DECIMALSEPARATOR: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_DECIMALSEPARATOR as SDL_Scancode;
-pub const SDL_SCANCODE_THOUSANDSSEPARATOR: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_THOUSANDSSEPARATOR as SDL_Scancode;
-pub const SDL_SCANCODE_KP_000: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_000 as SDL_Scancode;
-pub const SDL_SCANCODE_KP_00: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_00 as SDL_Scancode;
-pub const SDL_SCANCODE_EXSEL: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_EXSEL as SDL_Scancode;
-pub const SDL_SCANCODE_CRSEL: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_CRSEL as SDL_Scancode;
-pub const SDL_SCANCODE_CLEARAGAIN: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_CLEARAGAIN as SDL_Scancode;
-pub const SDL_SCANCODE_OPER: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_OPER as SDL_Scancode;
-pub const SDL_SCANCODE_OUT: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_OUT as SDL_Scancode;
-pub const SDL_SCANCODE_SEPARATOR: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_SEPARATOR as SDL_Scancode;
-pub const SDL_SCANCODE_RETURN2: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_RETURN2 as SDL_Scancode;
-pub const SDL_SCANCODE_PRIOR: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_PRIOR as SDL_Scancode;
-pub const SDL_SCANCODE_CLEAR: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_CLEAR as SDL_Scancode;
-pub const SDL_SCANCODE_CANCEL: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_CANCEL as SDL_Scancode;
-pub const SDL_SCANCODE_SYSREQ: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_SYSREQ as SDL_Scancode;
-pub const SDL_SCANCODE_ALTERASE: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_ALTERASE as SDL_Scancode;
-pub const SDL_SCANCODE_LANG9: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_LANG9 as SDL_Scancode;
-pub const SDL_SCANCODE_LANG8: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_LANG8 as SDL_Scancode;
-pub const SDL_SCANCODE_LANG7: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_LANG7 as SDL_Scancode;
-pub const SDL_SCANCODE_LANG6: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_LANG6 as SDL_Scancode;
-pub const SDL_SCANCODE_LANG5: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_LANG5 as SDL_Scancode;
-pub const SDL_SCANCODE_LANG4: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_LANG4 as SDL_Scancode;
-pub const SDL_SCANCODE_LANG3: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_LANG3 as SDL_Scancode;
-pub const SDL_SCANCODE_LANG2: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_LANG2 as SDL_Scancode;
-pub const SDL_SCANCODE_LANG1: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_LANG1 as SDL_Scancode;
-pub const SDL_SCANCODE_INTERNATIONAL9: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_INTERNATIONAL9 as SDL_Scancode;
-pub const SDL_SCANCODE_INTERNATIONAL8: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_INTERNATIONAL8 as SDL_Scancode;
-pub const SDL_SCANCODE_INTERNATIONAL7: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_INTERNATIONAL7 as SDL_Scancode;
-pub const SDL_SCANCODE_INTERNATIONAL6: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_INTERNATIONAL6 as SDL_Scancode;
-pub const SDL_SCANCODE_INTERNATIONAL5: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_INTERNATIONAL5 as SDL_Scancode;
-pub const SDL_SCANCODE_INTERNATIONAL4: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_INTERNATIONAL4 as SDL_Scancode;
-pub const SDL_SCANCODE_INTERNATIONAL3: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_INTERNATIONAL3 as SDL_Scancode;
-pub const SDL_SCANCODE_INTERNATIONAL2: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_INTERNATIONAL2 as SDL_Scancode;
-pub const SDL_SCANCODE_INTERNATIONAL1: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_INTERNATIONAL1 as SDL_Scancode;
-pub const SDL_SCANCODE_KP_EQUALSAS400: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_EQUALSAS400 as SDL_Scancode;
-pub const SDL_SCANCODE_KP_COMMA: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_COMMA as SDL_Scancode;
-pub const SDL_SCANCODE_VOLUMEDOWN: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_VOLUMEDOWN as SDL_Scancode;
-pub const SDL_SCANCODE_VOLUMEUP: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_VOLUMEUP as SDL_Scancode;
-pub const SDL_SCANCODE_MUTE: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_MUTE as SDL_Scancode;
-pub const SDL_SCANCODE_FIND: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_FIND as SDL_Scancode;
-pub const SDL_SCANCODE_PASTE: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_PASTE as SDL_Scancode;
-pub const SDL_SCANCODE_COPY: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_COPY as SDL_Scancode;
-pub const SDL_SCANCODE_CUT: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_CUT as SDL_Scancode;
-pub const SDL_SCANCODE_UNDO: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_UNDO as SDL_Scancode;
-pub const SDL_SCANCODE_AGAIN: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_AGAIN as SDL_Scancode;
-pub const SDL_SCANCODE_STOP: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_STOP as SDL_Scancode;
-pub const SDL_SCANCODE_SELECT: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_SELECT as SDL_Scancode;
-pub const SDL_SCANCODE_MENU: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_MENU as SDL_Scancode;
-pub const SDL_SCANCODE_HELP: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_HELP as SDL_Scancode;
-pub const SDL_SCANCODE_EXECUTE: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_EXECUTE as SDL_Scancode;
-pub const SDL_SCANCODE_F24: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_F24 as SDL_Scancode;
-pub const SDL_SCANCODE_F23: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_F23 as SDL_Scancode;
-pub const SDL_SCANCODE_F22: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_F22 as SDL_Scancode;
-pub const SDL_SCANCODE_F21: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_F21 as SDL_Scancode;
-pub const SDL_SCANCODE_F20: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_F20 as SDL_Scancode;
-pub const SDL_SCANCODE_F19: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_F19 as SDL_Scancode;
-pub const SDL_SCANCODE_F18: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_F18 as SDL_Scancode;
-pub const SDL_SCANCODE_F17: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_F17 as SDL_Scancode;
-pub const SDL_SCANCODE_F16: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_F16 as SDL_Scancode;
-pub const SDL_SCANCODE_F15: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_F15 as SDL_Scancode;
-pub const SDL_SCANCODE_F14: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_F14 as SDL_Scancode;
-pub const SDL_SCANCODE_F13: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_F13 as SDL_Scancode;
-pub const SDL_SCANCODE_KP_EQUALS: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_EQUALS as SDL_Scancode;
-pub const SDL_SCANCODE_POWER: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_POWER as SDL_Scancode;
-pub const SDL_SCANCODE_APPLICATION: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_APPLICATION as SDL_Scancode;
-pub const SDL_SCANCODE_NONUSBACKSLASH: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_NONUSBACKSLASH as SDL_Scancode;
-pub const SDL_SCANCODE_KP_PERIOD: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_PERIOD as SDL_Scancode;
-pub const SDL_SCANCODE_KP_0: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_0 as SDL_Scancode;
-pub const SDL_SCANCODE_KP_9: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_9 as SDL_Scancode;
-pub const SDL_SCANCODE_KP_8: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_8 as SDL_Scancode;
-pub const SDL_SCANCODE_KP_7: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_7 as SDL_Scancode;
-pub const SDL_SCANCODE_KP_6: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_6 as SDL_Scancode;
-pub const SDL_SCANCODE_KP_5: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_5 as SDL_Scancode;
-pub const SDL_SCANCODE_KP_4: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_4 as SDL_Scancode;
-pub const SDL_SCANCODE_KP_3: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_3 as SDL_Scancode;
-pub const SDL_SCANCODE_KP_2: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_2 as SDL_Scancode;
-pub const SDL_SCANCODE_KP_1: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_1 as SDL_Scancode;
-pub const SDL_SCANCODE_KP_ENTER: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_ENTER as SDL_Scancode;
-pub const SDL_SCANCODE_KP_PLUS: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_PLUS as SDL_Scancode;
-pub const SDL_SCANCODE_KP_MINUS: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_MINUS as SDL_Scancode;
-pub const SDL_SCANCODE_KP_MULTIPLY: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_MULTIPLY as SDL_Scancode;
-pub const SDL_SCANCODE_KP_DIVIDE: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_KP_DIVIDE as SDL_Scancode;
-pub const SDL_SCANCODE_NUMLOCKCLEAR: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_NUMLOCKCLEAR as SDL_Scancode;
-pub const SDL_SCANCODE_UP: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_UP as SDL_Scancode;
-pub const SDL_SCANCODE_DOWN: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_DOWN as SDL_Scancode;
-pub const SDL_SCANCODE_LEFT: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_LEFT as SDL_Scancode;
-pub const SDL_SCANCODE_RIGHT: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_RIGHT as SDL_Scancode;
-pub const SDL_SCANCODE_PAGEDOWN: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_PAGEDOWN as SDL_Scancode;
-pub const SDL_SCANCODE_END: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_END as SDL_Scancode;
-pub const SDL_SCANCODE_DELETE: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_DELETE as SDL_Scancode;
-pub const SDL_SCANCODE_PAGEUP: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_PAGEUP as SDL_Scancode;
-pub const SDL_SCANCODE_HOME: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_HOME as SDL_Scancode;
-pub const SDL_SCANCODE_INSERT: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_INSERT as SDL_Scancode;
-pub const SDL_SCANCODE_PAUSE: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_PAUSE as SDL_Scancode;
-pub const SDL_SCANCODE_SCROLLLOCK: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_SCROLLLOCK as SDL_Scancode;
-pub const SDL_SCANCODE_PRINTSCREEN: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_PRINTSCREEN as SDL_Scancode;
-pub const SDL_SCANCODE_F12: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_F12 as SDL_Scancode;
-pub const SDL_SCANCODE_F11: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_F11 as SDL_Scancode;
-pub const SDL_SCANCODE_F10: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_F10 as SDL_Scancode;
-pub const SDL_SCANCODE_F9: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_F9 as SDL_Scancode;
-pub const SDL_SCANCODE_F8: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_F8 as SDL_Scancode;
-pub const SDL_SCANCODE_F7: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_F7 as SDL_Scancode;
-pub const SDL_SCANCODE_F6: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_F6 as SDL_Scancode;
-pub const SDL_SCANCODE_F5: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_F5 as SDL_Scancode;
-pub const SDL_SCANCODE_F4: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_F4 as SDL_Scancode;
-pub const SDL_SCANCODE_F3: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_F3 as SDL_Scancode;
-pub const SDL_SCANCODE_F2: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_F2 as SDL_Scancode;
-pub const SDL_SCANCODE_F1: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_F1 as SDL_Scancode;
-pub const SDL_SCANCODE_CAPSLOCK: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_CAPSLOCK as SDL_Scancode;
-pub const SDL_SCANCODE_SLASH: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_SLASH as SDL_Scancode;
-pub const SDL_SCANCODE_PERIOD: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_PERIOD as SDL_Scancode;
-pub const SDL_SCANCODE_COMMA: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_COMMA as SDL_Scancode;
-pub const SDL_SCANCODE_GRAVE: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_GRAVE as SDL_Scancode;
-pub const SDL_SCANCODE_APOSTROPHE: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_APOSTROPHE as SDL_Scancode;
-pub const SDL_SCANCODE_SEMICOLON: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_SEMICOLON as SDL_Scancode;
-pub const SDL_SCANCODE_NONUSHASH: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_NONUSHASH as SDL_Scancode;
-pub const SDL_SCANCODE_BACKSLASH: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_BACKSLASH as SDL_Scancode;
-pub const SDL_SCANCODE_RIGHTBRACKET: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_RIGHTBRACKET as SDL_Scancode;
-pub const SDL_SCANCODE_LEFTBRACKET: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_LEFTBRACKET as SDL_Scancode;
-pub const SDL_SCANCODE_EQUALS: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_EQUALS as SDL_Scancode;
-pub const SDL_SCANCODE_MINUS: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_MINUS as SDL_Scancode;
-pub const SDL_SCANCODE_SPACE: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_SPACE as SDL_Scancode;
-pub const SDL_SCANCODE_TAB: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_TAB as SDL_Scancode;
-pub const SDL_SCANCODE_BACKSPACE: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_BACKSPACE as SDL_Scancode;
-pub const SDL_SCANCODE_ESCAPE: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_ESCAPE as SDL_Scancode;
-pub const SDL_SCANCODE_RETURN: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_RETURN as SDL_Scancode;
-pub const SDL_SCANCODE_0: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_0 as SDL_Scancode;
-pub const SDL_SCANCODE_9: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_9 as SDL_Scancode;
-pub const SDL_SCANCODE_8: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_8 as SDL_Scancode;
-pub const SDL_SCANCODE_7: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_7 as SDL_Scancode;
-pub const SDL_SCANCODE_6: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_6 as SDL_Scancode;
-pub const SDL_SCANCODE_5: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_5 as SDL_Scancode;
-pub const SDL_SCANCODE_4: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_4 as SDL_Scancode;
-pub const SDL_SCANCODE_3: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_3 as SDL_Scancode;
-pub const SDL_SCANCODE_2: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_2 as SDL_Scancode;
-pub const SDL_SCANCODE_1: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_1 as SDL_Scancode;
-pub const SDL_SCANCODE_Z: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_Z as SDL_Scancode;
-pub const SDL_SCANCODE_Y: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_Y as SDL_Scancode;
-pub const SDL_SCANCODE_X: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_X as SDL_Scancode;
-pub const SDL_SCANCODE_W: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_W as SDL_Scancode;
-pub const SDL_SCANCODE_V: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_V as SDL_Scancode;
-pub const SDL_SCANCODE_U: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_U as SDL_Scancode;
-pub const SDL_SCANCODE_T: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_T as SDL_Scancode;
-pub const SDL_SCANCODE_S: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_S as SDL_Scancode;
-pub const SDL_SCANCODE_R: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_R as SDL_Scancode;
-pub const SDL_SCANCODE_Q: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_Q as SDL_Scancode;
-pub const SDL_SCANCODE_P: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_P as SDL_Scancode;
-pub const SDL_SCANCODE_O: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_O as SDL_Scancode;
-pub const SDL_SCANCODE_N: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_N as SDL_Scancode;
-pub const SDL_SCANCODE_M: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_M as SDL_Scancode;
-pub const SDL_SCANCODE_L: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_L as SDL_Scancode;
-pub const SDL_SCANCODE_K: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_K as SDL_Scancode;
-pub const SDL_SCANCODE_J: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_J as SDL_Scancode;
-pub const SDL_SCANCODE_I: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_I as SDL_Scancode;
-pub const SDL_SCANCODE_H: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_H as SDL_Scancode;
-pub const SDL_SCANCODE_G: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_G as SDL_Scancode;
-pub const SDL_SCANCODE_F: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_F as SDL_Scancode;
-pub const SDL_SCANCODE_E: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_E as SDL_Scancode;
-pub const SDL_SCANCODE_D: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_D as SDL_Scancode;
-pub const SDL_SCANCODE_C: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_C as SDL_Scancode;
-pub const SDL_SCANCODE_B: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_B as SDL_Scancode;
-pub const SDL_SCANCODE_A: SDL_Scancode = sdl2_sys::SDL_Scancode::SDL_SCANCODE_A as SDL_Scancode;
-pub const SDL_SCANCODE_UNKNOWN: SDL_Scancode =
-    sdl2_sys::SDL_Scancode::SDL_SCANCODE_UNKNOWN as SDL_Scancode;
+sdl_constants! {
+    SDL_Scancode as SDL_Scancode;
+    SDL_NUM_SCANCODES, SDL_SCANCODE_ENDCALL, SDL_SCANCODE_CALL, SDL_SCANCODE_SOFTRIGHT,
+    SDL_SCANCODE_SOFTLEFT, SDL_SCANCODE_AUDIOFASTFORWARD, SDL_SCANCODE_AUDIOREWIND,
+    SDL_SCANCODE_APP2, SDL_SCANCODE_APP1, SDL_SCANCODE_SLEEP, SDL_SCANCODE_EJECT,
+    SDL_SCANCODE_KBDILLUMUP, SDL_SCANCODE_KBDILLUMDOWN, SDL_SCANCODE_KBDILLUMTOGGLE,
+    SDL_SCANCODE_DISPLAYSWITCH, SDL_SCANCODE_BRIGHTNESSUP, SDL_SCANCODE_BRIGHTNESSDOWN,
+    SDL_SCANCODE_AC_BOOKMARKS, SDL_SCANCODE_AC_REFRESH, SDL_SCANCODE_AC_STOP,
+    SDL_SCANCODE_AC_FORWARD, SDL_SCANCODE_AC_BACK, SDL_SCANCODE_AC_HOME, SDL_SCANCODE_AC_SEARCH,
+    SDL_SCANCODE_COMPUTER, SDL_SCANCODE_CALCULATOR, SDL_SCANCODE_MAIL, SDL_SCANCODE_WWW,
+    SDL_SCANCODE_MEDIASELECT, SDL_SCANCODE_AUDIOMUTE, SDL_SCANCODE_AUDIOPLAY,
+    SDL_SCANCODE_AUDIOSTOP, SDL_SCANCODE_AUDIOPREV, SDL_SCANCODE_AUDIONEXT, SDL_SCANCODE_MODE,
+    SDL_SCANCODE_RGUI, SDL_SCANCODE_RALT, SDL_SCANCODE_RSHIFT, SDL_SCANCODE_RCTRL,
+    SDL_SCANCODE_LGUI, SDL_SCANCODE_LALT, SDL_SCANCODE_LSHIFT, SDL_SCANCODE_LCTRL,
+    SDL_SCANCODE_KP_HEXADECIMAL, SDL_SCANCODE_KP_DECIMAL, SDL_SCANCODE_KP_OCTAL,
+    SDL_SCANCODE_KP_BINARY, SDL_SCANCODE_KP_CLEARENTRY, SDL_SCANCODE_KP_CLEAR,
+    SDL_SCANCODE_KP_PLUSMINUS, SDL_SCANCODE_KP_MEMDIVIDE, SDL_SCANCODE_KP_MEMMULTIPLY,
+    SDL_SCANCODE_KP_MEMSUBTRACT, SDL_SCANCODE_KP_MEMADD, SDL_SCANCODE_KP_MEMCLEAR,
+    SDL_SCANCODE_KP_MEMRECALL, SDL_SCANCODE_KP_MEMSTORE, SDL_SCANCODE_KP_EXCLAM,
+    SDL_SCANCODE_KP_AT, SDL_SCANCODE_KP_SPACE, SDL_SCANCODE_KP_HASH, SDL_SCANCODE_KP_COLON,
+    SDL_SCANCODE_KP_DBLVERTICALBAR, SDL_SCANCODE_KP_VERTICALBAR, SDL_SCANCODE_KP_DBLAMPERSAND,
+    SDL_SCANCODE_KP_AMPERSAND, SDL_SCANCODE_KP_GREATER, SDL_SCANCODE_KP_LESS,
+    SDL_SCANCODE_KP_PERCENT, SDL_SCANCODE_KP_POWER, SDL_SCANCODE_KP_XOR, SDL_SCANCODE_KP_F,
+    SDL_SCANCODE_KP_E, SDL_SCANCODE_KP_D, SDL_SCANCODE_KP_C, SDL_SCANCODE_KP_B,
+    SDL_SCANCODE_KP_A, SDL_SCANCODE_KP_BACKSPACE, SDL_SCANCODE_KP_TAB,
+    SDL_SCANCODE_KP_RIGHTBRACE, SDL_SCANCODE_KP_LEFTBRACE, SDL_SCANCODE_KP_RIGHTPAREN,
+    SDL_SCANCODE_KP_LEFTPAREN, SDL_SCANCODE_CURRENCYSUBUNIT, SDL_SCANCODE_CURRENCYUNIT,
+    SDL_SCANCODE_DECIMALSEPARATOR, SDL_SCANCODE_THOUSANDSSEPARATOR, SDL_SCANCODE_KP_000,
+    SDL_SCANCODE_KP_00, SDL_SCANCODE_EXSEL, SDL_SCANCODE_CRSEL, SDL_SCANCODE_CLEARAGAIN,
+    SDL_SCANCODE_OPER, SDL_SCANCODE_OUT, SDL_SCANCODE_SEPARATOR, SDL_SCANCODE_RETURN2,
+    SDL_SCANCODE_PRIOR, SDL_SCANCODE_CLEAR, SDL_SCANCODE_CANCEL, SDL_SCANCODE_SYSREQ,
+    SDL_SCANCODE_ALTERASE, SDL_SCANCODE_LANG9, SDL_SCANCODE_LANG8, SDL_SCANCODE_LANG7,
+    SDL_SCANCODE_LANG6, SDL_SCANCODE_LANG5, SDL_SCANCODE_LANG4, SDL_SCANCODE_LANG3,
+    SDL_SCANCODE_LANG2, SDL_SCANCODE_LANG1, SDL_SCANCODE_INTERNATIONAL9,
+    SDL_SCANCODE_INTERNATIONAL8, SDL_SCANCODE_INTERNATIONAL7, SDL_SCANCODE_INTERNATIONAL6,
+    SDL_SCANCODE_INTERNATIONAL5, SDL_SCANCODE_INTERNATIONAL4, SDL_SCANCODE_INTERNATIONAL3,
+    SDL_SCANCODE_INTERNATIONAL2, SDL_SCANCODE_INTERNATIONAL1, SDL_SCANCODE_KP_EQUALSAS400,
+    SDL_SCANCODE_KP_COMMA, SDL_SCANCODE_VOLUMEDOWN, SDL_SCANCODE_VOLUMEUP, SDL_SCANCODE_MUTE,
+    SDL_SCANCODE_FIND, SDL_SCANCODE_PASTE, SDL_SCANCODE_COPY, SDL_SCANCODE_CUT,
+    SDL_SCANCODE_UNDO, SDL_SCANCODE_AGAIN, SDL_SCANCODE_STOP, SDL_SCANCODE_SELECT,
+    SDL_SCANCODE_MENU, SDL_SCANCODE_HELP, SDL_SCANCODE_EXECUTE, SDL_SCANCODE_F24,
+    SDL_SCANCODE_F23, SDL_SCANCODE_F22, SDL_SCANCODE_F21, SDL_SCANCODE_F20, SDL_SCANCODE_F19,
+    SDL_SCANCODE_F18, SDL_SCANCODE_F17, SDL_SCANCODE_F16, SDL_SCANCODE_F15, SDL_SCANCODE_F14,
+    SDL_SCANCODE_F13, SDL_SCANCODE_KP_EQUALS, SDL_SCANCODE_POWER, SDL_SCANCODE_APPLICATION,
+    SDL_SCANCODE_NONUSBACKSLASH, SDL_SCANCODE_KP_PERIOD, SDL_SCANCODE_KP_0, SDL_SCANCODE_KP_9,
+    SDL_SCANCODE_KP_8, SDL_SCANCODE_KP_7, SDL_SCANCODE_KP_6, SDL_SCANCODE_KP_5,
+    SDL_SCANCODE_KP_4, SDL_SCANCODE_KP_3, SDL_SCANCODE_KP_2, SDL_SCANCODE_KP_1,
+    SDL_SCANCODE_KP_ENTER, SDL_SCANCODE_KP_PLUS, SDL_SCANCODE_KP_MINUS,
+    SDL_SCANCODE_KP_MULTIPLY, SDL_SCANCODE_KP_DIVIDE, SDL_SCANCODE_NUMLOCKCLEAR,
+    SDL_SCANCODE_UP, SDL_SCANCODE_DOWN, SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT,
+    SDL_SCANCODE_PAGEDOWN, SDL_SCANCODE_END, SDL_SCANCODE_DELETE, SDL_SCANCODE_PAGEUP,
+    SDL_SCANCODE_HOME, SDL_SCANCODE_INSERT, SDL_SCANCODE_PAUSE, SDL_SCANCODE_SCROLLLOCK,
+    SDL_SCANCODE_PRINTSCREEN, SDL_SCANCODE_F12, SDL_SCANCODE_F11, SDL_SCANCODE_F10,
+    SDL_SCANCODE_F9, SDL_SCANCODE_F8, SDL_SCANCODE_F7, SDL_SCANCODE_F6, SDL_SCANCODE_F5,
+    SDL_SCANCODE_F4, SDL_SCANCODE_F3, SDL_SCANCODE_F2, SDL_SCANCODE_F1, SDL_SCANCODE_CAPSLOCK,
+    SDL_SCANCODE_SLASH, SDL_SCANCODE_PERIOD, SDL_SCANCODE_COMMA, SDL_SCANCODE_GRAVE,
+    SDL_SCANCODE_APOSTROPHE, SDL_SCANCODE_SEMICOLON, SDL_SCANCODE_NONUSHASH,
+    SDL_SCANCODE_BACKSLASH, SDL_SCANCODE_RIGHTBRACKET, SDL_SCANCODE_LEFTBRACKET,
+    SDL_SCANCODE_EQUALS, SDL_SCANCODE_MINUS, SDL_SCANCODE_SPACE, SDL_SCANCODE_TAB,
+    SDL_SCANCODE_BACKSPACE, SDL_SCANCODE_ESCAPE, SDL_SCANCODE_RETURN, SDL_SCANCODE_0,
+    SDL_SCANCODE_9, SDL_SCANCODE_8, SDL_SCANCODE_7, SDL_SCANCODE_6, SDL_SCANCODE_5,
+    SDL_SCANCODE_4, SDL_SCANCODE_3, SDL_SCANCODE_2, SDL_SCANCODE_1, SDL_SCANCODE_Z,
+    SDL_SCANCODE_Y, SDL_SCANCODE_X, SDL_SCANCODE_W, SDL_SCANCODE_V, SDL_SCANCODE_U,
+    SDL_SCANCODE_T, SDL_SCANCODE_S, SDL_SCANCODE_R, SDL_SCANCODE_Q, SDL_SCANCODE_P,
+    SDL_SCANCODE_O, SDL_SCANCODE_N, SDL_SCANCODE_M, SDL_SCANCODE_L, SDL_SCANCODE_K,
+    SDL_SCANCODE_J, SDL_SCANCODE_I, SDL_SCANCODE_H, SDL_SCANCODE_G, SDL_SCANCODE_F,
+    SDL_SCANCODE_E, SDL_SCANCODE_D, SDL_SCANCODE_C, SDL_SCANCODE_B, SDL_SCANCODE_A,
+    SDL_SCANCODE_UNKNOWN,
+}
 pub use sm::types::{SDL_Keycode, SDL_Keymod};
 pub const KMOD_RESERVED: SDL_Keymod = 32768;
-pub const KMOD_GUI: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_GUI as SDL_Keymod;
-pub const KMOD_ALT: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_ALT as SDL_Keymod;
-pub const KMOD_SHIFT: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_SHIFT as SDL_Keymod;
-pub const KMOD_CTRL: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_CTRL as SDL_Keymod;
-pub const KMOD_SCROLL: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_SCROLL as SDL_Keymod;
-pub const KMOD_MODE: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_MODE as SDL_Keymod;
-pub const KMOD_CAPS: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_CAPS as SDL_Keymod;
-pub const KMOD_NUM: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_NUM as SDL_Keymod;
-pub const KMOD_RGUI: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_RGUI as SDL_Keymod;
-pub const KMOD_LGUI: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_LGUI as SDL_Keymod;
-pub const KMOD_RALT: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_RALT as SDL_Keymod;
-pub const KMOD_LALT: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_LALT as SDL_Keymod;
-pub const KMOD_RCTRL: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_RCTRL as SDL_Keymod;
-pub const KMOD_LCTRL: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_LCTRL as SDL_Keymod;
-pub const KMOD_RSHIFT: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_RSHIFT as SDL_Keymod;
-pub const KMOD_LSHIFT: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_LSHIFT as SDL_Keymod;
-pub const KMOD_NONE: SDL_Keymod = sdl2_sys::SDL_Keymod::KMOD_NONE as SDL_Keymod;
+sdl_constants! {
+    SDL_Keymod as SDL_Keymod;
+    KMOD_GUI, KMOD_ALT, KMOD_SHIFT, KMOD_CTRL, KMOD_SCROLL, KMOD_MODE, KMOD_CAPS, KMOD_NUM,
+    KMOD_RGUI, KMOD_LGUI, KMOD_RALT, KMOD_LALT, KMOD_RCTRL, KMOD_LCTRL, KMOD_RSHIFT,
+    KMOD_LSHIFT, KMOD_NONE,
+}
 pub use sm::types::{SDL_JoystickID, SDL_JoystickPowerLevel};
-pub const SDL_JOYSTICK_POWER_MAX: SDL_JoystickPowerLevel =
-    sdl2_sys::SDL_JoystickPowerLevel::SDL_JOYSTICK_POWER_MAX as SDL_JoystickPowerLevel;
-pub const SDL_JOYSTICK_POWER_WIRED: SDL_JoystickPowerLevel =
-    sdl2_sys::SDL_JoystickPowerLevel::SDL_JOYSTICK_POWER_WIRED as SDL_JoystickPowerLevel;
-pub const SDL_JOYSTICK_POWER_FULL: SDL_JoystickPowerLevel =
-    sdl2_sys::SDL_JoystickPowerLevel::SDL_JOYSTICK_POWER_FULL as SDL_JoystickPowerLevel;
-pub const SDL_JOYSTICK_POWER_MEDIUM: SDL_JoystickPowerLevel =
-    sdl2_sys::SDL_JoystickPowerLevel::SDL_JOYSTICK_POWER_MEDIUM as SDL_JoystickPowerLevel;
-pub const SDL_JOYSTICK_POWER_LOW: SDL_JoystickPowerLevel =
-    sdl2_sys::SDL_JoystickPowerLevel::SDL_JOYSTICK_POWER_LOW as SDL_JoystickPowerLevel;
-pub const SDL_JOYSTICK_POWER_EMPTY: SDL_JoystickPowerLevel =
-    sdl2_sys::SDL_JoystickPowerLevel::SDL_JOYSTICK_POWER_EMPTY as SDL_JoystickPowerLevel;
-pub const SDL_JOYSTICK_POWER_UNKNOWN: SDL_JoystickPowerLevel =
-    sdl2_sys::SDL_JoystickPowerLevel::SDL_JOYSTICK_POWER_UNKNOWN as SDL_JoystickPowerLevel;
+sdl_constants! {
+    SDL_JoystickPowerLevel as SDL_JoystickPowerLevel;
+    SDL_JOYSTICK_POWER_MAX, SDL_JOYSTICK_POWER_WIRED, SDL_JOYSTICK_POWER_FULL,
+    SDL_JOYSTICK_POWER_MEDIUM, SDL_JOYSTICK_POWER_LOW, SDL_JOYSTICK_POWER_EMPTY,
+    SDL_JOYSTICK_POWER_UNKNOWN,
+}
 pub type C2RustUnnamed_1 = i32;
-pub const SDL_CONTROLLER_AXIS_MAX: C2RustUnnamed_1 =
-    sdl2_sys::SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_MAX as C2RustUnnamed_1;
-pub const SDL_CONTROLLER_AXIS_TRIGGERRIGHT: C2RustUnnamed_1 =
-    sdl2_sys::SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_TRIGGERRIGHT as C2RustUnnamed_1;
-pub const SDL_CONTROLLER_AXIS_TRIGGERLEFT: C2RustUnnamed_1 =
-    sdl2_sys::SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_TRIGGERLEFT as C2RustUnnamed_1;
-pub const SDL_CONTROLLER_AXIS_RIGHTY: C2RustUnnamed_1 =
-    sdl2_sys::SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_RIGHTY as C2RustUnnamed_1;
-pub const SDL_CONTROLLER_AXIS_RIGHTX: C2RustUnnamed_1 =
-    sdl2_sys::SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_RIGHTX as C2RustUnnamed_1;
-pub const SDL_CONTROLLER_AXIS_LEFTY: C2RustUnnamed_1 =
-    sdl2_sys::SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_LEFTY as C2RustUnnamed_1;
-pub const SDL_CONTROLLER_AXIS_LEFTX: C2RustUnnamed_1 =
-    sdl2_sys::SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_LEFTX as C2RustUnnamed_1;
-pub const SDL_CONTROLLER_AXIS_INVALID: C2RustUnnamed_1 =
-    sdl2_sys::SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_INVALID as C2RustUnnamed_1;
+sdl_constants! {
+    SDL_GameControllerAxis as C2RustUnnamed_1;
+    SDL_CONTROLLER_AXIS_MAX, SDL_CONTROLLER_AXIS_TRIGGERRIGHT, SDL_CONTROLLER_AXIS_TRIGGERLEFT,
+    SDL_CONTROLLER_AXIS_RIGHTY, SDL_CONTROLLER_AXIS_RIGHTX, SDL_CONTROLLER_AXIS_LEFTY,
+    SDL_CONTROLLER_AXIS_LEFTX, SDL_CONTROLLER_AXIS_INVALID,
+}
 pub type C2RustUnnamed_2 = i32;
-pub const SDL_CONTROLLER_BUTTON_MAX: C2RustUnnamed_2 =
-    sdl2_sys::SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_MAX as C2RustUnnamed_2;
-pub const SDL_CONTROLLER_BUTTON_TOUCHPAD: C2RustUnnamed_2 =
-    sdl2_sys::SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_TOUCHPAD as C2RustUnnamed_2;
-pub const SDL_CONTROLLER_BUTTON_PADDLE4: C2RustUnnamed_2 =
-    sdl2_sys::SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_PADDLE4 as C2RustUnnamed_2;
-pub const SDL_CONTROLLER_BUTTON_PADDLE3: C2RustUnnamed_2 =
-    sdl2_sys::SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_PADDLE3 as C2RustUnnamed_2;
-pub const SDL_CONTROLLER_BUTTON_PADDLE2: C2RustUnnamed_2 =
-    sdl2_sys::SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_PADDLE2 as C2RustUnnamed_2;
-pub const SDL_CONTROLLER_BUTTON_PADDLE1: C2RustUnnamed_2 =
-    sdl2_sys::SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_PADDLE1 as C2RustUnnamed_2;
-pub const SDL_CONTROLLER_BUTTON_MISC1: C2RustUnnamed_2 =
-    sdl2_sys::SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_MISC1 as C2RustUnnamed_2;
-pub const SDL_CONTROLLER_BUTTON_DPAD_RIGHT: C2RustUnnamed_2 =
-    sdl2_sys::SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_DPAD_RIGHT as C2RustUnnamed_2;
-pub const SDL_CONTROLLER_BUTTON_DPAD_LEFT: C2RustUnnamed_2 =
-    sdl2_sys::SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_DPAD_LEFT as C2RustUnnamed_2;
-pub const SDL_CONTROLLER_BUTTON_DPAD_DOWN: C2RustUnnamed_2 =
-    sdl2_sys::SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_DPAD_DOWN as C2RustUnnamed_2;
-pub const SDL_CONTROLLER_BUTTON_DPAD_UP: C2RustUnnamed_2 =
-    sdl2_sys::SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_DPAD_UP as C2RustUnnamed_2;
-pub const SDL_CONTROLLER_BUTTON_RIGHTSHOULDER: C2RustUnnamed_2 =
-    sdl2_sys::SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_RIGHTSHOULDER as C2RustUnnamed_2;
-pub const SDL_CONTROLLER_BUTTON_LEFTSHOULDER: C2RustUnnamed_2 =
-    sdl2_sys::SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_LEFTSHOULDER as C2RustUnnamed_2;
-pub const SDL_CONTROLLER_BUTTON_RIGHTSTICK: C2RustUnnamed_2 =
-    sdl2_sys::SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_RIGHTSTICK as C2RustUnnamed_2;
-pub const SDL_CONTROLLER_BUTTON_LEFTSTICK: C2RustUnnamed_2 =
-    sdl2_sys::SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_LEFTSTICK as C2RustUnnamed_2;
-pub const SDL_CONTROLLER_BUTTON_START: C2RustUnnamed_2 =
-    sdl2_sys::SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_START as C2RustUnnamed_2;
-pub const SDL_CONTROLLER_BUTTON_GUIDE: C2RustUnnamed_2 =
-    sdl2_sys::SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_GUIDE as C2RustUnnamed_2;
-pub const SDL_CONTROLLER_BUTTON_BACK: C2RustUnnamed_2 =
-    sdl2_sys::SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_BACK as C2RustUnnamed_2;
-pub const SDL_CONTROLLER_BUTTON_Y: C2RustUnnamed_2 =
-    sdl2_sys::SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_Y as C2RustUnnamed_2;
-pub const SDL_CONTROLLER_BUTTON_X: C2RustUnnamed_2 =
-    sdl2_sys::SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_X as C2RustUnnamed_2;
-pub const SDL_CONTROLLER_BUTTON_B: C2RustUnnamed_2 =
-    sdl2_sys::SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_B as C2RustUnnamed_2;
-pub const SDL_CONTROLLER_BUTTON_A: C2RustUnnamed_2 =
-    sdl2_sys::SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_A as C2RustUnnamed_2;
-pub const SDL_CONTROLLER_BUTTON_INVALID: C2RustUnnamed_2 =
-    sdl2_sys::SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_INVALID as C2RustUnnamed_2;
+sdl_constants! {
+    SDL_GameControllerButton as C2RustUnnamed_2;
+    SDL_CONTROLLER_BUTTON_MAX, SDL_CONTROLLER_BUTTON_TOUCHPAD, SDL_CONTROLLER_BUTTON_PADDLE4,
+    SDL_CONTROLLER_BUTTON_PADDLE3, SDL_CONTROLLER_BUTTON_PADDLE2, SDL_CONTROLLER_BUTTON_PADDLE1,
+    SDL_CONTROLLER_BUTTON_MISC1, SDL_CONTROLLER_BUTTON_DPAD_RIGHT,
+    SDL_CONTROLLER_BUTTON_DPAD_LEFT, SDL_CONTROLLER_BUTTON_DPAD_DOWN,
+    SDL_CONTROLLER_BUTTON_DPAD_UP, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER,
+    SDL_CONTROLLER_BUTTON_LEFTSHOULDER, SDL_CONTROLLER_BUTTON_RIGHTSTICK,
+    SDL_CONTROLLER_BUTTON_LEFTSTICK, SDL_CONTROLLER_BUTTON_START, SDL_CONTROLLER_BUTTON_GUIDE,
+    SDL_CONTROLLER_BUTTON_BACK, SDL_CONTROLLER_BUTTON_Y, SDL_CONTROLLER_BUTTON_X,
+    SDL_CONTROLLER_BUTTON_B, SDL_CONTROLLER_BUTTON_A, SDL_CONTROLLER_BUTTON_INVALID,
+}
 pub use sm::types::{SDL_FingerID, SDL_GestureID, SDL_TouchID};
 pub type C2RustUnnamed_3 = u32;
-pub const SDL_LASTEVENT: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_LASTEVENT as C2RustUnnamed_3;
-pub const SDL_USEREVENT: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_USEREVENT as C2RustUnnamed_3;
-pub const SDL_POLLSENTINEL: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_POLLSENTINEL as C2RustUnnamed_3;
-pub const SDL_RENDER_DEVICE_RESET: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_RENDER_DEVICE_RESET as C2RustUnnamed_3;
-pub const SDL_RENDER_TARGETS_RESET: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_RENDER_TARGETS_RESET as C2RustUnnamed_3;
-pub const SDL_SENSORUPDATE: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_SENSORUPDATE as C2RustUnnamed_3;
-pub const SDL_AUDIODEVICEREMOVED: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_AUDIODEVICEREMOVED as C2RustUnnamed_3;
-pub const SDL_AUDIODEVICEADDED: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_AUDIODEVICEADDED as C2RustUnnamed_3;
-pub const SDL_DROPCOMPLETE: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_DROPCOMPLETE as C2RustUnnamed_3;
-pub const SDL_DROPBEGIN: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_DROPBEGIN as C2RustUnnamed_3;
-pub const SDL_DROPTEXT: C2RustUnnamed_3 = sdl2_sys::SDL_EventType::SDL_DROPTEXT as C2RustUnnamed_3;
-pub const SDL_DROPFILE: C2RustUnnamed_3 = sdl2_sys::SDL_EventType::SDL_DROPFILE as C2RustUnnamed_3;
-pub const SDL_CLIPBOARDUPDATE: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_CLIPBOARDUPDATE as C2RustUnnamed_3;
-pub const SDL_MULTIGESTURE: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_MULTIGESTURE as C2RustUnnamed_3;
-pub const SDL_DOLLARRECORD: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_DOLLARRECORD as C2RustUnnamed_3;
-pub const SDL_DOLLARGESTURE: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_DOLLARGESTURE as C2RustUnnamed_3;
-pub const SDL_FINGERMOTION: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_FINGERMOTION as C2RustUnnamed_3;
-pub const SDL_FINGERUP: C2RustUnnamed_3 = sdl2_sys::SDL_EventType::SDL_FINGERUP as C2RustUnnamed_3;
-pub const SDL_FINGERDOWN: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_FINGERDOWN as C2RustUnnamed_3;
+sdl_constants! {
+    SDL_EventType as C2RustUnnamed_3;
+    SDL_LASTEVENT, SDL_USEREVENT, SDL_POLLSENTINEL, SDL_RENDER_DEVICE_RESET,
+    SDL_RENDER_TARGETS_RESET, SDL_SENSORUPDATE, SDL_AUDIODEVICEREMOVED, SDL_AUDIODEVICEADDED,
+    SDL_DROPCOMPLETE, SDL_DROPBEGIN, SDL_DROPTEXT, SDL_DROPFILE, SDL_CLIPBOARDUPDATE,
+    SDL_MULTIGESTURE, SDL_DOLLARRECORD, SDL_DOLLARGESTURE, SDL_FINGERMOTION, SDL_FINGERUP,
+    SDL_FINGERDOWN,
+}
 pub const SDL_CONTROLLERSTEAMHANDLEUPDATED: C2RustUnnamed_3 = 1627;
 pub const SDL_CONTROLLERUPDATECOMPLETE_RESERVED_FOR_SDL3: C2RustUnnamed_3 = 1626;
-pub const SDL_CONTROLLERSENSORUPDATE: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_CONTROLLERSENSORUPDATE as C2RustUnnamed_3;
-pub const SDL_CONTROLLERTOUCHPADUP: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_CONTROLLERTOUCHPADUP as C2RustUnnamed_3;
-pub const SDL_CONTROLLERTOUCHPADMOTION: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_CONTROLLERTOUCHPADMOTION as C2RustUnnamed_3;
-pub const SDL_CONTROLLERTOUCHPADDOWN: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_CONTROLLERTOUCHPADDOWN as C2RustUnnamed_3;
-pub const SDL_CONTROLLERDEVICEREMAPPED: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_CONTROLLERDEVICEREMAPPED as C2RustUnnamed_3;
-pub const SDL_CONTROLLERDEVICEREMOVED: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_CONTROLLERDEVICEREMOVED as C2RustUnnamed_3;
-pub const SDL_CONTROLLERDEVICEADDED: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_CONTROLLERDEVICEADDED as C2RustUnnamed_3;
-pub const SDL_CONTROLLERBUTTONUP: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_CONTROLLERBUTTONUP as C2RustUnnamed_3;
-pub const SDL_CONTROLLERBUTTONDOWN: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_CONTROLLERBUTTONDOWN as C2RustUnnamed_3;
-pub const SDL_CONTROLLERAXISMOTION: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_CONTROLLERAXISMOTION as C2RustUnnamed_3;
-pub const SDL_JOYBATTERYUPDATED: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_JOYBATTERYUPDATED as C2RustUnnamed_3;
-pub const SDL_JOYDEVICEREMOVED: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_JOYDEVICEREMOVED as C2RustUnnamed_3;
-pub const SDL_JOYDEVICEADDED: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_JOYDEVICEADDED as C2RustUnnamed_3;
-pub const SDL_JOYBUTTONUP: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_JOYBUTTONUP as C2RustUnnamed_3;
-pub const SDL_JOYBUTTONDOWN: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_JOYBUTTONDOWN as C2RustUnnamed_3;
-pub const SDL_JOYHATMOTION: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_JOYHATMOTION as C2RustUnnamed_3;
-pub const SDL_JOYBALLMOTION: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_JOYBALLMOTION as C2RustUnnamed_3;
-pub const SDL_JOYAXISMOTION: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_JOYAXISMOTION as C2RustUnnamed_3;
-pub const SDL_MOUSEWHEEL: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_MOUSEWHEEL as C2RustUnnamed_3;
-pub const SDL_MOUSEBUTTONUP: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_MOUSEBUTTONUP as C2RustUnnamed_3;
-pub const SDL_MOUSEBUTTONDOWN: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_MOUSEBUTTONDOWN as C2RustUnnamed_3;
-pub const SDL_MOUSEMOTION: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_MOUSEMOTION as C2RustUnnamed_3;
-pub const SDL_TEXTEDITING_EXT: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_TEXTEDITING_EXT as C2RustUnnamed_3;
-pub const SDL_KEYMAPCHANGED: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_KEYMAPCHANGED as C2RustUnnamed_3;
-pub const SDL_TEXTINPUT: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_TEXTINPUT as C2RustUnnamed_3;
-pub const SDL_TEXTEDITING: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_TEXTEDITING as C2RustUnnamed_3;
-pub const SDL_KEYUP: C2RustUnnamed_3 = sdl2_sys::SDL_EventType::SDL_KEYUP as C2RustUnnamed_3;
-pub const SDL_KEYDOWN: C2RustUnnamed_3 = sdl2_sys::SDL_EventType::SDL_KEYDOWN as C2RustUnnamed_3;
-pub const SDL_SYSWMEVENT: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_SYSWMEVENT as C2RustUnnamed_3;
-pub const SDL_WINDOWEVENT: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_WINDOWEVENT as C2RustUnnamed_3;
-pub const SDL_DISPLAYEVENT: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_DISPLAYEVENT as C2RustUnnamed_3;
-pub const SDL_LOCALECHANGED: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_LOCALECHANGED as C2RustUnnamed_3;
-pub const SDL_APP_DIDENTERFOREGROUND: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_APP_DIDENTERFOREGROUND as C2RustUnnamed_3;
-pub const SDL_APP_WILLENTERFOREGROUND: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_APP_WILLENTERFOREGROUND as C2RustUnnamed_3;
-pub const SDL_APP_DIDENTERBACKGROUND: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_APP_DIDENTERBACKGROUND as C2RustUnnamed_3;
-pub const SDL_APP_WILLENTERBACKGROUND: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_APP_WILLENTERBACKGROUND as C2RustUnnamed_3;
-pub const SDL_APP_LOWMEMORY: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_APP_LOWMEMORY as C2RustUnnamed_3;
-pub const SDL_APP_TERMINATING: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_APP_TERMINATING as C2RustUnnamed_3;
-pub const SDL_QUIT: C2RustUnnamed_3 = sdl2_sys::SDL_EventType::SDL_QUIT as C2RustUnnamed_3;
-pub const SDL_FIRSTEVENT: C2RustUnnamed_3 =
-    sdl2_sys::SDL_EventType::SDL_FIRSTEVENT as C2RustUnnamed_3;
+sdl_constants! {
+    SDL_EventType as C2RustUnnamed_3;
+    SDL_CONTROLLERSENSORUPDATE, SDL_CONTROLLERTOUCHPADUP, SDL_CONTROLLERTOUCHPADMOTION,
+    SDL_CONTROLLERTOUCHPADDOWN, SDL_CONTROLLERDEVICEREMAPPED, SDL_CONTROLLERDEVICEREMOVED,
+    SDL_CONTROLLERDEVICEADDED, SDL_CONTROLLERBUTTONUP, SDL_CONTROLLERBUTTONDOWN,
+    SDL_CONTROLLERAXISMOTION, SDL_JOYBATTERYUPDATED, SDL_JOYDEVICEREMOVED, SDL_JOYDEVICEADDED,
+    SDL_JOYBUTTONUP, SDL_JOYBUTTONDOWN, SDL_JOYHATMOTION, SDL_JOYBALLMOTION, SDL_JOYAXISMOTION,
+    SDL_MOUSEWHEEL, SDL_MOUSEBUTTONUP, SDL_MOUSEBUTTONDOWN, SDL_MOUSEMOTION,
+    SDL_TEXTEDITING_EXT, SDL_KEYMAPCHANGED, SDL_TEXTINPUT, SDL_TEXTEDITING, SDL_KEYUP,
+    SDL_KEYDOWN, SDL_SYSWMEVENT, SDL_WINDOWEVENT, SDL_DISPLAYEVENT, SDL_LOCALECHANGED,
+    SDL_APP_DIDENTERFOREGROUND, SDL_APP_WILLENTERFOREGROUND, SDL_APP_DIDENTERBACKGROUND,
+    SDL_APP_WILLENTERBACKGROUND, SDL_APP_LOWMEMORY, SDL_APP_TERMINATING, SDL_QUIT,
+    SDL_FIRSTEVENT,
+}
 pub type C2RustUnnamed_4 = u32;
-pub const SDL_MESSAGEBOX_BUTTONS_RIGHT_TO_LEFT: C2RustUnnamed_4 =
-    sdl2_sys::SDL_MessageBoxFlags::SDL_MESSAGEBOX_BUTTONS_RIGHT_TO_LEFT as C2RustUnnamed_4;
-pub const SDL_MESSAGEBOX_BUTTONS_LEFT_TO_RIGHT: C2RustUnnamed_4 =
-    sdl2_sys::SDL_MessageBoxFlags::SDL_MESSAGEBOX_BUTTONS_LEFT_TO_RIGHT as C2RustUnnamed_4;
-pub const SDL_MESSAGEBOX_INFORMATION: C2RustUnnamed_4 =
-    sdl2_sys::SDL_MessageBoxFlags::SDL_MESSAGEBOX_INFORMATION as C2RustUnnamed_4;
-pub const SDL_MESSAGEBOX_WARNING: C2RustUnnamed_4 =
-    sdl2_sys::SDL_MessageBoxFlags::SDL_MESSAGEBOX_WARNING as C2RustUnnamed_4;
-pub const SDL_MESSAGEBOX_ERROR: C2RustUnnamed_4 =
-    sdl2_sys::SDL_MessageBoxFlags::SDL_MESSAGEBOX_ERROR as C2RustUnnamed_4;
+sdl_constants! {
+    SDL_MessageBoxFlags as C2RustUnnamed_4;
+    SDL_MESSAGEBOX_BUTTONS_RIGHT_TO_LEFT, SDL_MESSAGEBOX_BUTTONS_LEFT_TO_RIGHT,
+    SDL_MESSAGEBOX_INFORMATION, SDL_MESSAGEBOX_WARNING, SDL_MESSAGEBOX_ERROR,
+}
 pub type C2RustUnnamed_5 = u32;
-pub const SDL_RENDERER_TARGETTEXTURE: C2RustUnnamed_5 =
-    sdl2_sys::SDL_RendererFlags::SDL_RENDERER_TARGETTEXTURE as C2RustUnnamed_5;
-pub const SDL_RENDERER_PRESENTVSYNC: C2RustUnnamed_5 =
-    sdl2_sys::SDL_RendererFlags::SDL_RENDERER_PRESENTVSYNC as C2RustUnnamed_5;
-pub const SDL_RENDERER_ACCELERATED: C2RustUnnamed_5 =
-    sdl2_sys::SDL_RendererFlags::SDL_RENDERER_ACCELERATED as C2RustUnnamed_5;
-pub const SDL_RENDERER_SOFTWARE: C2RustUnnamed_5 =
-    sdl2_sys::SDL_RendererFlags::SDL_RENDERER_SOFTWARE as C2RustUnnamed_5;
+sdl_constants! {
+    SDL_RendererFlags as C2RustUnnamed_5;
+    SDL_RENDERER_TARGETTEXTURE, SDL_RENDERER_PRESENTVSYNC, SDL_RENDERER_ACCELERATED,
+    SDL_RENDERER_SOFTWARE,
+}
 pub type C2RustUnnamed_6 = u32;
-pub const SDL_TEXTUREACCESS_TARGET: C2RustUnnamed_6 =
-    sdl2_sys::SDL_TextureAccess::SDL_TEXTUREACCESS_TARGET as C2RustUnnamed_6;
-pub const SDL_TEXTUREACCESS_STREAMING: C2RustUnnamed_6 =
-    sdl2_sys::SDL_TextureAccess::SDL_TEXTUREACCESS_STREAMING as C2RustUnnamed_6;
-pub const SDL_TEXTUREACCESS_STATIC: C2RustUnnamed_6 =
-    sdl2_sys::SDL_TextureAccess::SDL_TEXTUREACCESS_STATIC as C2RustUnnamed_6;
+sdl_constants! {
+    SDL_TextureAccess as C2RustUnnamed_6;
+    SDL_TEXTUREACCESS_TARGET, SDL_TEXTUREACCESS_STREAMING, SDL_TEXTUREACCESS_STATIC,
+}
 pub use sm::types::{
     Apu, ApuHistory as C2RustUnnamed_7, BgLayer, Cart, Cpu, Dma, DmaChannel, Dsp, DspChannel,
     DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs, PpuZbufType, Snes, Spc, Timer,

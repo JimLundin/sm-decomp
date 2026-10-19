@@ -91,6 +91,7 @@ pub mod snes {
 pub mod platform {
     pub mod glsl_shader;
     pub mod opengl;
+    mod sdl_constants;
 }
 
 pub(crate) mod audio_snapshot;
