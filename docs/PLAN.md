@@ -31,6 +31,25 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+CPU opcode table (2026-10-20): one private macro shares all 177 repeated
+address-resolution and memory-operation arms. All 255 outer patterns retain
+their order, including 78 special cases and the fallback. Opcode hooks,
+early returns, carries, evaluation order and existing scopes remain exact.
+No runtime helper, borrow or unsafe operation is introduced.
+
+Independent full-source reconstruction passes; all 88 other CPU functions
+are unchanged. Actual library compiler output on string-table base 7f5e6f1c
+is byte-identical after removing only the exact added macro definition:
+all 10276725 remaining bytes match, with no other normalization.
+
+Net Rust lines -429, to 138119; every other progress counter is unchanged.
+Formatting/check, normal release (23.93s), progress and full any% pass:
+129712/0 (108.11s replay, 108.26s wall), native exit 0. All 75 final
+source/config/host inputs and 81 replay pins remain fixed. This final run
+includes the committed string tables; the earlier CPU-only run retains its
+older source binding. Continue substantial shared implementations;
+broader readability and boot-to-credits remain open.
+
 Immutable string-pointer tables (2026-10-20): all four existing tables
 share a literal-only declaration macro. The three opcode-format tables and
 seven bug-save paths retain all 775 ordered slots: 531 exact NUL-terminated
