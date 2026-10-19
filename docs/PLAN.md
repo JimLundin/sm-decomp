@@ -12161,6 +12161,28 @@ earlier store-order claims; zero-scratch kernels do not prove unconditional
 intermediate write equivalence. No maintained Rust/residue changes or
 ROM-derived assets committed by this review.
 
+Independent full Waver rendering replay (2026-10-19).
+Frozen d30d431e baseline prefix28500/71 (53.61s), nativeexit1, reproduces
+72 raw9100..92CD table-difference frames,40 window-difference frames and
+71 rendered failures. First28228 remains pixel255,223 green00/84.
+Independent in-place prototype prefix28500/0 (57.56s), nativeexit0,
+has zero raw table/window differences. Actual ROM kernel versus prototype
+passes9160 final-table cases: eight origins, every even start2..458 and five
+gradient pairs. This excludes start0, scratch aliasing and exact store vectors.
+
+Separately frozen peer sm_91.rs with d30d431e host/core passes complete
+Waver58109/0 (119.79s), nativeexit0, and any%129712/0 (246.40s),
+nativeexit0. Read-only checks find zero raw9100..92CD table differences and
+zero window1left/right differences on both full replays. These results prove
+this frozen candidate removes the71 Waver pixel failures on this route;
+other caller/scratch/alias cases and current integration remain separate.
+No mask was removed and all existing rendering/RAM/audio comparisons stay
+enabled. Cargo fmt/check, release and progress pass. No maintained source or
+own residue changes. Quality session owns the source fix and poisoned-scratch
+intermediate-store classification; its uncommitted edits are not staged here.
+Independent prototypes/ROM inputs remain ignored. Full gameplay/credits,
+hardware/audio, masked RAM and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
