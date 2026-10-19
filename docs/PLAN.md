@@ -10892,6 +10892,23 @@ outside this replay. Rust lines -9; other own counters unchanged. Prior
 holds and complete gameplay/render/audio remain open. Continue covered CPU
 cleanup.
 
+CPU shared BIT/load operand reads (2026-10-19): test_accumulator_bits and
+load_register reuse read_operand for captured-width reads and word cycles.
+BIT passes captured width to its safe flag helper; byte accumulator loads
+capture the preserved upper byte before the bus read, then retain live-width
+final flags. Frozen `37a6c000` plus this change passes 71,827,456 actual
+old/current wrapper comparisons covering every byte operand/register word
+and sampled word flag/boundary cases for BIT and A/X/Y loads. Named CPU/bus
+state and cycles match; static-WRAM cases do not exhaust MMIO. Prefix
+3,600/0 (0.98s), native exit 0, executes word/byte counts BIT 23,474/6,698,
+A loads 990,782/420,817, X loads 171,669/246,437 and Y loads 36,080/19,911.
+Clean full any% passes 129,712/0 (48.03s), native exit 0. Cargo fmt/check,
+full release/release-library builds with external SDL2, normal metadata and
+frozen optimized core/DLL pass. Live CPU matches verified source; peer PPU
+work is outside this replay. Rust lines -5; other own counters unchanged.
+Prior holds and complete gameplay/render/audio remain open. Continue covered
+CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

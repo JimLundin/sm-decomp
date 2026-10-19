@@ -648,14 +648,9 @@ fn test_bits(value: u16, byte: bool, cpu: &mut Cpu) {
     cpu.v = value & if byte { 0x40 } else { 0x4000 } != 0;
 }
 unsafe fn test_accumulator_bits(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
-    if (*cpu).mf {
-        let value = u16::from(read_byte(cpu, low, game));
-        test_bits(value, true, &mut *cpu);
-    } else {
-        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        let value = read_word(cpu, low, high, game);
-        test_bits(value, false, &mut *cpu);
-    }
+    let byte = (*cpu).mf;
+    let value = read_operand(cpu, low, high, byte, game);
+    test_bits(value, byte, &mut *cpu);
 }
 unsafe fn load_register(
     cpu: *mut Cpu,
@@ -664,13 +659,13 @@ unsafe fn load_register(
     register: CpuRegister,
     game: &mut Game,
 ) {
-    let value = if register.byte(&*cpu) {
-        let upper = register.byte_load_upper(&*cpu);
-        upper | u16::from(read_byte(cpu, low, game))
+    let byte = register.byte(&*cpu);
+    let upper = if byte {
+        register.byte_load_upper(&*cpu)
     } else {
-        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        read_word(cpu, low, high, game)
+        0
     };
+    let value = upper | read_operand(cpu, low, high, byte, game);
     register.load(value, &mut *cpu);
 }
 unsafe fn pull_register(cpu: *mut Cpu, register: CpuRegister, game: &mut Game) {
