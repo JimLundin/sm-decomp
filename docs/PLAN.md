@@ -11070,6 +11070,18 @@ source; peer PPU work is outside this replay. Rust lines +2 provide the
 shared safe calculation; other own counters unchanged. Prior holds and
 complete gameplay/render/audio remain open. Continue covered CPU cleanup.
 
+Independent lower99BD continuation audit (2026-10-19): retained
+map-lower99bd-exit passes 77,950/71 (154.76s), native exit 1. The actual
+read-only failure-counter replay matches all 71 ordered baseline failed
+frames exactly with rendering enabled. Its first 77,720 inputs equal
+map-waver-low-door; the final state is still room 99BD, X37/Y1243,
+pose 008A, missiles 1/10 and equipment 1004. This substantiates the longer
+prefix without claiming an additional room, item or boss. No gameplay,
+RAM or inventory writes are introduced. The frozen route core excludes
+concurrent CPU, PPU and render-initialization changes; their owners retain
+integration verification. Continue the coordinated lower-shaft route,
+respecting the existing upper99BD and ammunition holds. Credits remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
