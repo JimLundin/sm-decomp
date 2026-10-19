@@ -1730,16 +1730,16 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `ea204f0d` passes
-uninterrupted full boot any% 129712/0 (177.75s) and Speed Booster
-148406/0 (228.35s), native exits 0. All 74 source/configuration/host/
-progress inputs match that commit. This adds the shared Mode7 sampling helper
-to the reviewed families below. Later projectile, parenthesis and hardware
-work retains its own checks outside this snapshot.
+Latest reviewed integration (2026-10-19): frozen `f4a042af` passes
+uninterrupted full boot any% 129712/0 (209.79s) and Speed Booster
+148406/0 (263.97s), native exits 0. All 74 source/configuration/host/
+progress inputs match that commit. This adds the shared SPC carry-arithmetic
+helper to the reviewed families below. Later projectile, parenthesis and
+hardware work retains its own checks outside this snapshot.
 
-Serialized checkpoint payloads are byte-identical to reviewed c66ea0b3.
+Serialized checkpoint payloads are byte-identical to reviewed ea204f0d.
 The only changed header field is the runtime-source fingerprint, independently
-recomputed from its actual inputs; only snes/ppu.rs changes among those inputs.
+recomputed from its actual inputs; only snes/spc.rs changes among those inputs.
 The Game declaration and checkpoint codec are unchanged. All other bindings,
 including the payload checksum, agree. No compatibility hash is patched and
 neither replay loads an earlier checkpoint. Complete non-timing diagnostics
@@ -1748,10 +1748,50 @@ and coverage agree, including the known fingernail diagnostic. Speed reaches
 pose $0089, health 46/399, missiles 6/15, Supers 0/5, items $3105 and
 beams $1004 equipped/collected. Kraid is defeated and all eight coroutine
 bytes are zero. Credits remain unexercised. The same build passes the full-boot
-pause route 40836/0 (59.44s), native exit 0, returning to gameplay in
+pause route 40836/0 (77.14s), native exit 0, returning to gameplay in
 room $96BA. Its payload and every non-runtime binding match the prior pause
 run, as do complete non-timing logs. Earlier mode observations retain their
 scope below.
+
+Independent SPC carry reconstruction covers all 74 integration inputs and
+all 67 sources in the owner's snapshot. The four original arithmetic cores
+match after renaming the accumulator operand. Replacing only those cores and
+inserting the helper reconstructs the entire SPC module. Operand reads,
+subtraction complementation, destination writes, Z/N updates and complete
+opcode/addressing dispatch remain exact. V/H/C writes retain their order.
+The helper uses byte operands and a boolean carry, so the maximum sum is
+511 and u16 preserves every original promoted result. No mutable SPC/APU
+reference spans a bus operation; no RAM or hardware layout changes.
+
+Fresh actual release-library opcode checks pass 1048576 arithmetic cases:
+every byte operand pair and both carries for ADC/SBC accumulator/memory
+forms, with both initially clear and set non-carry flags. An independent
+model uses signed addition/subtraction and nibble carry/borrow, checking
+result, all flags, preserved registers, destination, PC and cycles. The exact
+original SPC module uses the same fresh library types and bus implementation;
+its opcode results agree too. These are instruction-dispatch checks, not
+only extracted arithmetic expressions.
+
+Another 51200 cases cross all 20 selected source/destination bytes (all
+$f0..$ff registers plus four ordinary RAM bytes), both direct pages and
+carries, eight register/timer/port fixtures and both memory addressing forms
+for ADC/SBC. Actual old/new dispatch and an explicit ordered bus model agree
+on complete initialized SPC/APU/DSP bytes and cycles. This includes 192
+same-timer source/destination cases: the second read sees the cleared counter.
+A further 32768 memory-immediate cases cross every DSP address, four history
+counts including 255/256, eight operand boundaries and both carries. DSP RAM
+and channels, APU RAM and history agree, including suppressed DSP writes for
+addresses >= $80 and full histories. DSP sample-memory pointers are connected
+to actual APU RAM, covering key-on register reads too.
+
+All 24 affected opcodes additionally agree in 6144 complete contexts with a
+separate deterministic seed stream for flags, operands and registers. Those
+addressing choices are sampled, not every indirect/indexed bus combination.
+The owner's 524288 arithmetic and 24576 opcode contexts retain checked source,
+library and fixture pins and full-boot logs. Its opcode fixture correlates
+several inputs and fixes DSP address zero; the new checks supplement that
+scope. Constructed opcode contexts do not establish movie call-site coverage
+or universal hardware/audio accuracy. Earlier coverage and alias limits remain.
 
 Independent Mode7 reconstruction covers all 74 integration inputs and all
 67 sources in the owner's snapshot. Replacing only the two sampling sequences,
@@ -2209,15 +2249,15 @@ dedicated 5544-case API checks and 24/24 site observations are recorded by
 implementation; this review verifies the source transformation. The movie
 replays do not establish frontend decoder execution coverage.
 
-The normal Cargo integration is independently built from frozen ea204f0d.
+The normal Cargo integration is independently built from frozen f4a042af.
 All 74 inputs, the fresh game library/DLL and copied fixtures stay fixed.
 Only registry dependencies seed this checkout, including existing registry
 build-script executable links. Formatting, normal release
-(36.64s), host build (4.02s) and progress pass. This family removes
-46 Rust lines and 20 c_int casts across 21 lines. One private unsafe helper
-owns the repeated raw VRAM reads, raising unsafe functions by one; other
-progress counters are unchanged. Frozen totals: 192849 Rust lines,
-21355 raw-offset lines, 34420 c_int casts across 27447 lines and 6504 unsafe
+(25.88s), host build (14.82s) and progress pass. This family removes
+36 Rust lines and 68 c_int casts across 48 lines. One private unsafe helper
+owns the repeated flag writes, raising unsafe functions by one; other
+progress counters are unchanged. Frozen totals: 192813 Rust lines,
+21355 raw-offset lines, 34352 c_int casts across 27399 lines and 6505 unsafe
 functions. This audit changes no maintained Rust or assets; later peer work
 retains its own checks.
 
