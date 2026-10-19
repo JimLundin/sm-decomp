@@ -11912,6 +11912,23 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Door scrolling setup fields (2026-10-19): SetupScrolling now uses named
+byte-backed background-offset, scrolling-hook and transition-counter fields.
+BG2 H/V and hook clears stay ordered; direction 2 increments BG1 V with
+word wrapping, the separate live direction read clears the counter unless
+direction 3, and the scrolling callback precedes E3C0. Independent source
+review confirms callback/store/gate order. Cargo fmt/check and full release
+build pass, native exit 0. Frozen 78d0c0c8 plus only these two source files
+passes any% 129,712/0 (198.84s), native exit 0: 61 actual calls, directions
+[36,25,0,0]. Waver 58,109/71 (84.56s), native exit 1, retains the existing
+failure count: 28 calls, directions [11,13,2,2], exercising both special
+gates. Observations strip exactly to maintained source; later hardware
+changes are excluded. Own raw offsets -8, cast lines -15; Rust lines +12
+provide six reusable field accessors. Other counters unchanged. No probes
+or ROM-derived assets committed. Next: Samus placement/load-tiles fields,
+preserving callback reads and coordinate wrapping. Held X-alignment movement
+coverage and complete credits/gameplay/audio/hardware gaps remain open.
+
 Door alignment coordinates (2026-10-19):
 DoorTransitionFunction_ScrollScreenToAlignment uses named door direction
 and layer-one coordinates, wrapping word movement and direct control flow.

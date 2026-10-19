@@ -9790,34 +9790,18 @@ pub unsafe fn DoorTransitionFunction_SetupNewRoom(game: &mut Game) -> CoroutineR
     return kCoroutineNone as CoroutineRet;
 }
 pub unsafe fn DoorTransitionFunction_SetupScrolling(game: &mut Game) -> CoroutineRet {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb5 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb7 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7e9 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x791 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 3 as ::core::ffi::c_int
-        == 2 as ::core::ffi::c_int
-    {
-        let ref mut fresh36 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xb3 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        *fresh36 = (*fresh36).wrapping_add(1);
+    game.set_reg_bg2hofs(0);
+    game.set_reg_bg2vofs(0);
+    game.set_scrolling_finished_hook(0);
+    if game.door_direction() & 3 == 2 {
+        game.set_reg_bg1vofs(game.reg_bg1vofs().wrapping_add(1));
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x791 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 3 as ::core::ffi::c_int
-        != 3 as ::core::ffi::c_int
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x925 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+    if game.door_direction() & 3 != 3 {
+        game.set_door_transition_frame_counter(0);
     }
     DoorTransitionScrollingSetup(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x99c as ::core::ffi::c_int as isize)
-        as *mut uint16) = (0x82e3c0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    return kCoroutineNone as CoroutineRet;
+    game.set_door_transition_function(0xe3c0);
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn DoorTransitionFunction_PlaceSamusLoadTiles(game: &mut Game) -> CoroutineRet {
     let mut v0: uint16 = 0;

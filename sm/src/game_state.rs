@@ -277,6 +277,34 @@ impl Game {
         u16::from_le_bytes([self.g_ram[0x791], self.g_ram[0x792]])
     }
 
+    /// reg_BG1VOFS ($7E:00B3 in ram_map).
+    pub fn reg_bg1vofs(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xb3], self.g_ram[0xb4]])
+    }
+    pub fn set_reg_bg1vofs(&mut self, value: u16) {
+        self.g_ram[0xb3..0xb5].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// reg_BG2HOFS ($7E:00B5 in ram_map).
+    pub fn set_reg_bg2hofs(&mut self, value: u16) {
+        self.g_ram[0xb5..0xb7].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// reg_BG2VOFS ($7E:00B7 in ram_map).
+    pub fn set_reg_bg2vofs(&mut self, value: u16) {
+        self.g_ram[0xb7..0xb9].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// scrolling_finished_hook ($7E:07E9 in ram_map).
+    pub fn set_scrolling_finished_hook(&mut self, value: u16) {
+        self.g_ram[0x7e9..0x7eb].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// door_transition_frame_counter ($7E:0925 in ram_map).
+    pub fn set_door_transition_frame_counter(&mut self, value: u16) {
+        self.g_ram[0x925..0x927].copy_from_slice(&value.to_le_bytes());
+    }
+
     /// samus_x_pos ($7E:0AF6 in ram_map).
     pub fn samus_x_pos(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0xaf6], self.g_ram[0xaf7]])
