@@ -2111,29 +2111,24 @@ pub unsafe fn PlmInstr_Return(
         as uintptr_t as *const uint8;
 }
 pub unsafe fn PlmInstr_GotoIfDoorBitSet(
-    mut plmp: *const uint8,
-    mut k: uint16,
+    plmp: *const uint8,
+    k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
-    let mut v2: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1dc7 as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
-    if v2 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
-        return plmp.offset(2 as ::core::ffi::c_int as isize);
-    }
-    let mut idx: ::core::ffi::c_int = PrepareBitAccess(v2, game) as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x5e7 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            & *(&raw mut game.g_ram as *mut uint8)
-                .offset(0xd8b0 as ::core::ffi::c_int as isize)
-                .offset(idx as isize) as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
-    {
-        return *(plmp as *mut uint16) as uintptr_t as *const uint8;
-    } else {
-        return plmp.offset(2 as ::core::ffi::c_int as isize);
+    let index = usize::from(k >> 1) * 2;
+    let read_word = |game: &Game, offset: usize| {
+        u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
     };
+    let argument = read_word(game, 0x1dc7 + index); // plm_room_arguments
+    if argument & 0x8000 != 0 {
+        return plmp.add(2);
+    }
+    let bit_index = usize::from(PrepareBitAccess(argument, game));
+    let mask = read_word(game, 0x5e7); // bitmask
+    if mask & u16::from(game.g_ram[0xd8b0 + bit_index]) != 0 {
+        return usize::from((plmp as *const u16).read_unaligned()) as *const uint8;
+    }
+    plmp.add(2)
 }
 pub unsafe fn PlmInstr_IncrementDoorHitCounterAndJGE(
     plmp: *const uint8,

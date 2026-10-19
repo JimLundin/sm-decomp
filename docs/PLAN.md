@@ -10766,6 +10766,29 @@ matches verified source; peer gameplay/PPU work is outside this replay.
 All own progress counters unchanged. Prior CPU holds and complete gameplay/
 render/audio remain open. Continue covered CPU cleanup.
 
+Door-bit instruction uses byte-backed RAM (2026-10-19).
+PlmInstr_GotoIfDoorBitSet captures the room argument with the original
+odd-slot truncation, preserves the marked-argument early advance and calls
+PrepareBitAccess before reading the live mask and door byte. The captured
+argument cannot change across that call; its repeated high-bit test was
+redundant. A set bit returns the instruction's unaligned little-endian word
+as the same encoded bank pointer; otherwise advance remains two bytes.
+Unsafe stays at the instruction-pointer and legacy callback boundaries.
+
+Instrumented baseline observes24 actual calls, including frames70008 and
+74237, in the normal-input map/Parlor route. Baseline75665/71 (89.22s),
+clean75665/71 (103.40s), observed native exits1, match all71 ordered
+failed frames exactly. Call counts do not establish every branch/state.
+Clean explicit-render any%129712/0 (149.79s), observed native exit0.
+Pinned7fcc20d6 host plus committed gameplay cleanups isolates this callback;
+peer CPU/PPU work is excluded. Gameplay build source matches maintained Rust.
+Cargo fmt/check, fullrelease build and progress pass. Own raw offsets-3,
+cast lines-12, Rust lines-5; other own counters unchanged. Inputs, probes,
+SRAM and ROM-derived data stay ignored. Next: continue normal-input Parlor
+ascent from the retained Y299 prefix toward upper hall and item/boss coverage.
+Credits, complete hardware/gameplay, audio/render, masked RAM and ownership
+remain open; existing holds remain held.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
