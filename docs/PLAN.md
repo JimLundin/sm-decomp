@@ -40,7 +40,7 @@ No allocation, conversion or new runtime operation is introduced.
 
 Complete source reconstruction and all four expanded initializers pass.
 Whole-library expansion matches after removing the new macro/import and
-normalizing 775 c_char/244 null qualifications and four trailing array commas.
+normalizing 775 c_char/244 null qualifications; every comma remains exact.
 Independent source and complete expansion review passes. Compiler
 typecheck, normal release (30.20s), formatting and progress pass. Final
 composition includes a61a5376 SDL declarations. Full any% passes 129712/0
@@ -2397,7 +2397,29 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `a61a5376` groups all 741 SDL
+Latest reviewed integration (2026-10-20): `24c39190` shares all four immutable
+string-pointer tables. Independent complete-AST inventory and ordered-entry
+reconstruction retain 531 literal byte strings and 244 null slots, including
+all three opcode-format arrays and the seven bug-save paths. All 71 committed
+source/Cargo inputs match the frozen candidate; all 68 replay sources match
+that candidate byte-for-byte. The existing constructor, pointer casts, static
+storage, table types and caller behavior remain unchanged.
+
+Independent actual whole-library expansion review binds the helper to its
+source and preserves every remaining token after only its definition/import
+and 775 c_char/244 null path qualifications are accounted for. No comma,
+literal or parenthesis normalization is needed. The three helper/expansion
+hashes remain stable. The earlier four-comma allowance was unnecessary and
+has been superseded by strict comparison.
+
+Normal release (30.20s), formatting/check and progress pass. The single any%
+replay passes 129712/0 (104.22s), native exit 0; all 73 replay pins remain
+exact after completion. Review reused these checks. Net Rust lines -575,
+total 138548; other progress counters are unchanged. This establishes table
+equivalence and core-gameplay regression coverage, not broader tracing/UI
+execution or boot-to-credits completion.
+
+Included `a61a5376` groups all 741 SDL
 constant declarations: 261 configuration, 449 frontend and 31 OpenGL aliases
 in 26 groups. Independent complete-AST review and whole-source reconstruction
 bind all 75 committed source/config/host inputs to the frozen candidate.
