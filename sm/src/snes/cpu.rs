@@ -756,28 +756,28 @@ unsafe fn update_memory(cpu: *mut Cpu, low: u32, high: u32, delta: u16, game: &m
     };
     set_zero_negative(result, (*cpu).mf, &mut *cpu);
 }
-unsafe fn test_and_set_bits(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
+unsafe fn test_and_update_bits(cpu: *mut Cpu, low: u32, high: u32, set: bool, game: &mut Game) {
     if (*cpu).mf {
         let value = read_byte(cpu, low, game);
         (*cpu).z = (*cpu).a as u8 & value == 0;
-        write_byte(cpu, low, value | (*cpu).a as u8, game);
+        let accumulator = (*cpu).a as u8;
+        let result = if set {
+            value | accumulator
+        } else {
+            value & !accumulator
+        };
+        write_byte(cpu, low, result, game);
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(2);
         let value = read_word(cpu, low, high, game);
         (*cpu).z = (*cpu).a & value == 0;
-        write_word(cpu, low, high, value | (*cpu).a, true, game);
-    }
-}
-unsafe fn test_and_reset_bits(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
-    if (*cpu).mf {
-        let value = read_byte(cpu, low, game);
-        (*cpu).z = (*cpu).a as u8 & value == 0;
-        write_byte(cpu, low, value & !((*cpu).a as u8), game);
-    } else {
-        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(2);
-        let value = read_word(cpu, low, high, game);
-        (*cpu).z = (*cpu).a & value == 0;
-        write_word(cpu, low, high, value & !(*cpu).a, true, game);
+        let accumulator = (*cpu).a;
+        let result = if set {
+            value | accumulator
+        } else {
+            value & !accumulator
+        };
+        write_word(cpu, low, high, result, true, game);
     }
 }
 
@@ -903,7 +903,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x04 => {
                 let (low, high) = address_direct_page(cpu, game);
-                test_and_set_bits(cpu, low, high, game);
+                test_and_update_bits(cpu, low, high, true, game);
                 break;
             }
             0x05 => {
@@ -940,7 +940,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x0c => {
                 let (low, high) = address_absolute(cpu, game);
-                test_and_set_bits(cpu, low, high, game);
+                test_and_update_bits(cpu, low, high, true, game);
                 break;
             }
             0x0d => {
@@ -979,7 +979,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x14 => {
                 let (low, high) = address_direct_page(cpu, game);
-                test_and_reset_bits(cpu, low, high, game);
+                test_and_update_bits(cpu, low, high, false, game);
                 break;
             }
             0x15 => {
@@ -1016,7 +1016,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x1c => {
                 let (low, high) = address_absolute(cpu, game);
-                test_and_reset_bits(cpu, low, high, game);
+                test_and_update_bits(cpu, low, high, false, game);
                 break;
             }
             0x1d => {

@@ -9667,6 +9667,24 @@ replay. Unsafe functions -2, Rust lines -5; other own counters unchanged.
 Arbitrary MMIO mutation and complete gameplay/render/audio remain open.
 Continue covered CPU cleanup; TSX/ROR stay held for contextual execution.
 
+CPU shared TSB/TRB bus handling (2026-10-19): test_and_update_bits selects
+set/reset after the existing operand read and Z store. Width selection, word
+cycle increment, both accumulator reads, Z-before-write and high-before-low
+word writes retain their order. The four opcode callers retain their operation.
+Frozen `18484db2` plus this change passes 18,874,368 actual old/current cases:
+every accumulator, 36 operand bit patterns (zero/full/alternating/single-bit/
+single-clear), both widths/operations and aliased/disjoint byte addresses.
+Named CPU/bus fields, RAM writes, Z and wrapping cycles match. This is not
+the complete word Cartesian product or arbitrary MMIO mutation coverage.
+Prefix 3,600/0 (1.06s), native exit 0, executes word TSB 9 and TRB 4 times;
+neither byte path executes there. Byte comparisons remain supporting evidence.
+Clean full any% 129,712/0 (52.78s), native exit 0. Cargo fmt/check, full release
+and release-library builds with external SDL2, normal metadata and optimized
+frozen core/DLL builds pass. Live CPU matches verified source; peer PPU work
+is outside this replay. Unsafe functions -1; other own counters unchanged,
+including Rust lines. Complete gameplay/render/audio remain open.
+Continue covered CPU cleanup; TSX/ROR stay held for contextual execution.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
