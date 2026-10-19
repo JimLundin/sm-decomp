@@ -591,7 +591,7 @@ unsafe fn swap16(mut v: uint16) -> uint16 {
     return ((v as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
         | v as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint16;
 }
-pub const kCoroutineNone: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+pub const kCoroutineNone: ::core::ffi::c_int = 0;
 #[inline]
 unsafe fn RomPtr_A7(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
     return RomPtr(
@@ -625,164 +625,138 @@ unsafe fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
     *lo = t as uint16;
     *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
-pub const fnnullsub_170_A7: ::core::ffi::c_int = 0xa7804c as ::core::ffi::c_int;
-pub const fnKraid_GetsBig_BreakCeilingPlatforms: ::core::ffi::c_int =
-    0xa7ac4d as ::core::ffi::c_int;
-pub const fnKraid_GetsBig_SetBG2TilemapPrioBits: ::core::ffi::c_int =
-    0xa7ad3a as ::core::ffi::c_int;
-pub const fnKraid_GetsBig_FinishUpdateBg2Tilemap: ::core::ffi::c_int =
-    0xa7ad61 as ::core::ffi::c_int;
-pub const fnKraid_GetsBig_DrawRoomBg: ::core::ffi::c_int = 0xa7ad8e as ::core::ffi::c_int;
-pub const fnKraid_GetsBig_FadeInRoomBg: ::core::ffi::c_int = 0xa7ae23 as ::core::ffi::c_int;
-pub const fnKraid_Mainloop_Thinking: ::core::ffi::c_int = 0xa7aea4 as ::core::ffi::c_int;
-pub const fnKraid_GetsBig_Thinking: ::core::ffi::c_int = 0xa7aec4 as ::core::ffi::c_int;
-pub const fnKraid_Shot_MouthIsOpen: ::core::ffi::c_int = 0xa7aee4 as ::core::ffi::c_int;
-pub const fnKraidInstr_PlayRoarSfx: uint32 = 10989460 as uint32;
-pub const fnKraidInstr_PlayDyingSfx: uint32 = 10989471 as uint32;
-pub const fnKraid_InitEyeGlowing: ::core::ffi::c_int = 0xa7b6bf as ::core::ffi::c_int;
-pub const fnKraid_Shot_GlowHisEye: ::core::ffi::c_int = 0xa7b6d7 as ::core::ffi::c_int;
-pub const fnKraid_Shot_UnglowEye: ::core::ffi::c_int = 0xa7b73d as ::core::ffi::c_int;
-pub const fnnullsub_347: uint32 = 10991665 as uint32;
-pub const fnKraidLint_ProduceLint: ::core::ffi::c_int = 0xa7b832 as ::core::ffi::c_int;
-pub const fnKraidLint_ChargeLint: ::core::ffi::c_int = 0xa7b868 as ::core::ffi::c_int;
-pub const fnKraidLint_FireLint: ::core::ffi::c_int = 0xa7b89b as ::core::ffi::c_int;
-pub const fnKraidFingernail_WaitForLintXpos: ::core::ffi::c_int = 0xa7b907 as ::core::ffi::c_int;
-pub const fnKraid_AlignEnemyToKraid: ::core::ffi::c_int = 0xa7b923 as ::core::ffi::c_int;
-pub const fnKraidEnemy_HandleFunctionTimer: ::core::ffi::c_int = 0xa7b92d as ::core::ffi::c_int;
-pub const fnKraidEnemy_DecrementEnemyFunctionTimer: ::core::ffi::c_int =
-    0xa7b93f as ::core::ffi::c_int;
-pub const fnKraidFoot_FirstPhase_Thinking: ::core::ffi::c_int = 0xa7b960 as ::core::ffi::c_int;
-pub const fnKraidEnemy_ProcessInstrEnemyTimer: ::core::ffi::c_int = 0xa7b965 as ::core::ffi::c_int;
-pub const fnnullsub_234: ::core::ffi::c_int = 0xa7ba2d as ::core::ffi::c_int;
-pub const fnKraidsFoot_SecondPhase_Thinking: ::core::ffi::c_int = 0xa7ba2e as ::core::ffi::c_int;
-pub const fnKraidsFoot_SecondPhase_WalkingBackwards: ::core::ffi::c_int =
-    0xa7bb45 as ::core::ffi::c_int;
-pub const fnKraidsFoot_SecondPhaseSetup_WalkToStartPt: ::core::ffi::c_int =
-    0xa7bb6e as ::core::ffi::c_int;
-pub const fnKraidsFoot_SecondPhase_Init: ::core::ffi::c_int = 0xa7bba4 as ::core::ffi::c_int;
-pub const fnKraidsFoot_SecondPhase_WalkForward: ::core::ffi::c_int = 0xa7bbae as ::core::ffi::c_int;
-pub const fnKraid_Main_AttackWithMouthOpen: ::core::ffi::c_int = 0xa7bbea as ::core::ffi::c_int;
-pub const fnKraidsFingernail_Init: ::core::ffi::c_int = 0xa7bd60 as ::core::ffi::c_int;
-pub const fnKraidsFingernail_Fire: ::core::ffi::c_int = 0xa7be8e as ::core::ffi::c_int;
-pub const fnKraidsFoot_PrepareToLungeForward: ::core::ffi::c_int = 0xa7bf2d as ::core::ffi::c_int;
-pub const fnKraidsFoot_FirstPhase_LungeForward: ::core::ffi::c_int = 0xa7bf5d as ::core::ffi::c_int;
-pub const fnKraidsFoot_FirstPhase_RetreatFromLunge: ::core::ffi::c_int =
-    0xa7bfab as ::core::ffi::c_int;
-pub const fnKraid_GetsBig_ReleaseCamera: ::core::ffi::c_int = 0xa7c0a1 as ::core::ffi::c_int;
-pub const fnUnpauseHook_Kraid_IsDead: ::core::ffi::c_int = 0xa7c1fb as ::core::ffi::c_int;
-pub const fnUnpauseHook_Kraid_IsAlive: ::core::ffi::c_int = 0xa7c24e as ::core::ffi::c_int;
-pub const fnKraid_UnpauseHook_IsSinking: ::core::ffi::c_int = 0xa7c2a0 as ::core::ffi::c_int;
-pub const fnPauseHook_Kraid: ::core::ffi::c_int = 0xa7c325 as ::core::ffi::c_int;
-pub const fnKraid_Death_Init: ::core::ffi::c_int = 0xa7c360 as ::core::ffi::c_int;
-pub const fnKraid_Death_Fadeout: ::core::ffi::c_int = 0xa7c3f9 as ::core::ffi::c_int;
-pub const fnKraid_Death_UpdateBG2TilemapTopHalf: ::core::ffi::c_int =
-    0xa7c4a4 as ::core::ffi::c_int;
-pub const fnKraid_Death_UpdateBG2TilemapBottomHalf: ::core::ffi::c_int =
-    0xa7c4c8 as ::core::ffi::c_int;
-pub const fnKraid_Death_SinkThroughFloor: ::core::ffi::c_int = 0xa7c537 as ::core::ffi::c_int;
-pub const fnKraid_CrumbleLeftPlatform_Left: uint32 = 10995345 as uint32;
-pub const fnnullsub_356: uint32 = 10995366 as uint32;
-pub const fnKraid_CrumbleRightPlatform_Middle: uint32 = 10995367 as uint32;
-pub const fnKraid_CrumbleRightPlatform_Left: uint32 = 10995389 as uint32;
-pub const fnKraid_CrumbleLeftPlatform_Right: uint32 = 10995411 as uint32;
-pub const fnKraid_CrumbleLeftPlatform_Middle: uint32 = 10995433 as uint32;
-pub const fnKraid_CrumbleRightPlatform_Right: uint32 = 10995455 as uint32;
-pub const fnKraid_FadeInBg_ClearBg2TilemapTopHalf: ::core::ffi::c_int =
-    0xa7c715 as ::core::ffi::c_int;
-pub const fnKraid_FadeInBg_ClearBg2TilemapBottomHalf: ::core::ffi::c_int =
-    0xa7c751 as ::core::ffi::c_int;
-pub const fnKraid_FadeInBg_LoadBg3Tiles1of4: ::core::ffi::c_int = 0xa7c777 as ::core::ffi::c_int;
-pub const fnKraid_FadeInBg_LoadBg3Tiles2of4: ::core::ffi::c_int = 0xa7c7a3 as ::core::ffi::c_int;
-pub const fnKraid_FadeInBg_LoadBg3Tiles3of4: ::core::ffi::c_int = 0xa7c7c9 as ::core::ffi::c_int;
-pub const fnKraid_FadeInBg_LoadBg3Tiles4of4: ::core::ffi::c_int = 0xa7c7ef as ::core::ffi::c_int;
-pub const fnKraid_FadeInBg_FadeInBp6: ::core::ffi::c_int = 0xa7c815 as ::core::ffi::c_int;
-pub const fnKraid_FadeInBg_SetEnemyDead_KraidWasAlive: ::core::ffi::c_int =
-    0xa7c843 as ::core::ffi::c_int;
-pub const fnKraid_FadeInBg_SetEnemyDead_KraidWasDead: ::core::ffi::c_int =
-    0xa7c851 as ::core::ffi::c_int;
-pub const fnKraid_RestrictSamusXtoFirstScreen: ::core::ffi::c_int = 0xa7c865 as ::core::ffi::c_int;
-pub const fnKraid_RaiseKraidThroughFloor: ::core::ffi::c_int = 0xa7c86b as ::core::ffi::c_int;
-pub const fnKraid_Raise_LoadTilemapBottomAndShake: ::core::ffi::c_int =
-    0xa7c89a as ::core::ffi::c_int;
-pub const fnKraid_Raise_SpawnRandomEarthquakeProjs16: ::core::ffi::c_int =
-    0xa7c8e0 as ::core::ffi::c_int;
-pub const fnKraid_Raise_SpawnRandomEarthquakeProjs8: ::core::ffi::c_int =
-    0xa7c902 as ::core::ffi::c_int;
-pub const fnKraid_Raise_Handler: ::core::ffi::c_int = 0xa7c924 as ::core::ffi::c_int;
-pub const fnPhantoon_Func_1: uint32 = 10997485 as uint32;
-pub const fnPhantoon_Func_4: uint32 = 10997598 as uint32;
-pub const fnPhantoon_StartTrackingSamusAndInitEyeTimer: uint32 = 10997823 as uint32;
-pub const fnPhantoon_PickPatternForRound2: uint32 = 10997878 as uint32;
-pub const fnnullsub_237: ::core::ffi::c_int = 0xa7d4a8 as ::core::ffi::c_int;
-pub const fnPhantoon_Spawn8FireballsInCircleAtStart: ::core::ffi::c_int =
-    0xa7d4a9 as ::core::ffi::c_int;
-pub const fnPhantoon_WaitBetweenSpawningAndSpinningFireballs: ::core::ffi::c_int =
-    0xa7d4ee as ::core::ffi::c_int;
-pub const fnPhantoon_SpawnFireballsBeforeFight: ::core::ffi::c_int = 0xa7d508 as ::core::ffi::c_int;
-pub const fnPhantoon_WavyFadeIn: ::core::ffi::c_int = 0xa7d54a as ::core::ffi::c_int;
-pub const fnPhantoon_PickPatternForRound1: ::core::ffi::c_int = 0xa7d596 as ::core::ffi::c_int;
-pub const fnPhantoon_MovePhantoonInFigure8ThenOpenEye: ::core::ffi::c_int =
-    0xa7d5e7 as ::core::ffi::c_int;
-pub const fnPhantoon_EyeFollowsSamusUntilTimerRunsOut: ::core::ffi::c_int =
-    0xa7d60d as ::core::ffi::c_int;
-pub const fnPhantoon_BecomesSolidAndBodyVuln: ::core::ffi::c_int = 0xa7d65c as ::core::ffi::c_int;
-pub const fnPhantoon_IsSwooping: ::core::ffi::c_int = 0xa7d678 as ::core::ffi::c_int;
-pub const fnPhantoon_FadeoutWithSwoop: ::core::ffi::c_int = 0xa7d6b9 as ::core::ffi::c_int;
-pub const fnPhantoon_WaitAfterFadeOut: ::core::ffi::c_int = 0xa7d6d4 as ::core::ffi::c_int;
-pub const fnPhantoon_MoveLeftOrRightAndPickEyeOpenPatt: ::core::ffi::c_int =
-    0xa7d6e2 as ::core::ffi::c_int;
-pub const fnPhantoon_FadeInBeforeFigure8: ::core::ffi::c_int = 0xa7d72d as ::core::ffi::c_int;
-pub const fnPhantoon_BecomeSolidAfterRainingFireballs: ::core::ffi::c_int =
-    0xa7d73f as ::core::ffi::c_int;
-pub const fnPhantoon_FadeInDuringFireballRain: ::core::ffi::c_int = 0xa7d767 as ::core::ffi::c_int;
-pub const fnPhantoon_FollowSamusWithEyeDuringFireballRain: ::core::ffi::c_int =
-    0xa7d788 as ::core::ffi::c_int;
-pub const fnPhantoon_FadeOutDuringFireballRain: ::core::ffi::c_int = 0xa7d7d5 as ::core::ffi::c_int;
-pub const fnPhantoon_SpawnRainingFireballs: ::core::ffi::c_int = 0xa7d7f7 as ::core::ffi::c_int;
-pub const fnPhantoon_FadeOutBeforeFirstFireballRain: ::core::ffi::c_int =
-    0xa7d82a as ::core::ffi::c_int;
-pub const fnPhantoon_FadeOutBeforeEnrage: ::core::ffi::c_int = 0xa7d85c as ::core::ffi::c_int;
-pub const fnPhantoon_MoveEnragedPhantoonToTopCenter: ::core::ffi::c_int =
-    0xa7d874 as ::core::ffi::c_int;
-pub const fnPhantoon_FadeInEnragedPhantoon: ::core::ffi::c_int = 0xa7d891 as ::core::ffi::c_int;
-pub const fnPhantoon_Enraged: ::core::ffi::c_int = 0xa7d8ac as ::core::ffi::c_int;
-pub const fnPhantoon_FadeoutAfterEnrage: ::core::ffi::c_int = 0xa7d916 as ::core::ffi::c_int;
-pub const fnPhantoon_CompleteSwoopAfterFatalShot: ::core::ffi::c_int =
-    0xa7d92e as ::core::ffi::c_int;
-pub const fnPhantoon_DyingPhantoonFadeInOut: ::core::ffi::c_int = 0xa7d948 as ::core::ffi::c_int;
-pub const fnPhantoon_DyingPhantoonExplosions: ::core::ffi::c_int = 0xa7d98b as ::core::ffi::c_int;
-pub const fnPhantoon_WavyDyingPhantoonAndCry: ::core::ffi::c_int = 0xa7da51 as ::core::ffi::c_int;
-pub const fnPhantoon_DyingFadeOut: ::core::ffi::c_int = 0xa7da86 as ::core::ffi::c_int;
-pub const fnPhantoon_AlmostDead: ::core::ffi::c_int = 0xa7dad7 as ::core::ffi::c_int;
-pub const fnPhantoon_Dead: ::core::ffi::c_int = 0xa7db3d as ::core::ffi::c_int;
-pub const fnEtecoon_Func_4: ::core::ffi::c_int = 0xa7e9af as ::core::ffi::c_int;
-pub const fnEtecoon_Func_5: ::core::ffi::c_int = 0xa7ea00 as ::core::ffi::c_int;
-pub const fnEtecoon_Func_6: ::core::ffi::c_int = 0xa7ea37 as ::core::ffi::c_int;
-pub const fnEtecoon_Func_7: ::core::ffi::c_int = 0xa7eab5 as ::core::ffi::c_int;
-pub const fnEtecoon_Func_8: ::core::ffi::c_int = 0xa7eb02 as ::core::ffi::c_int;
-pub const fnEtecoon_Func_9: ::core::ffi::c_int = 0xa7eb2c as ::core::ffi::c_int;
-pub const fnEtecoon_Func_10: ::core::ffi::c_int = 0xa7eb50 as ::core::ffi::c_int;
-pub const fnEtecoon_Func_11: ::core::ffi::c_int = 0xa7ebcd as ::core::ffi::c_int;
-pub const fnEtecoon_Func_12: ::core::ffi::c_int = 0xa7ec1b as ::core::ffi::c_int;
-pub const fnEtecoon_Func_16: ::core::ffi::c_int = 0xa7ec97 as ::core::ffi::c_int;
-pub const fnEtecoon_Func_17: ::core::ffi::c_int = 0xa7ecbb as ::core::ffi::c_int;
-pub const fnEtecoon_Func_18: ::core::ffi::c_int = 0xa7ecdf as ::core::ffi::c_int;
-pub const fnEtecoon_Func_19: ::core::ffi::c_int = 0xa7ed09 as ::core::ffi::c_int;
-pub const fnEtecoon_Func_20: ::core::ffi::c_int = 0xa7ed2a as ::core::ffi::c_int;
-pub const fnEtecoon_Func_21: ::core::ffi::c_int = 0xa7ed54 as ::core::ffi::c_int;
-pub const fnEtecoon_Func_22: ::core::ffi::c_int = 0xa7ed75 as ::core::ffi::c_int;
-pub const fnEtecoon_Func_23: ::core::ffi::c_int = 0xa7edc7 as ::core::ffi::c_int;
-pub const fnEtecoon_Func_24: ::core::ffi::c_int = 0xa7ee3e as ::core::ffi::c_int;
-pub const fnEtecoon_Func_25: ::core::ffi::c_int = 0xa7ee9a as ::core::ffi::c_int;
-pub const fnEtecoon_Func_26: ::core::ffi::c_int = 0xa7eeb8 as ::core::ffi::c_int;
-pub const fnDachora_Func_2: ::core::ffi::c_int = 0xa7f570 as ::core::ffi::c_int;
-pub const fnDachora_Func_3: ::core::ffi::c_int = 0xa7f5bc as ::core::ffi::c_int;
-pub const fnDachora_Func_4: ::core::ffi::c_int = 0xa7f5ed as ::core::ffi::c_int;
-pub const fnDachora_Func_5: ::core::ffi::c_int = 0xa7f65e as ::core::ffi::c_int;
-pub const fnDachora_Func_7: ::core::ffi::c_int = 0xa7f78f as ::core::ffi::c_int;
-pub const fnDachora_Func_8: ::core::ffi::c_int = 0xa7f806 as ::core::ffi::c_int;
-pub const fnDachora_Func_11: ::core::ffi::c_int = 0xa7f935 as ::core::ffi::c_int;
-pub const fnDachora_Func_12: ::core::ffi::c_int = 0xa7f98c as ::core::ffi::c_int;
+pub const fnnullsub_170_A7: ::core::ffi::c_int = 0xa7804c;
+pub const fnKraid_GetsBig_BreakCeilingPlatforms: ::core::ffi::c_int = 0xa7ac4d;
+pub const fnKraid_GetsBig_SetBG2TilemapPrioBits: ::core::ffi::c_int = 0xa7ad3a;
+pub const fnKraid_GetsBig_FinishUpdateBg2Tilemap: ::core::ffi::c_int = 0xa7ad61;
+pub const fnKraid_GetsBig_DrawRoomBg: ::core::ffi::c_int = 0xa7ad8e;
+pub const fnKraid_GetsBig_FadeInRoomBg: ::core::ffi::c_int = 0xa7ae23;
+pub const fnKraid_Mainloop_Thinking: ::core::ffi::c_int = 0xa7aea4;
+pub const fnKraid_GetsBig_Thinking: ::core::ffi::c_int = 0xa7aec4;
+pub const fnKraid_Shot_MouthIsOpen: ::core::ffi::c_int = 0xa7aee4;
+pub const fnKraidInstr_PlayRoarSfx: uint32 = 10989460;
+pub const fnKraidInstr_PlayDyingSfx: uint32 = 10989471;
+pub const fnKraid_InitEyeGlowing: ::core::ffi::c_int = 0xa7b6bf;
+pub const fnKraid_Shot_GlowHisEye: ::core::ffi::c_int = 0xa7b6d7;
+pub const fnKraid_Shot_UnglowEye: ::core::ffi::c_int = 0xa7b73d;
+pub const fnnullsub_347: uint32 = 10991665;
+pub const fnKraidLint_ProduceLint: ::core::ffi::c_int = 0xa7b832;
+pub const fnKraidLint_ChargeLint: ::core::ffi::c_int = 0xa7b868;
+pub const fnKraidLint_FireLint: ::core::ffi::c_int = 0xa7b89b;
+pub const fnKraidFingernail_WaitForLintXpos: ::core::ffi::c_int = 0xa7b907;
+pub const fnKraid_AlignEnemyToKraid: ::core::ffi::c_int = 0xa7b923;
+pub const fnKraidEnemy_HandleFunctionTimer: ::core::ffi::c_int = 0xa7b92d;
+pub const fnKraidEnemy_DecrementEnemyFunctionTimer: ::core::ffi::c_int = 0xa7b93f;
+pub const fnKraidFoot_FirstPhase_Thinking: ::core::ffi::c_int = 0xa7b960;
+pub const fnKraidEnemy_ProcessInstrEnemyTimer: ::core::ffi::c_int = 0xa7b965;
+pub const fnnullsub_234: ::core::ffi::c_int = 0xa7ba2d;
+pub const fnKraidsFoot_SecondPhase_Thinking: ::core::ffi::c_int = 0xa7ba2e;
+pub const fnKraidsFoot_SecondPhase_WalkingBackwards: ::core::ffi::c_int = 0xa7bb45;
+pub const fnKraidsFoot_SecondPhaseSetup_WalkToStartPt: ::core::ffi::c_int = 0xa7bb6e;
+pub const fnKraidsFoot_SecondPhase_Init: ::core::ffi::c_int = 0xa7bba4;
+pub const fnKraidsFoot_SecondPhase_WalkForward: ::core::ffi::c_int = 0xa7bbae;
+pub const fnKraid_Main_AttackWithMouthOpen: ::core::ffi::c_int = 0xa7bbea;
+pub const fnKraidsFingernail_Init: ::core::ffi::c_int = 0xa7bd60;
+pub const fnKraidsFingernail_Fire: ::core::ffi::c_int = 0xa7be8e;
+pub const fnKraidsFoot_PrepareToLungeForward: ::core::ffi::c_int = 0xa7bf2d;
+pub const fnKraidsFoot_FirstPhase_LungeForward: ::core::ffi::c_int = 0xa7bf5d;
+pub const fnKraidsFoot_FirstPhase_RetreatFromLunge: ::core::ffi::c_int = 0xa7bfab;
+pub const fnKraid_GetsBig_ReleaseCamera: ::core::ffi::c_int = 0xa7c0a1;
+pub const fnUnpauseHook_Kraid_IsDead: ::core::ffi::c_int = 0xa7c1fb;
+pub const fnUnpauseHook_Kraid_IsAlive: ::core::ffi::c_int = 0xa7c24e;
+pub const fnKraid_UnpauseHook_IsSinking: ::core::ffi::c_int = 0xa7c2a0;
+pub const fnPauseHook_Kraid: ::core::ffi::c_int = 0xa7c325;
+pub const fnKraid_Death_Init: ::core::ffi::c_int = 0xa7c360;
+pub const fnKraid_Death_Fadeout: ::core::ffi::c_int = 0xa7c3f9;
+pub const fnKraid_Death_UpdateBG2TilemapTopHalf: ::core::ffi::c_int = 0xa7c4a4;
+pub const fnKraid_Death_UpdateBG2TilemapBottomHalf: ::core::ffi::c_int = 0xa7c4c8;
+pub const fnKraid_Death_SinkThroughFloor: ::core::ffi::c_int = 0xa7c537;
+pub const fnKraid_CrumbleLeftPlatform_Left: uint32 = 10995345;
+pub const fnnullsub_356: uint32 = 10995366;
+pub const fnKraid_CrumbleRightPlatform_Middle: uint32 = 10995367;
+pub const fnKraid_CrumbleRightPlatform_Left: uint32 = 10995389;
+pub const fnKraid_CrumbleLeftPlatform_Right: uint32 = 10995411;
+pub const fnKraid_CrumbleLeftPlatform_Middle: uint32 = 10995433;
+pub const fnKraid_CrumbleRightPlatform_Right: uint32 = 10995455;
+pub const fnKraid_FadeInBg_ClearBg2TilemapTopHalf: ::core::ffi::c_int = 0xa7c715;
+pub const fnKraid_FadeInBg_ClearBg2TilemapBottomHalf: ::core::ffi::c_int = 0xa7c751;
+pub const fnKraid_FadeInBg_LoadBg3Tiles1of4: ::core::ffi::c_int = 0xa7c777;
+pub const fnKraid_FadeInBg_LoadBg3Tiles2of4: ::core::ffi::c_int = 0xa7c7a3;
+pub const fnKraid_FadeInBg_LoadBg3Tiles3of4: ::core::ffi::c_int = 0xa7c7c9;
+pub const fnKraid_FadeInBg_LoadBg3Tiles4of4: ::core::ffi::c_int = 0xa7c7ef;
+pub const fnKraid_FadeInBg_FadeInBp6: ::core::ffi::c_int = 0xa7c815;
+pub const fnKraid_FadeInBg_SetEnemyDead_KraidWasAlive: ::core::ffi::c_int = 0xa7c843;
+pub const fnKraid_FadeInBg_SetEnemyDead_KraidWasDead: ::core::ffi::c_int = 0xa7c851;
+pub const fnKraid_RestrictSamusXtoFirstScreen: ::core::ffi::c_int = 0xa7c865;
+pub const fnKraid_RaiseKraidThroughFloor: ::core::ffi::c_int = 0xa7c86b;
+pub const fnKraid_Raise_LoadTilemapBottomAndShake: ::core::ffi::c_int = 0xa7c89a;
+pub const fnKraid_Raise_SpawnRandomEarthquakeProjs16: ::core::ffi::c_int = 0xa7c8e0;
+pub const fnKraid_Raise_SpawnRandomEarthquakeProjs8: ::core::ffi::c_int = 0xa7c902;
+pub const fnKraid_Raise_Handler: ::core::ffi::c_int = 0xa7c924;
+pub const fnPhantoon_Func_1: uint32 = 10997485;
+pub const fnPhantoon_Func_4: uint32 = 10997598;
+pub const fnPhantoon_StartTrackingSamusAndInitEyeTimer: uint32 = 10997823;
+pub const fnPhantoon_PickPatternForRound2: uint32 = 10997878;
+pub const fnnullsub_237: ::core::ffi::c_int = 0xa7d4a8;
+pub const fnPhantoon_Spawn8FireballsInCircleAtStart: ::core::ffi::c_int = 0xa7d4a9;
+pub const fnPhantoon_WaitBetweenSpawningAndSpinningFireballs: ::core::ffi::c_int = 0xa7d4ee;
+pub const fnPhantoon_SpawnFireballsBeforeFight: ::core::ffi::c_int = 0xa7d508;
+pub const fnPhantoon_WavyFadeIn: ::core::ffi::c_int = 0xa7d54a;
+pub const fnPhantoon_PickPatternForRound1: ::core::ffi::c_int = 0xa7d596;
+pub const fnPhantoon_MovePhantoonInFigure8ThenOpenEye: ::core::ffi::c_int = 0xa7d5e7;
+pub const fnPhantoon_EyeFollowsSamusUntilTimerRunsOut: ::core::ffi::c_int = 0xa7d60d;
+pub const fnPhantoon_BecomesSolidAndBodyVuln: ::core::ffi::c_int = 0xa7d65c;
+pub const fnPhantoon_IsSwooping: ::core::ffi::c_int = 0xa7d678;
+pub const fnPhantoon_FadeoutWithSwoop: ::core::ffi::c_int = 0xa7d6b9;
+pub const fnPhantoon_WaitAfterFadeOut: ::core::ffi::c_int = 0xa7d6d4;
+pub const fnPhantoon_MoveLeftOrRightAndPickEyeOpenPatt: ::core::ffi::c_int = 0xa7d6e2;
+pub const fnPhantoon_FadeInBeforeFigure8: ::core::ffi::c_int = 0xa7d72d;
+pub const fnPhantoon_BecomeSolidAfterRainingFireballs: ::core::ffi::c_int = 0xa7d73f;
+pub const fnPhantoon_FadeInDuringFireballRain: ::core::ffi::c_int = 0xa7d767;
+pub const fnPhantoon_FollowSamusWithEyeDuringFireballRain: ::core::ffi::c_int = 0xa7d788;
+pub const fnPhantoon_FadeOutDuringFireballRain: ::core::ffi::c_int = 0xa7d7d5;
+pub const fnPhantoon_SpawnRainingFireballs: ::core::ffi::c_int = 0xa7d7f7;
+pub const fnPhantoon_FadeOutBeforeFirstFireballRain: ::core::ffi::c_int = 0xa7d82a;
+pub const fnPhantoon_FadeOutBeforeEnrage: ::core::ffi::c_int = 0xa7d85c;
+pub const fnPhantoon_MoveEnragedPhantoonToTopCenter: ::core::ffi::c_int = 0xa7d874;
+pub const fnPhantoon_FadeInEnragedPhantoon: ::core::ffi::c_int = 0xa7d891;
+pub const fnPhantoon_Enraged: ::core::ffi::c_int = 0xa7d8ac;
+pub const fnPhantoon_FadeoutAfterEnrage: ::core::ffi::c_int = 0xa7d916;
+pub const fnPhantoon_CompleteSwoopAfterFatalShot: ::core::ffi::c_int = 0xa7d92e;
+pub const fnPhantoon_DyingPhantoonFadeInOut: ::core::ffi::c_int = 0xa7d948;
+pub const fnPhantoon_DyingPhantoonExplosions: ::core::ffi::c_int = 0xa7d98b;
+pub const fnPhantoon_WavyDyingPhantoonAndCry: ::core::ffi::c_int = 0xa7da51;
+pub const fnPhantoon_DyingFadeOut: ::core::ffi::c_int = 0xa7da86;
+pub const fnPhantoon_AlmostDead: ::core::ffi::c_int = 0xa7dad7;
+pub const fnPhantoon_Dead: ::core::ffi::c_int = 0xa7db3d;
+pub const fnEtecoon_Func_4: ::core::ffi::c_int = 0xa7e9af;
+pub const fnEtecoon_Func_5: ::core::ffi::c_int = 0xa7ea00;
+pub const fnEtecoon_Func_6: ::core::ffi::c_int = 0xa7ea37;
+pub const fnEtecoon_Func_7: ::core::ffi::c_int = 0xa7eab5;
+pub const fnEtecoon_Func_8: ::core::ffi::c_int = 0xa7eb02;
+pub const fnEtecoon_Func_9: ::core::ffi::c_int = 0xa7eb2c;
+pub const fnEtecoon_Func_10: ::core::ffi::c_int = 0xa7eb50;
+pub const fnEtecoon_Func_11: ::core::ffi::c_int = 0xa7ebcd;
+pub const fnEtecoon_Func_12: ::core::ffi::c_int = 0xa7ec1b;
+pub const fnEtecoon_Func_16: ::core::ffi::c_int = 0xa7ec97;
+pub const fnEtecoon_Func_17: ::core::ffi::c_int = 0xa7ecbb;
+pub const fnEtecoon_Func_18: ::core::ffi::c_int = 0xa7ecdf;
+pub const fnEtecoon_Func_19: ::core::ffi::c_int = 0xa7ed09;
+pub const fnEtecoon_Func_20: ::core::ffi::c_int = 0xa7ed2a;
+pub const fnEtecoon_Func_21: ::core::ffi::c_int = 0xa7ed54;
+pub const fnEtecoon_Func_22: ::core::ffi::c_int = 0xa7ed75;
+pub const fnEtecoon_Func_23: ::core::ffi::c_int = 0xa7edc7;
+pub const fnEtecoon_Func_24: ::core::ffi::c_int = 0xa7ee3e;
+pub const fnEtecoon_Func_25: ::core::ffi::c_int = 0xa7ee9a;
+pub const fnEtecoon_Func_26: ::core::ffi::c_int = 0xa7eeb8;
+pub const fnDachora_Func_2: ::core::ffi::c_int = 0xa7f570;
+pub const fnDachora_Func_3: ::core::ffi::c_int = 0xa7f5bc;
+pub const fnDachora_Func_4: ::core::ffi::c_int = 0xa7f5ed;
+pub const fnDachora_Func_5: ::core::ffi::c_int = 0xa7f65e;
+pub const fnDachora_Func_7: ::core::ffi::c_int = 0xa7f78f;
+pub const fnDachora_Func_8: ::core::ffi::c_int = 0xa7f806;
+pub const fnDachora_Func_11: ::core::ffi::c_int = 0xa7f935;
+pub const fnDachora_Func_12: ::core::ffi::c_int = 0xa7f98c;
 #[inline]
 unsafe fn gEnemyData(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut EnemyData {
     return (&raw mut game.g_ram as *mut uint8)

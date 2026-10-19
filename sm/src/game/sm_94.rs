@@ -319,8 +319,8 @@ struct PostGrappleCollisionSample {
     edge_position: u16,
 }
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
-pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+pub const true_0: ::core::ffi::c_int = 1;
+pub const false_0: ::core::ffi::c_int = 0;
 #[inline]
 unsafe fn abs16(mut t: uint16) -> uint16 {
     return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
@@ -369,10 +369,9 @@ unsafe fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
     *lo = t as uint16;
     *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
-pub const fnDoorTransitionFunction_HandleElevator: ::core::ffi::c_int =
-    0x82e17d as ::core::ffi::c_int;
-pub const fnGrappleInstr_Goto: uint32 = 9744628 as uint32;
-pub const fnGrappleBeam_Func2: ::core::ffi::c_int = 0x9bc8c5 as ::core::ffi::c_int;
+pub const fnDoorTransitionFunction_HandleElevator: ::core::ffi::c_int = 0x82e17d;
+pub const fnGrappleInstr_Goto: uint32 = 9744628;
+pub const fnGrappleBeam_Func2: ::core::ffi::c_int = 0x9bc8c5;
 
 static kAlignPos_Tab1: [uint8; 512] = [
     16 as ::core::ffi::c_int as uint8,

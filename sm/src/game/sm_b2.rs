@@ -368,29 +368,29 @@ unsafe fn get_Vulnerability(mut a: uint16, game: &mut Game) -> *mut Vulnerabilit
         game,
     ) as *mut Vulnerability;
 }
-pub const fnnullsub_169_B2: ::core::ffi::c_int = 0xb2804b as ::core::ffi::c_int;
-pub const fnSpacePirates_Func_1: ::core::ffi::c_int = 0xb2f034 as ::core::ffi::c_int;
-pub const fnnullsub_279: uint32 = 11726927 as uint32;
-pub const fnSpacePirates_Func_2: uint32 = 11726928 as uint32;
-pub const fnSpacePirates_Func_3: ::core::ffi::c_int = 0xb2f0c8 as ::core::ffi::c_int;
-pub const fnnullsub_281: uint32 = 11727075 as uint32;
-pub const fnSpacePirates_Func_4: uint32 = 11727076 as uint32;
-pub const fnSpacePirates_Func_5: uint32 = 11728553 as uint32;
-pub const fnSpacePirates_Func_6: uint32 = 11728612 as uint32;
-pub const fnSpacePirates_Func_11: uint32 = 11728919 as uint32;
-pub const fnSpacePirates_Func_12: ::core::ffi::c_int = 0xb2f84c as ::core::ffi::c_int;
-pub const fnSpacePirates_Func_13: uint32 = 11729040 as uint32;
-pub const fnSpacePirates_Func_14: ::core::ffi::c_int = 0xb2f8c5 as ::core::ffi::c_int;
-pub const fnSpacePirates_Func_15: uint32 = 11729161 as uint32;
-pub const fnSpacePirates_F985: uint32 = 11729285 as uint32;
-pub const fnSpacePirates_F9C1: ::core::ffi::c_int = 0xb2f9c1 as ::core::ffi::c_int;
-pub const fnSpacePirates_FA15: ::core::ffi::c_int = 0xb2fa15 as ::core::ffi::c_int;
-pub const fnSpacePirates_FA59: uint32 = 11729497 as uint32;
-pub const fnSpacePirates_FA95: ::core::ffi::c_int = 0xb2fa95 as ::core::ffi::c_int;
-pub const fnSpacePirates_FAE9: ::core::ffi::c_int = 0xb2fae9 as ::core::ffi::c_int;
-pub const fnWalkingSpacePirates_FD44: uint32 = 11730244 as uint32;
-pub const fnWalkingSpacePirates_FDCE: uint32 = 11730382 as uint32;
-pub const fnnullsub_282: uint32 = 11730506 as uint32;
+pub const fnnullsub_169_B2: ::core::ffi::c_int = 0xb2804b;
+pub const fnSpacePirates_Func_1: ::core::ffi::c_int = 0xb2f034;
+pub const fnnullsub_279: uint32 = 11726927;
+pub const fnSpacePirates_Func_2: uint32 = 11726928;
+pub const fnSpacePirates_Func_3: ::core::ffi::c_int = 0xb2f0c8;
+pub const fnnullsub_281: uint32 = 11727075;
+pub const fnSpacePirates_Func_4: uint32 = 11727076;
+pub const fnSpacePirates_Func_5: uint32 = 11728553;
+pub const fnSpacePirates_Func_6: uint32 = 11728612;
+pub const fnSpacePirates_Func_11: uint32 = 11728919;
+pub const fnSpacePirates_Func_12: ::core::ffi::c_int = 0xb2f84c;
+pub const fnSpacePirates_Func_13: uint32 = 11729040;
+pub const fnSpacePirates_Func_14: ::core::ffi::c_int = 0xb2f8c5;
+pub const fnSpacePirates_Func_15: uint32 = 11729161;
+pub const fnSpacePirates_F985: uint32 = 11729285;
+pub const fnSpacePirates_F9C1: ::core::ffi::c_int = 0xb2f9c1;
+pub const fnSpacePirates_FA15: ::core::ffi::c_int = 0xb2fa15;
+pub const fnSpacePirates_FA59: uint32 = 11729497;
+pub const fnSpacePirates_FA95: ::core::ffi::c_int = 0xb2fa95;
+pub const fnSpacePirates_FAE9: ::core::ffi::c_int = 0xb2fae9;
+pub const fnWalkingSpacePirates_FD44: uint32 = 11730244;
+pub const fnWalkingSpacePirates_FDCE: uint32 = 11730382;
+pub const fnnullsub_282: uint32 = 11730506;
 #[inline]
 unsafe fn gEnemyData(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut EnemyData {
     return (&raw mut game.g_ram as *mut uint8)

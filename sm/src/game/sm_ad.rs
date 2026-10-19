@@ -208,8 +208,7 @@ unsafe fn RomPtr_AD(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
         game,
     );
 }
-pub const fnMotherBrainBody_FakeDeath_Descent_0_Pause: ::core::ffi::c_int =
-    0xa9881d as ::core::ffi::c_int;
+pub const fnMotherBrainBody_FakeDeath_Descent_0_Pause: ::core::ffi::c_int = 0xa9881d;
 #[inline]
 unsafe fn gEnemyData(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut EnemyData {
     return (&raw mut game.g_ram as *mut uint8)

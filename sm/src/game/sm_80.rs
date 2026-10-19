@@ -409,8 +409,7 @@ unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
     *lo = t as uint16;
     *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
-pub const fnDoorTransition_FadeInScreenAndFinish: ::core::ffi::c_int =
-    0x82e737 as ::core::ffi::c_int;
+pub const fnDoorTransition_FadeInScreenAndFinish: ::core::ffi::c_int = 0x82e737;
 pub unsafe fn APU_UploadBank(mut addr: uint32, game: &mut Game) {
     if !game.g_use_my_apu_code {
         crate::native_audio::upload(addr, game);

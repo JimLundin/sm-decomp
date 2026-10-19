@@ -50,8 +50,8 @@ pub struct CartHeader {
     pub pal: bool,
     pub cartType: uint8_t,
 }
-pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+pub const true_0: ::core::ffi::c_int = 1;
+pub const false_0: ::core::ffi::c_int = 0;
 pub unsafe fn snes_loadRom(
     mut snes: *mut Snes,
     mut data: *const uint8_t,

@@ -587,16 +587,16 @@ unsafe fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
     *lo = t as uint16;
     *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
-pub const fnnullsub_171_AA: ::core::ffi::c_int = 0xaa807b as ::core::ffi::c_int;
-pub const fnnullsub_270: ::core::ffi::c_int = 0xaac6ab as ::core::ffi::c_int;
-pub const fnTorizo_Func_3: ::core::ffi::c_int = 0xaac6bf as ::core::ffi::c_int;
-pub const fnTorizo_Func_4: uint32 = 11192006 as uint32;
-pub const fnTorizo_Func_1: uint32 = 11192063 as uint32;
-pub const fnTorizo_Func_9: uint32 = 11195842 as uint32;
-pub const fnTorizo_Func_10: uint32 = 11195871 as uint32;
-pub const fnTorizo_D5E6: uint32 = 11195878 as uint32;
-pub const fnnullsub_274: ::core::ffi::c_int = 0xaadcaa as ::core::ffi::c_int;
-pub const fnnullsub_276: ::core::ffi::c_int = 0xaae7a6 as ::core::ffi::c_int;
+pub const fnnullsub_171_AA: ::core::ffi::c_int = 0xaa807b;
+pub const fnnullsub_270: ::core::ffi::c_int = 0xaac6ab;
+pub const fnTorizo_Func_3: ::core::ffi::c_int = 0xaac6bf;
+pub const fnTorizo_Func_4: uint32 = 11192006;
+pub const fnTorizo_Func_1: uint32 = 11192063;
+pub const fnTorizo_Func_9: uint32 = 11195842;
+pub const fnTorizo_Func_10: uint32 = 11195871;
+pub const fnTorizo_D5E6: uint32 = 11195878;
+pub const fnnullsub_274: ::core::ffi::c_int = 0xaadcaa;
+pub const fnnullsub_276: ::core::ffi::c_int = 0xaae7a6;
 #[inline]
 unsafe fn gEnemyData(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut EnemyData {
     return (&raw mut game.g_ram as *mut uint8)

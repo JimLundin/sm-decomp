@@ -470,8 +470,8 @@ pub struct Pair_R18_R20 {
     pub r20: uint16,
 }
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
-pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+pub const true_0: ::core::ffi::c_int = 1;
+pub const false_0: ::core::ffi::c_int = 0;
 pub const __ASSERT_FUNCTION: [::core::ffi::c_char; 28] = unsafe {
     ::core::mem::transmute::<[u8; 28], [::core::ffi::c_char; 28]>(*b"uint8 *RomPtr_RAM(uint16_t)\0")
 };
@@ -535,56 +535,54 @@ unsafe fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
     *lo = t as uint16;
     *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
-pub const fnSamus_MovementHandler_Normal: ::core::ffi::c_int = 0x90a337 as ::core::ffi::c_int;
-pub const fnProjPreInstr_Empty: ::core::ffi::c_int = 0x90b169 as ::core::ffi::c_int;
-pub const fnSamus_MoveHandlerVerticalShinespark: ::core::ffi::c_int =
-    0x90d0ab as ::core::ffi::c_int;
-pub const fnSamus_MoveHandler_Shinespark_Diag: ::core::ffi::c_int = 0x90d0d7 as ::core::ffi::c_int;
-pub const fnSamus_MoveHandler_Shinespark_Horiz: ::core::ffi::c_int = 0x90d106 as ::core::ffi::c_int;
-pub const fnSamus_MoveHandler_Knockback: ::core::ffi::c_int = 0x90df38 as ::core::ffi::c_int;
-pub const fnSamus_MoveHandler_BombJumpStart: ::core::ffi::c_int = 0x90e025 as ::core::ffi::c_int;
-pub const fnSamus_Func3: ::core::ffi::c_int = 0x90e0e6 as ::core::ffi::c_int;
-pub const fnSamus_Func9: ::core::ffi::c_int = 0x90e41b as ::core::ffi::c_int;
-pub const fnSamus_FrameHandlerAlfa_Func11: ::core::ffi::c_int = 0x90e695 as ::core::ffi::c_int;
-pub const fnSamus_FrameHandlerAlfa_Func12: ::core::ffi::c_int = 0x90e6c9 as ::core::ffi::c_int;
-pub const fnSamus_FrameHandlerAlfa_Func13: ::core::ffi::c_int = 0x90e713 as ::core::ffi::c_int;
-pub const fnSamus_FrameHandlerBeta_Func17: ::core::ffi::c_int = 0x90e725 as ::core::ffi::c_int;
-pub const fnSamus_FrameHandlerBeta_Func14: ::core::ffi::c_int = 0x90e7f5 as ::core::ffi::c_int;
-pub const fnSamus_Func16: ::core::ffi::c_int = 0x90e86a as ::core::ffi::c_int;
-pub const fnEmptyFunction: ::core::ffi::c_int = 0x90e8cd as ::core::ffi::c_int;
-pub const fnj_HandleDemoRecorder_2_0: ::core::ffi::c_int = 0x90e8d9 as ::core::ffi::c_int;
-pub const fnSetContactDamageIndexAndUpdateMinimap: ::core::ffi::c_int =
-    0x90e8dc as ::core::ffi::c_int;
-pub const fnnullsub_152: ::core::ffi::c_int = 0x90e90e as ::core::ffi::c_int;
-pub const fnSamus_InputHandler_E913: ::core::ffi::c_int = 0x90e913 as ::core::ffi::c_int;
-pub const fnSamus_Func20_: ::core::ffi::c_int = 0x90e918 as ::core::ffi::c_int;
-pub const fnSamus_InputHandler_E91D: ::core::ffi::c_int = 0x90e91d as ::core::ffi::c_int;
-pub const fnHandleAutoJumpHack: ::core::ffi::c_int = 0x90e926 as ::core::ffi::c_int;
-pub const fnSamusMovementType_Xray: ::core::ffi::c_int = 0x90e94f as ::core::ffi::c_int;
-pub const fnSamusDrawHandler_Default: ::core::ffi::c_int = 0x90eb52 as ::core::ffi::c_int;
-pub const fnSamus_InputHandler: ::core::ffi::c_int = 0x918000 as ::core::ffi::c_int;
-pub const fnDemoPreInstr_nullsub_162: ::core::ffi::c_int = 0x9183bf as ::core::ffi::c_int;
-pub const fnDemoInstr_Finish: uint32 = 9536551 as uint32;
-pub const fnDemoInstr_SetPreInstr: uint32 = 9536564 as uint32;
-pub const fnDemoInstr_ClearPreInstr: uint32 = 9536575 as uint32;
-pub const fnDemoInstr_Goto: uint32 = 9536584 as uint32;
-pub const fnDemoInstr_DecTimerAndGoto: uint32 = 9536591 as uint32;
-pub const fnDemoInstr_SetTimer: uint32 = 9536601 as uint32;
-pub const fnDemoInstr_Func2: uint32 = 9537020 as uint32;
-pub const fnDemoPreInstr_864F: uint32 = 9537103 as uint32;
-pub const fnDemoPreInstr_866A: ::core::ffi::c_int = 0x91866a as ::core::ffi::c_int;
-pub const fnDemoInstr_Disable: uint32 = 9537154 as uint32;
-pub const fnDemoInstr_Func3: uint32 = 9537337 as uint32;
-pub const fnDemoPreInstr_CheckLeaveDemo: ::core::ffi::c_int = 0x918a9b as ::core::ffi::c_int;
-pub const fnDemoPreInstr_8AB0: uint32 = 9538224 as uint32;
-pub const fnXray_Func6: uint32 = 9555577 as uint32;
-pub const fnXray_Func6B: uint32 = 9555643 as uint32;
-pub const fnXray_Func7: uint32 = 9555766 as uint32;
-pub const fnXray_Func8: uint32 = 9555774 as uint32;
-pub const fnXray_Func9: ::core::ffi::c_int = 0x91cf4e as ::core::ffi::c_int;
-pub const fnXray_Func10: uint32 = 9555810 as uint32;
-pub const fnXray_Func11: ::core::ffi::c_int = 0x91cf6f as ::core::ffi::c_int;
-pub const fnGrappleBeamFunc_Inactive: ::core::ffi::c_int = 0x9bc4f0 as ::core::ffi::c_int;
+pub const fnSamus_MovementHandler_Normal: ::core::ffi::c_int = 0x90a337;
+pub const fnProjPreInstr_Empty: ::core::ffi::c_int = 0x90b169;
+pub const fnSamus_MoveHandlerVerticalShinespark: ::core::ffi::c_int = 0x90d0ab;
+pub const fnSamus_MoveHandler_Shinespark_Diag: ::core::ffi::c_int = 0x90d0d7;
+pub const fnSamus_MoveHandler_Shinespark_Horiz: ::core::ffi::c_int = 0x90d106;
+pub const fnSamus_MoveHandler_Knockback: ::core::ffi::c_int = 0x90df38;
+pub const fnSamus_MoveHandler_BombJumpStart: ::core::ffi::c_int = 0x90e025;
+pub const fnSamus_Func3: ::core::ffi::c_int = 0x90e0e6;
+pub const fnSamus_Func9: ::core::ffi::c_int = 0x90e41b;
+pub const fnSamus_FrameHandlerAlfa_Func11: ::core::ffi::c_int = 0x90e695;
+pub const fnSamus_FrameHandlerAlfa_Func12: ::core::ffi::c_int = 0x90e6c9;
+pub const fnSamus_FrameHandlerAlfa_Func13: ::core::ffi::c_int = 0x90e713;
+pub const fnSamus_FrameHandlerBeta_Func17: ::core::ffi::c_int = 0x90e725;
+pub const fnSamus_FrameHandlerBeta_Func14: ::core::ffi::c_int = 0x90e7f5;
+pub const fnSamus_Func16: ::core::ffi::c_int = 0x90e86a;
+pub const fnEmptyFunction: ::core::ffi::c_int = 0x90e8cd;
+pub const fnj_HandleDemoRecorder_2_0: ::core::ffi::c_int = 0x90e8d9;
+pub const fnSetContactDamageIndexAndUpdateMinimap: ::core::ffi::c_int = 0x90e8dc;
+pub const fnnullsub_152: ::core::ffi::c_int = 0x90e90e;
+pub const fnSamus_InputHandler_E913: ::core::ffi::c_int = 0x90e913;
+pub const fnSamus_Func20_: ::core::ffi::c_int = 0x90e918;
+pub const fnSamus_InputHandler_E91D: ::core::ffi::c_int = 0x90e91d;
+pub const fnHandleAutoJumpHack: ::core::ffi::c_int = 0x90e926;
+pub const fnSamusMovementType_Xray: ::core::ffi::c_int = 0x90e94f;
+pub const fnSamusDrawHandler_Default: ::core::ffi::c_int = 0x90eb52;
+pub const fnSamus_InputHandler: ::core::ffi::c_int = 0x918000;
+pub const fnDemoPreInstr_nullsub_162: ::core::ffi::c_int = 0x9183bf;
+pub const fnDemoInstr_Finish: uint32 = 9536551;
+pub const fnDemoInstr_SetPreInstr: uint32 = 9536564;
+pub const fnDemoInstr_ClearPreInstr: uint32 = 9536575;
+pub const fnDemoInstr_Goto: uint32 = 9536584;
+pub const fnDemoInstr_DecTimerAndGoto: uint32 = 9536591;
+pub const fnDemoInstr_SetTimer: uint32 = 9536601;
+pub const fnDemoInstr_Func2: uint32 = 9537020;
+pub const fnDemoPreInstr_864F: uint32 = 9537103;
+pub const fnDemoPreInstr_866A: ::core::ffi::c_int = 0x91866a;
+pub const fnDemoInstr_Disable: uint32 = 9537154;
+pub const fnDemoInstr_Func3: uint32 = 9537337;
+pub const fnDemoPreInstr_CheckLeaveDemo: ::core::ffi::c_int = 0x918a9b;
+pub const fnDemoPreInstr_8AB0: uint32 = 9538224;
+pub const fnXray_Func6: uint32 = 9555577;
+pub const fnXray_Func6B: uint32 = 9555643;
+pub const fnXray_Func7: uint32 = 9555766;
+pub const fnXray_Func8: uint32 = 9555774;
+pub const fnXray_Func9: ::core::ffi::c_int = 0x91cf4e;
+pub const fnXray_Func10: uint32 = 9555810;
+pub const fnXray_Func11: ::core::ffi::c_int = 0x91cf6f;
+pub const fnGrappleBeamFunc_Inactive: ::core::ffi::c_int = 0x9bc4f0;
 static kSamusInputHandlers: [Option<Func_V>; 28] = unsafe {
     [
         Some(Samus_Input_00_Standing as unsafe fn(&mut Game) -> ()),

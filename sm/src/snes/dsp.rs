@@ -12,8 +12,8 @@ pub use crate::types::{
     __int16_t, __int8_t, __uint16_t, __uint8_t, int16_t, int8_t, size_t, uint16_t, uint8_t, Dsp,
     DspChannel, SaveLoadFunc,
 };
-pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+pub const true_0: ::core::ffi::c_int = 1;
+pub const false_0: ::core::ffi::c_int = 0;
 static rateValues: [::core::ffi::c_int; 32] = [
     0 as ::core::ffi::c_int,
     2048 as ::core::ffi::c_int,

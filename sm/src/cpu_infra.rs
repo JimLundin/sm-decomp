@@ -368,8 +368,8 @@ pub const OBSEL: SnesRegs = 8449;
 pub const INIDISP: SnesRegs = 8448;
 pub use crate::types::RunMode;
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
-pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+pub const true_0: ::core::ffi::c_int = 1;
+pub const false_0: ::core::ffi::c_int = 0;
 #[inline]
 unsafe fn get_ProjectileInstr(mut a: uint16, game: &mut Game) -> *mut ProjectileInstr {
     return RomPtr(

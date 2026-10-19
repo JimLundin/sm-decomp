@@ -19,8 +19,8 @@ pub use crate::types::{
     DmaChannel, Dsp, DspChannel, DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs,
     PpuZbufType, SaveLoadFunc, Snes, Spc, Timer, WindowLayer,
 };
-pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+pub const true_0: ::core::ffi::c_int = 1;
+pub const false_0: ::core::ffi::c_int = 0;
 pub const __ASSERT_FUNCTION: [::core::ffi::c_char; 34] = unsafe {
     ::core::mem::transmute::<[u8; 34], [::core::ffi::c_char; 34]>(
         *b"uint8_t dma_read(Dma *, uint16_t)\0",

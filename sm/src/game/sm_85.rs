@@ -306,12 +306,12 @@ unsafe fn RomPtr_85(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
         game,
     );
 }
-pub const fnWriteLargeMessageBoxTilemap: uint32 = 8749658 as uint32;
-pub const fnWriteSmallMessageBoxTilemap: uint32 = 8749705 as uint32;
-pub const fnDrawShootButtonAndSetupPpuForLargeMessageBox: uint32 = 8750021 as uint32;
-pub const fnDrawRunButtonAndSetupPpuForLargeMessageBox: uint32 = 8750028 as uint32;
-pub const fnSetupPpuForSmallMessageBox: uint32 = 8750134 as uint32;
-pub const fnSetupPpuForLargeMessageBox: uint32 = 8750145 as uint32;
+pub const fnWriteLargeMessageBoxTilemap: uint32 = 8749658;
+pub const fnWriteSmallMessageBoxTilemap: uint32 = 8749705;
+pub const fnDrawShootButtonAndSetupPpuForLargeMessageBox: uint32 = 8750021;
+pub const fnDrawRunButtonAndSetupPpuForLargeMessageBox: uint32 = 8750028;
+pub const fnSetupPpuForSmallMessageBox: uint32 = 8750134;
+pub const fnSetupPpuForLargeMessageBox: uint32 = 8750145;
 
 static kMsgBoxSpecialButtonTilemapOffs: [uint16; 27] = [
     0 as ::core::ffi::c_int as uint16,

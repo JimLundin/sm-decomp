@@ -220,13 +220,13 @@ pub const UINT_MAX: ::core::ffi::c_uint = (__INT_MAX__ as ::core::ffi::c_uint)
     .wrapping_mul(2 as ::core::ffi::c_uint)
     .wrapping_add(1 as ::core::ffi::c_uint);
 pub const GL_TEXTURE_2D: ::core::ffi::c_int = gl::TEXTURE_2D as ::core::ffi::c_int;
-pub const GL_CLAMP: ::core::ffi::c_int = 0x2900 as ::core::ffi::c_int;
+pub const GL_CLAMP: ::core::ffi::c_int = 0x2900;
 pub const GL_FALSE: ::core::ffi::c_int = gl::FALSE as ::core::ffi::c_int;
 pub const GL_FLOAT: ::core::ffi::c_int = gl::FLOAT as ::core::ffi::c_int;
 pub const GL_LINEAR: ::core::ffi::c_int = gl::LINEAR as ::core::ffi::c_int;
 pub const GL_LINEAR_MIPMAP_LINEAR: ::core::ffi::c_int =
     gl::LINEAR_MIPMAP_LINEAR as ::core::ffi::c_int;
-pub const GL_LUMINANCE: ::core::ffi::c_int = 0x1909 as ::core::ffi::c_int;
+pub const GL_LUMINANCE: ::core::ffi::c_int = 0x1909;
 pub const GL_NEAREST: ::core::ffi::c_int = gl::NEAREST as ::core::ffi::c_int;
 pub const GL_NEAREST_MIPMAP_NEAREST: ::core::ffi::c_int =
     gl::NEAREST_MIPMAP_NEAREST as ::core::ffi::c_int;
@@ -271,8 +271,8 @@ unsafe fn atof(mut __nptr: *const ::core::ffi::c_char) -> ::core::ffi::c_double 
     return strtod(__nptr, NULL as *mut *mut ::core::ffi::c_char);
 }
 pub const EOF: ::core::ffi::c_int = -(1 as ::core::ffi::c_int);
-pub const SEEK_SET: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-pub const SEEK_CUR: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
+pub const SEEK_SET: ::core::ffi::c_int = 0;
+pub const SEEK_CUR: ::core::ffi::c_int = 1;
 unsafe fn stbi__start_mem(
     mut s: *mut stbi__context,
     mut buffer: *const stbi_uc,
@@ -1801,10 +1801,10 @@ unsafe fn stbi__ldr_to_hdr(
     free(data as *mut ::core::ffi::c_void);
     return output;
 }
-pub const STBI__ZFAST_BITS: ::core::ffi::c_int = 9 as ::core::ffi::c_int;
+pub const STBI__ZFAST_BITS: ::core::ffi::c_int = 9;
 pub const STBI__ZFAST_MASK: ::core::ffi::c_int =
     ((1 as ::core::ffi::c_int) << STBI__ZFAST_BITS) - 1 as ::core::ffi::c_int;
-pub const STBI__ZNSYMS: ::core::ffi::c_int = 288 as ::core::ffi::c_int;
+pub const STBI__ZNSYMS: ::core::ffi::c_int = 288;
 unsafe fn stbi__bitreverse16(mut n: ::core::ffi::c_int) -> ::core::ffi::c_int {
     n = (n & 0xaaaa as ::core::ffi::c_int) >> 1 as ::core::ffi::c_int
         | (n & 0x5555 as ::core::ffi::c_int) << 1 as ::core::ffi::c_int;
@@ -4965,7 +4965,7 @@ pub unsafe fn stbi_is_16_bit_from_callbacks(
     stbi__start_callbacks(&raw mut s, c as *mut stbi_io_callbacks, user);
     return stbi__is_16_main(&raw mut s);
 }
-pub const STBI_MAX_DIMENSIONS: ::core::ffi::c_int = 4096 as ::core::ffi::c_int;
+pub const STBI_MAX_DIMENSIONS: ::core::ffi::c_int = 4096;
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const NULL_0: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 unsafe fn ParseConfigKeyPass(
@@ -6503,6 +6503,6 @@ pub unsafe fn GlslShader_Render(
     }
     (*gs).frame_count = (*gs).frame_count.wrapping_add(1);
 }
-pub const __INT_MAX__: ::core::ffi::c_int = 2147483647 as ::core::ffi::c_int;
-pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+pub const __INT_MAX__: ::core::ffi::c_int = 2147483647;
+pub const true_0: ::core::ffi::c_int = 1;
+pub const false_0: ::core::ffi::c_int = 0;

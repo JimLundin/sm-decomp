@@ -50,8 +50,8 @@ pub const kPaletteShift_0: C2RustUnnamed_2 = 6;
 pub type C2RustUnnamed_2 = ::core::ffi::c_uint;
 pub use crate::types::uint64;
 pub type C2RustUnnamed_3 = ::core::ffi::c_uint;
-pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+pub const true_0: ::core::ffi::c_int = 1;
+pub const false_0: ::core::ffi::c_int = 0;
 pub const __ASSERT_FUNCTION: [::core::ffi::c_char; 43] = unsafe {
     ::core::mem::transmute::<[u8; 43], [::core::ffi::c_char; 43]>(
         *b"void PpuDrawBackgrounds(Ppu *, int, _Bool)\0",

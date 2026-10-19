@@ -72,7 +72,7 @@ pub use crate::types::{
     uint16, uint32, uint8, Config, GlTextureWithSize, GlslParam, GlslPass, GlslShader, GlslTexture,
     GlslTextureUniform, GlslUniforms, RendererFuncs,
 };
-pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
+pub const true_0: ::core::ffi::c_int = 1;
 pub const GL_TEXTURE_2D: ::core::ffi::c_int = gl::TEXTURE_2D as ::core::ffi::c_int;
 pub const GL_DEBUG_OUTPUT: ::core::ffi::c_int = gl::DEBUG_OUTPUT as ::core::ffi::c_int;
 pub const GL_DEBUG_OUTPUT_SYNCHRONOUS: ::core::ffi::c_int =
@@ -97,7 +97,7 @@ pub const GL_COMPILE_STATUS: ::core::ffi::c_int = gl::COMPILE_STATUS as ::core::
 pub const GL_FRAGMENT_SHADER: ::core::ffi::c_int = gl::FRAGMENT_SHADER as ::core::ffi::c_int;
 pub const GL_LINK_STATUS: ::core::ffi::c_int = gl::LINK_STATUS as ::core::ffi::c_int;
 pub const GL_VERTEX_SHADER: ::core::ffi::c_int = gl::VERTEX_SHADER as ::core::ffi::c_int;
-pub const kDebugFlag: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+pub const kDebugFlag: ::core::ffi::c_int = 0;
 static mut g_window: *mut SDL_Window = ::core::ptr::null::<SDL_Window>() as *mut SDL_Window;
 static mut g_screen_buffer: *mut uint8 = ::core::ptr::null::<uint8>() as *mut uint8;
 static mut g_screen_buffer_size: size_t = 0;

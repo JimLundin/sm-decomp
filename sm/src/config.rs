@@ -457,7 +457,7 @@ pub static mut g_config: Config = Config {
     shader: ::core::ptr::null::<::core::ffi::c_char>(),
     msu_path: ::core::ptr::null::<::core::ffi::c_char>(),
 };
-pub const N: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+pub const N: ::core::ffi::c_int = 0;
 static mut kDefaultKbdControls: [uint16; 130] = [0; 130];
 static mut kKeyNameId: [KeyNameId; 24] = [
     KeyNameId {
@@ -1419,8 +1419,8 @@ pub unsafe fn ParseConfigFile(mut filename: *const ::core::ffi::c_char) {
 }
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const NULL_0: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
-pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+pub const true_0: ::core::ffi::c_int = 1;
+pub const false_0: ::core::ffi::c_int = 0;
 unsafe fn run_static_initializers() {
     kDefaultKbdControls = [
         0 as ::core::ffi::c_int as uint16,

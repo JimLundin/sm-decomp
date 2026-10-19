@@ -13,9 +13,9 @@ unsafe fn RomPtr_B4(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
         game,
     );
 }
-pub const fnSpriteObject_Instr_RepeatLast: uint32 = 11844848 as uint32;
-pub const fnSpriteObject_Instr_Terminate: uint32 = 11844871 as uint32;
-pub const fnSpriteObject_Instr_Goto: uint32 = 11844882 as uint32;
+pub const fnSpriteObject_Instr_RepeatLast: uint32 = 11844848;
+pub const fnSpriteObject_Instr_Terminate: uint32 = 11844871;
+pub const fnSpriteObject_Instr_Goto: uint32 = 11844882;
 pub unsafe fn CreateSpriteAtPos(
     mut x_r18: uint16,
     mut y_r20: uint16,

@@ -81,11 +81,23 @@ diagnostic lookup matches at all 131072 RAM byte addresses. Cast and unsafe
 counts are unchanged by this metadata-only change. Final full replay results
 are recorded with the host build improvement below.
 
-Next disjoint candidate: 3676 literal casts repeat the type already declared
-on their constants (1157 c_int and 2519 uint32). Check every literal against
-its declared range and preserve every constant value before removing them.
-This is separate from arithmetic narrowing, where wrapping/carry semantics
-still need the subsystem work above.
+Typed constants (2026-10-19): removed 3676 casts repeating the declared type
+(1157 c_int and 2519 uint32), with 183 fewer Rust lines. Every literal fits
+its type; compiled comparisons preserve all 3676 values, and a deliberately
+changed value fails the comparison. Source audit permits only those constant
+declarations. Frozen 64e8d165 plus this pass passes any% 129712/0 (220.88s)
+and pre-Kraid refill 115663/0 (222.39s), native exits 0, with stable source,
+DLL and fixtures. Formatting/check and normal release builds pass (53.54s
+frozen, 61s workspace). Progress: cast lines -1157, unsafe/raw accesses
+unchanged. This does not prove new gameplay coverage or a compile-time gain.
+
+Next disjoint candidate: remove the redundant c_int/isize casts on complete
+literal pointer-offset arguments, after checking range, argument types and
+unchanged source outside the replacements. A frozen preview removes about
+23000 Rust lines from roughly 25500 arguments. Pointer access and unsafe
+semantics remain unchanged; do not count this as retiring raw access. This
+is separate from arithmetic narrowing and the subsystem work above. Other
+sessions own the projectile state/handler changes; avoid duplicating them.
 
 ## Validation strategy (2026-10-19)
 

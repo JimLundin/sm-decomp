@@ -192,30 +192,30 @@ unsafe fn RomPtr_87(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
         game,
     );
 }
-pub const fnAnimtilesInstr_Delete: uint32 = 8880306 as uint32;
-pub const fnAnimtilesInstr_Goto: uint32 = 8880311 as uint32;
-pub const fnAnimtilesInstr_GotoRel: uint32 = 8880316 as uint32;
-pub const fnAnimtilesInstr_DecrementTimerAndGoto: uint32 = 8880340 as uint32;
-pub const fnAnimtilesInstr_DecrementTimerAndGotoRel: uint32 = 8880348 as uint32;
-pub const fnAnimtilesInstr_SetTimer: uint32 = 8880355 as uint32;
-pub const fnAnimtilesInstr_QueueMusic: uint32 = 8880368 as uint32;
-pub const fnAnimtilesInstr_QueueSfx1: uint32 = 8880380 as uint32;
-pub const fnAnimtilesInstr_QueueSfx2: uint32 = 8880392 as uint32;
-pub const fnAnimtilesInstr_QueueSfx3: uint32 = 8880404 as uint32;
-pub const fnAnimtilesInstr_GotoIfBossBitSet: uint32 = 8880416 as uint32;
-pub const fnAnimtilesInstr_SetBossBit: uint32 = 8880435 as uint32;
-pub const fnAnimtilesInstr_GotoIfEventHappened: uint32 = 8880447 as uint32;
-pub const fnAnimtilesInstr_SetEventHappened: uint32 = 8880464 as uint32;
-pub const fnAnimtilesInstr_WaitUntilAreaBossDead_DoubleRet: uint32 = 8880570 as uint32;
-pub const fnAnimtilesInstr_GotoIfBossBitSetInArea: uint32 = 8880899 as uint32;
-pub const fnAnimtilesInstr_SpawnTourianStatueEyeGlow: uint32 = 8880928 as uint32;
-pub const fnAnimtilesInstr_SpawnTourianStatueSoul: uint32 = 8880943 as uint32;
-pub const fnAnimtilesInstr_GotoIfTourianStatueBusy: uint32 = 8880958 as uint32;
-pub const fnAnimtilesInstr_TourianStatueSetState: uint32 = 8880969 as uint32;
-pub const fnAnimtilesInstr_TourianStatueClearState: uint32 = 8880978 as uint32;
-pub const fnAnimtilesInstr_Clear3PaletteColors: uint32 = 8880987 as uint32;
-pub const fnAnimtilesInstr_SpawnPalfxObj: uint32 = 8881010 as uint32;
-pub const fnAnimtilesInstr_Write8PaletteColors: uint32 = 8881023 as uint32;
+pub const fnAnimtilesInstr_Delete: uint32 = 8880306;
+pub const fnAnimtilesInstr_Goto: uint32 = 8880311;
+pub const fnAnimtilesInstr_GotoRel: uint32 = 8880316;
+pub const fnAnimtilesInstr_DecrementTimerAndGoto: uint32 = 8880340;
+pub const fnAnimtilesInstr_DecrementTimerAndGotoRel: uint32 = 8880348;
+pub const fnAnimtilesInstr_SetTimer: uint32 = 8880355;
+pub const fnAnimtilesInstr_QueueMusic: uint32 = 8880368;
+pub const fnAnimtilesInstr_QueueSfx1: uint32 = 8880380;
+pub const fnAnimtilesInstr_QueueSfx2: uint32 = 8880392;
+pub const fnAnimtilesInstr_QueueSfx3: uint32 = 8880404;
+pub const fnAnimtilesInstr_GotoIfBossBitSet: uint32 = 8880416;
+pub const fnAnimtilesInstr_SetBossBit: uint32 = 8880435;
+pub const fnAnimtilesInstr_GotoIfEventHappened: uint32 = 8880447;
+pub const fnAnimtilesInstr_SetEventHappened: uint32 = 8880464;
+pub const fnAnimtilesInstr_WaitUntilAreaBossDead_DoubleRet: uint32 = 8880570;
+pub const fnAnimtilesInstr_GotoIfBossBitSetInArea: uint32 = 8880899;
+pub const fnAnimtilesInstr_SpawnTourianStatueEyeGlow: uint32 = 8880928;
+pub const fnAnimtilesInstr_SpawnTourianStatueSoul: uint32 = 8880943;
+pub const fnAnimtilesInstr_GotoIfTourianStatueBusy: uint32 = 8880958;
+pub const fnAnimtilesInstr_TourianStatueSetState: uint32 = 8880969;
+pub const fnAnimtilesInstr_TourianStatueClearState: uint32 = 8880978;
+pub const fnAnimtilesInstr_Clear3PaletteColors: uint32 = 8880987;
+pub const fnAnimtilesInstr_SpawnPalfxObj: uint32 = 8881010;
+pub const fnAnimtilesInstr_Write8PaletteColors: uint32 = 8881023;
 pub unsafe fn EnableAnimtiles(game: &mut Game) {
     let ref mut fresh9 = *((&raw mut game.g_ram as *mut uint8)
         .offset(0x1ef1 as ::core::ffi::c_int as isize) as *mut uint16);

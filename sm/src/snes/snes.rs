@@ -35,8 +35,8 @@ pub use crate::types::{
     DmaChannel, Dsp, DspChannel, DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs,
     PpuZbufType, SaveLoadFunc, Snes, Spc, Timer, WindowLayer,
 };
-pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+pub const true_0: ::core::ffi::c_int = 1;
+pub const false_0: ::core::ffi::c_int = 0;
 
 pub unsafe fn snes_init(mut ram: *mut uint8_t) -> *mut Snes {
     let mut snes: *mut Snes = malloc(::core::mem::size_of::<Snes>() as size_t) as *mut Snes;

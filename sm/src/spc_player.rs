@@ -142,8 +142,8 @@ pub const V1VOLL: DspReg = 16;
 pub const V0OUTX: DspReg = 9;
 pub const V0ENVX: DspReg = 8;
 pub const V0VOLR: DspReg = 1;
-pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+pub const true_0: ::core::ffi::c_int = 1;
+pub const false_0: ::core::ffi::c_int = 0;
 static kChannel_Maps: [MemMap; 47] = [
     MemMap {
         off: 0 as ::core::ffi::c_ulong as uint16,

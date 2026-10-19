@@ -1029,7 +1029,7 @@ unsafe fn abs16(mut t: uint16) -> uint16 {
         t as ::core::ffi::c_int
     }) as uint16;
 }
-pub const kCoroutineNone: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+pub const kCoroutineNone: ::core::ffi::c_int = 0;
 #[inline]
 unsafe fn RomPtr_A9(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
     return RomPtr(
@@ -1062,398 +1062,296 @@ unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int, game: &mut Game) -> *mut Vr
     return (&raw mut game.g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
         as *mut uint8 as *mut VramWriteEntry;
 }
-pub const fnEproj_Init_0x8bde_SkreeDownLeft: ::core::ffi::c_int = 0x868b15 as ::core::ffi::c_int;
-pub const fnMotherBrainsBody_UnpauseHook: ::core::ffi::c_int = 0xa98763 as ::core::ffi::c_int;
-pub const fnMotherBrainsBrain_SetupBrainAndNeckToDraw: ::core::ffi::c_int =
-    0xa987a2 as ::core::ffi::c_int;
-pub const fnMotherBrainsBrain_SetupBrainToDraw: ::core::ffi::c_int = 0xa987d0 as ::core::ffi::c_int;
-pub const fnMotherBrainsBody_FirstPhase_DoubleRet: ::core::ffi::c_int =
-    0xa987e1 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_FakeDeath_Descent_0_Pause: uint32 = 11110429 as uint32;
-pub const fnMotherBrainBody_FakeDeath_Descent_1: ::core::ffi::c_int =
-    0xa98829 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_FakeDeath_Descent_2: ::core::ffi::c_int =
-    0xa9884d as ::core::ffi::c_int;
-pub const fnMotherBrainBody_FakeDeath_Descent_3: ::core::ffi::c_int =
-    0xa9886c as ::core::ffi::c_int;
-pub const fnMotherBrainBody_FakeDeath_Descent_4: ::core::ffi::c_int =
-    0xa98884 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_FakeDeath_Descent_5: ::core::ffi::c_int =
-    0xa988b2 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_FakeDeath_Descent_6: ::core::ffi::c_int =
-    0xa988d3 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_0_Wait: ::core::ffi::c_int = 0xa98949 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_1_ClearBottomLeftTube: ::core::ffi::c_int =
-    0xa9896e as ::core::ffi::c_int;
-pub const fnMotherBrainBody_2_SpawnTopRightTubeFalling: ::core::ffi::c_int =
-    0xa98983 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_3_ClearCeilingBlock9: uint32 = 11110816 as uint32;
-pub const fnMotherBrainBody_4_SpawnTopLeftTubeFalling: ::core::ffi::c_int =
-    0xa989b5 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_4_ClearCeilingBlock6: ::core::ffi::c_int =
-    0xa989d2 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_5_SpawnTubeFallingEnemy1: ::core::ffi::c_int =
-    0xa989e7 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_6_ClearBottomRightTube: ::core::ffi::c_int =
-    0xa989fa as ::core::ffi::c_int;
-pub const fnMotherBrainBody_7_SpawnTubeFallingEnemy2: ::core::ffi::c_int =
-    0xa98a0f as ::core::ffi::c_int;
-pub const fnMotherBrainBody_8_ClearBottomMiddleLeftTube: ::core::ffi::c_int =
-    0xa98a22 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_9_SpawnTopMiddleLeftFalling: ::core::ffi::c_int =
-    0xa98a37 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_10_ClearCeilingTubeColumn7: ::core::ffi::c_int =
-    0xa98a54 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_11_SpawnTopMiddleRightFalling: ::core::ffi::c_int =
-    0xa98a69 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_12_ClearCeilingTubeColumn8: ::core::ffi::c_int =
-    0xa98a86 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_13_SpawnTubeFallingEnemy3: ::core::ffi::c_int =
-    0xa98a9b as ::core::ffi::c_int;
-pub const fnMotherBrainBody_14_ClearBottomMiddleRightTube: ::core::ffi::c_int =
-    0xa98aae as ::core::ffi::c_int;
-pub const fnMotherBrainBody_15_SpawnTubeFallingEnemy4: ::core::ffi::c_int =
-    0xa98ac3 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_16_ClearBottomMiddleTubes: ::core::ffi::c_int =
-    0xa98ad6 as ::core::ffi::c_int;
-pub const fnnullsub_365: uint32 = 11111140 as uint32;
-pub const fnMotherBrainsTubesFalling_Main_NonMain: uint32 = 11111304 as uint32;
-pub const fnMotherBrainsTubesFalling_WaitToFall: uint32 = 11111371 as uint32;
-pub const fnMotherBrainsTubesFalling_Falling: ::core::ffi::c_int = 0xa98bd6 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_FakeDeath_Ascent_0_DrawBG1Row23: ::core::ffi::c_int =
-    0xa98c87 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_FakeDeath_Ascent_1_DrawBG1Row45: ::core::ffi::c_int =
-    0xa98c9e as ::core::ffi::c_int;
-pub const fnMotherBrainBody_FakeDeath_Ascent_2_DrawBG1Row67: ::core::ffi::c_int =
-    0xa98cb5 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_FakeDeath_Ascent_3_DrawBG1Row89: ::core::ffi::c_int =
-    0xa98ccc as ::core::ffi::c_int;
-pub const fnMotherBrainBody_FakeDeath_Ascent_4_DrawBG1RowAB: ::core::ffi::c_int =
-    0xa98ce3 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_FakeDeath_Ascent_5_DrawBG1RowCD: ::core::ffi::c_int =
-    0xa98cfa as ::core::ffi::c_int;
-pub const fnMotherBrainBody_FakeDeath_Ascent_6_SetupPhase2Gfx: ::core::ffi::c_int =
-    0xa98d11 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_FakeDeath_Ascent_7_SetupPhase2Brain: ::core::ffi::c_int =
-    0xa98d49 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_FakeDeath_Ascent_8_Pause: ::core::ffi::c_int =
-    0xa98d79 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_FakeDeath_Ascent_9_PrepareRise: ::core::ffi::c_int =
-    0xa98d8b as ::core::ffi::c_int;
-pub const fnMotherBrainBody_FakeDeath_Ascent_10_LoadLegTiles: ::core::ffi::c_int =
-    0xa98db4 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_FakeDeath_Ascent_11_ContinuePause: ::core::ffi::c_int =
-    0xa98dc3 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_FakeDeath_Ascent_12_StartMusic: ::core::ffi::c_int =
-    0xa98dec as ::core::ffi::c_int;
-pub const fnMotherBrainBody_FakeDeath_Ascent_13_Raise: ::core::ffi::c_int =
-    0xa98e4d as ::core::ffi::c_int;
-pub const fnMotherBrainBody_FakeDeath_Ascent_14_WaitForUncouching: ::core::ffi::c_int =
-    0xa98e95 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_FakeDeath_Ascent_15_TransitionFromGrey: ::core::ffi::c_int =
-    0xa98eaa as ::core::ffi::c_int;
-pub const fnMotherBrainBody_2ndphase_16_ShakeHeadMenacingly: ::core::ffi::c_int =
-    0xa98ef5 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_2ndphase_17_BringHeadBackUp: ::core::ffi::c_int =
-    0xa98f14 as ::core::ffi::c_int;
-pub const fnMotherBrainBody_2ndphase_18_FinishStretching: ::core::ffi::c_int =
-    0xa98f33 as ::core::ffi::c_int;
-pub const fnMotherBrain_Instr_Goto: uint32 = 11115279 as uint32;
-pub const fnMotherBrain_Instr_EnableNeckMovementGoto: uint32 = 11115284 as uint32;
-pub const fnMotherBrain_Instr_DisableNeckMovement: uint32 = 11115296 as uint32;
-pub const fnMotherBrain_Instr_QueueSfx2: uint32 = 11115304 as uint32;
-pub const fnMotherBrain_Instr_QueueSfx3: uint32 = 11115314 as uint32;
-pub const fnMotherBrain_Instr_SpawnDroolEproj: uint32 = 11115324 as uint32;
-pub const fnMotherBrain_Instr_SpawnPurpleBreath: uint32 = 11115373 as uint32;
-pub const fnMotherBrain_Instr_SetMainShakeTimer50: uint32 = 11115383 as uint32;
-pub const fnMotherBrain_Instr_GotoEitherOr: uint32 = 11115621 as uint32;
-pub const fnMotherBrain_Instr_MaybeGoto: uint32 = 11115693 as uint32;
-pub const fnMotherBrain_Instr_MaybeGoto2: uint32 = 11115789 as uint32;
-pub const fnMotherBrain_Instr_Goto2: uint32 = 11115809 as uint32;
-pub const fnMotherBrain_Instr_QueueShitroidAttackSfx: uint32 = 11116023 as uint32;
-pub const fnMotherBrain_Instr_SpawnBlueRingEproj: uint32 = 11116073 as uint32;
-pub const fnMotherBrain_Instr_AimRingsAtShitroid: uint32 = 11116087 as uint32;
-pub const fnMotherBrain_Instr_AimRingsAtSamus: uint32 = 11116123 as uint32;
-pub const fnMotherBrain_Instr_IncrShitroidAttackCtr: uint32 = 11116195 as uint32;
-pub const fnMotherBrain_Instr_SetShitroidAttackCtr0: uint32 = 11116213 as uint32;
-pub const fnMotherBrain_Instr_SpawnBombEproj: uint32 = 11116221 as uint32;
-pub const fnMotherBrain_Instr_SpawnLaserEproj: uint32 = 11116358 as uint32;
-pub const fnMotherBrain_Instr_SpawnRainbowEproj: uint32 = 11116420 as uint32;
-pub const fnMotherBrain_Instr_SetupFxForRainbowBeam: uint32 = 11116430 as uint32;
-pub const fnMotherBrain_Phase3_Death_0: ::core::ffi::c_int = 0xa9aee1 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Death_1: ::core::ffi::c_int = 0xa9af12 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Death_2: ::core::ffi::c_int = 0xa9af21 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Death_3: ::core::ffi::c_int = 0xa9af54 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Death_4: ::core::ffi::c_int = 0xa9af9d as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Death_5: ::core::ffi::c_int = 0xa9afb6 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Death_6: ::core::ffi::c_int = 0xa9b013 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Death_7: ::core::ffi::c_int = 0xa9b115 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Death_8: ::core::ffi::c_int = 0xa9b12d as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Death_9: ::core::ffi::c_int = 0xa9b15e as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Death_10: ::core::ffi::c_int = 0xa9b173 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Death_11: ::core::ffi::c_int = 0xa9b189 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Death_12: ::core::ffi::c_int = 0xa9b1b8 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Death_13: ::core::ffi::c_int = 0xa9b1d5 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Death_14_20framedelay: ::core::ffi::c_int =
-    0xa9b211 as ::core::ffi::c_int;
-pub const fnMotherBrain_CorpseRottingFinished: uint32 = 11121187 as uint32;
-pub const fnMotherBrain_Phase3_Death_15_LoadEscapeTimerTiles: ::core::ffi::c_int =
-    0xa9b258 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Death_16_StartEscape: ::core::ffi::c_int =
-    0xa9b26d as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Death_17_SpawnTimeBomb: ::core::ffi::c_int =
-    0xa9b2d1 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Death_18_TypesZebesText: ::core::ffi::c_int =
-    0xa9b2e3 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Death_19_EscapeDoorExploding: ::core::ffi::c_int =
-    0xa9b2f9 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Death_20_BlowUpEscapeDoor: ::core::ffi::c_int =
-    0xa9b32a as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Death_21_KeepEarthquakeGoing: ::core::ffi::c_int =
-    0xa9b33c as ::core::ffi::c_int;
-pub const fnMotherBrain_Body_Phase2_Thinking: ::core::ffi::c_int = 0xa9b605 as ::core::ffi::c_int;
-pub const fnMotherBrain_Body_Phase2_TryAttack: ::core::ffi::c_int = 0xa9b64b as ::core::ffi::c_int;
-pub const fnMotherBrain_FiringBomb_DecideOnWalking: ::core::ffi::c_int =
-    0xa9b781 as ::core::ffi::c_int;
-pub const fnMotherBrain_FiringBomb_WalkingBackwards: ::core::ffi::c_int =
-    0xa9b7ac as ::core::ffi::c_int;
-pub const fnMotherBrain_FiringBomb_Crouch: ::core::ffi::c_int = 0xa9b7c6 as ::core::ffi::c_int;
-pub const fnMotherBrain_FiringBomb_Fired: ::core::ffi::c_int = 0xa9b7e8 as ::core::ffi::c_int;
-pub const fnMotherBrain_FiringBomb_Standup: ::core::ffi::c_int = 0xa9b7f8 as ::core::ffi::c_int;
-pub const fnMotherBomb_FiringLaser_PositionHead: ::core::ffi::c_int =
-    0xa9b80e as ::core::ffi::c_int;
-pub const fnMotherBomb_FiringLaser_PositionHeadSlowlyFire: ::core::ffi::c_int =
-    0xa9b839 as ::core::ffi::c_int;
-pub const fnMotherBomb_FiringLaser_FinishAttack: ::core::ffi::c_int =
-    0xa9b863 as ::core::ffi::c_int;
-pub const fnMotherBomb_FiringDeathBeam: ::core::ffi::c_int = 0xa9b87d as ::core::ffi::c_int;
-pub const fnMotherBomb_FiringRainbowBeam_0: ::core::ffi::c_int = 0xa9b8eb as ::core::ffi::c_int;
-pub const fnMotherBomb_FiringRainbowBeam_1_StartCharge: ::core::ffi::c_int =
-    0xa9b91a as ::core::ffi::c_int;
-pub const fnMotherBomb_FiringRainbowBeam_2_RetractNeck: ::core::ffi::c_int =
-    0xa9b92b as ::core::ffi::c_int;
-pub const fnMotherBomb_FiringRainbowBeam_3_Wait: ::core::ffi::c_int =
-    0xa9b93f as ::core::ffi::c_int;
-pub const fnMotherBomb_FiringRainbowBeam_4_ExtendNeckDown: ::core::ffi::c_int =
-    0xa9b951 as ::core::ffi::c_int;
-pub const fnMotherBomb_FiringRainbowBeam_5_StartFiring: ::core::ffi::c_int =
-    0xa9b975 as ::core::ffi::c_int;
-pub const fnMotherBomb_FiringRainbowBeam_6_MoveSamusToWall: ::core::ffi::c_int =
-    0xa9b9e5 as ::core::ffi::c_int;
-pub const fnMotherBomb_FiringRainbowBeam_7_DelayFrame: ::core::ffi::c_int =
-    0xa9ba00 as ::core::ffi::c_int;
-pub const fnMotherBomb_FiringRainbowBeam_8_StartDrainSamus: ::core::ffi::c_int =
-    0xa9ba27 as ::core::ffi::c_int;
-pub const fnMotherBomb_FiringRainbowBeam_9_DrainingSamus: ::core::ffi::c_int =
-    0xa9ba3c as ::core::ffi::c_int;
-pub const fnMotherBomb_FiringRainbowBeam_10_FinishFiringRainbow: ::core::ffi::c_int =
-    0xa9ba5e as ::core::ffi::c_int;
-pub const fnMotherBomb_FiringRainbowBeam_11_LetSamusFall: ::core::ffi::c_int =
-    0xa9bac4 as ::core::ffi::c_int;
-pub const fnMotherBomb_FiringRainbowBeam_12_WaitForSamusHitGround: ::core::ffi::c_int =
-    0xa9bad1 as ::core::ffi::c_int;
-pub const fnMotherBomb_FiringRainbowBeam_13_LowerHead: ::core::ffi::c_int =
-    0xa9badd as ::core::ffi::c_int;
-pub const fnMotherBomb_FiringRainbowBeam_14_DecideNextAction: ::core::ffi::c_int =
-    0xa9bb06 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase2Cut_0: ::core::ffi::c_int = 0xa9bd45 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase2Cut_1: ::core::ffi::c_int = 0xa9bd98 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase2Cut_2: ::core::ffi::c_int = 0xa9bda9 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase2Cut_3: ::core::ffi::c_int = 0xa9bdc1 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase2Cut_4: ::core::ffi::c_int = 0xa9bdd2 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase2Cut_5: ::core::ffi::c_int = 0xa9bded as ::core::ffi::c_int;
-pub const fnnullsub_364: ::core::ffi::c_int = 0xa9be1a as ::core::ffi::c_int;
-pub const fnMotherBrain_DrainedByShitroid_0: ::core::ffi::c_int = 0xa9be38 as ::core::ffi::c_int;
-pub const fnMotherBrain_DrainedByShitroid_1: ::core::ffi::c_int = 0xa9be5d as ::core::ffi::c_int;
-pub const fnMotherBrain_DrainedByShitroid_2: ::core::ffi::c_int = 0xa9be96 as ::core::ffi::c_int;
-pub const fnMotherBrain_DrainedByShitroid_3: ::core::ffi::c_int = 0xa9bf0e as ::core::ffi::c_int;
-pub const fnMotherBrain_DrainedByShitroid_4: ::core::ffi::c_int = 0xa9bf41 as ::core::ffi::c_int;
-pub const fnMotherBrain_DrainedByShitroid_5: ::core::ffi::c_int = 0xa9bf56 as ::core::ffi::c_int;
-pub const fnMotherBrain_DrainedByShitroid_6: ::core::ffi::c_int = 0xa9bf7d as ::core::ffi::c_int;
-pub const fnMotherBrain_DrainedByShitroid_7: ::core::ffi::c_int = 0xa9bf95 as ::core::ffi::c_int;
-pub const fnMotherBrain_PainfulWalkForwards: ::core::ffi::c_int = 0xa9bfd0 as ::core::ffi::c_int;
-pub const fnMotherBrain_PainfulWalkingForwards: ::core::ffi::c_int = 0xa9bfe8 as ::core::ffi::c_int;
-pub const fnMotherBrain_PainfulWalkBackwards: ::core::ffi::c_int = 0xa9c004 as ::core::ffi::c_int;
-pub const fnMotherBrain_PainfulWalkingBackwards: ::core::ffi::c_int =
-    0xa9c01c as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase2_Revive_0: ::core::ffi::c_int = 0xa9c059 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase2_Revive_1: ::core::ffi::c_int = 0xa9c066 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase2_Revive_2: ::core::ffi::c_int = 0xa9c082 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase2_Revive_3: ::core::ffi::c_int = 0xa9c08f as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase2_Revive_4: ::core::ffi::c_int = 0xa9c0ba as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase2_Revive_5: ::core::ffi::c_int = 0xa9c0e4 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase2_Revive_6: ::core::ffi::c_int = 0xa9c0fb as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase2_Revive_7: ::core::ffi::c_int = 0xa9c11e as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase2_Revive_8: ::core::ffi::c_int = 0xa9c147 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase2_MurderShitroid_1: ::core::ffi::c_int =
-    0xa9c15c as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase2_MurderShitroid_2: ::core::ffi::c_int =
-    0xa9c182 as ::core::ffi::c_int;
-pub const fnnullsub_367: uint32 = 11125133 as uint32;
-pub const fnMotherBrain_Phase2_PrepareForFinalShitroid: ::core::ffi::c_int =
-    0xa9c18e as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase2_ExecuteFinalkShitroid: ::core::ffi::c_int =
-    0xa9c19a as ::core::ffi::c_int;
-pub const fnnullsub_363: ::core::ffi::c_int = 0xa9c1a6 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Recover_MakeDistance: ::core::ffi::c_int =
-    0xa9c1cf as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Recover_SetupForFight: ::core::ffi::c_int =
-    0xa9c1f0 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Fighting_Main: ::core::ffi::c_int = 0xa9c209 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Fighting_Cooldown: ::core::ffi::c_int =
-    0xa9c24e as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Walk_TryToInchForward: ::core::ffi::c_int =
-    0xa9c26a as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Walk_RetreatQuickly: ::core::ffi::c_int =
-    0xa9c2b3 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Walk_RetreatSlowly: ::core::ffi::c_int =
-    0xa9c2d2 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Neck_Normal: ::core::ffi::c_int = 0xa9c330 as ::core::ffi::c_int;
-pub const fnnullsub_369: uint32 = 11125587 as uint32;
-pub const fnMotherBrain_Phase3_Neck_SetupRecoilRecovery: ::core::ffi::c_int =
-    0xa9c354 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Neck_RecoilRecovery: ::core::ffi::c_int =
-    0xa9c37b as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Neck_SetupHyperBeamRecoil: ::core::ffi::c_int =
-    0xa9c395 as ::core::ffi::c_int;
-pub const fnMotherBrain_Phase3_Neck_HyperBeamRecoil: ::core::ffi::c_int =
-    0xa9c3cd as ::core::ffi::c_int;
-pub const fnShitroidInCutscene_DashOntoScreen: ::core::ffi::c_int = 0xa9c7cc as ::core::ffi::c_int;
-pub const fnShitroidInCutscene_CurveTowardsBrain: ::core::ffi::c_int =
-    0xa9c7ec as ::core::ffi::c_int;
-pub const fnShitroidInCutscene_GetIntoFace: ::core::ffi::c_int = 0xa9c811 as ::core::ffi::c_int;
-pub const fnShitroidInCutscene_LatchOntoBrain: ::core::ffi::c_int = 0xa9c851 as ::core::ffi::c_int;
-pub const fnShitroidInCutscene_SetMotherBrainToStumbleBack: ::core::ffi::c_int =
-    0xa9c879 as ::core::ffi::c_int;
-pub const fnShitroidInCutscene_ActivateRainbowBeam: ::core::ffi::c_int =
-    0xa9c889 as ::core::ffi::c_int;
-pub const fnShitroidInCutscene_BrainTurnsToCorpse: ::core::ffi::c_int =
-    0xa9c8e2 as ::core::ffi::c_int;
-pub const fnShitroidInCutscene_StopDraining: ::core::ffi::c_int = 0xa9c915 as ::core::ffi::c_int;
-pub const fnShitroidInCutscene_LetGoAndSpawnDust: ::core::ffi::c_int =
-    0xa9c94b as ::core::ffi::c_int;
-pub const fnShitroidInCutscene_MoveUpToCeiling: uint32 = 11127129 as uint32;
-pub const fnShitroidInCutscene_MoveToSamus: ::core::ffi::c_int = 0xa9c9c3 as ::core::ffi::c_int;
-pub const fnShitroidInCutscene_LatchOntoSamus: ::core::ffi::c_int = 0xa9ca66 as ::core::ffi::c_int;
-pub const fnShitroidInCutscene_HealSamusToFullHealth: ::core::ffi::c_int =
-    0xa9ca7a as ::core::ffi::c_int;
-pub const fnnullsub_368: ::core::ffi::c_int = 0xa9cabc as ::core::ffi::c_int;
-pub const fnShitroidInCutscene_IdleUntilToNoHealth: ::core::ffi::c_int =
-    0xa9cabd as ::core::ffi::c_int;
-pub const fnShitroidInCutscene_ReleaseSamus: ::core::ffi::c_int = 0xa9cb13 as ::core::ffi::c_int;
-pub const fnShitroidInCutscene_StareDownMotherBrain: ::core::ffi::c_int =
-    0xa9cb2d as ::core::ffi::c_int;
-pub const fnShitroidInCutscene_FlyOffScreen: ::core::ffi::c_int = 0xa9cb56 as ::core::ffi::c_int;
-pub const fnShitroidInCutscene_MoveToFinalChargeStart: ::core::ffi::c_int =
-    0xa9cb7b as ::core::ffi::c_int;
-pub const fnShitroidInCutscene_InitiateFinalCharge: ::core::ffi::c_int =
-    0xa9cbb3 as ::core::ffi::c_int;
-pub const fnShitroidInCutscene_FinalCharge: ::core::ffi::c_int = 0xa9cbd8 as ::core::ffi::c_int;
-pub const fnShitroidInCutscene_ShitroidFinalBelow: ::core::ffi::c_int =
-    0xa9cc3e as ::core::ffi::c_int;
-pub const fnShitroidInCutscene_PlaySamusTheme: ::core::ffi::c_int = 0xa9cc60 as ::core::ffi::c_int;
-pub const fnShitroidInCutscene_PrepareSamusHyperbeam: ::core::ffi::c_int =
-    0xa9cc7f as ::core::ffi::c_int;
-pub const fnnullsub_338: ::core::ffi::c_int = 0xa9cc98 as ::core::ffi::c_int;
-pub const fnShitroidInCutscene_DeathSequence: ::core::ffi::c_int = 0xa9cc99 as ::core::ffi::c_int;
-pub const fnShitroidInCutscene_UnloadShitroid: ::core::ffi::c_int = 0xa9ccc0 as ::core::ffi::c_int;
-pub const fnShitroidInCutscene_LetSamusRainbowMore: ::core::ffi::c_int =
-    0xa9ccde as ::core::ffi::c_int;
-pub const fnShitroidInCutscene_FinishCutscene: ::core::ffi::c_int = 0xa9ccf0 as ::core::ffi::c_int;
-pub const fnSamusRainbowPaletteFunc_ActivateWhenEnemyLow: ::core::ffi::c_int =
-    0xa9cd30 as ::core::ffi::c_int;
-pub const fnSamusRainbowPaletteFunc_GraduallySlowDown: ::core::ffi::c_int =
-    0xa9cd4b as ::core::ffi::c_int;
-pub const fnDeadTorizo_WaitForSamusColl: ::core::ffi::c_int = 0xa9d3ad as ::core::ffi::c_int;
-pub const fnnullsub_361: ::core::ffi::c_int = 0xa9d3c7 as ::core::ffi::c_int;
-pub const fnDeadTorizo_PreRotDelay: ::core::ffi::c_int = 0xa9d3c8 as ::core::ffi::c_int;
-pub const fnDeadTorizo_Rotting: ::core::ffi::c_int = 0xa9d3e6 as ::core::ffi::c_int;
-pub const fnDeadTorizo_CorpseRottingFinished: uint32 = 11130301 as uint32;
-pub const fnDeadSidehopper_Alive_WaitForActivate: ::core::ffi::c_int =
-    0xa9d8e2 as ::core::ffi::c_int;
-pub const fnDeadSidehopper_Activated: ::core::ffi::c_int = 0xa9d8f1 as ::core::ffi::c_int;
-pub const fnnullsub_362: ::core::ffi::c_int = 0xa9d90f as ::core::ffi::c_int;
-pub const fnDeadMonsters_Func_1: ::core::ffi::c_int = 0xa9d910 as ::core::ffi::c_int;
-pub const fnDeadMonsters_Func_2: ::core::ffi::c_int = 0xa9d91d as ::core::ffi::c_int;
-pub const fnDeadMonsters_Func_5: ::core::ffi::c_int = 0xa9da08 as ::core::ffi::c_int;
-pub const fnnullsub_268: ::core::ffi::c_int = 0xa9da63 as ::core::ffi::c_int;
-pub const fnDeadSidehopper_WaitForSamusColl: ::core::ffi::c_int = 0xa9da64 as ::core::ffi::c_int;
-pub const fnDeadZoomer_WaitForSamusColl: ::core::ffi::c_int = 0xa9da69 as ::core::ffi::c_int;
-pub const fnDeadSkree_WaitForSamusColl: ::core::ffi::c_int = 0xa9da6e as ::core::ffi::c_int;
-pub const fnDeadRipper_WaitForSamusColl: ::core::ffi::c_int = 0xa9da73 as ::core::ffi::c_int;
-pub const fnDeadSidehopper_PreRotDelay: ::core::ffi::c_int = 0xa9da8f as ::core::ffi::c_int;
-pub const fnDeadZoomer_PreRotDelay: ::core::ffi::c_int = 0xa9da94 as ::core::ffi::c_int;
-pub const fnDeadRipper_PreRotDelay: ::core::ffi::c_int = 0xa9da99 as ::core::ffi::c_int;
-pub const fnDeadSkree_PreRotDelay: ::core::ffi::c_int = 0xa9da9e as ::core::ffi::c_int;
-pub const fnDeadSidehopper_Rotting: ::core::ffi::c_int = 0xa9daba as ::core::ffi::c_int;
-pub const fnDeadZoomer_Rotting: ::core::ffi::c_int = 0xa9dad0 as ::core::ffi::c_int;
-pub const fnDeadRipper_Rotting: ::core::ffi::c_int = 0xa9dae6 as ::core::ffi::c_int;
-pub const fnDeadSkree_Rotting: ::core::ffi::c_int = 0xa9dafc as ::core::ffi::c_int;
-pub const fnCorpseRottingRotEntryFinishedHook: uint32 = 11131912 as uint32;
-pub const fnTorizo_CorpseRottingInitFunc: uint32 = 11132440 as uint32;
-pub const fnSidehopper_CorpseRottingInitFunc_0: uint32 = 11132609 as uint32;
-pub const fnSidehopper_CorpseRottingInitFunc_2: uint32 = 11132680 as uint32;
-pub const fnZoomer_CorpseRottingInitFunc_0: uint32 = 11132751 as uint32;
-pub const fnZoomer_CorpseRottingInitFunc_2: uint32 = 11132780 as uint32;
-pub const fnZoomer_CorpseRottingInitFunc_4: uint32 = 11132809 as uint32;
-pub const fnRipper_CorpseRottingInitFunc_0: uint32 = 11132838 as uint32;
-pub const fnRipper_CorpseRottingInitFunc_2: uint32 = 11132867 as uint32;
-pub const fnSkree_CorpseRottingInitFunc_0: uint32 = 11132896 as uint32;
-pub const fnSkree_CorpseRottingInitFunc_2: uint32 = 11132953 as uint32;
-pub const fnSkree_CorpseRottingInitFunc_4: uint32 = 11133010 as uint32;
-pub const fnMotherBrain_CorpseRottingInitFunc: uint32 = 11133067 as uint32;
-pub const fnTorizo_CorpseRottingMoveFunc: uint32 = 11133554 as uint32;
-pub const fnTorizo_CorpseRottingCopyFunc: uint32 = 11133835 as uint32;
-pub const fnSidehopper_CorpseRottingMoveFunc_0: uint32 = 11134056 as uint32;
-pub const fnSidehopper_CorpseRottingCopyFunc_0: uint32 = 11134197 as uint32;
-pub const fnSidehopper_CorpseRottingMoveFunc_2: uint32 = 11134308 as uint32;
-pub const fnSidehopper_CorpseRottingCopyFunc_2: uint32 = 11134454 as uint32;
-pub const fnZoomer_CorpseRottingMoveFunc_0: uint32 = 11134570 as uint32;
-pub const fnZoomer_CorpseRottingCopyFunc_0: uint32 = 11134649 as uint32;
-pub const fnZoomer_CorpseRottingMoveFunc_2: uint32 = 11134710 as uint32;
-pub const fnZoomer_CorpseRottingCopyFunc_2: uint32 = 11134789 as uint32;
-pub const fnZoomer_CorpseRottingMoveFunc_4: uint32 = 11134850 as uint32;
-pub const fnZoomer_CorpseRottingCopyFunc_4: uint32 = 11134929 as uint32;
-pub const fnRipper_CorpseRottingMoveFunc_0: uint32 = 11134990 as uint32;
-pub const fnRipper_CorpseRottingCopyFunc_0: uint32 = 11135069 as uint32;
-pub const fnRipper_CorpseRottingMoveFunc_2: uint32 = 11135130 as uint32;
-pub const fnRipper_CorpseRottingCopyFunc_2: uint32 = 11135209 as uint32;
-pub const fnSkree_CorpseRottingMoveFunc_0: uint32 = 11135270 as uint32;
-pub const fnSkree_CorpseRottingCopyFunc_0: uint32 = 11135323 as uint32;
-pub const fnSkree_CorpseRottingMoveFunc_2: uint32 = 11135364 as uint32;
-pub const fnSkree_CorpseRottingCopyFunc_2: uint32 = 11135417 as uint32;
-pub const fnSkree_CorpseRottingMoveFunc_4: uint32 = 11135458 as uint32;
-pub const fnSkree_CorpseRottingCopyFunc_4: uint32 = 11135511 as uint32;
-pub const fnMotherBrain_CorpseRottingMoveFunc: uint32 = 11135552 as uint32;
-pub const fnMotherBrain_CorpseRottingCopyFunc: uint32 = 11135755 as uint32;
-pub const fnShitroid_Func_3: ::core::ffi::c_int = 0xa9efdf as ::core::ffi::c_int;
-pub const fnShitroid_Func_4: ::core::ffi::c_int = 0xa9efe6 as ::core::ffi::c_int;
-pub const fnShitroid_Func_5: ::core::ffi::c_int = 0xa9f02b as ::core::ffi::c_int;
-pub const fnShitroid_Func_6: ::core::ffi::c_int = 0xa9f037 as ::core::ffi::c_int;
-pub const fnShitroid_Func_7: ::core::ffi::c_int = 0xa9f049 as ::core::ffi::c_int;
-pub const fnShitroid_Func_8: ::core::ffi::c_int = 0xa9f06d as ::core::ffi::c_int;
-pub const fnShitroid_Func_9: ::core::ffi::c_int = 0xa9f094 as ::core::ffi::c_int;
-pub const fnShitroid_Func_10: ::core::ffi::c_int = 0xa9f0e6 as ::core::ffi::c_int;
-pub const fnShitroid_Func_11: ::core::ffi::c_int = 0xa9f125 as ::core::ffi::c_int;
-pub const fnShitroid_Func_12: ::core::ffi::c_int = 0xa9f138 as ::core::ffi::c_int;
-pub const fnShitroid_Func_13: ::core::ffi::c_int = 0xa9f180 as ::core::ffi::c_int;
-pub const fnShitroid_Func_14: ::core::ffi::c_int = 0xa9f1fa as ::core::ffi::c_int;
-pub const fnShitroid_Func_15: ::core::ffi::c_int = 0xa9f20e as ::core::ffi::c_int;
-pub const fnShitroid_Func_16: ::core::ffi::c_int = 0xa9f21b as ::core::ffi::c_int;
-pub const fnShitroid_Func_17: ::core::ffi::c_int = 0xa9f2a2 as ::core::ffi::c_int;
-pub const fnShitroid_Func_18: ::core::ffi::c_int = 0xa9f2ae as ::core::ffi::c_int;
-pub const fnShitroid_Func_19: ::core::ffi::c_int = 0xa9f2c0 as ::core::ffi::c_int;
-pub const fnShitroid_Func_20: ::core::ffi::c_int = 0xa9f2fb as ::core::ffi::c_int;
-pub const fnShitroid_Func_21: ::core::ffi::c_int = 0xa9f324 as ::core::ffi::c_int;
-pub const fnShitroid_Func_22: ::core::ffi::c_int = 0xa9f360 as ::core::ffi::c_int;
-pub const fnShitroid_Func_23: ::core::ffi::c_int = 0xa9f36d as ::core::ffi::c_int;
-pub const fnShitroid_Func_24: ::core::ffi::c_int = 0xa9f3a3 as ::core::ffi::c_int;
-pub const fnShitroid_Func_25: ::core::ffi::c_int = 0xa9f3be as ::core::ffi::c_int;
-pub const fnShitroid_GraduallyAccelerateTowards0x8: uint32 = 11138143 as uint32;
-pub const fnShitroid_GraduallyAccelerateTowards0x10: uint32 = 11138150 as uint32;
-pub const fnShitroid_HandleCutscenePalette: ::core::ffi::c_int = 0xa9f683 as ::core::ffi::c_int;
-pub const fnShitroid_HandleCutscenePalette_LowHealth: ::core::ffi::c_int =
-    0xa9f68f as ::core::ffi::c_int;
+pub const fnEproj_Init_0x8bde_SkreeDownLeft: ::core::ffi::c_int = 0x868b15;
+pub const fnMotherBrainsBody_UnpauseHook: ::core::ffi::c_int = 0xa98763;
+pub const fnMotherBrainsBrain_SetupBrainAndNeckToDraw: ::core::ffi::c_int = 0xa987a2;
+pub const fnMotherBrainsBrain_SetupBrainToDraw: ::core::ffi::c_int = 0xa987d0;
+pub const fnMotherBrainsBody_FirstPhase_DoubleRet: ::core::ffi::c_int = 0xa987e1;
+pub const fnMotherBrainBody_FakeDeath_Descent_0_Pause: uint32 = 11110429;
+pub const fnMotherBrainBody_FakeDeath_Descent_1: ::core::ffi::c_int = 0xa98829;
+pub const fnMotherBrainBody_FakeDeath_Descent_2: ::core::ffi::c_int = 0xa9884d;
+pub const fnMotherBrainBody_FakeDeath_Descent_3: ::core::ffi::c_int = 0xa9886c;
+pub const fnMotherBrainBody_FakeDeath_Descent_4: ::core::ffi::c_int = 0xa98884;
+pub const fnMotherBrainBody_FakeDeath_Descent_5: ::core::ffi::c_int = 0xa988b2;
+pub const fnMotherBrainBody_FakeDeath_Descent_6: ::core::ffi::c_int = 0xa988d3;
+pub const fnMotherBrainBody_0_Wait: ::core::ffi::c_int = 0xa98949;
+pub const fnMotherBrainBody_1_ClearBottomLeftTube: ::core::ffi::c_int = 0xa9896e;
+pub const fnMotherBrainBody_2_SpawnTopRightTubeFalling: ::core::ffi::c_int = 0xa98983;
+pub const fnMotherBrainBody_3_ClearCeilingBlock9: uint32 = 11110816;
+pub const fnMotherBrainBody_4_SpawnTopLeftTubeFalling: ::core::ffi::c_int = 0xa989b5;
+pub const fnMotherBrainBody_4_ClearCeilingBlock6: ::core::ffi::c_int = 0xa989d2;
+pub const fnMotherBrainBody_5_SpawnTubeFallingEnemy1: ::core::ffi::c_int = 0xa989e7;
+pub const fnMotherBrainBody_6_ClearBottomRightTube: ::core::ffi::c_int = 0xa989fa;
+pub const fnMotherBrainBody_7_SpawnTubeFallingEnemy2: ::core::ffi::c_int = 0xa98a0f;
+pub const fnMotherBrainBody_8_ClearBottomMiddleLeftTube: ::core::ffi::c_int = 0xa98a22;
+pub const fnMotherBrainBody_9_SpawnTopMiddleLeftFalling: ::core::ffi::c_int = 0xa98a37;
+pub const fnMotherBrainBody_10_ClearCeilingTubeColumn7: ::core::ffi::c_int = 0xa98a54;
+pub const fnMotherBrainBody_11_SpawnTopMiddleRightFalling: ::core::ffi::c_int = 0xa98a69;
+pub const fnMotherBrainBody_12_ClearCeilingTubeColumn8: ::core::ffi::c_int = 0xa98a86;
+pub const fnMotherBrainBody_13_SpawnTubeFallingEnemy3: ::core::ffi::c_int = 0xa98a9b;
+pub const fnMotherBrainBody_14_ClearBottomMiddleRightTube: ::core::ffi::c_int = 0xa98aae;
+pub const fnMotherBrainBody_15_SpawnTubeFallingEnemy4: ::core::ffi::c_int = 0xa98ac3;
+pub const fnMotherBrainBody_16_ClearBottomMiddleTubes: ::core::ffi::c_int = 0xa98ad6;
+pub const fnnullsub_365: uint32 = 11111140;
+pub const fnMotherBrainsTubesFalling_Main_NonMain: uint32 = 11111304;
+pub const fnMotherBrainsTubesFalling_WaitToFall: uint32 = 11111371;
+pub const fnMotherBrainsTubesFalling_Falling: ::core::ffi::c_int = 0xa98bd6;
+pub const fnMotherBrainBody_FakeDeath_Ascent_0_DrawBG1Row23: ::core::ffi::c_int = 0xa98c87;
+pub const fnMotherBrainBody_FakeDeath_Ascent_1_DrawBG1Row45: ::core::ffi::c_int = 0xa98c9e;
+pub const fnMotherBrainBody_FakeDeath_Ascent_2_DrawBG1Row67: ::core::ffi::c_int = 0xa98cb5;
+pub const fnMotherBrainBody_FakeDeath_Ascent_3_DrawBG1Row89: ::core::ffi::c_int = 0xa98ccc;
+pub const fnMotherBrainBody_FakeDeath_Ascent_4_DrawBG1RowAB: ::core::ffi::c_int = 0xa98ce3;
+pub const fnMotherBrainBody_FakeDeath_Ascent_5_DrawBG1RowCD: ::core::ffi::c_int = 0xa98cfa;
+pub const fnMotherBrainBody_FakeDeath_Ascent_6_SetupPhase2Gfx: ::core::ffi::c_int = 0xa98d11;
+pub const fnMotherBrainBody_FakeDeath_Ascent_7_SetupPhase2Brain: ::core::ffi::c_int = 0xa98d49;
+pub const fnMotherBrainBody_FakeDeath_Ascent_8_Pause: ::core::ffi::c_int = 0xa98d79;
+pub const fnMotherBrainBody_FakeDeath_Ascent_9_PrepareRise: ::core::ffi::c_int = 0xa98d8b;
+pub const fnMotherBrainBody_FakeDeath_Ascent_10_LoadLegTiles: ::core::ffi::c_int = 0xa98db4;
+pub const fnMotherBrainBody_FakeDeath_Ascent_11_ContinuePause: ::core::ffi::c_int = 0xa98dc3;
+pub const fnMotherBrainBody_FakeDeath_Ascent_12_StartMusic: ::core::ffi::c_int = 0xa98dec;
+pub const fnMotherBrainBody_FakeDeath_Ascent_13_Raise: ::core::ffi::c_int = 0xa98e4d;
+pub const fnMotherBrainBody_FakeDeath_Ascent_14_WaitForUncouching: ::core::ffi::c_int = 0xa98e95;
+pub const fnMotherBrainBody_FakeDeath_Ascent_15_TransitionFromGrey: ::core::ffi::c_int = 0xa98eaa;
+pub const fnMotherBrainBody_2ndphase_16_ShakeHeadMenacingly: ::core::ffi::c_int = 0xa98ef5;
+pub const fnMotherBrainBody_2ndphase_17_BringHeadBackUp: ::core::ffi::c_int = 0xa98f14;
+pub const fnMotherBrainBody_2ndphase_18_FinishStretching: ::core::ffi::c_int = 0xa98f33;
+pub const fnMotherBrain_Instr_Goto: uint32 = 11115279;
+pub const fnMotherBrain_Instr_EnableNeckMovementGoto: uint32 = 11115284;
+pub const fnMotherBrain_Instr_DisableNeckMovement: uint32 = 11115296;
+pub const fnMotherBrain_Instr_QueueSfx2: uint32 = 11115304;
+pub const fnMotherBrain_Instr_QueueSfx3: uint32 = 11115314;
+pub const fnMotherBrain_Instr_SpawnDroolEproj: uint32 = 11115324;
+pub const fnMotherBrain_Instr_SpawnPurpleBreath: uint32 = 11115373;
+pub const fnMotherBrain_Instr_SetMainShakeTimer50: uint32 = 11115383;
+pub const fnMotherBrain_Instr_GotoEitherOr: uint32 = 11115621;
+pub const fnMotherBrain_Instr_MaybeGoto: uint32 = 11115693;
+pub const fnMotherBrain_Instr_MaybeGoto2: uint32 = 11115789;
+pub const fnMotherBrain_Instr_Goto2: uint32 = 11115809;
+pub const fnMotherBrain_Instr_QueueShitroidAttackSfx: uint32 = 11116023;
+pub const fnMotherBrain_Instr_SpawnBlueRingEproj: uint32 = 11116073;
+pub const fnMotherBrain_Instr_AimRingsAtShitroid: uint32 = 11116087;
+pub const fnMotherBrain_Instr_AimRingsAtSamus: uint32 = 11116123;
+pub const fnMotherBrain_Instr_IncrShitroidAttackCtr: uint32 = 11116195;
+pub const fnMotherBrain_Instr_SetShitroidAttackCtr0: uint32 = 11116213;
+pub const fnMotherBrain_Instr_SpawnBombEproj: uint32 = 11116221;
+pub const fnMotherBrain_Instr_SpawnLaserEproj: uint32 = 11116358;
+pub const fnMotherBrain_Instr_SpawnRainbowEproj: uint32 = 11116420;
+pub const fnMotherBrain_Instr_SetupFxForRainbowBeam: uint32 = 11116430;
+pub const fnMotherBrain_Phase3_Death_0: ::core::ffi::c_int = 0xa9aee1;
+pub const fnMotherBrain_Phase3_Death_1: ::core::ffi::c_int = 0xa9af12;
+pub const fnMotherBrain_Phase3_Death_2: ::core::ffi::c_int = 0xa9af21;
+pub const fnMotherBrain_Phase3_Death_3: ::core::ffi::c_int = 0xa9af54;
+pub const fnMotherBrain_Phase3_Death_4: ::core::ffi::c_int = 0xa9af9d;
+pub const fnMotherBrain_Phase3_Death_5: ::core::ffi::c_int = 0xa9afb6;
+pub const fnMotherBrain_Phase3_Death_6: ::core::ffi::c_int = 0xa9b013;
+pub const fnMotherBrain_Phase3_Death_7: ::core::ffi::c_int = 0xa9b115;
+pub const fnMotherBrain_Phase3_Death_8: ::core::ffi::c_int = 0xa9b12d;
+pub const fnMotherBrain_Phase3_Death_9: ::core::ffi::c_int = 0xa9b15e;
+pub const fnMotherBrain_Phase3_Death_10: ::core::ffi::c_int = 0xa9b173;
+pub const fnMotherBrain_Phase3_Death_11: ::core::ffi::c_int = 0xa9b189;
+pub const fnMotherBrain_Phase3_Death_12: ::core::ffi::c_int = 0xa9b1b8;
+pub const fnMotherBrain_Phase3_Death_13: ::core::ffi::c_int = 0xa9b1d5;
+pub const fnMotherBrain_Phase3_Death_14_20framedelay: ::core::ffi::c_int = 0xa9b211;
+pub const fnMotherBrain_CorpseRottingFinished: uint32 = 11121187;
+pub const fnMotherBrain_Phase3_Death_15_LoadEscapeTimerTiles: ::core::ffi::c_int = 0xa9b258;
+pub const fnMotherBrain_Phase3_Death_16_StartEscape: ::core::ffi::c_int = 0xa9b26d;
+pub const fnMotherBrain_Phase3_Death_17_SpawnTimeBomb: ::core::ffi::c_int = 0xa9b2d1;
+pub const fnMotherBrain_Phase3_Death_18_TypesZebesText: ::core::ffi::c_int = 0xa9b2e3;
+pub const fnMotherBrain_Phase3_Death_19_EscapeDoorExploding: ::core::ffi::c_int = 0xa9b2f9;
+pub const fnMotherBrain_Phase3_Death_20_BlowUpEscapeDoor: ::core::ffi::c_int = 0xa9b32a;
+pub const fnMotherBrain_Phase3_Death_21_KeepEarthquakeGoing: ::core::ffi::c_int = 0xa9b33c;
+pub const fnMotherBrain_Body_Phase2_Thinking: ::core::ffi::c_int = 0xa9b605;
+pub const fnMotherBrain_Body_Phase2_TryAttack: ::core::ffi::c_int = 0xa9b64b;
+pub const fnMotherBrain_FiringBomb_DecideOnWalking: ::core::ffi::c_int = 0xa9b781;
+pub const fnMotherBrain_FiringBomb_WalkingBackwards: ::core::ffi::c_int = 0xa9b7ac;
+pub const fnMotherBrain_FiringBomb_Crouch: ::core::ffi::c_int = 0xa9b7c6;
+pub const fnMotherBrain_FiringBomb_Fired: ::core::ffi::c_int = 0xa9b7e8;
+pub const fnMotherBrain_FiringBomb_Standup: ::core::ffi::c_int = 0xa9b7f8;
+pub const fnMotherBomb_FiringLaser_PositionHead: ::core::ffi::c_int = 0xa9b80e;
+pub const fnMotherBomb_FiringLaser_PositionHeadSlowlyFire: ::core::ffi::c_int = 0xa9b839;
+pub const fnMotherBomb_FiringLaser_FinishAttack: ::core::ffi::c_int = 0xa9b863;
+pub const fnMotherBomb_FiringDeathBeam: ::core::ffi::c_int = 0xa9b87d;
+pub const fnMotherBomb_FiringRainbowBeam_0: ::core::ffi::c_int = 0xa9b8eb;
+pub const fnMotherBomb_FiringRainbowBeam_1_StartCharge: ::core::ffi::c_int = 0xa9b91a;
+pub const fnMotherBomb_FiringRainbowBeam_2_RetractNeck: ::core::ffi::c_int = 0xa9b92b;
+pub const fnMotherBomb_FiringRainbowBeam_3_Wait: ::core::ffi::c_int = 0xa9b93f;
+pub const fnMotherBomb_FiringRainbowBeam_4_ExtendNeckDown: ::core::ffi::c_int = 0xa9b951;
+pub const fnMotherBomb_FiringRainbowBeam_5_StartFiring: ::core::ffi::c_int = 0xa9b975;
+pub const fnMotherBomb_FiringRainbowBeam_6_MoveSamusToWall: ::core::ffi::c_int = 0xa9b9e5;
+pub const fnMotherBomb_FiringRainbowBeam_7_DelayFrame: ::core::ffi::c_int = 0xa9ba00;
+pub const fnMotherBomb_FiringRainbowBeam_8_StartDrainSamus: ::core::ffi::c_int = 0xa9ba27;
+pub const fnMotherBomb_FiringRainbowBeam_9_DrainingSamus: ::core::ffi::c_int = 0xa9ba3c;
+pub const fnMotherBomb_FiringRainbowBeam_10_FinishFiringRainbow: ::core::ffi::c_int = 0xa9ba5e;
+pub const fnMotherBomb_FiringRainbowBeam_11_LetSamusFall: ::core::ffi::c_int = 0xa9bac4;
+pub const fnMotherBomb_FiringRainbowBeam_12_WaitForSamusHitGround: ::core::ffi::c_int = 0xa9bad1;
+pub const fnMotherBomb_FiringRainbowBeam_13_LowerHead: ::core::ffi::c_int = 0xa9badd;
+pub const fnMotherBomb_FiringRainbowBeam_14_DecideNextAction: ::core::ffi::c_int = 0xa9bb06;
+pub const fnMotherBrain_Phase2Cut_0: ::core::ffi::c_int = 0xa9bd45;
+pub const fnMotherBrain_Phase2Cut_1: ::core::ffi::c_int = 0xa9bd98;
+pub const fnMotherBrain_Phase2Cut_2: ::core::ffi::c_int = 0xa9bda9;
+pub const fnMotherBrain_Phase2Cut_3: ::core::ffi::c_int = 0xa9bdc1;
+pub const fnMotherBrain_Phase2Cut_4: ::core::ffi::c_int = 0xa9bdd2;
+pub const fnMotherBrain_Phase2Cut_5: ::core::ffi::c_int = 0xa9bded;
+pub const fnnullsub_364: ::core::ffi::c_int = 0xa9be1a;
+pub const fnMotherBrain_DrainedByShitroid_0: ::core::ffi::c_int = 0xa9be38;
+pub const fnMotherBrain_DrainedByShitroid_1: ::core::ffi::c_int = 0xa9be5d;
+pub const fnMotherBrain_DrainedByShitroid_2: ::core::ffi::c_int = 0xa9be96;
+pub const fnMotherBrain_DrainedByShitroid_3: ::core::ffi::c_int = 0xa9bf0e;
+pub const fnMotherBrain_DrainedByShitroid_4: ::core::ffi::c_int = 0xa9bf41;
+pub const fnMotherBrain_DrainedByShitroid_5: ::core::ffi::c_int = 0xa9bf56;
+pub const fnMotherBrain_DrainedByShitroid_6: ::core::ffi::c_int = 0xa9bf7d;
+pub const fnMotherBrain_DrainedByShitroid_7: ::core::ffi::c_int = 0xa9bf95;
+pub const fnMotherBrain_PainfulWalkForwards: ::core::ffi::c_int = 0xa9bfd0;
+pub const fnMotherBrain_PainfulWalkingForwards: ::core::ffi::c_int = 0xa9bfe8;
+pub const fnMotherBrain_PainfulWalkBackwards: ::core::ffi::c_int = 0xa9c004;
+pub const fnMotherBrain_PainfulWalkingBackwards: ::core::ffi::c_int = 0xa9c01c;
+pub const fnMotherBrain_Phase2_Revive_0: ::core::ffi::c_int = 0xa9c059;
+pub const fnMotherBrain_Phase2_Revive_1: ::core::ffi::c_int = 0xa9c066;
+pub const fnMotherBrain_Phase2_Revive_2: ::core::ffi::c_int = 0xa9c082;
+pub const fnMotherBrain_Phase2_Revive_3: ::core::ffi::c_int = 0xa9c08f;
+pub const fnMotherBrain_Phase2_Revive_4: ::core::ffi::c_int = 0xa9c0ba;
+pub const fnMotherBrain_Phase2_Revive_5: ::core::ffi::c_int = 0xa9c0e4;
+pub const fnMotherBrain_Phase2_Revive_6: ::core::ffi::c_int = 0xa9c0fb;
+pub const fnMotherBrain_Phase2_Revive_7: ::core::ffi::c_int = 0xa9c11e;
+pub const fnMotherBrain_Phase2_Revive_8: ::core::ffi::c_int = 0xa9c147;
+pub const fnMotherBrain_Phase2_MurderShitroid_1: ::core::ffi::c_int = 0xa9c15c;
+pub const fnMotherBrain_Phase2_MurderShitroid_2: ::core::ffi::c_int = 0xa9c182;
+pub const fnnullsub_367: uint32 = 11125133;
+pub const fnMotherBrain_Phase2_PrepareForFinalShitroid: ::core::ffi::c_int = 0xa9c18e;
+pub const fnMotherBrain_Phase2_ExecuteFinalkShitroid: ::core::ffi::c_int = 0xa9c19a;
+pub const fnnullsub_363: ::core::ffi::c_int = 0xa9c1a6;
+pub const fnMotherBrain_Phase3_Recover_MakeDistance: ::core::ffi::c_int = 0xa9c1cf;
+pub const fnMotherBrain_Phase3_Recover_SetupForFight: ::core::ffi::c_int = 0xa9c1f0;
+pub const fnMotherBrain_Phase3_Fighting_Main: ::core::ffi::c_int = 0xa9c209;
+pub const fnMotherBrain_Phase3_Fighting_Cooldown: ::core::ffi::c_int = 0xa9c24e;
+pub const fnMotherBrain_Phase3_Walk_TryToInchForward: ::core::ffi::c_int = 0xa9c26a;
+pub const fnMotherBrain_Phase3_Walk_RetreatQuickly: ::core::ffi::c_int = 0xa9c2b3;
+pub const fnMotherBrain_Phase3_Walk_RetreatSlowly: ::core::ffi::c_int = 0xa9c2d2;
+pub const fnMotherBrain_Phase3_Neck_Normal: ::core::ffi::c_int = 0xa9c330;
+pub const fnnullsub_369: uint32 = 11125587;
+pub const fnMotherBrain_Phase3_Neck_SetupRecoilRecovery: ::core::ffi::c_int = 0xa9c354;
+pub const fnMotherBrain_Phase3_Neck_RecoilRecovery: ::core::ffi::c_int = 0xa9c37b;
+pub const fnMotherBrain_Phase3_Neck_SetupHyperBeamRecoil: ::core::ffi::c_int = 0xa9c395;
+pub const fnMotherBrain_Phase3_Neck_HyperBeamRecoil: ::core::ffi::c_int = 0xa9c3cd;
+pub const fnShitroidInCutscene_DashOntoScreen: ::core::ffi::c_int = 0xa9c7cc;
+pub const fnShitroidInCutscene_CurveTowardsBrain: ::core::ffi::c_int = 0xa9c7ec;
+pub const fnShitroidInCutscene_GetIntoFace: ::core::ffi::c_int = 0xa9c811;
+pub const fnShitroidInCutscene_LatchOntoBrain: ::core::ffi::c_int = 0xa9c851;
+pub const fnShitroidInCutscene_SetMotherBrainToStumbleBack: ::core::ffi::c_int = 0xa9c879;
+pub const fnShitroidInCutscene_ActivateRainbowBeam: ::core::ffi::c_int = 0xa9c889;
+pub const fnShitroidInCutscene_BrainTurnsToCorpse: ::core::ffi::c_int = 0xa9c8e2;
+pub const fnShitroidInCutscene_StopDraining: ::core::ffi::c_int = 0xa9c915;
+pub const fnShitroidInCutscene_LetGoAndSpawnDust: ::core::ffi::c_int = 0xa9c94b;
+pub const fnShitroidInCutscene_MoveUpToCeiling: uint32 = 11127129;
+pub const fnShitroidInCutscene_MoveToSamus: ::core::ffi::c_int = 0xa9c9c3;
+pub const fnShitroidInCutscene_LatchOntoSamus: ::core::ffi::c_int = 0xa9ca66;
+pub const fnShitroidInCutscene_HealSamusToFullHealth: ::core::ffi::c_int = 0xa9ca7a;
+pub const fnnullsub_368: ::core::ffi::c_int = 0xa9cabc;
+pub const fnShitroidInCutscene_IdleUntilToNoHealth: ::core::ffi::c_int = 0xa9cabd;
+pub const fnShitroidInCutscene_ReleaseSamus: ::core::ffi::c_int = 0xa9cb13;
+pub const fnShitroidInCutscene_StareDownMotherBrain: ::core::ffi::c_int = 0xa9cb2d;
+pub const fnShitroidInCutscene_FlyOffScreen: ::core::ffi::c_int = 0xa9cb56;
+pub const fnShitroidInCutscene_MoveToFinalChargeStart: ::core::ffi::c_int = 0xa9cb7b;
+pub const fnShitroidInCutscene_InitiateFinalCharge: ::core::ffi::c_int = 0xa9cbb3;
+pub const fnShitroidInCutscene_FinalCharge: ::core::ffi::c_int = 0xa9cbd8;
+pub const fnShitroidInCutscene_ShitroidFinalBelow: ::core::ffi::c_int = 0xa9cc3e;
+pub const fnShitroidInCutscene_PlaySamusTheme: ::core::ffi::c_int = 0xa9cc60;
+pub const fnShitroidInCutscene_PrepareSamusHyperbeam: ::core::ffi::c_int = 0xa9cc7f;
+pub const fnnullsub_338: ::core::ffi::c_int = 0xa9cc98;
+pub const fnShitroidInCutscene_DeathSequence: ::core::ffi::c_int = 0xa9cc99;
+pub const fnShitroidInCutscene_UnloadShitroid: ::core::ffi::c_int = 0xa9ccc0;
+pub const fnShitroidInCutscene_LetSamusRainbowMore: ::core::ffi::c_int = 0xa9ccde;
+pub const fnShitroidInCutscene_FinishCutscene: ::core::ffi::c_int = 0xa9ccf0;
+pub const fnSamusRainbowPaletteFunc_ActivateWhenEnemyLow: ::core::ffi::c_int = 0xa9cd30;
+pub const fnSamusRainbowPaletteFunc_GraduallySlowDown: ::core::ffi::c_int = 0xa9cd4b;
+pub const fnDeadTorizo_WaitForSamusColl: ::core::ffi::c_int = 0xa9d3ad;
+pub const fnnullsub_361: ::core::ffi::c_int = 0xa9d3c7;
+pub const fnDeadTorizo_PreRotDelay: ::core::ffi::c_int = 0xa9d3c8;
+pub const fnDeadTorizo_Rotting: ::core::ffi::c_int = 0xa9d3e6;
+pub const fnDeadTorizo_CorpseRottingFinished: uint32 = 11130301;
+pub const fnDeadSidehopper_Alive_WaitForActivate: ::core::ffi::c_int = 0xa9d8e2;
+pub const fnDeadSidehopper_Activated: ::core::ffi::c_int = 0xa9d8f1;
+pub const fnnullsub_362: ::core::ffi::c_int = 0xa9d90f;
+pub const fnDeadMonsters_Func_1: ::core::ffi::c_int = 0xa9d910;
+pub const fnDeadMonsters_Func_2: ::core::ffi::c_int = 0xa9d91d;
+pub const fnDeadMonsters_Func_5: ::core::ffi::c_int = 0xa9da08;
+pub const fnnullsub_268: ::core::ffi::c_int = 0xa9da63;
+pub const fnDeadSidehopper_WaitForSamusColl: ::core::ffi::c_int = 0xa9da64;
+pub const fnDeadZoomer_WaitForSamusColl: ::core::ffi::c_int = 0xa9da69;
+pub const fnDeadSkree_WaitForSamusColl: ::core::ffi::c_int = 0xa9da6e;
+pub const fnDeadRipper_WaitForSamusColl: ::core::ffi::c_int = 0xa9da73;
+pub const fnDeadSidehopper_PreRotDelay: ::core::ffi::c_int = 0xa9da8f;
+pub const fnDeadZoomer_PreRotDelay: ::core::ffi::c_int = 0xa9da94;
+pub const fnDeadRipper_PreRotDelay: ::core::ffi::c_int = 0xa9da99;
+pub const fnDeadSkree_PreRotDelay: ::core::ffi::c_int = 0xa9da9e;
+pub const fnDeadSidehopper_Rotting: ::core::ffi::c_int = 0xa9daba;
+pub const fnDeadZoomer_Rotting: ::core::ffi::c_int = 0xa9dad0;
+pub const fnDeadRipper_Rotting: ::core::ffi::c_int = 0xa9dae6;
+pub const fnDeadSkree_Rotting: ::core::ffi::c_int = 0xa9dafc;
+pub const fnCorpseRottingRotEntryFinishedHook: uint32 = 11131912;
+pub const fnTorizo_CorpseRottingInitFunc: uint32 = 11132440;
+pub const fnSidehopper_CorpseRottingInitFunc_0: uint32 = 11132609;
+pub const fnSidehopper_CorpseRottingInitFunc_2: uint32 = 11132680;
+pub const fnZoomer_CorpseRottingInitFunc_0: uint32 = 11132751;
+pub const fnZoomer_CorpseRottingInitFunc_2: uint32 = 11132780;
+pub const fnZoomer_CorpseRottingInitFunc_4: uint32 = 11132809;
+pub const fnRipper_CorpseRottingInitFunc_0: uint32 = 11132838;
+pub const fnRipper_CorpseRottingInitFunc_2: uint32 = 11132867;
+pub const fnSkree_CorpseRottingInitFunc_0: uint32 = 11132896;
+pub const fnSkree_CorpseRottingInitFunc_2: uint32 = 11132953;
+pub const fnSkree_CorpseRottingInitFunc_4: uint32 = 11133010;
+pub const fnMotherBrain_CorpseRottingInitFunc: uint32 = 11133067;
+pub const fnTorizo_CorpseRottingMoveFunc: uint32 = 11133554;
+pub const fnTorizo_CorpseRottingCopyFunc: uint32 = 11133835;
+pub const fnSidehopper_CorpseRottingMoveFunc_0: uint32 = 11134056;
+pub const fnSidehopper_CorpseRottingCopyFunc_0: uint32 = 11134197;
+pub const fnSidehopper_CorpseRottingMoveFunc_2: uint32 = 11134308;
+pub const fnSidehopper_CorpseRottingCopyFunc_2: uint32 = 11134454;
+pub const fnZoomer_CorpseRottingMoveFunc_0: uint32 = 11134570;
+pub const fnZoomer_CorpseRottingCopyFunc_0: uint32 = 11134649;
+pub const fnZoomer_CorpseRottingMoveFunc_2: uint32 = 11134710;
+pub const fnZoomer_CorpseRottingCopyFunc_2: uint32 = 11134789;
+pub const fnZoomer_CorpseRottingMoveFunc_4: uint32 = 11134850;
+pub const fnZoomer_CorpseRottingCopyFunc_4: uint32 = 11134929;
+pub const fnRipper_CorpseRottingMoveFunc_0: uint32 = 11134990;
+pub const fnRipper_CorpseRottingCopyFunc_0: uint32 = 11135069;
+pub const fnRipper_CorpseRottingMoveFunc_2: uint32 = 11135130;
+pub const fnRipper_CorpseRottingCopyFunc_2: uint32 = 11135209;
+pub const fnSkree_CorpseRottingMoveFunc_0: uint32 = 11135270;
+pub const fnSkree_CorpseRottingCopyFunc_0: uint32 = 11135323;
+pub const fnSkree_CorpseRottingMoveFunc_2: uint32 = 11135364;
+pub const fnSkree_CorpseRottingCopyFunc_2: uint32 = 11135417;
+pub const fnSkree_CorpseRottingMoveFunc_4: uint32 = 11135458;
+pub const fnSkree_CorpseRottingCopyFunc_4: uint32 = 11135511;
+pub const fnMotherBrain_CorpseRottingMoveFunc: uint32 = 11135552;
+pub const fnMotherBrain_CorpseRottingCopyFunc: uint32 = 11135755;
+pub const fnShitroid_Func_3: ::core::ffi::c_int = 0xa9efdf;
+pub const fnShitroid_Func_4: ::core::ffi::c_int = 0xa9efe6;
+pub const fnShitroid_Func_5: ::core::ffi::c_int = 0xa9f02b;
+pub const fnShitroid_Func_6: ::core::ffi::c_int = 0xa9f037;
+pub const fnShitroid_Func_7: ::core::ffi::c_int = 0xa9f049;
+pub const fnShitroid_Func_8: ::core::ffi::c_int = 0xa9f06d;
+pub const fnShitroid_Func_9: ::core::ffi::c_int = 0xa9f094;
+pub const fnShitroid_Func_10: ::core::ffi::c_int = 0xa9f0e6;
+pub const fnShitroid_Func_11: ::core::ffi::c_int = 0xa9f125;
+pub const fnShitroid_Func_12: ::core::ffi::c_int = 0xa9f138;
+pub const fnShitroid_Func_13: ::core::ffi::c_int = 0xa9f180;
+pub const fnShitroid_Func_14: ::core::ffi::c_int = 0xa9f1fa;
+pub const fnShitroid_Func_15: ::core::ffi::c_int = 0xa9f20e;
+pub const fnShitroid_Func_16: ::core::ffi::c_int = 0xa9f21b;
+pub const fnShitroid_Func_17: ::core::ffi::c_int = 0xa9f2a2;
+pub const fnShitroid_Func_18: ::core::ffi::c_int = 0xa9f2ae;
+pub const fnShitroid_Func_19: ::core::ffi::c_int = 0xa9f2c0;
+pub const fnShitroid_Func_20: ::core::ffi::c_int = 0xa9f2fb;
+pub const fnShitroid_Func_21: ::core::ffi::c_int = 0xa9f324;
+pub const fnShitroid_Func_22: ::core::ffi::c_int = 0xa9f360;
+pub const fnShitroid_Func_23: ::core::ffi::c_int = 0xa9f36d;
+pub const fnShitroid_Func_24: ::core::ffi::c_int = 0xa9f3a3;
+pub const fnShitroid_Func_25: ::core::ffi::c_int = 0xa9f3be;
+pub const fnShitroid_GraduallyAccelerateTowards0x8: uint32 = 11138143;
+pub const fnShitroid_GraduallyAccelerateTowards0x10: uint32 = 11138150;
+pub const fnShitroid_HandleCutscenePalette: ::core::ffi::c_int = 0xa9f683;
+pub const fnShitroid_HandleCutscenePalette_LowHealth: ::core::ffi::c_int = 0xa9f68f;
 #[inline]
 unsafe fn gEnemyData(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut EnemyData {
     return (&raw mut game.g_ram as *mut uint8)

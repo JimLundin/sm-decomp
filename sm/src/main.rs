@@ -1037,7 +1037,7 @@ pub const SDL_INIT_AUDIO: ::core::ffi::c_uint = sdl2_sys::SDL_INIT_AUDIO as ::co
 pub const SDL_INIT_VIDEO: ::core::ffi::c_uint = sdl2_sys::SDL_INIT_VIDEO as ::core::ffi::c_uint;
 pub const SDL_INIT_GAMECONTROLLER: ::core::ffi::c_uint =
     sdl2_sys::SDL_INIT_GAMECONTROLLER as ::core::ffi::c_uint;
-pub const kDebugFlag: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+pub const kDebugFlag: ::core::ffi::c_int = 0;
 #[inline]
 unsafe fn IntMin(mut a: ::core::ffi::c_int, mut b: ::core::ffi::c_int) -> ::core::ffi::c_int {
     return if a < b { a } else { b };
@@ -1185,7 +1185,7 @@ pub unsafe fn ChangeWindowScale(mut scale_step: ::core::ffi::c_int) {
         );
     };
 }
-pub const RESIZE_BORDER: ::core::ffi::c_int = 20 as ::core::ffi::c_int;
+pub const RESIZE_BORDER: ::core::ffi::c_int = 20;
 unsafe extern "C" fn HitTestCallback(
     mut win: *mut SDL_Window,
     mut pt: *const SDL_Point,
@@ -2542,8 +2542,8 @@ unsafe fn SwitchDirectory() {
     }
 }
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
-pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+pub const true_0: ::core::ffi::c_int = 1;
+pub const false_0: ::core::ffi::c_int = 0;
 // The transpiled runtime references glibc's stderr and assertion symbols.
 // MinGW uses a stream accessor instead; FILE is passed opaquely to the CRT.
 #[cfg(windows)]

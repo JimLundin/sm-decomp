@@ -53,8 +53,8 @@ unsafe fn get_ProjectileInstr(mut a: uint16, game: &mut Game) -> *mut Projectile
         game,
     ) as *mut ProjectileInstr;
 }
-pub const fnProj93Instr_Delete: uint32 = 9667119 as uint32;
-pub const fnProj93Instr_Goto: uint32 = 9667129 as uint32;
+pub const fnProj93Instr_Delete: uint32 = 9667119;
+pub const fnProj93Instr_Goto: uint32 = 9667129;
 pub unsafe fn InitializeProjectile(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut r18: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)

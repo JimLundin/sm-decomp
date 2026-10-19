@@ -20,8 +20,8 @@ pub use crate::types::{
     uint32_t, uint8_t, Apu, ApuHistory as C2RustUnnamed, Dsp, DspChannel, DspRegWriteHistory,
     SaveLoadFunc, Spc, Timer,
 };
-pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+pub const true_0: ::core::ffi::c_int = 1;
+pub const false_0: ::core::ffi::c_int = 0;
 static bootRom: [uint8_t; 64] = [
     0xcd as ::core::ffi::c_int as uint8_t,
     0xef as ::core::ffi::c_int as uint8_t,

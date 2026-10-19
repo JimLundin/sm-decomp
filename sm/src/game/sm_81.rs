@@ -372,7 +372,7 @@ pub const addr_stru_82B9B4: Consts_82 = 47540;
 pub const addr_stru_82B9AA: Consts_82 = 47530;
 pub const addr_stru_82B9A0: Consts_82 = 47520;
 pub const addr_kPauseMenuMapData: Consts_82 = 38679;
-pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
+pub const true_0: ::core::ffi::c_int = 1;
 #[inline]
 unsafe fn swap16(mut v: uint16) -> uint16 {
     return ((v as ::core::ffi::c_int) << 8 as ::core::ffi::c_int

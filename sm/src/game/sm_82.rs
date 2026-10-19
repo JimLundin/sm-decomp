@@ -704,7 +704,7 @@ unsafe fn swap16(mut v: uint16) -> uint16 {
     return ((v as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
         | v as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint16;
 }
-pub const kCoroutineNone: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+pub const kCoroutineNone: ::core::ffi::c_int = 0;
 #[inline]
 unsafe fn RomPtr_RAM(mut addr: uint16_t, game: &mut Game) -> *mut uint8 {
     '_c2rust_label: {
@@ -817,73 +817,62 @@ unsafe fn get_PlmHeader_Size6(mut a: uint16, game: &mut Game) -> *mut PlmHeader_
         game,
     ) as *mut PlmHeader_Size6;
 }
-pub const fnDemoRoom_ChargeBeamRoomScroll21: uint32 = 8554778 as uint32;
-pub const fnnullsub_291: uint32 = 8554788 as uint32;
-pub const fnDemoRoom_SetBG2TilemapBase: uint32 = 8554789 as uint32;
-pub const fnDemoRoom_SetKraidFunctionTimer: uint32 = 8554795 as uint32;
-pub const fnDemoRoom_SetBrinstarBossBits: uint32 = 8554802 as uint32;
-pub const fnOptionsPreInstr_nullsub_57: uint32 = 8555536 as uint32;
-pub const fnOptionsInstr_Destroy: uint32 = 8555610 as uint32;
-pub const fnOptionsInstr_8C64: uint32 = 8555620 as uint32;
-pub const fnOptionsInstr_SetPreInstr: uint32 = 8555630 as uint32;
-pub const fnOptionsInstr_8C79: uint32 = 8555641 as uint32;
-pub const fnOptionsInstr_Goto: uint32 = 8555650 as uint32;
-pub const fnOptionsInstr_8C89: uint32 = 8555657 as uint32;
-pub const fnOptionsInstr_8C93: uint32 = 8555667 as uint32;
-pub const fnBabyMetroidPlaySfx0x23: uint32 = 8567820 as uint32;
-pub const fnBabyMetroidPlaySfx0x26: uint32 = 8567829 as uint32;
-pub const fnBabyMetroidPlaySfx0x27: uint32 = 8567838 as uint32;
-pub const fnDoorTransitionFunction_HandleElevator: uint32 = 8577405 as uint32;
-pub const fnDoorTransitionFunction_Wait48frames: ::core::ffi::c_int =
-    0x82e19f as ::core::ffi::c_int;
-pub const fnDoorTransitionFunction_WaitForSoundsToFinish: ::core::ffi::c_int =
-    0x82e29e as ::core::ffi::c_int;
-pub const fnDoorTransitionFunction_FadeOutScreen: ::core::ffi::c_int =
-    0x82e2db as ::core::ffi::c_int;
-pub const fnDoorTransitionFunction_LoadDoorHeaderEtc: ::core::ffi::c_int =
-    0x82e2f7 as ::core::ffi::c_int;
-pub const fnDoorTransitionFunction_ScrollScreenToAlignment: ::core::ffi::c_int =
-    0x82e310 as ::core::ffi::c_int;
-pub const fnDoorTransitionFunction_FixDoorsMovingUp: ::core::ffi::c_int =
-    0x82e353 as ::core::ffi::c_int;
-pub const fnDoorTransitionFunction_SetupNewRoom: ::core::ffi::c_int =
-    0x82e36e as ::core::ffi::c_int;
-pub const fnDoorTransitionFunction_SetupScrolling: ::core::ffi::c_int =
-    0x82e38e as ::core::ffi::c_int;
-pub const fnDoorTransitionFunction_PlaceSamusLoadTiles: ::core::ffi::c_int =
-    0x82e3c0 as ::core::ffi::c_int;
-pub const fnDoorTransitionFunction_LoadMoreThings_Async: ::core::ffi::c_int =
-    0x82e4a9 as ::core::ffi::c_int;
-pub const fnDoorTransition_C_HandleAnimTiles: ::core::ffi::c_int = 0x82e659 as ::core::ffi::c_int;
-pub const fnDoorTransition_WaitForMusicToClear: ::core::ffi::c_int = 0x82e664 as ::core::ffi::c_int;
-pub const fnDoorTransition_HandleTransition: ::core::ffi::c_int = 0x82e6a2 as ::core::ffi::c_int;
-pub const fnDoorTransition_FadeInScreenAndFinish: ::core::ffi::c_int =
-    0x82e737 as ::core::ffi::c_int;
-pub const fnsub_82F296: uint32 = 8581782 as uint32;
-pub const fnOptionsPreInstr_F2A9: uint32 = 8581801 as uint32;
-pub const fnsub_82F34B: uint32 = 8581963 as uint32;
-pub const fnsub_82F353: uint32 = 8581971 as uint32;
-pub const fnsub_82F35B: uint32 = 8581979 as uint32;
-pub const fnsub_82F363: uint32 = 8581987 as uint32;
-pub const fnOptionsPreInstr_F376: uint32 = 8582006 as uint32;
-pub const fnOptionsPreInstr_F3A0: uint32 = 8582048 as uint32;
-pub const fnOptionsPreInstr_F3E2: uint32 = 8582114 as uint32;
-pub const fnsub_82F419: uint32 = 8582169 as uint32;
-pub const fnOptionsPreInstr_F42C: uint32 = 8582188 as uint32;
-pub const fnPauseHook_Empty: uint32 = 8946657 as uint32;
-pub const fnCinematicFunctionNone: ::core::ffi::c_int = 0x8b9a47 as ::core::ffi::c_int;
-pub const fnCinematicFunctionOpening: ::core::ffi::c_int = 0x8b9b68 as ::core::ffi::c_int;
-pub const fnCinematicFunction_Intro_Initial: ::core::ffi::c_int = 0x8ba395 as ::core::ffi::c_int;
-pub const fnCinematicFunctionBlackoutFromCeres: ::core::ffi::c_int = 0x8bc11b as ::core::ffi::c_int;
-pub const fnCinematicFunctionEscapeFromCebes: ::core::ffi::c_int = 0x8bd480 as ::core::ffi::c_int;
-pub const fnPauseHook_DraygonRoom: uint32 = 9423094 as uint32;
-pub const fnUnpauseHook_DraygonRoom: uint32 = 9423100 as uint32;
-pub const fnUnpauseHook_Kraid_IsDead: uint32 = 10994171 as uint32;
-pub const fnUnpauseHook_Kraid_IsAlive: uint32 = 10994254 as uint32;
-pub const fnKraid_UnpauseHook_IsSinking: uint32 = 10994336 as uint32;
-pub const fnPauseHook_Kraid: uint32 = 10994469 as uint32;
-pub const fnMotherBrainsBody_UnpauseHook: uint32 = 11110243 as uint32;
-pub const fnlocret_828C81: ::core::ffi::c_int = 0x828c81 as ::core::ffi::c_int;
+pub const fnDemoRoom_ChargeBeamRoomScroll21: uint32 = 8554778;
+pub const fnnullsub_291: uint32 = 8554788;
+pub const fnDemoRoom_SetBG2TilemapBase: uint32 = 8554789;
+pub const fnDemoRoom_SetKraidFunctionTimer: uint32 = 8554795;
+pub const fnDemoRoom_SetBrinstarBossBits: uint32 = 8554802;
+pub const fnOptionsPreInstr_nullsub_57: uint32 = 8555536;
+pub const fnOptionsInstr_Destroy: uint32 = 8555610;
+pub const fnOptionsInstr_8C64: uint32 = 8555620;
+pub const fnOptionsInstr_SetPreInstr: uint32 = 8555630;
+pub const fnOptionsInstr_8C79: uint32 = 8555641;
+pub const fnOptionsInstr_Goto: uint32 = 8555650;
+pub const fnOptionsInstr_8C89: uint32 = 8555657;
+pub const fnOptionsInstr_8C93: uint32 = 8555667;
+pub const fnBabyMetroidPlaySfx0x23: uint32 = 8567820;
+pub const fnBabyMetroidPlaySfx0x26: uint32 = 8567829;
+pub const fnBabyMetroidPlaySfx0x27: uint32 = 8567838;
+pub const fnDoorTransitionFunction_HandleElevator: uint32 = 8577405;
+pub const fnDoorTransitionFunction_Wait48frames: ::core::ffi::c_int = 0x82e19f;
+pub const fnDoorTransitionFunction_WaitForSoundsToFinish: ::core::ffi::c_int = 0x82e29e;
+pub const fnDoorTransitionFunction_FadeOutScreen: ::core::ffi::c_int = 0x82e2db;
+pub const fnDoorTransitionFunction_LoadDoorHeaderEtc: ::core::ffi::c_int = 0x82e2f7;
+pub const fnDoorTransitionFunction_ScrollScreenToAlignment: ::core::ffi::c_int = 0x82e310;
+pub const fnDoorTransitionFunction_FixDoorsMovingUp: ::core::ffi::c_int = 0x82e353;
+pub const fnDoorTransitionFunction_SetupNewRoom: ::core::ffi::c_int = 0x82e36e;
+pub const fnDoorTransitionFunction_SetupScrolling: ::core::ffi::c_int = 0x82e38e;
+pub const fnDoorTransitionFunction_PlaceSamusLoadTiles: ::core::ffi::c_int = 0x82e3c0;
+pub const fnDoorTransitionFunction_LoadMoreThings_Async: ::core::ffi::c_int = 0x82e4a9;
+pub const fnDoorTransition_C_HandleAnimTiles: ::core::ffi::c_int = 0x82e659;
+pub const fnDoorTransition_WaitForMusicToClear: ::core::ffi::c_int = 0x82e664;
+pub const fnDoorTransition_HandleTransition: ::core::ffi::c_int = 0x82e6a2;
+pub const fnDoorTransition_FadeInScreenAndFinish: ::core::ffi::c_int = 0x82e737;
+pub const fnsub_82F296: uint32 = 8581782;
+pub const fnOptionsPreInstr_F2A9: uint32 = 8581801;
+pub const fnsub_82F34B: uint32 = 8581963;
+pub const fnsub_82F353: uint32 = 8581971;
+pub const fnsub_82F35B: uint32 = 8581979;
+pub const fnsub_82F363: uint32 = 8581987;
+pub const fnOptionsPreInstr_F376: uint32 = 8582006;
+pub const fnOptionsPreInstr_F3A0: uint32 = 8582048;
+pub const fnOptionsPreInstr_F3E2: uint32 = 8582114;
+pub const fnsub_82F419: uint32 = 8582169;
+pub const fnOptionsPreInstr_F42C: uint32 = 8582188;
+pub const fnPauseHook_Empty: uint32 = 8946657;
+pub const fnCinematicFunctionNone: ::core::ffi::c_int = 0x8b9a47;
+pub const fnCinematicFunctionOpening: ::core::ffi::c_int = 0x8b9b68;
+pub const fnCinematicFunction_Intro_Initial: ::core::ffi::c_int = 0x8ba395;
+pub const fnCinematicFunctionBlackoutFromCeres: ::core::ffi::c_int = 0x8bc11b;
+pub const fnCinematicFunctionEscapeFromCebes: ::core::ffi::c_int = 0x8bd480;
+pub const fnPauseHook_DraygonRoom: uint32 = 9423094;
+pub const fnUnpauseHook_DraygonRoom: uint32 = 9423100;
+pub const fnUnpauseHook_Kraid_IsDead: uint32 = 10994171;
+pub const fnUnpauseHook_Kraid_IsAlive: uint32 = 10994254;
+pub const fnKraid_UnpauseHook_IsSinking: uint32 = 10994336;
+pub const fnPauseHook_Kraid: uint32 = 10994469;
+pub const fnMotherBrainsBody_UnpauseHook: uint32 = 11110243;
+pub const fnlocret_828C81: ::core::ffi::c_int = 0x828c81;
 pub unsafe fn CallDemoRoomDataFunc(mut ea: uint32, game: &mut Game) {
     match ea {
         8554778 => {
