@@ -185,6 +185,15 @@ pub unsafe fn apu_cpuRead(apu: *mut Apu, adr: u16) -> u8 {
     }
     (*apu).ram[usize::from(adr)]
 }
+fn record_dsp_write(history: &mut DspRegWriteHistory, address: u8, value: u8) {
+    let index = history.count as i32;
+    if index != 256 {
+        history.count = (index + 1) as u32;
+        history.addr[index as usize] = address;
+        history.val[index as usize] = value;
+    }
+}
+
 pub unsafe fn apu_cpuWrite(apu: *mut Apu, adr: u16, val: u8) {
     match adr {
         0xf1 => {
@@ -211,13 +220,7 @@ pub unsafe fn apu_cpuWrite(apu: *mut Apu, adr: u16, val: u8) {
             (*apu).dspAdr = val;
         }
         0xf3 => {
-            let mut i_0: ::core::ffi::c_int =
-                (*apu).c2rust_unnamed.hist.count as ::core::ffi::c_int;
-            if i_0 != 256 as ::core::ffi::c_int {
-                (*apu).c2rust_unnamed.hist.count = (i_0 + 1 as ::core::ffi::c_int) as uint32_t;
-                (*apu).c2rust_unnamed.hist.addr[i_0 as usize] = (*apu).dspAdr;
-                (*apu).c2rust_unnamed.hist.val[i_0 as usize] = val;
-            }
+            record_dsp_write(&mut (*apu).c2rust_unnamed.hist, (*apu).dspAdr, val);
             if ((*apu).dspAdr as ::core::ffi::c_int) < 0x80 as ::core::ffi::c_int {
                 dsp_write((*apu).dsp, (*apu).dspAdr, val);
             }

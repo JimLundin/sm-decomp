@@ -161,6 +161,20 @@ change and no new replay result belong to this cleanup.
 
 ## The oracle
 
+APU DSP-write history cleanup (2026-10-19): F3 recording now uses a safe
+helper over the existing history fields. Signed-count arithmetic, the 256
+sentinel, mutation/panic order, DSP callback and final RAM store stay exact.
+Actual controls pass 16,842,752 valid cases, 35 release-mode invalid-count
+panic cases and 10,240 SPC MOV instruction contexts. Physical-audio boot
+passes 3600/0 (5.97s), native exit 0, with 303,368 helper calls, including
+303,112 full-history calls. Frozen 0bc3fea9 plus only this change passes
+any% 129712/0 (236.94s), native exit 0, and Waver 58109/71 (131.22s), native
+exit 1; all 71 complete ordered diagnostics equal baseline. Independent
+review, cargo fmt/check, release and progress pass; live source equals the
+frozen candidate. Cast lines -3; Rust lines +3 isolate mutation in safe code.
+Other counters and layouts are unchanged. These hardware boot controls do
+not establish complete audio timing; later PPU/CPU/gameplay edits are separate.
+
 PPU brightness-table cleanup (2026-10-19): cache generation now uses a safe
 array helper, preserving marker/store order, equal-marker reuse, half-color
 rounding and the normal table's saturated tail. Actual old/current scanline
