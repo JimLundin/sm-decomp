@@ -912,7 +912,7 @@ pub unsafe fn Botwoon_Init(game: &mut Game) {
         (*E).botwoon_var_33 = 1u16;
         (*E).botwoon_var_34 = 1u16;
         (*E).botwoon_var_59 = 1u16;
-        (*E).botwoon_var_36 = -(1i32) as u16;
+        (*E).botwoon_var_36 = -1i32 as u16;
         (*E).botwoon_var_37 = 0u16;
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
         let mut health: u16 = (*E).base.health;
@@ -1165,7 +1165,7 @@ pub unsafe fn Botwoon_Func_13(game: &mut Game) {
             (*E).botwoon_var_4B = 0u16;
         } else {
             (*E).botwoon_var_35 = 0u16;
-            (*E).botwoon_var_36 = -(1i32) as u16;
+            (*E).botwoon_var_36 = -1i32 as u16;
         }
         Botwoon_Func_10(ram_word!(game, cur_enemy_index), game);
     };
@@ -1279,7 +1279,7 @@ pub unsafe fn Botwoon_Func_20(k: u16, game: &mut Game) -> Point16U {
     let mut r18: u16 = v3;
     if v3 as i32 - 256i32 & 0x8000i32 != 0 {
         if v3 as i32 + 256i32 & 0x8000i32 != 0 {
-            r18 = -(255i32) as u16;
+            r18 = -255i32 as u16;
         }
     } else {
         r18 = 255u16;
@@ -1289,7 +1289,7 @@ pub unsafe fn Botwoon_Func_20(k: u16, game: &mut Game) -> Point16U {
     let mut r20: u16 = v4;
     if v4 as i32 - 256i32 & 0x8000i32 != 0 {
         if v4 as i32 + 256i32 & 0x8000i32 != 0 {
-            r20 = -(255i32) as u16;
+            r20 = -255i32 as u16;
         }
     } else {
         r20 = 255u16;
@@ -1338,7 +1338,7 @@ pub unsafe fn Botwoon_Func_23(game: &mut Game) {
             if v2 == 0 {
                 (*E).botwoon_var_35 = 0u16;
                 (*E).botwoon_var_3E = 0u16;
-                (*E).botwoon_var_36 = -(1i32) as u16;
+                (*E).botwoon_var_36 = -1i32 as u16;
                 if (*E).botwoon_var_33 == 0 {
                     (*E).botwoon_var_3E = 1u16;
                 }
@@ -1605,7 +1605,7 @@ pub unsafe fn Botwoon_Func_33(game: &mut Game) {
     let step: i32 = if ((*E).botwoon_var_44 as i32 & 0x8000i32) == 0i32 {
         2i32
     } else {
-        -(2i32)
+        -2i32
     };
     loop {
         let v6: *const u8 = RomPtr_B3((*E).botwoon_var_42, game);

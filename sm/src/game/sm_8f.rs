@@ -200,7 +200,7 @@ pub unsafe fn RoomSetup_AfterSavingAnimals(game: &mut Game) {
         game,
     );
     set_ram_word!(game.earthquake_type = 24u16);
-    set_ram_word!(game.earthquake_timer = -(1i32) as u16);
+    set_ram_word!(game.earthquake_timer = -1i32 as u16);
 }
 pub unsafe fn RoomSetup_AutoDestroyWallAfterEscape(game: &mut Game) {
     SpawnHardcodedPlm(
@@ -216,7 +216,7 @@ pub unsafe fn RoomSetup_TurnWallIntoShotblocks(game: &mut Game) {
 }
 pub unsafe fn RoomSetup_ShakeDuringEscape(game: &mut Game) {
     set_ram_word!(game.earthquake_type = 6u16);
-    set_ram_word!(game.earthquake_timer = -(1i32) as u16);
+    set_ram_word!(game.earthquake_timer = -1i32 as u16);
     FxTypeFunc_20(game);
 }
 pub unsafe fn RoomSetup_ScrollingSkyLand(game: &mut Game) {
@@ -574,17 +574,17 @@ pub unsafe fn RoomCode_SetCollectedMap(game: &mut Game) {
 pub unsafe fn RoomCode_SetZebesTimebombEvent(game: &mut Game) {
     SetEventHappened(0xeu16, game);
     set_ram_word!(game.earthquake_type = 18u16);
-    set_ram_word!(game.earthquake_timer = -(1i32) as u16);
+    set_ram_word!(game.earthquake_timer = -1i32 as u16);
 }
 pub unsafe fn RoomCode_SetLightHorizRoomShake(game: &mut Game) {
     set_ram_word!(game.earthquake_type = 18u16);
     *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u8 as *mut u16) = 18u16;
     *((&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut u16) = 0u16;
-    set_ram_word!(game.earthquake_timer = -(1i32) as u16);
+    set_ram_word!(game.earthquake_timer = -1i32 as u16);
 }
 pub unsafe fn RoomCode_SetMediumHorizRoomShake(game: &mut Game) {
     set_ram_word!(game.earthquake_type = 21u16);
-    set_ram_word!(game.earthquake_timer = -(1i32) as u16);
+    set_ram_word!(game.earthquake_timer = -1i32 as u16);
 }
 pub unsafe fn RoomCode_Escape4_SetMediumHorizRoomShake(game: &mut Game) {
     SpawnHardcodedPlm(
@@ -594,7 +594,7 @@ pub unsafe fn RoomCode_Escape4_SetMediumHorizRoomShake(game: &mut Game) {
     set_ram_word!(game.earthquake_type = 21u16);
     *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u8 as *mut u16) = 21u16;
     *((&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut u16) = 0u16;
-    set_ram_word!(game.earthquake_timer = -(1i32) as u16);
+    set_ram_word!(game.earthquake_timer = -1i32 as u16);
 }
 pub unsafe fn RoomCode_SetCeresDoorSolid(game: &mut Game) {
     SpawnHardcodedPlm(
@@ -645,10 +645,10 @@ pub unsafe fn DoorCode_SetScroll_49(game: &mut Game) {
 }
 pub unsafe fn DoorCode_SetupElevatubeFromSouth(game: &mut Game) {
     *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(4) as *mut u8 as *mut u16) =
-        -(256i32) as u16;
+        -256i32 as u16;
     *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u8 as *mut u16) = 2496u16;
     *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(6) as *mut u8 as *mut u16) =
-        -(32i32) as u16;
+        -32i32 as u16;
     CallSomeSamusCode(0u16, game);
     SpawnHardcodedPlm(
         SpawnHardcodedPlmArgs::new(0x1u8, 0u8, 0xb8f9 as VoidP),
@@ -1146,8 +1146,8 @@ pub unsafe fn RoomCode_CrocomireShaking(game: &mut Game) {
         }
     }
 }
-static kRoomCode_RidleyRoomShaking_X: [i16; 8] = [0, 2, 2, 2, 0, -(2), -(2), -(2)];
-static kRoomCode_RidleyRoomShaking_Y: [i16; 8] = [-(2), -(2), 0, 2, 2, 2, 0, -(2)];
+static kRoomCode_RidleyRoomShaking_X: [i16; 8] = [0, 2, 2, 2, 0, -2, -2, -2];
+static kRoomCode_RidleyRoomShaking_Y: [i16; 8] = [-2, -2, 0, 2, 2, 2, 0, -2];
 pub unsafe fn RoomCode_RidleyRoomShaking(game: &mut Game) {
     let ai_var_A: u16 =
         (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(4)).ai_var_A;

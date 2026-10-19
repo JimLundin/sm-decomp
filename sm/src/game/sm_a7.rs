@@ -446,7 +446,7 @@ pub unsafe fn Kraid_Touch_ArmFoot(game: &mut Game) {
 }
 pub unsafe fn Kraid_Func_1(game: &mut Game) {
     set_ram_word!(game.extra_samus_x_displacement = 4u16);
-    set_ram_word!(game.extra_samus_y_displacement = -(8i32) as u16);
+    set_ram_word!(game.extra_samus_y_displacement = -8i32 as u16);
 }
 pub unsafe fn Kraid_Touch(game: &mut Game) {
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
@@ -483,8 +483,8 @@ pub unsafe fn Kraid_SetEnemyPropsToDead(game: &mut Game) {
 pub unsafe fn Kraid_Init(game: &mut Game) {
     let mut v5: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
     let mut j: u16 = 0;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x604) as *mut LongPtr)).bank = -(89i32) as u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x601) as *mut LongPtr)).bank = -(89i32) as u8;
+    (*((&raw mut game.g_ram as *mut u8).offset(0x604) as *mut LongPtr)).bank = -89i32 as u8;
+    (*((&raw mut game.g_ram as *mut u8).offset(0x601) as *mut LongPtr)).bank = -89i32 as u8;
     (*((&raw mut game.g_ram as *mut u8).offset(0x604) as *mut LongPtr)).addr =
         ((0xa7c24ei32) as u16);
     (*((&raw mut game.g_ram as *mut u8).offset(0x601) as *mut LongPtr)).addr =
@@ -514,7 +514,7 @@ pub unsafe fn Kraid_Init(game: &mut Game) {
         v5 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
         (*v5).size = 512u16;
         (*v5).src.addr = addr_kKraidsRoomBg as i32 as VoidP;
-        (*v5).src.bank = -(89i32) as u8;
+        (*v5).src.bank = -89i32 as u8;
         (*v5).vram_dst = (((*(&raw mut game.g_ram as *mut u8).offset(0x5d) as i32 & 0xfi32)
             << 8i32)
             + 16128i32) as u16;
@@ -650,7 +650,7 @@ pub unsafe fn KraidsMiddleLint_Init(game: &mut Game) {
         (*v0.offset(3)).current_instruction = addr_kKraid_Ilist_8AFE as u16;
         (*v0.offset(3)).spritemap_pointer = addr_kKraid_Sprmap_A5DF as u16;
         (*v0.offset(3)).ai_var_A = addr_locret_A7B831 as u16;
-        (*v0.offset(3)).ai_var_C = -(16i32) as u16;
+        (*v0.offset(3)).ai_var_C = -16i32 as u16;
     };
 }
 pub unsafe fn KraidsBottomLint_Init(game: &mut Game) {
@@ -663,7 +663,7 @@ pub unsafe fn KraidsBottomLint_Init(game: &mut Game) {
         (*v0.offset(4)).current_instruction = addr_kKraid_Ilist_8AFE as u16;
         (*v0.offset(4)).spritemap_pointer = addr_kKraid_Sprmap_A5DF as u16;
         (*v0.offset(4)).ai_var_A = addr_locret_A7B831 as u16;
-        (*v0.offset(4)).ai_var_C = -(16i32) as u16;
+        (*v0.offset(4)).ai_var_C = -16i32 as u16;
     };
 }
 pub unsafe fn KraidsFoot_Init(game: &mut Game) {
@@ -704,7 +704,7 @@ pub unsafe fn Kraid_GetsBig_BreakCeilingPlatforms(game: &mut Game) {
     let mut v0: u16 = 1u16;
     let E: *mut Enemy_Kraid = Get_Kraid(0i32, game);
     if ((*E).base.y_pos as i32 & 2i32) != 0i32 {
-        v0 = -(1i32) as u16;
+        v0 = -1i32 as u16;
     }
     (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(v0);
     (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
@@ -832,7 +832,7 @@ pub unsafe fn Kraid_DrawRoomBg(game: &mut Game) {
     v3 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
     (*v3).size = 512u16;
     (*v3).src.addr = addr_kKraidsRoomBg as i32 as VoidP;
-    (*v3).src.bank = -(89i32) as u8;
+    (*v3).src.bank = -89i32 as u8;
     (*v3).vram_dst = (((*(&raw mut game.g_ram as *mut u8).offset(0x5d) as i32 & 0xfi32) << 8i32)
         + 16128i32) as u16;
     set_ram_word!(game.vram_write_queue_tail = (v2).wrapping_add(7u16));
@@ -1003,7 +1003,7 @@ pub unsafe fn Kraid_ExecuteInstr(game: &mut Game) -> u16 {
                     game,
                 ))
                 .size as *mut u8)
-                    .offset(0) = -(89i32) as u8;
+                    .offset(0) = -89i32 as u8;
                 (*gVramWriteEntry(v5 as i32, game)).size =
                     ((*(&raw mut game.g_ram as *mut u8).offset(0x59) as i32 & 0xfci32) << 8i32)
                         as u16;
@@ -1587,7 +1587,7 @@ pub unsafe fn KraidLint_FireLint(k: u16, game: &mut Game) {
             -((g_word_A7A928 as i32) << 16i32 | g_word_A7A926 as i32) as u32,
         );
         if ram_word!(game, extra_samus_x_displacement) as i32 + 16i32 & 0x8000i32 != 0 {
-            set_ram_word!(game.extra_samus_x_displacement = -(16i32) as u16);
+            set_ram_word!(game.extra_samus_x_displacement = -16i32 as u16);
         }
     }
 }
@@ -2426,7 +2426,7 @@ pub unsafe fn Kraid_Death_UpdateBG2TilemapTopHalf(game: &mut Game) {
 }
 pub unsafe fn Kraid_Death_UpdateBG2TilemapBottomHalf(game: &mut Game) {
     Kraid_ProcessKraidInstr(game);
-    (*((&raw mut game.g_ram as *mut u8).offset(0x604) as *mut LongPtr)).bank = -(89i32) as u8;
+    (*((&raw mut game.g_ram as *mut u8).offset(0x604) as *mut LongPtr)).bank = -89i32 as u8;
     (*((&raw mut game.g_ram as *mut u8).offset(0x604) as *mut LongPtr)).addr =
         ((0xa7c2a0i32) as u16);
     let E: *mut Enemy_Kraid = Get_Kraid(0i32, game);
@@ -2648,7 +2648,7 @@ pub unsafe fn Kraid_FadeInBg_LoadBg3Tiles1of4(game: &mut Game) {
     let v0: u16 = ram_word!(game, vram_write_queue_tail);
     v1 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
     (*v1).size = 1024u16;
-    (*v1).src.addr = -(19968i32) as VoidP;
+    (*v1).src.addr = -19968i32 as VoidP;
     *(&raw mut (*v1).src.bank as *mut u16) = 154u16;
     (*v1).vram_dst = 0x4000u16;
     set_ram_word!(game.vram_write_queue_tail = (v0).wrapping_add(7u16));
@@ -2659,7 +2659,7 @@ pub unsafe fn Kraid_FadeInBg_LoadBg3Tiles2of4(game: &mut Game) {
     let v0: u16 = ram_word!(game, vram_write_queue_tail);
     v1 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
     (*v1).size = 1024u16;
-    (*v1).src.addr = -(18944i32) as VoidP;
+    (*v1).src.addr = -18944i32 as VoidP;
     *(&raw mut (*v1).src.bank as *mut u16) = 154u16;
     (*v1).vram_dst = 16896u16;
     set_ram_word!(game.vram_write_queue_tail = (v0).wrapping_add(7u16));
@@ -2670,7 +2670,7 @@ pub unsafe fn Kraid_FadeInBg_LoadBg3Tiles3of4(game: &mut Game) {
     let v0: u16 = ram_word!(game, vram_write_queue_tail);
     v1 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
     (*v1).size = 1024u16;
-    (*v1).src.addr = -(17920i32) as VoidP;
+    (*v1).src.addr = -17920i32 as VoidP;
     *(&raw mut (*v1).src.bank as *mut u16) = 154u16;
     (*v1).vram_dst = 17408u16;
     set_ram_word!(game.vram_write_queue_tail = (v0).wrapping_add(7u16));
@@ -2681,7 +2681,7 @@ pub unsafe fn Kraid_FadeInBg_LoadBg3Tiles4of4(game: &mut Game) {
     let v0: u16 = ram_word!(game, vram_write_queue_tail);
     v1 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
     (*v1).size = 1024u16;
-    (*v1).src.addr = -(16896i32) as VoidP;
+    (*v1).src.addr = -16896i32 as VoidP;
     *(&raw mut (*v1).src.bank as *mut u16) = 154u16;
     (*v1).vram_dst = 17920u16;
     set_ram_word!(game.vram_write_queue_tail = (v0).wrapping_add(7u16));
@@ -2714,7 +2714,7 @@ pub unsafe fn Kraid_FadeInBg_SetEnemyDead_KraidWasDead(game: &mut Game) {
     if Kraid_CheckIfDead(game) == 0 || ram_word!(game, layer1_x_pos) != 0u16 {
         Kraid_SetEnemyPropsToDead(game);
     }
-    set_ram_word!(game.previous_layer1_x_block = -(1i32) as u16);
+    set_ram_word!(game.previous_layer1_x_block = -1i32 as u16);
 }
 pub unsafe fn Kraid_RestrictSamusXtoFirstScreen(k: u16, game: &mut Game) {
     Kraid_RestrictSamusXtoFirstScreen_2(game);
@@ -2792,14 +2792,14 @@ pub unsafe fn Kraid_Raise_Handler(game: &mut Game) {
     let E0: *mut Enemy_Kraid = Get_Kraid(0i32, game);
     (*E0).base.x_pos = ((*E0).base.x_pos as i32
         + if ((*E0).base.y_pos as i32 & 2i32) == 0i32 {
-            -(1i32)
+            -1i32
         } else {
             1i32
         }) as u16;
     AddToHiLo(
         &raw mut (*E0).base.y_pos,
         &raw mut (*E0).base.y_subpos,
-        -(0x8000i32) as u32,
+        -0x8000i32 as u32,
     );
     if (*E0).base.y_pos as i32 - 457i32 & 0x8000i32 != 0 {
         (*E0).base.x_pos = 176u16;
@@ -2952,7 +2952,7 @@ pub unsafe fn Phantoon2_Init(game: &mut Game) {
         crate::rtl::rom_table_word!(game, 0xa7ce8e, (*v6).parameter_2 as isize);
     (*v6).ai_preinstr = ((0xa7d4a9i32) as u16);
     (*v7.offset(3)).parameter_1 = 0u16;
-    (*v7.offset(3)).ai_var_C = -(1i32) as u16;
+    (*v7.offset(3)).ai_var_C = -1i32 as u16;
 }
 pub unsafe fn Phantoon_Main(game: &mut Game) {
     Phantoon_Func_2(ram_word!(game, cur_enemy_index), game);
@@ -3087,7 +3087,7 @@ pub unsafe fn Phantoon_Func_7(k: u16, game: &mut Game) {
             (*E).phant_var_C = (*E).phant_var_C.wrapping_sub(1);
             let v8: bool = ((*E).phant_var_C as i32 & 0x8000i32) != 0i32;
             if v3 || v8 {
-                (*E).phant_var_C = -(1i32) as u16;
+                (*E).phant_var_C = -1i32 as u16;
                 (*E).phant_var_B = *(RomPtr_A7(
                     crate::rtl::rom_table_word!(game, 0xa7ccfd, (*E).phant_var_A as isize),
                     game,
@@ -3330,7 +3330,7 @@ pub unsafe fn Phantoon_MoveInSwoopingPattern(k: u16, game: &mut Game) {
         (((*E2).phant_var_C as i16 as i32) << 8i32) as u32,
     );
     if (*E0).base.x_pos as i32 + 64i32 & 0x8000i32 != 0 {
-        (*E0).base.x_pos = -(64i32) as u16;
+        (*E0).base.x_pos = -64i32 as u16;
     } else if (*E0).base.x_pos as i32 - 448i32 & 0x8000i32 == 0 {
         (*E0).base.x_pos = 448u16;
     }
@@ -3474,7 +3474,7 @@ pub unsafe fn Phantoon_SpawnFireballsBeforeFight(k: u16, game: &mut Game) {
             | (0x4000u16));
         (*EK).phant_var_F = ((0xa7d54ai32) as u16);
         let E3: *mut Enemy_Phantoon = Get_Phantoon(0xc0i32, game);
-        (*E3).phant_parameter_1 = -(32767i32) as u16;
+        (*E3).phant_parameter_1 = -32767i32 as u16;
         (*EK).phant_var_E = 120u16;
         sub_88E487(2u16, g_word_A7CDA3, game);
         (*E3).phant_var_D = g_word_A7CD9D;
@@ -3938,7 +3938,7 @@ pub unsafe fn Phantoon_DyingFadeOut(k: u16, game: &mut Game) {
         }
     } else if (ram_word!(game, nmi_frame_counter_word) as i32 & 0xfi32) == 0i32 {
         if *(&raw mut (*E).phant_var_C as *mut u8).offset(0) == 0xf2u8 {
-            (*E).phant_var_C = -(1i32) as u16;
+            (*E).phant_var_C = -1i32 as u16;
             (*E).phant_var_F = 0u16;
         } else {
             let v2: u8 = (*(&raw mut (*E).phant_var_C as *mut u8).offset(0)).wrapping_add(16u8);
@@ -3955,7 +3955,7 @@ pub unsafe fn Phantoon_AlmostDead(k: u16, game: &mut Game) {
         game.phantom_related_layer_flag,
         |fresh18| (fresh18 as i32 & !(0x4000i32)) as u16
     );
-    (*Get_Phantoon(0xc0i32, game)).phant_parameter_1 = -(1i32) as u16;
+    (*Get_Phantoon(0xc0i32, game)).phant_parameter_1 = -1i32 as u16;
     let EK: *mut Enemy_Phantoon = Get_Phantoon(k as i32, game);
     (*EK).phant_var_F = ((0xa7db3di32) as u16);
     (*EK).phant_var_E = 60u16;
@@ -4333,7 +4333,7 @@ pub unsafe fn Etecoon_Init(game: &mut Game) {
     (*E).base.timer = 0u16;
     (*E).base.current_instruction = addr_kEtecoon_Ilist_E8CE as u16;
     (*E).etecoon_var_F = ((0xa7e9afi32) as u16);
-    (*E).etecoon_var_E = -(1i32) as u16;
+    (*E).etecoon_var_E = -1i32 as u16;
 }
 pub unsafe fn Etecoon_Main(game: &mut Game) {
     let E: *mut Enemy_Etecoon = Get_Etecoon(ram_word!(game, cur_enemy_index) as i32, game);
@@ -4626,7 +4626,7 @@ pub unsafe fn Etecoon_Func_20(k: u16, game: &mut Game) {
         (*E).base.instruction_timer = 1u16;
         (*E).base.current_instruction = addr_stru_A7E898 as u16;
         (*E).etecoon_var_F = ((0xa7ed54i32) as u16);
-        (*E).etecoon_var_A = -(1i32) as u16;
+        (*E).etecoon_var_A = -1i32 as u16;
         (*E).etecoon_var_B = g_word_A7E906;
     }
 }

@@ -776,7 +776,7 @@ pub unsafe fn GameOverMenu_3_Main(game: &mut Game) {
     }
     v0 = 30720i16;
     if ram_word!(game, file_select_map_area_index) != 0 {
-        v0 = -(30720i32) as i16;
+        v0 = -30720i16;
     }
     v1 = (v0) | (0x28i16);
     let v3: *mut OamEnt = gOamEnt(ram_word!(game, oam_next_ptr) as i32, game);
@@ -1991,7 +1991,7 @@ pub unsafe fn FileSelectMenu_16(game: &mut Game) {
             .offset(i as u16 as i32 as isize) as *mut u16) = 15u16;
         i -= 2i32;
     }
-    set_ram_word!(game.nonempty_save_slots = -(1i32) as u16);
+    set_ram_word!(game.nonempty_save_slots = -1i32 as u16);
     (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).palette_index =
         0u16;
     LoadMenuTilemap(0x56u16, addr_kMenuTilemap_SamusData as u16, game);
@@ -2484,10 +2484,10 @@ pub unsafe fn ConfigureWindow1ForExpandingSquare(game: &mut Game) {
 }
 pub unsafe fn SetupInitialExpandingSquareHDMA(game: &mut Game) {
     set_ram_word!(game.expand_sq_topbottom_margin_right_pos = 0u16);
-    set_ram_word!(game.expand_sq_topbottom_margin_left_pos = -(1i32) as u16);
+    set_ram_word!(game.expand_sq_topbottom_margin_left_pos = -1i32 as u16);
     *((&raw mut game.g_ram as *mut u8).offset(0x9e32) as *mut u16 as *mut u8).offset(0) = 127u8;
     *((&raw mut game.g_ram as *mut u8).offset(0x9e36) as *mut u16 as *mut u8).offset(0) =
-        -(127i32) as u8;
+        -127i32 as u8;
     (*((&raw mut game.g_ram as *mut u8).offset(0x9e00) as *mut ExpandingSquareTransitionHdma)
         .offset(0))
     .field_0 = 111u8;
@@ -2496,7 +2496,7 @@ pub unsafe fn SetupInitialExpandingSquareHDMA(game: &mut Game) {
     .field_1 = 34u8;
     (*((&raw mut game.g_ram as *mut u8).offset(0x9e00) as *mut ExpandingSquareTransitionHdma)
         .offset(0))
-    .field_2 = -(98i32) as u8;
+    .field_2 = -98i32 as u8;
     (*((&raw mut game.g_ram as *mut u8).offset(0x9e00) as *mut ExpandingSquareTransitionHdma)
         .offset(1))
     .field_0 = 1u8;
@@ -2505,7 +2505,7 @@ pub unsafe fn SetupInitialExpandingSquareHDMA(game: &mut Game) {
     .field_1 = 50u8;
     (*((&raw mut game.g_ram as *mut u8).offset(0x9e00) as *mut ExpandingSquareTransitionHdma)
         .offset(1))
-    .field_2 = -(98i32) as u8;
+    .field_2 = -98i32 as u8;
     (*((&raw mut game.g_ram as *mut u8).offset(0x9e00) as *mut ExpandingSquareTransitionHdma)
         .offset(2))
     .field_0 = 1u8;
@@ -2514,7 +2514,7 @@ pub unsafe fn SetupInitialExpandingSquareHDMA(game: &mut Game) {
     .field_1 = 50u8;
     (*((&raw mut game.g_ram as *mut u8).offset(0x9e00) as *mut ExpandingSquareTransitionHdma)
         .offset(2))
-    .field_2 = -(98i32) as u8;
+    .field_2 = -98i32 as u8;
     (*((&raw mut game.g_ram as *mut u8).offset(0x9e00) as *mut ExpandingSquareTransitionHdma)
         .offset(3))
     .field_0 = 111u8;
@@ -2523,7 +2523,7 @@ pub unsafe fn SetupInitialExpandingSquareHDMA(game: &mut Game) {
     .field_1 = 32u8;
     (*((&raw mut game.g_ram as *mut u8).offset(0x9e00) as *mut ExpandingSquareTransitionHdma)
         .offset(3))
-    .field_2 = -(98i32) as u8;
+    .field_2 = -98i32 as u8;
     WriteReg(DMAP2 as u16, 0x40u8, game);
     WriteReg(BBAD2 as u16, 0x26u8, game);
     WriteReg(A1T2L as u16, 0u8, game);
@@ -2543,7 +2543,7 @@ pub unsafe fn SetupInitialExpandingSquareHDMA(game: &mut Game) {
     .field_1 = 32u8;
     (*((&raw mut game.g_ram as *mut u8).offset(0x9e10) as *mut ExpandingSquareTransitionHdma)
         .offset(0))
-    .field_2 = -(98i32) as u8;
+    .field_2 = -98i32 as u8;
     (*((&raw mut game.g_ram as *mut u8).offset(0x9e10) as *mut ExpandingSquareTransitionHdma)
         .offset(1))
     .field_0 = 1u8;
@@ -2552,7 +2552,7 @@ pub unsafe fn SetupInitialExpandingSquareHDMA(game: &mut Game) {
     .field_1 = 54u8;
     (*((&raw mut game.g_ram as *mut u8).offset(0x9e10) as *mut ExpandingSquareTransitionHdma)
         .offset(1))
-    .field_2 = -(98i32) as u8;
+    .field_2 = -98i32 as u8;
     (*((&raw mut game.g_ram as *mut u8).offset(0x9e10) as *mut ExpandingSquareTransitionHdma)
         .offset(2))
     .field_0 = 1u8;
@@ -2561,7 +2561,7 @@ pub unsafe fn SetupInitialExpandingSquareHDMA(game: &mut Game) {
     .field_1 = 54u8;
     (*((&raw mut game.g_ram as *mut u8).offset(0x9e10) as *mut ExpandingSquareTransitionHdma)
         .offset(2))
-    .field_2 = -(98i32) as u8;
+    .field_2 = -98i32 as u8;
     (*((&raw mut game.g_ram as *mut u8).offset(0x9e10) as *mut ExpandingSquareTransitionHdma)
         .offset(3))
     .field_0 = 111u8;
@@ -2570,7 +2570,7 @@ pub unsafe fn SetupInitialExpandingSquareHDMA(game: &mut Game) {
     .field_1 = 32u8;
     (*((&raw mut game.g_ram as *mut u8).offset(0x9e10) as *mut ExpandingSquareTransitionHdma)
         .offset(3))
-    .field_2 = -(98i32) as u8;
+    .field_2 = -98i32 as u8;
     WriteReg(DMAP3 as u16, 0x40u8, game);
     WriteReg(BBAD3 as u16, 0x27u8, game);
     WriteReg(A1T3L as u16, 0x10u8, game);
@@ -2831,7 +2831,7 @@ pub unsafe fn SelectFileSelectMapArea(game: &mut Game) {
                 if v3 != -1i16 {
                     break;
                 }
-                v0 = -(1i32) as u16;
+                v0 = -1i32 as u16;
             }
         }
         v0 = v0.wrapping_add(1);
@@ -2845,7 +2845,7 @@ pub unsafe fn SelectFileSelectMapArea(game: &mut Game) {
                 if v4 != -1i16 {
                     break 's_43;
                 }
-                v0 = -(1i32) as u16;
+                v0 = -1i32 as u16;
             }
             v0 = v0.wrapping_add(1);
             r20 = r20.wrapping_sub(1);
@@ -3021,7 +3021,7 @@ pub unsafe fn SetupRoomSelectMapExpandingSquareTransHDMA(game: &mut Game) {
     }
     AddExpandingSqTransLeftIndirHDMA(v2, k, 0x9e32u16, game);
     k = AddExpandingSqTransRightIndirHDMA(v2, k, 0x9e36u16, game);
-    let mut v4: u16 = (-(32i32) - ram_word!(game, expand_sq_bottom_pos) as i32) as u16;
+    let mut v4: u16 = (-32i32 - ram_word!(game, expand_sq_bottom_pos) as i32) as u16;
     if (ram_word!(game, expand_sq_bottom_pos) as u8) == 0xe0u8 {
         v4 = 1u16;
     }

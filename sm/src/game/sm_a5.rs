@@ -277,7 +277,7 @@ pub unsafe fn Draygon_Init(game: &mut Game) {
         as *mut u16) = 165u16;
     (*((&raw mut game.g_ram as *mut u8).offset(0x178c) as *mut LongPtr)).addr =
         ((0xa59342i32) as u16);
-    set_ram_word!(game.flag_process_all_enemies = -(1i32) as u16);
+    set_ram_word!(game.flag_process_all_enemies = -1i32 as u16);
     (*Get_Draygon(0i32, game)).base.current_instruction = addr_kDraygon_Ilist_9889 as u16;
     (*Get_Draygon(0x40i32, game)).base.current_instruction = addr_kDraygon_Ilist_9944 as u16;
     (*Get_Draygon(0x80i32, game)).base.current_instruction = addr_kDraygon_Ilist_99FC as u16;
@@ -364,7 +364,7 @@ pub unsafe fn Draygon_Func_1(game: &mut Game) {
         if (*E).draygon_var_B == 0 {
             v2 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
             (*v2).size = 1536u16;
-            (*v2).src.addr = -(27648i32) as VoidP;
+            (*v2).src.addr = -27648i32 as VoidP;
             *(&raw mut (*v2).src.bank as *mut u16) = 177u16;
             (*v2).vram_dst = 27904u16;
             update_ram_word!(game.vram_write_queue_tail, wrapping_add(7u16));
@@ -615,7 +615,7 @@ pub unsafe fn Draygon_Func_13(game: &mut Game) {
 pub unsafe fn Draygon_Func_14(game: &mut Game) {
     Draygon_Func_3(game);
     let E: *mut Enemy_Draygon = Get_Draygon(0i32, game);
-    (*E).base.x_pos = -(80i32) as u16;
+    (*E).base.x_pos = -80i32 as u16;
     (*E).base.y_pos = 384u16;
     (*E).draygon_var_E = 0u16;
     (*E).draygon_var_D = 1u16;
@@ -711,7 +711,7 @@ pub unsafe fn Draygon_Func_17(k: u16, game: &mut Game) {
     if ((*E).base.x_pos as i16) >= 0i16 && (*E).base.x_pos as i32 - 672i32 & 0x8000i32 == 0 {
         (*E).draygon_var_A = ((0xa589b3i32) as u16);
         (*E).base.x_pos = 592u16;
-        (*E).base.y_pos = -(80i32) as u16;
+        (*E).base.y_pos = -80i32 as u16;
         (*E).draygon_var_B = (*E).draygon_var_C;
     }
 }
@@ -813,8 +813,8 @@ pub unsafe fn Draygon_Func_21(k: u16, game: &mut Game) {
         );
         if ((*E).base.x_pos as i16) < 0i16 && (*E).base.x_pos as i32 + 80i32 & 0x8000i32 != 0 {
             (*E).draygon_var_A = ((0xa587f4i32) as u16);
-            (*E).base.x_pos = -(80i32) as u16;
-            (*E).base.y_pos = -(80i32) as u16;
+            (*E).base.x_pos = -80i32 as u16;
+            (*E).base.y_pos = -80i32 as u16;
             (*E).draygon_var_B = (*E).draygon_var_C;
         }
     };
@@ -828,7 +828,7 @@ pub unsafe fn Draygon_Func_22(game: &mut Game) {
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
         v2 = 8i16;
         if (*E).draygon_var_20 == 0 {
-            v2 = -(8i32) as i16;
+            v2 = -8i16;
         }
         let v3: u16 = Abs16(
             ((*E).base.x_pos as i32 + v2 as i32 - ram_word!(game, samus_x_pos) as i32) as u16,
@@ -1273,7 +1273,7 @@ pub unsafe fn Draygon_Func_40(k: u16, game: &mut Game) {
     let mut v1: i16 = 0;
     v1 = 8i16;
     if (*Get_Draygon(k as i32, game)).draygon_var_20 == 0 {
-        v1 = -(8i32) as i16;
+        v1 = -8i16;
     }
     let E: *mut Enemy_Draygon = Get_Draygon(0i32, game);
     set_ram_word!(game.samus_x_pos = ((*E).base.x_pos).wrapping_add((v1) as u16));
@@ -2016,7 +2016,7 @@ pub unsafe fn SporeSpawn_Init(game: &mut Game) {
         set_ram_word!(game.scrolling_finished_hook = 0u16);
     } else {
         (*E0).base.current_instruction = addr_kDraygon_Ilist_E6C7 as u16;
-        set_ram_word!(game.flag_process_all_enemies = -(1i32) as u16);
+        set_ram_word!(game.flag_process_all_enemies = -1i32 as u16);
         let v5: u16 = ram_word!(game, cur_enemy_index);
         (*E).ssn_var_A = ((0xa5eb1ai32) as u16);
         set_ram_word!(game.scrolling_finished_hook = ((0x909589i32) as u16));
@@ -2190,7 +2190,7 @@ pub unsafe fn SporeSpawn_Shot(game: &mut Game) {
             v4 = 2i16;
             if (*EK).base.health as i32 - 400i32 & 0x8000i32 != 0 {
                 if ((*E).ssn_var_0C as i32 & 0x8000i32) != 0i32 {
-                    v4 = -(2i32) as i16;
+                    v4 = -2i16;
                 }
                 (*E).ssn_var_0C = v4 as u16;
             }

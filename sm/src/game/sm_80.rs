@@ -502,7 +502,7 @@ pub unsafe fn InitializePpuIoRegs(game: &mut Game) {
     crate::rtl::write_register_and_mirror(WOBJSEL as u16, 0, 0x62, false, game);
     crate::rtl::write_register_and_mirror(WH0 as u16, 0, 0x63, false, game);
     WriteReg(WH1 as u16, 0xf8u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x64) = -(8i32) as u8;
+    *(&raw mut game.g_ram as *mut u8).offset(0x64) = -8i32 as u8;
     crate::rtl::write_register_and_mirror(WH2 as u16, 0, 0x65, false, game);
     crate::rtl::write_register_and_mirror(WH3 as u16, 0, 0x66, false, game);
     crate::rtl::write_register_and_mirror(WBGLOG as u16, 0, 0x67, false, game);
@@ -513,7 +513,7 @@ pub unsafe fn InitializePpuIoRegs(game: &mut Game) {
     crate::rtl::write_register_and_mirror(TSW as u16, 2, 0x6d, false, game);
     crate::rtl::write_register_and_mirror(CGWSEL as u16, 2, 0x6e, false, game);
     WriteReg(CGADSUB as u16, 0xa1u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x71) = -(95i32) as u8;
+    *(&raw mut game.g_ram as *mut u8).offset(0x71) = -95i32 as u8;
     WriteReg(COLDATA as u16, 0xe0u8, game);
     WriteReg(COLDATA as u16, 0xe0u8, game);
     WriteReg(COLDATA as u16, 0x80u8, game);
@@ -881,7 +881,7 @@ pub unsafe fn HandleMusicQueue(game: &mut Game) {
         }
         if (ram_word!(game, music_entry) as i32 & 0x8000i32) != 0i32 {
             set_ram_word!(game.music_data_index = ram_word!(game, music_entry) as u8 as u16);
-            *(&raw mut game.g_ram as *mut u8).offset(0x64c) = -(1i32) as u8;
+            *(&raw mut game.g_ram as *mut u8).offset(0x64c) = -1i32 as u8;
             APU_UploadBank(
                 Load24(
                     (game.g_rom.offset(crate::rtl::lorom_offset(0x8fe7e1)) as *const u8
@@ -1956,7 +1956,7 @@ pub unsafe fn ProcessTimer(game: &mut Game) -> u8 {
 pub unsafe fn ProcessTimer_CeresStart(game: &mut Game) -> u8 {
     ClearTimerRam(game);
     SetTimerMinutes(0x100u16, game);
-    set_ram_word!(game.timer_status = -(32765i32) as u16);
+    set_ram_word!(game.timer_status = -32765i32 as u16);
     0u8
 }
 pub fn ProcessTimer_Empty(game: &mut Game) -> u8 {
@@ -1965,7 +1965,7 @@ pub fn ProcessTimer_Empty(game: &mut Game) -> u8 {
 pub unsafe fn ProcessTimer_MotherBrainStart(game: &mut Game) -> u8 {
     ClearTimerRam(game);
     SetTimerMinutes(0x300u16, game);
-    set_ram_word!(game.timer_status = -(32765i32) as u16);
+    set_ram_word!(game.timer_status = -32765i32 as u16);
     0u8
 }
 pub unsafe fn ProcessTimer_InitialDelay(game: &mut Game) -> u8 {
@@ -1992,7 +1992,7 @@ pub unsafe fn ProcessTimer_MovingIntoPlace(game: &mut Game) -> u8 {
     let mut v1: u16 = (ram_word!(game, timer_x_pos)).wrapping_add(224u16);
     if (ram_word!(game, timer_x_pos)).wrapping_add(224u16) >= 0xdc00u16 {
         v0 = 1i32;
-        v1 = -(9216i32) as u16;
+        v1 = -9216i32 as u16;
     }
     set_ram_word!(game.timer_x_pos = v1);
     let mut v2: u16 = (ram_word!(game, timer_y_pos)).wrapping_sub(193u16);
@@ -2116,7 +2116,7 @@ pub unsafe fn StartGameplay_Async(game: &mut Game) -> CoroutineRet {
             set_ram_word!(game.music_track_index = 0u16);
             set_ram_word!(game.timer_status = 0u16);
             ResetSoundQueues(game);
-            set_ram_word!(game.debug_disable_sounds = -(1i32) as u16);
+            set_ram_word!(game.debug_disable_sounds = -1i32 as u16);
             DisableNMI(game);
             DisableIrqInterrupts(game);
             LoadDestinationRoomThings(game);

@@ -264,7 +264,7 @@ unsafe fn atoi(mut __nptr: *const c_char) -> i32 {
 unsafe fn atof(mut __nptr: *const c_char) -> c_double {
     strtod(__nptr, NULL as *mut *mut c_char)
 }
-pub const EOF: i32 = -(1i32);
+pub const EOF: i32 = -1i32;
 pub const SEEK_SET: i32 = 0;
 pub const SEEK_CUR: i32 = 1;
 unsafe fn stbi__start_mem(s: *mut stbi__context, buffer: *const stbi_uc, len: i32) {
@@ -1309,14 +1309,14 @@ unsafe fn stbi__zhuffman_decode_slowpath(a: *mut stbi__zbuf, z: *mut stbi__zhuff
         s += 1;
     }
     if s >= 16i32 {
-        return -(1i32);
+        return -1i32;
     }
     b = (k >> 16i32 - s) - (*z).firstcode[s as usize] as i32 + (*z).firstsymbol[s as usize] as i32;
     if b >= STBI__ZNSYMS {
-        return -(1i32);
+        return -1i32;
     }
     if (*z).size[b as usize] as i32 != s {
-        return -(1i32);
+        return -1i32;
     }
     (*a).code_buffer >>= s;
     (*a).num_bits -= s;
@@ -1327,7 +1327,7 @@ unsafe fn stbi__zhuffman_decode(a: *mut stbi__zbuf, z: *mut stbi__zhuffman) -> i
     let mut s: i32 = 0;
     if (*a).num_bits < 16i32 {
         if stbi__zeof(a) != 0 {
-            return -(1i32);
+            return -1i32;
         }
         stbi__fill_bits(a);
     }
@@ -3798,7 +3798,7 @@ unsafe fn GlslShader_GetUniforms(gs: *mut GlslShader) {
         GlslTextureUniform_Read(
             program,
             b"\0" as *const u8 as *const c_char,
-            -(1i32),
+            -1i32,
             &raw mut (*p).unif.Top,
         );
         (*p).unif.OutputSize = gl::GetUniformLocation(
@@ -3824,7 +3824,7 @@ unsafe fn GlslShader_GetUniforms(gs: *mut GlslShader) {
         GlslTextureUniform_Read(
             program,
             b"Orig\0" as *const u8 as *const c_char,
-            -(1i32),
+            -1i32,
             &raw mut (*p).unif.Orig,
         );
         let mut j: i32 = 0i32;
@@ -3832,7 +3832,7 @@ unsafe fn GlslShader_GetUniforms(gs: *mut GlslShader) {
             GlslTextureUniform_Read(
                 program,
                 b"Prev\0" as *const u8 as *const c_char,
-                if j != 0 { j } else { -(1i32) },
+                if j != 0 { j } else { -1i32 },
                 (&raw mut (*p).unif.Prev as *mut GlslTextureUniform).offset(j as isize)
                     as *mut GlslTextureUniform,
             );
@@ -4237,9 +4237,9 @@ unsafe fn GlslShader_SetShaderVars(gs: *mut GlslShader, ctx: *mut RenderCtx, pas
     RenderCtx_SetGlslTextureUniform(
         ctx,
         &raw mut (*p).unif.Top,
-        (*p.offset(-(1i32) as isize)).width as i32,
-        (*p.offset(-(1i32) as isize)).height as i32,
-        (*p.offset(-(1i32) as isize)).gl_texture,
+        (*p.offset(-1i32 as isize)).width as i32,
+        (*p.offset(-1i32 as isize)).height as i32,
+        (*p.offset(-1i32 as isize)).gl_texture,
     );
     if (*p).unif.OutputSize >= 0i32 {
         let mut output_size: [c_float; 2] = [
@@ -4373,7 +4373,7 @@ pub unsafe fn GlslShader_Render(
             }
             1 => {
                 (*p).width =
-                    ((*p.offset(-(1i32) as isize)).width as i32 as c_float * (*p).scale_x) as u16;
+                    ((*p.offset(-1i32 as isize)).width as i32 as c_float * (*p).scale_x) as u16;
             }
             2 => {
                 (*p).width = (viewport_width as c_float * (*p).scale_x) as u16;
@@ -4382,7 +4382,7 @@ pub unsafe fn GlslShader_Render(
                 (*p).width = (if last_pass as i32 != 0 {
                     viewport_width as c_float
                 } else {
-                    (*p.offset(-(1i32) as isize)).width as i32 as c_float * (*p).scale_x
+                    (*p.offset(-1i32 as isize)).width as i32 as c_float * (*p).scale_x
                 }) as u16;
             }
         }
@@ -4392,7 +4392,7 @@ pub unsafe fn GlslShader_Render(
             }
             1 => {
                 (*p).height =
-                    ((*p.offset(-(1i32) as isize)).height as i32 as c_float * (*p).scale_y) as u16;
+                    ((*p.offset(-1i32 as isize)).height as i32 as c_float * (*p).scale_y) as u16;
             }
             2 => {
                 (*p).height = (viewport_height as c_float * (*p).scale_y) as u16;
@@ -4401,7 +4401,7 @@ pub unsafe fn GlslShader_Render(
                 (*p).height = (if last_pass as i32 != 0 {
                     viewport_height as c_float
                 } else {
-                    (*p.offset(-(1i32) as isize)).height as i32 as c_float * (*p).scale_y
+                    (*p.offset(-1i32 as isize)).height as i32 as c_float * (*p).scale_y
                 }) as u16;
             }
         }
@@ -4466,7 +4466,7 @@ pub unsafe fn GlslShader_Render(
         }
         gl::BindTexture(
             GL_TEXTURE_2D as GLenum,
-            (*p.offset(-(1i32) as isize)).gl_texture as GLuint,
+            (*p.offset(-1i32 as isize)).gl_texture as GLuint,
         );
         let filter: u32 = if (*p).filter != 0 {
             (*p).filter

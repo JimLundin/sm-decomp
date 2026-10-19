@@ -132,9 +132,9 @@ pub unsafe fn NextLineStripComments(s: *mut *mut c_char) -> *mut c_char {
     ) as *mut c_char;
     eol = if !comment.is_null() { comment } else { eol };
     while eol > p
-        && (*eol.offset(-(1i32) as isize) as i32 == '\r' as i32
-            || *eol.offset(-(1i32) as isize) as i32 == ' ' as i32
-            || *eol.offset(-(1i32) as isize) as i32 == '\t' as i32)
+        && (*eol.offset(-1i32 as isize) as i32 == '\r' as i32
+            || *eol.offset(-1i32 as isize) as i32 == ' ' as i32
+            || *eol.offset(-1i32 as isize) as i32 == '\t' as i32)
     {
         eol = eol.offset(-1);
     }
@@ -201,8 +201,8 @@ pub unsafe fn SplitKeyValue(p: *mut c_char) -> *mut c_char {
     }
     let mut kr: *mut c_char = equals;
     while kr > p
-        && (*kr.offset(-(1i32) as isize) as i32 == ' ' as i32
-            || *kr.offset(-(1i32) as isize) as i32 == '\t' as i32)
+        && (*kr.offset(-1i32 as isize) as i32 == ' ' as i32
+            || *kr.offset(-1i32 as isize) as i32 == '\t' as i32)
     {
         kr = kr.offset(-1);
     }

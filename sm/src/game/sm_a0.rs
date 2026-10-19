@@ -1928,7 +1928,7 @@ pub unsafe fn InitializeEnemies(game: &mut Game) {
     }
     let mut j: i32 = 34i32;
     while j >= 0i32 {
-        set_ram_word!(game.eproj_killed_enemy_index[(j >> 1i32)] = -(1i32) as u16);
+        set_ram_word!(game.eproj_killed_enemy_index[(j >> 1i32)] = -1i32 as u16);
         j -= 2i32;
     }
     let mut v4: u16 = ram_word!(game, room_enemy_population_ptr);
@@ -2172,10 +2172,10 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
         }
         *((&raw mut game.g_ram as *mut u8).offset(0x17ac) as *mut u16)
             .offset((ram_word!(game, active_enemy_indexes_write_ptr) as i32 >> 1i32) as isize) =
-            -(1i32) as u16;
+            -1i32 as u16;
         *((&raw mut game.g_ram as *mut u8).offset(0x17ec) as *mut u16).offset(
             (ram_word!(game, interactive_enemy_indexes_write_ptr) as i32 >> 1i32) as isize,
-        ) = -(1i32) as u16;
+        ) = -1i32 as u16;
     } else {
         loop {
             let v0: u16 = ram_word!(game, cur_enemy_index);
@@ -2223,10 +2223,10 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
         }
         *((&raw mut game.g_ram as *mut u8).offset(0x17ac) as *mut u16)
             .offset((ram_word!(game, active_enemy_indexes_write_ptr) as i32 >> 1i32) as isize) =
-            -(1i32) as u16;
+            -1i32 as u16;
         *((&raw mut game.g_ram as *mut u8).offset(0x17ec) as *mut u16).offset(
             (ram_word!(game, interactive_enemy_indexes_write_ptr) as i32 >> 1i32) as isize,
-        ) = -(1i32) as u16;
+        ) = -1i32 as u16;
     };
 }
 pub unsafe fn CallEnemyAi(ea: u32, game: &mut Game) {
@@ -3364,7 +3364,7 @@ pub unsafe fn EnemyMain(game: &mut Game) {
     if ram_word!(game, first_free_enemy_index) != 0 {
         if ram_word!(game, enemy_index_to_shake) != 0xffffu16 {
             (*gEnemyData(ram_word!(game, enemy_index_to_shake) as i32, game)).shake_timer = 64u16;
-            set_ram_word!(game.enemy_index_to_shake = -(1i32) as u16);
+            set_ram_word!(game.enemy_index_to_shake = -1i32 as u16);
         }
         let mut current_block_39: u64;
         let mut active_enemy_indexes_index: i32 = 0i32;
@@ -3498,10 +3498,10 @@ pub unsafe fn EnemyMain(game: &mut Game) {
     }
     HandleSpriteObjects(game);
     update_ram_word!(game.random_enemy_counter, wrapping_add(1));
-    set_ram_word!(game.enemy_index_colliding_dirs[0] = -(1i32) as u16);
-    set_ram_word!(game.enemy_index_colliding_dirs[1] = -(1i32) as u16);
-    set_ram_word!(game.enemy_index_colliding_dirs[2] = -(1i32) as u16);
-    set_ram_word!(game.enemy_index_colliding_dirs[3] = -(1i32) as u16);
+    set_ram_word!(game.enemy_index_colliding_dirs[0] = -1i32 as u16);
+    set_ram_word!(game.enemy_index_colliding_dirs[1] = -1i32 as u16);
+    set_ram_word!(game.enemy_index_colliding_dirs[2] = -1i32 as u16);
+    set_ram_word!(game.enemy_index_colliding_dirs[3] = -1i32 as u16);
 }
 pub unsafe fn DecrementSamusTimers(game: &mut Game) {
     if ram_word!(game, samus_invincibility_timer) != 0 {
@@ -3513,8 +3513,8 @@ pub unsafe fn DecrementSamusTimers(game: &mut Game) {
     if ram_word!(game, projectile_invincibility_timer) != 0 {
         update_ram_word!(game.projectile_invincibility_timer, wrapping_sub(1));
     }
-    set_ram_word!(game.interactive_enemy_indexes[0] = -(1i32) as u16);
-    set_ram_word!(game.active_enemy_indexes[0] = -(1i32) as u16);
+    set_ram_word!(game.interactive_enemy_indexes[0] = -1i32 as u16);
+    set_ram_word!(game.active_enemy_indexes[0] = -1i32 as u16);
 }
 pub unsafe fn SpawnEnemyDrops(a: u16, k: u16, varE20: u16, game: &mut Game) {
     game.eproj_spawn_varE24 = a;
@@ -3670,7 +3670,7 @@ pub unsafe fn WriteEnemyOams(game: &mut Game) {
             + if ((*E).frame_counter as i32 & 2i32) == 0i32 {
                 1i32
             } else {
-                -(1i32)
+                -1i32
             }) as u16;
         (*E).shake_timer = (*E).shake_timer.wrapping_sub(1);
     }
@@ -4718,7 +4718,7 @@ pub unsafe fn NormalEnemyPowerBombAiSkipDeathAnim(game: &mut Game) {
     let v0: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
     let mut vulnerability_ptr: u16 = (*get_EnemyDef_A2((*v0).enemy_ptr, game)).vulnerability_ptr;
     if vulnerability_ptr == 0 {
-        vulnerability_ptr = -(5092i32) as u16;
+        vulnerability_ptr = -5092i32 as u16;
     }
     let power_bomb: u8 = (*get_Vulnerability(vulnerability_ptr, game)).power_bomb;
     if power_bomb != 255u8 {

@@ -90,7 +90,7 @@ pub unsafe fn SpawnPalfxObject(j: u16, game: &mut Game) {
     PalFxDef = get_PalFxDef(j, game);
     CallPalfxFunc(
         (((*PalFxDef).func) as u32) | (0x8d0000u32),
-        -(1i32) as u16,
+        -1i32 as u16,
         v1,
         game,
     );

@@ -85,16 +85,16 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight2(game: &mut Game) {
     MotherBrain_CalcHdma_BeamAimedRight((*E).mbn_var_3C, (*E).mbn_var_3E, game);
     *((&raw mut game.g_ram as *mut u8).offset(0x9c00) as *mut u16) = 16u16;
     *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(1) as *mut u8 as *mut u16) =
-        -(25600i32) as u16;
+        -25600i32 as u16;
     *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(3) as *mut u8 as *mut u16) = 16u16;
     *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(4) as *mut u8 as *mut u16) =
-        -(25597i32) as u16;
+        -25597i32 as u16;
     *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(6) as *mut u8 as *mut u16) = 240u16;
     *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(7) as *mut u8 as *mut u16) =
-        -(25340i32) as u16;
+        -25340i32 as u16;
     *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(9) as *mut u8 as *mut u16) = 244u16;
     *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(10) as *mut u8 as *mut u16) =
-        -(25108i32) as u16;
+        -25108i32 as u16;
     *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(12) as *mut u8 as *mut u16) = 0u16;
 }
 pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(mut r22: u16, mut r24: u16, game: &mut Game) {
@@ -182,17 +182,17 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedUp(game: &mut Game) {
         .expect("non-null function pointer")((*E).mbn_var_3C, (*E).mbn_var_3E, game);
     *((&raw mut game.g_ram as *mut u8).offset(0x9c00) as *mut u16) = 16u16;
     *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(1) as *mut u8 as *mut u16) =
-        -(25344i32) as u16;
+        -25344i32 as u16;
     *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(3) as *mut u8 as *mut u16) = 16u16;
     *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(4) as *mut u8 as *mut u16) =
-        -(25342i32) as u16;
+        -25342i32 as u16;
     let v2: u16 = ((*E).mbn_var_3D).wrapping_sub(32u16);
     printf(b"Carry crap!\n\0" as *const u8 as *const c_char);
     if v2 >= 0x80u16 {
         *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(6) as *mut u8 as *mut u16) =
             (v2 as i32 - 127i32 | 0x80i32) as u16;
         *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(7) as *mut u8 as *mut u16) =
-            -(25340i32) as u16;
+            -25340i32 as u16;
         *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(9) as *mut u8 as *mut u16) =
             255u16;
         *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(10) as *mut u8 as *mut u16) =
@@ -206,7 +206,7 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedUp(game: &mut Game) {
         *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(6) as *mut u8 as *mut u16) =
             (v2) | (0x80u16);
         *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(7) as *mut u8 as *mut u16) =
-            -(25340i32) as u16;
+            -25340i32 as u16;
         *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(9) as *mut u8 as *mut u16) =
             127u16;
         *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(10) as *mut u8 as *mut u16) =
@@ -237,13 +237,13 @@ pub unsafe fn MotherBrain_CalcHdma_Up_UpRight(mut r22: u16, mut r24: u16, game: 
     loop {
         let mut v4: u16 = (r18).wrapping_add(r22);
         if u16::overflowing_add(r18, r22).1 {
-            v4 = -(1i32) as u16;
+            v4 = -1i32 as u16;
         }
         r22 = v4;
         let R36: u16 = (v4 as i32 >> 8i32 & 0xffi32) as u16;
         let mut v7: u16 = (r20).wrapping_add(r24);
         if u16::overflowing_add(r20, r24).1 {
-            v7 = -(1i32) as u16;
+            v7 = -1i32 as u16;
         }
         r24 = v7;
         let mut v8: u16 = (R36 as i32 | v7 as i32 & 0xff00i32) as u16;
@@ -288,7 +288,7 @@ pub unsafe fn MotherBrain_CalcHdma_Up_Up(mut r22: u16, mut r24: u16, game: &mut 
         let r26: u16 = (v4 as i32 >> 8i32) as u8 as u16;
         let mut v7: u16 = (r20).wrapping_add(r24);
         if u16::overflowing_add(r20, r24).1 {
-            v7 = -(1i32) as u16;
+            v7 = -1i32 as u16;
         }
         r24 = v7;
         let mut v8: u16 = (r26 as i32 | v7 as i32 & 0xff00i32) as u16;
@@ -364,16 +364,16 @@ pub unsafe fn MotherBrain_CalcHdma_Down(game: &mut Game) {
         .expect("non-null function pointer")((*E).mbn_var_3C, (*E).mbn_var_3E, game);
     *((&raw mut game.g_ram as *mut u8).offset(0x9c00) as *mut u16) = 16u16;
     *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(1) as *mut u8 as *mut u16) =
-        -(25600i32) as u16;
+        -25600i32 as u16;
     *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(3) as *mut u8 as *mut u16) = 16u16;
     *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(4) as *mut u8 as *mut u16) =
-        -(25597i32) as u16;
+        -25597i32 as u16;
     *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(6) as *mut u8 as *mut u16) = 240u16;
     *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(7) as *mut u8 as *mut u16) =
-        -(25340i32) as u16;
+        -25340i32 as u16;
     *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(9) as *mut u8 as *mut u16) = 244u16;
     *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(10) as *mut u8 as *mut u16) =
-        -(25114i32) as u16;
+        -25114i32 as u16;
     *((&raw mut game.g_ram as *mut u8).offset(0x9c00).offset(12) as *mut u8 as *mut u16) = 0u16;
 }
 pub unsafe fn MotherBrain_CalcHdma_Down_DownRight(mut r22: u16, mut r24: u16, game: &mut Game) {
@@ -405,13 +405,13 @@ pub unsafe fn MotherBrain_CalcHdma_Down_DownRight(mut r22: u16, mut r24: u16, ga
     loop {
         let mut v4: u16 = (r18).wrapping_add(r22);
         if u16::overflowing_add(r18, r22).1 {
-            v4 = -(1i32) as u16;
+            v4 = -1i32 as u16;
         }
         r22 = v4;
         let r26: u16 = (v4 as i32 >> 8i32) as u16;
         let mut v7: u16 = (r20).wrapping_add(r24);
         if u16::overflowing_add(r20, r24).1 {
-            v7 = -(1i32) as u16;
+            v7 = -1i32 as u16;
         }
         r24 = v7;
         let mut v8: u16 = (r26 as i32 | v7 as i32 & 0xff00i32) as u16;
@@ -462,7 +462,7 @@ pub unsafe fn MotherBrain_CalcHdma_Down_Down(mut r22: u16, mut r24: u16, game: &
         let r26: u16 = (v4 as i32 >> 8i32) as u16;
         let mut v7: u16 = (r20).wrapping_add(r24);
         if u16::overflowing_add(r20, r24).1 {
-            v7 = -(1i32) as u16;
+            v7 = -1i32 as u16;
         }
         r24 = v7;
         let mut v8: u16 = (r26 as i32 | v7 as i32 & 0xff00i32) as u16;

@@ -111,7 +111,7 @@ pub unsafe fn dsp_reset(dsp: *mut Dsp) {
     (*dsp).reset = true_0 != 0;
     (*dsp).masterVolumeL = 0i8;
     (*dsp).masterVolumeR = 0i8;
-    (*dsp).noiseSample = -(0x4000i32) as i16;
+    (*dsp).noiseSample = -0x4000i16;
     (*dsp).noiseRate = 0u16;
     (*dsp).noiseCounter = 0u16;
     (*dsp).echoWrites = false_0 != 0;
@@ -170,15 +170,15 @@ pub unsafe fn dsp_cycle(dsp: *mut Dsp) {
         totalR += (*dsp).channel[i as usize].sampleOut as i32
             * (*dsp).channel[i as usize].volumeR as i32
             >> 6i32;
-        totalL = if totalL < -(0x8000i32) {
-            -(0x8000i32)
+        totalL = if totalL < -0x8000i32 {
+            -0x8000i32
         } else if totalL > 0x7fffi32 {
             0x7fffi32
         } else {
             totalL
         };
-        totalR = if totalR < -(0x8000i32) {
-            -(0x8000i32)
+        totalR = if totalR < -0x8000i32 {
+            -0x8000i32
         } else if totalR > 0x7fffi32 {
             0x7fffi32
         } else {
@@ -188,15 +188,15 @@ pub unsafe fn dsp_cycle(dsp: *mut Dsp) {
     }
     totalL = totalL * (*dsp).masterVolumeL as i32 >> 7i32;
     totalR = totalR * (*dsp).masterVolumeR as i32 >> 7i32;
-    totalL = if totalL < -(0x8000i32) {
-        -(0x8000i32)
+    totalL = if totalL < -0x8000i32 {
+        -0x8000i32
     } else if totalL > 0x7fffi32 {
         0x7fffi32
     } else {
         totalL
     };
-    totalR = if totalR < -(0x8000i32) {
-        -(0x8000i32)
+    totalR = if totalR < -0x8000i32 {
+        -0x8000i32
     } else if totalR > 0x7fffi32 {
         0x7fffi32
     } else {
@@ -253,15 +253,15 @@ unsafe fn dsp_handleEcho(dsp: *mut Dsp, outputL: *mut i32, outputR: *mut i32) {
         }
         i += 1;
     }
-    sumL = if sumL < -(0x8000i32) {
-        -(0x8000i32)
+    sumL = if sumL < -0x8000i32 {
+        -0x8000i32
     } else if sumL > 0x7fffi32 {
         0x7fffi32
     } else {
         sumL
     };
-    sumR = if sumR < -(0x8000i32) {
-        -(0x8000i32)
+    sumR = if sumR < -0x8000i32 {
+        -0x8000i32
     } else if sumR > 0x7fffi32 {
         0x7fffi32
     } else {
@@ -269,15 +269,15 @@ unsafe fn dsp_handleEcho(dsp: *mut Dsp, outputL: *mut i32, outputR: *mut i32) {
     };
     let outL: i32 = *outputL + (sumL * (*dsp).echoVolumeL as i32 >> 7i32);
     let outR: i32 = *outputR + (sumR * (*dsp).echoVolumeR as i32 >> 7i32);
-    *outputL = if outL < -(0x8000i32) {
-        -(0x8000i32)
+    *outputL = if outL < -0x8000i32 {
+        -0x8000i32
     } else if outL > 0x7fffi32 {
         0x7fffi32
     } else {
         outL
     };
-    *outputR = if outR < -(0x8000i32) {
-        -(0x8000i32)
+    *outputR = if outR < -0x8000i32 {
+        -0x8000i32
     } else if outR > 0x7fffi32 {
         0x7fffi32
     } else {
@@ -294,15 +294,15 @@ unsafe fn dsp_handleEcho(dsp: *mut Dsp, outputL: *mut i32, outputR: *mut i32) {
             inR += (*dsp).channel[i_0 as usize].sampleOut as i32
                 * (*dsp).channel[i_0 as usize].volumeR as i32
                 >> 6i32;
-            inL = if inL < -(0x8000i32) {
-                -(0x8000i32)
+            inL = if inL < -0x8000i32 {
+                -0x8000i32
             } else if inL > 0x7fffi32 {
                 0x7fffi32
             } else {
                 inL
             };
-            inR = if inR < -(0x8000i32) {
-                -(0x8000i32)
+            inR = if inR < -0x8000i32 {
+                -0x8000i32
             } else if inR > 0x7fffi32 {
                 0x7fffi32
             } else {
@@ -313,15 +313,15 @@ unsafe fn dsp_handleEcho(dsp: *mut Dsp, outputL: *mut i32, outputR: *mut i32) {
     }
     inL += sumL * (*dsp).feedbackVolume as i32 >> 7i32;
     inR += sumR * (*dsp).feedbackVolume as i32 >> 7i32;
-    inL = if inL < -(0x8000i32) {
-        -(0x8000i32)
+    inL = if inL < -0x8000i32 {
+        -0x8000i32
     } else if inL > 0x7fffi32 {
         0x7fffi32
     } else {
         inL
     };
-    inR = if inR < -(0x8000i32) {
-        -(0x8000i32)
+    inR = if inR < -0x8000i32 {
+        -0x8000i32
     } else if inR > 0x7fffi32 {
         0x7fffi32
     } else {
@@ -497,8 +497,8 @@ unsafe fn dsp_getSample(dsp: *mut Dsp, ch: i32, sampleNum: i32, offset: i32) -> 
     out += gaussValues[(0x100i32 + offset) as usize] as i32 * olds as i32 >> 10i32;
     out = (out & 0xffffi32) as i16 as i32;
     out += gaussValues[offset as usize] as i32 * news as i32 >> 10i32;
-    out = if out < -(0x8000i32) {
-        -(0x8000i32)
+    out = if out < -0x8000i32 {
+        -0x8000i32
     } else if out > 0x7fffi32 {
         0x7fffi32
     } else {
@@ -575,8 +575,8 @@ unsafe fn dsp_decodeBrr(dsp: *mut Dsp, ch: i32) {
             }
             _ => {}
         }
-        s = if s < -(0x8000i32) {
-            -(0x8000i32)
+        s = if s < -0x8000i32 {
+            -0x8000i32
         } else if s > 0x7fffi32 {
             0x7fffi32
         } else {

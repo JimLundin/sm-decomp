@@ -981,20 +981,20 @@ pub unsafe fn LoadDemoRoomData(game: &mut Game) {
         let v2: i32 = v1 as i32 >> 1i32;
         *((&raw mut game.g_ram as *mut u8)
             .offset(0xd830)
-            .offset(v1 as isize) as *mut u8 as *mut u16) = -(1i32) as u16;
+            .offset(v1 as isize) as *mut u8 as *mut u16) = -1i32 as u16;
         *((&raw mut game.g_ram as *mut u8)
             .offset(0xd870)
-            .offset(v1 as isize) as *mut u8 as *mut u16) = -(1i32) as u16;
-        set_ram_word!(game.UNUSED_word_7ED8F0[v2] = -(1i32) as u16);
+            .offset(v1 as isize) as *mut u8 as *mut u16) = -1i32 as u16;
+        set_ram_word!(game.UNUSED_word_7ED8F0[v2] = -1i32 as u16);
         *((&raw mut game.g_ram as *mut u8)
             .offset(0xd908)
-            .offset(v1 as isize) as *mut u8 as *mut u16) = -(1i32) as u16;
+            .offset(v1 as isize) as *mut u8 as *mut u16) = -1i32 as u16;
         *((&raw mut game.g_ram as *mut u8)
             .offset(0xd8f8)
-            .offset(v1 as isize) as *mut u8 as *mut u16) = -(1i32) as u16;
+            .offset(v1 as isize) as *mut u8 as *mut u16) = -1i32 as u16;
         *((&raw mut game.g_ram as *mut u8)
             .offset(0xd8f8)
-            .offset((v1 as i32 + 8i32) as isize) as *mut u8 as *mut u16) = -(1i32) as u16;
+            .offset((v1 as i32 + 8i32) as isize) as *mut u8 as *mut u16) = -1i32 as u16;
         *((&raw mut game.g_ram as *mut u8)
             .offset(0xd8b0)
             .offset(v1 as isize) as *mut u8 as *mut u16) = 0u16;
@@ -1013,10 +1013,10 @@ pub unsafe fn LoadDemoRoomData(game: &mut Game) {
         let v3: i32 = v1 as i32 >> 1i32;
         *((&raw mut game.g_ram as *mut u8)
             .offset(0xd830)
-            .offset(v1 as isize) as *mut u8 as *mut u16) = -(1i32) as u16;
+            .offset(v1 as isize) as *mut u8 as *mut u16) = -1i32 as u16;
         *((&raw mut game.g_ram as *mut u8)
             .offset(0xd870)
-            .offset(v1 as isize) as *mut u8 as *mut u16) = -(1i32) as u16;
+            .offset(v1 as isize) as *mut u8 as *mut u16) = -1i32 as u16;
         *((&raw mut game.g_ram as *mut u8)
             .offset(0xd8b0)
             .offset(v1 as isize) as *mut u8 as *mut u16) = 0u16;
@@ -1902,7 +1902,7 @@ pub unsafe fn SetupMapScrollingForFileSelectMap(game: &mut Game) {
         r18 = (64u16).wrapping_sub(r18);
         update_ram_word!(game.reg_BG1VOFS, wrapping_sub((v1) as u16));
         if ram_word!(game, reg_BG1VOFS) as i32 + 40i32 & 0x8000i32 != 0 {
-            set_ram_word!(game.reg_BG1VOFS = -(40i32) as u16);
+            set_ram_word!(game.reg_BG1VOFS = -40i32 as u16);
         }
     }
 }
@@ -2319,7 +2319,7 @@ pub unsafe fn LoadPauseMenuMapTilemap(game: &mut Game) {
 pub unsafe fn DrawRoomSelectMap(game: &mut Game) {
     *(&raw mut game.g_ram as *mut u8).offset(0x5d) = 51u8;
     *(&raw mut game.g_ram as *mut u8).offset(0x69) = 19u8;
-    set_ram_word!(game.reg_BG1VOFS = -(40i32) as u16);
+    set_ram_word!(game.reg_BG1VOFS = -40i32 as u16);
     let mut v0: u16 = ram_word!(game, area_index);
     if ram_word!(game, area_index) as i32 - 7i32 & 0x8000i32 == 0 {
         v0 = 0u16;
@@ -2476,7 +2476,7 @@ pub unsafe fn SetupMapScrollingForPauseMenu(a: u16, game: &mut Game) {
     if v2 >= 0i16 {
         update_ram_word!(game.reg_BG1VOFS, wrapping_sub((v2) as u16));
         if ram_word!(game, reg_BG1VOFS) as i32 + 40i32 & 0x8000i32 != 0 {
-            set_ram_word!(game.reg_BG1VOFS = -(40i32) as u16);
+            set_ram_word!(game.reg_BG1VOFS = -40i32 as u16);
         }
     }
 }
@@ -3468,9 +3468,9 @@ pub unsafe fn EquipmentScreenCategory_Tanks_0(game: &mut Game) {
     }
 }
 pub unsafe fn EquipmentScreenHudReserveAutoTilemap_On_BUGGY(game: &mut Game) {
-    let mut v0: u16 = -(26229i32) as u16;
+    let mut v0: u16 = -26229i32 as u16;
     if ram_word!(game, samus_reserve_health) == 0 {
-        v0 = -(26217i32) as u16;
+        v0 = -26217i32 as u16;
     }
     let v1: *const u16 = RomPtr_82(v0, game) as *const u16;
     set_ram_word!(game.hud_tilemap[8] = *v1);
@@ -3938,7 +3938,7 @@ pub unsafe fn EquipmentScreenMoveToBeams(mut v0: u16, r18: u16, game: &mut Game)
 }
 pub unsafe fn EquipmentScreenMoveToBottomOfBeams(mut k: u16, game: &mut Game) -> u16 {
     if ram_word!(game, hyper_beam_flag) != 0 {
-        return -(1i32) as u16;
+        return -1i32 as u16;
     }
     while (crate::rtl::rom_table_word!(game, 0x82c04c, (k as i32 >> 1i32) as isize) as i32
         & ram_word!(game, collected_beams) as i32)
@@ -3946,7 +3946,7 @@ pub unsafe fn EquipmentScreenMoveToBottomOfBeams(mut k: u16, game: &mut Game) ->
     {
         k = (k).wrapping_sub(2u16);
         if (k as i32 & 0x8000i32) != 0i32 {
-            return -(1i32) as u16;
+            return -1i32 as u16;
         }
     }
     QueueSfx1_Max6(0x37u16, game);
@@ -3962,7 +3962,7 @@ pub unsafe fn EquipmentScreenMoveLowerOnSuitsMisc(mut v0: u16, game: &mut Game) 
     {
         v0 = (v0).wrapping_add(2u16);
         if ((v0) as i16).wrapping_sub(10i16) >= 0i16 {
-            return -(1i32) as u16;
+            return -1i32 as u16;
         }
     }
     QueueSfx1_Max6(0x37u16, game);
@@ -4010,7 +4010,7 @@ pub unsafe fn EquipmentScreenCategory_Boots_MoveUpInBoots(mut k: u16, game: &mut
     {
         k = (k).wrapping_sub(2u16);
         if (k as i32 & 0x8000i32) != 0i32 {
-            return -(1i32) as u16;
+            return -1i32 as u16;
         }
     }
     QueueSfx1_Max6(0x37u16, game);
@@ -4207,7 +4207,7 @@ pub unsafe fn DrawSimpleMapIcons(a: u16, k: u16, r3: u16, game: &mut Game) {
         game,
     ) as *mut u16);
     if v2 != 0 {
-        DrawMapIconsOfType(v2, R34, -(1i32) as u16, r3, game);
+        DrawMapIconsOfType(v2, R34, -1i32 as u16, r3, game);
     }
 }
 pub unsafe fn DrawMapIconsOfType(mut a: u16, r34: u16, mut r36: u16, r3: u16, game: &mut Game) {
@@ -5301,7 +5301,7 @@ pub unsafe fn GameState_10_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRe
     }
     ClearSoundsWhenGoingThroughDoor(game);
     QueueSfx2_Max15(0x71u16, game);
-    set_ram_word!(game.debug_disable_sounds = -(1i32) as u16);
+    set_ram_word!(game.debug_disable_sounds = -1i32 as u16);
     set_ram_word!(game.door_transition_function = ((0x82e29ei32) as u16));
     update_ram_word!(game.game_state, wrapping_add(1));
     kCoroutineNone as CoroutineRet
@@ -6762,7 +6762,7 @@ pub unsafe fn OptionsPreInstr_F3A0(k: u16, game: &mut Game) {
             if *(&raw mut game.g_ram as *mut u8).offset(0x51) == 0x80u8 {
                 let v1: i32 = k as i32 >> 1i32;
                 set_ram_word!(game.eproj_E[(v1 + 15i32)] = 1u16);
-                set_ram_word!(game.eproj_y_vel[(v1 + 17i32)] = -(2890i32) as u16);
+                set_ram_word!(game.eproj_y_vel[(v1 + 17i32)] = -2890i32 as u16);
             }
         }
         9 => {
@@ -6786,14 +6786,14 @@ pub unsafe fn OptionsPreInstr_F3E2(k: u16, game: &mut Game) {
     {
         let v1: i32 = k as i32 >> 1i32;
         set_ram_word!(game.eproj_E[(v1 + 15i32)] = 1u16);
-        set_ram_word!(game.eproj_y_vel[(v1 + 17i32)] = -(2890i32) as u16);
+        set_ram_word!(game.eproj_y_vel[(v1 + 17i32)] = -2890i32 as u16);
     }
 }
 pub unsafe fn sub_82F404(k: u16, game: &mut Game) {
     if ram_word!(game, game_options_screen_index) == 1u16 {
         let v1: i32 = k as i32 >> 1i32;
         set_ram_word!(game.eproj_E[(v1 + 15i32)] = 1u16);
-        set_ram_word!(game.eproj_y_vel[(v1 + 17i32)] = -(2890i32) as u16);
+        set_ram_word!(game.eproj_y_vel[(v1 + 17i32)] = -2890i32 as u16);
     }
 }
 pub unsafe fn sub_82F419(j: u16, game: &mut Game) {

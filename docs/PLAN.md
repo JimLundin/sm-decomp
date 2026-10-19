@@ -94,6 +94,27 @@ all 76 source/DLL/fixture pins remain fixed. Independent descriptor/source
 review has no findings. Continue substantial repeated families; the broader
 readability and boot-to-credits goals remain open.
 
+Negative integer constants (2026-10-20): ast-grep simplifies the complete
+eligible family of 1318 expressions across 38 files. All 366 in-range casts
+from negative i32 constants become identically valued i16/i8 literals; 952
+negative operands lose redundant parentheses while keeping their existing
+suffix or inferred type. All 1120 ordinary expressions and 198 expressions
+inside known RAM macros are classified. Integer radix, values, surrounding
+operations, diagnostics, RAM metadata and unselected casts remain unchanged.
+
+Compiler constant-equality checks pass for all 366 signed casts. Independent
+full-source reconstruction, type/range/context review and final composition
+review pass. Net Rust lines -1129, casts -366; total Rust is 144364. Raw RAM
+accesses, unsafe functions and all 15857 actual i32 casts remain unchanged.
+
+Final composition includes committed HDMA 72072fd5. Normal release
+(22.67s), formatting/check and progress pass. Full any% passes
+129712/0 (137.00s), native exit 0. All 73 committed source/config/host
+inputs match the frozen candidate and all 78 replay pins remain fixed.
+Frontend changes are compiler-checked; the movie covers core gameplay.
+Continue substantial shared implementations; the broader readability and
+boot-to-credits goals remain incomplete.
+
 Fixed LoROM word-table reads (2026-10-20): 893 complete expressions across
 27 gameplay banks share one raw reader and caller-side macro: 718 ordinary
 AST expressions and 175 reads inside known RAM macros. The macro captures

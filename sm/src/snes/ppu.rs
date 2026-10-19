@@ -1596,7 +1596,7 @@ unsafe fn ppu_evaluateSprites(ppu: *mut Ppu, line: i32) -> bool {
                     let z: PpuZbufType = (paletteBase + (prio << 8i32)) as PpuZbufType;
                     let mut col: i32 = 0i32;
                     while col < spriteSize {
-                        if col + x > -(8i32) && col + x < 256i32 {
+                        if col + x > -8i32 && col + x < 256i32 {
                             tilesFound += 1;
                             if tilesFound > 34i32 {
                                 (*ppu).timeOver = true_0 != 0;

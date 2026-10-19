@@ -1110,11 +1110,10 @@ pub unsafe fn WalkingSpacePirates_FD44(game: &mut Game) {
         if result != 0 {
             EnemyFunc_BBBF(
                 ram_word!(game, cur_enemy_index),
-                (-(9i32) as i16 as i32) << 16i32,
+                (-9i16 as i32) << 16i32,
                 game,
             );
-            if Enemy_MoveRight_IgnoreSlopes(ram_word!(game, cur_enemy_index), -(14337i32), game)
-                == 0
+            if Enemy_MoveRight_IgnoreSlopes(ram_word!(game, cur_enemy_index), -14337i32, game) == 0
                 && (((*E).base.x_pos) as i16).wrapping_sub(((*E).sps_var_E) as i16) >= 0i16
             {
                 return;

@@ -123,87 +123,15 @@ unsafe fn Get_Torizo(o: i32, game: &mut Game) -> *mut Enemy_Torizo {
 static g_word_AAB096: u16 = 6u16;
 static g_word_AAB098: u16 = 5u16;
 static g_word_AAB09A: u16 = 3u16;
-static g_word_AAC3EE: [i16; 16] = [
-    -(9),
-    -(6),
-    -(7),
-    5,
-    -(16),
-    -(7),
-    0,
-    0,
-    9,
-    6,
-    7,
-    -(5),
-    16,
-    7,
-    0,
-    0,
-];
-static g_word_AAC40E: [i16; 8] = [0, -(6), -(6), -(7), 0, 0, 0, 0];
-static g_word_AAC440: [i16; 16] = [
-    -(9),
-    -(6),
-    -(7),
-    5,
-    -(16),
-    -(7),
-    0,
-    0,
-    9,
-    6,
-    7,
-    -(5),
-    16,
-    7,
-    0,
-    0,
-];
-static g_word_AAC460: [i16; 8] = [0, -(6), -(6), -(7), 0, 0, 0, 0];
+static g_word_AAC3EE: [i16; 16] = [-9, -6, -7, 5, -16, -7, 0, 0, 9, 6, 7, -5, 16, 7, 0, 0];
+static g_word_AAC40E: [i16; 8] = [0, -6, -6, -7, 0, 0, 0, 0];
+static g_word_AAC440: [i16; 16] = [-9, -6, -7, 5, -16, -7, 0, 0, 9, 6, 7, -5, 16, 7, 0, 0];
+static g_word_AAC460: [i16; 8] = [0, -6, -6, -7, 0, 0, 0, 0];
 static g_word_AAC4BD: [i16; 20] = [
-    -(5),
-    0,
-    -(5),
-    -(19),
-    -(16),
-    -(7),
-    0,
-    -(7),
-    -(17),
-    -(18),
-    5,
-    0,
-    5,
-    19,
-    16,
-    7,
-    0,
-    7,
-    17,
-    18,
+    -5, 0, -5, -19, -16, -7, 0, -7, -17, -18, 5, 0, 5, 19, 16, 7, 0, 7, 17, 18,
 ];
 static g_word_AAC532: [i16; 20] = [
-    -(5),
-    0,
-    -(5),
-    -(0x13),
-    -(0x10),
-    -(7),
-    0,
-    -(7),
-    -(0x11),
-    -(0x12),
-    5,
-    0,
-    5,
-    0x13,
-    0x10,
-    7,
-    0,
-    7,
-    0x11,
-    0x12,
+    -5, 0, -5, -0x13, -0x10, -7, 0, -7, -0x11, -0x12, 5, 0, 5, 0x13, 0x10, 7, 0, 7, 0x11, 0x12,
 ];
 static g_word_AAC95F: [i16; 2] = [0xdb, 0x1a8];
 static g_word_AAC963: [i16; 2] = [0xb3, 0x90];
@@ -251,26 +179,7 @@ static kTorizo_Palettes_10: [u16; 16] = [
     0x4480, 0,
 ];
 static g_word_AAD59A: [i16; 20] = [
-    -(5),
-    0,
-    -(5),
-    -(19),
-    -(16),
-    -(7),
-    0,
-    -(7),
-    -(17),
-    -(18),
-    5,
-    0,
-    5,
-    19,
-    16,
-    7,
-    0,
-    7,
-    17,
-    18,
+    -5, 0, -5, -19, -16, -7, 0, -7, -17, -18, 5, 0, 5, 19, 16, 7, 0, 7, 17, 18,
 ];
 static g_word_AADEE9: [u16; 7] = [0, 0x20, 0x60, 0xc0, 0x140, 0x1a0, 0x1e0];
 static kChozoStatue_Palette: [u16; 16] = [
@@ -372,10 +281,10 @@ pub unsafe fn Torizo_C20A(k: u16, game: &mut Game) {
     if ((*E).toriz_parameter_1 as i32 & 0x8000i32) != 0i32 {
         v2 = 512i16;
     } else {
-        v2 = -(512i32) as i16;
+        v2 = -512i16;
     }
     (*E).toriz_var_A = v2 as u16;
-    (*E).toriz_var_B = -(1472i32) as u16;
+    (*E).toriz_var_B = -1472i32 as u16;
     (*E).toriz_var_C = 40u16;
     (*E).base.instruction_timer = 1u16;
 }
@@ -383,12 +292,12 @@ pub unsafe fn Torizo_C22D(k: u16, game: &mut Game) {
     let mut v2: i16 = 0;
     let E: *mut Enemy_Torizo = Get_Torizo(k as i32, game);
     if ((*E).toriz_parameter_1 as i32 & 0x8000i32) != 0i32 {
-        v2 = -(768i32) as i16;
+        v2 = -768i16;
     } else {
         v2 = 768i16;
     }
     (*E).toriz_var_A = v2 as u16;
-    (*E).toriz_var_B = -(1152i32) as u16;
+    (*E).toriz_var_B = -1152i32 as u16;
     (*E).toriz_var_C = 40u16;
     (*E).base.instruction_timer = 1u16;
 }
@@ -956,8 +865,8 @@ pub unsafe fn Torizo_Init(game: &mut Game) {
                 set_ram_word!(game.samus_max_super_missiles = 20u16);
                 set_ram_word!(game.samus_power_bombs = 20u16);
                 set_ram_word!(game.samus_max_power_bombs = 20u16);
-                set_ram_word!(game.equipped_items = -(3273i32) as u16);
-                set_ram_word!(game.collected_items = -(3273i32) as u16);
+                set_ram_word!(game.equipped_items = -3273i32 as u16);
+                set_ram_word!(game.collected_items = -3273i32 as u16);
                 set_ram_word!(game.equipped_beams = 4111u16);
                 set_ram_word!(game.collected_beams = 4111u16);
             }
@@ -2001,7 +1910,7 @@ pub unsafe fn Shaktool_PreInstr_0(k: u16, game: &mut Game) {
         if (*E).shakt_parameter_1 != 0 {
             (*E).base.current_instruction = addr_kShaktool_Ilist_E461 as u16;
             (*E).base.instruction_timer = 1u16;
-            (*E).shakt_var_A = -(256i32) as u16;
+            (*E).shakt_var_A = -256i32 as u16;
             (*E).shakt_var_B = 256u16;
         }
     }

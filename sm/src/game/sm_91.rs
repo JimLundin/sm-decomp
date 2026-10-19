@@ -985,7 +985,7 @@ unsafe fn XrayHdmaFunc_BeamAimedR(ctx: *mut XrayHdmaCtx, game: &mut Game) {
         (*ctx).r32 as u32,
         65535u32,
         1u32,
-        -(2i32),
+        -2i32,
     );
 }
 unsafe fn XrayHdmaFunc_BeamAimedL(ctx: *mut XrayHdmaCtx, game: &mut Game) {
@@ -994,7 +994,7 @@ unsafe fn XrayHdmaFunc_BeamAimedL(ctx: *mut XrayHdmaCtx, game: &mut Game) {
         (*ctx).dest,
         t - 2i32,
         0u32,
-        -(1i32) as u32,
+        -1i32 as u32,
         (((*ctx).r22) as u32).wrapping_add(0x10000u32),
         -((*ctx).r32 as i32) as u32,
         2i32,
@@ -1003,10 +1003,10 @@ unsafe fn XrayHdmaFunc_BeamAimedL(ctx: *mut XrayHdmaCtx, game: &mut Game) {
         (*ctx).dest,
         t,
         0u32,
-        -(1i32) as u32,
+        -1i32 as u32,
         (((*ctx).r22) as u32).wrapping_add(0x10000u32),
         -((*ctx).r30 as i32) as u32,
-        -(2i32),
+        -2i32,
     );
 }
 unsafe fn XrayHdmaFunc_BeamAimedU(ctx: *mut XrayHdmaCtx, game: &mut Game) {
@@ -1288,7 +1288,7 @@ unsafe fn XrayHdmaOnScreen_BeamAimedR(ctx: *mut XrayHdmaCtx, game: &mut Game) {
         (*ctx).r32 as u32,
         65535u32,
         1u32,
-        -(2i32),
+        -2i32,
     );
 }
 unsafe fn XrayHdmaOnScreen_BeamAimedL(ctx: *mut XrayHdmaCtx, game: &mut Game) {
@@ -1299,7 +1299,7 @@ unsafe fn XrayHdmaOnScreen_BeamAimedL(ctx: *mut XrayHdmaCtx, game: &mut Game) {
         (*ctx).dest,
         v0 - 4i32,
         0u32,
-        -(1i32) as u32,
+        -1i32 as u32,
         (*ctx).r22 as u32,
         -((*ctx).r32 as i32) as u32,
         2i32,
@@ -1308,10 +1308,10 @@ unsafe fn XrayHdmaOnScreen_BeamAimedL(ctx: *mut XrayHdmaCtx, game: &mut Game) {
         (*ctx).dest,
         v0,
         0u32,
-        -(1i32) as u32,
+        -1i32 as u32,
         (*ctx).r22 as u32,
         -((*ctx).r30 as i32) as u32,
-        -(2i32),
+        -2i32,
     );
 }
 unsafe fn XrayHdmaOnScreen_BeamAimedU(ctx: *mut XrayHdmaCtx, game: &mut Game) {
@@ -2346,7 +2346,7 @@ pub unsafe fn VariaSuitPickup(game: &mut Game) {
 pub unsafe fn GravitySuitPickup(game: &mut Game) {
     *(&raw mut game.g_ram as *mut u8).offset(0xdf0) = 48u8;
     *(&raw mut game.g_ram as *mut u8).offset(0xdf1) = 73u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xdf2) = -(112i32) as u8;
+    *(&raw mut game.g_ram as *mut u8).offset(0xdf2) = -112i32 as u8;
     *(&raw mut game.g_ram as *mut u8).offset(0xdf3) = 1u8;
     Samus_CancelSpeedBoost(game);
     SetHiLo(
@@ -2980,10 +2980,10 @@ pub unsafe fn Samus_CancelSpeedBoost(game: &mut Game) {
         }
     }
     if (ram_word!(game, speed_echoes_index) as i32 & 0x8000i32) == 0i32 {
-        set_ram_word!(game.speed_echoes_index = -(1i32) as u16);
+        set_ram_word!(game.speed_echoes_index = -1i32 as u16);
         if *(&raw mut game.g_ram as *mut u8).offset(0xa1e) == 4u8 {
-            set_ram_word!(game.speed_echo_xspeed[0] = -(8i32) as u16);
-            set_ram_word!(game.speed_echo_xspeed[1] = -(8i32) as u16);
+            set_ram_word!(game.speed_echo_xspeed[0] = -8i32 as u16);
+            set_ram_word!(game.speed_echo_xspeed[1] = -8i32 as u16);
         } else {
             set_ram_word!(game.speed_echo_xspeed[0] = 8u16);
             set_ram_word!(game.speed_echo_xspeed[1] = 8u16);
@@ -3220,7 +3220,7 @@ pub unsafe fn Xray_Initialize(game: &mut Game) -> u8 {
     );
     *(((&raw mut game.g_ram as *mut u8).offset(0xa8a) as *mut u16 as *mut u8).offset(1)
         as *mut u16) = 0u16;
-    set_ram_word!(game.demo_input_prev = -(26424i32) as u16);
+    set_ram_word!(game.demo_input_prev = -26424i32 as u16);
     mov24(
         (&raw mut game.g_ram as *mut u8).offset(0xa8e) as *mut LongPtr,
         0x999098u32,
@@ -3260,7 +3260,7 @@ pub unsafe fn ResponsibleForXrayStandupGlitch(game: &mut Game) {
         *((&raw mut game.g_ram as *mut u8).offset(0xa1e) as *mut u16);
     set_ram_word!(game.samus_movement_handler = ((0x90a337i32) as u16));
     set_ram_word!(game.samus_input_handler = ((0x90e913i32) as u16));
-    set_ram_word!(game.demo_timer_counter = -(1i32) as u16);
+    set_ram_word!(game.demo_timer_counter = -1i32 as u16);
     let r18: u16 = (((*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const u8
         as *mut SamusPoseParams)
         .offset(ram_word!(game, samus_pose) as isize))
@@ -3297,9 +3297,9 @@ pub unsafe fn MakeSamusFaceForward(game: &mut Game) {
     }
     set_ram_word!(game.frame_handler_alfa = ((0x90e713i32) as u16));
     set_ram_word!(game.frame_handler_beta = ((0x90e8dci32) as u16));
-    set_ram_word!(game.samus_new_pose = -(1i32) as u16);
-    set_ram_word!(game.samus_new_pose_interrupted = -(1i32) as u16);
-    set_ram_word!(game.samus_new_pose_transitional = -(1i32) as u16);
+    set_ram_word!(game.samus_new_pose = -1i32 as u16);
+    set_ram_word!(game.samus_new_pose_interrupted = -1i32 as u16);
+    set_ram_word!(game.samus_new_pose_transitional = -1i32 as u16);
     set_ram_word!(game.samus_momentum_routine_index = 0u16);
     set_ram_word!(game.samus_special_transgfx_index = 0u16);
     set_ram_word!(game.samus_hurt_switch_index = 0u16);
@@ -3344,9 +3344,9 @@ pub unsafe fn SomeMotherBrainScripts(a: u16, game: &mut Game) {
         set_ram_word!(game.samus_prev_pose = ram_word!(game, samus_pose));
         *((&raw mut game.g_ram as *mut u8).offset(0xa22) as *mut u16) =
             *((&raw mut game.g_ram as *mut u8).offset(0xa1e) as *mut u16);
-        set_ram_word!(game.samus_new_pose = -(1i32) as u16);
-        set_ram_word!(game.samus_new_pose_interrupted = -(1i32) as u16);
-        set_ram_word!(game.samus_new_pose_transitional = -(1i32) as u16);
+        set_ram_word!(game.samus_new_pose = -1i32 as u16);
+        set_ram_word!(game.samus_new_pose_interrupted = -1i32 as u16);
+        set_ram_word!(game.samus_new_pose_transitional = -1i32 as u16);
         set_ram_word!(game.samus_momentum_routine_index = 0u16);
         set_ram_word!(game.samus_special_transgfx_index = 0u16);
         set_ram_word!(game.samus_hurt_switch_index = 0u16);
@@ -3888,7 +3888,7 @@ pub unsafe fn Samus_CheckWalkedIntoSomething(game: &mut Game) {
         if cres_0.collision != 0 {
             current_block = 8208193451455325075;
         } else {
-            amt = (-(1i32) as i16 as i32) << 16i32;
+            amt = (-1i16 as i32) << 16i32;
             set_ram_word!(game.samus_collision_direction = 0u16);
             current_block = 12513788902857388954;
         }

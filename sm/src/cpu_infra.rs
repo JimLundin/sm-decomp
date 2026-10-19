@@ -289,7 +289,7 @@ pub unsafe fn PatchBugs(mode: u32, addr: u32, game: &mut Game) -> u32 {
         {
             0i32
         } else {
-            -(8i32)
+            -8i32
         };
         (*game.g_cpu).a = ((*game.g_cpu).a as i32 + (8i32 + delta)) as u16;
     } else if FixBugHook(0x86b701u32, game) {
@@ -412,7 +412,7 @@ pub unsafe fn RunPatchBugHook(addr: u32, game: &mut Game) -> i32 {
             return *SnesRomPtr(new_pc, game) as i32;
         }
     }
-    -(1i32)
+    -1i32
 }
 pub unsafe fn CpuOpcodeHook(addr: u32, game: &mut Game) -> i32 {
     let mut i: size_t = 0 as size_t;

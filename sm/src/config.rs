@@ -917,7 +917,7 @@ unsafe fn GetIniSection(s: *const c_char) -> i32 {
     if StringEqualsNoCase(s, b"[GamepadMap]\0" as *const u8 as *const c_char) {
         return 5i32;
     }
-    -(1i32)
+    -1i32
 }
 pub unsafe fn ParseBool(mut value: *const c_char, result: *mut bool) -> bool {
     let mut rv: bool = false_0 != 0;
@@ -1129,7 +1129,7 @@ unsafe fn ParseOneConfigFile(filename: *const c_char, depth: i32) -> bool {
     if filedata.is_null() {
         return false_0 != 0;
     }
-    let mut section: i32 = -(2i32);
+    let mut section: i32 = -2i32;
     g_config.memory_buffer = filedata;
     let mut lineno: i32 = 1i32;
     loop {
@@ -1163,7 +1163,7 @@ unsafe fn ParseOneConfigFile(filename: *const c_char, depth: i32) -> bool {
                     );
                 }
                 free(new_filename as *mut c_void);
-            } else if section == -(2i32) {
+            } else if section == -2i32 {
                 fprintf(
                     stderr,
                     b"%s:%d: Expecting [section]\n\0" as *const u8 as *const c_char,

@@ -89,7 +89,7 @@ pub unsafe fn snes_loadRom(
     );
     let mut i: i32 = 0i32;
     while i < 4i32 {
-        headers[i as usize].score = -(50i32) as i16;
+        headers[i as usize].score = -50i16;
         i += 1;
     }
     if length >= 0x8000i32 {
@@ -253,17 +253,17 @@ unsafe fn readHeader(data: *const u8, length: i32, location: i32, header: *mut C
     score += if (*header).speed as i32 == 2i32 || (*header).speed as i32 == 3i32 {
         5i32
     } else {
-        -(4i32)
+        -4i32
     };
     score += if (*header).type_0 as i32 <= 3i32 || (*header).type_0 as i32 == 5i32 {
         5i32
     } else {
-        -(2i32)
+        -2i32
     };
     score += if (*header).coprocessor as i32 <= 5i32 || (*header).coprocessor as i32 >= 0xei32 {
         5i32
     } else {
-        -(2i32)
+        -2i32
     };
     score += if (*header).chips as i32 <= 6i32
         || (*header).chips as i32 == 9i32
@@ -271,17 +271,17 @@ unsafe fn readHeader(data: *const u8, length: i32, location: i32, header: *mut C
     {
         5i32
     } else {
-        -(2i32)
+        -2i32
     };
     score += if (*header).region as i32 <= 0x14i32 {
         5i32
     } else {
-        -(2i32)
+        -2i32
     };
     score += if (*header).checksum as i32 + (*header).checksumComplement as i32 == 0xffffi32 {
         8i32
     } else {
-        -(6i32)
+        -6i32
     };
     let resetVector: u16 = (*data.offset((location + 0x3ci32) as isize) as i32
         | (*data.offset((location + 0x3di32) as isize) as i32) << 8i32)
@@ -289,7 +289,7 @@ unsafe fn readHeader(data: *const u8, length: i32, location: i32, header: *mut C
     score += if resetVector as i32 >= 0x8000i32 {
         8i32
     } else {
-        -(20i32)
+        -20i32
     };
     let opcodeLoc: i32 = location + 0x40i32 - 0x8000i32 + (resetVector as i32 & 0x7fffi32);
     let mut opcode: u8 = 0xffu8;

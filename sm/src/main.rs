@@ -1101,7 +1101,7 @@ pub unsafe fn ChangeWindowScale(scale_step: i32) {
         w: 0,
         h: 0,
     };
-    let mut bt: i32 = -(1i32);
+    let mut bt: i32 = -1i32;
     let mut bl: i32 = 0;
     let mut bb: i32 = 0;
     let mut br: i32 = 0;
@@ -1368,7 +1368,7 @@ unsafe fn SdlRenderer_Init(window: *mut SDL_Window, game: &mut Game) -> bool {
     }
     let renderer: *mut SDL_Renderer = SDL_CreateRenderer(
         g_window as *mut SDL_Window,
-        -(1i32),
+        -1i32,
         (if g_config.output_method as i32 == kOutputMethod_SDLSoftware as i32 {
             SDL_RENDERER_SOFTWARE as i32
         } else {
@@ -1708,7 +1708,7 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut c_char, owner: &GameOwner) -
                         ChangeWindowScale(if event.wheel.y > 0 as Sint32 {
                             1i32
                         } else {
-                            -(1i32)
+                            -1i32
                         });
                     }
                 }
@@ -2015,7 +2015,7 @@ unsafe fn HandleCommand(j: u32, pressed: bool, game: &mut Game) {
                 ChangeWindowScale(1i32);
             }
             125 => {
-                ChangeWindowScale(-(1i32));
+                ChangeWindowScale(-1i32);
             }
             126 => {
                 g_display_perf = (g_display_perf as i32 ^ 1i32) != 0;
@@ -2028,7 +2028,7 @@ unsafe fn HandleCommand(j: u32, pressed: bool, game: &mut Game) {
                 HandleVolumeAdjustment(if j == kKeys_VolumeUp as i32 as u32 {
                     1i32
                 } else {
-                    -(1i32)
+                    -1i32
                 });
             }
             _ => {
@@ -2080,7 +2080,7 @@ unsafe fn RemapSdlButton(button: i32) -> i32 {
         12 => kGamepadBtn_DpadDown as i32,
         13 => kGamepadBtn_DpadLeft as i32,
         14 => kGamepadBtn_DpadRight as i32,
-        _ => -(1i32),
+        _ => -1i32,
     }
 }
 unsafe fn HandleGamepadInput(button: i32, pressed: bool, game: &mut Game) {
@@ -2130,7 +2130,7 @@ unsafe fn HandleGamepadAxisInput(gamepad_id: i32, axis: i32, value: i32, game: &
     static mut last_y: i32 = 0;
     if axis == SDL_CONTROLLER_AXIS_LEFTX as i32 || axis == SDL_CONTROLLER_AXIS_LEFTY as i32 {
         if last_gamepad_id != gamepad_id {
-            if value > -(16000i32) && value < 16000i32 {
+            if value > -16000i32 && value < 16000i32 {
                 return;
             }
             last_gamepad_id = gamepad_id;

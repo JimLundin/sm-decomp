@@ -226,7 +226,7 @@ pub unsafe fn ProjectileInsts_GetValue(k: u16, game: &mut Game) -> u16 {
     {
         0i32
     } else {
-        -(8i32)
+        -8i32
     };
     (*get_ProjectileInstr((ip + delta) as u16, game)).field_6
 }

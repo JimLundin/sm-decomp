@@ -223,7 +223,7 @@ pub unsafe fn RoomCode_CeresElevatorShaft(game: &mut Game) {
                 v1 = ((*((&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut u16)) as i16)
                     .wrapping_add(1i16);
                 if *((&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut u16) == 67u16 {
-                    v1 = -(32700i32) as i16;
+                    v1 = -32700i16;
                 }
             }
             *((&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut u16) = v1 as u16;

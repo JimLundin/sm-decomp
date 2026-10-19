@@ -1259,7 +1259,7 @@ pub unsafe fn PlmInstr_IncrementArgumentAndJGE(
     .wrapping_add(1u8);
     if v2 >= *plmp.offset(0) {
         let v4: i32 = k as i32 >> 1i32;
-        set_ram_word!(game.plm_room_arguments[v4] = -(1i32) as u16);
+        set_ram_word!(game.plm_room_arguments[v4] = -1i32 as u16);
         set_ram_word!(game.plm_pre_instrs[v4] = addr_locret_848AE0 as u16);
         PlmInstr_Goto(plmp.offset(1), k)
     } else {
@@ -2534,7 +2534,7 @@ pub unsafe fn PlmPreInstr_WakeAndLavaIfBoosterCollected(k: u16, game: &mut Game)
         if (ram_word!(game, fx_target_y_pos) as i32 & 0x8000i32) != 0i32 {
             set_ram_word!(game.plm_header_ptr[(k as i32 >> 1i32)] = 0u16);
         } else {
-            set_ram_word!(game.fx_y_vel = -(128i32) as u16);
+            set_ram_word!(game.fx_y_vel = -128i32 as u16);
             let v1: i32 = k as i32 >> 1i32;
             set_ram_word!(game.plm_instruction_timer[v1] = 1u16);
             update_ram_word!(game.plm_instr_list_ptrs[v1], wrapping_add(1));
@@ -2542,7 +2542,7 @@ pub unsafe fn PlmPreInstr_WakeAndLavaIfBoosterCollected(k: u16, game: &mut Game)
             set_ram_word!(game.plm_timers[v1] = 0u16);
         }
     } else {
-        set_ram_word!(game.fx_target_y_pos = -(1i32) as u16);
+        set_ram_word!(game.fx_target_y_pos = -1i32 as u16);
         set_ram_word!(game.fx_y_vel = 0u16);
         set_ram_word!(game.fx_timer = 0u16);
         set_ram_word!(game.earthquake_timer = 0u16);
@@ -2620,7 +2620,7 @@ pub unsafe fn PlmPreInstr_OldTourianEscapeShaftEscape(k: u16, game: &mut Game) {
 }
 pub unsafe fn PlmPreInstr_EscapeRoomBeforeOldTourianEscapeShaft(k: u16, game: &mut Game) {
     if WakePlmIfSamusIsBelowAndRightOfTarget(k, 240u16, 1344u16, game) == 0 {
-        set_ram_word!(game.fx_y_vel = -(104i32) as u16);
+        set_ram_word!(game.fx_y_vel = -104i32 as u16);
         set_ram_word!(game.fx_timer = 16u16);
     }
 }
@@ -4096,7 +4096,7 @@ pub unsafe fn PlmInstr_ClearChargeBeamCounter(
     plmp
 }
 pub unsafe fn PlmInstr_E63B(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
-    set_ram_word!(game.fx_y_vel = -(32i32) as u16);
+    set_ram_word!(game.fx_y_vel = -32i32 as u16);
     plmp
 }
 pub unsafe fn sub_84EE4D(j: u16, game: &mut Game) -> u8 {
