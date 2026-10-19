@@ -13943,6 +13943,41 @@ Keep it this small. Add a crate only when the game code itself needs one.
 
 ## Phase 1: make the oracle a one-command check
 
+Headless mismatch recovery (2026-10-19): continue from the completed
+oracle snapshot after reporting a failed frame. That snapshot carries the
+current Rust continuation bytes copied during comparison. The previous
+recovery replayed the pre-frame state, leaving native continuations stale:
+a single $05E7 fault at frame 8296 produced 204 failing frames by frame 8500,
+and the already-unmasked $05E6 neighbor reproduced the same cascade.
+The first mismatch was real; later failures did not isolate new defects.
+
+Failed physical-audio frames retain the oracle APU state and queue; only
+successful comparisons adopt the Rust physical-audio branch. Interactive
+retries keep their existing path. The change adds eight Rust lines for the
+saved failure flag, recovery branch and audio guard; other own counters
+are unchanged.
+
+Eleven 8500-frame controls pass on the final recovery source: seven with
+the custom audio driver and four with physical audio. Low/high scratch-byte
+and lower-neighbor faults each produce exactly one failure at frame 8296;
+the old-mask controls and retained upper mask suppress only their expected
+faults. Physical APU RAM and queue-entry faults each produce one failure,
+then captured audio state and queue match the oracle. All remaining frames
+pass, ordered helper events match, and all 128 KiB final RAM equal the clean
+run in each mode. These observed builds use frozen e4ed0170 plus the two
+boss scratch stores, two-byte unmask and recovery change. All 62 source files
+strip exactly through the reviewed observation layers and retain their hashes.
+
+Clean frozen f5779bd3 plus only this recovery change passes any% 129712/0
+(249.85s), Waver 58109/0 (140.27s) and Spazer 90706/0 (208.62s),
+native exits 0. Complete non-timing diagnostics match the reviewed routes.
+All 68 source/config/host files match Git plus this change; source, DLL,
+ROM and copied inputs retain their hashes, with isolated saves and SM_*
+overrides cleared. Format/check, normal Cargo release
+(17.53s) and progress pass. Later gameplay, checkpoint and boss-mask
+integration retain separate checks. Full gameplay/credits, wider hardware
+and audio coverage, disk-save persistence and other masks remain unfinished.
+
 Cargo library reuse (2026-10-19): after the normal Cargo release build on
 Windows, use `python tools/verify_dll.py rom/sm.smc movies/any.inputs --cargo`
 with the installed SDL2 environment. See [the SDK setup](../movies/README.md).

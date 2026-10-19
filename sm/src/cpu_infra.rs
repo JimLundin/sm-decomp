@@ -3498,7 +3498,8 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
         }
         // Select recovery commands; successful physical comparison adopts mine below.
         queue_mine.select_runtime(queue_theirs, game);
-        if game.g_fail {
+        let failed = game.g_fail;
+        if failed {
             if game.VERIFY_ACTIVE {
                 game.VERIFY_FAILURES += 1;
                 if game.VERIFY_FAILURES == 1 {
@@ -3509,6 +3510,11 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
             if !game.VERIFY_ACTIVE || game.VERIFY_FAILURES == 1 {
                 printf(b"Verify failure!\n\0" as *const u8 as *const ::core::ffi::c_char);
             }
+        }
+        // Headless recovery adopts the completed oracle frame, including the Rust
+        // continuation bytes copied during comparison. Replaying the previous
+        // frame would leave those bytes stale.
+        if failed && !game.VERIFY_ACTIVE {
             (*game.g_snes).ppu = (*game.g_snes).snes_ppu;
             RestoreSnapshot(&game.g_snapshot_before, &mut *game.g_snes, &mut *game.g_cpu);
             if game.g_use_my_apu_code {
@@ -3539,9 +3545,11 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
             if game.g_use_my_apu_code {
                 game.g_snapshot_mine.player.restore(game.g_spc_player);
             } else {
-                // Continue the independently verified Rust audio branch.
-                game.g_snapshot_mine.audio.restore(game.g_snes);
-                queue_mine.restore(game);
+                if !failed {
+                    // Continue the independently verified Rust audio branch.
+                    game.g_snapshot_mine.audio.restore(game.g_snes);
+                    queue_mine.restore(game);
+                }
                 game.g_snapshot_theirs.player.restore(game.g_spc_player);
             }
             break;
