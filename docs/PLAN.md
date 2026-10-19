@@ -10451,6 +10451,23 @@ checkpoint toward accessible item/boss progression; major bosses and credits
 remain unproved. Held upper99BD ascent,cliff tuning,old9AD9dropammoandHDMA
 stay held. Gameplay/hardware,render/audio,maskedRAM andownership remain open.
 
+CPU safe register comparison (2026-10-19): CpuRegister::compare owns the
+post-read register masking, subtraction/carry and zero/negative updates.
+The unsafe wrapper retains bus reads and cycles. Subtraction uses the width
+captured before the reads; final flags retain the live register-width read.
+Frozen `e2af2b8b` plus this change passes 53,084,160 actual old/current wrapper
+cases: all byte operands/register words and word boundary/equality/borrow
+cases, named CPU/bus state, C/Z/N/V and cycle wrapping. These static-WRAM
+comparisons do not exhaust mutating MMIO or independent MF/XF combinations.
+Prefix 3,600/0 (0.96s), native exit 0, executes A/X/Y word/byte paths with
+counts 72,809/117,035; 10,098/49,139; 11,452/10,038. Clean full any%
+129,712/0 (44.51s), native exit 0. Cargo fmt/check, full release/release-library
+builds with external SDL2, normal metadata and frozen optimized core/DLL pass.
+Live CPU matches verified source; peer PPU work is outside this replay.
+Rust lines +3 provide the safe method boundary; other own counters unchanged.
+Indexed-indirect/TSX/accumulator ROR remain held. Complete gameplay/render/
+audio remain open. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

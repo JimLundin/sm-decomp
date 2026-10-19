@@ -625,6 +625,12 @@ impl CpuRegister {
         }
         set_zero_negative(value, self.byte(cpu), cpu);
     }
+    fn compare(self, value: u16, byte: bool, cpu: &mut Cpu) {
+        let lhs = self.value(cpu);
+        let lhs = if byte { lhs & 0xff } else { lhs };
+        let result = subtract_for_compare(lhs, value, byte, cpu);
+        set_zero_negative(result, self.byte(cpu), cpu);
+    }
 }
 unsafe fn compare_register(
     cpu: *mut Cpu,
@@ -640,10 +646,7 @@ unsafe fn compare_register(
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
         read_word(cpu, low, high, game)
     };
-    let lhs = register.value(&*cpu);
-    let lhs = if byte { lhs & 0xff } else { lhs };
-    let result = subtract_for_compare(lhs, value, byte, &mut *cpu);
-    set_zero_negative(result, register.byte(&*cpu), &mut *cpu);
+    register.compare(value, byte, &mut *cpu);
 }
 fn test_bits(value: u16, byte: bool, cpu: &mut Cpu) {
     cpu.z = cpu.a & value == 0;
