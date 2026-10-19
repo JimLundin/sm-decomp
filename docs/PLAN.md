@@ -1676,18 +1676,17 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `bf562b75` passes
-uninterrupted full boot any% 129712/0 (217.08s) and Speed Booster
-148406/0 (283.77s), native exits 0. All 74 source/configuration/host/
-progress inputs match that commit. This adds the complete LoROM mapping family
-and all 40 planar pixel extractions to the previously reviewed families below.
-Later projectile and PPU tile-load work is outside this snapshot.
+Latest reviewed integration (2026-10-19): frozen `bc15bf6b` passes
+uninterrupted full boot any% 129712/0 (172.39s) and Speed Booster
+148406/0 (219.19s), native exits 0. All 74 source/configuration/host/
+progress inputs match that commit. This adds the six shared PPU tile-row loads
+to the previously reviewed families below. Later pause-label, projectile and
+PPU full-tile drawing work is outside this snapshot.
 
-Serialized checkpoint payloads are byte-identical to reviewed 7086aff2.
+Serialized checkpoint payloads are byte-identical to reviewed bf562b75.
 The only changed header field is the runtime-source fingerprint, independently
-recomputed from the actual inputs. Only rtl.rs and snes/ppu.rs
-differ among those inputs. The game_state.rs declaration prefix, structure
-layouts and checkpoint codec remain unchanged.
+recomputed from the actual inputs. Only snes/ppu.rs differs among
+those inputs. Structure layouts and the checkpoint codec remain unchanged.
 All other bindings, including the payload checksum, agree. No compatibility
 hash is patched and neither replay loads an earlier checkpoint. Complete
 non-timing diagnostics and coverage agree, including the known fingernail
@@ -1695,6 +1694,32 @@ diagnostic. Speed reaches 55 rooms and 53 enemy definitions, ending in state 8,
 room $AD1B, X171/Y123, pose $0089, health 46/399, missiles 6/15, Supers 0/5,
 items $3105 and beams $1004 equipped/collected. Kraid is defeated and all eight
 coroutine bytes are zero. Credits remain unexercised.
+
+Independent tile-load reconstruction covers the complete PPU and all 67
+candidate source files. The three sequences per bit depth are identical after
+renaming locals. All six calls preserve tile, row and priority arguments;
+surrounding gates, palette adjustments, stores and loop advancement are exact.
+The two removed addr locals have no other uses. The shared raw-pointer helper
+reads the base word first, then base+8 only for four planes; the second address
+remains unmasked. Wrapping address arithmetic, u16 priority selection and the
+upper-word bit pattern are unchanged. No wider mutable borrow is introduced.
+
+Register writes align tile bases to 4096 words. Normal/flipped row offsets
+are 0..7, so a valid four-plane base address has low nibble 0..7 and its
+unmasked +8 read remains within 32768-word VRAM after the original base mask.
+Fresh extracted old/helper/model checks pass 3840 cases using that real VRAM
+size, all 16 register-derived bases, eight rows, 15 tile boundaries and both
+depths. Addresses are independently checked before calls. Reversed rows,
+wrong priority, a short address mask, a wrong second-word offset, wrong packing
+shift and an omitted second read each fail the same comparator.
+
+The owner's 1048576 arithmetic cases use 32776 words so unusual row boundaries
+can be compared with eight padding words. Their exact sequences and results
+were reviewed, not rerun; they do not prove arbitrary caller-pointer validity.
+The separate 12288 constructed PPU/pixel cases and both full-boot logs retain
+fixed source/library/input pins. Those drawing probes include arbitrary tile
+bases; their count establishes neither valid hardware alignment for every
+case nor movie call-site coverage. The fresh aligned cases supplement them.
 
 Independent LoROM reconstruction covers all 67 source files and restores
 every surrounding operation across the 30 changed files. The 1174 calls
@@ -1888,15 +1913,17 @@ dedicated 5544-case API checks and 24/24 site observations are recorded by
 implementation; this review verifies the source transformation. The movie
 replays do not establish frontend decoder execution coverage.
 
-The normal Cargo integration is independently built from frozen bf562b75.
+The normal Cargo integration is independently built from frozen bc15bf6b.
 All 74 inputs, the fresh game library/DLL and copied fixtures stay fixed.
 Only registry dependencies seed this checkout, including existing registry
 build-script executable links. Formatting, normal release
-(37.71s), host build (14.09s) and progress pass. These two families remove
-4890 Rust lines and 7276 c_int casts across 4528 lines; all other progress
-counters stay unchanged. Frozen totals: 201559 Rust lines, 21391 raw-offset
-lines, 43990 c_int casts across 35522 lines and 6501 unsafe functions. This
-audit changes no maintained Rust or assets; later peer work retains its own checks.
+(41.64s), host build (5.17s) and progress pass. The family removes
+70 Rust lines and 21 c_int casts across 18 lines. One private unsafe helper
+centralizes six raw load sequences, increasing unsafe functions by one;
+other progress counters stay unchanged. Frozen totals: 201489 Rust lines,
+21391 raw-offset lines, 43969 c_int casts across 35504 lines and 6502 unsafe
+functions. This audit changes no maintained Rust or assets; later peer work
+retains its own checks.
 
 The prior PLM block-mask review remains valid: all six helper sites execute,
 with 2082 air-scroll updates, 105 shared retain updates and one each for four
