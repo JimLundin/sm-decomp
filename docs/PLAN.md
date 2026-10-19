@@ -1189,11 +1189,10 @@ Formatting, normal release (33.76s), host build
 lines, 35 raw-offset lines, 18 promotion casts (11 cast lines) and 61 unsafe
 functions. This audit changes no maintained Rust or committed assets.
 
-Credits remain unvisited. Later constant/identity callbacks, projectile
-slope collision and message-box changes need their own integration. The
-new Speed Booster route at input 148406 retains separate validation;
-remaining bosses, credits, persistence and broader hardware/audio coverage
-remain unfinished.
+The unchanged 8ccedfcb library also verifies the continuation through
+Speed Booster at input 148406; see the independent route review below.
+Later source changes need their own integration. Remaining bosses, credits,
+persistence and broader hardware/audio coverage remain unfinished.
 
 Earlier reviewed integration: frozen `64e8d165` passes full any% 129712/0
 (184.20s) and Kraid phase two 119823/0 (195.59s), native exits 0. This
@@ -1817,6 +1816,30 @@ credits, persistence and broader hardware/audio coverage remain unfinished.
 Ignored movies/speed-booster.inputs SHA-256:
 8590d6b62655d9b850696df059f156908a132e1a2990b098a0a29edef4119ea2.
 No ROM, checkpoint, input asset or derived diagnostic is committed.
+
+Independent Speed Booster review (2026-10-19): the reviewed 8ccedfcb
+library resumes its own full-boot Bubble Mountain checkpoint at 138749
+and verifies the remaining 9657 inputs through 148406: 9657/0 (12.25s),
+native exit 0. The complete movie has the exact reviewed Bubble Mountain
+prefix. Runtime, ROM, parsed controller prefix, frame, audio and payload
+bindings all validate. Rendering and standard comparisons stay enabled;
+no RAM or resource injection, rebuild or repeated prefix is involved.
+
+Speed Booster is absent at the starting checkpoint and present in both
+equipped and collected items at the end. Final state matches the milestone
+above, including health 46/399, dismissed message, zero coroutine bytes
+and Kraid's defeated bit. The complete serialized payload equals the clean
+message-box-layout result and both observers; full RAM also equals the
+original route's 47968563 hash. Headers differ only in the runtime binding
+expected between those source bases. Raw paired probes agree: Run, message
+13 and B glyph each execute once at input 147889. Removing all 16 marker
+blocks recovers each observer's exact original/candidate source.
+
+All reviewed source, library, fixture, checkpoint and result pins stay
+fixed. The existing 8ccedfcb format/release/progress results remain valid;
+this audit changes no maintained Rust or residue counts and commits no
+derived assets. Later source changes still require integration. Remaining
+bosses, credits, persistence and broader hardware/audio coverage stay open.
 
 Warehouse Energy Tank and Bubble Mountain (2026-10-19): ordinary inputs
 extend the exact Warehouse 128547/Varia 122732 prefixes. The Warehouse
