@@ -91,6 +91,18 @@ DLL and fixtures. Formatting/check and normal release builds pass (53.54s
 frozen, 61s workspace). Progress: cast lines -1157, unsafe/raw accesses
 unchanged. This does not prove new gameplay coverage or a compile-time gain.
 
+Independent constant audit and broader verification (2026-10-19): a separate
+lexer reproduces all 3676 selected declarations, literal ranges, alias types
+and compiled before/after values. All text outside those declarations is
+unchanged after newline normalization; 64 excluded typed declarations and
+11 nested constants remain untouched. The independently prepared candidate
+matches all 64 source files of the owning session's compiled candidate.
+Reuse that immutable DLL for the longer Kraid phase-two fixture: 119823/0
+(251.46s), native exit 0, with the one already-attributed fingernail warning.
+All source, configuration, host, DLL, library and fixture hashes remain fixed.
+The owning pass's any% and refill results are reused without another build
+or duplicate replay. This review changes no Rust or residue counters.
+
 Next disjoint candidate: remove the redundant c_int/isize casts on complete
 literal pointer-offset arguments, after checking range, argument types and
 unchanged source outside the replacements. A frozen preview removes about
