@@ -442,7 +442,7 @@ unsafe fn address_absolute_indexed_indirect(cpu: *mut Cpu, game: &mut Game) -> u
 unsafe fn and_accumulator(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
         let value = u16::from(read_byte(cpu, low, game));
-        (*cpu).a = (*cpu).a & 0xff00 | ((*cpu).a & value) & 0xff;
+        (*cpu).a &= value | 0xff00;
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
         let value = read_word(cpu, low, high, game);

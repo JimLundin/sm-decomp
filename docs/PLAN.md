@@ -9480,6 +9480,21 @@ matches verified source; all own progress counters unchanged. Full word
 Cartesian, arbitrary MMIO and complete gameplay/render/audio remain open.
 Continue covered CPU cleanup; TSX/ROR remain held for contextual execution.
 
+CPU byte AND assignment (2026-10-19): AND updates A with &= against the
+zero-extended operand OR FF00. The high-byte ones preserve high A and the low
+byte retains the original AND. Fetch order, live A, word cycle accounting and
+final live-MF Z/N updates are unchanged. Frozen `8d4e8425` plus this change
+passes 17,235,968 actual old/current helper cases: every A word/byte operand
+pair and seven sampled word boundary/source entries including duplicates.
+Named CPU/bus fields, flags and cycles match. An initial temporary probe naming
+error prevented compilation; corrected probe builds and all cases pass. Prefix
+3,600/0 (1.11s), native exit 0, executes word/byte AND 231,044/39,120 times.
+Clean full any% 129,712/0 (53.52s), native exit 0. Cargo fmt/check, full release
+and release-library builds with external SDL2, normal metadata and optimized
+frozen core/DLL builds pass. Live CPU matches verified source; all own progress
+counters unchanged. Full word Cartesian, arbitrary MMIO and complete gameplay/
+render/audio remain open. Continue covered CPU cleanup; TSX/ROR stay held.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
