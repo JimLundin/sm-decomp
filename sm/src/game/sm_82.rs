@@ -9741,69 +9741,30 @@ pub unsafe fn DoorTransitionFunction_LoadDoorHeaderEtc(game: &mut Game) -> Corou
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn DoorTransitionFunction_ScrollScreenToAlignment(game: &mut Game) -> CoroutineRet {
-    let mut current_block_7: u64;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x791 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 2 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
-    {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8
-            != 0
-        {
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                & 0x80 as ::core::ffi::c_int
-                != 0 as ::core::ffi::c_int
-            {
-                let ref mut fresh31 = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x911 as ::core::ffi::c_int as isize)
-                    as *mut uint16);
-                *fresh31 = (*fresh31).wrapping_add(1);
-            } else {
-                let ref mut fresh32 = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x911 as ::core::ffi::c_int as isize)
-                    as *mut uint16);
-                *fresh32 = (*fresh32).wrapping_sub(1);
-            }
-            current_block_7 = 4867821042651356885;
-        } else {
-            current_block_7 = 11812396948646013369;
-        }
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize)
-        as *mut uint16) as uint8
-        != 0
-    {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            & 0x80 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
-        {
-            let ref mut fresh33 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x915 as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            *fresh33 = (*fresh33).wrapping_add(1);
-        } else {
-            let ref mut fresh34 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x915 as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            *fresh34 = (*fresh34).wrapping_sub(1);
-        }
-        current_block_7 = 4867821042651356885;
+    let align_x = game.door_direction() & 2 != 0;
+    let position = if align_x {
+        game.layer1_x_pos()
     } else {
-        current_block_7 = 11812396948646013369;
-    }
-    match current_block_7 {
-        11812396948646013369 => {}
-        _ => {
-            CalculateLayer2PosAndScrollsWhenScrolling(game);
-            return kCoroutineNone as CoroutineRet;
+        game.layer1_y_pos()
+    };
+    let aligned = position as u8 == 0;
+    if !aligned {
+        let position = if position & 0x80 != 0 {
+            position.wrapping_add(1)
+        } else {
+            position.wrapping_sub(1)
+        };
+        if align_x {
+            game.set_layer1_x_pos(position);
+        } else {
+            game.set_layer1_y_pos(position);
         }
     }
     CalculateLayer2PosAndScrollsWhenScrolling(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x99c as ::core::ffi::c_int as isize)
-        as *mut uint16) = (0x82e353 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    return kCoroutineNone as CoroutineRet;
+    if aligned {
+        game.set_door_transition_function(0xe353);
+    }
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn DoorTransitionFunction_FixDoorsMovingUp(game: &mut Game) -> CoroutineRet {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x791 as ::core::ffi::c_int as isize)

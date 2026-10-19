@@ -255,13 +255,26 @@ impl Game {
     }
 
     /// layer1_x_pos ($7E:0911 in ram_map).
+    pub fn set_layer1_x_pos(&mut self, value: u16) {
+        self.g_ram[0x911..0x913].copy_from_slice(&value.to_le_bytes());
+    }
+
     pub fn layer1_x_pos(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0x911], self.g_ram[0x912]])
     }
 
     /// layer1_y_pos ($7E:0915 in ram_map).
+    pub fn set_layer1_y_pos(&mut self, value: u16) {
+        self.g_ram[0x915..0x917].copy_from_slice(&value.to_le_bytes());
+    }
+
     pub fn layer1_y_pos(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0x915], self.g_ram[0x916]])
+    }
+
+    /// door_direction ($7E:0791 in ram_map).
+    pub fn door_direction(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x791], self.g_ram[0x792]])
     }
 
     /// samus_x_pos ($7E:0AF6 in ram_map).

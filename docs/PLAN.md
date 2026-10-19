@@ -11852,6 +11852,26 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Door alignment coordinates (2026-10-19):
+DoorTransitionFunction_ScrollScreenToAlignment uses named door direction
+and layer-one coordinates, wrapping word movement and direct control flow.
+Direction bit 1 selects X; otherwise Y. The pre-step low-byte gate retains
+the extra call after movement reaches a boundary. Bit 7 selects increment
+versus decrement; layer-two callback remains before E353 transition store.
+Cargo fmt/check and full release build pass, native exit 0. Frozen e1188d3a
+plus only these two source files passes any% 129,712/0 (148.57s), native
+exit 0: 185 actual calls, Y [61 aligned, 92 increment, 32 decrement]. Waver
+58,109/71 (101.88s), native exit 1, retains the existing failure count:
+Y [24 aligned, 0 increment, 57 decrement], X [4 aligned, 0 increment,
+0 decrement]. X movement is not exercised by these routes. Observations
+strip exactly to maintained source; coordinate arithmetic covers all word
+values in a supporting check. Own raw offsets -10, cast lines -20, Rust
+lines -26; three named accessors account for added state-view lines. Other
+counters unchanged. No probes or ROM-derived assets committed. Next: obtain
+normal-input X-alignment movement coverage before further cleanup of that
+path; continue covered door setup callbacks independently. Complete credits,
+gameplay, audio timing and hardware gaps remain open.
+
 Door-header transition fields (2026-10-19):
 DoorTransitionFunction_LoadDoorHeaderEtc uses named byte-backed HDMA enable
 and next-IRQ-handler fields. Header load and HDMA-object clear callbacks
