@@ -17007,6 +17007,34 @@ and keep their separate checks. No probes, inputs, checkpoints or temporary
 scripts are committed. Continue shared projectile state/handler families;
 gameplay through credits and broader hardware/audio coverage remain unfinished.
 
+Ridley fireball impact gate (2026-10-19): the F-word read after
+collision callbacks and ID clear now uses the existing byte-backed accessor.
+Captured argument index, word rounding, live coordinate reads, spawn and
+sound order remain exact; unsafe callbacks remain unchanged.
+
+Frozen 1579f6be plus only this change passes
+any% 129712/0 (204.95s) and Warehouse 128547/0
+(228.84s), native exits 0. Observed any% 129712/0
+(224.91s) reaches the changed read 24 times.
+Clean/observed non-timing diagnostics match; source/DLL/ROM/input hashes
+remain fixed and maintained function matches verified source.
+Extracted old/current routines match complete RAM, callback traces and spawn
+coordinates in 458752 cases: every 16-bit index, seven horizontal/vertical/F
+gate combinations and callbacks that mutate the live index. Final function
+matches the earlier boundary-tested body. Other frozen sources match HEAD
+after newline normalization; only this read differs in the bank.
+
+The proposed rock-drop instruction 980E coordinate rewrite remains pending:
+an earlier observed any% 129712/0 (301.38s), native exit 0, records zero
+980E calls. Its constructed comparisons do not establish movie coverage.
+Original body restored before this candidate's build and verification.
+
+Cargo fmt/check, normal release build and progress pass. Net raw offsets -1,
+Rust lines -1; casts, unsafe functions and other own counters unchanged.
+No probes or ROM-derived artifacts committed. Continue indexed projectile
+state/handler families; broader gameplay/credits, hardware/audio/masks and
+ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

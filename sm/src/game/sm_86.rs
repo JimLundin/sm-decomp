@@ -2929,8 +2929,7 @@ pub unsafe fn EprojPreInstr_9642_RidleysFireball(mut k: uint16, game: &mut Game)
     }
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     EprojStateMut(&mut game.g_ram).set_id(v2 as usize, 0);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16).offset(v2 as isize) == 0
-    {
+    if EprojState(&game.g_ram).slot_word(0x1b23, v2 as usize) == 0 {
         game.eproj_spawn_pt = Point16U {
             x: game.enemy_projectile_x_pos(k),
             y: game.enemy_projectile_y_pos(k),
