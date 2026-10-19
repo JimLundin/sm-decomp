@@ -1821,7 +1821,7 @@ pub unsafe fn CreateOptionsMenuObject_(mut a: uint16, mut j: uint16, game: &mut 
     );
     return 0 as uint8;
 }
-pub unsafe fn OptionsPreInstr_nullsub_57(mut k: uint16) {}
+pub fn OptionsPreInstr_nullsub_57(mut k: uint16) {}
 pub unsafe fn OptionsMenuFunc1(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 14 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
@@ -3803,7 +3803,7 @@ pub unsafe fn ClearPauseMenuData(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x75f) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x761) as *mut uint16) = 0 as uint16;
 }
-pub unsafe fn sub_82A425() {}
+pub fn sub_82A425() {}
 pub unsafe fn sub_82A42A(game: &mut Game) {
     let mut current_block: u64;
     if *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as ::core::ffi::c_int
@@ -7442,7 +7442,7 @@ pub unsafe fn WaitUntilEndOfVblankAndEnableIrq(game: &mut Game) {
         EnableIrqInterruptsNow(game);
     }
 }
-pub unsafe fn PointlessFunctionStupidToo() {}
+pub fn PointlessFunctionStupidToo() {}
 pub unsafe fn SaveMapExploredifElevator(game: &mut Game) {
     if game.elevator_door_properties_orientation() & 0x000f != 0 {
         SetElevatorsAsUsed(game);
@@ -7576,7 +7576,7 @@ pub unsafe fn LoadNewMusicTrackIfChanged(game: &mut Game) {
         }
     }
 }
-pub unsafe fn NullFunc() {}
+pub fn NullFunc() {}
 pub unsafe fn PlayRoomMusicTrackAfterAFrames(mut a: uint16, game: &mut Game) {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) as ::core::ffi::c_int)
         < kGameState_40_TransitionToDemo as ::core::ffi::c_int

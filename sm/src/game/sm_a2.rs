@@ -8123,7 +8123,7 @@ pub unsafe fn TimedShutter_Func_4(mut k: uint16, game: &mut Game) {
         (*E).tsr_var_A = (0xa2eb11 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     };
 }
-pub unsafe fn TimedShutter_Func_Null(game: &mut Game) {}
+pub fn TimedShutter_Func_Null(game: &mut Game) {}
 static off_A2EB1A: [Option<Func_V>; 5] = unsafe {
     [
         Some(TimedShutter_Func_6 as unsafe fn(&mut Game) -> ()),
@@ -8227,7 +8227,7 @@ pub unsafe fn TimedShutter_Func_9(game: &mut Game) {
         (*E).tsr_var_F = (*E).tsr_var_F.wrapping_add(1);
     }
 }
-pub unsafe fn TimedShutter_Func_Null2(game: &mut Game) {}
+pub fn TimedShutter_Func_Null2(game: &mut Game) {}
 static off_A2EC3A: [Option<Func_V>; 5] = unsafe {
     [
         Some(TimedShutter_Func_11 as unsafe fn(&mut Game) -> ()),
@@ -8346,7 +8346,7 @@ pub unsafe fn TimedShutter_Func_14(game: &mut Game) {
         (*E).tsr_var_F = (*E).tsr_var_F.wrapping_add(1);
     }
 }
-pub unsafe fn TimedShutter_Func_15() {}
+pub fn TimedShutter_Func_15() {}
 pub unsafe fn RisingFallingPlatform_Init(game: &mut Game) {
     RisingFallingPlatform_Func_1(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
@@ -8609,7 +8609,7 @@ pub unsafe fn RisingFallingPlatform_Func_5(game: &mut Game) {
         game,
     );
 }
-pub unsafe fn RisingFallingPlatform_Func_6(game: &mut Game) {}
+pub fn RisingFallingPlatform_Func_6(game: &mut Game) {}
 pub unsafe fn RisingFallingPlatform_Func_7(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_RisingFallingPlatform =
         Get_RisingFallingPlatform(k as ::core::ffi::c_int, game);
@@ -8748,7 +8748,7 @@ pub unsafe fn RisingFallingPlatform_Func_12(game: &mut Game) {
         }
     }
 }
-pub unsafe fn RisingFallingPlatform_Func_13() {}
+pub fn RisingFallingPlatform_Func_13() {}
 pub unsafe fn RisingFallingPlatform_Touch(game: &mut Game) {
     RisingFallingPlatform_Powerbomb(game);
 }
@@ -8986,7 +8986,7 @@ pub unsafe fn HorizontalShootableShutter_Func_5(game: &mut Game) {
         game,
     );
 }
-pub unsafe fn HorizontalShootableShutter_Func_6(game: &mut Game) {}
+pub fn HorizontalShootableShutter_Func_6(game: &mut Game) {}
 pub unsafe fn HorizontalShootableShutter_Func_7(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_RisingFallingPlatform =
         Get_RisingFallingPlatform(k as ::core::ffi::c_int, game);
@@ -9149,7 +9149,7 @@ pub unsafe fn HorizontalShootableShutter_Func_13(game: &mut Game) {
         }
     }
 }
-pub unsafe fn HorizontalShootableShutter_Func_14() {}
+pub fn HorizontalShootableShutter_Func_14() {}
 pub unsafe fn HorizontalShootableShutter_Touch(game: &mut Game) {
     let mut E: *mut Enemy_HorizontalShootableShutter = Get_HorizontalShootableShutter(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,

@@ -1696,8 +1696,8 @@ pub unsafe fn Enemy_NormalFrozenAI(game: &mut Game) {
 pub unsafe fn CreateADudShot(game: &mut Game) {
     CreateDudShot(game);
 }
-pub unsafe fn func_nullsub_169() {}
-pub unsafe fn func_nullsub_170() {}
+pub fn func_nullsub_169() {}
+pub fn func_nullsub_170() {}
 pub unsafe fn EnemyInstr_SetAiPreInstr(
     k: uint16,
     jp: *const uint16,
@@ -1710,7 +1710,7 @@ pub fn EnemyInstr_ClearAiPreInstr(k: uint16, jp: *const uint16, game: &mut Game)
     game.enemy_instructions(k).set_ai_preinstr(0x807b);
     jp
 }
-pub unsafe fn func_nullsub_171() {}
+pub fn func_nullsub_171() {}
 pub fn EnemyInstr_StopScript(k: uint16, _jp: *const uint16, game: &mut Game) -> *const uint16 {
     let properties = game.enemy_instructions(k).properties() | kEnemyProps_Deleted as u16;
     game.enemy_instructions(k).set_properties(properties);
@@ -6167,7 +6167,7 @@ pub unsafe fn EnemyCollisionHandler(game: &mut Game) {
         EnemySamusCollHandler(game);
     };
 }
-pub unsafe fn func_nullsub_4() {}
+pub fn func_nullsub_4() {}
 pub unsafe fn SamusProjectileInteractionHandler(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xf378) as *mut uint16) = 10 as uint16;
     if *((&raw mut game.g_ram as *mut uint8).offset(0x18ae) as *mut uint16) != 0 {

@@ -2917,7 +2917,7 @@ pub unsafe fn MotherBrain_HandleNeckLower(game: &mut Game) {
         MotherBrain_HandleNeckLower_0();
     };
 }
-pub unsafe fn MotherBrain_HandleNeckLower_0() {}
+pub fn MotherBrain_HandleNeckLower_0() {}
 pub unsafe fn MotherBrain_HandleNeckLower_2_BobDown(game: &mut Game) {
     let mut v1: int16 = 0;
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int, game);
@@ -4980,7 +4980,7 @@ pub unsafe fn MotherBomb_FiringDeathBeam_1(game: &mut Game) {
         (*E).mbn_var_17 = (*E).mbn_var_17.wrapping_add(1);
     }
 }
-pub unsafe fn MotherBomb_FiringDeathBeam_2(game: &mut Game) {}
+pub fn MotherBomb_FiringDeathBeam_2(game: &mut Game) {}
 pub unsafe fn MotherBomb_FiringDeathBeam_3(game: &mut Game) {
     MotherBrain_SetBrainInstrs(
         addr_kMotherBrain_Ilist_9C87 as ::core::ffi::c_int as uint16,

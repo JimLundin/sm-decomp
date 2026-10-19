@@ -935,7 +935,7 @@ pub unsafe fn Crocomire_8BA4(game: &mut Game) {
         }
     };
 }
-pub unsafe fn nullsub_305(game: &mut Game) {}
+pub fn nullsub_305(game: &mut Game) {}
 static off_A48C14: [Option<Func_V>; 45] = unsafe {
     [
         Some(Crocomire_Func_28 as unsafe fn(&mut Game) -> ()),
@@ -3451,4 +3451,4 @@ pub unsafe fn CrocomireTongue_Init(game: &mut Game) {
         (*E).base.palette_index = 3584 as uint16;
     };
 }
-pub unsafe fn CrocomireTongue_Main() {}
+pub fn CrocomireTongue_Main() {}

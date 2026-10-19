@@ -44,7 +44,7 @@ unsafe fn Get_MotherBrain(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut En
         .offset(0xf78)
         .offset(o as isize) as *mut Enemy_MotherBrain;
 }
-pub unsafe fn nullsub_341(game: &mut Game) {}
+pub fn nullsub_341(game: &mut Game) {}
 static funcs_BE56D: [Option<Func_V>; 16] = unsafe {
     [
         Some(MotherBrain_CalcHdma_Down as unsafe fn(&mut Game) -> ()),

@@ -4216,7 +4216,7 @@ pub unsafe fn NorfairLavaMan_Func_12(mut k: uint16, game: &mut Game) {
         _ => {}
     };
 }
-pub unsafe fn sub_A8B291(mut k: uint16) {}
+pub fn sub_A8B291(mut k: uint16) {}
 pub unsafe fn NorfairLavaMan_Func_13(game: &mut Game) {
     let mut v2: *mut EnemySpawnData = ::core::ptr::null_mut::<EnemySpawnData>();
     let mut E: *mut Enemy_NorfairLavaMan = Get_NorfairLavaMan(

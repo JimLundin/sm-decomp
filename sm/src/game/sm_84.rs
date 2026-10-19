@@ -725,7 +725,7 @@ pub unsafe fn SpawnRoomPLM(k: uint16, game: &mut Game) {
         game,
     );
 }
-pub unsafe fn PlmPreInstr_Empty2() {}
+pub fn PlmPreInstr_Empty2() {}
 /// Prepare a PLM slot at the current collision block and invoke its setup.
 ///
 /// # Safety

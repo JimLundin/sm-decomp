@@ -272,7 +272,7 @@ pub unsafe fn Samus_Input_03_SpinJumping(game: &mut Game) {
 pub unsafe fn Samus_Input_04_MorphBallOnGround(game: &mut Game) {
     Samus_LookupTransitionTable(game);
 }
-pub unsafe fn Samus_Input_07_Unused(game: &mut Game) {}
+pub fn Samus_Input_07_Unused(game: &mut Game) {}
 pub unsafe fn Samus_Input_05_Crouching(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xa78) as *mut uint16) != 0 {
         Samus_Func20(game);
@@ -294,7 +294,7 @@ pub unsafe fn Samus_Input_06_Falling(game: &mut Game) {
 pub unsafe fn Samus_Input_08_MorphBallFalling(game: &mut Game) {
     Samus_LookupTransitionTable(game);
 }
-pub unsafe fn Samus_Input_09_Unused(game: &mut Game) {}
+pub fn Samus_Input_09_Unused(game: &mut Game) {}
 pub unsafe fn Samus_Input_0A_KnockbackOrCrystalFlashEnding(game: &mut Game) {
     Samus_LookupTransitionTable(game);
     if *(&raw mut game.g_ram as *mut uint8).offset(0xa1f) as ::core::ffi::c_int
@@ -304,7 +304,7 @@ pub unsafe fn Samus_Input_0A_KnockbackOrCrystalFlashEnding(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x18aa) as *mut uint16) = 0 as uint16;
     }
 }
-pub unsafe fn Samus_Input_0B_Unused(game: &mut Game) {}
+pub fn Samus_Input_0B_Unused(game: &mut Game) {}
 pub unsafe fn Samus_Input_0C_Unused(game: &mut Game) {
     Samus_LookupTransitionTable(game);
 }
@@ -314,7 +314,7 @@ pub unsafe fn Samus_Input_0D_Unused(game: &mut Game) {
 pub unsafe fn Samus_Input_0E_TurningAroundOnGround(game: &mut Game) {
     Samus_LookupTransitionTable(game);
 }
-pub unsafe fn Samus_Input_0F_CrouchingEtcTransition(game: &mut Game) {}
+pub fn Samus_Input_0F_CrouchingEtcTransition(game: &mut Game) {}
 pub unsafe fn Samus_Input_10_Moonwalking(game: &mut Game) {
     Samus_LookupTransitionTable(game);
 }
@@ -4451,7 +4451,7 @@ pub unsafe fn SomeMotherBrainScripts_4(game: &mut Game) -> uint8 {
     }
     return 1 as uint8;
 }
-pub unsafe fn nullsub_17(game: &mut Game) {}
+pub fn nullsub_17(game: &mut Game) {}
 static off_91E6E1: [Option<Func_V>; 28] = unsafe {
     [
         Some(SamusFunc_E633_0 as unsafe fn(&mut Game) -> ()),
@@ -4731,7 +4731,7 @@ pub unsafe fn SamusFunc_E633_20(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16) = 3 as uint16;
     };
 }
-pub unsafe fn nullsub_18(game: &mut Game) {}
+pub fn nullsub_18(game: &mut Game) {}
 static kSamus_HandleTransFromBlockColl: [Option<Func_V>; 6] = unsafe {
     [
         Some(nullsub_18 as unsafe fn(&mut Game) -> ()),
@@ -5148,10 +5148,10 @@ pub unsafe fn Samus_CheckWalkedIntoSomething(game: &mut Game) {
         );
     *((&raw mut game.g_ram as *mut uint8).offset(0xdce) as *mut uint16) = 0 as uint16;
 }
-pub unsafe fn nullsub_19(game: &mut Game) {}
-pub unsafe fn nullsub_20(game: &mut Game) {}
-pub unsafe fn nullsub_21(game: &mut Game) {}
-pub unsafe fn nullsub_22(game: &mut Game) {}
+pub fn nullsub_19(game: &mut Game) {}
+pub fn nullsub_20(game: &mut Game) {}
+pub fn nullsub_21(game: &mut Game) {}
+pub fn nullsub_22(game: &mut Game) {}
 static kSamus_HandleTransitionsA: [Option<Func_V>; 9] = unsafe {
     [
         Some(nullsub_18 as unsafe fn(&mut Game) -> ()),
@@ -5752,7 +5752,7 @@ pub unsafe fn Samus_HandleTransitionsB_9B(game: &mut Game) {
         0 as uint32,
     );
 }
-pub unsafe fn nullsub_23(game: &mut Game) {}
+pub fn nullsub_23(game: &mut Game) {}
 static kSamus_HandleTransitionsA_5: [Option<Func_V>; 7] = unsafe {
     [
         Some(sub_91EFC3 as unsafe fn(&mut Game) -> ()),
@@ -5787,7 +5787,7 @@ pub unsafe fn Samus_HandleTransitionsA_5_2(game: &mut Game) {
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0xa18) as *mut uint16) = 0 as uint16;
 }
-pub unsafe fn sub_91EFC3(game: &mut Game) {}
+pub fn sub_91EFC3(game: &mut Game) {}
 pub unsafe fn sub_91EFC3_rv(game: &mut Game) -> uint8 {
     return 0 as uint8;
 }
@@ -7452,8 +7452,8 @@ pub unsafe fn SamusFunc_EC80(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xb36) as *mut uint16) = 2 as uint16;
     }
 }
-pub unsafe fn nullsub_24(game: &mut Game) {}
-pub unsafe fn nullsub_25(game: &mut Game) {}
+pub fn nullsub_24(game: &mut Game) {}
+pub fn nullsub_25(game: &mut Game) {}
 static kHandleJumpTrans: [Option<Func_V>; 28] = unsafe {
     [
         Some(nullsub_24 as unsafe fn(&mut Game) -> ()),

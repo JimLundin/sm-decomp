@@ -95,7 +95,7 @@ pub unsafe fn LoadFxEntry(mut v0: uint16, game: &mut Game) {
             0 as uint16;
     };
 }
-pub unsafe fn nullsub_106(game: &mut Game) {}
+pub fn nullsub_106(game: &mut Game) {}
 static kFxTypeFuncPtrs: [Option<Func_V>; 23] = unsafe {
     [
         Some(nullsub_106 as unsafe fn(&mut Game) -> ()),

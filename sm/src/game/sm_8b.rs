@@ -1251,7 +1251,7 @@ pub unsafe fn ProcessCinematicBgObject_DrawToTextTilemap(
         offs = r22;
     }
 }
-pub unsafe fn ProcessCinematicBgObject_Nothing(mut k: uint16, mut j: uint16, mut r18: uint16) {}
+pub fn ProcessCinematicBgObject_Nothing(mut k: uint16, mut j: uint16, mut r18: uint16) {}
 pub unsafe fn ProcessCinematicBgObject_DrawToBgTilemap(
     mut k: uint16,
     mut j: uint16,
@@ -2505,7 +2505,7 @@ pub unsafe fn CinematicSprInstr_SetTimer(mut k: uint16, mut j: uint16, game: &mu
         *(RomPtr_8B(j as uint16_t, game) as *mut uint16);
     return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-pub unsafe fn sub_8B94E1() {}
+pub fn sub_8B94E1() {}
 pub unsafe fn SpawnMode7Object(mut j: uint16, mut a: uint16, game: &mut Game) -> uint8 {
     let mut Mode7ObjectDef: *mut Mode7ObjectDef = ::core::ptr::null_mut::<Mode7ObjectDef>();
     *((&raw mut game.g_ram as *mut uint8).offset(0x19b3) as *mut uint16) = a;
@@ -2798,7 +2798,7 @@ pub unsafe fn CinematicBgInstr_Delete(mut k: uint16, mut j: uint16, game: &mut G
 pub unsafe fn CinematicBgInstr_Goto(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     return *(RomPtr_8C(j as uint16_t, game) as *mut uint16);
 }
-pub unsafe fn sub_8B9743() {}
+pub fn sub_8B9743() {}
 pub unsafe fn DrawCinematicSpriteObjects_Intro(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
@@ -3177,7 +3177,7 @@ pub unsafe fn GameState_1_OpeningCinematic_(game: &mut Game) -> CoroutineRet {
     HandleMode7TransformationNoRotation(game);
     return kCoroutineNone as CoroutineRet;
 }
-pub unsafe fn CinematicFunctionNone() {}
+pub fn CinematicFunctionNone() {}
 pub unsafe fn MaybeSkipCinematics(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) as ::core::ffi::c_int
         + 0x60d8 as ::core::ffi::c_int
@@ -3459,7 +3459,7 @@ pub unsafe fn sub_8B9CCF(mut k: uint16, game: &mut Game) {
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         (0x8b93d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-pub unsafe fn sub_8B9CDE() {}
+pub fn sub_8B9CDE() {}
 pub unsafe fn CinematicSprInstr_9CE1(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 17 as uint8;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
@@ -3981,7 +3981,7 @@ pub unsafe fn GameState_37_CeresGoesBoomWithSamus_(game: &mut Game) -> Coroutine
     HandleMode7TransformationMatrix(game);
     return kCoroutineNone as CoroutineRet;
 }
-pub unsafe fn CinematicFunc_Nothing() {}
+pub fn CinematicFunc_Nothing() {}
 pub unsafe fn CinematicFunction_Intro_Initial(game: &mut Game) {
     let mut j: uint16 = 0;
     let mut k: uint16 = 0;

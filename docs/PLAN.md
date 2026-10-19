@@ -309,10 +309,25 @@ the known Kraid warning. Source, libraries, fixtures and logs retain their
 hashes. This audit adds no maintained Rust or gameplay coverage. Later
 projectile/safety changes and broader gameplay/hardware gaps remain open.
 
-Next disjoint safety audit: 57 gameplay callbacks have empty bodies but still
-declare unsafe. Check their signatures and function-pointer uses, then make
-the compiler verify that removing those unnecessary qualifiers needs no new
-unsafe block. Continue broader subsystem state and handler consolidation.
+Empty callback safety (2026-10-19): remove unnecessary unsafe qualifiers
+from 57 public callbacks in 16 gameplay banks. Every body is empty; parameters
+are borrowed Game or integer values. Names, parameters, bodies, callers and
+existing callback table types are unchanged. The compiler accepts all 57
+actual exported functions as both safe and original unsafe function pointers.
+Exact comparison of all 72 frozen source/configuration files permits only
+the 57 qualifier removals, preserving every checkpoint fingerprint input.
+
+Frozen 020a52d4 plus this pass passes full-boot any% 129712/0 (231.21s)
+and Bubble Mountain 138749/0 (274.45s), native exits 0, with stable
+source, DLL and fixtures. No shorter included route is replayed separately.
+Formatting/check, normal release builds (32.95s frozen,
+47.76s workspace) and progress pass. Unsafe functions -57; Rust lines,
+casts and raw accesses unchanged. No build-time gain is established.
+Concurrent gameplay edits retain separate validation; temporary checks stay local.
+
+Next disjoint safety audit: callbacks that only return a constant or unchanged
+argument. Check their callable types before removing unnecessary unsafe;
+continue broader subsystem state and handler consolidation.
 
 Independent split-word audit (2026-10-19): reconstruct e23ad2ee from
 its parent and the owning e8592193-based candidate across all 64 Rust files

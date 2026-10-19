@@ -294,7 +294,7 @@ pub unsafe fn UnusedSpinningTurtleEye_Init(game: &mut Game) {
     (*v0).current_instruction =
         addr_kUnusedSpinningTurtleEye_Ilist_86A7 as ::core::ffi::c_int as uint16;
 }
-pub unsafe fn UnusedSpinningTurtleEye_Main() {}
+pub fn UnusedSpinningTurtleEye_Main() {}
 pub unsafe fn BrinstarPipeBug_Init(game: &mut Game) {
     let mut PipeBug: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
@@ -993,7 +993,7 @@ pub unsafe fn NorfairPipeBug_Func_11(game: &mut Game) {
                 .offset((v2 + 1 as ::core::ffi::c_int) as isize) as uint32,
     );
 }
-pub unsafe fn sub_B38E56() {}
+pub fn sub_B38E56() {}
 pub unsafe fn NorfairPipeBug_Func_12(game: &mut Game) {
     let mut E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,

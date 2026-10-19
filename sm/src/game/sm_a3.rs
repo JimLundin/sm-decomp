@@ -1986,7 +1986,7 @@ pub unsafe fn Crab_Init(game: &mut Game) {
         game,
     );
 }
-pub unsafe fn Crab_Func_1() {}
+pub fn Crab_Func_1() {}
 pub unsafe fn Slug_Init(game: &mut Game) {
     let mut v1: *mut EnemyData = gEnemyData(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
@@ -2006,7 +2006,7 @@ pub unsafe fn Slug_Init(game: &mut Game) {
         game,
     );
 }
-pub unsafe fn Slug_Func_1() {}
+pub fn Slug_Func_1() {}
 pub unsafe fn PlatformThatFallsWithSamus_Instr_3(
     mut k: uint16,
     mut jp: *const uint16,
@@ -4249,8 +4249,8 @@ pub unsafe fn MaridiaRefillCandy_Func_4(game: &mut Game) {
         (*E).base.timer = 0 as uint16;
     }
 }
-pub unsafe fn MaridiaRefillCandy_Func_5() {}
-pub unsafe fn MaridiaRefillCandy_Func_6() {}
+pub fn MaridiaRefillCandy_Func_5() {}
+pub fn MaridiaRefillCandy_Func_6() {}
 pub unsafe fn NorfairSlowFireball_Init(game: &mut Game) {
     let mut v1: *mut EnemyData = gEnemyData(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
@@ -4524,7 +4524,7 @@ pub unsafe fn Bang_Func_6(mut k: uint16, game: &mut Game) {
         (*E).bang_var_F = (0xa3bcc5 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-pub unsafe fn Bang_Func_7(mut k: uint16) {}
+pub fn Bang_Func_7(mut k: uint16) {}
 pub unsafe fn Bang_Func_8(mut k: uint16, game: &mut Game) {
     let mut v1: uint8 = (CalculateAngleOfSamusFromEnemy(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),

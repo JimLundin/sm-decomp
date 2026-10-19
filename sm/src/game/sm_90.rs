@@ -4379,7 +4379,7 @@ pub unsafe fn Samus_Movement_08_MorphBallFalling(game: &mut Game) {
         Samus_MorphedFallingMovement(game);
     };
 }
-pub unsafe fn Samus_Movement_09_Unused(game: &mut Game) {}
+pub fn Samus_Movement_09_Unused(game: &mut Game) {}
 pub unsafe fn Samus_Movement_0A_KnockbackOrCrystalFlashEnding(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16) = 0 as uint16;
     Samus_Move_NoSpeedCalc_Y(game);
@@ -4390,8 +4390,8 @@ pub unsafe fn Samus_Movement_0B_Unused(game: &mut Game) {
 pub unsafe fn Samus_Movement_0C_Unused(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16) = 0 as uint16;
 }
-pub unsafe fn Samus_Movement_0D_Unused(game: &mut Game) {}
-pub unsafe fn nullsub_13(game: &mut Game) {}
+pub fn Samus_Movement_0D_Unused(game: &mut Game) {}
+pub fn nullsub_13(game: &mut Game) {}
 static kSamusCrouchingEtcFuncs: [Option<HandlerFunc>; 12] = unsafe {
     [
         Some(nullsub_13 as unsafe fn(&mut Game) -> ()),
@@ -4709,7 +4709,7 @@ pub unsafe fn DisableMinimapAndMarkBossRoomAsExplored(game: &mut Game) {
         i += 4 as ::core::ffi::c_int;
     }
 }
-pub unsafe fn InitializeMiniMapBroken() {}
+pub fn InitializeMiniMapBroken() {}
 pub unsafe fn UpdateMinimap(game: &mut Game) {
     let mut v4: int16 = 0;
     let mut v10: int16 = 0;

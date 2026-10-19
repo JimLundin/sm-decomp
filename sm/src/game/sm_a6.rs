@@ -1342,7 +1342,7 @@ pub unsafe fn Boulder_Func_5(game: &mut Game) {
     (*E).boulder_var_03 = (*E).base.y_pos;
     (*E).boulder_var_02 = (*E).base.y_subpos;
 }
-pub unsafe fn Boulder_Func_6() {}
+pub fn Boulder_Func_6() {}
 pub unsafe fn Boulder_Func_7(mut j: uint16, game: &mut Game) {
     let mut E: *mut Enemy_Boulder = Get_Boulder(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
@@ -6491,7 +6491,7 @@ pub unsafe fn RidleysExplosion_Func_2(game: &mut Game) {
         game,
     );
 }
-pub unsafe fn locret_A6CB20(game: &mut Game) {}
+pub fn locret_A6CB20(game: &mut Game) {}
 static off_A6CB21: [Option<Func_V>; 9] = unsafe {
     [
         Some(locret_A6CB20 as unsafe fn(&mut Game) -> ()),

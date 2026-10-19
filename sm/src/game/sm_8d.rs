@@ -109,7 +109,7 @@ pub unsafe fn SpawnPalfxObject(mut j: uint16, game: &mut Game) {
         game,
     );
 }
-pub unsafe fn PalPreInstr_nullsub_129(mut k: uint16) {}
+pub fn PalPreInstr_nullsub_129(mut k: uint16) {}
 pub unsafe fn PaletteFxHandler(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x1e79) as *mut uint16) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
