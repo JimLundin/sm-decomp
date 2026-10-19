@@ -13829,6 +13829,26 @@ unchanged; the candidate's temporary reductions are intentionally undone.
 Air-scroll and other earlier verified PLM changes remain committed. Broader
 gameplay/credits, hardware/audio/masks and ownership remain unfinished.
 
+Room PLM slot search (2026-10-19): SpawnRoomPLM now selects the
+highest free slot through a safe descending40-header scan. The same word
+addresses and zero-header gate remain exact; a full table still returns
+without initialization. Room-entry resolution, field writes and setup callback
+after the search are unchanged.
+
+Frozen bd625061 plus only this search passes any%129712/0
+(224.55s) and pickup68606/0 (128.45s), native exits0.
+Observed pickup68606/0 (134.77s) compares selected slots and
+all128KiB RAM at the unchanged initializer entry on 294 actual
+calls against the original search. No observed call encounters a full table; that return path has source
+review only. Movie hits establish only observed occupancy states. Clean and observed
+non-timing diagnostics match after stripping observers. Frozen scope and
+maintained routine identity pass; no observers are committed.
+
+Cargo fmt/check, normal release build and progress pass. Own raw offsets-1,
+cast lines-4 and Rust lines-4; other own counters unchanged. Peer edits remain
+preserved. Remaining room-PLM initialization and broader gameplay/credits,
+hardware/audio/masks/ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

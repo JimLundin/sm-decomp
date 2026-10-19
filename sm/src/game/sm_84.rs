@@ -1143,17 +1143,13 @@ unsafe fn spawn_hardcoded_plm(
 pub unsafe fn SpawnRoomPLM(mut k: uint16, game: &mut Game) {
     let mut rpe: *mut RoomPlmEntry = ::core::ptr::null_mut::<RoomPlmEntry>();
     let mut x_block: int16 = 0;
-    let mut v1: uint16 = 78 as uint16;
-    while *((&raw mut game.g_ram as *mut uint8).offset(0x1c37 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-        != 0
-    {
-        v1 = (v1 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
-        if v1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
-            return;
-        }
-    }
+    let v1 = match (0..40).rev().find(|&slot| {
+        let header_addr = 0x1c37 + slot * 2; // plm_header_ptr
+        u16::from_le_bytes([game.g_ram[header_addr], game.g_ram[header_addr + 1]]) == 0
+    }) {
+        Some(slot) => (slot * 2) as u16,
+        None => return,
+    };
     rpe = if k as ::core::ffi::c_int == 0x12 as ::core::ffi::c_int {
         (&raw mut game.g_ram as *mut uint8).offset(0x12 as ::core::ffi::c_int as isize)
             as *mut RoomPlmEntry
