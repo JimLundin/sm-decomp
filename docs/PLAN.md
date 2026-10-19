@@ -461,6 +461,54 @@ change and no new replay result belong to this cleanup.
 
 ## The oracle
 
+Boss-bit scratch fidelity (2026-10-19): SetBossBitForCurArea and
+CheckBossBitForCurArea now store the incoming mask byte at $05E7, preserving
+$05E8 as the ROM's eight-bit stores do. Compare both bytes by narrowing the
+existing $05E7..$05F4 normalization to $05E9..$05F4. Multiplication scratch
+remains masked; uncovered ClearBoss/ClearEvent helpers remain unchanged.
+
+The mask-only reproduction fails once in 8257 frames, at index 8256:
+CheckBoss(1) leaves Rust scratch0040 instead of ROM0001. Ordered helper
+observation additionally finds the transient SetBoss(4) omission at index
+51872, hidden by a subsequent CheckBoss before the ordinary frame comparison.
+ROM stores are at 80:81E1 and 80:81AB respectively.
+
+Frozen e4ed0170 plus only these changes passes observed any%129712/0
+(352.87s) and Spazer90706/0 (309.69s). All399034/295082 ordered entry/exit
+events match, including arguments, incoming/outgoing scratch and meaningful
+returns. SetBoss executes3/2 times and CheckBoss130/2169 times; no raw word
+differs, including117730/88488 nonzero frames. The51873/0 prefix also passes
+161660 ordered events. ClearBoss/ClearEvent have no observed calls.
+
+Clean frozen c2890f0d plus exactly the two stores and mask split passes
+any%129712/0 (253.79s) and Spazer90706/0 (210.07s), native exits0. All68
+frozen files retain their hashes. Exact observation stripping, source scope
+and independent review pass; later concurrent changes retain separate checks.
+
+Seven clean-source controls run10204 frames on the same DLL. At gameplay
+index10000, low/high $05E7/$05E8 and lower-neighbor $05E6 faults each cause
+exactly one failure, with only the intended byte reported. The next203
+frames pass and live scratch recovers0040. Clean execution, both exact
+old-mask negatives and retained masked neighbor $05E9 pass10204/0. Native
+continuation bytes are stable across the injected frame. These checks prove
+detector sensitivity and mask boundaries, not complete recovery: the three
+detected runs share25 final RAM differences from clean, all inside existing
+native-owned normalization ranges. No differences remain outside those ranges.
+All four non-detected controls match clean full128KiB RAM exactly.
+
+A separate recovery defect appears at room-loading index8296: both $05E7
+and previously unmasked neighbor $05E6 faults produce8500/204, even with all
+helper observers removed. Scratch recovers0001 immediately, but the failure
+path restores pre-frame native continuation while rerunning the ROM; Rust
+repeats PLM initialization on the next frame. Those fault dumps match exactly.
+Recovery repair is separate from this change; neither fault scenario proves
+complete raw-RAM recovery. Independent review confirms both limitations.
+
+Formatting, normal Cargo release (1m25s) and progress pass. Own Rust lines+2
+restore the missing stores; other counters are unchanged. No diagnostic code,
+movies or ROM-derived assets are committed. Full gameplay/credits, audio,
+remaining masks and ownership stay unfinished.
+
 Spazer milestone (2026-10-19): extend the normal-input Red Tower route
 down to Energy Station $A618, refill to 199/199 health, then cross $A3DD and
 climb Below Spazer $A408 using wall jumps and bombs. Enter $A447, collect

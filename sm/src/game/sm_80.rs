@@ -515,6 +515,7 @@ pub fn PrepareBitAccess(a: uint16, game: &mut Game) -> uint16 {
     a >> 3
 }
 pub unsafe fn SetBossBitForCurArea(mut a: uint16, game: &mut Game) {
+    game.g_ram[0x5e7] = a as u8; // The ROM stores the mask with an 8-bit accumulator.
     let ref mut fresh91 = *(&raw mut game.g_ram as *mut uint8)
         .offset(0xd828 as ::core::ffi::c_int as isize)
         .offset(
@@ -533,6 +534,7 @@ pub unsafe fn ClearBossBitForCurArea(mut a: uint16, game: &mut Game) {
     *fresh19 = (*fresh19 as ::core::ffi::c_int & !(a as ::core::ffi::c_int)) as uint8;
 }
 pub unsafe fn CheckBossBitForCurArea(mut a: uint16, game: &mut Game) -> uint8 {
+    game.g_ram[0x5e7] = a as u8; // The ROM stores the mask with an 8-bit accumulator.
     return (a as ::core::ffi::c_int
         & *(&raw mut game.g_ram as *mut uint8)
             .offset(0xd828 as ::core::ffi::c_int as isize)
