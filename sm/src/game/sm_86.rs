@@ -838,16 +838,15 @@ unsafe fn SpawnEprojInner(mut j: uint16, mut gfx_idx: uint16, game: &mut Game) -
         }
     }
     let v4 = usize::from(v3 >> 1);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x19bb) as *mut uint16).offset(v4 as isize) =
-        gfx_idx;
+    EprojStateMut(&mut game.g_ram).write(0x19bb, v4, gfx_idx);
     EprojStateMut(&mut game.g_ram).set_id(v4, j);
     let mut Edef: *mut EprojDef = get_EprojDef(j, game);
     let value = (*Edef).pre_instr_ptr as uint16;
     EprojStateMut(&mut game.g_ram).set_preinstruction(v4, value);
     let value = (*Edef).instr_list as uint16;
     EprojStateMut(&mut game.g_ram).set_instruction(v4, value);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1bb3) as *mut uint16).offset(v4 as isize) =
-        (*Edef).radius;
+    let radius = (*Edef).radius;
+    EprojStateMut(&mut game.g_ram).write(0x1bb3, v4, radius);
     let value = (*Edef).properties;
     EprojStateMut(&mut game.g_ram).set_properties(v4, value);
     EprojStateMut(&mut game.g_ram).set_instruction_timer(v4, 1);
@@ -866,14 +865,14 @@ pub unsafe fn SpawnEprojWithGfx(
     mut j: uint16,
     game: &mut Game,
 ) -> uint16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1993) as *mut uint16) = a;
+    EprojStateMut(&mut game.g_ram).write(0x1993, 0, a);
     let mut E: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);
     let gfx_idx = ((*E).vram_tiles_index as ::core::ffi::c_int
         | (*E).palette_index as ::core::ffi::c_int) as uint16;
     SpawnEprojInner(j, gfx_idx, game).unwrap_or(gfx_idx)
 }
 pub unsafe fn SpawnEprojWithRoomGfx(mut j: uint16, mut a: uint16, game: &mut Game) -> uint16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1993) as *mut uint16) = a;
+    EprojStateMut(&mut game.g_ram).write(0x1993, 0, a);
     SpawnEprojInner(j, 0, game)
         .unwrap_or_else(|| u16::from_le_bytes([game.g_ram[0x1997], game.g_ram[0x1998]]))
 }

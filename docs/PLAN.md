@@ -15631,6 +15631,28 @@ property store and explicit read ordering; unsafe functions/other counters
 unchanged. No probes/artifacts committed. Further projectile updates and
 broader gameplay/credits, hardware/audio/masks and ownership remain open.
 
+Enemy-projectile spawn stores (2026-10-19): use the existing byte-backed
+writer for spawn graphics/radius and both public spawn initialization-parameter
+stores. No helper added. Radius definition read stays before its store, and
+all surrounding definition reads/writes/callbacks retain order. Parameter
+write precedes enemy-pointer acquisition, avoiding a new borrow crossing.
+Captured slot, failure returns and aliases remain unchanged.
+
+Frozen a91d1a4a plus only this change passes
+any%129712/0 (218.99s) and Varia122732/0 (242.90s),
+native exits0. Observed Varia122732/0 (284.68s) checks all
+byte-backed stores against original unaligned writes over complete RAM.
+Changed-site hits: graphics/radius 565 each, enemy-parameter
+380, room-parameter 185. All four execute.
+Clean/observed non-timing diagnostics match after stripping; frozen source,
+DLL, ROM and inputs retain hashes and maintained changed region matches.
+No probes or artifacts committed.
+
+Cargo fmt/check, normal release build and progress pass. Raw offsets-4,
+Rust lines-1; casts, unsafe functions and other own counters unchanged.
+Further indexed updates, gameplay/credits, hardware/audio/masks and
+ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
