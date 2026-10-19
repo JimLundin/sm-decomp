@@ -9049,6 +9049,26 @@ progress counters unchanged. Full word Cartesian coverage, decimal movie
 coverage, arbitrary device mutation and gameplay/render/audio completion remain
 open. Continue covered CPU cleanup.
 
+CPU safe ADC arithmetic (2026-10-19): add_to_accumulator owns callback-free
+arithmetic through a safe mutable Cpu reference. The unsafe ADC wrapper keeps
+pre-fetch width selection, word cycle increment and operand reads; the reference
+starts afterward and ends before the final live-width Z/N update. Byte operands
+are widened from u8; post-fetch A/C/D reads and decimal/overflow/C/A order stay
+exact. Independent source review finds no differences. Frozen HEAD `762ed08f`
+plus this change passes 144,179,200 actual old/current ADC/SBC comparisons
+(SBC is unchanged): every byte operand/register word, nineteen word boundary/
+decimal/sign entries including duplicates, both carry values and decimal flags.
+Named CPU/bus state, cycles, byte high-A and binary A/C assertions pass; decimal
+results are preservation evidence against the old helper. Prefix 3,600/0 (1.95s)
+executes word/byte ADC 195,798/37,613 times, all binary. Constructed real-helper
+cases cover decimal. Clean full any% 129,712/0 (69.84s), native exit 0. Cargo
+fmt/check, full release and release-library builds with external SDL2, normal
+metadata and optimized frozen core/DLL builds pass. Live CPU matches verified
+source; peer snapshot changes are outside this replay. Rust lines +5 introduce
+the safe helper and its bus-reading wrapper; other own counters unchanged.
+Full word Cartesian and decimal movie coverage, arbitrary MMIO mutation and
+complete gameplay/render/audio remain open. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
