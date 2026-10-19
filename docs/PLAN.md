@@ -1395,15 +1395,16 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `32e0630d` passes
-uninterrupted full boot any% 129712/0 (177.32s) and Speed Booster
-148406/0 (230.21s), native exits 0. This adds pickup finish-state
-consolidation to the reviewed 5d51b115 integration. Speed includes the exact
-Bubble Mountain, Warehouse, Varia and Hi-Jump prefixes; no shorter duplicate
-replay is run. Coverage remains 55 rooms and 53 enemy definitions.
+Latest reviewed integration (2026-10-19): frozen `9edc009c` passes
+uninterrupted full boot any% 129712/0 (191.00s) and Speed Booster
+148406/0 (253.16s), native exits 0. This adds the Ridley impact gate
+(d56a46ba) and 1206 identity-cast removals (d642c4b4) to reviewed 32e0630d.
+Speed includes the exact Bubble Mountain, Warehouse, Varia and Hi-Jump
+prefixes; no shorter duplicate replay is run. Coverage remains 55 rooms
+and 53 enemy definitions.
 
 Both complete checkpoints, including every binding and serialized payload,
-are byte-identical to the reviewed 5d51b115 full-boot endpoints. Runtime
+are byte-identical to the reviewed 32e0630d full-boot endpoints. Runtime
 source inputs and compatibility code remain unchanged. Neither replay loads
 an earlier checkpoint. Non-timing diagnostics and coverage match exactly,
 including the known fingernail diagnostic. Speed ends in state 8, room
@@ -1411,43 +1412,45 @@ $AD1B, X171/Y123, pose $0089, health 46/399, missiles 6/15, Supers 0/5,
 items $3105 and beams $1004 equipped/collected. Kraid is defeated and all
 eight coroutine bytes are zero; credits remain unexercised.
 
-Independent pickup review reconstructs the complete commit, both retained
-sites and their helper. Both half-indices derive from the original u16
-argument; the earlier borrowed timer has no use across the new writer.
-The sole direct caller is the existing dispatcher, with no function-pointer
-escape for this routine. F337 and differently ordered EEAF remain unchanged.
+Independent identity-cast review reconstructs all 31 committed banks from
+the actual parent by removing exactly 1206 recorded cast spans, then
+formatting. Fresh compiler THIR on that parent and the reconstructed
+unformatted candidate confirms every removed cast has identical input and
+output types. All 729113 remaining expression kinds, types and mapped
+source spans agree, excluding transparent Scope nodes. Operand types are
+706 usize, 351 u16, 74 u8, 50 i32 and 25 u32. Destination aliases resolve
+through maintained types.rs; native C aliases are excluded. These are
+compiler and transformation checks, not claims of movie coverage for every
+changed routine.
 
-Fresh whole-function controls use the real Game and its position/radius
-accessors, exact original/candidate bodies and the maintained abs16. They
-pass 458752 cases: every u16 index across expiry, contact and grapple
-collection, X/Y misses and post-callback timer changes. Callback RAM
-snapshots, pickup counts and final complete RAM agree. Callbacks change
-the live index, finish fields, timer and coordinates; substituting the live
-index for the captured argument fails. These are controlled callback cases,
-not claims that every branch was observed during gameplay.
+Independent Ridley review reconstructs the complete one-read commit and
+confirms the frozen integration body. The F-word read remains after the
+collision callbacks and captured-slot ID clear, at $1B23 plus twice the
+captured half-index. EprojInstr_980E remains unchanged. Exact original and
+candidate controls using the maintained position getters pass 458752 cases.
+A further 524288 cases cover every u16 index in eight scenarios while
+callbacks change the F word, live index and coordinates. Final complete
+RAM, call traces and spawn coordinates agree. Caching the gate before the
+callbacks or using the changed live index each fails. These callback
+controls use a reduced Game harness; original unaligned reads retain the
+native x86-64 qualification.
 
-Fresh helper controls separately pass 131072 full-RAM cases and 524288
-ordered stores on two restored patterns. Instruction ECA3, timer 1,
-properties 3000 and preinstruction EFDF retain their exact addresses,
-widths and order. Reversed stores, one-byte writes and wrong index scaling
-all fail. Original unaligned accesses retain the native x86-64 qualification.
-
-The entire dedicated observation/retained sources reconstruct from their
-frozen base, and the reviewed cast transformation recovers the committed
-pickup body. All 155 source/configuration, binary and fixture pins still
-match. Raw logs confirm 44 contact finishes and 55 shared outer finishes,
-with both complete-RAM comparisons at each call. Those outer hits do not
-distinguish expiry from grapple collection. Observation exit 2 identifies
-only the unhit F337 probe and creates no checkpoint; none is claimed.
-Both dedicated clean checkpoints equal the prior reviewed full endpoints.
+The dedicated retained Ridley source reconstructs from its frozen base.
+All 73 source, binary and fixture pins still match. Its observation
+logs record 24 actual gate reads, native exit 0 and identical clean/observed
+non-timing diagnostics. The observation builder adds the read marker and
+complete-RAM comparisons for byte-backed writes. This establishes the
+recorded read hits, without claiming every impact branch was exercised.
 
 All 73 integration source/configuration/host/progress files, Cargo library,
 DLL and copied fixtures stay fixed. Only registry dependencies seed this
-checkout. Formatting, normal release (42.92s), host build
-(2.73s) and progress pass. The change removes ten Rust lines,
-eight raw-offset lines and four c_int casts (three cast lines); unsafe
-functions remain 6520. This audit changes no maintained Rust or committed
-assets. Prior PPU/projectile reviews retain their recorded coverage limits.
+checkout. Formatting, normal release (36.08s), host build
+(2.79s) and progress pass. Net change: 61 fewer Rust lines and one
+fewer raw-offset line. The 1206 removed casts are identity casts; c_int
+occurrences stay 65290, while lines containing them fall by one to 49454.
+Frozen totals: 214442 Rust lines, 21579 raw-offset lines and 6520 unsafe
+functions. This audit changes no maintained Rust or committed assets.
+Prior pickup, PPU and projectile reviews retain their coverage limits.
 
 Later source changes need their own integration. Remaining bosses, credits,
 persistence and broader hardware/audio coverage remain unfinished.
