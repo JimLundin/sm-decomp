@@ -1358,17 +1358,16 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `95ff9cef` passes
-uninterrupted full boot any% 129712/0 (250.89s) and Speed Booster
-148406/0 (300.99s), native exits 0. This batch covers four source
-commits since ee52ea08: intermediate integer casts, projectile velocity
-arithmetic, fireball child countdown and fireball collision transitions.
-Speed includes the exact Bubble Mountain, Warehouse, Varia and Hi-Jump
-prefixes; no shorter duplicate replay is run. Coverage remains 55 rooms
-and 53 enemy definitions.
+Latest reviewed integration (2026-10-19): frozen `5d51b115` passes
+uninterrupted full boot any% 129712/0 (316.30s) and Speed Booster
+148406/0 (388.26s), native exits 0. This batch covers three source
+commits since 95ff9cef: message-box PPU lifecycle, Ceres debris velocity
+and projectile instruction restarts. Speed includes the exact Bubble
+Mountain, Warehouse, Varia and Hi-Jump prefixes; no shorter duplicate
+replay is run. Coverage remains 55 rooms and 53 enemy definitions.
 
 Both complete checkpoints, including every binding and serialized payload,
-are byte-identical to the reviewed ee52ea08 full-boot endpoints. Runtime
+are byte-identical to the reviewed 95ff9cef full-boot endpoints. Runtime
 source inputs and compatibility code remain unchanged. Neither replay loads
 an earlier checkpoint. Non-timing diagnostics and coverage match exactly,
 including the known fingernail diagnostic. Speed ends in state 8, room
@@ -1376,40 +1375,47 @@ $AD1B, X171/Y123, pose $0089, health 46/399, missiles 6/15, Supers 0/5,
 items $3105 and beams $1004 equipped/collected. Kraid is defeated and all
 eight coroutine bytes are zero; credits remain unexercised.
 
-Independent cast review reconstructs all 28 committed banks by applying
-only the 7442 selected deletions, the signed literal suffix and rustfmt.
-Fresh before/after compiler output confirms every operand span and final
-type: 4784 i32, 2596 u32 and 62 bool inputs, with no wider integer or float.
-All nonliteral input types remain exact. Normal-lint constant comparisons
-cover all 849 distinct inferred literal conversions; the additional
-0x8000i32 explicitly retains -32768. Fresh byte-model controls pass 3145732
-comparisons across all ten observed type pairs. Float saturation and 64-bit
-widening remain excluded. These identities cover the selected transformations;
-the movies do not establish execution of every changed gameplay routine.
+Independent PPU review reconstructs the whole four-function commit and
+all controls, accounting for the already reviewed intermediate casts.
+Fresh controls use committed original/candidate bodies, actual word helpers,
+HDMA setup/generator and RAM layouts. They pass 133265 cases, 4790997
+callback snapshots and 4924262 complete-RAM comparisons. Packed offsets,
+65-word and 896-word fills, all destination/length words, register order
+and callback-visible reads match. Shortened fills, cached length/palette/
+backups and a missing dummy VRAM read all fail. Primitive bus callbacks
+exercise ordering; actual DMA remains covered by the gameplay replays.
 
-Independent arithmetic review reconstructs both velocity functions and the
-unchanged combined caller. Rebuilt controls use the maintained position
-getters and pass 213888 full-RAM/return cases plus 87818240 arithmetic
-comparisons. Carry, signed high byte, byte/word index distinction and store
-order are retained; omitted carry, unsigned high byte and rounded fraction
-index variants fail. Historical probe source is reconstructed against all
-66 recorded source pins: X executes 25 times and Y 13 times. Its subsequently
-reused build outputs are not reused for this integration.
+Both PPU observer sources strip exactly to their clean sources; the reviewed
+cast transformation recovers the committed banks. All 434 pins still match.
+The paired map continuations pass 49014/0 and paired gunship continuations
+1605/0, with identical complete checkpoints and independently checked input,
+runtime, ROM and payload bindings. All four entries execute, and completion,
+fill, destination and length probes agree. The prior zero-entry prefix
+qualification remains bounded to its recorded unchanged coroutine roots.
 
-Independent fireball controls reconstruct both commits and helper bodies.
-They pass 69120 countdown and 786432 collision full-RAM/trace cases, including
-every u16 index, wrapping byte gates, callback index mutation and returned
-instruction pointers. Wrong byte rounding, unsigned gating, live-index slot
-selection and missing timer variants fail. Dedicated observation sources,
-libraries and fixtures still match their pins: countdown spawns 26 times
-and skips six; collision store branches execute four and two times.
-Legacy unaligned accesses are characterized on x86-64, not made Rust-valid.
+Independent restart review reconstructs all 38 surveyed sites and the ten
+selected transitions in nine routines. Captured indices retain their full
+unsigned half-slot meaning; local RAM borrows end before the writer. The
+whole commit and control source reconstruct exactly. Fresh controls pass
+136544 full-RAM/ordered-write cases; wrong address, width, stride, order and
+timer variants fail. Historical source reconstructs against all 66 pins;
+raw Speed logs confirm 189 selected full-RAM comparisons. Shared historical
+build outputs are not reused for this integration. Unselected sites remain
+outside this change, including the unhit horizontal collision branch.
 
-All 73 source/configuration/host/progress files, Cargo library, DLL and
-copied fixtures stay fixed. Only registry dependencies seed this checkout.
-Formatting, normal release (52.19s), host build
-(3.64s) and progress pass. The batch removes 2123 Rust lines,
-six raw-offset lines and 7475 c_int casts (7364 cast lines); unsafe functions
+Independent debris review reconstructs the complete single-function change
+and tests actual position getters. Fresh controls pass 393216 full-RAM,
+callback-trace and spawn-coordinate cases, with callbacks changing live
+indices and coordinates; all word velocities retain wrapping +16. Live-index
+ID clearing and +15 variants fail. Dedicated frozen observation source,
+libraries and fixtures retain all 73 pins and show 1048 velocity updates.
+Native unaligned controls characterize x86-64 behavior, not Rust validity.
+
+All 73 integration source/configuration/host/progress files, Cargo library,
+DLL and copied fixtures stay fixed. Only registry dependencies seed this
+checkout. Formatting, normal release (59.73s), host build
+(3.49s) and progress pass. The batch removes 105 Rust lines,
+55 raw-offset lines and 21 c_int casts (14 cast lines); unsafe functions
 remain 6520. This audit changes no maintained Rust or committed assets.
 
 Later source changes need their own integration. Remaining bosses, credits,
