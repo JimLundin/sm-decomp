@@ -1767,9 +1767,9 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     (*s).snes_open_bus = snes.openBus;
     (*s).input_control = (snes.ppuLatch, snes.autoJoyRead, snes.autoJoyTimer);
     (*s).wram_port_address = snes.ramAdr;
-    let dma = &*snes.dma;
-    (*s).dma_channels = dma.channel;
-    (*s).dma_timing = (dma.hdmaTimer, dma.dmaTimer, dma.dmaBusy);
+    let dma = snes.dma;
+    (*s).dma_channels = (*dma).channel;
+    (*s).dma_timing = ((*dma).hdmaTimer, (*dma).dmaTimer, (*dma).dmaBusy);
     (*s).arithmetic = (
         snes.multiplyA,
         snes.multiplyResult,
@@ -1990,9 +1990,9 @@ unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     snes.openBus = (*s).snes_open_bus;
     (snes.ppuLatch, snes.autoJoyRead, snes.autoJoyTimer) = (*s).input_control;
     snes.ramAdr = (*s).wram_port_address;
-    let dma = &mut *snes.dma;
-    dma.channel = (*s).dma_channels;
-    (dma.hdmaTimer, dma.dmaTimer, dma.dmaBusy) = (*s).dma_timing;
+    let dma = snes.dma;
+    (*dma).channel = (*s).dma_channels;
+    ((*dma).hdmaTimer, (*dma).dmaTimer, (*dma).dmaBusy) = (*s).dma_timing;
     (
         snes.multiplyA,
         snes.multiplyResult,

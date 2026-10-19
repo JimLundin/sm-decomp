@@ -9069,6 +9069,22 @@ the safe helper and its bus-reading wrapper; other own counters unchanged.
 Full word Cartesian and decimal movie coverage, arbitrary MMIO mutation and
 complete gameplay/render/audio remain open. Continue covered CPU cleanup.
 
+DMA snapshot initialized-field access (2026-10-19): capture and restore now
+access channels and timing through the raw DMA pointer, avoiding whole-Dma
+references over its uninitialized explicit seven-byte pad. Operational fields,
+write order, owner pointer, serialization and pad remain unchanged. Actual
+capture/restore boundary comparisons pass 65,536 cases across 155 operational
+fields, owner pointer and explicit pad bytes. Instrumented 3,600/0 replay
+executes 10,800 captures and 7,200 restores. Independent source/probe review
+finds no differences. Original clean source at `762ed08f` plus this change
+passes any% 129,712/0 (69.73s). Fresh frozen integration at `f0c4ec27` plus
+only this DMA change passes any% 129,712/0 (67.69s), captured native exit 0;
+the newer concurrent SBC edit is excluded. Cargo fmt/check and full release
+build pass (20.20s) using external SDL2. All own residue counters are unchanged;
+the live Rust-line increase of five belongs to the separate SBC work. No probe
+or ROM-derived assets enter the commit. Other whole-allocation validity,
+arbitrary MMIO, renderer/audio, masked RAM and boot-to-credits gaps remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
