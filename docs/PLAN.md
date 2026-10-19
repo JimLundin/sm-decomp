@@ -55,6 +55,14 @@ Explicit installed-toolchain cargo fmt --check and cargo build --release pass.
 No maintained source changes or new replay result belong to this audit; peer
 CPU/PPU edits remain separately owned and their integration replay is running.
 
+Further workspace cleanup (2026-10-19): moved oracle-render,
+oracle-sound-probe, oracle-slope-fix, bg-address-probe and oracle-review
+outside the checkout to temporary sm-workspace-retired-builds-20261019-b:
+539 files / 573.1 MiB. Current route/build scripts and live compiler/replay
+command lines have no references to those retired directories. Current
+release/verifier outputs, route inputs and comparison baselines remain.
+No source or residue changes; additional obsolete probe residue remains.
+
 ## The oracle
 
 Render initialization QC (2026-10-19): snes_init now initializes disableRender
