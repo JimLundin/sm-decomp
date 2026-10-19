@@ -9106,7 +9106,7 @@ wrapper; other own counters unchanged. Full word Cartesian and decimal movie
 coverage, arbitrary MMIO mutation and full gameplay/render/audio remain open.
 Continue covered CPU cleanup.
 
-Snapshot throughput probes (2026-10-19): frozen e8878518-source DLLs compare
+Snapshot throughput probes (2026-10-19): frozen 6e2f8971-source DLLs compare
 baseline/candidate/candidate/baseline with rendering explicitly enabled and
 the same custom audio backend. Complete-array equality replacing the three
 RAM/SRAM/VRAM memcmp conditions passes 12,000/0 in all four runs, native
@@ -9162,6 +9162,21 @@ normal metadata and optimized frozen core/DLL builds pass. Live CPU matches
 verified source. Rust lines +3 introduce the safe helper; other counters
 unchanged. Full gameplay/render/audio, arbitrary device mutations and ROR movie
 coverage remain open. Continue covered CPU cleanup.
+
+Renderer cost probe (2026-10-19): the same frozen 6e2f8971 source with
+explicit rendering and unchanged custom audio passes 20,000/0, native exit
+0 (33.59s with instrumentation). Temporary scope timers report inclusive
+PpuDrawWholeLine 15.536s/8,960,000 calls, PpuDrawBackgrounds
+7.052s/9,344,384 calls, sprite evaluation 3.844s/8,887,424 calls, and the
+entire per-window color-math conversion branch 4.984s/4,021,658 spans.
+WholeLine includes background and color-math work; sprite evaluation runs
+separately. These totals must not be summed as exclusive costs. Millions
+of timer calls add overhead; this selects a target, not a speedup estimate.
+Independent source/archive audit identifies all 84 retained baseline files
+as 6e2f8971, correcting the previous e8878518 attribution; all compared
+variants shared that baseline. No maintained renderer instrumentation is
+added. Next: isolate color-math conversion with separate pixel slices,
+measure its speed, and compare actual row output before adopting a change.
 
 ## Definition of done for any change
 
