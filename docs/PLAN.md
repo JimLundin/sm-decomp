@@ -48,10 +48,46 @@ The look-back compares the original Rust transpilation, 1311d3b4, with the
 to 955. Known abs16/AddToHiLo/SetHiLo copies now each have one implementation;
 swap16 and CFADD copies are gone. No literal operand remains in the old
 c_int/isize offset chain. Other promoted offsets are nonliteral expressions.
-The historical function pairs also need triage: disappearance from an AST
-report can mean changed code, another reported link, or a shorter function.
+Disappearance from an AST report can mean changed code, another reported
+link, or a shorter function; the historical pairs are triaged below.
 Continue auditing declarations, casts and state-update variants; this look-back
 is not complete and does not establish that every useful family was found.
+
+Historical-pair audit against 1b5149f8: of 147 original AST pairs missing
+from the earlier report, five have a current direct clone link and 96 more
+appear at 50 tokens/five lines. Two include wrappers under five lines. The
+remaining 44 pairs were read: 15 perform different operations, 11 belong to
+the projectile scope, 17 suggest larger families to expand, and one led to
+the five-routine position-clamp candidate. These are pair counts, not counts of
+independent families or proven equivalents. A changed report is not proof
+of accidental drift. The fresh scans take 5.7s and 8.1s respectively.
+
+Declaration audit: cross-file repeated struct names fall from 74 to zero;
+six type names and 328 constant names still repeat. Macro expansions are
+not included, and matching names do not prove identical types or values.
+The initializer scan finds 15 identical stbi__context expressions (300
+lines), five stbi__zbuf expressions (130 lines), and nested Huffman/callback
+initializers. Those nested counts overlap. Next expand coherent initializer,
+PPU setup, Fire Geyser child-shape, enemy row-scan and directional projectile
+families before selecting a rewrite. Keep unrelated state setters separate.
+
+Previous-position candidate held (2026-10-19): a historical transition pair
+expands to five routines in sm_91/sm_9b, including both grapple variants.
+The candidate shares the 12-pixel previous-coordinate clamp and the complete
+transition reset suffix. It would remove 212 lines, 86 raw accesses and two
+unsafe declarations. Exact reconstruction checks all 67 source files; a
+broader coordinate/threshold rescan finds only its shared implementation.
+Extracted old/new execution agrees in 1713936 cases across all 4096 bytes
+of the RAM region containing these fields; nonwrapping distance is rejected.
+Each coordinate/displacement word is swept against boundaries, not all pairs.
+Frozen 1b5149f8 plus the candidate passes any% 129712/0 (194.77s) and Speed
+Booster 148406/0 (264.17s), native exits 0. Formatting, normal release and
+progress pass. However, call-site probes find zero calls to all five sites
+in both movies; both observation runs exit 2 for missing required probes.
+The candidate is therefore pending outside maintained source, following the
+rule to leave unexercised gameplay rewrites pending. Its reductions are not
+included in committed progress. Resume with a normal-input grapple/transition
+route covering B_9, B_9B, C_7, BE98 and HandleSpecialGrappleBeamAngles.
 
 Liquid-decision source consolidation (2026-10-19): 19 decisions in 18 routines
 across sm_90/sm_91 share one safe height query. Structural searches included
