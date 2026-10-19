@@ -167,6 +167,11 @@ fn exchange_carry_emulation(cpu: &mut Cpu) {
     std::mem::swap(&mut cpu.c, &mut cpu.e);
     cpu_setFlags(cpu_getFlags(cpu), cpu);
 }
+unsafe fn update_status_bits(cpu: *mut Cpu, set: bool, game: &mut Game) {
+    let flags = cpu_getFlags(&*cpu);
+    let mask = fetch_byte(cpu, game);
+    cpu_setFlags(if set { flags | mask } else { flags & !mask }, &mut *cpu);
+}
 fn exchange_accumulator_bytes(cpu: &mut Cpu) {
     cpu.a = cpu.a.swap_bytes();
     set_zero_negative(cpu.a, true, cpu);
@@ -1724,7 +1729,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             compare_register(cpu, low, high, CpuRegister::Accumulator, game);
         }
         0xc2 => {
-            cpu_setFlags(cpu_getFlags(&*cpu) & !fetch_byte(cpu, game), &mut *cpu);
+            update_status_bits(cpu, false, game);
         }
         0xc3 => {
             let (low, high) = address_stack_relative(cpu, game);
@@ -1845,7 +1850,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             subtract_with_carry(cpu, low, high, game);
         }
         0xe2 => {
-            cpu_setFlags(cpu_getFlags(&*cpu) | fetch_byte(cpu, game), &mut *cpu);
+            update_status_bits(cpu, true, game);
         }
         0xe3 => {
             let (low, high) = address_stack_relative(cpu, game);

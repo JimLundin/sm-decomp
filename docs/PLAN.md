@@ -10545,6 +10545,23 @@ next platform underside, and obtain onward item/boss coverage. Held upper99BD
 ascent, cliff tuning, old9AD9 drop ammo and HDMA remain held. Credits, full
 gameplay/hardware, rendering/audio, masked RAM and ownership remain open.
 
+CPU shared status-bit updates (2026-10-19): REP/SEP use update_status_bits,
+capturing flags before the operand fetch and applying clear/set masks before
+the existing flag normalization. Callback SP/E/X/Y effects and saved flag
+semantics remain exact; no CPU reference spans the bus read. Frozen `c244317d`
+plus this change passes 1,048,576 actual old/current dispatch trace cases:
+every flags/mask pair, both E values, two PC boundaries and fixed/mutating
+callbacks. The mutation toggles E and updates flags/SP/X/Y; named CPU state,
+history and access traces match. These synthetic patterns do not exhaust
+arbitrary MMIO behavior. Prefix 3,600/0 (1.04s), native exit 0, executes
+REP/SEP 195,476/108,914 times. Clean full any% 129,712/0 (53.84s), native
+exit 0. Cargo fmt/check, full release/release-library builds with external
+SDL2, normal metadata and frozen optimized core/DLL pass. Live CPU matches
+verified source; peer PPU work is outside this replay. Rust lines +5 and
+unsafe functions +1 share the ordered status-mask bus operation; other own
+counters unchanged. Prior CPU holds and complete gameplay/render/audio
+remain open. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
