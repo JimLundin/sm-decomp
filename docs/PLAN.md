@@ -2246,34 +2246,42 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `72072fd5` shares the complete
-17-function Power Bomb / Crystal Flash window-rendering family. Independent
-source review preserves clipping, empty sentinels, live reads, row-store order,
-pointer setup, distinct byte/word counter updates and all five transition tails.
-All 202 unselected functions retain the composed peer source.
+Latest reviewed integration (2026-10-20): `b9655531` simplifies 1318 negative
+constants across 38 files: 366 in-range i32-to-signed casts become identical
+typed negatives, and 952 redundant operand parentheses disappear. Independent
+whole-source reconstruction verifies values, source/result types, AST spans
+and protected contexts. All 1120 ordinary expressions and 198 known RAM-macro
+expressions retain their context; unsigned and out-of-range casts are unchanged.
+The 366 compiler constant equalities pass, with no primitive-name shadows.
 
-The reviewed candidate passes 778700 extracted-code comparisons: exhaustive
-byte clipping and side selection, full-RAM traversal, pointer boundaries and
-five-stage cases. The two u8 wrapping tails are exercised; ExplosionYellow's
-out-of-allocation i32 tail domain is excluded. These scoped checks preserve
-the original valid-memory domains, without claiming every joint state or
-general Game alias safety. All ten focused-check pins and the DLL hash remain
-stable; the completed reviewers' work was reused.
-
-Independent three-way composition reproduces the complete final sm_88.rs
-exactly after line-ending normalization, including the reviewed LoROM/core
-imports. All 73 inputs in the commit match the reviewed candidate, and all
-79 replay pins remain stable after completion. Normal release (24.57s),
+All 73 committed inputs match the reviewed candidate. Its base is the exact
+reviewed HDMA source; only seven obsolete sm_88 selections disappear from the
+preliminary batch. All 78 replay pins remain stable. Normal release (22.67s),
 formatting/check and progress pass. Full any% passes 129712/0
-(115.13s wall, 114.97s replay), native exit 0; no duplicate build or replay.
+(137.00s wall, 136.85s replay), native exit 0. A disk-full build attempt was
+retried successfully without source changes; the completed final build and
+replay were reused for review. Net Rust lines -1129, total 144364; 366 cast
+tokens disappear, with all 15857 i32 casts retained. Raw-offset expressions
+remain 3823 and unsafe functions remain 6445.
 
-Net Rust lines -375, total 145493; unsafe functions fall seven to 6445 and
-raw-offset expressions fall 48 to 3823. The prior `19214770` / `fc340e34`
-LoROM/import review and its scoped pointer-order and lifetime checks remain
-included. Concurrent ROM-bank-wrapper edits are outside this committed
-snapshot and its verification. Broader readability, frontend execution,
-full credits and global alias safety remain incomplete; the any% movie has
-zero ending/credits-state frames and does not prove every explosion variant.
+The included `72072fd5` shares all 17 Power Bomb / Crystal Flash renderer and
+stage functions (-375 lines, seven fewer unsafe functions). Independent source
+review preserves live reads, clipping sentinels, row-store order, pointer setup,
+counter widths and all five transition tails; 202 unselected functions stay
+exact. Its independent three-way composition reproduces the complete source.
+All 73 committed inputs and 79 replay pins match its reviewed snapshot;
+release (24.57s) and any% 129712/0 (115.13s wall, 114.97s replay) pass.
+
+The HDMA comparison passes 778700 scoped cases for byte clipping, side selection,
+full-RAM traversal, pointer boundaries and five stages. Both u8 wrapping tails
+are exercised; ExplosionYellow's out-of-allocation i32 tail domain is excluded.
+All ten focused-check pins and its DLL hash remain stable. The completed
+reviewers' work was reused; these checks do not establish every joint state or
+general Game alias safety. Earlier LoROM/import reviews and scoped pointer-order
+and lifetime checks remain included. Concurrent ROM-bank-wrapper edits are
+outside this committed snapshot and its verification. Broader readability,
+frontend execution and full credits remain incomplete; the any% movie has zero
+ending/credits-state frames and does not prove every explosion variant.
 
 The prior `2ddf3af0` shares all twelve corpse
 tile initializers. Independent reconstruction accounts for all 50 ordered
