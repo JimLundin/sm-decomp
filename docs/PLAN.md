@@ -14685,6 +14685,25 @@ definitions: raw offsets-14, cast lines-17, Rust lines-1; unsafe functions
 and other own counters unchanged. Further indexed-field/update cleanup,
 gameplay/credits, hardware/audio/masks and ownership remain open.
 
+Enemy-projectile ID clearing (2026-10-19): reuse the byte-backed ID
+setter for ClearEprojs and EprojInstr_Delete. Both routines are safe Rust.
+Clear retains descending word slots17..0; Delete preserves unsigned index
+rounding, writes only the ID word and returns the same null instruction pointer.
+
+Frozen a6b668d5 plus only this change passes
+any%129712/0 (200.09s) and Hi-Jump99191/0 (172.55s),
+native exits0. Observed Hi-Jump99191/0 (174.17s) checks
+1254 complete-RAM stores against original unaligned ID writes:
+58 clear calls, each with exact descending store order, and 210
+Delete calls. Clean and observed non-timing diagnostics match after probe
+stripping. All other frozen source files and maintained changed sections
+match. No observers are committed; concurrent edits remain separate.
+
+Cargo fmt/check, normal release build and progress pass. Including setter:
+raw offsets-2, cast lines-7, unsafe functions-2, Rust lines-7. Other own
+counters unchanged. Further projectile field/update cleanup and broader
+gameplay/credits, hardware/audio/masks and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

@@ -817,6 +817,9 @@ impl EprojStateMut<'_> {
             self.write(base, word_index, 0);
         }
     }
+    fn set_id(&mut self, word_index: usize, value: u16) {
+        self.write(0x1997, word_index, value);
+    }
     fn set_index(&mut self, value: u16) {
         self.write(0x1991, 0, value);
     }
@@ -832,13 +835,9 @@ pub unsafe fn DisableEprojs(game: &mut Game) {
         .offset(0x198d as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh17 = (*fresh17 as ::core::ffi::c_int & !(0x8000 as ::core::ffi::c_int)) as uint16;
 }
-pub unsafe fn ClearEprojs(game: &mut Game) {
-    let mut i: ::core::ffi::c_int = 34 as ::core::ffi::c_int;
-    while i >= 0 as ::core::ffi::c_int {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset((i >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-        i -= 2 as ::core::ffi::c_int;
+pub fn ClearEprojs(game: &mut Game) {
+    for word_index in (0..18).rev() {
+        EprojStateMut(&mut game.g_ram).set_id(word_index, 0);
     }
 }
 unsafe fn SpawnEprojInner(mut j: uint16, mut gfx_idx: uint16, game: &mut Game) -> Option<uint16> {
@@ -951,15 +950,9 @@ pub unsafe fn EprojRunAll(game: &mut Game) {
         }
     }
 }
-pub unsafe fn EprojInstr_Delete(
-    mut k: uint16,
-    mut epjp: *const uint8,
-    game: &mut Game,
-) -> *const uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-    return ::core::ptr::null::<uint8>();
+pub fn EprojInstr_Delete(k: uint16, epjp: *const uint8, game: &mut Game) -> *const uint8 {
+    EprojStateMut(&mut game.g_ram).set_id(usize::from(k >> 1), 0);
+    ::core::ptr::null()
 }
 pub unsafe fn EprojInstr_Sleep(
     mut k: uint16,
