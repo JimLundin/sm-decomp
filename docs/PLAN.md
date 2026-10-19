@@ -13304,6 +13304,26 @@ counters unchanged. Frozen replays contain only this routine change;
 peer edits remain preserved. PLM decrement/Chozo coverage holds and complete
 credits/gameplay/hardware/audio/masks/ownership remain open.
 
+PLM draw commands (2026-10-19): ProcessPlmDrawInstruction now uses
+byte-backed slot/block RAM and unaligned live command/operand words.
+Horizontal/vertical stride selection, captured vertical width, per-block
+read-before-store order, zero terminator and signed X/Y displacement from
+the original block origin remain exact. Wide destination arithmetic still
+rounds odd byte indices down before adding the level_data base10002.
+ROM-or-RAM instruction resolution and callback boundaries remain unchanged.
+
+Frozen b1e7dca4 plus only this change passes any%129712/0
+(169.00s), native exit0, and pickup route68606/0
+(105.17s), native exit0. Observed pickup route68606/0
+(105.18s) executes 3765 commands, including 741 vertical
+and 3024 horizontal commands. Maintained source has no observers.
+Arithmetic audit matches500000 stride/odd-index/signed-displacement cases;
+this adds no movie coverage or arbitrary-alias proof. Cargo fmt/check and
+release build pass. Own raw offsets-6, cast lines-23, Rust lines-26; other
+own counters unchanged. Frozen replays contain only this routine change;
+peer edits remain preserved. PLM decrement/Chozo coverage holds and complete
+credits/gameplay/hardware/audio/masks/ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

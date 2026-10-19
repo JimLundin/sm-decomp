@@ -1543,64 +1543,38 @@ unsafe fn RomPtr_84orRAM(mut addr: uint16_t, game: &mut Game) -> *mut uint8 {
         return RomPtr_RAM(addr, game);
     };
 }
-pub unsafe fn ProcessPlmDrawInstruction(mut v0: uint16, game: &mut Game) {
-    let mut v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut p: *mut uint16 = RomPtr_84orRAM(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xde6c as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as uint16_t,
-        game,
-    ) as *mut uint16;
-    let mut dst: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1c87 as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset(v1 as isize);
-    let mut dst_base: uint16 = dst;
+pub unsafe fn ProcessPlmDrawInstruction(k: uint16, game: &mut Game) {
+    let slot = usize::from(k >> 1) * 2;
+    let draw_instruction =
+        u16::from_le_bytes([game.g_ram[0xde6c + slot], game.g_ram[0xde6d + slot]]);
+    let mut words = RomPtr_84orRAM(draw_instruction, game) as *const u16;
+    let mut destination =
+        u16::from_le_bytes([game.g_ram[0x1c87 + slot], game.g_ram[0x1c88 + slot]]);
+    let origin = destination;
     loop {
-        let fresh28 = p;
-        p = p.offset(1);
-        let mut v4: uint16 = *fresh28;
-        if v4 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
-            let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-            let mut t: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x7a5 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                * 2 as ::core::ffi::c_int;
-            while i < v4 as uint8 as ::core::ffi::c_int {
-                let fresh29 = p;
-                p = p.offset(1);
-                *((&raw mut game.g_ram as *mut uint8).offset(0x10002 as ::core::ffi::c_int as isize)
-                    as *mut uint16)
-                    .offset(
-                        (dst as ::core::ffi::c_int + i * t >> 1 as ::core::ffi::c_int) as isize,
-                    ) = *fresh29;
-                i += 1;
-            }
+        let command = words.read_unaligned();
+        words = words.add(1);
+        let stride = if command & 0x8000 != 0 {
+            usize::from(u16::from_le_bytes([game.g_ram[0x7a5], game.g_ram[0x7a6]])) * 2
         } else {
-            let mut i_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-            while i_0 < v4 as uint8 as ::core::ffi::c_int {
-                let fresh30 = p;
-                p = p.offset(1);
-                *((&raw mut game.g_ram as *mut uint8).offset(0x10002 as ::core::ffi::c_int as isize)
-                    as *mut uint16)
-                    .offset(
-                        (dst as ::core::ffi::c_int + i_0 * 2 as ::core::ffi::c_int
-                            >> 1 as ::core::ffi::c_int) as isize,
-                    ) = *fresh30;
-                i_0 += 1;
-            }
+            2
+        };
+        for block in 0..usize::from(command as u8) {
+            let word = words.read_unaligned();
+            words = words.add(1);
+            // The original word indexing rounds odd byte destinations down.
+            let offset = 0x10002 + ((usize::from(destination) + block * stride) >> 1) * 2;
+            game.g_ram[offset..offset + 2].copy_from_slice(&word.to_le_bytes());
         }
-        if *p == 0 {
+        let displacement = words.read_unaligned();
+        if displacement == 0 {
             break;
         }
-        dst = (dst_base as ::core::ffi::c_int
-            + 2 as ::core::ffi::c_int
-                * (*p as int8 as ::core::ffi::c_int
-                    + (*p as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as int8
-                        as ::core::ffi::c_int
-                        * *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x7a5 as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int)) as uint16;
-        p = p.offset(1);
+        let x = i32::from(displacement as u8 as i8);
+        let y = i32::from((displacement >> 8) as u8 as i8);
+        let width = i32::from(u16::from_le_bytes([game.g_ram[0x7a5], game.g_ram[0x7a6]]));
+        destination = (i32::from(origin) + 2 * (x + y * width)) as u16;
+        words = words.add(1);
     }
 }
 pub unsafe fn PlmInstr_Sleep(plmp: *const uint8, k: uint16, game: &mut Game) -> *const uint8 {
