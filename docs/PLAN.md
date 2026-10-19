@@ -12131,6 +12131,19 @@ maintained source or residue changes, no ROM-derived artifacts committed.
 The quality session owns the Waver correction and full integration. Outbound
 cross-session messaging still fails its local MCP connection; incoming works.
 
+Independent final Waver gradient review (2026-10-19): the final candidate's
+xray_offscreen_positive_stores matches the previously ROM-tested helper
+after ignoring its renamed function, comments and whitespace. An expanded
+temporary actual-ROM probe passes1,179,648 ordered-store comparisons: every
+16-bit gradient in either edge position paired with0306, origins0000/FE00/
+FFFF and starts0/144/458. Ordered destination address/value vectors and
+independent final scratch-model checks match, nativeexit0. The earlier
+25,760-case probe covers all even display starts and both destinations;
+neither matrix exhausts the full Cartesian product or outer angle/caller
+behavior. No maintained source/residue changes or ROM-derived assets belong
+to this review. The owner has applied the candidate and is verifying full
+movies; that integration remains separate from these frozen kernel checks.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
