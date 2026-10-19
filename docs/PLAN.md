@@ -9,16 +9,104 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
-Checkpoint review follow-up (2026-10-19): the earlier codec serialized
-`Dma.pad`, seven unused bytes that `dma_init` and `dma_reset` never initialize.
-The pending repair projects only initialized DMA fields from the raw allocation,
-without reading padding or forming a reference to the whole `Dma`; source
-inspection passes. Repaired `checkpoint.rs` SHA-256:
+Checkpoint repair verified (2026-10-19): the earlier codec read uninitialized
+`Dma.pad`. The repaired codec projects initialized DMA fields directly from
+the allocation without referencing the whole Dma, and excludes explicit
+APU/SNES padding too. Initialization review covers CPU, SPC, both DSPs,
+both PPUs, inputs, APU, SNES and the custom player. Repaired checkpoint source:
 `6c9c1c43481fae6037829b764b1790429793cc26a879ab7f0f37949deda70a2e`.
-Hold checkpoint substitution for required full-boot commit verification until
-that repaired codec passes its continuation, fault, rejection and full-boot
-checks. Earlier successful scenarios, including `7de53cc1`, describe the
-earlier codec. This source review adds no replay result.
+The repaired runs below resolve the substitution hold. Earlier independent
+results, including `7de53cc1`, describe the earlier codec.
+
+## Validation strategy (2026-10-19)
+
+User priority: shorten the complete edit/build/result cycle. Replaying the
+entire any% fixture after every local edit is neither necessary nor sufficient:
+it exercises only six rooms and can miss the changed routine entirely.
+Use three levels of validation, with explicit limits on what each proves:
+
+1. During iteration, run the shortest scenario that executes the changed
+   routine and relevant branches, with the normal differential oracle,
+   rendering and audio advancement enabled. Prefer an existing verified
+   prefix; for late behavior, use a verifier checkpoint before the setup that
+   matters. Include the effect of the change (the next callback, frame, room
+   transition or persistent write), not just a function entry. Record calls
+   and the frame range. A room name or a zero-failure run alone is not evidence
+   that a function executed. If it does not execute, choose another route or
+   extend the inputs; do not repeat the same uncovered movie.
+2. Before a focused gameplay commit, run its exercised scenarios on the final
+   build, plus formatting, release build and progress. A checkpoint proves
+   behavior from its recorded state, not that the changed build reaches that
+   state from boot. Reuse across gameplay changes therefore needs review of
+   earlier effects and the exercised branches. For this substitution, start
+   before the changed behavior's relevant setup; if the checkpoint bypasses
+   earlier affected calls or prerequisites, use boot. Changes to initialization,
+   shared RAM access, dispatch with broad reach, runtime, hardware, audio,
+   oracle checks or checkpoint code require full boot replay before commit.
+   Uncertain scope also falls back to boot. Constructed tests supplement
+   ordinary input execution for arithmetic/aliasing boundaries.
+3. Run full any% and the broadest relevant gameplay route on each completed
+   subsystem batch, at most five focused commits or 30 minutes of changes
+   since the last full check, whichever comes first, and before publishing an
+   integration. Build once, replay independent routes in separate processes,
+   and do not rebuild a loaded DLL. Do not replay shorter fixtures that are
+   exact prefixes of a longer included route unless their end-state assertion differs. Attribute
+   any integration failure to the intervening small commits and repair it.
+   Full boot checks remain the regression check for history and interactions;
+   they do not replace changed-code execution evidence.
+
+The existing verifier now supports `--checkpoint-out`, `--checkpoint-in`
+and repeatable `--require-hit` options. A required explicit function/branch
+probe with zero calls fails the run; labels do not infer execution from room
+presence. Use these qualified scenarios for the focused commits above;
+the unconditional full-any% rule is replaced by this strategy. The CLI's
+default remains a full boot replay when no checkpoint or frame limit is given.
+Checkpoints are local disposable files, never Git artifacts. They must bind
+to the ROM, preceding controller inputs, audio mode and compatible runtime.
+Any cache invalidation or uncertainty uses the ordinary boot path.
+
+Repaired checkpoint validation on frozen 49b6ac06 plus the verifier change:
+clean any% 129712/0 (231.93s including startup), Waver 58109/0 (106.02s),
+and the complete 29909-frame resumed Waver remainder (62.04s) all pass,
+native exits 0. Boot and resumed runs produce
+byte-identical continuation state at 28550 and 58109, including both PPUs,
+CPU/DMA/input state, SRAM, both audio implementations and recorder logs.
+The 350-frame Morph Ball eye-beam scenario takes 0.95s including process
+startup versus 47.99s from boot to the same endpoint under shared load.
+An observed version executes all 14 fading calls at 28505..28518: 13 fading
+steps and one completion. A changed completion-table word produces exactly
+one failing frame at 28518, exit 1; it cannot save a checkpoint. These probes
+are temporary, and the final clean source contains no gameplay instrumentation.
+
+Custom and physical-audio boot/resume checks at frame 1000 have identical
+continuation bytes. Missing probes, changed runtime/ROM/input-prefix/audio
+identity, corrupt payloads, duplicate requirements and out-of-range segments
+are rejected. Missing-probe and unmet-credits runs cannot save checkpoints.
+A direct check of the exact DMA codec/reset and C-layout declarations saves
+183 initialized semantic bytes with padding left uninitialized; changing the
+padding leaves those bytes identical, and loading leaves padding untouched.
+This establishes these checkpoint scenarios, not universal state coverage.
+Formatting/check, normal Cargo release and progress pass. The explicit
+state codec, probe reporting and argument host add 663 Rust lines, seven
+unsafe functions, one C ABI export and one no_mangle symbol; gameplay
+residue is unchanged. This addition buys complete-state resume and rejection
+checks in the existing verifier. No ROM,
+checkpoint, diagnostic helper or benchmark data is committed.
+
+Four repaired-codec cycles each make a real gameplay-probe edit, run normal
+Cargo release build and then the Python `--cargo` verifier command. Order is
+boot / segment / segment / boot. Mean complete turnaround is 101.86s from
+boot versus 44.34s for the exercised segment, 56.47% less elapsed time.
+Every rebuilt probe executes 14 calls at inputs 28505..28518. Individual
+boot cycles are 128.50s and 75.22s; segment cycles are 36.53s and 52.16s.
+Shared-machine load varies. Cargo takes 32.06s and 46.15s in the segment
+cycles, so compilation now dominates this short scenario. Probes are absent
+from maintained gameplay and the final clean verification source.
+
+Continue selecting the earliest scenario with actual changed-code hits and
+an adequate effect tail. Broaden route coverage where no existing scenario
+executes the target. Keep this in the normal CLI; no benchmark service,
+evidence store, dashboard or separate validation framework.
 
 Independent checkpoint quality review (2026-10-19): frozen `78e60d32`
 plus the six reviewed checkpoint/probe source and host files passes any%
@@ -14207,8 +14295,9 @@ hardware/audio/masks/ownership remain unfinished.
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
-2. The verify run (phase 1) over the any% movie has no new failing frames
-   compared with `main`.
+2. The scenarios required by the validation strategy above have no new failing
+   frames. Focused gameplay commits may use qualified exercised segments;
+   shared/runtime changes and integration batches require full boot routes.
 3. `sh tools/progress.sh` numbers did not go up, or the commit says why.
 4. Every rewritten routine actually executes in the verification scenario.
    For gameplay, demonstrate calls on movie frames that exercise the changed
@@ -14467,7 +14556,7 @@ Cargo fmt/check, release build with the installed external SDL2 library, and
 progress pass. This change modifies only the build script and this plan;
 all own Rust residue counters are unchanged.
 
-1. **Run it once — done.** Put the ROM in `rom/sm.smc`, run
+1. **Run it once â€” done.** Put the ROM in `rom/sm.smc`, run
    `cargo run --release -- rom/sm.smc` from the repo root, play a minute and
    confirm no `Verify failure!` lines. Linux or WSL first. If anything
    differs from what snesrev's C build did, that is a transpile bug: fix it
@@ -14516,21 +14605,21 @@ all own Rust residue counters are unchanged.
    Linux full any% also passes: 129,712 frames, zero failures, 216.62 seconds.
    Final-source smoke and any% passed; low% and 100% repeats are still running:
    https://github.com/JimLundin/sm-decomp/actions/runs/39060756294.
-2. **Headless verify mode — done.** Add `sm verify <rom> <inputs> [--frames N]`:
+2. **Headless verify mode â€” done.** Add `sm verify <rom> <inputs> [--frames N]`:
    no window, no audio, unthrottled, `RM_BOTH`. It feeds one recorded
    controller word per game frame through the same path as `RtlRunFrame`,
    counts failing frames, prints the first one with the differing RAM
    addresses (named via `ram_map`), and exits non-zero on any failure.
    Implemented in `sm/src/verify.rs`, also shared by the Windows DLL host.
    Local DLL smoke: 3,600 frames, zero mismatches, 4.69 seconds.
-3. **Inputs — done.** Restore movie import (`.lsmv` and `.bk2` to one `u16` per
+3. **Inputs â€” done.** Restore movie import (`.lsmv` and `.bk2` to one `u16` per
    frame) from `crates/movie` in the archive branch, as a module or a small
    `tools/` binary. The TAS will not stay in sync with snesrev's frame loop
    (lag frames differ), and that is fine: the comparison is still valid on
    whatever the inputs make the game do. Sync only affects coverage. Fix sync
    later if coverage stalls.
    Implemented in `tools/movie_inputs.py`; all three movies imported.
-4. **Baseline — done.** Record the failing-frame count for the any%, low% and 100%
+4. **Baseline â€” done.** Record the failing-frame count for the any%, low% and 100%
    movies on `main` in this file. Target: zero, apart from known snesrev
    mismatches, which get listed here with their frame and cause.
    Baselines on main (2026-10-17):
@@ -14546,7 +14635,7 @@ all own Rust residue counters are unchanged.
    and 100% at `21c8a165` (618.18s / 373.15s). The final Actions matrix above
    reruns all three on `f2569067`; its full any% passed in 216.62s.
    No known mismatches in these replays.
-5. **Speed — done.** A full any% verify should finish in a few minutes. If it is
+5. **Speed â€” done.** A full any% verify should finish in a few minutes. If it is
    slower, profile the snapshot and compare path before anything else.
    Local full any% takes about three minutes; all movies run concurrently.
 
@@ -14555,7 +14644,7 @@ all own Rust residue counters are unchanged.
 Mechanical refactors, each verified with the phase 1 run. Order matters:
 every step makes the next one easier.
 
-1. **Shared types — done.** Repeated C structs and typedefs now have one
+1. **Shared types â€” done.** Repeated C structs and typedefs now have one
    definition in `types.rs`; copies are public re-exports.
    Preparation while phase 1 runs: the first mechanical batch can consolidate
    `LongPtr` (22 identical copies), `OamEnt` (7), and `VramWriteEntry` (18)
@@ -14614,7 +14703,7 @@ every step makes the next one easier.
    these dependencies explicitly in a later hardware-type batch. Remaining
    batches: aliases, gameplay data, hardware/music closure, runtime/platform
    types, then a duplicate inventory before marking this item done.
-2. **Rust linkage — done.** Replace `extern "C" { fn Foo(); }` declarations with `use` of the real
+2. **Rust linkage â€” done.** Replace `extern "C" { fn Foo(); }` declarations with `use` of the real
    function. Then drop `#[no_mangle]` and `extern "C"` from Rust-to-Rust
    functions. Keep the C ABI only at the SDL boundary.
    After shared types, pilot the three `snes/input.rs` exports and their sole
@@ -14655,7 +14744,7 @@ every step makes the next one easier.
    -> 261,547; other counters unchanged. Final-source Linux validation
    passed on `bd036cd8`: format, release build, smoke and full any% all pass.
    https://github.com/JimLundin/sm-decomp/actions/runs/39066700833.
-3. **Crate bindings and stable — done.** Handwritten SDL/OpenGL FFI replaced
+3. **Crate bindings and stable â€” done.** Handwritten SDL/OpenGL FFI replaced
    with crate bindings; `extern_types` dropped and toolchain moved to stable.
    SDL batch applied: handwritten functions/events now use `sdl2-sys` 0.38;
    integer config domains retain exact values, SDL enums adapted at boundary.
@@ -18758,11 +18847,11 @@ probe resolves movie coverage; prioritize normal-input coverage or oracle gaps.
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
-- Raw `g_ram` offsets → named accessors generated from `ram_map.rs`
+- Raw `g_ram` offsets â†’ named accessors generated from `ram_map.rs`
   (`ram.samus_x_pos()`, `ram.enemy(k).y_pos`), still backed by `g_ram`.
-- `as ::core::ffi::c_int` chains → the actual unsigned/signed 8/16-bit
+- `as ::core::ffi::c_int` chains â†’ the actual unsigned/signed 8/16-bit
   arithmetic, with `wrapping_*` where the SNES wraps.
-- Function pointer tables and `switch` dispatch → `match` and enums.
+- Function pointer tables and `switch` dispatch â†’ `match` and enums.
 - Remove `unsafe` once a function no longer touches raw pointers.
 
 The hand-written Rust in the archive (`restart/`, `crates/port`,

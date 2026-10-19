@@ -85,6 +85,12 @@ def main():
     parser.add_argument("rom", type=Path)
     parser.add_argument("inputs", type=Path)
     parser.add_argument("--frames", type=int)
+    parser.add_argument("--checkpoint-in", type=Path,
+                        help="resume a local verifier checkpoint; --frames counts from that point")
+    parser.add_argument("--checkpoint-out", type=Path,
+                        help="save a new local verifier checkpoint after the last frame")
+    parser.add_argument("--require-hit", action="append", default=[], metavar="PROBE",
+                        help="require an explicit routine/branch probe to execute (repeatable)")
     parser.add_argument("--no-build", action="store_true",
                         help="reuse target/verify-dll/sm_verify.dll")
     parser.add_argument("--cargo", action="store_true",
@@ -99,6 +105,15 @@ def main():
     root = Path(__file__).resolve().parents[1]
     # Paths are resolved before changing cwd so invocation works from anywhere.
     rom, inputs = args.rom.resolve(), args.inputs.resolve()
+    replay_args = [str(rom), str(inputs)]
+    if args.frames is not None:
+        replay_args.extend(["--frames", str(args.frames)])
+    for probe in args.require_hit:
+        replay_args.extend(["--require-hit", probe])
+    for option, path in (("--checkpoint-in", args.checkpoint_in),
+                         ("--checkpoint-out", args.checkpoint_out)):
+        if path is not None:
+            replay_args.extend([option, str(path.resolve())])
     dll = root / "target" / "verify-dll" / "sm_verify.dll"
     if not args.no_build:
         dll = build(root, args.rustc, args.cargo)
@@ -112,6 +127,14 @@ def main():
                 if directory.is_dir():
                     dll_directories.append(os.add_dll_directory(str(directory.resolve())))
     host = ctypes.CDLL(str(dll))
+    if args.checkpoint_in is not None or args.checkpoint_out is not None or args.require_hit:
+        if not hasattr(host, "sm_verify_args"):
+            raise RuntimeError("cached DLL predates segment options; run without --no-build")
+        host.sm_verify_args.argtypes = [ctypes.c_uint32, ctypes.POINTER(ctypes.c_char_p)]
+        host.sm_verify_args.restype = ctypes.c_int
+        argv = (ctypes.c_char_p * len(replay_args))(
+            *(arg.encode("utf-8") for arg in replay_args))
+        return host.sm_verify_args(len(replay_args), argv)
     host.sm_verify.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_uint64]
     host.sm_verify.restype = ctypes.c_int
     return host.sm_verify(str(rom).encode("utf-8"), str(inputs).encode("utf-8"),

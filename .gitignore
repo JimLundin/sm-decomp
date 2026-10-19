@@ -10,4 +10,5 @@
 /movies/*.inputs
 # Save states and logs written by the game.
 /saves/
+*.smvchk
 *.log

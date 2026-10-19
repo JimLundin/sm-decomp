@@ -98,4 +98,7 @@ pub mod host;
 
 pub mod game_state;
 
+/// Execution requirements for focused verifier scenarios.
+pub mod verify_probe;
+
 pub(crate) mod native_audio;

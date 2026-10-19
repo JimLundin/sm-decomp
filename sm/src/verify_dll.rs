@@ -67,24 +67,10 @@ pub unsafe extern "C" fn sm_verify(
     inputs: *const c_char,
     frames: u64,
 ) -> c_int {
-    let mut owned_game = sm::game_state::Game::new();
-    let game = &mut *owned_game;
-
-    if STARTED.swap(true, Ordering::SeqCst) {
-        eprintln!("verify: use a separate Python process for each replay");
-        return 2;
-    }
     if rom.is_null() || inputs.is_null() {
         eprintln!("verify: missing ROM or input path");
         return 2;
     }
-    sm::host::install_host_hooks(sm::host::HostHooks {
-        die: host_die,
-        warning: host_warning,
-        apu_lock: host_apu_lock,
-        apu_unlock: host_apu_unlock,
-    });
-    stderr = __acrt_iob_func(2);
     let mut args = Vec::new();
     for path in [rom, inputs] {
         match CStr::from_ptr(path).to_str() {
@@ -98,5 +84,45 @@ pub unsafe extern "C" fn sm_verify(
     if frames != 0 {
         args.extend(["--frames".to_owned(), frames.to_string()]);
     }
-    verify::run_args(&args, game)
+    run(&args)
+}
+
+/// The normal CLI argument path, including verifier checkpoint options.
+#[no_mangle]
+pub unsafe extern "C" fn sm_verify_args(argc: u32, argv: *const *const c_char) -> c_int {
+    if argv.is_null() || argc > 1024 {
+        eprintln!("verify: invalid arguments");
+        return 2;
+    }
+    let mut args = Vec::new();
+    for &arg in std::slice::from_raw_parts(argv, argc as usize) {
+        if arg.is_null() {
+            eprintln!("verify: null argument");
+            return 2;
+        }
+        match CStr::from_ptr(arg).to_str() {
+            Ok(arg) => args.push(arg.to_owned()),
+            Err(_) => {
+                eprintln!("verify: argument is not valid UTF-8");
+                return 2;
+            }
+        }
+    }
+    run(&args)
+}
+
+unsafe fn run(args: &[String]) -> c_int {
+    if STARTED.swap(true, Ordering::SeqCst) {
+        eprintln!("verify: use a separate Python process for each replay");
+        return 2;
+    }
+    let mut game = Game::new();
+    sm::host::install_host_hooks(sm::host::HostHooks {
+        die: host_die,
+        warning: host_warning,
+        apu_lock: host_apu_lock,
+        apu_unlock: host_apu_unlock,
+    });
+    stderr = __acrt_iob_func(2);
+    verify::run_args(args, &mut game)
 }

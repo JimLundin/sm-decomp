@@ -2,6 +2,8 @@
 use sm::game_state::Game;
 use std::{collections::BTreeSet, ffi::CString, time::Instant};
 
+mod checkpoint;
+
 #[derive(Default)]
 struct ReplayCoverage {
     states: std::collections::BTreeMap<u16, usize>,
@@ -105,10 +107,13 @@ pub fn run_args(args: &[String], game: &mut Game) -> i32 {
 
 fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
     if args.len() < 2 {
-        return Err("usage: sm verify <rom> <inputs> [--frames N] [--load-sram]".into());
+        return Err("usage: sm verify <rom> <inputs> [--frames N] [--load-sram] [--checkpoint-in PATH] [--checkpoint-out PATH] [--require-hit NAME]...".into());
     }
     let mut frame_limit = None;
     let mut load_sram = false;
+    let mut checkpoint_in = None;
+    let mut checkpoint_out = None;
+    let mut required_probes = Vec::new();
     let mut options = args[2..].iter();
     while let Some(option) = options.next() {
         match option.as_str() {
@@ -122,8 +127,24 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
                 );
             }
             "--load-sram" if !load_sram => load_sram = true,
+            "--checkpoint-in" if checkpoint_in.is_none() => {
+                checkpoint_in = Some(options.next().ok_or("missing checkpoint input path")?);
+            }
+            "--checkpoint-out" if checkpoint_out.is_none() => {
+                checkpoint_out = Some(options.next().ok_or("missing checkpoint output path")?);
+            }
+            "--require-hit" => {
+                required_probes.push(options.next().ok_or("missing probe name")?.clone());
+            }
             _ => return Err(format!("unknown or repeated option: {option}")),
         }
+    }
+    sm::verify_probe::configure(&required_probes)?;
+    if load_sram && (checkpoint_in.is_some() || checkpoint_out.is_some()) {
+        return Err("checkpoints require the deterministic clean-SRAM boot".into());
+    }
+    if checkpoint_out.is_some_and(|path| std::path::Path::new(path).exists()) {
+        return Err("checkpoint output already exists; choose a new path".into());
     }
     let saved_sram = if load_sram {
         let sram = std::fs::read("saves/sm.srm").map_err(|e| format!("saves/sm.srm: {e}"))?;
@@ -153,13 +174,17 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
         // bit 0, Y at bit 1, ... R at bit 11 (the input latch reverses it).
         inputs.push(pad.reverse_bits());
     }
-    let frames = frame_limit.unwrap_or(inputs.len());
-    if frames == 0 || frames > inputs.len() {
+    if frame_limit == Some(0) || frame_limit.is_some_and(|n| n > inputs.len()) {
         return Err(format!(
-            "requested {frames} frames, inputs contain {}",
+            "invalid frame limit, inputs contain {}",
             inputs.len()
         ));
     }
+    let rom = if checkpoint_in.is_some() || checkpoint_out.is_some() {
+        std::fs::read(&args[0]).map_err(|e| format!("{}: {e}", args[0]))?
+    } else {
+        Vec::new()
+    };
     let filename = CString::new(args[0].as_bytes()).map_err(|_| "invalid ROM path")?;
     let start = Instant::now();
     unsafe {
@@ -193,11 +218,32 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             1024,
             0,
         );
+        let first = match checkpoint_in {
+            Some(path) => checkpoint::load(std::path::Path::new(path), game, &rom, &inputs)?,
+            None => 0,
+        };
+        let frames = frame_limit.unwrap_or(inputs.len() - first);
+        let end = first
+            .checked_add(frames)
+            .filter(|&end| end <= inputs.len())
+            .ok_or("requested segment extends past the movie")?;
+        if frames == 0 {
+            return Err("requested segment is empty".into());
+        }
+        if checkpoint_in.is_some() {
+            eprintln!("Checkpoint segment: input frames {first}..{end}; prefix was not replayed by this build");
+        }
+        // Initialization and checkpoint loading are setup, not segment hits.
+        sm::verify_probe::configure(&required_probes)?;
         let mut discarded_audio = [0i16; 534 * 2];
         let mut coverage = ReplayCoverage::default();
         // Optional console diagnostics share the normal CLI and DLL replay path.
         let trace = std::env::var_os("SM_VERIFY_TRACE").is_some();
-        for (index, &pad) in inputs[..frames].iter().enumerate() {
+        for (offset, &pad) in inputs[first..end].iter().enumerate() {
+            let index = first + offset;
+            if !required_probes.is_empty() {
+                sm::verify_probe::begin_frame(index);
+            }
             // Undrawn rows must not retain a prior mismatch or stale pixels.
             // No frame is running; keep access raw while each PPU retains
             // its pointer to the array. Each write clears one whole array.
@@ -207,7 +253,7 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             // Advance the music driver once per frame without playing audio.
             sm::rtl::RtlRenderAudio(discarded_audio.as_mut_ptr(), 534, 2, game);
             coverage.observe(game, index, trace);
-            let completed = index + 1;
+            let completed = offset + 1;
             if completed % 10_000 == 0 {
                 let failures = game.VERIFY_FAILURES;
                 eprintln!(
@@ -224,9 +270,21 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             "Verified {frames} frames: {failures} failing frames ({:.2}s)",
             start.elapsed().as_secs_f64()
         );
+        let probes = sm::verify_probe::report();
+        if failures != 0 {
+            if checkpoint_out.is_some() {
+                eprintln!("Checkpoint not saved: replay failed");
+            }
+            return Ok(failures);
+        }
+        probes?;
         if std::env::var_os("SM_VERIFY_REQUIRE_CREDITS").is_some() && coverage.credits_frames() == 0
         {
             return Err("replay never entered the ending/credits state (39)".into());
+        }
+        if let Some(path) = checkpoint_out {
+            checkpoint::save(std::path::Path::new(path), game, &rom, &inputs, end)?;
+            eprintln!("Saved verifier checkpoint before input frame {end}: {path}");
         }
         Ok(failures)
     }

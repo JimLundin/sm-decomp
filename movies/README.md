@@ -45,6 +45,49 @@ python tools/verify_dll.py rom/sm.smc movies/any.inputs --cargo
 Cargo checks sources and dependencies on every build. Build errors stop
 before replay. Keep the SDL2 environment for subsequent `--no-build` runs.
 
+For a late gameplay change, the verifier can save a local checkpoint and
+replay a short suffix with the same oracle, rendered-frame checks and audio
+advancement. This is a verifier checkpoint, not a frontend save state.
+`--frames` counts frames executed by this invocation; input indices printed
+for a resumed segment are absolute, zero-based movie indices.
+
+For example, the local Charge Beam route described in `docs/PLAN.md`
+contains the Morph Ball eye-beam sequence at frames 28200..28550:
+
+```powershell
+python tools/verify_dll.py rom/sm.smc movies/charge-beam.inputs --cargo --frames 28200 --checkpoint-out target/morph.smvchk
+python tools/verify_dll.py rom/sm.smc movies/charge-beam.inputs --cargo --checkpoint-in target/morph.smvchk --frames 350
+```
+
+The first command verifies the prefix and creates a new checkpoint. After
+editing gameplay, the second command rebuilds and verifies only 350 frames.
+Omit `--frames` to replay the entire remaining suffix. Checkpoints reject a
+different ROM, preceding controller inputs, audio backend, incompatible
+runtime source or corrupt payload. Runtime/state-layout changes require a
+new checkpoint from boot. Gameplay changes may reuse one, but the suffix
+does not validate the changed program's earlier history. Outputs must be new
+paths, and failing runs never produce checkpoints. Keep these ROM-derived
+files local and ignored by Git.
+
+To establish that the changed code actually runs, insert an explicit probe
+at the routine entry and inside each relevant changed branch, for example:
+
+```rust
+crate::verify_probe::hit("morph-fade");
+```
+
+Then append `--require-hit morph-fade` to the segment command. Repeat the
+option for branch labels. A required probe with zero calls makes the run
+exit 2 even if all compared frames match. The report gives call counts and
+first/last input-frame indices. Labels count explicit `hit` calls; they do
+not search function names or infer execution from room coverage. Keep probes
+while iterating and checking the final changed body, then remove temporary
+probes and rerun the same segment on the clean build. Extend the segment far
+enough to observe the behavior's effects. Omit `--require-hit` after removing
+its probes. See the
+[validation strategy](../docs/PLAN.md#validation-strategy-2026-10-19) for when
+full boot replays are required and the integration cadence.
+
 The DLL script builds before replaying; `--rustc` selects a compiler when it
 is not on PATH. Use `--no-build` only to reuse a DLL built from the source you
 intend to verify, and do not rebuild it while another process has it loaded.
