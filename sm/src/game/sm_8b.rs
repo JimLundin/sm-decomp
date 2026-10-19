@@ -569,6 +569,48 @@ pub const fnSamus_FrameHandlerAlfa_Func12: i32 = 0x90e6c9;
 pub const fnSamus_Func15: i32 = 0x90e833;
 pub const fnSamusDrawHandler_Default: i32 = 0x90eb52;
 pub const fnlocret_8B9585: i32 = 0x8b9585;
+// Cinematic graphics loads keep source, destination, then transfer size together.
+// RAM destinations are byte offsets; VRAM destinations are word addresses.
+enum CinematicAsset {
+    Decompress(u32, isize),
+    VramWords(u32, u16, u16),
+    VramLowBytes(u32, u16, u16),
+    VramHighBytes(u32, u16, u16),
+}
+
+impl CinematicAsset {
+    unsafe fn load(self, game: &mut Game) {
+        let (transfer, destination, vmain) = match self {
+            Self::Decompress(source, destination) => {
+                DecompressToMem(
+                    source,
+                    (&raw mut game.g_ram as *mut u8).offset(destination),
+                    game,
+                );
+                return;
+            }
+            Self::VramWords(source, destination, size) => {
+                (StartDmaCopy::vram_words(1, source, size), destination, 0x80)
+            }
+            Self::VramLowBytes(source, destination, size) => (
+                StartDmaCopy::vram_low_bytes(1, source, size),
+                destination,
+                0,
+            ),
+            Self::VramHighBytes(source, destination, size) => (
+                StartDmaCopy::vram_high_bytes(1, source, size),
+                destination,
+                0x80,
+            ),
+        };
+        WriteReg(VMADDL as u16, destination as u8, game);
+        WriteReg(VMADDH as u16, (destination >> 8) as u8, game);
+        WriteReg(VMAIN as u16, vmain, game);
+        SetupDmaTransfer(&raw const transfer as *const c_void, game);
+        WriteReg(MDMAEN as u16, 2u8, game);
+    }
+}
+
 pub unsafe fn SetupPpuForTitleSequence(game: &mut Game) {
     crate::rtl::write_register_and_mirror(INIDISP as u16, 0x80, 0x51, false, game);
     crate::rtl::write_register_and_mirror(OBSEL as u16, 3, 0x52, false, game);
@@ -1606,17 +1648,8 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
                 *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1) = 64u8;
                 *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2) = 0x80u8;
                 crate::rtl::write_register_and_mirror(SETINI as u16, 0, 0x77, false, game);
-                DecompressToMem(
-                    0x9580d8u32,
-                    (&raw mut game.g_ram as *mut u8).offset(0x15000),
-                    game,
-                );
-                WriteReg(VMADDL as u16, 0u8, game);
-                WriteReg(VMADDH as u16, 0x60u8, game);
-                WriteReg(VMAIN as u16, 0x80u8, game);
-                static unk_8B92B9: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7f5000, 0x4000);
-                SetupDmaTransfer(&raw const unk_8B92B9 as *const c_void, game);
-                WriteReg(MDMAEN as u16, 2u8, game);
+                CinematicAsset::Decompress(0x9580d8, 0x15000).load(game);
+                CinematicAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
                 *(&raw mut game.g_ram as *mut u8).offset(0x51) = 0x80u8;
                 let mut v0: u16 = 0u16;
                 loop {
@@ -2576,32 +2609,11 @@ pub unsafe fn LoadTitleSequenceGraphics(game: &mut Game) {
             break;
         }
     }
-    DecompressToMem(
-        0x94e000u32,
-        (&raw mut game.g_ram as *mut u8).offset(0x10000),
-        game,
-    );
-    DecompressToMem(
-        0x96fc04u32,
-        (&raw mut game.g_ram as *mut u8).offset(0x14000),
-        game,
-    );
-    DecompressToMem(
-        0x9580d8u32,
-        (&raw mut game.g_ram as *mut u8).offset(0x15000),
-        game,
-    );
-    DecompressToMem(
-        0x95a5e1u32,
-        (&raw mut game.g_ram as *mut u8).offset(0x19000),
-        game,
-    );
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8B9BFF: StartDmaCopy = StartDmaCopy::vram_high_bytes(1, 0x7f0000, 0x4000);
-    SetupDmaTransfer(&raw const unk_8B9BFF as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
+    CinematicAsset::Decompress(0x94e000, 0x10000).load(game);
+    CinematicAsset::Decompress(0x96fc04, 0x14000).load(game);
+    CinematicAsset::Decompress(0x9580d8, 0x15000).load(game);
+    CinematicAsset::Decompress(0x95a5e1, 0x19000).load(game);
+    CinematicAsset::VramHighBytes(0x7f0000, 0x0000, 0x4000).load(game);
     WriteReg(VMAIN as u16, 0u8, game);
     WriteReg(VMADDL as u16, 0u8, game);
     WriteReg(VMADDH as u16, 0u8, game);
@@ -2613,18 +2625,8 @@ pub unsafe fn LoadTitleSequenceGraphics(game: &mut Game) {
             break;
         }
     }
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0u8, game);
-    WriteReg(VMAIN as u16, 0u8, game);
-    static unk_8B9C37: StartDmaCopy = StartDmaCopy::vram_low_bytes(1, 0x7f4000, 0x1000);
-    SetupDmaTransfer(&raw const unk_8B9C37 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x60u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8B9C57: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7f5000, 0x4000);
-    SetupDmaTransfer(&raw const unk_8B9C57 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
+    CinematicAsset::VramLowBytes(0x7f4000, 0x0000, 0x1000).load(game);
+    CinematicAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
     WriteRegWord(M7A as u16, 0x100u16, game);
     set_ram_word!(game.reg_M7A = 256u16);
     WriteRegWord(M7B as u16, 0u16, game);
@@ -3061,83 +3063,20 @@ pub unsafe fn CinematicFunction_Intro_Initial(game: &mut Game) {
             break;
         }
     }
-    DecompressToMem(
-        0x95f90eu32,
-        (&raw mut game.g_ram as *mut u8).offset(0x10000),
-        game,
-    );
-    DecompressToMem(
-        0x95d089u32,
-        (&raw mut game.g_ram as *mut u8).offset(0x18000),
-        game,
-    );
-    DecompressToMem(
-        0x9788ccu32,
-        (&raw mut game.g_ram as *mut u8).offset(0x19000),
-        game,
-    );
-    DecompressToMem(
-        0x96ff14u32,
-        (&raw mut game.g_ram as *mut u8).offset(0x19800),
-        game,
-    );
-    DecompressToMem(
-        0x95e4c2u32,
-        (&raw mut game.g_ram as *mut u8).offset(0x1b800),
-        game,
-    );
-    DecompressToMem(
-        0x978d12u32,
-        (&raw mut game.g_ram as *mut u8).offset(0x1e000),
-        game,
-    );
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BA469: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7f0000, 0x8000);
-    SetupDmaTransfer(&raw const unk_8BA469 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x40u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BA489: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7f8000, 0x900);
-    SetupDmaTransfer(&raw const unk_8BA489 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x48u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BA4A9: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7f9000, 0x800);
-    SetupDmaTransfer(&raw const unk_8BA4A9 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x4cu8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BA4C9: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7fe000, 0x800);
-    SetupDmaTransfer(&raw const unk_8BA4C9 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x50u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BA4E9: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7f9800, 0x2000);
-    SetupDmaTransfer(&raw const unk_8BA4E9 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x60u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BA509: StartDmaCopy = StartDmaCopy::vram_words(1, 0x9ad200, 0x2000);
-    SetupDmaTransfer(&raw const unk_8BA509 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x6eu8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BA529: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7fb800, 0x2400);
-    SetupDmaTransfer(&raw const unk_8BA529 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    DecompressToMem(
-        0x95d713u32,
-        (&raw mut game.g_ram as *mut u8).offset(0x1a000),
-        game,
-    );
+    CinematicAsset::Decompress(0x95f90e, 0x10000).load(game);
+    CinematicAsset::Decompress(0x95d089, 0x18000).load(game);
+    CinematicAsset::Decompress(0x9788cc, 0x19000).load(game);
+    CinematicAsset::Decompress(0x96ff14, 0x19800).load(game);
+    CinematicAsset::Decompress(0x95e4c2, 0x1b800).load(game);
+    CinematicAsset::Decompress(0x978d12, 0x1e000).load(game);
+    CinematicAsset::VramWords(0x7f0000, 0x0000, 0x8000).load(game);
+    CinematicAsset::VramWords(0x7f8000, 0x4000, 0x900).load(game);
+    CinematicAsset::VramWords(0x7f9000, 0x4800, 0x800).load(game);
+    CinematicAsset::VramWords(0x7fe000, 0x4c00, 0x800).load(game);
+    CinematicAsset::VramWords(0x7f9800, 0x5000, 0x2000).load(game);
+    CinematicAsset::VramWords(0x9ad200, 0x6000, 0x2000).load(game);
+    CinematicAsset::VramWords(0x7fb800, 0x6e00, 0x2400).load(game);
+    CinematicAsset::Decompress(0x95d713, 0x1a000).load(game);
     EnableNMI(game);
     set_ram_word!(game.screen_fade_delay = 3u16);
     set_ram_word!(game.screen_fade_counter = 3u16);
@@ -3241,12 +3180,7 @@ pub unsafe fn CinematicFunc_Intro_WaitForFadeOut(game: &mut Game) {
 }
 pub unsafe fn CinematicFunc_Intro_SetupTextPage2(game: &mut Game) {
     ClearJapaneseTextTiles(game);
-    WriteReg(VMADDL as u16, 0x80u8, game);
-    WriteReg(VMADDH as u16, 0x41u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BA689: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e4000, 0x600);
-    SetupDmaTransfer(&raw const unk_8BA689 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
+    CinematicAsset::VramWords(0x7e4000, 0x4180, 0x600).load(game);
     crate::rtl::write_register_and_mirror(TM as u16, 0x16, 0x69, false, game);
     ClearCinematicBgObjects(0x2fu16, game);
     EnableCinematicBgObjects(game);
@@ -4798,26 +4732,10 @@ pub unsafe fn CinematicFunction_Intro_Func54(game: &mut Game) {
             break;
         }
     }
-    DecompressToMem(
-        0x95a82fu32,
-        (&raw mut game.g_ram as *mut u8).offset(0x10000),
-        game,
-    );
-    DecompressToMem(
-        0x96fe69u32,
-        (&raw mut game.g_ram as *mut u8).offset(0x14000),
-        game,
-    );
-    DecompressToMem(
-        0x96d10au32,
-        (&raw mut game.g_ram as *mut u8).offset(0x15000),
-        game,
-    );
-    WriteRegWord(VMADDL as u16, 0u16, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BBD04: StartDmaCopy = StartDmaCopy::vram_high_bytes(1, 0x7f0000, 0x4000);
-    SetupDmaTransfer(&raw const unk_8BBD04 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
+    CinematicAsset::Decompress(0x95a82f, 0x10000).load(game);
+    CinematicAsset::Decompress(0x96fe69, 0x14000).load(game);
+    CinematicAsset::Decompress(0x96d10a, 0x15000).load(game);
+    CinematicAsset::VramHighBytes(0x7f0000, 0x0000, 0x4000).load(game);
     WriteReg(VMAIN as u16, 0u8, game);
     WriteRegWord(VMADDL as u16, 0u16, game);
     v1 = 0x4000i16;
@@ -4828,16 +4746,8 @@ pub unsafe fn CinematicFunction_Intro_Func54(game: &mut Game) {
             break;
         }
     }
-    WriteRegWord(VMADDL as u16, 0u16, game);
-    WriteReg(VMAIN as u16, 0u8, game);
-    static unk_8BBD3C: StartDmaCopy = StartDmaCopy::vram_low_bytes(1, 0x7f4000, 0x300);
-    SetupDmaTransfer(&raw const unk_8BBD3C as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteRegWord(VMADDL as u16, 0x6000u16, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BBD5C: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7f5000, 0x4000);
-    SetupDmaTransfer(&raw const unk_8BBD5C as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
+    CinematicAsset::VramLowBytes(0x7f4000, 0x0000, 0x300).load(game);
+    CinematicAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
     WriteRegWord(M7A as u16, 0x100u16, game);
     set_ram_word!(game.reg_M7A = 256u16);
     WriteRegWord(M7B as u16, 0u16, game);
@@ -5128,27 +5038,10 @@ pub unsafe fn CinematicFunctionBlackoutFromCeres(game: &mut Game) {
             break;
         }
     }
-    DecompressToMem(
-        0x95a82fu32,
-        (&raw mut game.g_ram as *mut u8).offset(0x10000),
-        game,
-    );
-    DecompressToMem(
-        0x96fe69u32,
-        (&raw mut game.g_ram as *mut u8).offset(0x14000),
-        game,
-    );
-    DecompressToMem(
-        0x96d10au32,
-        (&raw mut game.g_ram as *mut u8).offset(0x15000),
-        game,
-    );
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BC19C: StartDmaCopy = StartDmaCopy::vram_high_bytes(1, 0x7f0000, 0x4000);
-    SetupDmaTransfer(&raw const unk_8BC19C as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
+    CinematicAsset::Decompress(0x95a82f, 0x10000).load(game);
+    CinematicAsset::Decompress(0x96fe69, 0x14000).load(game);
+    CinematicAsset::Decompress(0x96d10a, 0x15000).load(game);
+    CinematicAsset::VramHighBytes(0x7f0000, 0x0000, 0x4000).load(game);
     WriteReg(VMAIN as u16, 0u8, game);
     WriteReg(VMADDL as u16, 0u8, game);
     WriteReg(VMADDH as u16, 0u8, game);
@@ -5160,24 +5053,9 @@ pub unsafe fn CinematicFunctionBlackoutFromCeres(game: &mut Game) {
             break;
         }
     }
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0u8, game);
-    WriteReg(VMAIN as u16, 0u8, game);
-    static unk_8BC1D4: StartDmaCopy = StartDmaCopy::vram_low_bytes(1, 0x7f4600, 0x600);
-    SetupDmaTransfer(&raw const unk_8BC1D4 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x60u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BC1F4: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7f5000, 0x4000);
-    SetupDmaTransfer(&raw const unk_8BC1F4 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x60u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BC214: StartDmaCopy = StartDmaCopy::vram_words(1, 0x9ad200, 0x1a00);
-    SetupDmaTransfer(&raw const unk_8BC214 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
+    CinematicAsset::VramLowBytes(0x7f4600, 0x0000, 0x600).load(game);
+    CinematicAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
+    CinematicAsset::VramWords(0x9ad200, 0x6000, 0x1a00).load(game);
     WriteRegWord(M7A as u16, 0x100u16, game);
     set_ram_word!(game.reg_M7A = 256u16);
     WriteRegWord(M7B as u16, 0u16, game);
@@ -5499,34 +5377,11 @@ pub unsafe fn CinematicFunction_Intro_Func86(game: &mut Game) {
             .offset(i as u16 as i32 as isize) as *mut u16) = 0u16;
         i -= 2i32;
     }
-    DecompressToMem(
-        0x978adbu32,
-        (&raw mut game.g_ram as *mut u8).offset(0x19000),
-        game,
-    );
-    DecompressToMem(
-        0x96ec76u32,
-        (&raw mut game.g_ram as *mut u8).offset(0x15000),
-        game,
-    );
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0u8, game);
-    WriteReg(VMAIN as u16, 0u8, game);
-    static unk_8BC6E4: StartDmaCopy = StartDmaCopy::vram_low_bytes(1, 0x7f4300, 0x300);
-    SetupDmaTransfer(&raw const unk_8BC6E4 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x5cu8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BC704: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7f9000, 0x800);
-    SetupDmaTransfer(&raw const unk_8BC704 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x60u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BC724: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7f5000, 0x4000);
-    SetupDmaTransfer(&raw const unk_8BC724 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
+    CinematicAsset::Decompress(0x978adb, 0x19000).load(game);
+    CinematicAsset::Decompress(0x96ec76, 0x15000).load(game);
+    CinematicAsset::VramLowBytes(0x7f4300, 0x0000, 0x300).load(game);
+    CinematicAsset::VramWords(0x7f9000, 0x5c00, 0x800).load(game);
+    CinematicAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
     WriteRegWord(M7A as u16, 0x100u16, game);
     set_ram_word!(game.reg_M7A = 256u16);
     WriteRegWord(M7B as u16, 0u16, game);
@@ -5865,60 +5720,16 @@ pub unsafe fn CinematicFunctionEscapeFromCebes(game: &mut Game) {
             break;
         }
     }
-    DecompressToMem(
-        0x98bcd6u32,
-        (&raw mut game.g_ram as *mut u8).offset(0x10000),
-        game,
-    );
-    DecompressToMem(
-        0x99a56fu32,
-        (&raw mut game.g_ram as *mut u8).offset(0x14000),
-        game,
-    );
-    DecompressToMem(
-        0x99d17eu32,
-        (&raw mut game.g_ram as *mut u8).offset(0x18000),
-        game,
-    );
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BD4FC: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7f8000, 0x4000);
-    SetupDmaTransfer(&raw const unk_8BD4FC as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x20u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BD51C: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7f8000, 0x4000);
-    SetupDmaTransfer(&raw const unk_8BD51C as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x60u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BD53C: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7f4000, 0x4000);
-    SetupDmaTransfer(&raw const unk_8BD53C as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BD55C: StartDmaCopy = StartDmaCopy::vram_high_bytes(1, 0x7f0000, 0x4000);
-    SetupDmaTransfer(&raw const unk_8BD55C as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    DecompressToMem(
-        0x988304u32,
-        (&raw mut game.g_ram as *mut u8).offset(0x18000),
-        game,
-    );
-    DecompressToMem(
-        0x95a82fu32,
-        (&raw mut game.g_ram as *mut u8).offset(0x10000),
-        game,
-    );
-    DecompressToMem(
-        0x96fe69u32,
-        (&raw mut game.g_ram as *mut u8).offset(0x14000),
-        game,
-    );
+    CinematicAsset::Decompress(0x98bcd6, 0x10000).load(game);
+    CinematicAsset::Decompress(0x99a56f, 0x14000).load(game);
+    CinematicAsset::Decompress(0x99d17e, 0x18000).load(game);
+    CinematicAsset::VramWords(0x7f8000, 0x0000, 0x4000).load(game);
+    CinematicAsset::VramWords(0x7f8000, 0x2000, 0x4000).load(game);
+    CinematicAsset::VramWords(0x7f4000, 0x6000, 0x4000).load(game);
+    CinematicAsset::VramHighBytes(0x7f0000, 0x0000, 0x4000).load(game);
+    CinematicAsset::Decompress(0x988304, 0x18000).load(game);
+    CinematicAsset::Decompress(0x95a82f, 0x10000).load(game);
+    CinematicAsset::Decompress(0x96fe69, 0x14000).load(game);
     let mut v3: u16 = 768u16;
     loop {
         *(((&raw mut game.g_ram as *mut u8).offset(0x14000)).offset(v3 as i32 as isize)
@@ -5928,41 +5739,13 @@ pub unsafe fn CinematicFunctionEscapeFromCebes(game: &mut Game) {
             break;
         }
     }
-    DecompressToMem(
-        0x98b5c1u32,
-        (&raw mut game.g_ram as *mut u8).offset(0x1e000),
-        game,
-    );
-    DecompressToMem(
-        0x98b857u32,
-        (&raw mut game.g_ram as *mut u8).offset(0x1e800),
-        game,
-    );
-    DecompressToMem(
-        0x98baedu32,
-        (&raw mut game.g_ram as *mut u8).offset(0x1f000),
-        game,
-    );
-    DecompressToMem(
-        0x98bccdu32,
-        (&raw mut game.g_ram as *mut u8).offset(0x1f800),
-        game,
-    );
-    DecompressToMem(
-        0x97e7deu32,
-        (&raw mut game.g_ram as *mut u8).offset(0xa000),
-        game,
-    );
-    DecompressToMem(
-        0x99d65bu32,
-        (&raw mut game.g_ram as *mut u8).offset(0x2000),
-        game,
-    );
-    DecompressToMem(
-        0x99d932u32,
-        (&raw mut game.g_ram as *mut u8).offset(0x6000),
-        game,
-    );
+    CinematicAsset::Decompress(0x98b5c1, 0x1e000).load(game);
+    CinematicAsset::Decompress(0x98b857, 0x1e800).load(game);
+    CinematicAsset::Decompress(0x98baed, 0x1f000).load(game);
+    CinematicAsset::Decompress(0x98bccd, 0x1f800).load(game);
+    CinematicAsset::Decompress(0x97e7de, 0xa000).load(game);
+    CinematicAsset::Decompress(0x99d65b, 0x2000).load(game);
+    CinematicAsset::Decompress(0x99d932, 0x6000).load(game);
     WriteRegWord(M7A as u16, 0x100u16, game);
     set_ram_word!(game.reg_M7A = 256u16);
     WriteRegWord(M7B as u16, 0u16, game);
@@ -6029,29 +5812,10 @@ pub unsafe fn CinematicFunction_Intro_Func111(game: &mut Game) {
     }
 }
 pub unsafe fn CinematicFunction_Intro_Func112(game: &mut Game) {
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BD746: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e2000, 0x4000);
-    SetupDmaTransfer(&raw const unk_8BD746 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x20u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BD766: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e2000, 0x4000);
-    SetupDmaTransfer(&raw const unk_8BD766 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    DecompressToMem(
-        0x98ed4fu32,
-        (&raw mut game.g_ram as *mut u8).offset(0x2000),
-        game,
-    );
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BD79B: StartDmaCopy = StartDmaCopy::vram_high_bytes(1, 0x7e2000, 0x4000);
-    SetupDmaTransfer(&raw const unk_8BD79B as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
+    CinematicAsset::VramWords(0x7e2000, 0x0000, 0x4000).load(game);
+    CinematicAsset::VramWords(0x7e2000, 0x2000, 0x4000).load(game);
+    CinematicAsset::Decompress(0x98ed4f, 0x2000).load(game);
+    CinematicAsset::VramHighBytes(0x7e2000, 0x0000, 0x4000).load(game);
     ClearPaletteFXObjects(game);
     ClearCinematicSprites(game);
     SpawnPalfxObject(addr_kPalfx_E1E0 as u16, game);
@@ -6086,65 +5850,17 @@ pub unsafe fn CinematicFunction_Intro_Func113(game: &mut Game) {
     }
 }
 pub unsafe fn CinematicFunction_Intro_Func115(game: &mut Game) {
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BD84C: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e6000, 0x4000);
-    SetupDmaTransfer(&raw const unk_8BD84C as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x20u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BD86C: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e6000, 0x4000);
-    SetupDmaTransfer(&raw const unk_8BD86C as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    DecompressToMem(
-        0x999101u32,
-        (&raw mut game.g_ram as *mut u8).offset(0x6000),
-        game,
-    );
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BD8A1: StartDmaCopy = StartDmaCopy::vram_high_bytes(1, 0x7e6000, 0x4000);
-    SetupDmaTransfer(&raw const unk_8BD8A1 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x40u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BD8C1: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7f8000, 0x6000);
-    SetupDmaTransfer(&raw const unk_8BD8C1 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x70u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BD8E1: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7fe000, 0x800);
-    SetupDmaTransfer(&raw const unk_8BD8E1 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x74u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BD901: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7fe800, 0x800);
-    SetupDmaTransfer(&raw const unk_8BD901 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x78u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BD921: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7ff000, 0x800);
-    SetupDmaTransfer(&raw const unk_8BD921 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x7cu8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BD941: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7ff800, 0x800);
-    SetupDmaTransfer(&raw const unk_8BD941 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x50u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BD961: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7ea000, 0x1000);
-    SetupDmaTransfer(&raw const unk_8BD961 as *const c_void, game);
-    crate::rtl::write_register_and_mirror(MDMAEN as u16, 2, 0x52, false, game);
+    CinematicAsset::VramWords(0x7e6000, 0x0000, 0x4000).load(game);
+    CinematicAsset::VramWords(0x7e6000, 0x2000, 0x4000).load(game);
+    CinematicAsset::Decompress(0x999101, 0x6000).load(game);
+    CinematicAsset::VramHighBytes(0x7e6000, 0x0000, 0x4000).load(game);
+    CinematicAsset::VramWords(0x7f8000, 0x4000, 0x6000).load(game);
+    CinematicAsset::VramWords(0x7fe000, 0x7000, 0x800).load(game);
+    CinematicAsset::VramWords(0x7fe800, 0x7400, 0x800).load(game);
+    CinematicAsset::VramWords(0x7ff000, 0x7800, 0x800).load(game);
+    CinematicAsset::VramWords(0x7ff800, 0x7c00, 0x800).load(game);
+    CinematicAsset::VramWords(0x7ea000, 0x5000, 0x1000).load(game);
+    game.g_ram[0x52] = 2;
     ClearPaletteFXObjects(game);
     ClearCinematicSprites(game);
     let mut v0: u16 = 256u16;
@@ -6526,106 +6242,26 @@ pub unsafe fn CinematicFunction_Intro_Func126(game: &mut Game) {
             break;
         }
     }
-    DecompressToMem(
-        0x979803u32,
-        (&raw mut game.g_ram as *mut u8).offset(0x10000),
-        game,
-    );
-    DecompressToMem(
-        0x97b957u32,
-        (&raw mut game.g_ram as *mut u8).offset(0x2000),
-        game,
-    );
-    DecompressToMem(
-        0x97d7fcu32,
-        (&raw mut game.g_ram as *mut u8).offset(0x6000),
-        game,
-    );
-    DecompressToMem(
-        0x97e7deu32,
-        (&raw mut game.g_ram as *mut u8).offset(0x1c000),
-        game,
-    );
-    DecompressToMem(
-        0x9796f4u32,
-        (&raw mut game.g_ram as *mut u8).offset(0x1e000),
-        game,
-    );
-    DecompressToMem(
-        0x97f987u32,
-        (&raw mut game.g_ram as *mut u8).offset(0x14000),
-        game,
-    );
-    DecompressToMem(
-        0x99da9fu32,
-        (&raw mut game.g_ram as *mut u8).offset(0x1e800),
-        game,
-    );
-    DecompressToMem(
-        0x99dab1u32,
-        (&raw mut game.g_ram as *mut u8).offset(0x1f000),
-        game,
-    );
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x20u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BDF39: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7fe800, 0x100);
-    SetupDmaTransfer(&raw const unk_8BDF39 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x24u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BDF59: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7ff000, 0x800);
-    SetupDmaTransfer(&raw const unk_8BDF59 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x40u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BDF79: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7fc000, 0x1000);
-    SetupDmaTransfer(&raw const unk_8BDF79 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x60u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BDF99: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e6000, 0x4000);
-    SetupDmaTransfer(&raw const unk_8BDF99 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x50u8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BDFB9: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7f0000, 0x2000);
-    SetupDmaTransfer(&raw const unk_8BDFB9 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    WriteReg(VMADDL as u16, 0u8, game);
-    WriteReg(VMADDH as u16, 0x4cu8, game);
-    WriteReg(VMAIN as u16, 0x80u8, game);
-    static unk_8BDFD9: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7fe000, 0x800);
-    SetupDmaTransfer(&raw const unk_8BDFD9 as *const c_void, game);
-    WriteReg(MDMAEN as u16, 2u8, game);
-    DecompressToMem(
-        0x99e089u32,
-        (&raw mut game.g_ram as *mut u8).offset(0x6000),
-        game,
-    );
-    DecompressToMem(
-        0x99ecc4u32,
-        (&raw mut game.g_ram as *mut u8).offset(0x8000),
-        game,
-    );
+    CinematicAsset::Decompress(0x979803, 0x10000).load(game);
+    CinematicAsset::Decompress(0x97b957, 0x2000).load(game);
+    CinematicAsset::Decompress(0x97d7fc, 0x6000).load(game);
+    CinematicAsset::Decompress(0x97e7de, 0x1c000).load(game);
+    CinematicAsset::Decompress(0x9796f4, 0x1e000).load(game);
+    CinematicAsset::Decompress(0x97f987, 0x14000).load(game);
+    CinematicAsset::Decompress(0x99da9f, 0x1e800).load(game);
+    CinematicAsset::Decompress(0x99dab1, 0x1f000).load(game);
+    CinematicAsset::VramWords(0x7fe800, 0x2000, 0x100).load(game);
+    CinematicAsset::VramWords(0x7ff000, 0x2400, 0x800).load(game);
+    CinematicAsset::VramWords(0x7fc000, 0x4000, 0x1000).load(game);
+    CinematicAsset::VramWords(0x7e6000, 0x6000, 0x4000).load(game);
+    CinematicAsset::VramWords(0x7f0000, 0x5000, 0x2000).load(game);
+    CinematicAsset::VramWords(0x7fe000, 0x4c00, 0x800).load(game);
+    CinematicAsset::Decompress(0x99e089, 0x6000).load(game);
+    CinematicAsset::Decompress(0x99ecc4, 0x8000).load(game);
     if ram_word!(game, game_time_hours) as i32 - 3i32 & 0x8000i32 != 0 {
-        WriteReg(VMADDL as u16, 0u8, game);
-        WriteReg(VMADDH as u16, 0u8, game);
-        WriteReg(VMAIN as u16, 0x80u8, game);
-        static unk_8BE027: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e2000, 0x4000);
-        SetupDmaTransfer(&raw const unk_8BE027 as *const c_void, game);
-        WriteReg(MDMAEN as u16, 2u8, game);
+        CinematicAsset::VramWords(0x7e2000, 0x0000, 0x4000).load(game);
     } else {
-        WriteReg(VMADDL as u16, 0u8, game);
-        WriteReg(VMADDH as u16, 0u8, game);
-        WriteReg(VMAIN as u16, 0x80u8, game);
-        static unk_8BE04B: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7f0000, 0x4000);
-        SetupDmaTransfer(&raw const unk_8BE04B as *const c_void, game);
-        WriteReg(MDMAEN as u16, 2u8, game);
+        CinematicAsset::VramWords(0x7f0000, 0x0000, 0x4000).load(game);
     }
     WriteRegWord(M7A as u16, 0x100u16, game);
     set_ram_word!(game.reg_M7A = 256u16);
@@ -6654,11 +6290,7 @@ pub unsafe fn CinematicFunction_Intro_Func126(game: &mut Game) {
         i -= 2i32;
     }
     CinematicFunction_Intro_Func127(game);
-    DecompressToMem(
-        0x97eeffu32,
-        (&raw mut game.g_ram as *mut u8).offset(0x10000),
-        game,
-    );
+    CinematicAsset::Decompress(0x97eeff, 0x10000).load(game);
     ClearCinematicBgObjects(0x7fu16, game);
     CinematicFunction_Intro_Func128(0x7fu16, game);
     EnableTextGlowObjects_(game);

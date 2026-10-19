@@ -31,6 +31,35 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Cinematic graphics loads (2026-10-20): one private loader shares all 92
+decompression and immediate VRAM-transfer operations across 11 setup handlers.
+All 230 payload values, widths, word/low-byte/high-byte modes, register order
+and the exceptional MDMAEN-after RAM mirror store remain exact. Packed DMA
+descriptors are consumed synchronously; two ordered word reads now explicitly
+use read_unaligned so the shared loader's local descriptors need no alignment
+assumption. Later descriptor fields are not prefetched.
+
+Net Rust lines -368, written raw RAM offsets -45 and unsafe functions +1
+for the shared loader. The cinematic stage has 142783 Rust lines before the
+separate inline-pointer consolidation. Independent complete-source and
+constructor/order review passes; all unselected bodies retain current source.
+Formatting/check and progress pass. Broader pointer validity remains open.
+
+Targeted extracted-code comparisons pass all 3904 operation, sequence and
+mirror-state cases with observing/mutating callbacks. All 256 early-mirror
+and two swapped-register negative controls are detected. The checker uses
+the same corrected packed reader on both sides; its alignment correction is
+covered by source review. These checks establish factoring/order equivalence
+at the mocked hardware boundary, not full hardware or cinematic coverage.
+
+Combined verification with inline RAM pointers on 07e30047 passes normal
+release (22.53s), formatting/check, progress and full any%
+129712/0 (101.36s), native exit 0. Both focused commits share
+this run; no cinematic-only replay is claimed. All 74 source/config/host
+inputs and 80 verification pins remain fixed. The final inline-pointer tree
+matches the frozen composition; broader readability and boot-to-credits
+remain open.
+
 Same-type casts (2026-10-20): release Clippy across all targets identifies
 1219 redundant primitive-integer/raw-pointer casts across 36 files. Removing
 only each cast suffix retains the exact operand, grouping, pointer constness,

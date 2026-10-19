@@ -1033,12 +1033,12 @@ pub unsafe fn SetupDmaTransfer(p: *const c_void, game: &mut Game) {
     let v2: i32 = (*s).chan as i32 * 16i32;
     WriteRegWord(
         (v2 + DMAP0 as i32) as SnesRegs as u16,
-        *(&raw const (*s).dmap as *mut u16),
+        (&raw const (*s).dmap).cast::<u16>().read_unaligned(),
         game,
     );
     WriteRegWord(
         (v2 + A1T0L as i32) as SnesRegs as u16,
-        *(&raw const (*s).a1.addr as *mut u16),
+        (&raw const (*s).a1.addr).read_unaligned(),
         game,
     );
     WriteReg((v2 + A1B0 as i32) as SnesRegs as u16, (*s).a1.bank, game);
