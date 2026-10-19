@@ -2293,427 +2293,72 @@ pub unsafe fn SetupDmaTransfer(mut p: *const ::core::ffi::c_void, game: &mut Gam
     );
 }
 pub unsafe fn NmiUpdateIoRegisters(game: &mut Game) {
-    WriteReg(
-        NMITIMEN as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x84 as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        INIDISP as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        OBSEL as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x52 as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        BGMODE as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        MOSAIC as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x57 as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        BG1SC as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x58 as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        BG2SC as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        BG3SC as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x5a as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        BG4SC as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x5c as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        BG12NBA as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        BG34NBA as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x5e as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        M7SEL as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x5f as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        W12SEL as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x60 as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        W34SEL as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x61 as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        WOBJSEL as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x62 as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        WH0 as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x63 as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        WH1 as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x64 as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        WH2 as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x65 as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        WH3 as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x66 as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        WBGLOG as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x67 as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        WOBJLOG as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x68 as ::core::ffi::c_int as isize),
-        game,
-    );
-    *(&raw mut game.g_ram as *mut uint8).offset(0x6a as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize);
-    WriteReg(
-        TM as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        TMW as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x6c as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        TS as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        TSW as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x6d as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        CGWSEL as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        CGADSUB as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize),
-        game,
-    );
-    *(&raw mut game.g_ram as *mut uint8).offset(0x70 as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x6e as ::core::ffi::c_int as isize);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x73 as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize);
-    WriteReg(
-        COLDATA as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x74 as ::core::ffi::c_int as isize)
-            .offset(0 as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        COLDATA as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x74 as ::core::ffi::c_int as isize)
-            .offset(1 as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        COLDATA as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x74 as ::core::ffi::c_int as isize)
-            .offset(2 as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        SETINI as ::core::ffi::c_int as uint16,
-        *(&raw mut game.g_ram as *mut uint8).offset(0x77 as ::core::ffi::c_int as isize),
-        game,
-    );
-    WriteReg(
-        BG1HOFS as ::core::ffi::c_int as uint16,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
-        game,
-    );
-    WriteReg(
-        BG1HOFS as ::core::ffi::c_int as uint16,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
-            .offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                    .wrapping_sub(1 as usize) as isize,
-            ),
-        game,
-    );
-    WriteReg(
-        BG1VOFS as ::core::ffi::c_int as uint16,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
-        game,
-    );
-    WriteReg(
-        BG1VOFS as ::core::ffi::c_int as uint16,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
-            .offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                    .wrapping_sub(1 as usize) as isize,
-            ),
-        game,
-    );
-    WriteReg(
-        BG2HOFS as ::core::ffi::c_int as uint16,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
-        game,
-    );
-    WriteReg(
-        BG2HOFS as ::core::ffi::c_int as uint16,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb5 as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
-            .offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                    .wrapping_sub(1 as usize) as isize,
-            ),
-        game,
-    );
-    WriteReg(
-        BG2VOFS as ::core::ffi::c_int as uint16,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb7 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
-        game,
-    );
-    WriteReg(
-        BG2VOFS as ::core::ffi::c_int as uint16,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb7 as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
-            .offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                    .wrapping_sub(1 as usize) as isize,
-            ),
-        game,
-    );
-    WriteReg(
-        BG3HOFS as ::core::ffi::c_int as uint16,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb9 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
-        game,
-    );
-    WriteReg(
-        BG3HOFS as ::core::ffi::c_int as uint16,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb9 as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
-            .offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                    .wrapping_sub(1 as usize) as isize,
-            ),
-        game,
-    );
-    WriteReg(
-        BG3VOFS as ::core::ffi::c_int as uint16,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xbb as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
-        game,
-    );
-    WriteReg(
-        BG3VOFS as ::core::ffi::c_int as uint16,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xbb as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
-            .offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                    .wrapping_sub(1 as usize) as isize,
-            ),
-        game,
-    );
-    WriteReg(
-        BG4HOFS as ::core::ffi::c_int as uint16,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xbd as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
-        game,
-    );
-    WriteReg(
-        BG4HOFS as ::core::ffi::c_int as uint16,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xbd as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
-            .offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                    .wrapping_sub(1 as usize) as isize,
-            ),
-        game,
-    );
-    WriteReg(
-        BG4VOFS as ::core::ffi::c_int as uint16,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xbf as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
-        game,
-    );
-    WriteReg(
-        BG4VOFS as ::core::ffi::c_int as uint16,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xbf as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
-            .offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                    .wrapping_sub(1 as usize) as isize,
-            ),
-        game,
-    );
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7eb as ::core::ffi::c_int as isize)
-        as *mut uint16 as *mut uint8)
-        .offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                .wrapping_sub(1 as usize) as isize,
-        ) = *(&raw mut game.g_ram as *mut uint8).offset(0x56 as ::core::ffi::c_int as isize);
-    if *(&raw mut game.g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
-        & 7 as ::core::ffi::c_int
-        == 7 as ::core::ffi::c_int
-        || *(&raw mut game.g_ram as *mut uint8).offset(0x56 as ::core::ffi::c_int as isize)
-            as ::core::ffi::c_int
-            & 7 as ::core::ffi::c_int
-            == 7 as ::core::ffi::c_int
-    {
-        WriteReg(
-            M7A as ::core::ffi::c_int as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x78 as ::core::ffi::c_int as isize)
-                as *mut uint16) as uint8,
-            game,
-        );
-        WriteReg(
-            M7A as ::core::ffi::c_int as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x78 as ::core::ffi::c_int as isize)
-                as *mut uint16 as *mut uint8)
-                .offset(
-                    (::core::mem::size_of::<uint16>() as usize)
-                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                        .wrapping_sub(1 as usize) as isize,
-                ),
-            game,
-        );
-        WriteReg(
-            M7B as ::core::ffi::c_int as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x7a as ::core::ffi::c_int as isize)
-                as *mut uint16) as uint8,
-            game,
-        );
-        WriteReg(
-            M7B as ::core::ffi::c_int as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x7a as ::core::ffi::c_int as isize)
-                as *mut uint16 as *mut uint8)
-                .offset(
-                    (::core::mem::size_of::<uint16>() as usize)
-                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                        .wrapping_sub(1 as usize) as isize,
-                ),
-            game,
-        );
-        WriteReg(
-            M7C as ::core::ffi::c_int as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x7c as ::core::ffi::c_int as isize)
-                as *mut uint16) as uint8,
-            game,
-        );
-        WriteReg(
-            M7C as ::core::ffi::c_int as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x7c as ::core::ffi::c_int as isize)
-                as *mut uint16 as *mut uint8)
-                .offset(
-                    (::core::mem::size_of::<uint16>() as usize)
-                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                        .wrapping_sub(1 as usize) as isize,
-                ),
-            game,
-        );
-        WriteReg(
-            M7D as ::core::ffi::c_int as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x7e as ::core::ffi::c_int as isize)
-                as *mut uint16) as uint8,
-            game,
-        );
-        WriteReg(
-            M7D as ::core::ffi::c_int as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x7e as ::core::ffi::c_int as isize)
-                as *mut uint16 as *mut uint8)
-                .offset(
-                    (::core::mem::size_of::<uint16>() as usize)
-                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                        .wrapping_sub(1 as usize) as isize,
-                ),
-            game,
-        );
-        WriteReg(
-            M7X as ::core::ffi::c_int as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x80 as ::core::ffi::c_int as isize)
-                as *mut uint16) as uint8,
-            game,
-        );
-        WriteReg(
-            M7X as ::core::ffi::c_int as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x80 as ::core::ffi::c_int as isize)
-                as *mut uint16 as *mut uint8)
-                .offset(
-                    (::core::mem::size_of::<uint16>() as usize)
-                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                        .wrapping_sub(1 as usize) as isize,
-                ),
-            game,
-        );
-        WriteReg(
-            M7Y as ::core::ffi::c_int as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x82 as ::core::ffi::c_int as isize)
-                as *mut uint16) as uint8,
-            game,
-        );
-        WriteReg(
-            M7Y as ::core::ffi::c_int as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x82 as ::core::ffi::c_int as isize)
-                as *mut uint16 as *mut uint8)
-                .offset(
-                    (::core::mem::size_of::<uint16>() as usize)
-                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                        .wrapping_sub(1 as usize) as isize,
-                ),
-            game,
-        );
+    WriteReg(NMITIMEN as u16, game.g_ram[0x84], game);
+    WriteReg(INIDISP as u16, game.g_ram[0x51], game);
+    WriteReg(OBSEL as u16, game.g_ram[0x52], game);
+    WriteReg(BGMODE as u16, game.g_ram[0x55], game);
+    WriteReg(MOSAIC as u16, game.g_ram[0x57], game);
+    WriteReg(BG1SC as u16, game.g_ram[0x58], game);
+    WriteReg(BG2SC as u16, game.g_ram[0x59], game);
+    WriteReg(BG3SC as u16, game.g_ram[0x5a], game);
+    WriteReg(BG4SC as u16, game.g_ram[0x5c], game);
+    WriteReg(BG12NBA as u16, game.g_ram[0x5d], game);
+    WriteReg(BG34NBA as u16, game.g_ram[0x5e], game);
+    WriteReg(M7SEL as u16, game.g_ram[0x5f], game);
+    WriteReg(W12SEL as u16, game.g_ram[0x60], game);
+    WriteReg(W34SEL as u16, game.g_ram[0x61], game);
+    WriteReg(WOBJSEL as u16, game.g_ram[0x62], game);
+    WriteReg(WH0 as u16, game.g_ram[0x63], game);
+    WriteReg(WH1 as u16, game.g_ram[0x64], game);
+    WriteReg(WH2 as u16, game.g_ram[0x65], game);
+    WriteReg(WH3 as u16, game.g_ram[0x66], game);
+    WriteReg(WBGLOG as u16, game.g_ram[0x67], game);
+    WriteReg(WOBJLOG as u16, game.g_ram[0x68], game);
+    game.g_ram[0x6a] = game.g_ram[0x69];
+    WriteReg(TM as u16, game.g_ram[0x69], game);
+    WriteReg(TMW as u16, game.g_ram[0x6c], game);
+    WriteReg(TS as u16, game.g_ram[0x6b], game);
+    WriteReg(TSW as u16, game.g_ram[0x6d], game);
+    WriteReg(CGWSEL as u16, game.g_ram[0x6f], game);
+    WriteReg(CGADSUB as u16, game.g_ram[0x72], game);
+    game.g_ram[0x70] = game.g_ram[0x6e];
+    game.g_ram[0x73] = game.g_ram[0x71];
+    WriteReg(COLDATA as u16, game.g_ram[0x74], game);
+    WriteReg(COLDATA as u16, game.g_ram[0x75], game);
+    WriteReg(COLDATA as u16, game.g_ram[0x76], game);
+    WriteReg(SETINI as u16, game.g_ram[0x77], game);
+
+    // Scroll and Mode 7 words latch low then high bytes through the same address.
+    WriteReg(BG1HOFS as u16, game.g_ram[0xb1], game);
+    WriteReg(BG1HOFS as u16, game.g_ram[0xb2], game);
+    WriteReg(BG1VOFS as u16, game.g_ram[0xb3], game);
+    WriteReg(BG1VOFS as u16, game.g_ram[0xb4], game);
+    WriteReg(BG2HOFS as u16, game.g_ram[0xb5], game);
+    WriteReg(BG2HOFS as u16, game.g_ram[0xb6], game);
+    WriteReg(BG2VOFS as u16, game.g_ram[0xb7], game);
+    WriteReg(BG2VOFS as u16, game.g_ram[0xb8], game);
+    WriteReg(BG3HOFS as u16, game.g_ram[0xb9], game);
+    WriteReg(BG3HOFS as u16, game.g_ram[0xba], game);
+    WriteReg(BG3VOFS as u16, game.g_ram[0xbb], game);
+    WriteReg(BG3VOFS as u16, game.g_ram[0xbc], game);
+    WriteReg(BG4HOFS as u16, game.g_ram[0xbd], game);
+    WriteReg(BG4HOFS as u16, game.g_ram[0xbe], game);
+    WriteReg(BG4VOFS as u16, game.g_ram[0xbf], game);
+    WriteReg(BG4VOFS as u16, game.g_ram[0xc0], game);
+    game.g_ram[0x7ec] = game.g_ram[0x56];
+    if game.g_ram[0x55] & 7 == 7 || game.g_ram[0x56] & 7 == 7 {
+        WriteReg(M7A as u16, game.g_ram[0x78], game);
+        WriteReg(M7A as u16, game.g_ram[0x79], game);
+        WriteReg(M7B as u16, game.g_ram[0x7a], game);
+        WriteReg(M7B as u16, game.g_ram[0x7b], game);
+        WriteReg(M7C as u16, game.g_ram[0x7c], game);
+        WriteReg(M7C as u16, game.g_ram[0x7d], game);
+        WriteReg(M7D as u16, game.g_ram[0x7e], game);
+        WriteReg(M7D as u16, game.g_ram[0x7f], game);
+        WriteReg(M7X as u16, game.g_ram[0x80], game);
+        WriteReg(M7X as u16, game.g_ram[0x81], game);
+        WriteReg(M7Y as u16, game.g_ram[0x82], game);
+        WriteReg(M7Y as u16, game.g_ram[0x83], game);
     }
 }
 pub unsafe fn NmiUpdatePalettesAndOam(game: &mut Game) {

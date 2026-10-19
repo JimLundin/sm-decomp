@@ -47,18 +47,18 @@ No maintained source or own residue counters change in this quality check.
 Later Cargo-profile and gameplay changes retain separate verification;
 full gameplay/credits, hardware/audio coverage and remaining masks stay open.
 
-Latest focused check: frozen `cd0a6111` plus safe OAM clears passes
-any% 129712/0 (199.39s) and Waver 58109/0 (104.81s), both native exits 0.
-ClearUnusedOam uses four-byte slices to hide only unused sprite Y positions,
-then resets oam_next_ptr. ClearOamExt still clears exactly 32 bytes.
-A shared 9,000-frame prefix passes 17,870 actual old/current full-RAM
-comparisons, 8,935 calls per routine, with both routines changing RAM.
-Constructed controls pass all 65,536 pointer words and 336 extension cases,
-preserving index rounding, high-pointer no-op behavior and neighboring RAM.
-Natural pointers are aligned and at most 512; odd/higher cases are constructed.
-Frozen hashes, exact observation stripping and independent review pass.
-Formatting, release build and progress pass. Own raw offsets -4, unsafe
-functions -2, cast lines -8 and Rust lines -7; other counters unchanged.
+Latest focused check: frozen `e1a9a3d3` plus direct NMI register reads passes
+any% 129712/0 (305.76s) and Waver 58109/0 (149.57s), both native exits 0.
+NmiUpdateIoRegisters retains all 47/59 ordered hardware writes, four mirror
+stores and live byte-read order. The shared 9,000-frame prefix passes with
+9,000 actual old/current comparisons: 7,841 neither-mode, 455 primary Mode 7
+and 704 fake-only Mode 7 calls. All three mode cases execute naturally.
+Another 4,608 hardware controls cover IRQ/timer flags, latch history, both
+PPUs and high mode bits. Full RAM, both PPUs, CPU/Snes/Cart fields and SRAM
+match; restoration is checked before each candidate call. Ordered register
+values and mirror states match at every write. Frozen hashes, exact stripping
+and independent review pass. Formatting, release build and progress pass.
+Own raw offsets -69, cast lines -137 and Rust lines -355; other counters unchanged.
 
 Everything that existed before is in the branch `archive/pre-transpile-2026-10-17`.
 
