@@ -9224,6 +9224,23 @@ matches verified source. Rust lines +1 introduce the safe helper; other counters
 unchanged. Full word Cartesian, arbitrary MMIO mutation and complete gameplay/
 render/audio coverage remain open; ROR stays held. Continue covered CPU cleanup.
 
+CPU safe transfers to accumulator (2026-10-19): TXA/TYA call safe
+transfer_to_accumulator. Destination MF controls width independently of XF;
+byte mode preserves high A, word mode copies the source word, and A-before-Z/N
+order is unchanged. Source argument is captured before the callback-free mutable
+reference. Independent source/probe review finds no differences. Frozen HEAD
+`b1541314` plus this change passes 4,194,304 actual old/current dispatcher cases
+across every source word, eight accumulator boundary/source entries including
+duplicates, both destination widths and incoming carry values (XF tracks carry
+in these constructed cases). Named CPU/bus fields, flags, cycles and PC history
+match. Prefix 3,600/0 (1.15s), native exit 0, executes TXA/TYA 31,326/43,943
+times. Clean full any% 129,712/0 (56.37s), native exit 0. Cargo fmt/check, full
+release and release-library builds with external SDL2, normal metadata and
+optimized frozen core/DLL builds pass. Live CPU matches verified source.
+Rust lines -2; other counters unchanged. Full source/accumulator Cartesian,
+arbitrary MMIO and complete gameplay/render/audio remain open. ROR stays held
+for contextual execution. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

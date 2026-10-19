@@ -865,6 +865,14 @@ fn update_y(delta: u16, cpu: &mut Cpu) {
     cpu.y = if cpu.xf { result & 0xff } else { result };
     set_zero_negative(cpu.y, cpu.xf, cpu);
 }
+fn transfer_to_accumulator(value: u16, cpu: &mut Cpu) {
+    cpu.a = if cpu.mf {
+        cpu.a & 0xff00 | value & 0xff
+    } else {
+        value
+    };
+    set_zero_negative(cpu.a, cpu.mf, cpu);
+}
 unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
     // Preserve the inherited history value of 0xffffffff when PC is zero.
     let cur_pc = (i32::from((*cpu).k) << 16 | (i32::from((*cpu).pc) - 1)) as u32;
@@ -1686,12 +1694,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0x8a => {
-                if (*cpu).mf {
-                    (*cpu).a = (*cpu).a & 0xff00 | ((*cpu).x & 0xff);
-                } else {
-                    (*cpu).a = (*cpu).x;
-                }
-                set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
+                transfer_to_accumulator((*cpu).x, &mut *cpu);
                 break;
             }
             0x8b => {
@@ -1758,12 +1761,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0x98 => {
-                if (*cpu).mf {
-                    (*cpu).a = (*cpu).a & 0xff00 | ((*cpu).y & 0xff);
-                } else {
-                    (*cpu).a = (*cpu).y;
-                }
-                set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
+                transfer_to_accumulator((*cpu).y, &mut *cpu);
                 break;
             }
             0x99 => {
