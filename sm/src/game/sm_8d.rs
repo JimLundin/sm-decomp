@@ -1,3 +1,4 @@
+pub use crate::game::constants::bank_8d::*;
 use crate::game::sm_80::{QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game_state::Game;
 use crate::rtl::AddToHiLo;
@@ -14,48 +15,6 @@ pub struct PalFxDef {
     pub instrs: VoidP,
 }
 pub use crate::types::Consts_8D;
-pub const addr_kPalfx_FFD5: Consts_8D = 65493;
-pub const addr_kPalfx_FFD1: Consts_8D = 65489;
-pub const addr_kPalfx_FFCD: Consts_8D = 65485;
-pub const addr_kPalfx_FFC9: Consts_8D = 65481;
-pub const addr_stru_8DF75D: Consts_8D = 63325;
-pub const addr_stru_8DF759: Consts_8D = 63321;
-pub const addr_word_8DEC76: Consts_8D = 60534;
-pub const addr_word_8DEB43: Consts_8D = 60227;
-pub const addr_off_8DE8B6: Consts_8D = 59574;
-pub const addr_off_8DE68A: Consts_8D = 59018;
-pub const addr_kPalfxInstrList_E45E: Consts_8D = 58462;
-pub const addr_off_8DE420: Consts_8D = 58400;
-pub const addr_off_8DE400: Consts_8D = 58368;
-pub const addr_off_8DE3E0: Consts_8D = 58336;
-pub const addr_kPalfx_E200: Consts_8D = 57856;
-pub const addr_stru_8DE1FC: Consts_8D = 57852;
-pub const addr_stru_8DE1F8: Consts_8D = 57848;
-pub const addr_stru_8DE1F4: Consts_8D = 57844;
-pub const addr_stru_8DE1F0: Consts_8D = 57840;
-pub const addr_kPalfx_E1E8: Consts_8D = 57832;
-pub const addr_kPalfx_E1E4: Consts_8D = 57828;
-pub const addr_kPalfx_E1E0: Consts_8D = 57824;
-pub const addr_kPalfx_E1DC: Consts_8D = 57820;
-pub const addr_kPalfx_E1D8: Consts_8D = 57816;
-pub const addr_kPalfx_E1D4: Consts_8D = 57812;
-pub const addr_kPalfx_E1D0: Consts_8D = 57808;
-pub const addr_kPalfx_E1CC: Consts_8D = 57804;
-pub const addr_kPalfx_E1C8: Consts_8D = 57800;
-pub const addr_kPalfx_E1C4: Consts_8D = 57796;
-pub const addr_stru_8DE1C0: Consts_8D = 57792;
-pub const addr_kPalfx_E1BC: Consts_8D = 57788;
-pub const addr_kPalfx_E1B8: Consts_8D = 57784;
-pub const addr_kPalfx_E1B0: Consts_8D = 57776;
-pub const addr_kPalfx_E1AC: Consts_8D = 57772;
-pub const addr_kPalfx_E1A8: Consts_8D = 57768;
-pub const addr_kPalfx_E1A4: Consts_8D = 57764;
-pub const addr_kPalfx_E1A0: Consts_8D = 57760;
-pub const addr_kPalfx_E19C: Consts_8D = 57756;
-pub const addr_kPalfx_E198: Consts_8D = 57752;
-pub const addr_kPalfx_E194: Consts_8D = 57748;
-pub const addr_off_8DE192: Consts_8D = 57746;
-pub const addr_locret_8DC5E3: Consts_8D = 50659;
 #[inline]
 unsafe fn RomPtr_8D(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
     return RomPtr(

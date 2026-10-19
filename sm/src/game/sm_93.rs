@@ -1,3 +1,4 @@
+pub use crate::game::constants::projectile_types::*;
 use crate::game::sm_80::{InvalidInterrupt_Crash, QueueSfx2_Max6};
 use crate::game::sm_81::DrawProjectileSpritemap;
 use crate::game::sm_8b::CalcExplosion_Mode7;
@@ -24,14 +25,6 @@ pub struct ProjectileDataTable {
     pub instr_ptrs: [uint16; 10],
 }
 pub use crate::types::{ProjectileInstr, ProjectileType};
-pub const kProjectileType_DontInteractWithSamus: ProjectileType = 32768;
-pub const kProjectileType_TypeMask: ProjectileType = 3840;
-pub const kProjectileType_MissileExplosion: ProjectileType = 2048;
-pub const kProjectileType_BeamExplosion: ProjectileType = 1792;
-pub const kProjectileType_Bomb: ProjectileType = 1280;
-pub const kProjectileType_PowerBomb: ProjectileType = 768;
-pub const kProjectileType_SuperMissile: ProjectileType = 512;
-pub const kProjectileType_Missile: ProjectileType = 256;
 #[inline]
 unsafe fn RomPtr_93(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
     return RomPtr(

@@ -16,6 +16,7 @@
 
 /// Gameplay, one module per original ROM bank (`sm_80` = bank $80, ...).
 pub mod game {
+    pub mod constants;
     pub(crate) mod enemy_ram;
     pub mod sm_80;
     pub mod sm_81;

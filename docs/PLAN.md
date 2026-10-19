@@ -265,11 +265,34 @@ This tests source-binding sensitivity, not a changed hardware implementation.
 The game library remains byte-identical when adding this host binding; the
 final replays above include it.
 
-Next disjoint definition survey: 173 Consts_86 values repeat in 19 modules,
-212 Samus poses in 10, 45 game states in 10 and 42 Consts_8D values in seven.
-Audit these repeated gameplay definitions together for the next consolidation,
-preserving public paths and types. Subsystem operations remain the route to
-reducing unsafe code; definition sharing alone does not remove those calls.
+Shared gameplay definitions (2026-10-19): 7175 declarations in 30 bank
+modules now use 834 definitions in game::constants. Each of 22 namespaces
+keeps one matching type/value set; each bank reexports only its original
+sets, preserving public paths and existing unsigned types. This includes
+poses, movement, game states, buttons, projectile types, enemy flags and
+shared bank addresses. No enum narrowing or gameplay operations change.
+Net Rust lines -6118; unsafe functions, cast lines and raw accesses unchanged.
+
+All 7175 compiled public values/types match exact original declarations;
+a changed-value control fails. The source audit checks every original Rust
+file, permits only definitions/reexports/module registration and formatting,
+and preserves every checkpoint fingerprint input byte after newline
+normalization. These gameplay definition files retain the existing gameplay
+checkpoint policy; no compatibility or verifier code changes.
+
+Frozen 155da8a2 plus this pass passes full-boot any% 129712/0 (205.91s)
+and Bubble Mountain 138749/0 (244.26s), native exits 0, with stable
+source, DLL and fixtures. Bubble Mountain includes the Warehouse and Varia
+prefixes, so neither shorter final replay is duplicated. Formatting/check,
+normal release builds (38.96s frozen, 43.44s workspace) and progress pass.
+Timings have different cache/load conditions and do not establish a build-time
+gain. Concurrent subsystem edits retain their own validation; temporary
+comparisons and assets remain uncommitted.
+
+Next disjoint safety audit: 57 gameplay callbacks have empty bodies but still
+declare unsafe. Check their signatures and function-pointer uses, then make
+the compiler verify that removing those unnecessary qualifiers needs no new
+unsafe block. Continue broader subsystem state and handler consolidation.
 
 Independent split-word audit (2026-10-19): reconstruct e23ad2ee from
 its parent and the owning e8592193-based candidate across all 64 Rust files

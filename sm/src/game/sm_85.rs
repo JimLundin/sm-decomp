@@ -1,3 +1,6 @@
+pub use crate::game::constants::bank_60::*;
+pub use crate::game::constants::buttons::*;
+pub use crate::game::constants::game_states::*;
 use crate::game::sm_80::{
     HandleMusicQueue, QueueSfx1_Max6, ReadJoypadInputs, WaitForNMI_NoUpdate_Async,
 };
@@ -17,81 +20,12 @@ pub struct MsgBoxConfig {
     pub draw_initial_tilemap: VoidP,
     pub message_tilemap: VoidP,
 }
-pub use crate::types::GameState;
-pub const kGameState_44_TransitionFromDemo: GameState = 44;
-pub const kGameState_43_TransitionFromDemo: GameState = 43;
-pub const kGameState_42_PlayingDemo: GameState = 42;
-pub const kGameState_41_TransitionToDemo: GameState = 41;
-pub const kGameState_40_TransitionToDemo: GameState = 40;
-pub const kGameState_39_EndingAndCredits: GameState = 39;
-pub const kGameState_38_SamusEscapesFromZebes: GameState = 38;
-pub const kGameState_37_CeresGoesBoomWithSamus: GameState = 37;
-pub const kGameState_36_WhitingOutFromTimeUp: GameState = 36;
-pub const kGameState_35_TimeUp: GameState = 35;
-pub const kGameState_34_CeresGoesBoom: GameState = 34;
-pub const kGameState_33_BlackoutFromCeres: GameState = 33;
-pub const kGameState_32_MadeItToCeresElevator: GameState = 32;
-pub const kGameState_31_SetUpNewGame: GameState = 31;
-pub const kGameState_30_IntroCinematic: GameState = 30;
-pub const kGameState_29_DebugGameOverMenu: GameState = 29;
-pub const kGameState_28_Unused: GameState = 28;
-pub const kGameState_27_ReserveTanksAuto: GameState = 27;
-pub const kGameState_26_GameOverMenu: GameState = 26;
-pub const kGameState_25_SamusNoHealth: GameState = 25;
-pub const kGameState_24_SamusNoHealth: GameState = 24;
-pub const kGameState_23_SamusNoHealth: GameState = 23;
-pub const kGameState_22_SamusNoHealth: GameState = 22;
-pub const kGameState_21_SamusNoHealth: GameState = 21;
-pub const kGameState_20_SamusNoHealth: GameState = 20;
-pub const kGameState_19_SamusNoHealth: GameState = 19;
-pub const kGameState_18_Unpausing: GameState = 18;
-pub const kGameState_17_Unpausing: GameState = 17;
-pub const kGameState_16_Unpausing: GameState = 16;
-pub const kGameState_15_Paused: GameState = 15;
-pub const kGameState_14_Paused: GameState = 14;
-pub const kGameState_13_Pausing: GameState = 13;
-pub const kGameState_12_Pausing: GameState = 12;
-pub const kGameState_11_LoadingNextRoom: GameState = 11;
-pub const kGameState_10_LoadingNextRoom: GameState = 10;
-pub const kGameState_9_HitDoorBlock: GameState = 9;
-pub const kGameState_8_MainGameplay: GameState = 8;
-pub const kGameState_7_MainGameplayFadeIn: GameState = 7;
-pub const kGameState_6_LoadingGameData: GameState = 6;
-pub const kGameState_5_FileSelectMap: GameState = 5;
-pub const kGameState_4_FileSelectMenus: GameState = 4;
-pub const kGameState_3_Unused: GameState = 3;
-pub const kGameState_2_GameOptionsMenu: GameState = 2;
-pub const kGameState_1_OpeningCinematic: GameState = 1;
-pub const kGameState_0_Reset: GameState = 0;
 pub use crate::types::Buttons;
-pub const kButton_B: Buttons = 32768;
-pub const kButton_Y: Buttons = 16384;
-pub const kButton_Select: Buttons = 8192;
-pub const kButton_Start: Buttons = 4096;
-pub const kButton_Up: Buttons = 2048;
-pub const kButton_Down: Buttons = 1024;
-pub const kButton_Left: Buttons = 512;
-pub const kButton_Right: Buttons = 256;
-pub const kButton_A: Buttons = 128;
-pub const kButton_X: Buttons = 64;
-pub const kButton_L: Buttons = 32;
-pub const kButton_R: Buttons = 16;
+pub use crate::types::GameState;
 pub use crate::types::{
     Consts_60, Ram3000, Ram3000_Menu, Ram3000_Misc, Ram3000_MsgBox, Ram3800, Ram4000,
     Ram4000_Backups,
 };
-pub const addr_unk_606300: Consts_60 = 25344;
-pub const addr_unk_6061F0: Consts_60 = 25072;
-pub const addr_unk_605BE0: Consts_60 = 23520;
-pub const addr_unk_6059A0: Consts_60 = 22944;
-pub const addr_unk_605880: Consts_60 = 22656;
-pub const addr_unk_605820: Consts_60 = 22560;
-pub const addr_unk_605800: Consts_60 = 22528;
-pub const addr_unk_605400: Consts_60 = 21504;
-pub const addr_unk_6053E0: Consts_60 = 21472;
-pub const addr_unk_605000: Consts_60 = 20480;
-pub const addr_unk_604C00: Consts_60 = 19456;
-pub const addr_unk_604800: Consts_60 = 18432;
 #[inline]
 unsafe fn RomPtr_85(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
     return RomPtr(

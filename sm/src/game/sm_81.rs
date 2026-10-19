@@ -1,3 +1,6 @@
+pub use crate::game::constants::bank_82::*;
+pub use crate::game::constants::buttons::*;
+pub use crate::game::constants::game_states::*;
 use crate::game::sm_80::{
     HandleFadeIn, HandleFadeOut, HasQueuedMusic, LoadFromLoadStation, LoadMirrorOfExploredMapTiles,
     QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx3_Max6, ScreenOff, ScreenOn, SetupDmaTransfer,
@@ -29,70 +32,13 @@ extern "C" {
     ) -> *mut ::core::ffi::c_void;
 
 }
+pub use crate::types::Buttons;
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
     int32_t, int8, int8_t, size_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, Func_V,
     LongPtr, OamEnt, SnesRegs, VoidP, VramWriteEntry,
 };
 pub use crate::types::{EnemyData, GameState, RoomDefHeader, SpawnHdmaObject_Args};
-pub const kGameState_44_TransitionFromDemo: GameState = 44;
-pub const kGameState_43_TransitionFromDemo: GameState = 43;
-pub const kGameState_42_PlayingDemo: GameState = 42;
-pub const kGameState_41_TransitionToDemo: GameState = 41;
-pub const kGameState_40_TransitionToDemo: GameState = 40;
-pub const kGameState_39_EndingAndCredits: GameState = 39;
-pub const kGameState_38_SamusEscapesFromZebes: GameState = 38;
-pub const kGameState_37_CeresGoesBoomWithSamus: GameState = 37;
-pub const kGameState_36_WhitingOutFromTimeUp: GameState = 36;
-pub const kGameState_35_TimeUp: GameState = 35;
-pub const kGameState_34_CeresGoesBoom: GameState = 34;
-pub const kGameState_33_BlackoutFromCeres: GameState = 33;
-pub const kGameState_32_MadeItToCeresElevator: GameState = 32;
-pub const kGameState_31_SetUpNewGame: GameState = 31;
-pub const kGameState_30_IntroCinematic: GameState = 30;
-pub const kGameState_29_DebugGameOverMenu: GameState = 29;
-pub const kGameState_28_Unused: GameState = 28;
-pub const kGameState_27_ReserveTanksAuto: GameState = 27;
-pub const kGameState_26_GameOverMenu: GameState = 26;
-pub const kGameState_25_SamusNoHealth: GameState = 25;
-pub const kGameState_24_SamusNoHealth: GameState = 24;
-pub const kGameState_23_SamusNoHealth: GameState = 23;
-pub const kGameState_22_SamusNoHealth: GameState = 22;
-pub const kGameState_21_SamusNoHealth: GameState = 21;
-pub const kGameState_20_SamusNoHealth: GameState = 20;
-pub const kGameState_19_SamusNoHealth: GameState = 19;
-pub const kGameState_18_Unpausing: GameState = 18;
-pub const kGameState_17_Unpausing: GameState = 17;
-pub const kGameState_16_Unpausing: GameState = 16;
-pub const kGameState_15_Paused: GameState = 15;
-pub const kGameState_14_Paused: GameState = 14;
-pub const kGameState_13_Pausing: GameState = 13;
-pub const kGameState_12_Pausing: GameState = 12;
-pub const kGameState_11_LoadingNextRoom: GameState = 11;
-pub const kGameState_10_LoadingNextRoom: GameState = 10;
-pub const kGameState_9_HitDoorBlock: GameState = 9;
-pub const kGameState_8_MainGameplay: GameState = 8;
-pub const kGameState_7_MainGameplayFadeIn: GameState = 7;
-pub const kGameState_6_LoadingGameData: GameState = 6;
-pub const kGameState_5_FileSelectMap: GameState = 5;
-pub const kGameState_4_FileSelectMenus: GameState = 4;
-pub const kGameState_3_Unused: GameState = 3;
-pub const kGameState_2_GameOptionsMenu: GameState = 2;
-pub const kGameState_1_OpeningCinematic: GameState = 1;
-pub const kGameState_0_Reset: GameState = 0;
-pub use crate::types::Buttons;
-pub const kButton_B: Buttons = 32768;
-pub const kButton_Y: Buttons = 16384;
-pub const kButton_Select: Buttons = 8192;
-pub const kButton_Start: Buttons = 4096;
-pub const kButton_Up: Buttons = 2048;
-pub const kButton_Down: Buttons = 1024;
-pub const kButton_Left: Buttons = 512;
-pub const kButton_Right: Buttons = 256;
-pub const kButton_A: Buttons = 128;
-pub const kButton_X: Buttons = 64;
-pub const kButton_L: Buttons = 32;
-pub const kButton_R: Buttons = 16;
 pub use crate::types::{ExpandingSquareTransitionHdma, MapIconDataPointers, StartDmaCopy};
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
@@ -145,27 +91,6 @@ pub const addr_kMenuTilemap_TryAgain: Consts_81 = 37684;
 pub const addr_kMenuTilemap_FindMetroidLarva: Consts_81 = 37636;
 pub const addr_kMenuTilemap_GameOver: Consts_81 = 37596;
 pub use crate::types::Consts_82;
-pub const addr_stru_82F4D6: Consts_82 = 62678;
-pub const addr_stru_82F4D0: Consts_82 = 62672;
-pub const addr_stru_82F4CA: Consts_82 = 62666;
-pub const addr_stru_82F4C4: Consts_82 = 62660;
-pub const addr_stru_82F4B8: Consts_82 = 62648;
-pub const addr_off_82F4B6: Consts_82 = 62646;
-pub const addr_kMapIconDataPointers: Consts_82 = 51147;
-pub const addr_kDummySamusWireframeTilemap: Consts_82 = 50745;
-pub const addr_kEquipmentTilemapOffs_Boots: Consts_82 = 49282;
-pub const addr_kEquipmentTilemapOffs_Suits: Consts_82 = 49270;
-pub const addr_kEquipmentTilemapOffs_Weapons: Consts_82 = 49260;
-pub const addr_kEquipmentTilemapOffs_Tanks: Consts_82 = 49256;
-pub const addr_kEquipmentScreenTilemap_Blank: Consts_82 = 49178;
-pub const addr_kEquipmentScreenTilemap_AUTO: Consts_82 = 48938;
-pub const addr_kEquipmentScreenTilemap_MANUAL: Consts_82 = 48930;
-pub const addr_kgameOverBabyMetridInstructionList: Consts_82 = 48167;
-pub const addr_stru_82B9BE: Consts_82 = 47550;
-pub const addr_stru_82B9B4: Consts_82 = 47540;
-pub const addr_stru_82B9AA: Consts_82 = 47530;
-pub const addr_stru_82B9A0: Consts_82 = 47520;
-pub const addr_kPauseMenuMapData: Consts_82 = 38679;
 pub const true_0: ::core::ffi::c_int = 1;
 #[inline]
 unsafe fn RomPtr_81(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
