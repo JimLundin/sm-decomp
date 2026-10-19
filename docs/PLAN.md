@@ -14870,6 +14870,38 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Samus lower sprite visibility windows (2026-10-19): knockback, wall-jump
+and damage-boost handlers now use safe pose/frame reads and two-byte clears.
+Wall-jump hides frames 3..12 and damage-boost hides 2..8; exhaustive checks of
+all 65536 frame words prove these ordinary ranges equal the prior paired
+wrapped sign tests. Knockback retains the Crystal Flash end-pose gate and
+its single wrapped frame-minus-3 comparison. Visible returns preserve the index.
+
+Frozen ed4300c2 plus this source passes clean any% 129712/0 (249.26s)
+and Spazer 90706/0 (214.40s). Observed Spazer passes 90706/0 (211.51s),
+matching complete RAM, g_fail and returns on every call. Knockback has 251
+ordinary-pose calls at input indexes 2383..88415; Crystal Flash branches have
+zero hits. Wall-jump has 91 visible calls at 68266..89243 and 126 hidden
+calls at 68276..89263. Damage boost has three visible calls at 38939..38941;
+its hidden branch has zero hits. Each rewritten routine is required to execute.
+
+458752 constructed comparisons pass: 327680 knockback cases cover every
+frame word for four representative poses and every pose at frame zero; each window
+passes all 65536 frame words. Nine controls detect wrong range endpoints,
+a truncated frame byte, unsigned knockback comparison, a missing Crystal
+Flash pose, a one-byte clear and clearing visible sprites. Restored RAM/g_fail
+continue through a 10000/0 prefix (37.39s); constructed calls do not count
+as movie coverage. Observer stripping, clean/observed diagnostics and
+source/DLL/fixture hashes pass.
+
+Formatting/check, normal release --locked and progress pass. The workspace
+release retry passes after a transient missing verifier-module build failure.
+Own raw offsets -10, unsafe functions -3, cast lines -29 and Rust lines -30;
+other own counters are unchanged. The existing ignored verification workspace
+and build cache were reused. No diagnostic code or ROM-derived fixtures are
+committed. Hidden damage-boost and Crystal Flash gameplay, commands 7/10/12,
+full credits and wider hardware/audio coverage remain open.
+
 Spin-jump lower sprite visibility (2026-10-19): SamusBottomDrawn_3_SpinJump
 is now safe Rust using named pose/frame reads and a two-byte RAM clear.
 The four Screw Attack/Space Jump poses, frame-zero exception and wrapped

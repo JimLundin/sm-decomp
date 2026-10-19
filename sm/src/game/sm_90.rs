@@ -1669,24 +1669,16 @@ pub fn SamusBottomDrawn_3_SpinJump(game: &mut Game) -> uint8 {
     game.g_ram[0xaca..0xacc].fill(0);
     0
 }
-pub unsafe fn SamusBottomDrawn_A_Knockback(game: &mut Game) -> uint8 {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        != kPose_D7_FaceR_CrystalFlashEnd as ::core::ffi::c_int
-        && *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            != kPose_D8_FaceL_CrystalFlashEnd as ::core::ffi::c_int
-        || *((&raw mut game.g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - 3 as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            == 0
-    {
-        return 1 as uint8;
+pub fn SamusBottomDrawn_A_Knockback(game: &mut Game) -> uint8 {
+    let crystal_flash_end = matches!(
+        SamusPose::from(game.samus_pose()),
+        kPose_D7_FaceR_CrystalFlashEnd | kPose_D8_FaceL_CrystalFlashEnd
+    );
+    if !crystal_flash_end || game.samus_anim_frame().wrapping_sub(3) & 0x8000 == 0 {
+        return 1;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaca as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    return 0 as uint8;
+    game.g_ram[0xaca..0xacc].fill(0);
+    0
 }
 pub unsafe fn SamusBottomDrawn_F_Transitions(game: &mut Game) -> uint8 {
     let mut current_block: u64;
@@ -1772,41 +1764,19 @@ pub unsafe fn UNUSED_SamusBottomDrawn_D(game: &mut Game) -> uint8 {
         as *mut uint16) = 0 as uint16;
     return 0 as uint8;
 }
-pub unsafe fn SamusBottomDrawn_14_WallJump(game: &mut Game) -> uint8 {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        - 3 as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        != 0
-        || *((&raw mut game.g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - 13 as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            == 0
-    {
-        return 1 as uint8;
+pub fn SamusBottomDrawn_14_WallJump(game: &mut Game) -> uint8 {
+    if !(3..13).contains(&game.samus_anim_frame()) {
+        return 1;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaca as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    return 0 as uint8;
+    game.g_ram[0xaca..0xacc].fill(0);
+    0
 }
-pub unsafe fn SamusBottomDrawn_19_DamageBoost(game: &mut Game) -> uint8 {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        - 2 as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        != 0
-        || *((&raw mut game.g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - 9 as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            == 0
-    {
-        return 1 as uint8;
+pub fn SamusBottomDrawn_19_DamageBoost(game: &mut Game) -> uint8 {
+    if !(2..9).contains(&game.samus_anim_frame()) {
+        return 1;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaca as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    return 0 as uint8;
+    game.g_ram[0xaca..0xacc].fill(0);
+    0
 }
 pub unsafe fn SamusBottomDrawn_1B(game: &mut Game) -> uint8 {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
