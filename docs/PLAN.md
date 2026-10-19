@@ -1967,7 +1967,25 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): `1b9b8ccd` adds 4197 named scalar
+Latest reviewed integration (2026-10-19): `fe86b814` combines 124 nested
+conditions with the reviewed RAM-store composition. All 70 committed
+Rust/Cargo inputs match the checked candidate; its 67 Rust files match the
+replay source copy. All 72 source/library/DLL/fixture pins remain stable. Normal release,
+workspace release, formatting/check and progress pass. Full any% 129712/0
+(128.26s) and Speed Booster 148406/0 (164.16s) pass, native exits 0;
+completed runs were reused.
+
+The complete token audit and CST scan identify exactly 124 removed nested-if
+pairs and 124 added short-circuit conjunctions, with grouping parentheses
+and formatting-only commas. Other operand/body tokens retain their order.
+Null guards precede dereferences; side-effecting decimal, SPC and X-ray
+conditions retain call/read/write order. Clippy has no collapsible_if
+warnings. Rust lines fall by 213; casts, raw accesses and unsafe functions
+are unchanged, with eight fewer cast-containing lines through formatting.
+Movies cover core behavior; frontend execution, full credits and global
+alias safety retain the limitations below.
+
+The prior `1b9b8ccd` adds 4197 named scalar
 stores to the reviewed compiler/RAM composition. All 74 committed source,
 configuration, host and progress inputs match the tested snapshot; all 77
 replay pins remain stable. Normal release (36.83s), workspace release (36.68s),
@@ -1982,8 +2000,7 @@ pass, with neighboring-byte and post-sweep outside-field RAM checks and RHS
 mutation/drop controls; the test library/DLL bindings match. These finite
 checks do not establish global alias safety. Net Rust lines -262, casts -8394;
 one shared unsafe helper is added. The cast-line counter rises 32 through
-wrapping while its actual token count stays 33870. The pending nested-if
-composition retains separate verification.
+wrapping while its actual token count stays 33870.
 
 The prior `05234716` combines the 121
 single-match simplifications with the Boolean and named-RAM changes.
@@ -19634,7 +19651,7 @@ and Speed Booster 148406/0 (164.16s), native exits 0, with fixed
 source/library/fixture pins. Formatting/check, normal release (22.35s snapshot,
 23.09s workspace), progress and diff check pass. Movies supply core regression
 coverage; frontend conditions are compiler checked. Full credits/readability
-remain open. Continue named scalar writes and larger compiler families.
+remain open. Continue named byte accesses and larger compiler families.
 
 ## Definition of done for any change
 
