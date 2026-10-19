@@ -9744,6 +9744,78 @@ work is outside this replay. Rust lines -2; other own counters unchanged.
 Arbitrary MMIO and complete gameplay/render/audio remain open. Continue
 covered CPU cleanup; TSX/ROR stay held for contextual execution.
 
+Parlor descent reaches the west Missile Tank (2026-10-19). Start from
+refilled-9969.inputs through 62001 in 92FD, X277/Y139, health89/99,
+Morph/Bombs1004 and missiles5/5. Walking west cannot clear the rise.
+parlor-west-jump reaches X347/Y171 above the bomb cap; fresh morph/bomb
+inputs in parlor-bomb-descent open it and reach X375/Y235. Shaft centering
+then reaches X453/Y795, health59/99. Left/shoot traversal enters 9A44,
+ending X456/Y139. This is a separate branch from the held upper99BD ascent.
+
+The first corridor attempt stays standing with missiles selected. Select
+then separated Down presses morph successfully; left/shoot reaches X245/Y153.
+The low tunnel stops at X197/Y153. Three fresh bombs separated by waits
+clear the breakables and reach X37/Y153. Jump unmorphs; Select and five
+fresh left/shoot presses followed by left/shoot80 cross the west door.
+Actual traces retain missiles5/5 throughout: the trial name and room's
+red-cap block definition do not establish a red-cap missile expenditure.
+Transition67404, 9A90 load67422, gameplay67509; item-red-door ends
+X200/Y139, health59/99, missiles5/5. Left/shoot45,
+left/jump/shoot30, left/shoot25, neutral240, Jump1, neutral120 collects
+the actual Missile Tank: missiles10/10, message2, X83/Y112 at frame68055.
+Room-definition PLM EEDB at X64/Y112 alone would not establish this pickup.
+
+A fresh Jump dismisses the active message routine: coroutines are all zero
+by68070; subsequent right/jump/shoot movement reaches X219/Y139 with
+health59/99 and missiles9/10 after firing one. The message-number field
+remains2 after completion; it is not an active-dialogue flag. item-missile-release68429/71
+proves released control. Retain this input and the successful pickup prefix.
+Fresh right/shoot1, right/jump/shoot35, right/shoot100, neutral120
+spends another missile and returns through the east blue door:
+transition68497, 9A44 load68515, gameplay68602, final X48/Y139,
+health59/99, missiles8/10, all coroutines zero. item-return-door68685/71
+(159.57s), observed nativeexit1. This proves a usable return from the tank;
+it does not return all the way through the bomb tunnel to Parlor.
+
+All thirteen completed ordered diagnostic streams exactly match frozen
+explicit-render Waver71: no new failing frames. Native process exit1 was
+observed for each route, reflecting those existing failures:
+parlor-lower-west: 62831/71 (164.93s)
+parlor-west-jump: 63302/71 (153.72s)
+parlor-bomb-descent: 63935/71 (142.51s)
+parlor-shaft-center: 64540/71 (137.58s)
+parlor-item-door: 65145/71 (153.56s)
+item-corridor-bomb: 65564/71 (149.82s)
+item-fresh-morph: 66032/71 (148.79s)
+item-low-tunnel: 66312/71 (146.33s)
+item-tunnel-bombs: 66917/71 (143.84s)
+item-red-door: 67594/71 (150.72s)
+item-room-pickup: 68055/71 (150.55s)
+item-missile-release: 68429/71 (153.36s)
+item-return-door: 68685/71 (159.57s)
+
+Fresh same-host any% passes 129712/0 (283.07s),
+native process exit0. parlor-observe.dll was explicitly built with
+--extern sm=target/route-render-comparison/libsm.rlib; the retained core
+is the d217ea15-session frozen render verifier. Observations only read state;
+no injected RAM, map, health or ammunition writes. These input-only checks
+do not verify concurrent CPU/PPU edits; peer hardware owns its source replays.
+Historical source/core association and native exits were observed in tool
+calls; retained logs alone do not bind them. No ROM, inputs, SRAM, geometry
+or diagnostic assets enter the commit. No gameplay source change is justified.
+
+Cargo fmt and fmt --check, full cargo build --release with external SDL2
+and progress pass. Progress:22691 raw,39 extern blocks,3 C ABI exports,
+5 no_mangle,6714 unsafe,85562 casts,257471 Rust lines. Own source/counter
+delta zero; reductions since the preceding route milestone belong to peer
+CPU work. This focused item finishes within one hour. Next: continue from
+the retained capacity-ten route (eight missiles after returning) toward
+accessible items/boss progression;
+Tourian statues remain locked until major boss progress is established.
+Held upper99BD ascent, cliff tuning, old9AD9 enemy-drop ammo and HDMA remain
+held. Full credits, gameplay/hardware, rendering/audio fidelity, masked RAM
+and ownership are unfinished. Peer hardware work and remote sync stay separate.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
