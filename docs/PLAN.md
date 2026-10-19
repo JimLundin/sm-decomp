@@ -49,6 +49,17 @@ transpile notes are historical provenance, not a regeneration workflow.
 Keep only current build outputs in `target/` and the ignored ROM/movie inputs
 needed for verification. Remove obsolete scratch and restart artifacts.
 
+Retired Waver prototype cleanup (2026-10-19): moved `target/waver-render-fix`
+outside the checkout to temporary
+`sm-workspace-retired-waver-20261019-093821-027/waver-render-fix`.
+All 97 files / 125,589,591 bytes are preserved with matching SHA-256 hashes.
+Only its own retired scripts reference the directory; live processes and
+current repository/top-level temporary scripts have no dependencies on it.
+Final Waver verification artifacts and current route/build inputs remain.
+Formatting, release build and progress checks pass. No maintained source or
+residue-count changes and no new replay belong to this cleanup; current Rust
+source retains verified any% 129712/0 and upper-east route 68096/0 results.
+
 Retired missile-probe cleanup (2026-10-19): moved `target/missile-calls`
 outside the checkout to the temporary directory
 `sm-workspace-retired-missile-calls-20261019-073508-678/missile-calls`.
