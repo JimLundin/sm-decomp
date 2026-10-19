@@ -10054,15 +10054,12 @@ pub unsafe fn UpdateBackgroundCommand_C_ClearKraidBg2Tilemap(
 }
 pub unsafe fn DoorTransition_C_HandleAnimTiles(game: &mut Game) -> CoroutineRet {
     AnimtilesHandler(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x99c as ::core::ffi::c_int as isize)
-        as *mut uint16) = (0x82e664 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    game.set_door_transition_function(fnDoorTransition_WaitForMusicToClear as u16);
     return kCoroutineNone as CoroutineRet;
 }
 pub unsafe fn DoorTransition_WaitForMusicToClear(game: &mut Game) -> CoroutineRet {
     if HasQueuedMusic(game) == 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x99c as ::core::ffi::c_int as isize)
-            as *mut uint16) =
-            (0x82e6a2 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        game.set_door_transition_function(fnDoorTransition_HandleTransition as u16);
         LoadNewMusicTrackIfChanged(game);
     }
     return kCoroutineNone as CoroutineRet;
@@ -10142,8 +10139,7 @@ pub unsafe fn DoorTransition_HandleTransition(game: &mut Game) -> CoroutineRet {
         }
     }
     SetLiquidPhysicsType(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x99c as ::core::ffi::c_int as isize)
-        as *mut uint16) = (0x82e737 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    game.set_door_transition_function(fnDoorTransition_FadeInScreenAndFinish as u16);
     let ref mut fresh37 = *((&raw mut game.g_ram as *mut uint8)
         .offset(0x51 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh37 = (*fresh37 as ::core::ffi::c_int | 0x1f as ::core::ffi::c_int) as uint16;

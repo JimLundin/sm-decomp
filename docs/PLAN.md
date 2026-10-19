@@ -13638,6 +13638,20 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Door completion state stores (2026-10-19): the animation, music-ready and
+transition handlers use the existing byte-backed setter and named callback
+constants for E664/E6A2/E737. Their stores retain the original callback/gate
+positions; coordinate, HDMA, IRQ and elevator code are unchanged. Frozen
+8b40c5ac plus these three replacements passes any% 129712/0 (261.63s) and
+Waver 58109/0 (159.13s), native exits 0. A 20000/0 observed prefix executes
+each store seven times, including the music-ready branch; all 21 words match.
+Independent source/observer review, exact stripping, formatting, release
+build using the workspace dependency cache and progress pass. Own raw offsets
+-3, cast lines -6, Rust lines -4; other counters unchanged. The separately
+committed menu correction is preserved; only the three reviewed routine bodies
+change here. Next: the unconditional descending HDMA clear pairs in
+HandleTransition. Broader Phase 3 and held coverage remain open.
+
 Samus animation countdown (2026-10-19): merge the duplicated timer decrement
 and frame-advance paths in Samus_Animate. Named pose/frame accessors and a
 byte-backed timer retain the two jump poses' special hold, which selects 4
