@@ -9397,12 +9397,13 @@ This proves persistence/reload for this file and route, not arbitrary savefiles.
 Maintained sm/src/verify.rs adds opt-in --load-sram using existing
 saves/sm.srm reader/synchronization. It rejects missing/non8192files before
 initialization and compares actualloadedbytes with the validated buffer after
-RtlReadSram's secondread. Changed/failed rereads cannot silently pass.
+RtlReadSram's secondread. The loaded bytes must match that buffer; this does not independently attest
+a successful second file open when unchanged initial bytes already match.
 --frames and --load-sram accept eitherorder; default empty-SRAM movies retain
 existingbehavior. No game/RTL/storage/layout changes. This fixes verify itself
 so savedgame continuation uses the maintained oracle instead of temporaryhosts.
 
-Frozen43ce4b7b plus onlyverify.rs matchesall63archivedsourcefiles except the
+Frozen43ce4b7b plus onlyverify.rs matchesall62archivedsourcefiles except the
 exactverifierchange; excludespeerCPUWIP. Exactmaintainedverify copy and that
 core linked into sameDLL passfullany%129712/0 (57.64s) and freshreload2065/0
 (0.70s), observednativeexit0. EarliercurrentworktreeDLLalso passesany%
@@ -9425,6 +9426,24 @@ probeassets. Peer ownsremote sync. Next: actualonwardgameplaycoverage toward
 credits from retainedrefilledshaftprefix, with requirements inspected first.
 Held upper99BD,clifftuning,oldenemy-dropammoandHDMA remainheld. Credits,full
 hardware/render/audio,maskedRAM andownership remainunfinished.
+
+CPU index-load branch values (2026-10-19): LDX/LDY return the operand from
+their selected byte/word read branch, then store the index and update Z/N.
+Pre-fetch XF selection, word cycle increment before reads, full word result
+despite possible subsequent XF mutation, and final live-XF flags stay exact.
+Independent source/probe review finds no differences. Frozen `43ce4b7b` plus
+this change passes 524,288 actual old/current loads across every operand word,
+both widths/carry values, named CPU/bus fields and cycles. Prefix 3,600/0
+(1.14s), native exit 0, executes word/byte LDX 171,669/246,437 and LDY
+36,080/19,911 times. Clean full any% 129,712/0 (59.53s), native exit 0.
+After SRAM-loading verifier commit `d1c37b94`, fresh frozen integration with
+that verifier and this exact CPU source also passes any% 129,712/0 (49.76s),
+native exit 0. This default replay does not establish SRAM-loaded route coverage.
+Cargo fmt/check, full release and release-library builds with external SDL2,
+normal metadata and optimized frozen core/DLL builds pass. Live CPU matches
+verified source. Rust lines +2 make branch results explicit; other own counters
+unchanged. Arbitrary MMIO mutation and full gameplay/render/audio remain open.
+Continue covered CPU cleanup; TSX/ROR remain held for contextual execution.
 
 ## Definition of done for any change
 

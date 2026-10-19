@@ -648,21 +648,23 @@ unsafe fn load_accumulator(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) 
     set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
 }
 unsafe fn load_x(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
-    if (*cpu).xf {
-        (*cpu).x = u16::from(read_byte(cpu, low, game));
+    let value = if (*cpu).xf {
+        u16::from(read_byte(cpu, low, game))
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        (*cpu).x = read_word(cpu, low, high, game);
-    }
+        read_word(cpu, low, high, game)
+    };
+    (*cpu).x = value;
     set_zero_negative((*cpu).x, (*cpu).xf, &mut *cpu);
 }
 unsafe fn load_y(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
-    if (*cpu).xf {
-        (*cpu).y = u16::from(read_byte(cpu, low, game));
+    let value = if (*cpu).xf {
+        u16::from(read_byte(cpu, low, game))
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        (*cpu).y = read_word(cpu, low, high, game);
-    }
+        read_word(cpu, low, high, game)
+    };
+    (*cpu).y = value;
     set_zero_negative((*cpu).y, (*cpu).xf, &mut *cpu);
 }
 unsafe fn store_accumulator(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
