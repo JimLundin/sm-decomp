@@ -17950,6 +17950,35 @@ functions and raw PPU reads are unchanged. Neither fixture reaches credits.
 No temporary probes or ROM-derived assets committed. Continue larger coherent
 families and route coverage; hardware/audio/masks and ownership remain open.
 
+Planar PPU pixel family (2026-10-19): jscpd renamed/literal clone
+discovery and complete CST assignments select all 40 pixel extractions in
+2bpp/4bpp drawing, including both flips and leading/full/trailing tile paths.
+A safe private const-generic helper gathers the plane bits for the palette
+index. Twenty two-plane and twenty four-plane callers retain their bits
+operand and exact shift 0..7; all masks, priority tests, reads, writes and
+loop advancement remain in place. The repeated pure word reads have no
+observable evaluation-order difference. Four-plane callers retain their
+original transparency tests; two-plane callers retain pixel != 0.
+
+Actual old/new extraction expressions and an independent bit-by-bit model
+agree in 10487040 comparisons: each expression sweeps all 65536 low/high
+words in four layouts, plus every isolated input bit. This is not all u32
+combinations. Actual original/current draw routines agree in 12288 complete
+initialized PPU-state/pixel comparisons across six paths, 1024 seeds and
+masked/unmasked screens. Changed bit-depth paths contribute 4096 comparisons,
+with varying tile/window/scroll data and flip bits; complete-line drawing
+also uses both paths. Constructed states are not universal renderer coverage.
+
+Frozen 7086aff2 plus only this change passes full any% 129712/0
+(189.50s) and Speed Booster 148406/0 (254.97s), native exits 0,
+with fixed source/library/DLL/ROM/movie hashes. Complete-source reconstruction
+permits only the 40 expressions and helper; other frozen sources match.
+Cargo fmt/check, normal release (38.16s, native exit 0), diff check and
+progress pass. Own Rust lines -211, c_int cast lines -160; unsafe functions
+and actual raw accesses are unchanged. Neither fixture reaches credits.
+No probes or ROM-derived assets committed. Continue larger coherent families
+and normal-input coverage; hardware/audio/masks and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

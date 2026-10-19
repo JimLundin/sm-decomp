@@ -452,6 +452,15 @@ unsafe fn ppu_background_row(
         (tileadr as uint).wrapping_add(y & 0x7 as uint) as ::core::ffi::c_int;
     (tps, tileadr0, tileadr1)
 }
+// Gather one bit from each packed plane byte into the palette index.
+fn ppu_planar_pixel<const PLANES: u32>(bits: u32, shift: u32) -> i32 {
+    let pixel = (bits >> shift & 1) | (bits >> (shift + 7) & 2);
+    if PLANES == 4 {
+        (pixel | (bits >> (shift + 14) & 4) | (bits >> (shift + 21) & 8)) as i32
+    } else {
+        pixel as i32
+    }
+}
 unsafe fn PpuDrawBackground_4bpp(
     mut ppu: *mut Ppu,
     mut y: uint,
@@ -531,14 +540,7 @@ unsafe fn PpuDrawBackground_4bpp(
                         bits >>= x & 7 as uint;
                         x = x.wrapping_add(curw as uint);
                         loop {
-                            pixel = (bits >> 0 as ::core::ffi::c_int & 1 as uint32
-                                | bits >> 7 as ::core::ffi::c_int + 0 as ::core::ffi::c_int
-                                    & 2 as uint32
-                                | bits >> 14 as ::core::ffi::c_int + 0 as ::core::ffi::c_int
-                                    & 4 as uint32
-                                | bits >> 21 as ::core::ffi::c_int + 0 as ::core::ffi::c_int
-                                    & 8 as uint32)
-                                as ::core::ffi::c_int;
+                            pixel = ppu_planar_pixel::<4>(bits, 0);
                             if bits
                                 & ((0x1010101 as ::core::ffi::c_int) << 0 as ::core::ffi::c_int)
                                     as uint32
@@ -558,15 +560,7 @@ unsafe fn PpuDrawBackground_4bpp(
                         bits <<= x & 7 as uint;
                         x = x.wrapping_add(curw as uint);
                         loop {
-                            pixel = (bits >> 7 as ::core::ffi::c_int - 0 as ::core::ffi::c_int
-                                & 1 as uint32
-                                | bits >> 14 as ::core::ffi::c_int - 0 as ::core::ffi::c_int
-                                    & 2 as uint32
-                                | bits >> 21 as ::core::ffi::c_int - 0 as ::core::ffi::c_int
-                                    & 4 as uint32
-                                | bits >> 28 as ::core::ffi::c_int - 0 as ::core::ffi::c_int
-                                    & 8 as uint32)
-                                as ::core::ffi::c_int;
+                            pixel = ppu_planar_pixel::<4>(bits, 7);
                             if bits & 0x80808080 as uint32 >> 0 as ::core::ffi::c_int != 0
                                 && z as ::core::ffi::c_int > *dstz.offset(0) as ::core::ffi::c_int
                             {
@@ -616,14 +610,7 @@ unsafe fn PpuDrawBackground_4bpp(
                         (tile_0 & 0x1c00 as uint32) >> kPaletteShift_0 as ::core::ffi::c_int,
                     ) as PpuZbufType as PpuZbufType;
                     if tile_0 & 0x4000 as uint32 != 0 {
-                        pixel = (bits_0 >> 0 as ::core::ffi::c_int & 1 as uint32
-                            | bits_0 >> 7 as ::core::ffi::c_int + 0 as ::core::ffi::c_int
-                                & 2 as uint32
-                            | bits_0 >> 14 as ::core::ffi::c_int + 0 as ::core::ffi::c_int
-                                & 4 as uint32
-                            | bits_0 >> 21 as ::core::ffi::c_int + 0 as ::core::ffi::c_int
-                                & 8 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<4>(bits_0, 0);
                         if bits_0
                             & ((0x1010101 as ::core::ffi::c_int) << 0 as ::core::ffi::c_int)
                                 as uint32
@@ -632,14 +619,7 @@ unsafe fn PpuDrawBackground_4bpp(
                         {
                             *dstz.offset(0) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 1 as ::core::ffi::c_int & 1 as uint32
-                            | bits_0 >> 7 as ::core::ffi::c_int + 1 as ::core::ffi::c_int
-                                & 2 as uint32
-                            | bits_0 >> 14 as ::core::ffi::c_int + 1 as ::core::ffi::c_int
-                                & 4 as uint32
-                            | bits_0 >> 21 as ::core::ffi::c_int + 1 as ::core::ffi::c_int
-                                & 8 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<4>(bits_0, 1);
                         if bits_0
                             & ((0x1010101 as ::core::ffi::c_int) << 1 as ::core::ffi::c_int)
                                 as uint32
@@ -648,14 +628,7 @@ unsafe fn PpuDrawBackground_4bpp(
                         {
                             *dstz.offset(1) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 2 as ::core::ffi::c_int & 1 as uint32
-                            | bits_0 >> 7 as ::core::ffi::c_int + 2 as ::core::ffi::c_int
-                                & 2 as uint32
-                            | bits_0 >> 14 as ::core::ffi::c_int + 2 as ::core::ffi::c_int
-                                & 4 as uint32
-                            | bits_0 >> 21 as ::core::ffi::c_int + 2 as ::core::ffi::c_int
-                                & 8 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<4>(bits_0, 2);
                         if bits_0
                             & ((0x1010101 as ::core::ffi::c_int) << 2 as ::core::ffi::c_int)
                                 as uint32
@@ -664,14 +637,7 @@ unsafe fn PpuDrawBackground_4bpp(
                         {
                             *dstz.offset(2) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 3 as ::core::ffi::c_int & 1 as uint32
-                            | bits_0 >> 7 as ::core::ffi::c_int + 3 as ::core::ffi::c_int
-                                & 2 as uint32
-                            | bits_0 >> 14 as ::core::ffi::c_int + 3 as ::core::ffi::c_int
-                                & 4 as uint32
-                            | bits_0 >> 21 as ::core::ffi::c_int + 3 as ::core::ffi::c_int
-                                & 8 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<4>(bits_0, 3);
                         if bits_0
                             & ((0x1010101 as ::core::ffi::c_int) << 3 as ::core::ffi::c_int)
                                 as uint32
@@ -680,14 +646,7 @@ unsafe fn PpuDrawBackground_4bpp(
                         {
                             *dstz.offset(3) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 4 as ::core::ffi::c_int & 1 as uint32
-                            | bits_0 >> 7 as ::core::ffi::c_int + 4 as ::core::ffi::c_int
-                                & 2 as uint32
-                            | bits_0 >> 14 as ::core::ffi::c_int + 4 as ::core::ffi::c_int
-                                & 4 as uint32
-                            | bits_0 >> 21 as ::core::ffi::c_int + 4 as ::core::ffi::c_int
-                                & 8 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<4>(bits_0, 4);
                         if bits_0
                             & ((0x1010101 as ::core::ffi::c_int) << 4 as ::core::ffi::c_int)
                                 as uint32
@@ -696,14 +655,7 @@ unsafe fn PpuDrawBackground_4bpp(
                         {
                             *dstz.offset(4) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 5 as ::core::ffi::c_int & 1 as uint32
-                            | bits_0 >> 7 as ::core::ffi::c_int + 5 as ::core::ffi::c_int
-                                & 2 as uint32
-                            | bits_0 >> 14 as ::core::ffi::c_int + 5 as ::core::ffi::c_int
-                                & 4 as uint32
-                            | bits_0 >> 21 as ::core::ffi::c_int + 5 as ::core::ffi::c_int
-                                & 8 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<4>(bits_0, 5);
                         if bits_0
                             & ((0x1010101 as ::core::ffi::c_int) << 5 as ::core::ffi::c_int)
                                 as uint32
@@ -712,14 +664,7 @@ unsafe fn PpuDrawBackground_4bpp(
                         {
                             *dstz.offset(5) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 6 as ::core::ffi::c_int & 1 as uint32
-                            | bits_0 >> 7 as ::core::ffi::c_int + 6 as ::core::ffi::c_int
-                                & 2 as uint32
-                            | bits_0 >> 14 as ::core::ffi::c_int + 6 as ::core::ffi::c_int
-                                & 4 as uint32
-                            | bits_0 >> 21 as ::core::ffi::c_int + 6 as ::core::ffi::c_int
-                                & 8 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<4>(bits_0, 6);
                         if bits_0
                             & ((0x1010101 as ::core::ffi::c_int) << 6 as ::core::ffi::c_int)
                                 as uint32
@@ -728,14 +673,7 @@ unsafe fn PpuDrawBackground_4bpp(
                         {
                             *dstz.offset(6) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 7 as ::core::ffi::c_int & 1 as uint32
-                            | bits_0 >> 7 as ::core::ffi::c_int + 7 as ::core::ffi::c_int
-                                & 2 as uint32
-                            | bits_0 >> 14 as ::core::ffi::c_int + 7 as ::core::ffi::c_int
-                                & 4 as uint32
-                            | bits_0 >> 21 as ::core::ffi::c_int + 7 as ::core::ffi::c_int
-                                & 8 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<4>(bits_0, 7);
                         if bits_0
                             & ((0x1010101 as ::core::ffi::c_int) << 7 as ::core::ffi::c_int)
                                 as uint32
@@ -745,113 +683,49 @@ unsafe fn PpuDrawBackground_4bpp(
                             *dstz.offset(7) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
                     } else {
-                        pixel = (bits_0 >> 7 as ::core::ffi::c_int - 0 as ::core::ffi::c_int
-                            & 1 as uint32
-                            | bits_0 >> 14 as ::core::ffi::c_int - 0 as ::core::ffi::c_int
-                                & 2 as uint32
-                            | bits_0 >> 21 as ::core::ffi::c_int - 0 as ::core::ffi::c_int
-                                & 4 as uint32
-                            | bits_0 >> 28 as ::core::ffi::c_int - 0 as ::core::ffi::c_int
-                                & 8 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<4>(bits_0, 7);
                         if bits_0 & 0x80808080 as uint32 >> 0 as ::core::ffi::c_int != 0
                             && z_0 as ::core::ffi::c_int > *dstz.offset(0) as ::core::ffi::c_int
                         {
                             *dstz.offset(0) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 7 as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-                            & 1 as uint32
-                            | bits_0 >> 14 as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-                                & 2 as uint32
-                            | bits_0 >> 21 as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-                                & 4 as uint32
-                            | bits_0 >> 28 as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-                                & 8 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<4>(bits_0, 6);
                         if bits_0 & 0x80808080 as uint32 >> 1 as ::core::ffi::c_int != 0
                             && z_0 as ::core::ffi::c_int > *dstz.offset(1) as ::core::ffi::c_int
                         {
                             *dstz.offset(1) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 7 as ::core::ffi::c_int - 2 as ::core::ffi::c_int
-                            & 1 as uint32
-                            | bits_0 >> 14 as ::core::ffi::c_int - 2 as ::core::ffi::c_int
-                                & 2 as uint32
-                            | bits_0 >> 21 as ::core::ffi::c_int - 2 as ::core::ffi::c_int
-                                & 4 as uint32
-                            | bits_0 >> 28 as ::core::ffi::c_int - 2 as ::core::ffi::c_int
-                                & 8 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<4>(bits_0, 5);
                         if bits_0 & 0x80808080 as uint32 >> 2 as ::core::ffi::c_int != 0
                             && z_0 as ::core::ffi::c_int > *dstz.offset(2) as ::core::ffi::c_int
                         {
                             *dstz.offset(2) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 7 as ::core::ffi::c_int - 3 as ::core::ffi::c_int
-                            & 1 as uint32
-                            | bits_0 >> 14 as ::core::ffi::c_int - 3 as ::core::ffi::c_int
-                                & 2 as uint32
-                            | bits_0 >> 21 as ::core::ffi::c_int - 3 as ::core::ffi::c_int
-                                & 4 as uint32
-                            | bits_0 >> 28 as ::core::ffi::c_int - 3 as ::core::ffi::c_int
-                                & 8 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<4>(bits_0, 4);
                         if bits_0 & 0x80808080 as uint32 >> 3 as ::core::ffi::c_int != 0
                             && z_0 as ::core::ffi::c_int > *dstz.offset(3) as ::core::ffi::c_int
                         {
                             *dstz.offset(3) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 7 as ::core::ffi::c_int - 4 as ::core::ffi::c_int
-                            & 1 as uint32
-                            | bits_0 >> 14 as ::core::ffi::c_int - 4 as ::core::ffi::c_int
-                                & 2 as uint32
-                            | bits_0 >> 21 as ::core::ffi::c_int - 4 as ::core::ffi::c_int
-                                & 4 as uint32
-                            | bits_0 >> 28 as ::core::ffi::c_int - 4 as ::core::ffi::c_int
-                                & 8 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<4>(bits_0, 3);
                         if bits_0 & 0x80808080 as uint32 >> 4 as ::core::ffi::c_int != 0
                             && z_0 as ::core::ffi::c_int > *dstz.offset(4) as ::core::ffi::c_int
                         {
                             *dstz.offset(4) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 7 as ::core::ffi::c_int - 5 as ::core::ffi::c_int
-                            & 1 as uint32
-                            | bits_0 >> 14 as ::core::ffi::c_int - 5 as ::core::ffi::c_int
-                                & 2 as uint32
-                            | bits_0 >> 21 as ::core::ffi::c_int - 5 as ::core::ffi::c_int
-                                & 4 as uint32
-                            | bits_0 >> 28 as ::core::ffi::c_int - 5 as ::core::ffi::c_int
-                                & 8 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<4>(bits_0, 2);
                         if bits_0 & 0x80808080 as uint32 >> 5 as ::core::ffi::c_int != 0
                             && z_0 as ::core::ffi::c_int > *dstz.offset(5) as ::core::ffi::c_int
                         {
                             *dstz.offset(5) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 7 as ::core::ffi::c_int - 6 as ::core::ffi::c_int
-                            & 1 as uint32
-                            | bits_0 >> 14 as ::core::ffi::c_int - 6 as ::core::ffi::c_int
-                                & 2 as uint32
-                            | bits_0 >> 21 as ::core::ffi::c_int - 6 as ::core::ffi::c_int
-                                & 4 as uint32
-                            | bits_0 >> 28 as ::core::ffi::c_int - 6 as ::core::ffi::c_int
-                                & 8 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<4>(bits_0, 1);
                         if bits_0 & 0x80808080 as uint32 >> 6 as ::core::ffi::c_int != 0
                             && z_0 as ::core::ffi::c_int > *dstz.offset(6) as ::core::ffi::c_int
                         {
                             *dstz.offset(6) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 7 as ::core::ffi::c_int - 7 as ::core::ffi::c_int
-                            & 1 as uint32
-                            | bits_0 >> 14 as ::core::ffi::c_int - 7 as ::core::ffi::c_int
-                                & 2 as uint32
-                            | bits_0 >> 21 as ::core::ffi::c_int - 7 as ::core::ffi::c_int
-                                & 4 as uint32
-                            | bits_0 >> 28 as ::core::ffi::c_int - 7 as ::core::ffi::c_int
-                                & 8 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<4>(bits_0, 0);
                         if bits_0 & 0x80808080 as uint32 >> 7 as ::core::ffi::c_int != 0
                             && z_0 as ::core::ffi::c_int > *dstz.offset(7) as ::core::ffi::c_int
                         {
@@ -888,14 +762,7 @@ unsafe fn PpuDrawBackground_4bpp(
                     ) as PpuZbufType as PpuZbufType;
                     if tile_1 & 0x4000 as uint32 != 0 {
                         loop {
-                            pixel = (bits_1 >> 0 as ::core::ffi::c_int & 1 as uint32
-                                | bits_1 >> 7 as ::core::ffi::c_int + 0 as ::core::ffi::c_int
-                                    & 2 as uint32
-                                | bits_1 >> 14 as ::core::ffi::c_int + 0 as ::core::ffi::c_int
-                                    & 4 as uint32
-                                | bits_1 >> 21 as ::core::ffi::c_int + 0 as ::core::ffi::c_int
-                                    & 8 as uint32)
-                                as ::core::ffi::c_int;
+                            pixel = ppu_planar_pixel::<4>(bits_1, 0);
                             if bits_1
                                 & ((0x1010101 as ::core::ffi::c_int) << 0 as ::core::ffi::c_int)
                                     as uint32
@@ -914,15 +781,7 @@ unsafe fn PpuDrawBackground_4bpp(
                         }
                     } else {
                         loop {
-                            pixel = (bits_1 >> 7 as ::core::ffi::c_int - 0 as ::core::ffi::c_int
-                                & 1 as uint32
-                                | bits_1 >> 14 as ::core::ffi::c_int - 0 as ::core::ffi::c_int
-                                    & 2 as uint32
-                                | bits_1 >> 21 as ::core::ffi::c_int - 0 as ::core::ffi::c_int
-                                    & 4 as uint32
-                                | bits_1 >> 28 as ::core::ffi::c_int - 0 as ::core::ffi::c_int
-                                    & 8 as uint32)
-                                as ::core::ffi::c_int;
+                            pixel = ppu_planar_pixel::<4>(bits_1, 7);
                             if bits_1 & 0x80808080 as uint32 >> 0 as ::core::ffi::c_int != 0
                                 && z_1 as ::core::ffi::c_int > *dstz.offset(0) as ::core::ffi::c_int
                             {
@@ -1020,10 +879,7 @@ unsafe fn PpuDrawBackground_2bpp(
                         bits >>= x & 7 as uint;
                         x = x.wrapping_add(curw as uint);
                         loop {
-                            pixel = (bits >> 0 as ::core::ffi::c_int & 1 as uint32
-                                | bits >> 7 as ::core::ffi::c_int + 0 as ::core::ffi::c_int
-                                    & 2 as uint32)
-                                as ::core::ffi::c_int;
+                            pixel = ppu_planar_pixel::<2>(bits, 0);
                             if pixel != 0
                                 && z as ::core::ffi::c_int > *dstz.offset(0) as ::core::ffi::c_int
                             {
@@ -1040,11 +896,7 @@ unsafe fn PpuDrawBackground_2bpp(
                         bits <<= x & 7 as uint;
                         x = x.wrapping_add(curw as uint);
                         loop {
-                            pixel = (bits >> 7 as ::core::ffi::c_int - 0 as ::core::ffi::c_int
-                                & 1 as uint32
-                                | bits >> 14 as ::core::ffi::c_int - 0 as ::core::ffi::c_int
-                                    & 2 as uint32)
-                                as ::core::ffi::c_int;
+                            pixel = ppu_planar_pixel::<2>(bits, 7);
                             if pixel != 0
                                 && z as ::core::ffi::c_int > *dstz.offset(0) as ::core::ffi::c_int
                             {
@@ -1092,154 +944,98 @@ unsafe fn PpuDrawBackground_2bpp(
                         (tile_0 & 0x1c00 as uint32) >> kPaletteShift as ::core::ffi::c_int,
                     ) as PpuZbufType as PpuZbufType;
                     if tile_0 & 0x4000 as uint32 != 0 {
-                        pixel = (bits_0 >> 0 as ::core::ffi::c_int & 1 as uint32
-                            | bits_0 >> 7 as ::core::ffi::c_int + 0 as ::core::ffi::c_int
-                                & 2 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<2>(bits_0, 0);
                         if pixel != 0
                             && z_0 as ::core::ffi::c_int > *dstz.offset(0) as ::core::ffi::c_int
                         {
                             *dstz.offset(0) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 1 as ::core::ffi::c_int & 1 as uint32
-                            | bits_0 >> 7 as ::core::ffi::c_int + 1 as ::core::ffi::c_int
-                                & 2 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<2>(bits_0, 1);
                         if pixel != 0
                             && z_0 as ::core::ffi::c_int > *dstz.offset(1) as ::core::ffi::c_int
                         {
                             *dstz.offset(1) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 2 as ::core::ffi::c_int & 1 as uint32
-                            | bits_0 >> 7 as ::core::ffi::c_int + 2 as ::core::ffi::c_int
-                                & 2 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<2>(bits_0, 2);
                         if pixel != 0
                             && z_0 as ::core::ffi::c_int > *dstz.offset(2) as ::core::ffi::c_int
                         {
                             *dstz.offset(2) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 3 as ::core::ffi::c_int & 1 as uint32
-                            | bits_0 >> 7 as ::core::ffi::c_int + 3 as ::core::ffi::c_int
-                                & 2 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<2>(bits_0, 3);
                         if pixel != 0
                             && z_0 as ::core::ffi::c_int > *dstz.offset(3) as ::core::ffi::c_int
                         {
                             *dstz.offset(3) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 4 as ::core::ffi::c_int & 1 as uint32
-                            | bits_0 >> 7 as ::core::ffi::c_int + 4 as ::core::ffi::c_int
-                                & 2 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<2>(bits_0, 4);
                         if pixel != 0
                             && z_0 as ::core::ffi::c_int > *dstz.offset(4) as ::core::ffi::c_int
                         {
                             *dstz.offset(4) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 5 as ::core::ffi::c_int & 1 as uint32
-                            | bits_0 >> 7 as ::core::ffi::c_int + 5 as ::core::ffi::c_int
-                                & 2 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<2>(bits_0, 5);
                         if pixel != 0
                             && z_0 as ::core::ffi::c_int > *dstz.offset(5) as ::core::ffi::c_int
                         {
                             *dstz.offset(5) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 6 as ::core::ffi::c_int & 1 as uint32
-                            | bits_0 >> 7 as ::core::ffi::c_int + 6 as ::core::ffi::c_int
-                                & 2 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<2>(bits_0, 6);
                         if pixel != 0
                             && z_0 as ::core::ffi::c_int > *dstz.offset(6) as ::core::ffi::c_int
                         {
                             *dstz.offset(6) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 7 as ::core::ffi::c_int & 1 as uint32
-                            | bits_0 >> 7 as ::core::ffi::c_int + 7 as ::core::ffi::c_int
-                                & 2 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<2>(bits_0, 7);
                         if pixel != 0
                             && z_0 as ::core::ffi::c_int > *dstz.offset(7) as ::core::ffi::c_int
                         {
                             *dstz.offset(7) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
                     } else {
-                        pixel = (bits_0 >> 7 as ::core::ffi::c_int - 0 as ::core::ffi::c_int
-                            & 1 as uint32
-                            | bits_0 >> 14 as ::core::ffi::c_int - 0 as ::core::ffi::c_int
-                                & 2 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<2>(bits_0, 7);
                         if pixel != 0
                             && z_0 as ::core::ffi::c_int > *dstz.offset(0) as ::core::ffi::c_int
                         {
                             *dstz.offset(0) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 7 as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-                            & 1 as uint32
-                            | bits_0 >> 14 as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-                                & 2 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<2>(bits_0, 6);
                         if pixel != 0
                             && z_0 as ::core::ffi::c_int > *dstz.offset(1) as ::core::ffi::c_int
                         {
                             *dstz.offset(1) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 7 as ::core::ffi::c_int - 2 as ::core::ffi::c_int
-                            & 1 as uint32
-                            | bits_0 >> 14 as ::core::ffi::c_int - 2 as ::core::ffi::c_int
-                                & 2 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<2>(bits_0, 5);
                         if pixel != 0
                             && z_0 as ::core::ffi::c_int > *dstz.offset(2) as ::core::ffi::c_int
                         {
                             *dstz.offset(2) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 7 as ::core::ffi::c_int - 3 as ::core::ffi::c_int
-                            & 1 as uint32
-                            | bits_0 >> 14 as ::core::ffi::c_int - 3 as ::core::ffi::c_int
-                                & 2 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<2>(bits_0, 4);
                         if pixel != 0
                             && z_0 as ::core::ffi::c_int > *dstz.offset(3) as ::core::ffi::c_int
                         {
                             *dstz.offset(3) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 7 as ::core::ffi::c_int - 4 as ::core::ffi::c_int
-                            & 1 as uint32
-                            | bits_0 >> 14 as ::core::ffi::c_int - 4 as ::core::ffi::c_int
-                                & 2 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<2>(bits_0, 3);
                         if pixel != 0
                             && z_0 as ::core::ffi::c_int > *dstz.offset(4) as ::core::ffi::c_int
                         {
                             *dstz.offset(4) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 7 as ::core::ffi::c_int - 5 as ::core::ffi::c_int
-                            & 1 as uint32
-                            | bits_0 >> 14 as ::core::ffi::c_int - 5 as ::core::ffi::c_int
-                                & 2 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<2>(bits_0, 2);
                         if pixel != 0
                             && z_0 as ::core::ffi::c_int > *dstz.offset(5) as ::core::ffi::c_int
                         {
                             *dstz.offset(5) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 7 as ::core::ffi::c_int - 6 as ::core::ffi::c_int
-                            & 1 as uint32
-                            | bits_0 >> 14 as ::core::ffi::c_int - 6 as ::core::ffi::c_int
-                                & 2 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<2>(bits_0, 1);
                         if pixel != 0
                             && z_0 as ::core::ffi::c_int > *dstz.offset(6) as ::core::ffi::c_int
                         {
                             *dstz.offset(6) = (z_0 as ::core::ffi::c_int + pixel) as PpuZbufType;
                         }
-                        pixel = (bits_0 >> 7 as ::core::ffi::c_int - 7 as ::core::ffi::c_int
-                            & 1 as uint32
-                            | bits_0 >> 14 as ::core::ffi::c_int - 7 as ::core::ffi::c_int
-                                & 2 as uint32)
-                            as ::core::ffi::c_int;
+                        pixel = ppu_planar_pixel::<2>(bits_0, 0);
                         if pixel != 0
                             && z_0 as ::core::ffi::c_int > *dstz.offset(7) as ::core::ffi::c_int
                         {
@@ -1274,10 +1070,7 @@ unsafe fn PpuDrawBackground_2bpp(
                     ) as PpuZbufType as PpuZbufType;
                     if tile_1 & 0x4000 as uint32 != 0 {
                         loop {
-                            pixel = (bits_1 >> 0 as ::core::ffi::c_int & 1 as uint32
-                                | bits_1 >> 7 as ::core::ffi::c_int + 0 as ::core::ffi::c_int
-                                    & 2 as uint32)
-                                as ::core::ffi::c_int;
+                            pixel = ppu_planar_pixel::<2>(bits_1, 0);
                             if pixel != 0
                                 && z_1 as ::core::ffi::c_int > *dstz.offset(0) as ::core::ffi::c_int
                             {
@@ -1293,11 +1086,7 @@ unsafe fn PpuDrawBackground_2bpp(
                         }
                     } else {
                         loop {
-                            pixel = (bits_1 >> 7 as ::core::ffi::c_int - 0 as ::core::ffi::c_int
-                                & 1 as uint32
-                                | bits_1 >> 14 as ::core::ffi::c_int - 0 as ::core::ffi::c_int
-                                    & 2 as uint32)
-                                as ::core::ffi::c_int;
+                            pixel = ppu_planar_pixel::<2>(bits_1, 7);
                             if pixel != 0
                                 && z_1 as ::core::ffi::c_int > *dstz.offset(0) as ::core::ffi::c_int
                             {
