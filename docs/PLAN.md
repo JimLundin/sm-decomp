@@ -18116,6 +18116,37 @@ No RAM/layout change, temporary probe or ROM-derived asset is committed.
 Neither movie reaches credits; broader readability, hardware/audio/masks,
 ownership and normal-input coverage remain unfinished.
 
+PPU full-tile pixel family (2026-10-19): jscpd normalized clone
+discovery and complete CST if/else branches select both full-tile operations.
+The four 2bpp/4bpp flip variants share one private eight-pixel helper.
+Offsets advance in screen order 0..7; extraction shifts follow the original
+flip. Four-plane masks and two-plane pixel != 0 tests remain distinct.
+Destination reads occur only after visibility, and each priority comparison
+and conditional word store retains its order. The helper returns the final
+pixel into the existing caller local; pointer/width advancement stays outside.
+Leading and trailing partial tiles retain their own different loops.
+
+Extracted original/current execution agrees in 786432 guarded-buffer and
+final-pixel comparisons: all 65536 words in three low/high layouts, both
+bit depths/flips, varied priority boundaries and destinations below/equal/
+above priority. An independent per-plane model checks every resulting word;
+this is not all input combinations. Actual original/current drawing routines
+also agree in 12288 complete initialized PPU-state/pixel comparisons across
+six paths, 1024 seeds and masked/unmasked screens. Both changed bit depths
+and complete-line drawing execute; constructed inputs are not universal
+branch coverage or SNES accuracy.
+
+Frozen c04c2da0 plus only this change passes full any% 129712/0
+(182.11s) and Speed Booster 148406/0 (229.16s), native exits 0,
+with fixed source/library/DLL/ROM/movie hashes. Exact source reconstruction
+permits only the two complete branches and helper; other frozen sources match.
+Cargo fmt/check, normal release (44.41s, native exit 0), diff check and
+progress pass. Own Rust lines -192, c_int cast lines -80; unsafe functions
++1 centralizes the four raw store variants. Raw RAM accesses are unchanged;
+repeated PPU destination read/write syntax is reduced. No layout change,
+temporary probe or ROM-derived asset committed. Neither route reaches credits;
+broader readability, hardware/audio/masks and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
