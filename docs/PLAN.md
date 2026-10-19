@@ -46,7 +46,30 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest verified integration: frozen `d42210df` passes any% 129712/0
+Latest reviewed integration: frozen `0feb1882` passes any% 129712/0
+(231.13s), Waver 58109/0 (92.80s) and Red Tower 85800/0 (159.84s), all
+native exits 0. This combines beam/PLM cleanup, scrolling DMA, door-header
+fields and the title Mode 7 correction with $19B3/$19B4 comparison enabled.
+Red Tower visits 28 rooms and 33 enemy definitions. Its first 69700, 71800
+and 78380 controller frames exactly match the Super Missile, Green Brinstar
+Save and Charge fixtures; those sequences are exercised as prefixes here.
+
+Complete non-timing stdout/stderr match the previously reviewed any%, Waver
+and Red Tower routes. All 68 source/config/host files match Git after newline
+normalization and retain their hashes through replay, as do the DLL, ROM and
+copied inputs. Saves are isolated and SM_* overrides cleared. Independent
+review confirms the door-header observation strips to the exact original and
+current bodies, including all eight intermediate stores. Scrolling DMA's
+old/current hardware comparison and 16 controls also strip exactly to their
+stated source; natural coverage and constructed cases remain distinct.
+
+Formatting/check, normal workspace Cargo release (59.41s) and progress pass.
+No maintained source or own residue counters change in this quality check.
+Changes after 0feb1882 retain separate verification. Full gameplay/credits,
+disk-save persistence, wider hardware/audio coverage and remaining masks stay
+unfinished.
+
+Previous verified integration: frozen `d42210df` passes any% 129712/0
 (224.63s), Waver 58109/0 (99.29s), Super Missile 69700/0 (109.15s),
 Green Brinstar Save 71800/0 (113.91s) and Charge Beam 78380/0 (165.48s),
 all native exits 0. This combines the pose/radius/alignment cleanup,
