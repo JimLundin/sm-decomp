@@ -220,8 +220,12 @@ return-stack writes are accounted for separately. Both destinations include
 2,656 wrapped-bank cases and 58,525 adjacent-tail cases. The run executes
 763,558,672 opcodes in 59.13s, native exit 0. Thus earlier zero-scratch
 address/value-vector results must not be generalized to arbitrary scratch.
-Static kernel review finds no destination reads between these writes; an
-actual read trace and the pending final integration remain separate checks.
+An actual CPU read-byte observer repeats all 243,344 cases in 45.14s,
+native exit 0, with zero destination reads, including wrapped-bank and
+adjacent-tail addresses. Controls detect real reads at the first/last covered
+bytes and exclude the two outside neighbors at both bases. Together with
+the same final-RAM checks, this classifies the observed scratch-byte stores
+as unconsumed within these calls. Final on-screen integration remains open.
 No maintained source or own residue change belongs to either review; all
 probes, snapshots and ROM-derived outputs remain outside tracked files.
 
