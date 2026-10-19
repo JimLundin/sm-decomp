@@ -2245,16 +2245,7 @@ pub unsafe fn AddToTilemapInner(mut k: uint16, mut j: *const uint16, game: &mut 
 pub unsafe fn InitializeHud(game: &mut Game) {
     WriteRegWord(VMADDL as uint16, addr_unk_605800 as uint16, game);
     WriteRegWord(VMAIN as uint16, 0x80 as uint16, game);
-    static unk_809A8F: StartDmaCopy = StartDmaCopy {
-        chan: 1 as uint8,
-        dmap: 1 as uint8,
-        bbad: 0x18 as uint8,
-        a1: LongPtr {
-            addr: (((0x80988bi32) as u16) & (0xffffu16)),
-            bank: (0x80988b as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
-        },
-        das: 0x40 as VoidP,
-    };
+    static unk_809A8F: StartDmaCopy = StartDmaCopy::vram_words(1, 0x80988b, 0x40);
     SetupDmaTransfer(&raw const unk_809A8F as *const ::core::ffi::c_void, game);
     WriteReg(MDMAEN as uint16, 2 as uint8, game);
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;

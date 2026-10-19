@@ -89,6 +89,37 @@ movie excludes the frontend and supplies regression verification, not decoder
 coverage. Formatting, normal release (32.91s frozen, 33.50s stable workspace)
 and progress pass. Other concurrent gameplay edits retain their own checks.
 
+DMA descriptor consolidation (2026-10-19): the initializer audit expands
+to all 72 StartDmaCopy statics across five banks, including differing source
+addresses and lengths. Four const constructors name VRAM words (60), VRAM
+high bytes (6), VRAM low bytes (4) and WRAM bytes (2). Channel, transfer mode,
+register, banked source and size remain exact. All statics and setup/trigger
+calls stay in place; the packed type and its consumers are unchanged.
+
+Compiled comparison preserves all eight bytes of every descriptor and its
+size/alignment (8/1), with independently computed expected bytes; a changed-
+mode control is rejected. Expanding the constructors reconstructs all source
+exactly, and the final CST scan finds no old initializer forms. Net Rust
+lines -589, c_int cast lines -72, all casts -570; unsafe and raw accesses
+are unchanged. Formatting/check, normal release (36.37s frozen, 46.19s
+stable workspace) and progress pass. Frozen 26880181 plus this family passes
+any% 129712/0 (156.13s) and Speed Booster 148406/0 (189.99s), native
+exits 0, with fixed source/DLL/fixtures. These are static-value replacements;
+the compiled byte comparison covers all 72, not a claim of 72 runtime hits.
+Later gameplay and PPU commits retain their own verification.
+
+Expanded historical-family coverage audit: an isolated 26880181 survey probes
+174 routine entries across the larger leads. Full any% and Speed Booster
+have zero failing frames (221.15s/277.48s); both native exits are 2 because
+required probes are missing. All eight projectile direction handlers execute,
+making their complete collision-position family the next gameplay candidate.
+The seven cinematic PPU setups reach four; door scroll setters reach 11/64;
+enemy row scans 1/2; Roach and Draygon pairs 0/2 each; Fire Geyser 0/23.
+Those larger gameplay rewrites remain pending coverage. HUD entry hits (6/6)
+do not establish their gated success suffixes. DMA-owner entries reach 11/23;
+owner entry alone does not prove each nested static is used. Reports remain
+temporary; the survey does not establish that every useful family was found.
+
 Previous-position candidate held (2026-10-19): a historical transition pair
 expands to five routines in sm_91/sm_9b, including both grapple variants.
 The candidate shares the 12-pixel previous-coordinate clamp and the complete

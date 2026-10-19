@@ -897,6 +897,65 @@ pub struct StartDmaCopy {
     pub das: VoidP,
 }
 
+impl StartDmaCopy {
+    const fn new(channel: u8, mode: u8, register: u8, source: u32, size: u16) -> Self {
+        Self {
+            chan: channel,
+            dmap: mode,
+            bbad: register,
+            a1: LongPtr {
+                addr: source as u16,
+                bank: (source >> 16) as u8,
+            },
+            das: size,
+        }
+    }
+
+    /// Copy alternating low/high VRAM bytes. VMAIN controls address stepping.
+    pub const fn vram_words(channel: u8, source: u32, size: u16) -> Self {
+        Self::new(
+            channel,
+            1,
+            crate::snes::registers::VMDATAL as u8,
+            source,
+            size,
+        )
+    }
+
+    /// Copy only the low byte of each VRAM word.
+    pub const fn vram_low_bytes(channel: u8, source: u32, size: u16) -> Self {
+        Self::new(
+            channel,
+            0,
+            crate::snes::registers::VMDATAL as u8,
+            source,
+            size,
+        )
+    }
+
+    /// Copy only the high byte of each VRAM word.
+    pub const fn vram_high_bytes(channel: u8, source: u32, size: u16) -> Self {
+        Self::new(
+            channel,
+            0,
+            crate::snes::registers::VMDATAH as u8,
+            source,
+            size,
+        )
+    }
+
+    /// Copy bytes through the auto-incrementing WRAM data port.
+    pub const fn wram_bytes(channel: u8, source: u32, size: u16) -> Self {
+        Self::new(
+            channel,
+            0,
+            crate::snes::registers::WMDATA as u8,
+            source,
+            size,
+        )
+    }
+}
+
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct TileTable {

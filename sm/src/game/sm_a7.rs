@@ -2848,26 +2848,8 @@ pub unsafe fn Kraid_ClearSomeSpikes(game: &mut Game) {
     );
 }
 pub unsafe fn UnpauseHook_Kraid_IsDead(game: &mut Game) -> CoroutineRet {
-    static unk_A7C21E: StartDmaCopy = StartDmaCopy {
-        chan: 1 as uint8,
-        dmap: 1 as uint8,
-        bbad: 0x18 as uint8,
-        a1: LongPtr {
-            addr: (((0xa7a716i32) as u16) & (0xffffu16)),
-            bank: (0xa7a716 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
-        },
-        das: 0x200 as VoidP,
-    };
-    static unk_A7C23E: StartDmaCopy = StartDmaCopy {
-        chan: 1 as uint8,
-        dmap: 1 as uint8,
-        bbad: 0x18 as uint8,
-        a1: LongPtr {
-            addr: (((0x9ab200i32) as u16) & (0xffffu16)),
-            bank: (0x9ab200 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
-        },
-        das: 0x800 as VoidP,
-    };
+    static unk_A7C21E: StartDmaCopy = StartDmaCopy::vram_words(1, 0xa7a716, 0x200);
+    static unk_A7C23E: StartDmaCopy = StartDmaCopy::vram_words(1, 0x9ab200, 0x800);
     ScreenOff(game);
     WriteReg(VMADDL as uint16, 0 as uint8, game);
     WriteReg(
@@ -2889,26 +2871,8 @@ pub unsafe fn UnpauseHook_Kraid_IsDead(game: &mut Game) -> CoroutineRet {
     Kraid_TransferTopHalfToVram(game);
     return kCoroutineNone as CoroutineRet;
 }
-static unk_A7C26B: StartDmaCopy = StartDmaCopy {
-    chan: 1 as uint8,
-    dmap: 1 as uint8,
-    bbad: 0x18 as uint8,
-    a1: LongPtr {
-        addr: (((0x7e5000i32) as u16) & (0xffffu16)),
-        bank: (0x7e5000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
-    },
-    das: 0x400 as VoidP,
-};
-static unk_A7C28D: StartDmaCopy = StartDmaCopy {
-    chan: 1 as uint8,
-    dmap: 1 as uint8,
-    bbad: 0x18 as uint8,
-    a1: LongPtr {
-        addr: (((0x7e2000i32) as u16) & (0xffffu16)),
-        bank: (0x7e2000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
-    },
-    das: 0x800 as VoidP,
-};
+static unk_A7C26B: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e5000, 0x400);
+static unk_A7C28D: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e2000, 0x800);
 pub unsafe fn UnpauseHook_Kraid_IsAlive(game: &mut Game) -> CoroutineRet {
     ScreenOff(game);
     WriteReg(VMADDL as uint16, 0 as uint8, game);
@@ -2935,16 +2899,7 @@ pub unsafe fn Kraid_TransferTopHalfToVram(game: &mut Game) {
     WriteReg(MDMAEN as uint16, 2 as uint8, game);
     ScreenOn(game);
 }
-static unk_A7C2BD: StartDmaCopy = StartDmaCopy {
-    chan: 1 as uint8,
-    dmap: 1 as uint8,
-    bbad: 0x18 as uint8,
-    a1: LongPtr {
-        addr: (((0x7e5000i32) as u16) & (0xffffu16)),
-        bank: (0x7e5000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
-    },
-    das: 0x400 as VoidP,
-};
+static unk_A7C2BD: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e5000, 0x400);
 pub unsafe fn Kraid_UnpauseHook_IsSinking(game: &mut Game) -> CoroutineRet {
     let mut _state_variable_: *mut uint8 = (&raw mut game.g_ram as *mut uint8).offset(0x613);
     's_100: {

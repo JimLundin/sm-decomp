@@ -983,61 +983,25 @@ pub unsafe fn LoadInitialMenuTiles(game: &mut Game) {
     WriteReg(VMADDL as uint16, 0 as uint8, game);
     WriteReg(VMADDH as uint16, 0 as uint8, game);
     WriteReg(VMAIN as uint16, 0x80 as uint8, game);
-    static unk_818DF1: StartDmaCopy = StartDmaCopy {
-        chan: 1 as uint8,
-        dmap: 1 as uint8,
-        bbad: 0x18 as uint8,
-        a1: LongPtr {
-            addr: (((0x8e8000i32) as u16) & (0xffffu16)),
-            bank: (0x8e8000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
-        },
-        das: 0x5600 as VoidP,
-    };
+    static unk_818DF1: StartDmaCopy = StartDmaCopy::vram_words(1, 0x8e8000, 0x5600);
     SetupDmaTransfer(&raw const unk_818DF1 as *const ::core::ffi::c_void, game);
     WriteReg(MDMAEN as uint16, 2 as uint8, game);
     WriteReg(VMADDL as uint16, 0 as uint8, game);
     WriteReg(VMADDH as uint16, 0x30 as uint8, game);
     WriteReg(VMAIN as uint16, 0x80 as uint8, game);
-    static unk_818E11: StartDmaCopy = StartDmaCopy {
-        chan: 1 as uint8,
-        dmap: 1 as uint8,
-        bbad: 0x18 as uint8,
-        a1: LongPtr {
-            addr: (((0xb68000i32) as u16) & (0xffffu16)),
-            bank: (0xb68000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
-        },
-        das: 0x2000 as VoidP,
-    };
+    static unk_818E11: StartDmaCopy = StartDmaCopy::vram_words(1, 0xb68000, 0x2000);
     SetupDmaTransfer(&raw const unk_818E11 as *const ::core::ffi::c_void, game);
     WriteReg(MDMAEN as uint16, 2 as uint8, game);
     WriteReg(VMADDL as uint16, 0 as uint8, game);
     WriteReg(VMADDH as uint16, 0x60 as uint8, game);
     WriteReg(VMAIN as uint16, 0x80 as uint8, game);
-    static unk_818E31: StartDmaCopy = StartDmaCopy {
-        chan: 1 as uint8,
-        dmap: 1 as uint8,
-        bbad: 0x18 as uint8,
-        a1: LongPtr {
-            addr: (((0xb6c000i32) as u16) & (0xffffu16)),
-            bank: (0xb6c000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
-        },
-        das: 0x2000 as VoidP,
-    };
+    static unk_818E31: StartDmaCopy = StartDmaCopy::vram_words(1, 0xb6c000, 0x2000);
     SetupDmaTransfer(&raw const unk_818E31 as *const ::core::ffi::c_void, game);
     WriteReg(MDMAEN as uint16, 2 as uint8, game);
     WriteReg(VMADDL as uint16, 0 as uint8, game);
     WriteReg(VMADDH as uint16, 0x40 as uint8, game);
     WriteReg(VMAIN as uint16, 0x80 as uint8, game);
-    static unk_818E51: StartDmaCopy = StartDmaCopy {
-        chan: 1 as uint8,
-        dmap: 1 as uint8,
-        bbad: 0x18 as uint8,
-        a1: LongPtr {
-            addr: (((0x8ed600i32) as u16) & (0xffffu16)),
-            bank: (0x8ed600 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
-        },
-        das: 0x600 as VoidP,
-    };
+    static unk_818E51: StartDmaCopy = StartDmaCopy::vram_words(1, 0x8ed600, 0x600);
     SetupDmaTransfer(&raw const unk_818E51 as *const ::core::ffi::c_void, game);
     WriteReg(MDMAEN as uint16, 2 as uint8, game);
 }
@@ -1153,16 +1117,7 @@ pub unsafe fn GameOverMenu_5_Continue(game: &mut Game) {
     WriteReg(VMADDL as uint16, 0 as uint8, game);
     WriteReg(VMADDH as uint16, 0x40 as uint8, game);
     WriteReg(VMAIN as uint16, 0x80 as uint8, game);
-    static unk_819093: StartDmaCopy = StartDmaCopy {
-        chan: 1 as uint8,
-        dmap: 1 as uint8,
-        bbad: 0x18 as uint8,
-        a1: LongPtr {
-            addr: (((0x9ab200i32) as u16) & (0xffffu16)),
-            bank: (0x9ab200 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
-        },
-        das: 0x2000 as VoidP,
-    };
+    static unk_819093: StartDmaCopy = StartDmaCopy::vram_words(1, 0x9ab200, 0x2000);
     SetupDmaTransfer(&raw const unk_819093 as *const ::core::ffi::c_void, game);
     WriteReg(MDMAEN as uint16, 2 as uint8, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) = 16 as uint16;
