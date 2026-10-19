@@ -10562,6 +10562,20 @@ unsafe functions +1 share the ordered status-mask bus operation; other own
 counters unchanged. Prior CPU holds and complete gameplay/render/audio
 remain open. Continue covered CPU cleanup.
 
+CPU typed immediate width (2026-10-19): address_immediate accepts CpuRegister
+instead of a boolean width selector, reusing its byte accessor. The eleven
+opcode call sites name A/X/Y as appropriate; addressing and PC order are
+unchanged. Frozen `09fdd9c1` plus this change passes 201,326,592 actual
+old/current immediate-address cases: every PC/bank, independent MF/XF and all
+three register selectors, with named CPU state equal. Prefix 3,600/0 (0.99s),
+native exit 0, executes A/X/Y word/byte selectors with counts 460,929/199,600;
+32,860/84,752; 18,489/21,787. Clean full any% 129,712/0 (49.35s), native
+exit 0. Cargo fmt/check, full release/release-library builds with external
+SDL2, normal metadata and frozen optimized core/DLL pass. Live CPU matches
+verified source; peer PPU work is outside this replay. All own progress
+counters unchanged. Prior CPU holds and complete gameplay/render/audio remain
+open. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

@@ -266,8 +266,8 @@ unsafe fn service_interrupt(cpu: *mut Cpu, irq: bool, game: &mut Game) {
     };
     (*cpu).pc = read_word(cpu, vector, vector + 1, game);
 }
-fn address_immediate(cpu: &mut Cpu, xFlag: bool) -> (u32, u32) {
-    let byte = if xFlag { cpu.xf } else { cpu.mf };
+fn address_immediate(cpu: &mut Cpu, register: CpuRegister) -> (u32, u32) {
+    let byte = register.byte(cpu);
     let low = next_program_address(cpu);
     let high = if byte { 0 } else { next_program_address(cpu) };
     (low, high)
@@ -921,7 +921,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             push_byte(cpu, cpu_getFlags(&*cpu), game);
         }
         0x09 => {
-            let (low, high) = address_immediate(&mut *cpu, false);
+            let (low, high) = address_immediate(&mut *cpu, CpuRegister::Accumulator);
             logical_accumulator(cpu, low, high, LogicOperation::Or, game);
         }
         0x0a => {
@@ -1048,7 +1048,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             cpu_setFlags(pull_byte(cpu, game), &mut *cpu);
         }
         0x29 => {
-            let (low, high) = address_immediate(&mut *cpu, false);
+            let (low, high) = address_immediate(&mut *cpu, CpuRegister::Accumulator);
             logical_accumulator(cpu, low, high, LogicOperation::And, game);
         }
         0x2a => {
@@ -1191,7 +1191,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             push_register(cpu, CpuRegister::Accumulator, game);
         }
         0x49 => {
-            let (low, high) = address_immediate(&mut *cpu, false);
+            let (low, high) = address_immediate(&mut *cpu, CpuRegister::Accumulator);
             logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
         }
         0x4a => {
@@ -1356,7 +1356,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             pull_register(cpu, CpuRegister::Accumulator, game);
         }
         0x69 => {
-            let (low, high) = address_immediate(&mut *cpu, false);
+            let (low, high) = address_immediate(&mut *cpu, CpuRegister::Accumulator);
             add_with_carry(cpu, low, high, game);
         }
         0x6a => {
@@ -1594,7 +1594,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             store_register(cpu, low, high, CpuRegister::Accumulator, game);
         }
         0xa0 => {
-            let (low, high) = address_immediate(&mut *cpu, true);
+            let (low, high) = address_immediate(&mut *cpu, CpuRegister::Y);
             load_register(cpu, low, high, CpuRegister::Y, game);
         }
         0xa1 => {
@@ -1602,7 +1602,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             load_register(cpu, low, high, CpuRegister::Accumulator, game);
         }
         0xa2 => {
-            let (low, high) = address_immediate(&mut *cpu, true);
+            let (low, high) = address_immediate(&mut *cpu, CpuRegister::X);
             load_register(cpu, low, high, CpuRegister::X, game);
         }
         0xa3 => {
@@ -1629,7 +1629,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             IndexRegister::Y.load((*cpu).a, &mut *cpu);
         }
         0xa9 => {
-            let (low, high) = address_immediate(&mut *cpu, false);
+            let (low, high) = address_immediate(&mut *cpu, CpuRegister::Accumulator);
             load_register(cpu, low, high, CpuRegister::Accumulator, game);
         }
         0xaa => {
@@ -1721,7 +1721,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             load_register(cpu, low, high, CpuRegister::Accumulator, game);
         }
         0xc0 => {
-            let (low, high) = address_immediate(&mut *cpu, true);
+            let (low, high) = address_immediate(&mut *cpu, CpuRegister::Y);
             compare_register(cpu, low, high, CpuRegister::Y, game);
         }
         0xc1 => {
@@ -1755,7 +1755,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             IndexRegister::Y.update(1, &mut *cpu);
         }
         0xc9 => {
-            let (low, high) = address_immediate(&mut *cpu, false);
+            let (low, high) = address_immediate(&mut *cpu, CpuRegister::Accumulator);
             compare_register(cpu, low, high, CpuRegister::Accumulator, game);
         }
         0xca => {
@@ -1842,7 +1842,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             compare_register(cpu, low, high, CpuRegister::Accumulator, game);
         }
         0xe0 => {
-            let (low, high) = address_immediate(&mut *cpu, true);
+            let (low, high) = address_immediate(&mut *cpu, CpuRegister::X);
             compare_register(cpu, low, high, CpuRegister::X, game);
         }
         0xe1 => {
@@ -1876,7 +1876,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             IndexRegister::X.update(1, &mut *cpu);
         }
         0xe9 => {
-            let (low, high) = address_immediate(&mut *cpu, false);
+            let (low, high) = address_immediate(&mut *cpu, CpuRegister::Accumulator);
             subtract_with_carry(cpu, low, high, game);
         }
         0xeb => {
