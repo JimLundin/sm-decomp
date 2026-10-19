@@ -117,6 +117,20 @@ the pre-step alignment gate, wrapping coordinate step and callback/store order.
 
 ## The oracle
 
+Initial CPU bus-counter QC (2026-10-19): snes_init now initializes
+cpuMemOps and cpuCyclesLeft before the first reset fetches the CPU vector.
+Those reads previously performed wrapping arithmetic on uninitialized bytes.
+Actual poisoned-allocation controls show the old first-reset counters
+A5/A5 becoming A7/B5; the two stores give 00/00 becoming 02/10. Both versions
+retain final reset counters 00/34, the reset vector, soft-reset RAM preservation
+and hard-reset RAM clearing. Frozen 4fe2fb1f plus only these stores passes
+any% 129712/0 (223.42s), native exit 0, and Waver 58109/71 (109.59s), native
+exit 1. All 71 full ordered Waver diagnostics match the explicit-render
+baseline. The maintained source matches the frozen clean candidate; temporary
+poisoning and counters are absent. Cargo fmt/check, release build and progress
+pass. Rust lines +2 initialize host timing state; other own residue counts and
+SNES/RAM/save layouts are unchanged. Later peer changes are outside these runs.
+
 Verifier SRAM isolation (2026-10-19): RtlWriteSram now skips host file writes
 when VERIFY_ACTIVE. Game SRAM mutations and the oracle's complete8192-byte
 comparison remain active. Replays previously renamed/overwrote the shared
