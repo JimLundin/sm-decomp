@@ -142,6 +142,22 @@ the pre-step alignment gate, wrapping coordinate step and callback/store order.
 
 ## The oracle
 
+APU allocation validity QC (2026-10-19): apu_init zero-initializes its
+allocation before constructing the child devices. The first reset previously
+formed array/timer references over uninitialized storage, including bools.
+Raw-byte controls on poisoned allocations show the four bool bytes change
+from A5 to 00; the old invalid values are inspected only as bytes. The new
+allocation passes the actual first SPC IPL opcode and 512 valid seeded reset
+pairs preserving RAM/ports, timers, explicit padding, DSP-write history and
+child bindings. A 3600/0 prefix executes the constructor once. Frozen
+6fe1f451 plus only the initialization passes any% 129712/0 (180.89s), native
+exit 0, and Waver 58109/71 (93.28s), native exit 1; all 71 full ordered
+failure diagnostics match baseline. Maintained source equals the clean
+candidate. Cargo fmt/check, release and progress pass. Rust lines +1; other
+own counters and layouts are unchanged. New allocations start zeroed; warm
+resets still preserve padding/history. Later ROR/door edits and complete
+audio timing/gameplay coverage are outside these checks.
+
 Initial CPU bus-counter QC (2026-10-19): snes_init now initializes
 cpuMemOps and cpuCyclesLeft before the first reset fetches the CPU vector.
 Those reads previously performed wrapping arithmetic on uninitialized bytes.

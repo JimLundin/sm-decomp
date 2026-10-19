@@ -90,6 +90,7 @@ static bootRom: [uint8_t; 64] = [
 ];
 pub unsafe fn apu_init() -> *mut Apu {
     let mut apu: *mut Apu = malloc(::core::mem::size_of::<Apu>() as size_t) as *mut Apu;
+    core::ptr::write_bytes(apu, 0, 1);
     (*apu).spc = spc_init(apu as *mut Apu);
     (*apu).dsp = dsp_init(&raw mut (*apu).ram as *mut uint8_t);
     return apu;
