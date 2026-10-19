@@ -2993,21 +2993,17 @@ pub unsafe fn EprojPreInstr_966C(mut k: uint16, game: &mut Game) {
     MoveEprojWithVelocityX(k, game);
     if EprojBlockCollisition_Vertical(k, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
     {
-        let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v1 as isize) =
-            addr_off_869574 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v1 as isize) =
-            1 as uint16;
+        let slot = usize::from(k >> 1);
+        EprojStateMut(&mut game.g_ram).set_instruction(slot, addr_off_869574 as uint16);
+        EprojStateMut(&mut game.g_ram).set_instruction_timer(slot, 1);
     }
 }
 pub unsafe fn EprojPreInstr_9688(mut k: uint16, game: &mut Game) {
     MoveEprojWithVelocityY(k, game);
     if EprojBlockCollisition_Horiz(k, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
-        let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v1 as isize) =
-            addr_off_869574 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v1 as isize) =
-            1 as uint16;
+        let slot = usize::from(k >> 1);
+        EprojStateMut(&mut game.g_ram).set_instruction(slot, addr_off_869574 as uint16);
+        EprojStateMut(&mut game.g_ram).set_instruction_timer(slot, 1);
     }
 }
 pub unsafe fn EprojPreInstr_96A4(mut k: uint16, game: &mut Game) {

@@ -16772,6 +16772,33 @@ other own counters unchanged. No probes or ROM-derived artifacts committed.
 Continue indexed projectile state/handler families; broader gameplay/credits,
 hardware/audio/masks and ownership remain unfinished.
 
+Fireball collision instruction transitions (2026-10-19): four raw
+stores in preinstructions 966C/9688 now use the existing byte-backed
+instruction and timer setters. Movement, collision callback, slot capture,
+instruction 9574 store then timer-one store retain their order. Captured
+argument slot remains selected even if callbacks change the live index.
+Existing collision gates and unsafe callback boundaries remain unchanged.
+
+Frozen fcf54f0a plus only this change passes
+any% 129712/0 (209.45s) and Warehouse 128547/0
+(235.62s), native exits 0. Observed any% 129712/0
+(231.09s) reaches actual store branches: 966C 4,
+9688 2. Every byte-backed write matches the original unaligned
+store over complete RAM. Clean/observed non-timing diagnostics match;
+source/DLL/ROM/input hashes remain fixed. Maintained region matches after
+accounting for the concurrent constant-cast simplification; those values
+are unchanged and peer edits remain preserved.
+Extracted old/current handlers match complete RAM and callback traces in
+786432 cases: both handlers, every 16-bit index, six collision return bytes
+and callbacks that mutate the live index. Other frozen sources match HEAD
+after newline normalization; only these store replacements differ in bank.
+
+Cargo fmt/check, normal release build (51.99s) and progress pass. Net raw
+offsets -4, cast lines -2, Rust lines -4; unsafe functions and other own
+counters unchanged. No probes or ROM-derived artifacts committed. Continue
+indexed projectile state/handler families; broader gameplay/credits,
+hardware/audio/masks and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
