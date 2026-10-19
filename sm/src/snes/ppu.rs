@@ -456,136 +456,21 @@ pub unsafe fn ppu_copy(mut ppu: *mut Ppu, mut ppu_src: *mut Ppu) {
     (*ppu).renderPitch = pitch as uint32_t;
     (*ppu).snes = snes;
 }
-pub unsafe fn ppu_reset(mut ppu: *mut Ppu) {
-    let mut snes: *mut Snes = (*ppu).snes;
-    let mut pitch: size_t = (*ppu).renderPitch as size_t;
-    let mut renderBuffer: *mut uint8_t = (*ppu).renderBuffer;
-    memset(
-        ppu as *mut ::core::ffi::c_void,
-        0 as ::core::ffi::c_int,
-        ::core::mem::size_of::<Ppu>() as size_t,
-    );
-    (*ppu).renderBuffer = renderBuffer;
-    (*ppu).renderPitch = pitch as uint32_t;
+pub unsafe fn ppu_reset(ppu: *mut Ppu) {
+    let snes = (*ppu).snes;
+    let pitch = (*ppu).renderPitch;
+    let render_buffer = (*ppu).renderBuffer;
+    // The first reset initializes a partially constructed allocation.
+    core::ptr::write_bytes(ppu, 0, 1);
+    (*ppu).renderBuffer = render_buffer;
+    (*ppu).renderPitch = pitch;
     (*ppu).snes = snes;
-    (*ppu).vramPointer = 0 as uint16_t;
-    (*ppu).vramIncrementOnHigh = false_0 != 0;
-    (*ppu).vramIncrement = 1 as uint16_t;
-    (*ppu).vramRemapMode = 0 as uint8_t;
-    (*ppu).vramReadBuffer = 0 as uint16_t;
-    memset(
-        &raw mut (*ppu).cgram as *mut uint16_t as *mut ::core::ffi::c_void,
-        0 as ::core::ffi::c_int,
-        ::core::mem::size_of::<[uint16_t; 256]>() as size_t,
-    );
-    (*ppu).cgramPointer = 0 as uint8_t;
-    (*ppu).cgramSecondWrite = false_0 != 0;
-    (*ppu).cgramBuffer = 0 as uint8_t;
-    memset(
-        &raw mut (*ppu).oam as *mut uint16_t as *mut ::core::ffi::c_void,
-        0 as ::core::ffi::c_int,
-        ::core::mem::size_of::<[uint16_t; 256]>() as size_t,
-    );
-    memset(
-        &raw mut (*ppu).highOam as *mut uint8_t as *mut ::core::ffi::c_void,
-        0 as ::core::ffi::c_int,
-        ::core::mem::size_of::<[uint8_t; 32]>() as size_t,
-    );
-    (*ppu).oamAdr = 0 as uint8_t;
-    (*ppu).oamAdrWritten = 0 as uint8_t;
-    (*ppu).oamInHigh = false_0 != 0;
-    (*ppu).oamInHighWritten = false_0 != 0;
-    (*ppu).oamSecondWrite = false_0 != 0;
-    (*ppu).oamBuffer = 0 as uint8_t;
-    (*ppu).objPriority = false_0 != 0;
-    (*ppu).objTileAdr1 = 0 as uint16_t;
-    (*ppu).objTileAdr2 = 0 as uint16_t;
-    (*ppu).objSize = 0 as uint8_t;
-    (*ppu).timeOver = false_0 != 0;
-    (*ppu).rangeOver = false_0 != 0;
-    (*ppu).objInterlace = false_0 != 0;
-    let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    while i < 4 as ::core::ffi::c_int {
-        (*ppu).bgLayer[i as usize].hScroll = 0 as uint16_t;
-        (*ppu).bgLayer[i as usize].vScroll = 0 as uint16_t;
-        (*ppu).bgLayer[i as usize].tilemapWider = false_0 != 0;
-        (*ppu).bgLayer[i as usize].tilemapHigher = false_0 != 0;
-        (*ppu).bgLayer[i as usize].tilemapAdr = 0 as uint16_t;
-        (*ppu).bgLayer[i as usize].tileAdr = 0 as uint16_t;
-        (*ppu).bgLayer[i as usize].bigTiles = false_0 != 0;
-        (*ppu).bgLayer[i as usize].mosaicEnabled = false_0 != 0;
-        i += 1;
-    }
-    (*ppu).scrollPrev = 0 as uint8_t;
-    (*ppu).scrollPrev2 = 0 as uint8_t;
-    (*ppu).mosaicSize = 1 as uint8_t;
-    (*ppu).mosaicStartLine = 1 as uint8_t;
-    let mut i_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    while i_0 < 5 as ::core::ffi::c_int {
-        (*ppu).layer[i_0 as usize].mainScreenEnabled = false_0 != 0;
-        (*ppu).layer[i_0 as usize].subScreenEnabled = false_0 != 0;
-        (*ppu).layer[i_0 as usize].mainScreenWindowed = false_0 != 0;
-        (*ppu).layer[i_0 as usize].subScreenWindowed = false_0 != 0;
-        i_0 += 1;
-    }
-    memset(
-        &raw mut (*ppu).m7matrix as *mut int16_t as *mut ::core::ffi::c_void,
-        0 as ::core::ffi::c_int,
-        ::core::mem::size_of::<[int16_t; 8]>() as size_t,
-    );
-    (*ppu).m7prev = 0 as uint8_t;
-    (*ppu).m7largeField = false_0 != 0;
-    (*ppu).m7charFill = false_0 != 0;
-    (*ppu).m7xFlip = false_0 != 0;
-    (*ppu).m7yFlip = false_0 != 0;
-    (*ppu).m7extBg = false_0 != 0;
-    (*ppu).m7startX = 0 as ::core::ffi::c_int as int32_t;
-    (*ppu).m7startY = 0 as ::core::ffi::c_int as int32_t;
-    let mut i_1: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    while i_1 < 6 as ::core::ffi::c_int {
-        (*ppu).windowLayer[i_1 as usize].window1enabled = false_0 != 0;
-        (*ppu).windowLayer[i_1 as usize].window2enabled = false_0 != 0;
-        (*ppu).windowLayer[i_1 as usize].window1inversed = false_0 != 0;
-        (*ppu).windowLayer[i_1 as usize].window2inversed = false_0 != 0;
-        (*ppu).windowLayer[i_1 as usize].maskLogic = 0 as uint8_t;
-        i_1 += 1;
-    }
-    (*ppu).window1left = 0 as uint8_t;
-    (*ppu).window1right = 0 as uint8_t;
-    (*ppu).window2left = 0 as uint8_t;
-    (*ppu).window2right = 0 as uint8_t;
-    (*ppu).clipMode = 0 as uint8_t;
-    (*ppu).preventMathMode = 0 as uint8_t;
-    (*ppu).addSubscreen = false_0 != 0;
-    (*ppu).subtractColor = false_0 != 0;
-    (*ppu).halfColor = false_0 != 0;
-    memset(
-        &raw mut (*ppu).mathEnabled as *mut bool as *mut ::core::ffi::c_void,
-        0 as ::core::ffi::c_int,
-        ::core::mem::size_of::<[bool; 6]>() as size_t,
-    );
-    (*ppu).fixedColorR = 0 as uint8_t;
-    (*ppu).fixedColorG = 0 as uint8_t;
-    (*ppu).fixedColorB = 0 as uint8_t;
-    (*ppu).forcedBlank = true_0 != 0;
-    (*ppu).brightness = 0 as uint8_t;
-    (*ppu).mode = 0 as uint8_t;
-    (*ppu).bg3priority = false_0 != 0;
-    (*ppu).evenFrame = false_0 != 0;
-    (*ppu).pseudoHires = false_0 != 0;
-    (*ppu).overscan = false_0 != 0;
-    (*ppu).frameOverscan = false_0 != 0;
-    (*ppu).interlace = false_0 != 0;
-    (*ppu).frameInterlace = false_0 != 0;
-    (*ppu).directColor = false_0 != 0;
-    (*ppu).hCount = 0 as uint16_t;
-    (*ppu).vCount = 0 as uint16_t;
-    (*ppu).hCountSecond = false_0 != 0;
-    (*ppu).vCountSecond = false_0 != 0;
-    (*ppu).countersLatched = false_0 != 0;
-    (*ppu).ppu1openBus = 0 as uint8_t;
-    (*ppu).ppu2openBus = 0 as uint8_t;
+    (*ppu).vramIncrement = 1;
+    (*ppu).mosaicSize = 1;
+    (*ppu).mosaicStartLine = 1;
+    (*ppu).forcedBlank = true;
 }
+
 pub unsafe fn ppu_saveload(
     mut ppu: *mut Ppu,
     mut func: Option<SaveLoadFunc>,

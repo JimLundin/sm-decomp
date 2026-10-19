@@ -23,13 +23,18 @@ Complete gameplay, audio timing and masked RAM remain unverified. Historical
 zero-failure Waver runs made before the render initialization fix do not
 establish rendering equivalence.
 
-Latest integrated check: frozen `76ef4899` plus the Power Bomb block change
-from `f69e97c9` passes any% 129712/0 (254.29s), native exit 0, and the
-83073-frame floor route with 71 failures (199.50s), native exit 1. All 71
-ordered diagnostics equal the Waver baseline; the input prefix is identical
-through every known failure. The route executes ten block setup calls, while
-any% executes none. The Power Bomb projectile branch remains uncovered.
-Later gameplay, CPU, APU and PPU edits are outside this snapshot.
+Current priority (2026-10-19): the user asks to emphasize resolving the 71
+Waver rendering failures. Resume a focused diagnosis using the retained
+findings before further unrelated cleanup. The current first failure is
+frame 28,228, pixel (255,223), green byte 00 versus 84, with zero RAM
+differences. Keep rendering and all comparisons enabled.
+
+Latest integrated check: frozen `f69e97c9` plus the committed brightness-table
+cleanup and PPU reset simplification passes any% 129712/0 (233.05s), native
+exit 0, and Waver 58109/71 (108.52s), native exit 1. Complete ordered Waver
+stderr matches the explicit-render baseline after excluding progress updates.
+Format, release build and progress checks pass. Later door-argument, CPU and
+APU-history edits are outside these replays; complete gameplay remains open.
 
 Everything that existed before is in the branch `archive/pre-transpile-2026-10-17`.
 
@@ -160,6 +165,19 @@ sessions own the adjacent cleanup above. No maintained source or residue
 change and no new replay result belong to this cleanup.
 
 ## The oracle
+
+PPU reset initialization cleanup (2026-10-19): reset retains the raw whole-
+allocation clear, restores its three host fields and sets only the four
+nonzero defaults. Removed redundant zero stores and loops; no PPU/RAM/save
+layout changes. Independent review and 4,096 actual old/current reset pairs
+compare every allocation byte after reset, including padding, while checking
+null/live host pointers, four pitches and untouched pixel buffers. A fresh
+3,600/0 prefix executes the changed reset twice. The integrated any%/Waver
+results above include brightness cleanup; all 71 Waver failures remain exact.
+The formatted maintained PPU equals the frozen combined source. Cargo fmt,
+fmt --check, release build and progress pass. Own cast lines -14, Rust lines
+-115; other counters unchanged. Probe code and ROM-derived data remain outside
+tracked files. Next: the user-prioritized Waver rendering diagnosis above.
 
 APU DSP-write history cleanup (2026-10-19): F3 recording now uses a safe
 helper over the existing history fields. Signed-count arithmetic, the 256
