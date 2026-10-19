@@ -1147,6 +1147,35 @@ no Rust or residue; later projectile/word-helper changes retain separate
 verification. Remaining bosses, credits, persistence and broader hardware/audio
 coverage are still unfinished.
 
+Independent subsystem integration (2026-10-19): frozen 79c1fa14 combines
+the six source commits since f44151b9: named projectile reads, wrapping
+arithmetic, pure word helpers, live enemy-death fields, the enable flag and
+message-box tables. Uninterrupted full boot any% passes 129712/0 (170.60s)
+and Varia Suit 122732/0 (185.13s), native exits 0. Both complete serialized
+continuation payloads match the previously verified endpoints byte for byte;
+ROM/input/frame/audio/payload bindings agree. The source-based runtime
+fingerprint changes as expected; neither boot run loads an earlier checkpoint.
+
+The same unchanged DLL then resumes its own Varia checkpoint through the
+5815-frame Warehouse suffix: 5815/0 (13.26s), native exit 0, ending at
+absolute input frame 128547. Its entire serialized payload and non-timing
+diagnostics match the independently qualified c7856316-plus-message-box
+continuation. Final room $A471, X70/Y395, pose $0002, health 52/299,
+missiles 12/15, Supers 4/5, items $1105 and beams $1004 agree; Kraid stays
+defeated and all eight coroutine bytes are zero. The suffix adds no diagnostic;
+the full Varia prefix retains the one known fingernail warning. Credits remain
+unvisited. This is a same-build boot-and-resume chain to Warehouse.
+
+All 70 source/configuration/host files, library, DLL and copied fixtures stay
+fixed. Only registry dependencies seed the isolated checkout. Formatting,
+normal Cargo release (26.26s), Cargo host (2.06s) and progress pass. The batch
+removes 210 Rust lines, 29 raw-access expressions, 201 c_int promotion casts
+and 30 unsafe functions. This audit adds no Rust or residue. It closes six
+source commits; subsequent batches retain the five-commit/30-minute limit.
+Later comparison, split-word helper, radius and property changes retain their
+separate checks and still need integration. Remaining bosses, credits,
+persistence and broader hardware/audio coverage remain unfinished.
+
 Warehouse return waypoint (2026-10-19): ordinary inputs extend Varia's
 exact 122732-frame prefix to 128547. The same frozen c7856316 plus the message-box
 table build that passes full Varia 122732/0 resumes its own verified
