@@ -1184,9 +1184,9 @@ function count is unchanged. This audit changes no maintained Rust.
 
 Credits remain unvisited, and earlier observations retain their branch and
 caller coverage limits. Newer gameplay-definition and projectile changes
-need their own integration. Route continuation needs health recovery before
-Speed Booster; remaining bosses, credits, persistence and broader hardware/
-audio coverage remain unfinished.
+need their own integration. Route continuation reaches Speed Booster at input 148406.
+Remaining bosses, credits, persistence and broader hardware/audio coverage
+remain unfinished.
 
 Earlier reviewed integration: frozen `64e8d165` passes full any% 129712/0
 (184.20s) and Kraid phase two 119823/0 (195.59s), native exits 0. This
@@ -1782,6 +1782,34 @@ Ignored movies/warehouse-return.inputs has SHA-256
 1374de5652f541dcf71703c3340266d02021ad61ca1798cd7e4416749190f953.
 No rebuild, repeated full boot, source change or committed asset is needed
 for this continuation. Abandoned gameplay attempts are excluded.
+
+Speed Booster milestone (2026-10-19): ordinary inputs extend the exact
+Warehouse 128547, Energy Tank 129802 and Bubble Mountain 138749 prefixes
+through frame 148406. Health recovery and bomb/wall jumps reach Bubble's
+upper exit; the route continues through $B07A and Speed Booster Hall
+($ACF0) into $AD1B. Speed Booster is acquired and message 13 is dismissed.
+The retained route uses no RAM, health or ammunition injection and excludes
+abandoned attempts.
+
+The unchanged original route library verifies 128547..148406 continuously:
+19859/0 (41.13s), native exit 0. Frozen 1458fe46 plus the message-box layout
+change resumes its own full-boot Warehouse 128547/0 checkpoint for the same
+19859/0 (20.03s), native exit 0, without a rebuild or new diagnostics.
+All 81 source, library, asset and checkpoint pins remain fixed; runtime,
+ROM, complete input prefix, endpoint, audio mode and payload bindings pass.
+Complete final RAM equals the original route, SHA-256
+479685637b9f8528238b2c3f24e9cd9cb3ddc52a54ae16854fe5b0280e4cda49.
+
+Final state 8 is room $AD1B, X171/Y123, pose $0089, health 46/399,
+missiles 6/15, Supers 0/5, items $3105 and beams $1004 equipped/collected.
+All eight coroutine bytes are zero and Kraid remains defeated. The modern
+suffix includes 18515 gameplay frames, 11 rooms and 14 enemy definitions.
+This establishes Speed Booster coverage; later upgrades, remaining bosses,
+credits, persistence and broader hardware/audio coverage remain unfinished.
+
+Ignored movies/speed-booster.inputs SHA-256:
+8590d6b62655d9b850696df059f156908a132e1a2990b098a0a29edef4119ea2.
+No ROM, checkpoint, input asset or derived diagnostic is committed.
 
 Warehouse Energy Tank and Bubble Mountain (2026-10-19): ordinary inputs
 extend the exact Warehouse 128547/Varia 122732 prefixes. The Warehouse
