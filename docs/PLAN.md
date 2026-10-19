@@ -10003,6 +10003,78 @@ replays. Rust lines -14; other own counters unchanged. Indexed-indirect/TSX/
 accumulator ROR stay held. Complete gameplay/render/audio remain open.
 Continue covered CPU cleanup.
 
+Missile Tank return through the bomb tunnel reaches Parlor (2026-10-19).
+From tank-return-tunnel69387 at9A44 X171/Y153 health59/99, four fresh
+bombs separated by80 neutral frames and right/shoot65 traversal segments
+clear the remaining breakables. Final right/shoot110, neutral120 crosses
+the east door: transition69921, 92FD load69939, gameplay70026. Samus
+lands X295/Y929, ball pose001D, health59/99, missiles8/10. Retain
+tank-return-bombs70139/71 (157.23s), observed nativeexit1. This closes
+the previously unverified return from the new Missile Tank to Parlor.
+
+Opposite-door climb is still unfinished. Unmorph and a long right jump
+hit the wall atX331/Y805, then fall toX385/Y1019, costing5health.
+Shorter initial jump preserves59health but falls toX426/Y1211.
+Two lower-platform jumps reachX475/Y912, health49/99. Direct door jumps
+hit the underside atY869. L/0020 is aim down, R/0010 aim up; the early
+aim trial used L and is not evidence of upward fire. Correct Up fire and
+R jump also fail to establish entry. Backstep reachesX441/Y923; jumping
+there reachesX442/Y823 but right movement hitsX443 and falls below door.
+Neither run input nor the measured approach-shot trial resolves it.
+
+Useful next launch: tank-map-step-left retained through70888, near
+X442/Y823, then left12, neutral80 lands X428/Y859 on the central platform
+(observed70925..70960). Fresh right/jump/shoot reachesX491/Y784 above
+the door, health49/99: tank-map-center-ledge71231/71. Left18,neutral25,
+right/aim-up/shoot65,right/shoot60,neutral120 returns to that same upper
+ledge, not98E2. Down-aimed central-platform shooting falls toX475/Y912.
+Retain the central-platform prefix around70980 for the next focused
+door approach; no map station acquisition or room98E2/9994 entry is proved.
+
+All16 complete trials return nativeexit1, with71 existing failing frames:
+tank-return-bombs: 70139/71 (157.23s)
+tank-parlor-cross: 70411/71 (61.67s)
+tank-parlor-delayed: 70382/71 (81.93s)
+tank-parlor-rise: 70803/71 (80.97s)
+tank-parlor-platform: 70583/71 (75.13s)
+tank-map-door: 71024/71 (76.21s)
+tank-map-aim: 71129/71 (77.89s)
+tank-map-up: 71129/71 (65.33s)
+tank-map-backstep: 71124/71 (77.34s)
+tank-map-step-left: 71069/71 (71.60s)
+tank-map-wall-left: 71116/71 (73.08s)
+tank-map-fall-run: 71088/71 (72.88s)
+tank-map-approach-shot: 71124/71 (75.03s)
+tank-map-center-ledge: 71231/71 (70.50s)
+tank-map-drop: 71519/71 (77.70s)
+tank-map-central-shot: 71250/71 (74.45s)
+
+The initial return uses the previously explicit-built frozen d217ea15-session
+parlor-observe.dll; its71 ordered diagnostics exactly match Waver. Later
+trials use tank-current-observe.dll explicitly built this turn against
+target/tank-cleanup/libclean.rlib (7fcc20d6 plus committed Missile Tank
+accessors). That core suppresses diagnostics after the first failure;
+all15 first diagnostic lines match the existing first Waver failure.
+The longest retained successful climb route is independently replayed
+through a read-only failure-counter observer with the same clean core:
+return-failure-frames71519/71 (80.40s), observed nativeexit1. All71 ordered
+failing frame numbers exactly match its prior pickup-route baseline, so no
+new failing frames occur. Same-core explicit-render any%129712/0 (136.88s),
+nativeexit0 from the preceding change remains the no-source-change regression.
+These observations verify inputs on pinned cores, not peer CPU/PPU edits.
+No injected RAM, geometry, health or ammunition writes were used.
+
+Cargo fmt/check, full release build with external SDL2 and progress pass.
+Own maintained source/residue delta zero; peer counter changes are separate.
+Progress22689 raw,39 extern blocks,3 C ABI exports,5 no_mangle,6714 unsafe,
+85558 casts,257442 Rust lines includes independently owned peer reductions.
+No ROM, controller inputs, SRAM, room geometry or probes are committed.
+This item finishes in under one hour. Next: resolve approach to Parlor's
+eastY864 door from the retained central platform, then continue accessible
+item/boss coverage. Held upper99BD ascent, cliff tuning, old9AD9 enemy-drop
+ammo and HDMA stay held. Credits, full gameplay/hardware, rendering/audio,
+masked RAM and ownership remain unfinished. Peer work/remote sync stay separate.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
