@@ -1896,14 +1896,10 @@ pub unsafe fn PlmInstr_SetItemBit(
 ) -> *const uint8 {
     let index = usize::from(k >> 1) * 2;
     let v2 = u16::from_le_bytes([game.g_ram[0x1dc7 + index], game.g_ram[0x1dc8 + index]]);
-    if v2 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
-        let mut v3: uint16 = PrepareBitAccess(v2, game);
-        let ref mut fresh63 = *(&raw mut game.g_ram as *mut uint8)
-            .offset(0xd870 as ::core::ffi::c_int as isize)
-            .offset(v3 as isize);
-        *fresh63 = (*fresh63 as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x5e7 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint8;
+    if v2 & 0x8000 == 0 {
+        let byte_index = usize::from(PrepareBitAccess(v2, game));
+        let bitmask = u16::from_le_bytes([game.g_ram[0x5e7], game.g_ram[0x5e8]]);
+        game.g_ram[0xd870 + byte_index] |= bitmask as u8;
     }
     return plmp;
 }

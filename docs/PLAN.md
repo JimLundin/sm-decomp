@@ -12569,6 +12569,30 @@ no new item or room. Next: inspect the actual one-block passage geometry
 and reachable jump/bomb state before another timing sweep. Complete
 credits/gameplay, hardware/audio, remaining masks and ownership stay open.
 
+Collected-item byte write (2026-10-19): PlmInstr_SetItemBit now reads
+the little-endian bitmask and ORs its low byte into item_bit_array. The
+high-bit gate, PrepareBitAccess callback/scratch write and unchanged return
+pointer retain their order. Frozen d196375a plus only this change
+passes any%129712/0 (198.51s), nativeexit0, and the verified
+missile pickup route68606/0 (113.40s), nativeexit0. Observed
+route68606/0 (111.15s) executes the actual changed store5
+times, including item15 at68399. Maintained source contains no observations.
+Cargo fmt/check and release build pass. Own progress raw offsets-2,
+cast lines-3, Rust lines-4; peer changes excluded from this snapshot.
+
+Super Missile approach remains unproved. Wall-jump/morph alignment from
+the verified ledge returns to the lower shaft, with zero comparisons and
+no new item. Repeated controller timing does not justify more attempts
+without new geometry/collision evidence. Next: inspect live block geometry
+and collision state at the opening, then choose a new route. Live69713
+geometry confirms row18/column4 B16E at64/288 and row19/column4 30FF.
+Type3 is special air for scroll updates, not a slope; do not attribute the
+stopped ascent to slope collision. Standing width and adjacent solid blocks
+still need actual collision evidence. Complete
+credits/gameplay, hardware/audio timing, remaining masks and ownership stay
+open. Probe/save/movie outputs remain outside tracked files; peer source
+and pending PLAN edits are preserved.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
