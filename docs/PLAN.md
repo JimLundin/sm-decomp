@@ -71,6 +71,24 @@ initializers. Those nested counts overlap. Next expand coherent initializer,
 PPU setup, Fire Geyser child-shape, enemy row-scan and directional projectile
 families before selecting a rewrite. Keep unrelated state setters separate.
 
+Decoder initializer completion (2026-10-19): all 24 outer context, zbuf,
+Huffman and PNG initializers now use four private EMPTY constants. This
+extends 7b9bc6a0 to the remaining three PNG sites: nine further Rust lines
+removed, 380 across the complete family. Cast, unsafe and raw-access counts
+are unchanged. Expanding the constants reconstructs the original source
+exactly; other source files match the frozen f52034bd base.
+
+Actual frontend libraries agree on 5472 image API cases and 72 zlib cases,
+including memory/file/callback inputs, 8/16-bit/float output, metadata,
+filters, channels, flips and stored/fixed/dynamic deflate. Pixels, float bits,
+I/O traces and file positions match; native-channel 8-bit expected pixels
+also pass. Probes reach all 24 initializer sites. Six pre-existing raw-stream
+rejections are preserved. Frozen f52034bd plus the complete family passes
+any% 129712/0 (125.33s), native exit 0, with fixed source/DLL/inputs. That
+movie excludes the frontend and supplies regression verification, not decoder
+coverage. Formatting, normal release (32.91s frozen, 33.50s stable workspace)
+and progress pass. Other concurrent gameplay edits retain their own checks.
+
 Previous-position candidate held (2026-10-19): a historical transition pair
 expands to five routines in sm_91/sm_9b, including both grapple variants.
 The candidate shares the 12-pixel previous-coordinate clamp and the complete

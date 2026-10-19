@@ -210,6 +210,25 @@ pub struct RenderCtx {
 }
 pub const kMaxVaosInRenderCtx: C2RustUnnamed_3 = 51;
 pub use crate::types::{stbi_us, Config};
+impl stbi__zhuffman {
+    const EMPTY: Self = stbi__zhuffman {
+        fast: [0; 512],
+        firstcode: [0; 16],
+        maxcode: [0; 17],
+        firstsymbol: [0; 16],
+        size: [0; 288],
+        value: [0; 288],
+    };
+}
+impl stbi__png {
+    const EMPTY: Self = stbi__png {
+        s: ::core::ptr::null_mut::<stbi__context>(),
+        idata: ::core::ptr::null_mut::<stbi_uc>(),
+        expanded: ::core::ptr::null_mut::<stbi_uc>(),
+        out: ::core::ptr::null_mut::<stbi_uc>(),
+        depth: 0,
+    };
+}
 impl stbi__context {
     const EMPTY: Self = stbi__context {
         img_x: 0,
@@ -230,16 +249,6 @@ impl stbi__context {
         img_buffer_end: ::core::ptr::null_mut::<stbi_uc>(),
         img_buffer_original: ::core::ptr::null_mut::<stbi_uc>(),
         img_buffer_original_end: ::core::ptr::null_mut::<stbi_uc>(),
-    };
-}
-impl stbi__zhuffman {
-    const EMPTY: Self = stbi__zhuffman {
-        fast: [0; 512],
-        firstcode: [0; 16],
-        maxcode: [0; 17],
-        firstsymbol: [0; 16],
-        size: [0; 288],
-        value: [0; 288],
     };
 }
 impl stbi__zbuf {
@@ -4359,13 +4368,7 @@ unsafe fn stbi__png_load(
     mut req_comp: ::core::ffi::c_int,
     mut ri: *mut stbi__result_info,
 ) -> *mut ::core::ffi::c_void {
-    let mut p: stbi__png = stbi__png {
-        s: ::core::ptr::null_mut::<stbi__context>(),
-        idata: ::core::ptr::null_mut::<stbi_uc>(),
-        expanded: ::core::ptr::null_mut::<stbi_uc>(),
-        out: ::core::ptr::null_mut::<stbi_uc>(),
-        depth: 0,
-    };
+    let mut p: stbi__png = stbi__png::EMPTY;
     p.s = s;
     return stbi__do_png(&raw mut p, x, y, comp, req_comp, ri);
 }
@@ -4407,24 +4410,12 @@ unsafe fn stbi__png_info(
     mut y: *mut ::core::ffi::c_int,
     mut comp: *mut ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
-    let mut p: stbi__png = stbi__png {
-        s: ::core::ptr::null_mut::<stbi__context>(),
-        idata: ::core::ptr::null_mut::<stbi_uc>(),
-        expanded: ::core::ptr::null_mut::<stbi_uc>(),
-        out: ::core::ptr::null_mut::<stbi_uc>(),
-        depth: 0,
-    };
+    let mut p: stbi__png = stbi__png::EMPTY;
     p.s = s;
     return stbi__png_info_raw(&raw mut p, x, y, comp);
 }
 unsafe fn stbi__png_is16(mut s: *mut stbi__context) -> ::core::ffi::c_int {
-    let mut p: stbi__png = stbi__png {
-        s: ::core::ptr::null_mut::<stbi__context>(),
-        idata: ::core::ptr::null_mut::<stbi_uc>(),
-        expanded: ::core::ptr::null_mut::<stbi_uc>(),
-        out: ::core::ptr::null_mut::<stbi_uc>(),
-        depth: 0,
-    };
+    let mut p: stbi__png = stbi__png::EMPTY;
     p.s = s;
     if stbi__png_info_raw(
         &raw mut p,
