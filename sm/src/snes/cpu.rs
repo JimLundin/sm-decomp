@@ -439,37 +439,39 @@ unsafe fn address_absolute_indexed_indirect(cpu: *mut Cpu, game: &mut Game) -> u
         game,
     )
 }
-unsafe fn and_accumulator(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
-    if (*cpu).mf {
-        let value = u16::from(read_byte(cpu, low, game));
-        (*cpu).a &= value | 0xff00;
-    } else {
-        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        let value = read_word(cpu, low, high, game);
-        (*cpu).a &= value;
-    }
-    set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
+#[derive(Clone, Copy)]
+enum LogicOperation {
+    And,
+    Or,
+    Xor,
 }
-unsafe fn or_accumulator(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
-    if (*cpu).mf {
-        let value = u16::from(read_byte(cpu, low, game));
-        (*cpu).a |= value;
+fn apply_accumulator_logic(value: u16, byte: bool, operation: LogicOperation, cpu: &mut Cpu) {
+    let result = match operation {
+        LogicOperation::And => cpu.a & value,
+        LogicOperation::Or => cpu.a | value,
+        LogicOperation::Xor => cpu.a ^ value,
+    };
+    cpu.a = if byte {
+        cpu.a & 0xff00 | result & 0xff
     } else {
-        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        let value = read_word(cpu, low, high, game);
-        (*cpu).a |= value;
-    }
-    set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
+        result
+    };
 }
-unsafe fn xor_accumulator(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
-    if (*cpu).mf {
-        let value = u16::from(read_byte(cpu, low, game));
-        (*cpu).a ^= value;
+unsafe fn logical_accumulator(
+    cpu: *mut Cpu,
+    low: u32,
+    high: u32,
+    operation: LogicOperation,
+    game: &mut Game,
+) {
+    let byte = (*cpu).mf;
+    let value = if byte {
+        u16::from(read_byte(cpu, low, game))
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        let value = read_word(cpu, low, high, game);
-        (*cpu).a ^= value;
-    }
+        read_word(cpu, low, high, game)
+    };
+    apply_accumulator_logic(value, byte, operation, &mut *cpu);
     set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
 }
 fn addition_overflow(register: u16, value: u16, result: i32, byte: bool) -> bool {
@@ -918,7 +920,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x01 => {
                 let (low, high) = address_direct_page_indexed_indirect(cpu, game);
-                or_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
                 break;
             }
             0x02 => {
@@ -935,7 +937,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x03 => {
                 let (low, high) = address_stack_relative(cpu, game);
-                or_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
                 break;
             }
             0x04 => {
@@ -945,7 +947,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x05 => {
                 let (low, high) = address_direct_page(cpu, game);
-                or_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
                 break;
             }
             0x06 => {
@@ -955,7 +957,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x07 => {
                 let (low, high) = address_direct_page_indirect_long(cpu, game);
-                or_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
                 break;
             }
             0x08 => {
@@ -964,7 +966,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x09 => {
                 let (low, high) = address_immediate(&mut *cpu, false);
-                or_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
                 break;
             }
             0x0a => {
@@ -982,7 +984,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x0d => {
                 let (low, high) = address_absolute(cpu, game);
-                or_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
                 break;
             }
             0x0e => {
@@ -992,7 +994,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x0f => {
                 let (low, high) = address_absolute_long(cpu, game);
-                or_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
                 break;
             }
             0x10 => {
@@ -1001,17 +1003,17 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x11 => {
                 let (low, high) = address_direct_page_indirect_y(cpu, false, game);
-                or_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
                 break;
             }
             0x12 => {
                 let (low, high) = address_direct_page_indirect(cpu, game);
-                or_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
                 break;
             }
             0x13 => {
                 let (low, high) = address_stack_relative_indirect_y(cpu, game);
-                or_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
                 break;
             }
             0x14 => {
@@ -1021,7 +1023,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x15 => {
                 let (low, high) = address_direct_page_x(cpu, game);
-                or_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
                 break;
             }
             0x16 => {
@@ -1031,7 +1033,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x17 => {
                 let (low, high) = address_direct_page_indirect_long_y(cpu, game);
-                or_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
                 break;
             }
             0x18 => {
@@ -1040,7 +1042,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x19 => {
                 let (low, high) = address_absolute_y(cpu, false, game);
-                or_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
                 break;
             }
             0x1a => {
@@ -1058,7 +1060,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x1d => {
                 let (low, high) = address_absolute_x(cpu, false, game);
-                or_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
                 break;
             }
             0x1e => {
@@ -1068,7 +1070,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x1f => {
                 let (low, high) = address_absolute_long_x(cpu, game);
-                or_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Or, game);
                 break;
             }
             0x20 => {
@@ -1079,7 +1081,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x21 => {
                 let (low, high) = address_direct_page_indexed_indirect(cpu, game);
-                and_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::And, game);
                 break;
             }
             0x22 => {
@@ -1093,7 +1095,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x23 => {
                 let (low, high) = address_stack_relative(cpu, game);
-                and_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::And, game);
                 break;
             }
             0x24 => {
@@ -1103,7 +1105,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x25 => {
                 let (low, high) = address_direct_page(cpu, game);
-                and_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::And, game);
                 break;
             }
             0x26 => {
@@ -1113,7 +1115,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x27 => {
                 let (low, high) = address_direct_page_indirect_long(cpu, game);
-                and_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::And, game);
                 break;
             }
             0x28 => {
@@ -1122,7 +1124,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x29 => {
                 let (low, high) = address_immediate(&mut *cpu, false);
-                and_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::And, game);
                 break;
             }
             0x2a => {
@@ -1141,7 +1143,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x2d => {
                 let (low, high) = address_absolute(cpu, game);
-                and_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::And, game);
                 break;
             }
             0x2e => {
@@ -1151,7 +1153,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x2f => {
                 let (low, high) = address_absolute_long(cpu, game);
-                and_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::And, game);
                 break;
             }
             0x30 => {
@@ -1160,17 +1162,17 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x31 => {
                 let (low, high) = address_direct_page_indirect_y(cpu, false, game);
-                and_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::And, game);
                 break;
             }
             0x32 => {
                 let (low, high) = address_direct_page_indirect(cpu, game);
-                and_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::And, game);
                 break;
             }
             0x33 => {
                 let (low, high) = address_stack_relative_indirect_y(cpu, game);
-                and_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::And, game);
                 break;
             }
             0x34 => {
@@ -1180,7 +1182,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x35 => {
                 let (low, high) = address_direct_page_x(cpu, game);
-                and_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::And, game);
                 break;
             }
             0x36 => {
@@ -1190,7 +1192,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x37 => {
                 let (low, high) = address_direct_page_indirect_long_y(cpu, game);
-                and_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::And, game);
                 break;
             }
             0x38 => {
@@ -1199,7 +1201,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x39 => {
                 let (low, high) = address_absolute_y(cpu, false, game);
-                and_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::And, game);
                 break;
             }
             0x3a => {
@@ -1218,7 +1220,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x3d => {
                 let (low, high) = address_absolute_x(cpu, false, game);
-                and_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::And, game);
                 break;
             }
             0x3e => {
@@ -1228,7 +1230,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x3f => {
                 let (low, high) = address_absolute_long_x(cpu, game);
-                and_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::And, game);
                 break;
             }
             0x40 => {
@@ -1242,7 +1244,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x41 => {
                 let (low, high) = address_direct_page_indexed_indirect(cpu, game);
-                xor_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
                 break;
             }
             0x42 => {
@@ -1251,7 +1253,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x43 => {
                 let (low, high) = address_stack_relative(cpu, game);
-                xor_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
                 break;
             }
             0x44 => {
@@ -1278,7 +1280,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x45 => {
                 let (low, high) = address_direct_page(cpu, game);
-                xor_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
                 break;
             }
             0x46 => {
@@ -1288,7 +1290,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x47 => {
                 let (low, high) = address_direct_page_indirect_long(cpu, game);
-                xor_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
                 break;
             }
             0x48 => {
@@ -1302,7 +1304,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x49 => {
                 let (low, high) = address_immediate(&mut *cpu, false);
-                xor_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
                 break;
             }
             0x4a => {
@@ -1319,7 +1321,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x4d => {
                 let (low, high) = address_absolute(cpu, game);
-                xor_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
                 break;
             }
             0x4e => {
@@ -1329,7 +1331,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x4f => {
                 let (low, high) = address_absolute_long(cpu, game);
-                xor_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
                 break;
             }
             0x50 => {
@@ -1338,17 +1340,17 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x51 => {
                 let (low, high) = address_direct_page_indirect_y(cpu, false, game);
-                xor_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
                 break;
             }
             0x52 => {
                 let (low, high) = address_direct_page_indirect(cpu, game);
-                xor_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
                 break;
             }
             0x53 => {
                 let (low, high) = address_stack_relative_indirect_y(cpu, game);
-                xor_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
                 break;
             }
             0x54 => {
@@ -1375,7 +1377,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x55 => {
                 let (low, high) = address_direct_page_x(cpu, game);
-                xor_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
                 break;
             }
             0x56 => {
@@ -1385,7 +1387,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x57 => {
                 let (low, high) = address_direct_page_indirect_long_y(cpu, game);
-                xor_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
                 break;
             }
             0x58 => {
@@ -1394,7 +1396,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x59 => {
                 let (low, high) = address_absolute_y(cpu, false, game);
-                xor_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
                 break;
             }
             0x5a => {
@@ -1429,7 +1431,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x5d => {
                 let (low, high) = address_absolute_x(cpu, false, game);
-                xor_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
                 break;
             }
             0x5e => {
@@ -1439,7 +1441,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x5f => {
                 let (low, high) = address_absolute_long_x(cpu, game);
-                xor_accumulator(cpu, low, high, game);
+                logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
                 break;
             }
             0x60 => {

@@ -9495,6 +9495,25 @@ frozen core/DLL builds pass. Live CPU matches verified source; all own progress
 counters unchanged. Full word Cartesian, arbitrary MMIO and complete gameplay/
 render/audio remain open. Continue covered CPU cleanup; TSX/ROR stay held.
 
+CPU shared logical accumulator path (2026-10-19): AND/OR/XOR use a private
+LogicOperation enum, one unsafe operand-reading wrapper and a safe arithmetic
+helper. All 45 opcode callers select their original operation. Pre-fetch MF
+selects operand width; word cycle increments precede reads. Post-fetch A, byte
+high-A preservation and final live-MF Z/N remain exact; the mutable reference
+is confined to callback-free arithmetic after bus reads. Frozen `598828ab`
+plus this change passes 51,707,904 actual old/current helper comparisons across
+every A word/byte operand pair and seven sampled word boundary/source entries
+including duplicates. Literal old routines independently perform bus reads;
+named CPU/bus fields, flags and cycles match. Prefix 3,600/0 (1.09s), native
+exit 0, executes word/byte AND 231,044/39,120, OR 88,666/814 and XOR 10,863/527.
+Clean full any% 129,712/0 (55.48s), native exit 0. Cargo fmt/check, full release
+and release-library builds with external SDL2, normal metadata and optimized
+frozen core/DLL builds pass. Live CPU matches verified source; peer PPU changes
+are outside this replay. Unsafe functions -2; Rust lines +2 add the enum/safe
+boundary and formatter reflow while removing repeated bus handling. Other own
+counters unchanged. Full word Cartesian, arbitrary MMIO and complete gameplay/
+render/audio remain open. Continue covered CPU cleanup; TSX/ROR stay held.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
