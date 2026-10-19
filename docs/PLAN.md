@@ -8786,6 +8786,21 @@ builds pass; full frontend linking still lacks SDL2. Live CPU matches verified
 source. Cast lines -5, Rust lines -9; other counters unchanged. Invalid-delta
 assertion execution, complete gameplay and rendering/audio remain open.
 
+CPU native RTL breakpoint guard (2026-10-19): native stack comparisons and
+a direct invalid-stack branch replace promoted comparisons/empty labelled
+block. Assertion arguments, breakpoint clear before callback and PC/bank pulls
+remain exact. Frozen HEAD `e9c523f3` plus this change passes 73,723 extracted
+old/current cases with real stack reads/substituted callback and 720,896
+boundary predicates. The actual cpu_doOpcode/HookedFunctionRts path passes
+7,933 additional cases with no callback substitution, checking callback state,
+bank pull and return-PC wrapping. Prefix 3,600/0 (1.08s) executes 74,857 ordinary
+RTL instructions but zero guarded callbacks; guard execution comes from the
+dedicated probe. Clean full any% 129,712/0 (57.34s), native exit 0. Cargo
+fmt/check, release library, normal metadata and optimized core/DLL builds pass;
+full frontend linking still lacks SDL2. Live CPU matches verified source.
+Cast lines -5, Rust lines -7; other counters unchanged. Invalid-stack assertion
+execution, complete gameplay and rendering/audio remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

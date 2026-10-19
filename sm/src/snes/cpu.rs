@@ -1491,26 +1491,19 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0x6b => {
-                if (*cpu).sp as ::core::ffi::c_int >= (*cpu).spBreakpoint as ::core::ffi::c_int
-                    && (*cpu).spBreakpoint as ::core::ffi::c_int != 0
-                {
-                    '_c2rust_label_0: {
-                        if (*cpu).sp as ::core::ffi::c_int
-                            == (*cpu).spBreakpoint as ::core::ffi::c_int
-                        {
-                        } else {
-                            __assert_fail(
-                                b"cpu->sp == cpu->spBreakpoint\0" as *const u8
-                                    as *const ::core::ffi::c_char,
-                                b"src/snes/cpu.c\0" as *const u8 as *const ::core::ffi::c_char,
-                                1464 as ::core::ffi::c_uint,
-                                b"void cpu_doOpcode(Cpu *, uint8_t)\0" as *const u8
-                                    as *const ::core::ffi::c_char,
-                            );
-                        }
-                    };
-                    (*cpu).spBreakpoint = 0 as u16;
-                    if HookedFunctionRts(0 as ::core::ffi::c_int, game) {
+                if (*cpu).sp >= (*cpu).spBreakpoint && (*cpu).spBreakpoint != 0 {
+                    if (*cpu).sp != (*cpu).spBreakpoint {
+                        __assert_fail(
+                            b"cpu->sp == cpu->spBreakpoint\0" as *const u8
+                                as *const ::core::ffi::c_char,
+                            b"src/snes/cpu.c\0" as *const u8 as *const ::core::ffi::c_char,
+                            1464 as ::core::ffi::c_uint,
+                            b"void cpu_doOpcode(Cpu *, uint8_t)\0" as *const u8
+                                as *const ::core::ffi::c_char,
+                        );
+                    }
+                    (*cpu).spBreakpoint = 0;
+                    if HookedFunctionRts(0, game) {
                         return;
                     }
                 }
