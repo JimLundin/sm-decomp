@@ -11759,6 +11759,33 @@ replays prevent interpreting timings as performance measurements. Prior
 holds and complete gameplay/render/audio remain open. Continue covered CPU
 cleanup.
 
+Post-map9AD9 regenerating floor remains unfinished (2026-10-19).
+Retain verified map9ad9-down137181916/71 atX70/Y1675,health24/199,
+missiles1/10,equipment1004. FloorY1696 isC16B/BTS09 atX80..175;
+below it is clear until a second shootable block atX112/Y1776,BTS04.
+Downward jumps/shots briefly reachY1686, then snap back to standing1675.
+Early, delayed and short-jump shots all return to the floor. Bombs complete
+morph, break blocks and bounce Samus upward, then land ballY1689.
+X100/108/103/101 attempts overlap block edges, but final ball136 trial
+centers exactlyX136 and still returnsY1689 with24health. Alignment alone
+therefore does not solve this floor; earlier alignment hypothesis is rejected.
+Bomb sweep drifts toX189; return trial endsX137; neither crosses.
+
+Final map9ad9-ball13683073/71 (150.95s), observed native exit1, is an
+unfinished exploratory extension, not a verified route milestone. All these
+trials report71 failures, but their exact ordered frames were not separately
+replayed. No new room, item or boss progress is claimed. No gameplay/RAM/
+inventory writes; source/residue delta0. Inputs, probes, SRAM and ROM-derived
+geometry stay ignored. Energy Tank cleanup3b2b9775 owns fmt/check, release,
+progress, contextual77139/71 and clean any%129712/0 (195.69s).
+
+Stop this item at the one-hour work limit. Next resumed work needs live
+block/PLM regeneration observation around the fall or a controlled beam-to-
+ball crossing avoiding bomb bounce; do not repeat blind alignment guesses.
+Keep old9AD9 enemy-drop ammo, upper99BD ascent and earlier holds held.
+Complete credits/gameplay/hardware, audio/render, masked RAM and ownership
+remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
