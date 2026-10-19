@@ -1912,12 +1912,22 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `e289a2f1` combines the
-compiler cleanups and five enemy-parameter initializers. A fresh normal
-release build passes (40.07s); full boot any% passes 129712/0
-(164.41s), native exit 0. Formatting/check and progress pass, with all
-source/library/DLL/configuration/fixture hashes stable. Only registry
-dependencies were reused; the maintained game and verifier host were rebuilt.
+Latest reviewed integration (2026-10-19): `11bc05a3` adds the identity-op
+cleanup to the reviewed compiler and initializer work. The complete committed
+Rust inventory, Cargo configuration, original base and replay source copy
+match the checked snapshots. All 72 source/library/DLL/fixture pins match.
+Normal release and full boot any% 129712/0 (153.10s) and Speed Booster
+148406/0 (213.07s) pass, native exits 0; completed runs were reused.
+
+Complete word diffs contain exactly 1411 removals of `& (0xffffu16)` across
+23 files. The compiler identifies these as redundant u16 masks; operand
+reads, casts and evaluation order remain unchanged. All-target/all-feature
+Clippy has zero identity_op diagnostics. Formatting/check passes; Rust lines
+fall by 199, with raw-access, unsafe-function and cast counts unchanged.
+
+The earlier e289a2f1 composition retains its fresh normal release (40.07s)
+and any% 129712/0 (164.41s), native exit 0, with all source/library/DLL/
+configuration/fixture hashes stable. Only registry dependencies were reused.
 
 Initializer review reconstructs exactly the five routines, two parameter
 getters and six-byte Mini Kraid view. Packed types and Game layout are
