@@ -11718,6 +11718,24 @@ unchanged. Concurrent replays prevent interpreting timings as performance
 measurements. Prior holds and complete gameplay/render/audio remain open.
 Continue covered CPU cleanup.
 
+CPU safe direct-page register loads (2026-10-19): load_direct_page shares
+DP assignment and word Z/N updates between PLD and TCD. Stack reads remain
+before PLD assignment; TCD retains the full accumulator value regardless of
+MF. Other flags and bus/stack behavior stay unchanged. Frozen `77a8a6f9`
+plus this change passes 892,918 actual dispatcher/previous-arm comparisons:
+every word value, both MF/emulation choices, every emulation stack pointer
+and native WRAM stack range with sampled word boundaries. Named CPU/bus
+state and flags match; device-mapped native stacks/MMIO are not exhausted.
+Prefix 3,600/0 (2.91s), native exit 0, executes PLD 3,600 and TCD 3,601
+calls. Clean full any% passes 129,712/0 (162.88s), native exit 0. Cargo
+fmt/check, full release/release-library builds with external SDL2, normal
+metadata and frozen optimized core/DLL pass. Live CPU matches verified
+source; uncommitted peer gameplay/PPU work is outside this replay. Rust lines
++3 share assignment in safe code; other own counters unchanged. Concurrent
+replays prevent interpreting timings as performance measurements. Prior
+holds and complete gameplay/render/audio remain open. Continue covered CPU
+cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
