@@ -13315,14 +13315,25 @@ ROM-or-RAM instruction resolution and callback boundaries remain unchanged.
 Frozen b1e7dca4 plus only this change passes any%129712/0
 (169.00s), native exit0, and pickup route68606/0
 (105.17s), native exit0. Observed pickup route68606/0
-(105.18s) executes 3765 commands, including 741 vertical
-and 3024 horizontal commands. Maintained source has no observers.
+(105.18s) executes 3765 nonempty commands: 741 vertical commands write
+2964 blocks and 3024 horizontal commands write 4507 blocks. Counts are per
+command; zero-count commands remain unexercised. Maintained source has no
+observers.
 Arithmetic audit matches500000 stride/odd-index/signed-displacement cases;
 this adds no movie coverage or arbitrary-alias proof. Cargo fmt/check and
 release build pass. Own raw offsets-6, cast lines-23, Rust lines-26; other
 own counters unchanged. Frozen replays contain only this routine change;
 peer edits remain preserved. PLM decrement/Chozo coverage holds and complete
 credits/gameplay/hardware/audio/masks/ownership remain open.
+
+Independent PLM draw QC confirms all 62 frozen Rust files match b1e7dca4
+plus only this routine, whose body matches commit182e6a2c and live source.
+Complete clean/observed pickup stdout and stderr match after removing only
+timing and observer lines. Source review preserves command-local stride,
+live displacement width, wide odd-index rounding and read-before-store
+order. Current formatting/check, normal Cargo release (2.31s) and progress
+pass. This review changes no maintained source or own residue counters;
+the existing full replays above provide its movie verification.
 
 ## Definition of done for any change
 
