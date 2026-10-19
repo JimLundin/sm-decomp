@@ -1064,6 +1064,57 @@ borrowed raw places and unsafe-function counts unchanged. Maintained edit
 to final result 340.05s. Concurrent changes retain separate checks;
 temporary controls/probes and input assets remain uncommitted.
 
+Projectile instruction restarts (2026-10-19): ten exercised transitions
+in nine routines share start_instruction on the existing byte-backed state.
+It writes the instruction word, then timer 1. Captured half-slot indices,
+odd-index rounding, full-width offsets and callback order remain exact.
+Conditional/ROM instruction values are read before either write. Prior local
+RAM borrows end before the helper; dispatcher callers retain no RAM pointer
+across it. The unvisited horizontal branch of sub_86A887 stays unchanged.
+
+The 38-site survey on fcf54f0a verifies any% 129712/0
+(198.08s) and Speed Booster 148406/0
+(245.53s), with 189 complete-RAM comparisons at the
+selected transitions. Exits 2 report required unvisited probes. Twenty-four
+sites are unvisited; four exercised fireball/pickup sites belong to other
+sessions and are excluded here. Four further pointer/index candidates remain
+outside the survey. All selected transitions execute on Speed Booster;
+any% is regression coverage for this selection.
+
+| Transition | Speed Booster calls @ input frames |
+| --- | --- |
+| sub_86A887 (vertical collision) | 36 @ 51092..51532 |
+| EprojPreInstr_BombTorizosChozoOrbs (horizontal collision) | 4 @ 50749..51301 |
+| EprojPreInstr_BombTorizosChozoOrbs (vertical collision) | 23 @ 50705..51314 |
+| sub_86B535 | 11 @ 137669..138542 |
+| EprojPreInstr_EyeDoorProjectile | 1 @ 117232..117232 |
+| EprojPreInstr_EyeDoorSweat | 2 @ 117328..117571 |
+| EprojPreInstr_KagosBugs | 12 @ 65327..65659 |
+| EprojPreInstr_D0EC | 10 @ 65361..65685 |
+| EprojPreInstr_D128 | 9 @ 65377..65646 |
+| EprojInit_EnemyDeathExplosion | 81 @ 35462..146245 |
+
+Extracted setter/index controls pass 136544 complete-RAM and ordered-write
+comparisons: every u16 index and instruction value independently, plus
+boundary indices/values and byte patterns at all 38 sites. Five mutants for
+address, width, stride, write order and timer value all fail. This characterizes
+the original unaligned native stores; it does not establish their Rust validity.
+Native build 1.66s, execution 1.86s.
+
+Observer removal recovers the exact selection. Rebase onto 95ff9cef
+preserves concurrent cast cleanup and other subsystem work. Frozen final
+any% passes 129712/0 (254.37s), Speed Booster 148406/0
+(311.17s), native exits 0. All source/configuration,
+DLL/library, ROM and input hashes stay fixed. Speed Booster includes the
+Bubble Mountain/Warehouse prefixes and retains the known fingernail warning.
+Survey/final builds 25.6s/36.59s; formatting/check,
+normal release (0.85s) and progress pass. Including the helper, net
+Rust lines -19, raw accesses -20, all casts -65,
+c_int casts -4 (lines -2); unsafe functions and raw borrowed
+places unchanged. Maintained edit to final result 449.3s. Concurrent edits
+retain separate checks; no temporary controls, probes or assets are committed.
+Full gameplay through credits and wider hardware/audio coverage remain open.
+
 ## Validation strategy (2026-10-19)
 
 User priority: shorten the complete edit/build/result cycle. Replaying the
