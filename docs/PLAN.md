@@ -10409,6 +10409,23 @@ then return to Parlor for further accessible item/boss progression. Credits,
 gameplay/hardware, render/audio, masked RAM and ownership remain unfinished.
 Held upper99BD ascent, cliff tuning, old9AD9 drop ammo and HDMA stay held.
 
+CPU shared accumulator assignment (2026-10-19): load_accumulator, renamed
+from the transfer helper, shares byte-high preservation and zero/negative
+flags for ASL/ROL/LSR, INC/DEC and TXA/TYA. Carry calculations remain before
+assignment; byte LSR still masks the shifted low byte to 7F. Frozen `7e7300b3`
+plus this change passes 1,835,008 actual old/current dispatcher cases: every A
+word, both widths/carry values, flags, named CPU/bus state, cycles and history.
+Old dispatcher calls retained old helper bodies, so comparisons do not share
+the changed assignment path. Transfer source values are correlated with A;
+this is not every Cartesian register combination. Prefix 3,600/0 (1.15s),
+native exit 0, executes ASL/ROL/LSR/INC/DEC/TXA/TYA 121,402/2,016/121,928/
+11,273/18,758/31,326/43,943 times. Clean full any% 129,712/0 (53.59s), native
+exit 0. Cargo fmt/check, full release/release-library builds with external
+SDL2, normal metadata and frozen optimized core/DLL pass. Live CPU matches
+verified source; peer PPU work is outside this replay. Rust lines -7; other
+own counters unchanged. Indexed-indirect/TSX/accumulator ROR remain held.
+Complete gameplay/render/audio remain open. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

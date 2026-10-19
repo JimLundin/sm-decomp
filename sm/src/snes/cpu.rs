@@ -821,32 +821,25 @@ fn shift_accumulator_left(rotate: bool, cpu: &mut Cpu) {
     let result = value << 1 | u16::from(rotate && cpu.c);
     if cpu.mf {
         cpu.c = value & 0x80 != 0;
-        cpu.a = value & 0xff00 | result & 0xff;
     } else {
         cpu.c = value & 0x8000 != 0;
-        cpu.a = result;
     }
-    set_zero_negative(cpu.a, cpu.mf, cpu);
+    load_accumulator(result, cpu);
 }
 fn shift_accumulator_right(cpu: &mut Cpu) {
     cpu.c = cpu.a & 1 != 0;
-    if cpu.mf {
-        cpu.a = cpu.a & 0xff00 | (cpu.a >> 1 & 0x7f);
+    let result = if cpu.mf {
+        cpu.a >> 1 & 0x7f
     } else {
-        cpu.a >>= 1;
-    }
-    set_zero_negative(cpu.a, cpu.mf, cpu);
+        cpu.a >> 1
+    };
+    load_accumulator(result, cpu);
 }
 fn update_accumulator(delta: u16, cpu: &mut Cpu) {
     let result = cpu.a.wrapping_add(delta);
-    cpu.a = if cpu.mf {
-        cpu.a & 0xff00 | result & 0xff
-    } else {
-        result
-    };
-    set_zero_negative(cpu.a, cpu.mf, cpu);
+    load_accumulator(result, cpu);
 }
-fn transfer_to_accumulator(value: u16, cpu: &mut Cpu) {
+fn load_accumulator(value: u16, cpu: &mut Cpu) {
     cpu.a = if cpu.mf {
         cpu.a & 0xff00 | value & 0xff
     } else {
@@ -1515,7 +1508,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
         }
         0x8a => {
-            transfer_to_accumulator((*cpu).x, &mut *cpu);
+            load_accumulator((*cpu).x, &mut *cpu);
         }
         0x8b => {
             push_byte(cpu, (*cpu).db, game);
@@ -1568,7 +1561,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             store_register(cpu, low, high, CpuRegister::Accumulator, game);
         }
         0x98 => {
-            transfer_to_accumulator((*cpu).y, &mut *cpu);
+            load_accumulator((*cpu).y, &mut *cpu);
         }
         0x99 => {
             let (low, high) = address_absolute_y(cpu, true, game);
