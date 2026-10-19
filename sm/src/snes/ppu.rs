@@ -2425,92 +2425,36 @@ unsafe fn PpuDrawWholeLine(mut ppu: *mut Ppu, mut y: uint) {
             );
             dst_0 = dst_0.add(count);
         } else {
-            let mut half_color_map: *mut uint8 = if (*ppu).halfColor as ::core::ffi::c_int != 0 {
-                &raw mut (*ppu).brightnessMultHalf as *mut uint8
+            let count = if right > left {
+                (right - left) as usize
             } else {
-                &raw mut (*ppu).brightnessMult as *mut uint8
+                1
             };
-            math_enabled_cur |= (((*ppu).addSubscreen as ::core::ffi::c_int)
-                << 8 as ::core::ffi::c_int
-                | ((*ppu).subtractColor as ::core::ffi::c_int) << 9 as ::core::ffi::c_int)
-                as uint32;
-            let mut i_1: uint32 = left;
-            loop {
-                let mut color_0: uint32 =
-                    (*ppu).cgram[((*ppu).bgBuffers[0 as ::core::ffi::c_int as usize].data
-                        [i_1 as usize] as ::core::ffi::c_int
-                        & 0xff as ::core::ffi::c_int) as usize] as uint32;
-                let mut color2: uint32 = 0;
-                let mut main_layer: uint8 =
-                    ((*ppu).bgBuffers[0 as ::core::ffi::c_int as usize].data[i_1 as usize]
-                        as ::core::ffi::c_int
-                        >> 8 as ::core::ffi::c_int
-                        & 0xf as ::core::ffi::c_int) as uint8;
-                let mut r: uint32 = color_0 & clip_color_mask;
-                let mut g: uint32 = color_0 >> 5 as ::core::ffi::c_int & clip_color_mask;
-                let mut b: uint32 = color_0 >> 10 as ::core::ffi::c_int & clip_color_mask;
-                let mut color_map: *mut uint8 = &raw mut (*ppu).brightnessMult as *mut uint8;
-                if math_enabled_cur
-                    & ((1 as ::core::ffi::c_int) << main_layer as ::core::ffi::c_int) as uint32
-                    != 0
-                {
-                    if math_enabled_cur & 0x100 as uint32 != 0 {
-                        if (*ppu).bgBuffers[1 as ::core::ffi::c_int as usize].data[i_1 as usize]
-                            as ::core::ffi::c_int
-                            & 0xff as ::core::ffi::c_int
-                            != 0 as ::core::ffi::c_int
-                        {
-                            color2 = (*ppu).cgram[((*ppu).bgBuffers
-                                [1 as ::core::ffi::c_int as usize]
-                                .data[i_1 as usize]
-                                as ::core::ffi::c_int
-                                & 0xff as ::core::ffi::c_int)
-                                as usize] as uint32;
-                            color_map = half_color_map;
-                        } else {
-                            color2 = fixed_color;
-                        }
-                    } else {
-                        color2 = fixed_color;
-                        color_map = half_color_map;
-                    }
-                    let mut r2: uint32 = color2 & 0x1f as uint32;
-                    let mut g2: uint32 = color2 >> 5 as ::core::ffi::c_int & 0x1f as uint32;
-                    let mut b2: uint32 = color2 >> 10 as ::core::ffi::c_int & 0x1f as uint32;
-                    if math_enabled_cur & 0x200 as uint32 != 0 {
-                        r = if r >= r2 {
-                            r.wrapping_sub(r2)
-                        } else {
-                            0 as uint32
-                        };
-                        g = if g >= g2 {
-                            g.wrapping_sub(g2)
-                        } else {
-                            0 as uint32
-                        };
-                        b = if b >= b2 {
-                            b.wrapping_sub(b2)
-                        } else {
-                            0 as uint32
-                        };
-                    } else {
-                        r = r.wrapping_add(r2);
-                        g = g.wrapping_add(g2);
-                        b = b.wrapping_add(b2);
-                    }
-                }
-                *dst_0.offset(0 as ::core::ffi::c_int as isize) =
-                    (*color_map.offset(b as isize) as ::core::ffi::c_int
-                        | (*color_map.offset(g as isize) as ::core::ffi::c_int)
-                            << 8 as ::core::ffi::c_int
-                        | (*color_map.offset(r as isize) as ::core::ffi::c_int)
-                            << 16 as ::core::ffi::c_int) as uint32;
-                dst_0 = dst_0.offset(1);
-                i_1 = i_1.wrapping_add(1);
-                if !(i_1 < right) {
-                    break;
-                }
-            }
+            let math_brightness: &[u8; 63] = if (*ppu).halfColor {
+                (&(&(*ppu).brightnessMultHalf)[..63]).try_into().unwrap()
+            } else {
+                &(*ppu).brightnessMult
+            };
+            math_enabled_cur |=
+                (u32::from((*ppu).addSubscreen) << 8) | (u32::from((*ppu).subtractColor) << 9);
+            draw_color_math_span(
+                core::slice::from_raw_parts_mut(dst_0, count),
+                core::slice::from_raw_parts(
+                    (*ppu).bgBuffers[0].data.as_ptr().add(left as usize),
+                    count,
+                ),
+                core::slice::from_raw_parts(
+                    (*ppu).bgBuffers[1].data.as_ptr().add(left as usize),
+                    count,
+                ),
+                &(*ppu).cgram,
+                &(*ppu).brightnessMult,
+                math_brightness,
+                clip_color_mask != 0,
+                math_enabled_cur,
+                fixed_color,
+            );
+            dst_0 = dst_0.add(count);
         }
         cw_clip_math >>= 1 as ::core::ffi::c_int;
         windex = windex.wrapping_add(1);
@@ -4035,5 +3979,56 @@ fn draw_sprite_tile_span(dst: &mut [u16], plane: u32, z: u16, px_left: u32, hfli
             }
             pixels <<= 4;
         }
+    }
+}
+
+fn draw_color_math_span(
+    dst: &mut [u32],
+    main: &[u16],
+    sub: &[u16],
+    palette: &[u16; 256],
+    brightness: &[u8; 63],
+    math_brightness: &[u8; 63],
+    color_visible: bool,
+    flags: u32,
+    fixed: u32,
+) {
+    let mask: u16 = if color_visible { 31 } else { 0 };
+    for (index, (dst, &pixel)) in dst.iter_mut().zip(main).enumerate() {
+        let color = palette[usize::from(pixel & 0xff)];
+        let layer = (pixel >> 8) & 0xf;
+        let mut r = u32::from(color & mask);
+        let mut g = u32::from((color >> 5) & mask);
+        let mut b = u32::from((color >> 10) & mask);
+        let mut color_map: &[u8; 63] = brightness;
+        if flags & (1 << layer) != 0 {
+            let color2 = if flags & 0x100 != 0 {
+                let sub_pixel = sub[index] & 0xff;
+                if sub_pixel != 0 {
+                    color_map = math_brightness;
+                    u32::from(palette[usize::from(sub_pixel)])
+                } else {
+                    fixed
+                }
+            } else {
+                color_map = math_brightness;
+                fixed
+            };
+            let r2 = color2 & 0x1f;
+            let g2 = (color2 >> 5) & 0x1f;
+            let b2 = (color2 >> 10) & 0x1f;
+            if flags & 0x200 != 0 {
+                r = r.saturating_sub(r2);
+                g = g.saturating_sub(g2);
+                b = b.saturating_sub(b2);
+            } else {
+                r += r2;
+                g += g2;
+                b += b2;
+            }
+        }
+        *dst = u32::from(color_map[b as usize])
+            | u32::from(color_map[g as usize]) << 8
+            | u32::from(color_map[r as usize]) << 16;
     }
 }

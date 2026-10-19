@@ -244,6 +244,35 @@ gameplay and SRAM changes are excluded from these frozen runs. Next: the
 measured color-math conversion branch, using separate pixel slices and actual
 row-output comparison before timing. Existing full-game/oracle gaps remain.
 
+Color-math span extraction (2026-10-19): conversion now receives separate
+destination/main/subscreen slices and fixed-size palette/brightness tables.
+The visible-color flag exposes the 0/31 channel mask; addition reaches at
+most index62, so the selected half table needs only its first63 entries.
+Zero-subpixel normal-brightness fallback, full layer-nibble flags, subtraction,
+BGRA ordering and original minimum-one-pixel spans remain exact.
+Frozen27835e26 actual old/current comparisons pass8,960,000 complete rows
+over20,000/0 and26,034,400 rows overWaver58,109/71 (143.09s). Both background
+buffers and every output pixel match; all71 ordered Waver failure diagnostics
+equal the explicit-render baseline. Movies exercise fixed/subscreen addition
+and fixed subtraction, but no half brightness or subscreen subtraction.
+Independent exact-old-loop comparisons additionally pass1,048,576 arithmetic,
+32,768 layer/flag and32,944 bounded-span cases across brightness/half/clipping,
+subscreen subtraction and zero-subpixel fallback. Both incorrect-half-table
+and zero-subpixel mutations are rejected. These are constructed cases.
+Clean baseline/candidate/candidate/baseline20,000/0 runs use CPU seconds
+30.5625/28.6875/30.1250/30.8594: both pairs favor the candidate, mean4.25%
+lower CPU time. Wall times32.694/32.613/35.577/33.373s instead average3.21%
+higher under concurrent load; an elapsed replay speedup is not established.
+Clean final78d0c0c8 plus only this PPU change passes any%129,712/0 (176.48s),
+native exit0, andWaver58,109/71 (77.37s), native exit1. Cargo fmt/check and
+release pass, including the final color_visible parameter rename; exact source
+audit permits only that identifier difference from the frozen replay body.
+Cast lines-29 and Rust lines-5; other own counters unchanged. Later peer
+CPU/SNES/gameplay changes are outside these replays. Temporary observations
+and ROM-derived inputs stay uncommitted. Next: profile the committed renderer
+and verify elapsed throughput under steadier load before further optimization.
+Existing rendering/audio, masked RAM and complete gameplay/credits gaps remain.
+
 The binary contains two complete implementations of each frame:
 
 - **theirs**: the original ROM code, run on the emulated 65816 in `sm/src/snes`.
