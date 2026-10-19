@@ -1096,242 +1096,101 @@ pub unsafe fn QueueMusic_DelayedY(mut a: uint16, mut j: uint16, game: &mut Game)
             (v2 + 2 as ::core::ffi::c_int & 0xe as ::core::ffi::c_int) as uint16;
     }
 }
-pub unsafe fn QueueSfx1_Max15(mut a: uint16, game: &mut Game) {
-    QueueSfx1_Internal(
-        ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 15 as ::core::ffi::c_int) as uint16,
-        game,
-    );
-}
-pub unsafe fn QueueSfx1_Max9(mut a: uint16, game: &mut Game) {
-    QueueSfx1_Internal(
-        ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 9 as ::core::ffi::c_int) as uint16,
-        game,
-    );
-}
-pub unsafe fn QueueSfx1_Max3(mut a: uint16, game: &mut Game) {
-    QueueSfx1_Internal(
-        ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 3 as ::core::ffi::c_int) as uint16,
-        game,
-    );
-}
-pub unsafe fn QueueSfx1_Max1(mut a: uint16, game: &mut Game) {
-    QueueSfx1_Internal(
-        ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 1 as ::core::ffi::c_int) as uint16,
-        game,
-    );
-}
-pub unsafe fn QueueSfx1_Max6(mut a: uint16, game: &mut Game) {
-    QueueSfx1_Internal(
-        ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 6 as ::core::ffi::c_int) as uint16,
-        game,
-    );
-}
-pub unsafe fn QueueSfx1_Internal(mut a: uint16, game: &mut Game) {
-    *(&raw mut game.g_ram as *mut uint8).offset(0x653).offset(0) = a as uint8;
-    if (*(&raw mut game.g_ram as *mut uint8).offset(0x646).offset(0) as ::core::ffi::c_int
-        - *(&raw mut game.g_ram as *mut uint8).offset(0x643).offset(0) as ::core::ffi::c_int
-        & 0xf as ::core::ffi::c_int)
-        < a as uint8 as ::core::ffi::c_int
+// Byte-backed queue layout from ram_map: three channels, sixteen slots each.
+fn queue_sfx(channel: usize, sound: u8, max_queued: u8, game: &mut Game) {
+    let read_pos = 0x643 + channel;
+    let write_pos = 0x646 + channel;
+    let limit_pos = 0x653 + channel;
+    let buffer = 0x656 + 16 * channel;
+
+    // This write also happens when capacity or the sound gates reject the request.
+    game.g_ram[limit_pos] = max_queued;
+    let queued = game.g_ram[write_pos].wrapping_sub(game.g_ram[read_pos]) & 15;
+    if queued >= max_queued {
+        return;
+    }
+    if game.debug_disable_sounds() != 0
+        || game.game_state() >= 40
+        || game.power_bomb_explosion_status() & 0x8000 != 0
     {
-        let mut v2: uint8 = ((a as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int)
-            >> 8 as ::core::ffi::c_int) as uint8;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x5f5) as *mut uint16) == 0
-            && *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) < 0x28u16
-            && (*((&raw mut game.g_ram as *mut uint8).offset(0x592) as *mut uint16)
-                as ::core::ffi::c_int
-                & 0x8000 as ::core::ffi::c_int)
-                == 0i32
-        {
-            let mut v1: uint8 = *(&raw mut game.g_ram as *mut uint8).offset(0x646).offset(0);
-            let mut v3: uint8 =
-                (*(&raw mut game.g_ram as *mut uint8).offset(0x646).offset(0)).wrapping_add(1u8);
-            if v3 >= 0x10u8 {
-                v3 = 0 as uint8;
-            }
-            if v3 == *(&raw mut game.g_ram as *mut uint8).offset(0x643).offset(0) {
-                if v2
-                    < *(&raw mut game.g_ram as *mut uint8)
-                        .offset(0x656)
-                        .offset(v1 as isize)
-                {
-                    *(&raw mut game.g_ram as *mut uint8)
-                        .offset(0x656)
-                        .offset(v1 as isize) = v2;
-                }
-            } else {
-                *(&raw mut game.g_ram as *mut uint8)
-                    .offset(0x656)
-                    .offset(
-                        *(&raw mut game.g_ram as *mut uint8)
-                            .offset(0x646)
-                            .offset(0)
-                            as isize,
-                    ) = v2;
-                *(&raw mut game.g_ram as *mut uint8).offset(0x646).offset(0) = v3;
-                *(&raw mut game.g_ram as *mut uint8)
-                    .offset(0x656)
-                    .offset(v3 as isize) = 0 as uint8;
-            }
+        return;
+    }
+
+    let write = game.g_ram[write_pos];
+    let mut next = write.wrapping_add(1);
+    if next >= 16 {
+        next = 0;
+    }
+    // Preserve adjacent-RAM access for an out-of-range current write position.
+    let slot = buffer + usize::from(write);
+    if next == game.g_ram[read_pos] {
+        // Lower sound numbers take priority when the ring is full.
+        if sound < game.g_ram[slot] {
+            game.g_ram[slot] = sound;
         }
+    } else {
+        game.g_ram[slot] = sound;
+        game.g_ram[write_pos] = next;
+        game.g_ram[buffer + usize::from(next)] = 0;
     }
 }
-pub unsafe fn QueueSfx2_Max15(mut a: uint16, game: &mut Game) {
-    QueueSfx2_Internal(
-        ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 15 as ::core::ffi::c_int) as uint16,
-        game,
-    );
+
+pub fn QueueSfx1_Max15(sound: uint16, game: &mut Game) {
+    queue_sfx(0, sound as u8, 15, game);
 }
-pub unsafe fn QueueSfx2_Max9(mut a: uint16, game: &mut Game) {
-    QueueSfx2_Internal(
-        ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 9 as ::core::ffi::c_int) as uint16,
-        game,
-    );
+pub fn QueueSfx1_Max9(sound: uint16, game: &mut Game) {
+    queue_sfx(0, sound as u8, 9, game);
 }
-pub unsafe fn QueueSfx2_Max3(mut a: uint16, game: &mut Game) {
-    QueueSfx2_Internal(
-        ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 3 as ::core::ffi::c_int) as uint16,
-        game,
-    );
+pub fn QueueSfx1_Max3(sound: uint16, game: &mut Game) {
+    queue_sfx(0, sound as u8, 3, game);
 }
-pub unsafe fn QueueSfx2_Max1(mut a: uint16, game: &mut Game) {
-    QueueSfx2_Internal(
-        ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 1 as ::core::ffi::c_int) as uint16,
-        game,
-    );
+pub fn QueueSfx1_Max1(sound: uint16, game: &mut Game) {
+    queue_sfx(0, sound as u8, 1, game);
 }
-pub unsafe fn QueueSfx2_Max6(mut a: uint16, game: &mut Game) {
-    QueueSfx2_Internal(
-        ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 6 as ::core::ffi::c_int) as uint16,
-        game,
-    );
+pub fn QueueSfx1_Max6(sound: uint16, game: &mut Game) {
+    queue_sfx(0, sound as u8, 6, game);
 }
-pub unsafe fn QueueSfx2_Internal(mut a: uint16, game: &mut Game) {
-    *(&raw mut game.g_ram as *mut uint8).offset(0x653).offset(1) = a as uint8;
-    if (*(&raw mut game.g_ram as *mut uint8).offset(0x646).offset(1) as ::core::ffi::c_int
-        - *(&raw mut game.g_ram as *mut uint8).offset(0x643).offset(1) as ::core::ffi::c_int
-        & 0xf as ::core::ffi::c_int)
-        < a as uint8 as ::core::ffi::c_int
-    {
-        let mut v2: uint8 = ((a as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int)
-            >> 8 as ::core::ffi::c_int) as uint8;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x5f5) as *mut uint16) == 0
-            && *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) < 0x28u16
-            && (*((&raw mut game.g_ram as *mut uint8).offset(0x592) as *mut uint16)
-                as ::core::ffi::c_int
-                & 0x8000 as ::core::ffi::c_int)
-                == 0i32
-        {
-            let mut v1: uint8 = *(&raw mut game.g_ram as *mut uint8).offset(0x646).offset(1);
-            let mut v3: uint8 =
-                (*(&raw mut game.g_ram as *mut uint8).offset(0x646).offset(1)).wrapping_add(1u8);
-            if v3 >= 0x10u8 {
-                v3 = 0 as uint8;
-            }
-            if v3 == *(&raw mut game.g_ram as *mut uint8).offset(0x643).offset(1) {
-                if v2
-                    < *(&raw mut game.g_ram as *mut uint8)
-                        .offset(0x666)
-                        .offset(v1 as isize)
-                {
-                    *(&raw mut game.g_ram as *mut uint8)
-                        .offset(0x666)
-                        .offset(v1 as isize) = v2;
-                }
-            } else {
-                *(&raw mut game.g_ram as *mut uint8)
-                    .offset(0x666)
-                    .offset(
-                        *(&raw mut game.g_ram as *mut uint8)
-                            .offset(0x646)
-                            .offset(1)
-                            as isize,
-                    ) = v2;
-                *(&raw mut game.g_ram as *mut uint8).offset(0x646).offset(1) = v3;
-                *(&raw mut game.g_ram as *mut uint8)
-                    .offset(0x666)
-                    .offset(v3 as isize) = 0 as uint8;
-            }
-        }
-    }
+pub fn QueueSfx1_Internal(packed: uint16, game: &mut Game) {
+    let [max_queued, sound] = packed.to_le_bytes();
+    queue_sfx(0, sound, max_queued, game);
 }
-pub unsafe fn QueueSfx3_Max15(mut a: uint16, game: &mut Game) {
-    QueueSfx3_Internal(
-        ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 15 as ::core::ffi::c_int) as uint16,
-        game,
-    );
+pub fn QueueSfx2_Max15(sound: uint16, game: &mut Game) {
+    queue_sfx(1, sound as u8, 15, game);
 }
-pub unsafe fn QueueSfx3_Max9(mut a: uint16, game: &mut Game) {
-    QueueSfx3_Internal(
-        ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 9 as ::core::ffi::c_int) as uint16,
-        game,
-    );
+pub fn QueueSfx2_Max9(sound: uint16, game: &mut Game) {
+    queue_sfx(1, sound as u8, 9, game);
 }
-pub unsafe fn QueueSfx3_Max3(mut a: uint16, game: &mut Game) {
-    QueueSfx3_Internal(
-        ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 3 as ::core::ffi::c_int) as uint16,
-        game,
-    );
+pub fn QueueSfx2_Max3(sound: uint16, game: &mut Game) {
+    queue_sfx(1, sound as u8, 3, game);
 }
-pub unsafe fn QueueSfx3_Max1(mut a: uint16, game: &mut Game) {
-    QueueSfx3_Internal(
-        ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 1 as ::core::ffi::c_int) as uint16,
-        game,
-    );
+pub fn QueueSfx2_Max1(sound: uint16, game: &mut Game) {
+    queue_sfx(1, sound as u8, 1, game);
 }
-pub unsafe fn QueueSfx3_Max6(mut a: uint16, game: &mut Game) {
-    QueueSfx3_Internal(
-        ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 6 as ::core::ffi::c_int) as uint16,
-        game,
-    );
+pub fn QueueSfx2_Max6(sound: uint16, game: &mut Game) {
+    queue_sfx(1, sound as u8, 6, game);
 }
-pub unsafe fn QueueSfx3_Internal(mut a: uint16, game: &mut Game) {
-    *(&raw mut game.g_ram as *mut uint8).offset(0x653).offset(2) = a as uint8;
-    if (*(&raw mut game.g_ram as *mut uint8).offset(0x646).offset(2) as ::core::ffi::c_int
-        - *(&raw mut game.g_ram as *mut uint8).offset(0x643).offset(2) as ::core::ffi::c_int
-        & 0xf as ::core::ffi::c_int)
-        < a as uint8 as ::core::ffi::c_int
-    {
-        let mut v2: uint8 = ((a as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int)
-            >> 8 as ::core::ffi::c_int) as uint8;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x5f5) as *mut uint16) == 0
-            && *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) < 0x28u16
-            && (*((&raw mut game.g_ram as *mut uint8).offset(0x592) as *mut uint16)
-                as ::core::ffi::c_int
-                & 0x8000 as ::core::ffi::c_int)
-                == 0i32
-        {
-            let mut v1: uint8 = *(&raw mut game.g_ram as *mut uint8).offset(0x646).offset(2);
-            let mut v3: uint8 =
-                (*(&raw mut game.g_ram as *mut uint8).offset(0x646).offset(2)).wrapping_add(1u8);
-            if v3 >= 0x10u8 {
-                v3 = 0 as uint8;
-            }
-            if v3 == *(&raw mut game.g_ram as *mut uint8).offset(0x643).offset(2) {
-                if v2
-                    < *(&raw mut game.g_ram as *mut uint8)
-                        .offset(0x676)
-                        .offset(v1 as isize)
-                {
-                    *(&raw mut game.g_ram as *mut uint8)
-                        .offset(0x676)
-                        .offset(v1 as isize) = v2;
-                }
-            } else {
-                *(&raw mut game.g_ram as *mut uint8)
-                    .offset(0x676)
-                    .offset(
-                        *(&raw mut game.g_ram as *mut uint8)
-                            .offset(0x646)
-                            .offset(2)
-                            as isize,
-                    ) = v2;
-                *(&raw mut game.g_ram as *mut uint8).offset(0x646).offset(2) = v3;
-                *(&raw mut game.g_ram as *mut uint8)
-                    .offset(0x676)
-                    .offset(v3 as isize) = 0 as uint8;
-            }
-        }
-    }
+pub fn QueueSfx2_Internal(packed: uint16, game: &mut Game) {
+    let [max_queued, sound] = packed.to_le_bytes();
+    queue_sfx(1, sound, max_queued, game);
+}
+pub fn QueueSfx3_Max15(sound: uint16, game: &mut Game) {
+    queue_sfx(2, sound as u8, 15, game);
+}
+pub fn QueueSfx3_Max9(sound: uint16, game: &mut Game) {
+    queue_sfx(2, sound as u8, 9, game);
+}
+pub fn QueueSfx3_Max3(sound: uint16, game: &mut Game) {
+    queue_sfx(2, sound as u8, 3, game);
+}
+pub fn QueueSfx3_Max1(sound: uint16, game: &mut Game) {
+    queue_sfx(2, sound as u8, 1, game);
+}
+pub fn QueueSfx3_Max6(sound: uint16, game: &mut Game) {
+    queue_sfx(2, sound as u8, 6, game);
+}
+pub fn QueueSfx3_Internal(packed: uint16, game: &mut Game) {
+    let [max_queued, sound] = packed.to_le_bytes();
+    queue_sfx(2, sound, max_queued, game);
 }
 pub unsafe fn SetupDmaTransfer(mut p: *const ::core::ffi::c_void, game: &mut Game) {
     let mut s: *const StartDmaCopy = p as *const StartDmaCopy;

@@ -178,6 +178,10 @@ impl Game {
         debug_invincibility: 0xde0;
         /// game_state ($7E:0998 in ram_map).
         game_state: 0x998;
+        /// debug_disable_sounds ($7E:05F5 in ram_map).
+        debug_disable_sounds: 0x5f5;
+        /// power_bomb_explosion_status ($7E:0592 in ram_map).
+        power_bomb_explosion_status: 0x592;
         pausemenu_button_label_mode: 0x753;
         /// loading_game_state ($7E:D914 in ram_map).
         loading_game_state: 0xd914;

@@ -46,6 +46,37 @@ Keep each commit one invariant, but apply it across the complete eligible family
 Rank by net deletion including shared code, unsafe operations removed and
 edit/build/verification cost. Prefer this work over further isolated cleanup.
 
+Sound-effect queue family (2026-10-19): three queue bodies now share one
+safe implementation, retaining all fifteen fixed-limit wrappers and three
+packed-argument entry points. Named word reads replace the sound gates.
+Limit-before-gate writes, byte-wrapped/clamped next positions, lower-number
+priority and adjacent-RAM access at invalid indices remain exact. Net Rust
+lines -137, raw RAM accesses -45, unsafe functions -18 and casts -153.
+
+jscpd discovery and complete ast-grep declarations cover the family. The
+three original Rust bodies in 1311d3b4 and their current counterparts each
+normalize exactly by channel and buffer address. Consumers already share
+their channel handling; PLM/projectile callers keep the same entry points.
+Complete source reconstruction permits only this family and two named reads.
+Compiled originals and the actual release library agree in 4521984 full-RAM
+cases: all byte-position pairs at boundary limits, all sound-priority pairs,
+all packed arguments, each gate word and every argument to all fifteen wrappers.
+Broken clamp, priority and limit-write controls fail. These factored sweeps
+are not every joint RAM state. Paired any% observations reach all three
+channels and 8/15 wrappers with identical counts; exits 2 report only the
+seven unvisited wrappers, whose argument mappings are covered by the sweeps.
+
+Frozen 465cd486 plus this family passes any% 129712/0 (227.83s) and Speed
+Booster 148406/0 (285.23s), native exits 0, with fixed source/DLL/fixtures.
+Formatting/check, normal release (21.32s), stable workspace release and
+progress pass. The two staged files match the verified source; concurrent
+projectile and SPC work remains separate.
+
+Next finish the refreshed historical-pair triage, including functions that
+fell below the AST size threshold, before selecting the next shared
+implementation. The broader readability audit and eligible Clippy families
+remain open.
+
 Clippy return cleanup (2026-10-19): standard cargo clippy --fix with
 needless_return removes 5550 redundant returns across all 50 affected files,
 including the frontend and all Cargo targets. Net Rust lines -2227; casts,
@@ -62,9 +93,8 @@ Staged Rust matches this verified snapshot; independent pending work is preserve
 The refreshed jscpd AST scan reports 337 pairs at 0.90 similarity/100 nodes,
 versus 456 in the original Rust: 306 retained, 150 absent and 31 new links.
 These are candidate relationships, not proof of drift or deletion estimates.
-Next expand the complete three-channel SFX queue family, including its fifteen
-wrappers; preserve its priority, limit writes and invalid-index behavior.
-Continue eligible Clippy families and the broader historical audit; it remains open.
+The complete SFX producer family is consolidated above. Continue the
+historical audit and eligible whole-family Clippy simplifications.
 
 Clippy automatic parentheses cleanup (2026-10-19): cargo clippy --fix
 with unused_parens removes 8883 redundant parenthesis pairs across all
