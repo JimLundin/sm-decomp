@@ -1710,24 +1710,22 @@ pub unsafe fn PlmInstr_LoadItemPlmGfx(
     plmp
 }
 pub unsafe fn PlmInstr_CopyFromRamToVram(
-    mut plmp: *const uint8,
-    mut k: uint16,
+    plmp: *const uint8,
+    _k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
-    let mut v2: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16);
-    let mut v4: *mut VramWriteEntry = gVramWriteEntry(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    (*v4).size = *(plmp as *mut uint16);
-    (*v4).src.addr = *(plmp.offset(2 as ::core::ffi::c_int as isize) as *mut uint16) as VoidP;
-    (*v4).src.bank = *plmp.offset(4 as ::core::ffi::c_int as isize);
-    (*v4).vram_dst = *(plmp.offset(5 as ::core::ffi::c_int as isize) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (v2 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
-    return plmp.offset(7 as ::core::ffi::c_int as isize);
+    let queue_tail = u16::from_le_bytes([game.g_ram[0x330], game.g_ram[0x331]]);
+    let entry_tail = u16::from_le_bytes([game.g_ram[0x330], game.g_ram[0x331]]);
+    let entry = 0xd0 + usize::from(entry_tail); // vram_write_queue
+    let size = (plmp as *const u16).read_unaligned();
+    game.g_ram[entry..entry + 2].copy_from_slice(&size.to_le_bytes());
+    let source = (plmp.add(2) as *const u16).read_unaligned();
+    game.g_ram[entry + 2..entry + 4].copy_from_slice(&source.to_le_bytes());
+    game.g_ram[entry + 4] = *plmp.add(4);
+    let destination = (plmp.add(5) as *const u16).read_unaligned();
+    game.g_ram[entry + 5..entry + 7].copy_from_slice(&destination.to_le_bytes());
+    game.g_ram[0x330..0x332].copy_from_slice(&queue_tail.wrapping_add(7).to_le_bytes());
+    plmp.add(7)
 }
 pub unsafe fn PlmInstr_GotoIfBossBitSet(
     mut plmp: *const uint8,

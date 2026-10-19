@@ -13228,6 +13228,23 @@ this loader change, and peer edits remain preserved. PLM decrement/Chozo
 coverage holds and complete credits/gameplay/hardware/audio/masks/ownership
 remain open; the Super Missile route/cleanup retains separate evidence.
 
+PLM RAM-to-VRAM queue (2026-10-19): PlmInstr_CopyFromRamToVram now
+writes its packed queue entry through byte-backed RAM. Captured tail and
+second live entry-tail read retain their order. Size/source/bank/destination
+operands are each read immediately before their original store; destination
+remains at entry+5 and the captured tail advances7 last with16-bit wrapping.
+The returned pointer advances7 and unaligned operand words remain supported.
+
+Frozen fbaea1d1 plus only this change passes any%129712/0
+(265.12s), native exit0, and pickup route68606/0
+(154.70s), native exit0. Observed pickup route68606/0
+(153.36s) executes 1 actual queue writes. Maintained
+source has no observers. Cargo fmt/check and release build pass. Own raw
+offsets-3, cast lines-9, Rust lines-2; other own counters unchanged. Frozen
+replays contain only this instruction change; peer edits remain preserved.
+PLM decrement/Chozo coverage holds and complete credits/gameplay/hardware/
+audio/masks/ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
