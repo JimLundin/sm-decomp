@@ -13584,6 +13584,27 @@ Peer edits remain preserved. DisablePLMs remains unchanged pending separate
 X-ray-path coverage. Full credits/gameplay/hardware/audio/masks/ownership
 remain open.
 
+PLM BTS instruction (2026-10-19): PlmInstr_SetBTS now reads the
+captured PLM block index through little-endian RAM bytes and writes one
+block-behavior byte. Operand-before-index read order, rounded slot index,
+halved block index and one-byte instruction advance remain unchanged.
+The function remains unsafe for its instruction operand pointer.
+
+Frozen 2112d8a0 plus only this routine passes any%129712/0
+(224.75s) and pickup68606/0 (146.54s), native exits0.
+Observed pickup68606/0 (147.59s) compares all128KiB RAM
+and the returned pointer against the original after 20 actual
+calls, restoring the current result before continuing. This routine has no
+effects outside RAM. Clean and observed non-timing diagnostics match after
+stripping observers. Frozen scope and formatting-normalized maintained
+routine identity pass; no observers are committed. Invalid slots and operand
+aliases are not inferred from this movie's calls.
+
+Cargo fmt/check, normal release build and progress pass. Own raw offsets-2,
+cast lines-7 and Rust lines-9; other own counters unchanged. Peer edits
+remain preserved. Complete credits/gameplay/hardware/audio/masks/ownership
+and uncovered PLM holds remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

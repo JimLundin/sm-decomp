@@ -2038,21 +2038,12 @@ pub unsafe fn PlmInstr_IncrementArgumentAndJGE(
         return plmp.offset(3 as ::core::ffi::c_int as isize);
     };
 }
-pub unsafe fn PlmInstr_SetBTS(
-    mut plmp: *const uint8,
-    mut k: uint16,
-    game: &mut Game,
-) -> *const uint8 {
-    *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-                as ::core::ffi::c_int
-                >> 1 as ::core::ffi::c_int) as isize,
-        ) = *plmp.offset(0 as ::core::ffi::c_int as isize);
-    return plmp.offset(1 as ::core::ffi::c_int as isize);
+pub unsafe fn PlmInstr_SetBTS(plmp: *const uint8, k: uint16, game: &mut Game) -> *const uint8 {
+    let bts = *plmp;
+    let index_addr = 0x1c87 + usize::from(k >> 1) * 2; // plm_block_indices
+    let block_index = u16::from_le_bytes([game.g_ram[index_addr], game.g_ram[index_addr + 1]]) >> 1;
+    game.g_ram[0x16402 + usize::from(block_index)] = bts;
+    plmp.add(1)
 }
 pub unsafe fn PlmInstr_DrawPlmBlock(
     mut plmp: *const uint8,
