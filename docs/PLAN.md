@@ -10944,6 +10944,24 @@ ROM-derived geometry remain ignored. Next: unmorph near the actual upper
 door and continue onward item/boss coverage. Credits, complete gameplay/
 hardware, audio/render, masked RAM and ownership remain open; holds stay held.
 
+Post-map Parlor upper exit reaches Waver (2026-10-19).
+From map-parlor-upper-morph-bomb X37/Y153 in ball form, Up1, neutral20,
+left/shoot80, left90, neutral30 unmorph, open and cross the actual door.
+Door transition begins76610, room becomes990D at76628, control returns
+76715. map-parlor-upper-exit76779/71 (80.66s), observed native exit1,
+ends990DX1395/Y162, standing, health24/99, map1/station255, missiles1/10,
+equipment1004. This completes the post-map central Parlor climb and exit;
+it does not add a new room definition or claim boss/credits progress.
+Read-only failure-counter replay76779/71 (102.32s), observed native exit1,
+matches all71 ordered baseline failed frames exactly, rendering enabled.
+No gameplay/RAM/inventory writes or new failures; source/residue delta0.
+Committed door-bit cleanup owns fmt/check, release, progress, contextual
+75665/71 and clean any%129712/0 (149.79s). Inputs, probes, SRAM and
+ROM-derived geometry remain ignored. Next: descend Waver toward lower99BD
+and onward route/item/boss coverage; held upper99BD ascent stays held.
+Complete credits/gameplay/hardware, render/audio, masked RAM and ownership
+remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
