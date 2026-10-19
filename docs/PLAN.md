@@ -9630,6 +9630,25 @@ outside this replay. Unsafe functions -1, Rust lines -15; other own counters
 unchanged. Arbitrary MMIO mutation and full gameplay/render/audio remain open.
 Continue covered CPU cleanup; TSX/ROR stay held for contextual execution.
 
+CPU shared register stores (2026-10-19): STA/STX/STY share store_register;
+the existing comparison selector is renamed CpuRegister and reused. MF/XF
+selection remains before writes; word cycle increment precedes the register
+read, and the captured word still writes low before high. Safe selector
+references end before bus callbacks. All twenty store opcode callers select
+the same registers; comparison callers only change the enum name. Frozen
+`e5d7c1de` plus this change passes 1,572,864 actual old/current store cases:
+every selected word, independently varied MF/XF, distinct A/X/Y values and
+aliased/disjoint byte addresses. Named CPU/bus fields and RAM writes match;
+aliased word writes leave the high byte, and cycles wrap identically. Prefix
+3,600/0 (1.06s), native exit 0, executes word/byte STA 576,985/787,595,
+STX 229,096/242,810 and STY 22,222/3,600 times. Clean full any% 129,712/0
+(56.09s), native exit 0. Cargo fmt/check, full release and release-library
+builds with external SDL2, normal metadata and optimized frozen core/DLL
+builds pass. Live CPU matches verified source; peer PPU work is outside this
+replay. Unsafe functions -2, Rust lines -10; other own counters unchanged.
+Arbitrary MMIO mutation and complete gameplay/render/audio remain open.
+Continue covered CPU cleanup; TSX/ROR stay held for contextual execution.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
