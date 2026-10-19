@@ -13810,6 +13810,22 @@ cast lines-19 and Rust lines-15; other own counters unchanged. Peer edits
 remain preserved. Solid-scroll and broader PLM cleanup remain unfinished,
 along with full credits/gameplay/hardware/audio/masks/ownership.
 
+Solid-scroll coverage hold (2026-10-19): the candidate byte-backed
+PlmInstr_ProcessSolidScrollUpdate rewrite executes zero calls on both the
+68606-frame pickup movie and 90706-frame Spazer movie. Observed replays
+pass68606/0 (125.79s) and90706/0 (193.89s), native exits0, but their explicit
+nonzero-call checks reject completion. The candidate's clean any% passes
+129712/0 (208.09s) and pickup68606/0 (125.04s); these provide only general
+regression evidence. Frozen source is7515ce97 plus only that candidate.
+
+Restored the original maintained function exactly; no candidate source or
+observers are committed. Further cleanup of this routine waits for actual
+solid-scroll execution through normal input. Formatting/check, normal Cargo
+release and progress pass after restoration. Own final residue counters are
+unchanged; the candidate's temporary reductions are intentionally undone.
+Air-scroll and other earlier verified PLM changes remain committed. Broader
+gameplay/credits, hardware/audio/masks and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
