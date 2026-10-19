@@ -66,23 +66,23 @@ No maintained source or own residue counters change in this quality check.
 Later Cargo-profile and gameplay changes retain separate verification;
 full gameplay/credits, hardware/audio coverage and remaining masks stay open.
 
-Latest focused check: frozen `90f257d8` plus the shared Samus tile DMA
-helper passes any% 129712/0 (250.19s) and Waver 58109/0 (144.30s), both
-native exits 0. Live descriptor reads, top-before-bottom order, bank-preserving
-source wrapping and both zero-size quirks remain unchanged. A 9000/0 prefix
-passes 9000 actual old/current comparisons, with 4500 helper entries:
-2250 requests per half, 4500 second DMAs and 1,527,296 transferred bytes per
-side. Full captured RAM, both PPUs, CPU/Snes/Cart, SRAM, inputs, DMA state
-and g_fail match after checked restoration. Ordered register writes, ROM
-lookups, source reads and transferred bytes match. All 23 constructed
-controls pass, including zero first size, skipped second DMA, source wrapping,
-descriptor spill and low-address diagnostics (131,697 transferred bytes per
-side). Natural calls cover inactive/both halves and nonzero second sizes;
-independent-half and edge cases are constructed, and all observed sources
-are ROM. Frozen hashes, exact observation stripping and independent review
-pass. Formatting, release build and progress pass. Own raw offsets -4,
-cast lines -27 and Rust lines -75; unsafe functions +1 because the private
-helper consolidates the two hardware-transfer sequences.
+Latest focused check: frozen `ff755657` plus byte-backed animated-tile
+uploads passes any% 129712/0 (318.31s) and Waver 58109/0 (166.88s), both
+native exits 0. NmiProcessAnimtilesVramTransfers visits slots 5..0, keeps the
+full-word ID/source gates and live size/destination read positions, and clears
+each source request only after its channel-0 DMA. The 30000/0 Waver prefix
+passes 29370 actual old/current comparisons: 8316 disabled and 21054 enabled.
+Natural transfers execute only in slot 5: 96 transfers / 7680 ROM bytes per
+side, frames 20894..21844, plus 920 nonzero-ID/zero-source skips. Captured RAM,
+both PPUs, CPU/Snes/Cart, SRAM, inputs, DMA state and g_fail match after checked
+restoration; ordered register writes, source reads, DMA bytes and request
+clears match. All 15 constructed cases pass 26 transfers / 340 bytes per
+side (334 ROM, six WRAM-mirror bytes), covering other slots, reverse multi-slot
+order, full-word gates, request-table aliases and source wrapping. Active
+zero-size transfers remain unexercised because bank $87 crosses unsupported
+I/O. Frozen hashes, exact observation stripping and independent review pass.
+Formatting, release build and progress pass. Own raw offsets -7, cast lines
+-21 and Rust lines -31; other own counters unchanged.
 
 Everything that existed before is in the branch `archive/pre-transpile-2026-10-17`.
 

@@ -2429,65 +2429,34 @@ pub unsafe fn NmiTransferSamusToVram(game: &mut Game) {
     }
 }
 pub unsafe fn NmiProcessAnimtilesVramTransfers(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x1ef1 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
-    {
-        let mut i: ::core::ffi::c_int = 10 as ::core::ffi::c_int;
-        while i & 0x80 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-            let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x1ef5 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v1 as isize)
-                != 0
-            {
-                if *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x1f25 as ::core::ffi::c_int as isize)
-                    as *mut uint16)
-                    .offset(v1 as isize)
-                    != 0
-                {
-                    WriteRegWord(
-                        A1T0L as ::core::ffi::c_int as uint16,
-                        *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x1f25 as ::core::ffi::c_int as isize)
-                            as *mut uint16)
-                            .offset(v1 as isize),
-                        game,
-                    );
-                    WriteReg(A1B0 as ::core::ffi::c_int as uint16, 0x87 as uint8, game);
-                    WriteRegWord(
-                        DMAP0 as ::core::ffi::c_int as uint16,
-                        0x1801 as uint16,
-                        game,
-                    );
-                    WriteRegWord(
-                        DAS0L as ::core::ffi::c_int as uint16,
-                        *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x1f31 as ::core::ffi::c_int as isize)
-                            as *mut uint16)
-                            .offset(v1 as isize),
-                        game,
-                    );
-                    WriteRegWord(
-                        VMADDL as ::core::ffi::c_int as uint16,
-                        *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x1f3d as ::core::ffi::c_int as isize)
-                            as *mut uint16)
-                            .offset(v1 as isize),
-                        game,
-                    );
-                    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
-                    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 1 as uint8, game);
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x1f25 as ::core::ffi::c_int as isize)
-                        as *mut uint16)
-                        .offset(v1 as isize) = 0 as uint16;
-                }
-            }
-            i -= 2 as ::core::ffi::c_int;
+    // Only bit 15 of animtiles_enable_flag enables transfers.
+    if game.g_ram[0x1ef2] & 0x80 == 0 {
+        return;
+    }
+    for slot in (0..6).rev() {
+        let offset = slot * 2;
+        let id = u16::from_le_bytes([game.g_ram[0x1ef5 + offset], game.g_ram[0x1ef6 + offset]]);
+        if id == 0 {
+            continue;
         }
+        let source_index = 0x1f25 + offset;
+        let source = u16::from_le_bytes([game.g_ram[source_index], game.g_ram[source_index + 1]]);
+        if source == 0 {
+            continue;
+        }
+
+        WriteRegWord(A1T0L as u16, source, game);
+        WriteReg(A1B0 as u16, 0x87, game);
+        WriteRegWord(DMAP0 as u16, 0x1801, game);
+        let size = u16::from_le_bytes([game.g_ram[0x1f31 + offset], game.g_ram[0x1f32 + offset]]);
+        WriteRegWord(DAS0L as u16, size, game);
+        let vram_addr =
+            u16::from_le_bytes([game.g_ram[0x1f3d + offset], game.g_ram[0x1f3e + offset]]);
+        WriteRegWord(VMADDL as u16, vram_addr, game);
+        WriteReg(VMAIN as u16, 0x80, game);
+        WriteReg(MDMAEN as u16, 1, game);
+        // Consume the request only after its transfer completes.
+        game.g_ram[source_index..source_index + 2].fill(0);
     }
 }
 pub unsafe fn ReadJoypadInputs(game: &mut Game) {
