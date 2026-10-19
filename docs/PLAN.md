@@ -37,6 +37,10 @@ check uses frozen 9c34f8a5 plus the cinematic fix committed in d610b820.
 The Red Tower extension passes 85,800 frames with zero failures, 28 rooms
 and 33 enemy definitions, on frozen a31170d6 plus beam cleanup 5680cde1.
 It ends at the west ledge in $A253 with 49/199 health and 4/5 Supers.
+The Spazer extension passes 90,706 frames with zero failures, 32 rooms
+and 34 enemy definitions, on frozen 5680cde1 plus title Mode 7 fix e4ed0170.
+It includes the Energy Station refill and ends with Charge plus Spazer,
+189/199 health and 2/5 Supers. Credits remain unvisited.
 Rendering starts enabled deterministically. Complete gameplay, audio timing
 and other masked RAM remain unverified. Historical zero-failure Waver runs
 made before the render initialization fix do not establish rendering equivalence.
@@ -429,6 +433,40 @@ sessions own the adjacent cleanup above. No maintained source or residue
 change and no new replay result belong to this cleanup.
 
 ## The oracle
+
+Spazer milestone (2026-10-19): extend the normal-input Red Tower route
+down to Energy Station $A618, refill to 199/199 health, then cross $A3DD and
+climb Below Spazer $A408 using wall jumps and bombs. Enter $A447, collect
+Spazer and dismiss its message. Full boot passes 90706/0 (198.78s), native
+exit 0: 74799 gameplay frames, 32 rooms, 34 enemy definitions and zero credits
+frames. Final state 8 is X162/Y171, health 189/199, missiles 5/10, Supers 2/5,
+equipment 1004 and equipped/collected beams 1004. All eight coroutine bytes
+are zero. The route exercises the new beam combination; it does not establish
+Spazer removing an already equipped Plasma bit, which was absent here.
+
+Ignored movies/spazer.inputs has 90706 frames, SHA-256
+5b3d017d468333c6ca28dbc00dc10d850bc1a5b550617bc76fedb8c43e311d11.
+Its first 85800 frames exactly match movies/red-tower.inputs. The full-boot
+library is frozen 5680cde1 plus only the title Mode 7 correction committed in
+e4ed0170. Later scrolling-DMA/EnablePLMs and other concurrent changes retain
+their separate checks. The host adds only read-only final inventory/beam/
+coroutine logging to that frozen verifier and preserves its comparison and
+return value. Independent source, host, input and final-result review passes;
+all 68 source hashes, library hash and input hash remain unchanged.
+
+The original continuous 85800..90706 check passes 4906/0, native exit 0, on
+438e7755 plus the menu fix. Its before-90706 checkpoint save171 belongs to
+that older library, not the newer full-boot source; cross-source continuation
+has not been checked. The 87565-frame Energy Station fallback is also preserved
+locally, with 1765/0 continuation and full health; its input is an exact prefix
+of this final route. The original route timebox ended with this safe milestone.
+
+Formatting, normal Cargo release and progress passed with the Mode 7 source
+used here. This milestone changes no maintained Rust or own residue counts;
+inputs, checkpoints and temporary metadata remain uncommitted. Next route
+work returns through Below Spazer toward the lower east exit and Kraid;
+that continuation remains unverified. Complete gameplay/credits, audio timing,
+remaining masks and ownership stay unfinished.
 
 Title Mode 7 spawn argument (2026-10-19): LoadTitleSequenceGraphics now
 passes $000C instead of a zero local, retaining the incoming A left by its
