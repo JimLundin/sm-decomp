@@ -8618,6 +8618,19 @@ pass; full frontend linking still lacks SDL2. Live CPU source matches frozen
 verified source. All progress counters unchanged. Full word Cartesian coverage,
 arbitrary bus mutation, complete gameplay and rendering/audio remain open.
 
+CPU operation names (2026-10-19): fourteen private logic/comparison/bit/load/
+store helpers now have descriptive Rust names, including load_accumulator,
+compare_x and store_zero. All 133 definition/caller replacements reverse
+exactly to frozen HEAD `1b2b9028`; bodies and opcode patterns are unchanged.
+Full sm/src search finds no old identifiers. Prefix 3,600/0 (1.26s) executes
+every renamed helper: AND/OR/XOR 270,164/89,480/11,390; compare A/X/Y
+189,844/59,237/21,490; BIT 30,172; load A/X/Y 1,411,599/418,106/55,991;
+store A/X/Y/zero 1,364,580/471,906/25,822/171,133. Clean full any% 129,712/0
+(49.15s), native exit 0. Cargo fmt/check, release library, normal metadata and
+optimized core/DLL builds pass; full frontend linking still lacks SDL2. Live
+CPU source matches frozen verified source. Progress counters unchanged.
+Complete gameplay and rendering/audio remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
