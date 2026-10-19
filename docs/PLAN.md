@@ -8631,6 +8631,20 @@ optimized core/DLL builds pass; full frontend linking still lacks SDL2. Live
 CPU source matches frozen verified source. Progress counters unchanged.
 Complete gameplay and rendering/audio remain open.
 
+CPU arithmetic/update names (2026-10-19): ten private arithmetic, shift and
+memory-update helpers use descriptive names, including add_with_carry,
+rotate_memory_right and test_and_reset_bits. All 68 definition/caller
+replacements reverse exactly to frozen HEAD `8d7f45f1`; bodies/opcode patterns
+are unchanged and sm/src has no old identifiers. Prefix 3,600 has zero verify
+failures but the coverage assertion rejects zero LSR calls; that process is
+not counted as a pass. Full instrumented any% 129,712/0 (46.35s), native exit 0,
+executes all ten helpers: ADC/SBC 29,250,828/5,774,763; ROR/ROL/LSR/ASL
+66/697,844/23,214/4,117,166; INC/DEC 3,389,610/8,937,555; TSB/TRB 915/578.
+Clean full any% 129,712/0 (49.99s), native exit 0. Cargo fmt/check, release
+library, normal metadata and optimized core/DLL builds pass; full frontend
+linking still lacks SDL2. Live CPU source matches frozen verified source.
+Progress counters unchanged. Complete gameplay and rendering/audio remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

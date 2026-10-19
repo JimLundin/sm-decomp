@@ -465,7 +465,7 @@ unsafe fn xor_accumulator(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     }
     set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
 }
-unsafe fn cpu_adc(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
+unsafe fn add_with_carry(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
         let value: u8 = cpu_read(cpu, low, game);
         let mut result: i32 = 0;
@@ -517,7 +517,7 @@ unsafe fn cpu_adc(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     }
     set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
 }
-unsafe fn cpu_sbc(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
+unsafe fn subtract_with_carry(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
         let value = !cpu_read(cpu, low, game);
         let mut result: i32 = 0;
@@ -692,7 +692,7 @@ unsafe fn store_zero(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
         cpu_writeWord(cpu, low, high, 0, false, game);
     }
 }
-unsafe fn cpu_ror(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
+unsafe fn rotate_memory_right(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let (result, carry) = if (*cpu).mf {
         let value = cpu_read(cpu, low, game);
         let carry = value & 1 != 0;
@@ -710,7 +710,7 @@ unsafe fn cpu_ror(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     set_zero_negative(result, (*cpu).mf, &mut *cpu);
     (*cpu).c = carry;
 }
-unsafe fn cpu_rol(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
+unsafe fn rotate_memory_left(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).mf {
         let result = (u32::from(cpu_read(cpu, low, game)) << 1) | u32::from((*cpu).c);
         (*cpu).c = result & 0x100 != 0;
@@ -725,7 +725,7 @@ unsafe fn cpu_rol(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     };
     set_zero_negative(result as u16, (*cpu).mf, &mut *cpu);
 }
-unsafe fn cpu_lsr(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
+unsafe fn shift_memory_right(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).mf {
         let value = cpu_read(cpu, low, game);
         (*cpu).c = value & 1 != 0;
@@ -742,7 +742,7 @@ unsafe fn cpu_lsr(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     };
     set_zero_negative(result, (*cpu).mf, &mut *cpu);
 }
-unsafe fn cpu_asl(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
+unsafe fn shift_memory_left(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).mf {
         let result = u32::from(cpu_read(cpu, low, game)) << 1;
         (*cpu).c = result & 0x100 != 0;
@@ -757,7 +757,7 @@ unsafe fn cpu_asl(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     };
     set_zero_negative(result as u16, (*cpu).mf, &mut *cpu);
 }
-unsafe fn cpu_inc(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
+unsafe fn increment_memory(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).mf {
         let result = u16::from(cpu_read(cpu, low, game)).wrapping_add(1);
         cpu_write(cpu, low, result as u8, game);
@@ -770,7 +770,7 @@ unsafe fn cpu_inc(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     };
     set_zero_negative(result, (*cpu).mf, &mut *cpu);
 }
-unsafe fn cpu_dec(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
+unsafe fn decrement_memory(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).mf {
         let result = u16::from(cpu_read(cpu, low, game)).wrapping_sub(1);
         cpu_write(cpu, low, result as u8, game);
@@ -783,7 +783,7 @@ unsafe fn cpu_dec(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     };
     set_zero_negative(result, (*cpu).mf, &mut *cpu);
 }
-unsafe fn cpu_tsb(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
+unsafe fn test_and_set_bits(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
         let value = cpu_read(cpu, low, game);
         (*cpu).z = (*cpu).a as u8 & value == 0;
@@ -795,7 +795,7 @@ unsafe fn cpu_tsb(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
         cpu_writeWord(cpu, low, high, value | (*cpu).a, true, game);
     }
 }
-unsafe fn cpu_trb(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
+unsafe fn test_and_reset_bits(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
         let value = cpu_read(cpu, low, game);
         (*cpu).z = (*cpu).a as u8 & value == 0;
@@ -878,7 +878,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x04 => {
                 let (low, high) = address_direct_page(cpu, game);
-                cpu_tsb(cpu, low, high, game);
+                test_and_set_bits(cpu, low, high, game);
                 break;
             }
             0x05 => {
@@ -888,7 +888,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x06 => {
                 let (low, high) = address_direct_page(cpu, game);
-                cpu_asl(cpu, low, high, game);
+                shift_memory_left(cpu, low, high, game);
                 break;
             }
             0x07 => {
@@ -922,7 +922,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x0c => {
                 let (low, high) = address_absolute(cpu, game);
-                cpu_tsb(cpu, low, high, game);
+                test_and_set_bits(cpu, low, high, game);
                 break;
             }
             0x0d => {
@@ -932,7 +932,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x0e => {
                 let (low, high) = address_absolute(cpu, game);
-                cpu_asl(cpu, low, high, game);
+                shift_memory_left(cpu, low, high, game);
                 break;
             }
             0x0f => {
@@ -961,7 +961,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x14 => {
                 let (low, high) = address_direct_page(cpu, game);
-                cpu_trb(cpu, low, high, game);
+                test_and_reset_bits(cpu, low, high, game);
                 break;
             }
             0x15 => {
@@ -971,7 +971,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x16 => {
                 let (low, high) = address_direct_page_x(cpu, game);
-                cpu_asl(cpu, low, high, game);
+                shift_memory_left(cpu, low, high, game);
                 break;
             }
             0x17 => {
@@ -1003,7 +1003,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x1c => {
                 let (low, high) = address_absolute(cpu, game);
-                cpu_trb(cpu, low, high, game);
+                test_and_reset_bits(cpu, low, high, game);
                 break;
             }
             0x1d => {
@@ -1013,7 +1013,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x1e => {
                 let (low, high) = address_absolute_x(cpu, true, game);
-                cpu_asl(cpu, low, high, game);
+                shift_memory_left(cpu, low, high, game);
                 break;
             }
             0x1f => {
@@ -1058,7 +1058,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x26 => {
                 let (low, high) = address_direct_page(cpu, game);
-                cpu_rol(cpu, low, high, game);
+                rotate_memory_left(cpu, low, high, game);
                 break;
             }
             0x27 => {
@@ -1104,7 +1104,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x2e => {
                 let (low, high) = address_absolute(cpu, game);
-                cpu_rol(cpu, low, high, game);
+                rotate_memory_left(cpu, low, high, game);
                 break;
             }
             0x2f => {
@@ -1143,7 +1143,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x36 => {
                 let (low, high) = address_direct_page_x(cpu, game);
-                cpu_rol(cpu, low, high, game);
+                rotate_memory_left(cpu, low, high, game);
                 break;
             }
             0x37 => {
@@ -1186,7 +1186,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x3e => {
                 let (low, high) = address_absolute_x(cpu, true, game);
-                cpu_rol(cpu, low, high, game);
+                rotate_memory_left(cpu, low, high, game);
                 break;
             }
             0x3f => {
@@ -1246,7 +1246,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x46 => {
                 let (low, high) = address_direct_page(cpu, game);
-                cpu_lsr(cpu, low, high, game);
+                shift_memory_right(cpu, low, high, game);
                 break;
             }
             0x47 => {
@@ -1293,7 +1293,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x4e => {
                 let (low, high) = address_absolute(cpu, game);
-                cpu_lsr(cpu, low, high, game);
+                shift_memory_right(cpu, low, high, game);
                 break;
             }
             0x4f => {
@@ -1349,7 +1349,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x56 => {
                 let (low, high) = address_direct_page_x(cpu, game);
-                cpu_lsr(cpu, low, high, game);
+                shift_memory_right(cpu, low, high, game);
                 break;
             }
             0x57 => {
@@ -1405,7 +1405,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x5e => {
                 let (low, high) = address_absolute_x(cpu, true, game);
-                cpu_lsr(cpu, low, high, game);
+                shift_memory_right(cpu, low, high, game);
                 break;
             }
             0x5f => {
@@ -1445,7 +1445,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x61 => {
                 let (low, high) = address_direct_page_indexed_indirect(cpu, game);
-                cpu_adc(cpu, low, high, game);
+                add_with_carry(cpu, low, high, game);
                 break;
             }
             0x62 => {
@@ -1455,7 +1455,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x63 => {
                 let (low, high) = address_stack_relative(cpu, game);
-                cpu_adc(cpu, low, high, game);
+                add_with_carry(cpu, low, high, game);
                 break;
             }
             0x64 => {
@@ -1465,17 +1465,17 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x65 => {
                 let (low, high) = address_direct_page(cpu, game);
-                cpu_adc(cpu, low, high, game);
+                add_with_carry(cpu, low, high, game);
                 break;
             }
             0x66 => {
                 let (low, high) = address_direct_page(cpu, game);
-                cpu_ror(cpu, low, high, game);
+                rotate_memory_right(cpu, low, high, game);
                 break;
             }
             0x67 => {
                 let (low, high) = address_direct_page_indirect_long(cpu, game);
-                cpu_adc(cpu, low, high, game);
+                add_with_carry(cpu, low, high, game);
                 break;
             }
             0x68 => {
@@ -1490,7 +1490,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x69 => {
                 let (low, high) = address_immediate(&mut *cpu, false);
-                cpu_adc(cpu, low, high, game);
+                add_with_carry(cpu, low, high, game);
                 break;
             }
             0x6a => {
@@ -1540,17 +1540,17 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x6d => {
                 let (low, high) = address_absolute(cpu, game);
-                cpu_adc(cpu, low, high, game);
+                add_with_carry(cpu, low, high, game);
                 break;
             }
             0x6e => {
                 let (low, high) = address_absolute(cpu, game);
-                cpu_ror(cpu, low, high, game);
+                rotate_memory_right(cpu, low, high, game);
                 break;
             }
             0x6f => {
                 let (low, high) = address_absolute_long(cpu, game);
-                cpu_adc(cpu, low, high, game);
+                add_with_carry(cpu, low, high, game);
                 break;
             }
             0x70 => {
@@ -1559,17 +1559,17 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x71 => {
                 let (low, high) = address_direct_page_indirect_y(cpu, false, game);
-                cpu_adc(cpu, low, high, game);
+                add_with_carry(cpu, low, high, game);
                 break;
             }
             0x72 => {
                 let (low, high) = address_direct_page_indirect(cpu, game);
-                cpu_adc(cpu, low, high, game);
+                add_with_carry(cpu, low, high, game);
                 break;
             }
             0x73 => {
                 let (low, high) = address_stack_relative_indirect_y(cpu, game);
-                cpu_adc(cpu, low, high, game);
+                add_with_carry(cpu, low, high, game);
                 break;
             }
             0x74 => {
@@ -1579,17 +1579,17 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x75 => {
                 let (low, high) = address_direct_page_x(cpu, game);
-                cpu_adc(cpu, low, high, game);
+                add_with_carry(cpu, low, high, game);
                 break;
             }
             0x76 => {
                 let (low, high) = address_direct_page_x(cpu, game);
-                cpu_ror(cpu, low, high, game);
+                rotate_memory_right(cpu, low, high, game);
                 break;
             }
             0x77 => {
                 let (low, high) = address_direct_page_indirect_long_y(cpu, game);
-                cpu_adc(cpu, low, high, game);
+                add_with_carry(cpu, low, high, game);
                 break;
             }
             0x78 => {
@@ -1598,7 +1598,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x79 => {
                 let (low, high) = address_absolute_y(cpu, false, game);
-                cpu_adc(cpu, low, high, game);
+                add_with_carry(cpu, low, high, game);
                 break;
             }
             0x7a => {
@@ -1622,17 +1622,17 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x7d => {
                 let (low, high) = address_absolute_x(cpu, false, game);
-                cpu_adc(cpu, low, high, game);
+                add_with_carry(cpu, low, high, game);
                 break;
             }
             0x7e => {
                 let (low, high) = address_absolute_x(cpu, true, game);
-                cpu_ror(cpu, low, high, game);
+                rotate_memory_right(cpu, low, high, game);
                 break;
             }
             0x7f => {
                 let (low, high) = address_absolute_long_x(cpu, game);
-                cpu_adc(cpu, low, high, game);
+                add_with_carry(cpu, low, high, game);
                 break;
             }
             0x80 => {
@@ -2020,7 +2020,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0xc6 => {
                 let (low, high) = address_direct_page(cpu, game);
-                cpu_dec(cpu, low, high, game);
+                decrement_memory(cpu, low, high, game);
                 break;
             }
             0xc7 => {
@@ -2067,7 +2067,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0xce => {
                 let (low, high) = address_absolute(cpu, game);
-                cpu_dec(cpu, low, high, game);
+                decrement_memory(cpu, low, high, game);
                 break;
             }
             0xcf => {
@@ -2106,7 +2106,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0xd6 => {
                 let (low, high) = address_direct_page_x(cpu, game);
-                cpu_dec(cpu, low, high, game);
+                decrement_memory(cpu, low, high, game);
                 break;
             }
             0xd7 => {
@@ -2149,7 +2149,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0xde => {
                 let (low, high) = address_absolute_x(cpu, true, game);
-                cpu_dec(cpu, low, high, game);
+                decrement_memory(cpu, low, high, game);
                 break;
             }
             0xdf => {
@@ -2164,7 +2164,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0xe1 => {
                 let (low, high) = address_direct_page_indexed_indirect(cpu, game);
-                cpu_sbc(cpu, low, high, game);
+                subtract_with_carry(cpu, low, high, game);
                 break;
             }
             0xe2 => {
@@ -2173,7 +2173,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0xe3 => {
                 let (low, high) = address_stack_relative(cpu, game);
-                cpu_sbc(cpu, low, high, game);
+                subtract_with_carry(cpu, low, high, game);
                 break;
             }
             0xe4 => {
@@ -2183,17 +2183,17 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0xe5 => {
                 let (low, high) = address_direct_page(cpu, game);
-                cpu_sbc(cpu, low, high, game);
+                subtract_with_carry(cpu, low, high, game);
                 break;
             }
             0xe6 => {
                 let (low, high) = address_direct_page(cpu, game);
-                cpu_inc(cpu, low, high, game);
+                increment_memory(cpu, low, high, game);
                 break;
             }
             0xe7 => {
                 let (low, high) = address_direct_page_indirect_long(cpu, game);
-                cpu_sbc(cpu, low, high, game);
+                subtract_with_carry(cpu, low, high, game);
                 break;
             }
             0xe8 => {
@@ -2207,7 +2207,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0xe9 => {
                 let (low, high) = address_immediate(&mut *cpu, false);
-                cpu_sbc(cpu, low, high, game);
+                subtract_with_carry(cpu, low, high, game);
                 break;
             }
             0xeb => {
@@ -2222,17 +2222,17 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0xed => {
                 let (low, high) = address_absolute(cpu, game);
-                cpu_sbc(cpu, low, high, game);
+                subtract_with_carry(cpu, low, high, game);
                 break;
             }
             0xee => {
                 let (low, high) = address_absolute(cpu, game);
-                cpu_inc(cpu, low, high, game);
+                increment_memory(cpu, low, high, game);
                 break;
             }
             0xef => {
                 let (low, high) = address_absolute_long(cpu, game);
-                cpu_sbc(cpu, low, high, game);
+                subtract_with_carry(cpu, low, high, game);
                 break;
             }
             0xf0 => {
@@ -2241,17 +2241,17 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0xf1 => {
                 let (low, high) = address_direct_page_indirect_y(cpu, false, game);
-                cpu_sbc(cpu, low, high, game);
+                subtract_with_carry(cpu, low, high, game);
                 break;
             }
             0xf2 => {
                 let (low, high) = address_direct_page_indirect(cpu, game);
-                cpu_sbc(cpu, low, high, game);
+                subtract_with_carry(cpu, low, high, game);
                 break;
             }
             0xf3 => {
                 let (low, high) = address_stack_relative_indirect_y(cpu, game);
-                cpu_sbc(cpu, low, high, game);
+                subtract_with_carry(cpu, low, high, game);
                 break;
             }
             0xf4 => {
@@ -2264,17 +2264,17 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0xf5 => {
                 let (low, high) = address_direct_page_x(cpu, game);
-                cpu_sbc(cpu, low, high, game);
+                subtract_with_carry(cpu, low, high, game);
                 break;
             }
             0xf6 => {
                 let (low, high) = address_direct_page_x(cpu, game);
-                cpu_inc(cpu, low, high, game);
+                increment_memory(cpu, low, high, game);
                 break;
             }
             0xf7 => {
                 let (low, high) = address_direct_page_indirect_long_y(cpu, game);
-                cpu_sbc(cpu, low, high, game);
+                subtract_with_carry(cpu, low, high, game);
                 break;
             }
             0xf8 => {
@@ -2283,7 +2283,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0xf9 => {
                 let (low, high) = address_absolute_y(cpu, false, game);
-                cpu_sbc(cpu, low, high, game);
+                subtract_with_carry(cpu, low, high, game);
                 break;
             }
             0xfa => {
@@ -2311,17 +2311,17 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0xfd => {
                 let (low, high) = address_absolute_x(cpu, false, game);
-                cpu_sbc(cpu, low, high, game);
+                subtract_with_carry(cpu, low, high, game);
                 break;
             }
             0xfe => {
                 let (low, high) = address_absolute_x(cpu, true, game);
-                cpu_inc(cpu, low, high, game);
+                increment_memory(cpu, low, high, game);
                 break;
             }
             0xff => {
                 let (low, high) = address_absolute_long_x(cpu, game);
-                cpu_sbc(cpu, low, high, game);
+                subtract_with_carry(cpu, low, high, game);
                 break;
             }
             0xea | _ => {
