@@ -1676,17 +1676,13 @@ pub unsafe fn PlmInstr_LoadItemPlmGfx(
     mut k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
-    let mut v2: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1c2d as ::core::ffi::c_int as isize) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdf0c as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1c2d as ::core::ffi::c_int as isize)
-            as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1c2d as ::core::ffi::c_int as isize)
-        as *mut uint16) =
-        (v2 as ::core::ffi::c_int + 2 as ::core::ffi::c_int & 6 as ::core::ffi::c_int) as uint16;
-    let mut v3: ::core::ffi::c_int = v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let gfx_index = u16::from_le_bytes([game.g_ram[0x1c2d], game.g_ram[0x1c2e]]);
+    let slot = 0xdf0c + usize::from(k >> 1) * 2; // plm_variables
+    let current_index = u16::from_le_bytes([game.g_ram[0x1c2d], game.g_ram[0x1c2e]]);
+    game.g_ram[slot..slot + 2].copy_from_slice(&current_index.to_le_bytes());
+    let next_index = gfx_index.wrapping_add(2) & 6;
+    game.g_ram[0x1c2d..0x1c2f].copy_from_slice(&next_index.to_le_bytes());
+    let mut v3: ::core::ffi::c_int = i32::from(gfx_index >> 1);
     let mut r18: ::core::ffi::c_int = *(game.g_rom.offset(
         (((0x8487cd as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0x8487cd as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)

@@ -12966,6 +12966,27 @@ source, which remains preserved. PLM decrement, Chozo guarded reads,
 Super Missile passage and previous holds stay held; complete credits,
 gameplay, hardware/audio, masks and ownership remain open.
 
+PLM item-graphics selection state (2026-10-19):
+PlmInstr_LoadItemPlmGfx now reads plm_item_gfx_index and writes its captured
+PLM variable/next index through byte-backed RAM. The initial capture,
+second live read for plm_variables, variable store and subsequent index
+advance remain ordered. The next index retains (old+2)&6 for all word
+values. Its full-width table index is unchanged; ROM/table/queue/tile logic
+remains as before.
+
+Frozen 7745edfc plus only this change passes any%129712/0
+(199.32s), native exit0, and pickup route68606/0
+(123.49s), native exit0. Observed pickup route68606/0
+(126.03s) executes 3 selection sequences. Maintained
+source has no observers. All65536 index steps match separately; this adds
+no movie coverage. Cargo fmt/check and release build pass. Own raw offsets-4,
+cast lines-7, Rust lines-4; other own counters unchanged. Peer source is
+excluded from frozen replays and preserved. Next: the loader's graphics
+pointer store, retaining its position after three ROM table reads.
+PLM decrement, Chozo guarded reads, Super Missile passage and previous holds
+stay held; complete credits, gameplay, hardware/audio, masks and ownership
+remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
