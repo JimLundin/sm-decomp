@@ -63,6 +63,18 @@ command lines have no references to those retired directories. Current
 release/verifier outputs, route inputs and comparison baselines remain.
 No source or residue changes; additional obsolete probe residue remains.
 
+Workspace cleanup and door-wait review (2026-10-19): moved boot-probe,
+geometry-probe, movie-sync, physical-queue-review and coverage-validation
+outside the checkout to temporary sm-workspace-retired-builds-20261019-c:
+181 files / 50.6 MiB. Current route/build scripts and live compiler/replay
+commands have no references to those retired directories. No maintained
+source or residue change belongs to this cleanup. Independent door-wait
+review confirms unchanged callback prefix, channel0/1/2 short-circuit order,
+E2DB transition store and CoroutineRet return. All65,536 byte read/write
+pairs match the original signed subtraction masked to the low nibble.
+Actual wait/advance coverage and final any% results remain owned by the
+implementation session; this review does not replace its running replay.
+
 ## The oracle
 
 PPU host-field initialization QC (2026-10-19): ppu_init initializes
