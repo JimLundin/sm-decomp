@@ -9334,6 +9334,36 @@ CPU matches verified source. Rust lines -12; other counters unchanged. Arbitrary
 MMIO and full gameplay/render/audio remain open; ROR stays held for contextual
 execution. Continue covered CPU cleanup.
 
+Color-math throughput experiments (2026-10-19): frozen 02c6cd7b-source
+DLLs with identical explicit rendering and custom audio test separate
+output/input slices for the per-window conversion loop. Simple-helper
+baseline/candidate/candidate/baseline times are 21.78/23.00/20.18/19.39s;
+candidate mean is 4.88% slower and both adjacent comparisons are slower.
+A second helper dispatches add/subtract and subscreen choices once per
+span into four constant-generic loops and hoists fixed RGB extraction.
+Its B/C/C/B times are 19.43/18.91/16.86/16.02s; conflicting pair direction
+and a 0.90% slower candidate mean establish no gain. Reversed C/B/B/C
+times are 24.51/21.01/20.36/22.03s, with candidate mean 12.50% slower
+and both adjacent comparisons slower. All twelve replays pass 20,000/0,
+native exit 0, with identical 10,869 gameplay frames and three rooms.
+Both helper variants are rejected; maintained PPU source is unchanged.
+
+Independent exact-old-loop comparisons pass 1,905,472 guarded-output/
+unchanged-main-and-sub-buffer/destination-advance cases per variant,
+including every main/palette word, 1,024 flag combinations, nonlinear
+independent brightness maps, zero/nonzero subscreen indexes, all layer
+nibbles including 8/9, clipping and equal/inverted in-bounds spans.
+These are helper checks, not complete PPU or gameplay equivalence.
+Five alternating 100,000-row conversion microbenchmarks also show the
+specialized helper slower in four batches, approximately 19% by mean;
+sub-100ms timings are noisy and do not establish full-game performance.
+Native DLL-host exits are zero; a denied standalone executable is not
+counted as an executed check. Shared machine load limits replay timing
+precision; all batches, including the conflicting first one, are retained.
+Temporary probes remain outside maintained source. Own residue delta zero;
+peer CPU work is separate. Next: optimize measured sprite evaluation,
+preserving OAM scan priority, tile limits and first nontransparent writes.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
