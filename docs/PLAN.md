@@ -12857,6 +12857,24 @@ unchanged. Frozen replays exclude peer source, which remains preserved.
 Chozo guarded reads, Super Missile passage and previous holds remain held;
 complete credits, gameplay, hardware/audio, masks and ownership stay open.
 
+PLM preinstruction words (2026-10-19): PlmInstr_PreInstr and
+PlmInstr_ClearPreInstr now write little-endian plm_pre_instrs through
+byte-backed RAM. PreInstr reads its unaligned operand before the write,
+then advances two bytes; ClearPreInstr writes86D0 and returns its unchanged
+pointer. Both retain full-width k>>1 indexing. ClearPreInstr is now safe.
+
+Frozen e6ca81de plus only this change passes any%129712/0
+(183.38s), native exit0, and pickup route68606/0
+(122.22s), native exit0. Observed pickup route68606/0
+(121.74s) executes 36 setter and 2 clearer calls.
+All65536 slot address calculations match separately; these do not replace
+contextual coverage. Maintained source has no observers. Cargo fmt/check
+and release build pass. Own raw offsets-2, unsafe functions-1, cast lines-6,
+Rust lines-11; other own counters unchanged. Frozen replays exclude peer
+source, which remains preserved. Chozo guarded reads, Super Missile passage
+and previous holds stay held; complete credits, gameplay, hardware/audio,
+masks and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

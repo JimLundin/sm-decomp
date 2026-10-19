@@ -1625,27 +1625,16 @@ pub unsafe fn PlmInstr_Delete(
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     return ::core::ptr::null::<uint8>();
 }
-pub unsafe fn PlmInstr_PreInstr(
-    mut plmp: *const uint8,
-    mut k: uint16,
-    game: &mut Game,
-) -> *const uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1cd7 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-        *(plmp as *mut uint16);
-    return plmp.offset(2 as ::core::ffi::c_int as isize);
+pub unsafe fn PlmInstr_PreInstr(plmp: *const uint8, k: uint16, game: &mut Game) -> *const uint8 {
+    let pre_instruction = (plmp as *const u16).read_unaligned();
+    let offset = 0x1cd7 + usize::from(k >> 1) * 2; // plm_pre_instrs
+    game.g_ram[offset..offset + 2].copy_from_slice(&pre_instruction.to_le_bytes());
+    plmp.add(2)
 }
-pub unsafe fn PlmInstr_ClearPreInstr(
-    mut plmp: *const uint8,
-    mut k: uint16,
-    game: &mut Game,
-) -> *const uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1cd7 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-        (0x8486d0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    return plmp;
+pub fn PlmInstr_ClearPreInstr(plmp: *const uint8, k: uint16, game: &mut Game) -> *const uint8 {
+    let offset = 0x1cd7 + usize::from(k >> 1) * 2; // plm_pre_instrs
+    game.g_ram[offset..offset + 2].copy_from_slice(&0x86d0u16.to_le_bytes());
+    plmp
 }
 pub unsafe fn CallPlmInstrFunc(mut ea: uint32, game: &mut Game) {
     match ea {
