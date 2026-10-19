@@ -600,19 +600,19 @@ pub const fnnullsub_276: ::core::ffi::c_int = 0xaae7a6;
 #[inline]
 unsafe fn gEnemyData(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut EnemyData {
     return (&raw mut game.g_ram as *mut uint8)
-        .offset(0xf78 as ::core::ffi::c_int as isize)
+        .offset(0xf78)
         .offset(o as isize) as *mut EnemyData;
 }
 #[inline]
 unsafe fn Get_Shaktool(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_Shaktool {
     return (&raw mut game.g_ram as *mut uint8)
-        .offset(0xf78 as ::core::ffi::c_int as isize)
+        .offset(0xf78)
         .offset(o as isize) as *mut Enemy_Shaktool;
 }
 #[inline]
 unsafe fn Get_Torizo(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_Torizo {
     return (&raw mut game.g_ram as *mut uint8)
-        .offset(0xf78 as ::core::ffi::c_int as isize)
+        .offset(0xf78)
         .offset(o as isize) as *mut Enemy_Torizo;
 }
 static g_word_AAB096: uint16 = 6 as uint16;
@@ -1041,18 +1041,16 @@ pub unsafe fn Enemy_SetAiPreInstr_AA(
     mut jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*gEnemyData(k as ::core::ffi::c_int, game)).ai_preinstr =
-        *jp.offset(0 as ::core::ffi::c_int as isize);
-    return jp.offset(1 as ::core::ffi::c_int as isize);
+    (*gEnemyData(k as ::core::ffi::c_int, game)).ai_preinstr = *jp.offset(0);
+    return jp.offset(1);
 }
 pub unsafe fn Torizo_Instr_3(
     mut k: uint16,
     mut jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*Get_Torizo(k as ::core::ffi::c_int, game)).toriz_var_E =
-        *jp.offset(0 as ::core::ffi::c_int as isize);
-    return jp.offset(1 as ::core::ffi::c_int as isize);
+    (*Get_Torizo(k as ::core::ffi::c_int, game)).toriz_var_E = *jp.offset(0);
+    return jp.offset(1);
 }
 pub unsafe fn Torizo_Instr_31(
     mut k: uint16,
@@ -1138,11 +1136,9 @@ pub unsafe fn Torizo_Instr_35(
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v3: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
             .offset((v3 + 160 as ::core::ffi::c_int) as isize) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
             .offset((v3 + 144 as ::core::ffi::c_int) as isize) = 0 as uint16;
         i -= 2 as ::core::ffi::c_int;
     }
@@ -1155,10 +1151,7 @@ pub unsafe fn Torizo_Instr_38(
 ) -> *const uint16 {
     SetBossBitForCurArea(4 as uint16, game);
     QueueMusic_Delayed8(g_word_AAB09A, game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) != 0 {
         Enemy_ItemDrop_GoldenTorizo(k, game);
     } else {
         Enemy_ItemDrop_BombTorizo(k, game);
@@ -1224,11 +1217,9 @@ pub unsafe fn Torizo_C250(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
             .offset((v1 + 160 as ::core::ffi::c_int) as isize) = kTorizo_Palettes_3[v1 as usize];
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
             .offset((v1 + 144 as ::core::ffi::c_int) as isize) = kTorizo_Palettes_2[v1 as usize];
         i -= 2 as ::core::ffi::c_int;
     }
@@ -1237,11 +1228,9 @@ pub unsafe fn Torizo_C268(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
             .offset((v1 + 160 as ::core::ffi::c_int) as isize) = kTorizo_Palettes_5[v1 as usize];
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
             .offset((v1 + 144 as ::core::ffi::c_int) as isize) = kTorizo_Palettes_4[v1 as usize];
         i -= 2 as ::core::ffi::c_int;
     }
@@ -1250,11 +1239,9 @@ pub unsafe fn Torizo_C280(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
             .offset((v1 + 160 as ::core::ffi::c_int) as isize) = kTorizo_Palettes_7[v1 as usize];
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
             .offset((v1 + 144 as ::core::ffi::c_int) as isize) = kTorizo_Palettes_6[v1 as usize];
         i -= 2 as ::core::ffi::c_int;
     }
@@ -1263,11 +1250,9 @@ pub unsafe fn Torizo_C298(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
             .offset((v1 + 160 as ::core::ffi::c_int) as isize) = kTorizo_Palettes_10[v1 as usize];
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
             .offset((v1 + 144 as ::core::ffi::c_int) as isize) = kTorizo_Palettes_8[v1 as usize];
         i -= 2 as ::core::ffi::c_int;
     }
@@ -1276,11 +1261,9 @@ pub unsafe fn Torizo_C2B0(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
             .offset((v1 + 160 as ::core::ffi::c_int) as isize) = kTorizo_Palettes_5[v1 as usize];
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
             .offset((v1 + 144 as ::core::ffi::c_int) as isize) = kTorizo_Palettes_4[v1 as usize];
         i -= 2 as ::core::ffi::c_int;
     }
@@ -1313,15 +1296,12 @@ pub unsafe fn Torizo_Instr_25(
         & 0x4000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
+        return *jp.offset(0) as uintptr_t as *const uint16;
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
-        return *jp.offset(1 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) != 0 {
+        return *jp.offset(1) as uintptr_t as *const uint16;
     } else {
-        return jp.offset(2 as ::core::ffi::c_int as isize);
+        return jp.offset(2);
     };
 }
 pub unsafe fn Torizo_Instr_22(
@@ -1329,9 +1309,8 @@ pub unsafe fn Torizo_Instr_22(
     mut jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*Get_Torizo(k as ::core::ffi::c_int, game)).toriz_var_00 =
-        *jp.offset(0 as ::core::ffi::c_int as isize);
-    return jp.offset(1 as ::core::ffi::c_int as isize);
+    (*Get_Torizo(k as ::core::ffi::c_int, game)).toriz_var_00 = *jp.offset(0);
+    return jp.offset(1);
 }
 pub unsafe fn Torizo_Instr_19(
     mut k: uint16,
@@ -1352,7 +1331,7 @@ pub unsafe fn Torizo_Instr_30(
     mut jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    let mut a: uint16 = *jp.offset(0 as ::core::ffi::c_int as isize);
+    let mut a: uint16 = *jp.offset(0);
     let mut i: ::core::ffi::c_int = 5 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         SpawnEprojWithRoomGfx(
@@ -1363,11 +1342,10 @@ pub unsafe fn Torizo_Instr_30(
         i -= 1;
     }
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
-    (*E).base.current_instruction = (jp.offset(1 as ::core::ffi::c_int as isize) as *mut uint8)
-        .offset_from(RomBankBase(
-            (*gEnemyData(k as ::core::ffi::c_int, game)).bank,
-            game,
-        )) as ::core::ffi::c_long as uint16;
+    (*E).base.current_instruction = (jp.offset(1) as *mut uint8).offset_from(RomBankBase(
+        (*gEnemyData(k as ::core::ffi::c_int, game)).bank,
+        game,
+    )) as ::core::ffi::c_long as uint16;
     (*E).base.flash_timer = 40 as uint16;
     (*E).base.instruction_timer = 40 as uint16;
     return ::core::ptr::null::<uint16>();
@@ -1487,7 +1465,7 @@ pub unsafe fn Torizo_Instr_4(
     mut jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    let mut v2: uint16 = *jp.offset(0 as ::core::ffi::c_int as isize);
+    let mut v2: uint16 = *jp.offset(0);
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
     (*E).base.x_pos = ((*E).base.x_pos as ::core::ffi::c_int
         + g_word_AAC3EE[(v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize]
@@ -1496,14 +1474,14 @@ pub unsafe fn Torizo_Instr_4(
         + g_word_AAC40E[((v2 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
             >> 1 as ::core::ffi::c_int) as usize] as ::core::ffi::c_int)
         as uint16;
-    return jp.offset(1 as ::core::ffi::c_int as isize);
+    return jp.offset(1);
 }
 pub unsafe fn Torizo_Instr_40(
     mut k: uint16,
     mut jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    let mut v2: uint16 = *jp.offset(0 as ::core::ffi::c_int as isize);
+    let mut v2: uint16 = *jp.offset(0);
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
     (*E).base.x_pos = ((*E).base.x_pos as ::core::ffi::c_int
         - g_word_AAC440[(v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize]
@@ -1512,7 +1490,7 @@ pub unsafe fn Torizo_Instr_40(
         - g_word_AAC460[((v2 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
             >> 1 as ::core::ffi::c_int) as usize] as ::core::ffi::c_int)
         as uint16;
-    return jp.offset(1 as ::core::ffi::c_int as isize);
+    return jp.offset(1);
 }
 pub unsafe fn Torizo_Instr_16(
     mut k: uint16,
@@ -1520,9 +1498,9 @@ pub unsafe fn Torizo_Instr_16(
     game: &mut Game,
 ) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
-    (*E).toriz_var_A = g_word_AAC4BD[(*jp.offset(0 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
-        >> 1 as ::core::ffi::c_int) as usize] as uint16;
+    (*E).toriz_var_A = g_word_AAC4BD
+        [(*jp.offset(0) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize]
+        as uint16;
     if Enemy_MoveRight_IgnoreSlopes(
         k,
         ((*E).toriz_var_A as int16 as int32) << 16 as ::core::ffi::c_int,
@@ -1540,8 +1518,8 @@ pub unsafe fn Torizo_Instr_16(
     } else {
         EnemyFunc_C8AD(k, game);
         if ((*E).toriz_parameter_1 as ::core::ffi::c_int
-            ^ *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            ^ *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
+                as ::core::ffi::c_int
                 - (*E).base.x_pos as ::core::ffi::c_int)
             & 0x8000 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
@@ -1549,9 +1527,9 @@ pub unsafe fn Torizo_Instr_16(
             if (*E).toriz_var_03 == 0 {
                 (*E).toriz_var_03 = 72 as uint16;
             }
-            return jp.offset(1 as ::core::ffi::c_int as isize);
+            return jp.offset(1);
         } else {
-            return jp.offset(1 as ::core::ffi::c_int as isize);
+            return jp.offset(1);
         }
     };
 }
@@ -1561,9 +1539,9 @@ pub unsafe fn Torizo_Instr_27(
     game: &mut Game,
 ) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
-    (*E).toriz_var_A = g_word_AAC532[(*jp.offset(0 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
-        >> 1 as ::core::ffi::c_int) as usize] as uint16;
+    (*E).toriz_var_A = g_word_AAC532
+        [(*jp.offset(0) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize]
+        as uint16;
     if Enemy_MoveRight_IgnoreSlopes(
         k,
         ((*E).toriz_var_A as int16 as int32) << 16 as ::core::ffi::c_int,
@@ -1581,8 +1559,8 @@ pub unsafe fn Torizo_Instr_27(
     } else {
         EnemyFunc_C8AD(k, game);
         if ((*E).toriz_parameter_1 as ::core::ffi::c_int
-            ^ *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            ^ *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
+                as ::core::ffi::c_int
                 - (*E).base.x_pos as ::core::ffi::c_int)
             & 0x8000 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
@@ -1590,9 +1568,9 @@ pub unsafe fn Torizo_Instr_27(
             if (*E).toriz_var_03 == 0 {
                 (*E).toriz_var_03 = 72 as uint16;
             }
-            return jp.offset(1 as ::core::ffi::c_int as isize);
+            return jp.offset(1);
         } else {
-            return jp.offset(1 as ::core::ffi::c_int as isize);
+            return jp.offset(1);
         }
     };
 }
@@ -1605,9 +1583,9 @@ pub unsafe fn Torizo_Instr_23(
         & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
+        return *jp.offset(0) as uintptr_t as *const uint16;
     } else {
-        return jp.offset(1 as ::core::ffi::c_int as isize);
+        return jp.offset(1);
     };
 }
 pub unsafe fn Torizo_Instr_14(
@@ -1618,22 +1596,22 @@ pub unsafe fn Torizo_Instr_14(
     if CompareDistToSamus_X(k, 0x38 as uint16, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
         != 0
     {
-        return jp.offset(1 as ::core::ffi::c_int as isize);
+        return jp.offset(1);
     }
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
     if ((*E).toriz_parameter_1 as ::core::ffi::c_int
-        ^ *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        ^ *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) as ::core::ffi::c_int
             - (*E).base.x_pos as ::core::ffi::c_int)
         & 0x8000 as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
     {
-        return jp.offset(1 as ::core::ffi::c_int as isize);
+        return jp.offset(1);
     }
-    (*E).toriz_var_00 = (jp.offset(1 as ::core::ffi::c_int as isize) as *mut uint8).offset_from(
-        RomBankBase((*gEnemyData(k as ::core::ffi::c_int, game)).bank, game),
-    ) as ::core::ffi::c_long as uint16;
-    return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
+    (*E).toriz_var_00 = (jp.offset(1) as *mut uint8).offset_from(RomBankBase(
+        (*gEnemyData(k as ::core::ffi::c_int, game)).bank,
+        game,
+    )) as ::core::ffi::c_long as uint16;
+    return *jp.offset(0) as uintptr_t as *const uint16;
 }
 pub unsafe fn Torizo_Instr_15(
     mut k: uint16,
@@ -1645,10 +1623,10 @@ pub unsafe fn Torizo_Instr_15(
         || Torizo_Func_12(k, game) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
     {
-        return jp.offset(1 as ::core::ffi::c_int as isize);
+        return jp.offset(1);
     }
     Torizo_C22D(k, game);
-    return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
+    return *jp.offset(0) as uintptr_t as *const uint16;
 }
 pub unsafe fn Torizo_Instr_26(
     mut k: uint16,
@@ -1656,26 +1634,25 @@ pub unsafe fn Torizo_Instr_26(
     game: &mut Game,
 ) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
-    (*E).toriz_var_00 = (jp.offset(2 as ::core::ffi::c_int as isize) as *mut uint8).offset_from(
-        RomBankBase((*gEnemyData(k as ::core::ffi::c_int, game)).bank, game),
-    ) as ::core::ffi::c_long as uint16;
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x9c6 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int)
+    (*E).toriz_var_00 = (jp.offset(2) as *mut uint8).offset_from(RomBankBase(
+        (*gEnemyData(k as ::core::ffi::c_int, game)).bank,
+        game,
+    )) as ::core::ffi::c_long as uint16;
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x9c6) as *mut uint16) as ::core::ffi::c_int)
         < 5 as ::core::ffi::c_int
-        || *((&raw mut game.g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+        || *((&raw mut game.g_ram as *mut uint8).offset(0x5b6) as *mut uint16) as ::core::ffi::c_int
+            + (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
+                as ::core::ffi::c_int
                 & 1 as ::core::ffi::c_int)
-            + (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            + (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
+                as ::core::ffi::c_int
                 >> 1 as ::core::ffi::c_int)
             & 8 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
     {
-        return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
+        return *jp.offset(0) as uintptr_t as *const uint16;
     } else {
-        return *jp.offset(1 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
+        return *jp.offset(1) as uintptr_t as *const uint16;
     };
 }
 pub unsafe fn Torizo_Instr_18(
@@ -1710,12 +1687,12 @@ pub unsafe fn Torizo_Instr_20(
     game: &mut Game,
 ) -> *const uint16 {
     SpawnEprojWithGfx(
-        *jp.offset(0 as ::core::ffi::c_int as isize),
+        *jp.offset(0),
         k,
         addr_kEproj_BombTorizoSonicBoom as ::core::ffi::c_int as uint16,
         game,
     );
-    return jp.offset(1 as ::core::ffi::c_int as isize);
+    return jp.offset(1);
 }
 pub unsafe fn Torizo_Instr_44(
     mut k: uint16,
@@ -1723,12 +1700,12 @@ pub unsafe fn Torizo_Instr_44(
     game: &mut Game,
 ) -> *const uint16 {
     SpawnEprojWithGfx(
-        *jp.offset(0 as ::core::ffi::c_int as isize),
+        *jp.offset(0),
         k,
         addr_kEproj_GoldenTorizoSonicBoom as ::core::ffi::c_int as uint16,
         game,
     );
-    return jp.offset(1 as ::core::ffi::c_int as isize);
+    return jp.offset(1);
 }
 pub unsafe fn Torizo_Instr_21(
     mut k: uint16,
@@ -1737,10 +1714,10 @@ pub unsafe fn Torizo_Instr_21(
 ) -> *const uint16 {
     SpawnEprojWithRoomGfx(
         addr_kEproj_BombTorizoExplosiveSwipe as ::core::ffi::c_int as uint16,
-        *jp.offset(0 as ::core::ffi::c_int as isize),
+        *jp.offset(0),
         game,
     );
-    return jp.offset(1 as ::core::ffi::c_int as isize);
+    return jp.offset(1);
 }
 pub unsafe fn Torizo_Instr_17(
     mut k: uint16,
@@ -1759,11 +1736,8 @@ pub unsafe fn Torizo_Instr_13(
     return jp;
 }
 pub unsafe fn Torizo_C620(mut k: uint16, game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        == 0
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x5e5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) == 0
+        && *((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16) as ::core::ffi::c_int
             & 0x8142 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
     {
@@ -1792,10 +1766,8 @@ pub unsafe fn Torizo_C643(mut k: uint16, game: &mut Game) {
         if v3 as ::core::ffi::c_int >= 0 as ::core::ffi::c_int
             && v3 as ::core::ffi::c_int != 256 as ::core::ffi::c_int
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
-                as *mut uint16) = 4 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 32 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = 4 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 32 as uint16;
             (*E).toriz_var_B = 256 as uint16;
         }
     } else {
@@ -1805,13 +1777,11 @@ pub unsafe fn Torizo_C643(mut k: uint16, game: &mut Game) {
 }
 pub unsafe fn Torizo_Hurt(game: &mut Game) {
     Torizo_C620(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16),
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
         game,
     );
     if (*Get_Torizo(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .base
@@ -1822,11 +1792,9 @@ pub unsafe fn Torizo_Hurt(game: &mut Game) {
         let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
         while i >= 0 as ::core::ffi::c_int {
             let mut v2: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
                 .offset((v2 + 160 as ::core::ffi::c_int) as isize) = 0x7fff as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
                 .offset((v2 + 144 as ::core::ffi::c_int) as isize) = 0x7fff as uint16;
             i -= 2 as ::core::ffi::c_int;
         }
@@ -1868,14 +1836,12 @@ pub unsafe fn CallTorizoFunc(mut ea: uint32, mut k: uint16, game: &mut Game) {
 }
 pub unsafe fn Torizo_Main(game: &mut Game) {
     let mut E: *mut Enemy_Torizo = Get_Torizo(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     CallTorizoFunc(
         ((*E).toriz_var_E as ::core::ffi::c_int | 0xaa0000 as ::core::ffi::c_int) as uint32,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16),
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
         game,
     );
 }
@@ -1895,8 +1861,7 @@ pub unsafe fn Torizo_Func_4(mut k: uint16, game: &mut Game) {
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         | kEnemyProps_Tangible as ::core::ffi::c_int) as uint16;
     let mut v2: uint16 = 78 as uint16;
-    while *((&raw mut game.g_ram as *mut uint8).offset(0x1c37 as ::core::ffi::c_int as isize)
-        as *mut uint16)
+    while *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
         .offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
         as ::core::ffi::c_int
         != addr_kPlmHeader_D6EA as ::core::ffi::c_int
@@ -2054,10 +2019,8 @@ pub unsafe fn Torizo_Func_7(mut k: uint16, game: &mut Game) {
         (*E).base.current_instruction = (*E).toriz_var_00;
         (*E).base.instruction_timer = 1 as uint16;
         (*E).toriz_var_B = 256 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
-            as *mut uint16) = 4 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 32 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = 4 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 32 as uint16;
     } else {
         (*E).toriz_var_B = ((*E).toriz_var_B as ::core::ffi::c_int
             + (*E).toriz_var_C as ::core::ffi::c_int) as uint16;
@@ -2065,8 +2028,7 @@ pub unsafe fn Torizo_Func_7(mut k: uint16, game: &mut Game) {
 }
 pub unsafe fn Torizo_Init(game: &mut Game) {
     let mut E: *mut Enemy_Torizo = Get_Torizo(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     if CheckBossBitForCurArea(4 as uint16, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
@@ -2075,8 +2037,7 @@ pub unsafe fn Torizo_Init(game: &mut Game) {
         (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
             | kEnemyProps_Deleted as ::core::ffi::c_int) as uint16;
     } else {
-        let mut v2: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x79f as ::core::ffi::c_int as isize)
+        let mut v2: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x79f)
             as *mut uint16) as ::core::ffi::c_int
             >> 1 as ::core::ffi::c_int;
         (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
@@ -2107,52 +2068,37 @@ pub unsafe fn Torizo_Init(game: &mut Game) {
         let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
         while i >= 0 as ::core::ffi::c_int {
             let mut v4: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
                 .offset((v4 + 240 as ::core::ffi::c_int) as isize) =
                 kTorizo_Palettes_1[v4 as usize];
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
                 .offset((v4 + 176 as ::core::ffi::c_int) as isize) = kTorizo_Palette[v4 as usize];
             i -= 2 as ::core::ffi::c_int;
         }
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            != 0
-        {
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) != 0 {
             Torizo_C280(game);
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x8b as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            if *((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16)
+                as ::core::ffi::c_int
                 == 0xc0c0 as ::core::ffi::c_int
             {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9c2 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 700 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9c4 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 700 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9d4 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 300 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9d6 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 300 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9c6 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 100 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9c8 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 100 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9ca as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 20 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9cc as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 20 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9ce as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 20 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9d0 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 20 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = -(3273 as ::core::ffi::c_int) as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9a4 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = -(3273 as ::core::ffi::c_int) as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9a6 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 4111 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9a8 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 4111 as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16) = 700 as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0x9c4) as *mut uint16) = 700 as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0x9d4) as *mut uint16) = 300 as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16) = 300 as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0x9c6) as *mut uint16) = 100 as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0x9c8) as *mut uint16) = 100 as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0x9ca) as *mut uint16) = 20 as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0x9cc) as *mut uint16) = 20 as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0x9ce) as *mut uint16) = 20 as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0x9d0) as *mut uint16) = 20 as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16) =
+                    -(3273 as ::core::ffi::c_int) as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0x9a4) as *mut uint16) =
+                    -(3273 as ::core::ffi::c_int) as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0x9a6) as *mut uint16) =
+                    4111 as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0x9a8) as *mut uint16) =
+                    4111 as uint16;
             }
         } else {
             Torizo_C250(game);
@@ -2164,15 +2110,12 @@ pub unsafe fn GoldTorizo_Touch(game: &mut Game) {
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game);
 }
 pub unsafe fn Torizo_Shot(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) != 0 {
         GoldTorizo_Shot(game);
     } else {
         let mut E: *mut Enemy_Torizo = Get_Torizo(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int,
+            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
+                as ::core::ffi::c_int,
             game,
         );
         if (*E).toriz_var_04 as ::core::ffi::c_int | (*E).base.flash_timer as ::core::ffi::c_int
@@ -2196,10 +2139,7 @@ pub unsafe fn Torizo_Shot(game: &mut Game) {
     };
 }
 pub unsafe fn Torizo_Func_8(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) != 0 {
         Torizo_D658(game);
     }
 }
@@ -2211,9 +2151,9 @@ pub unsafe fn Torizo_Instr_39(
     if (*Get_Torizo(k as ::core::ffi::c_int, game)).base.y_pos as ::core::ffi::c_int
         == 375 as ::core::ffi::c_int
     {
-        return jp.offset(1 as ::core::ffi::c_int as isize);
+        return jp.offset(1);
     } else {
-        return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
+        return *jp.offset(0) as uintptr_t as *const uint16;
     };
 }
 pub unsafe fn Torizo_Instr_41(
@@ -2265,18 +2205,17 @@ pub unsafe fn Torizo_Instr_58(
 ) -> *const uint16 {
     let mut v2: int16 = 0;
     v2 = 34 as int16;
-    while *(((&raw mut game.g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
-        as *mut uint16 as *mut uint8)
+    while *(((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16 as *mut uint8)
         .offset(v2 as uint16 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         != 0xb1c0 as ::core::ffi::c_int
     {
         v2 = (v2 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as int16;
         if (v2 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
-            return jp.offset(1 as ::core::ffi::c_int as isize);
+            return jp.offset(1);
         }
     }
-    return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
+    return *jp.offset(0) as uintptr_t as *const uint16;
 }
 pub unsafe fn Torizo_Instr_59(
     mut k: uint16,
@@ -2310,15 +2249,12 @@ pub unsafe fn Torizo_Instr_63(
 }
 pub unsafe fn GoldTorizo_Main(game: &mut Game) {
     let mut E: *mut Enemy_Torizo = Get_Torizo(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as ::core::ffi::c_int
         == kPose_1B_FaceR_SpaceJump as ::core::ffi::c_int
-        || *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        || *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as ::core::ffi::c_int
             == kPose_1C_FaceL_SpaceJump as ::core::ffi::c_int
     {
         (*E).toriz_var_07 = (*E).toriz_var_07.wrapping_add(1);
@@ -2327,8 +2263,7 @@ pub unsafe fn GoldTorizo_Main(game: &mut Game) {
     }
     CallTorizoFunc(
         ((*E).toriz_var_E as ::core::ffi::c_int | 0xaa0000 as ::core::ffi::c_int) as uint32,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16),
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
         game,
     );
 }
@@ -2360,8 +2295,8 @@ pub unsafe fn Torizo_Func_12(mut k: uint16, game: &mut Game) -> uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
     return ((*E).toriz_parameter_1 as ::core::ffi::c_int
         ^ (*E).base.x_pos as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16;
+            - *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
+                as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn Torizo_Func_11(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
@@ -2369,13 +2304,11 @@ pub unsafe fn Torizo_Func_11(mut k: uint16, game: &mut Game) {
 }
 pub unsafe fn GoldTorizo_Hurt(game: &mut Game) {
     Torizo_C620(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16),
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
         game,
     );
     if (*gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .flash_timer as ::core::ffi::c_int
@@ -2385,18 +2318,15 @@ pub unsafe fn GoldTorizo_Hurt(game: &mut Game) {
         let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
         while i >= 0 as ::core::ffi::c_int {
             let mut v2: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
                 .offset((v2 + 160 as ::core::ffi::c_int) as isize) = 0x7fff as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
                 .offset((v2 + 144 as ::core::ffi::c_int) as isize) = 0x7fff as uint16;
             i -= 2 as ::core::ffi::c_int;
         }
     } else {
         Torizo_Func_11(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-                as *mut uint16),
+            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
             game,
         );
     };
@@ -2426,32 +2356,31 @@ pub unsafe fn Torizo_Instr_49(
         || CompareDistToSamus_X(k, 0x28 as uint16, game) as ::core::ffi::c_int
             & 1 as ::core::ffi::c_int
             != 0
-        || *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        || *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as ::core::ffi::c_int
             != kPose_1D_FaceR_Morphball_Ground as ::core::ffi::c_int
-            && *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            && *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16)
+                as ::core::ffi::c_int
                 != kPose_1E_MoveR_Morphball_Ground as ::core::ffi::c_int
-            && *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            && *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16)
+                as ::core::ffi::c_int
                 != kPose_1F_MoveL_Morphball_Ground as ::core::ffi::c_int
-            && *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            && *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16)
+                as ::core::ffi::c_int
                 != kPose_79_FaceR_Springball_Ground as ::core::ffi::c_int
-            && *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            && *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16)
+                as ::core::ffi::c_int
                 != kPose_7A_FaceL_Springball_Ground as ::core::ffi::c_int
-            && *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            && *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16)
+                as ::core::ffi::c_int
                 != kPose_7B_MoveR_Springball_Ground as ::core::ffi::c_int
-            && *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            && *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16)
+                as ::core::ffi::c_int
                 != kPose_7C_MoveL_Springball_Ground as ::core::ffi::c_int
     {
-        return jp.offset(1 as ::core::ffi::c_int as isize);
+        return jp.offset(1);
     }
     (*Get_Torizo(k as ::core::ffi::c_int, game)).toriz_var_09 = 0 as uint16;
-    return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
+    return *jp.offset(0) as uintptr_t as *const uint16;
 }
 pub unsafe fn Torizo_Instr_61(
     mut k: uint16,
@@ -2460,10 +2389,10 @@ pub unsafe fn Torizo_Instr_61(
 ) -> *const uint16 {
     SpawnEprojWithRoomGfx(
         addr_kEproj_GoldenTorizoEyeBeam as ::core::ffi::c_int as uint16,
-        *jp.offset(0 as ::core::ffi::c_int as isize),
+        *jp.offset(0),
         game,
     );
-    return jp.offset(1 as ::core::ffi::c_int as isize);
+    return jp.offset(1);
 }
 pub unsafe fn Torizo_Instr_53(
     mut k: uint16,
@@ -2481,14 +2410,14 @@ pub unsafe fn Torizo_Instr_53(
         || NextRandom(game) as ::core::ffi::c_int & 0x110 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
     {
-        return jp.offset(1 as ::core::ffi::c_int as isize);
+        return jp.offset(1);
     }
     (*Get_Torizo(k as ::core::ffi::c_int, game)).toriz_var_00 =
-        (jp.offset(1 as ::core::ffi::c_int as isize) as *mut uint8).offset_from(RomBankBase(
+        (jp.offset(1) as *mut uint8).offset_from(RomBankBase(
             (*gEnemyData(k as ::core::ffi::c_int, game)).bank,
             game,
         )) as ::core::ffi::c_long as uint16;
-    return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
+    return *jp.offset(0) as uintptr_t as *const uint16;
 }
 pub unsafe fn Torizo_Instr_55(
     mut k: uint16,
@@ -2500,13 +2429,14 @@ pub unsafe fn Torizo_Instr_55(
         || NextRandom(game) as ::core::ffi::c_int & 0x102 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
     {
-        return jp.offset(1 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
+        return jp.offset(1) as uintptr_t as *const uint16;
     }
     (*E).toriz_var_09 = 0 as uint16;
-    (*E).toriz_var_00 = (jp.offset(1 as ::core::ffi::c_int as isize) as *mut uint8).offset_from(
-        RomBankBase((*gEnemyData(k as ::core::ffi::c_int, game)).bank, game),
-    ) as ::core::ffi::c_long as uint16;
-    return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
+    (*E).toriz_var_00 = (jp.offset(1) as *mut uint8).offset_from(RomBankBase(
+        (*gEnemyData(k as ::core::ffi::c_int, game)).bank,
+        game,
+    )) as ::core::ffi::c_long as uint16;
+    return *jp.offset(0) as uintptr_t as *const uint16;
 }
 pub unsafe fn Torizo_Instr_52(
     mut k: uint16,
@@ -2518,12 +2448,13 @@ pub unsafe fn Torizo_Instr_52(
         || (*E).toriz_parameter_2 as ::core::ffi::c_int & 0x2000 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
     {
-        return jp.offset(1 as ::core::ffi::c_int as isize);
+        return jp.offset(1);
     }
-    (*E).toriz_var_00 = (jp.offset(1 as ::core::ffi::c_int as isize) as *mut uint8).offset_from(
-        RomBankBase((*gEnemyData(k as ::core::ffi::c_int, game)).bank, game),
-    ) as ::core::ffi::c_long as uint16;
-    return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
+    (*E).toriz_var_00 = (jp.offset(1) as *mut uint8).offset_from(RomBankBase(
+        (*gEnemyData(k as ::core::ffi::c_int, game)).bank,
+        game,
+    )) as ::core::ffi::c_long as uint16;
+    return *jp.offset(0) as uintptr_t as *const uint16;
 }
 pub unsafe fn Torizo_Instr_50(
     mut k: uint16,
@@ -2533,27 +2464,27 @@ pub unsafe fn Torizo_Instr_50(
     if CompareDistToSamus_X(k, 0x70 as uint16, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
         == 0
     {
-        return jp.offset(1 as ::core::ffi::c_int as isize);
+        return jp.offset(1);
     }
     if Torizo_Func_12(k, game) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        return jp.offset(1 as ::core::ffi::c_int as isize);
+        return jp.offset(1);
     }
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
     if (*E).toriz_var_07 as ::core::ffi::c_int <= 0x168 as ::core::ffi::c_int
-        && (*((&raw mut game.g_ram as *mut uint8).offset(0x8b as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        && (*((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16)
+            as ::core::ffi::c_int
             & 0x300 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
             || NextRandom(game) as ::core::ffi::c_int & 0x101 as ::core::ffi::c_int
                 == 0 as ::core::ffi::c_int)
     {
-        return jp.offset(1 as ::core::ffi::c_int as isize);
+        return jp.offset(1);
     }
     (*E).toriz_var_09 = 0 as uint16;
     Torizo_C20A(k, game);
-    return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
+    return *jp.offset(0) as uintptr_t as *const uint16;
 }
 pub unsafe fn Torizo_Instr_43(
     mut k: uint16,
@@ -2581,11 +2512,11 @@ pub unsafe fn Torizo_Instr_51(
             || Torizo_Func_12(k, game) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                 != 0 as ::core::ffi::c_int)
     {
-        return jp.offset(1 as ::core::ffi::c_int as isize);
+        return jp.offset(1);
     }
     (*E).toriz_var_09 = 0 as uint16;
     Torizo_C22D(k, game);
-    return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
+    return *jp.offset(0) as uintptr_t as *const uint16;
 }
 pub unsafe fn Torizo_Instr_45(
     mut k: uint16,
@@ -2593,27 +2524,25 @@ pub unsafe fn Torizo_Instr_45(
     game: &mut Game,
 ) -> *const uint16 {
     (*Get_Torizo(k as ::core::ffi::c_int, game)).toriz_var_00 =
-        (jp.offset(2 as ::core::ffi::c_int as isize) as *mut uint8).offset_from(RomBankBase(
+        (jp.offset(2) as *mut uint8).offset_from(RomBankBase(
             (*gEnemyData(k as ::core::ffi::c_int, game)).bank,
             game,
         )) as ::core::ffi::c_long as uint16;
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x9c6 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int)
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x9c6) as *mut uint16) as ::core::ffi::c_int)
         < 0x20 as ::core::ffi::c_int
-        || *((&raw mut game.g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+        || *((&raw mut game.g_ram as *mut uint8).offset(0x5b6) as *mut uint16) as ::core::ffi::c_int
+            + (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
+                as ::core::ffi::c_int
                 & 1 as ::core::ffi::c_int)
-            + (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            + (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
+                as ::core::ffi::c_int
                 >> 1 as ::core::ffi::c_int)
             & 8 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
     {
-        return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
+        return *jp.offset(0) as uintptr_t as *const uint16;
     } else {
-        return *jp.offset(1 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
+        return *jp.offset(1) as uintptr_t as *const uint16;
     };
 }
 pub unsafe fn Torizo_Instr_54(
@@ -2622,9 +2551,9 @@ pub unsafe fn Torizo_Instr_54(
     game: &mut Game,
 ) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
-    (*E).toriz_var_A = g_word_AAD59A[(*jp.offset(0 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
-        >> 1 as ::core::ffi::c_int) as usize] as uint16;
+    (*E).toriz_var_A = g_word_AAD59A
+        [(*jp.offset(0) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize]
+        as uint16;
     if Enemy_MoveRight_IgnoreSlopes(
         k,
         ((*E).toriz_var_A as int16 as int32) << 16 as ::core::ffi::c_int,
@@ -2642,8 +2571,8 @@ pub unsafe fn Torizo_Instr_54(
     } else {
         EnemyFunc_C8AD(k, game);
         if ((*E).toriz_parameter_1 as ::core::ffi::c_int
-            ^ *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            ^ *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
+                as ::core::ffi::c_int
                 - (*E).base.x_pos as ::core::ffi::c_int)
             & 0x8000 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
@@ -2651,23 +2580,20 @@ pub unsafe fn Torizo_Instr_54(
             if (*E).toriz_var_03 == 0 {
                 (*E).toriz_var_03 = 16 as uint16;
             }
-            return jp.offset(1 as ::core::ffi::c_int as isize);
+            return jp.offset(1);
         } else {
-            return jp.offset(1 as ::core::ffi::c_int as isize);
+            return jp.offset(1);
         }
     };
 }
 pub unsafe fn Torizo_Func_9(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_Torizo = Get_Torizo(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) as ::core::ffi::c_int
         > 0x140 as ::core::ffi::c_int
-        && *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        && *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) as ::core::ffi::c_int
             > 0x170 as ::core::ffi::c_int
     {
         (*E).base.current_instruction = (*E).base.current_instruction.wrapping_add(1);
@@ -2734,8 +2660,7 @@ pub unsafe fn Torizo_D5F1(mut k: uint16, game: &mut Game) {
 }
 pub unsafe fn Torizo_D658(game: &mut Game) {
     let mut E: *mut Enemy_Torizo = Get_Torizo(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     if (*E).base.flash_timer == 0 && (*E).toriz_var_04 == 0 {
@@ -2744,8 +2669,7 @@ pub unsafe fn Torizo_D658(game: &mut Game) {
 }
 pub unsafe fn GoldTorizo_Shot(game: &mut Game) {
     let mut E: *mut Enemy_Torizo = Get_Torizo(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     if (*E).base.flash_timer == 0 {
@@ -2764,23 +2688,16 @@ pub unsafe fn GoldTorizo_Shot(game: &mut Game) {
             v2 = 0;
             v3 = 0;
             v2 = (2 as ::core::ffi::c_int
-                * *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x18a6 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int) as uint16;
-            v3 = (*((&raw mut game.g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x18a6 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as isize,
-                ) as ::core::ffi::c_int
+                * *((&raw mut game.g_ram as *mut uint8).offset(0x18a6) as *mut uint16)
+                    as ::core::ffi::c_int) as uint16;
+            v3 = (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(
+                *((&raw mut game.g_ram as *mut uint8).offset(0x18a6) as *mut uint16) as isize,
+            ) as ::core::ffi::c_int
                 & 0xf00 as ::core::ffi::c_int) as uint16;
             (*E).toriz_var_05 = v3;
             if v3 as ::core::ffi::c_int == 256 as ::core::ffi::c_int {
                 Torizo_D6D1(
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xe54 as ::core::ffi::c_int as isize)
-                        as *mut uint16),
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
                     v2,
                     game,
                 );
@@ -2790,9 +2707,7 @@ pub unsafe fn GoldTorizo_Shot(game: &mut Game) {
                 current_block_14 = 17149359649428287120;
             } else {
                 Torizo_D6F7(
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xe54 as ::core::ffi::c_int as isize)
-                        as *mut uint16),
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
                     v2,
                     game,
                 );
@@ -2813,8 +2728,7 @@ pub unsafe fn GoldTorizo_Shot(game: &mut Game) {
 pub unsafe fn Torizo_D6A6(game: &mut Game) {
     NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
     let mut E: *mut Enemy_Torizo = Get_Torizo(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     if (*E).base.health == 0 {
@@ -2827,8 +2741,7 @@ pub unsafe fn Torizo_D6A6(game: &mut Game) {
     }
 }
 pub unsafe fn Torizo_D6D1(mut k: uint16, mut j: uint16, game: &mut Game) {
-    let ref mut fresh1 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xc04 as ::core::ffi::c_int as isize) as *mut uint16)
+    let ref mut fresh1 = *((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh1 = (*fresh1 as ::core::ffi::c_int & !(0x10 as ::core::ffi::c_int)) as uint16;
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
@@ -2846,8 +2759,7 @@ pub unsafe fn Torizo_D6D1(mut k: uint16, mut j: uint16, game: &mut Game) {
 }
 pub unsafe fn Torizo_D6F7(mut k: uint16, mut j: uint16, game: &mut Game) {
     let mut E: *mut Enemy_Torizo = Get_Torizo(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     if Torizo_Func_12(k, game) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -2857,9 +2769,7 @@ pub unsafe fn Torizo_D6F7(mut k: uint16, mut j: uint16, game: &mut Game) {
             ((*E).toriz_parameter_2 as ::core::ffi::c_int | 0x1000 as ::core::ffi::c_int) as uint16;
         (*E).toriz_var_E =
             (0xaac6ab as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xc04 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16)
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
         *fresh0 = (*fresh0 as ::core::ffi::c_int | 0x10 as ::core::ffi::c_int) as uint16;
         (*E).base.instruction_timer = 1 as uint16;
@@ -2888,8 +2798,7 @@ pub unsafe fn Torizo_D6F7(mut k: uint16, mut j: uint16, game: &mut Game) {
 }
 pub unsafe fn TourianEntranceStatue_Init(game: &mut Game) {
     let mut v0: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     (*v0).palette_index = 0 as uint16;
@@ -2922,8 +2831,7 @@ pub unsafe fn TourianEntranceStatue_Init(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v5: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
             .offset((v5 + 240 as ::core::ffi::c_int) as isize) = *(game.g_rom.offset(
             (((0xaad785 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                 << 15 as ::core::ffi::c_int
@@ -2932,8 +2840,7 @@ pub unsafe fn TourianEntranceStatue_Init(game: &mut Game) {
         ) as *const uint8
             as *mut uint16)
             .offset(v5 as isize);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
             .offset((v5 + 160 as ::core::ffi::c_int) as isize) = *(game.g_rom.offset(
             (((0xaad765 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                 << 15 as ::core::ffi::c_int
@@ -2983,8 +2890,8 @@ pub unsafe fn Shaktool_Instr_4(
     return Shaktool_D956(
         k,
         jp,
-        (*((&raw mut (*E).shakt_var_A as *mut uint8).offset(1 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        (*((&raw mut (*E).shakt_var_A as *mut uint8).offset(1) as *mut uint16)
+            as ::core::ffi::c_int
             ^ 0x80 as ::core::ffi::c_int) as uint16,
         game,
     );
@@ -2998,8 +2905,7 @@ pub unsafe fn Shaktool_Instr_5(
     return Shaktool_D956(
         k,
         jp,
-        *((&raw mut (*E).shakt_var_A as *mut uint8).offset(1 as ::core::ffi::c_int as isize)
-            as *mut uint16),
+        *((&raw mut (*E).shakt_var_A as *mut uint8).offset(1) as *mut uint16),
         game,
     );
 }
@@ -3060,7 +2966,7 @@ pub unsafe fn Shaktool_Instr_1(
             & 0x3fffff as ::core::ffi::c_int) as isize,
     ) as *const uint8
         as *mut uint16)
-        .offset(0 as ::core::ffi::c_int as isize);
+        .offset(0);
     (*Get_Shaktool(
         shakt_var_E as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
         game,
@@ -3070,7 +2976,7 @@ pub unsafe fn Shaktool_Instr_1(
             | 0xaadedb as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
             & 0x3fffff as ::core::ffi::c_int) as isize,
     ) as *const uint8 as *mut uint16)
-        .offset(1 as ::core::ffi::c_int as isize);
+        .offset(1);
     (*Get_Shaktool(
         shakt_var_E as ::core::ffi::c_int + 128 as ::core::ffi::c_int,
         game,
@@ -3080,7 +2986,7 @@ pub unsafe fn Shaktool_Instr_1(
             | 0xaadedb as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
             & 0x3fffff as ::core::ffi::c_int) as isize,
     ) as *const uint8 as *mut uint16)
-        .offset(2 as ::core::ffi::c_int as isize);
+        .offset(2);
     (*Get_Shaktool(
         shakt_var_E as ::core::ffi::c_int + 192 as ::core::ffi::c_int,
         game,
@@ -3090,7 +2996,7 @@ pub unsafe fn Shaktool_Instr_1(
             | 0xaadedb as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
             & 0x3fffff as ::core::ffi::c_int) as isize,
     ) as *const uint8 as *mut uint16)
-        .offset(3 as ::core::ffi::c_int as isize);
+        .offset(3);
     (*Get_Shaktool(
         shakt_var_E as ::core::ffi::c_int + 256 as ::core::ffi::c_int,
         game,
@@ -3100,7 +3006,7 @@ pub unsafe fn Shaktool_Instr_1(
             | 0xaadedb as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
             & 0x3fffff as ::core::ffi::c_int) as isize,
     ) as *const uint8 as *mut uint16)
-        .offset(4 as ::core::ffi::c_int as isize);
+        .offset(4);
     (*Get_Shaktool(
         shakt_var_E as ::core::ffi::c_int + 320 as ::core::ffi::c_int,
         game,
@@ -3110,7 +3016,7 @@ pub unsafe fn Shaktool_Instr_1(
             | 0xaadedb as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
             & 0x3fffff as ::core::ffi::c_int) as isize,
     ) as *const uint8 as *mut uint16)
-        .offset(5 as ::core::ffi::c_int as isize);
+        .offset(5);
     (*Get_Shaktool(
         shakt_var_E as ::core::ffi::c_int + 384 as ::core::ffi::c_int,
         game,
@@ -3120,7 +3026,7 @@ pub unsafe fn Shaktool_Instr_1(
             | 0xaadedb as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
             & 0x3fffff as ::core::ffi::c_int) as isize,
     ) as *const uint8 as *mut uint16)
-        .offset(6 as ::core::ffi::c_int as isize);
+        .offset(6);
     return jp;
 }
 pub unsafe fn Shaktool_DAE5(mut k: uint16, game: &mut Game) {
@@ -3419,13 +3325,10 @@ pub unsafe fn Shaktool_DC2A(mut k: uint16, game: &mut Game) {
             .offset(v3 as isize) as int16 as ::core::ffi::c_int)
             << 8 as ::core::ffi::c_int) as uint32)
             .wrapping_add(
-                (*((&raw mut game.g_ram as *mut uint8).offset(0xe84 as ::core::ffi::c_int as isize)
-                    as *mut uint16)
+                (*((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
                     .offset((v5 + 91 as ::core::ffi::c_int) as isize) as uint32)
                     << 16 as ::core::ffi::c_int
-                    | *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xe84 as ::core::ffi::c_int as isize)
-                        as *mut uint16)
+                    | *((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
                         .offset((v5 + 92 as ::core::ffi::c_int) as isize)
                         as uint32,
             ),
@@ -3442,13 +3345,10 @@ pub unsafe fn Shaktool_DC2A(mut k: uint16, game: &mut Game) {
             .offset(v3 as isize) as int16 as ::core::ffi::c_int)
             << 8 as ::core::ffi::c_int) as uint32)
             .wrapping_add(
-                (*((&raw mut game.g_ram as *mut uint8).offset(0xe84 as ::core::ffi::c_int as isize)
-                    as *mut uint16)
+                (*((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
                     .offset((v5 + 93 as ::core::ffi::c_int) as isize) as uint32)
                     << 16 as ::core::ffi::c_int
-                    | *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xe84 as ::core::ffi::c_int as isize)
-                        as *mut uint16)
+                    | *((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
                         .offset((v5 + 94 as ::core::ffi::c_int) as isize)
                         as uint32,
             ),
@@ -3493,8 +3393,7 @@ pub unsafe fn Shaktool_DC6F(mut k: uint16, game: &mut Game) {
 }
 pub unsafe fn Shaktool_Hurt(game: &mut Game) {
     let mut E: *mut Enemy_Shaktool = Get_Shaktool(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     CallEnemyPreInstr(
@@ -3549,8 +3448,7 @@ pub unsafe fn Shaktool_DCD7(mut k: uint16, game: &mut Game) {
     ) as ::core::ffi::c_int
         + 8 as ::core::ffi::c_int
         & 0xe0 as ::core::ffi::c_int) as uint16;
-    *(&raw mut (*E).shakt_var_D as *mut uint8).offset(0 as ::core::ffi::c_int as isize) =
-        v3 as uint8;
+    *(&raw mut (*E).shakt_var_D as *mut uint8).offset(0) = v3 as uint8;
     (*E).base.current_instruction = *(game.g_rom.offset(
         (((0xaadd15 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0xaadd15 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -3604,15 +3502,13 @@ pub unsafe fn Shaktool_DD25(mut k: uint16, game: &mut Game) {
             (*E).base.y_pos = y_pos;
             Shaktool_DB59(k, game);
             Shaktool_DB0E(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-                    as *mut uint16),
+                *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
                 ((*E).shakt_parameter_1 as ::core::ffi::c_int | 0x2000 as ::core::ffi::c_int)
                     as uint16,
                 game,
             );
             Shaktool_DB0E(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-                    as *mut uint16),
+                *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
                 ((*E).shakt_parameter_1 as ::core::ffi::c_int & 0xbfff as ::core::ffi::c_int)
                     as uint16,
                 game,
@@ -3692,8 +3588,7 @@ pub unsafe fn Shaktool_DD25(mut k: uint16, game: &mut Game) {
 }
 pub unsafe fn Shaktool_Init(game: &mut Game) {
     let mut E: *mut Enemy_Shaktool = Get_Shaktool(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     (*E).base.instruction_timer = 1 as uint16;
@@ -3711,8 +3606,7 @@ pub unsafe fn Shaktool_Init(game: &mut Game) {
                 & 0x3fffff as ::core::ffi::c_int) as isize,
         ) as *const uint8 as *mut uint16)
             .offset(v3 as isize) as ::core::ffi::c_int) as uint16;
-    (*E).shakt_var_E = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xe54 as ::core::ffi::c_int as isize) as *mut uint16)
+    (*E).shakt_var_E = (*((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
         as ::core::ffi::c_int
         - *(game.g_rom.offset(
             (((0xaadea3 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -3758,8 +3652,7 @@ pub unsafe fn Shaktool_Init(game: &mut Game) {
         .offset(v3 as isize);
     if shakto_parameter_2 != 0 {
         Shaktool_DC2A(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-                as *mut uint16),
+            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
             game,
         );
     }
@@ -3770,8 +3663,7 @@ pub unsafe fn Shaktool_Touch(game: &mut Game) {
 pub unsafe fn Shaktool_Shot(game: &mut Game) {
     NormalEnemyShotAi(game);
     let mut E: *mut Enemy_Shaktool = Get_Shaktool(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     if (*E).base.health == 0 {
@@ -3822,10 +3714,8 @@ pub unsafe fn Shaktool_Instr_9(
     mut jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1980 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 32 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x197c as ::core::ffi::c_int as isize)
-        as *mut uint16) = 64 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1980) as *mut uint16) = 32 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16) = 64 as uint16;
     return jp;
 }
 pub unsafe fn Shaktool_Instr_11(
@@ -3833,8 +3723,7 @@ pub unsafe fn Shaktool_Instr_11(
     mut jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1978 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 722 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16) = 722 as uint16;
     return jp;
 }
 pub unsafe fn Shaktool_Instr_10(
@@ -3874,20 +3763,17 @@ pub unsafe fn Shaktool_Instr_12(
     game: &mut Game,
 ) -> *const uint16 {
     let mut e: *mut Enemy_Shaktool = Get_Shaktool(k as ::core::ffi::c_int, game);
-    let mut arg: uint16 = *jp.offset(0 as ::core::ffi::c_int as isize);
+    let mut arg: uint16 = *jp.offset(0);
     CalculateBlockContainingPixelPos(
         ((*e).base.x_pos as ::core::ffi::c_int + arg as ::core::ffi::c_int) as uint16,
         ((*e).base.y_pos as ::core::ffi::c_int + 28 as ::core::ffi::c_int) as uint16,
         game,
     );
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x10002 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                + *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int) as isize,
-        ) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16).offset(
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as ::core::ffi::c_int
+            + *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16)
+                as ::core::ffi::c_int) as isize,
+    ) as ::core::ffi::c_int
         & 0xf000 as ::core::ffi::c_int
         == 0xa000 as ::core::ffi::c_int
     {
@@ -3898,7 +3784,7 @@ pub unsafe fn Shaktool_Instr_12(
             game,
         );
     }
-    return jp.offset(1 as ::core::ffi::c_int as isize);
+    return jp.offset(1);
 }
 pub unsafe fn Shaktool_Instr_7(
     mut k: uint16,
@@ -3906,7 +3792,7 @@ pub unsafe fn Shaktool_Instr_7(
     game: &mut Game,
 ) -> *const uint16 {
     let mut E: *mut Enemy_Shaktool = Get_Shaktool(k as ::core::ffi::c_int, game);
-    (*E).shakt_var_C = *jp.offset(0 as ::core::ffi::c_int as isize);
+    (*E).shakt_var_C = *jp.offset(0);
     Enemy_MoveRight_IgnoreSlopes(
         k,
         (*(game.g_rom.offset(
@@ -3939,23 +3825,25 @@ pub unsafe fn Shaktool_Instr_7(
     EnemyFunc_C8AD(k, game);
     let mut v6: ::core::ffi::c_int =
         (*E).shakt_var_C as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*(game.g_rom.offset(
-        (((0xaae670 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xaae670 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
-        .offset(v6 as isize) as ::core::ffi::c_int
-        + (*E).base.x_pos as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*(game.g_rom.offset(
-        (((0xaae6b0 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xaae6b0 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
-        .offset(v6 as isize) as ::core::ffi::c_int
-        + (*E).base.y_pos as ::core::ffi::c_int) as uint16;
-    return jp.offset(1 as ::core::ffi::c_int as isize);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) =
+        (*(game.g_rom.offset(
+            (((0xaae670 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                << 15 as ::core::ffi::c_int
+                | 0xaae670 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                & 0x3fffff as ::core::ffi::c_int) as isize,
+        ) as *const uint8 as *mut uint16)
+            .offset(v6 as isize) as ::core::ffi::c_int
+            + (*E).base.x_pos as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) =
+        (*(game.g_rom.offset(
+            (((0xaae6b0 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                << 15 as ::core::ffi::c_int
+                | 0xaae6b0 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                & 0x3fffff as ::core::ffi::c_int) as isize,
+        ) as *const uint8 as *mut uint16)
+            .offset(v6 as isize) as ::core::ffi::c_int
+            + (*E).base.y_pos as ::core::ffi::c_int) as uint16;
+    return jp.offset(1);
 }
 pub unsafe fn Shaktool_Instr_14(
     mut k: uint16,
@@ -3963,18 +3851,15 @@ pub unsafe fn Shaktool_Instr_14(
     game: &mut Game,
 ) -> *const uint16 {
     CallSomeSamusCode(1 as uint16, game);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xcd20).offset(6) as *mut uint8 as *mut uint16) =
+        0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xcd20).offset(8) as *mut uint8 as *mut uint16) =
+        0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xcd20).offset(9) as *mut uint8 as *mut uint16) =
+        0 as uint16;
     *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xcd20 as ::core::ffi::c_int as isize)
-        .offset(6 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xcd20 as ::core::ffi::c_int as isize)
-        .offset(8 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xcd20 as ::core::ffi::c_int as isize)
-        .offset(9 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xcd20 as ::core::ffi::c_int as isize)
-        .offset(13 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) = 1 as uint16;
+        .offset(0xcd20)
+        .offset(13) as *mut uint8 as *mut uint16) = 1 as uint16;
     SpawnHardcodedPlm(
         SpawnHardcodedPlmArgs {
             field_0: 0x17 as uint8,
@@ -3988,8 +3873,7 @@ pub unsafe fn Shaktool_Instr_14(
 pub unsafe fn N00bTubeCracks_Init(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 62 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
             .offset(((i >> 1 as ::core::ffi::c_int) + 144 as ::core::ffi::c_int) as isize) =
             *(game.g_rom.offset(
                 (((0xaae2dd as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -4003,8 +3887,7 @@ pub unsafe fn N00bTubeCracks_Init(game: &mut Game) {
 }
 pub unsafe fn ChozoStatue_Init(game: &mut Game) {
     let mut v0: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     (*v0).properties = ((*v0).properties as ::core::ffi::c_int
@@ -4031,12 +3914,10 @@ pub unsafe fn ChozoStatue_Init(game: &mut Game) {
         let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
         while i >= 0 as ::core::ffi::c_int {
             let mut v3: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
                 .offset((v3 + 160 as ::core::ffi::c_int) as isize) =
                 kChozoStatue_Palettes[v3 as usize] as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
                 .offset((v3 + 144 as ::core::ffi::c_int) as isize) =
                 kChozoStatue_Palette[v3 as usize];
             i -= 2 as ::core::ffi::c_int;
@@ -4063,12 +3944,10 @@ pub unsafe fn sub_AAE784(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
             .offset((v1 + 160 as ::core::ffi::c_int) as isize) =
             kChozoStatue_Palettes3[v1 as usize] as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
             .offset((v1 + 144 as ::core::ffi::c_int) as isize) =
             kChozoStatue_Palettes2[v1 as usize] as uint16;
         i -= 2 as ::core::ffi::c_int;
@@ -4084,8 +3963,7 @@ pub unsafe fn sub_AAE784(game: &mut Game) {
 }
 pub unsafe fn ChozoStatue_Main(game: &mut Game) {
     let mut v0: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     CallEnemyPreInstr(
@@ -4095,11 +3973,9 @@ pub unsafe fn ChozoStatue_Main(game: &mut Game) {
 }
 pub unsafe fn Shaktool_PreInstr_0(mut k: uint16, game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xd828 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as *mut uint8 as *mut uint16) as ::core::ffi::c_int
+        .offset(0xd828)
+        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize)
+        as *mut uint8 as *mut uint16) as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {

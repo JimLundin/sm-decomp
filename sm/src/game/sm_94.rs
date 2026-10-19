@@ -2704,15 +2704,13 @@ static kBlockFunc_9C73_Tab1: [int8; 18] = [
 ];
 unsafe fn BlockFunc_9C73(mut v0: uint16, game: &mut Game) -> uint16 {
     let mut v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v1 as isize) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(v1 as isize)
+        as ::core::ffi::c_int
         & 0xf00 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
         return kBlockFunc_9C73_Tab1[(2 as ::core::ffi::c_int
-            * (*(((&raw mut game.g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            * (*(((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
                 .offset(v1 as isize) as *mut uint16 as *mut uint8)
                 .offset(
                     (::core::mem::size_of::<uint16>() as usize)
@@ -2722,8 +2720,7 @@ unsafe fn BlockFunc_9C73(mut v0: uint16, game: &mut Game) -> uint16 {
                 & 0xf as ::core::ffi::c_int)
             + 1 as ::core::ffi::c_int) as usize] as uint16;
     } else {
-        let mut r18: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xc18 as ::core::ffi::c_int as isize)
+        let mut r18: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0xc18)
             as *mut uint16)
             .offset(v1 as isize) as ::core::ffi::c_int
             & 0xf as ::core::ffi::c_int;
@@ -2737,29 +2734,24 @@ pub unsafe fn BombOrPowerBomb_Func1(mut v0: uint16, game: &mut Game) {
     let mut v3: int16 = 0;
     let mut temp_collision_DD2: uint16 = BlockFunc_9C73(v0, game);
     let mut v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    v2 = *((&raw mut game.g_ram as *mut uint8).offset(0xb64 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v1 as isize) as int16;
+    v2 = *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v1 as isize)
+        as int16;
     if v2 as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
-        let mut r26: uint16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xb64 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize);
+        let mut r26: uint16 =
+            *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v1 as isize);
         if ((*(&raw mut v2 as *mut uint8).offset(
             (::core::mem::size_of::<int16>() as usize)
                 .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x7a9 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
+            - *((&raw mut game.g_ram as *mut uint8).offset(0x7a9) as *mut uint16)
+                as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int
         {
-            v3 = *((&raw mut game.g_ram as *mut uint8).offset(0xb78 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            v3 = *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
                 .offset(v1 as isize) as int16;
             if v3 as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
-                let mut R28: uint16 = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0xb78 as ::core::ffi::c_int as isize)
+                let mut R28: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xb78)
                     as *mut uint16)
                     .offset(v1 as isize);
                 if ((*(&raw mut v3 as *mut uint8).offset(
@@ -2767,15 +2759,12 @@ pub unsafe fn BombOrPowerBomb_Func1(mut v0: uint16, game: &mut Game) {
                         .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                         .wrapping_sub(1 as usize) as isize,
                 ) as ::core::ffi::c_int
-                    - *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x7ab as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int) as int16
-                    as ::core::ffi::c_int)
+                    - *((&raw mut game.g_ram as *mut uint8).offset(0x7ab) as *mut uint16)
+                        as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
                     < 0 as ::core::ffi::c_int
                 {
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xdc4 as ::core::ffi::c_int as isize)
-                        as *mut uint16) = 0 as uint16;
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) =
+                        0 as uint16;
                     CalculateBlockAt(r26, R28, 0 as uint16, 0 as uint16, game);
                     let mut ci: CollInfo = CollInfo {
                         ci_r18_r20: 0,
@@ -2799,14 +2788,13 @@ pub unsafe fn BombOrPowerBomb_Func1(mut v0: uint16, game: &mut Game) {
 }
 unsafe fn BlockColl_GetBlockIndexAbove(mut k: uint16, game: &mut Game) -> uint16 {
     return (k as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as uint16;
+        - *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as ::core::ffi::c_int
+        - *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as ::core::ffi::c_int)
+        as uint16;
 }
 unsafe fn BlockColl_GetBlockIndexRight(mut k: uint16, game: &mut Game) -> uint16 {
-    return (*((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    return (*((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16)
+        as ::core::ffi::c_int
         * 2 as ::core::ffi::c_int
         + k as ::core::ffi::c_int
         + 1 as ::core::ffi::c_int
@@ -2816,8 +2804,8 @@ unsafe fn BlockColl_GetBlockIndexLeft(mut k: uint16) -> uint16 {
     return (k as ::core::ffi::c_int - 4 as ::core::ffi::c_int) as uint16;
 }
 unsafe fn BlockColl_GetBlockIndexBelow(mut k: uint16, game: &mut Game) -> uint16 {
-    return (*((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    return (*((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16)
+        as ::core::ffi::c_int
         * 2 as ::core::ffi::c_int
         + k as ::core::ffi::c_int
         + 1 as ::core::ffi::c_int
@@ -2826,34 +2814,26 @@ unsafe fn BlockColl_GetBlockIndexBelow(mut k: uint16, game: &mut Game) -> uint16
 unsafe fn BlockColl_BombExplosion(mut ci: *mut CollInfo, mut k: uint16, game: &mut Game) {
     let mut v2: int16 = 0;
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xc7c as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v1 as isize)
-        == 0
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xc7c) as *mut uint16).offset(v1 as isize) == 0
     {
-        v2 = *((&raw mut game.g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as int16;
+        v2 = *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(v1 as isize)
+            as int16;
         if v2 as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
                 .offset(v1 as isize) =
                 (v2 as ::core::ffi::c_int | 1 as ::core::ffi::c_int) as uint16;
-            if *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            if *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16)
+                as ::core::ffi::c_int
                 != 0xffff as ::core::ffi::c_int
             {
                 let mut v3: uint16 = (2 as ::core::ffi::c_int
-                    * *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xdc4 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int)
-                    as uint16;
+                    * *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16)
+                        as ::core::ffi::c_int) as uint16;
                 BlockBombedReact(
                     ci,
                     (2 as ::core::ffi::c_int
-                        * *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xdc4 as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int) as uint16,
+                        * *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16)
+                            as ::core::ffi::c_int) as uint16,
                     game,
                 );
                 let mut idx: uint16 = BlockColl_GetBlockIndexAbove(v3, game);
@@ -2876,11 +2856,9 @@ unsafe fn SetCarry_0(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
 }
 unsafe fn sub_949D5D(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
     if (*(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as ::core::ffi::c_int
+        .offset(0x16402)
+        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
+        as ::core::ffi::c_int
         & 0x1f as ::core::ffi::c_int)
         < 5 as ::core::ffi::c_int
     {
@@ -2891,18 +2869,14 @@ unsafe fn sub_949D5D(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
 }
 unsafe fn BlockBombedReact_Special(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
     let mut v0: uint8 = *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        );
+        .offset(0x16402)
+        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize);
     if v0 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
         let mut kBlockBombedReact_Region_Plm: *mut uint16 =
             RomPtr_94(0x9e44 as uint16_t, game) as *mut uint16;
         let mut v2: *const uint16 = RomPtr_94(
             *kBlockBombedReact_Region_Plm.offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
+                *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize,
             ) as uint16_t,
             game,
         ) as *mut uint16;
@@ -2919,11 +2893,8 @@ unsafe fn BlockBombedReact_Special(mut ci: *mut CollInfo, game: &mut Game) -> ui
 }
 unsafe fn BlockReact_ShootableAir(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
     let mut v0: uint8 = *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        );
+        .offset(0x16402)
+        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize);
     if v0 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
         let mut t: uint16 =
             *(RomPtr_94(0x9ea6 as uint16_t, game) as *mut uint16).offset(v0 as isize);
@@ -2937,18 +2908,14 @@ unsafe fn BlockReact_ShootableAir(mut ci: *mut CollInfo, game: &mut Game) -> uin
 }
 unsafe fn BlockReact_Shootable(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
     let mut v0: uint8 = *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        );
+        .offset(0x16402)
+        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize);
     if v0 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
         let mut kBlockShotBombGrappleReaction_ShootableBlock_RegionPlm: *mut uint16 =
             RomPtr_94(0x9fc6 as uint16_t, game) as *mut uint16;
         let mut v2: *mut uint16 = RomPtr_94(
             *kBlockShotBombGrappleReaction_ShootableBlock_RegionPlm.offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
+                *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize,
             ) as uint16_t,
             game,
         ) as *mut uint16;
@@ -2971,11 +2938,8 @@ unsafe fn BlockReact_BombableAir(mut ci: *mut CollInfo, game: &mut Game) -> uint
     let mut kBlockShotBombGrappleReact_BombableBlockPlm: *mut uint16 =
         RomPtr_94(0xa012 as uint16_t, game) as *mut uint16;
     let mut v0: uint8 = *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        );
+        .offset(0x16402)
+        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize);
     if v0 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
         SpawnPLM(
             *kBlockShotBombGrappleReact_BombableBlockPlm.offset(v0 as isize),
@@ -2988,11 +2952,8 @@ unsafe fn BlockReact_BombableBlock(mut ci: *mut CollInfo, game: &mut Game) -> ui
     let mut kBlockShotBombGrappleReact_BombableBlockPlm: *mut uint16 =
         RomPtr_94(0xa012 as uint16_t, game) as *mut uint16;
     let mut v0: uint8 = *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        );
+        .offset(0x16402)
+        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize);
     if v0 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
         SpawnPLM(
             *kBlockShotBombGrappleReact_BombableBlockPlm.offset(v0 as isize),
@@ -3022,15 +2983,11 @@ static kBlockBombedReact: [Option<Func_CollInfo_U8>; 16] = unsafe {
     ]
 };
 unsafe fn BlockBombedReact(mut ci: *mut CollInfo, mut v0: uint16, game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
-    while kBlockBombedReact[((*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x10002 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as ::core::ffi::c_int
+    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) =
+        (v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
+    while kBlockBombedReact[((*((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16)
+        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
+        as ::core::ffi::c_int
         & 0xf000 as ::core::ffi::c_int)
         >> 12 as ::core::ffi::c_int) as usize]
         .expect("non-null function pointer")(ci, game) as ::core::ffi::c_int
@@ -3042,27 +2999,23 @@ unsafe fn BlockFunc_A06A(mut k: uint16, game: &mut Game) {
     let mut v2: int16 = 0;
     let mut v3: int16 = 0;
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    v2 = *((&raw mut game.g_ram as *mut uint8).offset(0xc7c as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v1 as isize) as int16;
+    v2 = *((&raw mut game.g_ram as *mut uint8).offset(0xc7c) as *mut uint16).offset(v1 as isize)
+        as int16;
     if v2 != 0 {
         if (v2 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc7c as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc7c) as *mut uint16)
                 .offset(v1 as isize) = 0 as uint16;
         }
     } else {
-        let mut r18: uint16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xcea as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
+        let mut r18: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16
+            as *mut uint8)
             .offset(
                 (::core::mem::size_of::<uint16>() as usize)
                     .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                     .wrapping_sub(1 as usize) as isize,
             ) as uint16;
         let mut r20: uint16 = ((3 as ::core::ffi::c_int
-            * *((&raw mut game.g_ram as *mut uint8).offset(0xcea as ::core::ffi::c_int as isize)
-                as *mut uint16 as *mut uint8)
+            * *((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16 as *mut uint8)
                 .offset(
                     (::core::mem::size_of::<uint16>() as usize)
                         .wrapping_div(::core::mem::size_of::<uint8>() as usize)
@@ -3070,10 +3023,9 @@ unsafe fn BlockFunc_A06A(mut k: uint16, game: &mut Game) {
                 ) as ::core::ffi::c_int) as uint16
             as ::core::ffi::c_int
             >> 2 as ::core::ffi::c_int) as uint16;
-        v3 = (*((&raw mut game.g_ram as *mut uint8).offset(0xce2 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xcea as ::core::ffi::c_int as isize)
-                as *mut uint16 as *mut uint8)
+        v3 = (*((&raw mut game.g_ram as *mut uint8).offset(0xce2) as *mut uint16)
+            as ::core::ffi::c_int
+            - *((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16 as *mut uint8)
                 .offset(
                     (::core::mem::size_of::<uint16>() as usize)
                         .wrapping_div(::core::mem::size_of::<uint8>() as usize)
@@ -3085,38 +3037,37 @@ unsafe fn BlockFunc_A06A(mut k: uint16, game: &mut Game) {
         let mut r22: uint16 =
             (v3 as uint16 as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint16;
         let mut v4: uint16 = ((r18 as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0xce2 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16
+            + *((&raw mut game.g_ram as *mut uint8).offset(0xce2) as *mut uint16)
+                as ::core::ffi::c_int) as uint16
             as ::core::ffi::c_int
             >> 4 as ::core::ffi::c_int) as uint16;
         if v4 as ::core::ffi::c_int
-            >= *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            >= *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16)
+                as ::core::ffi::c_int
         {
-            v4 = (*((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            v4 = (*((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16)
+                as ::core::ffi::c_int
                 - 1 as ::core::ffi::c_int) as uint16;
         }
         let mut r24: uint16 = v4;
-        let mut v5: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0xce4 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        let mut v5: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xce4) as *mut uint16)
+            as ::core::ffi::c_int
             - r20 as ::core::ffi::c_int) as uint16;
         if (v5 as int16 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
             v5 = 0 as uint16;
         }
         let mut r26: uint16 = (v5 as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint16;
         let mut v6: uint16 = ((r20 as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0xce4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16
+            + *((&raw mut game.g_ram as *mut uint8).offset(0xce4) as *mut uint16)
+                as ::core::ffi::c_int) as uint16
             as ::core::ffi::c_int
             >> 4 as ::core::ffi::c_int) as uint16;
         if v6 as ::core::ffi::c_int
-            >= *((&raw mut game.g_ram as *mut uint8).offset(0x7a7 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            >= *((&raw mut game.g_ram as *mut uint8).offset(0x7a7) as *mut uint16)
+                as ::core::ffi::c_int
         {
-            v6 = (*((&raw mut game.g_ram as *mut uint8).offset(0x7a7 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            v6 = (*((&raw mut game.g_ram as *mut uint8).offset(0x7a7) as *mut uint16)
+                as ::core::ffi::c_int
                 - 1 as ::core::ffi::c_int) as uint16;
         }
         let mut R28: uint16 = v6;
@@ -3154,8 +3105,7 @@ unsafe fn BlockFunc_A0F4(
 ) {
     let mut RegWord: uint16 = Mult8x8(
         a as uint8,
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
+        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as uint8,
     );
     let mut v3: uint16 = (2 as ::core::ffi::c_int
         * (RegWord as ::core::ffi::c_int
@@ -3193,8 +3143,7 @@ unsafe fn BlockFunc_A11A(
 ) {
     let mut RegWord: uint16 = Mult8x8(
         a as uint8,
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
+        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as uint8,
     );
     let mut v3: uint16 = (2 as ::core::ffi::c_int
         * (RegWord as ::core::ffi::c_int
@@ -3217,8 +3166,8 @@ unsafe fn BlockFunc_A11A(
     loop {
         BlockBombedReact(&raw mut ci, v3, game);
         v3 = (v3 as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            + *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16)
+                as ::core::ffi::c_int
                 * 2 as ::core::ffi::c_int) as uint16;
         v4 -= 1;
         if !(v4 as ::core::ffi::c_int >= 0 as ::core::ffi::c_int) {
@@ -3228,26 +3177,19 @@ unsafe fn BlockFunc_A11A(
 }
 unsafe fn BlockShotReactHoriz_Slope(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
     if (*(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as ::core::ffi::c_int
+        .offset(0x16402)
+        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
+        as ::core::ffi::c_int
         & 0x1f as ::core::ffi::c_int)
         < 5 as ::core::ffi::c_int
     {
         return BlockShotReactVert_Slope_Square(
             ci,
-            (*(&raw mut game.g_ram as *mut uint8)
-                .offset(0x16402 as ::core::ffi::c_int as isize)
-                .offset(
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xdc4 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as isize,
-                ) as ::core::ffi::c_int
+            (*(&raw mut game.g_ram as *mut uint8).offset(0x16402).offset(
+                *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize,
+            ) as ::core::ffi::c_int
                 & 0x1f as ::core::ffi::c_int) as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16),
+            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16),
             game,
         );
     } else {
@@ -3256,26 +3198,19 @@ unsafe fn BlockShotReactHoriz_Slope(mut ci: *mut CollInfo, game: &mut Game) -> u
 }
 unsafe fn BlockShotReactVert_Slope(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
     if (*(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as ::core::ffi::c_int
+        .offset(0x16402)
+        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
+        as ::core::ffi::c_int
         & 0x1f as ::core::ffi::c_int)
         < 5 as ::core::ffi::c_int
     {
         return BlockShotReactHoriz_Slope_Square(
             ci,
-            (*(&raw mut game.g_ram as *mut uint8)
-                .offset(0x16402 as ::core::ffi::c_int as isize)
-                .offset(
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xdc4 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as isize,
-                ) as ::core::ffi::c_int
+            (*(&raw mut game.g_ram as *mut uint8).offset(0x16402).offset(
+                *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize,
+            ) as ::core::ffi::c_int
                 & 0x1f as ::core::ffi::c_int) as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16),
+            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16),
             game,
         );
     } else {
@@ -3305,21 +3240,17 @@ unsafe fn BlockShotReactHoriz(mut ci: *mut CollInfo, mut k: uint16, game: &mut G
     };
     let mut v1: uint8 = 0;
     if k as ::core::ffi::c_int
-        >= *((&raw mut game.g_ram as *mut uint8).offset(0x7b9 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        >= *((&raw mut game.g_ram as *mut uint8).offset(0x7b9) as *mut uint16) as ::core::ffi::c_int
     {
         return 1 as uint8;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) =
+        (k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
     loop {
-        v1 = kBlockShotReactHoriz[((*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x10002 as ::core::ffi::c_int as isize)
+        v1 = kBlockShotReactHoriz[((*((&raw mut game.g_ram as *mut uint8).offset(0x10002)
             as *mut uint16)
-            .offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
-            ) as ::core::ffi::c_int
+            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
+            as ::core::ffi::c_int
             & 0xf000 as ::core::ffi::c_int)
             >> 12 as ::core::ffi::c_int) as usize]
             .expect("non-null function pointer")(ci, game);
@@ -3355,21 +3286,17 @@ unsafe fn BlockShotReactVert(mut ci: *mut CollInfo, mut k: uint16, game: &mut Ga
     };
     let mut v1: uint8 = 0;
     if k as ::core::ffi::c_int
-        >= *((&raw mut game.g_ram as *mut uint8).offset(0x7b9 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        >= *((&raw mut game.g_ram as *mut uint8).offset(0x7b9) as *mut uint16) as ::core::ffi::c_int
     {
         return 1 as uint8;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) =
+        (k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
     loop {
-        v1 = kBlockShotReactVert[((*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x10002 as ::core::ffi::c_int as isize)
+        v1 = kBlockShotReactVert[((*((&raw mut game.g_ram as *mut uint8).offset(0x10002)
             as *mut uint16)
-            .offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
-            ) as ::core::ffi::c_int
+            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
+            as ::core::ffi::c_int
             & 0xf000 as ::core::ffi::c_int)
             >> 12 as ::core::ffi::c_int) as usize]
             .expect("non-null function pointer")(ci, game);
@@ -3384,38 +3311,30 @@ unsafe fn BlockShotReactVert(mut ci: *mut CollInfo, mut k: uint16, game: &mut Ga
 }
 unsafe fn BlockGetSomePos1(mut k: uint16, game: &mut Game) -> uint16 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut r38: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb78 as ::core::ffi::c_int as isize) as *mut uint16)
+    let mut r38: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
         .offset(v1 as isize) as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0xbc8 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as ::core::ffi::c_int
+        - *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16).offset(v1 as isize)
+            as ::core::ffi::c_int
         & 0xfff0 as ::core::ffi::c_int) as uint16;
-    return ((*((&raw mut game.g_ram as *mut uint8).offset(0xbc8 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v1 as isize) as ::core::ffi::c_int
-        + *((&raw mut game.g_ram as *mut uint8).offset(0xb78 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as ::core::ffi::c_int
+    return ((*((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16).offset(v1 as isize)
+        as ::core::ffi::c_int
+        + *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v1 as isize)
+            as ::core::ffi::c_int
         - 1 as ::core::ffi::c_int
         - r38 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
         >> 4 as ::core::ffi::c_int) as uint16;
 }
 unsafe fn BlockGetSomePos2(mut k: uint16, game: &mut Game) -> uint16 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut r38: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb64 as ::core::ffi::c_int as isize) as *mut uint16)
+    let mut r38: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
         .offset(v1 as isize) as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0xbb4 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as ::core::ffi::c_int
+        - *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16).offset(v1 as isize)
+            as ::core::ffi::c_int
         & 0xfff0 as ::core::ffi::c_int) as uint16;
-    return ((*((&raw mut game.g_ram as *mut uint8).offset(0xbb4 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v1 as isize) as ::core::ffi::c_int
-        + *((&raw mut game.g_ram as *mut uint8).offset(0xb64 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as ::core::ffi::c_int
+    return ((*((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16).offset(v1 as isize)
+        as ::core::ffi::c_int
+        + *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v1 as isize)
+            as ::core::ffi::c_int
         - 1 as ::core::ffi::c_int
         - r38 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
         >> 4 as ::core::ffi::c_int) as uint16;
@@ -3423,48 +3342,37 @@ unsafe fn BlockGetSomePos2(mut k: uint16, game: &mut Game) -> uint16 {
 pub unsafe fn BlockCollNoWaveBeamHoriz(mut k: uint16, game: &mut Game) -> uint8 {
     let mut v7: uint16 = 0;
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut amt: int32 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xbdc as ::core::ffi::c_int as isize) as *mut uint16)
+    let mut amt: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0xbdc) as *mut uint16)
         .offset(v1 as isize) as int16 as int32)
         << 8 as ::core::ffi::c_int;
     let mut some_pos: uint16 = BlockGetSomePos1(k, game);
     let mut prod: uint16 = Mult8x8(
-        ((*((&raw mut game.g_ram as *mut uint8).offset(0xb78 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xbc8 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+        ((*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v1 as isize)
+            as ::core::ffi::c_int
+            - *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int) as uint16
             as ::core::ffi::c_int
             >> 4 as ::core::ffi::c_int) as uint8,
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
+        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as uint8,
     );
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut uint8).offset(0xb64 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as *mut uint16,
-        ((&raw mut game.g_ram as *mut uint8).offset(0xb8c as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as *mut uint16,
+        ((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v1 as isize)
+            as *mut uint16,
+        ((&raw mut game.g_ram as *mut uint8).offset(0xb8c) as *mut uint16).offset(v1 as isize)
+            as *mut uint16,
         amt as uint32,
     );
-    let mut r24: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb64 as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset(v1 as isize);
+    let mut r24: uint16 =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v1 as isize);
     if amt < 0 as int32 {
-        v7 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb64 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        v7 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
             .offset(v1 as isize) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xbb4 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            - *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int) as uint16;
     } else {
-        v7 = (*((&raw mut game.g_ram as *mut uint8).offset(0xbb4 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        v7 = (*((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16)
             .offset(v1 as isize) as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0xb64 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            + *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int
             - 1 as ::core::ffi::c_int) as uint16;
     }
@@ -3478,8 +3386,8 @@ pub unsafe fn BlockCollNoWaveBeamHoriz(mut k: uint16, game: &mut Game) -> uint8 
                 .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x7a9 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
+            - *((&raw mut game.g_ram as *mut uint8).offset(0x7a9) as *mut uint16)
+                as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
             >= 0 as ::core::ffi::c_int
     {
         return 0 as uint8;
@@ -3497,8 +3405,8 @@ pub unsafe fn BlockCollNoWaveBeamHoriz(mut k: uint16, game: &mut Game) -> uint8 
     loop {
         BlockShotReactHoriz(&raw mut ci, v8, game);
         v8 = (v8 as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            + *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16)
+                as ::core::ffi::c_int
                 * 2 as ::core::ffi::c_int) as uint16;
         ci.ci_r38 = ci.ci_r38.wrapping_sub(1);
         if !(ci.ci_r38 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -3516,53 +3424,41 @@ pub unsafe fn BlockCollNoWaveBeamHoriz(mut k: uint16, game: &mut Game) -> uint8 
 pub unsafe fn BlockCollNoWaveBeamVert(mut k: uint16, game: &mut Game) -> uint8 {
     let mut v7: uint16 = 0;
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut amt: int32 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xbf0 as ::core::ffi::c_int as isize) as *mut uint16)
+    let mut amt: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0xbf0) as *mut uint16)
         .offset(v1 as isize) as int16 as int32)
         << 8 as ::core::ffi::c_int;
     let mut some_pos: uint16 = BlockGetSomePos2(k, game);
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut uint8).offset(0xb78 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as *mut uint16,
-        ((&raw mut game.g_ram as *mut uint8).offset(0xba0 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as *mut uint16,
+        ((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v1 as isize)
+            as *mut uint16,
+        ((&raw mut game.g_ram as *mut uint8).offset(0xba0) as *mut uint16).offset(v1 as isize)
+            as *mut uint16,
         amt as uint32,
     );
-    let mut r24: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb78 as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset(v1 as isize);
+    let mut r24: uint16 =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v1 as isize);
     if amt < 0 as int32 {
-        v7 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb78 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        v7 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
             .offset(v1 as isize) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xbc8 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            - *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int) as uint16;
     } else {
-        v7 = (*((&raw mut game.g_ram as *mut uint8).offset(0xbc8 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        v7 = (*((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
             .offset(v1 as isize) as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0xb78 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            + *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int
             - 1 as ::core::ffi::c_int) as uint16;
     }
     let mut R28: uint16 = v7;
-    let mut v8: uint16 = ((*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb64 as ::core::ffi::c_int as isize) as *mut uint16)
+    let mut v8: uint16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
         .offset(v1 as isize) as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0xbb4 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as ::core::ffi::c_int) as uint16
-        as ::core::ffi::c_int
+        - *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16).offset(v1 as isize)
+            as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
         >> 4 as ::core::ffi::c_int) as uint16;
     let mut v9: uint16 = (2 as ::core::ffi::c_int
         * (Mult8x8(
             (v7 as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint8,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-                as *mut uint16) as uint8,
+            *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as uint8,
         ) as ::core::ffi::c_int
             + v8 as ::core::ffi::c_int)) as uint16;
     if some_pos as ::core::ffi::c_int - 16 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0
@@ -3571,8 +3467,8 @@ pub unsafe fn BlockCollNoWaveBeamVert(mut k: uint16, game: &mut Game) -> uint8 {
                 .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x7ab as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
+            - *((&raw mut game.g_ram as *mut uint8).offset(0x7ab) as *mut uint16)
+                as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
             >= 0 as ::core::ffi::c_int
     {
         return 0 as uint8;
@@ -3606,48 +3502,37 @@ pub unsafe fn BlockCollNoWaveBeamVert(mut k: uint16, game: &mut Game) -> uint8 {
 pub unsafe fn BlockCollWaveBeamHoriz(mut k: uint16, game: &mut Game) -> uint8 {
     let mut v7: uint16 = 0;
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut amt: int32 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xbdc as ::core::ffi::c_int as isize) as *mut uint16)
+    let mut amt: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0xbdc) as *mut uint16)
         .offset(v1 as isize) as int16 as int32)
         << 8 as ::core::ffi::c_int;
     let mut some_pos: uint16 = BlockGetSomePos1(k, game);
     let mut prod: uint16 = Mult8x8(
-        ((*((&raw mut game.g_ram as *mut uint8).offset(0xb78 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xbc8 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+        ((*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v1 as isize)
+            as ::core::ffi::c_int
+            - *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int) as uint16
             as ::core::ffi::c_int
             >> 4 as ::core::ffi::c_int) as uint8,
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
+        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as uint8,
     );
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut uint8).offset(0xb64 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as *mut uint16,
-        ((&raw mut game.g_ram as *mut uint8).offset(0xb8c as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as *mut uint16,
+        ((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v1 as isize)
+            as *mut uint16,
+        ((&raw mut game.g_ram as *mut uint8).offset(0xb8c) as *mut uint16).offset(v1 as isize)
+            as *mut uint16,
         amt as uint32,
     );
-    let mut r24: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb64 as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset(v1 as isize);
+    let mut r24: uint16 =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v1 as isize);
     if amt < 0 as int32 {
-        v7 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb64 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        v7 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
             .offset(v1 as isize) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xbb4 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            - *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int) as uint16;
     } else {
-        v7 = (*((&raw mut game.g_ram as *mut uint8).offset(0xbb4 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        v7 = (*((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16)
             .offset(v1 as isize) as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0xb64 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            + *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int
             - 1 as ::core::ffi::c_int) as uint16;
     }
@@ -3669,8 +3554,7 @@ pub unsafe fn BlockCollWaveBeamHoriz(mut k: uint16, game: &mut Game) -> uint8 {
         ci_r38: some_pos,
         ci_r40: some_pos,
     };
-    let mut v9: uint8 = *(((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb78 as ::core::ffi::c_int as isize) as *mut uint16)
+    let mut v9: uint8 = *(((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
         .offset(v1 as isize) as *mut uint16 as *mut uint8)
         .offset(
             (::core::mem::size_of::<uint16>() as usize)
@@ -3679,23 +3563,23 @@ pub unsafe fn BlockCollWaveBeamHoriz(mut k: uint16, game: &mut Game) -> uint8 {
         );
     if v9 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int == 0
         && ((v9 as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x7ab as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
+            - *((&raw mut game.g_ram as *mut uint8).offset(0x7ab) as *mut uint16)
+                as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int
         && ((*(&raw mut R28 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>() as usize)
                 .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x7a9 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
+            - *((&raw mut game.g_ram as *mut uint8).offset(0x7a9) as *mut uint16)
+                as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int
     {
         loop {
             BlockShotReactHoriz(&raw mut ci, v8, game);
             v8 = (v8 as ::core::ffi::c_int
-                + *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
+                + *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16)
+                    as ::core::ffi::c_int
                     * 2 as ::core::ffi::c_int) as uint16;
             ci.ci_r38 = ci.ci_r38.wrapping_sub(1);
             if !(ci.ci_r38 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -3710,52 +3594,40 @@ pub unsafe fn BlockCollWaveBeamHoriz(mut k: uint16, game: &mut Game) -> uint8 {
 pub unsafe fn BlockCollWaveBeamVert(mut k: uint16, game: &mut Game) -> uint8 {
     let mut v7: uint16 = 0;
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut amt: int32 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xbf0 as ::core::ffi::c_int as isize) as *mut uint16)
+    let mut amt: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0xbf0) as *mut uint16)
         .offset(v1 as isize) as int16 as int32)
         << 8 as ::core::ffi::c_int;
     let mut some_pos: uint16 = BlockGetSomePos2(k, game);
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut uint8).offset(0xb78 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as *mut uint16,
-        ((&raw mut game.g_ram as *mut uint8).offset(0xba0 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as *mut uint16,
+        ((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v1 as isize)
+            as *mut uint16,
+        ((&raw mut game.g_ram as *mut uint8).offset(0xba0) as *mut uint16).offset(v1 as isize)
+            as *mut uint16,
         amt as uint32,
     );
-    let mut r24: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb78 as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset(v1 as isize);
+    let mut r24: uint16 =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v1 as isize);
     if amt < 0 as int32 {
-        v7 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb78 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        v7 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
             .offset(v1 as isize) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xbc8 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            - *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int) as uint16;
     } else {
-        v7 = (*((&raw mut game.g_ram as *mut uint8).offset(0xbc8 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        v7 = (*((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
             .offset(v1 as isize) as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0xb78 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            + *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int
             - 1 as ::core::ffi::c_int) as uint16;
     }
     let mut R28: uint16 = v7;
     let mut prod: uint16 = Mult8x8(
         (v7 as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint8,
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
+        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as uint8,
     );
-    let mut v8: uint16 = ((*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb64 as ::core::ffi::c_int as isize) as *mut uint16)
+    let mut v8: uint16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
         .offset(v1 as isize) as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0xbb4 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as ::core::ffi::c_int) as uint16
-        as ::core::ffi::c_int
+        - *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16).offset(v1 as isize)
+            as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
         >> 4 as ::core::ffi::c_int) as uint16;
     let mut v9: uint16 = (2 as ::core::ffi::c_int
         * (prod as ::core::ffi::c_int + v8 as ::core::ffi::c_int))
@@ -3764,8 +3636,7 @@ pub unsafe fn BlockCollWaveBeamVert(mut k: uint16, game: &mut Game) -> uint8 {
     {
         return 0 as uint8;
     }
-    let mut v10: uint8 = *(((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb64 as ::core::ffi::c_int as isize) as *mut uint16)
+    let mut v10: uint8 = *(((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
         .offset(v1 as isize) as *mut uint16 as *mut uint8)
         .offset(
             (::core::mem::size_of::<uint16>() as usize)
@@ -3784,16 +3655,16 @@ pub unsafe fn BlockCollWaveBeamVert(mut k: uint16, game: &mut Game) -> uint8 {
     };
     if v10 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int == 0
         && ((v10 as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x7a9 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
+            - *((&raw mut game.g_ram as *mut uint8).offset(0x7a9) as *mut uint16)
+                as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int
         && ((*(&raw mut R28 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>() as usize)
                 .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x7ab as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
+            - *((&raw mut game.g_ram as *mut uint8).offset(0x7ab) as *mut uint16)
+                as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int
     {
         loop {
@@ -3811,38 +3682,30 @@ pub unsafe fn BlockCollWaveBeamVert(mut k: uint16, game: &mut Game) -> uint8 {
 }
 pub unsafe fn BlockCollMissileHoriz(mut k: uint16, game: &mut Game) -> uint8 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut amt: int32 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xbdc as ::core::ffi::c_int as isize) as *mut uint16)
+    let mut amt: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0xbdc) as *mut uint16)
         .offset(v1 as isize) as int16 as int32)
         << 8 as ::core::ffi::c_int;
     let mut prod: uint16 = Mult8x8(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xb78 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as ::core::ffi::c_int
+        (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v1 as isize)
+            as ::core::ffi::c_int
             >> 4 as ::core::ffi::c_int) as uint8,
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
+        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as uint8,
     );
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut uint8).offset(0xb64 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as *mut uint16,
-        ((&raw mut game.g_ram as *mut uint8).offset(0xb8c as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as *mut uint16,
+        ((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v1 as isize)
+            as *mut uint16,
+        ((&raw mut game.g_ram as *mut uint8).offset(0xb8c) as *mut uint16).offset(v1 as isize)
+            as *mut uint16,
         amt as uint32,
     );
-    let mut v3: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb8c as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset(v1 as isize);
-    let mut r24: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb64 as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset(v1 as isize);
+    let mut v3: uint16 =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xb8c) as *mut uint16).offset(v1 as isize);
+    let mut r24: uint16 =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v1 as isize);
     let mut r28: uint16 = r24;
     let mut v7: uint16 = (2 as ::core::ffi::c_int
         * (prod as ::core::ffi::c_int
-            + (*((&raw mut game.g_ram as *mut uint8).offset(0xb64 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            + (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int
                 >> 4 as ::core::ffi::c_int))) as uint16;
     let mut ci: CollInfo = CollInfo {
@@ -3860,8 +3723,8 @@ pub unsafe fn BlockCollMissileHoriz(mut k: uint16, game: &mut Game) -> uint8 {
             .wrapping_div(::core::mem::size_of::<uint8>() as usize)
             .wrapping_sub(1 as usize) as isize,
     ) as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0x7a9 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
+        - *((&raw mut game.g_ram as *mut uint8).offset(0x7a9) as *mut uint16) as ::core::ffi::c_int)
+        as int16 as ::core::ffi::c_int
         >= 0 as ::core::ffi::c_int
         || BlockShotReactHoriz(&raw mut ci, v7, game) == 0
     {
@@ -3872,33 +3735,26 @@ pub unsafe fn BlockCollMissileHoriz(mut k: uint16, game: &mut Game) -> uint8 {
 }
 pub unsafe fn BlockCollMissileVert(mut k: uint16, game: &mut Game) -> uint8 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut amt: int32 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xbf0 as ::core::ffi::c_int as isize) as *mut uint16)
+    let mut amt: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0xbf0) as *mut uint16)
         .offset(v1 as isize) as int16 as int32)
         << 8 as ::core::ffi::c_int;
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut uint8).offset(0xb78 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as *mut uint16,
-        ((&raw mut game.g_ram as *mut uint8).offset(0xba0 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as *mut uint16,
+        ((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v1 as isize)
+            as *mut uint16,
+        ((&raw mut game.g_ram as *mut uint8).offset(0xba0) as *mut uint16).offset(v1 as isize)
+            as *mut uint16,
         amt as uint32,
     );
-    let mut r24: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb78 as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset(v1 as isize);
+    let mut r24: uint16 =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v1 as isize);
     let mut r28: uint16 = r24;
     let mut prod: uint16 = Mult8x8(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xb78 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as ::core::ffi::c_int
+        (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v1 as isize)
+            as ::core::ffi::c_int
             >> 4 as ::core::ffi::c_int) as uint8,
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
+        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as uint8,
     );
-    let mut v7: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb64 as ::core::ffi::c_int as isize) as *mut uint16)
+    let mut v7: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
         .offset(v1 as isize) as ::core::ffi::c_int
         >> 4 as ::core::ffi::c_int) as uint16;
     let mut v8: uint16 = (2 as ::core::ffi::c_int
@@ -3919,8 +3775,8 @@ pub unsafe fn BlockCollMissileVert(mut k: uint16, game: &mut Game) -> uint8 {
             .wrapping_div(::core::mem::size_of::<uint8>() as usize)
             .wrapping_sub(1 as usize) as isize,
     ) as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0x7ab as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
+        - *((&raw mut game.g_ram as *mut uint8).offset(0x7ab) as *mut uint16) as ::core::ffi::c_int)
+        as int16 as ::core::ffi::c_int
         >= 0 as ::core::ffi::c_int
         || BlockShotReactVert(&raw mut ci, v8, game) == 0
     {
@@ -3935,13 +3791,12 @@ unsafe fn BlockShotReact_Slope_NonSquare(
     mut k: uint16,
     game: &mut Game,
 ) -> uint8 {
-    let mut v2: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb64 as ::core::ffi::c_int as isize) as *mut uint16)
+    let mut v2: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
         as ::core::ffi::c_int
         & 0xf as ::core::ffi::c_int
         ^ (if *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x16402 as ::core::ffi::c_int as isize)
+            .offset(0x16402)
             .offset(k as isize) as ::core::ffi::c_int
             & 0x40 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
@@ -3950,13 +3805,12 @@ unsafe fn BlockShotReact_Slope_NonSquare(
         } else {
             0 as ::core::ffi::c_int
         })) as uint16;
-    let mut v4: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb78 as ::core::ffi::c_int as isize) as *mut uint16)
+    let mut v4: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
         as ::core::ffi::c_int
         & 0xf as ::core::ffi::c_int
         ^ (if *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x16402 as ::core::ffi::c_int as isize)
+            .offset(0x16402)
             .offset(k as isize) as ::core::ffi::c_int
             & 0x80 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
@@ -3967,7 +3821,7 @@ unsafe fn BlockShotReact_Slope_NonSquare(
         })) as uint16;
     let mut v5: uint16 = (kAlignYPos_Tab0[(16 as ::core::ffi::c_int
         * (*(&raw mut game.g_ram as *mut uint8)
-            .offset(0x16402 as ::core::ffi::c_int as isize)
+            .offset(0x16402)
             .offset(k as isize) as ::core::ffi::c_int
             & 0x1f as ::core::ffi::c_int)
         + (v2 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int))
@@ -3984,18 +3838,13 @@ unsafe fn BlockShotReact_Slope_NonSquare(
     };
 }
 unsafe fn BlockShotReactVert_Slope_NonSquare(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xdc4 as ::core::ffi::c_int as isize) as *mut uint16);
-    let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xdde as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16);
+    let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16);
     let mut div: uint16 = SnesDivide(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-            as *mut uint16),
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16),
+        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as uint8,
     );
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xb78 as ::core::ffi::c_int as isize)
-        as *mut uint16)
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
         .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
         as ::core::ffi::c_int
         >> 4 as ::core::ffi::c_int
@@ -4007,18 +3856,13 @@ unsafe fn BlockShotReactVert_Slope_NonSquare(mut ci: *mut CollInfo, game: &mut G
     };
 }
 unsafe fn BlockShotReactHoriz_Slope_NonSquare(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xdc4 as ::core::ffi::c_int as isize) as *mut uint16);
-    let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xdde as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16);
+    let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16);
     let mut mod_0: uint16 = SnesModulus(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-            as *mut uint16),
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16),
+        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as uint8,
     );
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xb64 as ::core::ffi::c_int as isize)
-        as *mut uint16)
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
         .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
         as ::core::ffi::c_int
         >> 4 as ::core::ffi::c_int
@@ -4051,14 +3895,11 @@ pub unsafe fn BlockCollSpreadBomb(mut k: uint16, game: &mut Game) -> uint8 {
         ]
     };
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut r26: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb64 as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset(v1 as isize);
-    let mut r28: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb78 as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset(v1 as isize);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    let mut r26: uint16 =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v1 as isize);
+    let mut r28: uint16 =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v1 as isize);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) = 0 as uint16;
     CalculateBlockAt(r26, r28, 0 as uint16, 0 as uint16, game);
     let mut ci: CollInfo = CollInfo {
         ci_r18_r20: 0,
@@ -4070,29 +3911,22 @@ pub unsafe fn BlockCollSpreadBomb(mut k: uint16, game: &mut Game) -> uint8 {
         ci_r38: 0,
         ci_r40: 0,
     };
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xc7c as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v1 as isize)
-        == 0
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xc7c) as *mut uint16).offset(v1 as isize) == 0
     {
         BlockColl_BombExplosion(&raw mut ci, k, game);
         return 0 as uint8;
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as ::core::ffi::c_int
         == 0xffff as ::core::ffi::c_int
     {
         return 1 as uint8;
     }
     let mut rv: uint8 = 0;
     loop {
-        rv = kBlockCollSpreadBomb[((*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x10002 as ::core::ffi::c_int as isize)
+        rv = kBlockCollSpreadBomb[((*((&raw mut game.g_ram as *mut uint8).offset(0x10002)
             as *mut uint16)
-            .offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
-            ) as ::core::ffi::c_int
+            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
+            as ::core::ffi::c_int
             & 0xf000 as ::core::ffi::c_int)
             >> 12 as ::core::ffi::c_int) as usize]
             .expect("non-null function pointer")(&raw mut ci, game);
@@ -4111,42 +3945,33 @@ unsafe fn BlockShotReactVert_Slope_Square(
     let mut temp_collision_DD4: uint16 =
         (4 as ::core::ffi::c_int * a as ::core::ffi::c_int) as uint16;
     let mut temp_collision_DD6: uint16 = (*(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
+        .offset(0x16402)
         .offset(k as isize) as ::core::ffi::c_int
         >> 6 as ::core::ffi::c_int) as uint16;
     let mut v2: uint16 = (4 as ::core::ffi::c_int * a as ::core::ffi::c_int
         + (temp_collision_DD6 as ::core::ffi::c_int
             ^ ((*ci).ci_r28 as ::core::ffi::c_int & 8 as ::core::ffi::c_int)
                 >> 3 as ::core::ffi::c_int)) as uint16;
-    let mut v3: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xdde as ::core::ffi::c_int as isize)
+    let mut v3: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0xdde)
         as *mut uint16) as ::core::ffi::c_int
         >> 1 as ::core::ffi::c_int;
     if (*ci).ci_r30 == 0 {
         if (*ci).ci_r26 == 0 {
-            if *((&raw mut game.g_ram as *mut uint8).offset(0xb78 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            if *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
                 .offset(v3 as isize) as ::core::ffi::c_int
-                - *((&raw mut game.g_ram as *mut uint8).offset(0xbc8 as ::core::ffi::c_int as isize)
-                    as *mut uint16)
+                - *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
                     .offset(v3 as isize) as ::core::ffi::c_int
                 & 8 as ::core::ffi::c_int
                 != 0 as ::core::ffi::c_int
                 || kTab948E54[v2 as usize] == 0
             {
                 let mut v4: uint16 = (v2 as ::core::ffi::c_int ^ 2 as ::core::ffi::c_int) as uint16;
-                if *(((&raw mut game.g_ram as *mut uint8)
-                    .offset(0xbc8 as ::core::ffi::c_int as isize)
-                    as *mut uint16)
+                if *(((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
                     .offset(v3 as isize) as *mut uint16 as *mut uint8)
-                    .offset(0 as ::core::ffi::c_int as isize)
-                    as ::core::ffi::c_int
-                    + *(((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xb78 as ::core::ffi::c_int as isize)
-                        as *mut uint16)
+                    .offset(0) as ::core::ffi::c_int
+                    + *(((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
                         .offset(v3 as isize) as *mut uint16 as *mut uint8)
-                        .offset(0 as ::core::ffi::c_int as isize)
-                        as ::core::ffi::c_int
+                        .offset(0) as ::core::ffi::c_int
                     - 1 as ::core::ffi::c_int
                     & 8 as ::core::ffi::c_int
                     == 0 as ::core::ffi::c_int
@@ -4159,13 +3984,9 @@ unsafe fn BlockShotReactVert_Slope_Square(
         }
         if (*ci).ci_r38 != 0 {
             if (*ci).ci_r38 as ::core::ffi::c_int == (*ci).ci_r26 as ::core::ffi::c_int
-                && *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0xb78 as ::core::ffi::c_int as isize)
-                    as *mut uint16)
+                && *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
                     .offset(v3 as isize) as ::core::ffi::c_int
-                    - *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xbc8 as ::core::ffi::c_int as isize)
-                        as *mut uint16)
+                    - *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
                         .offset(v3 as isize) as ::core::ffi::c_int
                     & 8 as ::core::ffi::c_int
                     != 0 as ::core::ffi::c_int
@@ -4175,14 +3996,12 @@ unsafe fn BlockShotReactVert_Slope_Square(
                     != 0 as ::core::ffi::c_int) as ::core::ffi::c_int
                     as uint8;
             }
-        } else if *(((&raw mut game.g_ram as *mut uint8)
-            .offset(0xbc8 as ::core::ffi::c_int as isize) as *mut uint16)
+        } else if *(((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
             .offset(v3 as isize) as *mut uint16 as *mut uint8)
-            .offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-            + *(((&raw mut game.g_ram as *mut uint8).offset(0xb78 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            .offset(0) as ::core::ffi::c_int
+            + *(((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
                 .offset(v3 as isize) as *mut uint16 as *mut uint8)
-                .offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
+                .offset(0) as ::core::ffi::c_int
             - 1 as ::core::ffi::c_int
             & 8 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
@@ -4197,9 +4016,8 @@ unsafe fn BlockShotReactVert_Slope_Square(
             as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xb78 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v3 as isize) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v3 as isize)
+        as ::core::ffi::c_int
         & 8 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
@@ -4217,7 +4035,7 @@ unsafe fn BlockShotReactHoriz_Slope_Square(
     let mut temp_collision_DD4: uint16 =
         (4 as ::core::ffi::c_int * a as ::core::ffi::c_int) as uint16;
     let mut temp_collision_DD6: uint16 = (*(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
+        .offset(0x16402)
         .offset(k as isize) as ::core::ffi::c_int
         >> 6 as ::core::ffi::c_int) as uint16;
     let mut v2: uint16 = (4 as ::core::ffi::c_int * a as ::core::ffi::c_int
@@ -4226,33 +4044,24 @@ unsafe fn BlockShotReactHoriz_Slope_Square(
                 >> 2 as ::core::ffi::c_int)) as uint16;
     if (*ci).ci_r30 == 0 {
         if (*ci).ci_r26 == 0 {
-            let mut v3: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xdde as ::core::ffi::c_int as isize)
+            let mut v3: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0xdde)
                 as *mut uint16) as ::core::ffi::c_int
                 >> 1 as ::core::ffi::c_int;
-            if *((&raw mut game.g_ram as *mut uint8).offset(0xb64 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            if *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
                 .offset(v3 as isize) as ::core::ffi::c_int
-                - *((&raw mut game.g_ram as *mut uint8).offset(0xbb4 as ::core::ffi::c_int as isize)
-                    as *mut uint16)
+                - *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16)
                     .offset(v3 as isize) as ::core::ffi::c_int
                 & 8 as ::core::ffi::c_int
                 != 0 as ::core::ffi::c_int
                 || kTab948E54[v2 as usize] as ::core::ffi::c_int == 0 as ::core::ffi::c_int
             {
                 let mut v4: uint16 = (v2 as ::core::ffi::c_int ^ 1 as ::core::ffi::c_int) as uint16;
-                if *(((&raw mut game.g_ram as *mut uint8)
-                    .offset(0xbb4 as ::core::ffi::c_int as isize)
-                    as *mut uint16)
+                if *(((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16)
                     .offset(v3 as isize) as *mut uint16 as *mut uint8)
-                    .offset(0 as ::core::ffi::c_int as isize)
-                    as ::core::ffi::c_int
-                    + *(((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xb64 as ::core::ffi::c_int as isize)
-                        as *mut uint16)
+                    .offset(0) as ::core::ffi::c_int
+                    + *(((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
                         .offset(v3 as isize) as *mut uint16 as *mut uint8)
-                        .offset(0 as ::core::ffi::c_int as isize)
-                        as ::core::ffi::c_int
+                        .offset(0) as ::core::ffi::c_int
                     - 1 as ::core::ffi::c_int
                     & 8 as ::core::ffi::c_int
                     == 0 as ::core::ffi::c_int
@@ -4265,24 +4074,16 @@ unsafe fn BlockShotReactHoriz_Slope_Square(
         }
         if (*ci).ci_r38 != 0 {
             if (*ci).ci_r38 as ::core::ffi::c_int == (*ci).ci_r26 as ::core::ffi::c_int
-                && *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0xb64 as ::core::ffi::c_int as isize)
-                    as *mut uint16)
-                    .offset(
-                        (*((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xdde as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int
+                && *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(
+                    (*((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16)
+                        as ::core::ffi::c_int
+                        >> 1 as ::core::ffi::c_int) as isize,
+                ) as ::core::ffi::c_int
+                    - *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16).offset(
+                        (*((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16)
+                            as ::core::ffi::c_int
                             >> 1 as ::core::ffi::c_int) as isize,
                     ) as ::core::ffi::c_int
-                    - *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xbb4 as ::core::ffi::c_int as isize)
-                        as *mut uint16)
-                        .offset(
-                            (*((&raw mut game.g_ram as *mut uint8)
-                                .offset(0xdde as ::core::ffi::c_int as isize)
-                                as *mut uint16) as ::core::ffi::c_int
-                                >> 1 as ::core::ffi::c_int) as isize,
-                        ) as ::core::ffi::c_int
                     & 8 as ::core::ffi::c_int
                     != 0 as ::core::ffi::c_int
             {
@@ -4291,23 +4092,18 @@ unsafe fn BlockShotReactHoriz_Slope_Square(
                     != 0 as ::core::ffi::c_int) as ::core::ffi::c_int
                     as uint8;
             }
-        } else if *(((&raw mut game.g_ram as *mut uint8)
-            .offset(0xbb4 as ::core::ffi::c_int as isize) as *mut uint16)
-            .offset(
-                (*((&raw mut game.g_ram as *mut uint8).offset(0xdde as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
+        } else if *(((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16).offset(
+            (*((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16)
+                as ::core::ffi::c_int
+                >> 1 as ::core::ffi::c_int) as isize,
+        ) as *mut uint16 as *mut uint8)
+            .offset(0) as ::core::ffi::c_int
+            + *(((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(
+                (*((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16)
+                    as ::core::ffi::c_int
                     >> 1 as ::core::ffi::c_int) as isize,
             ) as *mut uint16 as *mut uint8)
-            .offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-            + *(((&raw mut game.g_ram as *mut uint8).offset(0xb64 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(
-                    (*((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xdde as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int
-                        >> 1 as ::core::ffi::c_int) as isize,
-                ) as *mut uint16 as *mut uint8)
-                .offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
+                .offset(0) as ::core::ffi::c_int
             - 1 as ::core::ffi::c_int
             & 8 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
@@ -4322,13 +4118,10 @@ unsafe fn BlockShotReactHoriz_Slope_Square(
             as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xb64 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(
-            (*((&raw mut game.g_ram as *mut uint8).offset(0xdde as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                >> 1 as ::core::ffi::c_int) as isize,
-        ) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(
+        (*((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16) as ::core::ffi::c_int
+            >> 1 as ::core::ffi::c_int) as isize,
+    ) as ::core::ffi::c_int
         & 8 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
@@ -4350,15 +4143,12 @@ unsafe fn BlockReactGrapple_GrappleBlock(mut ci: *mut CollInfo, game: &mut Game)
         0xd0e0 as ::core::ffi::c_int as uint16,
         0xd0d8 as ::core::ffi::c_int as uint16,
     ];
-    let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xcf4 as ::core::ffi::c_int as isize) as *mut uint16);
+    let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0xcf4) as *mut uint16);
     *fresh0 = (*fresh0 as ::core::ffi::c_int & !(0x8000 as ::core::ffi::c_int)) as uint16;
     if *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as ::core::ffi::c_int
+        .offset(0x16402)
+        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
+        as ::core::ffi::c_int
         & 0x80 as ::core::ffi::c_int
         != 0
     {
@@ -4366,11 +4156,9 @@ unsafe fn BlockReactGrapple_GrappleBlock(mut ci: *mut CollInfo, game: &mut Game)
     } else {
         return SpawnPLM(
             kBlockReactGrapple_GrappleBlockPlm[*(&raw mut game.g_ram as *mut uint8)
-                .offset(0x16402 as ::core::ffi::c_int as isize)
+                .offset(0x16402)
                 .offset(
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xdc4 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as isize,
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize,
                 ) as usize],
             game,
         );
@@ -4396,11 +4184,9 @@ unsafe fn BlockReactGrapple_SpikeBlock(mut ci: *mut CollInfo, game: &mut Game) -
         0xd0e4 as ::core::ffi::c_int as uint16,
     ];
     if *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as ::core::ffi::c_int
+        .offset(0x16402)
+        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
+        as ::core::ffi::c_int
         & 0x80 as ::core::ffi::c_int
         != 0
     {
@@ -4408,91 +4194,67 @@ unsafe fn BlockReactGrapple_SpikeBlock(mut ci: *mut CollInfo, game: &mut Game) -
     } else {
         return SpawnPLM(
             kBlockReactGrapple_SpikeBlockPlm[*(&raw mut game.g_ram as *mut uint8)
-                .offset(0x16402 as ::core::ffi::c_int as isize)
+                .offset(0x16402)
                 .offset(
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xdc4 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as isize,
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize,
                 ) as usize],
             game,
         );
     };
 }
 pub unsafe fn BlockCollGrappleBeam(game: &mut Game) -> uint8 {
-    let mut grapple_vel_x: int32 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xd22 as ::core::ffi::c_int as isize)
+    let mut grapple_vel_x: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd22)
         as *mut uint16) as int16 as int32)
         << 6 as ::core::ffi::c_int;
-    let mut grapple_vel_y: int32 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xd24 as ::core::ffi::c_int as isize)
+    let mut grapple_vel_y: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd24)
         as *mut uint16) as int16 as int32)
         << 6 as ::core::ffi::c_int;
     let mut result: uint8 = 0 as uint8;
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i < 4 as ::core::ffi::c_int {
         AddToHiLo(
-            (&raw mut game.g_ram as *mut uint8).offset(0xd10 as ::core::ffi::c_int as isize)
-                as *mut uint16,
-            (&raw mut game.g_ram as *mut uint8).offset(0xd0e as ::core::ffi::c_int as isize)
-                as *mut uint16,
+            (&raw mut game.g_ram as *mut uint8).offset(0xd10) as *mut uint16,
+            (&raw mut game.g_ram as *mut uint8).offset(0xd0e) as *mut uint16,
             grapple_vel_x as uint32,
         );
         AddToHiLo(
-            (&raw mut game.g_ram as *mut uint8).offset(0xd14 as ::core::ffi::c_int as isize)
-                as *mut uint16,
-            (&raw mut game.g_ram as *mut uint8).offset(0xd12 as ::core::ffi::c_int as isize)
-                as *mut uint16,
+            (&raw mut game.g_ram as *mut uint8).offset(0xd14) as *mut uint16,
+            (&raw mut game.g_ram as *mut uint8).offset(0xd12) as *mut uint16,
             grapple_vel_y as uint32,
         );
         SetHiLo(
-            (&raw mut game.g_ram as *mut uint8).offset(0xd08 as ::core::ffi::c_int as isize)
-                as *mut uint16,
-            (&raw mut game.g_ram as *mut uint8).offset(0xd06 as ::core::ffi::c_int as isize)
-                as *mut uint16,
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0xd10 as ::core::ffi::c_int as isize)
-                as *mut uint16) as uint32)
+            (&raw mut game.g_ram as *mut uint8).offset(0xd08) as *mut uint16,
+            (&raw mut game.g_ram as *mut uint8).offset(0xd06) as *mut uint16,
+            ((*((&raw mut game.g_ram as *mut uint8).offset(0xd10) as *mut uint16) as uint32)
                 << 16 as ::core::ffi::c_int
-                | *((&raw mut game.g_ram as *mut uint8).offset(0xd0e as ::core::ffi::c_int as isize)
-                    as *mut uint16) as uint32)
+                | *((&raw mut game.g_ram as *mut uint8).offset(0xd0e) as *mut uint16) as uint32)
                 .wrapping_add(
-                    (*((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xaf6 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as uint32)
+                    (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) as uint32)
                         << 16 as ::core::ffi::c_int
-                        | *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xaf8 as ::core::ffi::c_int as isize)
-                            as *mut uint16) as uint32,
+                        | *((&raw mut game.g_ram as *mut uint8).offset(0xaf8) as *mut uint16)
+                            as uint32,
                 )
                 .wrapping_add(
-                    ((*((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xd02 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int)
+                    ((*((&raw mut game.g_ram as *mut uint8).offset(0xd02) as *mut uint16)
+                        as ::core::ffi::c_int)
                         << 16 as ::core::ffi::c_int) as uint32,
                 ),
         );
         SetHiLo(
-            (&raw mut game.g_ram as *mut uint8).offset(0xd0c as ::core::ffi::c_int as isize)
-                as *mut uint16,
-            (&raw mut game.g_ram as *mut uint8).offset(0xd0a as ::core::ffi::c_int as isize)
-                as *mut uint16,
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0xd14 as ::core::ffi::c_int as isize)
-                as *mut uint16) as uint32)
+            (&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16,
+            (&raw mut game.g_ram as *mut uint8).offset(0xd0a) as *mut uint16,
+            ((*((&raw mut game.g_ram as *mut uint8).offset(0xd14) as *mut uint16) as uint32)
                 << 16 as ::core::ffi::c_int
-                | *((&raw mut game.g_ram as *mut uint8).offset(0xd12 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as uint32)
+                | *((&raw mut game.g_ram as *mut uint8).offset(0xd12) as *mut uint16) as uint32)
                 .wrapping_add(
-                    (*((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xafa as ::core::ffi::c_int as isize)
-                        as *mut uint16) as uint32)
+                    (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) as uint32)
                         << 16 as ::core::ffi::c_int
-                        | *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xafc as ::core::ffi::c_int as isize)
-                            as *mut uint16) as uint32,
+                        | *((&raw mut game.g_ram as *mut uint8).offset(0xafc) as *mut uint16)
+                            as uint32,
                 )
                 .wrapping_add(
-                    ((*((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xd04 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int)
+                    ((*((&raw mut game.g_ram as *mut uint8).offset(0xd04) as *mut uint16)
+                        as ::core::ffi::c_int)
                         << 16 as ::core::ffi::c_int) as uint32,
                 ),
         );
@@ -4500,18 +4262,16 @@ pub unsafe fn BlockCollGrappleBeam(game: &mut Game) -> uint8 {
         if result as ::core::ffi::c_int & 0x40 as ::core::ffi::c_int != 0 as ::core::ffi::c_int
             && result as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 as ::core::ffi::c_int
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xd08 as ::core::ffi::c_int as isize)
-                as *mut uint16) = (*((&raw mut game.g_ram as *mut uint8)
-                .offset(0xd08 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                & 0xfff0 as ::core::ffi::c_int
-                | 8 as ::core::ffi::c_int) as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xd0c as ::core::ffi::c_int as isize)
-                as *mut uint16) = (*((&raw mut game.g_ram as *mut uint8)
-                .offset(0xd0c as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                & 0xfff0 as ::core::ffi::c_int
-                | 8 as ::core::ffi::c_int) as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xd08) as *mut uint16) =
+                (*((&raw mut game.g_ram as *mut uint8).offset(0xd08) as *mut uint16)
+                    as ::core::ffi::c_int
+                    & 0xfff0 as ::core::ffi::c_int
+                    | 8 as ::core::ffi::c_int) as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16) =
+                (*((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16)
+                    as ::core::ffi::c_int
+                    & 0xfff0 as ::core::ffi::c_int
+                    | 8 as ::core::ffi::c_int) as uint16;
             return result;
         }
         i += 1;
@@ -4541,17 +4301,14 @@ pub unsafe fn BlockReactGrapple(game: &mut Game) -> uint8 {
         ]
     };
     let mut prod: uint16 = Mult8x8(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xd0c as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        (*((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16) as ::core::ffi::c_int
             >> 4 as ::core::ffi::c_int) as uint8,
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
+        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as uint8,
     );
-    v0 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd08 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    v0 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd08) as *mut uint16) as ::core::ffi::c_int
         >> 4 as ::core::ffi::c_int) as int16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (prod as ::core::ffi::c_int + v0 as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) =
+        (prod as ::core::ffi::c_int + v0 as ::core::ffi::c_int) as uint16;
     let mut ci: CollInfo = CollInfo {
         ci_r18_r20: 0 as int32,
         ci_r24: 0,
@@ -4564,13 +4321,10 @@ pub unsafe fn BlockReactGrapple(game: &mut Game) -> uint8 {
     };
     let mut rv: uint8 = 0;
     loop {
-        rv = kBlockReactGrapple[((*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x10002 as ::core::ffi::c_int as isize)
+        rv = kBlockReactGrapple[((*((&raw mut game.g_ram as *mut uint8).offset(0x10002)
             as *mut uint16)
-            .offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
-            ) as ::core::ffi::c_int
+            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
+            as ::core::ffi::c_int
             & 0xf000 as ::core::ffi::c_int)
             >> 12 as ::core::ffi::c_int) as usize]
             .expect("non-null function pointer")(&raw mut ci, game);
@@ -4908,8 +4662,7 @@ unsafe fn BlockFunc_A957(mut tmpD82: uint16, mut tmpD84: uint16, game: &mut Game
     let mut v0: uint16 = tmpD82;
     let mut v2: uint16 = 0;
     let mut v3: uint16 = 0;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xcf4 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xcf4) as *mut uint16) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
     {
@@ -4918,33 +4671,31 @@ unsafe fn BlockFunc_A957(mut tmpD82: uint16, mut tmpD84: uint16, game: &mut Game
             & 0x8000 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
         {
-            v2 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd08 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            v2 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd08) as *mut uint16)
+                as ::core::ffi::c_int
                 & 0xfff0 as ::core::ffi::c_int
                 | 7 as ::core::ffi::c_int) as uint16;
         } else {
-            v2 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd08 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            v2 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd08) as *mut uint16)
+                as ::core::ffi::c_int
                 & 0xfff0 as ::core::ffi::c_int
                 | 8 as ::core::ffi::c_int) as uint16;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd08 as ::core::ffi::c_int as isize)
-            as *mut uint16) = v2;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xd08) as *mut uint16) = v2;
         if kSinCosTable8bit_Sext[v1 as usize] as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
         {
-            v3 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd0c as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            v3 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16)
+                as ::core::ffi::c_int
                 & 0xfff0 as ::core::ffi::c_int
                 | 7 as ::core::ffi::c_int) as uint16;
         } else {
-            v3 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd0c as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            v3 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16)
+                as ::core::ffi::c_int
                 & 0xfff0 as ::core::ffi::c_int
                 | 8 as ::core::ffi::c_int) as uint16;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd0c as ::core::ffi::c_int as isize)
-            as *mut uint16) = v3;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16) = v3;
     }
     let mut v4: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     v5 = kSinCosTable8bit_Sext[(v4 + 64 as ::core::ffi::c_int) as usize];
@@ -4952,64 +4703,62 @@ unsafe fn BlockFunc_A957(mut tmpD82: uint16, mut tmpD84: uint16, game: &mut Game
     let mut v8: uint16 = 0;
     if (v5 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
         if v5 as ::core::ffi::c_int == -(256 as ::core::ffi::c_int) {
-            v6 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd08 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            v6 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd08) as *mut uint16)
+                as ::core::ffi::c_int
                 - tmpD84 as ::core::ffi::c_int) as uint16;
         } else {
             let mut prod: uint16 = Mult8x8(
                 tmpD84 as uint8,
                 -(v5 as int8 as ::core::ffi::c_int) as uint8,
             );
-            v6 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd08 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            v6 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd08) as *mut uint16)
+                as ::core::ffi::c_int
                 - (prod as ::core::ffi::c_int >> 8 as ::core::ffi::c_int))
                 as uint16;
         }
     } else if v5 as ::core::ffi::c_int == 256 as ::core::ffi::c_int {
         v6 = (tmpD84 as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0xd08 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16;
+            + *((&raw mut game.g_ram as *mut uint8).offset(0xd08) as *mut uint16)
+                as ::core::ffi::c_int) as uint16;
     } else {
         let mut prod_0: uint16 = Mult8x8(
             tmpD84 as uint8,
             kSinCosTable8bit_Sext[(v4 + 64 as ::core::ffi::c_int) as usize] as uint8,
         );
-        v6 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd08 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        v6 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd08) as *mut uint16)
+            as ::core::ffi::c_int
             + (prod_0 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int)) as uint16;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xd90 as ::core::ffi::c_int as isize)
-        as *mut uint16) = v6;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xd94 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (v6 as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint8 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xd90) as *mut uint16) = v6;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xd94) as *mut uint16) =
+        (v6 as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint8 as uint16;
     v7 = kSinCosTable8bit_Sext[v4 as usize];
     if (v7 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
         if v7 as ::core::ffi::c_int == -(256 as ::core::ffi::c_int) {
-            v8 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd0c as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            v8 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16)
+                as ::core::ffi::c_int
                 - tmpD84 as ::core::ffi::c_int) as uint16;
         } else {
             let mut prod_1: uint16 = Mult8x8(tmpD84 as uint8, -(v7 as ::core::ffi::c_int) as uint8);
-            v8 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd0c as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            v8 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16)
+                as ::core::ffi::c_int
                 - (prod_1 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int))
                 as uint16;
         }
     } else if v7 as ::core::ffi::c_int == 256 as ::core::ffi::c_int {
         v8 = (tmpD84 as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0xd0c as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16;
+            + *((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16)
+                as ::core::ffi::c_int) as uint16;
     } else {
         let mut prod_2: uint16 =
             Mult8x8(tmpD84 as uint8, kSinCosTable8bit_Sext[v4 as usize] as uint8);
-        v8 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd0c as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        v8 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16)
+            as ::core::ffi::c_int
             + (prod_2 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int)) as uint16;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xd92 as ::core::ffi::c_int as isize)
-        as *mut uint16) = v8;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xd96 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (v8 as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint8 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xd92) as *mut uint16) = v8;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xd96) as *mut uint16) =
+        (v8 as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint8 as uint16;
 }
 unsafe fn ClearCarry_10(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
     return 0 as uint8;
@@ -5038,16 +4787,13 @@ unsafe fn BlockReact_AA64(game: &mut Game) -> uint8 {
             Some(SetCarry_3 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
         ]
     };
-    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xd94 as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xd94) as *mut uint16);
     let mut RegWord: uint16 = Mult8x8(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd96 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xd96) as *mut uint16) as uint8,
+        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as uint8,
     );
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (RegWord as ::core::ffi::c_int + v0 as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) =
+        (RegWord as ::core::ffi::c_int + v0 as ::core::ffi::c_int) as uint16;
     let mut ci: CollInfo = CollInfo {
         ci_r18_r20: 0 as int32,
         ci_r24: 0,
@@ -5060,13 +4806,10 @@ unsafe fn BlockReact_AA64(game: &mut Game) -> uint8 {
     };
     let mut rv: uint8 = 0;
     loop {
-        rv = kBlockReactLut_AB90_0[((*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x10002 as ::core::ffi::c_int as isize)
+        rv = kBlockReactLut_AB90_0[((*((&raw mut game.g_ram as *mut uint8).offset(0x10002)
             as *mut uint16)
-            .offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
-            ) as ::core::ffi::c_int
+            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
+            as ::core::ffi::c_int
             & 0xf000 as ::core::ffi::c_int)
             >> 12 as ::core::ffi::c_int) as usize]
             .expect("non-null function pointer")(&raw mut ci, game);
@@ -5095,33 +4838,24 @@ static g_word_94AAF7: [uint16; 16] = [
     0 as ::core::ffi::c_int as uint16,
 ];
 unsafe fn BlockReact_AA64_SpikeAir(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) != 0 {
         return 0 as uint8;
     }
     let mut v0: int16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as *mut uint8 as *mut uint16) as int16;
+        .offset(0x16402)
+        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
+        as *mut uint8 as *mut uint16) as int16;
     if v0 as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
         let mut v: uint32 = ((g_word_94AAF7[v0 as usize] as int16 as ::core::ffi::c_int)
             << 16 as ::core::ffi::c_int) as uint32;
         if v != 0 {
             AddToHiLo(
-                (&raw mut game.g_ram as *mut uint8).offset(0xa50 as ::core::ffi::c_int as isize)
-                    as *mut uint16,
-                (&raw mut game.g_ram as *mut uint8).offset(0xa4e as ::core::ffi::c_int as isize)
-                    as *mut uint16,
+                (&raw mut game.g_ram as *mut uint8).offset(0xa50) as *mut uint16,
+                (&raw mut game.g_ram as *mut uint8).offset(0xa4e) as *mut uint16,
                 v,
             );
-            *((&raw mut game.g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 60 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x18aa as ::core::ffi::c_int as isize)
-                as *mut uint16) = 10 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) = 60 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x18aa) as *mut uint16) = 10 as uint16;
         }
     }
     return 0 as uint8;
@@ -5145,33 +4879,24 @@ static g_word_94AB70: [uint16; 16] = [
     0 as ::core::ffi::c_int as uint16,
 ];
 unsafe fn BlockReact_AA64_SpikeBlock(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) != 0 {
         return 1 as uint8;
     }
     let mut v0: int16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as *mut uint8 as *mut uint16) as int16;
+        .offset(0x16402)
+        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
+        as *mut uint8 as *mut uint16) as int16;
     if v0 as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
         let mut v: uint32 = ((g_word_94AB70[v0 as usize] as int16 as ::core::ffi::c_int)
             << 16 as ::core::ffi::c_int) as uint32;
         if v != 0 {
             AddToHiLo(
-                (&raw mut game.g_ram as *mut uint8).offset(0xa50 as ::core::ffi::c_int as isize)
-                    as *mut uint16,
-                (&raw mut game.g_ram as *mut uint8).offset(0xa4e as ::core::ffi::c_int as isize)
-                    as *mut uint16,
+                (&raw mut game.g_ram as *mut uint8).offset(0xa50) as *mut uint16,
+                (&raw mut game.g_ram as *mut uint8).offset(0xa4e) as *mut uint16,
                 v,
             );
-            *((&raw mut game.g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 60 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x18aa as ::core::ffi::c_int as isize)
-                as *mut uint16) = 10 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) = 60 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x18aa) as *mut uint16) = 10 as uint16;
         }
     }
     return 1 as uint8;
@@ -5198,16 +4923,13 @@ static kBlockReactLut_AB90: [Option<Func_CollInfo_U8>; 16] = unsafe {
 };
 unsafe fn BlockFunc_ABB0(game: &mut Game) -> uint8 {
     let mut rv: uint8 = 0;
-    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xd94 as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xd94) as *mut uint16);
     let mut RegWord: uint16 = Mult8x8(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd96 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xd96) as *mut uint16) as uint8,
+        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as uint8,
     );
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (RegWord as ::core::ffi::c_int + v0 as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) =
+        (RegWord as ::core::ffi::c_int + v0 as ::core::ffi::c_int) as uint16;
     let mut ci: CollInfo = CollInfo {
         ci_r18_r20: 0 as int32,
         ci_r24: 0,
@@ -5219,13 +4941,10 @@ unsafe fn BlockFunc_ABB0(game: &mut Game) -> uint8 {
         ci_r40: 0,
     };
     loop {
-        rv = kBlockReactLut_AB90[((*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x10002 as ::core::ffi::c_int as isize)
+        rv = kBlockReactLut_AB90[((*((&raw mut game.g_ram as *mut uint8).offset(0x10002)
             as *mut uint16)
-            .offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
-            ) as ::core::ffi::c_int
+            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
+            as ::core::ffi::c_int
             & 0xf000 as ::core::ffi::c_int)
             >> 12 as ::core::ffi::c_int) as usize]
             .expect("non-null function pointer")(&raw mut ci, game);
@@ -5237,10 +4956,8 @@ unsafe fn BlockFunc_ABB0(game: &mut Game) -> uint8 {
 }
 unsafe fn BlockFunc_ABE6(mut tmpD82: uint16, game: &mut Game) -> uint8 {
     let mut v0: uint8 = 0;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xd98 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 6 as uint16;
-    let mut grapple_beam_tmpD84: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xcfe as ::core::ffi::c_int as isize)
+    *((&raw mut game.g_ram as *mut uint8).offset(0xd98) as *mut uint16) = 6 as uint16;
+    let mut grapple_beam_tmpD84: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xcfe)
         as *mut uint16) as ::core::ffi::c_int
         + 8 as ::core::ffi::c_int) as uint16;
     loop {
@@ -5251,9 +4968,7 @@ unsafe fn BlockFunc_ABE6(mut tmpD82: uint16, game: &mut Game) -> uint8 {
         }
         grapple_beam_tmpD84 =
             (grapple_beam_tmpD84 as ::core::ffi::c_int + 8 as ::core::ffi::c_int) as uint16;
-        let ref mut fresh10 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xd98 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let ref mut fresh10 = *((&raw mut game.g_ram as *mut uint8).offset(0xd98) as *mut uint16);
         *fresh10 = (*fresh10).wrapping_sub(1);
         if *fresh10 == 0 {
             return 0 as uint8;
@@ -5263,88 +4978,70 @@ unsafe fn BlockFunc_ABE6(mut tmpD82: uint16, game: &mut Game) -> uint8 {
 }
 pub unsafe fn BlockFunc_AC11(game: &mut Game) {
     let mut grapple_beam_tmpD82: uint16 = (2 as ::core::ffi::c_int
-        * *(&raw mut game.g_ram as *mut uint8).offset(0xcfb as ::core::ffi::c_int as isize)
-            as ::core::ffi::c_int) as uint16;
-    let mut grapple_beam_tmpD84: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xcfe as ::core::ffi::c_int as isize)
-        as *mut uint16);
+        * *(&raw mut game.g_ram as *mut uint8).offset(0xcfb) as ::core::ffi::c_int)
+        as uint16;
+    let mut grapple_beam_tmpD84: uint16 =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xcfe) as *mut uint16);
     BlockFunc_A957(grapple_beam_tmpD82, grapple_beam_tmpD84, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xd16 as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xd90 as ::core::ffi::c_int as isize) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xd18 as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xd92 as ::core::ffi::c_int as isize) as *mut uint16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xd16) as *mut uint16) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xd90) as *mut uint16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xd18) as *mut uint16) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xd92) as *mut uint16);
 }
 pub unsafe fn BlockFunc_AC31(game: &mut Game) -> uint8 {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xd00 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        == 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xd00) as *mut uint16) == 0 {
         return 0 as uint8;
     }
-    let mut end: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xd00 as ::core::ffi::c_int as isize) as *mut uint16)
+    let mut end: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd00) as *mut uint16)
         as ::core::ffi::c_int
-        + *((&raw mut game.g_ram as *mut uint8).offset(0xcfe as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xd00 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+        + *((&raw mut game.g_ram as *mut uint8).offset(0xcfe) as *mut uint16) as ::core::ffi::c_int)
+        as uint16;
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xd00) as *mut uint16) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
         if (end as ::core::ffi::c_int) < 8 as ::core::ffi::c_int {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xd00 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xd00) as *mut uint16) = 0 as uint16;
             end = 8 as uint16;
         }
         let mut increment: ::core::ffi::c_int = 8 as ::core::ffi::c_int;
         let mut grapple_beam_tmpD82: uint16 = (2 as ::core::ffi::c_int
-            * *(&raw mut game.g_ram as *mut uint8).offset(0xcfb as ::core::ffi::c_int as isize)
-                as ::core::ffi::c_int) as uint16;
-        let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xcfe as ::core::ffi::c_int as isize)
-            as *mut uint16);
+            * *(&raw mut game.g_ram as *mut uint8).offset(0xcfb) as ::core::ffi::c_int)
+            as uint16;
+        let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xcfe) as *mut uint16);
         while v1 as ::core::ffi::c_int != end as ::core::ffi::c_int {
             let mut grapple_beam_tmpD84: uint16 =
                 (increment + v1 as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16;
             BlockFunc_A957(grapple_beam_tmpD82, grapple_beam_tmpD84, game);
             if BlockReact_AA64(game) != 0 {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xcfe as ::core::ffi::c_int as isize)
-                    as *mut uint16) = v1;
+                *((&raw mut game.g_ram as *mut uint8).offset(0xcfe) as *mut uint16) = v1;
                 return 1 as uint8;
             }
             v1 = v1.wrapping_sub(1);
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0xcfe as ::core::ffi::c_int as isize)
-            as *mut uint16) = end;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xcfe) as *mut uint16) = end;
         return 0 as uint8;
     } else {
         if end as ::core::ffi::c_int >= 63 as ::core::ffi::c_int {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xd00 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xd00) as *mut uint16) = 0 as uint16;
             end = 63 as uint16;
         }
         let mut increment_0: ::core::ffi::c_int = 56 as ::core::ffi::c_int;
         let mut grapple_beam_tmpD82_0: uint16 = (2 as ::core::ffi::c_int
-            * *(&raw mut game.g_ram as *mut uint8).offset(0xcfb as ::core::ffi::c_int as isize)
-                as ::core::ffi::c_int) as uint16;
-        let mut v1_0: uint16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xcfe as ::core::ffi::c_int as isize)
-            as *mut uint16);
+            * *(&raw mut game.g_ram as *mut uint8).offset(0xcfb) as ::core::ffi::c_int)
+            as uint16;
+        let mut v1_0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xcfe) as *mut uint16);
         while v1_0 as ::core::ffi::c_int != end as ::core::ffi::c_int {
             let mut grapple_beam_tmpD84_0: uint16 =
                 (increment_0 + v1_0 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16;
             BlockFunc_A957(grapple_beam_tmpD82_0, grapple_beam_tmpD84_0, game);
             if BlockReact_AA64(game) != 0 {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xcfe as ::core::ffi::c_int as isize)
-                    as *mut uint16) = v1_0;
+                *((&raw mut game.g_ram as *mut uint8).offset(0xcfe) as *mut uint16) = v1_0;
                 return 1 as uint8;
             }
             v1_0 = v1_0.wrapping_add(1);
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0xcfe as ::core::ffi::c_int as isize)
-            as *mut uint16) = end;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xcfe) as *mut uint16) = end;
         return 0 as uint8;
     };
 }
@@ -5361,22 +5058,19 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> uint8 {
     let mut grapple_beam_tmpD88: uint16 = 0;
     let mut tmpD9C: uint16 = 0;
     let mut v0: uint16 = 256 as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xcf4 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xcf4) as *mut uint16) as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
         v0 = 160 as uint16;
     }
-    let mut v1: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xd2e as ::core::ffi::c_int as isize) as *mut uint16)
+    let mut v1: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd2e) as *mut uint16)
         as ::core::ffi::c_int
-        + *((&raw mut game.g_ram as *mut uint8).offset(0xd26 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as uint16;
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0xd2e as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        + *((&raw mut game.g_ram as *mut uint8).offset(0xd26 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
+        + *((&raw mut game.g_ram as *mut uint8).offset(0xd26) as *mut uint16) as ::core::ffi::c_int)
+        as uint16;
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0xd2e) as *mut uint16) as ::core::ffi::c_int
+        + *((&raw mut game.g_ram as *mut uint8).offset(0xd26) as *mut uint16) as ::core::ffi::c_int)
+        as int16 as ::core::ffi::c_int
         >= 0 as ::core::ffi::c_int
     {
         prod16 = (Multiply16x16(v1, v0, game) >> 8 as ::core::ffi::c_int) as uint16;
@@ -5385,14 +5079,14 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> uint8 {
         }
         tmpD9C = prod16;
         grapple_beam_tmpD88 = (2 as ::core::ffi::c_int
-            * ((*((&raw mut game.g_ram as *mut uint8).offset(0xcfa as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            * ((*((&raw mut game.g_ram as *mut uint8).offset(0xcfa) as *mut uint16)
+                as ::core::ffi::c_int
                 + prod16 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
                 >> 8 as ::core::ffi::c_int)) as uint16;
         v2 = 0;
         v2 = (2 as ::core::ffi::c_int
-            * *(&raw mut game.g_ram as *mut uint8).offset(0xcfb as ::core::ffi::c_int as isize)
-                as ::core::ffi::c_int) as uint16;
+            * *(&raw mut game.g_ram as *mut uint8).offset(0xcfb) as ::core::ffi::c_int)
+            as uint16;
         if v2 as ::core::ffi::c_int != grapple_beam_tmpD88 as ::core::ffi::c_int {
             loop {
                 grapple_beam_tmpD86 = v2;
@@ -5416,33 +5110,25 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> uint8 {
             match current_block {
                 16784897620381762466 => {}
                 _ => {
-                    *(&raw mut v4 as *mut uint8).offset(0 as ::core::ffi::c_int as isize) =
-                        0 as uint8;
+                    *(&raw mut v4 as *mut uint8).offset(0) = 0 as uint8;
                     *(&raw mut v4 as *mut uint8).offset(
                         (::core::mem::size_of::<int16>() as usize)
                             .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                             .wrapping_sub(1 as usize) as isize,
                     ) = (grapple_beam_tmpD86 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
                         as uint8;
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xcfa as ::core::ffi::c_int as isize)
-                        as *mut uint16) =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xcfa) as *mut uint16) =
                         (v4 as ::core::ffi::c_int | 0x80 as ::core::ffi::c_int) as uint16;
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xcfc as ::core::ffi::c_int as isize)
-                        as *mut uint16) =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xcfc) as *mut uint16) =
                         (v4 as ::core::ffi::c_int | 0x80 as ::core::ffi::c_int) as uint16;
-                    if *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xd98 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int
+                    if *((&raw mut game.g_ram as *mut uint8).offset(0xd98) as *mut uint16)
+                        as ::core::ffi::c_int
                         != 6 as ::core::ffi::c_int
-                        && *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xd98 as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int
+                        && *((&raw mut game.g_ram as *mut uint8).offset(0xd98) as *mut uint16)
+                            as ::core::ffi::c_int
                             != 5 as ::core::ffi::c_int
-                        || *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xcfe as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int
+                        || *((&raw mut game.g_ram as *mut uint8).offset(0xcfe) as *mut uint16)
+                            as ::core::ffi::c_int
                             != 8 as ::core::ffi::c_int
                     {
                         current_block = 15145243721762997867;
@@ -5458,43 +5144,34 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> uint8 {
             15145243721762997867 => {}
             4207414038393540328 => {}
             _ => {
-                let ref mut fresh4 = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0xcfa as ::core::ffi::c_int as isize)
-                    as *mut uint16);
+                let ref mut fresh4 =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xcfa) as *mut uint16);
                 *fresh4 = (*fresh4 as ::core::ffi::c_int + tmpD9C as ::core::ffi::c_int) as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xcfc as ::core::ffi::c_int as isize)
-                    as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0xcfa as ::core::ffi::c_int as isize)
-                    as *mut uint16);
-                let ref mut fresh5 = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0xd36 as ::core::ffi::c_int as isize)
-                    as *mut uint16);
+                *((&raw mut game.g_ram as *mut uint8).offset(0xcfc) as *mut uint16) =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xcfa) as *mut uint16);
+                let ref mut fresh5 =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xd36) as *mut uint16);
                 *fresh5 =
                     (*fresh5 as ::core::ffi::c_int & !(0x8000 as ::core::ffi::c_int)) as uint16;
-                let ref mut fresh6 = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0xd30 as ::core::ffi::c_int as isize)
-                    as *mut uint16);
+                let ref mut fresh6 =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xd30) as *mut uint16);
                 *fresh6 = (*fresh6).wrapping_sub(1);
                 if *fresh6 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                     != 0 as ::core::ffi::c_int
                 {
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xd30 as ::core::ffi::c_int as isize)
-                        as *mut uint16) = 0 as uint16;
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xd30) as *mut uint16) =
+                        0 as uint16;
                 }
-                if *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0xd2e as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
+                if *((&raw mut game.g_ram as *mut uint8).offset(0xd2e) as *mut uint16)
+                    as ::core::ffi::c_int
                     & 0x8000 as ::core::ffi::c_int
                     == 0 as ::core::ffi::c_int
                 {
-                    v3 = (*((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xd2e as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int
+                    v3 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd2e) as *mut uint16)
+                        as ::core::ffi::c_int
                         - 6 as ::core::ffi::c_int) as uint16;
-                    if (*((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xd2e as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int
+                    if (*((&raw mut game.g_ram as *mut uint8).offset(0xd2e) as *mut uint16)
+                        as ::core::ffi::c_int
                         - 6 as ::core::ffi::c_int) as int16
                         as ::core::ffi::c_int
                         >= 0 as ::core::ffi::c_int
@@ -5504,13 +5181,11 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> uint8 {
                         current_block = 18377268871191777778;
                     }
                 } else {
-                    v3 = (*((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xd2e as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int
+                    v3 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd2e) as *mut uint16)
+                        as ::core::ffi::c_int
                         + 6 as ::core::ffi::c_int) as uint16;
-                    if ((*((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xd2e as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int
+                    if ((*((&raw mut game.g_ram as *mut uint8).offset(0xd2e) as *mut uint16)
+                        as ::core::ffi::c_int
                         + 6 as ::core::ffi::c_int) as int16
                         as ::core::ffi::c_int)
                         < 0 as ::core::ffi::c_int
@@ -5526,8 +5201,7 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> uint8 {
                     }
                     _ => {}
                 }
-                *((&raw mut game.g_ram as *mut uint8).offset(0xd2e as ::core::ffi::c_int as isize)
-                    as *mut uint16) = v3;
+                *((&raw mut game.g_ram as *mut uint8).offset(0xd2e) as *mut uint16) = v3;
                 return 0 as uint8;
             }
         }
@@ -5539,14 +5213,14 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> uint8 {
         }
         tmpD9C = -(prod16 as ::core::ffi::c_int) as uint16;
         grapple_beam_tmpD88 = (2 as ::core::ffi::c_int
-            * ((*((&raw mut game.g_ram as *mut uint8).offset(0xcfa as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            * ((*((&raw mut game.g_ram as *mut uint8).offset(0xcfa) as *mut uint16)
+                as ::core::ffi::c_int
                 - prod16 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
                 >> 8 as ::core::ffi::c_int)) as uint16;
         v5 = 0;
         v5 = (2 as ::core::ffi::c_int
-            * *(&raw mut game.g_ram as *mut uint8).offset(0xcfb as ::core::ffi::c_int as isize)
-                as ::core::ffi::c_int) as uint16;
+            * *(&raw mut game.g_ram as *mut uint8).offset(0xcfb) as ::core::ffi::c_int)
+            as uint16;
         if v5 as ::core::ffi::c_int == grapple_beam_tmpD88 as ::core::ffi::c_int {
             current_block = 5091811861639934416;
         } else {
@@ -5563,34 +5237,25 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> uint8 {
                         & 1 as ::core::ffi::c_int
                         != 0
                     {
-                        *(&raw mut v7 as *mut uint8).offset(0 as ::core::ffi::c_int as isize) =
-                            0 as uint8;
+                        *(&raw mut v7 as *mut uint8).offset(0) = 0 as uint8;
                         *(&raw mut v7 as *mut uint8).offset(
                             (::core::mem::size_of::<int16>() as usize)
                                 .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                                 .wrapping_sub(1 as usize) as isize,
                         ) = (grapple_beam_tmpD86 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
                             as uint8;
-                        *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xcfa as ::core::ffi::c_int as isize)
-                            as *mut uint16) =
+                        *((&raw mut game.g_ram as *mut uint8).offset(0xcfa) as *mut uint16) =
                             (v7 as ::core::ffi::c_int | 0x80 as ::core::ffi::c_int) as uint16;
-                        *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xcfc as ::core::ffi::c_int as isize)
-                            as *mut uint16) =
+                        *((&raw mut game.g_ram as *mut uint8).offset(0xcfc) as *mut uint16) =
                             (v7 as ::core::ffi::c_int | 0x80 as ::core::ffi::c_int) as uint16;
-                        if (*((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xd98 as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int
+                        if (*((&raw mut game.g_ram as *mut uint8).offset(0xd98) as *mut uint16)
+                            as ::core::ffi::c_int
                             == 6 as ::core::ffi::c_int
-                            || *((&raw mut game.g_ram as *mut uint8)
-                                .offset(0xd98 as ::core::ffi::c_int as isize)
-                                as *mut uint16)
+                            || *((&raw mut game.g_ram as *mut uint8).offset(0xd98) as *mut uint16)
                                 as ::core::ffi::c_int
                                 == 5 as ::core::ffi::c_int)
-                            && *((&raw mut game.g_ram as *mut uint8)
-                                .offset(0xcfe as ::core::ffi::c_int as isize)
-                                as *mut uint16) as ::core::ffi::c_int
+                            && *((&raw mut game.g_ram as *mut uint8).offset(0xcfe) as *mut uint16)
+                                as ::core::ffi::c_int
                                 == 8 as ::core::ffi::c_int
                         {
                             current_block = 4207414038393540328;
@@ -5610,35 +5275,27 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> uint8 {
                     }
                 }
                 _ => {
-                    let ref mut fresh7 = *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xcfa as ::core::ffi::c_int as isize)
-                        as *mut uint16);
+                    let ref mut fresh7 =
+                        *((&raw mut game.g_ram as *mut uint8).offset(0xcfa) as *mut uint16);
                     *fresh7 =
                         (*fresh7 as ::core::ffi::c_int + tmpD9C as ::core::ffi::c_int) as uint16;
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xcfc as ::core::ffi::c_int as isize)
-                        as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xcfa as ::core::ffi::c_int as isize)
-                        as *mut uint16);
-                    let ref mut fresh8 = *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xd36 as ::core::ffi::c_int as isize)
-                        as *mut uint16);
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xcfc) as *mut uint16) =
+                        *((&raw mut game.g_ram as *mut uint8).offset(0xcfa) as *mut uint16);
+                    let ref mut fresh8 =
+                        *((&raw mut game.g_ram as *mut uint8).offset(0xd36) as *mut uint16);
                     *fresh8 =
                         (*fresh8 as ::core::ffi::c_int & !(0x8000 as ::core::ffi::c_int)) as uint16;
-                    let ref mut fresh9 = *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xd30 as ::core::ffi::c_int as isize)
-                        as *mut uint16);
+                    let ref mut fresh9 =
+                        *((&raw mut game.g_ram as *mut uint8).offset(0xd30) as *mut uint16);
                     *fresh9 = (*fresh9).wrapping_sub(1);
                     if *fresh9 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                         != 0 as ::core::ffi::c_int
                     {
-                        *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xd30 as ::core::ffi::c_int as isize)
-                            as *mut uint16) = 0 as uint16;
+                        *((&raw mut game.g_ram as *mut uint8).offset(0xd30) as *mut uint16) =
+                            0 as uint16;
                     }
-                    if *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xd2e as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int
+                    if *((&raw mut game.g_ram as *mut uint8).offset(0xd2e) as *mut uint16)
+                        as ::core::ffi::c_int
                         & 0x8000 as ::core::ffi::c_int
                         == 0 as ::core::ffi::c_int
                     {
@@ -5657,13 +5314,11 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> uint8 {
             _ => {
                 match current_block {
                     10399321362245223758 => {
-                        v6 = (*((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xd2e as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int
+                        v6 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd2e) as *mut uint16)
+                            as ::core::ffi::c_int
                             + 6 as ::core::ffi::c_int) as uint16;
-                        if ((*((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xd2e as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int
+                        if ((*((&raw mut game.g_ram as *mut uint8).offset(0xd2e) as *mut uint16)
+                            as ::core::ffi::c_int
                             + 6 as ::core::ffi::c_int) as int16
                             as ::core::ffi::c_int)
                             < 0 as ::core::ffi::c_int
@@ -5674,13 +5329,11 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> uint8 {
                         }
                     }
                     _ => {
-                        v6 = (*((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xd2e as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int
+                        v6 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd2e) as *mut uint16)
+                            as ::core::ffi::c_int
                             - 6 as ::core::ffi::c_int) as uint16;
-                        if (*((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xd2e as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int
+                        if (*((&raw mut game.g_ram as *mut uint8).offset(0xd2e) as *mut uint16)
+                            as ::core::ffi::c_int
                             - 6 as ::core::ffi::c_int) as int16
                             as ::core::ffi::c_int
                             >= 0 as ::core::ffi::c_int
@@ -5697,66 +5350,51 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> uint8 {
                     }
                     _ => {}
                 }
-                *((&raw mut game.g_ram as *mut uint8).offset(0xd2e as ::core::ffi::c_int as isize)
-                    as *mut uint16) = v6;
+                *((&raw mut game.g_ram as *mut uint8).offset(0xd2e) as *mut uint16) = v6;
                 return 0 as uint8;
             }
         }
     }
     match current_block {
         15145243721762997867 => {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xd30 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 16 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xd26 as ::core::ffi::c_int as isize)
-                as *mut uint16) = -(*((&raw mut game.g_ram as *mut uint8)
-                .offset(0xd26 as ::core::ffi::c_int as isize)
-                as *mut uint16) as int16 as ::core::ffi::c_int
-                >> 1 as ::core::ffi::c_int) as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xd2e as ::core::ffi::c_int as isize)
-                as *mut uint16) = -(*((&raw mut game.g_ram as *mut uint8)
-                .offset(0xd2e as ::core::ffi::c_int as isize)
-                as *mut uint16) as int16 as ::core::ffi::c_int
-                >> 1 as ::core::ffi::c_int) as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xd30) as *mut uint16) = 16 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xd26) as *mut uint16) =
+                -(*((&raw mut game.g_ram as *mut uint8).offset(0xd26) as *mut uint16) as int16
+                    as ::core::ffi::c_int
+                    >> 1 as ::core::ffi::c_int) as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xd2e) as *mut uint16) =
+                -(*((&raw mut game.g_ram as *mut uint8).offset(0xd2e) as *mut uint16) as int16
+                    as ::core::ffi::c_int
+                    >> 1 as ::core::ffi::c_int) as uint16;
             return 1 as uint8;
         }
         _ => {
-            let ref mut fresh3 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xd36 as ::core::ffi::c_int as isize)
-                as *mut uint16);
+            let ref mut fresh3 =
+                *((&raw mut game.g_ram as *mut uint8).offset(0xd36) as *mut uint16);
             *fresh3 = (*fresh3 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xd26 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xd2e as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xd26) as *mut uint16) = 0 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xd2e) as *mut uint16) = 0 as uint16;
             return 1 as uint8;
         }
     };
 }
 pub unsafe fn BlockFunc_AEE3(game: &mut Game) -> uint8 {
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0xd26 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        ^ *((&raw mut game.g_ram as *mut uint8).offset(0xcfa as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int)
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0xd26) as *mut uint16) as ::core::ffi::c_int
+        ^ *((&raw mut game.g_ram as *mut uint8).offset(0xcfa) as *mut uint16) as ::core::ffi::c_int)
         & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd38 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xd38) as *mut uint16) = 0 as uint16;
         return 1 as uint8;
     } else {
-        let ref mut fresh22 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xd38 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let ref mut fresh22 = *((&raw mut game.g_ram as *mut uint8).offset(0xd38) as *mut uint16);
         *fresh22 = (*fresh22).wrapping_add(1);
         if *fresh22 as ::core::ffi::c_int == 32 as ::core::ffi::c_int {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xd32 as ::core::ffi::c_int as isize)
-                as *mut uint16) =
+            *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
                 (0x9bc8c5 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd26 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd2e as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xd26) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xd2e) as *mut uint16) = 0 as uint16;
         return 1 as uint8;
     };
 }
@@ -5764,32 +5402,24 @@ pub unsafe fn GrappleFunc_AF87(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd62 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) = addr_word_94B197 as ::core::ffi::c_int as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd42 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xd62) as *mut uint16).offset(v1 as isize) =
+            addr_word_94B197 as ::core::ffi::c_int as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xd42) as *mut uint16)
             .offset((v1 + 15 as ::core::ffi::c_int) as isize) =
             addr_word_94B193 as ::core::ffi::c_int as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd42 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xd42) as *mut uint16)
             .offset((v1 + 14 as ::core::ffi::c_int) as isize) =
             addr_word_94B18F as ::core::ffi::c_int as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd42 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xd42) as *mut uint16)
             .offset((v1 + 13 as ::core::ffi::c_int) as isize) =
             addr_word_94B18B as ::core::ffi::c_int as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd42 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) = 1 as uint16;
-        *(((&raw mut game.g_ram as *mut uint8).offset(0xd40 as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xd42) as *mut uint16).offset(v1 as isize) =
+            1 as uint16;
+        *(((&raw mut game.g_ram as *mut uint8).offset(0xd40) as *mut uint16 as *mut uint8)
             .offset(i as isize) as *mut uint16) = 1 as uint16;
-        *(((&raw mut game.g_ram as *mut uint8).offset(0xd3e as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
+        *(((&raw mut game.g_ram as *mut uint8).offset(0xd3e) as *mut uint16 as *mut uint8)
             .offset(i as isize) as *mut uint16) = 1 as uint16;
-        *(((&raw mut game.g_ram as *mut uint8).offset(0xd3c as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
+        *(((&raw mut game.g_ram as *mut uint8).offset(0xd3c) as *mut uint16 as *mut uint8)
             .offset(i as isize) as *mut uint16) = 1 as uint16;
         i -= 8 as ::core::ffi::c_int;
     }
@@ -5805,14 +5435,12 @@ pub unsafe fn CallGrappleInstr(mut ea: uint32, mut j: uint16, game: &mut Game) -
 }
 pub unsafe fn HandleGrappleBeamGfx(game: &mut Game) {
     let mut v1: ::core::ffi::c_int = CalculateAngleFromXY(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xd08 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xd1a as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16,
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xd0c as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xd1c as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16,
+        (*((&raw mut game.g_ram as *mut uint8).offset(0xd08) as *mut uint16) as ::core::ffi::c_int
+            - *((&raw mut game.g_ram as *mut uint8).offset(0xd1a) as *mut uint16)
+                as ::core::ffi::c_int) as uint16,
+        (*((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16) as ::core::ffi::c_int
+            - *((&raw mut game.g_ram as *mut uint8).offset(0xd1c) as *mut uint16)
+                as ::core::ffi::c_int) as uint16,
         game,
     ) as ::core::ffi::c_int;
     let mut r28_r26: uint32 = ((kSinCosTable8bit_Sext[(v1 + 64 as ::core::ffi::c_int) as usize]
@@ -5820,42 +5448,36 @@ pub unsafe fn HandleGrappleBeamGfx(game: &mut Game) {
         << 11 as ::core::ffi::c_int) as uint32;
     let mut r32_r30: uint32 = ((kSinCosTable8bit_Sext[v1 as usize] as ::core::ffi::c_int)
         << 11 as ::core::ffi::c_int) as uint32;
-    let mut chr: uint16 = ((*(&raw mut game.g_ram as *mut uint8)
-        .offset(0xcfb as ::core::ffi::c_int as isize)
+    let mut chr: uint16 = ((*(&raw mut game.g_ram as *mut uint8).offset(0xcfb)
         as ::core::ffi::c_int
         & 0x80 as ::core::ffi::c_int)
         >> 1 as ::core::ffi::c_int) as uint16;
     chr = (chr as ::core::ffi::c_int
         | 2 as ::core::ffi::c_int
-            * ((*(&raw mut game.g_ram as *mut uint8).offset(0xcfb as ::core::ffi::c_int as isize)
-                as ::core::ffi::c_int
+            * ((*(&raw mut game.g_ram as *mut uint8).offset(0xcfb) as ::core::ffi::c_int
                 ^ chr as ::core::ffi::c_int)
                 & 0x40 as ::core::ffi::c_int
                 ^ 0x40 as ::core::ffi::c_int)) as uint16;
     chr = ((chr as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16;
-    let mut r20_r18: uint32 = ((*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xd1a as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+    let mut r20_r18: uint32 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xd1a) as *mut uint16)
+        as ::core::ffi::c_int
+        - *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16)
+            as ::core::ffi::c_int
         - 4 as ::core::ffi::c_int)
         << 16 as ::core::ffi::c_int) as uint32;
-    let mut r24_r22: uint32 = ((*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xd1c as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+    let mut r24_r22: uint32 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xd1c) as *mut uint16)
+        as ::core::ffi::c_int
+        - *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16)
+            as ::core::ffi::c_int
         - 4 as ::core::ffi::c_int)
         << 16 as ::core::ffi::c_int) as uint32;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xcfe as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xcfe) as *mut uint16) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
         return;
     }
-    let mut n: ::core::ffi::c_int = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xcfe as ::core::ffi::c_int as isize)
+    let mut n: ::core::ffi::c_int = (*((&raw mut game.g_ram as *mut uint8).offset(0xcfe)
         as *mut uint16) as ::core::ffi::c_int
         / 8 as ::core::ffi::c_int
         & 0xf as ::core::ffi::c_int)
@@ -5863,16 +5485,13 @@ pub unsafe fn HandleGrappleBeamGfx(game: &mut Game) {
     let mut q: ::core::ffi::c_int = 15 as ::core::ffi::c_int;
     loop {
         let mut i: ::core::ffi::c_int = 0;
-        let ref mut fresh17 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xd42 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(q as isize);
+        let ref mut fresh17 =
+            *((&raw mut game.g_ram as *mut uint8).offset(0xd42) as *mut uint16).offset(q as isize);
         let fresh18 = *fresh17;
         *fresh17 = (*fresh17).wrapping_sub(1);
         if fresh18 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
             let mut v9: *const uint16 = ::core::ptr::null::<uint16>();
-            i = *((&raw mut game.g_ram as *mut uint8).offset(0xd62 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            i = *((&raw mut game.g_ram as *mut uint8).offset(0xd62) as *mut uint16)
                 .offset(q as isize) as ::core::ffi::c_int;
             loop {
                 v9 = RomPtr_94(i as uint16_t, game) as *const uint16;
@@ -5887,20 +5506,17 @@ pub unsafe fn HandleGrappleBeamGfx(game: &mut Game) {
                     game,
                 ) as ::core::ffi::c_int;
             }
-            *((&raw mut game.g_ram as *mut uint8).offset(0xd42 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0xd42) as *mut uint16)
                 .offset(q as isize) = *v9;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xd62 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0xd62) as *mut uint16)
                 .offset(q as isize) = (i + 4 as ::core::ffi::c_int) as uint16;
         }
         if (r24_r22 | r20_r18) & 0xff000000 as uint32 != 0 as uint32 {
             break;
         }
         let mut v12: uint16 = *(RomPtr_94(
-            (*((&raw mut game.g_ram as *mut uint8).offset(0xd62 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(q as isize) as ::core::ffi::c_int
+            (*((&raw mut game.g_ram as *mut uint8).offset(0xd62) as *mut uint16).offset(q as isize)
+                as ::core::ffi::c_int
                 - 2 as ::core::ffi::c_int) as uint16_t,
             game,
         ) as *mut uint16);
@@ -5918,18 +5534,15 @@ pub unsafe fn HandleGrappleBeamGfx(game: &mut Game) {
             break;
         }
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as ::core::ffi::c_int
         == kPose_B2_FaceR_Grapple_Air as ::core::ffi::c_int
-        || *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        || *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as ::core::ffi::c_int
             == kPose_B3_FaceL_Grapple_Air as ::core::ffi::c_int
     {
         DrawGrappleOams3(game);
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0xd0c as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+    } else if *((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16)
+        as ::core::ffi::c_int
+        - *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16) as ::core::ffi::c_int
         & 0xff00 as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
     {
@@ -5942,45 +5555,37 @@ unsafe fn DrawGrappleOams(
     mut chr_r38: uint16,
     game: &mut Game,
 ) {
-    let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x590 as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16);
     let mut v2: *mut OamEnt = gOamEnt(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     (*v2).xcoord = x_r20 as uint8;
     (*v2).ycoord = y_r24 as uint8;
     *(&raw mut (*v2).charnum as *mut uint16) = chr_r38;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (v1 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) =
+        (v1 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
 }
 unsafe fn DrawGrappleOams3(game: &mut Game) {
-    let mut idx: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x590 as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut idx: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16);
     let mut v2: *mut OamEnt = gOamEnt(idx as ::core::ffi::c_int, game);
-    let mut x: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xd08 as ::core::ffi::c_int as isize) as *mut uint16)
+    let mut x: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd08) as *mut uint16)
         as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        - *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16) as ::core::ffi::c_int
         - 4 as ::core::ffi::c_int) as uint16;
     (*v2).xcoord = x as uint8;
-    (*v2).ycoord = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xd0c as ::core::ffi::c_int as isize) as *mut uint16)
+    (*v2).ycoord = (*((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16)
         as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        - *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16) as ::core::ffi::c_int
         - 4 as ::core::ffi::c_int) as uint8;
     *(&raw mut (*v2).charnum as *mut uint16) = 14880 as uint16;
-    let ref mut fresh19 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x570 as ::core::ffi::c_int as isize) as *mut uint16)
+    let ref mut fresh19 = *((&raw mut game.g_ram as *mut uint8).offset(0x570) as *mut uint16)
         .offset((idx as ::core::ffi::c_int >> 5 as ::core::ffi::c_int) as isize);
     *fresh19 = (*fresh19 as ::core::ffi::c_int
         | ((x as ::core::ffi::c_int & 0x100 as ::core::ffi::c_int) >> 8 as ::core::ffi::c_int)
             << 2 as ::core::ffi::c_int
                 * (idx as ::core::ffi::c_int >> 2 as ::core::ffi::c_int & 7 as ::core::ffi::c_int))
         as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (idx as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) =
+        (idx as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
 }

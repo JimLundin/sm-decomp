@@ -1969,8 +1969,7 @@ unsafe fn WritePitch(mut p: *mut SpcPlayer, mut c: *mut Channel, mut pitch: uint
     WritePitchInner(p, c, pitch);
 }
 unsafe fn Music_ResetChan(mut p: *mut SpcPlayer) {
-    let mut c: *mut Channel = (&raw mut (*p).channel as *mut Channel)
-        .offset(7 as ::core::ffi::c_int as isize) as *mut Channel;
+    let mut c: *mut Channel = (&raw mut (*p).channel as *mut Channel).offset(7) as *mut Channel;
     (*p).cur_chan_bit = 0x80 as uint8;
     loop {
         *(&raw mut (*c).channel_volume as *mut uint8).offset(
@@ -2023,18 +2022,15 @@ unsafe fn Channel_SetInstrument_NoSetId(
     }
     let mut ip: *const uint8 = (&raw mut (*p).ram as *mut uint8)
         .offset((instrument as ::core::ffi::c_int * 6 as ::core::ffi::c_int) as isize)
-        .offset(0x6c00 as ::core::ffi::c_int as isize);
+        .offset(0x6c00);
     if (*p).is_chan_on as ::core::ffi::c_int & (*p).cur_chan_bit as ::core::ffi::c_int != 0 {
         return;
     }
     let mut reg: uint8 = ((*c).index as ::core::ffi::c_int * 16 as ::core::ffi::c_int) as uint8;
-    if *ip.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-        & 0x80 as ::core::ffi::c_int
-        != 0
-    {
+    if *ip.offset(0) as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0 {
         (*p).reg_FLG = ((*p).reg_FLG as ::core::ffi::c_int & 0x20 as ::core::ffi::c_int
-            | *ip.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                & 0x1f as ::core::ffi::c_int) as uint8;
+            | *ip.offset(0) as ::core::ffi::c_int & 0x1f as ::core::ffi::c_int)
+            as uint8;
         (*p).reg_NON =
             ((*p).reg_NON as ::core::ffi::c_int | (*p).cur_chan_bit as ::core::ffi::c_int) as uint8;
         Dsp_Write(
@@ -2046,28 +2042,26 @@ unsafe fn Channel_SetInstrument_NoSetId(
         Dsp_Write(
             p,
             (reg as ::core::ffi::c_int + V0SRCN as ::core::ffi::c_int) as uint8_t,
-            *ip.offset(0 as ::core::ffi::c_int as isize),
+            *ip.offset(0),
         );
     }
     Dsp_Write(
         p,
         (reg as ::core::ffi::c_int + V0ADSR1 as ::core::ffi::c_int) as uint8_t,
-        *ip.offset(1 as ::core::ffi::c_int as isize),
+        *ip.offset(1),
     );
     Dsp_Write(
         p,
         (reg as ::core::ffi::c_int + V0ADSR2 as ::core::ffi::c_int) as uint8_t,
-        *ip.offset(2 as ::core::ffi::c_int as isize),
+        *ip.offset(2),
     );
     Dsp_Write(
         p,
         (reg as ::core::ffi::c_int + V0GAIN as ::core::ffi::c_int) as uint8_t,
-        *ip.offset(3 as ::core::ffi::c_int as isize),
+        *ip.offset(3),
     );
-    (*c).instrument_pitch_base =
-        ((*ip.offset(4 as ::core::ffi::c_int as isize) as ::core::ffi::c_int)
-            << 8 as ::core::ffi::c_int
-            | *ip.offset(5 as ::core::ffi::c_int as isize) as ::core::ffi::c_int) as uint16;
+    (*c).instrument_pitch_base = ((*ip.offset(4) as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
+        | *ip.offset(5) as ::core::ffi::c_int) as uint16;
 }
 unsafe fn Channel_SetInstrument(mut p: *mut SpcPlayer, mut c: *mut Channel, mut instrument: uint8) {
     (*c).instrument_id = instrument;
@@ -3135,32 +3129,27 @@ unsafe fn Spc_Loop_Part2(mut p: *mut SpcPlayer, mut ticks: uint8) {
 unsafe fn Vector_Reset_Spc(mut p: *mut SpcPlayer) {
     dsp_reset((*p).dsp);
     memset(
-        (&raw mut (*p).ram as *mut uint8).offset(0x500 as ::core::ffi::c_int as isize) as *mut uint8
-            as *mut ::core::ffi::c_void,
+        (&raw mut (*p).ram as *mut uint8).offset(0x500) as *mut uint8 as *mut ::core::ffi::c_void,
         0 as ::core::ffi::c_int,
         0x1000 as size_t,
     );
     memset(
-        (&raw mut (*p).ram as *mut uint8).offset(0x20 as ::core::ffi::c_int as isize) as *mut uint8
-            as *mut ::core::ffi::c_void,
+        (&raw mut (*p).ram as *mut uint8).offset(0x20) as *mut uint8 as *mut ::core::ffi::c_void,
         0 as ::core::ffi::c_int,
         0xf as size_t,
     );
     memset(
-        (&raw mut (*p).ram as *mut uint8).offset(0xd0 as ::core::ffi::c_int as isize) as *mut uint8
-            as *mut ::core::ffi::c_void,
+        (&raw mut (*p).ram as *mut uint8).offset(0xd0) as *mut uint8 as *mut ::core::ffi::c_void,
         0 as ::core::ffi::c_int,
         0x1f as size_t,
     );
     memset(
-        (&raw mut (*p).ram as *mut uint8).offset(0x391 as ::core::ffi::c_int as isize) as *mut uint8
-            as *mut ::core::ffi::c_void,
+        (&raw mut (*p).ram as *mut uint8).offset(0x391) as *mut uint8 as *mut ::core::ffi::c_void,
         0 as ::core::ffi::c_int,
         0x6f as size_t,
     );
     memset(
-        (&raw mut (*p).ram as *mut uint8).offset(0x440 as ::core::ffi::c_int as isize) as *mut uint8
-            as *mut ::core::ffi::c_void,
+        (&raw mut (*p).ram as *mut uint8).offset(0x440) as *mut uint8 as *mut ::core::ffi::c_void,
         0 as ::core::ffi::c_int,
         0x7f as size_t,
     );
@@ -3360,26 +3349,22 @@ pub unsafe fn Sfx1_HandleCmdFromSnes(mut p: *mut SpcPlayer) {
         Sfx_Chan_Reset(
             p,
             &raw mut (*p).sfx1,
-            (&raw mut (*p).sfx_chans_1 as *mut SfxChan).offset(0 as ::core::ffi::c_int as isize)
-                as *mut SfxChan,
+            (&raw mut (*p).sfx_chans_1 as *mut SfxChan).offset(0) as *mut SfxChan,
         );
         Sfx_Chan_Reset(
             p,
             &raw mut (*p).sfx1,
-            (&raw mut (*p).sfx_chans_1 as *mut SfxChan).offset(1 as ::core::ffi::c_int as isize)
-                as *mut SfxChan,
+            (&raw mut (*p).sfx_chans_1 as *mut SfxChan).offset(1) as *mut SfxChan,
         );
         Sfx_Chan_Reset(
             p,
             &raw mut (*p).sfx1,
-            (&raw mut (*p).sfx_chans_1 as *mut SfxChan).offset(2 as ::core::ffi::c_int as isize)
-                as *mut SfxChan,
+            (&raw mut (*p).sfx_chans_1 as *mut SfxChan).offset(2) as *mut SfxChan,
         );
         Sfx_Chan_Reset(
             p,
             &raw mut (*p).sfx1,
-            (&raw mut (*p).sfx_chans_1 as *mut SfxChan).offset(3 as ::core::ffi::c_int as isize)
-                as *mut SfxChan,
+            (&raw mut (*p).sfx_chans_1 as *mut SfxChan).offset(3) as *mut SfxChan,
         );
     }
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -3699,14 +3684,12 @@ pub unsafe fn Sfx2_HandleCmdFromSnes(mut p: *mut SpcPlayer) {
         Sfx_Chan_Reset(
             p,
             &raw mut (*p).sfx2,
-            (&raw mut (*p).sfx_chans_2 as *mut SfxChan).offset(0 as ::core::ffi::c_int as isize)
-                as *mut SfxChan,
+            (&raw mut (*p).sfx_chans_2 as *mut SfxChan).offset(0) as *mut SfxChan,
         );
         Sfx_Chan_Reset(
             p,
             &raw mut (*p).sfx2,
-            (&raw mut (*p).sfx_chans_2 as *mut SfxChan).offset(1 as ::core::ffi::c_int as isize)
-                as *mut SfxChan,
+            (&raw mut (*p).sfx_chans_2 as *mut SfxChan).offset(1) as *mut SfxChan,
         );
     }
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -3859,14 +3842,12 @@ pub unsafe fn Sfx3_HandleCmdFromSnes(mut p: *mut SpcPlayer) {
         Sfx_Chan_Reset(
             p,
             &raw mut (*p).sfx3,
-            (&raw mut (*p).sfx_chans_3 as *mut SfxChan).offset(0 as ::core::ffi::c_int as isize)
-                as *mut SfxChan,
+            (&raw mut (*p).sfx_chans_3 as *mut SfxChan).offset(0) as *mut SfxChan,
         );
         Sfx_Chan_Reset(
             p,
             &raw mut (*p).sfx3,
-            (&raw mut (*p).sfx_chans_3 as *mut SfxChan).offset(1 as ::core::ffi::c_int as isize)
-                as *mut SfxChan,
+            (&raw mut (*p).sfx_chans_3 as *mut SfxChan).offset(1) as *mut SfxChan,
         );
     }
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -4297,9 +4278,8 @@ pub unsafe fn SpcPlayer_CopyVariablesToRam(mut p: *mut SpcPlayer) {
     let mut c: *mut Channel = &raw mut (*p).channel as *mut Channel;
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i < 8 as ::core::ffi::c_int {
-        let mut m: *const MemMap = (&raw const kChannel_Maps as *const MemMap)
-            .offset(0 as ::core::ffi::c_int as isize)
-            as *const MemMap;
+        let mut m: *const MemMap =
+            (&raw const kChannel_Maps as *const MemMap).offset(0) as *const MemMap;
         while m
             != (&raw const kChannel_Maps as *const MemMap).offset(
                 (::core::mem::size_of::<[MemMap; 47]>() as usize)
@@ -4325,9 +4305,8 @@ pub unsafe fn SpcPlayer_CopyVariablesToRam(mut p: *mut SpcPlayer) {
         i += 1;
         c = c.offset(1);
     }
-    let mut m_0: *const MemMapSized = (&raw const kSpcPlayer_Maps as *const MemMapSized)
-        .offset(0 as ::core::ffi::c_int as isize)
-        as *const MemMapSized;
+    let mut m_0: *const MemMapSized =
+        (&raw const kSpcPlayer_Maps as *const MemMapSized).offset(0) as *const MemMapSized;
     while m_0
         != (&raw const kSpcPlayer_Maps as *const MemMapSized).offset(
             (::core::mem::size_of::<[MemMapSized; 283]>() as usize)
@@ -4348,9 +4327,8 @@ pub unsafe fn SpcPlayer_CopyVariablesFromRam(mut p: *mut SpcPlayer) {
     let mut c: *mut Channel = &raw mut (*p).channel as *mut Channel;
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i < 8 as ::core::ffi::c_int {
-        let mut m: *const MemMap = (&raw const kChannel_Maps as *const MemMap)
-            .offset(0 as ::core::ffi::c_int as isize)
-            as *const MemMap;
+        let mut m: *const MemMap =
+            (&raw const kChannel_Maps as *const MemMap).offset(0) as *const MemMap;
         while m
             != (&raw const kChannel_Maps as *const MemMap).offset(
                 (::core::mem::size_of::<[MemMap; 47]>() as usize)
@@ -4376,9 +4354,8 @@ pub unsafe fn SpcPlayer_CopyVariablesFromRam(mut p: *mut SpcPlayer) {
         i += 1;
         c = c.offset(1);
     }
-    let mut m_0: *const MemMapSized = (&raw const kSpcPlayer_Maps as *const MemMapSized)
-        .offset(0 as ::core::ffi::c_int as isize)
-        as *const MemMapSized;
+    let mut m_0: *const MemMapSized =
+        (&raw const kSpcPlayer_Maps as *const MemMapSized).offset(0) as *const MemMapSized;
     while m_0
         != (&raw const kSpcPlayer_Maps as *const MemMapSized).offset(
             (::core::mem::size_of::<[MemMapSized; 283]>() as usize)
@@ -4460,9 +4437,8 @@ pub unsafe fn SpcPlayer_Upload(mut p: *mut SpcPlayer, mut data: *const uint8_t) 
         if numbytes == 0 as ::core::ffi::c_int {
             break;
         }
-        let mut target: ::core::ffi::c_int =
-            *(data.offset(2 as ::core::ffi::c_int as isize) as *mut uint16) as ::core::ffi::c_int;
-        data = data.offset(4 as ::core::ffi::c_int as isize);
+        let mut target: ::core::ffi::c_int = *(data.offset(2) as *mut uint16) as ::core::ffi::c_int;
+        data = data.offset(4);
         loop {
             let fresh32 = data;
             data = data.offset(1);
@@ -4483,9 +4459,8 @@ pub unsafe fn SpcPlayer_Upload(mut p: *mut SpcPlayer, mut data: *const uint8_t) 
         (*p).input_ports[2 as ::core::ffi::c_int as usize];
     (*p).input_ports[0 as ::core::ffi::c_int as usize] =
         (*p).input_ports[1 as ::core::ffi::c_int as usize];
-    (*p).music_ptr_toplevel = *((&raw mut (*p).ram as *mut uint8)
-        .offset(0x581e as ::core::ffi::c_int as isize) as *mut uint8
-        as *mut uint16);
+    (*p).music_ptr_toplevel =
+        *((&raw mut (*p).ram as *mut uint8).offset(0x581e) as *mut uint8 as *mut uint16);
     (*p).counter_sf0c = 2 as uint16;
     (*p).key_OFF =
         ((*p).key_OFF as ::core::ffi::c_int | !((*p).is_chan_on as ::core::ffi::c_int)) as uint8;

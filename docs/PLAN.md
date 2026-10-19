@@ -103,13 +103,29 @@ All source, configuration, host, DLL, library and fixture hashes remain fixed.
 The owning pass's any% and refill results are reused without another build
 or duplicate replay. This review changes no Rust or residue counters.
 
-Next disjoint candidate: remove the redundant c_int/isize casts on complete
-literal pointer-offset arguments, after checking range, argument types and
-unchanged source outside the replacements. A frozen preview removes about
-23000 Rust lines from roughly 25500 arguments. Pointer access and unsafe
-semantics remain unchanged; do not count this as retiring raw access. This
-is separate from arithmetic narrowing and the subsystem work above. Other
-sessions own the projectile state/handler changes; avoid duplicating them.
+Literal pointer offsets (2026-10-19): removed 25482 c_int/isize cast chains
+from complete literal arguments. Each value is in 0..=131072 and keeps the
+same isize argument; all compiled comparisons pass and a changed-value
+control fails. Source audit excludes strings/comments and permits only the
+selected casts and formatting changes across all 64 source files. All 34572
+offset calls and 21842 raw RAM access forms remain; no pointer invariant,
+arithmetic narrowing, callback order or unsafe boundary changes.
+
+Frozen 76891aed plus this pass passes any% 129712/0 (222.73s) and Kraid
+phase two 119823/0 (232.52s), native exits 0, with stable source, DLL and
+fixtures. Formatting/check and normal release builds pass (51.30s frozen,
+47.85s workspace). Only external dependency artifacts are reused; game and
+host artifacts stay with their checkout. These timings do not establish a
+compile-time improvement. Concurrent gameplay changes retain their own checks.
+
+The rebased change removes 23003 Rust lines and 25052 counted c_int cast
+lines (the frozen candidate removes 23005 and 25053). The raw-offset line
+counter rises by 14 because formatting joins previously split expressions;
+actual raw accesses, offset calls and unsafe functions are unchanged. This
+removes over a megabyte of redundant source without adding a wrapper or macro.
+Next: continue the shared state and handler-family work above to remove
+operations and unsafe boundaries. Other sessions own the current projectile
+state/handler changes; avoid duplicating them.
 
 ## Validation strategy (2026-10-19)
 

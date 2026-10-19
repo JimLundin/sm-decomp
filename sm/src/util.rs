@@ -62,8 +62,8 @@ pub unsafe fn NextDelim(
 ) -> *mut ::core::ffi::c_char {
     let mut r: *mut ::core::ffi::c_char = *s;
     if !r.is_null() {
-        while *r.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int == ' ' as i32
-            || *r.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int == '\t' as i32
+        while *r.offset(0) as ::core::ffi::c_int == ' ' as i32
+            || *r.offset(0) as ::core::ffi::c_int == '\t' as i32
         {
             r = r.offset(1);
         }
@@ -155,7 +155,7 @@ pub unsafe fn NextLineStripComments(
     }
     let mut eol: *mut ::core::ffi::c_char = strchr(p, '\n' as i32);
     *s = if !eol.is_null() {
-        eol.offset(1 as ::core::ffi::c_int as isize)
+        eol.offset(1)
     } else {
         ::core::ptr::null_mut::<::core::ffi::c_char>()
     };
@@ -179,8 +179,8 @@ pub unsafe fn NextLineStripComments(
         eol = eol.offset(-1);
     }
     *eol = 0 as ::core::ffi::c_char;
-    while *p.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int == ' ' as i32
-        || *p.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int == '\t' as i32
+    while *p.offset(0) as ::core::ffi::c_int == ' ' as i32
+        || *p.offset(0) as ::core::ffi::c_int == '\t' as i32
     {
         p = p.offset(1);
     }
@@ -261,9 +261,9 @@ pub unsafe fn SplitKeyValue(mut p: *mut ::core::ffi::c_char) -> *mut ::core::ffi
         kr = kr.offset(-1);
     }
     *kr = 0 as ::core::ffi::c_char;
-    let mut v: *mut ::core::ffi::c_char = equals.offset(1 as ::core::ffi::c_int as isize);
-    while *v.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int == ' ' as i32
-        || *v.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int == '\t' as i32
+    let mut v: *mut ::core::ffi::c_char = equals.offset(1);
+    while *v.offset(0) as ::core::ffi::c_int == ' ' as i32
+        || *v.offset(0) as ::core::ffi::c_int == '\t' as i32
     {
         v = v.offset(1);
     }

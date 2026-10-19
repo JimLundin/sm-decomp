@@ -105,8 +105,7 @@ pub unsafe fn snes_loadRom(
             data,
             length,
             0x7fc0 as ::core::ffi::c_int,
-            (&raw mut headers as *mut CartHeader).offset(0 as ::core::ffi::c_int as isize)
-                as *mut CartHeader,
+            (&raw mut headers as *mut CartHeader).offset(0) as *mut CartHeader,
         );
     }
     if length >= 0x8200 as ::core::ffi::c_int {
@@ -114,8 +113,7 @@ pub unsafe fn snes_loadRom(
             data,
             length,
             0x81c0 as ::core::ffi::c_int,
-            (&raw mut headers as *mut CartHeader).offset(1 as ::core::ffi::c_int as isize)
-                as *mut CartHeader,
+            (&raw mut headers as *mut CartHeader).offset(1) as *mut CartHeader,
         );
     }
     if length >= 0x10000 as ::core::ffi::c_int {
@@ -123,8 +121,7 @@ pub unsafe fn snes_loadRom(
             data,
             length,
             0xffc0 as ::core::ffi::c_int,
-            (&raw mut headers as *mut CartHeader).offset(2 as ::core::ffi::c_int as isize)
-                as *mut CartHeader,
+            (&raw mut headers as *mut CartHeader).offset(2) as *mut CartHeader,
         );
     }
     if length >= 0x10200 as ::core::ffi::c_int {
@@ -132,8 +129,7 @@ pub unsafe fn snes_loadRom(
             data,
             length,
             0x101c0 as ::core::ffi::c_int,
-            (&raw mut headers as *mut CartHeader).offset(3 as ::core::ffi::c_int as isize)
-                as *mut CartHeader,
+            (&raw mut headers as *mut CartHeader).offset(3) as *mut CartHeader,
         );
     }
     let mut max: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -147,7 +143,7 @@ pub unsafe fn snes_loadRom(
         i_0 += 1;
     }
     if used & 1 as ::core::ffi::c_int != 0 {
-        data = data.offset(0x200 as ::core::ffi::c_int as isize);
+        data = data.offset(0x200);
         length -= 0x200 as ::core::ffi::c_int;
     }
     if headers[used as usize].cartType as ::core::ffi::c_int > 2 as ::core::ffi::c_int {

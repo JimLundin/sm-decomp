@@ -710,7 +710,7 @@ unsafe fn ParseKeyArray(
                 .is_null()
                 {
                     key_with_mod |= kKeyMod_Shift as ::core::ffi::c_int;
-                    s = s.offset(6 as ::core::ffi::c_int as isize);
+                    s = s.offset(6);
                 } else if !StringStartsWithNoCase(
                     s,
                     b"Ctrl+\0" as *const u8 as *const ::core::ffi::c_char,
@@ -718,7 +718,7 @@ unsafe fn ParseKeyArray(
                 .is_null()
                 {
                     key_with_mod |= kKeyMod_Ctrl as ::core::ffi::c_int;
-                    s = s.offset(5 as ::core::ffi::c_int as isize);
+                    s = s.offset(5);
                 } else {
                     if StringStartsWithNoCase(
                         s,
@@ -729,7 +729,7 @@ unsafe fn ParseKeyArray(
                         break;
                     }
                     key_with_mod |= kKeyMod_Alt as ::core::ffi::c_int;
-                    s = s.offset(4 as ::core::ffi::c_int as isize);
+                    s = s.offset(4);
                 }
             }
             let mut key: SDL_Keycode = SDL_GetKeyFromName(s);
@@ -1344,12 +1344,12 @@ unsafe fn ParseOneConfigFile(
                 }
             } else if *p as ::core::ffi::c_int == '!' as i32
                 && !SkipPrefix(
-                    p.offset(1 as ::core::ffi::c_int as isize),
+                    p.offset(1),
                     b"include \0" as *const u8 as *const ::core::ffi::c_char,
                 )
                 .is_null()
             {
-                let mut tt: *mut ::core::ffi::c_char = p.offset(8 as ::core::ffi::c_int as isize);
+                let mut tt: *mut ::core::ffi::c_char = p.offset(8);
                 let mut new_filename: *mut ::core::ffi::c_char =
                     ReplaceFilenameWithNewPath(filename, NextPossiblyQuotedString(&raw mut tt));
                 if depth > 10 as ::core::ffi::c_int

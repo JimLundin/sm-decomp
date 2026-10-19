@@ -1151,8 +1151,7 @@ unsafe fn stbi__refill_buffer(mut s: *mut stbi__context) {
     if n == 0 as ::core::ffi::c_int {
         (*s).read_from_callbacks = 0 as ::core::ffi::c_int;
         (*s).img_buffer = &raw mut (*s).buffer_start as *mut stbi_uc;
-        (*s).img_buffer_end =
-            (&raw mut (*s).buffer_start as *mut stbi_uc).offset(1 as ::core::ffi::c_int as isize);
+        (*s).img_buffer_end = (&raw mut (*s).buffer_start as *mut stbi_uc).offset(1);
         *(*s).img_buffer = 0 as stbi_uc;
     } else {
         (*s).img_buffer = &raw mut (*s).buffer_start as *mut stbi_uc;
@@ -1305,165 +1304,151 @@ unsafe fn stbi__convert_format(
             10 => {
                 i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
                 while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0 as ::core::ffi::c_int as isize) =
-                        *src.offset(0 as ::core::ffi::c_int as isize);
-                    *dest.offset(1 as ::core::ffi::c_int as isize) = 255 as ::core::ffi::c_uchar;
+                    *dest.offset(0) = *src.offset(0);
+                    *dest.offset(1) = 255 as ::core::ffi::c_uchar;
                     i -= 1;
-                    src = src.offset(1 as ::core::ffi::c_int as isize);
-                    dest = dest.offset(2 as ::core::ffi::c_int as isize);
+                    src = src.offset(1);
+                    dest = dest.offset(2);
                 }
             }
             11 => {
                 i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
                 while i >= 0 as ::core::ffi::c_int {
-                    let ref mut fresh9 = *dest.offset(2 as ::core::ffi::c_int as isize);
-                    *fresh9 = *src.offset(0 as ::core::ffi::c_int as isize);
-                    let ref mut fresh10 = *dest.offset(1 as ::core::ffi::c_int as isize);
+                    let ref mut fresh9 = *dest.offset(2);
+                    *fresh9 = *src.offset(0);
+                    let ref mut fresh10 = *dest.offset(1);
                     *fresh10 = *fresh9;
-                    *dest.offset(0 as ::core::ffi::c_int as isize) = *fresh10;
+                    *dest.offset(0) = *fresh10;
                     i -= 1;
-                    src = src.offset(1 as ::core::ffi::c_int as isize);
-                    dest = dest.offset(3 as ::core::ffi::c_int as isize);
+                    src = src.offset(1);
+                    dest = dest.offset(3);
                 }
             }
             12 => {
                 i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
                 while i >= 0 as ::core::ffi::c_int {
-                    let ref mut fresh11 = *dest.offset(2 as ::core::ffi::c_int as isize);
-                    *fresh11 = *src.offset(0 as ::core::ffi::c_int as isize);
-                    let ref mut fresh12 = *dest.offset(1 as ::core::ffi::c_int as isize);
+                    let ref mut fresh11 = *dest.offset(2);
+                    *fresh11 = *src.offset(0);
+                    let ref mut fresh12 = *dest.offset(1);
                     *fresh12 = *fresh11;
-                    *dest.offset(0 as ::core::ffi::c_int as isize) = *fresh12;
-                    *dest.offset(3 as ::core::ffi::c_int as isize) = 255 as ::core::ffi::c_uchar;
+                    *dest.offset(0) = *fresh12;
+                    *dest.offset(3) = 255 as ::core::ffi::c_uchar;
                     i -= 1;
-                    src = src.offset(1 as ::core::ffi::c_int as isize);
-                    dest = dest.offset(4 as ::core::ffi::c_int as isize);
+                    src = src.offset(1);
+                    dest = dest.offset(4);
                 }
             }
             17 => {
                 i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
                 while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0 as ::core::ffi::c_int as isize) =
-                        *src.offset(0 as ::core::ffi::c_int as isize);
+                    *dest.offset(0) = *src.offset(0);
                     i -= 1;
-                    src = src.offset(2 as ::core::ffi::c_int as isize);
-                    dest = dest.offset(1 as ::core::ffi::c_int as isize);
+                    src = src.offset(2);
+                    dest = dest.offset(1);
                 }
             }
             19 => {
                 i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
                 while i >= 0 as ::core::ffi::c_int {
-                    let ref mut fresh13 = *dest.offset(2 as ::core::ffi::c_int as isize);
-                    *fresh13 = *src.offset(0 as ::core::ffi::c_int as isize);
-                    let ref mut fresh14 = *dest.offset(1 as ::core::ffi::c_int as isize);
+                    let ref mut fresh13 = *dest.offset(2);
+                    *fresh13 = *src.offset(0);
+                    let ref mut fresh14 = *dest.offset(1);
                     *fresh14 = *fresh13;
-                    *dest.offset(0 as ::core::ffi::c_int as isize) = *fresh14;
+                    *dest.offset(0) = *fresh14;
                     i -= 1;
-                    src = src.offset(2 as ::core::ffi::c_int as isize);
-                    dest = dest.offset(3 as ::core::ffi::c_int as isize);
+                    src = src.offset(2);
+                    dest = dest.offset(3);
                 }
             }
             20 => {
                 i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
                 while i >= 0 as ::core::ffi::c_int {
-                    let ref mut fresh15 = *dest.offset(2 as ::core::ffi::c_int as isize);
-                    *fresh15 = *src.offset(0 as ::core::ffi::c_int as isize);
-                    let ref mut fresh16 = *dest.offset(1 as ::core::ffi::c_int as isize);
+                    let ref mut fresh15 = *dest.offset(2);
+                    *fresh15 = *src.offset(0);
+                    let ref mut fresh16 = *dest.offset(1);
                     *fresh16 = *fresh15;
-                    *dest.offset(0 as ::core::ffi::c_int as isize) = *fresh16;
-                    *dest.offset(3 as ::core::ffi::c_int as isize) =
-                        *src.offset(1 as ::core::ffi::c_int as isize);
+                    *dest.offset(0) = *fresh16;
+                    *dest.offset(3) = *src.offset(1);
                     i -= 1;
-                    src = src.offset(2 as ::core::ffi::c_int as isize);
-                    dest = dest.offset(4 as ::core::ffi::c_int as isize);
+                    src = src.offset(2);
+                    dest = dest.offset(4);
                 }
             }
             28 => {
                 i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
                 while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0 as ::core::ffi::c_int as isize) =
-                        *src.offset(0 as ::core::ffi::c_int as isize);
-                    *dest.offset(1 as ::core::ffi::c_int as isize) =
-                        *src.offset(1 as ::core::ffi::c_int as isize);
-                    *dest.offset(2 as ::core::ffi::c_int as isize) =
-                        *src.offset(2 as ::core::ffi::c_int as isize);
-                    *dest.offset(3 as ::core::ffi::c_int as isize) = 255 as ::core::ffi::c_uchar;
+                    *dest.offset(0) = *src.offset(0);
+                    *dest.offset(1) = *src.offset(1);
+                    *dest.offset(2) = *src.offset(2);
+                    *dest.offset(3) = 255 as ::core::ffi::c_uchar;
                     i -= 1;
-                    src = src.offset(3 as ::core::ffi::c_int as isize);
-                    dest = dest.offset(4 as ::core::ffi::c_int as isize);
+                    src = src.offset(3);
+                    dest = dest.offset(4);
                 }
             }
             25 => {
                 i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
                 while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0 as ::core::ffi::c_int as isize) = stbi__compute_y(
-                        *src.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int,
-                        *src.offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int,
-                        *src.offset(2 as ::core::ffi::c_int as isize) as ::core::ffi::c_int,
-                    )
-                        as ::core::ffi::c_uchar;
+                    *dest.offset(0) = stbi__compute_y(
+                        *src.offset(0) as ::core::ffi::c_int,
+                        *src.offset(1) as ::core::ffi::c_int,
+                        *src.offset(2) as ::core::ffi::c_int,
+                    ) as ::core::ffi::c_uchar;
                     i -= 1;
-                    src = src.offset(3 as ::core::ffi::c_int as isize);
-                    dest = dest.offset(1 as ::core::ffi::c_int as isize);
+                    src = src.offset(3);
+                    dest = dest.offset(1);
                 }
             }
             26 => {
                 i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
                 while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0 as ::core::ffi::c_int as isize) = stbi__compute_y(
-                        *src.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int,
-                        *src.offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int,
-                        *src.offset(2 as ::core::ffi::c_int as isize) as ::core::ffi::c_int,
-                    )
-                        as ::core::ffi::c_uchar;
-                    *dest.offset(1 as ::core::ffi::c_int as isize) = 255 as ::core::ffi::c_uchar;
+                    *dest.offset(0) = stbi__compute_y(
+                        *src.offset(0) as ::core::ffi::c_int,
+                        *src.offset(1) as ::core::ffi::c_int,
+                        *src.offset(2) as ::core::ffi::c_int,
+                    ) as ::core::ffi::c_uchar;
+                    *dest.offset(1) = 255 as ::core::ffi::c_uchar;
                     i -= 1;
-                    src = src.offset(3 as ::core::ffi::c_int as isize);
-                    dest = dest.offset(2 as ::core::ffi::c_int as isize);
+                    src = src.offset(3);
+                    dest = dest.offset(2);
                 }
             }
             33 => {
                 i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
                 while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0 as ::core::ffi::c_int as isize) = stbi__compute_y(
-                        *src.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int,
-                        *src.offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int,
-                        *src.offset(2 as ::core::ffi::c_int as isize) as ::core::ffi::c_int,
-                    )
-                        as ::core::ffi::c_uchar;
+                    *dest.offset(0) = stbi__compute_y(
+                        *src.offset(0) as ::core::ffi::c_int,
+                        *src.offset(1) as ::core::ffi::c_int,
+                        *src.offset(2) as ::core::ffi::c_int,
+                    ) as ::core::ffi::c_uchar;
                     i -= 1;
-                    src = src.offset(4 as ::core::ffi::c_int as isize);
-                    dest = dest.offset(1 as ::core::ffi::c_int as isize);
+                    src = src.offset(4);
+                    dest = dest.offset(1);
                 }
             }
             34 => {
                 i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
                 while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0 as ::core::ffi::c_int as isize) = stbi__compute_y(
-                        *src.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int,
-                        *src.offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int,
-                        *src.offset(2 as ::core::ffi::c_int as isize) as ::core::ffi::c_int,
-                    )
-                        as ::core::ffi::c_uchar;
-                    *dest.offset(1 as ::core::ffi::c_int as isize) =
-                        *src.offset(3 as ::core::ffi::c_int as isize);
+                    *dest.offset(0) = stbi__compute_y(
+                        *src.offset(0) as ::core::ffi::c_int,
+                        *src.offset(1) as ::core::ffi::c_int,
+                        *src.offset(2) as ::core::ffi::c_int,
+                    ) as ::core::ffi::c_uchar;
+                    *dest.offset(1) = *src.offset(3);
                     i -= 1;
-                    src = src.offset(4 as ::core::ffi::c_int as isize);
-                    dest = dest.offset(2 as ::core::ffi::c_int as isize);
+                    src = src.offset(4);
+                    dest = dest.offset(2);
                 }
             }
             35 => {
                 i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
                 while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0 as ::core::ffi::c_int as isize) =
-                        *src.offset(0 as ::core::ffi::c_int as isize);
-                    *dest.offset(1 as ::core::ffi::c_int as isize) =
-                        *src.offset(1 as ::core::ffi::c_int as isize);
-                    *dest.offset(2 as ::core::ffi::c_int as isize) =
-                        *src.offset(2 as ::core::ffi::c_int as isize);
+                    *dest.offset(0) = *src.offset(0);
+                    *dest.offset(1) = *src.offset(1);
+                    *dest.offset(2) = *src.offset(2);
                     i -= 1;
-                    src = src.offset(4 as ::core::ffi::c_int as isize);
-                    dest = dest.offset(3 as ::core::ffi::c_int as isize);
+                    src = src.offset(4);
+                    dest = dest.offset(3);
                 }
             }
             _ => {
@@ -1558,161 +1543,151 @@ unsafe fn stbi__convert_format16(
             10 => {
                 i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
                 while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0 as ::core::ffi::c_int as isize) =
-                        *src.offset(0 as ::core::ffi::c_int as isize);
-                    *dest.offset(1 as ::core::ffi::c_int as isize) = 0xffff as stbi__uint16;
+                    *dest.offset(0) = *src.offset(0);
+                    *dest.offset(1) = 0xffff as stbi__uint16;
                     i -= 1;
-                    src = src.offset(1 as ::core::ffi::c_int as isize);
-                    dest = dest.offset(2 as ::core::ffi::c_int as isize);
+                    src = src.offset(1);
+                    dest = dest.offset(2);
                 }
             }
             11 => {
                 i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
                 while i >= 0 as ::core::ffi::c_int {
-                    let ref mut fresh1 = *dest.offset(2 as ::core::ffi::c_int as isize);
-                    *fresh1 = *src.offset(0 as ::core::ffi::c_int as isize);
-                    let ref mut fresh2 = *dest.offset(1 as ::core::ffi::c_int as isize);
+                    let ref mut fresh1 = *dest.offset(2);
+                    *fresh1 = *src.offset(0);
+                    let ref mut fresh2 = *dest.offset(1);
                     *fresh2 = *fresh1;
-                    *dest.offset(0 as ::core::ffi::c_int as isize) = *fresh2;
+                    *dest.offset(0) = *fresh2;
                     i -= 1;
-                    src = src.offset(1 as ::core::ffi::c_int as isize);
-                    dest = dest.offset(3 as ::core::ffi::c_int as isize);
+                    src = src.offset(1);
+                    dest = dest.offset(3);
                 }
             }
             12 => {
                 i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
                 while i >= 0 as ::core::ffi::c_int {
-                    let ref mut fresh3 = *dest.offset(2 as ::core::ffi::c_int as isize);
-                    *fresh3 = *src.offset(0 as ::core::ffi::c_int as isize);
-                    let ref mut fresh4 = *dest.offset(1 as ::core::ffi::c_int as isize);
+                    let ref mut fresh3 = *dest.offset(2);
+                    *fresh3 = *src.offset(0);
+                    let ref mut fresh4 = *dest.offset(1);
                     *fresh4 = *fresh3;
-                    *dest.offset(0 as ::core::ffi::c_int as isize) = *fresh4;
-                    *dest.offset(3 as ::core::ffi::c_int as isize) = 0xffff as stbi__uint16;
+                    *dest.offset(0) = *fresh4;
+                    *dest.offset(3) = 0xffff as stbi__uint16;
                     i -= 1;
-                    src = src.offset(1 as ::core::ffi::c_int as isize);
-                    dest = dest.offset(4 as ::core::ffi::c_int as isize);
+                    src = src.offset(1);
+                    dest = dest.offset(4);
                 }
             }
             17 => {
                 i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
                 while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0 as ::core::ffi::c_int as isize) =
-                        *src.offset(0 as ::core::ffi::c_int as isize);
+                    *dest.offset(0) = *src.offset(0);
                     i -= 1;
-                    src = src.offset(2 as ::core::ffi::c_int as isize);
-                    dest = dest.offset(1 as ::core::ffi::c_int as isize);
+                    src = src.offset(2);
+                    dest = dest.offset(1);
                 }
             }
             19 => {
                 i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
                 while i >= 0 as ::core::ffi::c_int {
-                    let ref mut fresh5 = *dest.offset(2 as ::core::ffi::c_int as isize);
-                    *fresh5 = *src.offset(0 as ::core::ffi::c_int as isize);
-                    let ref mut fresh6 = *dest.offset(1 as ::core::ffi::c_int as isize);
+                    let ref mut fresh5 = *dest.offset(2);
+                    *fresh5 = *src.offset(0);
+                    let ref mut fresh6 = *dest.offset(1);
                     *fresh6 = *fresh5;
-                    *dest.offset(0 as ::core::ffi::c_int as isize) = *fresh6;
+                    *dest.offset(0) = *fresh6;
                     i -= 1;
-                    src = src.offset(2 as ::core::ffi::c_int as isize);
-                    dest = dest.offset(3 as ::core::ffi::c_int as isize);
+                    src = src.offset(2);
+                    dest = dest.offset(3);
                 }
             }
             20 => {
                 i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
                 while i >= 0 as ::core::ffi::c_int {
-                    let ref mut fresh7 = *dest.offset(2 as ::core::ffi::c_int as isize);
-                    *fresh7 = *src.offset(0 as ::core::ffi::c_int as isize);
-                    let ref mut fresh8 = *dest.offset(1 as ::core::ffi::c_int as isize);
+                    let ref mut fresh7 = *dest.offset(2);
+                    *fresh7 = *src.offset(0);
+                    let ref mut fresh8 = *dest.offset(1);
                     *fresh8 = *fresh7;
-                    *dest.offset(0 as ::core::ffi::c_int as isize) = *fresh8;
-                    *dest.offset(3 as ::core::ffi::c_int as isize) =
-                        *src.offset(1 as ::core::ffi::c_int as isize);
+                    *dest.offset(0) = *fresh8;
+                    *dest.offset(3) = *src.offset(1);
                     i -= 1;
-                    src = src.offset(2 as ::core::ffi::c_int as isize);
-                    dest = dest.offset(4 as ::core::ffi::c_int as isize);
+                    src = src.offset(2);
+                    dest = dest.offset(4);
                 }
             }
             28 => {
                 i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
                 while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0 as ::core::ffi::c_int as isize) =
-                        *src.offset(0 as ::core::ffi::c_int as isize);
-                    *dest.offset(1 as ::core::ffi::c_int as isize) =
-                        *src.offset(1 as ::core::ffi::c_int as isize);
-                    *dest.offset(2 as ::core::ffi::c_int as isize) =
-                        *src.offset(2 as ::core::ffi::c_int as isize);
-                    *dest.offset(3 as ::core::ffi::c_int as isize) = 0xffff as stbi__uint16;
+                    *dest.offset(0) = *src.offset(0);
+                    *dest.offset(1) = *src.offset(1);
+                    *dest.offset(2) = *src.offset(2);
+                    *dest.offset(3) = 0xffff as stbi__uint16;
                     i -= 1;
-                    src = src.offset(3 as ::core::ffi::c_int as isize);
-                    dest = dest.offset(4 as ::core::ffi::c_int as isize);
+                    src = src.offset(3);
+                    dest = dest.offset(4);
                 }
             }
             25 => {
                 i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
                 while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0 as ::core::ffi::c_int as isize) = stbi__compute_y_16(
-                        *src.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int,
-                        *src.offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int,
-                        *src.offset(2 as ::core::ffi::c_int as isize) as ::core::ffi::c_int,
+                    *dest.offset(0) = stbi__compute_y_16(
+                        *src.offset(0) as ::core::ffi::c_int,
+                        *src.offset(1) as ::core::ffi::c_int,
+                        *src.offset(2) as ::core::ffi::c_int,
                     );
                     i -= 1;
-                    src = src.offset(3 as ::core::ffi::c_int as isize);
-                    dest = dest.offset(1 as ::core::ffi::c_int as isize);
+                    src = src.offset(3);
+                    dest = dest.offset(1);
                 }
             }
             26 => {
                 i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
                 while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0 as ::core::ffi::c_int as isize) = stbi__compute_y_16(
-                        *src.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int,
-                        *src.offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int,
-                        *src.offset(2 as ::core::ffi::c_int as isize) as ::core::ffi::c_int,
+                    *dest.offset(0) = stbi__compute_y_16(
+                        *src.offset(0) as ::core::ffi::c_int,
+                        *src.offset(1) as ::core::ffi::c_int,
+                        *src.offset(2) as ::core::ffi::c_int,
                     );
-                    *dest.offset(1 as ::core::ffi::c_int as isize) = 0xffff as stbi__uint16;
+                    *dest.offset(1) = 0xffff as stbi__uint16;
                     i -= 1;
-                    src = src.offset(3 as ::core::ffi::c_int as isize);
-                    dest = dest.offset(2 as ::core::ffi::c_int as isize);
+                    src = src.offset(3);
+                    dest = dest.offset(2);
                 }
             }
             33 => {
                 i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
                 while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0 as ::core::ffi::c_int as isize) = stbi__compute_y_16(
-                        *src.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int,
-                        *src.offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int,
-                        *src.offset(2 as ::core::ffi::c_int as isize) as ::core::ffi::c_int,
+                    *dest.offset(0) = stbi__compute_y_16(
+                        *src.offset(0) as ::core::ffi::c_int,
+                        *src.offset(1) as ::core::ffi::c_int,
+                        *src.offset(2) as ::core::ffi::c_int,
                     );
                     i -= 1;
-                    src = src.offset(4 as ::core::ffi::c_int as isize);
-                    dest = dest.offset(1 as ::core::ffi::c_int as isize);
+                    src = src.offset(4);
+                    dest = dest.offset(1);
                 }
             }
             34 => {
                 i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
                 while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0 as ::core::ffi::c_int as isize) = stbi__compute_y_16(
-                        *src.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int,
-                        *src.offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int,
-                        *src.offset(2 as ::core::ffi::c_int as isize) as ::core::ffi::c_int,
+                    *dest.offset(0) = stbi__compute_y_16(
+                        *src.offset(0) as ::core::ffi::c_int,
+                        *src.offset(1) as ::core::ffi::c_int,
+                        *src.offset(2) as ::core::ffi::c_int,
                     );
-                    *dest.offset(1 as ::core::ffi::c_int as isize) =
-                        *src.offset(3 as ::core::ffi::c_int as isize);
+                    *dest.offset(1) = *src.offset(3);
                     i -= 1;
-                    src = src.offset(4 as ::core::ffi::c_int as isize);
-                    dest = dest.offset(2 as ::core::ffi::c_int as isize);
+                    src = src.offset(4);
+                    dest = dest.offset(2);
                 }
             }
             35 => {
                 i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
                 while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0 as ::core::ffi::c_int as isize) =
-                        *src.offset(0 as ::core::ffi::c_int as isize);
-                    *dest.offset(1 as ::core::ffi::c_int as isize) =
-                        *src.offset(1 as ::core::ffi::c_int as isize);
-                    *dest.offset(2 as ::core::ffi::c_int as isize) =
-                        *src.offset(2 as ::core::ffi::c_int as isize);
+                    *dest.offset(0) = *src.offset(0);
+                    *dest.offset(1) = *src.offset(1);
+                    *dest.offset(2) = *src.offset(2);
                     i -= 1;
-                    src = src.offset(4 as ::core::ffi::c_int as isize);
-                    dest = dest.offset(3 as ::core::ffi::c_int as isize);
+                    src = src.offset(4);
+                    dest = dest.offset(3);
                 }
             }
             _ => {
@@ -3324,9 +3299,9 @@ unsafe fn stbi__create_png_image_raw(
             cur = cur.offset(output_bytes as isize);
             prior = prior.offset(output_bytes as isize);
         } else {
-            raw = raw.offset(1 as ::core::ffi::c_int as isize);
-            cur = cur.offset(1 as ::core::ffi::c_int as isize);
-            prior = prior.offset(1 as ::core::ffi::c_int as isize);
+            raw = raw.offset(1);
+            cur = cur.offset(1);
+            prior = prior.offset(1);
         }
         if depth < 8 as ::core::ffi::c_int || img_n == out_n {
             let mut nk: ::core::ffi::c_int = (width - 1 as ::core::ffi::c_int) * filter_bytes;
@@ -3822,13 +3797,11 @@ unsafe fn stbi__create_png_image_raw(
         let mut cur16: *mut stbi__uint16 = cur_1 as *mut stbi__uint16;
         i = 0 as stbi__uint32;
         while i < x.wrapping_mul(y).wrapping_mul(out_n as stbi__uint32) {
-            *cur16 = ((*cur_1.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int)
-                << 8 as ::core::ffi::c_int
-                | *cur_1.offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int)
-                as stbi__uint16;
+            *cur16 = ((*cur_1.offset(0) as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
+                | *cur_1.offset(1) as ::core::ffi::c_int) as stbi__uint16;
             i = i.wrapping_add(1);
             cur16 = cur16.offset(1);
-            cur_1 = cur_1.offset(2 as ::core::ffi::c_int as isize);
+            cur_1 = cur_1.offset(2);
         }
     }
     return 1 as ::core::ffi::c_int;
@@ -4002,30 +3975,25 @@ unsafe fn stbi__compute_transparency(
     if out_n == 2 as ::core::ffi::c_int {
         i = 0 as stbi__uint32;
         while i < pixel_count {
-            *p.offset(1 as ::core::ffi::c_int as isize) =
-                (if *p.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                    == *tc.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                {
+            *p.offset(1) =
+                (if *p.offset(0) as ::core::ffi::c_int == *tc.offset(0) as ::core::ffi::c_int {
                     0 as ::core::ffi::c_int
                 } else {
                     255 as ::core::ffi::c_int
                 }) as stbi_uc;
-            p = p.offset(2 as ::core::ffi::c_int as isize);
+            p = p.offset(2);
             i = i.wrapping_add(1);
         }
     } else {
         i = 0 as stbi__uint32;
         while i < pixel_count {
-            if *p.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                == *tc.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                && *p.offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                    == *tc.offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                && *p.offset(2 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                    == *tc.offset(2 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
+            if *p.offset(0) as ::core::ffi::c_int == *tc.offset(0) as ::core::ffi::c_int
+                && *p.offset(1) as ::core::ffi::c_int == *tc.offset(1) as ::core::ffi::c_int
+                && *p.offset(2) as ::core::ffi::c_int == *tc.offset(2) as ::core::ffi::c_int
             {
-                *p.offset(3 as ::core::ffi::c_int as isize) = 0 as stbi_uc;
+                *p.offset(3) = 0 as stbi_uc;
             }
-            p = p.offset(4 as ::core::ffi::c_int as isize);
+            p = p.offset(4);
             i = i.wrapping_add(1);
         }
     }
@@ -4055,30 +4023,25 @@ unsafe fn stbi__compute_transparency16(
     if out_n == 2 as ::core::ffi::c_int {
         i = 0 as stbi__uint32;
         while i < pixel_count {
-            *p.offset(1 as ::core::ffi::c_int as isize) =
-                (if *p.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                    == *tc.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                {
+            *p.offset(1) =
+                (if *p.offset(0) as ::core::ffi::c_int == *tc.offset(0) as ::core::ffi::c_int {
                     0 as ::core::ffi::c_int
                 } else {
                     65535 as ::core::ffi::c_int
                 }) as stbi__uint16;
-            p = p.offset(2 as ::core::ffi::c_int as isize);
+            p = p.offset(2);
             i = i.wrapping_add(1);
         }
     } else {
         i = 0 as stbi__uint32;
         while i < pixel_count {
-            if *p.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                == *tc.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                && *p.offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                    == *tc.offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                && *p.offset(2 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                    == *tc.offset(2 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
+            if *p.offset(0) as ::core::ffi::c_int == *tc.offset(0) as ::core::ffi::c_int
+                && *p.offset(1) as ::core::ffi::c_int == *tc.offset(1) as ::core::ffi::c_int
+                && *p.offset(2) as ::core::ffi::c_int == *tc.offset(2) as ::core::ffi::c_int
             {
-                *p.offset(3 as ::core::ffi::c_int as isize) = 0 as stbi__uint16;
+                *p.offset(3) = 0 as stbi__uint16;
             }
-            p = p.offset(4 as ::core::ffi::c_int as isize);
+            p = p.offset(4);
             i = i.wrapping_add(1);
         }
     }
@@ -4109,12 +4072,10 @@ unsafe fn stbi__expand_png_palette(
         while i < pixel_count {
             let mut n: ::core::ffi::c_int =
                 *orig.offset(i as isize) as ::core::ffi::c_int * 4 as ::core::ffi::c_int;
-            *p.offset(0 as ::core::ffi::c_int as isize) = *palette.offset(n as isize);
-            *p.offset(1 as ::core::ffi::c_int as isize) =
-                *palette.offset((n + 1 as ::core::ffi::c_int) as isize);
-            *p.offset(2 as ::core::ffi::c_int as isize) =
-                *palette.offset((n + 2 as ::core::ffi::c_int) as isize);
-            p = p.offset(3 as ::core::ffi::c_int as isize);
+            *p.offset(0) = *palette.offset(n as isize);
+            *p.offset(1) = *palette.offset((n + 1 as ::core::ffi::c_int) as isize);
+            *p.offset(2) = *palette.offset((n + 2 as ::core::ffi::c_int) as isize);
+            p = p.offset(3);
             i = i.wrapping_add(1);
         }
     } else {
@@ -4122,14 +4083,11 @@ unsafe fn stbi__expand_png_palette(
         while i < pixel_count {
             let mut n_0: ::core::ffi::c_int =
                 *orig.offset(i as isize) as ::core::ffi::c_int * 4 as ::core::ffi::c_int;
-            *p.offset(0 as ::core::ffi::c_int as isize) = *palette.offset(n_0 as isize);
-            *p.offset(1 as ::core::ffi::c_int as isize) =
-                *palette.offset((n_0 + 1 as ::core::ffi::c_int) as isize);
-            *p.offset(2 as ::core::ffi::c_int as isize) =
-                *palette.offset((n_0 + 2 as ::core::ffi::c_int) as isize);
-            *p.offset(3 as ::core::ffi::c_int as isize) =
-                *palette.offset((n_0 + 3 as ::core::ffi::c_int) as isize);
-            p = p.offset(4 as ::core::ffi::c_int as isize);
+            *p.offset(0) = *palette.offset(n_0 as isize);
+            *p.offset(1) = *palette.offset((n_0 + 1 as ::core::ffi::c_int) as isize);
+            *p.offset(2) = *palette.offset((n_0 + 2 as ::core::ffi::c_int) as isize);
+            *p.offset(3) = *palette.offset((n_0 + 3 as ::core::ffi::c_int) as isize);
+            p = p.offset(4);
             i = i.wrapping_add(1);
         }
     }
@@ -4155,11 +4113,10 @@ unsafe fn stbi__de_iphone(mut z: *mut stbi__png) {
     if (*s).img_out_n == 3 as ::core::ffi::c_int {
         i = 0 as stbi__uint32;
         while i < pixel_count {
-            let mut t: stbi_uc = *p.offset(0 as ::core::ffi::c_int as isize);
-            *p.offset(0 as ::core::ffi::c_int as isize) =
-                *p.offset(2 as ::core::ffi::c_int as isize);
-            *p.offset(2 as ::core::ffi::c_int as isize) = t;
-            p = p.offset(3 as ::core::ffi::c_int as isize);
+            let mut t: stbi_uc = *p.offset(0);
+            *p.offset(0) = *p.offset(2);
+            *p.offset(2) = t;
+            p = p.offset(3);
             i = i.wrapping_add(1);
         }
     } else {
@@ -4178,41 +4135,36 @@ unsafe fn stbi__de_iphone(mut z: *mut stbi__png) {
         if stbi__unpremultiply_on_load_global != 0 {
             i = 0 as stbi__uint32;
             while i < pixel_count {
-                let mut a: stbi_uc = *p.offset(3 as ::core::ffi::c_int as isize);
-                let mut t_0: stbi_uc = *p.offset(0 as ::core::ffi::c_int as isize);
+                let mut a: stbi_uc = *p.offset(3);
+                let mut t_0: stbi_uc = *p.offset(0);
                 if a != 0 {
                     let mut half: stbi_uc =
                         (a as ::core::ffi::c_int / 2 as ::core::ffi::c_int) as stbi_uc;
-                    *p.offset(0 as ::core::ffi::c_int as isize) =
-                        ((*p.offset(2 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                            * 255 as ::core::ffi::c_int
-                            + half as ::core::ffi::c_int)
-                            / a as ::core::ffi::c_int) as stbi_uc;
-                    *p.offset(1 as ::core::ffi::c_int as isize) =
-                        ((*p.offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                            * 255 as ::core::ffi::c_int
-                            + half as ::core::ffi::c_int)
-                            / a as ::core::ffi::c_int) as stbi_uc;
-                    *p.offset(2 as ::core::ffi::c_int as isize) =
-                        ((t_0 as ::core::ffi::c_int * 255 as ::core::ffi::c_int
-                            + half as ::core::ffi::c_int)
-                            / a as ::core::ffi::c_int) as stbi_uc;
+                    *p.offset(0) = ((*p.offset(2) as ::core::ffi::c_int
+                        * 255 as ::core::ffi::c_int
+                        + half as ::core::ffi::c_int)
+                        / a as ::core::ffi::c_int) as stbi_uc;
+                    *p.offset(1) = ((*p.offset(1) as ::core::ffi::c_int
+                        * 255 as ::core::ffi::c_int
+                        + half as ::core::ffi::c_int)
+                        / a as ::core::ffi::c_int) as stbi_uc;
+                    *p.offset(2) = ((t_0 as ::core::ffi::c_int * 255 as ::core::ffi::c_int
+                        + half as ::core::ffi::c_int)
+                        / a as ::core::ffi::c_int) as stbi_uc;
                 } else {
-                    *p.offset(0 as ::core::ffi::c_int as isize) =
-                        *p.offset(2 as ::core::ffi::c_int as isize);
-                    *p.offset(2 as ::core::ffi::c_int as isize) = t_0;
+                    *p.offset(0) = *p.offset(2);
+                    *p.offset(2) = t_0;
                 }
-                p = p.offset(4 as ::core::ffi::c_int as isize);
+                p = p.offset(4);
                 i = i.wrapping_add(1);
             }
         } else {
             i = 0 as stbi__uint32;
             while i < pixel_count {
-                let mut t_1: stbi_uc = *p.offset(0 as ::core::ffi::c_int as isize);
-                *p.offset(0 as ::core::ffi::c_int as isize) =
-                    *p.offset(2 as ::core::ffi::c_int as isize);
-                *p.offset(2 as ::core::ffi::c_int as isize) = t_1;
-                p = p.offset(4 as ::core::ffi::c_int as isize);
+                let mut t_1: stbi_uc = *p.offset(0);
+                *p.offset(0) = *p.offset(2);
+                *p.offset(2) = t_1;
+                p = p.offset(4);
                 i = i.wrapping_add(1);
             }
         }
@@ -4990,10 +4942,7 @@ unsafe fn ParseConfigKeyPass(
     if pass >= (*gs).n_pass as uint || *endp as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
         return ::core::ptr::null_mut::<GlslPass>();
     }
-    return (*gs)
-        .pass
-        .offset(pass as isize)
-        .offset(1 as ::core::ffi::c_int as isize);
+    return (*gs).pass.offset(pass as isize).offset(1);
 }
 unsafe fn ParseScaleType(mut s: *const ::core::ffi::c_char) -> uint8 {
     return (if StringEqualsNoCase(s, b"source\0" as *const u8 as *const ::core::ffi::c_char)
@@ -5159,12 +5108,7 @@ unsafe fn GlslShader_InitializePasses(mut gs: *mut GlslShader, mut passes: ::cor
     ) as *mut GlslPass;
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i < (*gs).n_pass {
-        GlslPass_Initialize(
-            (*gs)
-                .pass
-                .offset(i as isize)
-                .offset(1 as ::core::ffi::c_int as isize),
-        );
+        GlslPass_Initialize((*gs).pass.offset(i as isize).offset(1));
         i += 1;
     }
 }
@@ -5455,7 +5399,7 @@ pub unsafe fn GlslShader_ReadShaderFile(
                 8 as size_t,
             ) == 0 as ::core::ffi::c_int
         {
-            let mut tt: *mut ::core::ffi::c_char = line.offset(8 as ::core::ffi::c_int as isize);
+            let mut tt: *mut ::core::ffi::c_char = line.offset(8);
             let mut new_filename: *mut ::core::ffi::c_char =
                 ReplaceFilenameWithNewPath(filename, NextPossiblyQuotedString(&raw mut tt));
             GlslShader_ReadShaderFile(gs, new_filename, result);
@@ -5468,7 +5412,7 @@ pub unsafe fn GlslShader_ReadShaderFile(
                 17 as size_t,
             ) == 0 as ::core::ffi::c_int
         {
-            let mut tt_0: *mut ::core::ffi::c_char = line.offset(17 as ::core::ffi::c_int as isize);
+            let mut tt_0: *mut ::core::ffi::c_char = line.offset(17);
             let mut param: *mut GlslParam =
                 GlslShader_GetParam(gs, NextPossiblyQuotedString(&raw mut tt_0));
             NextPossiblyQuotedString(&raw mut tt_0);
@@ -5658,7 +5602,7 @@ static mut kMvpMatrixOrtho: [::core::ffi::c_float; 16] = [
 unsafe fn GlslShader_GetUniforms(mut gs: *mut GlslShader) {
     let mut pass_idx: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
     (*gs).max_prev_frame = 0 as ::core::ffi::c_int;
-    let mut p: *mut GlslPass = (*gs).pass.offset(1 as ::core::ffi::c_int as isize);
+    let mut p: *mut GlslPass = (*gs).pass.offset(1);
     let mut p_end: *mut GlslPass = p.offset((*gs).n_pass as isize);
     while p < p_end {
         let mut program: uint = (*p).gl_program;
@@ -5797,7 +5741,7 @@ pub unsafe fn GlslShader_CreateFromFile(
     }
     if IsGlslFilename(filename) {
         GlslShader_InitializePasses(gs, 1 as ::core::ffi::c_int);
-        let ref mut fresh0 = (*(*gs).pass.offset(1 as ::core::ffi::c_int as isize)).filename;
+        let ref mut fresh0 = (*(*gs).pass.offset(1)).filename;
         *fresh0 = strdup(filename);
         filename = b"\0" as *const u8 as *const ::core::ffi::c_char;
         current_block = 1394248824506584008;
@@ -6030,7 +5974,7 @@ pub unsafe fn GlslShader_CreateFromFile(
     return gs;
 }
 pub unsafe fn GlslShader_Destroy(mut gs: *mut GlslShader) {
-    let mut p: *mut GlslPass = (*gs).pass.offset(1 as ::core::ffi::c_int as isize);
+    let mut p: *mut GlslPass = (*gs).pass.offset(1);
     let mut p_end: *mut GlslPass = p.offset((*gs).n_pass as isize);
     while p < p_end {
         gl::DeleteProgram((*p).gl_program as GLuint);
@@ -6163,8 +6107,8 @@ unsafe fn GlslShader_SetShaderVars(
     );
     if (*p).unif.OutputSize >= 0 as ::core::ffi::c_int {
         let mut output_size: [::core::ffi::c_float; 2] = [
-            (*p.offset(0 as ::core::ffi::c_int as isize)).width as ::core::ffi::c_float,
-            (*p.offset(0 as ::core::ffi::c_int as isize)).height as ::core::ffi::c_float,
+            (*p.offset(0)).width as ::core::ffi::c_float,
+            (*p.offset(0)).height as ::core::ffi::c_float,
         ];
         gl::Uniform2fv(
             (*p).unif.OutputSize as GLint,
@@ -6190,9 +6134,9 @@ unsafe fn GlslShader_SetShaderVars(
     RenderCtx_SetGlslTextureUniform(
         ctx,
         &raw mut (*p).unif.Orig,
-        (*(*gs).pass.offset(0 as ::core::ffi::c_int as isize)).width as ::core::ffi::c_int,
-        (*(*gs).pass.offset(0 as ::core::ffi::c_int as isize)).height as ::core::ffi::c_int,
-        (*(*gs).pass.offset(0 as ::core::ffi::c_int as isize)).gl_texture,
+        (*(*gs).pass.offset(0)).width as ::core::ffi::c_int,
+        (*(*gs).pass.offset(0)).height as ::core::ffi::c_int,
+        (*(*gs).pass.offset(0)).gl_texture,
     );
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i < (*gs).max_prev_frame {
@@ -6279,9 +6223,9 @@ pub unsafe fn GlslShader_Render(
     mut viewport_width: ::core::ffi::c_int,
     mut viewport_height: ::core::ffi::c_int,
 ) {
-    (*(*gs).pass.offset(0 as ::core::ffi::c_int as isize)).gl_texture = (*tex).gl_texture;
-    (*(*gs).pass.offset(0 as ::core::ffi::c_int as isize)).width = (*tex).width;
-    (*(*gs).pass.offset(0 as ::core::ffi::c_int as isize)).height = (*tex).height;
+    (*(*gs).pass.offset(0)).gl_texture = (*tex).gl_texture;
+    (*(*gs).pass.offset(0)).width = (*tex).width;
+    (*(*gs).pass.offset(0)).height = (*tex).height;
     let mut previous_framebuffer: GLint = 0;
     gl::GetIntegerv(
         GL_FRAMEBUFFER_BINDING as GLenum,

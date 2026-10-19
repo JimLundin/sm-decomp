@@ -378,11 +378,11 @@ pub unsafe fn LogWrite(mut snes: *mut Snes, mut adr: uint32_t, mut val: uint8_t,
         val as ::core::ffi::c_int,
         ((*(*snes).cpu).k as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
             | (*(*snes).cpu).pc as ::core::ffi::c_int,
-        *(*snes).ram.offset(0x12 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-            | (*(*snes).ram.offset(0x13 as ::core::ffi::c_int as isize)
+        *(*snes).ram.offset(0x12) as ::core::ffi::c_int
+            | (*(*snes).ram.offset(0x13)
                 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int,
-        *(*snes).ram.offset(0x14 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-            | (*(*snes).ram.offset(0x15 as ::core::ffi::c_int as isize)
+        *(*snes).ram.offset(0x14) as ::core::ffi::c_int
+            | (*(*snes).ram.offset(0x15)
                 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int,
         (*(*snes).cpu).a as ::core::ffi::c_int,
         (*(*snes).cpu).x as ::core::ffi::c_int,

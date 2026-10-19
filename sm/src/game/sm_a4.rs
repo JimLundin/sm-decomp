@@ -389,13 +389,13 @@ unsafe fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
 #[inline]
 unsafe fn gEnemyData(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut EnemyData {
     return (&raw mut game.g_ram as *mut uint8)
-        .offset(0xf78 as ::core::ffi::c_int as isize)
+        .offset(0xf78)
         .offset(o as isize) as *mut EnemyData;
 }
 #[inline]
 unsafe fn Get_Crocomire(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_Crocomire {
     return (&raw mut game.g_ram as *mut uint8)
-        .offset(0xf78 as ::core::ffi::c_int as isize)
+        .offset(0xf78)
         .offset(o as isize) as *mut Enemy_Crocomire;
 }
 static g_word_A48692: uint16 = 8 as uint16;
@@ -421,8 +421,7 @@ pub unsafe fn Enemy_NormalFrozenAI_A4(game: &mut Game) {
 }
 pub unsafe fn Crocomire_Hurt(game: &mut Game) {
     Crocomire_Func_27(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16),
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
         game,
     );
     Crocomire_Func_31(game);
@@ -458,8 +457,7 @@ pub unsafe fn Crocomire_Instr_1(
     game: &mut Game,
 ) -> *const uint16 {
     let mut crocom_var_C: uint16 = (*Get_Crocomire(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .crocom_var_C;
@@ -492,8 +490,8 @@ pub unsafe fn Crocomire_Func_4(
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int, game);
     let mut v1: uint16 = abs16(
         ((*E).base.x_pos as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16,
+            - *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
+                as ::core::ffi::c_int) as uint16,
     );
     if v1 as ::core::ffi::c_int - 224 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         (*E).crocom_var_B =
@@ -542,8 +540,7 @@ pub unsafe fn Crocomire_Instr_14(
     mut jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x5e5 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16) as ::core::ffi::c_int
         & 0xfff as ::core::ffi::c_int)
         - 1024 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -578,8 +575,7 @@ pub unsafe fn Crocomire_Func_7(
                 ((*E).crocom_var_F as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
             SpawnEprojWithGfx(
                 crocom_var_F,
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-                    as *mut uint16),
+                *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
                 addr_stru_868F8F as ::core::ffi::c_int as uint16,
                 game,
             );
@@ -766,8 +762,8 @@ pub unsafe fn Crocomire_Func_17(
         QueueSfx2_Max6(0x54 as uint16, game);
     } else {
         (*Get_Crocomire(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int,
+            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
+                as ::core::ffi::c_int,
             game,
         ))
         .crocom_var_C = 10 as uint16;
@@ -781,8 +777,7 @@ pub unsafe fn Crocomire_Func_18(
     game: &mut Game,
 ) -> *const uint16 {
     let mut result: *const uint16 = Crocomire_Func_2(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16),
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
         jp,
         game,
     );
@@ -800,8 +795,7 @@ pub unsafe fn Crocomire_Func_19(
 ) -> *const uint16 {
     let mut v2: bool = false;
     jp = Crocomire_Func_2(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16),
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
         jp,
         game,
     );
@@ -812,8 +806,7 @@ pub unsafe fn Crocomire_Func_19(
         v2 as ::core::ffi::c_int != 0
     } {
         jp = Crocomire_Func_20(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-                as *mut uint16),
+            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
             game,
         );
         (*E).crocom_var_C = 32 as uint16;
@@ -836,8 +829,7 @@ pub unsafe fn Crocomire_Func_21(
         != 0 as ::core::ffi::c_int
     {
         jp = Crocomire_Func_2(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-                as *mut uint16),
+            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
             jp,
             game,
         );
@@ -845,8 +837,7 @@ pub unsafe fn Crocomire_Func_21(
         (*E).crocom_var_C = 34 as uint16;
     } else {
         jp = Crocomire_Func_20(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-                as *mut uint16),
+            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
             game,
         );
         (*E).crocom_var_C = 32 as uint16;
@@ -858,8 +849,7 @@ pub unsafe fn Crocomire_Func_22(
     mut jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    k = *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-        as *mut uint16);
+    k = *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
     jp = Crocomire_Func_2(k, jp, game);
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int, game);
     if (*E).crocom_var_D == 0 {
@@ -875,8 +865,7 @@ pub unsafe fn Crocomire_Func_23(
     mut jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    k = *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-        as *mut uint16);
+    k = *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int, game);
     if (*E).base.x_pos as ::core::ffi::c_int - 672 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -909,8 +898,7 @@ pub unsafe fn Crocomire_Func_24(
     game: &mut Game,
 ) -> *const uint16 {
     let mut v2: bool = false;
-    k = *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-        as *mut uint16);
+    k = *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int, game);
     if (*E).crocom_var_D == 0 || {
         v2 = (*E).crocom_var_D as ::core::ffi::c_int == 1 as ::core::ffi::c_int;
@@ -935,8 +923,7 @@ pub unsafe fn Crocomire_Func_25(
     mut jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    k = *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-        as *mut uint16);
+    k = *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int, game);
     let mut crocom_var_B: uint16 = (*E).crocom_var_B;
     if crocom_var_B as ::core::ffi::c_int & 0x2000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int
@@ -978,12 +965,10 @@ pub unsafe fn Crocomire_Func_26(
 }
 pub unsafe fn Crocomire_Init(game: &mut Game) {
     let mut v7: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
-    *((&raw mut game.g_ram as *mut uint8).offset(0x179c as ::core::ffi::c_int as isize)
-        as *mut uint16) = 6 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x179c) as *mut uint16) = 6 as uint16;
     let mut v0: uint16 = 0 as uint16;
     loop {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
             .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 824 as uint16;
         v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
         if !(((v0 as ::core::ffi::c_int - 4096 as ::core::ffi::c_int) as int16
@@ -994,21 +979,16 @@ pub unsafe fn Crocomire_Init(game: &mut Game) {
         }
     }
     if *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xd828 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as *mut uint8 as *mut uint16) as ::core::ffi::c_int
+        .offset(0xd828)
+        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize)
+        as *mut uint8 as *mut uint16) as ::core::ffi::c_int
         & 2 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xcd20 as ::core::ffi::c_int as isize)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xcd20) as *mut uint16) = 257 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xcd20).offset(2) as *mut uint8
             as *mut uint16) = 257 as uint16;
-        *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xcd20 as ::core::ffi::c_int as isize)
-            .offset(2 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) = 257 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x688 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x688) as *mut uint16) = 0 as uint16;
         let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int, game);
         (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
             & 0x7bff as ::core::ffi::c_int
@@ -1044,42 +1024,35 @@ pub unsafe fn Crocomire_Init(game: &mut Game) {
         (*E).base.y_pos = 144 as uint16;
         (*E).base.y_height = 28 as uint16;
         (*E).base.x_width = 40 as uint16;
-        let mut v6: uint16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x330 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let mut v6: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
         v7 = gVramWriteEntry(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int,
+            *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16)
+                as ::core::ffi::c_int,
             game,
         );
         (*v7).size = 2048 as uint16;
         (*v7).src.addr = 0x2000 as VoidP;
         *(&raw mut (*v7).src.bank as *mut uint16) = 126 as uint16;
-        (*v7).vram_dst = ((*(&raw mut game.g_ram as *mut uint8)
-            .offset(0x59 as ::core::ffi::c_int as isize)
-            as ::core::ffi::c_int
+        (*v7).vram_dst = ((*(&raw mut game.g_ram as *mut uint8).offset(0x59) as ::core::ffi::c_int
             & 0xfc as ::core::ffi::c_int)
             << 8 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-            as *mut uint16) = (v6 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) =
+            (v6 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
     } else {
         DisableMinimapAndMarkBossRoomAsExplored(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x69a as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x69a) as *mut uint16) = 0 as uint16;
         let mut E_0: *mut Enemy_Crocomire = Get_Crocomire(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int,
+            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
+                as ::core::ffi::c_int,
             game,
         );
         (*E_0).crocom_var_A = 0 as uint16;
         (*E_0).crocom_var_E = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xcd20 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xcd20) as *mut uint16) = 0 as uint16;
         let mut i: ::core::ffi::c_int = 32 as ::core::ffi::c_int;
         while i >= 0 as ::core::ffi::c_int {
             let mut v3: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
                 .offset((v3 + 160 as ::core::ffi::c_int) as isize) = *(game.g_rom.offset(
                 (((0xa4b8bd as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                     << 15 as ::core::ffi::c_int
@@ -1088,8 +1061,7 @@ pub unsafe fn Crocomire_Init(game: &mut Game) {
             ) as *const uint8
                 as *mut uint16)
                 .offset(v3 as isize);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
                 .offset((v3 + 208 as ::core::ffi::c_int) as isize) = *(game.g_rom.offset(
                 (((0xa4b8dd as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                     << 15 as ::core::ffi::c_int
@@ -1101,12 +1073,9 @@ pub unsafe fn Crocomire_Init(game: &mut Game) {
             i -= 2 as ::core::ffi::c_int;
         }
         (*E_0).crocom_var_C = 4 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x179e as ::core::ffi::c_int as isize)
-            as *mut uint16) = 16 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x941 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 2 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x179a as ::core::ffi::c_int as isize)
-            as *mut uint16) = 1024 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x179e) as *mut uint16) = 16 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x941) as *mut uint16) = 2 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x179a) as *mut uint16) = 1024 as uint16;
         (*E_0).base.current_instruction =
             addr_kCrocomire_Ilist_BADE as ::core::ffi::c_int as uint16;
         (*E_0).base.extra_properties = ((*E_0).base.extra_properties as ::core::ffi::c_int
@@ -1115,8 +1084,7 @@ pub unsafe fn Crocomire_Init(game: &mut Game) {
     };
 }
 pub unsafe fn Crocomire_Func_27(mut k: uint16, game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb7 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (67 as ::core::ffi::c_int
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16) = (67 as ::core::ffi::c_int
         - (*Get_Crocomire(k as ::core::ffi::c_int, game)).base.y_pos as ::core::ffi::c_int)
         as uint16;
     let mut v1: uint16 = 32 as uint16;
@@ -1143,24 +1111,20 @@ pub unsafe fn Crocomire_Func_27(mut k: uint16, game: &mut Game) {
             return;
         }
     }
-    let ref mut fresh8 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb7 as ::core::ffi::c_int as isize) as *mut uint16);
+    let ref mut fresh8 = *((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16);
     *fresh8 = (*fresh8 as ::core::ffi::c_int
-        + *(RomPtr_A4(spritemap_pointer as uint16_t, game) as *mut uint16)
-            .offset(14 as ::core::ffi::c_int as isize) as ::core::ffi::c_int)
-        as uint16;
+        + *(RomPtr_A4(spritemap_pointer as uint16_t, game) as *mut uint16).offset(14)
+            as ::core::ffi::c_int) as uint16;
     Crocomire_8BA4(game);
 }
 pub unsafe fn Crocomire_8BA4(game: &mut Game) {
     let mut current_block: u64;
     let mut E0: *mut Enemy_Crocomire = Get_Crocomire(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     let mut E1: *mut Enemy_Crocomire = Get_Crocomire(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int,
         game,
     );
@@ -1169,14 +1133,14 @@ pub unsafe fn Crocomire_8BA4(game: &mut Game) {
     (*E1).base.y_pos = (*E0).base.y_pos;
     let mut x_pos: uint16 = (*E0).base.x_pos;
     if (x_pos as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
+        - *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16) as ::core::ffi::c_int)
+        as int16 as ::core::ffi::c_int
         >= 0 as ::core::ffi::c_int
     {
         if (*E0).base.x_pos as ::core::ffi::c_int
             - 128 as ::core::ffi::c_int
-            - (*((&raw mut game.g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            - (*((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16)
+                as ::core::ffi::c_int
                 + 256 as ::core::ffi::c_int)
             & 0x8000 as ::core::ffi::c_int
             != 0
@@ -1186,8 +1150,8 @@ pub unsafe fn Crocomire_8BA4(game: &mut Game) {
             current_block = 1762290943679506230;
         }
     } else if ((x_pos as ::core::ffi::c_int + 128 as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
+        - *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16) as ::core::ffi::c_int)
+        as int16 as ::core::ffi::c_int)
         < 0 as ::core::ffi::c_int
     {
         current_block = 1762290943679506230;
@@ -1196,8 +1160,7 @@ pub unsafe fn Crocomire_8BA4(game: &mut Game) {
     }
     match current_block {
         6937071982253665452 => {
-            let mut v6: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-                .offset(0x911 as ::core::ffi::c_int as isize)
+            let mut v6: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x911)
                 as *mut uint16) as ::core::ffi::c_int
                 - (*E0).base.x_pos as ::core::ffi::c_int
                 + 51 as ::core::ffi::c_int) as uint16;
@@ -1207,13 +1170,11 @@ pub unsafe fn Crocomire_8BA4(game: &mut Game) {
             {
                 v6 = 256 as uint16;
             }
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb5 as ::core::ffi::c_int as isize)
-                as *mut uint16) = v6;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xb5) as *mut uint16) = v6;
             return;
         }
         _ => {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb5 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 256 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xb5) as *mut uint16) = 256 as uint16;
             return;
         }
     };
@@ -1278,92 +1239,77 @@ pub unsafe fn Crocomire_Main(game: &mut Game) {
 }
 pub unsafe fn Crocomire_Func_28(game: &mut Game) {
     Crocomire_Func_37(game);
-    *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xcd20 as ::core::ffi::c_int as isize)
-        .offset(4 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) = 257 as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    *((&raw mut game.g_ram as *mut uint8).offset(0xcd20).offset(4) as *mut uint8 as *mut uint16) =
+        257 as uint16;
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) as ::core::ffi::c_int
         - 1312 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         == 0
     {
-        *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xcd20 as ::core::ffi::c_int as isize)
-            .offset(4 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) = 256 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xcd20).offset(4) as *mut uint8
+            as *mut uint16) = 256 as uint16;
     }
     Crocomire_Func_27(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16),
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
         game,
     );
 }
 pub unsafe fn Crocomire_Func_29(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb5 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb7 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb5) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16) = 0 as uint16;
 }
 pub unsafe fn Crocomire_Func_30(game: &mut Game) {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int, game);
     if (*E).crocom_var_A == 0
         && (((*E).base.x_pos as ::core::ffi::c_int
             - (*E).base.x_width as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xafe as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
+            - *((&raw mut game.g_ram as *mut uint8).offset(0xafe) as *mut uint16)
+                as ::core::ffi::c_int
+            - *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
+                as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int
     {
         NormalEnemyTouchAi(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16) = ((*E).base.x_pos as ::core::ffi::c_int
-            - (*E).base.x_width as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xafe as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb10 as ::core::ffi::c_int as isize)
-            as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb58 as ::core::ffi::c_int as isize)
-            as *mut uint16) = -(4 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb5c as ::core::ffi::c_int as isize)
-            as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) =
+            ((*E).base.x_pos as ::core::ffi::c_int
+                - (*E).base.x_width as ::core::ffi::c_int
+                - *((&raw mut game.g_ram as *mut uint8).offset(0xafe) as *mut uint16)
+                    as ::core::ffi::c_int) as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xb10) as *mut uint16) =
+            *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16);
+        *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16) =
+            -(4 as ::core::ffi::c_int) as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xb5c) as *mut uint16) =
+            -(1 as ::core::ffi::c_int) as uint16;
     }
 }
 pub unsafe fn Crocomire_Func_31(game: &mut Game) {
     let mut j: uint16 = 0;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x797 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        == 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x797) as *mut uint16) == 0 {
         if (*Get_Crocomire(0 as ::core::ffi::c_int, game))
             .base
             .flash_timer as ::core::ffi::c_int
             != 0
-            && *((&raw mut game.g_ram as *mut uint8).offset(0xe44 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            && *((&raw mut game.g_ram as *mut uint8).offset(0xe44) as *mut uint16)
+                as ::core::ffi::c_int
                 & 2 as ::core::ffi::c_int
                 != 0 as ::core::ffi::c_int
         {
             let mut i: ::core::ffi::c_int = 14 as ::core::ffi::c_int;
             while i >= 0 as ::core::ffi::c_int {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-                    as *mut uint16)
-                    .offset(
-                        ((i >> 1 as ::core::ffi::c_int) + 112 as ::core::ffi::c_int) as isize,
-                    ) = 0x7fff as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(
+                    ((i >> 1 as ::core::ffi::c_int) + 112 as ::core::ffi::c_int) as isize,
+                ) = 0x7fff as uint16;
                 i -= 2 as ::core::ffi::c_int;
             }
         } else {
             j = 14 as uint16;
             while j as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int
             {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-                    as *mut uint16)
-                    .offset(
-                        ((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
-                            + 112 as ::core::ffi::c_int) as isize,
-                    ) = *(game.g_rom.offset(
+                *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(
+                    ((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
+                        + 112 as ::core::ffi::c_int) as isize,
+                ) = *(game.g_rom.offset(
                     (((0xa4b89d as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                         << 15 as ::core::ffi::c_int
                         | 0xa4b89d as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -1435,24 +1381,16 @@ pub unsafe fn Crocomire_Func_37(game: &mut Game) {
         & 0x8000 as ::core::ffi::c_int
         != 0
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9000 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9002 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9006 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x900a as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x9000) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x9002) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x9006) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x900a) as *mut uint16) = 0 as uint16;
     } else if (*E0).base.x_pos as ::core::ffi::c_int - 1552 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0
     {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x9000 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            == 0
-        {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x9000 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 1 as uint16;
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x9000) as *mut uint16) == 0 {
+            *((&raw mut game.g_ram as *mut uint8).offset(0x9000) as *mut uint16) = 1 as uint16;
             game.eproj_spawn_pt = Point16U {
                 x: 1536 as uint16,
                 y: 176 as uint16,
@@ -1467,22 +1405,15 @@ pub unsafe fn Crocomire_Func_37(game: &mut Game) {
         & 0x8000 as ::core::ffi::c_int
         != 0
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9002 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9006 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x900a as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x9002) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x9006) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x900a) as *mut uint16) = 0 as uint16;
     } else if (*E0).base.x_pos as ::core::ffi::c_int - 1568 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0
     {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x9002 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            == 0
-        {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x9002 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 1 as uint16;
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x9002) as *mut uint16) == 0 {
+            *((&raw mut game.g_ram as *mut uint8).offset(0x9002) as *mut uint16) = 1 as uint16;
             SpawnHardcodedPlm(
                 SpawnHardcodedPlmArgs {
                     field_0: 0x61 as uint8,
@@ -1506,20 +1437,14 @@ pub unsafe fn Crocomire_Func_37(game: &mut Game) {
         if x_pos as ::core::ffi::c_int - 1568 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             != 0
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x9006 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x900a as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x9006) as *mut uint16) = 0 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x900a) as *mut uint16) = 0 as uint16;
         } else if x_pos as ::core::ffi::c_int - 1584 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             != 0
         {
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x9006 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                == 0
-            {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9006 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 1 as uint16;
+            if *((&raw mut game.g_ram as *mut uint8).offset(0x9006) as *mut uint16) == 0 {
+                *((&raw mut game.g_ram as *mut uint8).offset(0x9006) as *mut uint16) = 1 as uint16;
                 SpawnHardcodedPlm(
                     SpawnHardcodedPlmArgs {
                         field_0: 0x62 as uint8,
@@ -1552,14 +1477,12 @@ pub unsafe fn Crocomire_Func_37(game: &mut Game) {
         {
             Crocomire_8EE5(game);
             (*E0).crocom_var_20 = 1 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x9018 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 1 as uint16;
-            let mut v3: uint16 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xe54 as ::core::ffi::c_int as isize)
-                as *mut uint16);
+            *((&raw mut game.g_ram as *mut uint8).offset(0x9018) as *mut uint16) = 1 as uint16;
+            let mut v3: uint16 =
+                *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
             let mut EK: *mut Enemy_Crocomire = Get_Crocomire(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int,
+                *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
+                    as ::core::ffi::c_int,
                 game,
             );
             (*EK).crocom_var_A =
@@ -1577,9 +1500,8 @@ pub unsafe fn Crocomire_Func_37(game: &mut Game) {
             (*Get_Crocomire(0x100 as ::core::ffi::c_int, game)).crocom_var_01 = 0 as uint16;
             (*Get_Crocomire(0x140 as ::core::ffi::c_int, game)).crocom_var_01 = 0 as uint16;
             QueueSfx2_Max6(0x3b as uint16, game);
-            *(((&raw mut game.g_ram as *mut uint8).offset(0x9015 as ::core::ffi::c_int as isize)
-                as *mut uint16 as *mut uint8)
-                .offset(1 as ::core::ffi::c_int as isize) as *mut uint16) = 0 as uint16;
+            *(((&raw mut game.g_ram as *mut uint8).offset(0x9015) as *mut uint16 as *mut uint8)
+                .offset(1) as *mut uint16) = 0 as uint16;
             SpawnHardcodedPlm(
                 SpawnHardcodedPlmArgs {
                     field_0: 0x4e as uint8,
@@ -1595,8 +1517,8 @@ pub unsafe fn Crocomire_Func_37(game: &mut Game) {
                 | kEnemyProps_Tangible as ::core::ffi::c_int)
                 as uint16;
             let mut E1: *mut Enemy_Crocomire = Get_Crocomire(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
+                *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
+                    as ::core::ffi::c_int
                     + 64 as ::core::ffi::c_int,
                 game,
             );
@@ -1769,10 +1691,8 @@ pub unsafe fn Crocomire_Instr_2(
     mut jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
-        as *mut uint16) = 4 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 5 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = 4 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 5 as uint16;
     QueueSfx2_Max6(0x76 as uint16, game);
     return jp;
 }
@@ -1786,8 +1706,7 @@ pub unsafe fn Crocomire_Instr_4(
         == 0 as ::core::ffi::c_int
     {
         Enemy_MoveRight_IgnoreSlopes(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-                as *mut uint16),
+            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
             (-(4 as ::core::ffi::c_int) as int16 as int32) << 16 as ::core::ffi::c_int,
             game,
         );
@@ -1811,12 +1730,10 @@ pub unsafe fn Crocomire_Instr_15(
     return Crocomire_Instr_4(k, jp, game);
 }
 pub unsafe fn Crocomire_Func_43(game: &mut Game) {
-    let mut v1: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x5e5 as ::core::ffi::c_int as isize) as *mut uint16)
+    let mut v1: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
         as ::core::ffi::c_int
         & 0x1f as ::core::ffi::c_int) as uint16;
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x5e5 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16) as ::core::ffi::c_int
         - 4096 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
         >= 0 as ::core::ffi::c_int
     {
@@ -1830,8 +1747,7 @@ pub unsafe fn Crocomire_Instr_16(
     game: &mut Game,
 ) -> *const uint16 {
     if Enemy_MoveRight_IgnoreSlopes(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16),
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
         (-(4 as ::core::ffi::c_int) as int16 as int32) << 16 as ::core::ffi::c_int,
         game,
     ) != 0
@@ -1840,8 +1756,7 @@ pub unsafe fn Crocomire_Instr_16(
         return addr_kCrocomire_Ilist_BF3C as ::core::ffi::c_int as uintptr_t as *const uint16;
     } else {
         let mut v2: uint16 = 32 as uint16;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x5e5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16) as ::core::ffi::c_int
             - 2048 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             == 0
@@ -1851,9 +1766,8 @@ pub unsafe fn Crocomire_Instr_16(
         return Crocomire_Func_87(
             jp,
             (v2 as ::core::ffi::c_int
-                + (*((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x5e5 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
+                + (*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
+                    as ::core::ffi::c_int
                     & 0xf as ::core::ffi::c_int)) as uint16,
             game,
         );
@@ -1868,13 +1782,12 @@ pub unsafe fn Crocomire_Instr_13(
     if (((*E).base.x_pos as ::core::ffi::c_int
         - (*E).base.x_width as ::core::ffi::c_int
         - 260 as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
+        - *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16) as ::core::ffi::c_int)
+        as int16 as ::core::ffi::c_int)
         < 0 as ::core::ffi::c_int
     {
         Enemy_MoveRight_IgnoreSlopes(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-                as *mut uint16),
+            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
             (4 as ::core::ffi::c_int as int16 as int32) << 16 as ::core::ffi::c_int,
             game,
         );
@@ -1918,11 +1831,9 @@ pub unsafe fn Crocomire_Func_49(game: &mut Game) {
         QueueMusic_Delayed8(6 as uint16, game);
         (*E).crocom_var_A = 88 as uint16;
         (*E).base.current_instruction = addr_kCrocomire_Ilist_E1D2 as ::core::ffi::c_int as uint16;
-        *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xcd20 as ::core::ffi::c_int as isize)
-            .offset(4 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) = 257 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x5f7 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xcd20).offset(4) as *mut uint8
+            as *mut uint16) = 257 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x5f7) as *mut uint16) = 0 as uint16;
         let fresh12 = &raw mut (*Get_Crocomire(0x40 as ::core::ffi::c_int, game))
             .base
             .properties;
@@ -1938,10 +1849,8 @@ pub unsafe fn Crocomire_Func_49(game: &mut Game) {
             },
             game,
         );
-        *((&raw mut game.g_ram as *mut uint8).offset(0x941 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x688 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x941) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x688) as *mut uint16) = 0 as uint16;
     }
 }
 pub unsafe fn Crocomire_Func_50(game: &mut Game) {
@@ -1989,25 +1898,21 @@ pub unsafe fn Crocomire_Func_51(game: &mut Game) {
     Crocomire_Func_55(game);
 }
 pub unsafe fn Crocomire_Func_52(game: &mut Game) {
-    let mut v0: uint16 = *(((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9015 as ::core::ffi::c_int as isize) as *mut uint16
+    let mut v0: uint16 = *(((&raw mut game.g_ram as *mut uint8).offset(0x9015) as *mut uint16
         as *mut uint8)
-        .offset(1 as ::core::ffi::c_int as isize) as *mut uint16);
-    if *(((&raw mut game.g_ram as *mut uint8).offset(0x9015 as ::core::ffi::c_int as isize)
-        as *mut uint16 as *mut uint8)
-        .offset(1 as ::core::ffi::c_int as isize) as *mut uint16) as ::core::ffi::c_int
+        .offset(1) as *mut uint16);
+    if *(((&raw mut game.g_ram as *mut uint8).offset(0x9015) as *mut uint16 as *mut uint8).offset(1)
+        as *mut uint16) as ::core::ffi::c_int
         - 22 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0
     {
-        let mut v1: uint16 =
-            *(((&raw mut game.g_ram as *mut uint8).offset(0x9015 as ::core::ffi::c_int as isize)
-                as *mut uint16 as *mut uint8)
-                .offset(1 as ::core::ffi::c_int as isize) as *mut uint16);
-        let ref mut fresh17 =
-            *(((&raw mut game.g_ram as *mut uint8).offset(0x9015 as ::core::ffi::c_int as isize)
-                as *mut uint16 as *mut uint8)
-                .offset(1 as ::core::ffi::c_int as isize) as *mut uint16);
+        let mut v1: uint16 = *(((&raw mut game.g_ram as *mut uint8).offset(0x9015) as *mut uint16
+            as *mut uint8)
+            .offset(1) as *mut uint16);
+        let ref mut fresh17 = *(((&raw mut game.g_ram as *mut uint8).offset(0x9015) as *mut uint16
+            as *mut uint8)
+            .offset(1) as *mut uint16);
         *fresh17 = (*fresh17 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
         SpawnEprojWithGfx(
             *(game.g_rom.offset(
@@ -2025,18 +1930,14 @@ pub unsafe fn Crocomire_Func_52(game: &mut Game) {
     Crocomire_Func_54(game);
 }
 pub unsafe fn Crocomire_Func_53(game: &mut Game) {
-    let ref mut fresh9 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9018 as ::core::ffi::c_int as isize) as *mut uint16);
+    let ref mut fresh9 = *((&raw mut game.g_ram as *mut uint8).offset(0x9018) as *mut uint16);
     *fresh9 = (*fresh9).wrapping_sub(1);
     if *fresh9 == 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9018 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 6 as uint16;
-        let mut v0: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x5e5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        *((&raw mut game.g_ram as *mut uint8).offset(0x9018) as *mut uint16) = 6 as uint16;
+        let mut v0: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
+            as ::core::ffi::c_int
             & 0x3f as ::core::ffi::c_int) as uint16;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x5e5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16) as ::core::ffi::c_int
             & 2 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
         {
@@ -2045,12 +1946,11 @@ pub unsafe fn Crocomire_Func_53(game: &mut Game) {
         let mut x: uint16 = ((*Get_Crocomire(0 as ::core::ffi::c_int, game)).base.x_pos
             as ::core::ffi::c_int
             + v0 as ::core::ffi::c_int) as uint16;
-        let mut y: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x1962 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        let mut y: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
+            as ::core::ffi::c_int
             + 16 as ::core::ffi::c_int
-            - ((*((&raw mut game.g_ram as *mut uint8).offset(0x5e5 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            - ((*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
+                as ::core::ffi::c_int
                 & 0x1f00 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
                 >> 8 as ::core::ffi::c_int)) as uint16;
         CreateSpriteAtPos(x, y, 21 as uint16, 0 as uint16, game);
@@ -2073,13 +1973,11 @@ pub unsafe fn Crocomire_Func_55(game: &mut Game) {
     (*E0).crocom_var_B =
         ((*E0).crocom_var_B as ::core::ffi::c_int & !(0x800 as ::core::ffi::c_int)) as uint16;
     Crocomire_Func_27(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16),
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
         game,
     );
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     if (*E).base.y_pos as ::core::ffi::c_int - 280 as ::core::ffi::c_int
@@ -2087,14 +1985,13 @@ pub unsafe fn Crocomire_Func_55(game: &mut Game) {
         != 0
     {
         let mut v3: uint16 = (8 as ::core::ffi::c_int
-            * (*((&raw mut game.g_ram as *mut uint8).offset(0xb7 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            * (*((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16)
+                as ::core::ffi::c_int
                 + 288 as ::core::ffi::c_int
                 & 0xfff8 as ::core::ffi::c_int)) as uint16;
         let mut m: ::core::ffi::c_int = 32 as ::core::ffi::c_int;
         loop {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
                 .offset((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
                 824 as uint16;
             v3 = (v3 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
@@ -2103,12 +2000,11 @@ pub unsafe fn Crocomire_Func_55(game: &mut Game) {
                 break;
             }
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe1e as ::core::ffi::c_int as isize)
-            as *mut uint16) = 1 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe1e) as *mut uint16) = 1 as uint16;
         (*E0).base.extra_properties = ((*E0).base.extra_properties as ::core::ffi::c_int
             & !(0x8000 as ::core::ffi::c_int)) as uint16;
         crocom_var_D = (*E).crocom_var_D as int8;
-        *(&raw mut (*E).crocom_var_D as *mut uint8).offset(0 as ::core::ffi::c_int as isize) =
+        *(&raw mut (*E).crocom_var_D as *mut uint8).offset(0) =
             (crocom_var_D as ::core::ffi::c_int + 0x80 as ::core::ffi::c_int) as uint8;
         v7 = (__CFADD__uint8(crocom_var_D as uint8, 0x80 as uint8) as ::core::ffi::c_int
             + *(&raw mut (*E).crocom_var_D as *mut uint8).offset(
@@ -2126,11 +2022,10 @@ pub unsafe fn Crocomire_Func_55(game: &mut Game) {
                 .wrapping_sub(1 as usize) as isize,
         ) = v7 as uint8;
         let mut v8: bool = __CFADD__uint8(
-            *(&raw mut (*E).crocom_var_E as *mut uint8).offset(0 as ::core::ffi::c_int as isize),
+            *(&raw mut (*E).crocom_var_E as *mut uint8).offset(0),
             v7 as uint8,
         );
-        let ref mut fresh13 =
-            *(&raw mut (*E).crocom_var_E as *mut uint8).offset(0 as ::core::ffi::c_int as isize);
+        let ref mut fresh13 = *(&raw mut (*E).crocom_var_E as *mut uint8).offset(0);
         *fresh13 = (*fresh13 as ::core::ffi::c_int + v7 as ::core::ffi::c_int) as uint8;
         v9 = (v8 as ::core::ffi::c_int
             + *(&raw mut (*E).crocom_var_E as *mut uint8).offset(
@@ -2171,12 +2066,11 @@ pub unsafe fn Crocomire_Func_55(game: &mut Game) {
         v12 = (v13 as ::core::ffi::c_int + crocom_var_E_high as ::core::ffi::c_int) as int8;
         v8 = (v8 as ::core::ffi::c_int
             | __CFADD__uint8(
-                *(&raw mut (*E).base.y_pos as *mut uint8).offset(0 as ::core::ffi::c_int as isize),
+                *(&raw mut (*E).base.y_pos as *mut uint8).offset(0),
                 v12 as uint8,
             ) as ::core::ffi::c_int)
             != 0;
-        let ref mut fresh15 =
-            *(&raw mut (*E).base.y_pos as *mut uint8).offset(0 as ::core::ffi::c_int as isize);
+        let ref mut fresh15 = *(&raw mut (*E).base.y_pos as *mut uint8).offset(0);
         *fresh15 = (*fresh15 as ::core::ffi::c_int + v12 as ::core::ffi::c_int) as uint8;
         let ref mut fresh16 = *(&raw mut (*E).base.y_pos as *mut uint8).offset(
             (::core::mem::size_of::<uint16>() as usize)
@@ -2192,8 +2086,7 @@ pub unsafe fn Crocomire_Func_55(game: &mut Game) {
 }
 pub unsafe fn Crocomire_Func_56(game: &mut Game) {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     let mut y_pos: uint16 = (*E).base.y_pos;
@@ -2220,8 +2113,7 @@ pub unsafe fn Crocomire_Func_56(game: &mut Game) {
 pub unsafe fn Crocomire_929E(game: &mut Game) {
     Crocomire_Func_53(game);
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     let mut y_pos: uint16 = (*E).base.y_pos;
@@ -2254,8 +2146,7 @@ pub unsafe fn Crocomire_92D8(game: &mut Game) {
     let mut v6: int8 = 0;
     Crocomire_Func_58(game);
     let mut EK: *mut Enemy_Crocomire = Get_Crocomire(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     if (*EK).base.y_pos as ::core::ffi::c_int - 218 as ::core::ffi::c_int
@@ -2266,8 +2157,7 @@ pub unsafe fn Crocomire_92D8(game: &mut Game) {
         (*EK).crocom_var_A = (*EK).crocom_var_A.wrapping_add(1);
     } else {
         Crocomire_Func_27(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-                as *mut uint16),
+            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
             game,
         );
         let mut E0: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int, game);
@@ -2286,7 +2176,7 @@ pub unsafe fn Crocomire_92D8(game: &mut Game) {
                     .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                     .wrapping_sub(1 as usize) as isize,
             ) as ::core::ffi::c_int;
-        *(&raw mut (*E0).crocom_var_E as *mut uint8).offset(0 as ::core::ffi::c_int as isize) =
+        *(&raw mut (*E0).crocom_var_E as *mut uint8).offset(0) =
             (crocom_var_E as ::core::ffi::c_int
                 - *(&raw mut (*E0).crocom_var_D as *mut uint8).offset(
                     (::core::mem::size_of::<uint16>() as usize)
@@ -2300,7 +2190,7 @@ pub unsafe fn Crocomire_92D8(game: &mut Game) {
         ) as ::core::ffi::c_int
             - v5 as ::core::ffi::c_int) as int8;
         if (v6 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
-            *(&raw mut (*E0).crocom_var_E as *mut uint8).offset(0 as ::core::ffi::c_int as isize) =
+            *(&raw mut (*E0).crocom_var_E as *mut uint8).offset(0) =
                 -(1 as ::core::ffi::c_int) as uint8;
             v6 = 0 as int8;
         }
@@ -2315,15 +2205,14 @@ pub unsafe fn Crocomire_92D8(game: &mut Game) {
                 .wrapping_sub(1 as usize) as isize,
         );
         v5 = (crocom_var_F_high as ::core::ffi::c_int)
-            < *(&raw mut (*E0).crocom_var_E as *mut uint8).offset(0 as ::core::ffi::c_int as isize)
-                as ::core::ffi::c_int;
+            < *(&raw mut (*E0).crocom_var_E as *mut uint8).offset(0) as ::core::ffi::c_int;
         *(&raw mut (*E0).crocom_var_F as *mut uint8).offset(
             (::core::mem::size_of::<uint16>() as usize)
                 .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                 .wrapping_sub(1 as usize) as isize,
         ) = (crocom_var_F_high as ::core::ffi::c_int
-            - *(&raw mut (*E0).crocom_var_E as *mut uint8).offset(0 as ::core::ffi::c_int as isize)
-                as ::core::ffi::c_int) as uint8;
+            - *(&raw mut (*E0).crocom_var_E as *mut uint8).offset(0) as ::core::ffi::c_int)
+            as uint8;
         let mut y_pos: uint8 = (*E0).base.y_pos as uint8;
         let mut v9: uint8 = (v5 as ::core::ffi::c_int
             + *(&raw mut (*E0).crocom_var_E as *mut uint8).offset(
@@ -2331,7 +2220,7 @@ pub unsafe fn Crocomire_92D8(game: &mut Game) {
                     .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                     .wrapping_sub(1 as usize) as isize,
             ) as ::core::ffi::c_int) as uint8;
-        *(&raw mut (*E0).base.y_pos as *mut uint8).offset(0 as ::core::ffi::c_int as isize) =
+        *(&raw mut (*E0).base.y_pos as *mut uint8).offset(0) =
             (y_pos as ::core::ffi::c_int - v9 as ::core::ffi::c_int) as uint8;
         let ref mut fresh7 = *(&raw mut (*E0).base.y_pos as *mut uint8).offset(
             (::core::mem::size_of::<uint16>() as usize)
@@ -2345,23 +2234,19 @@ pub unsafe fn Crocomire_92D8(game: &mut Game) {
 }
 pub unsafe fn Crocomire_Func_57(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 0;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x68c as ::core::ffi::c_int as isize) = 48 as uint8;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x688 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 48 as uint16;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x68c) = 48 as uint8;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x688) as *mut uint16) = 48 as uint16;
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     (*E).crocom_var_A = (*E).crocom_var_A.wrapping_add(1);
     (*E).crocom_var_A = (*E).crocom_var_A.wrapping_add(1);
     (*E).base.current_instruction = addr_kCrocomire_Ilist_BF64 as ::core::ffi::c_int as uint16;
     (*E).base.instruction_timer = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xe1e as ::core::ffi::c_int as isize)
-        as *mut uint16) = 1 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xe1e) as *mut uint16) = 1 as uint16;
     let mut E1: *mut Enemy_Crocomire = Get_Crocomire(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int,
         game,
     );
@@ -2375,11 +2260,9 @@ pub unsafe fn Crocomire_Func_57(game: &mut Game) {
     let mut v3: uint16 = 0 as uint16;
     loop {
         let mut v4: ::core::ffi::c_int = v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v4 as isize) = 824 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(v4 as isize) =
+            824 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
             .offset((v4 + 1 as ::core::ffi::c_int) as isize) = 824 as uint16;
         v3 = (v3 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
         if !(((v3 as ::core::ffi::c_int - 1024 as ::core::ffi::c_int) as int16
@@ -2403,8 +2286,7 @@ pub unsafe fn Crocomire_Func_57(game: &mut Game) {
         {
             break;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
             .offset((v6 + 32 as ::core::ffi::c_int) as isize) = *(game.g_rom.offset(
             (((0xa49c79 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                 << 15 as ::core::ffi::c_int
@@ -2419,30 +2301,25 @@ pub unsafe fn Crocomire_Func_57(game: &mut Game) {
 }
 pub unsafe fn Crocomire_93BE(mut k: uint16, game: &mut Game) {
     let mut v3: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
-    let mut v2: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v2: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
     v3 = gVramWriteEntry(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     (*v3).size = k;
     (*v3).src.addr = 0x2000 as VoidP;
     *(&raw mut (*v3).src.bank as *mut uint16) = 126 as uint16;
-    (*v3).vram_dst = ((*(&raw mut game.g_ram as *mut uint8)
-        .offset(0x59 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
+    (*v3).vram_dst = ((*(&raw mut game.g_ram as *mut uint8).offset(0x59) as ::core::ffi::c_int
         & 0xfc as ::core::ffi::c_int)
         << 8 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (v2 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) =
+        (v2 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn Crocomire_Func_58(game: &mut Game) {
-    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb7 as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16);
     let mut i: ::core::ffi::c_int = 510 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xcaf0 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xcaf0) as *mut uint16)
             .offset((i >> 1 as ::core::ffi::c_int) as isize) = v0;
         i -= 2 as ::core::ffi::c_int;
     }
@@ -2451,21 +2328,18 @@ pub unsafe fn Crocomire_Func_59(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 0;
     Crocomire_Func_58(game);
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     (*E).crocom_var_A = (*E).crocom_var_A.wrapping_add(1);
     (*E).crocom_var_A = (*E).crocom_var_A.wrapping_add(1);
     (*E).base.instruction_timer = 1 as uint16;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x68c as ::core::ffi::c_int as isize) = 48 as uint8;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x688 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 48 as uint16;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x68c) = 48 as uint8;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x688) as *mut uint16) = 48 as uint16;
     (*E).base.current_instruction = addr_kCrocomire_Ilist_BF7E as ::core::ffi::c_int as uint16;
     let mut v1: uint16 = 0 as uint16;
     loop {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
             .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 824 as uint16;
         v1 = (v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
         if !(((v1 as ::core::ffi::c_int - 2048 as ::core::ffi::c_int) as int16
@@ -2489,8 +2363,7 @@ pub unsafe fn Crocomire_Func_59(game: &mut Game) {
         {
             break;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
             .offset((v3 + 32 as ::core::ffi::c_int) as isize) = *(game.g_rom.offset(
             (((0xa49e7b as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                 << 15 as ::core::ffi::c_int
@@ -2506,61 +2379,59 @@ pub unsafe fn Crocomire_Func_59(game: &mut Game) {
 pub unsafe fn Crocomire_Func_60(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 0;
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     (*E).crocom_var_A =
         ((*E).crocom_var_A as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x692 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 256 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x690 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x698 as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((game.g_rom.offset(
-        (((0xa49bc5 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xa49bc5 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16 as *mut uint8)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x69a as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int as isize,
-        ) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x694 as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x698 as ::core::ffi::c_int as isize) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x696 as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((game.g_rom.offset(
-        (((0xa49bc7 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xa49bc7 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16 as *mut uint8)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x69a as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int as isize,
-        ) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x68e as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((game.g_rom.offset(
-        (((0xa49bc9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xa49bc9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16 as *mut uint8)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x69a as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int as isize,
-        ) as *mut uint16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0x692) as *mut uint16) = 256 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x690) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x698) as *mut uint16) =
+        *((game.g_rom.offset(
+            (((0xa49bc5 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                << 15 as ::core::ffi::c_int
+                | 0xa49bc5 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                & 0x3fffff as ::core::ffi::c_int) as isize,
+        ) as *const uint8 as *mut uint16 as *mut uint8)
+            .offset(
+                *((&raw mut game.g_ram as *mut uint8).offset(0x69a) as *mut uint16)
+                    as ::core::ffi::c_int as isize,
+            ) as *mut uint16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0x694) as *mut uint16) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0x698) as *mut uint16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0x696) as *mut uint16) =
+        *((game.g_rom.offset(
+            (((0xa49bc7 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                << 15 as ::core::ffi::c_int
+                | 0xa49bc7 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                & 0x3fffff as ::core::ffi::c_int) as isize,
+        ) as *const uint8 as *mut uint16 as *mut uint8)
+            .offset(
+                *((&raw mut game.g_ram as *mut uint8).offset(0x69a) as *mut uint16)
+                    as ::core::ffi::c_int as isize,
+            ) as *mut uint16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0x68e) as *mut uint16) =
+        *((game.g_rom.offset(
+            (((0xa49bc9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                << 15 as ::core::ffi::c_int
+                | 0xa49bc9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                & 0x3fffff as ::core::ffi::c_int) as isize,
+        ) as *const uint8 as *mut uint16 as *mut uint8)
+            .offset(
+                *((&raw mut game.g_ram as *mut uint8).offset(0x69a) as *mut uint16)
+                    as ::core::ffi::c_int as isize,
+            ) as *mut uint16);
     let mut bank: uint8 = *((game.g_rom.offset(
         (((0xa49bcb as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0xa49bcb as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
             & 0x3fffff as ::core::ffi::c_int) as isize,
     ) as *const uint8 as *mut uint16 as *mut uint8)
         .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x69a as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int as isize,
+            *((&raw mut game.g_ram as *mut uint8).offset(0x69a) as *mut uint16)
+                as ::core::ffi::c_int as isize,
         ) as *mut uint16) as uint8;
     let mut v6: uint16 = 0;
-    i = *((&raw mut game.g_ram as *mut uint8).offset(0x69a as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    i = *((&raw mut game.g_ram as *mut uint8).offset(0x69a) as *mut uint16) as ::core::ffi::c_int
         + 8 as ::core::ffi::c_int;
     loop {
         let mut v2: uint16 = *((game.g_rom.offset(
@@ -2581,8 +2452,7 @@ pub unsafe fn Crocomire_Func_60(game: &mut Game) {
                 & 0x3fffff as ::core::ffi::c_int) as isize,
         ) as *const uint8 as *mut uint16 as *mut uint8)
             .offset(i as isize) as *mut uint16);
-        let mut n: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x68e as ::core::ffi::c_int as isize)
+        let mut n: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x68e)
             as *mut uint16) as ::core::ffi::c_int;
         loop {
             *((&raw mut game.g_ram as *mut uint8).offset(v3 as isize) as *mut uint8
@@ -2596,14 +2466,14 @@ pub unsafe fn Crocomire_Func_60(game: &mut Game) {
         }
         i = v6 as ::core::ffi::c_int + 4 as ::core::ffi::c_int;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x69a as ::core::ffi::c_int as isize)
-        as *mut uint16) = (i + 2 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x68a as ::core::ffi::c_int as isize)
-        as *mut uint16) = (i + 2 as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x69a) as *mut uint16) =
+        (i + 2 as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x68a) as *mut uint16) =
+        (i + 2 as ::core::ffi::c_int) as uint16;
     let mut j: ::core::ffi::c_int = 128 as ::core::ffi::c_int;
     while j >= 0 as ::core::ffi::c_int {
         *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x69c as ::core::ffi::c_int as isize)
+            .offset(0x69c)
             .offset(j as uint16 as isize) as *mut uint8 as *mut uint16) = 0 as uint16;
         j -= 2 as ::core::ffi::c_int;
     }
@@ -2613,34 +2483,31 @@ pub unsafe fn Crocomire_Func_61(game: &mut Game) {
 }
 pub unsafe fn Crocomire_Func_62(game: &mut Game) {
     let mut v2: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
-    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x68a as ::core::ffi::c_int as isize) as *mut uint16);
-    let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x68a) as *mut uint16);
+    let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
     if *((game.g_rom.offset(
         (((0xa49bc5 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0xa49bc5 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
             & 0x3fffff as ::core::ffi::c_int) as isize,
     ) as *const uint8 as *mut uint16 as *mut uint8)
         .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x68a as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int as isize,
+            *((&raw mut game.g_ram as *mut uint8).offset(0x68a) as *mut uint16)
+                as ::core::ffi::c_int as isize,
         ) as *mut uint16) as ::core::ffi::c_int
         == 0xffff as ::core::ffi::c_int
     {
         let mut E: *mut Enemy_Crocomire = Get_Crocomire(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int,
+            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
+                as ::core::ffi::c_int,
             game,
         );
         (*E).crocom_var_A = (*E).crocom_var_A.wrapping_add(1);
         (*E).crocom_var_A = (*E).crocom_var_A.wrapping_add(1);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x68a as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x68a) as *mut uint16) = 0 as uint16;
     } else {
         v2 = gVramWriteEntry(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int,
+            *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16)
+                as ::core::ffi::c_int,
             game,
         );
         (*v2).size = *((game.g_rom.offset(
@@ -2650,8 +2517,8 @@ pub unsafe fn Crocomire_Func_62(game: &mut Game) {
                 & 0x3fffff as ::core::ffi::c_int) as isize,
         ) as *const uint8 as *mut uint16 as *mut uint8)
             .offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x68a as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int as isize,
+                *((&raw mut game.g_ram as *mut uint8).offset(0x68a) as *mut uint16)
+                    as ::core::ffi::c_int as isize,
             ) as *mut uint16);
         (*v2).src.addr = *((game.g_rom.offset(
             (((0xa49bcb as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -2676,10 +2543,10 @@ pub unsafe fn Crocomire_Func_62(game: &mut Game) {
                 & 0x3fffff as ::core::ffi::c_int) as isize,
         ) as *const uint8 as *mut uint16 as *mut uint8)
             .offset(v0 as ::core::ffi::c_int as isize) as *mut uint16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x68a as ::core::ffi::c_int as isize)
-            as *mut uint16) = (v0 as ::core::ffi::c_int + 8 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-            as *mut uint16) = (v1 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x68a) as *mut uint16) =
+            (v0 as ::core::ffi::c_int + 8 as ::core::ffi::c_int) as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) =
+            (v1 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
     };
 }
 pub unsafe fn Crocomire_Func_64(game: &mut Game) {
@@ -2702,11 +2569,9 @@ pub unsafe fn Crocomire_950F(game: &mut Game) {
             .base
             .y_pos as ::core::ffi::c_int
             - 72 as ::core::ffi::c_int)) as uint16;
-    let mut v2: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb7 as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v2: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16);
     loop {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xcaf0 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xcaf0) as *mut uint16)
             .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = v2;
         v1 = (v1 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
         if !(v1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int) {
@@ -2714,30 +2579,22 @@ pub unsafe fn Crocomire_950F(game: &mut Game) {
         }
     }
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     (*E).crocom_var_A = (*E).crocom_var_A.wrapping_add(1);
     (*E).crocom_var_A = (*E).crocom_var_A.wrapping_add(1);
     v4 = Get_Crocomire(0 as ::core::ffi::c_int, game);
     (*Get_Crocomire(0x80 as ::core::ffi::c_int, game)).crocom_var_D = (*v4).base.x_pos;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xcae0 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 255 as uint16;
-    *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xcae0 as ::core::ffi::c_int as isize)
-        .offset(1 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) =
+    *((&raw mut game.g_ram as *mut uint8).offset(0xcae0) as *mut uint16) = 255 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xcae0).offset(1) as *mut uint8 as *mut uint16) =
         -(13584 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xcae0 as ::core::ffi::c_int as isize)
-        .offset(3 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) = 225 as uint16;
-    *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xcae0 as ::core::ffi::c_int as isize)
-        .offset(4 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) =
+    *((&raw mut game.g_ram as *mut uint8).offset(0xcae0).offset(3) as *mut uint8 as *mut uint16) =
+        225 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xcae0).offset(4) as *mut uint8 as *mut uint16) =
         -(13330 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xcae0 as ::core::ffi::c_int as isize)
-        .offset(6 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xcae0).offset(6) as *mut uint8 as *mut uint16) =
+        0 as uint16;
     (*v4).crocom_var_1F = SpawnHdmaObject(
         0xa4 as uint8,
         &raw const unk_A49559 as *const ::core::ffi::c_void,
@@ -2746,8 +2603,7 @@ pub unsafe fn Crocomire_950F(game: &mut Game) {
 }
 pub unsafe fn Crocomire_Func_63(game: &mut Game) {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     (*E).crocom_var_A =
@@ -2770,22 +2626,20 @@ pub unsafe fn Crocomire_Func_65(game: &mut Game) {
     (*E0).base.x_pos = crocom_var_D;
     if !(Crocomire_Func_67(game) == 0) {
         Crocomire_Func_27(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-                as *mut uint16),
+            *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
             game,
         );
         v4 = 0;
-        v4 = (*((&raw mut game.g_ram as *mut uint8).offset(0x694 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        v4 = (*((&raw mut game.g_ram as *mut uint8).offset(0x694) as *mut uint16)
+            as ::core::ffi::c_int
             - 3 as ::core::ffi::c_int) as uint16;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x694 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x694) as *mut uint16) as ::core::ffi::c_int
             - 19 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             != 0
         {
-            if (*((&raw mut game.g_ram as *mut uint8).offset(0x692 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            if (*((&raw mut game.g_ram as *mut uint8).offset(0x692) as *mut uint16)
+                as ::core::ffi::c_int
                 - 20480 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
                 >= 0 as ::core::ffi::c_int
             {
@@ -2800,71 +2654,53 @@ pub unsafe fn Crocomire_Func_65(game: &mut Game) {
         match current_block {
             11812396948646013369 => {}
             _ => {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x694 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = v4;
-                let mut v5: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x692 as ::core::ffi::c_int as isize)
+                *((&raw mut game.g_ram as *mut uint8).offset(0x694) as *mut uint16) = v4;
+                let mut v5: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x692)
                     as *mut uint16) as ::core::ffi::c_int
                     + 384 as ::core::ffi::c_int) as uint16;
-                if *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x692 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
+                if *((&raw mut game.g_ram as *mut uint8).offset(0x692) as *mut uint16)
+                    as ::core::ffi::c_int
                     - 20096 as ::core::ffi::c_int
                     & 0x8000 as ::core::ffi::c_int
                     == 0
                 {
                     v5 = 20480 as uint16;
                 }
-                *((&raw mut game.g_ram as *mut uint8).offset(0x692 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = v5;
+                *((&raw mut game.g_ram as *mut uint8).offset(0x692) as *mut uint16) = v5;
                 let mut r18: uint16 = 0 as uint16;
                 let mut v6: uint16 = (2 as ::core::ffi::c_int
                     * ((*E1).base.y_pos as ::core::ffi::c_int - 72 as ::core::ffi::c_int))
                     as uint16;
-                let mut v7: uint16 = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x694 as ::core::ffi::c_int as isize)
-                    as *mut uint16);
-                *((&raw mut game.g_ram as *mut uint8).offset(0x5a6 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x694 as ::core::ffi::c_int as isize)
-                    as *mut uint16);
+                let mut v7: uint16 =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0x694) as *mut uint16);
+                *((&raw mut game.g_ram as *mut uint8).offset(0x5a6) as *mut uint16) =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0x694) as *mut uint16);
                 loop {
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xcaf0 as ::core::ffi::c_int as isize)
-                        as *mut uint16)
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xcaf0) as *mut uint16)
                         .offset((v6 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-                        (*((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xb7 as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int
+                        (*((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16)
+                            as ::core::ffi::c_int
                             + v7 as ::core::ffi::c_int
-                            - *((&raw mut game.g_ram as *mut uint8)
-                                .offset(0x5a6 as ::core::ffi::c_int as isize)
-                                as *mut uint16) as ::core::ffi::c_int)
-                            as uint16;
+                            - *((&raw mut game.g_ram as *mut uint8).offset(0x5a6) as *mut uint16)
+                                as ::core::ffi::c_int) as uint16;
                     let mut v8: bool = __CFADD__uint16(
-                        *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x692 as ::core::ffi::c_int as isize)
-                            as *mut uint16),
+                        *((&raw mut game.g_ram as *mut uint8).offset(0x692) as *mut uint16),
                         r18,
                     );
                     r18 = (r18 as ::core::ffi::c_int
-                        + *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x692 as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int)
-                        as uint16;
+                        + *((&raw mut game.g_ram as *mut uint8).offset(0x692) as *mut uint16)
+                            as ::core::ffi::c_int) as uint16;
                     if !v8 {
                         v7 = v7.wrapping_add(1);
                     }
-                    let ref mut fresh18 = *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x5a6 as ::core::ffi::c_int as isize)
-                        as *mut uint16);
+                    let ref mut fresh18 =
+                        *((&raw mut game.g_ram as *mut uint8).offset(0x5a6) as *mut uint16);
                     *fresh18 = (*fresh18).wrapping_add(1);
                     v6 = (v6 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
                     if !(((v7 as ::core::ffi::c_int
-                        - *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x698 as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int)
-                        as int16 as ::core::ffi::c_int)
+                        - *((&raw mut game.g_ram as *mut uint8).offset(0x698) as *mut uint16)
+                            as ::core::ffi::c_int) as int16
+                        as ::core::ffi::c_int)
                         < 0 as ::core::ffi::c_int)
                     {
                         break;
@@ -2874,13 +2710,10 @@ pub unsafe fn Crocomire_Func_65(game: &mut Game) {
                     as ::core::ffi::c_int)
                     < 0 as ::core::ffi::c_int
                 {
-                    let mut v9: uint16 = *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xb7 as ::core::ffi::c_int as isize)
-                        as *mut uint16);
+                    let mut v9: uint16 =
+                        *((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16);
                     loop {
-                        *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xcaf0 as ::core::ffi::c_int as isize)
-                            as *mut uint16)
+                        *((&raw mut game.g_ram as *mut uint8).offset(0xcaf0) as *mut uint16)
                             .offset(
                                 (v6 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
                             ) = v9;
@@ -2898,14 +2731,12 @@ pub unsafe fn Crocomire_Func_65(game: &mut Game) {
         }
     }
     let mut EK: *mut Enemy_Crocomire = Get_Crocomire(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     (*EK).crocom_var_A =
         ((*EK).crocom_var_A as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
-    i = *((&raw mut game.g_ram as *mut uint8).offset(0x69a as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int;
+    i = *((&raw mut game.g_ram as *mut uint8).offset(0x69a) as *mut uint16) as ::core::ffi::c_int;
     while *((game.g_rom.offset(
         (((0xa49bc5 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0xa49bc5 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -2916,18 +2747,16 @@ pub unsafe fn Crocomire_Func_65(game: &mut Game) {
     {
         i += 8 as ::core::ffi::c_int;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x69a as ::core::ffi::c_int as isize)
-        as *mut uint16) = (i + 2 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x18b4 as ::core::ffi::c_int as isize)
-        as *mut uint16)
+    *((&raw mut game.g_ram as *mut uint8).offset(0x69a) as *mut uint16) =
+        (i + 2 as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x18b4) as *mut uint16)
         .offset(((*E0).crocom_var_1F as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         0 as uint16;
 }
 pub unsafe fn Crocomire_Func_66(game: &mut Game) {
     let mut v3: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     (*E).crocom_var_E = 0 as uint16;
@@ -2935,27 +2764,23 @@ pub unsafe fn Crocomire_Func_66(game: &mut Game) {
     (*E).crocom_var_D = 2048 as uint16;
     let mut i: ::core::ffi::c_int = 4094 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
             .offset((i >> 1 as ::core::ffi::c_int) as isize) = 824 as uint16;
         i -= 2 as ::core::ffi::c_int;
     }
-    let mut v2: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v2: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
     v3 = gVramWriteEntry(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     (*v3).size = 2048 as uint16;
     (*v3).src.addr = 0x2000 as VoidP;
     *(&raw mut (*v3).src.bank as *mut uint16) = 126 as uint16;
-    (*v3).vram_dst = ((*(&raw mut game.g_ram as *mut uint8)
-        .offset(0x59 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
+    (*v3).vram_dst = ((*(&raw mut game.g_ram as *mut uint8).offset(0x59) as ::core::ffi::c_int
         & 0xfe as ::core::ffi::c_int)
         << 8 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (v2 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) =
+        (v2 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
     Crocomire_9BB3(game);
 }
 static kCrocoEraseLineMasks: [uint8; 8] = [
@@ -2969,12 +2794,10 @@ static kCrocoEraseLineMasks: [uint8; 8] = [
     0xfe as ::core::ffi::c_int as uint8,
 ];
 pub unsafe fn Crocomire_Func_67(game: &mut Game) -> uint16 {
-    let mut n: ::core::ffi::c_int = *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x68c as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int;
+    let mut n: ::core::ffi::c_int =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x68c) as ::core::ffi::c_int;
     loop {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x690 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x690) as *mut uint16) as ::core::ffi::c_int
             > 48 as ::core::ffi::c_int
         {
             return 1 as uint16;
@@ -2985,32 +2808,26 @@ pub unsafe fn Crocomire_Func_67(game: &mut Game) -> uint16 {
                 | 0xa49697 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
                 & 0x3fffff as ::core::ffi::c_int) as isize,
         ) as *const uint8 as *mut uint8)
-            .offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x690 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
-            ) as ::core::ffi::c_int;
+            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x690) as *mut uint16) as isize)
+            as ::core::ffi::c_int;
         if ((*(&raw mut game.g_ram as *mut uint8)
-            .offset(0x69c as ::core::ffi::c_int as isize)
+            .offset(0x69c)
             .offset(rr as isize) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x688 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as int8 as ::core::ffi::c_int)
+            - *((&raw mut game.g_ram as *mut uint8).offset(0x688) as *mut uint16)
+                as ::core::ffi::c_int) as int8 as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int
         {
             break;
         }
-        let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x690 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0x690) as *mut uint16);
         *fresh0 = (*fresh0).wrapping_add(1);
         if *fresh0 as ::core::ffi::c_int >= 128 as ::core::ffi::c_int {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x690 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x690) as *mut uint16) = 0 as uint16;
             return 0 as uint16;
         }
     }
     '_c2rust_label: {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x690 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x690) as *mut uint16) as ::core::ffi::c_int
             <= 48 as ::core::ffi::c_int
         {
         } else {
@@ -3027,52 +2844,46 @@ pub unsafe fn Crocomire_Func_67(game: &mut Game) -> uint16 {
             | 0xa49697 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
             & 0x3fffff as ::core::ffi::c_int) as isize,
     ) as *const uint8 as *mut uint8)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x690 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as ::core::ffi::c_int;
+        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x690) as *mut uint16) as isize)
+        as ::core::ffi::c_int;
     let mut mask: uint8 = kCrocoEraseLineMasks[(vline_idx & 7 as ::core::ffi::c_int) as usize];
     loop {
         let mut q: ::core::ffi::c_int = *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x69c as ::core::ffi::c_int as isize)
+            .offset(0x69c)
             .offset(vline_idx as isize)
             as ::core::ffi::c_int;
         let mut j: ::core::ffi::c_int = 2 as ::core::ffi::c_int * (q & 7 as ::core::ffi::c_int)
             + ((q & !(7 as ::core::ffi::c_int)) << 6 as ::core::ffi::c_int)
             + 4 as ::core::ffi::c_int * (vline_idx & !(7 as ::core::ffi::c_int));
-        let ref mut fresh1 = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x4000 as ::core::ffi::c_int as isize)
+        let ref mut fresh1 = (*((&raw mut game.g_ram as *mut uint8).offset(0x4000)
             as *mut Ram4000))
             .backups
             .field_0[(j + 0 as ::core::ffi::c_int) as usize];
         *fresh1 = (*fresh1 as ::core::ffi::c_int & mask as ::core::ffi::c_int) as uint8;
-        let ref mut fresh2 = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x4000 as ::core::ffi::c_int as isize)
+        let ref mut fresh2 = (*((&raw mut game.g_ram as *mut uint8).offset(0x4000)
             as *mut Ram4000))
             .backups
             .field_0[(j + 1 as ::core::ffi::c_int) as usize];
         *fresh2 = (*fresh2 as ::core::ffi::c_int & mask as ::core::ffi::c_int) as uint8;
-        let ref mut fresh3 = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x4000 as ::core::ffi::c_int as isize)
+        let ref mut fresh3 = (*((&raw mut game.g_ram as *mut uint8).offset(0x4000)
             as *mut Ram4000))
             .backups
             .field_0[(j + 16 as ::core::ffi::c_int) as usize];
         *fresh3 = (*fresh3 as ::core::ffi::c_int & mask as ::core::ffi::c_int) as uint8;
-        let ref mut fresh4 = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x4000 as ::core::ffi::c_int as isize)
+        let ref mut fresh4 = (*((&raw mut game.g_ram as *mut uint8).offset(0x4000)
             as *mut Ram4000))
             .backups
             .field_0[(j + 17 as ::core::ffi::c_int) as usize];
         *fresh4 = (*fresh4 as ::core::ffi::c_int & mask as ::core::ffi::c_int) as uint8;
         if *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x69c as ::core::ffi::c_int as isize)
+            .offset(0x69c)
             .offset(vline_idx as isize) as ::core::ffi::c_int
             == 48 as ::core::ffi::c_int
         {
             break;
         }
         let ref mut fresh5 = *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x69c as ::core::ffi::c_int as isize)
+            .offset(0x69c)
             .offset(vline_idx as isize);
         *fresh5 = (*fresh5).wrapping_add(1);
         n -= 1;
@@ -3083,12 +2894,11 @@ pub unsafe fn Crocomire_Func_67(game: &mut Game) -> uint16 {
     let mut v7: uint16 = 0;
     let mut v8: uint16 = 0;
     loop {
-        v7 = (*((&raw mut game.g_ram as *mut uint8).offset(0x68a as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0x69a as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16;
-        v8 = *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        v7 = (*((&raw mut game.g_ram as *mut uint8).offset(0x68a) as *mut uint16)
+            as ::core::ffi::c_int
+            + *((&raw mut game.g_ram as *mut uint8).offset(0x69a) as *mut uint16)
+                as ::core::ffi::c_int) as uint16;
+        v8 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
         if *((game.g_rom.offset(
             (((0xa49bc5 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                 << 15 as ::core::ffi::c_int
@@ -3101,12 +2911,10 @@ pub unsafe fn Crocomire_Func_67(game: &mut Game) -> uint16 {
         {
             break;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x68a as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x68a) as *mut uint16) = 0 as uint16;
     }
     let mut v9: *mut VramWriteEntry = gVramWriteEntry(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     (*v9).size = *((game.g_rom.offset(
@@ -3135,24 +2943,21 @@ pub unsafe fn Crocomire_Func_67(game: &mut Game) -> uint16 {
             & 0x3fffff as ::core::ffi::c_int) as isize,
     ) as *const uint8 as *mut uint16 as *mut uint8)
         .offset(v7 as ::core::ffi::c_int as isize) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (v8 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
-    let ref mut fresh6 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x68a as ::core::ffi::c_int as isize) as *mut uint16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) =
+        (v8 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
+    let ref mut fresh6 = *((&raw mut game.g_ram as *mut uint8).offset(0x68a) as *mut uint16);
     *fresh6 = (*fresh6 as ::core::ffi::c_int + 8 as ::core::ffi::c_int) as uint16;
     return 1 as uint16;
 }
 pub unsafe fn Crocomire_Func_68(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) as ::core::ffi::c_int
         - 640 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0
     {
         QueueMusic_Delayed8(5 as uint16, game);
-        *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xcd20 as ::core::ffi::c_int as isize)
-            .offset(3 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) = 256 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xcd20).offset(3) as *mut uint8
+            as *mut uint16) = 256 as uint16;
         SpawnHardcodedPlm(
             SpawnHardcodedPlmArgs {
                 field_0: 0x30 as uint8,
@@ -3161,8 +2966,7 @@ pub unsafe fn Crocomire_Func_68(game: &mut Game) {
             },
             game,
         );
-        *((&raw mut game.g_ram as *mut uint8).offset(0x941 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 6 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x941) as *mut uint16) = 6 as uint16;
         let mut E0: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int, game);
         (*E0).base.properties = ((*E0).base.properties as ::core::ffi::c_int
             & 0x7bff as ::core::ffi::c_int
@@ -3210,8 +3014,7 @@ pub unsafe fn Crocomire_Func_70(game: &mut Game) {
         (*E0).crocom_var_D = 128 as uint16;
         let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
         while i >= 0 as ::core::ffi::c_int {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
                 .offset(((i >> 1 as ::core::ffi::c_int) + 176 as ::core::ffi::c_int) as isize) =
                 *(game.g_rom.offset(
                     (((0xa4b91d as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -3310,10 +3113,8 @@ pub unsafe fn Crocomire_Func_71(game: &mut Game) {
     if crocom_var_D != 0 {
         (*E).crocom_var_D =
             (crocom_var_D as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16;
-        v3 = *((&raw mut game.g_ram as *mut uint8).offset(0x688 as ::core::ffi::c_int as isize)
-            as *mut uint16) as int16;
-        let mut v4: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x688 as ::core::ffi::c_int as isize)
+        v3 = *((&raw mut game.g_ram as *mut uint8).offset(0x688) as *mut uint16) as int16;
+        let mut v4: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x688)
             as *mut uint16) as ::core::ffi::c_int
             >> 1 as ::core::ffi::c_int;
         if *(game.g_rom.offset(
@@ -3325,12 +3126,11 @@ pub unsafe fn Crocomire_Func_71(game: &mut Game) {
             .offset(v4 as isize) as ::core::ffi::c_int
             != 0xffff as ::core::ffi::c_int
         {
-            let mut v5: uint16 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x330 as ::core::ffi::c_int as isize)
-                as *mut uint16);
+            let mut v5: uint16 =
+                *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
             v6 = gVramWriteEntry(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int,
+                *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16)
+                    as ::core::ffi::c_int,
                 game,
             );
             (*v6).size = 512 as uint16;
@@ -3349,14 +3149,13 @@ pub unsafe fn Crocomire_Func_71(game: &mut Game) {
                     & 0x3fffff as ::core::ffi::c_int) as isize,
             ) as *const uint8 as *mut uint16)
                 .offset(v4 as isize) as ::core::ffi::c_int
-                + ((*(&raw mut game.g_ram as *mut uint8).offset(0x52 as ::core::ffi::c_int as isize)
-                    as ::core::ffi::c_int
+                + ((*(&raw mut game.g_ram as *mut uint8).offset(0x52) as ::core::ffi::c_int
                     & 7 as ::core::ffi::c_int)
                     << 13 as ::core::ffi::c_int)) as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-                as *mut uint16) = (v5 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x688 as ::core::ffi::c_int as isize)
-                as *mut uint16) = (v3 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) =
+                (v5 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x688) as *mut uint16) =
+                (v3 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
         }
     } else {
         (*E).base.x_pos = 480 as uint16;
@@ -3394,8 +3193,7 @@ pub unsafe fn Crocomire_Func_71(game: &mut Game) {
         (*E).base.palette_index = 0 as uint16;
         let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
         while i >= 0 as ::core::ffi::c_int {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
                 .offset(((i >> 1 as ::core::ffi::c_int) + 144 as ::core::ffi::c_int) as isize) =
                 *(game.g_rom.offset(
                     (((0xa4b8fd as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -3412,8 +3210,7 @@ pub unsafe fn Crocomire_Func_71(game: &mut Game) {
         loop {
             SpawnEprojWithGfx(
                 v8,
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-                    as *mut uint16),
+                *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
                 addr_kEproj_CrocomireSpikeWallPieces as ::core::ffi::c_int as uint16,
                 game,
             );
@@ -3583,8 +3380,8 @@ pub unsafe fn Crocomire_Func_87(
     game.eproj_spawn_pt = Point16U {
         x: (a as ::core::ffi::c_int
             + (*E).base.x_pos as ::core::ffi::c_int
-            + (*((&raw mut game.g_ram as *mut uint8).offset(0x5e5 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            + (*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
+                as ::core::ffi::c_int
                 & 7 as ::core::ffi::c_int)) as uint16,
         y: ((*E).base.y_height as ::core::ffi::c_int + (*E).base.y_pos as ::core::ffi::c_int
             - 16 as ::core::ffi::c_int) as uint16,
@@ -3632,11 +3429,9 @@ pub unsafe fn Crocomire_Func_88(game: &mut Game) {
     };
 }
 pub unsafe fn Crocomire_9B65(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xcd20 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 257 as uint16;
-    *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xcd20 as ::core::ffi::c_int as isize)
-        .offset(2 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) = 257 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xcd20) as *mut uint16) = 257 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xcd20).offset(2) as *mut uint8 as *mut uint16) =
+        257 as uint16;
     SpawnHardcodedPlm(
         SpawnHardcodedPlmArgs {
             field_0: 0x1e as uint8,
@@ -3661,14 +3456,11 @@ pub unsafe fn Crocomire_Func_90(game: &mut Game) {
 }
 pub unsafe fn Crocomire_9B86(game: &mut Game) {
     QueueMusic_Delayed8(6 as uint16, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x941 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x941) as *mut uint16) = 0 as uint16;
     let ref mut fresh10 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xd828 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as *mut uint8 as *mut uint16);
+        .offset(0xd828)
+        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize)
+        as *mut uint8 as *mut uint16);
     *fresh10 = (*fresh10 as ::core::ffi::c_int | 2 as ::core::ffi::c_int) as uint16;
     QueueMusic_Delayed8(6 as uint16, game);
     Crocomire_Func_87(::core::ptr::null::<uint16>(), 0xfff0 as uint16, game);
@@ -3688,8 +3480,8 @@ pub unsafe fn Crocomire_Func_92(game: &mut Game) {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int, game);
     (*E).crocom_var_B =
         ((*E).crocom_var_B as ::core::ffi::c_int | 0x4000 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb58 as ::core::ffi::c_int as isize)
-        as *mut uint16) = -(4 as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16) =
+        -(4 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn Crocomire_Func_93(game: &mut Game) {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int, game);
@@ -3702,19 +3494,13 @@ pub unsafe fn Crocomire_Func_93(game: &mut Game) {
         ((*E).crocom_var_B as ::core::ffi::c_int | v1 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn Crocomire_Func_94(game: &mut Game) {
-    let mut v0: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x18a6 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int;
+    let mut v0: ::core::ffi::c_int =
+        *((&raw mut game.g_ram as *mut uint8).offset(0x18a6) as *mut uint16) as ::core::ffi::c_int;
     game.eproj_spawn_pt = Point16U {
-        x: *((&raw mut game.g_ram as *mut uint8).offset(0xb64 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v0 as isize),
-        y: *((&raw mut game.g_ram as *mut uint8).offset(0xb78 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v0 as isize),
+        x: *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v0 as isize),
+        y: *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v0 as isize),
     };
-    let mut v1: uint16 = (if *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xc18 as ::core::ffi::c_int as isize) as *mut uint16)
+    let mut v1: uint16 = (if *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
         .offset(v0 as isize) as ::core::ffi::c_int
         & 0x200 as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
@@ -3752,8 +3538,7 @@ pub unsafe fn Crocomire_Powerbomb(game: &mut Game) {
                     as *mut uint16)
                     as ::core::ffi::c_int;
                 loop {
-                    v2 = *(RomPtr_A4(spritemap_pointer as uint16_t, game) as *mut uint16)
-                        .offset(3 as ::core::ffi::c_int as isize);
+                    v2 = *(RomPtr_A4(spritemap_pointer as uint16_t, game) as *mut uint16).offset(3);
                     v3 = addr_kCrocomire_Ilist_BDAE as ::core::ffi::c_int as uint16;
                     if v2 as ::core::ffi::c_int
                         == addr_kCrocomire_BigSprmap_D600 as ::core::ffi::c_int
@@ -3793,20 +3578,16 @@ pub unsafe fn Crocomire_Func_95(game: &mut Game) {
     if ((*E).base.x_pos as ::core::ffi::c_int
         - (*E).base.x_width as ::core::ffi::c_int
         - 256 as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
+        - *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16) as ::core::ffi::c_int)
+        as int16 as ::core::ffi::c_int
         >= 0 as ::core::ffi::c_int
     {
         current_block = 4956146061682418353;
     } else {
         v1 = 0;
         v2 = 0;
-        v1 = *((&raw mut game.g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x18a6 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
-            );
+        v1 = *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
+            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x18a6) as *mut uint16) as isize);
         if v1 as ::core::ffi::c_int & 0xf00 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
             v3 = (v1 as ::core::ffi::c_int & 0xf00 as ::core::ffi::c_int) as int16;
             v2 = g_word_A4869A;
@@ -3865,19 +3646,13 @@ pub unsafe fn Crocomire_Func_95(game: &mut Game) {
         ((*E).base.ai_handler_bits as ::core::ffi::c_int | 2 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn Crocomire_Func_1(game: &mut Game) {
-    let mut v0: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x18a6 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int;
+    let mut v0: ::core::ffi::c_int =
+        *((&raw mut game.g_ram as *mut uint8).offset(0x18a6) as *mut uint16) as ::core::ffi::c_int;
     game.eproj_spawn_pt = Point16U {
-        x: *((&raw mut game.g_ram as *mut uint8).offset(0xb64 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v0 as isize),
-        y: *((&raw mut game.g_ram as *mut uint8).offset(0xb78 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v0 as isize),
+        x: *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v0 as isize),
+        y: *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v0 as isize),
     };
-    let mut v1: uint16 = (if *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xc18 as ::core::ffi::c_int as isize) as *mut uint16)
+    let mut v1: uint16 = (if *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
         .offset(v0 as isize) as ::core::ffi::c_int
         & 0x200 as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
@@ -3894,16 +3669,13 @@ pub unsafe fn Crocomire_Func_1(game: &mut Game) {
 }
 pub unsafe fn CrocomireTongue_Init(game: &mut Game) {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     if *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xd828 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as *mut uint8 as *mut uint16) as ::core::ffi::c_int
+        .offset(0xd828)
+        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize)
+        as *mut uint8 as *mut uint16) as ::core::ffi::c_int
         & 2 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {

@@ -902,15 +902,13 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
     let mut v2: int16 = 0;
     let mut v4: int16 = 0;
     let mut v7: int16 = 0;
-    let mut _state_variable_: *mut uint8 =
-        (&raw mut game.g_ram as *mut uint8).offset(0x612 as ::core::ffi::c_int as isize);
+    let mut _state_variable_: *mut uint8 = (&raw mut game.g_ram as *mut uint8).offset(0x612);
     's_445: {
         let mut current_block_103: u64;
         match *_state_variable_ as ::core::ffi::c_int {
             0 => {
-                if *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x998 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
+                if *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16)
+                    as ::core::ffi::c_int
                     == kGameState_40_TransitionToDemo as ::core::ffi::c_int
                 {
                     InitIoForGameplay(game);
@@ -919,34 +917,27 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                     Samus_Initialize(game);
                     LoadDemoRoomData(game);
                 } else {
-                    if *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xd914 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int
+                    if *((&raw mut game.g_ram as *mut uint8).offset(0xd914) as *mut uint16)
+                        as ::core::ffi::c_int
                         != kLoadingGameState_5_Main as ::core::ffi::c_int
                     {
-                        if *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xd914 as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int
+                        if *((&raw mut game.g_ram as *mut uint8).offset(0xd914) as *mut uint16)
+                            as ::core::ffi::c_int
                             == kLoadingGameState_1F_StartingAtCeres as ::core::ffi::c_int
                         {
-                            *((&raw mut game.g_ram as *mut uint8)
-                                .offset(0x79f as ::core::ffi::c_int as isize)
-                                as *mut uint16) = 6 as uint16;
-                            *((&raw mut game.g_ram as *mut uint8)
-                                .offset(0x78b as ::core::ffi::c_int as isize)
-                                as *mut uint16) = 0 as uint16;
+                            *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) =
+                                6 as uint16;
+                            *((&raw mut game.g_ram as *mut uint8).offset(0x78b) as *mut uint16) =
+                                0 as uint16;
                             ClearTimerRam(game);
-                        } else if *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xd914 as ::core::ffi::c_int as isize)
+                        } else if *((&raw mut game.g_ram as *mut uint8).offset(0xd914)
                             as *mut uint16) as ::core::ffi::c_int
                             == kLoadingGameState_22_EscapingCeres as ::core::ffi::c_int
                         {
-                            *((&raw mut game.g_ram as *mut uint8)
-                                .offset(0x79f as ::core::ffi::c_int as isize)
-                                as *mut uint16) = 0 as uint16;
-                            *((&raw mut game.g_ram as *mut uint8)
-                                .offset(0x78b as ::core::ffi::c_int as isize)
-                                as *mut uint16) = 18 as uint16;
+                            *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) =
+                                0 as uint16;
+                            *((&raw mut game.g_ram as *mut uint8).offset(0x78b) as *mut uint16) =
+                                18 as uint16;
                             LoadMirrorOfExploredMapTiles(game);
                         }
                     }
@@ -985,15 +976,10 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                 v0 = 32 as int16;
                 let mut v1: uint16 = 0 as uint16;
                 loop {
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xc200 as ::core::ffi::c_int as isize)
-                        as *mut uint16)
-                        .offset(
-                            ((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
-                                + 192 as ::core::ffi::c_int) as isize,
-                        ) = *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xc000 as ::core::ffi::c_int as isize)
-                        as *mut uint16)
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(
+                        ((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
+                            + 192 as ::core::ffi::c_int) as isize,
+                    ) = *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
                         .offset(
                             ((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
                                 + 192 as ::core::ffi::c_int) as isize,
@@ -1004,10 +990,8 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                         break;
                     }
                 }
-                *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 1 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 1 as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 1 as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 1 as uint16;
                 EnableNMI(game);
                 EnableEprojs(game);
                 EnablePLMs(game);
@@ -1015,29 +999,24 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                 EnableHdmaObjects(game);
                 EnableAnimtiles(game);
                 SetLiquidPhysicsType(game);
-                if *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x998 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
+                if *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16)
+                    as ::core::ffi::c_int
                     == kGameState_40_TransitionToDemo as ::core::ffi::c_int
                 {
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xda0 as ::core::ffi::c_int as isize)
-                        as *mut uint16) = 6 as uint16;
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xda0) as *mut uint16) =
+                        6 as uint16;
                     current_block_103 = 980989089337379490;
-                } else if *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0xd914 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
+                } else if *((&raw mut game.g_ram as *mut uint8).offset(0xd914) as *mut uint16)
+                    as ::core::ffi::c_int
                     == kLoadingGameState_22_EscapingCeres as ::core::ffi::c_int
                 {
                     QueueMusic_Delayed8(5 as uint16, game);
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xda0 as ::core::ffi::c_int as isize)
-                        as *mut uint16) = 15 as uint16;
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xda0) as *mut uint16) =
+                        15 as uint16;
                     current_block_103 = 10753070352654377903;
                 } else {
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xda0 as ::core::ffi::c_int as isize)
-                        as *mut uint16) = 6 as uint16;
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xda0) as *mut uint16) =
+                        6 as uint16;
                     current_block_103 = 129780949503461575;
                 }
             }
@@ -1055,33 +1034,27 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                         *_state_variable_ = 3 as uint8;
                         return _coret__1 as CoroutineRet;
                     }
-                    let ref mut fresh141 = *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xda0 as ::core::ffi::c_int as isize)
-                        as *mut uint16);
+                    let ref mut fresh141 =
+                        *((&raw mut game.g_ram as *mut uint8).offset(0xda0) as *mut uint16);
                     *fresh141 = (*fresh141).wrapping_sub(1);
-                    if *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xda0 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int
+                    if *((&raw mut game.g_ram as *mut uint8).offset(0xda0) as *mut uint16)
+                        as ::core::ffi::c_int
                         & 0x8000 as ::core::ffi::c_int
                         == 0 as ::core::ffi::c_int
                     {
                         current_block_103 = 10753070352654377903;
                         continue;
                     }
-                    let ref mut fresh142 = *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x998 as ::core::ffi::c_int as isize)
-                        as *mut uint16);
+                    let ref mut fresh142 =
+                        *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
                     *fresh142 = (*fresh142).wrapping_add(1);
                     v2 = 512 as int16;
                     let mut v3: uint16 = 0 as uint16;
                     loop {
-                        *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xc000 as ::core::ffi::c_int as isize)
-                            as *mut uint16)
+                        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
                             .offset(
                                 (v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                            ) = *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xc200 as ::core::ffi::c_int as isize)
+                            ) = *((&raw mut game.g_ram as *mut uint8).offset(0xc200)
                             as *mut uint16)
                             .offset((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
                         v3 = (v3 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
@@ -1098,13 +1071,11 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                         *_state_variable_ = 2 as uint8;
                         return _coret__0 as CoroutineRet;
                     }
-                    let ref mut fresh139 = *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xda0 as ::core::ffi::c_int as isize)
-                        as *mut uint16);
+                    let ref mut fresh139 =
+                        *((&raw mut game.g_ram as *mut uint8).offset(0xda0) as *mut uint16);
                     *fresh139 = (*fresh139).wrapping_sub(1);
-                    if *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xda0 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int
+                    if *((&raw mut game.g_ram as *mut uint8).offset(0xda0) as *mut uint16)
+                        as ::core::ffi::c_int
                         & 0x8000 as ::core::ffi::c_int
                         == 0 as ::core::ffi::c_int
                     {
@@ -1120,13 +1091,11 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                                 as isize,
                         ) as *const uint8 as *mut uint16)
                             .offset(
-                                *((&raw mut game.g_ram as *mut uint8)
-                                    .offset(0x1f55 as ::core::ffi::c_int as isize)
-                                    as *mut uint16) as isize,
+                                *((&raw mut game.g_ram as *mut uint8).offset(0x1f55) as *mut uint16)
+                                    as isize,
                             ) as ::core::ffi::c_int
                             + 18 as ::core::ffi::c_int
-                                * (*((&raw mut game.g_ram as *mut uint8)
-                                    .offset(0x1f57 as ::core::ffi::c_int as isize)
+                                * (*((&raw mut game.g_ram as *mut uint8).offset(0x1f57)
                                     as *mut uint16)
                                     as ::core::ffi::c_int
                                     - 1 as ::core::ffi::c_int)) as uint16,
@@ -1137,20 +1106,16 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                         (r18 as ::core::ffi::c_int | 0x820000 as ::core::ffi::c_int) as uint32,
                         game,
                     );
-                    let ref mut fresh140 = *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x998 as ::core::ffi::c_int as isize)
-                        as *mut uint16);
+                    let ref mut fresh140 =
+                        *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
                     *fresh140 = (*fresh140).wrapping_add(1);
                     v7 = 512 as int16;
                     let mut v8: uint16 = 0 as uint16;
                     loop {
-                        *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xc000 as ::core::ffi::c_int as isize)
-                            as *mut uint16)
+                        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
                             .offset(
                                 (v8 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                            ) = *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xc200 as ::core::ffi::c_int as isize)
+                            ) = *((&raw mut game.g_ram as *mut uint8).offset(0xc200)
                             as *mut uint16)
                             .offset((v8 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
                         v8 = (v8 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
@@ -1178,33 +1143,26 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                         *_state_variable_ = 4 as uint8;
                         return _coret__2 as CoroutineRet;
                     }
-                    let ref mut fresh143 = *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xda0 as ::core::ffi::c_int as isize)
-                        as *mut uint16);
+                    let ref mut fresh143 =
+                        *((&raw mut game.g_ram as *mut uint8).offset(0xda0) as *mut uint16);
                     *fresh143 = (*fresh143).wrapping_sub(1);
-                    if *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xda0 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int
+                    if *((&raw mut game.g_ram as *mut uint8).offset(0xda0) as *mut uint16)
+                        as ::core::ffi::c_int
                         & 0x8000 as ::core::ffi::c_int
                         == 0 as ::core::ffi::c_int
                     {
                         current_block_103 = 129780949503461575;
                         continue;
                     }
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x998 as ::core::ffi::c_int as isize)
-                        as *mut uint16) =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
                         kGameState_7_MainGameplayFadeIn as ::core::ffi::c_int as uint16;
                     v4 = 512 as int16;
                     let mut v5: uint16 = 0 as uint16;
                     loop {
-                        *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xc000 as ::core::ffi::c_int as isize)
-                            as *mut uint16)
+                        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
                             .offset(
                                 (v5 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                            ) = *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xc200 as ::core::ffi::c_int as isize)
+                            ) = *((&raw mut game.g_ram as *mut uint8).offset(0xc200)
                             as *mut uint16)
                             .offset((v5 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
                         v5 = (v5 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
@@ -1213,15 +1171,12 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                             break;
                         }
                     }
-                    if *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xd914 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int
+                    if *((&raw mut game.g_ram as *mut uint8).offset(0xd914) as *mut uint16)
+                        as ::core::ffi::c_int
                         == kLoadingGameState_1F_StartingAtCeres as ::core::ffi::c_int
                     {
-                        *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xc000 as ::core::ffi::c_int as isize)
-                            as *mut uint16)
-                            .offset(223 as ::core::ffi::c_int as isize) = 0 as uint16;
+                        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
+                            .offset(223) = 0 as uint16;
                         CallSomeSamusCode(8 as uint16, game);
                     } else {
                         CallSomeSamusCode(9 as uint16, game);
@@ -1240,7 +1195,7 @@ pub unsafe fn InitIoForGameplay(game: &mut Game) {
 }
 pub unsafe fn InitCpuForGameplay(game: &mut Game) {
     WriteReg(NMITIMEN as ::core::ffi::c_int as uint16, 1 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x84 as ::core::ffi::c_int as isize) = 1 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x84) = 1 as uint8;
     WriteReg(WRIO as ::core::ffi::c_int as uint16, 0 as uint8, game);
     WriteReg(WRMPYA as ::core::ffi::c_int as uint16, 0 as uint8, game);
     WriteReg(WRMPYB as ::core::ffi::c_int as uint16, 0 as uint8, game);
@@ -1253,100 +1208,92 @@ pub unsafe fn InitCpuForGameplay(game: &mut Game) {
     WriteReg(VTIMEH as ::core::ffi::c_int as uint16, 0 as uint8, game);
     WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 0 as uint8, game);
     WriteReg(HDMAEN as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x85 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x85) = 0 as uint8;
     WriteReg(MEMSEL as ::core::ffi::c_int as uint16, 1 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x86 as ::core::ffi::c_int as isize) = 1 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x86) = 1 as uint8;
 }
 pub unsafe fn InitPpuForGameplay(game: &mut Game) {
     WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) =
-        0x80 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x51) = 0x80 as uint8;
     WriteReg(OBSEL as ::core::ffi::c_int as uint16, 3 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x52 as ::core::ffi::c_int as isize) = 3 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x52) = 3 as uint8;
     WriteReg(OAMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x53 as ::core::ffi::c_int as isize) as *mut uint16
-        as *mut uint8)
-        .offset(0 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x53) as *mut uint16 as *mut uint8).offset(0) =
+        0 as uint8;
     WriteReg(OAMADDH as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x53 as ::core::ffi::c_int as isize) as *mut uint16
-        as *mut uint8)
-        .offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                .wrapping_sub(1 as usize) as isize,
-        ) = 0x80 as uint8;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x53) as *mut uint16 as *mut uint8).offset(
+        (::core::mem::size_of::<uint16>() as usize)
+            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            .wrapping_sub(1 as usize) as isize,
+    ) = 0x80 as uint8;
     WriteReg(OAMDATA as ::core::ffi::c_int as uint16, 0 as uint8, game);
     WriteReg(OAMDATA as ::core::ffi::c_int as uint16, 0 as uint8, game);
     WriteReg(BGMODE as ::core::ffi::c_int as uint16, 9 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize) = 9 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x55) = 9 as uint8;
     WriteReg(MOSAIC as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x57 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x57) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x5d) = 0 as uint8;
     WriteReg(BG12NBA as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x5e as ::core::ffi::c_int as isize) = 4 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x5e) = 4 as uint8;
     WriteReg(BG34NBA as ::core::ffi::c_int as uint16, 4 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x58 as ::core::ffi::c_int as isize) = 81 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x58) = 81 as uint8;
     WriteReg(BG1SC as ::core::ffi::c_int as uint16, 0x51 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize) = 73 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x59) = 73 as uint8;
     WriteReg(BG2SC as ::core::ffi::c_int as uint16, 0x49 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x5a as ::core::ffi::c_int as isize) = 90 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x5a) = 90 as uint8;
     WriteReg(BG3SC as ::core::ffi::c_int as uint16, 0x5a as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x5c as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x5c) = 0 as uint8;
     WriteReg(BG4SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8, game);
     WriteReg(W12SEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x60 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x60) = 0 as uint8;
     WriteReg(W12SEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x60 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x60) = 0 as uint8;
     WriteReg(W34SEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x61 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x61) = 0 as uint8;
     WriteReg(WOBJSEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x62 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x62) = 0 as uint8;
     WriteReg(WH0 as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x63 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x63) = 0 as uint8;
     WriteReg(WH1 as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x64 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x64) = 0 as uint8;
     WriteReg(WH2 as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x65 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x65) = 0 as uint8;
     WriteReg(WH3 as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x66 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x66) = 0 as uint8;
     WriteReg(WBGLOG as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x67 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x67) = 0 as uint8;
     WriteReg(WOBJLOG as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x68 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x68) = 0 as uint8;
     WriteReg(TM as ::core::ffi::c_int as uint16, 0x17 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 23 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 23 as uint8;
     WriteReg(TMW as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x6c as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x6c) = 0 as uint8;
     WriteReg(TS as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x6b) = 0 as uint8;
     WriteReg(TSW as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x6d as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x6d) = 0 as uint8;
     WriteReg(CGWSEL as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x6e as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x6e) = 0 as uint8;
     WriteReg(CGADSUB as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x71) = 0 as uint8;
     WriteReg(COLDATA as ::core::ffi::c_int as uint16, 0xe0 as uint8, game);
     WriteReg(SETINI as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x77 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x77) = 0 as uint8;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) = 0 as uint16;
     memset7E(
-        (&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000 as *mut uint16,
+        (&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000 as *mut uint16,
         0 as uint16,
         0x7fe as uint16,
     );
     memset7E(
-        (&raw mut game.g_ram as *mut uint8).offset(0x4000 as ::core::ffi::c_int as isize)
-            as *mut Ram4000 as *mut uint16,
+        (&raw mut game.g_ram as *mut uint8).offset(0x4000) as *mut Ram4000 as *mut uint16,
         0x6f as uint16,
         0x7fe as uint16,
     );
     memset7E(
-        &raw mut (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x4000 as ::core::ffi::c_int as isize) as *mut Ram4000))
-            .bg2_tilemap as *mut uint16,
+        &raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x4000) as *mut Ram4000)).bg2_tilemap
+            as *mut uint16,
         0x2c0f as uint16,
         0xfe as uint16,
     );
@@ -1356,8 +1303,7 @@ pub unsafe fn LoadInitialPalette(game: &mut Game) {
     v0 = 512 as int16;
     let mut v1: uint16 = 0 as uint16;
     loop {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
             .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
             *(game.g_rom.offset(
                 (((0x9a8000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -1436,42 +1382,29 @@ pub unsafe fn LoadStdBG3andSpriteTilesClearTilemaps(game: &mut Game) {
     WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
 }
 pub unsafe fn GameState_32_MadeItToCeresElevator(game: &mut Game) -> CoroutineRet {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x943 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x943) as *mut uint16) != 0 {
         DrawTimer(game);
     }
     let mut _coret_: uint8 = GameState_8_MainGameplay(game) as uint8;
     if _coret_ != 0 {
         return _coret_ as CoroutineRet;
     }
-    let ref mut fresh124 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xaa0 as ::core::ffi::c_int as isize) as *mut uint16);
+    let ref mut fresh124 = *((&raw mut game.g_ram as *mut uint8).offset(0xaa0) as *mut uint16);
     *fresh124 = (*fresh124).wrapping_sub(1);
     let mut v0: bool =
         *fresh124 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xaa0 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        == 0
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xaa0) as *mut uint16) == 0
         || v0 as ::core::ffi::c_int != 0
     {
-        let ref mut fresh125 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let ref mut fresh125 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
         *fresh125 = (*fresh125).wrapping_add(1);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
     }
     return kCoroutineNone as CoroutineRet;
 }
 pub unsafe fn GameState_33_BlackoutFromCeres(game: &mut Game) -> CoroutineRet {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x943 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x943) as *mut uint16) != 0 {
         DrawTimer(game);
     }
     let mut _coret_: uint8 = GameState_8_MainGameplay(game) as uint8;
@@ -1479,51 +1412,34 @@ pub unsafe fn GameState_33_BlackoutFromCeres(game: &mut Game) -> CoroutineRet {
         return _coret_ as CoroutineRet;
     }
     HandleFadeOut(game);
-    if *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
+    if *(&raw mut game.g_ram as *mut uint8).offset(0x51) as ::core::ffi::c_int
         == 0x80 as ::core::ffi::c_int
     {
         EnableNMI(game);
         WaitUntilEndOfVblankAndClearHdma(game);
         DisableIrqInterrupts(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1982 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xab as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x6e as ::core::ffi::c_int as isize) =
-            0 as uint8;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) =
-            0 as uint8;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) =
-            16 as uint8;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) =
-            0 as uint8;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x6c as ::core::ffi::c_int as isize) =
-            0 as uint8;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x6d as ::core::ffi::c_int as isize) =
-            0 as uint8;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize) =
-            9 as uint8;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd914 as ::core::ffi::c_int as isize)
-            as *mut uint16) = kLoadingGameState_22_EscapingCeres as ::core::ffi::c_int as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 34 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1982) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xab) as *mut uint16) = 0 as uint16;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x6e) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x71) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 16 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x6b) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x6c) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x6d) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x55) = 9 as uint8;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xd914) as *mut uint16) =
+            kLoadingGameState_22_EscapingCeres as ::core::ffi::c_int as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) = 34 as uint16;
         SaveToSram(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x952 as ::core::ffi::c_int as isize)
-                as *mut uint16),
+            *((&raw mut game.g_ram as *mut uint8).offset(0x952) as *mut uint16),
             game,
         );
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
-            as *mut uint16) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
             (0x8bc11b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x93f as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x943 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x93f) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x943) as *mut uint16) = 0 as uint16;
         QueueMusic_Delayed8(0 as uint16, game);
         QueueSfx1_Max15(2 as uint16, game);
         QueueSfx2_Max15(0x71 as uint16, game);
@@ -1536,77 +1452,55 @@ pub unsafe fn GameState_35_TimeUp(game: &mut Game) -> CoroutineRet {
     if _coret_ != 0 {
         return _coret_ as CoroutineRet;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc402 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 8 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc402) as *mut uint16) = 8 as uint16;
     if AdvancePaletteFadeForAllPalettes(game) != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16) = kGameState_36_WhitingOutFromTimeUp as ::core::ffi::c_int as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
+            kGameState_36_WhitingOutFromTimeUp as ::core::ffi::c_int as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
     }
     return kCoroutineNone as CoroutineRet;
 }
 pub unsafe fn GameState_36_WhitingOutFromTimeUp(game: &mut Game) -> CoroutineRet {
     HandleFadeOut(game);
-    if *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
+    if *(&raw mut game.g_ram as *mut uint8).offset(0x51) as ::core::ffi::c_int
         == 0x80 as ::core::ffi::c_int
     {
         EnableNMI(game);
         WaitUntilEndOfVblankAndClearHdma(game);
         DisableIrqInterrupts(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1982 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xab as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x6e as ::core::ffi::c_int as isize) =
-            0 as uint8;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) =
-            0 as uint8;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) =
-            16 as uint8;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) =
-            0 as uint8;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x6c as ::core::ffi::c_int as isize) =
-            0 as uint8;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x6d as ::core::ffi::c_int as isize) =
-            0 as uint8;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize) =
-            9 as uint8;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x93f as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x943 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1982) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xab) as *mut uint16) = 0 as uint16;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x6e) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x71) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 16 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x6b) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x6c) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x6d) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x55) = 9 as uint8;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x93f) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x943) as *mut uint16) = 0 as uint16;
         QueueSfx1_Max15(2 as uint16, game);
         QueueSfx2_Max15(0x71 as uint16, game);
         QueueSfx3_Max15(1 as uint16, game);
         if CheckEventHappened(0xe as uint16, game) != 0 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x727 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) = 0 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16) = 0 as uint16;
             let mut i: ::core::ffi::c_int = 254 as ::core::ffi::c_int;
             while i >= 0 as ::core::ffi::c_int {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1a6f as ::core::ffi::c_int as isize)
-                    as *mut uint16)
+                *((&raw mut game.g_ram as *mut uint8).offset(0x1a6f) as *mut uint16)
                     .offset(((i >> 1 as ::core::ffi::c_int) + 15 as ::core::ffi::c_int) as isize) =
                     0 as uint16;
                 i -= 2 as ::core::ffi::c_int;
             }
-            *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-                as *mut uint16) = kGameState_25_SamusNoHealth as ::core::ffi::c_int as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
+                kGameState_25_SamusNoHealth as ::core::ffi::c_int as uint16;
         } else {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-                as *mut uint16) =
+            *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
                 kGameState_37_CeresGoesBoomWithSamus as ::core::ffi::c_int as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
-                as *mut uint16) =
+            *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
                 (0x8bc11b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         }
     }
@@ -1618,40 +1512,27 @@ pub unsafe fn GameState_38_SamusEscapesFromZebes(game: &mut Game) -> CoroutineRe
         return _coret_ as CoroutineRet;
     }
     HandleFadeOut(game);
-    if *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
+    if *(&raw mut game.g_ram as *mut uint8).offset(0x51) as ::core::ffi::c_int
         == 0x80 as ::core::ffi::c_int
     {
         EnableNMI(game);
         WaitUntilEndOfVblankAndClearHdma(game);
         DisableIrqInterrupts(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1982 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x6e as ::core::ffi::c_int as isize) =
-            0 as uint8;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) =
-            0 as uint8;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) =
-            16 as uint8;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) =
-            0 as uint8;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x6c as ::core::ffi::c_int as isize) =
-            0 as uint8;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x6d as ::core::ffi::c_int as isize) =
-            0 as uint8;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize) =
-            9 as uint8;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16) = kGameState_39_EndingAndCredits as ::core::ffi::c_int as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
-            as *mut uint16) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1982) as *mut uint16) = 0 as uint16;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x6e) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x71) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 16 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x6b) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x6c) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x6d) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x55) = 9 as uint8;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
+            kGameState_39_EndingAndCredits as ::core::ffi::c_int as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
             (0x8bd480 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x943 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x943) as *mut uint16) = 0 as uint16;
         QueueMusic_Delayed8(0 as uint16, game);
         QueueSfx1_Max15(2 as uint16, game);
         QueueSfx2_Max15(0x71 as uint16, game);
@@ -1665,16 +1546,14 @@ pub unsafe fn GameState_41_TransitionToDemo(game: &mut Game) -> CoroutineRet {
         return _coret_ as CoroutineRet;
     }
     HdmaObjectHandler(game);
-    let ref mut fresh126 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x998 as ::core::ffi::c_int as isize) as *mut uint16);
+    let ref mut fresh126 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
     *fresh126 = (*fresh126).wrapping_add(1);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 15 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x51) = 15 as uint8;
     return kCoroutineNone as CoroutineRet;
 }
 pub unsafe fn GameState_42_PlayingDemo_Async(game: &mut Game) -> CoroutineRet {
     let mut current_block: u64;
-    let mut _state_variable_: *mut uint8 =
-        (&raw mut game.g_ram as *mut uint8).offset(0x614 as ::core::ffi::c_int as isize);
+    let mut _state_variable_: *mut uint8 = (&raw mut game.g_ram as *mut uint8).offset(0x614);
     match *_state_variable_ as ::core::ffi::c_int {
         0 | 2 => {
             let mut _coret_: uint8 = GameState_8_MainGameplay(game) as uint8;
@@ -1682,34 +1561,23 @@ pub unsafe fn GameState_42_PlayingDemo_Async(game: &mut Game) -> CoroutineRet {
                 *_state_variable_ = 2 as uint8;
                 return _coret_ as CoroutineRet;
             }
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                != 0
-            {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdec as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 1 as uint16;
+            if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) != 0 {
+                *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) = 1 as uint16;
                 current_block = 4040822987312515878;
             } else {
-                let ref mut fresh127 = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x1f53 as ::core::ffi::c_int as isize)
-                    as *mut uint16);
+                let ref mut fresh127 =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0x1f53) as *mut uint16);
                 *fresh127 = (*fresh127).wrapping_sub(1);
-                if *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x1f53 as ::core::ffi::c_int as isize)
-                    as *mut uint16)
-                    == 0
-                    || *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x1f53 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int
+                if *((&raw mut game.g_ram as *mut uint8).offset(0x1f53) as *mut uint16) == 0
+                    || *((&raw mut game.g_ram as *mut uint8).offset(0x1f53) as *mut uint16)
+                        as ::core::ffi::c_int
                         & 0x8000 as ::core::ffi::c_int
                         != 0 as ::core::ffi::c_int
                 {
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xdec as ::core::ffi::c_int as isize)
-                        as *mut uint16) = 0 as uint16;
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x77e as ::core::ffi::c_int as isize)
-                        as *mut uint16) = 90 as uint16;
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) =
+                        0 as uint16;
+                    *((&raw mut game.g_ram as *mut uint8).offset(0x77e) as *mut uint16) =
+                        90 as uint16;
                     current_block = 12296459429166835708;
                 } else {
                     current_block = 13472856163611868459;
@@ -1735,18 +1603,13 @@ pub unsafe fn GameState_42_PlayingDemo_Async(game: &mut Game) -> CoroutineRet {
                     *_state_variable_ = 1 as uint8;
                     return _coret__0 as CoroutineRet;
                 }
-                if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-                    as *mut uint16)
-                    != 0
-                {
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xdec as ::core::ffi::c_int as isize)
-                        as *mut uint16) = 1 as uint16;
+                if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) != 0 {
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) =
+                        1 as uint16;
                     current_block = 4040822987312515878;
                 } else {
-                    let ref mut fresh128 = *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x77e as ::core::ffi::c_int as isize)
-                        as *mut uint16);
+                    let ref mut fresh128 =
+                        *((&raw mut game.g_ram as *mut uint8).offset(0x77e) as *mut uint16);
                     *fresh128 = (*fresh128).wrapping_sub(1);
                     if *fresh128 == 0 {
                         current_block = 4040822987312515878;
@@ -1756,18 +1619,13 @@ pub unsafe fn GameState_42_PlayingDemo_Async(game: &mut Game) -> CoroutineRet {
                 }
             }
             _ => {
-                let ref mut fresh129 = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x998 as ::core::ffi::c_int as isize)
-                    as *mut uint16);
+                let ref mut fresh129 =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
                 *fresh129 = (*fresh129).wrapping_add(1);
-                *((&raw mut game.g_ram as *mut uint8).offset(0x5f5 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 0 as uint16;
-                *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) =
-                    0x80 as uint8;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 1 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 1 as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0x5f5) as *mut uint16) = 0 as uint16;
+                *(&raw mut game.g_ram as *mut uint8).offset(0x51) = 0x80 as uint8;
+                *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 1 as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 1 as uint16;
                 current_block = 13472856163611868459;
             }
         }
@@ -1775,79 +1633,62 @@ pub unsafe fn GameState_42_PlayingDemo_Async(game: &mut Game) -> CoroutineRet {
     return 0 as CoroutineRet;
 }
 pub unsafe fn GameState_43_TransitionFromDemo(game: &mut Game) -> CoroutineRet {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xdec as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) as ::core::ffi::c_int
         != 1 as ::core::ffi::c_int
     {
         CheckForNextDemo(game);
     }
     EnableNMI(game);
-    let ref mut fresh130 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x998 as ::core::ffi::c_int as isize) as *mut uint16);
+    let ref mut fresh130 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
     *fresh130 = (*fresh130).wrapping_add(1);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
     WaitUntilEndOfVblankAndClearHdma(game);
     DisableIrqInterrupts(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1982 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xab as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa7 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1982) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xab) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xa7) as *mut uint16) = 0 as uint16;
     DisablePaletteFx(game);
     ClearPaletteFXObjects(game);
     let mut i: ::core::ffi::c_int = 656 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
-        *(((&raw mut game.g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
+        *(((&raw mut game.g_ram as *mut uint8).offset(0x198d) as *mut uint16 as *mut uint8)
             .offset(i as isize) as *mut uint16) = 0 as uint16;
         i -= 2 as ::core::ffi::c_int;
     }
     let mut j: ::core::ffi::c_int = 538 as ::core::ffi::c_int;
     while j >= 0 as ::core::ffi::c_int {
-        *(((&raw mut game.g_ram as *mut uint8).offset(0x77c as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
+        *(((&raw mut game.g_ram as *mut uint8).offset(0x77c) as *mut uint16 as *mut uint8)
             .offset(j as isize) as *mut uint16) = 0 as uint16;
         j -= 2 as ::core::ffi::c_int;
     }
-    *(&raw mut game.g_ram as *mut uint8).offset(0x6e as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 16 as uint8;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x6c as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x6d as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x6e) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x71) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 16 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x6b) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x6c) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x6d) = 0 as uint8;
     return kCoroutineNone as CoroutineRet;
 }
 pub unsafe fn GameState_44_TransitionFromDemo(game: &mut Game) -> CoroutineRet {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-        as *mut uint16) = kGameState_1_OpeningCinematic as ::core::ffi::c_int as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xdec as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
+        kGameState_1_OpeningCinematic as ::core::ffi::c_int as uint16;
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16) = kGameState_40_TransitionToDemo as ::core::ffi::c_int as uint16;
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0xdec as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
+        *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
+            kGameState_40_TransitionToDemo as ::core::ffi::c_int as uint16;
+    } else if *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) != 0 {
         LoadTitleSequenceGraphics(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(4 as ::core::ffi::c_int as isize) = 2 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
-            as *mut uint16) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(4) =
+            2 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
             (0x8b9a47 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     } else {
         QueueMusic_Delayed8(0 as uint16, game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x5f5 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
-            as *mut uint16) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0x5f5) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
             (0x8b9b68 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
     return kCoroutineNone as CoroutineRet;
@@ -1860,47 +1701,38 @@ pub unsafe fn CheckForNextDemo(game: &mut Game) {
                 | 0x82876c as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
                 & 0x3fffff as ::core::ffi::c_int) as isize,
         ) as *const uint8 as *mut uint16)
-            .offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1f55 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
-            ) as ::core::ffi::c_int
+            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x1f55) as *mut uint16) as isize)
+            as ::core::ffi::c_int
             + 18 as ::core::ffi::c_int
-                * *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x1f57 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int) as uint16_t,
+                * *((&raw mut game.g_ram as *mut uint8).offset(0x1f57) as *mut uint16)
+                    as ::core::ffi::c_int) as uint16_t,
         game,
     ) as *mut uint16) as ::core::ffi::c_int
         == 0xffff as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdec as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        let mut v0: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x1f55 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) = 0 as uint16;
+        let mut v0: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x1f55) as *mut uint16)
+            as ::core::ffi::c_int
             + 1 as ::core::ffi::c_int) as uint16;
         if v0 as ::core::ffi::c_int
-            >= *((&raw mut game.g_ram as *mut uint8).offset(0x1f59 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            >= *((&raw mut game.g_ram as *mut uint8).offset(0x1f59) as *mut uint16)
+                as ::core::ffi::c_int
         {
             v0 = 0 as uint16;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1f55 as ::core::ffi::c_int as isize)
-            as *mut uint16) = v0;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1f57 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1f55) as *mut uint16) = v0;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1f57) as *mut uint16) = 0 as uint16;
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdec as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0x8000 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) = 0x8000 as uint16;
     };
 }
 pub unsafe fn LoadDemoRoomData(game: &mut Game) {
     let mut drd: *mut DemoRoomData = ::core::ptr::null_mut::<DemoRoomData>();
-    *((&raw mut game.g_ram as *mut uint8).offset(0x78d as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x78d) as *mut uint16) = 0 as uint16;
     drd = get_DemoRoomData(
         (18 as ::core::ffi::c_int
-            * *((&raw mut game.g_ram as *mut uint8).offset(0x1f57 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            * *((&raw mut game.g_ram as *mut uint8).offset(0x1f57) as *mut uint16)
+                as ::core::ffi::c_int
             + *(game.g_rom.offset(
                 (((0x82876c as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                     << 15 as ::core::ffi::c_int
@@ -1908,93 +1740,75 @@ pub unsafe fn LoadDemoRoomData(game: &mut Game) {
                     & 0x3fffff as ::core::ffi::c_int) as isize,
             ) as *const uint8 as *mut uint16)
                 .offset(
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x1f55 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as isize,
+                    *((&raw mut game.g_ram as *mut uint8).offset(0x1f55) as *mut uint16) as isize,
                 ) as ::core::ffi::c_int) as uint16,
         game,
     );
-    *((&raw mut game.g_ram as *mut uint8).offset(0x79b as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*drd).room_ptr_ as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x78d as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*drd).door_ptr;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*drd).screen_x_pos;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x91d as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x911 as ::core::ffi::c_int as isize) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*drd).screen_y_pos;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x91f as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x915 as ::core::ffi::c_int as isize) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x915 as ::core::ffi::c_int as isize) as *mut uint16)
+    *((&raw mut game.g_ram as *mut uint8).offset(0x79b) as *mut uint16) =
+        (*drd).room_ptr_ as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x78d) as *mut uint16) = (*drd).door_ptr;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16) = (*drd).screen_x_pos;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x91d) as *mut uint16) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16) = (*drd).screen_y_pos;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x91f) as *mut uint16) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) =
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16) as ::core::ffi::c_int
+            + (*drd).samus_x_offs as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb14) as *mut uint16) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) = ((*drd).samus_y_offs
         as ::core::ffi::c_int
-        + (*drd).samus_x_offs as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb14 as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xafa as ::core::ffi::c_int as isize) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-        as *mut uint16) = ((*drd).samus_y_offs as ::core::ffi::c_int
-        + *((&raw mut game.g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-        + 128 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb10 as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xaf6 as ::core::ffi::c_int as isize) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1f53 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*drd).demo_length;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-        as *mut uint16 as *mut uint8)
-        .offset(0 as ::core::ffi::c_int as isize) = (*get_RoomDefHeader(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x79b as ::core::ffi::c_int as isize)
-            as *mut uint16),
-        game,
-    ))
-    .area_index_;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    let ref mut fresh144 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1f57 as ::core::ffi::c_int as isize) as *mut uint16);
+        + *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16) as ::core::ffi::c_int
+        + 128 as ::core::ffi::c_int)
+        as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb10) as *mut uint16) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1f53) as *mut uint16) = (*drd).demo_length;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16 as *mut uint8).offset(0) =
+        (*get_RoomDefHeader(
+            *((&raw mut game.g_ram as *mut uint8).offset(0x79b) as *mut uint16),
+            game,
+        ))
+        .area_index_;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) = 0 as uint16;
+    let ref mut fresh144 = *((&raw mut game.g_ram as *mut uint8).offset(0x1f57) as *mut uint16);
     *fresh144 = (*fresh144).wrapping_add(1);
     let mut v1: uint16 = 0 as uint16;
     loop {
         let mut v2: ::core::ffi::c_int = v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xd830 as ::core::ffi::c_int as isize)
+            .offset(0xd830)
             .offset(v1 as isize) as *mut uint8 as *mut uint16) =
             -(1 as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xd870 as ::core::ffi::c_int as isize)
+            .offset(0xd870)
             .offset(v1 as isize) as *mut uint8 as *mut uint16) =
             -(1 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd8f0 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v2 as isize) = -(1 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xd908 as ::core::ffi::c_int as isize)
-            .offset(v1 as isize) as *mut uint8 as *mut uint16) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xd8f0) as *mut uint16).offset(v2 as isize) =
             -(1 as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xd8f8 as ::core::ffi::c_int as isize)
+            .offset(0xd908)
             .offset(v1 as isize) as *mut uint8 as *mut uint16) =
             -(1 as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xd8f8 as ::core::ffi::c_int as isize)
+            .offset(0xd8f8)
+            .offset(v1 as isize) as *mut uint8 as *mut uint16) =
+            -(1 as ::core::ffi::c_int) as uint16;
+        *((&raw mut game.g_ram as *mut uint8)
+            .offset(0xd8f8)
             .offset((v1 as ::core::ffi::c_int + 8 as ::core::ffi::c_int) as isize)
             as *mut uint8 as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xd8b0 as ::core::ffi::c_int as isize)
+            .offset(0xd8b0)
             .offset(v1 as isize) as *mut uint8 as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xd820 as ::core::ffi::c_int as isize)
+            .offset(0xd820)
             .offset(v1 as isize) as *mut uint8 as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xd828 as ::core::ffi::c_int as isize)
+            .offset(0xd828)
             .offset(v1 as isize) as *mut uint8 as *mut uint16) = 0 as uint16;
         v1 = (v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
         if !(((v1 as ::core::ffi::c_int - 8 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
@@ -2006,15 +1820,15 @@ pub unsafe fn LoadDemoRoomData(game: &mut Game) {
     loop {
         let mut v3: ::core::ffi::c_int = v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xd830 as ::core::ffi::c_int as isize)
+            .offset(0xd830)
             .offset(v1 as isize) as *mut uint8 as *mut uint16) =
             -(1 as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xd870 as ::core::ffi::c_int as isize)
+            .offset(0xd870)
             .offset(v1 as isize) as *mut uint8 as *mut uint16) =
             -(1 as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xd8b0 as ::core::ffi::c_int as isize)
+            .offset(0xd8b0)
             .offset(v1 as isize) as *mut uint8 as *mut uint16) = 0 as uint16;
         v1 = (v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
         if !(((v1 as ::core::ffi::c_int - 64 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
@@ -2025,8 +1839,7 @@ pub unsafe fn LoadDemoRoomData(game: &mut Game) {
     }
     let mut v4: uint16 = 0 as uint16;
     loop {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xcd52 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xcd52) as *mut uint16)
             .offset((v4 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
         v4 = (v4 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
         if !(((v4 as ::core::ffi::c_int - 1536 as ::core::ffi::c_int) as int16
@@ -2036,36 +1849,27 @@ pub unsafe fn LoadDemoRoomData(game: &mut Game) {
             break;
         }
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9d4 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9d6 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9c0 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xd914 as ::core::ffi::c_int as isize)
-        as *mut uint16) = kLoadingGameState_0_Intro as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x5f7 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9d4) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9c0) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xd914) as *mut uint16) =
+        kLoadingGameState_0_Intro as ::core::ffi::c_int as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x5f7) as *mut uint16) = 0 as uint16;
 }
 pub unsafe fn DemoRoom_ChargeBeamRoomScroll21(game: &mut Game) {
     *(&raw mut game.g_ram as *mut uint8)
-        .offset(0xcd20 as ::core::ffi::c_int as isize)
-        .offset(33 as ::core::ffi::c_int as isize) = 0 as uint8;
+        .offset(0xcd20)
+        .offset(33) = 0 as uint8;
 }
 pub unsafe fn DemoRoom_SetBG2TilemapBase(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 74 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x59) as *mut uint16) = 74 as uint16;
 }
 pub unsafe fn DemoRoom_SetKraidFunctionTimer(game: &mut Game) {
-    (*((&raw mut game.g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
-        as *mut EnemyData)
-        .offset(0 as ::core::ffi::c_int as isize))
-    .ai_preinstr = 60 as uint16;
+    (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
+        .ai_preinstr = 60 as uint16;
 }
 pub unsafe fn DemoRoom_SetBrinstarBossBits(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut uint8)
-        .offset(0xd828 as ::core::ffi::c_int as isize)
-        .offset(1 as ::core::ffi::c_int as isize) = 1 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0xd828).offset(1) = 1 as uint8;
 }
 static kGameStateFuncs: [Option<Func_V_Coroutine>; 45] = unsafe {
     [
@@ -2118,9 +1922,8 @@ static kGameStateFuncs: [Option<Func_V_Coroutine>; 45] = unsafe {
 };
 pub unsafe fn RunOneFrameOfGameInner(game: &mut Game) -> CoroutineRet {
     let mut current_block: u64;
-    let mut st: ::core::ffi::c_int = *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x611 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int;
+    let mut st: ::core::ffi::c_int =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x611) as ::core::ffi::c_int;
     if st >= 1 as ::core::ffi::c_int && st <= 3 as ::core::ffi::c_int {
         let mut _coret_: uint8 = Vector_RESET_Async(game) as uint8;
         if _coret_ != 0 {
@@ -2137,34 +1940,25 @@ pub unsafe fn RunOneFrameOfGameInner(game: &mut Game) -> CoroutineRet {
     }
     match current_block {
         8515828400728868193 => {
-            let ref mut fresh149 =
-                *(&raw mut game.g_ram as *mut uint8).offset(0x615 as ::core::ffi::c_int as isize);
+            let ref mut fresh149 = *(&raw mut game.g_ram as *mut uint8).offset(0x615);
             *fresh149 = 0 as uint8;
-            let ref mut fresh150 =
-                *(&raw mut game.g_ram as *mut uint8).offset(0x614 as ::core::ffi::c_int as isize);
+            let ref mut fresh150 = *(&raw mut game.g_ram as *mut uint8).offset(0x614);
             *fresh150 = *fresh149;
-            let ref mut fresh151 =
-                *(&raw mut game.g_ram as *mut uint8).offset(0x613 as ::core::ffi::c_int as isize);
+            let ref mut fresh151 = *(&raw mut game.g_ram as *mut uint8).offset(0x613);
             *fresh151 = *fresh150;
-            *(&raw mut game.g_ram as *mut uint8).offset(0x612 as ::core::ffi::c_int as isize) =
-                *fresh151;
+            *(&raw mut game.g_ram as *mut uint8).offset(0x612) = *fresh151;
             ReadJoypadInputs(game);
             HdmaObjectHandler(game);
             NextRandom(game);
             ClearOamExt(game);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x71d as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x71f as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x721 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
-            st = *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) = 0 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x71d) as *mut uint16) = 0 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x71f) as *mut uint16) = 0 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x721) as *mut uint16) = 0 as uint16;
+            st = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16)
+                as ::core::ffi::c_int
                 + 10 as ::core::ffi::c_int;
-            *(&raw mut game.g_ram as *mut uint8).offset(0x611 as ::core::ffi::c_int as isize) =
-                st as uint8;
+            *(&raw mut game.g_ram as *mut uint8).offset(0x611) = st as uint8;
         }
         _ => {}
     }
@@ -2176,37 +1970,28 @@ pub unsafe fn RunOneFrameOfGameInner(game: &mut Game) -> CoroutineRet {
     HandleSoundEffects(game);
     ClearUnusedOam(game);
     ShowSpareCpu(game);
-    if *(&raw mut game.g_ram as *mut uint8).offset(0x612 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
-        | *(&raw mut game.g_ram as *mut uint8).offset(0x613 as ::core::ffi::c_int as isize)
-            as ::core::ffi::c_int
-        | *(&raw mut game.g_ram as *mut uint8).offset(0x614 as ::core::ffi::c_int as isize)
-            as ::core::ffi::c_int
-        | *(&raw mut game.g_ram as *mut uint8).offset(0x615 as ::core::ffi::c_int as isize)
-            as ::core::ffi::c_int
+    if *(&raw mut game.g_ram as *mut uint8).offset(0x612) as ::core::ffi::c_int
+        | *(&raw mut game.g_ram as *mut uint8).offset(0x613) as ::core::ffi::c_int
+        | *(&raw mut game.g_ram as *mut uint8).offset(0x614) as ::core::ffi::c_int
+        | *(&raw mut game.g_ram as *mut uint8).offset(0x615) as ::core::ffi::c_int
         != 0
     {
         printf(
             b"Coroutine state: %d, %d, %d, %d\n\0" as *const u8 as *const ::core::ffi::c_char,
-            *(&raw mut game.g_ram as *mut uint8).offset(0x612 as ::core::ffi::c_int as isize)
-                as ::core::ffi::c_int,
-            *(&raw mut game.g_ram as *mut uint8).offset(0x613 as ::core::ffi::c_int as isize)
-                as ::core::ffi::c_int,
-            *(&raw mut game.g_ram as *mut uint8).offset(0x614 as ::core::ffi::c_int as isize)
-                as ::core::ffi::c_int,
-            *(&raw mut game.g_ram as *mut uint8).offset(0x615 as ::core::ffi::c_int as isize)
-                as ::core::ffi::c_int,
+            *(&raw mut game.g_ram as *mut uint8).offset(0x612) as ::core::ffi::c_int,
+            *(&raw mut game.g_ram as *mut uint8).offset(0x613) as ::core::ffi::c_int,
+            *(&raw mut game.g_ram as *mut uint8).offset(0x614) as ::core::ffi::c_int,
+            *(&raw mut game.g_ram as *mut uint8).offset(0x615) as ::core::ffi::c_int,
         );
         Warning(b"Coroutine State is broken!\0" as *const u8 as *const ::core::ffi::c_char);
     }
-    *(&raw mut game.g_ram as *mut uint8).offset(0x611 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x611) = 0 as uint8;
     return kCoroutineNone as CoroutineRet;
 }
 pub unsafe fn RunOneFrameOfGame(game: &mut Game) {
     let mut ret: CoroutineRet = RunOneFrameOfGameInner(game);
     if ret as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-        *(&raw mut game.g_ram as *mut uint8).offset(0x5b4 as ::core::ffi::c_int as isize) =
-            1 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x5b4) = 1 as uint8;
     }
     Vector_NMI(game);
 }
@@ -2236,34 +2021,25 @@ static kSfxHandlers: [Option<Func_Y_V>; 5] = unsafe {
     ]
 };
 pub unsafe fn HandleSoundEffects(game: &mut Game) {
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x686 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x686) as *mut uint16) as ::core::ffi::c_int
         - 1 as ::core::ffi::c_int) as int8 as ::core::ffi::c_int
         >= 0 as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x686 as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
-            .offset(0 as ::core::ffi::c_int as isize) =
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x686 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                - 1 as ::core::ffi::c_int) as uint8;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x686) as *mut uint16 as *mut uint8)
+            .offset(0) = (*((&raw mut game.g_ram as *mut uint8).offset(0x686) as *mut uint16)
+            as ::core::ffi::c_int
+            - 1 as ::core::ffi::c_int) as uint8;
         RtlApuWrite(APUI01 as ::core::ffi::c_int as uint32, 0 as uint8, game);
-        *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x64d as ::core::ffi::c_int as isize)
-            .offset(0 as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x64d).offset(0) = 0 as uint8;
         RtlApuWrite(APUI02 as ::core::ffi::c_int as uint32, 0 as uint8, game);
-        *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x64d as ::core::ffi::c_int as isize)
-            .offset(1 as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x64d).offset(1) = 0 as uint8;
         RtlApuWrite(APUI03 as ::core::ffi::c_int as uint32, 0 as uint8, game);
-        *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x64d as ::core::ffi::c_int as isize)
-            .offset(2 as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x64d).offset(2) = 0 as uint8;
     } else {
         let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
         while i < 3 as ::core::ffi::c_int {
             kSfxHandlers[*(&raw mut game.g_ram as *mut uint8)
-                .offset(0x649 as ::core::ffi::c_int as isize)
+                .offset(0x649)
                 .offset(i as isize) as usize]
                 .expect("non-null function pointer")(i as uint16, game);
             i += 1;
@@ -2272,19 +2048,19 @@ pub unsafe fn HandleSoundEffects(game: &mut Game) {
 }
 pub unsafe fn SfxHandlers_0_SendToApu(mut j: uint16, game: &mut Game) {
     if *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x643 as ::core::ffi::c_int as isize)
+        .offset(0x643)
         .offset(j as isize) as ::core::ffi::c_int
         != *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x646 as ::core::ffi::c_int as isize)
+            .offset(0x646)
             .offset(j as isize) as ::core::ffi::c_int
     {
         let mut v2: uint8 = (*(&raw mut game.g_ram as *mut uint8)
-            .offset(0x643 as ::core::ffi::c_int as isize)
+            .offset(0x643)
             .offset(j as isize) as ::core::ffi::c_int
             + j as ::core::ffi::c_int * 16 as ::core::ffi::c_int)
             as uint8;
         let mut v3: uint8 = *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x656 as ::core::ffi::c_int as isize)
+            .offset(0x656)
             .offset(v2 as isize);
         RtlApuWrite(
             (j as ::core::ffi::c_int + APUI01 as ::core::ffi::c_int) as SnesRegs as uint32,
@@ -2292,107 +2068,93 @@ pub unsafe fn SfxHandlers_0_SendToApu(mut j: uint16, game: &mut Game) {
             game,
         );
         *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x64d as ::core::ffi::c_int as isize)
+            .offset(0x64d)
             .offset(j as isize) = v3;
         *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x643 as ::core::ffi::c_int as isize)
+            .offset(0x643)
             .offset(j as isize) = (v2 as ::core::ffi::c_int + 1 as ::core::ffi::c_int
             & 0xf as ::core::ffi::c_int) as uint8;
         let ref mut fresh134 = *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x649 as ::core::ffi::c_int as isize)
+            .offset(0x649)
             .offset(j as isize);
         *fresh134 = (*fresh134).wrapping_add(1);
     }
 }
 pub unsafe fn SfxHandlers_1_WaitForAck(mut j: uint16, game: &mut Game) {
     let mut v1: uint8 = *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x64d as ::core::ffi::c_int as isize)
+        .offset(0x64d)
         .offset(j as isize);
     let ref mut fresh138 = *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x649 as ::core::ffi::c_int as isize)
+        .offset(0x649)
         .offset(j as isize);
     *fresh138 = (*fresh138).wrapping_add(1);
     *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x650 as ::core::ffi::c_int as isize)
+        .offset(0x650)
         .offset(j as isize) = 6 as uint8;
 }
 pub unsafe fn SfxHandlers_2_ClearRequest(mut j: uint16, game: &mut Game) {
     let ref mut fresh135 = *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x650 as ::core::ffi::c_int as isize)
+        .offset(0x650)
         .offset(j as isize);
     let fresh136 = *fresh135;
     *fresh135 = (*fresh135).wrapping_sub(1);
     if fresh136 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
         *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x64d as ::core::ffi::c_int as isize)
+            .offset(0x64d)
             .offset(j as isize) = 0 as uint8;
         let ref mut fresh137 = *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x649 as ::core::ffi::c_int as isize)
+            .offset(0x649)
             .offset(j as isize);
         *fresh137 = (*fresh137).wrapping_add(1);
     }
 }
 pub unsafe fn SfxHandlers_3_WaitForAck(mut j: uint16, game: &mut Game) {
     let mut v1: uint8 = *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x64d as ::core::ffi::c_int as isize)
+        .offset(0x64d)
         .offset(j as isize);
     *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x649 as ::core::ffi::c_int as isize)
+        .offset(0x649)
         .offset(j as isize) = 0 as uint8;
     SfxHandlers_0_SendToApu(j, game);
 }
 pub unsafe fn SfxHandlers_4_Reset(mut j: uint16, game: &mut Game) {
     let ref mut fresh132 = *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x650 as ::core::ffi::c_int as isize)
+        .offset(0x650)
         .offset(j as isize);
     let fresh133 = *fresh132;
     *fresh132 = (*fresh132).wrapping_sub(1);
     if fresh133 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
         *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x649 as ::core::ffi::c_int as isize)
+            .offset(0x649)
             .offset(j as isize) = 0 as uint8;
     }
 }
 pub unsafe fn ResetSoundQueues(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x643 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x643 as ::core::ffi::c_int as isize)
-        .offset(2 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x646 as ::core::ffi::c_int as isize)
-        .offset(1 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x649 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x649 as ::core::ffi::c_int as isize)
-        .offset(2 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x643) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x643).offset(2) as *mut uint8 as *mut uint16) =
+        0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x646).offset(1) as *mut uint8 as *mut uint16) =
+        0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x649) as *mut uint16) = 0 as uint16;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x649).offset(2) = 0 as uint8;
 }
 pub unsafe fn ShowSpareCpu(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdfe as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x8b as ::core::ffi::c_int as isize) as *mut uint16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xdfe) as *mut uint16) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16);
 }
 pub unsafe fn GameState_0_Reset_Async(game: &mut Game) -> CoroutineRet {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdf8 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdfa as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdfc as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (0x8b9b68 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1f55 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x1f59 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    *((&raw mut game.g_ram as *mut uint8).offset(0xdf8) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xdfa) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xdfc) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
+        (0x8b9b68 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1f55) as *mut uint16) = 0 as uint16;
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x1f59) as *mut uint16) as ::core::ffi::c_int
         == 4 as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1f55 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 3 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1f55) as *mut uint16) = 3 as uint16;
     }
-    let ref mut fresh79 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x998 as ::core::ffi::c_int as isize) as *mut uint16);
+    let ref mut fresh79 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
     *fresh79 = (*fresh79).wrapping_add(1);
     return kCoroutineNone as CoroutineRet;
 }
@@ -2414,17 +2176,12 @@ pub unsafe fn GameState_7_MainGameplayFadeIn(game: &mut Game) -> CoroutineRet {
         return _coret_ as CoroutineRet;
     }
     HandleFadeIn(game);
-    if *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
+    if *(&raw mut game.g_ram as *mut uint8).offset(0x51) as ::core::ffi::c_int
         == 15 as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        let ref mut fresh131 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
+        let ref mut fresh131 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
         *fresh131 = (*fresh131).wrapping_add(1);
     }
     return kCoroutineNone as CoroutineRet;
@@ -2434,25 +2191,18 @@ pub unsafe fn GameState_28_Unused(game: &mut Game) -> CoroutineRet {
     return kCoroutineNone as CoroutineRet;
 }
 pub unsafe fn GameState_8_MainGameplay(game: &mut Game) -> CoroutineRet {
-    let mut _state_variable_: *mut uint8 =
-        (&raw mut game.g_ram as *mut uint8).offset(0x612 as ::core::ffi::c_int as isize);
+    let mut _state_variable_: *mut uint8 = (&raw mut game.g_ram as *mut uint8).offset(0x612);
     let mut current_block_38: u64;
     match *_state_variable_ as ::core::ffi::c_int {
         0 => {
             DetermineWhichEnemiesToProcess(game);
             PaletteFxHandler(game);
             HandleControllerInputForGamePhysics(game);
-            if *((&raw mut game.g_ram as *mut uint8).offset(0xe12 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                == 0
-            {
+            if *((&raw mut game.g_ram as *mut uint8).offset(0xe12) as *mut uint16) == 0 {
                 SamusProjectileInteractionHandler(game);
             }
             EnemyMain(game);
-            if *((&raw mut game.g_ram as *mut uint8).offset(0xdc8 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                != 0
-            {
+            if *((&raw mut game.g_ram as *mut uint8).offset(0xdc8) as *mut uint16) != 0 {
                 current_block_38 = 6718109325120641364;
             } else {
                 current_block_38 = 13586036798005543211;
@@ -2471,16 +2221,14 @@ pub unsafe fn GameState_8_MainGameplay(game: &mut Game) -> CoroutineRet {
     match current_block_38 {
         6718109325120641364 => {
             let mut _coret_: uint8 = DisplayMessageBox_Async(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdc8 as ::core::ffi::c_int as isize)
-                    as *mut uint16),
+                *((&raw mut game.g_ram as *mut uint8).offset(0xdc8) as *mut uint16),
                 game,
             ) as uint8;
             if _coret_ != 0 {
                 *_state_variable_ = 1 as uint8;
                 return _coret_ as CoroutineRet;
             }
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc8 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xdc8) as *mut uint16) = 0 as uint16;
             current_block_38 = 13586036798005543211;
         }
         _ => {}
@@ -2501,10 +2249,7 @@ pub unsafe fn GameState_8_MainGameplay(game: &mut Game) -> CoroutineRet {
                 return _coret__0 as CoroutineRet;
             }
             AnimtilesHandler(game);
-            if *((&raw mut game.g_ram as *mut uint8).offset(0xe12 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                == 0
-            {
+            if *((&raw mut game.g_ram as *mut uint8).offset(0xe12) as *mut uint16) == 0 {
                 EprojSamusCollDetect(game);
                 EprojProjCollDet(game);
                 ProcessEnemyPowerBombInteraction(game);
@@ -2532,11 +2277,9 @@ pub unsafe fn DeleteAllOptionsMenuObjects_(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 14 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
             .offset((v1 + 5 as ::core::ffi::c_int) as isize) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1adb as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16)
             .offset((v1 + 17 as ::core::ffi::c_int) as isize) = 0 as uint16;
         i -= 2 as ::core::ffi::c_int;
     }
@@ -2573,11 +2316,9 @@ pub unsafe fn CallOptionsEntryFunc(mut ea: uint32, mut j: uint16, game: &mut Gam
     };
 }
 pub unsafe fn CreateOptionsMenuObject_(mut a: uint16, mut j: uint16, game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
-        as *mut uint16) = a;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16) = a;
     let mut v3: uint16 = 14 as uint16;
-    while *((&raw mut game.g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
-        as *mut uint16)
+    while *((&raw mut game.g_ram as *mut uint8).offset(0x1afd) as *mut uint16)
         .offset((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
         != 0
     {
@@ -2588,27 +2329,20 @@ pub unsafe fn CreateOptionsMenuObject_(mut a: uint16, mut j: uint16, game: &mut 
     }
     let mut v5: *const uint8 = RomPtr_82(j as uint16_t, game);
     let mut v6: ::core::ffi::c_int = v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1b0d as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v6 as isize) = *(v5.offset(2 as ::core::ffi::c_int as isize) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v6 as isize) = *(v5.offset(4 as ::core::ffi::c_int as isize) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v6 as isize) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v6 as isize) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1b2d as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v6 as isize) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1add as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v6 as isize) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1aed as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v6 as isize) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1b0d) as *mut uint16).offset(v6 as isize) =
+        *(v5.offset(2) as *mut uint16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1afd) as *mut uint16).offset(v6 as isize) =
+        *(v5.offset(4) as *mut uint16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v6 as isize) =
+        1 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1a9d) as *mut uint16).offset(v6 as isize) =
+        0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1b2d) as *mut uint16).offset(v6 as isize) =
+        0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1add) as *mut uint16).offset(v6 as isize) =
+        0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1aed) as *mut uint16).offset(v6 as isize) =
+        0 as uint16;
     CallOptionsEntryFunc(
         (*(v5 as *mut uint16) as ::core::ffi::c_int | 0x820000 as ::core::ffi::c_int) as uint32,
         v3,
@@ -2620,16 +2354,14 @@ pub unsafe fn OptionsPreInstr_nullsub_57(mut k: uint16) {}
 pub unsafe fn OptionsMenuFunc1(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 14 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1a8f as ::core::ffi::c_int as isize)
-            as *mut uint16) = i as uint16;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1a8f) as *mut uint16) = i as uint16;
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x1afd) as *mut uint16)
             .offset((i >> 1 as ::core::ffi::c_int) as isize)
             != 0
         {
             OptionsMenuFunc2(i as uint16, game);
-            i = *((&raw mut game.g_ram as *mut uint8).offset(0x1a8f as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int;
+            i = *((&raw mut game.g_ram as *mut uint8).offset(0x1a8f) as *mut uint16)
+                as ::core::ffi::c_int;
         }
         i -= 2 as ::core::ffi::c_int;
     }
@@ -2684,42 +2416,34 @@ pub unsafe fn CallOptionsInstr(
 }
 pub unsafe fn OptionsMenuFunc2(mut k: uint16, game: &mut Game) {
     CallOptionsPreInstr(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x1b0d as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x1b0d) as *mut uint16)
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
             as ::core::ffi::c_int
             | 0x820000 as ::core::ffi::c_int) as uint32,
         k,
         game,
     );
-    let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1a8f as ::core::ffi::c_int as isize) as *mut uint16);
-    let mut v2: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1a8f as ::core::ffi::c_int as isize)
+    let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x1a8f) as *mut uint16);
+    let mut v2: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x1a8f)
         as *mut uint16) as ::core::ffi::c_int
         >> 1 as ::core::ffi::c_int;
-    let ref mut fresh119 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1b1d as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset(v2 as isize);
+    let ref mut fresh119 =
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v2 as isize);
     let fresh120 = *fresh119;
     *fresh119 = (*fresh119).wrapping_sub(1);
     if fresh120 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
-        let mut v4: uint16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x1afd as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        let mut v4: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x1afd) as *mut uint16)
             .offset(v2 as isize);
         let mut v5: *mut uint16 = ::core::ptr::null_mut::<uint16>();
         loop {
             v5 = RomPtr_82(v4 as uint16_t, game) as *mut uint16;
-            if *v5.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                & 0x8000 as ::core::ffi::c_int
+            if *v5.offset(0) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                 == 0 as ::core::ffi::c_int
             {
                 break;
             }
             v4 = CallOptionsInstr(
-                (*v5.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                    | 0x820000 as ::core::ffi::c_int) as uint32,
+                (*v5.offset(0) as ::core::ffi::c_int | 0x820000 as ::core::ffi::c_int) as uint32,
                 v1,
                 (v4 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16,
                 game,
@@ -2729,44 +2453,36 @@ pub unsafe fn OptionsMenuFunc2(mut k: uint16, game: &mut Game) {
             }
         }
         let mut v7: ::core::ffi::c_int = v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v7 as isize) = *v5.offset(0 as ::core::ffi::c_int as isize);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v7 as isize) = *v5.offset(1 as ::core::ffi::c_int as isize);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v7 as isize) = (v4 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1b1d) as *mut uint16).offset(v7 as isize) =
+            *v5.offset(0);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1a9d) as *mut uint16).offset(v7 as isize) =
+            *v5.offset(1);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1afd) as *mut uint16).offset(v7 as isize) =
+            (v4 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
     }
 }
 pub unsafe fn OptionsInstr_Destroy(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v2 as isize) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v2 as isize) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1a9d) as *mut uint16).offset(v2 as isize) =
+        0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1afd) as *mut uint16).offset(v2 as isize) =
+        0 as uint16;
     return 0 as uint16;
 }
 pub unsafe fn OptionsInstr_8C64(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
-        as *mut uint16)
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1afd) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         (j as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
     return 0 as uint16;
 }
 pub unsafe fn OptionsInstr_SetPreInstr(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1b0d as ::core::ffi::c_int as isize)
-        as *mut uint16)
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1b0d) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(RomPtr_82(j as uint16_t, game) as *mut uint16);
     return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn OptionsInstr_8C79(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1b0d as ::core::ffi::c_int as isize)
-        as *mut uint16)
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1b0d) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         (0x828c81 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return j;
@@ -2776,9 +2492,8 @@ pub unsafe fn OptionsInstr_Goto(mut k: uint16, mut j: uint16, game: &mut Game) -
 }
 pub unsafe fn OptionsInstr_8C89(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1b2d as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset(v2 as isize);
+    let ref mut fresh0 =
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1b2d) as *mut uint16).offset(v2 as isize);
     let fresh1 = *fresh0;
     *fresh0 = (*fresh0).wrapping_sub(1);
     if fresh1 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
@@ -2788,8 +2503,7 @@ pub unsafe fn OptionsInstr_8C89(mut k: uint16, mut j: uint16, game: &mut Game) -
     };
 }
 pub unsafe fn OptionsInstr_8C93(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1b2d as ::core::ffi::c_int as isize)
-        as *mut uint16)
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1b2d) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(RomPtr_82(j as uint16_t, game) as *mut uint16);
     return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
@@ -2798,26 +2512,20 @@ pub unsafe fn DrawOptionsMenuSpritemaps(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 14 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize)
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x1a9d) as *mut uint16).offset(v1 as isize)
             != 0
         {
-            let mut v2: uint16 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x1a9d as ::core::ffi::c_int as isize)
+            let mut v2: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x1a9d)
                 as *mut uint16)
                 .offset(v1 as isize);
             DrawSpritemap(
                 0x82 as uint8,
                 v2,
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1aad as ::core::ffi::c_int as isize)
-                    as *mut uint16)
+                *((&raw mut game.g_ram as *mut uint8).offset(0x1aad) as *mut uint16)
                     .offset(v1 as isize),
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
-                    as *mut uint16)
+                *((&raw mut game.g_ram as *mut uint8).offset(0x1abd) as *mut uint16)
                     .offset(v1 as isize),
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1acd as ::core::ffi::c_int as isize)
-                    as *mut uint16)
+                *((&raw mut game.g_ram as *mut uint8).offset(0x1acd) as *mut uint16)
                     .offset(v1 as isize),
                 game,
             );
@@ -2831,19 +2539,14 @@ pub unsafe fn GameState_12_Pausing_Darkening_Async(game: &mut Game) -> Coroutine
         return _coret_ as CoroutineRet;
     }
     HandleFadeOut(game);
-    if *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
+    if *(&raw mut game.g_ram as *mut uint8).offset(0x51) as ::core::ffi::c_int
         & 0xf as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
     {
         EnableNMI(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        let ref mut fresh80 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
+        let ref mut fresh80 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
         *fresh80 = (*fresh80).wrapping_add(1);
     }
     return kCoroutineNone as CoroutineRet;
@@ -2880,15 +2583,12 @@ pub unsafe fn CallUnpauseHook_Async(mut ea: uint32, game: &mut Game) -> Coroutin
 }
 pub unsafe fn GameState_13_Pausing_Async(game: &mut Game) -> CoroutineRet {
     DisableHdmaObjects(game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x85 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x85) = 0 as uint8;
     WriteReg(HDMAEN as ::core::ffi::c_int as uint16, 0 as uint8, game);
     DisableAnimtiles(game);
     BackupBG2TilemapForPauseMenu(game);
     CallPauseHook(
-        Load24(
-            (&raw mut game.g_ram as *mut uint8).offset(0x601 as ::core::ffi::c_int as isize)
-                as *mut LongPtr,
-        ),
+        Load24((&raw mut game.g_ram as *mut uint8).offset(0x601) as *mut LongPtr),
         game,
     );
     CancelSoundEffects(game);
@@ -2898,29 +2598,21 @@ pub unsafe fn GameState_13_Pausing_Async(game: &mut Game) -> CoroutineRet {
     LoadPauseMenuMapTilemapAndAreaLabel(game);
     BackupGameplayPalettesAndLoadForPause(game);
     ContinueInitPauseMenu(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x74d as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x73b as ::core::ffi::c_int as isize)
-        as *mut uint16) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x5fd as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x5ff as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 1 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 1 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x74d) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x73b) as *mut uint16) = 1 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x5fd) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x5ff) as *mut uint16) = 0 as uint16;
     QueueClearingOfFxTilemap(game);
-    let ref mut fresh85 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x998 as ::core::ffi::c_int as isize) as *mut uint16);
+    let ref mut fresh85 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
     *fresh85 = (*fresh85).wrapping_add(1);
     return kCoroutineNone as CoroutineRet;
 }
 pub unsafe fn BackupBG2TilemapForPauseMenu(game: &mut Game) {
     WriteRegWord(
         VMADDL as ::core::ffi::c_int as uint16,
-        ((*(&raw mut game.g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize)
-            as ::core::ffi::c_int
+        ((*(&raw mut game.g_ram as *mut uint8).offset(0x59) as ::core::ffi::c_int
             & 0xfc as ::core::ffi::c_int)
             << 8 as ::core::ffi::c_int
             | 1 as ::core::ffi::c_int) as uint16,
@@ -2948,8 +2640,7 @@ pub unsafe fn BackupBG2TilemapForPauseMenu(game: &mut Game) {
 pub unsafe fn RestoreBG2TilemapFromPauseScreen(game: &mut Game) {
     WriteRegWord(
         VMADDL as ::core::ffi::c_int as uint16,
-        ((*(&raw mut game.g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize)
-            as ::core::ffi::c_int
+        ((*(&raw mut game.g_ram as *mut uint8).offset(0x59) as ::core::ffi::c_int
             & 0xfc as ::core::ffi::c_int)
             << 8 as ::core::ffi::c_int) as uint16,
         game,
@@ -2969,94 +2660,76 @@ pub unsafe fn RestoreBG2TilemapFromPauseScreen(game: &mut Game) {
     WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
 }
 pub unsafe fn BackupSomeGfxStateForPause(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut uint8).offset(0x765 as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x58 as ::core::ffi::c_int as isize);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x766 as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x767 as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x5a as ::core::ffi::c_int as isize);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x768 as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x769 as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x5e as ::core::ffi::c_int as isize);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x76a as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x52 as ::core::ffi::c_int as isize);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x76b as ::core::ffi::c_int as isize) =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x76c as ::core::ffi::c_int as isize) =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x76d as ::core::ffi::c_int as isize) =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb9 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x76e as ::core::ffi::c_int as isize) =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x76f as ::core::ffi::c_int as isize) =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb7 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x770 as ::core::ffi::c_int as isize) =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xbb as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x771 as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x772 as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x91b as ::core::ffi::c_int as isize);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x773 as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x91c as ::core::ffi::c_int as isize);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x774 as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x57 as ::core::ffi::c_int as isize);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x775 as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize);
+    *(&raw mut game.g_ram as *mut uint8).offset(0x765) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x58);
+    *(&raw mut game.g_ram as *mut uint8).offset(0x766) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x59);
+    *(&raw mut game.g_ram as *mut uint8).offset(0x767) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x5a);
+    *(&raw mut game.g_ram as *mut uint8).offset(0x768) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x5d);
+    *(&raw mut game.g_ram as *mut uint8).offset(0x769) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x5e);
+    *(&raw mut game.g_ram as *mut uint8).offset(0x76a) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x52);
+    *(&raw mut game.g_ram as *mut uint8).offset(0x76b) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16) as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x76c) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xb5) as *mut uint16) as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x76d) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xb9) as *mut uint16) as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x76e) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x76f) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16) as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x770) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xbb) as *mut uint16) as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x771) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x55);
+    *(&raw mut game.g_ram as *mut uint8).offset(0x772) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x91b);
+    *(&raw mut game.g_ram as *mut uint8).offset(0x773) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x91c);
+    *(&raw mut game.g_ram as *mut uint8).offset(0x774) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x57);
+    *(&raw mut game.g_ram as *mut uint8).offset(0x775) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x71);
 }
 pub unsafe fn RestoreSomeGfxStateForPause(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut uint8).offset(0x91b as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x772 as ::core::ffi::c_int as isize);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x91c as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x773 as ::core::ffi::c_int as isize);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x771 as ::core::ffi::c_int as isize);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xbb as ::core::ffi::c_int as isize) as *mut uint16
-        as *mut uint8)
-        .offset(0 as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x770 as ::core::ffi::c_int as isize);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb7 as ::core::ffi::c_int as isize) as *mut uint16
-        as *mut uint8)
-        .offset(0 as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x76f as ::core::ffi::c_int as isize);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize) as *mut uint16
-        as *mut uint8)
-        .offset(0 as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x76e as ::core::ffi::c_int as isize);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb9 as ::core::ffi::c_int as isize) as *mut uint16
-        as *mut uint8)
-        .offset(0 as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x76d as ::core::ffi::c_int as isize);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb5 as ::core::ffi::c_int as isize) as *mut uint16
-        as *mut uint8)
-        .offset(0 as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x76c as ::core::ffi::c_int as isize);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize) as *mut uint16
-        as *mut uint8)
-        .offset(0 as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x76b as ::core::ffi::c_int as isize);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x52 as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x76a as ::core::ffi::c_int as isize);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x5e as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x769 as ::core::ffi::c_int as isize);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x768 as ::core::ffi::c_int as isize);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x5a as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x767 as ::core::ffi::c_int as isize);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x766 as ::core::ffi::c_int as isize);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x58 as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x765 as ::core::ffi::c_int as isize);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x57 as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x774 as ::core::ffi::c_int as isize);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x775 as ::core::ffi::c_int as isize);
+    *(&raw mut game.g_ram as *mut uint8).offset(0x91b) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x772);
+    *(&raw mut game.g_ram as *mut uint8).offset(0x91c) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x773);
+    *(&raw mut game.g_ram as *mut uint8).offset(0x55) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x771);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xbb) as *mut uint16 as *mut uint8).offset(0) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x770);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16 as *mut uint8).offset(0) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x76f);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16 as *mut uint8).offset(0) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x76e);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb9) as *mut uint16 as *mut uint8).offset(0) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x76d);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb5) as *mut uint16 as *mut uint8).offset(0) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x76c);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16 as *mut uint8).offset(0) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x76b);
+    *(&raw mut game.g_ram as *mut uint8).offset(0x52) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x76a);
+    *(&raw mut game.g_ram as *mut uint8).offset(0x5e) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x769);
+    *(&raw mut game.g_ram as *mut uint8).offset(0x5d) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x768);
+    *(&raw mut game.g_ram as *mut uint8).offset(0x5a) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x767);
+    *(&raw mut game.g_ram as *mut uint8).offset(0x59) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x766);
+    *(&raw mut game.g_ram as *mut uint8).offset(0x58) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x765);
+    *(&raw mut game.g_ram as *mut uint8).offset(0x57) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x774);
+    *(&raw mut game.g_ram as *mut uint8).offset(0x71) =
+        *(&raw mut game.g_ram as *mut uint8).offset(0x775);
 }
 pub unsafe fn LoadPauseMenuTilesAndClearBG2(game: &mut Game) {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
@@ -3159,8 +2832,7 @@ pub unsafe fn LoadPauseScreenBaseTilemaps(game: &mut Game) {
         loop {
             let fresh92 = v1;
             v1 = v1.wrapping_add(1);
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-                as *mut Ram3000))
+            (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
                 .pause_menu_map_tilemap[fresh92 as usize] =
                 *(RomPtr_82(v0 as uint16_t, game) as *mut uint16);
             v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
@@ -3179,30 +2851,22 @@ pub unsafe fn LoadPauseScreenBaseTilemaps(game: &mut Game) {
     LoadEqupmentScreenReserveHealthTilemap(game);
 }
 pub unsafe fn LoadEqupmentScreenReserveHealthTilemap(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9d4 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
-        let mut r42: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x9d6 as ::core::ffi::c_int as isize)
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x9d4) as *mut uint16) != 0 {
+        let mut r42: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x9d6)
             as *mut uint16) as ::core::ffi::c_int
             / 100 as ::core::ffi::c_int;
-        let mut rest: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x9d6 as ::core::ffi::c_int as isize)
+        let mut rest: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x9d6)
             as *mut uint16) as ::core::ffi::c_int
             % 100 as ::core::ffi::c_int;
         let mut div10: ::core::ffi::c_int = rest / 10 as ::core::ffi::c_int;
         let mut mod10: ::core::ffi::c_int = rest % 10 as ::core::ffi::c_int;
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3800 as ::core::ffi::c_int as isize)
-            as *mut Ram3800))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3800) as *mut Ram3800))
             .cinematic_bg_tilemap[394 as ::core::ffi::c_int as usize] =
             (mod10 + 2052 as ::core::ffi::c_int) as uint16;
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3800 as ::core::ffi::c_int as isize)
-            as *mut Ram3800))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3800) as *mut Ram3800))
             .cinematic_bg_tilemap[393 as ::core::ffi::c_int as usize] =
             (div10 + 2052 as ::core::ffi::c_int) as uint16;
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3800 as ::core::ffi::c_int as isize)
-            as *mut Ram3800))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3800) as *mut Ram3800))
             .cinematic_bg_tilemap[392 as ::core::ffi::c_int as usize] =
             (r42 + 2052 as ::core::ffi::c_int) as uint16;
     }
@@ -3213,12 +2877,10 @@ pub unsafe fn BackupGameplayPalettesAndLoadForPause(game: &mut Game) {
     v0 = 512 as int16;
     let mut v1: uint16 = 0 as uint16;
     loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap
             [(v1 as ::core::ffi::c_int + 384 as ::core::ffi::c_int) as usize] =
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
                 .offset(v1 as isize);
         v1 = v1.wrapping_add(1);
         v0 = (v0 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as int16;
@@ -3229,8 +2891,7 @@ pub unsafe fn BackupGameplayPalettesAndLoadForPause(game: &mut Game) {
     v2 = 512 as int16;
     let mut v3: uint16 = 0 as uint16;
     loop {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
             .offset((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
             *(game.g_rom.offset(
                 (((0xb6f000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -3258,59 +2919,53 @@ pub unsafe fn ContinueInitPauseMenu(game: &mut Game) {
 pub unsafe fn SetupMapScrollingForFileSelectMap(game: &mut Game) {
     ResetPauseMenuAnimations(game);
     DetermineMapScrollLimits(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x5ac as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
-        + ((*((&raw mut game.g_ram as *mut uint8).offset(0x5ae as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x5ac as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
-            >> 1 as ::core::ffi::c_int)
-        - 128 as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16) =
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x5ac) as *mut uint16) as ::core::ffi::c_int
+            + ((*((&raw mut game.g_ram as *mut uint8).offset(0x5ae) as *mut uint16)
+                as ::core::ffi::c_int
+                - *((&raw mut game.g_ram as *mut uint8).offset(0x5ac) as *mut uint16)
+                    as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
+                >> 1 as ::core::ffi::c_int)
+            - 128 as ::core::ffi::c_int) as uint16;
     let mut r18: uint16 = (8 as ::core::ffi::c_int
-        * (*((&raw mut game.g_ram as *mut uint8).offset(0x7a1 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + ((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+        * (*((&raw mut game.g_ram as *mut uint8).offset(0x7a1) as *mut uint16)
+            as ::core::ffi::c_int
+            + ((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
+                as ::core::ffi::c_int
                 & 0xff00 as ::core::ffi::c_int)
                 >> 8 as ::core::ffi::c_int))
-        - *((&raw mut game.g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as uint16;
+        - *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16) as ::core::ffi::c_int)
+        as uint16;
     let mut v0: int16 = (224 as ::core::ffi::c_int - r18 as ::core::ffi::c_int) as int16;
     if (224 as ::core::ffi::c_int - r18 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
         >= 0 as ::core::ffi::c_int
     {
         r18 = (32 as ::core::ffi::c_int - r18 as ::core::ffi::c_int) as uint16;
         if r18 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-            let ref mut fresh146 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xb1 as ::core::ffi::c_int as isize)
-                as *mut uint16);
+            let ref mut fresh146 =
+                *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16);
             *fresh146 = (*fresh146 as ::core::ffi::c_int - r18 as ::core::ffi::c_int) as uint16;
         }
     } else {
         r18 = (224 as ::core::ffi::c_int - r18 as ::core::ffi::c_int) as uint16;
-        let ref mut fresh147 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xb1 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let ref mut fresh147 = *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16);
         *fresh147 = (*fresh147 as ::core::ffi::c_int - v0 as ::core::ffi::c_int) as uint16;
     }
-    r18 = (*((&raw mut game.g_ram as *mut uint8).offset(0x5b0 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        + ((*((&raw mut game.g_ram as *mut uint8).offset(0x5b2 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x5b0 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
+    r18 = (*((&raw mut game.g_ram as *mut uint8).offset(0x5b0) as *mut uint16)
+        as ::core::ffi::c_int
+        + ((*((&raw mut game.g_ram as *mut uint8).offset(0x5b2) as *mut uint16)
+            as ::core::ffi::c_int
+            - *((&raw mut game.g_ram as *mut uint8).offset(0x5b0) as *mut uint16)
+                as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
             >> 1 as ::core::ffi::c_int)
         + 16 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
-        as *mut uint16) = -(112 as ::core::ffi::c_int - r18 as ::core::ffi::c_int
-        & 0xfff8 as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) =
+        -(112 as ::core::ffi::c_int - r18 as ::core::ffi::c_int & 0xfff8 as ::core::ffi::c_int)
+            as uint16;
     r18 = (8 as ::core::ffi::c_int
-        * (*((&raw mut game.g_ram as *mut uint8).offset(0x7a3 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-                as *mut uint16 as *mut uint8)
+        * (*((&raw mut game.g_ram as *mut uint8).offset(0x7a3) as *mut uint16)
+            as ::core::ffi::c_int
+            + *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16 as *mut uint8)
                 .offset(
                     (::core::mem::size_of::<uint16>() as usize)
                         .wrapping_div(::core::mem::size_of::<uint8>() as usize)
@@ -3324,35 +2979,27 @@ pub unsafe fn SetupMapScrollingForFileSelectMap(game: &mut Game) {
         >= 0 as ::core::ffi::c_int
     {
         r18 = (64 as ::core::ffi::c_int - r18 as ::core::ffi::c_int) as uint16;
-        let ref mut fresh148 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xb3 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let ref mut fresh148 = *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16);
         *fresh148 = (*fresh148 as ::core::ffi::c_int - v1 as ::core::ffi::c_int) as uint16;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) as ::core::ffi::c_int
             + 40 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             != 0
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
-                as *mut uint16) = -(40 as ::core::ffi::c_int) as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) =
+                -(40 as ::core::ffi::c_int) as uint16;
         }
     }
 }
 pub unsafe fn GameState_14_Paused_Async(game: &mut Game) -> CoroutineRet {
     DrawPauseMenuDuringFadeIn(game);
     HandleFadeIn(game);
-    if *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
+    if *(&raw mut game.g_ram as *mut uint8).offset(0x51) as ::core::ffi::c_int
         == 15 as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        let ref mut fresh93 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
+        let ref mut fresh93 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
         *fresh93 = (*fresh93).wrapping_add(1);
     }
     return kCoroutineNone as CoroutineRet;
@@ -3377,8 +3024,7 @@ static kPauseMenuFuncs: [Option<Func_V>; 8] = unsafe {
     ]
 };
 pub unsafe fn MainPauseRoutine(game: &mut Game) {
-    kPauseMenuFuncs[*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x727 as ::core::ffi::c_int as isize) as *mut uint16) as usize]
+    kPauseMenuFuncs[*((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16) as usize]
         .expect("non-null function pointer")(game);
 }
 pub unsafe fn PauseMenu_0_MapScreen(game: &mut Game) {
@@ -3389,40 +3035,30 @@ pub unsafe fn PauseMenu_0_MapScreen(game: &mut Game) {
     MapScreenDrawSamusPositionIndicator(game);
     DrawMapIcons(game);
     DisplayMapElevatorDestinations(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x763 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x763) as *mut uint16) = 0 as uint16;
 }
 pub unsafe fn PauseMenu_1_EquipmentScreen(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) = 0 as uint16;
     EquipmentScreenMain(game);
     HandlePauseScreenLR(game);
     HandlePauseScreenStart(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x763 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 1 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x763) as *mut uint16) = 1 as uint16;
 }
 pub unsafe fn PauseMenu_2(game: &mut Game) {
     DisplayMapElevatorDestinations(game);
     MapScreenDrawSamusPositionIndicator(game);
     DrawMapIcons(game);
     HandlePauseMenuLRPressHighlight(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x763 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x763) as *mut uint16) = 0 as uint16;
     HandleFadeOut(game);
-    if *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
+    if *(&raw mut game.g_ram as *mut uint8).offset(0x51) as ::core::ffi::c_int
         == 0x80 as ::core::ffi::c_int
     {
         EnableNMI(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        let ref mut fresh97 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x727 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
+        let ref mut fresh97 = *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16);
         *fresh97 = (*fresh97).wrapping_add(1);
     }
 }
@@ -3431,18 +3067,13 @@ pub unsafe fn PauseMenu_5(game: &mut Game) {
     EquipmentScreenDisplayReserveTankAmount(game);
     HandlePauseMenuLRPressHighlight(game);
     HandleFadeOut(game);
-    if *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
+    if *(&raw mut game.g_ram as *mut uint8).offset(0x51) as ::core::ffi::c_int
         == 0x80 as ::core::ffi::c_int
     {
         EnableNMI(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        let ref mut fresh95 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x727 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
+        let ref mut fresh95 = *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16);
         *fresh95 = (*fresh95).wrapping_add(1);
     }
 }
@@ -3450,100 +3081,72 @@ pub unsafe fn PauseMenu_3_MapToEquipment_Load(game: &mut Game) {
     DisplayMapElevatorDestinations(game);
     EquipmentScreenSetupReserveMode(game);
     EquipmentScreenTransferBG1Tilemap(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x763 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 1 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x763) as *mut uint16) = 1 as uint16;
     SetPauseScreenButtonLabelPalettes(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x73f as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x72b as ::core::ffi::c_int as isize)
-        as *mut uint16) = *(game.g_rom.offset(
+    *((&raw mut game.g_ram as *mut uint8).offset(0x73f) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x72b) as *mut uint16) = *(game.g_rom.offset(
         (((0x82c10c as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0x82c10c as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
             & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint8 as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 1 as uint16;
-    let ref mut fresh96 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x727 as ::core::ffi::c_int as isize) as *mut uint16);
+    ) as *const uint8
+        as *mut uint8
+        as *mut uint16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 1 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 1 as uint16;
+    let ref mut fresh96 = *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16);
     *fresh96 = (*fresh96).wrapping_add(1);
 }
 pub unsafe fn PauseMenu_6_EquipmentToMap_Load(game: &mut Game) {
     DisplayMapElevatorDestinations(game);
     LoadPauseMenuMapTilemapAndAreaLabel(game);
     SetPauseScreenButtonLabelPalettes(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x73f as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x72b as ::core::ffi::c_int as isize)
-        as *mut uint16) = *(game.g_rom.offset(
+    *((&raw mut game.g_ram as *mut uint8).offset(0x73f) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x72b) as *mut uint16) = *(game.g_rom.offset(
         (((0x82c10c as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0x82c10c as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
             & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint8 as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x763 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    let ref mut fresh94 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x727 as ::core::ffi::c_int as isize) as *mut uint16);
+    ) as *const uint8
+        as *mut uint8
+        as *mut uint16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 1 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 1 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x763) as *mut uint16) = 0 as uint16;
+    let ref mut fresh94 = *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16);
     *fresh94 = (*fresh94).wrapping_add(1);
 }
 pub unsafe fn PauseMenu_7_EquipmentToMap_FadeIn(game: &mut Game) {
     MapScreenDrawSamusPositionIndicator(game);
     DrawMapIcons(game);
     DisplayMapElevatorDestinations(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x763 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x763) as *mut uint16) = 0 as uint16;
     HandleFadeIn(game);
-    if *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
+    if *(&raw mut game.g_ram as *mut uint8).offset(0x51) as ::core::ffi::c_int
         == 15 as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x753 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x753 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            != 0
-        {
+        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
+        let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x753) as *mut uint16);
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x753) as *mut uint16) != 0 {
             v0 = 1 as uint16;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x727 as ::core::ffi::c_int as isize)
-            as *mut uint16) = v0;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16) = v0;
     }
 }
 pub unsafe fn PauseMenu_4_MapToEquipment_FadeIn(game: &mut Game) {
     EquipmentScreenDrawItemSelector(game);
     EquipmentScreenDisplayReserveTankAmount(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x763 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 1 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x763) as *mut uint16) = 1 as uint16;
     HandleFadeIn(game);
-    if *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
+    if *(&raw mut game.g_ram as *mut uint8).offset(0x51) as ::core::ffi::c_int
         == 15 as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x753 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x753 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            != 0
-        {
+        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
+        let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x753) as *mut uint16);
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x753) as *mut uint16) != 0 {
             v0 = 1 as uint16;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x727 as ::core::ffi::c_int as isize)
-            as *mut uint16) = v0;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16) = v0;
     }
 }
 static kMapScrollingFuncs: [Option<Func_V>; 5] = unsafe {
@@ -3556,25 +3159,18 @@ static kMapScrollingFuncs: [Option<Func_V>; 5] = unsafe {
     ]
 };
 pub unsafe fn MapScrolling(game: &mut Game) {
-    kMapScrollingFuncs[*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x5fd as ::core::ffi::c_int as isize) as *mut uint16)
-        as usize]
+    kMapScrollingFuncs
+        [*((&raw mut game.g_ram as *mut uint8).offset(0x5fd) as *mut uint16) as usize]
         .expect("non-null function pointer")(game);
 }
 pub unsafe fn MapScrolling_0_None(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x5fb as ::core::ffi::c_int as isize)
-        as *mut uint16) = 4 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x5fb) as *mut uint16) = 4 as uint16;
 }
 pub unsafe fn MapScrolling_GetSpeedIndex(game: &mut Game) -> uint16 {
-    let mut result: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x5ff as ::core::ffi::c_int as isize)
-        as *mut uint16);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x5fb as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        == 0
-    {
-        return (*((&raw mut game.g_ram as *mut uint8).offset(0x5ff as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+    let mut result: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x5ff) as *mut uint16);
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x5fb) as *mut uint16) == 0 {
+        return (*((&raw mut game.g_ram as *mut uint8).offset(0x5ff) as *mut uint16)
+            as ::core::ffi::c_int
             + 32 as ::core::ffi::c_int) as uint16;
     }
     return result;
@@ -3614,56 +3210,44 @@ static kMapScrollingSpeedTable: [uint16; 32] = [
     0 as ::core::ffi::c_int as uint16,
 ];
 pub unsafe fn MapScrolling_1_Left(game: &mut Game) {
-    let ref mut fresh105 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb1 as ::core::ffi::c_int as isize) as *mut uint16);
+    let ref mut fresh105 = *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16);
     *fresh105 = (*fresh105 as ::core::ffi::c_int
         - kMapScrollingSpeedTable[(MapScrolling_GetSpeedIndex(game) as ::core::ffi::c_int
             >> 1 as ::core::ffi::c_int) as usize] as ::core::ffi::c_int) as uint16;
     MapScrolling_Common(game);
 }
 pub unsafe fn MapScrolling_Common(game: &mut Game) {
-    let ref mut fresh100 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x5ff as ::core::ffi::c_int as isize) as *mut uint16);
+    let ref mut fresh100 = *((&raw mut game.g_ram as *mut uint8).offset(0x5ff) as *mut uint16);
     *fresh100 = (*fresh100).wrapping_add(1);
-    let ref mut fresh101 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x5ff as ::core::ffi::c_int as isize) as *mut uint16);
+    let ref mut fresh101 = *((&raw mut game.g_ram as *mut uint8).offset(0x5ff) as *mut uint16);
     *fresh101 = (*fresh101).wrapping_add(1);
     if *fresh101 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
         QueueSfx1_Max6(0x36 as uint16, game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x5fd as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x5ff as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x5fb as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            != 0
-        {
-            let ref mut fresh102 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x5fb as ::core::ffi::c_int as isize)
-                as *mut uint16);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x5fd) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x5ff) as *mut uint16) = 0 as uint16;
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x5fb) as *mut uint16) != 0 {
+            let ref mut fresh102 =
+                *((&raw mut game.g_ram as *mut uint8).offset(0x5fb) as *mut uint16);
             *fresh102 = (*fresh102).wrapping_sub(1);
         }
     }
 }
 pub unsafe fn MapScrolling_2_Right(game: &mut Game) {
-    let ref mut fresh104 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb1 as ::core::ffi::c_int as isize) as *mut uint16);
+    let ref mut fresh104 = *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16);
     *fresh104 = (*fresh104 as ::core::ffi::c_int
         + kMapScrollingSpeedTable[(MapScrolling_GetSpeedIndex(game) as ::core::ffi::c_int
             >> 1 as ::core::ffi::c_int) as usize] as ::core::ffi::c_int) as uint16;
     MapScrolling_Common(game);
 }
 pub unsafe fn MapScrolling_3_Up(game: &mut Game) {
-    let ref mut fresh103 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb3 as ::core::ffi::c_int as isize) as *mut uint16);
+    let ref mut fresh103 = *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16);
     *fresh103 = (*fresh103 as ::core::ffi::c_int
         - kMapScrollingSpeedTable[(MapScrolling_GetSpeedIndex(game) as ::core::ffi::c_int
             >> 1 as ::core::ffi::c_int) as usize] as ::core::ffi::c_int) as uint16;
     MapScrolling_Common(game);
 }
 pub unsafe fn MapScrolling_4_Down(game: &mut Game) {
-    let ref mut fresh99 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb3 as ::core::ffi::c_int as isize) as *mut uint16);
+    let ref mut fresh99 = *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16);
     *fresh99 = (*fresh99 as ::core::ffi::c_int
         + kMapScrollingSpeedTable[(MapScrolling_GetSpeedIndex(game) as ::core::ffi::c_int
             >> 1 as ::core::ffi::c_int) as usize] as ::core::ffi::c_int) as uint16;
@@ -3673,25 +3257,19 @@ pub unsafe fn GameState_16_Unpausing_Async(game: &mut Game) -> CoroutineRet {
     HighlightPauseScreenButton(game);
     DrawPauseMenuDuringFadeout(game);
     HandleFadeOut(game);
-    if *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
+    if *(&raw mut game.g_ram as *mut uint8).offset(0x51) as ::core::ffi::c_int
         == 0x80 as ::core::ffi::c_int
     {
         EnableNMI(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        let ref mut fresh106 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
+        let ref mut fresh106 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
         *fresh106 = (*fresh106).wrapping_add(1);
     }
     return kCoroutineNone as CoroutineRet;
 }
 pub unsafe fn DrawPauseMenuDuringFadeout(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x763 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x763) as *mut uint16) as ::core::ffi::c_int
         == 1 as ::core::ffi::c_int
     {
         EquipmentScreenDrawItemSelector(game);
@@ -3704,8 +3282,7 @@ pub unsafe fn DrawPauseMenuDuringFadeout(game: &mut Game) {
     };
 }
 pub unsafe fn GameState_17_Unpausing_Async(game: &mut Game) -> CoroutineRet {
-    let mut _state_variable_: *mut uint8 =
-        (&raw mut game.g_ram as *mut uint8).offset(0x612 as ::core::ffi::c_int as isize);
+    let mut _state_variable_: *mut uint8 = (&raw mut game.g_ram as *mut uint8).offset(0x612);
     let mut current_block_17: u64;
     match *_state_variable_ as ::core::ffi::c_int {
         0 => {
@@ -3714,10 +3291,8 @@ pub unsafe fn GameState_17_Unpausing_Async(game: &mut Game) -> CoroutineRet {
             ResumeGameplay(game);
             RestoreSomeGfxStateForPause(game);
             RestoreBG2TilemapFromPauseScreen(game);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 1 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 1 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 1 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 1 as uint16;
             current_block_17 = 16264310372000621783;
         }
         1 => {
@@ -3730,10 +3305,7 @@ pub unsafe fn GameState_17_Unpausing_Async(game: &mut Game) -> CoroutineRet {
     match current_block_17 {
         16264310372000621783 => {
             let mut _coret_: uint8 = CallUnpauseHook_Async(
-                Load24(
-                    (&raw mut game.g_ram as *mut uint8).offset(0x604 as ::core::ffi::c_int as isize)
-                        as *mut LongPtr,
-                ),
+                Load24((&raw mut game.g_ram as *mut uint8).offset(0x604) as *mut LongPtr),
                 game,
             ) as uint8;
             if _coret_ != 0 {
@@ -3743,9 +3315,8 @@ pub unsafe fn GameState_17_Unpausing_Async(game: &mut Game) -> CoroutineRet {
             EnableHdmaObjects(game);
             EnableAnimtiles(game);
             QueueSamusMovementSfx(game);
-            let ref mut fresh108 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x998 as ::core::ffi::c_int as isize)
-                as *mut uint16);
+            let ref mut fresh108 =
+                *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
             *fresh108 = (*fresh108).wrapping_add(1);
         }
         _ => {}
@@ -3759,26 +3330,21 @@ pub unsafe fn GameState_18_Unpausing(game: &mut Game) -> CoroutineRet {
         return _coret_ as CoroutineRet;
     }
     HandleFadeIn(game);
-    if *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
+    if *(&raw mut game.g_ram as *mut uint8).offset(0x51) as ::core::ffi::c_int
         == 15 as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16) = kGameState_8_MainGameplay as ::core::ffi::c_int as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
+            kGameState_8_MainGameplay as ::core::ffi::c_int as uint16;
     }
     return kCoroutineNone as CoroutineRet;
 }
 pub unsafe fn LoadPauseMenuMapTilemapAndAreaLabel(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xbd as ::core::ffi::c_int as isize) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xbf as ::core::ffi::c_int as isize) as *mut uint16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xbd) as *mut uint16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xbf) as *mut uint16);
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x30 as uint8, game);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
@@ -3802,10 +3368,8 @@ pub unsafe fn LoadPauseMenuMapTilemapAndAreaLabel(game: &mut Game) {
     WriteReg(BBAD1 as ::core::ffi::c_int as uint16, 0x18 as uint8, game);
     WriteReg(DAS1L as ::core::ffi::c_int as uint16, 0x18 as uint8, game);
     WriteReg(DAS1H as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x79f as ::core::ffi::c_int as isize) as *mut uint16);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16);
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as ::core::ffi::c_int
         - 7 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         == 0
@@ -3827,10 +3391,8 @@ pub unsafe fn LoadPauseMenuMapTilemapAndAreaLabel(game: &mut Game) {
     WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
 }
 pub unsafe fn LoadPauseMenuMapTilemap(game: &mut Game) {
-    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x79f as ::core::ffi::c_int as isize) as *mut uint16);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16);
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as ::core::ffi::c_int
         - 7 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         == 0
@@ -3849,9 +3411,8 @@ pub unsafe fn LoadPauseMenuMapTilemap(game: &mut Game) {
         ) as uint32_t,
         game,
     ) as *const uint16;
-    let mut r3: *mut uint16 = (&raw mut game.g_ram as *mut uint8)
-        .offset(0x4000 as ::core::ffi::c_int as isize) as *mut Ram4000
-        as *mut uint16;
+    let mut r3: *mut uint16 =
+        (&raw mut game.g_ram as *mut uint8).offset(0x4000) as *mut Ram4000 as *mut uint16;
     let mut r6: *const uint16 = RomPtr_82(
         *(game.g_rom.offset(
             (((0x829717 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -3862,15 +3423,10 @@ pub unsafe fn LoadPauseMenuMapTilemap(game: &mut Game) {
             .offset(v0 as isize) as uint16_t,
         game,
     ) as *const uint16;
-    let mut r9: *const uint16 = (&raw mut game.g_ram as *mut uint8)
-        .offset(0x7f7 as ::core::ffi::c_int as isize)
-        as *const uint16;
+    let mut r9: *const uint16 = (&raw mut game.g_ram as *mut uint8).offset(0x7f7) as *const uint16;
     if *(&raw mut game.g_ram as *mut uint8)
-        .offset(0xd908 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        )
+        .offset(0xd908)
+        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize)
         != 0
     {
         let fresh86 = r6;
@@ -3921,10 +3477,10 @@ pub unsafe fn LoadPauseMenuMapTilemap(game: &mut Game) {
         let mut r18: uint8 = 0 as uint8;
         loop {
             let mut t: uint8 = *(&raw mut game.g_ram as *mut uint8)
-                .offset(0x7f7 as ::core::ffi::c_int as isize)
+                .offset(0x7f7)
                 .offset(v2 as isize);
             let ref mut fresh90 = *(&raw mut game.g_ram as *mut uint8)
-                .offset(0x7f7 as ::core::ffi::c_int as isize)
+                .offset(0x7f7)
                 .offset(v2 as isize);
             *fresh90 = ((*fresh90 as ::core::ffi::c_int) << 1 as ::core::ffi::c_int) as uint8;
             if t as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int == 0 {
@@ -3932,7 +3488,7 @@ pub unsafe fn LoadPauseMenuMapTilemap(game: &mut Game) {
                     0x1f as uint16;
             } else {
                 let ref mut fresh91 = *(&raw mut game.g_ram as *mut uint8)
-                    .offset(0x7f7 as ::core::ffi::c_int as isize)
+                    .offset(0x7f7)
                     .offset(v2 as isize);
                 *fresh91 = (*fresh91).wrapping_add(1);
                 *r3.offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
@@ -3956,14 +3512,12 @@ pub unsafe fn LoadPauseMenuMapTilemap(game: &mut Game) {
     };
 }
 pub unsafe fn DrawRoomSelectMap(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize) = 51 as uint8;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 19 as uint8;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
-        as *mut uint16) = -(40 as ::core::ffi::c_int) as uint16;
-    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x79f as ::core::ffi::c_int as isize) as *mut uint16);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    *(&raw mut game.g_ram as *mut uint8).offset(0x5d) = 51 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 19 as uint8;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) =
+        -(40 as ::core::ffi::c_int) as uint16;
+    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16);
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as ::core::ffi::c_int
         - 7 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         == 0
@@ -3982,9 +3536,8 @@ pub unsafe fn DrawRoomSelectMap(game: &mut Game) {
         ) as uint32_t,
         game,
     ) as *const uint16;
-    let mut r3: *mut uint16 = (&raw mut game.g_ram as *mut uint8)
-        .offset(0x3000 as ::core::ffi::c_int as isize) as *mut Ram3000
-        as *mut uint16;
+    let mut r3: *mut uint16 =
+        (&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000 as *mut uint16;
     let mut r6: *const uint16 = RomPtr_82(
         *(game.g_rom.offset(
             (((0x829717 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -3995,15 +3548,10 @@ pub unsafe fn DrawRoomSelectMap(game: &mut Game) {
             .offset(v0 as isize) as uint16_t,
         game,
     ) as *const uint16;
-    let mut r9: *const uint16 = (&raw mut game.g_ram as *mut uint8)
-        .offset(0x7f7 as ::core::ffi::c_int as isize)
-        as *const uint16;
+    let mut r9: *const uint16 = (&raw mut game.g_ram as *mut uint8).offset(0x7f7) as *const uint16;
     if *(&raw mut game.g_ram as *mut uint8)
-        .offset(0xd908 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        )
+        .offset(0xd908)
+        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize)
         != 0
     {
         let fresh43 = r6;
@@ -4054,10 +3602,10 @@ pub unsafe fn DrawRoomSelectMap(game: &mut Game) {
         let mut r18: uint8 = 0 as uint8;
         loop {
             let mut what: uint8 = *(&raw mut game.g_ram as *mut uint8)
-                .offset(0x7f7 as ::core::ffi::c_int as isize)
+                .offset(0x7f7)
                 .offset(v2 as isize);
             let ref mut fresh47 = *(&raw mut game.g_ram as *mut uint8)
-                .offset(0x7f7 as ::core::ffi::c_int as isize)
+                .offset(0x7f7)
                 .offset(v2 as isize);
             *fresh47 = ((*fresh47 as ::core::ffi::c_int) << 1 as ::core::ffi::c_int) as uint8;
             if what as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int == 0 {
@@ -4065,7 +3613,7 @@ pub unsafe fn DrawRoomSelectMap(game: &mut Game) {
                     0xf as uint16;
             } else {
                 let ref mut fresh48 = *(&raw mut game.g_ram as *mut uint8)
-                    .offset(0x7f7 as ::core::ffi::c_int as isize)
+                    .offset(0x7f7)
                     .offset(v2 as isize);
                 *fresh48 = (*fresh48).wrapping_add(1);
                 *r3.offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
@@ -4089,25 +3637,21 @@ pub unsafe fn DrawRoomSelectMap(game: &mut Game) {
             }
         }
     }
-    let mut v16: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v16: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
     let mut v17: *mut VramWriteEntry = gVramWriteEntry(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     (*v17).size = 4096 as uint16;
     (*v17).src.addr =
-        ((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000 as *mut uint8)
+        ((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000 as *mut uint8)
             .offset_from(&raw mut game.g_ram as *mut uint8) as ::core::ffi::c_long as VoidP;
     (*v17).src.bank = 126 as uint8;
-    (*v17).vram_dst = ((*(&raw mut game.g_ram as *mut uint8)
-        .offset(0x58 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
+    (*v17).vram_dst = ((*(&raw mut game.g_ram as *mut uint8).offset(0x58) as ::core::ffi::c_int
         & 0xfc as ::core::ffi::c_int)
         << 8 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (v16 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) =
+        (v16 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn DrawRoomSelectMapAreaLabel(mut dst: *mut uint16, game: &mut Game) {
     let mut v2: *const uint16 = RomPtr_82(
@@ -4117,10 +3661,8 @@ pub unsafe fn DrawRoomSelectMapAreaLabel(mut dst: *mut uint16, game: &mut Game) 
                 | 0x82965f as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
                 & 0x3fffff as ::core::ffi::c_int) as isize,
         ) as *const uint8 as *mut uint16)
-            .offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
-            ) as uint16_t,
+            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize)
+            as uint16_t,
         game,
     ) as *const uint16;
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -4133,59 +3675,53 @@ pub unsafe fn DrawRoomSelectMapAreaLabel(mut dst: *mut uint16, game: &mut Game) 
 pub unsafe fn SetupMapScrollingForPauseMenu(mut a: uint16, game: &mut Game) {
     let mut v1: int16 = 0;
     let mut v2: int16 = 0;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x5ac as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
-        + ((*((&raw mut game.g_ram as *mut uint8).offset(0x5ae as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x5ac as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
-            >> 1 as ::core::ffi::c_int)
-        - 128 as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16) =
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x5ac) as *mut uint16) as ::core::ffi::c_int
+            + ((*((&raw mut game.g_ram as *mut uint8).offset(0x5ae) as *mut uint16)
+                as ::core::ffi::c_int
+                - *((&raw mut game.g_ram as *mut uint8).offset(0x5ac) as *mut uint16)
+                    as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
+                >> 1 as ::core::ffi::c_int)
+            - 128 as ::core::ffi::c_int) as uint16;
     let mut r18: uint16 = (8 as ::core::ffi::c_int
-        * (*((&raw mut game.g_ram as *mut uint8).offset(0x7a1 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + ((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+        * (*((&raw mut game.g_ram as *mut uint8).offset(0x7a1) as *mut uint16)
+            as ::core::ffi::c_int
+            + ((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
+                as ::core::ffi::c_int
                 & 0xff00 as ::core::ffi::c_int)
                 >> 8 as ::core::ffi::c_int))
-        - *((&raw mut game.g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as uint16;
+        - *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16) as ::core::ffi::c_int)
+        as uint16;
     v1 = (224 as ::core::ffi::c_int - r18 as ::core::ffi::c_int) as int16;
     if (224 as ::core::ffi::c_int - r18 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
         >= 0 as ::core::ffi::c_int
     {
         r18 = (32 as ::core::ffi::c_int - r18 as ::core::ffi::c_int) as uint16;
         if r18 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-            let ref mut fresh19 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xb1 as ::core::ffi::c_int as isize)
-                as *mut uint16);
+            let ref mut fresh19 =
+                *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16);
             *fresh19 = (*fresh19 as ::core::ffi::c_int - r18 as ::core::ffi::c_int) as uint16;
         }
     } else {
         r18 = (224 as ::core::ffi::c_int - r18 as ::core::ffi::c_int) as uint16;
-        let ref mut fresh20 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xb1 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let ref mut fresh20 = *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16);
         *fresh20 = (*fresh20 as ::core::ffi::c_int - v1 as ::core::ffi::c_int) as uint16;
     }
-    r18 = (*((&raw mut game.g_ram as *mut uint8).offset(0x5b0 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        + ((*((&raw mut game.g_ram as *mut uint8).offset(0x5b2 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x5b0 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
+    r18 = (*((&raw mut game.g_ram as *mut uint8).offset(0x5b0) as *mut uint16)
+        as ::core::ffi::c_int
+        + ((*((&raw mut game.g_ram as *mut uint8).offset(0x5b2) as *mut uint16)
+            as ::core::ffi::c_int
+            - *((&raw mut game.g_ram as *mut uint8).offset(0x5b0) as *mut uint16)
+                as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
             >> 1 as ::core::ffi::c_int)
         + 16 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
-        as *mut uint16) = -(a as ::core::ffi::c_int - r18 as ::core::ffi::c_int
-        & 0xfff8 as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) =
+        -(a as ::core::ffi::c_int - r18 as ::core::ffi::c_int & 0xfff8 as ::core::ffi::c_int)
+            as uint16;
     r18 = (8 as ::core::ffi::c_int
-        * (*((&raw mut game.g_ram as *mut uint8).offset(0x7a3 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-                as *mut uint16 as *mut uint8)
+        * (*((&raw mut game.g_ram as *mut uint8).offset(0x7a3) as *mut uint16)
+            as ::core::ffi::c_int
+            + *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16 as *mut uint8)
                 .offset(
                     (::core::mem::size_of::<uint16>() as usize)
                         .wrapping_div(::core::mem::size_of::<uint8>() as usize)
@@ -4196,18 +3732,15 @@ pub unsafe fn SetupMapScrollingForPauseMenu(mut a: uint16, game: &mut Game) {
         as uint16;
     v2 = (64 as ::core::ffi::c_int - r18 as ::core::ffi::c_int) as int16;
     if v2 as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
-        let ref mut fresh21 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xb3 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let ref mut fresh21 = *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16);
         *fresh21 = (*fresh21 as ::core::ffi::c_int - v2 as ::core::ffi::c_int) as uint16;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) as ::core::ffi::c_int
             + 40 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             != 0
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
-                as *mut uint16) = -(40 as ::core::ffi::c_int) as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) =
+                -(40 as ::core::ffi::c_int) as uint16;
         }
     }
 }
@@ -4261,10 +3794,10 @@ unsafe fn DetermineLeftmostMapColumn(mut r0: *const uint8) -> uint16 {
                 return 26 as uint16;
             }
             if result as ::core::ffi::c_int & 7 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-                r0 = r0.offset(1 as ::core::ffi::c_int as isize);
+                r0 = r0.offset(1);
             }
             if result as ::core::ffi::c_int == 32 as ::core::ffi::c_int {
-                r0 = r0.offset(123 as ::core::ffi::c_int as isize);
+                r0 = r0.offset(123);
             }
             break;
         }
@@ -4309,7 +3842,7 @@ unsafe fn DetermineRightmostMapColumn(mut r0: *const uint8) -> uint16 {
     return result;
 }
 unsafe fn DetermineTopmostMapColumn(mut r0: *const uint8) -> uint16 {
-    let mut r3: *const uint8 = r0.offset(128 as ::core::ffi::c_int as isize);
+    let mut r3: *const uint8 = r0.offset(128);
     let mut result: uint16 = 0 as uint16;
     let mut v1: uint16 = 0 as uint16;
     while *r0.offset(v1 as isize) == 0 && *r3.offset(v1 as isize) == 0 {
@@ -4318,8 +3851,8 @@ unsafe fn DetermineTopmostMapColumn(mut r0: *const uint8) -> uint16 {
             >= 0 as ::core::ffi::c_int
         {
             v1 = 0 as uint16;
-            r0 = r0.offset(4 as ::core::ffi::c_int as isize);
-            r3 = r3.offset(4 as ::core::ffi::c_int as isize);
+            r0 = r0.offset(4);
+            r3 = r3.offset(4);
             result = result.wrapping_add(1);
             if (result as ::core::ffi::c_int - 31 as ::core::ffi::c_int) as int16
                 as ::core::ffi::c_int
@@ -4332,7 +3865,7 @@ unsafe fn DetermineTopmostMapColumn(mut r0: *const uint8) -> uint16 {
     return result;
 }
 unsafe fn DetermineBottommostMapColumn(mut r0: *const uint8) -> uint16 {
-    let mut r3: *const uint8 = r0.offset(128 as ::core::ffi::c_int as isize);
+    let mut r3: *const uint8 = r0.offset(128);
     let mut result: uint16 = 31 as uint16;
     let mut v1: uint16 = 0 as uint16;
     while *r0.offset(v1 as isize) == 0 && *r3.offset(v1 as isize) == 0 {
@@ -4353,120 +3886,88 @@ unsafe fn DetermineBottommostMapColumn(mut r0: *const uint8) -> uint16 {
 }
 pub unsafe fn DetermineMapScrollLimits(game: &mut Game) {
     let mut r6: *const uint8 = ::core::ptr::null::<uint8>();
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x789 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x789) as *mut uint16) != 0 {
         r6 = RomPtr_82(
             *(RomPtr_82(
                 (addr_kPauseMenuMapData as ::core::ffi::c_int
                     + 2 as ::core::ffi::c_int
-                        * *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x79f as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int) as uint16_t,
+                        * *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16)
+                            as ::core::ffi::c_int) as uint16_t,
                 game,
             ) as *mut uint16),
             game,
         );
     } else {
-        r6 = (&raw mut game.g_ram as *mut uint8).offset(0x7f7 as ::core::ffi::c_int as isize);
+        r6 = (&raw mut game.g_ram as *mut uint8).offset(0x7f7);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x5ac as ::core::ffi::c_int as isize)
-        as *mut uint16) =
+    *((&raw mut game.g_ram as *mut uint8).offset(0x5ac) as *mut uint16) =
         (DetermineLeftmostMapColumn(r6) as ::core::ffi::c_int * 8 as ::core::ffi::c_int) as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as ::core::ffi::c_int
         == 4 as ::core::ffi::c_int
     {
-        let ref mut fresh22 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x5ac as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let ref mut fresh22 = *((&raw mut game.g_ram as *mut uint8).offset(0x5ac) as *mut uint16);
         *fresh22 = (*fresh22 as ::core::ffi::c_int - 24 as ::core::ffi::c_int) as uint16;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x5ae as ::core::ffi::c_int as isize)
-        as *mut uint16) =
-        (DetermineRightmostMapColumn(r6.offset(131 as ::core::ffi::c_int as isize))
-            as ::core::ffi::c_int
+    *((&raw mut game.g_ram as *mut uint8).offset(0x5ae) as *mut uint16) =
+        (DetermineRightmostMapColumn(r6.offset(131)) as ::core::ffi::c_int
             * 8 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x5b0 as ::core::ffi::c_int as isize)
-        as *mut uint16) =
+    *((&raw mut game.g_ram as *mut uint8).offset(0x5b0) as *mut uint16) =
         (DetermineTopmostMapColumn(r6) as ::core::ffi::c_int * 8 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x5b2 as ::core::ffi::c_int as isize)
-        as *mut uint16) =
-        (DetermineBottommostMapColumn(r6.offset(124 as ::core::ffi::c_int as isize))
-            as ::core::ffi::c_int
+    *((&raw mut game.g_ram as *mut uint8).offset(0x5b2) as *mut uint16) =
+        (DetermineBottommostMapColumn(r6.offset(124)) as ::core::ffi::c_int
             * 8 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn SetupPpuForPauseMenu(game: &mut Game) {
     WriteReg(OBSEL as ::core::ffi::c_int as uint16, 1 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x52 as ::core::ffi::c_int as isize) = 1 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x52) = 1 as uint8;
     WriteReg(BGMODE as ::core::ffi::c_int as uint16, 9 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize) = 9 as uint8;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x55) = 9 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x5d) = 0 as uint8;
     WriteReg(BG12NBA as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x5e as ::core::ffi::c_int as isize) = 4 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x5e) = 4 as uint8;
     WriteReg(BG34NBA as ::core::ffi::c_int as uint16, 4 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x58 as ::core::ffi::c_int as isize) = 49 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x58) = 49 as uint8;
     WriteReg(BG1SC as ::core::ffi::c_int as uint16, 0x31 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize) = 56 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x59) = 56 as uint8;
     WriteReg(BG2SC as ::core::ffi::c_int as uint16, 0x38 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x5a as ::core::ffi::c_int as isize) = 88 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x5a) = 88 as uint8;
     WriteReg(BG3SC as ::core::ffi::c_int as uint16, 0x58 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x5c as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x5c) = 0 as uint8;
     WriteReg(BG4SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
     WriteReg(TM as ::core::ffi::c_int as uint16, 0x17 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 23 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 23 as uint8;
     WriteReg(MOSAIC as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x57 as ::core::ffi::c_int as isize) = 0 as uint8;
-    let ref mut fresh24 = *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x74 as ::core::ffi::c_int as isize)
-        .offset(0 as ::core::ffi::c_int as isize);
+    *(&raw mut game.g_ram as *mut uint8).offset(0x57) = 0 as uint8;
+    let ref mut fresh24 = *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0);
     *fresh24 = (*fresh24 as ::core::ffi::c_int & 0xe0 as ::core::ffi::c_int) as uint8;
-    let ref mut fresh25 = *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x74 as ::core::ffi::c_int as isize)
-        .offset(1 as ::core::ffi::c_int as isize);
+    let ref mut fresh25 = *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1);
     *fresh25 = (*fresh25 as ::core::ffi::c_int & 0xe0 as ::core::ffi::c_int) as uint8;
-    let ref mut fresh26 = *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x74 as ::core::ffi::c_int as isize)
-        .offset(2 as ::core::ffi::c_int as isize);
+    let ref mut fresh26 = *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2);
     *fresh26 = (*fresh26 as ::core::ffi::c_int & 0xe0 as ::core::ffi::c_int) as uint8;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x71) = 0 as uint8;
 }
 pub unsafe fn ResetPauseMenuAnimations(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x757 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb5 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb9 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb7 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xbb as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x753 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x73f as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x745 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x776 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x778 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x77a as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x72b as ::core::ffi::c_int as isize)
-        as *mut uint16) = *(game.g_rom.offset(
+    *((&raw mut game.g_ram as *mut uint8).offset(0x757) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb5) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb9) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xbb) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x753) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x73f) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x745) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x776) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x778) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x77a) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x72b) as *mut uint16) = *(game.g_rom.offset(
         (((0x82c10c as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0x82c10c as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
             & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint8 as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x73b as ::core::ffi::c_int as isize)
-        as *mut uint16) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x74f as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    ) as *const uint8
+        as *mut uint8
+        as *mut uint16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0x73b) as *mut uint16) = 1 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x74f) as *mut uint16) = 0 as uint16;
 }
 unsafe fn ChangePaletteValues(mut target: *mut uint16, mut new_color: uint16, mut n: size_t) {
     let mut i: size_t = 0 as size_t;
@@ -4478,10 +3979,7 @@ unsafe fn ChangePaletteValues(mut target: *mut uint16, mut new_color: uint16, mu
     }
 }
 pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9d4 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x9d4) as *mut uint16) != 0 {
         memcpy(
             (&raw mut game.g_ram as *mut uint8).offset(
                 *(game.g_rom.offset(
@@ -4490,8 +3988,7 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
                         | 0x82c068 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
                         & 0x3fffff as ::core::ffi::c_int) as isize,
                 ) as *const uint8 as *mut uint16)
-                    .offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                    as isize,
+                    .offset(0) as ::core::ffi::c_int as isize,
             ) as *mut ::core::ffi::c_void,
             RomPtr_82(
                 *(game.g_rom.offset(
@@ -4500,7 +3997,7 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
                         | 0x82c088 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
                         & 0x3fffff as ::core::ffi::c_int) as isize,
                 ) as *const uint8 as *mut uint16)
-                    .offset(0 as ::core::ffi::c_int as isize) as uint16_t,
+                    .offset(0) as uint16_t,
                 game,
             ) as *const ::core::ffi::c_void,
             14 as size_t,
@@ -4513,8 +4010,7 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
                         | 0x82c068 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
                         & 0x3fffff as ::core::ffi::c_int) as isize,
                 ) as *const uint8 as *mut uint16)
-                    .offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                    as isize,
+                    .offset(1) as ::core::ffi::c_int as isize,
             ) as *mut ::core::ffi::c_void,
             RomPtr_82(
                 *(game.g_rom.offset(
@@ -4523,7 +4019,7 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
                         | 0x82c088 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
                         & 0x3fffff as ::core::ffi::c_int) as isize,
                 ) as *const uint8 as *mut uint16)
-                    .offset(1 as ::core::ffi::c_int as isize) as uint16_t,
+                    .offset(1) as uint16_t,
                 game,
             ) as *const ::core::ffi::c_void,
             14 as size_t,
@@ -4533,10 +4029,7 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
         addr_kEquipmentTilemapOffs_Weapons as ::core::ffi::c_int as uint16_t,
         game,
     ) as *mut uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa76 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xa76) as *mut uint16) != 0 {
         let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
         while i < 5 as ::core::ffi::c_int {
             memcpy(
@@ -4563,8 +4056,8 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
             let mut target: *mut uint16 = (&raw mut game.g_ram as *mut uint8)
                 .offset(*p.offset(i_0 as isize) as ::core::ffi::c_int as isize)
                 as *mut uint16;
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x9a8 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            if *((&raw mut game.g_ram as *mut uint8).offset(0x9a8) as *mut uint16)
+                as ::core::ffi::c_int
                 & *(game.g_rom.offset(
                     (((0x82c04c as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                         << 15 as ::core::ffi::c_int
@@ -4589,9 +4082,8 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
                     ) as *const ::core::ffi::c_void,
                     10 as size_t,
                 );
-                if *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x9a6 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
+                if *((&raw mut game.g_ram as *mut uint8).offset(0x9a6) as *mut uint16)
+                    as ::core::ffi::c_int
                     & *(game.g_rom.offset(
                         (((0x82c04c as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                             << 15 as ::core::ffi::c_int
@@ -4625,8 +4117,7 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
         let mut target_0: *mut uint16 = (&raw mut game.g_ram as *mut uint8)
             .offset(*p.offset(i_1 as isize) as ::core::ffi::c_int as isize)
             as *mut uint16;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x9a4 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x9a4) as *mut uint16) as ::core::ffi::c_int
             & *(game.g_rom.offset(
                 (((0x82c056 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                     << 15 as ::core::ffi::c_int
@@ -4650,8 +4141,8 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
                 ) as *const ::core::ffi::c_void,
                 18 as size_t,
             );
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            if *((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16)
+                as ::core::ffi::c_int
                 & *(game.g_rom.offset(
                     (((0x82c056 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                         << 15 as ::core::ffi::c_int
@@ -4684,8 +4175,7 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
         let mut target_1: *mut uint16 = (&raw mut game.g_ram as *mut uint8)
             .offset(*p.offset(i_2 as isize) as ::core::ffi::c_int as isize)
             as *mut uint16;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x9a4 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x9a4) as *mut uint16) as ::core::ffi::c_int
             & *(game.g_rom.offset(
                 (((0x82c062 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                     << 15 as ::core::ffi::c_int
@@ -4709,8 +4199,8 @@ pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
                 ) as *const ::core::ffi::c_void,
                 18 as size_t,
             );
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            if *((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16)
+                as ::core::ffi::c_int
                 & *(game.g_rom.offset(
                     (((0x82c062 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                         << 15 as ::core::ffi::c_int
@@ -4757,13 +4247,10 @@ pub unsafe fn ContinueInitGameplayResume(game: &mut Game) {
     v0 = 512 as int16;
     let mut v1: uint16 = 0 as uint16;
     loop {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
-            .pause_menu_map_tilemap
-            [(v1 as ::core::ffi::c_int + 384 as ::core::ffi::c_int) as usize];
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(v1 as isize) =
+            (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
+                .pause_menu_map_tilemap
+                [(v1 as ::core::ffi::c_int + 384 as ::core::ffi::c_int) as usize];
         v1 = v1.wrapping_add(1);
         v0 = (v0 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as int16;
         if !(v0 != 0) {
@@ -4778,135 +4265,95 @@ pub unsafe fn ContinueInitGameplayResume(game: &mut Game) {
 }
 pub unsafe fn SetupPpuForGameplayResume(game: &mut Game) {
     WriteReg(OBSEL as ::core::ffi::c_int as uint16, 3 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x52 as ::core::ffi::c_int as isize) = 3 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x52) = 3 as uint8;
     WriteReg(BGMODE as ::core::ffi::c_int as uint16, 9 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize) = 9 as uint8;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x55) = 9 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x5d) = 0 as uint8;
     WriteReg(BG12NBA as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x5e as ::core::ffi::c_int as isize) = 4 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x5e) = 4 as uint8;
     WriteReg(BG34NBA as ::core::ffi::c_int as uint16, 4 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x58 as ::core::ffi::c_int as isize) = 81 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x58) = 81 as uint8;
     WriteReg(BG1SC as ::core::ffi::c_int as uint16, 0x51 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize) = 73 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x59) = 73 as uint8;
     WriteReg(BG2SC as ::core::ffi::c_int as uint16, 0x49 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x5a as ::core::ffi::c_int as isize) = 90 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x5a) = 90 as uint8;
     WriteReg(BG3SC as ::core::ffi::c_int as uint16, 0x5a as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x5c as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x5c) = 0 as uint8;
     WriteReg(BG4SC as ::core::ffi::c_int as uint16, 0 as uint8, game);
 }
 pub unsafe fn CalculateBgScrolls_Unpause(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x91d as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
-        + *((&raw mut game.g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x91f as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
-        + *((&raw mut game.g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb5 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x921 as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
-        + *((&raw mut game.g_ram as *mut uint8).offset(0x917 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb7 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x923 as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
-        + *((&raw mut game.g_ram as *mut uint8).offset(0x919 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16) =
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x91d) as *mut uint16) as ::core::ffi::c_int
+            + *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16)
+                as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) =
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x91f) as *mut uint16) as ::core::ffi::c_int
+            + *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16)
+                as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb5) as *mut uint16) =
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x921) as *mut uint16) as ::core::ffi::c_int
+            + *((&raw mut game.g_ram as *mut uint8).offset(0x917) as *mut uint16)
+                as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16) =
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x923) as *mut uint16) as ::core::ffi::c_int
+            + *((&raw mut game.g_ram as *mut uint8).offset(0x919) as *mut uint16)
+                as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn UpdateBeamTilesAndPalette_Unpause(game: &mut Game) {
     UpdateBeamTilesAndPalette(game);
 }
 pub unsafe fn ClearPauseMenuData(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x727 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x729 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x72b as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x72d as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x72f as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x731 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x733 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x735 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x737 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x739 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x73d as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x73f as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x741 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x743 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x745 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x747 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x749 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x74b as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x74d as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x751 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x753 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x757 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x759 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x75b as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x75d as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x75f as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x761 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x729) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x72b) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x72d) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x72f) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x731) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x733) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x735) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x737) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x739) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x73d) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x73f) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x741) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x743) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x745) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x747) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x749) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x74b) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x74d) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x751) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x753) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x757) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x759) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x75b) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x75d) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x75f) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x761) as *mut uint16) = 0 as uint16;
 }
 pub unsafe fn sub_82A425() {}
 pub unsafe fn sub_82A42A(game: &mut Game) {
     let mut current_block: u64;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as ::core::ffi::c_int
         == kPose_81_FaceR_Screwattack as ::core::ffi::c_int
-        || *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        || *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as ::core::ffi::c_int
             == kPose_82_FaceL_Screwattack as ::core::ffi::c_int
     {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16) as ::core::ffi::c_int
             & 8 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
         {
             return;
         }
         current_block = 2878476956402529644;
-    } else if (*((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    } else if (*((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16)
+        as ::core::ffi::c_int
         == kPose_1B_FaceR_SpaceJump as ::core::ffi::c_int
-        || *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        || *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16)
+            as ::core::ffi::c_int
             == kPose_1C_FaceL_SpaceJump as ::core::ffi::c_int)
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        && *((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16) as ::core::ffi::c_int
             & 0x20 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
     {
@@ -4916,15 +4363,14 @@ pub unsafe fn sub_82A42A(game: &mut Game) {
     }
     match current_block {
         2878476956402529644 => {
-            if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e as ::core::ffi::c_int as isize)
-                as ::core::ffi::c_int
+            if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) as ::core::ffi::c_int
                 == 4 as ::core::ffi::c_int
             {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-                    as *mut uint16) = kPose_1A_FaceL_SpinJump as ::core::ffi::c_int as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
+                    kPose_1A_FaceL_SpinJump as ::core::ffi::c_int as uint16;
             } else {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-                    as *mut uint16) = kPose_19_FaceR_SpinJump as ::core::ffi::c_int as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
+                    kPose_19_FaceR_SpinJump as ::core::ffi::c_int as uint16;
             }
             SamusFunc_F433(game);
             Samus_SetAnimationFrameIfPoseChanged(game);
@@ -4933,40 +4379,36 @@ pub unsafe fn sub_82A42A(game: &mut Game) {
     };
 }
 pub unsafe fn sub_82A47B(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16) as ::core::ffi::c_int
         & 4 as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
     {
-        if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e as ::core::ffi::c_int as isize)
-            as ::core::ffi::c_int
+        if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) as ::core::ffi::c_int
             == 4 as ::core::ffi::c_int
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-                as *mut uint16) = kPose_41_FaceL_Morphball_Ground as ::core::ffi::c_int as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
+                kPose_41_FaceL_Morphball_Ground as ::core::ffi::c_int as uint16;
         } else {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-                as *mut uint16) = kPose_1D_FaceR_Morphball_Ground as ::core::ffi::c_int as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
+                kPose_1D_FaceR_Morphball_Ground as ::core::ffi::c_int as uint16;
         }
         SamusFunc_F433(game);
         Samus_SetAnimationFrameIfPoseChanged(game);
     }
 }
 pub unsafe fn sub_82A4A9(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16) as ::core::ffi::c_int
         & 2 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e as ::core::ffi::c_int as isize)
-            as ::core::ffi::c_int
+        if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) as ::core::ffi::c_int
             == 4 as ::core::ffi::c_int
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-                as *mut uint16) = kPose_7A_FaceL_Springball_Ground as ::core::ffi::c_int as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
+                kPose_7A_FaceL_Springball_Ground as ::core::ffi::c_int as uint16;
         } else {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-                as *mut uint16) = kPose_79_FaceR_Springball_Ground as ::core::ffi::c_int as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
+                kPose_79_FaceR_Springball_Ground as ::core::ffi::c_int as uint16;
         }
         SamusFunc_F433(game);
         Samus_SetAnimationFrameIfPoseChanged(game);
@@ -4978,43 +4420,30 @@ pub unsafe fn HandlePauseScreenLR(game: &mut Game) {
 }
 pub unsafe fn HandlePauseScreenLrInput(game: &mut Game) {
     let mut current_block: u64;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x5e1 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x5e1) as *mut uint16) as ::core::ffi::c_int
         & kButton_L as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x753 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            == 0
-        {
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x753) as *mut uint16) == 0 {
             return;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x729 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 5 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x727 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 5 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x751 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 1 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x753 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x729) as *mut uint16) = 5 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16) = 5 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x751) as *mut uint16) = 1 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x753) as *mut uint16) = 0 as uint16;
         SetPauseScreenButtonLabelPalettes(game);
         current_block = 2636532137229557926;
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x5e1 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x5e1) as *mut uint16)
+        as ::core::ffi::c_int
         & kButton_R as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x753 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        && *((&raw mut game.g_ram as *mut uint8).offset(0x753) as *mut uint16) as ::core::ffi::c_int
             != 2 as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x729 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 5 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x727 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 2 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x751 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 2 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x753 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 2 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x729) as *mut uint16) = 5 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16) = 2 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x751) as *mut uint16) = 2 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x753) as *mut uint16) = 2 as uint16;
         SetPauseScreenButtonLabelPalettes(game);
         current_block = 2636532137229557926;
     } else {
@@ -5040,20 +4469,11 @@ static kPauseLrButtonPressedHighlight_X: [uint16; 2] = [
     0xd0 as ::core::ffi::c_int as uint16,
 ];
 pub unsafe fn HandlePauseMenuLRPressHighlight(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x729 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
-        let ref mut fresh42 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x729 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x729) as *mut uint16) != 0 {
+        let ref mut fresh42 = *((&raw mut game.g_ram as *mut uint8).offset(0x729) as *mut uint16);
         *fresh42 = (*fresh42).wrapping_sub(1);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x751 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            != 0
-        {
-            let mut v0: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x751 as ::core::ffi::c_int as isize)
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x751) as *mut uint16) != 0 {
+            let mut v0: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x751)
                 as *mut uint16) as ::core::ffi::c_int
                 - 1 as ::core::ffi::c_int;
             DrawMenuSpritemap(
@@ -5072,41 +4492,26 @@ pub unsafe fn DrawLrHighlight(game: &mut Game) {
     DrawPauseScreenSpriteAnim(2 as uint16, 0xe8 as uint16, 0xd0 as uint16, game);
 }
 pub unsafe fn HandlePauseScreenStart(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x5e1 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x5e1) as *mut uint16) as ::core::ffi::c_int
         & kButton_Start as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
         QueueSfx1_Max6(0x38 as uint16, game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 1 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 1 as uint16;
-        let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x753 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x753 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 1 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 1 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 1 as uint16;
+        let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x753) as *mut uint16);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x753) as *mut uint16) = 1 as uint16;
         SetPauseScreenButtonLabelPalettes(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x753 as ::core::ffi::c_int as isize)
-            as *mut uint16) = v0;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x729 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 11 as uint16;
-        let ref mut fresh98 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x753) as *mut uint16) = v0;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x729) as *mut uint16) = 11 as uint16;
+        let ref mut fresh98 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
         *fresh98 = (*fresh98).wrapping_add(1);
     }
     UpdatePauseMenuLRStartVramTilemap(game);
 }
 pub unsafe fn HighlightPauseScreenButton(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x729 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
-        let ref mut fresh107 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x729 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x729) as *mut uint16) != 0 {
+        let ref mut fresh107 = *((&raw mut game.g_ram as *mut uint8).offset(0x729) as *mut uint16);
         *fresh107 = (*fresh107).wrapping_sub(1);
         DrawMenuSpritemap(
             0x2b as uint16,
@@ -5125,9 +4530,8 @@ static kSetPauseScreenButtonLabelPalettes_Funcs: [Option<Func_V>; 3] = unsafe {
     ]
 };
 pub unsafe fn SetPauseScreenButtonLabelPalettes(game: &mut Game) {
-    kSetPauseScreenButtonLabelPalettes_Funcs[*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x753 as ::core::ffi::c_int as isize)
-        as *mut uint16) as usize]
+    kSetPauseScreenButtonLabelPalettes_Funcs
+        [*((&raw mut game.g_ram as *mut uint8).offset(0x753) as *mut uint16) as usize]
         .expect("non-null function pointer")(game);
 }
 pub unsafe fn SetPauseScreenButtonLabelPalettes_2(game: &mut Game) {
@@ -5140,12 +4544,10 @@ pub unsafe fn SetPauseScreenButtonLabelPalettes_2(game: &mut Game) {
     v0 = 10 as int16;
     let mut v1: uint16 = 0 as uint16;
     loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap
             [(v1 as ::core::ffi::c_int + 805 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-                as *mut Ram3000))
+            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
                 .pause_menu_map_tilemap
                 [(v1 as ::core::ffi::c_int + 805 as ::core::ffi::c_int) as usize]
                 as ::core::ffi::c_int
@@ -5160,12 +4562,10 @@ pub unsafe fn SetPauseScreenButtonLabelPalettes_2(game: &mut Game) {
     v2 = 10 as int16;
     let mut v3: uint16 = 0 as uint16;
     loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap
             [(v3 as ::core::ffi::c_int + 837 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-                as *mut Ram3000))
+            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
                 .pause_menu_map_tilemap
                 [(v3 as ::core::ffi::c_int + 837 as ::core::ffi::c_int) as usize]
                 as ::core::ffi::c_int
@@ -5180,12 +4580,10 @@ pub unsafe fn SetPauseScreenButtonLabelPalettes_2(game: &mut Game) {
     v4 = 8 as int16;
     let mut v5: uint16 = 0 as uint16;
     loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap
             [(v5 as ::core::ffi::c_int + 812 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-                as *mut Ram3000))
+            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
                 .pause_menu_map_tilemap
                 [(v5 as ::core::ffi::c_int + 812 as ::core::ffi::c_int) as usize]
                 as ::core::ffi::c_int
@@ -5200,12 +4598,10 @@ pub unsafe fn SetPauseScreenButtonLabelPalettes_2(game: &mut Game) {
     v6 = 8 as int16;
     let mut v7: uint16 = 0 as uint16;
     loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap
             [(v7 as ::core::ffi::c_int + 844 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-                as *mut Ram3000))
+            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
                 .pause_menu_map_tilemap
                 [(v7 as ::core::ffi::c_int + 844 as ::core::ffi::c_int) as usize]
                 as ::core::ffi::c_int
@@ -5220,12 +4616,10 @@ pub unsafe fn SetPauseScreenButtonLabelPalettes_2(game: &mut Game) {
     v8 = 10 as int16;
     let mut v9: uint16 = 0 as uint16;
     loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap
             [(v9 as ::core::ffi::c_int + 822 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-                as *mut Ram3000))
+            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
                 .pause_menu_map_tilemap
                 [(v9 as ::core::ffi::c_int + 822 as ::core::ffi::c_int) as usize]
                 as ::core::ffi::c_int
@@ -5240,12 +4634,10 @@ pub unsafe fn SetPauseScreenButtonLabelPalettes_2(game: &mut Game) {
     v10 = 10 as int16;
     let mut v11: uint16 = 0 as uint16;
     loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap
             [(v11 as ::core::ffi::c_int + 854 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-                as *mut Ram3000))
+            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
                 .pause_menu_map_tilemap
                 [(v11 as ::core::ffi::c_int + 854 as ::core::ffi::c_int) as usize]
                 as ::core::ffi::c_int
@@ -5268,12 +4660,10 @@ pub unsafe fn SetPauseScreenButtonLabelPalettes_1(game: &mut Game) {
     v0 = 8 as int16;
     let mut v1: uint16 = 0 as uint16;
     loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap
             [(v1 as ::core::ffi::c_int + 812 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-                as *mut Ram3000))
+            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
                 .pause_menu_map_tilemap
                 [(v1 as ::core::ffi::c_int + 812 as ::core::ffi::c_int) as usize]
                 as ::core::ffi::c_int
@@ -5288,12 +4678,10 @@ pub unsafe fn SetPauseScreenButtonLabelPalettes_1(game: &mut Game) {
     v2 = 8 as int16;
     let mut v3: uint16 = 0 as uint16;
     loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap
             [(v3 as ::core::ffi::c_int + 844 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-                as *mut Ram3000))
+            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
                 .pause_menu_map_tilemap
                 [(v3 as ::core::ffi::c_int + 844 as ::core::ffi::c_int) as usize]
                 as ::core::ffi::c_int
@@ -5308,12 +4696,10 @@ pub unsafe fn SetPauseScreenButtonLabelPalettes_1(game: &mut Game) {
     v4 = 10 as int16;
     let mut v5: uint16 = 0 as uint16;
     loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap
             [(v5 as ::core::ffi::c_int + 805 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-                as *mut Ram3000))
+            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
                 .pause_menu_map_tilemap
                 [(v5 as ::core::ffi::c_int + 805 as ::core::ffi::c_int) as usize]
                 as ::core::ffi::c_int
@@ -5328,12 +4714,10 @@ pub unsafe fn SetPauseScreenButtonLabelPalettes_1(game: &mut Game) {
     v6 = 10 as int16;
     let mut v7: uint16 = 0 as uint16;
     loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap
             [(v7 as ::core::ffi::c_int + 837 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-                as *mut Ram3000))
+            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
                 .pause_menu_map_tilemap
                 [(v7 as ::core::ffi::c_int + 837 as ::core::ffi::c_int) as usize]
                 as ::core::ffi::c_int
@@ -5348,12 +4732,10 @@ pub unsafe fn SetPauseScreenButtonLabelPalettes_1(game: &mut Game) {
     v8 = 10 as int16;
     let mut v9: uint16 = 0 as uint16;
     loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap
             [(v9 as ::core::ffi::c_int + 822 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-                as *mut Ram3000))
+            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
                 .pause_menu_map_tilemap
                 [(v9 as ::core::ffi::c_int + 822 as ::core::ffi::c_int) as usize]
                 as ::core::ffi::c_int
@@ -5368,12 +4750,10 @@ pub unsafe fn SetPauseScreenButtonLabelPalettes_1(game: &mut Game) {
     v10 = 10 as int16;
     let mut v11: uint16 = 0 as uint16;
     loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap
             [(v11 as ::core::ffi::c_int + 854 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-                as *mut Ram3000))
+            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
                 .pause_menu_map_tilemap
                 [(v11 as ::core::ffi::c_int + 854 as ::core::ffi::c_int) as usize]
                 as ::core::ffi::c_int
@@ -5396,12 +4776,10 @@ pub unsafe fn SetPauseScreenButtonLabelPalettes_0(game: &mut Game) {
     v0 = 10 as int16;
     let mut v1: uint16 = 0 as uint16;
     loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap
             [(v1 as ::core::ffi::c_int + 822 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-                as *mut Ram3000))
+            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
                 .pause_menu_map_tilemap
                 [(v1 as ::core::ffi::c_int + 822 as ::core::ffi::c_int) as usize]
                 as ::core::ffi::c_int
@@ -5416,12 +4794,10 @@ pub unsafe fn SetPauseScreenButtonLabelPalettes_0(game: &mut Game) {
     v2 = 10 as int16;
     let mut v3: uint16 = 0 as uint16;
     loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap
             [(v3 as ::core::ffi::c_int + 854 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-                as *mut Ram3000))
+            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
                 .pause_menu_map_tilemap
                 [(v3 as ::core::ffi::c_int + 854 as ::core::ffi::c_int) as usize]
                 as ::core::ffi::c_int
@@ -5436,12 +4812,10 @@ pub unsafe fn SetPauseScreenButtonLabelPalettes_0(game: &mut Game) {
     v4 = 8 as int16;
     let mut v5: uint16 = 0 as uint16;
     loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap
             [(v5 as ::core::ffi::c_int + 812 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-                as *mut Ram3000))
+            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
                 .pause_menu_map_tilemap
                 [(v5 as ::core::ffi::c_int + 812 as ::core::ffi::c_int) as usize]
                 as ::core::ffi::c_int
@@ -5456,12 +4830,10 @@ pub unsafe fn SetPauseScreenButtonLabelPalettes_0(game: &mut Game) {
     v6 = 8 as int16;
     let mut v7: uint16 = 0 as uint16;
     loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap
             [(v7 as ::core::ffi::c_int + 844 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-                as *mut Ram3000))
+            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
                 .pause_menu_map_tilemap
                 [(v7 as ::core::ffi::c_int + 844 as ::core::ffi::c_int) as usize]
                 as ::core::ffi::c_int
@@ -5476,12 +4848,10 @@ pub unsafe fn SetPauseScreenButtonLabelPalettes_0(game: &mut Game) {
     v8 = 10 as int16;
     let mut v9: uint16 = 0 as uint16;
     loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap
             [(v9 as ::core::ffi::c_int + 805 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-                as *mut Ram3000))
+            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
                 .pause_menu_map_tilemap
                 [(v9 as ::core::ffi::c_int + 805 as ::core::ffi::c_int) as usize]
                 as ::core::ffi::c_int
@@ -5496,12 +4866,10 @@ pub unsafe fn SetPauseScreenButtonLabelPalettes_0(game: &mut Game) {
     v10 = 10 as int16;
     let mut v11: uint16 = 0 as uint16;
     loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap
             [(v11 as ::core::ffi::c_int + 837 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-                as *mut Ram3000))
+            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
                 .pause_menu_map_tilemap
                 [(v11 as ::core::ffi::c_int + 837 as ::core::ffi::c_int) as usize]
                 as ::core::ffi::c_int
@@ -5515,11 +4883,9 @@ pub unsafe fn SetPauseScreenButtonLabelPalettes_0(game: &mut Game) {
     }
 }
 pub unsafe fn UpdatePauseMenuLRStartVramTilemap(game: &mut Game) {
-    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
     (*gVramWriteEntry(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .size = 128 as uint16;
@@ -5534,15 +4900,14 @@ pub unsafe fn UpdatePauseMenuLRStartVramTilemap(game: &mut Game) {
         game,
     ))
     .size as *mut uint8)
-        .offset(0 as ::core::ffi::c_int as isize) = 126 as uint8;
+        .offset(0) = 126 as uint8;
     (*gVramWriteEntry(v0 as ::core::ffi::c_int, game)).size =
-        (((*(&raw mut game.g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize)
-            as ::core::ffi::c_int
+        (((*(&raw mut game.g_ram as *mut uint8).offset(0x59) as ::core::ffi::c_int
             & 0xfc as ::core::ffi::c_int)
             << 8 as ::core::ffi::c_int)
             + 800 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) =
+        (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn DrawPauseScreenSpriteAnim(
     mut a: uint16,
@@ -5588,7 +4953,7 @@ pub unsafe fn DrawPauseScreenSpriteAnim(
             *v3.offset((3 as ::core::ffi::c_int * *v8 as ::core::ffi::c_int) as isize) as uint16;
         if v10 as ::core::ffi::c_int == 255 as ::core::ffi::c_int {
             *v8 = 0 as uint16;
-            v10 = *v3.offset(0 as ::core::ffi::c_int as isize) as uint16;
+            v10 = *v3.offset(0) as uint16;
         }
         *v5 = v10;
     }
@@ -5597,7 +4962,7 @@ pub unsafe fn DrawPauseScreenSpriteAnim(
             | 0x82c0fa as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
             & 0x3fffff as ::core::ffi::c_int) as isize,
     ) as *const uint8 as *mut uint16)
-        .offset(3 as ::core::ffi::c_int as isize);
+        .offset(3);
     let mut r24: ::core::ffi::c_int = *v3.offset(
         (3 as ::core::ffi::c_int * *v8 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as isize,
     ) as ::core::ffi::c_int;
@@ -5634,28 +4999,18 @@ pub unsafe fn HandlePauseScreenPaletteAnimation(game: &mut Game) {
     let mut v2: uint16 = 0;
     let mut j: uint16 = 0;
     let mut v1: uint8 = 0;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x73b as ::core::ffi::c_int as isize)
-        as *mut uint16) as uint8
-        != 0
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x73b as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
-            .offset(0 as ::core::ffi::c_int as isize) =
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x73b as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                - 1 as ::core::ffi::c_int) as uint8;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x73b as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8
-            == 0
-        {
-            let mut i: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x74f as ::core::ffi::c_int as isize)
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x73b) as *mut uint16) as uint8 != 0 {
+        *((&raw mut game.g_ram as *mut uint8).offset(0x73b) as *mut uint16 as *mut uint8)
+            .offset(0) = (*((&raw mut game.g_ram as *mut uint8).offset(0x73b) as *mut uint16)
+            as ::core::ffi::c_int
+            - 1 as ::core::ffi::c_int) as uint8;
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x73b) as *mut uint16) as uint8 == 0 {
+            let mut i: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x74f)
                 as *mut uint16) as ::core::ffi::c_int
                 + 1 as ::core::ffi::c_int;
             loop {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x74f as ::core::ffi::c_int as isize)
-                    as *mut uint16 as *mut uint8)
-                    .offset(0 as ::core::ffi::c_int as isize) = i as uint8;
+                *((&raw mut game.g_ram as *mut uint8).offset(0x74f) as *mut uint16 as *mut uint8)
+                    .offset(0) = i as uint8;
                 v1 = *(game.g_rom.offset(
                     (((0x82c10c as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                         << 15 as ::core::ffi::c_int
@@ -5669,27 +5024,23 @@ pub unsafe fn HandlePauseScreenPaletteAnimation(game: &mut Game) {
                 QueueSfx3_Max6(0x2a as uint16, game);
                 i = 0 as ::core::ffi::c_int;
             }
-            *((&raw mut game.g_ram as *mut uint8).offset(0x73b as ::core::ffi::c_int as isize)
-                as *mut uint16 as *mut uint8)
-                .offset(0 as ::core::ffi::c_int as isize) = v1;
-            *(&raw mut v2 as *mut uint8).offset(0 as ::core::ffi::c_int as isize) = 0 as uint8;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x73b) as *mut uint16 as *mut uint8)
+                .offset(0) = v1;
+            *(&raw mut v2 as *mut uint8).offset(0) = 0 as uint8;
             *(&raw mut v2 as *mut uint8).offset(
                 (::core::mem::size_of::<uint16>() as usize)
                     .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                     .wrapping_sub(1 as usize) as isize,
-            ) = *((&raw mut game.g_ram as *mut uint8).offset(0x74f as ::core::ffi::c_int as isize)
-                as *mut uint16) as uint8;
+            ) = *((&raw mut game.g_ram as *mut uint8).offset(0x74f) as *mut uint16) as uint8;
             let mut v3: uint16 = ((v2 as ::core::ffi::c_int >> 3 as ::core::ffi::c_int)
                 + 30 as ::core::ffi::c_int) as uint16;
             j = 30 as uint16;
             while j as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int
             {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-                    as *mut uint16)
-                    .offset(
-                        ((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
-                            + 176 as ::core::ffi::c_int) as isize,
-                    ) = *(game.g_rom.offset(
+                *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(
+                    ((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
+                        + 176 as ::core::ffi::c_int) as isize,
+                ) = *(game.g_rom.offset(
                     (((0x82a987 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                         << 15 as ::core::ffi::c_int
                         | 0x82a987 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -5708,26 +5059,19 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
     let mut v5: int16 = 0;
     let mut v7: int16 = 0;
     let mut v8: int16 = 0;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xbd as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb1 as ::core::ffi::c_int as isize) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xbf as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb3 as ::core::ffi::c_int as isize) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9d4 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    *((&raw mut game.g_ram as *mut uint8).offset(0xbd) as *mut uint16) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xbf) as *mut uint16) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) = 0 as uint16;
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x9d4) as *mut uint16) as ::core::ffi::c_int
         != 0
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x9c0 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        && *((&raw mut game.g_ram as *mut uint8).offset(0x9c0) as *mut uint16) as ::core::ffi::c_int
             != 0
     {
         v0 = addr_kEquipmentScreenTilemap_AUTO as ::core::ffi::c_int as VoidP;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x9c0 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x9c0) as *mut uint16) as ::core::ffi::c_int
             != 1 as ::core::ffi::c_int
         {
             v0 = addr_kEquipmentScreenTilemap_MANUAL as ::core::ffi::c_int as VoidP;
@@ -5735,12 +5079,9 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
         let mut table: *mut uint16 = RomPtr_82(v0 as uint16_t, game) as *mut uint16;
         let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
         while i < 4 as ::core::ffi::c_int {
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x3800 as ::core::ffi::c_int as isize)
-                as *mut Ram3800))
+            (*((&raw mut game.g_ram as *mut uint8).offset(0x3800) as *mut Ram3800))
                 .cinematic_bg_tilemap[(i + 327 as ::core::ffi::c_int) as usize] =
-                ((*((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x3800 as ::core::ffi::c_int as isize)
-                    as *mut Ram3800))
+                ((*((&raw mut game.g_ram as *mut uint8).offset(0x3800) as *mut Ram3800))
                     .cinematic_bg_tilemap[(i + 327 as ::core::ffi::c_int) as usize]
                     as ::core::ffi::c_int
                     & 0xfc00 as ::core::ffi::c_int
@@ -5748,35 +5089,28 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
             i += 1;
         }
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x741 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x72d as ::core::ffi::c_int as isize)
-        as *mut uint16) = *(game.g_rom.offset(
+    *((&raw mut game.g_ram as *mut uint8).offset(0x741) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x72d) as *mut uint16) = *(game.g_rom.offset(
         (((0x82c10c as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0x82c10c as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
             & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint8)
-        .offset(0 as ::core::ffi::c_int as isize) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x743 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x72f as ::core::ffi::c_int as isize)
-        as *mut uint16) = *(game.g_rom.offset(
+    ) as *const uint8
+        as *mut uint8)
+        .offset(0)
+        as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x743) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x72f) as *mut uint16) = *(game.g_rom.offset(
         (((0x82c165 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0x82c165 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
             & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint8)
-        .offset(0 as ::core::ffi::c_int as isize) as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9d4 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+    ) as *const uint8
+        as *mut uint8)
+        .offset(0)
+        as uint16;
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x9d4) as *mut uint16) != 0 {
+        *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) = 0 as uint16;
     } else {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xa76 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            != 0
-        {
+        if *((&raw mut game.g_ram as *mut uint8).offset(0xa76) as *mut uint16) != 0 {
             current_block = 15976848397966268834;
         } else {
             let mut v4: uint16 = 0 as uint16;
@@ -5789,9 +5123,8 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
                 ) as *const uint8 as *mut uint16)
                     .offset((v4 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
                     as ::core::ffi::c_int
-                    & *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x9a8 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int
+                    & *((&raw mut game.g_ram as *mut uint8).offset(0x9a8) as *mut uint16)
+                        as ::core::ffi::c_int
                     == 0 as ::core::ffi::c_int)
                 {
                     current_block = 4761528863920922185;
@@ -5809,7 +5142,7 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
             match current_block {
                 15976848397966268834 => {}
                 _ => {
-                    *(&raw mut v5 as *mut uint8).offset(0 as ::core::ffi::c_int as isize) =
+                    *(&raw mut v5 as *mut uint8).offset(0) =
                         ((v4 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16
                             as ::core::ffi::c_int
                             >> 8 as ::core::ffi::c_int) as uint8;
@@ -5818,9 +5151,7 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
                             .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                             .wrapping_sub(1 as usize) as isize,
                     ) = (v4 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint8;
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x755 as ::core::ffi::c_int as isize)
-                        as *mut uint16) =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) =
                         (v5 as ::core::ffi::c_int | 1 as ::core::ffi::c_int) as uint16;
                     current_block = 9932683223035187777;
                 }
@@ -5839,12 +5170,11 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
                     ) as *const uint8 as *mut uint16)
                         .offset((v6 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
                         as ::core::ffi::c_int
-                        & *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x9a4 as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int
+                        & *((&raw mut game.g_ram as *mut uint8).offset(0x9a4) as *mut uint16)
+                            as ::core::ffi::c_int
                         != 0 as ::core::ffi::c_int
                     {
-                        *(&raw mut v7 as *mut uint8).offset(0 as ::core::ffi::c_int as isize) =
+                        *(&raw mut v7 as *mut uint8).offset(0) =
                             ((v6 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16
                                 as ::core::ffi::c_int
                                 >> 8 as ::core::ffi::c_int) as uint8;
@@ -5853,9 +5183,7 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
                                 .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                                 .wrapping_sub(1 as usize) as isize,
                         ) = (v6 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint8;
-                        *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x755 as ::core::ffi::c_int as isize)
-                            as *mut uint16) =
+                        *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) =
                             (v7 as ::core::ffi::c_int | 2 as ::core::ffi::c_int) as uint16;
                         current_block = 9932683223035187777;
                         break;
@@ -5888,10 +5216,7 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
             }
         }
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9d6 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16) != 0 {
         EquipmentScreenGlowingArrowSolidOn(game);
         WriteSamusWireframeTilemapAndQueue(game);
     }
@@ -5912,8 +5237,7 @@ pub unsafe fn EquipmentScreenTransferBG1Tilemap(game: &mut Game) {
     };
     SetupDmaTransfer(&raw const unk_82AC3B as *const ::core::ffi::c_void, game);
     WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) = 0 as uint16;
 }
 static kEquipmentScreenCategories: [Option<Func_V>; 4] = unsafe {
     [
@@ -5924,9 +5248,8 @@ static kEquipmentScreenCategories: [Option<Func_V>; 4] = unsafe {
     ]
 };
 pub unsafe fn EquipmentScreenMain(game: &mut Game) {
-    kEquipmentScreenCategories[*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x755 as ::core::ffi::c_int as isize)
-        as *mut uint16) as uint8 as usize]
+    kEquipmentScreenCategories
+        [*((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) as uint8 as usize]
         .expect("non-null function pointer")(game);
     EquipmentScreenDrawItemSelector(game);
     EquipmentScreenDisplayReserveTankAmount(game);
@@ -5939,8 +5262,7 @@ static kEquipmentScreenCategory_TanksFuncs: [Option<Func_V>; 2] = unsafe {
     ]
 };
 pub unsafe fn EquipmentScreenCategory_Tanks(game: &mut Game) {
-    kEquipmentScreenCategory_TanksFuncs[*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x755 as ::core::ffi::c_int as isize)
+    kEquipmentScreenCategory_TanksFuncs[*((&raw mut game.g_ram as *mut uint8).offset(0x755)
         as *mut uint16 as *mut uint8)
         .offset(
             (::core::mem::size_of::<uint16>() as usize)
@@ -5952,15 +5274,12 @@ pub unsafe fn EquipmentScreenCategory_Tanks(game: &mut Game) {
     EquipmentScreenGlowingArrow(game);
 }
 pub unsafe fn EquipmentScreenHandleDpad(game: &mut Game) {
-    let mut r18: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x755 as ::core::ffi::c_int as isize) as *mut uint16);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    let mut r18: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16);
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int
         & kButton_Right as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int
             & kButton_Down as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
             || EquipmentScreenMoveLowerOnSuitsMisc(0 as uint16, game) as ::core::ffi::c_int
@@ -5968,42 +5287,36 @@ pub unsafe fn EquipmentScreenHandleDpad(game: &mut Game) {
         {
             EquipmentScreenMoveToHighJumpOrLowerInBoots(0 as uint16, r18, game);
         }
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16)
+        as ::core::ffi::c_int
         & kButton_Up as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) as ::core::ffi::c_int
             & 0xff00 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
         {
             QueueSfx1_Max6(0x37 as uint16, game);
-            let ref mut fresh53 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x755 as ::core::ffi::c_int as isize)
-                as *mut uint16);
+            let ref mut fresh53 =
+                *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16);
             *fresh53 = (*fresh53 as ::core::ffi::c_int - 256 as ::core::ffi::c_int) as uint16;
         }
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16)
+        as ::core::ffi::c_int
         & kButton_Down as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) as ::core::ffi::c_int
             & 0xff00 as ::core::ffi::c_int
             == 256 as ::core::ffi::c_int
-            || *((&raw mut game.g_ram as *mut uint8).offset(0x9c0 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            || *((&raw mut game.g_ram as *mut uint8).offset(0x9c0) as *mut uint16)
+                as ::core::ffi::c_int
                 == 1 as ::core::ffi::c_int
             || {
-                let ref mut fresh54 = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x755 as ::core::ffi::c_int as isize)
-                    as *mut uint16);
+                let ref mut fresh54 =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16);
                 *fresh54 = (*fresh54 as ::core::ffi::c_int + 256 as ::core::ffi::c_int) as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9d6 as ::core::ffi::c_int as isize)
-                    as *mut uint16)
-                    == 0
+                *((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16) == 0
             }
         {
             EquipmentScreenMoveToBeams(0 as uint16, r18, game);
@@ -6019,14 +5332,10 @@ static kEquipmentScreenGlowingArrowFuncs: [Option<Func_V>; 2] = unsafe {
     ]
 };
 pub unsafe fn EquipmentScreenGlowingArrow(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-        as *mut uint16) as uint8
-        != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) as uint8 != 0 {
         EquipmentScreenGlowingArrowSolidOff(game);
     } else {
-        kEquipmentScreenGlowingArrowFuncs[*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x755 as ::core::ffi::c_int as isize)
+        kEquipmentScreenGlowingArrowFuncs[*((&raw mut game.g_ram as *mut uint8).offset(0x755)
             as *mut uint16 as *mut uint8)
             .offset(
                 (::core::mem::size_of::<uint16>() as usize)
@@ -6105,60 +5414,46 @@ static kEquipmentScreenGlowingArrowPalettes1: [uint16; 32] = [
     0x156 as ::core::ffi::c_int as uint16,
 ];
 pub unsafe fn EquipmentScreenGlowingArrowAnimated(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9c0 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x9c0) as *mut uint16) as ::core::ffi::c_int
         == 1 as ::core::ffi::c_int
     {
-        let mut v0: ::core::ffi::c_int = *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x5b5 as ::core::ffi::c_int as isize)
+        let mut v0: ::core::ffi::c_int = *(&raw mut game.g_ram as *mut uint8).offset(0x5b5)
             as ::core::ffi::c_int
             & 0x1f as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(102 as ::core::ffi::c_int as isize) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(102) =
             kEquipmentScreenGlowingArrowPalettes0[v0 as usize];
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(107 as ::core::ffi::c_int as isize) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(107) =
             kEquipmentScreenGlowingArrowPalettes1[v0 as usize];
         EquipmentScreenEnergyArrowGlow_On(game);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(107 as ::core::ffi::c_int as isize) = 926 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(102 as ::core::ffi::c_int as isize) = 342 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(107) =
+            926 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(102) =
+            342 as uint16;
         EquipmentScreenEnergyArrowGlow_Off(game);
     };
 }
 pub unsafe fn EquipmentScreenGlowingArrowSolidOn(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(107 as ::core::ffi::c_int as isize) = 926 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(102 as ::core::ffi::c_int as isize) = 342 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(107) =
+        926 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(102) =
+        342 as uint16;
     EquipmentScreenEnergyArrowGlow_On(game);
 }
 pub unsafe fn EquipmentScreenGlowingArrowSolidOff(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(107 as ::core::ffi::c_int as isize) = 926 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(102 as ::core::ffi::c_int as isize) = 342 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(107) =
+        926 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(102) =
+        342 as uint16;
     EquipmentScreenEnergyArrowGlow_Off(game);
 }
 pub unsafe fn EquipmentScreenEnergyArrowGlow_On(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i < 8 as ::core::ffi::c_int {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3800 as ::core::ffi::c_int as isize)
-            as *mut Ram3800))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3800) as *mut Ram3800))
             .equipment_screen_bg1_tilemap
             [(129 as ::core::ffi::c_int + i * 32 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3800 as ::core::ffi::c_int as isize)
-                as *mut Ram3800))
+            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3800) as *mut Ram3800))
                 .equipment_screen_bg1_tilemap
                 [(129 as ::core::ffi::c_int + i * 32 as ::core::ffi::c_int) as usize]
                 as ::core::ffi::c_int
@@ -6168,11 +5463,9 @@ pub unsafe fn EquipmentScreenEnergyArrowGlow_On(game: &mut Game) {
     }
     let mut i_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i_0 < 2 as ::core::ffi::c_int {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3800 as ::core::ffi::c_int as isize)
-            as *mut Ram3800))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3800) as *mut Ram3800))
             .equipment_screen_bg1_tilemap[(385 as ::core::ffi::c_int + i_0) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3800 as ::core::ffi::c_int as isize)
-                as *mut Ram3800))
+            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3800) as *mut Ram3800))
                 .equipment_screen_bg1_tilemap[(385 as ::core::ffi::c_int + i_0) as usize]
                 as ::core::ffi::c_int
                 & !(0x1c00 as ::core::ffi::c_int)
@@ -6183,12 +5476,10 @@ pub unsafe fn EquipmentScreenEnergyArrowGlow_On(game: &mut Game) {
 pub unsafe fn EquipmentScreenEnergyArrowGlow_Off(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i < 8 as ::core::ffi::c_int {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3800 as ::core::ffi::c_int as isize)
-            as *mut Ram3800))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3800) as *mut Ram3800))
             .equipment_screen_bg1_tilemap
             [(129 as ::core::ffi::c_int + i * 32 as ::core::ffi::c_int) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3800 as ::core::ffi::c_int as isize)
-                as *mut Ram3800))
+            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3800) as *mut Ram3800))
                 .equipment_screen_bg1_tilemap
                 [(129 as ::core::ffi::c_int + i * 32 as ::core::ffi::c_int) as usize]
                 as ::core::ffi::c_int
@@ -6198,11 +5489,9 @@ pub unsafe fn EquipmentScreenEnergyArrowGlow_Off(game: &mut Game) {
     }
     let mut i_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i_0 < 2 as ::core::ffi::c_int {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3800 as ::core::ffi::c_int as isize)
-            as *mut Ram3800))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3800) as *mut Ram3800))
             .equipment_screen_bg1_tilemap[(385 as ::core::ffi::c_int + i_0) as usize] =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3800 as ::core::ffi::c_int as isize)
-                as *mut Ram3800))
+            ((*((&raw mut game.g_ram as *mut uint8).offset(0x3800) as *mut Ram3800))
                 .equipment_screen_bg1_tilemap[(385 as ::core::ffi::c_int + i_0) as usize]
                 as ::core::ffi::c_int
                 & !(0x1c00 as ::core::ffi::c_int)
@@ -6225,33 +5514,26 @@ static kEquipmentScreenTilemap_AUTO: [uint16; 4] = [
 pub unsafe fn EquipmentScreenCategory_Tanks_0(game: &mut Game) {
     let mut v0: int16 = 0;
     let mut v2: int16 = 0;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int
         & kButton_A as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x9d4 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        && *((&raw mut game.g_ram as *mut uint8).offset(0x9d4) as *mut uint16) as ::core::ffi::c_int
             != 0
     {
         QueueSfx1_Max6(0x37 as uint16, game);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x9c0 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x9c0) as *mut uint16) as ::core::ffi::c_int
             == 1 as ::core::ffi::c_int
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x9c0 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 2 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x9c0) as *mut uint16) = 2 as uint16;
             EquipmentScreenHudReserveAutoTilemap_Off(game);
             v0 = 8 as int16;
             let mut v1: uint16 = 0 as uint16;
             loop {
-                (*((&raw mut game.g_ram as *mut uint8).offset(0x3800 as ::core::ffi::c_int as isize)
-                    as *mut Ram3800))
+                (*((&raw mut game.g_ram as *mut uint8).offset(0x3800) as *mut Ram3800))
                     .cinematic_bg_tilemap
                     [(v1 as ::core::ffi::c_int + 327 as ::core::ffi::c_int) as usize] =
                     (kEquipmentScreenTilemap_MANUAL[v1 as usize] as ::core::ffi::c_int
-                        | (*((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x3800 as ::core::ffi::c_int as isize)
-                            as *mut Ram3800))
+                        | (*((&raw mut game.g_ram as *mut uint8).offset(0x3800) as *mut Ram3800))
                             .cinematic_bg_tilemap
                             [(v1 as ::core::ffi::c_int + 327 as ::core::ffi::c_int) as usize]
                             as ::core::ffi::c_int
@@ -6263,20 +5545,16 @@ pub unsafe fn EquipmentScreenCategory_Tanks_0(game: &mut Game) {
                 }
             }
         } else {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x9c0 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 1 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x9c0) as *mut uint16) = 1 as uint16;
             EquipmentScreenHudReserveAutoTilemap_On_BUGGY(game);
             v2 = 8 as int16;
             let mut v3: uint16 = 0 as uint16;
             loop {
-                (*((&raw mut game.g_ram as *mut uint8).offset(0x3800 as ::core::ffi::c_int as isize)
-                    as *mut Ram3800))
+                (*((&raw mut game.g_ram as *mut uint8).offset(0x3800) as *mut Ram3800))
                     .cinematic_bg_tilemap
                     [(v3 as ::core::ffi::c_int + 327 as ::core::ffi::c_int) as usize] =
                     (kEquipmentScreenTilemap_AUTO[v3 as usize] as ::core::ffi::c_int
-                        | (*((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x3800 as ::core::ffi::c_int as isize)
-                            as *mut Ram3800))
+                        | (*((&raw mut game.g_ram as *mut uint8).offset(0x3800) as *mut Ram3800))
                             .cinematic_bg_tilemap
                             [(v3 as ::core::ffi::c_int + 327 as ::core::ffi::c_int) as usize]
                             as ::core::ffi::c_int
@@ -6292,130 +5570,88 @@ pub unsafe fn EquipmentScreenCategory_Tanks_0(game: &mut Game) {
 }
 pub unsafe fn EquipmentScreenHudReserveAutoTilemap_On_BUGGY(game: &mut Game) {
     let mut v0: uint16 = -(26229 as ::core::ffi::c_int) as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9d6 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        == 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16) == 0 {
         v0 = -(26217 as ::core::ffi::c_int) as uint16;
     }
     let mut v1: *const uint16 = RomPtr_82(v0 as uint16_t, game) as *const uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc608 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(8 as ::core::ffi::c_int as isize) = *v1;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc608 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(9 as ::core::ffi::c_int as isize) = *v1.offset(1 as ::core::ffi::c_int as isize);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc608 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(40 as ::core::ffi::c_int as isize) = *v1.offset(2 as ::core::ffi::c_int as isize);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc608 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(41 as ::core::ffi::c_int as isize) = *v1.offset(3 as ::core::ffi::c_int as isize);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc608 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(72 as ::core::ffi::c_int as isize) = *v1.offset(4 as ::core::ffi::c_int as isize);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc608 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(73 as ::core::ffi::c_int as isize) = *v1.offset(5 as ::core::ffi::c_int as isize);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(8) = *v1;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(9) = *v1.offset(1);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(40) = *v1.offset(2);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(41) = *v1.offset(3);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(72) = *v1.offset(4);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(73) = *v1.offset(5);
 }
 pub unsafe fn EquipmentScreenHudReserveAutoTilemap_Off(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc608 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(8 as ::core::ffi::c_int as isize) = 11279 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc608 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(9 as ::core::ffi::c_int as isize) = 11279 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc608 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(40 as ::core::ffi::c_int as isize) = 11279 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc608 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(41 as ::core::ffi::c_int as isize) = 11279 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc608 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(72 as ::core::ffi::c_int as isize) = 11279 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc608 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(73 as ::core::ffi::c_int as isize) = 11279 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(8) =
+        11279 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(9) =
+        11279 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(40) =
+        11279 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(41) =
+        11279 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(72) =
+        11279 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(73) =
+        11279 as uint16;
 }
 static kReserveTankEnergyTransferPerFrame: uint16 = 1 as uint16;
 pub unsafe fn EquipmentScreenCategory_Tanks_1(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x757 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        == 0
-    {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x757) as *mut uint16) == 0 {
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int
             & kButton_A as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
         {
             return;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x757 as ::core::ffi::c_int as isize)
-            as *mut uint16) = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x9d6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + 7 as ::core::ffi::c_int
-            & 0xfff8 as ::core::ffi::c_int) as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x757) as *mut uint16) =
+            (*((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16)
+                as ::core::ffi::c_int
+                + 7 as ::core::ffi::c_int
+                & 0xfff8 as ::core::ffi::c_int) as uint16;
     }
-    let ref mut fresh55 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x757 as ::core::ffi::c_int as isize) as *mut uint16);
+    let ref mut fresh55 = *((&raw mut game.g_ram as *mut uint8).offset(0x757) as *mut uint16);
     *fresh55 = (*fresh55).wrapping_sub(1);
     if *fresh55 as ::core::ffi::c_int & 7 as ::core::ffi::c_int == 7 as ::core::ffi::c_int {
         QueueSfx3_Max6(0x2d as uint16, game);
     }
-    let ref mut fresh56 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9c2 as ::core::ffi::c_int as isize) as *mut uint16);
+    let ref mut fresh56 = *((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16);
     *fresh56 = (*fresh56 as ::core::ffi::c_int
         + kReserveTankEnergyTransferPerFrame as ::core::ffi::c_int) as uint16;
-    if ((*((&raw mut game.g_ram as *mut uint8).offset(0x9c2 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0x9c4 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
+    if ((*((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16) as ::core::ffi::c_int
+        - *((&raw mut game.g_ram as *mut uint8).offset(0x9c4) as *mut uint16) as ::core::ffi::c_int)
+        as int16 as ::core::ffi::c_int)
         < 0 as ::core::ffi::c_int
     {
-        let ref mut fresh57 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x9d6 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let ref mut fresh57 = *((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16);
         *fresh57 = (*fresh57 as ::core::ffi::c_int
             - kReserveTankEnergyTransferPerFrame as ::core::ffi::c_int)
             as uint16;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x9d6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as int16 as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16) as int16
+            as ::core::ffi::c_int
             > 0 as ::core::ffi::c_int
         {
             return;
         }
-        let ref mut fresh58 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x9c2 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let ref mut fresh58 = *((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16);
         *fresh58 = (*fresh58 as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0x9d6 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16;
+            + *((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16)
+                as ::core::ffi::c_int) as uint16;
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9c2 as ::core::ffi::c_int as isize)
-            as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x9c4 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16) =
+            *((&raw mut game.g_ram as *mut uint8).offset(0x9c4) as *mut uint16);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9d6 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x757 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x757) as *mut uint16) = 0 as uint16;
     EquipmentScreenEnergyArrowGlow_Off(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) = 0 as uint16;
 }
 pub unsafe fn EquipmentScreenCategory_Weapons(game: &mut Game) {
     EquipmentScreenCategory_Weapons_MoveButtons(game);
-    let mut R36: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9a6 as ::core::ffi::c_int as isize) as *mut uint16);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9a8 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8 as ::core::ffi::c_int
+    let mut R36: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x9a6) as *mut uint16);
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x9a8) as *mut uint16) != 0 {
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) as uint8
+            as ::core::ffi::c_int
             == 1 as ::core::ffi::c_int
         {
             EquipmentScreenCategory_ButtonResponse(10 as uint16, game);
@@ -6424,15 +5660,12 @@ pub unsafe fn EquipmentScreenCategory_Weapons(game: &mut Game) {
     }
 }
 pub unsafe fn EquipmentScreenCategory_Weapons_MoveButtons(game: &mut Game) {
-    let mut r18: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x755 as ::core::ffi::c_int as isize) as *mut uint16);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    let mut r18: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16);
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int
         & 0x100 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int
             & 0x800 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
         {
@@ -6440,27 +5673,23 @@ pub unsafe fn EquipmentScreenCategory_Weapons_MoveButtons(game: &mut Game) {
         } else if EquipmentScreenMoveLowerOnSuitsMisc(4 as uint16, game) != 0 {
             EquipmentScreenMoveToHighJumpOrLowerInBoots(0 as uint16, r18, game);
         }
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16)
+        as ::core::ffi::c_int
         & 0x400 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xa76 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            == 0
-            && *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0xa76) as *mut uint16) == 0
+            && *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16)
+                as ::core::ffi::c_int
                 != 1025 as ::core::ffi::c_int
         {
-            let ref mut fresh61 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x755 as ::core::ffi::c_int as isize)
-                as *mut uint16);
+            let ref mut fresh61 =
+                *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16);
             *fresh61 = (*fresh61 as ::core::ffi::c_int + 256 as ::core::ffi::c_int) as uint16;
             EquipmentScreenMoveToBeams(
                 (2 as ::core::ffi::c_int
-                    * *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x755 as ::core::ffi::c_int as isize)
-                        as *mut uint16 as *mut uint8)
+                    * *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16
+                        as *mut uint8)
                         .offset(
                             (::core::mem::size_of::<uint16>() as usize)
                                 .wrapping_div(::core::mem::size_of::<uint8>() as usize)
@@ -6470,25 +5699,22 @@ pub unsafe fn EquipmentScreenCategory_Weapons_MoveButtons(game: &mut Game) {
                 game,
             );
         }
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16)
+        as ::core::ffi::c_int
         & 0x800 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) as ::core::ffi::c_int
             & 0xff00 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
             || {
-                let ref mut fresh62 = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x755 as ::core::ffi::c_int as isize)
-                    as *mut uint16);
+                let ref mut fresh62 =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16);
                 *fresh62 = (*fresh62 as ::core::ffi::c_int - 256 as ::core::ffi::c_int) as uint16;
                 EquipmentScreenMoveToBottomOfBeams(
                     (2 as ::core::ffi::c_int
-                        * *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x755 as ::core::ffi::c_int as isize)
-                            as *mut uint16 as *mut uint8)
+                        * *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16
+                            as *mut uint8)
                             .offset(
                                 (::core::mem::size_of::<uint16>() as usize)
                                     .wrapping_div(::core::mem::size_of::<uint8>() as usize)
@@ -6501,27 +5727,24 @@ pub unsafe fn EquipmentScreenCategory_Weapons_MoveButtons(game: &mut Game) {
             }
         {
             if EquipmentScreenMoveToReserveTanks(game) == 0 {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = r18;
+                *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) = r18;
             }
         }
     }
 }
 pub unsafe fn EquipmentScreenCategory_Weapons_PlazmaSpazerCheck(mut R36: uint16, game: &mut Game) {
-    let mut t: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9a6 as ::core::ffi::c_int as isize)
+    let mut t: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x9a6)
         as *mut uint16) as ::core::ffi::c_int
         & !(R36 as ::core::ffi::c_int);
     if t & 4 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
         if R36 as ::core::ffi::c_int & 4 as ::core::ffi::c_int == 0 as ::core::ffi::c_int
-            && *((&raw mut game.g_ram as *mut uint8).offset(0x9a6 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            && *((&raw mut game.g_ram as *mut uint8).offset(0x9a6) as *mut uint16)
+                as ::core::ffi::c_int
                 & 8 as ::core::ffi::c_int
                 != 0 as ::core::ffi::c_int
         {
-            let ref mut fresh59 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x9a6 as ::core::ffi::c_int as isize)
-                as *mut uint16);
+            let ref mut fresh59 =
+                *((&raw mut game.g_ram as *mut uint8).offset(0x9a6) as *mut uint16);
             *fresh59 = (*fresh59 as ::core::ffi::c_int & !(8 as ::core::ffi::c_int)) as uint16;
             ChangePaletteValues(
                 (&raw mut game.g_ram as *mut uint8).offset(
@@ -6531,8 +5754,7 @@ pub unsafe fn EquipmentScreenCategory_Weapons_PlazmaSpazerCheck(mut R36: uint16,
                             | 0x82c06c as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
                             & 0x3fffff as ::core::ffi::c_int) as isize,
                     ) as *const uint8 as *mut uint16)
-                        .offset(4 as ::core::ffi::c_int as isize)
-                        as ::core::ffi::c_int as isize,
+                        .offset(4) as ::core::ffi::c_int as isize,
                 ) as *mut uint16,
                 3072 as uint16,
                 5 as size_t,
@@ -6540,14 +5762,11 @@ pub unsafe fn EquipmentScreenCategory_Weapons_PlazmaSpazerCheck(mut R36: uint16,
         }
     } else if t & 8 as ::core::ffi::c_int != 0 as ::core::ffi::c_int
         && R36 as ::core::ffi::c_int & 8 as ::core::ffi::c_int == 0 as ::core::ffi::c_int
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x9a6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        && *((&raw mut game.g_ram as *mut uint8).offset(0x9a6) as *mut uint16) as ::core::ffi::c_int
             & 4 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
     {
-        let ref mut fresh60 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x9a6 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let ref mut fresh60 = *((&raw mut game.g_ram as *mut uint8).offset(0x9a6) as *mut uint16);
         *fresh60 = (*fresh60 as ::core::ffi::c_int & !(4 as ::core::ffi::c_int)) as uint16;
         ChangePaletteValues(
             (&raw mut game.g_ram as *mut uint8).offset(
@@ -6557,8 +5776,7 @@ pub unsafe fn EquipmentScreenCategory_Weapons_PlazmaSpazerCheck(mut R36: uint16,
                         | 0x82c06c as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
                         & 0x3fffff as ::core::ffi::c_int) as isize,
                 ) as *const uint8 as *mut uint16)
-                    .offset(3 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                    as isize,
+                    .offset(3) as ::core::ffi::c_int as isize,
             ) as *mut uint16,
             3072 as uint16,
             5 as size_t,
@@ -6567,52 +5785,45 @@ pub unsafe fn EquipmentScreenCategory_Weapons_PlazmaSpazerCheck(mut R36: uint16,
 }
 pub unsafe fn EquipmentScreenCategory_Suit(game: &mut Game) {
     EquipmentScreenCategory_Suit_MoveResponse(game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-        as *mut uint16) as uint8 as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) as uint8
+        as ::core::ffi::c_int
         == 2 as ::core::ffi::c_int
     {
         EquipmentScreenCategory_ButtonResponse(18 as uint16, game);
     }
 }
 pub unsafe fn EquipmentScreenCategory_Suit_MoveResponse(game: &mut Game) {
-    let mut r18: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x755 as ::core::ffi::c_int as isize) as *mut uint16);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    let mut r18: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16);
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int
         & kButton_Left as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int
             & kButton_Down as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
         {
             if EquipmentScreenMoveToReserveTanks(game) != 0 {
                 return;
             }
-            *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-                as *mut uint16) = r18;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) = r18;
         }
         EquipmentScreenMoveToBeams(0 as uint16, r18, game);
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16)
+        as ::core::ffi::c_int
         & kButton_Up as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) as ::core::ffi::c_int
             & 0xff00 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
         {
-            let ref mut fresh51 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x755 as ::core::ffi::c_int as isize)
-                as *mut uint16);
+            let ref mut fresh51 =
+                *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16);
             *fresh51 = (*fresh51 as ::core::ffi::c_int - 256 as ::core::ffi::c_int) as uint16;
             EquipmentScreenMoveToScrewOrHigherOnSuits(
                 (2 as ::core::ffi::c_int
-                    * *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x755 as ::core::ffi::c_int as isize)
-                        as *mut uint16 as *mut uint8)
+                    * *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16
+                        as *mut uint8)
                         .offset(
                             (::core::mem::size_of::<uint16>() as usize)
                                 .wrapping_div(::core::mem::size_of::<uint8>() as usize)
@@ -6622,25 +5833,22 @@ pub unsafe fn EquipmentScreenCategory_Suit_MoveResponse(game: &mut Game) {
                 game,
             );
         }
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16)
+        as ::core::ffi::c_int
         & kButton_Down as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) as ::core::ffi::c_int
             & 0xff00 as ::core::ffi::c_int
             == 1280 as ::core::ffi::c_int
             || {
-                let ref mut fresh52 = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x755 as ::core::ffi::c_int as isize)
-                    as *mut uint16);
+                let ref mut fresh52 =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16);
                 *fresh52 = (*fresh52 as ::core::ffi::c_int + 256 as ::core::ffi::c_int) as uint16;
                 EquipmentScreenMoveLowerOnSuitsMisc(
                     (2 as ::core::ffi::c_int
-                        * *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x755 as ::core::ffi::c_int as isize)
-                            as *mut uint16 as *mut uint8)
+                        * *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16
+                            as *mut uint8)
                             .offset(
                                 (::core::mem::size_of::<uint16>() as usize)
                                     .wrapping_div(::core::mem::size_of::<uint8>() as usize)
@@ -6658,50 +5866,44 @@ pub unsafe fn EquipmentScreenCategory_Suit_MoveResponse(game: &mut Game) {
 }
 pub unsafe fn EquipmentScreenCategory_Boots(game: &mut Game) {
     EquipmentScreenCategory_Boots_MoveResponse(game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-        as *mut uint16) as uint8 as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) as uint8
+        as ::core::ffi::c_int
         == 3 as ::core::ffi::c_int
     {
         EquipmentScreenCategory_ButtonResponse(18 as uint16, game);
     }
 }
 pub unsafe fn EquipmentScreenCategory_Boots_MoveResponse(game: &mut Game) {
-    let mut r18: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x755 as ::core::ffi::c_int as isize) as *mut uint16);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    let mut r18: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16);
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int
         & kButton_Left as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        if (*((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if (*((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16)
+            as ::core::ffi::c_int
             & kButton_Up as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
             || EquipmentScreenMoveToBottomOfBeams(8 as uint16, game) as ::core::ffi::c_int
                 == 0xffff as ::core::ffi::c_int)
             && EquipmentScreenMoveToReserveTanks(game) == 0
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-                as *mut uint16) = r18;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) = r18;
         }
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16)
+        as ::core::ffi::c_int
         & kButton_Down as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) as ::core::ffi::c_int
             != 515 as ::core::ffi::c_int
         {
-            let ref mut fresh49 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x755 as ::core::ffi::c_int as isize)
-                as *mut uint16);
+            let ref mut fresh49 =
+                *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16);
             *fresh49 = (*fresh49 as ::core::ffi::c_int + 256 as ::core::ffi::c_int) as uint16;
             EquipmentScreenMoveToHighJumpOrLowerInBoots(
                 (2 as ::core::ffi::c_int
-                    * *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x755 as ::core::ffi::c_int as isize)
-                        as *mut uint16 as *mut uint8)
+                    * *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16
+                        as *mut uint8)
                         .offset(
                             (::core::mem::size_of::<uint16>() as usize)
                                 .wrapping_div(::core::mem::size_of::<uint8>() as usize)
@@ -6711,25 +5913,22 @@ pub unsafe fn EquipmentScreenCategory_Boots_MoveResponse(game: &mut Game) {
                 game,
             );
         }
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16)
+        as ::core::ffi::c_int
         & kButton_Up as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) as ::core::ffi::c_int
             & 0xff00 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
             || {
-                let ref mut fresh50 = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x755 as ::core::ffi::c_int as isize)
-                    as *mut uint16);
+                let ref mut fresh50 =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16);
                 *fresh50 = (*fresh50 as ::core::ffi::c_int - 256 as ::core::ffi::c_int) as uint16;
                 EquipmentScreenCategory_Boots_MoveUpInBoots(
                     (2 as ::core::ffi::c_int
-                        * *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x755 as ::core::ffi::c_int as isize)
-                            as *mut uint16 as *mut uint8)
+                        * *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16
+                            as *mut uint8)
                             .offset(
                                 (::core::mem::size_of::<uint16>() as usize)
                                     .wrapping_div(::core::mem::size_of::<uint8>() as usize)
@@ -6747,18 +5946,15 @@ pub unsafe fn EquipmentScreenCategory_Boots_MoveResponse(game: &mut Game) {
 }
 pub unsafe fn WriteSamusWireframeTilemapAndQueue(game: &mut Game) {
     WriteSamusWireframeTilemap(game);
-    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
     (*gVramWriteEntry(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .size = 1280 as uint16;
     v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     (*gVramWriteEntry(v0 as ::core::ffi::c_int, game)).size =
-        (((&raw mut game.g_ram as *mut uint8).offset(0x3800 as ::core::ffi::c_int as isize)
-            as *mut Ram3800 as *mut uint8)
+        (((&raw mut game.g_ram as *mut uint8).offset(0x3800) as *mut Ram3800 as *mut uint8)
             .offset_from(&raw mut game.g_ram as *mut uint8) as ::core::ffi::c_long
             + 256 as ::core::ffi::c_long) as uint16;
     v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
@@ -6770,16 +5966,15 @@ pub unsafe fn WriteSamusWireframeTilemapAndQueue(game: &mut Game) {
         game,
     ))
     .size as *mut uint8)
-        .offset(0 as ::core::ffi::c_int as isize) = 126 as uint8;
+        .offset(0) = 126 as uint8;
     (*gVramWriteEntry(v0 as ::core::ffi::c_int, game)).size = 0x3080 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) =
+        (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn WriteSamusWireframeTilemap(game: &mut Game) {
     let mut i: uint16 = 0;
     i = 0 as uint16;
-    while *((&raw mut game.g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    while *((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16) as ::core::ffi::c_int
         & 0x101 as ::core::ffi::c_int
         != *(game.g_rom.offset(
             (((0x82b257 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -6812,9 +6007,7 @@ pub unsafe fn WriteSamusWireframeTilemap(game: &mut Game) {
         loop {
             let fresh64 = src;
             src = src.offset(1);
-            *((&raw mut (*((&raw mut game.g_ram as *mut uint8)
-                .offset(0x3800 as ::core::ffi::c_int as isize)
-                as *mut Ram3800))
+            *((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x3800) as *mut Ram3800))
                 .cinematic_bg_tilemap as *mut uint16 as *mut uint8)
                 .offset(v2 as ::core::ffi::c_int as isize) as *mut uint16) = *fresh64;
             v2 = (v2 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
@@ -6831,12 +6024,11 @@ pub unsafe fn WriteSamusWireframeTilemap(game: &mut Game) {
     }
 }
 pub unsafe fn EquipmentScreenDrawItemSelector(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9d4 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        | (*((&raw mut game.g_ram as *mut uint8).offset(0x9a4 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x9a8 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x9d4) as *mut uint16) as ::core::ffi::c_int
+        | (*((&raw mut game.g_ram as *mut uint8).offset(0x9a4) as *mut uint16)
+            as ::core::ffi::c_int
+            | *((&raw mut game.g_ram as *mut uint8).offset(0x9a8) as *mut uint16)
+                as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
         != 0
     {
         let mut t: *mut uint16 = RomPtr_82(
@@ -6847,14 +6039,12 @@ pub unsafe fn EquipmentScreenDrawItemSelector(game: &mut Game) {
                     & 0x3fffff as ::core::ffi::c_int) as isize,
             ) as *const uint8 as *mut uint16)
                 .offset(
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x755 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as uint8 as isize,
+                    *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) as uint8
+                        as isize,
                 ) as ::core::ffi::c_int
                 + 4 as ::core::ffi::c_int
-                    * *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x755 as ::core::ffi::c_int as isize)
-                        as *mut uint16 as *mut uint8)
+                    * *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16
+                        as *mut uint8)
                         .offset(
                             (::core::mem::size_of::<uint16>() as usize)
                                 .wrapping_div(::core::mem::size_of::<uint8>() as usize)
@@ -6864,9 +6054,8 @@ pub unsafe fn EquipmentScreenDrawItemSelector(game: &mut Game) {
         ) as *mut uint16;
         DrawPauseScreenSpriteAnim(
             3 as uint16,
-            (*t.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                - 1 as ::core::ffi::c_int) as uint16,
-            *t.offset(1 as ::core::ffi::c_int as isize),
+            (*t.offset(0) as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
+            *t.offset(1),
             game,
         );
     }
@@ -6904,23 +6093,17 @@ static kPartialReserveTankSpritemapIds: [uint16; 16] = [
 pub unsafe fn EquipmentScreenDisplayReserveTankAmount_(game: &mut Game) {
     let mut r3: uint16 = EquipmentScreenDisplayReserves_PaletteSetup(game);
     let mut r52: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9d4 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        == 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x9d4) as *mut uint16) == 0 {
         return;
     }
-    let mut R44: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9d4 as ::core::ffi::c_int as isize) as *mut uint16)
+    let mut R44: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x9d4) as *mut uint16)
         as ::core::ffi::c_int
         / 100 as ::core::ffi::c_int) as uint16;
-    let mut mod_value: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9d6 as ::core::ffi::c_int as isize)
+    let mut mod_value: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x9d6)
         as *mut uint16) as ::core::ffi::c_int
         % 100 as ::core::ffi::c_int;
     let mut R50: uint16 = mod_value as uint16;
-    let mut r42: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9d6 as ::core::ffi::c_int as isize)
+    let mut r42: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x9d6)
         as *mut uint16) as ::core::ffi::c_int
         / 100 as ::core::ffi::c_int;
     let mut R48: uint16 = r42 as uint16;
@@ -6952,15 +6135,13 @@ pub unsafe fn EquipmentScreenDisplayReserveTankAmount_(game: &mut Game) {
             as uint16;
         if v2 as ::core::ffi::c_int - 7 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0
             && RegWord as ::core::ffi::c_int % 14 as ::core::ffi::c_int != 0
-            && *(&raw mut game.g_ram as *mut uint8).offset(0x5b5 as ::core::ffi::c_int as isize)
-                as ::core::ffi::c_int
+            && *(&raw mut game.g_ram as *mut uint8).offset(0x5b5) as ::core::ffi::c_int
                 & 4 as ::core::ffi::c_int
                 == 0 as ::core::ffi::c_int
         {
             v2 = (v2 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
         }
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x9d6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16) as ::core::ffi::c_int
             - 100 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             == 0
@@ -7001,38 +6182,24 @@ pub unsafe fn EquipmentScreenDisplayReserveTankAmount_(game: &mut Game) {
     );
     let mut div_val: ::core::ffi::c_int = R50 as ::core::ffi::c_int / 10 as ::core::ffi::c_int;
     let mut mod_val: ::core::ffi::c_int = R50 as ::core::ffi::c_int % 10 as ::core::ffi::c_int;
-    (*((&raw mut game.g_ram as *mut uint8).offset(0x3800 as ::core::ffi::c_int as isize)
-        as *mut Ram3800))
-        .cinematic_bg_tilemap[394 as ::core::ffi::c_int as usize] =
-        (mod_val + 2052 as ::core::ffi::c_int) as uint16;
-    (*((&raw mut game.g_ram as *mut uint8).offset(0x3800 as ::core::ffi::c_int as isize)
-        as *mut Ram3800))
-        .cinematic_bg_tilemap[393 as ::core::ffi::c_int as usize] =
-        (div_val + 2052 as ::core::ffi::c_int) as uint16;
-    (*((&raw mut game.g_ram as *mut uint8).offset(0x3800 as ::core::ffi::c_int as isize)
-        as *mut Ram3800))
-        .cinematic_bg_tilemap[392 as ::core::ffi::c_int as usize] =
-        (r42 + 2052 as ::core::ffi::c_int) as uint16;
+    (*((&raw mut game.g_ram as *mut uint8).offset(0x3800) as *mut Ram3800)).cinematic_bg_tilemap
+        [394 as ::core::ffi::c_int as usize] = (mod_val + 2052 as ::core::ffi::c_int) as uint16;
+    (*((&raw mut game.g_ram as *mut uint8).offset(0x3800) as *mut Ram3800)).cinematic_bg_tilemap
+        [393 as ::core::ffi::c_int as usize] = (div_val + 2052 as ::core::ffi::c_int) as uint16;
+    (*((&raw mut game.g_ram as *mut uint8).offset(0x3800) as *mut Ram3800)).cinematic_bg_tilemap
+        [392 as ::core::ffi::c_int as usize] = (r42 + 2052 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn EquipmentScreenDisplayReserves_PaletteSetup(game: &mut Game) -> uint16 {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9d6 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
-        let ref mut fresh40 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x72f as ::core::ffi::c_int as isize)
-            as *mut uint16);
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16) != 0 {
+        let ref mut fresh40 = *((&raw mut game.g_ram as *mut uint8).offset(0x72f) as *mut uint16);
         *fresh40 = (*fresh40).wrapping_sub(1);
         let mut v0: bool = *fresh40 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x72f as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            == 0
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x72f) as *mut uint16) == 0
             || v0 as ::core::ffi::c_int != 0
         {
-            let ref mut fresh41 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x743 as ::core::ffi::c_int as isize)
-                as *mut uint16);
+            let ref mut fresh41 =
+                *((&raw mut game.g_ram as *mut uint8).offset(0x743) as *mut uint16);
             *fresh41 = (*fresh41).wrapping_add(1);
             let mut v1: uint16 = *(game.g_rom.offset(
                 (((0x82c165 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -7042,23 +6209,20 @@ pub unsafe fn EquipmentScreenDisplayReserves_PaletteSetup(game: &mut Game) -> ui
             ) as *const uint8 as *mut uint8)
                 .offset(
                     (2 as ::core::ffi::c_int
-                        * *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x743 as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int) as isize,
+                        * *((&raw mut game.g_ram as *mut uint8).offset(0x743) as *mut uint16)
+                            as ::core::ffi::c_int) as isize,
                 ) as uint16;
             if v1 as ::core::ffi::c_int == 255 as ::core::ffi::c_int {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x743 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 0 as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0x743) as *mut uint16) = 0 as uint16;
                 v1 = *(game.g_rom.offset(
                     (((0x82c165 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                         << 15 as ::core::ffi::c_int
                         | 0x82c165 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
                         & 0x3fffff as ::core::ffi::c_int) as isize,
                 ) as *const uint8 as *mut uint8)
-                    .offset(0 as ::core::ffi::c_int as isize) as uint16;
+                    .offset(0) as uint16;
             }
-            *((&raw mut game.g_ram as *mut uint8).offset(0x72f as ::core::ffi::c_int as isize)
-                as *mut uint16) = v1;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x72f) as *mut uint16) = v1;
         }
         return *(game.g_rom.offset(
             (((0x82c0fa as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -7066,21 +6230,15 @@ pub unsafe fn EquipmentScreenDisplayReserves_PaletteSetup(game: &mut Game) -> ui
                 | 0x82c0fa as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
                 & 0x3fffff as ::core::ffi::c_int) as isize,
         ) as *const uint8 as *mut uint16)
-            .offset(3 as ::core::ffi::c_int as isize);
+            .offset(3);
     } else {
         return 1536 as uint16;
     };
 }
 pub unsafe fn EquipmentScreenMoveToReserveTanks(game: &mut Game) -> uint16 {
-    let mut result: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9d4 as ::core::ffi::c_int as isize)
-        as *mut uint16);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9d4 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+    let mut result: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x9d4) as *mut uint16);
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x9d4) as *mut uint16) != 0 {
+        *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) = 0 as uint16;
         QueueSfx1_Max6(0x37 as uint16, game);
         return 1 as uint16;
     }
@@ -7089,10 +6247,7 @@ pub unsafe fn EquipmentScreenMoveToReserveTanks(game: &mut Game) -> uint16 {
 pub unsafe fn EquipmentScreenMoveToBeams(mut v0: uint16, mut r18: uint16, game: &mut Game) {
     let mut v1: int16 = 0;
     let mut current_block_5: u64;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa76 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xa76) as *mut uint16) != 0 {
         current_block_5 = 16475780731721606008;
     } else {
         loop {
@@ -7104,8 +6259,8 @@ pub unsafe fn EquipmentScreenMoveToBeams(mut v0: uint16, mut r18: uint16, game: 
             ) as *const uint8 as *mut uint16)
                 .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
                 as ::core::ffi::c_int
-                & *((&raw mut game.g_ram as *mut uint8).offset(0x9a8 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
+                & *((&raw mut game.g_ram as *mut uint8).offset(0x9a8) as *mut uint16)
+                    as ::core::ffi::c_int
                 == 0 as ::core::ffi::c_int)
             {
                 current_block_5 = 6873731126896040597;
@@ -7122,7 +6277,7 @@ pub unsafe fn EquipmentScreenMoveToBeams(mut v0: uint16, mut r18: uint16, game: 
         match current_block_5 {
             16475780731721606008 => {}
             _ => {
-                *(&raw mut v1 as *mut uint8).offset(0 as ::core::ffi::c_int as isize) =
+                *(&raw mut v1 as *mut uint8).offset(0) =
                     ((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16
                         as ::core::ffi::c_int
                         >> 8 as ::core::ffi::c_int) as uint8;
@@ -7131,9 +6286,9 @@ pub unsafe fn EquipmentScreenMoveToBeams(mut v0: uint16, mut r18: uint16, game: 
                         .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                         .wrapping_sub(1 as usize) as isize,
                 ) = (v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint8;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = (v1 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int
-                    | 1 as ::core::ffi::c_int) as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) =
+                    (v1 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int
+                        | 1 as ::core::ffi::c_int) as uint16;
                 QueueSfx1_Max6(0x37 as uint16, game);
                 current_block_5 = 13513818773234778473;
             }
@@ -7141,17 +6296,13 @@ pub unsafe fn EquipmentScreenMoveToBeams(mut v0: uint16, mut r18: uint16, game: 
     }
     match current_block_5 {
         16475780731721606008 => {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-                as *mut uint16) = r18;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) = r18;
         }
         _ => {}
     };
 }
 pub unsafe fn EquipmentScreenMoveToBottomOfBeams(mut k: uint16, game: &mut Game) -> uint16 {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa76 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xa76) as *mut uint16) != 0 {
         return -(1 as ::core::ffi::c_int) as uint16;
     }
     while *(game.g_rom.offset(
@@ -7161,8 +6312,7 @@ pub unsafe fn EquipmentScreenMoveToBottomOfBeams(mut k: uint16, game: &mut Game)
     ) as *const uint8 as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
         as ::core::ffi::c_int
-        & *((&raw mut game.g_ram as *mut uint8).offset(0x9a8 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        & *((&raw mut game.g_ram as *mut uint8).offset(0x9a8) as *mut uint16) as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
     {
         k = (k as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
@@ -7174,8 +6324,7 @@ pub unsafe fn EquipmentScreenMoveToBottomOfBeams(mut k: uint16, game: &mut Game)
     let mut result: uint16 = ((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
         << 8 as ::core::ffi::c_int
         | 1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-        as *mut uint16) = result;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) = result;
     return result;
 }
 pub unsafe fn EquipmentScreenMoveLowerOnSuitsMisc(mut v0: uint16, game: &mut Game) -> uint16 {
@@ -7187,8 +6336,7 @@ pub unsafe fn EquipmentScreenMoveLowerOnSuitsMisc(mut v0: uint16, game: &mut Gam
     ) as *const uint8 as *mut uint16)
         .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
         as ::core::ffi::c_int
-        & *((&raw mut game.g_ram as *mut uint8).offset(0x9a4 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        & *((&raw mut game.g_ram as *mut uint8).offset(0x9a4) as *mut uint16) as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
     {
         v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
@@ -7199,17 +6347,17 @@ pub unsafe fn EquipmentScreenMoveLowerOnSuitsMisc(mut v0: uint16, game: &mut Gam
         }
     }
     QueueSfx1_Max6(0x37 as uint16, game);
-    *(&raw mut v1 as *mut uint8).offset(0 as ::core::ffi::c_int as isize) =
-        ((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
-            >> 8 as ::core::ffi::c_int) as uint8;
+    *(&raw mut v1 as *mut uint8).offset(0) = ((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
+        as uint16 as ::core::ffi::c_int
+        >> 8 as ::core::ffi::c_int) as uint8;
     *(&raw mut v1 as *mut uint8).offset(
         (::core::mem::size_of::<int16>() as usize)
             .wrapping_div(::core::mem::size_of::<uint8>() as usize)
             .wrapping_sub(1 as usize) as isize,
     ) = (v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint8;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (v1 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int
-        | 2 as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) =
+        (v1 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int | 2 as ::core::ffi::c_int)
+            as uint16;
     return 0 as uint16;
 }
 pub unsafe fn EquipmentScreenMoveToScrewOrHigherOnSuits(
@@ -7224,22 +6372,19 @@ pub unsafe fn EquipmentScreenMoveToScrewOrHigherOnSuits(
     ) as *const uint8 as *mut uint16)
         .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
         as ::core::ffi::c_int
-        & *((&raw mut game.g_ram as *mut uint8).offset(0x9a4 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        & *((&raw mut game.g_ram as *mut uint8).offset(0x9a4) as *mut uint16) as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
     {
         v0 = (v0 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
         if v0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-                as *mut uint16) = r18;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) = r18;
             return;
         }
     }
     QueueSfx1_Max6(0x37 as uint16, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-        as *mut uint16) = ((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int
-        | 2 as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) =
+        ((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
+            | 2 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn EquipmentScreenMoveToHighJumpOrLowerInBoots(
     mut v0: uint16,
@@ -7253,24 +6398,21 @@ pub unsafe fn EquipmentScreenMoveToHighJumpOrLowerInBoots(
     ) as *const uint8 as *mut uint16)
         .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
         as ::core::ffi::c_int
-        & *((&raw mut game.g_ram as *mut uint8).offset(0x9a4 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        & *((&raw mut game.g_ram as *mut uint8).offset(0x9a4) as *mut uint16) as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
     {
         v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
         if (v0 as ::core::ffi::c_int - 6 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
             >= 0 as ::core::ffi::c_int
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-                as *mut uint16) = r18;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) = r18;
             return;
         }
     }
     QueueSfx1_Max6(0x37 as uint16, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-        as *mut uint16) = ((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int
-        | 3 as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) =
+        ((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
+            | 3 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn EquipmentScreenCategory_Boots_MoveUpInBoots(
     mut k: uint16,
@@ -7283,8 +6425,7 @@ pub unsafe fn EquipmentScreenCategory_Boots_MoveUpInBoots(
     ) as *const uint8 as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
         as ::core::ffi::c_int
-        & *((&raw mut game.g_ram as *mut uint8).offset(0x9a4 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        & *((&raw mut game.g_ram as *mut uint8).offset(0x9a4) as *mut uint16) as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
     {
         k = (k as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
@@ -7296,28 +6437,25 @@ pub unsafe fn EquipmentScreenCategory_Boots_MoveUpInBoots(
     let mut result: uint16 = ((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
         << 8 as ::core::ffi::c_int
         | 3 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-        as *mut uint16) = result;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) = result;
     return result;
 }
 pub unsafe fn EquipmentScreenCategory_ButtonResponse(mut r24: uint16, game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int
         & kButton_A as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
         QueueSfx1_Max6(0x38 as uint16, game);
-        let mut item: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x755 as ::core::ffi::c_int as isize)
+        let mut item: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x755)
             as *mut uint16 as *mut uint8)
             .offset(
                 (::core::mem::size_of::<uint16>() as usize)
                     .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                     .wrapping_sub(1 as usize) as isize,
             ) as ::core::ffi::c_int;
-        let mut category: ::core::ffi::c_int =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
-                as *mut uint16) as uint8 as ::core::ffi::c_int;
+        let mut category: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x755)
+            as *mut uint16) as uint8
+            as ::core::ffi::c_int;
         let mut target: *mut uint8 = (&raw mut game.g_ram as *mut uint8).offset(
             *(RomPtr_82(
                 (*(game.g_rom.offset(
@@ -7381,10 +6519,7 @@ pub unsafe fn EquipmentScreenCategory_ButtonResponse(mut r24: uint16, game: &mut
     }
 }
 pub unsafe fn DrawPauseMenuDuringFadeIn(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x727 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16) != 0 {
         EquipmentScreenDrawItemSelector(game);
         EquipmentScreenDisplayReserveTankAmount(game);
     } else {
@@ -7394,10 +6529,7 @@ pub unsafe fn DrawPauseMenuDuringFadeIn(game: &mut Game) {
     };
 }
 pub unsafe fn UNKNOWN_sub_82B650(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x753 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x753) as *mut uint16) != 0 {
         DisplayMapElevatorDestinations(game);
         MapScreenDrawSamusPositionIndicator(game);
         DrawMapIcons(game);
@@ -7449,24 +6581,18 @@ pub unsafe fn DrawMapIcons(game: &mut Game) {
         game,
     );
     DrawSaveStationMapIcon(8 as uint16, 0xc80b as uint16, 1024 as uint16, game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x5d1 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x5d1) as *mut uint16) != 0 {
         DrawSimpleMapIcons(8 as uint16, 0xc82b as uint16, 1024 as uint16, game);
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        == 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) == 0 {
         DrawMenuSpritemap(
             0x63 as uint16,
             (kMap_Criteria_SavePoints[0 as ::core::ffi::c_int as usize] as ::core::ffi::c_int
-                - *((&raw mut game.g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int) as uint16,
+                - *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16)
+                    as ::core::ffi::c_int) as uint16,
             (kMap_Criteria_SavePoints[1 as ::core::ffi::c_int as usize] as ::core::ffi::c_int
-                - *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int) as uint16,
+                - *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16)
+                    as ::core::ffi::c_int) as uint16,
             3584 as uint16,
             game,
         );
@@ -7486,55 +6612,47 @@ pub unsafe fn DrawFileSelectMapIcons(game: &mut Game) {
                 | 0x82c7cb as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
                 & 0x3fffff as ::core::ffi::c_int) as isize,
         ) as *const uint8 as *mut MapIconDataPointers)
-            .offset(4 as ::core::ffi::c_int as isize))
+            .offset(4))
         .crateria as *mut uint8)
             .offset(
                 (2 as ::core::ffi::c_int
-                    * *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x79f as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int) as isize,
+                    * *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16)
+                        as ::core::ffi::c_int) as isize,
             ) as *mut VoidP),
         game,
     ) as *mut uint16)
         .offset(
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x78b as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            (*((&raw mut game.g_ram as *mut uint8).offset(0x78b) as *mut uint16)
+                as ::core::ffi::c_int
                 * 2 as ::core::ffi::c_int) as isize,
         );
-    let mut v1: uint16 = (*data.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as uint16;
-    let mut v2: uint16 = (*data.offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x77a as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    let mut v1: uint16 = (*data.offset(0) as ::core::ffi::c_int
+        - *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16) as ::core::ffi::c_int)
+        as uint16;
+    let mut v2: uint16 = (*data.offset(1) as ::core::ffi::c_int
+        - *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) as ::core::ffi::c_int)
+        as uint16;
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x77a) as *mut uint16) as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
     {
         DrawMenuSpritemap(0x12 as uint16, v1, v2, 3584 as uint16, game);
     }
     DrawMenuSpritemap(a, v1, v2, 3584 as uint16, game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x5d1 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x5d1) as *mut uint16) != 0 {
         DrawDebugSaveMapIcons(0xc as uint16, 0xc80b as uint16, 1536 as uint16, game);
         DrawDebugElevatorMapIcons(0x17 as uint16, 0xc81b as uint16, 1536 as uint16, game);
         DrawSimpleMapIcons(0xc as uint16, 0xc82b as uint16, 1536 as uint16, game);
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        == 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) == 0 {
         DrawMenuSpritemap(
             0x63 as uint16,
             (kMap_Criteria_SavePoints[0 as ::core::ffi::c_int as usize] as ::core::ffi::c_int
-                - *((&raw mut game.g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int) as uint16,
+                - *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16)
+                    as ::core::ffi::c_int) as uint16,
             (kMap_Criteria_SavePoints[1 as ::core::ffi::c_int as usize] as ::core::ffi::c_int
-                - *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int) as uint16,
+                - *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16)
+                    as ::core::ffi::c_int) as uint16,
             3584 as uint16,
             game,
         );
@@ -7557,30 +6675,23 @@ pub unsafe fn DrawSaveStationMapIcon(
         0x80 as ::core::ffi::c_int as uint8,
     ];
     let mut R34: uint16 = a;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        == *((&raw mut game.g_ram as *mut uint8).offset(0xd918 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as ::core::ffi::c_int
+        == *((&raw mut game.g_ram as *mut uint8).offset(0xd918) as *mut uint16)
+            as ::core::ffi::c_int
     {
-        let mut R36: uint16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xd8f8 as ::core::ffi::c_int as isize)
-            .offset(
-                (2 as ::core::ffi::c_int
-                    * *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x79f as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int) as isize,
-            ) as *mut uint8 as *mut uint16);
-        *(&raw mut R36 as *mut uint8).offset(0 as ::core::ffi::c_int as isize) =
-            (R36 as ::core::ffi::c_int
-                & kShlBit[*((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x78b as ::core::ffi::c_int as isize)
-                    as *mut uint16) as usize] as ::core::ffi::c_int) as uint8;
+        let mut R36: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xd8f8).offset(
+            (2 as ::core::ffi::c_int
+                * *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16)
+                    as ::core::ffi::c_int) as isize,
+        ) as *mut uint8 as *mut uint16);
+        *(&raw mut R36 as *mut uint8).offset(0) = (R36 as ::core::ffi::c_int
+            & kShlBit[*((&raw mut game.g_ram as *mut uint8).offset(0x78b) as *mut uint16) as usize]
+                as ::core::ffi::c_int) as uint8;
         let mut v2: uint16 = *(RomPtr_82(
             (k as ::core::ffi::c_int
                 + 2 as ::core::ffi::c_int
-                    * *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x79f as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int) as uint16_t,
+                    * *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16)
+                        as ::core::ffi::c_int) as uint16_t,
             game,
         ) as *mut uint16);
         if v2 != 0 {
@@ -7590,18 +6701,16 @@ pub unsafe fn DrawSaveStationMapIcon(
 }
 pub unsafe fn DrawDebugSaveMapIcons(mut a: uint16, mut k: uint16, mut r3: uint16, game: &mut Game) {
     let mut R34: uint16 = a;
-    let mut R36: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xd8f8 as ::core::ffi::c_int as isize)
-        .offset(
-            (2 as ::core::ffi::c_int
-                * *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int) as isize,
-        ) as *mut uint8 as *mut uint16);
+    let mut R36: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xd8f8).offset(
+        (2 as ::core::ffi::c_int
+            * *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16)
+                as ::core::ffi::c_int) as isize,
+    ) as *mut uint8 as *mut uint16);
     let mut v2: uint16 = *(RomPtr_82(
         (k as ::core::ffi::c_int
             + 2 as ::core::ffi::c_int
-                * *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int) as uint16_t,
+                * *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16)
+                    as ::core::ffi::c_int) as uint16_t,
         game,
     ) as *mut uint16);
     if v2 != 0 {
@@ -7615,19 +6724,17 @@ pub unsafe fn DrawDebugElevatorMapIcons(
     game: &mut Game,
 ) {
     let mut R34: uint16 = a;
-    let mut R36: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xd8f8 as ::core::ffi::c_int as isize)
-        .offset(
-            (2 as ::core::ffi::c_int
-                * *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
-                + 1 as ::core::ffi::c_int) as isize,
-        ) as *mut uint8 as *mut uint16);
+    let mut R36: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xd8f8).offset(
+        (2 as ::core::ffi::c_int
+            * *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16)
+                as ::core::ffi::c_int
+            + 1 as ::core::ffi::c_int) as isize,
+    ) as *mut uint8 as *mut uint16);
     let mut v2: uint16 = *(RomPtr_82(
         (k as ::core::ffi::c_int
             + 2 as ::core::ffi::c_int
-                * *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int) as uint16_t,
+                * *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16)
+                    as ::core::ffi::c_int) as uint16_t,
         game,
     ) as *mut uint16);
     if v2 != 0 {
@@ -7639,8 +6746,8 @@ pub unsafe fn DrawSimpleMapIcons(mut a: uint16, mut k: uint16, mut r3: uint16, g
     let mut v2: uint16 = *(RomPtr_82(
         (k as ::core::ffi::c_int
             + 2 as ::core::ffi::c_int
-                * *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int) as uint16_t,
+                * *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16)
+                    as ::core::ffi::c_int) as uint16_t,
         game,
     ) as *mut uint16);
     if v2 != 0 {
@@ -7664,22 +6771,16 @@ pub unsafe fn DrawMapIconsOfType(
         v3 = (r36 as ::core::ffi::c_int & 1 as ::core::ffi::c_int) as int8;
         r36 = (r36 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
         if v3 != 0 {
-            v4 = CheckIfMapPositionIsExplored(
-                *v2.offset(0 as ::core::ffi::c_int as isize),
-                *v2.offset(1 as ::core::ffi::c_int as isize),
-                game,
-            ) as int16;
+            v4 = CheckIfMapPositionIsExplored(*v2.offset(0), *v2.offset(1), game) as int16;
             if v4 != 0 {
                 DrawMenuSpritemap(
                     r34,
-                    (*v2.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                        - *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xb1 as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int) as uint16,
-                    (*v2.offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                        - *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xb3 as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int) as uint16,
+                    (*v2.offset(0) as ::core::ffi::c_int
+                        - *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16)
+                            as ::core::ffi::c_int) as uint16,
+                    (*v2.offset(1) as ::core::ffi::c_int
+                        - *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16)
+                            as ::core::ffi::c_int) as uint16,
                     r3,
                     game,
                 );
@@ -7713,22 +6814,20 @@ pub unsafe fn CheckIfMapPositionIsExplored(
         (k as ::core::ffi::c_int >> 3 as ::core::ffi::c_int & 7 as ::core::ffi::c_int) as uint16;
     return (kBits0x80Shr[v3 as usize] as ::core::ffi::c_int
         & *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x7f7 as ::core::ffi::c_int as isize)
+            .offset(0x7f7)
             .offset(r18 as isize) as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
 }
 pub unsafe fn DrawBossMapIcons(mut a: uint16, mut k: uint16, game: &mut Game) {
     let mut bits: ::core::ffi::c_int = *(&raw mut game.g_ram as *mut uint8)
-        .offset(0xd828 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as ::core::ffi::c_int;
+        .offset(0xd828)
+        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize)
+        as ::core::ffi::c_int;
     let mut t: ::core::ffi::c_int = *(RomPtr_82(
         (k as ::core::ffi::c_int
             + 2 as ::core::ffi::c_int
-                * *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int) as uint16_t,
+                * *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16)
+                    as ::core::ffi::c_int) as uint16_t,
         game,
     ) as *mut uint16) as ::core::ffi::c_int;
     if t == 0 as ::core::ffi::c_int {
@@ -7737,59 +6836,45 @@ pub unsafe fn DrawBossMapIcons(mut a: uint16, mut k: uint16, game: &mut Game) {
     let mut v4: *const uint16 = RomPtr_82(t as uint16_t, game) as *const uint16;
     let mut current_block_8: u64;
     loop {
-        if *v4.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-            == 0xffff as ::core::ffi::c_int
-        {
+        if *v4.offset(0) as ::core::ffi::c_int == 0xffff as ::core::ffi::c_int {
             return;
         }
-        if *v4.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-            != 0xfffe as ::core::ffi::c_int
-        {
+        if *v4.offset(0) as ::core::ffi::c_int != 0xfffe as ::core::ffi::c_int {
             let mut v5: ::core::ffi::c_int = bits & 1 as ::core::ffi::c_int;
             bits >>= 1 as ::core::ffi::c_int;
             if v5 != 0 {
                 DrawMenuSpritemap(
                     0x62 as uint16,
-                    (*v4.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                        - *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xb1 as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int) as uint16,
-                    (*v4.offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                        - *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xb3 as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int) as uint16,
+                    (*v4.offset(0) as ::core::ffi::c_int
+                        - *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16)
+                            as ::core::ffi::c_int) as uint16,
+                    (*v4.offset(1) as ::core::ffi::c_int
+                        - *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16)
+                            as ::core::ffi::c_int) as uint16,
                     3584 as uint16,
                     game,
                 );
                 DrawMenuSpritemap(
                     a,
-                    (*v4.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                        - *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xb1 as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int) as uint16,
-                    (*v4.offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                        - *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xb3 as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int) as uint16,
+                    (*v4.offset(0) as ::core::ffi::c_int
+                        - *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16)
+                            as ::core::ffi::c_int) as uint16,
+                    (*v4.offset(1) as ::core::ffi::c_int
+                        - *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16)
+                            as ::core::ffi::c_int) as uint16,
                     3072 as uint16,
                     game,
                 );
                 current_block_8 = 12675440807659640239;
-            } else if *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x789 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                != 0
-            {
+            } else if *((&raw mut game.g_ram as *mut uint8).offset(0x789) as *mut uint16) != 0 {
                 DrawMenuSpritemap(
                     a,
-                    (*v4.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                        - *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xb1 as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int) as uint16,
-                    (*v4.offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                        - *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xb3 as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int) as uint16,
+                    (*v4.offset(0) as ::core::ffi::c_int
+                        - *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16)
+                            as ::core::ffi::c_int) as uint16,
+                    (*v4.offset(1) as ::core::ffi::c_int
+                        - *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16)
+                            as ::core::ffi::c_int) as uint16,
                     3584 as uint16,
                     game,
                 );
@@ -7806,39 +6891,29 @@ pub unsafe fn DrawBossMapIcons(mut a: uint16, mut k: uint16, game: &mut Game) {
             }
             _ => {}
         }
-        v4 = v4.offset(2 as ::core::ffi::c_int as isize);
+        v4 = v4.offset(2);
     }
 }
 pub unsafe fn DrawMapScrollArrowAndCheckToScroll(mut db: uint8, mut k: uint16, game: &mut Game) {
     let mut v1: *const uint16 = RomPtrWithBank(db, k as uint16_t, game) as *const uint16;
-    DrawPauseScreenSpriteAnim(
-        *v1.offset(2 as ::core::ffi::c_int as isize),
-        *v1,
-        *v1.offset(1 as ::core::ffi::c_int as isize),
-        game,
-    );
+    DrawPauseScreenSpriteAnim(*v1.offset(2), *v1, *v1.offset(1), game);
     let mut v2: *const uint8 = RomPtrWithBank(db, k as uint16_t, game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x8b as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & *(v2.offset(6 as ::core::ffi::c_int as isize) as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16) as ::core::ffi::c_int
+        & *(v2.offset(6) as *mut uint16) as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x5fd as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            == 0
+        && *((&raw mut game.g_ram as *mut uint8).offset(0x5fd) as *mut uint16) == 0
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x5fd as ::core::ffi::c_int as isize)
-            as *mut uint16) = *(v2.offset(8 as ::core::ffi::c_int as isize) as *mut uint16);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x5fd) as *mut uint16) =
+            *(v2.offset(8) as *mut uint16);
     }
 }
 pub unsafe fn sub_82B932(game: &mut Game) {
     HandleMapScrollArrows(game);
 }
 pub unsafe fn HandleMapScrollArrows(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x5ac as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x5ac) as *mut uint16) as ::core::ffi::c_int
         - 24 as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        - *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0
     {
@@ -7848,11 +6923,9 @@ pub unsafe fn HandleMapScrollArrows(game: &mut Game) {
             game,
         );
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x5ae as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x5ae) as *mut uint16) as ::core::ffi::c_int
         - 232 as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        - *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         == 0
     {
@@ -7862,11 +6935,9 @@ pub unsafe fn HandleMapScrollArrows(game: &mut Game) {
             game,
         );
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x5b0 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x5b0) as *mut uint16) as ::core::ffi::c_int
         - 56 as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        - *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0
     {
@@ -7876,16 +6947,13 @@ pub unsafe fn HandleMapScrollArrows(game: &mut Game) {
             game,
         );
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x5b2 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x5b2) as *mut uint16) as ::core::ffi::c_int
         - 177 as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        - *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0
     {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x5fd as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x5fd) as *mut uint16) as ::core::ffi::c_int
             == (*(game.g_rom.offset(
                 (((0x82b9be as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                     << 15 as ::core::ffi::c_int
@@ -7894,12 +6962,9 @@ pub unsafe fn HandleMapScrollArrows(game: &mut Game) {
             ) as *const uint8 as *mut MapScrollArrowData))
                 .map_scroll_dir as ::core::ffi::c_int
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x5fb as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x5fd as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x5ff as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x5fb) as *mut uint16) = 0 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x5fd) as *mut uint16) = 0 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x5ff) as *mut uint16) = 0 as uint16;
         }
     } else {
         DrawMapScrollArrowAndCheckToScroll(
@@ -7914,30 +6979,28 @@ pub unsafe fn MapScreenDrawSamusPositionIndicator(game: &mut Game) {
     DrawMenuSpritemap(
         a,
         (8 as ::core::ffi::c_int
-            * (*((&raw mut game.g_ram as *mut uint8).offset(0x7a1 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                + *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-                    as *mut uint16 as *mut uint8)
+            * (*((&raw mut game.g_ram as *mut uint8).offset(0x7a1) as *mut uint16)
+                as ::core::ffi::c_int
+                + *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16 as *mut uint8)
                     .offset(
                         (::core::mem::size_of::<uint16>() as usize)
                             .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                             .wrapping_sub(1 as usize) as isize,
                     ) as ::core::ffi::c_int)
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16,
+            - *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16)
+                as ::core::ffi::c_int) as uint16,
         (8 as ::core::ffi::c_int
-            * (*((&raw mut game.g_ram as *mut uint8).offset(0x7a3 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                + *((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-                    as *mut uint16 as *mut uint8)
+            * (*((&raw mut game.g_ram as *mut uint8).offset(0x7a3) as *mut uint16)
+                as ::core::ffi::c_int
+                + *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16 as *mut uint8)
                     .offset(
                         (::core::mem::size_of::<uint16>() as usize)
                             .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                             .wrapping_sub(1 as usize) as isize,
                     ) as ::core::ffi::c_int
                 + 1 as ::core::ffi::c_int)
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16,
+            - *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16)
+                as ::core::ffi::c_int) as uint16,
         3584 as uint16,
         game,
     );
@@ -7955,34 +7018,29 @@ static kMap_SamusPositionIndicator_SpritemapIds: [uint16; 4] = [
     0x60 as ::core::ffi::c_int as uint16,
 ];
 pub unsafe fn UpdateSamusPositionIndicatorAnimation(game: &mut Game) -> uint16 {
-    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x778 as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x778) as *mut uint16);
     if v0 == 0 {
-        let mut v1: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x776 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        let mut v1: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x776) as *mut uint16)
+            as ::core::ffi::c_int
             + 2 as ::core::ffi::c_int) as uint16;
         if (v1 as ::core::ffi::c_int - 8 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
             >= 0 as ::core::ffi::c_int
         {
-            let ref mut fresh2 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x77a as ::core::ffi::c_int as isize)
-                as *mut uint16);
+            let ref mut fresh2 =
+                *((&raw mut game.g_ram as *mut uint8).offset(0x77a) as *mut uint16);
             *fresh2 = (*fresh2).wrapping_add(1);
             v1 = 0 as uint16;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x776 as ::core::ffi::c_int as isize)
-            as *mut uint16) = v1;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x776) as *mut uint16) = v1;
         v0 = kMap_SamusPositionIndicator_Delays
             [(v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize];
-        *((&raw mut game.g_ram as *mut uint8).offset(0x778 as ::core::ffi::c_int as isize)
-            as *mut uint16) = v0;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x778) as *mut uint16) = v0;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x778 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (v0 as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x778) as *mut uint16) =
+        (v0 as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16;
     return kMap_SamusPositionIndicator_SpritemapIds[(*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x776 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+        .offset(0x776) as *mut uint16)
+        as ::core::ffi::c_int
         >> 1 as ::core::ffi::c_int) as usize];
 }
 pub unsafe fn DrawBorderAroundSamusData(game: &mut Game) {
@@ -8025,78 +7083,53 @@ static kDrawMenuSelectionMissile_SpriteMap: [uint16; 4] = [
     0x34 as ::core::ffi::c_int as uint16,
 ];
 pub unsafe fn DrawMenuSelectionMissile(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
-        let ref mut fresh38 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x198d as ::core::ffi::c_int as isize)
-            as *mut uint16);
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x198d) as *mut uint16) != 0 {
+        let ref mut fresh38 = *((&raw mut game.g_ram as *mut uint8).offset(0x198d) as *mut uint16);
         *fresh38 = (*fresh38).wrapping_sub(1);
         if *fresh38 == 0 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(0 as ::core::ffi::c_int as isize) =
-                (*(((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x1997 as ::core::ffi::c_int as isize)
-                    as *mut uint16)
-                    .offset(0 as ::core::ffi::c_int as isize) as *mut uint16
-                    as *mut uint8)
-                    .offset(0 as ::core::ffi::c_int as isize)
-                    as ::core::ffi::c_int
+            *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(0) =
+                (*(((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(0)
+                    as *mut uint16 as *mut uint8)
+                    .offset(0) as ::core::ffi::c_int
                     + 1 as ::core::ffi::c_int
                     & 3 as ::core::ffi::c_int) as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
-                as *mut uint16) = kDrawMenuSelectionMissile_Enable[*((&raw mut game.g_ram
-                as *mut uint8)
-                .offset(0x1997 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(0 as ::core::ffi::c_int as isize)
-                as usize];
+            *((&raw mut game.g_ram as *mut uint8).offset(0x198d) as *mut uint16) =
+                kDrawMenuSelectionMissile_Enable[*((&raw mut game.g_ram as *mut uint8)
+                    .offset(0x1997)
+                    as *mut uint16)
+                    .offset(0) as usize];
         }
     }
     DrawMenuSpritemap(
-        kDrawMenuSelectionMissile_SpriteMap[*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x1997 as ::core::ffi::c_int as isize)
+        kDrawMenuSelectionMissile_SpriteMap[*((&raw mut game.g_ram as *mut uint8).offset(0x1997)
             as *mut uint16)
-            .offset(0 as ::core::ffi::c_int as isize)
-            as usize],
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(5 as ::core::ffi::c_int as isize),
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(10 as ::core::ffi::c_int as isize),
+            .offset(0) as usize],
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(5),
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(10),
         3584 as uint16,
         game,
     );
 }
 pub unsafe fn DrawFileCopyArrow(game: &mut Game) {
     let mut v0: uint16 = 0;
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(16 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(17 as ::core::ffi::c_int as isize) as ::core::ffi::c_int) as int16
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(16)
         as ::core::ffi::c_int
+        - *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(17)
+            as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
         >= 0 as ::core::ffi::c_int
     {
         v0 = 3 as uint16;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(16 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(17 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(16)
+            as ::core::ffi::c_int
+            - *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(17)
+                as ::core::ffi::c_int
             - 2 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             != 0
         {
             v0 = 4 as uint16;
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(16 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
+            if *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(16)
+                as ::core::ffi::c_int
                 != 1 as ::core::ffi::c_int
             {
                 v0 = 5 as uint16;
@@ -8104,21 +7137,16 @@ pub unsafe fn DrawFileCopyArrow(game: &mut Game) {
         }
     } else {
         v0 = 0 as uint16;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(17 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(16 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(17)
+            as ::core::ffi::c_int
+            - *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(16)
+                as ::core::ffi::c_int
             - 2 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             != 0
         {
             v0 = 1 as uint16;
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(16 as ::core::ffi::c_int as isize)
-                != 0
+            if *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(16) != 0
             {
                 v0 = 2 as uint16;
             }
@@ -8155,11 +7183,8 @@ pub unsafe fn DrawFileCopyArrow(game: &mut Game) {
 }
 pub unsafe fn DisplayMapElevatorDestinations(game: &mut Game) {
     if *(&raw mut game.g_ram as *mut uint8)
-        .offset(0xd908 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        )
+        .offset(0xd908)
+        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize)
         != 0
     {
         let mut i: ::core::ffi::c_int = *(game.g_rom.offset(
@@ -8168,26 +7193,21 @@ pub unsafe fn DisplayMapElevatorDestinations(game: &mut Game) {
                 | 0x82c74d as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
                 & 0x3fffff as ::core::ffi::c_int) as isize,
         ) as *const uint8 as *mut uint16)
-            .offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
-            ) as ::core::ffi::c_int;
+            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize)
+            as ::core::ffi::c_int;
         loop {
             let mut v1: *const uint8 = RomPtr_82(i as uint16_t, game);
             if *(v1 as *mut uint16) as ::core::ffi::c_int == 0xffff as ::core::ffi::c_int {
                 break;
             }
             DrawMenuSpritemap(
-                *(v1.offset(4 as ::core::ffi::c_int as isize) as *mut uint16),
+                *(v1.offset(4) as *mut uint16),
                 (*(v1 as *mut uint16) as ::core::ffi::c_int
-                    - *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xb1 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int) as uint16,
-                (*(v1.offset(2 as ::core::ffi::c_int as isize) as *mut uint16)
-                    as ::core::ffi::c_int
-                    - *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xb3 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int) as uint16,
+                    - *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16)
+                        as ::core::ffi::c_int) as uint16,
+                (*(v1.offset(2) as *mut uint16) as ::core::ffi::c_int
+                    - *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16)
+                        as ::core::ffi::c_int) as uint16,
                 0 as uint16,
                 game,
             );
@@ -8196,17 +7216,13 @@ pub unsafe fn DisplayMapElevatorDestinations(game: &mut Game) {
     }
 }
 pub unsafe fn HandleGameOverBabyMetroid(game: &mut Game) {
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
-        as *mut EnemyData)
-        .offset(0 as ::core::ffi::c_int as isize))
-    .instruction_timer
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
+        .instruction_timer
         != 0
     {
         sub_82BB7F(
-            (*((&raw mut game.g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
-                as *mut EnemyData)
-                .offset(0 as ::core::ffi::c_int as isize))
-            .instruction_timer,
+            (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
+                .instruction_timer,
             game,
         );
     } else {
@@ -8233,40 +7249,28 @@ pub unsafe fn CallBabyMetroidPlaySfx(mut ea: uint32, game: &mut Game) {
     };
 }
 pub unsafe fn sub_82BB7F(mut a: uint16, game: &mut Game) {
-    let mut current_instruction: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xf78 as ::core::ffi::c_int as isize)
-        as *mut EnemyData)
-        .offset(0 as ::core::ffi::c_int as isize))
-    .current_instruction;
-    (*((&raw mut game.g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
-        as *mut EnemyData)
-        .offset(0 as ::core::ffi::c_int as isize))
-    .instruction_timer = (a as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16;
+    let mut current_instruction: uint16 =
+        (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
+            .current_instruction;
+    (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
+        .instruction_timer = (a as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16;
     if a as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
         let mut v2: *const uint8 = RomPtr_82(
-            (*((&raw mut game.g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
-                as *mut EnemyData)
-                .offset(0 as ::core::ffi::c_int as isize))
-            .current_instruction as uint16_t,
+            (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
+                .current_instruction as uint16_t,
             game,
         );
-        if *(v2.offset(6 as ::core::ffi::c_int as isize) as *mut uint16) as ::core::ffi::c_int
-            == 0xffff as ::core::ffi::c_int
-        {
+        if *(v2.offset(6) as *mut uint16) as ::core::ffi::c_int == 0xffff as ::core::ffi::c_int {
             sub_82BBDD(game);
-        } else if (*(v2.offset(6 as ::core::ffi::c_int as isize) as *mut uint16)
-            as ::core::ffi::c_int
-            + 1 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
+        } else if (*(v2.offset(6) as *mut uint16) as ::core::ffi::c_int + 1 as ::core::ffi::c_int)
+            as int16 as ::core::ffi::c_int
             >= 0 as ::core::ffi::c_int
         {
-            (*((&raw mut game.g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
+            (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
+                .instruction_timer = *(v2.offset(6) as *mut uint16);
+            let fresh18 = &raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0xf78)
                 as *mut EnemyData)
-                .offset(0 as ::core::ffi::c_int as isize))
-            .instruction_timer = *(v2.offset(6 as ::core::ffi::c_int as isize) as *mut uint16);
-            let fresh18 = &raw mut (*((&raw mut game.g_ram as *mut uint8)
-                .offset(0xf78 as ::core::ffi::c_int as isize)
-                as *mut EnemyData)
-                .offset(0 as ::core::ffi::c_int as isize))
+                .offset(0))
             .current_instruction;
             fresh18.write_unaligned(
                 (fresh18.read_unaligned() as ::core::ffi::c_int + 6 as ::core::ffi::c_int)
@@ -8278,47 +7282,39 @@ pub unsafe fn sub_82BB7F(mut a: uint16, game: &mut Game) {
             );
         } else {
             CallBabyMetroidPlaySfx(
-                (*(v2.offset(6 as ::core::ffi::c_int as isize) as *mut uint16)
-                    as ::core::ffi::c_int
+                (*(v2.offset(6) as *mut uint16) as ::core::ffi::c_int
                     | 0x820000 as ::core::ffi::c_int) as uint32,
                 game,
             );
         }
     } else {
         DrawBabyMetroid(
-            (*((&raw mut game.g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
-                as *mut EnemyData)
-                .offset(0 as ::core::ffi::c_int as isize))
-            .current_instruction,
+            (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
+                .current_instruction,
             game,
         );
     };
 }
 pub unsafe fn sub_82BBDD(game: &mut Game) {
-    (*((&raw mut game.g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
-        as *mut EnemyData)
-        .offset(0 as ::core::ffi::c_int as isize))
-    .current_instruction = addr_kgameOverBabyMetridInstructionList as ::core::ffi::c_int as uint16;
-    (*((&raw mut game.g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
-        as *mut EnemyData)
-        .offset(0 as ::core::ffi::c_int as isize))
-    .instruction_timer = 10 as uint16;
+    (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
+        .current_instruction =
+        addr_kgameOverBabyMetridInstructionList as ::core::ffi::c_int as uint16;
+    (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
+        .instruction_timer = 10 as uint16;
     sub_82BB7F(0xa as uint16, game);
 }
 pub unsafe fn DrawBabyMetroid(mut k: uint16, game: &mut Game) {
-    let mut v1: uint16 =
-        *(RomPtr_82(k as uint16_t, game) as *mut uint16).offset(2 as ::core::ffi::c_int as isize);
+    let mut v1: uint16 = *(RomPtr_82(k as uint16_t, game) as *mut uint16).offset(2);
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i < 32 as ::core::ffi::c_int {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
             .offset(((i >> 1 as ::core::ffi::c_int) + 192 as ::core::ffi::c_int) as isize) =
             *(RomPtr_82((v1 as ::core::ffi::c_int + i) as uint16_t, game) as *mut uint16);
         i += 2 as ::core::ffi::c_int;
     }
     let mut v3: *const uint8 = RomPtr_82(k as uint16_t, game);
     DrawMenuSpritemap(
-        *(v3.offset(2 as ::core::ffi::c_int as isize) as *mut uint16),
+        *(v3.offset(2) as *mut uint16),
         0x7c as uint16,
         0x50 as uint16,
         2048 as uint16,
@@ -8334,21 +7330,15 @@ pub unsafe fn DrawBabyMetroid(mut k: uint16, game: &mut Game) {
 }
 pub unsafe fn FinishProcessingGameOverBabyMetroidAsm(game: &mut Game) {
     let mut t: uint16 = *(RomPtr_82(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
-            as *mut EnemyData)
-            .offset(0 as ::core::ffi::c_int as isize))
-        .current_instruction as uint16_t,
+        (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
+            .current_instruction as uint16_t,
         game,
     ) as *mut uint16)
-        .offset(4 as ::core::ffi::c_int as isize);
-    (*((&raw mut game.g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
-        as *mut EnemyData)
-        .offset(0 as ::core::ffi::c_int as isize))
-    .instruction_timer = t;
-    let fresh17 = &raw mut (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xf78 as ::core::ffi::c_int as isize)
-        as *mut EnemyData)
-        .offset(0 as ::core::ffi::c_int as isize))
+        .offset(4);
+    (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
+        .instruction_timer = t;
+    let fresh17 = &raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData)
+        .offset(0))
     .current_instruction;
     fresh17.write_unaligned(
         (fresh17.read_unaligned() as ::core::ffi::c_int + 8 as ::core::ffi::c_int) as uint16,
@@ -8357,10 +7347,8 @@ pub unsafe fn FinishProcessingGameOverBabyMetroidAsm(game: &mut Game) {
         sub_82BBDD(game);
     } else {
         DrawBabyMetroid(
-            (*((&raw mut game.g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
-                as *mut EnemyData)
-                .offset(0 as ::core::ffi::c_int as isize))
-            .current_instruction,
+            (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
+                .current_instruction,
             game,
         );
     };
@@ -8383,15 +7371,13 @@ pub unsafe fn CancelSoundEffects(game: &mut Game) {
     QueueSfx3_Max6(1 as uint16, game);
 }
 pub unsafe fn QueueSamusMovementSfx(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xb3e as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xb3e) as *mut uint16) as ::core::ffi::c_int
         & 0xff00 as ::core::ffi::c_int
         == 1024 as ::core::ffi::c_int
     {
         QueueSfx3_Max6(0x2b as uint16, game);
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xcd0 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) as ::core::ffi::c_int
         - 16 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         == 0
@@ -8401,46 +7387,33 @@ pub unsafe fn QueueSamusMovementSfx(game: &mut Game) {
     CallSomeSamusCode(0x14 as uint16, game);
 }
 pub unsafe fn AdvancePaletteFadeForAllPalettes_0xc(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc402 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 12 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc402) as *mut uint16) = 12 as uint16;
     return AdvancePaletteFadeForAllPalettes(game);
 }
 pub unsafe fn AdvancePaletteFade_BgPalette6(game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc402 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 12 as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xc400 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc402) as *mut uint16) = 12 as uint16;
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16) as ::core::ffi::c_int
         <= 0xd as ::core::ffi::c_int
     {
         let mut i: ::core::ffi::c_int = 192 as ::core::ffi::c_int;
         while i < 0xe0 as ::core::ffi::c_int {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
                 .offset((i >> 1 as ::core::ffi::c_int) as isize) =
                 CalculateNthTransitionColorFromXtoY(
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xc400 as ::core::ffi::c_int as isize)
-                        as *mut uint16),
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xc000 as ::core::ffi::c_int as isize)
-                        as *mut uint16)
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16),
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
                         .offset((i >> 1 as ::core::ffi::c_int) as isize),
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xc200 as ::core::ffi::c_int as isize)
-                        as *mut uint16)
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
                         .offset((i >> 1 as ::core::ffi::c_int) as isize),
                     game,
                 );
             i += 2 as ::core::ffi::c_int;
         }
-        let ref mut fresh5 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xc400 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let ref mut fresh5 = *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16);
         *fresh5 = (*fresh5).wrapping_add(1);
         return 0 as uint8;
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc400 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16) = 0 as uint16;
         return 1 as uint8;
     };
 }
@@ -8449,30 +7422,23 @@ pub unsafe fn AdvanceGradualColorChangeOfPalette(
     mut j: uint16,
     game: &mut Game,
 ) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc402 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 15 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc402) as *mut uint16) = 15 as uint16;
     if (15 as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0xc400 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
+        - *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16)
+            as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
         >= 0 as ::core::ffi::c_int
     {
         let mut R34: uint16 = j;
         loop {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
                 .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
                 CalculateNthTransitionColorFromXtoY(
-                    (*((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xc400 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int
+                    (*((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16)
+                        as ::core::ffi::c_int
                         + 1 as ::core::ffi::c_int) as uint16,
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xc000 as ::core::ffi::c_int as isize)
-                        as *mut uint16)
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
                         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize),
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xc200 as ::core::ffi::c_int as isize)
-                        as *mut uint16)
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
                         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize),
                     game,
                 );
@@ -8481,73 +7447,52 @@ pub unsafe fn AdvanceGradualColorChangeOfPalette(
                 break;
             }
         }
-        let ref mut fresh3 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xc400 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let ref mut fresh3 = *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16);
         *fresh3 = (*fresh3).wrapping_add(1);
         return 0 as uint8;
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc400 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16) = 0 as uint16;
         return 1 as uint8;
     };
 }
 pub unsafe fn AdvancePaletteFadeForAllPalettes(game: &mut Game) -> uint8 {
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0xc402 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0xc402) as *mut uint16) as ::core::ffi::c_int
         + 1 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
-        >= *((&raw mut game.g_ram as *mut uint8).offset(0xc400 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        >= *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16)
+            as ::core::ffi::c_int
     {
         let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
         while i < 0x200 as ::core::ffi::c_int {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc404 as ::core::ffi::c_int as isize)
-                as *mut uint16) = i as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc404) as *mut uint16) = i as uint16;
             let mut v2: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-            if *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            if *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
                 .offset(v2 as isize) as ::core::ffi::c_int
-                != *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0xc000 as ::core::ffi::c_int as isize)
-                    as *mut uint16)
+                != *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
                     .offset(v2 as isize) as ::core::ffi::c_int
             {
                 let mut v3: uint16 = CalculateNthTransitionColorFromXtoY(
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xc400 as ::core::ffi::c_int as isize)
-                        as *mut uint16),
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xc000 as ::core::ffi::c_int as isize)
-                        as *mut uint16)
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16),
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
                         .offset(v2 as isize),
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xc200 as ::core::ffi::c_int as isize)
-                        as *mut uint16)
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
                         .offset(v2 as isize),
                     game,
                 );
-                i = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0xc404 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-                    as *mut uint16)
-                    .offset(
-                        (*((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xc404 as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int
-                            >> 1 as ::core::ffi::c_int) as isize,
-                    ) = v3;
+                i = *((&raw mut game.g_ram as *mut uint8).offset(0xc404) as *mut uint16)
+                    as ::core::ffi::c_int;
+                *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(
+                    (*((&raw mut game.g_ram as *mut uint8).offset(0xc404) as *mut uint16)
+                        as ::core::ffi::c_int
+                        >> 1 as ::core::ffi::c_int) as isize,
+                ) = v3;
             }
             i += 2 as ::core::ffi::c_int;
         }
-        let ref mut fresh4 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xc400 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let ref mut fresh4 = *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16);
         *fresh4 = (*fresh4).wrapping_add(1);
         return 0 as uint8;
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc400 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16) = 0 as uint16;
         return 1 as uint8;
     };
 }
@@ -8593,8 +7538,8 @@ pub unsafe fn CalculateNthTransitionColorComponentFromXtoY(
     }
     let mut v4: uint16 = (a as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16;
     if v4 as ::core::ffi::c_int
-        == *((&raw mut game.g_ram as *mut uint8).offset(0xc402 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        == *((&raw mut game.g_ram as *mut uint8).offset(0xc402) as *mut uint16)
+            as ::core::ffi::c_int
     {
         return j;
     }
@@ -8602,8 +7547,7 @@ pub unsafe fn CalculateNthTransitionColorComponentFromXtoY(
         ((abs16((j as ::core::ffi::c_int - k as ::core::ffi::c_int) as uint16)
             as ::core::ffi::c_int)
             << 8 as ::core::ffi::c_int) as uint16,
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xc402 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        (*((&raw mut game.g_ram as *mut uint8).offset(0xc402) as *mut uint16) as ::core::ffi::c_int
             - (v4 as ::core::ffi::c_int + 1 as ::core::ffi::c_int)
             + 1 as ::core::ffi::c_int) as uint8,
     );
@@ -8618,174 +7562,138 @@ pub unsafe fn CalculateNthTransitionColorComponentFromXtoY(
         >> 8 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn sub_82DAF7(mut a: uint16, game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc402 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 12 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc402) as *mut uint16) = 12 as uint16;
     return sub_82DB0C(a, game);
 }
 pub unsafe fn sub_82DB0C(mut a: uint16, game: &mut Game) -> uint8 {
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0xc402 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0xc402) as *mut uint16) as ::core::ffi::c_int
         + 1 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
-        >= *((&raw mut game.g_ram as *mut uint8).offset(0xc400 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        >= *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16)
+            as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc404 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc404) as *mut uint16) = 0 as uint16;
         while a != 0 {
             if a as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
-                let ref mut fresh15 = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0xc404 as ::core::ffi::c_int as isize)
-                    as *mut uint16);
+                let ref mut fresh15 =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xc404) as *mut uint16);
                 *fresh15 = (*fresh15 as ::core::ffi::c_int + 32 as ::core::ffi::c_int) as uint16;
             } else {
                 sub_82DB41(game);
             }
             a = (a as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
         }
-        let ref mut fresh16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xc400 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let ref mut fresh16 = *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16);
         *fresh16 = (*fresh16).wrapping_add(1);
         return 0 as uint8;
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc400 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16) = 0 as uint16;
         return 1 as uint8;
     };
 }
 pub unsafe fn sub_82DB41(game: &mut Game) {
-    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xc404 as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xc404) as *mut uint16);
     loop {
         let mut v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as ::core::ffi::c_int
-            != *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+        if *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(v1 as isize)
+            as ::core::ffi::c_int
+            != *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int
         {
             let mut v2: uint16 = CalculateNthTransitionColorFromXtoY(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc400 as ::core::ffi::c_int as isize)
-                    as *mut uint16),
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-                    as *mut uint16)
+                *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16),
+                *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
                     .offset(v1 as isize),
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-                    as *mut uint16)
+                *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
                     .offset(v1 as isize),
                 game,
             );
-            v0 = *((&raw mut game.g_ram as *mut uint8).offset(0xc404 as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(
-                    (*((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xc404 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int
-                        >> 1 as ::core::ffi::c_int) as isize,
-                ) = v2;
+            v0 = *((&raw mut game.g_ram as *mut uint8).offset(0xc404) as *mut uint16);
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(
+                (*((&raw mut game.g_ram as *mut uint8).offset(0xc404) as *mut uint16)
+                    as ::core::ffi::c_int
+                    >> 1 as ::core::ffi::c_int) as isize,
+            ) = v2;
         }
         v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc404 as ::core::ffi::c_int as isize)
-            as *mut uint16) = v0;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc404) as *mut uint16) = v0;
         if !(v0 as ::core::ffi::c_int & 0x1f as ::core::ffi::c_int != 0 as ::core::ffi::c_int) {
             break;
         }
     }
 }
 pub unsafe fn HandleSamusOutOfHealthAndGameTile(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9c2 as ::core::ffi::c_int as isize)
-        as *mut uint16) as int16 as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16) as int16
+        as ::core::ffi::c_int
         <= 0 as ::core::ffi::c_int
     {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x9c0 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x9c0) as *mut uint16) as ::core::ffi::c_int
             & 1 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
-            && *((&raw mut game.g_ram as *mut uint8).offset(0x9d6 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            && *((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16)
+                as ::core::ffi::c_int
                 != 0
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa78 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0x8000 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-                as *mut uint16) = kGameState_27_ReserveTanksAuto as ::core::ffi::c_int as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xa78) as *mut uint16) = 0x8000 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
+                kGameState_27_ReserveTanksAuto as ::core::ffi::c_int as uint16;
             CallSomeSamusCode(0x1b as uint16, game);
         } else {
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            if *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16)
+                as ::core::ffi::c_int
                 != kGameState_8_MainGameplay as ::core::ffi::c_int
             {
                 return;
             }
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa78 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0x8000 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xa78) as *mut uint16) = 0x8000 as uint16;
             CallSomeSamusCode(0x11 as uint16, game);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-                as *mut uint16) = kGameState_19_SamusNoHealth as ::core::ffi::c_int as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
+                kGameState_19_SamusNoHealth as ::core::ffi::c_int as uint16;
         }
     }
-    let ref mut fresh81 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9da as ::core::ffi::c_int as isize) as *mut uint16);
+    let ref mut fresh81 = *((&raw mut game.g_ram as *mut uint8).offset(0x9da) as *mut uint16);
     *fresh81 = (*fresh81).wrapping_add(1);
     if *fresh81 as ::core::ffi::c_int - 60 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9da as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        let ref mut fresh82 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x9dc as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x9da) as *mut uint16) = 0 as uint16;
+        let ref mut fresh82 = *((&raw mut game.g_ram as *mut uint8).offset(0x9dc) as *mut uint16);
         *fresh82 = (*fresh82).wrapping_add(1);
         if *fresh82 as ::core::ffi::c_int - 60 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             == 0
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x9dc as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
-            let ref mut fresh83 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x9de as ::core::ffi::c_int as isize)
-                as *mut uint16);
+            *((&raw mut game.g_ram as *mut uint8).offset(0x9dc) as *mut uint16) = 0 as uint16;
+            let ref mut fresh83 =
+                *((&raw mut game.g_ram as *mut uint8).offset(0x9de) as *mut uint16);
             *fresh83 = (*fresh83).wrapping_add(1);
             if *fresh83 as ::core::ffi::c_int - 60 as ::core::ffi::c_int
                 & 0x8000 as ::core::ffi::c_int
                 == 0
             {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9de as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 0 as uint16;
-                let ref mut fresh84 = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x9e0 as ::core::ffi::c_int as isize)
-                    as *mut uint16);
+                *((&raw mut game.g_ram as *mut uint8).offset(0x9de) as *mut uint16) = 0 as uint16;
+                let ref mut fresh84 =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0x9e0) as *mut uint16);
                 *fresh84 = (*fresh84).wrapping_add(1);
             }
         }
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9e0 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x9e0) as *mut uint16) as ::core::ffi::c_int
         - 100 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         == 0
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9da as ::core::ffi::c_int as isize)
-            as *mut uint16) = 59 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9dc as ::core::ffi::c_int as isize)
-            as *mut uint16) = 59 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9de as ::core::ffi::c_int as isize)
-            as *mut uint16) = 59 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9e0 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 99 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x9da) as *mut uint16) = 59 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x9dc) as *mut uint16) = 59 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x9de) as *mut uint16) = 59 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x9e0) as *mut uint16) = 99 as uint16;
     }
 }
 pub unsafe fn GameState_27_ReserveTanksAuto(game: &mut Game) -> CoroutineRet {
-    if *(&raw mut game.g_ram as *mut uint8).offset(0x612 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
+    if *(&raw mut game.g_ram as *mut uint8).offset(0x612) as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
         && RefillHealthFromReserveTanks(game) as ::core::ffi::c_int != 0
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa78 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16) = kGameState_8_MainGameplay as ::core::ffi::c_int as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xa78) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
+            kGameState_8_MainGameplay as ::core::ffi::c_int as uint16;
         CallSomeSamusCode(0x10 as uint16, game);
     }
     let mut _coret_: uint8 = GameState_8_MainGameplay(game) as uint8;
@@ -8797,51 +7705,37 @@ pub unsafe fn GameState_27_ReserveTanksAuto(game: &mut Game) -> CoroutineRet {
 }
 pub unsafe fn RefillHealthFromReserveTanks(game: &mut Game) -> uint8 {
     let mut current_block: u64;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9d6 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16) != 0 {
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x5b6) as *mut uint16) as ::core::ffi::c_int
             & 7 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
         {
             QueueSfx3_Max3(0x2d as uint16, game);
         }
-        let ref mut fresh11 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x9c2 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let ref mut fresh11 = *((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16);
         *fresh11 = (*fresh11).wrapping_add(1);
         if (*fresh11 as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x9c4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
+            - *((&raw mut game.g_ram as *mut uint8).offset(0x9c4) as *mut uint16)
+                as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
             >= 0 as ::core::ffi::c_int
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x9c2 as ::core::ffi::c_int as isize)
-                as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x9c4 as ::core::ffi::c_int as isize)
-                as *mut uint16);
+            *((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16) =
+                *((&raw mut game.g_ram as *mut uint8).offset(0x9c4) as *mut uint16);
             current_block = 15379867480756242343;
         } else {
-            let ref mut fresh13 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x9d6 as ::core::ffi::c_int as isize)
-                as *mut uint16);
+            let ref mut fresh13 =
+                *((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16);
             *fresh13 = (*fresh13).wrapping_sub(1);
             let mut v0: bool = *fresh13 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                 != 0 as ::core::ffi::c_int;
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x9d6 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                == 0
-            {
+            if *((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16) == 0 {
                 current_block = 15379867480756242343;
             } else if v0 {
-                let ref mut fresh14 = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x9c2 as ::core::ffi::c_int as isize)
-                    as *mut uint16);
+                let ref mut fresh14 =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16);
                 *fresh14 = (*fresh14 as ::core::ffi::c_int
-                    + *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x9d6 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int) as uint16;
+                    + *((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16)
+                        as ::core::ffi::c_int) as uint16;
                 current_block = 15379867480756242343;
             } else {
                 current_block = 13183875560443969876;
@@ -8850,18 +7744,16 @@ pub unsafe fn RefillHealthFromReserveTanks(game: &mut Game) -> uint8 {
         match current_block {
             13183875560443969876 => {}
             _ => {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9d6 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 0 as uint16;
-                return (*((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x9d6 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
+                *((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16) = 0 as uint16;
+                return (*((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16)
+                    as ::core::ffi::c_int
                     == 0 as ::core::ffi::c_int) as ::core::ffi::c_int
                     as uint8;
             }
         }
     }
-    return (*((&raw mut game.g_ram as *mut uint8).offset(0x9d6 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    return (*((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16)
+        as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
 }
 pub unsafe fn GameState_19_SamusNoHealth(game: &mut Game) -> CoroutineRet {
@@ -8871,57 +7763,41 @@ pub unsafe fn GameState_19_SamusNoHealth(game: &mut Game) -> CoroutineRet {
     }
     let mut i: ::core::ffi::c_int = 255 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap[(i + 384 as ::core::ffi::c_int) as usize] =
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(i as isize);
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(i as isize);
         i -= 1;
     }
     let mut j: ::core::ffi::c_int = 382 as ::core::ffi::c_int;
     while j & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
             .offset((j >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
         j -= 2 as ::core::ffi::c_int;
     }
     let mut k: ::core::ffi::c_int = 94 as ::core::ffi::c_int;
     while k & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
             .offset(((k >> 1 as ::core::ffi::c_int) + 208 as ::core::ffi::c_int) as isize) =
             0 as uint16;
         k -= 2 as ::core::ffi::c_int;
     }
     let mut m: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while m & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
             .offset(((m >> 1 as ::core::ffi::c_int) + 192 as ::core::ffi::c_int) as isize) =
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
                 .offset(((m >> 1 as ::core::ffi::c_int) + 192 as ::core::ffi::c_int) as isize);
         m -= 2 as ::core::ffi::c_int;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 3 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xde4 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xde6 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xde8 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9d2 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa04 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x18aa as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    let ref mut fresh109 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x998 as ::core::ffi::c_int as isize) as *mut uint16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) = 3 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xde4) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xde6) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xde8) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9d2) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xa04) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x18aa) as *mut uint16) = 0 as uint16;
+    let ref mut fresh109 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
     *fresh109 = (*fresh109).wrapping_add(1);
     return kCoroutineNone as CoroutineRet;
 }
@@ -8930,57 +7806,36 @@ pub unsafe fn GameState_20_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineR
     if _coret_ != 0 {
         return _coret_ as CoroutineRet;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc402 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 6 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc402) as *mut uint16) = 6 as uint16;
     if AdvancePaletteFadeForAllPalettes(game) != 0 {
         WaitUntilEndOfVblankAndClearHdma(game);
         DisableIrqInterrupts(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1982 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xab as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x6e as ::core::ffi::c_int as isize) =
-            0 as uint8;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) =
-            0 as uint8;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) =
-            16 as uint8;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) =
-            0 as uint8;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x6c as ::core::ffi::c_int as isize) =
-            0 as uint8;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x6d as ::core::ffi::c_int as isize) =
-            0 as uint8;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize) =
-            9 as uint8;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1982) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xab) as *mut uint16) = 0 as uint16;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x6e) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x71) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 16 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x6b) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x6c) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x6d) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x55) = 9 as uint8;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
         let mut i: ::core::ffi::c_int = 254 as ::core::ffi::c_int;
         while i >= 0 as ::core::ffi::c_int {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1a6f as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0x1a6f) as *mut uint16)
                 .offset(((i >> 1 as ::core::ffi::c_int) + 15 as ::core::ffi::c_int) as isize) =
                 0 as uint16;
             i -= 2 as ::core::ffi::c_int;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0xde8 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 16 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 3 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xde4 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xde6 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        let ref mut fresh110 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        *((&raw mut game.g_ram as *mut uint8).offset(0xde8) as *mut uint16) = 16 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) = 3 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xde4) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xde6) as *mut uint16) = 0 as uint16;
+        let ref mut fresh110 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
         *fresh110 = (*fresh110).wrapping_add(1);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x592 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x592) as *mut uint16) = 0 as uint16;
         QueueSfx1_Max15(2 as uint16, game);
         QueueSfx2_Max15(0x71 as uint16, game);
         QueueSfx3_Max15(1 as uint16, game);
@@ -8994,37 +7849,28 @@ pub unsafe fn GameState_21_SamusNoHealth(game: &mut Game) -> CoroutineRet {
     Samus_DrawWhenNotAnimatingOrDying(game);
     if HasQueuedMusic(game) == 0 {
         StartSamusDeathAnimation(game);
-        let ref mut fresh111 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let ref mut fresh111 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
         *fresh111 = (*fresh111).wrapping_add(1);
     }
     return kCoroutineNone as CoroutineRet;
 }
 pub unsafe fn GameState_22_SamusNoHealth_Dying(game: &mut Game) -> CoroutineRet {
     DrawSamusStartingDeathAnim_(game);
-    let ref mut fresh113 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xde8 as ::core::ffi::c_int as isize) as *mut uint16);
+    let ref mut fresh113 = *((&raw mut game.g_ram as *mut uint8).offset(0xde8) as *mut uint16);
     *fresh113 = (*fresh113).wrapping_sub(1);
     let mut v0: bool =
         *fresh113 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xde8 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        == 0
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xde8) as *mut uint16) == 0
         || v0 as ::core::ffi::c_int != 0
     {
-        let ref mut fresh114 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let ref mut fresh114 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
         *fresh114 = (*fresh114).wrapping_add(1);
     }
     return kCoroutineNone as CoroutineRet;
 }
 pub unsafe fn GameState_23_SamusNoHealth_Flashing(game: &mut Game) -> CoroutineRet {
     if HandleSamusDeathSequence(game) != 0 {
-        let ref mut fresh115 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let ref mut fresh115 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
         *fresh115 = (*fresh115).wrapping_add(1);
     } else {
         Samus_DrawDuringDeathAnim(game);
@@ -9033,36 +7879,25 @@ pub unsafe fn GameState_23_SamusNoHealth_Flashing(game: &mut Game) -> CoroutineR
 }
 pub unsafe fn GameState_24_SamusNoHealth_Explosion(game: &mut Game) -> CoroutineRet {
     if GameState_24_SamusNoHealth_Explosion_Helper(game) != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 1 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 1 as uint16;
-        let ref mut fresh116 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 1 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 1 as uint16;
+        let ref mut fresh116 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
         *fresh116 = (*fresh116).wrapping_add(1);
     }
     return kCoroutineNone as CoroutineRet;
 }
 pub unsafe fn GameState_25_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineRet {
     HandleFadeOut(game);
-    if *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
+    if *(&raw mut game.g_ram as *mut uint8).offset(0x51) as ::core::ffi::c_int
         == 0x80 as ::core::ffi::c_int
     {
         EnableNMI(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        let ref mut fresh117 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
+        let ref mut fresh117 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
         *fresh117 = (*fresh117).wrapping_add(1);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x727 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x5f5 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x5f5) as *mut uint16) = 0 as uint16;
     }
     return kCoroutineNone as CoroutineRet;
 }
@@ -9133,8 +7968,7 @@ pub unsafe fn LoadStateHeader(game: &mut Game) {
     game.set_room_main_code_ptr((*room_state).main_code_ptr);
 }
 pub unsafe fn WaitUntilEndOfVblankAndEnableIrq(game: &mut Game) {
-    if *(&raw mut game.g_ram as *mut uint8).offset(0x84 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
+    if *(&raw mut game.g_ram as *mut uint8).offset(0x84) as ::core::ffi::c_int
         & 0x30 as ::core::ffi::c_int
         != 0x30 as ::core::ffi::c_int
     {
@@ -9158,24 +7992,16 @@ pub unsafe fn LoadMapExploredIfElevator(game: &mut Game) {
     }
 }
 pub unsafe fn EnsureSamusDrawnEachFrame(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xe16 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        == 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xe16) as *mut uint16) == 0 {
         Samus_DrawWhenNotAnimatingOrDying(game);
     }
 }
 pub unsafe fn LoadEnemyGfxToVram(game: &mut Game) {
     let mut ED: *mut EnemyDef = ::core::ptr::null_mut::<EnemyDef>();
     let mut dst: uint16 = 0x7000 as uint16;
-    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x7d1 as ::core::ffi::c_int as isize) as *mut uint16);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x7d1 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
-        let mut i: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x7d1 as ::core::ffi::c_int as isize)
+    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x7d1) as *mut uint16);
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x7d1) as *mut uint16) != 0 {
+        let mut i: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x7d1)
             as *mut uint16) as ::core::ffi::c_int;
         loop {
             let mut enemy_def: uint16 = (*get_EnemyTileset(v0, game)).enemy_def as uint16;
@@ -9215,82 +8041,68 @@ pub unsafe fn LoadEnemyGfxToVram(game: &mut Game) {
     }
 }
 pub unsafe fn LoadRoomMusic(game: &mut Game) {
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int)
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) as ::core::ffi::c_int)
         < kGameState_40_TransitionToDemo as ::core::ffi::c_int
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x7cb as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        && *((&raw mut game.g_ram as *mut uint8).offset(0x7cb) as *mut uint16) as ::core::ffi::c_int
             != 0
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x7cb as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            != *((&raw mut game.g_ram as *mut uint8).offset(0x7f3 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+        && *((&raw mut game.g_ram as *mut uint8).offset(0x7cb) as *mut uint16) as ::core::ffi::c_int
+            != *((&raw mut game.g_ram as *mut uint8).offset(0x7f3) as *mut uint16)
+                as ::core::ffi::c_int
     {
         QueueMusic_Delayed8(0 as uint16, game);
         QueueMusic_Delayed8(
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x7cb as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+            (*((&raw mut game.g_ram as *mut uint8).offset(0x7cb) as *mut uint16)
+                as ::core::ffi::c_int
                 | 0xff00 as ::core::ffi::c_int) as uint16,
             game,
         );
     }
 }
 pub unsafe fn UpdateMusicTrackIndex(game: &mut Game) {
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int)
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) as ::core::ffi::c_int)
         < kGameState_40_TransitionToDemo as ::core::ffi::c_int
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x7c9 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        && *((&raw mut game.g_ram as *mut uint8).offset(0x7c9) as *mut uint16) as ::core::ffi::c_int
             != 0
     {
-        let mut r18: uint16 = ((*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x7cb as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int)
+        let mut r18: uint16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0x7cb) as *mut uint16)
+            as ::core::ffi::c_int)
             << 8 as ::core::ffi::c_int) as uint16;
         r18 = (r18 as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x7c9 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16;
-        let mut r20: uint16 = ((*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x7f3 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int)
+            | *((&raw mut game.g_ram as *mut uint8).offset(0x7c9) as *mut uint16)
+                as ::core::ffi::c_int) as uint16;
+        let mut r20: uint16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0x7f3) as *mut uint16)
+            as ::core::ffi::c_int)
             << 8 as ::core::ffi::c_int) as uint16;
         r20 = (r20 as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x7f5 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16;
+            | *((&raw mut game.g_ram as *mut uint8).offset(0x7f5) as *mut uint16)
+                as ::core::ffi::c_int) as uint16;
         if r18 as ::core::ffi::c_int != r20 as ::core::ffi::c_int {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x7f5 as ::core::ffi::c_int as isize)
-                as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x7c9 as ::core::ffi::c_int as isize)
-                as *mut uint16);
+            *((&raw mut game.g_ram as *mut uint8).offset(0x7f5) as *mut uint16) =
+                *((&raw mut game.g_ram as *mut uint8).offset(0x7c9) as *mut uint16);
         }
     }
 }
 pub unsafe fn LoadNewMusicTrackIfChanged(game: &mut Game) {
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int)
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) as ::core::ffi::c_int)
         < 0x28 as ::core::ffi::c_int
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x7c9 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        && *((&raw mut game.g_ram as *mut uint8).offset(0x7c9) as *mut uint16) as ::core::ffi::c_int
             != 0
     {
-        let mut r18: uint16 = ((*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x7cb as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int)
+        let mut r18: uint16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0x7cb) as *mut uint16)
+            as ::core::ffi::c_int)
             << 8 as ::core::ffi::c_int) as uint16;
         r18 = (r18 as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x7c9 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16;
-        let mut r20: uint16 = ((*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x7f3 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int)
+            | *((&raw mut game.g_ram as *mut uint8).offset(0x7c9) as *mut uint16)
+                as ::core::ffi::c_int) as uint16;
+        let mut r20: uint16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0x7f3) as *mut uint16)
+            as ::core::ffi::c_int)
             << 8 as ::core::ffi::c_int) as uint16;
         r20 = (r20 as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x7f5 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16;
+            | *((&raw mut game.g_ram as *mut uint8).offset(0x7f5) as *mut uint16)
+                as ::core::ffi::c_int) as uint16;
         if r18 as ::core::ffi::c_int != r20 as ::core::ffi::c_int {
             QueueMusic_DelayedY(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x7c9 as ::core::ffi::c_int as isize)
-                    as *mut uint16),
+                *((&raw mut game.g_ram as *mut uint8).offset(0x7c9) as *mut uint16),
                 6 as uint16,
                 game,
             );
@@ -9299,14 +8111,12 @@ pub unsafe fn LoadNewMusicTrackIfChanged(game: &mut Game) {
 }
 pub unsafe fn NullFunc() {}
 pub unsafe fn PlayRoomMusicTrackAfterAFrames(mut a: uint16, game: &mut Game) {
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int)
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) as ::core::ffi::c_int)
         < kGameState_40_TransitionToDemo as ::core::ffi::c_int
     {
         QueueMusic_DelayedY(0 as uint16, a, game);
         QueueMusic_Delayed8(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x7f5 as ::core::ffi::c_int as isize)
-                as *mut uint16),
+            *((&raw mut game.g_ram as *mut uint8).offset(0x7f5) as *mut uint16),
             game,
         );
     }
@@ -9316,8 +8126,7 @@ pub unsafe fn LoadColorsForSpritesBeamsAndEnemies(game: &mut Game) {
     let mut k: uint16 = 0;
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
             .offset(((i >> 1 as ::core::ffi::c_int) + 208 as ::core::ffi::c_int) as isize) =
             *(game.g_rom.offset(
                 (((0x9a8000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -9330,27 +8139,21 @@ pub unsafe fn LoadColorsForSpritesBeamsAndEnemies(game: &mut Game) {
     }
     j = 30 as uint16;
     while j as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(
-                ((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 224 as ::core::ffi::c_int)
-                    as isize,
-            ) = *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(
-                ((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 224 as ::core::ffi::c_int)
-                    as isize,
-            );
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(
+            ((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 224 as ::core::ffi::c_int)
+                as isize,
+        ) = *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(
+            ((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 224 as ::core::ffi::c_int)
+                as isize,
+        );
         j = (j as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
     }
     k = 30 as uint16;
     while k as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(
-                ((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 128 as ::core::ffi::c_int)
-                    as isize,
-            ) = *(game.g_rom.offset(
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(
+            ((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 128 as ::core::ffi::c_int)
+                as isize,
+        ) = *(game.g_rom.offset(
             (((0x9afc00 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                 << 15 as ::core::ffi::c_int
                 | 0x9afc00 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -9384,42 +8187,30 @@ pub unsafe fn GameState_9_HitDoorBlock(game: &mut Game) -> CoroutineRet {
     CallDoorTransitionFunction_Async(u32::from(game.door_transition_function()) | 0x820000, game)
 }
 pub unsafe fn DoorTransitionFunction_HandleElevator(game: &mut Game) -> CoroutineRet {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xe16 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        == 0
-    {
-        let ref mut fresh6 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xe16) as *mut uint16) == 0 {
+        let ref mut fresh6 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
         *fresh6 = (*fresh6).wrapping_add(1);
         return GameState_10_LoadingNextRoom_Async(game);
     }
     CallSomeSamusCode(0 as uint16, game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x799 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x799) as *mut uint16) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        let ref mut fresh7 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let ref mut fresh7 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
         *fresh7 = (*fresh7).wrapping_add(1);
         return GameState_10_LoadingNextRoom_Async(game);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x92f as ::core::ffi::c_int as isize)
-        as *mut uint16) = 48 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x99c as ::core::ffi::c_int as isize)
-        as *mut uint16) = (0x82e19f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x92f) as *mut uint16) = 48 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x99c) as *mut uint16) =
+        (0x82e19f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return DoorTransitionFunction_Wait48frames(game);
 }
 pub unsafe fn DoorTransitionFunction_Wait48frames(game: &mut Game) -> CoroutineRet {
-    let ref mut fresh8 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x92f as ::core::ffi::c_int as isize) as *mut uint16);
+    let ref mut fresh8 = *((&raw mut game.g_ram as *mut uint8).offset(0x92f) as *mut uint16);
     *fresh8 = (*fresh8).wrapping_sub(1);
     if *fresh8 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
-        let ref mut fresh9 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let ref mut fresh9 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
         *fresh9 = (*fresh9).wrapping_add(1);
         return GameState_10_LoadingNextRoom_Async(game);
     } else {
@@ -9431,14 +8222,10 @@ pub unsafe fn DoorTransitionFunction_Wait48frames(game: &mut Game) -> CoroutineR
     return kCoroutineNone as CoroutineRet;
 }
 pub unsafe fn GameState_10_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRet {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x797 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x795 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x5f7 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1e75 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x797) as *mut uint16) = 1 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x795) as *mut uint16) = 1 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x5f7) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1e75) as *mut uint16) = 0 as uint16;
     DetermineWhichEnemiesToProcess(game);
     EnemyMain(game);
     DrawSamusEnemiesAndProjectiles(game);
@@ -9447,138 +8234,62 @@ pub unsafe fn GameState_10_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRe
     let mut i: ::core::ffi::c_int = 254 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(v1 as isize) =
+            0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
             .offset((v1 + 128 as ::core::ffi::c_int) as isize) = 0 as uint16;
         i -= 2 as ::core::ffi::c_int;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(9 as ::core::ffi::c_int as isize) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xc000 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(9 as ::core::ffi::c_int as isize);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(10 as ::core::ffi::c_int as isize) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xc000 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(10 as ::core::ffi::c_int as isize);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(13 as ::core::ffi::c_int as isize) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xc000 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(13 as ::core::ffi::c_int as isize);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(14 as ::core::ffi::c_int as isize) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xc000 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(14 as ::core::ffi::c_int as isize);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(17 as ::core::ffi::c_int as isize) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xc000 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(17 as ::core::ffi::c_int as isize);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(18 as ::core::ffi::c_int as isize) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xc000 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(18 as ::core::ffi::c_int as isize);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(19 as ::core::ffi::c_int as isize) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xc000 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(19 as ::core::ffi::c_int as isize);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(29 as ::core::ffi::c_int as isize) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xc000 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(29 as ::core::ffi::c_int as isize);
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x7b1 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        | *((&raw mut game.g_ram as *mut uint8).offset(0x7b3 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int)
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(9) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(9);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(10) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(10);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(13) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(13);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(14) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(14);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(17) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(17);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(18) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(18);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(19) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(19);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(29) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(29);
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x7b1) as *mut uint16) as ::core::ffi::c_int
+        | *((&raw mut game.g_ram as *mut uint8).offset(0x7b3) as *mut uint16) as ::core::ffi::c_int)
         & 1 as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(20 as ::core::ffi::c_int as isize) = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xc000 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(20 as ::core::ffi::c_int as isize);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(21 as ::core::ffi::c_int as isize) = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xc000 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(21 as ::core::ffi::c_int as isize);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(22 as ::core::ffi::c_int as isize) = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xc000 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(22 as ::core::ffi::c_int as isize);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(23 as ::core::ffi::c_int as isize) = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xc000 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(23 as ::core::ffi::c_int as isize);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(28 as ::core::ffi::c_int as isize) = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xc000 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(28 as ::core::ffi::c_int as isize);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x943 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            != 0
-        {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(209 as ::core::ffi::c_int as isize) = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xc000 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(209 as ::core::ffi::c_int as isize);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(210 as ::core::ffi::c_int as isize) = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xc000 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(210 as ::core::ffi::c_int as isize);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(212 as ::core::ffi::c_int as isize) = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xc000 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(212 as ::core::ffi::c_int as isize);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(221 as ::core::ffi::c_int as isize) = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xc000 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(221 as ::core::ffi::c_int as isize);
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(20) =
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(20);
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(21) =
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(21);
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(22) =
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(22);
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(23) =
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(23);
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(28) =
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(28);
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x943) as *mut uint16) != 0 {
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(209) =
+                *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(209);
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(210) =
+                *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(210);
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(212) =
+                *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(212);
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(221) =
+                *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(221);
             DrawTimer(game);
         }
     }
     ClearSoundsWhenGoingThroughDoor(game);
     QueueSfx2_Max15(0x71 as uint16, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x5f5 as ::core::ffi::c_int as isize)
-        as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x99c as ::core::ffi::c_int as isize)
-        as *mut uint16) = (0x82e29e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    let ref mut fresh10 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x998 as ::core::ffi::c_int as isize) as *mut uint16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0x5f5) as *mut uint16) =
+        -(1 as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x99c) as *mut uint16) =
+        (0x82e29e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    let ref mut fresh10 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
     *fresh10 = (*fresh10).wrapping_add(1);
     return kCoroutineNone as CoroutineRet;
 }
@@ -9703,18 +8414,18 @@ pub unsafe fn DoorTransitionFunction_PlaceSamusLoadTiles(game: &mut Game) -> Cor
     if game.cre_bitset() & 2 != 0 && game.door_def_ptr() != addr_kDoorDef_947a as u16 {
         DecompressToMem(
             0xb98000 as uint32,
-            (&raw mut game.g_ram as *mut uint8).offset(0x7000 as ::core::ffi::c_int as isize),
+            (&raw mut game.g_ram as *mut uint8).offset(0x7000),
             game,
         );
     }
     DecompressToMem(
         game.tileset_tiles_pointer(),
-        (&raw mut game.g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize),
+        (&raw mut game.g_ram as *mut uint8).offset(0x2000),
         game,
     );
     DecompressToMem(
         game.tileset_compr_palette_ptr(),
-        (&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize),
+        (&raw mut game.g_ram as *mut uint8).offset(0xc200),
         game,
     );
     CopyToVramNow(0 as uint16, 0x7e2000 as uint32, 0x2000 as uint16, game);
@@ -9866,12 +8577,10 @@ pub unsafe fn ClearBg2Tilemap(game: &mut Game) {
 pub unsafe fn ClearKraidBg2Tilemap(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 1023 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x4000 as ::core::ffi::c_int as isize)
-            as *mut Ram4000))
-            .xray_tilemaps[i as usize] = 824 as uint16;
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x4000 as ::core::ffi::c_int as isize)
-            as *mut Ram4000))
-            .xray_tilemaps[(i + 1024 as ::core::ffi::c_int) as usize] = 824 as uint16;
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x4000) as *mut Ram4000)).xray_tilemaps
+            [i as usize] = 824 as uint16;
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x4000) as *mut Ram4000)).xray_tilemaps
+            [(i + 1024 as ::core::ffi::c_int) as usize] = 824 as uint16;
         i -= 1;
     }
     CopyToVramNow(0x4000 as uint16, 0x7e4000 as uint32, 0x1000 as uint16, game);
@@ -9884,8 +8593,7 @@ pub unsafe fn UpdateBackgroundCommand_E_DoorDependentTransferToVRAM(
     mut j: uint16,
     game: &mut Game,
 ) -> uint16 {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x78d as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x78d) as *mut uint16) as ::core::ffi::c_int
         == *(RomPtr_8F(j as uint16_t, game) as *mut uint16) as ::core::ffi::c_int
     {
         return UpdateBackgroundCommand_2_TransferToVram(
@@ -9922,7 +8630,7 @@ pub unsafe fn UpdateBackgroundCommand_8_TransferToVramAndSetBg3(
     game: &mut Game,
 ) -> uint16 {
     j = UpdateBackgroundCommand_2_TransferToVram(j, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x5e as ::core::ffi::c_int as isize) = 2 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x5e) = 2 as uint8;
     return j;
 }
 pub unsafe fn UpdateBackgroundCommand_A_ClearBg2Tilemap(j: uint16, game: &mut Game) -> uint16 {
@@ -10005,8 +8713,7 @@ pub unsafe fn LoadDestinationRoomThings(game: &mut Game) {
     LoadCRETilesTilesetTilesAndPalette(game);
 }
 pub unsafe fn LoadCRETilesTilesetTilesAndPalette(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xe16 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xe16) as *mut uint16) = 0 as uint16;
     WriteRegWord(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint16, game);
     WriteRegWord(
         VMADDL as ::core::ffi::c_int as uint16,
@@ -10020,20 +8727,13 @@ pub unsafe fn LoadCRETilesTilesetTilesAndPalette(game: &mut Game) {
     );
     WriteRegWord(VMADDL as ::core::ffi::c_int as uint16, 0 as uint16, game);
     DecompressToVRAM(
-        Load24(
-            (&raw mut game.g_ram as *mut uint8).offset(0x7c3 as ::core::ffi::c_int as isize)
-                as *mut LongPtr,
-        ),
+        Load24((&raw mut game.g_ram as *mut uint8).offset(0x7c3) as *mut LongPtr),
         0 as uint16,
         game,
     );
     DecompressToMem(
-        Load24(
-            (&raw mut game.g_ram as *mut uint8).offset(0x7c6 as ::core::ffi::c_int as isize)
-                as *mut LongPtr,
-        ),
-        (&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
-            as *mut uint8,
+        Load24((&raw mut game.g_ram as *mut uint8).offset(0x7c6) as *mut LongPtr),
+        (&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint8,
         game,
     );
 }
@@ -10045,79 +8745,60 @@ pub unsafe fn LoadLevelDataAndOtherThings(game: &mut Game) {
     let mut n: uint16 = 0;
     let mut i: ::core::ffi::c_int = 25598 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x10002 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16)
             .offset((i >> 1 as ::core::ffi::c_int) as isize) = 0x8000 as uint16;
         i -= 2 as ::core::ffi::c_int;
     }
     DecompressToMem(
-        Load24(
-            (&raw mut game.g_ram as *mut uint8).offset(0x7bd as ::core::ffi::c_int as isize)
-                as *mut LongPtr,
-        ),
-        (&raw mut game.g_ram as *mut uint8).offset(0x10000 as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8,
+        Load24((&raw mut game.g_ram as *mut uint8).offset(0x7bd) as *mut LongPtr),
+        (&raw mut game.g_ram as *mut uint8).offset(0x10000) as *mut uint16 as *mut uint8,
         game,
     );
-    let mut size: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x10000 as ::core::ffi::c_int as isize)
-        as *mut uint16);
+    let mut size: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x10000) as *mut uint16);
     memcpy(
-        (&raw mut game.g_ram as *mut uint8).offset(0x19602 as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut ::core::ffi::c_void,
-        ((&raw mut game.g_ram as *mut uint8).offset(0x10002 as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
+        (&raw mut game.g_ram as *mut uint8).offset(0x19602) as *mut uint16
+            as *mut ::core::ffi::c_void,
+        ((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16 as *mut uint8)
             .offset(size as ::core::ffi::c_int as isize)
             .offset((size as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
             as *const ::core::ffi::c_void,
         size as size_t,
     );
     memcpy(
-        (&raw mut game.g_ram as *mut uint8).offset(0x16402 as ::core::ffi::c_int as isize)
-            as *mut ::core::ffi::c_void,
-        ((&raw mut game.g_ram as *mut uint8).offset(0x10002 as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
+        (&raw mut game.g_ram as *mut uint8).offset(0x16402) as *mut ::core::ffi::c_void,
+        ((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16 as *mut uint8)
             .offset(size as ::core::ffi::c_int as isize) as *const ::core::ffi::c_void,
         (size as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as size_t,
     );
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as ::core::ffi::c_int
         == 6 as ::core::ffi::c_int
     {
         DecompressToMem(
-            Load24(
-                (&raw mut game.g_ram as *mut uint8).offset(0x7c0 as ::core::ffi::c_int as isize)
-                    as *mut LongPtr,
-            ),
-            (&raw mut game.g_ram as *mut uint8).offset(0xa000 as ::core::ffi::c_int as isize),
+            Load24((&raw mut game.g_ram as *mut uint8).offset(0x7c0) as *mut LongPtr),
+            (&raw mut game.g_ram as *mut uint8).offset(0xa000),
             game,
         );
     } else {
         DecompressToMem(
             0xb9a09d as uint32,
-            (&raw mut game.g_ram as *mut uint8).offset(0xa000 as ::core::ffi::c_int as isize),
+            (&raw mut game.g_ram as *mut uint8).offset(0xa000),
             game,
         );
         DecompressToMem(
-            Load24(
-                (&raw mut game.g_ram as *mut uint8).offset(0x7c0 as ::core::ffi::c_int as isize)
-                    as *mut LongPtr,
-            ),
-            (&raw mut game.g_ram as *mut uint8).offset(0xa800 as ::core::ffi::c_int as isize),
+            Load24((&raw mut game.g_ram as *mut uint8).offset(0x7c0) as *mut LongPtr),
+            (&raw mut game.g_ram as *mut uint8).offset(0xa800),
             game,
         );
     }
     let mut RD: *mut RoomDefRoomstate = get_RoomDefRoomstate(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7bb as ::core::ffi::c_int as isize)
-            as *mut uint16),
+        *((&raw mut game.g_ram as *mut uint8).offset(0x7bb) as *mut uint16),
         game,
     );
     rdf_scroll_ptr = (*RD).rdf_scroll_ptr as int16;
     if rdf_scroll_ptr as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
         let mut scrollval: uint16 = (*RD).rdf_scroll_ptr as uint16;
-        let mut r20: uint8 = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x7ab as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        let mut r20: uint8 = (*((&raw mut game.g_ram as *mut uint8).offset(0x7ab) as *mut uint16)
+            as ::core::ffi::c_int
             - 1 as ::core::ffi::c_int) as uint8;
         let mut v8: uint8 = 2 as uint8;
         let mut v9: uint8 = 0 as uint8;
@@ -10131,22 +8812,20 @@ pub unsafe fn LoadLevelDataAndOtherThings(game: &mut Game) {
                 let fresh145 = v9;
                 v9 = v9.wrapping_add(1);
                 *(&raw mut game.g_ram as *mut uint8)
-                    .offset(0xcd20 as ::core::ffi::c_int as isize)
+                    .offset(0xcd20)
                     .offset(fresh145 as isize) = v8;
                 v11 += 1;
                 if !(v11 as ::core::ffi::c_int
-                    != *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x7a9 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as uint8 as ::core::ffi::c_int)
+                    != *((&raw mut game.g_ram as *mut uint8).offset(0x7a9) as *mut uint16) as uint8
+                        as ::core::ffi::c_int)
                 {
                     break;
                 }
             }
             v10 += 1;
             if !(v10 as ::core::ffi::c_int
-                != *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x7ab as ::core::ffi::c_int as isize)
-                    as *mut uint16) as uint8 as ::core::ffi::c_int)
+                != *((&raw mut game.g_ram as *mut uint8).offset(0x7ab) as *mut uint16) as uint8
+                    as ::core::ffi::c_int)
             {
                 break;
             }
@@ -10155,7 +8834,7 @@ pub unsafe fn LoadLevelDataAndOtherThings(game: &mut Game) {
         m = 0 as uint16;
         while m as ::core::ffi::c_int != 50 as ::core::ffi::c_int {
             *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xcd20 as ::core::ffi::c_int as isize)
+                .offset(0xcd20)
                 .offset(m as isize) as *mut uint8 as *mut uint16) =
                 *(RomPtr_8F(rdf_scroll_ptr as uint16_t, game) as *mut uint16);
             rdf_scroll_ptr =
@@ -10172,32 +8851,26 @@ pub unsafe fn LoadLevelDataAndOtherThings(game: &mut Game) {
     }
     RunDoorSetupCode(game);
     RunRoomSetupCode(game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xe16 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe18 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 2 as uint16;
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xe16) as *mut uint16) != 0 {
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe18) as *mut uint16) = 2 as uint16;
     }
 }
 pub unsafe fn SpawnDoorClosingPLM(game: &mut Game) {
     if CheckIfColoredDoorCapSpawned(game) == 0 {
         let mut v0: *const uint16 = RomPtr_8F(
             (2 as ::core::ffi::c_int
-                * *((&raw mut game.g_ram as *mut uint8).offset(0x791 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
+                * *((&raw mut game.g_ram as *mut uint8).offset(0x791) as *mut uint16)
+                    as ::core::ffi::c_int
                 + addr_kDoorClosingPlmIds as ::core::ffi::c_int) as uint16_t,
             game,
         ) as *const uint16;
         if *v0 != 0 {
-            let mut rp: *mut RoomPlmEntry = (&raw mut game.g_ram as *mut uint8)
-                .offset(0x12 as ::core::ffi::c_int as isize)
-                as *mut RoomPlmEntry;
+            let mut rp: *mut RoomPlmEntry =
+                (&raw mut game.g_ram as *mut uint8).offset(0x12) as *mut RoomPlmEntry;
             (*rp).plm_header_ptr_ = *v0 as VoidP;
             *(&raw mut (*rp).x_block as *mut uint16) = *(&raw mut (*(get_DoorDef
                 as unsafe fn(uint16, &mut Game) -> *mut DoorDef)(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x78d as ::core::ffi::c_int as isize)
-                    as *mut uint16),
+                *((&raw mut game.g_ram as *mut uint8).offset(0x78d) as *mut uint16),
                 game,
             ))
             .x_pos_plm as *mut uint16);
@@ -10208,21 +8881,18 @@ pub unsafe fn SpawnDoorClosingPLM(game: &mut Game) {
 }
 pub unsafe fn CheckIfColoredDoorCapSpawned(game: &mut Game) -> uint8 {
     let mut DD: *mut DoorDef = get_DoorDef(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x78d as ::core::ffi::c_int as isize)
-            as *mut uint16),
+        *((&raw mut game.g_ram as *mut uint8).offset(0x78d) as *mut uint16),
         game,
     );
     let mut v2: uint16 = (2 as ::core::ffi::c_int
         * (Mult8x8(
             (*DD).y_pos_plm,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-                as *mut uint16) as uint8,
+            *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as uint8,
         ) as ::core::ffi::c_int
             + (*DD).x_pos_plm as ::core::ffi::c_int)) as uint16;
     let mut v3: uint16 = 78 as uint16;
     while v2 as ::core::ffi::c_int
-        != *((&raw mut game.g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        != *((&raw mut game.g_ram as *mut uint8).offset(0x1c87) as *mut uint16)
             .offset((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
             as ::core::ffi::c_int
     {
@@ -10232,41 +8902,33 @@ pub unsafe fn CheckIfColoredDoorCapSpawned(game: &mut Game) -> uint8 {
         }
     }
     let mut v5: ::core::ffi::c_int = v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x1c37 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v5 as isize)
-        == 0
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16).offset(v5 as isize) == 0
     {
         return 0 as uint8;
     }
-    let mut v6: int16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1dc7 as ::core::ffi::c_int as isize) as *mut uint16)
+    let mut v6: int16 = *((&raw mut game.g_ram as *mut uint8).offset(0x1dc7) as *mut uint16)
         .offset(v5 as isize) as int16;
     if v6 as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
         let mut idx: ::core::ffi::c_int =
             PrepareBitAccess(v6 as uint16, game) as ::core::ffi::c_int;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x5e7 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x5e7) as *mut uint16) as ::core::ffi::c_int
             & *(&raw mut game.g_ram as *mut uint8)
-                .offset(0xd8b0 as ::core::ffi::c_int as isize)
+                .offset(0xd8b0)
                 .offset(idx as isize) as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
         {
             return 0 as uint8;
         }
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xde1c as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v5 as isize) = 1 as uint16;
-    let mut v8: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1c37 as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset(v5 as isize);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xde1c) as *mut uint16).offset(v5 as isize) =
+        1 as uint16;
+    let mut v8: uint16 =
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16).offset(v5 as isize);
     if v8 == 0 {
         return 0 as uint8;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1d27 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v5 as isize) = (*get_PlmHeader_Size6(v8, game)).instr_list_2_ptr as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1d27) as *mut uint16).offset(v5 as isize) =
+        (*get_PlmHeader_Size6(v8, game)).instr_list_2_ptr as uint16;
     return 1 as uint8;
 }
 static kLoadLibraryBackgroundFuncs: [Option<Func_Y_Y>; 8] = unsafe {
@@ -10292,14 +8954,10 @@ static kLoadLibraryBackgroundFuncs: [Option<Func_Y_Y>; 8] = unsafe {
 pub unsafe fn LoadLibraryBackground(game: &mut Game) {
     let mut bg_data_ptr: uint16 = 0;
     ClearFXTilemap(game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x1964 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x1964) as *mut uint16) != 0 {
         WriteRegWord(
             A1T1L as ::core::ffi::c_int as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1964 as ::core::ffi::c_int as isize)
-                as *mut uint16),
+            *((&raw mut game.g_ram as *mut uint8).offset(0x1964) as *mut uint16),
             game,
         );
         WriteRegWord(
@@ -10318,8 +8976,7 @@ pub unsafe fn LoadLibraryBackground(game: &mut Game) {
         WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
     }
     bg_data_ptr = (*get_RoomDefRoomstate(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7bb as ::core::ffi::c_int as isize)
-            as *mut uint16),
+        *((&raw mut game.g_ram as *mut uint8).offset(0x7bb) as *mut uint16),
         game,
     ))
     .bg_data_ptr as uint16;
@@ -10345,8 +9002,7 @@ pub unsafe fn LoadLibraryBackgroundFunc_E_DoorDependentTransferToVram(
     mut j: uint16,
     game: &mut Game,
 ) -> uint16 {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x78d as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x78d) as *mut uint16) as ::core::ffi::c_int
         == (*get_LoadBg_E(j, game)).field_0 as ::core::ffi::c_int
     {
         return LoadLibraryBackgroundFunc_2_TransferToVram(
@@ -10361,7 +9017,7 @@ pub unsafe fn LoadLibraryBackgroundFunc_2_TransferToVram(mut j: uint16, game: &m
     let mut LoadBg_28: *mut uint16 = RomPtr_8F(j as uint16_t, game) as *mut uint16;
     WriteRegWord(
         VMADDL as ::core::ffi::c_int as uint16,
-        *((LoadBg_28 as *mut uint8).offset(3 as ::core::ffi::c_int as isize) as *mut uint16),
+        *((LoadBg_28 as *mut uint8).offset(3) as *mut uint16),
         game,
     );
     WriteRegWord(
@@ -10372,12 +9028,12 @@ pub unsafe fn LoadLibraryBackgroundFunc_2_TransferToVram(mut j: uint16, game: &m
     WriteRegWord(A1T1L as ::core::ffi::c_int as uint16, *LoadBg_28, game);
     WriteRegWord(
         A1B1 as ::core::ffi::c_int as uint16,
-        *LoadBg_28.offset(1 as ::core::ffi::c_int as isize),
+        *LoadBg_28.offset(1),
         game,
     );
     WriteRegWord(
         DAS1L as ::core::ffi::c_int as uint16,
-        *((LoadBg_28 as *mut uint8).offset(5 as ::core::ffi::c_int as isize) as *mut uint16),
+        *((LoadBg_28 as *mut uint8).offset(5) as *mut uint16),
         game,
     );
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
@@ -10388,10 +9044,8 @@ pub unsafe fn LoadLibraryBackgroundFunc_4_Decompress(mut j: uint16, game: &mut G
     let mut p: *const uint8 = RomPtr_8F(j as uint16_t, game);
     DecompressToMem(
         Load24(p as *mut LongPtr),
-        (&raw mut game.g_ram as *mut uint8).offset(
-            *(p.offset(3 as ::core::ffi::c_int as isize) as *mut uint16) as ::core::ffi::c_int
-                as isize,
-        ),
+        (&raw mut game.g_ram as *mut uint8)
+            .offset(*(p.offset(3) as *mut uint16) as ::core::ffi::c_int as isize),
         game,
     );
     return (j as ::core::ffi::c_int + 5 as ::core::ffi::c_int) as uint16;
@@ -10419,7 +9073,7 @@ pub unsafe fn LoadLibraryBackgroundFunc_8_TransferToVramAndSetBg3(
     game: &mut Game,
 ) -> uint16 {
     j = LoadLibraryBackgroundFunc_2_TransferToVram(j, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x5e as ::core::ffi::c_int as isize) = 2 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x5e) = 2 as uint8;
     return j;
 }
 pub unsafe fn LoadLevelScrollAndCre(game: &mut Game) {
@@ -10430,106 +9084,77 @@ pub unsafe fn LoadLevelScrollAndCre(game: &mut Game) {
     let mut v12: int8 = 0;
     let mut i: ::core::ffi::c_int = 6398 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x10002 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16)
             .offset((i >> 1 as ::core::ffi::c_int) as isize) = 0x8000 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x10002 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(
-                ((i >> 1 as ::core::ffi::c_int)
-                    + 3200 as ::core::ffi::c_int * 1 as ::core::ffi::c_int)
-                    as isize,
-            ) = 0x8000 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x10002 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(
-                ((i >> 1 as ::core::ffi::c_int)
-                    + 3200 as ::core::ffi::c_int * 2 as ::core::ffi::c_int)
-                    as isize,
-            ) = 0x8000 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x10002 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(
-                ((i >> 1 as ::core::ffi::c_int)
-                    + 3200 as ::core::ffi::c_int * 3 as ::core::ffi::c_int)
-                    as isize,
-            ) = 0x8000 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16).offset(
+            ((i >> 1 as ::core::ffi::c_int) + 3200 as ::core::ffi::c_int * 1 as ::core::ffi::c_int)
+                as isize,
+        ) = 0x8000 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16).offset(
+            ((i >> 1 as ::core::ffi::c_int) + 3200 as ::core::ffi::c_int * 2 as ::core::ffi::c_int)
+                as isize,
+        ) = 0x8000 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16).offset(
+            ((i >> 1 as ::core::ffi::c_int) + 3200 as ::core::ffi::c_int * 3 as ::core::ffi::c_int)
+                as isize,
+        ) = 0x8000 as uint16;
         i -= 2 as ::core::ffi::c_int;
     }
     DecompressToMem(
-        Load24(
-            (&raw mut game.g_ram as *mut uint8).offset(0x7bd as ::core::ffi::c_int as isize)
-                as *mut LongPtr,
-        ),
-        (&raw mut game.g_ram as *mut uint8).offset(0x10000 as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8,
+        Load24((&raw mut game.g_ram as *mut uint8).offset(0x7bd) as *mut LongPtr),
+        (&raw mut game.g_ram as *mut uint8).offset(0x10000) as *mut uint16 as *mut uint8,
         game,
     );
-    let mut size: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x10000 as ::core::ffi::c_int as isize)
-        as *mut uint16);
+    let mut size: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x10000) as *mut uint16);
     memcpy(
-        (&raw mut game.g_ram as *mut uint8).offset(0x19602 as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut ::core::ffi::c_void,
-        ((&raw mut game.g_ram as *mut uint8).offset(0x10002 as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
+        (&raw mut game.g_ram as *mut uint8).offset(0x19602) as *mut uint16
+            as *mut ::core::ffi::c_void,
+        ((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16 as *mut uint8)
             .offset(size as ::core::ffi::c_int as isize)
             .offset((size as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
             as *const ::core::ffi::c_void,
         size as size_t,
     );
     memcpy(
-        (&raw mut game.g_ram as *mut uint8).offset(0x16402 as ::core::ffi::c_int as isize)
-            as *mut ::core::ffi::c_void,
-        ((&raw mut game.g_ram as *mut uint8).offset(0x10002 as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
+        (&raw mut game.g_ram as *mut uint8).offset(0x16402) as *mut ::core::ffi::c_void,
+        ((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16 as *mut uint8)
             .offset(size as ::core::ffi::c_int as isize) as *const ::core::ffi::c_void,
         (size as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as size_t,
     );
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as ::core::ffi::c_int
         == 6 as ::core::ffi::c_int
     {
         DecompressToMem(
-            Load24(
-                (&raw mut game.g_ram as *mut uint8).offset(0x7c0 as ::core::ffi::c_int as isize)
-                    as *mut LongPtr,
-            ),
-            (&raw mut game.g_ram as *mut uint8).offset(0xa000 as ::core::ffi::c_int as isize),
+            Load24((&raw mut game.g_ram as *mut uint8).offset(0x7c0) as *mut LongPtr),
+            (&raw mut game.g_ram as *mut uint8).offset(0xa000),
             game,
         );
     } else {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x7b3 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x7b3) as *mut uint16) as ::core::ffi::c_int
             & 2 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
         {
             DecompressToMem(
                 0xb9a09d as uint32,
-                (&raw mut game.g_ram as *mut uint8).offset(0xa000 as ::core::ffi::c_int as isize),
+                (&raw mut game.g_ram as *mut uint8).offset(0xa000),
                 game,
             );
         }
         DecompressToMem(
-            Load24(
-                (&raw mut game.g_ram as *mut uint8).offset(0x7c0 as ::core::ffi::c_int as isize)
-                    as *mut LongPtr,
-            ),
-            (&raw mut game.g_ram as *mut uint8).offset(0xa800 as ::core::ffi::c_int as isize),
+            Load24((&raw mut game.g_ram as *mut uint8).offset(0x7c0) as *mut LongPtr),
+            (&raw mut game.g_ram as *mut uint8).offset(0xa800),
             game,
         );
     }
     let mut RD: *mut RoomDefRoomstate = get_RoomDefRoomstate(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7bb as ::core::ffi::c_int as isize)
-            as *mut uint16),
+        *((&raw mut game.g_ram as *mut uint8).offset(0x7bb) as *mut uint16),
         game,
     );
     rdf_scroll_ptr = (*RD).rdf_scroll_ptr as int16;
     if rdf_scroll_ptr as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
         let mut r18: uint16 = (*RD).rdf_scroll_ptr as uint16;
-        let mut r20: uint8 = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x7ab as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        let mut r20: uint8 = (*((&raw mut game.g_ram as *mut uint8).offset(0x7ab) as *mut uint16)
+            as ::core::ffi::c_int
             - 1 as ::core::ffi::c_int) as uint8;
         let mut v8: uint8 = 2 as uint8;
         let mut v9: uint8 = 0 as uint8;
@@ -10544,22 +9169,20 @@ pub unsafe fn LoadLevelScrollAndCre(game: &mut Game) {
                 let fresh35 = v9;
                 v9 = v9.wrapping_add(1);
                 *(&raw mut game.g_ram as *mut uint8)
-                    .offset(0xcd20 as ::core::ffi::c_int as isize)
+                    .offset(0xcd20)
                     .offset(fresh35 as isize) = v8;
                 v11 += 1;
                 if !(v11 as ::core::ffi::c_int
-                    != *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x7a9 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as uint8 as ::core::ffi::c_int)
+                    != *((&raw mut game.g_ram as *mut uint8).offset(0x7a9) as *mut uint16) as uint8
+                        as ::core::ffi::c_int)
                 {
                     break;
                 }
             }
             v10 = (v12 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as int8;
             if !(v12 as ::core::ffi::c_int + 1 as ::core::ffi::c_int
-                != *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x7ab as ::core::ffi::c_int as isize)
-                    as *mut uint16) as uint8 as ::core::ffi::c_int)
+                != *((&raw mut game.g_ram as *mut uint8).offset(0x7ab) as *mut uint16) as uint8
+                    as ::core::ffi::c_int)
             {
                 break;
             }
@@ -10568,7 +9191,7 @@ pub unsafe fn LoadLevelScrollAndCre(game: &mut Game) {
         m = 0 as uint16;
         while m as ::core::ffi::c_int != 50 as ::core::ffi::c_int {
             *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xcd20 as ::core::ffi::c_int as isize)
+                .offset(0xcd20)
                 .offset(m as isize) as *mut uint8 as *mut uint16) =
                 *(RomPtr_8F(rdf_scroll_ptr as uint16_t, game) as *mut uint16);
             rdf_scroll_ptr =
@@ -10580,8 +9203,7 @@ pub unsafe fn LoadLevelScrollAndCre(game: &mut Game) {
 pub unsafe fn CreatePlmsExecuteDoorAsmRoomSetup(game: &mut Game) {
     let mut RoomDefRoomstate: *mut RoomDefRoomstate = ::core::ptr::null_mut::<RoomDefRoomstate>();
     RoomDefRoomstate = get_RoomDefRoomstate(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7bb as ::core::ffi::c_int as isize)
-            as *mut uint16),
+        *((&raw mut game.g_ram as *mut uint8).offset(0x7bb) as *mut uint16),
         game,
     );
     if (*RoomDefRoomstate).room_plm_header_ptr != 0 {
@@ -10594,12 +9216,8 @@ pub unsafe fn CreatePlmsExecuteDoorAsmRoomSetup(game: &mut Game) {
     }
     RunDoorSetupCode(game);
     RunRoomSetupCode(game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xe16 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe18 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 2 as uint16;
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xe16) as *mut uint16) != 0 {
+        *((&raw mut game.g_ram as *mut uint8).offset(0xe18) as *mut uint16) = 2 as uint16;
     }
 }
 static kGameOptionsMenuFuncs: [Option<Func_V>; 13] = unsafe {
@@ -10620,14 +9238,12 @@ static kGameOptionsMenuFuncs: [Option<Func_V>; 13] = unsafe {
     ]
 };
 pub unsafe fn GameState_2_GameOptionsMenu(game: &mut Game) -> CoroutineRet {
-    kGameOptionsMenuFuncs[*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xde2 as ::core::ffi::c_int as isize) as *mut uint16)
-        as usize]
+    kGameOptionsMenuFuncs
+        [*((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) as usize]
         .expect("non-null function pointer")(game);
     OptionsMenuFunc1(game);
     DrawOptionsMenuSpritemaps(game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) as ::core::ffi::c_int
         - 2 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         == 0
@@ -10638,27 +9254,19 @@ pub unsafe fn GameState_2_GameOptionsMenu(game: &mut Game) -> CoroutineRet {
 }
 pub unsafe fn GameOptionsMenuFunc_0(game: &mut Game) {
     HandleFadeOut(game);
-    if *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
+    if *(&raw mut game.g_ram as *mut uint8).offset(0x51) as ::core::ffi::c_int
         == 0x80 as ::core::ffi::c_int
     {
         EnableNMI(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        let ref mut fresh65 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xde2 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
+        let ref mut fresh65 = *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16);
         *fresh65 = (*fresh65).wrapping_add(1);
-    } else if *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
+    } else if *(&raw mut game.g_ram as *mut uint8).offset(0x51) as ::core::ffi::c_int
         == 14 as ::core::ffi::c_int
     {
-        let mut v0: uint16 = *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x6b as ::core::ffi::c_int as isize) as uint16;
-        if *(&raw mut game.g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize)
-            as ::core::ffi::c_int
+        let mut v0: uint16 = *(&raw mut game.g_ram as *mut uint8).offset(0x6b) as uint16;
+        if *(&raw mut game.g_ram as *mut uint8).offset(0x6b) as ::core::ffi::c_int
             & 4 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
         {
@@ -10668,15 +9276,15 @@ pub unsafe fn GameOptionsMenuFunc_0(game: &mut Game) {
 }
 pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen(game: &mut Game) {
     let mut j: uint16 = 0;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 19 as uint8;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x6c as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x6d as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x6e as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x5d) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x69) = 19 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x6b) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x6c) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x6d) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x6e) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x71) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x6f) = 0 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x72) = 0 as uint8;
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8, game);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x58 as uint8, game);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
@@ -10692,20 +9300,14 @@ pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen(game: &mut Game) {
     };
     SetupDmaTransfer(&raw const unk_82EC3D as *const ::core::ffi::c_void, game);
     WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb5 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb7 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xde0 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb5) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xde0) as *mut uint16) = 0 as uint16;
     let mut i: ::core::ffi::c_int = 510 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
             .offset((i >> 1 as ::core::ffi::c_int) as isize) = *(game.g_rom.offset(
             (((0x8ee400 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                 << 15 as ::core::ffi::c_int
@@ -10718,43 +9320,40 @@ pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen(game: &mut Game) {
     }
     DecompressToMem(
         0x978df4 as uint32,
-        (&raw mut game.g_ram as *mut uint8).offset(0x1c000 as ::core::ffi::c_int as isize),
+        (&raw mut game.g_ram as *mut uint8).offset(0x1c000),
         game,
     );
     DecompressToMem(
         0x978fcd as uint32,
-        (&raw mut game.g_ram as *mut uint8).offset(0x1c800 as ::core::ffi::c_int as isize),
+        (&raw mut game.g_ram as *mut uint8).offset(0x1c800),
         game,
     );
     DecompressToMem(
         0x9791c4 as uint32,
-        (&raw mut game.g_ram as *mut uint8).offset(0x1d000 as ::core::ffi::c_int as isize),
+        (&raw mut game.g_ram as *mut uint8).offset(0x1d000),
         game,
     );
     DecompressToMem(
         0x97938d as uint32,
-        (&raw mut game.g_ram as *mut uint8).offset(0x1d800 as ::core::ffi::c_int as isize),
+        (&raw mut game.g_ram as *mut uint8).offset(0x1d800),
         game,
     );
     DecompressToMem(
         0x97953a as uint32,
-        (&raw mut game.g_ram as *mut uint8).offset(0x1e000 as ::core::ffi::c_int as isize),
+        (&raw mut game.g_ram as *mut uint8).offset(0x1e000),
         game,
     );
     j = 1023 as uint16;
     while j as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap[j as usize] = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x19602 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+            .offset(0x19602) as *mut uint16)
             .offset((j as ::core::ffi::c_int + 5375 as ::core::ffi::c_int) as isize);
         j = j.wrapping_sub(1);
     }
     // The ROM keeps the final copied tile in A through the object clear.
     let initial_tile = u16::from_le_bytes([game.g_ram[0x3000], game.g_ram[0x3001]]);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) = 0 as uint16;
     DeleteAllOptionsMenuObjects_(game);
     CreateOptionsMenuObject_(
         initial_tile,
@@ -10767,33 +9366,25 @@ pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen(game: &mut Game) {
         addr_stru_82F4C4 as ::core::ffi::c_int as uint16,
         game,
     );
-    let ref mut fresh66 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xde2 as ::core::ffi::c_int as isize) as *mut uint16);
+    let ref mut fresh66 = *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16);
     *fresh66 = (*fresh66).wrapping_add(1);
     OptionsMenuFunc4(game);
 }
 pub unsafe fn GameOptionsMenu_2_FadeInOptionsScreen(game: &mut Game) {
     HandleFadeIn(game);
-    if *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
+    if *(&raw mut game.g_ram as *mut uint8).offset(0x51) as ::core::ffi::c_int
         == 15 as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        let ref mut fresh67 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xde2 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
+        let ref mut fresh67 = *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16);
         *fresh67 = (*fresh67).wrapping_add(1);
     }
 }
 pub unsafe fn OptionsMenu_AddToVramQueue(game: &mut Game) {
-    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
     (*gVramWriteEntry(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
+        *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .size = 2048 as uint16;
@@ -10808,20 +9399,17 @@ pub unsafe fn OptionsMenu_AddToVramQueue(game: &mut Game) {
         game,
     ))
     .size as *mut uint8)
-        .offset(0 as ::core::ffi::c_int as isize) = 126 as uint8;
+        .offset(0) = 126 as uint8;
     (*gVramWriteEntry(v0 as ::core::ffi::c_int, game)).size = 20480 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) =
+        (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn OptionsMenuFunc5(mut a: uint16, mut k: uint16, mut j: uint16, game: &mut Game) {
     loop {
-        *((&raw mut (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x3000 as ::core::ffi::c_int as isize) as *mut Ram3000))
+        *((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap as *mut uint16 as *mut uint8)
             .offset(k as ::core::ffi::c_int as isize) as *mut uint16) = (a as ::core::ffi::c_int
-            | *((&raw mut (*((&raw mut game.g_ram as *mut uint8)
-                .offset(0x3000 as ::core::ffi::c_int as isize)
-                as *mut Ram3000))
+            | *((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
                 .pause_menu_map_tilemap as *mut uint16 as *mut uint8)
                 .offset(k as ::core::ffi::c_int as isize) as *mut uint16)
                 as ::core::ffi::c_int
@@ -10844,97 +9432,74 @@ static kGameOptionsMenuItemFuncs: [Option<Func_V>; 5] = unsafe {
     ]
 };
 pub unsafe fn GameOptionsMenu_3_OptionsScreen(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int
         & kButton_Up as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
         QueueSfx1_Max6(0x37 as uint16, game);
-        let ref mut fresh68 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x99e as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let ref mut fresh68 = *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16);
         *fresh68 = (*fresh68).wrapping_sub(1);
         if *fresh68 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-                as *mut uint16) = 4 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) = 4 as uint16;
         }
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16)
+        as ::core::ffi::c_int
         & kButton_Down as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
         QueueSfx1_Max6(0x37 as uint16, game);
-        let ref mut fresh69 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x99e as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let ref mut fresh69 = *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16);
         *fresh69 = (*fresh69).wrapping_add(1);
         if *fresh69 as ::core::ffi::c_int == 5 as ::core::ffi::c_int {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) = 0 as uint16;
         }
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 11 as uint16;
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+        *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) = 11 as uint16;
+    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16)
+        as ::core::ffi::c_int
         & kButton_A as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
-        || *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        || *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int
             & kButton_Start as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
     {
         QueueSfx1_Max6(0x38 as uint16, game);
-        kGameOptionsMenuItemFuncs[*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x99e as ::core::ffi::c_int as isize)
-            as *mut uint16) as usize]
+        kGameOptionsMenuItemFuncs
+            [*((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) as usize]
             .expect("non-null function pointer")(game);
     }
 }
 pub unsafe fn GameOptionsMenuItemFunc_0(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x5d1 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x5d1) as *mut uint16) as ::core::ffi::c_int
         != 0
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x8b as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        && *((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16) as ::core::ffi::c_int
             & kButton_L as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
-        || *((&raw mut game.g_ram as *mut uint8).offset(0xd914 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        || *((&raw mut game.g_ram as *mut uint8).offset(0xd914) as *mut uint16)
+            as ::core::ffi::c_int
             == kGameState_5_FileSelectMap as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 4 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) = 4 as uint16;
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 12 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) = 12 as uint16;
     };
 }
 pub unsafe fn GameOptionsMenuItemFunc_2_ToggleJapanese(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16) =
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16) as ::core::ffi::c_int
+            == 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
     OptionsMenuFunc4(game);
 }
 pub unsafe fn OptionsMenuFunc4(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16) != 0 {
         OptionsMenuFunc5(0x400 as uint16, 0x288 as uint16, 0x18 as uint16, game);
         OptionsMenuFunc5(0x400 as uint16, 0x2c8 as uint16, 0x18 as uint16, game);
         OptionsMenuFunc5(0 as uint16, 0x348 as uint16, 0x32 as uint16, game);
@@ -10947,105 +9512,77 @@ pub unsafe fn OptionsMenuFunc4(game: &mut Game) {
     };
 }
 pub unsafe fn GameOptionsMenuItemFunc_4(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut uint8).offset(0x57 as ::core::ffi::c_int as isize) = 3 as uint8;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 5 as uint16;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x57) = 3 as uint8;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) = 5 as uint16;
 }
 pub unsafe fn GameOptionsMenu_B_TransitionBackToFileSelect(game: &mut Game) {
     HandleFadeOut(game);
-    if *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
+    if *(&raw mut game.g_ram as *mut uint8).offset(0x51) as ::core::ffi::c_int
         == 0x80 as ::core::ffi::c_int
     {
         EnableNMI(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16) = kGameState_4_FileSelectMenus as ::core::ffi::c_int as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x727 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
+            kGameState_4_FileSelectMenus as ::core::ffi::c_int as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) = 0 as uint16;
     }
 }
 pub unsafe fn GameOptionsMenu_C_FadeOutOptionsScreenToStart(game: &mut Game) {
     HandleFadeOut(game);
-    if *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
+    if *(&raw mut game.g_ram as *mut uint8).offset(0x51) as ::core::ffi::c_int
         == 0x80 as ::core::ffi::c_int
     {
         EnableNMI(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 4 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) = 4 as uint16;
     }
 }
 pub unsafe fn GameOptionsMenu_4_StartGame(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x5d1 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) = 0 as uint16;
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x5d1) as *mut uint16) as ::core::ffi::c_int
         != 0
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x8b as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        && *((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16) as ::core::ffi::c_int
             & 0x20 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16) = kGameState_5_FileSelectMap as ::core::ffi::c_int as uint16;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xd914 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
+            kGameState_5_FileSelectMap as ::core::ffi::c_int as uint16;
+        if *((&raw mut game.g_ram as *mut uint8).offset(0xd914) as *mut uint16)
+            as ::core::ffi::c_int
             != kLoadingGameState_5_Main as ::core::ffi::c_int
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xd914 as ::core::ffi::c_int as isize)
-                as *mut uint16) = kGameState_5_FileSelectMap as ::core::ffi::c_int as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xd914) as *mut uint16) =
+                kGameState_5_FileSelectMap as ::core::ffi::c_int as uint16;
             SaveToSram(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x952 as ::core::ffi::c_int as isize)
-                    as *mut uint16),
+                *((&raw mut game.g_ram as *mut uint8).offset(0x952) as *mut uint16),
                 game,
             );
         }
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0xd914 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xd914 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xd914 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+    } else if *((&raw mut game.g_ram as *mut uint8).offset(0xd914) as *mut uint16) != 0 {
+        *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
+            *((&raw mut game.g_ram as *mut uint8).offset(0xd914) as *mut uint16);
+        if *((&raw mut game.g_ram as *mut uint8).offset(0xd914) as *mut uint16)
+            as ::core::ffi::c_int
             == kGameState_34_CeresGoesBoom as ::core::ffi::c_int
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
-                as *mut uint16) =
+            *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
                 (0x8bc11b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) = 0 as uint16;
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16) = kGameState_30_IntroCinematic as ::core::ffi::c_int as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
-            as *mut uint16) =
+        *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
+            kGameState_30_IntroCinematic as ::core::ffi::c_int as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
             (0x8ba395 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
     };
 }
 pub unsafe fn GameOptionsMenu_5_DissolveOutScreen(game: &mut Game) {
@@ -11055,53 +9592,34 @@ pub unsafe fn GameOptionsMenu_5_DissolveOutScreen(game: &mut Game) {
     let mut n: uint16 = 0;
     let mut v1: uint16 = 0;
     HandleFadeOut(game);
-    if *(&raw mut game.g_ram as *mut uint8).offset(0x57 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
+    if *(&raw mut game.g_ram as *mut uint8).offset(0x57) as ::core::ffi::c_int
         != 0xf3 as ::core::ffi::c_int
     {
-        let ref mut fresh70 =
-            *(&raw mut game.g_ram as *mut uint8).offset(0x57 as ::core::ffi::c_int as isize);
+        let ref mut fresh70 = *(&raw mut game.g_ram as *mut uint8).offset(0x57);
         *fresh70 = (*fresh70 as ::core::ffi::c_int + 16 as ::core::ffi::c_int) as uint8;
     }
-    if *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
+    if *(&raw mut game.g_ram as *mut uint8).offset(0x51) as ::core::ffi::c_int
         == 0x80 as ::core::ffi::c_int
     {
         EnableNMI(game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        let ref mut fresh71 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xde2 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) = 0 as uint16;
+        let ref mut fresh71 = *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16);
         *fresh71 = (*fresh71).wrapping_add(1);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            != 0
-        {
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) != 0 {
+            if *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16)
+                as ::core::ffi::c_int
                 & 4 as ::core::ffi::c_int
                 != 0 as ::core::ffi::c_int
             {
-                if *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x9e2 as ::core::ffi::c_int as isize)
-                    as *mut uint16)
-                    != 0
-                {
+                if *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16) != 0 {
                     let mut i: ::core::ffi::c_int = 1023 as ::core::ffi::c_int;
                     while i >= 0 as ::core::ffi::c_int {
-                        (*((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x3000 as ::core::ffi::c_int as isize)
-                            as *mut Ram3000))
-                            .pause_menu_map_tilemap[i as usize] = *((&raw mut game.g_ram
-                            as *mut uint8)
-                            .offset(0x19602 as ::core::ffi::c_int as isize)
-                            as *mut uint16)
-                            .offset((i + 9471 as ::core::ffi::c_int) as isize);
+                        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
+                            .pause_menu_map_tilemap[i as usize] =
+                            *((&raw mut game.g_ram as *mut uint8).offset(0x19602) as *mut uint16)
+                                .offset((i + 9471 as ::core::ffi::c_int) as isize);
                         i -= 1;
                     }
                 } else {
@@ -11109,51 +9627,36 @@ pub unsafe fn GameOptionsMenu_5_DissolveOutScreen(game: &mut Game) {
                     while j as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                         == 0 as ::core::ffi::c_int
                     {
-                        (*((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x3000 as ::core::ffi::c_int as isize)
-                            as *mut Ram3000))
-                            .pause_menu_map_tilemap[j as usize] = *((&raw mut game.g_ram
-                            as *mut uint8)
-                            .offset(0x19602 as ::core::ffi::c_int as isize)
-                            as *mut uint16)
-                            .offset(
-                                (j as ::core::ffi::c_int + 8447 as ::core::ffi::c_int) as isize,
-                            );
+                        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
+                            .pause_menu_map_tilemap[j as usize] =
+                            *((&raw mut game.g_ram as *mut uint8).offset(0x19602) as *mut uint16)
+                                .offset(
+                                    (j as ::core::ffi::c_int + 8447 as ::core::ffi::c_int) as isize,
+                                );
                         j = j.wrapping_sub(1);
                     }
                 }
-                *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 0 as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) = 0 as uint16;
                 OptionsMenuFunc7(game);
-                *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 1 as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) = 1 as uint16;
                 OptionsMenuFunc7(game);
-                *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 4 as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) = 4 as uint16;
                 CreateOptionsMenuObject_(
                     4 as uint16,
                     addr_stru_82F4D0 as ::core::ffi::c_int as uint16,
                     game,
                 );
             } else {
-                if *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x9e2 as ::core::ffi::c_int as isize)
-                    as *mut uint16)
-                    != 0
-                {
+                if *((&raw mut game.g_ram as *mut uint8).offset(0x9e2) as *mut uint16) != 0 {
                     k = 1023 as uint16;
                     while k as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                         == 0 as ::core::ffi::c_int
                     {
-                        v1 = *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x19602 as ::core::ffi::c_int as isize)
-                            as *mut uint16)
+                        v1 = *((&raw mut game.g_ram as *mut uint8).offset(0x19602) as *mut uint16)
                             .offset(
                                 (k as ::core::ffi::c_int + 7423 as ::core::ffi::c_int) as isize,
                             );
-                        (*((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x3000 as ::core::ffi::c_int as isize)
-                            as *mut Ram3000))
+                        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
                             .pause_menu_map_tilemap[k as usize] = v1;
                         k = k.wrapping_sub(1);
                     }
@@ -11162,15 +9665,11 @@ pub unsafe fn GameOptionsMenu_5_DissolveOutScreen(game: &mut Game) {
                     while m as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                         == 0 as ::core::ffi::c_int
                     {
-                        v1 = *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x19602 as ::core::ffi::c_int as isize)
-                            as *mut uint16)
+                        v1 = *((&raw mut game.g_ram as *mut uint8).offset(0x19602) as *mut uint16)
                             .offset(
                                 (m as ::core::ffi::c_int + 6399 as ::core::ffi::c_int) as isize,
                             );
-                        (*((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x3000 as ::core::ffi::c_int as isize)
-                            as *mut Ram3000))
+                        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
                             .pause_menu_map_tilemap[m as usize] = v1;
                         m = m.wrapping_sub(1);
                     }
@@ -11187,12 +9686,10 @@ pub unsafe fn GameOptionsMenu_5_DissolveOutScreen(game: &mut Game) {
             n = 1023 as uint16;
             while n as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int
             {
-                (*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-                    as *mut Ram3000))
-                    .pause_menu_map_tilemap[n as usize] = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x19602 as ::core::ffi::c_int as isize)
-                    as *mut uint16)
-                    .offset((n as ::core::ffi::c_int + 5375 as ::core::ffi::c_int) as isize);
+                (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
+                    .pause_menu_map_tilemap[n as usize] =
+                    *((&raw mut game.g_ram as *mut uint8).offset(0x19602) as *mut uint16)
+                        .offset((n as ::core::ffi::c_int + 5375 as ::core::ffi::c_int) as isize);
                 n = n.wrapping_sub(1);
             }
             OptionsMenuFunc4(game);
@@ -11203,44 +9700,31 @@ pub unsafe fn GameOptionsMenu_5_DissolveOutScreen(game: &mut Game) {
 }
 pub unsafe fn GameOptionsMenu_6_DissolveInScreen(game: &mut Game) {
     HandleFadeIn(game);
-    if *(&raw mut game.g_ram as *mut uint8).offset(0x57 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
+    if *(&raw mut game.g_ram as *mut uint8).offset(0x57) as ::core::ffi::c_int
         != 3 as ::core::ffi::c_int
     {
-        let ref mut fresh72 =
-            *(&raw mut game.g_ram as *mut uint8).offset(0x57 as ::core::ffi::c_int as isize);
+        let ref mut fresh72 = *(&raw mut game.g_ram as *mut uint8).offset(0x57);
         *fresh72 = (*fresh72 as ::core::ffi::c_int - 16 as ::core::ffi::c_int) as uint8;
     }
-    if *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
+    if *(&raw mut game.g_ram as *mut uint8).offset(0x51) as ::core::ffi::c_int
         == 15 as ::core::ffi::c_int
     {
-        *(&raw mut game.g_ram as *mut uint8).offset(0x57 as ::core::ffi::c_int as isize) =
-            0 as uint8;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            != 0
-        {
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+        *(&raw mut game.g_ram as *mut uint8).offset(0x57) = 0 as uint8;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) != 0 {
+            if *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16)
+                as ::core::ffi::c_int
                 & 4 as ::core::ffi::c_int
                 != 0 as ::core::ffi::c_int
             {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 8 as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) = 8 as uint16;
             } else {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 7 as uint16;
+                *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) = 7 as uint16;
             }
-            *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) = 0 as uint16;
         } else {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 3 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) = 3 as uint16;
         }
     }
 }
@@ -11252,43 +9736,34 @@ static kGameOptionsMenuSpecialSettings: [Option<Func_V>; 3] = unsafe {
     ]
 };
 pub unsafe fn GameOptionsMenu_8_SpecialSettings(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int
         & kButton_Up as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
         QueueSfx1_Max6(0x37 as uint16, game);
-        let ref mut fresh75 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x99e as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let ref mut fresh75 = *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16);
         *fresh75 = (*fresh75).wrapping_sub(1);
         if *fresh75 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-                as *mut uint16) = 2 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) = 2 as uint16;
         }
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16)
+        as ::core::ffi::c_int
         & kButton_Down as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
         QueueSfx1_Max6(0x37 as uint16, game);
-        let ref mut fresh76 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x99e as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let ref mut fresh76 = *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16);
         *fresh76 = (*fresh76).wrapping_add(1);
         if *fresh76 as ::core::ffi::c_int == 3 as ::core::ffi::c_int {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) = 0 as uint16;
         }
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
     {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int
             & (kButton_Start as ::core::ffi::c_int
                 | kButton_Left as ::core::ffi::c_int
                 | kButton_Right as ::core::ffi::c_int
@@ -11296,15 +9771,13 @@ pub unsafe fn GameOptionsMenu_8_SpecialSettings(game: &mut Game) {
             != 0 as ::core::ffi::c_int
         {
             QueueSfx1_Max6(0x38 as uint16, game);
-            kGameOptionsMenuSpecialSettings[*((&raw mut game.g_ram as *mut uint8)
-                .offset(0x99e as ::core::ffi::c_int as isize)
-                as *mut uint16) as usize]
+            kGameOptionsMenuSpecialSettings
+                [*((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) as usize]
                 .expect("non-null function pointer")(game);
         }
     } else {
         QueueSfx1_Max6(0x38 as uint16, game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) = 0 as uint16;
         GameOptionsMenuItemFunc_4(game);
     };
 }
@@ -11316,10 +9789,8 @@ pub unsafe fn GameOptionsMenuSpecialSettings_0(game: &mut Game) {
                 | 0x82f0ae as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
                 & 0x3fffff as ::core::ffi::c_int) as isize,
         ) as *const uint8 as *mut uint16)
-            .offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
-            ) as uint16_t,
+            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) as isize)
+            as uint16_t,
         game,
     );
     if *(v0 as *mut uint16) != 0 {
@@ -11330,8 +9801,7 @@ pub unsafe fn GameOptionsMenuSpecialSettings_0(game: &mut Game) {
     OptionsMenuFunc7(game);
 }
 pub unsafe fn GameOptionsMenuSpecialSettings_2(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) = 0 as uint16;
     GameOptionsMenuItemFunc_4(game);
 }
 static g_word_82F149: [uint16; 4] = [
@@ -11348,8 +9818,8 @@ static g_word_82F151: [uint16; 4] = [
 ];
 pub unsafe fn OptionsMenuFunc7(game: &mut Game) {
     let mut v0: uint16 = (4 as ::core::ffi::c_int
-        * *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as uint16;
+        * *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) as ::core::ffi::c_int)
+        as uint16;
     if *(RomPtr_RAM(
         *(game.g_rom.offset(
             (((0x82f0ae as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -11357,10 +9827,8 @@ pub unsafe fn OptionsMenuFunc7(game: &mut Game) {
                 | 0x82f0ae as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
                 & 0x3fffff as ::core::ffi::c_int) as isize,
         ) as *const uint8 as *mut uint16)
-            .offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
-            ) as uint16_t,
+            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) as isize)
+            as uint16_t,
         game,
     ) as *mut uint16)
         != 0
@@ -11368,8 +9836,8 @@ pub unsafe fn OptionsMenuFunc7(game: &mut Game) {
         OptionsMenuFunc5(
             0 as uint16,
             g_word_82F149[((4 as ::core::ffi::c_int
-                * *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int) as uint16
+                * *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16)
+                    as ::core::ffi::c_int) as uint16
                 as ::core::ffi::c_int
                 >> 1 as ::core::ffi::c_int) as usize],
             0xc as uint16,
@@ -11399,8 +9867,8 @@ pub unsafe fn OptionsMenuFunc7(game: &mut Game) {
         OptionsMenuFunc5(
             0x400 as uint16,
             g_word_82F149[((4 as ::core::ffi::c_int
-                * *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int) as uint16
+                * *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16)
+                    as ::core::ffi::c_int) as uint16
                 as ::core::ffi::c_int
                 >> 1 as ::core::ffi::c_int) as usize],
             0xc as uint16,
@@ -11447,63 +9915,47 @@ static word_82F204: [uint16; 16] = [
     0x80 as ::core::ffi::c_int as uint16,
 ];
 pub unsafe fn GameOptionsMenu_7_ControllerSettings(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int
         & kButton_Up as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
         QueueSfx1_Max6(0x37 as uint16, game);
-        let ref mut fresh73 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x99e as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        let ref mut fresh73 = *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16);
         *fresh73 = (*fresh73).wrapping_sub(1);
         let mut v0: uint16 = *fresh73;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
         {
             if v0 as ::core::ffi::c_int != 6 as ::core::ffi::c_int {
                 return;
             }
-            *((&raw mut game.g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 10 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) = 10 as uint16;
             return;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-            as *mut uint16) = 8 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 9 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) = 8 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) = 9 as uint16;
         return;
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int
         & kButton_Down as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
         QueueSfx1_Max6(0x37 as uint16, game);
-        let mut v1: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x99e as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        let mut v1: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16)
+            as ::core::ffi::c_int
             + 1 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-            as *mut uint16) = v1;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) = v1;
         if v1 as ::core::ffi::c_int == 7 as ::core::ffi::c_int {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 9 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) = 9 as uint16;
             return;
         }
         if v1 as ::core::ffi::c_int == 9 as ::core::ffi::c_int {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 10 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) = 0 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) = 10 as uint16;
             return;
         }
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
+    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) != 0 {
         QueueSfx1_Max6(0x38 as uint16, game);
         static kOptionsMenuControllerFuncs: [Option<Func_V>; 9] = unsafe {
             [
@@ -11518,120 +9970,91 @@ pub unsafe fn GameOptionsMenu_7_ControllerSettings(game: &mut Game) {
                 Some(OptionsMenuControllerFunc_8 as unsafe fn(&mut Game) -> ()),
             ]
         };
-        kOptionsMenuControllerFuncs[*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x99e as ::core::ffi::c_int as isize)
-            as *mut uint16) as usize]
+        kOptionsMenuControllerFuncs
+            [*((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) as usize]
             .expect("non-null function pointer")(game);
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x91 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x91) as *mut uint16)
+        as ::core::ffi::c_int
         != 0
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        && *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) as ::core::ffi::c_int
             == 8 as ::core::ffi::c_int
-        && *((&raw mut game.g_ram as *mut uint8).offset(0xde0 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        && *((&raw mut game.g_ram as *mut uint8).offset(0xde0) as *mut uint16) as ::core::ffi::c_int
             - 16 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             != 0
     {
-        if word_82F204[*((&raw mut game.g_ram as *mut uint8)
-            .offset(0xde0 as ::core::ffi::c_int as isize) as *mut uint16)
-            as usize] as ::core::ffi::c_int
-            & *((&raw mut game.g_ram as *mut uint8).offset(0x91 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-            == word_82F204[*((&raw mut game.g_ram as *mut uint8)
-                .offset(0xde0 as ::core::ffi::c_int as isize)
-                as *mut uint16) as usize] as ::core::ffi::c_int
+        if word_82F204[*((&raw mut game.g_ram as *mut uint8).offset(0xde0) as *mut uint16) as usize]
+            as ::core::ffi::c_int
+            & *((&raw mut game.g_ram as *mut uint8).offset(0x91) as *mut uint16)
+                as ::core::ffi::c_int
+            == word_82F204
+                [*((&raw mut game.g_ram as *mut uint8).offset(0xde0) as *mut uint16) as usize]
+                as ::core::ffi::c_int
         {
-            let ref mut fresh74 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xde0 as ::core::ffi::c_int as isize)
-                as *mut uint16);
+            let ref mut fresh74 =
+                *((&raw mut game.g_ram as *mut uint8).offset(0xde0) as *mut uint16);
             *fresh74 = (*fresh74).wrapping_add(1);
         } else {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xde0 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xde0) as *mut uint16) = 0 as uint16;
         }
     }
 }
 pub unsafe fn OptionsMenuControllerFunc_8(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int
         & (kButton_Start as ::core::ffi::c_int | kButton_A as ::core::ffi::c_int)
         != 0 as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9b2 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 64 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9b4 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 128 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9b6 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0x8000 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9b8 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0x4000 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9ba as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0x2000 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9be as ::core::ffi::c_int as isize)
-            as *mut uint16) = 16 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9bc as ::core::ffi::c_int as isize)
-            as *mut uint16) = 32 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x9b2) as *mut uint16) = 64 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x9b4) as *mut uint16) = 128 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x9b6) as *mut uint16) = 0x8000 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x9b8) as *mut uint16) = 0x4000 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x9ba) as *mut uint16) = 0x2000 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x9be) as *mut uint16) = 16 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x9bc) as *mut uint16) = 32 as uint16;
         LoadControllerOptionsFromControllerBindings(game);
         OptionsMenuFunc6(game);
     }
 }
 pub unsafe fn OptionsMenuControllerFunc_7(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int
         & (kButton_Start as ::core::ffi::c_int | kButton_A as ::core::ffi::c_int)
         != 0 as ::core::ffi::c_int
         && OptionsMenuFunc8(game) == 0
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) = 0 as uint16;
         GameOptionsMenuItemFunc_4(game);
     }
 }
 pub unsafe fn GameOptionsMenu_9_ScrollControllerSettingsDown(game: &mut Game) {
-    let ref mut fresh77 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb3 as ::core::ffi::c_int as isize) as *mut uint16);
+    let ref mut fresh77 = *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16);
     *fresh77 = (*fresh77 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) as ::core::ffi::c_int
         == 32 as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 7 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) = 7 as uint16;
     }
 }
 pub unsafe fn GameOptionsMenu_A_ScrollControllerSettingsUp(game: &mut Game) {
-    let ref mut fresh78 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb3 as ::core::ffi::c_int as isize) as *mut uint16);
+    let ref mut fresh78 = *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16);
     *fresh78 = (*fresh78 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        == 0
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 7 as uint16;
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) == 0 {
+        *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) = 7 as uint16;
     }
 }
 pub unsafe fn sub_82F296(mut j: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
-        as *mut uint16)
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
         .offset((v1 + 13 as ::core::ffi::c_int) as isize) = 24 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7 as ::core::ffi::c_int as isize)
-        as *mut uint16)
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16)
         .offset((v1 + 3 as ::core::ffi::c_int) as isize) = 56 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7 as ::core::ffi::c_int as isize)
-        as *mut uint16)
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16)
         .offset((v1 + 11 as ::core::ffi::c_int) as isize) = 3584 as uint16;
 }
 pub unsafe fn OptionsPreInstr_F2A9(mut v0: uint16, game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) as ::core::ffi::c_int
         == kGameState_2_GameOptionsMenu as ::core::ffi::c_int
     {
-        let mut v2: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xde2 as ::core::ffi::c_int as isize)
+        let mut v2: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0xde2)
             as *mut uint16) as ::core::ffi::c_int;
         let mut v3: uint16 = *(game.g_rom.offset(
             (((0x82f2ed as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -11644,139 +10067,104 @@ pub unsafe fn OptionsPreInstr_F2A9(mut v0: uint16, game: &mut Game) {
             let mut v4: *const uint16 = RomPtr_82(
                 (v3 as ::core::ffi::c_int
                     + 4 as ::core::ffi::c_int
-                        * *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x99e as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int) as uint16_t,
+                        * *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16)
+                            as ::core::ffi::c_int) as uint16_t,
                 game,
             ) as *const uint16;
             let mut v5: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
                 .offset((v5 + 13 as ::core::ffi::c_int) as isize) = *v4;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset((v5 + 3 as ::core::ffi::c_int) as isize) =
-                *v4.offset(1 as ::core::ffi::c_int as isize);
+            *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16)
+                .offset((v5 + 3 as ::core::ffi::c_int) as isize) = *v4.offset(1);
         } else {
             let mut v6: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
                 .offset((v6 + 13 as ::core::ffi::c_int) as isize) = 384 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16)
                 .offset((v6 + 3 as ::core::ffi::c_int) as isize) = 16 as uint16;
         }
     } else {
         let mut v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16)
             .offset((v1 + 15 as ::core::ffi::c_int) as isize) = 1 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1adb as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16)
             .offset((v1 + 17 as ::core::ffi::c_int) as isize) =
             addr_off_82F4B6 as ::core::ffi::c_int as uint16;
     };
 }
 pub unsafe fn sub_82F34B(mut j: uint16, game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(
-            ((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 13 as ::core::ffi::c_int)
-                as isize,
-        ) = 124 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(
+        ((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 13 as ::core::ffi::c_int) as isize,
+    ) = 124 as uint16;
     sub_82F369(j, game);
 }
 pub unsafe fn sub_82F353(mut j: uint16, game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(
-            ((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 13 as ::core::ffi::c_int)
-                as isize,
-        ) = 132 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(
+        ((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 13 as ::core::ffi::c_int) as isize,
+    ) = 132 as uint16;
     sub_82F369(j, game);
 }
 pub unsafe fn sub_82F35B(mut j: uint16, game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(
-            ((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 13 as ::core::ffi::c_int)
-                as isize,
-        ) = 128 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(
+        ((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 13 as ::core::ffi::c_int) as isize,
+    ) = 128 as uint16;
     sub_82F369(j, game);
 }
 pub unsafe fn sub_82F363(mut j: uint16, game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(
-            ((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 13 as ::core::ffi::c_int)
-                as isize,
-        ) = 128 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(
+        ((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 13 as ::core::ffi::c_int) as isize,
+    ) = 128 as uint16;
     sub_82F369(j, game);
 }
 pub unsafe fn sub_82F369(mut j: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7 as ::core::ffi::c_int as isize)
-        as *mut uint16)
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16)
         .offset((v1 + 3 as ::core::ffi::c_int) as isize) = 16 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7 as ::core::ffi::c_int as isize)
-        as *mut uint16)
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16)
         .offset((v1 + 11 as ::core::ffi::c_int) as isize) = 3584 as uint16;
 }
 pub unsafe fn OptionsPreInstr_F376(mut k: uint16, game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) as ::core::ffi::c_int
         != kGameState_2_GameOptionsMenu as ::core::ffi::c_int
-        || *((&raw mut game.g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        || *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) as ::core::ffi::c_int
             == 6 as ::core::ffi::c_int
-            && *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
-                as ::core::ffi::c_int
+            && *(&raw mut game.g_ram as *mut uint8).offset(0x51) as ::core::ffi::c_int
                 == 0x80 as ::core::ffi::c_int
     {
         let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16)
             .offset((v1 + 15 as ::core::ffi::c_int) as isize) = 1 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1adb as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16)
             .offset((v1 + 17 as ::core::ffi::c_int) as isize) =
             addr_off_82F4B6 as ::core::ffi::c_int as uint16;
     }
 }
 pub unsafe fn OptionsPreInstr_F3A0(mut k: uint16, game: &mut Game) {
-    match *((&raw mut game.g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    match *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) as ::core::ffi::c_int
     {
         6 => {
-            if *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
-                as ::core::ffi::c_int
+            if *(&raw mut game.g_ram as *mut uint8).offset(0x51) as ::core::ffi::c_int
                 == 0x80 as ::core::ffi::c_int
             {
                 let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
-                    as *mut uint16)
+                *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16)
                     .offset((v1 + 15 as ::core::ffi::c_int) as isize) = 1 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1adb as ::core::ffi::c_int as isize)
-                    as *mut uint16)
+                *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16)
                     .offset((v1 + 17 as ::core::ffi::c_int) as isize) =
                     -(2890 as ::core::ffi::c_int) as uint16;
             }
         }
         9 => {
-            let ref mut fresh121 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x1ab7 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(
+            let ref mut fresh121 =
+                *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(
                     ((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 3 as ::core::ffi::c_int)
                         as isize,
                 );
             *fresh121 = (*fresh121 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
         }
         10 => {
-            let ref mut fresh122 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x1ab7 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(
+            let ref mut fresh122 =
+                *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(
                     ((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 3 as ::core::ffi::c_int)
                         as isize,
                 );
@@ -11786,61 +10174,48 @@ pub unsafe fn OptionsPreInstr_F3A0(mut k: uint16, game: &mut Game) {
     };
 }
 pub unsafe fn OptionsPreInstr_F3E2(mut k: uint16, game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) as ::core::ffi::c_int
         == 6 as ::core::ffi::c_int
-        && *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
-            as ::core::ffi::c_int
+        && *(&raw mut game.g_ram as *mut uint8).offset(0x51) as ::core::ffi::c_int
             == 0x80 as ::core::ffi::c_int
     {
         let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16)
             .offset((v1 + 15 as ::core::ffi::c_int) as isize) = 1 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1adb as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16)
             .offset((v1 + 17 as ::core::ffi::c_int) as isize) =
             -(2890 as ::core::ffi::c_int) as uint16;
     }
 }
 pub unsafe fn sub_82F404(mut k: uint16, game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) as ::core::ffi::c_int
         == 1 as ::core::ffi::c_int
     {
         let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16)
             .offset((v1 + 15 as ::core::ffi::c_int) as isize) = 1 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1adb as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16)
             .offset((v1 + 17 as ::core::ffi::c_int) as isize) =
             -(2890 as ::core::ffi::c_int) as uint16;
     }
 }
 pub unsafe fn sub_82F419(mut j: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
-        as *mut uint16)
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
         .offset((v1 + 13 as ::core::ffi::c_int) as isize) = 216 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7 as ::core::ffi::c_int as isize)
-        as *mut uint16)
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16)
         .offset((v1 + 3 as ::core::ffi::c_int) as isize) = 16 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7 as ::core::ffi::c_int as isize)
-        as *mut uint16)
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16)
         .offset((v1 + 11 as ::core::ffi::c_int) as isize) = 3584 as uint16;
 }
 pub unsafe fn OptionsPreInstr_F42C(mut k: uint16, game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) as ::core::ffi::c_int
         != 2 as ::core::ffi::c_int
     {
         let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16)
             .offset((v1 + 15 as ::core::ffi::c_int) as isize) = 1 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1adb as ::core::ffi::c_int as isize)
-            as *mut uint16)
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16)
             .offset((v1 + 17 as ::core::ffi::c_int) as isize) =
             addr_off_82F4B6 as ::core::ffi::c_int as uint16;
     }
@@ -11865,34 +10240,29 @@ pub unsafe fn LoadControllerOptionsFromControllerBindings(game: &mut Game) {
         } else if v2 as ::core::ffi::c_int & kButton_A as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1b23 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16)
                 .offset((v1 + 13 as ::core::ffi::c_int) as isize) = 1 as uint16;
             current_block_13 = 2720989448508244618;
         } else if (v2 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1b23 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16)
                 .offset((v1 + 13 as ::core::ffi::c_int) as isize) = 2 as uint16;
             current_block_13 = 2720989448508244618;
         } else if v2 as ::core::ffi::c_int & kButton_Select as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1b23 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16)
                 .offset((v1 + 13 as ::core::ffi::c_int) as isize) = 3 as uint16;
             current_block_13 = 2720989448508244618;
         } else if v2 as ::core::ffi::c_int & kButton_Y as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1b23 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16)
                 .offset((v1 + 13 as ::core::ffi::c_int) as isize) = 4 as uint16;
             current_block_13 = 2720989448508244618;
         } else if v2 as ::core::ffi::c_int & kButton_L as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1b23 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16)
                 .offset((v1 + 13 as ::core::ffi::c_int) as isize) = 5 as uint16;
             current_block_13 = 2720989448508244618;
         } else if v2 as ::core::ffi::c_int & kButton_R as ::core::ffi::c_int
@@ -11900,15 +10270,13 @@ pub unsafe fn LoadControllerOptionsFromControllerBindings(game: &mut Game) {
         {
             current_block_13 = 4528428927647462225;
         } else {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1b23 as ::core::ffi::c_int as isize)
-                as *mut uint16)
+            *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16)
                 .offset((v1 + 13 as ::core::ffi::c_int) as isize) = 6 as uint16;
             current_block_13 = 2720989448508244618;
         }
         match current_block_13 {
             4528428927647462225 => {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1b23 as ::core::ffi::c_int as isize)
-                    as *mut uint16)
+                *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16)
                     .offset((v1 + 13 as ::core::ffi::c_int) as isize) = 0 as uint16;
             }
             _ => {}
@@ -11946,8 +10314,7 @@ pub unsafe fn OptionsMenuFunc8(game: &mut Game) -> uint8 {
             ) as *const uint8 as *mut uint16)
                 .offset((v0 >> 1 as ::core::ffi::c_int) as isize) as isize,
         ) as *mut uint8 as *mut uint16) = word_82F575[*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x1b23 as ::core::ffi::c_int as isize)
-            as *mut uint16)
+            .offset(0x1b23) as *mut uint16)
             .offset(((v0 >> 1 as ::core::ffi::c_int) + 13 as ::core::ffi::c_int) as isize)
             as usize] as uint16;
         v0 += 2 as ::core::ffi::c_int;
@@ -11986,48 +10353,35 @@ pub unsafe fn OptionsMenuFunc6(game: &mut Game) {
                     & 0x3fffff as ::core::ffi::c_int) as isize,
             ) as *const uint8 as *mut uint16)
                 .offset(
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x1b23 as ::core::ffi::c_int as isize)
-                        as *mut uint16)
+                    *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16)
                         .offset((v1 + 13 as ::core::ffi::c_int) as isize)
                         as isize,
                 ) as uint16_t,
             game,
         ) as *const uint16;
-        *((&raw mut (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x3000 as ::core::ffi::c_int as isize) as *mut Ram3000))
+        *((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap as *mut uint16 as *mut uint8)
             .offset(v2 as ::core::ffi::c_int as isize) as *mut uint16) = *v3;
-        *(((&raw mut (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x3000 as ::core::ffi::c_int as isize) as *mut Ram3000))
+        *(((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap as *mut uint16)
-            .offset(1 as ::core::ffi::c_int as isize) as *mut uint16 as *mut uint8)
-            .offset(v2 as ::core::ffi::c_int as isize) as *mut uint16) =
-            *v3.offset(1 as ::core::ffi::c_int as isize);
-        *(((&raw mut (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x3000 as ::core::ffi::c_int as isize) as *mut Ram3000))
+            .offset(1) as *mut uint16 as *mut uint8)
+            .offset(v2 as ::core::ffi::c_int as isize) as *mut uint16) = *v3.offset(1);
+        *(((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap as *mut uint16)
-            .offset(2 as ::core::ffi::c_int as isize) as *mut uint16 as *mut uint8)
-            .offset(v2 as ::core::ffi::c_int as isize) as *mut uint16) =
-            *v3.offset(2 as ::core::ffi::c_int as isize);
-        *(((&raw mut (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x3000 as ::core::ffi::c_int as isize) as *mut Ram3000))
+            .offset(2) as *mut uint16 as *mut uint8)
+            .offset(v2 as ::core::ffi::c_int as isize) as *mut uint16) = *v3.offset(2);
+        *(((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap as *mut uint16)
-            .offset(32 as ::core::ffi::c_int as isize) as *mut uint16 as *mut uint8)
-            .offset(v2 as ::core::ffi::c_int as isize) as *mut uint16) =
-            *v3.offset(3 as ::core::ffi::c_int as isize);
-        *(((&raw mut (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x3000 as ::core::ffi::c_int as isize) as *mut Ram3000))
+            .offset(32) as *mut uint16 as *mut uint8)
+            .offset(v2 as ::core::ffi::c_int as isize) as *mut uint16) = *v3.offset(3);
+        *(((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap as *mut uint16)
-            .offset(33 as ::core::ffi::c_int as isize) as *mut uint16 as *mut uint8)
-            .offset(v2 as ::core::ffi::c_int as isize) as *mut uint16) =
-            *v3.offset(4 as ::core::ffi::c_int as isize);
-        *(((&raw mut (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x3000 as ::core::ffi::c_int as isize) as *mut Ram3000))
+            .offset(33) as *mut uint16 as *mut uint8)
+            .offset(v2 as ::core::ffi::c_int as isize) as *mut uint16) = *v3.offset(4);
+        *(((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap as *mut uint16)
-            .offset(34 as ::core::ffi::c_int as isize) as *mut uint16 as *mut uint8)
-            .offset(v2 as ::core::ffi::c_int as isize) as *mut uint16) =
-            *v3.offset(5 as ::core::ffi::c_int as isize);
+            .offset(34) as *mut uint16 as *mut uint8)
+            .offset(v2 as ::core::ffi::c_int as isize) as *mut uint16) = *v3.offset(5);
         v0 = (v4 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
         if !(((v4 as ::core::ffi::c_int - 12 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int)
@@ -12035,65 +10389,53 @@ pub unsafe fn OptionsMenuFunc6(game: &mut Game) {
             break;
         }
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x1b47 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(0)
+        as ::core::ffi::c_int
         != 5 as ::core::ffi::c_int
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x1b47 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
+        && *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(0)
+            as ::core::ffi::c_int
             != 6 as ::core::ffi::c_int
     {
-        *((&raw mut (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x3000 as ::core::ffi::c_int as isize) as *mut Ram3000))
+        *((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .menu
             .backup_of_io_registers_in_gameover as *mut uint8)
-            .offset(46 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint32) =
+            .offset(46) as *mut uint8 as *mut uint32) =
             *(&raw const g_word_82F6AD as *const uint16 as *mut uint32);
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap[665 as ::core::ffi::c_int as usize] =
             g_word_82F6AD[2 as ::core::ffi::c_int as usize];
-        *((&raw mut (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x3000 as ::core::ffi::c_int as isize) as *mut Ram3000))
+        *((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .menu
             .field_536 as *mut uint8)
-            .offset(56 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint32) =
-            *((&raw const g_word_82F6AD as *const uint16).offset(3 as ::core::ffi::c_int as isize)
-                as *const uint16 as *mut uint32);
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
+            .offset(56) as *mut uint8 as *mut uint32) =
+            *((&raw const g_word_82F6AD as *const uint16).offset(3) as *const uint16
+                as *mut uint32);
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap[697 as ::core::ffi::c_int as usize] =
             g_word_82F6AD[5 as ::core::ffi::c_int as usize];
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x1b47 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(1)
+        as ::core::ffi::c_int
         != 5 as ::core::ffi::c_int
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x1b47 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
+        && *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(1)
+            as ::core::ffi::c_int
             != 6 as ::core::ffi::c_int
     {
-        *((&raw mut (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x3000 as ::core::ffi::c_int as isize) as *mut Ram3000))
+        *((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .menu
             .field_536 as *mut uint8)
-            .offset(184 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint32) =
+            .offset(184) as *mut uint8 as *mut uint32) =
             *(&raw const g_word_82F6AD as *const uint16 as *mut uint32);
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap[761 as ::core::ffi::c_int as usize] =
             g_word_82F6AD[2 as ::core::ffi::c_int as usize];
-        *((&raw mut (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x3000 as ::core::ffi::c_int as isize) as *mut Ram3000))
+        *((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .menu
             .menu_tilemap as *mut uint8)
-            .offset(46 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint32) =
-            *((&raw const g_word_82F6AD as *const uint16).offset(3 as ::core::ffi::c_int as isize)
-                as *const uint16 as *mut uint32);
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
+            .offset(46) as *mut uint8 as *mut uint32) =
+            *((&raw const g_word_82F6AD as *const uint16).offset(3) as *const uint16
+                as *mut uint32);
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap[793 as ::core::ffi::c_int as usize] =
             g_word_82F6AD[5 as ::core::ffi::c_int as usize];
     }
@@ -12102,8 +10444,7 @@ pub unsafe fn OptionsMenuControllerFunc_0(game: &mut Game) {
     let mut v0: uint16 = 12 as uint16;
     while word_82F575[(v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize]
         as ::core::ffi::c_uint
-        & *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_uint
+        & *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_uint
         == 0 as ::core::ffi::c_uint
     {
         v0 = (v0 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
@@ -12113,12 +10454,10 @@ pub unsafe fn OptionsMenuControllerFunc_0(game: &mut Game) {
     }
     let mut r18: uint16 = (v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
     let mut v1: uint16 = (2 as ::core::ffi::c_int
-        * *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        * *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) as ::core::ffi::c_int
         + 2 as ::core::ffi::c_int) as uint16;
     if 2 as ::core::ffi::c_int
-        * *((&raw mut game.g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
+        * *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) as ::core::ffi::c_int
         - 12 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         == 0
@@ -12128,12 +10467,10 @@ pub unsafe fn OptionsMenuControllerFunc_0(game: &mut Game) {
     let mut v2: uint16 = v1;
     let mut i: ::core::ffi::c_int = 5 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x1b23 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(
-                ((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 13 as ::core::ffi::c_int)
-                    as isize,
-            ) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16).offset(
+            ((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 13 as ::core::ffi::c_int)
+                as isize,
+        ) as ::core::ffi::c_int
             == r18 as ::core::ffi::c_int
         {
             break;
@@ -12146,20 +10483,14 @@ pub unsafe fn OptionsMenuControllerFunc_0(game: &mut Game) {
         }
         i -= 1;
     }
-    let mut v4: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x99e as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int;
-    let mut r20: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1b23 as ::core::ffi::c_int as isize) as *mut uint16)
+    let mut v4: ::core::ffi::c_int =
+        *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) as ::core::ffi::c_int;
+    let mut r20: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16)
         .offset((v4 + 13 as ::core::ffi::c_int) as isize);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1b23 as ::core::ffi::c_int as isize)
-        as *mut uint16)
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16)
         .offset((v4 + 13 as ::core::ffi::c_int) as isize) = r18;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1b23 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(
-            ((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 13 as ::core::ffi::c_int)
-                as isize,
-        ) = r20;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16).offset(
+        ((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 13 as ::core::ffi::c_int) as isize,
+    ) = r20;
     OptionsMenuFunc6(game);
 }

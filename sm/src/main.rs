@@ -1543,25 +1543,25 @@ unsafe fn main_0(
     let mut config_file: *const ::core::ffi::c_char = ::core::ptr::null::<::core::ffi::c_char>();
     if argc >= 2 as ::core::ffi::c_int
         && strcmp(
-            *argv.offset(0 as ::core::ffi::c_int as isize),
+            *argv.offset(0),
             b"--config\0" as *const u8 as *const ::core::ffi::c_char,
         ) == 0 as ::core::ffi::c_int
     {
-        config_file = *argv.offset(1 as ::core::ffi::c_int as isize);
+        config_file = *argv.offset(1);
         argc -= 2 as ::core::ffi::c_int;
-        argv = argv.offset(2 as ::core::ffi::c_int as isize);
+        argv = argv.offset(2);
     } else {
         SwitchDirectory();
     }
     if argc >= 1 as ::core::ffi::c_int
         && strcmp(
-            *argv.offset(0 as ::core::ffi::c_int as isize),
+            *argv.offset(0),
             b"--debug\0" as *const u8 as *const ::core::ffi::c_char,
         ) == 0 as ::core::ffi::c_int
     {
         owner.with(|game| game.g_debug_flag = true_0 != 0);
         argc -= 1 as ::core::ffi::c_int;
-        argv = argv.offset(1 as ::core::ffi::c_int as isize);
+        argv = argv.offset(1);
     }
     ParseConfigFile(config_file);
     g_snes_width = g_config.extended_aspect_ratio as ::core::ffi::c_int * 2 as ::core::ffi::c_int
@@ -1633,12 +1633,11 @@ unsafe fn main_0(
     } else {
         g_renderer_funcs = kSdlRendererFuncs;
     }
-    let mut filename: *const ::core::ffi::c_char =
-        if !(*argv.offset(0 as ::core::ffi::c_int as isize)).is_null() {
-            *argv.offset(0 as ::core::ffi::c_int as isize) as *const ::core::ffi::c_char
-        } else {
-            b"sm.smc\0" as *const u8 as *const ::core::ffi::c_char
-        };
+    let mut filename: *const ::core::ffi::c_char = if !(*argv.offset(0)).is_null() {
+        *argv.offset(0) as *const ::core::ffi::c_char
+    } else {
+        b"sm.smc\0" as *const u8 as *const ::core::ffi::c_char
+    };
     let mut snes: *mut Snes = owner.with(|game| SnesInit(filename, game));
     if snes.is_null() {
         let mut buf: [::core::ffi::c_char; 256] = [0; 256];
