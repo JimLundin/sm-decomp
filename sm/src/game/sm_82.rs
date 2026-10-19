@@ -9154,35 +9154,17 @@ pub unsafe fn WaitUntilEndOfVblankAndEnableIrq(game: &mut Game) {
 }
 pub unsafe fn PointlessFunctionStupidToo() {}
 pub unsafe fn SaveMapExploredifElevator(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x793 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 0xf as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
-    {
+    if game.elevator_door_properties_orientation() & 0x000f != 0 {
         SetElevatorsAsUsed(game);
     }
-    if (*get_DoorDef(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x78d as ::core::ffi::c_int as isize)
-            as *mut uint16),
-        game,
-    ))
-    .door_bitflags as ::core::ffi::c_int
-        & 0x40 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
-    {
+    let door = get_DoorDef(game.door_def_ptr(), game);
+    if (*door).door_bitflags & 0x40 != 0 {
         SaveExploredMapTilesToSaved(game);
     }
 }
 pub unsafe fn LoadMapExploredIfElevator(game: &mut Game) {
-    if (*get_DoorDef(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x78d as ::core::ffi::c_int as isize)
-            as *mut uint16),
-        game,
-    ))
-    .door_bitflags as ::core::ffi::c_int
-        & 0x40 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
-    {
+    let door = get_DoorDef(game.door_def_ptr(), game);
+    if (*door).door_bitflags & 0x40 != 0 {
         LoadMirrorOfExploredMapTiles(game);
     }
 }

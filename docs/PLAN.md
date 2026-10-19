@@ -14453,6 +14453,23 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Elevator map wrapper cleanup (2026-10-19): SaveMapExploredifElevator
+and LoadMapExploredIfElevator use existing named word reads and byte masks.
+The marking callback still precedes the fresh door lookup; map callbacks
+retain their original room/area contexts. Frozen 79a28a38 plus this change
+passes any% 129712/0 (257.17s) and Waver 58109/0 (140.91s), native exits 0.
+Observed prefix 20000/0 and Waver 58109/0 match full RAM/g_fail and every
+real callback/lookup boundary on 70 wrapper calls. Waver executes two map
+saves and two loads. Elevator marking has constructed coverage only.
+Six cases per wrapper check independent gate expectations using the real
+callbacks, with guarded ROM byte 2 and checked natural-state restoration.
+An injected gate mismatch is caught before candidate forwarding on frame
+11543. Independent source/observer reviews, exact stripping, frozen/source/
+input/ROM/DLL identity and clean/observed Waver non-timing diagnostics pass.
+Formatting, release build and progress pass. Own raw offsets -3, cast lines
+-12 and Rust lines -18; other counters unchanged. Next: door-transition
+dispatcher address reads; broader gameplay/credits and ownership stay open.
+
 Samus running animation delay (2026-10-19): replace the speed-booster
 helper's raw RAM casts with byte-backed reads, named animation accessors
 and explicit wrapping arithmetic. Preserve whole-word decrement with low-byte
