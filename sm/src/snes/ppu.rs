@@ -1318,6 +1318,33 @@ unsafe fn PpuDrawBackground_2bpp(
         windex = windex.wrapping_add(1);
     }
 }
+// Mode7 scroll/center words are signed 13-bit values; displacements retain
+// the original bit-13 sign selection and ten low bits.
+fn ppu_mode7_coordinates(
+    h_scroll: i16,
+    v_scroll: i16,
+    x_center: i16,
+    y_center: i16,
+) -> (i32, i32, i32, i32) {
+    let signed13 = |word: i16| i32::from(word.wrapping_shl(3) >> 3);
+    let h_scroll = signed13(h_scroll);
+    let v_scroll = signed13(v_scroll);
+    let x_center = signed13(x_center);
+    let y_center = signed13(y_center);
+    let clip = |delta: i32| {
+        if delta & 0x2000 != 0 {
+            delta | !1023
+        } else {
+            delta & 1023
+        }
+    };
+    (
+        x_center,
+        y_center,
+        clip(h_scroll - x_center),
+        clip(v_scroll - y_center),
+    )
+}
 unsafe fn PpuDrawBackground_mode7(
     mut ppu: *mut Ppu,
     mut y: uint,
@@ -1331,34 +1358,12 @@ unsafe fn PpuDrawBackground_mode7(
         return;
     }
     let mut win = ppu_windows_for_layer(ppu, sub as usize, layer as uint);
-    let mut hScroll: ::core::ffi::c_int =
-        (((*ppu).m7matrix[6 as ::core::ffi::c_int as usize] as ::core::ffi::c_int)
-            << 3 as ::core::ffi::c_int) as int16_t as ::core::ffi::c_int
-            >> 3 as ::core::ffi::c_int;
-    let mut vScroll: ::core::ffi::c_int =
-        (((*ppu).m7matrix[7 as ::core::ffi::c_int as usize] as ::core::ffi::c_int)
-            << 3 as ::core::ffi::c_int) as int16_t as ::core::ffi::c_int
-            >> 3 as ::core::ffi::c_int;
-    let mut xCenter: ::core::ffi::c_int =
-        (((*ppu).m7matrix[4 as ::core::ffi::c_int as usize] as ::core::ffi::c_int)
-            << 3 as ::core::ffi::c_int) as int16_t as ::core::ffi::c_int
-            >> 3 as ::core::ffi::c_int;
-    let mut yCenter: ::core::ffi::c_int =
-        (((*ppu).m7matrix[5 as ::core::ffi::c_int as usize] as ::core::ffi::c_int)
-            << 3 as ::core::ffi::c_int) as int16_t as ::core::ffi::c_int
-            >> 3 as ::core::ffi::c_int;
-    let mut clippedH: ::core::ffi::c_int = hScroll - xCenter;
-    let mut clippedV: ::core::ffi::c_int = vScroll - yCenter;
-    clippedH = if clippedH & 0x2000 as ::core::ffi::c_int != 0 {
-        clippedH | !(1023 as ::core::ffi::c_int)
-    } else {
-        clippedH & 1023 as ::core::ffi::c_int
-    };
-    clippedV = if clippedV & 0x2000 as ::core::ffi::c_int != 0 {
-        clippedV | !(1023 as ::core::ffi::c_int)
-    } else {
-        clippedV & 1023 as ::core::ffi::c_int
-    };
+    let (mut xCenter, mut yCenter, mut clippedH, mut clippedV) = ppu_mode7_coordinates(
+        (*ppu).m7matrix[6],
+        (*ppu).m7matrix[7],
+        (*ppu).m7matrix[4],
+        (*ppu).m7matrix[5],
+    );
     let mut mosaic_enabled: bool = (*ppu).mosaicEnabled as ::core::ffi::c_int
         & (1 as ::core::ffi::c_int) << 0 as ::core::ffi::c_int
         != 0;
@@ -2367,34 +2372,12 @@ unsafe fn ppu_getPixelForBgLayer(
     };
 }
 unsafe fn ppu_calculateMode7Starts(mut ppu: *mut Ppu, mut y: ::core::ffi::c_int) {
-    let mut hScroll: ::core::ffi::c_int =
-        (((*ppu).m7matrix[6 as ::core::ffi::c_int as usize] as ::core::ffi::c_int)
-            << 3 as ::core::ffi::c_int) as int16_t as ::core::ffi::c_int
-            >> 3 as ::core::ffi::c_int;
-    let mut vScroll: ::core::ffi::c_int =
-        (((*ppu).m7matrix[7 as ::core::ffi::c_int as usize] as ::core::ffi::c_int)
-            << 3 as ::core::ffi::c_int) as int16_t as ::core::ffi::c_int
-            >> 3 as ::core::ffi::c_int;
-    let mut xCenter: ::core::ffi::c_int =
-        (((*ppu).m7matrix[4 as ::core::ffi::c_int as usize] as ::core::ffi::c_int)
-            << 3 as ::core::ffi::c_int) as int16_t as ::core::ffi::c_int
-            >> 3 as ::core::ffi::c_int;
-    let mut yCenter: ::core::ffi::c_int =
-        (((*ppu).m7matrix[5 as ::core::ffi::c_int as usize] as ::core::ffi::c_int)
-            << 3 as ::core::ffi::c_int) as int16_t as ::core::ffi::c_int
-            >> 3 as ::core::ffi::c_int;
-    let mut clippedH: ::core::ffi::c_int = hScroll - xCenter;
-    let mut clippedV: ::core::ffi::c_int = vScroll - yCenter;
-    clippedH = if clippedH & 0x2000 as ::core::ffi::c_int != 0 {
-        clippedH | !(1023 as ::core::ffi::c_int)
-    } else {
-        clippedH & 1023 as ::core::ffi::c_int
-    };
-    clippedV = if clippedV & 0x2000 as ::core::ffi::c_int != 0 {
-        clippedV | !(1023 as ::core::ffi::c_int)
-    } else {
-        clippedV & 1023 as ::core::ffi::c_int
-    };
+    let (mut xCenter, mut yCenter, mut clippedH, mut clippedV) = ppu_mode7_coordinates(
+        (*ppu).m7matrix[6],
+        (*ppu).m7matrix[7],
+        (*ppu).m7matrix[4],
+        (*ppu).m7matrix[5],
+    );
     if (*ppu).bgLayer[0 as ::core::ffi::c_int as usize].mosaicEnabled as ::core::ffi::c_int != 0
         && (*ppu).mosaicSize as ::core::ffi::c_int > 1 as ::core::ffi::c_int
     {

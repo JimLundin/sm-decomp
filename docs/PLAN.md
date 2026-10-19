@@ -17890,6 +17890,35 @@ Other concurrent gameplay changes retain their own checks. No probes,
 temporary tooling, ROM or derived assets are committed. Continue larger
 coherent state/handler families and normal-input route coverage.
 
+Mode7 coordinate setup family (2026-10-19): jscpd exact clone
+discovery and ast-grep complete CST functions select both renderer paths.
+Share their four signed-13 scroll/center conversions and two displacement
+clips in a pure safe helper. Argument reads retain matrix order 6/7/4/5;
+the original integer intermediates have no observable operations between
+them. Signed-word shift truncation and bit-13 clip selection remain exact.
+Each caller retains its gate, mosaic/row width, matrix products, pixel
+drawing or start-field stores. Those suffixes differ and remain separate.
+
+Freshly extracted original/current coordinate execution agrees in 3948543
+comparisons: each of four words sweeps all 65536 inputs against 15 boundaries,
+plus all 16383 attainable signed-13 displacements. This is not every word
+combination. Actual original/current PPU routines agree in 12288 complete
+initialized PPU-state/pixel comparisons across six paths, 1024 seeds and
+masked/unmasked screens. Both changed Mode7 paths contribute 4096 comparisons,
+varying scroll/center words and flip/field/fill flags. The legacy path compares
+its resulting m7startX/Y fields; the optimized path compares actual drawing.
+Constructed states do not establish every mosaic branch or SNES accuracy.
+
+Frozen 9dff7cbd plus only this change passes full any% 129712/0
+(205.15s) and Speed Booster 148406/0 (258.67s), native exits 0,
+with fixed source/library/DLL/ROM/movie hashes. Exact reconstruction permits
+only the shared coordinate sequence and its two calls; all other frozen
+sources match. Cargo fmt/check, normal release (19.31s, native exit 0), diff
+check and progress pass. Own Rust lines -17, c_int cast lines -36; unsafe
+functions and raw PPU reads are unchanged. Neither fixture reaches credits.
+No temporary probes or ROM-derived assets committed. Continue larger coherent
+families and route coverage; hardware/audio/masks and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
