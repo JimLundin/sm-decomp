@@ -436,6 +436,16 @@ This is separate from the 7420/0 (17.17s) continuous 78380..85800 check on
 438e7755 plus the menu fix. Its before-85800 checkpoint belongs to that older
 library; no cross-source continuation claim is made for that checkpoint yet.
 
+Independent QC replays all 85800 frames through the unchanged clean verifier
+DLL on the same frozen a31170d6 plus beam-pickup scope: zero failures
+(148.67s), native exit 0. All diagnostics, including 28 rooms and 33 enemy
+definitions, match the original full-boot result after removing only timing
+and read-only FINAL/BEAMS logging. All 68 source/config/host files, DLL, ROM
+and copied controller input retain their hashes. Saves are isolated and SM_*
+overrides cleared. Current formatting/check, normal Cargo release (0.17s)
+and progress pass; this quality check changes no source or own residue
+counters. Later Mode 7, DMA and door-header changes retain separate checks.
+
 Formatting, normal Cargo release and progress passed with the beam source
 used here. This milestone changes no maintained Rust or own residue counts;
 inputs, checkpoints and temporary metadata remain uncommitted. Next route
