@@ -9816,6 +9816,24 @@ Held upper99BD ascent, cliff tuning, old9AD9 enemy-drop ammo and HDMA remain
 held. Full credits, gameplay/hardware, rendering/audio fidelity, masked RAM
 and ownership are unfinished. Peer hardware work and remote sync stay separate.
 
+CPU safe XCE completion (2026-10-19): exchange_carry_emulation swaps carry
+and emulation with std::mem::swap, then uses the existing flag normalization.
+The helper has no callbacks; forcing MF/XF and page-one SP in emulation,
+conditional X/Y truncation and all other flag/register behavior remain exact.
+Frozen `ecc245b5` plus this change passes 33,554,432 actual old/current
+completion cases: all 256 flags, both initial modes and every register/SP word,
+with independently asserted resulting C/E/MF/XF/SP/X/Y and full named CPU state.
+Prefix 3,600/0 (1.05s), native exit 0, executes XCE once leaving emulation at
+boot. Entry into emulation is covered by constructed comparisons, not this
+prefix. Clean full any% 129,712/0 (54.17s), native exit 0. Cargo fmt/check,
+full release/release-library builds with external SDL2, normal metadata and
+optimized frozen core/DLL pass. Live CPU matches verified source; peer PPU
+work is outside this replay. Rust lines +1 introduces the safe helper while
+removing dispatcher pointer operations; other own counters unchanged.
+Block moves remain without any% movie hits as previously recorded; this turn
+leaves them untouched. Complete gameplay/render/audio remain open. Continue
+covered CPU cleanup; TSX/ROR stay held for contextual execution.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
