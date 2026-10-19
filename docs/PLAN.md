@@ -11495,6 +11495,28 @@ map/tank route toward accessible onward passages. Old9AD9 enemy-drop ammo,
 upper99BD ascent and earlier holds remain held. Complete credits/gameplay/
 hardware, render/audio, masked RAM and ownership remain open.
 
+CPU shared plain/indexed long addresses (2026-10-19): long_address accepts
+an optional index and centralizes byte-pair wrapping for all four absolute/
+DP-long wrappers. None retains the fetched 24-bit address; indexed paths
+retain wrapping addition after operand reads and live index selection.
+Frozen `27835e26` plus this change passes 69,992,448 actual old/current
+wrapper comparisons using retained prior bodies/helper: every 24-bit address,
+every index word with sampled boundaries, all four callers. Named CPU/bus
+state, address pairs, wrapping and cycles match; constructed WRAM cases do
+not exhaust MMIO/callback mutation. Prefix 3,600/0 (2.73s) counts
+2,418/293,365/0/143,578 calls (absolute plain/X, DP plain/Y); its contextual
+coverage assertion correctly aborts for missing plain DP-long calls.
+Full instrumented any% then passes 129,712/0 (174.69s), native exit 0,
+with counts 5,067,254/16,918,501/275,433/4,292,721, covering every wrapper.
+Clean full any% passes 129,712/0 (149.82s), native exit 0. Cargo fmt/check,
+full release/release-library builds with external SDL2, normal metadata and
+frozen optimized core/DLL pass. Live CPU matches verified source; uncommitted
+peer gameplay work is outside replay. Rust lines +3 express optional index
+selection while centralizing the wrapping rule; other own counters unchanged.
+Concurrent replays prevent interpreting timings as performance measurements.
+Prior holds and complete gameplay/render/audio remain open. Continue covered
+CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
