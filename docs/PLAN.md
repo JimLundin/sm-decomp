@@ -12925,6 +12925,18 @@ Keep it this small. Add a crate only when the game code itself needs one.
 
 ## Phase 1: make the oracle a one-command check
 
+Actual Cargo artifact QC (2026-10-19): frozen b1a18b45 with the default
+release profile and with incremental=true/codegen-units=16 both passes
+any% 129712/0 and Waver 58109/0, all four native exits 0. Every non-timing
+stdout/stderr diagnostic matches. These DLL hosts link the actual Cargo
+release libraries. Clean-source audit finds only the proposed Cargo.toml
+difference; copied DLLs precede the later edit-cycle probes, contain no
+revision marker and retain their hashes through replay. Both clean Cargo
+builds pass. Current formatting and progress pass; no maintained source or
+own residue change belongs to this audit. Newer gameplay, pixel clearing
+and mask-removal changes are outside this frozen check. Turnaround timing
+measurements remain separate from these artifact-behavior checks.
+
 Native library linkage (2026-10-19): remove the redundant sm/build.rs.
 The sdl2-sys dependency already supplies SDL2; the only native libm
 import, pow, now owns its unchanged Unix linkage in platform/glsl_shader.rs.
