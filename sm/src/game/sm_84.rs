@@ -4247,75 +4247,45 @@ pub unsafe fn PlmSetup_B767_ClearShitroidInvisibleWall(mut j: uint16, game: &mut
     }
     return 0 as uint8;
 }
-pub unsafe fn PlmSetup_B76B_SaveStationTrigger(mut j: uint16, game: &mut Game) -> uint8 {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x592 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        == 0
-        && (*((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            == kPose_01_FaceR_Normal as ::core::ffi::c_int
-            || *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                == kPose_02_FaceL_Normal as ::core::ffi::c_int)
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x1e75 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            == 0
-        && *((&raw mut game.g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            & 0xf as ::core::ffi::c_int
-            == 3 as ::core::ffi::c_int
+pub unsafe fn PlmSetup_B76B_SaveStationTrigger(j: uint16, game: &mut Game) -> uint8 {
+    let read_word = |game: &Game, offset: usize| {
+        u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
+    };
+    if read_word(game, 0x592) == 0 // power_bomb_explosion_status
+        && (game.samus_pose() == kPose_01_FaceR_Normal as u16
+            || game.samus_pose() == kPose_02_FaceL_Normal as u16)
+        && read_word(game, 0x1e75) == 0 // save_station_lockout_flag
+        && game.samus_collision_direction() & 0xf == 3
     {
         CalculatePlmBlockCoords(j, game);
-        if (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - 8 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
-            >> 4 as ::core::ffi::c_int
-            == *((&raw mut game.g_ram as *mut uint8).offset(0x1c29 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-        {
-            let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-            let mut v2: uint16 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x1c87 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v1 as isize);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v1 as isize) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1c37 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v1 as isize) = 0 as uint16;
-            let mut v3: uint16 = 78 as uint16;
-            while v2 as ::core::ffi::c_int
-                != *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x1c87 as ::core::ffi::c_int as isize)
-                    as *mut uint16)
-                    .offset((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-                    as ::core::ffi::c_int
-            {
-                v3 = (v3 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
-                if v3 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-                    != 0 as ::core::ffi::c_int
-                {
-                    return 1 as uint8;
+        let samus_block = game.samus_x_pos().wrapping_sub(8) >> 4;
+        let station_block = read_word(game, 0x1c29); // plm_x_block
+        if samus_block == station_block {
+            let trigger_offset = usize::from(j >> 1) * 2;
+            let block_index = read_word(game, 0x1c87 + trigger_offset);
+            // Remove the temporary trigger before finding the station's PLM.
+            game.g_ram[0x1c87 + trigger_offset..0x1c89 + trigger_offset]
+                .copy_from_slice(&0u16.to_le_bytes());
+            game.g_ram[0x1c37 + trigger_offset..0x1c39 + trigger_offset]
+                .copy_from_slice(&0u16.to_le_bytes());
+            for slot in (0..40).rev() {
+                let slot_offset = slot * 2;
+                if read_word(game, 0x1c87 + slot_offset) == block_index {
+                    let instruction_offset = 0x1d27 + slot_offset;
+                    let instruction = read_word(game, instruction_offset).wrapping_add(1);
+                    game.g_ram[instruction_offset..instruction_offset + 2]
+                        .copy_from_slice(&instruction.to_le_bytes());
+                    let instruction = read_word(game, instruction_offset).wrapping_add(1);
+                    game.g_ram[instruction_offset..instruction_offset + 2]
+                        .copy_from_slice(&instruction.to_le_bytes());
+                    game.g_ram[0xde1c + slot_offset..0xde1e + slot_offset]
+                        .copy_from_slice(&1u16.to_le_bytes());
+                    break;
                 }
             }
-            let mut v4: ::core::ffi::c_int = v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-            let ref mut fresh8 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x1d27 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v4 as isize);
-            *fresh8 = (*fresh8).wrapping_add(1);
-            let ref mut fresh9 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x1d27 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v4 as isize);
-            *fresh9 = (*fresh9).wrapping_add(1);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xde1c as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v4 as isize) = 1 as uint16;
         }
     }
-    return 1 as uint8;
+    1
 }
 pub unsafe fn PlmSetup_B76F_SaveStation(mut j: uint16, game: &mut Game) -> uint8 {
     WriteLevelDataBlockTypeAndBts(

@@ -13700,6 +13700,29 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Save-station trigger cleanup (2026-10-19): PlmSetup_B76B_SaveStationTrigger
+now uses byte-backed words and named Samus accessors, with an explicit
+descending40-slot search. Power-bomb-status, pose, lockout and collision
+gates retain their short circuit order. Block-coordinate calculation still
+precedes the wrapped(X-8)>>4 alignment check. Trigger block/header clearing,
+first matching station, two separate wrapping instruction increments and
+timer1 retain their original order, including zero-block and no-match quirks.
+
+Frozen90f257d8 plus only this function passes any%129712/0 (322.35s),
+Waver58109/0 (144.14s) and save route71800/0 (199.68s), native exits0.
+The observed save replay71800/0 (188.17s) compares all128KiB RAM, g_fail and
+return values on all77 actual trigger calls. Gates pass46 times; one centered
+call wakes station78 at frame index71311 inA201, instructionAFEC->AFEE and
+timer1. Two calls change RAM. Lower-slot/no-match and wrapping extremes have
+source review only; they are not inferred from this route's one wake.
+
+Independent behavior/source/observation-stripping review and immutable source
+hashes pass. Formatting, normal release build and progress pass. Own raw
+offsets-14, cast lines-33 and Rust lines-30; other counters unchanged.
+Concurrent PLM queue edits are excluded from the frozen source. No diagnostic
+tooling or ROM-derived assets are committed. Complete gameplay, broader PLM
+coverage and ownership remain unfinished.
+
 Door-transition HDMA clear (2026-10-19): replace the raw pointer loop with
 safe two-byte stores for the same 256 descending pairs. All 512 destinations
 and their 9C00-before-9E00 order remain exact; field_0 retains byte indexing
