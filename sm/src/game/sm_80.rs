@@ -321,8 +321,7 @@ pub unsafe fn Vector_RESET_Async(game: &mut Game) -> CoroutineRet {
     let mut current_block_63: u64;
     match *_state_variable_ as i32 {
         1 => {
-            WriteReg(MEMSEL as u16, 1 as u8, game);
-            *(&raw mut game.g_ram as *mut u8).offset(0x86) = 1 as u8;
+            crate::rtl::write_register_and_mirror(MEMSEL as u16, 1, 0x86, false, game);
             bak = ram_word!(game, bug_fix_counter);
             memset(
                 &raw mut game.g_ram as *mut u8 as *mut ::core::ffi::c_void,
@@ -360,8 +359,7 @@ pub unsafe fn Vector_RESET_Async(game: &mut Game) -> CoroutineRet {
             0x10000 as i32 as size_t,
         );
         set_ram_word!(game.bug_fix_counter = bak);
-        WriteReg(NMITIMEN as u16, 0 as u8, game);
-        *(&raw mut game.g_ram as *mut u8).offset(0x84) = 0 as u8;
+        crate::rtl::write_register_and_mirror(NMITIMEN as u16, 0, 0x84, false, game);
         *(&raw mut game.g_ram as *mut u8).offset(0x51) = 0x8f as u8;
         InitializeCpuIoRegs(game);
         InitializePpuIoRegs(game);
@@ -464,8 +462,7 @@ pub unsafe fn SaveExploredMapTilesToSaved(game: &mut Game) {
     }
 }
 pub unsafe fn InitializeCpuIoRegs(game: &mut Game) {
-    WriteReg(NMITIMEN as u16, 1 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x84) = 1 as u8;
+    crate::rtl::write_register_and_mirror(NMITIMEN as u16, 1, 0x84, false, game);
     WriteReg(WRIO as u16, 0 as u8, game);
     WriteReg(WRMPYA as u16, 0 as u8, game);
     WriteReg(WRMPYB as u16, 0 as u8, game);
@@ -477,16 +474,12 @@ pub unsafe fn InitializeCpuIoRegs(game: &mut Game) {
     WriteReg(VTIMEL as u16, 0 as u8, game);
     WriteReg(VTIMEH as u16, 0 as u8, game);
     WriteReg(MDMAEN as u16, 0 as u8, game);
-    WriteReg(HDMAEN as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x85) = 0 as u8;
-    WriteReg(MEMSEL as u16, 1 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x86) = 1 as u8;
+    crate::rtl::write_register_and_mirror(HDMAEN as u16, 0, 0x85, false, game);
+    crate::rtl::write_register_and_mirror(MEMSEL as u16, 1, 0x86, false, game);
 }
 pub unsafe fn InitializePpuIoRegs(game: &mut Game) {
-    WriteReg(INIDISP as u16, 0x8f as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x51) = 0x8f as u8;
-    WriteReg(OBSEL as u16, 3 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x52) = 3 as u8;
+    crate::rtl::write_register_and_mirror(INIDISP as u16, 0x8f, 0x51, false, game);
+    crate::rtl::write_register_and_mirror(OBSEL as u16, 3, 0x52, false, game);
     WriteReg(OAMADDL as u16, 0 as u8, game);
     *((&raw mut game.g_ram as *mut u8).offset(0x53) as *mut u16 as *mut u8).offset(0) = 0 as u8;
     WriteReg(OAMADDH as u16, 0x80 as u8, game);
@@ -497,22 +490,14 @@ pub unsafe fn InitializePpuIoRegs(game: &mut Game) {
     ) = 0x80 as u8;
     WriteReg(OAMDATA as u16, 0 as u8, game);
     WriteReg(OAMDATA as u16, 0 as u8, game);
-    WriteReg(BGMODE as u16, 9 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x55) = 9 as u8;
-    WriteReg(MOSAIC as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x57) = 0 as u8;
-    WriteReg(BG1SC as u16, 0x40 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x58) = 64 as u8;
-    WriteReg(BG2SC as u16, 0x44 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x59) = 68 as u8;
-    WriteReg(BG3SC as u16, 0x48 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x5a) = 72 as u8;
-    WriteReg(BG4SC as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x5c) = 0 as u8;
-    WriteReg(BG12NBA as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x5d) = 0 as u8;
-    WriteReg(BG34NBA as u16, 5 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x5e) = 5 as u8;
+    crate::rtl::write_register_and_mirror(BGMODE as u16, 9, 0x55, false, game);
+    crate::rtl::write_register_and_mirror(MOSAIC as u16, 0, 0x57, false, game);
+    crate::rtl::write_register_and_mirror(BG1SC as u16, 0x40, 0x58, false, game);
+    crate::rtl::write_register_and_mirror(BG2SC as u16, 0x44, 0x59, false, game);
+    crate::rtl::write_register_and_mirror(BG3SC as u16, 0x48, 0x5a, false, game);
+    crate::rtl::write_register_and_mirror(BG4SC as u16, 0, 0x5c, false, game);
+    crate::rtl::write_register_and_mirror(BG12NBA as u16, 0, 0x5d, false, game);
+    crate::rtl::write_register_and_mirror(BG34NBA as u16, 5, 0x5e, false, game);
     WriteReg(BG1HOFS as u16, 0 as u8, game);
     WriteReg(BG1HOFS as u16, 0 as u8, game);
     WriteReg(BG1VOFS as u16, 0 as u8, game);
@@ -530,42 +515,28 @@ pub unsafe fn InitializePpuIoRegs(game: &mut Game) {
     WriteReg(BG4VOFS as u16, 0 as u8, game);
     WriteReg(BG4VOFS as u16, 0 as u8, game);
     WriteReg(VMAIN as u16, 0 as u8, game);
-    WriteReg(M7SEL as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x5f) = 0 as u8;
+    crate::rtl::write_register_and_mirror(M7SEL as u16, 0, 0x5f, false, game);
     WriteReg(M7A as u16, 0 as u8, game);
     WriteReg(M7B as u16, 0 as u8, game);
     WriteReg(M7C as u16, 0 as u8, game);
     WriteReg(M7D as u16, 0 as u8, game);
     WriteReg(M7X as u16, 0 as u8, game);
     WriteReg(M7Y as u16, 0 as u8, game);
-    WriteReg(W12SEL as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x60) = 0 as u8;
-    WriteReg(W34SEL as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x61) = 0 as u8;
-    WriteReg(WOBJSEL as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x62) = 0 as u8;
-    WriteReg(WH0 as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x63) = 0 as u8;
+    crate::rtl::write_register_and_mirror(W12SEL as u16, 0, 0x60, false, game);
+    crate::rtl::write_register_and_mirror(W34SEL as u16, 0, 0x61, false, game);
+    crate::rtl::write_register_and_mirror(WOBJSEL as u16, 0, 0x62, false, game);
+    crate::rtl::write_register_and_mirror(WH0 as u16, 0, 0x63, false, game);
     WriteReg(WH1 as u16, 0xf8 as u8, game);
     *(&raw mut game.g_ram as *mut u8).offset(0x64) = -(8 as i32) as u8;
-    WriteReg(WH2 as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x65) = 0 as u8;
-    WriteReg(WH3 as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x66) = 0 as u8;
-    WriteReg(WBGLOG as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x67) = 0 as u8;
-    WriteReg(WOBJLOG as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x68) = 0 as u8;
-    WriteReg(TM as u16, 0x11 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x69) = 17 as u8;
-    WriteReg(TMW as u16, 0x11 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x6c) = 17 as u8;
-    WriteReg(TS as u16, 2 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 2 as u8;
-    WriteReg(TSW as u16, 2 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x6d) = 2 as u8;
-    WriteReg(CGWSEL as u16, 2 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x6e) = 2 as u8;
+    crate::rtl::write_register_and_mirror(WH2 as u16, 0, 0x65, false, game);
+    crate::rtl::write_register_and_mirror(WH3 as u16, 0, 0x66, false, game);
+    crate::rtl::write_register_and_mirror(WBGLOG as u16, 0, 0x67, false, game);
+    crate::rtl::write_register_and_mirror(WOBJLOG as u16, 0, 0x68, false, game);
+    crate::rtl::write_register_and_mirror(TM as u16, 0x11, 0x69, false, game);
+    crate::rtl::write_register_and_mirror(TMW as u16, 0x11, 0x6c, false, game);
+    crate::rtl::write_register_and_mirror(TS as u16, 2, 0x6b, false, game);
+    crate::rtl::write_register_and_mirror(TSW as u16, 2, 0x6d, false, game);
+    crate::rtl::write_register_and_mirror(CGWSEL as u16, 2, 0x6e, false, game);
     WriteReg(CGADSUB as u16, 0xa1 as u8, game);
     *(&raw mut game.g_ram as *mut u8).offset(0x71) = -(95 as i32) as u8;
     WriteReg(COLDATA as u16, 0xe0 as u8, game);
@@ -576,8 +547,7 @@ pub unsafe fn InitializePpuIoRegs(game: &mut Game) {
     *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1) = 64 as u8;
     WriteReg(COLDATA as u16, 0x20 as u8, game);
     *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2) = 32 as u8;
-    WriteReg(SETINI as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x77) = 0 as u8;
+    crate::rtl::write_register_and_mirror(SETINI as u16, 0, 0x77, false, game);
 }
 pub unsafe fn WriteLotsOf0x1c2f(game: &mut Game) {
     sub_8088EB(0x1c2f as u16, game);

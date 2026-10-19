@@ -20059,6 +20059,23 @@ This constructor/field-name transformation does not change spawn control flow.
 Continue substantial shared implementations;
 readability and full boot-to-credits coverage remain incomplete.
 
+Register/mirror setup pairs (2026-10-20): 225 complete literal pairs
+across six files share one ordered helper: 173 bus writes precede the explicit
+RAM mirror, and 52 follow it. Each original register, byte value and mirror
+offset remains explicit, including unusual register/mirror combinations.
+Nonoverlapping selection retains alternating-write sequences exactly.
+Whole-file expansion reconstructs all six original files; 115200 full-RAM
+and mutating-bus trace cases preserve callback-visible RAM and store order.
+
+Net Rust lines -208, actual casts -675 and raw-offset occurrences -225;
+unsafe functions +1 for the shared bus-write helper. The cast-line metric is
+unchanged. Formatting/check, normal registry-only release (24.54s), progress
+and diff checks pass. Frozen 8da1b9c9 plus this family passes full any%
+129712/0 (112.31s), native exit 0; all 70 Rust/Cargo inputs and 72 replay pins
+remain fixed. The earlier 2481f16f-plus-pairs replay (114.04s) remains
+bound to its pre-alias source. Continue substantial shared implementations; readability and
+full boot-to-credits coverage remain incomplete.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

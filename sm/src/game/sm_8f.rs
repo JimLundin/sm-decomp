@@ -781,8 +781,7 @@ pub unsafe fn DoorCode_SetScroll_65(game: &mut Game) {
     *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(25) = 0 as u8;
 }
 pub unsafe fn DoorCode_CeresElevatorShaft(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0x56) = 7 as u8;
-    WriteReg(BGMODE as u16, 7 as u8, game);
+    crate::rtl::write_register_and_mirror(BGMODE as u16, 7, 0x56, true, game);
     set_ram_word!(game.reg_M7A = 256 as u16);
     set_ram_word!(game.reg_M7D = 256 as u16);
     set_ram_word!(game.reg_M7B = 0 as u16);

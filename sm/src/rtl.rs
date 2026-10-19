@@ -1059,6 +1059,23 @@ pub unsafe fn RomPtr(addr: u32, game: &mut Game) -> *const u8 {
     }
     game.g_rom.offset(crate::rtl::lorom_offset(addr)) as *const u8
 }
+/// Preserve the setup sequence's explicit RAM mirror and bus-write order.
+pub(crate) unsafe fn write_register_and_mirror(
+    register: u16,
+    value: u8,
+    mirror: usize,
+    mirror_first: bool,
+    game: &mut Game,
+) {
+    if mirror_first {
+        game.g_ram[mirror] = value;
+        WriteReg(register, value, game);
+    } else {
+        WriteReg(register, value, game);
+        game.g_ram[mirror] = value;
+    }
+}
+
 pub unsafe fn WriteReg(reg: u16, value: u8, game: &mut Game) {
     snes_write(game.g_snes as *mut Snes, reg as u32, value as u8, game);
 }

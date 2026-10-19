@@ -552,8 +552,7 @@ pub unsafe fn InitIoForGameplay(game: &mut Game) {
     InitPpuForGameplay(game);
 }
 pub unsafe fn InitCpuForGameplay(game: &mut Game) {
-    WriteReg(NMITIMEN as u16, 1 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x84) = 1 as u8;
+    crate::rtl::write_register_and_mirror(NMITIMEN as u16, 1, 0x84, false, game);
     WriteReg(WRIO as u16, 0 as u8, game);
     WriteReg(WRMPYA as u16, 0 as u8, game);
     WriteReg(WRMPYB as u16, 0 as u8, game);
@@ -565,16 +564,12 @@ pub unsafe fn InitCpuForGameplay(game: &mut Game) {
     WriteReg(VTIMEL as u16, 0 as u8, game);
     WriteReg(VTIMEH as u16, 0 as u8, game);
     WriteReg(MDMAEN as u16, 0 as u8, game);
-    WriteReg(HDMAEN as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x85) = 0 as u8;
-    WriteReg(MEMSEL as u16, 1 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x86) = 1 as u8;
+    crate::rtl::write_register_and_mirror(HDMAEN as u16, 0, 0x85, false, game);
+    crate::rtl::write_register_and_mirror(MEMSEL as u16, 1, 0x86, false, game);
 }
 pub unsafe fn InitPpuForGameplay(game: &mut Game) {
-    WriteReg(INIDISP as u16, 0x80 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x51) = 0x80 as u8;
-    WriteReg(OBSEL as u16, 3 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x52) = 3 as u8;
+    crate::rtl::write_register_and_mirror(INIDISP as u16, 0x80, 0x51, false, game);
+    crate::rtl::write_register_and_mirror(OBSEL as u16, 3, 0x52, false, game);
     WriteReg(OAMADDL as u16, 0 as u8, game);
     *((&raw mut game.g_ram as *mut u8).offset(0x53) as *mut u16 as *mut u8).offset(0) = 0 as u8;
     WriteReg(OAMADDH as u16, 0x80 as u8, game);
@@ -585,58 +580,33 @@ pub unsafe fn InitPpuForGameplay(game: &mut Game) {
     ) = 0x80 as u8;
     WriteReg(OAMDATA as u16, 0 as u8, game);
     WriteReg(OAMDATA as u16, 0 as u8, game);
-    WriteReg(BGMODE as u16, 9 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x55) = 9 as u8;
-    WriteReg(MOSAIC as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x57) = 0 as u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x5d) = 0 as u8;
-    WriteReg(BG12NBA as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x5e) = 4 as u8;
-    WriteReg(BG34NBA as u16, 4 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x58) = 81 as u8;
-    WriteReg(BG1SC as u16, 0x51 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x59) = 73 as u8;
-    WriteReg(BG2SC as u16, 0x49 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x5a) = 90 as u8;
-    WriteReg(BG3SC as u16, 0x5a as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x5c) = 0 as u8;
-    WriteReg(BG4SC as u16, 0 as u8, game);
+    crate::rtl::write_register_and_mirror(BGMODE as u16, 9, 0x55, false, game);
+    crate::rtl::write_register_and_mirror(MOSAIC as u16, 0, 0x57, false, game);
+    crate::rtl::write_register_and_mirror(BG12NBA as u16, 0, 0x5d, true, game);
+    crate::rtl::write_register_and_mirror(BG34NBA as u16, 4, 0x5e, true, game);
+    crate::rtl::write_register_and_mirror(BG1SC as u16, 0x51, 0x58, true, game);
+    crate::rtl::write_register_and_mirror(BG2SC as u16, 0x49, 0x59, true, game);
+    crate::rtl::write_register_and_mirror(BG3SC as u16, 0x5a, 0x5a, true, game);
+    crate::rtl::write_register_and_mirror(BG4SC as u16, 0, 0x5c, true, game);
     WriteReg(VMAIN as u16, 0 as u8, game);
-    WriteReg(W12SEL as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x60) = 0 as u8;
-    WriteReg(W12SEL as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x60) = 0 as u8;
-    WriteReg(W34SEL as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x61) = 0 as u8;
-    WriteReg(WOBJSEL as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x62) = 0 as u8;
-    WriteReg(WH0 as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x63) = 0 as u8;
-    WriteReg(WH1 as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x64) = 0 as u8;
-    WriteReg(WH2 as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x65) = 0 as u8;
-    WriteReg(WH3 as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x66) = 0 as u8;
-    WriteReg(WBGLOG as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x67) = 0 as u8;
-    WriteReg(WOBJLOG as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x68) = 0 as u8;
-    WriteReg(TM as u16, 0x17 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x69) = 23 as u8;
-    WriteReg(TMW as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x6c) = 0 as u8;
-    WriteReg(TS as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 0 as u8;
-    WriteReg(TSW as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x6d) = 0 as u8;
-    WriteReg(CGWSEL as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x6e) = 0 as u8;
-    WriteReg(CGADSUB as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x71) = 0 as u8;
+    crate::rtl::write_register_and_mirror(W12SEL as u16, 0, 0x60, false, game);
+    crate::rtl::write_register_and_mirror(W12SEL as u16, 0, 0x60, false, game);
+    crate::rtl::write_register_and_mirror(W34SEL as u16, 0, 0x61, false, game);
+    crate::rtl::write_register_and_mirror(WOBJSEL as u16, 0, 0x62, false, game);
+    crate::rtl::write_register_and_mirror(WH0 as u16, 0, 0x63, false, game);
+    crate::rtl::write_register_and_mirror(WH1 as u16, 0, 0x64, false, game);
+    crate::rtl::write_register_and_mirror(WH2 as u16, 0, 0x65, false, game);
+    crate::rtl::write_register_and_mirror(WH3 as u16, 0, 0x66, false, game);
+    crate::rtl::write_register_and_mirror(WBGLOG as u16, 0, 0x67, false, game);
+    crate::rtl::write_register_and_mirror(WOBJLOG as u16, 0, 0x68, false, game);
+    crate::rtl::write_register_and_mirror(TM as u16, 0x17, 0x69, false, game);
+    crate::rtl::write_register_and_mirror(TMW as u16, 0, 0x6c, false, game);
+    crate::rtl::write_register_and_mirror(TS as u16, 0, 0x6b, false, game);
+    crate::rtl::write_register_and_mirror(TSW as u16, 0, 0x6d, false, game);
+    crate::rtl::write_register_and_mirror(CGWSEL as u16, 0, 0x6e, false, game);
+    crate::rtl::write_register_and_mirror(CGADSUB as u16, 0, 0x71, false, game);
     WriteReg(COLDATA as u16, 0xe0 as u8, game);
-    WriteReg(SETINI as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x77) = 0 as u8;
+    crate::rtl::write_register_and_mirror(SETINI as u16, 0, 0x77, false, game);
     set_ram_word!(game.oam_next_ptr = 0 as u16);
     memset7E(
         (&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000 as *mut u16,
@@ -1667,8 +1637,7 @@ pub unsafe fn CallUnpauseHook_Async(ea: u32, game: &mut Game) -> CoroutineRet {
 }
 pub unsafe fn GameState_13_Pausing_Async(game: &mut Game) -> CoroutineRet {
     DisableHdmaObjects(game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x85) = 0 as u8;
-    WriteReg(HDMAEN as u16, 0 as u8, game);
+    crate::rtl::write_register_and_mirror(HDMAEN as u16, 0, 0x85, true, game);
     DisableAnimtiles(game);
     BackupBG2TilemapForPauseMenu(game);
     CallPauseHook(
@@ -2662,26 +2631,16 @@ pub unsafe fn DetermineMapScrollLimits(game: &mut Game) {
     );
 }
 pub unsafe fn SetupPpuForPauseMenu(game: &mut Game) {
-    WriteReg(OBSEL as u16, 1 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x52) = 1 as u8;
-    WriteReg(BGMODE as u16, 9 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x55) = 9 as u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x5d) = 0 as u8;
-    WriteReg(BG12NBA as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x5e) = 4 as u8;
-    WriteReg(BG34NBA as u16, 4 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x58) = 49 as u8;
-    WriteReg(BG1SC as u16, 0x31 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x59) = 56 as u8;
-    WriteReg(BG2SC as u16, 0x38 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x5a) = 88 as u8;
-    WriteReg(BG3SC as u16, 0x58 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x5c) = 0 as u8;
-    WriteReg(BG4SC as u16, 0 as u8, game);
-    WriteReg(TM as u16, 0x17 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x69) = 23 as u8;
-    WriteReg(MOSAIC as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x57) = 0 as u8;
+    crate::rtl::write_register_and_mirror(OBSEL as u16, 1, 0x52, false, game);
+    crate::rtl::write_register_and_mirror(BGMODE as u16, 9, 0x55, false, game);
+    crate::rtl::write_register_and_mirror(BG12NBA as u16, 0, 0x5d, true, game);
+    crate::rtl::write_register_and_mirror(BG34NBA as u16, 4, 0x5e, true, game);
+    crate::rtl::write_register_and_mirror(BG1SC as u16, 0x31, 0x58, true, game);
+    crate::rtl::write_register_and_mirror(BG2SC as u16, 0x38, 0x59, true, game);
+    crate::rtl::write_register_and_mirror(BG3SC as u16, 0x58, 0x5a, true, game);
+    crate::rtl::write_register_and_mirror(BG4SC as u16, 0, 0x5c, true, game);
+    crate::rtl::write_register_and_mirror(TM as u16, 0x17, 0x69, false, game);
+    crate::rtl::write_register_and_mirror(MOSAIC as u16, 0, 0x57, false, game);
     let ref mut fresh24 = *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0);
     *fresh24 = (*fresh24) & (0xe0u8);
     let ref mut fresh25 = *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1);
@@ -2910,22 +2869,14 @@ pub unsafe fn ContinueInitGameplayResume(game: &mut Game) {
     CallSomeSamusCode(0xc as u16, game);
 }
 pub unsafe fn SetupPpuForGameplayResume(game: &mut Game) {
-    WriteReg(OBSEL as u16, 3 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x52) = 3 as u8;
-    WriteReg(BGMODE as u16, 9 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x55) = 9 as u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x5d) = 0 as u8;
-    WriteReg(BG12NBA as u16, 0 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x5e) = 4 as u8;
-    WriteReg(BG34NBA as u16, 4 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x58) = 81 as u8;
-    WriteReg(BG1SC as u16, 0x51 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x59) = 73 as u8;
-    WriteReg(BG2SC as u16, 0x49 as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x5a) = 90 as u8;
-    WriteReg(BG3SC as u16, 0x5a as u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x5c) = 0 as u8;
-    WriteReg(BG4SC as u16, 0 as u8, game);
+    crate::rtl::write_register_and_mirror(OBSEL as u16, 3, 0x52, false, game);
+    crate::rtl::write_register_and_mirror(BGMODE as u16, 9, 0x55, false, game);
+    crate::rtl::write_register_and_mirror(BG12NBA as u16, 0, 0x5d, true, game);
+    crate::rtl::write_register_and_mirror(BG34NBA as u16, 4, 0x5e, true, game);
+    crate::rtl::write_register_and_mirror(BG1SC as u16, 0x51, 0x58, true, game);
+    crate::rtl::write_register_and_mirror(BG2SC as u16, 0x49, 0x59, true, game);
+    crate::rtl::write_register_and_mirror(BG3SC as u16, 0x5a, 0x5a, true, game);
+    crate::rtl::write_register_and_mirror(BG4SC as u16, 0, 0x5c, true, game);
 }
 pub unsafe fn CalculateBgScrolls_Unpause(game: &mut Game) {
     set_ram_word!(
@@ -6396,8 +6347,7 @@ pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen(game: &mut Game) {
     *(&raw mut game.g_ram as *mut u8).offset(0x6e) = 0 as u8;
     *(&raw mut game.g_ram as *mut u8).offset(0x71) = 0 as u8;
     *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 0 as u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x72) = 0 as u8;
-    WriteReg(VMADDL as u16, 0 as u8, game);
+    crate::rtl::write_register_and_mirror(VMADDL as u16, 0, 0x72, true, game);
     WriteReg(VMADDH as u16, 0x58 as u8, game);
     WriteReg(VMAIN as u16, 0x80 as u8, game);
     static unk_82EC3D: StartDmaCopy = StartDmaCopy::vram_words(1, 0x8edc00, 0x800);
