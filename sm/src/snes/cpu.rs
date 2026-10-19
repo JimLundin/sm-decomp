@@ -326,8 +326,7 @@ unsafe fn read_direct_page_pointer(cpu: *mut Cpu, game: &mut Game) -> u32 {
 }
 unsafe fn address_direct_page_indirect(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
     let pointer = read_direct_page_pointer(cpu, game);
-    let low = (u32::from((*cpu).db) << 16) + pointer;
-    (low, low.wrapping_add(1) & 0xffffff)
+    data_bank_address(pointer as u16, &*cpu)
 }
 unsafe fn address_direct_page_indexed_indirect(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
     let adr = u16::from(fetch_byte(cpu, game));
@@ -397,8 +396,11 @@ unsafe fn address_stack_relative_indirect_y(cpu: *mut Cpu, game: &mut Game) -> (
     )
 }
 unsafe fn address_absolute(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
-    let adr = u32::from(fetch_word(cpu, game));
-    let low = (u32::from((*cpu).db) << 16) + adr;
+    let offset = fetch_word(cpu, game);
+    data_bank_address(offset, &*cpu)
+}
+fn data_bank_address(offset: u16, cpu: &Cpu) -> (u32, u32) {
+    let low = (u32::from(cpu.db) << 16) | u32::from(offset);
     (low, low.wrapping_add(1) & 0xffffff)
 }
 unsafe fn address_absolute_x(cpu: *mut Cpu, write: bool, game: &mut Game) -> (u32, u32) {

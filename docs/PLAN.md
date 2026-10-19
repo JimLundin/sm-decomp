@@ -11051,6 +11051,25 @@ ROM-derived data remain ignored. Next: descend toward the bottom exit9969
 and onward item/boss coverage. Credits, complete gameplay/hardware,
 audio/render, masked RAM and ownership remain open.
 
+CPU shared data-bank address calculation (2026-10-19): data_bank_address
+combines a word offset with live DB and wraps the second byte at 24 bits
+for absolute and direct-page-indirect callers. Offset/pointer reads remain
+before the safe helper; no CPU reference spans bus callbacks. OR equals the
+previous addition because bank and word bits are disjoint; the DP pointer
+is formed from a word, so its narrowing retains all bits. Frozen `3974ccdf`
+plus this change passes 33,611,524 actual old/current wrapper comparisons:
+all word offsets and banks, both callers, and sampled pointer values across
+WRAM DP offsets 0000..1FDE excluding three instruction/pointer overlaps in
+the constructed setup. Named CPU/bus state, addresses and cycles match;
+arbitrary MMIO and callback mutation are not exhausted. Prefix 3,600/0
+(1.64s), native exit 0, executes absolute 1,667,088 and DP indirect 34,066
+calls. Clean full any% passes 129,712/0 (89.16s), native exit 0. Cargo
+fmt/check, full release/release-library builds with external SDL2, normal
+metadata and frozen optimized core/DLL pass. Live CPU matches verified
+source; peer PPU work is outside this replay. Rust lines +2 provide the
+shared safe calculation; other own counters unchanged. Prior holds and
+complete gameplay/render/audio remain open. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
