@@ -10735,6 +10735,21 @@ matches verified source; peer PPU work is outside replay. Rust lines +1 provide
 the shared safe arithmetic helper; other own counters unchanged. Prior holds
 and complete gameplay/render/audio remain open. Continue covered CPU cleanup.
 
+Post-map Parlor ascent reaches Y363 (2026-10-19).
+From map-parlor-shoot619 X398/Y523, right1, right/jump28, Jump/shoot1,
+neutral70, left/jump40, Jump/shoot1, neutral50 reach X416/Y363, standing,
+health29/99, map1/station255, missiles1/10, equipment1004 at75665.
+The first landing is X454/Y443 with one5-health contact. The retained prefix
+ends before a later enemy contact; map-parlor-rise459's full extension is
+not a stable endpoint. map-parlor-stable363 retains exactly75665 inputs.
+Read-only failure-counter replay75665/71 (96.69s), observed native exit1,
+matches all71 ordered baseline failed frames exactly with rendering enabled.
+No gameplay state writes or new failing frames. Source/residue delta0;
+preceding door-hit cleanup owns fmt/release, progress and any%129712/0.
+Inputs, probes, SRAM and ROM-derived geometry remain ignored. Next: leave
+the narrow363 platform promptly and climb toward the upper hall. Complete
+credits/gameplay/hardware, render/audio, masked RAM and ownership stay open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
