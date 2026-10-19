@@ -12246,6 +12246,18 @@ intermediate-store classification; its uncommitted edits are not staged here.
 Independent prototypes/ROM inputs remain ignored. Full gameplay/credits,
 hardware/audio, masked RAM and ownership remain open.
 
+Current-snapshot Waver prototype integration (2026-10-19): frozen c5fa40d9
+plus the existing sm_91 prototype includes the later committed door/RAM
+accessor work absent from the first candidate replay. Clean standard verifier
+passes any%129712/0 (166.34s) and Waver58109/0 (83.48s), native exits0,
+from normal boot without repro snapshots or diagnostic instrumentation.
+Cargo fmt/check and release build pass; progress passes. Live sm_91 still
+matches the frozen prototype at completion. No maintained source/residue
+changes or ROM-derived assets belong to this check. These results strengthen
+prototype integration only; the pending reversed-gradient/start-zero helper
+revision needs its own source identity, corner checks and full replays.
+Complete credits/gameplay, hardware/audio timing and other masks remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
