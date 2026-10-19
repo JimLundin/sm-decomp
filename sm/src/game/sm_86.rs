@@ -2203,8 +2203,7 @@ pub unsafe fn Eproj_PreInstr_SkreeParticle(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v1 as isize);
     *fresh145 = (*fresh145 as ::core::ffi::c_int + 80 as ::core::ffi::c_int) as uint16;
     if CheckIfEprojIsOffScreen(k, game) != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(v1 as isize) =
-            0 as uint16;
+        EprojStateMut(&mut game.g_ram).set_id(v1 as usize, 0);
     }
 }
 pub unsafe fn EprojInstr_SpawnEnemyDropsWithDraygonsEyeDrops(
@@ -2972,8 +2971,7 @@ pub unsafe fn EprojPreInstr_9642_RidleysFireball(mut k: uint16, game: &mut Game)
         v1 = -(27056 as ::core::ffi::c_int) as uint16;
     }
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(v2 as isize) =
-        0 as uint16;
+    EprojStateMut(&mut game.g_ram).set_id(v2 as usize, 0);
     if *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16).offset(v2 as isize) == 0
     {
         game.eproj_spawn_pt = Point16U {
@@ -3150,8 +3148,7 @@ pub unsafe fn EprojPreInstr_9734_CeresFallingDebris(mut k: uint16, game: &mut Ga
     *fresh135 = (*fresh135 as ::core::ffi::c_int + 16 as ::core::ffi::c_int) as uint16;
     if EprojBlockCollisition_Vertical(k, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(v1 as isize) =
-            0 as uint16;
+        EprojStateMut(&mut game.g_ram).set_id(v1 as usize, 0);
         game.eproj_spawn_pt = Point16U {
             x: game.enemy_projectile_x_pos(k),
             y: game.enemy_projectile_y_pos(k),
@@ -3829,8 +3826,7 @@ pub unsafe fn EprojPreInstr_KraidRocks(mut k: uint16, game: &mut Game) {
         || EprojBlockCollisition_Vertical(k, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
             != 0
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16)
-            .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
+        EprojStateMut(&mut game.g_ram).set_id(usize::from(k >> 1), 0);
     } else {
         let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         let mut v2: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16)
@@ -3852,8 +3848,7 @@ pub unsafe fn EprojPreInstr_KraidRocks(mut k: uint16, game: &mut Game) {
 pub unsafe fn EprojPreInstr_RocksFallingKraidCeiling(mut k: uint16, game: &mut Game) {
     if EprojBlockCollisition_Vertical(k, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16)
-            .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
+        EprojStateMut(&mut game.g_ram).set_id(usize::from(k >> 1), 0);
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16)
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
@@ -3895,8 +3890,7 @@ pub unsafe fn EprojPreInit_MiniKraidSpit(mut k: uint16, game: &mut Game) {
         || EprojBlockCollisition_Vertical(k, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
             != 0
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16)
-            .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
+        EprojStateMut(&mut game.g_ram).set_id(usize::from(k >> 1), 0);
     } else {
         let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         v2 = (*((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16)
@@ -3953,8 +3947,7 @@ unsafe fn EprojInit_MiniKraidSpikesRight(mut j: uint16, game: &mut Game) {
 }
 pub unsafe fn EprojPreInstr_MiniKraidSpikes(mut k: uint16, game: &mut Game) {
     if EprojBlockCollisition_Horiz(k, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16)
-            .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
+        EprojStateMut(&mut game.g_ram).set_id(usize::from(k >> 1), 0);
     }
 }
 unsafe fn EprojInit_WalkingLavaSeahorseFireball(mut j: uint16, game: &mut Game) {
@@ -4079,8 +4072,7 @@ pub unsafe fn EprojPreInstr_PirateMotherBrainLaser_MoveLeft(mut k: uint16, game:
         *fresh22 = (*fresh22 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
     }
     if CheckIfEprojIsOffScreen(k, game) != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(v1 as isize) =
-            0 as uint16;
+        EprojStateMut(&mut game.g_ram).set_id(v1 as usize, 0);
     }
 }
 pub unsafe fn EprojPreInstr_PirateMotherBrainLaser_MoveRight(mut k: uint16, game: &mut Game) {
@@ -4098,8 +4090,7 @@ pub unsafe fn EprojPreInstr_PirateMotherBrainLaser_MoveRight(mut k: uint16, game
         *fresh24 = (*fresh24 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     }
     if CheckIfEprojIsOffScreen(k, game) != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(v1 as isize) =
-            0 as uint16;
+        EprojStateMut(&mut game.g_ram).set_id(v1 as usize, 0);
     }
 }
 unsafe fn EprojInit_PirateClaw(mut j: uint16, game: &mut Game) {
@@ -5682,8 +5673,7 @@ pub unsafe fn Eproj_DeleteIfYposOutside(mut k: uint16, game: &mut Game) {
         as int16 as ::core::ffi::c_int
         >= 288 as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(v1 as isize) =
-            0 as uint16;
+        EprojStateMut(&mut game.g_ram).set_id(v1 as usize, 0);
     }
 }
 static word_86B65B: [int16; 20] = [
@@ -8975,10 +8965,9 @@ static kEprojPreInstr_SpikeShootingPlantSpikes: [Option<Func_Y_V>; 10] = unsafe 
         ),
     ]
 };
-pub unsafe fn EprojPreInstrHelper_SpikeShootingPlantSpikes_Func1(mut k: uint16, game: &mut Game) {
+pub fn EprojPreInstrHelper_SpikeShootingPlantSpikes_Func1(mut k: uint16, game: &mut Game) {
     if EprojPreInstrHelper_SpikeShootingPlantSpikes_Func2(k, game) != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16)
-            .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
+        EprojStateMut(&mut game.g_ram).set_id(usize::from(k >> 1), 0);
     }
 }
 pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes(mut k: uint16, game: &mut Game) {
@@ -9621,10 +9610,9 @@ unsafe fn EprojInit_EyeDoorSmoke(mut j: uint16, game: &mut Game) {
                     + 1 as ::core::ffi::c_int)) as uint16;
     NextRandom(game);
 }
-pub unsafe fn EprojPreInstr_DustCloudOrExplosion(mut k: uint16, game: &mut Game) {
+pub fn EprojPreInstr_DustCloudOrExplosion(mut k: uint16, game: &mut Game) {
     if CheckIfEprojIsOffScreen(k, game) != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16)
-            .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
+        EprojStateMut(&mut game.g_ram).set_id(usize::from(k >> 1), 0);
     }
 }
 pub unsafe fn EprojInstr_SetYVel(

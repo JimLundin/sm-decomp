@@ -719,6 +719,56 @@ through credits and broader hardware/audio coverage remain unfinished.
 | selected-low | 47676 | 8324..136939 |
 | spritemap | 110253 | 8324..138595 |
 
+Projectile removal stores (2026-10-19): twelve exercised removal sites
+reuse the byte-backed ID setter. Conditions, captured half-slot indices,
+store order, later reads and child spawning remain unchanged. Prior local
+RAM borrows end before these stores; no retained pointer crosses them.
+The dust/explosion and spike-plant removal helpers now contain only safe
+operations and no longer require unsafe callers. No helper is added.
+
+The 46-site survey passes any% 129712/0 (196.55s) and
+Bubble Mountain 138749/0 (246.93s), comparing full RAM
+after every exercised store against the original unaligned word write.
+Exits 2 report deliberately required unvisited probes; 34 surveyed stores
+remain unchanged. Three additional candidates remain excluded for an
+unproved index or retained pointer. Compiled controls pass 69216
+complete-RAM cases: all u16 byte indices plus boundary/alias indices,
+old ID words and neighboring-byte patterns for all 46 statements. Wrong
+address, byte-only clearing and wrong stride controls all fail. Build
+0.38s, execution 0.78s; this characterizes original native
+unaligned stores without establishing their Rust alignment validity.
+
+Removing probes recovers exactly 155da8a2 plus the selected change.
+The final candidate rebases those unchanged original function bodies onto
+020a52d4, including the subsequently committed subsystem changes.
+Frozen final any% passes 129712/0 (209.41s) and Bubble Mountain
+138749/0 (262.87s), native exits 0. Source/configuration,
+DLL/library, ROM and fixture hashes stay fixed. The known fingernail
+diagnostic remains; the longer route includes the exact Warehouse prefix.
+Uncommitted concurrent changes retain separate checks.
+
+Survey/final builds 24.03s/54.33s; formatting/check,
+normal release (52.78s) and progress pass. Net Rust lines -12,
+raw RAM stores -12, c_int casts -12, cast-containing lines
+-6 and unsafe functions -2. Maintained edit to final result
+335.99s. Temporary controls/probes and input assets remain uncommitted.
+Full gameplay/credits and wider hardware/audio coverage remain unfinished.
+
+| Removal site | Any% calls @ frames | Bubble Mountain calls @ frames |
+| --- | --- | --- |
+| Eproj_PreInstr_SkreeParticle | - | 36 @ 46050..88532 |
+| EprojPreInstr_9642_RidleysFireball | 24 @ 36784..89539 | - |
+| EprojPreInstr_9734_CeresFallingDebris | - | 11 @ 18189..18278 |
+| EprojPreInstr_KraidRocks | - | 109 @ 118395..119527 |
+| EprojPreInstr_RocksFallingKraidCeiling | - | 15 @ 119383..120279 |
+| EprojPreInit_MiniKraidSpit | - | 22 @ 110369..126729 |
+| EprojPreInstr_MiniKraidSpikes | - | 34 @ 110898..127152 |
+| EprojPreInstr_PirateMotherBrainLaser_MoveLeft | - | 21 @ 37194..125356 |
+| EprojPreInstr_PirateMotherBrainLaser_MoveRight | - | 10 @ 36916..125043 |
+| Eproj_DeleteIfYposOutside | - | 11 @ 137723..138596 |
+| EprojPreInstrHelper_SpikeShootingPlantSpikes_Func1 | - | 13 @ 84915..91814 |
+| EprojPreInstr_DustCloudOrExplosion | - | 11 @ 18226..120071 |
+
 ## Validation strategy (2026-10-19)
 
 User priority: shorten the complete edit/build/result cycle. Replaying the
