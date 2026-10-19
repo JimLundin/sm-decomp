@@ -2416,7 +2416,27 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `24c39190` shares all four immutable
+Latest reviewed integration (2026-10-20): `33abebc9` shares the complete
+177-arm CPU address/operation family. Reused independent source review binds
+all 255 ordered dispatch arms, 78 retained special cases, opcode hooks and
+88 other functions to the original source. The macro preserves the original
+address-before-operation sequence, operand tokens and scopes.
+
+Independent final composition review binds all 75 committed source/config/host
+inputs to the frozen candidate, including the reviewed string tables. Actual
+compiler output retains all 10276725 baseline bytes after removing only the
+added macro definition and its line indentation. Its template matches the
+reviewed helper; all three expansion/helper hashes remain stable.
+
+Normal release (23.93s), formatting/check, progress and full any% pass:
+129712/0 (108.26s wall, 108.11s replay), native exit 0. All 81 replay pins
+remain unchanged after completion. Review reused these final combined checks;
+the earlier CPU-only replay is not the final composition authority. Net Rust
+lines -429, total 138119; other progress counters remain unchanged. These
+checks establish factoring equivalence and regression coverage within the
+existing movie; full credits and broader hardware/frontend coverage remain open.
+
+Included `24c39190` shares all four immutable
 string-pointer tables. Independent complete-AST inventory and ordered-entry
 reconstruction retain 531 literal byte strings and 244 null slots, including
 all three opcode-format arrays and the seven bug-save paths. All 71 committed
