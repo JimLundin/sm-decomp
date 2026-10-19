@@ -10750,6 +10750,22 @@ Inputs, probes, SRAM and ROM-derived geometry remain ignored. Next: leave
 the narrow363 platform promptly and climb toward the upper hall. Complete
 credits/gameplay/hardware, render/audio, masked RAM and ownership stay open.
 
+CPU complete safe accumulator logic (2026-10-19): apply_accumulator_logic
+now owns final zero/negative updates as well as AND/OR/XOR assignment. The
+unsafe wrapper retains operand reads/cycles. Assignment uses captured width;
+flags still use live MF after assignment. Frozen `599d2424` plus this change
+passes 51,707,904 actual old/current wrapper cases: every A word/byte operand
+pair and sampled word boundaries. The old wrapper uses its retained old helper,
+so the moved flag statement is independently compared. Named CPU/bus state
+and cycles match; static-WRAM cases do not exhaust mutating MMIO. Prefix
+3,600/0 (1.15s), native exit 0, executes AND/OR/XOR word/byte paths with counts
+231,044/39,120; 88,666/814; 10,863/527. Clean full any% 129,712/0 (64.46s),
+native exit 0. Cargo fmt/check, full release/release-library builds with
+external SDL2, normal metadata and frozen optimized core/DLL pass. Live CPU
+matches verified source; peer gameplay/PPU work is outside this replay.
+All own progress counters unchanged. Prior CPU holds and complete gameplay/
+render/audio remain open. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

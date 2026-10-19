@@ -461,6 +461,7 @@ fn apply_accumulator_logic(value: u16, byte: bool, operation: LogicOperation, cp
     } else {
         result
     };
+    set_zero_negative(cpu.a, cpu.mf, cpu);
 }
 unsafe fn logical_accumulator(
     cpu: *mut Cpu,
@@ -477,7 +478,6 @@ unsafe fn logical_accumulator(
         read_word(cpu, low, high, game)
     };
     apply_accumulator_logic(value, byte, operation, &mut *cpu);
-    set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
 }
 fn addition_overflow(register: u16, value: u16, result: i32, byte: bool) -> bool {
     let sign = if byte { 0x80 } else { 0x8000 };
