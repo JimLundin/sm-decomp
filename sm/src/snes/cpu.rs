@@ -536,14 +536,9 @@ fn add_to_accumulator(value: u16, byte: bool, cpu: &mut Cpu) {
     set_zero_negative(cpu.a, cpu.mf, cpu);
 }
 unsafe fn add_with_carry(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
-    if (*cpu).mf {
-        let value = u16::from(read_byte(cpu, low, game));
-        add_to_accumulator(value, true, &mut *cpu);
-    } else {
-        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        let value = read_word(cpu, low, high, game);
-        add_to_accumulator(value, false, &mut *cpu);
-    }
+    let byte = (*cpu).mf;
+    let value = read_operand(cpu, low, high, byte, game);
+    add_to_accumulator(value, byte, &mut *cpu);
 }
 fn subtract_from_accumulator(value: u16, byte: bool, cpu: &mut Cpu) {
     if byte {
@@ -590,14 +585,10 @@ fn subtract_from_accumulator(value: u16, byte: bool, cpu: &mut Cpu) {
     set_zero_negative(cpu.a, cpu.mf, cpu);
 }
 unsafe fn subtract_with_carry(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
-    if (*cpu).mf {
-        let value = u16::from(!read_byte(cpu, low, game));
-        subtract_from_accumulator(value, true, &mut *cpu);
-    } else {
-        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        let value = !read_word(cpu, low, high, game);
-        subtract_from_accumulator(value, false, &mut *cpu);
-    }
+    let byte = (*cpu).mf;
+    let value = read_operand(cpu, low, high, byte, game);
+    let value = if byte { value ^ 0xff } else { !value };
+    subtract_from_accumulator(value, byte, &mut *cpu);
 }
 #[derive(Clone, Copy)]
 enum CpuRegister {

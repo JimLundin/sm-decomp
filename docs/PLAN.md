@@ -10874,6 +10874,24 @@ hall to Parlor's door and continue item/boss coverage. Existing holds,
 credits, complete gameplay/hardware, audio/render, masked RAM and ownership
 remain open.
 
+CPU shared ADC/SBC operand reads (2026-10-19): add_with_carry and
+subtract_with_carry reuse read_operand, preserving captured width before
+bus reads and the extra word cycle. SBC inverts only the fetched byte in
+byte mode and the full word in word mode; safe arithmetic and live final
+flag widths remain unchanged. Frozen `52629924` plus this change passes
+144,179,200 actual old/current wrapper comparisons across byte inputs and
+word decimal/sign/boundary cases, both carry/decimal flags, named CPU/bus
+state and cycles. Static-WRAM and sampled-word limits remain; arbitrary MMIO
+is not exhausted. Prefix 3,600/0 (1.03s), native exit 0, executes binary ADC
+195,798 word/37,613 byte calls and SBC 38,340 word/169 byte calls. Decimal
+paths are comparison-covered but absent from that prefix. Clean full any%
+passes 129,712/0 (48.64s), native exit 0. Cargo fmt/check, full release and
+release-library builds with external SDL2, normal metadata and frozen
+optimized core/DLL pass. Live CPU matches verified source; peer PPU work is
+outside this replay. Rust lines -9; other own counters unchanged. Prior
+holds and complete gameplay/render/audio remain open. Continue covered CPU
+cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
