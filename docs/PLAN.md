@@ -19721,6 +19721,32 @@ source/library/fixture pins. Formatting/check, normal release (23.35s snapshot,
 coverage; frontend branches are compiler checked. Full credits/readability
 remain open. Continue named byte accesses and larger compiler families.
 
+Corpse tile-transfer family (2026-10-19): all 24 specialized move/copy
+functions share one ordered row-transfer implementation. Twelve descriptors
+retain row thresholds and tile bases; move copies both plane words before
+clearing either source word, while copy retains the source. Progress is read
+again per row, preserving tile/state overlaps at high indices. The original
+bit-15 subtraction gate (including its high-value range), small-corpse rounded
+word indices and Mother Brain's raw odd byte indices remain exact. The twelve
+initializers remain a separate ROM/setup family.
+
+Complete ast-grep declarations cover all 24 functions. Actual optimized Rust
+library functions and compiled original Rust agree over full RAM in 2143584
+cases: every counter value at fixed indices, sampled boundary indices, equal
+and adjacent source/destination words, and counter-word aliases. Four direct
+Skree alias cases also pass; real overlay offset is 0x8802. These finite cases
+do not exhaust every joint RAM state. Net Rust lines -1554, raw-offset lines
+-480, casts -2765, c_int cast lines -845 and unsafe functions -24. Shared raw
+operations use unaligned accesses and avoid references across overlapping words.
+
+Frozen 99963bfb plus this family includes the dispatch batch and passes
+any% 129712/0 (143.39s) and Speed Booster 148406/0 (176.75s),
+native exits 0, with fixed source/library/fixture pins. Formatting/check,
+normal release (31.77s snapshot, 34.33s workspace), progress and diff check
+pass. Movies supply regression coverage; direct comparisons exercise corpse
+transfers. Full credits/readability remain open. Continue large repeated-body
+consolidation, including coherent initialization families.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
