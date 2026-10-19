@@ -13529,6 +13529,19 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Background command callbacks (2026-10-19): replace the eight statically
+present Option callbacks with a direct function table and remove dispatch's
+redundant expect. Callback order/bodies, odd-command pairing, bounds checks,
+wrapping argument advance and zero-return exit remain unchanged. Frozen
+cd0a6111 plus this change passes any% 129712/0 (250.99s) and Waver 58109/0
+(108.74s), native exits 0. An observed 20000/0 prefix executes 24 actual
+calls: commands 0/2/4/A run 7/10/5/2 times; other callback bodies stay unchanged.
+Source/observer review, exact stripping, formatting, release build using the
+workspace dependency cache and progress pass. A fresh dependency build still
+hits the documented Windows build-script execution block. Own Rust lines -11;
+other counters unchanged. Next: the remaining covered door-transition selector
+stores. Broader Phase 3 and held coverage remain open.
+
 Samus animation pose commands (2026-10-19): commands 8/9/13 now use
 byte-backed scalar reads and named input-handler/transition setters. Command
 13 accepts a pose byte and is safe. Command 9 reads its little-endian item

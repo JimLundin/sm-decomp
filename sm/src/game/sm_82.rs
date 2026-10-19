@@ -9847,27 +9847,16 @@ pub unsafe fn DoorTransitionFunction_PlaceSamusLoadTiles(game: &mut Game) -> Cor
     game.set_door_transition_function(0xe4a9);
     kCoroutineNone as CoroutineRet
 }
-static kUpdateBackgroundCommands: [Option<Func_Y_Y>; 8] = unsafe {
-    [
-        Some(UpdateBackgroundCommand_0_Finish as unsafe fn(uint16, &mut Game) -> uint16),
-        Some(UpdateBackgroundCommand_2_TransferToVram as unsafe fn(uint16, &mut Game) -> uint16),
-        Some(UpdateBackgroundCommand_4_Decompression as unsafe fn(uint16, &mut Game) -> uint16),
-        Some(UpdateBackgroundCommand_6_ClearFxTilemap as unsafe fn(uint16, &mut Game) -> uint16),
-        Some(
-            UpdateBackgroundCommand_8_TransferToVramAndSetBg3
-                as unsafe fn(uint16, &mut Game) -> uint16,
-        ),
-        Some(UpdateBackgroundCommand_A_ClearBg2Tilemap as unsafe fn(uint16, &mut Game) -> uint16),
-        Some(
-            UpdateBackgroundCommand_C_ClearKraidBg2Tilemap
-                as unsafe fn(uint16, &mut Game) -> uint16,
-        ),
-        Some(
-            UpdateBackgroundCommand_E_DoorDependentTransferToVRAM
-                as unsafe fn(uint16, &mut Game) -> uint16,
-        ),
-    ]
-};
+static kUpdateBackgroundCommands: [Func_Y_Y; 8] = [
+    UpdateBackgroundCommand_0_Finish,
+    UpdateBackgroundCommand_2_TransferToVram,
+    UpdateBackgroundCommand_4_Decompression,
+    UpdateBackgroundCommand_6_ClearFxTilemap,
+    UpdateBackgroundCommand_8_TransferToVramAndSetBg3,
+    UpdateBackgroundCommand_A_ClearBg2Tilemap,
+    UpdateBackgroundCommand_C_ClearKraidBg2Tilemap,
+    UpdateBackgroundCommand_E_DoorDependentTransferToVRAM,
+];
 pub unsafe fn DoorTransitionFunction_LoadMoreThings_Async(game: &mut Game) -> CoroutineRet {
     let mut bg_data_ptr: uint16 = 0;
     's_188: {
@@ -9906,9 +9895,9 @@ pub unsafe fn DoorTransitionFunction_LoadMoreThings_Async(game: &mut Game) -> Co
                 if bg_data_ptr & 0x8000 != 0 {
                     loop {
                         let command = game.read_rom_word(0x8f0000 | u32::from(bg_data_ptr), 0);
-                        bg_data_ptr = kUpdateBackgroundCommands[usize::from(command >> 1)]
-                            .expect("non-null function pointer")(
-                            bg_data_ptr.wrapping_add(2), game
+                        bg_data_ptr = kUpdateBackgroundCommands[usize::from(command >> 1)](
+                            bg_data_ptr.wrapping_add(2),
+                            game,
                         );
                         if bg_data_ptr == 0 {
                             break;
