@@ -1,4 +1,6 @@
 /target
+# Python tooling caches.
+__pycache__/
 # Never commit the ROM or anything derived from it.
 /rom/*
 !/rom/README.md
