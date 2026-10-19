@@ -368,8 +368,7 @@ unsafe fn address_direct_page_indirect_long(cpu: *mut Cpu, game: &mut Game) -> (
 }
 unsafe fn address_direct_page_indirect_long_y(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
     let pointer = read_direct_page_long_pointer(cpu, game);
-    let low = pointer.wrapping_add(u32::from((*cpu).y)) & 0xffffff;
-    (low, low.wrapping_add(1) & 0xffffff)
+    long_indexed_address(pointer, IndexRegister::Y, &*cpu)
 }
 unsafe fn address_stack_relative(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
     let adr = u16::from(fetch_byte(cpu, game));
@@ -429,8 +428,11 @@ unsafe fn address_absolute_long(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
     (low, low.wrapping_add(1) & 0xffffff)
 }
 unsafe fn address_absolute_long_x(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
-    let adr = fetch_long_address(cpu, game);
-    let low = adr.wrapping_add(u32::from((*cpu).x)) & 0xffffff;
+    let address = fetch_long_address(cpu, game);
+    long_indexed_address(address, IndexRegister::X, &*cpu)
+}
+fn long_indexed_address(address: u32, index: IndexRegister, cpu: &Cpu) -> (u32, u32) {
+    let low = address.wrapping_add(u32::from(index.value(cpu))) & 0xffffff;
     (low, low.wrapping_add(1) & 0xffffff)
 }
 unsafe fn address_absolute_indexed_indirect(cpu: *mut Cpu, game: &mut Game) -> u16 {

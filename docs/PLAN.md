@@ -11386,6 +11386,24 @@ onward item/boss coverage. Held upper99BD ascent and earlier holds stay held.
 Complete credits/gameplay/hardware, render/audio, masked RAM and ownership
 remain open.
 
+CPU shared long indexed address calculation (2026-10-19):
+long_indexed_address shares safe index addition and 24-bit byte-pair wrapping
+between absolute-long-X and direct-page-long-Y callers. Operand/pointer reads
+remain before live index reads; long DP bank-byte read and cycle behavior
+stay unchanged. Frozen `af8c196c` plus this change passes 34,996,224 actual
+old/current wrapper comparisons: every 24-bit address, every index word with
+sampled address boundaries, both callers. Named CPU/bus state, address pairs,
+wrapping and cycles match; arbitrary MMIO/callback mutations are not exhausted
+by constructed WRAM cases. Prefix 3,600/0 (2.77s), native exit 0, executes
+absolute-long-X 293,365 and DP-long-Y 143,578 calls. Clean full any% passes
+129,712/0 (205.99s), native exit 0. Cargo fmt/check, full release/release-library
+builds with external SDL2, normal metadata and frozen optimized core/DLL pass.
+Live CPU matches verified source; uncommitted peer gameplay work is outside
+this replay. Rust lines +2 centralize the safe calculation; other own counters
+unchanged. Concurrent replays prevent interpreting timings as performance
+measurements. Prior holds and complete gameplay/render/audio remain open.
+Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
