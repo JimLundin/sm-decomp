@@ -165,6 +165,15 @@ fn set_zero_negative(value: u16, byte: bool, cpu: &mut Cpu) {
         cpu.n = value & 0x8000 != 0;
     }
 }
+fn subtract_for_compare(register: u16, value: u16, byte: bool, cpu: &mut Cpu) -> u16 {
+    cpu.c = register >= value;
+    let result = register.wrapping_sub(value);
+    if byte {
+        result & 0xff
+    } else {
+        result
+    }
+}
 fn branch_relative(value: u8, check: bool, cpu: &mut Cpu) {
     if check {
         cpu.cyclesUsed = cpu.cyclesUsed.wrapping_add(1);
@@ -567,45 +576,39 @@ unsafe fn subtract_with_carry(cpu: *mut Cpu, low: u32, high: u32, game: &mut Gam
 unsafe fn compare_accumulator(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).mf {
         let value = read_byte(cpu, low, game);
-        let register = (*cpu).a as u8;
-        (*cpu).c = register >= value;
-        u16::from(register.wrapping_sub(value))
+        let register = (*cpu).a & 0xff;
+        subtract_for_compare(register, u16::from(value), true, &mut *cpu)
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
         let value = read_word(cpu, low, high, game);
         let register = (*cpu).a;
-        (*cpu).c = register >= value;
-        register.wrapping_sub(value)
+        subtract_for_compare(register, value, false, &mut *cpu)
     };
     set_zero_negative(result, (*cpu).mf, &mut *cpu);
 }
 unsafe fn compare_x(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).xf {
         let value = read_byte(cpu, low, game);
-        let register = (*cpu).x as u8;
-        (*cpu).c = register >= value;
-        u16::from(register.wrapping_sub(value))
+        let register = (*cpu).x & 0xff;
+        subtract_for_compare(register, u16::from(value), true, &mut *cpu)
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
         let value = read_word(cpu, low, high, game);
         let register = (*cpu).x;
-        (*cpu).c = register >= value;
-        register.wrapping_sub(value)
+        subtract_for_compare(register, value, false, &mut *cpu)
     };
     set_zero_negative(result, (*cpu).xf, &mut *cpu);
 }
 unsafe fn compare_y(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).xf {
         let value = read_byte(cpu, low, game);
-        let register = (*cpu).y as u8;
-        (*cpu).c = register >= value;
-        u16::from(register.wrapping_sub(value))
+        let register = (*cpu).y & 0xff;
+        subtract_for_compare(register, u16::from(value), true, &mut *cpu)
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
         let value = read_word(cpu, low, high, game);
         let register = (*cpu).y;
-        (*cpu).c = register >= value;
-        register.wrapping_sub(value)
+        subtract_for_compare(register, value, false, &mut *cpu)
     };
     set_zero_negative(result, (*cpu).xf, &mut *cpu);
 }

@@ -8943,6 +8943,22 @@ library, normal metadata and optimized core/DLL builds pass; full frontend
 linking still lacks SDL2. Live CPU matches verified source. Progress counters
 unchanged. Complete gameplay and rendering/audio remain open.
 
+CPU shared comparison arithmetic (2026-10-19): six byte/word branches in
+CMP/CPX/CPY use safe subtract_for_compare for carry and wrapped result. Byte
+registers are masked before the bus-free mutable-reference call; operand reads,
+word cycle increments and final live-width Z/N update retain their order.
+Frozen HEAD `2316e4a5` plus this change passes 53,084,160 actual old/current
+comparisons over all byte operands/register words and word boundary/equality/
+borrow cases, checking C/Z/N/V, cycle wrapping and named CPU/bus state. Prefix
+3,600/0 (1.03s) executes word/byte CMP 72,809/117,035, CPX 10,098/49,139 and CPY
+11,452/10,038 calls, exercising both helper widths. Clean full any% 129,712/0
+(61.73s), native exit 0. Cargo fmt/check, release library, normal metadata and
+optimized core/DLL builds pass; full frontend linking still lacks SDL2. Live
+CPU matches verified source. Rust lines +3 introduce the shared safe helper
+while replacing repeated carry/subtraction; other counters unchanged. Full word
+Cartesian coverage, arbitrary bus mutation, gameplay and rendering/audio remain
+open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
