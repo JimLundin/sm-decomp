@@ -14373,8 +14373,10 @@ and source/DLL/fixture hashes remain stable throughout the frozen checks.
 
 Cargo fmt/check, release --locked (25.01s) and progress pass. Own raw offsets
 -19, cast lines -54 and Rust lines -52; other counters are unchanged.
-Temporary checks/builds are removed; no probes or ROM-derived files are
-committed. Commands 7/10/12 remain held. Booster-equipped movie coverage,
+Temporary checks/builds remain in the OS temporary directory
+sm-speed-delay-fooi8dbj: automatic approval review rejected their deletion
+with "blocked by policy". No probes or ROM-derived files are committed.
+Commands 7/10/12 remain held. Booster-equipped movie coverage,
 complete gameplay/credits and broader hardware/audio coverage remain open.
 
 Destination-room CRE cleanup (2026-10-19): the loader uses named word
