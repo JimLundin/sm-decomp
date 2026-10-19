@@ -3237,18 +3237,16 @@ unsafe fn EprojInit_9660_FireballExplosion(mut j: uint16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v1 as isize) =
         0 as uint16;
 }
-unsafe fn EprojInit_Common(mut j: uint16, mut k: uint16, mut a: uint16, game: &mut Game) {
-    let mut v3: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16).offset(v3 as isize) = a;
-    let mut v4: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v3 as isize) =
-        game.enemy_projectile_x_pos(k);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v3 as isize) =
-        game.enemy_projectile_y_pos(k);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16).offset(v3 as isize) =
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16).offset(v4 as isize);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x19bb) as *mut uint16).offset(v3 as isize) =
-        2560 as uint16;
+unsafe fn EprojInit_Common(j: uint16, k: uint16, a: uint16, game: &mut Game) {
+    let slot = usize::from(j >> 1);
+    EprojStateMut(&mut game.g_ram).write(0x1b23, slot, a);
+    let x = game.enemy_projectile_x_pos(k);
+    EprojStateMut(&mut game.g_ram).write(0x1a4b, slot, x);
+    let y = game.enemy_projectile_y_pos(k);
+    EprojStateMut(&mut game.g_ram).write(0x1a93, slot, y);
+    let e = EprojState(&game.g_ram).slot_word(0x1aff, usize::from(k >> 1));
+    EprojStateMut(&mut game.g_ram).write(0x1aff, slot, e);
+    EprojStateMut(&mut game.g_ram).write(0x19bb, slot, 2560);
     SetAreaDependentEprojProperties(j, game);
 }
 unsafe fn EprojInit_9688(mut j: uint16, game: &mut Game) {

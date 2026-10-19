@@ -16027,6 +16027,29 @@ raw offsets, unsafe functions and other own counters unchanged. No probes
 or artifacts committed. Broader gameplay/credits, hardware/audio/masks and
 ownership remain unfinished.
 
+Enemy-projectile child initialization (2026-10-19): EprojInit_Common
+uses byte-backed slot writes and an indexed E word read. F precedes X read/
+store, then Y read/store, then E read/store, graphics, and the unchanged
+area-property callback. Each source read remains between its neighboring
+stores, preserving possible parent/child aliases and unsigned slot rounding.
+No helper is added, and unsafe remains at the properties callback boundary.
+
+Frozen 44b8acc7 plus only this change passes
+any%129712/0 (233.34s) and Warehouse128547/0 (260.40s),
+native exits0. Observed any%129712/0 (255.11s) executes
+38 common initializer calls. All byte-backed writes match original
+unaligned stores over complete RAM; the copied E read matches its original
+word at each call. Clean/observed non-timing diagnostics match after stripping.
+Source/DLL/ROM/input hashes remain stable and maintained function matches.
+
+Separate exact-body controls pass605 complete-RAM comparisons for same,
+oddball and wide parent/child slot combinations and five F values, with a
+controlled final properties callback. This supplements actual game callbacks.
+Cargo fmt/check, normal release build and progress pass. Raw offsets-6,
+cast lines-2, Rust lines-2; unsafe functions/other counters unchanged.
+No probes/artifacts committed. Further projectile cleanup, gameplay/credits,
+hardware/audio/masks and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
