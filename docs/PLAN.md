@@ -12698,6 +12698,30 @@ frozen replays and preserved in the checkout. Super Missile passage and
 previous holds remain held; complete credits, gameplay, hardware/audio,
 remaining masks and ownership stay open. Continue covered readability work.
 
+Equipment pickup RAM words (2026-10-19):
+PlmInstr_PickupEquipmentAndShowMessage reads its unaligned equipment word,
+then writes equipped_items and collected_items through byte-backed access.
+The equipped write precedes the collected read/write; music callback,
+subsequent live message-byte read and returned pointer remain unchanged.
+Frozen e1d0ff9b plus only this change passes any%129712/0
+(156.85s), native exit0, and pickup route68606/0
+(96.93s), native exit0. Separate observed route68606/0
+(98.38s) executes 2 actual equipment stores. Maintained
+source contains no observations. Cargo fmt/check and release build pass.
+Own raw offsets-2, cast lines-4, Rust lines-3; other own counters unchanged.
+Peer source is excluded from these frozen replays and preserved.
+
+Chozo guarded-read coverage hold (2026-10-19): a byte-backed
+PlmInstr_GotoIfChozoSet candidate passed any%129712/0 (207.73s), pickup
+68606/0 (131.57s) and observed pickup68606/0 (131.70s), native exits0.
+The observer records zero guarded mask/room_chozo_bits reads; it does not
+count calls skipped by the high-bit gate. These replays cannot demonstrate
+the changed guarded path. Retire only this candidate and retain the original
+maintained body. Obtain contextual guarded-path coverage before further
+cleanup; extracted arithmetic/source review do not close this gap.
+Super Missile passage and previous holds remain held. Complete credits,
+gameplay, hardware/audio timing, remaining masks and ownership stay open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

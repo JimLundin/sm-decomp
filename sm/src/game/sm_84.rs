@@ -1933,13 +1933,10 @@ pub unsafe fn PlmInstr_PickupEquipmentAndShowMessage(
     mut k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
-    let mut t: uint16 = *(plmp as *mut uint16);
-    let ref mut fresh57 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9a2 as ::core::ffi::c_int as isize) as *mut uint16);
-    *fresh57 = (*fresh57 as ::core::ffi::c_int | t as ::core::ffi::c_int) as uint16;
-    let ref mut fresh58 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9a4 as ::core::ffi::c_int as isize) as *mut uint16);
-    *fresh58 = (*fresh58 as ::core::ffi::c_int | t as ::core::ffi::c_int) as uint16;
+    let equipment = (plmp as *const u16).read_unaligned();
+    let equipped = u16::from_le_bytes([game.g_ram[0x9a2], game.g_ram[0x9a3]]);
+    game.set_equipped_items(equipped | equipment);
+    game.set_collected_items(game.collected_items() | equipment);
     PlayRoomMusicTrackAfterAFrames(0x168 as uint16, game);
     DisplayMessageBox(
         *plmp.offset(2 as ::core::ffi::c_int as isize) as uint16,
