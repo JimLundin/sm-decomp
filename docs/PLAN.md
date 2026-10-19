@@ -334,6 +334,59 @@ change and no new replay result belong to this cleanup.
 
 ## The oracle
 
+Cinematic spawn arguments and comparison (2026-10-19): correct 13 ordinary
+spawn parameters across six exercised intro/Ceres callers. Three fixed-slot
+calls now use an explicit-parameter helper that stores the incoming word at
+$1B9D before the unchanged initializer. ROM entry traces and initializer
+instructions establish the values, including palette words left in A.
+Remove only the two-byte $1B9D/$1B9E comparison normalization. Several old
+arguments were overwritten within a frame, so frame-end agreement alone
+would not establish correct spawn inputs.
+
+Frozen 90f257d8 plus only this candidate passes observed any% 129712/0
+(308.52s), with all 167 ordered ROM/Rust spawn tuples matching (159 ordinary,
+eight fixed-slot). Save route 71800/0 (201.40s) matches all 64 tuples
+(61 ordinary, three fixed-slot). Every changed caller executes, at frame
+indices 159, 2218, 3516, 7568, 19011 and 19739. No raw $1B9D word differs
+at frame boundaries. Exact observation stripping and independent review pass.
+
+Clean final integration is frozen 9c34f8a5 plus only these two source files:
+any% 129712/0 (250.17s), save route 71800/0 (141.29s), Waver 58109/0
+(149.74s), all native exits 0. All 68 frozen files match the stated scope
+after newline normalization and retain their hashes through replay; inputs
+are copied and hashed, with isolated saves and SM_* overrides cleared.
+
+Clean 1000-frame control passes 1000/0. Separate low-byte, high-byte and
+neighbor $1B9C/$1B9F faults each produce exactly one failure at frame 159;
+the two old-mask controls pass 1000/0. All seven final 128 KiB RAM dumps
+match exactly. The completed frame 159 retains $0400. The original unmasked
+reproduction was 160 frames / one failure, separate from the earlier menu bug.
+
+The existing SpawnCinematicSpriteObjectToR18 body and eight uncovered ending
+callers remain unchanged. Their incoming A values still need implementation
+and real credits coverage; the ROM-backed pending mapping is:
+
+| ROM callsite | Object | Slot | Incoming A |
+| --- | --- | ---: | --- |
+| DDA9 | EF21 | 4 | 0004 |
+| F2D5 | EEBB | 0 | F27C |
+| F2E0 | EEF7 | 2 | 0002 |
+| F326 | EEC1 | 6 | 0006 |
+| F523 | EF3F | 0 | F51D |
+| F565 | EF75 | 2 | 0002 |
+| F572 | EF7B | 2 | 0002 |
+| F57A | EF6F | 0 | 0A00 after EF7B; 0C00 after EF75 |
+
+The instruction dispatcher preserves its instruction address in A. Func185
+retains high byte F2 during eight-bit writes; Func208 retains F51D. EF6F's
+argument comes from the preceding initializer's palette return.
+
+Formatting, normal Cargo release (1m 04s) and progress pass. Own unsafe
+functions +1 and Rust lines +5 enable explicit parameters without rewriting
+unexecuted ending callers; cast lines -2, other counters unchanged. No probes
+or ROM-derived assets are committed. Wider cinematic/gameplay coverage,
+credits, audio timing, remaining masks and ownership stay unfinished.
+
 Independent Samus graphics DMA QC (2026-10-19): clean frozen 90f257d8
 plus only NmiTransferSamusToVram and its shared helper passes any% 129712/0
 (250.19s) and Waver 58109/0 (144.30s), native exits 0. Complete non-timing

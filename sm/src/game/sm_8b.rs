@@ -3263,6 +3263,15 @@ pub unsafe fn SpawnCinematicSpriteObject(mut j: uint16, mut a: uint16, game: &mu
     }
     return 1 as uint8;
 }
+pub unsafe fn SpawnCinematicSpriteObjectAtSlot(
+    j: uint16,
+    slot: uint16,
+    param: uint16,
+    game: &mut Game,
+) -> uint8 {
+    game.g_ram[0x1b9d..0x1b9f].copy_from_slice(&param.to_le_bytes());
+    SpawnCimenaticSpriteObjectInner(j, slot, game)
+}
 pub unsafe fn SpawnCinematicSpriteObjectToR18(
     mut j: uint16,
     mut r18: uint16,
@@ -4340,7 +4349,7 @@ pub unsafe fn HandleCinematicsTransitions_2(game: &mut Game) {
     );
     SpawnCinematicSpriteObject(
         addr_kCinematicSpriteObjectDef_8BA125 as ::core::ffi::c_int as uint16,
-        0 as uint16,
+        0x0400, // Palette left in A by the first sprite initializer.
         game,
     );
     *((&raw mut game.g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
@@ -6895,14 +6904,15 @@ pub unsafe fn CinematicFunction_Intro_WaitInputSetupMotherBrainFight(game: &mut 
             as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
             as *mut uint16) = 127 as uint16;
-        SpawnCinematicSpriteObjectToR18(
+        SpawnCinematicSpriteObjectAtSlot(
             addr_kCinematicSpriteObjectDef_8BCE55 as ::core::ffi::c_int as uint16,
             0 as uint16,
+            0x007f, // The preceding $1A4B store leaves $007F in A.
             game,
         );
         SpawnCinematicSpriteObject(
             addr_kCinematicSpriteObjectDef_8BCF27 as ::core::ffi::c_int as uint16,
-            0 as uint16,
+            0x0e00, // Palette left in A by the first sprite initializer.
             game,
         );
         let mut v1: uint16 = 0 as uint16;
@@ -7017,7 +7027,7 @@ pub unsafe fn CinematicFunction_Intro_WaitInputSetupBabyMetroid(game: &mut Game)
         );
         SpawnCinematicSpriteObject(
             addr_kCinematicSpriteObjectDef_8BCE79 as ::core::ffi::c_int as uint16,
-            0 as uint16,
+            0x0e00, // Palette left in A by the first sprite initializer.
             game,
         );
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b9f as ::core::ffi::c_int as isize)
@@ -9199,17 +9209,17 @@ pub unsafe fn CinematicFunction_Intro_Func56(game: &mut Game) {
             as *mut uint16) = 32 as uint16;
         SpawnCinematicSpriteObject(
             addr_kCinematicSpriteObjectDef_8BCF39 as ::core::ffi::c_int as uint16,
-            0 as uint16,
+            0x0020, // The preceding $198D store leaves $0020 in A.
             game,
         );
         SpawnCinematicSpriteObject(
             addr_kCinematicSpriteObjectDef_8BCE85 as ::core::ffi::c_int as uint16,
-            0 as uint16,
+            0x0800, // Palette left in A by the preceding sprite initializer.
             game,
         );
         SpawnCinematicSpriteObject(
             addr_kCinematicSpriteObjectDef_8BCE8B as ::core::ffi::c_int as uint16,
-            0 as uint16,
+            0x0c00, // Palette left in A by the preceding sprite initializer.
             game,
         );
         SpawnCinematicSpriteObject(
@@ -9779,19 +9789,21 @@ pub unsafe fn CinematicFunctionBlackoutFromCeres(game: &mut Game) {
         0 as uint16,
         game,
     );
-    SpawnCinematicSpriteObjectToR18(
+    SpawnCinematicSpriteObjectAtSlot(
         addr_kCinematicSpriteObjectDef_8BCE8B as ::core::ffi::c_int as uint16,
         2 as uint16,
+        0x0002,
         game,
     );
-    SpawnCinematicSpriteObjectToR18(
+    SpawnCinematicSpriteObjectAtSlot(
         addr_kCinematicSpriteObjectDef_8BCE91 as ::core::ffi::c_int as uint16,
         0 as uint16,
+        0x0000,
         game,
     );
     SpawnCinematicSpriteObject(
         addr_kCinematicSpriteObjectDef_8BCF33 as ::core::ffi::c_int as uint16,
-        0 as uint16,
+        0x0800, // Palette left in A by the preceding sprite initializer.
         game,
     );
     SpawnPalfxObject(addr_kPalfx_E1B8 as ::core::ffi::c_int as uint16, game);
@@ -10497,32 +10509,32 @@ pub unsafe fn CinematicFunction_Intro_Func88(game: &mut Game) {
                 as *mut uint16) = 256 as uint16;
             SpawnCinematicSpriteObject(
                 addr_kCinematicSpriteObjectDef_8BCEA3 as ::core::ffi::c_int as uint16,
-                0 as uint16,
+                0x0100, // The preceding $198F store leaves $0100 in A.
                 game,
             );
             SpawnCinematicSpriteObject(
                 addr_kCinematicSpriteObjectDef_8BCEF7 as ::core::ffi::c_int as uint16,
-                0 as uint16,
+                0x0e00, // Palette left in A by the preceding sprite initializer.
                 game,
             );
             SpawnCinematicSpriteObject(
                 addr_kCinematicSpriteObjectDef_8BCEFD as ::core::ffi::c_int as uint16,
-                0 as uint16,
+                0x0800, // Palette left in A by the preceding sprite initializer.
                 game,
             );
             SpawnCinematicSpriteObject(
                 addr_kCinematicSpriteObjectDef_8BCF03 as ::core::ffi::c_int as uint16,
-                0 as uint16,
+                0x0800, // Palette left in A by the preceding sprite initializer.
                 game,
             );
             SpawnCinematicSpriteObject(
                 addr_kCinematicSpriteObjectDef_8BCF09 as ::core::ffi::c_int as uint16,
-                0 as uint16,
+                0x0800, // Palette left in A by the preceding sprite initializer.
                 game,
             );
             SpawnCinematicSpriteObject(
                 addr_kCinematicSpriteObjectDef_8BCEAF as ::core::ffi::c_int as uint16,
-                0 as uint16,
+                0x0800, // Palette left in A by the preceding sprite initializer.
                 game,
             );
             *((&raw mut game.g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
