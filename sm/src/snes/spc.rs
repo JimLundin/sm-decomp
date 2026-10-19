@@ -410,13 +410,26 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
             let mut dst: uint16_t = spc_adrDpDp(spc, &raw mut src);
             spc_logic_memory(spc, dst, src, opcode);
         }
-        10 => {
-            let mut adr_2: uint16_t = 0 as uint16_t;
-            let mut bit: uint8_t = spc_adrAbsBit(spc, &raw mut adr_2);
-            (*spc).c = (*spc).c as ::core::ffi::c_int
-                | spc_read(spc, adr_2) as ::core::ffi::c_int >> bit as ::core::ffi::c_int
-                    & 1 as ::core::ffi::c_int
-                != 0;
+        10 | 42 | 74 | 106 | 138 | 170 | 202 | 234 => {
+            let mut address = 0;
+            let bit = spc_adrAbsBit(spc, &raw mut address);
+            // Logical operations capture carry before their operand bus read.
+            let carry = if opcode <= 138 { (*spc).c } else { false };
+            let value = spc_read(spc, address);
+            let mask = 1u8 << bit;
+            let bit_set = value & mask != 0;
+            match opcode {
+                10 => (*spc).c = carry | bit_set,
+                42 => (*spc).c = carry | !bit_set,
+                74 => (*spc).c = carry & bit_set,
+                106 => (*spc).c = carry & !bit_set,
+                138 => (*spc).c = carry ^ bit_set,
+                170 => (*spc).c = bit_set,
+                // MOV1 reads carry after the bus read, then replaces only its bit.
+                202 => spc_write(spc, address, (value & !mask) | (u8::from((*spc).c) << bit)),
+                234 => spc_write(spc, address, value ^ mask),
+                _ => unreachable!(),
+            }
         }
         11 => {
             spc_shift_memory::<false, false>(spc, spc_adrDp(spc));
@@ -512,14 +525,6 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
         32 => {
             (*spc).p = false_0 != 0;
         }
-        42 => {
-            let mut adr_4: uint16_t = 0 as uint16_t;
-            let mut bit_0: uint8_t = spc_adrAbsBit(spc, &raw mut adr_4);
-            (*spc).c = (*spc).c as ::core::ffi::c_int
-                | !(spc_read(spc, adr_4) as ::core::ffi::c_int >> bit_0 as ::core::ffi::c_int)
-                    & 1 as ::core::ffi::c_int
-                != 0;
-        }
         43 => {
             spc_shift_memory::<false, true>(spc, spc_adrDp(spc));
         }
@@ -581,14 +586,6 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
         }
         64 => {
             (*spc).p = true_0 != 0;
-        }
-        74 => {
-            let mut adr_5: uint16_t = 0 as uint16_t;
-            let mut bit_1: uint8_t = spc_adrAbsBit(spc, &raw mut adr_5);
-            (*spc).c = (*spc).c as ::core::ffi::c_int
-                & (spc_read(spc, adr_5) as ::core::ffi::c_int >> bit_1 as ::core::ffi::c_int
-                    & 1 as ::core::ffi::c_int)
-                != 0;
         }
         75 => {
             spc_shift_memory::<true, false>(spc, spc_adrDp(spc));
@@ -675,14 +672,6 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
             let mut src_8: uint16_t = 0 as uint16_t;
             let mut dst_10: uint16_t = spc_adrDpDp(spc, &raw mut src_8);
             spc_compare_memory(spc, dst_10, src_8);
-        }
-        106 => {
-            let mut adr_7: uint16_t = 0 as uint16_t;
-            let mut bit_2: uint8_t = spc_adrAbsBit(spc, &raw mut adr_7);
-            (*spc).c = (*spc).c as ::core::ffi::c_int
-                & (!(spc_read(spc, adr_7) as ::core::ffi::c_int >> bit_2 as ::core::ffi::c_int)
-                    & 1 as ::core::ffi::c_int)
-                != 0;
         }
         107 => {
             spc_shift_memory::<true, true>(spc, spc_adrDp(spc));
@@ -798,14 +787,6 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
             let mut dst_13: uint16_t = spc_adrDpDp(spc, &raw mut src_11);
             spc_arithmetic_memory(spc, dst_13, src_11, opcode & 0x20 != 0);
         }
-        138 => {
-            let mut adr_9: uint16_t = 0 as uint16_t;
-            let mut bit_3: uint8_t = spc_adrAbsBit(spc, &raw mut adr_9);
-            (*spc).c = (*spc).c as ::core::ffi::c_int
-                ^ spc_read(spc, adr_9) as ::core::ffi::c_int >> bit_3 as ::core::ffi::c_int
-                    & 1 as ::core::ffi::c_int
-                != 0;
-        }
         139 => {
             spc_dec(spc, spc_adrDp(spc));
         }
@@ -912,13 +893,6 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
         160 => {
             (*spc).i = true_0 != 0;
         }
-        170 => {
-            let mut adr_10: uint16_t = 0 as uint16_t;
-            let mut bit_4: uint8_t = spc_adrAbsBit(spc, &raw mut adr_10);
-            (*spc).c = spc_read(spc, adr_10) as ::core::ffi::c_int >> bit_4 as ::core::ffi::c_int
-                & 1 as ::core::ffi::c_int
-                != 0;
-        }
         171 => {
             spc_inc(spc, spc_adrDp(spc));
         }
@@ -993,15 +967,6 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
         }
         201 | 233 => {
             spc_move_memory::<1>(spc, spc_adrAbs(spc), opcode & 0x20 == 0);
-        }
-        202 => {
-            let mut adr_13: uint16_t = 0 as uint16_t;
-            let mut bit_5: uint8_t = spc_adrAbsBit(spc, &raw mut adr_13);
-            let mut result_7: uint8_t = (spc_read(spc, adr_13) as ::core::ffi::c_int
-                & !((1 as ::core::ffi::c_int) << bit_5 as ::core::ffi::c_int)
-                | ((*spc).c as ::core::ffi::c_int) << bit_5 as ::core::ffi::c_int)
-                as uint8_t;
-            spc_write(spc, adr_13, result_7);
         }
         203 | 235 => {
             spc_move_memory::<2>(spc, spc_adrDp(spc), opcode & 0x20 == 0);
@@ -1093,14 +1058,6 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
         }
         232 => {
             spc_move_memory::<0>(spc, spc_adrImm(spc), false);
-        }
-        234 => {
-            let mut adr_14: uint16_t = 0 as uint16_t;
-            let mut bit_6: uint8_t = spc_adrAbsBit(spc, &raw mut adr_14);
-            let mut result_10: uint8_t = (spc_read(spc, adr_14) as ::core::ffi::c_int
-                ^ (1 as ::core::ffi::c_int) << bit_6 as ::core::ffi::c_int)
-                as uint8_t;
-            spc_write(spc, adr_14, result_10);
         }
         237 => {
             (*spc).c = !(*spc).c;

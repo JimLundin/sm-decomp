@@ -19243,6 +19243,33 @@ zlib and projectile changes retain their own checks outside this commit.
 No probe or ROM-derived artifact committed. Neither movie reaches credits;
 full progression, readability and hardware/audio completion remain open.
 
+SPC absolute carry-bit family (2026-10-19): normalized jscpd and
+complete CST dispatch/arm selection cover all eight OR1/AND1/EOR1/MOV1/NOT1
+opcodes, including complemented-source forms. One shared arm decodes the
+packed 13-bit address and bit number and reads the bus once. The operation
+match uses byte masks and boolean logic. Logical forms capture carry before
+the operand bus read; MOV1 store reads carry afterward. Stores replace or
+invert only the selected bit; read forms change only carry. No short-circuit
+logic skips a bus read. Operand order, PC and cycle entries remain exact.
+
+Complete source reconstruction permits only these eight arms and formatting;
+other frozen sources match. Both compiled implementations pass 4194304
+independent opcode/bit/value/flag checks covering every byte value and all
+flags at every bit, checking registers, RAM, flags, PC and cycles. Actual
+spc_runOpcode agrees in 8192 constructed bus contexts across all eight
+opcodes and 1024 register/flag/operand seeds, bits 0..7, packed addresses,
+RAM, ports, DSP registers and timer counters. Complete initialized
+SPC/APU/DSP state and cycles match. This is finite hardware-state coverage.
+
+Frozen 6a9c8fad plus only this family passes any% 129712/0
+(147.14s) and Speed Booster 148406/0 (190.40s), native exits 0,
+with fixed source/library/DLL/ROM/movie hashes. Cargo fmt/check, normal live
+release (29.20s), progress and diff check pass. Own Rust lines -43 and
+c_int cast lines -22; unsafe/raw/layout counts unchanged. Concurrent
+block-reaction and projectile work retains its own verification. No probe
+or ROM-derived artifact committed. Neither movie reaches credits; broader
+readability, full progression and hardware/audio completion remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
