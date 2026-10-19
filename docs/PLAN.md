@@ -30,6 +30,10 @@ The extension to the Green Brinstar Save Room passes 71,800 frames with zero
 failures, 23 rooms and 28 enemy definitions. It ends with 3/5 Supers and an
 in-game save completed. It also passes on frozen integration 19d550a3;
 credits remain unvisited.
+The Charge Beam extension passes 78,380 frames with zero failures, visiting
+25 rooms and 31 enemy definitions. It collects another Missile Tank and
+Charge Beam, ending in Big Pink with 19/199 health and 2/5 Supers. This
+check uses frozen 9c34f8a5 plus the cinematic fix committed in d610b820.
 Rendering starts enabled deterministically. Complete gameplay, audio timing
 and other masked RAM remain unverified. Historical zero-failure Waver runs
 made before the render initialization fix do not establish rendering equivalence.
@@ -333,6 +337,36 @@ sessions own the adjacent cleanup above. No maintained source or residue
 change and no new replay result belong to this cleanup.
 
 ## The oracle
+
+Charge Beam milestone (2026-10-19): extend the normal-input save-room
+route through Dachora corridor $9CB3 to Big Pink $9D19, collect a second
+Missile Tank and Charge Beam, and dismiss the pickup message. Full boot
+passes 78380/0 (167.51s), native exit 0: 63434 gameplay frames, 25 rooms,
+31 enemy definitions and zero credits frames. Final state 8 is X612/Y1883,
+health 19/199, missiles 5/10, Supers 2/5, equipment 1004 and equipped/collected
+beams 1000. All eight coroutine bytes are zero. The final input holds fire
+for 90 frames then releases it; a charged projectile was not directly observed.
+
+Ignored movies/charge-beam.inputs has 78380 frames, SHA-256
+5e622ef4850ef68b21ae95ca09d7a251f7430f0ca10ff6b9f80e5b9d9bf38340.
+Its first 71800 frames exactly match movies/green-brinstar-save.inputs.
+The full-boot library is frozen 9c34f8a5 plus only the cinematic argument
+correction and $1B9D mask removal committed in d610b820. The host differs
+from the frozen verifier only by read-only final inventory/beam/coroutine
+logging and preserves the comparison and return value. Independent source,
+host, input and result review passes; source and library hashes are stable.
+This is separate from the original 6580/0 resumed 71800..78380 route check
+on frozen 438e7755 plus the menu fix. The before-78380 checkpoint was made
+by that older library, not by the newer full-boot run.
+
+Formatting, normal Cargo release and progress passed with the cinematic
+source used here. This milestone changes no maintained Rust or own residue
+counts; inputs, checkpoints and temporary metadata remain uncommitted.
+Next route work returns through the Charge shaft toward Green Hill Zone
+$9E52, then Noob Bridge $9FBA and Red Tower $A253. Both green doors cost
+the two remaining Supers; health recovery is needed along the way. The
+$A07B refill detour from Dachora corridor needs Speed Booster and is deferred.
+Complete gameplay/credits, audio timing and remaining masks stay unfinished.
 
 Cinematic spawn arguments and comparison (2026-10-19): correct 13 ordinary
 spawn parameters across six exercised intro/Ceres callers. Three fixed-slot
