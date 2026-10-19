@@ -1947,7 +1947,22 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): `240bb809` adds 422 direct
+Latest reviewed integration (2026-10-19): `4474383b` adds 7082 named scalar
+word reads to the reviewed Boolean composition. Exact reconstruction covers
+all 32 caller files; all 1169 RAM table rows retain their address, name, type,
+shape and order. The caller macro uses unaligned little-endian loads without
+adding Game/RAM references, retaining read positions and pointer arguments.
+All 74 baseline inputs, 67 committed Rust files and 77 replay pins match.
+
+The actual macro passes all 65536 word values for each of 535 used fields
+(35061760 checks), with checked library/DLL bindings. These value checks do
+not establish global alias safety. Normal release (24.98s), workspace release
+(18.70s), formatting/check and progress pass. Full any% passes 129712/0
+(107.90s replay, 108.07s wall), native exit 0; the completed run was reused.
+Net Rust lines -7308 and casts -14164; unsafe-function count is unchanged.
+The subsequent single-match composition awaits its own integration review.
+
+The prior `240bb809` adds 422 direct
 primitive comparisons to the reviewed compiler and initializer work.
 All 74 committed source/configuration/host/progress inputs match the checked
 Boolean snapshot. Its normal release and full any% 129712/0 (162.35s)
@@ -1960,7 +1975,6 @@ operator and RAM-read position. Rust lines fall by 7; casts, raw accesses and
 unsafe functions are unchanged. Formatting/check, workspace release and
 all-target/all-feature Clippy pass. Only two nonautomatic Boolean locations
 remain. These frontend compiler checks do not establish frontend execution.
-The subsequent named-RAM and single-match compositions await their own review.
 
 The prior `11bc05a3` adds the identity-op
 cleanup to the reviewed compiler and initializer work. The complete committed
