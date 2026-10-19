@@ -20,20 +20,19 @@ extern "C" {
 
 }
 pub use crate::types::{
-    __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16_t, int32_t, int8_t,
-    size_t, uint16_t, uint32_t, uint8_t, Apu, ApuHistory as C2RustUnnamed, BgLayer, Cart, Cpu, Dma,
-    DmaChannel, Dsp, DspChannel, DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs,
-    PpuZbufType, SaveLoadFunc, Snes, Spc, Timer, WindowLayer,
+    size_t, Apu, ApuHistory as C2RustUnnamed, BgLayer, Cart, Cpu, Dma, DmaChannel, Dsp, DspChannel,
+    DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs, PpuZbufType, SaveLoadFunc, Snes, Spc,
+    Timer, WindowLayer,
 };
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub unsafe fn cart_init(snes: *mut Snes) -> *mut Cart {
     let cart: *mut Cart = malloc(::core::mem::size_of::<Cart>() as size_t) as *mut Cart;
     (*cart).snes = snes;
-    (*cart).type_0 = 0 as uint8_t;
-    (*cart).rom = ::core::ptr::null_mut::<uint8_t>();
-    (*cart).romSize = 0 as uint32_t;
-    (*cart).ram = ::core::ptr::null_mut::<uint8_t>();
-    (*cart).ramSize = 0 as uint32_t;
+    (*cart).type_0 = 0 as u8;
+    (*cart).rom = ::core::ptr::null_mut::<u8>();
+    (*cart).romSize = 0 as u32;
+    (*cart).ram = ::core::ptr::null_mut::<u8>();
+    (*cart).ramSize = 0 as u32;
     cart
 }
 pub unsafe fn cart_free(cart: *mut Cart) {
@@ -53,33 +52,27 @@ pub unsafe fn cart_saveload(
         game,
     );
 }
-pub unsafe fn cart_load(
-    cart: *mut Cart,
-    type_0: i32,
-    rom: *mut uint8_t,
-    romSize: i32,
-    ramSize: i32,
-) {
-    (*cart).type_0 = type_0 as uint8_t;
+pub unsafe fn cart_load(cart: *mut Cart, type_0: i32, rom: *mut u8, romSize: i32, ramSize: i32) {
+    (*cart).type_0 = type_0 as u8;
     if !(*cart).rom.is_null() {
         free((*cart).rom as *mut ::core::ffi::c_void);
     }
     if !(*cart).ram.is_null() {
         free((*cart).ram as *mut ::core::ffi::c_void);
     }
-    (*cart).rom = malloc(romSize as size_t) as *mut uint8_t;
-    (*cart).romSize = romSize as uint32_t;
+    (*cart).rom = malloc(romSize as size_t) as *mut u8;
+    (*cart).romSize = romSize as u32;
     if ramSize > 0 as i32 {
-        (*cart).ram = malloc(ramSize as size_t) as *mut uint8_t;
+        (*cart).ram = malloc(ramSize as size_t) as *mut u8;
         memset(
             (*cart).ram as *mut ::core::ffi::c_void,
             0 as i32,
             ramSize as size_t,
         );
     } else {
-        (*cart).ram = ::core::ptr::null_mut::<uint8_t>();
+        (*cart).ram = ::core::ptr::null_mut::<u8>();
     }
-    (*cart).ramSize = ramSize as uint32_t;
+    (*cart).ramSize = ramSize as u32;
     memcpy(
         (*cart).rom as *mut ::core::ffi::c_void,
         rom as *const ::core::ffi::c_void,
@@ -167,22 +160,22 @@ unsafe fn cart_writeLorom(cart: *mut Cart, bank: u8, address: u16, value: u8) {
         *(*cart).ram.offset(index as isize) = value;
     }
 }
-unsafe fn cart_readHirom(cart: *mut Cart, mut bank: uint8_t, adr: uint16_t) -> uint8_t {
-    bank = (bank as i32 & 0x7f as i32) as uint8_t;
+unsafe fn cart_readHirom(cart: *mut Cart, mut bank: u8, adr: u16) -> u8 {
+    bank = (bank as i32 & 0x7f as i32) as u8;
     if (bank as i32) < 0x40 as i32
         && adr as i32 >= 0x6000 as i32
         && (adr as i32) < 0x8000 as i32
-        && (*cart).ramSize > 0 as uint32_t
+        && (*cart).ramSize > 0 as u32
     {
         return *(*cart).ram.offset(
-            (((bank as i32 & 0x3f as i32) << 13 as i32 | adr as i32 & 0x1fff as i32) as uint32_t
-                & (*cart).ramSize.wrapping_sub(1 as uint32_t)) as isize,
+            (((bank as i32 & 0x3f as i32) << 13 as i32 | adr as i32 & 0x1fff as i32) as u32
+                & (*cart).ramSize.wrapping_sub(1 as u32)) as isize,
         );
     }
     if adr as i32 >= 0x8000 as i32 || bank as i32 >= 0x40 as i32 {
         return *(*cart).rom.offset(
-            (((bank as i32 & 0x3f as i32) << 16 as i32 | adr as i32) as uint32_t
-                & (*cart).romSize.wrapping_sub(1 as uint32_t)) as isize,
+            (((bank as i32 & 0x3f as i32) << 16 as i32 | adr as i32) as u32
+                & (*cart).romSize.wrapping_sub(1 as u32)) as isize,
         );
     }
     '_c2rust_label: {
@@ -196,16 +189,16 @@ unsafe fn cart_readHirom(cart: *mut Cart, mut bank: uint8_t, adr: uint16_t) -> u
     };
     (*(*cart).snes).openBus
 }
-unsafe fn cart_writeHirom(cart: *mut Cart, mut bank: uint8_t, adr: uint16_t, val: uint8_t) {
-    bank = (bank as i32 & 0x7f as i32) as uint8_t;
+unsafe fn cart_writeHirom(cart: *mut Cart, mut bank: u8, adr: u16, val: u8) {
+    bank = (bank as i32 & 0x7f as i32) as u8;
     if (bank as i32) < 0x40 as i32
         && adr as i32 >= 0x6000 as i32
         && (adr as i32) < 0x8000 as i32
-        && (*cart).ramSize > 0 as uint32_t
+        && (*cart).ramSize > 0 as u32
     {
         *(*cart).ram.offset(
-            (((bank as i32 & 0x3f as i32) << 13 as i32 | adr as i32 & 0x1fff as i32) as uint32_t
-                & (*cart).ramSize.wrapping_sub(1 as uint32_t)) as isize,
+            (((bank as i32 & 0x3f as i32) << 13 as i32 | adr as i32 & 0x1fff as i32) as u32
+                & (*cart).ramSize.wrapping_sub(1 as u32)) as isize,
         ) = val;
     }
 }

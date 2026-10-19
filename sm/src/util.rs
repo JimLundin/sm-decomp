@@ -38,9 +38,7 @@ pub struct __va_list_tag {
     pub overflow_arg_area: *mut ::core::ffi::c_void,
     pub reg_save_area: *mut ::core::ffi::c_void,
 }
-pub use crate::types::{
-    _IO_lock_t, __off64_t, __off_t, __uint8_t, size_t, uint8, uint8_t, ByteArray, _IO_FILE, FILE,
-};
+pub use crate::types::{_IO_lock_t, __off64_t, __off_t, size_t, ByteArray, _IO_FILE, FILE};
 pub type va_list = __gnuc_va_list;
 pub type __gnuc_va_list = __builtin_va_list;
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
@@ -105,19 +103,19 @@ pub unsafe fn StringStartsWithNoCase(
         b = b.offset(1);
     }
 }
-pub unsafe fn ReadWholeFile(name: *const ::core::ffi::c_char, length: *mut size_t) -> *mut uint8 {
+pub unsafe fn ReadWholeFile(name: *const ::core::ffi::c_char, length: *mut size_t) -> *mut u8 {
     let f: *mut FILE = fopen(name, b"rb\0" as *const u8 as *const ::core::ffi::c_char) as *mut FILE;
     if f.is_null() {
-        return ::core::ptr::null_mut::<uint8>();
+        return ::core::ptr::null_mut::<u8>();
     }
     fseek(f, 0 as ::core::ffi::c_long, SEEK_END);
     let size: size_t = ftell(f) as size_t;
     rewind(f);
-    let buffer: *mut uint8 = malloc(size.wrapping_add(1 as size_t)) as *mut uint8;
+    let buffer: *mut u8 = malloc(size.wrapping_add(1 as size_t)) as *mut u8;
     if buffer.is_null() {
         Die(b"malloc failed\0" as *const u8 as *const ::core::ffi::c_char);
     }
-    *buffer.offset(size as isize) = 0 as uint8;
+    *buffer.offset(size as isize) = 0 as u8;
     if fread(buffer as *mut ::core::ffi::c_void, 1 as size_t, size, f) as size_t != size {
         Die(b"fread failed\0" as *const u8 as *const ::core::ffi::c_char);
     }
@@ -269,8 +267,8 @@ pub unsafe fn ByteArray_Resize(arr: *mut ByteArray, new_size: size_t) {
         } else {
             new_size
         };
-        let data: *mut uint8 =
-            realloc((*arr).data as *mut ::core::ffi::c_void, (*arr).capacity) as *mut uint8;
+        let data: *mut u8 =
+            realloc((*arr).data as *mut ::core::ffi::c_void, (*arr).capacity) as *mut u8;
         if data.is_null() {
             Die(b"memory allocation failed\0" as *const u8 as *const ::core::ffi::c_char);
         }
@@ -279,10 +277,10 @@ pub unsafe fn ByteArray_Resize(arr: *mut ByteArray, new_size: size_t) {
 }
 pub unsafe fn ByteArray_Destroy(arr: *mut ByteArray) {
     let data: *mut ::core::ffi::c_void = (*arr).data as *mut ::core::ffi::c_void;
-    (*arr).data = ::core::ptr::null_mut::<uint8>();
+    (*arr).data = ::core::ptr::null_mut::<u8>();
     free(data);
 }
-pub unsafe fn ByteArray_AppendData(arr: *mut ByteArray, data: *const uint8, data_size: size_t) {
+pub unsafe fn ByteArray_AppendData(arr: *mut ByteArray, data: *const u8, data_size: size_t) {
     ByteArray_Resize(arr, (*arr).size.wrapping_add(data_size));
     memcpy(
         (*arr)
@@ -293,7 +291,7 @@ pub unsafe fn ByteArray_AppendData(arr: *mut ByteArray, data: *const uint8, data
         data_size,
     );
 }
-pub unsafe fn ByteArray_AppendByte(arr: *mut ByteArray, v: uint8) {
+pub unsafe fn ByteArray_AppendByte(arr: *mut ByteArray, v: u8) {
     ByteArray_Resize(arr, (*arr).size.wrapping_add(1 as size_t));
     *(*arr)
         .data

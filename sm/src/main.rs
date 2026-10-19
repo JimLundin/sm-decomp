@@ -85,11 +85,7 @@ extern "C" {
     ) -> !;
 
 }
-pub use sm::types::{
-    _IO_lock_t, __int16_t, __int32_t, __int64_t, __int8_t, __mode_t, __off64_t, __off_t,
-    __uint16_t, __uint32_t, __uint64_t, __uint8_t, int16_t, int32_t, int64_t, int8_t, size_t,
-    uint16_t, uint32_t, uint64_t, uint8_t, _IO_FILE, FILE,
-};
+pub use sm::types::{_IO_lock_t, __mode_t, __off64_t, __off_t, size_t, _IO_FILE, FILE};
 pub const SDL_TRUE: SDL_bool = sdl2_sys::SDL_bool::SDL_TRUE;
 pub const SDL_FALSE: SDL_bool = sdl2_sys::SDL_bool::SDL_FALSE;
 pub use sm::types::SDL_AudioDeviceID;
@@ -942,7 +938,7 @@ pub const kPpuRenderFlags_NoSpriteLimits: C2RustUnnamed_8 = 8;
 pub const kPpuRenderFlags_Height240: C2RustUnnamed_8 = 4;
 pub const kPpuRenderFlags_4x4Mode7: C2RustUnnamed_8 = 2;
 pub const kPpuRenderFlags_NewRenderer: C2RustUnnamed_8 = 1;
-pub use sm::types::{int16, uint16, uint32, uint64, uint8, SaveLoadOperation as C2RustUnnamed_9};
+pub use sm::types::SaveLoadOperation as C2RustUnnamed_9;
 pub const kSaveLoad_Replay: C2RustUnnamed_9 = 3;
 pub const kSaveLoad_Load: C2RustUnnamed_9 = 2;
 pub const kSaveLoad_Save: C2RustUnnamed_9 = 1;
@@ -1040,18 +1036,18 @@ unsafe fn IntMax(a: i32, b: i32) -> i32 {
 }
 pub static mut g_is_turbo: bool = false;
 pub static mut g_want_dump_memmap_flags: bool = false;
-static mut g_pixels: [uint8_t; 245760] = [0; 245760];
-static mut g_my_pixels: [uint8_t; 245760] = [0; 245760];
+static mut g_pixels: [u8; 245760] = [0; 245760];
+static mut g_my_pixels: [u8; 245760] = [0; 245760];
 static mut kWindowTitle: [::core::ffi::c_char; 9] =
     unsafe { ::core::mem::transmute::<[u8; 9], [::core::ffi::c_char; 9]>(*b"SuperMet\0") };
-static mut g_win_flags: uint32 = SDL_WINDOW_RESIZABLE as i32 as uint32;
+static mut g_win_flags: u32 = SDL_WINDOW_RESIZABLE as i32 as u32;
 static mut g_window: *mut SDL_Window = ::core::ptr::null::<SDL_Window>() as *mut SDL_Window;
-static mut g_cursor: uint8 = true_0 as uint8;
-static mut g_paused: uint8 = 0;
-static mut g_turbo: uint8 = 0;
-static mut g_replay_turbo: uint8 = true_0 as uint8;
-static mut g_current_window_scale: uint8 = 0;
-static mut g_gamepad_buttons: uint8 = 0;
+static mut g_cursor: u8 = true_0 as u8;
+static mut g_paused: u8 = 0;
+static mut g_turbo: u8 = 0;
+static mut g_replay_turbo: u8 = true_0 as u8;
+static mut g_current_window_scale: u8 = 0;
+static mut g_gamepad_buttons: u8 = 0;
 static mut g_input1_state: i32 = 0;
 static mut g_display_perf: bool = false;
 static mut g_curr_fps: i32 = 0;
@@ -1065,8 +1061,8 @@ static mut g_renderer_funcs: RendererFuncs = RendererFuncs {
     BeginDraw: None,
     EndDraw: None,
 };
-static mut g_gamepad_modifiers: uint32 = 0;
-static mut g_gamepad_last_cmd: [uint16; 17] = [0; 17];
+static mut g_gamepad_modifiers: u32 = 0;
+static mut g_gamepad_last_cmd: [u16; 17] = [0; 17];
 unsafe fn host_die(error: *const ::core::ffi::c_char) {
     SDL_ShowSimpleMessageBox(
         SDL_MESSAGEBOX_ERROR as i32 as Uint32,
@@ -1141,7 +1137,7 @@ pub unsafe fn ChangeWindowScale(scale_step: i32) {
         IntMin(g_current_window_scale as i32 + scale_step, max_scale),
         1 as i32,
     );
-    g_current_window_scale = new_scale as uint8;
+    g_current_window_scale = new_scale as u8;
     let w: i32 = new_scale * g_snes_width;
     let h: i32 = new_scale * g_snes_height;
     SDL_SetWindowSize(g_window as *mut SDL_Window, w, h);
@@ -1172,9 +1168,9 @@ unsafe extern "C" fn HitTestCallback(
     pt: *const SDL_Point,
     data: *mut ::core::ffi::c_void,
 ) -> SDL_HitTestResult {
-    let flags: uint32 = SDL_GetWindowFlags(win as *mut SDL_Window) as uint32;
-    if flags & SDL_WINDOW_FULLSCREEN_DESKTOP as i32 as uint32 != 0 as uint32
-        || flags & SDL_WINDOW_FULLSCREEN as i32 as uint32 != 0 as uint32
+    let flags: u32 = SDL_GetWindowFlags(win as *mut SDL_Window) as u32;
+    if flags & SDL_WINDOW_FULLSCREEN_DESKTOP as i32 as u32 != 0 as u32
+        || flags & SDL_WINDOW_FULLSCREEN as i32 as u32 != 0 as u32
     {
         return SDL_HITTEST_NORMAL;
     }
@@ -1208,20 +1204,20 @@ unsafe extern "C" fn HitTestCallback(
     SDL_HITTEST_NORMAL
 }
 pub unsafe fn RtlDrawPpuFrame(
-    pixel_buffer: *mut uint8,
+    pixel_buffer: *mut u8,
     pitch: size_t,
-    render_flags: uint32,
+    render_flags: u32,
     game: &mut Game,
 ) {
-    let ppu_pixels: *mut uint8 = if game.g_other_image as i32 != 0 {
-        &raw mut g_my_pixels as *mut uint8
+    let ppu_pixels: *mut u8 = if game.g_other_image as i32 != 0 {
+        &raw mut g_my_pixels as *mut u8
     } else {
-        &raw mut g_pixels as *mut uint8
+        &raw mut g_pixels as *mut u8
     };
     let mut y: size_t = 0 as size_t;
     while y < 240 as size_t {
         memcpy(
-            (pixel_buffer as *mut uint8_t).offset(y.wrapping_mul(pitch) as isize)
+            (pixel_buffer as *mut u8).offset(y.wrapping_mul(pitch) as isize)
                 as *mut ::core::ffi::c_void,
             ppu_pixels.offset(y.wrapping_mul(256 as size_t).wrapping_mul(4 as size_t) as isize)
                 as *const ::core::ffi::c_void,
@@ -1231,9 +1227,8 @@ pub unsafe fn RtlDrawPpuFrame(
     }
 }
 unsafe fn DrawPpuFrameWithPerf(game: &mut Game) {
-    let render_scale: i32 =
-        PpuGetCurrentRenderScale((*game.g_snes).ppu, g_ppu_render_flags as uint32_t);
-    let mut pixel_buffer: *mut uint8 = ::core::ptr::null_mut::<uint8>();
+    let render_scale: i32 = PpuGetCurrentRenderScale((*game.g_snes).ppu, g_ppu_render_flags as u32);
+    let mut pixel_buffer: *mut u8 = ::core::ptr::null_mut::<u8>();
     let mut pitch: i32 = 0 as i32;
     g_renderer_funcs
         .BeginDraw
@@ -1248,14 +1243,14 @@ unsafe fn DrawPpuFrameWithPerf(game: &mut Game) {
         static mut history: [::core::ffi::c_float; 64] = [0.; 64];
         static mut average: ::core::ffi::c_float = 0.;
         static mut history_pos: i32 = 0;
-        let before: uint64 = SDL_GetPerformanceCounter() as uint64;
+        let before: u64 = SDL_GetPerformanceCounter() as u64;
         RtlDrawPpuFrame(
             pixel_buffer,
             pitch as size_t,
-            g_ppu_render_flags as uint32,
+            g_ppu_render_flags as u32,
             game,
         );
-        let after: uint64 = SDL_GetPerformanceCounter() as uint64;
+        let after: u64 = SDL_GetPerformanceCounter() as u64;
         let v: ::core::ffi::c_float = (SDL_GetPerformanceFrequency() as ::core::ffi::c_double
             / after.wrapping_sub(before) as ::core::ffi::c_double)
             as ::core::ffi::c_float;
@@ -1267,7 +1262,7 @@ unsafe fn DrawPpuFrameWithPerf(game: &mut Game) {
         RtlDrawPpuFrame(
             pixel_buffer,
             pitch as size_t,
-            g_ppu_render_flags as uint32,
+            g_ppu_render_flags as u32,
             game,
         );
     }
@@ -1276,7 +1271,7 @@ unsafe fn DrawPpuFrameWithPerf(game: &mut Game) {
             pixel_buffer.offset((pitch * render_scale) as isize),
             pitch as size_t,
             g_curr_fps,
-            (render_scale == 4 as i32) as i32 as uint8,
+            (render_scale == 4 as i32) as i32 as u8,
         );
     }
     if game.g_got_mismatch_count != 0 {
@@ -1284,17 +1279,17 @@ unsafe fn DrawPpuFrameWithPerf(game: &mut Game) {
             pixel_buffer.offset((pitch * render_scale) as isize),
             pitch as size_t,
             game.g_got_mismatch_count,
-            (render_scale == 4 as i32) as i32 as uint8,
+            (render_scale == 4 as i32) as i32 as u8,
         );
     }
     g_renderer_funcs.EndDraw.expect("non-null function pointer")(game);
 }
 static mut g_audio_mutex: *mut SDL_mutex = ::core::ptr::null::<SDL_mutex>() as *mut SDL_mutex;
-static mut g_audiobuffer_cur: *mut uint8 = ::core::ptr::null::<uint8>() as *mut uint8;
-static mut g_audiobuffer_end: *mut uint8 = ::core::ptr::null::<uint8>() as *mut uint8;
-static mut g_audiobuffer: *mut uint8 = ::core::ptr::null::<uint8>() as *mut uint8;
+static mut g_audiobuffer_cur: *mut u8 = ::core::ptr::null::<u8>() as *mut u8;
+static mut g_audiobuffer_end: *mut u8 = ::core::ptr::null::<u8>() as *mut u8;
+static mut g_audiobuffer: *mut u8 = ::core::ptr::null::<u8>() as *mut u8;
 static mut g_frames_per_block: i32 = 0;
-static mut g_audio_channels: uint8 = 0;
+static mut g_audio_channels: u8 = 0;
 static mut g_audio_device: SDL_AudioDeviceID = 0;
 unsafe fn initialize_verify_audio(game: &mut Game) -> Result<(), String> {
     g_audio_mutex = SDL_CreateMutex();
@@ -1335,7 +1330,7 @@ unsafe extern "C" fn AudioCallback(
                 == 0 as ::core::ffi::c_long
             {
                 RtlRenderAudio(
-                    g_audiobuffer as *mut int16,
+                    g_audiobuffer as *mut i16,
                     g_frames_per_block,
                     g_audio_channels as i32,
                     game,
@@ -1343,7 +1338,7 @@ unsafe extern "C" fn AudioCallback(
                 g_audiobuffer_cur = g_audiobuffer;
                 g_audiobuffer_end = g_audiobuffer.offset(
                     ((g_frames_per_block * g_audio_channels as i32) as usize)
-                        .wrapping_mul(::core::mem::size_of::<int16>() as usize)
+                        .wrapping_mul(::core::mem::size_of::<i16>() as usize)
                         as isize,
                 );
             }
@@ -1453,7 +1448,7 @@ unsafe fn SdlRenderer_Destroy(game: &mut Game) {
 unsafe fn SdlRenderer_BeginDraw(
     width: i32,
     height: i32,
-    pixels: *mut *mut uint8,
+    pixels: *mut *mut u8,
     pitch: *mut i32,
     game: &mut Game,
 ) {
@@ -1487,7 +1482,7 @@ static mut kSdlRendererFuncs: RendererFuncs = RendererFuncs {
     Initialize: Some(SdlRenderer_Init as unsafe fn(*mut SDL_Window, &mut Game) -> bool),
     Destroy: Some(SdlRenderer_Destroy as unsafe fn(&mut Game) -> ()),
     BeginDraw: Some(
-        SdlRenderer_BeginDraw as unsafe fn(i32, i32, *mut *mut uint8, *mut i32, &mut Game) -> (),
+        SdlRenderer_BeginDraw as unsafe fn(i32, i32, *mut *mut u8, *mut i32, &mut Game) -> (),
     ),
     EndDraw: Some(SdlRenderer_EndDraw as unsafe fn(&mut Game) -> ()),
 };
@@ -1525,25 +1520,25 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut ::core::ffi::c_char, owner: 
         | g_config.extend_y as i32 * kPpuRenderFlags_Height240 as i32
         | g_config.no_sprite_limits as i32 * kPpuRenderFlags_NoSpriteLimits as i32;
     if g_config.fullscreen as i32 == 1 as i32 {
-        g_win_flags ^= SDL_WINDOW_FULLSCREEN_DESKTOP as i32 as uint32;
+        g_win_flags ^= SDL_WINDOW_FULLSCREEN_DESKTOP as i32 as u32;
     } else if g_config.fullscreen as i32 == 2 as i32 {
-        g_win_flags ^= SDL_WINDOW_FULLSCREEN as i32 as uint32;
+        g_win_flags ^= SDL_WINDOW_FULLSCREEN as i32 as u32;
     }
     g_current_window_scale = (if g_config.window_scale as i32 == 0 as i32 {
         2 as i32
     } else {
         IntMin(g_config.window_scale as i32, kMaxWindowScale as i32)
-    }) as uint8;
+    }) as u8;
     if (g_config.audio_freq as i32) < 11025 as i32 || g_config.audio_freq as i32 > 48000 as i32 {
-        g_config.audio_freq = kDefaultFreq as i32 as uint16;
+        g_config.audio_freq = kDefaultFreq as i32 as u16;
     }
     if (g_config.audio_channels as i32) < 1 as i32 || g_config.audio_channels as i32 > 2 as i32 {
-        g_config.audio_channels = kDefaultChannels as i32 as uint8;
+        g_config.audio_channels = kDefaultChannels as i32 as u8;
     }
     if g_config.audio_samples as i32 <= 0 as i32
         || g_config.audio_samples as i32 & g_config.audio_samples as i32 - 1 as i32 != 0 as i32
     {
-        g_config.audio_samples = kDefaultSamples as i32 as uint16;
+        g_config.audio_samples = kDefaultSamples as i32 as u16;
     }
     if SDL_Init(
         SDL_INIT_VIDEO as Uint32 | SDL_INIT_AUDIO as Uint32 | SDL_INIT_GAMECONTROLLER as Uint32,
@@ -1567,7 +1562,7 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut ::core::ffi::c_char, owner: 
         g_current_window_scale as i32 * g_snes_height
     };
     if g_config.output_method as i32 == kOutputMethod_OpenGL as i32 {
-        g_win_flags |= SDL_WINDOW_OPENGL as i32 as uint32;
+        g_win_flags |= SDL_WINDOW_OPENGL as i32 as u32;
         OpenGLRenderer_Create(&raw mut g_renderer_funcs);
     } else {
         g_renderer_funcs = kSdlRendererFuncs;
@@ -1675,24 +1670,24 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut ::core::ffi::c_char, owner: 
             );
             return 1 as i32;
         }
-        g_audio_channels = 2 as uint8;
+        g_audio_channels = 2 as u8;
         g_frames_per_block = 534 as i32 * have.freq / 32000 as i32;
         g_audiobuffer = malloc(
             ((g_frames_per_block * have.channels as i32) as size_t)
-                .wrapping_mul(::core::mem::size_of::<int16>() as size_t),
-        ) as *mut uint8;
+                .wrapping_mul(::core::mem::size_of::<i16>() as size_t),
+        ) as *mut u8;
     }
     PpuBeginDrawing(
         (*snes).snes_ppu,
-        &raw mut g_pixels as *mut uint8_t,
+        &raw mut g_pixels as *mut u8,
         (256 as i32 * 4 as i32) as size_t,
-        0 as uint32_t,
+        0 as u32,
     );
     PpuBeginDrawing(
         (*snes).my_ppu,
-        &raw mut g_my_pixels as *mut uint8_t,
+        &raw mut g_my_pixels as *mut u8,
         (256 as i32 * 4 as i32) as size_t,
-        0 as uint32_t,
+        0 as u32,
     );
     mkdir(
         b"saves\0" as *const u8 as *const ::core::ffi::c_char,
@@ -1705,15 +1700,13 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut ::core::ffi::c_char, owner: 
         i += 1;
     }
     if g_config.autosave {
-        owner.with(|game| {
-            HandleCommand((kKeys_Load as i32 + 0 as i32) as uint32, true_0 != 0, game)
-        });
+        owner.with(|game| HandleCommand((kKeys_Load as i32 + 0 as i32) as u32, true_0 != 0, game));
     }
     let mut running: bool = true_0 != 0;
-    let mut lastTick: uint32 = SDL_GetTicks() as uint32;
-    let mut curTick: uint32 = 0 as uint32;
-    let mut frameCtr: uint32 = 0 as uint32;
-    let mut audiopaused: uint8 = true_0 as uint8;
+    let mut lastTick: u32 = SDL_GetTicks() as u32;
+    let mut curTick: u32 = 0 as u32;
+    let mut frameCtr: u32 = 0 as u32;
+    let mut audiopaused: u8 = true_0 as u8;
     let mut has_bug_in_title: bool = false_0 != 0;
     while running {
         let mut event: SDL_Event = SDL_Event { type_: 0 };
@@ -1759,15 +1752,14 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut ::core::ffi::c_char, owner: 
                     if event.button.button as i32 == SDL_BUTTON_LEFT
                         && event.button.state as i32 == SDL_PRESSED
                         && event.button.clicks as i32 == 2 as i32
-                        && g_win_flags & SDL_WINDOW_FULLSCREEN_DESKTOP as i32 as uint32
-                            == 0 as uint32
-                        && g_win_flags & SDL_WINDOW_FULLSCREEN as i32 as uint32 == 0 as uint32
+                        && g_win_flags & SDL_WINDOW_FULLSCREEN_DESKTOP as i32 as u32 == 0 as u32
+                        && g_win_flags & SDL_WINDOW_FULLSCREEN as i32 as u32 == 0 as u32
                         && SDL_GetModState() as u32 & KMOD_SHIFT as i32 as u32 != 0
                     {
-                        g_win_flags ^= SDL_WINDOW_BORDERLESS as i32 as uint32;
+                        g_win_flags ^= SDL_WINDOW_BORDERLESS as i32 as u32;
                         SDL_SetWindowBordered(
                             g_window as *mut SDL_Window,
-                            if g_win_flags & SDL_WINDOW_BORDERLESS as uint32 == 0 as uint32 {
+                            if g_win_flags & SDL_WINDOW_BORDERLESS as u32 == 0 as u32 {
                                 SDL_TRUE
                             } else {
                                 SDL_FALSE
@@ -1812,10 +1804,10 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut ::core::ffi::c_char, owner: 
         } else {
             let mut inputs: i32 = g_input1_state;
             if g_input1_state & 0xf0 as i32 != 0 {
-                g_gamepad_buttons = 0 as uint8;
+                g_gamepad_buttons = 0 as u8;
             }
             inputs |= g_gamepad_buttons as i32;
-            let is_replay: uint8 = owner.with(|game| RtlRunFrame(inputs, game)) as uint8;
+            let is_replay: u8 = owner.with(|game| RtlRunFrame(inputs, game)) as u8;
             frameCtr = frameCtr.wrapping_add(1);
             let (want_bug_in_title, disable_render) = owner.with(|game| {
                 (*game.g_snes).disableRender =
@@ -1825,8 +1817,8 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut ::core::ffi::c_char, owner: 
                                 0xf as i32
                             } else {
                                 0x7f as i32
-                            }) as uint32
-                            != 0 as uint32;
+                            }) as u32
+                            != 0 as u32;
                 if !(*game.g_snes).disableRender {
                     DrawPpuFrameWithPerf(game);
                 }
@@ -1856,28 +1848,26 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut ::core::ffi::c_char, owner: 
                     );
                 }
             }
-            curTick = SDL_GetTicks() as uint32;
+            curTick = SDL_GetTicks() as u32;
             if !disable_render && !g_config.disable_frame_delay {
-                static mut delays: [uint8; 3] = [17, 17, 16];
-                lastTick = lastTick
-                    .wrapping_add(delays[frameCtr.wrapping_rem(3 as uint32) as usize] as uint32);
+                static mut delays: [u8; 3] = [17, 17, 16];
+                lastTick =
+                    lastTick.wrapping_add(delays[frameCtr.wrapping_rem(3 as u32) as usize] as u32);
                 if lastTick > curTick {
-                    let mut delta: uint32 = lastTick.wrapping_sub(curTick);
-                    if delta > 500 as uint32 {
-                        lastTick = curTick.wrapping_sub(500 as uint32);
-                        delta = 500 as uint32;
+                    let mut delta: u32 = lastTick.wrapping_sub(curTick);
+                    if delta > 500 as u32 {
+                        lastTick = curTick.wrapping_sub(500 as u32);
+                        delta = 500 as u32;
                     }
                     SDL_Delay(delta as Uint32);
-                } else if curTick.wrapping_sub(lastTick) > 500 as uint32 {
+                } else if curTick.wrapping_sub(lastTick) > 500 as u32 {
                     lastTick = curTick;
                 }
             }
         }
     }
     if g_config.autosave {
-        owner.with(|game| {
-            HandleCommand((kKeys_Save as i32 + 0 as i32) as uint32, true_0 != 0, game)
-        });
+        owner.with(|game| HandleCommand((kKeys_Save as i32 + 0 as i32) as u32, true_0 != 0, game));
     }
     SDL_PauseAudioDevice(g_audio_device, 1 as i32);
     SDL_CloseAudioDevice(g_audio_device);
@@ -1888,8 +1878,8 @@ unsafe fn main_0(mut argc: i32, mut argv: *mut *mut ::core::ffi::c_char, owner: 
     SDL_Quit();
     0 as i32
 }
-unsafe fn RenderDigit(mut dst: *mut uint8, pitch: size_t, digit: i32, color: uint32, big: bool) {
-    static mut kFont: [uint8; 100] = [
+unsafe fn RenderDigit(mut dst: *mut u8, pitch: size_t, digit: i32, color: u32, big: bool) {
+    static mut kFont: [u8; 100] = [
         0x1c, 0x36, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x36, 0x1c, 0x18, 0x1c, 0x1e, 0x18, 0x18,
         0x18, 0x18, 0x18, 0x18, 0x7e, 0x3e, 0x63, 0x60, 0x30, 0x18, 0xc, 0x6, 0x3, 0x63, 0x7f,
         0x3e, 0x63, 0x60, 0x60, 0x3c, 0x60, 0x60, 0x60, 0x63, 0x3e, 0x30, 0x38, 0x3c, 0x36, 0x33,
@@ -1898,8 +1888,7 @@ unsafe fn RenderDigit(mut dst: *mut uint8, pitch: size_t, digit: i32, color: uin
         0x18, 0xc, 0xc, 0xc, 0xc, 0x3e, 0x63, 0x63, 0x63, 0x3e, 0x63, 0x63, 0x63, 0x63, 0x3e, 0x3e,
         0x63, 0x63, 0x63, 0x7e, 0x60, 0x60, 0x60, 0x30, 0x1e,
     ];
-    let mut p: *const uint8 =
-        (&raw const kFont as *const uint8).offset((digit * 10 as i32) as isize);
+    let mut p: *const u8 = (&raw const kFont as *const u8).offset((digit * 10 as i32) as isize);
     if !big {
         let mut y: i32 = 0 as i32;
         while y < 10 as i32 {
@@ -1909,7 +1898,7 @@ unsafe fn RenderDigit(mut dst: *mut uint8, pitch: size_t, digit: i32, color: uin
             let mut x: i32 = 0 as i32;
             while v != 0 {
                 if v & 1 as i32 != 0 {
-                    *(dst as *mut uint32).offset(x as isize) = color;
+                    *(dst as *mut u32).offset(x as isize) = color;
                 }
                 x += 1;
                 v >>= 1 as i32;
@@ -1926,13 +1915,13 @@ unsafe fn RenderDigit(mut dst: *mut uint8, pitch: size_t, digit: i32, color: uin
             let mut x_0: i32 = 0 as i32;
             while v_0 != 0 {
                 if v_0 & 1 as i32 != 0 {
-                    let ref mut fresh2 = *(dst as *mut uint32).offset((x_0 * 2 as i32) as isize);
+                    let ref mut fresh2 = *(dst as *mut u32).offset((x_0 * 2 as i32) as isize);
                     *fresh2 = color;
-                    *(dst as *mut uint32).offset((x_0 * 2 as i32 + 1 as i32) as isize) = *fresh2;
-                    let ref mut fresh3 = *(dst.offset(pitch as isize) as *mut uint32)
-                        .offset((x_0 * 2 as i32) as isize);
+                    *(dst as *mut u32).offset((x_0 * 2 as i32 + 1 as i32) as isize) = *fresh2;
+                    let ref mut fresh3 =
+                        *(dst.offset(pitch as isize) as *mut u32).offset((x_0 * 2 as i32) as isize);
                     *fresh3 = color;
-                    *(dst.offset(pitch as isize) as *mut uint32)
+                    *(dst.offset(pitch as isize) as *mut u32)
                         .offset((x_0 * 2 as i32 + 1 as i32) as isize) = *fresh3;
                 }
                 x_0 += 1;
@@ -1943,7 +1932,7 @@ unsafe fn RenderDigit(mut dst: *mut uint8, pitch: size_t, digit: i32, color: uin
         }
     };
 }
-unsafe fn RenderNumber(dst: *mut uint8, pitch: size_t, n: i32, big: uint8) {
+unsafe fn RenderNumber(dst: *mut u8, pitch: size_t, n: i32, big: u8) {
     let mut buf: [::core::ffi::c_char; 32] = [0; 32];
     let mut s: *mut ::core::ffi::c_char = ::core::ptr::null_mut::<::core::ffi::c_char>();
     let mut i: i32 = 0;
@@ -1961,7 +1950,7 @@ unsafe fn RenderNumber(dst: *mut uint8, pitch: size_t, n: i32, big: uint8) {
             ),
             pitch,
             *s as i32 - '0' as i32,
-            0x404040 as uint32,
+            0x404040 as u32,
             big != 0,
         );
         s = s.offset(1);
@@ -1974,16 +1963,16 @@ unsafe fn RenderNumber(dst: *mut uint8, pitch: size_t, n: i32, big: uint8) {
             dst.offset((i << big as i32) as isize),
             pitch,
             *s as i32 - '0' as i32,
-            0xffffff as uint32,
+            0xffffff as u32,
             big != 0,
         );
         s = s.offset(1);
         i += 8 as i32 * 4 as i32;
     }
 }
-unsafe fn HandleCommand(j: uint32, pressed: bool, game: &mut Game) {
-    if j <= kKeys_Controls_Last as i32 as uint32 {
-        static mut kKbdRemap: [uint8; 13] = [0, 4, 5, 6, 7, 2, 3, 8, 0, 9, 1, 10, 11];
+unsafe fn HandleCommand(j: u32, pressed: bool, game: &mut Game) {
+    if j <= kKeys_Controls_Last as i32 as u32 {
+        static mut kKbdRemap: [u8; 13] = [0, 4, 5, 6, 7, 2, 3, 8, 0, 9, 1, 10, 11];
         if pressed {
             g_input1_state |= (1 as i32) << kKbdRemap[j as usize] as i32;
         } else {
@@ -1991,45 +1980,45 @@ unsafe fn HandleCommand(j: uint32, pressed: bool, game: &mut Game) {
         }
         return;
     }
-    if j == kKeys_Turbo as i32 as uint32 {
-        g_turbo = pressed as uint8;
+    if j == kKeys_Turbo as i32 as u32 {
+        g_turbo = pressed as u8;
         return;
     }
     if !pressed {
         return;
     }
-    if j <= kKeys_Load_Last as i32 as uint32 {
+    if j <= kKeys_Load_Last as i32 as u32 {
         RtlSaveLoad(
             kSaveLoad_Load as i32,
-            j.wrapping_sub(kKeys_Load as i32 as uint32) as i32,
+            j.wrapping_sub(kKeys_Load as i32 as u32) as i32,
             game,
         );
-    } else if j <= kKeys_Save_Last as i32 as uint32 {
+    } else if j <= kKeys_Save_Last as i32 as u32 {
         RtlSaveLoad(
             kSaveLoad_Save as i32,
-            j.wrapping_sub(kKeys_Save as i32 as uint32) as i32,
+            j.wrapping_sub(kKeys_Save as i32 as u32) as i32,
             game,
         );
-    } else if j <= kKeys_Replay_Last as i32 as uint32 {
+    } else if j <= kKeys_Replay_Last as i32 as u32 {
         RtlSaveLoad(
             kSaveLoad_Replay as i32,
-            j.wrapping_sub(kKeys_Replay as i32 as uint32) as i32,
+            j.wrapping_sub(kKeys_Replay as i32 as u32) as i32,
             game,
         );
-    } else if j <= kKeys_LoadRef_Last as i32 as uint32 {
+    } else if j <= kKeys_LoadRef_Last as i32 as u32 {
         RtlSaveLoad(
             kSaveLoad_Load as i32,
-            (256 as uint32)
+            (256 as u32)
                 .wrapping_add(j)
-                .wrapping_sub(kKeys_LoadRef as i32 as uint32) as i32,
+                .wrapping_sub(kKeys_LoadRef as i32 as u32) as i32,
             game,
         );
-    } else if j <= kKeys_ReplayRef_Last as i32 as uint32 {
+    } else if j <= kKeys_ReplayRef_Last as i32 as u32 {
         RtlSaveLoad(
             kSaveLoad_Replay as i32,
-            (256 as uint32)
+            (256 as u32)
                 .wrapping_add(j)
-                .wrapping_sub(kKeys_ReplayRef as i32 as uint32) as i32,
+                .wrapping_sub(kKeys_ReplayRef as i32 as u32) as i32,
             game,
         );
     } else {
@@ -2046,25 +2035,25 @@ unsafe fn HandleCommand(j: uint32, pressed: bool, game: &mut Game) {
             116 => RtlClearKeyLog(game),
             117 => RtlStopReplay(game),
             118 => {
-                g_win_flags ^= SDL_WINDOW_FULLSCREEN_DESKTOP as i32 as uint32;
+                g_win_flags ^= SDL_WINDOW_FULLSCREEN_DESKTOP as i32 as u32;
                 SDL_SetWindowFullscreen(
                     g_window as *mut SDL_Window,
                     g_win_flags as Uint32 & SDL_WINDOW_FULLSCREEN_DESKTOP as i32 as Uint32,
                 );
-                g_cursor = (g_cursor == 0) as i32 as uint8;
+                g_cursor = (g_cursor == 0) as i32 as u8;
                 SDL_ShowCursor(g_cursor as i32);
             }
             119 => {
                 RtlReset(1 as i32, game);
             }
             120 => {
-                g_paused = (g_paused == 0) as i32 as uint8;
+                g_paused = (g_paused == 0) as i32 as u8;
             }
             121 => {
-                g_paused = (g_paused == 0) as i32 as uint8;
+                g_paused = (g_paused == 0) as i32 as u8;
             }
             123 => {
-                g_replay_turbo = (g_replay_turbo == 0) as i32 as uint8;
+                g_replay_turbo = (g_replay_turbo == 0) as i32 as u8;
             }
             124 => {
                 ChangeWindowScale(1 as i32);
@@ -2081,7 +2070,7 @@ unsafe fn HandleCommand(j: uint32, pressed: bool, game: &mut Game) {
                     g_ppu_render_flags & kPpuRenderFlags_NewRenderer as i32 != 0 as i32;
             }
             128 | 129 => {
-                HandleVolumeAdjustment(if j == kKeys_VolumeUp as i32 as uint32 {
+                HandleVolumeAdjustment(if j == kKeys_VolumeUp as i32 as u32 {
                     1 as i32
                 } else {
                     -(1 as i32)
@@ -2104,7 +2093,7 @@ unsafe fn HandleCommand(j: uint32, pressed: bool, game: &mut Game) {
 unsafe fn HandleInput(keyCode: i32, keyMod: i32, pressed: bool, game: &mut Game) {
     let j: i32 = FindCmdForSdlKey(keyCode as SDL_Keycode, keyMod as SDL_Keymod);
     if j != 0 as i32 {
-        HandleCommand(j as uint32, pressed, game);
+        HandleCommand(j as u32, pressed, game);
     }
 }
 unsafe fn OpenOneGamepad(i: i32) {
@@ -2141,16 +2130,16 @@ unsafe fn RemapSdlButton(button: i32) -> i32 {
     }
 }
 unsafe fn HandleGamepadInput(button: i32, pressed: bool, game: &mut Game) {
-    if (g_gamepad_modifiers & ((1 as i32) << button) as uint32 != 0) as i32 == pressed as i32 {
+    if (g_gamepad_modifiers & ((1 as i32) << button) as u32 != 0) as i32 == pressed as i32 {
         return;
     }
-    g_gamepad_modifiers ^= ((1 as i32) << button) as uint32;
+    g_gamepad_modifiers ^= ((1 as i32) << button) as u32;
     if pressed {
         g_gamepad_last_cmd[button as usize] =
-            FindCmdForGamepadButton(button, g_gamepad_modifiers) as uint16;
+            FindCmdForGamepadButton(button, g_gamepad_modifiers) as u16;
     }
     if g_gamepad_last_cmd[button as usize] as i32 != 0 as i32 {
-        HandleCommand(g_gamepad_last_cmd[button as usize] as uint32, pressed, game);
+        HandleCommand(g_gamepad_last_cmd[button as usize] as u32, pressed, game);
     }
 }
 unsafe fn HandleVolumeAdjustment(volume_adjustment: i32) {
@@ -2170,10 +2159,10 @@ unsafe fn ApproximateAtan2(
     mut y: ::core::ffi::c_float,
     mut x: ::core::ffi::c_float,
 ) -> ::core::ffi::c_float {
-    let sign_mask: uint32 = 0x80000000 as uint32;
+    let sign_mask: u32 = 0x80000000 as u32;
     let b: ::core::ffi::c_float = 0.596227f32;
-    let ux_s: uint32 = sign_mask & *(&raw mut x as *mut uint32);
-    let uy_s: uint32 = sign_mask & *(&raw mut y as *mut uint32);
+    let ux_s: u32 = sign_mask & *(&raw mut x as *mut u32);
+    let uy_s: u32 = sign_mask & *(&raw mut y as *mut u32);
     let q: ::core::ffi::c_float =
         ((!ux_s & uy_s) >> 29 as i32 | ux_s >> 30 as i32) as ::core::ffi::c_float;
     let mut bxy_a: ::core::ffi::c_float = b * x * y;
@@ -2182,8 +2171,7 @@ unsafe fn ApproximateAtan2(
     }
     let num: ::core::ffi::c_float = bxy_a + y * y;
     let mut atan_1q: ::core::ffi::c_float = num / (x * x + bxy_a + num + 0.000001f32);
-    let mut uatan_2q: uint32_t =
-        ux_s as uint32_t ^ uy_s as uint32_t | *(&raw mut atan_1q as *mut uint32);
+    let mut uatan_2q: u32 = ux_s as u32 ^ uy_s as u32 | *(&raw mut atan_1q as *mut u32);
     q + *(&raw mut uatan_2q as *mut ::core::ffi::c_float)
 }
 unsafe fn HandleGamepadAxisInput(gamepad_id: i32, axis: i32, value: i32, game: &mut Game) {
@@ -2206,26 +2194,26 @@ unsafe fn HandleGamepadAxisInput(gamepad_id: i32, axis: i32, value: i32, game: &
         } = value;
         let mut buttons: i32 = 0 as i32;
         if last_x * last_x + last_y * last_y >= 10000 as i32 * 10000 as i32 {
-            static mut kSegmentToButtons: [uint8; 8] = [
-                ((1 as i32) << 4 as i32) as uint8,
-                ((1 as i32) << 4 as i32 | (1 as i32) << 7 as i32) as uint8,
-                ((1 as i32) << 7 as i32) as uint8,
-                ((1 as i32) << 7 as i32 | (1 as i32) << 5 as i32) as uint8,
-                ((1 as i32) << 5 as i32) as uint8,
-                ((1 as i32) << 5 as i32 | (1 as i32) << 6 as i32) as uint8,
-                ((1 as i32) << 6 as i32) as uint8,
-                ((1 as i32) << 6 as i32 | (1 as i32) << 4 as i32) as uint8,
+            static mut kSegmentToButtons: [u8; 8] = [
+                ((1 as i32) << 4 as i32) as u8,
+                ((1 as i32) << 4 as i32 | (1 as i32) << 7 as i32) as u8,
+                ((1 as i32) << 7 as i32) as u8,
+                ((1 as i32) << 7 as i32 | (1 as i32) << 5 as i32) as u8,
+                ((1 as i32) << 5 as i32) as u8,
+                ((1 as i32) << 5 as i32 | (1 as i32) << 6 as i32) as u8,
+                ((1 as i32) << 6 as i32) as u8,
+                ((1 as i32) << 6 as i32 | (1 as i32) << 4 as i32) as u8,
             ];
-            let angle: uint8 = (ApproximateAtan2(
+            let angle: u8 = (ApproximateAtan2(
                 last_y as ::core::ffi::c_float,
                 last_x as ::core::ffi::c_float,
             ) * 64.0f32
-                + 0.5f32) as i32 as uint8;
+                + 0.5f32) as i32 as u8;
             buttons = kSegmentToButtons
-                [((angle as i32 + 16 as i32 + 64 as i32) as uint8 as i32 >> 5 as i32) as usize]
+                [((angle as i32 + 16 as i32 + 64 as i32) as u8 as i32 >> 5 as i32) as usize]
                 as i32;
         }
-        g_gamepad_buttons = buttons as uint8;
+        g_gamepad_buttons = buttons as u8;
     } else if (axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT as i32
         || axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT as i32)
         && (value < 12000 as i32 || value >= 16000 as i32)

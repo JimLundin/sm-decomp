@@ -48,33 +48,32 @@ extern "C" {
     fn time(__timer: *mut time_t) -> time_t;
 }
 pub use crate::types::{
-    _IO_lock_t, __int16_t, __int32_t, __int8_t, __off64_t, __off_t, __time_t, __uint16_t,
-    __uint32_t, __uint8_t, int16_t, int32_t, int8, int8_t, size_t, time_t, uint16, uint16_t,
-    uint32, uint32_t, uint8, uint8_t, Apu, ApuHistory as C2RustUnnamed, BgLayer, Cart, Cpu, Dma,
-    DmaChannel, Dsp, DspChannel, DspRegWriteHistory, EnemyBase, Enemy_Botwoon, Input, Layer, Ppu,
-    PpuPixelPrioBufs, PpuZbufType, Snes, Spc, Timer, VoidP, WindowLayer, _IO_FILE, FILE,
+    _IO_lock_t, __off64_t, __off_t, __time_t, size_t, time_t, Apu, ApuHistory as C2RustUnnamed,
+    BgLayer, Cart, Cpu, Dma, DmaChannel, Dsp, DspChannel, DspRegWriteHistory, EnemyBase,
+    Enemy_Botwoon, Input, Layer, Ppu, PpuPixelPrioBufs, PpuZbufType, Snes, Spc, Timer, VoidP,
+    WindowLayer, _IO_FILE, FILE,
 };
 pub use crate::types::{ProjectileInstr, SyncAllFunc};
 // Explicit state previously included by the oversized OAM memory copy.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct SpriteSnapshot {
-    pub address: uint8,
-    pub written_address: uint8,
+    pub address: u8,
+    pub written_address: u8,
     pub high_table: bool,
     pub written_high_table: bool,
     pub second_byte: bool,
-    pub buffer: uint8,
+    pub buffer: u8,
     pub priority_rotation: bool,
-    pub tile_address_1: uint16,
-    pub tile_address_2: uint16,
-    pub size: uint8,
+    pub tile_address_1: u16,
+    pub tile_address_2: u16,
+    pub size: u8,
     // Preserve the inherited cache coverage without depending on Ppu layout.
-    pub legacy_pixel_prefix: [uint8; 19],
+    pub legacy_pixel_prefix: [u8; 19],
 }
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct CounterSnapshot {
-    pub horizontal: uint16,
-    pub vertical: uint16,
+    pub horizontal: u16,
+    pub vertical: u16,
     pub horizontal_second_byte: bool,
     pub vertical_second_byte: bool,
     pub latched: bool,
@@ -84,66 +83,66 @@ pub struct CounterSnapshot {
 pub struct Snapshot {
     pub audio: crate::audio_snapshot::AudioSnapshot,
     pub player: crate::audio_snapshot::PlayerSnapshot,
-    pub a: uint16,
-    pub x: uint16,
-    pub y: uint16,
-    pub sp: uint16,
-    pub dp: uint16,
-    pub pc: uint16,
-    pub k: uint8,
-    pub db: uint8,
-    pub flags: uint8,
+    pub a: u16,
+    pub x: u16,
+    pub y: u16,
+    pub sp: u16,
+    pub dp: u16,
+    pub pc: u16,
+    pub k: u8,
+    pub db: u8,
+    pub flags: u8,
     pub cpu_waiting: bool,
     pub cpu_emulation: bool,
     pub cpu_stopped: bool,
     pub cpu_irq_pending: bool,
     pub cpu_nmi_pending: bool,
-    pub video_clock: (uint16_t, uint16_t, uint32_t),
+    pub video_clock: (u16, u16, u32),
     pub interrupt_latches: (bool, bool, bool),
     pub interrupt_enables: (bool, bool, bool),
-    pub h_timer: uint16_t,
-    pub snes_open_bus: uint8_t,
-    pub input_control: (bool, bool, uint16_t),
-    pub wram_port_address: uint32_t,
+    pub h_timer: u16,
+    pub snes_open_bus: u8,
+    pub input_control: (bool, bool, u16),
+    pub wram_port_address: u32,
     pub dma_channels: [crate::types::DmaChannel; 8],
-    pub dma_timing: (uint16_t, uint32_t, bool),
-    pub arithmetic: (uint8_t, uint16_t, uint16_t, uint16_t),
-    pub vTimer: uint16_t,
-    pub ram: [uint8; 131072],
-    pub vram: [uint16; 32768],
-    pub sram: [uint8; 8192],
-    pub oam: [uint16; 256],
-    pub high_oam: [uint8; 32],
+    pub dma_timing: (u16, u32, bool),
+    pub arithmetic: (u8, u16, u16, u16),
+    pub vTimer: u16,
+    pub ram: [u8; 131072],
+    pub vram: [u16; 32768],
+    pub sram: [u8; 8192],
+    pub oam: [u16; 256],
+    pub high_oam: [u8; 32],
     pub sprite: SpriteSnapshot,
     pub counters: CounterSnapshot,
     pub status_flags: [bool; 3],
     pub mode7_matrix: [i16; 8],
     pub mode7_flags: [bool; 5],
-    pub mosaic: ([bool; 4], uint8, uint8),
-    pub bgmode: (uint8, bool, [bool; 4]),
-    pub bg_scroll: [(uint16, uint16); 4],
-    pub bg_address: [(bool, bool, uint16, uint16); 4],
-    pub screen_routing: ([uint8; 2], [uint8; 2], [[bool; 4]; 5]),
-    pub window_select: (uint32, [(bool, bool, bool, bool, uint8); 6]),
-    pub window_bounds: [uint8; 4],
-    pub fixed_color: [uint8; 3],
+    pub mosaic: ([bool; 4], u8, u8),
+    pub bgmode: (u8, bool, [bool; 4]),
+    pub bg_scroll: [(u16, u16); 4],
+    pub bg_address: [(bool, bool, u16, u16); 4],
+    pub screen_routing: ([u8; 2], [u8; 2], [[bool; 4]; 5]),
+    pub window_select: (u32, [(bool, bool, bool, bool, u8); 6]),
+    pub window_bounds: [u8; 4],
+    pub fixed_color: [u8; 3],
     pub color_math: (bool, bool, [bool; 6]),
-    pub color_selection: (uint8, uint8, bool, bool),
+    pub color_selection: (u8, u8, bool, bool),
     pub display_geometry: [bool; 6],
-    pub brightness: uint8,
+    pub brightness: u8,
     pub forced_blank: bool,
-    pub cgram: [uint16; 256],
-    pub write_latches: [uint8; 3],
-    pub cgram_pointer: uint8,
+    pub cgram: [u16; 256],
+    pub write_latches: [u8; 3],
+    pub cgram_pointer: u8,
     pub cgram_second_write: bool,
-    pub cgram_buffer: uint8,
-    pub ppu1_open_bus: uint8,
-    pub ppu2_open_bus: uint8,
-    pub vram_read_buffer: uint16,
-    pub vram_pointer: uint16,
-    pub vram_increment: uint16,
+    pub cgram_buffer: u8,
+    pub ppu1_open_bus: u8,
+    pub ppu2_open_bus: u8,
+    pub vram_read_buffer: u16,
+    pub vram_pointer: u16,
+    pub vram_increment: u16,
     pub vram_increment_on_high: bool,
-    pub vram_remap_mode: uint8,
+    pub vram_remap_mode: u8,
     // Per-run observations, not emulated or serialized audio state.
     pub apu_upload_count: u32,
     pub apu_startup_upload: bool,
@@ -157,19 +156,19 @@ pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 #[inline]
-unsafe fn get_ProjectileInstr(a: uint16, game: &mut Game) -> *mut ProjectileInstr {
-    RomPtr((0x930000 as i32 | a as i32) as uint32_t, game) as *mut ProjectileInstr
+unsafe fn get_ProjectileInstr(a: u16, game: &mut Game) -> *mut ProjectileInstr {
+    RomPtr((0x930000 as i32 | a as i32) as u32, game) as *mut ProjectileInstr
 }
 #[inline]
 unsafe fn Get_Botwoon(o: i32, game: &mut Game) -> *mut Enemy_Botwoon {
-    (&raw mut game.g_ram as *mut uint8)
+    (&raw mut game.g_ram as *mut u8)
         .offset(0xf78)
         .offset(o as isize) as *mut Enemy_Botwoon
 }
 
-pub unsafe fn Call(addr: uint32, game: &mut Game) {
+pub unsafe fn Call(addr: u32, game: &mut Game) {
     '_c2rust_label: {
-        if addr & 0x8000 as uint32 != 0 {
+        if addr & 0x8000 as u32 != 0 {
         } else {
             __assert_fail(
                 b"addr & 0x8000\0" as *const u8 as *const ::core::ffi::c_char,
@@ -179,30 +178,30 @@ pub unsafe fn Call(addr: uint32, game: &mut Game) {
             );
         }
     };
-    RunAsmCode(addr, 0 as uint16, 0 as uint16, 0 as uint16, 0 as i32, game);
+    RunAsmCode(addr, 0 as u16, 0 as u16, 0 as u16, 0 as i32, game);
 }
-pub unsafe fn SnesRomPtr(v: uint32, game: &mut Game) -> *mut uint8_t {
-    RomPtr(v as uint32_t, game) as *mut uint8_t
+pub unsafe fn SnesRomPtr(v: u32, game: &mut Game) -> *mut u8 {
+    RomPtr(v as u32, game) as *mut u8
 }
-pub unsafe fn ProcessHook(v: uint32, game: &mut Game) -> bool {
-    let rombyte: *mut uint8_t = SnesRomPtr(v, game);
+pub unsafe fn ProcessHook(v: u32, game: &mut Game) -> bool {
+    let rombyte: *mut u8 = SnesRomPtr(v, game);
     match game.hookmode {
         0 => {
             let fresh2 = game.hookcnt;
             game.hookcnt = game.hookcnt.wrapping_add(1);
-            *rombyte = game.hook_orgbyte[fresh2 as usize] as uint8_t;
+            *rombyte = game.hook_orgbyte[fresh2 as usize] as u8;
             return false_0 != 0;
         }
         1 => {
             let fresh3 = game.hookcnt;
             game.hookcnt = game.hookcnt.wrapping_add(1);
-            game.hook_orgbyte[fresh3 as usize] = *rombyte as uint8;
-            *rombyte = 0 as uint8_t;
+            game.hook_orgbyte[fresh3 as usize] = *rombyte as u8;
+            *rombyte = 0 as u8;
             return false_0 != 0;
         }
         2 => {
             if v == game.hookadr {
-                game.hookmode = 3 as uint32;
+                game.hookmode = 3 as u32;
                 return true_0 != 0;
             }
             return false_0 != 0;
@@ -211,19 +210,19 @@ pub unsafe fn ProcessHook(v: uint32, game: &mut Game) -> bool {
     }
     false_0 != 0
 }
-pub unsafe fn FixBugHook(addr: uint32, game: &mut Game) -> bool {
+pub unsafe fn FixBugHook(addr: u32, game: &mut Game) -> bool {
     match game.hookmode {
         1 => {
-            let rombyte: *mut uint8_t = SnesRomPtr(addr, game);
+            let rombyte: *mut u8 = SnesRomPtr(addr, game);
             let fresh0 = game.hookcnt;
             game.hookcnt = game.hookcnt.wrapping_add(1);
-            game.hook_fixbug_orgbyte[fresh0 as usize] = *rombyte as uint8;
-            *rombyte = 0 as uint8_t;
+            game.hook_fixbug_orgbyte[fresh0 as usize] = *rombyte as u8;
+            *rombyte = 0 as u8;
             return false_0 != 0;
         }
         2 => {
             if addr == game.hookadr {
-                game.hookmode = 3 as uint32;
+                game.hookmode = 3 as u32;
                 return true_0 != 0;
             }
             game.hookcnt = game.hookcnt.wrapping_add(1);
@@ -233,7 +232,7 @@ pub unsafe fn FixBugHook(addr: uint32, game: &mut Game) -> bool {
     }
     false_0 != 0
 }
-static kPatchedCarrys: [uint32; 155] = [
+static kPatchedCarrys: [u32; 155] = [
     0xa7ac33, 0xa7ac36, 0xa7ac39, 0xa7ac42, 0xa7ac45, 0xa6d6d1, 0xa6d6d3, 0xa6d6d5, 0xa6d700,
     0xa6d702, 0xa6d704, 0xa6d665, 0xa6d667, 0xa6d669, 0xa6d694, 0xa6d696, 0xa6d698, 0x818b65,
     0x818b6b, 0x818ba7, 0x818bd9, 0x818bdf, 0x86a671, 0x86a680, 0x86a6a9, 0x86a6ba, 0x88b245,
@@ -254,187 +253,183 @@ static kPatchedCarrys: [uint32; 155] = [
     0xa48ca1, 0xa48ca4,
 ];
 
-pub unsafe fn PatchBugs(mode: uint32, addr: uint32, game: &mut Game) -> uint32 {
+pub unsafe fn PatchBugs(mode: u32, addr: u32, game: &mut Game) -> u32 {
     game.hookmode = mode;
     game.hookadr = addr;
-    game.hookcnt = 0 as uint32;
-    if FixBugHook(0x86ef35 as uint32, game) {
+    game.hookcnt = 0 as u32;
+    if FixBugHook(0x86ef35 as u32, game) {
         (*game.g_cpu).x = (*game.g_cpu).y;
-    } else if FixBugHook(0x86ef45 as uint32, game) {
+    } else if FixBugHook(0x86ef45 as u32, game) {
         (*game.g_cpu).z = (*game.g_cpu).a as i32 == 0 as i32;
-    } else if FixBugHook(0x818ab8 as uint32, game) {
+    } else if FixBugHook(0x818ab8 as u32, game) {
         if (*game.g_cpu).y as i32 == 0 as i32 {
-            (*game.g_cpu).pc = 0x8b1f as uint16_t;
+            (*game.g_cpu).pc = 0x8b1f as u16;
         }
-    } else if FixBugHook(0xa794ba as uint32, game) {
+    } else if FixBugHook(0xa794ba as u32, game) {
         (*game.g_cpu).y = (*game.g_cpu).x;
-    } else if FixBugHook(0xa7b968 as uint32, game) {
-        (*game.g_cpu).x = ram_word!(game, cur_enemy_index) as uint16_t;
-    } else if FixBugHook(0xa7b963 as uint32, game) {
-        (*game.g_cpu).x = ram_word!(game, cur_enemy_index) as uint16_t;
-    } else if FixBugHook(0xa496c8 as uint32, game) {
-        (*game.g_cpu).a = 0 as uint16_t;
-    } else if FixBugHook(0x9085aa as uint32, game) {
-        (*game.g_cpu).a = ram_word!(game, speed_boost_counter) as uint16_t;
-    } else if FixBugHook(0xa29044 as uint32, game) as i32 != 0
-        || FixBugHook(0xa2905d as uint32, game) as i32 != 0
+    } else if FixBugHook(0xa7b968 as u32, game) {
+        (*game.g_cpu).x = ram_word!(game, cur_enemy_index) as u16;
+    } else if FixBugHook(0xa7b963 as u32, game) {
+        (*game.g_cpu).x = ram_word!(game, cur_enemy_index) as u16;
+    } else if FixBugHook(0xa496c8 as u32, game) {
+        (*game.g_cpu).a = 0 as u16;
+    } else if FixBugHook(0x9085aa as u32, game) {
+        (*game.g_cpu).a = ram_word!(game, speed_boost_counter) as u16;
+    } else if FixBugHook(0xa29044 as u32, game) as i32 != 0
+        || FixBugHook(0xa2905d as u32, game) as i32 != 0
     {
         (*game.g_cpu).c = (*game.g_cpu).a as i32 == 0 as i32;
-    } else if FixBugHook(0xa29051 as uint32, game) {
+    } else if FixBugHook(0xa29051 as u32, game) {
         (*game.g_cpu).a = (*game.g_cpu).a.wrapping_sub(1);
-    } else if FixBugHook(0xa5931c as uint32, game) {
-        (*game.g_cpu).x = ram_word!(game, cur_enemy_index) as uint16_t;
-    } else if FixBugHook(0x80ada4 as uint32, game) {
-        (*game.g_cpu).a = ram_word!(game, layer2_y_pos) as uint16_t;
-    } else if FixBugHook(0x80add9 as uint32, game) {
-        (*game.g_cpu).a = ram_word!(game, layer2_y_pos) as uint16_t;
-    } else if FixBugHook(0x80ad4d as uint32, game) {
-        (*game.g_cpu).a = ram_word!(game, layer2_x_pos) as uint16_t;
-    } else if FixBugHook(0x80ad77 as uint32, game) {
-        (*game.g_cpu).a = ram_word!(game, layer2_x_pos) as uint16_t;
-    } else if FixBugHook(0x9381db as uint32, game) {
+    } else if FixBugHook(0xa5931c as u32, game) {
+        (*game.g_cpu).x = ram_word!(game, cur_enemy_index) as u16;
+    } else if FixBugHook(0x80ada4 as u32, game) {
+        (*game.g_cpu).a = ram_word!(game, layer2_y_pos) as u16;
+    } else if FixBugHook(0x80add9 as u32, game) {
+        (*game.g_cpu).a = ram_word!(game, layer2_y_pos) as u16;
+    } else if FixBugHook(0x80ad4d as u32, game) {
+        (*game.g_cpu).a = ram_word!(game, layer2_x_pos) as u16;
+    } else if FixBugHook(0x80ad77 as u32, game) {
+        (*game.g_cpu).a = ram_word!(game, layer2_x_pos) as u16;
+    } else if FixBugHook(0x9381db as u32, game) {
         let k: i32 = (*game.g_cpu).x as i32;
         let ip: i32 = ram_word!(game, projectile_bomb_instruction_ptr[(k >> 1i32)]) as i32;
         let delta: i32 = if ram_word!(game, projectile_bomb_instruction_timers[(k >> 1i32)]) as i32
             == 1 as i32
-            && (*get_ProjectileInstr(ip as uint16, game)).timer as i32 & 0x8000 as i32 == 0
+            && (*get_ProjectileInstr(ip as u16, game)).timer as i32 & 0x8000 as i32 == 0
         {
             0 as i32
         } else {
             -(8 as i32)
         };
-        (*game.g_cpu).a = ((*game.g_cpu).a as i32 + (8 as i32 + delta)) as uint16_t;
-    } else if FixBugHook(0x86b701 as uint32, game) {
+        (*game.g_cpu).a = ((*game.g_cpu).a as i32 + (8 as i32 + delta)) as u16;
+    } else if FixBugHook(0x86b701 as u32, game) {
         (*game.g_cpu).x = (*game.g_cpu).y;
-    } else if FixBugHook(0x8fc1b0 as uint32, game) {
+    } else if FixBugHook(0x8fc1b0 as u32, game) {
         (*game.g_cpu).x = (*game.g_cpu).a;
-    } else if !FixBugHook(0x80804f as uint32, game) {
-        if FixBugHook(0x829325 as uint32, game) {
-            (*game.g_cpu).db = 0x82 as uint8_t;
-        } else if FixBugHook(0x848acd as uint32, game) {
-            (*game.g_cpu).a = 0 as uint16_t;
-        } else if FixBugHook(0xa7ceb2 as uint32, game) {
-            (*game.g_cpu).x = ram_word!(game, cur_enemy_index) as uint16_t;
-        } else if FixBugHook(0x91cd44 as uint32, game) {
+    } else if !FixBugHook(0x80804f as u32, game) {
+        if FixBugHook(0x829325 as u32, game) {
+            (*game.g_cpu).db = 0x82 as u8;
+        } else if FixBugHook(0x848acd as u32, game) {
+            (*game.g_cpu).a = 0 as u16;
+        } else if FixBugHook(0xa7ceb2 as u32, game) {
+            (*game.g_cpu).x = ram_word!(game, cur_enemy_index) as u16;
+        } else if FixBugHook(0x91cd44 as u32, game) {
             if (*game.g_cpu).x as i32 == 0 as i32 {
-                (*game.g_cpu).pc = 0xcd52 as uint16_t;
+                (*game.g_cpu).pc = 0xcd52 as u16;
             }
-        } else if FixBugHook(0x82afd3 as uint32, game) {
-            if ram_word!(game, pausemenu_equipment_category_item) as uint8 as i32 != 1 as i32 {
-                return 0x82afd9 as uint32;
+        } else if FixBugHook(0x82afd3 as u32, game) {
+            if ram_word!(game, pausemenu_equipment_category_item) as u8 as i32 != 1 as i32 {
+                return 0x82afd9 as u32;
             }
-        } else if FixBugHook(0x82b0cd as uint32, game) {
-            if ram_word!(game, pausemenu_equipment_category_item) as uint8 as i32 != 2 as i32 {
-                return 0x82afd9 as uint32;
+        } else if FixBugHook(0x82b0cd as u32, game) {
+            if ram_word!(game, pausemenu_equipment_category_item) as u8 as i32 != 2 as i32 {
+                return 0x82afd9 as u32;
             }
-        } else if FixBugHook(0x82b15b as uint32, game) {
-            if ram_word!(game, pausemenu_equipment_category_item) as uint8 as i32 != 3 as i32 {
-                return 0x82afd9 as uint32;
+        } else if FixBugHook(0x82b15b as u32, game) {
+            if ram_word!(game, pausemenu_equipment_category_item) as u8 as i32 != 3 as i32 {
+                return 0x82afd9 as u32;
             }
-        } else if FixBugHook(0xa2d38c as uint32, game) {
-            (*game.g_cpu).x = ram_word!(game, cur_enemy_index) as uint16_t;
-        } else if FixBugHook(0xa4970f as uint32, game) {
-            (*game.g_cpu).a = ((*game.g_cpu).a as i32 & 0xff as i32) as uint16_t;
-            (*game.g_cpu).y = ((*game.g_cpu).x as i32 & 0x7 as i32) as uint16_t;
-        } else if FixBugHook(0xa496e0 as uint32, game) {
+        } else if FixBugHook(0xa2d38c as u32, game) {
+            (*game.g_cpu).x = ram_word!(game, cur_enemy_index) as u16;
+        } else if FixBugHook(0xa4970f as u32, game) {
+            (*game.g_cpu).a = ((*game.g_cpu).a as i32 & 0xff as i32) as u16;
+            (*game.g_cpu).y = ((*game.g_cpu).x as i32 & 0x7 as i32) as u16;
+        } else if FixBugHook(0xa496e0 as u32, game) {
             if (*game.g_cpu).x as i32 > 48 as i32 {
-                set_ram_word!(game.croco_cur_vline_idx = (*game.g_cpu).x as uint16);
+                set_ram_word!(game.croco_cur_vline_idx = (*game.g_cpu).x as u16);
                 (*game.g_cpu).mf = 0 as i32 != 0;
-                return 0xa497ce as uint32;
+                return 0xa497ce as u32;
             }
-        } else if FixBugHook(0x91da89 as uint32, game) {
+        } else if FixBugHook(0x91da89 as u32, game) {
             if ram_word!(game, special_samus_palette_frame) as i32 > 6 as i32 {
-                set_ram_word!(game.special_samus_palette_frame = 6 as uint16);
+                set_ram_word!(game.special_samus_palette_frame = 6 as u16);
             }
-        } else if FixBugHook(0x828d56 as uint32, game) {
-            WriteReg(VMAIN as i32 as uint16, 0x80 as uint8, game);
-        } else if FixBugHook(0x88afcf as uint32, game) {
+        } else if FixBugHook(0x828d56 as u32, game) {
+            WriteReg(VMAIN as i32 as u16, 0x80 as u8, game);
+        } else if FixBugHook(0x88afcf as u32, game) {
             if (*game.g_cpu).a as i32 & 0x8000 as i32 != 0 {
-                (*game.g_cpu).a = 0 as uint16_t;
+                (*game.g_cpu).a = 0 as u16;
             }
-        } else if FixBugHook(0x88aff2 as uint32, game) {
+        } else if FixBugHook(0x88aff2 as u32, game) {
             if ((*game.g_cpu).a as i32) < 256 as i32 {
-                (*game.g_cpu).a = 256 as uint16_t;
+                (*game.g_cpu).a = 256 as u16;
             }
-        } else if FixBugHook(0x8189bd as uint32, game) {
+        } else if FixBugHook(0x8189bd as u32, game) {
             if (*game.g_cpu).y as i32 == 0 as i32 {
-                return 0x818a35 as uint32;
+                return 0x818a35 as u32;
             }
-        } else if FixBugHook(0xa29bc1 as uint32, game) {
-            (*game.g_cpu).a = 1 as uint16_t;
-        } else if FixBugHook(0x82e910 as uint32, game) {
-            *((&raw mut game.g_ram as *mut uint8).offset(22) as *mut uint8 as *mut uint16) =
-                0 as uint16;
-        } else if FixBugHook(0x90a4c8 as uint32, game) {
-            *((&raw mut game.g_ram as *mut uint8).offset(18) as *mut uint8 as *mut uint16) =
-                0 as uint16;
-        } else if FixBugHook(0xa99f60 as uint32, game) {
-            *((&raw mut game.g_ram as *mut uint8).offset(22) as *mut uint8 as *mut uint16) =
-                1 as uint16;
-        } else if FixBugHook(0x94a85b as uint32, game) {
+        } else if FixBugHook(0xa29bc1 as u32, game) {
+            (*game.g_cpu).a = 1 as u16;
+        } else if FixBugHook(0x82e910 as u32, game) {
+            *((&raw mut game.g_ram as *mut u8).offset(22) as *mut u8 as *mut u16) = 0 as u16;
+        } else if FixBugHook(0x90a4c8 as u32, game) {
+            *((&raw mut game.g_ram as *mut u8).offset(18) as *mut u8 as *mut u16) = 0 as u16;
+        } else if FixBugHook(0xa99f60 as u32, game) {
+            *((&raw mut game.g_ram as *mut u8).offset(22) as *mut u8 as *mut u16) = 1 as u16;
+        } else if FixBugHook(0x94a85b as u32, game) {
             memset(
-                (&raw mut game.g_ram as *mut uint8).offset(0xd82) as *mut ::core::ffi::c_void,
+                (&raw mut game.g_ram as *mut u8).offset(0xd82) as *mut ::core::ffi::c_void,
                 0 as i32,
                 8 as size_t,
             );
-        } else if FixBugHook(0xa0a35c as uint32, game) {
+        } else if FixBugHook(0xa0a35c as u32, game) {
             set_ram_word!(
-                game.REMOVED_R18 = *((&raw mut game.g_ram as *mut uint8).offset(0xcea)
-                    as *mut uint16 as *mut uint8)
+                game.REMOVED_R18 = *((&raw mut game.g_ram as *mut u8).offset(0xcea) as *mut u16
+                    as *mut u8)
                     .offset(
-                        (::core::mem::size_of::<uint16>() as usize)
-                            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                        (::core::mem::size_of::<u16>() as usize)
+                            .wrapping_div(::core::mem::size_of::<u8>() as usize)
                             .wrapping_sub(1_usize) as isize,
-                    ) as uint16
+                    ) as u16
             );
             set_ram_word!(
                 game.REMOVED_R20 = (ram_word!(game, REMOVED_R18) as i32
                     + (ram_word!(game, REMOVED_R18) as i32 >> 1 as i32)
-                    >> 1 as i32) as uint16
+                    >> 1 as i32) as u16
             );
-        } else if FixBugHook(0xa7b049 as uint32, game) {
-            (*game.g_cpu).x = 0 as uint16_t;
-        } else if FixBugHook(0xa5a018 as uint32, game) {
-            set_ram_word!(game.REMOVED_varE24 = 0 as uint16);
-        } else if FixBugHook(0xb39ddb as uint32, game) {
+        } else if FixBugHook(0xa7b049 as u32, game) {
+            (*game.g_cpu).x = 0 as u16;
+        } else if FixBugHook(0xa5a018 as u32, game) {
+            set_ram_word!(game.REMOVED_varE24 = 0 as u16);
+        } else if FixBugHook(0xb39ddb as u32, game) {
             let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
             set_ram_word!(
-                game.REMOVED_R18 = ((*E).base.x_pos as i32 - (*E).botwoon_var_56 as i32) as uint16
+                game.REMOVED_R18 = ((*E).base.x_pos as i32 - (*E).botwoon_var_56 as i32) as u16
             );
             set_ram_word!(
-                game.REMOVED_R20 = ((*E).base.y_pos as i32 - (*E).botwoon_var_57 as i32) as uint16
+                game.REMOVED_R20 = ((*E).base.y_pos as i32 - (*E).botwoon_var_57 as i32) as u16
             );
-        } else if FixBugHook(0xb39e13 as uint32, game) {
+        } else if FixBugHook(0xb39e13 as u32, game) {
             let E_0: *mut Enemy_Botwoon =
                 Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
             (*E_0).botwoon_var_45 = ((*E_0).botwoon_var_45 as i32
-                + (ram_word!(game, REMOVED_R22) as i32 - (*E_0).botwoon_var_45 as i32) as int8
-                    as i32
+                + (ram_word!(game, REMOVED_R22) as i32 - (*E_0).botwoon_var_45 as i32) as i8 as i32
                     * 3 as i32
-                    / 4 as i32) as uint8 as uint16;
+                    / 4 as i32) as u8 as u16;
             set_ram_word!(game.REMOVED_R22 = (*E_0).botwoon_var_45);
         }
     }
-    0 as uint32
+    0 as u32
 }
-pub unsafe fn RunPatchBugHook(addr: uint32, game: &mut Game) -> i32 {
-    let new_pc: uint32 = PatchBugs(2 as uint32, addr, game);
-    if game.hookmode == 3 as uint32 {
-        if new_pc == 0 as uint32 {
+pub unsafe fn RunPatchBugHook(addr: u32, game: &mut Game) -> i32 {
+    let new_pc: u32 = PatchBugs(2 as u32, addr, game);
+    if game.hookmode == 3 as u32 {
+        if new_pc == 0 as u32 {
             return game.hook_fixbug_orgbyte[game.hookcnt as usize] as i32;
         } else {
-            (*game.g_cpu).k = (new_pc >> 16 as i32) as uint8_t;
-            (*game.g_cpu).pc = (new_pc & 0xffff as uint32).wrapping_add(1 as uint32) as uint16_t;
+            (*game.g_cpu).k = (new_pc >> 16 as i32) as u8;
+            (*game.g_cpu).pc = (new_pc & 0xffff as u32).wrapping_add(1 as u32) as u16;
             return *SnesRomPtr(new_pc, game) as i32;
         }
     }
     -(1 as i32)
 }
-pub unsafe fn CpuOpcodeHook(addr: uint32, game: &mut Game) -> i32 {
+pub unsafe fn CpuOpcodeHook(addr: u32, game: &mut Game) -> i32 {
     let mut i: size_t = 0 as size_t;
     while i
-        != (::core::mem::size_of::<[uint32; 155]>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint32>() as usize)
+        != (::core::mem::size_of::<[u32; 155]>() as usize)
+            .wrapping_div(::core::mem::size_of::<u32>() as usize)
     {
         if addr == kPatchedCarrys[i as usize] {
             return game.kPatchedCarrysOrg[i as usize] as i32;
@@ -756,190 +751,178 @@ unsafe fn VerifySnapshotsEq(
         }
     }
     memcpy(
-        (&raw mut (*b).ram as *mut uint8).offset(0) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*a).ram as *mut uint8).offset(0) as *mut uint8 as *const ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0) as *mut u8 as *const ::core::ffi::c_void,
         0x51 as size_t,
     );
     memcpy(
-        (&raw mut (*b).ram as *mut uint8).offset(0x1f5b) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*a).ram as *mut uint8).offset(0x1f5b) as *mut uint8
-            as *const ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x1f5b) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x1f5b) as *mut u8 as *const ::core::ffi::c_void,
         (0x100 as i32 - 0x5b as i32) as size_t,
     );
     memcpy(
-        (&raw mut (*b).ram as *mut uint8).offset(0xad) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*a).ram as *mut uint8).offset(0xad) as *mut uint8 as *const ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xad) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xad) as *mut u8 as *const ::core::ffi::c_void,
         4 as size_t,
     );
     memcpy(
-        (&raw mut (*b).ram as *mut uint8).offset(0x5ed) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*a).ram as *mut uint8).offset(0x5ed) as *mut uint8 as *const ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x5ed) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x5ed) as *mut u8 as *const ::core::ffi::c_void,
         8 as size_t,
     );
     memcpy(
-        (&raw mut (*b).ram as *mut uint8).offset(0x5bc) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*a).ram as *mut uint8).offset(0x5bc) as *mut uint8 as *const ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x5bc) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x5bc) as *mut u8 as *const ::core::ffi::c_void,
         9 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut uint8).offset(0x60b) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut uint8).offset(0x60b) as *mut uint8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x60b) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x60b) as *mut u8 as *const ::core::ffi::c_void,
         6 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut uint8).offset(0x611) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut uint8).offset(0x611) as *mut uint8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x611) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x611) as *mut u8 as *const ::core::ffi::c_void,
         6 as size_t,
     );
     memcpy(
-        (&raw mut (*b).ram as *mut uint8).offset(0x641) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*a).ram as *mut uint8).offset(0x641) as *mut uint8 as *const ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x641) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x641) as *mut u8 as *const ::core::ffi::c_void,
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut uint8).offset(0x77e) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut uint8).offset(0x77e) as *mut uint8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x77e) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x77e) as *mut u8 as *const ::core::ffi::c_void,
         5 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut uint8).offset(0x78f) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut uint8).offset(0x78f) as *mut uint8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x78f) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x78f) as *mut u8 as *const ::core::ffi::c_void,
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut uint8).offset(0x7b7) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut uint8).offset(0x7b7) as *mut uint8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x7b7) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x7b7) as *mut u8 as *const ::core::ffi::c_void,
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut uint8).offset(0x933) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut uint8).offset(0x933) as *mut uint8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x933) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x933) as *mut u8 as *const ::core::ffi::c_void,
         10 as size_t,
     );
     memcpy(
-        (&raw mut (*b).ram as *mut uint8).offset(0xb24) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*a).ram as *mut uint8).offset(0xb24) as *mut uint8 as *const ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xb24) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xb24) as *mut u8 as *const ::core::ffi::c_void,
         4 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut uint8).offset(0xd1e) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut uint8).offset(0xd1e) as *mut uint8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xd1e) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xd1e) as *mut u8 as *const ::core::ffi::c_void,
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut uint8).offset(0xd82) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut uint8).offset(0xd82) as *mut uint8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xd82) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xd82) as *mut u8 as *const ::core::ffi::c_void,
         8 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut uint8).offset(0xd9c) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut uint8).offset(0xd9c) as *mut uint8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xd9c) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xd9c) as *mut u8 as *const ::core::ffi::c_void,
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut uint8).offset(0xdd2) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut uint8).offset(0xdd2) as *mut uint8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xdd2) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xdd2) as *mut u8 as *const ::core::ffi::c_void,
         6 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut uint8).offset(0xd8a) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut uint8).offset(0xd8a) as *mut uint8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xd8a) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xd8a) as *mut u8 as *const ::core::ffi::c_void,
         6 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut uint8).offset(0xe20) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut uint8).offset(0xe20) as *mut uint8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xe20) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xe20) as *mut u8 as *const ::core::ffi::c_void,
         (0xe46 as i32 - 0xe20 as i32) as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut uint8).offset(0xe54) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut uint8).offset(0xe54) as *mut uint8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xe54) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xe54) as *mut u8 as *const ::core::ffi::c_void,
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut uint8).offset(0xe02) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut uint8).offset(0xe02) as *mut uint8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xe02) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xe02) as *mut u8 as *const ::core::ffi::c_void,
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut uint8).offset(0xe4a) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut uint8).offset(0xe4a) as *mut uint8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xe4a) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xe4a) as *mut u8 as *const ::core::ffi::c_void,
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut uint8).offset(0xe56) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut uint8).offset(0xe56) as *mut uint8 as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xe56) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xe56) as *mut u8 as *const ::core::ffi::c_void,
         4 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut uint8).offset(0x1784) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut uint8).offset(0x1784) as *mut uint8
-            as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x1784) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x1784) as *mut u8 as *const ::core::ffi::c_void,
         8 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut uint8).offset(0x1790) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut uint8).offset(0x1790) as *mut uint8
-            as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x1790) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x1790) as *mut u8 as *const ::core::ffi::c_void,
         4 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut uint8).offset(0x17a8) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut uint8).offset(0x17a8) as *mut uint8
-            as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x17a8) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x17a8) as *mut u8 as *const ::core::ffi::c_void,
         4 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut uint8).offset(0x1834) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut uint8).offset(0x1834) as *mut uint8
-            as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x1834) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x1834) as *mut u8 as *const ::core::ffi::c_void,
         8 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut uint8).offset(0x184a) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut uint8).offset(0x184a) as *mut uint8
-            as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x184a) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x184a) as *mut u8 as *const ::core::ffi::c_void,
         18 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut uint8).offset(0x186e) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut uint8).offset(0x186e) as *mut uint8
-            as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x186e) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x186e) as *mut u8 as *const ::core::ffi::c_void,
         (16 as i32 + 8 as i32) as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut uint8).offset(0x18a6) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut uint8).offset(0x18a6) as *mut uint8
-            as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x18a6) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x18a6) as *mut u8 as *const ::core::ffi::c_void,
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut uint8).offset(0x189a) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut uint8).offset(0x189a) as *mut uint8
-            as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x189a) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x189a) as *mut u8 as *const ::core::ffi::c_void,
         12 as size_t,
     );
     memcpy(
-        (&raw mut (*b).ram as *mut uint8).offset(0x1966) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*a).ram as *mut uint8).offset(0x1966) as *mut uint8
-            as *const ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0x1966) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0x1966) as *mut u8 as *const ::core::ffi::c_void,
         6 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut uint8).offset(0xef74) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut uint8).offset(0xef74) as *mut uint8
-            as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xef74) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xef74) as *mut u8 as *const ::core::ffi::c_void,
         4 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut uint8).offset(0xf37a) as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut uint8).offset(0xf37a) as *mut uint8
-            as *const ::core::ffi::c_void,
+        (&raw mut (*a).ram as *mut u8).offset(0xf37a) as *mut u8 as *mut ::core::ffi::c_void,
+        (&raw mut (*b).ram as *mut u8).offset(0xf37a) as *mut u8 as *const ::core::ffi::c_void,
         6 as size_t,
     );
     if memcmp(
-        &raw mut (*b).ram as *mut uint8 as *const ::core::ffi::c_void,
-        &raw mut (*a).ram as *mut uint8 as *const ::core::ffi::c_void,
+        &raw mut (*b).ram as *mut u8 as *const ::core::ffi::c_void,
+        &raw mut (*a).ram as *mut u8 as *const ::core::ffi::c_void,
         0x20000 as i32 as size_t,
     ) != 0
     {
@@ -999,8 +982,8 @@ unsafe fn VerifySnapshotsEq(
         );
     }
     if memcmp(
-        &raw mut (*b).sram as *mut uint8 as *const ::core::ffi::c_void,
-        &raw mut (*a).sram as *mut uint8 as *const ::core::ffi::c_void,
+        &raw mut (*b).sram as *mut u8 as *const ::core::ffi::c_void,
+        &raw mut (*a).sram as *mut u8 as *const ::core::ffi::c_void,
         0x2000 as size_t,
     ) != 0
     {
@@ -1026,12 +1009,12 @@ unsafe fn VerifySnapshotsEq(
                             b"0x%.6X: %.4X != %.4X (%.4X)\n\0" as *const u8
                                 as *const ::core::ffi::c_char,
                             i_0 as i32,
-                            *((&raw mut (*b).sram as *mut uint8).offset(i_0 as isize) as *mut uint8
-                                as *mut uint16) as i32,
-                            *((&raw mut (*a).sram as *mut uint8).offset(i_0 as isize) as *mut uint8
-                                as *mut uint16) as i32,
-                            *((&raw mut (*prev).sram as *mut uint8).offset(i_0 as isize)
-                                as *mut uint8 as *mut uint16) as i32,
+                            *((&raw mut (*b).sram as *mut u8).offset(i_0 as isize) as *mut u8
+                                as *mut u16) as i32,
+                            *((&raw mut (*a).sram as *mut u8).offset(i_0 as isize) as *mut u8
+                                as *mut u16) as i32,
+                            *((&raw mut (*prev).sram as *mut u8).offset(i_0 as isize) as *mut u8
+                                as *mut u16) as i32,
                         );
                         i_0 = i_0.wrapping_add(1);
                         j_0 += 1;
@@ -1060,9 +1043,9 @@ unsafe fn VerifySnapshotsEq(
         );
     }
     if memcmp(
-        &raw mut (*b).vram as *mut uint16 as *const ::core::ffi::c_void,
-        &raw mut (*a).vram as *mut uint16 as *const ::core::ffi::c_void,
-        (::core::mem::size_of::<uint16>() as size_t).wrapping_mul(0x8000 as size_t),
+        &raw mut (*b).vram as *mut u16 as *const ::core::ffi::c_void,
+        &raw mut (*a).vram as *mut u16 as *const ::core::ffi::c_void,
+        (::core::mem::size_of::<u16>() as size_t).wrapping_mul(0x8000 as size_t),
     ) != 0
     {
         game.g_fail = true_0 != 0;
@@ -1154,15 +1137,15 @@ unsafe fn MakeSnapshot(s: &mut Snapshot, snes: &Snes, c: &Cpu, player: *mut SpcP
     (*s).vram_increment = (*(*snes).ppu).vramIncrement;
     (*s).vram_increment_on_high = (*(*snes).ppu).vramIncrementOnHigh;
     (*s).vram_remap_mode = (*(*snes).ppu).vramRemapMode;
-    (*s).a = (*c).a as uint16;
-    (*s).x = (*c).x as uint16;
-    (*s).y = (*c).y as uint16;
-    (*s).sp = (*c).sp as uint16;
-    (*s).dp = (*c).dp as uint16;
-    (*s).db = (*c).db as uint8;
-    (*s).pc = (*c).pc as uint16;
-    (*s).k = (*c).k as uint8;
-    (*s).flags = cpu_getFlags(&*c) as uint8;
+    (*s).a = (*c).a as u16;
+    (*s).x = (*c).x as u16;
+    (*s).y = (*c).y as u16;
+    (*s).sp = (*c).sp as u16;
+    (*s).dp = (*c).dp as u16;
+    (*s).db = (*c).db as u8;
+    (*s).pc = (*c).pc as u16;
+    (*s).k = (*c).k as u8;
+    (*s).flags = cpu_getFlags(&*c) as u8;
     (*s).cpu_waiting = (*c).waiting;
     (*s).cpu_emulation = (*c).e;
     (*s).cpu_stopped = (*c).stopped;
@@ -1186,19 +1169,19 @@ unsafe fn MakeSnapshot(s: &mut Snapshot, snes: &Snes, c: &Cpu, player: *mut SpcP
     );
     (*s).vTimer = (*snes).vTimer;
     memcpy(
-        &raw mut (*s).ram as *mut uint8 as *mut ::core::ffi::c_void,
+        &raw mut (*s).ram as *mut u8 as *mut ::core::ffi::c_void,
         (*snes).ram as *const ::core::ffi::c_void,
         0x20000 as i32 as size_t,
     );
     memcpy(
-        &raw mut (*s).sram as *mut uint8 as *mut ::core::ffi::c_void,
+        &raw mut (*s).sram as *mut u8 as *mut ::core::ffi::c_void,
         (*(*snes).cart).ram as *const ::core::ffi::c_void,
         (*(*snes).cart).ramSize as size_t,
     );
     memcpy(
-        &raw mut (*s).vram as *mut uint16 as *mut ::core::ffi::c_void,
-        &raw mut (*(*snes).ppu).vram as *mut uint16_t as *const ::core::ffi::c_void,
-        (::core::mem::size_of::<uint16>() as size_t).wrapping_mul(0x8000 as size_t),
+        &raw mut (*s).vram as *mut u16 as *mut ::core::ffi::c_void,
+        &raw mut (*(*snes).ppu).vram as *mut u16 as *const ::core::ffi::c_void,
+        (::core::mem::size_of::<u16>() as size_t).wrapping_mul(0x8000 as size_t),
     );
     let ppu = &*(*snes).ppu;
     (*s).brightness = ppu.brightness;
@@ -1386,20 +1369,20 @@ unsafe fn RestoreSnapshot(s: &Snapshot, snes: &mut Snes, c: &mut Cpu) {
     (*(*snes).ppu).vramIncrement = (*s).vram_increment;
     (*(*snes).ppu).vramIncrementOnHigh = (*s).vram_increment_on_high;
     (*(*snes).ppu).vramRemapMode = (*s).vram_remap_mode;
-    (*c).a = (*s).a as uint16_t;
-    (*c).x = (*s).x as uint16_t;
-    (*c).y = (*s).y as uint16_t;
-    (*c).sp = (*s).sp as uint16_t;
-    (*c).dp = (*s).dp as uint16_t;
-    (*c).db = (*s).db as uint8_t;
-    (*c).pc = (*s).pc as uint16_t;
-    (*c).k = (*s).k as uint8_t;
+    (*c).a = (*s).a as u16;
+    (*c).x = (*s).x as u16;
+    (*c).y = (*s).y as u16;
+    (*c).sp = (*s).sp as u16;
+    (*c).dp = (*s).dp as u16;
+    (*c).db = (*s).db as u8;
+    (*c).pc = (*s).pc as u16;
+    (*c).k = (*s).k as u8;
     (*snes).vTimer = (*s).vTimer;
     (*c).e = (*s).cpu_emulation;
     (*c).stopped = (*s).cpu_stopped;
     (*c).irqWanted = (*s).cpu_irq_pending;
     (*c).nmiWanted = (*s).cpu_nmi_pending;
-    cpu_setFlags((*s).flags as uint8_t, &mut *c);
+    cpu_setFlags((*s).flags as u8, &mut *c);
     (*c).waiting = (*s).cpu_waiting;
     (snes.hPos, snes.vPos, snes.frames) = (*s).video_clock;
     (snes.inNmi, snes.inIrq, snes.inVblank) = (*s).interrupt_latches;
@@ -1419,18 +1402,18 @@ unsafe fn RestoreSnapshot(s: &Snapshot, snes: &mut Snes, c: &mut Cpu) {
     ) = (*s).arithmetic;
     memcpy(
         (*snes).ram as *mut ::core::ffi::c_void,
-        &raw const (*s).ram as *const uint8 as *const ::core::ffi::c_void,
+        &raw const (*s).ram as *const u8 as *const ::core::ffi::c_void,
         0x20000 as i32 as size_t,
     );
     memcpy(
         (*(*snes).cart).ram as *mut ::core::ffi::c_void,
-        &raw const (*s).sram as *const uint8 as *const ::core::ffi::c_void,
+        &raw const (*s).sram as *const u8 as *const ::core::ffi::c_void,
         0x2000 as size_t,
     );
     memcpy(
-        &raw mut (*(*snes).ppu).vram as *mut uint16_t as *mut ::core::ffi::c_void,
-        &raw const (*s).vram as *const uint16 as *const ::core::ffi::c_void,
-        (::core::mem::size_of::<uint16>() as size_t).wrapping_mul(0x8000 as size_t),
+        &raw mut (*(*snes).ppu).vram as *mut u16 as *mut ::core::ffi::c_void,
+        &raw const (*s).vram as *const u16 as *const ::core::ffi::c_void,
+        (::core::mem::size_of::<u16>() as size_t).wrapping_mul(0x8000 as size_t),
     );
     let ppu = &mut *(*snes).ppu;
     ppu.hCount = (*s).counters.horizontal;
@@ -1452,34 +1435,27 @@ unsafe fn RestoreSnapshot(s: &Snapshot, snes: &mut Snes, c: &mut Cpu) {
     ppu.objSize = (*s).sprite.size;
     ppu.objPixelBufferXX[..19].copy_from_slice(&(*s).sprite.legacy_pixel_prefix);
 }
-pub unsafe fn RunAsmCode(
-    pc: uint32,
-    a: uint16,
-    x: uint16,
-    y: uint16,
-    flags: i32,
-    game: &mut Game,
-) -> i32 {
-    let org_sp: uint16 = (*game.g_cpu).sp as uint16;
-    let org_pc: uint16 = (*game.g_cpu).pc as uint16;
-    let org_b: uint8 = (*game.g_cpu).db as uint8;
-    let org_dp: uint16 = (*game.g_cpu).dp as uint16;
+pub unsafe fn RunAsmCode(pc: u32, a: u16, x: u16, y: u16, flags: i32, game: &mut Game) -> i32 {
+    let org_sp: u16 = (*game.g_cpu).sp as u16;
+    let org_pc: u16 = (*game.g_cpu).pc as u16;
+    let org_b: u8 = (*game.g_cpu).db as u8;
+    let org_dp: u16 = (*game.g_cpu).dp as u16;
     printf(b"RunAsmCode!\n\0" as *const u8 as *const ::core::ffi::c_char);
-    game.g_ram[0x1ffff as i32 as usize] = 1 as uint8;
+    game.g_ram[0x1ffff as i32 as usize] = 1 as u8;
     let dc: bool = (*game.g_snes).debug_cycles;
-    (*game.g_cpu).db = (pc >> 16 as i32) as uint8_t;
-    (*game.g_cpu).a = a as uint16_t;
-    (*game.g_cpu).x = x as uint16_t;
-    (*game.g_cpu).y = y as uint16_t;
+    (*game.g_cpu).db = (pc >> 16 as i32) as u8;
+    (*game.g_cpu).a = a as u16;
+    (*game.g_cpu).x = x as u16;
+    (*game.g_cpu).y = y as u16;
     (*game.g_cpu).spBreakpoint = (*game.g_cpu).sp;
-    (*game.g_cpu).k = (pc >> 16 as i32) as uint8_t;
-    (*game.g_cpu).pc = (pc & 0xffff as uint32) as uint16_t;
+    (*game.g_cpu).k = (pc >> 16 as i32) as u8;
+    (*game.g_cpu).pc = (pc & 0xffff as u32) as u16;
     (*game.g_cpu).mf = flags & 1 as i32 != 0;
     (*game.g_cpu).xf = (flags & 2 as i32) >> 1 as i32 != 0;
     game.g_calling_asm_from_c = true_0 != 0;
     while game.g_calling_asm_from_c {
-        let pc_0: uint32 = (((*(*game.g_snes).cpu).k as i32) << 16 as i32
-            | (*(*game.g_snes).cpu).pc as i32) as uint32;
+        let pc_0: u32 = (((*(*game.g_snes).cpu).k as i32) << 16 as i32
+            | (*(*game.g_snes).cpu).pc as i32) as u32;
         if (*game.g_snes).debug_cycles {
             let mut line: [::core::ffi::c_char; 80] = [0; 80];
             getProcessorStateCpu(game.g_snes, &raw mut line as *mut ::core::ffi::c_char, game);
@@ -1498,17 +1474,17 @@ pub unsafe fn RunAsmCode(
             }
         }
     }
-    (*game.g_cpu).dp = org_dp as uint16_t;
-    (*game.g_cpu).sp = org_sp as uint16_t;
-    (*game.g_cpu).db = org_b as uint8_t;
-    (*game.g_cpu).pc = org_pc as uint16_t;
+    (*game.g_cpu).dp = org_dp as u16;
+    (*game.g_cpu).sp = org_sp as u16;
+    (*game.g_cpu).db = org_b as u8;
+    (*game.g_cpu).pc = org_pc as u16;
     (*game.g_snes).debug_cycles = dc;
     game.g_calling_asm_from_c_ret
 }
 unsafe fn loadRom(name: *const ::core::ffi::c_char, snes: *mut Snes, game: &mut Game) -> bool {
     let mut length: size_t = 0 as size_t;
-    let mut file: *mut uint8_t = ::core::ptr::null_mut::<uint8_t>();
-    file = ReadWholeFile(name, &raw mut length) as *mut uint8_t;
+    let mut file: *mut u8 = ::core::ptr::null_mut::<u8>();
+    file = ReadWholeFile(name, &raw mut length) as *mut u8;
     if file.is_null() {
         puts(b"Failed to read file\0" as *const u8 as *const ::core::ffi::c_char);
         return false_0 != 0;
@@ -1517,21 +1493,21 @@ unsafe fn loadRom(name: *const ::core::ffi::c_char, snes: *mut Snes, game: &mut 
     free(file as *mut ::core::ffi::c_void);
     result
 }
-pub unsafe fn PatchBytes(addr: uint32, bytes: &[uint8], game: &mut Game) {
+pub unsafe fn PatchBytes(addr: u32, bytes: &[u8], game: &mut Game) {
     // Resolve the original base for every byte; RomPtr can update g_fail.
     for (i, &byte) in bytes.iter().enumerate() {
         *SnesRomPtr(addr, game).offset(i as isize) = byte;
     }
 }
-pub unsafe fn FixupCarry(addr: uint32, game: &mut Game) {
-    *SnesRomPtr(addr, game) = 0 as uint8_t;
+pub unsafe fn FixupCarry(addr: u32, game: &mut Game) {
+    *SnesRomPtr(addr, game) = 0 as u8;
 }
 
 pub unsafe fn RtlUpdateSnesPatchForBugfix(game: &mut Game) {
     game.currently_installed_bug_fix_counter = ram_word!(game, bug_fix_counter);
-    PatchBytes(0x8584a3 as uint32, &[0x20, 0x50, 0x96, 0x60], game);
+    PatchBytes(0x8584a3 as u32, &[0x20, 0x50, 0x96, 0x60], game);
     PatchBytes(
-        0x859650 as uint32,
+        0x859650 as u32,
         &[
             0x20,
             0x36,
@@ -1547,156 +1523,148 @@ pub unsafe fn RtlUpdateSnesPatchForBugfix(game: &mut Game) {
                 0x8f as i32
             } else {
                 0x8b as i32
-            }) as uint8,
+            }) as u8,
             0xf0,
             0xf3,
             0x60,
         ],
         game,
     );
-    PatchBytes(0x8584cc as uint32, &[0x18, 0x18], game);
+    PatchBytes(0x8584cc as u32, &[0x18, 0x18], game);
 }
 pub unsafe fn SnesInit(filename: *const ::core::ffi::c_char, game: &mut Game) -> *mut Snes {
-    game.g_snes = snes_init(&raw mut game.g_ram as *mut uint8_t) as *mut Snes;
+    game.g_snes = snes_init(&raw mut game.g_ram as *mut u8) as *mut Snes;
     game.g_cpu = (*game.g_snes).cpu;
     let loaded: bool = loadRom(filename, game.g_snes, game);
     if !loaded {
         return ::core::ptr::null_mut::<Snes>();
     }
-    game.g_sram = (*(*game.g_snes).cart).ram as *mut uint8;
+    game.g_sram = (*(*game.g_snes).cart).ram as *mut u8;
     game.g_rom = (*(*game.g_snes).cart).rom;
     game.register_rom(game.g_rom, (*(*game.g_snes).cart).romSize as usize);
     RtlSetupEmuCallbacks(
-        ::core::ptr::null_mut::<uint8>(),
-        Some(RtlRunFrameCompare as unsafe fn(uint16, i32, &mut Game) -> ()),
+        ::core::ptr::null_mut::<u8>(),
+        Some(RtlRunFrameCompare as unsafe fn(u16, i32, &mut Game) -> ()),
         None,
         game,
     );
-    *(&raw mut game.g_ram as *mut uint8).offset(0x611) = 1 as uint8;
-    PatchBytes(0x82896b as uint32, &[0x20, 0xf, 0xf7], game);
-    PatchBytes(0x82f70f as uint32, &[0x7c, 0x81, 0x89], game);
-    PatchBytes(0x8ba362 as uint32, &[0x5f, 0xf7], game);
-    PatchBytes(0x8bf760 as uint32, &[0xc2, 0x20, 0x4c, 0x67, 0xa3], game);
-    PatchBytes(0x8584b2 as uint32, &[0xa, 0xa], game);
+    *(&raw mut game.g_ram as *mut u8).offset(0x611) = 1 as u8;
+    PatchBytes(0x82896b as u32, &[0x20, 0xf, 0xf7], game);
+    PatchBytes(0x82f70f as u32, &[0x7c, 0x81, 0x89], game);
+    PatchBytes(0x8ba362 as u32, &[0x5f, 0xf7], game);
+    PatchBytes(0x8bf760 as u32, &[0xc2, 0x20, 0x4c, 0x67, 0xa3], game);
+    PatchBytes(0x8584b2 as u32, &[0xa, 0xa], game);
     PatchBytes(
-        0x84efd3 as uint32,
+        0x84efd3 as u32,
         &[0xc0, 0, 0, 0xf0, 0x3, 0x20, 0x64, 0x87, 0x60],
         game,
     );
-    PatchBytes(0x848243 as uint32, &[0xd3, 0xef], game);
+    PatchBytes(0x848243 as u32, &[0xd3, 0xef], game);
+    PatchBytes(0x86f4a6 as u32, &[0xac, 0x91, 0x19, 0x4c, 0x76, 0x86], game);
+    PatchBytes(0x8685bd as u32, &[0xa6, 0xf4], game);
     PatchBytes(
-        0x86f4a6 as uint32,
-        &[0xac, 0x91, 0x19, 0x4c, 0x76, 0x86],
-        game,
-    );
-    PatchBytes(0x8685bd as uint32, &[0xa6, 0xf4], game);
-    PatchBytes(
-        0x82f713 as uint32,
+        0x82f713 as u32,
         &[
             0xc2, 0x30, 0x22, 0x59, 0x94, 0x80, 0x20, 0x48, 0x89, 0x22, 0x38, 0x83, 0x80, 0x4c,
             0x13, 0xf7,
         ],
         game,
     );
-    PatchBytes(0x828944 as uint32, &[0x58, 0x4c, 0x13, 0xf7], game);
-    PatchBytes(0x82897a as uint32, &[0x28, 0x60], game);
+    PatchBytes(0x828944 as u32, &[0x58, 0x4c, 0x13, 0xf7], game);
+    PatchBytes(0x82897a as u32, &[0x28, 0x60], game);
     PatchBytes(
-        0x80945c as uint32,
+        0x80945c as u32,
         &[0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
         game,
     );
     PatchBytes(
-        0xa8b237 as uint32,
+        0xa8b237 as u32,
         &[0xbc, 0xaa, 0xf, 0xc9, 0x6c, 0, 0x10, 0x1a],
         game,
     );
-    PatchBytes(0xa2904b as uint32, &[0x49, 0xff, 0xff, 0x69, 0, 0], game);
-    PatchBytes(0xa29065 as uint32, &[0x49, 0xff, 0xff, 0x69, 0, 0], game);
-    PatchBytes(0xa0896f as uint32, &[0x6b], game);
-    PatchBytes(0xa98c12 as uint32, &[0x18, 0x18, 0x18], game);
-    PatchBytes(0x8085f6 as uint32, &[0x60], game);
+    PatchBytes(0xa2904b as u32, &[0x49, 0xff, 0xff, 0x69, 0, 0], game);
+    PatchBytes(0xa29065 as u32, &[0x49, 0xff, 0xff, 0x69, 0, 0], game);
+    PatchBytes(0xa0896f as u32, &[0x6b], game);
+    PatchBytes(0xa98c12 as u32, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x8085f6 as u32, &[0x60], game);
     PatchBytes(
-        0x80843c as uint32,
+        0x80843c as u32,
         &[0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
         game,
     );
     PatchBytes(
-        0x808475 as uint32,
+        0x808475 as u32,
         &[0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
         game,
     );
     PatchBytes(
-        0x808525 as uint32,
+        0x808525 as u32,
         &[0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
         game,
     );
-    PatchBytes(0x8882a1 as uint32, &[0x18, 0x18, 0x18, 0x18], game);
-    PatchBytes(0x828533 as uint32, &[0x18, 0x18, 0x18, 0x18], game);
-    PatchBytes(0x80837b as uint32, &[0x18, 0x18, 0x18, 0x18], game);
-    PatchBytes(0x80838e as uint32, &[0x18, 0x18, 0x18, 0x18], game);
-    PatchBytes(0x82df6c as uint32, &[0x18, 0x18, 0x18, 0x18], game);
-    PatchBytes(0x80d000 as uint32, &[0x20, 0x32, 0x96, 0x6b], game);
-    PatchBytes(0x82e02c as uint32, &[0x22, 0, 0xd0, 0x80, 0x18], game);
-    PatchBytes(0x82e06b as uint32, &[0x22, 0, 0xd0, 0x80, 0x18], game);
-    PatchBytes(0x82e50d as uint32, &[0x22, 0, 0xd0, 0x80, 0x18], game);
-    PatchBytes(0x82e609 as uint32, &[0x22, 0, 0xd0, 0x80, 0x18], game);
-    PatchBytes(0x82e526 as uint32, &[0x22, 0x4, 0xd0, 0x80, 0x18], game);
+    PatchBytes(0x8882a1 as u32, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x828533 as u32, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x80837b as u32, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x80838e as u32, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x82df6c as u32, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x80d000 as u32, &[0x20, 0x32, 0x96, 0x6b], game);
+    PatchBytes(0x82e02c as u32, &[0x22, 0, 0xd0, 0x80, 0x18], game);
+    PatchBytes(0x82e06b as u32, &[0x22, 0, 0xd0, 0x80, 0x18], game);
+    PatchBytes(0x82e50d as u32, &[0x22, 0, 0xd0, 0x80, 0x18], game);
+    PatchBytes(0x82e609 as u32, &[0x22, 0, 0xd0, 0x80, 0x18], game);
+    PatchBytes(0x82e526 as u32, &[0x22, 0x4, 0xd0, 0x80, 0x18], game);
     PatchBytes(
-        0x80d004 as uint32,
+        0x80d004 as u32,
         &[0x22, 0x38, 0x83, 0x80, 0xad, 0x31, 0x9, 0x10, 0xf7, 0x6b],
         game,
     );
-    PatchBytes(0x82e540 as uint32, &[0x18, 0x18, 0x18, 0x18], game);
-    PatchBytes(0x8bc11e as uint32, &[0x18, 0x18, 0x18, 0x18], game);
-    PatchBytes(0x8bd487 as uint32, &[0x18, 0x18, 0x18, 0x18], game);
-    PatchBytes(0x858148 as uint32, &[0x18, 0x18, 0x18], game);
-    PatchBytes(0x8581b2 as uint32, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x82e540 as u32, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x8bc11e as u32, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x8bd487 as u32, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x858148 as u32, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x8581b2 as u32, &[0x18, 0x18, 0x18], game);
     PatchBytes(
-        0x8581ea as uint32,
+        0x8581ea as u32,
         &[0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
         game,
     );
-    PatchBytes(0x858203 as uint32, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x858203 as u32, &[0x18, 0x18, 0x18], game);
     PatchBytes(
-        0x858236 as uint32,
+        0x858236 as u32,
         &[0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
         game,
     );
     PatchBytes(
-        0x8582b8 as uint32,
+        0x8582b8 as u32,
         &[
             0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18,
         ],
         game,
     );
-    PatchBytes(0x858321 as uint32, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x858321 as u32, &[0x18, 0x18, 0x18], game);
     PatchBytes(
-        0x85835a as uint32,
+        0x85835a as u32,
         &[0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
         game,
     );
-    PatchBytes(0x858532 as uint32, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x858532 as u32, &[0x18, 0x18, 0x18], game);
     PatchBytes(
-        0x85856b as uint32,
+        0x85856b as u32,
         &[0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
         game,
     );
-    PatchBytes(0x858096 as uint32, &[0x18, 0x18, 0x18], game);
-    PatchBytes(0x8580b4 as uint32, &[0x18, 0x18, 0x18], game);
-    PatchBytes(0x8580dc as uint32, &[0x18, 0x18, 0x18], game);
-    PatchBytes(0x8580f2 as uint32, &[0x18, 0x18, 0x18], game);
-    PatchBytes(0x85861c as uint32, &[0x18, 0x18, 0x18], game);
-    PatchBytes(0x858651 as uint32, &[0x18, 0x18, 0x18], game);
-    PatchBytes(0x858692 as uint32, &[0x18, 0x18, 0x18, 0x18], game);
-    PatchBytes(0x858696 as uint32, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x858096 as u32, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x8580b4 as u32, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x8580dc as u32, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x8580f2 as u32, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x85861c as u32, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x858651 as u32, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x858692 as u32, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x858696 as u32, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x859660 as u32, &[0x8, 0xc2, 0x30, 0x4c, 0xa9, 0x85], game);
+    PatchBytes(0x8583ba as u32, &[0x20, 0x60, 0x96], game);
     PatchBytes(
-        0x859660 as uint32,
-        &[0x8, 0xc2, 0x30, 0x4c, 0xa9, 0x85],
-        game,
-    );
-    PatchBytes(0x8583ba as uint32, &[0x20, 0x60, 0x96], game);
-    PatchBytes(
-        0x859670 as uint32,
+        0x859670 as u32,
         &[
             0x22, 0x81, 0x96, 0x85, 0xc9, 0xff, 0xff, 0xd0, 0x4, 0x5c, 0x5f, 0xab, 0xa2, 0x5c,
             0x26, 0xab, 0xa2,
@@ -1704,88 +1672,88 @@ pub unsafe fn SnesInit(filename: *const ::core::ffi::c_char, game: &mut Game) ->
         game,
     );
     PatchBytes(
-        0x859681 as uint32,
+        0x859681 as u32,
         &[
             0xcd, 0x1f, 0x1c, 0xd0, 0x8, 0x9c, 0x1f, 0x1c, 0xad, 0xf9, 0x5, 0x6b, 0xff, 0x8d, 0xc8,
             0xd, 0xa9, 0xff, 0xff, 0x6b,
         ],
         game,
     );
-    PatchBytes(0xa2ab22 as uint32, &[0x5c, 0x70, 0x96, 0x85], game);
+    PatchBytes(0xa2ab22 as u32, &[0x5c, 0x70, 0x96, 0x85], game);
     PatchBytes(
-        0x8596a0 as uint32,
+        0x8596a0 as u32,
         &[
             0x22, 0xd4, 0x8f, 0xa0, 0xad, 0xc8, 0xd, 0xf0, 0x7, 0x22, 0x95, 0x96, 0x85, 0x9c, 0xc8,
             0xd, 0x6b,
         ],
         game,
     );
-    PatchBytes(0x828b65 as uint32, &[0x22, 0xa0, 0x96, 0x85], game);
+    PatchBytes(0x828b65 as u32, &[0x22, 0xa0, 0x96, 0x85], game);
     PatchBytes(
-        0x8596c0 as uint32,
+        0x8596c0 as u32,
         &[0x20, 0x89, 0x85, 0xa9, 0x1c, 0, 0x8d, 0x1f, 0x1c, 0x60],
         game,
     );
-    PatchBytes(0x8580e5 as uint32, &[0x20, 0xc0, 0x96], game);
+    PatchBytes(0x8580e5 as u32, &[0x20, 0xc0, 0x96], game);
     PatchBytes(
-        0x84efdc as uint32,
+        0x84efdc as u32,
         &[
             0xad, 0xc8, 0xd, 0xf0, 0x11, 0x98, 0x9d, 0x27, 0x1d, 0xad, 0xc8, 0xd, 0x22, 0x95, 0x96,
             0x85, 0x9c, 0xc8, 0xd, 0xbc, 0x27, 0x1d, 0x4c, 0xee, 0x85,
         ],
         game,
     );
-    PatchBytes(0x8485f7 as uint32, &[0xf4, 0xdb, 0xef], game);
+    PatchBytes(0x8485f7 as u32, &[0xf4, 0xdb, 0xef], game);
     PatchBytes(
-        0x859695 as uint32,
+        0x859695 as u32,
         &[0x8, 0x8b, 0xda, 0x5a, 0x5c, 0x84, 0x80, 0x85],
         game,
     );
-    PatchBytes(0x858080 as uint32, &[0x8d, 0xc8, 0xd, 0x6b], game);
+    PatchBytes(0x858080 as u32, &[0x8d, 0xc8, 0xd, 0x6b], game);
     PatchBytes(
-        0x84f000 as uint32,
+        0x84f000 as u32,
         &[
             0x22, 0x81, 0x96, 0x85, 0xc9, 0xff, 0xff, 0xf0, 0x4, 0x5c, 0xfa, 0x8c, 0x84, 0x7a,
             0xfa, 0x88, 0x88, 0x60,
         ],
         game,
     );
-    PatchBytes(0x848cf6 as uint32, &[0x5c, 0, 0xf0, 0x84], game);
+    PatchBytes(0x848cf6 as u32, &[0x5c, 0, 0xf0, 0x84], game);
     PatchBytes(
-        0x81f000 as uint32,
+        0x81f000 as u32,
         &[0xa9, 0xff, 0xff, 0x8d, 0x98, 0x9, 0x60],
         game,
     );
-    PatchBytes(0x819027 as uint32, &[0x5c, 0, 0xf0, 0x81], game);
-    PatchBytes(0x819112 as uint32, &[0x5c, 0, 0xf0, 0x81], game);
-    PatchBytes(0x8194e9 as uint32, &[0x5c, 0, 0xf0, 0x81], game);
-    PatchBytes(0x8095e1 as uint32, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x819027 as u32, &[0x5c, 0, 0xf0, 0x81], game);
+    PatchBytes(0x819112 as u32, &[0x5c, 0, 0xf0, 0x81], game);
+    PatchBytes(0x8194e9 as u32, &[0x5c, 0, 0xf0, 0x81], game);
+    PatchBytes(0x8095e1 as u32, &[0x18, 0x18, 0x18, 0x18], game);
     if game.g_use_my_apu_code {
-        PatchBytes(0x808028 as uint32, &[0x60], game);
+        PatchBytes(0x808028 as u32, &[0x60], game);
     }
-    PatchBytes(0x828a59 as uint32, &[0x18, 0x18, 0x18, 0x80], game);
-    PatchBytes(0x828a72 as uint32, &[0x18, 0x18, 0x18], game);
-    PatchBytes(0x828a80 as uint32, &[0x18, 0x18, 0x18, 0x80], game);
-    PatchBytes(0x828a67 as uint32, &[0x6], game);
-    PatchBytes(0x82831e as uint32, &[0, 0x2e], game);
-    PatchBytes(0x91c234 as uint32, &[0xa5, 0x25], game);
-    PatchBytes(0x809af3 as uint32, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x828a59 as u32, &[0x18, 0x18, 0x18, 0x80], game);
+    PatchBytes(0x828a72 as u32, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x828a80 as u32, &[0x18, 0x18, 0x18, 0x80], game);
+    PatchBytes(0x828a67 as u32, &[0x6], game);
+    PatchBytes(0x82831e as u32, &[0, 0x2e], game);
+    PatchBytes(0x91c234 as u32, &[0xa5, 0x25], game);
+    PatchBytes(0x809af3 as u32, &[0x18, 0x18, 0x18, 0x18], game);
     PatchBytes(
-        0xa7ff82 as uint32,
+        0xa7ff82 as u32,
         &[
             0xa5, 0x12, 0x48, 0xa5, 0x14, 0x48, 0xa5, 0x16, 0x48, 0x22, 0xa7, 0xa6, 0xa0, 0x68,
             0x85, 0x16, 0x68, 0x85, 0x14, 0x68, 0x85, 0x12, 0x6b,
         ],
         game,
     );
-    PatchBytes(0xa7b03a as uint32, &[0x22, 0x82, 0xff, 0xa7], game);
+    PatchBytes(0xa7b03a as u32, &[0x22, 0x82, 0xff, 0xa7], game);
     RtlUpdateSnesPatchForBugfix(game);
     let mut i: size_t = 0 as size_t;
     while i
-        != (::core::mem::size_of::<[uint32; 155]>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint32>() as usize)
+        != (::core::mem::size_of::<[u32; 155]>() as usize)
+            .wrapping_div(::core::mem::size_of::<u32>() as usize)
     {
-        let t_84: uint8 = *SnesRomPtr(kPatchedCarrys[i as usize], game);
+        let t_84: u8 = *SnesRomPtr(kPatchedCarrys[i as usize], game);
         if t_84 != 0 {
             game.kPatchedCarrysOrg[i as usize] = t_84;
             FixupCarry(kPatchedCarrys[i as usize], game);
@@ -1797,7 +1765,7 @@ pub unsafe fn SnesInit(filename: *const ::core::ffi::c_char, game: &mut Game) ->
         }
         i = i.wrapping_add(1);
     }
-    PatchBugs(1 as uint32, 0 as uint32, game);
+    PatchBugs(1 as u32, 0 as u32, game);
     game.g_snes
 }
 pub unsafe fn DebugGameOverMenu() {
@@ -1810,7 +1778,7 @@ pub unsafe fn DebugGameOverMenu() {
         );
     };
 }
-pub unsafe fn RunCpuUntilPC(pc1: uint32, pc2: uint32, game: &mut Game) -> uint32 {
+pub unsafe fn RunCpuUntilPC(pc1: u32, pc2: u32, game: &mut Game) -> u32 {
     loop {
         if (*game.g_snes).debug_cycles {
             let mut line: [::core::ffi::c_char; 80] = [0; 80];
@@ -1818,27 +1786,27 @@ pub unsafe fn RunCpuUntilPC(pc1: uint32, pc2: uint32, game: &mut Game) -> uint32
             puts(&raw mut line as *mut ::core::ffi::c_char);
         }
         cpu_runOpcode(game.g_cpu, game);
-        let addr: uint32 = (((*(*game.g_snes).cpu).k as i32) << 16 as i32
-            | (*(*game.g_snes).cpu).pc as i32) as uint32;
+        let addr: u32 = (((*(*game.g_snes).cpu).k as i32) << 16 as i32
+            | (*(*game.g_snes).cpu).pc as i32) as u32;
         if addr == pc1 || addr == pc2 {
             return addr;
         }
     }
 }
 pub unsafe fn RunOneFrameOfGame_Emulated(game: &mut Game) {
-    let bug_fix_bak: uint16 = ram_word!(game, bug_fix_counter);
+    let bug_fix_bak: u16 = ram_word!(game, bug_fix_counter);
     let cpu = (*game.g_snes).cpu;
     if (*cpu).k == 0x80 && (*cpu).pc == 0x8459 {
         RunCpuUntilPC(0x808460, 0x808460, game);
         (*cpu).pc = 0x8462;
     }
-    RunCpuUntilPC(0x808343 as uint32, 0x85813c as uint32, game);
+    RunCpuUntilPC(0x808343 as u32, 0x85813c as u32, game);
     (*(*game.g_snes).cpu).nmiWanted = true_0 != 0;
-    RunCpuUntilPC(0x80834a as uint32, 0x858142 as uint32, game);
+    RunCpuUntilPC(0x80834a as u32, 0x858142 as u32, game);
     set_ram_word!(game.bug_fix_counter = bug_fix_bak);
 }
 pub unsafe fn DrawFrameToPpu(game: &mut Game) {
-    (*game.g_snes).vPos = 0 as uint16_t;
+    (*game.g_snes).vPos = 0 as u16;
     (*game.g_snes).hPos = (*game.g_snes).vPos;
     while !(*(*game.g_snes).cpu).nmiWanted {
         // No CPU or APU advances between these calls. Only scanline start,
@@ -1930,7 +1898,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
         game.g_snapshot_before.player.restore(game.g_spc_player);
         game.g_snapshot_theirs.apu_upload_count = 0;
         game.g_snapshot_theirs.apu_startup_upload = false;
-        (*game.g_snes).runningWhichVersion = 1 as uint8_t;
+        (*game.g_snes).runningWhichVersion = 1 as u8;
         RunOneFrameOfGame_Emulated(game);
         DrawFrameToPpu(game);
         MakeSnapshot(
@@ -1947,7 +1915,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
         game.g_snapshot_mine.apu_startup_upload = false;
         (*game.g_snes).ppu = (*game.g_snes).my_ppu;
         RestoreSnapshot(&game.g_snapshot_before, &mut *game.g_snes, &mut *game.g_cpu);
-        (*game.g_snes).runningWhichVersion = 2 as uint8_t;
+        (*game.g_snes).runningWhichVersion = 2 as u8;
         RunOneFrameOfGame(game);
         DrawFrameToPpu(game);
         let queue_mine = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
@@ -1957,7 +1925,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
             &*game.g_cpu,
             game.g_spc_player,
         );
-        (*game.g_snes).runningWhichVersion = 0xff as uint8_t;
+        (*game.g_snes).runningWhichVersion = 0xff as u8;
         VerifySnapshotsEq(
             &raw mut game.g_snapshot_mine,
             &raw mut game.g_snapshot_theirs,
@@ -2061,32 +2029,32 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
     } else {
         (*game.g_snes).snes_ppu
     };
-    (*game.g_snes).runningWhichVersion = 0 as uint8_t;
+    (*game.g_snes).runningWhichVersion = 0 as u8;
     if ram_word!(game, game_state) as i32 == 0xffff as i32 {
-        (*(*game.g_snes).cpu).k = 0x80 as uint8_t;
-        (*(*game.g_snes).cpu).pc = 0x8459 as uint16_t;
-        *(&raw mut game.g_ram as *mut uint8).offset(0x611) = 3 as uint8;
+        (*(*game.g_snes).cpu).k = 0x80 as u8;
+        (*(*game.g_snes).cpu).pc = 0x8459 as u16;
+        *(&raw mut game.g_ram as *mut u8).offset(0x611) = 3 as u8;
     }
     if ram_word!(game, menu_index) as i32 & 0xff00 as i32 != 0 {
         printf(b"MENU INDEX TOO BIG!\n\0" as *const u8 as *const ::core::ffi::c_char);
         SaveBugSnapshot(game);
         update_ram_word!(game.menu_index, |fresh1| (fresh1 as i32 & 0xff as i32)
-            as uint16);
+            as u16);
     }
     if game.g_got_mismatch_count != 0 {
         game.g_got_mismatch_count -= 1;
     }
 }
-pub unsafe fn RtlRunFrameCompare(input: uint16, run_what: i32, game: &mut Game) {
-    (*(*game.g_snes).input1).currentState = input as uint16_t;
+pub unsafe fn RtlRunFrameCompare(input: u16, run_what: i32, game: &mut Game) {
+    (*(*game.g_snes).input1).currentState = input as u16;
     if game.g_runmode as i32 == RM_THEIRS as i32 {
         RunOneFrameOfGame_Emulated(game);
         DrawFrameToPpu(game);
     } else if game.g_runmode as i32 == RM_MINE as i32 {
-        (*game.g_snes).runningWhichVersion = 0xff as uint8_t;
+        (*game.g_snes).runningWhichVersion = 0xff as u8;
         RunOneFrameOfGame(game);
         DrawFrameToPpu(game);
-        (*game.g_snes).runningWhichVersion = 0 as uint8_t;
+        (*game.g_snes).runningWhichVersion = 0 as u8;
     } else {
         RunOneFrameOfGame_Both(game);
     };

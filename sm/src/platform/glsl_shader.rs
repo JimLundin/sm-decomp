@@ -79,9 +79,8 @@ extern "C" {
     fn pow(__x: ::core::ffi::c_double, __y: ::core::ffi::c_double) -> ::core::ffi::c_double;
 }
 pub use crate::types::{
-    __off64_t, __off_t, __uint16_t, __uint32_t, __uint8_t, ptrdiff_t, size_t, uint, uint16,
-    uint16_t, uint32, uint32_t, uint8, uint8_t, uintptr_t, GLboolean, GLchar, GLenum, GLfloat,
-    GLint, GLsizei, GLsizeiptr, GLuint,
+    __off64_t, __off_t, ptrdiff_t, size_t, GLboolean, GLchar, GLenum, GLfloat, GLint, GLsizei,
+    GLsizeiptr, GLuint,
 };
 pub type C2RustUnnamed = u32;
 pub const kGlslMaxTextures: C2RustUnnamed = 10;
@@ -182,10 +181,10 @@ pub const STBI_ORDER_RGB: C2RustUnnamed_0 = 0;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct RenderCtx {
-    pub texture_unit: uint,
-    pub offset: uint,
-    pub num_vaos: uint,
-    pub vaos: [uint; 51],
+    pub texture_unit: u32,
+    pub offset: u32,
+    pub num_vaos: u32,
+    pub vaos: [u32; 51],
 }
 pub const kMaxVaosInRenderCtx: C2RustUnnamed_3 = 51;
 pub use crate::types::{stbi_us, Config};
@@ -3363,16 +3362,16 @@ unsafe fn ParseConfigKeyPass(
         key = key.offset(1);
         match_0 = match_0.offset(1);
     }
-    if (*key as i32 - '0' as i32) as uint8 as i32 >= 10 as i32 {
+    if (*key as i32 - '0' as i32) as u8 as i32 >= 10 as i32 {
         return ::core::ptr::null_mut::<GlslPass>();
     }
-    let pass: uint = strtoul(key, &raw mut endp, 10 as i32) as uint;
-    if pass >= (*gs).n_pass as uint || *endp as i32 != 0 as i32 {
+    let pass: u32 = strtoul(key, &raw mut endp, 10 as i32) as u32;
+    if pass >= (*gs).n_pass as u32 || *endp as i32 != 0 as i32 {
         return ::core::ptr::null_mut::<GlslPass>();
     }
     (*gs).pass.offset(pass as isize).offset(1)
 }
-unsafe fn ParseScaleType(s: *const ::core::ffi::c_char) -> uint8 {
+unsafe fn ParseScaleType(s: *const ::core::ffi::c_char) -> u8 {
     ((if StringEqualsNoCase(s, b"source\0" as *const u8 as *const ::core::ffi::c_char) as i32 != 0 {
         GLSL_SOURCE as i32
     } else if StringEqualsNoCase(s, b"viewport\0" as *const u8 as *const ::core::ffi::c_char) as i32
@@ -3385,9 +3384,9 @@ unsafe fn ParseScaleType(s: *const ::core::ffi::c_char) -> uint8 {
         GLSL_ABSOLUTE as i32
     } else {
         GLSL_NONE as i32
-    }) as uint8)
+    }) as u8)
 }
-unsafe fn ParseWrapMode(s: *const ::core::ffi::c_char) -> uint {
+unsafe fn ParseWrapMode(s: *const ::core::ffi::c_char) -> u32 {
     ((if StringEqualsNoCase(s, b"repeat\0" as *const u8 as *const ::core::ffi::c_char) as i32 != 0 {
         GL_REPEAT
     } else if StringEqualsNoCase(
@@ -3403,12 +3402,12 @@ unsafe fn ParseWrapMode(s: *const ::core::ffi::c_char) -> uint {
         GL_CLAMP
     } else {
         GL_CLAMP_TO_BORDER
-    }) as uint)
+    }) as u32)
 }
 unsafe fn GlslPass_Initialize(pass: *mut GlslPass) {
     (*pass).scale_x = 1.0f32;
     (*pass).scale_y = 1.0f32;
-    (*pass).wrap_mode = GL_CLAMP_TO_BORDER as uint;
+    (*pass).wrap_mode = GL_CLAMP_TO_BORDER as u32;
 }
 unsafe fn ParseTextures(gs: *mut GlslShader, mut value: *mut ::core::ffi::c_char) {
     let mut id: *mut ::core::ffi::c_char = ::core::ptr::null_mut::<::core::ffi::c_char>();
@@ -3423,8 +3422,8 @@ unsafe fn ParseTextures(gs: *mut GlslShader, mut value: *mut ::core::ffi::c_char
             calloc(::core::mem::size_of::<GlslTexture>() as size_t, 1 as size_t)
                 as *mut GlslTexture;
         (*t).id = strdup(id);
-        (*t).wrap_mode = GL_CLAMP_TO_BORDER as uint;
-        (*t).filter = GL_NEAREST as uint;
+        (*t).wrap_mode = GL_CLAMP_TO_BORDER as u32;
+        (*t).filter = GL_NEAREST as u32;
         *nextp = t;
         nextp = &raw mut (*t).next as *mut *mut GlslTexture;
         num += 1;
@@ -3465,7 +3464,7 @@ unsafe fn ParseTextureKeyValue(
                     GL_LINEAR
                 } else {
                     GL_NEAREST
-                }) as uint;
+                }) as u32;
                 return true_0 != 0;
             }
         }
@@ -3605,7 +3604,7 @@ unsafe fn GlslShader_ReadPresetFile(
                             GL_LINEAR
                         } else {
                             GL_NEAREST
-                        }) as uint;
+                        }) as u32;
                 } else {
                     pass = ParseConfigKeyPass(
                         gs,
@@ -3695,7 +3694,7 @@ unsafe fn GlslShader_ReadPresetFile(
                                                         );
                                                         if !pass.is_null() {
                                                             (*pass).frame_count_mod =
-                                                                atoi(value) as uint;
+                                                                atoi(value) as u32;
                                                         } else {
                                                             pass = ParseConfigKeyPass(
                                                                 gs,
@@ -3836,21 +3835,12 @@ pub unsafe fn GlslShader_ReadShaderFile(
             (*param).max = atof(NextPossiblyQuotedString(&raw mut tt_0)) as ::core::ffi::c_float;
         } else {
             *line.offset(linelen as isize) = '\n' as i32 as ::core::ffi::c_char;
-            ByteArray_AppendData(
-                result,
-                line as *mut uint8,
-                linelen.wrapping_add(1 as size_t),
-            );
+            ByteArray_AppendData(result, line as *mut u8, linelen.wrapping_add(1 as size_t));
         }
     }
     free(data_org as *mut ::core::ffi::c_void);
 }
-unsafe fn GlslPass_Compile(
-    p: *mut GlslPass,
-    type_0: uint,
-    data: *const uint8,
-    size: size_t,
-) -> bool {
+unsafe fn GlslPass_Compile(p: *mut GlslPass, type_0: u32, data: *const u8, size: size_t) -> bool {
     static mut kVertexPrefix: [::core::ffi::c_char; 42] = unsafe {
         ::core::mem::transmute::<[u8; 42], [::core::ffi::c_char; 42]>(
             *b"#define VERTEX\n#define PARAMETER_UNIFORM\n\0",
@@ -3886,20 +3876,20 @@ unsafe fn GlslPass_Compile(
         strings[0 as i32 as usize] = data as *mut ::core::ffi::c_char;
         lengths[0 as i32 as usize] = skip as i32 as GLint;
     }
-    strings[1 as i32 as usize] = (if type_0 == GL_VERTEX_SHADER as uint {
+    strings[1 as i32 as usize] = (if type_0 == GL_VERTEX_SHADER as u32 {
         &raw const kVertexPrefix as *const ::core::ffi::c_char as *mut ::core::ffi::c_char
             as *const ::core::ffi::c_char
     } else {
         &raw const kFragmentPrefix as *const ::core::ffi::c_char
     }) as *const GLchar;
-    lengths[1 as i32 as usize] = (if type_0 == GL_VERTEX_SHADER as uint {
+    lengths[1 as i32 as usize] = (if type_0 == GL_VERTEX_SHADER as u32 {
         (::core::mem::size_of::<[::core::ffi::c_char; 42]>() as usize).wrapping_sub(1_usize)
     } else {
         (::core::mem::size_of::<[::core::ffi::c_char; 44]>() as usize).wrapping_sub(1_usize)
     }) as GLint;
     strings[2 as i32 as usize] = (data as *mut GLchar).offset(skip as isize);
     lengths[2 as i32 as usize] = size.wrapping_sub(skip) as i32 as GLint;
-    let shader: uint = gl::CreateShader(type_0 as GLenum) as uint;
+    let shader: u32 = gl::CreateShader(type_0 as GLenum) as u32;
     gl::ShaderSource(
         shader as GLuint,
         3 as GLsizei,
@@ -3929,7 +3919,7 @@ unsafe fn GlslPass_Compile(
             } else {
                 b"While\0" as *const u8 as *const ::core::ffi::c_char
             },
-            if type_0 == GL_VERTEX_SHADER as uint {
+            if type_0 == GL_VERTEX_SHADER as u32 {
                 b"vertex\0" as *const u8 as *const ::core::ffi::c_char
             } else {
                 b"fragment\0" as *const u8 as *const ::core::ffi::c_char
@@ -3945,7 +3935,7 @@ unsafe fn GlslPass_Compile(
     compile_status == GL_TRUE
 }
 unsafe fn GlslTextureUniform_Read(
-    program: uint,
+    program: u32,
     prefix: *const ::core::ffi::c_char,
     i: i32,
     result: *mut GlslTextureUniform,
@@ -4008,7 +3998,7 @@ unsafe fn GlslShader_GetUniforms(gs: *mut GlslShader) {
     let mut p: *mut GlslPass = (*gs).pass.offset(1);
     let p_end: *mut GlslPass = p.offset((*gs).n_pass as isize);
     while p < p_end {
-        let program: uint = (*p).gl_program;
+        let program: u32 = (*p).gl_program;
         gl::UseProgram(program as GLuint);
         let MVPMatrix: GLint = gl::GetUniformLocation(
             program as GLuint,
@@ -4097,7 +4087,7 @@ unsafe fn GlslShader_GetUniforms(gs: *mut GlslShader) {
         let mut pa: *mut GlslParam = (*gs).first_param;
         while !pa.is_null() {
             (*pa).uniform[pass_idx as usize] =
-                gl::GetUniformLocation(program as GLuint, (*pa).id) as uint;
+                gl::GetUniformLocation(program as GLuint, (*pa).id) as u32;
             pa = (*pa).next as *mut GlslParam;
         }
         p = p.offset(1);
@@ -4126,7 +4116,7 @@ pub unsafe fn GlslShader_CreateFromFile(
     let mut buffer: [::core::ffi::c_char; 256] = [0; 256];
     let mut link_status: GLint = 0;
     let mut shader_code: ByteArray = ByteArray {
-        data: ::core::ptr::null_mut::<uint8>(),
+        data: ::core::ptr::null_mut::<u8>(),
         size: 0,
         capacity: 0,
     };
@@ -4184,15 +4174,15 @@ pub unsafe fn GlslShader_CreateFromFile(
                     current_block = 13851546192323845927;
                     break;
                 } else {
-                    (*p).gl_program = gl::CreateProgram() as uint;
+                    (*p).gl_program = gl::CreateProgram() as u32;
                     if !GlslPass_Compile(
                         p,
-                        GL_VERTEX_SHADER as uint,
+                        GL_VERTEX_SHADER as u32,
                         shader_code.data,
                         shader_code.size,
                     ) || !GlslPass_Compile(
                         p,
-                        GL_FRAGMENT_SHADER as uint,
+                        GL_FRAGMENT_SHADER as u32,
                         shader_code.data,
                         shader_code.size,
                     ) {
@@ -4261,11 +4251,11 @@ pub unsafe fn GlslShader_CreateFromFile(
                     GL_TEXTURE_2D as GLenum,
                     GL_TEXTURE_MIN_FILTER as GLenum,
                     (if (*t).mipmap as i32 != 0 {
-                        (if (*t).filter == GL_LINEAR as uint {
+                        (if (*t).filter == GL_LINEAR as u32 {
                             GL_LINEAR_MIPMAP_LINEAR
                         } else {
                             GL_NEAREST_MIPMAP_NEAREST
-                        }) as uint
+                        }) as u32
                     } else {
                         (*t).filter
                     }) as GLint,
@@ -4404,7 +4394,7 @@ pub unsafe fn GlslShader_Destroy(gs: *mut GlslShader) {
     gl::DeleteBuffers(1 as GLsizei, &raw mut (*gs).gl_vbo);
     free(gs as *mut ::core::ffi::c_void);
 }
-unsafe fn RenderCtx_SetTexture(ctx: *mut RenderCtx, textureu: i32, texture_id: uint) {
+unsafe fn RenderCtx_SetTexture(ctx: *mut RenderCtx, textureu: i32, texture_id: u32) {
     if textureu >= 0 as i32 {
         gl::ActiveTexture((GL_TEXTURE0 as GLenum).wrapping_add((*ctx).texture_unit as GLenum));
         gl::BindTexture(GL_TEXTURE_2D as GLenum, texture_id as GLuint);
@@ -4413,10 +4403,10 @@ unsafe fn RenderCtx_SetTexture(ctx: *mut RenderCtx, textureu: i32, texture_id: u
         gl::Uniform1i(textureu as GLint, fresh55 as GLint);
     }
 }
-unsafe fn RenderCtx_SetTexCoords(ctx: *mut RenderCtx, tex_coord: i32, offset: uintptr_t) {
+unsafe fn RenderCtx_SetTexCoords(ctx: *mut RenderCtx, tex_coord: i32, offset: usize) {
     if tex_coord >= 0 as i32 {
         '_c2rust_label: {
-            if (*ctx).num_vaos < kMaxVaosInRenderCtx as i32 as uint {
+            if (*ctx).num_vaos < kMaxVaosInRenderCtx as i32 as u32 {
             } else {
                 __assert_fail(
                     b"ctx->num_vaos < kMaxVaosInRenderCtx\0" as *const u8
@@ -4430,7 +4420,7 @@ unsafe fn RenderCtx_SetTexCoords(ctx: *mut RenderCtx, tex_coord: i32, offset: ui
         };
         let fresh54 = (*ctx).num_vaos;
         (*ctx).num_vaos = (*ctx).num_vaos.wrapping_add(1);
-        (*ctx).vaos[fresh54 as usize] = tex_coord as uint;
+        (*ctx).vaos[fresh54 as usize] = tex_coord as u32;
         gl::VertexAttribPointer(
             tex_coord as GLuint,
             2 as GLint,
@@ -4447,7 +4437,7 @@ unsafe fn RenderCtx_SetGlslTextureUniform(
     u: *mut GlslTextureUniform,
     width: i32,
     height: i32,
-    texture: uint,
+    texture: u32,
 ) {
     let mut size: [::core::ffi::c_float; 2] = [
         width as ::core::ffi::c_float,
@@ -4468,7 +4458,7 @@ unsafe fn RenderCtx_SetGlslTextureUniform(
             &raw mut size as *mut ::core::ffi::c_float,
         );
     }
-    RenderCtx_SetTexCoords(ctx, (*u).TexCoord, (*ctx).offset as uintptr_t);
+    RenderCtx_SetTexCoords(ctx, (*u).TexCoord, (*ctx).offset as usize);
 }
 unsafe fn GlslShader_SetShaderVars(gs: *mut GlslShader, ctx: *mut RenderCtx, pass: i32) {
     let p: *mut GlslPass = (*gs).pass.offset(pass as isize) as *mut GlslPass;
@@ -4503,8 +4493,8 @@ unsafe fn GlslShader_SetShaderVars(gs: *mut GlslShader, ctx: *mut RenderCtx, pas
     if (*p).unif.FrameDirection >= 0 as i32 {
         gl::Uniform1i((*p).unif.FrameDirection as GLint, 1 as GLint);
     }
-    RenderCtx_SetTexCoords(ctx, (*p).unif.LUTTexCoord, (*ctx).offset as uintptr_t);
-    RenderCtx_SetTexCoords(ctx, (*p).unif.VertexCoord, 0 as uintptr_t);
+    RenderCtx_SetTexCoords(ctx, (*p).unif.LUTTexCoord, (*ctx).offset as usize);
+    RenderCtx_SetTexCoords(ctx, (*p).unif.VertexCoord, 0 as usize);
     RenderCtx_SetGlslTextureUniform(
         ctx,
         &raw mut (*p).unif.Orig,
@@ -4518,12 +4508,12 @@ unsafe fn GlslShader_SetShaderVars(gs: *mut GlslShader, ctx: *mut RenderCtx, pas
             .offset(
                 ((*gs)
                     .frame_count
-                    .wrapping_sub(1 as uint)
-                    .wrapping_sub(i as uint)
-                    & 7 as uint) as isize,
+                    .wrapping_sub(1 as u32)
+                    .wrapping_sub(i as u32)
+                    & 7 as u32) as isize,
             ) as *mut GlTextureWithSize;
         '_c2rust_label: {
-            if (*t).gl_texture != 0 as uint {
+            if (*t).gl_texture != 0 as u32 {
             } else {
                 __assert_fail(
                     b"t->gl_texture != 0\0" as *const u8 as *const ::core::ffi::c_char,
@@ -4579,7 +4569,7 @@ unsafe fn GlslShader_SetShaderVars(gs: *mut GlslShader, ctx: *mut RenderCtx, pas
     }
     let mut pa: *mut GlslParam = (*gs).first_param;
     while !pa.is_null() {
-        if (*pa).uniform[pass as usize] >= 0 as uint {
+        if (*pa).uniform[pass as usize] >= 0 as u32 {
             gl::Uniform1f(
                 (*pa).uniform[pass as usize] as GLint,
                 (*pa).value as GLfloat,
@@ -4612,15 +4602,15 @@ pub unsafe fn GlslShader_Render(
         let p: *mut GlslPass = (*gs).pass.offset(pass as isize);
         match (*p).scale_type_x as i32 {
             3 => {
-                (*p).width = (*p).scale_x as uint16;
+                (*p).width = (*p).scale_x as u16;
             }
             1 => {
                 (*p).width = ((*p.offset(-(1 as i32) as isize)).width as i32
                     as ::core::ffi::c_float
-                    * (*p).scale_x) as uint16;
+                    * (*p).scale_x) as u16;
             }
             2 => {
-                (*p).width = (viewport_width as ::core::ffi::c_float * (*p).scale_x) as uint16;
+                (*p).width = (viewport_width as ::core::ffi::c_float * (*p).scale_x) as u16;
             }
             _ => {
                 (*p).width = (if last_pass as i32 != 0 {
@@ -4628,20 +4618,20 @@ pub unsafe fn GlslShader_Render(
                 } else {
                     (*p.offset(-(1 as i32) as isize)).width as i32 as ::core::ffi::c_float
                         * (*p).scale_x
-                }) as uint16;
+                }) as u16;
             }
         }
         match (*p).scale_type_y as i32 {
             3 => {
-                (*p).height = (*p).scale_y as uint16;
+                (*p).height = (*p).scale_y as u16;
             }
             1 => {
                 (*p).height = ((*p.offset(-(1 as i32) as isize)).height as i32
                     as ::core::ffi::c_float
-                    * (*p).scale_y) as uint16;
+                    * (*p).scale_y) as u16;
             }
             2 => {
-                (*p).height = (viewport_height as ::core::ffi::c_float * (*p).scale_y) as uint16;
+                (*p).height = (viewport_height as ::core::ffi::c_float * (*p).scale_y) as u16;
             }
             _ => {
                 (*p).height = (if last_pass as i32 != 0 {
@@ -4649,7 +4639,7 @@ pub unsafe fn GlslShader_Render(
                 } else {
                     (*p.offset(-(1 as i32) as isize)).height as i32 as ::core::ffi::c_float
                         * (*p).scale_y
-                }) as uint16;
+                }) as u16;
             }
         }
         if !last_pass {
@@ -4715,14 +4705,14 @@ pub unsafe fn GlslShader_Render(
             GL_TEXTURE_2D as GLenum,
             (*p.offset(-(1 as i32) as isize)).gl_texture as GLuint,
         );
-        let filter: uint = if (*p).filter != 0 {
+        let filter: u32 = if (*p).filter != 0 {
             (*p).filter
         } else {
             (if last_pass as i32 != 0 && g_config.linear_filtering as i32 != 0 {
                 GL_LINEAR
             } else {
                 GL_NEAREST
-            }) as uint
+            }) as u32
         };
         gl::TexParameteri(
             GL_TEXTURE_2D as GLenum,
@@ -4733,11 +4723,11 @@ pub unsafe fn GlslShader_Render(
             GL_TEXTURE_2D as GLenum,
             GL_TEXTURE_MIN_FILTER as GLenum,
             (if (*p).mipmap_input as i32 != 0 {
-                (if filter == GL_LINEAR as uint {
+                (if filter == GL_LINEAR as u32 {
                     GL_LINEAR_MIPMAP_LINEAR
                 } else {
                     GL_NEAREST_MIPMAP_NEAREST
-                }) as uint
+                }) as u32
             } else {
                 filter
             }) as GLint,
@@ -4762,13 +4752,13 @@ pub unsafe fn GlslShader_Render(
             num_vaos: 0,
             vaos: [0; 51],
         };
-        ctx.num_vaos = 0 as uint;
+        ctx.num_vaos = 0 as u32;
         ctx.texture_unit = ctx.num_vaos;
         ctx.offset = (if last_pass as i32 != 0 {
             (::core::mem::size_of::<::core::ffi::c_float>() as usize).wrapping_mul(8_usize)
         } else {
             0_usize
-        }) as uint;
+        }) as u32;
         GlslShader_SetShaderVars(gs, &raw mut ctx, pass);
         gl::DrawArrays(GL_TRIANGLE_STRIP as GLenum, 0 as GLint, 4 as GLsizei);
         let mut i: i32 = 0 as i32;
@@ -4788,14 +4778,14 @@ pub unsafe fn GlslShader_Render(
     if (*gs).max_prev_frame != 0 as i32 {
         let store_pos: *mut GlTextureWithSize = (&raw mut (*gs).prev_frame
             as *mut GlTextureWithSize)
-            .offset(((*gs).frame_count & 7 as uint) as isize)
+            .offset(((*gs).frame_count & 7 as u32) as isize)
             as *mut GlTextureWithSize;
         let load_pos: *mut GlTextureWithSize = (&raw mut (*gs).prev_frame as *mut GlTextureWithSize)
             .offset(
-                ((*gs).frame_count.wrapping_sub((*gs).max_prev_frame as uint) & 7 as uint) as isize,
+                ((*gs).frame_count.wrapping_sub((*gs).max_prev_frame as u32) & 7 as u32) as isize,
             ) as *mut GlTextureWithSize;
         '_c2rust_label: {
-            if (*store_pos).gl_texture == 0 as uint {
+            if (*store_pos).gl_texture == 0 as u32 {
             } else {
                 __assert_fail(
                     b"store_pos->gl_texture == 0\0" as *const u8

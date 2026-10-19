@@ -4,7 +4,7 @@
 use crate::game::enemy_layouts::enemy_layout;
 use crate::game::sm_a0::{Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, SineMult8bit};
 use crate::game_state::Game;
-use crate::types::{uint16, EnemyBase};
+use crate::types::EnemyBase;
 
 const INITIAL_INSTRUCTION: u16 = 0x86a7;
 const ANIMATION_TABLE: u32 = 0xa386db;
@@ -112,7 +112,7 @@ impl<'a> WaverRam<'a> {
     }
 }
 
-pub fn Waver_Instr_1(_k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+pub fn Waver_Instr_1(_k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let index = game.cur_enemy_index();
     WaverRam::new(game, index).set_animation_finished(1);
     jp

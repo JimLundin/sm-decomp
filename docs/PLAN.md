@@ -93,6 +93,28 @@ This focused update commit shares that composed run; no update-only replay
 is claimed. Final native-alias source/config/host inputs match the frozen run.
 The broader readability and alias-safety goals remain open.
 
+Native fixed-width aliases (2026-10-20): ast-grep replaces 51007 resolved
+type uses across 54 Rust files with their primitive names, removes 25 alias
+declarations and 732 import entries. All 25 bidirectional compiler type-identity
+checks and complete independent source reconstruction pass; no primitive
+name shadows exist. Macro type uses are reviewed separately; the 1169 RAM
+metadata rows, matching arms and diagnostic/comment text remain exact.
+
+Net Rust lines -3415 from shorter names, import removal and normal formatting;
+total Rust is 150662. Runtime casts and unsafe operations are unchanged by
+the spelling change. The existing raw-offset counter now recognizes all four
+byte spellings: comparable lines 4095 to 4096 reflect formatting only, while
+the whitespace-independent count stays 4096. Cast lines fall 19810 to 19759
+through formatting; no cast elimination is claimed.
+
+Combined verification includes the 882-update family and committed HDMA:
+normal release (23.99s), formatting/check and progress pass;
+full any% 129712/0 (112.70s), native exit 0. All 73 source/config/host
+inputs match the frozen composition and all 78 replay pins remain fixed.
+Both focused commits share this run. The frontend is compiler-checked;
+the movie covers core gameplay. Continue substantial shared implementations;
+the broader readability and boot-to-credits goals remain incomplete.
+
 Native integer type names (2026-10-20): ast-grep replaces 34487 c_int
 and 267 c_uint paths with the identical i32/u32 types across 52 Rust files.
 33108 paths are ordinary type nodes; 1646 are inside 829 set_ram_word!

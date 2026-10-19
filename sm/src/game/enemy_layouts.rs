@@ -13,10 +13,10 @@ macro_rules! enemy_layout {
         #[repr(C)]
         pub struct $name {
             pub $base: $base_type,
-            $(pub $head: $crate::types::uint16,)*
+            $(pub $head: ::core::primitive::u16,)*
             $(
                 pub $array: [$element; $length],
-                $(pub $word: $crate::types::uint16,)*
+                $(pub $word: ::core::primitive::u16,)*
             )*
         }
     };

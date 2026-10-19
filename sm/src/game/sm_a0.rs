@@ -328,24 +328,20 @@ extern "C" {
     fn memset(__s: *mut ::core::ffi::c_void, __c: i32, __n: size_t) -> *mut ::core::ffi::c_void;
 
 }
-pub use crate::types::{
-    __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
-    int32_t, int8, int8_t, size_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, uintptr_t,
-    EnemyData, LongPtr, PairU16, Point16U, VoidP, VramWriteEntry,
-};
+pub use crate::types::{size_t, EnemyData, LongPtr, PairU16, Point16U, VoidP, VramWriteEntry};
 pub use crate::types::{EnemyDef, EnemySpawnData, Vulnerability};
 pub use crate::types::{EnemyProps, EprojDef, ExtendedSpriteMap, Hitbox};
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct EnemyPopulation {
     pub enemy_ptr: VoidP,
-    pub x_pos: uint16,
-    pub y_pos: uint16,
-    pub init_param: uint16,
-    pub properties: uint16,
-    pub extra_properties: uint16,
-    pub parameter1: uint16,
-    pub parameter2: uint16,
+    pub x_pos: u16,
+    pub y_pos: u16,
+    pub init_param: u16,
+    pub properties: u16,
+    pub extra_properties: u16,
+    pub parameter1: u16,
+    pub parameter2: u16,
 }
 pub use crate::types::{EnemyAiBits, EnemyTileset};
 pub const kEnemyAiBits_Frozen: EnemyAiBits = 4;
@@ -354,9 +350,9 @@ pub const kEnemyAiBits_Grapple: EnemyAiBits = 1;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct EnemyTileLoadData {
-    pub tile_data_size: uint16,
+    pub tile_data_size: u16,
     pub tile_data_ptr: LongPtr,
-    pub offset_into_ram: uint16,
+    pub offset_into_ram: u16,
 }
 pub use crate::types::Consts_60;
 pub use crate::types::Consts_86;
@@ -369,28 +365,28 @@ pub use crate::types::{
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct PositionAndWidth {
-    pub x_pos: uint16,
-    pub x_subpos: uint16,
-    pub y_pos: uint16,
-    pub y_subpos: uint16,
-    pub width: uint16,
-    pub height: uint16,
+    pub x_pos: u16,
+    pub x_subpos: u16,
+    pub y_pos: u16,
+    pub y_subpos: u16,
+    pub width: u16,
+    pub height: u16,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct EnemyBlockCollInfo {
-    pub ebci_r18_r20: int32,
-    pub ebci_r24: uint16,
-    pub ebci_r26: uint16,
-    pub ebci_r28: uint16,
-    pub ebci_r30: uint16,
-    pub ebci_r32: uint16,
+    pub ebci_r18_r20: i32,
+    pub ebci_r24: u16,
+    pub ebci_r26: u16,
+    pub ebci_r28: u16,
+    pub ebci_r30: u16,
+    pub ebci_r32: u16,
 }
-pub type Func_EnemyBlockCollInfo_U8 = unsafe fn(&mut EnemyBlockCollInfo, &mut Game) -> uint8;
+pub type Func_EnemyBlockCollInfo_U8 = unsafe fn(&mut EnemyBlockCollInfo, &mut Game) -> u8;
 pub use crate::types::Point32;
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 #[inline]
-unsafe fn RomPtr_RAM(addr: uint16_t, game: &mut Game) -> *mut uint8 {
+unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
     '_c2rust_label: {
         if addr < 0x2000u16 {
         } else {
@@ -402,55 +398,52 @@ unsafe fn RomPtr_RAM(addr: uint16_t, game: &mut Game) -> *mut uint8 {
             );
         }
     };
-    (&raw mut game.g_ram as *mut uint8).offset(addr as i32 as isize)
+    (&raw mut game.g_ram as *mut u8).offset(addr as i32 as isize)
 }
 #[inline]
-unsafe fn RomPtr_86(addr: uint16_t, game: &mut Game) -> *const uint8 {
+unsafe fn RomPtr_86(addr: u16, game: &mut Game) -> *const u8 {
     RomPtr((0x860000u32) | ((addr) as u32), game)
 }
 #[inline]
-unsafe fn RomPtr_A1(addr: uint16_t, game: &mut Game) -> *const uint8 {
+unsafe fn RomPtr_A1(addr: u16, game: &mut Game) -> *const u8 {
     RomPtr((0xa10000u32) | ((addr) as u32), game)
 }
 #[inline]
-unsafe fn RomPtr_B4(addr: uint16_t, game: &mut Game) -> *const uint8 {
+unsafe fn RomPtr_B4(addr: u16, game: &mut Game) -> *const u8 {
     RomPtr((0xb40000u32) | ((addr) as u32), game)
 }
 #[inline]
-unsafe fn RomPtrWithBank(bank: uint8, addr: uint16_t, game: &mut Game) -> *const uint8 {
-    RomPtr(((bank as i32) << 16 as i32 | addr as i32) as uint32_t, game)
+unsafe fn RomPtrWithBank(bank: u8, addr: u16, game: &mut Game) -> *const u8 {
+    RomPtr(((bank as i32) << 16 as i32 | addr as i32) as u32, game)
 }
 #[inline]
-unsafe fn RomBankBase(bank: uint8, game: &mut Game) -> *const uint8 {
-    RomPtr(
-        (((bank as i32) << 16 as i32) + 0x8000 as i32) as uint32_t,
-        game,
-    )
-    .offset(-(0x8000 as i32 as isize))
+unsafe fn RomBankBase(bank: u8, game: &mut Game) -> *const u8 {
+    RomPtr((((bank as i32) << 16 as i32) + 0x8000 as i32) as u32, game)
+        .offset(-(0x8000 as i32 as isize))
 }
 #[inline]
-unsafe fn get_EnemyDef_A2(a: uint16, game: &mut Game) -> *mut EnemyDef {
+unsafe fn get_EnemyDef_A2(a: u16, game: &mut Game) -> *mut EnemyDef {
     RomPtr((0xa00000u32) | ((a) as u32), game) as *mut EnemyDef
 }
 #[inline]
-unsafe fn get_EnemyTileset(a: uint16, game: &mut Game) -> *mut EnemyTileset {
+unsafe fn get_EnemyTileset(a: u16, game: &mut Game) -> *mut EnemyTileset {
     RomPtr((0xb40000u32) | ((a) as u32), game) as *mut EnemyTileset
 }
 #[inline]
-unsafe fn get_EprojDef(a: uint16, game: &mut Game) -> *mut EprojDef {
+unsafe fn get_EprojDef(a: u16, game: &mut Game) -> *mut EprojDef {
     RomPtr((0x860000u32) | ((a) as u32), game) as *mut EprojDef
 }
 #[inline]
-unsafe fn get_Vulnerability(a: uint16, game: &mut Game) -> *mut Vulnerability {
+unsafe fn get_Vulnerability(a: u16, game: &mut Game) -> *mut Vulnerability {
     RomPtr((0xb40000u32) | ((a) as u32), game) as *mut Vulnerability
 }
 #[inline]
-unsafe fn get_ExtendedSpriteMap(db: uint8, a: uint16, game: &mut Game) -> *mut ExtendedSpriteMap {
-    RomPtr(((db as i32) << 16 as i32 | a as i32) as uint32_t, game) as *mut ExtendedSpriteMap
+unsafe fn get_ExtendedSpriteMap(db: u8, a: u16, game: &mut Game) -> *mut ExtendedSpriteMap {
+    RomPtr(((db as i32) << 16 as i32 | a as i32) as u32, game) as *mut ExtendedSpriteMap
 }
 #[inline]
-unsafe fn get_EnemyPopulation(db: uint8, a: uint16, game: &mut Game) -> *mut EnemyPopulation {
-    RomPtr(((db as i32) << 16 as i32 | a as i32) as uint32_t, game) as *mut EnemyPopulation
+unsafe fn get_EnemyPopulation(db: u8, a: u16, game: &mut Game) -> *mut EnemyPopulation {
+    RomPtr(((db as i32) << 16 as i32 | a as i32) as u32, game) as *mut EnemyPopulation
 }
 pub const fnEprojPreInstr_nullsub_83: i32 = 0x8684fb;
 pub const fnGrappleBeam_Func2: i32 = 0x9bc8c5;
@@ -461,1148 +454,1148 @@ pub const fnEnemy_GrappleReact_CancelBeam_A0: i32 = 0xa0800f;
 pub const fnEnemy_GrappleReact_SamusLatchesNoInvinc_A0: i32 = 0xa08014;
 pub const fnEnemy_GrappleReact_SamusLatchesParalyze_A0: i32 = 0xa08019;
 pub const fnEnemy_GrappleReact_HurtSamus_A0: i32 = 0xa0801e;
-pub const fnEnemy_NormalTouchAI_A0: uint32 = 10518563;
-pub const fnEnemy_NormalShotAI_A0: uint32 = 10518573;
+pub const fnEnemy_NormalTouchAI_A0: u32 = 10518563;
+pub const fnEnemy_NormalShotAI_A0: u32 = 10518573;
 pub const fnEnemy_NormalPowerBombAI_A0: i32 = 0xa08037;
 pub const fnnullsub_169: i32 = 0xa0804b;
 pub const fnnullsub_170: i32 = 0xa0804c;
 pub const fnnullsub_171: i32 = 0xa0807b;
-pub const fnEnemy_GrappleReact_SamusLatchesOn_A2: uint32 = 10649605;
-pub const fnEnemy_GrappleReact_KillEnemy_A2: uint32 = 10649610;
-pub const fnEnemy_GrappleReact_CancelBeam_A2: uint32 = 10649615;
-pub const fnEnemy_NormalTouchAI_A2: uint32 = 10649635;
-pub const fnEnemy_NormalShotAI_A2: uint32 = 10649645;
-pub const fnEnemy_NormalPowerBombAI_A2: uint32 = 10649655;
-pub const fnEnemy_NormalFrozenAI_A2: uint32 = 10649665;
-pub const fnnullsub_170_A2: uint32 = 10649676;
-pub const fnnullsub_171_A2: uint32 = 10649723;
-pub const fnEnemyInstr_Goto_A2: uint32 = 10649837;
-pub const fnEnemyInstr_DecTimerAndGoto2_A2: uint32 = 10649872;
-pub const fnEnemyInstr_SetTimer_A2: uint32 = 10649891;
-pub const fnEnemyInstr_Sleep_A2: uint32 = 10649903;
-pub const fnEnemyInstr_EnableOffScreenProcessing_A2: uint32 = 10649971;
-pub const fnEnemyInstr_DisableOffScreenProcessing_A2: uint32 = 10649981;
-pub const fnBouncingGoofball_Init: uint32 = 10651420;
-pub const fnBouncingGoofball_Main: uint32 = 10651548;
-pub const fnBouncingGoofball_Instr_88C5: uint32 = 10651845;
-pub const fnBouncingGoofball_Instr_88C6: uint32 = 10651846;
-pub const fnMiniCrocomire_Instr_897E: uint32 = 10652030;
-pub const fnMiniCrocomire_Instr_8990: uint32 = 10652048;
-pub const fnMiniCrocomire_Instr_899D: uint32 = 10652061;
-pub const fnMiniCrocomire_Init: uint32 = 10652077;
-pub const fnMiniCrocomire_Main: uint32 = 10652144;
-pub const fnMiniCrocomire_PreInstr5: uint32 = 10652227;
-pub const fnMiniCrocomire_PreInstr6: uint32 = 10652252;
-pub const fnnullsub_175: uint32 = 10652277;
-pub const fnMaridiaBeybladeTurtle_Init: uint32 = 10653036;
-pub const fnMiniMaridiaBeybladeTurtle_Init: uint32 = 10653085;
-pub const fnMaridiaBeybladeTurtle_Main: uint32 = 10653138;
-pub const fnMiniMaridiaBeybladeTurtle_Main: uint32 = 10653998;
-pub const fnMaridiaBeybladeTurtle_Touch: uint32 = 10654337;
-pub const fnMiniMaridiaBeybladeTurtle_Touch: uint32 = 10654367;
-pub const fnMiniMaridiaBeybladeTurtle_Shot: uint32 = 10654479;
-pub const fnMaridiaBeybladeTurtle_Instr_9381: uint32 = 10654593;
-pub const fnMaridiaBeybladeTurtle_Instr_9412: uint32 = 10654738;
-pub const fnMaridiaBeybladeTurtle_Instr_9447: uint32 = 10654791;
-pub const fnMaridiaBeybladeTurtle_Instr_9451: uint32 = 10654801;
-pub const fnMaridiaBeybladeTurtle_Instr_946B: uint32 = 10654827;
-pub const fnMaridiaBeybladeTurtle_Instr_9485: uint32 = 10654853;
-pub const fnMaridiaBeybladeTurtle_Instr_94A1: uint32 = 10654881;
-pub const fnMaridiaBeybladeTurtle_Instr_94C7: uint32 = 10654919;
-pub const fnMaridiaBeybladeTurtle_Instr_94D1: uint32 = 10654929;
-pub const fnThinHoppingBlobs_Init: uint32 = 10656319;
-pub const fnThinHoppingBlobs_Main: uint32 = 10656381;
-pub const fnSpikeShootingPlant_Instr_9F2A: uint32 = 10657578;
-pub const fnSpikeShootingPlant_Init: uint32 = 10657608;
-pub const fnSpikeShootingPlant_Main: uint32 = 10657715;
-pub const fnSpikeShootingPlant_2: uint32 = 10657722;
-pub const fnSpikeShootingPlant_3: uint32 = 10657772;
-pub const fnnullsub_182: uint32 = 10657819;
-pub const fnSpikeShootingPlant_Instr_A095: uint32 = 10657941;
-pub const fnSpikeShootingPlant_Instr_A0A7: uint32 = 10657959;
-pub const fnMaridiaSpikeyShell_Init: uint32 = 10658809;
-pub const fnMaridiaSpikeyShell_Main: uint32 = 10658942;
-pub const fnMaridiaSpikeyShell_Instr_A56D: uint32 = 10659181;
-pub const fnMaridiaSpikeyShell_Instr_A571: uint32 = 10659185;
-pub const fnMaridiaSpikeyShell_Shot: uint32 = 10659193;
-pub const fnGunshipTop_Init: uint32 = 10659396;
-pub const fnGunshipBottom_Init: uint32 = 10659538;
-pub const fnGunshipTop_Main: uint32 = 10659673;
-pub const fnnullsub_187: uint32 = 10659799;
-pub const fnGunshipTop_3: uint32 = 10659852;
-pub const fnGunshipTop_4: uint32 = 10660048;
-pub const fnGunshipTop_5: uint32 = 10660162;
-pub const fnGunshipTop_6: uint32 = 10660176;
-pub const fnGunshipTop_7: uint32 = 10660231;
-pub const fnGunshipTop_8: uint32 = 10660285;
-pub const fnGunshipTop_9: uint32 = 10660431;
-pub const fnGunshipTop_10: uint32 = 10660445;
-pub const fnGunshipTop_11: uint32 = 10660500;
-pub const fnGunshipTop_12: uint32 = 10660514;
-pub const fnGunshipTop_13: uint32 = 10660639;
-pub const fnGunshipTop_14: uint32 = 10660704;
-pub const fnGunshipTop_15: uint32 = 10660718;
-pub const fnGunshipTop_16: uint32 = 10660773;
-pub const fnGunshipTop_17: uint32 = 10660807;
-pub const fnGunshipTop_18: uint32 = 10660891;
-pub const fnGunshipTop_19: uint32 = 10661079;
-pub const fnGunshipTop_20: uint32 = 10661134;
-pub const fnGunshipTop_21: uint32 = 10661165;
-pub const fnFlies_Init: uint32 = 10661995;
-pub const fnFlies_Main: uint32 = 10662175;
-pub const fnFlies_4: uint32 = 10662222;
-pub const fnFlies_5: uint32 = 10662268;
-pub const fnFlies_6: uint32 = 10662314;
-pub const fnFlies_7: uint32 = 10662354;
-pub const fnNorfairErraticFireball_Init: uint32 = 10662880;
-pub const fnNorfairErraticFireball_Main: uint32 = 10662927;
-pub const fnLavaquakeRocks_Init: uint32 = 10663280;
-pub const fnLavaquakeRocks_Main: uint32 = 10663311;
-pub const fnRinka_Init: uint32 = 10663426;
-pub const fnRinka_Main: uint32 = 10663876;
-pub const fnRinka_Frozen: uint32 = 10664233;
-pub const fnRinka_Touch: uint32 = 10664263;
-pub const fnRinka_Shot: uint32 = 10664269;
-pub const fnRinka_Powerbomb: uint32 = 10664275;
-pub const fnRinka_Instr_B9B3: uint32 = 10664371;
-pub const fnRinka_Instr_B9BD: uint32 = 10664381;
-pub const fnRinka_Instr_B9C7: uint32 = 10664391;
-pub const fnEnemyInstr_Rio_Instr_1: uint32 = 10664899;
-pub const fnRio_Init: uint32 = 10664909;
-pub const fnRio_Main: uint32 = 10664931;
-pub const fnNorfairLavajumpingEnemy_Instr_BE8E: uint32 = 10665614;
-pub const fnNorfairLavajumpingEnemy_Init: uint32 = 10665625;
-pub const fnNorfairLavajumpingEnemy_Main: uint32 = 10665682;
-pub const fnNorfairLavajumpingEnemy_Func_1: uint32 = 10665692;
-pub const fnNorfairLavajumpingEnemy_Func_2: uint32 = 10665754;
-pub const fnNorfairLavajumpingEnemy_Func_3: uint32 = 10665790;
-pub const fnNorfairLavajumpingEnemy_Func_4: uint32 = 10665852;
-pub const fnNorfairLavajumpingEnemy_Func_5: uint32 = 10665916;
-pub const fnNorfairRio_Instr_C1C9: uint32 = 10666441;
-pub const fnNorfairRio_Instr_C1D4: uint32 = 10666452;
-pub const fnNorfairRio_Instr_C1DF: uint32 = 10666463;
-pub const fnNorfairRio_Instr_C1EA: uint32 = 10666474;
-pub const fnNorfairRio_Instr_C1F5: uint32 = 10666485;
-pub const fnNorfairRio_Instr_C200: uint32 = 10666496;
-pub const fnNorfairRio_Instr_C20B: uint32 = 10666507;
-pub const fnNorfairRio_Instr_C216: uint32 = 10666518;
-pub const fnNorfairRio_Instr_C221: uint32 = 10666529;
-pub const fnNorfairRio_Instr_C22C: uint32 = 10666540;
-pub const fnNorfairRio_Instr_C237: uint32 = 10666551;
-pub const fnNorfairRio_Init: uint32 = 10666562;
-pub const fnNorfairRio_Main: uint32 = 10666615;
-pub const fnNorfairRio_Func_1: uint32 = 10666625;
-pub const fnNorfairRio_Func_2: uint32 = 10666727;
-pub const fnNorfairRio_Func_3: uint32 = 10666815;
-pub const fnNorfairRio_Func_4: uint32 = 10666849;
-pub const fnNorfairRio_Func_5: uint32 = 10666929;
-pub const fnNorfairRio_Func_6: uint32 = 10667014;
-pub const fnLowerNorfairRio_Instr_C6D2: uint32 = 10667730;
-pub const fnLowerNorfairRio_Instr_C6DD: uint32 = 10667741;
-pub const fnLowerNorfairRio_Instr_C6E8: uint32 = 10667752;
-pub const fnLowerNorfairRio_Init: uint32 = 10667763;
-pub const fnLowerNorfairRio_Main: uint32 = 10667812;
-pub const fnLowerNorfairRio_Func_1: uint32 = 10667822;
-pub const fnLowerNorfairRio_Func_2: uint32 = 10667889;
-pub const fnLowerNorfairRio_Func_3: uint32 = 10667963;
-pub const fnLowerNorfairRio_Func_4: uint32 = 10667990;
-pub const fnLowerNorfairRio_Func_5: uint32 = 10668077;
-pub const fnLowerNorfairRio_Func_6: uint32 = 10668168;
-pub const fnMaridiaLargeSnail_Instr_CB6B: uint32 = 10668907;
-pub const fnMaridiaLargeSnail_Instr_CCB3: uint32 = 10669235;
-pub const fnMaridiaLargeSnail_Instr_CCBE: uint32 = 10669246;
-pub const fnMaridiaLargeSnail_Instr_CCC9: uint32 = 10669257;
-pub const fnMaridiaLargeSnail_Init: uint32 = 10669268;
-pub const fnMaridiaLargeSnail_Main: uint32 = 10669331;
-pub const fnMaridiaLargeSnail_Func_7: uint32 = 10669926;
-pub const fnMaridiaLargeSnail_Func_8: uint32 = 10669993;
-pub const fnMaridiaLargeSnail_Func_12: uint32 = 10670984;
-pub const fnMaridiaLargeSnail_Touch: uint32 = 10670988;
-pub const fnMaridiaLargeSnail_Shot: uint32 = 10671028;
-pub const fnHirisingSlowfalling_Init: uint32 = 10674038;
-pub const fnHirisingSlowfalling_Main: uint32 = 10674222;
-pub const fnGripper_Init: uint32 = 10674643;
-pub const fnGripper_Main: uint32 = 10674721;
-pub const fnJetPowerRipper_Init: uint32 = 10674968;
-pub const fnJetPowerRipper_Main: uint32 = 10675027;
-pub const fnJetPowerRipper_Shot: uint32 = 10675113;
-pub const fnRipper_Init: uint32 = 10675359;
-pub const fnRipper_Main: uint32 = 10675418;
-pub const fnLavaSeahorse_Instr_E5FB: uint32 = 10675707;
-pub const fnLavaSeahorse_Init: uint32 = 10675718;
-pub const fnLavaSeahorse_Main: uint32 = 10675790;
-pub const fnLavaSeahorse_Func_1: uint32 = 10675796;
-pub const fnLavaSeahorse_Func_2: uint32 = 10675885;
-pub const fnLavaSeahorse_Func_3: uint32 = 10675953;
-pub const fnLavaSeahorse_Func_4: uint32 = 10676020;
-pub const fnLavaSeahorse_Func_5: uint32 = 10676041;
-pub const fnnullsub_196: uint32 = 10676097;
-pub const fnLavaSeahorse_Touch: uint32 = 10676168;
-pub const fnLavaSeahorse_Shot: uint32 = 10676174;
-pub const fnLavaSeahorse_Powerbomb: uint32 = 10676180;
-pub const fnTimedShutter_Init: uint32 = 10676698;
-pub const fnTimedShutter_Main: uint32 = 10676918;
-pub const fnRisingFallingPlatform_Init: uint32 = 10677765;
-pub const fnShootableShutter_Init: uint32 = 10677778;
-pub const fnRisingFallingPlatform_Main: uint32 = 10677969;
-pub const fnRisingFallingPlatform_Touch: uint32 = 10678429;
-pub const fnRisingFallingPlatform_Shot: uint32 = 10678434;
-pub const fnShootableShutter_Shot: uint32 = 10678442;
-pub const fnRisingFallingPlatform_Powerbomb: uint32 = 10678454;
-pub const fnHorizontalShootableShutter_Init: uint32 = 10678545;
-pub const fnHorizontalShootableShutter_Main: uint32 = 10678750;
-pub const fnHorizontalShootableShutter_Touch: uint32 = 10679256;
-pub const fnHorizontalShootableShutter_Shot: uint32 = 10679310;
-pub const fnHorizontalShootableShutter_Powerbomb: uint32 = 10679322;
-pub const fnEnemy_GrappleReact_NoInteract_A3: uint32 = 10715136;
-pub const fnEnemy_GrappleReact_KillEnemy_A3: uint32 = 10715146;
-pub const fnEnemy_GrappleReact_CancelBeam_A3: uint32 = 10715151;
-pub const fnEnemy_NormalTouchAI_A3: uint32 = 10715171;
-pub const fnEnemy_NormalShotAI_A3: uint32 = 10715181;
-pub const fnEnemy_NormalPowerBombAI_A3: uint32 = 10715191;
-pub const fnEnemy_NormalFrozenAI_A3: uint32 = 10715201;
-pub const fnnullsub_170_A3: uint32 = 10715212;
-pub const fnEnemyInstr_Goto_A3: uint32 = 10715373;
-pub const fnEnemyInstr_Sleep_A3: uint32 = 10715439;
-pub const fnEnemyInstr_EnableOffScreenProcessing_A3: uint32 = 10715507;
-pub const fnEnemyInstr_DisableOffScreenProcessing_A3: uint32 = 10715517;
-pub const fnWaver_Instr_1: uint32 = 10716899;
-pub const fnWaver_Init: uint32 = 10716909;
-pub const fnWaver_Main: uint32 = 10717004;
-pub const fnMetalee_Instr_1: uint32 = 10717526;
-pub const fnMetalee_Init: uint32 = 10717536;
-pub const fnMetalee_Main: uint32 = 10717561;
-pub const fnMetalee_Shot: uint32 = 10717967;
-pub const fnFireflea_Init: uint32 = 10718509;
-pub const fnFireflea_Main: uint32 = 10718702;
-pub const fnFireflea_Touch: uint32 = 10718827;
-pub const fnFireflea_Powerbomb: uint32 = 10718851;
-pub const fnFireflea_Shot: uint32 = 10718857;
-pub const fnMaridiaFish_Instr_3: uint32 = 10719382;
-pub const fnMaridiaFish_Instr_1: uint32 = 10719392;
-pub const fnMaridiaFish_Instr_2: uint32 = 10719402;
-pub const fnMaridiaFish_Init: uint32 = 10719413;
-pub const fnMaridiaFish_Main: uint32 = 10719531;
-pub const fnElevator_Init: uint32 = 10720486;
-pub const fnElevator_Frozen: uint32 = 10720554;
-pub const fnCrab_Init: uint32 = 10720995;
-pub const fnSlug_Init: uint32 = 10721595;
-pub const fnPlatformThatFallsWithSamus_Instr_3: uint32 = 10722411;
-pub const fnPlatformThatFallsWithSamus_Instr_4: uint32 = 10722422;
-pub const fnPlatformThatFallsWithSamus_Instr_1: uint32 = 10722433;
-pub const fnPlatformThatFallsWithSamus_Instr_2: uint32 = 10722444;
-pub const fnPlatformThatFallsWithSamus_Init: uint32 = 10722463;
-pub const fnFastMovingSlowSinkingPlatform_Init: uint32 = 10722490;
-pub const fnPlatformThatFallsWithSamus_Main: uint32 = 10722582;
-pub const fnnullsub_32: uint32 = 10723079;
-pub const fnFastMovingSlowSinkingPlatform_Shot: uint32 = 10723080;
-pub const fnRoach_Init: uint32 = 10723661;
-pub const fnRoach_Main: uint32 = 10724048;
-pub const fnMochtroid_Init: uint32 = 10725245;
-pub const fnMochtroid_Main: uint32 = 10725264;
-pub const fnMochtroid_Touch: uint32 = 10725715;
-pub const fnMochtroid_Shot: uint32 = 10725800;
-pub const fnSidehopper_Func_1: uint32 = 10725992;
-pub const fnSidehopper_Instr_1: uint32 = 10726142;
-pub const fnSidehopper_Init: uint32 = 10726153;
-pub const fnSidehopper_Main: uint32 = 10726351;
-pub const fnMaridiaRefillCandy_Instr_1: uint32 = 10728489;
-pub const fnMaridiaRefillCandy_Instr_2: uint32 = 10728500;
-pub const fnMaridiaRefillCandy_Instr_3: uint32 = 10728511;
-pub const fnMaridiaRefillCandy_Init: uint32 = 10728522;
-pub const fnMaridiaRefillCandy_Main: uint32 = 10728572;
-pub const fnNorfairSlowFireball_Init: uint32 = 10729071;
-pub const fnBang_Instr_1: uint32 = 10730104;
-pub const fnBang_Instr_2: uint32 = 10730152;
-pub const fnBang_Init: uint32 = 10730163;
-pub const fnBang_Main: uint32 = 10730277;
-pub const fnBang_Func_6: uint32 = 10730661;
-pub const fnBang_Func_7: uint32 = 10730689;
-pub const fnBang_Func_8: uint32 = 10730693;
-pub const fnBang_Func_10: uint32 = 10730780;
-pub const fnBang_Func_11: uint32 = 10730796;
-pub const fnBang_Shot: uint32 = 10731261;
-pub const fnSkree_Instr_1: uint32 = 10733220;
-pub const fnSkree_Init: uint32 = 10733230;
-pub const fnSkree_Main: uint32 = 10733255;
-pub const fnSkree_Shot: uint32 = 10733557;
-pub const fnMaridiaSnail_Instr_1: uint32 = 10734646;
-pub const fnMaridiaSnail_Instr_2: uint32 = 10734655;
-pub const fnMaridiaSnail_Instr_4: uint32 = 10734664;
-pub const fnMaridiaSnail_Instr_3: uint32 = 10734687;
-pub const fnMaridiaSnail_Instr_5: uint32 = 10734712;
-pub const fnMaridiaSnail_Init: uint32 = 10735074;
-pub const fnMaridiaSnail_Main: uint32 = 10735204;
-pub const fnnullsub_215: uint32 = 10735455;
-pub const fnMaridiaSnail_Func_7: uint32 = 10735456;
-pub const fnMaridiaSnail_Func_9: uint32 = 10735526;
-pub const fnMaridiaSnail_CFB7: uint32 = 10735543;
-pub const fnMaridiaSnail_CFBD: uint32 = 10735549;
-pub const fnMaridiaSnail_CFCE: uint32 = 10735566;
-pub const fnMaridiaSnail_CFD4: uint32 = 10735572;
-pub const fnMaridiaSnail_CFE5: uint32 = 10735589;
-pub const fnMaridiaSnail_CFEB: uint32 = 10735595;
-pub const fnMaridiaSnail_CFFC: uint32 = 10735612;
-pub const fnMaridiaSnail_Func_15: uint32 = 10736051;
-pub const fnMaridiaSnail_Touch: uint32 = 10736560;
-pub const fnMaridiaSnail_Shot: uint32 = 10736745;
-pub const fnReflec_Func_1: uint32 = 10738444;
-pub const fnReflec_Instr_1: uint32 = 10738632;
-pub const fnReflec_Init: uint32 = 10738643;
-pub const fnnullsub_33: uint32 = 10738715;
-pub const fnReflec_Shot: uint32 = 10738716;
-pub const fnWreckedShipOrangeZoomer_Func_1: uint32 = 10739650;
-pub const fnWreckedShipOrangeZoomer_Init: uint32 = 10739779;
-pub const fnnullsub_343: uint32 = 10739850;
-pub const fnWreckedShipOrangeZoomer_Func_2: uint32 = 10739857;
-pub const fnWreckedShipOrangeZoomer_Main: uint32 = 10739851;
-pub const fnsub_A3E168: uint32 = 10740072;
-pub const fnBigEyeBugs_Init: uint32 = 10740436;
-pub const fnFireZoomer_Init: uint32 = 10741148;
-pub const fnZoomer_Instr_SetPreinstr: uint32 = 10741344;
-pub const fnStoneZoomer_Init: uint32 = 10741353;
-pub const fnnullsub_304: uint32 = 10741441;
-pub const fnStoneZoomer_Main: uint32 = 10741442;
-pub const fnFireZoomer_Func_1: uint32 = 10741448;
-pub const fnFireZoomer_Func_2: uint32 = 10741637;
-pub const fnFireZoomer_Func_3: uint32 = 10741746;
-pub const fnMetroid_Init: uint32 = 10742351;
-pub const fnMetroid_Instr_2: uint32 = 10742437;
-pub const fnMetroid_Instr_1: uint32 = 10742449;
-pub const fnMetroid_Frozen: uint32 = 10742502;
-pub const fnMetroid_Hurt: uint32 = 10742579;
-pub const fnMetroid_Main: uint32 = 10742680;
-pub const fnMetroid_Touch: uint32 = 10743275;
-pub const fnMetroid_Shot: uint32 = 10743559;
-pub const fnMetroid_Powerbomb: uint32 = 10743874;
-pub const fnEnemy_GrappleReact_SamusLatchesOn_A4: uint32 = 10780677;
-pub const fnEnemy_NormalTouchAI_A4: uint32 = 10780707;
-pub const fnEnemy_NormalShotAI_A4: uint32 = 10780717;
-pub const fnEnemy_NormalPowerBombAI_A4: uint32 = 10780727;
-pub const fnEnemy_NormalFrozenAI_A4: uint32 = 10780737;
-pub const fnnullsub_170_A4: uint32 = 10780748;
-pub const fnEnemyInstr_Goto_A4: uint32 = 10780909;
-pub const fnEnemyInstr_Sleep_A4: uint32 = 10780975;
-pub const fnCrocomire_Hurt: uint32 = 10782343;
-pub const fnCrocomire_Instr_1: uint32 = 10782374;
-pub const fnCrocomire_Instr_14: uint32 = 10782546;
-pub const fnCrocomire_Init: uint32 = 10783322;
-pub const fnCrocomire_Main: uint32 = 10783748;
-pub const fnCrocomire_Instr_11: uint32 = 10783995;
-pub const fnCrocomire_Instr_7: uint32 = 10784007;
-pub const fnCrocomire_Instr_19: uint32 = 10784019;
-pub const fnCrocomire_Instr_2: uint32 = 10784711;
-pub const fnCrocomire_Instr_4: uint32 = 10784735;
-pub const fnCrocomire_Instr_3: uint32 = 10784762;
-pub const fnCrocomire_Instr_15: uint32 = 10784767;
-pub const fnCrocomire_Instr_16: uint32 = 10784797;
-pub const fnCrocomire_Instr_13: uint32 = 10784859;
-pub const fnCrocomire_Instr_18: uint32 = 10784895;
-pub const fnCrocomire_Instr_12: uint32 = 10784911;
-pub const fnCrocomire_Instr_17: uint32 = 10784916;
-pub const fnCrocomire_Instr_8: uint32 = 10787483;
-pub const fnCrocomire_Instr_6: uint32 = 10787488;
-pub const fnCrocomire_Instr_9: uint32 = 10787493;
-pub const fnCrocomire_Instr_5: uint32 = 10787498;
-pub const fnCrocomire_Instr_20: uint32 = 10787503;
-pub const fnCrocomire_Instr_21: uint32 = 10787508;
-pub const fnCrocomire_Instr_22: uint32 = 10787513;
-pub const fnCrocomire_Instr_23: uint32 = 10787518;
-pub const fnCrocomire_Instr_24: uint32 = 10787523;
-pub const fnCrocomire_Instr_10: uint32 = 10787528;
-pub const fnCrocomire_Instr_25: uint32 = 10787533;
-pub const fnCrocomire_Instr_26: uint32 = 10787538;
-pub const fnCrocomire_Instr_27: uint32 = 10787543;
-pub const fnCrocomire_Func_92: uint32 = 10795325;
-pub const fnnullsub_34: uint32 = 10795344;
-pub const fnCrocomire_Func_93: uint32 = 10795345;
-pub const fnCrocomire_Func_94: uint32 = 10795368;
-pub const fnCrocomire_Powerbomb: uint32 = 10795410;
-pub const fnCrocomire_Func_95: uint32 = 10795525;
-pub const fnCrocomire_Func_1: uint32 = 10795700;
-pub const fnCrocomireTongue_Init: uint32 = 10811002;
-pub const fnCrocomireTongue_Main: uint32 = 10811067;
-pub const fnEnemy_GrappleReact_NoInteract_A5: uint32 = 10846208;
-pub const fnEnemy_GrappleReact_CancelBeam_A5: uint32 = 10846223;
-pub const fnEnemy_NormalTouchAI_A5: uint32 = 10846243;
-pub const fnEnemy_NormalShotAI_A5: uint32 = 10846253;
-pub const fnEnemy_NormalPowerBombAI_A5: uint32 = 10846263;
-pub const fnEnemy_NormalFrozenAI_A5: uint32 = 10846273;
-pub const fnCreateADudShot_A5: uint32 = 10846278;
-pub const fnnullsub_170_A5: uint32 = 10846284;
-pub const fnEnemyInstr_StopScript_A5: uint32 = 10846332;
-pub const fnEnemyInstr_Goto_A5: uint32 = 10846445;
-pub const fnEnemyInstr_DecTimerAndGoto2_A5: uint32 = 10846480;
-pub const fnEnemyInstr_SetTimer_A5: uint32 = 10846499;
-pub const fnEnemyInstr_Sleep_A5: uint32 = 10846511;
-pub const fnEnemyInstr_WaitNframes_A5: uint32 = 10846522;
-pub const fnDraygon_Init: uint32 = 10847879;
-pub const fnDraygon_Main: uint32 = 10847996;
-pub const fnDraygon_Func_36: uint32 = 10851138;
-pub const fnDraygon_Instr_1: uint32 = 10851549;
-pub const fnDraygon_Hurt: uint32 = 10851661;
-pub const fnDraygon_Touch: uint32 = 10851818;
-pub const fnDraygon_Shot: uint32 = 10851824;
-pub const fnDraygon_Powerbomb: uint32 = 10851847;
-pub const fnDraygon_Instr_13: uint32 = 10852150;
-pub const fnDraygon_Instr_8: uint32 = 10852159;
-pub const fnDraygon_Instr_7: uint32 = 10852178;
-pub const fnDraygon_Instr_6: uint32 = 10852197;
-pub const fnDraygon_Instr_9: uint32 = 10852216;
-pub const fnDraygon_Instr_2: uint32 = 10852501;
-pub const fnDraygon_Instr_11: uint32 = 10852563;
-pub const fnDraygon_Instr_5: uint32 = 10852591;
-pub const fnDraygon_Instr_15: uint32 = 10853274;
-pub const fnDraygon_Instr_17: uint32 = 10853514;
-pub const fnDraygon_Instr_14: uint32 = 10853898;
-pub const fnDraygon_Instr_16: uint32 = 10854231;
-pub const fnDraygon_Instr_10: uint32 = 10854240;
-pub const fnDraygon_Instr_4: uint32 = 10854254;
-pub const fnDraygon_Instr_12: uint32 = 10854268;
-pub const fnDraygon_Instr_18: uint32 = 10854318;
-pub const fnDraygonsEye_Init: uint32 = 10863723;
-pub const fnDraygon_Instr_3: uint32 = 10863739;
-pub const fnDraygonsEye_Main: uint32 = 10863750;
-pub const fnDraygonsTail_Init: uint32 = 10864025;
-pub const fnnullsub_37: uint32 = 10864042;
-pub const fnDraygonsArms_Init: uint32 = 10864045;
-pub const fnnullsub_38: uint32 = 10864068;
-pub const fnDraygon_Instr_25: uint32 = 10872671;
-pub const fnDraygon_Instr_24: uint32 = 10872689;
-pub const fnDraygon_Instr_21: uint32 = 10872877;
-pub const fnDraygon_Instr_22: uint32 = 10872946;
-pub const fnDraygon_Instr_27: uint32 = 10872956;
-pub const fnDraygon_Instr_23: uint32 = 10872981;
-pub const fnDraygon_Instr_30: uint32 = 10873009;
-pub const fnDraygon_Instr_20: uint32 = 10873018;
-pub const fnDraygon_Instr_29: uint32 = 10873034;
-pub const fnDraygon_Instr_19: uint32 = 10873116;
-pub const fnDraygon_Instr_28: uint32 = 10873198;
-pub const fnDraygon_Instr_26: uint32 = 10873265;
-pub const fnSporeSpawn_Init: uint32 = 10873386;
-pub const fnSporeSpawn_Main: uint32 = 10873619;
-pub const fnSporeSpawn_Shot: uint32 = 10874202;
-pub const fnSporeSpawn_Touch: uint32 = 10874348;
-pub const fnnullsub_39: uint32 = 10874354;
-pub const fnEnemy_GrappleReact_NoInteract_A6: uint32 = 10911744;
-pub const fnEnemy_GrappleReact_CancelBeam_A6: uint32 = 10911759;
-pub const fnEnemy_NormalTouchAI_A6: uint32 = 10911779;
-pub const fnEnemy_NormalShotAI_A6: uint32 = 10911789;
-pub const fnEnemy_NormalPowerBombAI_A6: uint32 = 10911799;
-pub const fnEnemy_NormalFrozenAI_A6: uint32 = 10911809;
-pub const fnnullsub_170_A6: uint32 = 10911820;
-pub const fnEnemyInstr_Goto_A6: uint32 = 10911981;
-pub const fnEnemyInstr_Sleep_A6: uint32 = 10912047;
-pub const fnBoulder_Init: uint32 = 10913525;
-pub const fnBoulder_Main: uint32 = 10913683;
-pub const fnSpikeyPlatform_Init: uint32 = 10914607;
-pub const fnSpikeyPlatform2ndEnemy_Init: uint32 = 10914693;
-pub const fnSpikeyPlatform2ndEnemy_Main: uint32 = 10914713;
-pub const fnSpikeyPlatform_Main: uint32 = 10914733;
-pub const fnFireGeyser_Instr_1: uint32 = 10915247;
-pub const fnFireGeyser_Instr_2: uint32 = 10915347;
-pub const fnFireGeyser_Instr_3: uint32 = 10915373;
-pub const fnFireGeyser_Instr_4: uint32 = 10915393;
-pub const fnFireGeyser_Instr_5: uint32 = 10915413;
-pub const fnFireGeyser_Instr_6: uint32 = 10915433;
-pub const fnFireGeyser_Instr_7: uint32 = 10915453;
-pub const fnFireGeyser_Instr_8: uint32 = 10915473;
-pub const fnFireGeyser_Instr_9: uint32 = 10915493;
-pub const fnFireGeyser_Instr_10: uint32 = 10915513;
-pub const fnFireGeyser_Instr_11: uint32 = 10915533;
-pub const fnFireGeyser_Instr_12: uint32 = 10915553;
-pub const fnFireGeyser_Instr_13: uint32 = 10915573;
-pub const fnFireGeyser_Instr_14: uint32 = 10915593;
-pub const fnFireGeyser_Instr_15: uint32 = 10915613;
-pub const fnFireGeyser_Instr_16: uint32 = 10915633;
-pub const fnFireGeyser_Instr_17: uint32 = 10915653;
-pub const fnFireGeyser_Instr_18: uint32 = 10915673;
-pub const fnFireGeyser_Instr_19: uint32 = 10915693;
-pub const fnFireGeyser_Instr_20: uint32 = 10915713;
-pub const fnFireGeyser_Instr_21: uint32 = 10915733;
-pub const fnFireGeyser_Instr_22: uint32 = 10915753;
-pub const fnFireGeyser_Instr_23: uint32 = 10915773;
-pub const fnFireGeyser_Instr_24: uint32 = 10915793;
-pub const fnFireGeyser_Init: uint32 = 10915836;
-pub const fnFireGeyser_Main: uint32 = 10915875;
-pub const fnNuclearWaffle_Init: uint32 = 10917060;
-pub const fnNuclearWaffle_Main: uint32 = 10917390;
-pub const fnFakeKraid_Init: uint32 = 10918488;
-pub const fnFakeKraid_Main: uint32 = 10918594;
-pub const fnFakeKraid_Instr_2: uint32 = 10918694;
-pub const fnFakeKraid_Instr_1: uint32 = 10918772;
-pub const fnFakeKraid_Instr_3: uint32 = 10918834;
-pub const fnFakeKraid_Instr_4: uint32 = 10918852;
-pub const fnFakeKraid_Instr_5: uint32 = 10918914;
-pub const fnFakeKraid_Touch: uint32 = 10918946;
-pub const fnFakeKraid_Shot: uint32 = 10918969;
-pub const fnCeresRidley_Init: uint32 = 10920181;
-pub const fnCeresRidley_Main: uint32 = 10920584;
-pub const fnCeresRidley_Hurt: uint32 = 10920659;
-pub const fnRidley_A2F2: uint32 = 10920690;
-pub const fnRidley_Main: uint32 = 10924583;
-pub const fnRidley_Func_2: uint32 = 10924682;
-pub const fnRidley_Hurt: uint32 = 10924695;
-pub const fnRidleysExplosion_Init: uint32 = 10929814;
-pub const fnRidleysExplosion_Main: uint32 = 10930388;
-pub const fnsub_A6DF59: uint32 = 10936153;
-pub const fnRidley_Shot: uint32 = 10936202;
-pub const fnRidley_Powerbomb: uint32 = 10936242;
-pub const fnRidley_Instr_5: uint32 = 10937534;
-pub const fnRidley_Instr_6: uint32 = 10937546;
-pub const fnRidley_Instr_10: uint32 = 10937554;
-pub const fnRidley_Instr_4: uint32 = 10937582;
-pub const fnRidley_Instr_3: uint32 = 10937592;
-pub const fnRidley_Instr_2: uint32 = 10937601;
-pub const fnRidley_Instr_1: uint32 = 10937623;
-pub const fnRidley_Instr_14: uint32 = 10937631;
-pub const fnRidley_Instr_9: uint32 = 10938140;
-pub const fnRidley_Instr_7: uint32 = 10938151;
-pub const fnRidley_Instr_8: uint32 = 10938159;
-pub const fnRidley_Instr_11: uint32 = 10938445;
-pub const fnRidley_Instr_12: uint32 = 10938628;
-pub const fnRidley_Instr_13: uint32 = 10938633;
-pub const fnRidley_Instr_15: uint32 = 10938729;
-pub const fnRidley_Instr_16: uint32 = 10938742;
-pub const fnCeresSteam_Init: uint32 = 10940337;
-pub const fnCeresSteam_Main: uint32 = 10940429;
-pub const fnCeresSteam_Touch: uint32 = 10940479;
-pub const fnCeresSteam_Instr_1: uint32 = 10940701;
-pub const fnCeresSteam_Instr_2: uint32 = 10940711;
-pub const fnCeresSteam_Instr_3: uint32 = 10940725;
-pub const fnCeresDoor_Instr_6: uint32 = 10942014;
-pub const fnCeresDoor_Instr_4: uint32 = 10942058;
-pub const fnCeresDoor_Instr_8: uint32 = 10942072;
-pub const fnCeresSteam_Instr_4: uint32 = 10942091;
-pub const fnCeresDoor_Instr_1: uint32 = 10942101;
-pub const fnCeresDoor_Instr_3: uint32 = 10942111;
-pub const fnCeresSteam_Instr_5: uint32 = 10942118;
-pub const fnCeresDoor_Instr_5: uint32 = 10942128;
-pub const fnCeresDoor_Instr_2: uint32 = 10942131;
-pub const fnCeresDoor_Instr_7: uint32 = 10942141;
-pub const fnCeresDoor_Init: uint32 = 10942149;
-pub const fnCeresDoor_Main: uint32 = 10942309;
-pub const fnnullsub_41: uint32 = 10942752;
-pub const fnZebetites_Init: uint32 = 10943346;
-pub const fnZebetites_Main: uint32 = 10943539;
-pub const fnZebetites_Touch: uint32 = 10943911;
-pub const fnZebetites_Shot: uint32 = 10943916;
-pub const fnEnemy_GrappleReact_NoInteract_A7: uint32 = 10977280;
-pub const fnEnemy_GrappleReact_CancelBeam_A7: uint32 = 10977295;
-pub const fnEnemy_NormalShotAI_A7: uint32 = 10977325;
-pub const fnEnemy_NormalPowerBombAI_A7: uint32 = 10977335;
-pub const fnEnemy_NormalPowerBombAI_SkipDeathAnim_A7: uint32 = 10977340;
-pub const fnEnemy_NormalFrozenAI_A7: uint32 = 10977345;
-pub const fnnullsub_170_A7: uint32 = 10977356;
-pub const fnEnemyInstr_Call_A7: uint32 = 10977418;
-pub const fnEnemyInstr_Goto_A7: uint32 = 10977517;
-pub const fnEnemyInstr_DecTimerAndGoto2_A7: uint32 = 10977552;
-pub const fnEnemyInstr_SetTimer_A7: uint32 = 10977571;
-pub const fnEnemyInstr_Sleep_A7: uint32 = 10977583;
-pub const fnKraid_Instr_9: uint32 = 10979983;
-pub const fnKraid_Touch_ArmFoot: uint32 = 10982539;
-pub const fnnullsub_44: uint32 = 10982543;
-pub const fnKraidsArm_Touch: uint32 = 10982544;
-pub const fnKraid_Touch: uint32 = 10982559;
-pub const fnnullsub_43: uint32 = 10982581;
-pub const fnKraid_Arm_Shot: uint32 = 10982582;
-pub const fnKraid_Init: uint32 = 10987865;
-pub const fnKraidsArm_Init: uint32 = 10988355;
-pub const fnKraidsTopLint_Init: uint32 = 10988392;
-pub const fnKraidsMiddleLint_Init: uint32 = 10988444;
-pub const fnKraidsBottomLint_Init: uint32 = 10988490;
-pub const fnKraidsFoot_Init: uint32 = 10988536;
-pub const fnKraid_Main: uint32 = 10988577;
-pub const fnKraid_Instr_1: uint32 = 10991155;
-pub const fnKraid_Instr_DecYpos: uint32 = 10991158;
-pub const fnKraid_Instr_IncrYpos_Shake: uint32 = 10991164;
-pub const fnKraid_Instr_PlaySound_0x76: uint32 = 10991182;
-pub const fnKraid_Instr_XposMinus3: uint32 = 10991194;
-pub const fnKraid_Instr_XposMinus3b: uint32 = 10991207;
-pub const fnKraid_Instr_XposPlus3: uint32 = 10991220;
-pub const fnKraid_Instr_MoveHimRight: uint32 = 10991235;
-pub const fnKraidsArm_Main: uint32 = 10991549;
-pub const fnKraidsTopLint_Main: uint32 = 10991617;
-pub const fnKraidsMiddleLint_Main: uint32 = 10991629;
-pub const fnKraidsBottomLint_Main: uint32 = 10991641;
-pub const fnKraidsFoot_Main: uint32 = 10992118;
-pub const fnKraidsGoodFingernail_Touch: uint32 = 10992847;
-pub const fnKraidsBadFingernail_Touch: uint32 = 10992862;
-pub const fnKraidsGoodFingernail_Init: uint32 = 10992879;
-pub const fnKraidsBadFingernail_Init: uint32 = 10992941;
-pub const fnKraidsGoodFingernail_Main: uint32 = 10992946;
-pub const fnKraidsBadFingernail_Main: uint32 = 10992969;
-pub const fnPhantoon_Init: uint32 = 10997235;
-pub const fnPhantoon2_Init: uint32 = 10997333;
-pub const fnPhantoon_Main: uint32 = 10997414;
-pub const fnnullsub_237: uint32 = 10998952;
-pub const fnPhantoon_Spawn8FireballsInCircleAtStart: uint32 = 10998953;
-pub const fnPhantoon_WaitBetweenSpawningAndSpinningFireballs: uint32 = 10999022;
-pub const fnPhantoon_SpawnFireballsBeforeFight: uint32 = 10999048;
-pub const fnPhantoon_WavyFadeIn: uint32 = 10999114;
-pub const fnPhantoon_PickPatternForRound1: uint32 = 10999190;
-pub const fnPhantoon_MovePhantoonInFigure8ThenOpenEye: uint32 = 10999271;
-pub const fnPhantoon_EyeFollowsSamusUntilTimerRunsOut: uint32 = 10999309;
-pub const fnPhantoon_BecomesSolidAndBodyVuln: uint32 = 10999388;
-pub const fnPhantoon_IsSwooping: uint32 = 10999416;
-pub const fnPhantoon_FadeoutWithSwoop: uint32 = 10999481;
-pub const fnPhantoon_WaitAfterFadeOut: uint32 = 10999508;
-pub const fnPhantoon_MoveLeftOrRightAndPickEyeOpenPatt: uint32 = 10999522;
-pub const fnPhantoon_FadeInBeforeFigure8: uint32 = 10999597;
-pub const fnPhantoon_BecomeSolidAfterRainingFireballs: uint32 = 10999615;
-pub const fnPhantoon_FadeInDuringFireballRain: uint32 = 10999655;
-pub const fnPhantoon_FollowSamusWithEyeDuringFireballRain: uint32 = 10999688;
-pub const fnPhantoon_FadeOutDuringFireballRain: uint32 = 10999765;
-pub const fnPhantoon_SpawnRainingFireballs: uint32 = 10999799;
-pub const fnPhantoon_FadeOutBeforeFirstFireballRain: uint32 = 10999850;
-pub const fnPhantoon_FadeOutBeforeEnrage: uint32 = 10999900;
-pub const fnPhantoon_MoveEnragedPhantoonToTopCenter: uint32 = 10999924;
-pub const fnPhantoon_FadeInEnragedPhantoon: uint32 = 10999953;
-pub const fnPhantoon_Enraged: uint32 = 10999980;
-pub const fnPhantoon_FadeoutAfterEnrage: uint32 = 11000086;
-pub const fnPhantoon_CompleteSwoopAfterFatalShot: uint32 = 11000110;
-pub const fnPhantoon_DyingPhantoonFadeInOut: uint32 = 11000136;
-pub const fnPhantoon_DyingPhantoonExplosions: uint32 = 11000203;
-pub const fnPhantoon_WavyDyingPhantoonAndCry: uint32 = 11000401;
-pub const fnPhantoon_DyingFadeOut: uint32 = 11000454;
-pub const fnPhantoon_AlmostDead: uint32 = 11000535;
-pub const fnPhantoon_Dead: uint32 = 11000637;
-pub const fnPhantoon_Hurt: uint32 = 11001151;
-pub const fnPhantoon_Touch: uint32 = 11001237;
-pub const fnnullsub_358: uint32 = 11001242;
-pub const fnPhantoon_Shot: uint32 = 11001243;
-pub const fnnullsub_45: uint32 = 11001873;
-pub const fnEtecoon_Init: uint32 = 11004178;
-pub const fnEtecoon_Main: uint32 = 11004224;
-pub const fnEtecoon_Func_4: uint32 = 11004335;
-pub const fnEtecoon_Func_5: uint32 = 11004416;
-pub const fnEtecoon_Func_6: uint32 = 11004471;
-pub const fnEtecoon_Func_7: uint32 = 11004597;
-pub const fnEtecoon_Func_8: uint32 = 11004674;
-pub const fnEtecoon_Func_9: uint32 = 11004716;
-pub const fnEtecoon_Func_10: uint32 = 11004752;
-pub const fnEtecoon_Func_11: uint32 = 11004877;
-pub const fnEtecoon_Func_12: uint32 = 11004955;
-pub const fnEtecoon_Func_16: uint32 = 11005079;
-pub const fnEtecoon_Func_17: uint32 = 11005115;
-pub const fnEtecoon_Func_18: uint32 = 11005151;
-pub const fnEtecoon_Func_19: uint32 = 11005193;
-pub const fnEtecoon_Func_20: uint32 = 11005226;
-pub const fnEtecoon_Func_21: uint32 = 11005268;
-pub const fnEtecoon_Func_22: uint32 = 11005301;
-pub const fnEtecoon_Func_23: uint32 = 11005383;
-pub const fnEtecoon_Func_24: uint32 = 11005502;
-pub const fnEtecoon_Func_25: uint32 = 11005594;
-pub const fnEtecoon_Func_26: uint32 = 11005624;
-pub const fnDachora_Init: uint32 = 11007197;
-pub const fnDachora_Main: uint32 = 11007278;
-pub const fnDachora_Func_2: uint32 = 11007344;
-pub const fnDachora_Func_3: uint32 = 11007420;
-pub const fnDachora_Func_4: uint32 = 11007469;
-pub const fnDachora_Func_5: uint32 = 11007582;
-pub const fnDachora_Func_7: uint32 = 11007887;
-pub const fnDachora_Func_8: uint32 = 11008006;
-pub const fnDachora_Func_11: uint32 = 11008309;
-pub const fnDachora_Func_12: uint32 = 11008396;
-pub const fnEnemy_GrappleReact_NoInteract_A8: uint32 = 11042816;
-pub const fnEnemy_GrappleReact_KillEnemy_A8: uint32 = 11042826;
-pub const fnEnemy_GrappleReact_CancelBeam_A8: uint32 = 11042831;
-pub const fnEnemy_GrappleReact_SamusLatchesNoInvinc_A8: uint32 = 11042836;
-pub const fnEnemy_GrappleReact_HurtSamus_A8: uint32 = 11042846;
-pub const fnEnemy_NormalTouchAI_A8: uint32 = 11042851;
-pub const fnEnemy_NormalShotAI_A8: uint32 = 11042861;
-pub const fnEnemy_NormalPowerBombAI_A8: uint32 = 11042871;
-pub const fnEnemy_NormalFrozenAI_A8: uint32 = 11042881;
-pub const fnnullsub_170_A8: uint32 = 11042892;
-pub const fnEnemyInstr_Goto_A8: uint32 = 11043053;
-pub const fnEnemyInstr_DecTimerAndGoto2_A8: uint32 = 11043088;
-pub const fnEnemyInstr_SetTimer_A8: uint32 = 11043107;
-pub const fnEnemyInstr_Sleep_A8: uint32 = 11043119;
-pub const fnEnemyInstr_EnableOffScreenProcessing_A8: uint32 = 11043187;
-pub const fnEnemyInstr_DisableOffScreenProcessing_A8: uint32 = 11043197;
-pub const fnMiniDraygon_Instr_2: uint32 = 11044751;
-pub const fnMiniDraygon_Instr_1: uint32 = 11044763;
-pub const fnMiniDraygon_Instr_3: uint32 = 11044790;
-pub const fnMiniDraygon_Instr_4: uint32 = 11044811;
-pub const fnMiniDraygon_Init: uint32 = 11044832;
-pub const fnEvirProjectile_Init: uint32 = 11045040;
-pub const fnMiniDraygon_Main: uint32 = 11045147;
-pub const fnEvirProjectile_Main: uint32 = 11045278;
-pub const fnMiniDraygon_Touch: uint32 = 11045638;
-pub const fnMiniDraygon_Powerbomb: uint32 = 11045644;
-pub const fnMiniDraygon_Shot: uint32 = 11045650;
-pub const fnMorphBallEye_Init: uint32 = 11047000;
-pub const fnMorphBallEye_Main: uint32 = 11047138;
-pub const fnMorphBallEye_Func_1: uint32 = 11047153;
-pub const fnMorphBallEye_Func_2: uint32 = 11047214;
-pub const fnMorphBallEye_Func_3: uint32 = 11047264;
-pub const fnMorphBallEye_Func_4: uint32 = 11047374;
-pub const fnnullsub_244: uint32 = 11047388;
-pub const fnFune_Instr_2: uint32 = 11048485;
-pub const fnFune_Instr_6: uint32 = 11048497;
-pub const fnFune_Instr_7: uint32 = 11048522;
-pub const fnFune_Instr_1: uint32 = 11048547;
-pub const fnFune_Instr_4: uint32 = 11048572;
-pub const fnFune_Instr_3: uint32 = 11048597;
-pub const fnFune_Instr_5: uint32 = 11048628;
-pub const fnFune_Init: uint32 = 11048675;
-pub const fnFune_Main: uint32 = 11048752;
-pub const fnWreckedShipGhost_Init: uint32 = 11049710;
-pub const fnWreckedShipGhost_Main: uint32 = 11049788;
-pub const fnYappingMaw_Instr_2: uint32 = 11051207;
-pub const fnYappingMaw_Instr_4: uint32 = 11051225;
-pub const fnYappingMaw_Instr_5: uint32 = 11051243;
-pub const fnYappingMaw_Instr_7: uint32 = 11051261;
-pub const fnYappingMaw_Instr_3: uint32 = 11051279;
-pub const fnYappingMaw_Instr_6: uint32 = 11051297;
-pub const fnYappingMaw_Instr_1: uint32 = 11051315;
-pub const fnYappingMaw_Init: uint32 = 11051336;
-pub const fnYappingMaw_Main: uint32 = 11051537;
-pub const fnYappingMaw_Touch: uint32 = 11052953;
-pub const fnYappingMaw_Shot: uint32 = 11052989;
-pub const fnYappingMaw_Frozen: uint32 = 11053109;
-pub const fnKago_Init: uint32 = 11053894;
-pub const fnKago_Main: uint32 = 11053941;
-pub const fnKago_Shot: uint32 = 11053955;
-pub const fnNorfairLavaMan_Instr_1: uint32 = 11054610;
-pub const fnNorfairLavaMan_Instr_8: uint32 = 11054630;
-pub const fnNorfairLavaMan_Instr_14: uint32 = 11054640;
-pub const fnNorfairLavaMan_Instr_2: uint32 = 11054650;
-pub const fnNorfairLavaMan_Instr_7: uint32 = 11054661;
-pub const fnNorfairLavaMan_Instr_10: uint32 = 11054672;
-pub const fnNorfairLavaMan_Instr_12: uint32 = 11054682;
-pub const fnNorfairLavaMan_Instr_9: uint32 = 11054692;
-pub const fnNorfairLavaMan_Instr_11: uint32 = 11054728;
-pub const fnNorfairLavaMan_Instr_13: uint32 = 11054742;
-pub const fnNorfairLavaMan_Instr_5: uint32 = 11054778;
-pub const fnNorfairLavaMan_Instr_15: uint32 = 11054794;
-pub const fnNorfairLavaMan_Instr_4: uint32 = 11054820;
-pub const fnNorfairLavaMan_Instr_16: uint32 = 11054846;
-pub const fnNorfairLavaMan_Instr_6: uint32 = 11054872;
-pub const fnNorfairLavaMan_Instr_3: uint32 = 11054916;
-pub const fnNorfairLavaMan_Init: uint32 = 11054987;
-pub const fnNorfairLavaMan_Func_6: uint32 = 11055282;
-pub const fnNorfairLavaMan_Main: uint32 = 11055370;
-pub const fnNorfairLavaMan_Func_7: uint32 = 11055386;
-pub const fnNorfairLavaMan_Func_8: uint32 = 11055477;
-pub const fnsub_A8B193: uint32 = 11055507;
-pub const fnNorfairLavaMan_Func_9: uint32 = 11055544;
-pub const fnNorfairLavaMan_Func_10: uint32 = 11055581;
-pub const fnNorfairLavaMan_Func_11: uint32 = 11055620;
-pub const fnsub_A8B291: uint32 = 11055761;
-pub const fnNorfairLavaMan_Func_13: uint32 = 11055765;
-pub const fnNorfairLavaMan_Func_15: uint32 = 11055885;
-pub const fnNorfairLavaMan_Func_16: uint32 = 11055903;
-pub const fnNorfairLavaMan_Func_17: uint32 = 11055958;
-pub const fnNorfairLavaMan_Func_18: uint32 = 11056039;
-pub const fnNorfairLavaMan_Powerbomb: uint32 = 11056128;
-pub const fnNorfairLavaMan_Touch: uint32 = 11056134;
-pub const fnNorfairLavaMan_Shot: uint32 = 11056140;
-pub const fnBeetom_Instr_1: uint32 = 11056990;
-pub const fnBeetom_Init: uint32 = 11057014;
-pub const fnBeetom_Main: uint32 = 11057165;
-pub const fnBeetom_Touch: uint32 = 11058734;
-pub const fnBeetom_Shot: uint32 = 11058860;
-pub const fnMaridiaFloater_Init: uint32 = 11059657;
-pub const fnMaridiaFloater_Main: uint32 = 11059740;
-pub const fnMaridiaFloater_Func_3: uint32 = 11059843;
-pub const fnMaridiaFloater_Func_4: uint32 = 11059878;
-pub const fnMaridiaFloater_Func_5: uint32 = 11059919;
-pub const fnMaridiaFloater_Func_6: uint32 = 11060075;
-pub const fnMaridiaFloater_Func_7: uint32 = 11060193;
-pub const fnMaridiaFloater_Func_8: uint32 = 11060329;
-pub const fnMaridiaFloater_Func_9: uint32 = 11060444;
-pub const fnMaridiaFloater_Func_10: uint32 = 11060480;
-pub const fnMaridiaFloater_Func_11: uint32 = 11060509;
-pub const fnnullsub_256: uint32 = 11060584;
-pub const fnMaridiaFloater_Func_12: uint32 = 11060585;
-pub const fnMaridiaFloater_Func_13: uint32 = 11060639;
-pub const fnMaridiaFloater_Touch: uint32 = 11060670;
-pub const fnMaridiaFloater_Shot: uint32 = 11060719;
-pub const fnMaridiaFloater_Powerbomb: uint32 = 11060799;
-pub const fnWreckedShipRobot_Init: uint32 = 11062135;
-pub const fnWreckedShipRobotDeactivated_Init: uint32 = 11062220;
-pub const fnWreckedShipRobot_Main: uint32 = 11062326;
-pub const fnnullsub_342: uint32 = 11062374;
-pub const fnWreckedShipRobot_Func_1: uint32 = 11062375;
-pub const fnWreckedShipRobot_Instr_4: uint32 = 11062537;
-pub const fnWreckedShipRobot_Instr_9: uint32 = 11062692;
-pub const fnWreckedShipRobot_Instr_6: uint32 = 11062762;
-pub const fnWreckedShipRobot_Instr_8: uint32 = 11062917;
-pub const fnWreckedShipRobot_Instr_7: uint32 = 11062987;
-pub const fnWreckedShipRobot_Instr_15: uint32 = 11062991;
-pub const fnWreckedShipRobot_Instr_18: uint32 = 11063146;
-pub const fnWreckedShipRobot_Instr_16: uint32 = 11063216;
-pub const fnWreckedShipRobot_Instr_17: uint32 = 11063371;
-pub const fnWreckedShipRobot_Instr_3: uint32 = 11063441;
-pub const fnWreckedShipRobot_Instr_10: uint32 = 11063490;
-pub const fnWreckedShipRobot_Instr_14: uint32 = 11063494;
-pub const fnWreckedShipRobot_Instr_2: uint32 = 11063506;
-pub const fnWreckedShipRobot_Instr_13: uint32 = 11063552;
-pub const fnWreckedShipRobot_Instr_1: uint32 = 11063559;
-pub const fnWreckedShipRobot_Instr_12: uint32 = 11063601;
-pub const fnWreckedShipRobot_Instr_5: uint32 = 11063613;
-pub const fnWreckedShipRobot_Instr_11: uint32 = 11063659;
-pub const fnWreckedShipRobotDeactivated_Touch: uint32 = 11063668;
-pub const fnWreckedShipRobotDeactivated_Shot: uint32 = 11063693;
-pub const fnWreckedShipRobot_Shot: uint32 = 11063698;
-pub const fnMaridiaPuffer_Init: uint32 = 11065545;
-pub const fnMaridiaPuffer_Main: uint32 = 11065611;
-pub const fnMaridiaPuffer_Shot: uint32 = 11066132;
-pub const fnWalkingLavaSeahorse_Init: uint32 = 11066573;
-pub const fnWalkingLavaSeahorse_Main: uint32 = 11066731;
-pub const fnWalkingLavaSeahorse_Instr_4: uint32 = 11067164;
-pub const fnWalkingLavaSeahorse_Instr_3: uint32 = 11067187;
-pub const fnWalkingLavaSeahorse_Instr_5: uint32 = 11067193;
-pub const fnWalkingLavaSeahorse_Instr_6: uint32 = 11067199;
-pub const fnWalkingLavaSeahorse_Instr_2: uint32 = 11067235;
-pub const fnWalkingLavaSeahorse_Instr_1: uint32 = 11067249;
-pub const fnWreckedShipOrbs_Init: uint32 = 11068296;
-pub const fnWreckedShipOrbs_Main: uint32 = 11068355;
-pub const fnWreckedShipSpark_Instr_2: uint32 = 11068957;
-pub const fnWreckedShipSpark_Instr_1: uint32 = 11068970;
-pub const fnWreckedShipSpark_Init: uint32 = 11068983;
-pub const fnWreckedShipSpark_Main: uint32 = 11069070;
-pub const fnWreckedShipSpark_Shot: uint32 = 11069198;
-pub const fnBlueBrinstarFaceBlock_Init: uint32 = 11069486;
-pub const fnBlueBrinstarFaceBlock_Func_1: uint32 = 11069550;
-pub const fnBlueBrinstarFaceBlock_Main: uint32 = 11069614;
-pub const fnBlueBrinstarFaceBlock_Shot: uint32 = 11069725;
-pub const fnKiHunter_Init: uint32 = 11071880;
-pub const fnKiHunterWings_Init: uint32 = 11072020;
-pub const fnKiHunter_Main: uint32 = 11072092;
-pub const fnKiHunterWings_Main: uint32 = 11072098;
-pub const fnKiHunter_Instr_1: uint32 = 11072806;
-pub const fnKiHunter_Instr_2: uint32 = 11072996;
-pub const fnKiHunter_Instr_3: uint32 = 11073151;
-pub const fnKiHunter_Instr_4: uint32 = 11073234;
-pub const fnKiHunter_Instr_5: uint32 = 11073240;
-pub const fnKiHunter_Shot: uint32 = 11073281;
-pub const fnEnemy_GrappleReact_CancelBeam_A9: uint32 = 11108367;
-pub const fnEnemy_NormalPowerBombAI_A9: uint32 = 11108407;
-pub const fnEnemy_NormalFrozenAI_A9: uint32 = 11108417;
-pub const fnnullsub_170_A9: uint32 = 11108428;
-pub const fnEnemyInstr_Sleep_A9: uint32 = 11108655;
-pub const fnMotherBrainsBody_Init: uint32 = 11110023;
-pub const fnMotherBrainsBrain_Init: uint32 = 11110149;
-pub const fnMotherBrainsBody_Hurt: uint32 = 11110206;
-pub const fnnullsub_264: uint32 = 11110278;
-pub const fnMotherBrainsBody_Powerbomb: uint32 = 11110279;
-pub const fnMotherBrainsBrain_Hurt: uint32 = 11110283;
-pub const fnMotherBrain_DrawBrainNeck_EnemyGfxDrawHook: uint32 = 11110345;
-pub const fnMotherBrainsBrain_GfxDrawHook: uint32 = 11110365;
-pub const fnMotherBrainsTubesFalling_Init: uint32 = 11111221;
-pub const fnMotherBrainsTubesFalling_Main: uint32 = 11111301;
-pub const fnMotherBrain_Instr_MoveBodyUp10Left4: uint32 = 11113910;
-pub const fnMotherBrain_Instr_MoveBodyUp16Left4: uint32 = 11113920;
-pub const fnMotherBrain_Instr_MoveBodyUp12Right2: uint32 = 11113930;
-pub const fnMotherBrain_Instr_MoveDown12Left4: uint32 = 11113950;
-pub const fnMotherBrain_Instr_MoveDown16Right2: uint32 = 11113960;
-pub const fnMotherBrain_Instr_MoveDown10Right2: uint32 = 11113970;
-pub const fnMotherBrain_Instr_MoveUp2Right1: uint32 = 11113980;
-pub const fnMotherBrain_Instr_MoveRight2: uint32 = 11113996;
-pub const fnMotherBrain_Instr_MoveUp1: uint32 = 11114012;
-pub const fnMotherBrain_Instr_MoveUp1Right3_Sfx: uint32 = 11114018;
-pub const fnMotherBrain_Instr_Down2Right15: uint32 = 11114040;
-pub const fnMotherBrain_Instr_Down4Right6: uint32 = 11114056;
-pub const fnMotherBrain_Instr_Up4Left2: uint32 = 11114072;
-pub const fnMotherBrain_Instr_Up2Left1_Sfx: uint32 = 11114088;
-pub const fnMotherBrain_Instr_Up2Left1_Sfx2: uint32 = 11114110;
-pub const fnMotherBrain_Instr_MoveLeft2: uint32 = 11114132;
-pub const fnMotherBrain_Instr_MoveDown1: uint32 = 11114148;
-pub const fnMotherBrain_Instr_MoveDown1Left3: uint32 = 11114154;
-pub const fnMotherBrain_Instr_MoveUp2Left15_Sfx: uint32 = 11114170;
-pub const fnMotherBrain_Instr_MoveUp4Left6: uint32 = 11114192;
-pub const fnMotherBrain_Instr_MoveDown4Right2: uint32 = 11114208;
-pub const fnMotherBrain_Instr_MoveDown2Right1: uint32 = 11114224;
-pub const fnMotherBrain_Instr_SetPose_Standing: uint32 = 11114240;
-pub const fnMotherBrain_Instr_SetPose_Walking: uint32 = 11114248;
-pub const fnMotherBrain_Instr_SetPose_Crouched: uint32 = 11114256;
-pub const fnMotherBrain_Instr_SetPose_CrouchedTrans: uint32 = 11114264;
-pub const fnMotherBrain_Instr_SetPose_DeathBeamMode: uint32 = 11114272;
-pub const fnMotherBrain_Instr_SetPose_LeaningDown: uint32 = 11114280;
-pub const fnMotherBrain_Instr_SpawnEprojToOffset: uint32 = 11115208;
-pub const fnMotherBrain_Instr_SpawnDeathBeamEproj: uint32 = 11115247;
-pub const fnMotherBrain_Instr_IncrBeamAttackPhase: uint32 = 11115269;
-pub const fnMotherBrainsBody_Shot: uint32 = 11121923;
-pub const fnMotherBrainsBrain_Shot: uint32 = 11121927;
-pub const fnnullsub_47: uint32 = 11122117;
-pub const fnMotherBrainsBrain_Touch: uint32 = 11122118;
-pub const fnShitroidInCutscene_Init: uint32 = 11126544;
-pub const fnShitroidInCutscene_Main: uint32 = 11126649;
-pub const fnShitroidInCutscene_Touch: uint32 = 11128579;
-pub const fnShitroid_Instr_1: uint32 = 11128756;
-pub const fnShitroid_Instr_2: uint32 = 11128778;
-pub const fnDeadTorizo_Init: uint32 = 11129608;
-pub const fnDeadTorizo_Main: uint32 = 11129704;
-pub const fnDeadTorizo_MainGfxHook: uint32 = 11129754;
-pub const fnDeadTorizo_Powerbomb: uint32 = 11129898;
-pub const fnDeadTorizo_Shot: uint32 = 11129907;
-pub const fnDeadSidehopper_Init: uint32 = 11130806;
-pub const fnDeadZoomer_Init: uint32 = 11130953;
-pub const fnDeadRipper_Init: uint32 = 11130998;
-pub const fnDeadSkree_Init: uint32 = 11131039;
-pub const fnDeadSidehopper_Powerbomb: uint32 = 11131084;
-pub const fnDeadSidehopper_Main: uint32 = 11131099;
-pub const fnDeadZoomer_Powerbomb: uint32 = 11132141;
-pub const fnDeadZoomer_Shot: uint32 = 11132152;
-pub const fnDeadRipper_Powerbomb: uint32 = 11132157;
-pub const fnDeadRipper_Shot: uint32 = 11132168;
-pub const fnDeadSkree_Powerbomb: uint32 = 11132173;
-pub const fnDeadSkree_Shot: uint32 = 11132184;
-pub const fnDeadSidehopper_Shot: uint32 = 11132189;
-pub const fnDeadSidehopper_Touch: uint32 = 11132228;
-pub const fnsub_A9ECD0: uint32 = 11136208;
-pub const fnShitroid_Init: uint32 = 11136823;
-pub const fnShitroid_Powerbomb: uint32 = 11136954;
-pub const fnShitroid_Main: uint32 = 11136965;
-pub const fnShitroid_Touch: uint32 = 11138953;
-pub const fnShitroid_Shot: uint32 = 11139138;
-pub const fnShitroid_Instr_3: uint32 = 11139360;
-pub const fnShitroid_Instr_4: uint32 = 11139382;
-pub const fnShitroid_Instr_6: uint32 = 11139472;
-pub const fnShitroid_Instr_5: uint32 = 11139476;
-pub const fnEnemy_GrappleReact_CancelBeam_AA: uint32 = 11173903;
-pub const fnEnemy_NormalPowerBombAI_AA: uint32 = 11173943;
-pub const fnEnemy_NormalFrozenAI_AA: uint32 = 11173953;
-pub const fnnullsub_170_AA: uint32 = 11173964;
-pub const fnEnemy_SetAiPreInstr_AA: uint32 = 11173995;
-pub const fnEnemy_ClearAiPreInstr_AA: uint32 = 11174004;
-pub const fnnullsub_171_AA: uint32 = 11174011;
-pub const fnEnemyInstr_StopScript_AA: uint32 = 11174012;
-pub const fnEnemyInstr_Goto_AA: uint32 = 11174125;
-pub const fnEnemyInstr_DecTimerAndGoto2_AA: uint32 = 11174160;
-pub const fnEnemyInstr_SetTimer_AA: uint32 = 11174179;
-pub const fnEnemyInstr_Sleep_AA: uint32 = 11174191;
-pub const fnEnemyInstr_WaitNframes_AA: uint32 = 11174202;
-pub const fnEnemyInstr_CopyToVram_AA: uint32 = 11174219;
-pub const fnTorizo_Instr_3: uint32 = 11186332;
-pub const fnTorizo_Instr_31: uint32 = 11186461;
-pub const fnTorizo_Instr_33: uint32 = 11186622;
-pub const fnTorizo_Instr_36: uint32 = 11186724;
-pub const fnTorizo_Instr_37: uint32 = 11186734;
-pub const fnTorizo_Instr_35: uint32 = 11186744;
-pub const fnTorizo_Instr_38: uint32 = 11186765;
-pub const fnTorizo_Instr_6: uint32 = 11186801;
-pub const fnTorizo_Instr_5: uint32 = 11188557;
-pub const fnTorizo_Instr_9: uint32 = 11188561;
-pub const fnTorizo_Instr_7: uint32 = 11190984;
-pub const fnTorizo_Instr_2: uint32 = 11190985;
-pub const fnTorizo_Instr_8: uint32 = 11190993;
-pub const fnTorizo_Instr_25: uint32 = 11191001;
-pub const fnTorizo_Instr_22: uint32 = 11191021;
-pub const fnTorizo_Instr_19: uint32 = 11191031;
-pub const fnTorizo_Instr_32: uint32 = 11191037;
-pub const fnTorizo_Instr_30: uint32 = 11191043;
-pub const fnTorizo_Instr_34: uint32 = 11191087;
-pub const fnTorizo_Instr_24: uint32 = 11191114;
-pub const fnTorizo_Instr_12: uint32 = 11191131;
-pub const fnTorizo_Instr_10: uint32 = 11191149;
-pub const fnTorizo_Instr_11: uint32 = 11191159;
-pub const fnTorizo_Instr_29: uint32 = 11191178;
-pub const fnTorizo_Instr_1: uint32 = 11191200;
-pub const fnTorizo_Instr_28: uint32 = 11191222;
-pub const fnTorizo_Instr_4: uint32 = 11191244;
-pub const fnTorizo_Instr_40: uint32 = 11191326;
-pub const fnTorizo_Instr_16: uint32 = 11191408;
-pub const fnTorizo_Instr_27: uint32 = 11191525;
-pub const fnTorizo_Instr_23: uint32 = 11191642;
-pub const fnTorizo_Instr_14: uint32 = 11191655;
-pub const fnTorizo_Instr_15: uint32 = 11191691;
-pub const fnTorizo_Instr_26: uint32 = 11191716;
-pub const fnTorizo_Instr_18: uint32 = 11191755;
-pub const fnTorizo_Instr_20: uint32 = 11191779;
-pub const fnTorizo_Instr_44: uint32 = 11191794;
-pub const fnTorizo_Instr_21: uint32 = 11191809;
-pub const fnTorizo_Instr_17: uint32 = 11191824;
-pub const fnTorizo_Instr_13: uint32 = 11191832;
-pub const fnTorizo_Hurt: uint32 = 11191934;
-pub const fnTorizo_Main: uint32 = 11191972;
-pub const fnTorizo_Func_5: uint32 = 11192146;
-pub const fnTorizo_Func_6: uint32 = 11192360;
-pub const fnTorizo_Func_7: uint32 = 11192364;
-pub const fnTorizo_Init: uint32 = 11192447;
-pub const fnnullsub_344: uint32 = 11192670;
-pub const fnGoldTorizo_Touch: uint32 = 11192695;
-pub const fnTorizo_Shot: uint32 = 11192700;
-pub const fnnullsub_271: uint32 = 11192769;
-pub const fnTorizo_Func_8: uint32 = 11192770;
-pub const fnTorizo_Instr_39: uint32 = 11193038;
-pub const fnTorizo_Instr_41: uint32 = 11193054;
-pub const fnTorizo_Instr_42: uint32 = 11193058;
-pub const fnTorizo_Instr_48: uint32 = 11193815;
-pub const fnTorizo_Instr_57: uint32 = 11194601;
-pub const fnTorizo_Instr_58: uint32 = 11194611;
-pub const fnTorizo_Instr_59: uint32 = 11194747;
-pub const fnTorizo_Instr_62: uint32 = 11194759;
-pub const fnTorizo_Instr_63: uint32 = 11194855;
-pub const fnGoldTorizo_Main: uint32 = 11195241;
-pub const fnTorizo_Instr_56: uint32 = 11195279;
-pub const fnTorizo_Instr_60: uint32 = 11195287;
-pub const fnTorizo_Instr_46: uint32 = 11195295;
-pub const fnGoldTorizo_Hurt: uint32 = 11195322;
-pub const fnTorizo_Instr_47: uint32 = 11195360;
-pub const fnTorizo_Instr_49: uint32 = 11195370;
-pub const fnTorizo_Instr_61: uint32 = 11195446;
-pub const fnTorizo_Instr_53: uint32 = 11195461;
-pub const fnTorizo_Instr_55: uint32 = 11195508;
-pub const fnTorizo_Instr_52: uint32 = 11195547;
-pub const fnTorizo_Instr_50: uint32 = 11195578;
-pub const fnTorizo_Instr_43: uint32 = 11195635;
-pub const fnTorizo_Instr_51: uint32 = 11195645;
-pub const fnTorizo_Instr_45: uint32 = 11195686;
-pub const fnTorizo_Instr_54: uint32 = 11195725;
-pub const fnTorizo_D5ED: uint32 = 11195885;
-pub const fnTorizo_D5F1: uint32 = 11195889;
-pub const fnGoldTorizo_Shot: uint32 = 11196007;
-pub const fnnullsub_49: uint32 = 11196359;
-pub const fnTourianEntranceStatue_Init: uint32 = 11196360;
-pub const fnShaktool_Instr_2: uint32 = 11196721;
-pub const fnShaktool_Instr_3: uint32 = 11196735;
-pub const fnShaktool_Instr_4: uint32 = 11196746;
-pub const fnShaktool_Instr_5: uint32 = 11196755;
-pub const fnShaktool_Instr_6: uint32 = 11196831;
-pub const fnShaktool_Instr_1: uint32 = 11196858;
-pub const fnShaktool_Hurt: uint32 = 11197603;
-pub const fnnullsub_274: uint32 = 11197610;
-pub const fnnullsub_275: uint32 = 11197611;
-pub const fnShaktool_DCAC: uint32 = 11197612;
-pub const fnShaktool_DCD7: uint32 = 11197655;
-pub const fnShaktool_DD25: uint32 = 11197733;
-pub const fnShaktool_Init: uint32 = 11198019;
-pub const fnShaktool_Touch: uint32 = 11198255;
-pub const fnShaktool_Shot: uint32 = 11198260;
-pub const fnShaktool_Instr_9: uint32 = 11199529;
-pub const fnShaktool_Instr_11: uint32 = 11199542;
-pub const fnShaktool_Instr_10: uint32 = 11199549;
-pub const fnsub_AAE445: uint32 = 11199557;
-pub const fnShaktool_Instr_8: uint32 = 11199871;
-pub const fnShaktool_Instr_13: uint32 = 11199879;
-pub const fnShaktool_Instr_12: uint32 = 11199887;
-pub const fnShaktool_Instr_7: uint32 = 11199960;
-pub const fnShaktool_Instr_14: uint32 = 11200240;
-pub const fnN00bTubeCracks_Init: uint32 = 11200278;
-pub const fnChozoStatue_Init: uint32 = 11200293;
-pub const fnnullsub_276: uint32 = 11200422;
-pub const fnChozoStatue_Main: uint32 = 11200423;
-pub const fnShaktool_PreInstr_0: uint32 = 11200430;
-pub const fnnullsub_277: uint32 = 11200474;
-pub const fnnullsub_51: uint32 = 11200475;
-pub const fnnullsub_52: uint32 = 11200476;
-pub const fnEnemy_GrappleReact_CancelBeam_B2: uint32 = 11698191;
-pub const fnEnemy_NormalPowerBombAI_B2: uint32 = 11698231;
-pub const fnEnemy_NormalFrozenAI_B2: uint32 = 11698241;
-pub const fnnullsub_170_B2: uint32 = 11698252;
-pub const fnEnemyInstr_Goto_B2: uint32 = 11698413;
-pub const fnEnemyInstr_DecTimerAndGoto2_B2: uint32 = 11698448;
-pub const fnEnemyInstr_SetTimer_B2: uint32 = 11698467;
-pub const fnEnemyInstr_Sleep_B2: uint32 = 11698479;
-pub const fnEnemyInstr_WaitNframes_B2: uint32 = 11698490;
-pub const fnWalkingSpacePirates_Powerbomb: uint32 = 11700071;
-pub const fnWalkingSpacePirates_Touch: uint32 = 11700076;
-pub const fnWalkingSpacePirates_Shot: uint32 = 11700089;
-pub const fnWalkingSpacePirates_87C8: uint32 = 11700168;
-pub const fnWalkingSpacePirates_883E: uint32 = 11700286;
-pub const fnSpacePirates_Instr_MovePixelsDownAndChangeDirFaceRight: uint32 = 11726400;
-pub const fnSpacePirates_Instr_MovePixelsDownAndChangeDirFaceLeft: uint32 = 11726450;
-pub const fnSpacePirates_Instr_RandomNewDirFaceR: uint32 = 11726500;
-pub const fnSpacePirates_Instr_RandomNewDirFaceL: uint32 = 11726524;
-pub const fnSpacePirates_Instr_PrepareWallJumpR: uint32 = 11726548;
-pub const fnSpacePirates_Instr_PrepareWallJumpL: uint32 = 11726589;
-pub const fnSpacePirates_Instr_FireLaserL: uint32 = 11726634;
-pub const fnSpacePirates_Instr_FireLaserR: uint32 = 11726685;
-pub const fnSpacePirates_Instr_SetEnemyFunc: uint32 = 11726723;
-pub const fnSpacePirates_Instr_PlaySfx: uint32 = 11726739;
-pub const fnWallSpacePirates_Init: uint32 = 11726751;
-pub const fnWallSpacePirates_Main: uint32 = 11726893;
-pub const fnSpacePirates_Instr_20: uint32 = 11728182;
-pub const fnSpacePirates_Instr_16: uint32 = 11728198;
-pub const fnSpacePirates_Instr_15: uint32 = 11728228;
-pub const fnSpacePirates_Instr_18: uint32 = 11728272;
-pub const fnSpacePirates_Instr_17: uint32 = 11728342;
-pub const fnNinjaSpacePirates_Init: uint32 = 11728350;
-pub const fnNinjaSpacePirates_Main: uint32 = 11728546;
-pub const fnSpacePirates_Instr_19: uint32 = 11729257;
-pub const fnSpacePirates_Instr_21: uint32 = 11729469;
-pub const fnSpacePirates_Instr_12: uint32 = 11730024;
-pub const fnSpacePirates_Instr_14: uint32 = 11730064;
-pub const fnSpacePirates_Instr_11: uint32 = 11730104;
-pub const fnSpacePirates_Instr_13: uint32 = 11730120;
-pub const fnWalkingSpacePirates_Init: uint32 = 11730178;
-pub const fnWalkingSpacePirates_Main: uint32 = 11730226;
-pub const fnEnemy_GrappleReact_NoInteract_B3: uint32 = 11763712;
-pub const fnEnemy_GrappleReact_KillEnemy_B3: uint32 = 11763722;
-pub const fnEnemy_GrappleReact_CancelBeam_B3: uint32 = 11763727;
-pub const fnEnemy_NormalTouchAI_B3: uint32 = 11763747;
-pub const fnEnemy_NormalShotAI_B3: uint32 = 11763757;
-pub const fnEnemy_NormalPowerBombAI_B3: uint32 = 11763767;
-pub const fnEnemy_NormalFrozenAI_B3: uint32 = 11763777;
-pub const fnnullsub_170_B3: uint32 = 11763788;
-pub const fnEnemy_SetAiPreInstr_B3: uint32 = 11763819;
-pub const fnEnemy_ClearAiPreInstr_B3: uint32 = 11763828;
-pub const fnnullsub_171_B3: uint32 = 11763835;
-pub const fnEnemyInstr_Goto_B3: uint32 = 11763949;
-pub const fnEnemyInstr_DecTimerAndGoto2_B3: uint32 = 11763984;
-pub const fnEnemyInstr_SetTimer_B3: uint32 = 11764003;
-pub const fnEnemyInstr_Sleep_B3: uint32 = 11764015;
-pub const fnUnusedSpinningTurtleEye_Init: uint32 = 11765499;
-pub const fnUnusedSpinningTurtleEye_Main: uint32 = 11765518;
-pub const fnBrinstarPipeBug_Init: uint32 = 11765819;
-pub const fnBrinstarPipeBug_Main: uint32 = 11765882;
-pub const fnBrinstarPipeBug_PreInstr_1: uint32 = 11765888;
-pub const fnBrinstarPipeBug_PreInstr_2: uint32 = 11765904;
-pub const fnBrinstarPipeBug_PreInstr_3: uint32 = 11765987;
-pub const fnBrinstarPipeBug_PreInstr_4: uint32 = 11766044;
-pub const fnBrinstarPipeBug_PreInstr_5: uint32 = 11766142;
-pub const fnNorfairPipeBug_Init: uint32 = 11766625;
-pub const fnNorfairPipeBug_Main: uint32 = 11766686;
-pub const fnNorfairPipeBug_Func_5: uint32 = 11767039;
-pub const fnBrinstarYellowPipeBug_Init: uint32 = 11767628;
-pub const fnBrinstarYellowPipeBug_Main: uint32 = 11767726;
-pub const fnBotwoon_Instr_1: uint32 = 11769031;
-pub const fnBotwoon_Instr_2: uint32 = 11769047;
-pub const fnBotwoon_Instr_3: uint32 = 11769063;
-pub const fnBotwoon_Instr_4: uint32 = 11769079;
-pub const fnBotwoon_Instr_5: uint32 = 11769095;
-pub const fnBotwoon_Instr_6: uint32 = 11769111;
-pub const fnBotwoon_Instr_7: uint32 = 11769127;
-pub const fnBotwoon_Instr_8: uint32 = 11769143;
-pub const fnBotwoon_Instr_9: uint32 = 11769159;
-pub const fnBotwoon_Instr_10: uint32 = 11769175;
-pub const fnBotwoon_Instr_SetSpitting: uint32 = 11769191;
-pub const fnBotwoon_Instr_QueueSpitSfx: uint32 = 11769202;
-pub const fnBotwoon_Init: uint32 = 11769219;
-pub const fnBotwoon_Main: uint32 = 11769448;
-pub const fnBotwoon_Func_26: uint32 = 11771328;
-pub const fnBotwoon_Func_27: uint32 = 11771517;
-pub const fnBotwoon_Func_28: uint32 = 11771616;
-pub const fnBotwoon_Func_29: uint32 = 11771700;
-pub const fnBotwoon_Func_30: uint32 = 11771770;
-pub const fnBotwoon_Touch: uint32 = 11771903;
-pub const fnBotwoon_Shot: uint32 = 11771926;
-pub const fnBotwoon_Powerbomb: uint32 = 11771969;
-pub const fnEscapeEtecoon_Instr_1: uint32 = 11789637;
-pub const fnEscapeEtecoon_Instr_2: uint32 = 11789840;
-pub const fnEscapeEtecoon_Main: uint32 = 11789909;
-pub const fnEscapeEtecoon_E65C: uint32 = 11789916;
-pub const fnEscapeEtecoon_E670: uint32 = 11789936;
-pub const fnEscapeEtecoon_E680: uint32 = 11789952;
-pub const fnEscapeEtecoon_Init: uint32 = 11790027;
-pub const fnEscapeDachora_Instr_2: uint32 = 11791016;
-pub const fnEscapeDachora_Instr_3: uint32 = 11791032;
-pub const fnEscapeDachora_Instr_1: uint32 = 11791049;
-pub const fnEscapeDachora_Instr_4: uint32 = 11791063;
-pub const fnEscapeDachora_Init: uint32 = 11791077;
-pub const fnnullsub_54: uint32 = 11791130;
+pub const fnEnemy_GrappleReact_SamusLatchesOn_A2: u32 = 10649605;
+pub const fnEnemy_GrappleReact_KillEnemy_A2: u32 = 10649610;
+pub const fnEnemy_GrappleReact_CancelBeam_A2: u32 = 10649615;
+pub const fnEnemy_NormalTouchAI_A2: u32 = 10649635;
+pub const fnEnemy_NormalShotAI_A2: u32 = 10649645;
+pub const fnEnemy_NormalPowerBombAI_A2: u32 = 10649655;
+pub const fnEnemy_NormalFrozenAI_A2: u32 = 10649665;
+pub const fnnullsub_170_A2: u32 = 10649676;
+pub const fnnullsub_171_A2: u32 = 10649723;
+pub const fnEnemyInstr_Goto_A2: u32 = 10649837;
+pub const fnEnemyInstr_DecTimerAndGoto2_A2: u32 = 10649872;
+pub const fnEnemyInstr_SetTimer_A2: u32 = 10649891;
+pub const fnEnemyInstr_Sleep_A2: u32 = 10649903;
+pub const fnEnemyInstr_EnableOffScreenProcessing_A2: u32 = 10649971;
+pub const fnEnemyInstr_DisableOffScreenProcessing_A2: u32 = 10649981;
+pub const fnBouncingGoofball_Init: u32 = 10651420;
+pub const fnBouncingGoofball_Main: u32 = 10651548;
+pub const fnBouncingGoofball_Instr_88C5: u32 = 10651845;
+pub const fnBouncingGoofball_Instr_88C6: u32 = 10651846;
+pub const fnMiniCrocomire_Instr_897E: u32 = 10652030;
+pub const fnMiniCrocomire_Instr_8990: u32 = 10652048;
+pub const fnMiniCrocomire_Instr_899D: u32 = 10652061;
+pub const fnMiniCrocomire_Init: u32 = 10652077;
+pub const fnMiniCrocomire_Main: u32 = 10652144;
+pub const fnMiniCrocomire_PreInstr5: u32 = 10652227;
+pub const fnMiniCrocomire_PreInstr6: u32 = 10652252;
+pub const fnnullsub_175: u32 = 10652277;
+pub const fnMaridiaBeybladeTurtle_Init: u32 = 10653036;
+pub const fnMiniMaridiaBeybladeTurtle_Init: u32 = 10653085;
+pub const fnMaridiaBeybladeTurtle_Main: u32 = 10653138;
+pub const fnMiniMaridiaBeybladeTurtle_Main: u32 = 10653998;
+pub const fnMaridiaBeybladeTurtle_Touch: u32 = 10654337;
+pub const fnMiniMaridiaBeybladeTurtle_Touch: u32 = 10654367;
+pub const fnMiniMaridiaBeybladeTurtle_Shot: u32 = 10654479;
+pub const fnMaridiaBeybladeTurtle_Instr_9381: u32 = 10654593;
+pub const fnMaridiaBeybladeTurtle_Instr_9412: u32 = 10654738;
+pub const fnMaridiaBeybladeTurtle_Instr_9447: u32 = 10654791;
+pub const fnMaridiaBeybladeTurtle_Instr_9451: u32 = 10654801;
+pub const fnMaridiaBeybladeTurtle_Instr_946B: u32 = 10654827;
+pub const fnMaridiaBeybladeTurtle_Instr_9485: u32 = 10654853;
+pub const fnMaridiaBeybladeTurtle_Instr_94A1: u32 = 10654881;
+pub const fnMaridiaBeybladeTurtle_Instr_94C7: u32 = 10654919;
+pub const fnMaridiaBeybladeTurtle_Instr_94D1: u32 = 10654929;
+pub const fnThinHoppingBlobs_Init: u32 = 10656319;
+pub const fnThinHoppingBlobs_Main: u32 = 10656381;
+pub const fnSpikeShootingPlant_Instr_9F2A: u32 = 10657578;
+pub const fnSpikeShootingPlant_Init: u32 = 10657608;
+pub const fnSpikeShootingPlant_Main: u32 = 10657715;
+pub const fnSpikeShootingPlant_2: u32 = 10657722;
+pub const fnSpikeShootingPlant_3: u32 = 10657772;
+pub const fnnullsub_182: u32 = 10657819;
+pub const fnSpikeShootingPlant_Instr_A095: u32 = 10657941;
+pub const fnSpikeShootingPlant_Instr_A0A7: u32 = 10657959;
+pub const fnMaridiaSpikeyShell_Init: u32 = 10658809;
+pub const fnMaridiaSpikeyShell_Main: u32 = 10658942;
+pub const fnMaridiaSpikeyShell_Instr_A56D: u32 = 10659181;
+pub const fnMaridiaSpikeyShell_Instr_A571: u32 = 10659185;
+pub const fnMaridiaSpikeyShell_Shot: u32 = 10659193;
+pub const fnGunshipTop_Init: u32 = 10659396;
+pub const fnGunshipBottom_Init: u32 = 10659538;
+pub const fnGunshipTop_Main: u32 = 10659673;
+pub const fnnullsub_187: u32 = 10659799;
+pub const fnGunshipTop_3: u32 = 10659852;
+pub const fnGunshipTop_4: u32 = 10660048;
+pub const fnGunshipTop_5: u32 = 10660162;
+pub const fnGunshipTop_6: u32 = 10660176;
+pub const fnGunshipTop_7: u32 = 10660231;
+pub const fnGunshipTop_8: u32 = 10660285;
+pub const fnGunshipTop_9: u32 = 10660431;
+pub const fnGunshipTop_10: u32 = 10660445;
+pub const fnGunshipTop_11: u32 = 10660500;
+pub const fnGunshipTop_12: u32 = 10660514;
+pub const fnGunshipTop_13: u32 = 10660639;
+pub const fnGunshipTop_14: u32 = 10660704;
+pub const fnGunshipTop_15: u32 = 10660718;
+pub const fnGunshipTop_16: u32 = 10660773;
+pub const fnGunshipTop_17: u32 = 10660807;
+pub const fnGunshipTop_18: u32 = 10660891;
+pub const fnGunshipTop_19: u32 = 10661079;
+pub const fnGunshipTop_20: u32 = 10661134;
+pub const fnGunshipTop_21: u32 = 10661165;
+pub const fnFlies_Init: u32 = 10661995;
+pub const fnFlies_Main: u32 = 10662175;
+pub const fnFlies_4: u32 = 10662222;
+pub const fnFlies_5: u32 = 10662268;
+pub const fnFlies_6: u32 = 10662314;
+pub const fnFlies_7: u32 = 10662354;
+pub const fnNorfairErraticFireball_Init: u32 = 10662880;
+pub const fnNorfairErraticFireball_Main: u32 = 10662927;
+pub const fnLavaquakeRocks_Init: u32 = 10663280;
+pub const fnLavaquakeRocks_Main: u32 = 10663311;
+pub const fnRinka_Init: u32 = 10663426;
+pub const fnRinka_Main: u32 = 10663876;
+pub const fnRinka_Frozen: u32 = 10664233;
+pub const fnRinka_Touch: u32 = 10664263;
+pub const fnRinka_Shot: u32 = 10664269;
+pub const fnRinka_Powerbomb: u32 = 10664275;
+pub const fnRinka_Instr_B9B3: u32 = 10664371;
+pub const fnRinka_Instr_B9BD: u32 = 10664381;
+pub const fnRinka_Instr_B9C7: u32 = 10664391;
+pub const fnEnemyInstr_Rio_Instr_1: u32 = 10664899;
+pub const fnRio_Init: u32 = 10664909;
+pub const fnRio_Main: u32 = 10664931;
+pub const fnNorfairLavajumpingEnemy_Instr_BE8E: u32 = 10665614;
+pub const fnNorfairLavajumpingEnemy_Init: u32 = 10665625;
+pub const fnNorfairLavajumpingEnemy_Main: u32 = 10665682;
+pub const fnNorfairLavajumpingEnemy_Func_1: u32 = 10665692;
+pub const fnNorfairLavajumpingEnemy_Func_2: u32 = 10665754;
+pub const fnNorfairLavajumpingEnemy_Func_3: u32 = 10665790;
+pub const fnNorfairLavajumpingEnemy_Func_4: u32 = 10665852;
+pub const fnNorfairLavajumpingEnemy_Func_5: u32 = 10665916;
+pub const fnNorfairRio_Instr_C1C9: u32 = 10666441;
+pub const fnNorfairRio_Instr_C1D4: u32 = 10666452;
+pub const fnNorfairRio_Instr_C1DF: u32 = 10666463;
+pub const fnNorfairRio_Instr_C1EA: u32 = 10666474;
+pub const fnNorfairRio_Instr_C1F5: u32 = 10666485;
+pub const fnNorfairRio_Instr_C200: u32 = 10666496;
+pub const fnNorfairRio_Instr_C20B: u32 = 10666507;
+pub const fnNorfairRio_Instr_C216: u32 = 10666518;
+pub const fnNorfairRio_Instr_C221: u32 = 10666529;
+pub const fnNorfairRio_Instr_C22C: u32 = 10666540;
+pub const fnNorfairRio_Instr_C237: u32 = 10666551;
+pub const fnNorfairRio_Init: u32 = 10666562;
+pub const fnNorfairRio_Main: u32 = 10666615;
+pub const fnNorfairRio_Func_1: u32 = 10666625;
+pub const fnNorfairRio_Func_2: u32 = 10666727;
+pub const fnNorfairRio_Func_3: u32 = 10666815;
+pub const fnNorfairRio_Func_4: u32 = 10666849;
+pub const fnNorfairRio_Func_5: u32 = 10666929;
+pub const fnNorfairRio_Func_6: u32 = 10667014;
+pub const fnLowerNorfairRio_Instr_C6D2: u32 = 10667730;
+pub const fnLowerNorfairRio_Instr_C6DD: u32 = 10667741;
+pub const fnLowerNorfairRio_Instr_C6E8: u32 = 10667752;
+pub const fnLowerNorfairRio_Init: u32 = 10667763;
+pub const fnLowerNorfairRio_Main: u32 = 10667812;
+pub const fnLowerNorfairRio_Func_1: u32 = 10667822;
+pub const fnLowerNorfairRio_Func_2: u32 = 10667889;
+pub const fnLowerNorfairRio_Func_3: u32 = 10667963;
+pub const fnLowerNorfairRio_Func_4: u32 = 10667990;
+pub const fnLowerNorfairRio_Func_5: u32 = 10668077;
+pub const fnLowerNorfairRio_Func_6: u32 = 10668168;
+pub const fnMaridiaLargeSnail_Instr_CB6B: u32 = 10668907;
+pub const fnMaridiaLargeSnail_Instr_CCB3: u32 = 10669235;
+pub const fnMaridiaLargeSnail_Instr_CCBE: u32 = 10669246;
+pub const fnMaridiaLargeSnail_Instr_CCC9: u32 = 10669257;
+pub const fnMaridiaLargeSnail_Init: u32 = 10669268;
+pub const fnMaridiaLargeSnail_Main: u32 = 10669331;
+pub const fnMaridiaLargeSnail_Func_7: u32 = 10669926;
+pub const fnMaridiaLargeSnail_Func_8: u32 = 10669993;
+pub const fnMaridiaLargeSnail_Func_12: u32 = 10670984;
+pub const fnMaridiaLargeSnail_Touch: u32 = 10670988;
+pub const fnMaridiaLargeSnail_Shot: u32 = 10671028;
+pub const fnHirisingSlowfalling_Init: u32 = 10674038;
+pub const fnHirisingSlowfalling_Main: u32 = 10674222;
+pub const fnGripper_Init: u32 = 10674643;
+pub const fnGripper_Main: u32 = 10674721;
+pub const fnJetPowerRipper_Init: u32 = 10674968;
+pub const fnJetPowerRipper_Main: u32 = 10675027;
+pub const fnJetPowerRipper_Shot: u32 = 10675113;
+pub const fnRipper_Init: u32 = 10675359;
+pub const fnRipper_Main: u32 = 10675418;
+pub const fnLavaSeahorse_Instr_E5FB: u32 = 10675707;
+pub const fnLavaSeahorse_Init: u32 = 10675718;
+pub const fnLavaSeahorse_Main: u32 = 10675790;
+pub const fnLavaSeahorse_Func_1: u32 = 10675796;
+pub const fnLavaSeahorse_Func_2: u32 = 10675885;
+pub const fnLavaSeahorse_Func_3: u32 = 10675953;
+pub const fnLavaSeahorse_Func_4: u32 = 10676020;
+pub const fnLavaSeahorse_Func_5: u32 = 10676041;
+pub const fnnullsub_196: u32 = 10676097;
+pub const fnLavaSeahorse_Touch: u32 = 10676168;
+pub const fnLavaSeahorse_Shot: u32 = 10676174;
+pub const fnLavaSeahorse_Powerbomb: u32 = 10676180;
+pub const fnTimedShutter_Init: u32 = 10676698;
+pub const fnTimedShutter_Main: u32 = 10676918;
+pub const fnRisingFallingPlatform_Init: u32 = 10677765;
+pub const fnShootableShutter_Init: u32 = 10677778;
+pub const fnRisingFallingPlatform_Main: u32 = 10677969;
+pub const fnRisingFallingPlatform_Touch: u32 = 10678429;
+pub const fnRisingFallingPlatform_Shot: u32 = 10678434;
+pub const fnShootableShutter_Shot: u32 = 10678442;
+pub const fnRisingFallingPlatform_Powerbomb: u32 = 10678454;
+pub const fnHorizontalShootableShutter_Init: u32 = 10678545;
+pub const fnHorizontalShootableShutter_Main: u32 = 10678750;
+pub const fnHorizontalShootableShutter_Touch: u32 = 10679256;
+pub const fnHorizontalShootableShutter_Shot: u32 = 10679310;
+pub const fnHorizontalShootableShutter_Powerbomb: u32 = 10679322;
+pub const fnEnemy_GrappleReact_NoInteract_A3: u32 = 10715136;
+pub const fnEnemy_GrappleReact_KillEnemy_A3: u32 = 10715146;
+pub const fnEnemy_GrappleReact_CancelBeam_A3: u32 = 10715151;
+pub const fnEnemy_NormalTouchAI_A3: u32 = 10715171;
+pub const fnEnemy_NormalShotAI_A3: u32 = 10715181;
+pub const fnEnemy_NormalPowerBombAI_A3: u32 = 10715191;
+pub const fnEnemy_NormalFrozenAI_A3: u32 = 10715201;
+pub const fnnullsub_170_A3: u32 = 10715212;
+pub const fnEnemyInstr_Goto_A3: u32 = 10715373;
+pub const fnEnemyInstr_Sleep_A3: u32 = 10715439;
+pub const fnEnemyInstr_EnableOffScreenProcessing_A3: u32 = 10715507;
+pub const fnEnemyInstr_DisableOffScreenProcessing_A3: u32 = 10715517;
+pub const fnWaver_Instr_1: u32 = 10716899;
+pub const fnWaver_Init: u32 = 10716909;
+pub const fnWaver_Main: u32 = 10717004;
+pub const fnMetalee_Instr_1: u32 = 10717526;
+pub const fnMetalee_Init: u32 = 10717536;
+pub const fnMetalee_Main: u32 = 10717561;
+pub const fnMetalee_Shot: u32 = 10717967;
+pub const fnFireflea_Init: u32 = 10718509;
+pub const fnFireflea_Main: u32 = 10718702;
+pub const fnFireflea_Touch: u32 = 10718827;
+pub const fnFireflea_Powerbomb: u32 = 10718851;
+pub const fnFireflea_Shot: u32 = 10718857;
+pub const fnMaridiaFish_Instr_3: u32 = 10719382;
+pub const fnMaridiaFish_Instr_1: u32 = 10719392;
+pub const fnMaridiaFish_Instr_2: u32 = 10719402;
+pub const fnMaridiaFish_Init: u32 = 10719413;
+pub const fnMaridiaFish_Main: u32 = 10719531;
+pub const fnElevator_Init: u32 = 10720486;
+pub const fnElevator_Frozen: u32 = 10720554;
+pub const fnCrab_Init: u32 = 10720995;
+pub const fnSlug_Init: u32 = 10721595;
+pub const fnPlatformThatFallsWithSamus_Instr_3: u32 = 10722411;
+pub const fnPlatformThatFallsWithSamus_Instr_4: u32 = 10722422;
+pub const fnPlatformThatFallsWithSamus_Instr_1: u32 = 10722433;
+pub const fnPlatformThatFallsWithSamus_Instr_2: u32 = 10722444;
+pub const fnPlatformThatFallsWithSamus_Init: u32 = 10722463;
+pub const fnFastMovingSlowSinkingPlatform_Init: u32 = 10722490;
+pub const fnPlatformThatFallsWithSamus_Main: u32 = 10722582;
+pub const fnnullsub_32: u32 = 10723079;
+pub const fnFastMovingSlowSinkingPlatform_Shot: u32 = 10723080;
+pub const fnRoach_Init: u32 = 10723661;
+pub const fnRoach_Main: u32 = 10724048;
+pub const fnMochtroid_Init: u32 = 10725245;
+pub const fnMochtroid_Main: u32 = 10725264;
+pub const fnMochtroid_Touch: u32 = 10725715;
+pub const fnMochtroid_Shot: u32 = 10725800;
+pub const fnSidehopper_Func_1: u32 = 10725992;
+pub const fnSidehopper_Instr_1: u32 = 10726142;
+pub const fnSidehopper_Init: u32 = 10726153;
+pub const fnSidehopper_Main: u32 = 10726351;
+pub const fnMaridiaRefillCandy_Instr_1: u32 = 10728489;
+pub const fnMaridiaRefillCandy_Instr_2: u32 = 10728500;
+pub const fnMaridiaRefillCandy_Instr_3: u32 = 10728511;
+pub const fnMaridiaRefillCandy_Init: u32 = 10728522;
+pub const fnMaridiaRefillCandy_Main: u32 = 10728572;
+pub const fnNorfairSlowFireball_Init: u32 = 10729071;
+pub const fnBang_Instr_1: u32 = 10730104;
+pub const fnBang_Instr_2: u32 = 10730152;
+pub const fnBang_Init: u32 = 10730163;
+pub const fnBang_Main: u32 = 10730277;
+pub const fnBang_Func_6: u32 = 10730661;
+pub const fnBang_Func_7: u32 = 10730689;
+pub const fnBang_Func_8: u32 = 10730693;
+pub const fnBang_Func_10: u32 = 10730780;
+pub const fnBang_Func_11: u32 = 10730796;
+pub const fnBang_Shot: u32 = 10731261;
+pub const fnSkree_Instr_1: u32 = 10733220;
+pub const fnSkree_Init: u32 = 10733230;
+pub const fnSkree_Main: u32 = 10733255;
+pub const fnSkree_Shot: u32 = 10733557;
+pub const fnMaridiaSnail_Instr_1: u32 = 10734646;
+pub const fnMaridiaSnail_Instr_2: u32 = 10734655;
+pub const fnMaridiaSnail_Instr_4: u32 = 10734664;
+pub const fnMaridiaSnail_Instr_3: u32 = 10734687;
+pub const fnMaridiaSnail_Instr_5: u32 = 10734712;
+pub const fnMaridiaSnail_Init: u32 = 10735074;
+pub const fnMaridiaSnail_Main: u32 = 10735204;
+pub const fnnullsub_215: u32 = 10735455;
+pub const fnMaridiaSnail_Func_7: u32 = 10735456;
+pub const fnMaridiaSnail_Func_9: u32 = 10735526;
+pub const fnMaridiaSnail_CFB7: u32 = 10735543;
+pub const fnMaridiaSnail_CFBD: u32 = 10735549;
+pub const fnMaridiaSnail_CFCE: u32 = 10735566;
+pub const fnMaridiaSnail_CFD4: u32 = 10735572;
+pub const fnMaridiaSnail_CFE5: u32 = 10735589;
+pub const fnMaridiaSnail_CFEB: u32 = 10735595;
+pub const fnMaridiaSnail_CFFC: u32 = 10735612;
+pub const fnMaridiaSnail_Func_15: u32 = 10736051;
+pub const fnMaridiaSnail_Touch: u32 = 10736560;
+pub const fnMaridiaSnail_Shot: u32 = 10736745;
+pub const fnReflec_Func_1: u32 = 10738444;
+pub const fnReflec_Instr_1: u32 = 10738632;
+pub const fnReflec_Init: u32 = 10738643;
+pub const fnnullsub_33: u32 = 10738715;
+pub const fnReflec_Shot: u32 = 10738716;
+pub const fnWreckedShipOrangeZoomer_Func_1: u32 = 10739650;
+pub const fnWreckedShipOrangeZoomer_Init: u32 = 10739779;
+pub const fnnullsub_343: u32 = 10739850;
+pub const fnWreckedShipOrangeZoomer_Func_2: u32 = 10739857;
+pub const fnWreckedShipOrangeZoomer_Main: u32 = 10739851;
+pub const fnsub_A3E168: u32 = 10740072;
+pub const fnBigEyeBugs_Init: u32 = 10740436;
+pub const fnFireZoomer_Init: u32 = 10741148;
+pub const fnZoomer_Instr_SetPreinstr: u32 = 10741344;
+pub const fnStoneZoomer_Init: u32 = 10741353;
+pub const fnnullsub_304: u32 = 10741441;
+pub const fnStoneZoomer_Main: u32 = 10741442;
+pub const fnFireZoomer_Func_1: u32 = 10741448;
+pub const fnFireZoomer_Func_2: u32 = 10741637;
+pub const fnFireZoomer_Func_3: u32 = 10741746;
+pub const fnMetroid_Init: u32 = 10742351;
+pub const fnMetroid_Instr_2: u32 = 10742437;
+pub const fnMetroid_Instr_1: u32 = 10742449;
+pub const fnMetroid_Frozen: u32 = 10742502;
+pub const fnMetroid_Hurt: u32 = 10742579;
+pub const fnMetroid_Main: u32 = 10742680;
+pub const fnMetroid_Touch: u32 = 10743275;
+pub const fnMetroid_Shot: u32 = 10743559;
+pub const fnMetroid_Powerbomb: u32 = 10743874;
+pub const fnEnemy_GrappleReact_SamusLatchesOn_A4: u32 = 10780677;
+pub const fnEnemy_NormalTouchAI_A4: u32 = 10780707;
+pub const fnEnemy_NormalShotAI_A4: u32 = 10780717;
+pub const fnEnemy_NormalPowerBombAI_A4: u32 = 10780727;
+pub const fnEnemy_NormalFrozenAI_A4: u32 = 10780737;
+pub const fnnullsub_170_A4: u32 = 10780748;
+pub const fnEnemyInstr_Goto_A4: u32 = 10780909;
+pub const fnEnemyInstr_Sleep_A4: u32 = 10780975;
+pub const fnCrocomire_Hurt: u32 = 10782343;
+pub const fnCrocomire_Instr_1: u32 = 10782374;
+pub const fnCrocomire_Instr_14: u32 = 10782546;
+pub const fnCrocomire_Init: u32 = 10783322;
+pub const fnCrocomire_Main: u32 = 10783748;
+pub const fnCrocomire_Instr_11: u32 = 10783995;
+pub const fnCrocomire_Instr_7: u32 = 10784007;
+pub const fnCrocomire_Instr_19: u32 = 10784019;
+pub const fnCrocomire_Instr_2: u32 = 10784711;
+pub const fnCrocomire_Instr_4: u32 = 10784735;
+pub const fnCrocomire_Instr_3: u32 = 10784762;
+pub const fnCrocomire_Instr_15: u32 = 10784767;
+pub const fnCrocomire_Instr_16: u32 = 10784797;
+pub const fnCrocomire_Instr_13: u32 = 10784859;
+pub const fnCrocomire_Instr_18: u32 = 10784895;
+pub const fnCrocomire_Instr_12: u32 = 10784911;
+pub const fnCrocomire_Instr_17: u32 = 10784916;
+pub const fnCrocomire_Instr_8: u32 = 10787483;
+pub const fnCrocomire_Instr_6: u32 = 10787488;
+pub const fnCrocomire_Instr_9: u32 = 10787493;
+pub const fnCrocomire_Instr_5: u32 = 10787498;
+pub const fnCrocomire_Instr_20: u32 = 10787503;
+pub const fnCrocomire_Instr_21: u32 = 10787508;
+pub const fnCrocomire_Instr_22: u32 = 10787513;
+pub const fnCrocomire_Instr_23: u32 = 10787518;
+pub const fnCrocomire_Instr_24: u32 = 10787523;
+pub const fnCrocomire_Instr_10: u32 = 10787528;
+pub const fnCrocomire_Instr_25: u32 = 10787533;
+pub const fnCrocomire_Instr_26: u32 = 10787538;
+pub const fnCrocomire_Instr_27: u32 = 10787543;
+pub const fnCrocomire_Func_92: u32 = 10795325;
+pub const fnnullsub_34: u32 = 10795344;
+pub const fnCrocomire_Func_93: u32 = 10795345;
+pub const fnCrocomire_Func_94: u32 = 10795368;
+pub const fnCrocomire_Powerbomb: u32 = 10795410;
+pub const fnCrocomire_Func_95: u32 = 10795525;
+pub const fnCrocomire_Func_1: u32 = 10795700;
+pub const fnCrocomireTongue_Init: u32 = 10811002;
+pub const fnCrocomireTongue_Main: u32 = 10811067;
+pub const fnEnemy_GrappleReact_NoInteract_A5: u32 = 10846208;
+pub const fnEnemy_GrappleReact_CancelBeam_A5: u32 = 10846223;
+pub const fnEnemy_NormalTouchAI_A5: u32 = 10846243;
+pub const fnEnemy_NormalShotAI_A5: u32 = 10846253;
+pub const fnEnemy_NormalPowerBombAI_A5: u32 = 10846263;
+pub const fnEnemy_NormalFrozenAI_A5: u32 = 10846273;
+pub const fnCreateADudShot_A5: u32 = 10846278;
+pub const fnnullsub_170_A5: u32 = 10846284;
+pub const fnEnemyInstr_StopScript_A5: u32 = 10846332;
+pub const fnEnemyInstr_Goto_A5: u32 = 10846445;
+pub const fnEnemyInstr_DecTimerAndGoto2_A5: u32 = 10846480;
+pub const fnEnemyInstr_SetTimer_A5: u32 = 10846499;
+pub const fnEnemyInstr_Sleep_A5: u32 = 10846511;
+pub const fnEnemyInstr_WaitNframes_A5: u32 = 10846522;
+pub const fnDraygon_Init: u32 = 10847879;
+pub const fnDraygon_Main: u32 = 10847996;
+pub const fnDraygon_Func_36: u32 = 10851138;
+pub const fnDraygon_Instr_1: u32 = 10851549;
+pub const fnDraygon_Hurt: u32 = 10851661;
+pub const fnDraygon_Touch: u32 = 10851818;
+pub const fnDraygon_Shot: u32 = 10851824;
+pub const fnDraygon_Powerbomb: u32 = 10851847;
+pub const fnDraygon_Instr_13: u32 = 10852150;
+pub const fnDraygon_Instr_8: u32 = 10852159;
+pub const fnDraygon_Instr_7: u32 = 10852178;
+pub const fnDraygon_Instr_6: u32 = 10852197;
+pub const fnDraygon_Instr_9: u32 = 10852216;
+pub const fnDraygon_Instr_2: u32 = 10852501;
+pub const fnDraygon_Instr_11: u32 = 10852563;
+pub const fnDraygon_Instr_5: u32 = 10852591;
+pub const fnDraygon_Instr_15: u32 = 10853274;
+pub const fnDraygon_Instr_17: u32 = 10853514;
+pub const fnDraygon_Instr_14: u32 = 10853898;
+pub const fnDraygon_Instr_16: u32 = 10854231;
+pub const fnDraygon_Instr_10: u32 = 10854240;
+pub const fnDraygon_Instr_4: u32 = 10854254;
+pub const fnDraygon_Instr_12: u32 = 10854268;
+pub const fnDraygon_Instr_18: u32 = 10854318;
+pub const fnDraygonsEye_Init: u32 = 10863723;
+pub const fnDraygon_Instr_3: u32 = 10863739;
+pub const fnDraygonsEye_Main: u32 = 10863750;
+pub const fnDraygonsTail_Init: u32 = 10864025;
+pub const fnnullsub_37: u32 = 10864042;
+pub const fnDraygonsArms_Init: u32 = 10864045;
+pub const fnnullsub_38: u32 = 10864068;
+pub const fnDraygon_Instr_25: u32 = 10872671;
+pub const fnDraygon_Instr_24: u32 = 10872689;
+pub const fnDraygon_Instr_21: u32 = 10872877;
+pub const fnDraygon_Instr_22: u32 = 10872946;
+pub const fnDraygon_Instr_27: u32 = 10872956;
+pub const fnDraygon_Instr_23: u32 = 10872981;
+pub const fnDraygon_Instr_30: u32 = 10873009;
+pub const fnDraygon_Instr_20: u32 = 10873018;
+pub const fnDraygon_Instr_29: u32 = 10873034;
+pub const fnDraygon_Instr_19: u32 = 10873116;
+pub const fnDraygon_Instr_28: u32 = 10873198;
+pub const fnDraygon_Instr_26: u32 = 10873265;
+pub const fnSporeSpawn_Init: u32 = 10873386;
+pub const fnSporeSpawn_Main: u32 = 10873619;
+pub const fnSporeSpawn_Shot: u32 = 10874202;
+pub const fnSporeSpawn_Touch: u32 = 10874348;
+pub const fnnullsub_39: u32 = 10874354;
+pub const fnEnemy_GrappleReact_NoInteract_A6: u32 = 10911744;
+pub const fnEnemy_GrappleReact_CancelBeam_A6: u32 = 10911759;
+pub const fnEnemy_NormalTouchAI_A6: u32 = 10911779;
+pub const fnEnemy_NormalShotAI_A6: u32 = 10911789;
+pub const fnEnemy_NormalPowerBombAI_A6: u32 = 10911799;
+pub const fnEnemy_NormalFrozenAI_A6: u32 = 10911809;
+pub const fnnullsub_170_A6: u32 = 10911820;
+pub const fnEnemyInstr_Goto_A6: u32 = 10911981;
+pub const fnEnemyInstr_Sleep_A6: u32 = 10912047;
+pub const fnBoulder_Init: u32 = 10913525;
+pub const fnBoulder_Main: u32 = 10913683;
+pub const fnSpikeyPlatform_Init: u32 = 10914607;
+pub const fnSpikeyPlatform2ndEnemy_Init: u32 = 10914693;
+pub const fnSpikeyPlatform2ndEnemy_Main: u32 = 10914713;
+pub const fnSpikeyPlatform_Main: u32 = 10914733;
+pub const fnFireGeyser_Instr_1: u32 = 10915247;
+pub const fnFireGeyser_Instr_2: u32 = 10915347;
+pub const fnFireGeyser_Instr_3: u32 = 10915373;
+pub const fnFireGeyser_Instr_4: u32 = 10915393;
+pub const fnFireGeyser_Instr_5: u32 = 10915413;
+pub const fnFireGeyser_Instr_6: u32 = 10915433;
+pub const fnFireGeyser_Instr_7: u32 = 10915453;
+pub const fnFireGeyser_Instr_8: u32 = 10915473;
+pub const fnFireGeyser_Instr_9: u32 = 10915493;
+pub const fnFireGeyser_Instr_10: u32 = 10915513;
+pub const fnFireGeyser_Instr_11: u32 = 10915533;
+pub const fnFireGeyser_Instr_12: u32 = 10915553;
+pub const fnFireGeyser_Instr_13: u32 = 10915573;
+pub const fnFireGeyser_Instr_14: u32 = 10915593;
+pub const fnFireGeyser_Instr_15: u32 = 10915613;
+pub const fnFireGeyser_Instr_16: u32 = 10915633;
+pub const fnFireGeyser_Instr_17: u32 = 10915653;
+pub const fnFireGeyser_Instr_18: u32 = 10915673;
+pub const fnFireGeyser_Instr_19: u32 = 10915693;
+pub const fnFireGeyser_Instr_20: u32 = 10915713;
+pub const fnFireGeyser_Instr_21: u32 = 10915733;
+pub const fnFireGeyser_Instr_22: u32 = 10915753;
+pub const fnFireGeyser_Instr_23: u32 = 10915773;
+pub const fnFireGeyser_Instr_24: u32 = 10915793;
+pub const fnFireGeyser_Init: u32 = 10915836;
+pub const fnFireGeyser_Main: u32 = 10915875;
+pub const fnNuclearWaffle_Init: u32 = 10917060;
+pub const fnNuclearWaffle_Main: u32 = 10917390;
+pub const fnFakeKraid_Init: u32 = 10918488;
+pub const fnFakeKraid_Main: u32 = 10918594;
+pub const fnFakeKraid_Instr_2: u32 = 10918694;
+pub const fnFakeKraid_Instr_1: u32 = 10918772;
+pub const fnFakeKraid_Instr_3: u32 = 10918834;
+pub const fnFakeKraid_Instr_4: u32 = 10918852;
+pub const fnFakeKraid_Instr_5: u32 = 10918914;
+pub const fnFakeKraid_Touch: u32 = 10918946;
+pub const fnFakeKraid_Shot: u32 = 10918969;
+pub const fnCeresRidley_Init: u32 = 10920181;
+pub const fnCeresRidley_Main: u32 = 10920584;
+pub const fnCeresRidley_Hurt: u32 = 10920659;
+pub const fnRidley_A2F2: u32 = 10920690;
+pub const fnRidley_Main: u32 = 10924583;
+pub const fnRidley_Func_2: u32 = 10924682;
+pub const fnRidley_Hurt: u32 = 10924695;
+pub const fnRidleysExplosion_Init: u32 = 10929814;
+pub const fnRidleysExplosion_Main: u32 = 10930388;
+pub const fnsub_A6DF59: u32 = 10936153;
+pub const fnRidley_Shot: u32 = 10936202;
+pub const fnRidley_Powerbomb: u32 = 10936242;
+pub const fnRidley_Instr_5: u32 = 10937534;
+pub const fnRidley_Instr_6: u32 = 10937546;
+pub const fnRidley_Instr_10: u32 = 10937554;
+pub const fnRidley_Instr_4: u32 = 10937582;
+pub const fnRidley_Instr_3: u32 = 10937592;
+pub const fnRidley_Instr_2: u32 = 10937601;
+pub const fnRidley_Instr_1: u32 = 10937623;
+pub const fnRidley_Instr_14: u32 = 10937631;
+pub const fnRidley_Instr_9: u32 = 10938140;
+pub const fnRidley_Instr_7: u32 = 10938151;
+pub const fnRidley_Instr_8: u32 = 10938159;
+pub const fnRidley_Instr_11: u32 = 10938445;
+pub const fnRidley_Instr_12: u32 = 10938628;
+pub const fnRidley_Instr_13: u32 = 10938633;
+pub const fnRidley_Instr_15: u32 = 10938729;
+pub const fnRidley_Instr_16: u32 = 10938742;
+pub const fnCeresSteam_Init: u32 = 10940337;
+pub const fnCeresSteam_Main: u32 = 10940429;
+pub const fnCeresSteam_Touch: u32 = 10940479;
+pub const fnCeresSteam_Instr_1: u32 = 10940701;
+pub const fnCeresSteam_Instr_2: u32 = 10940711;
+pub const fnCeresSteam_Instr_3: u32 = 10940725;
+pub const fnCeresDoor_Instr_6: u32 = 10942014;
+pub const fnCeresDoor_Instr_4: u32 = 10942058;
+pub const fnCeresDoor_Instr_8: u32 = 10942072;
+pub const fnCeresSteam_Instr_4: u32 = 10942091;
+pub const fnCeresDoor_Instr_1: u32 = 10942101;
+pub const fnCeresDoor_Instr_3: u32 = 10942111;
+pub const fnCeresSteam_Instr_5: u32 = 10942118;
+pub const fnCeresDoor_Instr_5: u32 = 10942128;
+pub const fnCeresDoor_Instr_2: u32 = 10942131;
+pub const fnCeresDoor_Instr_7: u32 = 10942141;
+pub const fnCeresDoor_Init: u32 = 10942149;
+pub const fnCeresDoor_Main: u32 = 10942309;
+pub const fnnullsub_41: u32 = 10942752;
+pub const fnZebetites_Init: u32 = 10943346;
+pub const fnZebetites_Main: u32 = 10943539;
+pub const fnZebetites_Touch: u32 = 10943911;
+pub const fnZebetites_Shot: u32 = 10943916;
+pub const fnEnemy_GrappleReact_NoInteract_A7: u32 = 10977280;
+pub const fnEnemy_GrappleReact_CancelBeam_A7: u32 = 10977295;
+pub const fnEnemy_NormalShotAI_A7: u32 = 10977325;
+pub const fnEnemy_NormalPowerBombAI_A7: u32 = 10977335;
+pub const fnEnemy_NormalPowerBombAI_SkipDeathAnim_A7: u32 = 10977340;
+pub const fnEnemy_NormalFrozenAI_A7: u32 = 10977345;
+pub const fnnullsub_170_A7: u32 = 10977356;
+pub const fnEnemyInstr_Call_A7: u32 = 10977418;
+pub const fnEnemyInstr_Goto_A7: u32 = 10977517;
+pub const fnEnemyInstr_DecTimerAndGoto2_A7: u32 = 10977552;
+pub const fnEnemyInstr_SetTimer_A7: u32 = 10977571;
+pub const fnEnemyInstr_Sleep_A7: u32 = 10977583;
+pub const fnKraid_Instr_9: u32 = 10979983;
+pub const fnKraid_Touch_ArmFoot: u32 = 10982539;
+pub const fnnullsub_44: u32 = 10982543;
+pub const fnKraidsArm_Touch: u32 = 10982544;
+pub const fnKraid_Touch: u32 = 10982559;
+pub const fnnullsub_43: u32 = 10982581;
+pub const fnKraid_Arm_Shot: u32 = 10982582;
+pub const fnKraid_Init: u32 = 10987865;
+pub const fnKraidsArm_Init: u32 = 10988355;
+pub const fnKraidsTopLint_Init: u32 = 10988392;
+pub const fnKraidsMiddleLint_Init: u32 = 10988444;
+pub const fnKraidsBottomLint_Init: u32 = 10988490;
+pub const fnKraidsFoot_Init: u32 = 10988536;
+pub const fnKraid_Main: u32 = 10988577;
+pub const fnKraid_Instr_1: u32 = 10991155;
+pub const fnKraid_Instr_DecYpos: u32 = 10991158;
+pub const fnKraid_Instr_IncrYpos_Shake: u32 = 10991164;
+pub const fnKraid_Instr_PlaySound_0x76: u32 = 10991182;
+pub const fnKraid_Instr_XposMinus3: u32 = 10991194;
+pub const fnKraid_Instr_XposMinus3b: u32 = 10991207;
+pub const fnKraid_Instr_XposPlus3: u32 = 10991220;
+pub const fnKraid_Instr_MoveHimRight: u32 = 10991235;
+pub const fnKraidsArm_Main: u32 = 10991549;
+pub const fnKraidsTopLint_Main: u32 = 10991617;
+pub const fnKraidsMiddleLint_Main: u32 = 10991629;
+pub const fnKraidsBottomLint_Main: u32 = 10991641;
+pub const fnKraidsFoot_Main: u32 = 10992118;
+pub const fnKraidsGoodFingernail_Touch: u32 = 10992847;
+pub const fnKraidsBadFingernail_Touch: u32 = 10992862;
+pub const fnKraidsGoodFingernail_Init: u32 = 10992879;
+pub const fnKraidsBadFingernail_Init: u32 = 10992941;
+pub const fnKraidsGoodFingernail_Main: u32 = 10992946;
+pub const fnKraidsBadFingernail_Main: u32 = 10992969;
+pub const fnPhantoon_Init: u32 = 10997235;
+pub const fnPhantoon2_Init: u32 = 10997333;
+pub const fnPhantoon_Main: u32 = 10997414;
+pub const fnnullsub_237: u32 = 10998952;
+pub const fnPhantoon_Spawn8FireballsInCircleAtStart: u32 = 10998953;
+pub const fnPhantoon_WaitBetweenSpawningAndSpinningFireballs: u32 = 10999022;
+pub const fnPhantoon_SpawnFireballsBeforeFight: u32 = 10999048;
+pub const fnPhantoon_WavyFadeIn: u32 = 10999114;
+pub const fnPhantoon_PickPatternForRound1: u32 = 10999190;
+pub const fnPhantoon_MovePhantoonInFigure8ThenOpenEye: u32 = 10999271;
+pub const fnPhantoon_EyeFollowsSamusUntilTimerRunsOut: u32 = 10999309;
+pub const fnPhantoon_BecomesSolidAndBodyVuln: u32 = 10999388;
+pub const fnPhantoon_IsSwooping: u32 = 10999416;
+pub const fnPhantoon_FadeoutWithSwoop: u32 = 10999481;
+pub const fnPhantoon_WaitAfterFadeOut: u32 = 10999508;
+pub const fnPhantoon_MoveLeftOrRightAndPickEyeOpenPatt: u32 = 10999522;
+pub const fnPhantoon_FadeInBeforeFigure8: u32 = 10999597;
+pub const fnPhantoon_BecomeSolidAfterRainingFireballs: u32 = 10999615;
+pub const fnPhantoon_FadeInDuringFireballRain: u32 = 10999655;
+pub const fnPhantoon_FollowSamusWithEyeDuringFireballRain: u32 = 10999688;
+pub const fnPhantoon_FadeOutDuringFireballRain: u32 = 10999765;
+pub const fnPhantoon_SpawnRainingFireballs: u32 = 10999799;
+pub const fnPhantoon_FadeOutBeforeFirstFireballRain: u32 = 10999850;
+pub const fnPhantoon_FadeOutBeforeEnrage: u32 = 10999900;
+pub const fnPhantoon_MoveEnragedPhantoonToTopCenter: u32 = 10999924;
+pub const fnPhantoon_FadeInEnragedPhantoon: u32 = 10999953;
+pub const fnPhantoon_Enraged: u32 = 10999980;
+pub const fnPhantoon_FadeoutAfterEnrage: u32 = 11000086;
+pub const fnPhantoon_CompleteSwoopAfterFatalShot: u32 = 11000110;
+pub const fnPhantoon_DyingPhantoonFadeInOut: u32 = 11000136;
+pub const fnPhantoon_DyingPhantoonExplosions: u32 = 11000203;
+pub const fnPhantoon_WavyDyingPhantoonAndCry: u32 = 11000401;
+pub const fnPhantoon_DyingFadeOut: u32 = 11000454;
+pub const fnPhantoon_AlmostDead: u32 = 11000535;
+pub const fnPhantoon_Dead: u32 = 11000637;
+pub const fnPhantoon_Hurt: u32 = 11001151;
+pub const fnPhantoon_Touch: u32 = 11001237;
+pub const fnnullsub_358: u32 = 11001242;
+pub const fnPhantoon_Shot: u32 = 11001243;
+pub const fnnullsub_45: u32 = 11001873;
+pub const fnEtecoon_Init: u32 = 11004178;
+pub const fnEtecoon_Main: u32 = 11004224;
+pub const fnEtecoon_Func_4: u32 = 11004335;
+pub const fnEtecoon_Func_5: u32 = 11004416;
+pub const fnEtecoon_Func_6: u32 = 11004471;
+pub const fnEtecoon_Func_7: u32 = 11004597;
+pub const fnEtecoon_Func_8: u32 = 11004674;
+pub const fnEtecoon_Func_9: u32 = 11004716;
+pub const fnEtecoon_Func_10: u32 = 11004752;
+pub const fnEtecoon_Func_11: u32 = 11004877;
+pub const fnEtecoon_Func_12: u32 = 11004955;
+pub const fnEtecoon_Func_16: u32 = 11005079;
+pub const fnEtecoon_Func_17: u32 = 11005115;
+pub const fnEtecoon_Func_18: u32 = 11005151;
+pub const fnEtecoon_Func_19: u32 = 11005193;
+pub const fnEtecoon_Func_20: u32 = 11005226;
+pub const fnEtecoon_Func_21: u32 = 11005268;
+pub const fnEtecoon_Func_22: u32 = 11005301;
+pub const fnEtecoon_Func_23: u32 = 11005383;
+pub const fnEtecoon_Func_24: u32 = 11005502;
+pub const fnEtecoon_Func_25: u32 = 11005594;
+pub const fnEtecoon_Func_26: u32 = 11005624;
+pub const fnDachora_Init: u32 = 11007197;
+pub const fnDachora_Main: u32 = 11007278;
+pub const fnDachora_Func_2: u32 = 11007344;
+pub const fnDachora_Func_3: u32 = 11007420;
+pub const fnDachora_Func_4: u32 = 11007469;
+pub const fnDachora_Func_5: u32 = 11007582;
+pub const fnDachora_Func_7: u32 = 11007887;
+pub const fnDachora_Func_8: u32 = 11008006;
+pub const fnDachora_Func_11: u32 = 11008309;
+pub const fnDachora_Func_12: u32 = 11008396;
+pub const fnEnemy_GrappleReact_NoInteract_A8: u32 = 11042816;
+pub const fnEnemy_GrappleReact_KillEnemy_A8: u32 = 11042826;
+pub const fnEnemy_GrappleReact_CancelBeam_A8: u32 = 11042831;
+pub const fnEnemy_GrappleReact_SamusLatchesNoInvinc_A8: u32 = 11042836;
+pub const fnEnemy_GrappleReact_HurtSamus_A8: u32 = 11042846;
+pub const fnEnemy_NormalTouchAI_A8: u32 = 11042851;
+pub const fnEnemy_NormalShotAI_A8: u32 = 11042861;
+pub const fnEnemy_NormalPowerBombAI_A8: u32 = 11042871;
+pub const fnEnemy_NormalFrozenAI_A8: u32 = 11042881;
+pub const fnnullsub_170_A8: u32 = 11042892;
+pub const fnEnemyInstr_Goto_A8: u32 = 11043053;
+pub const fnEnemyInstr_DecTimerAndGoto2_A8: u32 = 11043088;
+pub const fnEnemyInstr_SetTimer_A8: u32 = 11043107;
+pub const fnEnemyInstr_Sleep_A8: u32 = 11043119;
+pub const fnEnemyInstr_EnableOffScreenProcessing_A8: u32 = 11043187;
+pub const fnEnemyInstr_DisableOffScreenProcessing_A8: u32 = 11043197;
+pub const fnMiniDraygon_Instr_2: u32 = 11044751;
+pub const fnMiniDraygon_Instr_1: u32 = 11044763;
+pub const fnMiniDraygon_Instr_3: u32 = 11044790;
+pub const fnMiniDraygon_Instr_4: u32 = 11044811;
+pub const fnMiniDraygon_Init: u32 = 11044832;
+pub const fnEvirProjectile_Init: u32 = 11045040;
+pub const fnMiniDraygon_Main: u32 = 11045147;
+pub const fnEvirProjectile_Main: u32 = 11045278;
+pub const fnMiniDraygon_Touch: u32 = 11045638;
+pub const fnMiniDraygon_Powerbomb: u32 = 11045644;
+pub const fnMiniDraygon_Shot: u32 = 11045650;
+pub const fnMorphBallEye_Init: u32 = 11047000;
+pub const fnMorphBallEye_Main: u32 = 11047138;
+pub const fnMorphBallEye_Func_1: u32 = 11047153;
+pub const fnMorphBallEye_Func_2: u32 = 11047214;
+pub const fnMorphBallEye_Func_3: u32 = 11047264;
+pub const fnMorphBallEye_Func_4: u32 = 11047374;
+pub const fnnullsub_244: u32 = 11047388;
+pub const fnFune_Instr_2: u32 = 11048485;
+pub const fnFune_Instr_6: u32 = 11048497;
+pub const fnFune_Instr_7: u32 = 11048522;
+pub const fnFune_Instr_1: u32 = 11048547;
+pub const fnFune_Instr_4: u32 = 11048572;
+pub const fnFune_Instr_3: u32 = 11048597;
+pub const fnFune_Instr_5: u32 = 11048628;
+pub const fnFune_Init: u32 = 11048675;
+pub const fnFune_Main: u32 = 11048752;
+pub const fnWreckedShipGhost_Init: u32 = 11049710;
+pub const fnWreckedShipGhost_Main: u32 = 11049788;
+pub const fnYappingMaw_Instr_2: u32 = 11051207;
+pub const fnYappingMaw_Instr_4: u32 = 11051225;
+pub const fnYappingMaw_Instr_5: u32 = 11051243;
+pub const fnYappingMaw_Instr_7: u32 = 11051261;
+pub const fnYappingMaw_Instr_3: u32 = 11051279;
+pub const fnYappingMaw_Instr_6: u32 = 11051297;
+pub const fnYappingMaw_Instr_1: u32 = 11051315;
+pub const fnYappingMaw_Init: u32 = 11051336;
+pub const fnYappingMaw_Main: u32 = 11051537;
+pub const fnYappingMaw_Touch: u32 = 11052953;
+pub const fnYappingMaw_Shot: u32 = 11052989;
+pub const fnYappingMaw_Frozen: u32 = 11053109;
+pub const fnKago_Init: u32 = 11053894;
+pub const fnKago_Main: u32 = 11053941;
+pub const fnKago_Shot: u32 = 11053955;
+pub const fnNorfairLavaMan_Instr_1: u32 = 11054610;
+pub const fnNorfairLavaMan_Instr_8: u32 = 11054630;
+pub const fnNorfairLavaMan_Instr_14: u32 = 11054640;
+pub const fnNorfairLavaMan_Instr_2: u32 = 11054650;
+pub const fnNorfairLavaMan_Instr_7: u32 = 11054661;
+pub const fnNorfairLavaMan_Instr_10: u32 = 11054672;
+pub const fnNorfairLavaMan_Instr_12: u32 = 11054682;
+pub const fnNorfairLavaMan_Instr_9: u32 = 11054692;
+pub const fnNorfairLavaMan_Instr_11: u32 = 11054728;
+pub const fnNorfairLavaMan_Instr_13: u32 = 11054742;
+pub const fnNorfairLavaMan_Instr_5: u32 = 11054778;
+pub const fnNorfairLavaMan_Instr_15: u32 = 11054794;
+pub const fnNorfairLavaMan_Instr_4: u32 = 11054820;
+pub const fnNorfairLavaMan_Instr_16: u32 = 11054846;
+pub const fnNorfairLavaMan_Instr_6: u32 = 11054872;
+pub const fnNorfairLavaMan_Instr_3: u32 = 11054916;
+pub const fnNorfairLavaMan_Init: u32 = 11054987;
+pub const fnNorfairLavaMan_Func_6: u32 = 11055282;
+pub const fnNorfairLavaMan_Main: u32 = 11055370;
+pub const fnNorfairLavaMan_Func_7: u32 = 11055386;
+pub const fnNorfairLavaMan_Func_8: u32 = 11055477;
+pub const fnsub_A8B193: u32 = 11055507;
+pub const fnNorfairLavaMan_Func_9: u32 = 11055544;
+pub const fnNorfairLavaMan_Func_10: u32 = 11055581;
+pub const fnNorfairLavaMan_Func_11: u32 = 11055620;
+pub const fnsub_A8B291: u32 = 11055761;
+pub const fnNorfairLavaMan_Func_13: u32 = 11055765;
+pub const fnNorfairLavaMan_Func_15: u32 = 11055885;
+pub const fnNorfairLavaMan_Func_16: u32 = 11055903;
+pub const fnNorfairLavaMan_Func_17: u32 = 11055958;
+pub const fnNorfairLavaMan_Func_18: u32 = 11056039;
+pub const fnNorfairLavaMan_Powerbomb: u32 = 11056128;
+pub const fnNorfairLavaMan_Touch: u32 = 11056134;
+pub const fnNorfairLavaMan_Shot: u32 = 11056140;
+pub const fnBeetom_Instr_1: u32 = 11056990;
+pub const fnBeetom_Init: u32 = 11057014;
+pub const fnBeetom_Main: u32 = 11057165;
+pub const fnBeetom_Touch: u32 = 11058734;
+pub const fnBeetom_Shot: u32 = 11058860;
+pub const fnMaridiaFloater_Init: u32 = 11059657;
+pub const fnMaridiaFloater_Main: u32 = 11059740;
+pub const fnMaridiaFloater_Func_3: u32 = 11059843;
+pub const fnMaridiaFloater_Func_4: u32 = 11059878;
+pub const fnMaridiaFloater_Func_5: u32 = 11059919;
+pub const fnMaridiaFloater_Func_6: u32 = 11060075;
+pub const fnMaridiaFloater_Func_7: u32 = 11060193;
+pub const fnMaridiaFloater_Func_8: u32 = 11060329;
+pub const fnMaridiaFloater_Func_9: u32 = 11060444;
+pub const fnMaridiaFloater_Func_10: u32 = 11060480;
+pub const fnMaridiaFloater_Func_11: u32 = 11060509;
+pub const fnnullsub_256: u32 = 11060584;
+pub const fnMaridiaFloater_Func_12: u32 = 11060585;
+pub const fnMaridiaFloater_Func_13: u32 = 11060639;
+pub const fnMaridiaFloater_Touch: u32 = 11060670;
+pub const fnMaridiaFloater_Shot: u32 = 11060719;
+pub const fnMaridiaFloater_Powerbomb: u32 = 11060799;
+pub const fnWreckedShipRobot_Init: u32 = 11062135;
+pub const fnWreckedShipRobotDeactivated_Init: u32 = 11062220;
+pub const fnWreckedShipRobot_Main: u32 = 11062326;
+pub const fnnullsub_342: u32 = 11062374;
+pub const fnWreckedShipRobot_Func_1: u32 = 11062375;
+pub const fnWreckedShipRobot_Instr_4: u32 = 11062537;
+pub const fnWreckedShipRobot_Instr_9: u32 = 11062692;
+pub const fnWreckedShipRobot_Instr_6: u32 = 11062762;
+pub const fnWreckedShipRobot_Instr_8: u32 = 11062917;
+pub const fnWreckedShipRobot_Instr_7: u32 = 11062987;
+pub const fnWreckedShipRobot_Instr_15: u32 = 11062991;
+pub const fnWreckedShipRobot_Instr_18: u32 = 11063146;
+pub const fnWreckedShipRobot_Instr_16: u32 = 11063216;
+pub const fnWreckedShipRobot_Instr_17: u32 = 11063371;
+pub const fnWreckedShipRobot_Instr_3: u32 = 11063441;
+pub const fnWreckedShipRobot_Instr_10: u32 = 11063490;
+pub const fnWreckedShipRobot_Instr_14: u32 = 11063494;
+pub const fnWreckedShipRobot_Instr_2: u32 = 11063506;
+pub const fnWreckedShipRobot_Instr_13: u32 = 11063552;
+pub const fnWreckedShipRobot_Instr_1: u32 = 11063559;
+pub const fnWreckedShipRobot_Instr_12: u32 = 11063601;
+pub const fnWreckedShipRobot_Instr_5: u32 = 11063613;
+pub const fnWreckedShipRobot_Instr_11: u32 = 11063659;
+pub const fnWreckedShipRobotDeactivated_Touch: u32 = 11063668;
+pub const fnWreckedShipRobotDeactivated_Shot: u32 = 11063693;
+pub const fnWreckedShipRobot_Shot: u32 = 11063698;
+pub const fnMaridiaPuffer_Init: u32 = 11065545;
+pub const fnMaridiaPuffer_Main: u32 = 11065611;
+pub const fnMaridiaPuffer_Shot: u32 = 11066132;
+pub const fnWalkingLavaSeahorse_Init: u32 = 11066573;
+pub const fnWalkingLavaSeahorse_Main: u32 = 11066731;
+pub const fnWalkingLavaSeahorse_Instr_4: u32 = 11067164;
+pub const fnWalkingLavaSeahorse_Instr_3: u32 = 11067187;
+pub const fnWalkingLavaSeahorse_Instr_5: u32 = 11067193;
+pub const fnWalkingLavaSeahorse_Instr_6: u32 = 11067199;
+pub const fnWalkingLavaSeahorse_Instr_2: u32 = 11067235;
+pub const fnWalkingLavaSeahorse_Instr_1: u32 = 11067249;
+pub const fnWreckedShipOrbs_Init: u32 = 11068296;
+pub const fnWreckedShipOrbs_Main: u32 = 11068355;
+pub const fnWreckedShipSpark_Instr_2: u32 = 11068957;
+pub const fnWreckedShipSpark_Instr_1: u32 = 11068970;
+pub const fnWreckedShipSpark_Init: u32 = 11068983;
+pub const fnWreckedShipSpark_Main: u32 = 11069070;
+pub const fnWreckedShipSpark_Shot: u32 = 11069198;
+pub const fnBlueBrinstarFaceBlock_Init: u32 = 11069486;
+pub const fnBlueBrinstarFaceBlock_Func_1: u32 = 11069550;
+pub const fnBlueBrinstarFaceBlock_Main: u32 = 11069614;
+pub const fnBlueBrinstarFaceBlock_Shot: u32 = 11069725;
+pub const fnKiHunter_Init: u32 = 11071880;
+pub const fnKiHunterWings_Init: u32 = 11072020;
+pub const fnKiHunter_Main: u32 = 11072092;
+pub const fnKiHunterWings_Main: u32 = 11072098;
+pub const fnKiHunter_Instr_1: u32 = 11072806;
+pub const fnKiHunter_Instr_2: u32 = 11072996;
+pub const fnKiHunter_Instr_3: u32 = 11073151;
+pub const fnKiHunter_Instr_4: u32 = 11073234;
+pub const fnKiHunter_Instr_5: u32 = 11073240;
+pub const fnKiHunter_Shot: u32 = 11073281;
+pub const fnEnemy_GrappleReact_CancelBeam_A9: u32 = 11108367;
+pub const fnEnemy_NormalPowerBombAI_A9: u32 = 11108407;
+pub const fnEnemy_NormalFrozenAI_A9: u32 = 11108417;
+pub const fnnullsub_170_A9: u32 = 11108428;
+pub const fnEnemyInstr_Sleep_A9: u32 = 11108655;
+pub const fnMotherBrainsBody_Init: u32 = 11110023;
+pub const fnMotherBrainsBrain_Init: u32 = 11110149;
+pub const fnMotherBrainsBody_Hurt: u32 = 11110206;
+pub const fnnullsub_264: u32 = 11110278;
+pub const fnMotherBrainsBody_Powerbomb: u32 = 11110279;
+pub const fnMotherBrainsBrain_Hurt: u32 = 11110283;
+pub const fnMotherBrain_DrawBrainNeck_EnemyGfxDrawHook: u32 = 11110345;
+pub const fnMotherBrainsBrain_GfxDrawHook: u32 = 11110365;
+pub const fnMotherBrainsTubesFalling_Init: u32 = 11111221;
+pub const fnMotherBrainsTubesFalling_Main: u32 = 11111301;
+pub const fnMotherBrain_Instr_MoveBodyUp10Left4: u32 = 11113910;
+pub const fnMotherBrain_Instr_MoveBodyUp16Left4: u32 = 11113920;
+pub const fnMotherBrain_Instr_MoveBodyUp12Right2: u32 = 11113930;
+pub const fnMotherBrain_Instr_MoveDown12Left4: u32 = 11113950;
+pub const fnMotherBrain_Instr_MoveDown16Right2: u32 = 11113960;
+pub const fnMotherBrain_Instr_MoveDown10Right2: u32 = 11113970;
+pub const fnMotherBrain_Instr_MoveUp2Right1: u32 = 11113980;
+pub const fnMotherBrain_Instr_MoveRight2: u32 = 11113996;
+pub const fnMotherBrain_Instr_MoveUp1: u32 = 11114012;
+pub const fnMotherBrain_Instr_MoveUp1Right3_Sfx: u32 = 11114018;
+pub const fnMotherBrain_Instr_Down2Right15: u32 = 11114040;
+pub const fnMotherBrain_Instr_Down4Right6: u32 = 11114056;
+pub const fnMotherBrain_Instr_Up4Left2: u32 = 11114072;
+pub const fnMotherBrain_Instr_Up2Left1_Sfx: u32 = 11114088;
+pub const fnMotherBrain_Instr_Up2Left1_Sfx2: u32 = 11114110;
+pub const fnMotherBrain_Instr_MoveLeft2: u32 = 11114132;
+pub const fnMotherBrain_Instr_MoveDown1: u32 = 11114148;
+pub const fnMotherBrain_Instr_MoveDown1Left3: u32 = 11114154;
+pub const fnMotherBrain_Instr_MoveUp2Left15_Sfx: u32 = 11114170;
+pub const fnMotherBrain_Instr_MoveUp4Left6: u32 = 11114192;
+pub const fnMotherBrain_Instr_MoveDown4Right2: u32 = 11114208;
+pub const fnMotherBrain_Instr_MoveDown2Right1: u32 = 11114224;
+pub const fnMotherBrain_Instr_SetPose_Standing: u32 = 11114240;
+pub const fnMotherBrain_Instr_SetPose_Walking: u32 = 11114248;
+pub const fnMotherBrain_Instr_SetPose_Crouched: u32 = 11114256;
+pub const fnMotherBrain_Instr_SetPose_CrouchedTrans: u32 = 11114264;
+pub const fnMotherBrain_Instr_SetPose_DeathBeamMode: u32 = 11114272;
+pub const fnMotherBrain_Instr_SetPose_LeaningDown: u32 = 11114280;
+pub const fnMotherBrain_Instr_SpawnEprojToOffset: u32 = 11115208;
+pub const fnMotherBrain_Instr_SpawnDeathBeamEproj: u32 = 11115247;
+pub const fnMotherBrain_Instr_IncrBeamAttackPhase: u32 = 11115269;
+pub const fnMotherBrainsBody_Shot: u32 = 11121923;
+pub const fnMotherBrainsBrain_Shot: u32 = 11121927;
+pub const fnnullsub_47: u32 = 11122117;
+pub const fnMotherBrainsBrain_Touch: u32 = 11122118;
+pub const fnShitroidInCutscene_Init: u32 = 11126544;
+pub const fnShitroidInCutscene_Main: u32 = 11126649;
+pub const fnShitroidInCutscene_Touch: u32 = 11128579;
+pub const fnShitroid_Instr_1: u32 = 11128756;
+pub const fnShitroid_Instr_2: u32 = 11128778;
+pub const fnDeadTorizo_Init: u32 = 11129608;
+pub const fnDeadTorizo_Main: u32 = 11129704;
+pub const fnDeadTorizo_MainGfxHook: u32 = 11129754;
+pub const fnDeadTorizo_Powerbomb: u32 = 11129898;
+pub const fnDeadTorizo_Shot: u32 = 11129907;
+pub const fnDeadSidehopper_Init: u32 = 11130806;
+pub const fnDeadZoomer_Init: u32 = 11130953;
+pub const fnDeadRipper_Init: u32 = 11130998;
+pub const fnDeadSkree_Init: u32 = 11131039;
+pub const fnDeadSidehopper_Powerbomb: u32 = 11131084;
+pub const fnDeadSidehopper_Main: u32 = 11131099;
+pub const fnDeadZoomer_Powerbomb: u32 = 11132141;
+pub const fnDeadZoomer_Shot: u32 = 11132152;
+pub const fnDeadRipper_Powerbomb: u32 = 11132157;
+pub const fnDeadRipper_Shot: u32 = 11132168;
+pub const fnDeadSkree_Powerbomb: u32 = 11132173;
+pub const fnDeadSkree_Shot: u32 = 11132184;
+pub const fnDeadSidehopper_Shot: u32 = 11132189;
+pub const fnDeadSidehopper_Touch: u32 = 11132228;
+pub const fnsub_A9ECD0: u32 = 11136208;
+pub const fnShitroid_Init: u32 = 11136823;
+pub const fnShitroid_Powerbomb: u32 = 11136954;
+pub const fnShitroid_Main: u32 = 11136965;
+pub const fnShitroid_Touch: u32 = 11138953;
+pub const fnShitroid_Shot: u32 = 11139138;
+pub const fnShitroid_Instr_3: u32 = 11139360;
+pub const fnShitroid_Instr_4: u32 = 11139382;
+pub const fnShitroid_Instr_6: u32 = 11139472;
+pub const fnShitroid_Instr_5: u32 = 11139476;
+pub const fnEnemy_GrappleReact_CancelBeam_AA: u32 = 11173903;
+pub const fnEnemy_NormalPowerBombAI_AA: u32 = 11173943;
+pub const fnEnemy_NormalFrozenAI_AA: u32 = 11173953;
+pub const fnnullsub_170_AA: u32 = 11173964;
+pub const fnEnemy_SetAiPreInstr_AA: u32 = 11173995;
+pub const fnEnemy_ClearAiPreInstr_AA: u32 = 11174004;
+pub const fnnullsub_171_AA: u32 = 11174011;
+pub const fnEnemyInstr_StopScript_AA: u32 = 11174012;
+pub const fnEnemyInstr_Goto_AA: u32 = 11174125;
+pub const fnEnemyInstr_DecTimerAndGoto2_AA: u32 = 11174160;
+pub const fnEnemyInstr_SetTimer_AA: u32 = 11174179;
+pub const fnEnemyInstr_Sleep_AA: u32 = 11174191;
+pub const fnEnemyInstr_WaitNframes_AA: u32 = 11174202;
+pub const fnEnemyInstr_CopyToVram_AA: u32 = 11174219;
+pub const fnTorizo_Instr_3: u32 = 11186332;
+pub const fnTorizo_Instr_31: u32 = 11186461;
+pub const fnTorizo_Instr_33: u32 = 11186622;
+pub const fnTorizo_Instr_36: u32 = 11186724;
+pub const fnTorizo_Instr_37: u32 = 11186734;
+pub const fnTorizo_Instr_35: u32 = 11186744;
+pub const fnTorizo_Instr_38: u32 = 11186765;
+pub const fnTorizo_Instr_6: u32 = 11186801;
+pub const fnTorizo_Instr_5: u32 = 11188557;
+pub const fnTorizo_Instr_9: u32 = 11188561;
+pub const fnTorizo_Instr_7: u32 = 11190984;
+pub const fnTorizo_Instr_2: u32 = 11190985;
+pub const fnTorizo_Instr_8: u32 = 11190993;
+pub const fnTorizo_Instr_25: u32 = 11191001;
+pub const fnTorizo_Instr_22: u32 = 11191021;
+pub const fnTorizo_Instr_19: u32 = 11191031;
+pub const fnTorizo_Instr_32: u32 = 11191037;
+pub const fnTorizo_Instr_30: u32 = 11191043;
+pub const fnTorizo_Instr_34: u32 = 11191087;
+pub const fnTorizo_Instr_24: u32 = 11191114;
+pub const fnTorizo_Instr_12: u32 = 11191131;
+pub const fnTorizo_Instr_10: u32 = 11191149;
+pub const fnTorizo_Instr_11: u32 = 11191159;
+pub const fnTorizo_Instr_29: u32 = 11191178;
+pub const fnTorizo_Instr_1: u32 = 11191200;
+pub const fnTorizo_Instr_28: u32 = 11191222;
+pub const fnTorizo_Instr_4: u32 = 11191244;
+pub const fnTorizo_Instr_40: u32 = 11191326;
+pub const fnTorizo_Instr_16: u32 = 11191408;
+pub const fnTorizo_Instr_27: u32 = 11191525;
+pub const fnTorizo_Instr_23: u32 = 11191642;
+pub const fnTorizo_Instr_14: u32 = 11191655;
+pub const fnTorizo_Instr_15: u32 = 11191691;
+pub const fnTorizo_Instr_26: u32 = 11191716;
+pub const fnTorizo_Instr_18: u32 = 11191755;
+pub const fnTorizo_Instr_20: u32 = 11191779;
+pub const fnTorizo_Instr_44: u32 = 11191794;
+pub const fnTorizo_Instr_21: u32 = 11191809;
+pub const fnTorizo_Instr_17: u32 = 11191824;
+pub const fnTorizo_Instr_13: u32 = 11191832;
+pub const fnTorizo_Hurt: u32 = 11191934;
+pub const fnTorizo_Main: u32 = 11191972;
+pub const fnTorizo_Func_5: u32 = 11192146;
+pub const fnTorizo_Func_6: u32 = 11192360;
+pub const fnTorizo_Func_7: u32 = 11192364;
+pub const fnTorizo_Init: u32 = 11192447;
+pub const fnnullsub_344: u32 = 11192670;
+pub const fnGoldTorizo_Touch: u32 = 11192695;
+pub const fnTorizo_Shot: u32 = 11192700;
+pub const fnnullsub_271: u32 = 11192769;
+pub const fnTorizo_Func_8: u32 = 11192770;
+pub const fnTorizo_Instr_39: u32 = 11193038;
+pub const fnTorizo_Instr_41: u32 = 11193054;
+pub const fnTorizo_Instr_42: u32 = 11193058;
+pub const fnTorizo_Instr_48: u32 = 11193815;
+pub const fnTorizo_Instr_57: u32 = 11194601;
+pub const fnTorizo_Instr_58: u32 = 11194611;
+pub const fnTorizo_Instr_59: u32 = 11194747;
+pub const fnTorizo_Instr_62: u32 = 11194759;
+pub const fnTorizo_Instr_63: u32 = 11194855;
+pub const fnGoldTorizo_Main: u32 = 11195241;
+pub const fnTorizo_Instr_56: u32 = 11195279;
+pub const fnTorizo_Instr_60: u32 = 11195287;
+pub const fnTorizo_Instr_46: u32 = 11195295;
+pub const fnGoldTorizo_Hurt: u32 = 11195322;
+pub const fnTorizo_Instr_47: u32 = 11195360;
+pub const fnTorizo_Instr_49: u32 = 11195370;
+pub const fnTorizo_Instr_61: u32 = 11195446;
+pub const fnTorizo_Instr_53: u32 = 11195461;
+pub const fnTorizo_Instr_55: u32 = 11195508;
+pub const fnTorizo_Instr_52: u32 = 11195547;
+pub const fnTorizo_Instr_50: u32 = 11195578;
+pub const fnTorizo_Instr_43: u32 = 11195635;
+pub const fnTorizo_Instr_51: u32 = 11195645;
+pub const fnTorizo_Instr_45: u32 = 11195686;
+pub const fnTorizo_Instr_54: u32 = 11195725;
+pub const fnTorizo_D5ED: u32 = 11195885;
+pub const fnTorizo_D5F1: u32 = 11195889;
+pub const fnGoldTorizo_Shot: u32 = 11196007;
+pub const fnnullsub_49: u32 = 11196359;
+pub const fnTourianEntranceStatue_Init: u32 = 11196360;
+pub const fnShaktool_Instr_2: u32 = 11196721;
+pub const fnShaktool_Instr_3: u32 = 11196735;
+pub const fnShaktool_Instr_4: u32 = 11196746;
+pub const fnShaktool_Instr_5: u32 = 11196755;
+pub const fnShaktool_Instr_6: u32 = 11196831;
+pub const fnShaktool_Instr_1: u32 = 11196858;
+pub const fnShaktool_Hurt: u32 = 11197603;
+pub const fnnullsub_274: u32 = 11197610;
+pub const fnnullsub_275: u32 = 11197611;
+pub const fnShaktool_DCAC: u32 = 11197612;
+pub const fnShaktool_DCD7: u32 = 11197655;
+pub const fnShaktool_DD25: u32 = 11197733;
+pub const fnShaktool_Init: u32 = 11198019;
+pub const fnShaktool_Touch: u32 = 11198255;
+pub const fnShaktool_Shot: u32 = 11198260;
+pub const fnShaktool_Instr_9: u32 = 11199529;
+pub const fnShaktool_Instr_11: u32 = 11199542;
+pub const fnShaktool_Instr_10: u32 = 11199549;
+pub const fnsub_AAE445: u32 = 11199557;
+pub const fnShaktool_Instr_8: u32 = 11199871;
+pub const fnShaktool_Instr_13: u32 = 11199879;
+pub const fnShaktool_Instr_12: u32 = 11199887;
+pub const fnShaktool_Instr_7: u32 = 11199960;
+pub const fnShaktool_Instr_14: u32 = 11200240;
+pub const fnN00bTubeCracks_Init: u32 = 11200278;
+pub const fnChozoStatue_Init: u32 = 11200293;
+pub const fnnullsub_276: u32 = 11200422;
+pub const fnChozoStatue_Main: u32 = 11200423;
+pub const fnShaktool_PreInstr_0: u32 = 11200430;
+pub const fnnullsub_277: u32 = 11200474;
+pub const fnnullsub_51: u32 = 11200475;
+pub const fnnullsub_52: u32 = 11200476;
+pub const fnEnemy_GrappleReact_CancelBeam_B2: u32 = 11698191;
+pub const fnEnemy_NormalPowerBombAI_B2: u32 = 11698231;
+pub const fnEnemy_NormalFrozenAI_B2: u32 = 11698241;
+pub const fnnullsub_170_B2: u32 = 11698252;
+pub const fnEnemyInstr_Goto_B2: u32 = 11698413;
+pub const fnEnemyInstr_DecTimerAndGoto2_B2: u32 = 11698448;
+pub const fnEnemyInstr_SetTimer_B2: u32 = 11698467;
+pub const fnEnemyInstr_Sleep_B2: u32 = 11698479;
+pub const fnEnemyInstr_WaitNframes_B2: u32 = 11698490;
+pub const fnWalkingSpacePirates_Powerbomb: u32 = 11700071;
+pub const fnWalkingSpacePirates_Touch: u32 = 11700076;
+pub const fnWalkingSpacePirates_Shot: u32 = 11700089;
+pub const fnWalkingSpacePirates_87C8: u32 = 11700168;
+pub const fnWalkingSpacePirates_883E: u32 = 11700286;
+pub const fnSpacePirates_Instr_MovePixelsDownAndChangeDirFaceRight: u32 = 11726400;
+pub const fnSpacePirates_Instr_MovePixelsDownAndChangeDirFaceLeft: u32 = 11726450;
+pub const fnSpacePirates_Instr_RandomNewDirFaceR: u32 = 11726500;
+pub const fnSpacePirates_Instr_RandomNewDirFaceL: u32 = 11726524;
+pub const fnSpacePirates_Instr_PrepareWallJumpR: u32 = 11726548;
+pub const fnSpacePirates_Instr_PrepareWallJumpL: u32 = 11726589;
+pub const fnSpacePirates_Instr_FireLaserL: u32 = 11726634;
+pub const fnSpacePirates_Instr_FireLaserR: u32 = 11726685;
+pub const fnSpacePirates_Instr_SetEnemyFunc: u32 = 11726723;
+pub const fnSpacePirates_Instr_PlaySfx: u32 = 11726739;
+pub const fnWallSpacePirates_Init: u32 = 11726751;
+pub const fnWallSpacePirates_Main: u32 = 11726893;
+pub const fnSpacePirates_Instr_20: u32 = 11728182;
+pub const fnSpacePirates_Instr_16: u32 = 11728198;
+pub const fnSpacePirates_Instr_15: u32 = 11728228;
+pub const fnSpacePirates_Instr_18: u32 = 11728272;
+pub const fnSpacePirates_Instr_17: u32 = 11728342;
+pub const fnNinjaSpacePirates_Init: u32 = 11728350;
+pub const fnNinjaSpacePirates_Main: u32 = 11728546;
+pub const fnSpacePirates_Instr_19: u32 = 11729257;
+pub const fnSpacePirates_Instr_21: u32 = 11729469;
+pub const fnSpacePirates_Instr_12: u32 = 11730024;
+pub const fnSpacePirates_Instr_14: u32 = 11730064;
+pub const fnSpacePirates_Instr_11: u32 = 11730104;
+pub const fnSpacePirates_Instr_13: u32 = 11730120;
+pub const fnWalkingSpacePirates_Init: u32 = 11730178;
+pub const fnWalkingSpacePirates_Main: u32 = 11730226;
+pub const fnEnemy_GrappleReact_NoInteract_B3: u32 = 11763712;
+pub const fnEnemy_GrappleReact_KillEnemy_B3: u32 = 11763722;
+pub const fnEnemy_GrappleReact_CancelBeam_B3: u32 = 11763727;
+pub const fnEnemy_NormalTouchAI_B3: u32 = 11763747;
+pub const fnEnemy_NormalShotAI_B3: u32 = 11763757;
+pub const fnEnemy_NormalPowerBombAI_B3: u32 = 11763767;
+pub const fnEnemy_NormalFrozenAI_B3: u32 = 11763777;
+pub const fnnullsub_170_B3: u32 = 11763788;
+pub const fnEnemy_SetAiPreInstr_B3: u32 = 11763819;
+pub const fnEnemy_ClearAiPreInstr_B3: u32 = 11763828;
+pub const fnnullsub_171_B3: u32 = 11763835;
+pub const fnEnemyInstr_Goto_B3: u32 = 11763949;
+pub const fnEnemyInstr_DecTimerAndGoto2_B3: u32 = 11763984;
+pub const fnEnemyInstr_SetTimer_B3: u32 = 11764003;
+pub const fnEnemyInstr_Sleep_B3: u32 = 11764015;
+pub const fnUnusedSpinningTurtleEye_Init: u32 = 11765499;
+pub const fnUnusedSpinningTurtleEye_Main: u32 = 11765518;
+pub const fnBrinstarPipeBug_Init: u32 = 11765819;
+pub const fnBrinstarPipeBug_Main: u32 = 11765882;
+pub const fnBrinstarPipeBug_PreInstr_1: u32 = 11765888;
+pub const fnBrinstarPipeBug_PreInstr_2: u32 = 11765904;
+pub const fnBrinstarPipeBug_PreInstr_3: u32 = 11765987;
+pub const fnBrinstarPipeBug_PreInstr_4: u32 = 11766044;
+pub const fnBrinstarPipeBug_PreInstr_5: u32 = 11766142;
+pub const fnNorfairPipeBug_Init: u32 = 11766625;
+pub const fnNorfairPipeBug_Main: u32 = 11766686;
+pub const fnNorfairPipeBug_Func_5: u32 = 11767039;
+pub const fnBrinstarYellowPipeBug_Init: u32 = 11767628;
+pub const fnBrinstarYellowPipeBug_Main: u32 = 11767726;
+pub const fnBotwoon_Instr_1: u32 = 11769031;
+pub const fnBotwoon_Instr_2: u32 = 11769047;
+pub const fnBotwoon_Instr_3: u32 = 11769063;
+pub const fnBotwoon_Instr_4: u32 = 11769079;
+pub const fnBotwoon_Instr_5: u32 = 11769095;
+pub const fnBotwoon_Instr_6: u32 = 11769111;
+pub const fnBotwoon_Instr_7: u32 = 11769127;
+pub const fnBotwoon_Instr_8: u32 = 11769143;
+pub const fnBotwoon_Instr_9: u32 = 11769159;
+pub const fnBotwoon_Instr_10: u32 = 11769175;
+pub const fnBotwoon_Instr_SetSpitting: u32 = 11769191;
+pub const fnBotwoon_Instr_QueueSpitSfx: u32 = 11769202;
+pub const fnBotwoon_Init: u32 = 11769219;
+pub const fnBotwoon_Main: u32 = 11769448;
+pub const fnBotwoon_Func_26: u32 = 11771328;
+pub const fnBotwoon_Func_27: u32 = 11771517;
+pub const fnBotwoon_Func_28: u32 = 11771616;
+pub const fnBotwoon_Func_29: u32 = 11771700;
+pub const fnBotwoon_Func_30: u32 = 11771770;
+pub const fnBotwoon_Touch: u32 = 11771903;
+pub const fnBotwoon_Shot: u32 = 11771926;
+pub const fnBotwoon_Powerbomb: u32 = 11771969;
+pub const fnEscapeEtecoon_Instr_1: u32 = 11789637;
+pub const fnEscapeEtecoon_Instr_2: u32 = 11789840;
+pub const fnEscapeEtecoon_Main: u32 = 11789909;
+pub const fnEscapeEtecoon_E65C: u32 = 11789916;
+pub const fnEscapeEtecoon_E670: u32 = 11789936;
+pub const fnEscapeEtecoon_E680: u32 = 11789952;
+pub const fnEscapeEtecoon_Init: u32 = 11790027;
+pub const fnEscapeDachora_Instr_2: u32 = 11791016;
+pub const fnEscapeDachora_Instr_3: u32 = 11791032;
+pub const fnEscapeDachora_Instr_1: u32 = 11791049;
+pub const fnEscapeDachora_Instr_4: u32 = 11791063;
+pub const fnEscapeDachora_Init: u32 = 11791077;
+pub const fnnullsub_54: u32 = 11791130;
 #[inline]
 unsafe fn gEnemyData(o: i32, game: &mut Game) -> *mut EnemyData {
-    (&raw mut game.g_ram as *mut uint8)
+    (&raw mut game.g_ram as *mut u8)
         .offset(0xf78)
         .offset(o as isize) as *mut EnemyData
 }
 #[inline]
 unsafe fn gEnemySpawnData(o: i32, game: &mut Game) -> *mut EnemySpawnData {
-    (&raw mut game.g_ram as *mut uint8)
+    (&raw mut game.g_ram as *mut u8)
         .offset(0x7000)
         .offset(o as isize) as *mut EnemySpawnData
 }
@@ -1653,35 +1646,27 @@ pub unsafe fn CreateADudShot(game: &mut Game) {
 }
 pub fn func_nullsub_169() {}
 pub fn func_nullsub_170() {}
-pub unsafe fn EnemyInstr_SetAiPreInstr(
-    k: uint16,
-    jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn EnemyInstr_SetAiPreInstr(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     game.enemy_instructions(k).set_ai_preinstr(*jp);
     jp.add(1)
 }
-pub fn EnemyInstr_ClearAiPreInstr(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+pub fn EnemyInstr_ClearAiPreInstr(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     game.enemy_instructions(k).set_ai_preinstr(0x807b);
     jp
 }
 pub fn func_nullsub_171() {}
-pub fn EnemyInstr_StopScript(k: uint16, _jp: *const uint16, game: &mut Game) -> *const uint16 {
+pub fn EnemyInstr_StopScript(k: u16, _jp: *const u16, game: &mut Game) -> *const u16 {
     let properties = game.enemy_instructions(k).properties() | kEnemyProps_Deleted as u16;
     game.enemy_instructions(k).set_properties(properties);
     core::ptr::null()
 }
-pub unsafe fn EnemyInstr_Goto(_k: uint16, jp: *const uint16) -> *const uint16 {
-    *jp as usize as *const uint16
+pub unsafe fn EnemyInstr_Goto(_k: u16, jp: *const u16) -> *const u16 {
+    *jp as usize as *const u16
 }
-pub unsafe fn EnemyInstr_GotoRel(_k: uint16, jp: *const uint16) -> *const uint16 {
-    (jp as *const uint8).offset(isize::from(*(jp as *const int8))) as *const uint16
+pub unsafe fn EnemyInstr_GotoRel(_k: u16, jp: *const u16) -> *const u16 {
+    (jp as *const u8).offset(isize::from(*(jp as *const i8))) as *const u16
 }
-pub unsafe fn EnemyInstr_DecTimerAndGoto(
-    k: uint16,
-    jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn EnemyInstr_DecTimerAndGoto(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let timer = game.enemy_instructions(k).timer();
     let decremented = game.enemy_instructions(k).timer().wrapping_sub(1);
     game.enemy_instructions(k).set_timer(decremented);
@@ -1691,84 +1676,68 @@ pub unsafe fn EnemyInstr_DecTimerAndGoto(
         EnemyInstr_Goto(k, jp)
     }
 }
-pub unsafe fn EnemyInstr_DecTimerAndGotoRel(
-    k: uint16,
-    jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn EnemyInstr_DecTimerAndGotoRel(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let timer = game.enemy_instructions(k).timer_low();
     let decremented = game.enemy_instructions(k).timer_low().wrapping_sub(1);
     game.enemy_instructions(k).set_timer_low(decremented);
     if timer == 1 {
-        (jp as *const uint8).add(1) as *const uint16
+        (jp as *const u8).add(1) as *const u16
     } else {
         EnemyInstr_GotoRel(k, jp)
     }
 }
-pub unsafe fn EnemyInstr_SetTimer(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+pub unsafe fn EnemyInstr_SetTimer(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     game.enemy_instructions(k).set_timer(*jp);
     jp.add(1)
 }
-pub unsafe fn EnemyInstr_Skip2bytes(_k: uint16, jp: *const uint16) -> *const uint16 {
+pub unsafe fn EnemyInstr_Skip2bytes(_k: u16, jp: *const u16) -> *const u16 {
     jp.add(1)
 }
-pub unsafe fn EnemyInstr_Sleep(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+pub unsafe fn EnemyInstr_Sleep(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let base_ptr = RomBankBase(game.enemy_instructions(k).bank(), game);
-    let instruction = (jp as *const uint8).sub(2).offset_from(base_ptr) as uint16;
+    let instruction = (jp as *const u8).sub(2).offset_from(base_ptr) as u16;
     game.enemy_instructions(k)
         .set_current_instruction(instruction);
     core::ptr::null()
 }
-pub unsafe fn EnemyInstr_WaitNframes(
-    k: uint16,
-    jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn EnemyInstr_WaitNframes(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let base_ptr = RomBankBase(game.enemy_instructions(k).bank(), game);
     game.enemy_instructions(k).set_instruction_timer(*jp);
-    let instruction = (jp as *const uint8).add(2).offset_from(base_ptr) as uint16;
+    let instruction = (jp as *const u8).add(2).offset_from(base_ptr) as u16;
     game.enemy_instructions(k)
         .set_current_instruction(instruction);
     core::ptr::null()
 }
-pub unsafe fn EnemyInstr_CopyToVram(
-    _k: uint16,
-    jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn EnemyInstr_CopyToVram(_k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let tail = game.vram_write_queue_tail();
     let cursor = game.vram_write_queue_tail();
-    let source = jp as *const uint8;
-    let word = (source as *const uint16).read_unaligned();
+    let source = jp as *const u8;
+    let word = (source as *const u16).read_unaligned();
     game.write_vram_queue_word(cursor, 0, word);
-    let word = (source.add(2) as *const uint16).read_unaligned();
+    let word = (source.add(2) as *const u16).read_unaligned();
     game.write_vram_queue_word(cursor, 2, word);
-    let word = (source.add(3) as *const uint16).read_unaligned();
+    let word = (source.add(3) as *const u16).read_unaligned();
     game.write_vram_queue_word(cursor, 3, word);
-    let word = (source.add(5) as *const uint16).read_unaligned();
+    let word = (source.add(5) as *const u16).read_unaligned();
     game.write_vram_queue_word(cursor, 5, word);
     game.set_vram_write_queue_tail(tail.wrapping_add(7));
-    (jp as usize).wrapping_add(7) as *const uint16
+    (jp as usize).wrapping_add(7) as *const u16
 }
-pub fn EnemyInstr_EnableOffScreenProcessing(
-    k: uint16,
-    jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub fn EnemyInstr_EnableOffScreenProcessing(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let properties = game.enemy_instructions(k).properties() | 0x800;
     game.enemy_instructions(k).set_properties(properties);
     jp
 }
 pub fn EnemyInstr_DisableOffScreenProcessing(
-    k: uint16,
-    jp: *const uint16,
+    k: u16,
+    jp: *const u16,
     game: &mut Game,
-) -> *const uint16 {
+) -> *const u16 {
     let properties = game.enemy_instructions(k).properties() & !0x800;
     game.enemy_instructions(k).set_properties(properties);
     jp
 }
-static kRoomShakes: [uint16; 144] = [
+static kRoomShakes: [u16; 144] = [
     1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 3, 0, 0, 0, 0, 3, 0, 0,
     3, 3, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 2, 0, 2, 0, 0, 2, 0, 2, 2, 2, 2, 2, 3, 0, 3, 0,
     0, 3, 0, 3, 3, 3, 3, 3, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 2, 0, 2, 0, 0, 2, 0, 2, 2, 2, 2, 2,
@@ -1825,11 +1794,11 @@ pub unsafe fn SetAllEnemiesToShakeFor2Frames(game: &mut Game) {
             break;
         }
         (*gEnemyData(ram_word!(game, active_enemy_indexes[v1]) as i32, game)).shake_timer =
-            2 as uint16;
+            2 as u16;
         i += 2 as i32;
     }
 }
-pub unsafe fn CallEnemyGfxDrawHook(ea: uint32, game: &mut Game) {
+pub unsafe fn CallEnemyGfxDrawHook(ea: u32, game: &mut Game) {
     match ea {
         10518604 => (),
         10738444 => Reflec_Func_1(game),
@@ -1852,7 +1821,7 @@ pub unsafe fn DrawSamusEnemiesAndProjectiles(game: &mut Game) {
     DrawSpriteObjects(game);
     DrawBombAndProjectileExplosions(game);
     DrawEprojsWithPriority(EprojPriority::Low, game);
-    let mut phase_varE32: uint16 = 0 as uint16;
+    let mut phase_varE32: u16 = 0 as u16;
     while phase_varE32 != 8u16 {
         if phase_varE32 == 3u16 {
             DrawSamusAndProjectiles(game);
@@ -1860,18 +1829,18 @@ pub unsafe fn DrawSamusEnemiesAndProjectiles(game: &mut Game) {
             DrawEprojsWithPriority(EprojPriority::High, game);
         }
         if ram_word!(game, enemy_drawing_queue_sizes[phase_varE32]) != 0 {
-            let varE36: uint16 = ram_word!(game, enemy_drawing_queue_sizes[phase_varE32]);
-            let varE3A: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0b133))
-                as *const uint8 as *mut uint16)
+            let varE36: u16 = ram_word!(game, enemy_drawing_queue_sizes[phase_varE32]);
+            let varE3A: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0b133)) as *const u8
+                as *mut u16)
                 .offset(phase_varE32 as isize);
-            let mut v1: uint16 = 0 as uint16;
-            let mut varE38: uint16 = 0;
-            set_ram_word!(game.enemy_drawing_queue_sizes[phase_varE32] = 0 as uint16);
+            let mut v1: u16 = 0 as u16;
+            let mut varE38: u16 = 0;
+            set_ram_word!(game.enemy_drawing_queue_sizes[phase_varE32] = 0 as u16);
             loop {
                 varE38 = v1;
-                let v2: *mut uint8 = RomPtr_RAM((varE3A).wrapping_add(v1), game);
-                let v3: uint16 = *(v2 as *mut uint16);
-                *(v2 as *mut uint16) = 0 as uint16;
+                let v2: *mut u8 = RomPtr_RAM((varE3A).wrapping_add(v1), game);
+                let v3: u16 = *(v2 as *mut u16);
+                *(v2 as *mut u16) = 0 as u16;
                 set_ram_word!(game.cur_enemy_index = v3);
                 WriteEnemyOams(game);
                 v1 = (varE38).wrapping_add(2u16);
@@ -1883,11 +1852,11 @@ pub unsafe fn DrawSamusEnemiesAndProjectiles(game: &mut Game) {
         phase_varE32 = phase_varE32.wrapping_add(1);
     }
     CallEnemyGfxDrawHook(
-        Load24((&raw mut game.g_ram as *mut uint8).offset(0x178c) as *mut LongPtr),
+        Load24((&raw mut game.g_ram as *mut u8).offset(0x178c) as *mut LongPtr),
         game,
     );
 }
-pub unsafe fn RecordEnemySpawnData(j: uint16, game: &mut Game) {
+pub unsafe fn RecordEnemySpawnData(j: u16, game: &mut Game) {
     let mut v2: *mut EnemySpawnData = ::core::ptr::null_mut::<EnemySpawnData>();
     let mut v5: *mut EnemySpawnData = ::core::ptr::null_mut::<EnemySpawnData>();
     let v1: *mut EnemyData = gEnemyData(j as i32, game);
@@ -1900,15 +1869,15 @@ pub unsafe fn RecordEnemySpawnData(j: uint16, game: &mut Game) {
     (*v2).extra_properties = (*v1).extra_properties;
     (*v2).param_1 = (*v1).parameter_1;
     (*v2).param_2 = (*v1).parameter_2;
-    let mut r18: uint16 = 0 as uint16;
-    let mut r20: uint16 = 0 as uint16;
-    let mut r22: uint16 = 0 as uint16;
-    let mut r24: uint16 = 0 as uint16;
-    let mut R26: uint16 = 0 as uint16;
-    let mut R28: uint16 = 0 as uint16;
-    let name_ptr: uint16 = (*get_EnemyDef_A2((*v1).enemy_ptr, game)).name_ptr;
+    let mut r18: u16 = 0 as u16;
+    let mut r20: u16 = 0 as u16;
+    let mut r22: u16 = 0 as u16;
+    let mut r24: u16 = 0 as u16;
+    let mut R26: u16 = 0 as u16;
+    let mut R28: u16 = 0 as u16;
+    let name_ptr: u16 = (*get_EnemyDef_A2((*v1).enemy_ptr, game)).name_ptr;
     if name_ptr != 0 {
-        let v4: *const uint16 = RomPtr_B4(name_ptr, game) as *const uint16;
+        let v4: *const u16 = RomPtr_B4(name_ptr, game) as *const u16;
         r18 = *v4.offset(0);
         r20 = *v4.offset(1);
         r22 = *v4.offset(2);
@@ -1917,81 +1886,76 @@ pub unsafe fn RecordEnemySpawnData(j: uint16, game: &mut Game) {
         R28 = *v4.offset(6);
     }
     v5 = gEnemySpawnData(j as i32, game);
-    *(&raw mut (*v5).name as *mut uint8 as *mut uint16) = r18;
-    *((&raw mut (*v5).name as *mut uint8).offset(2) as *mut uint8 as *mut uint16) = r20;
-    *((&raw mut (*v5).name as *mut uint8).offset(4) as *mut uint8 as *mut uint16) = r22;
-    *((&raw mut (*v5).name as *mut uint8).offset(6) as *mut uint8 as *mut uint16) = r24;
-    *((&raw mut (*v5).name as *mut uint8).offset(8) as *mut uint8 as *mut uint16) = R26;
-    *((&raw mut (*v5).name as *mut uint8).offset(10) as *mut uint8 as *mut uint16) = R28;
+    *(&raw mut (*v5).name as *mut u8 as *mut u16) = r18;
+    *((&raw mut (*v5).name as *mut u8).offset(2) as *mut u8 as *mut u16) = r20;
+    *((&raw mut (*v5).name as *mut u8).offset(4) as *mut u8 as *mut u16) = r22;
+    *((&raw mut (*v5).name as *mut u8).offset(6) as *mut u8 as *mut u16) = r24;
+    *((&raw mut (*v5).name as *mut u8).offset(8) as *mut u8 as *mut u16) = R26;
+    *((&raw mut (*v5).name as *mut u8).offset(10) as *mut u8 as *mut u16) = R28;
 }
 pub unsafe fn LoadEnemies(game: &mut Game) {
-    set_ram_word!(game.debug_time_frozen_for_enemies = 0 as uint16);
-    (*((&raw mut game.g_ram as *mut uint8).offset(0x178c) as *mut LongPtr)).bank = 160 as uint8;
-    (*((&raw mut game.g_ram as *mut uint8).offset(0x178c) as *mut LongPtr)).addr =
+    set_ram_word!(game.debug_time_frozen_for_enemies = 0 as u16);
+    (*((&raw mut game.g_ram as *mut u8).offset(0x178c) as *mut LongPtr)).bank = 160 as u8;
+    (*((&raw mut game.g_ram as *mut u8).offset(0x178c) as *mut LongPtr)).addr =
         ((0xa0804ci32) as u16);
-    set_ram_word!(game.enemy_bg2_tilemap_size = 2048 as uint16);
-    set_ram_word!(game.UNUSED_word_7E179E = 0 as uint16);
-    set_ram_word!(game.UNUSED_word_7E17A0 = 0 as uint16);
-    set_ram_word!(game.boss_id = 0 as uint16);
+    set_ram_word!(game.enemy_bg2_tilemap_size = 2048 as u16);
+    set_ram_word!(game.UNUSED_word_7E179E = 0 as u16);
+    set_ram_word!(game.UNUSED_word_7E17A0 = 0 as u16);
+    set_ram_word!(game.boss_id = 0 as u16);
     ClearEnemyDataAndProcessEnemySet(game);
     LoadEnemyTileData(game);
-    set_ram_word!(game.enemy_tile_vram_src = 0 as uint16);
-    set_ram_word!(game.flag_disable_projectile_interaction = 0 as uint16);
+    set_ram_word!(game.enemy_tile_vram_src = 0 as u16);
+    set_ram_word!(game.flag_disable_projectile_interaction = 0 as u16);
     ClearSpriteObjects(game);
 }
 pub unsafe fn ClearEnemyDataAndProcessEnemySet(game: &mut Game) {
     memset(
-        (&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut ::core::ffi::c_void,
+        (&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut ::core::ffi::c_void,
         0 as i32,
         2048 as size_t,
     );
-    if *(RomPtr_A1(ram_word!(game, room_enemy_population_ptr), game) as *mut uint16) != 0xffffu16 {
+    if *(RomPtr_A1(ram_word!(game, room_enemy_population_ptr), game) as *mut u16) != 0xffffu16 {
         ProcessEnemyTilesets(game);
     }
 }
 pub unsafe fn InitializeEnemies(game: &mut Game) {
     memset(
-        (&raw mut game.g_ram as *mut uint8).offset(0x7000) as *mut uint8
-            as *mut ::core::ffi::c_void,
+        (&raw mut game.g_ram as *mut u8).offset(0x7000) as *mut u8 as *mut ::core::ffi::c_void,
         0 as i32,
         0x2800 as size_t,
     );
-    set_ram_word!(game.num_enemies_in_room = 0 as uint16);
-    set_ram_word!(game.num_enemies_killed_in_room = 0 as uint16);
-    set_ram_word!(game.flag_process_all_enemies = 0 as uint16);
+    set_ram_word!(game.num_enemies_in_room = 0 as u16);
+    set_ram_word!(game.num_enemies_killed_in_room = 0 as u16);
+    set_ram_word!(game.flag_process_all_enemies = 0 as u16);
     let mut i: i32 = 286 as i32;
     while i >= 0i32 {
-        set_ram_word!(game.eproj_flags[(i >> 1i32)] = 0 as uint16);
+        set_ram_word!(game.eproj_flags[(i >> 1i32)] = 0 as u16);
         i -= 2 as i32;
     }
     let mut j: i32 = 34 as i32;
     while j >= 0i32 {
-        set_ram_word!(game.eproj_killed_enemy_index[(j >> 1i32)] = -(1 as i32) as uint16);
+        set_ram_word!(game.eproj_killed_enemy_index[(j >> 1i32)] = -(1 as i32) as u16);
         j -= 2 as i32;
     }
-    let mut v4: uint16 = ram_word!(game, room_enemy_population_ptr);
-    if (*get_EnemyPopulation(
-        0xa1 as uint8,
-        ram_word!(game, room_enemy_population_ptr),
-        game,
-    ))
-    .enemy_ptr
+    let mut v4: u16 = ram_word!(game, room_enemy_population_ptr);
+    if (*get_EnemyPopulation(0xa1 as u8, ram_word!(game, room_enemy_population_ptr), game))
+        .enemy_ptr
         == 0xffffu16
     {
         return;
     }
-    set_ram_word!(game.UNUSED_word_7E0E48 = 0 as uint16);
-    let mut v5: uint16 = 0 as uint16;
+    set_ram_word!(game.UNUSED_word_7E0E48 = 0 as u16);
+    let mut v5: u16 = 0 as u16;
     loop {
         LoadEnemyGfxIndexes(v4, v5, game);
-        let EP: *mut EnemyPopulation = get_EnemyPopulation(0xa1 as uint8, v4, game);
+        let EP: *mut EnemyPopulation = get_EnemyPopulation(0xa1 as u8, v4, game);
         let ED: *mut EnemyDef = get_EnemyDef_A2((*EP).enemy_ptr, game);
         let E: *mut EnemyData = gEnemyData(v5 as i32, game);
         (*E).x_width = (*ED).x_radius;
         (*E).y_height = (*ED).y_radius;
         (*E).health = (*ED).health;
-        (*E).layer = (*ED).layer as uint16;
-        *(&raw mut (*E).bank as *mut uint16) = *(&raw mut (*ED).bank as *mut uint16);
+        (*E).layer = (*ED).layer as u16;
+        *(&raw mut (*E).bank as *mut u16) = *(&raw mut (*ED).bank as *mut u16);
         if (*ED).boss_fight_value != 0 {
             set_ram_word!(game.boss_id = (*ED).boss_fight_value);
         }
@@ -2003,58 +1967,58 @@ pub unsafe fn InitializeEnemies(game: &mut Game) {
         (*E).extra_properties = (*EP).extra_properties;
         (*E).parameter_1 = (*EP).parameter1;
         (*E).parameter_2 = (*EP).parameter2;
-        (*E).frame_counter = 0 as uint16;
-        (*E).timer = 0 as uint16;
-        (*E).instruction_timer = 1 as uint16;
-        (*E).frame_counter = 0 as uint16;
+        (*E).frame_counter = 0 as u16;
+        (*E).timer = 0 as u16;
+        (*E).instruction_timer = 1 as u16;
+        (*E).frame_counter = 0 as u16;
         RecordEnemySpawnData(v5, game);
         set_ram_word!(game.cur_enemy_index = v5);
         CallEnemyAi(
-            (((*ED).bank as i32) << 16 as i32 | (*ED).ai_init as i32) as uint32,
+            (((*ED).bank as i32) << 16 as i32 | (*ED).ai_init as i32) as u32,
             game,
         );
-        (*E).spritemap_pointer = 0 as uint16;
+        (*E).spritemap_pointer = 0 as u16;
         if ((*E).properties as i32 & 0x2000 as i32) != 0i32 {
-            let mut v12: uint16 = addr_kSpritemap_Nothing_A4 as uint16;
+            let mut v12: u16 = addr_kSpritemap_Nothing_A4 as u16;
             if ((*E).extra_properties as i32 & 4 as i32) != 0i32 {
-                v12 = addr_kExtendedSpritemap_Nothing_A4 as uint16;
+                v12 = addr_kExtendedSpritemap_Nothing_A4 as u16;
             }
             (*E).spritemap_pointer = v12;
         }
         v5 = (v5).wrapping_add(64u16);
         v4 = (v4).wrapping_add(16u16);
-        if ((*get_EnemyPopulation(0xa1 as uint8, v4, game)).enemy_ptr == 0xffffu16) {
+        if ((*get_EnemyPopulation(0xa1 as u8, v4, game)).enemy_ptr == 0xffffu16) {
             break;
         }
     }
     set_ram_word!(game.first_free_enemy_index = v5);
-    set_ram_word!(game.num_enemies_in_room = (v5 as i32 >> 6 as i32) as uint16);
-    set_ram_word!(game.num_enemy_deaths_left_to_clear = *RomPtr_A1(v4, game).offset(2) as uint16);
+    set_ram_word!(game.num_enemies_in_room = (v5 as i32 >> 6 as i32) as u16);
+    set_ram_word!(game.num_enemy_deaths_left_to_clear = *RomPtr_A1(v4, game).offset(2) as u16);
 }
-pub unsafe fn LoadEnemyGfxIndexes(k: uint16, j: uint16, game: &mut Game) {
+pub unsafe fn LoadEnemyGfxIndexes(k: u16, j: u16, game: &mut Game) {
     let E: *mut EnemyData = gEnemyData(j as i32, game);
     let ES: *mut EnemySpawnData = gEnemySpawnData(j as i32, game);
-    let mut e: uint16 = ram_word!(game, room_enemy_tilesets_ptr);
-    let mut f: uint16 = 0 as uint16;
+    let mut e: u16 = ram_word!(game, room_enemy_tilesets_ptr);
+    let mut f: u16 = 0 as u16;
     loop {
         let ET: *mut EnemyTileset = get_EnemyTileset(e, game);
-        if (*get_EnemyPopulation(0xa1 as uint8, k, game)).enemy_ptr == (*ET).enemy_def {
-            (*ES).palette_index = (((*ET).vram_dst as i32 & 0xf as i32) << 9 as i32) as uint16;
+        if (*get_EnemyPopulation(0xa1 as u8, k, game)).enemy_ptr == (*ET).enemy_def {
+            (*ES).palette_index = (((*ET).vram_dst as i32 & 0xf as i32) << 9 as i32) as u16;
             (*E).palette_index = (*ES).palette_index;
             (*ES).vram_tiles_index = f;
             (*E).vram_tiles_index = (*ES).vram_tiles_index;
             return;
         }
         if (*ET).enemy_def == 0xffffu16 {
-            (*ES).vram_tiles_index = 0 as uint16;
+            (*ES).vram_tiles_index = 0 as u16;
             (*E).vram_tiles_index = (*ES).vram_tiles_index;
-            (*ES).palette_index = 2560 as uint16;
+            (*ES).palette_index = 2560 as u16;
             (*E).palette_index = (*ES).palette_index;
             return;
         }
         f = (f as i32
             + ((*get_EnemyDef_A2((*ET).enemy_def, game)).tile_data_size as i32 >> 5 as i32))
-            as uint16;
+            as u16;
         e = (e).wrapping_add(4u16);
     }
 }
@@ -2062,23 +2026,23 @@ pub unsafe fn LoadEnemyTileData(game: &mut Game) {
     let mut i: i32 = 510 as i32;
     while i >= 0i32 {
         (*gEnemySpawnData(i, game)).some_flag =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x9ad200)) as *const uint8 as *mut uint16)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x9ad200)) as *const u8 as *mut u16)
                 .offset(((i >> 1 as i32) + 3072 as i32) as isize);
         i -= 2 as i32;
     }
     if ram_word!(game, enemy_tile_load_data_write_pos) != 0 {
-        let mut v1: uint16 = 0 as uint16;
+        let mut v1: u16 = 0 as u16;
         let mut load_data: *mut EnemyTileLoadData =
-            (&raw mut game.g_ram as *mut uint8).offset(0xe5a) as *mut EnemyTileLoadData;
+            (&raw mut game.g_ram as *mut u8).offset(0xe5a) as *mut EnemyTileLoadData;
         loop {
-            let mut v2: uint16 = (*load_data).tile_data_ptr.addr;
-            let r18: uint16 = ((*load_data).tile_data_size).wrapping_add(v2);
-            let mut v3: uint16 = (*load_data).offset_into_ram;
-            let db: uint8 = (*load_data).tile_data_ptr.bank;
+            let mut v2: u16 = (*load_data).tile_data_ptr.addr;
+            let r18: u16 = ((*load_data).tile_data_size).wrapping_add(v2);
+            let mut v3: u16 = (*load_data).offset_into_ram;
+            let db: u8 = (*load_data).tile_data_ptr.bank;
             loop {
                 memcpy(
-                    (&raw mut game.g_ram as *mut uint8).offset((0x7000 as i32 + v3 as i32) as isize)
-                        as *mut uint8 as *mut ::core::ffi::c_void,
+                    (&raw mut game.g_ram as *mut u8).offset((0x7000 as i32 + v3 as i32) as isize)
+                        as *mut u8 as *mut ::core::ffi::c_void,
                     RomPtrWithBank(db, v2, game) as *const ::core::ffi::c_void,
                     8 as size_t,
                 );
@@ -2094,7 +2058,7 @@ pub unsafe fn LoadEnemyTileData(game: &mut Game) {
                 break;
             }
         }
-        set_ram_word!(game.enemy_tile_load_data_write_pos = 0 as uint16);
+        set_ram_word!(game.enemy_tile_load_data_write_pos = 0 as u16);
     }
 }
 pub unsafe fn TransferEnemyTilesToVramAndInit(game: &mut Game) {
@@ -2130,84 +2094,83 @@ pub unsafe fn TransferEnemyTilesToVramAndInit(game: &mut Game) {
     }
 }
 pub unsafe fn ProcessEnemyTilesets(game: &mut Game) {
-    set_ram_word!(game.enemy_tile_load_data_write_pos = 0 as uint16);
-    let mut r30: uint16 = 2048 as uint16;
-    set_ram_word!(game.enemy_def_ptr[0] = 0 as uint16);
-    set_ram_word!(game.enemy_def_ptr[1] = 0 as uint16);
-    set_ram_word!(game.enemy_def_ptr[2] = 0 as uint16);
-    set_ram_word!(game.enemy_def_ptr[3] = 0 as uint16);
-    set_ram_word!(game.enemy_gfxdata_tiles_index[0] = 0 as uint16);
-    set_ram_word!(game.enemy_gfxdata_tiles_index[1] = 0 as uint16);
-    set_ram_word!(game.enemy_gfxdata_tiles_index[2] = 0 as uint16);
-    set_ram_word!(game.enemy_gfxdata_tiles_index[3] = 0 as uint16);
-    set_ram_word!(game.enemy_gfxdata_vram_ptr[0] = 0 as uint16);
-    set_ram_word!(game.enemy_gfxdata_vram_ptr[1] = 0 as uint16);
-    set_ram_word!(game.enemy_gfxdata_vram_ptr[2] = 0 as uint16);
-    set_ram_word!(game.enemy_gfxdata_vram_ptr[3] = 0 as uint16);
-    let mut enemy_gfx_data_write_ptr: uint16 = 0 as uint16;
-    let mut next_enemy_tiles_index: uint16 = 0 as uint16;
+    set_ram_word!(game.enemy_tile_load_data_write_pos = 0 as u16);
+    let mut r30: u16 = 2048 as u16;
+    set_ram_word!(game.enemy_def_ptr[0] = 0 as u16);
+    set_ram_word!(game.enemy_def_ptr[1] = 0 as u16);
+    set_ram_word!(game.enemy_def_ptr[2] = 0 as u16);
+    set_ram_word!(game.enemy_def_ptr[3] = 0 as u16);
+    set_ram_word!(game.enemy_gfxdata_tiles_index[0] = 0 as u16);
+    set_ram_word!(game.enemy_gfxdata_tiles_index[1] = 0 as u16);
+    set_ram_word!(game.enemy_gfxdata_tiles_index[2] = 0 as u16);
+    set_ram_word!(game.enemy_gfxdata_tiles_index[3] = 0 as u16);
+    set_ram_word!(game.enemy_gfxdata_vram_ptr[0] = 0 as u16);
+    set_ram_word!(game.enemy_gfxdata_vram_ptr[1] = 0 as u16);
+    set_ram_word!(game.enemy_gfxdata_vram_ptr[2] = 0 as u16);
+    set_ram_word!(game.enemy_gfxdata_vram_ptr[3] = 0 as u16);
+    let mut enemy_gfx_data_write_ptr: u16 = 0 as u16;
+    let mut next_enemy_tiles_index: u16 = 0 as u16;
     let mut ET: *mut EnemyTileset =
         get_EnemyTileset(ram_word!(game, room_enemy_tilesets_ptr), game);
     let mut LD: *mut EnemyTileLoadData =
-        (&raw mut game.g_ram as *mut uint8).offset(0xe5a) as *mut EnemyTileLoadData;
+        (&raw mut game.g_ram as *mut u8).offset(0xe5a) as *mut EnemyTileLoadData;
     while (*ET).enemy_def != 0xffffu16 {
         let ED: *mut EnemyDef = get_EnemyDef_A2((*ET).enemy_def, game);
         memcpy(
-            ((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(
-                ((*(&raw mut (*ET).vram_dst as *mut uint8).offset(0) as i32 + 8 as i32) * 16 as i32)
+            ((&raw mut game.g_ram as *mut u8).offset(0xc200) as *mut u16).offset(
+                ((*(&raw mut (*ET).vram_dst as *mut u8).offset(0) as i32 + 8 as i32) * 16 as i32)
                     as isize,
-            ) as *mut uint16 as *mut ::core::ffi::c_void,
+            ) as *mut u16 as *mut ::core::ffi::c_void,
             RomPtrWithBank((*ED).bank, (*ED).palette_ptr, game) as *const ::core::ffi::c_void,
             32 as size_t,
         );
         (*LD).tile_data_size = ((*ED).tile_data_size) & (0x7fffu16);
         (*LD).tile_data_ptr = (*ED).tile_data;
-        let mut v10: uint16 = r30;
+        let mut v10: u16 = r30;
         if ((*ED).tile_data_size as i32 & 0x8000 as i32) != 0i32 {
-            v10 = ((((*ET).vram_dst) & (0x3000u16)) as i32 >> 3 as i32) as uint16;
+            v10 = ((((*ET).vram_dst) & (0x3000u16)) as i32 >> 3 as i32) as u16;
         }
         (*LD).offset_into_ram = v10;
         update_ram_word!(game.enemy_tile_load_data_write_pos, wrapping_add(7u16));
         LD = LD.offset(1);
-        let v11: uint16 = enemy_gfx_data_write_ptr;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xef64) as *mut uint16)
+        let v11: u16 = enemy_gfx_data_write_ptr;
+        *((&raw mut game.g_ram as *mut u8).offset(0xef64) as *mut u16)
             .offset((enemy_gfx_data_write_ptr as i32 >> 1 as i32) as isize) =
             next_enemy_tiles_index;
         set_ram_word!(game.enemy_def_ptr[(v11 as i32 >> 1i32)] = (*ET).enemy_def);
         set_ram_word!(game.enemy_gfxdata_vram_ptr[(v11 as i32 >> 1i32)] = (*ET).vram_dst);
         enemy_gfx_data_write_ptr = (enemy_gfx_data_write_ptr).wrapping_add(2u16);
         next_enemy_tiles_index =
-            (next_enemy_tiles_index as i32 + ((*ED).tile_data_size as i32 >> 5 as i32)) as uint16;
+            (next_enemy_tiles_index as i32 + ((*ED).tile_data_size as i32 >> 5 as i32)) as u16;
         r30 = (r30).wrapping_add((*ED).tile_data_size);
         ET = ET.offset(1);
     }
 }
 pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
     update_ram_word!(game.UNUSED_word_7E0E46, wrapping_add(1));
-    set_ram_word!(game.cur_enemy_index = 0 as uint16);
-    set_ram_word!(game.active_enemy_indexes_write_ptr = 0 as uint16);
-    set_ram_word!(game.interactive_enemy_indexes_write_ptr = 0 as uint16);
+    set_ram_word!(game.cur_enemy_index = 0 as u16);
+    set_ram_word!(game.active_enemy_indexes_write_ptr = 0 as u16);
+    set_ram_word!(game.interactive_enemy_indexes_write_ptr = 0 as u16);
     if ram_word!(game, flag_process_all_enemies) != 0 {
         loop {
-            let v5: uint16 = ram_word!(game, cur_enemy_index);
+            let v5: u16 = ram_word!(game, cur_enemy_index);
             let v6: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
             if (*v6).enemy_ptr != 0u16 && (*v6).enemy_ptr as i32 != addr_kEnemyDef_DAFF as i32 {
                 if ((*v6).properties as i32 & 0x200 as i32) != 0i32 {
-                    (*v6).enemy_ptr = 0 as uint16;
+                    (*v6).enemy_ptr = 0 as u16;
                 } else {
-                    let v7: uint16 = ram_word!(game, active_enemy_indexes_write_ptr);
+                    let v7: u16 = ram_word!(game, active_enemy_indexes_write_ptr);
                     let v8: i32 =
                         ram_word!(game, active_enemy_indexes_write_ptr) as i32 >> 1 as i32;
                     set_ram_word!(game.active_enemy_indexes[v8] = ram_word!(game, cur_enemy_index));
                     set_ram_word!(game.interactive_enemy_indexes[v8] = v5);
                     set_ram_word!(game.active_enemy_indexes_write_ptr = (v7).wrapping_add(2u16));
                     if ((*v6).properties as i32 & 0x400 as i32) == 0i32 {
-                        let v9: uint16 = ram_word!(game, interactive_enemy_indexes_write_ptr);
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x17ec) as *mut uint16)
-                            .offset(
-                                (ram_word!(game, interactive_enemy_indexes_write_ptr) as i32
-                                    >> 1 as i32) as isize,
-                            ) = v5;
+                        let v9: u16 = ram_word!(game, interactive_enemy_indexes_write_ptr);
+                        *((&raw mut game.g_ram as *mut u8).offset(0x17ec) as *mut u16).offset(
+                            (ram_word!(game, interactive_enemy_indexes_write_ptr) as i32
+                                >> 1 as i32) as isize,
+                        ) = v5;
                         set_ram_word!(
                             game.interactive_enemy_indexes_write_ptr = (v9).wrapping_add(2u16)
                         );
@@ -2219,50 +2182,49 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
                 break;
             }
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x17ac) as *mut uint16).offset(
+        *((&raw mut game.g_ram as *mut u8).offset(0x17ac) as *mut u16).offset(
             (ram_word!(game, active_enemy_indexes_write_ptr) as i32 >> 1 as i32) as isize,
-        ) = -(1 as i32) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x17ec) as *mut uint16).offset(
+        ) = -(1 as i32) as u16;
+        *((&raw mut game.g_ram as *mut u8).offset(0x17ec) as *mut u16).offset(
             (ram_word!(game, interactive_enemy_indexes_write_ptr) as i32 >> 1 as i32) as isize,
-        ) = -(1 as i32) as uint16;
+        ) = -(1 as i32) as u16;
     } else {
         loop {
-            let v0: uint16 = ram_word!(game, cur_enemy_index);
+            let v0: u16 = ram_word!(game, cur_enemy_index);
             let v1: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
             if (*v1).enemy_ptr != 0u16 && (*v1).enemy_ptr as i32 != addr_kEnemyDef_DAFF as i32 {
-                let properties: uint16 = (*v1).properties;
+                let properties: u16 = (*v1).properties;
                 if (properties as i32 & 0x200 as i32) != 0i32 {
-                    (*v1).enemy_ptr = 0 as uint16;
+                    (*v1).enemy_ptr = 0 as u16;
                 } else if (properties as i32 & 0x800 as i32) != 0i32
                     || ((*v1).ai_handler_bits as i32 & 4 as i32) != 0i32
                     || (((*v1).x_width as i32 + (*v1).x_pos as i32
-                        - ram_word!(game, layer1_x_pos) as i32) as int16)
+                        - ram_word!(game, layer1_x_pos) as i32) as i16)
                         >= 0i16
                         && (((*v1).x_width as i32
                             + ram_word!(game, layer1_x_pos) as i32
                             + 256 as i32
-                            - (*v1).x_pos as i32) as int16)
+                            - (*v1).x_pos as i32) as i16)
                             >= 0i16
                         && (((*v1).y_pos as i32 + 8 as i32 - ram_word!(game, layer1_y_pos) as i32)
-                            as int16)
+                            as i16)
                             >= 0i16
                         && ((ram_word!(game, layer1_y_pos) as i32 + 248 as i32 - (*v1).y_pos as i32)
-                            as int16)
+                            as i16)
                             >= 0i16
                 {
-                    let v3: uint16 = ram_word!(game, active_enemy_indexes_write_ptr);
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x17ac) as *mut uint16).offset(
+                    let v3: u16 = ram_word!(game, active_enemy_indexes_write_ptr);
+                    *((&raw mut game.g_ram as *mut u8).offset(0x17ac) as *mut u16).offset(
                         (ram_word!(game, active_enemy_indexes_write_ptr) as i32 >> 1 as i32)
                             as isize,
                     ) = ram_word!(game, cur_enemy_index);
                     set_ram_word!(game.active_enemy_indexes_write_ptr = (v3).wrapping_add(2u16));
                     if ((*v1).properties as i32 & 0x400 as i32) == 0i32 {
-                        let v4: uint16 = ram_word!(game, interactive_enemy_indexes_write_ptr);
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x17ec) as *mut uint16)
-                            .offset(
-                                (ram_word!(game, interactive_enemy_indexes_write_ptr) as i32
-                                    >> 1 as i32) as isize,
-                            ) = v0;
+                        let v4: u16 = ram_word!(game, interactive_enemy_indexes_write_ptr);
+                        *((&raw mut game.g_ram as *mut u8).offset(0x17ec) as *mut u16).offset(
+                            (ram_word!(game, interactive_enemy_indexes_write_ptr) as i32
+                                >> 1 as i32) as isize,
+                        ) = v0;
                         set_ram_word!(
                             game.interactive_enemy_indexes_write_ptr = (v4).wrapping_add(2u16)
                         );
@@ -2274,15 +2236,15 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
                 break;
             }
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x17ac) as *mut uint16).offset(
+        *((&raw mut game.g_ram as *mut u8).offset(0x17ac) as *mut u16).offset(
             (ram_word!(game, active_enemy_indexes_write_ptr) as i32 >> 1 as i32) as isize,
-        ) = -(1 as i32) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x17ec) as *mut uint16).offset(
+        ) = -(1 as i32) as u16;
+        *((&raw mut game.g_ram as *mut u8).offset(0x17ec) as *mut u16).offset(
             (ram_word!(game, interactive_enemy_indexes_write_ptr) as i32 >> 1 as i32) as isize,
-        ) = -(1 as i32) as uint16;
+        ) = -(1 as i32) as u16;
     };
 }
-pub unsafe fn CallEnemyAi(ea: uint32, game: &mut Game) {
+pub unsafe fn CallEnemyAi(ea: u32, game: &mut Game) {
     match ea {
         10649605 => Enemy_GrappleReact_SamusLatchesOn_A2(game),
         10649610 => Enemy_GrappleReact_KillEnemy_A2(game),
@@ -2728,8 +2690,8 @@ pub unsafe fn CallEnemyAi(ea: uint32, game: &mut Game) {
         }
     }
 }
-pub unsafe fn CallEnemyPreInstr(ea: uint32, game: &mut Game) {
-    let k: uint16 = ram_word!(game, cur_enemy_index);
+pub unsafe fn CallEnemyPreInstr(ea: u32, game: &mut Game) {
+    let k: u16 = ram_word!(game, cur_enemy_index);
     match ea {
         10518651 => (),
         10649723 => (),
@@ -2936,12 +2898,7 @@ pub unsafe fn CallEnemyPreInstr(ea: uint32, game: &mut Game) {
         }
     }
 }
-pub unsafe fn CallEnemyInstr(
-    ea: uint32,
-    k: uint16,
-    j: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn CallEnemyInstr(ea: u32, k: u16, j: *const u16, game: &mut Game) -> *const u16 {
     match ea {
         10649837 => EnemyInstr_Goto(k, j),
         10649872 => EnemyInstr_DecTimerAndGoto(k, j, game),
@@ -3411,24 +3368,24 @@ pub unsafe fn CallEnemyInstr(
         11115269 => MotherBrain_Instr_IncrBeamAttackPhase(k, j, game),
         _ => {
             Unreachable(game);
-            ::core::ptr::null::<uint16>()
+            ::core::ptr::null::<u16>()
         }
     }
 }
 pub unsafe fn EnemyMain(game: &mut Game) {
     let mut ED: *mut EnemyDef = ::core::ptr::null_mut::<EnemyDef>();
-    let mut v6: int16 = 0;
-    let mut v8: int8 = 0;
+    let mut v6: i16 = 0;
+    let mut v8: i8 = 0;
     if ram_word!(game, first_free_enemy_index) != 0 {
         if ram_word!(game, enemy_index_to_shake) != 0xffffu16 {
             (*gEnemyData(ram_word!(game, enemy_index_to_shake) as i32, game)).shake_timer =
-                64 as uint16;
-            set_ram_word!(game.enemy_index_to_shake = -(1 as i32) as uint16);
+                64 as u16;
+            set_ram_word!(game.enemy_index_to_shake = -(1 as i32) as u16);
         }
         let mut current_block_39: u64;
         let mut active_enemy_indexes_index: i32 = 0 as i32;
         loop {
-            let v1: uint16 = ram_word!(
+            let v1: u16 = ram_word!(
                 game,
                 active_enemy_indexes[(active_enemy_indexes_index >> 1i32)]
             );
@@ -3472,18 +3429,18 @@ pub unsafe fn EnemyMain(game: &mut Game) {
                 current_block_39 = 8457315219000651999;
             }
             if current_block_39 == 8457315219000651999 {
-                set_ram_word!(game.UNUSED_word_7E17A2 = 0 as uint16);
+                set_ram_word!(game.UNUSED_word_7E17A2 = 0 as u16);
                 if ram_word!(game, debug_time_frozen_for_enemies) as i32
                     | ram_word!(game, time_is_frozen_flag) as i32
                     == 0
                 {
-                    v6 = 0 as int16;
-                    let mut ai_handler_bits: uint16 = (*E).ai_handler_bits;
+                    v6 = 0 as i16;
+                    let mut ai_handler_bits: u16 = (*E).ai_handler_bits;
                     if ai_handler_bits != 0 {
                         loop {
                             v6 += 1;
                             v8 = ((ai_handler_bits) as i8) & (1i8);
-                            ai_handler_bits = (ai_handler_bits as i32 >> 1 as i32) as uint16;
+                            ai_handler_bits = (ai_handler_bits as i32 >> 1 as i32) as u16;
                             if (v8 != 0) {
                                 break;
                             }
@@ -3492,10 +3449,10 @@ pub unsafe fn EnemyMain(game: &mut Game) {
                     CallEnemyAi(
                         (((*E).bank as i32) << 16 as i32
                             | (*get_EnemyDef_A2(
-                                ((*E).enemy_ptr as i32 + 2 as i32 * v6 as i32) as uint16,
+                                ((*E).enemy_ptr as i32 + 2 as i32 * v6 as i32) as u16,
                                 game,
                             ))
-                            .main_ai as i32) as uint32,
+                            .main_ai as i32) as u32,
                         game,
                     );
                     current_block_39 = 5447921980315815038;
@@ -3504,7 +3461,7 @@ pub unsafe fn EnemyMain(game: &mut Game) {
                     if (*ED).time_is_frozen_ai != 0 {
                         CallEnemyAi(
                             (((*E).bank as i32) << 16 as i32 | (*ED).time_is_frozen_ai as i32)
-                                as uint32,
+                                as u32,
                             game,
                         );
                         current_block_39 = 5447921980315815038;
@@ -3520,7 +3477,7 @@ pub unsafe fn EnemyMain(game: &mut Game) {
                     {
                         (*E).frame_counter = (*E).frame_counter.wrapping_add(1);
                         if ((*E).properties as i32 & 0x2000 as i32) != 0i32 {
-                            set_ram_word!(game.enemy_processing_stage = 2 as uint16);
+                            set_ram_word!(game.enemy_processing_stage = 2 as u16);
                             ProcessEnemyInstructions(game);
                         }
                     }
@@ -3532,8 +3489,8 @@ pub unsafe fn EnemyMain(game: &mut Game) {
                     && ((*E).flash_timer == 1u16 || (*E).frozen_timer == 1u16)
                 {
                     (*gEnemySpawnData(ram_word!(game, cur_enemy_index) as i32, game))
-                        .cause_of_death = 0 as uint16;
-                    EnemyDeathAnimation(ram_word!(game, cur_enemy_index), 0 as uint16, game);
+                        .cause_of_death = 0 as u16;
+                    EnemyDeathAnimation(ram_word!(game, cur_enemy_index), 0 as u16, game);
                 }
                 if (((*E).extra_properties as i32 & 4 as i32) != 0i32
                     || EnemyWithNormalSpritesIsOffScreen(game) == 0)
@@ -3550,7 +3507,7 @@ pub unsafe fn EnemyMain(game: &mut Game) {
             {
                 (*E).flash_timer = (*E).flash_timer.wrapping_sub(1);
                 if (*E).flash_timer as i32 - 8 as i32 & 0x8000 as i32 != 0 {
-                    (*E).ai_handler_bits = ((*E).ai_handler_bits as i32 & !(2 as i32)) as uint16;
+                    (*E).ai_handler_bits = ((*E).ai_handler_bits as i32 & !(2 as i32)) as u16;
                 }
             }
             active_enemy_indexes_index += 2 as i32;
@@ -3558,10 +3515,10 @@ pub unsafe fn EnemyMain(game: &mut Game) {
     }
     HandleSpriteObjects(game);
     update_ram_word!(game.random_enemy_counter, wrapping_add(1));
-    set_ram_word!(game.enemy_index_colliding_dirs[0] = -(1 as i32) as uint16);
-    set_ram_word!(game.enemy_index_colliding_dirs[1] = -(1 as i32) as uint16);
-    set_ram_word!(game.enemy_index_colliding_dirs[2] = -(1 as i32) as uint16);
-    set_ram_word!(game.enemy_index_colliding_dirs[3] = -(1 as i32) as uint16);
+    set_ram_word!(game.enemy_index_colliding_dirs[0] = -(1 as i32) as u16);
+    set_ram_word!(game.enemy_index_colliding_dirs[1] = -(1 as i32) as u16);
+    set_ram_word!(game.enemy_index_colliding_dirs[2] = -(1 as i32) as u16);
+    set_ram_word!(game.enemy_index_colliding_dirs[3] = -(1 as i32) as u16);
 }
 pub unsafe fn DecrementSamusTimers(game: &mut Game) {
     if ram_word!(game, samus_invincibility_timer) != 0 {
@@ -3573,22 +3530,22 @@ pub unsafe fn DecrementSamusTimers(game: &mut Game) {
     if ram_word!(game, projectile_invincibility_timer) != 0 {
         update_ram_word!(game.projectile_invincibility_timer, wrapping_sub(1));
     }
-    set_ram_word!(game.interactive_enemy_indexes[0] = -(1 as i32) as uint16);
-    set_ram_word!(game.active_enemy_indexes[0] = -(1 as i32) as uint16);
+    set_ram_word!(game.interactive_enemy_indexes[0] = -(1 as i32) as u16);
+    set_ram_word!(game.active_enemy_indexes[0] = -(1 as i32) as u16);
 }
-pub unsafe fn SpawnEnemyDrops(a: uint16, k: uint16, varE20: uint16, game: &mut Game) {
+pub unsafe fn SpawnEnemyDrops(a: u16, k: u16, varE20: u16, game: &mut Game) {
     game.eproj_spawn_varE24 = a;
-    SpawnEprojWithGfx(varE20, k, addr_kEproj_Pickup as uint16, game);
+    SpawnEprojWithGfx(varE20, k, addr_kEproj_Pickup as u16, game);
 }
 pub unsafe fn DeleteEnemyAndConnectedEnemies(game: &mut Game) {
     let v0: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    let mut num_parts: uint16 = (*get_EnemyDef_A2((*v0).enemy_ptr, game)).num_parts;
+    let mut num_parts: u16 = (*get_EnemyDef_A2((*v0).enemy_ptr, game)).num_parts;
     if num_parts == 0 {
-        num_parts = 1 as uint16;
+        num_parts = 1 as u16;
     }
-    let mut v2: uint16 = num_parts;
+    let mut v2: u16 = num_parts;
     loop {
-        (*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).enemy_ptr = 0 as uint16;
+        (*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).enemy_ptr = 0 as u16;
         update_ram_word!(game.cur_enemy_index, wrapping_add(64u16));
         v2 = v2.wrapping_sub(1);
         if (v2 == 0) {
@@ -3596,20 +3553,20 @@ pub unsafe fn DeleteEnemyAndConnectedEnemies(game: &mut Game) {
         }
     }
 }
-pub unsafe fn SpawnEnemy(db: uint8, k: uint16, game: &mut Game) -> uint16 {
+pub unsafe fn SpawnEnemy(db: u8, k: u16, game: &mut Game) -> u16 {
     let current_block: u64;
-    let mut varE20: uint16 = k;
-    let cur_enemy_index_backup: uint16 = ram_word!(game, cur_enemy_index);
-    let enemy_ptr: uint16 = (*get_EnemyPopulation(db, k, game)).enemy_ptr;
-    let mut v3: int16 = (((*get_EnemyDef_A2(enemy_ptr, game)).num_parts) as i16).wrapping_sub(1i16);
+    let mut varE20: u16 = k;
+    let cur_enemy_index_backup: u16 = ram_word!(game, cur_enemy_index);
+    let enemy_ptr: u16 = (*get_EnemyPopulation(db, k, game)).enemy_ptr;
+    let mut v3: i16 = (((*get_EnemyDef_A2(enemy_ptr, game)).num_parts) as i16).wrapping_sub(1i16);
     if v3 < 0i16 {
-        v3 = 0 as int16;
+        v3 = 0 as i16;
     }
-    let mut varE22: uint16 = v3 as uint16;
-    let mut varE26: uint16 = v3 as uint16;
-    let mut new_enemy_index: uint16 = 0 as uint16;
+    let mut varE22: u16 = v3 as u16;
+    let mut varE26: u16 = v3 as u16;
+    let mut new_enemy_index: u16 = 0 as u16;
     's_26: loop {
-        let mut v4: uint16 = new_enemy_index;
+        let mut v4: u16 = new_enemy_index;
         while (*gEnemyData(v4 as i32, game)).enemy_ptr == 0 {
             if varE22 == 0 {
                 current_block = 12137821391237576008;
@@ -3618,7 +3575,7 @@ pub unsafe fn SpawnEnemy(db: uint8, k: uint16, game: &mut Game) -> uint16 {
             varE22 = varE22.wrapping_sub(1);
             v4 = (v4).wrapping_add(64u16);
             if v4 >= 2048u16 {
-                return 0xffff as uint16;
+                return 0xffff as u16;
             }
         }
         new_enemy_index = (new_enemy_index).wrapping_add(64u16);
@@ -3652,15 +3609,15 @@ pub unsafe fn SpawnEnemy(db: uint8, k: uint16, game: &mut Game) -> uint16 {
                     enemy_gfxdata_vram_ptr[v10]
                 )));
             } else {
-                (*E).vram_tiles_index = 0 as uint16;
-                (*E).palette_index = 0 as uint16;
+                (*E).vram_tiles_index = 0 as u16;
+                (*E).palette_index = 0 as u16;
             }
             let ED: *mut EnemyDef = get_EnemyDef_A2((*EP).enemy_ptr, game);
             (*E).x_width = (*ED).x_radius;
             (*E).y_height = (*ED).y_radius;
             (*E).health = (*ED).health;
-            (*E).layer = (*ED).layer as uint16;
-            *(&raw mut (*E).bank as *mut uint16) = *(&raw mut (*ED).bank as *mut uint16);
+            (*E).layer = (*ED).layer as u16;
+            *(&raw mut (*E).bank as *mut u16) = *(&raw mut (*ED).bank as *mut u16);
             (*E).enemy_ptr = (*EP).enemy_ptr;
             (*E).x_pos = (*EP).x_pos;
             (*E).y_pos = (*EP).y_pos;
@@ -3669,26 +3626,26 @@ pub unsafe fn SpawnEnemy(db: uint8, k: uint16, game: &mut Game) -> uint16 {
             (*E).extra_properties = (*EP).extra_properties;
             (*E).parameter_1 = (*EP).parameter1;
             (*E).parameter_2 = (*EP).parameter2;
-            (*E).frame_counter = 0 as uint16;
-            (*E).timer = 0 as uint16;
-            (*E).ai_var_A = 0 as uint16;
-            (*E).ai_var_B = 0 as uint16;
-            (*E).ai_var_C = 0 as uint16;
-            (*E).ai_var_D = 0 as uint16;
-            (*E).ai_var_E = 0 as uint16;
-            (*E).ai_preinstr = 0 as uint16;
-            (*E).instruction_timer = 1 as uint16;
-            (*E).frame_counter = 0 as uint16;
+            (*E).frame_counter = 0 as u16;
+            (*E).timer = 0 as u16;
+            (*E).ai_var_A = 0 as u16;
+            (*E).ai_var_B = 0 as u16;
+            (*E).ai_var_C = 0 as u16;
+            (*E).ai_var_D = 0 as u16;
+            (*E).ai_var_E = 0 as u16;
+            (*E).ai_preinstr = 0 as u16;
+            (*E).instruction_timer = 1 as u16;
+            (*E).frame_counter = 0 as u16;
             RecordEnemySpawnData(new_enemy_index, game);
             set_ram_word!(game.cur_enemy_index = new_enemy_index);
             if (*ED).ai_init as i32 & 0x8000 as i32 != 0 {
                 CallEnemyAi(
-                    (((*ED).bank as i32) << 16 as i32 | (*ED).ai_init as i32) as uint32,
+                    (((*ED).bank as i32) << 16 as i32 | (*ED).ai_init as i32) as u32,
                     game,
                 );
             }
             if ((*E).properties as i32 & 0x2000 as i32) != 0i32 {
-                (*E).spritemap_pointer = addr_kSpritemap_Nothing_A0 as uint16;
+                (*E).spritemap_pointer = addr_kSpritemap_Nothing_A0 as u16;
             }
             if varE26 == 0 || {
                 varE26 = varE26.wrapping_sub(1);
@@ -3700,19 +3657,19 @@ pub unsafe fn SpawnEnemy(db: uint8, k: uint16, game: &mut Game) -> uint16 {
             new_enemy_index = (new_enemy_index).wrapping_add(64u16);
             varE20 = (varE20).wrapping_add(16u16);
         },
-        _ => 0xffff as uint16,
+        _ => 0xffff as u16,
     }
 }
 pub unsafe fn DrawOneEnemy(game: &mut Game) {
-    let varE34: uint16 =
+    let varE34: u16 =
         (2u16).wrapping_mul((*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).layer);
     *(RomPtr_RAM(
         (ram_word!(game, enemy_drawing_queue_sizes[(varE34 as i32 >> 1i32)])).wrapping_add(
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0b133)) as *const uint8 as *mut uint16)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0b133)) as *const u8 as *mut u16)
                 .offset((varE34 as i32 >> 1 as i32) as isize),
         ),
         game,
-    ) as *mut uint16) = ram_word!(game, cur_enemy_index);
+    ) as *mut u16) = ram_word!(game, cur_enemy_index);
     update_ram_word!(
         game.enemy_drawing_queue_sizes[(varE34 as i32 >> 1 as i32)],
         wrapping_add(2u16)
@@ -3722,21 +3679,21 @@ pub unsafe fn WriteEnemyOams(game: &mut Game) {
     let mut palette_index: VoidP = 0;
     let E: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
     let ES: *mut EnemySpawnData = gEnemySpawnData(ram_word!(game, cur_enemy_index) as i32, game);
-    let mut x2: uint16 =
-        ((*ES).xpos2 as i32 + (*E).x_pos as i32 - ram_word!(game, layer1_x_pos) as i32) as uint16;
-    let y2: uint16 =
-        ((*ES).ypos2 as i32 + (*E).y_pos as i32 - ram_word!(game, layer1_y_pos) as i32) as uint16;
+    let mut x2: u16 =
+        ((*ES).xpos2 as i32 + (*E).x_pos as i32 - ram_word!(game, layer1_x_pos) as i32) as u16;
+    let y2: u16 =
+        ((*ES).ypos2 as i32 + (*E).y_pos as i32 - ram_word!(game, layer1_y_pos) as i32) as u16;
     if (*E).shake_timer != 0 {
         x2 = (x2 as i32
             + if ((*E).frame_counter as i32 & 2 as i32) == 0i32 {
                 1 as i32
             } else {
                 -(1 as i32)
-            }) as uint16;
+            }) as u16;
         (*E).shake_timer = (*E).shake_timer.wrapping_sub(1);
     }
-    let mut x: uint16 = x2;
-    let mut y: uint16 = y2;
+    let mut x: u16 = x2;
+    let mut y: u16 = y2;
     if (*E).flash_timer != 0u16 && (ram_word!(game, random_enemy_counter) as i32 & 2 as i32) != 0i32
     {
         palette_index = 0 as VoidP;
@@ -3747,17 +3704,17 @@ pub unsafe fn WriteEnemyOams(game: &mut Game) {
     } else {
         palette_index = (*E).palette_index;
     }
-    let r3: uint16 = palette_index;
-    let r0: uint16 = (*E).vram_tiles_index;
+    let r3: u16 = palette_index;
+    let r0: u16 = (*E).vram_tiles_index;
     if ((*E).extra_properties as i32 & 4 as i32) != 0i32 {
         if (((*E).spritemap_pointer) as i16).wrapping_add((0x8000i32) as i16) < 0i16 {
             Unreachable(game);
         }
         let mut n: i32 = *RomPtrWithBank((*E).bank, (*E).spritemap_pointer, game) as i32;
-        let mut v5: uint16 = ((*E).spritemap_pointer).wrapping_add(2u16);
+        let mut v5: u16 = ((*E).spritemap_pointer).wrapping_add(2u16);
         loop {
             let ext: *mut ExtendedSpriteMap = get_ExtendedSpriteMap((*E).bank, v5, game);
-            if *(RomPtrWithBank((*E).bank, (*ext).spritemap, game) as *mut uint16) == 0xfffeu16 {
+            if *(RomPtrWithBank((*E).bank, (*ext).spritemap, game) as *mut u16) == 0xfffeu16 {
                 x = (x2).wrapping_add((*ext).xpos);
                 y = (y2).wrapping_add((*ext).ypos);
                 if ((*E).extra_properties as i32 & 0x8000 as i32) != 0i32 {
@@ -3769,9 +3726,9 @@ pub unsafe fn WriteEnemyOams(game: &mut Game) {
                 if (x as i32 + 128 as i32 & 0xfe00 as i32) == 0i32
                     && (y as i32 + 128 as i32 & 0xfe00 as i32) == 0i32
                 {
-                    if *(&raw mut y as *mut uint8).offset(
-                        (::core::mem::size_of::<uint16>())
-                            .wrapping_div(::core::mem::size_of::<uint8>())
+                    if *(&raw mut y as *mut u8).offset(
+                        (::core::mem::size_of::<u16>())
+                            .wrapping_div(::core::mem::size_of::<u8>())
                             .wrapping_sub(1_usize) as isize,
                     ) != 0
                     {
@@ -3796,34 +3753,33 @@ pub unsafe fn WriteEnemyOams(game: &mut Game) {
             }
         }
     } else {
-        set_ram_word!(game.enemy_processing_stage = 1 as uint16);
+        set_ram_word!(game.enemy_processing_stage = 1 as u16);
         DrawSpritemapWithBaseTile((*E).bank, (*E).spritemap_pointer, x, y, r3, r0, game);
     };
 }
 pub unsafe fn NormalEnemyFrozenAI(game: &mut Game) {
     let v0: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    (*v0).flash_timer = 0 as uint16;
+    (*v0).flash_timer = 0 as u16;
     if (*v0).frozen_timer == 0 || {
         (*v0).frozen_timer = (*v0).frozen_timer.wrapping_sub(1);
         (ram_word!(game, equipped_beams) as i32 & 2 as i32) == 0i32
     } {
-        let v1: uint16 = ((*v0).ai_handler_bits) & (0xfffbu16);
+        let v1: u16 = ((*v0).ai_handler_bits) & (0xfffbu16);
         (*v0).ai_handler_bits = v1;
         (*v0).frozen_timer = v1;
     }
 }
-pub unsafe fn ProcessExtendedTilemap(db: uint8, r22: uint16, game: &mut Game) {
-    let mut p: *const uint8 = RomPtrWithBank(db, (r22).wrapping_add(2u16), game);
+pub unsafe fn ProcessExtendedTilemap(db: u8, r22: u16, game: &mut Game) {
+    let mut p: *const u8 = RomPtrWithBank(db, (r22).wrapping_add(2u16), game);
     loop {
-        let v2: uint16 = *(p as *mut uint16);
+        let v2: u16 = *(p as *mut u16);
         if v2 == 0xffffu16 {
             break;
         }
-        let n: i32 = *(p as *mut uint16).offset(1) as i32;
+        let n: i32 = *(p as *mut u16).offset(1) as i32;
         p = p.offset(4);
         memcpy(
-            (&raw mut game.g_ram as *mut uint8).offset(v2 as i32 as isize)
-                as *mut ::core::ffi::c_void,
+            (&raw mut game.g_ram as *mut u8).offset(v2 as i32 as isize) as *mut ::core::ffi::c_void,
             p as *const ::core::ffi::c_void,
             (n * 2 as i32) as size_t,
         );
@@ -3863,7 +3819,7 @@ pub unsafe fn EnemyCollisionHandler(game: &mut Game) {
 }
 pub fn func_nullsub_4() {}
 pub unsafe fn SamusProjectileInteractionHandler(game: &mut Game) {
-    set_ram_word!(game.enemy_processing_stage = 10 as uint16);
+    set_ram_word!(game.enemy_processing_stage = 10 as u16);
     if ram_word!(game, flag_disable_projectile_interaction) != 0 {
         return;
     }
@@ -3880,7 +3836,7 @@ pub unsafe fn SamusProjectileInteractionHandler(game: &mut Game) {
     }
     let mut pidx: i32 = 0 as i32;
     while pidx != num_colls_to_check {
-        set_ram_word!(game.collision_detection_index = pidx as uint16);
+        set_ram_word!(game.collision_detection_index = pidx as u16);
         if !(ram_word!(game, projectile_damage[pidx]) == 0
             || ram_word!(game, projectile_type[pidx]) as i32 & 0x8000 as i32 != 0
             || (ram_word!(game, projectile_type[pidx]) as i32 & 0xf00 as i32) - 1792 as i32
@@ -3908,8 +3864,8 @@ pub unsafe fn SamusProjectileInteractionHandler(game: &mut Game) {
                     SuitDamageDivision(ram_word!(game, projectile_damage[pidx]), game),
                     game,
                 );
-                set_ram_word!(game.samus_invincibility_timer = 96 as uint16);
-                set_ram_word!(game.samus_knockback_timer = 5 as uint16);
+                set_ram_word!(game.samus_invincibility_timer = 96 as u16);
+                set_ram_word!(game.samus_knockback_timer = 5 as u16);
                 '_c2rust_label: {
                     __assert_fail(
                         b"0\0" as *const u8 as *const ::core::ffi::c_char,
@@ -3919,13 +3875,13 @@ pub unsafe fn SamusProjectileInteractionHandler(game: &mut Game) {
                             as *const ::core::ffi::c_char,
                     );
                 };
-                let mut v0: uint16 = 0 as uint16;
+                let mut v0: u16 = 0 as u16;
                 set_ram_word!(
                     game.knockback_x_dir = (((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(
-                        (*((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
+                        (*((&raw mut game.g_ram as *mut u8).offset(0x1a4b) as *mut u16)
                             .offset((v0 as i32 >> 1 as i32) as isize,))
                             as i16,
-                    ) >= 0i16) as uint16
+                    ) >= 0i16) as u16
                 );
                 return;
             }
@@ -3942,7 +3898,7 @@ pub unsafe fn SamusProjectileInteractionHandler(game: &mut Game) {
                         1 as i32
                     } else {
                         3 as i32
-                    }) as uint16
+                    }) as u16
                 );
             }
         }
@@ -3950,7 +3906,7 @@ pub unsafe fn SamusProjectileInteractionHandler(game: &mut Game) {
     }
 }
 pub unsafe fn EprojSamusCollDetect(game: &mut Game) {
-    set_ram_word!(game.enemy_processing_stage = 11 as uint16);
+    set_ram_word!(game.enemy_processing_stage = 11 as u16);
     if ram_word!(game, samus_invincibility_timer) != 0u16
         || ram_word!(game, samus_contact_damage_index) != 0u16
     {
@@ -3962,18 +3918,16 @@ pub unsafe fn EprojSamusCollDetect(game: &mut Game) {
             && (ram_word!(game, eproj_properties[i]) as i32 & 0x2000 as i32) == 0i32
             && ram_word!(game, eproj_radius[i]) != 0u16
         {
-            let varE20: uint16 = *(((&raw mut game.g_ram as *mut uint8).offset(0x1bb3)
-                as *mut uint16)
-                .offset(i as isize) as *mut uint16 as *mut uint8)
-                .offset(0) as uint16;
-            let varE22: uint16 = *(((&raw mut game.g_ram as *mut uint8).offset(0x1bb3)
-                as *mut uint16)
-                .offset(i as isize) as *mut uint16 as *mut uint8)
+            let varE20: u16 = *(((&raw mut game.g_ram as *mut u8).offset(0x1bb3) as *mut u16)
+                .offset(i as isize) as *mut u16 as *mut u8)
+                .offset(0) as u16;
+            let varE22: u16 = *(((&raw mut game.g_ram as *mut u8).offset(0x1bb3) as *mut u16)
+                .offset(i as isize) as *mut u16 as *mut u8)
                 .offset(
-                    (::core::mem::size_of::<uint16>())
-                        .wrapping_div(::core::mem::size_of::<uint8>())
+                    (::core::mem::size_of::<u16>())
+                        .wrapping_div(::core::mem::size_of::<u8>())
                         .wrapping_sub(1_usize) as isize,
-                ) as uint16;
+                ) as u16;
             if (abs16((ram_word!(game, samus_x_pos)).wrapping_sub(ram_word!(game, eproj_x_pos[i])))
                 as i32
                 - ram_word!(game, samus_x_radius) as i32)
@@ -3984,31 +3938,31 @@ pub unsafe fn EprojSamusCollDetect(game: &mut Game) {
                     - ram_word!(game, samus_y_radius) as i32)
                     < varE22 as i32
             {
-                set_ram_word!(game.collision_detection_index = (i * 2 as i32) as uint16);
-                HandleEprojCollWithSamus((i * 2 as i32) as uint16, game);
+                set_ram_word!(game.collision_detection_index = (i * 2 as i32) as u16);
+                HandleEprojCollWithSamus((i * 2 as i32) as u16, game);
             }
         }
         i -= 1;
     }
 }
-pub unsafe fn HandleEprojCollWithSamus(k: uint16, game: &mut Game) {
-    set_ram_word!(game.samus_invincibility_timer = 96 as uint16);
-    set_ram_word!(game.samus_knockback_timer = 5 as uint16);
-    let v1: uint16 = *(RomPtr_86(
-        *(((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16 as *mut uint8)
-            .offset(k as i32 as isize) as *mut uint16),
+pub unsafe fn HandleEprojCollWithSamus(k: u16, game: &mut Game) {
+    set_ram_word!(game.samus_invincibility_timer = 96 as u16);
+    set_ram_word!(game.samus_knockback_timer = 5 as u16);
+    let v1: u16 = *(RomPtr_86(
+        *(((&raw mut game.g_ram as *mut u8).offset(0x1997) as *mut u16 as *mut u8)
+            .offset(k as i32 as isize) as *mut u16),
         game,
-    ) as *mut uint16)
+    ) as *mut u16)
         .offset(5);
     if v1 != 0 {
         let v2: i32 = k as i32 >> 1 as i32;
         set_ram_word!(game.eproj_instr_list_ptr[v2] = v1);
-        set_ram_word!(game.eproj_instr_timers[v2] = 1 as uint16);
+        set_ram_word!(game.eproj_instr_timers[v2] = 1 as u16);
     }
     let v3: i32 = k as i32 >> 1 as i32;
     if (ram_word!(game, eproj_properties[v3]) as i32 & 0x4000 as i32) == 0i32 {
-        *(((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16 as *mut uint8)
-            .offset(k as i32 as isize) as *mut uint16) = 0 as uint16;
+        *(((&raw mut game.g_ram as *mut u8).offset(0x1997) as *mut u16 as *mut u8)
+            .offset(k as i32 as isize) as *mut u16) = 0 as u16;
     }
     Samus_DealDamage(
         SuitDamageDivision((ram_word!(game, eproj_properties[v3])) & (0xfffu16), game),
@@ -4017,11 +3971,11 @@ pub unsafe fn HandleEprojCollWithSamus(k: uint16, game: &mut Game) {
     set_ram_word!(
         game.knockback_x_dir = (((ram_word!(game, samus_x_pos)) as i16)
             .wrapping_sub((ram_word!(game, eproj_x_pos[v3])) as i16,)
-            >= 0i16) as uint16
+            >= 0i16) as u16
     );
 }
 pub unsafe fn EprojProjCollDet(game: &mut Game) {
-    set_ram_word!(game.enemy_processing_stage = 12 as uint16);
+    set_ram_word!(game.enemy_processing_stage = 12 as u16);
     if ram_word!(game, projectile_counter) == 0 {
         return;
     }
@@ -4035,7 +3989,7 @@ pub unsafe fn EprojProjCollDet(game: &mut Game) {
                 if ram_word!(game, eproj_flags[i]) == 2u16 {
                     break;
                 }
-                let v4: uint16 = ram_word!(game, projectile_type[j]);
+                let v4: u16 = ram_word!(game, projectile_type[j]);
                 if v4 != 0u16
                     && (v4 as i32 & 0xf00 as i32) != 768i32
                     && (v4 as i32 & 0xf00 as i32) != 1280i32
@@ -4045,11 +3999,7 @@ pub unsafe fn EprojProjCollDet(game: &mut Game) {
                     && ram_word!(game, eproj_y_pos[i]) as i32 & 0xffe0 as i32
                         == ram_word!(game, projectile_y_pos[j]) as i32 & 0xffe0 as i32
                 {
-                    HandleEprojCollWithProj(
-                        (i * 2 as i32) as uint16,
-                        (j * 2 as i32) as uint16,
-                        game,
-                    );
+                    HandleEprojCollWithProj((i * 2 as i32) as u16, (j * 2 as i32) as u16, game);
                 }
                 j += 1;
             }
@@ -4057,7 +4007,7 @@ pub unsafe fn EprojProjCollDet(game: &mut Game) {
         i -= 1;
     }
 }
-pub unsafe fn HandleEprojCollWithProj(k: uint16, j: uint16, game: &mut Game) {
+pub unsafe fn HandleEprojCollWithProj(k: u16, j: u16, game: &mut Game) {
     let i: i32 = j as i32 >> 1 as i32;
     if (ram_word!(game, projectile_type[i]) as i32 & 8 as i32) == 0i32 {
         update_ram_word!(game.projectile_dir[i], |fresh30| (fresh30) | (0x10u16));
@@ -4067,11 +4017,11 @@ pub unsafe fn HandleEprojCollWithProj(k: uint16, j: uint16, game: &mut Game) {
         CreateSpriteAtPos(
             ram_word!(game, projectile_x_pos[v4]),
             ram_word!(game, projectile_y_pos[v4]),
-            6 as uint16,
-            0 as uint16,
+            6 as u16,
+            0 as u16,
             game,
         );
-        QueueSfx1_Max6(0x3d as uint16, game);
+        QueueSfx1_Max6(0x3d as u16, game);
     } else {
         let j_0: i32 = k as i32 >> 1 as i32;
         set_ram_word!(game.eproj_G[j_0] = ram_word!(game, projectile_type[i]));
@@ -4079,12 +4029,12 @@ pub unsafe fn HandleEprojCollWithProj(k: uint16, j: uint16, game: &mut Game) {
             game.eproj_instr_list_ptr[j_0] =
                 (*get_EprojDef(ram_word!(game, eproj_id[j_0]), game,)).shot_instruction_list
         );
-        set_ram_word!(game.eproj_instr_timers[j_0] = 1 as uint16);
+        set_ram_word!(game.eproj_instr_timers[j_0] = 1 as u16);
         set_ram_word!(game.eproj_pre_instr[j_0] = ((0x8684fbi32) as u16));
         update_ram_word!(game.eproj_properties[j_0], |fresh31| (fresh31) & (0xfffu16));
     };
 }
-pub unsafe fn CallHitboxTouch(ea: uint32, game: &mut Game) {
+pub unsafe fn CallHitboxTouch(ea: u32, game: &mut Game) {
     match ea {
         10518563 => Enemy_NormalTouchAI_A0(game),
         10670984 => MaridiaLargeSnail_Func_12(game),
@@ -4110,7 +4060,7 @@ pub unsafe fn CallHitboxTouch(ea: uint32, game: &mut Game) {
         }
     }
 }
-pub unsafe fn CallHitboxShot(ea: uint32, j: uint16, game: &mut Game) {
+pub unsafe fn CallHitboxShot(ea: u32, j: u16, game: &mut Game) {
     match ea {
         10518573 => Enemy_NormalShotAI_A0(game),
         10649676 => (),
@@ -4146,57 +4096,54 @@ pub unsafe fn CallHitboxShot(ea: uint32, j: uint16, game: &mut Game) {
 }
 pub unsafe fn EnemySamusCollHandler_Multibox(game: &mut Game) {
     let E: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    set_ram_word!(game.enemy_processing_stage = 6 as uint16);
+    set_ram_word!(game.enemy_processing_stage = 6 as u16);
     if (*E).spritemap_pointer == 0 {
         return;
     }
-    let touch_ai: uint16 = (*get_EnemyDef_A2((*E).enemy_ptr, game)).touch_ai;
+    let touch_ai: u16 = (*get_EnemyDef_A2((*E).enemy_ptr, game)).touch_ai;
     if touch_ai as i32 == 0xa0804c as i32 & 0xffff as i32
         || touch_ai as i32 == 0xa0804b as i32 & 0xffff as i32
     {
         return;
     }
     if ram_word!(game, samus_contact_damage_index) != 0 {
-        set_ram_word!(game.samus_invincibility_timer = 0 as uint16);
+        set_ram_word!(game.samus_invincibility_timer = 0 as u16);
     } else if ram_word!(game, samus_invincibility_timer) != 0 {
         return;
     }
     if (*E).spritemap_pointer as i32 & 0x8000 as i32 == 0 {
         return;
     }
-    let samus_right_border_coll: uint16 =
+    let samus_right_border_coll: u16 =
         (ram_word!(game, samus_x_radius)).wrapping_add(ram_word!(game, samus_x_pos));
-    let samus_left_border_coll: uint16 =
+    let samus_left_border_coll: u16 =
         (ram_word!(game, samus_x_pos)).wrapping_sub(ram_word!(game, samus_x_radius));
-    let samus_bottom_border_coll: uint16 =
+    let samus_bottom_border_coll: u16 =
         (ram_word!(game, samus_y_radius)).wrapping_add(ram_word!(game, samus_y_pos));
-    let samus_top_border_coll: uint16 =
+    let samus_top_border_coll: u16 =
         (ram_word!(game, samus_y_pos)).wrapping_sub(ram_word!(game, samus_y_radius));
     let mut n: i32 = *RomPtrWithBank((*E).bank, (*E).spritemap_pointer, game) as i32;
-    let mut enemy_spritemap_entry_pointer: uint16 = ((*E).spritemap_pointer).wrapping_add(2u16);
+    let mut enemy_spritemap_entry_pointer: u16 = ((*E).spritemap_pointer).wrapping_add(2u16);
     loop {
         let ES: *mut ExtendedSpriteMap =
             get_ExtendedSpriteMap((*E).bank, enemy_spritemap_entry_pointer, game);
-        let coll_x_pos: uint16 = ((*ES).xpos).wrapping_add((*E).x_pos);
-        let coll_y_pos: uint16 = ((*ES).ypos).wrapping_add((*E).y_pos);
-        let p: *const uint8 = RomPtrWithBank((*E).bank, (*ES).hitbox_ptr_, game);
-        let mut m: i32 = *(p as *mut uint16) as i32;
+        let coll_x_pos: u16 = ((*ES).xpos).wrapping_add((*E).x_pos);
+        let coll_y_pos: u16 = ((*ES).ypos).wrapping_add((*E).y_pos);
+        let p: *const u8 = RomPtrWithBank((*E).bank, (*ES).hitbox_ptr_, game);
+        let mut m: i32 = *(p as *mut u16) as i32;
         let mut hb: *mut Hitbox = p.offset(2) as *mut Hitbox;
         while m != 0 {
-            if (((*hb).left as i32 + coll_x_pos as i32 - samus_right_border_coll as i32) as int16)
+            if (((*hb).left as i32 + coll_x_pos as i32 - samus_right_border_coll as i32) as i16)
                 < 0i16
-                && (((*hb).right as i32 + coll_x_pos as i32 - samus_left_border_coll as i32)
-                    as int16)
+                && (((*hb).right as i32 + coll_x_pos as i32 - samus_left_border_coll as i32) as i16)
                     >= 0i16
-                && (((*hb).top as i32 + coll_y_pos as i32 - samus_bottom_border_coll as i32)
-                    as int16)
+                && (((*hb).top as i32 + coll_y_pos as i32 - samus_bottom_border_coll as i32) as i16)
                     < 0i16
-                && (((*hb).bottom as i32 + coll_y_pos as i32 - samus_top_border_coll as i32)
-                    as int16)
+                && (((*hb).bottom as i32 + coll_y_pos as i32 - samus_top_border_coll as i32) as i16)
                     >= 0i16
             {
                 CallHitboxTouch(
-                    (((*E).bank as i32) << 16 as i32 | (*hb).func_ptr as i32) as uint32,
+                    (((*E).bank as i32) << 16 as i32 | (*hb).func_ptr as i32) as u32,
                     game,
                 );
                 return;
@@ -4213,14 +4160,14 @@ pub unsafe fn EnemySamusCollHandler_Multibox(game: &mut Game) {
 }
 pub unsafe fn EprojCollHandler_Multibox(game: &mut Game) {
     let E: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    set_ram_word!(game.enemy_processing_stage = 3 as uint16);
+    set_ram_word!(game.enemy_processing_stage = 3 as u16);
     if ram_word!(game, projectile_counter) == 0
         || (*E).spritemap_pointer == 0
         || (*E).spritemap_pointer as i32 == addr_kExtendedSpritemap_Nothing_A0 as i32
     {
         return;
     }
-    let shot_ai: uint16 = (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai;
+    let shot_ai: u16 = (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai;
     if shot_ai as i32 == 0xa0804c as i32 & 0xffff as i32
         || shot_ai as i32 == 0xa0804b as i32 & 0xffff as i32
     {
@@ -4234,7 +4181,7 @@ pub unsafe fn EprojCollHandler_Multibox(game: &mut Game) {
     }
     let mut pidx: i32 = 0 as i32;
     while pidx < 5i32 {
-        let v4: uint16 = ram_word!(game, projectile_type[pidx]);
+        let v4: u16 = ram_word!(game, projectile_type[pidx]);
         if v4 != 0u16
             && (v4 as i32 & 0xf00 as i32) != 768i32
             && (v4 as i32 & 0xf00 as i32) != 1280i32
@@ -4243,40 +4190,40 @@ pub unsafe fn EprojCollHandler_Multibox(game: &mut Game) {
             if (*E).spritemap_pointer as i32 & 0x8000 as i32 == 0 {
                 Unreachable(game);
             }
-            let esep: *const uint8 = RomPtrWithBank((*E).bank, (*E).spritemap_pointer, game);
+            let esep: *const u8 = RomPtrWithBank((*E).bank, (*E).spritemap_pointer, game);
             let mut n: i32 = *esep.offset(0) as i32;
             let mut ES: *mut ExtendedSpriteMap = esep.offset(2) as *mut ExtendedSpriteMap;
             while n != 0 {
-                let coll_x_pos: uint16 = ((*ES).xpos).wrapping_add((*E).x_pos);
-                let coll_y_pos: uint16 = ((*ES).ypos).wrapping_add((*E).y_pos);
-                let p: *const uint8 = RomPtrWithBank((*E).bank, (*ES).hitbox_ptr_, game);
-                let mut m: i32 = *(p as *mut uint16) as i32;
+                let coll_x_pos: u16 = ((*ES).xpos).wrapping_add((*E).x_pos);
+                let coll_y_pos: u16 = ((*ES).ypos).wrapping_add((*E).y_pos);
+                let p: *const u8 = RomPtrWithBank((*E).bank, (*ES).hitbox_ptr_, game);
+                let mut m: i32 = *(p as *mut u16) as i32;
                 let mut hb: *mut Hitbox = p.offset(2) as *mut Hitbox;
                 while m != 0 {
                     if ((ram_word!(game, projectile_x_radius[pidx]) as i32
                         + ram_word!(game, projectile_x_pos[pidx]) as i32
-                        - (coll_x_pos as i32 + (*hb).left as i32)) as int16)
+                        - (coll_x_pos as i32 + (*hb).left as i32)) as i16)
                         >= 0i16
                         && ((ram_word!(game, projectile_x_pos[pidx]) as i32
                             - ram_word!(game, projectile_x_radius[pidx]) as i32
                             - (coll_x_pos as i32 + (*hb).right as i32))
-                            as int16)
+                            as i16)
                             < 0i16
                         && ((ram_word!(game, projectile_y_radius[pidx]) as i32
                             + ram_word!(game, projectile_y_pos[pidx]) as i32
                             - (coll_y_pos as i32 + (*hb).top as i32))
-                            as int16)
+                            as i16)
                             >= 0i16
                         && ((ram_word!(game, projectile_y_pos[pidx]) as i32
                             - ram_word!(game, projectile_y_radius[pidx]) as i32
                             - (coll_y_pos as i32 + (*hb).bottom as i32))
-                            as int16)
+                            as i16)
                             < 0i16
                     {
                         if (ram_word!(game, projectile_type[pidx]) as i32 & 0xf00 as i32) == 512i32
                         {
-                            set_ram_word!(game.earthquake_timer = 30 as uint16);
-                            set_ram_word!(game.earthquake_type = 18 as uint16);
+                            set_ram_word!(game.earthquake_timer = 30 as u16);
+                            set_ram_word!(game.earthquake_type = 18 as u16);
                         }
                         if ((*E).properties as i32 & 0x1000 as i32) != 0i32
                             || (ram_word!(game, projectile_type[pidx]) as i32 & 8 as i32) == 0i32
@@ -4284,10 +4231,10 @@ pub unsafe fn EprojCollHandler_Multibox(game: &mut Game) {
                             update_ram_word!(game.projectile_dir[pidx], |fresh27| (fresh27)
                                 | (0x10u16));
                         }
-                        set_ram_word!(game.collision_detection_index = pidx as uint16);
+                        set_ram_word!(game.collision_detection_index = pidx as u16);
                         CallHitboxShot(
-                            (((*E).bank as i32) << 16 as i32 | (*hb).func_ptrA as i32) as uint32,
-                            (pidx * 2 as i32) as uint16,
+                            (((*E).bank as i32) << 16 as i32 | (*hb).func_ptrA as i32) as u32,
+                            (pidx * 2 as i32) as u16,
                             game,
                         );
                         return;
@@ -4304,14 +4251,14 @@ pub unsafe fn EprojCollHandler_Multibox(game: &mut Game) {
 }
 pub unsafe fn EnemyBombCollHandler_Multibox(game: &mut Game) {
     let E: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    set_ram_word!(game.enemy_processing_stage = 4 as uint16);
+    set_ram_word!(game.enemy_processing_stage = 4 as u16);
     if (*E).spritemap_pointer == 0
         || ((*E).properties as i32 & 0x400 as i32) != 0i32
         || (*E).invincibility_timer != 0u16
     {
         return;
     }
-    let shot_ai: uint16 = (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai;
+    let shot_ai: u16 = (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai;
     if shot_ai as i32 == 0xa0804c as i32 & 0xffff as i32
         || shot_ai as i32 == 0xa0804b as i32 & 0xffff as i32
         || ram_word!(game, bomb_counter) == 0
@@ -4321,7 +4268,7 @@ pub unsafe fn EnemyBombCollHandler_Multibox(game: &mut Game) {
     let mut pidx: i32 = 5 as i32;
     while pidx != 10i32 {
         if (ram_word!(game, projectile_x_pos[pidx]) != 0) {
-            let v4: uint16 = ram_word!(game, projectile_type[pidx]);
+            let v4: u16 = ram_word!(game, projectile_type[pidx]);
             if v4 != 0u16
                 && (v4 as i32 & 0xf00 as i32) == 1280i32
                 && ram_word!(game, projectile_variables[pidx]) == 0
@@ -4329,44 +4276,43 @@ pub unsafe fn EnemyBombCollHandler_Multibox(game: &mut Game) {
                 if (*E).spritemap_pointer as i32 & 0x8000 as i32 == 0 {
                     Unreachable(game);
                 }
-                let esep: *const uint8 = RomPtrWithBank((*E).bank, (*E).spritemap_pointer, game);
-                let mut n: i32 = *(esep as *mut uint16) as i32;
+                let esep: *const u8 = RomPtrWithBank((*E).bank, (*E).spritemap_pointer, game);
+                let mut n: i32 = *(esep as *mut u16) as i32;
                 let mut ES: *mut ExtendedSpriteMap = esep.offset(2) as *mut ExtendedSpriteMap;
                 while n != 0 {
-                    let coll_x_pos: uint16 = ((*ES).xpos).wrapping_add((*E).x_pos);
-                    let coll_y_pos: uint16 = ((*ES).ypos).wrapping_add((*E).y_pos);
-                    let p: *const uint8 = RomPtrWithBank((*E).bank, (*ES).hitbox_ptr_, game);
-                    let mut m: i32 = *(p as *mut uint16) as i32;
+                    let coll_x_pos: u16 = ((*ES).xpos).wrapping_add((*E).x_pos);
+                    let coll_y_pos: u16 = ((*ES).ypos).wrapping_add((*E).y_pos);
+                    let p: *const u8 = RomPtrWithBank((*E).bank, (*ES).hitbox_ptr_, game);
+                    let mut m: i32 = *(p as *mut u16) as i32;
                     let mut hb: *mut Hitbox = p.offset(2) as *mut Hitbox;
                     while m != 0 {
                         if ((ram_word!(game, projectile_x_radius[pidx]) as i32
                             + ram_word!(game, projectile_x_pos[pidx]) as i32
                             - (coll_x_pos as i32 + (*hb).left as i32))
-                            as int16)
+                            as i16)
                             >= 0i16
                             && ((ram_word!(game, projectile_x_pos[pidx]) as i32
                                 - ram_word!(game, projectile_x_radius[pidx]) as i32
                                 - (coll_x_pos as i32 + (*hb).right as i32))
-                                as int16)
+                                as i16)
                                 < 0i16
                             && ((ram_word!(game, projectile_y_radius[pidx]) as i32
                                 + ram_word!(game, projectile_y_pos[pidx]) as i32
                                 - (coll_y_pos as i32 + (*hb).top as i32))
-                                as int16)
+                                as i16)
                                 >= 0i16
                             && ((ram_word!(game, projectile_y_pos[pidx]) as i32
                                 - ram_word!(game, projectile_y_radius[pidx]) as i32
                                 - (coll_y_pos as i32 + (*hb).bottom as i32))
-                                as int16)
+                                as i16)
                                 < 0i16
                         {
                             update_ram_word!(game.projectile_dir[pidx], |fresh24| (fresh24)
                                 | (0x10u16));
-                            set_ram_word!(game.collision_detection_index = pidx as uint16);
+                            set_ram_word!(game.collision_detection_index = pidx as u16);
                             CallHitboxShot(
-                                (((*E).bank as i32) << 16 as i32 | (*hb).func_ptrA as i32)
-                                    as uint32,
-                                (pidx * 2 as i32) as uint16,
+                                (((*E).bank as i32) << 16 as i32 | (*hb).func_ptrA as i32) as u32,
+                                (pidx * 2 as i32) as u16,
                                 game,
                             );
                             return;
@@ -4385,28 +4331,27 @@ pub unsafe fn EnemyBombCollHandler_Multibox(game: &mut Game) {
 pub unsafe fn GrappleBeam_CollDetect_Enemy(game: &mut Game) -> PairU16 {
     let mut grapple_ai: VoidP = 0;
     let mut E: *mut EnemyData = ::core::ptr::null_mut::<EnemyData>();
-    CallSomeSamusCode(0xd as uint16, game);
-    set_ram_word!(game.collision_detection_index = 0 as uint16);
+    CallSomeSamusCode(0xd as u16, game);
+    set_ram_word!(game.collision_detection_index = 0 as u16);
     let mut i: i32 = 0 as i32;
     loop {
         set_ram_word!(game.cur_enemy_index = ram_word!(game, interactive_enemy_indexes[i]));
         if ram_word!(game, cur_enemy_index) == 0xffffu16 {
             return PairU16 {
-                k: 0 as uint16,
-                j: 0 as uint16,
+                k: 0 as u16,
+                j: 0 as u16,
             };
         }
         E = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
         if (*E).invincibility_timer == 0 {
-            let v5: uint16 =
-                abs16(((*E).x_pos).wrapping_sub(ram_word!(game, grapple_beam_end_x_pos)));
+            let v5: u16 = abs16(((*E).x_pos).wrapping_sub(ram_word!(game, grapple_beam_end_x_pos)));
             let mut v6: bool = v5 < (*E).x_width;
-            let v7: uint16 = (v5).wrapping_sub((*E).x_width);
+            let v7: u16 = (v5).wrapping_sub((*E).x_width);
             if v6 || v7 < 8u16 {
-                let v8: uint16 =
+                let v8: u16 =
                     abs16(((*E).y_pos).wrapping_sub(ram_word!(game, grapple_beam_end_y_pos)));
                 v6 = v8 < (*E).y_height;
-                let v9: uint16 = (v8).wrapping_sub((*E).y_height);
+                let v9: u16 = (v8).wrapping_sub((*E).y_height);
                 if v6 || v9 < 8u16 {
                     break;
                 }
@@ -4414,24 +4359,24 @@ pub unsafe fn GrappleBeam_CollDetect_Enemy(game: &mut Game) -> PairU16 {
         }
         i += 1;
     }
-    (*E).ai_handler_bits = 1 as uint16;
-    let mut v0: uint16 = 0 as uint16;
-    let enemy_ptr: uint16 = (*E).enemy_ptr;
+    (*E).ai_handler_bits = 1 as u16;
+    let mut v0: u16 = 0 as u16;
+    let enemy_ptr: u16 = (*E).enemy_ptr;
     grapple_ai = (*get_EnemyDef_A2((*E).enemy_ptr, game)).grapple_ai;
     if grapple_ai as i32 != 0xa08000 as i32 & 0xffff as i32 {
-        v0 = 1 as uint16;
+        v0 = 1 as u16;
         if grapple_ai as i32 != 0xa08005 as i32 & 0xffff as i32 {
-            v0 = 2 as uint16;
+            v0 = 2 as u16;
             if grapple_ai as i32 != 0xa0800a as i32 & 0xffff as i32 {
-                v0 = 3 as uint16;
+                v0 = 3 as u16;
                 if grapple_ai as i32 != 0xa0800f as i32 & 0xffff as i32 {
-                    v0 = 4 as uint16;
+                    v0 = 4 as u16;
                     if grapple_ai as i32 != 0xa08014 as i32 & 0xffff as i32 {
-                        v0 = 5 as uint16;
+                        v0 = 5 as u16;
                         if grapple_ai as i32 != 0xa08019 as i32 & 0xffff as i32 {
-                            v0 = 6 as uint16;
+                            v0 = 6 as u16;
                             if grapple_ai as i32 != 0xa0801e as i32 & 0xffff as i32 {
-                                v0 = 0 as uint16;
+                                v0 = 0 as u16;
                             }
                         }
                     }
@@ -4451,46 +4396,46 @@ pub unsafe fn GrappleBeam_CollDetect_Enemy(game: &mut Game) -> PairU16 {
 }
 pub unsafe fn SwitchEnemyAiToMainAi(game: &mut Game) {
     let E: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).ai_handler_bits = 0 as uint16;
-    (*E).invincibility_timer = 0 as uint16;
-    (*E).frozen_timer = 0 as uint16;
-    (*E).shake_timer = 0 as uint16;
+    (*E).ai_handler_bits = 0 as u16;
+    (*E).invincibility_timer = 0 as u16;
+    (*E).frozen_timer = 0 as u16;
+    (*E).shake_timer = 0 as u16;
 }
 pub unsafe fn SamusLatchesOnWithGrapple(game: &mut Game) {
     let E: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
     set_ram_word!(game.grapple_beam_end_x_pos = (*E).x_pos);
     set_ram_word!(game.grapple_beam_end_y_pos = (*E).y_pos);
     if (*E).frozen_timer != 0 {
-        (*E).ai_handler_bits = 4 as uint16;
+        (*E).ai_handler_bits = 4 as u16;
     } else {
         let ED: *mut EnemyDef = get_EnemyDef_A2((*E).enemy_ptr, game);
         (*E).flash_timer = (if (*ED).hurt_ai_time != 0u8 {
             (*ED).hurt_ai_time as i32
         } else {
             4 as i32
-        }) as uint16;
-        (*E).ai_handler_bits = 0 as uint16;
+        }) as u16;
+        (*E).ai_handler_bits = 0 as u16;
     };
 }
 pub unsafe fn EnemyGrappleDeath(game: &mut Game) {
-    (*gEnemySpawnData(ram_word!(game, cur_enemy_index) as i32, game)).cause_of_death = 4 as uint16;
-    EnemyDeathAnimation(ram_word!(game, cur_enemy_index), 0 as uint16, game);
-    (*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).ai_handler_bits = 0 as uint16;
+    (*gEnemySpawnData(ram_word!(game, cur_enemy_index) as i32, game)).cause_of_death = 4 as u16;
+    EnemyDeathAnimation(ram_word!(game, cur_enemy_index), 0 as u16, game);
+    (*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).ai_handler_bits = 0 as u16;
 }
 pub unsafe fn Enemy_SwitchToFrozenAi(game: &mut Game) {
-    (*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).ai_handler_bits = 4 as uint16;
+    (*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).ai_handler_bits = 4 as u16;
 }
 pub unsafe fn SamusLatchesOnWithGrappleNoInvinc(game: &mut Game) {
     let E: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).frozen_timer != 0 {
-        (*E).ai_handler_bits = 4 as uint16;
+        (*E).ai_handler_bits = 4 as u16;
     } else {
         CallEnemyAi(
             (((*E).bank as i32) << 16 as i32
-                | (*get_EnemyDef_A2((*E).enemy_ptr, game)).main_ai as i32) as uint32,
+                | (*get_EnemyDef_A2((*E).enemy_ptr, game)).main_ai as i32) as u32,
             game,
         );
-        (*E).ai_handler_bits = 0 as uint16;
+        (*E).ai_handler_bits = 0 as u16;
     }
     set_ram_word!(game.grapple_beam_end_x_pos = (*E).x_pos);
     set_ram_word!(game.grapple_beam_end_y_pos = (*E).y_pos);
@@ -4502,26 +4447,26 @@ pub unsafe fn SamusLatchesOnWithGrappleParalyze(game: &mut Game) {
         (*ED).hurt_ai_time as i32
     } else {
         4 as i32
-    }) as uint16;
-    (*E).ai_handler_bits = 0 as uint16;
+    }) as u16;
+    (*E).ai_handler_bits = 0 as u16;
     (*E).extra_properties = ((*E).extra_properties) | (1u16);
 }
 pub unsafe fn SamusHurtFromGrapple(game: &mut Game) {
-    (*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).ai_handler_bits = 4 as uint16;
+    (*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).ai_handler_bits = 4 as u16;
 }
 pub unsafe fn EnemySamusCollHandler(game: &mut Game) {
     let E: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    set_ram_word!(game.enemy_processing_stage = 9 as uint16);
+    set_ram_word!(game.enemy_processing_stage = 9 as u16);
     if (*E).spritemap_pointer == 0 {
         return;
     }
     if ram_word!(game, samus_contact_damage_index) != 0 {
-        set_ram_word!(game.samus_invincibility_timer = 0 as uint16);
+        set_ram_word!(game.samus_invincibility_timer = 0 as u16);
     } else if ram_word!(game, samus_invincibility_timer) != 0 {
         if (*E).enemy_ptr as i32 != addr_kEnemyDef_DAFF as i32 {
             return;
         }
-        let some_flag: uint16 =
+        let some_flag: u16 =
             (*gEnemySpawnData(ram_word!(game, cur_enemy_index) as i32, game)).some_flag;
         if some_flag == 0u16 || some_flag == 8u16 {
             return;
@@ -4542,14 +4487,14 @@ pub unsafe fn EnemySamusCollHandler(game: &mut Game) {
         && ((*E).enemy_ptr as i32 == addr_kEnemyDef_DAFF as i32 || (*E).frozen_timer == 0)
     {
         CallEnemyAi(
-            (((*E).bank as i32) << 16 as i32 | (*ED).touch_ai as i32) as uint32,
+            (((*E).bank as i32) << 16 as i32 | (*ED).touch_ai as i32) as u32,
             game,
         );
     }
 }
 pub unsafe fn EprojCollHandler(game: &mut Game) {
     let E: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    set_ram_word!(game.enemy_processing_stage = 7 as uint16);
+    set_ram_word!(game.enemy_processing_stage = 7 as u16);
     if ram_word!(game, projectile_counter) == 0 {
         return;
     }
@@ -4563,34 +4508,32 @@ pub unsafe fn EprojCollHandler(game: &mut Game) {
     }
     let mut pidx: i32 = 0 as i32;
     while pidx < 5i32 {
-        let j: uint16 = ram_word!(game, projectile_type[pidx]);
+        let j: u16 = ram_word!(game, projectile_type[pidx]);
         if j != 0u16
             && (j as i32 & 0xf00 as i32) != 768i32
             && (j as i32 & 0xf00 as i32) != 1280i32
             && (j as i32 & 0xf00 as i32) - 1792 as i32 & 0x8000 as i32 != 0
         {
-            let x: uint16 =
-                abs16((ram_word!(game, projectile_x_pos[pidx])).wrapping_sub((*E).x_pos));
-            let y: uint16 =
-                abs16((ram_word!(game, projectile_y_pos[pidx])).wrapping_sub((*E).y_pos));
+            let x: u16 = abs16((ram_word!(game, projectile_x_pos[pidx])).wrapping_sub((*E).x_pos));
+            let y: u16 = abs16((ram_word!(game, projectile_y_pos[pidx])).wrapping_sub((*E).y_pos));
             if (x as i32 - ram_word!(game, projectile_x_radius[pidx]) as i32) < (*E).x_width as i32
                 && (y as i32 - ram_word!(game, projectile_y_radius[pidx]) as i32)
                     < (*E).y_height as i32
             {
                 if (ram_word!(game, projectile_type[pidx]) as i32 & 0xf00 as i32) == 512i32 {
-                    set_ram_word!(game.earthquake_timer = 30 as uint16);
-                    set_ram_word!(game.earthquake_type = 18 as uint16);
+                    set_ram_word!(game.earthquake_timer = 30 as u16);
+                    set_ram_word!(game.earthquake_type = 18 as u16);
                 }
                 if ((*E).properties as i32 & 0x1000 as i32) != 0i32
                     || (ram_word!(game, projectile_type[pidx]) as i32 & 8 as i32) == 0i32
                 {
                     update_ram_word!(game.projectile_dir[pidx], |fresh26| (fresh26) | (0x10u16));
                 }
-                set_ram_word!(game.collision_detection_index = pidx as uint16);
+                set_ram_word!(game.collision_detection_index = pidx as u16);
                 CallEnemyAi(
                     (((*E).bank as i32) << 16 as i32
                         | (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai as i32)
-                        as uint32,
+                        as u32,
                     game,
                 );
                 return;
@@ -4601,7 +4544,7 @@ pub unsafe fn EprojCollHandler(game: &mut Game) {
 }
 pub unsafe fn EnemyBombCollHandler(game: &mut Game) {
     let E: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    set_ram_word!(game.enemy_processing_stage = 8 as uint16);
+    set_ram_word!(game.enemy_processing_stage = 8 as u16);
     if ram_word!(game, bomb_counter) == 0
         || (*E).spritemap_pointer == 0
         || (*E).invincibility_timer != 0u16
@@ -4622,12 +4565,12 @@ pub unsafe fn EnemyBombCollHandler(game: &mut Game) {
                 - ram_word!(game, projectile_y_radius[pidx]) as i32)
                 < (*E).y_height as i32
         {
-            set_ram_word!(game.collision_detection_index = pidx as uint16);
+            set_ram_word!(game.collision_detection_index = pidx as u16);
             update_ram_word!(game.projectile_dir[pidx], |fresh23| (fresh23) | (0x10u16));
             CallEnemyAi(
                 (((*E).bank as i32) << 16 as i32
                     | (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai as i32)
-                    as uint32,
+                    as u32,
                 game,
             );
             return;
@@ -4636,14 +4579,13 @@ pub unsafe fn EnemyBombCollHandler(game: &mut Game) {
     }
 }
 pub unsafe fn ProcessEnemyPowerBombInteraction(game: &mut Game) {
-    set_ram_word!(game.enemy_processing_stage = 5 as uint16);
-    let rx: uint16 =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>())
-                .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1_usize) as isize,
-        ) as uint16;
-    let ry: uint16 = (rx as i32 + (rx as i32 >> 1 as i32) >> 1 as i32) as uint16;
+    set_ram_word!(game.enemy_processing_stage = 5 as u16);
+    let rx: u16 = *((&raw mut game.g_ram as *mut u8).offset(0xcea) as *mut u16 as *mut u8).offset(
+        (::core::mem::size_of::<u16>())
+            .wrapping_div(::core::mem::size_of::<u8>())
+            .wrapping_sub(1_usize) as isize,
+    ) as u16;
+    let ry: u16 = (rx as i32 + (rx as i32 >> 1 as i32) >> 1 as i32) as u16;
     let mut i: i32 = 0x7c0 as i32;
     while rx != 0u16 && i >= 0i32 {
         let E: *mut EnemyData = gEnemyData(i, game);
@@ -4657,7 +4599,7 @@ pub unsafe fn ProcessEnemyPowerBombInteraction(game: &mut Game) {
                     (*ED).vulnerability_ptr as i32
                 } else {
                     addr_stru_B4EC1C as i32
-                }) as uint16,
+                }) as u16,
                 game,
             ))
             .power_bomb as i32
@@ -4668,77 +4610,73 @@ pub unsafe fn ProcessEnemyPowerBombInteraction(game: &mut Game) {
                 && abs16((ram_word!(game, power_bomb_explosion_y_pos)).wrapping_sub((*E).y_pos))
                     < ry
             {
-                set_ram_word!(game.cur_enemy_index = i as uint16);
-                let func: uint16 = (if (*ED).powerbomb_reaction != 0u16 {
+                set_ram_word!(game.cur_enemy_index = i as u16);
+                let func: u16 = (if (*ED).powerbomb_reaction != 0u16 {
                     (*ED).powerbomb_reaction as i32
                 } else {
                     0xa08037 as i32 & 0xffff as i32
-                }) as uint16;
-                CallEnemyAi(
-                    (((*E).bank as i32) << 16 as i32 | func as i32) as uint32,
-                    game,
-                );
+                }) as u16;
+                CallEnemyAi((((*E).bank as i32) << 16 as i32 | func as i32) as u32, game);
                 (*E).properties = ((*E).properties) | (0x800u16);
             }
         }
         i -= 0x40 as i32;
     }
 }
-pub unsafe fn EnemyDeathAnimation(k: uint16, mut a: uint16, game: &mut Game) {
+pub unsafe fn EnemyDeathAnimation(k: u16, mut a: u16, game: &mut Game) {
     let E: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).ai_handler_bits == 1u16 {
         set_ram_word!(game.grapple_beam_function = ((0x9bc8c5i32) as u16));
     }
     if a as i32 - 5 as i32 & 0x8000 as i32 == 0 {
-        a = 0 as uint16;
+        a = 0 as u16;
     }
     SpawnEprojWithGfx(
         a,
         ram_word!(game, cur_enemy_index),
-        addr_kEproj_EnemyDeathExplosion as uint16,
+        addr_kEproj_EnemyDeathExplosion as u16,
         game,
     );
-    let r18: uint16 = ((*E).properties) & (0x4000u16);
+    let r18: u16 = ((*E).properties) & (0x4000u16);
     memset(E as *mut ::core::ffi::c_void, 0 as i32, 64 as size_t);
     if r18 != 0 {
-        (*E).enemy_ptr = addr_kEnemyDef_DAFF as uint16;
-        (*E).bank = 0xa3 as uint8;
+        (*E).enemy_ptr = addr_kEnemyDef_DAFF as u16;
+        (*E).bank = 0xa3 as u8;
     }
     update_ram_word!(game.num_enemies_killed_in_room, wrapping_add(1));
 }
-pub unsafe fn RinkasDeathAnimation(mut a: uint16, game: &mut Game) {
+pub unsafe fn RinkasDeathAnimation(mut a: u16, game: &mut Game) {
     let E: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
     if a as i32 - 3 as i32 & 0x8000 as i32 == 0 {
-        a = 0 as uint16;
+        a = 0 as u16;
     }
     SpawnEprojWithGfx(
         a,
         ram_word!(game, cur_enemy_index),
-        addr_kEproj_EnemyDeathExplosion as uint16,
+        addr_kEproj_EnemyDeathExplosion as u16,
         game,
     );
-    let r18: uint16 = ((*E).properties) & (0x4000u16);
+    let r18: u16 = ((*E).properties) & (0x4000u16);
     memset(E as *mut ::core::ffi::c_void, 0 as i32, 64 as size_t);
     if r18 != 0 {
-        (*E).enemy_ptr = addr_kEnemyDef_DAFF as uint16;
-        (*E).bank = 0xa3 as uint8;
+        (*E).enemy_ptr = addr_kEnemyDef_DAFF as u16;
+        (*E).bank = 0xa3 as u8;
     }
 }
-pub unsafe fn SuitDamageDivision(a: uint16, game: &mut Game) -> uint16 {
+pub unsafe fn SuitDamageDivision(a: u16, game: &mut Game) -> u16 {
     if (ram_word!(game, equipped_items) as i32 & 0x20 as i32) != 0i32 {
-        return (a as i32 >> 2 as i32) as uint16;
+        return (a as i32 >> 2 as i32) as u16;
     }
     if ram_word!(game, equipped_items) as i32 & 1 as i32 != 0 {
-        return (a as i32 >> 1 as i32) as uint16;
+        return (a as i32 >> 1 as i32) as u16;
     }
     a
 }
 pub unsafe fn NormalEnemyTouchAi(game: &mut Game) {
     NormalEnemyTouchAiSkipDeathAnim(game);
     if (*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).health == 0 {
-        (*gEnemySpawnData(ram_word!(game, cur_enemy_index) as i32, game)).cause_of_death =
-            6 as uint16;
-        EnemyDeathAnimation(ram_word!(game, cur_enemy_index), 1 as uint16, game);
+        (*gEnemySpawnData(ram_word!(game, cur_enemy_index) as i32, game)).cause_of_death = 6 as u16;
+        EnemyDeathAnimation(ram_word!(game, cur_enemy_index), 1 as u16, game);
     }
 }
 pub unsafe fn NormalEnemyTouchAiSkipDeathAnim_CurEnemy(game: &mut Game) {
@@ -4749,69 +4687,68 @@ pub unsafe fn NormalEnemyTouchAiSkipDeathAnim(game: &mut Game) {
     let ED: *mut EnemyDef = get_EnemyDef_A2((*E).enemy_ptr, game);
     if ram_word!(game, samus_contact_damage_index) == 0u16 {
         Samus_DealDamage(SuitDamageDivision((*ED).damage, game), game);
-        set_ram_word!(game.samus_invincibility_timer = 96 as uint16);
-        set_ram_word!(game.samus_knockback_timer = 5 as uint16);
+        set_ram_word!(game.samus_invincibility_timer = 96 as u16);
+        set_ram_word!(game.samus_knockback_timer = 5 as u16);
         set_ram_word!(
             game.knockback_x_dir = (((ram_word!(game, samus_x_pos)) as i16)
                 .wrapping_sub(((*E).x_pos) as i16)
-                >= 0i16) as uint16
+                >= 0i16) as u16
         );
         return;
     }
-    let mut r20: uint16 = (ram_word!(game, samus_contact_damage_index)).wrapping_add(15u16);
-    let mut r22: uint16 = 0;
+    let mut r20: u16 = (ram_word!(game, samus_contact_damage_index)).wrapping_add(15u16);
+    let mut r22: u16 = 0;
     if ram_word!(game, samus_contact_damage_index) == 1u16 {
-        r22 = 500 as uint16;
+        r22 = 500 as u16;
     } else if ram_word!(game, samus_contact_damage_index) == 2u16 {
-        r22 = 300 as uint16;
+        r22 = 300 as u16;
     } else if ram_word!(game, samus_contact_damage_index) == 3u16 {
-        r22 = 2000 as uint16;
+        r22 = 2000 as u16;
     } else {
         r20 = r20.wrapping_add(1);
         if ram_word!(game, samus_contact_damage_index) == 4u16 {
-            CallSomeSamusCode(4 as uint16, game);
+            CallSomeSamusCode(4 as u16, game);
         }
-        r22 = 200 as uint16;
+        r22 = 200 as u16;
     }
-    let vp: uint16 = (if (*ED).vulnerability_ptr != 0u16 {
+    let vp: u16 = (if (*ED).vulnerability_ptr != 0u16 {
         (*ED).vulnerability_ptr as i32
     } else {
         addr_stru_B4EC1C as i32
-    }) as uint16;
+    }) as u16;
     set_ram_word!(
         game.last_enemy_power = *(&raw mut (*(get_Vulnerability
-            as unsafe fn(uint16, &mut Game) -> *mut Vulnerability)(
+            as unsafe fn(u16, &mut Game) -> *mut Vulnerability)(
             (r20).wrapping_add(vp), game,
         ))
-        .power as *mut uint16)
+        .power as *mut u16)
     );
-    let varE32: uint16 = (ram_word!(game, last_enemy_power)) & (0x7fu16);
+    let varE32: u16 = (ram_word!(game, last_enemy_power)) & (0x7fu16);
     if (ram_word!(game, last_enemy_power) as i32 & 0x7f as i32) != 0i32 {
-        let dmg: uint16 = ((r22 as i32 >> 1 as i32) * varE32 as i32) as uint16;
+        let dmg: u16 = ((r22 as i32 >> 1 as i32) * varE32 as i32) as u16;
         if dmg != 0 {
             (*E).flash_timer = (if (*ED).hurt_ai_time != 0u8 {
                 (*ED).hurt_ai_time as i32
             } else {
                 4 as i32
-            }) as uint16;
+            }) as u16;
             (*E).ai_handler_bits = ((*E).ai_handler_bits) | ((kEnemyAiBits_Hurt) as u16);
-            set_ram_word!(game.samus_invincibility_timer = 0 as uint16);
-            set_ram_word!(game.samus_knockback_timer = 0 as uint16);
+            set_ram_word!(game.samus_invincibility_timer = 0 as u16);
+            set_ram_word!(game.samus_knockback_timer = 0 as u16);
             (*E).health = (if (((*E).health) as i16).wrapping_sub((dmg) as i16) < 0i16 {
                 0 as i32
             } else {
                 ((((*E).health) as i16).wrapping_sub((dmg) as i16)) as i32
-            }) as uint16;
-            QueueSfx2_Max1(0xb as uint16, game);
+            }) as u16;
+            QueueSfx2_Max1(0xb as u16, game);
         }
     }
 }
 pub unsafe fn NormalEnemyPowerBombAi(game: &mut Game) {
     NormalEnemyPowerBombAiSkipDeathAnim(game);
     if (*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).health == 0 {
-        (*gEnemySpawnData(ram_word!(game, cur_enemy_index) as i32, game)).cause_of_death =
-            3 as uint16;
-        EnemyDeathAnimation(ram_word!(game, cur_enemy_index), 0 as uint16, game);
+        (*gEnemySpawnData(ram_word!(game, cur_enemy_index) as i32, game)).cause_of_death = 3 as u16;
+        EnemyDeathAnimation(ram_word!(game, cur_enemy_index), 0 as u16, game);
     }
 }
 pub unsafe fn NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game: &mut Game) {
@@ -4819,35 +4756,35 @@ pub unsafe fn NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game: &mut Game) {
 }
 pub unsafe fn NormalEnemyPowerBombAiSkipDeathAnim(game: &mut Game) {
     let mut EnemyDef_A2: *mut EnemyDef = ::core::ptr::null_mut::<EnemyDef>();
-    let mut hurt_ai_time: int16 = 0;
+    let mut hurt_ai_time: i16 = 0;
     let v0: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    let mut vulnerability_ptr: uint16 = (*get_EnemyDef_A2((*v0).enemy_ptr, game)).vulnerability_ptr;
+    let mut vulnerability_ptr: u16 = (*get_EnemyDef_A2((*v0).enemy_ptr, game)).vulnerability_ptr;
     if vulnerability_ptr == 0 {
-        vulnerability_ptr = -(5092 as i32) as uint16;
+        vulnerability_ptr = -(5092 as i32) as u16;
     }
-    let power_bomb: uint8 = (*get_Vulnerability(vulnerability_ptr, game)).power_bomb;
+    let power_bomb: u8 = (*get_Vulnerability(vulnerability_ptr, game)).power_bomb;
     if power_bomb != 255u8 {
-        let varE32: uint16 = ((power_bomb) as u16) & (0x7fu16);
+        let varE32: u16 = ((power_bomb) as u16) & (0x7fu16);
         if (power_bomb as i32 & 0x7f as i32) != 0i32 {
-            let ttt: uint32 = (100u32).wrapping_mul((varE32) as u32);
+            let ttt: u32 = (100u32).wrapping_mul((varE32) as u32);
             if ttt != 0 {
                 (*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).invincibility_timer =
-                    48 as uint16;
+                    48 as u16;
                 let j: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
                 EnemyDef_A2 = get_EnemyDef_A2((*j).enemy_ptr, game);
-                hurt_ai_time = (*EnemyDef_A2).hurt_ai_time as int16;
+                hurt_ai_time = (*EnemyDef_A2).hurt_ai_time as i16;
                 if (*EnemyDef_A2).hurt_ai_time == 0 {
-                    hurt_ai_time = 4 as int16;
+                    hurt_ai_time = 4 as i16;
                 }
                 let v6: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
                 (*v6).flash_timer = ((hurt_ai_time) as u16).wrapping_add(8u16);
                 (*v6).ai_handler_bits = ((*v6).ai_handler_bits) | (2u16);
-                let health: uint16 = (*v6).health;
-                let mut v9: bool = (health as uint32) < ttt;
-                let mut v8: uint16 = (health as uint32).wrapping_sub(ttt) as uint16;
+                let health: u16 = (*v6).health;
+                let mut v9: bool = (health as u32) < ttt;
+                let mut v8: u16 = (health as u32).wrapping_sub(ttt) as u16;
                 v9 = !v9;
                 if v8 == 0 || !v9 {
-                    v8 = 0 as uint16;
+                    v8 = 0 as u16;
                 }
                 (*v6).health = v8;
             }
@@ -4855,23 +4792,23 @@ pub unsafe fn NormalEnemyPowerBombAiSkipDeathAnim(game: &mut Game) {
     }
 }
 pub unsafe fn NormalEnemyShotAi(game: &mut Game) {
-    let varE2E: uint16 = NormalEnemyShotAiSkipDeathAnim(game);
+    let varE2E: u16 = NormalEnemyShotAiSkipDeathAnim(game);
     let E: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
     if varE2E != 0 {
-        CreateSpriteAtPos((*E).x_pos, (*E).y_pos, 55 as uint16, 0 as uint16, game);
+        CreateSpriteAtPos((*E).x_pos, (*E).y_pos, 55 as u16, 0 as u16, game);
     }
     if (*E).health == 0 {
-        let j: uint16 = ((*(((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
+        let j: u16 = ((*(((&raw mut game.g_ram as *mut u8).offset(0xc18) as *mut u16)
             .offset(ram_word!(game, collision_detection_index) as isize)
-            as *mut uint16 as *mut uint8)
+            as *mut u16 as *mut u8)
             .offset(
-                (::core::mem::size_of::<uint16>())
-                    .wrapping_div(::core::mem::size_of::<uint8>())
+                (::core::mem::size_of::<u16>())
+                    .wrapping_div(::core::mem::size_of::<u8>())
                     .wrapping_sub(1_usize) as isize,
             )) as u16)
             & (0xfu16);
         (*gEnemySpawnData(ram_word!(game, cur_enemy_index) as i32, game)).cause_of_death = j;
-        let mut death_anim: uint16 = 2 as uint16;
+        let mut death_anim: u16 = 2 as u16;
         if j == 2u16 {
             let ED: *mut EnemyDef = get_EnemyDef_A2((*E).enemy_ptr, game);
             if (*ED).death_anim as i32 - 3 as i32 & 0x8000 as i32 == 0 {
@@ -4887,37 +4824,37 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim_CurEnemy(game: &mut Game) {
     NormalEnemyShotAiSkipDeathAnim(game);
 }
 pub unsafe fn EnemyFunc_A6B4_UsedBySporeSpawn(game: &mut Game) {
-    let varE2E: uint16 = NormalEnemyShotAiSkipDeathAnim(game);
+    let varE2E: u16 = NormalEnemyShotAiSkipDeathAnim(game);
     if varE2E != 0 {
         let ED: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-        CreateSpriteAtPos((*ED).x_pos, (*ED).y_pos, 55 as uint16, 0 as uint16, game);
+        CreateSpriteAtPos((*ED).x_pos, (*ED).y_pos, 55 as u16, 0 as u16, game);
     }
 }
-pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> uint16 {
-    let mut ttt: uint32 = 0;
-    let mut r42: uint16 = 0;
+pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> u16 {
+    let mut ttt: u32 = 0;
+    let mut r42: u16 = 0;
     let current_block: u64;
-    let mut varE2E: uint16 = 0 as uint16;
-    let mut v5: int16 = 0;
-    let mut v6: int16 = 0;
-    let mut v9: int16 = 0;
+    let mut varE2E: u16 = 0 as u16;
+    let mut v5: i16 = 0;
+    let mut v6: i16 = 0;
+    let mut v9: i16 = 0;
     let mut EnemyDef_A2: *mut EnemyDef = ::core::ptr::null_mut::<EnemyDef>();
-    let mut hurt_ai_time: int16 = 0;
-    let mut v20: int16 = 0;
-    let mut varE32: uint16 = 0;
+    let mut hurt_ai_time: i16 = 0;
+    let mut v20: i16 = 0;
+    let mut varE32: u16 = 0;
     let v0: i32 = ram_word!(game, collision_detection_index) as i32;
-    let mut pd: uint16 = ram_word!(game, projectile_damage[v0]);
-    let r18: uint16 = ram_word!(game, projectile_type[v0]);
+    let mut pd: u16 = ram_word!(game, projectile_damage[v0]);
+    let r18: u16 = ram_word!(game, projectile_type[v0]);
     let j: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    let mut vulnerability_ptr: uint16 = (*get_EnemyDef_A2((*j).enemy_ptr, game)).vulnerability_ptr;
+    let mut vulnerability_ptr: u16 = (*get_EnemyDef_A2((*j).enemy_ptr, game)).vulnerability_ptr;
     if vulnerability_ptr == 0 {
-        vulnerability_ptr = addr_stru_B4EC1C as uint16;
+        vulnerability_ptr = addr_stru_B4EC1C as u16;
     }
-    let r20: uint16 = vulnerability_ptr;
+    let r20: u16 = vulnerability_ptr;
     if (r18 as i32 & 0xf00 as i32) != 0i32 {
         v5 = ((r18) as i16) & (0xf00i16);
         if (r18 as i32 & 0xf00 as i32) == 256i32 || v5 == 512i16 {
-            v6 = ((r18 as i32 & 0xf00 as i32) >> 8 as i32) as int16;
+            v6 = ((r18 as i32 & 0xf00 as i32) >> 8 as i32) as i16;
             varE32 = (((*get_Vulnerability((r20).wrapping_add((v6) as u16), game)).plasma_ice_wave)
                 as u16)
                 & (0x7fu16);
@@ -4934,17 +4871,17 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> uint16 {
     } else {
         set_ram_word!(
             game.last_enemy_power =
-                (*get_Vulnerability((r20 as i32 + (r18 as i32 & 0xf as i32)) as uint16, game,))
-                    .power as uint16
+                (*get_Vulnerability((r20 as i32 + (r18 as i32 & 0xf as i32)) as u16, game,)).power
+                    as u16
         );
         varE32 = (ram_word!(game, last_enemy_power)) & (0x7fu16);
         if ram_word!(game, last_enemy_power) != 255u16 {
             if (r18 as i32 & 0x10 as i32) != 0i32 {
-                let charged_beam: uint8 = (*get_Vulnerability(r20, game)).charged_beam;
+                let charged_beam: u8 = (*get_Vulnerability(r20, game)).charged_beam;
                 if charged_beam == 255u8 {
                     current_block = 3938820862080741272;
                 } else {
-                    let v4: uint16 = ((charged_beam) as u16) & (0xfu16);
+                    let v4: u16 = ((charged_beam) as u16) & (0xfu16);
                     if v4 == 0 {
                         current_block = 3938820862080741272;
                     } else {
@@ -4958,40 +4895,40 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> uint16 {
         } else {
             let v8: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
             if (*v8).frozen_timer == 0 {
-                QueueSfx3_Max3(0xa as uint16, game);
+                QueueSfx3_Max3(0xa as u16, game);
             }
-            v9 = 400 as int16;
+            v9 = 400 as i16;
             if ram_word!(game, area_index) == 2u16 {
-                v9 = 300 as int16;
+                v9 = 300 as i16;
             }
-            (*v8).frozen_timer = v9 as uint16;
+            (*v8).frozen_timer = v9 as u16;
             (*v8).ai_handler_bits = ((*v8).ai_handler_bits) | (4u16);
-            (*v8).invincibility_timer = 10 as uint16;
+            (*v8).invincibility_timer = 10 as u16;
             return varE2E;
         }
     }
     if current_block == 5143058163439228106 {
-        ttt = ((pd as i32 >> 1 as i32) as uint32).wrapping_mul(varE32 as uint32);
-        r42 = ttt as uint16;
+        ttt = ((pd as i32 >> 1 as i32) as u32).wrapping_mul(varE32 as u32);
+        r42 = ttt as u16;
         if r42 != 0 {
             pd = r42;
             let v10: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
             EnemyDef_A2 = get_EnemyDef_A2((*v10).enemy_ptr, game);
-            hurt_ai_time = (*EnemyDef_A2).hurt_ai_time as int16;
+            hurt_ai_time = (*EnemyDef_A2).hurt_ai_time as i16;
             if (*EnemyDef_A2).hurt_ai_time == 0 {
-                hurt_ai_time = 4 as int16;
+                hurt_ai_time = 4 as i16;
             }
             let v13: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
             (*v13).flash_timer = ((hurt_ai_time) as u16).wrapping_add(8u16);
             (*v13).ai_handler_bits = ((*v13).ai_handler_bits) | (2u16);
             if (*v13).frozen_timer == 0 {
-                let hurt_sfx: uint16 = (*get_EnemyDef_A2((*v13).enemy_ptr, game)).hurt_sfx;
+                let hurt_sfx: u16 = (*get_EnemyDef_A2((*v13).enemy_ptr, game)).hurt_sfx;
                 if hurt_sfx != 0 {
                     QueueSfx2_Max3(hurt_sfx, game);
                 }
                 varE2E = varE2E.wrapping_add(1);
             }
-            let v15: uint16 = ram_word!(game, cur_enemy_index);
+            let v15: u16 = ram_word!(game, cur_enemy_index);
             if (ram_word!(
                 game,
                 projectile_type[ram_word!(game, collision_detection_index)]
@@ -5000,12 +4937,12 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> uint16 {
                 != 0i32
             {
                 (*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).invincibility_timer =
-                    16 as uint16;
+                    16 as u16;
             }
             let v16: *mut EnemyData = gEnemyData(v15 as i32, game);
-            let health: uint16 = (*v16).health;
+            let health: u16 = (*v16).health;
             let mut v19: bool = health < pd;
-            let mut v18: uint16 = (health).wrapping_sub(pd);
+            let mut v18: u16 = (health).wrapping_sub(pd);
             v19 = !v19;
             if v18 == 0 || !v19 {
                 if (ram_word!(
@@ -5017,17 +4954,17 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> uint16 {
                     && (ram_word!(game, last_enemy_power) as i32 & 0xf0 as i32) != 128i32
                     && (*v16).frozen_timer == 0
                 {
-                    v20 = 400 as int16;
+                    v20 = 400 as i16;
                     if ram_word!(game, area_index) == 2u16 {
-                        v20 = 300 as int16;
+                        v20 = 300 as i16;
                     }
-                    (*v16).frozen_timer = v20 as uint16;
+                    (*v16).frozen_timer = v20 as u16;
                     (*v16).ai_handler_bits = ((*v16).ai_handler_bits) | (4u16);
-                    (*v16).invincibility_timer = 10 as uint16;
-                    QueueSfx3_Max3(0xa as uint16, game);
+                    (*v16).invincibility_timer = 10 as u16;
+                    QueueSfx3_Max3(0xa as u16, game);
                     return varE2E;
                 }
-                v18 = 0 as uint16;
+                v18 = 0 as u16;
             }
             (*v16).health = v18;
             return varE2E;
@@ -5038,11 +4975,11 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> uint16 {
     CreateSpriteAtPos(
         ram_word!(game, projectile_x_pos[v7]),
         ram_word!(game, projectile_y_pos[v7]),
-        6 as uint16,
-        0 as uint16,
+        6 as u16,
+        0 as u16,
         game,
     );
-    QueueSfx1_Max3(0x3d as uint16, game);
+    QueueSfx1_Max3(0x3d as u16, game);
     varE2E
 }
 pub unsafe fn CreateDudShot(game: &mut Game) {
@@ -5050,11 +4987,11 @@ pub unsafe fn CreateDudShot(game: &mut Game) {
     CreateSpriteAtPos(
         ram_word!(game, projectile_x_pos[v0]),
         ram_word!(game, projectile_y_pos[v0]),
-        6 as uint16,
-        0 as uint16,
+        6 as u16,
+        0 as u16,
         game,
     );
-    QueueSfx1_Max3(0x3d as uint16, game);
+    QueueSfx1_Max3(0x3d as u16, game);
     update_ram_word!(
         game.projectile_dir[ram_word!(game, collision_detection_index)],
         |fresh13| (fresh13) | (0x10u16)
@@ -5168,7 +5105,7 @@ fn solid_enemy_axis_overlaps(
     distance < enemy_radius || distance.wrapping_sub(enemy_radius) < samus_radius
 }
 
-pub fn Samus_CheckSolidEnemyColl(amt: int32, game: &mut Game) -> CheckEnemyColl_Result {
+pub fn Samus_CheckSolidEnemyColl(amt: i32, game: &mut Game) -> CheckEnemyColl_Result {
     if game.interactive_enemy_indexes_write_ptr() == 0 {
         return CheckSolidEnemyColl_Result { collision: 0, amt };
     }
@@ -5253,7 +5190,7 @@ pub fn Samus_CheckSolidEnemyColl(amt: int32, game: &mut Game) -> CheckEnemyColl_
     }
     CheckSolidEnemyColl_Result { collision: 0, amt }
 }
-pub fn CheckIfEnemyTouchesSamus(k: uint16, game: &mut Game) -> uint16 {
+pub fn CheckIfEnemyTouchesSamus(k: u16, game: &mut Game) -> u16 {
     let enemy = SolidEnemyCollisionBody::new(game, k);
     if !solid_enemy_axis_overlaps(
         game.samus_x_pos(),
@@ -5276,7 +5213,7 @@ pub fn CheckIfEnemyTouchesSamus(k: uint16, game: &mut Game) -> uint16 {
         0
     }
 }
-pub fn EnemyFunc_AC67(k: uint16, game: &mut Game) -> uint16 {
+pub fn EnemyFunc_AC67(k: u16, game: &mut Game) -> u16 {
     let enemy = SolidEnemyCollisionBody::new(game, k);
     let delta = game.samus_x_pos().wrapping_sub(enemy.x_pos());
     let distance = (delta as i16).wrapping_abs() as u16;
@@ -5327,14 +5264,14 @@ fn enemy_axis_outside_screen(
         || (camera.wrapping_add(upper_edge).wrapping_sub(position) as i16) < 0
 }
 
-pub fn CheckIfEnemyIsOnScreen(game: &mut Game) -> uint16 {
+pub fn CheckIfEnemyIsOnScreen(game: &mut Game) -> u16 {
     let enemy = SolidEnemyCollisionBody::new(game, game.cur_enemy_index());
     u16::from(
         enemy_axis_outside_screen(enemy.x_pos(), game.layer1_x_pos(), 0, 256)
             || enemy_axis_outside_screen(enemy.y_pos(), game.layer1_y_pos(), 0, 256),
     )
 }
-pub fn EnemyFunc_ADA3(a: uint16, game: &mut Game) -> uint16 {
+pub fn EnemyFunc_ADA3(a: u16, game: &mut Game) -> u16 {
     let enemy = SolidEnemyCollisionBody::new(game, game.cur_enemy_index());
     u16::from(
         enemy_axis_outside_screen(enemy.x_pos(), game.layer1_x_pos(), a, a.wrapping_add(256))
@@ -5346,7 +5283,7 @@ pub fn EnemyFunc_ADA3(a: uint16, game: &mut Game) -> uint16 {
             ),
     )
 }
-pub fn EnemyWithNormalSpritesIsOffScreen(game: &mut Game) -> uint16 {
+pub fn EnemyWithNormalSpritesIsOffScreen(game: &mut Game) -> u16 {
     let enemy = SolidEnemyCollisionBody::new(game, game.cur_enemy_index());
     u16::from(
         enemy_axis_outside_screen(
@@ -5357,7 +5294,7 @@ pub fn EnemyWithNormalSpritesIsOffScreen(game: &mut Game) -> uint16 {
         ) || enemy_axis_outside_screen(enemy.y_pos(), game.layer1_y_pos(), 8, 248),
     )
 }
-pub fn DetermineDirectionOfSamusFromEnemy(game: &mut Game) -> uint16 {
+pub fn DetermineDirectionOfSamusFromEnemy(game: &mut Game) -> u16 {
     let index = game.cur_enemy_index();
     if IsSamusWithinEnemy_Y(index, 32, game) != 0 {
         let index = game.cur_enemy_index();
@@ -5387,25 +5324,25 @@ pub fn DetermineDirectionOfSamusFromEnemy(game: &mut Game) -> uint16 {
         (false, false) => 3,
     }
 }
-pub fn GetSamusEnemyDelta_Y(k: uint16, game: &mut Game) -> uint16 {
+pub fn GetSamusEnemyDelta_Y(k: u16, game: &mut Game) -> u16 {
     let enemy = SolidEnemyCollisionBody::new(game, k);
     game.samus_y_pos().wrapping_sub(enemy.y_pos())
 }
-pub fn GetSamusEnemyDelta_X(k: uint16, game: &mut Game) -> uint16 {
+pub fn GetSamusEnemyDelta_X(k: u16, game: &mut Game) -> u16 {
     let enemy = SolidEnemyCollisionBody::new(game, k);
     game.samus_x_pos().wrapping_sub(enemy.x_pos())
 }
-pub fn IsSamusWithinEnemy_Y(k: uint16, a: uint16, game: &mut Game) -> uint16 {
+pub fn IsSamusWithinEnemy_Y(k: u16, a: u16, game: &mut Game) -> u16 {
     let delta = GetSamusEnemyDelta_Y(k, game);
     let distance = (delta as i16).wrapping_abs() as u16;
     u16::from((distance.wrapping_sub(a) as i16) < 0)
 }
-pub fn IsSamusWithinEnemy_X(k: uint16, a: uint16, game: &mut Game) -> uint16 {
+pub fn IsSamusWithinEnemy_X(k: u16, a: u16, game: &mut Game) -> u16 {
     let delta = GetSamusEnemyDelta_X(k, game);
     let distance = (delta as i16).wrapping_abs() as u16;
     u16::from((distance.wrapping_sub(a) as i16) < 0)
 }
-pub fn SignExtend8(a: uint16) -> uint16 {
+pub fn SignExtend8(a: u16) -> u16 {
     // Preserve the input high byte when bit 7 is clear.
     if a & 0x80 != 0 {
         a | 0xff00
@@ -5413,16 +5350,16 @@ pub fn SignExtend8(a: uint16) -> uint16 {
         a
     }
 }
-pub fn Mult32(a: uint16) -> uint16 {
+pub fn Mult32(a: u16) -> u16 {
     a.wrapping_mul(32)
 }
-pub fn Abs16(a: uint16) -> uint16 {
+pub fn Abs16(a: u16) -> u16 {
     (a as i16).wrapping_abs() as u16
 }
-pub fn SubtractThenAbs16(k: uint16, j: uint16) -> uint16 {
+pub fn SubtractThenAbs16(k: u16, j: u16) -> u16 {
     Abs16(j.wrapping_sub(k))
 }
-fn SineMult8bitInner(amplitude: uint16, phase: uint16, game: &Game) -> uint32 {
+fn SineMult8bitInner(amplitude: u16, phase: u16, game: &Game) -> u32 {
     let sample = game.read_rom_byte(0xa0b143, usize::from(phase & 0x7f));
     let product = u16::from(sample) * u16::from(amplitude as u8);
     let mut integer = product >> 8;
@@ -5435,22 +5372,22 @@ fn SineMult8bitInner(amplitude: uint16, phase: uint16, game: &Game) -> uint32 {
     (u32::from(integer) << 16) | u32::from(fraction)
 }
 
-pub fn CosineMult8bit(phase: uint16, amplitude: uint16, game: &mut Game) -> uint16 {
+pub fn CosineMult8bit(phase: u16, amplitude: u16, game: &mut Game) -> u16 {
     (SineMult8bitInner(amplitude, phase.wrapping_add(64) as u8 as u16, game) >> 16) as u16
 }
 
-pub fn SineMult8bit(phase: uint16, amplitude: uint16, game: &mut Game) -> uint16 {
+pub fn SineMult8bit(phase: u16, amplitude: u16, game: &mut Game) -> u16 {
     (SineMult8bitInner(amplitude, phase.wrapping_add(0x80) as u8 as u16, game) >> 16) as u16
 }
 
-pub fn CosineMult8bitFull(phase: uint16, amplitude: uint16, game: &mut Game) -> uint32 {
+pub fn CosineMult8bitFull(phase: u16, amplitude: u16, game: &mut Game) -> u32 {
     SineMult8bitInner(amplitude, phase.wrapping_add(64) as u8 as u16, game)
 }
 
-pub fn SineMult8bitFull(phase: uint16, amplitude: uint16, game: &mut Game) -> uint32 {
+pub fn SineMult8bitFull(phase: u16, amplitude: u16, game: &mut Game) -> u32 {
     SineMult8bitInner(amplitude, phase.wrapping_add(0x80) as u8 as u16, game)
 }
-pub fn ConvertAngleToXy(phase: uint16, amplitude: uint16, game: &mut Game) -> Point32 {
+pub fn ConvertAngleToXy(phase: u16, amplitude: u16, game: &mut Game) -> Point32 {
     let x_index = usize::from(phase.wrapping_add(0x40) & 0x7f);
     let x_sample = game.read_rom_word(0xa0b7ee, x_index * 2);
     let x = u32::from(x_sample) * u32::from(amplitude);
@@ -5468,7 +5405,7 @@ fn add_enemy_vector_coordinate(bytes: &mut [u8], amount: u32) {
     bytes[0..2].copy_from_slice(&((adjusted >> 16) as u16).to_le_bytes());
 }
 
-pub fn EnemyFunc_B691(phase: uint16, pt: Point32, game: &mut Game) {
+pub fn EnemyFunc_B691(phase: u16, pt: Point32, game: &mut Game) {
     let slot = 0xf78 + usize::from(game.cur_enemy_index());
     let x = if phase.wrapping_add(64) & 0x80 != 0 {
         pt.x.wrapping_neg()
@@ -5485,11 +5422,11 @@ pub fn EnemyFunc_B691(phase: uint16, pt: Point32, game: &mut Game) {
     let offset = slot + core::mem::offset_of!(EnemyData, y_pos);
     add_enemy_vector_coordinate(&mut game.g_ram[offset..offset + 4], y);
 }
-pub unsafe fn EnemyFunc_Divide(a: uint32, b: uint32) -> uint32 {
+pub unsafe fn EnemyFunc_Divide(a: u32, b: u32) -> u32 {
     if a != 0 {
         b.wrapping_div(a)
     } else {
-        0 as uint32
+        0 as u32
     }
 }
 fn corrected_samus_previous_position(position: u16, previous: u16) -> Option<u16> {
@@ -5551,51 +5488,51 @@ unsafe fn spawn_area_enemy_item_drops(
     }
 }
 
-pub unsafe fn Enemy_ItemDrop_MiniKraid(k: uint16, death_animation: uint16, game: &mut Game) {
+pub unsafe fn Enemy_ItemDrop_MiniKraid(k: u16, death_animation: u16, game: &mut Game) {
     spawn_nearby_enemy_item_drops(addr_kEnemyDef_E0FF as u16, k, 4, death_animation, game);
 }
-pub unsafe fn Enemy_ItemDrop_LowerNorfairSpacePirate(k: uint16, game: &mut Game) {
+pub unsafe fn Enemy_ItemDrop_LowerNorfairSpacePirate(k: u16, game: &mut Game) {
     spawn_nearby_enemy_item_drops(addr_kEnemyDef_F593 as u16, k, 5, 0, game);
 }
-pub unsafe fn Enemy_ItemDrop_Metroid(k: uint16, game: &mut Game) {
+pub unsafe fn Enemy_ItemDrop_Metroid(k: u16, game: &mut Game) {
     spawn_nearby_enemy_item_drops(addr_kEnemyDef_DD7F as u16, k, 5, 0, game);
 }
-pub unsafe fn Enemy_ItemDrop_Ridley(k: uint16, game: &mut Game) {
+pub unsafe fn Enemy_ItemDrop_Ridley(k: u16, game: &mut Game) {
     spawn_area_enemy_item_drops(addr_kEnemyDef_E17F as u16, k, 64, 320, 127, game);
 }
-pub unsafe fn Enemy_ItemDrop_Crocomire(k: uint16, game: &mut Game) {
+pub unsafe fn Enemy_ItemDrop_Crocomire(k: u16, game: &mut Game) {
     spawn_area_enemy_item_drops(addr_kEnemyDef_DDBF as u16, k, 576, 96, 127, game);
 }
-pub unsafe fn Enemy_ItemDrop_Phantoon(k: uint16, game: &mut Game) {
+pub unsafe fn Enemy_ItemDrop_Phantoon(k: u16, game: &mut Game) {
     spawn_area_enemy_item_drops(addr_kEnemyDef_E4BF as u16, k, 64, 96, 127, game);
 }
-pub unsafe fn Enemy_ItemDrop_Botwoon(k: uint16, game: &mut Game) {
+pub unsafe fn Enemy_ItemDrop_Botwoon(k: u16, game: &mut Game) {
     spawn_area_enemy_item_drops(addr_kEnemyDef_F293 as u16, k, 64, 128, 127, game);
 }
-pub unsafe fn Enemy_ItemDrop_Kraid(k: uint16, game: &mut Game) {
+pub unsafe fn Enemy_ItemDrop_Kraid(k: u16, game: &mut Game) {
     spawn_area_enemy_item_drops(addr_kEnemyDef_E2BF as u16, k, 128, 352, 255, game);
 }
-pub unsafe fn Enemy_ItemDrop_BombTorizo(k: uint16, game: &mut Game) {
+pub unsafe fn Enemy_ItemDrop_BombTorizo(k: u16, game: &mut Game) {
     spawn_area_enemy_item_drops(addr_kEnemyDef_EEFF as u16, k, 64, 96, 127, game);
 }
-pub unsafe fn Enemy_ItemDrop_GoldenTorizo(k: uint16, game: &mut Game) {
+pub unsafe fn Enemy_ItemDrop_GoldenTorizo(k: u16, game: &mut Game) {
     spawn_area_enemy_item_drops(addr_kEnemyDef_EEFF as u16, k, 128, 288, 255, game);
 }
-pub unsafe fn Enemy_ItemDrop_SporeSpawn(k: uint16, game: &mut Game) {
+pub unsafe fn Enemy_ItemDrop_SporeSpawn(k: u16, game: &mut Game) {
     spawn_area_enemy_item_drops(addr_kEnemyDef_DF3F as u16, k, 64, 528, 127, game);
 }
-pub unsafe fn Enemy_ItemDrop_Draygon(k: uint16, game: &mut Game) {
+pub unsafe fn Enemy_ItemDrop_Draygon(k: u16, game: &mut Game) {
     spawn_area_enemy_item_drops(addr_kEnemyDef_DE3F as u16, k, 128, 352, 255, game);
 }
-pub fn CompareDistToSamus_X(k: uint16, a: uint16, game: &mut Game) -> uint8 {
+pub fn CompareDistToSamus_X(k: u16, a: u16, game: &mut Game) -> u8 {
     let delta = GetSamusEnemyDelta_X(k, game);
     u8::from(Abs16(delta) >= a)
 }
-pub fn CompareDistToSamus_Y(k: uint16, a: uint16, game: &mut Game) -> uint8 {
+pub fn CompareDistToSamus_Y(k: u16, a: u16, game: &mut Game) -> u8 {
     let delta = GetSamusEnemyDelta_Y(k, game);
     u8::from(Abs16(delta) >= a)
 }
-pub fn EnemyFunc_BBBF(k: uint16, amt: int32, game: &mut Game) -> uint8 {
+pub fn EnemyFunc_BBBF(k: u16, amt: i32, game: &mut Game) -> u8 {
     let top = game
         .enemy_coordinates(k)
         .y_pos()
@@ -5635,7 +5572,7 @@ pub fn EnemyFunc_BBBF(k: uint16, amt: int32, game: &mut Game) -> uint8 {
         }
     }
 }
-pub fn EnemyFunc_BC76(k: uint16, amt: int32, game: &mut Game) -> uint8 {
+pub fn EnemyFunc_BC76(k: u16, amt: i32, game: &mut Game) -> u8 {
     let left = game
         .enemy_coordinates(k)
         .x_pos()
@@ -5676,7 +5613,7 @@ pub fn EnemyFunc_BC76(k: uint16, amt: int32, game: &mut Game) -> uint8 {
         block_offset += 2;
     }
 }
-pub fn EnemyFunc_BF8A(k: uint16, a: uint16, amt: int32, game: &mut Game) -> uint8 {
+pub fn EnemyFunc_BF8A(k: u16, a: u16, amt: i32, game: &mut Game) -> u8 {
     let left = game
         .enemy_coordinates(k)
         .x_pos()
@@ -5718,7 +5655,7 @@ pub fn EnemyFunc_BF8A(k: uint16, a: uint16, amt: int32, game: &mut Game) -> uint
         block_offset += 2;
     }
 }
-pub unsafe fn CalculateAngleOfSamusFromEproj(k: uint16, game: &mut Game) -> uint16 {
+pub unsafe fn CalculateAngleOfSamusFromEproj(k: u16, game: &mut Game) -> u16 {
     let x = game
         .samus_x_pos()
         .wrapping_sub(game.enemy_projectile_x_pos(k));
@@ -5727,12 +5664,12 @@ pub unsafe fn CalculateAngleOfSamusFromEproj(k: uint16, game: &mut Game) -> uint
         .wrapping_sub(game.enemy_projectile_y_pos(k));
     CalculateAngleFromXY(x, y, game)
 }
-pub unsafe fn CalculateAngleOfSamusFromEnemy(k: uint16, game: &mut Game) -> uint16 {
+pub unsafe fn CalculateAngleOfSamusFromEnemy(k: u16, game: &mut Game) -> u16 {
     let x = GetSamusEnemyDelta_X(k, game);
     let y = GetSamusEnemyDelta_Y(k, game);
     CalculateAngleFromXY(x, y, game)
 }
-pub unsafe fn CalculateAngleOfEnemyXfromEnemyY(k: uint16, j: uint16, game: &mut Game) -> uint16 {
+pub unsafe fn CalculateAngleOfEnemyXfromEnemyY(k: u16, j: u16, game: &mut Game) -> u16 {
     let x = game
         .enemy_coordinates(k)
         .x_pos()
@@ -5743,7 +5680,7 @@ pub unsafe fn CalculateAngleOfEnemyXfromEnemyY(k: uint16, j: uint16, game: &mut 
         .wrapping_sub(game.enemy_coordinates(j).y_pos());
     CalculateAngleFromXY(x, y, game)
 }
-pub unsafe fn CalculateAngleFromXY(x: uint16, y: uint16, game: &mut Game) -> uint16 {
+pub unsafe fn CalculateAngleFromXY(x: u16, y: u16, game: &mut Game) -> u16 {
     let quadrant = (u8::from(x & 0x8000 != 0) << 1) | u8::from(y & 0x8000 != 0);
     let x = Abs16(x);
     let y = Abs16(y);
@@ -5764,7 +5701,7 @@ pub unsafe fn CalculateAngleFromXY(x: uint16, y: uint16, game: &mut Game) -> uin
     };
     u16::from(angle)
 }
-pub fn IsEnemyLeavingScreen(k: uint16, game: &mut Game) -> uint8 {
+pub fn IsEnemyLeavingScreen(k: u16, game: &mut Game) -> u8 {
     let enemy = SolidEnemyCollisionBody::new(game, k);
     let x = enemy.x_pos();
     if (x as i16) < 0 {
@@ -5807,7 +5744,7 @@ pub unsafe fn ProcessEnemyInstructions(game: &mut Game) {
     let base_ptr = RomBankBase(game.enemy_instructions(index).bank(), game);
     let mut pc = base_ptr.add(usize::from(
         game.enemy_instructions(index).current_instruction(),
-    )) as *const uint16;
+    )) as *const u16;
     while *pc & 0x8000 != 0 {
         let address = (u32::from(game.enemy_instructions(index).bank()) << 16) | u32::from(*pc);
         pc = CallEnemyInstr(address, game.cur_enemy_index(), pc.add(1), game);
@@ -5815,20 +5752,20 @@ pub unsafe fn ProcessEnemyInstructions(game: &mut Game) {
             return;
         }
         if (pc as usize) < 0x10000 {
-            pc = base_ptr.add(pc as usize) as *const uint16;
+            pc = base_ptr.add(pc as usize) as *const u16;
         }
     }
     game.enemy_instructions(index).set_instruction_timer(*pc);
     game.enemy_instructions(index)
         .set_spritemap_pointer(*pc.add(1));
-    let instruction = (pc as *const uint8).add(4).offset_from(base_ptr) as uint16;
+    let instruction = (pc as *const u8).add(4).offset_from(base_ptr) as u16;
     game.enemy_instructions(index)
         .set_current_instruction(instruction);
     let properties = game.enemy_instructions(index).extra_properties() | 0x8000;
     game.enemy_instructions(index)
         .set_extra_properties(properties);
 }
-unsafe fn EnemyBlockCollReact_Spike(_collision: &mut EnemyBlockCollInfo, game: &mut Game) -> uint8 {
+unsafe fn EnemyBlockCollReact_Spike(_collision: &mut EnemyBlockCollInfo, game: &mut Game) -> u8 {
     let behavior = game.current_block_bts() & 0x7f;
     let plm = game.read_rom_word(0xa0c2da, usize::from(behavior) * 2);
     if plm == 0 {
@@ -5837,7 +5774,7 @@ unsafe fn EnemyBlockCollReact_Spike(_collision: &mut EnemyBlockCollInfo, game: &
     SpawnPLM(plm, game);
     0
 }
-fn EnemyBlockCollHorizReact_Slope(collision: &mut EnemyBlockCollInfo, game: &mut Game) -> uint8 {
+fn EnemyBlockCollHorizReact_Slope(collision: &mut EnemyBlockCollInfo, game: &mut Game) -> u8 {
     let bts = game.current_block_bts();
     if bts & 0x1f >= 5 {
         game.set_current_slope_bts(u16::from(bts));
@@ -5846,7 +5783,7 @@ fn EnemyBlockCollHorizReact_Slope(collision: &mut EnemyBlockCollInfo, game: &mut
         EnemyBlockCollHorizReact_Slope_Square(collision, bts, game)
     }
 }
-fn EnemyBlockCollVertReact_Slope(collision: &mut EnemyBlockCollInfo, game: &mut Game) -> uint8 {
+fn EnemyBlockCollVertReact_Slope(collision: &mut EnemyBlockCollInfo, game: &mut Game) -> u8 {
     let bts = game.current_block_bts();
     if bts & 0x1f >= 5 {
         EnemyBlockCollVertReact_Slope_NonSquare(collision, game)
@@ -5854,14 +5791,14 @@ fn EnemyBlockCollVertReact_Slope(collision: &mut EnemyBlockCollInfo, game: &mut 
         EnemyBlockCollVertReact_Slope_Square(collision, bts, game)
     }
 }
-static byte_A0C435: [uint8; 20] = [
+static byte_A0C435: [u8; 20] = [
     0, 1, 0x82, 0x83, 0, 0x81, 2, 0x83, 0, 1, 2, 0x83, 0, 0x81, 0x82, 0x83, 0x80, 0x81, 0x82, 0x83,
 ];
 fn EnemyBlockCollHorizReact_Slope_Square(
     collision: &mut EnemyBlockCollInfo,
     bts: u8,
     game: &mut Game,
-) -> uint8 {
+) -> u8 {
     let index = usize::from(bts & 0x1f) * 4
         + usize::from((bts >> 6) ^ ((collision.ebci_r26 & 8) >> 3) as u8);
     let enemy_index = game.cur_enemy_index();
@@ -5887,7 +5824,7 @@ fn EnemyBlockCollVertReact_Slope_Square(
     collision: &mut EnemyBlockCollInfo,
     bts: u8,
     game: &mut Game,
-) -> uint8 {
+) -> u8 {
     let index = usize::from(bts & 0x1f) * 4
         + usize::from((bts >> 6) ^ ((collision.ebci_r26 & 8) >> 2) as u8);
     let enemy_index = game.cur_enemy_index();
@@ -5912,7 +5849,7 @@ fn EnemyBlockCollVertReact_Slope_Square(
 fn EnemyBlockCollHorizReact_Slope_NonSquare(
     collision: &mut EnemyBlockCollInfo,
     game: &mut Game,
-) -> uint8 {
+) -> u8 {
     if collision.ebci_r32 & 0x8000 == 0 {
         return u8::from(collision.ebci_r32 & 0x4000 != 0);
     }
@@ -5932,7 +5869,7 @@ fn EnemyBlockCollHorizReact_Slope_NonSquare(
 fn EnemyBlockCollVertReact_Slope_NonSquare(
     collision: &mut EnemyBlockCollInfo,
     game: &mut Game,
-) -> uint8 {
+) -> u8 {
     let block = game.cur_block_index();
     // The SNES modulus uses only the low byte of room width and returns the
     // dividend unchanged when that byte is zero.
@@ -5974,7 +5911,7 @@ fn EnemyBlockCollVertReact_Slope_NonSquare(
     enemy.set_y_subpos(if moving_up { 0 } else { u16::MAX });
     1
 }
-fn EnemyBlockCollReact_HorizExt(_collision: &mut EnemyBlockCollInfo, game: &mut Game) -> uint8 {
+fn EnemyBlockCollReact_HorizExt(_collision: &mut EnemyBlockCollInfo, game: &mut Game) -> u8 {
     let offset = game.current_block_bts() as i8 as i16;
     if offset == 0 {
         return 0;
@@ -5983,7 +5920,7 @@ fn EnemyBlockCollReact_HorizExt(_collision: &mut EnemyBlockCollInfo, game: &mut 
     0xff
 }
 
-fn EnemyBlockCollReact_VertExt(_collision: &mut EnemyBlockCollInfo, game: &mut Game) -> uint8 {
+fn EnemyBlockCollReact_VertExt(_collision: &mut EnemyBlockCollInfo, game: &mut Game) -> u8 {
     let offset = game.current_block_bts() as i8 as i16;
     if offset == 0 {
         return 0;
@@ -5992,21 +5929,21 @@ fn EnemyBlockCollReact_VertExt(_collision: &mut EnemyBlockCollInfo, game: &mut G
     game.set_cur_block_index(game.cur_block_index().wrapping_add(offset));
     0xff
 }
-pub unsafe fn Enemy_MoveRight_SlopesAsWalls(k: uint16, amt: int32, game: &mut Game) -> uint8 {
-    Enemy_MoveRight_IgnoreSlopes_Inner(k, amt, 0x4000 as uint16, game)
+pub unsafe fn Enemy_MoveRight_SlopesAsWalls(k: u16, amt: i32, game: &mut Game) -> u8 {
+    Enemy_MoveRight_IgnoreSlopes_Inner(k, amt, 0x4000 as u16, game)
 }
-pub unsafe fn Enemy_MoveRight_ProcessSlopes(k: uint16, amt: int32, game: &mut Game) -> uint8 {
-    Enemy_MoveRight_IgnoreSlopes_Inner(k, amt, 0x8000 as uint16, game)
+pub unsafe fn Enemy_MoveRight_ProcessSlopes(k: u16, amt: i32, game: &mut Game) -> u8 {
+    Enemy_MoveRight_IgnoreSlopes_Inner(k, amt, 0x8000 as u16, game)
 }
-pub unsafe fn Enemy_MoveRight_IgnoreSlopes(k: uint16, amt: int32, game: &mut Game) -> uint8 {
-    Enemy_MoveRight_IgnoreSlopes_Inner(k, amt, 0 as uint16, game)
+pub unsafe fn Enemy_MoveRight_IgnoreSlopes(k: u16, amt: i32, game: &mut Game) -> u8 {
+    Enemy_MoveRight_IgnoreSlopes_Inner(k, amt, 0 as u16, game)
 }
 unsafe fn Enemy_MoveRight_IgnoreSlopes_Inner(
-    k: uint16,
-    amount32: int32,
-    slope_mode: uint16,
+    k: u16,
+    amount32: i32,
+    slope_mode: u16,
     game: &mut Game,
-) -> uint8 {
+) -> u8 {
     if amount32 == 0 {
         return 0;
     }
@@ -6080,7 +6017,7 @@ unsafe fn Enemy_MoveRight_IgnoreSlopes_Inner(
     1
 }
 
-pub unsafe fn Enemy_MoveDown(k: uint16, amount32: int32, game: &mut Game) -> uint8 {
+pub unsafe fn Enemy_MoveDown(k: u16, amount32: i32, game: &mut Game) -> u8 {
     if amount32 == 0 {
         return 0;
     }
@@ -6151,9 +6088,9 @@ pub unsafe fn Enemy_MoveDown(k: uint16, amount32: int32, game: &mut Game) -> uin
 }
 unsafe fn EnemyBlockCollReact_Horiz(
     collision: &mut EnemyBlockCollInfo,
-    block_offset: uint16,
+    block_offset: u16,
     game: &mut Game,
-) -> uint8 {
+) -> u8 {
     game.set_cur_block_index(block_offset >> 1);
     game.react_to_block(|block_type, game| match block_type {
         0 | 2 | 3 | 4 | 6 | 7 => 0,
@@ -6166,9 +6103,9 @@ unsafe fn EnemyBlockCollReact_Horiz(
 }
 unsafe fn EnemyBlockCollReact_Vert(
     collision: &mut EnemyBlockCollInfo,
-    block_offset: uint16,
+    block_offset: u16,
     game: &mut Game,
-) -> uint8 {
+) -> u8 {
     game.set_cur_block_index(block_offset >> 1);
     game.react_to_block(|block_type, game| match block_type {
         0 | 2 | 3 | 4 | 6 | 7 => 0,
@@ -6179,44 +6116,44 @@ unsafe fn EnemyBlockCollReact_Vert(
         _ => 1,
     })
 }
-pub unsafe fn CalculateBlockContainingPixelPos(xpos: uint16, ypos: uint16, game: &mut Game) {
-    let prod: uint16 = Mult8x8(
-        (ypos as i32 >> 4 as i32) as uint8,
-        ram_word!(game, room_width_in_blocks) as uint8,
+pub unsafe fn CalculateBlockContainingPixelPos(xpos: u16, ypos: u16, game: &mut Game) {
+    let prod: u16 = Mult8x8(
+        (ypos as i32 >> 4 as i32) as u8,
+        ram_word!(game, room_width_in_blocks) as u8,
     );
-    set_ram_word!(game.cur_block_index = (prod as i32 + (xpos as i32 >> 4 as i32)) as uint16);
+    set_ram_word!(game.cur_block_index = (prod as i32 + (xpos as i32 >> 4 as i32)) as u16);
 }
-pub unsafe fn EnemyFunc_C8AD(k: uint16, game: &mut Game) -> uint8 {
-    let mut result: uint8 = 0 as uint8;
+pub unsafe fn EnemyFunc_C8AD(k: u16, game: &mut Game) -> u8 {
+    let mut result: u8 = 0 as u8;
     let E: *mut EnemyData = gEnemyData(k as i32, game);
     CalculateBlockContainingPixelPos(
         (*E).x_pos,
-        ((*E).y_pos as i32 + (*E).y_height as i32 - 1 as i32) as uint16,
+        ((*E).y_pos as i32 + (*E).y_height as i32 - 1 as i32) as u16,
         game,
     );
     if (ram_word!(game, level_data[ram_word!(game, cur_block_index)]) as i32 & 0xf000 as i32)
         == 4096i32
-        && (*(&raw mut game.g_ram as *mut uint8)
+        && (*(&raw mut game.g_ram as *mut u8)
             .offset(0x16402)
             .offset(ram_word!(game, cur_block_index) as isize) as i32
             & 0x1f as i32)
             >= 5i32
     {
-        result = 1 as uint8;
-        let temp_collision_DD4: uint16 =
-            ((*E).y_height as i32 + (*E).y_pos as i32 - 1 as i32 & 0xf as i32) as uint16;
-        let temp_collision_DD6: uint16 = (16 as i32
-            * (*(&raw mut game.g_ram as *mut uint8)
+        result = 1 as u8;
+        let temp_collision_DD4: u16 =
+            ((*E).y_height as i32 + (*E).y_pos as i32 - 1 as i32 & 0xf as i32) as u16;
+        let temp_collision_DD6: u16 = (16 as i32
+            * (*(&raw mut game.g_ram as *mut u8)
                 .offset(0x16402)
                 .offset(ram_word!(game, cur_block_index) as isize) as i32
-                & 0x1f as i32)) as uint16;
-        if (*(&raw mut game.g_ram as *mut uint8)
+                & 0x1f as i32)) as u16;
+        if (*(&raw mut game.g_ram as *mut u8)
             .offset(0x16402)
             .offset(ram_word!(game, cur_block_index) as isize) as i32
             & 0x80 as i32)
             == 0i32
         {
-            let j: uint16 = (if (*(&raw mut game.g_ram as *mut uint8)
+            let j: u16 = (if (*(&raw mut game.g_ram as *mut u8)
                 .offset(0x16402)
                 .offset(ram_word!(game, cur_block_index) as isize)
                 as i32
@@ -6226,14 +6163,14 @@ pub unsafe fn EnemyFunc_C8AD(k: uint16, game: &mut Game) -> uint8 {
                 (*E).x_pos as i32 ^ 0xf as i32
             } else {
                 (*E).x_pos as i32
-            }) as uint16;
-            let v4: int16 = ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b))
-                as *const uint8 as *mut uint8)
+            }) as u16;
+            let v4: i16 = ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b)) as *const u8
+                as *mut u8)
                 .offset((temp_collision_DD6 as i32 + (j as i32 & 0xf as i32)) as isize)
                 as i32
                 & 0x1f as i32)
                 - temp_collision_DD4 as i32
-                - 1 as i32) as int16;
+                - 1 as i32) as i16;
             if v4 < 0i16 {
                 (*E).y_pos = ((*E).y_pos).wrapping_add((v4) as u16);
             }
@@ -6242,27 +6179,27 @@ pub unsafe fn EnemyFunc_C8AD(k: uint16, game: &mut Game) -> uint8 {
     CalculateBlockContainingPixelPos((*E).x_pos, ((*E).y_pos).wrapping_sub((*E).y_height), game);
     if (ram_word!(game, level_data[ram_word!(game, cur_block_index)]) as i32 & 0xf000 as i32)
         == 4096i32
-        && (*(&raw mut game.g_ram as *mut uint8)
+        && (*(&raw mut game.g_ram as *mut u8)
             .offset(0x16402)
             .offset(ram_word!(game, cur_block_index) as isize) as i32
             & 0x1f as i32)
             >= 5i32
     {
-        result = 1 as uint8;
-        let temp_collision_DD4_0: uint16 =
-            ((*E).y_pos as i32 - (*E).y_height as i32 & 0xf as i32 ^ 0xf as i32) as uint16;
-        let temp_collision_DD6_0: uint16 = (16 as i32
-            * (*(&raw mut game.g_ram as *mut uint8)
+        result = 1 as u8;
+        let temp_collision_DD4_0: u16 =
+            ((*E).y_pos as i32 - (*E).y_height as i32 & 0xf as i32 ^ 0xf as i32) as u16;
+        let temp_collision_DD6_0: u16 = (16 as i32
+            * (*(&raw mut game.g_ram as *mut u8)
                 .offset(0x16402)
                 .offset(ram_word!(game, cur_block_index) as isize) as i32
-                & 0x1f as i32)) as uint16;
-        if *(&raw mut game.g_ram as *mut uint8)
+                & 0x1f as i32)) as u16;
+        if *(&raw mut game.g_ram as *mut u8)
             .offset(0x16402)
             .offset(ram_word!(game, cur_block_index) as isize) as i32
             & 0x80 as i32
             != 0
         {
-            let j_0: uint16 = (if (*(&raw mut game.g_ram as *mut uint8)
+            let j_0: u16 = (if (*(&raw mut game.g_ram as *mut u8)
                 .offset(0x16402)
                 .offset(ram_word!(game, cur_block_index) as isize)
                 as i32
@@ -6272,14 +6209,14 @@ pub unsafe fn EnemyFunc_C8AD(k: uint16, game: &mut Game) -> uint8 {
                 (*E).x_pos as i32 ^ 0xf as i32
             } else {
                 (*E).x_pos as i32
-            }) as uint16;
-            let v7: int16 = ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b))
-                as *const uint8 as *mut uint8)
+            }) as u16;
+            let v7: i16 = ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b)) as *const u8
+                as *mut u8)
                 .offset((temp_collision_DD6_0 as i32 + (j_0 as i32 & 0xf as i32)) as isize)
                 as i32
                 & 0x1f as i32)
                 - temp_collision_DD4_0 as i32
-                - 1 as i32) as int16;
+                - 1 as i32) as i16;
             if v7 < 0i16 {
                 (*E).y_pos = ((*E).y_pos).wrapping_sub((v7) as u16);
             }

@@ -12,13 +12,12 @@ extern "C" {
 
 }
 pub use crate::types::{
-    __int16_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16_t, int8_t, size_t, uint16_t,
-    uint32_t, uint8_t, Apu, ApuHistory as C2RustUnnamed, Dsp, DspChannel, DspRegWriteHistory,
-    SaveLoadFunc, Spc, Timer,
+    size_t, Apu, ApuHistory as C2RustUnnamed, Dsp, DspChannel, DspRegWriteHistory, SaveLoadFunc,
+    Spc, Timer,
 };
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
-static bootRom: [uint8_t; 64] = [
+static bootRom: [u8; 64] = [
     0xcd, 0xef, 0xbd, 0xe8, 0, 0xc6, 0x1d, 0xd0, 0xfc, 0x8f, 0xaa, 0xf4, 0x8f, 0xbb, 0xf5, 0x78,
     0xcc, 0xf4, 0xd0, 0xfb, 0x2f, 0x19, 0xeb, 0xf4, 0xd0, 0xfc, 0x7e, 0xf4, 0xd0, 0xb, 0xe4, 0xf5,
     0xcb, 0xf4, 0xd7, 0, 0xfc, 0xd0, 0xf3, 0xab, 0x1, 0x10, 0xef, 0x7e, 0xf4, 0x10, 0xeb, 0xba,
@@ -28,7 +27,7 @@ pub unsafe fn apu_init() -> *mut Apu {
     let apu: *mut Apu = malloc(::core::mem::size_of::<Apu>() as size_t) as *mut Apu;
     core::ptr::write_bytes(apu, 0, 1);
     (*apu).spc = spc_init(apu as *mut Apu);
-    (*apu).dsp = dsp_init(&raw mut (*apu).ram as *mut uint8_t);
+    (*apu).dsp = dsp_init(&raw mut (*apu).ram as *mut u8);
     apu
 }
 pub unsafe fn apu_free(apu: *mut Apu) {
@@ -63,7 +62,7 @@ pub unsafe fn apu_saveload(
 ) {
     func.expect("non-null function pointer")(
         ctx,
-        &raw mut (*apu).ram as *mut uint8_t as *mut ::core::ffi::c_void,
+        &raw mut (*apu).ram as *mut u8 as *mut ::core::ffi::c_void,
         (65586 as size_t)
             .wrapping_add(6 as size_t)
             .wrapping_sub(16 as size_t),

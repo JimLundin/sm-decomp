@@ -6,10 +6,9 @@ extern "C" {
 
 }
 pub use crate::types::{
-    __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16_t, int32_t, int8_t,
-    uint16_t, uint32_t, uint8_t, Apu, ApuHistory as C2RustUnnamed, BgLayer, Cart, Cpu, Dma,
-    DmaChannel, Dsp, DspChannel, DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs,
-    PpuZbufType, Snes, Spc, Timer, WindowLayer,
+    Apu, ApuHistory as C2RustUnnamed, BgLayer, Cart, Cpu, Dma, DmaChannel, Dsp, DspChannel,
+    DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs, PpuZbufType, Snes, Spc, Timer,
+    WindowLayer,
 };
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 static opcodeNames: crate::types::ImmutableCStringPointers<256> = unsafe {
@@ -937,29 +936,16 @@ pub unsafe fn getProcessorStateSpc(apu: *mut Apu, line: *mut ::core::ffi::c_char
     );
 }
 unsafe fn getDisassemblyCpu(snes: *mut Snes, line: *mut ::core::ffi::c_char, game: &mut Game) {
-    let adr: uint32_t =
-        ((*(*snes).cpu).pc as i32 | ((*(*snes).cpu).k as i32) << 16 as i32) as uint32_t;
-    let opcode: uint8_t = snes_read(snes, adr, game);
-    let byte: uint8_t = snes_read(
-        snes,
-        adr.wrapping_add(1 as uint32_t) & 0xffffff as uint32_t,
-        game,
-    );
-    let byte2: uint8_t = snes_read(
-        snes,
-        adr.wrapping_add(2 as uint32_t) & 0xffffff as uint32_t,
-        game,
-    );
-    let word: uint16_t = ((byte2 as i32) << 8 as i32 | byte as i32) as uint16_t;
-    let longv: uint32_t = ((snes_read(
-        snes,
-        adr.wrapping_add(3 as uint32_t) & 0xffffff as uint32_t,
-        game,
-    ) as i32)
+    let adr: u32 = ((*(*snes).cpu).pc as i32 | ((*(*snes).cpu).k as i32) << 16 as i32) as u32;
+    let opcode: u8 = snes_read(snes, adr, game);
+    let byte: u8 = snes_read(snes, adr.wrapping_add(1 as u32) & 0xffffff as u32, game);
+    let byte2: u8 = snes_read(snes, adr.wrapping_add(2 as u32) & 0xffffff as u32, game);
+    let word: u16 = ((byte2 as i32) << 8 as i32 | byte as i32) as u16;
+    let longv: u32 = ((snes_read(snes, adr.wrapping_add(3 as u32) & 0xffffff as u32, game) as i32)
         << 16 as i32
-        | word as i32) as uint32_t;
-    let rel: uint16_t = ((*(*snes).cpu).pc as i32 + 2 as i32 + byte as int8_t as i32) as uint16_t;
-    let rell: uint16_t = ((*(*snes).cpu).pc as i32 + 3 as i32 + word as int16_t as i32) as uint16_t;
+        | word as i32) as u32;
+    let rel: u16 = ((*(*snes).cpu).pc as i32 + 2 as i32 + byte as i8 as i32) as u16;
+    let rell: u16 = ((*(*snes).cpu).pc as i32 + 3 as i32 + word as i16 as i32) as u16;
     match opcodeType[opcode as usize] {
         0 => {
             sprintf(
@@ -1009,15 +995,15 @@ unsafe fn getDisassemblyCpu(snes: *mut Snes, line: *mut ::core::ffi::c_char, gam
     };
 }
 unsafe fn getDisassemblySpc(apu: *mut Apu, line: *mut ::core::ffi::c_char) {
-    let adr: uint16_t = (*(*apu).spc).pc;
-    let opcode: uint8_t = apu_cpuRead(apu, adr);
-    let byte: uint8_t = apu_cpuRead(apu, (adr as i32 + 1 as i32 & 0xffff as i32) as uint16_t);
-    let byte2: uint8_t = apu_cpuRead(apu, (adr as i32 + 2 as i32 & 0xffff as i32) as uint16_t);
-    let word: uint16_t = ((byte2 as i32) << 8 as i32 | byte as i32) as uint16_t;
-    let rel: uint16_t = ((*(*apu).spc).pc as i32 + 2 as i32 + byte as int8_t as i32) as uint16_t;
-    let rel2: uint16_t = ((*(*apu).spc).pc as i32 + 2 as i32 + byte2 as int8_t as i32) as uint16_t;
-    let wordb: uint16_t = (word as i32 & 0x1fff as i32) as uint16_t;
-    let bit: uint8_t = (word as i32 >> 13 as i32) as uint8_t;
+    let adr: u16 = (*(*apu).spc).pc;
+    let opcode: u8 = apu_cpuRead(apu, adr);
+    let byte: u8 = apu_cpuRead(apu, (adr as i32 + 1 as i32 & 0xffff as i32) as u16);
+    let byte2: u8 = apu_cpuRead(apu, (adr as i32 + 2 as i32 & 0xffff as i32) as u16);
+    let word: u16 = ((byte2 as i32) << 8 as i32 | byte as i32) as u16;
+    let rel: u16 = ((*(*apu).spc).pc as i32 + 2 as i32 + byte as i8 as i32) as u16;
+    let rel2: u16 = ((*(*apu).spc).pc as i32 + 2 as i32 + byte2 as i8 as i32) as u16;
+    let wordb: u16 = (word as i32 & 0x1fff as i32) as u16;
+    let bit: u8 = (word as i32 >> 13 as i32) as u8;
     match opcodeTypeSpc[opcode as usize] {
         0 => {
             sprintf(

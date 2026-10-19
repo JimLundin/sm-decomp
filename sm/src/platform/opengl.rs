@@ -18,9 +18,8 @@ extern "C" {
 
 }
 pub use crate::types::{
-    _IO_lock_t, __off64_t, __off_t, __uint16_t, __uint32_t, __uint8_t, ptrdiff_t, size_t, uint,
-    uint16_t, uint32_t, uint8_t, GLbitfield, GLboolean, GLchar, GLenum, GLfloat, GLint, GLsizei,
-    GLsizeiptr, GLuint, SDL_GLContext, _IO_FILE, FILE, GLDEBUGPROC,
+    _IO_lock_t, __off64_t, __off_t, ptrdiff_t, size_t, GLbitfield, GLboolean, GLchar, GLenum,
+    GLfloat, GLint, GLsizei, GLsizeiptr, GLuint, SDL_GLContext, _IO_FILE, FILE, GLDEBUGPROC,
 };
 pub const SDL_GL_FLOATBUFFERS: SDL_GLattr = sdl2_sys::SDL_GLattr::SDL_GL_FLOATBUFFERS;
 pub const SDL_GL_CONTEXT_NO_ERROR: SDL_GLattr = sdl2_sys::SDL_GLattr::SDL_GL_CONTEXT_NO_ERROR;
@@ -65,8 +64,8 @@ pub const SDL_GL_CONTEXT_PROFILE_COMPATIBILITY: C2RustUnnamed =
 pub const SDL_GL_CONTEXT_PROFILE_CORE: C2RustUnnamed =
     sdl2_sys::SDL_GLprofile::SDL_GL_CONTEXT_PROFILE_CORE as C2RustUnnamed;
 pub use crate::types::{
-    uint16, uint32, uint8, Config, GlTextureWithSize, GlslParam, GlslPass, GlslShader, GlslTexture,
-    GlslTextureUniform, GlslUniforms, RendererFuncs,
+    Config, GlTextureWithSize, GlslParam, GlslPass, GlslShader, GlslTexture, GlslTextureUniform,
+    GlslUniforms, RendererFuncs,
 };
 pub const true_0: i32 = 1;
 pub const GL_TEXTURE_2D: i32 = gl::TEXTURE_2D as i32;
@@ -93,7 +92,7 @@ pub const GL_LINK_STATUS: i32 = gl::LINK_STATUS as i32;
 pub const GL_VERTEX_SHADER: i32 = gl::VERTEX_SHADER as i32;
 pub const kDebugFlag: i32 = 0;
 static mut g_window: *mut SDL_Window = ::core::ptr::null::<SDL_Window>() as *mut SDL_Window;
-static mut g_screen_buffer: *mut uint8 = ::core::ptr::null::<uint8>() as *mut uint8;
+static mut g_screen_buffer: *mut u8 = ::core::ptr::null::<u8>() as *mut u8;
 static mut g_screen_buffer_size: size_t = 0;
 static mut g_draw_width: i32 = 0;
 static mut g_draw_height: i32 = 0;
@@ -263,7 +262,7 @@ unsafe fn OpenGLRenderer_Destroy(game: &mut Game) {}
 unsafe fn OpenGLRenderer_BeginDraw(
     width: i32,
     height: i32,
-    pixels: *mut *mut uint8,
+    pixels: *mut *mut u8,
     pitch: *mut i32,
     game: &mut Game,
 ) {
@@ -271,7 +270,7 @@ unsafe fn OpenGLRenderer_BeginDraw(
     if size as size_t > g_screen_buffer_size {
         g_screen_buffer_size = size as size_t;
         free(g_screen_buffer as *mut ::core::ffi::c_void);
-        g_screen_buffer = malloc((size * 4 as i32) as size_t) as *mut uint8;
+        g_screen_buffer = malloc((size * 4 as i32) as size_t) as *mut u8;
     }
     g_draw_width = width;
     g_draw_height = height;
@@ -311,8 +310,8 @@ unsafe fn OpenGLRenderer_EndDraw(game: &mut Game) {
             g_screen_buffer as *const ::core::ffi::c_void,
         );
     } else {
-        g_texture.width = g_draw_width as uint16;
-        g_texture.height = g_draw_height as uint16;
+        g_texture.width = g_draw_width as u16;
+        g_texture.height = g_draw_height as u16;
         gl::TexImage2D(
             GL_TEXTURE_2D as GLenum,
             0 as GLint,
@@ -368,7 +367,7 @@ static mut kOpenGLRendererFuncs: RendererFuncs = RendererFuncs {
     Initialize: Some(OpenGLRenderer_Init as unsafe fn(*mut SDL_Window, &mut Game) -> bool),
     Destroy: Some(OpenGLRenderer_Destroy as unsafe fn(&mut Game) -> ()),
     BeginDraw: Some(
-        OpenGLRenderer_BeginDraw as unsafe fn(i32, i32, *mut *mut uint8, *mut i32, &mut Game) -> (),
+        OpenGLRenderer_BeginDraw as unsafe fn(i32, i32, *mut *mut u8, *mut i32, &mut Game) -> (),
     ),
     EndDraw: Some(OpenGLRenderer_EndDraw as unsafe fn(&mut Game) -> ()),
 };

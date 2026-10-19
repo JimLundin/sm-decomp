@@ -7,7 +7,7 @@ src=sm/src
 count() { grep -rE "$1" "$src" --include='*.rs' | wc -l | tr -d ' '; }
 
 printf '%-34s %8s\n' metric count
-printf '%-34s %8s\n' 'raw g_ram offsets'            "$(count 'g_ram as \*mut uint8\)')"
+printf '%-34s %8s\n' 'raw g_ram offsets'            "$(count 'g_ram as \*mut (uint8|uint8_t|__uint8_t|u8)\)')"
 printf '%-34s %8s\n' 'extern "C" blocks'            "$(count '^(pub )?(unsafe )?extern "C" \{')"
 printf '%-34s %8s\n' 'extern "C" fns (C ABI exports)' "$(count 'pub unsafe extern "C" fn')"
 printf '%-34s %8s\n' '#[no_mangle]'                 "$(count 'no_mangle')"

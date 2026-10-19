@@ -26,21 +26,20 @@ extern "C" {
 
 }
 pub use crate::types::{
-    __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16_t, int32_t, int8_t,
-    size_t, uint16_t, uint32_t, uint8_t, Apu, ApuHistory as C2RustUnnamed, BgLayer, Cart, Cpu, Dma,
-    DmaChannel, Dsp, DspChannel, DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs,
-    PpuZbufType, SaveLoadFunc, Snes, Spc, Timer, WindowLayer,
+    size_t, Apu, ApuHistory as C2RustUnnamed, BgLayer, Cart, Cpu, Dma, DmaChannel, Dsp, DspChannel,
+    DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs, PpuZbufType, SaveLoadFunc, Snes, Spc,
+    Timer, WindowLayer,
 };
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 
-pub unsafe fn snes_init(ram: *mut uint8_t) -> *mut Snes {
+pub unsafe fn snes_init(ram: *mut u8) -> *mut Snes {
     let snes: *mut Snes = malloc(::core::mem::size_of::<Snes>() as size_t) as *mut Snes;
     core::ptr::write_bytes(snes, 0, 1);
     (*snes).ram = ram;
     (*snes).debug_cycles = false_0 != 0;
     (*snes).debug_apu_cycles = false_0 != 0;
-    (*snes).runningWhichVersion = 0 as uint8_t;
+    (*snes).runningWhichVersion = 0 as u8;
     (*snes).disableRender = false;
     (*snes).cpuMemOps = 0;
     (*snes).cpuCyclesLeft = 0;
@@ -313,12 +312,11 @@ unsafe fn snes_writeReg(snes: *mut Snes, adr: u16, val: u8, game: &mut Game) {
         }
         0x420b => {
             if val as i32 == 2 as i32 {
-                let t: uint32_t = (((*(*snes).dma).channel[1 as i32 as usize].aBank as i32)
-                    << 16 as i32
+                let t: u32 = (((*(*snes).dma).channel[1 as i32 as usize].aBank as i32) << 16 as i32
                     | (*(*snes).dma).channel[1 as i32 as usize].aAdr as i32)
-                    as uint32_t;
+                    as u32;
                 let data: i32 = snes_read(snes, t, game) as i32
-                    | (snes_read(snes, t.wrapping_add(1 as uint32_t), game) as i32) << 8 as i32;
+                    | (snes_read(snes, t.wrapping_add(1 as u32), game) as i32) << 8 as i32;
             }
             dma_startDma((*snes).dma, val, false_0 != 0);
             while dma_cycle((*snes).dma, game) {}
@@ -359,7 +357,7 @@ pub unsafe fn snes_read(snes: *mut Snes, address: u32, game: &mut Game) -> u8 {
     }
     cart_read((*snes).cart, bank, offset, game)
 }
-pub unsafe fn LogWrite(snes: *mut Snes, adr: uint32_t, val: uint8_t, game: &mut Game) {
+pub unsafe fn LogWrite(snes: *mut Snes, adr: u32, val: u8, game: &mut Game) {
     printf(
         b"@%d: Write to 0x%x = 0x%.2x: 0x%x: r18=0x%x: r20=0x%x: a = 0x%x, x = 0x%x, y = 0x%x, c = %d\n\0"
             as *const u8 as *const ::core::ffi::c_char,
