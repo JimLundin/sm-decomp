@@ -3215,41 +3215,30 @@ unsafe fn EprojInit_Common(j: uint16, k: uint16, a: uint16, game: &mut Game) {
     EprojStateMut(&mut game.g_ram).write(0x19bb, slot, 2560);
     SetAreaDependentEprojProperties(j, game);
 }
-unsafe fn EprojInit_9688(mut j: uint16, game: &mut Game) {
-    let mut v1: uint16 = EprojState(&game.g_ram).init_param_1();
-    let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(v2 as isize) =
-        0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v2 as isize) =
-        -(3584 as ::core::ffi::c_int) as uint16;
-    EprojInit_Common(j, v1, 0x9688 as uint16, game);
+unsafe fn EprojInit_FireballChild(
+    j: uint16,
+    x: uint16,
+    y: uint16,
+    handler: uint16,
+    game: &mut Game,
+) {
+    let parent = EprojState(&game.g_ram).init_param_1();
+    let slot = usize::from(j >> 1);
+    EprojStateMut(&mut game.g_ram).write(0x1ab7, slot, x);
+    EprojStateMut(&mut game.g_ram).write(0x1adb, slot, y);
+    EprojInit_Common(j, parent, handler, game);
 }
-unsafe fn EprojInit_9696(mut j: uint16, game: &mut Game) {
-    let mut v1: uint16 = EprojState(&game.g_ram).init_param_1();
-    let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(v2 as isize) =
-        0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v2 as isize) =
-        3584 as uint16;
-    EprojInit_Common(j, v1, 0x9696 as uint16, game);
+unsafe fn EprojInit_9688(j: uint16, game: &mut Game) {
+    EprojInit_FireballChild(j, 0, (-3584i16) as u16, 0x9688, game);
 }
-unsafe fn EprojInit_966C(mut j: uint16, game: &mut Game) {
-    let mut v1: uint16 = EprojState(&game.g_ram).init_param_1();
-    let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(v2 as isize) =
-        3584 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v2 as isize) =
-        0 as uint16;
-    EprojInit_Common(j, v1, 0x966c as uint16, game);
+unsafe fn EprojInit_9696(j: uint16, game: &mut Game) {
+    EprojInit_FireballChild(j, 0, 3584, 0x9696, game);
 }
-unsafe fn EprojInit_967A(mut j: uint16, game: &mut Game) {
-    let mut v1: uint16 = EprojState(&game.g_ram).init_param_1();
-    let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(v2 as isize) =
-        -(3584 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v2 as isize) =
-        0 as uint16;
-    EprojInit_Common(j, v1, 0x967a as uint16, game);
+unsafe fn EprojInit_966C(j: uint16, game: &mut Game) {
+    EprojInit_FireballChild(j, 3584, 0, 0x966c, game);
+}
+unsafe fn EprojInit_967A(j: uint16, game: &mut Game) {
+    EprojInit_FireballChild(j, (-3584i16) as u16, 0, 0x967a, game);
 }
 pub unsafe fn EprojPreInstr_966C(mut k: uint16, game: &mut Game) {
     MoveEprojWithVelocityX(k, game);

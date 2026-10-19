@@ -16174,6 +16174,29 @@ a wrong zero-store destination; those checks do not establish movie coverage.
 Frozen a91d1a4a source, DLL and inputs stay fixed. Keep both handlers pending
 until ordinary inputs execute them; no clean replay or residue change follows.
 
+Fireball-child velocity setup (2026-10-19): four initializer wrappers
+share capture-init-param, X velocity store, Y velocity store, common callback.
+The signed -3584 values retain their u16 bits and each original F-handler
+word is unchanged. Captured parent stays before velocity writes; slot rounding
+and full-width offsets remain exact. The helper retains the existing unsafe
+common callback boundary.
+
+Frozen 1104716f plus only this change passes
+any%129712/0 (196.88s) and Warehouse128547/0 (227.17s),
+native exits0. Observed any%129712/0 (223.32s) executes all four
+handlers: 9688 6, 9696 7, 966C 16, 967A
+9. All byte-backed writes match original unaligned stores over
+complete RAM. Clean/observed non-timing diagnostics match after stripping;
+frozen source/DLL/ROM/input hashes stay stable and maintained region matches.
+Exact wrapper controls pass140 complete-RAM/callback-argument cases with
+odd/max slots, five captured-parent words and all four direction wrappers.
+
+Cargo fmt/check, normal release build and progress pass. Including helper:
+raw offsets-8, cast lines-6, Rust lines-11; unsafe functions+1 represents the
+shared common-callback boundary, with no new pointer operation. Other own
+counters unchanged. No probes/artifacts committed. Further projectile cleanup,
+gameplay/credits, hardware/audio/masks and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
