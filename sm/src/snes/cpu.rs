@@ -1502,14 +1502,15 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             IndexRegister::Y.update(u16::MAX, &mut *cpu);
         }
         0x89 => {
-            if (*cpu).mf {
-                let result = (*cpu).a as u8 & fetch_byte(cpu, game);
-                (*cpu).z = result == 0;
+            let byte = (*cpu).mf;
+            let accumulator = (*cpu).a;
+            let operand = if byte {
+                u16::from(fetch_byte(cpu, game))
             } else {
                 (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-                let result = (*cpu).a & fetch_word(cpu, game);
-                (*cpu).z = result == 0;
-            }
+                fetch_word(cpu, game)
+            };
+            (*cpu).z = accumulator & operand == 0;
         }
         0x8a => {
             load_accumulator((*cpu).x, &mut *cpu);

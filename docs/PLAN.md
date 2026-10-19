@@ -11989,6 +11989,24 @@ Next: use retained refilled shaft route for accessible item/boss coverage;
 obtain actual0300 execution before further cleanup of that branch. Credits,
 complete gameplay/hardware, render/audio, masked RAM and ownership stay open.
 
+CPU immediate BIT shared zero test (2026-10-19): opcode 89 captures the
+accumulator before fetching its width-selected operand, then shares the AND
+and zero-flag assignment. The extra word cycle remains before fetch; N/V,
+accumulator contents and operand byte order are unchanged. Frozen f69e97c9
+plus only this CPU change passes 1,900,544 actual old/current dispatcher
+comparisons covering every accumulator and operand with boundary partners,
+the complete byte matrix, physical WRAM PC wrap, cycle overflow and named
+CPU/bus state. These constructed cases do not exhaust device callbacks.
+Instrumented any% prefix passes 3600/0 (5.31s), native exit 0, with 41,196
+word and 6,698 byte calls. Clean any% passes 129712/0 (229.88s), native
+exit 0. Cargo fmt/check, release/release-library builds, frozen normal
+metadata and optimized core/DLL pass. Live CPU matches the clean candidate;
+later peer changes are outside that replay. Progress passes; CPU Rust lines
++1 make pre-fetch capture explicit, other own counters unchanged. Timings
+under concurrent load do not establish performance. Prior coverage holds,
+existing rendered failures, full gameplay/audio and credits remain open.
+Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
