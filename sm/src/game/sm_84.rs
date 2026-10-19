@@ -2136,43 +2136,34 @@ pub unsafe fn PlmInstr_GotoIfDoorBitSet(
     };
 }
 pub unsafe fn PlmInstr_IncrementDoorHitCounterAndJGE(
-    mut plmp: *const uint8,
-    mut k: uint16,
+    plmp: *const uint8,
+    k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
-    let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let ref mut fresh42 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xdf0c as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset(v2 as isize);
-    *fresh42 = (*fresh42).wrapping_add(1);
-    if (*fresh42 as uint8 as ::core::ffi::c_int)
-        < *plmp.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-    {
-        return plmp.offset(3 as ::core::ffi::c_int as isize);
+    let index = usize::from(k >> 1) * 2;
+    let read_word = |game: &Game, offset: usize| {
+        u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
+    };
+    let write_word = |game: &mut Game, offset: usize, value: u16| {
+        game.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+    };
+    let hits = read_word(game, 0xdf0c + index).wrapping_add(1); // plm_variables
+    write_word(game, 0xdf0c + index, hits);
+    if (hits as u8) < *plmp {
+        return plmp.add(3);
     }
-    let mut v5: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1dc7 as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset(v2 as isize);
-    if v5 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
-        let mut idx: ::core::ffi::c_int = PrepareBitAccess(v5, game) as ::core::ffi::c_int;
-        let ref mut fresh43 = *(&raw mut game.g_ram as *mut uint8)
-            .offset(0xd8b0 as ::core::ffi::c_int as isize)
-            .offset(idx as isize);
-        *fresh43 = (*fresh43 as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x5e7 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint8;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1dc7 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v2 as isize) = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0xd8b0 as ::core::ffi::c_int as isize)
-            .offset(idx as isize) as *mut uint8
-            as *mut uint16) as ::core::ffi::c_int
-            | 0x8000 as ::core::ffi::c_int) as uint16;
+    let argument = read_word(game, 0x1dc7 + index); // plm_room_arguments
+    if argument & 0x8000 == 0 {
+        let bit_index = usize::from(PrepareBitAccess(argument, game));
+        let mask = read_word(game, 0x5e7); // bitmask
+        let door = 0xd8b0 + bit_index; // opened_door_bit_array
+        game.g_ram[door] |= mask as u8;
+        // Preserve the original word read, including the following bit-array byte.
+        let marked_argument = read_word(game, door) | 0x8000;
+        write_word(game, 0x1dc7 + index, marked_argument);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1cd7 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v2 as isize) = addr_PlmPreInstr_Empty4 as ::core::ffi::c_int as uint16;
-    return PlmInstr_Goto(plmp.offset(1 as ::core::ffi::c_int as isize), k);
+    write_word(game, 0x1cd7 + index, addr_PlmPreInstr_Empty4 as u16);
+    PlmInstr_Goto(plmp.add(1), k)
 }
 pub unsafe fn PlmInstr_IncrementArgumentAndJGE(
     mut plmp: *const uint8,

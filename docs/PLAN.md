@@ -10661,6 +10661,46 @@ source; peer gameplay/PPU work is outside this replay. Rust lines -3; other
 own counters unchanged. Prior holds and complete gameplay/render/audio
 remain open. Continue covered CPU cleanup.
 
+Door hit counter uses byte-backed RAM and direct word arithmetic (2026-10-19).
+PlmInstr_IncrementDoorHitCounterAndJGE increments the word counter with
+wrapping, then compares only its low byte against the live instruction byte.
+The below-threshold path still advances three bytes. Reaching threshold reads
+the room argument; if its high bit is clear, PrepareBitAccess executes before
+reading the live mask and door byte. The byte OR retains its narrowing, then
+the original unaligned word read includes the neighboring door-bit byte when
+storing the marked room argument. Finally the empty preinstruction is written
+before the unchanged instruction-pointer jump. No RAM borrow spans callbacks;
+odd slot indexes still truncate through k >> 1. Unsafe remains at instruction
+pointers and legacy calls.
+
+Actual instrumented normal-input route observes twelve counter calls: two
+threshold1 and ten threshold5, including Parlor counts1..5 at70873,71091,
+71203,71294,71385. This covers below-threshold and door-opening paths; wrapping
+and already-marked argument paths are preserved by source comparison, not
+claimed as contextual coverage. Before is pinned7fcc20d6 plus committed
+Missile Tank,map-activation and missile-preinstruction changes. After adds
+only this callback. Baseline74373/71 (109.48s),instrumented74373/71
+(106.87s),clean74373/71 (107.09s),observed native exits1. All71 ordered
+failing frame numbers match exactly. Hosts explicitly enable rendering and
+record every failure-counter increment. Clean explicit-render any%129712/0
+(153.37s),observed native exit0. Built gameplay source matches
+maintained source; peer CPU/PPU edits are excluded from these pinned replays.
+
+Cargo fmt/check, fullrelease build and progress pass. Own raw offsets-7,
+cast lines-15,Rustlines-9; other counters unchanged. Whole-workspace progress
+22672raw,39extern,3CABI,5no_mangle,6718unsafe,85521casts,257160Rustlines includes
+peer changes. Only sm_84.rs and this note are committed; probes,input movies,
+SRAM and ROM-derived geometry stay ignored. No gameplay state/inventory writes.
+
+Parlor ascent remains unfinished. map-parlor-rise57175402/71 (80.94s),native
+exit1 reaches X431/Y619 with34health through75291, then its second jump hits
+an enemy near75305 and returnsX420/Y731,health29. Retain the earlier619 shelf
+prefix. map-parlor-vertical65175310/71 (113.49s),nativeexit1 misses its landing
+and fallsX396/Y859 with34health; it adds no progress. Next: use retained619
+shelf and normal beam/jump controls to clear the enemy and reach higher
+platforms. Held upper99BD ascent,cliff tuning,old9AD9ammoandHDMA stay held.
+Credits,fullgameplay/hardware,render/audio,maskedRAM andownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
