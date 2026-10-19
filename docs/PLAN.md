@@ -695,7 +695,38 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration: frozen `64e8d165` passes full any% 129712/0
+Latest reviewed integration (2026-10-19): frozen `83b7ac7e` passes
+uninterrupted full boot any% 129712/0 (303.41s) and Warehouse
+128547/0 (336.66s), native exits 0. This closes the five source commits
+since 79c1fa14: typed projectile comparisons, shared split-word helpers,
+radius bytes, property updates and intrinsic carry flags. The Warehouse
+fixture includes the exact Varia/Hi-Jump prefixes and visits 47 rooms and
+48 enemy definitions. Kraid is defeated and Varia is collected and equipped.
+
+The final Warehouse state is 8 in room $A471, X70/Y395, pose $0002,
+health 52/299, missiles 12/15, Supers 4/5, items $1105 and beams $1004.
+Kraid's defeated bit remains set and all eight coroutine bytes are zero.
+Both entire serialized continuation payloads match the previous 79c1fa14
+integration. In particular, this uninterrupted Warehouse replay reaches the
+same state as the prior same-build Varia-plus-suffix checkpoint chain.
+ROM/input/frame/audio/payload bindings agree; the runtime fingerprint differs
+after the shared-helper change. Neither new run loads a checkpoint.
+
+All 70 source/configuration/host files, Cargo library, DLL and copied fixtures
+stay fixed. Only registry dependencies seed the isolated checkout. Formatting,
+normal release (58.23s), host build (4.40s) and progress pass. The batch removes
+249 Rust lines, nine raw-access expressions, 192 promotion casts and 38
+unsafe functions. This audit changes no maintained Rust or residue.
+
+The known fingernail warning remains; credits are unvisited. The carry source
+audit preserves all 29 argument lists and surrounding operations. Its earlier
+survey still leaves 24 sites, including every word-carry gameplay call,
+unvisited; this general regression check adds no caller-level probe coverage.
+Newer spawn-store and accessor-definition changes retain separate integration
+checks. Remaining bosses, credits, persistence and broader hardware/audio
+coverage remain unfinished.
+
+Earlier reviewed integration: frozen `64e8d165` passes full any% 129712/0
 (184.20s) and Kraid phase two 119823/0 (195.59s), native exits 0. This
 combines the projectile read/update interface and spawn-parameter correction,
 unmasked $1993/$1994 comparison, Cargo host reuse and RAM metadata
