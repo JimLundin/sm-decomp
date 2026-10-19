@@ -9,6 +9,17 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+Checkpoint review follow-up (2026-10-19): the earlier codec serialized
+`Dma.pad`, seven unused bytes that `dma_init` and `dma_reset` never initialize.
+The pending repair projects only initialized DMA fields from the raw allocation,
+without reading padding or forming a reference to the whole `Dma`; source
+inspection passes. Repaired `checkpoint.rs` SHA-256:
+`6c9c1c43481fae6037829b764b1790429793cc26a879ab7f0f37949deda70a2e`.
+Hold checkpoint substitution for required full-boot commit verification until
+that repaired codec passes its continuation, fault, rejection and full-boot
+checks. Earlier successful scenarios, including `7de53cc1`, describe the
+earlier codec. This source review adds no replay result.
+
 Independent checkpoint quality review (2026-10-19): frozen `78e60d32`
 plus the six final checkpoint/probe source and host files passes any%
 129712/0 (306.91s) and Spazer 90706/0 (242.39s), both native exits 0.
@@ -85,7 +96,25 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration: frozen `0feb1882` passes any% 129712/0
+Waver-priority integration (2026-10-19): frozen `c1d11581` passes Waver
+58109/0 (121.00s), Spazer 90706/0 (191.24s) and any% 129712/0 (230.39s),
+all native exits 0. Rendering and both complete window tables remain checked.
+The Waver and Spazer inputs share the repaired interval 28228..28479, then
+first differ at input 56786; both distinct tails are retained. The earlier
+177 on-screen / 75 offscreen observations establish branch execution; these
+fresh clean replays add no instrumentation. Waver visits 17 rooms and 17
+enemy definitions; Spazer visits 32 rooms and 34 enemy definitions.
+
+All 68 source/config/host files match that commit after newline normalization.
+Source, DLL, captured Cargo library, ROM and copied input hashes remain stable;
+saves are isolated. Complete non-timing stdout/stderr match the reviewed
+routes. Formatting/check, normal Cargo release (65s) and progress pass.
+The verifier's Cargo refresh/link takes 119.49s after concurrent shared-cache
+invalidation. This review changes no maintained Rust or own residue counts.
+Pending checkpoint work and later gameplay changes retain separate checks;
+full gameplay/credits and wider hardware/audio coverage remain unfinished.
+
+Earlier reviewed integration: frozen `0feb1882` passes any% 129712/0
 (231.13s), Waver 58109/0 (92.80s), Red Tower 85800/0 (159.84s) and Spazer
 90706/0 (157.23s), all native exits 0. Spazer uses the same unchanged DLL
 and visits 32 rooms and 34 enemy definitions. This combines beam/PLM
