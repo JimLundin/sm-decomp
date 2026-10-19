@@ -10606,6 +10606,28 @@ Next: clear the upper-platform overhang from retainedX415/Y731; obtain further
 item/boss coverage. Held upper99BD ascent,cliff tuning,old9AD9dropammoandHDMA
 stay held. Credits,gameplay/hardware,render/audio,maskedRAM andownership open.
 
+Post-map Parlor ascent reaches Y651 (2026-10-19).
+From retained map-parlor-stop-spin X415/Y731,health34,map1,missiles1/10:
+Jump35,Jump/shoot1,Jump45,neutral60,left/jump40,Jump/shoot1,neutral75.
+Vertical jump reachesY621; second jump steers left onto the sloped platform.
+map-parlor-rise66775179/71 (88.56s),observed native exit1; despite its trial
+name the actual final position is92FDX377/Y651,standing,health34/99,
+map1/station255,missiles1/10,equipment1004. No extra contact damage. Retain
+this successful higher checkpoint; no new room or boss progression claimed.
+
+Read-only failure-counter replay75179/71 (75.13s),observed native exit1,
+matches all71 ordered baseline failed frames exactly. Rendering explicitly
+enabled, same pinned7fcc20d6 core plus committed Missile Tank accessors.
+No gameplay/RAM/health/inventory mutation; no new failing frames. Maintained
+source/residue delta0. Cargo fmt/check,release and progress passed for the
+preceding missile-door cleanup; its contextual74373/71 and any%129712/0
+(151.38s) remain separate source verification. Inputs,probes,SRAM and
+ROM-derived geometry stay ignored. Peer CPU/PPU and remote sync are separate.
+Next: continue central Parlor climb from retainedX377/Y651 toward upper hall
+and onward item/boss coverage. Held upper99BD ascent,cliff tuning,old9AD9
+ammo and HDMA stay held. Credits,fullgameplay/hardware,render/audio,maskedRAM
+andownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
