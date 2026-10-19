@@ -13746,6 +13746,28 @@ cast lines-13 and Rust lines-15; other own counters unchanged. Peer edits
 remain preserved. Complete credits/gameplay/hardware/audio/masks/ownership
 and uncovered PLM holds remain open.
 
+PLM air-scroll instruction (2026-10-19): PlmInstr_ProcessAirScrollUpdate
+now uses byte-backed RAM words and scroll bytes. Variable clear precedes the
+live argument read; ROM-bank8F entry reads retain value-before-index store
+order, two-byte stepping and bit7 termination. The final live block-index
+read and level-data type3000 update preserve the low12 block bits. Returned
+instruction pointer and ROM resolver remain unchanged.
+
+Frozen a13922a6 plus only this routine passes any%129712/0
+(206.59s) and pickup68606/0 (127.47s), native exits0.
+Observed pickup68606/0 (129.31s) compares all128KiB RAM
+and returned pointers against the original after 551 actual calls,
+restoring current RAM before continuing. The routine and ROM resolver have
+no effects outside RAM. Clean and observed non-timing diagnostics match after
+stripping observers. Frozen scope and maintained source identity pass; no
+observers are committed. Invalid slots and arbitrary aliases are not inferred
+from this route's calls.
+
+Cargo fmt/check, normal release build and progress pass. Own raw offsets-6,
+cast lines-19 and Rust lines-15; other own counters unchanged. Peer edits
+remain preserved. Solid-scroll and broader PLM cleanup remain unfinished,
+along with full credits/gameplay/hardware/audio/masks/ownership.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

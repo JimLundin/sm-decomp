@@ -2079,45 +2079,30 @@ pub unsafe fn PlmInstr_DrawPlmBlock(
     return ::core::ptr::null::<uint8>();
 }
 pub unsafe fn PlmInstr_ProcessAirScrollUpdate(
-    mut plmp: *const uint8,
-    mut k: uint16,
+    plmp: *const uint8,
+    k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1e17 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-    let mut v5: *const uint8 = RomPtr_8F(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1dc7 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-            as uint16_t,
-        game,
-    );
-    while !(*v5.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-        & 0x80 as ::core::ffi::c_int
-        != 0)
-    {
-        *(&raw mut game.g_ram as *mut uint8)
-            .offset(0xcd20 as ::core::ffi::c_int as isize)
-            .offset(*v5.offset(0 as ::core::ffi::c_int as isize) as isize) =
-            *v5.offset(1 as ::core::ffi::c_int as isize);
-        v5 = v5.offset(2 as ::core::ffi::c_int as isize);
+    let index = usize::from(k >> 1) * 2;
+    let read_word = |game: &Game, offset: usize| {
+        u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
+    };
+    let write_word = |game: &mut Game, offset: usize, value: u16| {
+        game.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+    };
+    write_word(game, 0x1e17 + index, 0); // plm_variable
+    let argument = read_word(game, 0x1dc7 + index); // plm_room_arguments
+    let mut entries = RomPtr_8F(argument, game);
+    while *entries & 0x80 == 0 {
+        let value = *entries.add(1);
+        game.g_ram[0xcd20 + usize::from(*entries)] = value; // scrolls
+        entries = entries.add(2);
     }
-    let mut v7: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1c87 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-        as ::core::ffi::c_int
-        >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x10002 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v7 as isize) = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x10002 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v7 as isize) as ::core::ffi::c_int
-        & 0xfff as ::core::ffi::c_int
-        | 0x3000 as ::core::ffi::c_int) as uint16;
-    return plmp;
+    let block_index = read_word(game, 0x1c87 + index); // plm_block_indices
+    let block_addr = 0x10002 + usize::from(block_index >> 1) * 2;
+    let block = read_word(game, block_addr);
+    write_word(game, block_addr, (block & 0x0fff) | 0x3000);
+    plmp
 }
 pub unsafe fn PlmInstr_ProcessSolidScrollUpdate(
     mut plmp: *const uint8,
