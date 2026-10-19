@@ -11984,6 +11984,24 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Door Samus placement prefix (2026-10-19): PlaceSamusLoadTiles uses named
+byte-backed coordinate/previous-position and door-flag writes. Layer-one X
+plus Samus X low byte wraps into X before previous X copies; Y then previous
+Y follow. Flag 0931 clears before direction 2 selects IRQ 16 (otherwise 22),
+then the original vblank wait and complete loading remainder execute unchanged.
+Independent review confirms order/widths and exact unchanged remainder.
+Cargo fmt/check and release build pass, native exit 0. Frozen 7551cdf8 plus
+only these two source files passes any% 129,712/0 (170.51s), native exit 0:
+61 actual calls, directions [36,25,0,0]. Waver 58,109/71 (62.65s), native
+exit 1, retains the existing count: 28 calls, directions [11,13,2,2],
+exercising both IRQ choices. Observations strip exactly to maintained source.
+Own raw offsets -13, cast lines -20, Rust lines -6; two reusable setters
+account for added state-view lines. Other counters unchanged. No probes or
+ROM-derived assets committed. Next: remaining placement loading gates and
+post-callback IRQ/transition fields, preserving live reads after callbacks.
+Held X-alignment movement and complete gameplay/credits/audio/hardware gaps
+remain open.
+
 Door scrolling setup fields (2026-10-19): SetupScrolling now uses named
 byte-backed background-offset, scrolling-hook and transition-counter fields.
 BG2 H/V and hook clears stay ordered; direction 2 increments BG1 V with

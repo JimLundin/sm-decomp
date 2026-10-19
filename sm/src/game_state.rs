@@ -310,6 +310,15 @@ impl Game {
         u16::from_le_bytes([self.g_ram[0xaf6], self.g_ram[0xaf7]])
     }
 
+    pub fn set_samus_x_pos(&mut self, value: u16) {
+        self.g_ram[0xaf6..0xaf8].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// door_transition_flag ($7E:0931 in ram_map).
+    pub fn set_door_transition_flag(&mut self, value: u16) {
+        self.g_ram[0x931..0x933].copy_from_slice(&value.to_le_bytes());
+    }
+
     /// samus_x_subpos ($7E:0AF8 in ram_map).
     pub fn samus_x_subpos(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0xaf8], self.g_ram[0xaf9]])

@@ -9804,38 +9804,23 @@ pub unsafe fn DoorTransitionFunction_SetupScrolling(game: &mut Game) -> Coroutin
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn DoorTransitionFunction_PlaceSamusLoadTiles(game: &mut Game) -> CoroutineRet {
-    let mut v0: uint16 = 0;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x911 as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
-        + *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb10 as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xaf6 as ::core::ffi::c_int as isize) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x915 as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
-        + *((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb14 as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xafa as ::core::ffi::c_int as isize) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x931 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x791 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 3 as ::core::ffi::c_int
-        == 2 as ::core::ffi::c_int
-    {
-        v0 = 16 as uint16;
+    game.set_samus_x_pos(
+        game.layer1_x_pos()
+            .wrapping_add(u16::from(game.samus_x_pos() as u8)),
+    );
+    game.set_samus_prev_x_pos(game.samus_x_pos());
+    game.set_samus_y_pos(
+        game.layer1_y_pos()
+            .wrapping_add(u16::from(game.samus_y_pos() as u8)),
+    );
+    game.set_samus_prev_y_pos(game.samus_y_pos());
+    game.set_door_transition_flag(0);
+    let irq_handler = if game.door_direction() & 3 == 2 {
+        16
     } else {
-        v0 = 22 as uint16;
-    }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa7 as ::core::ffi::c_int as isize)
-        as *mut uint16) = v0;
+        22
+    };
+    game.set_irqhandler_next_handler(irq_handler);
     WaitUntilEndOfVblankAndEnableIrq(game);
     if *((&raw mut game.g_ram as *mut uint8).offset(0x7b3 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
