@@ -595,6 +595,19 @@ impl EprojStateMut<'_> {
         let address = base + word_index * 2;
         self.0[address..address + 2].copy_from_slice(&value.to_le_bytes());
     }
+    fn add_split_words(
+        &mut self,
+        high_base: usize,
+        low_base: usize,
+        word_index: usize,
+        amount: u32,
+    ) {
+        let low = u32::from(EprojState(self.0).slot_word(low_base, word_index));
+        let high = u32::from(EprojState(self.0).slot_word(high_base, word_index));
+        let sum = (low | (high << 16)).wrapping_add(amount);
+        self.write(low_base, word_index, sum as u16);
+        self.write(high_base, word_index, (sum >> 16) as u16);
+    }
     fn add_word(&mut self, base: usize, word_index: usize, delta: u16) -> u16 {
         let value = EprojState(self.0)
             .slot_word(base, word_index)
@@ -2204,26 +2217,16 @@ unsafe fn Eproj_Init_0x8bec_SkreeUpLeft(mut j: uint16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(v2 as isize) =
         -(96 as ::core::ffi::c_int) as uint16;
 }
-pub unsafe fn Eproj_PreInstr_SkreeParticle(mut k: uint16, game: &mut Game) {
+pub fn Eproj_PreInstr_SkreeParticle(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    AddToHiLo(
-        ((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v1 as isize)
-            as *mut uint16,
-        ((&raw mut game.g_ram as *mut uint8).offset(0x1a27) as *mut uint16).offset(v1 as isize)
-            as *mut uint16,
-        ((*((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(v1 as isize)
-            as int16 as ::core::ffi::c_int)
-            << 8 as ::core::ffi::c_int) as uint32,
-    );
-    AddToHiLo(
-        ((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize)
-            as *mut uint16,
-        ((&raw mut game.g_ram as *mut uint8).offset(0x1a6f) as *mut uint16).offset(v1 as isize)
-            as *mut uint16,
-        ((*((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v1 as isize)
-            as int16 as ::core::ffi::c_int)
-            << 8 as ::core::ffi::c_int) as uint32,
-    );
+    let split_amount = ((EprojState(&game.g_ram).slot_word(0x1ab7, v1 as usize) as int16
+        as ::core::ffi::c_int)
+        << 8 as ::core::ffi::c_int) as uint32;
+    EprojStateMut(&mut game.g_ram).add_split_words(0x1a4b, 0x1a27, v1 as usize, split_amount);
+    let split_amount = ((EprojState(&game.g_ram).slot_word(0x1adb, v1 as usize) as int16
+        as ::core::ffi::c_int)
+        << 8 as ::core::ffi::c_int) as uint32;
+    EprojStateMut(&mut game.g_ram).add_split_words(0x1a93, 0x1a6f, v1 as usize, split_amount);
     EprojStateMut(&mut game.g_ram).add_word(0x1adb, v1 as usize, 80);
     if CheckIfEprojIsOffScreen(k, game) != 0 {
         EprojStateMut(&mut game.g_ram).set_id(v1 as usize, 0);
@@ -5500,24 +5503,14 @@ unsafe fn EprojInit_LavaSeahorseFireball(mut j: uint16, game: &mut Game) {
 }
 pub unsafe fn sub_86B535(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    AddToHiLo(
-        ((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v1 as isize)
-            as *mut uint16,
-        ((&raw mut game.g_ram as *mut uint8).offset(0x1a27) as *mut uint16).offset(v1 as isize)
-            as *mut uint16,
-        ((*((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(v1 as isize)
-            as int16 as ::core::ffi::c_int)
-            << 8 as ::core::ffi::c_int) as uint32,
-    );
-    AddToHiLo(
-        ((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize)
-            as *mut uint16,
-        ((&raw mut game.g_ram as *mut uint8).offset(0x1a6f) as *mut uint16).offset(v1 as isize)
-            as *mut uint16,
-        ((*((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v1 as isize)
-            as int16 as ::core::ffi::c_int)
-            << 8 as ::core::ffi::c_int) as uint32,
-    );
+    let split_amount = ((EprojState(&game.g_ram).slot_word(0x1ab7, v1 as usize) as int16
+        as ::core::ffi::c_int)
+        << 8 as ::core::ffi::c_int) as uint32;
+    EprojStateMut(&mut game.g_ram).add_split_words(0x1a4b, 0x1a27, v1 as usize, split_amount);
+    let split_amount = ((EprojState(&game.g_ram).slot_word(0x1adb, v1 as usize) as int16
+        as ::core::ffi::c_int)
+        << 8 as ::core::ffi::c_int) as uint32;
+    EprojStateMut(&mut game.g_ram).add_split_words(0x1a93, 0x1a6f, v1 as usize, split_amount);
     let mut v6: int16 = EprojState(&game.g_ram).slot_word(0x1adb, v1 as usize) as int16;
     if v6 as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
         EprojStateMut(&mut game.g_ram).write(0x1adb, v1 as usize, (v6 as u16).wrapping_add(32));
@@ -8682,17 +8675,12 @@ pub unsafe fn sub_86D992(mut v0: uint16, game: &mut Game) {
             384 as uint16;
     }
 }
-pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_MoveY1(mut k: uint16, game: &mut Game) {
+pub fn EprojPreInstr_SpikeShootingPlantSpikes_MoveY1(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    AddToHiLo(
-        ((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize)
-            as *mut uint16,
-        ((&raw mut game.g_ram as *mut uint8).offset(0x1a6f) as *mut uint16).offset(v1 as isize)
-            as *mut uint16,
-        ((*((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v1 as isize)
-            as int16 as ::core::ffi::c_int)
-            << 8 as ::core::ffi::c_int) as uint32,
-    );
+    let split_amount = ((EprojState(&game.g_ram).slot_word(0x1adb, v1 as usize) as int16
+        as ::core::ffi::c_int)
+        << 8 as ::core::ffi::c_int) as uint32;
+    EprojStateMut(&mut game.g_ram).add_split_words(0x1a93, 0x1a6f, v1 as usize, split_amount);
 }
 pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_MoveY2(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -8706,43 +8694,33 @@ pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_MoveY2(mut k: uint16, game:
             << 8 as ::core::ffi::c_int) as uint32,
     );
 }
-pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_MoveX1(mut k: uint16, game: &mut Game) {
+pub fn EprojPreInstr_SpikeShootingPlantSpikes_MoveX1(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    AddToHiLo(
-        ((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v1 as isize)
-            as *mut uint16,
-        ((&raw mut game.g_ram as *mut uint8).offset(0x1a27) as *mut uint16).offset(v1 as isize)
-            as *mut uint16,
-        ((*((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v1 as isize)
-            as int16 as ::core::ffi::c_int)
-            << 8 as ::core::ffi::c_int) as uint32,
-    );
+    let split_amount = ((EprojState(&game.g_ram).slot_word(0x1adb, v1 as usize) as int16
+        as ::core::ffi::c_int)
+        << 8 as ::core::ffi::c_int) as uint32;
+    EprojStateMut(&mut game.g_ram).add_split_words(0x1a4b, 0x1a27, v1 as usize, split_amount);
 }
-pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_MoveX2(mut k: uint16, game: &mut Game) {
+pub fn EprojPreInstr_SpikeShootingPlantSpikes_MoveX2(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    AddToHiLo(
-        ((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v1 as isize)
-            as *mut uint16,
-        ((&raw mut game.g_ram as *mut uint8).offset(0x1a27) as *mut uint16).offset(v1 as isize)
-            as *mut uint16,
-        ((*((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(v1 as isize)
-            as int16 as ::core::ffi::c_int)
-            << 8 as ::core::ffi::c_int) as uint32,
-    );
+    let split_amount = ((EprojState(&game.g_ram).slot_word(0x1ab7, v1 as usize) as int16
+        as ::core::ffi::c_int)
+        << 8 as ::core::ffi::c_int) as uint32;
+    EprojStateMut(&mut game.g_ram).add_split_words(0x1a4b, 0x1a27, v1 as usize, split_amount);
 }
-pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_0_MoveX1(mut k: uint16, game: &mut Game) {
+pub fn EprojPreInstr_SpikeShootingPlantSpikes_0_MoveX1(mut k: uint16, game: &mut Game) {
     EprojPreInstr_SpikeShootingPlantSpikes_MoveX1(k, game);
 }
-pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_2_MoveX2(mut k: uint16, game: &mut Game) {
+pub fn EprojPreInstr_SpikeShootingPlantSpikes_2_MoveX2(mut k: uint16, game: &mut Game) {
     EprojPreInstr_SpikeShootingPlantSpikes_MoveX2(k, game);
 }
-pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_1_MoveY1(mut k: uint16, game: &mut Game) {
+pub fn EprojPreInstr_SpikeShootingPlantSpikes_1_MoveY1(mut k: uint16, game: &mut Game) {
     EprojPreInstr_SpikeShootingPlantSpikes_MoveY1(k, game);
 }
 pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_4_MoveY2(mut k: uint16, game: &mut Game) {
     EprojPreInstr_SpikeShootingPlantSpikes_MoveY2(k, game);
 }
-pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_6_MoveX1Y1(mut k: uint16, game: &mut Game) {
+pub fn EprojPreInstr_SpikeShootingPlantSpikes_6_MoveX1Y1(mut k: uint16, game: &mut Game) {
     EprojPreInstr_SpikeShootingPlantSpikes_MoveX1(k, game);
     EprojPreInstr_SpikeShootingPlantSpikes_MoveY1(k, game);
 }
@@ -8750,7 +8728,7 @@ pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_8_MoveX1Y2(mut k: uint16, g
     EprojPreInstr_SpikeShootingPlantSpikes_MoveX1(k, game);
     EprojPreInstr_SpikeShootingPlantSpikes_MoveY2(k, game);
 }
-pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_7_MoveX2Y1(mut k: uint16, game: &mut Game) {
+pub fn EprojPreInstr_SpikeShootingPlantSpikes_7_MoveX2Y1(mut k: uint16, game: &mut Game) {
     EprojPreInstr_SpikeShootingPlantSpikes_MoveX2(k, game);
     EprojPreInstr_SpikeShootingPlantSpikes_MoveY1(k, game);
 }
