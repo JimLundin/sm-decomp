@@ -5645,15 +5645,11 @@ pub unsafe fn PlmSetup_C794_GreyDoor(mut j: uint16, game: &mut Game) -> uint8 {
     );
     return 0 as uint8;
 }
-pub unsafe fn PlmSetup_Door_Colored(mut j: uint16, game: &mut Game) -> uint8 {
-    WriteLevelDataBlockTypeAndBts(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize),
-        0xc044 as uint16,
-        game,
-    );
-    return 0 as uint8;
+pub unsafe fn PlmSetup_Door_Colored(j: uint16, game: &mut Game) -> uint8 {
+    let index = usize::from(j >> 1) * 2;
+    let block_index = u16::from_le_bytes([game.g_ram[0x1c87 + index], game.g_ram[0x1c88 + index]]);
+    WriteLevelDataBlockTypeAndBts(block_index, 0xc044, game);
+    0
 }
 pub unsafe fn PlmSetup_Door_Blue(mut j: uint16, game: &mut Game) -> uint8 {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xdde as ::core::ffi::c_int as isize)

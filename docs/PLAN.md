@@ -12025,6 +12025,35 @@ under concurrent load do not establish performance. Prior coverage holds,
 existing rendered failures, full gameplay/audio and credits remain open.
 Continue covered CPU cleanup.
 
+Colored door setup reads byte-backed block index (2026-10-19).
+PlmSetup_Door_Colored reads the PLM block-index word little-endian and calls
+WriteLevelDataBlockTypeAndBts with the unchanged C044 argument. Odd slot
+truncation and callback/read order stay exact; unsafe remains at the callback.
+Actual instrumented normal-input route executes 27 setup calls.
+Baseline72298/71 (140.68s), clean72298/71 (138.86s), observed native exits1,
+match all71 ordered baseline failure frames. Clean explicit-render
+any%129712/0 (231.97s), observed native exit0. Pinned host/gameplay
+snapshot isolates this routine from peer changes; clean sm_84.rs matches
+maintained source. Cargo fmt/check, release build and progress pass. Own
+raw offsets-1, cast lines-2, Rust lines-4; other own counters unchanged.
+
+Correction: C88A is a red door facing left, not green. Bank84 C318 uses
+five missile hits; C872/C878 are green. The earlier eastY1632 green-door
+claim is superseded. Retained Missile Station return71534 has five missiles
+and43health. Right/shoot38, neutral30, Select1, neutral20, five fresh
+right/shoot1 presses each followed byneutral90, right/shoot100, neutral120
+opens the east red door without injected RAM or inventory writes. Missile
+counts go5->4->3->2->1->0. Transition72110, 9CB3load72128, gameplay72215,
+finalX56/Y139health43/199. This adds a normal-input room; it is not a boss or
+credits claim. Observer72298/71 (157.85s), observed native exit1, omitted
+full ordered failure diagnostics, so the explicit clean/baseline replays
+above establish that comparison. Inputs, probes and ROM assets stay ignored.
+Next: continue through9CB3 toward accessible item/boss coverage; green doors
+still require Super Missiles. Follow-on right/run/shoot210, neutral90 reaches
+X759 near the Speed Booster blocks in9CB3;72598/71 (138.16s), nativeexit1,
+all71 ordered diagnostics equal baseline. The normal-jump trial is pending. Prior holds and complete gameplay/credits,
+hardware/render/audio, masked RAM and ownership gaps stay open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
