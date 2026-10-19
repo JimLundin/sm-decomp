@@ -15678,6 +15678,83 @@ explicit byte reads. No probes, controls or temporary
 artifacts enter maintained source. Other sessions retain their own checks.
 Broader gameplay/credits, hardware/audio/masks and ownership remain open.
 
+Live enemy source fields for projectiles (2026-10-19): replace 14 retained
+enemy pointers and one inline helper call across 15 exercised routines with
+captured byte indices and 29 separate live copied field reads. Reuse
+EnemyState and add four readers for graphics words and coordinate fractions.
+Every read keeps its original position relative to other reads, writes and
+callbacks; later current-index rereads remain live. The inline Kraid read
+captures its RAM index before constructing the shared receiver. The existing
+spawn-parameter store still precedes both graphics reads. Arithmetic,
+comparisons, byte layouts and callback behavior are unchanged.
+
+The broader e8592193-based survey covers 27 routines and 60 field sites.
+Full-boot Varia passes 122732/0 (312.88s including startup);
+native exit 2 reports only 31 deliberately required unhit sites. All 29
+visited sites belong to 15 complete routines; no routine is partially hit.
+Their 1478 summed field-read invocations are not routine-entry counts or
+proof of every branch. The 12 unvisited routines remain unchanged. Observed
+build: 40.55s. Probe stripping recovers the exact reviewed candidate.
+
+Nine full-RAM controls pass once, outside natural hit counts: graphics aliases
+with both source words and the spawn-parameter bytes, maximum odd enemy
+index, both death-explosion X destinations overlapping the later source Y,
+and sub_86D992 coordinate/fraction aliases plus maximum odd indices.
+Expected writes are specified independently; complete RAM is restored before
+gameplay continues. Controls and probes remain temporary.
+
+Final frozen ea300c56 plus only the selected change passes full-boot any%
+129712/0 (283.06s) and Warehouse return
+128547/0 (311.00s), native exits 0. Warehouse contains
+the exact full Varia prefix, so no shorter clean replay is duplicated.
+Complete non-timing diagnostics match the reviewed baselines, including the
+known X undefined message. All 71 frozen source/configuration/host/progress
+files, game library, DLL, ROM and copied inputs remain fixed. Independent
+source, observation, alias-ordering and raw-result audits pass.
+
+Formatting/check, normal release (61.24s), Cargo host link
+(3.26s) and progress pass in the frozen checkout. Final
+snapshot preparation through result: 398.44s under shared load.
+Game and host artifacts stay with that checkout; only registry dependencies
+are reused. Workspace formatting, release (34.73s) and progress also
+pass, but concurrent peer edits changed source during those workspace checks;
+the immutable checkout supplies this pass's verified build. Other concurrent
+gameplay changes retain their separate checks.
+
+Net Rust lines +13 and LF bytes +534 cover the four shared readers and
+expression wrapping. The change removes 29 raw field dereferences, 15 unsafe
+helper calls, 14 retained pointer locals and 15 promotion casts (14 cast
+lines). Raw g_ram-offset and unsafe-function counters are unchanged. Each
+field read still performs the same memory operation through byte-backed
+storage; this does not claim a gameplay or compilation speedup.
+
+Observed field sites and first/last absolute input frames follow. A row's
+call count applies separately to each field site in that routine.
+
+| Routine | Field sites | Calls per site @ absolute input frames |
+| --- | --- | --- |
+| `SpawnEprojWithGfx` | 2 | 380 @ 8323..120405 |
+| `Eproj_Init_0x8bc2_SkreeDownRight` | 2 | 11 @ 46050..88495 |
+| `Eproj_Init_0x8bd0_SkreeUpRight` | 2 | 11 @ 46050..88495 |
+| `Eproj_Init_0x8bde_SkreeDownLeft` | 2 | 11 @ 46050..88495 |
+| `Eproj_Init_0x8bec_SkreeUpLeft` | 2 | 11 @ 46050..88495 |
+| `EprojInit_RocksKraidSpits` | 2 | 4 @ 118925..118973 |
+| `EprojInit_RocksWhenKraidRises` | 1 | 105 @ 118352..119484 |
+| `EprojInit_MiniKraidSpikes` | 2 | 10 @ 110214..110690 |
+| `EprojInit_BombTorizoDeathExplosion` | 2 | 36 @ 51500..51795 |
+| `EprojInit_TourianLandingDustCloudsRightFoot` | 2 | 3 @ 50570..51139 |
+| `EprojInit_TorizoLandingDustCloudLeftFoot` | 2 | 3 @ 50570..51139 |
+| `EprojInit_KagosBugs` | 2 | 3 @ 65326..65522 |
+| `EprojPreInstr_KagosBugs_Func2` | 1 | 336 @ 65326..65687 |
+| `EprojInstr_D15C` | 1 | 11 @ 65348..65680 |
+| `sub_86D992` | 4 | 15 @ 84850..91686 |
+
+The retained-pointer hazards in MiniKraidSpit, PirateMotherBrainLaser,
+YappingMawsBody, sub_86C605 and RespawnEnemy require coordinated follow-ups.
+Drool still needs ordinary input coverage of its bit-$4000 arm. Unexercised
+survey routines retain their committed code. Broader gameplay/credits,
+hardware/audio/masks and ownership remain unfinished.
+
 Enemy-projectile script timers (2026-10-19): share byte-backed wrapping
 decrement between instruction and script timer fields; reuse it in both
 absolute conditional jump handler and add the script timer setter. Branches still

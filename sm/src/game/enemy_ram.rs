@@ -17,11 +17,23 @@ impl EnemyState<'_> {
     pub(crate) fn x_pos(&self) -> u16 {
         self.read(core::mem::offset_of!(EnemyData, x_pos))
     }
+    pub(crate) fn x_subpos(&self) -> u16 {
+        self.read(core::mem::offset_of!(EnemyData, x_subpos))
+    }
     pub(crate) fn y_pos(&self) -> u16 {
         self.read(core::mem::offset_of!(EnemyData, y_pos))
     }
+    pub(crate) fn y_subpos(&self) -> u16 {
+        self.read(core::mem::offset_of!(EnemyData, y_subpos))
+    }
     pub(crate) fn properties(&self) -> u16 {
         self.read(core::mem::offset_of!(EnemyData, properties))
+    }
+    pub(crate) fn palette_index(&self) -> u16 {
+        self.read(core::mem::offset_of!(EnemyData, palette_index))
+    }
+    pub(crate) fn vram_tiles_index(&self) -> u16 {
+        self.read(core::mem::offset_of!(EnemyData, vram_tiles_index))
     }
 }
 
