@@ -199,6 +199,32 @@ state differ, so these are not a before/after speedup measurement. Net Rust
 lines -187, unsafe functions -29, c_int cast lines -69; raw RAM access count
 unchanged. Concurrent subsystem work retains its own validation.
 
+Independent split-word audit (2026-10-19): reconstruct e23ad2ee from
+its parent and the owning e8592193-based candidate across all 64 Rust files
+and six configuration/host files. The 19 addition and 12 store copies have
+only two distinct bodies. All 283 addition and 57 store caller occurrences,
+their arguments and evaluation order remain unchanged; only definitions and
+required imports move. Raw pointer parameters preserve aliasing and the
+explicit unaligned operations remove the former alignment requirement.
+
+Freshly extracted helpers pass 75497472 complete-byte-array comparisons
+with an independent widened arithmetic model: every high word, four low-word
+boundaries, seven addition increments and 36 aligned/unaligned/disjoint/
+overlapping layouts. The former helpers also match on 18874368 aligned cases.
+Two separately compiled variants with reversed stores or omitted carry fail.
+These checks supplement the owning low-word sweep; they do not enumerate
+every combination of 32-bit values or prove all callers' pointer validity.
+
+Independent observer stripping recovers the exact clean source. The owning
+30000/0 prefix records 48021 additions at 2308..29999, including 13361
+unaligned calls at 2323..29974, and 82660 stores at 2218..29999. Reuse its
+clean full-boot any% 129712/0 and Varia 122732/0 results after checking the
+candidate source, fresh game-library build record, DLL, fixtures and native
+exits. The known fingernail warning remains. Formatting, normal release and
+progress checks pass with all pinned source, libraries, fixtures and logs
+unchanged. This audit adds no maintained Rust or residue and no gameplay
+coverage; later changes still require their separate integration check.
+
 Projectile word arithmetic (2026-10-19): replaced 27 exercised addition/
 subtraction expressions across 12 routines with u16 wrapping operations.
 All operands are u16 values or in-range literals; the original i32
