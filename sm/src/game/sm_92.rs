@@ -20,10 +20,7 @@ unsafe fn get_SamusTileAnimationDefs(
     mut a: uint16,
     game: &mut Game,
 ) -> *mut SamusTileAnimationDefs {
-    return RomPtr(
-        (0x920000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t,
-        game,
-    ) as *mut SamusTileAnimationDefs;
+    return RomPtr(((0x920000u32) | ((a) as u32)), game) as *mut SamusTileAnimationDefs;
 }
 pub unsafe fn SetSamusTilesDefsForCurAnim(game: &mut Game) {
     let mut v0: uint16 = (4 as ::core::ffi::c_int

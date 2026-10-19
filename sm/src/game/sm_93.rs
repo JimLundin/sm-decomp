@@ -27,24 +27,15 @@ pub struct ProjectileDataTable {
 pub use crate::types::{ProjectileInstr, ProjectileType};
 #[inline]
 unsafe fn RomPtr_93(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr(
-        (0x930000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t,
-        game,
-    );
+    return RomPtr(((0x930000u32) | ((addr) as u32)), game);
 }
 #[inline]
 unsafe fn get_ProjectileDataTable(mut a: uint16, game: &mut Game) -> *mut ProjectileDataTable {
-    return RomPtr(
-        (0x930000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t,
-        game,
-    ) as *mut ProjectileDataTable;
+    return RomPtr(((0x930000u32) | ((a) as u32)), game) as *mut ProjectileDataTable;
 }
 #[inline]
 unsafe fn get_ProjectileInstr(mut a: uint16, game: &mut Game) -> *mut ProjectileInstr {
-    return RomPtr(
-        (0x930000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t,
-        game,
-    ) as *mut ProjectileInstr;
+    return RomPtr(((0x930000u32) | ((a) as u32)), game) as *mut ProjectileInstr;
 }
 pub const fnProj93Instr_Delete: uint32 = 9667119;
 pub const fnProj93Instr_Goto: uint32 = 9667129;
@@ -381,9 +372,9 @@ pub unsafe fn RunProjectileInstructions(game: &mut Game) {
                 break;
             }
             v3 = CallProj93Instr(
-                ((*PI).timer as ::core::ffi::c_int | 0x930000 as ::core::ffi::c_int) as uint32,
+                ((((*PI).timer) as u32) | (0x930000u32)),
                 v0,
-                (v3 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16,
+                ((v3).wrapping_add((2u16))),
                 game,
             );
             if v3 == 0 {
@@ -399,7 +390,7 @@ pub unsafe fn RunProjectileInstructions(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16).offset(v1 as isize) =
             (*PI).y_radius as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0xc40) as *mut uint16).offset(v1 as isize) =
-            (v3 as ::core::ffi::c_int + 8 as ::core::ffi::c_int) as uint16;
+            ((v3).wrapping_add((8u16)));
     }
 }
 pub unsafe fn Proj93Instr_Delete(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
@@ -490,16 +481,18 @@ pub unsafe fn DrawPlayerExplosions2(game: &mut Game) {
                         & 0x8000 as ::core::ffi::c_int
                         == 0 as ::core::ffi::c_int
                     {
-                        r20 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
-                            .offset(v1 as isize)
-                            as ::core::ffi::c_int
-                            - *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16)
-                                as ::core::ffi::c_int) as uint16;
-                        v3 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
-                            .offset(v1 as isize)
-                            as ::core::ffi::c_int
-                            - *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16)
-                                as ::core::ffi::c_int) as uint16;
+                        r20 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xb64)
+                            as *mut uint16)
+                            .offset(v1 as isize))
+                        .wrapping_sub(
+                            (*((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16)),
+                        ));
+                        v3 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xb78)
+                            as *mut uint16)
+                            .offset(v1 as isize))
+                        .wrapping_sub(
+                            (*((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16)),
+                        ));
                         r18 = v3;
                     } else {
                         let mut pt: Point16U = CalcExplosion_Mode7(v0, game);
@@ -519,7 +512,7 @@ pub unsafe fn DrawPlayerExplosions2(game: &mut Game) {
                 }
             }
         }
-        v0 = (v0 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
+        v0 = ((v0).wrapping_sub((2u16)));
         *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16) = v0;
         if !(v0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int) {
             break;
@@ -536,11 +529,10 @@ pub unsafe fn sub_9382FD(game: &mut Game) {
         if *((&raw mut game.g_ram as *mut uint8).offset(0xc40) as *mut uint16).offset(v1 as isize)
             != 0
         {
-            let mut r20: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb64)
+            let mut r20: uint16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xb64)
                 as *mut uint16)
-                .offset(v1 as isize) as ::core::ffi::c_int
-                - *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16)
-                    as ::core::ffi::c_int) as uint16;
+                .offset(v1 as isize))
+            .wrapping_sub((*((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16))));
             let mut r18: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb78)
                 as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int
@@ -560,7 +552,7 @@ pub unsafe fn sub_9382FD(game: &mut Game) {
             }
             v0 = *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16);
         }
-        v0 = (v0 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
+        v0 = ((v0).wrapping_sub((2u16)));
         *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16) = v0;
         if !(v0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int) {
             break;
@@ -619,15 +611,14 @@ pub unsafe fn DrawBombAndProjectileExplosions(game: &mut Game) {
                 _ => {
                     match current_block {
                         11875828834189669668 => {
-                            let mut v3: uint16 = (*((&raw mut game.g_ram as *mut uint8)
+                            let mut v3: uint16 = ((*((&raw mut game.g_ram as *mut uint8)
                                 .offset(0xb64)
                                 as *mut uint16)
-                                .offset(v1 as isize)
-                                as ::core::ffi::c_int
-                                - *((&raw mut game.g_ram as *mut uint8).offset(0x911)
-                                    as *mut uint16)
-                                    as ::core::ffi::c_int)
-                                as uint16;
+                                .offset(v1 as isize))
+                            .wrapping_sub(
+                                (*((&raw mut game.g_ram as *mut uint8).offset(0x911)
+                                    as *mut uint16)),
+                            ));
                             r20 = v3;
                             if v3 as ::core::ffi::c_int - 304 as ::core::ffi::c_int
                                 & 0x8000 as ::core::ffi::c_int
@@ -638,14 +629,13 @@ pub unsafe fn DrawBombAndProjectileExplosions(game: &mut Game) {
                             {
                                 current_block = 2612600445040741303;
                             } else {
-                                v2 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb78)
+                                v2 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xb78)
                                     as *mut uint16)
-                                    .offset(v1 as isize)
-                                    as ::core::ffi::c_int
-                                    - *((&raw mut game.g_ram as *mut uint8).offset(0x915)
-                                        as *mut uint16)
-                                        as ::core::ffi::c_int)
-                                    as uint16;
+                                    .offset(v1 as isize))
+                                .wrapping_sub(
+                                    (*((&raw mut game.g_ram as *mut uint8).offset(0x915)
+                                        as *mut uint16)),
+                                ));
                                 r18 = v2;
                                 current_block = 2311960645627505036;
                             }
@@ -667,7 +657,7 @@ pub unsafe fn DrawBombAndProjectileExplosions(game: &mut Game) {
                 }
             }
         }
-        v0 = (v0 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
+        v0 = ((v0).wrapping_sub((2u16)));
         *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16) = v0;
         if !(v0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int) {
             break;

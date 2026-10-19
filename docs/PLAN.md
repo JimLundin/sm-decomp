@@ -51,6 +51,32 @@ state operations. Use the existing subsystem interfaces and coordinate with
 the projectile and Samus work. Temporary discovery scripts stay outside
 maintained code.
 
+Fixed-width arithmetic families (2026-10-19): replace 6089 promoted and
+narrowed add/subtract/multiply/bitwise expressions across 31 gameplay files.
+Wrapping arithmetic now states the final width directly. Preserve operand
+order and all existing pointer/reference operations and lifetimes. Exclude
+sm_86, whose projectile updates belong to the concurrent subsystem work.
+Require old arithmetic to fit its intermediate type; 53 uncertain cases stay.
+
+Fresh compiler comparison preserves 698765 retained expression kinds, types
+and source positions and all 6089 replacement result types. An independent
+reconstruction agrees with the complete transformation and intermediate bounds.
+Boundary checks pass 51818253 comparisons across 116 type/operator signatures,
+plus 1515 literal-expression checks; the final 6089 expressions are an exact
+subset of the tested family. Changed-result, saturation, sign-loss and reversed
+subtraction controls are rejected. This is not new gameplay coverage.
+
+Frozen 300bfd44 plus the arithmetic pass passes any% 129712/0 (166.47s)
+and Speed Booster 148406/0 (219.25s). The independent integration of current
+00a74e6e plus these exact 31 files also passes both full fixtures, 197.01s and
+260.96s, native exits 0, with fixed source, library, DLL and inputs. The staged
+Rust matches that integrated source. Neither fixture reaches credits.
+Formatting/check, normal release (25.24s original candidate, 21.95s integrated,
+32.30s stable workspace) and progress pass; no build-time gain is established.
+Net Rust lines -2846, actual c_int casts -12178, all casts -14973; unsafe
+functions, borrowed places, actual raw accesses and offset calls are unchanged.
+The raw-offset line counter drops by one through formatting only.
+
 Shared enemy layouts (2026-10-19): all 96 public enemy overlays in the
 12 bank modules and types.rs use one Copy/Clone repr(C) declaration template.
 All 3684 public field names, types, order, base fields, padding and arrays
