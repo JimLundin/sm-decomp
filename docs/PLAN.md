@@ -14266,6 +14266,26 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Room-header cleanup (2026-10-19): LoadRoomHeader uses named word
+accessors for all twelve stores. Packed reads, live scroll dimensions,
+the real state selector and post-callback byte multiplication retain their
+order and wrapping behavior. Frozen 60e3fb2a plus this change passes any%
+129712/0 (234.39s) and Waver 58109/0 (122.99s), native exits 0. Observed
+prefix 20000/0 and Waver 58109/0 compare 38 actual calls across 17 rooms:
+full RAM/g_fail, all twelve stores, lookup arguments/results and the real
+selector boundaries match. Twelve independent expected-value cases cover
+dimension truncation, product wrapping, guarded gaps and alternating g_fail;
+two inject dimensions after the real callback to check live rereads.
+These boundaries have constructed coverage only. Patched ROM and natural
+post-candidate state are restored before continuation. A transient area-byte
+overwrite is caught at 79F on frame 8256 before the next store hides it.
+Independent source/control/observer reviews, exact stripping, frozen source
+identity and clean/observed Waver non-timing diagnostics pass. Formatting,
+release build and progress pass. Own raw offsets -18 and cast lines -23;
+Rust lines +48 provide twelve setters and four getters. Other counters
+unchanged. Next: destination-room CRE flags; broader gameplay/credits and
+ownership remain unfinished.
+
 Door-header cleanup (2026-10-19): LoadDoorHeader uses named word
 accessors, retaining the combined flags/orientation word, live properties and
 direction reads, signed distance defaults and low-before-high speed stores.

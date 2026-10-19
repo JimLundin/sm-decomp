@@ -328,8 +328,79 @@ impl Game {
     }
 
     /// room_ptr ($7E:079B in ram_map).
+    pub fn room_ptr(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x79b], self.g_ram[0x79c]])
+    }
+
     pub fn set_room_ptr(&mut self, value: u16) {
         self.g_ram[0x79b..0x79d].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// room_index ($7E:079D in ram_map).
+    pub fn set_room_index(&mut self, value: u16) {
+        self.g_ram[0x79d..0x79f].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// area_index ($7E:079F in ram_map).
+    pub fn set_area_index(&mut self, value: u16) {
+        self.g_ram[0x79f..0x7a1].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// room_x_coordinate_on_map ($7E:07A1 in ram_map).
+    pub fn set_room_x_coordinate_on_map(&mut self, value: u16) {
+        self.g_ram[0x7a1..0x7a3].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// room_y_coordinate_on_map ($7E:07A3 in ram_map).
+    pub fn set_room_y_coordinate_on_map(&mut self, value: u16) {
+        self.g_ram[0x7a3..0x7a5].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// room_height_in_blocks ($7E:07A7 in ram_map).
+    pub fn room_height_in_blocks(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x7a7], self.g_ram[0x7a8]])
+    }
+
+    pub fn set_room_height_in_blocks(&mut self, value: u16) {
+        self.g_ram[0x7a7..0x7a9].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// room_width_in_scrolls ($7E:07A9 in ram_map).
+    pub fn room_width_in_scrolls(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x7a9], self.g_ram[0x7aa]])
+    }
+
+    pub fn set_room_width_in_scrolls(&mut self, value: u16) {
+        self.g_ram[0x7a9..0x7ab].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// room_height_in_scrolls ($7E:07AB in ram_map).
+    pub fn room_height_in_scrolls(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x7ab], self.g_ram[0x7ac]])
+    }
+
+    pub fn set_room_height_in_scrolls(&mut self, value: u16) {
+        self.g_ram[0x7ab..0x7ad].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// up_scroller ($7E:07AD in ram_map).
+    pub fn set_up_scroller(&mut self, value: u16) {
+        self.g_ram[0x7ad..0x7af].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// down_scroller ($7E:07AF in ram_map).
+    pub fn set_down_scroller(&mut self, value: u16) {
+        self.g_ram[0x7af..0x7b1].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// door_list_pointer ($7E:07B5 in ram_map).
+    pub fn set_door_list_pointer(&mut self, value: u16) {
+        self.g_ram[0x7b5..0x7b7].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// room_size_in_blocks ($7E:07B9 in ram_map).
+    pub fn set_room_size_in_blocks(&mut self, value: u16) {
+        self.g_ram[0x7b9..0x7bb].copy_from_slice(&value.to_le_bytes());
     }
 
     /// roomdefroomstate_ptr ($7E:07BB in ram_map).
@@ -1247,6 +1318,10 @@ impl Game {
     /// Room width in blocks ($7E:07A5 in ram_map).
     pub fn room_width_in_blocks(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0x7a5], self.g_ram[0x7a6]])
+    }
+
+    pub fn set_room_width_in_blocks(&mut self, value: u16) {
+        self.g_ram[0x7a5..0x7a7].copy_from_slice(&value.to_le_bytes());
     }
 
     /// Current enemy slot offset ($7E:0E54 in ram_map).

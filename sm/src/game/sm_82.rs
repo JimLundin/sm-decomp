@@ -9113,51 +9113,24 @@ pub unsafe fn LoadDoorHeader(game: &mut Game) {
     game.set_samus_door_transition_speed((speed >> 16) as u16);
 }
 pub unsafe fn LoadRoomHeader(game: &mut Game) {
-    let mut RoomDefHeader: *mut RoomDefHeader = ::core::ptr::null_mut::<RoomDefHeader>();
-    RoomDefHeader = get_RoomDefHeader(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x79b as ::core::ffi::c_int as isize)
-            as *mut uint16),
-        game,
+    let room = get_RoomDefHeader(game.room_ptr(), game);
+    game.set_room_index(u16::from((*room).semiunique_room_number));
+    game.set_area_index(u16::from((*room).area_index_));
+    game.set_room_x_coordinate_on_map(u16::from((*room).x_coordinate_on_map));
+    game.set_room_y_coordinate_on_map(u16::from((*room).y_coordinate_on_map));
+    game.set_room_width_in_scrolls(u16::from((*room).width));
+    game.set_room_width_in_blocks(game.room_width_in_scrolls().wrapping_mul(16));
+    game.set_room_height_in_scrolls(u16::from((*room).height));
+    game.set_room_height_in_blocks(game.room_height_in_scrolls().wrapping_mul(16));
+    game.set_up_scroller(u16::from((*room).up_scroller_));
+    game.set_down_scroller(u16::from((*room).down_scroller_));
+    game.set_door_list_pointer((*room).ptr_to_doorout);
+    HandleRoomDefStateSelect(game.room_ptr(), game);
+    let product = Mult8x8(
+        game.room_width_in_blocks() as u8,
+        game.room_height_in_blocks() as u8,
     );
-    *((&raw mut game.g_ram as *mut uint8).offset(0x79d as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*RoomDefHeader).semiunique_room_number as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*RoomDefHeader).area_index_ as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7a1 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*RoomDefHeader).x_coordinate_on_map as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7a3 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*RoomDefHeader).y_coordinate_on_map as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7a9 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*RoomDefHeader).width as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (16 as ::core::ffi::c_int
-        * *((&raw mut game.g_ram as *mut uint8).offset(0x7a9 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7ab as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*RoomDefHeader).height as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7a7 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (16 as ::core::ffi::c_int
-        * *((&raw mut game.g_ram as *mut uint8).offset(0x7ab as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7ad as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*RoomDefHeader).up_scroller_ as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7af as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*RoomDefHeader).down_scroller_ as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7b5 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*RoomDefHeader).ptr_to_doorout as uint16;
-    HandleRoomDefStateSelect(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x79b as ::core::ffi::c_int as isize)
-            as *mut uint16),
-        game,
-    );
-    let mut prod: uint16 = Mult8x8(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7a7 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
-    );
-    *((&raw mut game.g_ram as *mut uint8).offset(0x7b9 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (2 as ::core::ffi::c_int * prod as ::core::ffi::c_int) as uint16;
+    game.set_room_size_in_blocks(product.wrapping_mul(2));
 }
 pub unsafe fn LoadStateHeader(game: &mut Game) {
     let room_state = get_RoomDefRoomstate(game.roomdefroomstate_ptr(), game);
