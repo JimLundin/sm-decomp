@@ -2770,16 +2770,16 @@ pub unsafe fn Shaktool_DC07(mut k: uint16, game: &mut Game) {
     }
     (*E).shakt_var_C = (4 as ::core::ffi::c_int
         * *(&raw mut v2 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn Shaktool_DC2A(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_Shaktool = Get_Shaktool(k as ::core::ffi::c_int, game);
     let mut v3: ::core::ffi::c_int = *(&raw mut (*E).shakt_var_B as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) as ::core::ffi::c_int;
     let mut v5: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -2905,15 +2905,15 @@ pub unsafe fn Shaktool_DCD7(mut k: uint16, game: &mut Game) {
         != 0 as ::core::ffi::c_int
     {
         let ref mut fresh2 = *(&raw mut v2 as *mut uint8).offset(
-            (::core::mem::size_of::<int16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<int16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         );
         *fresh2 = (*fresh2 as ::core::ffi::c_int ^ 0x80 as ::core::ffi::c_int) as uint8;
     }
     let mut v3: uint16 = (*(&raw mut v2 as *mut uint8).offset(
-        (::core::mem::size_of::<int16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<int16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) as ::core::ffi::c_int
         + 8 as ::core::ffi::c_int
@@ -3035,8 +3035,8 @@ pub unsafe fn Shaktool_DD25(mut k: uint16, game: &mut Game) {
                     game,
                 );
                 (*E).shakt_var_D = ((*(&raw mut (*E).shakt_var_D as *mut uint8).offset(
-                    (::core::mem::size_of::<uint16>() as usize)
-                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                    (::core::mem::size_of::<uint16>())
+                        .wrapping_div(::core::mem::size_of::<uint8>())
                         .wrapping_sub(1 as usize) as isize,
                 ) as ::core::ffi::c_int)
                     << 8 as ::core::ffi::c_int) as uint16;

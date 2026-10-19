@@ -25,6 +25,27 @@ requires a change in approach. This order replaces the older isolated
 "next function" cleanup suggestions below. Preserve the maintained Rust and
 oracle as the authorities; do not reconstruct or consult the former C.
 
+High priority (user direction, 2026-10-19): consolidate the largest coherent
+repeated families, including near-matches that earlier local edits may have
+obscured. Search complete declarations, expressions and statement sequences,
+not only whole functions. Normalize local names and parameter differences for
+discovery; classify differing widths, addresses, call order and writes before
+applying a shared implementation. Do not assume a near-match is accidental drift.
+Keep each commit one invariant, but apply it across the complete eligible family.
+Rank by net deletion including shared code, unsafe operations removed and
+edit/build/verification cost. Prefer this work over further isolated cleanup.
+
+The 8808dec6 survey finds 524 functions in exact token-clone groups and 1299
+candidates after local-name, literal and enemy-type normalization. These are
+discovery counts, not equivalence proofs. Larger structures include 94 enemy
+layouts in five repeated field-type shapes (3806 lines), 111 typed enemy-pointer
+constructors and 1077 RAM borrowed-place update sequences. Near-match inspection
+must preserve real behavior differences. Next disjoint pass: shared enemy-layout
+declarations across all eligible shapes, checking every public field type,
+offset, size and alignment. Follow with coherent RAM/update and handler families;
+coordinate with the already-running projectile and Samus work. Temporary
+discovery scripts stay outside maintained code.
+
 The inspected workspace has about 256,000 Rust lines, 83,800 lines containing
 `c_int` casts and 6,700 unsafe functions. Against the transpilation baseline,
 only about 8%, 7% and 3% have disappeared. There is no verified original-C
@@ -376,11 +397,27 @@ are saved locally for continuations. Formatting/check, normal release builds
 (44.14s frozen, 38.63s workspace) and progress pass. These timings do not
 establish a build-time gain. Concurrent gameplay edits retain their own checks.
 
-Next disjoint cast audit: 1222 compiler-identified identity casts on nonliteral
-integer operands: 710 usize, 352 u16, 74 u8, 59 i32 and 27 u32. Check declared
-aliases and preserve complete expression types, including contextual inference.
-Continue shared state/handler consolidation in the other sessions; reuse the
-longer Speed Booster route where applicable.
+Portable identity casts (2026-10-19): the compiler identifies 1211 redundant
+nonliteral integer casts in frozen 95ff9cef. Before/after comparison preserves
+all 729716 remaining source expression kinds, types and operand positions.
+Declared aliases resolve to fixed primitives or usize. Exclude 11 native C
+alias casts, including four c_long widenings on LP64 hosts. Source/configuration
+audit across 72 files permits only the selected casts and rustfmt changes;
+checkpoint inputs, calls, actual raw accesses and offset operations stay exact.
+
+The frozen candidate passes full any% 129712/0 (331.24s) and
+Speed Booster 148406/0 (384.69s), native exits 0, with stable
+source, DLL and fixtures. Final checkpoints remain local. Normal release takes
+50.37s; the stable workspace recheck passes in 9.46s. An earlier
+workspace build succeeded but was repeated because a peer edited sm_86 during
+it. Formatting/check and progress pass. No build-time gain is established.
+
+Apply 1206 of those audited removals to current main: four message-box
+expressions were already removed by another cleanup, and one changed projectile
+expression stays with its owner. Net Rust lines -60, c_int cast lines
+-1; unsafe functions and raw accesses unchanged. Frozen replay results
+cover the cast rule; concurrent gameplay changes retain separate integration
+checks. The smaller cast pass is complete; prioritize larger families below.
 
 Independent split-word audit (2026-10-19): reconstruct e23ad2ee from
 its parent and the owning e8592193-based candidate across all 64 Rust files

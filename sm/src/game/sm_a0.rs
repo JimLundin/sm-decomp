@@ -2170,9 +2170,9 @@ pub unsafe fn RecordEnemySpawnData(mut j: uint16, game: &mut Game) {
     let mut r24: uint16 = 0 as uint16;
     let mut R26: uint16 = 0 as uint16;
     let mut R28: uint16 = 0 as uint16;
-    let mut name_ptr: uint16 = (*get_EnemyDef_A2((*v1).enemy_ptr, game)).name_ptr as uint16;
+    let mut name_ptr: uint16 = (*get_EnemyDef_A2((*v1).enemy_ptr, game)).name_ptr;
     if name_ptr != 0 {
-        let mut v4: *const uint16 = RomPtr_B4(name_ptr as uint16_t, game) as *const uint16;
+        let mut v4: *const uint16 = RomPtr_B4(name_ptr, game) as *const uint16;
         r18 = *v4.offset(0);
         r20 = *v4.offset(1);
         r22 = *v4.offset(2);
@@ -2256,7 +2256,7 @@ pub unsafe fn InitializeEnemies(game: &mut Game) {
     loop {
         LoadEnemyGfxIndexes(v4, v5, game);
         let mut EP: *mut EnemyPopulation = get_EnemyPopulation(0xa1 as uint8, v4, game);
-        let mut ED: *mut EnemyDef = get_EnemyDef_A2((*EP).enemy_ptr as uint16, game);
+        let mut ED: *mut EnemyDef = get_EnemyDef_A2((*EP).enemy_ptr, game);
         let mut E: *mut EnemyData = gEnemyData(v5 as ::core::ffi::c_int, game);
         (*E).x_width = (*ED).x_radius;
         (*E).y_height = (*ED).y_radius;
@@ -2267,7 +2267,7 @@ pub unsafe fn InitializeEnemies(game: &mut Game) {
             *((&raw mut game.g_ram as *mut uint8).offset(0x179c) as *mut uint16) =
                 (*ED).boss_fight_value;
         }
-        (*E).enemy_ptr = (*EP).enemy_ptr as uint16;
+        (*E).enemy_ptr = (*EP).enemy_ptr;
         (*E).x_pos = (*EP).x_pos;
         (*E).y_pos = (*EP).y_pos;
         (*E).current_instruction = (*EP).init_param;
@@ -2310,7 +2310,7 @@ pub unsafe fn InitializeEnemies(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xe4e) as *mut uint16) =
         (v5 as ::core::ffi::c_int >> 6 as ::core::ffi::c_int) as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xe52) as *mut uint16) =
-        *RomPtr_A1(v4 as uint16_t, game).offset(2) as uint16;
+        *RomPtr_A1(v4, game).offset(2) as uint16;
 }
 pub unsafe fn LoadEnemyGfxIndexes(mut k: uint16, mut j: uint16, game: &mut Game) {
     let mut E: *mut EnemyData = gEnemyData(j as ::core::ffi::c_int, game);
@@ -2338,8 +2338,7 @@ pub unsafe fn LoadEnemyGfxIndexes(mut k: uint16, mut j: uint16, game: &mut Game)
             return;
         }
         f = (f as ::core::ffi::c_int
-            + ((*get_EnemyDef_A2((*ET).enemy_def as uint16, game)).tile_data_size
-                as ::core::ffi::c_int
+            + ((*get_EnemyDef_A2((*ET).enemy_def, game)).tile_data_size as ::core::ffi::c_int
                 >> 5 as ::core::ffi::c_int)) as uint16;
         e = (e as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
     }
@@ -2361,7 +2360,7 @@ pub unsafe fn LoadEnemyTileData(game: &mut Game) {
         let mut load_data: *mut EnemyTileLoadData =
             (&raw mut game.g_ram as *mut uint8).offset(0xe5a) as *mut EnemyTileLoadData;
         loop {
-            let mut v2: uint16 = (*load_data).tile_data_ptr.addr as uint16;
+            let mut v2: uint16 = (*load_data).tile_data_ptr.addr;
             let mut r18: uint16 = ((*load_data).tile_data_size as ::core::ffi::c_int
                 + v2 as ::core::ffi::c_int) as uint16;
             let mut v3: uint16 = (*load_data).offset_into_ram;
@@ -2371,7 +2370,7 @@ pub unsafe fn LoadEnemyTileData(game: &mut Game) {
                     (&raw mut game.g_ram as *mut uint8)
                         .offset((0x7000 as ::core::ffi::c_int + v3 as ::core::ffi::c_int) as isize)
                         as *mut uint8 as *mut ::core::ffi::c_void,
-                    RomPtrWithBank(db, v2 as uint16_t, game) as *const ::core::ffi::c_void,
+                    RomPtrWithBank(db, v2, game) as *const ::core::ffi::c_void,
                     8 as size_t,
                 );
                 v3 = (v3 as ::core::ffi::c_int + 8 as ::core::ffi::c_int) as uint16;
@@ -2448,15 +2447,14 @@ pub unsafe fn ProcessEnemyTilesets(game: &mut Game) {
     let mut LD: *mut EnemyTileLoadData =
         (&raw mut game.g_ram as *mut uint8).offset(0xe5a) as *mut EnemyTileLoadData;
     while (*ET).enemy_def as ::core::ffi::c_int != 0xffff as ::core::ffi::c_int {
-        let mut ED: *mut EnemyDef = get_EnemyDef_A2((*ET).enemy_def as uint16, game);
+        let mut ED: *mut EnemyDef = get_EnemyDef_A2((*ET).enemy_def, game);
         memcpy(
             ((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(
                 ((*(&raw mut (*ET).vram_dst as *mut uint8).offset(0) as ::core::ffi::c_int
                     + 8 as ::core::ffi::c_int)
                     * 16 as ::core::ffi::c_int) as isize,
             ) as *mut uint16 as *mut ::core::ffi::c_void,
-            RomPtrWithBank((*ED).bank, (*ED).palette_ptr as uint16_t, game)
-                as *const ::core::ffi::c_void,
+            RomPtrWithBank((*ED).bank, (*ED).palette_ptr, game) as *const ::core::ffi::c_void,
             32 as size_t,
         );
         (*LD).tile_data_size =
@@ -2480,7 +2478,7 @@ pub unsafe fn ProcessEnemyTilesets(game: &mut Game) {
         ) = next_enemy_tiles_index;
         *((&raw mut game.g_ram as *mut uint8).offset(0xef5c) as *mut uint16)
             .offset((v11 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-            (*ET).enemy_def as uint16;
+            (*ET).enemy_def;
         *((&raw mut game.g_ram as *mut uint8).offset(0xef6c) as *mut uint16)
             .offset((v11 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
             (*ET).vram_dst;
@@ -5817,7 +5815,7 @@ pub unsafe fn SpawnEnemy(mut db: uint8, mut k: uint16, game: &mut Game) -> uint1
     let mut varE20: uint16 = k;
     let mut cur_enemy_index_backup: uint16 =
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
-    let mut enemy_ptr: uint16 = (*get_EnemyPopulation(db, k, game)).enemy_ptr as uint16;
+    let mut enemy_ptr: uint16 = (*get_EnemyPopulation(db, k, game)).enemy_ptr;
     let mut v3: int16 = ((*get_EnemyDef_A2(enemy_ptr, game)).num_parts as ::core::ffi::c_int
         - 1 as ::core::ffi::c_int) as int16;
     if (v3 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
@@ -5885,13 +5883,13 @@ pub unsafe fn SpawnEnemy(mut db: uint8, mut k: uint16, game: &mut Game) -> uint1
                 (*E).vram_tiles_index = 0 as uint16;
                 (*E).palette_index = 0 as uint16;
             }
-            let mut ED: *mut EnemyDef = get_EnemyDef_A2((*EP).enemy_ptr as uint16, game);
+            let mut ED: *mut EnemyDef = get_EnemyDef_A2((*EP).enemy_ptr, game);
             (*E).x_width = (*ED).x_radius;
             (*E).y_height = (*ED).y_radius;
             (*E).health = (*ED).health;
             (*E).layer = (*ED).layer as uint16;
             *(&raw mut (*E).bank as *mut uint16) = *(&raw mut (*ED).bank as *mut uint16);
-            (*E).enemy_ptr = (*EP).enemy_ptr as uint16;
+            (*E).enemy_ptr = (*EP).enemy_ptr;
             (*E).x_pos = (*EP).x_pos;
             (*E).y_pos = (*EP).y_pos;
             (*E).current_instruction = (*EP).init_param;
@@ -6006,9 +6004,9 @@ pub unsafe fn WriteEnemyOams(game: &mut Game) {
     {
         palette_index = 3072 as VoidP;
     } else {
-        palette_index = (*E).palette_index as VoidP;
+        palette_index = (*E).palette_index;
     }
-    let mut r3: uint16 = palette_index as uint16;
+    let mut r3: uint16 = palette_index;
     let mut r0: uint16 = (*E).vram_tiles_index;
     if (*E).extra_properties as ::core::ffi::c_int & 4 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
@@ -6020,13 +6018,12 @@ pub unsafe fn WriteEnemyOams(game: &mut Game) {
             Unreachable(game);
         }
         let mut n: ::core::ffi::c_int =
-            *RomPtrWithBank((*E).bank, (*E).spritemap_pointer as uint16_t, game)
-                as ::core::ffi::c_int;
+            *RomPtrWithBank((*E).bank, (*E).spritemap_pointer, game) as ::core::ffi::c_int;
         let mut v5: uint16 =
             ((*E).spritemap_pointer as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
         loop {
             let mut ext: *mut ExtendedSpriteMap = get_ExtendedSpriteMap((*E).bank, v5, game);
-            if *(RomPtrWithBank((*E).bank, (*ext).spritemap as uint16_t, game) as *mut uint16)
+            if *(RomPtrWithBank((*E).bank, (*ext).spritemap, game) as *mut uint16)
                 as ::core::ffi::c_int
                 == 0xfffe as ::core::ffi::c_int
             {
@@ -6035,7 +6032,7 @@ pub unsafe fn WriteEnemyOams(game: &mut Game) {
                 if (*E).extra_properties as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                     != 0 as ::core::ffi::c_int
                 {
-                    ProcessExtendedTilemap((*E).bank, (*ext).spritemap as uint16, game);
+                    ProcessExtendedTilemap((*E).bank, (*ext).spritemap, game);
                 }
             } else {
                 x = (x2 as ::core::ffi::c_int + (*ext).xpos as ::core::ffi::c_int) as uint16;
@@ -6048,14 +6045,14 @@ pub unsafe fn WriteEnemyOams(game: &mut Game) {
                         == 0 as ::core::ffi::c_int
                 {
                     if *(&raw mut y as *mut uint8).offset(
-                        (::core::mem::size_of::<uint16>() as usize)
-                            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                        (::core::mem::size_of::<uint16>())
+                            .wrapping_div(::core::mem::size_of::<uint8>())
                             .wrapping_sub(1 as usize) as isize,
                     ) != 0
                     {
                         DrawSpritemapWithBaseTileOffscreen(
                             (*E).bank,
-                            (*ext).spritemap as uint16,
+                            (*ext).spritemap,
                             x,
                             y,
                             r3,
@@ -6063,15 +6060,7 @@ pub unsafe fn WriteEnemyOams(game: &mut Game) {
                             game,
                         );
                     } else {
-                        DrawSpritemapWithBaseTile2(
-                            (*E).bank,
-                            (*ext).spritemap as uint16,
-                            x,
-                            y,
-                            r3,
-                            r0,
-                            game,
-                        );
+                        DrawSpritemapWithBaseTile2((*E).bank, (*ext).spritemap, x, y, r3, r0, game);
                     }
                 }
             }
@@ -6338,8 +6327,8 @@ pub unsafe fn EprojSamusCollDetect(game: &mut Game) {
                 *(((&raw mut game.g_ram as *mut uint8).offset(0x1bb3) as *mut uint16)
                     .offset(i as isize) as *mut uint16 as *mut uint8)
                     .offset(
-                        (::core::mem::size_of::<uint16>() as usize)
-                            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                        (::core::mem::size_of::<uint16>())
+                            .wrapping_div(::core::mem::size_of::<uint8>())
                             .wrapping_sub(1 as usize) as isize,
                     ) as uint16;
             if (abs16(
@@ -6508,7 +6497,7 @@ pub unsafe fn HandleEprojCollWithProj(mut k: uint16, mut j: uint16, game: &mut G
                     .offset(j_0 as isize),
                 game,
             ))
-            .shot_instruction_list as uint16;
+            .shot_instruction_list;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(j_0 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16).offset(j_0 as isize) =
@@ -6695,7 +6684,7 @@ pub unsafe fn EnemySamusCollHandler_Multibox(game: &mut Game) {
     if (*E).spritemap_pointer == 0 {
         return;
     }
-    let mut touch_ai: uint16 = (*get_EnemyDef_A2((*E).enemy_ptr, game)).touch_ai as uint16;
+    let mut touch_ai: uint16 = (*get_EnemyDef_A2((*E).enemy_ptr, game)).touch_ai;
     if touch_ai as ::core::ffi::c_int
         == 0xa0804c as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
         || touch_ai as ::core::ffi::c_int
@@ -6728,7 +6717,7 @@ pub unsafe fn EnemySamusCollHandler_Multibox(game: &mut Game) {
         - *((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16) as ::core::ffi::c_int)
         as uint16;
     let mut n: ::core::ffi::c_int =
-        *RomPtrWithBank((*E).bank, (*E).spritemap_pointer as uint16_t, game) as ::core::ffi::c_int;
+        *RomPtrWithBank((*E).bank, (*E).spritemap_pointer, game) as ::core::ffi::c_int;
     let mut enemy_spritemap_entry_pointer: uint16 =
         ((*E).spritemap_pointer as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     loop {
@@ -6738,7 +6727,7 @@ pub unsafe fn EnemySamusCollHandler_Multibox(game: &mut Game) {
             ((*ES).xpos as ::core::ffi::c_int + (*E).x_pos as ::core::ffi::c_int) as uint16;
         let mut coll_y_pos: uint16 =
             ((*ES).ypos as ::core::ffi::c_int + (*E).y_pos as ::core::ffi::c_int) as uint16;
-        let mut p: *const uint8 = RomPtrWithBank((*E).bank, (*ES).hitbox_ptr_ as uint16_t, game);
+        let mut p: *const uint8 = RomPtrWithBank((*E).bank, (*ES).hitbox_ptr_, game);
         let mut m: ::core::ffi::c_int = *(p as *mut uint16) as ::core::ffi::c_int;
         let mut hb: *mut Hitbox = p.offset(2) as *mut Hitbox;
         while m != 0 {
@@ -6790,7 +6779,7 @@ pub unsafe fn EprojCollHandler_Multibox(game: &mut Game) {
     {
         return;
     }
-    let mut shot_ai: uint16 = (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai as uint16;
+    let mut shot_ai: uint16 = (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai;
     if shot_ai as ::core::ffi::c_int
         == 0xa0804c as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
         || shot_ai as ::core::ffi::c_int
@@ -6819,8 +6808,7 @@ pub unsafe fn EprojCollHandler_Multibox(game: &mut Game) {
             if (*E).spritemap_pointer as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
                 Unreachable(game);
             }
-            let mut esep: *const uint8 =
-                RomPtrWithBank((*E).bank, (*E).spritemap_pointer as uint16_t, game);
+            let mut esep: *const uint8 = RomPtrWithBank((*E).bank, (*E).spritemap_pointer, game);
             let mut n: ::core::ffi::c_int = *esep.offset(0) as ::core::ffi::c_int;
             let mut ES: *mut ExtendedSpriteMap = esep.offset(2) as *mut ExtendedSpriteMap;
             while n != 0 {
@@ -6828,8 +6816,7 @@ pub unsafe fn EprojCollHandler_Multibox(game: &mut Game) {
                     ((*ES).xpos as ::core::ffi::c_int + (*E).x_pos as ::core::ffi::c_int) as uint16;
                 let mut coll_y_pos: uint16 =
                     ((*ES).ypos as ::core::ffi::c_int + (*E).y_pos as ::core::ffi::c_int) as uint16;
-                let mut p: *const uint8 =
-                    RomPtrWithBank((*E).bank, (*ES).hitbox_ptr_ as uint16_t, game);
+                let mut p: *const uint8 = RomPtrWithBank((*E).bank, (*ES).hitbox_ptr_, game);
                 let mut m: ::core::ffi::c_int = *(p as *mut uint16) as ::core::ffi::c_int;
                 let mut hb: *mut Hitbox = p.offset(2) as *mut Hitbox;
                 while m != 0 {
@@ -6928,7 +6915,7 @@ pub unsafe fn EnemyBombCollHandler_Multibox(game: &mut Game) {
     {
         return;
     }
-    let mut shot_ai: uint16 = (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai as uint16;
+    let mut shot_ai: uint16 = (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai;
     if shot_ai as ::core::ffi::c_int
         == 0xa0804c as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
         || shot_ai as ::core::ffi::c_int
@@ -6958,7 +6945,7 @@ pub unsafe fn EnemyBombCollHandler_Multibox(game: &mut Game) {
                     Unreachable(game);
                 }
                 let mut esep: *const uint8 =
-                    RomPtrWithBank((*E).bank, (*E).spritemap_pointer as uint16_t, game);
+                    RomPtrWithBank((*E).bank, (*E).spritemap_pointer, game);
                 let mut n: ::core::ffi::c_int = *(esep as *mut uint16) as ::core::ffi::c_int;
                 let mut ES: *mut ExtendedSpriteMap = esep.offset(2) as *mut ExtendedSpriteMap;
                 while n != 0 {
@@ -6968,8 +6955,7 @@ pub unsafe fn EnemyBombCollHandler_Multibox(game: &mut Game) {
                     let mut coll_y_pos: uint16 = ((*ES).ypos as ::core::ffi::c_int
                         + (*E).y_pos as ::core::ffi::c_int)
                         as uint16;
-                    let mut p: *const uint8 =
-                        RomPtrWithBank((*E).bank, (*ES).hitbox_ptr_ as uint16_t, game);
+                    let mut p: *const uint8 = RomPtrWithBank((*E).bank, (*ES).hitbox_ptr_, game);
                     let mut m: ::core::ffi::c_int = *(p as *mut uint16) as ::core::ffi::c_int;
                     let mut hb: *mut Hitbox = p.offset(2) as *mut Hitbox;
                     while m != 0 {
@@ -7458,8 +7444,8 @@ pub unsafe fn ProcessEnemyPowerBombInteraction(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xf378) as *mut uint16) = 5 as uint16;
     let mut rx: uint16 =
         *((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as uint16;
     let mut ry: uint16 = (rx as ::core::ffi::c_int
@@ -7739,8 +7725,7 @@ pub unsafe fn NormalEnemyPowerBombAiSkipDeathAnim(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    let mut vulnerability_ptr: uint16 =
-        (*get_EnemyDef_A2((*v0).enemy_ptr, game)).vulnerability_ptr as uint16;
+    let mut vulnerability_ptr: uint16 = (*get_EnemyDef_A2((*v0).enemy_ptr, game)).vulnerability_ptr;
     if vulnerability_ptr == 0 {
         vulnerability_ptr = -(5092 as ::core::ffi::c_int) as uint16;
     }
@@ -7804,8 +7789,8 @@ pub unsafe fn NormalEnemyShotAi(game: &mut Game) {
             .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x18a6) as *mut uint16) as isize)
             as *mut uint16 as *mut uint8)
             .offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                (::core::mem::size_of::<uint16>())
+                    .wrapping_div(::core::mem::size_of::<uint8>())
                     .wrapping_sub(1 as usize) as isize,
             ) as ::core::ffi::c_int
             & 0xf as ::core::ffi::c_int) as uint16;
@@ -7866,8 +7851,7 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> uint16 {
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    let mut vulnerability_ptr: uint16 =
-        (*get_EnemyDef_A2((*j).enemy_ptr, game)).vulnerability_ptr as uint16;
+    let mut vulnerability_ptr: uint16 = (*get_EnemyDef_A2((*j).enemy_ptr, game)).vulnerability_ptr;
     if vulnerability_ptr == 0 {
         vulnerability_ptr = addr_stru_B4EC1C as uint16;
     }

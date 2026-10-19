@@ -282,7 +282,7 @@ pub unsafe fn WalkingSpacePirates_87C8(game: &mut Game) {
             ))
             .base
             .enemy_ptr;
-            vulnerability_ptr = (*get_EnemyDef_A2(enemy_ptr, game)).vulnerability_ptr as uint16;
+            vulnerability_ptr = (*get_EnemyDef_A2(enemy_ptr, game)).vulnerability_ptr;
             if vulnerability_ptr == 0 {
                 vulnerability_ptr = addr_stru_B4EC1C as uint16;
             }
@@ -539,7 +539,7 @@ pub unsafe fn SpacePirates_Instr_FireLaserL(
         game,
     );
     *((&raw mut game.g_ram as *mut uint8).offset(0x1993) as *mut uint16) =
-        *(RomPtr_A0((*E).base.enemy_ptr as uint16_t, game) as *mut uint16).offset(3);
+        *(RomPtr_A0((*E).base.enemy_ptr, game) as *mut uint16).offset(3);
     game.eproj_spawn_pt = Point16U {
         x: ((*E).base.x_pos as ::core::ffi::c_int - 24 as ::core::ffi::c_int) as uint16,
         y: ((*E).base.y_pos as ::core::ffi::c_int - 16 as ::core::ffi::c_int) as uint16,
@@ -1191,8 +1191,8 @@ pub unsafe fn SpacePirates_Func_11(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(k as ::core::ffi::c_int, game);
     (*E).base.x_pos = ((*E).base.x_pos as ::core::ffi::c_int
         - *(&raw mut (*E).sps_var_00 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int) as uint16;
     (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
@@ -1209,8 +1209,8 @@ pub unsafe fn SpacePirates_Func_12(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(k as ::core::ffi::c_int, game);
     (*E).base.x_pos = ((*E).base.x_pos as ::core::ffi::c_int
         - *(&raw mut (*E).sps_var_00 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int) as uint16;
     (*E).base.y_pos = (*E).base.y_pos.wrapping_add(1);
@@ -1230,8 +1230,8 @@ pub unsafe fn SpacePirates_Func_13(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(k as ::core::ffi::c_int, game);
     (*E).base.x_pos = ((*E).base.x_pos as ::core::ffi::c_int
         + *(&raw mut (*E).sps_var_00 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int) as uint16;
     (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
@@ -1248,8 +1248,8 @@ pub unsafe fn SpacePirates_Func_14(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(k as ::core::ffi::c_int, game);
     (*E).base.x_pos = ((*E).base.x_pos as ::core::ffi::c_int
         + *(&raw mut (*E).sps_var_00 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int) as uint16;
     (*E).base.y_pos = (*E).base.y_pos.wrapping_add(1);
@@ -1323,8 +1323,8 @@ pub unsafe fn SpacePirates_F985(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(k as ::core::ffi::c_int, game);
     (*E).base.y_pos = ((*E).base.y_pos as ::core::ffi::c_int
         - *(&raw mut (*E).sps_var_00 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int) as uint16;
     v2 = ((*E).sps_var_00 as ::core::ffi::c_int - 64 as ::core::ffi::c_int) as int16;
@@ -1343,8 +1343,8 @@ pub unsafe fn SpacePirates_F9C1(mut k: uint16, game: &mut Game) {
     if Enemy_MoveDown(
         k,
         ((*(&raw mut (*E).sps_var_00 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as uint32)
             << 16 as ::core::ffi::c_int
@@ -1400,8 +1400,8 @@ pub unsafe fn SpacePirates_FA59(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(k as ::core::ffi::c_int, game);
     (*E).base.y_pos = ((*E).base.y_pos as ::core::ffi::c_int
         - *(&raw mut (*E).sps_var_00 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int) as uint16;
     v2 = ((*E).sps_var_00 as ::core::ffi::c_int - 64 as ::core::ffi::c_int) as int16;
@@ -1420,8 +1420,8 @@ pub unsafe fn SpacePirates_FA95(mut k: uint16, game: &mut Game) {
     if Enemy_MoveDown(
         k,
         ((*(&raw mut (*E).sps_var_00 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as uint32)
             << 16 as ::core::ffi::c_int

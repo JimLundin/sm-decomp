@@ -210,7 +210,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
             ) as *const uint8 as *mut uint16)
                 .offset(
                     *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize,
-                ) as uint16_t,
+                ),
             game,
         );
         let mut j: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -236,7 +236,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
             ) as *const uint8 as *mut uint16)
                 .offset(
                     *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize,
-                ) as uint16_t,
+                ),
             game,
         );
         let mut k: ::core::ffi::c_int = 0 as ::core::ffi::c_int;

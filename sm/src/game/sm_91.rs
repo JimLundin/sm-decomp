@@ -676,7 +676,7 @@ pub fn DemoInstr_Finish(_k: u16, _j: u16, game: &mut Game) -> u16 {
 }
 pub unsafe fn DemoInstr_SetPreInstr(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xa7a) as *mut uint16) =
-        *(RomPtr_91(j as uint16_t, game) as *mut uint16);
+        *(RomPtr_91(j, game) as *mut uint16);
     return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn DemoInstr_ClearPreInstr(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
@@ -684,7 +684,7 @@ pub unsafe fn DemoInstr_ClearPreInstr(mut k: uint16, mut j: uint16, game: &mut G
     return j;
 }
 pub unsafe fn DemoInstr_Goto(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
-    return *(RomPtr_91(j as uint16_t, game) as *mut uint16);
+    return *(RomPtr_91(j, game) as *mut uint16);
 }
 pub unsafe fn DemoInstr_DecTimerAndGoto(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0xa80) as *mut uint16);
@@ -697,7 +697,7 @@ pub unsafe fn DemoInstr_DecTimerAndGoto(mut k: uint16, mut j: uint16, game: &mut
 }
 pub unsafe fn DemoInstr_SetTimer(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xa80) as *mut uint16) =
-        *(RomPtr_91(j as uint16_t, game) as *mut uint16);
+        *(RomPtr_91(j, game) as *mut uint16);
     return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn DemoInstr_Func2(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
@@ -1729,8 +1729,8 @@ pub unsafe fn Xray_SetupStage1_FreezeTimeBackup(mut k: uint16, game: &mut Game) 
         .offset(k as uint8 as ::core::ffi::c_int as isize)
         .offset(1) =
         *((&raw mut game.g_ram as *mut uint8).offset(0xb5) as *mut uint16 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         );
     *((&raw mut game.g_ram as *mut uint8).offset(0x1920) as *mut uint16 as *mut uint8)
@@ -1740,8 +1740,8 @@ pub unsafe fn Xray_SetupStage1_FreezeTimeBackup(mut k: uint16, game: &mut Game) 
         .offset(k as uint8 as ::core::ffi::c_int as isize)
         .offset(1) =
         *((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         );
     *((&raw mut game.g_ram as *mut uint8).offset(0x192c) as *mut uint16 as *mut uint8)
@@ -2069,7 +2069,7 @@ unsafe fn Xray_GetXrayedBlock(mut k: uint16, game: &mut Game) -> *const uint8 {
                         & 0x3fffff as ::core::ffi::c_int) as isize,
                 ) as *const uint8 as *mut XrayBlockData)
                     .offset(i as isize))
-                .addr as uint16_t,
+                .addr,
                 game,
             );
             loop {
@@ -2198,7 +2198,7 @@ unsafe fn Xray_CombinedMove(
                     & 0x3fffff as ::core::ffi::c_int) as isize,
             ) as *const uint8 as *mut XrayBlockData)
                 .offset(1))
-            .addr as uint16_t,
+            .addr,
             game,
         ) as *mut uint16;
         while *t.offset(0) as ::core::ffi::c_int != 0xffff as ::core::ffi::c_int {
@@ -3085,15 +3085,15 @@ pub unsafe fn HandleVisorPalette(game: &mut Game) -> uint8 {
             ) as *const uint8 as *mut uint16)
                 .offset(
                     (*(&raw mut v1 as *mut uint8).offset(
-                        (::core::mem::size_of::<uint16>() as usize)
-                            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                        (::core::mem::size_of::<uint16>())
+                            .wrapping_div(::core::mem::size_of::<uint8>())
                             .wrapping_sub(1 as usize) as isize,
                     ) as ::core::ffi::c_int
                         >> 1 as ::core::ffi::c_int) as isize,
                 );
         let mut v2: ::core::ffi::c_int = *(&raw mut v1 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int
             + 2 as ::core::ffi::c_int;
@@ -3638,7 +3638,7 @@ pub unsafe fn Samus_Copy10PalColors(mut v0: uint16, game: &mut Game) {
     memcpy(
         ((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(224)
             as *mut uint16 as *mut ::core::ffi::c_void,
-        RomPtr_9B(v0 as uint16_t, game) as *const ::core::ffi::c_void,
+        RomPtr_9B(v0, game) as *const ::core::ffi::c_void,
         20 as size_t,
     );
 }
@@ -3646,7 +3646,7 @@ pub unsafe fn Samus_Copy6PalColors(mut j: uint16, game: &mut Game) {
     memcpy(
         ((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(234)
             as *mut uint16 as *mut ::core::ffi::c_void,
-        RomPtr_9B(j as uint16_t, game) as *const ::core::ffi::c_void,
+        RomPtr_9B(j, game) as *const ::core::ffi::c_void,
         12 as size_t,
     );
 }
@@ -3750,7 +3750,7 @@ pub unsafe fn CopyToSamusSuitPalette(mut k: uint16, game: &mut Game) {
     memcpy(
         ((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(192)
             as *mut uint16 as *mut ::core::ffi::c_void,
-        RomPtr_9B(k as uint16_t, game) as *mut uint16 as *const ::core::ffi::c_void,
+        RomPtr_9B(k, game) as *mut uint16 as *const ::core::ffi::c_void,
         32 as size_t,
     );
 }
@@ -3758,7 +3758,7 @@ pub unsafe fn CopyToSamusSuitTargetPalette(mut k: uint16, game: &mut Game) {
     memcpy(
         ((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(192)
             as *mut uint16 as *mut ::core::ffi::c_void,
-        RomPtr_9B(k as uint16_t, game) as *mut uint16 as *const ::core::ffi::c_void,
+        RomPtr_9B(k, game) as *mut uint16 as *const ::core::ffi::c_void,
         32 as size_t,
     );
 }
@@ -4699,8 +4699,8 @@ static off_91E951: [Option<Func_U8>; 6] = unsafe {
 };
 pub unsafe fn Samus_HandleTransFromBlockColl_2(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16 as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) as ::core::ffi::c_int
         != 4 as ::core::ffi::c_int
@@ -4708,8 +4708,8 @@ pub unsafe fn Samus_HandleTransFromBlockColl_2(game: &mut Game) {
         let mut v0: uint16 = (4 as ::core::ffi::c_int
             * *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16 as *mut uint8)
                 .offset(
-                    (::core::mem::size_of::<uint16>() as usize)
-                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                    (::core::mem::size_of::<uint16>())
+                        .wrapping_div(::core::mem::size_of::<uint8>())
                         .wrapping_sub(1 as usize) as isize,
                 ) as ::core::ffi::c_int) as uint16;
         if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) as ::core::ffi::c_int
@@ -4741,8 +4741,8 @@ pub unsafe fn Samus_HandleTransFromBlockColl_2(game: &mut Game) {
 }
 pub unsafe fn Samus_HandleTransFromBlockColl_1(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16 as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) as ::core::ffi::c_int
         != 4 as ::core::ffi::c_int
@@ -4750,8 +4750,8 @@ pub unsafe fn Samus_HandleTransFromBlockColl_1(game: &mut Game) {
         if off_91E951[*((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16
             as *mut uint8)
             .offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                (::core::mem::size_of::<uint16>())
+                    .wrapping_div(::core::mem::size_of::<uint8>())
                     .wrapping_sub(1 as usize) as isize,
             ) as usize]
             .expect("non-null function pointer")(game) as ::core::ffi::c_int
@@ -5015,24 +5015,24 @@ pub unsafe fn Samus_CheckWalkedIntoSomething(game: &mut Game) {
         != 4 as ::core::ffi::c_int
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0xb02) as *mut uint16) = 1 as uint16;
-        amt = ((1 as int16 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) as int32;
+        amt = ((1 as int16 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int);
         cres = Samus_CheckSolidEnemyColl(amt, game);
         if cres.collision == 0 {
             *((&raw mut game.g_ram as *mut uint8).offset(0xb02) as *mut uint16) = 1 as uint16;
-            amt = ((1 as int16 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) as int32;
+            amt = ((1 as int16 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int);
             current_block = 12513788902857388954;
         } else {
             current_block = 8208193451455325075;
         }
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0xb02) as *mut uint16) = 0 as uint16;
-        amt = ((1 as int16 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) as int32;
+        amt = ((1 as int16 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int);
         cres_0 = Samus_CheckSolidEnemyColl(amt, game);
         if cres_0.collision != 0 {
             current_block = 8208193451455325075;
         } else {
             amt = ((-(1 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
-                << 16 as ::core::ffi::c_int) as int32;
+                << 16 as ::core::ffi::c_int);
             *((&raw mut game.g_ram as *mut uint8).offset(0xb02) as *mut uint16) = 0 as uint16;
             current_block = 12513788902857388954;
         }
@@ -5284,7 +5284,7 @@ pub unsafe fn Samus_HandleTransitionsA_7(game: &mut Game) {
         amt = ((word_91ED36[(*((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16)
             as ::core::ffi::c_int
             - 53 as ::core::ffi::c_int) as usize] as int16 as ::core::ffi::c_int)
-            << 16 as ::core::ffi::c_int) as int32;
+            << 16 as ::core::ffi::c_int);
         if amt != 0 {
             current_block_11 = 7426089221157146073;
         } else {
@@ -5300,7 +5300,7 @@ pub unsafe fn Samus_HandleTransitionsA_7(game: &mut Game) {
             & 0x8000 as ::core::ffi::c_int
             != 0
     {
-        amt = ((5 as int16 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) as int32;
+        amt = ((5 as int16 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int);
         current_block_11 = 7426089221157146073;
     } else {
         current_block_11 = 1856101646708284338;
@@ -5725,8 +5725,8 @@ static kSamus_HandleTransitionsA_5_1: [Option<Func_U8>; 6] = unsafe {
 pub unsafe fn Samus_HandleTransitionsA_5_1(game: &mut Game) {
     HandleLandingSoundEffectsAndGfx(game);
     if *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16 as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) as ::core::ffi::c_int
         == 4 as ::core::ffi::c_int
@@ -5735,8 +5735,8 @@ pub unsafe fn Samus_HandleTransitionsA_5_1(game: &mut Game) {
     } else if kSamus_HandleTransitionsA_5_1[*((&raw mut game.g_ram as *mut uint8).offset(0xdc6)
         as *mut uint16 as *mut uint8)
         .offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as usize]
         .expect("non-null function pointer")(game) as ::core::ffi::c_int

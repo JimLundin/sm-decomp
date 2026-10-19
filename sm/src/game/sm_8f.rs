@@ -555,8 +555,8 @@ pub unsafe fn RoomCode_GenRandomExplodes_Nonblank(game: &mut Game) {
         let mut y: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16)
             as ::core::ffi::c_int
             + *(&raw mut Random as *mut uint8).offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                (::core::mem::size_of::<uint16>())
+                    .wrapping_div(::core::mem::size_of::<uint8>())
                     .wrapping_sub(1 as usize) as isize,
             ) as ::core::ffi::c_int) as uint16;
         let mut prod: uint16 = Mult8x8(
@@ -599,8 +599,8 @@ pub unsafe fn RoomCode_GenRandomExplodes_4th(game: &mut Game) {
             (*((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16)
                 as ::core::ffi::c_int
                 + *(&raw mut Random as *mut uint8).offset(
-                    (::core::mem::size_of::<uint16>() as usize)
-                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                    (::core::mem::size_of::<uint16>())
+                        .wrapping_div(::core::mem::size_of::<uint8>())
                         .wrapping_sub(1 as usize) as isize,
                 ) as ::core::ffi::c_int) as uint16,
             game,
@@ -1126,8 +1126,7 @@ pub unsafe fn CallRoomDefStateSelect(mut ea: uint32, mut k: uint16, game: &mut G
 pub unsafe fn HandleRoomDefStateSelect(mut k: uint16, game: &mut Game) {
     let mut v1: uint16 = (k as ::core::ffi::c_int + 11 as ::core::ffi::c_int) as uint16;
     loop {
-        let mut event_pointer: uint16 =
-            (*get_RoomDefStateSelect_E6E5_Finish(v1, game)).code_ptr as uint16;
+        let mut event_pointer: uint16 = (*get_RoomDefStateSelect_E6E5_Finish(v1, game)).code_ptr;
         v1 = CallRoomDefStateSelect(
             (event_pointer as ::core::ffi::c_int | 0x8f0000 as ::core::ffi::c_int) as uint32,
             (v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16,
@@ -1148,11 +1147,11 @@ pub unsafe fn RoomDefStateSelect_TourianBoss01(mut k: uint16, game: &mut Game) -
     {
         return (k as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     }
-    let mut v1: *const uint16 = RomPtr_8F(k as uint16_t, game) as *const uint16;
+    let mut v1: *const uint16 = RomPtr_8F(k, game) as *const uint16;
     return RoomDefStateSelect_Finish(*v1, game);
 }
 pub unsafe fn RoomDefStateSelect_IsEventSet(mut k: uint16, game: &mut Game) -> uint16 {
-    let mut v1: *const uint8 = RomPtr_8F(k as uint16_t, game);
+    let mut v1: *const uint8 = RomPtr_8F(k, game);
     if CheckEventHappened(*v1 as uint16, game) != 0 {
         return RoomDefStateSelect_Finish(*(v1.offset(1) as *mut uint16), game);
     } else {
@@ -1160,7 +1159,7 @@ pub unsafe fn RoomDefStateSelect_IsEventSet(mut k: uint16, game: &mut Game) -> u
     };
 }
 pub unsafe fn RoomDefStateSelect_IsBossDead(mut k: uint16, game: &mut Game) -> uint16 {
-    let mut v1: *const uint8 = RomPtr_8F(k as uint16_t, game);
+    let mut v1: *const uint8 = RomPtr_8F(k, game);
     if CheckBossBitForCurArea(*v1 as uint16, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
         != 0
     {
@@ -1177,14 +1176,14 @@ pub unsafe fn RoomDefStateSelect_MorphBallMissiles(mut k: uint16, game: &mut Gam
     {
         return (k as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     }
-    let mut v1: *const uint16 = RomPtr_8F(k as uint16_t, game) as *const uint16;
+    let mut v1: *const uint16 = RomPtr_8F(k, game) as *const uint16;
     return RoomDefStateSelect_Finish(*v1, game);
 }
 pub unsafe fn RoomDefStateSelect_PowerBombs(mut k: uint16, game: &mut Game) -> uint16 {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x9d0) as *mut uint16) == 0 {
         return (k as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     }
-    let mut v1: *const uint16 = RomPtr_8F(k as uint16_t, game) as *const uint16;
+    let mut v1: *const uint16 = RomPtr_8F(k, game) as *const uint16;
     return RoomDefStateSelect_Finish(*v1, game);
 }
 pub unsafe fn CallRoomSetupCode(mut ea: uint32, game: &mut Game) {

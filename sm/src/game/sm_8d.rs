@@ -96,7 +96,7 @@ pub unsafe fn SpawnPalfxObject(mut j: uint16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1ead) as *mut uint16).offset(v2 as isize) =
         (0x8dc526 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1ebd) as *mut uint16).offset(v2 as isize) =
-        (*get_PalFxDef(j, game)).instrs as uint16;
+        (*get_PalFxDef(j, game)).instrs;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1ecd) as *mut uint16).offset(v2 as isize) =
         1 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1edd) as *mut uint16).offset(v2 as isize) =
@@ -151,7 +151,7 @@ pub unsafe fn PalFx_ProcessOne(mut k: uint16, game: &mut Game) {
         .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     let mut v6: uint16 = 0;
     loop {
-        let mut p: *const uint16 = RomPtr_8D(j as uint16_t, game) as *const uint16;
+        let mut p: *const uint16 = RomPtr_8D(j, game) as *const uint16;
         v6 = *p;
         if *p as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
             break;
@@ -176,7 +176,7 @@ pub unsafe fn PalFx_ProcessOne(mut k: uint16, game: &mut Game) {
     let mut v11: uint16 = 0;
     loop {
         loop {
-            v10 = RomPtr_8D(j as uint16_t, game);
+            v10 = RomPtr_8D(j, game);
             v11 = *(v10.offset(2) as *mut uint16);
             if v11 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
                 break;
@@ -251,7 +251,7 @@ pub unsafe fn PalInstr_Delete(mut k: uint16, mut j: uint16, game: &mut Game) -> 
 pub unsafe fn PalInstr_SetPreInstr(mut k: uint16, mut j: uint16, game: &mut Game) -> PairU16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1ead) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-        *(RomPtr_8D(j as uint16_t, game) as *mut uint16);
+        *(RomPtr_8D(j, game) as *mut uint16);
     return MakePairU16(
         k,
         (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16,
@@ -264,7 +264,7 @@ pub unsafe fn PalInstr_ClearPreInstr(mut k: uint16, mut j: uint16, game: &mut Ga
     return MakePairU16(k, j);
 }
 pub unsafe fn PalInstr_Goto(mut k: uint16, mut j: uint16, game: &mut Game) -> PairU16 {
-    let mut v2: uint16 = *(RomPtr_8D(j as uint16_t, game) as *mut uint16);
+    let mut v2: uint16 = *(RomPtr_8D(j, game) as *mut uint16);
     return MakePairU16(k, v2);
 }
 pub unsafe fn PalInstr_DecTimerGoto(mut k: uint16, mut j: uint16, game: &mut Game) -> PairU16 {
@@ -285,7 +285,7 @@ pub unsafe fn PalInstr_DecTimerGoto(mut k: uint16, mut j: uint16, game: &mut Gam
 }
 pub unsafe fn PalInstr_SetTimer(mut k: uint16, mut j: uint16, game: &mut Game) -> PairU16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1edd) as *mut uint16 as *mut uint8)
-        .offset(k as ::core::ffi::c_int as isize) = *RomPtr_8D(j as uint16_t, game);
+        .offset(k as ::core::ffi::c_int as isize) = *RomPtr_8D(j, game);
     return MakePairU16(
         k,
         (j as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16,
@@ -294,14 +294,14 @@ pub unsafe fn PalInstr_SetTimer(mut k: uint16, mut j: uint16, game: &mut Game) -
 pub unsafe fn PalInstr_SetColorIndex(mut k: uint16, mut j: uint16, game: &mut Game) -> PairU16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1e8d) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-        *(RomPtr_8D(j as uint16_t, game) as *mut uint16);
+        *(RomPtr_8D(j, game) as *mut uint16);
     return MakePairU16(
         k,
         (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16,
     );
 }
 pub unsafe fn PalInstr_QueueMusic(mut k: uint16, mut j: uint16, game: &mut Game) -> PairU16 {
-    let mut v2: *const uint8 = RomPtr_8D(j as uint16_t, game);
+    let mut v2: *const uint8 = RomPtr_8D(j, game);
     QueueMusic_Delayed8(*v2 as uint16, game);
     return MakePairU16(
         k,
@@ -309,7 +309,7 @@ pub unsafe fn PalInstr_QueueMusic(mut k: uint16, mut j: uint16, game: &mut Game)
     );
 }
 pub unsafe fn PalInstr_QueueSfx1(mut k: uint16, mut j: uint16, game: &mut Game) -> PairU16 {
-    let mut v2: *const uint16 = RomPtr_8D(j as uint16_t, game) as *const uint16;
+    let mut v2: *const uint16 = RomPtr_8D(j, game) as *const uint16;
     QueueSfx1_Max6(*v2, game);
     return MakePairU16(
         k,
@@ -317,7 +317,7 @@ pub unsafe fn PalInstr_QueueSfx1(mut k: uint16, mut j: uint16, game: &mut Game) 
     );
 }
 pub unsafe fn PalInstr_QueueSfx2(mut k: uint16, mut j: uint16, game: &mut Game) -> PairU16 {
-    let mut v2: *const uint16 = RomPtr_8D(j as uint16_t, game) as *const uint16;
+    let mut v2: *const uint16 = RomPtr_8D(j, game) as *const uint16;
     QueueSfx2_Max6(*v2, game);
     return MakePairU16(
         k,
@@ -325,7 +325,7 @@ pub unsafe fn PalInstr_QueueSfx2(mut k: uint16, mut j: uint16, game: &mut Game) 
     );
 }
 pub unsafe fn PalInstr_QueueSfx3(mut k: uint16, mut j: uint16, game: &mut Game) -> PairU16 {
-    let mut v2: *const uint16 = RomPtr_8D(j as uint16_t, game) as *const uint16;
+    let mut v2: *const uint16 = RomPtr_8D(j, game) as *const uint16;
     QueueSfx3_Max6(*v2, game);
     return MakePairU16(
         k,
@@ -404,7 +404,7 @@ pub unsafe fn PalPreInstr_SamusInHeat(mut k: uint16, game: &mut Game) {
             v4 = addr_off_8DE420 as uint16;
         }
         *((&raw mut game.g_ram as *mut uint8).offset(0x1ebd) as *mut uint16).offset(v3 as isize) =
-            *((RomPtr_8D as unsafe fn(uint16_t, &mut Game) -> *const uint8)(v4 as uint16_t, game)
+            *((RomPtr_8D as unsafe fn(uint16_t, &mut Game) -> *const uint8)(v4, game)
                 .offset(v2 as isize) as *const uint8 as *mut uint16);
     }
 }
@@ -463,7 +463,7 @@ pub unsafe fn PalPreInstr_DeletePalfxIfMinibossDead(mut k: uint16, game: &mut Ga
 }
 pub unsafe fn PalInstr_SetPalfxIndex(mut k: uint16, mut j: uint16, game: &mut Game) -> PairU16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1eed) as *mut uint16) =
-        *RomPtr_8D(j as uint16_t, game) as uint16;
+        *RomPtr_8D(j, game) as uint16;
     return MakePairU16(
         k,
         (j as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16,

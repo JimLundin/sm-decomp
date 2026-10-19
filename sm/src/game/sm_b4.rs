@@ -56,7 +56,7 @@ pub unsafe fn CreateSpriteAtPos(
         .offset(ilist_r22 as isize);
     *((&raw mut game.g_ram as *mut uint8).offset(0xef78) as *mut uint16).offset(v1 as isize) = v2;
     *((&raw mut game.g_ram as *mut uint8).offset(0xeff8) as *mut uint16).offset(v1 as isize) =
-        *(RomPtr_B4(v2 as uint16_t, game) as *mut uint16);
+        *(RomPtr_B4(v2, game) as *mut uint16);
     return v0 as uint16;
 }
 pub unsafe fn CallSpriteObjectInstr(mut ea: uint32, game: &mut Game) {
@@ -116,7 +116,7 @@ pub unsafe fn HandleSpriteObjects(game: &mut Game) {
                             + 4 as ::core::ffi::c_int) as uint16;
                     *((&raw mut game.g_ram as *mut uint8).offset(0xef78) as *mut uint16)
                         .offset(v0 as isize) = v3;
-                    v1 = *(RomPtr_B4(v3 as uint16_t, game) as *mut uint16);
+                    v1 = *(RomPtr_B4(v3, game) as *mut uint16);
                     if v1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
                         current_block_9 = 8895462745870634114;
                     } else {
@@ -173,7 +173,7 @@ pub unsafe fn SpriteObject_Instr_Goto(game: &mut Game) {
             (*((&raw mut game.g_ram as *mut uint8).offset(0x1844) as *mut uint16)
                 as ::core::ffi::c_int
                 >> 1 as ::core::ffi::c_int) as isize,
-        ) as uint16_t,
+        ),
         game,
     )
     .offset(2) as *mut uint16);
@@ -184,7 +184,7 @@ pub unsafe fn SpriteObject_Instr_Goto(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xeff8) as *mut uint16).offset(
         (*((&raw mut game.g_ram as *mut uint8).offset(0x1844) as *mut uint16) as ::core::ffi::c_int
             >> 1 as ::core::ffi::c_int) as isize,
-    ) = *(RomPtr_B4(v2 as uint16_t, game) as *mut uint16);
+    ) = *(RomPtr_B4(v2, game) as *mut uint16);
 }
 pub unsafe fn DrawSpriteObjects(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 62 as ::core::ffi::c_int;
@@ -230,9 +230,9 @@ pub unsafe fn DrawSpriteObjects(game: &mut Game) {
                                 & 0x1ff as ::core::ffi::c_int)
                                 as uint16;
                             let mut v3: *const uint8 = RomPtr_B4(
-                                *((&raw mut game.g_ram as *mut uint8).offset(0xef78) as *mut uint16)
-                                    .offset(v1 as isize)
-                                    as uint16_t,
+                                *((&raw mut game.g_ram as *mut uint8).offset(0xef78)
+                                    as *mut uint16)
+                                    .offset(v1 as isize),
                                 game,
                             );
                             DrawSpritemapWithBaseTile(

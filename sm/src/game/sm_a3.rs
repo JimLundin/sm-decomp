@@ -1375,8 +1375,8 @@ pub unsafe fn Fireflea_Func_1(mut k: uint16, game: &mut Game) {
 pub unsafe fn Fireflea_Func_2(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_FireFlea = Get_FireFlea(k as ::core::ffi::c_int, game);
     (*E).ffa_var_D = ((*(&raw mut (*E).ffa_parameter_1 as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) as ::core::ffi::c_int)
         << 8 as ::core::ffi::c_int) as uint16;
@@ -1415,8 +1415,8 @@ pub unsafe fn Fireflea_Func_4(mut k: uint16, game: &mut Game) {
     ) as *const uint8 as *mut uint16)
         .offset(
             *(&raw mut (*E).ffa_parameter_2 as *mut uint8).offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                (::core::mem::size_of::<uint16>())
+                    .wrapping_div(::core::mem::size_of::<uint8>())
                     .wrapping_sub(1 as usize) as isize,
             ) as isize,
         ) as *mut uint16 as *mut uint8)
@@ -1449,8 +1449,8 @@ pub unsafe fn Fireflea_Main(game: &mut Game) {
         (*E).base.x_pos = ((*E).ffa_var_E as ::core::ffi::c_int
             + CosineMult8bit(
                 *(&raw mut (*E).ffa_var_D as *mut uint8).offset(
-                    (::core::mem::size_of::<uint16>() as usize)
-                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                    (::core::mem::size_of::<uint16>())
+                        .wrapping_div(::core::mem::size_of::<uint8>())
                         .wrapping_sub(1 as usize) as isize,
                 ) as uint16,
                 (*E).ffa_var_C,
@@ -1459,8 +1459,8 @@ pub unsafe fn Fireflea_Main(game: &mut Game) {
         (*E).base.y_pos = ((*E).ffa_var_F as ::core::ffi::c_int
             + SineMult8bit(
                 *(&raw mut (*E).ffa_var_D as *mut uint8).offset(
-                    (::core::mem::size_of::<uint16>() as usize)
-                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                    (::core::mem::size_of::<uint16>())
+                        .wrapping_div(::core::mem::size_of::<uint8>())
                         .wrapping_sub(1 as usize) as isize,
                 ) as uint16,
                 (*E).ffa_var_C,
@@ -1591,8 +1591,8 @@ pub unsafe fn MaridiaFish_Init(game: &mut Game) {
     (*E).base.current_instruction = addr_kMaridiaFish_Ilist_902A as uint16;
     (*E).mfh_var_A = (0xa39132 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     if *(&raw mut (*E).mfh_parameter_1 as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) == 0
     {
@@ -1628,8 +1628,8 @@ pub unsafe fn MaridiaFish_Init(game: &mut Game) {
         .offset((v1 + 3 as ::core::ffi::c_int) as isize);
     (*E).mfh_var_00 = *(&raw mut (*E).mfh_parameter_2 as *mut uint8).offset(0) as uint16;
     (*E).mfh_var_02 = *(&raw mut (*E).mfh_parameter_2 as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) as uint16;
     (*E).mfh_var_F = 0 as uint16;
@@ -2093,8 +2093,8 @@ pub unsafe fn PlatformThatFalls_Init(mut k: uint16, mut j: uint16, game: &mut Ga
     (*E).ptfwss_var_A = ((*E).base.y_pos as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16;
     (*E).ptfwss_var_F = 0 as uint16;
     (*E).ptfwss_var_05 = *(&raw mut (*E).ptfwss_parameter_2 as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) as uint16;
 }
@@ -2440,8 +2440,8 @@ pub unsafe fn Roach_Func_2(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_Roach = Get_Roach(k as ::core::ffi::c_int, game);
     let mut pt: Point32 = ConvertAngleToXy(
         *(&raw mut (*E).roach_parameter_1 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as uint16,
         *(&raw mut (*E).roach_parameter_1 as *mut uint8).offset(0) as uint16,
@@ -2457,8 +2457,8 @@ pub unsafe fn Roach_Func_3(mut k: uint16, game: &mut Game) {
         &raw mut (*E).roach_var_00,
         CosineMult8bitFull(
             *(&raw mut (*E).roach_parameter_1 as *mut uint8).offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                (::core::mem::size_of::<uint16>())
+                    .wrapping_div(::core::mem::size_of::<uint8>())
                     .wrapping_sub(1 as usize) as isize,
             ) as uint16,
             *(&raw mut (*E).roach_parameter_1 as *mut uint8).offset(0) as uint16,
@@ -2470,8 +2470,8 @@ pub unsafe fn Roach_Func_3(mut k: uint16, game: &mut Game) {
         &raw mut (*E).roach_var_02,
         SineMult8bitFull(
             *(&raw mut (*E).roach_parameter_1 as *mut uint8).offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                (::core::mem::size_of::<uint16>())
+                    .wrapping_div(::core::mem::size_of::<uint8>())
                     .wrapping_sub(1 as usize) as isize,
             ) as uint16,
             *(&raw mut (*E).roach_parameter_1 as *mut uint8).offset(0) as uint16,
@@ -2486,8 +2486,8 @@ pub unsafe fn Roach_Func_4(mut k: uint16, game: &mut Game) {
         &raw mut (*E).roach_var_04,
         CosineMult8bitFull(
             (*(&raw mut (*E).roach_parameter_1 as *mut uint8).offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                (::core::mem::size_of::<uint16>())
+                    .wrapping_div(::core::mem::size_of::<uint8>())
                     .wrapping_sub(1 as usize) as isize,
             ) as ::core::ffi::c_int
                 - 32 as ::core::ffi::c_int) as uint8 as uint16,
@@ -2500,8 +2500,8 @@ pub unsafe fn Roach_Func_4(mut k: uint16, game: &mut Game) {
         &raw mut (*E).roach_var_06,
         SineMult8bitFull(
             (*(&raw mut (*E).roach_parameter_1 as *mut uint8).offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                (::core::mem::size_of::<uint16>())
+                    .wrapping_div(::core::mem::size_of::<uint8>())
                     .wrapping_sub(1 as usize) as isize,
             ) as ::core::ffi::c_int
                 - 32 as ::core::ffi::c_int) as uint8 as uint16,
@@ -2517,8 +2517,8 @@ pub unsafe fn Roach_Func_5(mut k: uint16, game: &mut Game) {
         &raw mut (*E).roach_var_08,
         CosineMult8bitFull(
             (*(&raw mut (*E).roach_parameter_1 as *mut uint8).offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                (::core::mem::size_of::<uint16>())
+                    .wrapping_div(::core::mem::size_of::<uint8>())
                     .wrapping_sub(1 as usize) as isize,
             ) as ::core::ffi::c_int
                 + 32 as ::core::ffi::c_int) as uint8 as uint16,
@@ -2531,8 +2531,8 @@ pub unsafe fn Roach_Func_5(mut k: uint16, game: &mut Game) {
         &raw mut (*E).roach_var_0A,
         SineMult8bitFull(
             (*(&raw mut (*E).roach_parameter_1 as *mut uint8).offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                (::core::mem::size_of::<uint16>())
+                    .wrapping_div(::core::mem::size_of::<uint8>())
                     .wrapping_sub(1 as usize) as isize,
             ) as ::core::ffi::c_int
                 + 32 as ::core::ffi::c_int) as uint8 as uint16,
@@ -2545,8 +2545,8 @@ pub unsafe fn Roach_Func_6(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_Roach = Get_Roach(k as ::core::ffi::c_int, game);
     (*E).roach_var_20 = (2 as ::core::ffi::c_int
         * ((*(&raw mut (*E).roach_parameter_1 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int
             - 48 as ::core::ffi::c_int) as uint8 as ::core::ffi::c_int
@@ -2556,8 +2556,8 @@ pub unsafe fn Roach_Func_7(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_Roach = Get_Roach(k as ::core::ffi::c_int, game);
     (*E).roach_var_21 = (2 as ::core::ffi::c_int
         * ((*(&raw mut (*E).roach_parameter_1 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int
             - 80 as ::core::ffi::c_int) as uint8 as ::core::ffi::c_int
@@ -2567,8 +2567,8 @@ pub unsafe fn Roach_Func_8(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_Roach = Get_Roach(k as ::core::ffi::c_int, game);
     (*E).roach_var_22 = (2 as ::core::ffi::c_int
         * ((*(&raw mut (*E).roach_parameter_1 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int
             - 48 as ::core::ffi::c_int
@@ -2685,8 +2685,8 @@ pub unsafe fn Roach_Func_9(game: &mut Game) {
             ) as *const uint8 as *mut uint16)
                 .offset(
                     *(&raw mut (*E).roach_parameter_2 as *mut uint8).offset(
-                        (::core::mem::size_of::<uint16>() as usize)
-                            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                        (::core::mem::size_of::<uint16>())
+                            .wrapping_div(::core::mem::size_of::<uint8>())
                             .wrapping_sub(1 as usize) as isize,
                     ) as isize,
                 );
@@ -3027,8 +3027,8 @@ pub unsafe fn Roach_Func_28(game: &mut Game) {
 pub unsafe fn Roach_Func_29(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_Roach = Get_Roach(k as ::core::ffi::c_int, game);
     let mut varE20: uint16 = *(&raw mut (*E).roach_parameter_1 as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) as uint16;
     EnemyFunc_B691(
@@ -3191,7 +3191,7 @@ pub unsafe fn Mochtroid_Func_1(game: &mut Game) {
         - *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) as ::core::ffi::c_int)
         as int16 as ::core::ffi::c_int
         >> 2 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as int32;
+        << 8 as ::core::ffi::c_int);
     AddToHiLo(
         &raw mut (*E).mochtr_var_B,
         &raw mut (*E).mochtr_var_A,
@@ -4264,8 +4264,8 @@ pub unsafe fn Bang_Init(game: &mut Game) {
         .offset(*(&raw mut (*E).bang_parameter_2 as *mut uint8).offset(0) as isize);
     let mut v1: ::core::ffi::c_int = 2 as ::core::ffi::c_int
         * *(&raw mut (*E).bang_parameter_2 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int;
     let mut v2: uint16 = *(game.g_rom.offset(
@@ -4967,7 +4967,7 @@ pub unsafe fn MaridiaSnail_Init(game: &mut Game) {
             & 0x3fffff as ::core::ffi::c_int) as isize,
     ) as *const uint8 as *mut MaridiaSnailData2)
         .offset(current_instruction as isize))
-    .field_0 as uint16;
+    .field_0;
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         | (*(game.g_rom.offset(
             (((0xa3cd42 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -4983,7 +4983,7 @@ pub unsafe fn MaridiaSnail_Init(game: &mut Game) {
             & 0x3fffff as ::core::ffi::c_int) as isize,
     ) as *const uint8 as *mut MaridiaSnailData2)
         .offset(current_instruction as isize))
-    .field_4 as uint16;
+    .field_4;
     (*E).msl_var_C = (*(game.g_rom.offset(
         (((0xa3cd42 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0xa3cd42 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -5200,7 +5200,7 @@ unsafe fn Shift8AddMagn(mut a: int16, mut s: ::core::ffi::c_int) -> uint32 {
             -(s << 16 as ::core::ffi::c_int)
         } else {
             s << 16 as ::core::ffi::c_int
-        }) as int32;
+        });
     return r as uint32;
 }
 pub unsafe fn MaridiaSnail_Func_7(mut k: uint16, game: &mut Game) {
@@ -5233,7 +5233,7 @@ pub unsafe fn MaridiaSnail_Func_9(mut k: uint16, game: &mut Game) {
     } else {
         addr_stru_A3CCE2 as ::core::ffi::c_int
     }) as uint16;
-    MaridiaSnail_D07E(k, RomPtr_A3(v1 as uint16_t, game), game);
+    MaridiaSnail_D07E(k, RomPtr_A3(v1, game), game);
 }
 pub unsafe fn MaridiaSnail_CFB7(mut k: uint16, game: &mut Game) {
     MaridiaSnail_D002(k, RomPtr_A3(addr_stru_A3CCEA as uint16_t, game), game);
@@ -5247,7 +5247,7 @@ pub unsafe fn MaridiaSnail_CFBD(mut k: uint16, game: &mut Game) {
     } else {
         addr_stru_A3CCF2 as ::core::ffi::c_int
     }) as uint16;
-    MaridiaSnail_D07E(k, RomPtr_A3(v1 as uint16_t, game), game);
+    MaridiaSnail_D07E(k, RomPtr_A3(v1, game), game);
 }
 pub unsafe fn MaridiaSnail_CFCE(mut k: uint16, game: &mut Game) {
     MaridiaSnail_D002(k, RomPtr_A3(addr_stru_A3CCFA as uint16_t, game), game);
@@ -5261,7 +5261,7 @@ pub unsafe fn MaridiaSnail_CFD4(mut k: uint16, game: &mut Game) {
     } else {
         addr_stru_A3CD02 as ::core::ffi::c_int
     }) as uint16;
-    MaridiaSnail_D07E(k, RomPtr_A3(v1 as uint16_t, game), game);
+    MaridiaSnail_D07E(k, RomPtr_A3(v1, game), game);
 }
 pub unsafe fn MaridiaSnail_CFE5(mut k: uint16, game: &mut Game) {
     MaridiaSnail_D002(k, RomPtr_A3(addr_stru_A3CD0A as uint16_t, game), game);
@@ -5273,7 +5273,7 @@ pub unsafe fn MaridiaSnail_CFEB(mut k: uint16, game: &mut Game) {
     } else {
         v1 = addr_stru_A3CD12 as uint16;
     }
-    MaridiaSnail_D07E(k, RomPtr_A3(v1 as uint16_t, game), game);
+    MaridiaSnail_D07E(k, RomPtr_A3(v1, game), game);
 }
 pub unsafe fn MaridiaSnail_CFFC(mut k: uint16, game: &mut Game) {
     MaridiaSnail_D002(k, RomPtr_A3(addr_stru_A3CD1A as uint16_t, game), game);
@@ -5589,7 +5589,7 @@ pub unsafe fn MaridiaSnail_Func_19(mut k: uint16, game: &mut Game) -> uint8 {
         .offset(0))
     .field_0 as *mut uint8)
         .offset((8 as ::core::ffi::c_int * v2 as ::core::ffi::c_int) as isize)
-        as *mut VoidP) as uint16;
+        as *mut VoidP);
     (*E).base.properties = (*((&raw mut (*(game.g_rom.offset(
         (((0xa3cd42 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0xa3cd42 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -5609,7 +5609,7 @@ pub unsafe fn MaridiaSnail_Func_19(mut k: uint16, game: &mut Game) -> uint8 {
         .offset(0))
     .field_4 as *mut uint8)
         .offset((8 as ::core::ffi::c_int * v2 as ::core::ffi::c_int) as isize)
-        as *mut VoidP) as uint16;
+        as *mut VoidP);
     (*E).msl_var_C = *((&raw mut (*(game.g_rom.offset(
         (((0xa3cd42 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0xa3cd42 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -6747,7 +6747,7 @@ pub unsafe fn Metroid_Func_1(mut varE32: uint16, game: &mut Game) {
         - *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) as ::core::ffi::c_int)
         as int16 as ::core::ffi::c_int
         >> 2 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as int32;
+        << 8 as ::core::ffi::c_int);
     r18 = t as uint16;
     r20 = (t >> 16 as ::core::ffi::c_int) as uint16;
     let mut metroid_var_A: uint16 = (*E).metroid_var_A;
@@ -6805,8 +6805,8 @@ pub unsafe fn Metroid_Func_2(mut varE32: uint16, game: &mut Game) {
         as uint16 as ::core::ffi::c_int
         >> 8 as ::core::ffi::c_int) as uint8;
     *(&raw mut v1 as *mut uint8).offset(
-        (::core::mem::size_of::<int16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<int16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) = (varE32 as ::core::ffi::c_int
         - *(&raw mut (*E).base.y_pos as *mut uint8).offset(0) as ::core::ffi::c_int)
@@ -6855,8 +6855,8 @@ pub unsafe fn Metroid_Func_2(mut varE32: uint16, game: &mut Game) {
             - (*E).base.x_pos as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
             >> 8 as ::core::ffi::c_int) as uint8;
     *(&raw mut v5 as *mut uint8).offset(
-        (::core::mem::size_of::<int16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<int16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) = (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) as ::core::ffi::c_int
         - *(&raw mut (*E).base.x_pos as *mut uint8).offset(0) as ::core::ffi::c_int)

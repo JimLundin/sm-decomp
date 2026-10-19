@@ -231,9 +231,9 @@ pub unsafe fn ProjectileTrail_Func5(mut k: uint16, mut j: uint16, game: &mut Gam
                     .offset(v3 as isize) as ::core::ffi::c_int
                     & 0xf as ::core::ffi::c_int)) as uint16;
     }
-    let mut v6: uint16 = (*(RomPtr_9B(v5 as uint16_t, game) as *mut uint16) as ::core::ffi::c_int
+    let mut v6: uint16 = (*(RomPtr_9B(v5, game) as *mut uint16) as ::core::ffi::c_int
         + 4 as ::core::ffi::c_int * R22 as ::core::ffi::c_int) as uint16;
-    let mut p: *const uint8 = RomPtr_9B(v6 as uint16_t, game);
+    let mut p: *const uint8 = RomPtr_9B(v6, game);
     let mut v7: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0xd778) as *mut uint16).offset(v7 as isize) =
         (r20 as ::core::ffi::c_int + *p.offset(1) as int8 as ::core::ffi::c_int
@@ -350,7 +350,7 @@ pub unsafe fn HandleSamusDeathSequence_Helper2(game: &mut Game) {
                 (*((&raw mut game.g_ram as *mut uint8).offset(0xa74) as *mut uint16)
                     as ::core::ffi::c_int
                     >> 1 as ::core::ffi::c_int) as isize,
-            ) as uint16_t,
+            ),
         game,
     ) as *const uint16;
     memcpy(
@@ -407,8 +407,7 @@ pub unsafe fn CopyPalettesForSamusDeath(mut v0: uint16, game: &mut Game) {
                     | 0x9bb80f as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
                     & 0x3fffff as ::core::ffi::c_int) as isize,
             ) as *const uint8 as *mut uint16)
-                .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-                as uint16_t,
+                .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize),
             game,
         ) as *const ::core::ffi::c_void,
         32 as size_t,
@@ -612,7 +611,7 @@ unsafe fn ProcessEnemyGrappleBeamColl(
         3 => return 1 as ::core::ffi::c_int,
         1 | 4 | 5 => return 0 as ::core::ffi::c_int,
         6 => {
-            r18 = *(RomPtr_A0(r18 as uint16_t, game) as *mut uint16).offset(3);
+            r18 = *(RomPtr_A0(r18, game) as *mut uint16).offset(3);
             if *((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16)
                 as ::core::ffi::c_int
                 & 0x20 as ::core::ffi::c_int
@@ -921,7 +920,7 @@ pub unsafe fn HandleSpecialGrappleBeamAngles(game: &mut Game) -> uint8 {
     ) as *const uint8
         as *mut GrappleBeamSpecialAngles)
         .offset(v0 as isize))
-    .field_8 as uint16;
+    .field_8;
     *((&raw mut game.g_ram as *mut uint8).offset(0xa30) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xcf8) as *mut uint16) = 0 as uint16;
     let mut v2: int16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
@@ -1116,8 +1115,8 @@ pub unsafe fn GrappleBeamFunc_BC1F(game: &mut Game) {
                     - 1 as ::core::ffi::c_int) as uint16;
             }
             if *(&raw mut v0 as *mut uint8).offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                (::core::mem::size_of::<uint16>())
+                    .wrapping_div(::core::mem::size_of::<uint8>())
                     .wrapping_sub(1 as usize) as isize,
             ) as ::core::ffi::c_int
                 - 1 as ::core::ffi::c_int
@@ -1294,8 +1293,8 @@ pub unsafe fn GrappleBeamFunc_BD95(game: &mut Game) {
                     *((&raw mut game.g_ram as *mut uint8).offset(0xcfc) as *mut uint16
                         as *mut uint8)
                         .offset(
-                            (::core::mem::size_of::<uint16>() as usize)
-                                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                            (::core::mem::size_of::<uint16>())
+                                .wrapping_div(::core::mem::size_of::<uint8>())
                                 .wrapping_sub(1 as usize) as isize,
                         ) as isize,
                 ) as uint16;
@@ -1315,8 +1314,8 @@ pub unsafe fn GrappleBeamFunc_BD95(game: &mut Game) {
                     *((&raw mut game.g_ram as *mut uint8).offset(0xcfc) as *mut uint16
                         as *mut uint8)
                         .offset(
-                            (::core::mem::size_of::<uint16>() as usize)
-                                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                            (::core::mem::size_of::<uint16>())
+                                .wrapping_div(::core::mem::size_of::<uint8>())
                                 .wrapping_sub(1 as usize) as isize,
                         ) as isize,
                 ) as uint16;
@@ -2550,8 +2549,8 @@ pub unsafe fn PropelSamusFromGrappleSwing(game: &mut Game) {
         v2 = kSinCosTable8bit_Sext[(*((&raw mut game.g_ram as *mut uint8).offset(0xcfa)
             as *mut uint16 as *mut uint8)
             .offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                (::core::mem::size_of::<uint16>())
+                    .wrapping_div(::core::mem::size_of::<uint8>())
                     .wrapping_sub(1 as usize) as isize,
             ) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int) as usize];
@@ -2577,8 +2576,8 @@ pub unsafe fn PropelSamusFromGrappleSwing(game: &mut Game) {
         v1 = kSinCosTable8bit_Sext[(*((&raw mut game.g_ram as *mut uint8).offset(0xcfa)
             as *mut uint16 as *mut uint8)
             .offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                (::core::mem::size_of::<uint16>())
+                    .wrapping_div(::core::mem::size_of::<uint8>())
                     .wrapping_sub(1 as usize) as isize,
             ) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int) as usize];

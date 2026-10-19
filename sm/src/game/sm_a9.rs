@@ -2963,8 +2963,8 @@ pub unsafe fn MotherBrain_HandleNeck(game: &mut Game) {
         MotherBrain_HandleNeckUpper(game);
     }
     let mut r18: uint16 = *(&raw mut (*E1).mbn_var_20 as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) as uint16;
     (*E1).mbn_var_22 = ((*E).mbn_var_0A as ::core::ffi::c_int
@@ -2986,8 +2986,8 @@ pub unsafe fn MotherBrain_HandleNeck(game: &mut Game) {
         + ComputeCosMult((*E1).mbn_var_2A, r18, game) as ::core::ffi::c_int
         - 96 as ::core::ffi::c_int) as uint16;
     r18 = *(&raw mut (*E1).mbn_var_21 as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) as uint16;
     (*E1).mbn_var_2B = ((*E1).mbn_var_28 as ::core::ffi::c_int
@@ -3038,7 +3038,7 @@ pub unsafe fn MotherBrain_Func_1_DoubleRet(game: &mut Game) -> ::core::ffi::c_in
     if pc as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
         return -(1 as ::core::ffi::c_int);
     }
-    let mut p: *const uint8 = RomPtr_A9(pc as uint16_t, game);
+    let mut p: *const uint8 = RomPtr_A9(pc, game);
     if *((&raw mut game.g_ram as *mut uint8).offset(0xa78) as *mut uint16) != 0 {
         return *(p.offset(2) as *mut uint16) as ::core::ffi::c_int;
     }
@@ -3067,7 +3067,7 @@ pub unsafe fn MotherBrain_Func_1_DoubleRet(game: &mut Game) -> ::core::ffi::c_in
                 current_block = 1917311967535052937;
             }
             _ => {
-                p = RomPtr_A9(pc as uint16_t, game);
+                p = RomPtr_A9(pc, game);
                 v5 = *(p as *mut uint16);
                 if v5 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
                     break;
@@ -3167,7 +3167,7 @@ pub unsafe fn MotherBrain_AddSpritemapToOam(
     mut r22: uint16,
     game: &mut Game,
 ) {
-    let mut p: *const uint8 = RomPtr_A9(j as uint16_t, game);
+    let mut p: *const uint8 = RomPtr_A9(j, game);
     let mut n: ::core::ffi::c_int = *(p as *mut uint16) as ::core::ffi::c_int;
     p = p.offset(2);
     let mut idx: ::core::ffi::c_int =
@@ -3536,23 +3536,23 @@ pub unsafe fn MotherBrain_Instr_IncrBeamAttackPhase(
     return jp;
 }
 pub unsafe fn MotherBrain_Instr_Goto(mut k: uint16, game: &mut Game) -> uint16 {
-    return *(RomPtr_A9(k as uint16_t, game) as *mut uint16);
+    return *(RomPtr_A9(k, game) as *mut uint16);
 }
 pub unsafe fn MotherBrain_Instr_EnableNeckMovementGoto(mut k: uint16, game: &mut Game) -> uint16 {
     (*Get_MotherBrain(0x40 as ::core::ffi::c_int, game)).mbn_var_31 = 1 as uint16;
-    return *(RomPtr_A9(k as uint16_t, game) as *mut uint16);
+    return *(RomPtr_A9(k, game) as *mut uint16);
 }
 pub unsafe fn MotherBrain_Instr_DisableNeckMovement(mut k: uint16, game: &mut Game) -> uint16 {
     (*Get_MotherBrain(0x40 as ::core::ffi::c_int, game)).mbn_var_31 = 0 as uint16;
     return k;
 }
 pub unsafe fn MotherBrain_Instr_QueueSfx2(mut k: uint16, game: &mut Game) -> uint16 {
-    let mut v2: *const uint16 = RomPtr_A9(k as uint16_t, game) as *const uint16;
+    let mut v2: *const uint16 = RomPtr_A9(k, game) as *const uint16;
     QueueSfx2_Max6(*v2, game);
     return (k as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn MotherBrain_Instr_QueueSfx3(mut k: uint16, game: &mut Game) -> uint16 {
-    let mut v2: *const uint16 = RomPtr_A9(k as uint16_t, game) as *const uint16;
+    let mut v2: *const uint16 = RomPtr_A9(k, game) as *const uint16;
     QueueSfx3_Max6(*v2, game);
     return (k as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
@@ -3707,7 +3707,7 @@ pub unsafe fn MotherBrain_Instr_SetShitroidAttackCtr0(mut k: uint16, game: &mut 
     return k;
 }
 pub unsafe fn MotherBrain_Instr_SpawnBombEproj(mut k: uint16, game: &mut Game) -> uint16 {
-    let mut v2: *const uint16 = RomPtr_A9(k as uint16_t, game) as *const uint16;
+    let mut v2: *const uint16 = RomPtr_A9(k, game) as *const uint16;
     SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainBomb as uint16, *v2, game);
     return (k as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
@@ -3921,7 +3921,7 @@ pub unsafe fn MotherBrain_GenerateExplosions(
                 ) as *const uint8 as *mut uint16)
                     .offset((v5 + 1 as ::core::ffi::c_int) as isize),
             };
-            let mut v6: *const uint16 = RomPtr_A9(r22 as uint16_t, game) as *const uint16;
+            let mut v6: *const uint16 = RomPtr_A9(r22, game) as *const uint16;
             let mut v7: uint16 = *v6;
             let mut Random: uint16 = NextRandom(game);
             if Random as ::core::ffi::c_int >= 0x4000 as ::core::ffi::c_int {
@@ -3958,8 +3958,8 @@ pub unsafe fn MotherBrain_Phase3_Death_8(game: &mut Game) {
     let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int, game);
     v3 = ((*E1).base.y_pos as ::core::ffi::c_int
         + *(&raw mut v1 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int) as int16;
     if v3 as uint16 as ::core::ffi::c_int >= 0xc4 as ::core::ffi::c_int {
@@ -4294,7 +4294,7 @@ pub unsafe fn MotherBrain_SamusCollDetectPart(
     game: &mut Game,
 ) -> uint8 {
     let mut v5: int16 = 0;
-    let mut p: *const uint8 = RomPtr_A9(k as uint16_t, game);
+    let mut p: *const uint8 = RomPtr_A9(k, game);
     let mut n: ::core::ffi::c_int = *(p as *mut uint16) as ::core::ffi::c_int;
     p = p.offset(2);
     while n != 0 {
@@ -4398,8 +4398,8 @@ pub unsafe fn MotherBrainsBrain_Shot(game: &mut Game) {
             .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x18a6) as *mut uint16) as isize)
             as *mut uint16 as *mut uint8)
             .offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                (::core::mem::size_of::<uint16>())
+                    .wrapping_div(::core::mem::size_of::<uint8>())
                     .wrapping_sub(1 as usize) as isize,
             ) as ::core::ffi::c_int
             & 7 as ::core::ffi::c_int) as uint16;
@@ -4449,8 +4449,8 @@ pub unsafe fn MotherBrain_DetermineShotReactionType(game: &mut Game) -> uint16 {
         .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x18a6) as *mut uint16) as isize)
         as *mut uint16 as *mut uint8)
         .offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int
         & 7 as ::core::ffi::c_int) as usize] as uint16;
@@ -4580,7 +4580,7 @@ pub unsafe fn MotherBrain_Body_Phase2_TryAttack(game: &mut Game) {
             v2 = addr_byte_A9B6DF as uint16;
         }
         let mut v4: uint16 = 0 as uint16;
-        let mut v5: *const uint8 = RomPtr_A9(v2 as uint16_t, game);
+        let mut v5: *const uint8 = RomPtr_A9(v2, game);
         if *((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16) as uint8
             as ::core::ffi::c_int
             >= *v5 as ::core::ffi::c_int
@@ -5179,19 +5179,19 @@ pub unsafe fn MotherBrain_MoveSamusVerticallyTowardsCeilingFloor(
 ) -> uint8 {
     let mut carry: ::core::ffi::c_int =
         *((&raw mut game.g_ram as *mut uint8).offset(0xafc) as *mut uint16 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int
             + *(&raw mut a as *mut uint8).offset(0) as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0xafc) as *mut uint16 as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) = carry as uint8;
     *((&raw mut game.g_ram as *mut uint8).offset(0xb16) as *mut uint16 as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) = carry as uint8;
     let mut v4: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)
@@ -5222,19 +5222,19 @@ pub unsafe fn MotherBrain_MoveSamusVerticallyTowardsCeilingFloor(
 pub unsafe fn MotherBrain_MoveSamusHorizTowardsWall(mut a: uint16, game: &mut Game) -> uint8 {
     let mut carry: ::core::ffi::c_int =
         *((&raw mut game.g_ram as *mut uint8).offset(0xaf8) as *mut uint16 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int
             + *(&raw mut a as *mut uint8).offset(0) as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0xaf8) as *mut uint16 as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) = carry as uint8;
     *((&raw mut game.g_ram as *mut uint8).offset(0xb12) as *mut uint16 as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) = carry as uint8;
     let mut v4: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
@@ -6079,14 +6079,14 @@ pub unsafe fn MoveEnemyWithVelocity(game: &mut Game) {
     );
     let mut ai_var_B: uint16 = (*v0).ai_var_B;
     let mut carry: ::core::ffi::c_int = *(&raw mut (*v0).x_subpos as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) as ::core::ffi::c_int
         + *(&raw mut ai_var_B as *mut uint8).offset(0) as ::core::ffi::c_int;
     *(&raw mut (*v0).x_subpos as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) = carry as uint8;
     (*v0).x_pos = ((*v0).x_pos as ::core::ffi::c_int
@@ -6095,14 +6095,14 @@ pub unsafe fn MoveEnemyWithVelocity(game: &mut Game) {
             + (carry >> 8 as ::core::ffi::c_int))) as uint16;
     let mut ai_var_C: uint16 = (*v0).ai_var_C;
     carry = *(&raw mut (*v0).y_subpos as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) as ::core::ffi::c_int
         + *(&raw mut ai_var_C as *mut uint8).offset(0) as ::core::ffi::c_int;
     *(&raw mut (*v0).y_subpos as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) = carry as uint8;
     (*v0).y_pos = ((*v0).y_pos as ::core::ffi::c_int
@@ -6151,8 +6151,8 @@ pub unsafe fn sub_A9C46C(mut a: uint16, mut j: uint16, game: &mut Game) -> uint1
     WriteReg(
         M7A as uint16,
         *(&raw mut v2 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ),
         game,
@@ -6163,14 +6163,14 @@ pub unsafe fn sub_A9C46C(mut a: uint16, mut j: uint16, game: &mut Game) -> uint1
 pub unsafe fn Enemy_IncreaseYpos(mut k: uint16, mut a: uint16, game: &mut Game) {
     let mut v2: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);
     let mut carry: ::core::ffi::c_int = *(&raw mut (*v2).y_subpos as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) as ::core::ffi::c_int
         + *(&raw mut a as *mut uint8).offset(0) as ::core::ffi::c_int;
     *(&raw mut (*v2).y_subpos as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) = carry as uint8;
     (*v2).y_pos = ((*v2).y_pos as ::core::ffi::c_int
@@ -6323,7 +6323,7 @@ pub unsafe fn ProcessSpriteTilesTransfers(mut db: uint8, mut k: uint16, game: &m
         src = k;
     }
     let mut v4: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
-    let mut v5: *const uint8 = RomPtrWithBank(db, src as uint16_t, game);
+    let mut v5: *const uint8 = RomPtrWithBank(db, src, game);
     let mut v6: uint16 = *(v5 as *mut uint16);
     if v6 != 0 {
         v7 = gVramWriteEntry(
@@ -6333,13 +6333,13 @@ pub unsafe fn ProcessSpriteTilesTransfers(mut db: uint8, mut k: uint16, game: &m
         );
         (*v7).size = v6;
         *((&raw mut (*v7).src.addr as *mut uint8).offset(1) as *mut VoidP) =
-            *(v5.offset(3) as *mut uint16) as VoidP;
-        (*v7).src.addr = *(v5.offset(2) as *mut uint16) as VoidP;
+            *(v5.offset(3) as *mut uint16);
+        (*v7).src.addr = *(v5.offset(2) as *mut uint16);
         (*v7).vram_dst = *(v5.offset(5) as *mut uint16);
         *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) =
             (v4 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
         (*E).mbn_var_22 = (src as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
-        v6 = *(RomPtrWithBank(db, (*E).mbn_var_22 as uint16_t, game) as *mut uint16);
+        v6 = *(RomPtrWithBank(db, (*E).mbn_var_22, game) as *mut uint16);
         if v6 != 0 {
             return 0 as uint8;
         }
@@ -6971,7 +6971,7 @@ pub unsafe fn ShitroidInCutscene_MoveToSamus(mut k: uint16, game: &mut Game) {
         QueueSfx2_Max6(0x52 as uint16, game);
     }
     let mut sice_var_0E: uint16 = (*E).sice_var_0E;
-    let mut v3: *const uint16 = RomPtr_A9(sice_var_0E as uint16_t, game) as *const uint16;
+    let mut v3: *const uint16 = RomPtr_A9(sice_var_0E, game) as *const uint16;
     let mut rect: Rect16U = Rect16U {
         x: *v3.offset(0),
         y: *v3.offset(1),
@@ -6987,7 +6987,7 @@ pub unsafe fn ShitroidInCutscene_MoveToSamus(mut k: uint16, game: &mut Game) {
         game,
     );
     if Shitroid_Func_2(k, rect, game) == 0 {
-        v4 = *(RomPtr_A9(sice_var_0E as uint16_t, game) as *mut uint16).offset(4) as int16;
+        v4 = *(RomPtr_A9(sice_var_0E, game) as *mut uint16).offset(4) as int16;
         if (v4 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
             (*E).sice_var_A = v4 as uint16;
         } else {
@@ -7618,8 +7618,8 @@ pub unsafe fn ShitroidInCutscene_UpdateSpeedAndAngle(
     }
     (*E).sice_var_0A = v4;
     r18 = *(&raw mut v4 as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) as uint16;
     (*E).sice_var_B = Math_MultBySin((*E).sice_var_0B, r18);
@@ -7707,7 +7707,7 @@ pub unsafe fn HandleMotherBrainInstructionList(mut a: uint16, game: &mut Game) -
         return 0 as uint16;
     }
     let mut v2: uint16 = (*st).ip;
-    let mut v3: *const uint16 = RomPtr_A9(v2 as uint16_t, game) as *mut uint16;
+    let mut v3: *const uint16 = RomPtr_A9(v2, game) as *mut uint16;
     if *v3.offset(0) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         current_block = 2809726207655838168;
     } else {
@@ -7730,7 +7730,7 @@ pub unsafe fn HandleMotherBrainInstructionList(mut a: uint16, game: &mut Game) -
                 current_block = 6937071982253665452;
             }
             _ => {
-                v3 = RomPtr_A9(v2 as uint16_t, game) as *mut uint16;
+                v3 = RomPtr_A9(v2, game) as *mut uint16;
                 if *v3.offset(0) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
                     break;
                 } else {
@@ -7770,14 +7770,14 @@ pub unsafe fn MotherBrain_HandleBrainPal(game: &mut Game) {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
     if (*E).mbn_var_00 as ::core::ffi::c_int != 1 as ::core::ffi::c_int {
         mbn_var_D_high = *(&raw mut (*E).mbn_var_D as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as int8;
         if mbn_var_D_high != 0 {
             *(&raw mut (*E).mbn_var_D as *mut uint8).offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                (::core::mem::size_of::<uint16>())
+                    .wrapping_div(::core::mem::size_of::<uint8>())
                     .wrapping_sub(1 as usize) as isize,
             ) = (mbn_var_D_high as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint8;
         } else {
@@ -7789,15 +7789,15 @@ pub unsafe fn MotherBrain_HandleBrainPal(game: &mut Game) {
             ) as *const uint8 as *mut uint16)
                 .offset(
                     (*(&raw mut (*E).mbn_var_E as *mut uint8).offset(
-                        (::core::mem::size_of::<uint16>() as usize)
-                            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                        (::core::mem::size_of::<uint16>())
+                            .wrapping_div(::core::mem::size_of::<uint8>())
                             .wrapping_sub(1 as usize) as isize,
                     ) as ::core::ffi::c_int
                         >> 1 as ::core::ffi::c_int) as isize,
                 );
             *(&raw mut (*E).mbn_var_D as *mut uint8).offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                (::core::mem::size_of::<uint16>())
+                    .wrapping_div(::core::mem::size_of::<uint8>())
                     .wrapping_sub(1 as usize) as isize,
             ) = (*E).mbn_var_E as uint8;
             mbn_var_D = (*E).mbn_var_D as int8;
@@ -7836,7 +7836,7 @@ pub unsafe fn WriteColorsToPalette(
     loop {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-            *(RomPtrWithBank(db, j as uint16_t, game) as *mut uint16);
+            *(RomPtrWithBank(db, j, game) as *mut uint16);
         k = (k as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
         j = (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
         n -= 1;
@@ -7856,7 +7856,7 @@ pub unsafe fn WriteColorsToTargetPalette(
     loop {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-            *(RomPtrWithBank(db, j as uint16_t, game) as *mut uint16);
+            *(RomPtrWithBank(db, j, game) as *mut uint16);
         k = (k as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
         j = (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
         n -= 1;
@@ -8103,15 +8103,14 @@ pub unsafe fn DeadTorizo_Func_1(game: &mut Game) {
                         | 0xa9d583 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
                         & 0x3fffff as ::core::ffi::c_int) as isize,
                 ) as *const uint8 as *mut uint16)
-                    .offset((v11 + 1 as ::core::ffi::c_int) as isize) as VoidP;
+                    .offset((v11 + 1 as ::core::ffi::c_int) as isize);
             (*v10).src.addr = *(game.g_rom.offset(
                 (((0xa9d583 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                     << 15 as ::core::ffi::c_int
                     | 0xa9d583 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
                     & 0x3fffff as ::core::ffi::c_int) as isize,
             ) as *const uint8 as *mut uint16)
-                .offset((v11 + 2 as ::core::ffi::c_int) as isize)
-                as VoidP;
+                .offset((v11 + 2 as ::core::ffi::c_int) as isize);
             (*v10).vram_dst = *(game.g_rom.offset(
                 (((0xa9d583 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                     << 15 as ::core::ffi::c_int
@@ -8152,15 +8151,14 @@ pub unsafe fn DeadTorizo_Func_1(game: &mut Game) {
                         | 0xa9d549 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
                         & 0x3fffff as ::core::ffi::c_int) as isize,
                 ) as *const uint8 as *mut uint16)
-                    .offset((v6 + 1 as ::core::ffi::c_int) as isize) as VoidP;
+                    .offset((v6 + 1 as ::core::ffi::c_int) as isize);
             (*v5).src.addr = *(game.g_rom.offset(
                 (((0xa9d549 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                     << 15 as ::core::ffi::c_int
                     | 0xa9d549 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
                     & 0x3fffff as ::core::ffi::c_int) as isize,
             ) as *const uint8 as *mut uint16)
-                .offset((v6 + 2 as ::core::ffi::c_int) as isize)
-                as VoidP;
+                .offset((v6 + 2 as ::core::ffi::c_int) as isize);
             (*v5).vram_dst = *(game.g_rom.offset(
                 (((0xa9d549 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                     << 15 as ::core::ffi::c_int
@@ -8722,14 +8720,14 @@ pub unsafe fn DeadMonsters_Func_3(mut k: uint16, game: &mut Game) -> uint8 {
         != 0
     {
         let mut full: ::core::ffi::c_int = *(&raw mut (*E).base.y_subpos as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int
             + *(&raw mut v3 as *mut uint8).offset(0) as ::core::ffi::c_int;
         *(&raw mut (*E).base.y_subpos as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) = full as uint8;
         let mut v12: uint16 = ((*E).base.y_pos as ::core::ffi::c_int
@@ -8750,14 +8748,14 @@ pub unsafe fn DeadMonsters_Func_4(mut k: uint16, mut a: uint16, game: &mut Game)
         != 0
     {
         let mut full: ::core::ffi::c_int = *(&raw mut (*E).base.x_subpos as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int
             + *(&raw mut a as *mut uint8).offset(0) as ::core::ffi::c_int;
         *(&raw mut (*E).base.x_subpos as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) = full as uint8;
         (*E).base.x_pos = ((*E).base.x_pos as ::core::ffi::c_int
@@ -8986,7 +8984,7 @@ pub unsafe fn ProcessCorpseRotting(mut k: uint16, game: &mut Game) -> uint8 {
                         r18 = (*E0).dms_var_43;
                     }
                     CopyMoveCorpseRottingRotEntry(
-                        RomPtr_A9((*E0).dms_var_44 as uint16_t, game) as *const uint16,
+                        RomPtr_A9((*E0).dms_var_44, game) as *const uint16,
                         *v6,
                         r18,
                         game,
@@ -8999,7 +8997,7 @@ pub unsafe fn ProcessCorpseRotting(mut k: uint16, game: &mut Game) -> uint8 {
                     .offset(dms_var_52 as ::core::ffi::c_int as isize)
                     as *mut uint16;
                 CopyMoveCorpseRottingRotEntry(
-                    RomPtr_A9((*E).dms_var_44 as uint16_t, game) as *const uint16,
+                    RomPtr_A9((*E).dms_var_44, game) as *const uint16,
                     *v11,
                     r18_0,
                     game,
@@ -9110,7 +9108,7 @@ pub unsafe fn InitializeCorpseRottingDataTable(mut table: *mut uint16, mut a: ui
     }
 }
 pub unsafe fn InitializeEnemyCorpseRotting(mut k: uint16, mut j: uint16, game: &mut Game) {
-    let mut v2: *const uint8 = RomPtr_A9(j as uint16_t, game);
+    let mut v2: *const uint8 = RomPtr_A9(j, game);
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(k as ::core::ffi::c_int, game);
     (*E).dms_var_52 = *(v2 as *mut uint16);
     (*E).dms_var_53 = *(v2.offset(2) as *mut uint16);
@@ -9119,8 +9117,7 @@ pub unsafe fn InitializeEnemyCorpseRotting(mut k: uint16, mut j: uint16, game: &
     (*E).dms_var_5B = *(v2.offset(14) as *mut uint16);
     let mut v4: uint16 = *(v2.offset(12) as *mut uint16);
     (*E).dms_var_56 = v4;
-    (*E).dms_var_5A = (*(RomPtr_A9(v4 as uint16_t, game) as *mut uint16).offset(1)
-        as ::core::ffi::c_int
+    (*E).dms_var_5A = (*(RomPtr_A9(v4, game) as *mut uint16).offset(1) as ::core::ffi::c_int
         - 12 as ::core::ffi::c_int) as uint16;
     let mut v5: *mut uint16 = v2 as *mut uint16;
     let mut v6: uint16 = *v5.offset(4);
@@ -9140,15 +9137,15 @@ pub unsafe fn InitializeEnemyCorpseRotting(mut k: uint16, mut j: uint16, game: &
     );
 }
 pub unsafe fn ProcessCorpseRottingVramTransfers(mut k: uint16, game: &mut Game) {
-    let mut p: *const uint8 = RomPtr_A9(k as uint16_t, game);
+    let mut p: *const uint8 = RomPtr_A9(k, game);
     let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
     let mut v2: uint16 = *(p as *mut uint16);
     loop {
         let mut v3: *mut VramWriteEntry = gVramWriteEntry(v1 as ::core::ffi::c_int, game);
         (*v3).size = v2;
         *((&raw mut (*v3).src.addr as *mut uint8).offset(1) as *mut VoidP) =
-            *(p as *mut uint16).offset(1) as VoidP;
-        (*v3).src.addr = *(p as *mut uint16).offset(2) as VoidP;
+            *(p as *mut uint16).offset(1);
+        (*v3).src.addr = *(p as *mut uint16).offset(2);
         (*v3).vram_dst = *(p as *mut uint16).offset(3);
         v1 = (v1 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
         p = p.offset(8);
@@ -12453,20 +12450,20 @@ pub unsafe fn Shitroid_HandleCutscenePalette_Common(
         game,
     );
     shitro_var_D_high = *(&raw mut (*E).shitr_var_D as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) as int8;
     if shitro_var_D_high != 0 {
         *(&raw mut (*E).shitr_var_D as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) = (shitro_var_D_high as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint8;
     } else {
         *(&raw mut (*E).shitr_var_D as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) = (*E).shitr_var_E as uint8;
         let mut v3: uint8 = (*(&raw mut (*E).shitr_var_D as *mut uint8).offset(0)

@@ -69,8 +69,8 @@ pub unsafe fn MotherBrain_CalcHdma(game: &mut Game) {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
     let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int, game);
     let mut r18: uint16 = (*(&raw mut (*E).mbn_var_33 as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) as ::core::ffi::c_int
         >> 1 as ::core::ffi::c_int) as uint16;
@@ -152,8 +152,8 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(
         let fresh11 = v2;
         v2 = v2.offset(-1);
         *fresh11 = (*(&raw mut v4 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int
             | 0xff00 as ::core::ffi::c_int) as uint16;
@@ -182,8 +182,8 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(
         let fresh13 = v5;
         v5 = v5.offset(1);
         *fresh13 = (*(&raw mut v7 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int
             | 0xff00 as ::core::ffi::c_int) as uint16;

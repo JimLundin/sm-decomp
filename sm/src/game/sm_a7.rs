@@ -1218,7 +1218,7 @@ pub unsafe fn Kraid_ExecuteInstr(game: &mut Game) -> uint16 {
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int, game);
     loop {
         let mut kraid_var_B: uint16 = (*E).kraid_var_B;
-        let mut v2: *const uint16 = RomPtr_A7(kraid_var_B as uint16_t, game) as *const uint16;
+        let mut v2: *const uint16 = RomPtr_A7(kraid_var_B, game) as *const uint16;
         let mut result: uint16 = *v2;
         if *v2 as ::core::ffi::c_int != 0xffff as ::core::ffi::c_int {
             if ((*v2 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as int16
@@ -1297,7 +1297,7 @@ pub unsafe fn Kraid_Shot_Mouth(game: &mut Game) {
         (*E).kraid_var_E = 1 as uint16;
         v3 = 0 as int16;
         v5 = ::core::ptr::null::<uint8>();
-        v5 = RomPtr_A7(v4 as uint16_t, game);
+        v5 = RomPtr_A7(v4, game);
         r22 = ((*E).base.x_pos as ::core::ffi::c_int + *(v5 as *mut uint16) as ::core::ffi::c_int)
             as uint16;
         r20 = ((*E).base.y_pos as ::core::ffi::c_int
@@ -2093,8 +2093,8 @@ pub unsafe fn KraidsArm_Main(game: &mut Game) {
     (*E1).base.properties = v4;
     (*E1).base.x_pos = (*E).base.x_pos;
     if *(&raw mut (*E).kraid_mouth_flags as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) != 0
     {
@@ -2157,8 +2157,8 @@ pub unsafe fn KraidLint_FireLint(mut k: uint16, game: &mut Game) {
     AddToHiLo(
         &raw mut (*E).base.x_pos,
         &raw mut (*E).base.x_subpos,
-        -(((g_word_A7A928 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-            | g_word_A7A926 as ::core::ffi::c_int) as int32) as uint32,
+        -((g_word_A7A928 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
+            | g_word_A7A926 as ::core::ffi::c_int) as uint32,
     );
     if (*E).base.x_pos as ::core::ffi::c_int - 56 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -2183,8 +2183,8 @@ pub unsafe fn KraidLint_FireLint(mut k: uint16, game: &mut Game) {
         AddToHiLo(
             (&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16,
             (&raw mut game.g_ram as *mut uint8).offset(0xb56) as *mut uint16,
-            -(((g_word_A7A928 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                | g_word_A7A926 as ::core::ffi::c_int) as int32) as uint32,
+            -((g_word_A7A928 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
+                | g_word_A7A926 as ::core::ffi::c_int) as uint32,
         );
         if *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16) as ::core::ffi::c_int
             + 16 as ::core::ffi::c_int
@@ -2619,7 +2619,7 @@ pub unsafe fn KraidFingernailInit(mut k: uint16, game: &mut Game) {
             | 0xa78b0a as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
             & 0x3fffff as ::core::ffi::c_int) as isize,
     ) as *const uint8 as *mut SpriteDrawInstr))
-        .field_2 as uint16;
+        .field_2;
     (*E).kraid_next = (0xa7bd60 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).kraid_var_A = (0xa7b92d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).kraid_var_F = 64 as uint16;
@@ -2713,7 +2713,7 @@ pub unsafe fn KraidsFingernail_Init(game: &mut Game) {
                     >> 1 as ::core::ffi::c_int) as isize,
             );
     }
-    let mut v3: *const uint8 = RomPtr_A7(v2 as uint16_t, game);
+    let mut v3: *const uint8 = RomPtr_A7(v2, game);
     let mut E: *mut Enemy_Kraid = Get_Kraid(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
@@ -2846,8 +2846,8 @@ pub unsafe fn KraidsFingernail_Fire(mut k: uint16, game: &mut Game) {
         SetHiLo(
             &raw mut (*v5).ai_var_E,
             &raw mut (*v5).ai_var_D,
-            -((((*v5).ai_var_E as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                | (*v5).ai_var_D as ::core::ffi::c_int) as int32) as uint32,
+            -(((*v5).ai_var_E as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
+                | (*v5).ai_var_D as ::core::ffi::c_int) as uint32,
         );
     }
 }
@@ -2943,8 +2943,7 @@ pub unsafe fn Kraid_HandleFirstPhase(game: &mut Game) {
         (*E0).kraid_var_F = 180 as uint16;
         (*E0).kraid_next =
             (0xa7c0a1 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        let mut v2: uint16 =
-            *(RomPtr_A7((*E0).kraid_var_B as uint16_t, game) as *mut uint16).offset(1);
+        let mut v2: uint16 = *(RomPtr_A7((*E0).kraid_var_B, game) as *mut uint16).offset(1);
         let mut v3: uint16 = 50 as uint16;
         if v2 as ::core::ffi::c_int != addr_kKraidTilemaps_0 as ::core::ffi::c_int {
             v3 = 42 as uint16;
@@ -3236,10 +3235,10 @@ pub unsafe fn Kraid_UnpauseHook_IsSinking(game: &mut Game) -> CoroutineRet {
                     current_block_21 = 16936033848137449375;
                 }
                 _ => {
-                    let mut _coret_: uint8 = WaitForNMI_Async(game) as uint8;
+                    let mut _coret_: uint8 = WaitForNMI_Async(game);
                     if _coret_ != 0 {
                         *_state_variable_ = 1 as uint8;
-                        return _coret_ as CoroutineRet;
+                        return _coret_;
                     }
                     let ref mut fresh17 =
                         *((&raw mut game.g_ram as *mut uint8).offset(0x77e) as *mut uint16);
@@ -4504,7 +4503,7 @@ pub unsafe fn Phantoon_Func_7(mut k: uint16, game: &mut Game) {
                             | 0xa7ccfd as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
                             & 0x3fffff as ::core::ffi::c_int) as isize,
                     ) as *const uint8 as *mut uint16)
-                        .offset((*E).phant_var_A as isize) as uint16_t,
+                        .offset((*E).phant_var_A as isize),
                     game,
                 ) as *mut uint16)
                     .offset(1);
@@ -4537,7 +4536,7 @@ pub unsafe fn Phantoon_Func_7(mut k: uint16, game: &mut Game) {
                     & 0x3fffff as ::core::ffi::c_int) as isize,
             ) as *const uint8 as *mut uint16)
                 .offset(v5 as isize);
-            let mut v7: uint16 = *(RomPtr_A7(v6 as uint16_t, game) as *mut uint16);
+            let mut v7: uint16 = *(RomPtr_A7(v6, game) as *mut uint16);
             (*E).phant_var_C = v7;
             (*E).phant_var_B = *(RomPtr_A7(
                 (2 as ::core::ffi::c_int * v7 as ::core::ffi::c_int + v6 as ::core::ffi::c_int)
@@ -4657,8 +4656,8 @@ pub unsafe fn Phantoon_AdjustSpeedLeftSideClockwise(game: &mut Game) {
             AddToHiLo(
                 &raw mut (*E).phant_var_C,
                 &raw mut (*E).phant_var_B,
-                -(((g_word_A7CD79 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                    | g_word_A7CD77 as ::core::ffi::c_int) as int32) as uint32,
+                -((g_word_A7CD79 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
+                    | g_word_A7CD77 as ::core::ffi::c_int) as uint32,
             );
             if (*E).phant_var_C as ::core::ffi::c_int == g_word_A7CD7F as ::core::ffi::c_int
                 || (((*E).phant_var_C as ::core::ffi::c_int - g_word_A7CD7F as ::core::ffi::c_int)
@@ -4696,8 +4695,8 @@ pub unsafe fn Phantoon_AdjustSpeedRightSideClockwise(game: &mut Game) {
             AddToHiLo(
                 &raw mut (*E).phant_var_C,
                 &raw mut (*E).phant_var_B,
-                -(((g_word_A7CD87 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                    | g_word_A7CD85 as ::core::ffi::c_int) as int32) as uint32,
+                -((g_word_A7CD87 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
+                    | g_word_A7CD85 as ::core::ffi::c_int) as uint32,
             );
             if (*E).phant_var_C as ::core::ffi::c_int == g_word_A7CD8B as ::core::ffi::c_int
                 || (((*E).phant_var_C as ::core::ffi::c_int - g_word_A7CD8B as ::core::ffi::c_int)
@@ -4728,8 +4727,8 @@ pub unsafe fn Phantoon_AdjustSpeedRightSideClockwise(game: &mut Game) {
         AddToHiLo(
             &raw mut (*E).phant_var_C,
             &raw mut (*E).phant_var_B,
-            -(((g_word_A7CD83 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                | g_word_A7CD81 as ::core::ffi::c_int) as int32) as uint32,
+            -((g_word_A7CD83 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
+                | g_word_A7CD81 as ::core::ffi::c_int) as uint32,
         );
         if (*E).phant_var_C as ::core::ffi::c_int == g_word_A7CD89 as ::core::ffi::c_int
             || (((*E).phant_var_C as ::core::ffi::c_int - g_word_A7CD89 as ::core::ffi::c_int)
@@ -5955,8 +5954,8 @@ pub unsafe fn Phantoon_Hurt(game: &mut Game) {
             ))
             .phant_parameter_2 as *mut uint8)
                 .offset(
-                    (::core::mem::size_of::<uint16>() as usize)
-                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                    (::core::mem::size_of::<uint16>())
+                        .wrapping_div(::core::mem::size_of::<uint8>())
                         .wrapping_sub(1 as usize) as isize,
                 )
                 == 0
@@ -5971,8 +5970,8 @@ pub unsafe fn Phantoon_Hurt(game: &mut Game) {
             ))
             .phant_parameter_2 as *mut uint8)
                 .offset(
-                    (::core::mem::size_of::<uint16>() as usize)
-                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                    (::core::mem::size_of::<uint16>())
+                        .wrapping_div(::core::mem::size_of::<uint8>())
                         .wrapping_sub(1 as usize) as isize,
                 )
                 == 0
@@ -6199,8 +6198,8 @@ pub unsafe fn Etecoon_Main(game: &mut Game) {
         game,
     );
     if *(&raw mut (*E).etecoon_parameter_2 as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) != 0
     {
@@ -6772,7 +6771,7 @@ pub unsafe fn Dachora_Func_1(mut j: uint16, mut k: uint16, game: &mut Game) {
                 .offset((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
                 as ::core::ffi::c_int as isize,
         ) as *mut ::core::ffi::c_void,
-        RomPtr_A7(j as uint16_t, game) as *const ::core::ffi::c_void,
+        RomPtr_A7(j, game) as *const ::core::ffi::c_void,
         32 as size_t,
     );
 }
@@ -6890,8 +6889,8 @@ pub unsafe fn Dachora_Func_6(mut k: uint16, game: &mut Game) -> int32 {
                 ) as *const uint8 as *mut uint16)
                     .offset(
                         *(&raw mut (*E).dachor_var_E as *mut uint8).offset(
-                            (::core::mem::size_of::<uint16>() as usize)
-                                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                            (::core::mem::size_of::<uint16>())
+                                .wrapping_div(::core::mem::size_of::<uint8>())
                                 .wrapping_sub(1 as usize) as isize,
                         ) as isize,
                     ),
@@ -7095,8 +7094,8 @@ pub unsafe fn Dachora_Func_10(mut k: uint16, game: &mut Game) {
         ) as *const uint8 as *mut uint16)
             .offset(
                 *(&raw mut (*E).dachor_var_E as *mut uint8).offset(
-                    (::core::mem::size_of::<uint16>() as usize)
-                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                    (::core::mem::size_of::<uint16>())
+                        .wrapping_div(::core::mem::size_of::<uint8>())
                         .wrapping_sub(1 as usize) as isize,
                 ) as isize,
             ),
@@ -7122,7 +7121,7 @@ pub unsafe fn Dachora_Func_11(mut k: uint16, game: &mut Game) {
     let mut amt: int32 = (((*E).dachor_var_A as uint32) << 16 as ::core::ffi::c_int
         | (*E).dachor_var_B as uint32) as int32;
     if (amt >> 16 as ::core::ffi::c_int) - 10 as int32 & 0x8000 as int32 == 0 {
-        amt = ((10 as int16 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) as int32;
+        amt = ((10 as int16 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int);
     }
     if Enemy_MoveDown(k, amt, game) != 0 {
         if (*E).dachor_parameter_1 != 0 {

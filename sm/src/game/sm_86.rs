@@ -673,9 +673,9 @@ unsafe fn SpawnEprojInner(mut j: uint16, mut gfx_idx: uint16, game: &mut Game) -
     EprojStateMut(&mut game.g_ram).write(0x19bb, v4, gfx_idx);
     EprojStateMut(&mut game.g_ram).set_id(v4, j);
     let mut Edef: *mut EprojDef = get_EprojDef(j, game);
-    let value = (*Edef).pre_instr_ptr as uint16;
+    let value = (*Edef).pre_instr_ptr;
     EprojStateMut(&mut game.g_ram).set_preinstruction(v4, value);
-    let value = (*Edef).instr_list as uint16;
+    let value = (*Edef).instr_list;
     EprojStateMut(&mut game.g_ram).set_instruction(v4, value);
     let radius = (*Edef).radius;
     EprojStateMut(&mut game.g_ram).write(0x1bb3, v4, radius);
@@ -683,7 +683,7 @@ unsafe fn SpawnEprojInner(mut j: uint16, mut gfx_idx: uint16, game: &mut Game) -
     EprojStateMut(&mut game.g_ram).set_properties(v4, value);
     EprojStateMut(&mut game.g_ram).set_instruction_timer(v4, 1);
     EprojStateMut(&mut game.g_ram).set_spritemap(v4, 0x8000);
-    EprojStateMut(&mut game.g_ram).clear_spawn_variables(v4 as usize);
+    EprojStateMut(&mut game.g_ram).clear_spawn_variables(v4);
     CallEprojInit(
         ((*Edef).init_code_ptr as ::core::ffi::c_int | 0x860000 as ::core::ffi::c_int) as uint32,
         v3,
@@ -1040,7 +1040,7 @@ pub unsafe fn EprojInstr_WriteColorsToPalette(
     loop {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
             .offset((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-            *(RomPtr_86(v4 as uint16_t, game) as *mut uint16);
+            *(RomPtr_86(v4, game) as *mut uint16);
         v4 = (v4 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
         v3 = (v3 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
         n -= 1;
@@ -2113,8 +2113,8 @@ unsafe fn Eproj_Init_0x8aaf(mut j: uint16, game: &mut Game) {
                 ((*(((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16)
                     .offset(v3 as isize) as *mut uint16 as *mut uint8)
                     .offset(
-                        (::core::mem::size_of::<uint16>() as usize)
-                            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                        (::core::mem::size_of::<uint16>())
+                            .wrapping_div(::core::mem::size_of::<uint8>())
                             .wrapping_sub(1 as usize) as isize,
                     ) as ::core::ffi::c_int
                     & 6 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
@@ -2288,21 +2288,21 @@ unsafe fn EprojInit_DraygonsWallTurretProjs(mut j: uint16, game: &mut Game) {
 pub unsafe fn EprojPowerBombCollision(mut k: uint16, game: &mut Game) {
     let mut r18: uint16 =
         *((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as uint16;
     if *((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16 as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) != 0
     {
         let mut r20: uint16 = ((r18 as ::core::ffi::c_int
             + (*((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16 as *mut uint8)
                 .offset(
-                    (::core::mem::size_of::<uint16>() as usize)
-                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                    (::core::mem::size_of::<uint16>())
+                        .wrapping_div(::core::mem::size_of::<uint8>())
                         .wrapping_sub(1 as usize) as isize,
                 ) as ::core::ffi::c_int
                 & 1 as ::core::ffi::c_int)
@@ -2813,7 +2813,7 @@ pub unsafe fn MoveEprojWithVelocityX(mut k: uint16, game: &mut Game) -> uint16 {
 }
 pub unsafe fn SetAreaDependentEprojPropertiesEx(mut k: uint16, mut j: uint16, game: &mut Game) {
     let mut v2: uint16 = 0;
-    let mut p: *mut uint16 = RomPtr_86(k as uint16_t, game) as *mut uint16;
+    let mut p: *mut uint16 = RomPtr_86(k, game) as *mut uint16;
     if game.area_index() == 2 {
         v2 = *p.offset(1);
     } else if game.area_index() == 5 {
@@ -4049,8 +4049,8 @@ pub unsafe fn EprojPreInstr_PirateClawThrownLeft(mut k: uint16, game: &mut Game)
             - *(((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16)
                 .offset(v1 as isize) as *mut uint16 as *mut uint8)
                 .offset(
-                    (::core::mem::size_of::<uint16>() as usize)
-                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                    (::core::mem::size_of::<uint16>())
+                        .wrapping_div(::core::mem::size_of::<uint8>())
                         .wrapping_sub(1 as usize) as isize,
                 ) as ::core::ffi::c_int) as uint16;
         let mut v2: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16)
@@ -4069,8 +4069,8 @@ pub unsafe fn EprojPreInstr_PirateClawThrownLeft(mut k: uint16, game: &mut Game)
             + *(((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16)
                 .offset(v1 as isize) as *mut uint16 as *mut uint8)
                 .offset(
-                    (::core::mem::size_of::<uint16>() as usize)
-                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                    (::core::mem::size_of::<uint16>())
+                        .wrapping_div(::core::mem::size_of::<uint8>())
                         .wrapping_sub(1 as usize) as isize,
                 ) as ::core::ffi::c_int) as uint16;
         let ref mut fresh120 = *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16)
@@ -4095,8 +4095,8 @@ pub unsafe fn EprojPreInstr_PirateClawThrownRight(mut k: uint16, game: &mut Game
             + *(((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16)
                 .offset(v1 as isize) as *mut uint16 as *mut uint8)
                 .offset(
-                    (::core::mem::size_of::<uint16>() as usize)
-                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                    (::core::mem::size_of::<uint16>())
+                        .wrapping_div(::core::mem::size_of::<uint8>())
                         .wrapping_sub(1 as usize) as isize,
                 ) as ::core::ffi::c_int) as uint16;
         let mut v2: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16)
@@ -4115,8 +4115,8 @@ pub unsafe fn EprojPreInstr_PirateClawThrownRight(mut k: uint16, game: &mut Game
             - *(((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16)
                 .offset(v1 as isize) as *mut uint16 as *mut uint8)
                 .offset(
-                    (::core::mem::size_of::<uint16>() as usize)
-                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                    (::core::mem::size_of::<uint16>())
+                        .wrapping_div(::core::mem::size_of::<uint8>())
                         .wrapping_sub(1 as usize) as isize,
                 ) as ::core::ffi::c_int) as uint16;
         let ref mut fresh116 = *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16)
@@ -4780,7 +4780,7 @@ pub unsafe fn EprojPreInstr_AB07(mut k: uint16, game: &mut Game) {
             - *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int)) as int16
         as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as int32;
+        << 8 as ::core::ffi::c_int);
     AddToHiLo(
         ((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize)
             as *mut uint16,
@@ -4815,7 +4815,7 @@ pub unsafe fn EprojInstr_SpawnEnemyDrops(
     return epjp.offset(4);
 }
 unsafe fn Eproj_InitXYVelRandom(mut j: uint16, mut k: uint16, mut pt: Point16U, game: &mut Game) {
-    let mut v2: *const uint16 = RomPtr_86(k as uint16_t, game) as *const uint16;
+    let mut v2: *const uint16 = RomPtr_86(k, game) as *const uint16;
     let mut v3: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v3 as isize) = *v2;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v3 as isize) =
@@ -5938,7 +5938,7 @@ pub unsafe fn EprojPreInstr_TourianStatueUnlockingParticle(mut k: uint16, game: 
             as ::core::ffi::c_int) as uint16;
     amt = ((*((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v1 as isize)
         as int16 as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as int32;
+        << 8 as ::core::ffi::c_int);
     AddToHiLo(
         ((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize)
             as *mut uint16,
@@ -6562,8 +6562,7 @@ pub unsafe fn Eproj_MotherBrainRoomTurretBullets_Func2(mut v0: uint16, game: &mu
         & 7 as ::core::ffi::c_int) as uint8;
     let mut r18: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x1a27) as *mut uint16)
         .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
-    if *RomPtr_86(r18 as uint16_t, game)
-        .offset((r20 as ::core::ffi::c_int & 7 as ::core::ffi::c_int) as isize)
+    if *RomPtr_86(r18, game).offset((r20 as ::core::ffi::c_int & 7 as ::core::ffi::c_int) as isize)
         != 0
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a6f) as *mut uint16 as *mut uint8)
@@ -7080,8 +7079,8 @@ unsafe fn Eproj_GetCollDetectRect(mut k: uint16, game: &mut Game) -> Rect16U {
         h: *(((&raw mut game.g_ram as *mut uint8).offset(0x1bb3) as *mut uint16).offset(v1 as isize)
             as *mut uint16 as *mut uint8)
             .offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                (::core::mem::size_of::<uint16>())
+                    .wrapping_div(::core::mem::size_of::<uint8>())
                     .wrapping_sub(1 as usize) as isize,
             ) as uint16,
     };
@@ -7149,8 +7148,8 @@ pub unsafe fn MotherBrainBomb_Bomb_CollDetect_DoubleRet(mut k: uint16, game: &mu
         h: *(((&raw mut game.g_ram as *mut uint8).offset(0x1bb3) as *mut uint16).offset(v1 as isize)
             as *mut uint16 as *mut uint8)
             .offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                (::core::mem::size_of::<uint16>())
+                    .wrapping_div(::core::mem::size_of::<uint8>())
                     .wrapping_sub(1 as usize) as isize,
             ) as uint16,
     };
@@ -7830,7 +7829,7 @@ pub unsafe fn EprojPreInstr_MotherBrainGlassShatteringShard(mut k: uint16, game:
     );
     amt = ((*((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v1 as isize)
         as int16 as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as int32;
+        << 8 as ::core::ffi::c_int);
     AddToHiLo(
         ((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize)
             as *mut uint16,
@@ -8597,7 +8596,7 @@ pub unsafe fn EprojPreInstr_N00bTubeShards(mut k: uint16, game: &mut Game) {
     );
     amt = ((*((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v1 as isize)
         as int16 as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as int32;
+        << 8 as ::core::ffi::c_int);
     AddToHiLo(
         ((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize)
             as *mut uint16,
@@ -8634,7 +8633,7 @@ pub unsafe fn sub_86D83D(mut k: uint16, game: &mut Game) {
     *fresh67 = (*fresh67 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     amt = ((*((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v6 as isize)
         as int16 as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as int32;
+        << 8 as ::core::ffi::c_int);
     AddToHiLo(
         ((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v6 as isize)
             as *mut uint16,
@@ -9394,8 +9393,8 @@ unsafe fn EprojInit_EyeDoorSmoke(mut j: uint16, game: &mut Game) {
             );
     let mut v2: ::core::ffi::c_int = 8 as ::core::ffi::c_int
         * *((&raw mut game.g_ram as *mut uint8).offset(0x1993) as *mut uint16 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int
         >> 1 as ::core::ffi::c_int;
@@ -9529,8 +9528,8 @@ pub unsafe fn EprojPreInstr_E605(mut k: uint16, game: &mut Game) {
         + *(((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v1 as isize)
             as *mut uint16 as *mut uint8)
             .offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                (::core::mem::size_of::<uint16>())
+                    .wrapping_div(::core::mem::size_of::<uint8>())
                     .wrapping_sub(1 as usize) as isize,
             ) as int8 as ::core::ffi::c_int) as uint16;
 }
@@ -9614,11 +9613,11 @@ pub unsafe fn Eproj_FuncE73E_MoveXY(mut k: uint16, game: &mut Game) {
                 as *mut uint16,
             ((&raw mut game.g_ram as *mut uint8).offset(0x1a27) as *mut uint16).offset(v1 as isize)
                 as *mut uint16,
-            -(((*((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16)
+            -((*((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int)
                 << 16 as ::core::ffi::c_int
                 | *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16)
-                    .offset(v1 as isize) as ::core::ffi::c_int) as int32) as uint32,
+                    .offset(v1 as isize) as ::core::ffi::c_int) as uint32,
         );
     } else {
         AddToHiLo(
@@ -9644,11 +9643,11 @@ pub unsafe fn Eproj_FuncE73E_MoveXY(mut k: uint16, game: &mut Game) {
                 as *mut uint16,
             ((&raw mut game.g_ram as *mut uint8).offset(0x1a6f) as *mut uint16).offset(v1 as isize)
                 as *mut uint16,
-            -(((*((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16)
+            -((*((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int)
                 << 16 as ::core::ffi::c_int
                 | *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16)
-                    .offset(v1 as isize) as ::core::ffi::c_int) as int32) as uint32,
+                    .offset(v1 as isize) as ::core::ffi::c_int) as uint32,
         );
     } else {
         AddToHiLo(
@@ -10368,7 +10367,7 @@ pub unsafe fn RandomDropRoutine(mut k: uint16, game: &mut Game) -> uint16 {
         *((&raw mut game.g_ram as *mut uint8).offset(0xf3c8) as *mut uint16).offset(v1 as isize);
     if !(varE28 == 0) {
         v2 = 0;
-        v2 = (*get_EnemyDef_A2(varE28, game)).item_drop_chances_ptr as uint16;
+        v2 = (*get_EnemyDef_A2(varE28, game)).item_drop_chances_ptr;
         if !(v2 == 0) {
             Random = 0;
             loop {
@@ -10405,7 +10404,7 @@ pub unsafe fn RandomDropRoutine(mut k: uint16, game: &mut Game) -> uint16 {
                 }
                 _ => {}
             }
-            v7 = RomPtr_B4(v2 as uint16_t, game);
+            v7 = RomPtr_B4(v2, game);
             if *((&raw mut game.g_ram as *mut uint8).offset(0xe1a) as *mut uint16) as uint8 != 0 {
                 r18 = (*v7.offset(1) as ::core::ffi::c_int + *v7 as ::core::ffi::c_int) as uint8;
                 r22 = 3 as uint8;
@@ -10448,7 +10447,7 @@ pub unsafe fn RandomDropRoutine(mut k: uint16, game: &mut Game) -> uint16 {
                     v9 = (r22 as ::core::ffi::c_int & 1 as ::core::ffi::c_int) as int8;
                     r22 = (r22 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint8;
                     if v9 != 0 {
-                        let mut v10: *const uint8 = RomPtr_B4(v2 as uint16_t, game);
+                        let mut v10: *const uint8 = RomPtr_B4(v2, game);
                         let mut RegWord: uint16 = Mult8x8(r20, *v10);
                         let mut divved: ::core::ffi::c_int =
                             SnesDivide(RegWord, r18) as ::core::ffi::c_int;
@@ -10467,7 +10466,7 @@ pub unsafe fn RandomDropRoutine(mut k: uint16, game: &mut Game) -> uint16 {
                 v9 = (r22 as ::core::ffi::c_int & 1 as ::core::ffi::c_int) as int8;
                 r22 = (r22 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint8;
                 if v9 != 0 {
-                    let mut v14: *const uint8 = RomPtr_B4(v2 as uint16_t, game);
+                    let mut v14: *const uint8 = RomPtr_B4(v2, game);
                     if (r24 as ::core::ffi::c_int + *v14 as ::core::ffi::c_int) as uint16
                         as ::core::ffi::c_int
                         >= Random as ::core::ffi::c_int

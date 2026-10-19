@@ -348,7 +348,7 @@ pub unsafe fn UnpackMapFromSave(game: &mut Game) {
                     | 0x8182d6 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
                     & 0x3fffff as ::core::ffi::c_int) as isize,
             ) as *const uint8 as *mut uint16)
-                .offset(i_0 as isize) as uint16_t,
+                .offset(i_0 as isize),
             game,
         );
         let mut v3: ::core::ffi::c_int = *(game.g_rom.offset(
@@ -395,7 +395,7 @@ pub unsafe fn PackMapToSave(game: &mut Game) {
                     | 0x8182d6 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
                     & 0x3fffff as ::core::ffi::c_int) as isize,
             ) as *const uint8 as *mut uint16)
-                .offset(i as isize) as uint16_t,
+                .offset(i as isize),
             game,
         );
         let mut v1: ::core::ffi::c_int = *(game.g_rom.offset(
@@ -433,7 +433,7 @@ pub unsafe fn DrawSpritemap(
     mut chr_r22: uint16,
     game: &mut Game,
 ) {
-    let mut pp: *const uint8 = RomPtrWithBank(db, j as uint16_t, game);
+    let mut pp: *const uint8 = RomPtrWithBank(db, j, game);
     let mut n: ::core::ffi::c_int = *(pp as *mut uint16) as ::core::ffi::c_int;
     pp = pp.offset(2);
     let mut idx: ::core::ffi::c_int =
@@ -483,7 +483,7 @@ pub unsafe fn DrawSpritemapOffScreen(
     mut chr_r22: uint16,
     game: &mut Game,
 ) {
-    let mut pp: *const uint8 = RomPtr_8C(j as uint16_t, game);
+    let mut pp: *const uint8 = RomPtr_8C(j, game);
     let mut n: ::core::ffi::c_int = *(pp as *mut uint16) as ::core::ffi::c_int;
     pp = pp.offset(2);
     let mut idx: ::core::ffi::c_int =
@@ -540,7 +540,7 @@ pub unsafe fn DrawMenuSpritemap(
                 | 0x82c569 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
                 & 0x3fffff as ::core::ffi::c_int) as isize,
         ) as *const uint8 as *mut uint16)
-            .offset(a as isize) as uint16_t,
+            .offset(a as isize),
         game,
     );
     let mut n: ::core::ffi::c_int = *(pp as *mut uint16) as ::core::ffi::c_int;
@@ -595,7 +595,7 @@ pub unsafe fn DrawSamusSpritemap(
                 | 0x92808d as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
                 & 0x3fffff as ::core::ffi::c_int) as isize,
         ) as *const uint8 as *mut uint16)
-            .offset(a as isize) as uint16_t,
+            .offset(a as isize),
         game,
     );
     let mut idx: ::core::ffi::c_int =
@@ -639,7 +639,7 @@ pub unsafe fn DrawBeamGrappleSpritemap(
                     | 0x93a1a1 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
                     & 0x3fffff as ::core::ffi::c_int) as isize,
             ) as *const uint8 as *mut uint16)
-                .offset(a as isize) as uint16_t,
+                .offset(a as isize),
             game,
         ),
         x_r20,
@@ -656,8 +656,7 @@ pub unsafe fn DrawProjectileSpritemap(
     DrawGrappleOrProjectileSpritemap(
         RomPtr_93(
             *((&raw mut game.g_ram as *mut uint8).offset(0xcb8) as *mut uint16)
-                .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-                as uint16_t,
+                .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize),
             game,
         ),
         x_r20,
@@ -710,7 +709,7 @@ pub unsafe fn DrawSpritemapWithBaseTile(
     if j as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
         return;
     }
-    let mut pp: *mut uint8 = RomPtrWithBank(db, j as uint16_t, game) as *mut uint8;
+    let mut pp: *mut uint8 = RomPtrWithBank(db, j, game) as *mut uint8;
     let mut idx: ::core::ffi::c_int =
         *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) as ::core::ffi::c_int;
     let mut n: ::core::ffi::c_int = *(pp as *mut uint16) as ::core::ffi::c_int;
@@ -751,7 +750,7 @@ pub unsafe fn DrawSpritemapWithBaseTile2(
     mut r0: uint16,
     game: &mut Game,
 ) {
-    let mut pp: *const uint8 = RomPtrWithBank(db, j as uint16_t, game);
+    let mut pp: *const uint8 = RomPtrWithBank(db, j, game);
     let mut idx: ::core::ffi::c_int =
         *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) as ::core::ffi::c_int;
     let mut n: ::core::ffi::c_int = *(pp as *mut uint16) as ::core::ffi::c_int;
@@ -799,7 +798,7 @@ pub unsafe fn DrawSpritemapWithBaseTileOffscreen(
     mut r0: uint16,
     game: &mut Game,
 ) {
-    let mut pp: *const uint8 = RomPtrWithBank(db, j as uint16_t, game);
+    let mut pp: *const uint8 = RomPtrWithBank(db, j, game);
     let mut idx: ::core::ffi::c_int =
         *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) as ::core::ffi::c_int;
     let mut n: ::core::ffi::c_int = *(pp as *mut uint16) as ::core::ffi::c_int;
@@ -847,7 +846,7 @@ pub unsafe fn DrawEprojSpritemapWithBaseTile(
     mut chr_r28: uint16,
     game: &mut Game,
 ) {
-    let mut pp: *const uint8 = RomPtrWithBank(db, j as uint16_t, game);
+    let mut pp: *const uint8 = RomPtrWithBank(db, j, game);
     let mut idx: ::core::ffi::c_int =
         *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) as ::core::ffi::c_int;
     let mut n: ::core::ffi::c_int = *(pp as *mut uint16) as ::core::ffi::c_int;
@@ -895,7 +894,7 @@ pub unsafe fn DrawEprojSpritemapWithBaseTileOffscreen(
     mut chr_r28: uint16,
     game: &mut Game,
 ) {
-    let mut pp: *const uint8 = RomPtrWithBank(db, j as uint16_t, game);
+    let mut pp: *const uint8 = RomPtrWithBank(db, j, game);
     let mut idx: ::core::ffi::c_int =
         *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) as ::core::ffi::c_int;
     let mut n: ::core::ffi::c_int = *(pp as *mut uint16) as ::core::ffi::c_int;
@@ -2426,12 +2425,12 @@ pub unsafe fn FileSelectMenu_22_FileClearSelectSlot(game: &mut Game) {
     DrawBorderAroundDataClearMode(game);
     DrawMenuSelectionMissile(game);
     *(&raw mut v0 as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     ) = *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16 as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+        (::core::mem::size_of::<uint16>())
+            .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1 as usize) as isize,
     );
     if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int
@@ -5058,38 +5057,38 @@ pub unsafe fn FileSelectMap_21_MoveExpandingSquare(game: &mut Game) {
     AddToHiLo(
         (&raw mut game.g_ram as *mut uint8).offset(0x9e32) as *mut uint16,
         (&raw mut game.g_ram as *mut uint8).offset(0x9e30) as *mut uint16,
-        -(((*((&raw mut game.g_ram as *mut uint8).offset(0x9e42) as *mut uint16)
+        -((*((&raw mut game.g_ram as *mut uint8).offset(0x9e42) as *mut uint16)
             as ::core::ffi::c_int)
             << 16 as ::core::ffi::c_int
             | *((&raw mut game.g_ram as *mut uint8).offset(0x9e40) as *mut uint16)
-                as ::core::ffi::c_int) as int32) as uint32,
+                as ::core::ffi::c_int) as uint32,
     );
     AddToHiLo(
         (&raw mut game.g_ram as *mut uint8).offset(0x9e36) as *mut uint16,
         (&raw mut game.g_ram as *mut uint8).offset(0x9e34) as *mut uint16,
-        -(((*((&raw mut game.g_ram as *mut uint8).offset(0x9e46) as *mut uint16)
+        -((*((&raw mut game.g_ram as *mut uint8).offset(0x9e46) as *mut uint16)
             as ::core::ffi::c_int)
             << 16 as ::core::ffi::c_int
             | *((&raw mut game.g_ram as *mut uint8).offset(0x9e44) as *mut uint16)
-                as ::core::ffi::c_int) as int32) as uint32,
+                as ::core::ffi::c_int) as uint32,
     );
     AddToHiLo(
         (&raw mut game.g_ram as *mut uint8).offset(0x9e3a) as *mut uint16,
         (&raw mut game.g_ram as *mut uint8).offset(0x9e38) as *mut uint16,
-        -(((*((&raw mut game.g_ram as *mut uint8).offset(0x9e4a) as *mut uint16)
+        -((*((&raw mut game.g_ram as *mut uint8).offset(0x9e4a) as *mut uint16)
             as ::core::ffi::c_int)
             << 16 as ::core::ffi::c_int
             | *((&raw mut game.g_ram as *mut uint8).offset(0x9e48) as *mut uint16)
-                as ::core::ffi::c_int) as int32) as uint32,
+                as ::core::ffi::c_int) as uint32,
     );
     AddToHiLo(
         (&raw mut game.g_ram as *mut uint8).offset(0x9e3e) as *mut uint16,
         (&raw mut game.g_ram as *mut uint8).offset(0x9e3c) as *mut uint16,
-        -(((*((&raw mut game.g_ram as *mut uint8).offset(0x9e4e) as *mut uint16)
+        -((*((&raw mut game.g_ram as *mut uint8).offset(0x9e4e) as *mut uint16)
             as ::core::ffi::c_int)
             << 16 as ::core::ffi::c_int
             | *((&raw mut game.g_ram as *mut uint8).offset(0x9e4c) as *mut uint16)
-                as ::core::ffi::c_int) as int32) as uint32,
+                as ::core::ffi::c_int) as uint32,
     );
     SetupRoomSelectMapExpandingSquareTransHDMA(game);
     DrawAreaSelectMapLabels(game);
@@ -5229,7 +5228,7 @@ pub unsafe fn LoadMenuTilemap(mut k: uint16, mut j: uint16, game: &mut Game) {
     let mut k_bak: ::core::ffi::c_int = k as ::core::ffi::c_int;
     loop {
         loop {
-            v2 = *(RomPtr_81(j as uint16_t, game) as *mut uint16) as int16;
+            v2 = *(RomPtr_81(j, game) as *mut uint16) as int16;
             if v2 as ::core::ffi::c_int != -(2 as ::core::ffi::c_int) {
                 break;
             }

@@ -468,8 +468,8 @@ pub unsafe fn NorfairPipeBug_Init(game: &mut Game) {
         | kEnemyProps_Invisible as ::core::ffi::c_int) as uint16;
     (*PipeBug).pbg_var_B = (8 as ::core::ffi::c_int
         * *(&raw mut (*PipeBug).pbg_parameter_2 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int) as uint16;
     (*PipeBug).pbg_var_C = 0 as uint16;
@@ -2026,8 +2026,8 @@ pub unsafe fn Botwoon_Func_15(game: &mut Game) {
     );
     let mut v2: ::core::ffi::c_int = 8 as ::core::ffi::c_int
         * *(&raw mut (*E).botwoon_var_28 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int
         >> 1 as ::core::ffi::c_int;
@@ -2661,7 +2661,7 @@ pub unsafe fn Botwoon_Func_33(game: &mut Game) {
         -(2 as ::core::ffi::c_int)
     };
     loop {
-        let mut v6: *const uint8 = RomPtr_B3((*E).botwoon_var_42 as uint16_t, game);
+        let mut v6: *const uint8 = RomPtr_B3((*E).botwoon_var_42, game);
         let mut v7: uint16 = SignExtend8(*v6 as uint16);
         let mut v8: uint16 = 0;
         if v7 as ::core::ffi::c_int == 0xff80 as ::core::ffi::c_int || {

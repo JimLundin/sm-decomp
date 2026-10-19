@@ -753,8 +753,8 @@ pub unsafe fn Draygon_Func_5(game: &mut Game) {
             (varE22 as ::core::ffi::c_int + (*E).draygon_var_0F as ::core::ffi::c_int) as uint16;
         let mut v1: uint16 = (varE24 as ::core::ffi::c_int
             - *(&raw mut varE22 as *mut uint8).offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                (::core::mem::size_of::<uint16>())
+                    .wrapping_div(::core::mem::size_of::<uint8>())
                     .wrapping_sub(1 as usize) as isize,
             ) as ::core::ffi::c_int) as uint16;
         if ((v1 as ::core::ffi::c_int - (*E).draygon_var_01 as ::core::ffi::c_int) as int16
@@ -765,8 +765,8 @@ pub unsafe fn Draygon_Func_5(game: &mut Game) {
         }
         varE24 = (varE24 as ::core::ffi::c_int
             - *(&raw mut varE22 as *mut uint8).offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                (::core::mem::size_of::<uint16>())
+                    .wrapping_div(::core::mem::size_of::<uint8>())
                     .wrapping_sub(1 as usize) as isize,
             ) as ::core::ffi::c_int) as uint16;
         let fresh4 = varE26;
@@ -935,8 +935,8 @@ pub unsafe fn Draygon_Func_11(game: &mut Game) {
         AddToHiLo(
             &raw mut (*E).base.x_pos,
             &raw mut (*E).base.x_subpos,
-            -((((*E).draygon_var_D as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                | (*E).draygon_var_E as ::core::ffi::c_int) as int32) as uint32,
+            -(((*E).draygon_var_D as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
+                | (*E).draygon_var_E as ::core::ffi::c_int) as uint32,
         );
     } else {
         (*E).draygon_var_A =
@@ -993,8 +993,8 @@ pub unsafe fn Draygon_Func_13(game: &mut Game) {
         AddToHiLo(
             &raw mut (*E).base.x_pos,
             &raw mut (*E).base.x_subpos,
-            -((((*E).draygon_var_D as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                | (*E).draygon_var_E as ::core::ffi::c_int) as int32) as uint32,
+            -(((*E).draygon_var_D as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
+                | (*E).draygon_var_E as ::core::ffi::c_int) as uint32,
         );
     };
 }
@@ -1176,8 +1176,8 @@ pub unsafe fn Draygon_Func_19(game: &mut Game) {
         AddToHiLo(
             &raw mut (*E).base.x_pos,
             &raw mut (*E).base.x_subpos,
-            -((((*E).draygon_var_D as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                | (*E).draygon_var_E as ::core::ffi::c_int) as int32) as uint32,
+            -(((*E).draygon_var_D as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
+                | (*E).draygon_var_E as ::core::ffi::c_int) as uint32,
         );
     };
 }
@@ -1215,9 +1215,8 @@ pub unsafe fn Draygon_Func_20(game: &mut Game) {
                 AddToHiLo(
                     &raw mut (*E).base.x_pos,
                     &raw mut (*E).base.x_subpos,
-                    -((((*E).draygon_var_D as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                        | (*E).draygon_var_E as ::core::ffi::c_int) as int32)
-                        as uint32,
+                    -(((*E).draygon_var_D as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
+                        | (*E).draygon_var_E as ::core::ffi::c_int) as uint32,
                 );
                 if ((*E).base.x_pos as int32) < 0 as int32
                     && (*E).base.x_pos as ::core::ffi::c_int + 80 as ::core::ffi::c_int
@@ -1269,8 +1268,8 @@ pub unsafe fn Draygon_Func_21(mut k: uint16, game: &mut Game) {
         AddToHiLo(
             &raw mut (*E).base.x_pos,
             &raw mut (*E).base.x_subpos,
-            -((((*E).draygon_var_D as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                | (*E).draygon_var_E as ::core::ffi::c_int) as int32) as uint32,
+            -(((*E).draygon_var_D as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
+                | (*E).draygon_var_E as ::core::ffi::c_int) as uint32,
         );
         if ((*E).base.x_pos as int16 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int
             && (*E).base.x_pos as ::core::ffi::c_int + 80 as ::core::ffi::c_int
@@ -1466,8 +1465,8 @@ pub unsafe fn Draygon_Func_25(mut k: uint16, game: &mut Game) {
                 (*E).draygon_var_08 =
                     (*(&raw mut (*E).draygon_var_08 as *mut uint8).offset(0) as ::core::ffi::c_int
                         + *(&raw mut v6 as *mut uint8).offset(
-                            (::core::mem::size_of::<uint16>() as usize)
-                                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                            (::core::mem::size_of::<uint16>())
+                                .wrapping_div(::core::mem::size_of::<uint8>())
                                 .wrapping_sub(1 as usize) as isize,
                         ) as ::core::ffi::c_int) as uint8 as uint16;
                 draygon_var_0A = (*E).draygon_var_0A;
@@ -1963,7 +1962,7 @@ pub unsafe fn Draygon_Hurt(game: &mut Game) {
         (&raw mut game.g_ram as *mut uint8)
             .offset(addr_kDraygon_BigSprmap_C08F as ::core::ffi::c_int as isize)
             .offset(17) as *mut ::core::ffi::c_void,
-        RomPtr_A5(v0 as uint16_t, game) as *const ::core::ffi::c_void,
+        RomPtr_A5(v0, game) as *const ::core::ffi::c_void,
         32 as size_t,
     );
     if (*Get_Draygon(
@@ -2009,7 +2008,7 @@ pub unsafe fn Draygon_Hurt(game: &mut Game) {
         (&raw mut game.g_ram as *mut uint8)
             .offset(addr_kDraygon_BigSprmap_C11B as ::core::ffi::c_int as isize)
             .offset(197) as *mut ::core::ffi::c_void,
-        RomPtr_A5(v5 as uint16_t, game) as *const ::core::ffi::c_void,
+        RomPtr_A5(v5, game) as *const ::core::ffi::c_void,
         32 as size_t,
     );
     if *((&raw mut game.g_ram as *mut uint8).offset(0xa64) as *mut uint16) as ::core::ffi::c_int
@@ -2238,7 +2237,7 @@ pub unsafe fn Draygon_Instr_15(
 ) -> *const uint16 {
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
     (*E).draygon_var_0F = 24 as uint16;
-    let mut v3: *const uint8 = RomPtr_A0((*E).base.enemy_ptr as uint16_t, game);
+    let mut v3: *const uint8 = RomPtr_A0((*E).base.enemy_ptr, game);
     Samus_DealDamage(
         SuitDamageDivision(*(v3.offset(6) as *mut uint16), game),
         game,
@@ -2797,7 +2796,7 @@ pub unsafe fn Draygon_Instr_24(
     return jp;
 }
 pub unsafe fn Draygon_Func_50(mut j: uint16, game: &mut Game) {
-    let mut v1: *const uint8 = RomPtr_A5(j as uint16_t, game);
+    let mut v1: *const uint8 = RomPtr_A5(j, game);
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
     (*E).draygon_var_0B = *(v1 as *mut uint16);
     (*E).draygon_var_0C = *(v1.offset(2) as *mut uint16);
@@ -2814,17 +2813,17 @@ pub unsafe fn Draygon_Instr_21(
     return jp.offset(2);
 }
 pub unsafe fn Draygon_Func_51(mut j: uint16, game: &mut Game) {
-    let mut v1: uint16 = *(RomPtr_A5(j as uint16_t, game) as *mut uint16);
+    let mut v1: uint16 = *(RomPtr_A5(j, game) as *mut uint16);
     (*Get_Draygon(0 as ::core::ffi::c_int, game)).draygon_var_0B = v1;
 }
 pub unsafe fn Draygon_Func_52(mut j: uint16, game: &mut Game) {
-    let mut v1: uint16 = *(RomPtr_A5(j as uint16_t, game) as *mut uint16);
+    let mut v1: uint16 = *(RomPtr_A5(j, game) as *mut uint16);
     (*Get_Draygon(0 as ::core::ffi::c_int, game)).draygon_var_0C = v1;
 }
 pub unsafe fn Draygon_Instr_53(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
     (*E).draygon_var_0B = ((*E).draygon_var_0B as ::core::ffi::c_int
-        + *(RomPtr_A5(j as uint16_t, game) as *mut uint16) as ::core::ffi::c_int)
+        + *(RomPtr_A5(j, game) as *mut uint16) as ::core::ffi::c_int)
         as uint16;
     return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }

@@ -60,8 +60,8 @@ pub unsafe fn SetSamusTilesDefsForCurAnim(game: &mut Game) {
                     .offset((*AD).bottom_half_idx as isize) as ::core::ffi::c_int)
                 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x71d) as *mut uint16 as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+            (::core::mem::size_of::<uint16>())
+                .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ) = 1 as uint8;
     }

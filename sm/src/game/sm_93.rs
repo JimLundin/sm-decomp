@@ -66,8 +66,8 @@ pub unsafe fn InitializeProjectile(mut k: uint16, game: &mut Game) {
         ) as *const uint8 as *mut uint16)
             .offset(
                 (*(&raw mut v2 as *mut uint8).offset(
-                    (::core::mem::size_of::<uint16>() as usize)
-                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                    (::core::mem::size_of::<uint16>())
+                        .wrapping_div(::core::mem::size_of::<uint8>())
                         .wrapping_sub(1 as usize) as isize,
                 ) as ::core::ffi::c_int
                     & 0xf as ::core::ffi::c_int) as isize,
@@ -105,7 +105,7 @@ pub unsafe fn InitializeProjectile(mut k: uint16, game: &mut Game) {
         (*PD).damage;
     let mut v7: uint16 = (*PD).instr_ptrs[r18 as usize];
     *((&raw mut game.g_ram as *mut uint8).offset(0xc40) as *mut uint16).offset(v1 as isize) = v7;
-    let mut v8: *const uint8 = RomPtr_93(v7 as uint16_t, game);
+    let mut v8: *const uint8 = RomPtr_93(v7, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16).offset(v1 as isize) =
         *v8.offset(4) as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16).offset(v1 as isize) =
@@ -126,12 +126,12 @@ pub unsafe fn InitializeInstrForSuperMissile(mut v0: uint16, game: &mut Game) {
                 (*(((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
                     .offset(v1 as isize) as *mut uint16 as *mut uint8)
                     .offset(
-                        (::core::mem::size_of::<uint16>() as usize)
-                            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                        (::core::mem::size_of::<uint16>())
+                            .wrapping_div(::core::mem::size_of::<uint8>())
                             .wrapping_sub(1 as usize) as isize,
                     ) as ::core::ffi::c_int
                     & 0xf as ::core::ffi::c_int) as isize,
-            ) as uint16_t,
+            ),
         game,
     );
     let mut v4: uint16 = *(v3 as *mut uint16);
@@ -157,12 +157,12 @@ pub unsafe fn InitializeInstrForMissile(mut v0: uint16, game: &mut Game) {
                 (*(((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
                     .offset(v1 as isize) as *mut uint16 as *mut uint8)
                     .offset(
-                        (::core::mem::size_of::<uint16>() as usize)
-                            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                        (::core::mem::size_of::<uint16>())
+                            .wrapping_div(::core::mem::size_of::<uint8>())
                             .wrapping_sub(1 as usize) as isize,
                     ) as ::core::ffi::c_int
                     & 0xf as ::core::ffi::c_int) as isize,
-            ) as uint16_t,
+            ),
         game,
     );
     let mut v4: uint16 = *(v3 as *mut uint16);
@@ -202,8 +202,8 @@ pub unsafe fn KillProjectileInner(mut k: uint16, game: &mut Game) {
                 as *mut ProjectileDamagesAndInstrPtr))
                 .damages as *mut uint16)
                 .offset(
-                    (::core::mem::size_of::<::core::ffi::c_uint>() as usize)
-                        .wrapping_div(::core::mem::size_of::<uint16>() as usize)
+                    (::core::mem::size_of::<::core::ffi::c_uint>())
+                        .wrapping_div(::core::mem::size_of::<uint16>())
                         .wrapping_sub(1 as usize) as isize,
                 );
             *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = 20 as uint16;
@@ -218,7 +218,7 @@ pub unsafe fn KillProjectileInner(mut k: uint16, game: &mut Game) {
             ) as *const uint8
                 as *mut ProjectileDamagesAndInstrPtr))
                 .instr_ptr)
-                .offset(1) as uint16;
+                .offset(1);
         }
         if *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) as ::core::ffi::c_int
             - 21 as ::core::ffi::c_int
@@ -242,8 +242,8 @@ pub unsafe fn KillProjectileInner(mut k: uint16, game: &mut Game) {
             ) as *const uint8 as *mut ProjectileDamagesAndInstrPtr))
                 .damages as *mut uint16)
                 .offset(
-                    (::core::mem::size_of::<::core::ffi::c_uint>() as usize)
-                        .wrapping_div(::core::mem::size_of::<uint16>() as usize)
+                    (::core::mem::size_of::<::core::ffi::c_uint>())
+                        .wrapping_div(::core::mem::size_of::<uint16>())
                         .wrapping_sub(1 as usize) as isize,
                 );
         QueueSfx2_Max6(0xc as uint16, game);
@@ -264,8 +264,8 @@ pub unsafe fn InitializeBombExplosion(mut k: uint16, game: &mut Game) {
         ) as *const uint8 as *mut ProjectileDamagesAndInstrPtr))
             .damages as *mut uint16)
             .offset(
-                (::core::mem::size_of::<::core::ffi::c_uint>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint16>() as usize)
+                (::core::mem::size_of::<::core::ffi::c_uint>())
+                    .wrapping_div(::core::mem::size_of::<uint16>())
                     .wrapping_sub(1 as usize) as isize,
             );
     *((&raw mut game.g_ram as *mut uint8).offset(0xc54) as *mut uint16).offset(v1 as isize) =
@@ -315,7 +315,7 @@ pub unsafe fn InitializeSbaProjectile(mut k: uint16, game: &mut Game) {
                 (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
                     .offset(v1 as isize) as ::core::ffi::c_int
                     & 0xf as ::core::ffi::c_int) as isize,
-            ) as uint16_t,
+            ),
         game,
     );
     let mut v3: uint16 = *(v2 as *mut uint16);
@@ -393,7 +393,7 @@ pub unsafe fn RunProjectileInstructions(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc54) as *mut uint16).offset(v1 as isize) =
             (*PI).timer;
         *((&raw mut game.g_ram as *mut uint8).offset(0xcb8) as *mut uint16).offset(v1 as isize) =
-            (*PI).spritemap_ptr as uint16;
+            (*PI).spritemap_ptr;
         *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16).offset(v1 as isize) =
             (*PI).x_radius as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16).offset(v1 as isize) =
@@ -407,7 +407,7 @@ pub unsafe fn Proj93Instr_Delete(mut k: uint16, mut j: uint16, game: &mut Game) 
     return 0 as uint16;
 }
 pub unsafe fn Proj93Instr_Goto(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
-    return *(RomPtr_93(j as uint16_t, game) as *mut uint16);
+    return *(RomPtr_93(j, game) as *mut uint16);
 }
 pub unsafe fn DrawPlayerExplosions2(game: &mut Game) {
     let mut v2: uint16 = 0;
