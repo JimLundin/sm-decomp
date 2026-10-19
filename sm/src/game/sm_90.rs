@@ -17021,14 +17021,14 @@ pub unsafe fn SamusCode_08_SetupForCeresStart(game: &mut Game) -> uint8 {
         .offset(0xa1e as ::core::ffi::c_int as isize) as *mut uint16);
     *((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
-    SpawnEprojWithGfx(
+    let platform_parameter = SpawnEprojWithGfx(
         0 as uint16,
         0 as uint16,
         addr_kEproj_CeresElevatorPad as ::core::ffi::c_int as uint16,
         game,
     );
     SpawnEprojWithGfx(
-        0 as uint16,
+        platform_parameter,
         0 as uint16,
         addr_kEproj_CeresElevatorPlatform as ::core::ffi::c_int as uint16,
         game,

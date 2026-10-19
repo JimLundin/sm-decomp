@@ -841,12 +841,12 @@ pub unsafe fn ClearEprojs(game: &mut Game) {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-unsafe fn SpawnEprojInner(mut j: uint16, mut gfx_idx: uint16, game: &mut Game) {
+unsafe fn SpawnEprojInner(mut j: uint16, mut gfx_idx: uint16, game: &mut Game) -> Option<uint16> {
     let mut v3: uint16 = 34 as uint16;
     while EprojState(&game.g_ram).id(usize::from(v3 >> 1)) != 0 {
         v3 = (v3 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
         if v3 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
-            return;
+            return None;
         }
     }
     let v4 = usize::from(v3 >> 1);
@@ -876,22 +876,26 @@ unsafe fn SpawnEprojInner(mut j: uint16, mut gfx_idx: uint16, game: &mut Game) {
         v3,
         game,
     );
+    Some(v3)
 }
-pub unsafe fn SpawnEprojWithGfx(mut a: uint16, mut k: uint16, mut j: uint16, game: &mut Game) {
+pub unsafe fn SpawnEprojWithGfx(
+    mut a: uint16,
+    mut k: uint16,
+    mut j: uint16,
+    game: &mut Game,
+) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
         as *mut uint16) = a;
     let mut E: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);
-    SpawnEprojInner(
-        j,
-        ((*E).vram_tiles_index as ::core::ffi::c_int | (*E).palette_index as ::core::ffi::c_int)
-            as uint16,
-        game,
-    );
+    let gfx_idx = ((*E).vram_tiles_index as ::core::ffi::c_int
+        | (*E).palette_index as ::core::ffi::c_int) as uint16;
+    SpawnEprojInner(j, gfx_idx, game).unwrap_or(gfx_idx)
 }
-pub unsafe fn SpawnEprojWithRoomGfx(mut j: uint16, mut a: uint16, game: &mut Game) {
+pub unsafe fn SpawnEprojWithRoomGfx(mut j: uint16, mut a: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
         as *mut uint16) = a;
-    SpawnEprojInner(j, 0 as uint16, game);
+    SpawnEprojInner(j, 0, game)
+        .unwrap_or_else(|| u16::from_le_bytes([game.g_ram[0x1997], game.g_ram[0x1998]]))
 }
 unsafe fn EprojRunOne(mut k: uint16, game: &mut Game) {
     CallEprojPreInstr(

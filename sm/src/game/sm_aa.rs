@@ -1062,38 +1062,38 @@ pub unsafe fn Torizo_Instr_31(
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
     (*E).toriz_parameter_2 =
         ((*E).toriz_parameter_2 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
-    SpawnEprojWithGfx(
-        0 as uint16,
+    let mut parameter = SpawnEprojWithGfx(
+        (*E).toriz_parameter_2,
+        k,
+        addr_stru_86A95B as ::core::ffi::c_int as uint16,
+        game,
+    );
+    parameter = SpawnEprojWithGfx(
+        parameter,
+        k,
+        addr_stru_86A95B as ::core::ffi::c_int as uint16,
+        game,
+    );
+    parameter = SpawnEprojWithGfx(
+        parameter,
+        k,
+        addr_stru_86A95B as ::core::ffi::c_int as uint16,
+        game,
+    );
+    parameter = SpawnEprojWithGfx(
+        parameter,
+        k,
+        addr_stru_86A95B as ::core::ffi::c_int as uint16,
+        game,
+    );
+    parameter = SpawnEprojWithGfx(
+        parameter,
         k,
         addr_stru_86A95B as ::core::ffi::c_int as uint16,
         game,
     );
     SpawnEprojWithGfx(
-        0 as uint16,
-        k,
-        addr_stru_86A95B as ::core::ffi::c_int as uint16,
-        game,
-    );
-    SpawnEprojWithGfx(
-        0 as uint16,
-        k,
-        addr_stru_86A95B as ::core::ffi::c_int as uint16,
-        game,
-    );
-    SpawnEprojWithGfx(
-        0 as uint16,
-        k,
-        addr_stru_86A95B as ::core::ffi::c_int as uint16,
-        game,
-    );
-    SpawnEprojWithGfx(
-        0 as uint16,
-        k,
-        addr_stru_86A95B as ::core::ffi::c_int as uint16,
-        game,
-    );
-    SpawnEprojWithGfx(
-        0 as uint16,
+        parameter,
         k,
         addr_stru_86A95B as ::core::ffi::c_int as uint16,
         game,
@@ -1377,9 +1377,10 @@ pub unsafe fn Torizo_Instr_34(
     mut jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
+    // The instruction dispatcher leaves this handler address in A.
     SpawnEprojWithRoomGfx(
         addr_kEproj_BombTorizoDeathExplosion as ::core::ffi::c_int as uint16,
-        0 as uint16,
+        0xc32f,
         game,
     );
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
@@ -1396,14 +1397,14 @@ pub unsafe fn Torizo_Instr_24(
     mut jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    SpawnEprojWithRoomGfx(
+    let left_foot_parameter = SpawnEprojWithRoomGfx(
         addr_kEproj_TourianLandingDustCloudsRightFoot as ::core::ffi::c_int as uint16,
-        0 as uint16,
+        0xc34a,
         game,
     );
     SpawnEprojWithRoomGfx(
         addr_stru_86AFF3 as ::core::ffi::c_int as uint16,
-        0 as uint16,
+        left_foot_parameter,
         game,
     );
     return jp;
@@ -1682,20 +1683,21 @@ pub unsafe fn Torizo_Instr_18(
     mut jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    SpawnEprojWithGfx(
-        0 as uint16,
+    // The instruction dispatcher leaves this handler address in A.
+    let mut parameter = SpawnEprojWithGfx(
+        0xc5cb,
+        k,
+        addr_kEproj_BombTorizosChozoOrbs as ::core::ffi::c_int as uint16,
+        game,
+    );
+    parameter = SpawnEprojWithGfx(
+        parameter,
         k,
         addr_kEproj_BombTorizosChozoOrbs as ::core::ffi::c_int as uint16,
         game,
     );
     SpawnEprojWithGfx(
-        0 as uint16,
-        k,
-        addr_kEproj_BombTorizosChozoOrbs as ::core::ffi::c_int as uint16,
-        game,
-    );
-    SpawnEprojWithGfx(
-        0 as uint16,
+        parameter,
         k,
         addr_kEproj_BombTorizosChozoOrbs as ::core::ffi::c_int as uint16,
         game,

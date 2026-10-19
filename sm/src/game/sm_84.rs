@@ -1121,6 +1121,7 @@ unsafe fn spawn_hardcoded_plm(
         ((*PH).func_ptr as ::core::ffi::c_int | 0x840000 as ::core::ffi::c_int) as uint32,
         v1,
         displacement,
+        addr_kDefaultPlmDrawInstruction as u16,
         game,
     );
 }
@@ -1170,6 +1171,7 @@ pub unsafe fn SpawnRoomPLM(k: uint16, game: &mut Game) {
         0x840000 | u32::from(read_header_word(0)),
         v1,
         core::ptr::null_mut(),
+        addr_kDefaultPlmDrawInstruction as u16,
         game,
     );
 }
@@ -1222,6 +1224,7 @@ pub unsafe fn SpawnPLMWithCollision(
         0x840000 | u32::from(setup),
         index as u16,
         displacement,
+        0,
         game,
     )
 }
@@ -5231,8 +5234,12 @@ pub unsafe fn SetBtsTo0x10AdvanceRowUp(mut k: uint16, game: &mut Game) -> uint16
         - *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int) as uint16;
 }
-pub unsafe fn PlmSetup_C82A_DownwardsClosedGate(mut j: uint16, game: &mut Game) -> uint8 {
-    SpawnEprojWithRoomGfx(0xe659 as uint16, 0 as uint16, game);
+pub unsafe fn PlmSetup_C82A_DownwardsClosedGate(
+    mut j: uint16,
+    setup_a: uint16,
+    game: &mut Game,
+) -> uint8 {
+    SpawnEprojWithRoomGfx(0xe659 as uint16, setup_a, game);
     SetBts0x10FiveStepsDown(j, game);
     return 0 as uint8;
 }
@@ -7244,6 +7251,7 @@ pub unsafe fn sub_84EEAB(mut v0: uint16, game: &mut Game) -> uint8 {
     return 0 as uint8;
 }
 /// Dispatch setup with the active collision displacement, or null outside collision.
+/// `setup_a` preserves the spawner accumulator for setup routines that consume it.
 ///
 /// # Safety
 /// Legacy setup callbacks require initialized runtime state. A non-null
@@ -7252,6 +7260,7 @@ pub unsafe fn CallPlmHeaderFunc(
     ea: uint32,
     j: uint16,
     displacement: *mut i32,
+    setup_a: uint16,
     game: &mut Game,
 ) -> uint8 {
     match ea {
@@ -7312,7 +7321,7 @@ pub unsafe fn CallPlmHeaderFunc(
         8701425 => return PlmSetup_C822_RightYellowGateTrigger(j, game),
         8701456 => return PlmSetup_C816_LeftBlueGateTrigger(j, game),
         8701479 => return PlmSetup_C81A_RightBlueGateTrigger(j, game),
-        8701630 => return PlmSetup_C82A_DownwardsClosedGate(j, game),
+        8701630 => return PlmSetup_C82A_DownwardsClosedGate(j, setup_a, game),
         8701643 => return PlmSetup_C832_UpwardsClosedGate(j, game),
         8701656 => return PlmSetup_C826_DownwardsOpenGate(j, game),
         8701660 => return PlmSetup_C82E_UpwardsOpenGate(j, game),

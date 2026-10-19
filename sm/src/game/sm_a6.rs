@@ -3190,7 +3190,7 @@ pub unsafe fn FakeKraid_Func_1(mut k: uint16, mut j: uint16, game: &mut Game) {
         if fkd_var_C as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
             v6 = addr_kEproj_MiniKraidSpikesRight as ::core::ffi::c_int as uint16;
         }
-        SpawnEprojWithGfx(0 as uint16, k, v6, game);
+        SpawnEprojWithGfx(fkd_var_C as uint16, k, v6, game);
         if CheckIfEnemyIsOnScreen(game) == 0 {
             QueueSfx2_Max6(0x3f as uint16, game);
         }
@@ -3404,15 +3404,18 @@ pub unsafe fn FakeKraid_9C50(game: &mut Game) {
     .health
         == 0
     {
+        // The death animation remains in the ROM spawn parameter for all four drops.
+        let death_animation = 3;
         EnemyDeathAnimation(
             *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
                 as *mut uint16),
-            3 as uint16,
+            death_animation,
             game,
         );
         Enemy_ItemDrop_MiniKraid(
             *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
                 as *mut uint16),
+            death_animation,
             game,
         );
     }

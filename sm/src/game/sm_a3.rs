@@ -1477,26 +1477,26 @@ pub unsafe fn Metalee_Func_5(game: &mut Game) {
             let mut v2: uint16 = *((&raw mut game.g_ram as *mut uint8)
                 .offset(0xe54 as ::core::ffi::c_int as isize)
                 as *mut uint16);
-            SpawnEprojWithGfx(
-                0 as uint16,
+            let mut parameter = SpawnEprojWithGfx(
+                8,
                 v2,
                 addr_stru_868BFA as ::core::ffi::c_int as uint16,
                 game,
             );
-            SpawnEprojWithGfx(
-                0 as uint16,
+            parameter = SpawnEprojWithGfx(
+                parameter,
                 v2,
                 addr_stru_868C08 as ::core::ffi::c_int as uint16,
                 game,
             );
-            SpawnEprojWithGfx(
-                0 as uint16,
+            parameter = SpawnEprojWithGfx(
+                parameter,
                 v2,
                 addr_stru_868C16 as ::core::ffi::c_int as uint16,
                 game,
             );
             SpawnEprojWithGfx(
-                0 as uint16,
+                parameter,
                 v2,
                 addr_stru_868C24 as ::core::ffi::c_int as uint16,
                 game,
@@ -5380,27 +5380,27 @@ pub unsafe fn Skree_Func_4(game: &mut Game) {
             let mut v2: uint16 = *((&raw mut game.g_ram as *mut uint8)
                 .offset(0xe54 as ::core::ffi::c_int as isize)
                 as *mut uint16);
-            SpawnEprojWithGfx(
+            let mut parameter = SpawnEprojWithGfx(
                 8 as uint16,
                 *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
                     as *mut uint16),
                 addr_stru_868BC2 as ::core::ffi::c_int as uint16,
                 game,
             );
-            SpawnEprojWithGfx(
-                0 as uint16,
+            parameter = SpawnEprojWithGfx(
+                parameter,
                 v2,
                 addr_stru_868BD0 as ::core::ffi::c_int as uint16,
                 game,
             );
-            SpawnEprojWithGfx(
-                0 as uint16,
+            parameter = SpawnEprojWithGfx(
+                parameter,
                 v2,
                 addr_stru_868BDE as ::core::ffi::c_int as uint16,
                 game,
             );
             SpawnEprojWithGfx(
-                0 as uint16,
+                parameter,
                 v2,
                 addr_stru_868BEC as ::core::ffi::c_int as uint16,
                 game,
@@ -5440,27 +5440,27 @@ pub unsafe fn Skree_Shot(game: &mut Game) {
         let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8)
             .offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16);
-        SpawnEprojWithGfx(
+        let mut parameter = SpawnEprojWithGfx(
             (*E).skree_var_A,
             *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
                 as *mut uint16),
             addr_stru_868BC2 as ::core::ffi::c_int as uint16,
             game,
         );
-        SpawnEprojWithGfx(
-            0 as uint16,
+        parameter = SpawnEprojWithGfx(
+            parameter,
             v1,
             addr_stru_868BD0 as ::core::ffi::c_int as uint16,
             game,
         );
-        SpawnEprojWithGfx(
-            0 as uint16,
+        parameter = SpawnEprojWithGfx(
+            parameter,
             v1,
             addr_stru_868BDE as ::core::ffi::c_int as uint16,
             game,
         );
         SpawnEprojWithGfx(
-            0 as uint16,
+            parameter,
             v1,
             addr_stru_868BEC as ::core::ffi::c_int as uint16,
             game,

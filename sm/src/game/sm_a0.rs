@@ -9380,7 +9380,13 @@ pub fn EnemyFunc_B7A1(game: &mut Game) {
         game.set_samus_prev_x_pos(previous);
     }
 }
-unsafe fn spawn_nearby_enemy_item_drops(definition: u16, index: u16, count: u16, game: &mut Game) {
+unsafe fn spawn_nearby_enemy_item_drops(
+    definition: u16,
+    index: u16,
+    count: u16,
+    spawn_parameter: u16,
+    game: &mut Game,
+) {
     for _ in 0..count {
         // X origin is read before RNG; Y origin and random high byte are live afterward.
         let x = game.special_death_item_drop_x_origin_pos();
@@ -9389,7 +9395,7 @@ unsafe fn spawn_nearby_enemy_item_drops(definition: u16, index: u16, count: u16,
         let y = game.special_death_item_drop_y_origin_pos();
         let random_y = (game.random_number() & 0x1f00) >> 8;
         game.eproj_spawn_pt.y = y.wrapping_add(random_y).wrapping_sub(16);
-        SpawnEnemyDrops(definition, index, 0, game);
+        SpawnEnemyDrops(definition, index, spawn_parameter, game);
     }
 }
 
@@ -9408,14 +9414,14 @@ unsafe fn spawn_area_enemy_item_drops(
     }
 }
 
-pub unsafe fn Enemy_ItemDrop_MiniKraid(k: uint16, game: &mut Game) {
-    spawn_nearby_enemy_item_drops(addr_kEnemyDef_E0FF as u16, k, 4, game);
+pub unsafe fn Enemy_ItemDrop_MiniKraid(k: uint16, death_animation: uint16, game: &mut Game) {
+    spawn_nearby_enemy_item_drops(addr_kEnemyDef_E0FF as u16, k, 4, death_animation, game);
 }
 pub unsafe fn Enemy_ItemDrop_LowerNorfairSpacePirate(k: uint16, game: &mut Game) {
-    spawn_nearby_enemy_item_drops(addr_kEnemyDef_F593 as u16, k, 5, game);
+    spawn_nearby_enemy_item_drops(addr_kEnemyDef_F593 as u16, k, 5, 0, game);
 }
 pub unsafe fn Enemy_ItemDrop_Metroid(k: uint16, game: &mut Game) {
-    spawn_nearby_enemy_item_drops(addr_kEnemyDef_DD7F as u16, k, 5, game);
+    spawn_nearby_enemy_item_drops(addr_kEnemyDef_DD7F as u16, k, 5, 0, game);
 }
 pub unsafe fn Enemy_ItemDrop_Ridley(k: uint16, game: &mut Game) {
     spawn_area_enemy_item_drops(addr_kEnemyDef_E17F as u16, k, 64, 320, 127, game);

@@ -719,6 +719,45 @@ change and no new replay result belong to this cleanup.
 
 ## The oracle
 
+Enemy-projectile spawn parameter fidelity (2026-10-19): preserve the ROM
+accumulator returned by both allocation wrappers and thread it through
+chained Ceres, Skree, Metalee and Torizo spawns. Successful allocation
+returns the saved slot, including slot zero; exhaustion returns the saved
+graphics word or the occupied slot-zero ID for the respective wrapper.
+Keep the initial parameter store before allocation. Torizo instruction
+handlers retain their actual first accumulator values. Downward gate setup
+receives the original spawner context: $8DA0 for room/hardcoded PLMs and
+zero for current-block PLMs. Mini-Kraid nails use the captured direction
+word; its four drops retain the same death-animation parameter, 3.
+
+Remove the two-byte $1993/$1994 comparison mask. The final frozen build,
+a0912a84 plus eight reviewed source files, passes full any% 129712/0
+(300.31s) and pre-Kraid refill 115663/0 (304.42s), both native exits 0.
+Independent raw-word and ordered-call checks find zero differences across
+76/76 and 376/376 calls respectively, comparing count, wrapper, parameter
+and projectile definition. Spazer is the exact 90706-frame prefix of the
+longer route. The earlier complete Spazer profile exposed six additional
+callers; the expanded route exposed Mini-Kraid's nails and drops. All those
+observed parameter differences are resolved in the final source.
+
+Sixteen allocator controls and four actual Skree chains match ROM returns,
+ordered parameters and RAM outside the CPU stack, including full pools and
+slot-zero success. Independent byte-fault controls on the unchanged early
+path pass clean 10205/0; flipping either $1993 or $1994 at frame 10000 gives
+exactly one failure and exit 1. Frames 10001..10204 recover, and all three
+final 128 KiB RAM dumps are byte-identical. The final two Mini-Kraid changes
+first execute after frame 110000 and do not alter that control interval.
+
+All 62 observed source files strip back to the clean final candidate;
+source/DLL/input hashes stay fixed through replay. Independent ROM, source,
+result and live-merge reviews pass. Workspace formatting, release build
+(85.08s), whitespace and progress checks pass. Own source grows 17 lines
+for return/context plumbing and removes one c_int-cast line; other residue
+counters are unchanged. Concurrent byte-backed projectile cleanup is
+preserved separately. Unrelated graphics arguments and other comparison
+masks are unchanged. Later Kraid behavior and unexecuted spawners retain
+separate verification; these routes do not reach credits.
+
 Pre-Kraid refill milestone (2026-10-19): extend the Hi-Jump route through
 the Warehouse Entrance, collect the Missile Tank, defeat Mini-Kraid and
 the three pirates, then refill before main Kraid. Full boot passes
