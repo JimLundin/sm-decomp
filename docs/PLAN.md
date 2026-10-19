@@ -10315,6 +10315,57 @@ Own residue delta zero. Peer PPU/gameplay edits remain separately owned.
 Next: restore the release-build check, then reapply/verify this covered reuse.
 Complete gameplay/render/audio and the prior coverage holds remain open.
 
+Crateria map acquired; map activation RAM writes simplified (2026-10-19).
+The jump from X187 against the first column still hits an enemy and returns
+behind the rise: crateria-map-spin72121/71 (72.10s), native exit1. Starting
+at the earlier landed prefix crateria-map-corridor through71755 instead
+allows a full spinning jump: right/run1, right/run/jump40, right/run90,
+right/run/jump40, right/run90, right/run/jump40, right/run/shoot110,
+neutral60. crateria-map-early-spin72226/71 (66.37s), native exit1; it reaches
+X571/Y187 with34health. First rise crossed before contact; a later enemy
+hit between71820/71825 costs15health but does not erase the progress.
+
+From that successful input through72120: right1, right/run/jump40,
+right/run/shoot90, right/run/jump40, right/run/shoot100, neutral120 reaches
+9994, the Crateria map room. crateria-map-east72511/71 (68.05s), native
+exit1; room load72356, gameplay72443, finalX49/Y139,health34/99,1/10missiles.
+Then right/run100,right80,neutral180,Jump1,neutral120 activates the station:
+crateria-map-activate72992/71 (80.94s), native exit1. At72655 observer shows
+has_area_map1, station byte255, message20; finalX139/Y171,health34/99,
+map1/station255, game state15 (map screen). This proves map acquisition;
+closing the map screen and returning remain the next controller work.
+
+PlmInstr_ActivateMapStation now reads area_index through its existing named
+byte accessor, sets map_station_byte_array[area] toFF, calls DisplayMessageBox
+20, then uses the new named has_area_map word setter. The original unaligned
+word OR with00FF leaves the following station byte unchanged, so the single
+byte store preserves its final RAM effect. Callback/write order and returned
+instruction pointer stay identical. No RAM layout or ROM-derived constants
+change; unsafe remains because DisplayMessageBox uses the legacy runtime.
+
+Actual read-only instrumented callback execution: area0 at frame72655.
+Pinned7fcc20d6 core plus committed Missile Tank accessors is used for before;
+after adds only these two gameplay files. Baseline72992/71 (95.59s),
+instrumented72992/71 (99.80s), clean72992/71 (104.23s), observed
+native exits1. Every ordered failing frame exactly matches all71 baseline
+frames; no new failing frames. Hosts explicitly enable rendering and record
+each failure-counter change. Clean explicit-render any%129712/0
+(164.06s), observed native exit0. Current built gameplay files match
+maintained source. Concurrent CPU/PPU work is excluded from these pinned
+replays and remains separately owned. No controller/RAM/health/ammunition
+writes were injected. Probes, input movies, SRAM and ROM-derived geometry
+stay ignored; only gameplay source and this note enter the commit.
+
+Cargo fmt/check, full release build and progress pass. Own counters: raw RAM
+offsets-3, casts-4, Rust lines0, other counters unchanged. Whole-workspace
+progress22686raw,39extern,3CABI,5no_mangle,6717unsafe,85554casts,257188Rust
+lines includes peer changes (unsafe+1 and lines+3 since map-door milestone).
+This focused item finishes within onehour. Next: close the map screen with
+ordinary controls, return through98E2 toward accessible boss/item progression.
+Held upper99BD ascent, cliff tuning, old9AD9 enemy-drop ammo and HDMA stay
+held. Credits, gameplay/hardware fidelity, render/audio, masked RAM and
+ownership remain unfinished. Peer owns hardware work and remote sync.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

@@ -2554,21 +2554,16 @@ pub unsafe fn PlmInstr_QueueSfx3_Max1(
     return plmp.offset(1 as ::core::ffi::c_int as isize);
 }
 pub unsafe fn PlmInstr_ActivateMapStation(
-    mut plmp: *const uint8,
-    mut k: uint16,
+    plmp: *const uint8,
+    _k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
-    let ref mut fresh41 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xd908 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as *mut uint8 as *mut uint16);
-    *fresh41 = (*fresh41 as ::core::ffi::c_int | 0xff as ::core::ffi::c_int) as uint16;
-    DisplayMessageBox(0x14 as uint16, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x789 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 1 as uint16;
-    return plmp;
+    // map_station_byte_array; word OR with 00FF preserves the neighboring byte.
+    let station = 0xd908 + usize::from(game.area_index());
+    game.g_ram[station] = 0xff;
+    DisplayMessageBox(0x14, game);
+    game.set_has_area_map(1);
+    plmp
 }
 pub unsafe fn PlmInstr_ActivateEnergyStation(
     mut plmp: *const uint8,

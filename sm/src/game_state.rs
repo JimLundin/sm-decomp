@@ -508,6 +508,11 @@ impl Game {
         u16::from_le_bytes([self.g_ram[0x79f], self.g_ram[0x7a0]])
     }
 
+    /// has_area_map ($7E:0789 in ram_map).
+    pub fn set_has_area_map(&mut self, value: u16) {
+        self.g_ram[0x789..0x78b].copy_from_slice(&value.to_le_bytes());
+    }
+
     /// collected_items ($7E:09A4 in ram_map).
     pub fn set_collected_items(&mut self, value: u16) {
         self.g_ram[0x9a4..0x9a6].copy_from_slice(&value.to_le_bytes());
