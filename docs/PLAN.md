@@ -16419,6 +16419,34 @@ counters unchanged. No probes or ROM-derived artifacts committed. Continue
 indexed projectile state/handler families; broader gameplay/credits,
 hardware/audio/masks and ownership remain unfinished.
 
+Ridley fireball initialization (2026-10-19): six ordered destination
+stores and parameter/coordinate/velocity reads now use existing byte-backed
+state views. The returned Ram7800_Default pointer is eliminated; named
+var_19/var_1A layout offsets select the same words. Full-width slot rounding
+and aliases remain exact. The parameter-2 read/F store precedes the live
+parameter-1 read, then enemy-X read/store, enemy-Y read/store, graphics,
+extra-X read/store and extra-Y read/store. Existing promotion arithmetic,
+truncation and unsafe area-property callback are unchanged.
+
+Frozen 028aadda plus only this change passes
+any% 129712/0 (258.35s) and Warehouse 128547/0
+(291.12s), native exits 0. Observed any% 129712/0
+(281.60s) reaches the initializer 24 times.
+Every byte-backed store matches the original unaligned store over complete
+RAM. Clean/observed non-timing diagnostics match; source/DLL/ROM/input hashes
+remain fixed and the maintained function matches verified source.
+Extracted old/current functions match complete RAM and callback arguments
+in 131072 cases: every 16-bit slot index, odd/max indexes and source-field
+aliases, two backing patterns and varied parameters/coordinates/velocities.
+Other frozen sources match HEAD after newline normalization; only this
+initializer differs in its bank.
+
+Cargo fmt/check, normal release build (57.93s) and progress pass. Net raw
+offsets -9, cast lines -3, Rust lines -2; unsafe function count and other
+own counters unchanged. No probes or ROM-derived artifacts committed.
+Continue indexed projectile state/handler families; broader gameplay/credits,
+hardware/audio/masks and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

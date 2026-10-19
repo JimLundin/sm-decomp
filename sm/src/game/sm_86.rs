@@ -2921,30 +2921,28 @@ pub unsafe fn EprojPreInstr_9634(mut k: uint16, game: &mut Game) {
         *fresh137 = (*fresh137).wrapping_add(1);
     };
 }
-unsafe fn EprojInit_9642_RidleysFireball(mut j: uint16, game: &mut Game) {
-    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16).offset(v1 as isize) =
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1995) as *mut uint16);
-    let mut v2: int16 = (if EprojState(&game.g_ram).init_param_1() as ::core::ffi::c_int != 0 {
+unsafe fn EprojInit_9642_RidleysFireball(j: uint16, game: &mut Game) {
+    let slot = usize::from(j >> 1);
+    let parameter = EprojState(&game.g_ram).slot_word(0x1995, 0);
+    EprojStateMut(&mut game.g_ram).write(0x1b23, slot, parameter);
+    let v2: int16 = (if EprojState(&game.g_ram).init_param_1() as ::core::ffi::c_int != 0 {
         25 as ::core::ffi::c_int
     } else {
         -(25 as ::core::ffi::c_int)
     }) as int16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v1 as isize) =
-        ((*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0)).x_pos
-            as ::core::ffi::c_int
-            + v2 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize) =
-        ((*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0)).y_pos
-            as ::core::ffi::c_int
-            - 43 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x19bb) as *mut uint16).offset(v1 as isize) =
-        2560 as uint16;
-    let mut v4: *mut Ram7800_Default = gRam7800_Default(0 as uint16, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(v1 as isize) =
-        (*v4).var_19;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v1 as isize) =
-        (*v4).var_1A;
+    let x =
+        (game.enemy_state(0).x_pos() as ::core::ffi::c_int + v2 as ::core::ffi::c_int) as uint16;
+    EprojStateMut(&mut game.g_ram).write(0x1a4b, slot, x);
+    let y =
+        (game.enemy_state(0).y_pos() as ::core::ffi::c_int - 43 as ::core::ffi::c_int) as uint16;
+    EprojStateMut(&mut game.g_ram).write(0x1a93, slot, y);
+    EprojStateMut(&mut game.g_ram).write(0x19bb, slot, 2560);
+    let x_velocity = EprojState(&game.g_ram)
+        .slot_word(0x7800 + core::mem::offset_of!(Ram7800_Default, var_19), 0);
+    EprojStateMut(&mut game.g_ram).write(0x1ab7, slot, x_velocity);
+    let y_velocity = EprojState(&game.g_ram)
+        .slot_word(0x7800 + core::mem::offset_of!(Ram7800_Default, var_1A), 0);
+    EprojStateMut(&mut game.g_ram).write(0x1adb, slot, y_velocity);
     SetAreaDependentEprojPropertiesEx(
         addr_kRidleysFireball_Tab0 as ::core::ffi::c_int as uint16,
         j,
