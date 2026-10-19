@@ -276,6 +276,15 @@ excluded. Cargo fmt and progress pass; the current Cargo release attempt
 is blocked executing sm's generated build script (OS error 5), confirmed by
 Defender event 1121. No new source or own residue change belongs to this audit.
 
+Snapshot-API/window integration control (2026-10-19): the narrowed snapshot
+arguments now committed in 336180eb also pass the actual boundary controls
+with the pending WH0..WH3 fields. Both baseline and candidate exit 0:
+16 injected comparisons, 2,048 byte/register restores and 16 rendered
+continuations across both PPUs/renderers. The candidate detects every fault
+and restores the saved output; baseline omissions remain observable. Tested
+CPU/audio source matches maintained source exactly. This covers the combined
+paths absent from the performance replay's source; it is not a new movie run.
+
 Combined committed-main QC (2026-10-19): frozen d196375a passes full any%
 129712/0 (234.77s), Waver 58109/0 (113.47s) and the 9BC8 left-ledge route
 69714/0 (136.79s), all native exits 0. The committed verifier build function
