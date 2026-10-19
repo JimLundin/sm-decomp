@@ -300,6 +300,16 @@ impl Game {
         u16::from_le_bytes([self.g_ram[0x7bb], self.g_ram[0x7bc]])
     }
 
+    /// Compressed tileset graphics address ($7E:07C3 in ram_map).
+    pub fn tileset_tiles_pointer(&self) -> u32 {
+        u32::from_le_bytes([self.g_ram[0x7c3], self.g_ram[0x7c4], self.g_ram[0x7c5], 0])
+    }
+
+    /// Compressed tileset palette address ($7E:07C6 in ram_map).
+    pub fn tileset_compr_palette_ptr(&self) -> u32 {
+        u32::from_le_bytes([self.g_ram[0x7c6], self.g_ram[0x7c7], self.g_ram[0x7c8], 0])
+    }
+
     /// reg_BG1VOFS ($7E:00B3 in ram_map).
     pub fn reg_bg1vofs(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0xb3], self.g_ram[0xb4]])

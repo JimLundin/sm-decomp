@@ -9824,18 +9824,12 @@ pub unsafe fn DoorTransitionFunction_PlaceSamusLoadTiles(game: &mut Game) -> Cor
         );
     }
     DecompressToMem(
-        Load24(
-            (&raw mut game.g_ram as *mut uint8).offset(0x7c3 as ::core::ffi::c_int as isize)
-                as *mut LongPtr,
-        ),
+        game.tileset_tiles_pointer(),
         (&raw mut game.g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize),
         game,
     );
     DecompressToMem(
-        Load24(
-            (&raw mut game.g_ram as *mut uint8).offset(0x7c6 as ::core::ffi::c_int as isize)
-                as *mut LongPtr,
-        ),
+        game.tileset_compr_palette_ptr(),
         (&raw mut game.g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize),
         game,
     );

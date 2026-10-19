@@ -13442,6 +13442,20 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Door tileset source pointers (2026-10-19): two safe, named 24-bit RAM
+getters replace the unconditional Load24 reads in PlaceSamusLoadTiles.
+The palette read remains after tiles decompression; destinations, callbacks
+and the held optional CRE branch are unchanged. Frozen 6222ac0f plus this
+change passes any% 129712/0 (222.17s) and Waver 58109/0 (105.65s), exits 0.
+A 20000/0 contextual prefix executes seven actual two-decompression blocks;
+all 128 KiB RAM, source cursor, failure flag and arguments match baseline at
+28 decompressor boundaries and final returns. Independent controls pass
+10,000 cases; premature palette capture, fourth-byte contamination and bank
+truncation mutants are detected. Source review, format/check, release build
+and progress pass. Own raw offsets -2, cast lines -2, Rust lines +4 provide
+the two documented getters; other counters are unchanged. Next: the covered
+background-command table. Broader Phase 3 and held coverage remain open.
+
 Samus animation frame commands (2026-10-19): commands 6/14/15 now use safe
 functions, named frame/health accessors and explicit word wrapping. Command
 14 receives its byte operand from the dispatcher. The health decision retains
