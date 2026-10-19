@@ -9981,17 +9981,12 @@ pub unsafe fn DoorTransitionFunction_LoadMoreThings_Async(game: &mut Game) -> Co
     return 0 as CoroutineRet;
 }
 pub unsafe fn ClearFxTilemap(game: &mut Game) {
-    let mut i: ::core::ffi::c_int = 959 as ::core::ffi::c_int;
-    while i >= 0 as ::core::ffi::c_int {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x4000 as ::core::ffi::c_int as isize)
-            as *mut Ram4000))
-            .xray_tilemaps[i as usize] = 6222 as uint16;
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x4000 as ::core::ffi::c_int as isize)
-            as *mut Ram4000))
-            .xray_tilemaps[(i + 960 as ::core::ffi::c_int) as usize] = 6222 as uint16;
-        i -= 1;
+    for i in (0..960).rev() {
+        let offset = i * 2;
+        game.g_ram[0x4000 + offset..0x4002 + offset].copy_from_slice(&6222u16.to_le_bytes());
+        game.g_ram[0x4780 + offset..0x4782 + offset].copy_from_slice(&6222u16.to_le_bytes());
     }
-    CopyToVramNow(0x5880 as uint16, 0x7e4000 as uint32, 0xf00 as uint16, game);
+    CopyToVramNow(0x5880, 0x7e4000, 0xf00, game);
 }
 pub unsafe fn ClearBg2Tilemap(game: &mut Game) {
     for i in (0..1024).rev() {

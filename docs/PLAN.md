@@ -13264,6 +13264,15 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+FX tilemap clear (2026-10-19): ClearFxTilemap uses byte-backed stores for
+the same 960 descending word pairs and subsequent VRAM upload. Frozen
+999bd9c4 plus this routine passes any% 129712/0 (276.86s) and Waver
+58109/0 (134.43s), native exits 0. An observed 20000/0 prefix executes
+seven calls, all 13,440 word stores and seven real VRAM uploads. Supporting
+ordered-write/full-RAM comparisons and independent review pass. Cargo
+fmt/check, release and progress pass; own raw offsets -2, cast lines -5,
+Rust lines -5, other counters unchanged. Probes remain outside tracked files.
+
 Morph Ball eye-beam fading (2026-10-19): rename EACB to
 HdmaobjPreInstr_MorphBallEyeBeamFading and name its dispatch constant.
 Byte-backed state retains the exact green-byte completion guard, updater-first
