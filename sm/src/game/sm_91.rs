@@ -2525,11 +2525,7 @@ unsafe fn Xray_CombinedMove(
         .offset(0x16402)
         .offset(r36 as isize) as int8 as ::core::ffi::c_int;
     if step != 0 {
-        let mut variable: *mut uint16 = if which_dir as ::core::ffi::c_int != 0 {
-            &raw mut y
-        } else {
-            &raw mut x
-        };
+        let mut variable: *mut uint16 = if which_dir { &raw mut y } else { &raw mut x };
         loop {
             if ((*variable as ::core::ffi::c_int + step) as int16 as ::core::ffi::c_int)
                 < 0 as ::core::ffi::c_int
@@ -3613,9 +3609,7 @@ pub unsafe fn HandleMiscSamusPalette(game: &mut Game) {
             *fresh34 = (*fresh34).wrapping_sub(1);
             let mut v2: bool = *fresh34 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                 != 0 as ::core::ffi::c_int;
-            if *((&raw mut game.g_ram as *mut uint8).offset(0xad0) as *mut uint16) == 0
-                || v2 as ::core::ffi::c_int != 0
-            {
+            if *((&raw mut game.g_ram as *mut uint8).offset(0xad0) as *mut uint16) == 0 || v2 {
                 *((&raw mut game.g_ram as *mut uint8).offset(0xad0) as *mut uint16) =
                     *((&raw mut game.g_ram as *mut uint8).offset(0xace) as *mut uint16);
                 let ref mut fresh35 =
@@ -3787,9 +3781,7 @@ pub unsafe fn Samus_HandleScrewAttackSpeedBoostingPals(game: &mut Game) -> uint8
             *fresh17 = (*fresh17).wrapping_sub(1);
             let mut v3: bool = *fresh17 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                 != 0 as ::core::ffi::c_int;
-            if *((&raw mut game.g_ram as *mut uint8).offset(0xad0) as *mut uint16) == 0
-                || v3 as ::core::ffi::c_int != 0
-            {
+            if *((&raw mut game.g_ram as *mut uint8).offset(0xad0) as *mut uint16) == 0 || v3 {
                 *((&raw mut game.g_ram as *mut uint8).offset(0xad0) as *mut uint16) = 4 as uint16;
                 let mut R36_0: uint16 = *(game.g_rom.offset(
                     (((0x91daa9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -3886,9 +3878,7 @@ pub unsafe fn Samus_HandleShinesparkingPals(game: &mut Game) -> uint8 {
     *fresh19 = (*fresh19).wrapping_sub(1);
     let mut v0: bool =
         *fresh19 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa68) as *mut uint16) == 0
-        || v0 as ::core::ffi::c_int != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xa68) as *mut uint16) == 0 || v0 {
         *((&raw mut game.g_ram as *mut uint8).offset(0xacc) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0xace) as *mut uint16) = 0 as uint16;
         return 0 as uint8;
@@ -3974,9 +3964,7 @@ pub unsafe fn Samus_HandleCrystalFlashPals(game: &mut Game) -> uint8 {
         let ref mut fresh15 = *((&raw mut game.g_ram as *mut uint8).offset(0xdf2) as *mut uint16);
         *fresh15 = (*fresh15).wrapping_sub(1);
         let mut v1: bool = (*fresh15 as int16 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xdf2) as *mut uint16) == 0
-            || v1 as ::core::ffi::c_int != 0
-        {
+        if *((&raw mut game.g_ram as *mut uint8).offset(0xdf2) as *mut uint16) == 0 || v1 {
             *((&raw mut game.g_ram as *mut uint8).offset(0xdf2) as *mut uint16) =
                 *((&raw mut (*(game.g_rom.offset(
                     (((0x91dc00 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -4060,9 +4048,7 @@ pub unsafe fn Samus_HandleXrayPals(game: &mut Game) -> uint8 {
                 *fresh21 = (*fresh21).wrapping_sub(1);
                 let mut v0: bool = *fresh21 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                     != 0 as ::core::ffi::c_int;
-                if *((&raw mut game.g_ram as *mut uint8).offset(0xad0) as *mut uint16) == 0
-                    || v0 as ::core::ffi::c_int != 0
-                {
+                if *((&raw mut game.g_ram as *mut uint8).offset(0xad0) as *mut uint16) == 0 || v0 {
                     *((&raw mut game.g_ram as *mut uint8).offset(0xad0) as *mut uint16) =
                         5 as uint16;
                     *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)

@@ -528,6 +528,63 @@ consolidation in this file; the commit contains only the six-function
 rewrite and this record. Temporary controls, probes, checkpoints and input
 assets remain uncommitted.
 
+Boolean truth-test cleanup (2026-10-19): replaced 128 conversions of
+Boolean locals to c_int followed by != 0 with direct Boolean conditions,
+across 85 routines in 14 files. Operand evaluation and short-circuit order
+are unchanged; no memory access or numeric arithmetic is replaced. The
+scanner excludes strings/comments and requires explicit bool declarations.
+The compiled survey additionally binds every candidate to core::primitive::bool
+at its actual use, catching type inference or shadowing mistakes. Both
+possible input values satisfy the old/new truth table at compile time.
+Sixteen conditions in the separately active Gunship coroutine routines remain
+unchanged. This value-equivalence cleanup does not qualify unvisited gameplay.
+
+The observed 144-site survey passes any% 129712/0
+(280.36s) and Warehouse 128547/0
+(313.00s); 19 of the 128 changed conditions
+execute, with matching old/new results. Missing required probes account for
+survey exits 2. Survey build 63.93s. The remaining changed conditions
+have the same compiler-confirmed Boolean type and complete two-value proof;
+their surrounding paths remain unvisited. Observed calls are listed below
+in source order, with first/last absolute input frames.
+
+Final frozen source is 37692bd6 plus only these 128 substitutions, recovered
+exactly by removing probes/type checks and retaining the 16 Gunship originals.
+Clean build 26.64s; final any% 129712/0
+(291.39s) and Warehouse 128547/0 (324.58s),
+native exits 0. Source/configuration stays fixed through build and replay;
+DLL/library, ROM and input hashes remain fixed too. The route retains the
+known fingernail diagnostic. Concurrent state/coroutine edits retain their
+separate integration checks.
+
+Formatting/check and normal release pass (42.15s reported). Net Rust
+lines -79, c_int casts -128 and cast-containing lines -89; unsafe
+functions and raw RAM expressions are unchanged (raw-offset line delta
+0). No helper or wrapper is added. Maintained edit to final result:
+363.38s.
+
+| Condition | Any% calls @ frames | Warehouse calls @ frames |
+| --- | --- | --- |
+| sm_82::GameState_32_MadeItToCeresElevator / v0 (site 0) | - | 59 @ 18936..18994 |
+| sm_86::EprojPreInstr_CeresElevatorPad / v3 (site 9) | 236 @ 8324..97889 | 59 @ 8324..8382 |
+| sm_86::EprojPreInstr_Pickup / v7 (site 12) | - | 26116 @ 37943..128546 |
+| sm_86::EprojPreInstr_Pickup / v7 (site 13) | - | 2468 @ 40434..126802 |
+| sm_88::VariaSuitPickup_2_LightBeamWidens / v0 (site 14) | - | 22 @ 122119..122140 |
+| sm_8b::CinematicFunc_Func1 / v0 (site 15) | 388 @ 168..97584 | 1 @ 168..168 |
+| sm_8b::CinematicFunction_Intro_LastMetroidCaptivity / v0 (site 16) | 118 @ 346..48857 | 59 @ 346..404 |
+| sm_8b::CinematicFunc_Intro_QueueGalaxyIsAtPeace / v0 (site 17) | 398 @ 406..49057 | 199 @ 406..604 |
+| sm_8b::CinematicFunc_Intro_FadeOut / v0 (site 18) | 478 @ 638..49329 | 239 @ 638..876 |
+| sm_8b::CinematicFunction_Intro_Func52 / v1 (site 19) | 254 @ 3984..52249 | 127 @ 3984..4110 |
+| sm_8b::CinematicSprPreInstr_C489 / v1 (site 20) | 174 @ 42336..94406 | 58 @ 19221..19283 |
+| sm_8b::CinematicFunction_Intro_Func84 / v0 (site 21) | 573 @ 42593..94791 | 191 @ 19485..19675 |
+| sm_8b::CinematicFunction_Intro_Func108 / v0 (site 22) | - | 63 @ 20679..20741 |
+| sm_a6::Ridley_Func_124 / v1 (site 73) | 2932 @ 36290..89741 | 143 @ 14368..15082 |
+| sm_a6::Ridley_Func_124 / v1 (site 74) | 280 @ 36290..89469 | 93 @ 14368..15074 |
+| sm_a8::MorphBallEye_Func_2 / v2 (site 123) | - | 32 @ 28195..28226 |
+| sm_a8::MorphBallEye_Func_2 / v3 (site 124) | - | 31 @ 28195..28225 |
+| sm_a8::MorphBallEye_Func_4 / v2 (site 125) | - | 32 @ 28504..28535 |
+| sm_a8::MorphBallEye_Func_4 / v3 (site 126) | - | 31 @ 28504..28534 |
+
 ## Validation strategy (2026-10-19)
 
 User priority: shorten the complete edit/build/result cycle. Replaying the

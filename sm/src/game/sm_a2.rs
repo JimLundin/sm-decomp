@@ -7373,7 +7373,7 @@ pub unsafe fn MaridiaLargeSnail_Func_5(game: &mut Game) {
         (*E).mlsl_var_C = (*E).mlsl_var_C.wrapping_sub(1);
         let mut v4: bool = (*E).mlsl_var_C as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int;
-        if v4 as ::core::ffi::c_int != 0
+        if v4
             && {
                 (*E).mlsl_var_C = 0 as uint16;
                 IsSamusWithinEnemy_X(

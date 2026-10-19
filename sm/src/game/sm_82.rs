@@ -1381,9 +1381,7 @@ pub unsafe fn GameState_32_MadeItToCeresElevator(game: &mut Game) -> CoroutineRe
     *fresh124 = (*fresh124).wrapping_sub(1);
     let mut v0: bool =
         *fresh124 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xaa0) as *mut uint16) == 0
-        || v0 as ::core::ffi::c_int != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xaa0) as *mut uint16) == 0 || v0 {
         let ref mut fresh125 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
         *fresh125 = (*fresh125).wrapping_add(1);
         *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
@@ -6183,9 +6181,7 @@ pub unsafe fn EquipmentScreenDisplayReserves_PaletteSetup(game: &mut Game) -> ui
         *fresh40 = (*fresh40).wrapping_sub(1);
         let mut v0: bool = *fresh40 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x72f) as *mut uint16) == 0
-            || v0 as ::core::ffi::c_int != 0
-        {
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x72f) as *mut uint16) == 0 || v0 {
             let ref mut fresh41 =
                 *((&raw mut game.g_ram as *mut uint8).offset(0x743) as *mut uint16);
             *fresh41 = (*fresh41).wrapping_add(1);
@@ -7848,9 +7844,7 @@ pub unsafe fn GameState_22_SamusNoHealth_Dying(game: &mut Game) -> CoroutineRet 
     *fresh113 = (*fresh113).wrapping_sub(1);
     let mut v0: bool =
         *fresh113 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xde8) as *mut uint16) == 0
-        || v0 as ::core::ffi::c_int != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xde8) as *mut uint16) == 0 || v0 {
         let ref mut fresh114 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
         *fresh114 = (*fresh114).wrapping_add(1);
     }

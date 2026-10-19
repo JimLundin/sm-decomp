@@ -6350,7 +6350,7 @@ pub unsafe fn MotherBrain_DrainedByShitroid_7(game: &mut Game) {
     let mut v2: bool = (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
     let mut v3: uint16 = 0;
-    if v2 as ::core::ffi::c_int != 0 && {
+    if v2 && {
         (*E).mbn_var_F = 16 as uint16;
         v3 = ((*E).mbn_var_37 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16;
         (*E).mbn_var_37 = v3;
@@ -6446,7 +6446,7 @@ pub unsafe fn MotherBrain_Phase2_Revive_3(game: &mut Game) {
     let mut v1: bool = (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
     let mut v2: uint16 = 0;
-    if v1 as ::core::ffi::c_int != 0 && {
+    if v1 && {
         (*E).mbn_var_F = 16 as uint16;
         v2 = ((*E).mbn_var_37 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16;
         (*E).mbn_var_37 = v2;
@@ -6496,7 +6496,7 @@ pub unsafe fn MotherBrain_Phase2_Revive_6(game: &mut Game) {
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     let mut v1: bool = (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v1 as ::core::ffi::c_int != 0
+    if v1
         && MotherBrain_MakeWalkForwards(4 as uint16, 0x50 as uint16, game) as ::core::ffi::c_int
             & 1 as ::core::ffi::c_int
             != 0
@@ -8014,7 +8014,7 @@ pub unsafe fn ShitroidInCutscene_UnloadShitroid(mut k: uint16, game: &mut Game) 
     (*E).sice_var_F = (*E).sice_var_F.wrapping_sub(1);
     let mut v2: bool = (*E).sice_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int != 0
+    if v2
         && ProcessSpriteTilesTransfers(
             0xa9 as uint8,
             addr_stru_A98FC7 as ::core::ffi::c_int as uint16,

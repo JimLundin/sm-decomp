@@ -1987,7 +1987,7 @@ pub unsafe fn SpikeyPlatform_Func_5(mut k: uint16, game: &mut Game) -> uint16 {
         let mut v7: uint16 = (v6 as ::core::ffi::c_int
             - *((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16)
                 as ::core::ffi::c_int) as uint16;
-        if v3 as ::core::ffi::c_int != 0
+        if v3
             || v7 as ::core::ffi::c_int == (*E).base.y_height as ::core::ffi::c_int
             || (v7 as ::core::ffi::c_int) < (*E).base.y_height as ::core::ffi::c_int
         {
@@ -5856,15 +5856,13 @@ pub unsafe fn Ridley_Func_48(mut rect: Rect16U, game: &mut Game) -> uint8 {
     let mut v2: bool = (v1 as ::core::ffi::c_int) < 4 as ::core::ffi::c_int;
     let mut v3: uint16 = (v1 as ::core::ffi::c_int - 4 as ::core::ffi::c_int) as uint16;
     let mut result: uint8 = 0 as uint8;
-    if v2 as ::core::ffi::c_int != 0 || (v3 as ::core::ffi::c_int) < rect.w as ::core::ffi::c_int {
+    if v2 || (v3 as ::core::ffi::c_int) < rect.w as ::core::ffi::c_int {
         let mut v4: uint16 = abs16(
             ((*E).ridley_var_44 as ::core::ffi::c_int - rect.y as ::core::ffi::c_int) as uint16,
         );
         v2 = (v4 as ::core::ffi::c_int) < 4 as ::core::ffi::c_int;
         let mut v5: uint16 = (v4 as ::core::ffi::c_int - 4 as ::core::ffi::c_int) as uint16;
-        if v2 as ::core::ffi::c_int != 0
-            || (v5 as ::core::ffi::c_int) < rect.h as ::core::ffi::c_int
-        {
+        if v2 || (v5 as ::core::ffi::c_int) < rect.h as ::core::ffi::c_int {
             return 1 as uint8;
         }
     }
@@ -8004,9 +8002,7 @@ pub unsafe fn Ridley_Func_90(mut out: *mut Point16U, game: &mut Game) -> uint8 {
                 - *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16)
                     .offset(v2 as isize) as ::core::ffi::c_int)
                 as uint16;
-            if v4 as ::core::ffi::c_int != 0
-                || (v5 as ::core::ffi::c_int) < rect.w as ::core::ffi::c_int
-            {
+            if v4 || (v5 as ::core::ffi::c_int) < rect.w as ::core::ffi::c_int {
                 let mut v6: uint16 = abs16(
                     (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
                         .offset(v2 as isize) as ::core::ffi::c_int
@@ -8019,9 +8015,7 @@ pub unsafe fn Ridley_Func_90(mut out: *mut Point16U, game: &mut Game) -> uint8 {
                     - *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
                         .offset(v2 as isize) as ::core::ffi::c_int)
                     as uint16;
-                if v4 as ::core::ffi::c_int != 0
-                    || (v7 as ::core::ffi::c_int) < rect.h as ::core::ffi::c_int
-                {
+                if v4 || (v7 as ::core::ffi::c_int) < rect.h as ::core::ffi::c_int {
                     break;
                 }
             }
@@ -9137,9 +9131,7 @@ pub unsafe fn Ridley_Func_122(mut rect: Rect16U, game: &mut Game) -> uint16 {
                     - *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16)
                         .offset(v1 as isize) as ::core::ffi::c_int)
                     as uint16;
-                if v4 as ::core::ffi::c_int != 0
-                    || (v5 as ::core::ffi::c_int) < rect.w as ::core::ffi::c_int
-                {
+                if v4 || (v5 as ::core::ffi::c_int) < rect.w as ::core::ffi::c_int {
                     let mut v6: uint16 = abs16(
                         (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
                             .offset(v1 as isize) as ::core::ffi::c_int
@@ -9152,9 +9144,7 @@ pub unsafe fn Ridley_Func_122(mut rect: Rect16U, game: &mut Game) -> uint16 {
                         - *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
                             .offset(v1 as isize) as ::core::ffi::c_int)
                         as uint16;
-                    if v4 as ::core::ffi::c_int != 0
-                        || (v7 as ::core::ffi::c_int) < rect.h as ::core::ffi::c_int
-                    {
+                    if v4 || (v7 as ::core::ffi::c_int) < rect.h as ::core::ffi::c_int {
                         break;
                     }
                 }
@@ -9207,7 +9197,7 @@ pub unsafe fn Ridley_Func_124(mut rect: Rect16U, game: &mut Game) -> uint8 {
     let mut v2: uint16 = (v0 as ::core::ffi::c_int
         - *((&raw mut game.g_ram as *mut uint8).offset(0xafe) as *mut uint16) as ::core::ffi::c_int)
         as uint16;
-    if v1 as ::core::ffi::c_int != 0 || (v2 as ::core::ffi::c_int) < rect.w as ::core::ffi::c_int {
+    if v1 || (v2 as ::core::ffi::c_int) < rect.w as ::core::ffi::c_int {
         let mut v3: uint16 = abs16(
             (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)
                 as ::core::ffi::c_int
@@ -9219,9 +9209,7 @@ pub unsafe fn Ridley_Func_124(mut rect: Rect16U, game: &mut Game) -> uint8 {
         let mut v4: uint16 = (v3 as ::core::ffi::c_int
             - *((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16)
                 as ::core::ffi::c_int) as uint16;
-        if v1 as ::core::ffi::c_int != 0
-            || (v4 as ::core::ffi::c_int) < rect.h as ::core::ffi::c_int
-        {
+        if v1 || (v4 as ::core::ffi::c_int) < rect.h as ::core::ffi::c_int {
             return 1 as uint8;
         }
     }

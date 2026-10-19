@@ -4889,7 +4889,7 @@ pub unsafe fn Phantoon_Func_7(mut k: uint16, game: &mut Game) {
     (*E).phant_var_B = (*E).phant_var_B.wrapping_sub(1);
     let mut v4: bool = (*E).phant_var_B as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v3 as ::core::ffi::c_int != 0 || v4 as ::core::ffi::c_int != 0 {
+    if v3 || v4 {
         if (*E).phant_var_C as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
         {
@@ -4898,7 +4898,7 @@ pub unsafe fn Phantoon_Func_7(mut k: uint16, game: &mut Game) {
             let mut v8: bool = (*E).phant_var_C as ::core::ffi::c_int
                 & 0x8000 as ::core::ffi::c_int
                 != 0 as ::core::ffi::c_int;
-            if v3 as ::core::ffi::c_int != 0 || v8 as ::core::ffi::c_int != 0 {
+            if v3 || v8 {
                 (*E).phant_var_C = -(1 as ::core::ffi::c_int) as uint16;
                 (*E).phant_var_B = *(RomPtr_A7(
                     *(game.g_rom.offset(
@@ -5392,7 +5392,7 @@ pub unsafe fn Phantoon_Spawn8FireballsInCircleAtStart(mut k: uint16, game: &mut 
     (*EK).phant_var_E = (*EK).phant_var_E.wrapping_sub(1);
     let mut v3: bool = (*EK).phant_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+    if v2 || v3 {
         let mut E0: *mut Enemy_Phantoon = Get_Phantoon(0 as ::core::ffi::c_int, game);
         SpawnEprojWithGfx(
             (*E0).phant_var_A,
@@ -5429,7 +5429,7 @@ pub unsafe fn Phantoon_WaitBetweenSpawningAndSpinningFireballs(mut k: uint16, ga
     (*E).phant_var_E = (*E).phant_var_E.wrapping_sub(1);
     let mut v3: bool = (*E).phant_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+    if v2 || v3 {
         (*E).phant_var_E = 240 as uint16;
         (*E).phant_var_B = 1 as uint16;
         (*E).phant_var_F =
@@ -5442,7 +5442,7 @@ pub unsafe fn Phantoon_SpawnFireballsBeforeFight(mut k: uint16, game: &mut Game)
     (*EK).phant_var_E = (*EK).phant_var_E.wrapping_sub(1);
     let mut v4: bool = (*EK).phant_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v3 as ::core::ffi::c_int != 0 || v4 as ::core::ffi::c_int != 0 {
+    if v3 || v4 {
         (*EK).phant_var_B = 0 as uint16;
         let ref mut fresh30 = *((&raw mut game.g_ram as *mut uint8).offset(0x1988) as *mut uint16);
         *fresh30 = (*fresh30 as ::core::ffi::c_int | 0x4000 as ::core::ffi::c_int) as uint16;
@@ -5475,7 +5475,7 @@ pub unsafe fn Phantoon_WavyFadeIn(mut k: uint16, game: &mut Game) {
         (*E_0).phant_var_E = (*E_0).phant_var_E.wrapping_sub(1);
         let mut v3: bool = (*E_0).phant_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int;
-        if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+        if v2 || v3 {
             (*Get_Phantoon(0xc0 as ::core::ffi::c_int, game)).phant_var_E = 1 as uint16;
         }
     };
@@ -5486,7 +5486,7 @@ pub unsafe fn Phantoon_PickPatternForRound1(mut k: uint16, game: &mut Game) {
     (*EK).phant_var_E = (*EK).phant_var_E.wrapping_sub(1);
     let mut v3: bool = (*EK).phant_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+    if v2 || v3 {
         let mut E1: *mut Enemy_Phantoon = Get_Phantoon(0x40 as ::core::ffi::c_int, game);
         (*E1).phant_parameter_1 = 0 as uint16;
         (*EK).phant_var_F =
@@ -5530,7 +5530,7 @@ pub unsafe fn Phantoon_MovePhantoonInFigure8ThenOpenEye(mut k: uint16, game: &mu
     (*E).phant_var_A = (*E).phant_var_A.wrapping_sub(1);
     let mut v3: bool = (*E).phant_var_A as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+    if v2 || v3 {
         (*Get_Phantoon(k as ::core::ffi::c_int, game)).phant_var_F =
             (0xa7d4a8 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E).base.instruction_timer = 1 as uint16;
@@ -5545,7 +5545,7 @@ pub unsafe fn Phantoon_EyeFollowsSamusUntilTimerRunsOut(mut k: uint16, game: &mu
     (*EK).phant_var_E = (*EK).phant_var_E.wrapping_sub(1);
     let mut v3: bool = (*EK).phant_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+    if v2 || v3 {
         (*Get_Phantoon(k as ::core::ffi::c_int + 128 as ::core::ffi::c_int, game)).phant_var_B =
             0 as uint16;
         let mut E2: *mut Enemy_Phantoon = Get_Phantoon(0x80 as ::core::ffi::c_int, game);
@@ -5588,7 +5588,7 @@ pub unsafe fn Phantoon_IsSwooping(mut k: uint16, game: &mut Game) {
     (*EK).phant_var_E = (*EK).phant_var_E.wrapping_sub(1);
     let mut v3: bool = (*EK).phant_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+    if v2 || v3 {
         (*EK).phant_var_F =
             (0xa7d6b9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         let ref mut fresh27 = *((&raw mut game.g_ram as *mut uint8).offset(0x1988) as *mut uint16);
@@ -5622,7 +5622,7 @@ pub unsafe fn Phantoon_WaitAfterFadeOut(mut k: uint16, game: &mut Game) {
     (*E).phant_var_E = (*E).phant_var_E.wrapping_sub(1);
     let mut v3: bool = (*E).phant_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+    if v2 || v3 {
         (*E).phant_var_F =
             (0xa7d6e2 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
@@ -5685,7 +5685,7 @@ pub unsafe fn Phantoon_FollowSamusWithEyeDuringFireballRain(mut k: uint16, game:
     (*EK).phant_var_E = (*EK).phant_var_E.wrapping_sub(1);
     let mut v3: bool = (*EK).phant_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+    if v2 || v3 {
         (*Get_Phantoon(k as ::core::ffi::c_int + 128 as ::core::ffi::c_int, game)).phant_var_B =
             0 as uint16;
         let mut E2: *mut Enemy_Phantoon = Get_Phantoon(0x80 as ::core::ffi::c_int, game);
@@ -5733,7 +5733,7 @@ pub unsafe fn Phantoon_SpawnRainingFireballs(mut k: uint16, game: &mut Game) {
     (*EK).phant_var_E = (*EK).phant_var_E.wrapping_sub(1);
     let mut v3: bool = (*EK).phant_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+    if v2 || v3 {
         let mut a: uint16 =
             (NextRandom(game) as ::core::ffi::c_int & 7 as ::core::ffi::c_int) as uint16;
         let mut v4: ::core::ffi::c_int =
@@ -5775,7 +5775,7 @@ pub unsafe fn Phantoon_FadeOutBeforeFirstFireballRain(mut k: uint16, game: &mut 
     (*E).phant_var_A = (*E).phant_var_A.wrapping_sub(1);
     let mut v3: bool = (*E).phant_var_A as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+    if v2 || v3 {
         (*Get_Phantoon(0x80 as ::core::ffi::c_int, game)).phant_var_A = 0 as uint16;
         (*Get_Phantoon(k as ::core::ffi::c_int, game)).phant_var_F =
             (0xa7d73f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -5805,7 +5805,7 @@ pub unsafe fn Phantoon_MoveEnragedPhantoonToTopCenter(mut k: uint16, game: &mut 
     (*E).phant_var_E = (*E).phant_var_E.wrapping_sub(1);
     let mut v3: bool = (*E).phant_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+    if v2 || v3 {
         (*E).phant_var_F =
             (0xa7d891 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         let mut E_0: *mut Enemy_Phantoon = Get_Phantoon(0 as ::core::ffi::c_int, game);
@@ -5832,7 +5832,7 @@ pub unsafe fn Phantoon_Enraged(mut k: uint16, game: &mut Game) {
     (*E).phant_var_E = (*E).phant_var_E.wrapping_sub(1);
     let mut v3: bool = (*E).phant_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+    if v2 || v3 {
         if (*Get_Phantoon(0x40 as ::core::ffi::c_int, game)).phant_var_F as ::core::ffi::c_int
             & 1 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
@@ -5938,7 +5938,7 @@ pub unsafe fn Phantoon_DyingPhantoonExplosions(mut k: uint16, game: &mut Game) {
     (*EK).phant_var_E = (*EK).phant_var_E.wrapping_sub(1);
     let mut v3: bool = (*EK).phant_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+    if v2 || v3 {
         let mut E2: *mut Enemy_Phantoon = Get_Phantoon(0x80 as ::core::ffi::c_int, game);
         let mut v5: uint16 =
             (4 as ::core::ffi::c_int * (*E2).phant_var_F as ::core::ffi::c_int) as uint16;
@@ -6670,7 +6670,7 @@ pub unsafe fn Etecoon_Func_4(mut k: uint16, game: &mut Game) {
             let mut v3: bool = (*E).etecoon_var_E as ::core::ffi::c_int
                 & 0x8000 as ::core::ffi::c_int
                 != 0 as ::core::ffi::c_int;
-            if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+            if v2 || v3 {
                 (*E).base.current_instruction =
                     addr_kEtecoon_Ilist_E854 as ::core::ffi::c_int as uint16;
                 (*E).etecoon_var_F =
@@ -6696,7 +6696,7 @@ pub unsafe fn Etecoon_Func_5(mut k: uint16, game: &mut Game) {
     (*E).etecoon_var_E = (*E).etecoon_var_E.wrapping_sub(1);
     let mut v3: bool = (*E).etecoon_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+    if v2 || v3 {
         (*E).etecoon_var_A = g_word_A7E900;
         (*E).etecoon_var_B = g_word_A7E902;
         (*E).base.current_instruction = ((*E).base.current_instruction as ::core::ffi::c_int
@@ -6760,7 +6760,7 @@ pub unsafe fn Etecoon_Func_7(mut k: uint16, game: &mut Game) {
     (*E).etecoon_var_E = (*E).etecoon_var_E.wrapping_sub(1);
     let mut v3: bool = (*E).etecoon_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+    if v2 || v3 {
         (*E).base.current_instruction = ((*E).base.current_instruction as ::core::ffi::c_int
             + 2 as ::core::ffi::c_int) as uint16;
         (*E).base.instruction_timer = 1 as uint16;
@@ -6856,7 +6856,7 @@ pub unsafe fn Etecoon_Func_11(mut k: uint16, game: &mut Game) {
     (*E).etecoon_var_E = (*E).etecoon_var_E.wrapping_sub(1);
     let mut v3: bool = (*E).etecoon_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+    if v2 || v3 {
         if (*E).etecoon_parameter_1 != 0 {
             (*E).base.current_instruction =
                 addr_kEtecoon_Ilist_E894 as ::core::ffi::c_int as uint16;
@@ -6888,7 +6888,7 @@ pub unsafe fn Etecoon_Func_12(mut k: uint16, game: &mut Game) {
     (*E).etecoon_var_E = (*E).etecoon_var_E.wrapping_sub(1);
     let mut v3: bool = (*E).etecoon_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+    if v2 || v3 {
         (*E).etecoon_var_A = g_word_A7E900;
         (*E).etecoon_var_B = g_word_A7E902;
         funcs_A2A79[*(&raw mut (*E).etecoon_parameter_2 as *mut uint8).offset(0) as usize]
@@ -7041,7 +7041,7 @@ pub unsafe fn Etecoon_Func_23(mut k: uint16, game: &mut Game) {
     (*E).etecoon_var_E = (*E).etecoon_var_E.wrapping_sub(1);
     let mut v3: bool = (*E).etecoon_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+    if v2 || v3 {
         let mut v4: uint16 =
             ((*E).etecoon_parameter_1 as ::core::ffi::c_int + 256 as ::core::ffi::c_int) as uint16;
         (*E).etecoon_parameter_1 = v4;
@@ -7085,7 +7085,7 @@ pub unsafe fn Etecoon_Func_24(mut k: uint16, game: &mut Game) {
     (*E).etecoon_var_E = (*E).etecoon_var_E.wrapping_sub(1);
     let mut v3: bool = (*E).etecoon_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+    if v2 || v3 {
         if IsSamusWithinEnemy_Y(k, 0x40 as uint16, game) as ::core::ffi::c_int != 0
             && IsSamusWithinEnemy_X(k, 0x30 as uint16, game) as ::core::ffi::c_int != 0
         {

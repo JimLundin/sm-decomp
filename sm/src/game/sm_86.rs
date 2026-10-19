@@ -3646,7 +3646,7 @@ pub unsafe fn EprojPreInstr_PhantoonStartingFireballs2(mut k: uint16, game: &mut
     *fresh131 = (*fresh131).wrapping_sub(1);
     let mut v3: bool =
         *fresh131 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+    if v2 || v3 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16).offset(v1 as isize) =
             (0x869a01 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v1 as isize) =
@@ -3744,7 +3744,7 @@ pub unsafe fn EprojPreInstr_PhantoonDestroyableFireballs(mut k: uint16, game: &m
         (pt.x as ::core::ffi::c_int
             + (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
                 .x_pos as ::core::ffi::c_int) as uint16;
-    if v3 as ::core::ffi::c_int != 0
+    if v3
         || v4 as ::core::ffi::c_int - 256 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0
         || {
             v3 = ((pt.y as ::core::ffi::c_int
@@ -3787,7 +3787,7 @@ pub unsafe fn EprojPreInstr_PhantoonDestroyableFireballs_2(mut k: uint16, game: 
         *fresh125 = (*fresh125).wrapping_sub(1);
         v3 = *fresh125 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int;
-        if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+        if v2 || v3 {
             QueueSfx3_Max6(0x1d as uint16, game);
             current_block = 8066597768905169940;
         } else {
@@ -3847,7 +3847,7 @@ pub unsafe fn EprojPreInstr_PhantoonDestroyableFireballs_3(mut k: uint16, game: 
         (pt.x as ::core::ffi::c_int
             + (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
                 .x_pos as ::core::ffi::c_int) as uint16;
-    if v3 as ::core::ffi::c_int != 0
+    if v3
         || v4 as ::core::ffi::c_int - 256 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0
         || {
             v3 = ((pt.y as ::core::ffi::c_int
@@ -4543,7 +4543,7 @@ pub unsafe fn EprojPreInstr_CeresElevatorPad(mut k: uint16, game: &mut Game) {
             *fresh112 = (*fresh112).wrapping_sub(1);
             v2 as ::core::ffi::c_int != 0
         }
-        || v3 as ::core::ffi::c_int != 0
+        || v3
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize) =
             game.samus_y_pos().wrapping_add(28);
@@ -7217,7 +7217,7 @@ unsafe fn Eproj_CheckForCollisionWithSamus(mut v0: uint16, game: &mut Game) -> u
         - *((&raw mut game.g_ram as *mut uint8).offset(0xafe) as *mut uint16) as ::core::ffi::c_int)
         as uint16;
     let mut result: uint8 = 0 as uint8;
-    if v2 as ::core::ffi::c_int != 0 || (v3 as ::core::ffi::c_int) < rect.w as ::core::ffi::c_int {
+    if v2 || (v3 as ::core::ffi::c_int) < rect.w as ::core::ffi::c_int {
         let mut v4: uint16 = abs16(
             (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)
                 as ::core::ffi::c_int
@@ -7229,9 +7229,7 @@ unsafe fn Eproj_CheckForCollisionWithSamus(mut v0: uint16, game: &mut Game) -> u
         let mut v5: uint16 = (v4 as ::core::ffi::c_int
             - *((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16)
                 as ::core::ffi::c_int) as uint16;
-        if v2 as ::core::ffi::c_int != 0
-            || (v5 as ::core::ffi::c_int) < rect.h as ::core::ffi::c_int
-        {
+        if v2 || (v5 as ::core::ffi::c_int) < rect.h as ::core::ffi::c_int {
             return 1 as uint8;
         }
     }
@@ -10715,14 +10713,14 @@ pub unsafe fn EprojPreInstr_Pickup(mut k: uint16, game: &mut Game) {
                 );
                 let mut v7: bool = v6 < game.samus_x_radius();
                 let mut v8: uint16 = v6.wrapping_sub(game.samus_x_radius());
-                if v7 as ::core::ffi::c_int != 0 || v8 < varE20 {
+                if v7 || v8 < varE20 {
                     let mut v9: uint16 = abs16(
                         game.samus_y_pos()
                             .wrapping_sub(game.enemy_projectile_y_pos(k)),
                     );
                     v7 = v9 < game.samus_y_radius();
                     let mut v10: uint16 = v9.wrapping_sub(game.samus_y_radius());
-                    if v7 as ::core::ffi::c_int != 0 || v10 < varE22 {
+                    if v7 || v10 < varE22 {
                         off_86F0AD[(*((&raw mut game.g_ram as *mut uint8).offset(0x1aff)
                             as *mut uint16)
                             .offset(v5 as isize)

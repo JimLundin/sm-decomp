@@ -1890,9 +1890,7 @@ pub unsafe fn Samus_DrawStartingDeathAnim(game: &mut Game) {
     *fresh149 = (*fresh149).wrapping_sub(1);
     let mut v0: bool =
         *fresh149 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa94) as *mut uint16) == 0
-        || v0 as ::core::ffi::c_int != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xa94) as *mut uint16) == 0 || v0 {
         let ref mut fresh150 = *((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16);
         *fresh150 = (*fresh150).wrapping_add(1);
         Samus_HandleAnimDelay(game);
@@ -8070,7 +8068,7 @@ pub unsafe fn HandleChargingBeamGfxAudio(game: &mut Game) {
                 *fresh17 = (*fresh17).wrapping_sub(1);
                 let mut v8: bool = *fresh17 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                     != 0 as ::core::ffi::c_int;
-                if v7 as ::core::ffi::c_int != 0 || v8 as ::core::ffi::c_int != 0 {
+                if v7 || v8 {
                     let ref mut fresh20 = *(((&raw mut game.g_ram as *mut uint8).offset(0xcd6)
                         as *mut uint16 as *mut uint8)
                         .offset(i as isize)
@@ -9971,9 +9969,7 @@ pub unsafe fn Samus_MoveHandlerShinesparkWindup(game: &mut Game) {
     *fresh124 = (*fresh124).wrapping_sub(1);
     let mut v0: bool =
         *fresh124 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xaa2) as *mut uint16) == 0
-        || v0 as ::core::ffi::c_int != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xaa2) as *mut uint16) == 0 || v0 {
         if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) as ::core::ffi::c_int
             == 4 as ::core::ffi::c_int
         {
@@ -10345,9 +10341,7 @@ pub unsafe fn Samus_MoveHandler_ShinesparkCrashEchoCircle(game: &mut Game) {
     *fresh117 = (*fresh117).wrapping_sub(1);
     let mut v0: bool =
         *fresh117 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xaa2) as *mut uint16) == 0
-        || v0 as ::core::ffi::c_int != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xaa2) as *mut uint16) == 0 || v0 {
         *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) =
             (0x90d40d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0xa5c) as *mut uint16) =
@@ -10692,7 +10686,7 @@ pub unsafe fn SamusMoveHandler_CrystalFlashMain_0(game: &mut Game) {
             < 0 as ::core::ffi::c_int;
         let ref mut fresh110 = *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16);
         *fresh110 = (*fresh110).wrapping_sub(1);
-        if *fresh110 == 0 || v0 as ::core::ffi::c_int != 0 {
+        if *fresh110 == 0 || v0 {
             *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) = 10 as uint16;
             let ref mut fresh111 =
                 *((&raw mut game.g_ram as *mut uint8).offset(0xdea) as *mut uint16);
@@ -10714,7 +10708,7 @@ pub unsafe fn SamusMoveHandler_CrystalFlashMain_1(game: &mut Game) {
             < 0 as ::core::ffi::c_int;
         let ref mut fresh107 = *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16);
         *fresh107 = (*fresh107).wrapping_sub(1);
-        if *fresh107 == 0 || v0 as ::core::ffi::c_int != 0 {
+        if *fresh107 == 0 || v0 {
             *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) = 10 as uint16;
             let ref mut fresh108 =
                 *((&raw mut game.g_ram as *mut uint8).offset(0xdea) as *mut uint16);
@@ -10736,7 +10730,7 @@ pub unsafe fn SamusMoveHandler_CrystalFlashMain_2(game: &mut Game) {
             < 0 as ::core::ffi::c_int;
         let ref mut fresh105 = *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16);
         *fresh105 = (*fresh105).wrapping_sub(1);
-        if *fresh105 == 0 || v0 as ::core::ffi::c_int != 0 {
+        if *fresh105 == 0 || v0 {
             *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) =
                 (0x90d75b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0xa5c) as *mut uint16) =
@@ -11041,7 +11035,7 @@ pub unsafe fn ProjPreInstr_WaveSba(mut k: uint16, game: &mut Game) {
             *fresh34 = (*fresh34).wrapping_sub(1);
             v2 as ::core::ffi::c_int != 0
         }
-        || v3 as ::core::ffi::c_int != 0
+        || v3
     {
         QueueSfx1_Max6(0x29 as uint16, game);
         ClearProjectile(k, game);

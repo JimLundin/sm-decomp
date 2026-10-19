@@ -2256,7 +2256,7 @@ pub unsafe fn MorphBallEye_Func_2(mut k: uint16, game: &mut Game) {
     (*E).mbee_var_E = (*E).mbee_var_E.wrapping_sub(1);
     let mut v3: bool = (*E).mbee_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+    if v2 || v3 {
         QueueSfx2_Max6(0x17 as uint16, game);
         SpawnMorphBallEyeBeamHdma(game);
         (*E).mbee_var_F = (0xa89160 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -2312,7 +2312,7 @@ pub unsafe fn MorphBallEye_Func_4(mut k: uint16, game: &mut Game) {
     (*E).mbee_var_E = (*E).mbee_var_E.wrapping_sub(1);
     let mut v3: bool = (*E).mbee_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+    if v2 || v3 {
         (*E).mbee_var_F = (0xa890f1 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
@@ -5999,7 +5999,7 @@ pub unsafe fn MaridiaFloater_Func_3(mut k: uint16, game: &mut Game) {
     (*E).mfr_var_E = (*E).mfr_var_E.wrapping_sub(1);
     let mut v3: bool = (*E).mfr_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+    if v2 || v3 {
         let mut v4: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
             .offset((v4 + 104 as ::core::ffi::c_int) as isize) = 1 as uint16;
@@ -6017,7 +6017,7 @@ pub unsafe fn MaridiaFloater_Func_4(mut k: uint16, game: &mut Game) {
     (*E).mfr_var_E = (*E).mfr_var_E.wrapping_sub(1);
     let mut v3: bool = (*E).mfr_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+    if v2 || v3 {
         (*E).mfr_var_F = (0xa8c2cf as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E).mfr_var_A = g_word_A8C1C5;
         (*E).mfr_var_B = g_word_A8C1C7;
@@ -6039,7 +6039,7 @@ pub unsafe fn MaridiaFloater_Func_5(mut k: uint16, game: &mut Game) {
         (*E).mfr_var_D = (*E).mfr_var_D.wrapping_sub(1);
         let mut v3: bool = (*E).mfr_var_D as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int;
-        if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+        if v2 || v3 {
             (*E).mfr_var_D = 5 as uint16;
             let mut v4: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
             let mut v5: uint16 = (g_word_A8C1A1[(*E).mfr_var_C as usize] as ::core::ffi::c_int
@@ -6171,7 +6171,7 @@ pub unsafe fn MaridiaFloater_Func_7(mut k: uint16, game: &mut Game) {
         (*E).mfr_var_D = (*E).mfr_var_D.wrapping_sub(1);
         let mut v3: bool = (*E).mfr_var_D as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int;
-        if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+        if v2 || v3 {
             (*E).mfr_var_D = 5 as uint16;
             let mut v4: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
             let mut v5: uint16 = (g_word_A8C1A1[(*E).mfr_var_C as usize] as ::core::ffi::c_int
@@ -6316,7 +6316,7 @@ pub unsafe fn MaridiaFloater_Func_10(mut k: uint16, game: &mut Game) {
     (*E).mfr_var_E = (*E).mfr_var_E.wrapping_sub(1);
     let mut v3: bool = (*E).mfr_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+    if v2 || v3 {
         (*E).mfr_var_F = (0xa8c51d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E).mfr_var_A = g_word_A8C1C1;
         (*E).mfr_var_B = g_word_A8C1C3;
@@ -6394,7 +6394,7 @@ pub unsafe fn MaridiaFloater_Func_13(mut k: uint16, game: &mut Game) {
     (*E).mfr_var_E = (*E).mfr_var_E.wrapping_sub(1);
     let mut v3: bool = (*E).mfr_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int;
-    if v2 as ::core::ffi::c_int != 0 || v3 as ::core::ffi::c_int != 0 {
+    if v2 || v3 {
         let mut v4: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
             .offset((v4 + 100 as ::core::ffi::c_int) as isize) = 0 as uint16;

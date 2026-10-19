@@ -6570,9 +6570,7 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> uint8 {
                         .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                         .wrapping_sub(1 as usize) as isize,
                 ) as ::core::ffi::c_int) as uint8;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16) as uint8 == 0
-        || v0 as ::core::ffi::c_int != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16) as uint8 == 0 || v0 {
         *((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16) =
             -(256 as ::core::ffi::c_int) as uint16;
     } else {

@@ -612,9 +612,7 @@ pub unsafe fn HandleSamusDeathSequence(game: &mut Game) -> uint16 {
         *fresh6 = (*fresh6).wrapping_sub(1);
         let mut v0: bool =
             *fresh6 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) == 0
-            || v0 as ::core::ffi::c_int != 0
-        {
+        if *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) == 0 || v0 {
             if *((&raw mut game.g_ram as *mut uint8).offset(0xde4) as *mut uint16) != 0 {
                 *((&raw mut game.g_ram as *mut uint8).offset(0xde4) as *mut uint16) = 0 as uint16;
                 *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) = 3 as uint16;
@@ -782,9 +780,7 @@ pub unsafe fn GameState_24_SamusNoHealth_Explosion_2(game: &mut Game) -> uint16 
     *fresh1 = (*fresh1).wrapping_sub(1);
     let mut v0: bool =
         *fresh1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) == 0
-        || v0 as ::core::ffi::c_int != 0
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) == 0 || v0 {
         let ref mut fresh2 = *((&raw mut game.g_ram as *mut uint8).offset(0xde4) as *mut uint16);
         *fresh2 = (*fresh2).wrapping_add(1);
         if *fresh2 as ::core::ffi::c_int - 9 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int

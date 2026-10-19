@@ -7328,8 +7328,7 @@ pub unsafe fn GrappleBeam_CollDetect_Enemy(game: &mut Game) -> PairU16 {
             let mut v6: bool = (v5 as ::core::ffi::c_int) < (*E).x_width as ::core::ffi::c_int;
             let mut v7: uint16 =
                 (v5 as ::core::ffi::c_int - (*E).x_width as ::core::ffi::c_int) as uint16;
-            if v6 as ::core::ffi::c_int != 0 || (v7 as ::core::ffi::c_int) < 8 as ::core::ffi::c_int
-            {
+            if v6 || (v7 as ::core::ffi::c_int) < 8 as ::core::ffi::c_int {
                 let mut v8: uint16 = abs16(
                     ((*E).y_pos as ::core::ffi::c_int
                         - *((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16)
@@ -7338,9 +7337,7 @@ pub unsafe fn GrappleBeam_CollDetect_Enemy(game: &mut Game) -> PairU16 {
                 v6 = (v8 as ::core::ffi::c_int) < (*E).y_height as ::core::ffi::c_int;
                 let mut v9: uint16 =
                     (v8 as ::core::ffi::c_int - (*E).y_height as ::core::ffi::c_int) as uint16;
-                if v6 as ::core::ffi::c_int != 0
-                    || (v9 as ::core::ffi::c_int) < 8 as ::core::ffi::c_int
-                {
+                if v6 || (v9 as ::core::ffi::c_int) < 8 as ::core::ffi::c_int {
                     break;
                 }
             }

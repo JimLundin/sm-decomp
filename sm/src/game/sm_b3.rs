@@ -2958,7 +2958,7 @@ pub unsafe fn EscapeEtecoon_E680(mut k: uint16, game: &mut Game) {
         let mut v3: bool = -((*E).een_var_A as ::core::ffi::c_int) & 0x8000 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int;
         (*E).een_var_A = -((*E).een_var_A as ::core::ffi::c_int) as uint16;
-        (*E).base.current_instruction = (if v3 as ::core::ffi::c_int != 0 {
+        (*E).base.current_instruction = (if v3 {
             addr_kEscapeEtecoon_Ilist_E556 as ::core::ffi::c_int
         } else {
             addr_kEscapeEtecoon_Ilist_E582 as ::core::ffi::c_int
