@@ -68,8 +68,8 @@ Booster 148406/0 (178.84s), native exits 0, with fixed source/DLL/inputs.
 Formatting, normal release (17.78s frozen, 17.8s stable workspace) and progress
 pass. Concurrent PLM/projectile changes retain their separate verification.
 
-The concurrent session owns the 24 corpse tile-row move/copy routines in
-sm_a9 (1712 lines); its live verification is in progress. Continue reviewing
+The 24 corpse tile-row move/copy routines in sm_a9 (1712 lines) remain
+pending: full any% and Speed Booster probes find zero calls. Continue reviewing
 PPU initializer families and historical transition/block-reaction pairs. The
 112-constructor generic-pointer trial is rejected: expanded caller syntax
 leaves only ten net lines removed and does not justify that interface.
@@ -17450,6 +17450,27 @@ and progress pass. Own raw accesses -6 and Rust lines -20, including helper;
 casts and unsafe functions unchanged. Temporary probes and ROM-derived assets
 stay uncommitted. Continue coherent RAM update families; broader gameplay,
 hardware/audio/masks and ownership work remains unfinished.
+
+Corpse tile-row family coverage audit (2026-10-19): jscpd 5.4.1
+renamed/literal-normalized discovery and ast-grep 0.51.0 complete CST function
+selection confirm all 24 move/copy routines span 1712 lines. Their thresholds
+are 94 (Torizo), 38 (Sidehopper), 14 (Zoomer/Ripper), 30 (Skree) and 46
+(Mother Brain), with distinct group activation gates. Preserve each threshold
+reread: earlier writes can alias later sources and the threshold field at
+arbitrary indexes. Moves clear each group after its sequential copies;
+copies retain sources. Mother Brain uses full byte indexes into 9000, whereas
+the other variants round byte indexes down into the 2000 word array. These
+are discovery/classification findings, not a completed equivalence proof.
+
+Frozen 03a26509 plus only entry observations passes full any% 129712/0
+(130.16s) and Speed Booster 148406/0 (191.03s), native exits 0. All 24
+routines have zero calls in both fixtures. No corpse rewrite is eligible yet;
+leave the family pending until a normal-input route reaches these handlers.
+Low%/100% are not assumed to solve this: their earlier coverage audit found
+the same Ceres-only route. No production source or movie is changed.
+Temporary reports/probes remain outside the repo. Next: continue an exercised
+coherent RAM-update family or the PPU initializer audit; full progression
+coverage is needed before returning to corpse movement/copies.
 
 ## Definition of done for any change
 
