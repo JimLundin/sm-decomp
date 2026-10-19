@@ -2225,37 +2225,34 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `fc340e34` replaces 3345 core paths
-with explicit imports of the identical 14 items across 46 files. Independent
-complete-source reconstruction verifies all 3333 ordinary paths and 12 RAM-macro
-paths, imports and name resolution. No shadows, unclassified contexts or
-protected-text changes remain; macro-definition hygiene stays exact.
+Latest reviewed integration (2026-10-20): `72072fd5` shares the complete
+17-function Power Bomb / Crystal Flash window-rendering family. Independent
+source review preserves clipping, empty sentinels, live reads, row-store order,
+pointer setup, distinct byte/word counter updates and all five transition tails.
+All 202 unselected functions retain the composed peer source.
 
-Its parent `19214770` shares 893 LoROM word reads: 718 ordinary expressions
-and 175 reads within known RAM macros. Independent reconstruction covers all
-28 changed files, 458 addresses, signed index tokens and 20 implicit zero
-indices. Place/reference review confirms selected expressions are value reads.
-The exact shared reader preserves pointer capture before index evaluation and
-caller temporary lifetimes. Scoped synthetic checks pass 60030976 address/index/
-pointer-change cases and 65536 borrowed-temporary cases; deliberately incorrect
-pointer-order and cleanup controls are distinguished. These do not establish
-every caller's pointer validity or general Game alias safety.
+The reviewed candidate passes 778700 extracted-code comparisons: exhaustive
+byte clipping and side selection, full-RAM traversal, pointer boundaries and
+five-stage cases. The two u8 wrapping tails are exercised; ExplosionYellow's
+out-of-allocation i32 tail domain is excluded. These scoped checks preserve
+the original valid-memory domains, without claiming every joint state or
+general Game alias safety. All ten focused-check pins and the DLL hash remain
+stable; the completed reviewers' work was reused.
 
-All 73 inputs in each focused commit match its reviewed snapshot. The final
-composition preserves the same ordered 3345 import edits; all 78 replay pins,
-70 ROM-candidate inputs and seven focused-check pins remain stable. The commits
-share one normal release (23.49s) and full any% run: 129712/0
-(102.76s wall, 102.60s replay), native exit 0. Formatting and progress pass;
-the completed build and replay were reused. This run verifies the composition;
-no separate ROM-only replay is claimed. Previously reviewed indices, literals,
-register/mirror pairs, RAM updates, native aliases and HDMA remain included.
+Independent three-way composition reproduces the complete final sm_88.rs
+exactly after line-ending normalization, including the reviewed LoROM/core
+imports. All 73 inputs in the commit match the reviewed candidate, and all
+79 replay pins remain stable after completion. Normal release (24.57s),
+formatting/check and progress pass. Full any% passes 129712/0
+(115.13s wall, 114.97s replay), native exit 0; no duplicate build or replay.
 
-Net Rust lines -849 for ROM reads and -804 for imports, total 145868.
-ROM reads remove 1786 cast tokens; raw-access expressions remain 3871.
-Unsafe functions rise one to 6452 for the shared raw reader. The i32 cast-line
-count rises nine through formatting, with all 15948 actual i32 casts preserved.
-Broader readability, frontend execution, full credits and global alias safety
-remain incomplete; this movie contains zero ending/credits-state frames.
+Net Rust lines -375, total 145493; unsafe functions fall seven to 6445 and
+raw-offset expressions fall 48 to 3823. The prior `19214770` / `fc340e34`
+LoROM/import review and its scoped pointer-order and lifetime checks remain
+included. Concurrent ROM-bank-wrapper edits are outside this committed
+snapshot and its verification. Broader readability, frontend execution,
+full credits and global alias safety remain incomplete; the any% movie has
+zero ending/credits-state frames and does not prove every explosion variant.
 
 The prior `2ddf3af0` shares all twelve corpse
 tile initializers. Independent reconstruction accounts for all 50 ordered
