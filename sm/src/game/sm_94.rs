@@ -1675,7 +1675,7 @@ unsafe fn BlockFunc_A0F4(
         BlockBombedReact(&raw mut ci, v3, game);
         v3 = (v3).wrapping_add(2u16);
         v4 -= 1;
-        if !(v4 >= 0i16) {
+        if (v4 < 0i16) {
             break;
         }
     }
@@ -1710,7 +1710,7 @@ unsafe fn BlockFunc_A11A(mut a: uint16, r24: uint16, r26: uint16, r28: uint16, g
                 as ::core::ffi::c_int
                 * 2 as ::core::ffi::c_int) as uint16;
         v4 -= 1;
-        if !(v4 >= 0i16) {
+        if (v4 < 0i16) {
             break;
         }
     }
@@ -1893,7 +1893,7 @@ pub unsafe fn BlockCollNoWaveBeamHoriz(k: uint16, game: &mut Game) -> uint8 {
                 as ::core::ffi::c_int
                 * 2 as ::core::ffi::c_int) as uint16;
         ci.ci_r38 = ci.ci_r38.wrapping_sub(1);
-        if !((ci.ci_r38 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32) {
+        if ((ci.ci_r38 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32) {
             break;
         }
     }
@@ -1972,7 +1972,7 @@ pub unsafe fn BlockCollNoWaveBeamVert(k: uint16, game: &mut Game) -> uint8 {
         BlockShotReactVert(&raw mut ci, v9, game);
         v9 = (v9).wrapping_add(2u16);
         ci.ci_r38 = ci.ci_r38.wrapping_sub(1);
-        if !((ci.ci_r38 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32) {
+        if ((ci.ci_r38 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32) {
             break;
         }
     }
@@ -2066,7 +2066,7 @@ pub unsafe fn BlockCollWaveBeamHoriz(k: uint16, game: &mut Game) -> uint8 {
                     as ::core::ffi::c_int
                     * 2 as ::core::ffi::c_int) as uint16;
             ci.ci_r38 = ci.ci_r38.wrapping_sub(1);
-            if !((ci.ci_r38 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32) {
+            if ((ci.ci_r38 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32) {
                 break;
             }
         }
@@ -2155,7 +2155,7 @@ pub unsafe fn BlockCollWaveBeamVert(k: uint16, game: &mut Game) -> uint8 {
             BlockShotReactVert(&raw mut ci, v9, game);
             v9 = (v9).wrapping_add(2u16);
             ci.ci_r38 = ci.ci_r38.wrapping_sub(1);
-            if !((ci.ci_r38 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32) {
+            if ((ci.ci_r38 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32) {
                 break;
             }
         }
@@ -3760,7 +3760,7 @@ pub unsafe fn HandleGrappleBeamGfx(game: &mut Game) {
         r24_r22 = r24_r22.wrapping_add(r32_r30);
         q -= 1;
         n -= 1;
-        if !(n >= 0i32) {
+        if (n < 0i32) {
             break;
         }
     }

@@ -55,6 +55,21 @@ Retain targeted comparisons for state/control-flow changes. Preserve read
 and write order; compound-assignment suggestions need alias/order review.
 Keep plan updates concise. The broader readability goal remains incomplete.
 
+Compiler Boolean cleanup (2026-10-19): standard cargo clippy --fix replaces
+422 negated primitive comparisons across 33 files with direct comparisons.
+Independent review confirms unchanged operands, calls and RAM-read order;
+no floating-point or overloaded comparisons change. Net Rust lines -7;
+casts, raw accesses and unsafe functions are unchanged. Two nonautomatic
+suggestions remain untouched.
+
+Frozen 11bc05a3 plus this batch passes any% 129712/0 (162.35s) and
+Speed Booster 148406/0 (208.07s), native exits 0, with fixed sources,
+DLL and fixtures. Formatting, all-target/all-feature Clippy checks,
+normal release (27.50s), stable workspace release and progress pass.
+Frontend changes are compiler-checked; the movies exercise core gameplay.
+For subsequent assignment cleanup, retain hdma_load_indirect_address's size
+read before its bus callback; RomPtr operands can also write g_fail.
+
 Live enemy parameter reads (2026-10-19): finish the five pending projectile
 initializers using captured indices and live byte-backed fields. Six retained
 pointers, 16 raw field reads and six casts are removed. The parameter readers

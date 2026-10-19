@@ -1694,7 +1694,7 @@ pub unsafe fn NuclearWaffle_Init(game: &mut Game) {
         );
         v8 = ((*E).nwe_var_2A).wrapping_sub(2u16);
         (*E).nwe_var_2A = v8;
-        if !(v8 != 0) {
+        if (v8 == 0) {
             break;
         }
     }
@@ -1714,7 +1714,7 @@ pub unsafe fn NuclearWaffle_Init(game: &mut Game) {
         .nwe_var_10 = r18;
         v15 = ((*E).nwe_var_2A).wrapping_sub(2u16);
         (*E).nwe_var_2A = v15;
-        if !(v15 != 0) {
+        if (v15 == 0) {
             break;
         }
     }
@@ -1861,7 +1861,7 @@ pub unsafe fn NuclearWaffle_Func_3(varE32: uint16, game: &mut Game) {
             ((*E).nwe_var_27).wrapping_add(SineMult8bit(v11, varE32, game));
         v12 = ((*E).nwe_var_2A).wrapping_sub(2u16);
         (*E).nwe_var_2A = v12;
-        if !(v12 != 0) {
+        if (v12 == 0) {
             break;
         }
     }
@@ -1928,7 +1928,7 @@ pub unsafe fn NuclearWaffle_Func_4(varE32: uint16, game: &mut Game) {
             .offset((nwe_var_10 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = R34;
         v12 = ((*E).nwe_var_2A).wrapping_sub(2u16);
         (*E).nwe_var_2A = v12;
-        if !(v12 != 0) {
+        if (v12 == 0) {
             break;
         }
     }
@@ -1946,7 +1946,7 @@ pub unsafe fn NuclearWaffle_Func_5(a: uint16, r28_out: *mut uint16, game: &mut G
             }
             return (*E).nwe_var_23;
         }
-    } else if !(((a) as i16).wrapping_sub(((*E).nwe_var_2E) as i16) >= 0i16) {
+    } else if (((a) as i16).wrapping_sub(((*E).nwe_var_2E) as i16) < 0i16) {
         if ((a) as i16).wrapping_sub(((*E).nwe_var_23) as i16) < 0i16 {
             return (*E).nwe_var_23;
         }
@@ -2314,7 +2314,7 @@ pub unsafe fn CeresRidley_Init(game: &mut Game) {
                     .offset((v5 + 241 as ::core::ffi::c_int) as isize) = 0 as uint16;
                 v3 = (v3).wrapping_add(2u16);
                 v4 -= 1;
-                if !(v4 != 0) {
+                if (v4 == 0) {
                     break;
                 }
             }
@@ -2353,7 +2353,7 @@ pub unsafe fn CeresRidley_Init(game: &mut Game) {
                     0 as uint16;
                 v7 = (v7).wrapping_add(2u16);
                 v8 -= 1;
-                if !(v8 != 0) {
+                if (v8 == 0) {
                     break;
                 }
             }
@@ -2627,7 +2627,7 @@ pub unsafe fn CeresRidley_Func_2(game: &mut Game) {
 }
 pub unsafe fn CeresRidley_Func_3(game: &mut Game) {
     let mut v1: int16 = 0;
-    if !(*((&raw mut game.g_ram as *mut uint8).offset(0x797) as *mut uint16) != 0) {
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x797) as *mut uint16) == 0) {
         let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
         (*E).cry_var_A = ((0xa6a377i32) as u16);
         v1 = 512 as int16;
@@ -2708,7 +2708,7 @@ pub unsafe fn CeresRidley_Func_5(game: &mut Game) {
             r18 = (r18).wrapping_add(2u16);
             r20 = (r20).wrapping_add(2u16);
             v2 = (v5).wrapping_sub(1i16);
-            if !(v5 != 1i16) {
+            if (v5 == 1i16) {
                 break;
             }
         }
@@ -3340,7 +3340,7 @@ pub unsafe fn Ridley_Hurt(game: &mut Game) {
                 v2 = g_word_A6B288;
             }
             (*E).ridley_var_24 = v2;
-            if !((((*E).ridley_var_24) as i16).wrapping_sub((g_word_A6B288) as i16) >= 0i16) {
+            if ((((*E).ridley_var_24) as i16).wrapping_sub((g_word_A6B288) as i16) < 0i16) {
                 return;
             }
         }
@@ -5305,7 +5305,7 @@ pub unsafe fn Ridley_CBDC(game: &mut Game) {
         v1 = (v1).wrapping_add(20u16);
         let fresh11 = v0;
         v0 = v0.wrapping_sub(1);
-        if !(fresh11 != 1u16) {
+        if (fresh11 == 1u16) {
             break;
         }
     }
@@ -6429,7 +6429,7 @@ pub unsafe fn Ridley_Func_93(j: uint16, k: uint16, game: &mut Game) {
         dst = dst.offset(10);
         src = src.offset(1);
         v3 -= 1;
-        if !(v3 != 0) {
+        if (v3 == 0) {
             break;
         }
     }
@@ -6466,7 +6466,7 @@ pub unsafe fn Ridley_Func_96(game: &mut Game) {
         *fresh3 = (*fresh3) | (0x8000u16);
         v1 = (v1).wrapping_add(20u16);
         v0 -= 1;
-        if !(v0 != 0) {
+        if (v0 == 0) {
             break;
         }
     }
@@ -7272,7 +7272,7 @@ pub unsafe fn sub_A6DC13(j: uint16, r18: uint16, r20: uint16, r22: uint16, game:
         }
         p = p.offset(5);
         n -= 1;
-        if !(n != 0) {
+        if (n == 0) {
             break;
         }
     }

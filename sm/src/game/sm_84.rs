@@ -439,7 +439,7 @@ pub unsafe fn LoadRoomPlmGfx(game: &mut Game) {
             );
         }
         v0 += 2 as ::core::ffi::c_int;
-        if !(v0 != 8i32) {
+        if (v0 == 8i32) {
             break;
         }
     }
@@ -1511,7 +1511,7 @@ pub unsafe fn PlmInstr_ProcessSolidScrollUpdate(
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize),
         game,
     );
-    while !(*v5.offset(0) as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0) {
+    while (*v5.offset(0) as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int == 0) {
         *(&raw mut game.g_ram as *mut uint8)
             .offset(0xcd20)
             .offset(*v5.offset(0) as isize) = *v5.offset(1);
@@ -2152,8 +2152,8 @@ pub unsafe fn DrawPlm(mut k: uint16, game: &mut Game) {
                 r24 = r22;
             }
             r22 = (r22).wrapping_add(17u16);
-            if !(r22 as ::core::ffi::c_int - x as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-                == 0)
+            if (r22 as ::core::ffi::c_int - x as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
+                != 0)
             {
                 break;
             }
@@ -2583,7 +2583,7 @@ pub unsafe fn PlmSetup_SetrupWreckedShipEntrance(j: uint16, game: &mut Game) -> 
             .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 255 as uint16;
         v1 = (v1).wrapping_add(2u16);
         v2 -= 1;
-        if !(v2 != 0) {
+        if (v2 == 0) {
             break;
         }
     }
@@ -2646,8 +2646,8 @@ pub unsafe fn ActivateStationIfSamusCannonLinedUp(a: uint16, j: uint16, game: &m
     let current_block: u64;
     let mut v2: uint16 = 78 as uint16;
     loop {
-        if !(a
-            != *((&raw mut game.g_ram as *mut uint8).offset(0x1c87) as *mut uint16)
+        if (a
+            == *((&raw mut game.g_ram as *mut uint8).offset(0x1c87) as *mut uint16)
                 .offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize))
         {
             current_block = 16658872821858055392;
@@ -3180,7 +3180,7 @@ pub unsafe fn PlmSetup_ClearShitroidInvisibleWall(j: uint16, game: &mut Game) ->
                 as ::core::ffi::c_int
                 * 2 as ::core::ffi::c_int) as uint16;
         v2 -= 1;
-        if !(v2 != 0) {
+        if (v2 == 0) {
             break;
         }
     }
@@ -3204,7 +3204,7 @@ pub unsafe fn PlmSetup_B767_ClearShitroidInvisibleWall(j: uint16, game: &mut Gam
                 as ::core::ffi::c_int
                 * 2 as ::core::ffi::c_int) as uint16;
         v2 -= 1;
-        if !(v2 != 0) {
+        if (v2 == 0) {
             break;
         }
     }
@@ -3967,8 +3967,8 @@ pub unsafe fn sub_84C64C(j: uint16, a: uint16, game: &mut Game) -> uint8 {
     let current_block: u64;
     let mut v2: uint16 = 78 as uint16;
     loop {
-        if !(a
-            != *((&raw mut game.g_ram as *mut uint8).offset(0x1c87) as *mut uint16)
+        if (a
+            == *((&raw mut game.g_ram as *mut uint8).offset(0x1c87) as *mut uint16)
                 .offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize))
         {
             current_block = 16658872821858055392;

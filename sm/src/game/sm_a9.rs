@@ -1254,7 +1254,7 @@ pub unsafe fn MotherBrainsBody_Init(game: &mut Game) {
         v4 = v3;
         SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainRoomTurrets as uint16, v3, game);
         v3 = (v4).wrapping_add(1u16);
-        if !((v4).wrapping_add(1u16) < 0xcu16) {
+        if ((v4).wrapping_add(1u16) >= 0xcu16) {
             break;
         }
     }
@@ -1488,7 +1488,7 @@ pub unsafe fn MotherBrainBody_0_Wait(game: &mut Game) {
             v1 += 1;
         }
         v0 = (v0).wrapping_add(2u16);
-        if !(((v0) as i16).wrapping_sub(36i16) < 0i16) {
+        if (((v0) as i16).wrapping_sub(36i16) >= 0i16) {
             break;
         }
     }
@@ -2530,7 +2530,7 @@ pub unsafe fn MotherBrain_AddSpritemapToOam(
         }
         p = p.offset(5);
         n -= 1;
-        if !(n != 0) {
+        if (n == 0) {
             break;
         }
     }
@@ -3220,7 +3220,7 @@ pub unsafe fn MotherBrain_GenerateExplosions(a: uint16, r22: uint16, r24: uint16
             SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainDeathExplosion as uint16, v7, game);
             v3 = (v3).wrapping_add(4u16);
             v4 = (v9).wrapping_sub(1u16);
-            if !(v9 != 1u16) {
+            if (v9 == 1u16) {
                 break;
             }
         }
@@ -3480,7 +3480,7 @@ pub unsafe fn MotherBrain_ExplodeEscapeDoor(game: &mut Game) {
             game,
         );
         v0 = (v1).wrapping_add(1u16);
-        if !((v1).wrapping_add(1u16) < 8u16) {
+        if ((v1).wrapping_add(1u16) >= 8u16) {
             break;
         }
     }
@@ -4498,7 +4498,7 @@ pub unsafe fn MotherBrain_HandleRainbowBeamPalette(game: &mut Game) {
             mbn_var_01 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xade434)) as *const uint8
                 as *mut uint16)
                 .offset((mbn_var_01 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
-            if !(mbn_var_01 == 0) {
+            if (mbn_var_01 != 0) {
                 break;
             }
         }
@@ -4685,9 +4685,9 @@ pub unsafe fn MotherBrain_DrainedByShitroid_2(game: &mut Game) {
 pub unsafe fn MotherBrain_DrainedByShitroid_3(game: &mut Game) {
     let E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int, game);
     CallMotherBrainPainfulWalk((((*E1).mbn_var_08) as u32) | (0xa90000u32), game);
-    if !((*E1).mbn_var_06 as ::core::ffi::c_int - 8 as ::core::ffi::c_int
+    if ((*E1).mbn_var_06 as ::core::ffi::c_int - 8 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
-        != 0)
+        == 0)
     {
         (*E1).mbn_var_34 = 64 as uint16;
         (*E1).mbn_var_32 = 8 as uint16;
@@ -6728,7 +6728,7 @@ pub unsafe fn WriteColorsToPalette(
         k = (k).wrapping_add(2u16);
         j = (j).wrapping_add(2u16);
         n -= 1;
-        if !(n != 0) {
+        if (n == 0) {
             break;
         }
     }
@@ -6748,7 +6748,7 @@ pub unsafe fn WriteColorsToTargetPalette(
         k = (k).wrapping_add(2u16);
         j = (j).wrapping_add(2u16);
         n -= 1;
-        if !(n != 0) {
+        if (n == 0) {
             break;
         }
     }
@@ -6968,7 +6968,7 @@ pub unsafe fn DeadTorizo_Func_1(game: &mut Game) {
             v9 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9d583)) as *const uint8
                 as *mut uint16)
                 .offset((v8 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
-            if !(v9 != 0) {
+            if (v9 == 0) {
                 break;
             }
         }
@@ -6998,7 +6998,7 @@ pub unsafe fn DeadTorizo_Func_1(game: &mut Game) {
             v4 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa9d549)) as *const uint8
                 as *mut uint16)
                 .offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
-            if !(v4 != 0) {
+            if (v4 == 0) {
                 break;
             }
         }
@@ -7639,7 +7639,7 @@ pub unsafe fn ProcessCorpseRotting(k: uint16, game: &mut Game) -> uint8 {
                     *v11 = v12;
                 } else {
                     CallCorpseRottingFinish((((*E).dms_var_49) as u32) | (0xa90000u32), game);
-                    if !(v15 < (*Get_DeadMonsters(0 as ::core::ffi::c_int, game)).dms_var_46) {
+                    if (v15 >= (*Get_DeadMonsters(0 as ::core::ffi::c_int, game)).dms_var_46) {
                         break;
                     }
                     *v11 = -(1 as ::core::ffi::c_int) as uint16;
@@ -7718,7 +7718,7 @@ pub unsafe fn InitializeCorpseRottingDataTable(mut table: *mut uint16, a: uint16
         table = table.offset(2);
         r18 = (r18).wrapping_add(2u16);
         v2 -= 1;
-        if !(v2 >= 0i16) {
+        if (v2 < 0i16) {
             break;
         }
     }
@@ -7762,7 +7762,7 @@ pub unsafe fn ProcessCorpseRottingVramTransfers(k: uint16, game: &mut Game) {
         v1 = (v1).wrapping_add(7u16);
         p = p.offset(8);
         v2 = *(p as *mut uint16);
-        if !(v2 != 0) {
+        if (v2 == 0) {
             break;
         }
     }

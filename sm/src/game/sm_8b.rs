@@ -1210,7 +1210,7 @@ pub unsafe fn ProcessCinematicBgObject_DrawToTextTilemap(
             j = (j).wrapping_add(2u16);
             offs = (offs).wrapping_add(2u16);
             m = m.wrapping_sub(1);
-            if !(m != 0) {
+            if (m == 0) {
                 break;
             }
         }
@@ -1246,7 +1246,7 @@ pub unsafe fn ProcessCinematicBgObject_DrawToBgTilemap(
             j = (j).wrapping_add(2u16);
             offs = (offs).wrapping_add(2u16);
             m = m.wrapping_sub(1);
-            if !(m != 0) {
+            if (m == 0) {
                 break;
             }
         }
@@ -1312,7 +1312,7 @@ pub unsafe fn ProcessCinematicBgObject_Unk1(k: uint16, j: uint16, r18: uint16, g
         v3 = (v3).wrapping_add(r18x);
         r22 = (r22).wrapping_add(128u16);
         n = n.wrapping_sub(1);
-        if !(n != 0) {
+        if (n == 0) {
             break;
         }
     }
@@ -1362,7 +1362,7 @@ pub unsafe fn ProcessCinematicBgObject_Unk2(k: uint16, j: uint16, r18: uint16, g
         v3 = (v3).wrapping_add(r20);
         r22 = r22.wrapping_add(1);
         n -= 1;
-        if !(n != 0) {
+        if (n == 0) {
             break;
         }
     }
@@ -1488,7 +1488,7 @@ pub unsafe fn CopyPalettesToFadingPalettes(game: &mut Game) {
             .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
         v1 = (v1).wrapping_add(2u16);
         v0 -= 1;
-        if !(v0 != 0) {
+        if (v0 == 0) {
             break;
         }
     }
@@ -1525,7 +1525,7 @@ pub unsafe fn DecomposePaletteDataForFading(game: &mut Game) {
             (v6 << 3 as ::core::ffi::c_int) as uint16;
         v0 = (v0).wrapping_add(2u16);
         v1 -= 1;
-        if !(v1 != 0) {
+        if (v1 == 0) {
             break;
         }
     }
@@ -1543,7 +1543,7 @@ pub unsafe fn ClearYColorsFromIndexX(mut k: uint16, mut j: uint16, game: &mut Ga
             .offset((v2 + 1024 as ::core::ffi::c_int) as isize) = 0 as uint16;
         k = (k).wrapping_add(2u16);
         j = j.wrapping_sub(1);
-        if !(j != 0) {
+        if (j == 0) {
             break;
         }
     }
@@ -1571,7 +1571,7 @@ pub unsafe fn FadeOutYColorsFromIndexX(mut k: uint16, mut j: uint16, game: &mut 
         );
         k = (k).wrapping_add(2u16);
         j = j.wrapping_sub(1);
-        if !(j != 0) {
+        if (j == 0) {
             break;
         }
     }
@@ -1608,7 +1608,7 @@ pub unsafe fn FadeInYColorsFromIndexX(mut k: uint16, mut j: uint16, game: &mut G
                 & 0x1fff as ::core::ffi::c_int) as uint16;
         k = (k).wrapping_add(2u16);
         j = j.wrapping_sub(1);
-        if !(j != 0) {
+        if (j == 0) {
             break;
         }
     }
@@ -1644,7 +1644,7 @@ pub unsafe fn ComposeFadingPalettes(game: &mut Game) {
             v3;
         v0 = (v0).wrapping_add(2u16);
         v1 -= 1;
-        if !(v1 != 0) {
+        if (v1 == 0) {
             break;
         }
     }
@@ -1678,7 +1678,7 @@ pub unsafe fn CinematicFunction_Intro_Func20(j: uint16, game: &mut Game) {
         v2 = (v2).wrapping_add(16u16);
         tt = tt.offset(2);
         r18 -= 1;
-        if !(r18 != 0) {
+        if (r18 == 0) {
             break;
         }
     }
@@ -2041,7 +2041,7 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
                             as *mut uint16)
                             .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
                     v0 = (v0).wrapping_add(2u16);
-                    if !(((v0) as i16).wrapping_sub(512i16) < 0i16) {
+                    if (((v0) as i16).wrapping_sub(512i16) >= 0i16) {
                         break;
                     }
                 }
@@ -2825,7 +2825,7 @@ pub unsafe fn ProcessTextGlowObject(game: &mut Game) {
                 v3 = (v3).wrapping_add(2u16);
                 v4 = (v4).wrapping_add(2u16);
                 n -= 1;
-                if !(n != 0) {
+                if (n == 0) {
                     break;
                 }
             }
@@ -2986,7 +2986,7 @@ pub unsafe fn CreditsObject_Func1(j: uint16, game: &mut Game) {
             .offset(RegWord as ::core::ffi::c_int as isize) as *mut uint16) = *fresh6;
         RegWord = (RegWord).wrapping_add(2u16);
         n -= 1;
-        if !(n >= 0i32) {
+        if (n < 0i32) {
             break;
         }
     }
@@ -3085,7 +3085,7 @@ pub unsafe fn HandleCinematicsTransitions_2(game: &mut Game) {
             *(game.g_rom.offset(crate::rtl::lorom_offset(0x8ce1e9)) as *const uint8 as *mut uint16)
                 .offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
         v2 = (v2).wrapping_add(2u16);
-        if !(((v2) as i16).wrapping_sub(512i16) < 0i16) {
+        if (((v2) as i16).wrapping_sub(512i16) >= 0i16) {
             break;
         }
     }
@@ -3172,7 +3172,7 @@ pub unsafe fn LoadTitleSequenceGraphics(game: &mut Game) {
             *(game.g_rom.offset(crate::rtl::lorom_offset(0x8ce1e9)) as *const uint8 as *mut uint16)
                 .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
         v0 = (v0).wrapping_add(2u16);
-        if !(((v0) as i16).wrapping_sub(512i16) < 0i16) {
+        if (((v0) as i16).wrapping_sub(512i16) >= 0i16) {
             break;
         }
     }
@@ -3209,7 +3209,7 @@ pub unsafe fn LoadTitleSequenceGraphics(game: &mut Game) {
     loop {
         WriteReg(VMDATAL as uint16, 0xff as uint8, game);
         v1 -= 1;
-        if !(v1 != 0) {
+        if (v1 == 0) {
             break;
         }
     }
@@ -3747,7 +3747,7 @@ pub unsafe fn CinematicFunction_Intro_Initial(game: &mut Game) {
             *(game.g_rom.offset(crate::rtl::lorom_offset(0x8ce3e9)) as *const uint8 as *mut uint16)
                 .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
         v1 = (v1).wrapping_add(2u16);
-        if !(((v1) as i16).wrapping_sub(512i16) < 0i16) {
+        if (((v1) as i16).wrapping_sub(512i16) >= 0i16) {
             break;
         }
     }
@@ -3983,9 +3983,9 @@ pub unsafe fn CinematicFunc_Intro_SetupTextPage2(game: &mut Game) {
                 .offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
         v2 = (v2).wrapping_add(2u16);
         v1 = v1.wrapping_add(1);
-        if !(((v1 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 1792 as ::core::ffi::c_int)
+        if (((v1 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 1792 as ::core::ffi::c_int)
             as int16)
-            < 0i16)
+            >= 0i16)
         {
             break;
         }
@@ -4041,9 +4041,9 @@ pub unsafe fn ClearEnglishTextTilemap(game: &mut Game) {
         v0 = v0.wrapping_add(1);
         (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
             .pause_menu_map_tilemap[fresh5 as usize] = 47 as uint16;
-        if !(((v0 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 1536 as ::core::ffi::c_int)
+        if (((v0 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 1536 as ::core::ffi::c_int)
             as int16)
-            < 0i16)
+            >= 0i16)
         {
             break;
         }
@@ -4092,9 +4092,9 @@ pub unsafe fn ClearJapaneseTextTiles(game: &mut Game) {
                 .offset(0x16402)
                 .offset(7836) as *mut uint8 as *mut uint16);
         v0 = (v0).wrapping_add(8u16);
-        if !(((v0 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 1536 as ::core::ffi::c_int)
+        if (((v0 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 1536 as ::core::ffi::c_int)
             as int16)
-            < 0i16)
+            >= 0i16)
         {
             break;
         }
@@ -4921,7 +4921,7 @@ pub unsafe fn CinematicFunction_Intro_WaitInputSetupMotherBrainFight(game: &mut 
                     as *mut uint16)
                     .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
             v1 = (v1).wrapping_add(2u16);
-            if !(((v1) as i16).wrapping_sub(448i16) < 0i16) {
+            if (((v1) as i16).wrapping_sub(448i16) >= 0i16) {
                 break;
             }
         }
@@ -4931,7 +4931,7 @@ pub unsafe fn CinematicFunction_Intro_WaitInputSetupMotherBrainFight(game: &mut 
                 .offset(0x16402)
                 .offset(v2 as isize) as *mut uint8 as *mut uint16) = 0 as uint16;
             v2 = (v2).wrapping_add(2u16);
-            if !(((v2) as i16).wrapping_sub(512i16) < 0i16) {
+            if (((v2) as i16).wrapping_sub(512i16) >= 0i16) {
                 break;
             }
         }
@@ -4994,7 +4994,7 @@ pub unsafe fn CinematicFunction_Intro_WaitInputSetupBabyMetroid(game: &mut Game)
                     as *mut uint16)
                     .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
             v1 = (v1).wrapping_add(2u16);
-            if !(((v1) as i16).wrapping_sub(768i16) < 0i16) {
+            if (((v1) as i16).wrapping_sub(768i16) >= 0i16) {
                 break;
             }
         }
@@ -5027,7 +5027,7 @@ pub unsafe fn CinematicFunction_Intro_SetupTransitionToGameplay(game: &mut Game)
         ) = *(game.g_rom.offset(crate::rtl::lorom_offset(0x8ce3e9)) as *const uint8 as *mut uint16)
             .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
         v0 = (v0).wrapping_add(2u16);
-        if !(((v0) as i16).wrapping_sub(512i16) < 0i16) {
+        if (((v0) as i16).wrapping_sub(512i16) >= 0i16) {
             break;
         }
     }
@@ -5157,7 +5157,7 @@ pub unsafe fn CinematicFunction_Intro_Func13(game: &mut Game) {
         ) = *(game.g_rom.offset(crate::rtl::lorom_offset(0x8ce3e9)) as *const uint8 as *mut uint16)
             .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
         v0 = (v0).wrapping_add(2u16);
-        if !(((v0) as i16).wrapping_sub(512i16) < 0i16) {
+        if (((v0) as i16).wrapping_sub(512i16) >= 0i16) {
             break;
         }
     }
@@ -5272,9 +5272,9 @@ pub unsafe fn CinematicFunction_Intro_XfadeGameplayFade(game: &mut Game) {
             v0 = v0.wrapping_add(1);
             (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
                 .pause_menu_map_tilemap[fresh134 as usize] = 47 as uint16;
-            if !(((v0 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 1536 as ::core::ffi::c_int)
+            if (((v0 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 1536 as ::core::ffi::c_int)
                 as int16)
-                < 0i16)
+                >= 0i16)
             {
                 break;
             }
@@ -5315,9 +5315,9 @@ pub unsafe fn CinematicFunction_Intro_XfadeScientistFade(game: &mut Game) {
             v0 = v0.wrapping_add(1);
             (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
                 .pause_menu_map_tilemap[fresh132 as usize] = 47 as uint16;
-            if !(((v0 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 1536 as ::core::ffi::c_int)
+            if (((v0 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 1536 as ::core::ffi::c_int)
                 as int16)
-                < 0i16)
+                >= 0i16)
             {
                 break;
             }
@@ -5365,7 +5365,7 @@ pub unsafe fn CinematicFunction_Intro_SetupStuff(game: &mut Game) {
         ) = *(game.g_rom.offset(crate::rtl::lorom_offset(0x8ce3e9)) as *const uint8 as *mut uint16)
             .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
         v0 = (v0).wrapping_add(2u16);
-        if !(((v0) as i16).wrapping_sub(512i16) < 0i16) {
+        if (((v0) as i16).wrapping_sub(512i16) >= 0i16) {
             break;
         }
     }
@@ -5470,7 +5470,7 @@ pub unsafe fn CinematicFunction_Intro_Fadestuff2(game: &mut Game) {
                         + 224 as ::core::ffi::c_int) as isize,
                 );
             v0 = (v0).wrapping_add(2u16);
-            if !(((v0) as i16).wrapping_sub(14i16) < 0i16) {
+            if (((v0) as i16).wrapping_sub(14i16) >= 0i16) {
                 break;
             }
         }
@@ -6376,7 +6376,7 @@ pub unsafe fn CinematicFunction_Intro_Func54(game: &mut Game) {
             *(game.g_rom.offset(crate::rtl::lorom_offset(0x8ce5e9)) as *const uint8 as *mut uint16)
                 .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
         v0 = (v0).wrapping_add(2u16);
-        if !(((v0) as i16).wrapping_sub(512i16) < 0i16) {
+        if (((v0) as i16).wrapping_sub(512i16) >= 0i16) {
             break;
         }
     }
@@ -6406,7 +6406,7 @@ pub unsafe fn CinematicFunction_Intro_Func54(game: &mut Game) {
     loop {
         WriteReg(VMDATAL as uint16, 0x8c as uint8, game);
         v1 -= 1;
-        if !(v1 != 0) {
+        if (v1 == 0) {
             break;
         }
     }
@@ -6810,7 +6810,7 @@ pub unsafe fn CinematicFunctionBlackoutFromCeres(game: &mut Game) {
             *(game.g_rom.offset(crate::rtl::lorom_offset(0x8ce5e9)) as *const uint8 as *mut uint16)
                 .offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
         v2 = (v2).wrapping_add(2u16);
-        if !(((v2) as i16).wrapping_sub(512i16) < 0i16) {
+        if (((v2) as i16).wrapping_sub(512i16) >= 0i16) {
             break;
         }
     }
@@ -6842,7 +6842,7 @@ pub unsafe fn CinematicFunctionBlackoutFromCeres(game: &mut Game) {
     loop {
         WriteReg(VMDATAL as uint16, 0x8c as uint8, game);
         v3 -= 1;
-        if !(v3 != 0) {
+        if (v3 == 0) {
             break;
         }
     }
@@ -7778,7 +7778,7 @@ pub unsafe fn CinematicFunctionEscapeFromCebes(game: &mut Game) {
             *(game.g_rom.offset(crate::rtl::lorom_offset(0x8cede9)) as *const uint8 as *mut uint16)
                 .offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
         v2 = (v2).wrapping_add(2u16);
-        if !(((v2) as i16).wrapping_sub(512i16) < 0i16) {
+        if (((v2) as i16).wrapping_sub(512i16) >= 0i16) {
             break;
         }
     }
@@ -7841,7 +7841,7 @@ pub unsafe fn CinematicFunctionEscapeFromCebes(game: &mut Game) {
         *(((&raw mut game.g_ram as *mut uint8).offset(0x14000) as *mut uint8)
             .offset(v3 as ::core::ffi::c_int as isize) as *mut uint16) = 0x8c8c as uint16;
         v3 = (v3).wrapping_add(2u16);
-        if !(((v3) as i16).wrapping_sub(0x4000i16) < 0i16) {
+        if (((v3) as i16).wrapping_sub(0x4000i16) >= 0i16) {
             break;
         }
     }
@@ -8125,7 +8125,7 @@ pub unsafe fn CinematicFunction_Intro_Func115(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(v1 as isize) =
             v2;
         v0 = (v0).wrapping_add(2u16);
-        if !(((v0) as i16).wrapping_sub(512i16) < 0i16) {
+        if (((v0) as i16).wrapping_sub(512i16) >= 0i16) {
             break;
         }
     }
@@ -8203,7 +8203,7 @@ pub unsafe fn CinematicFunction_Intro_Func117(game: &mut Game) {
                     as *mut uint16)
                     .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
             v0 = (v0).wrapping_add(2u16);
-            if !(((v0) as i16).wrapping_sub(256i16) < 0i16) {
+            if (((v0) as i16).wrapping_sub(256i16) >= 0i16) {
                 break;
             }
         }
@@ -8596,7 +8596,7 @@ pub unsafe fn CinematicFunction_Intro_Func126(game: &mut Game) {
             *(game.g_rom.offset(crate::rtl::lorom_offset(0x8ce9e9)) as *const uint8 as *mut uint16)
                 .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
         v0 = (v0).wrapping_add(2u16);
-        if !(((v0) as i16).wrapping_sub(256i16) < 0i16) {
+        if (((v0) as i16).wrapping_sub(256i16) >= 0i16) {
             break;
         }
     }
@@ -8810,9 +8810,9 @@ pub unsafe fn CinematicFunction_Intro_Func132(game: &mut Game) {
                     as *mut uint16)
                     .offset(v1 as isize);
             v1 = v1.wrapping_add(1);
-            if !(((v1 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 576 as ::core::ffi::c_int)
+            if (((v1 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 576 as ::core::ffi::c_int)
                 as int16)
-                < 0i16)
+                >= 0i16)
             {
                 break;
             }
@@ -8941,9 +8941,9 @@ pub unsafe fn CinematicFunction_Intro_Func135(game: &mut Game) {
                     as *mut uint16)
                     .offset(v1 as isize);
             v1 = v1.wrapping_add(1);
-            if !(((v1 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 128 as ::core::ffi::c_int)
+            if (((v1 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 128 as ::core::ffi::c_int)
                 as int16)
-                < 0i16)
+                >= 0i16)
             {
                 break;
             }
@@ -9187,7 +9187,7 @@ pub unsafe fn CinematicFunction_Intro_Func141(game: &mut Game) {
                     as *mut uint16)
                     .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
             v0 = (v0).wrapping_add(2u16);
-            if !(((v0) as i16).wrapping_sub(416i16) < 0i16) {
+            if (((v0) as i16).wrapping_sub(416i16) >= 0i16) {
                 break;
             }
         }
@@ -9338,7 +9338,7 @@ pub unsafe fn CalcItemPercentageCount(k: uint16, instrp: uint16, game: &mut Game
                 .offset(v0 as isize) as uint8,
         ));
         v0 = v0.wrapping_sub(1);
-        if !((v0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32) {
+        if ((v0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32) {
             break;
         }
     }
@@ -9502,7 +9502,7 @@ pub unsafe fn CinematicFunction_Intro_Func127(game: &mut Game) {
         *(v2 as *mut uint16).offset(4) = 0 as uint16;
         v0 = (v0).wrapping_add(16u16);
         v1 += 1;
-        if !((v4).wrapping_sub(39i16) < 0i16) {
+        if ((v4).wrapping_sub(39i16) >= 0i16) {
             break;
         }
     }
@@ -9600,7 +9600,7 @@ pub unsafe fn CinematicFunction_Intro_Func149(game: &mut Game) {
             }
             v0 = (v0).wrapping_add(16u16);
             n -= 1;
-            if !(n != 0) {
+            if (n == 0) {
                 break;
             }
         }
@@ -9678,7 +9678,7 @@ pub unsafe fn CinematicFunction_Intro_Func149(game: &mut Game) {
             }
             v14 = (v14).wrapping_add(16u16);
             n2 -= 1;
-            if !(n2 != 0) {
+            if (n2 == 0) {
                 break;
             }
         }
@@ -10559,7 +10559,7 @@ pub unsafe fn CinematicFunction_Intro_Func219(k: uint16, j: uint16, game: &mut G
             *(game.g_rom.offset(crate::rtl::lorom_offset(0x8ce7e9)) as *const uint8 as *mut uint16)
                 .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
         v0 = (v0).wrapping_add(2u16);
-        if !(((v0) as i16).wrapping_sub(512i16) < 0i16) {
+        if (((v0) as i16).wrapping_sub(512i16) >= 0i16) {
             break;
         }
     }

@@ -2458,8 +2458,8 @@ pub unsafe fn ThinHoppingBlobs_Func5(game: &mut Game) {
                 as *mut uint8)
                 .offset(thbs_var_F as ::core::ffi::c_int as isize) as *mut uint16),
         );
-        if !(v2 as ::core::ffi::c_int - r24 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-            == 0)
+        if (v2 as ::core::ffi::c_int - r24 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
+            != 0)
         {
             break;
         }
@@ -4279,7 +4279,7 @@ pub unsafe fn Rinka_1(k: uint16, game: &mut Game) {
                 return;
             }
             v3 = (v3).wrapping_add(6u16);
-            if !(((v3) as i16).wrapping_sub(66i16) < 0i16) {
+            if (((v3) as i16).wrapping_sub(66i16) >= 0i16) {
                 break;
             }
         }
@@ -4745,11 +4745,11 @@ pub unsafe fn Rio_3(k: uint16, game: &mut Game) {
     ) != 0
     {
         (*E).rio_var_D = -((*E).rio_var_D as ::core::ffi::c_int) as uint16;
-    } else if !(Enemy_MoveDown(
+    } else if (Enemy_MoveDown(
         k,
         ((*E).rio_var_C as int16 as int32) << 8 as ::core::ffi::c_int,
         game,
-    ) != 0)
+    ) == 0)
     {
         v4 = (((*E).rio_var_C) as i16).wrapping_sub(24i16);
         (*E).rio_var_C = v4 as uint16;
@@ -5996,7 +5996,7 @@ pub unsafe fn HirisingSlowfalling_Func_2(k: uint16, r18: uint16, game: &mut Game
                     as *mut uint16)
                     .offset(v1 as isize) as uint32,
         );
-        if !((v >> 16 as ::core::ffi::c_int).wrapping_sub(r18 as uint32) & 0x8000 as uint32 != 0) {
+        if ((v >> 16 as ::core::ffi::c_int).wrapping_sub(r18 as uint32) & 0x8000 as uint32 == 0) {
             break;
         }
     }
@@ -7266,9 +7266,9 @@ pub unsafe fn RisingFallingPlatform_Powerbomb(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    if !((*E).rfpm_var_07 as ::core::ffi::c_int - 6 as ::core::ffi::c_int
+    if ((*E).rfpm_var_07 as ::core::ffi::c_int - 6 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
-        != 0)
+        == 0)
     {
         if (*E).rfpm_var_07 != 8u16 {
             if (*E).rfpm_var_0C != 0 {

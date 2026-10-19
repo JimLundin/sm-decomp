@@ -443,9 +443,9 @@ pub unsafe fn GameState_24_SamusNoHealth_Explosion_2(game: &mut Game) -> uint16 
 }
 pub unsafe fn CancelGrappleBeamIfIncompatiblePose(game: &mut Game) {
     let mut v0: int16 = 0;
-    if !(kIsGrappleBannedForMovementType
+    if (kIsGrappleBannedForMovementType
         [*(&raw mut game.g_ram as *mut uint8).offset(0xa1f) as usize]
-        != 0)
+        == 0)
     {
         if *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) as ::core::ffi::c_int
             != 0x9bc4f0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
@@ -1448,12 +1448,12 @@ pub unsafe fn HandleGrappleBeamFlare(game: &mut Game) {
             .wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16));
         let r18: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd1c) as *mut uint16))
             .wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16));
-        if !((*((&raw mut game.g_ram as *mut uint8).offset(0xd1c) as *mut uint16)
+        if ((*((&raw mut game.g_ram as *mut uint8).offset(0xd1c) as *mut uint16)
             as ::core::ffi::c_int
             - *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16)
                 as ::core::ffi::c_int
             & 0xff00 as ::core::ffi::c_int)
-            != 0i32)
+            == 0i32)
         {
             DrawBeamGrappleSpritemap(r22, r20, r18, game);
         }

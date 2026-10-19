@@ -199,13 +199,13 @@ pub unsafe fn WalkingSpacePirates_87C8(game: &mut Game) {
     let mut v2: *mut Vulnerability = ::core::ptr::null_mut::<Vulnerability>();
     let mut v3: int16 = 0;
     let mut v: *mut Vulnerability = ::core::ptr::null_mut::<Vulnerability>();
-    if !((*Get_SpacePirates(
+    if ((*Get_SpacePirates(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .base
     .enemy_ptr as ::core::ffi::c_int
-        != addr_kEnemyDef_F593 as ::core::ffi::c_int)
+        == addr_kEnemyDef_F593 as ::core::ffi::c_int)
     {
         r18 = *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
             .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x18a6) as *mut uint16) as isize);
@@ -857,8 +857,8 @@ pub unsafe fn NinjaSpacePirates_Init(game: &mut Game) {
     loop {
         r18 = (r18).wrapping_add(32u16);
         R22 = (R22).wrapping_add(r18);
-        if !(R22 as ::core::ffi::c_int - r20 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-            != 0)
+        if (R22 as ::core::ffi::c_int - r20 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
+            == 0)
         {
             break;
         }
@@ -887,7 +887,7 @@ pub unsafe fn NinjaSpacePirates_Init(game: &mut Game) {
         v6 = (v6).wrapping_add(2u16);
         v7 = (v7).wrapping_add(2u16);
         n -= 1;
-        if !(n >= 0i32) {
+        if (n < 0i32) {
             break;
         }
     }
@@ -1155,7 +1155,7 @@ pub unsafe fn SpacePirates_Func_16(game: &mut Game) {
         let mut v2: uint16 = 0;
         loop {
             v2 = (NextRandom(game)) & (3u16);
-            if !(v2 == 0) {
+            if (v2 != 0) {
                 break;
             }
         }

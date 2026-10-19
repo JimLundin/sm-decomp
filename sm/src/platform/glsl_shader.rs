@@ -1770,7 +1770,7 @@ unsafe fn stbi__fill_bits(z: *mut stbi__zbuf) {
             | (stbi__zget8(z) as ::core::ffi::c_uint) << (*z).num_bits)
             as stbi__uint32;
         (*z).num_bits += 8 as ::core::ffi::c_int;
-        if !((*z).num_bits <= 24 as ::core::ffi::c_int) {
+        if ((*z).num_bits > 24 as ::core::ffi::c_int) {
             break;
         }
     }
@@ -1799,7 +1799,7 @@ unsafe fn stbi__zhuffman_decode_slowpath(
         16 as ::core::ffi::c_int,
     );
     s = STBI__ZFAST_BITS + 1 as ::core::ffi::c_int;
-    while !(k < (*z).maxcode[s as usize]) {
+    while (k >= (*z).maxcode[s as usize]) {
         s += 1;
     }
     if s >= 16 as ::core::ffi::c_int {
@@ -1949,7 +1949,7 @@ unsafe fn stbi__parse_huffman_block(a: *mut stbi__zbuf) -> ::core::ffi::c_int {
                         zout = zout.offset(1);
                         *fresh46 = v as ::core::ffi::c_char;
                         len -= 1;
-                        if !(len != 0) {
+                        if (len == 0) {
                             break;
                         }
                     }
@@ -1962,7 +1962,7 @@ unsafe fn stbi__parse_huffman_block(a: *mut stbi__zbuf) -> ::core::ffi::c_int {
                     zout = zout.offset(1);
                     *fresh48 = *fresh47 as ::core::ffi::c_char;
                     len -= 1;
-                    if !(len != 0) {
+                    if (len == 0) {
                         break;
                     }
                 }
@@ -2202,7 +2202,7 @@ unsafe fn stbi__parse_zlib(
                 return 0 as ::core::ffi::c_int;
             }
         }
-        if !(final_0 == 0) {
+        if (final_0 != 0) {
             break;
         }
     }
@@ -4831,7 +4831,7 @@ pub unsafe fn GlslShader_CreateFromFile(
         1394248824506584008 => {
             let mut i: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
             loop {
-                if !(i <= (*gs).n_pass) {
+                if (i > (*gs).n_pass) {
                     current_block = 7056779235015430508;
                     break;
                 }

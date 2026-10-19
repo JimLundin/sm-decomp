@@ -328,7 +328,7 @@ pub unsafe fn memset7E(mut k: *mut uint16, a: uint16, mut j: uint16) {
         k = k.offset(1);
         *fresh99 = a;
         j = (j).wrapping_sub(2u16);
-        if !(j != 0) {
+        if (j == 0) {
             break;
         }
     }
@@ -463,7 +463,7 @@ pub unsafe fn LoadMirrorOfExploredMapTiles(game: &mut Game) {
                 .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
         v1 = (v1).wrapping_add(2u16);
         v2 = (v2).wrapping_add(2u16);
-        if !(((v2) as i16).wrapping_sub(256i16) < 0i16) {
+        if (((v2) as i16).wrapping_sub(256i16) >= 0i16) {
             break;
         }
     }
@@ -485,7 +485,7 @@ pub unsafe fn SaveExploredMapTilesToSaved(game: &mut Game) {
                 .offset(v2 as isize) as *mut uint8 as *mut uint16);
         v1 = (v1).wrapping_add(2u16);
         v2 = (v2).wrapping_add(2u16);
-        if !(((v2) as i16).wrapping_sub(256i16) < 0i16) {
+        if (((v2) as i16).wrapping_sub(256i16) >= 0i16) {
             break;
         }
     }
@@ -713,7 +713,7 @@ pub unsafe fn QueueMode7Transfers(db: uint8, k: uint16, game: &mut Game) {
             p = p.offset(9);
             dst = dst.offset(9);
         } else {
-            if !(f & 0x40 as ::core::ffi::c_int != 0) {
+            if (f & 0x40 as ::core::ffi::c_int == 0) {
                 break;
             }
             *dst.offset(7) = 0 as uint8;
@@ -2091,7 +2091,7 @@ pub unsafe fn HandleHudTilemap(game: &mut Game) {
                     >> 1 as ::core::ffi::c_int) as isize,
             ) = v3;
             v2 += 2 as ::core::ffi::c_int;
-            if !(((v2 - 28 as ::core::ffi::c_int) as int16) < 0i16) {
+            if (((v2 - 28 as ::core::ffi::c_int) as int16) >= 0i16) {
                 break;
             }
         }
@@ -2750,7 +2750,7 @@ pub unsafe fn DisplayViewablePartOfRoom(game: &mut Game) {
         let ref mut fresh45 = *((&raw mut game.g_ram as *mut uint8).offset(0x90b) as *mut uint16);
         *fresh45 = (*fresh45).wrapping_add(1);
         v2 += 1;
-        if !(v3 != 16i32) {
+        if (v3 == 16i32) {
             break;
         }
     }
@@ -3805,7 +3805,7 @@ pub unsafe fn UpdateLevelOrBackgroundDataColumn(k: uint16, game: &mut Game) {
             * 2 as ::core::ffi::c_int
             + v17 as ::core::ffi::c_int) as uint16;
         var939 = var939.wrapping_sub(1);
-        if !(var939 != 0) {
+        if (var939 == 0) {
             break;
         }
     }
@@ -4021,7 +4021,7 @@ pub unsafe fn UpdateLevelOrBackgroundDataRow(v0: uint16, game: &mut Game) {
         var937 = (v11).wrapping_add(4u16);
         v9 = (v17).wrapping_add(2u16);
         var939 = var939.wrapping_sub(1);
-        if !(var939 != 0) {
+        if (var939 == 0) {
             break;
         }
     }
@@ -4411,7 +4411,7 @@ pub unsafe fn DecompressToMem(src: uint32, decompress_dst: *mut uint8, game: &mu
                 dst_pos = dst_pos + 1;
                 *decompress_dst.offset(fresh24 as isize) = b;
                 len -= 1;
-                if !(len != 0) {
+                if (len == 0) {
                     break;
                 }
             }
@@ -4424,7 +4424,7 @@ pub unsafe fn DecompressToMem(src: uint32, decompress_dst: *mut uint8, game: &mu
                         dst_pos = dst_pos + 1;
                         *decompress_dst.offset(fresh25 as isize) = b;
                         len -= 1;
-                        if !(len != 0) {
+                        if (len == 0) {
                             break;
                         }
                     }
@@ -4444,7 +4444,7 @@ pub unsafe fn DecompressToMem(src: uint32, decompress_dst: *mut uint8, game: &mu
                         dst_pos = dst_pos + 1;
                         *decompress_dst.offset(fresh27 as isize) = b2;
                         len -= 1;
-                        if !(len != 0) {
+                        if (len == 0) {
                             break;
                         }
                     }
@@ -4458,7 +4458,7 @@ pub unsafe fn DecompressToMem(src: uint32, decompress_dst: *mut uint8, game: &mu
                         dst_pos = dst_pos + 1;
                         *decompress_dst.offset(fresh29 as isize) = fresh28;
                         len -= 1;
-                        if !(len != 0) {
+                        if (len == 0) {
                             break;
                         }
                     }
@@ -4469,7 +4469,7 @@ pub unsafe fn DecompressToMem(src: uint32, decompress_dst: *mut uint8, game: &mu
                     dst_pos = dst_pos + 1;
                     *decompress_dst.offset(fresh30 as isize) = b;
                     len -= 1;
-                    if !(len != 0) {
+                    if (len == 0) {
                         break;
                     }
                 },
@@ -4542,7 +4542,7 @@ pub unsafe fn DecompressToVRAM(src: uint32, dst_addr: uint16, game: &mut Game) {
                     game,
                 );
                 len -= 1;
-                if !(len != 0) {
+                if (len == 0) {
                     break;
                 }
             }
@@ -4560,7 +4560,7 @@ pub unsafe fn DecompressToVRAM(src: uint32, dst_addr: uint16, game: &mut Game) {
                             game,
                         );
                         len -= 1;
-                        if !(len != 0) {
+                        if (len == 0) {
                             break;
                         }
                     }
@@ -4590,7 +4590,7 @@ pub unsafe fn DecompressToVRAM(src: uint32, dst_addr: uint16, game: &mut Game) {
                             game,
                         );
                         len -= 1;
-                        if !(len != 0) {
+                        if (len == 0) {
                             break;
                         }
                     }
@@ -4609,7 +4609,7 @@ pub unsafe fn DecompressToVRAM(src: uint32, dst_addr: uint16, game: &mut Game) {
                             game,
                         );
                         len -= 1;
-                        if !(len != 0) {
+                        if (len == 0) {
                             break;
                         }
                     }
@@ -4627,7 +4627,7 @@ pub unsafe fn DecompressToVRAM(src: uint32, dst_addr: uint16, game: &mut Game) {
                         game,
                     );
                     len -= 1;
-                    if !(len != 0) {
+                    if (len == 0) {
                         break;
                     }
                 },

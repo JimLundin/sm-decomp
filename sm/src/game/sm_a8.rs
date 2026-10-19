@@ -1545,7 +1545,7 @@ pub unsafe fn WreckedShipGhost_Init(game: &mut Game) {
             .offset((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
         v3 = (v3).wrapping_add(2u16);
         n -= 1;
-        if !(n >= 0i32) {
+        if (n < 0i32) {
             break;
         }
     }
@@ -1614,7 +1614,7 @@ pub unsafe fn WreckedShipGhost_Func_1(k: uint16, game: &mut Game) {
         }
         v4 = (v4).wrapping_add(2u16);
         n -= 1;
-        if !(n != 0) {
+        if (n == 0) {
             break;
         }
     }
@@ -1631,7 +1631,7 @@ pub unsafe fn WreckedShipGhost_Func_1(k: uint16, game: &mut Game) {
                     [(v9 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize];
             v8 = (v8).wrapping_add(2u16);
             v9 = (v9).wrapping_add(2u16);
-            if !(((v9) as i16).wrapping_sub(32i16) < 0i16) {
+            if (((v9) as i16).wrapping_sub(32i16) >= 0i16) {
                 break;
             }
         }
@@ -1760,7 +1760,7 @@ pub unsafe fn WreckedShipGhost_Func_5(k: uint16, game: &mut Game) {
                 0x7fff as uint16;
             v9 = (v9).wrapping_add(2u16);
             n -= 1;
-            if !((n & 0x8000 as ::core::ffi::c_int) == 0i32) {
+            if ((n & 0x8000 as ::core::ffi::c_int) != 0i32) {
                 break;
             }
         }
@@ -1981,7 +1981,7 @@ pub unsafe fn WreckedShipGhost_Func_8(game: &mut Game) -> uint16 {
                 }
             }
             v3 = (v3).wrapping_add(2u16);
-            if !(((v3) as i16).wrapping_sub((r20) as i16) < 0i16) {
+            if (((v3) as i16).wrapping_sub((r20) as i16) >= 0i16) {
                 break;
             }
         }
@@ -2108,7 +2108,7 @@ pub unsafe fn YappingMaw_Init(game: &mut Game) {
         );
         v1 = (((*E).ymw_var_44) as i16).wrapping_sub(1i16);
         (*E).ymw_var_44 = v1 as uint16;
-        if !(v1 >= 0i16) {
+        if (v1 < 0i16) {
             break;
         }
     }
@@ -3673,8 +3673,8 @@ pub unsafe fn Beetom_Func_2(r22: uint16, r24: uint16, game: &mut Game) -> uint16
                 .offset((8 as ::core::ffi::c_int * r18 as ::core::ffi::c_int) as isize)
                 .offset(1) as *mut uint16),
         );
-        if !(r20 as ::core::ffi::c_int - r22 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-            != 0)
+        if (r20 as ::core::ffi::c_int - r22 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
+            == 0)
         {
             break;
         }
@@ -6025,22 +6025,22 @@ pub unsafe fn WalkingLavaSeahorse_Init(game: &mut Game) {
             &raw mut (*E).base.y_subpos,
             ((*E).wlse_var_B as uint32) << 16 as ::core::ffi::c_int | (*E).wlse_var_C as uint32,
         );
-        if !((WalkingLavaSeahorse_Func_2(
+        if ((WalkingLavaSeahorse_Func_2(
             *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
             game,
         ) as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int)
-            != 0i32)
+            == 0i32)
         {
             break;
         }
     }
-    while !(Enemy_MoveDown(
+    while (Enemy_MoveDown(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
         (((*E).wlse_var_B as uint32) << 16 as ::core::ffi::c_int | (*E).wlse_var_C as uint32)
             as int32,
         game,
-    ) != 0)
+    ) == 0)
     {
         WalkingLavaSeahorse_Func_2(
             *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
@@ -6702,7 +6702,7 @@ pub unsafe fn BlueBrinstarFaceBlock_Func_1(game: &mut Game) {
             v1 = (v1).wrapping_add(2u16);
             v0 = (v0).wrapping_add(2u16);
             n -= 1;
-            if !(n != 0) {
+            if (n == 0) {
                 break;
             }
         }
@@ -7555,8 +7555,8 @@ pub unsafe fn KiHunter_Func_17(game: &mut Game) {
             .offset(1) as *mut uint16))
             .wrapping_add((*E).khr_var_D);
         (*E).khr_var_D = v5;
-        if !(v5 as ::core::ffi::c_int - 0x2000 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-            != 0)
+        if (v5 as ::core::ffi::c_int - 0x2000 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
+            == 0)
         {
             break;
         }

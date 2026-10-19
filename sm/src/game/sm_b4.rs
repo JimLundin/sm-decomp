@@ -133,7 +133,7 @@ pub unsafe fn HandleSpriteObjects(game: &mut Game) {
         }
         let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0x1844) as *mut uint16);
         *fresh0 = (*fresh0).wrapping_sub(2u16);
-        if !(*fresh0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0) {
+        if (*fresh0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0) {
             break;
         }
     }
@@ -237,7 +237,7 @@ pub unsafe fn ClearSpriteObjects(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xef78) as *mut uint16)
             .offset((v0 >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
         v0 -= 2 as ::core::ffi::c_int;
-        if !(v0 != 0) {
+        if (v0 == 0) {
             break;
         }
     }

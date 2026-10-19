@@ -1432,7 +1432,7 @@ pub unsafe fn Botwoon_Func_5(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xf380) as *mut uint16)
             .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 2 as uint16;
         v0 = (v0).wrapping_sub(2u16);
-        if !(((v0) as i16).wrapping_sub(10i16) >= 0i16) {
+        if (((v0) as i16).wrapping_sub(10i16) < 0i16) {
             break;
         }
     }
@@ -1463,7 +1463,7 @@ pub unsafe fn Botwoon_HealthBasedPalHandling(game: &mut Game) {
                     .offset((fresh5 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
             r18 = r18.wrapping_add(1);
             r20 = (r20).wrapping_add(2u16);
-            if !(r20 != 512u16) {
+            if (r20 == 512u16) {
                 break;
             }
         }
@@ -1750,7 +1750,7 @@ pub unsafe fn Botwoon_Func_18(k: uint16, game: &mut Game) {
                         as uint16;
                     CreateSpriteAtPos(x_0, y_0, 9 as uint16, 2560 as uint16, game);
                     n -= 1;
-                    if !(n != 0) {
+                    if (n == 0) {
                         break;
                     }
                 }
@@ -1890,7 +1890,7 @@ pub unsafe fn Botwoon_Func_23(game: &mut Game) {
         r18 = (r18 as ::core::ffi::c_int - (*E).botwoon_var_C as ::core::ffi::c_int
             & 0x3ff as ::core::ffi::c_int) as uint16;
         n -= 2 as ::core::ffi::c_int;
-        if !((n & 0x8000 as ::core::ffi::c_int) == 0i32) {
+        if ((n & 0x8000 as ::core::ffi::c_int) != 0i32) {
             break;
         }
     }
@@ -1954,7 +1954,7 @@ pub unsafe fn Botwoon_Func_25(game: &mut Game) {
                 * (((r24).wrapping_add(CalculateAngleFromXY(x, y, game))) as ::core::ffi::c_int
                     >> 5 as ::core::ffi::c_int)) as uint16;
         n -= 2 as ::core::ffi::c_int;
-        if !(n >= 0i32) {
+        if (n < 0i32) {
             break;
         }
     }
@@ -2052,7 +2052,7 @@ pub unsafe fn Botwoon_Func_28(k: uint16, game: &mut Game) {
             let ref mut fresh2 = *(&raw mut game.g_ram as *mut uint8).offset(0x60b);
             *fresh2 = (*fresh2).wrapping_add(16u8);
             n -= 1;
-            if !(n != 0) {
+            if (n == 0) {
                 break;
             }
         }
@@ -2079,7 +2079,7 @@ pub unsafe fn Botwoon_Func_29(k: uint16, game: &mut Game) {
         let ref mut fresh3 = *(&raw mut game.g_ram as *mut uint8).offset(0x60b);
         *fresh3 = (*fresh3).wrapping_add(16u8);
         n -= 1;
-        if !(n != 0) {
+        if (n == 0) {
             break;
         }
     }
@@ -2139,7 +2139,7 @@ pub unsafe fn Botwoon_Func_31(k: uint16, game: &mut Game) {
             } else {
                 (*E).botwoon_var_35 = 0 as uint16;
                 n -= 8 as ::core::ffi::c_int;
-                if !(n >= 0i32) {
+                if (n < 0i32) {
                     break;
                 }
             }
@@ -2231,7 +2231,7 @@ pub unsafe fn Botwoon_Func_33(game: &mut Game) {
         y = (y).wrapping_add(v8);
         (*E).botwoon_var_42 = ((*E).botwoon_var_42 as ::core::ffi::c_int + step) as uint16;
         n -= 1;
-        if !(n != 0) {
+        if (n == 0) {
             break;
         }
     }

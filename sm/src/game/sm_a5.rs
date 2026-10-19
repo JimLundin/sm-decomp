@@ -1797,10 +1797,10 @@ pub unsafe fn Draygon_Func_41(game: &mut Game) {
     let mut j: uint16 = 0;
     let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
     i = 0 as ::core::ffi::c_int;
-    while !((((*E).base.health) as i16).wrapping_sub(
+    while ((((*E).base.health) as i16).wrapping_sub(
         (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa596ef)) as *const uint8 as *mut uint16)
             .offset((i >> 1 as ::core::ffi::c_int) as isize)) as i16,
-    ) >= 0i16)
+    ) < 0i16)
     {
         i += 2 as ::core::ffi::c_int;
     }
@@ -2045,7 +2045,7 @@ pub unsafe fn Draygon_Func_43(game: &mut Game) {
         );
         v2 = (v2).wrapping_sub(4u16);
         v1 -= 1;
-        if !(v1 >= 0i16) {
+        if (v1 < 0i16) {
             break;
         }
     }
@@ -2147,7 +2147,7 @@ pub unsafe fn Draygon_Func_46(game: &mut Game) {
             }
         }
         v0 = (v0).wrapping_sub(2u16);
-        if !(((v0) as i16).wrapping_sub(56i16) >= 0i16) {
+        if (((v0) as i16).wrapping_sub(56i16) < 0i16) {
             break;
         }
     }

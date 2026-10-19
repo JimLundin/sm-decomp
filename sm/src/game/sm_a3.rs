@@ -2741,8 +2741,8 @@ pub unsafe fn Sidehopper_Func_2(r22: uint16, r24: uint16, game: &mut Game) -> ui
                 .offset((8 as ::core::ffi::c_int * r18 as ::core::ffi::c_int) as isize)
                 .offset(1) as *mut uint16),
         );
-        if !(r20 as ::core::ffi::c_int - r22 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-            != 0)
+        if (r20 as ::core::ffi::c_int - r22 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
+            == 0)
         {
             break;
         }
@@ -4121,8 +4121,8 @@ pub unsafe fn MaridiaSnail_Func_5(k: uint16, game: &mut Game) {
 pub unsafe fn MaridiaSnail_Func_6(k: uint16, game: &mut Game) {
     let current_block: u64;
     let E: *mut Enemy_MaridiaSnail = Get_MaridiaSnail(k as ::core::ffi::c_int, game);
-    if !((*E).msl_var_F as ::core::ffi::c_int
-        == 0xa3d1b3 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int)
+    if ((*E).msl_var_F as ::core::ffi::c_int
+        != 0xa3d1b3 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int)
     {
         if (*E).msl_var_08 == 1u16 {
             if *((&raw mut game.g_ram as *mut uint8).offset(0xb3c) as *mut uint16) != 0u16
@@ -4683,7 +4683,7 @@ pub unsafe fn Reflec_Func_1(game: &mut Game) {
             v1 = (v1).wrapping_add(2u16);
             v0 = (v0).wrapping_add(2u16);
             n -= 1;
-            if !(n != 0) {
+            if (n == 0) {
                 break;
             }
         }

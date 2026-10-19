@@ -1957,7 +1957,7 @@ unsafe fn Music_ResetChan(p: *mut SpcPlayer) {
         c = c.offset(-1);
         (*p).cur_chan_bit =
             ((*p).cur_chan_bit as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint8;
-        if !((*p).cur_chan_bit != 0) {
+        if ((*p).cur_chan_bit == 0) {
             break;
         }
     }
@@ -2681,7 +2681,7 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
                                 (*p).cur_chan_bit = (((*p).cur_chan_bit as ::core::ffi::c_int)
                                     << 1 as ::core::ffi::c_int)
                                     as uint8;
-                                if !((*p).cur_chan_bit != 0) {
+                                if ((*p).cur_chan_bit == 0) {
                                     break;
                                 }
                             }
@@ -2724,11 +2724,11 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
                         c = &raw mut (*p).channel as *mut Channel;
                         (*p).cur_chan_bit = 1 as uint8;
                         loop {
-                            if !(*(&raw mut (*c).pattern_order_ptr_for_chan as *mut uint8).offset(
+                            if (*(&raw mut (*c).pattern_order_ptr_for_chan as *mut uint8).offset(
                                 (::core::mem::size_of::<uint16>() as usize)
                                     .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                                     .wrapping_sub(1_usize) as isize,
-                            ) == 0)
+                            ) != 0)
                             {
                                 (*c).note_ticks_left = (*c).note_ticks_left.wrapping_sub(1);
                                 if (*c).note_ticks_left == 0 {
@@ -2826,7 +2826,7 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
                             (*p).cur_chan_bit = (((*p).cur_chan_bit as ::core::ffi::c_int)
                                 << 1 as ::core::ffi::c_int)
                                 as uint8;
-                            if !((*p).cur_chan_bit != 0) {
+                            if ((*p).cur_chan_bit == 0) {
                                 break;
                             }
                         }
@@ -2894,7 +2894,7 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
                             (*p).cur_chan_bit = (((*p).cur_chan_bit as ::core::ffi::c_int)
                                 << 1 as ::core::ffi::c_int)
                                 as uint8;
-                            if !((*p).cur_chan_bit != 0) {
+                            if ((*p).cur_chan_bit == 0) {
                                 break;
                             }
                         }
@@ -3008,7 +3008,7 @@ unsafe fn Spc_Loop_Part2(p: *mut SpcPlayer, ticks: uint8) {
     if t >= 256 as ::core::ffi::c_int {
         loop {
             Music_HandleCmdFromSnes(p);
-            if !((*p).fast_forward != 0) {
+            if ((*p).fast_forward == 0) {
                 break;
             }
         }
@@ -3429,7 +3429,7 @@ pub unsafe fn Sfx_RunChan(p: *mut SpcPlayer, sr: *mut SfxRegs, s: *mut SfxChan) 
                     (*s).ptr_idx = (*s).repeat_pt;
                     a = SfxChan_GetByte(p, s);
                 }
-                if !(a as ::core::ffi::c_int == 0xfc as ::core::ffi::c_int) {
+                if (a as ::core::ffi::c_int != 0xfc as ::core::ffi::c_int) {
                     break;
                 }
                 (*p).reg_NON = ((*p).reg_NON as ::core::ffi::c_int
@@ -3629,7 +3629,7 @@ pub unsafe fn Sfx_Init(
     }
     loop {
         (*sr).voice_id = (*sr).voice_id.wrapping_sub(1);
-        if !((*sr).voice_id != 0) {
+        if ((*sr).voice_id == 0) {
             break;
         }
         let t: ::core::ffi::c_int = (*sr).voices_remaining as ::core::ffi::c_int;
@@ -3887,7 +3887,7 @@ pub unsafe fn SpcPlayer_Upload(p: *mut SpcPlayer, mut data: *const uint8_t) {
             target = target + 1;
             (*p).ram[(fresh33 & 0xffff as ::core::ffi::c_int) as usize] = *fresh32 as uint8;
             numbytes -= 1;
-            if !(numbytes != 0) {
+            if (numbytes == 0) {
                 break;
             }
         }

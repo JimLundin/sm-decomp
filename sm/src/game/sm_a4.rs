@@ -565,7 +565,7 @@ pub unsafe fn Crocomire_Init(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
             .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 824 as uint16;
         v0 = (v0).wrapping_add(2u16);
-        if !(((v0) as i16).wrapping_sub(4096i16) < 0i16) {
+        if (((v0) as i16).wrapping_sub(4096i16) >= 0i16) {
             break;
         }
     }
@@ -1484,7 +1484,7 @@ pub unsafe fn Crocomire_Func_55(game: &mut Game) {
                 824 as uint16;
             v3 = (v3).wrapping_add(2u16);
             m -= 1;
-            if !(m != 0) {
+            if (m == 0) {
                 break;
             }
         }
@@ -1753,7 +1753,7 @@ pub unsafe fn Crocomire_Func_57(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
             .offset((v4 + 1 as ::core::ffi::c_int) as isize) = 824 as uint16;
         v3 = (v3).wrapping_add(4u16);
-        if !(((v3) as i16).wrapping_sub(1024i16) < 0i16) {
+        if (((v3) as i16).wrapping_sub(1024i16) >= 0i16) {
             break;
         }
     }
@@ -1816,7 +1816,7 @@ pub unsafe fn Crocomire_Func_59(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
             .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 824 as uint16;
         v1 = (v1).wrapping_add(2u16);
-        if !(((v1) as i16).wrapping_sub(2048i16) < 0i16) {
+        if (((v1) as i16).wrapping_sub(2048i16) >= 0i16) {
             break;
         }
     }
@@ -1897,7 +1897,7 @@ pub unsafe fn Crocomire_Func_60(game: &mut Game) {
             v3 = (v3).wrapping_add(2u16);
             v2 = (v2).wrapping_add(2u16);
             n -= 1;
-            if !(n >= 0i32) {
+            if (n < 0i32) {
                 break;
             }
         }
@@ -1991,7 +1991,7 @@ pub unsafe fn Crocomire_950F(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xcaf0) as *mut uint16)
             .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = v2;
         v1 = (v1).wrapping_sub(2u16);
-        if !((v1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32) {
+        if ((v1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32) {
             break;
         }
     }
@@ -2039,7 +2039,7 @@ pub unsafe fn Crocomire_Func_65(game: &mut Game) {
         crocom_var_D = (crocom_var_D).wrapping_add(4u16);
     }
     (*E0).base.x_pos = crocom_var_D;
-    if !(Crocomire_Func_67(game) == 0) {
+    if (Crocomire_Func_67(game) != 0) {
         Crocomire_Func_27(
             *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
             game,
@@ -2111,10 +2111,10 @@ pub unsafe fn Crocomire_Func_65(game: &mut Game) {
                         *((&raw mut game.g_ram as *mut uint8).offset(0x5a6) as *mut uint16);
                     *fresh18 = (*fresh18).wrapping_add(1);
                     v6 = (v6).wrapping_add(2u16);
-                    if !(((v7) as i16).wrapping_sub(
+                    if (((v7) as i16).wrapping_sub(
                         (*((&raw mut game.g_ram as *mut uint8).offset(0x698) as *mut uint16))
                             as i16,
-                    ) < 0i16)
+                    ) >= 0i16)
                     {
                         break;
                     }
@@ -2128,7 +2128,7 @@ pub unsafe fn Crocomire_Func_65(game: &mut Game) {
                                 (v6 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
                             ) = v9;
                         v6 = (v6).wrapping_add(2u16);
-                        if !(((v6) as i16).wrapping_sub(512i16) < 0i16) {
+                        if (((v6) as i16).wrapping_sub(512i16) >= 0i16) {
                             break;
                         }
                     }
@@ -2269,7 +2269,7 @@ pub unsafe fn Crocomire_Func_67(game: &mut Game) -> uint16 {
             .offset(vline_idx as isize);
         *fresh5 = (*fresh5).wrapping_add(1);
         n -= 1;
-        if !(n != 0) {
+        if (n == 0) {
             break;
         }
     }
@@ -2519,7 +2519,7 @@ pub unsafe fn Crocomire_Func_71(game: &mut Game) {
                 game,
             );
             n -= 1;
-            if !(n != 0) {
+            if (n == 0) {
                 break;
             }
         }
@@ -2788,7 +2788,7 @@ pub unsafe fn Crocomire_Powerbomb(game: &mut Game) {
                     }
                     spritemap_pointer = (spritemap_pointer).wrapping_add(8u16);
                     n -= 1;
-                    if !(n == 0) {
+                    if (n != 0) {
                         continue;
                     }
                     v3 = addr_kCrocomire_Ilist_BDB6 as uint16;

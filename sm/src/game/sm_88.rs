@@ -787,7 +787,7 @@ pub unsafe fn HdmaObjectHandler(game: &mut Game) {
                     as ::core::ffi::c_int;
             }
             i += 2 as ::core::ffi::c_int;
-            if !(i != 12i32) {
+            if (i == 12i32) {
                 break;
             }
         }
@@ -1774,7 +1774,7 @@ pub unsafe fn CalculatePowerBombHdma_LeftOfScreen(
         }
         j = j.offset(1);
         k = k.wrapping_add(1);
-        if !(k != 192u16) {
+        if (k == 192u16) {
             break;
         }
     }
@@ -1804,7 +1804,7 @@ pub unsafe fn CalculatePowerBombHdma_OnScreen(mut k: uint16, mut j: *const uint8
             .offset(k as isize) = right;
         j = j.offset(1);
         k = k.wrapping_add(1);
-        if !(k != 192u16) {
+        if (k == 192u16) {
             break;
         }
     }
@@ -1835,7 +1835,7 @@ pub unsafe fn CalculatePowerBombHdma_RightOfScreen(
         }
         j = j.offset(1);
         k = k.wrapping_add(1);
-        if !(k != 192u16) {
+        if (k == 192u16) {
             break;
         }
     }
@@ -1929,7 +1929,7 @@ pub unsafe fn CalculatePowerBombHdmaScaled_LeftOfScreen(
             *(&raw mut k as *mut uint8).offset(0) = ((k) as u8).wrapping_sub(1u8);
         }
         *(&raw mut j as *mut uint8).offset(0) = ((j) as u8).wrapping_add(1u8);
-        if !((j as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) == 0i32) {
+        if ((j as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) != 0i32) {
             break;
         }
     }
@@ -1987,7 +1987,7 @@ pub unsafe fn CalculatePowerBombHdmaScaled_OnScreen(
             *(&raw mut k as *mut uint8).offset(0) = ((k) as u8).wrapping_sub(1u8);
         }
         *(&raw mut j as *mut uint8).offset(0) = ((j) as u8).wrapping_add(1u8);
-        if !((j as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) == 0i32) {
+        if ((j as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) != 0i32) {
             break;
         }
     }
@@ -2046,7 +2046,7 @@ pub unsafe fn CalculatePowerBombHdmaScaled_RightOfScreen(
             *(&raw mut k as *mut uint8).offset(0) = ((k) as u8).wrapping_sub(1u8);
         }
         *(&raw mut j as *mut uint8).offset(0) = ((j) as u8).wrapping_add(1u8);
-        if !((j as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) == 0i32) {
+        if ((j as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) != 0i32) {
             break;
         }
     }
@@ -2123,7 +2123,7 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionYellow(k: uint16, game: 
             .offset(i as isize) = ((v2 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int)
             >> 8 as ::core::ffi::c_int) as uint8;
         i -= 1;
-        if !((i & 0x80 as ::core::ffi::c_int) == 0i32) {
+        if ((i & 0x80 as ::core::ffi::c_int) != 0i32) {
             break;
         }
     }
@@ -2383,7 +2383,7 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionWhite(k: uint16, game
                 .wrapping_sub(1_usize) as isize,
         );
         i = i.wrapping_sub(1);
-        if !((i as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) == 0i32) {
+        if ((i as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) != 0i32) {
             break;
         }
     }
@@ -2722,7 +2722,7 @@ pub unsafe fn CalculateCrystalFlashHdmaDataTablesScaled_LeftOfScreen(
             k = k.wrapping_sub(1);
         }
         j = j.wrapping_add(1);
-        if !((j as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) == 0i32) {
+        if ((j as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) != 0i32) {
             break;
         }
     }
@@ -2780,7 +2780,7 @@ pub unsafe fn CalculateCrystalFlashHdmaDataTablesScaled_OnScreen(
             k = k.wrapping_sub(1);
         }
         j = j.wrapping_add(1);
-        if !((j as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) == 0i32) {
+        if ((j as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) != 0i32) {
             break;
         }
     }
@@ -2838,7 +2838,7 @@ pub unsafe fn CalculateCrystalFlashHdmaDataTablesScaled_RightOfScreen(
             k = k.wrapping_sub(1);
         }
         j = j.wrapping_add(1);
-        if !((j as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) == 0i32) {
+        if ((j as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) != 0i32) {
             break;
         }
     }
@@ -2905,7 +2905,7 @@ pub unsafe fn HdmaobjPreInstr_CrystalFlash_Stage1_Explosion(k: uint16, game: &mu
             & 0xff00 as ::core::ffi::c_int)
             >> 8 as ::core::ffi::c_int) as uint8;
         i -= 1;
-        if !((i & 0x80 as ::core::ffi::c_int) == 0i32) {
+        if ((i & 0x80 as ::core::ffi::c_int) != 0i32) {
             break;
         }
     }
@@ -3133,7 +3133,7 @@ pub unsafe fn HdmaobjPreInstr_BG3Xscroll(k: uint16, game: &mut Game) {
                     .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
             v2 = (v2).wrapping_add(2u16);
             v1 = (v1).wrapping_add(2u16);
-            if !(((v1) as i16).wrapping_sub(32i16) < 0i16) {
+            if (((v1) as i16).wrapping_sub(32i16) >= 0i16) {
                 break;
             }
         }
@@ -3396,9 +3396,9 @@ pub unsafe fn HdmaobjPreInstr_SkyLandBG2XscrollInner(k: uint16, game: &mut Game)
                 .scroll_subspeed as uint32,
         );
         v1 = v1.wrapping_add(1);
-        if !(v1 as ::core::ffi::c_int * 8 as ::core::ffi::c_int - 184 as ::core::ffi::c_int
+        if (v1 as ::core::ffi::c_int * 8 as ::core::ffi::c_int - 184 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
-            != 0)
+            == 0)
         {
             break;
         }
@@ -3477,9 +3477,9 @@ pub unsafe fn HdmaobjPreInstr_SkyLandBG2XscrollInner(k: uint16, game: &mut Game)
             }
         }
         v5 = v5.wrapping_add(1);
-        if !(v5 as ::core::ffi::c_int * 8 as ::core::ffi::c_int - 184 as ::core::ffi::c_int
+        if (v5 as ::core::ffi::c_int * 8 as ::core::ffi::c_int - 184 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
-            != 0)
+            == 0)
         {
             break;
         }
@@ -3739,7 +3739,7 @@ pub unsafe fn ExpandingContractingHdmaEffect(game: &mut Game) {
         v1 = (v1).wrapping_sub(2u16);
         v0 = (v0).wrapping_add(2u16);
         r20 = r20.wrapping_sub(1);
-        if !(r20 != 0) {
+        if (r20 == 0) {
             break;
         }
     }
@@ -4175,7 +4175,7 @@ pub unsafe fn Handle_LavaAcidBG2YScroll_Func1(v0: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x9c46) as *mut uint16)
             .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = v2;
         v1 = (v1).wrapping_sub(2u8);
-        if !((v1 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) == 0i32) {
+        if ((v1 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) != 0i32) {
             break;
         }
     }
@@ -4225,7 +4225,7 @@ pub unsafe fn Handle_LavaAcidBG2YScroll_Func2(v0: uint16, game: &mut Game) {
         v4 = (v4 as ::core::ffi::c_int - 2 as ::core::ffi::c_int & 0x1e as ::core::ffi::c_int)
             as uint8;
         n -= 1;
-        if !(n >= 0i32) {
+        if (n < 0i32) {
             break;
         }
     }
@@ -4285,7 +4285,7 @@ pub unsafe fn Handle_LavaAcidBG2YScroll_Func3(v0: uint16, game: &mut Game) {
         v3 = (v3 as ::core::ffi::c_int - 2 as ::core::ffi::c_int & 0x1e as ::core::ffi::c_int)
             as uint8;
         n -= 1;
-        if !(n >= 0i32) {
+        if (n < 0i32) {
             break;
         }
     }
@@ -4593,7 +4593,7 @@ pub unsafe fn HdmaobjPreInstr_WaterBG2XScroll_Func2(k: uint16, game: &mut Game) 
         v3 = (v3 as ::core::ffi::c_int - 2 as ::core::ffi::c_int & 0x1e as ::core::ffi::c_int)
             as uint8;
         n -= 1;
-        if !(n >= 0i32) {
+        if (n < 0i32) {
             break;
         }
     }
@@ -4607,7 +4607,7 @@ pub unsafe fn HdmaobjPreInstr_WaterBG2XScroll_Func1(k: uint16, game: &mut Game) 
                 as isize,
         ) = v2;
         v1 = (v1).wrapping_sub(2u8);
-        if !((v1 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) == 0i32) {
+        if ((v1 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) != 0i32) {
             break;
         }
     }
@@ -5366,7 +5366,7 @@ pub unsafe fn VariaSuitPickup_0_LightBeamAppears(game: &mut Game) -> uint8 {
             .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = g_word_88E0D5;
         v1 = (v1).wrapping_add(2u16);
         v0 -= 1;
-        if !(v0 > 0i16) {
+        if (v0 <= 0i16) {
             break;
         }
     }
@@ -5377,7 +5377,7 @@ pub unsafe fn VariaSuitPickup_0_LightBeamAppears(game: &mut Game) -> uint8 {
             .offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = g_word_88E0D5;
         v2 = (v2).wrapping_sub(2u16);
         v3 -= 1;
-        if !(v3 > 0i16) {
+        if (v3 <= 0i16) {
             break;
         }
     }
@@ -5546,7 +5546,7 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> uint8 {
             .offset(v5 as ::core::ffi::c_int as isize) = v6 as uint8;
         v2 = ((v5) as i16).wrapping_add(1i16);
         v3 = v3.wrapping_add(1);
-        if !(v2 < 0x100i16) {
+        if (v2 >= 0x100i16) {
             break;
         }
     }
@@ -5593,7 +5593,7 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> uint8 {
             .offset(v9 as ::core::ffi::c_int as isize) = v10 as uint8;
         v2 = ((v9) as i16).wrapping_add(1i16);
         v7 = v7.wrapping_sub(1);
-        if !(v2 < 0x200i16) {
+        if (v2 >= 0x200i16) {
             break;
         }
     }
@@ -5628,7 +5628,7 @@ pub unsafe fn VariaSuitPickup_4_LightBeamShrinks(game: &mut Game) -> uint8 {
             .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 255 as uint16;
         v1 = (v1).wrapping_add(2u16);
         v0 -= 1;
-        if !(v0 > 0i16) {
+        if (v0 <= 0i16) {
             break;
         }
     }
@@ -5641,7 +5641,7 @@ pub unsafe fn VariaSuitPickup_4_LightBeamShrinks(game: &mut Game) -> uint8 {
             .offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 255 as uint16;
         v2 = (v2).wrapping_sub(2u16);
         v3 -= 1;
-        if !(v3 > 0i16) {
+        if (v3 <= 0i16) {
             break;
         }
     }
@@ -6143,7 +6143,7 @@ pub unsafe fn HdmaobjPreInstr_E567(v0: uint16, game: &mut Game) {
                     );
             }
             v4 = (v8).wrapping_add(2u16);
-            if !(((v4) as i16).wrapping_sub((r30) as i16) < 0i16) {
+            if (((v4) as i16).wrapping_sub((r30) as i16) >= 0i16) {
                 break;
             }
         }
@@ -6715,7 +6715,7 @@ pub unsafe fn HdmaobjPreInstr_ECB6(k: uint16, game: &mut Game) {
                     );
             }
             v4 = (v8).wrapping_add(2u16);
-            if !(((v4 as ::core::ffi::c_int - n) as int16) < 0i16) {
+            if (((v4 as ::core::ffi::c_int - n) as int16) >= 0i16) {
                 break;
             }
         }

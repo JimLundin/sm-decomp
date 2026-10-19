@@ -419,7 +419,7 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                         );
                     v1 = (v1).wrapping_add(2u16);
                     v0 = (v0).wrapping_sub(2i16);
-                    if !(v0 != 0) {
+                    if (v0 == 0) {
                         break;
                     }
                 }
@@ -492,7 +492,7 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                             .offset((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
                         v3 = (v3).wrapping_add(2u16);
                         v2 = (v2).wrapping_sub(2i16);
-                        if !(v2 != 0) {
+                        if (v2 == 0) {
                             break;
                         }
                     }
@@ -545,7 +545,7 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                             .offset((v8 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
                         v8 = (v8).wrapping_add(2u16);
                         v7 = (v7).wrapping_sub(2i16);
-                        if !(v7 != 0) {
+                        if (v7 == 0) {
                             break;
                         }
                     }
@@ -592,7 +592,7 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                             .offset((v5 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
                         v5 = (v5).wrapping_add(2u16);
                         v4 = (v4).wrapping_sub(2i16);
-                        if !(v4 != 0) {
+                        if (v4 == 0) {
                             break;
                         }
                     }
@@ -734,7 +734,7 @@ pub unsafe fn LoadInitialPalette(game: &mut Game) {
                 .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
         v1 = (v1).wrapping_add(2u16);
         v0 = (v0).wrapping_sub(2i16);
-        if !(v0 != 0) {
+        if (v0 == 0) {
             break;
         }
     }
@@ -1170,7 +1170,7 @@ pub unsafe fn LoadDemoRoomData(game: &mut Game) {
             .offset(0xd828)
             .offset(v1 as isize) as *mut uint8 as *mut uint16) = 0 as uint16;
         v1 = (v1).wrapping_add(2u16);
-        if !(((v1) as i16).wrapping_sub(8i16) < 0i16) {
+        if (((v1) as i16).wrapping_sub(8i16) >= 0i16) {
             break;
         }
     }
@@ -1188,7 +1188,7 @@ pub unsafe fn LoadDemoRoomData(game: &mut Game) {
             .offset(0xd8b0)
             .offset(v1 as isize) as *mut uint8 as *mut uint16) = 0 as uint16;
         v1 = (v1).wrapping_add(2u16);
-        if !(((v1) as i16).wrapping_sub(64i16) < 0i16) {
+        if (((v1) as i16).wrapping_sub(64i16) >= 0i16) {
             break;
         }
     }
@@ -1197,7 +1197,7 @@ pub unsafe fn LoadDemoRoomData(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xcd52) as *mut uint16)
             .offset((v4 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
         v4 = (v4).wrapping_add(2u16);
-        if !(((v4) as i16).wrapping_sub(1536i16) < 0i16) {
+        if (((v4) as i16).wrapping_sub(1536i16) >= 0i16) {
             break;
         }
     }
@@ -2085,13 +2085,13 @@ pub unsafe fn LoadPauseScreenBaseTilemaps(game: &mut Game) {
                 .pause_menu_map_tilemap[fresh92 as usize] = *(RomPtr_82(v0, game) as *mut uint16);
             v0 = (v0).wrapping_add(2u16);
             n -= 1;
-            if !(n != 0) {
+            if (n == 0) {
                 break;
             }
         }
         v1 = (v1).wrapping_add(8u16);
         m -= 1;
-        if !(m != 0) {
+        if (m == 0) {
             break;
         }
     }
@@ -2132,7 +2132,7 @@ pub unsafe fn BackupGameplayPalettesAndLoadForPause(game: &mut Game) {
                 .offset(v1 as isize);
         v1 = v1.wrapping_add(1);
         v0 = (v0).wrapping_sub(2i16);
-        if !(v0 != 0) {
+        if (v0 == 0) {
             break;
         }
     }
@@ -2145,7 +2145,7 @@ pub unsafe fn BackupGameplayPalettesAndLoadForPause(game: &mut Game) {
                 .offset((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
         v3 = (v3).wrapping_add(2u16);
         v2 = (v2).wrapping_sub(2i16);
-        if !(v2 != 0) {
+        if (v2 == 0) {
             break;
         }
     }
@@ -2625,7 +2625,7 @@ pub unsafe fn LoadPauseMenuMapTilemap(game: &mut Game) {
                 r40 = u16::swap_bytes(*fresh89);
             }
             v8 = (v8).wrapping_add(2u16);
-            if !(((v8) as i16).wrapping_sub(4096i16) < 0i16) {
+            if (((v8) as i16).wrapping_sub(4096i16) >= 0i16) {
                 break;
             }
         }
@@ -2655,7 +2655,7 @@ pub unsafe fn LoadPauseMenuMapTilemap(game: &mut Game) {
             }
             v1 = (v1).wrapping_add(2u16);
             r18 = r18.wrapping_add(1);
-            if !(r18 >= 8u8) {
+            if (r18 < 8u8) {
                 continue;
             }
             r18 = 0 as uint8;
@@ -2734,7 +2734,7 @@ pub unsafe fn DrawRoomSelectMap(game: &mut Game) {
                 r40 = u16::swap_bytes(*fresh46);
             }
             v9 = (v9).wrapping_add(2u16);
-            if !(((v9) as i16).wrapping_sub(4096i16) < 0i16) {
+            if (((v9) as i16).wrapping_sub(4096i16) >= 0i16) {
                 break;
             }
         }
@@ -2765,8 +2765,8 @@ pub unsafe fn DrawRoomSelectMap(game: &mut Game) {
             }
             v1 = (v1).wrapping_add(2u16);
             r18 = r18.wrapping_add(1);
-            if !(r18 as ::core::ffi::c_int - 8 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
-                == 0)
+            if (r18 as ::core::ffi::c_int - 8 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
+                != 0)
             {
                 continue;
             }
@@ -2884,13 +2884,12 @@ unsafe fn DetermineLeftmostMapColumn(mut r0: *const uint8) -> uint16 {
         r18 = k0x80Shr[v0 as usize];
         v2 = 0 as uint16;
         loop {
-            if !((r18 as ::core::ffi::c_int & *r0.offset(v2 as isize) as ::core::ffi::c_int)
-                == 0i32)
+            if ((r18 as ::core::ffi::c_int & *r0.offset(v2 as isize) as ::core::ffi::c_int) != 0i32)
             {
                 break '_LABEL_2;
             }
             v2 = (v2).wrapping_add(4u16);
-            if !(((v2) as i16).wrapping_sub(128i16) >= 0i16) {
+            if (((v2) as i16).wrapping_sub(128i16) < 0i16) {
                 continue;
             }
             result = result.wrapping_add(1);
@@ -2916,13 +2915,12 @@ unsafe fn DetermineRightmostMapColumn(mut r0: *const uint8) -> uint16 {
         r18 = k0x80Shr_0[(result as ::core::ffi::c_int & 7 as ::core::ffi::c_int) as usize];
         v1 = 0 as uint16;
         loop {
-            if !((r18 as ::core::ffi::c_int & *r0.offset(v1 as isize) as ::core::ffi::c_int)
-                == 0i32)
+            if ((r18 as ::core::ffi::c_int & *r0.offset(v1 as isize) as ::core::ffi::c_int) != 0i32)
             {
                 break 's_7;
             }
             v1 = (v1).wrapping_add(4u16);
-            if !(((v1) as i16).wrapping_sub(128i16) >= 0i16) {
+            if (((v1) as i16).wrapping_sub(128i16) < 0i16) {
                 continue;
             }
             result = result.wrapping_sub(1);
@@ -3259,7 +3257,7 @@ pub unsafe fn ContinueInitGameplayResume(game: &mut Game) {
                 [(v1 as ::core::ffi::c_int + 384 as ::core::ffi::c_int) as usize];
         v1 = v1.wrapping_add(1);
         v0 = (v0).wrapping_sub(2i16);
-        if !(v0 != 0) {
+        if (v0 == 0) {
             break;
         }
     }
@@ -3724,13 +3722,13 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
         } else {
             let mut v4: uint16 = 0 as uint16;
             loop {
-                if !((*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c04c)) as *const uint8
+                if ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c04c)) as *const uint8
                     as *mut uint16)
                     .offset((v4 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
                     as ::core::ffi::c_int
                     & *((&raw mut game.g_ram as *mut uint8).offset(0x9a8) as *mut uint16)
                         as ::core::ffi::c_int)
-                    == 0i32)
+                    != 0i32)
                 {
                     current_block = 4761528863920922185;
                     break;
@@ -3787,7 +3785,7 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
                         break;
                     } else {
                         v6 = (v6).wrapping_add(2u16);
-                        if !(((v6) as i16).wrapping_sub(12i16) < 0i16) {
+                        if (((v6) as i16).wrapping_sub(12i16) >= 0i16) {
                             current_block = 1109700713171191020;
                             break;
                         }
@@ -3799,7 +3797,7 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
                         v8 = 0 as int16;
                         loop {
                             v8 = (v8).wrapping_add(2i16);
-                            if !((v8).wrapping_sub(6i16) < 0i16) {
+                            if ((v8).wrapping_sub(6i16) >= 0i16) {
                                 break;
                             }
                         }
@@ -4050,7 +4048,7 @@ pub unsafe fn EquipmentScreenCategory_Tanks_0(game: &mut Game) {
                             & 0xfc00 as ::core::ffi::c_int) as uint16;
                 v1 = v1.wrapping_add(1);
                 v0 = (v0).wrapping_sub(2i16);
-                if !(v0 != 0) {
+                if (v0 == 0) {
                     break;
                 }
             }
@@ -4071,7 +4069,7 @@ pub unsafe fn EquipmentScreenCategory_Tanks_0(game: &mut Game) {
                             & 0xfc00 as ::core::ffi::c_int) as uint16;
                 v3 = v3.wrapping_add(1);
                 v2 = (v2).wrapping_sub(2i16);
-                if !(v2 != 0) {
+                if (v2 == 0) {
                     break;
                 }
             }
@@ -4488,13 +4486,13 @@ pub unsafe fn WriteSamusWireframeTilemap(game: &mut Game) {
                 .offset(v2 as ::core::ffi::c_int as isize) as *mut uint16) = *fresh64;
             v2 = (v2).wrapping_add(2u16);
             n -= 1;
-            if !(n != 0) {
+            if (n == 0) {
                 break;
             }
         }
         v2 = (v3).wrapping_add(64u16);
         m -= 1;
-        if !(m != 0) {
+        if (m == 0) {
             break;
         }
     }
@@ -4569,7 +4567,7 @@ pub unsafe fn EquipmentScreenDisplayReserveTankAmount_(game: &mut Game) {
             );
             v0 = (v0).wrapping_add(2u16);
             r46 -= 1;
-            if !(r46 != 0) {
+            if (r46 == 0) {
                 break;
             }
         }
@@ -4680,13 +4678,13 @@ pub unsafe fn EquipmentScreenMoveToBeams(mut v0: uint16, r18: uint16, game: &mut
         current_block_5 = 16475780731721606008;
     } else {
         loop {
-            if !((*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c04c)) as *const uint8
+            if ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c04c)) as *const uint8
                 as *mut uint16)
                 .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
                 as ::core::ffi::c_int
                 & *((&raw mut game.g_ram as *mut uint8).offset(0x9a8) as *mut uint16)
                     as ::core::ffi::c_int)
-                == 0i32)
+                != 0i32)
             {
                 current_block_5 = 6873731126896040597;
                 break;
@@ -5682,7 +5680,7 @@ pub unsafe fn AdvanceGradualColorChangeOfPalette(
                     game,
                 );
             k = (k).wrapping_add(2u16);
-            if !(k < R34) {
+            if (k >= R34) {
                 break;
             }
         }
@@ -5841,7 +5839,7 @@ pub unsafe fn sub_82DB41(game: &mut Game) {
         }
         v0 = (v0).wrapping_add(2u16);
         *((&raw mut game.g_ram as *mut uint8).offset(0xc404) as *mut uint16) = v0;
-        if !((v0 as ::core::ffi::c_int & 0x1f as ::core::ffi::c_int) != 0i32) {
+        if ((v0 as ::core::ffi::c_int & 0x1f as ::core::ffi::c_int) == 0i32) {
             break;
         }
     }
@@ -6982,16 +6980,16 @@ pub unsafe fn LoadLevelDataAndOtherThings(game: &mut Game) {
                     .offset(0xcd20)
                     .offset(fresh145 as isize) = v8;
                 v11 += 1;
-                if !(v11 as ::core::ffi::c_int
-                    != *((&raw mut game.g_ram as *mut uint8).offset(0x7a9) as *mut uint16) as uint8
+                if (v11 as ::core::ffi::c_int
+                    == *((&raw mut game.g_ram as *mut uint8).offset(0x7a9) as *mut uint16) as uint8
                         as ::core::ffi::c_int)
                 {
                     break;
                 }
             }
             v10 += 1;
-            if !(v10 as ::core::ffi::c_int
-                != *((&raw mut game.g_ram as *mut uint8).offset(0x7ab) as *mut uint16) as uint8
+            if (v10 as ::core::ffi::c_int
+                == *((&raw mut game.g_ram as *mut uint8).offset(0x7ab) as *mut uint16) as uint8
                     as ::core::ffi::c_int)
             {
                 break;
@@ -7145,7 +7143,7 @@ pub unsafe fn LoadLibraryBackground(game: &mut Game) {
                 .expect("non-null function pointer")(
                 (bg_data_ptr).wrapping_add(2u16), game
             );
-            if !(bg_data_ptr != 0) {
+            if (bg_data_ptr == 0) {
                 break;
             }
         }
@@ -7310,16 +7308,16 @@ pub unsafe fn LoadLevelScrollAndCre(game: &mut Game) {
                     .offset(0xcd20)
                     .offset(fresh35 as isize) = v8;
                 v11 += 1;
-                if !(v11 as ::core::ffi::c_int
-                    != *((&raw mut game.g_ram as *mut uint8).offset(0x7a9) as *mut uint16) as uint8
+                if (v11 as ::core::ffi::c_int
+                    == *((&raw mut game.g_ram as *mut uint8).offset(0x7a9) as *mut uint16) as uint8
                         as ::core::ffi::c_int)
                 {
                     break;
                 }
             }
             v10 = (v12).wrapping_add(1i8);
-            if !(v12 as ::core::ffi::c_int + 1 as ::core::ffi::c_int
-                != *((&raw mut game.g_ram as *mut uint8).offset(0x7ab) as *mut uint16) as uint8
+            if (v12 as ::core::ffi::c_int + 1 as ::core::ffi::c_int
+                == *((&raw mut game.g_ram as *mut uint8).offset(0x7ab) as *mut uint16) as uint8
                     as ::core::ffi::c_int)
             {
                 break;
@@ -7525,7 +7523,7 @@ pub unsafe fn OptionsMenuFunc5(a: uint16, mut k: uint16, mut j: uint16, game: &m
             as uint16;
         k = (k).wrapping_add(2u16);
         j = (j).wrapping_sub(2u16);
-        if !(j != 0) {
+        if (j == 0) {
             break;
         }
     }
@@ -8284,7 +8282,7 @@ pub unsafe fn LoadControllerOptionsFromControllerBindings(game: &mut Game) {
             _ => {}
         }
         v0 = (v0).wrapping_add(2u16);
-        if !(((v0) as i16).wrapping_sub(14i16) < 0i16) {
+        if (((v0) as i16).wrapping_sub(14i16) >= 0i16) {
             break;
         }
     }
@@ -8313,7 +8311,7 @@ pub unsafe fn OptionsMenuFunc8(game: &mut Game) -> uint8 {
             .offset(((v0 >> 1 as ::core::ffi::c_int) + 13 as ::core::ffi::c_int) as isize)
             as usize] as uint16;
         v0 += 2 as ::core::ffi::c_int;
-        if !(v2 < 12i32) {
+        if (v2 >= 12i32) {
             break;
         }
     }
@@ -8362,7 +8360,7 @@ pub unsafe fn OptionsMenuFunc6(game: &mut Game) {
             .offset(34) as *mut uint16 as *mut uint8)
             .offset(v2 as ::core::ffi::c_int as isize) as *mut uint16) = *v3.offset(5);
         v0 = (v4).wrapping_add(2u16);
-        if !(((v4) as i16).wrapping_sub(12i16) < 0i16) {
+        if (((v4) as i16).wrapping_sub(12i16) >= 0i16) {
             break;
         }
     }

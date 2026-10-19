@@ -699,7 +699,7 @@ unsafe fn ParseKeyArray(
         s = NextDelim(&raw mut value, ',' as i32);
         !s.is_null()
     } {
-        if !(*s as ::core::ffi::c_int == 0 as ::core::ffi::c_int) {
+        if (*s as ::core::ffi::c_int != 0 as ::core::ffi::c_int) {
             let mut key_with_mod: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
             loop {
                 if !StringStartsWithNoCase(
@@ -910,12 +910,12 @@ unsafe fn ParseGamepadArray(
         s = NextDelim(&raw mut value, ',' as i32);
         !s.is_null()
     } {
-        if !(*s as ::core::ffi::c_int == 0 as ::core::ffi::c_int) {
+        if (*s as ::core::ffi::c_int != 0 as ::core::ffi::c_int) {
             let mut modifiers: uint32 = 0 as uint32;
             let mut ss: *const ::core::ffi::c_char = s;
             loop {
                 let button: ::core::ffi::c_int = ParseGamepadButtonName(&raw mut ss);
-                if !(button == kGamepadBtn_Invalid as ::core::ffi::c_int) {
+                if (button != kGamepadBtn_Invalid as ::core::ffi::c_int) {
                     while *ss as ::core::ffi::c_int == ' ' as i32
                         || *ss as ::core::ffi::c_int == '\t' as i32
                     {
@@ -1011,7 +1011,7 @@ pub unsafe fn ParseBool(mut value: *const ::core::ffi::c_char, result: *mut bool
     value = value.offset(1);
     match *fresh2 as ::core::ffi::c_int | 32 as ::core::ffi::c_int {
         48 => {
-            if !(*value as ::core::ffi::c_int == 0 as ::core::ffi::c_int) {
+            if (*value as ::core::ffi::c_int != 0 as ::core::ffi::c_int) {
                 return false_0 != 0;
             }
         }
@@ -1040,7 +1040,7 @@ pub unsafe fn ParseBool(mut value: *const ::core::ffi::c_char, result: *mut bool
         }
         49 => {
             rv = true_0 != 0;
-            if !(*value as ::core::ffi::c_int == 0 as ::core::ffi::c_int) {
+            if (*value as ::core::ffi::c_int != 0 as ::core::ffi::c_int) {
                 return false_0 != 0;
             }
         }
@@ -1327,7 +1327,7 @@ unsafe fn ParseOneConfigFile(
         if p.is_null() {
             break;
         }
-        if !(*p as ::core::ffi::c_int == 0 as ::core::ffi::c_int) {
+        if (*p as ::core::ffi::c_int != 0 as ::core::ffi::c_int) {
             if *p as ::core::ffi::c_int == '[' as i32 {
                 section = GetIniSection(p);
                 if section < 0 as ::core::ffi::c_int {

@@ -163,7 +163,7 @@ pub unsafe fn SaveToSram(a: uint16, game: &mut Game) {
                 .offset(v4 as isize) as *mut uint8 as *mut uint16);
         v4 = (v4).wrapping_add(2u16);
         v3 = (v3).wrapping_add(2u16);
-        if !(((v4) as i16).wrapping_sub(256i16) < 0i16) {
+        if (((v4) as i16).wrapping_sub(256i16) >= 0i16) {
             break;
         }
     }
@@ -186,7 +186,7 @@ pub unsafe fn SaveToSram(a: uint16, game: &mut Game) {
         ) as *mut uint8 as *mut uint16) = v7;
         r20 = (r20).wrapping_add(v7);
         v5 = (v5).wrapping_add(2u16);
-        if !(v6 != (&raw mut game.g_ram as *mut uint8).offset(0xde1c) as *mut uint16) {
+        if (v6 == (&raw mut game.g_ram as *mut uint8).offset(0xde1c) as *mut uint16) {
             break;
         }
     }
@@ -226,7 +226,7 @@ pub unsafe fn LoadFromSram(a: uint16, game: &mut Game) -> uint8 {
         *fresh1 = v3;
         r20 = (r20).wrapping_add(v3);
         v1 = (v1).wrapping_add(2u16);
-        if !(v2 != (&raw mut game.g_ram as *mut uint8).offset(0xde1c) as *mut uint16) {
+        if (v2 == (&raw mut game.g_ram as *mut uint8).offset(0xde1c) as *mut uint16) {
             break;
         }
     }
@@ -270,8 +270,8 @@ pub unsafe fn LoadFromSram(a: uint16, game: &mut Game) -> uint8 {
             r20 = v9;
             v7 = (v7).wrapping_add(2u16);
             v8 = (v8).wrapping_add(2u16);
-            if !(v8 as ::core::ffi::c_long
-                != ((&raw mut game.g_ram as *mut uint8).offset(0xde1c) as *mut uint16 as *mut uint8)
+            if (v8 as ::core::ffi::c_long
+                == ((&raw mut game.g_ram as *mut uint8).offset(0xde1c) as *mut uint16 as *mut uint8)
                     .offset_from(&raw mut game.g_ram as *mut uint8)
                     as ::core::ffi::c_long)
             {
@@ -316,7 +316,7 @@ pub unsafe fn UnpackMapFromSave(game: &mut Game) {
                 .offset(0xd91c)
                 .offset(fresh3 as isize);
             n -= 1;
-            if !(n != 0) {
+            if (n == 0) {
                 break;
             }
         }
@@ -350,7 +350,7 @@ pub unsafe fn PackMapToSave(game: &mut Game) {
                 .offset(0xd91c)
                 .offset(fresh96 as isize) = *unpacked.offset(v3 as isize);
             n -= 1;
-            if !(n != 0) {
+            if (n == 0) {
                 break;
             }
         }
@@ -814,9 +814,9 @@ pub unsafe fn GameOverMenu_0_FadeOutConfigGfx(game: &mut Game) {
                 *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
                     .offset(v0 as isize);
             v0 = v0.wrapping_add(1);
-            if !(((v0 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 512 as ::core::ffi::c_int)
+            if (((v0 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 512 as ::core::ffi::c_int)
                 as int16)
-                < 0i16)
+                >= 0i16)
             {
                 break;
             }
@@ -831,9 +831,9 @@ pub unsafe fn GameOverMenu_0_FadeOutConfigGfx(game: &mut Game) {
                     .offset((v1 as ::core::ffi::c_int * 2 as ::core::ffi::c_int) as isize)
                     as *mut uint16);
             v1 = v1.wrapping_add(1);
-            if !(((v1 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 54 as ::core::ffi::c_int)
+            if (((v1 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 54 as ::core::ffi::c_int)
                 as int16)
-                < 0i16)
+                >= 0i16)
             {
                 break;
             }
@@ -909,7 +909,7 @@ pub unsafe fn LoadMenuPalettes(game: &mut Game) {
             *(game.g_rom.offset(crate::rtl::lorom_offset(0x8ee400)) as *const uint8 as *mut uint16)
                 .offset((v1 + 1 as ::core::ffi::c_int) as isize);
         v0 = (v0).wrapping_add(4u16);
-        if !(((v0) as i16).wrapping_sub(512i16) < 0i16) {
+        if (((v0) as i16).wrapping_sub(512i16) >= 0i16) {
             break;
         }
     }
@@ -972,7 +972,7 @@ pub unsafe fn RestorePalettesAndIoAfterDebugGameover(game: &mut Game) {
             (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
                 .pause_menu_map_tilemap[(v0 + 384 as ::core::ffi::c_int) as usize];
         v0 += 1;
-        if !(((v0 * 2 as ::core::ffi::c_int - 512 as ::core::ffi::c_int) as int16) < 0i16) {
+        if (((v0 * 2 as ::core::ffi::c_int - 512 as ::core::ffi::c_int) as int16) >= 0i16) {
             break;
         }
     }
@@ -984,7 +984,7 @@ pub unsafe fn RestorePalettesAndIoAfterDebugGameover(game: &mut Game) {
             (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
                 .pause_menu_map_tilemap[(v1 + 640 as ::core::ffi::c_int) as usize];
         v1 += 1;
-        if !(((v1 * 2 as ::core::ffi::c_int - 54 as ::core::ffi::c_int) as int16) < 0i16) {
+        if (((v1 * 2 as ::core::ffi::c_int - 54 as ::core::ffi::c_int) as int16) >= 0i16) {
             break;
         }
     }
@@ -1128,7 +1128,7 @@ pub unsafe fn GameOverMenu_1_Init(game: &mut Game) {
             .menu_tilemap as *mut uint8 as *mut uint16)
             .offset(v0 as isize) = 15 as uint16;
         v0 += 1;
-        if !(((v0 * 2 as ::core::ffi::c_int - 2048 as ::core::ffi::c_int) as int16) < 0i16) {
+        if (((v0 * 2 as ::core::ffi::c_int - 2048 as ::core::ffi::c_int) as int16) >= 0i16) {
             break;
         }
     }
@@ -1295,7 +1295,7 @@ pub unsafe fn LoadFileSelectPalettes(game: &mut Game) {
             *(game.g_rom.offset(crate::rtl::lorom_offset(0x8ee400)) as *const uint8 as *mut uint16)
                 .offset((v1 + 1 as ::core::ffi::c_int) as isize);
         v0 += 4 as ::core::ffi::c_int;
-        if !(((v0 - 512 as ::core::ffi::c_int) as int16) < 0i16) {
+        if (((v0 - 512 as ::core::ffi::c_int) as int16) >= 0i16) {
             break;
         }
     }
@@ -1317,7 +1317,7 @@ pub unsafe fn FileSelectMenu_32_FadeOutToOptions(game: &mut Game) {
             *(((&raw mut game.g_ram as *mut uint8).offset(0x198d) as *mut uint16 as *mut uint8)
                 .offset(v0 as isize) as *mut uint16) = 0 as uint16;
             v0 += 2 as ::core::ffi::c_int;
-            if !(((v0 - 48 as ::core::ffi::c_int) as int16) < 0i16) {
+            if (((v0 - 48 as ::core::ffi::c_int) as int16) >= 0i16) {
                 break;
             }
         }
@@ -1421,10 +1421,10 @@ pub unsafe fn SetInitialFileCopyMenuSelection(game: &mut Game) {
     let mut v0: ::core::ffi::c_int =
         *((&raw mut game.g_ram as *mut uint8).offset(0x954) as *mut uint16) as ::core::ffi::c_int;
     let mut v1: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    while !(v0 & 1 as ::core::ffi::c_int != 0) {
+    while (v0 & 1 as ::core::ffi::c_int == 0) {
         v0 >>= 1 as ::core::ffi::c_int;
         v1 += 1;
-        if !(((v1 - 3 as ::core::ffi::c_int) as int16) < 0i16) {
+        if (((v1 - 3 as ::core::ffi::c_int) as int16) >= 0i16) {
             break;
         }
     }
@@ -1593,7 +1593,7 @@ pub unsafe fn FileSelectMenu_8(game: &mut Game) {
                 as uint8;
             loop {
                 v0 = v0.wrapping_sub(1);
-                if !((v0 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) == 0i32) {
+                if ((v0 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) != 0i32) {
                     current_block_18 = 1109700713171191020;
                     break;
                 }
@@ -1615,7 +1615,7 @@ pub unsafe fn FileSelectMenu_8(game: &mut Game) {
                 as uint8;
             loop {
                 v0 = v0.wrapping_add(1);
-                if !(((v0) as i8).wrapping_sub(4i8) < 0i8) {
+                if (((v0) as i8).wrapping_sub(4i8) >= 0i8) {
                     current_block_18 = 1109700713171191020;
                     break;
                 }
@@ -1660,9 +1660,9 @@ pub unsafe fn FileSelectMenu_9_InitializeSelectDest(game: &mut Game) {
     let ref mut fresh72 = *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16);
     *fresh72 = (*fresh72).wrapping_add(1);
     let mut v0: uint16 = 0 as uint16;
-    while !(v0 != *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(16)) {
+    while (v0 == *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(16)) {
         v0 = v0.wrapping_add(1);
-        if !(v0 as ::core::ffi::c_int - 3 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0)
+        if (v0 as ::core::ffi::c_int - 3 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0)
         {
             break;
         }
@@ -1756,7 +1756,7 @@ pub unsafe fn FileSelectMenu_10_FileCopySelectDest(game: &mut Game) {
             v0 = *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(15);
             loop {
                 v0 = v0.wrapping_sub(1);
-                if !((v0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32) {
+                if ((v0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32) {
                     current_block = 16545170798630791882;
                     break;
                 }
@@ -1777,7 +1777,7 @@ pub unsafe fn FileSelectMenu_10_FileCopySelectDest(game: &mut Game) {
             v0 = *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(15);
             loop {
                 v0 = v0.wrapping_add(1);
-                if !(v0 != 4u16) {
+                if (v0 == 4u16) {
                     current_block = 16545170798630791882;
                     break;
                 }
@@ -1859,7 +1859,7 @@ pub unsafe fn DrawFileCopyClearConfirmation(game: &mut Game) {
             .cast::<uint16>()
             .add(v0 as usize)) = 15 as uint16;
         v0 += 1;
-        if !(((v0 * 2 as ::core::ffi::c_int - 1728 as ::core::ffi::c_int) as int16) < 0i16) {
+        if (((v0 * 2 as ::core::ffi::c_int - 1728 as ::core::ffi::c_int) as int16) >= 0i16) {
             break;
         }
     }
@@ -1972,7 +1972,7 @@ pub unsafe fn HandleFileCopyArrowPalette(game: &mut Game) {
                         + 146 as ::core::ffi::c_int) as isize,
                 );
                 v1 = (v1).wrapping_add(2u16);
-                if !(((v1) as i16).wrapping_sub(12i16) < 0i16) {
+                if (((v1) as i16).wrapping_sub(12i16) >= 0i16) {
                     break;
                 }
             }
@@ -2048,7 +2048,7 @@ pub unsafe fn FileSelectMenu_13_FileCopyDoIt(game: &mut Game) {
             .cast::<uint16>()
             .add(v5 as usize)) = 15 as uint16;
         v5 += 1;
-        if !(((v5 * 2 as ::core::ffi::c_int - 1856 as ::core::ffi::c_int) as int16) < 0i16) {
+        if (((v5 * 2 as ::core::ffi::c_int - 1856 as ::core::ffi::c_int) as int16) >= 0i16) {
             break;
         }
     }
@@ -2074,7 +2074,7 @@ pub unsafe fn FileSelectMenu_13_FileCopyDoIt(game: &mut Game) {
             .offset(v6 as isize) as *mut uint16) = 15 as uint16;
         v6 += 2 as ::core::ffi::c_int;
         v7 += 2 as ::core::ffi::c_int;
-        if !(((v7 - 22 as ::core::ffi::c_int) as int16) < 0i16) {
+        if (((v7 - 22 as ::core::ffi::c_int) as int16) >= 0i16) {
             break;
         }
     }
@@ -2166,10 +2166,10 @@ pub unsafe fn FileSelectMenu_22_FileClearSelectSlot(game: &mut Game) {
             *fresh56 = (*fresh56).wrapping_add(1);
             return;
         }
-    } else if !((*((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16)
+    } else if ((*((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16)
         as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int)
-        != 0i32)
+        == 0i32)
     {
         let current_block_18: u64;
         if (*((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16)
@@ -2181,7 +2181,7 @@ pub unsafe fn FileSelectMenu_22_FileClearSelectSlot(game: &mut Game) {
                 as uint8;
             loop {
                 v1 = v1.wrapping_sub(1);
-                if !((v1 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) == 0i32) {
+                if ((v1 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) != 0i32) {
                     current_block_18 = 11307063007268554308;
                     break;
                 }
@@ -2203,7 +2203,7 @@ pub unsafe fn FileSelectMenu_22_FileClearSelectSlot(game: &mut Game) {
                 as uint8;
             loop {
                 v1 = v1.wrapping_add(1);
-                if !(((v1) as i8).wrapping_sub(4i8) < 0i8) {
+                if (((v1) as i8).wrapping_sub(4i8) >= 0i8) {
                     current_block_18 = 11307063007268554308;
                     break;
                 }
@@ -2377,9 +2377,9 @@ pub unsafe fn FileSelectMenu_25_FileClearDoClear(game: &mut Game) {
             .cast::<uint16>()
             .add(v3 as usize)) = 15 as uint16;
         v3 = v3.wrapping_add(1);
-        if !(((v3 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 1856 as ::core::ffi::c_int)
+        if (((v3 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 1856 as ::core::ffi::c_int)
             as int16)
-            < 0i16)
+            >= 0i16)
         {
             break;
         }
@@ -2405,7 +2405,7 @@ pub unsafe fn FileSelectMenu_26_ClearCompleted(game: &mut Game) {
         QueueSfx1_Max6(0x37 as uint16, game);
         let ref mut fresh49 = *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16);
         *fresh49 = (*fresh49).wrapping_add(1);
-        if !(LoadFromSram(0 as uint16, game) == 0) {
+        if (LoadFromSram(0 as uint16, game) != 0) {
             if LoadFromSram(1 as uint16, game) != 0 {
                 if LoadFromSram(2 as uint16, game) != 0 {
                     current_block_7 = 17037298857681653719;
@@ -2774,7 +2774,7 @@ pub unsafe fn DrawFileSelectionHealth(a: uint16, k: uint16, game: &mut Game) {
         let mut v3: uint16 = ((v2) as u16).wrapping_add(64u16);
         loop {
             mh -= 1;
-            if !(mh >= 0i32) {
+            if (mh < 0i32) {
                 break;
             }
             v4 = 153 as int16;
@@ -3073,7 +3073,7 @@ pub unsafe fn FileSelectMap_0(game: &mut Game) {
             *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
                 .offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
         v2 = (v2).wrapping_add(2u16);
-        if !(((v2) as i16).wrapping_sub(64i16) < 0i16) {
+        if (((v2) as i16).wrapping_sub(64i16) >= 0i16) {
             break;
         }
     }
@@ -3096,7 +3096,7 @@ pub unsafe fn FileSelectMap_1(game: &mut Game) {
                 [(v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize]
         {
             v0 = (v0).wrapping_add(2u16);
-            if !(((v0) as i16).wrapping_sub(12i16) >= 0i16) {
+            if (((v0) as i16).wrapping_sub(12i16) < 0i16) {
                 continue;
             }
             v0 = 0 as uint16;
@@ -3116,7 +3116,7 @@ pub unsafe fn FileSelectMap_1(game: &mut Game) {
                 LoadInactiveAreaMapForegroundColors(v1 as uint16, game);
             }
             v1 += 1;
-            if !((v2).wrapping_sub(5i16) < 0i16) {
+            if ((v2).wrapping_sub(5i16) >= 0i16) {
                 break;
             }
         }
@@ -3163,7 +3163,7 @@ pub unsafe fn LoadAreaMapForegroundColors(mut j: uint16, game: &mut Game) {
             v2 = (v2).wrapping_add(2u16);
             v3 = (v3).wrapping_add(2u16);
             n -= 1;
-            if !(n != 0) {
+            if (n == 0) {
                 break;
             }
         }
@@ -3391,9 +3391,9 @@ pub unsafe fn FileSelectMap_5_ExpandingSquare(game: &mut Game) {
                 as *const uint8 as *mut uint16)
                 .offset(v1 as isize);
             v1 = v1.wrapping_add(1);
-            if !(((v1 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 1600 as ::core::ffi::c_int)
+            if (((v1 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 1600 as ::core::ffi::c_int)
                 as int16)
-                < 0i16)
+                >= 0i16)
             {
                 break;
             }
@@ -3403,9 +3403,9 @@ pub unsafe fn FileSelectMap_5_ExpandingSquare(game: &mut Game) {
             v1 = v1.wrapping_add(1);
             (*((&raw mut game.g_ram as *mut uint8).offset(0x4000) as *mut Ram4000)).xray_tilemaps
                 [fresh37 as usize] = 10241 as uint16;
-            if !(((v1 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 2048 as ::core::ffi::c_int)
+            if (((v1 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 2048 as ::core::ffi::c_int)
                 as int16)
-                < 0i16)
+                >= 0i16)
             {
                 break;
             }
@@ -3426,7 +3426,7 @@ pub unsafe fn FileSelectMap_5_ExpandingSquare(game: &mut Game) {
                 as *const uint8 as *mut uint16)
                 .offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
             v2 = (v2).wrapping_sub(2u16);
-            if !(v2 != 0) {
+            if (v2 == 0) {
                 break;
             }
         }
@@ -3644,9 +3644,9 @@ pub unsafe fn SelectFileSelectMapArea(game: &mut Game) {
     's_43: loop {
         v2 = ((q) as i8) & (1i8);
         q = (q as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
-        if !(v2 == 0) {
+        if (v2 != 0) {
             v3 = *r0.offset((2 as ::core::ffi::c_int * v0 as ::core::ffi::c_int) as isize) as int16;
-            if !(v3 == -2i16) {
+            if (v3 != -2i16) {
                 if v3 != -1i16 {
                     break;
                 }
@@ -3655,7 +3655,7 @@ pub unsafe fn SelectFileSelectMapArea(game: &mut Game) {
         }
         v0 = v0.wrapping_add(1);
         r20 = r20.wrapping_sub(1);
-        if !(r20 == 0) {
+        if (r20 != 0) {
             continue;
         }
         loop {
@@ -3750,7 +3750,7 @@ pub unsafe fn DrawAreaSelectMapLabels(game: &mut Game) {
             if !(v4 != 0 && *v2 != 0xfffeu16) {
                 v2 = v2.offset(2);
                 R30 -= 1;
-                if !(R30 == 0) {
+                if (R30 != 0) {
                     continue;
                 }
                 if !(*((&raw mut game.g_ram as *mut uint8).offset(0x5d1) as *mut uint16) != 0u16
@@ -4100,7 +4100,7 @@ pub unsafe fn FileSelectMap_10_RoomSelectMap(game: &mut Game) {
         loop {
             r24 = (r24 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
             v1 -= 1;
-            if !(v1 >= 0i16) {
+            if (v1 < 0i16) {
                 break;
             }
         }
@@ -4422,7 +4422,7 @@ pub unsafe fn FileSelectMap_16_LoadPalettes(game: &mut Game) {
         let fresh19 = v0;
         v0 = v0 + 1;
         LoadInactiveAreaMapForegroundColors(fresh19 as uint16, game);
-        if !((v1).wrapping_sub(5i16) < 0i16) {
+        if ((v1).wrapping_sub(5i16) >= 0i16) {
             break;
         }
     }
@@ -4667,7 +4667,7 @@ pub unsafe fn NewSaveFile(game: &mut Game) {
             .offset((v0 as ::core::ffi::c_int + 8 as ::core::ffi::c_int) as isize)
             as *mut uint8 as *mut uint16) = 0 as uint16;
         v0 = (v0).wrapping_add(2u16);
-        if !(((v0) as i16).wrapping_sub(8i16) < 0i16) {
+        if (((v0) as i16).wrapping_sub(8i16) >= 0i16) {
             break;
         }
     }
@@ -4686,7 +4686,7 @@ pub unsafe fn NewSaveFile(game: &mut Game) {
             .offset(0xd8b0)
             .offset(v0 as isize) as *mut uint8 as *mut uint16) = 0 as uint16;
         v0 = (v0).wrapping_add(2u16);
-        if !(((v0) as i16).wrapping_sub(64i16) < 0i16) {
+        if (((v0) as i16).wrapping_sub(64i16) >= 0i16) {
             break;
         }
     }
@@ -4695,7 +4695,7 @@ pub unsafe fn NewSaveFile(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xcd52) as *mut uint16)
             .offset((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
         v3 = (v3).wrapping_add(2u16);
-        if !(((v3) as i16).wrapping_sub(1792i16) < 0i16) {
+        if (((v3) as i16).wrapping_sub(1792i16) >= 0i16) {
             break;
         }
     }
@@ -4710,7 +4710,7 @@ pub unsafe fn FileSelectClearRestOfMenuTilemapRow(mut v0: uint16, game: &mut Gam
             .offset(v0 as ::core::ffi::c_int as isize) as *mut uint16) = 15 as uint16;
         v0 = (v0).wrapping_add(2u16);
         n -= 1;
-        if !(n != 0) {
+        if (n == 0) {
             break;
         }
     }

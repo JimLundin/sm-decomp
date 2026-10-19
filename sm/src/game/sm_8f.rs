@@ -1075,7 +1075,7 @@ pub unsafe fn HandleRoomDefStateSelect(k: uint16, game: &mut Game) {
             (v1).wrapping_add(2u16),
             game,
         );
-        if !(v1 != 0) {
+        if (v1 == 0) {
             break;
         }
     }

@@ -148,7 +148,7 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(
         )) as u16)
             | (0xff00u16);
         mbn_var_3F = mbn_var_3F.wrapping_sub(1);
-        if !(mbn_var_3F != 32u16) {
+        if (mbn_var_3F == 32u16) {
             break;
         }
     }
@@ -157,7 +157,7 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(
         v2 = v2.offset(-1);
         *fresh12 = 255 as uint16;
         mbn_var_3F = mbn_var_3F.wrapping_sub(1);
-        if !(mbn_var_3F != 32u16) {
+        if (mbn_var_3F == 32u16) {
             break;
         }
     }
@@ -187,7 +187,7 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(
         v5 = v5.offset(1);
         *fresh14 = 255 as uint16;
         var_3F = var_3F.wrapping_add(1);
-        if !(var_3F != 232u16) {
+        if (var_3F == 232u16) {
             break;
         }
     }
@@ -297,7 +297,7 @@ pub unsafe fn MotherBrain_CalcHdma_Up_UpRight(mut r22: uint16, mut r24: uint16, 
         v2 = v2.offset(-1);
         *fresh10 = v8;
         mbn_var_3D = mbn_var_3D.wrapping_sub(1);
-        if !(mbn_var_3D != 32u16) {
+        if (mbn_var_3D == 32u16) {
             break;
         }
     }
@@ -343,7 +343,7 @@ pub unsafe fn MotherBrain_CalcHdma_Up_Up(mut r22: uint16, mut r24: uint16, game:
         v2 = v2.offset(-1);
         *fresh9 = v8;
         mbn_var_3D = mbn_var_3D.wrapping_sub(1);
-        if !(mbn_var_3D != 32u16) {
+        if (mbn_var_3D == 32u16) {
             break;
         }
     }
@@ -392,7 +392,7 @@ pub unsafe fn MotherBrain_CalcHdma_Up_UpLeft(mut r22: uint16, mut r24: uint16, g
         v2 = v2.offset(-1);
         *fresh8 = v8;
         mbn_var_3D = mbn_var_3D.wrapping_sub(1);
-        if !(mbn_var_3D != 32u16) {
+        if (mbn_var_3D == 32u16) {
             break;
         }
     }
@@ -454,7 +454,7 @@ pub unsafe fn MotherBrain_CalcHdma_Down_DownRight(
         dst = dst.offset(1);
         *fresh6 = 255 as uint16;
         v1 = v1.wrapping_sub(1);
-        if !(v1 != 0) {
+        if (v1 == 0) {
             break;
         }
     }
@@ -481,7 +481,7 @@ pub unsafe fn MotherBrain_CalcHdma_Down_DownRight(
         dst = dst.offset(1);
         *fresh7 = v8;
         mbn_var_3D = mbn_var_3D.wrapping_add(1);
-        if !(mbn_var_3D != 232u16) {
+        if (mbn_var_3D == 232u16) {
             break;
         }
     }
@@ -507,7 +507,7 @@ pub unsafe fn MotherBrain_CalcHdma_Down_Down(mut r22: uint16, mut r24: uint16, g
         dst = dst.offset(1);
         *fresh4 = 255 as uint16;
         v1 = v1.wrapping_sub(1);
-        if !(v1 != 0) {
+        if (v1 == 0) {
             break;
         }
     }
@@ -534,7 +534,7 @@ pub unsafe fn MotherBrain_CalcHdma_Down_Down(mut r22: uint16, mut r24: uint16, g
         dst = dst.offset(1);
         *fresh5 = v8;
         mbn_var_3D = mbn_var_3D.wrapping_add(1);
-        if !(mbn_var_3D != 232u16) {
+        if (mbn_var_3D == 232u16) {
             break;
         }
     }
@@ -567,7 +567,7 @@ pub unsafe fn MotherBrain_CalcHdma_Down_DownLeft(
         dst = dst.offset(1);
         *fresh2 = 255 as uint16;
         v1 = v1.wrapping_sub(1);
-        if !(v1 != 0) {
+        if (v1 == 0) {
             break;
         }
     }
@@ -595,7 +595,7 @@ pub unsafe fn MotherBrain_CalcHdma_Down_DownLeft(
         dst = dst.offset(1);
         *fresh3 = v8;
         mbn_var_3D = mbn_var_3D.wrapping_add(1);
-        if !(mbn_var_3D != 232u16) {
+        if (mbn_var_3D == 232u16) {
             break;
         }
     }

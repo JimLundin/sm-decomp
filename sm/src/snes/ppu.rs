@@ -556,7 +556,7 @@ unsafe fn ppu_draw_planar_background<const PLANES: u32, const PALETTE_SHIFT: u32
     let mut pixel: ::core::ffi::c_int = 0;
     let mut windex: size_t = 0 as size_t;
     while windex < win.nr as size_t {
-        if !(win.bits as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << windex != 0) {
+        if (win.bits as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << windex == 0) {
             let mut x: uint = (win.edges[windex as usize] as ::core::ffi::c_int
                 + (*bglayer).hScroll as ::core::ffi::c_int) as uint;
             let mut w: uint =
@@ -770,7 +770,7 @@ unsafe fn PpuDrawBackground_mode7(ppu: *mut Ppu, mut y: uint, sub: bool, z: PpuZ
             .wrapping_add((yCenter << 8 as ::core::ffi::c_int) as uint32);
     let mut windex: size_t = 0 as size_t;
     while windex < win.nr as size_t {
-        if !(win.bits as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << windex != 0) {
+        if (win.bits as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << windex == 0) {
             let x: ::core::ffi::c_int = win.edges[windex as usize] as ::core::ffi::c_int;
             let x2: ::core::ffi::c_int =
                 win.edges[windex.wrapping_add(1 as size_t) as usize] as ::core::ffi::c_int;
@@ -829,7 +829,7 @@ unsafe fn PpuDrawBackground_mode7(ppu: *mut Ppu, mut y: uint, sub: bool, z: PpuZ
                                 + z as ::core::ffi::c_int)
                                 as PpuZbufType;
                             i += 1;
-                            if !(i != w) {
+                            if (i == w) {
                                 break;
                             }
                         }
@@ -838,8 +838,8 @@ unsafe fn PpuDrawBackground_mode7(ppu: *mut Ppu, mut y: uint, sub: bool, z: PpuZ
                     ypos = ypos.wrapping_add(dy.wrapping_mul(w as uint32));
                     dstz = dstz.offset(w as isize);
                     w = (*ppu).mosaicSize as ::core::ffi::c_int;
-                    if !(dstz_end.offset_from(dstz) as ::core::ffi::c_long
-                        != 0 as ::core::ffi::c_long)
+                    if (dstz_end.offset_from(dstz) as ::core::ffi::c_long
+                        == 0 as ::core::ffi::c_long)
                     {
                         break;
                     }
@@ -854,7 +854,7 @@ unsafe fn PpuDrawBackground_mode7(ppu: *mut Ppu, mut y: uint, sub: bool, z: PpuZ
                     xpos = xpos.wrapping_add(dx);
                     ypos = ypos.wrapping_add(dy);
                     dstz = dstz.offset(1);
-                    if !(dstz != dstz_end) {
+                    if (dstz == dstz_end) {
                         break;
                     }
                 }
@@ -873,7 +873,7 @@ unsafe fn PpuDrawSprites(ppu: *mut Ppu, y: uint, sub: uint, clear_backdrop: bool
     let win = ppu_windows_for_layer(ppu, sub as usize, layer as uint);
     let mut windex: size_t = 0 as size_t;
     while windex < win.nr as size_t {
-        if !(win.bits as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << windex != 0) {
+        if (win.bits as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << windex == 0) {
             let left: ::core::ffi::c_int = win.edges[windex as usize] as ::core::ffi::c_int;
             let mut width: ::core::ffi::c_int =
                 win.edges[windex.wrapping_add(1 as size_t) as usize] as ::core::ffi::c_int - left;
@@ -900,7 +900,7 @@ unsafe fn PpuDrawSprites(ppu: *mut Ppu, y: uint, sub: uint, clear_backdrop: bool
                     src = src.offset(1);
                     dst = dst.offset(1);
                     width -= 1;
-                    if !(width != 0) {
+                    if (width == 0) {
                         break;
                     }
                 }
@@ -1121,7 +1121,7 @@ unsafe fn PpuDrawWholeLine(ppu: *mut Ppu, y: uint) {
         }
         cw_clip_math >>= 1 as ::core::ffi::c_int;
         windex = windex.wrapping_add(1);
-        if !(windex < cwin.nr as uint32) {
+        if (windex >= cwin.nr as uint32) {
             break;
         }
     }

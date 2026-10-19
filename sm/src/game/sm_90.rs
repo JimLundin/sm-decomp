@@ -1008,9 +1008,8 @@ pub unsafe fn Samus_DrawEchoes(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 2 as ::core::ffi::c_int;
     while i >= 0i32 {
         let v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-        if !(*((&raw mut game.g_ram as *mut uint8).offset(0xab0) as *mut uint16)
-            .offset(v1 as isize)
-            == 0)
+        if (*((&raw mut game.g_ram as *mut uint8).offset(0xab0) as *mut uint16).offset(v1 as isize)
+            != 0)
         {
             let v2: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xab8) as *mut uint16)
                 .offset(v1 as isize);
@@ -1308,7 +1307,7 @@ pub unsafe fn HandleAtmosphericEffects(game: &mut Game) {
         let v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
         let mut v2: uint16 =
             *((&raw mut game.g_ram as *mut uint8).offset(0xaec) as *mut uint16).offset(v1 as isize);
-        if !(v2 == 0) {
+        if (v2 != 0) {
             let r18: uint16 = (2u16).wrapping_mul((v2 as uint8) as u16);
             let v3: uint16 = (2u16).wrapping_mul(
                 (*(&raw mut v2 as *mut uint8).offset(
@@ -2490,10 +2489,10 @@ pub unsafe fn MainScrollingRoutine(game: &mut Game) {
     let mut v0: uint16 = 0;
     let mut current_block: u64;
     if *((&raw mut game.g_ram as *mut uint8).offset(0xcf8) as *mut uint16) != 0 {
-        if !((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
+        if ((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
             as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int)
-            != 0i32)
+            == 0i32)
         {
             v0 = 0;
             v0 = (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16))
@@ -3357,10 +3356,9 @@ pub unsafe fn Samus_DetermineAccel_Y(game: &mut Game) {
     static g_word_909EA7: uint16 = 0 as uint16;
     static g_word_909EA9: uint16 = 0 as uint16;
     static g_word_909EAB: uint16 = 0 as uint16;
-    if !((*((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16)
-        as ::core::ffi::c_int
+    if ((*((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16) as ::core::ffi::c_int
         & 0x20 as ::core::ffi::c_int)
-        != 0i32)
+        == 0i32)
     {
         r18 = Samus_GetBottom_R18(game);
         match liquid_at_height(game, r18) {
@@ -3594,7 +3592,7 @@ pub unsafe fn Samus_Movement_03_SpinJumping(game: &mut Game) {
             & 0x200 as ::core::ffi::c_int)
             != 0i32
         {
-            if !(*((&raw mut game.g_ram as *mut uint8).offset(0xb36) as *mut uint16) != 2u16) {
+            if (*((&raw mut game.g_ram as *mut uint8).offset(0xb36) as *mut uint16) == 2u16) {
                 if *((&raw mut game.g_ram as *mut uint8).offset(0xad2) as *mut uint16) != 0 {
                     if ((*(((&raw mut game.g_ram as *mut uint8).offset(0xb2c) as *mut uint16
                         as *mut uint8)
@@ -4039,7 +4037,7 @@ pub unsafe fn DisableMinimapAndMarkBossRoomAsExplored(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16)
             .offset((v1 + 90 as ::core::ffi::c_int) as isize) = 11295 as uint16;
         v0 = (v0).wrapping_add(2u16);
-        if !(((v0) as i16).wrapping_sub(10i16) < 0i16) {
+        if (((v0) as i16).wrapping_sub(10i16) >= 0i16) {
             break;
         }
     }
@@ -4435,7 +4433,7 @@ pub unsafe fn UpdateMinimapInside(
             v2 = (v2).wrapping_add(1984u16);
         }
         n -= 1;
-        if !(n != 0) {
+        if (n == 0) {
             break;
         }
     }
@@ -4493,11 +4491,11 @@ pub unsafe fn Samus_CanFireSuperMissile(game: &mut Game) -> uint8 {
         {
             return 0 as uint8;
         }
-    } else if !(*((&raw mut game.g_ram as *mut uint8).offset(0xcce) as *mut uint16)
+    } else if (*((&raw mut game.g_ram as *mut uint8).offset(0xcce) as *mut uint16)
         as ::core::ffi::c_int
         - 4 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
-        != 0)
+        == 0)
     {
         return 0 as uint8;
     }
@@ -4558,7 +4556,7 @@ pub unsafe fn WriteBeamPalette_Y(j: uint16, game: &mut Game) {
         ) = *(RomPtr_90((r0).wrapping_add(v1), game) as *mut uint16);
         v2 = (v2).wrapping_add(2u16);
         v1 = (v1).wrapping_add(2u16);
-        if !(((v1) as i16).wrapping_sub(32i16) < 0i16) {
+        if (((v1) as i16).wrapping_sub(32i16) >= 0i16) {
             break;
         }
     }
@@ -4576,7 +4574,7 @@ pub unsafe fn LoadProjectilePalette(a: uint16, game: &mut Game) {
         ) = *(RomPtr_90((r0).wrapping_add(v1), game) as *mut uint16);
         v2 = (v2).wrapping_add(2u16);
         v1 = (v1).wrapping_add(2u16);
-        if !(((v1) as i16).wrapping_sub(32i16) < 0i16) {
+        if (((v1) as i16).wrapping_sub(32i16) >= 0i16) {
             break;
         }
     }
@@ -4616,7 +4614,7 @@ pub unsafe fn ResetProjectileData(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc68) as *mut uint16).offset(v1 as isize) =
             ((0x90b169i32) as u16);
         v0 = (v0).wrapping_add(2u16);
-        if !(((v0) as i16).wrapping_sub(20i16) < 0i16) {
+        if (((v0) as i16).wrapping_sub(20i16) >= 0i16) {
             break;
         }
     }
@@ -5098,8 +5096,8 @@ pub unsafe fn ProjPreInstr_SuperMissile(mut k: uint16, game: &mut Game) {
             v3 as uint16,
             game,
         );
-        if !(DeleteProjectileIfFarOffScreen(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
-            != 0)
+        if (DeleteProjectileIfFarOffScreen(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
+            == 0)
         {
             return;
         }
@@ -6253,7 +6251,7 @@ pub unsafe fn FireUnchargedBeam(game: &mut Game) {
             != 0
         {
             v0 = (v0).wrapping_add(2u16);
-            if !(((v0) as i16).wrapping_sub(10i16) >= 0i16) {
+            if (((v0) as i16).wrapping_sub(10i16) < 0i16) {
                 continue;
             }
             v0 = (v0).wrapping_sub(2u16);
@@ -6395,7 +6393,7 @@ pub unsafe fn FireChargedBeam(game: &mut Game) {
             != 0
         {
             v0 = (v0).wrapping_add(2u16);
-            if !(((v0) as i16).wrapping_sub(10i16) >= 0i16) {
+            if (((v0) as i16).wrapping_sub(10i16) < 0i16) {
                 continue;
             }
             v0 = (v0).wrapping_sub(2u16);
@@ -6694,7 +6692,7 @@ pub unsafe fn HandleChargingBeamGfxAudio(game: &mut Game) {
                     break;
                 }
                 v0 = (v0).wrapping_add(2u16);
-                if !(((v9) as i16).wrapping_sub(4i16) < 0i16) {
+                if (((v9) as i16).wrapping_sub(4i16) >= 0i16) {
                     break;
                 }
             }
@@ -6828,7 +6826,7 @@ pub unsafe fn FireHyperBeam(game: &mut Game) {
             != 0
         {
             v0 = (v0).wrapping_add(2u16);
-            if !(((v0) as i16).wrapping_sub(10i16) >= 0i16) {
+            if (((v0) as i16).wrapping_sub(10i16) < 0i16) {
                 continue;
             }
             v0 = (v0).wrapping_sub(2u16);
@@ -7050,9 +7048,9 @@ pub unsafe fn HudSelectionHandler_MissilesOrSuperMissiles(game: &mut Game) {
         7351195479953500246 => {
             let mut v0: uint16 = 0 as uint16;
             loop {
-                if !(*((&raw mut game.g_ram as *mut uint8).offset(0xc2c) as *mut uint16)
+                if (*((&raw mut game.g_ram as *mut uint8).offset(0xc2c) as *mut uint16)
                     .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-                    != 0)
+                    == 0)
                 {
                     current_block = 13536709405535804910;
                     break;
@@ -7239,7 +7237,7 @@ pub unsafe fn HudSelectionHandler_MorphBall(game: &mut Game) {
                                 != 0
                             {
                                 v2 = (v2).wrapping_add(2u16);
-                                if !(((v2) as i16).wrapping_sub(20i16) >= 0i16) {
+                                if (((v2) as i16).wrapping_sub(20i16) < 0i16) {
                                     continue;
                                 }
                                 v2 = (v2).wrapping_sub(2u16);
@@ -7309,7 +7307,7 @@ pub unsafe fn HudSelectionHandler_MorphBall(game: &mut Game) {
                 != 0
             {
                 v0 = (v0).wrapping_add(2u16);
-                if !(((v0) as i16).wrapping_sub(20i16) >= 0i16) {
+                if (((v0) as i16).wrapping_sub(20i16) < 0i16) {
                     continue;
                 }
                 v0 = (v0).wrapping_sub(2u16);
@@ -9408,7 +9406,7 @@ pub unsafe fn BombSpread(game: &mut Game) {
             *((&raw mut game.g_ram as *mut uint8).offset(0xc7c) as *mut uint16)
                 .offset(v1 as isize) = kBombSpread_Tab0[v2 as usize];
             v0 = (v0).wrapping_add(2u16);
-            if !(((v0) as i16).wrapping_sub(20i16) < 0i16) {
+            if (((v0) as i16).wrapping_sub(20i16) >= 0i16) {
                 break;
             }
         }

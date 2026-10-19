@@ -184,7 +184,7 @@ pub unsafe fn PalFx_ProcessOne(k: uint16, game: &mut Game) {
         let v12: PairU16 = CallPalInstr(((v11) as u32) | (0x8d0000u32), color_idx, j, game);
         color_idx = v12.k;
         j = v12.j;
-        if !(j != 0) {
+        if (j == 0) {
             break;
         }
     }

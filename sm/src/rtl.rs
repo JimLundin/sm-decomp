@@ -833,7 +833,7 @@ pub unsafe fn StateRecorder_ReadNextReplayState(sr: *mut StateRecorder, game: &m
                         replay_pos = replay_pos + 1;
                         t = *(*sr).log.data.offset(fresh3 as isize);
                         nb += t as ::core::ffi::c_int;
-                        if !(t as ::core::ffi::c_int == 255 as ::core::ffi::c_int) {
+                        if (t as ::core::ffi::c_int != 255 as ::core::ffi::c_int) {
                             break;
                         }
                     }
@@ -863,7 +863,7 @@ pub unsafe fn StateRecorder_ReadNextReplayState(sr: *mut StateRecorder, game: &m
                     );
                     addr = addr.wrapping_add(1);
                     nb -= 1;
-                    if !(nb != 0) {
+                    if (nb == 0) {
                         break;
                     }
                 }
@@ -902,7 +902,7 @@ pub unsafe fn StateRecorder_ReadNextReplayState(sr: *mut StateRecorder, game: &m
                     replay_pos = replay_pos + 1;
                     t_0 = *(*sr).log.data.offset(fresh8 as isize);
                     frames += t_0 as ::core::ffi::c_int;
-                    if !(t_0 as ::core::ffi::c_int == 255 as ::core::ffi::c_int) {
+                    if (t_0 as ::core::ffi::c_int != 255 as ::core::ffi::c_int) {
                         break;
                     }
                 }

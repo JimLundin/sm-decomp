@@ -155,7 +155,7 @@ pub unsafe fn snes_loadRom(
         return false_0 != 0;
     }
     let mut newLength: ::core::ffi::c_int = 0x8000 as ::core::ffi::c_int;
-    while !(length <= newLength) {
+    while (length > newLength) {
         newLength *= 2 as ::core::ffi::c_int;
     }
     let newData: *mut uint8_t = malloc(newLength as size_t) as *mut uint8_t;
