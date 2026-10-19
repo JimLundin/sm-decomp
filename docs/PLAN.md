@@ -823,6 +823,21 @@ The committed delta is therefore 87 Rust lines, 36 raw expressions,
 14 c_int tokens (10 lines) and 155 casts removed; no unsafe functions change.
 This avoids counting the other pass's removals twice.
 
+Message-box PPU integration (2026-10-19): frozen b487abf8 combines this
+pass with the preceding cast and gameplay changes. Full boot any% passes
+129712/0 (206.99s), and Speed Booster passes 148406/0 (298.76s), native
+exits 0. Both entire checkpoints, including headers, equal the separately
+verified PPU endpoints; Speed's complete RAM equals the original route.
+Any% has no diagnostics; Speed retains the known fingernail warning.
+
+All 95 source/artifact/asset pins, including all 88 tracked files, and seven
+comparison/output pins remain fixed. Formatting/check, normal release
+(27.51s), Cargo host (2.52s) and progress pass. An external SDL build-script
+launch failed before game compilation; reseeding only registry dependencies
+with preserved timestamps allowed the retry. No game/host artifacts moved
+between checkouts. Later commits retain their own verification; remaining
+bosses, credits, persistence and broader hardware/audio work remain open.
+
 Boolean truth-test cleanup (2026-10-19): replaced 128 conversions of
 Boolean locals to c_int followed by != 0 with direct Boolean conditions,
 across 85 routines in 14 files. Operand evaluation and short-circuit order
