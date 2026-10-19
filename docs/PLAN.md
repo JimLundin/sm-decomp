@@ -34,6 +34,9 @@ The Charge Beam extension passes 78,380 frames with zero failures, visiting
 25 rooms and 31 enemy definitions. It collects another Missile Tank and
 Charge Beam, ending in Big Pink with 19/199 health and 2/5 Supers. This
 check uses frozen 9c34f8a5 plus the cinematic fix committed in d610b820.
+The Red Tower extension passes 85,800 frames with zero failures, 28 rooms
+and 33 enemy definitions, on frozen a31170d6 plus beam cleanup 5680cde1.
+It ends at the west ledge in $A253 with 49/199 health and 4/5 Supers.
 Rendering starts enabled deterministically. Complete gameplay, audio timing
 and other masked RAM remain unverified. Historical zero-failure Waver runs
 made before the render initialization fix do not establish rendering equivalence.
@@ -354,6 +357,33 @@ sessions own the adjacent cleanup above. No maintained source or residue
 change and no new replay result belong to this cleanup.
 
 ## The oracle
+
+Red Tower milestone (2026-10-19): extend the normal-input Charge route
+through Green Hill Zone $9E52 and Noob Bridge $9FBA into Red Tower $A253.
+The route farms the respawning Geega from 19 to 104 health and one to five
+Supers without contact, opens the blue gate and crosses the upper crumble
+bridge. Full boot passes 85800/0 (224.12s), native exit 0: 70474 gameplay
+frames, 28 rooms, 33 enemy definitions and zero credits frames. Final state
+8 is X49/Y1163, health 49/199, missiles 5/10, Supers 4/5, equipment 1004 and
+equipped/collected beams 1000; all eight coroutine bytes are zero.
+
+Ignored movies/red-tower.inputs has 85800 frames, SHA-256
+580a611f3e25b310140498e5018f7b373d97583ddd21131a1ed30a232435ffb0.
+Its first 78380 frames exactly match movies/charge-beam.inputs. The full-boot
+library is frozen a31170d6 plus only the beam pickup cleanup committed in
+5680cde1. The host adds only read-only final inventory/beam/coroutine logging
+to that frozen verifier and preserves its comparison and return value.
+Independent source, host and input review passes; frozen hashes remain stable.
+This is separate from the 7420/0 (17.17s) continuous 78380..85800 check on
+438e7755 plus the menu fix. Its before-85800 checkpoint belongs to that older
+library; no cross-source continuation claim is made for that checkpoint yet.
+
+Formatting, normal Cargo release and progress passed with the beam source
+used here. This milestone changes no maintained Rust or own residue counts;
+inputs, checkpoints and temporary metadata remain uncommitted. Next route
+work descends Red Tower toward the bottom-west Energy Station $A618, then
+east through $A3DD/$A408 toward Spazer. Those steps are not covered by this
+fixture. Complete gameplay/credits, audio timing and remaining masks stay open.
 
 Charge Beam milestone (2026-10-19): extend the normal-input save-room
 route through Dachora corridor $9CB3 to Big Pink $9D19, collect a second
