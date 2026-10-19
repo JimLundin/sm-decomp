@@ -108,6 +108,27 @@ exits 0, with fixed source/DLL/fixtures. These are static-value replacements;
 the compiled byte comparison covers all 72, not a claim of 72 runtime hits.
 Later gameplay and PPU commits retain their own verification.
 
+Projectile impact-position family (2026-10-19): eight handlers and their
+ten-entry function-pointer table now share one safe directional radius update.
+Both repeated direction codes, word-rounded indices, wrapping coordinates,
+X-before-Y order and inactive axes remain exact. Complete CST matches cover
+the functions, table and dispatch call; reconstruction restores all source.
+The broader coordinate/radius scan also finds reset, motion and collision-
+query routines, which are different operations from this impact adjustment.
+
+Extracted old/new execution agrees over all RAM in 663200 cases: every
+16-bit index, all ten directions, randomized words and carry/borrow/sign
+boundaries. This is not every combination of input words. The same comparison
+rejects a mutant that stops rounding odd indices. Frozen 6ea1ddb6 plus this
+family passes any% 129712/0 (169.99s) and Speed Booster 148406/0
+(206.46s), native exits 0, with fixed source/DLL/fixtures. A separate
+final-source any% observation passes 129712/0 (158.53s), native exit 0;
+all eight direction groups execute, with all 810 calls matching the original
+handler counts. Formatting/check, normal release (53.78s frozen,
+51.88s stable workspace) and progress pass. Net Rust lines -54, raw RAM
+accesses -24, unsafe functions -8, c_int cast lines -12 and all casts -106.
+Other concurrent projectile and PPU changes retain their own verification.
+
 Expanded historical-family coverage audit: an isolated 26880181 survey probes
 174 routine entries across the larger leads. Full any% and Speed Booster
 have zero failing frames (221.15s/277.48s); both native exits are 2 because

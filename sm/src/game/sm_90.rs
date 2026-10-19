@@ -5044,20 +5044,47 @@ pub unsafe fn ClearProjectile(mut k: uint16, game: &mut Game) {
         }
     };
 }
-static kKillProjectileFuncs: [Option<Func_Y_V>; 10] = unsafe {
-    [
-        Some(KillProjectileFunc_0 as unsafe fn(uint16, &mut Game) -> ()),
-        Some(KillProjectileFunc_1 as unsafe fn(uint16, &mut Game) -> ()),
-        Some(KillProjectileFunc_2 as unsafe fn(uint16, &mut Game) -> ()),
-        Some(KillProjectileFunc_3 as unsafe fn(uint16, &mut Game) -> ()),
-        Some(KillProjectileFunc_4 as unsafe fn(uint16, &mut Game) -> ()),
-        Some(KillProjectileFunc_4 as unsafe fn(uint16, &mut Game) -> ()),
-        Some(KillProjectileFunc_6 as unsafe fn(uint16, &mut Game) -> ()),
-        Some(KillProjectileFunc_7 as unsafe fn(uint16, &mut Game) -> ()),
-        Some(KillProjectileFunc_8 as unsafe fn(uint16, &mut Game) -> ()),
-        Some(KillProjectileFunc_0 as unsafe fn(uint16, &mut Game) -> ()),
-    ]
-};
+fn move_projectile_to_impact_point(index: u16, direction: usize, game: &mut Game) {
+    const DIRECTIONS: [(i8, i8); 10] = [
+        (0, -1),
+        (1, -1),
+        (1, 0),
+        (1, 1),
+        (0, 1),
+        (0, 1),
+        (-1, 1),
+        (-1, 0),
+        (-1, -1),
+        (0, -1),
+    ];
+    const X_POSITION: usize = 0xb64;
+    const Y_POSITION: usize = 0xb78;
+    const X_RADIUS: usize = 0xbb4;
+    const Y_RADIUS: usize = 0xbc8;
+
+    let (x_direction, y_direction) = DIRECTIONS[direction];
+    let slot_offset = usize::from(index & !1);
+    // Diagonals update X before Y; an unused axis is neither read nor written.
+    for (position_base, radius_base, step) in [
+        (X_POSITION, X_RADIUS, x_direction),
+        (Y_POSITION, Y_RADIUS, y_direction),
+    ] {
+        if step == 0 {
+            continue;
+        }
+        let address = position_base + slot_offset;
+        let position = u16::from_le_bytes([game.g_ram[address], game.g_ram[address + 1]]);
+        let radius_address = radius_base + slot_offset;
+        let radius =
+            u16::from_le_bytes([game.g_ram[radius_address], game.g_ram[radius_address + 1]]);
+        let position = if step > 0 {
+            position.wrapping_add(radius)
+        } else {
+            position.wrapping_sub(radius)
+        };
+        game.g_ram[address..address + 2].copy_from_slice(&position.to_le_bytes());
+    }
+}
 pub unsafe fn KillProjectile(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(v1 as isize)
@@ -5081,99 +5108,18 @@ pub unsafe fn KillProjectile(mut k: uint16, game: &mut Game) {
             return;
         }
     } else {
-        kKillProjectileFuncs[(*((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16)
-            .offset(v1 as isize) as ::core::ffi::c_int
-            & 0xf as ::core::ffi::c_int) as usize]
-            .expect("non-null function pointer")(k, game);
+        move_projectile_to_impact_point(
+            k,
+            (*((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16).offset(v1 as isize)
+                as ::core::ffi::c_int
+                & 0xf as ::core::ffi::c_int) as usize,
+            game,
+        );
     }
     KillProjectileInner(k, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0xc68) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         (((0x90b169i32) as u16) & (0xffffu16));
-}
-pub unsafe fn KillProjectileFunc_0(mut j: uint16, game: &mut Game) {
-    let ref mut fresh132 = *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
-        .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
-    *fresh132 = ((*fresh132).wrapping_sub(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
-            .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)),
-    ));
-}
-pub unsafe fn KillProjectileFunc_1(mut j: uint16, game: &mut Game) {
-    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let ref mut fresh142 =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v1 as isize);
-    *fresh142 = ((*fresh142).wrapping_add(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16).offset(v1 as isize)),
-    ));
-    let ref mut fresh143 =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v1 as isize);
-    *fresh143 = ((*fresh143).wrapping_sub(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16).offset(v1 as isize)),
-    ));
-}
-pub unsafe fn KillProjectileFunc_2(mut j: uint16, game: &mut Game) {
-    let ref mut fresh141 = *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
-        .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
-    *fresh141 = ((*fresh141).wrapping_add(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16)
-            .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)),
-    ));
-}
-pub unsafe fn KillProjectileFunc_3(mut j: uint16, game: &mut Game) {
-    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let ref mut fresh139 =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v1 as isize);
-    *fresh139 = ((*fresh139).wrapping_add(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16).offset(v1 as isize)),
-    ));
-    let ref mut fresh140 =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v1 as isize);
-    *fresh140 = ((*fresh140).wrapping_add(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16).offset(v1 as isize)),
-    ));
-}
-pub unsafe fn KillProjectileFunc_4(mut j: uint16, game: &mut Game) {
-    let ref mut fresh138 = *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
-        .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
-    *fresh138 = ((*fresh138).wrapping_add(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
-            .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)),
-    ));
-}
-pub unsafe fn KillProjectileFunc_6(mut j: uint16, game: &mut Game) {
-    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let ref mut fresh136 =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v1 as isize);
-    *fresh136 = ((*fresh136).wrapping_sub(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16).offset(v1 as isize)),
-    ));
-    let ref mut fresh137 =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v1 as isize);
-    *fresh137 = ((*fresh137).wrapping_add(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16).offset(v1 as isize)),
-    ));
-}
-pub unsafe fn KillProjectileFunc_7(mut j: uint16, game: &mut Game) {
-    let ref mut fresh135 = *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
-        .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
-    *fresh135 = ((*fresh135).wrapping_sub(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16)
-            .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)),
-    ));
-}
-pub unsafe fn KillProjectileFunc_8(mut j: uint16, game: &mut Game) {
-    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let ref mut fresh133 =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v1 as isize);
-    *fresh133 = ((*fresh133).wrapping_sub(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16).offset(v1 as isize)),
-    ));
-    let ref mut fresh134 =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v1 as isize);
-    *fresh134 = ((*fresh134).wrapping_sub(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16).offset(v1 as isize)),
-    ));
 }
 pub unsafe fn CallProjPreInstr(mut ea: uint32, mut k: uint16, game: &mut Game) {
     match ea {
