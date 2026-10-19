@@ -8,7 +8,7 @@ pub use crate::types::{
 };
 #[inline]
 unsafe fn RomPtr_B4(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr(((0xb40000u32) | ((addr) as u32)), game);
+    return RomPtr((0xb40000u32) | ((addr) as u32), game);
 }
 pub const fnSpriteObject_Instr_RepeatLast: uint32 = 11844848;
 pub const fnSpriteObject_Instr_Terminate: uint32 = 11844871;
@@ -101,12 +101,12 @@ pub unsafe fn HandleSpriteObjects(game: &mut Game) {
                 current_block_9 = 8895462745870634114;
             } else {
                 *((&raw mut game.g_ram as *mut uint8).offset(0xeff8) as *mut uint16)
-                    .offset(v0 as isize) = ((v1).wrapping_sub((1u16)));
+                    .offset(v0 as isize) = (v1).wrapping_sub(1u16);
                 if v1 == 1u16 {
-                    let mut v3: uint16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xef78)
+                    let mut v3: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xef78)
                         as *mut uint16)
                         .offset(v0 as isize))
-                    .wrapping_add((4u16)));
+                    .wrapping_add(4u16);
                     *((&raw mut game.g_ram as *mut uint8).offset(0xef78) as *mut uint16)
                         .offset(v0 as isize) = v3;
                     v1 = *(RomPtr_B4(v3, game) as *mut uint16);
@@ -130,12 +130,12 @@ pub unsafe fn HandleSpriteObjects(game: &mut Game) {
             match current_block_9 {
                 14916268686031723178 => {}
                 _ => {
-                    CallSpriteObjectInstr((((v1) as u32) | (0xb40000u32)), game);
+                    CallSpriteObjectInstr(((v1) as u32) | (0xb40000u32), game);
                 }
             }
         }
         let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0x1844) as *mut uint16);
-        *fresh0 = ((*fresh0).wrapping_sub((2u16)));
+        *fresh0 = (*fresh0).wrapping_sub(2u16);
         if !(*fresh0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0) {
             break;
         }
@@ -147,7 +147,7 @@ pub unsafe fn SpriteObject_Instr_RepeatLast(game: &mut Game) {
         >> 1 as ::core::ffi::c_int;
     let ref mut fresh1 =
         *((&raw mut game.g_ram as *mut uint8).offset(0xef78) as *mut uint16).offset(v2 as isize);
-    *fresh1 = ((*fresh1).wrapping_sub((4u16)));
+    *fresh1 = (*fresh1).wrapping_sub(4u16);
     *((&raw mut game.g_ram as *mut uint8).offset(0xeff8) as *mut uint16).offset(v2 as isize) =
         0x7fff as uint16;
 }
@@ -183,37 +183,37 @@ pub unsafe fn DrawSpriteObjects(game: &mut Game) {
         if *((&raw mut game.g_ram as *mut uint8).offset(0xef78) as *mut uint16).offset(v1 as isize)
             != 0
         {
-            let mut x: uint16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xf0f8)
+            let mut x: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xf0f8)
                 as *mut uint16)
                 .offset(v1 as isize))
-            .wrapping_sub((*((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16))));
-            if ((x) as i16).wrapping_add((16i16)) >= 0i16 {
+            .wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16));
+            if ((x) as i16).wrapping_add(16i16) >= 0i16 {
                 if x as ::core::ffi::c_int - 272 as ::core::ffi::c_int
                     & 0x8000 as ::core::ffi::c_int
                     != 0
                 {
-                    let mut y: int16 = (((*((&raw mut game.g_ram as *mut uint8).offset(0xf1f8)
+                    let mut y: int16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xf1f8)
                         as *mut uint16)
                         .offset(v1 as isize)) as i16)
                         .wrapping_sub(
-                            ((*((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16))
-                                as i16),
-                        ));
+                            (*((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16))
+                                as i16,
+                        );
                     if y >= 0i16 {
                         if y as ::core::ffi::c_int - 272 as ::core::ffi::c_int
                             & 0x8000 as ::core::ffi::c_int
                             != 0
                         {
-                            let mut r3: uint16 = ((*((&raw mut game.g_ram as *mut uint8)
+                            let mut r3: uint16 = (*((&raw mut game.g_ram as *mut uint8)
                                 .offset(0xf078)
                                 as *mut uint16)
                                 .offset(v1 as isize))
-                                & (0xe00u16));
-                            let mut r0: uint16 = ((*((&raw mut game.g_ram as *mut uint8)
+                                & (0xe00u16);
+                            let mut r0: uint16 = (*((&raw mut game.g_ram as *mut uint8)
                                 .offset(0xf078)
                                 as *mut uint16)
                                 .offset(v1 as isize))
-                                & (0x1ffu16));
+                                & (0x1ffu16);
                             let mut v3: *const uint8 = RomPtr_B4(
                                 *((&raw mut game.g_ram as *mut uint8).offset(0xef78)
                                     as *mut uint16)

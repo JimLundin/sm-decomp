@@ -28,7 +28,7 @@ pub use crate::types::{
 };
 #[inline]
 unsafe fn RomPtr_85(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr(((0x850000u32) | ((addr) as u32)), game);
+    return RomPtr((0x850000u32) | ((addr) as u32), game);
 }
 pub const fnWriteLargeMessageBoxTilemap: uint32 = 8749658;
 pub const fnWriteSmallMessageBoxTilemap: uint32 = 8749705;

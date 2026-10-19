@@ -4647,14 +4647,14 @@ pub unsafe fn EprojPreInstr_AB07(mut k: uint16, game: &mut Game) {
             as *mut uint16,
         amt as uint32,
     );
-    amt = (((8 as ::core::ffi::c_int
+    amt = ((8 as ::core::ffi::c_int
         * (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)
             as ::core::ffi::c_int
             - 36 as ::core::ffi::c_int
             - *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int)) as int16
         as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int);
+        << 8 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize)
             as *mut uint16,
@@ -5760,9 +5760,9 @@ pub unsafe fn EprojPreInstr_TourianStatueUnlockingParticle(mut k: uint16, game: 
         as ::core::ffi::c_int
         - *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize)
             as ::core::ffi::c_int) as uint16;
-    amt = ((*((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v1 as isize)
+    amt = (*((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v1 as isize)
         as int16 as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int);
+        << 8 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize)
             as *mut uint16,
@@ -7592,9 +7592,9 @@ pub unsafe fn EprojPreInstr_MotherBrainGlassShatteringShard(mut k: uint16, game:
             as *mut uint16,
         amt as uint32,
     );
-    amt = ((*((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v1 as isize)
+    amt = (*((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v1 as isize)
         as int16 as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int);
+        << 8 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize)
             as *mut uint16,
@@ -8341,9 +8341,9 @@ pub unsafe fn EprojPreInstr_N00bTubeShards(mut k: uint16, game: &mut Game) {
             as *mut uint16,
         amt as uint32,
     );
-    amt = ((*((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v1 as isize)
+    amt = (*((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v1 as isize)
         as int16 as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int);
+        << 8 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize)
             as *mut uint16,
@@ -8378,9 +8378,9 @@ pub unsafe fn sub_86D83D(mut k: uint16, game: &mut Game) {
     let ref mut fresh67 =
         *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(v6 as isize);
     *fresh67 = (*fresh67 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
-    amt = ((*((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v6 as isize)
+    amt = (*((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v6 as isize)
         as int16 as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int);
+        << 8 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v6 as isize)
             as *mut uint16,

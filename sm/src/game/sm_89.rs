@@ -34,11 +34,11 @@ pub struct FxDef {
 pub use crate::types::GameState;
 #[inline]
 unsafe fn RomPtr_83(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
-    return RomPtr(((0x830000u32) | ((addr) as u32)), game);
+    return RomPtr((0x830000u32) | ((addr) as u32), game);
 }
 #[inline]
 unsafe fn get_FxDef(mut a: uint16, game: &mut Game) -> *mut FxDef {
-    return RomPtr(((0x830000u32) | ((a) as u32)), game) as *mut FxDef;
+    return RomPtr((0x830000u32) | ((a) as u32), game) as *mut FxDef;
 }
 pub unsafe fn LoadFxEntry(mut v0: uint16, game: &mut Game) {
     let mut FD: *mut FxDef = get_FxDef(
@@ -118,7 +118,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
         if door_ptr == *((&raw mut game.g_ram as *mut uint8).offset(0x78d) as *mut uint16) {
             break;
         }
-        entry_ptr = ((entry_ptr).wrapping_add((16u16)));
+        entry_ptr = (entry_ptr).wrapping_add(16u16);
     }
     let mut FD: *mut FxDef = get_FxDef(entry_ptr, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16) = (*FD).base_y_pos;
@@ -205,10 +205,10 @@ pub unsafe fn RoomCode_CeresElevatorShaft(game: &mut Game) {
         != 0i32
     {
         if (112i16).wrapping_sub(
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)) as i16),
+            (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)) as i16,
         ) < 0i16
             && (144i16).wrapping_sub(
-                ((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)) as i16),
+                (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)) as i16,
             ) >= 0i16
             && *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)
                 as ::core::ffi::c_int
@@ -238,9 +238,9 @@ pub unsafe fn RoomCode_CeresElevatorShaft(game: &mut Game) {
             as *mut int16)
             < 0i16
         {
-            let mut v0: ::core::ffi::c_int = ((6u16).wrapping_mul(
-                (*((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint16)),
-            )) as ::core::ffi::c_int
+            let mut v0: ::core::ffi::c_int = ((6u16)
+                .wrapping_mul(*((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint16)))
+                as ::core::ffi::c_int
                 >> 1 as ::core::ffi::c_int;
             *((&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(2) as *mut uint8
                 as *mut uint16) = *(game.g_rom.offset(crate::rtl::lorom_offset(0x89ad5f))
@@ -260,17 +260,15 @@ pub unsafe fn RoomCode_CeresElevatorShaft(game: &mut Game) {
             *((&raw mut game.g_ram as *mut uint8).offset(0x7e) as *mut uint16) =
                 *((&raw mut game.g_ram as *mut uint8).offset(0x78) as *mut uint16);
             if *((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut int16) < 0i16 {
-                v1 = (((*((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint16))
-                    as i16)
-                    .wrapping_sub((1i16)));
+                v1 = ((*((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint16)) as i16)
+                    .wrapping_sub(1i16);
                 if *((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint16) == 0x8001u16
                 {
                     v1 = 0 as int16;
                 }
             } else {
-                v1 = (((*((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint16))
-                    as i16)
-                    .wrapping_add((1i16)));
+                v1 = ((*((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint16)) as i16)
+                    .wrapping_add(1i16);
                 if *((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint16) == 67u16 {
                     v1 = -(32700 as ::core::ffi::c_int) as int16;
                 }

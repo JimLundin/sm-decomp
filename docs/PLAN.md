@@ -46,6 +46,28 @@ Keep each commit one invariant, but apply it across the complete eligible family
 Rank by net deletion including shared code, unsafe operations removed and
 edit/build/verification cost. Prefer this work over further isolated cleanup.
 
+Clippy automatic parentheses cleanup (2026-10-19): cargo clippy --fix
+with unused_parens removes 8883 redundant parenthesis pairs across all
+32 affected gameplay files. Formatting removes 392 further Rust lines.
+Only parentheses and whitespace change; casts, raw operations and unsafe
+functions are unchanged. The c_int cast-line counter drops by one solely
+through formatting. This pass uses the standard compiler fix directly.
+
+The fixed snapshot passes any% 129712/0 (230.55s), Speed Booster 148406/0
+(298.28s) and pause 40836/0 (77.35s), native exits 0. Normal release passes
+(41.76s frozen, 23.05s stable workspace), as do formatting/check and progress.
+Staged Rust matches the fixed, verified source. A separate composition with
+pending projectile arithmetic adds 161 Clippy fixes and passes any% 129712/0
+(151.88s); those arithmetic changes retain their separate scope and checks.
+
+Next use Clippy for the complete needless_return family, then its other
+eligible automatic simplifications. Keep structural clone discovery with
+jscpd and ast-grep for larger shared implementations; the historical audit
+remains open. The initial core-library Clippy scan also found 5409 needless
+returns, 422 unnecessary casts, 397 assignment patterns, 430 nonminimal
+booleans and 1403 identity operations. These are diagnostic counts from that
+snapshot, not promised deletions or coverage of frontend-only code.
+
 Integer comparison family (2026-10-19): simplify 4657 comparisons across
 31 gameplay files using compiler-resolved types and value-preserving ranges.
 Remove 7018 casts and 2807 Rust lines. Signed narrowing, operand evaluation,
@@ -66,10 +88,6 @@ Speed Booster 148406/0 (308.95s) and pause 40836/0 (77.81s), native exits 0.
 Normal release passes (28.41s frozen, 39.74s stable workspace), as do
 formatting/check and progress. Staged Rust matches that verified snapshot;
 independent projectile and PPU edits remain outside this commit.
-
-Use standard automatic fixes next: Clippy's isolated unused_parens trial
-fixes 8883 parenthesis pairs across 32 gameplay files. Keep each lint family
-in its own verified commit. The broader historical clone audit remains open.
 
 Pause-label family (2026-10-19): all three label modes and their 18 row
 loops now use one safe, ordered tile-palette update. The direct initialization
