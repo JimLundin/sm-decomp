@@ -87,6 +87,26 @@ the spin-jump callback, then0795/0797 flag clears and0998 gameplay store.
 Named setters retain little-endian word layout and callback order. The
 implementation session owns actual fade branch counts and final replay.
 
+Retired oracle workspace cleanup (2026-10-19): moved oracle-ppu-state and
+oracle-driver from target to temporary sm-workspace-retired-builds-20261019-d,
+outside the checkout: 8,138 files / 4,321.6 MiB, preserved for recovery. Live
+compiler/replay command lines and current route, CPU, door and color-math
+scripts have no dependencies on those directories. Three historical scripts
+still reference the old paths (ppu-audit.py, lead-99bd-geometry/build_combat.py
+and lead-9ad9-combat/bomb_west.py); restore the directories before reusing those
+retired probes. Current builds, route inputs and diagnostic baselines remain.
+No maintained source changed; own residue counts are unchanged. Formatting
+check, release build and progress script pass; concurrent source edits remain
+owned by their implementation sessions.
+
+Independent door-header QC (2026-10-19): commit 980d5899 matches both
+verified source snapshots after line-ending normalization. The actual replay
+reports 129712/0, native exit 0, with 61 calls and 61 enabled-bit clears. Review
+confirms the LoadDoorHeader/sub_8882AC callback order, bit 15 clear at $18B0,
+word 8 store at $00A7 and E310 transition at $099C, preserving byte-backed layout.
+This verifies the frozen change; subsequent door-alignment and CPU edits
+remain separate work.
+
 ## The oracle
 
 Verifier SRAM isolation (2026-10-19): RtlWriteSram now skips host file writes
