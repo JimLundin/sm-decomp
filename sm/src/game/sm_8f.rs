@@ -200,11 +200,7 @@ pub const fnRoomCode_CrocomireShaking: uint32 = 9431245;
 pub const fnRoomCode_RidleyRoomShaking: uint32 = 9431376;
 pub unsafe fn RoomSetup_AfterSavingAnimals(game: &mut Game) {
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x3d as uint8,
-            field_1: 0xb as uint8,
-            field_2: 0xbb30 as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x3d as uint8, 0xb as uint8, 0xbb30 as VoidP),
         game,
     );
     set_ram_word!(game.earthquake_type = 24 as uint16);
@@ -212,21 +208,13 @@ pub unsafe fn RoomSetup_AfterSavingAnimals(game: &mut Game) {
 }
 pub unsafe fn RoomSetup_AutoDestroyWallAfterEscape(game: &mut Game) {
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x10 as uint8,
-            field_1: 0x87 as uint8,
-            field_2: 0xb964 as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x10 as uint8, 0x87 as uint8, 0xb964 as VoidP),
         game,
     );
 }
 pub unsafe fn RoomSetup_TurnWallIntoShotblocks(game: &mut Game) {
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0xf as uint8,
-            field_1: 0xa as uint8,
-            field_2: 0xb9ed as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0xf as uint8, 0xa as uint8, 0xb9ed as VoidP),
         game,
     );
 }
@@ -250,11 +238,7 @@ pub unsafe fn RoomSetup_RunStatueUnlockAnims(game: &mut Game) {
 pub unsafe fn DoorCode_StartWreckedShipTreadmillWest(game: &mut Game) {
     SpawnAnimtiles(addr_kAnimtiles_WreckedShipTradmillRight as uint16, game);
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x4 as uint8,
-            field_1: 0x9 as uint8,
-            field_2: 0xb64b as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x4 as uint8, 0x9 as uint8, 0xb64b as VoidP),
         game,
     );
 }
@@ -621,11 +605,7 @@ pub unsafe fn RoomCode_8FC8C8(game: &mut Game) {
 }
 pub unsafe fn RoomCode_SetupShaktoolRoomPlm(game: &mut Game) {
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0 as uint8,
-            field_1: 0 as uint8,
-            field_2: 0xb8eb as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0 as uint8, 0 as uint8, 0xb8eb as VoidP),
         game,
     );
 }
@@ -677,11 +657,7 @@ pub unsafe fn RoomCode_SetMediumHorizRoomShake(game: &mut Game) {
 }
 pub unsafe fn RoomCode_Escape4_SetMediumHorizRoomShake(game: &mut Game) {
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x10 as uint8,
-            field_1: 0x10 as uint8,
-            field_2: 0xb968 as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x10 as uint8, 0x10 as uint8, 0xb968 as VoidP),
         game,
     );
     set_ram_word!(game.earthquake_type = 21 as uint16);
@@ -692,11 +668,7 @@ pub unsafe fn RoomCode_Escape4_SetMediumHorizRoomShake(game: &mut Game) {
 }
 pub unsafe fn RoomCode_SetCeresDoorSolid(game: &mut Game) {
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0xf as uint8,
-            field_1: 0x26 as uint8,
-            field_2: 0xba48 as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0xf as uint8, 0x26 as uint8, 0xba48 as VoidP),
         game,
     );
     FxTypeFunc_2C_Haze(game);
@@ -712,11 +684,7 @@ pub unsafe fn RoomCode_CeresColorMathHdma_BgBase(game: &mut Game) {
 pub unsafe fn DoorCode_StartWreckedSkipTreadmill_East(game: &mut Game) {
     SpawnAnimtiles(addr_kAnimtiles_WreckedShipTradmillLeft as uint16, game);
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x4 as uint8,
-            field_1: 0x9 as uint8,
-            field_2: 0xb64f as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x4 as uint8, 0x9 as uint8, 0xb64f as VoidP),
         game,
     );
 }
@@ -764,11 +732,7 @@ pub unsafe fn DoorCode_SetupElevatubeFromSouth(game: &mut Game) {
         -(32 as i32) as uint16;
     CallSomeSamusCode(0 as uint16, game);
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x1 as uint8,
-            field_1: 0 as uint8,
-            field_2: 0xb8f9 as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x1 as uint8, 0 as uint8, 0xb8f9 as VoidP),
         game,
     );
 }
@@ -787,11 +751,7 @@ pub unsafe fn DoorCode_SetupElevatubeFromNorth(game: &mut Game) {
     );
     CallSomeSamusCode(0 as uint16, game);
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x1 as uint8,
-            field_1: 0 as uint8,
-            field_2: 0xb8f9 as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x1 as uint8, 0 as uint8, 0xb8f9 as VoidP),
         game,
     );
 }

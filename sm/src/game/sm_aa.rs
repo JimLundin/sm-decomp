@@ -2063,11 +2063,7 @@ pub unsafe fn Shaktool_Instr_14(k: uint16, jp: *const uint16, game: &mut Game) -
         .offset(0xcd20)
         .offset(13) as *mut uint8 as *mut uint16) = 1 as uint16;
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x17 as uint8,
-            field_1: 0x1d as uint8,
-            field_2: 0xd6fc as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x17 as uint8, 0x1d as uint8, 0xd6fc as VoidP),
         game,
     );
     jp
@@ -2114,19 +2110,11 @@ pub unsafe fn ChozoStatue_Init(game: &mut Game) {
             i -= 2 as i32;
         }
         SpawnHardcodedPlm(
-            SpawnHardcodedPlmArgs {
-                field_0: 0x4a as uint8,
-                field_1: 0x17 as uint8,
-                field_2: 0xd6ee as VoidP,
-            },
+            SpawnHardcodedPlmArgs::new(0x4a as uint8, 0x17 as uint8, 0xd6ee as VoidP),
             game,
         );
         SpawnHardcodedPlm(
-            SpawnHardcodedPlmArgs {
-                field_0: 0x17 as uint8,
-                field_1: 0x1d as uint8,
-                field_2: 0xd6fc as VoidP,
-            },
+            SpawnHardcodedPlmArgs::new(0x17 as uint8, 0x1d as uint8, 0xd6fc as VoidP),
             game,
         );
     };
@@ -2144,11 +2132,7 @@ pub unsafe fn sub_AAE784(game: &mut Game) {
         i -= 2 as i32;
     }
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0xc as uint8,
-            field_1: 0x1d as uint8,
-            field_2: 0xd6d6 as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0xc as uint8, 0x1d as uint8, 0xd6d6 as VoidP),
         game,
     );
 }

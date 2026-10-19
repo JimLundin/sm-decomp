@@ -570,19 +570,11 @@ pub unsafe fn MotherBrain_SealWall(game: &mut Game) {
     };
     SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as uint16, 9 as uint16, game);
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0xf as uint8,
-            field_1: 0x4 as uint8,
-            field_2: 0xb673 as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0xf as uint8, 0x4 as uint8, 0xb673 as VoidP),
         game,
     );
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0xf as uint8,
-            field_1: 0x9 as uint8,
-            field_2: 0xb673 as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0xf as uint8, 0x9 as uint8, 0xb673 as VoidP),
         game,
     );
     (*Get_MotherBrain(0 as i32, game)).mbn_var_A = ((0xa9881di32) as u16);

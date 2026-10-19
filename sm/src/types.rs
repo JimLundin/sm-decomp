@@ -874,9 +874,19 @@ pub struct SamusPoseParams {
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct SpawnHardcodedPlmArgs {
-    pub field_0: uint8,
-    pub field_1: uint8,
-    pub field_2: VoidP,
+    pub block_x: uint8,
+    pub block_y: uint8,
+    pub header: VoidP,
+}
+
+impl SpawnHardcodedPlmArgs {
+    pub const fn new(block_x: uint8, block_y: uint8, header: VoidP) -> Self {
+        Self {
+            block_x,
+            block_y,
+            header,
+        }
+    }
 }
 
 #[derive(Copy, Clone)]

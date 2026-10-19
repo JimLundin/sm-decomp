@@ -963,11 +963,7 @@ pub unsafe fn Botwoon_Init(game: &mut Game) {
     let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     if (*(&raw mut game.g_ram as *mut uint8).offset(0xd828).offset(4) as i32 & 2 as i32) != 0i32 {
         SpawnHardcodedPlm(
-            SpawnHardcodedPlmArgs {
-                field_0: 0xf as uint8,
-                field_1: 0x4 as uint8,
-                field_2: 0xb797 as VoidP,
-            },
+            SpawnHardcodedPlmArgs::new(0xf as uint8, 0x4 as uint8, 0xb797 as VoidP),
             game,
         );
         *((&raw mut game.g_ram as *mut uint8).offset(0xcd20) as *mut uint16) = 257 as uint16;
@@ -1322,11 +1318,7 @@ pub unsafe fn Botwoon_Func_16(game: &mut Game) {
 }
 pub unsafe fn Botwoon_Func_17(k: uint16, game: &mut Game) {
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0xf as uint8,
-            field_1: 0x4 as uint8,
-            field_2: 0xb79b as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0xf as uint8, 0x4 as uint8, 0xb79b as VoidP),
         game,
     );
     Enemy_ItemDrop_Botwoon(k, game);

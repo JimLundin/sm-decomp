@@ -2127,11 +2127,7 @@ pub unsafe fn SporeSpawn_Init(game: &mut Game) {
         (*E0).base.properties = ((*E0).base.properties) | (0x8000u16);
         SporeSpawn_Func_5(game);
         SpawnHardcodedPlm(
-            SpawnHardcodedPlmArgs {
-                field_0: 0x7 as uint8,
-                field_1: 0x1e as uint8,
-                field_2: 0xb793 as VoidP,
-            },
+            SpawnHardcodedPlmArgs::new(0x7 as uint8, 0x1e as uint8, 0xb793 as VoidP),
             game,
         );
         set_ram_word!(game.scrolling_finished_hook = 0 as uint16);
@@ -2377,11 +2373,7 @@ pub unsafe fn SporeSpawn_Func_6(game: &mut Game) {
         *fresh5 = (*fresh5) | (2u16);
         set_ram_word!(game.scrolling_finished_hook = 0 as uint16);
         SpawnHardcodedPlm(
-            SpawnHardcodedPlmArgs {
-                field_0: 0x7 as uint8,
-                field_1: 0x1e as uint8,
-                field_2: 0xb78f as VoidP,
-            },
+            SpawnHardcodedPlmArgs::new(0x7 as uint8, 0x1e as uint8, 0xb78f as VoidP),
             game,
         );
     }

@@ -2315,11 +2315,7 @@ pub unsafe fn StartGameplay_Async(game: &mut Game) -> CoroutineRet {
             return _coret__1;
         }
         SpawnHardcodedPlm(
-            SpawnHardcodedPlmArgs {
-                field_0: 0x8 as uint8,
-                field_1: 0x8 as uint8,
-                field_2: 0xb7eb as VoidP,
-            },
+            SpawnHardcodedPlmArgs::new(0x8 as uint8, 0x8 as uint8, 0xb7eb as VoidP),
             game,
         );
         set_ram_word!(game.door_transition_function = ((0x82e737i32) as u16));

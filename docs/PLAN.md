@@ -19984,6 +19984,22 @@ changes retain separate composition verification. Movie coverage
 of this enemy is unproven; direct comparisons exercise all eight callbacks.
 Continue larger repeated families; readability and full credits remain open.
 
+Hardcoded PLM spawn-descriptor family (2026-10-20): all 96 literal
+descriptors across eleven caller files use one const constructor. The layout
+retains its byte X/Y coordinates and word header pointer; fields are named
+block_x, block_y and header. All 288 original operand expressions, evaluation
+order, call sites and spawn reads remain exact. Complete ast-grep expressions
+and constructor expansion reconstruct all twelve changed files. Net Rust
+lines -374; casts, raw operations, unsafe functions and ABI counts unchanged.
+
+Formatting/check, normal registry-only release (35.41s final), source reconstruction,
+progress and diff checks pass. Frozen 1db62808 plus this family passes full
+any% 129712/0 (105.04s), native exit 0, with fixed source/library/fixture pins.
+This constructor/field-name transformation does not change spawn control flow.
+The final composition includes the committed integer-spelling batch.
+Continue substantial shared implementations;
+readability and full boot-to-credits coverage remain incomplete.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

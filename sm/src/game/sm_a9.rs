@@ -1067,11 +1067,7 @@ pub unsafe fn MotherBrainBody_FakeDeath_Descent_4(game: &mut Game) {
         (*E).mbn_var_F = 0 as uint16;
         (*E).mbn_var_37 = 0 as uint16;
         SpawnHardcodedPlm(
-            SpawnHardcodedPlmArgs {
-                field_0: 0xe as uint8,
-                field_1: 0x2 as uint8,
-                field_2: 0xb6b3 as VoidP,
-            },
+            SpawnHardcodedPlmArgs::new(0xe as uint8, 0x2 as uint8, 0xb6b3 as VoidP),
             game,
         );
     }
@@ -1149,11 +1145,7 @@ pub unsafe fn MotherBrainBody_0_Wait(game: &mut Game) {
 }
 pub unsafe fn MotherBrainBody_1_ClearBottomLeftTube(game: &mut Game) {
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x5 as uint8,
-            field_1: 0x9 as uint8,
-            field_2: 0xb6c3 as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x5 as uint8, 0x9 as uint8, 0xb6c3 as VoidP),
         game,
     );
     let E: *mut Enemy_MotherBrainBody = Get_MotherBrainBody(0x40 as i32, game);
@@ -1174,11 +1166,7 @@ pub unsafe fn MotherBrainBody_2_SpawnTopRightTubeFalling(game: &mut Game) {
 }
 pub unsafe fn MotherBrainBody_3_ClearCeilingBlock9(game: &mut Game) {
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x9 as uint8,
-            field_1: 0x2 as uint8,
-            field_2: 0xb6b3 as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x9 as uint8, 0x2 as uint8, 0xb6b3 as VoidP),
         game,
     );
     let E: *mut Enemy_MotherBrainBody = Get_MotherBrainBody(0x40 as i32, game);
@@ -1203,11 +1191,7 @@ pub unsafe fn MotherBrainBody_4_SpawnTopLeftTubeFalling(game: &mut Game) {
 }
 pub unsafe fn MotherBrainBody_4_ClearCeilingBlock6(game: &mut Game) {
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x6 as uint8,
-            field_1: 0x2 as uint8,
-            field_2: 0xb6b3 as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x6 as uint8, 0x2 as uint8, 0xb6b3 as VoidP),
         game,
     );
     let E: *mut Enemy_MotherBrainBody = Get_MotherBrainBody(0x40 as i32, game);
@@ -1224,11 +1208,7 @@ pub unsafe fn MotherBrainBody_5_SpawnTubeFallingEnemy1(game: &mut Game) {
 }
 pub unsafe fn MotherBrainBody_6_ClearBottomRightTube(game: &mut Game) {
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0xa as uint8,
-            field_1: 0x9 as uint8,
-            field_2: 0xb6c7 as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0xa as uint8, 0x9 as uint8, 0xb6c7 as VoidP),
         game,
     );
     let E: *mut Enemy_MotherBrainBody = Get_MotherBrainBody(0x40 as i32, game);
@@ -1245,11 +1225,7 @@ pub unsafe fn MotherBrainBody_7_SpawnTubeFallingEnemy2(game: &mut Game) {
 }
 pub unsafe fn MotherBrainBody_8_ClearBottomMiddleLeftTube(game: &mut Game) {
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x6 as uint8,
-            field_1: 0xa as uint8,
-            field_2: 0xb6bb as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x6 as uint8, 0xa as uint8, 0xb6bb as VoidP),
         game,
     );
     let E: *mut Enemy_MotherBrainBody = Get_MotherBrainBody(0x40 as i32, game);
@@ -1274,11 +1250,7 @@ pub unsafe fn MotherBrainBody_9_SpawnTopMiddleLeftFalling(game: &mut Game) {
 }
 pub unsafe fn MotherBrainBody_10_ClearCeilingTubeColumn7(game: &mut Game) {
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x7 as uint8,
-            field_1: 0x2 as uint8,
-            field_2: 0xb6b7 as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x7 as uint8, 0x2 as uint8, 0xb6b7 as VoidP),
         game,
     );
     let E: *mut Enemy_MotherBrainBody = Get_MotherBrainBody(0x40 as i32, game);
@@ -1303,11 +1275,7 @@ pub unsafe fn MotherBrainBody_11_SpawnTopMiddleRightFalling(game: &mut Game) {
 }
 pub unsafe fn MotherBrainBody_12_ClearCeilingTubeColumn8(game: &mut Game) {
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x8 as uint8,
-            field_1: 0x2 as uint8,
-            field_2: 0xb6b7 as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x8 as uint8, 0x2 as uint8, 0xb6b7 as VoidP),
         game,
     );
     let E: *mut Enemy_MotherBrainBody = Get_MotherBrainBody(0x40 as i32, game);
@@ -1324,11 +1292,7 @@ pub unsafe fn MotherBrainBody_13_SpawnTubeFallingEnemy3(game: &mut Game) {
 }
 pub unsafe fn MotherBrainBody_14_ClearBottomMiddleRightTube(game: &mut Game) {
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x9 as uint8,
-            field_1: 0xa as uint8,
-            field_2: 0xb6bb as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x9 as uint8, 0xa as uint8, 0xb6bb as VoidP),
         game,
     );
     let E: *mut Enemy_MotherBrainBody = Get_MotherBrainBody(0x40 as i32, game);
@@ -1345,11 +1309,7 @@ pub unsafe fn MotherBrainBody_15_SpawnTubeFallingEnemy4(game: &mut Game) {
 }
 pub unsafe fn MotherBrainBody_16_ClearBottomMiddleTubes(game: &mut Game) {
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x7 as uint8,
-            field_1: 0x7 as uint8,
-            field_2: 0xb6bf as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x7 as uint8, 0x7 as uint8, 0xb6bf as VoidP),
         game,
     );
     (*Get_MotherBrainBody(0x40 as i32, game)).mbby_var_E = addr_locret_A98AE4 as uint16;
@@ -1458,114 +1418,66 @@ pub unsafe fn MotherBrainsTubesFalling_SpawnSmoke(k: uint16, game: &mut Game) {
 }
 pub unsafe fn MotherBrainBody_FakeDeath_Ascent_0_DrawBG1Row23(game: &mut Game) {
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x2 as uint8,
-            field_1: 0x2 as uint8,
-            field_2: 0xb67b as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x2 as uint8, 0x2 as uint8, 0xb67b as VoidP),
         game,
     );
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x2 as uint8,
-            field_1: 0x3 as uint8,
-            field_2: 0xb67f as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x2 as uint8, 0x3 as uint8, 0xb67f as VoidP),
         game,
     );
     (*Get_MotherBrainBody(0 as i32, game)).mbby_var_A = ((0xa98c9ei32) as u16);
 }
 pub unsafe fn MotherBrainBody_FakeDeath_Ascent_1_DrawBG1Row45(game: &mut Game) {
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x2 as uint8,
-            field_1: 0x4 as uint8,
-            field_2: 0xb683 as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x2 as uint8, 0x4 as uint8, 0xb683 as VoidP),
         game,
     );
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x2 as uint8,
-            field_1: 0x5 as uint8,
-            field_2: 0xb687 as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x2 as uint8, 0x5 as uint8, 0xb687 as VoidP),
         game,
     );
     (*Get_MotherBrainBody(0 as i32, game)).mbby_var_A = ((0xa98cb5i32) as u16);
 }
 pub unsafe fn MotherBrainBody_FakeDeath_Ascent_2_DrawBG1Row67(game: &mut Game) {
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x2 as uint8,
-            field_1: 0x6 as uint8,
-            field_2: 0xb68b as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x2 as uint8, 0x6 as uint8, 0xb68b as VoidP),
         game,
     );
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x2 as uint8,
-            field_1: 0x7 as uint8,
-            field_2: 0xb68f as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x2 as uint8, 0x7 as uint8, 0xb68f as VoidP),
         game,
     );
     (*Get_MotherBrainBody(0 as i32, game)).mbby_var_A = ((0xa98ccci32) as u16);
 }
 pub unsafe fn MotherBrainBody_FakeDeath_Ascent_3_DrawBG1Row89(game: &mut Game) {
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x2 as uint8,
-            field_1: 0x8 as uint8,
-            field_2: 0xb693 as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x2 as uint8, 0x8 as uint8, 0xb693 as VoidP),
         game,
     );
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x2 as uint8,
-            field_1: 0x9 as uint8,
-            field_2: 0xb697 as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x2 as uint8, 0x9 as uint8, 0xb697 as VoidP),
         game,
     );
     (*Get_MotherBrainBody(0 as i32, game)).mbby_var_A = ((0xa98ce3i32) as u16);
 }
 pub unsafe fn MotherBrainBody_FakeDeath_Ascent_4_DrawBG1RowAB(game: &mut Game) {
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x2 as uint8,
-            field_1: 0xa as uint8,
-            field_2: 0xb69b as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x2 as uint8, 0xa as uint8, 0xb69b as VoidP),
         game,
     );
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x2 as uint8,
-            field_1: 0xb as uint8,
-            field_2: 0xb69f as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x2 as uint8, 0xb as uint8, 0xb69f as VoidP),
         game,
     );
     (*Get_MotherBrainBody(0 as i32, game)).mbby_var_A = ((0xa98cfai32) as u16);
 }
 pub unsafe fn MotherBrainBody_FakeDeath_Ascent_5_DrawBG1RowCD(game: &mut Game) {
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x2 as uint8,
-            field_1: 0xc as uint8,
-            field_2: 0xb6a3 as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x2 as uint8, 0xc as uint8, 0xb6a3 as VoidP),
         game,
     );
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x2 as uint8,
-            field_1: 0xd as uint8,
-            field_2: 0xb6a7 as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x2 as uint8, 0xd as uint8, 0xb6a7 as VoidP),
         game,
     );
     (*Get_MotherBrainBody(0 as i32, game)).mbby_var_A = ((0xa98d11i32) as u16);
@@ -2938,11 +2850,7 @@ pub unsafe fn MotherBrain_Phase3_Death_20_BlowUpEscapeDoor(game: &mut Game) {
     MotherBrain_ExplodeEscapeDoor(game);
     (*Get_MotherBrain(0 as i32, game)).mbn_var_A = ((0xa9b33ci32) as u16);
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0 as uint8,
-            field_1: 0x6 as uint8,
-            field_2: 0xb677 as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0 as uint8, 0x6 as uint8, 0xb677 as VoidP),
         game,
     );
 }
@@ -7155,19 +7063,11 @@ pub unsafe fn Shitroid_Func_4(game: &mut Game) {
             as *mut uint16) =
             *(&raw mut game.g_ram as *mut uint8).offset(0xcd20).offset(2) as uint16;
         SpawnHardcodedPlm(
-            SpawnHardcodedPlmArgs {
-                field_0: 0x30 as uint8,
-                field_1: 0x3 as uint8,
-                field_2: 0xb767 as VoidP,
-            },
+            SpawnHardcodedPlmArgs::new(0x30 as uint8, 0x3 as uint8, 0xb767 as VoidP),
             game,
         );
         SpawnHardcodedPlm(
-            SpawnHardcodedPlmArgs {
-                field_0: 0x1f as uint8,
-                field_1: 0x3 as uint8,
-                field_2: 0xb767 as VoidP,
-            },
+            SpawnHardcodedPlmArgs::new(0x1f as uint8, 0x3 as uint8, 0xb767 as VoidP),
             game,
         );
         let E: *mut Enemy_Shitroid = Get_Shitroid(ram_word!(game, cur_enemy_index) as i32, game);
@@ -7284,19 +7184,11 @@ pub unsafe fn Shitroid_Func_12(k: uint16, game: &mut Game) {
             as *mut uint8 as *mut uint16);
         *fresh15 = (*fresh15) | (0x100u16);
         SpawnHardcodedPlm(
-            SpawnHardcodedPlmArgs {
-                field_0: 0x30 as uint8,
-                field_1: 0x3 as uint8,
-                field_2: 0xb763 as VoidP,
-            },
+            SpawnHardcodedPlmArgs::new(0x30 as uint8, 0x3 as uint8, 0xb763 as VoidP),
             game,
         );
         SpawnHardcodedPlm(
-            SpawnHardcodedPlmArgs {
-                field_0: 0x1f as uint8,
-                field_1: 0x3 as uint8,
-                field_2: 0xb763 as VoidP,
-            },
+            SpawnHardcodedPlmArgs::new(0x1f as uint8, 0x3 as uint8, 0xb763 as VoidP),
             game,
         );
     }

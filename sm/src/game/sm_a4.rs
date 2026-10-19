@@ -520,27 +520,15 @@ pub unsafe fn Crocomire_Init(game: &mut Game) {
         (*E).base.properties =
             ((*E).base.properties as i32 & 0x7bff as i32 | 0x400 as i32) as uint16;
         SpawnHardcodedPlm(
-            SpawnHardcodedPlmArgs {
-                field_0: 0x20 as uint8,
-                field_1: 0x3 as uint8,
-                field_2: 0xb753 as VoidP,
-            },
+            SpawnHardcodedPlmArgs::new(0x20 as uint8, 0x3 as uint8, 0xb753 as VoidP),
             game,
         );
         SpawnHardcodedPlm(
-            SpawnHardcodedPlmArgs {
-                field_0: 0x1e as uint8,
-                field_1: 0x3 as uint8,
-                field_2: 0xb753 as VoidP,
-            },
+            SpawnHardcodedPlmArgs::new(0x1e as uint8, 0x3 as uint8, 0xb753 as VoidP),
             game,
         );
         SpawnHardcodedPlm(
-            SpawnHardcodedPlmArgs {
-                field_0: 0x61 as uint8,
-                field_1: 0xb as uint8,
-                field_2: 0xb747 as VoidP,
-            },
+            SpawnHardcodedPlmArgs::new(0x61 as uint8, 0xb as uint8, 0xb747 as VoidP),
             game,
         );
         (*E).crocom_var_A = 84 as uint16;
@@ -840,11 +828,7 @@ pub unsafe fn Crocomire_Func_37(game: &mut Game) {
         if ram_word!(game, g_word_7E9002) == 0 {
             set_ram_word!(game.g_word_7E9002 = 1 as uint16);
             SpawnHardcodedPlm(
-                SpawnHardcodedPlmArgs {
-                    field_0: 0x61 as uint8,
-                    field_1: 0xb as uint8,
-                    field_2: 0xb74b as VoidP,
-                },
+                SpawnHardcodedPlmArgs::new(0x61 as uint8, 0xb as uint8, 0xb74b as VoidP),
                 game,
             );
             game.eproj_spawn_pt = Point16U {
@@ -866,19 +850,11 @@ pub unsafe fn Crocomire_Func_37(game: &mut Game) {
             if ram_word!(game, g_word_7E9006) == 0 {
                 set_ram_word!(game.g_word_7E9006 = 1 as uint16);
                 SpawnHardcodedPlm(
-                    SpawnHardcodedPlmArgs {
-                        field_0: 0x62 as uint8,
-                        field_1: 0xb as uint8,
-                        field_2: 0xb74b as VoidP,
-                    },
+                    SpawnHardcodedPlmArgs::new(0x62 as uint8, 0xb as uint8, 0xb74b as VoidP),
                     game,
                 );
                 SpawnHardcodedPlm(
-                    SpawnHardcodedPlmArgs {
-                        field_0: 0x63 as uint8,
-                        field_1: 0xb as uint8,
-                        field_2: 0xb74b as VoidP,
-                    },
+                    SpawnHardcodedPlmArgs::new(0x63 as uint8, 0xb as uint8, 0xb74b as VoidP),
                     game,
                 );
                 game.eproj_spawn_pt = Point16U {
@@ -915,11 +891,7 @@ pub unsafe fn Crocomire_Func_37(game: &mut Game) {
             *(((&raw mut game.g_ram as *mut uint8).offset(0x9015) as *mut uint16 as *mut uint8)
                 .offset(1) as *mut uint16) = 0 as uint16;
             SpawnHardcodedPlm(
-                SpawnHardcodedPlmArgs {
-                    field_0: 0x4e as uint8,
-                    field_1: 0x3 as uint8,
-                    field_2: 0xb757 as VoidP,
-                },
+                SpawnHardcodedPlmArgs::new(0x4e as uint8, 0x3 as uint8, 0xb757 as VoidP),
                 game,
             );
             (*EK).base.current_instruction = addr_kCrocomire_Ilist_BFB0 as uint16;
@@ -940,83 +912,43 @@ pub unsafe fn Crocomire_Func_37(game: &mut Game) {
 }
 pub unsafe fn Crocomire_8EE5(game: &mut Game) {
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x61 as uint8,
-            field_1: 0xb as uint8,
-            field_2: 0xb74f as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x61 as uint8, 0xb as uint8, 0xb74f as VoidP),
         game,
     );
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x62 as uint8,
-            field_1: 0xb as uint8,
-            field_2: 0xb74f as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x62 as uint8, 0xb as uint8, 0xb74f as VoidP),
         game,
     );
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x63 as uint8,
-            field_1: 0xb as uint8,
-            field_2: 0xb74f as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x63 as uint8, 0xb as uint8, 0xb74f as VoidP),
         game,
     );
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x64 as uint8,
-            field_1: 0xb as uint8,
-            field_2: 0xb74f as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x64 as uint8, 0xb as uint8, 0xb74f as VoidP),
         game,
     );
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x65 as uint8,
-            field_1: 0xb as uint8,
-            field_2: 0xb74f as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x65 as uint8, 0xb as uint8, 0xb74f as VoidP),
         game,
     );
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x66 as uint8,
-            field_1: 0xb as uint8,
-            field_2: 0xb74f as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x66 as uint8, 0xb as uint8, 0xb74f as VoidP),
         game,
     );
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x67 as uint8,
-            field_1: 0xb as uint8,
-            field_2: 0xb74f as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x67 as uint8, 0xb as uint8, 0xb74f as VoidP),
         game,
     );
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x68 as uint8,
-            field_1: 0xb as uint8,
-            field_2: 0xb74f as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x68 as uint8, 0xb as uint8, 0xb74f as VoidP),
         game,
     );
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x69 as uint8,
-            field_1: 0xb as uint8,
-            field_2: 0xb74f as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x69 as uint8, 0xb as uint8, 0xb74f as VoidP),
         game,
     );
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x6a as uint8,
-            field_1: 0xb as uint8,
-            field_2: 0xb74f as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x6a as uint8, 0xb as uint8, 0xb74f as VoidP),
         game,
     );
     game.eproj_spawn_pt = Point16U {
@@ -1178,11 +1110,7 @@ pub unsafe fn Crocomire_Func_49(game: &mut Game) {
         let fresh12 = &raw mut (*Get_Crocomire(0x40 as i32, game)).base.properties;
         fresh12.write_unaligned((fresh12.read_unaligned()) | (0x200u16));
         SpawnHardcodedPlm(
-            SpawnHardcodedPlmArgs {
-                field_0: 0x4e as uint8,
-                field_1: 0x3 as uint8,
-                field_2: 0xb753 as VoidP,
-            },
+            SpawnHardcodedPlmArgs::new(0x4e as uint8, 0x3 as uint8, 0xb753 as VoidP),
             game,
         );
         set_ram_word!(game.camera_distance_index = 0 as uint16);
@@ -1984,11 +1912,7 @@ pub unsafe fn Crocomire_Func_68(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xcd20).offset(3) as *mut uint8
             as *mut uint16) = 256 as uint16;
         SpawnHardcodedPlm(
-            SpawnHardcodedPlmArgs {
-                field_0: 0x30 as uint8,
-                field_1: 0x3 as uint8,
-                field_2: 0xb757 as VoidP,
-            },
+            SpawnHardcodedPlmArgs::new(0x30 as uint8, 0x3 as uint8, 0xb757 as VoidP),
             game,
         );
         set_ram_word!(game.camera_distance_index = 6 as uint16);
@@ -2124,27 +2048,15 @@ pub unsafe fn Crocomire_Func_71(game: &mut Game) {
         (*E).crocom_var_E = 0 as uint16;
         (*E).crocom_var_F = 0 as uint16;
         SpawnHardcodedPlm(
-            SpawnHardcodedPlmArgs {
-                field_0: 0x20 as uint8,
-                field_1: 0x3 as uint8,
-                field_2: 0xb753 as VoidP,
-            },
+            SpawnHardcodedPlmArgs::new(0x20 as uint8, 0x3 as uint8, 0xb753 as VoidP),
             game,
         );
         SpawnHardcodedPlm(
-            SpawnHardcodedPlmArgs {
-                field_0: 0x1e as uint8,
-                field_1: 0x3 as uint8,
-                field_2: 0xb757 as VoidP,
-            },
+            SpawnHardcodedPlmArgs::new(0x1e as uint8, 0x3 as uint8, 0xb757 as VoidP),
             game,
         );
         SpawnHardcodedPlm(
-            SpawnHardcodedPlmArgs {
-                field_0: 0x70 as uint8,
-                field_1: 0xb as uint8,
-                field_2: 0xb747 as VoidP,
-            },
+            SpawnHardcodedPlmArgs::new(0x70 as uint8, 0xb as uint8, 0xb747 as VoidP),
             game,
         );
         QueueSfx2_Max6(0x29 as uint16, game);
@@ -2297,11 +2209,7 @@ pub unsafe fn Crocomire_Func_88(game: &mut Game) {
         (*E).base.y_height = 28 as uint16;
         (*E).base.x_width = 40 as uint16;
         SpawnHardcodedPlm(
-            SpawnHardcodedPlmArgs {
-                field_0: 0x30 as uint8,
-                field_1: 0x3 as uint8,
-                field_2: 0xb753 as VoidP,
-            },
+            SpawnHardcodedPlmArgs::new(0x30 as uint8, 0x3 as uint8, 0xb753 as VoidP),
             game,
         );
         Enemy_ItemDrop_Crocomire(0 as uint16, game);
@@ -2313,11 +2221,7 @@ pub unsafe fn Crocomire_9B65(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xcd20).offset(2) as *mut uint8 as *mut uint16) =
         257 as uint16;
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x1e as uint8,
-            field_1: 0x3 as uint8,
-            field_2: 0xb753 as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x1e as uint8, 0x3 as uint8, 0xb753 as VoidP),
         game,
     );
     Crocomire_9BB3(game);

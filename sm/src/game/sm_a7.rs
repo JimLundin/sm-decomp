@@ -734,91 +734,55 @@ pub unsafe fn Kraid_GetsBig_BreakCeilingPlatforms(game: &mut Game) {
         match (*E).kraid_var_F as i32 >> 1 as i32 {
             0 => {
                 SpawnHardcodedPlm(
-                    SpawnHardcodedPlmArgs {
-                        field_0: 0x6 as uint8,
-                        field_1: 0x12 as uint8,
-                        field_2: 0xb7b3 as VoidP,
-                    },
+                    SpawnHardcodedPlmArgs::new(0x6 as uint8, 0x12 as uint8, 0xb7b3 as VoidP),
                     game,
                 );
             }
             1 => {
                 SpawnHardcodedPlm(
-                    SpawnHardcodedPlmArgs {
-                        field_0: 0xd as uint8,
-                        field_1: 0x12 as uint8,
-                        field_2: 0xb7ab as VoidP,
-                    },
+                    SpawnHardcodedPlmArgs::new(0xd as uint8, 0x12 as uint8, 0xb7ab as VoidP),
                     game,
                 );
             }
             2 => {
                 SpawnHardcodedPlm(
-                    SpawnHardcodedPlmArgs {
-                        field_0: 0x2 as uint8,
-                        field_1: 0x12 as uint8,
-                        field_2: 0xb7a3 as VoidP,
-                    },
+                    SpawnHardcodedPlmArgs::new(0x2 as uint8, 0x12 as uint8, 0xb7a3 as VoidP),
                     game,
                 );
             }
             3 => {
                 SpawnHardcodedPlm(
-                    SpawnHardcodedPlmArgs {
-                        field_0: 0xa as uint8,
-                        field_1: 0x12 as uint8,
-                        field_2: 0xb7b3 as VoidP,
-                    },
+                    SpawnHardcodedPlmArgs::new(0xa as uint8, 0x12 as uint8, 0xb7b3 as VoidP),
                     game,
                 );
             }
             4 => {
                 SpawnHardcodedPlm(
-                    SpawnHardcodedPlmArgs {
-                        field_0: 0x5 as uint8,
-                        field_1: 0x12 as uint8,
-                        field_2: 0xb7ab as VoidP,
-                    },
+                    SpawnHardcodedPlmArgs::new(0x5 as uint8, 0x12 as uint8, 0xb7ab as VoidP),
                     game,
                 );
             }
             5 => {
                 SpawnHardcodedPlm(
-                    SpawnHardcodedPlmArgs {
-                        field_0: 0xc as uint8,
-                        field_1: 0x12 as uint8,
-                        field_2: 0xb7b3 as VoidP,
-                    },
+                    SpawnHardcodedPlmArgs::new(0xc as uint8, 0x12 as uint8, 0xb7b3 as VoidP),
                     game,
                 );
             }
             6 => {
                 SpawnHardcodedPlm(
-                    SpawnHardcodedPlmArgs {
-                        field_0: 0x3 as uint8,
-                        field_1: 0x12 as uint8,
-                        field_2: 0xb7ab as VoidP,
-                    },
+                    SpawnHardcodedPlmArgs::new(0x3 as uint8, 0x12 as uint8, 0xb7ab as VoidP),
                     game,
                 );
             }
             7 => {
                 SpawnHardcodedPlm(
-                    SpawnHardcodedPlmArgs {
-                        field_0: 0xb as uint8,
-                        field_1: 0x12 as uint8,
-                        field_2: 0xb7ab as VoidP,
-                    },
+                    SpawnHardcodedPlmArgs::new(0xb as uint8, 0x12 as uint8, 0xb7ab as VoidP),
                     game,
                 );
             }
             8 => {
                 SpawnHardcodedPlm(
-                    SpawnHardcodedPlmArgs {
-                        field_0: 0x4 as uint8,
-                        field_1: 0x12 as uint8,
-                        field_2: 0xb7b3 as VoidP,
-                    },
+                    SpawnHardcodedPlmArgs::new(0x4 as uint8, 0x12 as uint8, 0xb7b3 as VoidP),
                     game,
                 );
             }
@@ -2276,21 +2240,13 @@ pub unsafe fn Kraid_GetsBig_ReleaseCamera(game: &mut Game) {
 }
 pub unsafe fn Kraid_SpawnPlmToClearCeiling(game: &mut Game) {
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x2 as uint8,
-            field_1: 0x12 as uint8,
-            field_2: 0xb7b7 as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x2 as uint8, 0x12 as uint8, 0xb7b7 as VoidP),
         game,
     );
 }
 pub unsafe fn Kraid_ClearSomeSpikes(game: &mut Game) {
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x5 as uint8,
-            field_1: 0x1b as uint8,
-            field_2: 0xb7bb as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x5 as uint8, 0x1b as uint8, 0xb7bb as VoidP),
         game,
     );
 }
@@ -2525,11 +2481,7 @@ pub unsafe fn Kraid_Death_Init(game: &mut Game) {
         EnemyDeathAnimation(v4, 0x100 as uint16, game);
         set_ram_word!(game.cur_enemy_index = v7);
         SpawnHardcodedPlm(
-            SpawnHardcodedPlmArgs {
-                field_0: 0x5 as uint8,
-                field_1: 0x1b as uint8,
-                field_2: 0xb7bf as VoidP,
-            },
+            SpawnHardcodedPlmArgs::new(0x5 as uint8, 0x1b as uint8, 0xb7bf as VoidP),
             game,
         );
     }
@@ -2692,11 +2644,7 @@ pub unsafe fn Kraid_CrumbleLeftPlatform_Left(game: &mut Game) {
         game,
     );
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x7 as uint8,
-            field_1: 0x12 as uint8,
-            field_2: 0xb7a7 as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x7 as uint8, 0x12 as uint8, 0xb7a7 as VoidP),
         game,
     );
 }
@@ -2708,11 +2656,7 @@ pub unsafe fn Kraid_CrumbleRightPlatform_Middle(game: &mut Game) {
         game,
     );
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0xf as uint8,
-            field_1: 0x12 as uint8,
-            field_2: 0xb7a7 as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0xf as uint8, 0x12 as uint8, 0xb7a7 as VoidP),
         game,
     );
 }
@@ -2724,11 +2668,7 @@ pub unsafe fn Kraid_CrumbleRightPlatform_Left(game: &mut Game) {
         game,
     );
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0xe as uint8,
-            field_1: 0x12 as uint8,
-            field_2: 0xb7af as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0xe as uint8, 0x12 as uint8, 0xb7af as VoidP),
         game,
     );
 }
@@ -2740,11 +2680,7 @@ pub unsafe fn Kraid_CrumbleLeftPlatform_Right(game: &mut Game) {
         game,
     );
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x9 as uint8,
-            field_1: 0x12 as uint8,
-            field_2: 0xb7a7 as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x9 as uint8, 0x12 as uint8, 0xb7a7 as VoidP),
         game,
     );
 }
@@ -2756,11 +2692,7 @@ pub unsafe fn Kraid_CrumbleLeftPlatform_Middle(game: &mut Game) {
         game,
     );
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x8 as uint8,
-            field_1: 0x12 as uint8,
-            field_2: 0xb7af as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x8 as uint8, 0x12 as uint8, 0xb7af as VoidP),
         game,
     );
 }
@@ -2772,11 +2704,7 @@ pub unsafe fn Kraid_CrumbleRightPlatform_Right(game: &mut Game) {
         game,
     );
     SpawnHardcodedPlm(
-        SpawnHardcodedPlmArgs {
-            field_0: 0x10 as uint8,
-            field_1: 0x12 as uint8,
-            field_2: 0xb7af as VoidP,
-        },
+        SpawnHardcodedPlmArgs::new(0x10 as uint8, 0x12 as uint8, 0xb7af as VoidP),
         game,
     );
 }
@@ -3669,11 +3597,7 @@ pub unsafe fn Phantoon_Spawn8FireballsInCircleAtStart(k: uint16, game: &mut Game
             (*EK).phant_var_F = ((0xa7d4eei32) as u16);
             (*EK).phant_var_E = 30 as uint16;
             SpawnHardcodedPlm(
-                SpawnHardcodedPlmArgs {
-                    field_0: 0 as uint8,
-                    field_1: 0x6 as uint8,
-                    field_2: 0xb781 as VoidP,
-                },
+                SpawnHardcodedPlmArgs::new(0 as uint8, 0x6 as uint8, 0xb781 as VoidP),
                 game,
             );
         }
@@ -4241,11 +4165,7 @@ pub unsafe fn Phantoon_Dead(k: uint16, game: &mut Game) {
                 as *mut uint8 as *mut uint16);
             *fresh23 = (*fresh23) | (1u16);
             SpawnHardcodedPlm(
-                SpawnHardcodedPlmArgs {
-                    field_0: 0 as uint8,
-                    field_1: 0x6 as uint8,
-                    field_2: 0xb78b as VoidP,
-                },
+                SpawnHardcodedPlmArgs::new(0 as uint8, 0x6 as uint8, 0xb78b as VoidP),
                 game,
             );
             QueueMusic_Delayed8(3 as uint16, game);

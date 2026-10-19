@@ -4131,11 +4131,7 @@ pub unsafe fn FxTypeFunc_26_TourianEntranceStatue(game: &mut Game) {
     };
     if CheckEventHappened(0xa as uint16, game) as i32 & 1 as i32 != 0 {
         SpawnHardcodedPlm(
-            SpawnHardcodedPlmArgs {
-                field_0: 0x6 as uint8,
-                field_1: 0xc as uint8,
-                field_2: 0xb777 as VoidP,
-            },
+            SpawnHardcodedPlmArgs::new(0x6 as uint8, 0xc as uint8, 0xb777 as VoidP),
             game,
         );
         *((&raw mut game.g_ram as *mut uint8).offset(0xcd20) as *mut uint16) = 514 as uint16;
@@ -4237,11 +4233,7 @@ pub unsafe fn HdmaobjPreInstr_DC69(k: uint16, game: &mut Game) {
         );
         if ram_word!(game, hdma_object_B[v1]) == 0xff10u16 {
             SpawnHardcodedPlm(
-                SpawnHardcodedPlmArgs {
-                    field_0: 0x6 as uint8,
-                    field_1: 0xc as uint8,
-                    field_2: 0xb773 as VoidP,
-                },
+                SpawnHardcodedPlmArgs::new(0x6 as uint8, 0xc as uint8, 0xb773 as VoidP),
                 game,
             );
             SetEventHappened(0xa as uint16, game);

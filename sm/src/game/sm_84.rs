@@ -584,16 +584,16 @@ unsafe fn spawn_hardcoded_plm(
         }
     }
     let prod: uint16 = Mult8x8(
-        (*pp).field_1,
+        (*pp).block_y,
         ram_word!(game, room_width_in_blocks) as uint8,
     );
     let index = usize::from(v1 >> 1) * 2;
     let write_word = |game: &mut Game, offset: usize, value: u16| {
         game.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
     };
-    let block_index = (2 * (u32::from(prod) + u32::from((*pp).field_0))) as u16;
+    let block_index = (2 * (u32::from(prod) + u32::from((*pp).block_x))) as u16;
     write_word(game, 0x1c87 + index, block_index); // plm_block_indices
-    let v3 = (*pp).field_2;
+    let v3 = (*pp).header;
     write_word(game, 0x1c37 + index, v3); // plm_header_ptr
     write_word(game, 0x1dc7 + index, 0); // plm_room_arguments
     write_word(game, 0xdf0c + index, 0); // plm_variables
@@ -3715,11 +3715,7 @@ pub unsafe fn PlmSetup_D6DA_LowerNorfairChozoHandTrigger(
         *fresh3 = (*fresh3) & (0xfffu16);
         CallSomeSamusCode(0 as uint16, game);
         spawn_hardcoded_plm(
-            SpawnHardcodedPlmArgs {
-                field_0: 0xc as uint8,
-                field_1: 0x1d as uint8,
-                field_2: 0xd113 as VoidP,
-            },
+            SpawnHardcodedPlmArgs::new(0xc as uint8, 0x1d as uint8, 0xd113 as VoidP),
             displacement,
             game,
         );
@@ -3962,11 +3958,7 @@ pub unsafe fn PlmSetup_D6F2_WreckedShipChozoHandTrigger(
         *fresh2 = (*fresh2) & (0xfffu16);
         CallSomeSamusCode(0 as uint16, game);
         spawn_hardcoded_plm(
-            SpawnHardcodedPlmArgs {
-                field_0: 0x17 as uint8,
-                field_1: 0x1d as uint8,
-                field_2: 0xd6f8 as VoidP,
-            },
+            SpawnHardcodedPlmArgs::new(0x17 as uint8, 0x1d as uint8, 0xd6f8 as VoidP),
             displacement,
             game,
         );
