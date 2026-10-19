@@ -49,9 +49,9 @@ edit/build/verification cost. Prefer this work over further isolated cleanup.
 Clippy automatic parentheses cleanup (2026-10-19): cargo clippy --fix
 with unused_parens removes 8883 redundant parenthesis pairs across all
 32 affected gameplay files. Formatting removes 392 further Rust lines.
-Only parentheses and whitespace change; casts, raw operations and unsafe
-functions are unchanged. The c_int cast-line counter drops by one solely
-through formatting. This pass uses the standard compiler fix directly.
+Formatting also removes 154 trailing commas. Casts, raw operations and
+unsafe functions are unchanged. The c_int cast-line counter drops by one
+solely through formatting. This pass uses the standard compiler fix directly.
 
 The fixed snapshot passes any% 129712/0 (230.55s), Speed Booster 148406/0
 (298.28s) and pause 40836/0 (77.35s), native exits 0. Normal release passes
@@ -1730,28 +1730,53 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `f4a042af` passes
-uninterrupted full boot any% 129712/0 (209.79s) and Speed Booster
-148406/0 (263.97s), native exits 0. All 74 source/configuration/host/
-progress inputs match that commit. This adds the shared SPC carry-arithmetic
-helper to the reviewed families below. Later projectile, parenthesis and
-hardware work retains its own checks outside this snapshot.
+Latest reviewed integration (2026-10-19): frozen `65d70fb8` passes
+uninterrupted full boot any% 129712/0 (186.28s) and Speed Booster
+148406/0 (257.16s), native exits 0. All 74 source/configuration/host/
+progress inputs match that commit. This adds the Clippy parentheses cleanup
+to the reviewed families below. Later projectile, return and hardware work
+retains its own checks outside this snapshot.
 
-Serialized checkpoint payloads are byte-identical to reviewed ea204f0d.
-The only changed header field is the runtime-source fingerprint, independently
-recomputed from its actual inputs; only snes/spc.rs changes among those inputs.
-The Game declaration and checkpoint codec are unchanged. All other bindings,
-including the payload checksum, agree. No compatibility hash is patched and
-neither replay loads an earlier checkpoint. Complete non-timing diagnostics
-and coverage agree, including the known fingernail diagnostic. Speed reaches
+Complete serialized checkpoints are byte-identical to reviewed f4a042af.
+Every header binding and payload checksum agrees. The runtime-source
+fingerprint is independently recomputed from its actual inputs; those inputs,
+the Game declaration and checkpoint codec are unchanged. No compatibility
+hash is patched and neither replay loads an earlier checkpoint. Complete
+non-timing diagnostics and coverage agree, including the known fingernail
+diagnostic. Speed reaches
 55 rooms and 53 enemy definitions, ending in state 8, room $AD1B, X171/Y123,
 pose $0089, health 46/399, missiles 6/15, Supers 0/5, items $3105 and
 beams $1004 equipped/collected. Kraid is defeated and all eight coroutine
 bytes are zero. Credits remain unexercised. The same build passes the full-boot
-pause route 40836/0 (77.14s), native exit 0, returning to gameplay in
-room $96BA. Its payload and every non-runtime binding match the prior pause
-run, as do complete non-timing logs. Earlier mode observations retain their
-scope below.
+pause route 40836/0 (75.33s), native exit 0, returning to gameplay in
+room $96BA. Its complete checkpoint and non-timing logs match the prior
+pause run. Earlier mode observations retain their scope below.
+
+Independent parentheses review covers all 74 committed integration inputs.
+Exactly 32 gameplay files change relative to f4a042af. They remove 8883
+parenthesis pairs and, during formatting, 154 trailing commas. All remaining
+source characters match after whitespace normalization. No casts, raw
+operations, unsafe functions or hardware/RAM layouts change.
+
+Fresh compiler typed-HIR outputs cover the whole headless library, including
+all 32 changed gameplay modules. Each output has 26692894 bytes and 408045
+lines. Only 55 lines differ, all due to source coordinates in 11 closure types.
+The closure mapping is one-to-one; matching local source excerpts are equal
+apart from whitespace, and external closure locations are unchanged. Replacing
+only those coordinates makes the complete compiler outputs byte-identical.
+Operators, operand order, constants, call targets and compiler-resolved types
+therefore agree in this configuration. The normal frontend release build
+also passes; the HIR comparison does not claim frontend execution coverage.
+
+All 32 edited gameplay sources match the owner's frozen replay source, and
+its library/fixture pins and complete non-timing logs remain valid. Its older
+snapshot starts from 3c93b8bc with the PPU from cc17d506. Thus its DMA, PPU and
+SPC differ from the committed integration: it predates the shared HDMA reads,
+PPU windows/Mode7 sampling and SPC carry arithmetic. The fresh full-boot
+integration above verifies the actual committed combination. Source/typed-HIR
+equivalence supports the full parentheses family; the movie routes retain
+their existing coverage and do not demonstrate calls to every changed routine.
+Earlier coverage and alias limitations remain.
 
 Independent SPC carry reconstruction covers all 74 integration inputs and
 all 67 sources in the owner's snapshot. The four original arithmetic cores
@@ -2249,17 +2274,16 @@ dedicated 5544-case API checks and 24/24 site observations are recorded by
 implementation; this review verifies the source transformation. The movie
 replays do not establish frontend decoder execution coverage.
 
-The normal Cargo integration is independently built from frozen f4a042af.
+The normal Cargo integration is independently built from frozen 65d70fb8.
 All 74 inputs, the fresh game library/DLL and copied fixtures stay fixed.
 Only registry dependencies seed this checkout, including existing registry
 build-script executable links. Formatting, normal release
-(25.88s), host build (14.82s) and progress pass. This family removes
-36 Rust lines and 68 c_int casts across 48 lines. One private unsafe helper
-owns the repeated flag writes, raising unsafe functions by one; other
-progress counters are unchanged. Frozen totals: 192813 Rust lines,
-21355 raw-offset lines, 34352 c_int casts across 27399 lines and 6505 unsafe
-functions. This audit changes no maintained Rust or assets; later peer work
-retains its own checks.
+(26.12s), host build (3.23s) and progress pass. Formatting removes
+392 Rust lines and one c_int cast line; the cast count and all other progress
+counters remain unchanged. Frozen totals: 192421 Rust lines, 21355 raw-offset
+lines, 34352 c_int casts across 27398 lines and 6505 unsafe functions.
+This audit changes no maintained Rust or assets; later peer work retains its
+own checks.
 
 The prior PLM block-mask review remains valid: all six helper sites execute,
 with 2082 air-scroll updates, 105 shared retain updates and one each for four
