@@ -9316,6 +9316,24 @@ branch with it. Held upper99BD ascent, cliff tuning, old9AD9 enemy-drop ammo and
 HDMA remain held. Peer cleanup and remote sync remain separate. Credits, full
 gameplay/hardware, render/audio fidelity, masked RAM and ownership remain open.
 
+CPU safe transfers to indexes (2026-10-19): TAY/TAX/TXY/TYX call safe
+transfer_to_x/y helpers. XF controls destination width; byte mode clears high
+index bytes, word mode copies the source, and destination-before-Z/N order
+remains exact. Source arguments are captured before the callback-free mutable
+reference. Independent source/probe review finds no differences. Frozen HEAD
+`b7183aa6` plus this change passes 1,048,576 actual old/current dispatcher cases
+across every source word, both destination widths and incoming carry values,
+with distinct source/destination register initialization. Named CPU/bus fields,
+flags, cycles and PC history match. MF is not independently varied in these
+constructed cases; helpers do not use it. Prefix 3,600/0 (1.32s), native exit 0,
+executes TAY/TAX/TXY/TYX 48,330/108,749/727/10,367 times; these totals do not
+establish every width branch in context. Clean full any% 129,712/0 (59.91s),
+native exit 0. Cargo fmt/check, full release and release-library builds with
+external SDL2, normal metadata and optimized frozen core/DLL builds pass. Live
+CPU matches verified source. Rust lines -12; other counters unchanged. Arbitrary
+MMIO and full gameplay/render/audio remain open; ROR stays held for contextual
+execution. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

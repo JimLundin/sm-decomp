@@ -873,6 +873,14 @@ fn transfer_to_accumulator(value: u16, cpu: &mut Cpu) {
     };
     set_zero_negative(cpu.a, cpu.mf, cpu);
 }
+fn transfer_to_x(value: u16, cpu: &mut Cpu) {
+    cpu.x = if cpu.xf { value & 0xff } else { value };
+    set_zero_negative(cpu.x, cpu.xf, cpu);
+}
+fn transfer_to_y(value: u16, cpu: &mut Cpu) {
+    cpu.y = if cpu.xf { value & 0xff } else { value };
+    set_zero_negative(cpu.y, cpu.xf, cpu);
+}
 unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
     // Preserve the inherited history value of 0xffffffff when PC is zero.
     let cur_pc = (i32::from((*cpu).k) << 16 | (i32::from((*cpu).pc) - 1)) as u32;
@@ -1774,12 +1782,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0x9b => {
-                if (*cpu).xf {
-                    (*cpu).y = (*cpu).x & 0xff;
-                } else {
-                    (*cpu).y = (*cpu).x;
-                }
-                set_zero_negative((*cpu).y, (*cpu).xf, &mut *cpu);
+                transfer_to_y((*cpu).x, &mut *cpu);
                 break;
             }
             0x9c => {
@@ -1843,12 +1846,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0xa8 => {
-                if (*cpu).xf {
-                    (*cpu).y = (*cpu).a & 0xff;
-                } else {
-                    (*cpu).y = (*cpu).a;
-                }
-                set_zero_negative((*cpu).y, (*cpu).xf, &mut *cpu);
+                transfer_to_y((*cpu).a, &mut *cpu);
                 break;
             }
             0xa9 => {
@@ -1857,12 +1855,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0xaa => {
-                if (*cpu).xf {
-                    (*cpu).x = (*cpu).a & 0xff;
-                } else {
-                    (*cpu).x = (*cpu).a;
-                }
-                set_zero_negative((*cpu).x, (*cpu).xf, &mut *cpu);
+                transfer_to_x((*cpu).a, &mut *cpu);
                 break;
             }
             0xab => {
@@ -1948,12 +1941,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0xbb => {
-                if (*cpu).xf {
-                    (*cpu).x = (*cpu).y & 0xff;
-                } else {
-                    (*cpu).x = (*cpu).y;
-                }
-                set_zero_negative((*cpu).x, (*cpu).xf, &mut *cpu);
+                transfer_to_x((*cpu).y, &mut *cpu);
                 break;
             }
             0xbc => {
