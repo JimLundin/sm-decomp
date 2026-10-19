@@ -1750,27 +1750,67 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `65d70fb8` passes
-uninterrupted full boot any% 129712/0 (186.28s) and Speed Booster
-148406/0 (257.16s), native exits 0. All 74 source/configuration/host/
-progress inputs match that commit. This adds the Clippy parentheses cleanup
-to the reviewed families below. Later projectile, return and hardware work
-retains its own checks outside this snapshot.
+Latest reviewed integration (2026-10-19): frozen `a0c36eb7` passes
+uninterrupted full boot any% 129712/0 (174.43s) and Speed Booster
+148406/0 (244.50s), native exits 0. All 74 source/configuration/host/
+progress inputs match that commit. This adds the shared SPC shift/rotate
+helpers to the reviewed families below. Later projectile, return and
+hardware work retains its own checks outside this snapshot.
 
-Complete serialized checkpoints are byte-identical to reviewed f4a042af.
-Every header binding and payload checksum agrees. The runtime-source
-fingerprint is independently recomputed from its actual inputs; those inputs,
-the Game declaration and checkpoint codec are unchanged. No compatibility
-hash is patched and neither replay loads an earlier checkpoint. Complete
-non-timing diagnostics and coverage agree, including the known fingernail
-diagnostic. Speed reaches
+Serialized checkpoint payloads are byte-identical to reviewed 65d70fb8.
+The only changed header field is the runtime-source fingerprint, independently
+recomputed from its actual inputs; only snes/spc.rs changes among those inputs.
+The Game declaration and checkpoint codec are unchanged. All other bindings,
+including the payload checksum, agree. No compatibility hash is patched and
+neither replay loads an earlier checkpoint. Complete non-timing diagnostics
+and coverage agree, including the known fingernail diagnostic. Speed reaches
 55 rooms and 53 enemy definitions, ending in state 8, room $AD1B, X171/Y123,
 pose $0089, health 46/399, missiles 6/15, Supers 0/5, items $3105 and
 beams $1004 equipped/collected. Kraid is defeated and all eight coroutine
 bytes are zero. Credits remain unexercised. The same build passes the full-boot
-pause route 40836/0 (75.33s), native exit 0, returning to gameplay in
-room $96BA. Its complete checkpoint and non-timing logs match the prior
-pause run. Earlier mode observations retain their scope below.
+pause route 40836/0 (57.69s), native exit 0, returning to gameplay in
+room $96BA. Its payload and every non-runtime binding match the prior pause
+run, as do complete non-timing logs. Earlier mode observations retain their
+scope below.
+
+Independent SPC shift/rotate reconstruction covers all 74 integration
+inputs. Only snes/spc.rs differs from reviewed 65d70fb8. Replacing the four
+memory wrappers, twelve call sites and four complete accumulator arms, plus
+the two helpers, reconstructs the entire file. All other opcode arms,
+addressing helpers, bus accessors, Z/N handling and the opcode entry remain
+exact. Accumulator shifts retain carry-before-result writes; rotations
+retain result-before-carry writes. Memory operations read before carry,
+write carry before the bus write and set Z/N afterward. Non-rotating forms
+do not read incoming carry. No wider mutable borrow or RAM/layout change.
+
+Fresh actual release-library opcode checks pass 1048576 cases: all 256 byte
+values and all 256 initial flag patterns for each of the 16 affected opcodes.
+The exact original SPC module uses the same fresh library types and bus.
+Both versions agree with independent division, multiplication and modulo
+expectations for results and all flags. Preserved accumulator/registers,
+memory destination, PC and cycles agree. This includes direct, absolute,
+indexed direct-page and accumulator forms, with indexed byte wraparound.
+
+Another 7680 actual opcode contexts cross all twelve memory forms, all
+$f0..$ff registers plus four ordinary RAM bytes, both direct pages, both
+carries and eight timer/port fixtures. Old/new execution and an explicit
+ordered bus model agree on complete initialized SPC/APU/DSP bytes and cycles.
+Timer read-clear effects agree. A further 65536 cases cover every DSP address,
+four history counts including 255/256, eight byte boundaries, both carries
+and all four operations. The sample-memory pointer is connected to actual
+APU RAM, including key-on accesses. History saturation and suppressed DSP
+writes at addresses >= $80 agree. Another 10240 absolute-address contexts
+cover the boot-ROM boundary and final bytes, overlay enabled/disabled and
+all flag patterns; underlying RAM writes and complete state agree.
+
+The owner's 262144 memory-routine and 16384 opcode cases retain checked
+source/library/fixture pins and full-boot logs. Its snapshot is f4a042af plus
+the shift family, so its 32 gameplay files predate the reviewed parentheses
+cleanup. The fresh integration verifies the committed combination. Its opcode
+fixture also correlates several inputs and fixes DSP address zero; the fresh
+checks supplement that scope. Constructed instruction contexts do not prove
+universal hardware/audio accuracy or movie call-site coverage. Earlier
+coverage and alias limitations remain.
 
 Independent parentheses review covers all 74 committed integration inputs.
 Exactly 32 gameplay files change relative to f4a042af. They remove 8883
@@ -2294,16 +2334,16 @@ dedicated 5544-case API checks and 24/24 site observations are recorded by
 implementation; this review verifies the source transformation. The movie
 replays do not establish frontend decoder execution coverage.
 
-The normal Cargo integration is independently built from frozen 65d70fb8.
+The normal Cargo integration is independently built from frozen a0c36eb7.
 All 74 inputs, the fresh game library/DLL and copied fixtures stay fixed.
 Only registry dependencies seed this checkout, including existing registry
 build-script executable links. Formatting, normal release
-(26.12s), host build (3.23s) and progress pass. Formatting removes
-392 Rust lines and one c_int cast line; the cast count and all other progress
-counters remain unchanged. Frozen totals: 192421 Rust lines, 21355 raw-offset
-lines, 34352 c_int casts across 27398 lines and 6505 unsafe functions.
-This audit changes no maintained Rust or assets; later peer work retains its
-own checks.
+(29.16s), host build (12.80s) and progress pass. This family removes
+16 Rust lines, 38 c_int casts across 19 lines and three unsafe functions;
+other progress counters remain unchanged. Frozen totals: 192405 Rust lines,
+21355 raw-offset lines, 34314 c_int casts across 27379 lines and 6502 unsafe
+functions. This audit changes no maintained Rust or assets; later peer work
+retains its own checks.
 
 The prior PLM block-mask review remains valid: all six helper sites execute,
 with 2082 air-scroll updates, 105 shared retain updates and one each for four
