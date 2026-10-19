@@ -669,6 +669,24 @@ unsafe fn load_register(
     }
     set_zero_negative(value, register.byte(&*cpu), &mut *cpu);
 }
+unsafe fn pull_register(cpu: *mut Cpu, register: CpuRegister, game: &mut Game) {
+    let value = if register.byte(&*cpu) {
+        let upper = match register {
+            CpuRegister::Accumulator => (*cpu).a & 0xff00,
+            CpuRegister::X | CpuRegister::Y => 0,
+        };
+        upper | u16::from(pull_byte(cpu, game))
+    } else {
+        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
+        pull_word(cpu, game)
+    };
+    match register {
+        CpuRegister::Accumulator => (*cpu).a = value,
+        CpuRegister::X => (*cpu).x = value,
+        CpuRegister::Y => (*cpu).y = value,
+    }
+    set_zero_negative(value, register.byte(&*cpu), &mut *cpu);
+}
 unsafe fn push_register(cpu: *mut Cpu, register: CpuRegister, game: &mut Game) {
     if register.byte(&*cpu) {
         push_byte(cpu, register.value(&*cpu) as u8, game);
@@ -1460,13 +1478,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0x68 => {
-                if (*cpu).mf {
-                    (*cpu).a = (*cpu).a & 0xff00 | u16::from(pull_byte(cpu, game));
-                } else {
-                    (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-                    (*cpu).a = pull_word(cpu, game);
-                }
-                set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
+                pull_register(cpu, CpuRegister::Accumulator, game);
                 break;
             }
             0x69 => {
@@ -1576,13 +1588,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0x7a => {
-                if (*cpu).xf {
-                    (*cpu).y = u16::from(pull_byte(cpu, game));
-                } else {
-                    (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-                    (*cpu).y = pull_word(cpu, game);
-                }
-                set_zero_negative((*cpu).y, (*cpu).xf, &mut *cpu);
+                pull_register(cpu, CpuRegister::Y, game);
                 break;
             }
             0x7b => {
@@ -2206,13 +2212,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0xfa => {
-                if (*cpu).xf {
-                    (*cpu).x = u16::from(pull_byte(cpu, game));
-                } else {
-                    (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-                    (*cpu).x = pull_word(cpu, game);
-                }
-                set_zero_negative((*cpu).x, (*cpu).xf, &mut *cpu);
+                pull_register(cpu, CpuRegister::X, game);
                 break;
             }
             0xfb => {

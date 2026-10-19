@@ -9704,6 +9704,26 @@ replay. Rust lines -7; unsafe functions +1 centralizes the repeated stack bus
 boundary. Other own counters unchanged. Complete gameplay/render/audio remain
 open. Continue covered CPU cleanup; TSX/ROR stay held for contextual execution.
 
+CPU shared register pulls (2026-10-19): PLA/PLX/PLY call pull_register with
+CpuRegister. Byte PLA captures A's high byte before stack reads; byte X/Y
+zero-extend. Word cycle increment, existing pre-read SP increments/emulation
+wrapping, register store and final live-MF/XF Z/N retain their order. Safe
+selector references end before callbacks. Frozen `c7955e7f` plus this change
+passes 12,582,912 actual old/current cases: every operand word, independent
+MF/XF, all A-high/byte combinations, native/emulation modes and eight RAM
+stack positions (0000/0001/00FE/00FF/0100/01FE/01FF/1FFD). Named CPU/bus
+fields, RAM, loaded value, SP, flags and wrapping cycles match. Full instrumented
+any% 129,712/0 (50.39s), native exit 0, executes word/byte PLA
+2,330,641/711,265, PLX 3,870,573/2,197 and PLY 1,674,590/373,767 times.
+The initial prefix had 3,600/0 but no byte PLX; its all-width assertion aborted
+afterward and is not counted as a successful process. Clean full any%
+129,712/0 (50.77s), native exit 0. Cargo fmt/check, full release/release-library
+builds with external SDL2, normal metadata and optimized frozen core/DLL pass.
+Live CPU matches verified source; peer PPU work is outside these replays.
+Unsafe functions +1 centralizes repeated stack bus handling; other own counters,
+including Rust lines, unchanged. Arbitrary MMIO and complete gameplay/render/
+audio remain open. Continue covered CPU cleanup; TSX/ROR stay held.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
