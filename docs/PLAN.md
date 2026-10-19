@@ -57,6 +57,22 @@ CPU/PPU edits remain separately owned and their integration replay is running.
 
 ## The oracle
 
+Render initialization QC (2026-10-19): snes_init now initializes disableRender
+to false. The malloc-backed field previously had no initialization or reset
+store; actual sprite probes completed green replays with zero renderer calls.
+Headless verification now starts rendering deterministically; the interactive
+frontend retains its per-frame turbo selection. SNES/RAM/save layouts do not
+change. Frozen d0ded6a5 plus only this maintained store passes any% 129,712/0
+(197.16s), native exit0, with 57,794,240 actual sprite-evaluator calls. Waver
+58,109/71 (102.02s), native exit1, has 25,920,608 evaluator calls and all71
+full ordered failure diagnostics match the explicitly rendered baseline at
+3974ccdf. Diagnostic counters/printing stay temporary; peer sprite and gameplay
+edits are excluded from these runs. Cargo fmt/check and release build pass.
+Own Rust lines +1 initialize the host rendering control; other counters are
+unchanged. Prior zero-render passes cannot establish rendering equivalence.
+Sprite integration, 71 existing rendered failures, complete gameplay/credits,
+audio timing and masked RAM remain open.
+
 The binary contains two complete implementations of each frame:
 
 - **theirs**: the original ROM code, run on the emulated 65816 in `sm/src/snes`.

@@ -44,6 +44,7 @@ pub unsafe fn snes_init(mut ram: *mut uint8_t) -> *mut Snes {
     (*snes).debug_cycles = false_0 != 0;
     (*snes).debug_apu_cycles = false_0 != 0;
     (*snes).runningWhichVersion = 0 as uint8_t;
+    (*snes).disableRender = false;
     (*snes).cpu = cpu_init(snes as *mut ::core::ffi::c_void, 0 as ::core::ffi::c_int);
     (*snes).apu = apu_init();
     (*snes).dma = dma_init(snes);
