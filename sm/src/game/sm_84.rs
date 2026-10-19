@@ -1140,8 +1140,7 @@ unsafe fn spawn_hardcoded_plm(
         game,
     );
 }
-pub unsafe fn SpawnRoomPLM(mut k: uint16, game: &mut Game) {
-    let mut rpe: *mut RoomPlmEntry = ::core::ptr::null_mut::<RoomPlmEntry>();
+pub unsafe fn SpawnRoomPLM(k: uint16, game: &mut Game) {
     let v1 = match (0..40).rev().find(|&slot| {
         let header_addr = 0x1c37 + slot * 2; // plm_header_ptr
         u16::from_le_bytes([game.g_ram[header_addr], game.g_ram[header_addr + 1]]) == 0
@@ -1149,26 +1148,27 @@ pub unsafe fn SpawnRoomPLM(mut k: uint16, game: &mut Game) {
         Some(slot) => (slot * 2) as u16,
         None => return,
     };
-    rpe = if k as ::core::ffi::c_int == 0x12 as ::core::ffi::c_int {
-        (&raw mut game.g_ram as *mut uint8).offset(0x12 as ::core::ffi::c_int as isize)
-            as *mut RoomPlmEntry
+    let entry = if k == 0x12 {
+        game.g_ram.as_ptr().add(0x12)
     } else {
-        get_RoomPlmEntry(k, game)
+        get_RoomPlmEntry(k, game).cast::<u8>()
     };
-    let y_block = u16::from((*rpe).y_block);
+    let read_entry_word =
+        |offset: usize| u16::from_le_bytes([*entry.add(offset), *entry.add(offset + 1)]);
+    let y_block = u16::from(*entry.add(3));
     let room_width = u16::from_le_bytes([game.g_ram[0x7a5], game.g_ram[0x7a6]]) as u8;
     let row_start = y_block * u16::from(room_width);
-    let x_block = u16::from((*rpe).x_block);
+    let x_block = u16::from(*entry.add(2));
     let index = usize::from(v1 >> 1) * 2;
     let write_word = |game: &mut Game, offset: usize, value: u16| {
         game.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
     };
     let block_index = row_start.wrapping_add(x_block).wrapping_mul(2);
     write_word(game, 0x1c87 + index, block_index); // plm_block_indices
-    let argument = (*rpe).plm_room_argument;
+    let argument = read_entry_word(4);
     write_word(game, 0x1dc7 + index, argument); // plm_room_arguments
-    let pp = (*rpe).plm_header_ptr_ as u16;
-    let header = (*rpe).plm_header_ptr_ as u16;
+    let pp = read_entry_word(0);
+    let header = read_entry_word(0);
     write_word(game, 0x1c37 + index, header); // plm_header_ptr
     write_word(game, 0xdf0c + index, 0); // plm_variables
     write_word(game, 0x1cd7 + index, 0x84e6); // plm_pre_instrs

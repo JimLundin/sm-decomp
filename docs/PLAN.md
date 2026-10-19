@@ -13971,6 +13971,27 @@ cast lines-1 and Rust lines-3; own unsafe and other counters unchanged. Peer edi
 preserved. Remaining room-entry reads and broader gameplay/credits,
 hardware/audio/masks/ownership remain unfinished.
 
+Packed room PLM entry reads (2026-10-19): SpawnRoomPLM now reads
+room-entry bytes and little-endian header/argument words at explicit packed
+offsets. The k=12 temporary RAM entry and bank8F ROM resolver remain exact.
+Y-before-width/X reads, argument read after block store and two separate
+header reads remain in place. Field stores and setup callback are unchanged.
+
+Frozen 558a2598 plus only this entry-read rewrite
+passes any%129712/0 (318.05s) and pickup68606/0
+(180.88s), native exits0. Observed pickup68606/0
+(207.34s) compares all128KiB RAM, setup address and slot
+against the original on 294 actual spawns before invoking setup
+once. Of294 calls,19 use the temporary RAM entry at12 and275 resolve ROM.
+Clean and observed non-timing diagnostics match after stripping
+observers. Frozen scope and maintained routine identity pass; no observers
+are committed. Unusual RAM aliases and full-table states are not inferred
+from these movie calls.
+
+Cargo fmt/check, normal release build and progress pass. Own raw offsets-1,
+cast lines-2; Rust lines and other own counters unchanged. Peer edits remain preserved. Remaining header reads and
+broader gameplay/credits/hardware/audio/masks/ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
