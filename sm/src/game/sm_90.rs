@@ -38,6 +38,7 @@ use crate::game::sm_9b::{
 };
 use crate::game::sm_a0::Samus_CheckSolidEnemyColl;
 use crate::game_state::Game;
+use crate::rtl::abs16;
 use crate::rtl::{Load24, MakePairU16, Mult8x8, RomPtr, Unreachable};
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
@@ -613,19 +614,6 @@ pub use crate::types::{
 };
 pub const true_0: ::core::ffi::c_int = 1;
 pub const false_0: ::core::ffi::c_int = 0;
-#[inline]
-unsafe fn abs16(mut t: uint16) -> uint16 {
-    return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
-        -(t as ::core::ffi::c_int)
-    } else {
-        t as ::core::ffi::c_int
-    }) as uint16;
-}
-#[inline]
-unsafe fn swap16(mut v: uint16) -> uint16 {
-    return ((v as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
-        | v as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint16;
-}
 #[inline]
 unsafe fn RomPtr_82(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
     return RomPtr(
@@ -5334,20 +5322,20 @@ pub unsafe fn UpdateMinimap(game: &mut Game) {
     let mut r52: ::core::ffi::c_int = 2 as ::core::ffi::c_int * v4 as ::core::ffi::c_int;
     let mut v6: ::core::ffi::c_int = r52 >> 1 as ::core::ffi::c_int;
     let mut r24: uint16 = (kShr0xFc00[v6 as usize] as ::core::ffi::c_int
-        & swap16(
+        & u16::swap_bytes(
             *((&raw mut game.g_ram as *mut uint8)
                 .offset(0x7f7)
                 .offset(v3 as isize) as *mut uint8 as *mut uint16),
         ) as ::core::ffi::c_int) as uint16;
     let mut r26: uint16 = (kShr0xFc00[v6 as usize] as ::core::ffi::c_int
-        & swap16(
+        & u16::swap_bytes(
             *((&raw mut game.g_ram as *mut uint8)
                 .offset(0x7f7)
                 .offset((v3 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as isize)
                 as *mut uint8 as *mut uint16),
         ) as ::core::ffi::c_int) as uint16;
     let mut r28: uint16 = (kShr0xFc00[v6 as usize] as ::core::ffi::c_int
-        & swap16(
+        & u16::swap_bytes(
             *((&raw mut game.g_ram as *mut uint8)
                 .offset(0x7f7)
                 .offset((v3 as ::core::ffi::c_int + 8 as ::core::ffi::c_int) as isize)
@@ -5366,11 +5354,11 @@ pub unsafe fn UpdateMinimap(game: &mut Game) {
     );
     let mut r15: *const uint8 = r9;
     r9 = r9.offset(v3 as ::core::ffi::c_int as isize);
-    let mut r38: uint16 = swap16(*(r9 as *mut uint16));
+    let mut r38: uint16 = u16::swap_bytes(*(r9 as *mut uint16));
     r9 = r9.offset(4);
-    let mut r40: uint16 = swap16(*(r9 as *mut uint16));
+    let mut r40: uint16 = u16::swap_bytes(*(r9 as *mut uint16));
     r9 = r9.offset(4);
-    let mut r42: uint16 = swap16(*(r9 as *mut uint16));
+    let mut r42: uint16 = u16::swap_bytes(*(r9 as *mut uint16));
     if R50 as ::core::ffi::c_int & 3 as ::core::ffi::c_int == 3 as ::core::ffi::c_int {
         v10 = (if r46 as ::core::ffi::c_int != 0 {
             r52 >> 1 as ::core::ffi::c_int
@@ -8661,7 +8649,7 @@ pub unsafe fn HudSelectionHandler_MissilesOrSuperMissiles(game: &mut Game) {
                             .offset(v1 as isize) = 4 as uint16;
                         let mut v3: uint16 =
                             *((&raw mut game.g_ram as *mut uint8).offset(0x9d2) as *mut uint16);
-                        let mut r18: uint16 = swap16(
+                        let mut r18: uint16 = u16::swap_bytes(
                             *((&raw mut game.g_ram as *mut uint8).offset(0x9d2) as *mut uint16),
                         );
                         let ref mut fresh80 = *((&raw mut game.g_ram as *mut uint8).offset(0xc18)
@@ -8833,7 +8821,7 @@ pub unsafe fn HudSelectionHandler_MorphBall(game: &mut Game) {
                                 v2 = (v2 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
                                 break;
                             }
-                            let mut r18: uint16 = swap16(
+                            let mut r18: uint16 = u16::swap_bytes(
                                 *((&raw mut game.g_ram as *mut uint8).offset(0x9d2) as *mut uint16),
                             );
                             let mut v4: ::core::ffi::c_int =

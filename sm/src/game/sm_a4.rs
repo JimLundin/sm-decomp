@@ -9,6 +9,7 @@ use crate::game::sm_a0::{
 };
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
+use crate::rtl::abs16;
 use crate::rtl::RomPtr;
 extern "C" {
     fn __assert_fail(
@@ -325,14 +326,6 @@ pub struct Enemy_Crocomire {
     pub crocom_var_3F: uint16,
 }
 pub use crate::types::CrocomireFunc;
-#[inline]
-unsafe fn abs16(mut t: uint16) -> uint16 {
-    return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
-        -(t as ::core::ffi::c_int)
-    } else {
-        t as ::core::ffi::c_int
-    }) as uint16;
-}
 #[inline]
 unsafe fn __CFADD__uint16(mut x: uint16, mut y: uint16) -> bool {
     return x as ::core::ffi::c_int

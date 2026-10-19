@@ -17,6 +17,7 @@ use crate::game::sm_94::{
 };
 use crate::game::sm_a0::{CalculateAngleFromXY, GrappleBeam_CollDetect_Enemy};
 use crate::game_state::Game;
+use crate::rtl::abs16;
 use crate::rtl::{RomPtr, Unreachable};
 extern "C" {
     fn memcpy(
@@ -301,19 +302,6 @@ pub const addr_word_9BA120: Consts_9B = 41248;
 pub const addr_kSamusPalette_GravitySuit: Consts_9B = 38912;
 pub const addr_kSamusPalette_VariaSuit: Consts_9B = 38176;
 pub const addr_kSamusPalette_PowerSuit: Consts_9B = 37888;
-#[inline]
-unsafe fn abs16(mut t: uint16) -> uint16 {
-    return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
-        -(t as ::core::ffi::c_int)
-    } else {
-        t as ::core::ffi::c_int
-    }) as uint16;
-}
-#[inline]
-unsafe fn swap16(mut v: uint16) -> uint16 {
-    return ((v as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
-        | v as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint16;
-}
 #[inline]
 unsafe fn RomPtr_9B(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
     return RomPtr(
@@ -1146,7 +1134,7 @@ pub unsafe fn GrappleNext_CrouchAimLeft(game: &mut Game) {
 }
 pub unsafe fn HandleConnectingGrapple_Swinging(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xa30) as *mut uint16) = 9 as uint16;
-    let mut v0: uint16 = swap16(CalculateAngleFromXY(
+    let mut v0: uint16 = u16::swap_bytes(CalculateAngleFromXY(
         (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) as ::core::ffi::c_int
             - *((&raw mut game.g_ram as *mut uint8).offset(0xd08) as *mut uint16)
                 as ::core::ffi::c_int) as uint16,
@@ -1170,7 +1158,7 @@ pub unsafe fn HandleConnectingGrapple_Swinging(game: &mut Game) {
 }
 pub unsafe fn HandleConnectingGrapple_StuckInPlace(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xa30) as *mut uint16) = 10 as uint16;
-    let mut v0: uint16 = swap16(CalculateAngleFromXY(
+    let mut v0: uint16 = u16::swap_bytes(CalculateAngleFromXY(
         (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) as ::core::ffi::c_int
             - *((&raw mut game.g_ram as *mut uint8).offset(0xd08) as *mut uint16)
                 as ::core::ffi::c_int) as uint16,

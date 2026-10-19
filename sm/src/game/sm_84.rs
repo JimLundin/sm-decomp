@@ -15,6 +15,7 @@ use crate::game::sm_91::{
     GravitySuitPickup, LoadBlockToXrayTilemap, MakeSamusFaceForward, VariaSuitPickup,
 };
 use crate::game_state::Game;
+use crate::rtl::abs16;
 
 use crate::rtl::{Load24, Mult8x8, RomPtr, SnesDivide, SnesModulus, Unreachable};
 extern "C" {
@@ -475,14 +476,6 @@ pub use crate::types::SpawnHardcodedPlmArgs;
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const true_0: ::core::ffi::c_int = 1;
 pub const false_0: ::core::ffi::c_int = 0;
-#[inline]
-unsafe fn abs16(mut t: uint16) -> uint16 {
-    return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
-        -(t as ::core::ffi::c_int)
-    } else {
-        t as ::core::ffi::c_int
-    }) as uint16;
-}
 pub const kCoroutineNone: ::core::ffi::c_int = 0;
 #[inline]
 unsafe fn RomPtr_RAM(mut addr: uint16_t, game: &mut Game) -> *mut uint8 {

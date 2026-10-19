@@ -142,6 +142,30 @@ Next: continue the shared state and handler-family work above to remove
 operations and unsafe boundaries. Other sessions own the current projectile
 state/handler changes; avoid duplicating them.
 
+Safe word helpers (2026-10-19): replaced 17 identical unsafe abs16 helpers
+with one safe signed-word magnitude helper in rtl, and 11 unsafe swap16
+helpers with u16::swap_bytes at their 36 callers. All 108 magnitude calls
+retain their arguments. The magnitude of 0x8000 remains unsigned 0x8000.
+Compiled comparisons match both operations at all 65536 inputs; a deliberately
+wrong 0x8000 result is rejected. The source audit across all 64 files permits
+only the helper definitions, corresponding imports/call names and formatting.
+
+A separate observed any% prefix passes 30000/0 and requires all three probes:
+negative magnitude 88646 calls at 8324..29999, nonnegative magnitude 138172
+at 8326..29999, and byte swap 141875 at 159..29999. Probes are absent from
+maintained code. Frozen 2a826849 plus the clean change passes full any%
+129712/0 (221.44s) and Kraid phase two 119823/0 (239.23s), native exits 0,
+with stable source, DLL and fixtures. Concurrent gameplay edits have separate
+checks; these runs do not establish additional room or boss coverage.
+
+Formatting/check and normal release pass. The frozen build takes 66.02s;
+the workspace release check reuses current artifacts in 0.26s, with unchanged
+source during that check. This is cache reuse, not a measured compilation
+speedup. Net Rust lines -168, unsafe functions -28, c_int cast lines -73;
+raw accesses unchanged. No new module, wrapper family or test artifact is
+added. Continue the shared state and handler work above; keep pure arithmetic
+separate from pointer helpers whose aliasing and ordered writes still matter.
+
 Projectile word arithmetic (2026-10-19): replaced 27 exercised addition/
 subtraction expressions across 12 routines with u16 wrapping operations.
 All operands are u16 values or in-range literals; the original i32

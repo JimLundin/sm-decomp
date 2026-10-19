@@ -65,6 +65,7 @@ use crate::game::sm_a7::{
 use crate::game::sm_a9::MotherBrainsBody_UnpauseHook;
 use crate::game_state::Game;
 use crate::host::{Die, Warning};
+use crate::rtl::abs16;
 use crate::rtl::{
     Load24, Mult8x8, RomPtr, RtlApuWrite, SnesDivide, Unreachable, WriteReg, WriteRegWord,
 };
@@ -691,19 +692,6 @@ pub const addr_kRoom_96ba: Consts_8F = 38586;
 pub const __ASSERT_FUNCTION: [::core::ffi::c_char; 28] = unsafe {
     ::core::mem::transmute::<[u8; 28], [::core::ffi::c_char; 28]>(*b"uint8 *RomPtr_RAM(uint16_t)\0")
 };
-#[inline]
-unsafe fn abs16(mut t: uint16) -> uint16 {
-    return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
-        -(t as ::core::ffi::c_int)
-    } else {
-        t as ::core::ffi::c_int
-    }) as uint16;
-}
-#[inline]
-unsafe fn swap16(mut v: uint16) -> uint16 {
-    return ((v as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
-        | v as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint16;
-}
 pub const kCoroutineNone: ::core::ffi::c_int = 0;
 #[inline]
 unsafe fn RomPtr_RAM(mut addr: uint16_t, game: &mut Game) -> *mut uint8 {
@@ -3431,10 +3419,10 @@ pub unsafe fn LoadPauseMenuMapTilemap(game: &mut Game) {
     {
         let fresh86 = r6;
         r6 = r6.offset(1);
-        let mut r38: uint16 = swap16(*fresh86);
+        let mut r38: uint16 = u16::swap_bytes(*fresh86);
         let fresh87 = r9;
         r9 = r9.offset(1);
-        let mut r40: uint16 = swap16(*fresh87);
+        let mut r40: uint16 = u16::swap_bytes(*fresh87);
         let mut v8: uint16 = 0 as uint16;
         let mut v9: ::core::ffi::c_int = 16 as ::core::ffi::c_int;
         loop {
@@ -3458,10 +3446,10 @@ pub unsafe fn LoadPauseMenuMapTilemap(game: &mut Game) {
                 v9 = 16 as ::core::ffi::c_int;
                 let fresh88 = r6;
                 r6 = r6.offset(1);
-                r38 = swap16(*fresh88);
+                r38 = u16::swap_bytes(*fresh88);
                 let fresh89 = r9;
                 r9 = r9.offset(1);
-                r40 = swap16(*fresh89);
+                r40 = u16::swap_bytes(*fresh89);
             }
             v8 = (v8 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
             if !(((v8 as ::core::ffi::c_int - 4096 as ::core::ffi::c_int) as int16
@@ -3556,10 +3544,10 @@ pub unsafe fn DrawRoomSelectMap(game: &mut Game) {
     {
         let fresh43 = r6;
         r6 = r6.offset(1);
-        let mut r38: uint16 = swap16(*fresh43);
+        let mut r38: uint16 = u16::swap_bytes(*fresh43);
         let fresh44 = r9;
         r9 = r9.offset(1);
-        let mut r40: uint16 = swap16(*fresh44);
+        let mut r40: uint16 = u16::swap_bytes(*fresh44);
         let mut v9: uint16 = 0 as uint16;
         let mut v10: ::core::ffi::c_int = 16 as ::core::ffi::c_int;
         loop {
@@ -3583,10 +3571,10 @@ pub unsafe fn DrawRoomSelectMap(game: &mut Game) {
                 v10 = 16 as ::core::ffi::c_int;
                 let fresh45 = r6;
                 r6 = r6.offset(1);
-                r38 = swap16(*fresh45);
+                r38 = u16::swap_bytes(*fresh45);
                 let fresh46 = r9;
                 r9 = r9.offset(1);
-                r40 = swap16(*fresh46);
+                r40 = u16::swap_bytes(*fresh46);
             }
             v9 = (v9 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
             if !(((v9 as ::core::ffi::c_int - 4096 as ::core::ffi::c_int) as int16

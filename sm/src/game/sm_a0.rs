@@ -304,6 +304,7 @@ use crate::game::sm_b4::{
     ClearSpriteObjects, CreateSpriteAtPos, DrawSpriteObjects, HandleSpriteObjects,
 };
 use crate::game_state::Game;
+use crate::rtl::abs16;
 use crate::rtl::{Load24, Mult8x8, RomPtr, SnesDivide, Unreachable};
 extern "C" {
     fn __assert_fail(
@@ -639,19 +640,6 @@ pub struct EnemyBlockCollInfo {
 pub type Func_EnemyBlockCollInfo_U8 = unsafe fn(&mut EnemyBlockCollInfo, &mut Game) -> uint8;
 pub use crate::types::Point32;
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
-#[inline]
-unsafe fn abs16(mut t: uint16) -> uint16 {
-    return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
-        -(t as ::core::ffi::c_int)
-    } else {
-        t as ::core::ffi::c_int
-    }) as uint16;
-}
-#[inline]
-unsafe fn swap16(mut v: uint16) -> uint16 {
-    return ((v as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
-        | v as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint16;
-}
 #[inline]
 unsafe fn __CFADD__uint16(mut x: uint16, mut y: uint16) -> bool {
     return x as ::core::ffi::c_int
@@ -6156,7 +6144,7 @@ pub unsafe fn SpawnEnemy(mut db: uint8, mut k: uint16, game: &mut Game) -> uint1
                     as *mut uint16)
                     .offset(v10 as isize);
                 (*E).palette_index = (2 as ::core::ffi::c_int
-                    * swap16(
+                    * u16::swap_bytes(
                         *((&raw mut game.g_ram as *mut uint8).offset(0xef6c) as *mut uint16)
                             .offset(v10 as isize),
                     ) as ::core::ffi::c_int) as uint16;

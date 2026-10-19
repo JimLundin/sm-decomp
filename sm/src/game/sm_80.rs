@@ -362,11 +362,6 @@ pub const addr_kHudTilemaps_Missiles: Consts_80 = 39331;
 pub const addr_kHudTilemaps_AutoReserve: Consts_80 = 39307;
 pub use crate::types::SpawnHardcodedPlmArgs;
 #[inline]
-unsafe fn swap16(mut v: uint16) -> uint16 {
-    return ((v as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
-        | v as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint16;
-}
-#[inline]
 unsafe fn RomPtr_80(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
     return RomPtr(
         (0x800000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t,
@@ -755,7 +750,7 @@ pub unsafe fn InvalidInterrupt_Crash(game: &mut Game) {
 }
 pub unsafe fn LoadMirrorOfExploredMapTiles(game: &mut Game) {
     let mut v1: uint16 =
-        swap16(*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16));
+        u16::swap_bytes(*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16));
     let mut v2: uint16 = 0 as uint16;
     loop {
         *((&raw mut game.g_ram as *mut uint8)
@@ -780,7 +775,7 @@ pub unsafe fn LoadMirrorOfExploredMapTiles(game: &mut Game) {
 }
 pub unsafe fn SaveExploredMapTilesToSaved(game: &mut Game) {
     let mut v1: uint16 =
-        swap16(*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16));
+        u16::swap_bytes(*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16));
     let mut v2: uint16 = 0 as uint16;
     loop {
         *((&raw mut game.g_ram as *mut uint8).offset(0xcd52) as *mut uint16)
@@ -3998,7 +3993,7 @@ pub unsafe fn HandleAutoscrolling_X(game: &mut Game) {
         {
             *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16) = 0 as uint16;
         }
-        let mut v0: uint16 = swap16(
+        let mut v0: uint16 = u16::swap_bytes(
             (*((&raw mut game.g_ram as *mut uint8).offset(0x7a9) as *mut uint16)
                 as ::core::ffi::c_int
                 - 1 as ::core::ffi::c_int) as uint16,
@@ -4132,7 +4127,7 @@ pub unsafe fn HandleScrollingWhenTriggeringScrollRight(game: &mut Game) {
             *((&raw mut game.g_ram as *mut uint8).offset(0xb0a) as *mut uint16);
         *((&raw mut game.g_ram as *mut uint8).offset(0x90f) as *mut uint16) = 0 as uint16;
     }
-    let mut v0: uint16 = swap16(
+    let mut v0: uint16 = u16::swap_bytes(
         (*((&raw mut game.g_ram as *mut uint8).offset(0x7a9) as *mut uint16) as ::core::ffi::c_int
             - 1 as ::core::ffi::c_int) as uint16,
     );
@@ -4436,7 +4431,7 @@ pub unsafe fn HandleScrollingWhenTriggeringScrollDown(game: &mut Game) {
             *((&raw mut game.g_ram as *mut uint8).offset(0xb0e) as *mut uint16);
         *((&raw mut game.g_ram as *mut uint8).offset(0x913) as *mut uint16) = 0 as uint16;
     }
-    let mut v2: uint16 = swap16(
+    let mut v2: uint16 = u16::swap_bytes(
         (*((&raw mut game.g_ram as *mut uint8).offset(0x7ab) as *mut uint16) as ::core::ffi::c_int
             - 1 as ::core::ffi::c_int) as uint16,
     );

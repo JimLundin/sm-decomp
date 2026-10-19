@@ -18,6 +18,7 @@ use crate::game::sm_a0::{
 };
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
+use crate::rtl::abs16;
 use crate::rtl::{MakePairU16, RomPtr, SnesDivide, Unreachable, WriteReg};
 extern "C" {
     fn memcpy(
@@ -577,19 +578,6 @@ pub struct Enemy_Dachora {
     pub dachor_var_F: uint16,
     pub dachor_parameter_1: uint16,
     pub dachor_parameter_2: uint16,
-}
-#[inline]
-unsafe fn abs16(mut t: uint16) -> uint16 {
-    return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
-        -(t as ::core::ffi::c_int)
-    } else {
-        t as ::core::ffi::c_int
-    }) as uint16;
-}
-#[inline]
-unsafe fn swap16(mut v: uint16) -> uint16 {
-    return ((v as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
-        | v as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint16;
 }
 pub const kCoroutineNone: ::core::ffi::c_int = 0;
 #[inline]
@@ -6369,7 +6357,7 @@ pub unsafe fn Phantoon_CalculateNthTransitionColorComponentFromXtoY(
     } else {
         RegWord as ::core::ffi::c_int
     }) as uint16;
-    return ((r18 as ::core::ffi::c_int + swap16(k) as ::core::ffi::c_int) as uint16
+    return ((r18 as ::core::ffi::c_int + u16::swap_bytes(k) as ::core::ffi::c_int) as uint16
         as ::core::ffi::c_int
         >> 8 as ::core::ffi::c_int) as uint16;
 }
@@ -7211,7 +7199,7 @@ pub unsafe fn Dachora_Main(game: &mut Game) {
 }
 pub unsafe fn Dachora_Func_1(mut j: uint16, mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_Dachora = Get_Dachora(k as ::core::ffi::c_int, game);
-    let mut v3: uint16 = swap16((*E).base.palette_index);
+    let mut v3: uint16 = u16::swap_bytes((*E).base.palette_index);
     memcpy(
         (&raw mut game.g_ram as *mut uint8).offset(
             *(game.g_rom.offset(

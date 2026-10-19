@@ -27,6 +27,7 @@ use crate::game::sm_ad::{
     MotherBrain_Phase3_TurnLightsBackOn, MotherBrain_SealWall, TurnOffLightsForShitroidDeath,
 };
 use crate::game_state::Game;
+use crate::rtl::abs16;
 use crate::rtl::{mov24, MemCpy, ReadRegWord, RomPtr, SnesDivide, Unreachable, WriteReg};
 extern "C" {
     fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
@@ -1020,14 +1021,6 @@ pub struct Enemy_MotherBrainsTubesFalling {
     pub mbtfg_var_F: uint16,
     pub mbtfg_parameter_1: uint16,
     pub mbtfg_parameter_2: uint16,
-}
-#[inline]
-unsafe fn abs16(mut t: uint16) -> uint16 {
-    return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
-        -(t as ::core::ffi::c_int)
-    } else {
-        t as ::core::ffi::c_int
-    }) as uint16;
 }
 pub const kCoroutineNone: ::core::ffi::c_int = 0;
 #[inline]

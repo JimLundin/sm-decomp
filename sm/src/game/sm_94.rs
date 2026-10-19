@@ -322,14 +322,6 @@ pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::
 pub const true_0: ::core::ffi::c_int = 1;
 pub const false_0: ::core::ffi::c_int = 0;
 #[inline]
-unsafe fn abs16(mut t: uint16) -> uint16 {
-    return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
-        -(t as ::core::ffi::c_int)
-    } else {
-        t as ::core::ffi::c_int
-    }) as uint16;
-}
-#[inline]
 unsafe fn RomPtr_8F(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
     return RomPtr(
         (0x8f0000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t,

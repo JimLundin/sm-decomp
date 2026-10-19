@@ -23,6 +23,7 @@ use crate::game::sm_a0::{
 };
 use crate::game::sm_a9::MoveEnemyWithVelocity;
 use crate::game_state::Game;
+use crate::rtl::abs16;
 use crate::rtl::{Mult8x8, RomPtr, Unreachable};
 
 pub use crate::types::{
@@ -1578,19 +1579,6 @@ pub struct Enemy_TimedShutter {
     pub tsr_var_5D: uint16,
     pub tsr_var_5E: uint16,
     pub tsr_var_5F: uint16,
-}
-#[inline]
-unsafe fn abs16(mut t: uint16) -> uint16 {
-    return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
-        -(t as ::core::ffi::c_int)
-    } else {
-        t as ::core::ffi::c_int
-    }) as uint16;
-}
-#[inline]
-unsafe fn swap16(mut v: uint16) -> uint16 {
-    return ((v as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
-        | v as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint16;
 }
 #[inline]
 unsafe fn RomPtr_A2(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
@@ -3578,7 +3566,7 @@ pub unsafe fn ThinHoppingBlobs_Func5(game: &mut Game) {
                 )
                 .offset(1) as *mut uint16) as ::core::ffi::c_int) as uint16;
         thbs_var_F = (*E).thbs_var_F;
-        v2 = swap16(
+        v2 = u16::swap_bytes(
             *((game.g_rom.offset(
                 (((0xa29a07 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                     << 15 as ::core::ffi::c_int

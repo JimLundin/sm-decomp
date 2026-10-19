@@ -16,6 +16,7 @@ use crate::game::sm_a0::{
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy,
 };
 use crate::game_state::Game;
+use crate::rtl::abs16;
 use crate::rtl::{RomPtr, Unreachable};
 
 pub use crate::types::{
@@ -555,14 +556,6 @@ pub struct Enemy_Torizo {
     pub toriz_var_1D: uint16,
     pub toriz_var_1E: uint16,
     pub toriz_var_1F: uint16,
-}
-#[inline]
-unsafe fn abs16(mut t: uint16) -> uint16 {
-    return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
-        -(t as ::core::ffi::c_int)
-    } else {
-        t as ::core::ffi::c_int
-    }) as uint16;
 }
 #[inline]
 unsafe fn RomBankBase(mut bank: uint8, game: &mut Game) -> *const uint8 {

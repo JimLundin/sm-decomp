@@ -19,6 +19,7 @@ use crate::game::sm_a0::{
 use crate::game::sm_b4::CreateSpriteAtPos;
 pub use crate::game::waver::{Enemy_Waver, Waver_Func_1, Waver_Init, Waver_Instr_1, Waver_Main};
 use crate::game_state::Game;
+use crate::rtl::abs16;
 use crate::rtl::{RomPtr, SnesDivide, Unreachable};
 extern "C" {
     fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
@@ -1049,14 +1050,6 @@ pub struct Enemy_Roach {
     pub roach_var_3D: uint16,
     pub roach_var_3E: uint16,
     pub roach_var_3F: uint16,
-}
-#[inline]
-unsafe fn abs16(mut t: uint16) -> uint16 {
-    return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
-        -(t as ::core::ffi::c_int)
-    } else {
-        t as ::core::ffi::c_int
-    }) as uint16;
 }
 #[inline]
 unsafe fn RomPtr_A3(mut addr: uint16_t, game: &mut Game) -> *const uint8 {

@@ -476,11 +476,6 @@ pub const __ASSERT_FUNCTION: [::core::ffi::c_char; 28] = unsafe {
     ::core::mem::transmute::<[u8; 28], [::core::ffi::c_char; 28]>(*b"uint8 *RomPtr_RAM(uint16_t)\0")
 };
 #[inline]
-unsafe fn swap16(mut v: uint16) -> uint16 {
-    return ((v as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
-        | v as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint16;
-}
-#[inline]
 unsafe fn RomPtr_RAM(mut addr: uint16_t, game: &mut Game) -> *mut uint8 {
     '_c2rust_label: {
         if (addr as ::core::ffi::c_int) < 0x2000 as ::core::ffi::c_int {
@@ -3496,7 +3491,7 @@ pub unsafe fn HandleVisorPalette(game: &mut Game) -> uint8 {
             + 2 as ::core::ffi::c_int;
         if v2 - 12 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
             *((&raw mut game.g_ram as *mut uint8).offset(0xa72) as *mut uint16) =
-                (swap16(v2 as uint16) as ::core::ffi::c_int
+                (u16::swap_bytes(v2 as uint16) as ::core::ffi::c_int
                     | *((&raw mut game.g_ram as *mut uint8).offset(0xa72) as *mut uint16) as uint8
                         as ::core::ffi::c_int) as uint16;
         } else {

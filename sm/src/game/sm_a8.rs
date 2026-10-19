@@ -15,6 +15,7 @@ use crate::game::sm_a0::{
 };
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
+use crate::rtl::abs16;
 use crate::rtl::{Mult8x8, RomPtr, Unreachable, WriteReg};
 extern "C" {
     fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
@@ -1171,19 +1172,6 @@ pub struct Enemy_WreckedShipOrbs {
     pub wsos_var_1D: uint16,
     pub wsos_var_1E: uint16,
     pub wsos_var_1F: uint16,
-}
-#[inline]
-unsafe fn abs16(mut t: uint16) -> uint16 {
-    return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
-        -(t as ::core::ffi::c_int)
-    } else {
-        t as ::core::ffi::c_int
-    }) as uint16;
-}
-#[inline]
-unsafe fn swap16(mut v: uint16) -> uint16 {
-    return ((v as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
-        | v as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint16;
 }
 #[inline]
 unsafe fn __CFADD__uint16(mut x: uint16, mut y: uint16) -> bool {
@@ -2571,7 +2559,7 @@ pub unsafe fn WreckedShipGhost_Init(game: &mut Game) {
         addr_kWreckedShipGhost_Ilist_9A8C as ::core::ffi::c_int as uint16;
     (*E).wsgt_var_A = (0xa89d13 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).wsgt_var_B = (g_word_A89AA4 as ::core::ffi::c_int + 160 as ::core::ffi::c_int) as uint16;
-    let mut v2: uint16 = swap16((*E).base.palette_index);
+    let mut v2: uint16 = u16::swap_bytes((*E).base.palette_index);
     let mut v3: uint16 =
         (16 as ::core::ffi::c_int * v2 as ::core::ffi::c_int + 256 as ::core::ffi::c_int) as uint16;
     let mut n: ::core::ffi::c_int = 16 as ::core::ffi::c_int;
@@ -2633,7 +2621,7 @@ pub unsafe fn WreckedShipGhost_Func_1(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    let mut v3: uint16 = swap16((*E).base.palette_index);
+    let mut v3: uint16 = u16::swap_bytes((*E).base.palette_index);
     let mut v4: uint16 =
         (16 as ::core::ffi::c_int * v3 as ::core::ffi::c_int + 256 as ::core::ffi::c_int) as uint16;
     let mut n: ::core::ffi::c_int = 16 as ::core::ffi::c_int;
@@ -2661,7 +2649,7 @@ pub unsafe fn WreckedShipGhost_Func_1(mut k: uint16, game: &mut Game) {
     }
     if (v1 - 16 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
         (*E).wsgt_var_A = (0xa89bad as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        let mut v7: uint16 = swap16((*E).base.palette_index);
+        let mut v7: uint16 = u16::swap_bytes((*E).base.palette_index);
         let mut v8: uint16 = (16 as ::core::ffi::c_int * v7 as ::core::ffi::c_int
             + 256 as ::core::ffi::c_int) as uint16;
         let mut v9: uint16 = 0 as uint16;
@@ -2803,7 +2791,8 @@ pub unsafe fn WreckedShipGhost_Func_5(mut k: uint16, game: &mut Game) {
         (*E).wsgt_var_A = (0xa89c69 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
         (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
             | kEnemyProps_Tangible as ::core::ffi::c_int) as uint16;
-        let mut t: ::core::ffi::c_int = swap16((*E).base.palette_index) as ::core::ffi::c_int;
+        let mut t: ::core::ffi::c_int =
+            u16::swap_bytes((*E).base.palette_index) as ::core::ffi::c_int;
         let mut v9: uint16 = (16 as ::core::ffi::c_int * t + 256 as ::core::ffi::c_int) as uint16;
         let mut n: ::core::ffi::c_int = 16 as ::core::ffi::c_int;
         loop {
@@ -2961,7 +2950,7 @@ pub unsafe fn WreckedShipGhost_Func_8(game: &mut Game) -> uint16 {
                 as ::core::ffi::c_int,
             game,
         );
-        let mut v2: uint16 = swap16((*E).base.palette_index);
+        let mut v2: uint16 = u16::swap_bytes((*E).base.palette_index);
         let mut v3: uint16 = (16 as ::core::ffi::c_int * v2 as ::core::ffi::c_int
             + 256 as ::core::ffi::c_int) as uint16;
         let mut r20: uint16 = (16 as ::core::ffi::c_int * v2 as ::core::ffi::c_int

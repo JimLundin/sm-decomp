@@ -374,11 +374,6 @@ pub const addr_stru_82B9A0: Consts_82 = 47520;
 pub const addr_kPauseMenuMapData: Consts_82 = 38679;
 pub const true_0: ::core::ffi::c_int = 1;
 #[inline]
-unsafe fn swap16(mut v: uint16) -> uint16 {
-    return ((v as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
-        | v as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint16;
-}
-#[inline]
 unsafe fn RomPtr_81(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
     return RomPtr(
         (0x810000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t,
@@ -3395,7 +3390,7 @@ pub unsafe fn FileSelectMenu_16(game: &mut Game) {
         game,
     );
     *((&raw mut game.g_ram as *mut uint8).offset(0x954) as *mut uint16) =
-        (swap16(
+        (u16::swap_bytes(
             !(*((&raw mut game.g_ram as *mut uint8).offset(0x954) as *mut uint16)
                 as ::core::ffi::c_int) as uint16,
         ) as ::core::ffi::c_int

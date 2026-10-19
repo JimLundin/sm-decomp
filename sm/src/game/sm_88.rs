@@ -669,11 +669,6 @@ pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::
 pub const true_0: ::core::ffi::c_int = 1;
 pub const false_0: ::core::ffi::c_int = 0;
 #[inline]
-unsafe fn swap16(mut v: uint16) -> uint16 {
-    return ((v as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
-        | v as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint16;
-}
-#[inline]
 unsafe fn __CFADD__uint8(mut x: uint8, mut y: uint8) -> bool {
     return x as ::core::ffi::c_int
         > (x as ::core::ffi::c_int + y as ::core::ffi::c_int) as uint8 as ::core::ffi::c_int;
@@ -1320,7 +1315,7 @@ unsafe fn SpawnHdmaObjectInner(
     *((&raw mut game.g_ram as *mut uint8).offset(0x1938) as *mut uint16).offset(v2 as isize) =
         0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x18b4) as *mut uint16).offset(v2 as isize) =
-        swap16(r18);
+        u16::swap_bytes(r18);
     *((&raw mut game.g_ram as *mut uint8).offset(0x18c0) as *mut uint16).offset(v2 as isize) =
         (r24 as ::core::ffi::c_int | r20 as ::core::ffi::c_int) as uint16;
     WriteRegWord(
@@ -5163,7 +5158,7 @@ pub unsafe fn HdmaobjPreInstr_LavaAcidBG3YScroll(mut k: uint16, game: &mut Game)
             }
         }
         *((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16) =
-            swap16(*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16));
+            u16::swap_bytes(*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16));
         if *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
             as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int

@@ -28,6 +28,7 @@ use crate::game::sm_a9::{
 };
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
+use crate::rtl::abs16;
 use crate::rtl::{mov24, Mult8x8, RomPtr, SnesDivide, Unreachable};
 extern "C" {
     fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
@@ -896,14 +897,6 @@ pub struct Enemy_Zebetites {
 }
 pub const true_0: ::core::ffi::c_int = 1;
 pub const false_0: ::core::ffi::c_int = 0;
-#[inline]
-unsafe fn abs16(mut t: uint16) -> uint16 {
-    return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
-        -(t as ::core::ffi::c_int)
-    } else {
-        t as ::core::ffi::c_int
-    }) as uint16;
-}
 #[inline]
 unsafe fn RomPtr_A0(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
     return RomPtr(

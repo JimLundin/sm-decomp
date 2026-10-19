@@ -1383,6 +1383,12 @@ pub unsafe fn WriteReg(mut reg: uint16, mut value: uint8, game: &mut Game) {
         game,
     );
 }
+/// Magnitude of a signed SNES word; 0x8000 remains the unsigned value 0x8000.
+#[inline]
+pub(crate) fn abs16(value: u16) -> u16 {
+    (value as i16).unsigned_abs()
+}
+
 pub unsafe fn Mult8x8(mut a: uint8, mut b: uint8) -> uint16 {
     return (a as ::core::ffi::c_int * b as ::core::ffi::c_int) as uint16;
 }
