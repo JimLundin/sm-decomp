@@ -148,26 +148,29 @@ No maintained source or own residue counters change in this quality check.
 Later Cargo-profile and gameplay changes retain separate verification;
 full gameplay/credits, hardware/audio coverage and remaining masks stay open.
 
-Latest focused check: frozen `8e2bd047` plus the byte-backed VRAM write
-queue consumer passes any% 129712/0 (183.46s) and Waver 58109/0 (74.98s),
-both native exits 0. Captured-tail sentinel writes, linear seven-byte cursor,
-live field reads, word VMAIN's VMADDL side effect and final tail clearing before
-real scrolling retain their order. The 9000/0 prefix passes 9017 actual
-old/current comparisons: zero/nonzero tails 1361/7656, 15138 queue transfers,
-14434720 DMA bytes and 30276 diagnostic prereads per side. Both scrolling
-wrappers execute 9017 times. Captured RAM, both PPUs, CPU/Snes/Cart, SRAM,
-inputs, DMA state and g_fail match after checked restoration; ordered registers,
-entry fields, sentinels, tail clearing and transfer traces match.
-All 13 constructed controls pass 9377 queue starts plus 10 scrolling starts,
-9673 bytes and 28447 reads. They cover unaligned tails, all three tail-word
-aliases, early stops, inherited phase, both increments, source boundaries and
-a 9364-entry scan reaching cursor 65541 before terminating at 65548. Natural
-calls use increment 1, at most three entries and inactive scrolling; alternatives
-are constructed. Equivalence is checked for scans terminating within g_ram;
-queues without an in-RAM terminator remain outside verified coverage. Frozen
-hashes, exact observation stripping and independent review pass. Formatting,
-release build and progress pass. Own raw offsets -3, cast lines -16 and Rust
-lines -13; other own counters unchanged.
+Latest focused check: frozen `6fc29b99` plus the byte-backed six-slot
+NMI HDMA pointer loop passes any% 129712/0 (260.99s) and Waver 58109/0
+(123.86s), both native exits 0. Full-word active masks, low-byte bank-slot
+offsets, live table-pointer reads and ordered A1T low/high writes retain
+their meaning. No enable gate, channel masking or DMA execution is added.
+The 15000/0 Waver prefix passes 15000 actual old/current loop comparisons:
+18437 pointer writes and 36874 register-byte writes, with active slot counts
+9344/4631/1347/0/0/3115. RAM and captured hardware state match after checked
+restoration; the loop performs no bus reads. All 270 constructed controls
+pass 328 pointer writes and 656 bytes, including 300 ignored-register writes.
+They cover all 256 low/high bank-slot byte values, 255 high-only masks,
+duplicate/overlapping targets and register-boundary crossings. Slots 3/4 and
+unusual register offsets have constructed coverage only.
+
+Separate full baseline replays pass any% 129712/0 and Waver 58109/0.
+Their 129712/56100 read-queue calls have zero tails, entries and DMA bytes;
+player X-ray and Kraid-pause read-queue cleanup remains held for actual route
+coverage. The read-queue implementation is unchanged. Frozen source/input
+hashes, exact observation stripping and independent review pass. The live
+HDMA loop equals the tested source; concurrent boss-mask scratch stores are
+outside this frozen check and retain separate verification. Formatting,
+release build (35.72s) and progress pass. Own raw offsets -3, cast lines -8
+and Rust lines -12; other own counters unchanged.
 
 Independent quality audit (2026-10-19): the room-header clean snapshot's
 68 source/config/host files match frozen 60e3fb2a plus exactly c1554368's

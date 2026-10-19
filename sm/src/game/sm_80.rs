@@ -2374,29 +2374,17 @@ pub unsafe fn Vector_NMI(game: &mut Game) {
         NmiTransferSamusToVram(game);
         NmiProcessAnimtilesVramTransfers(game);
         NmiUpdateIoRegisters(game);
-        let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-        while i != 6 as ::core::ffi::c_int {
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x18b4 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(i as isize)
-                != 0
-            {
-                WriteRegWord(
-                    (*(((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x18c0 as ::core::ffi::c_int as isize)
-                        as *mut uint16)
-                        .offset(i as isize) as *mut uint16 as *mut uint8)
-                        .offset(0 as ::core::ffi::c_int as isize)
-                        as ::core::ffi::c_int
-                        + 17154 as ::core::ffi::c_int) as SnesRegs as uint16,
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x18d8 as ::core::ffi::c_int as isize)
-                        as *mut uint16)
-                        .offset(i as isize),
-                    game,
-                );
+        for slot in 0..6 {
+            let offset = slot * 2;
+            let channels =
+                u16::from_le_bytes([game.g_ram[0x18b4 + offset], game.g_ram[0x18b5 + offset]]);
+            if channels != 0 {
+                // The bank-slot word stores the DMA register offset in its low byte.
+                let bank_slot = u16::from(game.g_ram[0x18c0 + offset]);
+                let table_pointer =
+                    u16::from_le_bytes([game.g_ram[0x18d8 + offset], game.g_ram[0x18d9 + offset]]);
+                WriteRegWord(A1T0L as u16 + bank_slot, table_pointer, game);
             }
-            i += 1;
         }
         if *(&raw mut game.g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize)
             as ::core::ffi::c_int
