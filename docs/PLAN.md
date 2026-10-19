@@ -43,18 +43,18 @@ No maintained source or own residue counters change in this quality check.
 Later Cargo-profile and gameplay changes retain separate verification;
 full gameplay/credits, hardware/audio coverage and remaining masks stay open.
 
-IRQ callback check: frozen `69b844d9` plus non-null IRQ callbacks passes
-any% 129712/0 (229.46s) and Waver 58109/0 (117.06s), both native exits 0.
-The fourteen callbacks retain their order, handler bodies and selector
-expression; direct dispatch removes the impossible null case. A shared
-9,000-frame prefix passes with 2,814 actual IRQ calls: 2 for selector 0 and
-1,406 each for selectors 4 and 6. Constructed old/current checks cover
-1,360 pairs across all fourteen handlers, 680 even/odd pairs and 240 door
-callbacks across all four directions; all 128 KiB RAM, PPU/DMA/Snes fields
-and ordered register writes match. Eight invalid selectors panic before any
-callback or write and preserve compared state. Frozen source hashes and
-exact observation stripping pass. Source review, formatting, release build
-and progress pass. Own Rust lines -3; other residue counters are unchanged.
+Latest focused check: frozen `5fee3c5a` plus safe screen fades passes
+any% 129712/0 (226.87s) and Waver 58109/0 (115.77s), both native exits 0.
+HandleFadeIn/Out share a byte-backed timer update, preserving the signed
+decrement test, reload-before-brightness order and force-blank bit behavior.
+A shared 9,000-frame prefix passes with 182 actual old/current full-RAM
+comparisons: 107 fade-out and 75 fade-in calls. Constructed controls pass
+155,648 pairs across every timer word and all display bytes at selected
+timer/delay boundaries; all 128 KiB RAM matches. Terminal brightness cases
+that preserve the entire display byte have constructed coverage only.
+Frozen source hashes, exact observation stripping and independent review
+pass. Formatting, release build and progress pass. Own raw offsets -16,
+unsafe functions -2, cast lines -38 and Rust lines -30; other counters unchanged.
 
 Everything that existed before is in the branch `archive/pre-transpile-2026-10-17`.
 

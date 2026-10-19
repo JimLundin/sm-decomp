@@ -1077,72 +1077,42 @@ pub unsafe fn sub_808911(mut a: uint16, game: &mut Game) {
         0x800 as uint16,
     );
 }
-pub unsafe fn HandleFadeOut(game: &mut Game) {
-    if ((*((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        - 1 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
-        < 0 as ::core::ffi::c_int
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        if *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
-            as ::core::ffi::c_int
-            & 0xf as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
-        {
-            if *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
-                as ::core::ffi::c_int
-                & 0xf as ::core::ffi::c_int
-                == 1 as ::core::ffi::c_int
-            {
-                *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) =
-                    0x80 as uint8;
-            } else {
-                *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) =
-                    ((*(&raw mut game.g_ram as *mut uint8)
-                        .offset(0x51 as ::core::ffi::c_int as isize)
-                        as ::core::ffi::c_int
-                        & 0xf as ::core::ffi::c_int)
-                        - 1 as ::core::ffi::c_int) as uint8;
-            }
-        }
+fn tick_screen_fade(game: &mut Game) -> bool {
+    let screen_fade_counter = u16::from_le_bytes([game.g_ram[0x725], game.g_ram[0x726]]);
+    // Test the sign after the word decrement, then reload before changing brightness.
+    let remaining = screen_fade_counter.wrapping_sub(1);
+    let step_due = (remaining as i16) < 0;
+    let next_counter = if step_due {
+        let screen_fade_delay = u16::from_le_bytes([game.g_ram[0x723], game.g_ram[0x724]]);
+        screen_fade_delay
     } else {
-        let ref mut fresh70 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        *fresh70 = (*fresh70).wrapping_sub(1);
+        remaining
     };
+    game.g_ram[0x725..0x727].copy_from_slice(&next_counter.to_le_bytes());
+    step_due
 }
-pub unsafe fn HandleFadeIn(game: &mut Game) {
-    if ((*((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        - 1 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
-        < 0 as ::core::ffi::c_int
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x723 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        if *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
-            as ::core::ffi::c_int
-            + 1 as ::core::ffi::c_int
-            & 0xf as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
-        {
-            *(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) =
-                (*(&raw mut game.g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
-                    as ::core::ffi::c_int
-                    + 1 as ::core::ffi::c_int
-                    & 0xf as ::core::ffi::c_int) as uint8;
-        }
-    } else {
-        let ref mut fresh69 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x725 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        *fresh69 = (*fresh69).wrapping_sub(1);
-    };
+
+pub fn HandleFadeOut(game: &mut Game) {
+    if !tick_screen_fade(game) {
+        return;
+    }
+    let reg_inidisp = &mut game.g_ram[0x51];
+    match *reg_inidisp & 0x0f {
+        0 => {}
+        1 => *reg_inidisp = 0x80,
+        brightness => *reg_inidisp = brightness - 1,
+    }
+}
+
+pub fn HandleFadeIn(game: &mut Game) {
+    if !tick_screen_fade(game) {
+        return;
+    }
+    let reg_inidisp = &mut game.g_ram[0x51];
+    let brightness = reg_inidisp.wrapping_add(1) & 0x0f;
+    if brightness != 0 {
+        *reg_inidisp = brightness;
+    }
 }
 pub unsafe fn ClearUnusedOam(game: &mut Game) {
     let mut i: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
