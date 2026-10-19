@@ -10927,6 +10927,23 @@ Rust lines +7 and unsafe functions +1 centralize duplicated bus writes;
 other own counters unchanged. Prior holds and complete gameplay/render/audio
 remain open. Continue covered CPU cleanup.
 
+Post-map Parlor upper passage cleared (2026-10-19).
+From map-parlor-gap-settle X366/Y171, left/jump32, left/shoot65,
+left140, neutral30 reaches X277/Y139 with24health. This is the bombable
+obstruction before the door, not the door cap. Beam and overhang jumps do
+not pass it. Down1, neutral15, Down1, neutral20 complete the morph;
+left/shoot100, left100, neutral30 bomb through and roll to X37/Y153,
+ball pose0041, health24/99, map1/station255, missiles1/10, equipment1004.
+map-parlor-upper-morph-bomb76558/71 (88.46s), observed native exit1.
+Read-only failure-counter replay76558/71 (78.69s), observed native exit1,
+matches all71 ordered baseline failed frames exactly, rendering enabled.
+No gameplay/RAM/inventory writes or new failures. Source/residue delta0;
+committed door-bit cleanup owns fmt/check, release, progress, contextual
+75665/71 and clean any%129712/0 (149.79s). Inputs, probes, SRAM and
+ROM-derived geometry remain ignored. Next: unmorph near the actual upper
+door and continue onward item/boss coverage. Credits, complete gameplay/
+hardware, audio/render, masked RAM and ownership remain open; holds stay held.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
