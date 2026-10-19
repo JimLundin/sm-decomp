@@ -10909,6 +10909,24 @@ work is outside this replay. Rust lines -5; other own counters unchanged.
 Prior holds and complete gameplay/render/audio remain open. Continue covered
 CPU cleanup.
 
+CPU shared store operand writes (2026-10-19): store_register and store_zero
+use write_operand for captured-width writes and the extra word cycle. Word
+writes retain low-before-high order; register values remain fixed before
+bus callbacks and no CPU reference spans them. Capturing the value before
+the cycle increment is equivalent because those fields are independent.
+Frozen `0311eefa` plus this change passes 3,145,728 actual old/current store
+comparisons: every word value, A/X/Y/STZ, both widths, cycle counts 0/254/255
+and distinct/aliased destinations. Named CPU/bus state and written bytes
+match; static-WRAM cases do not exhaust MMIO. Prefix 3,600/0 (1.03s), native
+exit 0, executes word/byte counts STZ 160,743/10,390, A 576,985/787,595,
+X 229,096/242,810 and Y 22,222/3,600. Clean full any% passes 129,712/0
+(50.66s), native exit 0. Cargo fmt/check, full release/release-library builds
+with external SDL2, normal metadata and frozen optimized core/DLL pass.
+Live CPU matches verified source; peer PPU work is outside this replay.
+Rust lines +7 and unsafe functions +1 centralize duplicated bus writes;
+other own counters unchanged. Prior holds and complete gameplay/render/audio
+remain open. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

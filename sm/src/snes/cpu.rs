@@ -686,6 +686,21 @@ unsafe fn push_register(cpu: *mut Cpu, register: CpuRegister, game: &mut Game) {
         push_word(cpu, register.value(&*cpu), game);
     }
 }
+unsafe fn write_operand(
+    cpu: *mut Cpu,
+    low: u32,
+    high: u32,
+    value: u16,
+    byte: bool,
+    game: &mut Game,
+) {
+    if byte {
+        write_byte(cpu, low, value as u8, game);
+    } else {
+        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
+        write_word(cpu, low, high, value, false, game);
+    }
+}
 unsafe fn store_register(
     cpu: *mut Cpu,
     low: u32,
@@ -693,20 +708,12 @@ unsafe fn store_register(
     register: CpuRegister,
     game: &mut Game,
 ) {
-    if register.byte(&*cpu) {
-        write_byte(cpu, low, register.value(&*cpu) as u8, game);
-    } else {
-        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        write_word(cpu, low, high, register.value(&*cpu), false, game);
-    }
+    let byte = register.byte(&*cpu);
+    let value = register.value(&*cpu);
+    write_operand(cpu, low, high, value, byte, game);
 }
 unsafe fn store_zero(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
-    if (*cpu).mf {
-        write_byte(cpu, low, 0, game);
-    } else {
-        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        write_word(cpu, low, high, 0, false, game);
-    }
+    write_operand(cpu, low, high, 0, (*cpu).mf, game);
 }
 unsafe fn rotate_memory_right(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let (result, carry) = if (*cpu).mf {
