@@ -16,30 +16,22 @@ changing what it does.
 
 Current verification has limits: the any% fixture runs 129,712 frames with
 zero failures, but visits only six rooms and does not reach credits. The
-58,109-frame Waver route has 71 known rendered failures. Compare every ordered
-failure diagnostic against the baseline; matching totals alone cannot prove
-that a change adds no failures. Rendering now starts enabled deterministically.
-Complete gameplay, audio timing and masked RAM remain unverified. Historical
-zero-failure Waver runs made before the render initialization fix do not
-establish rendering equivalence.
+58,109-frame Waver route now also passes with zero rendered failures.
+Rendering starts enabled deterministically. Complete gameplay, audio timing
+and other masked RAM remain unverified. Historical zero-failure Waver runs
+made before the render initialization fix do not establish rendering equivalence.
 
-Current priority (2026-10-19): the user asks to emphasize resolving the 71
-Waver rendering failures. Resume a focused diagnosis using the retained
-findings before further unrelated cleanup. The current first failure is
-frame 28,228, pixel (255,223), green byte 00 versus 84, with zero RAM
-differences. Keep rendering and all comparisons enabled.
+User-prioritized Waver rendering repair (2026-10-19) is complete for the
+reported 71 failures. The cause was the down-right X-ray window generator:
+on-screen saturation and offscreen crossing cleanup require separate edge
+passes. The maintained correction preserves their 16-bit carry behavior.
 
-The current prototype clears full any% and Waver replays, but remains
-uncommitted: the implementation team is revising the on-screen helper after
-additional corner-case findings. Independent prototype results and the
-offscreen temporary-byte classification are recorded under The oracle below.
-
-Latest integrated check: frozen `f69e97c9` plus the committed brightness-table
-cleanup and PPU reset simplification passes any% 129712/0 (233.05s), native
-exit 0, and Waver 58109/71 (108.52s), native exit 1. Complete ordered Waver
-stderr matches the explicit-render baseline after excluding progress updates.
-Format, release build and progress checks pass. Later door-argument, CPU and
-APU-history edits are outside these replays; complete gameplay remains open.
+Latest focused check: frozen `b670ec87` plus the final `sm_91.rs` correction
+passes any% 129712/0 (182.74s) and Waver 58109/0 (104.21s), both native
+exit 0. A separate full Waver run observes both raw window tables and all
+four window boundaries before normalization: 58109/0 (120.90s), zero raw
+differences. Format, release build and progress checks pass. Concurrent
+comparison-mask changes are separate from this verified source snapshot.
 
 Everything that existed before is in the branch `archive/pre-transpile-2026-10-17`.
 
@@ -170,6 +162,40 @@ sessions own the adjacent cleanup above. No maintained source or residue
 change and no new replay result belong to this cleanup.
 
 ## The oracle
+
+Waver rendering repair (2026-10-19): replace only the two down-right
+X-ray ramp branches with safe byte-store helpers. The on-screen helper keeps
+independent 16-bit edge carries, the zero carry-index sentinel and cleanup
+only after the high edge carries. The offscreen helper preserves separate
+passes, crossing indices and wrapped cleanup addresses. Existing outer
+anchor/fill behavior and the other angle branches remain unchanged.
+
+The final 252-frame checkpoint replay clears all 71 prior rendered failures
+and matches both raw tables and all window boundaries. Full final-source
+results are recorded above; changed branches execute 177 on-screen and 75
+offscreen calls across the full Waver route. Actual-ROM controls pass 38,016
+on-screen and 243,344 offscreen cases at both table destinations. Scratch-
+dependent temporary high bytes are overwritten before return; these results
+establish final RAM equality, not identical transient values for arbitrary
+scratch. All real callers supply even byte offsets.
+
+Independent caller checks pass the 252-frame reproduction and 2,400
+constructed cases / 3,840 caller comparisons across all five callers.
+Scratch, color and adjacent RAM remain unchanged apart from ROM-confirmed
+wrapped table writes; a deliberate neighboring-byte fault is detected.
+The tested source equals the maintained source after removing temporary
+observation hooks. Cargo fmt, fmt --check, release build and progress pass.
+Own cast lines -4; Rust lines +184 make the distinct overflow/cleanup passes
+explicit. Other own counters and RAM layouts are unchanged. ROM-derived
+fixtures, probes and snapshots remain outside tracked files.
+
+Coverage limits: natural execution at destination $9800 remains unproved;
+constructed ROM controls cover that destination. Offscreen row controls cover
+visible rows 0..229, not arbitrary 16-bit rows. Separate existing on-screen
+outer-routine gaps remain: the row-zero anchor uses a different wrapped
+address, and upward filling ignores the ROM's existing-empty-word stop.
+Those unchanged gaps are outside this rendering fix. Complete gameplay,
+credits, audio timing and remaining masked state are still open.
 
 Independent X-ray table-mask controls (2026-10-19): frozen a761a09e plus
 prototype sm_91 SHA-256 6f03c19fd0018148dff98f66029fee0374651074c79c26067008491a359c541a

@@ -1645,20 +1645,203 @@ unsafe fn XrayHdmaFunc_BeamAimedU(mut ctx: *mut XrayHdmaCtx, game: &mut Game) {
     }
     XrayFillDown((*ctx).dest, 0xff as uint16, p as uint16);
 }
+// Callers supply an even byte offset (2 * row), so the high-edge pass
+// overwrites every temporary high byte written by the low-edge pass.
+fn xray_onscreen_positive_stores(
+    mut write: impl FnMut(u32, u8),
+    base: u32,
+    start: u16,
+    origin: u16,
+    low_step: u16,
+    high_step: u16,
+) {
+    let mut low_edge = origin;
+    let mut high_edge = origin;
+    // Zero doubles as the ROM's no-carry sentinel, even for a carry at row 0.
+    let mut carry_row = 0;
+    // $91:C87A uses the N flag after CPY #$01CC, including wrapped Y.
+    fn continues(index: u16) -> bool {
+        index.wrapping_sub(460) & 0x8000 != 0
+    }
+    fn word(write: &mut impl FnMut(u32, u8), base: u32, index: u16, value: u16) {
+        let address = base + u32::from(index);
+        let [low, high] = value.to_le_bytes();
+        write(address, low);
+        write(address + 1, high);
+    }
+
+    let mut index = start;
+    loop {
+        let (value, carry) = low_edge.overflowing_add(low_step);
+        low_edge = value;
+        if carry {
+            carry_row = index;
+            loop {
+                word(&mut write, base, index, 0x00ff);
+                index = index.wrapping_add(2);
+                if !continues(index) {
+                    break;
+                }
+            }
+            break;
+        }
+        // The high-edge pass overwrites this word's high byte.
+        let value = low_edge >> 8;
+        word(&mut write, base, index, value);
+        index = index.wrapping_add(2);
+        if !continues(index) {
+            break;
+        }
+    }
+
+    index = start.wrapping_add(1);
+    loop {
+        let (value, carry) = high_edge.overflowing_add(high_step);
+        high_edge = value;
+        if carry {
+            loop {
+                write(base + u32::from(index), 0xff);
+                index = index.wrapping_add(2);
+                if !continues(index) {
+                    break;
+                }
+            }
+            break;
+        }
+        write(base + u32::from(index), (high_edge >> 8) as u8);
+        index = index.wrapping_add(2);
+        if !continues(index) {
+            // The ROM reaches cleanup only when this edge carries.
+            return;
+        }
+    }
+
+    if carry_row != 0 {
+        index = carry_row.wrapping_add(2);
+        while continues(index) {
+            word(&mut write, base, index, 0x00ff);
+            index = index.wrapping_add(2);
+        }
+    }
+}
+fn xray_offscreen_positive_stores(
+    mut write: impl FnMut(u32, u8),
+    base: u32,
+    start: u16,
+    origin: u16,
+    low_step: u16,
+    high_step: u16,
+) {
+    // The ROM wraps the 16-bit index before adding the table base.
+    // At start zero, cleanup can therefore reach the following WRAM bank.
+    fn byte(write: &mut impl FnMut(u32, u8), base: u32, index: i32, value: u8) {
+        write(base + u32::from(index as u16), value);
+    }
+    fn word(write: &mut impl FnMut(u32, u8), base: u32, index: i32, value: u16) {
+        let address = base + u32::from(index as u16);
+        write(address, value as u8);
+        write(address + 1, (value >> 8) as u8);
+    }
+    fn edge(
+        write: &mut impl FnMut(u32, u8),
+        base: u32,
+        mut index: i32,
+        mut value: u16,
+        step: u16,
+        high: bool,
+    ) -> i32 {
+        loop {
+            let (next, carry) = value.overflowing_add(step);
+            value = next;
+            if carry {
+                break;
+            }
+            index += 2;
+            if index >= 460 {
+                return index;
+            }
+        }
+        if high {
+            byte(write, base, index, (value >> 8) as u8);
+        } else {
+            word(write, base, index, value >> 8);
+        }
+        index += 2;
+        if index >= 460 {
+            return if high { 459 } else { 458 };
+        }
+        let crossing = index - 4;
+        loop {
+            let (next, carry) = value.overflowing_add(step);
+            value = next;
+            if carry {
+                break;
+            }
+            if high {
+                byte(write, base, index, (value >> 8) as u8);
+            } else {
+                word(write, base, index, value >> 8);
+            }
+            index += 2;
+            if index >= 460 {
+                return crossing;
+            }
+        }
+        while index < 460 {
+            if high {
+                byte(write, base, index, 255);
+            } else {
+                word(write, base, index, 255);
+            }
+            index += 2;
+        }
+        crossing
+    }
+    // The low edge writes whole words first; the high edge then replaces
+    // their high bytes. The cleanup passes depend on both crossing indices.
+    let low = edge(&mut write, base, i32::from(start), origin, low_step, false);
+    let high = edge(
+        &mut write,
+        base,
+        i32::from(start) + 1,
+        origin,
+        high_step,
+        true,
+    );
+    let mut index = low;
+    loop {
+        byte(&mut write, base, index, 0);
+        index -= 2;
+        if index < high {
+            break;
+        }
+    }
+    let mut index = high - 1;
+    loop {
+        word(&mut write, base, index, 255);
+        index -= 2;
+        if index < 0 {
+            break;
+        }
+    }
+}
+
 unsafe fn XrayHdmaFunc_BeamAimedD(mut ctx: *mut XrayHdmaCtx, game: &mut Game) {
     let mut p: ::core::ffi::c_int = 2 as ::core::ffi::c_int * (*ctx).r24 as ::core::ffi::c_int;
     if (*ctx).r28 as ::core::ffi::c_int - 128 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0
     {
-        XrayFillDownRamped(
-            (*ctx).dest,
-            p,
-            ((*ctx).r22 as ::core::ffi::c_int - 0x10000 as ::core::ffi::c_int) as uint32,
-            (*ctx).r32 as uint32,
-            ((*ctx).r22 as ::core::ffi::c_int - 0x10000 as ::core::ffi::c_int) as uint32,
-            (*ctx).r30 as uint32,
-            0 as ::core::ffi::c_int,
+        // Current callers pass the $9100 or $9800 table inside this g_ram.
+        let base = 0x7e0000u32 + (*ctx).dest.cast::<u8>().offset_from(game.g_ram.as_ptr()) as u32;
+        xray_offscreen_positive_stores(
+            |address, value| game.g_ram[(address - 0x7e0000) as usize] = value,
+            base,
+            (*ctx).r24.wrapping_mul(2),
+            (*ctx).r22,
+            (*ctx).r32,
+            (*ctx).r30,
         );
+        return;
     } else if (*ctx).r26 as ::core::ffi::c_int - 128 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0
@@ -1816,14 +1999,15 @@ unsafe fn XrayHdmaOnScreen_BeamAimedD(mut ctx: *mut XrayHdmaCtx, game: &mut Game
     if (*ctx).r28 as ::core::ffi::c_int - 128 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0
     {
-        XrayFillDownRamped(
-            (*ctx).dest,
-            v0,
-            (*ctx).r22 as uint32,
-            (*ctx).r32 as uint32,
-            (*ctx).r22 as uint32,
-            (*ctx).r30 as uint32,
-            0 as ::core::ffi::c_int,
+        // Current callers pass the $9100 or $9800 table inside this g_ram.
+        let base = 0x7e0000u32 + (*ctx).dest.cast::<u8>().offset_from(game.g_ram.as_ptr()) as u32;
+        xray_onscreen_positive_stores(
+            |address, value| game.g_ram[(address - 0x7e0000) as usize] = value,
+            base,
+            (*ctx).r24.wrapping_mul(2),
+            (*ctx).r22,
+            (*ctx).r32,
+            (*ctx).r30,
         );
     } else if (*ctx).r26 as ::core::ffi::c_int - 128 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
