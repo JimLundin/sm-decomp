@@ -15847,6 +15847,33 @@ Drool still needs ordinary input coverage of its bit-$4000 arm. Unexercised
 survey routines retain their committed code. Broader gameplay/credits,
 hardware/audio/masks and ownership remain unfinished.
 
+Independent enemy-field audit (2026-10-19): reconstruct 655bd754 from
+its parent and independently reconstruct both frozen candidates. All 71
+final source/configuration/host/progress files and all 70 survey files match.
+The 29 reads retain their captured indices and positions relative to writes
+and callbacks; no view survives for a later read. Exact observer stripping
+recovers the survey candidate. Fourteen selected bodies match the committed
+bodies; SpawnEprojWithGfx differs only by the separately verified parameter
+store. The raw survey report confirms 1478 field reads across all 29 selected
+sites, nine constructed controls and exactly 31 unhit excluded sites.
+
+Freshly extracted readers pass 1441792 comparisons: all 65536 enemy indices
+for six fields, then every word value at four boundary indices for the four
+new fields. The four actual Skree initializers pass 263296 complete-RAM
+comparisons with an independent ordered byte model, covering all enemy
+indices plus exact and one-byte source/destination overlaps and arithmetic
+boundaries. Separately compiled wrong-offset and early-X-read variants fail.
+These constructed checks supplement the movie observations, not branch or
+new gameplay coverage; temporary code remains outside maintained source.
+
+Reuse the qualified clean any% 129712/0 and Warehouse 128547/0 results,
+native exits 0. Complete non-timing diagnostics match their baselines,
+including the known Kraid warning. Cargo fmt/check, normal release and
+progress pass in the frozen checkout; all pinned source, libraries, DLLs,
+fixtures and logs remain unchanged. This review adds no maintained Rust or
+residue. Later projectile and definition changes need their own integration;
+remaining bosses, credits, persistence and broader hardware/audio stay open.
+
 Enemy-projectile script timers (2026-10-19): share byte-backed wrapping
 decrement between instruction and script timer fields; reuse it in both
 absolute conditional jump handler and add the script timer setter. Branches still
