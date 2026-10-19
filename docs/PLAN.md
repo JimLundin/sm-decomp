@@ -53,6 +53,16 @@ transpile notes are historical provenance, not a regeneration workflow.
 Keep only current build outputs in `target/` and the ignored ROM/movie inputs
 needed for verification. Remove obsolete scratch and restart artifacts.
 
+Retired early-route probes (2026-10-19): moved `parlor-return-probe`,
+`parlor-block-probe`, `parlor-health-probe` and `bomb-exit-probe` from target
+to temporary `sm-workspace-retired-parlor-probes-20261019-075208-321`.
+All 166 files / 65,870,451 bytes are preserved with matching SHA-256 hashes.
+References are internal to the retired batch; current scripts and live
+processes have no dependencies on it. The old builders require an absent
+build directory. Retained route inputs, current builds and active probes
+remain available. No maintained source or residue change and no new replay
+belongs to this cleanup; the prior any% 129712/0 and Waver 58109/0 remain.
+
 Retired PLM/beam-probe cleanup (2026-10-19): moved colored-door-cleanup,
 colored-door-safe, power-block-cleanup, door-counter-cleanup and floor-observe
 from target, with their 13 retired helper scripts from route-gunship-top,
