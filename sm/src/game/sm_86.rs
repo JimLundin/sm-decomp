@@ -628,6 +628,12 @@ impl EprojStateMut<'_> {
     fn set_instruction(&mut self, word_index: usize, value: u16) {
         self.write(0x1b47, word_index, value);
     }
+    fn finish_pickup(&mut self, word_index: usize) {
+        self.set_instruction(word_index, addr_word_86ECA3 as u16);
+        self.set_instruction_timer(word_index, 1);
+        self.set_properties(word_index, 0x3000);
+        self.set_preinstruction(word_index, fnEprojPreInstr_Empty as u16);
+    }
     fn clear_spawn_variables(&mut self, word_index: usize) {
         // E/F, timer, X/Y subpositions, then G, in the original store order.
         for base in [0x1aff, 0x1b23, 0x19df, 0x1a27, 0x1a6f, 0x1bfb] {
@@ -10313,16 +10319,7 @@ pub unsafe fn EprojPreInstr_Pickup(mut k: uint16, game: &mut Game) {
                             .expect("non-null function pointer")(game);
                         let mut v11: ::core::ffi::c_int =
                             k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16)
-                            .offset(v11 as isize) = addr_word_86ECA3 as uint16;
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16)
-                            .offset(v11 as isize) = 1 as uint16;
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16)
-                            .offset(v11 as isize) = 12288 as uint16;
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16)
-                            .offset(v11 as isize) = (0x86efdf as ::core::ffi::c_int
-                            & 0xffff as ::core::ffi::c_int)
-                            as uint16;
+                        EprojStateMut(&mut game.g_ram).finish_pickup(v11 as usize);
                     }
                 }
                 return;
@@ -10330,14 +10327,7 @@ pub unsafe fn EprojPreInstr_Pickup(mut k: uint16, game: &mut Game) {
         }
     }
     let mut v4: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v4 as isize) =
-        addr_word_86ECA3 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v4 as isize) =
-        1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16).offset(v4 as isize) =
-        12288 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16).offset(v4 as isize) =
-        (0x86efdf as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    EprojStateMut(&mut game.g_ram).finish_pickup(v4 as usize);
 }
 pub unsafe fn Eproj_Pickup_SmallHealth(game: &mut Game) {
     Samus_RestoreHealth(5 as uint16, game);

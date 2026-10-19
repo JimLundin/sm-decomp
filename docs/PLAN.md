@@ -16950,6 +16950,42 @@ functions and other own counters unchanged. No probes or ROM-derived artifacts
 committed. Continue indexed projectile state/handler families; broader
 gameplay/credits, hardware/audio/masks and ownership remain unfinished.
 
+Pickup finish transition (2026-10-19): the contact and shared outer exits
+of EprojPreInstr_Pickup use one byte-backed finish helper. It writes
+instruction ECA3, timer 1, properties 3000 and preinstruction EFDF in the
+original order. Captured half-indices and callback/read timing remain;
+the existing state writer preserves little-endian, unaligned RAM bytes.
+
+Observed Speed Booster passes 148406/0 (237.60s). Contact finishes execute
+44 times at input frames 41370..146284; the shared outer exit executes
+55 times at 38342..144401. Both complete-RAM comparisons pass at all 99
+calls. These hits do not distinguish expiry from grapple
+collection. Native exit 2 reports exactly the unhit F337 no-drop finish;
+that block remains unchanged, as does the differently ordered EEAF handler.
+
+The extracted helper passes 131072 complete-RAM cases and 524288 ordered
+store events: every u16 byte index on two freshly restored RAM patterns.
+Reversed stores, a one-byte write and wrong index scaling are rejected.
+Independent source, pointer-provenance and generated-result review passes.
+
+Frozen fcf54f0a plus only the two retained sites and helper passes clean
+full-boot any% 129712/0 (261.34s) and Speed Booster 148406/0
+(331.43s), native exits 0. Complete non-timing Speed diagnostics
+match after exact probe/status/checkpoint-message checks. Discovery's
+unhit probe prevented checkpoint creation; no observed checkpoint equality
+is claimed. Source, library, DLL, configuration, host, ROM and inputs stay
+fixed. No shorter included route is replayed separately.
+
+Formatting/check, normal release and progress pass. Frozen release takes
+26.57s; workspace release takes 55.04s. These shared-load
+timings do not establish a compilation speedup. Including the helper and
+accounting for the concurrent cast cleanup, net Rust lines -10, raw accesses
+-8, pointer-offset calls -16, actual c_int casts -4 and cast lines -3;
+unsafe-function count is unchanged. Concurrent edits/staging are preserved
+and keep their separate checks. No probes, inputs, checkpoints or temporary
+scripts are committed. Continue shared projectile state/handler families;
+gameplay through credits and broader hardware/audio coverage remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
