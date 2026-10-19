@@ -338,9 +338,10 @@ Final checkpoint RAM confirms room $A59F, X139/Y267, pose $00A4, health
 205/299, missiles 9/15 and Supers 1/5; Kraid remains alive at 400 health.
 Items/beams remain 1104/1004 and $0611..$0618 are zero. Ordinary non-timing
 diagnostics match the baselines after excluding their optional trace and
-final-state logging. The single `X undefined` diagnostic persists; its
-callback/register-flow investigation remains open.
-Zero failing frames does not resolve that diagnostic or prove credits.
+final-state logging. The single `X undefined` diagnostic persists; the
+tagged follow-up below identifies good-fingernail contact and confirms
+matching animation behavior for its observed ten-health case. Other warning
+paths and damaged-nail boundary values remain separate; credits are unvisited.
 
 All 70 source/config/host files match the committed snapshot after newline
 normalization. Source, DLL, ROM and copied inputs remain unchanged. Cargo
@@ -836,16 +837,31 @@ library independently passes the 4160-frame continuation with zero failures.
 Its final save -30 is an isolated supported slot; it replaces no prior save.
 No cross-source checkpoint compatibility is claimed.
 
-Exactly one `X undefined` diagnostic remains. Buffered output does not
-identify its exact frame or emitter. The original combat branch places it
-near 119736; an earlier 119733 checkpoint excludes it. Legacy Kraid
-fingernail-touch and foot-retreat handlers emit this text and substitute
-assumed register values. Identify the executed callback and compare its ROM
-register flow before changing those defaults. This milestone therefore
-retains an explicit diagnostic limitation. It does not validate the new
-projectile-parameter mask removal through main Kraid. No maintained Rust or
-committed assets change; the preceding formatting/release/progress checks
-remain applicable. Main Kraid, credits and broader integration remain open.
+Tagged follow-up (2026-10-19): frozen a0912a84 plus the exact c1446827
+parameter changes passes 119823/0 (212.70s), native exit 0, with no raw
+$1993 word differences and all 534/534 ordered spawn calls equal. This
+validates the mask removal through the captured Kraid phase-two route.
+Only read-only observer additions distinguish the 62-file frozen source;
+source, DLL and input hashes remain fixed, and independent stripping,
+register-trace and complete-result audits pass.
+
+The sole `X undefined` emitter is KraidsGoodFingernail_Touch at input
+119733, enemy slot $0180, definition $E43F, health 10. The ROM returns
+that health in A, reloads X explicitly, and normalizes the outer death
+animation argument to zero. Native's zero argument matches this observed
+path; the diagnostic does not identify an observed gameplay divergence.
+Bad-fingernail and foot warning branches did not execute. Damaged-nail
+health values 1..4 still need separate coverage before any return-contract
+repair; the warning is retained, and no gameplay code is changed here.
+
+The original compatible save -23 gives a one-frame neutral-input reproducer
+at 119733..119734. From save -22 at 119655, the 78-frame prefix has no
+warning and the 79-frame prefix has one; every run has zero oracle failures.
+All 68 original candidate source entries and the matching library/input/save
+hashes are audited. Those old-library checkpoints are not claimed compatible
+with newer builds. This corrects the earlier approximate frame attribution.
+No maintained Rust, residue counts or committed assets change. Main Kraid,
+credits and broader integration remain open.
 
 Enemy-projectile spawn parameter fidelity (2026-10-19): preserve the ROM
 accumulator returned by both allocation wrappers and thread it through
