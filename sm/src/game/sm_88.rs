@@ -817,7 +817,7 @@ pub const fnnullsub_357: uint32 = 8972070 as uint32;
 pub const fnInitializeRainbowBeam: uint32 = 8972135 as uint32;
 pub const fnHdmaobjPreInstr_E7BC: uint32 = 8972220 as uint32;
 pub const fnHdmaobjInstr_InitMorphBallEyeBeamHdma: uint32 = 8972567 as uint32;
-pub const fnHdmaobjPreInstr_E9E6: uint32 = 8972774 as uint32;
+pub const fnHdmaobjPreInstr_MorphBallEyeBeamWidening: u32 = 0x88e9e6;
 pub const fnHdmaobjPreInstr_EA3C: uint32 = 8972860 as uint32;
 pub const fnHdmaobjPreInstr_EACB: uint32 = 8973003 as uint32;
 pub const fnHdmaobjInsr_ConfigTitleSequenceGradientHDMA: uint32 = 8973215 as uint32;
@@ -8858,52 +8858,45 @@ pub unsafe fn UpdateMorphBallEyeBeamHdma(k: u16, game: &mut Game) {
     game.g_ram[0x75] = game.g_ram[0x1915 + color_offset];
     game.g_ram[0x76] = game.g_ram[0x1920 + color_offset];
 }
-pub unsafe fn HdmaobjPreInstr_E9E6(mut k: uint16, game: &mut Game) {
-    let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1986 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 16 as uint16;
-    AddToHiLo(
-        (&raw mut game.g_ram as *mut uint8).offset(0x9080 as ::core::ffi::c_int as isize)
-            as *mut uint16,
-        (&raw mut game.g_ram as *mut uint8).offset(0x9082 as ::core::ffi::c_int as isize)
-            as *mut uint16,
-        0x4000 as uint32,
+pub unsafe fn HdmaobjPreInstr_MorphBallEyeBeamWidening(k: u16, game: &mut Game) {
+    fn add_fixed_point(ram: &mut [u8], whole: usize, fraction: usize, increment: u32) -> u32 {
+        let value =
+            u32::from_le_bytes([ram[fraction], ram[fraction + 1], ram[whole], ram[whole + 1]])
+                .wrapping_add(increment);
+        let bytes = value.to_le_bytes();
+        ram[fraction..fraction + 2].copy_from_slice(&bytes[..2]);
+        ram[whole..whole + 2].copy_from_slice(&bytes[2..]);
+        value
+    }
+
+    // Select the eye-beam layer blending configuration.
+    game.g_ram[0x1986..0x1988].copy_from_slice(&16u16.to_le_bytes());
+    let widening_speed = add_fixed_point(&mut game.g_ram, 0x9080, 0x9082, 0x4000);
+    let slot = usize::from(k & !1);
+    let width_offset = 0x192c + slot;
+    let fraction_offset = 0x1938 + slot;
+    let width = add_fixed_point(
+        &mut game.g_ram,
+        width_offset,
+        fraction_offset,
+        widening_speed,
     );
-    AddToHiLo(
-        ((&raw mut game.g_ram as *mut uint8).offset(0x192c as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v2 as isize) as *mut uint16,
-        ((&raw mut game.g_ram as *mut uint8).offset(0x1938 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v2 as isize) as *mut uint16,
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x9080 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint32)
-            << 16 as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x9082 as ::core::ffi::c_int as isize)
-                as *mut uint16) as uint32,
-    );
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x192c as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v2 as isize) as ::core::ffi::c_int
-        - 4 as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        == 0
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x192c as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v2 as isize) = 4 as uint16;
-        let mut v5: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x18b2 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            >> 1 as ::core::ffi::c_int;
-        let ref mut fresh74 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x18cc as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v5 as isize);
-        *fresh74 = (*fresh74 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x18e4 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v5 as isize) = 1 as uint16;
+    let whole_width = (width >> 16) as u16;
+    if (whole_width.wrapping_sub(4) as i16) >= 0 {
+        // Keep the fractional width when the integer part reaches the limit.
+        game.g_ram[width_offset..width_offset + 2].copy_from_slice(&4u16.to_le_bytes());
+        let current_slot = u16::from_le_bytes([game.g_ram[0x18b2], game.g_ram[0x18b3]]);
+        let current_offset = usize::from(current_slot & !1);
+        let instruction_offset = 0x18cc + current_offset;
+        let next_instruction = u16::from_le_bytes([
+            game.g_ram[instruction_offset],
+            game.g_ram[instruction_offset + 1],
+        ])
+        .wrapping_add(2);
+        game.g_ram[instruction_offset..instruction_offset + 2]
+            .copy_from_slice(&next_instruction.to_le_bytes());
+        let timer_offset = 0x18e4 + current_offset;
+        game.g_ram[timer_offset..timer_offset + 2].copy_from_slice(&1u16.to_le_bytes());
     }
     UpdateMorphBallEyeBeamHdma(k, game);
 }
@@ -9613,8 +9606,8 @@ pub unsafe fn CallHdmaobjPreInstr(mut ea: uint32, mut k: uint16, game: &mut Game
             HdmaobjPreInstr_E7BC(k, game);
             return;
         }
-        8972774 => {
-            HdmaobjPreInstr_E9E6(k, game);
+        fnHdmaobjPreInstr_MorphBallEyeBeamWidening => {
+            HdmaobjPreInstr_MorphBallEyeBeamWidening(k, game);
             return;
         }
         8972860 => {

@@ -12948,6 +12948,27 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Morph Ball eye-beam widening (2026-10-19): rename E9E6 to
+HdmaobjPreInstr_MorphBallEyeBeamWidening and name its dispatch constant.
+Safe byte-backed fixed-point additions retain fraction-before-whole stores,
+updated speed before width, the wrapped signed limit and fractional width
+on clamping. Instruction advance and timer stores use the captured current
+slot; the table updater receives the original argument slot.
+
+Frozen a3acf524 plus only sm_88.rs passes any% 129712/0 (232.12s) and
+Waver 58109/0 (103.86s), native exits 0. The 252-frame checkpoint executes
+six widening calls, five below the limit and one clamping 5.4000 to 4.4000,
+advancing E8FD to E8FF and setting timer 1. All 128 KiB RAM matches the old
+routine both at updater entry and on return; a fractional-speed fault is
+detected at frame 28228, byte 9082. Independent comparisons pass 82,336
+arithmetic/alias pairs and 5,472 pairs with the actual updater/table, including
+all 65,536 integer widths. Unsigned-limit and stale-speed mutants fail.
+Temporary observations strip exactly to the tested source; the maintained
+updater matches it. Source review, Cargo fmt/check, release and progress pass.
+Own raw offsets -12, cast lines -20, Rust lines -7; other counters unchanged.
+No probes or ROM-derived assets committed. Next: the full-beam EA3C callback;
+extend the checkpoint beyond frame 28480 to observe inactive/fade transitions.
+
 Morph Ball eye-beam HDMA (2026-10-19): rename sub_88E987 to
 UpdateMorphBallEyeBeamHdma and use byte-backed angle/width/color reads plus
 existing enemy/camera coordinate accessors. Enemy slot 1, wrapping positions,
