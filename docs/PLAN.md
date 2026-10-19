@@ -75,6 +75,18 @@ pairs match the original signed subtraction masked to the low nibble.
 Actual wait/advance coverage and final any% results remain owned by the
 implementation session; this review does not replace its running replay.
 
+Independent Energy Tank/fade QC (2026-10-19): rerunning retained baseline
+and current Energy Tank libraries through identical hosts recording every
+failure-counter increment passes77139/71 on both, native exits1. All71
+ordered failed-frame numbers match exactly; pickup callback still reports
+frame77102, slot78, amount100, health19/99. One concurrent SRAM output
+reported Unable to write saves/sm.srm; save-file concurrency is not verified
+by this check. No maintained source changed. Source review of pending fade
+cleanup confirms E2F7 fade-out transition, fade-in sound-enable store before
+the spin-jump callback, then0795/0797 flag clears and0998 gameplay store.
+Named setters retain little-endian word layout and callback order. The
+implementation session owns actual fade branch counts and final replay.
+
 ## The oracle
 
 PPU host-field initialization QC (2026-10-19): ppu_init initializes
