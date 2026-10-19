@@ -2022,7 +2022,28 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): `2ddf3af0` shares all twelve corpse
+Latest reviewed integration (2026-10-19): `a089d66c` combines 4429 indexed
+RAM accesses with the 88 patch buffers in parent `1a0fceb5`. Independent
+reconstruction accounts for all edits, including the composed cpu_infra/sm_a9
+files and sm_b3 macro import. Patch addresses, all 510 byte expressions and
+fresh per-byte ROM lookups remain exact. The 1169 RAM metadata rows retain
+their names, addresses, types, shapes and order across 162 named arrays.
+
+Signed element offsets, word widths, RHS-before-index/store order and temporary
+lifetimes are preserved without whole-Game/RAM borrows. The 3470 shared index
+casts, 848 typed literals and 434 i32 aliases preserve the original arithmetic.
+The unchanged macro/field set reuses 10616832 value cases, 10616767 valid signed
+index cases and RHS/index/drop controls; its source hash matches the final code.
+
+All 72 committed source/configuration/host inputs match the tested composition;
+all 77 source/DLL/fixture pins remain stable. Normal release (23.96s), workspace
+release (26.08s), formatting/check and progress pass. Full any% 129712/0
+(118.49s replay, 118.64s wall), native exit 0, covers both focused commits
+together; the completed run was reused. Net Rust lines -3952, unsafe-function
+count unchanged. Raw operations are consolidated. Broader readability,
+frontend execution, full credits and global alias safety retain the limits below.
+
+The prior `2ddf3af0` shares all twelve corpse
 tile initializers. Independent reconstruction accounts for all 50 ordered
 destination/source/length triples and unchanged ROM-address constants. Each
 initializer performs one ROM lookup followed by the same MemCpy calls. Moving
