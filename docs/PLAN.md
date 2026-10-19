@@ -70,6 +70,20 @@ Keep game/host Cargo artifacts with their checkout; external dependency
 caches can be reused separately. Never copy a different checkout's game
 library or package fingerprints as a shortcut to a fresh build.
 
+RAM metadata consolidation (2026-10-19): one row now records each address,
+name, original type and scalar/array shape. The shared declaration removes
+5833 Rust lines (7042 -> 1209) without hiding gameplay operations. All 1169
+compiled rows match the original in order, including aliases; the existing
+diagnostic lookup matches at all 131072 RAM byte addresses. Cast and unsafe
+counts are unchanged by this metadata-only change. Final full replay results
+are recorded with the host build improvement below.
+
+Next disjoint candidate: 3676 literal casts repeat the type already declared
+on their constants (1157 c_int and 2519 uint32). Check every literal against
+its declared range and preserve every constant value before removing them.
+This is separate from arithmetic narrowing, where wrapping/carry semantics
+still need the subsystem work above.
+
 ## Validation strategy (2026-10-19)
 
 User priority: shorten the complete edit/build/result cycle. Replaying the

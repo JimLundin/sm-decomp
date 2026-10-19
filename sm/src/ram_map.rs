@@ -3,8 +3,8 @@
 //! Extracted from snesrev/sm `variables.h` and `variables_extra.h` (rev 578f90b).
 //! c2rust expanded those macros, so the transpiled code reads e.g.
 //! `*(g_ram.offset(0x998) as *mut uint16)` where the C said `game_state`.
-//! Use this table to put the names back (phase 3 of docs/PLAN.md). Nothing
-//! in the game reads it yet.
+//! The verifier uses this table to name RAM mismatches. Use these names when
+//! replacing raw gameplay accesses (phase 3 of docs/PLAN.md).
 
 /// `Scalar`: the name is one value at `addr`. `Array`: the name is a pointer
 /// to the first element of a table of `ty` starting at `addr`.
@@ -23,7020 +23,1187 @@ pub struct RamVar {
     pub shape: Shape,
 }
 
-/// Sorted by address. Several names can share an address.
-pub const RAM_VARS: &[RamVar] = &[
-    RamVar {
-        addr: 0x00012,
-        name: "REMOVED_R18",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00014,
-        name: "REMOVED_R20",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00016,
-        name: "REMOVED_R22",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00051,
-        name: "reg_INIDISP",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00052,
-        name: "reg_OBSEL",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00053,
-        name: "reg_OAMaddr_UNUSED",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00055,
-        name: "reg_BGMODE",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00056,
-        name: "reg_BGMODE_fake",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00057,
-        name: "reg_MOSAIC",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00058,
-        name: "reg_BG1SC",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00059,
-        name: "reg_BG2SC",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0005A,
-        name: "reg_BG3SC",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0005B,
-        name: "gameplay_BG3SC",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0005C,
-        name: "reg_BG4SC",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0005D,
-        name: "reg_BG12NBA",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0005E,
-        name: "reg_BG34NBA",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0005F,
-        name: "reg_M7SEL",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00060,
-        name: "reg_W12SEL",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00061,
-        name: "reg_W34SEL",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00062,
-        name: "reg_WOBJSEL",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00063,
-        name: "reg_WH0",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00064,
-        name: "reg_WH1",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00065,
-        name: "reg_WH2",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00066,
-        name: "reg_WH3",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00067,
-        name: "reg_WBGLOG",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00068,
-        name: "reg_WOBJLOG",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00069,
-        name: "reg_TM",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0006A,
-        name: "gameplay_TM",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0006B,
-        name: "reg_TS",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0006C,
-        name: "reg_TMW",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0006D,
-        name: "reg_TSW",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0006E,
-        name: "next_gameplay_CGWSEL",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0006F,
-        name: "reg_CGWSEL",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00070,
-        name: "gameplay_CGWSEL",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00071,
-        name: "next_gameplay_CGADSUB",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00072,
-        name: "reg_CGADSUB",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00073,
-        name: "gameplay_CGADSUB",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00074,
-        name: "reg_COLDATA",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00077,
-        name: "reg_SETINI",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00078,
-        name: "reg_M7A",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0007A,
-        name: "reg_M7B",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0007C,
-        name: "reg_M7C",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0007E,
-        name: "reg_M7D",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00080,
-        name: "reg_M7X",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00082,
-        name: "reg_M7Y",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00084,
-        name: "reg_NMITIMEN",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00085,
-        name: "reg_HDMAEN",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00086,
-        name: "reg_MEMSEL",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00087,
-        name: "joypad_ctr_repeat_first",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00089,
-        name: "joypad_ctr_repeat_next",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0008B,
-        name: "joypad1_lastkeys",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0008D,
-        name: "joypad2_last",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0008F,
-        name: "joypad1_newkeys",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00091,
-        name: "joypad2_new_keys",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00093,
-        name: "joypad1_newkeys2_UNUSED",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00095,
-        name: "joypad2_newkeys2",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00097,
-        name: "joypad1_prev",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00099,
-        name: "joypad2_prev",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x000A3,
-        name: "joypad1_keyrepeat_ctr",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x000A5,
-        name: "joypad2_keyrepeat_ctr",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x000A7,
-        name: "irqhandler_next_handler",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x000A9,
-        name: "room_loading_irq_handler",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x000AB,
-        name: "cur_irq_handler",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x000AD,
-        name: "REMOVED_ptr_to_retaddr_parameters",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x000AF,
-        name: "current_region_animated_palette_fx",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x000B1,
-        name: "reg_BG1HOFS",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x000B3,
-        name: "reg_BG1VOFS",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x000B5,
-        name: "reg_BG2HOFS",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x000B7,
-        name: "reg_BG2VOFS",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x000B9,
-        name: "reg_BG3HOFS",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x000BB,
-        name: "reg_BG3VOFS",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x000BD,
-        name: "reg_BG4HOFS",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x000BF,
-        name: "reg_BG4VOFS",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x000C2,
-        name: "bug_fix_counter",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x000C4,
-        name: "g_word_7E00C4",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x000D0,
-        name: "vram_write_queue",
-        ty: "VramWriteEntry",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x002D0,
-        name: "mode7_write_queue",
-        ty: "Mode7VramWriteQueue",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00330,
-        name: "vram_write_queue_tail",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00334,
-        name: "mode7_vram_write_queue_tail",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00340,
-        name: "vram_read_queue",
-        ty: "VramReadQueueEnt",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00360,
-        name: "vram_read_queue_tail",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00370,
-        name: "oam_ent",
-        ty: "OamEnt",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00570,
-        name: "oam_ext",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00590,
-        name: "oam_next_ptr",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00592,
-        name: "power_bomb_explosion_status",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00596,
-        name: "g_word_7E0596",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00598,
-        name: "g_word_7E0598",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0059A,
-        name: "set_to_e0_by_scrolling_sky",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0059C,
-        name: "UNUSED_word_7E059C",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005A0,
-        name: "UNUSED_hdma_contracting_flag",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005A2,
-        name: "message_box_animation_y_radius",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005A4,
-        name: "message_box_animation_y0",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005A6,
-        name: "message_box_animation_y1",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005A8,
-        name: "message_box_animation_y2",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005AA,
-        name: "message_box_animation_y3",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005AC,
-        name: "map_min_x_scroll",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005AE,
-        name: "map_max_x_scroll",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005B0,
-        name: "map_min_y_scroll",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005B2,
-        name: "map_max_y_scroll",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005B4,
-        name: "waiting_for_nmi",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005B5,
-        name: "nmi_frame_counter_byte",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005B6,
-        name: "nmi_frame_counter_word",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005B8,
-        name: "nmi_frame_counter_including_lag",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005BA,
-        name: "nmi_frames_missed",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005BB,
-        name: "nmi_frames_missed_max",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005C5,
-        name: "joypad_dbg_1",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005C7,
-        name: "joypad_dbg_2",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005C9,
-        name: "joypad_dbg_missiles_swap",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005CB,
-        name: "joypad_dbg_super_missiles_swap",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005CD,
-        name: "joypad_dbg_power_bombs_swap",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005CF,
-        name: "joypad_dbg_flags",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005D1,
-        name: "enable_debug",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005D3,
-        name: "debug_saveload_scrollpos_toggle",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005D5,
-        name: "debug_saved_xscroll",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005D7,
-        name: "debug_saved_yscroll",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005D9,
-        name: "joypad_released_keys",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005DB,
-        name: "timed_held_input_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005DD,
-        name: "timed_held_input_timer_reset",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005DF,
-        name: "timed_held_input",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005E1,
-        name: "newly_held_down_timed_held_input",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005E3,
-        name: "previous_timed_held_input",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005E5,
-        name: "random_number",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005E7,
-        name: "bitmask",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005E9,
-        name: "REMOVED_mult_tmp_a",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005EB,
-        name: "REMOVED_mult_tmp_y",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005F1,
-        name: "REMOVED_mult_product_lo",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005F3,
-        name: "REMOVED_mult_product_hi",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005F5,
-        name: "debug_disable_sounds",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005F7,
-        name: "debug_disable_minimap",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005F9,
-        name: "save_confirmation_selection",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005FB,
-        name: "map_scrolling_gear_switch_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005FD,
-        name: "map_scrolling_direction",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x005FF,
-        name: "map_scrolling_speed_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00601,
-        name: "pause_hook",
-        ty: "LongPtr",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00604,
-        name: "unpause_hook",
-        ty: "LongPtr",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00607,
-        name: "earthquake_sfx_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00609,
-        name: "earthquake_sfx_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0060B,
-        name: "eproj_init_param_3",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0060D,
-        name: "REMOVED_remaining_enemy_hitbox_entries",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0060F,
-        name: "REMOVED_num_projectiles_to_check_enemy_coll",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00611,
-        name: "coroutine_state_0",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00612,
-        name: "coroutine_state_1",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00613,
-        name: "coroutine_state_2",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00614,
-        name: "coroutine_state_3",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00615,
-        name: "coroutine_state_4",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00617,
-        name: "is_uploading_apu",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00619,
-        name: "music_queue_track",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00629,
-        name: "music_queue_delay",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00639,
-        name: "music_queue_write_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0063B,
-        name: "music_queue_read_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0063D,
-        name: "music_entry",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0063F,
-        name: "music_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00641,
-        name: "REMOVED_apu_attempts_countdown",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00643,
-        name: "sfx_readpos",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00646,
-        name: "sfx_writepos",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00649,
-        name: "sfx_state",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0064C,
-        name: "cur_music_track",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0064D,
-        name: "sfx_cur",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00650,
-        name: "sfx_clear_delay",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00653,
-        name: "sfx_max_queued",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00656,
-        name: "sfx1_queue",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00666,
-        name: "sfx2_queue",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00676,
-        name: "sfx3_queue",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00686,
-        name: "sound_handler_downtime",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00688,
-        name: "croco_target_0688",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0068A,
-        name: "g_word_7E068A",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0068C,
-        name: "croco_word_068C",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0068E,
-        name: "g_word_7E068E",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00690,
-        name: "croco_cur_vline_idx",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00692,
-        name: "g_word_7E0692",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00694,
-        name: "g_word_7E0694",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00696,
-        name: "g_word_7E0696",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00698,
-        name: "g_word_7E0698",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0069A,
-        name: "croco_word_7E069A",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0069C,
-        name: "croco_vline_height",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0071C,
-        name: "UNUSED_byte_7E071C",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0071D,
-        name: "nmi_copy_samus_halves",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0071F,
-        name: "nmi_copy_samus_top_half_src",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00721,
-        name: "nmi_copy_samus_bottom_half_src",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00723,
-        name: "screen_fade_delay",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00725,
-        name: "screen_fade_counter",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00727,
-        name: "menu_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00729,
-        name: "pausemenu_start_lr_pressed_highlight_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0072B,
-        name: "pausemenu_lr_animation_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0072D,
-        name: "pausemenu_item_selector_animation_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0072F,
-        name: "pausemenu_reserve_tank_animation_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00731,
-        name: "UNUSED_word_7E0731",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00733,
-        name: "pausemenu_uparrow_animation_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00735,
-        name: "pausemenu_downarrow_animation_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00737,
-        name: "pausemenu_rightarrow_animation_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00739,
-        name: "pausemenu_leftarrow_animation_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0073B,
-        name: "pausemenu_palette_animation_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0073D,
-        name: "UNUSED_word_7E073D",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0073F,
-        name: "pausemenu_lr_animation_frame",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00741,
-        name: "pausemenu_item_selector_animation_frame",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00743,
-        name: "pausemenu_reserve_tank_animation_frame",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00745,
-        name: "UNUSED_word_7E0745",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00747,
-        name: "pausemenu_uparrow_animation_frame",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00749,
-        name: "pausemenu_downarrow_animation_frame",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0074B,
-        name: "pausemenu_rightarrow_animation_frame",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0074D,
-        name: "pausemenu_leftarrow_animation_frame",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0074F,
-        name: "pausemenu_palette_animation_frame",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00751,
-        name: "pausemenu_shoulder_button_highlight",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00753,
-        name: "pausemenu_button_label_mode",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00755,
-        name: "pausemenu_equipment_category_item",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00757,
-        name: "pausemenu_reserve_tank_delay_ctr",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00759,
-        name: "UNUSED_word_7E0759",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0075B,
-        name: "UNUSED_word_7E075B",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0075D,
-        name: "UNUSED_word_7E075D",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0075F,
-        name: "UNUSED_word_7E075F",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00761,
-        name: "UNUSED_word_7E0761",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00763,
-        name: "pause_screen_mode",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00765,
-        name: "pausemenu_bak_BG1SC",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00766,
-        name: "pausemenu_bak_BG2SC",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00767,
-        name: "pausemenu_bak_BG3SC",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00768,
-        name: "pausemenu_bak_BG12NBA",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00769,
-        name: "pausemenu_bak_BG34NBA",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0076A,
-        name: "pausemenu_bak_OBSEL",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0076B,
-        name: "pausemenu_bak_BG1HOFS",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0076C,
-        name: "pausemenu_bak_BG2HOFS",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0076D,
-        name: "pausemenu_bak_BG3HOFS",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0076E,
-        name: "pausemenu_bak_BG1VOFS",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0076F,
-        name: "pausemenu_bak_BG2VOFS",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00770,
-        name: "pausemenu_bak_BG3VOFS",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00771,
-        name: "pausemenu_bak_BGMODE",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00772,
-        name: "pausemenu_bak_layer2_scroll_x",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00773,
-        name: "pausemenu_bak_layer2_scroll_y",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00774,
-        name: "pausemenu_bak_MOSAIC",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00775,
-        name: "pausemenu_bak_CGADSUB",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00776,
-        name: "samus_position_indicator_animation_frame",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00778,
-        name: "samus_position_indicator_animation_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0077A,
-        name: "samus_position_indicator_animation_loop_counter",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0077C,
-        name: "hud_item_tilemap_palette_bits",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0077E,
-        name: "my_counter",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00780,
-        name: "my_counter2",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00782,
-        name: "coroutine_completion_flags",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00783,
-        name: "irq_enable_mode7",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00785,
-        name: "mode7_rotation_angle",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00787,
-        name: "g_word_7E0787",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00789,
-        name: "has_area_map",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0078B,
-        name: "load_station_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0078D,
-        name: "door_def_ptr",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0078F,
-        name: "REMOVED_door_bts",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00791,
-        name: "door_direction",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00793,
-        name: "elevator_door_properties_orientation",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00795,
-        name: "door_transition_flag_elevator_zebetites",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00797,
-        name: "door_transition_flag_enemies",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00799,
-        name: "elevator_direction",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0079B,
-        name: "room_ptr",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0079D,
-        name: "room_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0079F,
-        name: "area_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007A1,
-        name: "room_x_coordinate_on_map",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007A3,
-        name: "room_y_coordinate_on_map",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007A5,
-        name: "room_width_in_blocks",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007A7,
-        name: "room_height_in_blocks",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007A9,
-        name: "room_width_in_scrolls",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007AB,
-        name: "room_height_in_scrolls",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007AD,
-        name: "up_scroller",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007AF,
-        name: "down_scroller",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007B1,
-        name: "previous_cre_bitset",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007B3,
-        name: "cre_bitset",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007B5,
-        name: "door_list_pointer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007B7,
-        name: "REMOVED_event_pointer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007B9,
-        name: "room_size_in_blocks",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007BB,
-        name: "roomdefroomstate_ptr",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007BD,
-        name: "room_compr_level_data_ptr",
-        ty: "LongPtr",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007C0,
-        name: "tileset_tile_table_pointer",
-        ty: "LongPtr",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007C3,
-        name: "tileset_tiles_pointer",
-        ty: "LongPtr",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007C6,
-        name: "tileset_compr_palette_ptr",
-        ty: "LongPtr",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007C9,
-        name: "room_music_track_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007CB,
-        name: "room_music_data_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007CD,
-        name: "room_layer3_asm_ptr",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007CF,
-        name: "room_enemy_population_ptr",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007D1,
-        name: "room_enemy_tilesets_ptr",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007DF,
-        name: "room_main_code_ptr",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007E1,
-        name: "room_main_asm_variables",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x007E9,
-        name: "scrolling_finished_hook",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007EB,
-        name: "hdma_data_table_in_ceres",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007F3,
-        name: "music_data_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007F5,
-        name: "music_track_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x007F7,
-        name: "map_tiles_explored",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x008F7,
-        name: "layer1_x_block",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x008F9,
-        name: "layer1_y_block",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x008FB,
-        name: "layer2_x_block",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x008FD,
-        name: "layer2_y_block",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x008FF,
-        name: "previous_layer1_x_block",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00901,
-        name: "previous_layer1_y_block",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00903,
-        name: "previous_layer2_x_block",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00905,
-        name: "previous_layer2_y_block",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00907,
-        name: "bg1_x_block",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00909,
-        name: "bg1_y_block",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0090B,
-        name: "bg2_x_block",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0090D,
-        name: "bg2_y_block",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0090F,
-        name: "layer1_x_subpos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00911,
-        name: "layer1_x_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00913,
-        name: "layer1_y_subpos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00915,
-        name: "layer1_y_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00917,
-        name: "layer2_x_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00919,
-        name: "layer2_y_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0091B,
-        name: "layer2_scroll_x",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0091C,
-        name: "layer2_scroll_y",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0091D,
-        name: "bg1_x_offset",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0091F,
-        name: "bg1_y_offset",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00921,
-        name: "bg2_x_scroll",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00923,
-        name: "bg2_y_scroll",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00925,
-        name: "door_transition_frame_counter",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00927,
-        name: "door_destination_x_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00929,
-        name: "door_destination_y_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0092B,
-        name: "samus_door_transition_subspeed",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0092D,
-        name: "samus_door_transition_speed",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0092F,
-        name: "downwards_elevator_delay_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00931,
-        name: "door_transition_flag",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00933,
-        name: "REMOVED_var933",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00935,
-        name: "REMOVED_var935",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00937,
-        name: "REMOVED_var937",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00939,
-        name: "REMOVED_var939",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0093B,
-        name: "REMOVED_var93B",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0093F,
-        name: "ceres_status",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00941,
-        name: "camera_distance_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00943,
-        name: "timer_status",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00945,
-        name: "timer_centiseconds",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00946,
-        name: "timer_seconds",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00947,
-        name: "timer_minutes",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00948,
-        name: "timer_x_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0094A,
-        name: "timer_y_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00950,
-        name: "file_select_map_area_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00952,
-        name: "selected_save_slot",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00954,
-        name: "nonempty_save_slots",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00956,
-        name: "bg1_update_col_unwrapped_size",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00958,
-        name: "bg1_update_col_wrapped_size",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0095A,
-        name: "bg1_update_col_unwrapped_dst",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0095C,
-        name: "bg1_update_col_wrapped_dst",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0095E,
-        name: "bg1_update_col_wrapped_left_src",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00960,
-        name: "bg1_update_col_wrapped_right_src",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00962,
-        name: "bg1_update_col_enable",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00964,
-        name: "bg1_update_row_unwrapped_size",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00966,
-        name: "bg1_update_row_wrapped_size",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00968,
-        name: "bg1_update_row_unwrapped_dst",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0096A,
-        name: "bg1_update_row_wrapped_dst",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0096C,
-        name: "bg1_update_row_wrapped_top_src",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0096E,
-        name: "bg1_update_row_wrapped_bottom_src",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00970,
-        name: "bg1_update_row_enable",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00972,
-        name: "bg2_update_col_unwrapped_size",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00974,
-        name: "bg2_update_col_wrapped_size",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00976,
-        name: "bg2_update_col_unwrapped_dst",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00978,
-        name: "bg2_update_col_wrapped_dst",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0097A,
-        name: "bg2_update_col_wrapped_left_src",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0097C,
-        name: "bg2_update_col_wrapped_right_src",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0097E,
-        name: "bg2_update_col_enable",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00980,
-        name: "bg2_update_row_unwrapped_size",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00982,
-        name: "bg2_update_row_wrapped_size",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00984,
-        name: "bg2_update_row_unwrapped_dst",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00986,
-        name: "bg2_update_row_wrapped_dst",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00988,
-        name: "bg2_update_row_wrapped_top_src",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0098A,
-        name: "bg2_update_row_wrapped_bottom_src",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0098C,
-        name: "bg2_update_row_enable",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0098E,
-        name: "size_of_bg2",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00990,
-        name: "blocks_to_update_x_block",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00992,
-        name: "blocks_to_update_y_block",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00994,
-        name: "vram_blocks_to_update_x_block",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00996,
-        name: "vram_blocks_to_update_y_block",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00998,
-        name: "game_state",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0099C,
-        name: "door_transition_function",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0099E,
-        name: "menu_option_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009A2,
-        name: "equipped_items",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009A4,
-        name: "collected_items",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009A6,
-        name: "equipped_beams",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009A8,
-        name: "collected_beams",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009AA,
-        name: "button_config_up",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009AC,
-        name: "button_config_down",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009AE,
-        name: "button_config_left",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009B0,
-        name: "button_config_right",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009B2,
-        name: "button_config_shoot_x",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009B4,
-        name: "button_config_jump_a",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009B6,
-        name: "button_config_run_b",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009B8,
-        name: "button_config_itemcancel_y",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009BA,
-        name: "button_config_itemswitch",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009BC,
-        name: "button_config_aim_down_L",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009BE,
-        name: "button_config_aim_up_R",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009C0,
-        name: "reserve_health_mode",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009C2,
-        name: "samus_health",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009C4,
-        name: "samus_max_health",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009C6,
-        name: "samus_missiles",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009C8,
-        name: "samus_max_missiles",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009CA,
-        name: "samus_super_missiles",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009CC,
-        name: "samus_max_super_missiles",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009CE,
-        name: "samus_power_bombs",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009D0,
-        name: "samus_max_power_bombs",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009D2,
-        name: "hud_item_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009D4,
-        name: "samus_max_reserve_health",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009D6,
-        name: "samus_reserve_health",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009D8,
-        name: "samus_reserve_missiles",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009DA,
-        name: "game_time_frames",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009DC,
-        name: "game_time_seconds",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009DE,
-        name: "game_time_minutes",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009E0,
-        name: "game_time_hours",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009E2,
-        name: "japanese_text_flag",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009E4,
-        name: "moonwalk_flag",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009E6,
-        name: "debug_flag",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009E8,
-        name: "UNUSED_word_7E09E8",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x009EA,
-        name: "hud_auto_cancel_flag",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A04,
-        name: "samus_auto_cancel_hud_item_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A06,
-        name: "samus_prev_health",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A08,
-        name: "samus_prev_missiles",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A0A,
-        name: "samus_prev_super_missiles",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A0C,
-        name: "samus_prev_power_bombs",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A0E,
-        name: "samus_prev_hud_item_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A11,
-        name: "samus_prev_movement_type",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A12,
-        name: "samus_prev_health_for_flash",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A14,
-        name: "controller1_input_for_demo",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A16,
-        name: "controller1_new_input_for_demo",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A18,
-        name: "UNUSED_word_7E0A18",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A1C,
-        name: "samus_pose",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A1E,
-        name: "samus_pose_x_dir",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A1F,
-        name: "samus_movement_type",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A20,
-        name: "samus_prev_pose",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A22,
-        name: "samus_prev_pose_x_dir",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A23,
-        name: "samus_prev_movement_type2",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A24,
-        name: "samus_last_different_pose",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A26,
-        name: "samus_last_different_pose_x_dir",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A27,
-        name: "samus_last_different_pose_movement_type",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A28,
-        name: "samus_new_pose",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A2A,
-        name: "samus_new_pose_interrupted",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A2C,
-        name: "samus_new_pose_transitional",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A2E,
-        name: "samus_momentum_routine_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A30,
-        name: "samus_special_transgfx_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A32,
-        name: "samus_hurt_switch_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A34,
-        name: "solid_enemy_collision_flags",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A36,
-        name: "block_collision_flags",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A38,
-        name: "samus_space_to_move_up_blocks",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A3A,
-        name: "samus_y_radius_diff",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A3C,
-        name: "samus_space_to_move_down_blocks",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A3E,
-        name: "samus_space_to_move_up_enemy",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A40,
-        name: "samus_space_to_move_down_enemy",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A42,
-        name: "frame_handler_alfa",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A44,
-        name: "frame_handler_beta",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A46,
-        name: "enable_horiz_slope_coll",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A48,
-        name: "samus_hurt_flash_counter",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A4A,
-        name: "samus_special_super_palette_flags",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A4C,
-        name: "samus_subunit_health",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A4E,
-        name: "samus_periodic_subdamage",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A50,
-        name: "samus_periodic_damage",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A52,
-        name: "knockback_dir",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A54,
-        name: "knockback_x_dir",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A56,
-        name: "bomb_jump_dir",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A58,
-        name: "samus_movement_handler",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A5A,
-        name: "frame_handler_gamma",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A5C,
-        name: "samus_draw_handler",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A5E,
-        name: "UNUSED_word_7E0A5E",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A60,
-        name: "samus_input_handler",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A62,
-        name: "samus_var62",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A64,
-        name: "samus_grapple_flags",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A66,
-        name: "samus_x_speed_divisor",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A68,
-        name: "samus_shine_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A6A,
-        name: "samus_health_warning",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A6C,
-        name: "samus_x_speed_table_pointer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A6E,
-        name: "samus_contact_damage_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A72,
-        name: "samus_visor_palette_timer_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A74,
-        name: "samus_suit_palette_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A76,
-        name: "hyper_beam_flag",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A78,
-        name: "time_is_frozen_flag",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A7A,
-        name: "demo_input_pre_instr",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A7C,
-        name: "demo_input_instr_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A7E,
-        name: "demo_input_instr_ptr",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A80,
-        name: "demo_timer_counter",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A82,
-        name: "xray_angle",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A84,
-        name: "demo_input",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A86,
-        name: "demo_input_new",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A88,
-        name: "demo_enable",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A88,
-        name: "hdma_ptr_1",
-        ty: "LongPtr",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A8A,
-        name: "demo_num_input_frames",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A8B,
-        name: "hdma_ptr_2",
-        ty: "LongPtr",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A8C,
-        name: "demo_input_prev",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A8E,
-        name: "demo_input_prev_new",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A8E,
-        name: "hdma_ptr_3",
-        ty: "LongPtr",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A90,
-        name: "demo_backup_prev_controller_input",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A91,
-        name: "hdma_var_1",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A92,
-        name: "demo_backup_prev_controller_input_new",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A94,
-        name: "samus_anim_frame_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A96,
-        name: "samus_anim_frame",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A9A,
-        name: "samus_anim_frame_skip",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A9C,
-        name: "samus_anim_frame_buffer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00A9E,
-        name: "grapple_walljump_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00AA0,
-        name: "reached_ceres_elevator_fade_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00AA2,
-        name: "timer_for_shinesparks_startstop",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00AA4,
-        name: "UNUSEDword_7E0AA4",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00AA6,
-        name: "flag_arm_cannon_open_or_opening",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00AA7,
-        name: "flag_arm_cannon_opening_or_closing",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00AA8,
-        name: "arm_cannon_frame",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00AAA,
-        name: "hud_item_changed_this_frame",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00AAC,
-        name: "arm_cannon_drawing_mode",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00AAE,
-        name: "speed_echoes_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00AB0,
-        name: "speed_echo_xpos",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00AB8,
-        name: "speed_echo_ypos",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00AC0,
-        name: "speed_echo_xspeed",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00AC8,
-        name: "samus_top_half_spritemap_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00ACA,
-        name: "samus_bottom_half_spritemap_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00ACC,
-        name: "timer_for_shine_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00ACE,
-        name: "special_samus_palette_frame",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00AD0,
-        name: "special_samus_palette_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00AD2,
-        name: "liquid_physics_type",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00AD4,
-        name: "atmospheric_gfx_anim_timer",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00ADC,
-        name: "atmospheric_gfx_x_pos",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00AE4,
-        name: "atmospheric_gfx_y_pos",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00AEC,
-        name: "atmospheric_gfx_frame_and_type",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00AF4,
-        name: "autojump_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00AF6,
-        name: "samus_x_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00AF8,
-        name: "samus_x_subpos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00AFA,
-        name: "samus_y_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00AFC,
-        name: "samus_y_subpos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00AFE,
-        name: "samus_x_radius",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B00,
-        name: "samus_y_radius",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B02,
-        name: "samus_collision_direction",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B04,
-        name: "samus_spritemap_x_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B06,
-        name: "samus_spritemap_y_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B0A,
-        name: "ideal_layer1_xpos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B0E,
-        name: "ideal_layer1_ypos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B10,
-        name: "samus_prev_x_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B12,
-        name: "samus_prev_x_subpos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B14,
-        name: "samus_prev_y_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B16,
-        name: "samus_prev_y_subpos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B18,
-        name: "charged_shot_glow_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B1A,
-        name: "UNUSED_word_7E0B1A",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B20,
-        name: "used_for_ball_bounce_on_landing",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B22,
-        name: "samus_is_falling_flag",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B24,
-        name: "tempB24",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B26,
-        name: "tempB26",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B2A,
-        name: "UNUSED_word_7E0B2A",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B2C,
-        name: "samus_y_subspeed",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B2E,
-        name: "samus_y_speed",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B32,
-        name: "samus_y_subaccel",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B34,
-        name: "samus_y_accel",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B36,
-        name: "samus_y_dir",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B38,
-        name: "UNUSED_word_7E0B38",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B3C,
-        name: "samus_has_momentum_flag",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B3E,
-        name: "speed_boost_counter",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B40,
-        name: "samus_echoes_sound_flag",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B42,
-        name: "samus_x_extra_run_speed",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B44,
-        name: "samus_x_extra_run_subspeed",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B46,
-        name: "samus_x_base_speed",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B48,
-        name: "samus_x_base_subspeed",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B4A,
-        name: "samus_x_accel_mode",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B4C,
-        name: "samus_x_decel_mult",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B56,
-        name: "extra_samus_x_subdisplacement",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B58,
-        name: "extra_samus_x_displacement",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B5A,
-        name: "extra_samus_y_subdisplacement",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B5C,
-        name: "extra_samus_y_displacement",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B5E,
-        name: "new_projectile_direction_changed_pose",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B60,
-        name: "used_for_sba_attacksB60",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B62,
-        name: "samus_charge_palette_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00B64,
-        name: "projectile_x_pos",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00B78,
-        name: "projectile_y_pos",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00B8C,
-        name: "projectile_bomb_x_subpos",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00BA0,
-        name: "projectile_bomb_y_subpos",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00BB4,
-        name: "projectile_x_radius",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00BC8,
-        name: "projectile_y_radius",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00BDC,
-        name: "projectile_bomb_x_speed",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00BF0,
-        name: "projectile_bomb_y_speed",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00C04,
-        name: "projectile_dir",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00C18,
-        name: "projectile_type",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00C2C,
-        name: "projectile_damage",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00C40,
-        name: "projectile_bomb_instruction_ptr",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00C54,
-        name: "projectile_bomb_instruction_timers",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00C68,
-        name: "projectile_bomb_pre_instructions",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00C72,
-        name: "bomb_functions",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00C7C,
-        name: "projectile_variables",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00C86,
-        name: "bomb_timers",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00C90,
-        name: "projectile_timers",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00C9A,
-        name: "bomb_subspeeds",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00CA4,
-        name: "projectile_unk_A",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00CB8,
-        name: "projectile_spritemap_pointers",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00CCC,
-        name: "cooldown_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00CCE,
-        name: "projectile_counter",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00CD0,
-        name: "flare_counter",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00CD2,
-        name: "bomb_counter",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00CD4,
-        name: "bomb_spread_charge_timeout_counter",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00CD6,
-        name: "flare_animation_frame",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00CD8,
-        name: "flare_slow_sparks_anim_frame",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00CDA,
-        name: "flare_fast_sparks_anim_frame",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00CDC,
-        name: "flare_animation_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00CDE,
-        name: "flare_slow_sparks_anim_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00CE0,
-        name: "flare_fast_sparks_anim_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00CE2,
-        name: "power_bomb_explosion_x_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00CE4,
-        name: "power_bomb_explosion_y_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00CE6,
-        name: "power_bomb_explosion_x_pos_plus_0x100",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00CE8,
-        name: "power_bomb_explosion_y_pos_rsub_0x1ff",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00CEA,
-        name: "power_bomb_explosion_radius",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00CEC,
-        name: "power_bomb_pre_explosion_flash_radius",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00CEE,
-        name: "power_bomb_flag",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00CF0,
-        name: "power_bomb_pre_explosion_radius_speed",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00CF2,
-        name: "pre_scaled_power_bomb_explosion_shape_def_ptr",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00CF4,
-        name: "grapple_beam_flags",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00CF6,
-        name: "grapple_varCF6",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00CF8,
-        name: "slow_grabble_scrolling_flag",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00CFA,
-        name: "grapple_beam_end_angle16",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00CFB,
-        name: "grapple_beam_end_angle_hi",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00CFC,
-        name: "grapple_beam_end_angles_mirror",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00CFE,
-        name: "grapple_beam_length",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D00,
-        name: "grapple_beam_length_delta",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D02,
-        name: "grapple_beam_origin_x_offset",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D04,
-        name: "grapple_beam_origin_y_offset",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D06,
-        name: "grapple_beam_end_x_subpos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D08,
-        name: "grapple_beam_end_x_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D0A,
-        name: "grapple_beam_end_y_subpos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D0C,
-        name: "grapple_beam_end_y_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D0E,
-        name: "grapple_beam_end_x_suboffset",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D10,
-        name: "grapple_beam_end_x_offset",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D12,
-        name: "grapple_beam_end_y_suboffset",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D14,
-        name: "grapple_beam_end_y_offset",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D16,
-        name: "x_pos_of_start_of_grapple_beam",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D18,
-        name: "y_pos_of_start_of_grapple_beam",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D1A,
-        name: "x_pos_of_start_of_grapple_beam_prevframe",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D1C,
-        name: "y_pos_of_start_of_grapple_beam_prevframe",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D1E,
-        name: "grapple_beam_unkD1E",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D20,
-        name: "grapple_beam_unkD20",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D22,
-        name: "grapple_beam_extension_x_velocity",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D24,
-        name: "grapple_beam_extension_y_velocity",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D26,
-        name: "grapple_beam_unkD26",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D28,
-        name: "grapple_beam_unkD28",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D2A,
-        name: "grapple_beam_unkD2A",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D2C,
-        name: "grapple_beam_unkD2C",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D2E,
-        name: "grapple_beam_unkD2E",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D30,
-        name: "grapple_beam_unkD30",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D32,
-        name: "grapple_beam_function",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D34,
-        name: "grapple_beam_direction",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D36,
-        name: "grapple_beam_unkD36",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D38,
-        name: "grapple_beam_unkD38",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D3A,
-        name: "grapple_beam_unkD3A",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D3C,
-        name: "grapple_beam_unkD3C",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D3E,
-        name: "grapple_point_anim_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D40,
-        name: "grapple_point_anim_ptr",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D42,
-        name: "grapple_segment_anim_instr_timers",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00D62,
-        name: "grapple_segment_anim_instr_ptrs",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00D82,
-        name: "button_config_shoot_x_saved",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D84,
-        name: "button_config_jump_a_saved",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D86,
-        name: "button_config_run_b_saved",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D88,
-        name: "button_config_itemcancel_y_saved",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D8A,
-        name: "button_config_itemswitch_saved",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D8C,
-        name: "button_config_aim_down_L_saved",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D8E,
-        name: "button_config_aim_up_R_saved",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D90,
-        name: "grapple_beam_grapple_start_x",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D92,
-        name: "grapple_beam_grapple_start_y",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D94,
-        name: "grapple_beam_grapple_start_block_x",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D96,
-        name: "grapple_beam_grapple_start_block_y",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D98,
-        name: "g_word_7E0D98",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D9C,
-        name: "g_word_7E0D9C",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D9E,
-        name: "g_byte_7E0D9E",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00D9F,
-        name: "g_byte_7E0D9F",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DA0,
-        name: "loop_counter_transfer_enemies_to_vram",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DA2,
-        name: "absolute_moved_last_frame_x",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DA4,
-        name: "absolute_moved_last_frame_x_fract",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DA6,
-        name: "absolute_moved_last_frame_y",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DA8,
-        name: "absolute_moved_last_frame_y_fract",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DAA,
-        name: "projectile_init_speed_samus_moved_left",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DAC,
-        name: "projectile_init_speed_samus_moved_left_fract",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DAE,
-        name: "projectile_init_speed_samus_moved_right",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DB0,
-        name: "projectile_init_speed_samus_moved_right_fract",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DB2,
-        name: "projectile_init_speed_samus_moved_up",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DB4,
-        name: "projectile_init_speed_samus_moved_up_fract",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DB6,
-        name: "projectile_init_speed_samus_moved_down",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DB8,
-        name: "projectile_init_speed_samus_moved_down_fract",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DBA,
-        name: "samus_pos_adjusted_by_slope_flag",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DBC,
-        name: "samus_total_x_speed",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DBE,
-        name: "samus_total_x_subspeed",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DC0,
-        name: "play_resume_charging_beam_sfx",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DC2,
-        name: "prev_beam_charge_counter",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DC4,
-        name: "cur_block_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DC6,
-        name: "input_to_pose_calc",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DC8,
-        name: "queued_message_box_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DCE,
-        name: "samus_collides_with_solid_enemy",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DD0,
-        name: "samus_collision_flag",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DD2,
-        name: "REMOVED_temp_collision_DD2",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DD4,
-        name: "REMOVED_temp_collision_DD4",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DD6,
-        name: "REMOVED_temp_collision_DD6",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DDC,
-        name: "suit_pickup_light_beam_widening_speed",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DDE,
-        name: "projectile_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DE0,
-        name: "debug_invincibility",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DE2,
-        name: "game_options_screen_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DE4,
-        name: "g_word_7E0DE4",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DE6,
-        name: "g_word_7E0DE6",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DE8,
-        name: "g_word_7E0DE8",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DEA,
-        name: "which_item_to_pickup",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DEC,
-        name: "substate",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DEE,
-        name: "suit_pickup_light_beam_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DF0,
-        name: "suit_pickup_color_math_R",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DF1,
-        name: "suit_pickup_color_math_G",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DF2,
-        name: "suit_pickup_color_math_B",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DF3,
-        name: "suit_pickup_palette_transition_color",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DF4,
-        name: "UNUSED_debug_spare_cpu_display_flag",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DF6,
-        name: "UNUSED_word_7E0DF6",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DF8,
-        name: "UNUSED_word_7E0DF8",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DFA,
-        name: "UNUSED_word_7E0DFA",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DFC,
-        name: "UNUSED_word_7E0DFC",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00DFE,
-        name: "joypad1_input_samusfilter",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E00,
-        name: "joypad1_newinput_samusfilter",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E02,
-        name: "REMOVED_samus_bottom_boundary_position",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E04,
-        name: "distance_to_eject_samus_left",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E06,
-        name: "distance_to_eject_samus_right",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E08,
-        name: "distance_to_eject_samus_up",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E0A,
-        name: "distance_to_eject_samus_down",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E0C,
-        name: "g_byte_7E0E0C",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00E12,
-        name: "debug_disable_sprite_interact",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E16,
-        name: "elevator_flags",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E18,
-        name: "elevator_status",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E1A,
-        name: "health_drop_bias_flag",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E1C,
-        name: "enemy_index_to_shake",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E1E,
-        name: "nmi_flag_bg2_enemy_vram_transfer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E20,
-        name: "REMOVED_varE20",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E22,
-        name: "REMOVED_varE22",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E24,
-        name: "REMOVED_varE24",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E26,
-        name: "REMOVED_varE26",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E28,
-        name: "REMOVED_varE28",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E2A,
-        name: "REMOVED_varE2A",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E2C,
-        name: "REMOVED_varE2C",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E2E,
-        name: "REMOVED_varE2E",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E32,
-        name: "REMOVED_varE32",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E34,
-        name: "REMOVED_varE34",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E36,
-        name: "REMOVED_varE36",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E38,
-        name: "REMOVED_varE38",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E3A,
-        name: "REMOVED_varE3A",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E3C,
-        name: "REMOVED_varE3C",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E3E,
-        name: "REMOVED_varE3E",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E40,
-        name: "last_enemy_power",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E44,
-        name: "random_enemy_counter",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E46,
-        name: "UNUSED_word_7E0E46",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E48,
-        name: "UNUSED_word_7E0E48",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E4A,
-        name: "REMOVED_new_enemy_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E4C,
-        name: "first_free_enemy_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E4E,
-        name: "num_enemies_in_room",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E50,
-        name: "num_enemies_killed_in_room",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E52,
-        name: "num_enemy_deaths_left_to_clear",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E54,
-        name: "cur_enemy_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E56,
-        name: "REMOVED_cur_enemy_index_backup",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E58,
-        name: "REMOVED_enemy_data_ptr",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E5A,
-        name: "enemy_tile_load_data",
-        ty: "EnemyTileLoadData",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00E7A,
-        name: "enemy_tile_load_data_write_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E7C,
-        name: "enemy_tile_vram_src",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E7E,
-        name: "enemy_tile_vram_dst",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x00E84,
-        name: "enemy_drawing_queue",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00F68,
-        name: "enemy_drawing_queue_sizes",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x00F78,
-        name: "enemy_data",
-        ty: "EnemyData",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01778,
-        name: "fireflea_flashing_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0177A,
-        name: "fireflea_flashing_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0177C,
-        name: "UNUSED_word_7E177C",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0177E,
-        name: "fireflea_darkness_level",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01780,
-        name: "UNUSED_word_7E1780",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01782,
-        name: "UNUSED_word_7E1782",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01784,
-        name: "REMOVED_enemy_ai_pointer",
-        ty: "LongPtr",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01788,
-        name: "REMOVED_enemy_ai_pointer_backup",
-        ty: "LongPtr",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0178C,
-        name: "enemy_gfx_drawn_hook",
-        ty: "LongPtr",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01790,
-        name: "REMOVED_set_to_rtl_when_loading_enemies_unused",
-        ty: "LongPtr",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01794,
-        name: "variables_for_enemy_graphics_drawn_hook",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0179A,
-        name: "enemy_bg2_tilemap_size",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0179C,
-        name: "boss_id",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0179E,
-        name: "UNUSED_word_7E179E",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x017A0,
-        name: "UNUSED_word_7E17A0",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x017A2,
-        name: "UNUSED_word_7E17A2",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x017A4,
-        name: "active_enemy_indexes_write_ptr",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x017A6,
-        name: "interactive_enemy_indexes_write_ptr",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x017A8,
-        name: "REMOVED_active_enemy_indexes_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x017AA,
-        name: "REMOVED_interactive_enemy_indexes_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x017AC,
-        name: "active_enemy_indexes",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x017EC,
-        name: "interactive_enemy_indexes",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0182C,
-        name: "enemy_index_colliding_dirs",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01834,
-        name: "REMOVED_distance_to_enemy_colliding_dirs",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0183C,
-        name: "flag_process_all_enemies",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0183E,
-        name: "earthquake_type",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01840,
-        name: "earthquake_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01842,
-        name: "frame_counter_every_frame",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01844,
-        name: "sprite_object_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01846,
-        name: "debug_enemy_index_UNUSED",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01848,
-        name: "log_index_UNUSED",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0184A,
-        name: "REMOVED_samus_x_pos_colliding_solid",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0184C,
-        name: "REMOVED_samus_x_subpos_colliding_solid",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0184E,
-        name: "REMOVED_enemy_x_pos_colliding_solid",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01850,
-        name: "REMOVED_enemy_x_subpos_colliding_solid",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01852,
-        name: "REMOVED_samus_pos_delta_colliding_solid",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01854,
-        name: "REMOVED_samus_subpos_delta_colliding_solid",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01856,
-        name: "REMOVED_samus_y_pos_colliding_solid",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01858,
-        name: "REMOVED_samus_y_subpos_colliding_solid",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0185A,
-        name: "REMOVED_solid_enemy_collision_type",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0185C,
-        name: "debug_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0185E,
-        name: "debug_time_frozen_for_enemies",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01860,
-        name: "debug_text_cursor_x",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01862,
-        name: "debug_text_cursor_y",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01864,
-        name: "debug_enemy_set_entry_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01866,
-        name: "debug_enemy_population_pointer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01868,
-        name: "debug_enemy_spawn_x_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0186A,
-        name: "debug_enemy_spawn_y_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0186E,
-        name: "REMOVED_enemy_spritemap_entry_pointer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01870,
-        name: "REMOVED_enemy_left_border_collision",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01872,
-        name: "REMOVED_enemy_bottom_border_collision",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01874,
-        name: "REMOVED_enemy_right_border_collision",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01876,
-        name: "REMOVED_enemy_top_border_collision",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01878,
-        name: "REMOVED_hitbox_ptr",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0187A,
-        name: "REMOVED_enemy_spritemap_entry_coll_x_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0187C,
-        name: "REMOVED_enemy_spritemap_entry_coll_y_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0187E,
-        name: "REMOVED_samus_right_border_coll",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01880,
-        name: "REMOVED_samus_left_border_coll",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01882,
-        name: "REMOVED_samus_bottom_border_coll",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01884,
-        name: "REMOVED_samus_top_border_coll",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0189A,
-        name: "REMOVED_samus_target_x_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0189C,
-        name: "REMOVED_samus_target_x_subpos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0189E,
-        name: "REMOVED_samus_target_y_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x018A0,
-        name: "REMOVED_samus_target_y_subpos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x018A2,
-        name: "REMOVED_samus_x_radius_mirror",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x018A4,
-        name: "REMOVED_samus_y_radius_mirror",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x018A6,
-        name: "collision_detection_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x018A8,
-        name: "samus_invincibility_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x018AA,
-        name: "samus_knockback_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x018AC,
-        name: "projectile_invincibility_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x018AE,
-        name: "flag_disable_projectile_interaction",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x018B0,
-        name: "hdma_objects_enable_flag",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x018B2,
-        name: "hdma_object_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x018B4,
-        name: "hdma_object_channels_bitmask",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x018C0,
-        name: "hdma_object_bank_slot",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x018CC,
-        name: "hdma_object_instruction_list_pointers",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x018D8,
-        name: "hdma_object_table_pointers",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x018E4,
-        name: "hdma_object_instruction_timers",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x018F0,
-        name: "hdma_object_pre_instructions",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x018FC,
-        name: "hdma_object_pre_instruction_bank",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01908,
-        name: "hdma_object_timers",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01914,
-        name: "hdma_object_A",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01920,
-        name: "hdma_object_B",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0192C,
-        name: "hdma_object_C",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01938,
-        name: "hdma_object_D",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01944,
-        name: "hdma_object_E",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01950,
-        name: "hdma_object_F",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0195C,
-        name: "fx_y_subpos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0195E,
-        name: "fx_y_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01960,
-        name: "lava_acid_y_subpos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01962,
-        name: "lava_acid_y_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01964,
-        name: "fx_tilemap_ptr",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0196C,
-        name: "fx_rising_function_bank_88",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0196E,
-        name: "fx_type",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01970,
-        name: "fx_y_suboffset",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01972,
-        name: "fx_y_offset",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01974,
-        name: "tide_phase",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01976,
-        name: "fx_base_y_subpos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01978,
-        name: "fx_base_y_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0197A,
-        name: "fx_target_y_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0197C,
-        name: "fx_y_vel",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0197E,
-        name: "fx_liquid_options",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01980,
-        name: "fx_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01982,
-        name: "fx_layer_blending_config_a",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01984,
-        name: "fx_layer_blending_config_b",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01986,
-        name: "fx_layer_blending_config_c",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01988,
-        name: "phantom_related_layer_flag",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0198D,
-        name: "cinematic_var5",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0198D,
-        name: "eproj_enable_flag",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0198F,
-        name: "cinematic_var6",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0198F,
-        name: "eproj_unk198F",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01991,
-        name: "cinematic_var7",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01991,
-        name: "eproj_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01993,
-        name: "cinematic_var8",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01993,
-        name: "eproj_init_param_1",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01995,
-        name: "cinematic_var9",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01995,
-        name: "eproj_unk1995",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01997,
-        name: "cinematic_var10",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01997,
-        name: "eproj_id",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01999,
-        name: "g_word_7E1999",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0199B,
-        name: "g_word_7E199B",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0199D,
-        name: "g_word_7E199D",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0199F,
-        name: "g_word_7E199F",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x019A1,
-        name: "mode7_obj_instr_ptr",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x019A5,
-        name: "mode7_obj_preinstr_func",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x019A9,
-        name: "mode7_obj_instr_timer",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x019AD,
-        name: "mode7_obj_goto_timer",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x019B1,
-        name: "mode7_cur_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x019B3,
-        name: "mode7_spawn_param",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x019B5,
-        name: "cinematicbg_arr1",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x019BB,
-        name: "eproj_gfx_idx",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x019CD,
-        name: "cinematicbg_instr_ptr",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x019D5,
-        name: "cinematicbg_preinstr",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x019DD,
-        name: "cinematicbg_instr_timer",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x019DF,
-        name: "eproj_timers",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x019E5,
-        name: "cinematicbg_arr6",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x019ED,
-        name: "cinematicbg_var2",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x019F1,
-        name: "cinematic_enable_objs",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x019F3,
-        name: "cinematic_enable_bg_tilemap",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x019F5,
-        name: "cinematicbg_var3",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x019F7,
-        name: "cinematic_var21",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x019F9,
-        name: "cinematic_var22",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x019FB,
-        name: "cinematic_var23",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x019FD,
-        name: "cinematic_var24",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x019FF,
-        name: "cinematic_var25",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01A01,
-        name: "cinematic_var26",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01A03,
-        name: "eproj_pre_instr",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01A03,
-        name: "eproj_pre_instr",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01A27,
-        name: "eproj_x_subpos",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01A37,
-        name: "cinematic_var20",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01A47,
-        name: "cinematic_var19",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01A49,
-        name: "cinematic_var4",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01A4B,
-        name: "cinematic_var13",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01A4B,
-        name: "eproj_x_pos",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01A4D,
-        name: "cinematic_var14",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01A4F,
-        name: "cinematic_var17",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01A51,
-        name: "cinematic_var12",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01A53,
-        name: "cinematic_var18",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01A57,
-        name: "cinematic_var15",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01A59,
-        name: "cinematic_obj_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01A5D,
-        name: "cinematicspr_whattodraw",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01A6F,
-        name: "eproj_y_subpos",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01A7D,
-        name: "cinematicbg_arr7",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01A8F,
-        name: "optionsmenu_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01A93,
-        name: "eproj_y_pos",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01A93,
-        name: "options_menu_init_param",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01A9D,
-        name: "cinematicbg_arr8",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01A9D,
-        name: "optionsmenu_cur_data",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01AAD,
-        name: "optionsmenu_arr8",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01AB7,
-        name: "eproj_x_vel",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01ABD,
-        name: "cinematicbg_arr9",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01ABD,
-        name: "optionsmenu_arr9",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01ACD,
-        name: "optionsmenu_arr10",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01ADB,
-        name: "eproj_y_vel",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01ADD,
-        name: "cinematicspr_arr6",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01ADD,
-        name: "optionsmenu_arr6",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01AED,
-        name: "optionsmenu_arr7",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01AFD,
-        name: "cinematicspr_arr7",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01AFD,
-        name: "optionsmenu_instr_ptr",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01AFF,
-        name: "eproj_E",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01B0D,
-        name: "optionsmenu_arr1",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01B1D,
-        name: "cinematicspr_instr_ptr",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01B1D,
-        name: "optionsmenu_instr_timer",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01B23,
-        name: "eproj_F",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01B2D,
-        name: "optionsmenu_arr5",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01B3D,
-        name: "cinematicspr_preinstr_func",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01B3D,
-        name: "optionsmenu_arr11",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01B47,
-        name: "eproj_instr_list_ptr",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01B5D,
-        name: "cinematicspr_instr_timer",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01B6B,
-        name: "eproj_spritemap_ptr",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01B7D,
-        name: "cinematicspr_goto_timer",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01B8F,
-        name: "eproj_instr_timers",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01B9D,
-        name: "cinematic_spawn_param",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01B9F,
-        name: "cinematic_var11",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01BA1,
-        name: "cinematicbg_var1",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01BA3,
-        name: "cinematic_var16",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01BB3,
-        name: "eproj_radius",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01BD7,
-        name: "eproj_properties",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01BFB,
-        name: "eproj_G",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01C1F,
-        name: "message_box_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01C23,
-        name: "plm_flag",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01C25,
-        name: "plm_draw_tilemap_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01C27,
-        name: "plm_id",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01C29,
-        name: "plm_x_block",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01C2B,
-        name: "plm_y_block",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01C2D,
-        name: "plm_item_gfx_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01C2F,
-        name: "plm_item_gfx_ptrs",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01C37,
-        name: "plm_header_ptr",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01C87,
-        name: "plm_block_indices",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01CD7,
-        name: "plm_pre_instrs",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01D27,
-        name: "plm_instr_list_ptrs",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01D77,
-        name: "plm_timers",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01DC7,
-        name: "plm_room_arguments",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01E17,
-        name: "plm_variable",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01E67,
-        name: "custom_draw_instr_num_blocks",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01E69,
-        name: "custom_draw_instr_plm_block",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01E6B,
-        name: "custom_draw_instr_zero_terminator",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01E6D,
-        name: "tourian_entrance_statue_finished",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01E6F,
-        name: "tourian_entrance_statue_animstate",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01E71,
-        name: "flag_samus_in_quicksand",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01E73,
-        name: "inside_block_reaction_samus_point",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01E75,
-        name: "save_station_lockout_flag",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01E77,
-        name: "current_slope_bts",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01E79,
-        name: "flag_for_palette_fx_objects",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01E7B,
-        name: "palettefx_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01E7D,
-        name: "palettefx_ids",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01E8D,
-        name: "palettefx_color_indexes",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01EAD,
-        name: "palettefx_pre_instr",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01EBD,
-        name: "palettefx_instr_list_ptrs",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01ECD,
-        name: "palettefx_instr_timers",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01EDD,
-        name: "palettefx_timers",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01EED,
-        name: "samus_in_heat_palfx_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01EEF,
-        name: "samus_in_heat_palettefx_prev_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01EF1,
-        name: "animtiles_enable_flag",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01EF3,
-        name: "animtiles_object_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01EF5,
-        name: "animtiles_ids",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01F01,
-        name: "animtiles_timers",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01F0D,
-        name: "animtiles_instr_list_ptrs",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01F19,
-        name: "animtiles_instr_timers",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01F25,
-        name: "animtiles_src_ptr",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01F31,
-        name: "animtiles_sizes",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01F3D,
-        name: "animtiles_vram_ptr",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x01F49,
-        name: "animtiles_instruction",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01F51,
-        name: "cinematic_function",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01F53,
-        name: "demo_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01F55,
-        name: "demo_set",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01F57,
-        name: "demo_scene",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x01F59,
-        name: "num_demo_sets",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x02000,
-        name: "tilemap_stuff",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x03000,
-        name: "ram3000",
-        ty: "Ram3000",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x03800,
-        name: "ram3800",
-        ty: "Ram3800",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x04000,
-        name: "ram4000",
-        ty: "Ram4000",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x07000,
-        name: "enemy_spawn_data",
-        ty: "EnemySpawnData",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x07800,
-        name: "enemy_ram7800",
-        ty: "ExtraEnemyRam7800",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x08000,
-        name: "extra_enemy_ram8000",
-        ty: "ExtraEnemyRam8000",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x08800,
-        name: "extra_enemy_ram8800",
-        ty: "ExtraEnemyRam8800",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x09000,
-        name: "kraid_unk9000",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09002,
-        name: "g_word_7E9002",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09004,
-        name: "g_word_7E9004",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09006,
-        name: "g_word_7E9006",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09008,
-        name: "g_word_7E9008",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0900A,
-        name: "g_word_7E900A",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0900C,
-        name: "g_word_7E900C",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0900F,
-        name: "g_word_7E900F",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09012,
-        name: "g_word_7E9012",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09015,
-        name: "g_word_7E9015",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09018,
-        name: "g_word_7E9018",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09020,
-        name: "g_word_7E9020",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09022,
-        name: "g_word_7E9022",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09030,
-        name: "g_word_7E9030",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09032,
-        name: "g_word_7E9032",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09040,
-        name: "g_word_7E9040",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09042,
-        name: "g_word_7E9042",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09050,
-        name: "g_word_7E9050",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09052,
-        name: "g_word_7E9052",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09060,
-        name: "g_word_7E9060",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09062,
-        name: "g_word_7E9062",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09070,
-        name: "g_word_7E9070",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09072,
-        name: "g_word_7E9072",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09080,
-        name: "g_word_7E9080",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09082,
-        name: "g_word_7E9082",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09090,
-        name: "g_word_7E9090",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09092,
-        name: "g_word_7E9092",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x090A0,
-        name: "g_word_7E90A0",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x090A2,
-        name: "g_word_7E90A2",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x090B0,
-        name: "g_word_7E90B0",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x090B2,
-        name: "g_word_7E90B2",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x090C0,
-        name: "g_word_7E90C0",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x090C2,
-        name: "g_word_7E90C2",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x090D0,
-        name: "g_word_7E90D0",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x090D2,
-        name: "g_word_7E90D2",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09100,
-        name: "g_word_7E9100",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09140,
-        name: "g_word_7E9140",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09180,
-        name: "g_word_7E9180",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09500,
-        name: "g_byte_7E9500",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09510,
-        name: "g_byte_7E9510",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09520,
-        name: "g_byte_7E9520",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09530,
-        name: "g_byte_7E9530",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09540,
-        name: "g_byte_7E9540",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09550,
-        name: "g_byte_7E9550",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09560,
-        name: "g_byte_7E9560",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09570,
-        name: "g_byte_7E9570",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09580,
-        name: "g_byte_7E9580",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09590,
-        name: "g_byte_7E9590",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x095A0,
-        name: "g_byte_7E95A0",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x095B0,
-        name: "g_byte_7E95B0",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x095C0,
-        name: "g_byte_7E95C0",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x095D0,
-        name: "g_byte_7E95D0",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x095E0,
-        name: "g_byte_7E95E0",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x095F0,
-        name: "g_byte_7E95F0",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09600,
-        name: "g_byte_7E9600",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09610,
-        name: "g_byte_7E9610",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x097DC,
-        name: "g_word_7E97DC",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x09800,
-        name: "hdma_table_1",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x09C00,
-        name: "mother_brain_indirect_hdma",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x09C44,
-        name: "g_word_7E9C44",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09C46,
-        name: "g_word_7E9C46",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x09D00,
-        name: "hdma_table_2",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x09E00,
-        name: "hdma_window_1_left_pos",
-        ty: "ExpandingSquareTransitionHdma",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x09E10,
-        name: "hdma_window_1_right_pos",
-        ty: "ExpandingSquareTransitionHdma",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x09E20,
-        name: "expand_sq_topbottom_margin_right_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09E22,
-        name: "expand_sq_topbottom_margin_left_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09E30,
-        name: "expand_sq_left_subpos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09E32,
-        name: "expand_sq_left_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09E34,
-        name: "expand_sq_right_subpos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09E36,
-        name: "expand_sq_right_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09E38,
-        name: "expand_sq_top_subpos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09E3A,
-        name: "expand_sq_top_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09E3C,
-        name: "expand_sq_bottom_subpos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09E3E,
-        name: "expand_sq_bottom_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09E40,
-        name: "expand_sq_left_subvel",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09E42,
-        name: "expand_sq_left_vel",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09E44,
-        name: "expand_sq_right_subvel",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09E46,
-        name: "expand_sq_right_vel",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09E48,
-        name: "expand_sq_top_subvel",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09E4A,
-        name: "expand_sq_top_vel",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09E4C,
-        name: "expand_sq_bottom_subvel",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09E4E,
-        name: "expand_sq_bottom_vel",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09E50,
-        name: "expand_sq_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x09E80,
-        name: "g_word_7E9E80",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x09F00,
-        name: "scrolling_sky_bg2_indirect_hdma",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x09F80,
-        name: "scrolling_sky_bg2_hdma_data",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0A000,
-        name: "tile_table",
-        ty: "TileTables",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0C000,
-        name: "palette_buffer",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0C200,
-        name: "target_palettes",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0C400,
-        name: "palette_change_num",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0C402,
-        name: "palette_change_denom",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0C404,
-        name: "g_word_7EC404",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0C406,
-        name: "power_bomb_explosion_left_hdma",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0C506,
-        name: "power_bomb_explosion_right_hdma",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0C606,
-        name: "offscreen_power_bomb_left_hdma",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0C607,
-        name: "offscreen_power_bomb_right_hdma",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0C608,
-        name: "hud_tilemap",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0C6C8,
-        name: "plm_draw_tilemap",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0C8C8,
-        name: "bg1_column_update_tilemap_left_halves",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0C908,
-        name: "bg1_column_update_tilemap_right_halves",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0C948,
-        name: "bg1_column_update_tilemap_top_halves",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0C98C,
-        name: "bg1_column_update_tilemap_bottom_halves",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0C9D0,
-        name: "bg2_column_update_tilemap_left_halves",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0CA10,
-        name: "bg2_column_update_tilemap_right_halves",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0CA50,
-        name: "bg2_column_update_tilemap_top_halves",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0CA94,
-        name: "bg2_column_update_tilemap_bottom_halves",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0CAD8,
-        name: "hud_bg3_xpos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0CADA,
-        name: "hud_bg3_ypos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0CADC,
-        name: "bg3_xpos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0CADE,
-        name: "bg3_ypos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0CAE0,
-        name: "crocomire_bg2_scroll_hdma_indirect",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0CAF0,
-        name: "crocomire_bg2_scroll_hdma_data",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0CD20,
-        name: "scrolls",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0CD52,
-        name: "explored_map_tiles_saved",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0D552,
-        name: "debug_enemy_set_name",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0D55A,
-        name: "debug_enemy_set_data",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0D652,
-        name: "wrecked_ship_robot_palanim_palindex",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0D654,
-        name: "wrecked_ship_robot_palanim_timer",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0D656,
-        name: "wrecked_ship_robot_palanim_table_index",
-        ty: "uint8",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0D658,
-        name: "projectiletrail_left_instr_timer",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0D67C,
-        name: "projectiletrail_right_instr_timer",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0D6A0,
-        name: "projectiletrail_left_instr_list_ptr",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0D6C4,
-        name: "projectiletrail_right_instr_list_ptr",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0D6E8,
-        name: "projectiletrail_left_tile_and_attribs",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0D70C,
-        name: "projectiletrail_right_tile_and_attribs",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0D730,
-        name: "projectiletrail_left_x_pos",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0D754,
-        name: "projectiletrail_right_x_pos",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0D778,
-        name: "projectiletrail_left_y_pos",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0D79C,
-        name: "projectiletrail_right_y_pos",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0D7C0,
-        name: "player_data_saved",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0D820,
-        name: "events_that_happened",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0D828,
-        name: "boss_bits_for_area",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0D830,
-        name: "room_chozo_bits",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0D870,
-        name: "item_bit_array",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0D8B0,
-        name: "opened_door_bit_array",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0D8F0,
-        name: "UNUSED_word_7ED8F0",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0D8F8,
-        name: "used_save_stations_and_elevators",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0D908,
-        name: "map_station_byte_array",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0D914,
-        name: "loading_game_state",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0D916,
-        name: "sram_save_station_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0D918,
-        name: "sram_area_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0D91A,
-        name: "global_number_of_items_loaded_ctr",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0D91C,
-        name: "compressed_map_data",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0DE1C,
-        name: "plm_instruction_timer",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0DE6C,
-        name: "plm_instruction_draw_ptr",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0DEBC,
-        name: "plm_instruction_list_link_reg",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0DF0C,
-        name: "plm_variables",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0DF5C,
-        name: "backup_of_bg2_during_pause",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0EF5C,
-        name: "enemy_def_ptr",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0EF64,
-        name: "enemy_gfxdata_tiles_index",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0EF6C,
-        name: "enemy_gfxdata_vram_ptr",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0EF74,
-        name: "REMOVED_enemy_gfx_data_write_ptr",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0EF76,
-        name: "REMOVED_next_enemy_tiles_index",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0EF78,
-        name: "sprite_instr_list_ptrs",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0EFF8,
-        name: "sprite_instr_timer",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0F078,
-        name: "sprite_palettes",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0F0F8,
-        name: "sprite_x_pos",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0F178,
-        name: "sprite_x_subpos",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0F1F8,
-        name: "sprite_y_pos",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0F278,
-        name: "sprite_y_subpos",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0F2F8,
-        name: "sprite_disable_flag",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0F378,
-        name: "enemy_processing_stage",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0F380,
-        name: "eproj_flags",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0F3C8,
-        name: "eproj_enemy_header_ptr",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0F410,
-        name: "eproj_killed_enemy_index",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x0F434,
-        name: "special_death_item_drop_x_origin_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x0F436,
-        name: "special_death_item_drop_y_origin_pos",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x10000,
-        name: "ram7F_start",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-    RamVar {
-        addr: 0x10002,
-        name: "level_data",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x16402,
-        name: "BTS",
-        ty: "uint8",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x19602,
-        name: "custom_background",
-        ty: "uint16",
-        shape: Shape::Array,
-    },
-    RamVar {
-        addr: 0x1FF00,
-        name: "bug_fix_counter_BAD",
-        ty: "uint16",
-        shape: Shape::Scalar,
-    },
-];
+// One row records address, name, original type and scalar/array shape.
+macro_rules! ram_vars {
+    ($($addr:literal, $name:literal, $ty:ident, $shape:ident;)*) => {
+        /// Sorted by address. Several names can share an address; order is significant.
+        pub const RAM_VARS: &[RamVar] = &[$(RamVar {
+            addr: $addr,
+            name: $name,
+            ty: stringify!($ty),
+            shape: Shape::$shape,
+        },)*];
+    };
+}
+
+ram_vars! {
+    0x00012, "REMOVED_R18", uint16, Scalar;
+    0x00014, "REMOVED_R20", uint16, Scalar;
+    0x00016, "REMOVED_R22", uint16, Scalar;
+    0x00051, "reg_INIDISP", uint8, Scalar;
+    0x00052, "reg_OBSEL", uint8, Scalar;
+    0x00053, "reg_OAMaddr_UNUSED", uint16, Scalar;
+    0x00055, "reg_BGMODE", uint8, Scalar;
+    0x00056, "reg_BGMODE_fake", uint8, Scalar;
+    0x00057, "reg_MOSAIC", uint8, Scalar;
+    0x00058, "reg_BG1SC", uint8, Scalar;
+    0x00059, "reg_BG2SC", uint8, Scalar;
+    0x0005A, "reg_BG3SC", uint8, Scalar;
+    0x0005B, "gameplay_BG3SC", uint8, Scalar;
+    0x0005C, "reg_BG4SC", uint8, Scalar;
+    0x0005D, "reg_BG12NBA", uint8, Scalar;
+    0x0005E, "reg_BG34NBA", uint8, Scalar;
+    0x0005F, "reg_M7SEL", uint8, Scalar;
+    0x00060, "reg_W12SEL", uint8, Scalar;
+    0x00061, "reg_W34SEL", uint8, Scalar;
+    0x00062, "reg_WOBJSEL", uint8, Scalar;
+    0x00063, "reg_WH0", uint8, Scalar;
+    0x00064, "reg_WH1", uint8, Scalar;
+    0x00065, "reg_WH2", uint8, Scalar;
+    0x00066, "reg_WH3", uint8, Scalar;
+    0x00067, "reg_WBGLOG", uint8, Scalar;
+    0x00068, "reg_WOBJLOG", uint8, Scalar;
+    0x00069, "reg_TM", uint8, Scalar;
+    0x0006A, "gameplay_TM", uint8, Scalar;
+    0x0006B, "reg_TS", uint8, Scalar;
+    0x0006C, "reg_TMW", uint8, Scalar;
+    0x0006D, "reg_TSW", uint8, Scalar;
+    0x0006E, "next_gameplay_CGWSEL", uint8, Scalar;
+    0x0006F, "reg_CGWSEL", uint8, Scalar;
+    0x00070, "gameplay_CGWSEL", uint8, Scalar;
+    0x00071, "next_gameplay_CGADSUB", uint8, Scalar;
+    0x00072, "reg_CGADSUB", uint8, Scalar;
+    0x00073, "gameplay_CGADSUB", uint8, Scalar;
+    0x00074, "reg_COLDATA", uint8, Array;
+    0x00077, "reg_SETINI", uint8, Scalar;
+    0x00078, "reg_M7A", uint16, Scalar;
+    0x0007A, "reg_M7B", uint16, Scalar;
+    0x0007C, "reg_M7C", uint16, Scalar;
+    0x0007E, "reg_M7D", uint16, Scalar;
+    0x00080, "reg_M7X", uint16, Scalar;
+    0x00082, "reg_M7Y", uint16, Scalar;
+    0x00084, "reg_NMITIMEN", uint8, Scalar;
+    0x00085, "reg_HDMAEN", uint8, Scalar;
+    0x00086, "reg_MEMSEL", uint8, Scalar;
+    0x00087, "joypad_ctr_repeat_first", uint16, Scalar;
+    0x00089, "joypad_ctr_repeat_next", uint16, Scalar;
+    0x0008B, "joypad1_lastkeys", uint16, Scalar;
+    0x0008D, "joypad2_last", uint16, Scalar;
+    0x0008F, "joypad1_newkeys", uint16, Scalar;
+    0x00091, "joypad2_new_keys", uint16, Scalar;
+    0x00093, "joypad1_newkeys2_UNUSED", uint16, Scalar;
+    0x00095, "joypad2_newkeys2", uint16, Scalar;
+    0x00097, "joypad1_prev", uint16, Scalar;
+    0x00099, "joypad2_prev", uint16, Scalar;
+    0x000A3, "joypad1_keyrepeat_ctr", uint16, Scalar;
+    0x000A5, "joypad2_keyrepeat_ctr", uint16, Scalar;
+    0x000A7, "irqhandler_next_handler", uint16, Scalar;
+    0x000A9, "room_loading_irq_handler", uint16, Scalar;
+    0x000AB, "cur_irq_handler", uint16, Scalar;
+    0x000AD, "REMOVED_ptr_to_retaddr_parameters", uint16, Scalar;
+    0x000AF, "current_region_animated_palette_fx", uint16, Scalar;
+    0x000B1, "reg_BG1HOFS", uint16, Scalar;
+    0x000B3, "reg_BG1VOFS", uint16, Scalar;
+    0x000B5, "reg_BG2HOFS", uint16, Scalar;
+    0x000B7, "reg_BG2VOFS", uint16, Scalar;
+    0x000B9, "reg_BG3HOFS", uint16, Scalar;
+    0x000BB, "reg_BG3VOFS", uint16, Scalar;
+    0x000BD, "reg_BG4HOFS", uint16, Scalar;
+    0x000BF, "reg_BG4VOFS", uint16, Scalar;
+    0x000C2, "bug_fix_counter", uint16, Scalar;
+    0x000C4, "g_word_7E00C4", uint16, Array;
+    0x000D0, "vram_write_queue", VramWriteEntry, Array;
+    0x002D0, "mode7_write_queue", Mode7VramWriteQueue, Array;
+    0x00330, "vram_write_queue_tail", uint16, Scalar;
+    0x00334, "mode7_vram_write_queue_tail", uint16, Scalar;
+    0x00340, "vram_read_queue", VramReadQueueEnt, Array;
+    0x00360, "vram_read_queue_tail", uint16, Scalar;
+    0x00370, "oam_ent", OamEnt, Array;
+    0x00570, "oam_ext", uint16, Array;
+    0x00590, "oam_next_ptr", uint16, Scalar;
+    0x00592, "power_bomb_explosion_status", uint16, Scalar;
+    0x00596, "g_word_7E0596", uint16, Scalar;
+    0x00598, "g_word_7E0598", uint16, Scalar;
+    0x0059A, "set_to_e0_by_scrolling_sky", uint16, Scalar;
+    0x0059C, "UNUSED_word_7E059C", uint16, Scalar;
+    0x005A0, "UNUSED_hdma_contracting_flag", uint16, Scalar;
+    0x005A2, "message_box_animation_y_radius", uint16, Scalar;
+    0x005A4, "message_box_animation_y0", uint16, Scalar;
+    0x005A6, "message_box_animation_y1", uint16, Scalar;
+    0x005A8, "message_box_animation_y2", uint16, Scalar;
+    0x005AA, "message_box_animation_y3", uint16, Scalar;
+    0x005AC, "map_min_x_scroll", uint16, Scalar;
+    0x005AE, "map_max_x_scroll", uint16, Scalar;
+    0x005B0, "map_min_y_scroll", uint16, Scalar;
+    0x005B2, "map_max_y_scroll", uint16, Scalar;
+    0x005B4, "waiting_for_nmi", uint8, Scalar;
+    0x005B5, "nmi_frame_counter_byte", uint8, Scalar;
+    0x005B6, "nmi_frame_counter_word", uint16, Scalar;
+    0x005B8, "nmi_frame_counter_including_lag", uint16, Scalar;
+    0x005BA, "nmi_frames_missed", uint8, Scalar;
+    0x005BB, "nmi_frames_missed_max", uint8, Scalar;
+    0x005C5, "joypad_dbg_1", uint16, Scalar;
+    0x005C7, "joypad_dbg_2", uint16, Scalar;
+    0x005C9, "joypad_dbg_missiles_swap", uint16, Scalar;
+    0x005CB, "joypad_dbg_super_missiles_swap", uint16, Scalar;
+    0x005CD, "joypad_dbg_power_bombs_swap", uint16, Scalar;
+    0x005CF, "joypad_dbg_flags", uint16, Scalar;
+    0x005D1, "enable_debug", uint16, Scalar;
+    0x005D3, "debug_saveload_scrollpos_toggle", uint16, Scalar;
+    0x005D5, "debug_saved_xscroll", uint16, Scalar;
+    0x005D7, "debug_saved_yscroll", uint16, Scalar;
+    0x005D9, "joypad_released_keys", uint16, Scalar;
+    0x005DB, "timed_held_input_timer", uint16, Scalar;
+    0x005DD, "timed_held_input_timer_reset", uint16, Scalar;
+    0x005DF, "timed_held_input", uint16, Scalar;
+    0x005E1, "newly_held_down_timed_held_input", uint16, Scalar;
+    0x005E3, "previous_timed_held_input", uint16, Scalar;
+    0x005E5, "random_number", uint16, Scalar;
+    0x005E7, "bitmask", uint16, Scalar;
+    0x005E9, "REMOVED_mult_tmp_a", uint16, Scalar;
+    0x005EB, "REMOVED_mult_tmp_y", uint16, Scalar;
+    0x005F1, "REMOVED_mult_product_lo", uint16, Scalar;
+    0x005F3, "REMOVED_mult_product_hi", uint16, Scalar;
+    0x005F5, "debug_disable_sounds", uint16, Scalar;
+    0x005F7, "debug_disable_minimap", uint16, Scalar;
+    0x005F9, "save_confirmation_selection", uint16, Scalar;
+    0x005FB, "map_scrolling_gear_switch_timer", uint16, Scalar;
+    0x005FD, "map_scrolling_direction", uint16, Scalar;
+    0x005FF, "map_scrolling_speed_index", uint16, Scalar;
+    0x00601, "pause_hook", LongPtr, Scalar;
+    0x00604, "unpause_hook", LongPtr, Scalar;
+    0x00607, "earthquake_sfx_index", uint16, Scalar;
+    0x00609, "earthquake_sfx_timer", uint16, Scalar;
+    0x0060B, "eproj_init_param_3", uint8, Scalar;
+    0x0060D, "REMOVED_remaining_enemy_hitbox_entries", uint16, Scalar;
+    0x0060F, "REMOVED_num_projectiles_to_check_enemy_coll", uint16, Scalar;
+    0x00611, "coroutine_state_0", uint8, Scalar;
+    0x00612, "coroutine_state_1", uint8, Scalar;
+    0x00613, "coroutine_state_2", uint8, Scalar;
+    0x00614, "coroutine_state_3", uint8, Scalar;
+    0x00615, "coroutine_state_4", uint8, Scalar;
+    0x00617, "is_uploading_apu", uint16, Scalar;
+    0x00619, "music_queue_track", uint16, Array;
+    0x00629, "music_queue_delay", uint16, Array;
+    0x00639, "music_queue_write_pos", uint16, Scalar;
+    0x0063B, "music_queue_read_pos", uint16, Scalar;
+    0x0063D, "music_entry", uint16, Scalar;
+    0x0063F, "music_timer", uint16, Scalar;
+    0x00641, "REMOVED_apu_attempts_countdown", uint16, Scalar;
+    0x00643, "sfx_readpos", uint8, Array;
+    0x00646, "sfx_writepos", uint8, Array;
+    0x00649, "sfx_state", uint8, Array;
+    0x0064C, "cur_music_track", uint8, Scalar;
+    0x0064D, "sfx_cur", uint8, Array;
+    0x00650, "sfx_clear_delay", uint8, Array;
+    0x00653, "sfx_max_queued", uint8, Array;
+    0x00656, "sfx1_queue", uint8, Array;
+    0x00666, "sfx2_queue", uint8, Array;
+    0x00676, "sfx3_queue", uint8, Array;
+    0x00686, "sound_handler_downtime", uint16, Scalar;
+    0x00688, "croco_target_0688", uint16, Scalar;
+    0x0068A, "g_word_7E068A", uint16, Scalar;
+    0x0068C, "croco_word_068C", uint8, Scalar;
+    0x0068E, "g_word_7E068E", uint16, Scalar;
+    0x00690, "croco_cur_vline_idx", uint16, Scalar;
+    0x00692, "g_word_7E0692", uint16, Scalar;
+    0x00694, "g_word_7E0694", uint16, Scalar;
+    0x00696, "g_word_7E0696", uint16, Scalar;
+    0x00698, "g_word_7E0698", uint16, Scalar;
+    0x0069A, "croco_word_7E069A", uint16, Scalar;
+    0x0069C, "croco_vline_height", uint8, Array;
+    0x0071C, "UNUSED_byte_7E071C", uint8, Scalar;
+    0x0071D, "nmi_copy_samus_halves", uint16, Scalar;
+    0x0071F, "nmi_copy_samus_top_half_src", uint16, Scalar;
+    0x00721, "nmi_copy_samus_bottom_half_src", uint16, Scalar;
+    0x00723, "screen_fade_delay", uint16, Scalar;
+    0x00725, "screen_fade_counter", uint16, Scalar;
+    0x00727, "menu_index", uint16, Scalar;
+    0x00729, "pausemenu_start_lr_pressed_highlight_timer", uint16, Scalar;
+    0x0072B, "pausemenu_lr_animation_timer", uint16, Scalar;
+    0x0072D, "pausemenu_item_selector_animation_timer", uint16, Scalar;
+    0x0072F, "pausemenu_reserve_tank_animation_timer", uint16, Scalar;
+    0x00731, "UNUSED_word_7E0731", uint16, Scalar;
+    0x00733, "pausemenu_uparrow_animation_timer", uint16, Scalar;
+    0x00735, "pausemenu_downarrow_animation_timer", uint16, Scalar;
+    0x00737, "pausemenu_rightarrow_animation_timer", uint16, Scalar;
+    0x00739, "pausemenu_leftarrow_animation_timer", uint16, Scalar;
+    0x0073B, "pausemenu_palette_animation_timer", uint16, Scalar;
+    0x0073D, "UNUSED_word_7E073D", uint16, Scalar;
+    0x0073F, "pausemenu_lr_animation_frame", uint16, Scalar;
+    0x00741, "pausemenu_item_selector_animation_frame", uint16, Scalar;
+    0x00743, "pausemenu_reserve_tank_animation_frame", uint16, Scalar;
+    0x00745, "UNUSED_word_7E0745", uint16, Scalar;
+    0x00747, "pausemenu_uparrow_animation_frame", uint16, Scalar;
+    0x00749, "pausemenu_downarrow_animation_frame", uint16, Scalar;
+    0x0074B, "pausemenu_rightarrow_animation_frame", uint16, Scalar;
+    0x0074D, "pausemenu_leftarrow_animation_frame", uint16, Scalar;
+    0x0074F, "pausemenu_palette_animation_frame", uint16, Scalar;
+    0x00751, "pausemenu_shoulder_button_highlight", uint16, Scalar;
+    0x00753, "pausemenu_button_label_mode", uint16, Scalar;
+    0x00755, "pausemenu_equipment_category_item", uint16, Scalar;
+    0x00757, "pausemenu_reserve_tank_delay_ctr", uint16, Scalar;
+    0x00759, "UNUSED_word_7E0759", uint16, Scalar;
+    0x0075B, "UNUSED_word_7E075B", uint16, Scalar;
+    0x0075D, "UNUSED_word_7E075D", uint16, Scalar;
+    0x0075F, "UNUSED_word_7E075F", uint16, Scalar;
+    0x00761, "UNUSED_word_7E0761", uint16, Scalar;
+    0x00763, "pause_screen_mode", uint16, Scalar;
+    0x00765, "pausemenu_bak_BG1SC", uint8, Scalar;
+    0x00766, "pausemenu_bak_BG2SC", uint8, Scalar;
+    0x00767, "pausemenu_bak_BG3SC", uint8, Scalar;
+    0x00768, "pausemenu_bak_BG12NBA", uint8, Scalar;
+    0x00769, "pausemenu_bak_BG34NBA", uint8, Scalar;
+    0x0076A, "pausemenu_bak_OBSEL", uint8, Scalar;
+    0x0076B, "pausemenu_bak_BG1HOFS", uint8, Scalar;
+    0x0076C, "pausemenu_bak_BG2HOFS", uint8, Scalar;
+    0x0076D, "pausemenu_bak_BG3HOFS", uint8, Scalar;
+    0x0076E, "pausemenu_bak_BG1VOFS", uint8, Scalar;
+    0x0076F, "pausemenu_bak_BG2VOFS", uint8, Scalar;
+    0x00770, "pausemenu_bak_BG3VOFS", uint8, Scalar;
+    0x00771, "pausemenu_bak_BGMODE", uint8, Scalar;
+    0x00772, "pausemenu_bak_layer2_scroll_x", uint8, Scalar;
+    0x00773, "pausemenu_bak_layer2_scroll_y", uint8, Scalar;
+    0x00774, "pausemenu_bak_MOSAIC", uint8, Scalar;
+    0x00775, "pausemenu_bak_CGADSUB", uint8, Scalar;
+    0x00776, "samus_position_indicator_animation_frame", uint16, Scalar;
+    0x00778, "samus_position_indicator_animation_timer", uint16, Scalar;
+    0x0077A, "samus_position_indicator_animation_loop_counter", uint16, Scalar;
+    0x0077C, "hud_item_tilemap_palette_bits", uint16, Scalar;
+    0x0077E, "my_counter", uint16, Scalar;
+    0x00780, "my_counter2", uint16, Scalar;
+    0x00782, "coroutine_completion_flags", uint8, Scalar;
+    0x00783, "irq_enable_mode7", uint16, Scalar;
+    0x00785, "mode7_rotation_angle", uint16, Scalar;
+    0x00787, "g_word_7E0787", uint16, Scalar;
+    0x00789, "has_area_map", uint16, Scalar;
+    0x0078B, "load_station_index", uint16, Scalar;
+    0x0078D, "door_def_ptr", uint16, Scalar;
+    0x0078F, "REMOVED_door_bts", uint16, Scalar;
+    0x00791, "door_direction", uint16, Scalar;
+    0x00793, "elevator_door_properties_orientation", uint16, Scalar;
+    0x00795, "door_transition_flag_elevator_zebetites", uint16, Scalar;
+    0x00797, "door_transition_flag_enemies", uint16, Scalar;
+    0x00799, "elevator_direction", uint16, Scalar;
+    0x0079B, "room_ptr", uint16, Scalar;
+    0x0079D, "room_index", uint16, Scalar;
+    0x0079F, "area_index", uint16, Scalar;
+    0x007A1, "room_x_coordinate_on_map", uint16, Scalar;
+    0x007A3, "room_y_coordinate_on_map", uint16, Scalar;
+    0x007A5, "room_width_in_blocks", uint16, Scalar;
+    0x007A7, "room_height_in_blocks", uint16, Scalar;
+    0x007A9, "room_width_in_scrolls", uint16, Scalar;
+    0x007AB, "room_height_in_scrolls", uint16, Scalar;
+    0x007AD, "up_scroller", uint16, Scalar;
+    0x007AF, "down_scroller", uint16, Scalar;
+    0x007B1, "previous_cre_bitset", uint16, Scalar;
+    0x007B3, "cre_bitset", uint16, Scalar;
+    0x007B5, "door_list_pointer", uint16, Scalar;
+    0x007B7, "REMOVED_event_pointer", uint16, Scalar;
+    0x007B9, "room_size_in_blocks", uint16, Scalar;
+    0x007BB, "roomdefroomstate_ptr", uint16, Scalar;
+    0x007BD, "room_compr_level_data_ptr", LongPtr, Scalar;
+    0x007C0, "tileset_tile_table_pointer", LongPtr, Scalar;
+    0x007C3, "tileset_tiles_pointer", LongPtr, Scalar;
+    0x007C6, "tileset_compr_palette_ptr", LongPtr, Scalar;
+    0x007C9, "room_music_track_index", uint16, Scalar;
+    0x007CB, "room_music_data_index", uint16, Scalar;
+    0x007CD, "room_layer3_asm_ptr", uint16, Scalar;
+    0x007CF, "room_enemy_population_ptr", uint16, Scalar;
+    0x007D1, "room_enemy_tilesets_ptr", uint16, Scalar;
+    0x007DF, "room_main_code_ptr", uint16, Scalar;
+    0x007E1, "room_main_asm_variables", uint8, Array;
+    0x007E9, "scrolling_finished_hook", uint16, Scalar;
+    0x007EB, "hdma_data_table_in_ceres", uint16, Scalar;
+    0x007F3, "music_data_index", uint16, Scalar;
+    0x007F5, "music_track_index", uint16, Scalar;
+    0x007F7, "map_tiles_explored", uint8, Array;
+    0x008F7, "layer1_x_block", uint16, Scalar;
+    0x008F9, "layer1_y_block", uint16, Scalar;
+    0x008FB, "layer2_x_block", uint16, Scalar;
+    0x008FD, "layer2_y_block", uint16, Scalar;
+    0x008FF, "previous_layer1_x_block", uint16, Scalar;
+    0x00901, "previous_layer1_y_block", uint16, Scalar;
+    0x00903, "previous_layer2_x_block", uint16, Scalar;
+    0x00905, "previous_layer2_y_block", uint16, Scalar;
+    0x00907, "bg1_x_block", uint16, Scalar;
+    0x00909, "bg1_y_block", uint16, Scalar;
+    0x0090B, "bg2_x_block", uint16, Scalar;
+    0x0090D, "bg2_y_block", uint16, Scalar;
+    0x0090F, "layer1_x_subpos", uint16, Scalar;
+    0x00911, "layer1_x_pos", uint16, Scalar;
+    0x00913, "layer1_y_subpos", uint16, Scalar;
+    0x00915, "layer1_y_pos", uint16, Scalar;
+    0x00917, "layer2_x_pos", uint16, Scalar;
+    0x00919, "layer2_y_pos", uint16, Scalar;
+    0x0091B, "layer2_scroll_x", uint8, Scalar;
+    0x0091C, "layer2_scroll_y", uint8, Scalar;
+    0x0091D, "bg1_x_offset", uint16, Scalar;
+    0x0091F, "bg1_y_offset", uint16, Scalar;
+    0x00921, "bg2_x_scroll", uint16, Scalar;
+    0x00923, "bg2_y_scroll", uint16, Scalar;
+    0x00925, "door_transition_frame_counter", uint16, Scalar;
+    0x00927, "door_destination_x_pos", uint16, Scalar;
+    0x00929, "door_destination_y_pos", uint16, Scalar;
+    0x0092B, "samus_door_transition_subspeed", uint16, Scalar;
+    0x0092D, "samus_door_transition_speed", uint16, Scalar;
+    0x0092F, "downwards_elevator_delay_timer", uint16, Scalar;
+    0x00931, "door_transition_flag", uint16, Scalar;
+    0x00933, "REMOVED_var933", uint16, Scalar;
+    0x00935, "REMOVED_var935", uint16, Scalar;
+    0x00937, "REMOVED_var937", uint16, Scalar;
+    0x00939, "REMOVED_var939", uint16, Scalar;
+    0x0093B, "REMOVED_var93B", uint16, Scalar;
+    0x0093F, "ceres_status", uint16, Scalar;
+    0x00941, "camera_distance_index", uint16, Scalar;
+    0x00943, "timer_status", uint16, Scalar;
+    0x00945, "timer_centiseconds", uint8, Scalar;
+    0x00946, "timer_seconds", uint8, Scalar;
+    0x00947, "timer_minutes", uint8, Scalar;
+    0x00948, "timer_x_pos", uint16, Scalar;
+    0x0094A, "timer_y_pos", uint16, Scalar;
+    0x00950, "file_select_map_area_index", uint16, Scalar;
+    0x00952, "selected_save_slot", uint16, Scalar;
+    0x00954, "nonempty_save_slots", uint16, Scalar;
+    0x00956, "bg1_update_col_unwrapped_size", uint16, Scalar;
+    0x00958, "bg1_update_col_wrapped_size", uint16, Scalar;
+    0x0095A, "bg1_update_col_unwrapped_dst", uint16, Scalar;
+    0x0095C, "bg1_update_col_wrapped_dst", uint16, Scalar;
+    0x0095E, "bg1_update_col_wrapped_left_src", uint16, Scalar;
+    0x00960, "bg1_update_col_wrapped_right_src", uint16, Scalar;
+    0x00962, "bg1_update_col_enable", uint16, Scalar;
+    0x00964, "bg1_update_row_unwrapped_size", uint16, Scalar;
+    0x00966, "bg1_update_row_wrapped_size", uint16, Scalar;
+    0x00968, "bg1_update_row_unwrapped_dst", uint16, Scalar;
+    0x0096A, "bg1_update_row_wrapped_dst", uint16, Scalar;
+    0x0096C, "bg1_update_row_wrapped_top_src", uint16, Scalar;
+    0x0096E, "bg1_update_row_wrapped_bottom_src", uint16, Scalar;
+    0x00970, "bg1_update_row_enable", uint16, Scalar;
+    0x00972, "bg2_update_col_unwrapped_size", uint16, Scalar;
+    0x00974, "bg2_update_col_wrapped_size", uint16, Scalar;
+    0x00976, "bg2_update_col_unwrapped_dst", uint16, Scalar;
+    0x00978, "bg2_update_col_wrapped_dst", uint16, Scalar;
+    0x0097A, "bg2_update_col_wrapped_left_src", uint16, Scalar;
+    0x0097C, "bg2_update_col_wrapped_right_src", uint16, Scalar;
+    0x0097E, "bg2_update_col_enable", uint16, Scalar;
+    0x00980, "bg2_update_row_unwrapped_size", uint16, Scalar;
+    0x00982, "bg2_update_row_wrapped_size", uint16, Scalar;
+    0x00984, "bg2_update_row_unwrapped_dst", uint16, Scalar;
+    0x00986, "bg2_update_row_wrapped_dst", uint16, Scalar;
+    0x00988, "bg2_update_row_wrapped_top_src", uint16, Scalar;
+    0x0098A, "bg2_update_row_wrapped_bottom_src", uint16, Scalar;
+    0x0098C, "bg2_update_row_enable", uint16, Scalar;
+    0x0098E, "size_of_bg2", uint16, Scalar;
+    0x00990, "blocks_to_update_x_block", uint16, Scalar;
+    0x00992, "blocks_to_update_y_block", uint16, Scalar;
+    0x00994, "vram_blocks_to_update_x_block", uint16, Scalar;
+    0x00996, "vram_blocks_to_update_y_block", uint16, Scalar;
+    0x00998, "game_state", uint16, Scalar;
+    0x0099C, "door_transition_function", uint16, Scalar;
+    0x0099E, "menu_option_index", uint16, Scalar;
+    0x009A2, "equipped_items", uint16, Scalar;
+    0x009A4, "collected_items", uint16, Scalar;
+    0x009A6, "equipped_beams", uint16, Scalar;
+    0x009A8, "collected_beams", uint16, Scalar;
+    0x009AA, "button_config_up", uint16, Scalar;
+    0x009AC, "button_config_down", uint16, Scalar;
+    0x009AE, "button_config_left", uint16, Scalar;
+    0x009B0, "button_config_right", uint16, Scalar;
+    0x009B2, "button_config_shoot_x", uint16, Scalar;
+    0x009B4, "button_config_jump_a", uint16, Scalar;
+    0x009B6, "button_config_run_b", uint16, Scalar;
+    0x009B8, "button_config_itemcancel_y", uint16, Scalar;
+    0x009BA, "button_config_itemswitch", uint16, Scalar;
+    0x009BC, "button_config_aim_down_L", uint16, Scalar;
+    0x009BE, "button_config_aim_up_R", uint16, Scalar;
+    0x009C0, "reserve_health_mode", uint16, Scalar;
+    0x009C2, "samus_health", uint16, Scalar;
+    0x009C4, "samus_max_health", uint16, Scalar;
+    0x009C6, "samus_missiles", uint16, Scalar;
+    0x009C8, "samus_max_missiles", uint16, Scalar;
+    0x009CA, "samus_super_missiles", uint16, Scalar;
+    0x009CC, "samus_max_super_missiles", uint16, Scalar;
+    0x009CE, "samus_power_bombs", uint16, Scalar;
+    0x009D0, "samus_max_power_bombs", uint16, Scalar;
+    0x009D2, "hud_item_index", uint16, Scalar;
+    0x009D4, "samus_max_reserve_health", uint16, Scalar;
+    0x009D6, "samus_reserve_health", uint16, Scalar;
+    0x009D8, "samus_reserve_missiles", uint16, Scalar;
+    0x009DA, "game_time_frames", uint16, Scalar;
+    0x009DC, "game_time_seconds", uint16, Scalar;
+    0x009DE, "game_time_minutes", uint16, Scalar;
+    0x009E0, "game_time_hours", uint16, Scalar;
+    0x009E2, "japanese_text_flag", uint16, Scalar;
+    0x009E4, "moonwalk_flag", uint16, Scalar;
+    0x009E6, "debug_flag", uint16, Scalar;
+    0x009E8, "UNUSED_word_7E09E8", uint16, Scalar;
+    0x009EA, "hud_auto_cancel_flag", uint16, Scalar;
+    0x00A04, "samus_auto_cancel_hud_item_index", uint16, Scalar;
+    0x00A06, "samus_prev_health", uint16, Scalar;
+    0x00A08, "samus_prev_missiles", uint16, Scalar;
+    0x00A0A, "samus_prev_super_missiles", uint16, Scalar;
+    0x00A0C, "samus_prev_power_bombs", uint16, Scalar;
+    0x00A0E, "samus_prev_hud_item_index", uint16, Scalar;
+    0x00A11, "samus_prev_movement_type", uint8, Scalar;
+    0x00A12, "samus_prev_health_for_flash", uint16, Scalar;
+    0x00A14, "controller1_input_for_demo", uint16, Scalar;
+    0x00A16, "controller1_new_input_for_demo", uint16, Scalar;
+    0x00A18, "UNUSED_word_7E0A18", uint16, Scalar;
+    0x00A1C, "samus_pose", uint16, Scalar;
+    0x00A1E, "samus_pose_x_dir", uint8, Scalar;
+    0x00A1F, "samus_movement_type", uint8, Scalar;
+    0x00A20, "samus_prev_pose", uint16, Scalar;
+    0x00A22, "samus_prev_pose_x_dir", uint8, Scalar;
+    0x00A23, "samus_prev_movement_type2", uint8, Scalar;
+    0x00A24, "samus_last_different_pose", uint16, Scalar;
+    0x00A26, "samus_last_different_pose_x_dir", uint8, Scalar;
+    0x00A27, "samus_last_different_pose_movement_type", uint8, Scalar;
+    0x00A28, "samus_new_pose", uint16, Scalar;
+    0x00A2A, "samus_new_pose_interrupted", uint16, Scalar;
+    0x00A2C, "samus_new_pose_transitional", uint16, Scalar;
+    0x00A2E, "samus_momentum_routine_index", uint16, Scalar;
+    0x00A30, "samus_special_transgfx_index", uint16, Scalar;
+    0x00A32, "samus_hurt_switch_index", uint16, Scalar;
+    0x00A34, "solid_enemy_collision_flags", uint16, Scalar;
+    0x00A36, "block_collision_flags", uint16, Scalar;
+    0x00A38, "samus_space_to_move_up_blocks", uint16, Scalar;
+    0x00A3A, "samus_y_radius_diff", uint16, Scalar;
+    0x00A3C, "samus_space_to_move_down_blocks", uint16, Scalar;
+    0x00A3E, "samus_space_to_move_up_enemy", uint16, Scalar;
+    0x00A40, "samus_space_to_move_down_enemy", uint16, Scalar;
+    0x00A42, "frame_handler_alfa", uint16, Scalar;
+    0x00A44, "frame_handler_beta", uint16, Scalar;
+    0x00A46, "enable_horiz_slope_coll", uint16, Scalar;
+    0x00A48, "samus_hurt_flash_counter", uint16, Scalar;
+    0x00A4A, "samus_special_super_palette_flags", uint16, Scalar;
+    0x00A4C, "samus_subunit_health", uint16, Scalar;
+    0x00A4E, "samus_periodic_subdamage", uint16, Scalar;
+    0x00A50, "samus_periodic_damage", uint16, Scalar;
+    0x00A52, "knockback_dir", uint16, Scalar;
+    0x00A54, "knockback_x_dir", uint16, Scalar;
+    0x00A56, "bomb_jump_dir", uint16, Scalar;
+    0x00A58, "samus_movement_handler", uint16, Scalar;
+    0x00A5A, "frame_handler_gamma", uint16, Scalar;
+    0x00A5C, "samus_draw_handler", uint16, Scalar;
+    0x00A5E, "UNUSED_word_7E0A5E", uint16, Scalar;
+    0x00A60, "samus_input_handler", uint16, Scalar;
+    0x00A62, "samus_var62", uint16, Scalar;
+    0x00A64, "samus_grapple_flags", uint16, Scalar;
+    0x00A66, "samus_x_speed_divisor", uint16, Scalar;
+    0x00A68, "samus_shine_timer", uint16, Scalar;
+    0x00A6A, "samus_health_warning", uint16, Scalar;
+    0x00A6C, "samus_x_speed_table_pointer", uint16, Scalar;
+    0x00A6E, "samus_contact_damage_index", uint16, Scalar;
+    0x00A72, "samus_visor_palette_timer_index", uint16, Scalar;
+    0x00A74, "samus_suit_palette_index", uint16, Scalar;
+    0x00A76, "hyper_beam_flag", uint16, Scalar;
+    0x00A78, "time_is_frozen_flag", uint16, Scalar;
+    0x00A7A, "demo_input_pre_instr", uint16, Scalar;
+    0x00A7C, "demo_input_instr_timer", uint16, Scalar;
+    0x00A7E, "demo_input_instr_ptr", uint16, Scalar;
+    0x00A80, "demo_timer_counter", uint16, Scalar;
+    0x00A82, "xray_angle", uint16, Scalar;
+    0x00A84, "demo_input", uint16, Scalar;
+    0x00A86, "demo_input_new", uint16, Scalar;
+    0x00A88, "demo_enable", uint16, Scalar;
+    0x00A88, "hdma_ptr_1", LongPtr, Scalar;
+    0x00A8A, "demo_num_input_frames", uint16, Scalar;
+    0x00A8B, "hdma_ptr_2", LongPtr, Scalar;
+    0x00A8C, "demo_input_prev", uint16, Scalar;
+    0x00A8E, "demo_input_prev_new", uint16, Scalar;
+    0x00A8E, "hdma_ptr_3", LongPtr, Scalar;
+    0x00A90, "demo_backup_prev_controller_input", uint16, Scalar;
+    0x00A91, "hdma_var_1", uint16, Scalar;
+    0x00A92, "demo_backup_prev_controller_input_new", uint16, Scalar;
+    0x00A94, "samus_anim_frame_timer", uint16, Scalar;
+    0x00A96, "samus_anim_frame", uint16, Scalar;
+    0x00A9A, "samus_anim_frame_skip", uint16, Scalar;
+    0x00A9C, "samus_anim_frame_buffer", uint16, Scalar;
+    0x00A9E, "grapple_walljump_timer", uint16, Scalar;
+    0x00AA0, "reached_ceres_elevator_fade_timer", uint16, Scalar;
+    0x00AA2, "timer_for_shinesparks_startstop", uint16, Scalar;
+    0x00AA4, "UNUSEDword_7E0AA4", uint16, Scalar;
+    0x00AA6, "flag_arm_cannon_open_or_opening", uint8, Scalar;
+    0x00AA7, "flag_arm_cannon_opening_or_closing", uint8, Scalar;
+    0x00AA8, "arm_cannon_frame", uint16, Scalar;
+    0x00AAA, "hud_item_changed_this_frame", uint16, Scalar;
+    0x00AAC, "arm_cannon_drawing_mode", uint16, Scalar;
+    0x00AAE, "speed_echoes_index", uint16, Scalar;
+    0x00AB0, "speed_echo_xpos", uint16, Array;
+    0x00AB8, "speed_echo_ypos", uint16, Array;
+    0x00AC0, "speed_echo_xspeed", uint16, Array;
+    0x00AC8, "samus_top_half_spritemap_index", uint16, Scalar;
+    0x00ACA, "samus_bottom_half_spritemap_index", uint16, Scalar;
+    0x00ACC, "timer_for_shine_timer", uint16, Scalar;
+    0x00ACE, "special_samus_palette_frame", uint16, Scalar;
+    0x00AD0, "special_samus_palette_timer", uint16, Scalar;
+    0x00AD2, "liquid_physics_type", uint16, Scalar;
+    0x00AD4, "atmospheric_gfx_anim_timer", uint16, Array;
+    0x00ADC, "atmospheric_gfx_x_pos", uint16, Array;
+    0x00AE4, "atmospheric_gfx_y_pos", uint16, Array;
+    0x00AEC, "atmospheric_gfx_frame_and_type", uint16, Array;
+    0x00AF4, "autojump_timer", uint16, Scalar;
+    0x00AF6, "samus_x_pos", uint16, Scalar;
+    0x00AF8, "samus_x_subpos", uint16, Scalar;
+    0x00AFA, "samus_y_pos", uint16, Scalar;
+    0x00AFC, "samus_y_subpos", uint16, Scalar;
+    0x00AFE, "samus_x_radius", uint16, Scalar;
+    0x00B00, "samus_y_radius", uint16, Scalar;
+    0x00B02, "samus_collision_direction", uint16, Scalar;
+    0x00B04, "samus_spritemap_x_pos", uint16, Scalar;
+    0x00B06, "samus_spritemap_y_pos", uint16, Scalar;
+    0x00B0A, "ideal_layer1_xpos", uint16, Scalar;
+    0x00B0E, "ideal_layer1_ypos", uint16, Scalar;
+    0x00B10, "samus_prev_x_pos", uint16, Scalar;
+    0x00B12, "samus_prev_x_subpos", uint16, Scalar;
+    0x00B14, "samus_prev_y_pos", uint16, Scalar;
+    0x00B16, "samus_prev_y_subpos", uint16, Scalar;
+    0x00B18, "charged_shot_glow_timer", uint16, Scalar;
+    0x00B1A, "UNUSED_word_7E0B1A", uint16, Scalar;
+    0x00B20, "used_for_ball_bounce_on_landing", uint16, Scalar;
+    0x00B22, "samus_is_falling_flag", uint16, Scalar;
+    0x00B24, "tempB24", uint16, Scalar;
+    0x00B26, "tempB26", uint16, Scalar;
+    0x00B2A, "UNUSED_word_7E0B2A", uint16, Scalar;
+    0x00B2C, "samus_y_subspeed", uint16, Scalar;
+    0x00B2E, "samus_y_speed", uint16, Scalar;
+    0x00B32, "samus_y_subaccel", uint16, Scalar;
+    0x00B34, "samus_y_accel", uint16, Scalar;
+    0x00B36, "samus_y_dir", uint16, Scalar;
+    0x00B38, "UNUSED_word_7E0B38", uint16, Scalar;
+    0x00B3C, "samus_has_momentum_flag", uint16, Scalar;
+    0x00B3E, "speed_boost_counter", uint16, Scalar;
+    0x00B40, "samus_echoes_sound_flag", uint16, Scalar;
+    0x00B42, "samus_x_extra_run_speed", uint16, Scalar;
+    0x00B44, "samus_x_extra_run_subspeed", uint16, Scalar;
+    0x00B46, "samus_x_base_speed", uint16, Scalar;
+    0x00B48, "samus_x_base_subspeed", uint16, Scalar;
+    0x00B4A, "samus_x_accel_mode", uint16, Scalar;
+    0x00B4C, "samus_x_decel_mult", uint8, Scalar;
+    0x00B56, "extra_samus_x_subdisplacement", uint16, Scalar;
+    0x00B58, "extra_samus_x_displacement", uint16, Scalar;
+    0x00B5A, "extra_samus_y_subdisplacement", uint16, Scalar;
+    0x00B5C, "extra_samus_y_displacement", uint16, Scalar;
+    0x00B5E, "new_projectile_direction_changed_pose", uint16, Scalar;
+    0x00B60, "used_for_sba_attacksB60", uint16, Scalar;
+    0x00B62, "samus_charge_palette_index", uint16, Scalar;
+    0x00B64, "projectile_x_pos", uint16, Array;
+    0x00B78, "projectile_y_pos", uint16, Array;
+    0x00B8C, "projectile_bomb_x_subpos", uint16, Array;
+    0x00BA0, "projectile_bomb_y_subpos", uint16, Array;
+    0x00BB4, "projectile_x_radius", uint16, Array;
+    0x00BC8, "projectile_y_radius", uint16, Array;
+    0x00BDC, "projectile_bomb_x_speed", uint16, Array;
+    0x00BF0, "projectile_bomb_y_speed", uint16, Array;
+    0x00C04, "projectile_dir", uint16, Array;
+    0x00C18, "projectile_type", uint16, Array;
+    0x00C2C, "projectile_damage", uint16, Array;
+    0x00C40, "projectile_bomb_instruction_ptr", uint16, Array;
+    0x00C54, "projectile_bomb_instruction_timers", uint16, Array;
+    0x00C68, "projectile_bomb_pre_instructions", uint16, Array;
+    0x00C72, "bomb_functions", uint16, Array;
+    0x00C7C, "projectile_variables", uint16, Array;
+    0x00C86, "bomb_timers", uint16, Array;
+    0x00C90, "projectile_timers", uint16, Array;
+    0x00C9A, "bomb_subspeeds", uint16, Array;
+    0x00CA4, "projectile_unk_A", uint16, Array;
+    0x00CB8, "projectile_spritemap_pointers", uint16, Array;
+    0x00CCC, "cooldown_timer", uint16, Scalar;
+    0x00CCE, "projectile_counter", uint16, Scalar;
+    0x00CD0, "flare_counter", uint16, Scalar;
+    0x00CD2, "bomb_counter", uint16, Scalar;
+    0x00CD4, "bomb_spread_charge_timeout_counter", uint16, Scalar;
+    0x00CD6, "flare_animation_frame", uint16, Scalar;
+    0x00CD8, "flare_slow_sparks_anim_frame", uint16, Scalar;
+    0x00CDA, "flare_fast_sparks_anim_frame", uint16, Scalar;
+    0x00CDC, "flare_animation_timer", uint16, Scalar;
+    0x00CDE, "flare_slow_sparks_anim_timer", uint16, Scalar;
+    0x00CE0, "flare_fast_sparks_anim_timer", uint16, Scalar;
+    0x00CE2, "power_bomb_explosion_x_pos", uint16, Scalar;
+    0x00CE4, "power_bomb_explosion_y_pos", uint16, Scalar;
+    0x00CE6, "power_bomb_explosion_x_pos_plus_0x100", uint16, Scalar;
+    0x00CE8, "power_bomb_explosion_y_pos_rsub_0x1ff", uint16, Scalar;
+    0x00CEA, "power_bomb_explosion_radius", uint16, Scalar;
+    0x00CEC, "power_bomb_pre_explosion_flash_radius", uint16, Scalar;
+    0x00CEE, "power_bomb_flag", uint16, Scalar;
+    0x00CF0, "power_bomb_pre_explosion_radius_speed", uint16, Scalar;
+    0x00CF2, "pre_scaled_power_bomb_explosion_shape_def_ptr", uint16, Scalar;
+    0x00CF4, "grapple_beam_flags", uint16, Scalar;
+    0x00CF6, "grapple_varCF6", uint16, Scalar;
+    0x00CF8, "slow_grabble_scrolling_flag", uint16, Scalar;
+    0x00CFA, "grapple_beam_end_angle16", uint16, Scalar;
+    0x00CFB, "grapple_beam_end_angle_hi", uint8, Scalar;
+    0x00CFC, "grapple_beam_end_angles_mirror", uint16, Scalar;
+    0x00CFE, "grapple_beam_length", uint16, Scalar;
+    0x00D00, "grapple_beam_length_delta", uint16, Scalar;
+    0x00D02, "grapple_beam_origin_x_offset", uint16, Scalar;
+    0x00D04, "grapple_beam_origin_y_offset", uint16, Scalar;
+    0x00D06, "grapple_beam_end_x_subpos", uint16, Scalar;
+    0x00D08, "grapple_beam_end_x_pos", uint16, Scalar;
+    0x00D0A, "grapple_beam_end_y_subpos", uint16, Scalar;
+    0x00D0C, "grapple_beam_end_y_pos", uint16, Scalar;
+    0x00D0E, "grapple_beam_end_x_suboffset", uint16, Scalar;
+    0x00D10, "grapple_beam_end_x_offset", uint16, Scalar;
+    0x00D12, "grapple_beam_end_y_suboffset", uint16, Scalar;
+    0x00D14, "grapple_beam_end_y_offset", uint16, Scalar;
+    0x00D16, "x_pos_of_start_of_grapple_beam", uint16, Scalar;
+    0x00D18, "y_pos_of_start_of_grapple_beam", uint16, Scalar;
+    0x00D1A, "x_pos_of_start_of_grapple_beam_prevframe", uint16, Scalar;
+    0x00D1C, "y_pos_of_start_of_grapple_beam_prevframe", uint16, Scalar;
+    0x00D1E, "grapple_beam_unkD1E", uint16, Scalar;
+    0x00D20, "grapple_beam_unkD20", uint16, Scalar;
+    0x00D22, "grapple_beam_extension_x_velocity", uint16, Scalar;
+    0x00D24, "grapple_beam_extension_y_velocity", uint16, Scalar;
+    0x00D26, "grapple_beam_unkD26", uint16, Scalar;
+    0x00D28, "grapple_beam_unkD28", uint16, Scalar;
+    0x00D2A, "grapple_beam_unkD2A", uint16, Scalar;
+    0x00D2C, "grapple_beam_unkD2C", uint16, Scalar;
+    0x00D2E, "grapple_beam_unkD2E", uint16, Scalar;
+    0x00D30, "grapple_beam_unkD30", uint16, Scalar;
+    0x00D32, "grapple_beam_function", uint16, Scalar;
+    0x00D34, "grapple_beam_direction", uint16, Scalar;
+    0x00D36, "grapple_beam_unkD36", uint16, Scalar;
+    0x00D38, "grapple_beam_unkD38", uint16, Scalar;
+    0x00D3A, "grapple_beam_unkD3A", uint16, Scalar;
+    0x00D3C, "grapple_beam_unkD3C", uint16, Scalar;
+    0x00D3E, "grapple_point_anim_timer", uint16, Scalar;
+    0x00D40, "grapple_point_anim_ptr", uint16, Scalar;
+    0x00D42, "grapple_segment_anim_instr_timers", uint16, Array;
+    0x00D62, "grapple_segment_anim_instr_ptrs", uint16, Array;
+    0x00D82, "button_config_shoot_x_saved", uint16, Scalar;
+    0x00D84, "button_config_jump_a_saved", uint16, Scalar;
+    0x00D86, "button_config_run_b_saved", uint16, Scalar;
+    0x00D88, "button_config_itemcancel_y_saved", uint16, Scalar;
+    0x00D8A, "button_config_itemswitch_saved", uint16, Scalar;
+    0x00D8C, "button_config_aim_down_L_saved", uint16, Scalar;
+    0x00D8E, "button_config_aim_up_R_saved", uint16, Scalar;
+    0x00D90, "grapple_beam_grapple_start_x", uint16, Scalar;
+    0x00D92, "grapple_beam_grapple_start_y", uint16, Scalar;
+    0x00D94, "grapple_beam_grapple_start_block_x", uint16, Scalar;
+    0x00D96, "grapple_beam_grapple_start_block_y", uint16, Scalar;
+    0x00D98, "g_word_7E0D98", uint16, Scalar;
+    0x00D9C, "g_word_7E0D9C", uint16, Scalar;
+    0x00D9E, "g_byte_7E0D9E", uint8, Scalar;
+    0x00D9F, "g_byte_7E0D9F", uint8, Scalar;
+    0x00DA0, "loop_counter_transfer_enemies_to_vram", uint16, Scalar;
+    0x00DA2, "absolute_moved_last_frame_x", uint16, Scalar;
+    0x00DA4, "absolute_moved_last_frame_x_fract", uint16, Scalar;
+    0x00DA6, "absolute_moved_last_frame_y", uint16, Scalar;
+    0x00DA8, "absolute_moved_last_frame_y_fract", uint16, Scalar;
+    0x00DAA, "projectile_init_speed_samus_moved_left", uint16, Scalar;
+    0x00DAC, "projectile_init_speed_samus_moved_left_fract", uint16, Scalar;
+    0x00DAE, "projectile_init_speed_samus_moved_right", uint16, Scalar;
+    0x00DB0, "projectile_init_speed_samus_moved_right_fract", uint16, Scalar;
+    0x00DB2, "projectile_init_speed_samus_moved_up", uint16, Scalar;
+    0x00DB4, "projectile_init_speed_samus_moved_up_fract", uint16, Scalar;
+    0x00DB6, "projectile_init_speed_samus_moved_down", uint16, Scalar;
+    0x00DB8, "projectile_init_speed_samus_moved_down_fract", uint16, Scalar;
+    0x00DBA, "samus_pos_adjusted_by_slope_flag", uint16, Scalar;
+    0x00DBC, "samus_total_x_speed", uint16, Scalar;
+    0x00DBE, "samus_total_x_subspeed", uint16, Scalar;
+    0x00DC0, "play_resume_charging_beam_sfx", uint16, Scalar;
+    0x00DC2, "prev_beam_charge_counter", uint16, Scalar;
+    0x00DC4, "cur_block_index", uint16, Scalar;
+    0x00DC6, "input_to_pose_calc", uint16, Scalar;
+    0x00DC8, "queued_message_box_index", uint16, Scalar;
+    0x00DCE, "samus_collides_with_solid_enemy", uint16, Scalar;
+    0x00DD0, "samus_collision_flag", uint16, Scalar;
+    0x00DD2, "REMOVED_temp_collision_DD2", uint16, Scalar;
+    0x00DD4, "REMOVED_temp_collision_DD4", uint16, Scalar;
+    0x00DD6, "REMOVED_temp_collision_DD6", uint16, Scalar;
+    0x00DDC, "suit_pickup_light_beam_widening_speed", uint16, Scalar;
+    0x00DDE, "projectile_index", uint16, Scalar;
+    0x00DE0, "debug_invincibility", uint16, Scalar;
+    0x00DE2, "game_options_screen_index", uint16, Scalar;
+    0x00DE4, "g_word_7E0DE4", uint16, Scalar;
+    0x00DE6, "g_word_7E0DE6", uint16, Scalar;
+    0x00DE8, "g_word_7E0DE8", uint16, Scalar;
+    0x00DEA, "which_item_to_pickup", uint16, Scalar;
+    0x00DEC, "substate", uint16, Scalar;
+    0x00DEE, "suit_pickup_light_beam_pos", uint16, Scalar;
+    0x00DF0, "suit_pickup_color_math_R", uint8, Scalar;
+    0x00DF1, "suit_pickup_color_math_G", uint8, Scalar;
+    0x00DF2, "suit_pickup_color_math_B", uint8, Scalar;
+    0x00DF3, "suit_pickup_palette_transition_color", uint8, Scalar;
+    0x00DF4, "UNUSED_debug_spare_cpu_display_flag", uint16, Scalar;
+    0x00DF6, "UNUSED_word_7E0DF6", uint16, Scalar;
+    0x00DF8, "UNUSED_word_7E0DF8", uint16, Scalar;
+    0x00DFA, "UNUSED_word_7E0DFA", uint16, Scalar;
+    0x00DFC, "UNUSED_word_7E0DFC", uint16, Scalar;
+    0x00DFE, "joypad1_input_samusfilter", uint16, Scalar;
+    0x00E00, "joypad1_newinput_samusfilter", uint16, Scalar;
+    0x00E02, "REMOVED_samus_bottom_boundary_position", uint16, Scalar;
+    0x00E04, "distance_to_eject_samus_left", uint16, Scalar;
+    0x00E06, "distance_to_eject_samus_right", uint16, Scalar;
+    0x00E08, "distance_to_eject_samus_up", uint16, Scalar;
+    0x00E0A, "distance_to_eject_samus_down", uint16, Scalar;
+    0x00E0C, "g_byte_7E0E0C", uint8, Array;
+    0x00E12, "debug_disable_sprite_interact", uint16, Scalar;
+    0x00E16, "elevator_flags", uint16, Scalar;
+    0x00E18, "elevator_status", uint16, Scalar;
+    0x00E1A, "health_drop_bias_flag", uint16, Scalar;
+    0x00E1C, "enemy_index_to_shake", uint16, Scalar;
+    0x00E1E, "nmi_flag_bg2_enemy_vram_transfer", uint16, Scalar;
+    0x00E20, "REMOVED_varE20", uint16, Scalar;
+    0x00E22, "REMOVED_varE22", uint16, Scalar;
+    0x00E24, "REMOVED_varE24", uint16, Scalar;
+    0x00E26, "REMOVED_varE26", uint16, Scalar;
+    0x00E28, "REMOVED_varE28", uint16, Scalar;
+    0x00E2A, "REMOVED_varE2A", uint16, Scalar;
+    0x00E2C, "REMOVED_varE2C", uint16, Scalar;
+    0x00E2E, "REMOVED_varE2E", uint16, Scalar;
+    0x00E32, "REMOVED_varE32", uint16, Scalar;
+    0x00E34, "REMOVED_varE34", uint16, Scalar;
+    0x00E36, "REMOVED_varE36", uint16, Scalar;
+    0x00E38, "REMOVED_varE38", uint16, Scalar;
+    0x00E3A, "REMOVED_varE3A", uint16, Scalar;
+    0x00E3C, "REMOVED_varE3C", uint16, Scalar;
+    0x00E3E, "REMOVED_varE3E", uint16, Scalar;
+    0x00E40, "last_enemy_power", uint16, Scalar;
+    0x00E44, "random_enemy_counter", uint16, Scalar;
+    0x00E46, "UNUSED_word_7E0E46", uint16, Scalar;
+    0x00E48, "UNUSED_word_7E0E48", uint16, Scalar;
+    0x00E4A, "REMOVED_new_enemy_index", uint16, Scalar;
+    0x00E4C, "first_free_enemy_index", uint16, Scalar;
+    0x00E4E, "num_enemies_in_room", uint16, Scalar;
+    0x00E50, "num_enemies_killed_in_room", uint16, Scalar;
+    0x00E52, "num_enemy_deaths_left_to_clear", uint16, Scalar;
+    0x00E54, "cur_enemy_index", uint16, Scalar;
+    0x00E56, "REMOVED_cur_enemy_index_backup", uint16, Scalar;
+    0x00E58, "REMOVED_enemy_data_ptr", uint16, Scalar;
+    0x00E5A, "enemy_tile_load_data", EnemyTileLoadData, Array;
+    0x00E7A, "enemy_tile_load_data_write_pos", uint16, Scalar;
+    0x00E7C, "enemy_tile_vram_src", uint16, Scalar;
+    0x00E7E, "enemy_tile_vram_dst", uint16, Scalar;
+    0x00E84, "enemy_drawing_queue", uint16, Array;
+    0x00F68, "enemy_drawing_queue_sizes", uint16, Array;
+    0x00F78, "enemy_data", EnemyData, Array;
+    0x01778, "fireflea_flashing_timer", uint16, Scalar;
+    0x0177A, "fireflea_flashing_index", uint16, Scalar;
+    0x0177C, "UNUSED_word_7E177C", uint16, Scalar;
+    0x0177E, "fireflea_darkness_level", uint16, Scalar;
+    0x01780, "UNUSED_word_7E1780", uint16, Scalar;
+    0x01782, "UNUSED_word_7E1782", uint16, Scalar;
+    0x01784, "REMOVED_enemy_ai_pointer", LongPtr, Scalar;
+    0x01788, "REMOVED_enemy_ai_pointer_backup", LongPtr, Scalar;
+    0x0178C, "enemy_gfx_drawn_hook", LongPtr, Scalar;
+    0x01790, "REMOVED_set_to_rtl_when_loading_enemies_unused", LongPtr, Scalar;
+    0x01794, "variables_for_enemy_graphics_drawn_hook", uint16, Array;
+    0x0179A, "enemy_bg2_tilemap_size", uint16, Scalar;
+    0x0179C, "boss_id", uint16, Scalar;
+    0x0179E, "UNUSED_word_7E179E", uint16, Scalar;
+    0x017A0, "UNUSED_word_7E17A0", uint16, Scalar;
+    0x017A2, "UNUSED_word_7E17A2", uint16, Scalar;
+    0x017A4, "active_enemy_indexes_write_ptr", uint16, Scalar;
+    0x017A6, "interactive_enemy_indexes_write_ptr", uint16, Scalar;
+    0x017A8, "REMOVED_active_enemy_indexes_index", uint16, Scalar;
+    0x017AA, "REMOVED_interactive_enemy_indexes_index", uint16, Scalar;
+    0x017AC, "active_enemy_indexes", uint16, Array;
+    0x017EC, "interactive_enemy_indexes", uint16, Array;
+    0x0182C, "enemy_index_colliding_dirs", uint16, Array;
+    0x01834, "REMOVED_distance_to_enemy_colliding_dirs", uint16, Array;
+    0x0183C, "flag_process_all_enemies", uint16, Scalar;
+    0x0183E, "earthquake_type", uint16, Scalar;
+    0x01840, "earthquake_timer", uint16, Scalar;
+    0x01842, "frame_counter_every_frame", uint16, Scalar;
+    0x01844, "sprite_object_index", uint16, Scalar;
+    0x01846, "debug_enemy_index_UNUSED", uint16, Scalar;
+    0x01848, "log_index_UNUSED", uint16, Scalar;
+    0x0184A, "REMOVED_samus_x_pos_colliding_solid", uint16, Scalar;
+    0x0184C, "REMOVED_samus_x_subpos_colliding_solid", uint16, Scalar;
+    0x0184E, "REMOVED_enemy_x_pos_colliding_solid", uint16, Scalar;
+    0x01850, "REMOVED_enemy_x_subpos_colliding_solid", uint16, Scalar;
+    0x01852, "REMOVED_samus_pos_delta_colliding_solid", uint16, Scalar;
+    0x01854, "REMOVED_samus_subpos_delta_colliding_solid", uint16, Scalar;
+    0x01856, "REMOVED_samus_y_pos_colliding_solid", uint16, Scalar;
+    0x01858, "REMOVED_samus_y_subpos_colliding_solid", uint16, Scalar;
+    0x0185A, "REMOVED_solid_enemy_collision_type", uint16, Scalar;
+    0x0185C, "debug_index", uint16, Scalar;
+    0x0185E, "debug_time_frozen_for_enemies", uint16, Scalar;
+    0x01860, "debug_text_cursor_x", uint16, Scalar;
+    0x01862, "debug_text_cursor_y", uint16, Scalar;
+    0x01864, "debug_enemy_set_entry_index", uint16, Scalar;
+    0x01866, "debug_enemy_population_pointer", uint16, Scalar;
+    0x01868, "debug_enemy_spawn_x_pos", uint16, Scalar;
+    0x0186A, "debug_enemy_spawn_y_pos", uint16, Scalar;
+    0x0186E, "REMOVED_enemy_spritemap_entry_pointer", uint16, Scalar;
+    0x01870, "REMOVED_enemy_left_border_collision", uint16, Scalar;
+    0x01872, "REMOVED_enemy_bottom_border_collision", uint16, Scalar;
+    0x01874, "REMOVED_enemy_right_border_collision", uint16, Scalar;
+    0x01876, "REMOVED_enemy_top_border_collision", uint16, Scalar;
+    0x01878, "REMOVED_hitbox_ptr", uint16, Scalar;
+    0x0187A, "REMOVED_enemy_spritemap_entry_coll_x_pos", uint16, Scalar;
+    0x0187C, "REMOVED_enemy_spritemap_entry_coll_y_pos", uint16, Scalar;
+    0x0187E, "REMOVED_samus_right_border_coll", uint16, Scalar;
+    0x01880, "REMOVED_samus_left_border_coll", uint16, Scalar;
+    0x01882, "REMOVED_samus_bottom_border_coll", uint16, Scalar;
+    0x01884, "REMOVED_samus_top_border_coll", uint16, Scalar;
+    0x0189A, "REMOVED_samus_target_x_pos", uint16, Scalar;
+    0x0189C, "REMOVED_samus_target_x_subpos", uint16, Scalar;
+    0x0189E, "REMOVED_samus_target_y_pos", uint16, Scalar;
+    0x018A0, "REMOVED_samus_target_y_subpos", uint16, Scalar;
+    0x018A2, "REMOVED_samus_x_radius_mirror", uint16, Scalar;
+    0x018A4, "REMOVED_samus_y_radius_mirror", uint16, Scalar;
+    0x018A6, "collision_detection_index", uint16, Scalar;
+    0x018A8, "samus_invincibility_timer", uint16, Scalar;
+    0x018AA, "samus_knockback_timer", uint16, Scalar;
+    0x018AC, "projectile_invincibility_timer", uint16, Scalar;
+    0x018AE, "flag_disable_projectile_interaction", uint16, Scalar;
+    0x018B0, "hdma_objects_enable_flag", uint16, Scalar;
+    0x018B2, "hdma_object_index", uint16, Scalar;
+    0x018B4, "hdma_object_channels_bitmask", uint16, Array;
+    0x018C0, "hdma_object_bank_slot", uint16, Array;
+    0x018CC, "hdma_object_instruction_list_pointers", uint16, Array;
+    0x018D8, "hdma_object_table_pointers", uint16, Array;
+    0x018E4, "hdma_object_instruction_timers", uint16, Array;
+    0x018F0, "hdma_object_pre_instructions", uint16, Array;
+    0x018FC, "hdma_object_pre_instruction_bank", uint16, Array;
+    0x01908, "hdma_object_timers", uint16, Array;
+    0x01914, "hdma_object_A", uint16, Array;
+    0x01920, "hdma_object_B", uint16, Array;
+    0x0192C, "hdma_object_C", uint16, Array;
+    0x01938, "hdma_object_D", uint16, Array;
+    0x01944, "hdma_object_E", uint16, Array;
+    0x01950, "hdma_object_F", uint16, Array;
+    0x0195C, "fx_y_subpos", uint16, Scalar;
+    0x0195E, "fx_y_pos", uint16, Scalar;
+    0x01960, "lava_acid_y_subpos", uint16, Scalar;
+    0x01962, "lava_acid_y_pos", uint16, Scalar;
+    0x01964, "fx_tilemap_ptr", uint16, Scalar;
+    0x0196C, "fx_rising_function_bank_88", uint16, Scalar;
+    0x0196E, "fx_type", uint16, Scalar;
+    0x01970, "fx_y_suboffset", uint16, Scalar;
+    0x01972, "fx_y_offset", uint16, Scalar;
+    0x01974, "tide_phase", uint16, Scalar;
+    0x01976, "fx_base_y_subpos", uint16, Scalar;
+    0x01978, "fx_base_y_pos", uint16, Scalar;
+    0x0197A, "fx_target_y_pos", uint16, Scalar;
+    0x0197C, "fx_y_vel", uint16, Scalar;
+    0x0197E, "fx_liquid_options", uint16, Scalar;
+    0x01980, "fx_timer", uint16, Scalar;
+    0x01982, "fx_layer_blending_config_a", uint16, Scalar;
+    0x01984, "fx_layer_blending_config_b", uint16, Scalar;
+    0x01986, "fx_layer_blending_config_c", uint16, Scalar;
+    0x01988, "phantom_related_layer_flag", uint16, Scalar;
+    0x0198D, "cinematic_var5", uint16, Scalar;
+    0x0198D, "eproj_enable_flag", uint16, Scalar;
+    0x0198F, "cinematic_var6", uint16, Scalar;
+    0x0198F, "eproj_unk198F", uint16, Scalar;
+    0x01991, "cinematic_var7", uint16, Scalar;
+    0x01991, "eproj_index", uint16, Scalar;
+    0x01993, "cinematic_var8", uint16, Scalar;
+    0x01993, "eproj_init_param_1", uint16, Scalar;
+    0x01995, "cinematic_var9", uint16, Scalar;
+    0x01995, "eproj_unk1995", uint16, Scalar;
+    0x01997, "cinematic_var10", uint16, Scalar;
+    0x01997, "eproj_id", uint16, Array;
+    0x01999, "g_word_7E1999", uint16, Scalar;
+    0x0199B, "g_word_7E199B", uint16, Scalar;
+    0x0199D, "g_word_7E199D", uint16, Scalar;
+    0x0199F, "g_word_7E199F", uint16, Scalar;
+    0x019A1, "mode7_obj_instr_ptr", uint16, Array;
+    0x019A5, "mode7_obj_preinstr_func", uint16, Array;
+    0x019A9, "mode7_obj_instr_timer", uint16, Array;
+    0x019AD, "mode7_obj_goto_timer", uint16, Array;
+    0x019B1, "mode7_cur_index", uint16, Scalar;
+    0x019B3, "mode7_spawn_param", uint16, Scalar;
+    0x019B5, "cinematicbg_arr1", uint16, Array;
+    0x019BB, "eproj_gfx_idx", uint16, Array;
+    0x019CD, "cinematicbg_instr_ptr", uint16, Array;
+    0x019D5, "cinematicbg_preinstr", uint16, Array;
+    0x019DD, "cinematicbg_instr_timer", uint16, Array;
+    0x019DF, "eproj_timers", uint16, Array;
+    0x019E5, "cinematicbg_arr6", uint16, Array;
+    0x019ED, "cinematicbg_var2", uint16, Scalar;
+    0x019F1, "cinematic_enable_objs", uint16, Scalar;
+    0x019F3, "cinematic_enable_bg_tilemap", uint16, Scalar;
+    0x019F5, "cinematicbg_var3", uint16, Scalar;
+    0x019F7, "cinematic_var21", uint16, Scalar;
+    0x019F9, "cinematic_var22", uint16, Scalar;
+    0x019FB, "cinematic_var23", uint16, Scalar;
+    0x019FD, "cinematic_var24", uint16, Scalar;
+    0x019FF, "cinematic_var25", uint16, Scalar;
+    0x01A01, "cinematic_var26", uint16, Scalar;
+    0x01A03, "eproj_pre_instr", uint16, Array;
+    0x01A03, "eproj_pre_instr", uint16, Array;
+    0x01A27, "eproj_x_subpos", uint16, Array;
+    0x01A37, "cinematic_var20", uint16, Scalar;
+    0x01A47, "cinematic_var19", uint16, Scalar;
+    0x01A49, "cinematic_var4", uint16, Scalar;
+    0x01A4B, "cinematic_var13", uint16, Scalar;
+    0x01A4B, "eproj_x_pos", uint16, Array;
+    0x01A4D, "cinematic_var14", uint16, Scalar;
+    0x01A4F, "cinematic_var17", uint16, Scalar;
+    0x01A51, "cinematic_var12", uint16, Scalar;
+    0x01A53, "cinematic_var18", uint16, Scalar;
+    0x01A57, "cinematic_var15", uint16, Scalar;
+    0x01A59, "cinematic_obj_index", uint16, Scalar;
+    0x01A5D, "cinematicspr_whattodraw", uint16, Array;
+    0x01A6F, "eproj_y_subpos", uint16, Array;
+    0x01A7D, "cinematicbg_arr7", uint16, Array;
+    0x01A8F, "optionsmenu_index", uint16, Scalar;
+    0x01A93, "eproj_y_pos", uint16, Array;
+    0x01A93, "options_menu_init_param", uint16, Scalar;
+    0x01A9D, "cinematicbg_arr8", uint16, Array;
+    0x01A9D, "optionsmenu_cur_data", uint16, Array;
+    0x01AAD, "optionsmenu_arr8", uint16, Array;
+    0x01AB7, "eproj_x_vel", uint16, Array;
+    0x01ABD, "cinematicbg_arr9", uint16, Array;
+    0x01ABD, "optionsmenu_arr9", uint16, Array;
+    0x01ACD, "optionsmenu_arr10", uint16, Array;
+    0x01ADB, "eproj_y_vel", uint16, Array;
+    0x01ADD, "cinematicspr_arr6", uint16, Array;
+    0x01ADD, "optionsmenu_arr6", uint16, Array;
+    0x01AED, "optionsmenu_arr7", uint16, Array;
+    0x01AFD, "cinematicspr_arr7", uint16, Array;
+    0x01AFD, "optionsmenu_instr_ptr", uint16, Array;
+    0x01AFF, "eproj_E", uint16, Array;
+    0x01B0D, "optionsmenu_arr1", uint16, Array;
+    0x01B1D, "cinematicspr_instr_ptr", uint16, Array;
+    0x01B1D, "optionsmenu_instr_timer", uint16, Array;
+    0x01B23, "eproj_F", uint16, Array;
+    0x01B2D, "optionsmenu_arr5", uint16, Array;
+    0x01B3D, "cinematicspr_preinstr_func", uint16, Array;
+    0x01B3D, "optionsmenu_arr11", uint16, Array;
+    0x01B47, "eproj_instr_list_ptr", uint16, Array;
+    0x01B5D, "cinematicspr_instr_timer", uint16, Array;
+    0x01B6B, "eproj_spritemap_ptr", uint16, Array;
+    0x01B7D, "cinematicspr_goto_timer", uint16, Array;
+    0x01B8F, "eproj_instr_timers", uint16, Array;
+    0x01B9D, "cinematic_spawn_param", uint16, Scalar;
+    0x01B9F, "cinematic_var11", uint16, Scalar;
+    0x01BA1, "cinematicbg_var1", uint16, Scalar;
+    0x01BA3, "cinematic_var16", uint16, Scalar;
+    0x01BB3, "eproj_radius", uint16, Array;
+    0x01BD7, "eproj_properties", uint16, Array;
+    0x01BFB, "eproj_G", uint16, Array;
+    0x01C1F, "message_box_index", uint16, Scalar;
+    0x01C23, "plm_flag", uint16, Scalar;
+    0x01C25, "plm_draw_tilemap_index", uint16, Scalar;
+    0x01C27, "plm_id", uint16, Scalar;
+    0x01C29, "plm_x_block", uint16, Scalar;
+    0x01C2B, "plm_y_block", uint16, Scalar;
+    0x01C2D, "plm_item_gfx_index", uint16, Scalar;
+    0x01C2F, "plm_item_gfx_ptrs", uint16, Array;
+    0x01C37, "plm_header_ptr", uint16, Array;
+    0x01C87, "plm_block_indices", uint16, Array;
+    0x01CD7, "plm_pre_instrs", uint16, Array;
+    0x01D27, "plm_instr_list_ptrs", uint16, Array;
+    0x01D77, "plm_timers", uint16, Array;
+    0x01DC7, "plm_room_arguments", uint16, Array;
+    0x01E17, "plm_variable", uint16, Array;
+    0x01E67, "custom_draw_instr_num_blocks", uint16, Scalar;
+    0x01E69, "custom_draw_instr_plm_block", uint16, Scalar;
+    0x01E6B, "custom_draw_instr_zero_terminator", uint16, Scalar;
+    0x01E6D, "tourian_entrance_statue_finished", uint16, Scalar;
+    0x01E6F, "tourian_entrance_statue_animstate", uint16, Scalar;
+    0x01E71, "flag_samus_in_quicksand", uint16, Scalar;
+    0x01E73, "inside_block_reaction_samus_point", uint16, Scalar;
+    0x01E75, "save_station_lockout_flag", uint16, Scalar;
+    0x01E77, "current_slope_bts", uint16, Scalar;
+    0x01E79, "flag_for_palette_fx_objects", uint16, Scalar;
+    0x01E7B, "palettefx_index", uint16, Scalar;
+    0x01E7D, "palettefx_ids", uint16, Array;
+    0x01E8D, "palettefx_color_indexes", uint16, Array;
+    0x01EAD, "palettefx_pre_instr", uint16, Array;
+    0x01EBD, "palettefx_instr_list_ptrs", uint16, Array;
+    0x01ECD, "palettefx_instr_timers", uint16, Array;
+    0x01EDD, "palettefx_timers", uint16, Array;
+    0x01EED, "samus_in_heat_palfx_index", uint16, Scalar;
+    0x01EEF, "samus_in_heat_palettefx_prev_index", uint16, Scalar;
+    0x01EF1, "animtiles_enable_flag", uint16, Scalar;
+    0x01EF3, "animtiles_object_index", uint16, Scalar;
+    0x01EF5, "animtiles_ids", uint16, Array;
+    0x01F01, "animtiles_timers", uint16, Array;
+    0x01F0D, "animtiles_instr_list_ptrs", uint16, Array;
+    0x01F19, "animtiles_instr_timers", uint16, Array;
+    0x01F25, "animtiles_src_ptr", uint16, Array;
+    0x01F31, "animtiles_sizes", uint16, Array;
+    0x01F3D, "animtiles_vram_ptr", uint16, Array;
+    0x01F49, "animtiles_instruction", uint16, Scalar;
+    0x01F51, "cinematic_function", uint16, Scalar;
+    0x01F53, "demo_timer", uint16, Scalar;
+    0x01F55, "demo_set", uint16, Scalar;
+    0x01F57, "demo_scene", uint16, Scalar;
+    0x01F59, "num_demo_sets", uint16, Scalar;
+    0x02000, "tilemap_stuff", uint16, Array;
+    0x03000, "ram3000", Ram3000, Scalar;
+    0x03800, "ram3800", Ram3800, Scalar;
+    0x04000, "ram4000", Ram4000, Scalar;
+    0x07000, "enemy_spawn_data", EnemySpawnData, Array;
+    0x07800, "enemy_ram7800", ExtraEnemyRam7800, Array;
+    0x08000, "extra_enemy_ram8000", ExtraEnemyRam8000, Array;
+    0x08800, "extra_enemy_ram8800", ExtraEnemyRam8800, Array;
+    0x09000, "kraid_unk9000", uint16, Scalar;
+    0x09002, "g_word_7E9002", uint16, Scalar;
+    0x09004, "g_word_7E9004", uint16, Scalar;
+    0x09006, "g_word_7E9006", uint16, Scalar;
+    0x09008, "g_word_7E9008", uint16, Scalar;
+    0x0900A, "g_word_7E900A", uint16, Scalar;
+    0x0900C, "g_word_7E900C", uint16, Scalar;
+    0x0900F, "g_word_7E900F", uint16, Scalar;
+    0x09012, "g_word_7E9012", uint16, Scalar;
+    0x09015, "g_word_7E9015", uint16, Scalar;
+    0x09018, "g_word_7E9018", uint16, Scalar;
+    0x09020, "g_word_7E9020", uint16, Scalar;
+    0x09022, "g_word_7E9022", uint16, Scalar;
+    0x09030, "g_word_7E9030", uint16, Scalar;
+    0x09032, "g_word_7E9032", uint16, Scalar;
+    0x09040, "g_word_7E9040", uint16, Scalar;
+    0x09042, "g_word_7E9042", uint16, Scalar;
+    0x09050, "g_word_7E9050", uint16, Scalar;
+    0x09052, "g_word_7E9052", uint16, Scalar;
+    0x09060, "g_word_7E9060", uint16, Scalar;
+    0x09062, "g_word_7E9062", uint16, Scalar;
+    0x09070, "g_word_7E9070", uint16, Scalar;
+    0x09072, "g_word_7E9072", uint16, Scalar;
+    0x09080, "g_word_7E9080", uint16, Scalar;
+    0x09082, "g_word_7E9082", uint16, Scalar;
+    0x09090, "g_word_7E9090", uint16, Scalar;
+    0x09092, "g_word_7E9092", uint16, Scalar;
+    0x090A0, "g_word_7E90A0", uint16, Scalar;
+    0x090A2, "g_word_7E90A2", uint16, Scalar;
+    0x090B0, "g_word_7E90B0", uint16, Scalar;
+    0x090B2, "g_word_7E90B2", uint16, Scalar;
+    0x090C0, "g_word_7E90C0", uint16, Scalar;
+    0x090C2, "g_word_7E90C2", uint16, Scalar;
+    0x090D0, "g_word_7E90D0", uint16, Scalar;
+    0x090D2, "g_word_7E90D2", uint16, Scalar;
+    0x09100, "g_word_7E9100", uint16, Scalar;
+    0x09140, "g_word_7E9140", uint16, Scalar;
+    0x09180, "g_word_7E9180", uint16, Scalar;
+    0x09500, "g_byte_7E9500", uint8, Scalar;
+    0x09510, "g_byte_7E9510", uint8, Scalar;
+    0x09520, "g_byte_7E9520", uint8, Scalar;
+    0x09530, "g_byte_7E9530", uint8, Scalar;
+    0x09540, "g_byte_7E9540", uint8, Scalar;
+    0x09550, "g_byte_7E9550", uint8, Scalar;
+    0x09560, "g_byte_7E9560", uint8, Scalar;
+    0x09570, "g_byte_7E9570", uint8, Scalar;
+    0x09580, "g_byte_7E9580", uint8, Scalar;
+    0x09590, "g_byte_7E9590", uint8, Scalar;
+    0x095A0, "g_byte_7E95A0", uint8, Scalar;
+    0x095B0, "g_byte_7E95B0", uint8, Scalar;
+    0x095C0, "g_byte_7E95C0", uint8, Scalar;
+    0x095D0, "g_byte_7E95D0", uint8, Scalar;
+    0x095E0, "g_byte_7E95E0", uint8, Scalar;
+    0x095F0, "g_byte_7E95F0", uint8, Scalar;
+    0x09600, "g_byte_7E9600", uint8, Scalar;
+    0x09610, "g_byte_7E9610", uint8, Scalar;
+    0x097DC, "g_word_7E97DC", uint16, Array;
+    0x09800, "hdma_table_1", uint16, Array;
+    0x09C00, "mother_brain_indirect_hdma", uint8, Array;
+    0x09C44, "g_word_7E9C44", uint16, Scalar;
+    0x09C46, "g_word_7E9C46", uint16, Array;
+    0x09D00, "hdma_table_2", uint16, Array;
+    0x09E00, "hdma_window_1_left_pos", ExpandingSquareTransitionHdma, Array;
+    0x09E10, "hdma_window_1_right_pos", ExpandingSquareTransitionHdma, Array;
+    0x09E20, "expand_sq_topbottom_margin_right_pos", uint16, Scalar;
+    0x09E22, "expand_sq_topbottom_margin_left_pos", uint16, Scalar;
+    0x09E30, "expand_sq_left_subpos", uint16, Scalar;
+    0x09E32, "expand_sq_left_pos", uint16, Scalar;
+    0x09E34, "expand_sq_right_subpos", uint16, Scalar;
+    0x09E36, "expand_sq_right_pos", uint16, Scalar;
+    0x09E38, "expand_sq_top_subpos", uint16, Scalar;
+    0x09E3A, "expand_sq_top_pos", uint16, Scalar;
+    0x09E3C, "expand_sq_bottom_subpos", uint16, Scalar;
+    0x09E3E, "expand_sq_bottom_pos", uint16, Scalar;
+    0x09E40, "expand_sq_left_subvel", uint16, Scalar;
+    0x09E42, "expand_sq_left_vel", uint16, Scalar;
+    0x09E44, "expand_sq_right_subvel", uint16, Scalar;
+    0x09E46, "expand_sq_right_vel", uint16, Scalar;
+    0x09E48, "expand_sq_top_subvel", uint16, Scalar;
+    0x09E4A, "expand_sq_top_vel", uint16, Scalar;
+    0x09E4C, "expand_sq_bottom_subvel", uint16, Scalar;
+    0x09E4E, "expand_sq_bottom_vel", uint16, Scalar;
+    0x09E50, "expand_sq_timer", uint16, Scalar;
+    0x09E80, "g_word_7E9E80", uint16, Array;
+    0x09F00, "scrolling_sky_bg2_indirect_hdma", uint8, Array;
+    0x09F80, "scrolling_sky_bg2_hdma_data", uint16, Array;
+    0x0A000, "tile_table", TileTables, Scalar;
+    0x0C000, "palette_buffer", uint16, Array;
+    0x0C200, "target_palettes", uint16, Array;
+    0x0C400, "palette_change_num", uint16, Scalar;
+    0x0C402, "palette_change_denom", uint16, Scalar;
+    0x0C404, "g_word_7EC404", uint16, Scalar;
+    0x0C406, "power_bomb_explosion_left_hdma", uint8, Array;
+    0x0C506, "power_bomb_explosion_right_hdma", uint8, Array;
+    0x0C606, "offscreen_power_bomb_left_hdma", uint8, Scalar;
+    0x0C607, "offscreen_power_bomb_right_hdma", uint8, Scalar;
+    0x0C608, "hud_tilemap", uint16, Array;
+    0x0C6C8, "plm_draw_tilemap", uint16, Array;
+    0x0C8C8, "bg1_column_update_tilemap_left_halves", uint16, Array;
+    0x0C908, "bg1_column_update_tilemap_right_halves", uint16, Array;
+    0x0C948, "bg1_column_update_tilemap_top_halves", uint16, Array;
+    0x0C98C, "bg1_column_update_tilemap_bottom_halves", uint16, Array;
+    0x0C9D0, "bg2_column_update_tilemap_left_halves", uint8, Array;
+    0x0CA10, "bg2_column_update_tilemap_right_halves", uint16, Array;
+    0x0CA50, "bg2_column_update_tilemap_top_halves", uint8, Array;
+    0x0CA94, "bg2_column_update_tilemap_bottom_halves", uint8, Array;
+    0x0CAD8, "hud_bg3_xpos", uint16, Scalar;
+    0x0CADA, "hud_bg3_ypos", uint16, Scalar;
+    0x0CADC, "bg3_xpos", uint16, Scalar;
+    0x0CADE, "bg3_ypos", uint16, Scalar;
+    0x0CAE0, "crocomire_bg2_scroll_hdma_indirect", uint8, Array;
+    0x0CAF0, "crocomire_bg2_scroll_hdma_data", uint16, Array;
+    0x0CD20, "scrolls", uint8, Array;
+    0x0CD52, "explored_map_tiles_saved", uint16, Array;
+    0x0D552, "debug_enemy_set_name", uint8, Array;
+    0x0D55A, "debug_enemy_set_data", uint8, Array;
+    0x0D652, "wrecked_ship_robot_palanim_palindex", uint16, Scalar;
+    0x0D654, "wrecked_ship_robot_palanim_timer", uint16, Scalar;
+    0x0D656, "wrecked_ship_robot_palanim_table_index", uint8, Scalar;
+    0x0D658, "projectiletrail_left_instr_timer", uint16, Array;
+    0x0D67C, "projectiletrail_right_instr_timer", uint16, Array;
+    0x0D6A0, "projectiletrail_left_instr_list_ptr", uint16, Array;
+    0x0D6C4, "projectiletrail_right_instr_list_ptr", uint16, Array;
+    0x0D6E8, "projectiletrail_left_tile_and_attribs", uint16, Array;
+    0x0D70C, "projectiletrail_right_tile_and_attribs", uint16, Array;
+    0x0D730, "projectiletrail_left_x_pos", uint16, Array;
+    0x0D754, "projectiletrail_right_x_pos", uint16, Array;
+    0x0D778, "projectiletrail_left_y_pos", uint16, Array;
+    0x0D79C, "projectiletrail_right_y_pos", uint16, Array;
+    0x0D7C0, "player_data_saved", uint16, Array;
+    0x0D820, "events_that_happened", uint8, Array;
+    0x0D828, "boss_bits_for_area", uint8, Array;
+    0x0D830, "room_chozo_bits", uint8, Array;
+    0x0D870, "item_bit_array", uint8, Array;
+    0x0D8B0, "opened_door_bit_array", uint8, Array;
+    0x0D8F0, "UNUSED_word_7ED8F0", uint16, Array;
+    0x0D8F8, "used_save_stations_and_elevators", uint8, Array;
+    0x0D908, "map_station_byte_array", uint8, Array;
+    0x0D914, "loading_game_state", uint16, Scalar;
+    0x0D916, "sram_save_station_index", uint16, Scalar;
+    0x0D918, "sram_area_index", uint16, Scalar;
+    0x0D91A, "global_number_of_items_loaded_ctr", uint16, Scalar;
+    0x0D91C, "compressed_map_data", uint8, Array;
+    0x0DE1C, "plm_instruction_timer", uint16, Array;
+    0x0DE6C, "plm_instruction_draw_ptr", uint16, Array;
+    0x0DEBC, "plm_instruction_list_link_reg", uint16, Array;
+    0x0DF0C, "plm_variables", uint16, Array;
+    0x0DF5C, "backup_of_bg2_during_pause", uint16, Array;
+    0x0EF5C, "enemy_def_ptr", uint16, Array;
+    0x0EF64, "enemy_gfxdata_tiles_index", uint16, Array;
+    0x0EF6C, "enemy_gfxdata_vram_ptr", uint16, Array;
+    0x0EF74, "REMOVED_enemy_gfx_data_write_ptr", uint16, Scalar;
+    0x0EF76, "REMOVED_next_enemy_tiles_index", uint16, Scalar;
+    0x0EF78, "sprite_instr_list_ptrs", uint16, Array;
+    0x0EFF8, "sprite_instr_timer", uint16, Array;
+    0x0F078, "sprite_palettes", uint16, Array;
+    0x0F0F8, "sprite_x_pos", uint16, Array;
+    0x0F178, "sprite_x_subpos", uint16, Array;
+    0x0F1F8, "sprite_y_pos", uint16, Array;
+    0x0F278, "sprite_y_subpos", uint16, Array;
+    0x0F2F8, "sprite_disable_flag", uint16, Array;
+    0x0F378, "enemy_processing_stage", uint16, Scalar;
+    0x0F380, "eproj_flags", uint16, Array;
+    0x0F3C8, "eproj_enemy_header_ptr", uint16, Array;
+    0x0F410, "eproj_killed_enemy_index", uint16, Array;
+    0x0F434, "special_death_item_drop_x_origin_pos", uint16, Scalar;
+    0x0F436, "special_death_item_drop_y_origin_pos", uint16, Scalar;
+    0x10000, "ram7F_start", uint16, Scalar;
+    0x10002, "level_data", uint16, Array;
+    0x16402, "BTS", uint8, Array;
+    0x19602, "custom_background", uint16, Array;
+    0x1FF00, "bug_fix_counter_BAD", uint16, Scalar;
+}
