@@ -509,11 +509,10 @@ pub unsafe fn ReleaseButtonsFilter(mut v0: uint16, game: &mut Game) {
             ^ *((&raw mut game.g_ram as *mut uint8).offset(0x5df as ::core::ffi::c_int as isize)
                 as *mut uint16) as ::core::ffi::c_int)) as uint16;
 }
-pub unsafe fn PrepareBitAccess(mut a: uint16, game: &mut Game) -> uint16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x5e7 as ::core::ffi::c_int as isize)
-        as *mut uint16) = ((1 as ::core::ffi::c_int)
-        << (a as ::core::ffi::c_int & 7 as ::core::ffi::c_int)) as uint16;
-    return (a as ::core::ffi::c_int >> 3 as ::core::ffi::c_int) as uint16;
+pub fn PrepareBitAccess(a: uint16, game: &mut Game) -> uint16 {
+    let bitmask = 1u16 << (a & 7);
+    game.g_ram[0x5e7..0x5e9].copy_from_slice(&bitmask.to_le_bytes());
+    a >> 3
 }
 pub unsafe fn SetBossBitForCurArea(mut a: uint16, game: &mut Game) {
     let ref mut fresh91 = *(&raw mut game.g_ram as *mut uint8)

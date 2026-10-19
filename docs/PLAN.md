@@ -12664,6 +12664,25 @@ resume only with materially new evidence. This hold does not block covered
 readability work or investigation of other oracle gaps. Complete credits,
 gameplay, hardware/audio timing, remaining masks and ownership remain open.
 
+Safe bit-access helper (2026-10-19): PrepareBitAccess now builds its
+16-bit mask and writes both little-endian scratch bytes through safe RAM
+access. Its returned byte index, scratch write before return and all caller
+boundaries retain their behavior. Frozen 850e4166 plus only this change passes
+any%129712/0 (175.80s), native exit0, and pickup route68606/0
+(126.46s), native exit0. Separate observed pickup route68606/0
+(128.04s) records 53655 helper calls; observations are absent
+from maintained source. Arithmetic audit matches all65536 input words.
+
+Cargo fmt/check, stable optimized core/DLL and normal-core metadata builds
+pass. Cargo build --release was attempted but fails executing the generated
+sm build script with OS error5 under the documented managed Windows rule;
+release validation is incomplete for this change. No build-policy changes
+are included. Own raw offsets-1, unsafe functions-1, cast lines-4, Rust
+lines-1; other own counters unchanged. Peer edits are excluded from the
+frozen replays and preserved in the checkout. Super Missile passage and
+previous holds remain held; complete credits, gameplay, hardware/audio,
+remaining masks and ownership stay open. Continue covered readability work.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
