@@ -800,14 +800,17 @@ fn tested_bit_result(value: u16, byte: bool, set: bool, cpu: &mut Cpu) -> u16 {
     }
 }
 unsafe fn test_and_update_bits(cpu: *mut Cpu, low: u32, high: u32, set: bool, game: &mut Game) {
-    if (*cpu).mf {
-        let value = read_byte(cpu, low, game);
-        let result = tested_bit_result(u16::from(value), true, set, &mut *cpu);
-        write_byte(cpu, low, result as u8, game);
+    let byte = (*cpu).mf;
+    let value = if byte {
+        u16::from(read_byte(cpu, low, game))
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(2);
-        let value = read_word(cpu, low, high, game);
-        let result = tested_bit_result(value, false, set, &mut *cpu);
+        read_word(cpu, low, high, game)
+    };
+    let result = tested_bit_result(value, byte, set, &mut *cpu);
+    if byte {
+        write_byte(cpu, low, result as u8, game);
+    } else {
         write_word(cpu, low, high, result, true, game);
     }
 }

@@ -11884,6 +11884,25 @@ X70/Y1675,24health,missiles1/10. Old9AD9 enemy-drop ammo and earlier holds
 remain held. Credits, complete gameplay/hardware, render/audio, masked RAM
 and ownership remain open.
 
+CPU shared TSB/TRB wrapper arithmetic (2026-10-19): test_and_update_bits
+captures width once and shares tested_bit_result between byte/word paths.
+Extra two word cycles remain before reads; live accumulator/Z update remains
+after reads and before writes, with high-before-low word writes unchanged.
+Frozen `0bc3fea9` plus this change passes 5,767,168 actual old/current cases:
+every operand word, sampled accumulator boundaries, both widths/set choices
+and aliased/disjoint destinations. Named CPU/bus state and written bytes
+match; constructed WRAM cases do not exhaust MMIO/callback mutations.
+Full instrumented any% passes 129,712/0 (183.47s), native exit 0, executing
+TRB word/byte 152/426 and TSB 915/0 calls. Byte TSB remains comparison-covered.
+Clean full any% passes 129,712/0 (203.12s), native exit 0. Cargo fmt/check,
+full release/release-library builds with external SDL2, normal metadata and
+frozen optimized core/DLL pass. Live CPU matches verified source; uncommitted
+peer gameplay/SNES work is outside replay. Rust lines +3 make captured width
+and shared arithmetic explicit; other own counters unchanged. Concurrent
+replays prevent interpreting timings as performance measurements. TSC/TDC
+and prior holds remain held; complete gameplay/render/audio remain open.
+Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
