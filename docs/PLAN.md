@@ -1967,7 +1967,25 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): `05234716` combines the 121
+Latest reviewed integration (2026-10-19): `8e9846b3` adds 4197 named scalar
+stores to the reviewed compiler/RAM composition. All 74 committed source,
+configuration, host and progress inputs match the tested snapshot; all 77
+replay pins remain stable. Normal release (36.83s), workspace release (36.68s),
+formatting/check and progress pass. Full any% passes 129712/0 (162.04s replay,
+162.24s wall), native exit 0; the completed run was reused.
+
+Exact reconstruction covers every replacement in 32 caller files: RHS text,
+nested stores and table addresses remain unchanged. Value-first raw-pointer
+arguments retain RHS evaluation and temporary lifetime through the store,
+without adding Game/RAM references. All 65536 values for each of 602 fields
+pass, with neighboring-byte and post-sweep outside-field RAM checks and RHS
+mutation/drop controls; the test library/DLL bindings match. These finite
+checks do not establish global alias safety. Net Rust lines -262, casts -8394;
+one shared unsafe helper is added. The cast-line counter rises 32 through
+wrapping while its actual token count stays 33870. The pending nested-if
+composition retains separate verification.
+
+The prior `05234716` combines the 121
 single-match simplifications with the Boolean and named-RAM changes.
 A fresh normal release (37.15s) and full any% 129712/0 (163.09s replay,
 163.26s wall) pass, native exit 0. Formatting/check and progress pass;
