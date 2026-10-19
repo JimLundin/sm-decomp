@@ -13630,6 +13630,49 @@ Keep it this small. Add a crate only when the game code itself needs one.
 
 ## Phase 1: make the oracle a one-command check
 
+Cargo library reuse (2026-10-19): after the normal Cargo release build on
+Windows, use `python tools/verify_dll.py rom/sm.smc movies/any.inputs --cargo`
+with the installed SDL2 environment. See [the SDK setup](../movies/README.md).
+Cargo checks source/dependency freshness on each build; its reported release
+library is linked directly into the DLL host. This removes the second game
+compilation. The standalone mode remains available without SDL2, and
+`--no-build` retains its explicit meaning. Optimization and codegen-unit
+settings remain unchanged; every oracle check and rendered frame is retained.
+
+Frozen 182e6a2c before/after pairs include a real source edit, normal Cargo
+release build and the complete Python verifier command over any%. Both pairs
+run concurrently under normal CPU scheduling, with launch order reversed for
+the second pair. Total seconds improve 315.273 -> 298.649 and
+402.801 -> 372.152: 23.6365s saved on average, or 6.6%. Total process-tree CPU
+seconds improve 330.984375 -> 288.84375 and 342.390625 -> 288.53125, or 14.3%
+on average. Verifier build/startup time falls 22.663 -> 2.832s and
+37.158 -> 2.358s. Shared machine load remains variable; these are measured
+local iteration gains. All four complete CLI runs pass 129712/0, native
+exits 0, with identical game diagnostics after excluding timing and the
+temporary revision marker.
+
+A changed source marker appears in a 3600/0 run using only `--cargo`, without
+an earlier Cargo command. A deliberate compiler error exits 2 before linking
+or running the cached DLL; its hash stays unchanged. Clean recovery builds
+pass, and default standalone mode passes 3600/0 without LIBRARY_PATH.
+Clean final-source replays pass any% 129712/0 (320.01s) and Waver 58109/0
+(135.12s), native exits 0. The clean any% game output matches the baseline;
+the DLL hash remains unchanged. The documented --no-build reuse also passes
+3600/0 with the Cargo-linked DLL.
+All 68 frozen source/config files match the base after removing temporary
+markers and allowing only the verifier script change. The maintained script
+matches the final tested candidate. Cargo fmt/check, release build and
+progress pass. Own Rust residue counters are unchanged; no diagnostic scripts,
+compiled artifacts or ROM-derived data are committed.
+
+Earlier compiler-setting trials on frozen 7745edfc were rejected. Concurrent
+20,000-frame comparisons found native CPU targeting and optimization level 2
+used 2.3% and 3.6% more replay CPU respectively. Using 64 codegen units reduced
+CPU work, but normal full-cycle pairs 293.868 -> 291.143s and
+382.063 -> 381.608s averaged under 0.5% faster; fixed-core timings also varied
+widely. Those settings are not retained. Continue to measure the complete
+build-to-result path when evaluating future performance work.
+
 Release build turnaround (2026-10-19): prioritize the user's edit-to-result
 iteration time. Enable Cargo release incremental compilation and explicitly
 retain 16 codegen units. Release optimization, debug information and every

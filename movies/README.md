@@ -31,6 +31,20 @@ the same verifier through Python without SDL2:
 python tools/verify_dll.py rom/sm.smc movies/any.inputs
 ```
 
+After a Cargo release build on Windows, `--cargo` validates and reuses its
+library, compiling only the DLL host. This mode needs Cargo and the SDL2
+MinGW SDK. Set `LIBRARY_PATH` to the SDK's `lib` directory; runtime DLLs are
+loaded from that directory or its sibling `bin` directory:
+
+```powershell
+$env:LIBRARY_PATH = "C:\path\to\SDL2\x86_64-w64-mingw32\lib"
+cargo build --release
+python tools/verify_dll.py rom/sm.smc movies/any.inputs --cargo
+```
+
+Cargo checks sources and dependencies on every build. Build errors stop
+before replay. Keep the SDL2 environment for subsequent `--no-build` runs.
+
 The DLL script builds before replaying; `--rustc` selects a compiler when it
 is not on PATH. Use `--no-build` only to reuse a DLL built from the source you
 intend to verify, and do not rebuild it while another process has it loaded.
