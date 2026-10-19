@@ -33,7 +33,7 @@ use crate::game::sm_ad::{
     MotherBrain_Phase3_TurnLightsBackOn, MotherBrain_SealWall, TurnOffLightsForShitroidDeath,
 };
 use crate::game_state::Game;
-use crate::ram_map::{ram_word, set_ram_word};
+use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{mov24, MemCpy, ReadRegWord, RomPtr, SnesDivide, Unreachable, WriteReg};
 pub use crate::snes::registers::*;
@@ -1582,8 +1582,7 @@ pub unsafe fn MotherBrainBody_FakeDeath_Ascent_13_Raise(game: &mut Game) {
     let mut v1: uint16 = 0;
     if !((ram_word!(game, nmi_frame_counter_word) as i32 & 3 as i32) != 0i32 || {
         MotherBrain_SpawnDustCloudsForAscent(game);
-        let ref mut fresh7 = *((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16);
-        *fresh7 = (*fresh7).wrapping_add(2u16);
+        update_ram_word!(game.reg_BG2VOFS, wrapping_add(2u16));
         v1 = ((*E).base.y_pos).wrapping_sub(2u16);
         (*E).base.y_pos = v1;
         v1 >= 0xbdu16
@@ -1997,13 +1996,11 @@ pub unsafe fn MotherBrain_AddSpritemapToOam(
             (*oam).xcoord = x as uint8;
             (*oam).ycoord = y as uint8;
             *(&raw mut (*oam).charnum as *mut uint16) = (r22) | (*(p.offset(3) as *mut uint16));
-            let ref mut fresh6 = *((&raw mut game.g_ram as *mut uint8).offset(0x570)
-                as *mut uint16)
-                .offset((idx >> 5 as i32) as isize);
-            *fresh6 = (*fresh6 as i32
+            update_ram_word!(game.oam_ext[(idx >> 5 as i32)], |fresh6| (fresh6 as i32
                 | ((x as i32 & 0x100 as i32) >> 8 as i32
                     | (*(p as *mut int16) < 0i16) as i32 * 2 as i32)
-                    << 2 as i32 * (idx >> 2 as i32 & 7 as i32)) as uint16;
+                    << 2 as i32 * (idx >> 2 as i32 & 7 as i32))
+                as uint16);
             idx = idx + 4 as i32 & 0x1ff as i32;
         }
         p = p.offset(5);
@@ -2020,15 +2017,13 @@ pub unsafe fn MotherBrain_CalculateRainbowBeamHdma(game: &mut Game) {
 pub unsafe fn MotherBrain_MoveBodyDownScrollLeft(k: uint16, a: uint16, game: &mut Game) {
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as i32, game);
     (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(a);
-    let ref mut fresh1 = *((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16);
-    *fresh1 = (*fresh1).wrapping_sub(a);
+    update_ram_word!(game.reg_BG2VOFS, wrapping_sub(a));
     set_ram_word!(game.reg_BG2HOFS = (k as i32 + 34 as i32 - (*E).base.x_pos as i32) as uint16);
 }
 pub unsafe fn MotherBrain_MoveBodyDown(a: uint16, game: &mut Game) {
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as i32, game);
     (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(a);
-    let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16);
-    *fresh0 = (*fresh0).wrapping_sub(a);
+    update_ram_word!(game.reg_BG2VOFS, wrapping_sub(a));
     set_ram_word!(game.reg_BG2HOFS = (34u16).wrapping_sub((*E).base.x_pos));
 }
 pub unsafe fn MotherBrain_FootstepEffect(game: &mut Game) {
@@ -2856,8 +2851,7 @@ pub unsafe fn MotherBrain_Phase3_Death_20_BlowUpEscapeDoor(game: &mut Game) {
 }
 pub unsafe fn MotherBrain_Phase3_Death_21_KeepEarthquakeGoing(game: &mut Game) {
     if ram_word!(game, earthquake_timer) == 0 {
-        let ref mut fresh10 = *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16);
-        *fresh10 = (*fresh10).wrapping_sub(1);
+        update_ram_word!(game.earthquake_timer, wrapping_sub(1));
     }
 }
 pub unsafe fn MotherBrain_GenerateEscapeDoorExploding(game: &mut Game) {
@@ -3045,9 +3039,10 @@ pub unsafe fn MotherBrainsBrain_Shot(game: &mut Game) {
             )) as u16)
             & (7u16);
         if g_byte_A9B546[v1 as usize] != 0 {
-            let ref mut fresh11 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1dc7) as *mut uint16).offset(39);
-            *fresh11 = (*fresh11).wrapping_add((g_byte_A9B546[v1 as usize]) as u16);
+            update_ram_word!(
+                game.plm_room_arguments[39],
+                wrapping_add((g_byte_A9B546[v1 as usize]) as u16)
+            );
             QueueSfx2_Max6(0x6e as uint16, game);
             v2 = 13 as int16;
             let E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as i32, game);
@@ -4547,8 +4542,7 @@ pub unsafe fn Samus_HealDueToShitroid(game: &mut Game) -> uint8 {
         as int16)
         < 0i16
     {
-        let ref mut fresh4 = *((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16);
-        *fresh4 = (*fresh4).wrapping_add(1);
+        update_ram_word!(game.samus_health, wrapping_add(1));
         Samus_PlayGainingLosingHealthSfx(game);
         1 as uint8
     } else {

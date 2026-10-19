@@ -7,7 +7,7 @@ use crate::game::sm_86::SpawnEprojWithRoomGfx;
 use crate::game::sm_8d::SpawnPalfxObject;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game_state::Game;
-use crate::ram_map::{ram_word, set_ram_word};
+use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{RomPtr, Unreachable};
 
 pub use crate::types::{
@@ -43,12 +43,13 @@ pub const fnAnimtilesInstr_Clear3PaletteColors: uint32 = 8880987;
 pub const fnAnimtilesInstr_SpawnPalfxObj: uint32 = 8881010;
 pub const fnAnimtilesInstr_Write8PaletteColors: uint32 = 8881023;
 pub unsafe fn EnableAnimtiles(game: &mut Game) {
-    let ref mut fresh9 = *((&raw mut game.g_ram as *mut uint8).offset(0x1ef1) as *mut uint16);
-    *fresh9 = (*fresh9) | (0x8000u16);
+    update_ram_word!(game.animtiles_enable_flag, |fresh9| (fresh9) | (0x8000u16));
 }
 pub unsafe fn DisableAnimtiles(game: &mut Game) {
-    let ref mut fresh8 = *((&raw mut game.g_ram as *mut uint8).offset(0x1ef1) as *mut uint16);
-    *fresh8 = (*fresh8 as i32 & !(0x8000 as i32)) as uint16;
+    update_ram_word!(
+        game.animtiles_enable_flag,
+        |fresh8| (fresh8 as i32 & !(0x8000 as i32)) as uint16
+    );
 }
 pub unsafe fn ClearAnimtiles(game: &mut Game) {
     let mut i: i32 = 10 as i32;
@@ -317,8 +318,8 @@ pub unsafe fn AnimtilesInstr_TourianStatueSetState(
     j: uint16,
     game: &mut Game,
 ) -> uint16 {
-    let ref mut fresh5 = *((&raw mut game.g_ram as *mut uint8).offset(0x1e6f) as *mut uint16);
-    *fresh5 = (*fresh5) | (*(RomPtr_87(j, game) as *mut uint16));
+    update_ram_word!(game.tourian_entrance_statue_animstate, |fresh5| (fresh5)
+        | (*(RomPtr_87(j, game) as *mut uint16)));
     (j).wrapping_add(2u16)
 }
 pub unsafe fn AnimtilesInstr_TourianStatueClearState(
@@ -326,8 +327,10 @@ pub unsafe fn AnimtilesInstr_TourianStatueClearState(
     j: uint16,
     game: &mut Game,
 ) -> uint16 {
-    let ref mut fresh4 = *((&raw mut game.g_ram as *mut uint8).offset(0x1e6f) as *mut uint16);
-    *fresh4 = (*fresh4 as i32 & !(*(RomPtr_87(j, game) as *mut uint16) as i32)) as uint16;
+    update_ram_word!(
+        game.tourian_entrance_statue_animstate,
+        |fresh4| (fresh4 as i32 & !(*(RomPtr_87(j, game) as *mut uint16) as i32)) as uint16
+    );
     (j).wrapping_add(2u16)
 }
 pub unsafe fn AnimtilesInstr_Clear3PaletteColors(k: uint16, j: uint16, game: &mut Game) -> uint16 {

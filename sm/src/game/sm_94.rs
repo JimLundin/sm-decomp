@@ -7,7 +7,7 @@ use crate::game::sm_84::{SpawnPLM, SpawnPLMWithCollision};
 use crate::game::sm_90::KillProjectile;
 use crate::game::sm_a0::CalculateAngleFromXY;
 use crate::game_state::Game;
-use crate::ram_map::{ram_word, set_ram_word};
+use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{Mult8x8, RomPtr, SnesDivide, SnesModulus, Unreachable};
 use crate::snes::snes::snes_read;
@@ -2358,8 +2358,10 @@ unsafe fn BlockShotReactHoriz_Slope_Square(
 }
 unsafe fn BlockReactGrapple_GrappleBlock(ci: *mut CollInfo, game: &mut Game) -> uint8 {
     static kBlockReactGrapple_GrappleBlockPlm: [uint16; 4] = [0xd0d8, 0xd0dc, 0xd0e0, 0xd0d8];
-    let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0xcf4) as *mut uint16);
-    *fresh0 = (*fresh0 as i32 & !(0x8000 as i32)) as uint16;
+    update_ram_word!(
+        game.grapple_beam_flags,
+        |fresh0| (fresh0 as i32 & !(0x8000 as i32)) as uint16
+    );
     if *(&raw mut game.g_ram as *mut uint8)
         .offset(0x16402)
         .offset(ram_word!(game, cur_block_index) as isize) as i32
@@ -2975,9 +2977,7 @@ unsafe fn BlockFunc_ABE6(tmpD82: uint16, game: &mut Game) -> uint8 {
             break;
         }
         grapple_beam_tmpD84 = (grapple_beam_tmpD84).wrapping_add(8u16);
-        let ref mut fresh10 = *((&raw mut game.g_ram as *mut uint8).offset(0xd98) as *mut uint16);
-        *fresh10 = (*fresh10).wrapping_sub(1);
-        if *fresh10 == 0 {
+        if update_ram_word!(game.g_word_7E0D98, wrapping_sub(1), reread) == 0 {
             return 0 as uint8;
         }
     }
@@ -3114,19 +3114,17 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> uint8 {
             15145243721762997867 => {}
             4207414038393540328 => {}
             _ => {
-                let ref mut fresh4 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xcfa) as *mut uint16);
-                *fresh4 = (*fresh4).wrapping_add(tmpD9C);
+                update_ram_word!(game.grapple_beam_end_angle16, wrapping_add(tmpD9C));
                 set_ram_word!(
                     game.grapple_beam_end_angles_mirror = ram_word!(game, grapple_beam_end_angle16)
                 );
-                let ref mut fresh5 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xd36) as *mut uint16);
-                *fresh5 = (*fresh5 as i32 & !(0x8000 as i32)) as uint16;
-                let ref mut fresh6 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xd30) as *mut uint16);
-                *fresh6 = (*fresh6).wrapping_sub(1);
-                if (*fresh6 as i32 & 0x8000 as i32) != 0i32 {
+                update_ram_word!(game.grapple_beam_unkD36, |fresh5| (fresh5 as i32
+                    & !(0x8000 as i32))
+                    as uint16);
+                if (update_ram_word!(game.grapple_beam_unkD30, wrapping_sub(1), reread) as i32
+                    & 0x8000 as i32)
+                    != 0i32
+                {
                     set_ram_word!(game.grapple_beam_unkD30 = 0 as uint16);
                 }
                 if (ram_word!(game, grapple_beam_unkD2E) as i32 & 0x8000 as i32) == 0i32 {
@@ -3199,19 +3197,17 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> uint8 {
                     }
                 }
             } else {
-                let ref mut fresh7 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xcfa) as *mut uint16);
-                *fresh7 = (*fresh7).wrapping_add(tmpD9C);
+                update_ram_word!(game.grapple_beam_end_angle16, wrapping_add(tmpD9C));
                 set_ram_word!(
                     game.grapple_beam_end_angles_mirror = ram_word!(game, grapple_beam_end_angle16)
                 );
-                let ref mut fresh8 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xd36) as *mut uint16);
-                *fresh8 = (*fresh8 as i32 & !(0x8000 as i32)) as uint16;
-                let ref mut fresh9 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xd30) as *mut uint16);
-                *fresh9 = (*fresh9).wrapping_sub(1);
-                if (*fresh9 as i32 & 0x8000 as i32) != 0i32 {
+                update_ram_word!(game.grapple_beam_unkD36, |fresh8| (fresh8 as i32
+                    & !(0x8000 as i32))
+                    as uint16);
+                if (update_ram_word!(game.grapple_beam_unkD30, wrapping_sub(1), reread) as i32
+                    & 0x8000 as i32)
+                    != 0i32
+                {
                     set_ram_word!(game.grapple_beam_unkD30 = 0 as uint16);
                 }
                 if (ram_word!(game, grapple_beam_unkD2E) as i32 & 0x8000 as i32) == 0i32 {
@@ -3262,8 +3258,7 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> uint8 {
         );
         1 as uint8
     } else {
-        let ref mut fresh3 = *((&raw mut game.g_ram as *mut uint8).offset(0xd36) as *mut uint16);
-        *fresh3 = (*fresh3) | (0x8000u16);
+        update_ram_word!(game.grapple_beam_unkD36, |fresh3| (fresh3) | (0x8000u16));
         set_ram_word!(game.grapple_beam_unkD26 = 0 as uint16);
         set_ram_word!(game.grapple_beam_unkD2E = 0 as uint16);
         1 as uint8
@@ -3278,9 +3273,7 @@ pub unsafe fn BlockFunc_AEE3(game: &mut Game) -> uint8 {
         set_ram_word!(game.grapple_beam_unkD38 = 0 as uint16);
         1 as uint8
     } else {
-        let ref mut fresh22 = *((&raw mut game.g_ram as *mut uint8).offset(0xd38) as *mut uint16);
-        *fresh22 = (*fresh22).wrapping_add(1);
-        if *fresh22 == 32u16 {
+        if update_ram_word!(game.grapple_beam_unkD38, wrapping_add(1), reread) == 32u16 {
             set_ram_word!(game.grapple_beam_function = ((0x9bc8c5i32) as u16));
         }
         set_ram_word!(game.grapple_beam_unkD26 = 0 as uint16);
@@ -3430,10 +3423,11 @@ unsafe fn DrawGrappleOams3(game: &mut Game) {
         - ram_word!(game, layer1_y_pos) as i32
         - 4 as i32) as uint8;
     *(&raw mut (*v2).charnum as *mut uint16) = 14880 as uint16;
-    let ref mut fresh19 = *((&raw mut game.g_ram as *mut uint8).offset(0x570) as *mut uint16)
-        .offset((idx as i32 >> 5 as i32) as isize);
-    *fresh19 = (*fresh19 as i32
-        | ((x as i32 & 0x100 as i32) >> 8 as i32) << 2 as i32 * (idx as i32 >> 2 as i32 & 7 as i32))
-        as uint16;
+    update_ram_word!(
+        game.oam_ext[(idx as i32 >> 5 as i32)],
+        |fresh19| (fresh19 as i32
+            | ((x as i32 & 0x100 as i32) >> 8 as i32)
+                << 2 as i32 * (idx as i32 >> 2 as i32 & 7 as i32)) as uint16
+    );
     set_ram_word!(game.oam_next_ptr = (idx).wrapping_add(4u16));
 }

@@ -20,7 +20,7 @@ use crate::game::sm_91::{
     GravitySuitPickup, LoadBlockToXrayTilemap, MakeSamusFaceForward, VariaSuitPickup,
 };
 use crate::game_state::Game;
-use crate::ram_map::{ram_word, set_ram_word};
+use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::types::TileDrawOrder;
 
@@ -556,8 +556,8 @@ pub fn EnablePLMs(game: &mut Game) {
     game.g_ram[0x1c23..0x1c25].copy_from_slice(&(flags | 0x8000).to_le_bytes());
 }
 pub unsafe fn DisablePLMs(game: &mut Game) {
-    let ref mut fresh22 = *((&raw mut game.g_ram as *mut uint8).offset(0x1c23) as *mut uint16);
-    *fresh22 = (*fresh22 as i32 & !(0x8000 as i32)) as uint16;
+    update_ram_word!(game.plm_flag, |fresh22| (fresh22 as i32 & !(0x8000 as i32))
+        as uint16);
 }
 pub fn ClearPLMs(game: &mut Game) {
     for slot in (0..40).rev() {
@@ -760,12 +760,13 @@ pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
                                 ram_word!(game, plm_id),
                                 game,
                             );
-                            let ref mut fresh26 = *((&raw mut game.g_ram as *mut uint8)
-                                .offset(0xde1c)
-                                as *mut uint16)
-                                .offset((ram_word!(game, plm_id) as i32 >> 1 as i32) as isize);
-                            *fresh26 = (*fresh26).wrapping_sub(1);
-                            if *fresh26 != 0 {
+                            if update_ram_word!(
+                                game.plm_instruction_timer
+                                    [(ram_word!(game, plm_id) as i32 >> 1 as i32)],
+                                wrapping_sub(1),
+                                reread
+                            ) != 0
+                            {
                                 current_block_28 = 735147466149431745;
                             } else {
                                 base = RomBankBase(0x84 as uint8, game);
@@ -806,9 +807,7 @@ pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
             loop {
                 match current_block_28 {
                     735147466149431745 => {
-                        let ref mut fresh27 =
-                            *((&raw mut game.g_ram as *mut uint8).offset(0x1c27) as *mut uint16);
-                        *fresh27 = (*fresh27).wrapping_sub(2u16);
+                        update_ram_word!(game.plm_id, wrapping_sub(2u16));
                         current_block_28 = 17179679302217393232;
                         continue 'c_23315;
                     }
@@ -1157,10 +1156,8 @@ pub unsafe fn PlmInstr_PickupEquipmentAddGrappleShowMessage(
     game: &mut Game,
 ) -> *const uint8 {
     let t: uint16 = *(plmp as *mut uint16);
-    let ref mut fresh55 = *((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16);
-    *fresh55 = (*fresh55) | (t);
-    let ref mut fresh56 = *((&raw mut game.g_ram as *mut uint8).offset(0x9a4) as *mut uint16);
-    *fresh56 = (*fresh56) | (t);
+    update_ram_word!(game.equipped_items, |fresh55| (fresh55) | (t));
+    update_ram_word!(game.collected_items, |fresh56| (fresh56) | (t));
     AddGrappleToHudTilemap(game);
     PlayRoomMusicTrackAfterAFrames(0x168 as uint16, game);
     DisplayMessageBox(5 as uint16, game);
@@ -1172,10 +1169,8 @@ pub unsafe fn PlmInstr_PickupEquipmentAddXrayShowMessage(
     game: &mut Game,
 ) -> *const uint8 {
     let t: uint16 = *(plmp as *mut uint16);
-    let ref mut fresh53 = *((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16);
-    *fresh53 = (*fresh53) | (t);
-    let ref mut fresh54 = *((&raw mut game.g_ram as *mut uint8).offset(0x9a4) as *mut uint16);
-    *fresh54 = (*fresh54) | (t);
+    update_ram_word!(game.equipped_items, |fresh53| (fresh53) | (t));
+    update_ram_word!(game.collected_items, |fresh54| (fresh54) | (t));
     AddXrayToHudTilemap(game);
     PlayRoomMusicTrackAfterAFrames(0x168 as uint16, game);
     DisplayMessageBox(6 as uint16, game);
@@ -1198,11 +1193,12 @@ pub unsafe fn PlmInstr_CollectHealthReserveTank(
     k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
-    let ref mut fresh50 = *((&raw mut game.g_ram as *mut uint8).offset(0x9d4) as *mut uint16);
-    *fresh50 = (*fresh50).wrapping_add(*(plmp as *mut uint16));
+    update_ram_word!(
+        game.samus_max_reserve_health,
+        wrapping_add(*(plmp as *mut uint16))
+    );
     if ram_word!(game, reserve_health_mode) == 0 {
-        let ref mut fresh51 = *((&raw mut game.g_ram as *mut uint8).offset(0x9c0) as *mut uint16);
-        *fresh51 = (*fresh51).wrapping_add(1);
+        update_ram_word!(game.reserve_health_mode, wrapping_add(1));
     }
     PlayRoomMusicTrackAfterAFrames(0x168 as uint16, game);
     DisplayMessageBox(0x19 as uint16, game);
@@ -1240,10 +1236,8 @@ pub unsafe fn PlmInstr_CollectAmmoPowerBombTank(
     game: &mut Game,
 ) -> *const uint8 {
     let t: uint16 = *(plmp as *mut uint16);
-    let ref mut fresh44 = *((&raw mut game.g_ram as *mut uint8).offset(0x9d0) as *mut uint16);
-    *fresh44 = (*fresh44).wrapping_add(t);
-    let ref mut fresh45 = *((&raw mut game.g_ram as *mut uint8).offset(0x9ce) as *mut uint16);
-    *fresh45 = (*fresh45).wrapping_add(t);
+    update_ram_word!(game.samus_max_power_bombs, wrapping_add(t));
+    update_ram_word!(game.samus_power_bombs, wrapping_add(t));
     AddPowerBombsToHudTilemap(game);
     PlayRoomMusicTrackAfterAFrames(0x168 as uint16, game);
     DisplayMessageBox(4 as uint16, game);
@@ -1824,9 +1818,7 @@ pub unsafe fn DrawPlm(mut k: uint16, game: &mut Game) {
                 v26 = (v29).wrapping_add(2u16);
                 r3 = r3.wrapping_add(1);
                 r3 = r3.wrapping_add(1);
-                let ref mut fresh23 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x1c25) as *mut uint16);
-                *fresh23 = (*fresh23).wrapping_add(8u16);
+                update_ram_word!(game.plm_draw_tilemap_index, wrapping_add(8u16));
                 if ram_word!(game, plm_draw_tilemap_index) as i32 - 512 as i32 & 0x8000 as i32 == 0
                 {
                     break '_LABEL_2;
@@ -1961,9 +1953,7 @@ pub unsafe fn DrawPlm(mut k: uint16, game: &mut Game) {
                 );
                 v16 = (v19).wrapping_add(2u16);
                 r3 = (r3).wrapping_add(2u16);
-                let ref mut fresh24 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x1c25) as *mut uint16);
-                *fresh24 = (*fresh24).wrapping_add(8u16);
+                update_ram_word!(game.plm_draw_tilemap_index, wrapping_add(8u16));
                 if ram_word!(game, plm_draw_tilemap_index) as i32 - 512 as i32 & 0x8000 as i32 == 0
                 {
                     break '_LABEL_2;
@@ -1996,10 +1986,11 @@ pub unsafe fn PlmInstr_MovePlmDownOneBlock(
     k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
-    let ref mut fresh39 = *((&raw mut game.g_ram as *mut uint8).offset(0x1c87) as *mut uint16)
-        .offset((k as i32 >> 1 as i32) as isize);
-    *fresh39 =
-        (*fresh39 as i32 + 2 as i32 * ram_word!(game, room_width_in_blocks) as i32) as uint16;
+    update_ram_word!(
+        game.plm_block_indices[(k as i32 >> 1 as i32)],
+        |fresh39| (fresh39 as i32 + 2 as i32 * ram_word!(game, room_width_in_blocks) as i32)
+            as uint16
+    );
     plmp
 }
 pub unsafe fn PlmSetup_CrumbleBotwoonWall(j: uint16, game: &mut Game) -> uint8 {
@@ -2019,32 +2010,33 @@ pub unsafe fn PlmInstr_MovePlmDownOneBlock_0(
     k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
-    let ref mut fresh38 = *((&raw mut game.g_ram as *mut uint8).offset(0x1c87) as *mut uint16)
-        .offset((k as i32 >> 1 as i32) as isize);
-    *fresh38 =
-        (*fresh38 as i32 + 2 as i32 * ram_word!(game, room_width_in_blocks) as i32) as uint16;
+    update_ram_word!(
+        game.plm_block_indices[(k as i32 >> 1 as i32)],
+        |fresh38| (fresh38 as i32 + 2 as i32 * ram_word!(game, room_width_in_blocks) as i32)
+            as uint16
+    );
     plmp
 }
 pub unsafe fn PlmInstr_ABD6(plmp: *const uint8, k: uint16, game: &mut Game) -> *const uint8 {
-    let ref mut fresh31 = *((&raw mut game.g_ram as *mut uint8).offset(0x1c87) as *mut uint16)
-        .offset((k as i32 >> 1 as i32) as isize);
-    *fresh31 = (*fresh31).wrapping_add(2u16);
+    update_ram_word!(
+        game.plm_block_indices[(k as i32 >> 1 as i32)],
+        wrapping_add(2u16)
+    );
     plmp
 }
 pub unsafe fn PlmPreInstr_PositionSamusAndInvincible(k: uint16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1 as i32;
     set_ram_word!(game.samus_x_pos = ram_word!(game, plm_variable[v1]));
     set_ram_word!(game.samus_y_pos = ram_word!(game, plm_variables[v1]));
-    let ref mut fresh69 = *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16);
-    *fresh69 = (*fresh69) | (0x10u16);
+    update_ram_word!(game.samus_invincibility_timer, |fresh69| (fresh69)
+        | (0x10u16));
 }
 pub unsafe fn PlmInstr_DealDamage_2(
     plmp: *const uint8,
     k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
-    let ref mut fresh37 = *((&raw mut game.g_ram as *mut uint8).offset(0xa50) as *mut uint16);
-    *fresh37 = (*fresh37).wrapping_add(2u16);
+    update_ram_word!(game.samus_periodic_damage, wrapping_add(2u16));
     plmp
 }
 pub unsafe fn PlmInstr_GiveInvincibility(
@@ -2142,9 +2134,7 @@ pub unsafe fn PlmSetup_BTS_Brinstar_0x80_Floorplant(j: uint16, game: &mut Game) 
         == 15i32
     {
         let v1: i32 = ram_word!(game, plm_block_indices[(j as i32 >> 1i32)]) as i32 >> 1 as i32;
-        let ref mut fresh20 = *((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh20 = (*fresh20) & (0x8fffu16);
+        update_ram_word!(game.level_data[v1], |fresh20| (fresh20) & (0x8fffu16));
         let v2: i32 = j as i32 >> 1 as i32;
         set_ram_word!(game.plm_variable[v2] = ram_word!(game, samus_x_pos));
         set_ram_word!(game.plm_variables[v2] = (ram_word!(game, samus_y_pos)).wrapping_sub(1u16));
@@ -2160,9 +2150,7 @@ pub unsafe fn PlmSetup_BTS_Brinstar_0x81_Ceilingplant(j: uint16, game: &mut Game
         set_ram_word!(game.plm_header_ptr[(j as i32 >> 1i32)] = 0 as uint16);
     } else {
         let v1: i32 = ram_word!(game, plm_block_indices[(j as i32 >> 1i32)]) as i32 >> 1 as i32;
-        let ref mut fresh19 = *((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh19 = (*fresh19) & (0x8fffu16);
+        update_ram_word!(game.level_data[v1], |fresh19| (fresh19) & (0x8fffu16));
         let v2: i32 = j as i32 >> 1 as i32;
         set_ram_word!(game.plm_variable[v2] = ram_word!(game, samus_x_pos));
         set_ram_word!(game.plm_variables[v2] = (ram_word!(game, samus_y_pos)).wrapping_add(1u16));
@@ -2609,9 +2597,10 @@ pub unsafe fn PlmSetup_ClearShitroidInvisibleWall(j: uint16, game: &mut Game) ->
     let mut v1: uint16 = ram_word!(game, plm_block_indices[(j as i32 >> 1i32)]);
     v2 = 10 as int16;
     loop {
-        let ref mut fresh10 = *((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16)
-            .offset((v1 as i32 >> 1 as i32) as isize);
-        *fresh10 = (*fresh10) & (0xfffu16);
+        update_ram_word!(
+            game.level_data[(v1 as i32 >> 1 as i32)],
+            |fresh10| (fresh10) & (0xfffu16)
+        );
         v1 = (v1 as i32 + ram_word!(game, room_width_in_blocks) as i32 * 2 as i32) as uint16;
         v2 -= 1;
         if (v2 == 0) {
@@ -2728,14 +2717,8 @@ pub unsafe fn PlmPreInstr_WakeAndLavaIfBoosterCollected(k: uint16, game: &mut Ga
             set_ram_word!(game.fx_y_vel = -(128 as i32) as uint16);
             let v1: i32 = k as i32 >> 1 as i32;
             set_ram_word!(game.plm_instruction_timer[v1] = 1 as uint16);
-            let ref mut fresh82 = *((&raw mut game.g_ram as *mut uint8).offset(0x1d27)
-                as *mut uint16)
-                .offset(v1 as isize);
-            *fresh82 = (*fresh82).wrapping_add(1);
-            let ref mut fresh83 = *((&raw mut game.g_ram as *mut uint8).offset(0x1d27)
-                as *mut uint16)
-                .offset(v1 as isize);
-            *fresh83 = (*fresh83).wrapping_add(1);
+            update_ram_word!(game.plm_instr_list_ptrs[v1], wrapping_add(1));
+            update_ram_word!(game.plm_instr_list_ptrs[v1], wrapping_add(1));
             set_ram_word!(game.plm_timers[v1] = 0 as uint16);
         }
     } else {
@@ -2751,12 +2734,8 @@ pub unsafe fn PlmPreInstr_WakePLMAndStartFxMotionSamusFarLeft(k: uint16, game: &
         set_ram_word!(game.fx_timer = 1 as uint16);
         let v1: i32 = k as i32 >> 1 as i32;
         set_ram_word!(game.plm_instruction_timer[v1] = 1 as uint16);
-        let ref mut fresh80 = *((&raw mut game.g_ram as *mut uint8).offset(0x1d27) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh80 = (*fresh80).wrapping_add(1);
-        let ref mut fresh81 = *((&raw mut game.g_ram as *mut uint8).offset(0x1d27) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh81 = (*fresh81).wrapping_add(1);
+        update_ram_word!(game.plm_instr_list_ptrs[v1], wrapping_add(1));
+        update_ram_word!(game.plm_instr_list_ptrs[v1], wrapping_add(1));
         set_ram_word!(game.plm_timers[v1] = 0 as uint16);
     }
 }
@@ -2809,9 +2788,7 @@ pub unsafe fn WakePlmIfSamusIsBelowAndRightOfTarget(
 ) -> uint8 {
     if x_r18 < ram_word!(game, samus_x_pos) && y_r20 < ram_word!(game, samus_y_pos) {
         let v2: i32 = k as i32 >> 1 as i32;
-        let ref mut fresh21 = *((&raw mut game.g_ram as *mut uint8).offset(0x1d27) as *mut uint16)
-            .offset(v2 as isize);
-        *fresh21 = (*fresh21).wrapping_add(2u16);
+        update_ram_word!(game.plm_instr_list_ptrs[v2], wrapping_add(2u16));
         set_ram_word!(game.plm_instruction_timer[v2] = 1 as uint16);
         return false_0 as uint8;
     }
@@ -2906,20 +2883,17 @@ pub unsafe fn PlmInstr_MovePlmRight4Blocks(
     k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
-    let ref mut fresh36 = *((&raw mut game.g_ram as *mut uint8).offset(0x1c87) as *mut uint16)
-        .offset((k as i32 >> 1 as i32) as isize);
-    *fresh36 = (*fresh36).wrapping_add(8u16);
+    update_ram_word!(
+        game.plm_block_indices[(k as i32 >> 1 as i32)],
+        wrapping_add(8u16)
+    );
     plmp
 }
 pub unsafe fn PlmPreInstr_WakePlmIfTriggered(k: uint16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1 as i32;
     if ram_word!(game, plm_timers[v1]) != 0 {
-        let ref mut fresh78 = *((&raw mut game.g_ram as *mut uint8).offset(0x1d27) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh78 = (*fresh78).wrapping_add(1);
-        let ref mut fresh79 = *((&raw mut game.g_ram as *mut uint8).offset(0x1d27) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh79 = (*fresh79).wrapping_add(1);
+        update_ram_word!(game.plm_instr_list_ptrs[v1], wrapping_add(1));
+        update_ram_word!(game.plm_instr_list_ptrs[v1], wrapping_add(1));
         set_ram_word!(game.plm_instruction_timer[v1] = 1 as uint16);
         set_ram_word!(game.plm_pre_instrs[v1] = addr_locret_84BB6A as uint16);
     }
@@ -2948,12 +2922,8 @@ pub unsafe fn PlmPreInstr_WakePlmIfTriggeredOrSamusAbovePlm(k: uint16, game: &mu
         || ram_word!(game, plm_timers[(k as i32 >> 1i32)]) != 0u16
     {
         let v1: i32 = k as i32 >> 1 as i32;
-        let ref mut fresh74 = *((&raw mut game.g_ram as *mut uint8).offset(0x1d27) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh74 = (*fresh74).wrapping_add(1);
-        let ref mut fresh75 = *((&raw mut game.g_ram as *mut uint8).offset(0x1d27) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh75 = (*fresh75).wrapping_add(1);
+        update_ram_word!(game.plm_instr_list_ptrs[v1], wrapping_add(1));
+        update_ram_word!(game.plm_instr_list_ptrs[v1], wrapping_add(1));
         set_ram_word!(game.plm_instruction_timer[v1] = 1 as uint16);
         set_ram_word!(game.plm_pre_instrs[v1] = addr_locret_84BBDC as uint16);
     }
@@ -2986,9 +2956,7 @@ pub unsafe fn PlmInstr_WakeEprojAtPlmPos(
     }
     let v4: i32 = i >> 1 as i32;
     set_ram_word!(game.eproj_instr_timers[v4] = 1 as uint16);
-    let ref mut fresh35 =
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v4 as isize);
-    *fresh35 = (*fresh35).wrapping_add(2u16);
+    update_ram_word!(game.eproj_instr_list_ptr[v4], wrapping_add(2u16));
     plmp.offset(2)
 }
 pub unsafe fn PlmPreInstr_GoToLinkInstrIfShot(k: uint16, game: &mut Game) {
@@ -3261,10 +3229,7 @@ pub unsafe fn sub_84C64C(j: uint16, a: uint16, game: &mut Game) -> uint8 {
         v3 = 0;
         v3 = v2 as i32 >> 1 as i32;
         if ram_word!(game, plm_timers[v3]) == 0 {
-            let ref mut fresh7 = *((&raw mut game.g_ram as *mut uint8).offset(0x1d77)
-                as *mut uint16)
-                .offset(v3 as isize);
-            *fresh7 = (*fresh7).wrapping_add(1);
+            update_ram_word!(game.plm_timers[v3], wrapping_add(1));
         }
     }
     set_ram_word!(game.plm_header_ptr[(j as i32 >> 1i32)] = 0 as uint16);
@@ -3406,9 +3371,10 @@ pub unsafe fn PlmSetup_C794_GreyDoor(j: uint16, game: &mut Game) -> uint8 {
                 & (0x7cu16)) as i32
                 >> 1 as i32) as uint16
     );
-    let ref mut fresh6 =
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1dc7) as *mut uint16).offset(v1 as isize);
-    *fresh6 = (*fresh6 as i32 & !(0x7c00 as i32)) as uint16;
+    update_ram_word!(
+        game.plm_room_arguments[v1],
+        |fresh6| (fresh6 as i32 & !(0x7c00 as i32)) as uint16
+    );
     WriteLevelDataBlockTypeAndBts(
         ram_word!(game, plm_block_indices[v1]),
         0xc044 as uint16,
@@ -3651,8 +3617,7 @@ pub fn PlmSetup_D0D8_ClearVflag(j: uint16) -> uint8 {
     1 as uint8
 }
 pub unsafe fn PlmSetup_D0E8_GiveSamusDamage(j: uint16, game: &mut Game) -> uint8 {
-    let ref mut fresh4 = *((&raw mut game.g_ram as *mut uint8).offset(0xa50) as *mut uint16);
-    *fresh4 = (*fresh4).wrapping_add(1);
+    update_ram_word!(game.samus_periodic_damage, wrapping_add(1));
     0x41 as uint8
 }
 pub unsafe fn PlmSetup_D113_LowerNorfairChozoRoomPlug(j: uint16, game: &mut Game) -> uint8 {
@@ -3710,9 +3675,7 @@ pub unsafe fn PlmSetup_D6DA_LowerNorfairChozoHandTrigger(
         (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
             .parameter_1 = 1 as uint16;
         let v2: i32 = ram_word!(game, plm_block_indices[(j as i32 >> 1i32)]) as i32 >> 1 as i32;
-        let ref mut fresh3 = *((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16)
-            .offset(v2 as isize);
-        *fresh3 = (*fresh3) & (0xfffu16);
+        update_ram_word!(game.level_data[v2], |fresh3| (fresh3) & (0xfffu16));
         CallSomeSamusCode(0 as uint16, game);
         spawn_hardcoded_plm(
             SpawnHardcodedPlmArgs::new(0xc as uint8, 0x1d as uint8, 0xd113 as VoidP),
@@ -3727,9 +3690,7 @@ pub unsafe fn PlmPreInstr_IncrementRoomArgIfShotBySuperMissile(k: uint16, game: 
     let v1: i32 = k as i32 >> 1 as i32;
     let v2: uint16 = ram_word!(game, plm_timers[v1]);
     if (v2 as i32 & 0xf00 as i32) == 512i32 || (v2 as i32 & 0xf00 as i32) == 256i32 {
-        let ref mut fresh73 = *((&raw mut game.g_ram as *mut uint8).offset(0x1dc7) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh73 = (*fresh73).wrapping_add(1);
+        update_ram_word!(game.plm_room_arguments[v1], wrapping_add(1));
     }
     set_ram_word!(game.plm_timers[v1] = 0 as uint16);
 }
@@ -3813,12 +3774,8 @@ pub unsafe fn PlmPreInstr_WakeOnKeyPress(k: uint16, game: &mut Game) {
     {
         let v2: i32 = k as i32 >> 1 as i32;
         set_ram_word!(game.plm_instruction_timer[v2] = 1 as uint16);
-        let ref mut fresh67 = *((&raw mut game.g_ram as *mut uint8).offset(0x1d27) as *mut uint16)
-            .offset(v2 as isize);
-        *fresh67 = (*fresh67).wrapping_add(1);
-        let ref mut fresh68 = *((&raw mut game.g_ram as *mut uint8).offset(0x1d27) as *mut uint16)
-            .offset(v2 as isize);
-        *fresh68 = (*fresh68).wrapping_add(1);
+        update_ram_word!(game.plm_instr_list_ptrs[v2], wrapping_add(1));
+        update_ram_word!(game.plm_instr_list_ptrs[v2], wrapping_add(1));
     }
 }
 pub unsafe fn PlmInstr_EnableWaterPhysics(
@@ -3826,8 +3783,10 @@ pub unsafe fn PlmInstr_EnableWaterPhysics(
     k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
-    let ref mut fresh34 = *((&raw mut game.g_ram as *mut uint8).offset(0x197e) as *mut uint16);
-    *fresh34 = (*fresh34 as i32 & !(4 as i32)) as uint16;
+    update_ram_word!(
+        game.fx_liquid_options,
+        |fresh34| (fresh34 as i32 & !(4 as i32)) as uint16
+    );
     plmp
 }
 pub unsafe fn PlmInstr_SpawnN00bTubeCrackEproj(
@@ -3953,9 +3912,7 @@ pub unsafe fn PlmSetup_D6F2_WreckedShipChozoHandTrigger(
             .offset(0xcd20)
             .offset(13) as *mut uint8 as *mut uint16) = 257 as uint16;
         let v1: i32 = ram_word!(game, plm_block_indices[(j as i32 >> 1i32)]) as i32 >> 1 as i32;
-        let ref mut fresh2 = *((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh2 = (*fresh2) & (0xfffu16);
+        update_ram_word!(game.level_data[v1], |fresh2| (fresh2) & (0xfffu16));
         CallSomeSamusCode(0 as uint16, game);
         spawn_hardcoded_plm(
             SpawnHardcodedPlmArgs::new(0x17 as uint8, 0x1d as uint8, 0xd6f8 as VoidP),
@@ -4087,11 +4044,12 @@ pub unsafe fn PlmInstr_MoveUpAndMakeBlueDoorFacingRight(
     game: &mut Game,
 ) -> *const uint8 {
     let v2: i32 = k as i32 >> 1 as i32;
-    let ref mut fresh33 =
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1c87) as *mut uint16).offset(v2 as isize);
-    *fresh33 =
-        (*fresh33 as i32 - ram_word!(game, room_width_in_blocks) as i32 * 2 as i32) as uint16;
-    let blk: uint16 = *fresh33;
+    let blk: uint16 = update_ram_word!(
+        game.plm_block_indices[v2],
+        |fresh33| (fresh33 as i32 - ram_word!(game, room_width_in_blocks) as i32 * 2 as i32)
+            as uint16,
+        reread
+    );
     WriteLevelDataBlockTypeAndBts(blk, 0xc041 as uint16, game);
     sub_84D7EF(blk, game);
     plmp
@@ -4102,11 +4060,12 @@ pub unsafe fn PlmInstr_MoveUpAndMakeBlueDoorFacingLeft(
     game: &mut Game,
 ) -> *const uint8 {
     let v2: i32 = k as i32 >> 1 as i32;
-    let ref mut fresh32 =
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1c87) as *mut uint16).offset(v2 as isize);
-    *fresh32 =
-        (*fresh32 as i32 - ram_word!(game, room_width_in_blocks) as i32 * 2 as i32) as uint16;
-    let blk: uint16 = *fresh32;
+    let blk: uint16 = update_ram_word!(
+        game.plm_block_indices[v2],
+        |fresh32| (fresh32 as i32 - ram_word!(game, room_width_in_blocks) as i32 * 2 as i32)
+            as uint16,
+        reread
+    );
     WriteLevelDataBlockTypeAndBts(blk, 0xc040 as uint16, game);
     sub_84D7EF(blk, game);
     plmp
@@ -4482,8 +4441,7 @@ pub unsafe fn sub_84EE64(j: uint16, game: &mut Game) -> uint8 {
         0x45 as uint16,
         game,
     );
-    let ref mut fresh1 = *((&raw mut game.g_ram as *mut uint8).offset(0xd91a) as *mut uint16);
-    *fresh1 = (*fresh1).wrapping_add(1);
+    update_ram_word!(game.global_number_of_items_loaded_ctr, wrapping_add(1));
     0 as uint8
 }
 pub unsafe fn sub_84EE77(j: uint16, game: &mut Game) -> uint8 {
@@ -4514,8 +4472,7 @@ pub unsafe fn sub_84EE8E(j: uint16, game: &mut Game) -> uint8 {
             as *mut uint16)
             .offset((ram_word!(game, plm_block_indices[v1]) as i32 >> 1 as i32) as isize,)
     );
-    let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0xd91a) as *mut uint16);
-    *fresh0 = (*fresh0).wrapping_add(1);
+    update_ram_word!(game.global_number_of_items_loaded_ctr, wrapping_add(1));
     0 as uint8
 }
 pub unsafe fn sub_84EEAB(v0: uint16, game: &mut Game) -> uint8 {

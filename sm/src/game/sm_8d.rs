@@ -1,7 +1,7 @@
 pub use crate::game::constants::bank_8d::*;
 use crate::game::sm_80::{QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game_state::Game;
-use crate::ram_map::{ram_word, set_ram_word};
+use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::AddToHiLo;
 use crate::rtl::{MakePairU16, RomPtr, Unreachable};
 
@@ -57,12 +57,14 @@ pub const fnPalInstr_SetPalfxIndex: uint32 = 9302470;
 pub const fnPalPreInstr_F621: uint32 = 9303585;
 pub const fnPalInit_F779_Brinstar8: uint32 = 9303856;
 pub unsafe fn EnablePaletteFx(game: &mut Game) {
-    let ref mut fresh1 = *((&raw mut game.g_ram as *mut uint8).offset(0x1e79) as *mut uint16);
-    *fresh1 = (*fresh1) | (0x8000u16);
+    update_ram_word!(game.flag_for_palette_fx_objects, |fresh1| (fresh1)
+        | (0x8000u16));
 }
 pub unsafe fn DisablePaletteFx(game: &mut Game) {
-    let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0x1e79) as *mut uint16);
-    *fresh0 = (*fresh0 as i32 & !(0x8000 as i32)) as uint16;
+    update_ram_word!(
+        game.flag_for_palette_fx_objects,
+        |fresh0| (fresh0 as i32 & !(0x8000 as i32)) as uint16
+    );
 }
 pub unsafe fn ClearPaletteFXObjects(game: &mut Game) {
     let mut i: i32 = 14 as i32;

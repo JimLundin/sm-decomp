@@ -2,7 +2,7 @@ use crate::game::sm_80::QueueMusic_DelayedY;
 use crate::game::sm_81::DrawSamusSpritemap;
 use crate::game::sm_82::PlayRoomMusicTrackAfterAFrames;
 use crate::game_state::Game;
-use crate::ram_map::{ram_word, set_ram_word};
+use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::RomPtr;
 
 pub use crate::types::{
@@ -58,8 +58,7 @@ pub unsafe fn PlaySamusFanfare(game: &mut Game) -> uint8 {
         QueueMusic_DelayedY(1 as uint16, 0xe as uint16, game);
     }
     if ram_word!(game, substate) as i32 - 359 as i32 & 0x8000 as i32 != 0 {
-        let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16);
-        *fresh0 = (*fresh0).wrapping_add(1);
+        update_ram_word!(game.substate, wrapping_add(1));
         0 as uint8
     } else {
         set_ram_word!(game.samus_last_different_pose = ram_word!(game, samus_prev_pose));

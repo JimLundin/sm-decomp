@@ -72,7 +72,7 @@ use crate::game::sm_a7::{
 use crate::game::sm_a9::MotherBrainsBody_UnpauseHook;
 use crate::game_state::Game;
 use crate::host::{Die, Warning};
-use crate::ram_map::{ram_word, set_ram_word};
+use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{
     Load24, Mult8x8, RomPtr, RtlApuWrite, SnesDivide, Unreachable, WriteReg, WriteRegWord,
@@ -431,9 +431,7 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                         *_state_variable_ = 3 as uint8;
                         return _coret__1;
                     }
-                    let ref mut fresh141 =
-                        *((&raw mut game.g_ram as *mut uint8).offset(0xda0) as *mut uint16);
-                    *fresh141 = (*fresh141).wrapping_sub(1);
+                    update_ram_word!(game.loop_counter_transfer_enemies_to_vram, wrapping_sub(1));
                     if (ram_word!(game, loop_counter_transfer_enemies_to_vram) as i32
                         & 0x8000 as i32)
                         == 0i32
@@ -441,9 +439,7 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                         current_block_103 = 10753070352654377903;
                         continue;
                     }
-                    let ref mut fresh142 =
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
-                    *fresh142 = (*fresh142).wrapping_add(1);
+                    update_ram_word!(game.game_state, wrapping_add(1));
                     v2 = 512 as int16;
                     let mut v3: uint16 = 0 as uint16;
                     loop {
@@ -464,9 +460,7 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                         *_state_variable_ = 2 as uint8;
                         return _coret__0;
                     }
-                    let ref mut fresh139 =
-                        *((&raw mut game.g_ram as *mut uint8).offset(0xda0) as *mut uint16);
-                    *fresh139 = (*fresh139).wrapping_sub(1);
+                    update_ram_word!(game.loop_counter_transfer_enemies_to_vram, wrapping_sub(1));
                     if (ram_word!(game, loop_counter_transfer_enemies_to_vram) as i32
                         & 0x8000 as i32)
                         == 0i32
@@ -485,9 +479,7 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                     ))
                     .demo_code_ptr;
                     CallDemoRoomDataFunc(((r18) as u32) | (0x820000u32), game);
-                    let ref mut fresh140 =
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
-                    *fresh140 = (*fresh140).wrapping_add(1);
+                    update_ram_word!(game.game_state, wrapping_add(1));
                     v7 = 512 as int16;
                     let mut v8: uint16 = 0 as uint16;
                     loop {
@@ -519,9 +511,7 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                         *_state_variable_ = 4 as uint8;
                         return _coret__2;
                     }
-                    let ref mut fresh143 =
-                        *((&raw mut game.g_ram as *mut uint8).offset(0xda0) as *mut uint16);
-                    *fresh143 = (*fresh143).wrapping_sub(1);
+                    update_ram_word!(game.loop_counter_transfer_enemies_to_vram, wrapping_sub(1));
                     if (ram_word!(game, loop_counter_transfer_enemies_to_vram) as i32
                         & 0x8000 as i32)
                         == 0i32
@@ -719,12 +709,15 @@ pub unsafe fn GameState_32_MadeItToCeresElevator(game: &mut Game) -> CoroutineRe
     if _coret_ != 0 {
         return _coret_;
     }
-    let ref mut fresh124 = *((&raw mut game.g_ram as *mut uint8).offset(0xaa0) as *mut uint16);
-    *fresh124 = (*fresh124).wrapping_sub(1);
-    let v0: bool = (*fresh124 as i32 & 0x8000 as i32) != 0i32;
+    let v0: bool = (update_ram_word!(
+        game.reached_ceres_elevator_fade_timer,
+        wrapping_sub(1),
+        reread
+    ) as i32
+        & 0x8000 as i32)
+        != 0i32;
     if ram_word!(game, reached_ceres_elevator_fade_timer) == 0 || v0 {
-        let ref mut fresh125 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
-        *fresh125 = (*fresh125).wrapping_add(1);
+        update_ram_word!(game.game_state, wrapping_add(1));
         set_ram_word!(game.screen_fade_delay = 0 as uint16);
         set_ram_word!(game.screen_fade_counter = 0 as uint16);
     }
@@ -854,8 +847,7 @@ pub unsafe fn GameState_41_TransitionToDemo(game: &mut Game) -> CoroutineRet {
         return _coret_;
     }
     HdmaObjectHandler(game);
-    let ref mut fresh126 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
-    *fresh126 = (*fresh126).wrapping_add(1);
+    update_ram_word!(game.game_state, wrapping_add(1));
     *(&raw mut game.g_ram as *mut uint8).offset(0x51) = 15 as uint8;
     kCoroutineNone as CoroutineRet
 }
@@ -873,9 +865,7 @@ pub unsafe fn GameState_42_PlayingDemo_Async(game: &mut Game) -> CoroutineRet {
                 set_ram_word!(game.substate = 1 as uint16);
                 current_block = 4040822987312515878;
             } else {
-                let ref mut fresh127 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x1f53) as *mut uint16);
-                *fresh127 = (*fresh127).wrapping_sub(1);
+                update_ram_word!(game.demo_timer, wrapping_sub(1));
                 if ram_word!(game, demo_timer) == 0
                     || (ram_word!(game, demo_timer) as i32 & 0x8000 as i32) != 0i32
                 {
@@ -910,10 +900,7 @@ pub unsafe fn GameState_42_PlayingDemo_Async(game: &mut Game) -> CoroutineRet {
                     set_ram_word!(game.substate = 1 as uint16);
                     current_block = 4040822987312515878;
                 } else {
-                    let ref mut fresh128 =
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x77e) as *mut uint16);
-                    *fresh128 = (*fresh128).wrapping_sub(1);
-                    if *fresh128 == 0 {
+                    if update_ram_word!(game.my_counter, wrapping_sub(1), reread) == 0 {
                         current_block = 4040822987312515878;
                     } else {
                         current_block = 12296459429166835708;
@@ -921,9 +908,7 @@ pub unsafe fn GameState_42_PlayingDemo_Async(game: &mut Game) -> CoroutineRet {
                 }
             }
             _ => {
-                let ref mut fresh129 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
-                *fresh129 = (*fresh129).wrapping_add(1);
+                update_ram_word!(game.game_state, wrapping_add(1));
                 set_ram_word!(game.debug_disable_sounds = 0 as uint16);
                 *(&raw mut game.g_ram as *mut uint8).offset(0x51) = 0x80 as uint8;
                 set_ram_word!(game.screen_fade_delay = 1 as uint16);
@@ -939,8 +924,7 @@ pub unsafe fn GameState_43_TransitionFromDemo(game: &mut Game) -> CoroutineRet {
         CheckForNextDemo(game);
     }
     EnableNMI(game);
-    let ref mut fresh130 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
-    *fresh130 = (*fresh130).wrapping_add(1);
+    update_ram_word!(game.game_state, wrapping_add(1));
     set_ram_word!(game.screen_fade_delay = 0 as uint16);
     set_ram_word!(game.screen_fade_counter = 0 as uint16);
     WaitUntilEndOfVblankAndClearHdma(game);
@@ -1036,8 +1020,7 @@ pub unsafe fn LoadDemoRoomData(game: &mut Game) {
         (*get_RoomDefHeader(ram_word!(game, room_ptr), game)).area_index_;
     set_ram_word!(game.reg_BG1HOFS = 0 as uint16);
     set_ram_word!(game.reg_BG1VOFS = 0 as uint16);
-    let ref mut fresh144 = *((&raw mut game.g_ram as *mut uint8).offset(0x1f57) as *mut uint16);
-    *fresh144 = (*fresh144).wrapping_add(1);
+    update_ram_word!(game.demo_scene, wrapping_add(1));
     let mut v1: uint16 = 0 as uint16;
     loop {
         let v2: i32 = v1 as i32 >> 1 as i32;
@@ -1379,8 +1362,7 @@ pub unsafe fn GameState_0_Reset_Async(game: &mut Game) -> CoroutineRet {
     if ram_word!(game, num_demo_sets) == 4u16 {
         set_ram_word!(game.demo_set = 3 as uint16);
     }
-    let ref mut fresh79 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
-    *fresh79 = (*fresh79).wrapping_add(1);
+    update_ram_word!(game.game_state, wrapping_add(1));
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_1_OpeningCinematic(game: &mut Game) -> CoroutineRet {
@@ -1404,8 +1386,7 @@ pub unsafe fn GameState_7_MainGameplayFadeIn(game: &mut Game) -> CoroutineRet {
     if *(&raw mut game.g_ram as *mut uint8).offset(0x51) == 15u8 {
         set_ram_word!(game.screen_fade_delay = 0 as uint16);
         set_ram_word!(game.screen_fade_counter = 0 as uint16);
-        let ref mut fresh131 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
-        *fresh131 = (*fresh131).wrapping_add(1);
+        update_ram_word!(game.game_state, wrapping_add(1));
     }
     kCoroutineNone as CoroutineRet
 }
@@ -1666,8 +1647,7 @@ pub unsafe fn GameState_12_Pausing_Darkening_Async(game: &mut Game) -> Coroutine
         EnableNMI(game);
         set_ram_word!(game.screen_fade_delay = 0 as uint16);
         set_ram_word!(game.screen_fade_counter = 0 as uint16);
-        let ref mut fresh80 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
-        *fresh80 = (*fresh80).wrapping_add(1);
+        update_ram_word!(game.game_state, wrapping_add(1));
     }
     kCoroutineNone as CoroutineRet
 }
@@ -1719,8 +1699,7 @@ pub unsafe fn GameState_13_Pausing_Async(game: &mut Game) -> CoroutineRet {
     set_ram_word!(game.map_scrolling_direction = 0 as uint16);
     set_ram_word!(game.map_scrolling_speed_index = 0 as uint16);
     QueueClearingOfFxTilemap(game);
-    let ref mut fresh85 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
-    *fresh85 = (*fresh85).wrapping_add(1);
+    update_ram_word!(game.game_state, wrapping_add(1));
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn BackupBG2TilemapForPauseMenu(game: &mut Game) {
@@ -1955,14 +1934,11 @@ pub unsafe fn SetupMapScrollingForFileSelectMap(game: &mut Game) {
     if (224i16).wrapping_sub((r18) as i16) >= 0i16 {
         r18 = (32u16).wrapping_sub(r18);
         if (r18 as i32 & 0x8000 as i32) == 0i32 {
-            let ref mut fresh146 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16);
-            *fresh146 = (*fresh146).wrapping_sub(r18);
+            update_ram_word!(game.reg_BG1HOFS, wrapping_sub(r18));
         }
     } else {
         r18 = (224u16).wrapping_sub(r18);
-        let ref mut fresh147 = *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16);
-        *fresh147 = (*fresh147).wrapping_sub((v0) as u16);
+        update_ram_word!(game.reg_BG1HOFS, wrapping_sub((v0) as u16));
     }
     r18 = (ram_word!(game, map_min_y_scroll) as i32
         + (((ram_word!(game, map_max_y_scroll)).wrapping_sub(ram_word!(game, map_min_y_scroll)))
@@ -1983,8 +1959,7 @@ pub unsafe fn SetupMapScrollingForFileSelectMap(game: &mut Game) {
     let v1: int16 = (64i16).wrapping_sub((r18) as i16);
     if (64i16).wrapping_sub((r18) as i16) >= 0i16 {
         r18 = (64u16).wrapping_sub(r18);
-        let ref mut fresh148 = *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16);
-        *fresh148 = (*fresh148).wrapping_sub((v1) as u16);
+        update_ram_word!(game.reg_BG1VOFS, wrapping_sub((v1) as u16));
         if ram_word!(game, reg_BG1VOFS) as i32 + 40 as i32 & 0x8000 as i32 != 0 {
             set_ram_word!(game.reg_BG1VOFS = -(40 as i32) as uint16);
         }
@@ -1996,8 +1971,7 @@ pub unsafe fn GameState_14_Paused_Async(game: &mut Game) -> CoroutineRet {
     if *(&raw mut game.g_ram as *mut uint8).offset(0x51) == 15u8 {
         set_ram_word!(game.screen_fade_delay = 0 as uint16);
         set_ram_word!(game.screen_fade_counter = 0 as uint16);
-        let ref mut fresh93 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
-        *fresh93 = (*fresh93).wrapping_add(1);
+        update_ram_word!(game.game_state, wrapping_add(1));
     }
     kCoroutineNone as CoroutineRet
 }
@@ -2052,8 +2026,7 @@ pub unsafe fn PauseMenu_2(game: &mut Game) {
         EnableNMI(game);
         set_ram_word!(game.screen_fade_delay = 0 as uint16);
         set_ram_word!(game.screen_fade_counter = 0 as uint16);
-        let ref mut fresh97 = *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16);
-        *fresh97 = (*fresh97).wrapping_add(1);
+        update_ram_word!(game.menu_index, wrapping_add(1));
     }
 }
 pub unsafe fn PauseMenu_5(game: &mut Game) {
@@ -2065,8 +2038,7 @@ pub unsafe fn PauseMenu_5(game: &mut Game) {
         EnableNMI(game);
         set_ram_word!(game.screen_fade_delay = 0 as uint16);
         set_ram_word!(game.screen_fade_counter = 0 as uint16);
-        let ref mut fresh95 = *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16);
-        *fresh95 = (*fresh95).wrapping_add(1);
+        update_ram_word!(game.menu_index, wrapping_add(1));
     }
 }
 pub unsafe fn PauseMenu_3_MapToEquipment_Load(game: &mut Game) {
@@ -2083,8 +2055,7 @@ pub unsafe fn PauseMenu_3_MapToEquipment_Load(game: &mut Game) {
     );
     set_ram_word!(game.screen_fade_delay = 1 as uint16);
     set_ram_word!(game.screen_fade_counter = 1 as uint16);
-    let ref mut fresh96 = *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16);
-    *fresh96 = (*fresh96).wrapping_add(1);
+    update_ram_word!(game.menu_index, wrapping_add(1));
 }
 pub unsafe fn PauseMenu_6_EquipmentToMap_Load(game: &mut Game) {
     DisplayMapElevatorDestinations(game);
@@ -2099,8 +2070,7 @@ pub unsafe fn PauseMenu_6_EquipmentToMap_Load(game: &mut Game) {
     set_ram_word!(game.screen_fade_delay = 1 as uint16);
     set_ram_word!(game.screen_fade_counter = 1 as uint16);
     set_ram_word!(game.pause_screen_mode = 0 as uint16);
-    let ref mut fresh94 = *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16);
-    *fresh94 = (*fresh94).wrapping_add(1);
+    update_ram_word!(game.menu_index, wrapping_add(1));
 }
 pub unsafe fn PauseMenu_7_EquipmentToMap_FadeIn(game: &mut Game) {
     MapScreenDrawSamusPositionIndicator(game);
@@ -2160,46 +2130,52 @@ static kMapScrollingSpeedTable: [uint16; 32] = [
     0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 ];
 pub unsafe fn MapScrolling_1_Left(game: &mut Game) {
-    let ref mut fresh105 = *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16);
-    *fresh105 = (*fresh105).wrapping_sub(
-        kMapScrollingSpeedTable[(MapScrolling_GetSpeedIndex(game) as i32 >> 1 as i32) as usize],
+    update_ram_word!(
+        game.reg_BG1HOFS,
+        wrapping_sub(
+            kMapScrollingSpeedTable[(MapScrolling_GetSpeedIndex(game) as i32 >> 1 as i32) as usize]
+        )
     );
     MapScrolling_Common(game);
 }
 pub unsafe fn MapScrolling_Common(game: &mut Game) {
-    let ref mut fresh100 = *((&raw mut game.g_ram as *mut uint8).offset(0x5ff) as *mut uint16);
-    *fresh100 = (*fresh100).wrapping_add(1);
-    let ref mut fresh101 = *((&raw mut game.g_ram as *mut uint8).offset(0x5ff) as *mut uint16);
-    *fresh101 = (*fresh101).wrapping_add(1);
-    if (*fresh101 as i32 & 0xf as i32) == 0i32 {
+    update_ram_word!(game.map_scrolling_speed_index, wrapping_add(1));
+    if (update_ram_word!(game.map_scrolling_speed_index, wrapping_add(1), reread) as i32
+        & 0xf as i32)
+        == 0i32
+    {
         QueueSfx1_Max6(0x36 as uint16, game);
         set_ram_word!(game.map_scrolling_direction = 0 as uint16);
         set_ram_word!(game.map_scrolling_speed_index = 0 as uint16);
         if ram_word!(game, map_scrolling_gear_switch_timer) != 0 {
-            let ref mut fresh102 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x5fb) as *mut uint16);
-            *fresh102 = (*fresh102).wrapping_sub(1);
+            update_ram_word!(game.map_scrolling_gear_switch_timer, wrapping_sub(1));
         }
     }
 }
 pub unsafe fn MapScrolling_2_Right(game: &mut Game) {
-    let ref mut fresh104 = *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16);
-    *fresh104 = (*fresh104).wrapping_add(
-        kMapScrollingSpeedTable[(MapScrolling_GetSpeedIndex(game) as i32 >> 1 as i32) as usize],
+    update_ram_word!(
+        game.reg_BG1HOFS,
+        wrapping_add(
+            kMapScrollingSpeedTable[(MapScrolling_GetSpeedIndex(game) as i32 >> 1 as i32) as usize]
+        )
     );
     MapScrolling_Common(game);
 }
 pub unsafe fn MapScrolling_3_Up(game: &mut Game) {
-    let ref mut fresh103 = *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16);
-    *fresh103 = (*fresh103).wrapping_sub(
-        kMapScrollingSpeedTable[(MapScrolling_GetSpeedIndex(game) as i32 >> 1 as i32) as usize],
+    update_ram_word!(
+        game.reg_BG1VOFS,
+        wrapping_sub(
+            kMapScrollingSpeedTable[(MapScrolling_GetSpeedIndex(game) as i32 >> 1 as i32) as usize]
+        )
     );
     MapScrolling_Common(game);
 }
 pub unsafe fn MapScrolling_4_Down(game: &mut Game) {
-    let ref mut fresh99 = *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16);
-    *fresh99 = (*fresh99).wrapping_add(
-        kMapScrollingSpeedTable[(MapScrolling_GetSpeedIndex(game) as i32 >> 1 as i32) as usize],
+    update_ram_word!(
+        game.reg_BG1VOFS,
+        wrapping_add(
+            kMapScrollingSpeedTable[(MapScrolling_GetSpeedIndex(game) as i32 >> 1 as i32) as usize]
+        )
     );
     MapScrolling_Common(game);
 }
@@ -2211,8 +2187,7 @@ pub unsafe fn GameState_16_Unpausing_Async(game: &mut Game) -> CoroutineRet {
         EnableNMI(game);
         set_ram_word!(game.screen_fade_delay = 0 as uint16);
         set_ram_word!(game.screen_fade_counter = 0 as uint16);
-        let ref mut fresh106 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
-        *fresh106 = (*fresh106).wrapping_add(1);
+        update_ram_word!(game.game_state, wrapping_add(1));
     }
     kCoroutineNone as CoroutineRet
 }
@@ -2260,8 +2235,7 @@ pub unsafe fn GameState_17_Unpausing_Async(game: &mut Game) -> CoroutineRet {
         EnableHdmaObjects(game);
         EnableAnimtiles(game);
         QueueSamusMovementSfx(game);
-        let ref mut fresh108 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
-        *fresh108 = (*fresh108).wrapping_add(1);
+        update_ram_word!(game.game_state, wrapping_add(1));
     }
     *_state_variable_ = 0 as uint8;
     0 as CoroutineRet
@@ -2550,14 +2524,11 @@ pub unsafe fn SetupMapScrollingForPauseMenu(a: uint16, game: &mut Game) {
     if (224i16).wrapping_sub((r18) as i16) >= 0i16 {
         r18 = (32u16).wrapping_sub(r18);
         if (r18 as i32 & 0x8000 as i32) == 0i32 {
-            let ref mut fresh19 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16);
-            *fresh19 = (*fresh19).wrapping_sub(r18);
+            update_ram_word!(game.reg_BG1HOFS, wrapping_sub(r18));
         }
     } else {
         r18 = (224u16).wrapping_sub(r18);
-        let ref mut fresh20 = *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16);
-        *fresh20 = (*fresh20).wrapping_sub((v1) as u16);
+        update_ram_word!(game.reg_BG1HOFS, wrapping_sub((v1) as u16));
     }
     r18 = (ram_word!(game, map_min_y_scroll) as i32
         + (((ram_word!(game, map_max_y_scroll)).wrapping_sub(ram_word!(game, map_min_y_scroll)))
@@ -2577,8 +2548,7 @@ pub unsafe fn SetupMapScrollingForPauseMenu(a: uint16, game: &mut Game) {
         + (a as i32 - r18 as i32 & 0xfff8 as i32)) as uint16;
     v2 = (64i16).wrapping_sub((r18) as i16);
     if v2 >= 0i16 {
-        let ref mut fresh21 = *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16);
-        *fresh21 = (*fresh21).wrapping_sub((v2) as u16);
+        update_ram_word!(game.reg_BG1VOFS, wrapping_sub((v2) as u16));
         if ram_word!(game, reg_BG1VOFS) as i32 + 40 as i32 & 0x8000 as i32 != 0 {
             set_ram_word!(game.reg_BG1VOFS = -(40 as i32) as uint16);
         }
@@ -2700,8 +2670,7 @@ pub unsafe fn DetermineMapScrollLimits(game: &mut Game) {
     }
     set_ram_word!(game.map_min_x_scroll = (DetermineLeftmostMapColumn(r6)).wrapping_mul(8u16));
     if ram_word!(game, area_index) == 4u16 {
-        let ref mut fresh22 = *((&raw mut game.g_ram as *mut uint8).offset(0x5ac) as *mut uint16);
-        *fresh22 = (*fresh22).wrapping_sub(24u16);
+        update_ram_word!(game.map_min_x_scroll, wrapping_sub(24u16));
     }
     set_ram_word!(
         game.map_max_x_scroll = (DetermineRightmostMapColumn(r6.offset(131))).wrapping_mul(8u16)
@@ -3126,8 +3095,10 @@ static kPauseLrButtonPressedHighlight_Y: [uint16; 2] = [0x18, 0xe8];
 static kPauseLrButtonPressedHighlight_X: [uint16; 2] = [0xd0, 0xd0];
 pub unsafe fn HandlePauseMenuLRPressHighlight(game: &mut Game) {
     if ram_word!(game, pausemenu_start_lr_pressed_highlight_timer) != 0 {
-        let ref mut fresh42 = *((&raw mut game.g_ram as *mut uint8).offset(0x729) as *mut uint16);
-        *fresh42 = (*fresh42).wrapping_sub(1);
+        update_ram_word!(
+            game.pausemenu_start_lr_pressed_highlight_timer,
+            wrapping_sub(1)
+        );
         if ram_word!(game, pausemenu_shoulder_button_highlight) != 0 {
             let v0: i32 = ram_word!(game, pausemenu_shoulder_button_highlight) as i32 - 1 as i32;
             DrawMenuSpritemap(
@@ -3154,15 +3125,16 @@ pub unsafe fn HandlePauseScreenStart(game: &mut Game) {
         SetPauseScreenButtonLabelPalettes(game);
         set_ram_word!(game.pausemenu_button_label_mode = v0);
         set_ram_word!(game.pausemenu_start_lr_pressed_highlight_timer = 11 as uint16);
-        let ref mut fresh98 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
-        *fresh98 = (*fresh98).wrapping_add(1);
+        update_ram_word!(game.game_state, wrapping_add(1));
     }
     UpdatePauseMenuLRStartVramTilemap(game);
 }
 pub unsafe fn HighlightPauseScreenButton(game: &mut Game) {
     if ram_word!(game, pausemenu_start_lr_pressed_highlight_timer) != 0 {
-        let ref mut fresh107 = *((&raw mut game.g_ram as *mut uint8).offset(0x729) as *mut uint16);
-        *fresh107 = (*fresh107).wrapping_sub(1);
+        update_ram_word!(
+            game.pausemenu_start_lr_pressed_highlight_timer,
+            wrapping_sub(1)
+        );
         DrawMenuSpritemap(
             0x2b as uint16,
             0x90 as uint16,
@@ -3500,17 +3472,13 @@ pub unsafe fn EquipmentScreenHandleDpad(game: &mut Game) {
     } else if (ram_word!(game, joypad1_newkeys) as i32 & kButton_Up as i32) != 0i32 {
         if (ram_word!(game, pausemenu_equipment_category_item) as i32 & 0xff00 as i32) != 0i32 {
             QueueSfx1_Max6(0x37 as uint16, game);
-            let ref mut fresh53 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16);
-            *fresh53 = (*fresh53).wrapping_sub(256u16);
+            update_ram_word!(game.pausemenu_equipment_category_item, wrapping_sub(256u16));
         }
     } else if (ram_word!(game, joypad1_newkeys) as i32 & kButton_Down as i32) != 0i32 {
         if (ram_word!(game, pausemenu_equipment_category_item) as i32 & 0xff00 as i32) == 256i32
             || ram_word!(game, reserve_health_mode) == 1u16
             || {
-                let ref mut fresh54 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16);
-                *fresh54 = (*fresh54).wrapping_add(256u16);
+                update_ram_word!(game.pausemenu_equipment_category_item, wrapping_add(256u16));
                 ram_word!(game, samus_reserve_health) == 0
             }
         {
@@ -3704,24 +3672,35 @@ pub unsafe fn EquipmentScreenCategory_Tanks_1(game: &mut Game) {
                 (ram_word!(game, samus_reserve_health) as i32 + 7 as i32 & 0xfff8 as i32) as uint16
         );
     }
-    let ref mut fresh55 = *((&raw mut game.g_ram as *mut uint8).offset(0x757) as *mut uint16);
-    *fresh55 = (*fresh55).wrapping_sub(1);
-    if (*fresh55 as i32 & 7 as i32) == 7i32 {
+    if (update_ram_word!(
+        game.pausemenu_reserve_tank_delay_ctr,
+        wrapping_sub(1),
+        reread
+    ) as i32
+        & 7 as i32)
+        == 7i32
+    {
         QueueSfx3_Max6(0x2d as uint16, game);
     }
-    let ref mut fresh56 = *((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16);
-    *fresh56 = (*fresh56).wrapping_add(kReserveTankEnergyTransferPerFrame);
+    update_ram_word!(
+        game.samus_health,
+        wrapping_add(kReserveTankEnergyTransferPerFrame)
+    );
     if ((ram_word!(game, samus_health)) as i16)
         .wrapping_sub((ram_word!(game, samus_max_health)) as i16)
         < 0i16
     {
-        let ref mut fresh57 = *((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16);
-        *fresh57 = (*fresh57).wrapping_sub(kReserveTankEnergyTransferPerFrame);
+        update_ram_word!(
+            game.samus_reserve_health,
+            wrapping_sub(kReserveTankEnergyTransferPerFrame)
+        );
         if (ram_word!(game, samus_reserve_health) as int16) > 0i16 {
             return;
         }
-        let ref mut fresh58 = *((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16);
-        *fresh58 = (*fresh58).wrapping_add(ram_word!(game, samus_reserve_health));
+        update_ram_word!(
+            game.samus_health,
+            wrapping_add(ram_word!(game, samus_reserve_health))
+        );
     } else {
         set_ram_word!(game.samus_health = ram_word!(game, samus_max_health));
     }
@@ -3752,9 +3731,7 @@ pub unsafe fn EquipmentScreenCategory_Weapons_MoveButtons(game: &mut Game) {
         if ram_word!(game, hyper_beam_flag) == 0
             && ram_word!(game, pausemenu_equipment_category_item) != 1025u16
         {
-            let ref mut fresh61 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16);
-            *fresh61 = (*fresh61).wrapping_add(256u16);
+            update_ram_word!(game.pausemenu_equipment_category_item, wrapping_add(256u16));
             EquipmentScreenMoveToBeams(
                 (2u16).wrapping_mul(
                     (*((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16
@@ -3772,9 +3749,7 @@ pub unsafe fn EquipmentScreenCategory_Weapons_MoveButtons(game: &mut Game) {
     } else if (ram_word!(game, joypad1_newkeys) as i32 & 0x800 as i32) != 0i32
         && ((ram_word!(game, pausemenu_equipment_category_item) as i32 & 0xff00 as i32) == 0i32
             || {
-                let ref mut fresh62 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16);
-                *fresh62 = (*fresh62).wrapping_sub(256u16);
+                update_ram_word!(game.pausemenu_equipment_category_item, wrapping_sub(256u16));
                 EquipmentScreenMoveToBottomOfBeams(
                     (2u16).wrapping_mul(
                         (*((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16
@@ -3799,9 +3774,10 @@ pub unsafe fn EquipmentScreenCategory_Weapons_PlazmaSpazerCheck(R36: uint16, gam
         if (R36 as i32 & 4 as i32) == 0i32
             && (ram_word!(game, equipped_beams) as i32 & 8 as i32) != 0i32
         {
-            let ref mut fresh59 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9a6) as *mut uint16);
-            *fresh59 = (*fresh59 as i32 & !(8 as i32)) as uint16;
+            update_ram_word!(
+                game.equipped_beams,
+                |fresh59| (fresh59 as i32 & !(8 as i32)) as uint16
+            );
             ChangePaletteValues(
                 (&raw mut game.g_ram as *mut uint8).offset(
                     *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c06c)) as *const uint8
@@ -3816,8 +3792,10 @@ pub unsafe fn EquipmentScreenCategory_Weapons_PlazmaSpazerCheck(R36: uint16, gam
         && (R36 as i32 & 8 as i32) == 0i32
         && (ram_word!(game, equipped_beams) as i32 & 4 as i32) != 0i32
     {
-        let ref mut fresh60 = *((&raw mut game.g_ram as *mut uint8).offset(0x9a6) as *mut uint16);
-        *fresh60 = (*fresh60 as i32 & !(4 as i32)) as uint16;
+        update_ram_word!(
+            game.equipped_beams,
+            |fresh60| (fresh60 as i32 & !(4 as i32)) as uint16
+        );
         ChangePaletteValues(
             (&raw mut game.g_ram as *mut uint8).offset(
                 *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c06c)) as *const uint8
@@ -3847,9 +3825,7 @@ pub unsafe fn EquipmentScreenCategory_Suit_MoveResponse(game: &mut Game) {
         EquipmentScreenMoveToBeams(0 as uint16, r18, game);
     } else if (ram_word!(game, joypad1_newkeys) as i32 & kButton_Up as i32) != 0i32 {
         if (ram_word!(game, pausemenu_equipment_category_item) as i32 & 0xff00 as i32) != 0i32 {
-            let ref mut fresh51 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16);
-            *fresh51 = (*fresh51).wrapping_sub(256u16);
+            update_ram_word!(game.pausemenu_equipment_category_item, wrapping_sub(256u16));
             EquipmentScreenMoveToScrewOrHigherOnSuits(
                 (2u16).wrapping_mul(
                     (*((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16
@@ -3867,9 +3843,7 @@ pub unsafe fn EquipmentScreenCategory_Suit_MoveResponse(game: &mut Game) {
     } else if (ram_word!(game, joypad1_newkeys) as i32 & kButton_Down as i32) != 0i32
         && ((ram_word!(game, pausemenu_equipment_category_item) as i32 & 0xff00 as i32) == 1280i32
             || {
-                let ref mut fresh52 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16);
-                *fresh52 = (*fresh52).wrapping_add(256u16);
+                update_ram_word!(game.pausemenu_equipment_category_item, wrapping_add(256u16));
                 EquipmentScreenMoveLowerOnSuitsMisc(
                     (2u16).wrapping_mul(
                         (*((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16
@@ -3904,9 +3878,7 @@ pub unsafe fn EquipmentScreenCategory_Boots_MoveResponse(game: &mut Game) {
         }
     } else if (ram_word!(game, joypad1_newkeys) as i32 & kButton_Down as i32) != 0i32 {
         if ram_word!(game, pausemenu_equipment_category_item) != 515u16 {
-            let ref mut fresh49 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16);
-            *fresh49 = (*fresh49).wrapping_add(256u16);
+            update_ram_word!(game.pausemenu_equipment_category_item, wrapping_add(256u16));
             EquipmentScreenMoveToHighJumpOrLowerInBoots(
                 (2u16).wrapping_mul(
                     (*((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16
@@ -3924,9 +3896,7 @@ pub unsafe fn EquipmentScreenCategory_Boots_MoveResponse(game: &mut Game) {
     } else if (ram_word!(game, joypad1_newkeys) as i32 & kButton_Up as i32) != 0i32
         && ((ram_word!(game, pausemenu_equipment_category_item) as i32 & 0xff00 as i32) == 0i32
             || {
-                let ref mut fresh50 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16);
-                *fresh50 = (*fresh50).wrapping_sub(256u16);
+                update_ram_word!(game.pausemenu_equipment_category_item, wrapping_sub(256u16));
                 EquipmentScreenCategory_Boots_MoveUpInBoots(
                     (2u16).wrapping_mul(
                         (*((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16
@@ -4120,13 +4090,15 @@ pub unsafe fn EquipmentScreenDisplayReserveTankAmount_(game: &mut Game) {
 }
 pub unsafe fn EquipmentScreenDisplayReserves_PaletteSetup(game: &mut Game) -> uint16 {
     if ram_word!(game, samus_reserve_health) != 0 {
-        let ref mut fresh40 = *((&raw mut game.g_ram as *mut uint8).offset(0x72f) as *mut uint16);
-        *fresh40 = (*fresh40).wrapping_sub(1);
-        let v0: bool = (*fresh40 as i32 & 0x8000 as i32) != 0i32;
+        let v0: bool = (update_ram_word!(
+            game.pausemenu_reserve_tank_animation_timer,
+            wrapping_sub(1),
+            reread
+        ) as i32
+            & 0x8000 as i32)
+            != 0i32;
         if ram_word!(game, pausemenu_reserve_tank_animation_timer) == 0 || v0 {
-            let ref mut fresh41 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x743) as *mut uint16);
-            *fresh41 = (*fresh41).wrapping_add(1);
+            update_ram_word!(game.pausemenu_reserve_tank_animation_frame, wrapping_add(1));
             let mut v1: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x82c165))
                 as *const uint8 as *mut uint8)
                 .offset(
@@ -4704,9 +4676,10 @@ pub unsafe fn UpdateSamusPositionIndicatorAnimation(game: &mut Game) -> uint16 {
         let mut v1: uint16 =
             (ram_word!(game, samus_position_indicator_animation_frame)).wrapping_add(2u16);
         if ((v1) as i16).wrapping_sub(8i16) >= 0i16 {
-            let ref mut fresh2 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x77a) as *mut uint16);
-            *fresh2 = (*fresh2).wrapping_add(1);
+            update_ram_word!(
+                game.samus_position_indicator_animation_loop_counter,
+                wrapping_add(1)
+            );
             v1 = 0 as uint16;
         }
         set_ram_word!(game.samus_position_indicator_animation_frame = v1);
@@ -4749,9 +4722,7 @@ static kDrawMenuSelectionMissile_Enable: [uint16; 4] =
 static kDrawMenuSelectionMissile_SpriteMap: [uint16; 4] = [0x37, 0x36, 0x35, 0x34];
 pub unsafe fn DrawMenuSelectionMissile(game: &mut Game) {
     if ram_word!(game, cinematic_var5) != 0 {
-        let ref mut fresh38 = *((&raw mut game.g_ram as *mut uint8).offset(0x198d) as *mut uint16);
-        *fresh38 = (*fresh38).wrapping_sub(1);
-        if *fresh38 == 0 {
+        if update_ram_word!(game.cinematic_var5, wrapping_sub(1), reread) == 0 {
             set_ram_word!(
                 game.eproj_id[0] = (*(((&raw mut game.g_ram as *mut uint8).offset(0x1997)
                     as *mut uint16)
@@ -5005,8 +4976,7 @@ pub unsafe fn AdvancePaletteFade_BgPalette6(game: &mut Game) -> uint8 {
             );
             i += 2 as i32;
         }
-        let ref mut fresh5 = *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16);
-        *fresh5 = (*fresh5).wrapping_add(1);
+        update_ram_word!(game.palette_change_num, wrapping_add(1));
         0 as uint8
     } else {
         set_ram_word!(game.palette_change_num = 0 as uint16);
@@ -5035,8 +5005,7 @@ pub unsafe fn AdvanceGradualColorChangeOfPalette(
                 break;
             }
         }
-        let ref mut fresh3 = *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16);
-        *fresh3 = (*fresh3).wrapping_add(1);
+        update_ram_word!(game.palette_change_num, wrapping_add(1));
         0 as uint8
     } else {
         set_ram_word!(game.palette_change_num = 0 as uint16);
@@ -5064,8 +5033,7 @@ pub unsafe fn AdvancePaletteFadeForAllPalettes(game: &mut Game) -> uint8 {
             }
             i += 2 as i32;
         }
-        let ref mut fresh4 = *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16);
-        *fresh4 = (*fresh4).wrapping_add(1);
+        update_ram_word!(game.palette_change_num, wrapping_add(1));
         0 as uint8
     } else {
         set_ram_word!(game.palette_change_num = 0 as uint16);
@@ -5129,16 +5097,13 @@ pub unsafe fn sub_82DB0C(mut a: uint16, game: &mut Game) -> uint8 {
         set_ram_word!(game.g_word_7EC404 = 0 as uint16);
         while a != 0 {
             if a as i32 & 1 as i32 == 0 {
-                let ref mut fresh15 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xc404) as *mut uint16);
-                *fresh15 = (*fresh15).wrapping_add(32u16);
+                update_ram_word!(game.g_word_7EC404, wrapping_add(32u16));
             } else {
                 sub_82DB41(game);
             }
             a = (a as i32 >> 1 as i32) as uint16;
         }
-        let ref mut fresh16 = *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16);
-        *fresh16 = (*fresh16).wrapping_add(1);
+        update_ram_word!(game.palette_change_num, wrapping_add(1));
         0 as uint8
     } else {
         set_ram_word!(game.palette_change_num = 0 as uint16);
@@ -5184,22 +5149,22 @@ pub unsafe fn HandleSamusOutOfHealthAndGameTile(game: &mut Game) {
             set_ram_word!(game.game_state = kGameState_19_SamusNoHealth as uint16);
         }
     }
-    let ref mut fresh81 = *((&raw mut game.g_ram as *mut uint8).offset(0x9da) as *mut uint16);
-    *fresh81 = (*fresh81).wrapping_add(1);
-    if *fresh81 as i32 - 60 as i32 & 0x8000 as i32 == 0 {
+    if update_ram_word!(game.game_time_frames, wrapping_add(1), reread) as i32 - 60 as i32
+        & 0x8000 as i32
+        == 0
+    {
         set_ram_word!(game.game_time_frames = 0 as uint16);
-        let ref mut fresh82 = *((&raw mut game.g_ram as *mut uint8).offset(0x9dc) as *mut uint16);
-        *fresh82 = (*fresh82).wrapping_add(1);
-        if *fresh82 as i32 - 60 as i32 & 0x8000 as i32 == 0 {
+        if update_ram_word!(game.game_time_seconds, wrapping_add(1), reread) as i32 - 60 as i32
+            & 0x8000 as i32
+            == 0
+        {
             set_ram_word!(game.game_time_seconds = 0 as uint16);
-            let ref mut fresh83 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9de) as *mut uint16);
-            *fresh83 = (*fresh83).wrapping_add(1);
-            if *fresh83 as i32 - 60 as i32 & 0x8000 as i32 == 0 {
+            if update_ram_word!(game.game_time_minutes, wrapping_add(1), reread) as i32 - 60 as i32
+                & 0x8000 as i32
+                == 0
+            {
                 set_ram_word!(game.game_time_minutes = 0 as uint16);
-                let ref mut fresh84 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x9e0) as *mut uint16);
-                *fresh84 = (*fresh84).wrapping_add(1);
+                update_ram_word!(game.game_time_hours, wrapping_add(1));
             }
         }
     }
@@ -5231,22 +5196,24 @@ pub unsafe fn RefillHealthFromReserveTanks(game: &mut Game) -> uint8 {
         if (ram_word!(game, nmi_frame_counter_word) as i32 & 7 as i32) == 0i32 {
             QueueSfx3_Max3(0x2d as uint16, game);
         }
-        let ref mut fresh11 = *((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16);
-        *fresh11 = (*fresh11).wrapping_add(1);
-        if ((*fresh11) as i16).wrapping_sub((ram_word!(game, samus_max_health)) as i16) >= 0i16 {
+        if ((update_ram_word!(game.samus_health, wrapping_add(1), reread)) as i16)
+            .wrapping_sub((ram_word!(game, samus_max_health)) as i16)
+            >= 0i16
+        {
             set_ram_word!(game.samus_health = ram_word!(game, samus_max_health));
             current_block = 15379867480756242343;
         } else {
-            let ref mut fresh13 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9d6) as *mut uint16);
-            *fresh13 = (*fresh13).wrapping_sub(1);
-            let v0: bool = (*fresh13 as i32 & 0x8000 as i32) != 0i32;
+            let v0: bool = (update_ram_word!(game.samus_reserve_health, wrapping_sub(1), reread)
+                as i32
+                & 0x8000 as i32)
+                != 0i32;
             if ram_word!(game, samus_reserve_health) == 0 {
                 current_block = 15379867480756242343;
             } else if v0 {
-                let ref mut fresh14 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16);
-                *fresh14 = (*fresh14).wrapping_add(ram_word!(game, samus_reserve_health));
+                update_ram_word!(
+                    game.samus_health,
+                    wrapping_add(ram_word!(game, samus_reserve_health))
+                );
                 current_block = 15379867480756242343;
             } else {
                 current_block = 13183875560443969876;
@@ -5297,8 +5264,7 @@ pub unsafe fn GameState_19_SamusNoHealth(game: &mut Game) -> CoroutineRet {
     set_ram_word!(game.samus_auto_cancel_hud_item_index = 0 as uint16);
     set_ram_word!(game.samus_invincibility_timer = 0 as uint16);
     set_ram_word!(game.samus_knockback_timer = 0 as uint16);
-    let ref mut fresh109 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
-    *fresh109 = (*fresh109).wrapping_add(1);
+    update_ram_word!(game.game_state, wrapping_add(1));
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_20_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineRet {
@@ -5331,8 +5297,7 @@ pub unsafe fn GameState_20_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineR
         set_ram_word!(game.game_options_screen_index = 3 as uint16);
         set_ram_word!(game.g_word_7E0DE4 = 0 as uint16);
         set_ram_word!(game.g_word_7E0DE6 = 0 as uint16);
-        let ref mut fresh110 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
-        *fresh110 = (*fresh110).wrapping_add(1);
+        update_ram_word!(game.game_state, wrapping_add(1));
         set_ram_word!(game.power_bomb_explosion_status = 0 as uint16);
         QueueSfx1_Max15(2 as uint16, game);
         QueueSfx2_Max15(0x71 as uint16, game);
@@ -5347,26 +5312,23 @@ pub unsafe fn GameState_21_SamusNoHealth(game: &mut Game) -> CoroutineRet {
     Samus_DrawWhenNotAnimatingOrDying(game);
     if HasQueuedMusic(game) == 0 {
         StartSamusDeathAnimation(game);
-        let ref mut fresh111 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
-        *fresh111 = (*fresh111).wrapping_add(1);
+        update_ram_word!(game.game_state, wrapping_add(1));
     }
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_22_SamusNoHealth_Dying(game: &mut Game) -> CoroutineRet {
     DrawSamusStartingDeathAnim_(game);
-    let ref mut fresh113 = *((&raw mut game.g_ram as *mut uint8).offset(0xde8) as *mut uint16);
-    *fresh113 = (*fresh113).wrapping_sub(1);
-    let v0: bool = (*fresh113 as i32 & 0x8000 as i32) != 0i32;
+    let v0: bool = (update_ram_word!(game.g_word_7E0DE8, wrapping_sub(1), reread) as i32
+        & 0x8000 as i32)
+        != 0i32;
     if ram_word!(game, g_word_7E0DE8) == 0 || v0 {
-        let ref mut fresh114 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
-        *fresh114 = (*fresh114).wrapping_add(1);
+        update_ram_word!(game.game_state, wrapping_add(1));
     }
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_23_SamusNoHealth_Flashing(game: &mut Game) -> CoroutineRet {
     if HandleSamusDeathSequence(game) != 0 {
-        let ref mut fresh115 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
-        *fresh115 = (*fresh115).wrapping_add(1);
+        update_ram_word!(game.game_state, wrapping_add(1));
     } else {
         Samus_DrawDuringDeathAnim(game);
     }
@@ -5376,8 +5338,7 @@ pub unsafe fn GameState_24_SamusNoHealth_Explosion(game: &mut Game) -> Coroutine
     if GameState_24_SamusNoHealth_Explosion_Helper(game) != 0 {
         set_ram_word!(game.screen_fade_delay = 1 as uint16);
         set_ram_word!(game.screen_fade_counter = 1 as uint16);
-        let ref mut fresh116 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
-        *fresh116 = (*fresh116).wrapping_add(1);
+        update_ram_word!(game.game_state, wrapping_add(1));
     }
     kCoroutineNone as CoroutineRet
 }
@@ -5387,8 +5348,7 @@ pub unsafe fn GameState_25_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineR
         EnableNMI(game);
         set_ram_word!(game.screen_fade_delay = 0 as uint16);
         set_ram_word!(game.screen_fade_counter = 0 as uint16);
-        let ref mut fresh117 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
-        *fresh117 = (*fresh117).wrapping_add(1);
+        update_ram_word!(game.game_state, wrapping_add(1));
         set_ram_word!(game.menu_index = 0 as uint16);
         set_ram_word!(game.debug_disable_sounds = 0 as uint16);
     }
@@ -5619,14 +5579,12 @@ pub unsafe fn GameState_9_HitDoorBlock(game: &mut Game) -> CoroutineRet {
 }
 pub unsafe fn DoorTransitionFunction_HandleElevator(game: &mut Game) -> CoroutineRet {
     if ram_word!(game, elevator_flags) == 0 {
-        let ref mut fresh6 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
-        *fresh6 = (*fresh6).wrapping_add(1);
+        update_ram_word!(game.game_state, wrapping_add(1));
         return GameState_10_LoadingNextRoom_Async(game);
     }
     CallSomeSamusCode(0 as uint16, game);
     if (ram_word!(game, elevator_direction) as i32 & 0x8000 as i32) != 0i32 {
-        let ref mut fresh7 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
-        *fresh7 = (*fresh7).wrapping_add(1);
+        update_ram_word!(game.game_state, wrapping_add(1));
         return GameState_10_LoadingNextRoom_Async(game);
     }
     set_ram_word!(game.downwards_elevator_delay_timer = 48 as uint16);
@@ -5634,11 +5592,11 @@ pub unsafe fn DoorTransitionFunction_HandleElevator(game: &mut Game) -> Coroutin
     DoorTransitionFunction_Wait48frames(game)
 }
 pub unsafe fn DoorTransitionFunction_Wait48frames(game: &mut Game) -> CoroutineRet {
-    let ref mut fresh8 = *((&raw mut game.g_ram as *mut uint8).offset(0x92f) as *mut uint16);
-    *fresh8 = (*fresh8).wrapping_sub(1);
-    if (*fresh8 as i32 & 0x8000 as i32) != 0i32 {
-        let ref mut fresh9 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
-        *fresh9 = (*fresh9).wrapping_add(1);
+    if (update_ram_word!(game.downwards_elevator_delay_timer, wrapping_sub(1), reread) as i32
+        & 0x8000 as i32)
+        != 0i32
+    {
+        update_ram_word!(game.game_state, wrapping_add(1));
         return GameState_10_LoadingNextRoom_Async(game);
     } else {
         DetermineWhichEnemiesToProcess(game);
@@ -5694,8 +5652,7 @@ pub unsafe fn GameState_10_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRe
     QueueSfx2_Max15(0x71 as uint16, game);
     set_ram_word!(game.debug_disable_sounds = -(1 as i32) as uint16);
     set_ram_word!(game.door_transition_function = ((0x82e29ei32) as u16));
-    let ref mut fresh10 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
-    *fresh10 = (*fresh10).wrapping_add(1);
+    update_ram_word!(game.game_state, wrapping_add(1));
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_11_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRet {
@@ -6550,8 +6507,7 @@ pub unsafe fn GameOptionsMenuFunc_0(game: &mut Game) {
         EnableNMI(game);
         set_ram_word!(game.screen_fade_delay = 0 as uint16);
         set_ram_word!(game.screen_fade_counter = 0 as uint16);
-        let ref mut fresh65 = *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16);
-        *fresh65 = (*fresh65).wrapping_add(1);
+        update_ram_word!(game.game_options_screen_index, wrapping_add(1));
     } else if *(&raw mut game.g_ram as *mut uint8).offset(0x51) == 14u8 {
         let v0: uint16 = *(&raw mut game.g_ram as *mut uint8).offset(0x6b) as uint16;
         if (*(&raw mut game.g_ram as *mut uint8).offset(0x6b) as i32 & 4 as i32) == 0i32 {
@@ -6630,8 +6586,7 @@ pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen(game: &mut Game) {
     CreateOptionsMenuObject_(initial_tile, addr_stru_82F4B8 as uint16, game);
     // The first initializer leaves its palette $0E00 in A for this call.
     CreateOptionsMenuObject_(0x0e00, addr_stru_82F4C4 as uint16, game);
-    let ref mut fresh66 = *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16);
-    *fresh66 = (*fresh66).wrapping_add(1);
+    update_ram_word!(game.game_options_screen_index, wrapping_add(1));
     OptionsMenuFunc4(game);
 }
 pub unsafe fn GameOptionsMenu_2_FadeInOptionsScreen(game: &mut Game) {
@@ -6639,8 +6594,7 @@ pub unsafe fn GameOptionsMenu_2_FadeInOptionsScreen(game: &mut Game) {
     if *(&raw mut game.g_ram as *mut uint8).offset(0x51) == 15u8 {
         set_ram_word!(game.screen_fade_delay = 0 as uint16);
         set_ram_word!(game.screen_fade_counter = 0 as uint16);
-        let ref mut fresh67 = *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16);
-        *fresh67 = (*fresh67).wrapping_add(1);
+        update_ram_word!(game.game_options_screen_index, wrapping_add(1));
     }
 }
 pub unsafe fn OptionsMenu_AddToVramQueue(game: &mut Game) {
@@ -6688,16 +6642,15 @@ static kGameOptionsMenuItemFuncs: [Option<Func_V>; 5] = unsafe {
 pub unsafe fn GameOptionsMenu_3_OptionsScreen(game: &mut Game) {
     if (ram_word!(game, joypad1_newkeys) as i32 & kButton_Up as i32) != 0i32 {
         QueueSfx1_Max6(0x37 as uint16, game);
-        let ref mut fresh68 = *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16);
-        *fresh68 = (*fresh68).wrapping_sub(1);
-        if (*fresh68 as i32 & 0x8000 as i32) != 0i32 {
+        if (update_ram_word!(game.menu_option_index, wrapping_sub(1), reread) as i32
+            & 0x8000 as i32)
+            != 0i32
+        {
             set_ram_word!(game.menu_option_index = 4 as uint16);
         }
     } else if (ram_word!(game, joypad1_newkeys) as i32 & kButton_Down as i32) != 0i32 {
         QueueSfx1_Max6(0x37 as uint16, game);
-        let ref mut fresh69 = *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16);
-        *fresh69 = (*fresh69).wrapping_add(1);
-        if *fresh69 == 5u16 {
+        if update_ram_word!(game.menu_option_index, wrapping_add(1), reread) == 5u16 {
             set_ram_word!(game.menu_option_index = 0 as uint16);
         }
     }
@@ -6810,8 +6763,7 @@ pub unsafe fn GameOptionsMenu_5_DissolveOutScreen(game: &mut Game) {
         set_ram_word!(game.screen_fade_delay = 0 as uint16);
         set_ram_word!(game.screen_fade_counter = 0 as uint16);
         set_ram_word!(game.reg_BG1VOFS = 0 as uint16);
-        let ref mut fresh71 = *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16);
-        *fresh71 = (*fresh71).wrapping_add(1);
+        update_ram_word!(game.game_options_screen_index, wrapping_add(1));
         if ram_word!(game, menu_option_index) != 0 {
             if (ram_word!(game, menu_option_index) as i32 & 4 as i32) != 0i32 {
                 if ram_word!(game, japanese_text_flag) != 0 {
@@ -6908,16 +6860,15 @@ static kGameOptionsMenuSpecialSettings: [Option<Func_V>; 3] = unsafe {
 pub unsafe fn GameOptionsMenu_8_SpecialSettings(game: &mut Game) {
     if (ram_word!(game, joypad1_newkeys) as i32 & kButton_Up as i32) != 0i32 {
         QueueSfx1_Max6(0x37 as uint16, game);
-        let ref mut fresh75 = *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16);
-        *fresh75 = (*fresh75).wrapping_sub(1);
-        if (*fresh75 as i32 & 0x8000 as i32) != 0i32 {
+        if (update_ram_word!(game.menu_option_index, wrapping_sub(1), reread) as i32
+            & 0x8000 as i32)
+            != 0i32
+        {
             set_ram_word!(game.menu_option_index = 2 as uint16);
         }
     } else if (ram_word!(game, joypad1_newkeys) as i32 & kButton_Down as i32) != 0i32 {
         QueueSfx1_Max6(0x37 as uint16, game);
-        let ref mut fresh76 = *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16);
-        *fresh76 = (*fresh76).wrapping_add(1);
-        if *fresh76 == 3u16 {
+        if update_ram_word!(game.menu_option_index, wrapping_add(1), reread) == 3u16 {
             set_ram_word!(game.menu_option_index = 0 as uint16);
         }
     }
@@ -7024,9 +6975,7 @@ static word_82F204: [uint16; 16] = [
 pub unsafe fn GameOptionsMenu_7_ControllerSettings(game: &mut Game) {
     if (ram_word!(game, joypad1_newkeys) as i32 & kButton_Up as i32) != 0i32 {
         QueueSfx1_Max6(0x37 as uint16, game);
-        let ref mut fresh73 = *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16);
-        *fresh73 = (*fresh73).wrapping_sub(1);
-        let v0: uint16 = *fresh73;
+        let v0: uint16 = update_ram_word!(game.menu_option_index, wrapping_sub(1), reread);
         if (ram_word!(game, menu_option_index) as i32 & 0x8000 as i32) == 0i32 {
             if v0 != 6u16 {
                 return;
@@ -7075,9 +7024,7 @@ pub unsafe fn GameOptionsMenu_7_ControllerSettings(game: &mut Game) {
             & ram_word!(game, joypad2_new_keys) as i32
             == word_82F204[ram_word!(game, debug_invincibility) as usize] as i32
         {
-            let ref mut fresh74 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0xde0) as *mut uint16);
-            *fresh74 = (*fresh74).wrapping_add(1);
+            update_ram_word!(game.debug_invincibility, wrapping_add(1));
         } else {
             set_ram_word!(game.debug_invincibility = 0 as uint16);
         }
@@ -7105,15 +7052,13 @@ pub unsafe fn OptionsMenuControllerFunc_7(game: &mut Game) {
     }
 }
 pub unsafe fn GameOptionsMenu_9_ScrollControllerSettingsDown(game: &mut Game) {
-    let ref mut fresh77 = *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16);
-    *fresh77 = (*fresh77).wrapping_add(2u16);
+    update_ram_word!(game.reg_BG1VOFS, wrapping_add(2u16));
     if ram_word!(game, reg_BG1VOFS) == 32u16 {
         set_ram_word!(game.game_options_screen_index = 7 as uint16);
     }
 }
 pub unsafe fn GameOptionsMenu_A_ScrollControllerSettingsUp(game: &mut Game) {
-    let ref mut fresh78 = *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16);
-    *fresh78 = (*fresh78).wrapping_sub(2u16);
+    update_ram_word!(game.reg_BG1VOFS, wrapping_sub(2u16));
     if ram_word!(game, reg_BG1VOFS) == 0 {
         set_ram_word!(game.game_options_screen_index = 7 as uint16);
     }
@@ -7194,16 +7139,16 @@ pub unsafe fn OptionsPreInstr_F3A0(k: uint16, game: &mut Game) {
             }
         }
         9 => {
-            let ref mut fresh121 = *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7)
-                as *mut uint16)
-                .offset(((k as i32 >> 1 as i32) + 3 as i32) as isize);
-            *fresh121 = (*fresh121).wrapping_sub(2u16);
+            update_ram_word!(
+                game.eproj_x_vel[((k as i32 >> 1 as i32) + 3 as i32)],
+                wrapping_sub(2u16)
+            );
         }
         10 => {
-            let ref mut fresh122 = *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7)
-                as *mut uint16)
-                .offset(((k as i32 >> 1 as i32) + 3 as i32) as isize);
-            *fresh122 = (*fresh122).wrapping_add(2u16);
+            update_ram_word!(
+                game.eproj_x_vel[((k as i32 >> 1 as i32) + 3 as i32)],
+                wrapping_add(2u16)
+            );
         }
         _ => {}
     };

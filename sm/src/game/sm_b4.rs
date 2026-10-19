@@ -1,6 +1,6 @@
 use crate::game::sm_81::DrawSpritemapWithBaseTile;
 use crate::game_state::Game;
-use crate::ram_map::{ram_word, set_ram_word};
+use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{RomPtr, Unreachable};
 
 pub use crate::types::{
@@ -99,18 +99,17 @@ pub unsafe fn HandleSpriteObjects(game: &mut Game) {
                 }
             }
         }
-        let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0x1844) as *mut uint16);
-        *fresh0 = (*fresh0).wrapping_sub(2u16);
-        if (*fresh0 as i32 & 0x8000 as i32 != 0) {
+        if (update_ram_word!(game.sprite_object_index, wrapping_sub(2u16), reread) as i32
+            & 0x8000 as i32
+            != 0)
+        {
             break;
         }
     }
 }
 pub unsafe fn SpriteObject_Instr_RepeatLast(game: &mut Game) {
     let v2: i32 = ram_word!(game, sprite_object_index) as i32 >> 1 as i32;
-    let ref mut fresh1 =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xef78) as *mut uint16).offset(v2 as isize);
-    *fresh1 = (*fresh1).wrapping_sub(4u16);
+    update_ram_word!(game.sprite_instr_list_ptrs[v2], wrapping_sub(4u16));
     set_ram_word!(game.sprite_instr_timer[v2] = 0x7fff as uint16);
 }
 pub unsafe fn SpriteObject_Instr_Terminate(game: &mut Game) {

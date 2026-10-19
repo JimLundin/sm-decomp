@@ -31,7 +31,7 @@ use crate::game::sm_a0::{
 };
 use crate::game::sm_a9::MoveEnemyWithVelocity;
 use crate::game_state::Game;
-use crate::ram_map::{ram_word, set_ram_word};
+use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{Mult8x8, RomPtr, Unreachable};
@@ -1609,9 +1609,7 @@ pub unsafe fn MaridiaBeybladeTurtle_Func3(k: uint16, game: &mut Game) {
     MaridiaBeybladeTurtle_Func4(game);
     if (*(&raw mut game.g_ram as *mut uint8).offset(0x5b5) as i32 & 1 as i32) == 0i32 {
         if CheckIfEnemyTouchesSamus(k, game) != 0 {
-            let ref mut fresh23 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16);
-            *fresh23 = (*fresh23).wrapping_sub(1);
+            update_ram_word!(game.extra_samus_x_displacement, wrapping_sub(1));
         }
         let E: *mut Enemy_MaridiaBeybladeTurtle = Get_MaridiaBeybladeTurtle(k as i32, game);
         (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
@@ -1656,9 +1654,7 @@ pub unsafe fn MaridiaBeybladeTurtle_Func7(k: uint16, game: &mut Game) {
     MaridiaBeybladeTurtle_Func4(game);
     if Enemy_MoveDown(k, (-(1 as i32) as int16 as int32) << 16 as i32, game) == 0 {
         if CheckIfEnemyTouchesSamus(k, game) != 0 {
-            let ref mut fresh24 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb5c) as *mut uint16);
-            *fresh24 = (*fresh24).wrapping_sub(1);
+            update_ram_word!(game.extra_samus_y_displacement, wrapping_sub(1));
         }
         let E: *mut Enemy_MaridiaTurtle = Get_MaridiaTurtle(k as i32, game);
         let v2: uint16 = ((*E).mte_var_00).wrapping_sub(1u16);
@@ -1729,9 +1725,7 @@ pub unsafe fn MaridiaBeybladeTurtle_Func9(k: uint16, game: &mut Game) {
     } else {
         if CheckIfEnemyTouchesSamus(k, game) != 0 {
             (*E).base.y_pos = ((*E).base.y_pos).wrapping_sub(g_word_A28D62);
-            let ref mut fresh25 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb5c) as *mut uint16);
-            *fresh25 = (*fresh25).wrapping_sub(g_word_A28D62);
+            update_ram_word!(game.extra_samus_y_displacement, wrapping_sub(g_word_A28D62));
             return;
         }
         v2 = ((0xa290e1i32) as u16);
@@ -1982,9 +1976,12 @@ pub unsafe fn MaridiaBeybladeTurtle_Instr_9381(
 ) -> *const uint16 {
     let mut R48: uint16 = 0 as uint16;
     if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
-        let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16);
-        *fresh0 = (*fresh0).wrapping_add(
-            (*Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as i32, game)).mbte_var_E,
+        update_ram_word!(
+            game.extra_samus_x_displacement,
+            wrapping_add(
+                (*Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as i32, game))
+                    .mbte_var_E
+            )
         );
         R48 = 1 as uint16;
     }
@@ -2018,13 +2015,12 @@ pub unsafe fn MaridiaBeybladeTurtle_Instr_9381(
             game,
         );
         if R48 != 0 {
-            let ref mut fresh1 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb5c) as *mut uint16);
-            *fresh1 = (*fresh1 as i32
+            update_ram_word!(game.extra_samus_y_displacement, |fresh1| (fresh1 as i32
                 + ((*Get_MaridiaBeybladeTurtle(ram_word!(game, cur_enemy_index) as i32, game))
                     .base
                     .y_pos as i32
-                    - R50 as i32)) as uint16;
+                    - R50 as i32))
+                as uint16);
         }
     }
     jp
@@ -2943,8 +2939,7 @@ pub unsafe fn GunshipTop_1(k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn GunshipTop_2(k: uint16, game: &mut Game) {
-    let ref mut fresh8 = *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16);
-    *fresh8 = (*fresh8).wrapping_sub(8u16);
+    update_ram_word!(game.samus_y_pos, wrapping_sub(8u16));
     let E2: *mut Enemy_GunshipTop = Get_GunshipTop(k as i32 + 128 as i32, game);
     (*E2).base.y_pos = ((*E2).base.y_pos).wrapping_sub(8u16);
     let E1: *mut Enemy_GunshipTop = Get_GunshipTop(k as i32 + 64 as i32, game);
@@ -3018,10 +3013,12 @@ pub unsafe fn GunshipTop_4(k: uint16, game: &mut Game) {
     let mut v5: uint16 = 0;
     let GunshipTop: *mut Enemy_GunshipTop = Get_GunshipTop(k as i32, game);
     v2 = (*GunshipTop).gtp_var_E as i32;
-    let ref mut fresh9 = *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16);
-    *fresh9 = (*fresh9).wrapping_add(
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa2a622)) as *const uint8 as *mut uint16)
-            .offset(v2 as isize),
+    update_ram_word!(
+        game.samus_y_pos,
+        wrapping_add(
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa2a622)) as *const uint8 as *mut uint16)
+                .offset(v2 as isize)
+        )
     );
     let v3: *mut Enemy_GunshipTop = Get_GunshipTop(k as i32 + 128 as i32, game);
     (*v3).base.y_pos = ((*v3).base.y_pos).wrapping_add(
@@ -3066,9 +3063,10 @@ pub unsafe fn GunshipTop_5(k: uint16, game: &mut Game) {
 pub unsafe fn GunshipTop_6(k: uint16, game: &mut Game) {
     let E: *mut Enemy_GunshipTop = Get_GunshipTop(k as i32, game);
     let r18: uint16 = ((*E).gtp_var_E).wrapping_sub(30u16);
-    let ref mut fresh10 = *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16);
-    *fresh10 = (*fresh10).wrapping_sub(1);
-    if *fresh10 as i32 - r18 as i32 & 0x8000 as i32 != 0 {
+    if update_ram_word!(game.samus_y_pos, wrapping_sub(1), reread) as i32 - r18 as i32
+        & 0x8000 as i32
+        != 0
+    {
         (*E).gtp_var_F = ((0xa2a987i32) as u16);
         let E2: *mut Enemy_GunshipTop = Get_GunshipTop(k as i32 + 128 as i32, game);
         (*E2).base.instruction_timer = 1 as uint16;
@@ -3139,8 +3137,7 @@ pub unsafe fn GunshipTop_9(k: uint16, game: &mut Game) {
 pub unsafe fn GunshipTop_10(k: uint16, game: &mut Game) {
     let E: *mut Enemy_GunshipTop = Get_GunshipTop(k as i32, game);
     let r18: uint16 = ((*E).gtp_var_E).wrapping_add(18u16);
-    let ref mut fresh2 = *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16);
-    *fresh2 = (*fresh2).wrapping_add(2u16);
+    update_ram_word!(game.samus_y_pos, wrapping_add(2u16));
     if ram_word!(game, samus_y_pos) as i32 - r18 as i32 & 0x8000 as i32 == 0 {
         (*E).gtp_var_F = ((0xa2aa94i32) as u16);
         let E2: *mut Enemy_GunshipTop = Get_GunshipTop(k as i32 + 128 as i32, game);
@@ -3225,8 +3222,7 @@ pub unsafe fn GunshipTop_14(k: uint16, game: &mut Game) {
 pub unsafe fn GunshipTop_15(k: uint16, game: &mut Game) {
     let E: *mut Enemy_GunshipTop = Get_GunshipTop(k as i32, game);
     let r18: uint16 = ((*E).gtp_var_E).wrapping_sub(30u16);
-    let ref mut fresh4 = *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16);
-    *fresh4 = (*fresh4).wrapping_sub(2u16);
+    update_ram_word!(game.samus_y_pos, wrapping_sub(2u16));
     if ram_word!(game, samus_y_pos) as i32 - r18 as i32 & 0x8000 as i32 != 0 {
         (*E).gtp_var_F = ((0xa2aba5i32) as u16);
         let E2: *mut Enemy_GunshipTop = Get_GunshipTop(k as i32 + 128 as i32, game);
@@ -3274,8 +3270,7 @@ pub unsafe fn GunshipTop_17(k: uint16, game: &mut Game) {
         *(game.g_rom.offset(crate::rtl::lorom_offset(0xa2ac11)) as *const uint8 as *mut uint16)
             .offset(v3 as isize);
     set_ram_word!(game.vram_write_queue_tail = (v2).wrapping_add(2u16));
-    let ref mut fresh6 = *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16);
-    *fresh6 = (*fresh6).wrapping_add(2u16);
+    update_ram_word!(game.substate, wrapping_add(2u16));
     if ram_word!(game, substate) as i32 - 10 as i32 & 0x8000 as i32 == 0 {
         (*Get_GunshipTop(k as i32, game)).gtp_var_F = ((0xa2ac1bi32) as u16);
         set_ram_word!(game.substate = 0 as uint16);
@@ -3327,8 +3322,7 @@ pub unsafe fn GunshipTop_18(k: uint16, game: &mut Game) {
 }
 pub unsafe fn GunshipTop_19(k: uint16, game: &mut Game) {
     let mut v1: int16 = 0;
-    let ref mut fresh7 = *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16);
-    *fresh7 = (*fresh7).wrapping_sub(2u16);
+    update_ram_word!(game.samus_y_pos, wrapping_sub(2u16));
     v1 = ((ram_word!(game, samus_y_pos)) as i16).wrapping_sub(17i16);
     let E0: *mut Enemy_GunshipTop = Get_GunshipTop(k as i32, game);
     (*E0).base.y_pos = (ram_word!(game, samus_y_pos)).wrapping_sub(17u16);
@@ -4725,8 +4719,7 @@ pub unsafe fn MaridiaLargeSnail_Func_2(k: uint16, game: &mut Game) {
         } else if (*E).mlsl_var_05 != 0 {
             return;
         }
-        let ref mut fresh28 = *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16);
-        *fresh28 = (*fresh28).wrapping_add(r18);
+        update_ram_word!(game.extra_samus_x_displacement, wrapping_add(r18));
     }
 }
 pub unsafe fn MaridiaLargeSnail_Func_3(k: uint16, game: &mut Game) {
@@ -4961,13 +4954,9 @@ pub unsafe fn MaridiaLargeSnail_Touch(game: &mut Game) {
                 .x_pos) as i16,
         ) < 0i16
         {
-            let ref mut fresh26 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16);
-            *fresh26 = (*fresh26).wrapping_sub(4u16);
+            update_ram_word!(game.extra_samus_x_displacement, wrapping_sub(4u16));
         } else {
-            let ref mut fresh27 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16);
-            *fresh27 = (*fresh27).wrapping_add(4u16);
+            update_ram_word!(game.extra_samus_x_displacement, wrapping_add(4u16));
         }
     }
 }
@@ -5717,9 +5706,7 @@ pub unsafe fn TimedShutter_Func_10(k: uint16, game: &mut Game) {
     if CheckIfEnemyTouchesSamus(k, game) != 0 {
         let v4: int16 = (((*E).base.y_pos) as i16).wrapping_sub(((*E).tsr_var_40) as i16);
         if v4 < 0i16 {
-            let ref mut fresh30 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb5c) as *mut uint16);
-            *fresh30 = (*fresh30).wrapping_add((v4) as u16);
+            update_ram_word!(game.extra_samus_y_displacement, wrapping_add((v4) as u16));
         }
     }
 }
@@ -6272,8 +6259,7 @@ pub unsafe fn HorizontalShootableShutter_Func_10(k: uint16, game: &mut Game) {
     if (*Get_RisingFallingPlatform(k as i32, game)).rfpm_var_13 != 0
         && (ram_word!(game, joypad1_lastkeys) as i32 & 0x100 as i32) != 0i32
     {
-        let ref mut fresh12 = *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16);
-        *fresh12 = (*fresh12).wrapping_sub(4u16);
+        update_ram_word!(game.extra_samus_x_displacement, wrapping_sub(4u16));
         set_ram_word!(game.extra_samus_y_subdisplacement = 0 as uint16);
     }
 }
@@ -6281,8 +6267,7 @@ pub unsafe fn HorizontalShootableShutter_Func_11(k: uint16, game: &mut Game) {
     if (*Get_RisingFallingPlatform(k as i32, game)).rfpm_var_13 != 0
         && (ram_word!(game, joypad1_lastkeys) as i32 & 0x200 as i32) != 0i32
     {
-        let ref mut fresh13 = *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16);
-        *fresh13 = (*fresh13).wrapping_add(4u16);
+        update_ram_word!(game.extra_samus_x_displacement, wrapping_add(4u16));
         set_ram_word!(game.extra_samus_y_subdisplacement = 0 as uint16);
     }
 }

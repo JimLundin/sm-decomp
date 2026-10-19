@@ -22,7 +22,7 @@ use crate::game::sm_a0::{
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy,
 };
 use crate::game_state::Game;
-use crate::ram_map::{ram_word, set_ram_word};
+use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{RomPtr, Unreachable};
@@ -1396,9 +1396,10 @@ pub unsafe fn Torizo_D6A6(game: &mut Game) {
     }
 }
 pub unsafe fn Torizo_D6D1(k: uint16, j: uint16, game: &mut Game) {
-    let ref mut fresh1 = *((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16)
-        .offset((j as i32 >> 1 as i32) as isize);
-    *fresh1 = (*fresh1 as i32 & !(0x10 as i32)) as uint16;
+    update_ram_word!(
+        game.projectile_dir[(j as i32 >> 1 as i32)],
+        |fresh1| (fresh1 as i32 & !(0x10 as i32)) as uint16
+    );
     let E: *mut Enemy_Torizo = Get_Torizo(k as i32, game);
     (*E).toriz_var_E = ((0xaac6abi32) as u16);
     (*E).base.instruction_timer = 1 as uint16;
@@ -1415,9 +1416,10 @@ pub unsafe fn Torizo_D6F7(k: uint16, j: uint16, game: &mut Game) {
     if (Torizo_Func_12(k, game) as i32 & 0x8000 as i32) == 0i32 {
         (*E).toriz_parameter_2 = ((*E).toriz_parameter_2) | (0x1000u16);
         (*E).toriz_var_E = ((0xaac6abi32) as u16);
-        let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16)
-            .offset((j as i32 >> 1 as i32) as isize);
-        *fresh0 = (*fresh0) | (0x10u16);
+        update_ram_word!(
+            game.projectile_dir[(j as i32 >> 1 as i32)],
+            |fresh0| (fresh0) | (0x10u16)
+        );
         (*E).base.instruction_timer = 1 as uint16;
         let mut v3: uint16 = 0;
         if ((*E).toriz_parameter_1 as i32 & 0x2000 as i32) != 0i32 {

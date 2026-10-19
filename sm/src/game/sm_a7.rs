@@ -21,7 +21,7 @@ use crate::game::sm_a0::{
 };
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
-use crate::ram_map::{ram_word, set_ram_word};
+use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{MakePairU16, RomPtr, SnesDivide, Unreachable, WriteReg};
@@ -467,9 +467,10 @@ pub unsafe fn KraidsArm_Touch(game: &mut Game) {
 }
 pub unsafe fn Kraid_Arm_Shot(j: uint16, game: &mut Game) {
     Kraid_SpawnExplosionEproj(j, game);
-    let ref mut fresh16 = *((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16)
-        .offset((j as i32 >> 1 as i32) as isize);
-    *fresh16 = (*fresh16) | (0x10u16);
+    update_ram_word!(
+        game.projectile_dir[(j as i32 >> 1 as i32)],
+        |fresh16| (fresh16) | (0x10u16)
+    );
 }
 pub unsafe fn sub_A7A92A(game: &mut Game) {
     Kraid_CheckIfDead(game);
@@ -797,9 +798,10 @@ pub unsafe fn Kraid_GetsBig_BreakCeilingPlatforms(game: &mut Game) {
 pub unsafe fn Kraid_GetsBig_SetBG2TilemapPrioBits(game: &mut Game) {
     let mut v0: uint16 = 0 as uint16;
     loop {
-        let ref mut fresh11 = *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-            .offset((v0 as i32 >> 1 as i32) as isize);
-        *fresh11 = (*fresh11) | (0x2000u16);
+        update_ram_word!(
+            game.tilemap_stuff[(v0 as i32 >> 1 as i32)],
+            |fresh11| (fresh11) | (0x2000u16)
+        );
         v0 = (v0).wrapping_add(2u16);
         if (((v0) as i16).wrapping_sub(4096i16) >= 0i16) {
             break;
@@ -1094,10 +1096,9 @@ pub unsafe fn Kraid_Shot_Mouth(game: &mut Game) {
                             game.collision_detection_index = (v6 as i32 >> 1 as i32) as uint16
                         );
                         NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
-                        let ref mut fresh15 = *((&raw mut game.g_ram as *mut uint8).offset(0xc04)
-                            as *mut uint16)
-                            .offset((v6 as i32 >> 1 as i32) as isize);
-                        *fresh15 = (*fresh15) | (0x10u16);
+                        update_ram_word!(game.projectile_dir[(v6 as i32 >> 1 as i32)], |fresh15| {
+                            (fresh15) | (0x10u16)
+                        });
                         v3 = 1 as int16;
                         v6 = 0 as uint16;
                     }
@@ -1186,9 +1187,7 @@ pub unsafe fn Kraid_Enemy_Touch(game: &mut Game) {
             < 0i16
         {
             if ram_word!(game, samus_x_pos) as i32 - 40 as i32 & 0x8000 as i32 == 0 {
-                let ref mut fresh13 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16);
-                *fresh13 = (*fresh13).wrapping_sub(8u16);
+                update_ram_word!(game.samus_x_pos, wrapping_sub(8u16));
                 set_ram_word!(game.samus_prev_x_pos = ram_word!(game, samus_x_pos));
             }
             let mut kraid_min_y_pos_eject: uint16 =
@@ -1292,10 +1291,7 @@ pub unsafe fn Kraid_Shot_Body(game: &mut Game) {
                 if current_block_12 == 2894936153070068674 {
                     Kraid_SpawnExplosionEproj(i as uint16, game);
                     let v6: i32 = i >> 1 as i32;
-                    let ref mut fresh14 = *((&raw mut game.g_ram as *mut uint8).offset(0xc04)
-                        as *mut uint16)
-                        .offset(v6 as isize);
-                    *fresh14 = (*fresh14) | (0x10u16);
+                    update_ram_word!(game.projectile_dir[v6], |fresh14| (fresh14) | (0x10u16));
                     if (ram_word!(game, projectile_type[v6]) as i32 & 0x10 as i32) != 0i32 {
                         (*E).kraid_mouth_flags = ((*E).kraid_mouth_flags) | (1u16);
                     }
@@ -1554,10 +1550,7 @@ pub unsafe fn Kraid_Shot_UnglowEye(game: &mut Game) {
             != r18 as i32
         {
             r20 = r20.wrapping_add(1);
-            let ref mut fresh9 = *((&raw mut game.g_ram as *mut uint8).offset(0xc000)
-                as *mut uint16)
-                .offset(v4 as isize);
-            *fresh9 = (*fresh9).wrapping_sub(1);
+            update_ram_word!(game.palette_buffer[v4], wrapping_sub(1));
         }
         r18 = (ram_word!(game, palette_buffer[v4])) & (0x3e0u16);
         if *(game.g_rom.offset(crate::rtl::lorom_offset(0xa7b3d3)) as *const uint8 as *mut uint16)
@@ -1566,10 +1559,7 @@ pub unsafe fn Kraid_Shot_UnglowEye(game: &mut Game) {
             != r18 as i32
         {
             r20 = r20.wrapping_add(1);
-            let ref mut fresh10 = *((&raw mut game.g_ram as *mut uint8).offset(0xc000)
-                as *mut uint16)
-                .offset(v4 as isize);
-            *fresh10 = (*fresh10).wrapping_sub(32u16);
+            update_ram_word!(game.palette_buffer[v4], wrapping_sub(32u16));
         }
         v3 = (v3).wrapping_add(2u16);
         v2 = (v2).wrapping_add(2u16);
@@ -2386,9 +2376,7 @@ pub unsafe fn Kraid_UnpauseHook_IsSinking(game: &mut Game) -> CoroutineRet {
                         *_state_variable_ = 1 as uint8;
                         return _coret_;
                     }
-                    let ref mut fresh17 =
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x77e) as *mut uint16);
-                    *fresh17 = (*fresh17).wrapping_add(1);
+                    update_ram_word!(game.my_counter, wrapping_add(1));
                     current_block_21 = 7351195479953500246;
                 }
             }
@@ -2553,9 +2541,7 @@ pub unsafe fn Kraid_Death_UpdateBG2TilemapBottomHalf(game: &mut Game) {
     Kraid_UpdateBG2TilemapBottomHalf(game);
 }
 pub unsafe fn Kraid_PlaySoundEveryHalfSecond(game: &mut Game) {
-    let ref mut fresh7 = *((&raw mut game.g_ram as *mut uint8).offset(0x9000) as *mut uint16);
-    *fresh7 = (*fresh7).wrapping_sub(1);
-    if *fresh7 == 0 {
+    if update_ram_word!(game.kraid_unk9000, wrapping_sub(1), reread) == 0 {
         QueueSfx3_Max6(0x1e as uint16, game);
         set_ram_word!(game.kraid_unk9000 = 30 as uint16);
     }
@@ -3545,8 +3531,8 @@ pub unsafe fn Phantoon_StartDeathSequence(k: uint16, game: &mut Game) {
             break;
         }
     }
-    let ref mut fresh29 = *((&raw mut game.g_ram as *mut uint8).offset(0x1988) as *mut uint16);
-    *fresh29 = (*fresh29) | (0x4000u16);
+    update_ram_word!(game.phantom_related_layer_flag, |fresh29| (fresh29)
+        | (0x4000u16));
     (*Get_Phantoon(0xc0 as i32, game)).phant_parameter_2 = 1 as uint16;
 }
 pub unsafe fn Phantoon_FadeOut(a: uint16, game: &mut Game) {
@@ -3618,8 +3604,8 @@ pub unsafe fn Phantoon_SpawnFireballsBeforeFight(k: uint16, game: &mut Game) {
     let v4: bool = ((*EK).phant_var_E as i32 & 0x8000 as i32) != 0i32;
     if v3 || v4 {
         (*EK).phant_var_B = 0 as uint16;
-        let ref mut fresh30 = *((&raw mut game.g_ram as *mut uint8).offset(0x1988) as *mut uint16);
-        *fresh30 = (*fresh30) | (0x4000u16);
+        update_ram_word!(game.phantom_related_layer_flag, |fresh30| (fresh30)
+            | (0x4000u16));
         (*EK).phant_var_F = ((0xa7d54ai32) as u16);
         let E3: *mut Enemy_Phantoon = Get_Phantoon(0xc0 as i32, game);
         (*E3).phant_parameter_1 = -(32767 as i32) as uint16;
@@ -3725,8 +3711,10 @@ pub unsafe fn Phantoon_EyeFollowsSamusUntilTimerRunsOut(k: uint16, game: &mut Ga
 }
 pub unsafe fn Phantoon_BecomesSolidAndBodyVuln(v0: uint16, game: &mut Game) {
     Phantoon_ChangeEyeSpriteBasedOnSamusDist(game);
-    let ref mut fresh21 = *((&raw mut game.g_ram as *mut uint8).offset(0x1988) as *mut uint16);
-    *fresh21 = (*fresh21 as i32 & !(0x4000 as i32)) as uint16;
+    update_ram_word!(
+        game.phantom_related_layer_flag,
+        |fresh21| (fresh21 as i32 & !(0x4000 as i32)) as uint16
+    );
     Phantoon_BeginSwoopingPattern(v0, game);
     let E: *mut Enemy_Phantoon = Get_Phantoon(0 as i32, game);
     (*E).base.instruction_timer = 1 as uint16;
@@ -3741,8 +3729,8 @@ pub unsafe fn Phantoon_IsSwooping(k: uint16, game: &mut Game) {
     let v3: bool = ((*EK).phant_var_E as i32 & 0x8000 as i32) != 0i32;
     if v2 || v3 {
         (*EK).phant_var_F = ((0xa7d6b9i32) as u16);
-        let ref mut fresh27 = *((&raw mut game.g_ram as *mut uint8).offset(0x1988) as *mut uint16);
-        *fresh27 = (*fresh27) | (0x4000u16);
+        update_ram_word!(game.phantom_related_layer_flag, |fresh27| (fresh27)
+            | (0x4000u16));
         let E0: *mut Enemy_Phantoon = Get_Phantoon(0 as i32, game);
         (*E0).base.instruction_timer = 1 as uint16;
         let E1: *mut Enemy_Phantoon = Get_Phantoon(0x40 as i32, game);
@@ -3800,8 +3788,10 @@ pub unsafe fn Phantoon_FadeInBeforeFigure8(k: uint16, game: &mut Game) {
 pub unsafe fn Phantoon_BecomeSolidAfterRainingFireballs(k: uint16, game: &mut Game) {
     let E1: *mut Enemy_Phantoon = Get_Phantoon(0x40 as i32, game);
     (*E1).phant_var_F = 0 as uint16;
-    let ref mut fresh20 = *((&raw mut game.g_ram as *mut uint8).offset(0x1988) as *mut uint16);
-    *fresh20 = (*fresh20 as i32 & !(0x4000 as i32)) as uint16;
+    update_ram_word!(
+        game.phantom_related_layer_flag,
+        |fresh20| (fresh20 as i32 & !(0x4000 as i32)) as uint16
+    );
     let E: *mut Enemy_Phantoon = Get_Phantoon(0 as i32, game);
     (*E).base.instruction_timer = 1 as uint16;
     (*E1).base.instruction_timer = 1 as uint16;
@@ -3841,9 +3831,8 @@ pub unsafe fn Phantoon_FollowSamusWithEyeDuringFireballRain(k: uint16, game: &mu
             (*E0).base.current_instruction = addr_kKraid_Ilist_CC41 as uint16;
             (*E1).base.current_instruction = addr_kKraid_Ilist_CC91 as uint16;
             (*E0).base.properties = ((*E0).base.properties) | ((kEnemyProps_Tangible) as u16);
-            let ref mut fresh26 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1988) as *mut uint16);
-            *fresh26 = (*fresh26) | (0x4000u16);
+            update_ram_word!(game.phantom_related_layer_flag, |fresh26| (fresh26)
+                | (0x4000u16));
         }
     }
 }
@@ -4108,8 +4097,10 @@ pub unsafe fn Phantoon_AlmostDead(k: uint16, game: &mut Game) {
     *(&raw mut game.g_ram as *mut uint8).offset(0x57) = 0 as uint8;
     let E1: *mut Enemy_Phantoon = Get_Phantoon(0x40 as i32, game);
     (*E1).phant_parameter_1 = 0 as uint16;
-    let ref mut fresh18 = *((&raw mut game.g_ram as *mut uint8).offset(0x1988) as *mut uint16);
-    *fresh18 = (*fresh18 as i32 & !(0x4000 as i32)) as uint16;
+    update_ram_word!(
+        game.phantom_related_layer_flag,
+        |fresh18| (fresh18 as i32 & !(0x4000 as i32)) as uint16
+    );
     (*Get_Phantoon(0xc0 as i32, game)).phant_parameter_1 = -(1 as i32) as uint16;
     let EK: *mut Enemy_Phantoon = Get_Phantoon(k as i32, game);
     (*EK).phant_var_F = ((0xa7db3di32) as u16);
@@ -4485,9 +4476,8 @@ pub unsafe fn Phantoon_Shot(game: &mut Game) {
                 (*EK).phant_var_E = 0 as uint16;
                 (*Get_Phantoon(0x80 as i32, game)).phant_var_A = 0 as uint16;
                 (*Get_Phantoon(v1 as i32 + 0x80 as i32, game)).phant_var_B = 0 as uint16;
-                let ref mut fresh28 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x1988) as *mut uint16);
-                *fresh28 = (*fresh28) | (0x4000u16);
+                update_ram_word!(game.phantom_related_layer_flag, |fresh28| (fresh28)
+                    | (0x4000u16));
                 (*E0).base.instruction_timer = 1 as uint16;
                 let E1: *mut Enemy_Phantoon = Get_Phantoon(0x40 as i32, game);
                 (*E1).base.instruction_timer = 1 as uint16;

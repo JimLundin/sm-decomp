@@ -2,7 +2,7 @@ pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::buttons::*;
 pub use crate::game::constants::game_states::*;
 use crate::game_state::Game;
-use crate::ram_map::{ram_word, set_ram_word};
+use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::AddToHiLo;
 pub use crate::snes::registers::*;
 use crate::types::TileDrawOrder;
@@ -158,9 +158,10 @@ pub unsafe fn ReleaseButtonsFilter(v0: uint16, game: &mut Game) {
         set_ram_word!(game.timed_held_input_timer = ram_word!(game, timed_held_input_timer_reset));
         set_ram_word!(game.timed_held_input = 0 as uint16);
     } else {
-        let ref mut fresh87 = *((&raw mut game.g_ram as *mut uint8).offset(0x5db) as *mut uint16);
-        *fresh87 = (*fresh87).wrapping_sub(1);
-        if (*fresh87 as i32 & 0x8000 as i32) == 0i32 {
+        if (update_ram_word!(game.timed_held_input_timer, wrapping_sub(1), reread) as i32
+            & 0x8000 as i32)
+            == 0i32
+        {
             set_ram_word!(game.timed_held_input = 0 as uint16);
         } else {
             set_ram_word!(game.timed_held_input_timer = 0 as uint16);
@@ -1291,9 +1292,7 @@ pub unsafe fn ReadJoypadInputs(game: &mut Game) {
             (RegWord as i32 & (ram_word!(game, joypad1_prev) as i32 ^ RegWord as i32)) as uint16
     );
     if RegWord != 0u16 && RegWord == ram_word!(game, joypad1_prev) {
-        let ref mut fresh80 = *((&raw mut game.g_ram as *mut uint8).offset(0xa3) as *mut uint16);
-        *fresh80 = (*fresh80).wrapping_sub(1);
-        if *fresh80 == 0 {
+        if update_ram_word!(game.joypad1_keyrepeat_ctr, wrapping_sub(1), reread) == 0 {
             set_ram_word!(game.joypad1_newkeys2_UNUSED = ram_word!(game, joypad1_lastkeys));
             set_ram_word!(game.joypad1_keyrepeat_ctr = ram_word!(game, joypad_ctr_repeat_next));
         }
@@ -1313,10 +1312,7 @@ pub unsafe fn ReadJoypadInputs(game: &mut Game) {
                 (v1 as i32 & (ram_word!(game, joypad2_prev) as i32 ^ v1 as i32)) as uint16
         );
         if v1 != 0u16 && v1 == ram_word!(game, joypad2_prev) {
-            let ref mut fresh81 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0xa5) as *mut uint16);
-            *fresh81 = (*fresh81).wrapping_sub(1);
-            if *fresh81 == 0 {
+            if update_ram_word!(game.joypad2_keyrepeat_ctr, wrapping_sub(1), reread) == 0 {
                 set_ram_word!(game.joypad2_newkeys2 = ram_word!(game, joypad2_last));
                 set_ram_word!(game.joypad2_keyrepeat_ctr = ram_word!(game, joypad_ctr_repeat_next));
             }
@@ -1359,9 +1355,7 @@ pub unsafe fn ReadJoypadInputs(game: &mut Game) {
                     if (ram_word!(game, joypad_dbg_2) as i32 & 0x8000 as i32) != 0i32 {
                         let v2: bool =
                             (!(ram_word!(game, joypad_dbg_flags) as i32) & 0x8000 as i32) != 0i32;
-                        let ref mut fresh83 =
-                            *((&raw mut game.g_ram as *mut uint8).offset(0x5cf) as *mut uint16);
-                        *fresh83 = (*fresh83) ^ (0x8000u16);
+                        update_ram_word!(game.joypad_dbg_flags, |fresh83| (fresh83) ^ (0x8000u16));
                         if v2 {
                             set_ram_word!(
                                 game.joypad_dbg_missiles_swap = ram_word!(game, samus_missiles)
@@ -1392,20 +1386,14 @@ pub unsafe fn ReadJoypadInputs(game: &mut Game) {
                         }
                     }
                     if (ram_word!(game, joypad_dbg_2) as i32 & 0x40 as i32) != 0i32 {
-                        let ref mut fresh84 =
-                            *((&raw mut game.g_ram as *mut uint8).offset(0x5cf) as *mut uint16);
-                        *fresh84 = (*fresh84) ^ (0x2000u16);
+                        update_ram_word!(game.joypad_dbg_flags, |fresh84| (fresh84) ^ (0x2000u16));
                     }
                 }
             } else {
                 set_ram_word!(game.joypad_dbg_1 = 0 as uint16);
                 set_ram_word!(game.joypad_dbg_2 = 0 as uint16);
-                let ref mut fresh85 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x8d) as *mut uint16);
-                *fresh85 = (*fresh85) & (0x10u16);
-                let ref mut fresh86 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x91) as *mut uint16);
-                *fresh86 = (*fresh86) & (0x10u16);
+                update_ram_word!(game.joypad2_last, |fresh85| (fresh85) & (0x10u16));
+                update_ram_word!(game.joypad2_new_keys, |fresh86| (fresh86) & (0x10u16));
             }
         } else {
             set_ram_word!(game.debug_disable_sounds = 0 as uint16);
@@ -2113,8 +2101,7 @@ pub unsafe fn ProcessTimer_MovingIntoPlace(game: &mut Game) -> uint8 {
     }
     set_ram_word!(game.timer_y_pos = v2);
     if v0 == 2i32 {
-        let ref mut fresh18 = *((&raw mut game.g_ram as *mut uint8).offset(0x943) as *mut uint16);
-        *fresh18 = (*fresh18).wrapping_add(1);
+        update_ram_word!(game.timer_status, wrapping_add(1));
     }
     ProcessTimer_Decrement(game)
 }
@@ -2360,9 +2347,7 @@ pub unsafe fn Play20FramesOfMusic_Async(game: &mut Game) -> CoroutineRet {
                         *_state_variable_ = 1 as uint8;
                         return _coret_;
                     }
-                    let ref mut fresh79 =
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x77e) as *mut uint16);
-                    *fresh79 = (*fresh79).wrapping_add(1);
+                    update_ram_word!(game.my_counter, wrapping_add(1));
                     current_block_9 = 8258075665625361029;
                 }
             }
@@ -2407,14 +2392,10 @@ pub unsafe fn DisplayViewablePartOfRoom(game: &mut Game) {
             UploadBackgroundDataColumn(game);
         }
         NMI_ProcessVramWriteQueue(game);
-        let ref mut fresh42 = *((&raw mut game.g_ram as *mut uint8).offset(0x8f7) as *mut uint16);
-        *fresh42 = (*fresh42).wrapping_add(1);
-        let ref mut fresh43 = *((&raw mut game.g_ram as *mut uint8).offset(0x907) as *mut uint16);
-        *fresh43 = (*fresh43).wrapping_add(1);
-        let ref mut fresh44 = *((&raw mut game.g_ram as *mut uint8).offset(0x8fb) as *mut uint16);
-        *fresh44 = (*fresh44).wrapping_add(1);
-        let ref mut fresh45 = *((&raw mut game.g_ram as *mut uint8).offset(0x90b) as *mut uint16);
-        *fresh45 = (*fresh45).wrapping_add(1);
+        update_ram_word!(game.layer1_x_block, wrapping_add(1));
+        update_ram_word!(game.bg1_x_block, wrapping_add(1));
+        update_ram_word!(game.layer2_x_block, wrapping_add(1));
+        update_ram_word!(game.bg2_x_block, wrapping_add(1));
         v2 += 1;
         if (v3 == 16i32) {
             break;
@@ -3096,8 +3077,7 @@ pub unsafe fn HandleScrollingWhenTriggeringScrollUp(game: &mut Game) {
 }
 pub unsafe fn DebugScrollPosSaveLoad(game: &mut Game) {
     if (ram_word!(game, joypad2_new_keys) as i32 & 0x40 as i32) != 0i32 {
-        let ref mut fresh22 = *((&raw mut game.g_ram as *mut uint8).offset(0x5d3) as *mut uint16);
-        *fresh22 = (*fresh22).wrapping_add(1);
+        update_ram_word!(game.debug_saveload_scrollpos_toggle, wrapping_add(1));
     }
     if ram_word!(game, debug_saveload_scrollpos_toggle) as i32 & 1 as i32 != 0 {
         set_ram_word!(game.layer1_x_pos = ram_word!(game, debug_saved_xscroll));
@@ -3325,10 +3305,8 @@ pub unsafe fn FixDoorsMovingUp(game: &mut Game) {
     set_ram_word!(game.door_transition_frame_counter = 0 as uint16);
     CalculateBgScrollAndLayerPositionBlocks(game);
     UpdatePreviousLayerBlocks(game);
-    let ref mut fresh66 = *((&raw mut game.g_ram as *mut uint8).offset(0x901) as *mut uint16);
-    *fresh66 = (*fresh66).wrapping_add(1);
-    let ref mut fresh67 = *((&raw mut game.g_ram as *mut uint8).offset(0x905) as *mut uint16);
-    *fresh67 = (*fresh67).wrapping_add(1);
+    update_ram_word!(game.previous_layer1_y_block, wrapping_add(1));
+    update_ram_word!(game.previous_layer2_y_block, wrapping_add(1));
     DoorTransition_Up(game);
 }
 static kDoorTransitionSetupFuncs: [Option<Func_V>; 4] = unsafe {
@@ -3347,72 +3325,54 @@ pub unsafe fn DoorTransitionScrollingSetup(game: &mut Game) {
 }
 pub unsafe fn DoorTransitionScrollingSetup_Right(game: &mut Game) {
     CalculateLayer2Xpos(game);
-    let ref mut fresh60 = *((&raw mut game.g_ram as *mut uint8).offset(0x917) as *mut uint16);
-    *fresh60 = (*fresh60).wrapping_sub(256u16);
+    update_ram_word!(game.layer2_x_pos, wrapping_sub(256u16));
     CalculateLayer2Ypos(game);
-    let ref mut fresh61 = *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16);
-    *fresh61 = (*fresh61).wrapping_sub(256u16);
+    update_ram_word!(game.layer1_x_pos, wrapping_sub(256u16));
     UpdateBgScrollOffsets(game);
     CalculateBgScrollAndLayerPositionBlocks(game);
     UpdatePreviousLayerBlocks(game);
-    let ref mut fresh62 = *((&raw mut game.g_ram as *mut uint8).offset(0x8ff) as *mut uint16);
-    *fresh62 = (*fresh62).wrapping_sub(1);
-    let ref mut fresh63 = *((&raw mut game.g_ram as *mut uint8).offset(0x903) as *mut uint16);
-    *fresh63 = (*fresh63).wrapping_sub(1);
+    update_ram_word!(game.previous_layer1_x_block, wrapping_sub(1));
+    update_ram_word!(game.previous_layer2_x_block, wrapping_sub(1));
     DoorTransition_Right(game);
 }
 pub unsafe fn DoorTransitionScrollingSetup_Left(game: &mut Game) {
     CalculateLayer2Xpos(game);
-    let ref mut fresh56 = *((&raw mut game.g_ram as *mut uint8).offset(0x917) as *mut uint16);
-    *fresh56 = (*fresh56).wrapping_add(256u16);
+    update_ram_word!(game.layer2_x_pos, wrapping_add(256u16));
     CalculateLayer2Ypos(game);
-    let ref mut fresh57 = *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16);
-    *fresh57 = (*fresh57).wrapping_add(256u16);
+    update_ram_word!(game.layer1_x_pos, wrapping_add(256u16));
     UpdateBgScrollOffsets(game);
     CalculateBgScrollAndLayerPositionBlocks(game);
     UpdatePreviousLayerBlocks(game);
-    let ref mut fresh58 = *((&raw mut game.g_ram as *mut uint8).offset(0x8ff) as *mut uint16);
-    *fresh58 = (*fresh58).wrapping_add(1);
-    let ref mut fresh59 = *((&raw mut game.g_ram as *mut uint8).offset(0x903) as *mut uint16);
-    *fresh59 = (*fresh59).wrapping_add(1);
+    update_ram_word!(game.previous_layer1_x_block, wrapping_add(1));
+    update_ram_word!(game.previous_layer2_x_block, wrapping_add(1));
     DoorTransition_Left(game);
 }
 pub unsafe fn DoorTransitionScrollingSetup_Down(game: &mut Game) {
     CalculateLayer2Xpos(game);
     CalculateLayer2Ypos(game);
-    let ref mut fresh52 = *((&raw mut game.g_ram as *mut uint8).offset(0x919) as *mut uint16);
-    *fresh52 = (*fresh52).wrapping_sub(224u16);
-    let ref mut fresh53 = *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16);
-    *fresh53 = (*fresh53).wrapping_sub(224u16);
+    update_ram_word!(game.layer2_y_pos, wrapping_sub(224u16));
+    update_ram_word!(game.layer1_y_pos, wrapping_sub(224u16));
     UpdateBgScrollOffsets(game);
     CalculateBgScrollAndLayerPositionBlocks(game);
     UpdatePreviousLayerBlocks(game);
-    let ref mut fresh54 = *((&raw mut game.g_ram as *mut uint8).offset(0x901) as *mut uint16);
-    *fresh54 = (*fresh54).wrapping_sub(1);
-    let ref mut fresh55 = *((&raw mut game.g_ram as *mut uint8).offset(0x905) as *mut uint16);
-    *fresh55 = (*fresh55).wrapping_sub(1);
+    update_ram_word!(game.previous_layer1_y_block, wrapping_sub(1));
+    update_ram_word!(game.previous_layer2_y_block, wrapping_sub(1));
     DoorTransition_Down(game);
 }
 pub unsafe fn DoorTransitionScrollingSetup_Up(game: &mut Game) {
     CalculateLayer2Xpos(game);
     let v1: uint16 = ram_word!(game, layer1_y_pos);
-    let ref mut fresh46 = *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16);
-    *fresh46 = (*fresh46).wrapping_add(31u16);
+    update_ram_word!(game.layer1_y_pos, wrapping_add(31u16));
     CalculateLayer2Ypos(game);
-    let ref mut fresh47 = *((&raw mut game.g_ram as *mut uint8).offset(0x919) as *mut uint16);
-    *fresh47 = (*fresh47).wrapping_add(224u16);
+    update_ram_word!(game.layer2_y_pos, wrapping_add(224u16));
     set_ram_word!(game.layer1_y_pos = (v1).wrapping_add(256u16));
     UpdateBgScrollOffsets(game);
-    let ref mut fresh48 = *((&raw mut game.g_ram as *mut uint8).offset(0x929) as *mut uint16);
-    *fresh48 = (*fresh48).wrapping_add(32u16);
+    update_ram_word!(game.door_destination_y_pos, wrapping_add(32u16));
     CalculateBgScrollAndLayerPositionBlocks(game);
     UpdatePreviousLayerBlocks(game);
-    let ref mut fresh49 = *((&raw mut game.g_ram as *mut uint8).offset(0x901) as *mut uint16);
-    *fresh49 = (*fresh49).wrapping_add(1);
-    let ref mut fresh50 = *((&raw mut game.g_ram as *mut uint8).offset(0x905) as *mut uint16);
-    *fresh50 = (*fresh50).wrapping_add(1);
-    let ref mut fresh51 = *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16);
-    *fresh51 = (*fresh51).wrapping_sub(1);
+    update_ram_word!(game.previous_layer1_y_block, wrapping_add(1));
+    update_ram_word!(game.previous_layer2_y_block, wrapping_add(1));
+    update_ram_word!(game.layer1_y_pos, wrapping_sub(1));
     DoorTransition_Up(game);
 }
 pub unsafe fn UpdatePreviousLayerBlocks(game: &mut Game) {
@@ -3454,8 +3414,7 @@ pub unsafe fn Irq_FollowDoorTransition(game: &mut Game) {
     {
         set_ram_word!(game.layer1_x_pos = ram_word!(game, door_destination_x_pos));
         set_ram_word!(game.layer1_y_pos = ram_word!(game, door_destination_y_pos));
-        let ref mut fresh68 = *((&raw mut game.g_ram as *mut uint8).offset(0x931) as *mut uint16);
-        *fresh68 = (*fresh68) | (0x8000u16);
+        update_ram_word!(game.door_transition_flag, |fresh68| (fresh68) | (0x8000u16));
     }
 }
 pub unsafe fn DoorTransition_Right(game: &mut Game) -> uint8 {
@@ -3467,10 +3426,8 @@ pub unsafe fn DoorTransition_Right(game: &mut Game) -> uint8 {
             | ram_word!(game, samus_door_transition_subspeed) as uint32,
     );
     set_ram_word!(game.samus_prev_x_pos = ram_word!(game, samus_x_pos));
-    let ref mut fresh10 = *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16);
-    *fresh10 = (*fresh10).wrapping_add(4u16);
-    let ref mut fresh11 = *((&raw mut game.g_ram as *mut uint8).offset(0x917) as *mut uint16);
-    *fresh11 = (*fresh11).wrapping_add(4u16);
+    update_ram_word!(game.layer1_x_pos, wrapping_add(4u16));
+    update_ram_word!(game.layer2_x_pos, wrapping_add(4u16));
     UpdateScrollVarsUpdateMap(game);
     set_ram_word!(game.door_transition_frame_counter = (v2).wrapping_add(1u16));
     if v2 != 63u16 {
@@ -3488,10 +3445,8 @@ pub unsafe fn DoorTransition_Left(game: &mut Game) -> uint8 {
             | ram_word!(game, samus_door_transition_subspeed) as i32) as uint32,
     );
     set_ram_word!(game.samus_prev_x_pos = ram_word!(game, samus_x_pos));
-    let ref mut fresh8 = *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16);
-    *fresh8 = (*fresh8).wrapping_sub(4u16);
-    let ref mut fresh9 = *((&raw mut game.g_ram as *mut uint8).offset(0x917) as *mut uint16);
-    *fresh9 = (*fresh9).wrapping_sub(4u16);
+    update_ram_word!(game.layer1_x_pos, wrapping_sub(4u16));
+    update_ram_word!(game.layer2_x_pos, wrapping_sub(4u16));
     UpdateScrollVarsUpdateMap(game);
     set_ram_word!(game.door_transition_frame_counter = (v2).wrapping_add(1u16));
     (v2 == 63u16) as uint8
@@ -3507,29 +3462,21 @@ pub unsafe fn DoorTransition_Down(game: &mut Game) -> uint8 {
                     | ram_word!(game, samus_door_transition_subspeed) as uint32,
             );
             set_ram_word!(game.samus_prev_y_pos = ram_word!(game, samus_y_pos));
-            let ref mut fresh0 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16);
-            *fresh0 = (*fresh0).wrapping_add(4u16);
-            let ref mut fresh1 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x919) as *mut uint16);
-            *fresh1 = (*fresh1).wrapping_add(4u16);
+            update_ram_word!(game.layer1_y_pos, wrapping_add(4u16));
+            update_ram_word!(game.layer2_y_pos, wrapping_add(4u16));
             UpdateScrollVarsUpdateMap(game);
         }
     } else {
         let v5: uint16 = ram_word!(game, reg_BG1VOFS);
         let v4: uint16 = ram_word!(game, reg_BG2VOFS);
         let v3: uint16 = ram_word!(game, layer1_y_pos);
-        let ref mut fresh2 = *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16);
-        *fresh2 = (*fresh2).wrapping_sub(15u16);
+        update_ram_word!(game.layer1_y_pos, wrapping_sub(15u16));
         let v2: uint16 = ram_word!(game, layer2_y_pos);
-        let ref mut fresh3 = *((&raw mut game.g_ram as *mut uint8).offset(0x919) as *mut uint16);
-        *fresh3 = (*fresh3).wrapping_sub(15u16);
+        update_ram_word!(game.layer2_y_pos, wrapping_sub(15u16));
         CalculateBgScrollAndLayerPositionBlocks(game);
         UpdatePreviousLayerBlocks(game);
-        let ref mut fresh4 = *((&raw mut game.g_ram as *mut uint8).offset(0x901) as *mut uint16);
-        *fresh4 = (*fresh4).wrapping_sub(1);
-        let ref mut fresh5 = *((&raw mut game.g_ram as *mut uint8).offset(0x905) as *mut uint16);
-        *fresh5 = (*fresh5).wrapping_sub(1);
+        update_ram_word!(game.previous_layer1_y_block, wrapping_sub(1));
+        update_ram_word!(game.previous_layer2_y_block, wrapping_sub(1));
         UpdateScrollVarsUpdateMap(game);
         set_ram_word!(game.layer2_y_pos = v2);
         set_ram_word!(game.layer1_y_pos = v3);
@@ -3553,10 +3500,8 @@ pub unsafe fn DoorTransition_Up(game: &mut Game) -> uint8 {
                 | ram_word!(game, samus_door_transition_subspeed) as i32) as uint32,
         );
         set_ram_word!(game.samus_prev_y_pos = ram_word!(game, samus_y_pos));
-        let ref mut fresh12 = *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16);
-        *fresh12 = (*fresh12).wrapping_sub(4u16);
-        let ref mut fresh13 = *((&raw mut game.g_ram as *mut uint8).offset(0x919) as *mut uint16);
-        *fresh13 = (*fresh13).wrapping_sub(4u16);
+        update_ram_word!(game.layer1_y_pos, wrapping_sub(4u16));
+        update_ram_word!(game.layer2_y_pos, wrapping_sub(4u16));
         if ram_word!(game, door_transition_frame_counter) >= 5u16 {
             UpdateScrollVarsUpdateMap(game);
         } else {
@@ -3581,17 +3526,13 @@ pub unsafe fn DoorTransition_Up(game: &mut Game) -> uint8 {
         let v5: uint16 = ram_word!(game, reg_BG1VOFS);
         let v4: uint16 = ram_word!(game, reg_BG2VOFS);
         let v3: uint16 = ram_word!(game, layer1_y_pos);
-        let ref mut fresh14 = *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16);
-        *fresh14 = (*fresh14).wrapping_sub(16u16);
+        update_ram_word!(game.layer1_y_pos, wrapping_sub(16u16));
         let v2: uint16 = ram_word!(game, layer2_y_pos);
-        let ref mut fresh15 = *((&raw mut game.g_ram as *mut uint8).offset(0x919) as *mut uint16);
-        *fresh15 = (*fresh15).wrapping_sub(16u16);
+        update_ram_word!(game.layer2_y_pos, wrapping_sub(16u16));
         CalculateBgScrollAndLayerPositionBlocks(game);
         UpdatePreviousLayerBlocks(game);
-        let ref mut fresh16 = *((&raw mut game.g_ram as *mut uint8).offset(0x901) as *mut uint16);
-        *fresh16 = (*fresh16).wrapping_add(1);
-        let ref mut fresh17 = *((&raw mut game.g_ram as *mut uint8).offset(0x905) as *mut uint16);
-        *fresh17 = (*fresh17).wrapping_add(1);
+        update_ram_word!(game.previous_layer1_y_block, wrapping_add(1));
+        update_ram_word!(game.previous_layer2_y_block, wrapping_add(1));
         UpdateScrollVarsUpdateMap(game);
         set_ram_word!(game.layer2_y_pos = v2);
         set_ram_word!(game.layer1_y_pos = v3);
@@ -3617,8 +3558,7 @@ pub unsafe fn ConfigureMode7RotationMatrix(game: &mut Game) {
                 + 64 as i32) as usize] as uint16
         );
         set_ram_word!(game.reg_M7D = ram_word!(game, reg_M7A));
-        let ref mut fresh21 = *((&raw mut game.g_ram as *mut uint8).offset(0x785) as *mut uint16);
-        *fresh21 = (*fresh21).wrapping_add(1);
+        update_ram_word!(game.mode7_rotation_angle, wrapping_add(1));
     }
 }
 

@@ -113,6 +113,43 @@ macro_rules! set_ram_word {
 }
 pub(crate) use set_ram_word;
 
+// Capture the raw destination, read its old word first, then evaluate/store RHS.
+// The expression form binds a primitive value; it does not create a closure.
+// Indices use only primitives, with no extending temporary lifetimes.
+// `reread` loads that same destination after RHS temporaries have been dropped.
+macro_rules! update_ram_word {
+    ($game:ident.$field:ident$([$index:expr])?, $method:ident($argument:expr $(,)?) $(, $result:ident)? $(,)?) => {
+        $crate::ram_map::update_ram_word!($game.$field$([$index])?, |word| word.$method($argument) $(, $result)?)
+    };
+    ($game:ident.$field:ident$([$index:expr])?, |$old:ident| { $value:expr } $(, $result:ident)? $(,)?) => {
+        $crate::ram_map::update_ram_word!($game.$field$([$index])?, |$old| $value $(, $result)?)
+    };
+    ($game:ident.$field:ident[$index:expr], |$old:ident| $value:expr $(, $result:ident)? $(,)?) => {{
+        let destination = (&raw mut $game.g_ram)
+            .cast::<u8>()
+            .add($crate::ram_map::word_arrays::$field)
+            .cast::<u16>()
+            .offset(($index) as isize);
+        let $old = u16::from_le(destination.read_unaligned());
+        $crate::ram_map::write_word($value, destination);
+        $crate::ram_map::update_ram_word!(@result destination $(, $result)?)
+    }};
+    ($game:ident.$field:ident, |$old:ident| $value:expr $(, $result:ident)? $(,)?) => {{
+        let destination = (&raw mut $game.g_ram)
+            .cast::<u8>()
+            .add($crate::ram_map::words::$field)
+            .cast::<u16>();
+        let $old = u16::from_le(destination.read_unaligned());
+        $crate::ram_map::write_word($value, destination);
+        $crate::ram_map::update_ram_word!(@result destination $(, $result)?)
+    }};
+    (@result $destination:ident) => { () };
+    (@result $destination:ident, reread) => {
+        u16::from_le($destination.read_unaligned())
+    };
+}
+pub(crate) use update_ram_word;
+
 /// Store one SNES word without imposing host alignment.
 ///
 /// # Safety

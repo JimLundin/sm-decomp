@@ -16,7 +16,7 @@ use crate::game::sm_94::Samus_MoveDown_NoSolidColl;
 use crate::game::sm_a6::HandleCeresRidleyGetawayCutscene;
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
-use crate::ram_map::{ram_word, set_ram_word};
+use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{mov24, Mult8x8, RomPtr, Unreachable, WriteReg};
 pub use crate::snes::registers::*;
 extern "C" {
@@ -542,13 +542,11 @@ pub unsafe fn RoomCode_GenRandomExplodes_Nonblank(game: &mut Game) {
 pub unsafe fn RoomCode_ScrollingSkyLand_Shakes(game: &mut Game) {
     RoomCode_ScrollingSkyLand(game);
     RoomCode_GenRandomExplodes_Nonblank(game);
-    let ref mut fresh17 = *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16);
-    *fresh17 = (*fresh17) | (0x8000u16);
+    update_ram_word!(game.earthquake_timer, |fresh17| (fresh17) | (0x8000u16));
 }
 pub unsafe fn RoomCode_ExplodeShakes(game: &mut Game) {
     RoomCode_GenRandomExplodes_Nonblank(game);
-    let ref mut fresh16 = *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16);
-    *fresh16 = (*fresh16) | (0x8000u16);
+    update_ram_word!(game.earthquake_timer, |fresh16| (fresh16) | (0x8000u16));
 }
 pub unsafe fn RoomCode_GenRandomExplodes_4th(game: &mut Game) {
     if ram_word!(game, time_is_frozen_flag) == 0
@@ -594,10 +592,9 @@ pub unsafe fn RoomCode_ScrollRightDachora(game: &mut Game) {
         && ram_word!(game, layer1_y_pos) < 0x500u16
         && ram_word!(game, layer1_x_pos) < 0x380u16
     {
-        let ref mut fresh15 = *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16);
-        *fresh15 = (*fresh15 as i32
+        update_ram_word!(game.layer1_x_pos, |fresh15| (fresh15 as i32
             + ((ram_word!(game, layer1_x_pos) >= 0x380u16) as i32 + 3 as i32))
-            as uint16;
+            as uint16);
     }
 }
 pub unsafe fn RoomCode_8FC8C8(game: &mut Game) {
@@ -1226,8 +1223,7 @@ pub unsafe fn RoomCode_CrocomireShaking(game: &mut Game) {
                     .offset(1))
                 .ai_var_D;
             }
-            let ref mut fresh6 = *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16);
-            *fresh6 = (*fresh6).wrapping_add(ai_var_D);
+            update_ram_word!(game.reg_BG1VOFS, wrapping_add(ai_var_D));
             set_ram_word!(game.reg_BG2VOFS = (ai_var_D).wrapping_sub(48u16));
         } else if (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
             .ai_var_C
@@ -1246,13 +1242,9 @@ pub unsafe fn RoomCode_CrocomireShaking(game: &mut Game) {
                 & 1 as i32)
                 != 0i32
             {
-                let ref mut fresh8 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16);
-                *fresh8 = (*fresh8).wrapping_sub(4u16);
+                update_ram_word!(game.layer1_x_pos, wrapping_sub(4u16));
             } else {
-                let ref mut fresh9 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16);
-                *fresh9 = (*fresh9).wrapping_add(4u16);
+                update_ram_word!(game.layer1_x_pos, wrapping_add(4u16));
             }
         }
     }
@@ -1271,14 +1263,22 @@ pub unsafe fn RoomCode_RidleyRoomShaking(game: &mut Game) {
         .ai_var_A;
         fresh0.write_unaligned(fresh0.read_unaligned().wrapping_sub(1));
         let v1: i32 = ai_var_A as i32 - 1 as i32;
-        let ref mut fresh1 = *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16);
-        *fresh1 = (*fresh1).wrapping_add((kRoomCode_RidleyRoomShaking_X[v1 as usize]) as u16);
-        let ref mut fresh2 = *((&raw mut game.g_ram as *mut uint8).offset(0xb5) as *mut uint16);
-        *fresh2 = (*fresh2).wrapping_add((kRoomCode_RidleyRoomShaking_X[v1 as usize]) as u16);
-        let ref mut fresh3 = *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16);
-        *fresh3 = (*fresh3).wrapping_add((kRoomCode_RidleyRoomShaking_Y[v1 as usize]) as u16);
-        let ref mut fresh4 = *((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16);
-        *fresh4 = (*fresh4).wrapping_add((kRoomCode_RidleyRoomShaking_Y[v1 as usize]) as u16);
+        update_ram_word!(
+            game.reg_BG1HOFS,
+            wrapping_add((kRoomCode_RidleyRoomShaking_X[v1 as usize]) as u16)
+        );
+        update_ram_word!(
+            game.reg_BG2HOFS,
+            wrapping_add((kRoomCode_RidleyRoomShaking_X[v1 as usize]) as u16)
+        );
+        update_ram_word!(
+            game.reg_BG1VOFS,
+            wrapping_add((kRoomCode_RidleyRoomShaking_Y[v1 as usize]) as u16)
+        );
+        update_ram_word!(
+            game.reg_BG2VOFS,
+            wrapping_add((kRoomCode_RidleyRoomShaking_Y[v1 as usize]) as u16)
+        );
     }
 }
 pub unsafe fn CallRoomCode(ea: uint32, game: &mut Game) {

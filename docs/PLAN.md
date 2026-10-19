@@ -72,6 +72,27 @@ all 76 source/DLL/fixture pins remain fixed. Independent descriptor/source
 review has no findings. Continue substantial repeated families; the broader
 readability and boot-to-credits goals remain open.
 
+Named RAM word updates (2026-10-20): one caller-side macro shares all 882
+eligible read/modify/write sequences across 243 named fields and 29 callers.
+It captures the raw destination once, reads the old word before the RHS,
+keeps RHS temporaries alive through the store, and preserves 117 fresh
+post-store rereads after temporary destruction. Signed indices, little-endian
+unaligned access and the three conditional RHS expressions remain exact.
+
+Net Rust lines -483 and raw-offset lines -882; unsafe-function count is
+unchanged. The i32/c_int cast-line count rises 72 through formatting; the
+actual i32 cast count is unchanged; raw pointer-cast copies are consolidated. Independent complete-source reconstruction
+and composition review pass. Focused actual-macro checks pass 175 boundary
+cases plus alias/order/drop, hygiene, chained-store and caller-exit controls;
+two deliberately wrong-order controls fail as intended.
+
+Combined verification with the native-alias batch includes committed HDMA
+2481f16f. Normal release (23.99s), formatting/check and progress
+pass. Full any% passes 129712/0 (112.70s), native exit 0.
+This focused update commit shares that composed run; no update-only replay
+is claimed. Final native-alias source/config/host inputs match the frozen run.
+The broader readability and alias-safety goals remain open.
+
 Native integer type names (2026-10-20): ast-grep replaces 34487 c_int
 and 267 c_uint paths with the identical i32/u32 types across 52 Rust files.
 33108 paths are ordinary type nodes; 1646 are inside 829 set_ram_word!

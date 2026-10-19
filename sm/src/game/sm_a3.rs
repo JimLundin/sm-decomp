@@ -23,7 +23,7 @@ use crate::game::sm_a0::{
 use crate::game::sm_b4::CreateSpriteAtPos;
 pub use crate::game::waver::{Enemy_Waver, Waver_Func_1, Waver_Init, Waver_Instr_1, Waver_Main};
 use crate::game_state::Game;
-use crate::ram_map::{ram_word, set_ram_word};
+use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{RomPtr, SnesDivide, Unreachable};
@@ -897,8 +897,7 @@ pub unsafe fn Fireflea_Touch(k: uint16, game: &mut Game) {
     Enemy_NormalTouchAI_A3(game);
     EnemyDeathAnimation(k, v1, game);
     if ram_word!(game, fireflea_darkness_level) as i32 - 12 as i32 & 0x8000 as i32 != 0 {
-        let ref mut fresh7 = *((&raw mut game.g_ram as *mut uint8).offset(0x177e) as *mut uint16);
-        *fresh7 = (*fresh7).wrapping_add(2u16);
+        update_ram_word!(game.fireflea_darkness_level, wrapping_add(2u16));
     }
 }
 pub unsafe fn Fireflea_Powerbomb(game: &mut Game) {
@@ -916,8 +915,7 @@ pub unsafe fn Fireflea_Common(game: &mut Game) {
         == 0
         && ram_word!(game, fireflea_darkness_level) as i32 - 12 as i32 & 0x8000 as i32 != 0
     {
-        let ref mut fresh6 = *((&raw mut game.g_ram as *mut uint8).offset(0x177e) as *mut uint16);
-        *fresh6 = (*fresh6).wrapping_add(2u16);
+        update_ram_word!(game.fireflea_darkness_level, wrapping_add(2u16));
     }
 }
 pub unsafe fn MaridiaFish_Instr_3(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
@@ -1129,8 +1127,7 @@ pub unsafe fn Elevator_Func_1(game: &mut Game) {
         CallSomeSamusCode(7 as uint16, game);
         ResetProjectileData(game);
         Elevator_Func_4(game);
-        let ref mut fresh4 = *((&raw mut game.g_ram as *mut uint8).offset(0xe18) as *mut uint16);
-        *fresh4 = (*fresh4).wrapping_add(1);
+        update_ram_word!(game.elevator_status, wrapping_add(1));
     } else {
         set_ram_word!(game.elevator_flags = 0 as uint16);
     };
@@ -1155,8 +1152,7 @@ pub unsafe fn Elevator_Func_2(game: &mut Game) {
     Elevator_Func_4(game);
 }
 pub unsafe fn Elevator_Func_3(game: &mut Game) {
-    let ref mut fresh3 = *((&raw mut game.g_ram as *mut uint8).offset(0xe18) as *mut uint16);
-    *fresh3 = (*fresh3).wrapping_add(1);
+    update_ram_word!(game.elevator_status, wrapping_add(1));
     Elevator_Func3b(game);
 }
 pub unsafe fn Elevator_Func3b(game: &mut Game) {
@@ -1422,8 +1418,9 @@ pub unsafe fn PlatformThatFallsWithSamus_Func_4(game: &mut Game) {
     if (((*E).ptfwss_var_F) as i16).wrapping_sub(((*E).ptfwss_var_05) as i16) >= 0i16 {
         (*E).ptfwss_var_F = (*E).ptfwss_var_05;
     }
-    let ref mut fresh13 = *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16);
-    *fresh13 = (*fresh13 as i32 + ((*E).base.x_pos as i32 - (*E).ptfwss_var_01 as i32)) as uint16;
+    update_ram_word!(game.extra_samus_x_displacement, |fresh13| (fresh13 as i32
+        + ((*E).base.x_pos as i32 - (*E).ptfwss_var_01 as i32))
+        as uint16);
     (*E).ptfwss_var_01 = (*E).base.y_pos;
     let v2: i32 = 8 as i32 * (*E).ptfwss_var_F as i32 >> 1 as i32;
     if Enemy_MoveDown(
@@ -1440,8 +1437,9 @@ pub unsafe fn PlatformThatFallsWithSamus_Func_4(game: &mut Game) {
         (*E).ptfwss_var_F = 0 as uint16;
         PlatformThatFallsWithSamus_Func_10(game);
     }
-    let ref mut fresh14 = *((&raw mut game.g_ram as *mut uint8).offset(0xb5c) as *mut uint16);
-    *fresh14 = (*fresh14 as i32 + ((*E).base.y_pos as i32 - (*E).ptfwss_var_01 as i32)) as uint16;
+    update_ram_word!(game.extra_samus_y_displacement, |fresh14| (fresh14 as i32
+        + ((*E).base.y_pos as i32 - (*E).ptfwss_var_01 as i32))
+        as uint16);
 }
 pub unsafe fn PlatformThatFallsWithSamus_Func_5(game: &mut Game) {
     let E: *mut Enemy_PlatformThatFallsWithSamus =
@@ -2805,10 +2803,10 @@ pub unsafe fn Bang_Func_3(game: &mut Game) {
             let E: *mut Enemy_Bang =
                 Get_Bang(ram_word!(game, cur_enemy_index) as i32 + 64 as i32, game);
             (*E).base.properties = ((*E).base.properties) | (0x200u16);
-            let ref mut fresh1 = *((&raw mut game.g_ram as *mut uint8).offset(0xe84)
-                as *mut uint16)
-                .offset(((v9 as i32 >> 1 as i32) + 97 as i32) as isize);
-            *fresh1 = (*fresh1) | (0x200u16);
+            update_ram_word!(
+                game.enemy_drawing_queue[((v9 as i32 >> 1 as i32) + 97 as i32)],
+                |fresh1| (fresh1) | (0x200u16)
+            );
         } else {
             (*E0).bang_var_20 = (*E0).bang_var_20.wrapping_add(1);
             Bang_Func_18(game);
@@ -2833,8 +2831,7 @@ pub unsafe fn Bang_Func_4(a: uint16, game: &mut Game) -> uint16 {
         game.projectile_type[v3] =
             (ram_word!(game, equipped_beams) as i32 & 0xf as i32 | 0x10 as i32) as uint16
     );
-    let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0xcce) as *mut uint16);
-    *fresh0 = (*fresh0).wrapping_add(1);
+    update_ram_word!(game.projectile_counter, wrapping_add(1));
     ProjectileReflection(i as uint16, game);
     set_ram_word!(game.projectile_damage[v3] = (*E).bang_var_E);
     QueueSfx1_Max6(
@@ -2986,9 +2983,7 @@ pub unsafe fn Bang_Shot(game: &mut Game) {
         Bang_Func_18(game);
         let v1: i32 = ram_word!(game, collision_detection_index) as i32;
         (*E).bang_var_E = ((*E).bang_var_E).wrapping_add(ram_word!(game, projectile_damage[v1]));
-        let ref mut fresh2 =
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16).offset(v1 as isize);
-        *fresh2 = (*fresh2) | (0x10u16);
+        update_ram_word!(game.projectile_dir[v1], |fresh2| (fresh2) | (0x10u16));
         if (*E).bang_var_20 == 9u16 {
             (*E).bang_var_D = 1 as uint16;
         }
@@ -3780,10 +3775,11 @@ pub unsafe fn MaridiaSnail_Func_23(k: uint16, game: &mut Game) {
 }
 pub unsafe fn Reflec_Func_1(game: &mut Game) {
     if ram_word!(game, door_transition_flag_enemies) == 0 && {
-        let ref mut fresh15 =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1794) as *mut uint16).offset(2);
-        *fresh15 = (*fresh15).wrapping_sub(1);
-        *fresh15 == 0
+        update_ram_word!(
+            game.variables_for_enemy_graphics_drawn_hook[2],
+            wrapping_sub(1),
+            reread
+        ) == 0
     } {
         set_ram_word!(game.variables_for_enemy_graphics_drawn_hook[2] = 16 as uint16);
         let mut v0: uint16 = ram_word!(game, variables_for_enemy_graphics_drawn_hook[0]);
@@ -3846,9 +3842,10 @@ pub unsafe fn Reflec_Shot(game: &mut Game) {
         .offset(v3 as isize)
         == 0x8000u16
     {
-        let ref mut fresh16 = *((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16)
-            .offset((v0 as i32 >> 1 as i32) as isize);
-        *fresh16 = (*fresh16) | (0x10u16);
+        update_ram_word!(
+            game.projectile_dir[(v0 as i32 >> 1 as i32)],
+            |fresh16| (fresh16) | (0x10u16)
+        );
         printf(b"Possible bug. What is X?\n\0" as *const u8 as *const ::core::ffi::c_char);
         let ET: *mut Enemy_Reflec = Get_Reflec(v2 as i32, game);
         if (*ET).base.health != 0 {
@@ -3873,9 +3870,10 @@ pub unsafe fn Reflec_Shot(game: &mut Game) {
         }
         let v5: i32 = v0 as i32 >> 1 as i32;
         set_ram_word!(game.projectile_dir[v5] = v4 as uint16);
-        let ref mut fresh17 =
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(v5 as isize);
-        *fresh17 = (*fresh17 as i32 & !(0x8000 as i32)) as uint16;
+        update_ram_word!(
+            game.projectile_type[v5],
+            |fresh17| (fresh17 as i32 & !(0x8000 as i32)) as uint16
+        );
         ProjectileReflection(v0, game);
         QueueSfx2_Max6(0x57 as uint16, game);
     };
@@ -4334,13 +4332,12 @@ pub unsafe fn Metroid_Hurt(game: &mut Game) {
         );
     } else {
         let v3: i32 = (*E).metroid_var_00 as i32 >> 1 as i32;
-        let ref mut fresh10 = *((&raw mut game.g_ram as *mut uint8).offset(0xf078) as *mut uint16)
-            .offset(v3 as isize);
-        *fresh10 = (*fresh10) & (0xf1ffu16);
+        update_ram_word!(game.sprite_palettes[v3], |fresh10| (fresh10) & (0xf1ffu16));
         let metroid_var_01: uint16 = (*E).metroid_var_01;
-        let ref mut fresh11 = *((&raw mut game.g_ram as *mut uint8).offset(0xf078) as *mut uint16)
-            .offset((metroid_var_01 as i32 >> 1 as i32) as isize);
-        *fresh11 = (*fresh11) & (0xf1ffu16);
+        update_ram_word!(
+            game.sprite_palettes[(metroid_var_01 as i32 >> 1 as i32)],
+            |fresh11| (fresh11) & (0xf1ffu16)
+        );
     };
 }
 static off_A3EC09: [Option<Func_Y_V>; 4] = unsafe {

@@ -13,7 +13,7 @@ use crate::game::sm_a0::{
 };
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
-use crate::ram_map::{ram_word, set_ram_word};
+use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::RomPtr;
 use crate::rtl::{AddToHiLo, SetHiLo};
@@ -601,9 +601,10 @@ pub unsafe fn Crocomire_Func_27(k: uint16, game: &mut Game) {
             return;
         }
     }
-    let ref mut fresh8 = *((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16);
-    *fresh8 =
-        (*fresh8).wrapping_add(*(RomPtr_A4(spritemap_pointer, game) as *mut uint16).offset(14));
+    update_ram_word!(
+        game.reg_BG2VOFS,
+        wrapping_add(*(RomPtr_A4(spritemap_pointer, game) as *mut uint16).offset(14))
+    );
     Crocomire_8BA4(game);
 }
 pub unsafe fn Crocomire_8BA4(game: &mut Game) {
@@ -1179,9 +1180,7 @@ pub unsafe fn Crocomire_Func_52(game: &mut Game) {
     Crocomire_Func_54(game);
 }
 pub unsafe fn Crocomire_Func_53(game: &mut Game) {
-    let ref mut fresh9 = *((&raw mut game.g_ram as *mut uint8).offset(0x9018) as *mut uint16);
-    *fresh9 = (*fresh9).wrapping_sub(1);
-    if *fresh9 == 0 {
+    if update_ram_word!(game.g_word_7E9018, wrapping_sub(1), reread) == 0 {
         set_ram_word!(game.g_word_7E9018 = 6 as uint16);
         let mut v0: uint16 = (ram_word!(game, random_number)) & (0x3fu16);
         if (ram_word!(game, random_number) as i32 & 2 as i32) == 0i32 {
@@ -1729,9 +1728,7 @@ pub unsafe fn Crocomire_Func_65(game: &mut Game) {
                 if !v8 {
                     v7 = v7.wrapping_add(1);
                 }
-                let ref mut fresh18 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x5a6) as *mut uint16);
-                *fresh18 = (*fresh18).wrapping_add(1);
+                update_ram_word!(game.message_box_animation_y1, wrapping_add(1));
                 v6 = (v6).wrapping_add(2u16);
                 if (((v7) as i16).wrapping_sub((ram_word!(game, g_word_7E0698)) as i16) >= 0i16) {
                     break;
@@ -1804,9 +1801,7 @@ pub unsafe fn Crocomire_Func_67(game: &mut Game) -> uint16 {
         {
             break;
         }
-        let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0x690) as *mut uint16);
-        *fresh0 = (*fresh0).wrapping_add(1);
-        if *fresh0 >= 128u16 {
+        if update_ram_word!(game.croco_cur_vline_idx, wrapping_add(1), reread) >= 128u16 {
             set_ram_word!(game.croco_cur_vline_idx = 0 as uint16);
             return 0 as uint16;
         }
@@ -1899,8 +1894,7 @@ pub unsafe fn Crocomire_Func_67(game: &mut Game) -> uint16 {
         as *mut uint16 as *mut uint8)
         .offset(v7 as i32 as isize) as *mut uint16);
     set_ram_word!(game.vram_write_queue_tail = (v8).wrapping_add(7u16));
-    let ref mut fresh6 = *((&raw mut game.g_ram as *mut uint8).offset(0x68a) as *mut uint16);
-    *fresh6 = (*fresh6).wrapping_add(8u16);
+    update_ram_word!(game.g_word_7E068A, wrapping_add(8u16));
     1 as uint16
 }
 pub unsafe fn Crocomire_Func_68(game: &mut Game) {

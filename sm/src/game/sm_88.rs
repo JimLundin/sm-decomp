@@ -21,7 +21,7 @@ use crate::game::sm_91::{
 use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game::sm_a9::MotherBrain_CalculateRainbowBeamHdma;
 use crate::game_state::Game;
-use crate::ram_map::{ram_word, set_ram_word};
+use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{mov24, Load24, Mult8x8, RomPtr, Unreachable, WriteReg, WriteRegWord};
 use crate::rtl::{AddToHiLo, SetHiLo};
 pub use crate::snes::registers::*;
@@ -476,12 +476,14 @@ pub unsafe fn HandleLayerBlendingPowerBomb(mut j: uint16, game: &mut Game) {
     );
 }
 pub unsafe fn EnableHdmaObjects(game: &mut Game) {
-    let ref mut fresh31 = *((&raw mut game.g_ram as *mut uint8).offset(0x18b0) as *mut uint16);
-    *fresh31 = (*fresh31) | (0x8000u16);
+    update_ram_word!(game.hdma_objects_enable_flag, |fresh31| (fresh31)
+        | (0x8000u16));
 }
 pub unsafe fn DisableHdmaObjects(game: &mut Game) {
-    let ref mut fresh30 = *((&raw mut game.g_ram as *mut uint8).offset(0x18b0) as *mut uint16);
-    *fresh30 = (*fresh30 as i32 & !(0x8000 as i32)) as uint16;
+    update_ram_word!(
+        game.hdma_objects_enable_flag,
+        |fresh30| (fresh30 as i32 & !(0x8000 as i32)) as uint16
+    );
 }
 pub unsafe fn WaitUntilEndOfVblankAndClearHdma(game: &mut Game) {
     WriteReg(MDMAEN as uint16, 0 as uint8, game);
@@ -928,8 +930,10 @@ pub unsafe fn RaiseOrLowerFx(game: &mut Game) -> uint8 {
             (ram_word!(game, fx_base_y_pos) as uint32) << 16 as i32
                 | ram_word!(game, fx_base_y_subpos) as uint32,
         ) >> 16 as i32) as uint16;
-        let ref mut fresh13 = *((&raw mut game.g_ram as *mut uint8).offset(0x1976) as *mut uint16);
-        *fresh13 = (*fresh13 as uint32).wrapping_add(r24_r22) as uint16;
+        update_ram_word!(
+            game.fx_base_y_subpos,
+            |fresh13| (fresh13 as uint32).wrapping_add(r24_r22) as uint16
+        );
         if (v2 as i32 & 0x8000 as i32) != 0i32 {
             v2 = -(1 as i32) as uint16;
         }
@@ -946,8 +950,10 @@ pub unsafe fn RaiseOrLowerFx(game: &mut Game) -> uint8 {
             (ram_word!(game, fx_base_y_pos) as uint32) << 16 as i32
                 | ram_word!(game, fx_base_y_subpos) as uint32,
         ) >> 16 as i32) as uint16;
-        let ref mut fresh14 = *((&raw mut game.g_ram as *mut uint8).offset(0x1976) as *mut uint16);
-        *fresh14 = (*fresh14 as uint32).wrapping_add(r24_r22) as uint16;
+        update_ram_word!(
+            game.fx_base_y_subpos,
+            |fresh14| (fresh14 as uint32).wrapping_add(r24_r22) as uint16
+        );
         if (v0 as i32 & 0x8000 as i32) != 0i32 {
             v0 = 0 as uint16;
         }
@@ -964,8 +970,7 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc0_NoBeam(k: uint16, game: &mut Game) {
         != 0i32
     {
         CalculateXrayHdmaTable(game);
-        let ref mut fresh137 = *((&raw mut game.g_ram as *mut uint8).offset(0xa7a) as *mut uint16);
-        *fresh137 = (*fresh137).wrapping_add(1);
+        update_ram_word!(game.demo_input_pre_instr, wrapping_add(1));
     } else {
         set_ram_word!(game.demo_input_pre_instr = 3 as uint16);
     };
@@ -988,9 +993,7 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc1_BeamWidening(k: uint16, game: &mut Game)
         if ram_word!(game, demo_input) as i32 - 11 as i32 & 0x8000 as i32 == 0 {
             set_ram_word!(game.demo_input_new = 0 as uint16);
             set_ram_word!(game.demo_input = 10 as uint16);
-            let ref mut fresh136 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0xa7a) as *mut uint16);
-            *fresh136 = (*fresh136).wrapping_add(1);
+            update_ram_word!(game.demo_input_pre_instr, wrapping_add(1));
         }
         CalculateXrayHdmaTable(game);
     } else {
@@ -1004,8 +1007,7 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc2_FullBeam(k: uint16, game: &mut Game) {
         HandleMovingXrayUpDown(game);
         CalculateXrayHdmaTable(game);
     } else {
-        let ref mut fresh135 = *((&raw mut game.g_ram as *mut uint8).offset(0xa7a) as *mut uint16);
-        *fresh135 = (*fresh135).wrapping_add(1);
+        update_ram_word!(game.demo_input_pre_instr, wrapping_add(1));
     };
 }
 pub unsafe fn HandleMovingXrayUpDown(game: &mut Game) {
@@ -1029,9 +1031,7 @@ pub unsafe fn MoveXrayUp(game: &mut Game) {
                 < 0i16
                 || {
                     v0 = ram_word!(game, xray_angle) != 0u16;
-                    let ref mut fresh52 =
-                        *((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16);
-                    *fresh52 = (*fresh52).wrapping_sub(1);
+                    update_ram_word!(game.xray_angle, wrapping_sub(1));
                     ((ram_word!(game, xray_angle) as i32
                         - (!v0 as i32 + ram_word!(game, demo_input) as i32))
                         as int16)
@@ -1052,9 +1052,7 @@ pub unsafe fn MoveXrayUp(game: &mut Game) {
                             | 1 as uint16 as uint32,
                     )
                     >> 16 as i32) as int16;
-                let ref mut fresh53 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16);
-                *fresh53 = (*fresh53).wrapping_add(1);
+                update_ram_word!(game.xray_angle, wrapping_add(1));
                 v1 != 256i16 && (v1).wrapping_sub(256i16) >= 0i16
             })
     {
@@ -1077,9 +1075,7 @@ pub unsafe fn MoveXrayDown(game: &mut Game) {
                                 | 1 as uint16 as uint32,
                         )
                         >> 16 as i32) as int16;
-                    let ref mut fresh50 =
-                        *((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16);
-                    *fresh50 = (*fresh50).wrapping_add(1);
+                    update_ram_word!(game.xray_angle, wrapping_add(1));
                     v0 != 128i16 && (v0).wrapping_sub(128i16) >= 0i16
                 })
         {
@@ -1091,9 +1087,7 @@ pub unsafe fn MoveXrayDown(game: &mut Game) {
             < 0i16
             || {
                 v1 = ram_word!(game, xray_angle) != 0u16;
-                let ref mut fresh51 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16);
-                *fresh51 = (*fresh51).wrapping_sub(1);
+                update_ram_word!(game.xray_angle, wrapping_sub(1));
                 ram_word!(game, xray_angle) as i32
                     - (!v1 as i32 + ram_word!(game, demo_input) as i32)
                     != 128i32
@@ -1190,8 +1184,8 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc3_DeactivateBeam(k: uint16, game: &mut Gam
             v1 = 0x4000 as int16;
         }
     }
-    let ref mut fresh133 = *((&raw mut game.g_ram as *mut uint8).offset(0x1986) as *mut uint16);
-    *fresh133 = (*fresh133) | ((v1) as u16);
+    update_ram_word!(game.fx_layer_blending_config_c, |fresh133| (fresh133)
+        | ((v1) as u16));
     set_ram_word!(game.palette_buffer[0] = 0 as uint16);
     let v2: i32 = ram_word!(game, hdma_object_index) as i32 >> 1 as i32;
     set_ram_word!(game.reg_BG2HOFS = ram_word!(game, hdma_object_A[v2]));
@@ -1211,8 +1205,7 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc3_DeactivateBeam(k: uint16, game: &mut Gam
         (*v4).vram_dst = ((*(&raw mut game.g_ram as *mut uint8).offset(0x59) as i32 & 0xfc as i32)
             << 8 as i32) as uint16;
         set_ram_word!(game.vram_write_queue_tail = (v3).wrapping_add(7u16));
-        let ref mut fresh134 = *((&raw mut game.g_ram as *mut uint8).offset(0xa7a) as *mut uint16);
-        *fresh134 = (*fresh134).wrapping_add(1);
+        update_ram_word!(game.demo_input_pre_instr, wrapping_add(1));
     }
 }
 pub unsafe fn HdmaobjPreInstr_XrayFunc4_DeactivateBeam(k: uint16, game: &mut Game) {
@@ -1225,8 +1218,8 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc4_DeactivateBeam(k: uint16, game: &mut Gam
             v1 = 0x4000 as int16;
         }
     }
-    let ref mut fresh131 = *((&raw mut game.g_ram as *mut uint8).offset(0x1986) as *mut uint16);
-    *fresh131 = (*fresh131) | ((v1) as u16);
+    update_ram_word!(game.fx_layer_blending_config_c, |fresh131| (fresh131)
+        | ((v1) as u16));
     let v2: uint16 = ram_word!(game, vram_write_queue_tail);
     if ((ram_word!(game, vram_write_queue_tail)) as i16).wrapping_sub(240i16) < 0i16 {
         v3 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
@@ -1240,8 +1233,7 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc4_DeactivateBeam(k: uint16, game: &mut Gam
             (((*(&raw mut game.g_ram as *mut uint8).offset(0x59) as i32 & 0xfc as i32) << 8 as i32)
                 + 1024 as i32) as uint16;
         set_ram_word!(game.vram_write_queue_tail = (v2).wrapping_add(7u16));
-        let ref mut fresh132 = *((&raw mut game.g_ram as *mut uint8).offset(0xa7a) as *mut uint16);
-        *fresh132 = (*fresh132).wrapping_add(1);
+        update_ram_word!(game.demo_input_pre_instr, wrapping_add(1));
     }
 }
 pub unsafe fn HdmaobjPreInstr_XrayFunc5_DeactivateBeam(k: uint16, game: &mut Game) {
@@ -1253,8 +1245,8 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc5_DeactivateBeam(k: uint16, game: &mut Gam
             v1 = 0x4000 as int16;
         }
     }
-    let ref mut fresh130 = *((&raw mut game.g_ram as *mut uint8).offset(0x1986) as *mut uint16);
-    *fresh130 = (*fresh130) | ((v1) as u16);
+    update_ram_word!(game.fx_layer_blending_config_c, |fresh130| (fresh130)
+        | ((v1) as u16));
     if ram_word!(game, time_is_frozen_flag) != 0 {
         set_ram_word!(game.time_is_frozen_flag = 0 as uint16);
         set_ram_word!(game.demo_input_pre_instr = 0 as uint16);
@@ -1317,8 +1309,8 @@ pub unsafe fn HdmaobjPreInstr_Xray(k: uint16, game: &mut Game) {
                 as *mut uint16) = 0x87 as uint16;
         }
     }
-    let ref mut fresh138 = *((&raw mut game.g_ram as *mut uint8).offset(0x1986) as *mut uint16);
-    *fresh138 = (*fresh138) | ((v1) as u16);
+    update_ram_word!(game.fx_layer_blending_config_c, |fresh138| (fresh138)
+        | ((v1) as u16));
     kHdmaobjPreInstr_XrayFuncs[ram_word!(game, demo_input_pre_instr) as usize]
         .expect("non-null function pointer")(
         (2u16).wrapping_mul(ram_word!(game, demo_input_pre_instr)),
@@ -1387,16 +1379,16 @@ pub unsafe fn Hdmaobj_CleanUpTryCrystalFlash(v0: uint16, game: &mut Game) {
     CallSomeSamusCode(0x1e as uint16, game);
 }
 pub unsafe fn HdmaobjPreInstr_PowerBombExplode_SetWindowConf(k: uint16, game: &mut Game) {
-    let ref mut fresh129 = *((&raw mut game.g_ram as *mut uint8).offset(0x1986) as *mut uint16);
-    *fresh129 = (*fresh129) | (0x8000u16);
+    update_ram_word!(game.fx_layer_blending_config_c, |fresh129| (fresh129)
+        | (0x8000u16));
 }
 pub unsafe fn HdmaobjPreInstr_PowerBombExplode_Stage5_Afterglow(k: uint16, game: &mut Game) {
     if (ram_word!(game, power_bomb_explosion_status) as i32 & 0x8000 as i32) != 0i32 {
         let v1: i32 = k as uint8 as i32 >> 1 as i32;
-        let ref mut fresh125 = *((&raw mut game.g_ram as *mut uint8).offset(0x1908) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh125 = (*fresh125).wrapping_sub(1);
-        if (*fresh125 as i32 & 0x8000 as i32) != 0i32 {
+        if (update_ram_word!(game.hdma_object_timers[v1], wrapping_sub(1), reread) as i32
+            & 0x8000 as i32)
+            != 0i32
+        {
             let ref mut fresh126 = *((&raw mut game.g_ram as *mut uint8).offset(0x1938)
                 as *mut uint16 as *mut uint8)
                 .offset(k as uint8 as i32 as isize);
@@ -1404,10 +1396,10 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_Stage5_Afterglow(k: uint16, game:
             *fresh126 = (*fresh126).wrapping_sub(1);
             if fresh127 == 1u8 {
                 set_ram_word!(game.hdma_object_instruction_timers[v1] = 1 as uint16);
-                let ref mut fresh128 = *((&raw mut game.g_ram as *mut uint8).offset(0x18cc)
-                    as *mut uint16)
-                    .offset(v1 as isize);
-                *fresh128 = (*fresh128).wrapping_add(2u16);
+                update_ram_word!(
+                    game.hdma_object_instruction_list_pointers[v1],
+                    wrapping_add(2u16)
+                );
             } else {
                 if (*(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) as i32
                     & 0x1f as i32)
@@ -1824,17 +1816,22 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionYellow(k: uint16, game: 
         (*(game.g_rom.offset(crate::rtl::lorom_offset(0x888d85)) as *const uint8 as *mut uint8)
             .offset((t + 2 as i32) as isize))
             | (0x80u8);
-    let ref mut fresh122 = *((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16);
-    *fresh122 = (*fresh122).wrapping_add(ram_word!(game, power_bomb_pre_explosion_radius_speed));
+    update_ram_word!(
+        game.power_bomb_explosion_radius,
+        wrapping_add(ram_word!(game, power_bomb_pre_explosion_radius_speed))
+    );
     if ram_word!(game, power_bomb_explosion_radius) < 0x8600u16 {
-        let ref mut fresh123 = *((&raw mut game.g_ram as *mut uint8).offset(0xcf0) as *mut uint16);
-        *fresh123 = (*fresh123).wrapping_add(kPowerBombExplosionRadiusAccel);
+        update_ram_word!(
+            game.power_bomb_pre_explosion_radius_speed,
+            wrapping_add(kPowerBombExplosionRadiusAccel)
+        );
     } else {
         let v7: i32 = k as i32 >> 1 as i32;
         set_ram_word!(game.hdma_object_instruction_timers[v7] = 1 as uint16);
-        let ref mut fresh124 = *((&raw mut game.g_ram as *mut uint8).offset(0x18cc) as *mut uint16)
-            .offset(v7 as isize);
-        *fresh124 = (*fresh124).wrapping_add(2u16);
+        update_ram_word!(
+            game.hdma_object_instruction_list_pointers[v7],
+            wrapping_add(2u16)
+        );
         set_ram_word!(game.hdma_object_timers[v7] = 0 as uint16);
     };
 }
@@ -1877,16 +1874,19 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionWhite(k: uint16, game: &
         (*(game.g_rom.offset(crate::rtl::lorom_offset(0x888d85)) as *const uint8 as *mut uint8)
             .offset((t + 2 as i32) as isize))
             | (0x80u8);
-    let ref mut fresh118 = *((&raw mut game.g_ram as *mut uint8).offset(0xcf2) as *mut uint16);
-    *fresh118 = (*fresh118).wrapping_add(192u16);
+    update_ram_word!(
+        game.pre_scaled_power_bomb_explosion_shape_def_ptr,
+        wrapping_add(192u16)
+    );
     if ram_word!(game, pre_scaled_power_bomb_explosion_shape_def_ptr) as i32
         == addr_byte_889F06 as i32
     {
         let v3: i32 = k as i32 >> 1 as i32;
         set_ram_word!(game.hdma_object_instruction_timers[v3] = 1 as uint16);
-        let ref mut fresh119 = *((&raw mut game.g_ram as *mut uint8).offset(0x18cc) as *mut uint16)
-            .offset(v3 as isize);
-        *fresh119 = (*fresh119).wrapping_add(2u16);
+        update_ram_word!(
+            game.hdma_object_instruction_list_pointers[v3],
+            wrapping_add(2u16)
+        );
         set_ram_word!(game.hdma_object_timers[v3] = 0 as uint16);
         set_ram_word!(game.hdma_object_D[v3] = 32 as uint16);
     }
@@ -1894,11 +1894,14 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionWhite(k: uint16, game: &
         + ram_word!(game, power_bomb_explosion_radius) as i32)
         < 0x10000i32
     {
-        let ref mut fresh120 = *((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16);
-        *fresh120 =
-            (*fresh120).wrapping_add(ram_word!(game, power_bomb_pre_explosion_radius_speed));
-        let ref mut fresh121 = *((&raw mut game.g_ram as *mut uint8).offset(0xcf0) as *mut uint16);
-        *fresh121 = (*fresh121).wrapping_add(kPowerBombExplosionRadiusAccel);
+        update_ram_word!(
+            game.power_bomb_explosion_radius,
+            wrapping_add(ram_word!(game, power_bomb_pre_explosion_radius_speed))
+        );
+        update_ram_word!(
+            game.power_bomb_pre_explosion_radius_speed,
+            wrapping_add(kPowerBombExplosionRadiusAccel)
+        );
     }
 }
 pub unsafe fn CalculatePowerBombHdmaTablePointers(v0: uint16, game: &mut Game) {
@@ -2058,16 +2061,21 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionWhite(k: uint16, game
         (*(game.g_rom.offset(crate::rtl::lorom_offset(0x889079)) as *const uint8 as *mut uint8)
             .offset((t * 3 as i32 + 2 as i32) as isize))
             | (0x80u8);
-    let ref mut fresh115 = *((&raw mut game.g_ram as *mut uint8).offset(0xcec) as *mut uint16);
-    *fresh115 = (*fresh115).wrapping_add(ram_word!(game, power_bomb_pre_explosion_radius_speed));
+    update_ram_word!(
+        game.power_bomb_pre_explosion_flash_radius,
+        wrapping_add(ram_word!(game, power_bomb_pre_explosion_radius_speed))
+    );
     if ram_word!(game, power_bomb_pre_explosion_flash_radius) < 0x9200u16 {
-        let ref mut fresh116 = *((&raw mut game.g_ram as *mut uint8).offset(0xcf0) as *mut uint16);
-        *fresh116 = (*fresh116).wrapping_sub(kPowerBombPreExplosionRadiusAccel);
+        update_ram_word!(
+            game.power_bomb_pre_explosion_radius_speed,
+            wrapping_sub(kPowerBombPreExplosionRadiusAccel)
+        );
     } else {
         set_ram_word!(game.hdma_object_instruction_timers[(k as i32 >> 1i32)] = 1 as uint16);
-        let ref mut fresh117 = *((&raw mut game.g_ram as *mut uint8).offset(0x18cc) as *mut uint16)
-            .offset((k as i32 >> 1 as i32) as isize);
-        *fresh117 = (*fresh117).wrapping_add(2u16);
+        update_ram_word!(
+            game.hdma_object_instruction_list_pointers[(k as i32 >> 1 as i32)],
+            wrapping_add(2u16)
+        );
         set_ram_word!(game.hdma_object_timers[(k as i32 >> 1i32)] = 0 as uint16);
     };
 }
@@ -2110,24 +2118,30 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionYellow(k: uint16, gam
         (*(game.g_rom.offset(crate::rtl::lorom_offset(0x889079)) as *const uint8 as *mut uint8)
             .offset((3 as i32 * t + 2 as i32) as isize))
             | (0x80u8);
-    let ref mut fresh111 = *((&raw mut game.g_ram as *mut uint8).offset(0xcf2) as *mut uint16);
-    *fresh111 = (*fresh111).wrapping_add(192u16);
+    update_ram_word!(
+        game.pre_scaled_power_bomb_explosion_shape_def_ptr,
+        wrapping_add(192u16)
+    );
     if ram_word!(game, pre_scaled_power_bomb_explosion_shape_def_ptr) == 0xa206u16 {
         set_ram_word!(game.hdma_object_instruction_timers[(k as i32 >> 1i32)] = 1 as uint16);
-        let ref mut fresh112 = *((&raw mut game.g_ram as *mut uint8).offset(0x18cc) as *mut uint16)
-            .offset((k as i32 >> 1 as i32) as isize);
-        *fresh112 = (*fresh112).wrapping_add(2u16);
+        update_ram_word!(
+            game.hdma_object_instruction_list_pointers[(k as i32 >> 1 as i32)],
+            wrapping_add(2u16)
+        );
         set_ram_word!(game.hdma_object_timers[(k as i32 >> 1i32)] = 0 as uint16);
     }
     if (ram_word!(game, power_bomb_pre_explosion_radius_speed) as i32
         + ram_word!(game, power_bomb_pre_explosion_flash_radius) as i32)
         < 0x10000i32
     {
-        let ref mut fresh113 = *((&raw mut game.g_ram as *mut uint8).offset(0xcec) as *mut uint16);
-        *fresh113 =
-            (*fresh113).wrapping_add(ram_word!(game, power_bomb_pre_explosion_radius_speed));
-        let ref mut fresh114 = *((&raw mut game.g_ram as *mut uint8).offset(0xcf0) as *mut uint16);
-        *fresh114 = (*fresh114).wrapping_sub(kPowerBombPreExplosionRadiusAccel);
+        update_ram_word!(
+            game.power_bomb_pre_explosion_flash_radius,
+            wrapping_add(ram_word!(game, power_bomb_pre_explosion_radius_speed))
+        );
+        update_ram_word!(
+            game.power_bomb_pre_explosion_radius_speed,
+            wrapping_sub(kPowerBombPreExplosionRadiusAccel)
+        );
     }
 }
 pub unsafe fn SpawnCrystalFlashHdmaObjs(game: &mut Game) {
@@ -2180,10 +2194,10 @@ pub unsafe fn HdmaobjPreInstr_CrystalFlash_CustomLayerBlend(k: uint16, game: &mu
 pub unsafe fn HdmaobjPreInstr_CrystalFlash_Stage2_AfterGlow(k: uint16, game: &mut Game) {
     if (ram_word!(game, power_bomb_explosion_status) as i32 & 0x8000 as i32) != 0i32 {
         let v1: i32 = k as i32 >> 1 as i32;
-        let ref mut fresh109 = *((&raw mut game.g_ram as *mut uint8).offset(0x1908) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh109 = (*fresh109).wrapping_sub(1);
-        if (*fresh109 as i32 & 0x8000 as i32) != 0i32 {
+        if (update_ram_word!(game.hdma_object_timers[v1], wrapping_sub(1), reread) as i32
+            & 0x8000 as i32)
+            != 0i32
+        {
             if ((*(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2) as i32
                 | *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) as i32
                 | *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) as i32)
@@ -2225,10 +2239,10 @@ pub unsafe fn HdmaobjPreInstr_CrystalFlash_Stage2_AfterGlow(k: uint16, game: &mu
                     .offset(k as i32 as isize) = g_word_888B96 as uint8;
             } else {
                 set_ram_word!(game.hdma_object_instruction_timers[v1] = 1 as uint16);
-                let ref mut fresh110 = *((&raw mut game.g_ram as *mut uint8).offset(0x18cc)
-                    as *mut uint16)
-                    .offset(v1 as isize);
-                *fresh110 = (*fresh110).wrapping_add(2u16);
+                update_ram_word!(
+                    game.hdma_object_instruction_list_pointers[v1],
+                    wrapping_add(2u16)
+                );
             }
         }
     }
@@ -2507,16 +2521,21 @@ pub unsafe fn HdmaobjPreInstr_CrystalFlash_Stage1_Explosion(k: uint16, game: &mu
         (*(game.g_rom.offset(crate::rtl::lorom_offset(0x888d85)) as *const uint8 as *mut uint8)
             .offset((pos + 2 as i32) as isize))
             | (0x80u8);
-    let ref mut fresh106 = *((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16);
-    *fresh106 = (*fresh106).wrapping_add(ram_word!(game, power_bomb_pre_explosion_radius_speed));
+    update_ram_word!(
+        game.power_bomb_explosion_radius,
+        wrapping_add(ram_word!(game, power_bomb_pre_explosion_radius_speed))
+    );
     if ram_word!(game, power_bomb_explosion_radius) < 0x2000u16 {
-        let ref mut fresh107 = *((&raw mut game.g_ram as *mut uint8).offset(0xcf0) as *mut uint16);
-        *fresh107 = (*fresh107).wrapping_add(kPowerBombExplosionRadiusAccel);
+        update_ram_word!(
+            game.power_bomb_pre_explosion_radius_speed,
+            wrapping_add(kPowerBombExplosionRadiusAccel)
+        );
     } else {
         set_ram_word!(game.hdma_object_instruction_timers[(k as i32 >> 1i32)] = 1 as uint16);
-        let ref mut fresh108 = *((&raw mut game.g_ram as *mut uint8).offset(0x18cc) as *mut uint16)
-            .offset((k as i32 >> 1 as i32) as isize);
-        *fresh108 = (*fresh108).wrapping_add(2u16);
+        update_ram_word!(
+            game.hdma_object_instruction_list_pointers[(k as i32 >> 1 as i32)],
+            wrapping_add(2u16)
+        );
         set_ram_word!(game.hdma_object_timers[(k as i32 >> 1i32)] = 0 as uint16);
     };
 }
@@ -2599,8 +2618,7 @@ unsafe fn SetupSomeHdmaTablesBG3(
             .offset(v0 as isize) as uint16;
         r18 = (r18).wrapping_add(r20);
         v0 = (v0).wrapping_add(3u16);
-        let ref mut fresh49 = *((&raw mut game.g_ram as *mut uint8).offset(0x598) as *mut uint16);
-        *fresh49 = (*fresh49).wrapping_add(r20);
+        update_ram_word!(game.g_word_7E0598, wrapping_add(r20));
         if ram_word!(game, g_word_7E0598) as i32 - 224 as i32 & 0x8000 as i32 == 0 {
             break;
         }
@@ -3104,9 +3122,7 @@ pub unsafe fn HdmaobjPreInstr_FirefleaBG3XScroll(k: uint16, game: &mut Game) {
             | 0xc as i32) as uint16
     );
     if ram_word!(game, time_is_frozen_flag) == 0 {
-        let ref mut fresh103 = *((&raw mut game.g_ram as *mut uint8).offset(0x1778) as *mut uint16);
-        *fresh103 = (*fresh103).wrapping_sub(1);
-        if *fresh103 == 0 {
+        if update_ram_word!(game.fireflea_flashing_timer, wrapping_sub(1), reread) == 0 {
             set_ram_word!(game.fireflea_flashing_timer = 6 as uint16);
             if ram_word!(game, fireflea_darkness_level) as i32 - 10 as i32 & 0x8000 as i32 != 0 {
                 v1 = (ram_word!(game, fireflea_flashing_index)).wrapping_add(1u16);
@@ -3130,14 +3146,13 @@ pub unsafe fn HdmaobjPreInstr_FirefleaBG3XScroll(k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn ExpandingContractingHdmaEffect(game: &mut Game) {
-    let ref mut fresh32 = *((&raw mut game.g_ram as *mut uint8).offset(0x59a) as *mut uint16);
-    *fresh32 = (*fresh32).wrapping_add(1);
-    if *fresh32 as i32 - 4 as i32 & 0x8000 as i32 == 0 {
+    if update_ram_word!(game.set_to_e0_by_scrolling_sky, wrapping_add(1), reread) as i32 - 4 as i32
+        & 0x8000 as i32
+        == 0
+    {
         set_ram_word!(game.set_to_e0_by_scrolling_sky = 0 as uint16);
         if ram_word!(game, UNUSED_hdma_contracting_flag) != 0 {
-            let ref mut fresh33 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x5a2) as *mut uint16);
-            *fresh33 = (*fresh33).wrapping_sub(1024u16);
+            update_ram_word!(game.message_box_animation_y_radius, wrapping_sub(1024u16));
             if ram_word!(game, message_box_animation_y_radius) as i32 - 0x2000 as i32
                 & 0x8000 as i32
                 != 0
@@ -3146,16 +3161,12 @@ pub unsafe fn ExpandingContractingHdmaEffect(game: &mut Game) {
                 set_ram_word!(game.UNUSED_hdma_contracting_flag = 0 as uint16);
             }
         } else {
-            let ref mut fresh34 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x5a2) as *mut uint16);
-            *fresh34 = (*fresh34).wrapping_add(1024u16);
+            update_ram_word!(game.message_box_animation_y_radius, wrapping_add(1024u16));
             if ram_word!(game, message_box_animation_y_radius) as i32 + 0x8000 as i32
                 & 0x8000 as i32
                 == 0
             {
-                let ref mut fresh35 =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x5a0) as *mut uint16);
-                *fresh35 = (*fresh35).wrapping_add(1);
+                update_ram_word!(game.UNUSED_hdma_contracting_flag, wrapping_add(1));
             }
         }
         set_ram_word!(game.message_box_animation_y0 = 128 as uint16);
@@ -3180,17 +3191,11 @@ pub unsafe fn ExpandingContractingHdmaEffect(game: &mut Game) {
                 .wrapping_sub(ram_word!(game, message_box_animation_y2));
         r18 = (r18).wrapping_add(ram_word!(game, message_box_animation_y_radius));
         if Unreachable(game) {
-            let ref mut fresh36 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x5a6) as *mut uint16);
-            *fresh36 = (*fresh36).wrapping_add(1);
-            let ref mut fresh37 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x5aa) as *mut uint16);
-            *fresh37 = (*fresh37).wrapping_sub(1);
+            update_ram_word!(game.message_box_animation_y1, wrapping_add(1));
+            update_ram_word!(game.message_box_animation_y3, wrapping_sub(1));
         }
-        let ref mut fresh38 = *((&raw mut game.g_ram as *mut uint8).offset(0x5a4) as *mut uint16);
-        *fresh38 = (*fresh38).wrapping_add(1);
-        let ref mut fresh39 = *((&raw mut game.g_ram as *mut uint8).offset(0x5a8) as *mut uint16);
-        *fresh39 = (*fresh39).wrapping_sub(1);
+        update_ram_word!(game.message_box_animation_y0, wrapping_add(1));
+        update_ram_word!(game.message_box_animation_y2, wrapping_sub(1));
         v1 = (v1).wrapping_sub(2u16);
         v0 = (v0).wrapping_add(2u16);
         r20 = r20.wrapping_sub(1);
@@ -3205,9 +3210,9 @@ static g_word_88B256: [uint16; 17] = [
 pub unsafe fn HandleEarthquakeSoundEffect(game: &mut Game) {
     let mut v1: int16 = 0;
     if (ram_word!(game, earthquake_sfx_timer) as i32 & 0x8000 as i32) == 0i32 && {
-        let ref mut fresh43 = *((&raw mut game.g_ram as *mut uint8).offset(0x609) as *mut uint16);
-        *fresh43 = (*fresh43).wrapping_sub(1);
-        (*fresh43 as i32 & 0x8000 as i32) != 0i32
+        (update_ram_word!(game.earthquake_sfx_timer, wrapping_sub(1), reread) as i32
+            & 0x8000 as i32)
+            != 0i32
     } {
         let mut v0: uint16 = ram_word!(game, earthquake_sfx_index);
         v1 = g_word_88B256[(ram_word!(game, earthquake_sfx_index) as i32 >> 1 as i32) as usize]
@@ -3284,9 +3289,7 @@ pub unsafe fn FxHandleTide(game: &mut Game) {
             ) as i32;
         let v1: uint16 = (8u16).wrapping_mul((kSinCosTable8bit_Sext[v0 as usize]) as u16);
         if (kSinCosTable8bit_Sext[v0 as usize] as i32 & 0x1000 as i32) != 0i32 {
-            let ref mut fresh40 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1972) as *mut uint16);
-            *fresh40 = (*fresh40).wrapping_sub(1);
+            update_ram_word!(game.fx_y_offset, wrapping_sub(1));
         }
         *(((&raw mut game.g_ram as *mut uint8).offset(0x1970) as *mut uint16 as *mut uint8)
             .offset(1) as *mut uint16) = v1;
@@ -3312,9 +3315,7 @@ pub unsafe fn FxHandleTide(game: &mut Game) {
             ) as i32;
         let v4: uint16 = (32u16).wrapping_mul((kSinCosTable8bit_Sext[v3 as usize]) as u16);
         if (kSinCosTable8bit_Sext[v3 as usize] as i32 & 0x400 as i32) != 0i32 {
-            let ref mut fresh41 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1972) as *mut uint16);
-            *fresh41 = (*fresh41).wrapping_sub(1);
+            update_ram_word!(game.fx_y_offset, wrapping_sub(1));
         }
         *(((&raw mut game.g_ram as *mut uint8).offset(0x1970) as *mut uint16 as *mut uint8)
             .offset(1) as *mut uint16) = v4;
@@ -3345,19 +3346,15 @@ pub unsafe fn FxRisingFunction_LavaAcid(game: &mut Game) {
 pub unsafe fn FxRisingFunction_LavaAcid_WaitToRise(game: &mut Game) {
     HandleEarthquakeSoundEffect(game);
     set_ram_word!(game.earthquake_type = 21 as uint16);
-    let ref mut fresh44 = *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16);
-    *fresh44 = (*fresh44) | (0x20u16);
-    let ref mut fresh45 = *((&raw mut game.g_ram as *mut uint8).offset(0x1980) as *mut uint16);
-    *fresh45 = (*fresh45).wrapping_sub(1);
-    if *fresh45 == 0 {
+    update_ram_word!(game.earthquake_timer, |fresh44| (fresh44) | (0x20u16));
+    if update_ram_word!(game.fx_timer, wrapping_sub(1), reread) == 0 {
         set_ram_word!(game.fx_rising_function_bank_88 = ((0x88b382i32) as u16));
     }
 }
 pub unsafe fn FxRisingFunction_LavaAcid_Raising(game: &mut Game) {
     HandleEarthquakeSoundEffect(game);
     set_ram_word!(game.earthquake_type = 21 as uint16);
-    let ref mut fresh42 = *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16);
-    *fresh42 = (*fresh42) | (0x20u16);
+    update_ram_word!(game.earthquake_timer, |fresh42| (fresh42) | (0x20u16));
     if RaiseOrLowerFx(game) as i32 & 1 as i32 != 0 {
         set_ram_word!(game.fx_y_vel = 0 as uint16);
         set_ram_word!(game.fx_rising_function_bank_88 = ((0x88b343i32) as u16));
@@ -3644,9 +3641,7 @@ pub unsafe fn FxRisingFunction_C428_WaterNormal(game: &mut Game) {
     }
 }
 pub unsafe fn FxRisingFunction_WaterWaitToRise(game: &mut Game) {
-    let ref mut fresh46 = *((&raw mut game.g_ram as *mut uint8).offset(0x1980) as *mut uint16);
-    *fresh46 = (*fresh46).wrapping_sub(1);
-    if *fresh46 == 0 {
+    if update_ram_word!(game.fx_timer, wrapping_sub(1), reread) == 0 {
         set_ram_word!(game.fx_rising_function_bank_88 = ((0x88c458i32) as u16));
     }
 }
@@ -3742,9 +3737,10 @@ pub unsafe fn HdmaobjPreInstr_WaterBG3XScroll(k: uint16, game: &mut Game) {
         i -= 2 as i32;
     }
     if (ram_word!(game, fx_liquid_options) as i32 & 1 as i32) != 0i32 {
-        let ref mut fresh100 = *((&raw mut game.g_ram as *mut uint8).offset(0x192c) as *mut uint16)
-            .offset((k as i32 >> 1 as i32) as isize);
-        *fresh100 = (*fresh100).wrapping_add(64u16);
+        update_ram_word!(
+            game.hdma_object_C[(k as i32 >> 1 as i32)],
+            wrapping_add(64u16)
+        );
     }
     let mut v9: int16 = (ram_word!(game, fx_y_pos) as i32 - ram_word!(game, layer1_y_pos) as i32
         + 256 as i32) as int16;
@@ -3933,9 +3929,7 @@ pub unsafe fn HdmaobjPreInstr_RainBg3Scroll(k: uint16, game: &mut Game) {
                             .wrapping_sub(1_usize) as isize,
                     ) as int8 as i32) as uint16
         );
-        let ref mut fresh94 = *((&raw mut game.g_ram as *mut uint8).offset(0x1914) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh94 = (*fresh94).wrapping_sub(1536u16);
+        update_ram_word!(game.hdma_object_A[v1], wrapping_sub(1536u16));
         set_ram_word!(game.hdma_object_E[v1] = ram_word!(game, layer1_y_pos));
         set_ram_word!(
             game.bg3_xpos = (ram_word!(game, hdma_object_F[v1]) as i32
@@ -3948,9 +3942,10 @@ pub unsafe fn HdmaobjPreInstr_RainBg3Scroll(k: uint16, game: &mut Game) {
                             .wrapping_sub(1_usize) as isize,
                     ) as int8 as i32) as uint16
         );
-        let ref mut fresh95 = *((&raw mut game.g_ram as *mut uint8).offset(0x1920) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh95 = (*fresh95).wrapping_add(ram_word!(game, hdma_object_D[v1]));
+        update_ram_word!(
+            game.hdma_object_B[v1],
+            wrapping_add(ram_word!(game, hdma_object_D[v1]))
+        );
         set_ram_word!(game.hdma_object_F[v1] = ram_word!(game, layer1_x_pos));
     }
 }
@@ -4024,9 +4019,7 @@ pub unsafe fn HdmaobjPreInstr_FogBG3Scroll(k: uint16, game: &mut Game) {
                     ) as int8) as u16,
             )
         );
-        let ref mut fresh92 = *((&raw mut game.g_ram as *mut uint8).offset(0x1914) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh92 = (*fresh92).wrapping_sub(64u16);
+        update_ram_word!(game.hdma_object_A[v1], wrapping_sub(64u16));
         set_ram_word!(
             game.bg3_xpos = (ram_word!(game, layer1_x_pos)).wrapping_add(
                 (*(((&raw mut game.g_ram as *mut uint8).offset(0x1920) as *mut uint16)
@@ -4038,9 +4031,7 @@ pub unsafe fn HdmaobjPreInstr_FogBG3Scroll(k: uint16, game: &mut Game) {
                     ) as int8) as u16,
             )
         );
-        let ref mut fresh93 = *((&raw mut game.g_ram as *mut uint8).offset(0x1920) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh93 = (*fresh93).wrapping_add(80u16);
+        update_ram_word!(game.hdma_object_B[v1], wrapping_add(80u16));
     }
 }
 pub unsafe fn FxTypeFunc_26_TourianEntranceStatue(game: &mut Game) {
@@ -4083,17 +4074,17 @@ pub unsafe fn HdmaobjPreInstr_CheckLotsOfEventsHappened(mut v0: uint16, game: &m
         && CheckEventHappened(8 as uint16, game) as i32 & 1 as i32 != 0
         && CheckEventHappened(9 as uint16, game) as i32 & 1 as i32 != 0
     {
-        let ref mut fresh90 = *((&raw mut game.g_ram as *mut uint8).offset(0x1e6f) as *mut uint16);
-        *fresh90 = (*fresh90) | (0x10u16);
+        update_ram_word!(game.tourian_entrance_statue_animstate, |fresh90| (fresh90)
+            | (0x10u16));
         if (ram_word!(game, tourian_entrance_statue_animstate) as i32 & 0x8000 as i32) == 0i32 {
             set_ram_word!(game.hdma_object_C[(v0 as i32 >> 1i32)] = 300 as uint16);
             v0 = ram_word!(game, hdma_object_index);
             let v1: i32 = ram_word!(game, hdma_object_index) as i32 >> 1 as i32;
             set_ram_word!(game.hdma_object_instruction_timers[v1] = 1 as uint16);
-            let ref mut fresh91 = *((&raw mut game.g_ram as *mut uint8).offset(0x18cc)
-                as *mut uint16)
-                .offset(v1 as isize);
-            *fresh91 = (*fresh91).wrapping_add(2u16);
+            update_ram_word!(
+                game.hdma_object_instruction_list_pointers[v1],
+                wrapping_add(2u16)
+            );
         }
     }
     sub_88DBCB(v0, game);
@@ -4102,13 +4093,11 @@ pub unsafe fn HdmaobjPreInstr_DC23(k: uint16, game: &mut Game) {
     let v0: uint16 = k;
     HandleEarthquakeSoundEffect(game);
     set_ram_word!(game.earthquake_type = 13 as uint16);
-    let ref mut fresh87 = *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16);
-    *fresh87 = (*fresh87) | (0x20u16);
+    update_ram_word!(game.earthquake_timer, |fresh87| (fresh87) | (0x20u16));
     let v1: i32 = v0 as uint8 as i32 >> 1 as i32;
-    let ref mut fresh88 =
-        *((&raw mut game.g_ram as *mut uint8).offset(0x192c) as *mut uint16).offset(v1 as isize);
-    *fresh88 = (*fresh88).wrapping_sub(1);
-    if (*fresh88 as i32 & 0x8000 as i32) != 0i32 {
+    if (update_ram_word!(game.hdma_object_C[v1], wrapping_sub(1), reread) as i32 & 0x8000 as i32)
+        != 0i32
+    {
         SpawnEprojWithRoomGfx(
             addr_kEproj_TourianStatueDustClouds as uint16,
             0 as uint16,
@@ -4130,17 +4119,17 @@ pub unsafe fn HdmaobjPreInstr_DC23(k: uint16, game: &mut Game) {
             game,
         );
         set_ram_word!(game.hdma_object_instruction_timers[v1] = 1 as uint16);
-        let ref mut fresh89 = *((&raw mut game.g_ram as *mut uint8).offset(0x18cc) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh89 = (*fresh89).wrapping_add(2u16);
+        update_ram_word!(
+            game.hdma_object_instruction_list_pointers[v1],
+            wrapping_add(2u16)
+        );
     }
     sub_88DBCB(v0, game);
 }
 pub unsafe fn HdmaobjPreInstr_DC69(k: uint16, game: &mut Game) {
     HandleEarthquakeSoundEffect(game);
     set_ram_word!(game.earthquake_type = 13 as uint16);
-    let ref mut fresh85 = *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16);
-    *fresh85 = (*fresh85) | (0x20u16);
+    update_ram_word!(game.earthquake_timer, |fresh85| (fresh85) | (0x20u16));
     if ram_word!(game, time_is_frozen_flag) == 0 {
         let v1: i32 = k as i32 >> 1 as i32;
         AddToHiLo(
@@ -4157,10 +4146,10 @@ pub unsafe fn HdmaobjPreInstr_DC69(k: uint16, game: &mut Game) {
             );
             SetEventHappened(0xa as uint16, game);
             set_ram_word!(game.hdma_object_instruction_timers[v1] = 1 as uint16);
-            let ref mut fresh86 = *((&raw mut game.g_ram as *mut uint8).offset(0x18cc)
-                as *mut uint16)
-                .offset(v1 as isize);
-            *fresh86 = (*fresh86).wrapping_add(2u16);
+            update_ram_word!(
+                game.hdma_object_instruction_list_pointers[v1],
+                wrapping_add(2u16)
+            );
         }
         sub_88DBCB(k, game);
     }
@@ -4276,9 +4265,7 @@ pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_FadingIn(k: uint16, game: &
             }
             i -= 1;
         }
-        let ref mut fresh84 = *((&raw mut game.g_ram as *mut uint8).offset(0x1914) as *mut uint16)
-            .offset((v3 as i32 >> 1 as i32) as isize);
-        *fresh84 = (*fresh84).wrapping_add(1);
+        update_ram_word!(game.hdma_object_A[(v3 as i32 >> 1 as i32)], wrapping_add(1));
     };
 }
 pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_FadedIn(k: uint16, game: &mut Game) {
@@ -4316,9 +4303,7 @@ pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_FadingOut(k: uint16, game: 
             }
             i -= 1;
         }
-        let ref mut fresh83 = *((&raw mut game.g_ram as *mut uint8).offset(0x1914) as *mut uint16)
-            .offset((v3 as i32 >> 1 as i32) as isize);
-        *fresh83 = (*fresh83).wrapping_sub(1);
+        update_ram_word!(game.hdma_object_A[(v3 as i32 >> 1 as i32)], wrapping_sub(1));
     }
 }
 static unk_88DF38: SpawnHdmaObject_Args =
@@ -4464,8 +4449,7 @@ static g_word_88E0D5: uint16 = 0x7878 as uint16;
 pub unsafe fn VariaSuitPickup_0_LightBeamAppears(game: &mut Game) -> uint8 {
     let mut v0: int16 = 0;
     let mut v3: int16 = 0;
-    let ref mut fresh15 = *((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16);
-    *fresh15 = (*fresh15).wrapping_add(8u16);
+    update_ram_word!(game.suit_pickup_light_beam_pos, wrapping_add(8u16));
     v0 = ram_word!(game, suit_pickup_light_beam_pos) as int16;
     let mut v1: uint16 = 0 as uint16;
     loop {
@@ -4487,8 +4471,7 @@ pub unsafe fn VariaSuitPickup_0_LightBeamAppears(game: &mut Game) -> uint8 {
         }
     }
     if ram_word!(game, suit_pickup_light_beam_pos) as i32 - 128 as i32 & 0x8000 as i32 == 0 {
-        let ref mut fresh16 = *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16);
-        *fresh16 = (*fresh16).wrapping_add(1);
+        update_ram_word!(game.substate, wrapping_add(1));
         set_ram_word!(game.suit_pickup_light_beam_pos = 30840 as uint16);
     }
     1 as uint8
@@ -4523,8 +4506,7 @@ pub unsafe fn VariaSuitPickup_1(game: &mut Game) -> uint8 {
     }
     if ram_word!(game, suit_pickup_light_beam_pos) as uint8 as i32 - 97 as i32 & 0x8000 as i32 != 0
     {
-        let ref mut fresh18 = *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16);
-        *fresh18 = (*fresh18).wrapping_add(1);
+        update_ram_word!(game.substate, wrapping_add(1));
         set_ram_word!(game.suit_pickup_light_beam_pos = 0x846c as uint16);
     }
     1 as uint8
@@ -4685,13 +4667,16 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> uint8 {
             break;
         }
     }
-    let ref mut fresh19 = *((&raw mut game.g_ram as *mut uint8).offset(0xddc) as *mut uint16);
-    *fresh19 = (*fresh19).wrapping_add(96u16);
+    update_ram_word!(
+        game.suit_pickup_light_beam_widening_speed,
+        wrapping_add(96u16)
+    );
     if ram_word!(game, suit_pickup_light_beam_pos) == 0xff00u16 {
-        let ref mut fresh20 = *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16);
-        *fresh20 = (*fresh20).wrapping_add(1);
-        let ref mut fresh21 = *((&raw mut game.g_ram as *mut uint8).offset(0xddc) as *mut uint16);
-        *fresh21 = (*fresh21 as i32 >> 1 as i32) as uint16;
+        update_ram_word!(game.substate, wrapping_add(1));
+        update_ram_word!(
+            game.suit_pickup_light_beam_widening_speed,
+            |fresh21| (fresh21 as i32 >> 1 as i32) as uint16
+        );
         set_ram_word!(game.suit_pickup_light_beam_pos = 0 as uint16);
     }
     1 as uint8
@@ -4702,10 +4687,10 @@ pub unsafe fn VariaSuitPickup_4_LightBeamShrinks(game: &mut Game) -> uint8 {
     } else {
         AdvanceSuitPickupColorMathToOrange(game);
     }
-    let ref mut fresh25 = *((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16);
-    *fresh25 = (*fresh25 as i32
+    update_ram_word!(game.suit_pickup_light_beam_pos, |fresh25| (fresh25 as i32
         + ((ram_word!(game, suit_pickup_light_beam_widening_speed) as i32 & 0xff00 as i32)
-            >> 8 as i32)) as uint16;
+            >> 8 as i32))
+        as uint16);
     let mut v0: int16 = ram_word!(game, suit_pickup_light_beam_pos) as int16;
     let mut v1: uint16 = 0 as uint16;
     loop {
@@ -4726,16 +4711,17 @@ pub unsafe fn VariaSuitPickup_4_LightBeamShrinks(game: &mut Game) -> uint8 {
             break;
         }
     }
-    let ref mut fresh26 = *((&raw mut game.g_ram as *mut uint8).offset(0xddc) as *mut uint16);
-    *fresh26 = (*fresh26).wrapping_sub(32u16);
+    update_ram_word!(
+        game.suit_pickup_light_beam_widening_speed,
+        wrapping_sub(32u16)
+    );
     if ram_word!(game, suit_pickup_light_beam_widening_speed) as i32 - 256 as i32 & 0x8000 as i32
         != 0
     {
         set_ram_word!(game.suit_pickup_light_beam_widening_speed = 256 as uint16);
     }
     if ram_word!(game, suit_pickup_light_beam_pos) as i32 - 128 as i32 & 0x8000 as i32 == 0 {
-        let ref mut fresh27 = *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16);
-        *fresh27 = (*fresh27).wrapping_add(1);
+        update_ram_word!(game.substate, wrapping_add(1));
         set_ram_word!(game.suit_pickup_light_beam_pos = -(1793 as i32) as uint16);
     }
     1 as uint8
@@ -4753,8 +4739,7 @@ pub unsafe fn VariaSuitPickup_5_LightBeamDissipates(game: &mut Game) -> uint8 {
     set_ram_word!(game.hdma_table_1[128] = ram_word!(game, suit_pickup_light_beam_pos));
     if ram_word!(game, suit_pickup_light_beam_pos) as uint8 as i32 - 112 as i32 & 0x8000 as i32 == 0
     {
-        let ref mut fresh29 = *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16);
-        *fresh29 = (*fresh29).wrapping_add(1);
+        update_ram_word!(game.substate, wrapping_add(1));
     }
     1 as uint8
 }
@@ -4781,9 +4766,10 @@ pub unsafe fn GravitySuitPickup_6(game: &mut Game) -> uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xdf0) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xdf2) as *mut uint16) = 0 as uint16;
     let v0: i32 = ram_word!(game, hdma_object_index) as i32 >> 1 as i32;
-    let ref mut fresh12 =
-        *((&raw mut game.g_ram as *mut uint8).offset(0x18cc) as *mut uint16).offset(v0 as isize);
-    *fresh12 = (*fresh12).wrapping_add(2u16);
+    update_ram_word!(
+        game.hdma_object_instruction_list_pointers[v0],
+        wrapping_add(2u16)
+    );
     set_ram_word!(game.hdma_object_instruction_timers[v0] = 1 as uint16);
     CallSomeSamusCode(0xb as uint16, game);
     0 as uint8
@@ -4831,10 +4817,8 @@ pub unsafe fn AdvanceSuitPickupColorMathToOrange(game: &mut Game) -> uint8 {
     1 as uint8
 }
 pub unsafe fn VariaSuitPickup_3(game: &mut Game) -> uint8 {
-    let ref mut fresh22 = *((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16);
-    *fresh22 = (*fresh22) | (1u16);
-    let ref mut fresh23 = *((&raw mut game.g_ram as *mut uint8).offset(0x9a4) as *mut uint16);
-    *fresh23 = (*fresh23) | (1u16);
+    update_ram_word!(game.equipped_items, |fresh22| (fresh22) | (1u16));
+    update_ram_word!(game.collected_items, |fresh23| (fresh23) | (1u16));
     set_ram_word!(game.samus_pose = kPose_9B_FaceF_VariaGravitySuit as uint16);
     SamusFunc_F433(game);
     Samus_SetAnimationFrameIfPoseChanged(game);
@@ -4845,15 +4829,12 @@ pub unsafe fn VariaSuitPickup_3(game: &mut Game) -> uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xa22) as *mut uint16) =
         *((&raw mut game.g_ram as *mut uint8).offset(0xa1e) as *mut uint16);
     Samus_LoadSuitPalette(game);
-    let ref mut fresh24 = *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16);
-    *fresh24 = (*fresh24).wrapping_add(1);
+    update_ram_word!(game.substate, wrapping_add(1));
     1 as uint8
 }
 pub unsafe fn GravitySuitPickup_3(game: &mut Game) -> uint8 {
-    let ref mut fresh9 = *((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16);
-    *fresh9 = (*fresh9) | (0x20u16);
-    let ref mut fresh10 = *((&raw mut game.g_ram as *mut uint8).offset(0x9a4) as *mut uint16);
-    *fresh10 = (*fresh10) | (0x20u16);
+    update_ram_word!(game.equipped_items, |fresh9| (fresh9) | (0x20u16));
+    update_ram_word!(game.collected_items, |fresh10| (fresh10) | (0x20u16));
     set_ram_word!(game.samus_pose = kPose_9B_FaceF_VariaGravitySuit as uint16);
     SamusFunc_F433(game);
     Samus_SetAnimationFrameIfPoseChanged(game);
@@ -4864,8 +4845,7 @@ pub unsafe fn GravitySuitPickup_3(game: &mut Game) -> uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xa22) as *mut uint16) =
         *((&raw mut game.g_ram as *mut uint8).offset(0xa1e) as *mut uint16);
     Samus_LoadSuitPalette(game);
-    let ref mut fresh11 = *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16);
-    *fresh11 = (*fresh11).wrapping_add(1);
+    update_ram_word!(game.substate, wrapping_add(1));
     1 as uint8
 }
 pub unsafe fn AdvanceSuitPickupColorMathToBlue(game: &mut Game) -> uint8 {
@@ -4900,10 +4880,10 @@ pub unsafe fn HdmaobjPreInstr_E449(k: uint16, game: &mut Game) {
         {
             set_ram_word!(game.fx_layer_blending_config_c = 4 as uint16);
             let v0: i32 = ram_word!(game, hdma_object_index) as i32 >> 1 as i32;
-            let ref mut fresh82 = *((&raw mut game.g_ram as *mut uint8).offset(0x18cc)
-                as *mut uint16)
-                .offset(v0 as isize);
-            *fresh82 = (*fresh82).wrapping_add(2u16);
+            update_ram_word!(
+                game.hdma_object_instruction_list_pointers[v0],
+                wrapping_add(2u16)
+            );
             set_ram_word!(game.hdma_object_instruction_timers[v0] = 1 as uint16);
         }
     } else {
@@ -5199,9 +5179,10 @@ pub unsafe fn HdmaobjPreInstr_E567(v0: uint16, game: &mut Game) {
         }
     } else {
         let v1: i32 = ram_word!(game, hdma_object_index) as i32 >> 1 as i32;
-        let ref mut fresh81 = *((&raw mut game.g_ram as *mut uint8).offset(0x18cc) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh81 = (*fresh81).wrapping_add(2u16);
+        update_ram_word!(
+            game.hdma_object_instruction_list_pointers[v1],
+            wrapping_add(2u16)
+        );
         set_ram_word!(game.hdma_object_instruction_timers[v1] = 1 as uint16);
     };
 }
@@ -5255,18 +5236,10 @@ pub unsafe fn sub_88E7ED(game: &mut Game) {
         as *mut uint16)
         .offset((ram_word!(game, hdma_object_A[0]) as i32 >> 1 as i32) as isize);
     if (v0 as i32 & 0x8000 as i32) == 0i32 {
-        let ref mut fresh75 =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1914) as *mut uint16).offset(0);
-        *fresh75 = (*fresh75).wrapping_add(1);
-        let ref mut fresh76 =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1914) as *mut uint16).offset(0);
-        *fresh76 = (*fresh76).wrapping_add(1);
-        let ref mut fresh77 =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1914) as *mut uint16).offset(0);
-        *fresh77 = (*fresh77).wrapping_add(1);
-        let ref mut fresh78 =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1914) as *mut uint16).offset(0);
-        *fresh78 = (*fresh78).wrapping_add(1);
+        update_ram_word!(game.hdma_object_A[0], wrapping_add(1));
+        update_ram_word!(game.hdma_object_A[0], wrapping_add(1));
+        update_ram_word!(game.hdma_object_A[0], wrapping_add(1));
+        update_ram_word!(game.hdma_object_A[0], wrapping_add(1));
     } else {
         set_ram_word!(game.hdma_object_A[0] = 0 as uint16);
         v0 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x88e833)) as *const uint8
@@ -5487,18 +5460,20 @@ pub unsafe fn HdmaobjPreInstr_Backdrop_TitleSequenceGradient(k: uint16, game: &m
     ConfigureTitleSequenceGradientHDMA(game);
     if ram_word!(game, cinematic_function) as i32 == 0x8b9b68 as i32 & 0xffff as i32 {
         let v1: i32 = ram_word!(game, hdma_object_index) as i32 >> 1 as i32;
-        let ref mut fresh68 = *((&raw mut game.g_ram as *mut uint8).offset(0x18cc) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh68 = (*fresh68).wrapping_add(2u16);
+        update_ram_word!(
+            game.hdma_object_instruction_list_pointers[v1],
+            wrapping_add(2u16)
+        );
         set_ram_word!(game.hdma_object_instruction_timers[v1] = 1 as uint16);
     }
 }
 pub unsafe fn HdmaobjPreInstr_ColorMathControlB_TitleGradient(k: uint16, game: &mut Game) {
     if ram_word!(game, cinematic_function) as i32 == 0x8b9b68 as i32 & 0xffff as i32 {
         let v1: i32 = ram_word!(game, hdma_object_index) as i32 >> 1 as i32;
-        let ref mut fresh67 = *((&raw mut game.g_ram as *mut uint8).offset(0x18cc) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh67 = (*fresh67).wrapping_add(2u16);
+        update_ram_word!(
+            game.hdma_object_instruction_list_pointers[v1],
+            wrapping_add(2u16)
+        );
         set_ram_word!(game.hdma_object_instruction_timers[v1] = 1 as uint16);
     }
 }
@@ -5514,9 +5489,10 @@ pub unsafe fn SpawnIntroCutsceneCrossfadeHdma(game: &mut Game) {
 pub unsafe fn HdmaobjPreInstr_IntroCutsceneCrossfade(k: uint16, game: &mut Game) {
     if ram_word!(game, eproj_x_pos[0]) == 1u16 {
         let v1: i32 = ram_word!(game, hdma_object_index) as i32 >> 1 as i32;
-        let ref mut fresh66 = *((&raw mut game.g_ram as *mut uint8).offset(0x18cc) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh66 = (*fresh66).wrapping_add(2u16);
+        update_ram_word!(
+            game.hdma_object_instruction_list_pointers[v1],
+            wrapping_add(2u16)
+        );
         set_ram_word!(game.hdma_object_instruction_timers[v1] = 1 as uint16);
     }
 }
@@ -5679,9 +5655,10 @@ pub unsafe fn HdmaobjPreInstr_ECB6(k: uint16, game: &mut Game) {
         }
     } else {
         let v2: i32 = ram_word!(game, hdma_object_index) as i32 >> 1 as i32;
-        let ref mut fresh65 = *((&raw mut game.g_ram as *mut uint8).offset(0x18cc) as *mut uint16)
-            .offset(v2 as isize);
-        *fresh65 = (*fresh65).wrapping_add(2u16);
+        update_ram_word!(
+            game.hdma_object_instruction_list_pointers[v2],
+            wrapping_add(2u16)
+        );
         set_ram_word!(game.hdma_object_instruction_timers[v2] = 1 as uint16);
     };
 }

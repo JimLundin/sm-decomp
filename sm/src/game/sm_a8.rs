@@ -18,7 +18,7 @@ use crate::game::sm_a0::{
 };
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
-use crate::ram_map::{ram_word, set_ram_word};
+use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{Mult8x8, RomPtr, Unreachable, WriteReg};
@@ -1391,10 +1391,7 @@ pub unsafe fn WreckedShipGhost_Func_1(k: uint16, game: &mut Game) {
         if (ram_word!(game, palette_buffer[v5]) as i32 & 0x1f as i32) - 31 as i32 & 0x8000 as i32
             != 0
         {
-            let ref mut fresh12 = *((&raw mut game.g_ram as *mut uint8).offset(0xc000)
-                as *mut uint16)
-                .offset(v5 as isize);
-            *fresh12 = (*fresh12).wrapping_add(1057u16);
+            update_ram_word!(game.palette_buffer[v5], wrapping_add(1057u16));
             v1 -= 1;
         }
         v4 = (v4).wrapping_add(2u16);
@@ -2563,15 +2560,17 @@ pub unsafe fn NorfairLavaMan_Func_5(k: uint16, game: &mut Game) {
 }
 pub unsafe fn NorfairLavaMan_Func_6(game: &mut Game) {
     if ram_word!(game, door_transition_flag_enemies) == 0 && {
-        let ref mut fresh10 =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1794) as *mut uint16).offset(2);
-        *fresh10 = (*fresh10).wrapping_sub(1);
-        *fresh10 == 0
+        update_ram_word!(
+            game.variables_for_enemy_graphics_drawn_hook[2],
+            wrapping_sub(1),
+            reread
+        ) == 0
     } {
         set_ram_word!(game.variables_for_enemy_graphics_drawn_hook[2] = 8 as uint16);
-        let ref mut fresh11 =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1794) as *mut uint16).offset(1);
-        *fresh11 = (*fresh11).wrapping_add(1);
+        update_ram_word!(
+            game.variables_for_enemy_graphics_drawn_hook[1],
+            wrapping_add(1)
+        );
         let v0: i32 = (32 as i32
             * (ram_word!(game, variables_for_enemy_graphics_drawn_hook[1]) as i32 & 3 as i32))
             as uint16 as i32
@@ -3892,9 +3891,10 @@ pub unsafe fn MaridiaFloater_Func_13(k: uint16, game: &mut Game) {
     if v2 || v3 {
         let v4: i32 = k as i32 >> 1 as i32;
         set_ram_word!(game.enemy_drawing_queue[(v4 + 100i32)] = 0 as uint16);
-        let ref mut fresh2 = *((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
-            .offset((v4 + 97 as i32) as isize);
-        *fresh2 = (*fresh2) | (0x200u16);
+        update_ram_word!(
+            game.enemy_drawing_queue[(v4 + 97 as i32)],
+            |fresh2| (fresh2) | (0x200u16)
+        );
         MaridiaFloater_Func_1(k, game);
         v5 = 0 as uint16;
         EnemyDeathAnimation(k, v5, game);
@@ -3909,11 +3909,11 @@ pub unsafe fn MaridiaFloater_Touch(game: &mut Game) {
         let palette_index: uint16 = (*E).base.palette_index;
         NormalEnemyTouchAi(game);
         if (*E).base.health == 0 {
-            let ref mut fresh6 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16).offset(
-                    ((ram_word!(game, cur_enemy_index) as i32 >> 1 as i32) + 97 as i32) as isize,
-                );
-            *fresh6 = (*fresh6) | (0x200u16);
+            update_ram_word!(
+                game.enemy_drawing_queue
+                    [((ram_word!(game, cur_enemy_index) as i32 >> 1 as i32) + 97 as i32)],
+                |fresh6| (fresh6) | (0x200u16)
+            );
             (*E).base.palette_index = palette_index;
             MaridiaFloater_Func_1(ram_word!(game, cur_enemy_index), game);
             (*E).base.palette_index = 2560 as uint16;
@@ -3928,18 +3928,18 @@ pub unsafe fn MaridiaFloater_Shot(game: &mut Game) {
         if ((*E).base.ai_handler_bits as i32 & 4 as i32) != 0i32 {
             let v2: i32 = ram_word!(game, cur_enemy_index) as i32 >> 1 as i32;
             set_ram_word!(game.enemy_drawing_queue[(v2 + 109i32)] = (*E).base.frozen_timer);
-            let ref mut fresh4 = *((&raw mut game.g_ram as *mut uint8).offset(0xe84)
-                as *mut uint16)
-                .offset((v2 + 99 as i32) as isize);
-            *fresh4 = (*fresh4) | (4u16);
+            update_ram_word!(
+                game.enemy_drawing_queue[(v2 + 99 as i32)],
+                |fresh4| (fresh4) | (4u16)
+            );
         }
         if ((*E).base.ai_handler_bits as i32 & 2 as i32) != 0i32 {
             let v3: i32 = ram_word!(game, cur_enemy_index) as i32 >> 1 as i32;
             set_ram_word!(game.enemy_drawing_queue[(v3 + 108i32)] = (*E).base.flash_timer);
-            let ref mut fresh5 = *((&raw mut game.g_ram as *mut uint8).offset(0xe84)
-                as *mut uint16)
-                .offset((v3 + 99 as i32) as isize);
-            *fresh5 = (*fresh5) | (2u16);
+            update_ram_word!(
+                game.enemy_drawing_queue[(v3 + 99 as i32)],
+                |fresh5| (fresh5) | (2u16)
+            );
         }
         if (*E).base.health == 0 {
             (*E).mfr_var_F = ((0xa8c569i32) as u16);
@@ -3959,9 +3959,11 @@ pub unsafe fn MaridiaFloater_Powerbomb(game: &mut Game) {
         set_ram_word!(game.enemy_drawing_queue[(v1 + 109i32)] = (*E).base.frozen_timer);
         set_ram_word!(game.enemy_drawing_queue[(v1 + 99i32)] = (*E).base.ai_handler_bits);
     } else {
-        let ref mut fresh3 = *((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
-            .offset(((ram_word!(game, cur_enemy_index) as i32 >> 1 as i32) + 97 as i32) as isize);
-        *fresh3 = (*fresh3) | (0x200u16);
+        update_ram_word!(
+            game.enemy_drawing_queue
+                [((ram_word!(game, cur_enemy_index) as i32 >> 1 as i32) + 97 as i32)],
+            |fresh3| (fresh3) | (0x200u16)
+        );
     };
 }
 pub unsafe fn WreckedShipRobot_Init(game: &mut Game) {
@@ -4039,9 +4041,12 @@ pub unsafe fn WreckedShipRobot_Func_1(game: &mut Game) {
     if ram_word!(game, door_transition_flag_enemies) == 0
         && ram_word!(game, wrecked_ship_robot_palanim_timer) != 0
     {
-        let ref mut fresh13 = *((&raw mut game.g_ram as *mut uint8).offset(0xd654) as *mut uint16);
-        *fresh13 = (*fresh13).wrapping_sub(1);
-        if *fresh13 == 0 {
+        if update_ram_word!(
+            game.wrecked_ship_robot_palanim_timer,
+            wrapping_sub(1),
+            reread
+        ) == 0
+        {
             let mut v1: i32 = 0;
             i = *((&raw mut game.g_ram as *mut uint8).offset(0xd656) as *mut uint16);
             loop {
@@ -5119,9 +5124,10 @@ pub unsafe fn WreckedShipSpark_Func_3(k: uint16, game: &mut Game) {
     };
 }
 pub unsafe fn WreckedShipSpark_Shot(game: &mut Game) {
-    let ref mut fresh14 = *((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16)
-        .offset(ram_word!(game, collision_detection_index) as isize);
-    *fresh14 = (*fresh14 as i32 & !(0x10 as i32)) as uint16;
+    update_ram_word!(
+        game.projectile_dir[ram_word!(game, collision_detection_index)],
+        |fresh14| (fresh14 as i32 & !(0x10 as i32)) as uint16
+    );
 }
 pub unsafe fn BlueBrinstarFaceBlock_Init(game: &mut Game) {
     let v0: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
@@ -5143,10 +5149,11 @@ pub unsafe fn BlueBrinstarFaceBlock_Init(game: &mut Game) {
 }
 pub unsafe fn BlueBrinstarFaceBlock_Func_1(game: &mut Game) {
     if ram_word!(game, door_transition_flag_enemies) == 0 && {
-        let ref mut fresh0 =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1794) as *mut uint16).offset(2);
-        *fresh0 = (*fresh0).wrapping_sub(1);
-        *fresh0 == 0
+        update_ram_word!(
+            game.variables_for_enemy_graphics_drawn_hook[2],
+            wrapping_sub(1),
+            reread
+        ) == 0
     } {
         set_ram_word!(game.variables_for_enemy_graphics_drawn_hook[2] = 16 as uint16);
         let mut v0: uint16 = ram_word!(game, variables_for_enemy_graphics_drawn_hook[0]);
@@ -5210,9 +5217,10 @@ pub unsafe fn BlueBrinstarFaceBlock_Main(game: &mut Game) {
     }
 }
 pub unsafe fn BlueBrinstarFaceBlock_Shot(game: &mut Game) {
-    let ref mut fresh1 = *((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16)
-        .offset(ram_word!(game, collision_detection_index) as isize);
-    *fresh1 = (*fresh1 as i32 & !(0x10 as i32)) as uint16;
+    update_ram_word!(
+        game.projectile_dir[ram_word!(game, collision_detection_index)],
+        |fresh1| (fresh1 as i32 & !(0x10 as i32)) as uint16
+    );
 }
 pub unsafe fn KiHunter_Init(game: &mut Game) {
     let E: *mut Enemy_KiHunter = Get_KiHunter(ram_word!(game, cur_enemy_index) as i32, game);

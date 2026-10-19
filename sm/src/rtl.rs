@@ -1,7 +1,7 @@
 use crate::cpu_infra::RtlUpdateSnesPatchForBugfix;
 use crate::game_state::Game;
 use crate::host::{Die, RtlApuLock, RtlApuUnlock};
-use crate::ram_map::{ram_word, set_ram_word};
+use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::snes::apu::apu_cycle;
 use crate::snes::dsp::dsp_getSamples;
 use crate::snes::ppu::ppu_copy;
@@ -1401,8 +1401,8 @@ pub unsafe fn RtlCheat(c: ::core::ffi::c_char, game: &mut Game) {
             2 as i32,
         );
     } else if c as i32 == 'q' as i32 {
-        let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16);
-        *fresh0 = (*fresh0 as i32 - 4 as i32) as uint16;
+        update_ram_word!(game.samus_y_pos, |fresh0| (fresh0 as i32 - 4 as i32)
+            as uint16);
         set_ram_word!(game.samus_y_speed = -(8 as i32) as uint16);
         StateRecorder_RecordPatchByte(
             &raw mut game.state_recorder,

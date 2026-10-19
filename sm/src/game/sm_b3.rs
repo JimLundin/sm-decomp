@@ -17,7 +17,7 @@ use crate::game::sm_a0::{
 };
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
-use crate::ram_map::{ram_word, set_ram_word};
+use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::AddToHiLo;
 use crate::rtl::{RomPtr, Unreachable};
@@ -1097,9 +1097,10 @@ pub unsafe fn Botwoon_Func_4(game: &mut Game) {
 pub unsafe fn Botwoon_Func_5(game: &mut Game) {
     let mut v0: uint16 = 34 as uint16;
     loop {
-        let ref mut fresh4 = *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16)
-            .offset((v0 as i32 >> 1 as i32) as isize);
-        *fresh4 = (*fresh4) | (0x2000u16);
+        update_ram_word!(
+            game.eproj_properties[(v0 as i32 >> 1 as i32)],
+            |fresh4| (fresh4) | (0x2000u16)
+        );
         set_ram_word!(game.eproj_flags[(v0 as i32 >> 1i32)] = 2 as uint16);
         v0 = (v0).wrapping_sub(2u16);
         if (((v0) as i16).wrapping_sub(10i16) < 0i16) {
@@ -1438,17 +1439,17 @@ pub unsafe fn Botwoon_Func_23(game: &mut Game) {
             let v4: bool = (*ET).botwoon_var_10 == 1u16;
             (*ET).botwoon_var_10 = ((*ET).botwoon_var_10) ^ (1u16);
             if v4 {
-                let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7)
-                    as *mut uint16)
-                    .offset((botwoo_var_00 as i32 >> 1 as i32) as isize);
-                *fresh0 = (*fresh0 as i32 & !(0x2000 as i32)) as uint16;
+                update_ram_word!(
+                    game.eproj_properties[(botwoo_var_00 as i32 >> 1 as i32)],
+                    |fresh0| (fresh0 as i32 & !(0x2000 as i32)) as uint16
+                );
                 *((&raw mut game.g_ram as *mut uint8).offset(0xf380) as *mut uint16)
                     .offset((botwoo_var_00 as i32 >> 1 as i32) as isize) = 1 as uint16;
             } else {
-                let ref mut fresh1 = *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7)
-                    as *mut uint16)
-                    .offset((botwoo_var_00 as i32 >> 1 as i32) as isize);
-                *fresh1 = (*fresh1) | (0x2000u16);
+                update_ram_word!(
+                    game.eproj_properties[(botwoo_var_00 as i32 >> 1 as i32)],
+                    |fresh1| (fresh1) | (0x2000u16)
+                );
                 *((&raw mut game.g_ram as *mut uint8).offset(0xf380) as *mut uint16)
                     .offset((botwoo_var_00 as i32 >> 1 as i32) as isize) = 2 as uint16;
             }

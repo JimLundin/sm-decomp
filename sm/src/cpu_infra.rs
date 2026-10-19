@@ -1,7 +1,7 @@
 use crate::game::sm_80::Vector_IRQ;
 use crate::game::sm_82::RunOneFrameOfGame;
 use crate::game_state::Game;
-use crate::ram_map::{ram_word, set_ram_word};
+use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 pub use crate::snes::registers::*;
 use crate::types::SpcPlayer;
 
@@ -2070,8 +2070,8 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
     if ram_word!(game, menu_index) as i32 & 0xff00 as i32 != 0 {
         printf(b"MENU INDEX TOO BIG!\n\0" as *const u8 as *const ::core::ffi::c_char);
         SaveBugSnapshot(game);
-        let ref mut fresh1 = *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16);
-        *fresh1 = (*fresh1 as i32 & 0xff as i32) as uint16;
+        update_ram_word!(game.menu_index, |fresh1| (fresh1 as i32 & 0xff as i32)
+            as uint16);
     }
     if game.g_got_mismatch_count != 0 {
         game.g_got_mismatch_count -= 1;

@@ -21,7 +21,7 @@ use crate::game::sm_a0::{
 };
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
-use crate::ram_map::{ram_word, set_ram_word};
+use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{RomPtr, Unreachable};
 extern "C" {
@@ -373,9 +373,7 @@ pub unsafe fn Draygon_Func_1(game: &mut Game) {
             (*v2).src.addr = -(27648 as i32) as VoidP;
             *(&raw mut (*v2).src.bank as *mut uint16) = 177 as uint16;
             (*v2).vram_dst = 27904 as uint16;
-            let ref mut fresh0 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
-            *fresh0 = (*fresh0).wrapping_add(7u16);
+            update_ram_word!(game.vram_write_queue_tail, wrapping_add(7u16));
             Draygon_Func_45(game);
         }
         (*E).draygon_var_B = (*E).draygon_var_B.wrapping_add(1);
@@ -1775,22 +1773,23 @@ pub unsafe fn Draygon_Func_46(game: &mut Game) {
                 set_ram_word!(game.sprite_instr_list_ptrs[(v0 as i32 >> 1i32)] = 0 as uint16);
             } else {
                 let v3: i32 = v0 as i32 >> 1 as i32;
-                let ref mut fresh1 = *((&raw mut game.g_ram as *mut uint8).offset(0xf0f8)
-                    as *mut uint16)
-                    .offset(v3 as isize);
-                *fresh1 = (*fresh1).wrapping_add(SignExtend8(
-                    *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5ce07)) as *const uint8
-                        as *mut uint8)
-                        .offset(v1 as isize) as uint16,
-                ));
-                let ref mut fresh2 = *((&raw mut game.g_ram as *mut uint8).offset(0xf1f8)
-                    as *mut uint16)
-                    .offset(v3 as isize);
-                *fresh2 = (*fresh2).wrapping_add(SignExtend8(
-                    *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5ce07)) as *const uint8
-                        as *mut uint8)
-                        .offset((v2 as i32 + 1 as i32) as isize) as uint16,
-                ));
+                update_ram_word!(
+                    game.sprite_x_pos[v3],
+                    wrapping_add(SignExtend8(
+                        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5ce07)) as *const uint8
+                            as *mut uint8)
+                            .offset(v1 as isize) as uint16,
+                    ))
+                );
+                update_ram_word!(
+                    game.sprite_y_pos[v3],
+                    wrapping_add(SignExtend8(
+                        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5ce07)) as *const uint8
+                            as *mut uint8)
+                            .offset((v2 as i32 + 1 as i32) as isize)
+                            as uint16,
+                    ))
+                );
             }
         }
         v0 = (v0).wrapping_sub(2u16);
