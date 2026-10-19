@@ -1032,413 +1032,273 @@ unsafe fn RestorePpuForMessageBox(game: &mut Game) {
     );
 }
 unsafe fn OpenMessageBox_Async(game: &mut Game) -> CoroutineRet {
-    let mut _state_variable_: *mut uint8 = (&raw mut game.g_ram as *mut uint8).offset(0x615);
-    's_65: {
-        let mut current_block_10: u64;
-        match *_state_variable_ as ::core::ffi::c_int {
-            0 => {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x5a2) as *mut uint16) = 0 as uint16;
-                current_block_10 = 1734715445409302261;
-            }
-            1 => {
-                current_block_10 = 1734715445409302261;
-            }
-            _ => {
-                current_block_10 = 1856101646708284338;
-            }
-        }
-        loop {
-            match current_block_10 {
-                1856101646708284338 => {
-                    break 's_65;
-                }
-                _ => {
-                    let mut _coret_: uint8 = WaitForNMI_NoUpdate_Async(game) as uint8;
-                    if _coret_ != 0 {
-                        *_state_variable_ = 1 as uint8;
-                        return _coret_ as CoroutineRet;
-                    }
-                    HandleMusicQueue(game);
-                    HandleSoundEffects(game);
-                    MsgBoxMakeHdmaTable(game);
-                    if *((&raw mut game.g_ram as *mut uint8).offset(0x5a2) as *mut uint16)
-                        as ::core::ffi::c_int
-                        == 0x1800 as ::core::ffi::c_int
-                    {
-                        current_block_10 = 1856101646708284338;
-                        continue;
-                    }
-                    let ref mut fresh8 =
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x5a2) as *mut uint16);
-                    *fresh8 = (*fresh8 as ::core::ffi::c_int + 512 as ::core::ffi::c_int) as uint16;
-                    current_block_10 = 1734715445409302261;
-                }
-            }
+    match game.g_ram[0x615] {
+        0 => game.g_ram[0x5a2..0x5a4].fill(0),
+        1 => {}
+        _ => {
+            game.g_ram[0x615] = 0;
+            return 0;
         }
     }
-    *_state_variable_ = 0 as uint8;
-    return 0 as CoroutineRet;
+    loop {
+        let result = WaitForNMI_NoUpdate_Async(game);
+        if result != 0 {
+            game.g_ram[0x615] = 1;
+            return result;
+        }
+        HandleMusicQueue(game);
+        HandleSoundEffects(game);
+        MsgBoxMakeHdmaTable(game);
+        let radius = u16::from_le_bytes([game.g_ram[0x5a2], game.g_ram[0x5a3]]);
+        if radius == 0x1800 {
+            break;
+        }
+        game.g_ram[0x5a2..0x5a4].copy_from_slice(&radius.wrapping_add(0x200).to_le_bytes());
+    }
+    game.g_ram[0x615] = 0;
+    0
 }
 unsafe fn HandleMessageBoxInteraction_Async(game: &mut Game) -> CoroutineRet {
-    let mut _state_variable_: *mut uint8 = (&raw mut game.g_ram as *mut uint8).offset(0x615);
-    's_196: {
-        let mut current_block_34: u64;
-        match *_state_variable_ as ::core::ffi::c_int {
-            0 => {
-                if *((&raw mut game.g_ram as *mut uint8).offset(0x1c1f) as *mut uint16)
-                    as ::core::ffi::c_int
-                    == 23 as ::core::ffi::c_int
-                    || *((&raw mut game.g_ram as *mut uint8).offset(0x1c1f) as *mut uint16)
-                        as ::core::ffi::c_int
-                        == 28 as ::core::ffi::c_int
-                {
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x5f9) as *mut uint16) =
-                        0 as uint16;
-                    current_block_34 = 16534385235503378281;
-                } else {
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x77e) as *mut uint16) =
-                        10 as uint16;
-                    if *((&raw mut game.g_ram as *mut uint8).offset(0x1c1f) as *mut uint16)
-                        as ::core::ffi::c_int
-                        != 20 as ::core::ffi::c_int
-                        && *((&raw mut game.g_ram as *mut uint8).offset(0x1c1f) as *mut uint16)
-                            as ::core::ffi::c_int
-                            != 21 as ::core::ffi::c_int
-                        && *((&raw mut game.g_ram as *mut uint8).offset(0x1c1f) as *mut uint16)
-                            as ::core::ffi::c_int
-                            != 22 as ::core::ffi::c_int
-                        && *((&raw mut game.g_ram as *mut uint8).offset(0x1c1f) as *mut uint16)
-                            as ::core::ffi::c_int
-                            != 24 as ::core::ffi::c_int
-                    {
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x77e) as *mut uint16) =
-                            360 as uint16;
-                    }
-                    current_block_34 = 11768874745533072813;
+    enum Phase {
+        Confirmation,
+        Delay,
+        Dismiss,
+    }
+    let mut phase = match game.g_ram[0x615] {
+        0 => {
+            let message = u16::from_le_bytes([game.g_ram[0x1c1f], game.g_ram[0x1c20]]);
+            if matches!(message, 23 | 28) {
+                game.g_ram[0x5f9..0x5fb].fill(0);
+                Phase::Confirmation
+            } else {
+                game.g_ram[0x77e..0x780].copy_from_slice(&10u16.to_le_bytes());
+                if !matches!(message, 20 | 21 | 22 | 24) {
+                    game.g_ram[0x77e..0x780].copy_from_slice(&360u16.to_le_bytes());
                 }
-            }
-            1 => {
-                current_block_34 = 16534385235503378281;
-            }
-            2 => {
-                current_block_34 = 11768874745533072813;
-            }
-            3 => {
-                current_block_34 = 13352786176918754511;
-            }
-            _ => {
-                current_block_34 = 7746103178988627676;
+                Phase::Delay
             }
         }
-        loop {
-            match current_block_34 {
-                7746103178988627676 => {
-                    break 's_196;
+        1 => Phase::Confirmation,
+        2 => Phase::Delay,
+        3 => Phase::Dismiss,
+        _ => {
+            game.g_ram[0x615] = 0;
+            return 0;
+        }
+    };
+    loop {
+        match phase {
+            Phase::Confirmation => {
+                let result = WaitForNMI_NoUpdate_Async(game);
+                if result != 0 {
+                    game.g_ram[0x615] = 1;
+                    return result;
                 }
-                11768874745533072813 => {
-                    let mut _coret__0: uint8 = WaitForNMI_NoUpdate_Async(game) as uint8;
-                    if _coret__0 != 0 {
-                        *_state_variable_ = 2 as uint8;
-                        return _coret__0 as CoroutineRet;
-                    }
-                    HandleMusicQueue(game);
-                    HandleSoundEffects(game);
-                    let ref mut fresh6 =
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x77e) as *mut uint16);
-                    *fresh6 = (*fresh6).wrapping_sub(1);
-                    if *fresh6 != 0 {
-                        current_block_34 = 11768874745533072813;
-                    } else {
-                        current_block_34 = 13352786176918754511;
-                    }
+                HandleMusicQueue(game);
+                HandleSoundEffects(game);
+                ReadJoypadInputs(game);
+                let keys = u16::from_le_bytes([game.g_ram[0x8f], game.g_ram[0x90]]);
+                if keys & kButton_A as u16 != 0 {
+                    break;
                 }
-                16534385235503378281 => {
-                    let mut _coret_: uint8 = WaitForNMI_NoUpdate_Async(game) as uint8;
-                    if _coret_ != 0 {
-                        *_state_variable_ = 1 as uint8;
-                        return _coret_ as CoroutineRet;
-                    }
-                    HandleMusicQueue(game);
-                    HandleSoundEffects(game);
-                    ReadJoypadInputs(game);
-                    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) == 0 {
-                        current_block_34 = 16534385235503378281;
-                        continue;
-                    }
-                    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16)
-                        as ::core::ffi::c_int
-                        & kButton_A as ::core::ffi::c_int
-                        != 0 as ::core::ffi::c_int
-                    {
-                        current_block_34 = 7746103178988627676;
-                        continue;
-                    }
-                    if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16)
-                        as ::core::ffi::c_int
-                        & kButton_B as ::core::ffi::c_int
-                        != 0 as ::core::ffi::c_int
-                    {
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x5f9) as *mut uint16) =
-                            2 as uint16;
-                        current_block_34 = 7746103178988627676;
-                    } else {
-                        if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16)
-                            as ::core::ffi::c_int
-                            & (kButton_Select as ::core::ffi::c_int
-                                | kButton_Left as ::core::ffi::c_int
-                                | kButton_Right as ::core::ffi::c_int)
-                            != 0 as ::core::ffi::c_int
-                        {
-                            ToggleSaveConfirmationSelection(game);
-                            QueueSfx1_Max6(0x37 as uint16, game);
-                        }
-                        current_block_34 = 16534385235503378281;
-                    }
+                if keys & kButton_B as u16 != 0 {
+                    game.g_ram[0x5f9..0x5fb].copy_from_slice(&2u16.to_le_bytes());
+                    break;
                 }
-                _ => {
-                    let mut _coret__1: uint8 = WaitForNMI_NoUpdate_Async(game) as uint8;
-                    if _coret__1 != 0 {
-                        *_state_variable_ = 3 as uint8;
-                        return _coret__1 as CoroutineRet;
-                    }
-                    ReadJoypadInputs(game);
-                    if (if (*((&raw mut game.g_ram as *mut uint8).offset(0xc2) as *mut uint16)
-                        as ::core::ffi::c_int)
-                        < 1 as ::core::ffi::c_int
-                    {
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16)
-                            as ::core::ffi::c_int
-                    } else {
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16)
-                            as ::core::ffi::c_int
-                    }) == 0 as ::core::ffi::c_int
-                    {
-                        current_block_34 = 13352786176918754511;
-                    } else {
-                        current_block_34 = 7746103178988627676;
-                    }
+                if keys & (kButton_Select | kButton_Left | kButton_Right) as u16 != 0 {
+                    ToggleSaveConfirmationSelection(game);
+                    QueueSfx1_Max6(0x37, game);
+                }
+            }
+            Phase::Delay => {
+                let result = WaitForNMI_NoUpdate_Async(game);
+                if result != 0 {
+                    game.g_ram[0x615] = 2;
+                    return result;
+                }
+                HandleMusicQueue(game);
+                HandleSoundEffects(game);
+                let timer =
+                    u16::from_le_bytes([game.g_ram[0x77e], game.g_ram[0x77f]]).wrapping_sub(1);
+                game.g_ram[0x77e..0x780].copy_from_slice(&timer.to_le_bytes());
+                if timer == 0 {
+                    phase = Phase::Dismiss;
+                }
+            }
+            Phase::Dismiss => {
+                let result = WaitForNMI_NoUpdate_Async(game);
+                if result != 0 {
+                    game.g_ram[0x615] = 3;
+                    return result;
+                }
+                ReadJoypadInputs(game);
+                let bug_fix_counter = u16::from_le_bytes([game.g_ram[0xc2], game.g_ram[0xc3]]);
+                let keys = if bug_fix_counter == 0 {
+                    u16::from_le_bytes([game.g_ram[0x8f], game.g_ram[0x90]])
+                } else {
+                    game.joypad1_lastkeys()
+                };
+                if keys != 0 {
+                    break;
                 }
             }
         }
     }
-    *_state_variable_ = 0 as uint8;
-    return 0 as CoroutineRet;
+    game.g_ram[0x615] = 0;
+    0
 }
 unsafe fn CloseMessageBox_Async(game: &mut Game) -> CoroutineRet {
-    let mut _state_variable_: *mut uint8 = (&raw mut game.g_ram as *mut uint8).offset(0x615);
-    's_58: {
-        let mut current_block_10: u64;
-        match *_state_variable_ as ::core::ffi::c_int {
-            0 | 1 => {
-                current_block_10 = 15518350547184569309;
-            }
-            _ => {
-                current_block_10 = 17965632435239708295;
-            }
-        }
+    if matches!(game.g_ram[0x615], 0 | 1) {
         loop {
-            match current_block_10 {
-                17965632435239708295 => {
-                    break 's_58;
-                }
-                _ => {
-                    let mut _coret_: uint8 = WaitForNMI_NoUpdate_Async(game) as uint8;
-                    if _coret_ != 0 {
-                        *_state_variable_ = 1 as uint8;
-                        return _coret_ as CoroutineRet;
-                    }
-                    HandleMusicQueue(game);
-                    HandleSoundEffects(game);
-                    MsgBoxMakeHdmaTable(game);
-                    let ref mut fresh1 =
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x5a2) as *mut uint16);
-                    *fresh1 = (*fresh1 as ::core::ffi::c_int - 512 as ::core::ffi::c_int) as uint16;
-                    if *((&raw mut game.g_ram as *mut uint8).offset(0x5a2) as *mut uint16)
-                        as ::core::ffi::c_int
-                        & 0x8000 as ::core::ffi::c_int
-                        == 0 as ::core::ffi::c_int
-                    {
-                        current_block_10 = 15518350547184569309;
-                    } else {
-                        current_block_10 = 17965632435239708295;
-                    }
-                }
+            let result = WaitForNMI_NoUpdate_Async(game);
+            if result != 0 {
+                game.g_ram[0x615] = 1;
+                return result;
+            }
+            HandleMusicQueue(game);
+            HandleSoundEffects(game);
+            MsgBoxMakeHdmaTable(game);
+            let radius =
+                u16::from_le_bytes([game.g_ram[0x5a2], game.g_ram[0x5a3]]).wrapping_sub(0x200);
+            game.g_ram[0x5a2..0x5a4].copy_from_slice(&radius.to_le_bytes());
+            if radius & 0x8000 != 0 {
+                break;
             }
         }
     }
-    *_state_variable_ = 0 as uint8;
-    return 0 as CoroutineRet;
+    game.g_ram[0x615] = 0;
+    0
 }
-pub unsafe fn DisplayMessageBox_Async(mut a: uint16, game: &mut Game) -> CoroutineRet {
-    let mut _state_variable_: *mut uint8 = (&raw mut game.g_ram as *mut uint8).offset(0x614);
-    's_254: {
-        let mut current_block_60: u64;
-        match *_state_variable_ as ::core::ffi::c_int {
-            0 => {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1c1f) as *mut uint16) = a;
-                CancelSoundEffects(game);
-                InitializePpuForMessageBoxes(game);
-                ClearMessageBoxBg3Tilemap(game);
-                InitializeMessageBox(game);
-                current_block_60 = 6253325665877293079;
-            }
-            2 => {
-                current_block_60 = 6253325665877293079;
-            }
-            3 => {
-                current_block_60 = 15094944477431624519;
-            }
-            4 => {
-                current_block_60 = 4487664752189900950;
-            }
-            8 => {
-                current_block_60 = 11722929202011421503;
-            }
-            5 => {
-                current_block_60 = 4928684536100880175;
-            }
-            6 => {
-                current_block_60 = 12462294883523643517;
-            }
-            7 => {
-                current_block_60 = 17013389759922219937;
-            }
-            _ => {
-                current_block_60 = 14945149239039849694;
-            }
+pub unsafe fn DisplayMessageBox_Async(a: uint16, game: &mut Game) -> CoroutineRet {
+    enum Phase {
+        Open,
+        Interact,
+        Close,
+        SaveDelay,
+        SaveWait,
+        OpenSaved,
+        InteractSaved,
+        CloseSaved,
+        Restore,
+    }
+    let mut phase = match game.g_ram[0x614] {
+        0 => {
+            game.g_ram[0x1c1f..0x1c21].copy_from_slice(&a.to_le_bytes());
+            CancelSoundEffects(game);
+            InitializePpuForMessageBoxes(game);
+            ClearMessageBoxBg3Tilemap(game);
+            InitializeMessageBox(game);
+            Phase::Open
         }
-        match current_block_60 {
-            6253325665877293079 => {
-                let mut _coret_: uint8 = OpenMessageBox_Async(game) as uint8;
-                if _coret_ != 0 {
-                    *_state_variable_ = 2 as uint8;
-                    return _coret_ as CoroutineRet;
-                }
-                current_block_60 = 15094944477431624519;
-            }
-            _ => {}
+        2 => Phase::Open,
+        3 => Phase::Interact,
+        4 => Phase::Close,
+        8 => Phase::SaveWait,
+        5 => Phase::OpenSaved,
+        6 => Phase::InteractSaved,
+        7 => Phase::CloseSaved,
+        _ => {
+            game.g_ram[0x614] = 0;
+            return 0;
         }
-        match current_block_60 {
-            15094944477431624519 => {
-                let mut _coret__0: uint8 = HandleMessageBoxInteraction_Async(game) as uint8;
-                if _coret__0 != 0 {
-                    *_state_variable_ = 3 as uint8;
-                    return _coret__0 as CoroutineRet;
+    };
+    loop {
+        match phase {
+            Phase::Open | Phase::OpenSaved => {
+                let saved = matches!(phase, Phase::OpenSaved);
+                let result = OpenMessageBox_Async(game);
+                if result != 0 {
+                    game.g_ram[0x614] = if saved { 5 } else { 2 };
+                    return result;
                 }
-                current_block_60 = 4487664752189900950;
-            }
-            _ => {}
-        }
-        match current_block_60 {
-            4487664752189900950 => {
-                let mut _coret__1: uint8 = CloseMessageBox_Async(game) as uint8;
-                if _coret__1 != 0 {
-                    *_state_variable_ = 4 as uint8;
-                    return _coret__1 as CoroutineRet;
-                }
-                if *((&raw mut game.g_ram as *mut uint8).offset(0x1c1f) as *mut uint16)
-                    as ::core::ffi::c_int
-                    == 28 as ::core::ffi::c_int
-                    && *((&raw mut game.g_ram as *mut uint8).offset(0x5f9) as *mut uint16)
-                        as ::core::ffi::c_int
-                        != 2 as ::core::ffi::c_int
-                {
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x1c1f) as *mut uint16) =
-                        24 as uint16;
-                    ClearMessageBoxBg3Tilemap(game);
-                    QueueSfx1_Max6(0x2e as uint16, game);
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x77e) as *mut uint16) =
-                        160 as uint16;
-                    current_block_60 = 18317007320854588510;
+                phase = if saved {
+                    Phase::InteractSaved
                 } else {
-                    current_block_60 = 6717214610478484138;
-                }
+                    Phase::Interact
+                };
             }
-            _ => {}
-        }
-        loop {
-            match current_block_60 {
-                14945149239039849694 => {
-                    break 's_254;
+            Phase::Interact | Phase::InteractSaved => {
+                let saved = matches!(phase, Phase::InteractSaved);
+                let result = HandleMessageBoxInteraction_Async(game);
+                if result != 0 {
+                    game.g_ram[0x614] = if saved { 6 } else { 3 };
+                    return result;
                 }
-                17013389759922219937 => {
-                    let mut _coret__5: uint8 = CloseMessageBox_Async(game) as uint8;
-                    if _coret__5 != 0 {
-                        *_state_variable_ = 7 as uint8;
-                        return _coret__5 as CoroutineRet;
-                    }
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x1c1f) as *mut uint16) =
-                        28 as uint16;
-                    current_block_60 = 6717214610478484138;
+                phase = if saved {
+                    Phase::CloseSaved
+                } else {
+                    Phase::Close
+                };
+            }
+            Phase::Close | Phase::CloseSaved => {
+                let saved = matches!(phase, Phase::CloseSaved);
+                let result = CloseMessageBox_Async(game);
+                if result != 0 {
+                    game.g_ram[0x614] = if saved { 7 } else { 4 };
+                    return result;
                 }
-                11722929202011421503 => {
-                    let mut _coret__2: uint8 = WaitForNMI_NoUpdate_Async(game) as uint8;
-                    if _coret__2 != 0 {
-                        *_state_variable_ = 8 as uint8;
-                        return _coret__2 as CoroutineRet;
-                    }
-                    let ref mut fresh0 =
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x77e) as *mut uint16);
-                    *fresh0 = (*fresh0).wrapping_sub(1);
-                    if *fresh0 != 0 {
-                        current_block_60 = 18317007320854588510;
-                        continue;
-                    }
-                    InitializeMessageBox(game);
-                    current_block_60 = 4928684536100880175;
-                }
-                18317007320854588510 => {
-                    HandleMusicQueue(game);
-                    HandleSoundEffects(game);
-                    current_block_60 = 11722929202011421503;
-                }
-                4928684536100880175 => {
-                    let mut _coret__3: uint8 = OpenMessageBox_Async(game) as uint8;
-                    if _coret__3 != 0 {
-                        *_state_variable_ = 5 as uint8;
-                        return _coret__3 as CoroutineRet;
-                    }
-                    current_block_60 = 12462294883523643517;
-                }
-                12462294883523643517 => {
-                    let mut _coret__4: uint8 = HandleMessageBoxInteraction_Async(game) as uint8;
-                    if _coret__4 != 0 {
-                        *_state_variable_ = 6 as uint8;
-                        return _coret__4 as CoroutineRet;
-                    }
-                    current_block_60 = 17013389759922219937;
-                }
-                _ => {
-                    ClearMessageBoxBg3Tilemap(game);
-                    RestorePpuForMessageBox(game);
-                    QueueSamusMovementSfx(game);
-                    if *((&raw mut game.g_ram as *mut uint8).offset(0x1c1f) as *mut uint16)
-                        as ::core::ffi::c_int
-                        == 20 as ::core::ffi::c_int
+                if saved {
+                    game.g_ram[0x1c1f..0x1c21].copy_from_slice(&28u16.to_le_bytes());
+                    phase = Phase::Restore;
+                } else {
+                    let message = u16::from_le_bytes([game.g_ram[0x1c1f], game.g_ram[0x1c20]]);
+                    if message == 28
+                        && u16::from_le_bytes([game.g_ram[0x5f9], game.g_ram[0x5fa]]) != 2
                     {
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
-                            kGameState_12_Pausing as ::core::ffi::c_int as uint16;
+                        game.g_ram[0x1c1f..0x1c21].copy_from_slice(&24u16.to_le_bytes());
+                        ClearMessageBoxBg3Tilemap(game);
+                        QueueSfx1_Max6(0x2e, game);
+                        game.g_ram[0x77e..0x780].copy_from_slice(&160u16.to_le_bytes());
+                        phase = Phase::SaveDelay;
+                    } else {
+                        phase = Phase::Restore;
                     }
-                    current_block_60 = 14945149239039849694;
                 }
+            }
+            Phase::SaveDelay => {
+                HandleMusicQueue(game);
+                HandleSoundEffects(game);
+                phase = Phase::SaveWait;
+            }
+            Phase::SaveWait => {
+                let result = WaitForNMI_NoUpdate_Async(game);
+                if result != 0 {
+                    game.g_ram[0x614] = 8;
+                    return result;
+                }
+                let timer =
+                    u16::from_le_bytes([game.g_ram[0x77e], game.g_ram[0x77f]]).wrapping_sub(1);
+                game.g_ram[0x77e..0x780].copy_from_slice(&timer.to_le_bytes());
+                if timer == 0 {
+                    InitializeMessageBox(game);
+                    phase = Phase::OpenSaved;
+                } else {
+                    phase = Phase::SaveDelay;
+                }
+            }
+            Phase::Restore => {
+                ClearMessageBoxBg3Tilemap(game);
+                RestorePpuForMessageBox(game);
+                QueueSamusMovementSfx(game);
+                if u16::from_le_bytes([game.g_ram[0x1c1f], game.g_ram[0x1c20]]) == 20 {
+                    game.g_ram[0x998..0x99a]
+                        .copy_from_slice(&(kGameState_12_Pausing as u16).to_le_bytes());
+                }
+                break;
             }
         }
     }
-    *_state_variable_ = 0 as uint8;
-    return 0 as CoroutineRet;
+    game.g_ram[0x614] = 0;
+    0
 }
-pub unsafe fn DisplayMessageBox_Poll(mut a: uint16, game: &mut Game) -> ::core::ffi::c_int {
-    if a as ::core::ffi::c_int
-        == *((&raw mut game.g_ram as *mut uint8).offset(0x1c1f) as *mut uint16)
-            as ::core::ffi::c_int
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1c1f) as *mut uint16) = 0 as uint16;
-        return *((&raw mut game.g_ram as *mut uint8).offset(0x5f9) as *mut uint16)
-            as ::core::ffi::c_int;
+pub fn DisplayMessageBox_Poll(a: uint16, game: &mut Game) -> ::core::ffi::c_int {
+    if a == u16::from_le_bytes([game.g_ram[0x1c1f], game.g_ram[0x1c20]]) {
+        game.g_ram[0x1c1f..0x1c21].fill(0);
+        return u16::from_le_bytes([game.g_ram[0x5f9], game.g_ram[0x5fa]]) as ::core::ffi::c_int;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc8) as *mut uint16) = a;
-    return -(1 as ::core::ffi::c_int);
+    game.g_ram[0xdc8..0xdca].copy_from_slice(&a.to_le_bytes());
+    -1
 }
-pub unsafe fn DisplayMessageBox(mut a: uint16, game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc8) as *mut uint16) = a;
+pub fn DisplayMessageBox(a: uint16, game: &mut Game) {
+    game.g_ram[0xdc8..0xdca].copy_from_slice(&a.to_le_bytes());
 }

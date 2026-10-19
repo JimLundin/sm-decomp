@@ -467,6 +467,67 @@ result: 267.81s. Observed calls and first/last absolute input frames:
 | carry16-set | - | - |
 | carry16-clear | - | - |
 
+Message-box coroutine family (2026-10-19): replace numeric dispatch blocks
+in opening, interaction, closing and the outer message sequence with loops
+and local phases. All six functions, including request and poll, use
+byte-backed RAM access; request and poll no longer require unsafe callers.
+Persistent coroutine bytes change only at the original yield/completion
+points. Callback order, live input reads, same-call fallthrough, invalid
+states, wrapping radius/timer arithmetic and A/B/toggle priority remain.
+The ship-save sequence preserves the distinct first/resumed delay ordering,
+message 28 -> 24 -> 28, and the second open/interact/close sequence.
+
+Compiled extracted before/after Rust passes 309557 cases and 673037
+complete-RAM comparisons, including 363480 callback snapshots. Cases cover
+all state bytes, 0/1/255 child returns, callback mutations, boundary words,
+all 65536 confirmation-key combinations and request/poll words. Independent
+key assertions check A before B before toggle. Actual-source mutations of
+state-write timing, save-resume entry and the first confirmation bit fail.
+Compilation takes 4.436s and positive execution 23.511s. Independent audit
+checks the exact extracted bodies and results. Original odd-address word
+accesses are characterized under native x86-64 release behavior; this does
+not establish their Rust alignment validity. The new slices avoid that
+alignment assumption.
+
+Observed candidate runs execute 75 of 76 selected probes. From the common
+21530 checkpoint, Warehouse through 71400 passes 49870/0 (111.06s),
+including save-station message 23; the map-station route through 70544
+passes 49014/0 (110.39s), including message 20, pause and gameplay return.
+Four ordinary-input gunship continuations pass 1581/0, 1465/0, 1497/0
+and 1605/0: A acceptance, B cancellation, other input plus three toggles
+and selected-No acceptance, and two toggles back to Yes plus an empty-input
+wait before dismissing message 24. These cover the complete 28 -> 24 -> 28
+sequence. All six runs exit 0 without diagnostics. The map and four ship
+end checkpoints are byte-identical to the original-source counterparts;
+shared probe counts/ranges agree, and 239 combined pins stay unchanged.
+
+The checkpoint starts before any affected function call: a separate
+full-boot 21530/0 run records zero calls at all six unconditional entries.
+Its exit 2 reports only those intentionally absent required hits. Runtime,
+ROM and input-prefix bindings agree. Independent removal of all 76 probes
+recovers the exact clean candidate; observed build takes 40.98s.
+
+The legacy new-press dismissal branch remains covered by compiled controls
+at bug_fix_counter 0/1/$8000/$FFFF. Current normal boot sets that word to 1
+before gameplay, so ordinary-input movies cannot exercise its zero branch.
+No RAM injection or modified checkpoint is used to manufacture a hit.
+
+Frozen 40b4f9fa plus this change passes full-boot any% 129712/0 (307.37s)
+and Warehouse 128547/0 (346.62s), native exits 0, with all 77 source,
+configuration, host, library and asset pins unchanged. Warehouse includes
+the exact Varia/Kraid prefix; its complete RAM matches the original route.
+Any% has no diagnostics; Warehouse retains the known fingernail warning.
+
+Formatting/check, normal release (62.59s), Cargo verifier host (2.97s) and
+progress pass. Net Rust lines -140, raw-access lines -41, c_int cast lines
+-49, casts -183, borrowed raw places -4 and unsafe functions -2. All 54
+numeric current_block references disappear without adding a helper layer.
+Concurrent gameplay/shared-state changes retain their own integration
+checks. Integration preserves the separate uncommitted register-constant
+consolidation in this file; the commit contains only the six-function
+rewrite and this record. Temporary controls, probes, checkpoints and input
+assets remain uncommitted.
+
 ## Validation strategy (2026-10-19)
 
 User priority: shorten the complete edit/build/result cycle. Replaying the
