@@ -9716,36 +9716,10 @@ pub unsafe fn DoorTransitionFunction_WaitForSoundsToFinish(game: &mut Game) -> C
     EnemyMain(game);
     DrawSamusEnemiesAndProjectiles(game);
     EnsureSamusDrawnEachFrame(game);
-    if *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x646 as ::core::ffi::c_int as isize)
-        .offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-        - *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x643 as ::core::ffi::c_int as isize)
-            .offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-        & 0xf as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
-        && *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x646 as ::core::ffi::c_int as isize)
-            .offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-            - *(&raw mut game.g_ram as *mut uint8)
-                .offset(0x643 as ::core::ffi::c_int as isize)
-                .offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-            & 0xf as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
-        && *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x646 as ::core::ffi::c_int as isize)
-            .offset(2 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-            - *(&raw mut game.g_ram as *mut uint8)
-                .offset(0x643 as ::core::ffi::c_int as isize)
-                .offset(2 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-            & 0xf as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x99c as ::core::ffi::c_int as isize)
-            as *mut uint16) =
-            (0x82e2db as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    if game.sfx_queue_is_empty(0) && game.sfx_queue_is_empty(1) && game.sfx_queue_is_empty(2) {
+        game.set_door_transition_function(0xe2db);
     }
-    return kCoroutineNone as CoroutineRet;
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn DoorTransitionFunction_FadeOutScreen(game: &mut Game) -> CoroutineRet {
     if AdvancePaletteFadeForAllPalettes_0xc(game) != 0 {

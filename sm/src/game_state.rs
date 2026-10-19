@@ -211,6 +211,16 @@ impl Game {
         u16::from_le_bytes([self.g_ram[0xf436], self.g_ram[0xf437]])
     }
 
+    /// sfx_readpos / sfx_writepos ($7E:0643/0646 in ram_map).
+    pub fn sfx_queue_is_empty(&self, channel: usize) -> bool {
+        self.g_ram[0x646 + channel].wrapping_sub(self.g_ram[0x643 + channel]) & 0xf == 0
+    }
+
+    /// door_transition_function ($7E:099C in ram_map).
+    pub fn set_door_transition_function(&mut self, value: u16) {
+        self.g_ram[0x99c..0x99e].copy_from_slice(&value.to_le_bytes());
+    }
+
     /// layer1_x_pos ($7E:0911 in ram_map).
     pub fn layer1_x_pos(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0x911], self.g_ram[0x912]])

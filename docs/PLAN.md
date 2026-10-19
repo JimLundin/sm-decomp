@@ -11613,6 +11613,22 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Door sound-queue wait (2026-10-19):
+DoorTransitionFunction_WaitForSoundsToFinish now uses named byte-backed
+SFX queue checks and a named door-transition word store. Enemy processing,
+drawing, channel 0/1/2 short-circuit reads and the E2DB write retain their
+order. Wrapped byte subtraction preserves the original low-nibble gate for
+all 65,536 read/write pairs. Independent source review finds no differences.
+Cargo fmt/check and full release build pass, native exit 0. Full any%
+passes 129,712/0 (219.36s), native exit 0; actual routine calls total 114,
+including 53 waiting and 61 advancing calls. Temporary observations strip
+exactly to maintained source. Replay includes the frozen peer CPU pointer-
+address change and committed sprite spans; later Energy Tank edits are
+excluded. Own raw offsets -7, cast lines -20, Rust lines -16; other counters
+unchanged. No probe or ROM-derived assets are committed. Next: continue
+covered door-transition fields while normal-input routes expand coverage.
+Complete credits/gameplay, audio timing and hardware gaps remain open.
+
 Low-health callback QC (2026-10-19): Samus_LowHealthCheck_ uses the
 byte-backed samus_health_warning latch and a wrapping word subtraction.
 Activation still queues sound2 before setting the latch; deactivation clears
