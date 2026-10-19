@@ -64,95 +64,437 @@ struct LoadedRom {
     len: usize,
 }
 
+// Fixed word fields share one little-endian read/write definition. Indexed
+// fields and operations on other widths remain explicit methods below.
+macro_rules! ram_word_accessors {
+    (read; $( $(#[$meta:meta])* $name:ident: $address:literal; )*) => {
+        $(
+            $(#[$meta])*
+            pub fn $name(&self) -> u16 {
+                u16::from_le_bytes([self.g_ram[$address], self.g_ram[$address + 1]])
+            }
+        )*
+    };
+    (write; $( $(#[$meta:meta])* $name:ident: $address:literal; )*) => {
+        $(
+            $(#[$meta])*
+            pub fn $name(&mut self, value: u16) {
+                self.g_ram[$address..$address + 2].copy_from_slice(&value.to_le_bytes());
+            }
+        )*
+    };
+}
+
 // Initialize the large RAM and oracle snapshots directly on the heap.
 impl Game {
-    /// super_missiles count/capacity in the original RAM layout.
-    pub fn samus_super_missiles(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x9ca], self.g_ram[0x9cb]])
+    ram_word_accessors! {
+        read;
+        /// super_missiles count/capacity in the original RAM layout.
+        samus_super_missiles: 0x9ca;
+        samus_max_super_missiles: 0x9cc;
+        /// power_bombs count/capacity in the original RAM layout.
+        samus_power_bombs: 0x9ce;
+        samus_max_power_bombs: 0x9d0;
+        /// Health and reserve fields retain their original byte-backed RAM layout.
+        samus_health: 0x9c2;
+        /// Low-health sound latch ($7E:0A6A in ram_map).
+        samus_health_warning: 0xa6a;
+        /// Missile fields in ram_map at $7E:09C6/09C8/09D8.
+        samus_missiles: 0x9c6;
+        samus_max_missiles: 0x9c8;
+        samus_reserve_missiles: 0x9d8;
+        samus_max_health: 0x9c4;
+        samus_reserve_health: 0x9d6;
+        samus_max_reserve_health: 0x9d4;
+        reserve_health_mode: 0x9c0;
+        /// random_number ($7E:05E5 in ram_map).
+        random_number: 0x5e5;
+        /// special_death_item_drop_x_origin_pos ($7E:F434 in ram_map).
+        special_death_item_drop_x_origin_pos: 0xf434;
+        /// special_death_item_drop_y_origin_pos ($7E:F436 in ram_map).
+        special_death_item_drop_y_origin_pos: 0xf436;
+        /// timer_status ($7E:0943 in ram_map).
+        timer_status: 0x943;
+        /// door_transition_function ($7E:099C in ram_map).
+        door_transition_function: 0x99c;
+        /// hdma_objects_enable_flag ($7E:18B0 in ram_map).
+        hdma_objects_enable_flag: 0x18b0;
+        /// room_loading_irq_handler ($7E:00A9 in ram_map).
+        room_loading_irq_handler: 0xa9;
+        layer1_x_pos: 0x911;
+        layer1_y_pos: 0x915;
+        /// door_direction ($7E:0791 in ram_map).
+        door_direction: 0x791;
+        /// elevator_door_properties_orientation ($7E:0793 in ram_map).
+        elevator_door_properties_orientation: 0x793;
+        /// elevator_direction ($7E:0799 in ram_map).
+        elevator_direction: 0x799;
+        /// elevator_flags ($7E:0E16 in ram_map).
+        elevator_flags: 0xe16;
+        /// cre_bitset ($7E:07B3 in ram_map).
+        cre_bitset: 0x7b3;
+        /// door_def_ptr ($7E:078D in ram_map).
+        door_def_ptr: 0x78d;
+        /// room_ptr ($7E:079B in ram_map).
+        room_ptr: 0x79b;
+        /// room_height_in_blocks ($7E:07A7 in ram_map).
+        room_height_in_blocks: 0x7a7;
+        /// room_width_in_scrolls ($7E:07A9 in ram_map).
+        room_width_in_scrolls: 0x7a9;
+        /// room_height_in_scrolls ($7E:07AB in ram_map).
+        room_height_in_scrolls: 0x7ab;
+        /// roomdefroomstate_ptr ($7E:07BB in ram_map).
+        roomdefroomstate_ptr: 0x7bb;
+        /// reg_BG1VOFS ($7E:00B3 in ram_map).
+        reg_bg1vofs: 0xb3;
+        /// samus_x_pos ($7E:0AF6 in ram_map).
+        samus_x_pos: 0xaf6;
+        /// samus_x_subpos ($7E:0AF8 in ram_map).
+        samus_x_subpos: 0xaf8;
+        /// samus_y_pos ($7E:0AFA in ram_map).
+        samus_y_pos: 0xafa;
+        /// distance_to_eject_samus_up ($7E:0E08 in ram_map).
+        distance_to_eject_samus_up: 0xe08;
+        /// distance_to_eject_samus_down ($7E:0E0A in ram_map).
+        distance_to_eject_samus_down: 0xe0a;
+        /// samus_y_subpos ($7E:0AFC in ram_map).
+        samus_y_subpos: 0xafc;
+        /// samus_x_radius ($7E:0AFE in ram_map).
+        samus_x_radius: 0xafe;
+        /// extra_samus_y_displacement ($7E:0B5C in ram_map).
+        extra_samus_y_displacement: 0xb5c;
+        /// samus_y_radius ($7E:0B00 in ram_map).
+        samus_y_radius: 0xb00;
+        /// samus_pose ($7E:0A1C in ram_map).
+        samus_pose: 0xa1c;
+        /// samus_anim_frame ($7E:0A96 in ram_map).
+        samus_anim_frame: 0xa96;
+        /// joypad1_lastkeys ($7E:008B in ram_map).
+        joypad1_lastkeys: 0x8b;
+        /// samus_prev_x_pos ($7E:0B10 in ram_map).
+        samus_prev_x_pos: 0xb10;
+        /// samus_prev_y_pos ($7E:0B14 in ram_map).
+        samus_prev_y_pos: 0xb14;
+        debug_invincibility: 0xde0;
+        /// game_state ($7E:0998 in ram_map).
+        game_state: 0x998;
+        /// loading_game_state ($7E:D914 in ram_map).
+        loading_game_state: 0xd914;
+        /// area_index ($7E:079F in ram_map).
+        area_index: 0x79f;
+        collected_items: 0x9a4;
+        /// demo_set ($7E:1F55 in ram_map).
+        demo_set: 0x1f55;
+        /// demo_scene ($7E:1F57 in ram_map).
+        demo_scene: 0x1f57;
+        /// demo_input_pre_instr ($7E:0A7A in ram_map).
+        demo_input_pre_instr: 0xa7a;
+        /// demo_input_instr_timer ($7E:0A7C in ram_map).
+        demo_input_instr_timer: 0xa7c;
+        /// demo_input_instr_ptr ($7E:0A7E in ram_map).
+        demo_input_instr_ptr: 0xa7e;
+        /// demo_input ($7E:0A84 in ram_map).
+        demo_input: 0xa84;
+        /// demo_input_new ($7E:0A86 in ram_map).
+        demo_input_new: 0xa86;
+        /// demo_enable ($7E:0A88 in ram_map), shared with hdma_ptr_1.
+        demo_enable: 0xa88;
+        /// demo_input_prev ($7E:0A8C in ram_map).
+        demo_input_prev: 0xa8c;
+        /// demo_input_prev_new ($7E:0A8E in ram_map), shared with hdma_ptr_3.
+        demo_input_prev_new: 0xa8e;
+        /// button_config_jump_a ($7E:09B4 in ram_map).
+        button_config_jump_a: 0x9b4;
+        /// joypad1_newkeys ($7E:008F in ram_map).
+        joypad1_newkeys: 0x8f;
+        /// collision_detection_index ($7E:18A6 in ram_map).
+        collision_detection_index: 0x18a6;
+        /// interactive_enemy_indexes_write_ptr ($7E:17A6 in ram_map).
+        interactive_enemy_indexes_write_ptr: 0x17a6;
+        /// samus_collision_direction ($7E:0B02 in ram_map).
+        samus_collision_direction: 0xb02;
+        /// samus_collision_flag ($7E:0DD0 in ram_map).
+        samus_collision_flag: 0xdd0;
+        /// flag_samus_in_quicksand ($7E:1E71 in ram_map).
+        flag_samus_in_quicksand: 0x1e71;
+        /// inside_block_reaction_samus_point ($7E:1E73 in ram_map).
+        inside_block_reaction_samus_point: 0x1e73;
+        /// Current collision block index ($7E:0DC4 in ram_map).
+        cur_block_index: 0xdc4;
+        current_slope_bts: 0x1e77;
+        /// enemy_tile_vram_src ($7E:0E7C in ram_map).
+        enemy_tile_vram_src: 0xe7c;
+        /// enemy_tile_vram_dst ($7E:0E7E in ram_map).
+        enemy_tile_vram_dst: 0xe7e;
+        /// nmi_flag_bg2_enemy_vram_transfer ($7E:0E1E in ram_map).
+        nmi_flag_bg2_enemy_vram_transfer: 0xe1e;
+        /// enemy_bg2_tilemap_size ($7E:179A in ram_map).
+        enemy_bg2_tilemap_size: 0x179a;
+        /// debug_time_frozen_for_enemies ($7E:185E in ram_map).
+        debug_time_frozen_for_enemies: 0x185e;
+        /// time_is_frozen_flag ($7E:0A78 in ram_map).
+        time_is_frozen_flag: 0xa78;
+        /// VRAM write queue byte cursor ($7E:0330 in ram_map).
+        vram_write_queue_tail: 0x330;
+        /// Room width in blocks ($7E:07A5 in ram_map).
+        room_width_in_blocks: 0x7a5;
+        /// Current enemy slot offset ($7E:0E54 in ram_map).
+        cur_enemy_index: 0xe54;
     }
 
-    pub fn set_samus_super_missiles(&mut self, value: u16) {
-        self.g_ram[0x9ca..0x9cc].copy_from_slice(&value.to_le_bytes());
-    }
-
-    pub fn samus_max_super_missiles(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x9cc], self.g_ram[0x9cd]])
-    }
-
-    /// power_bombs count/capacity in the original RAM layout.
-    pub fn samus_power_bombs(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x9ce], self.g_ram[0x9cf]])
-    }
-
-    pub fn set_samus_power_bombs(&mut self, value: u16) {
-        self.g_ram[0x9ce..0x9d0].copy_from_slice(&value.to_le_bytes());
-    }
-
-    pub fn samus_max_power_bombs(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x9d0], self.g_ram[0x9d1]])
-    }
-
-    /// Health and reserve fields retain their original byte-backed RAM layout.
-    pub fn samus_health(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x9c2], self.g_ram[0x9c3]])
-    }
-
-    /// Low-health sound latch ($7E:0A6A in ram_map).
-    pub fn samus_health_warning(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xa6a], self.g_ram[0xa6b]])
-    }
-
-    pub fn set_samus_health_warning(&mut self, value: u16) {
-        self.g_ram[0xa6a..0xa6c].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// Missile fields in ram_map at $7E:09C6/09C8/09D8.
-    pub fn samus_missiles(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x9c6], self.g_ram[0x9c7]])
-    }
-
-    pub fn set_samus_missiles(&mut self, value: u16) {
-        self.g_ram[0x9c6..0x9c8].copy_from_slice(&value.to_le_bytes());
-    }
-
-    pub fn samus_max_missiles(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x9c8], self.g_ram[0x9c9]])
-    }
-
-    pub fn samus_reserve_missiles(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x9d8], self.g_ram[0x9d9]])
-    }
-
-    pub fn set_samus_reserve_missiles(&mut self, value: u16) {
-        self.g_ram[0x9d8..0x9da].copy_from_slice(&value.to_le_bytes());
-    }
-
-    pub fn set_samus_health(&mut self, value: u16) {
-        self.g_ram[0x9c2..0x9c4].copy_from_slice(&value.to_le_bytes());
-    }
-
-    pub fn samus_max_health(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x9c4], self.g_ram[0x9c5]])
-    }
-
-    pub fn samus_reserve_health(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x9d6], self.g_ram[0x9d7]])
-    }
-
-    pub fn set_samus_reserve_health(&mut self, value: u16) {
-        self.g_ram[0x9d6..0x9d8].copy_from_slice(&value.to_le_bytes());
-    }
-
-    pub fn samus_max_reserve_health(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x9d4], self.g_ram[0x9d5]])
-    }
-
-    pub fn reserve_health_mode(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x9c0], self.g_ram[0x9c1]])
-    }
-
-    pub fn set_reserve_health_mode(&mut self, value: u16) {
-        self.g_ram[0x9c0..0x9c2].copy_from_slice(&value.to_le_bytes());
+    ram_word_accessors! {
+        write;
+        set_samus_super_missiles: 0x9ca;
+        set_samus_power_bombs: 0x9ce;
+        set_samus_health_warning: 0xa6a;
+        set_samus_missiles: 0x9c6;
+        set_samus_reserve_missiles: 0x9d8;
+        set_samus_health: 0x9c2;
+        set_samus_reserve_health: 0x9d6;
+        set_reserve_health_mode: 0x9c0;
+        set_door_transition_function: 0x99c;
+        set_hdma_objects_enable_flag: 0x18b0;
+        /// irqhandler_next_handler ($7E:00A7 in ram_map).
+        set_irqhandler_next_handler: 0xa7;
+        /// debug_disable_sounds ($7E:05F5 in ram_map).
+        set_debug_disable_sounds: 0x5f5;
+        /// door_transition_flag_elevator_zebetites ($7E:0795 in ram_map).
+        set_door_transition_flag_elevator_zebetites: 0x795;
+        /// door_transition_flag_enemies ($7E:0797 in ram_map).
+        set_door_transition_flag_enemies: 0x797;
+        /// game_state ($7E:0998 in ram_map).
+        set_game_state: 0x998;
+        /// layer1_x_pos ($7E:0911 in ram_map).
+        set_layer1_x_pos: 0x911;
+        /// layer1_y_pos ($7E:0915 in ram_map).
+        set_layer1_y_pos: 0x915;
+        set_door_direction: 0x791;
+        set_elevator_door_properties_orientation: 0x793;
+        set_elevator_flags: 0xe16;
+        /// previous_cre_bitset ($7E:07B1 in ram_map).
+        set_previous_cre_bitset: 0x7b1;
+        set_cre_bitset: 0x7b3;
+        set_room_ptr: 0x79b;
+        /// room_index ($7E:079D in ram_map).
+        set_room_index: 0x79d;
+        /// area_index ($7E:079F in ram_map).
+        set_area_index: 0x79f;
+        /// room_x_coordinate_on_map ($7E:07A1 in ram_map).
+        set_room_x_coordinate_on_map: 0x7a1;
+        /// room_y_coordinate_on_map ($7E:07A3 in ram_map).
+        set_room_y_coordinate_on_map: 0x7a3;
+        set_room_height_in_blocks: 0x7a7;
+        set_room_width_in_scrolls: 0x7a9;
+        set_room_height_in_scrolls: 0x7ab;
+        /// up_scroller ($7E:07AD in ram_map).
+        set_up_scroller: 0x7ad;
+        /// down_scroller ($7E:07AF in ram_map).
+        set_down_scroller: 0x7af;
+        /// door_list_pointer ($7E:07B5 in ram_map).
+        set_door_list_pointer: 0x7b5;
+        /// room_size_in_blocks ($7E:07B9 in ram_map).
+        set_room_size_in_blocks: 0x7b9;
+        /// room_music_track_index ($7E:07C9 in ram_map).
+        set_room_music_track_index: 0x7c9;
+        /// room_music_data_index ($7E:07CB in ram_map).
+        set_room_music_data_index: 0x7cb;
+        /// room_layer3_asm_ptr ($7E:07CD in ram_map).
+        set_room_layer3_asm_ptr: 0x7cd;
+        /// room_enemy_population_ptr ($7E:07CF in ram_map).
+        set_room_enemy_population_ptr: 0x7cf;
+        /// room_enemy_tilesets_ptr ($7E:07D1 in ram_map).
+        set_room_enemy_tilesets_ptr: 0x7d1;
+        /// room_main_code_ptr ($7E:07DF in ram_map).
+        set_room_main_code_ptr: 0x7df;
+        set_reg_bg1vofs: 0xb3;
+        /// reg_BG2HOFS ($7E:00B5 in ram_map).
+        set_reg_bg2hofs: 0xb5;
+        /// reg_BG2VOFS ($7E:00B7 in ram_map).
+        set_reg_bg2vofs: 0xb7;
+        /// scrolling_finished_hook ($7E:07E9 in ram_map).
+        set_scrolling_finished_hook: 0x7e9;
+        /// door_transition_frame_counter ($7E:0925 in ram_map).
+        set_door_transition_frame_counter: 0x925;
+        /// door_destination_x_pos ($7E:0927 in ram_map).
+        set_door_destination_x_pos: 0x927;
+        /// door_destination_y_pos ($7E:0929 in ram_map).
+        set_door_destination_y_pos: 0x929;
+        /// samus_door_transition_subspeed ($7E:092B in ram_map).
+        set_samus_door_transition_subspeed: 0x92b;
+        /// samus_door_transition_speed ($7E:092D in ram_map).
+        set_samus_door_transition_speed: 0x92d;
+        set_samus_x_pos: 0xaf6;
+        /// door_transition_flag ($7E:0931 in ram_map).
+        set_door_transition_flag: 0x931;
+        set_samus_x_subpos: 0xaf8;
+        set_samus_y_pos: 0xafa;
+        set_samus_y_subpos: 0xafc;
+        set_extra_samus_y_displacement: 0xb5c;
+        /// samus_pose ($7E:0A1C in ram_map).
+        set_samus_pose: 0xa1c;
+        /// samus_prev_pose ($7E:0A20 in ram_map).
+        set_samus_prev_pose: 0xa20;
+        /// samus_last_different_pose ($7E:0A24 in ram_map).
+        set_samus_last_different_pose: 0xa24;
+        /// samus_anim_frame_timer ($7E:0A94 in ram_map).
+        set_samus_anim_frame_timer: 0xa94;
+        set_samus_anim_frame: 0xa96;
+        set_joypad1_lastkeys: 0x8b;
+        /// input_to_pose_calc ($7E:0DC6 in ram_map).
+        set_input_to_pose_calc: 0xdc6;
+        set_samus_prev_x_pos: 0xb10;
+        set_samus_prev_y_pos: 0xb14;
+        /// samus_momentum_routine_index ($7E:0A2E in ram_map).
+        set_samus_momentum_routine_index: 0xa2e;
+        /// samus_special_transgfx_index ($7E:0A30 in ram_map).
+        set_samus_special_transgfx_index: 0xa30;
+        /// samus_hurt_switch_index ($7E:0A32 in ram_map).
+        set_samus_hurt_switch_index: 0xa32;
+        /// absolute_moved_last_frame_x ($7E:0DA2 in ram_map).
+        set_absolute_moved_last_frame_x: 0xda2;
+        /// absolute_moved_last_frame_x_fract ($7E:0DA4 in ram_map).
+        set_absolute_moved_last_frame_x_fract: 0xda4;
+        /// absolute_moved_last_frame_y ($7E:0DA6 in ram_map).
+        set_absolute_moved_last_frame_y: 0xda6;
+        /// absolute_moved_last_frame_y_fract ($7E:0DA8 in ram_map).
+        set_absolute_moved_last_frame_y_fract: 0xda8;
+        /// samus_y_subaccel ($7E:0B32 in ram_map).
+        set_samus_y_subaccel: 0xb32;
+        /// samus_y_accel ($7E:0B34 in ram_map).
+        set_samus_y_accel: 0xb34;
+        /// debug_invincibility ($7E:0DE0 in ram_map).
+        set_debug_invincibility: 0xde0;
+        /// unused_word_7e0a5e ($7E:0A5E in ram_map).
+        set_unused_word_7e0a5e: 0xa5e;
+        /// samus_prev_health_for_flash ($7E:0A12 in ram_map).
+        set_samus_prev_health_for_flash: 0xa12;
+        /// samus_visor_palette_timer_index ($7E:0A72 in ram_map).
+        set_samus_visor_palette_timer_index: 0xa72;
+        /// enable_horiz_slope_coll ($7E:0A46 in ram_map).
+        set_enable_horiz_slope_coll: 0xa46;
+        /// samus_hurt_flash_counter ($7E:0A48 in ram_map).
+        set_samus_hurt_flash_counter: 0xa48;
+        /// samus_special_super_palette_flags ($7E:0A4A in ram_map).
+        set_samus_special_super_palette_flags: 0xa4a;
+        /// fx_y_pos ($7E:195E in ram_map).
+        set_fx_y_pos: 0x195e;
+        /// lava_acid_y_pos ($7E:1962 in ram_map).
+        set_lava_acid_y_pos: 0x1962;
+        /// cinematic_function ($7E:1F51 in ram_map).
+        set_cinematic_function: 0x1f51;
+        /// hud_item_index ($7E:09D2 in ram_map).
+        set_hud_item_index: 0x9d2;
+        /// samus_auto_cancel_hud_item_index ($7E:0A04 in ram_map).
+        set_samus_auto_cancel_hud_item_index: 0xa04;
+        /// samus_invincibility_timer ($7E:18A8 in ram_map).
+        set_samus_invincibility_timer: 0x18a8;
+        /// samus_knockback_timer ($7E:18AA in ram_map).
+        set_samus_knockback_timer: 0x18aa;
+        /// has_area_map ($7E:0789 in ram_map).
+        set_has_area_map: 0x789;
+        /// collected_items ($7E:09A4 in ram_map).
+        set_collected_items: 0x9a4;
+        /// equipped_items ($7E:09A2 in ram_map).
+        set_equipped_items: 0x9a2;
+        /// samus_max_missiles ($7E:09C8 in ram_map).
+        set_samus_max_missiles: 0x9c8;
+        /// samus_max_super_missiles ($7E:09CC in ram_map).
+        set_samus_max_super_missiles: 0x9cc;
+        /// samus_max_power_bombs ($7E:09D0 in ram_map).
+        set_samus_max_power_bombs: 0x9d0;
+        /// samus_max_health ($7E:09C4 in ram_map).
+        set_samus_max_health: 0x9c4;
+        /// collected_beams ($7E:09A8 in ram_map).
+        set_collected_beams: 0x9a8;
+        /// equipped_beams ($7E:09A6 in ram_map).
+        set_equipped_beams: 0x9a6;
+        /// button_config_up ($7E:09AA in ram_map).
+        set_button_config_up: 0x9aa;
+        /// button_config_down ($7E:09AC in ram_map).
+        set_button_config_down: 0x9ac;
+        /// button_config_left ($7E:09AE in ram_map).
+        set_button_config_left: 0x9ae;
+        /// button_config_right ($7E:09B0 in ram_map).
+        set_button_config_right: 0x9b0;
+        /// button_config_shoot_x ($7E:09B2 in ram_map).
+        set_button_config_shoot_x: 0x9b2;
+        /// button_config_jump_a ($7E:09B4 in ram_map).
+        set_button_config_jump_a: 0x9b4;
+        /// button_config_run_b ($7E:09B6 in ram_map).
+        set_button_config_run_b: 0x9b6;
+        /// button_config_itemcancel_y ($7E:09B8 in ram_map).
+        set_button_config_itemcancel_y: 0x9b8;
+        /// button_config_itemswitch ($7E:09BA in ram_map).
+        set_button_config_itemswitch: 0x9ba;
+        /// button_config_aim_up_r ($7E:09BE in ram_map).
+        set_button_config_aim_up_r: 0x9be;
+        /// button_config_aim_down_l ($7E:09BC in ram_map).
+        set_button_config_aim_down_l: 0x9bc;
+        /// unused_word_7e09e8 ($7E:09E8 in ram_map).
+        set_unused_word_7e09e8: 0x9e8;
+        /// debug_flag ($7E:09E6 in ram_map).
+        set_debug_flag: 0x9e6;
+        /// moonwalk_flag ($7E:09E4 in ram_map).
+        set_moonwalk_flag: 0x9e4;
+        /// unused_word_7e0df8 ($7E:0DF8 in ram_map).
+        set_unused_word_7e0df8: 0xdf8;
+        /// unused_word_7e0dfa ($7E:0DFA in ram_map).
+        set_unused_word_7e0dfa: 0xdfa;
+        /// unused_word_7e0dfc ($7E:0DFC in ram_map).
+        set_unused_word_7e0dfc: 0xdfc;
+        set_demo_input_pre_instr: 0xa7a;
+        set_demo_input_instr_timer: 0xa7c;
+        set_demo_input_instr_ptr: 0xa7e;
+        /// demo_timer_counter ($7E:0A80 in ram_map).
+        set_demo_timer_counter: 0xa80;
+        /// xray_angle ($7E:0A82 in ram_map), also used by demo input objects.
+        set_xray_angle: 0xa82;
+        set_demo_input: 0xa84;
+        set_demo_input_new: 0xa86;
+        set_demo_enable: 0xa88;
+        set_demo_input_prev: 0xa8c;
+        set_demo_input_prev_new: 0xa8e;
+        /// joypad1_input_samusfilter ($7E:0DFE in ram_map).
+        set_joypad1_input_samusfilter: 0xdfe;
+        /// joypad1_newinput_samusfilter ($7E:0E00 in ram_map).
+        set_joypad1_newinput_samusfilter: 0xe00;
+        /// frame_handler_alfa ($7E:0A42 in ram_map).
+        set_frame_handler_alfa: 0xa42;
+        /// frame_handler_beta ($7E:0A44 in ram_map).
+        set_frame_handler_beta: 0xa44;
+        /// frame_handler_gamma ($7E:0A5A in ram_map).
+        set_frame_handler_gamma: 0xa5a;
+        /// samus_movement_handler ($7E:0A58 in ram_map).
+        set_samus_movement_handler: 0xa58;
+        /// samus_draw_handler ($7E:0A5C in ram_map).
+        set_samus_draw_handler: 0xa5c;
+        /// samus_input_handler ($7E:0A60 in ram_map).
+        set_samus_input_handler: 0xa60;
+        /// grapple_beam_function ($7E:0D32 in ram_map).
+        set_grapple_beam_function: 0xd32;
+        /// samus_new_pose ($7E:0A28 in ram_map).
+        set_samus_new_pose: 0xa28;
+        /// samus_new_pose_interrupted ($7E:0A2A in ram_map).
+        set_samus_new_pose_interrupted: 0xa2a;
+        /// samus_new_pose_transitional ($7E:0A2C in ram_map).
+        set_samus_new_pose_transitional: 0xa2c;
+        set_joypad1_newkeys: 0x8f;
+        set_collision_detection_index: 0x18a6;
+        /// enemy_index_to_shake ($7E:0E1C in ram_map).
+        set_enemy_index_to_shake: 0xe1c;
+        set_samus_collision_direction: 0xb02;
+        set_samus_collision_flag: 0xdd0;
+        set_samus_pos_adjusted_by_slope_flag: 0xdba;
+        set_flag_samus_in_quicksand: 0x1e71;
+        set_inside_block_reaction_samus_point: 0x1e73;
+        set_cur_block_index: 0xdc4;
+        /// BTS saved by horizontal nonsquare slope dispatch ($7E:1E77 in ram_map).
+        set_current_slope_bts: 0x1e77;
+        set_enemy_tile_vram_src: 0xe7c;
+        set_enemy_tile_vram_dst: 0xe7e;
+        set_nmi_flag_bg2_enemy_vram_transfer: 0xe1e;
+        set_vram_write_queue_tail: 0x330;
+        set_room_width_in_blocks: 0x7a5;
     }
 
     /// Register the cartridge's ROM after a successful load.
@@ -196,21 +538,6 @@ impl Game {
         start
     }
 
-    /// random_number ($7E:05E5 in ram_map).
-    pub fn random_number(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x5e5], self.g_ram[0x5e6]])
-    }
-
-    /// special_death_item_drop_x_origin_pos ($7E:F434 in ram_map).
-    pub fn special_death_item_drop_x_origin_pos(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xf434], self.g_ram[0xf435]])
-    }
-
-    /// special_death_item_drop_y_origin_pos ($7E:F436 in ram_map).
-    pub fn special_death_item_drop_y_origin_pos(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xf436], self.g_ram[0xf437]])
-    }
-
     /// sfx_readpos / sfx_writepos ($7E:0643/0646 in ram_map).
     pub fn sfx_queue_is_empty(&self, channel: usize) -> bool {
         self.g_ram[0x646 + channel].wrapping_sub(self.g_ram[0x643 + channel]) & 0xf == 0
@@ -222,208 +549,6 @@ impl Game {
     }
     pub fn set_coroutine_state_1(&mut self, value: u8) {
         self.g_ram[0x612] = value;
-    }
-
-    /// timer_status ($7E:0943 in ram_map).
-    pub fn timer_status(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x943], self.g_ram[0x944]])
-    }
-
-    /// door_transition_function ($7E:099C in ram_map).
-    pub fn door_transition_function(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x99c], self.g_ram[0x99d]])
-    }
-
-    pub fn set_door_transition_function(&mut self, value: u16) {
-        self.g_ram[0x99c..0x99e].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// hdma_objects_enable_flag ($7E:18B0 in ram_map).
-    pub fn hdma_objects_enable_flag(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x18b0], self.g_ram[0x18b1]])
-    }
-    pub fn set_hdma_objects_enable_flag(&mut self, value: u16) {
-        self.g_ram[0x18b0..0x18b2].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// irqhandler_next_handler ($7E:00A7 in ram_map).
-    pub fn set_irqhandler_next_handler(&mut self, value: u16) {
-        self.g_ram[0xa7..0xa9].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// room_loading_irq_handler ($7E:00A9 in ram_map).
-    pub fn room_loading_irq_handler(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xa9], self.g_ram[0xaa]])
-    }
-
-    /// debug_disable_sounds ($7E:05F5 in ram_map).
-    pub fn set_debug_disable_sounds(&mut self, value: u16) {
-        self.g_ram[0x5f5..0x5f7].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// door_transition_flag_elevator_zebetites ($7E:0795 in ram_map).
-    pub fn set_door_transition_flag_elevator_zebetites(&mut self, value: u16) {
-        self.g_ram[0x795..0x797].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// door_transition_flag_enemies ($7E:0797 in ram_map).
-    pub fn set_door_transition_flag_enemies(&mut self, value: u16) {
-        self.g_ram[0x797..0x799].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// game_state ($7E:0998 in ram_map).
-    pub fn set_game_state(&mut self, value: u16) {
-        self.g_ram[0x998..0x99a].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// layer1_x_pos ($7E:0911 in ram_map).
-    pub fn set_layer1_x_pos(&mut self, value: u16) {
-        self.g_ram[0x911..0x913].copy_from_slice(&value.to_le_bytes());
-    }
-
-    pub fn layer1_x_pos(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x911], self.g_ram[0x912]])
-    }
-
-    /// layer1_y_pos ($7E:0915 in ram_map).
-    pub fn set_layer1_y_pos(&mut self, value: u16) {
-        self.g_ram[0x915..0x917].copy_from_slice(&value.to_le_bytes());
-    }
-
-    pub fn layer1_y_pos(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x915], self.g_ram[0x916]])
-    }
-
-    /// door_direction ($7E:0791 in ram_map).
-    pub fn door_direction(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x791], self.g_ram[0x792]])
-    }
-
-    pub fn set_door_direction(&mut self, value: u16) {
-        self.g_ram[0x791..0x793].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// elevator_door_properties_orientation ($7E:0793 in ram_map).
-    pub fn elevator_door_properties_orientation(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x793], self.g_ram[0x794]])
-    }
-
-    pub fn set_elevator_door_properties_orientation(&mut self, value: u16) {
-        self.g_ram[0x793..0x795].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// elevator_direction ($7E:0799 in ram_map).
-    pub fn elevator_direction(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x799], self.g_ram[0x79a]])
-    }
-
-    /// elevator_flags ($7E:0E16 in ram_map).
-    pub fn elevator_flags(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xe16], self.g_ram[0xe17]])
-    }
-
-    pub fn set_elevator_flags(&mut self, value: u16) {
-        self.g_ram[0xe16..0xe18].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// previous_cre_bitset ($7E:07B1 in ram_map).
-    pub fn set_previous_cre_bitset(&mut self, value: u16) {
-        self.g_ram[0x7b1..0x7b3].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// cre_bitset ($7E:07B3 in ram_map).
-    pub fn cre_bitset(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x7b3], self.g_ram[0x7b4]])
-    }
-
-    pub fn set_cre_bitset(&mut self, value: u16) {
-        self.g_ram[0x7b3..0x7b5].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// door_def_ptr ($7E:078D in ram_map).
-    pub fn door_def_ptr(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x78d], self.g_ram[0x78e]])
-    }
-
-    /// room_ptr ($7E:079B in ram_map).
-    pub fn room_ptr(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x79b], self.g_ram[0x79c]])
-    }
-
-    pub fn set_room_ptr(&mut self, value: u16) {
-        self.g_ram[0x79b..0x79d].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// room_index ($7E:079D in ram_map).
-    pub fn set_room_index(&mut self, value: u16) {
-        self.g_ram[0x79d..0x79f].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// area_index ($7E:079F in ram_map).
-    pub fn set_area_index(&mut self, value: u16) {
-        self.g_ram[0x79f..0x7a1].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// room_x_coordinate_on_map ($7E:07A1 in ram_map).
-    pub fn set_room_x_coordinate_on_map(&mut self, value: u16) {
-        self.g_ram[0x7a1..0x7a3].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// room_y_coordinate_on_map ($7E:07A3 in ram_map).
-    pub fn set_room_y_coordinate_on_map(&mut self, value: u16) {
-        self.g_ram[0x7a3..0x7a5].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// room_height_in_blocks ($7E:07A7 in ram_map).
-    pub fn room_height_in_blocks(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x7a7], self.g_ram[0x7a8]])
-    }
-
-    pub fn set_room_height_in_blocks(&mut self, value: u16) {
-        self.g_ram[0x7a7..0x7a9].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// room_width_in_scrolls ($7E:07A9 in ram_map).
-    pub fn room_width_in_scrolls(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x7a9], self.g_ram[0x7aa]])
-    }
-
-    pub fn set_room_width_in_scrolls(&mut self, value: u16) {
-        self.g_ram[0x7a9..0x7ab].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// room_height_in_scrolls ($7E:07AB in ram_map).
-    pub fn room_height_in_scrolls(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x7ab], self.g_ram[0x7ac]])
-    }
-
-    pub fn set_room_height_in_scrolls(&mut self, value: u16) {
-        self.g_ram[0x7ab..0x7ad].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// up_scroller ($7E:07AD in ram_map).
-    pub fn set_up_scroller(&mut self, value: u16) {
-        self.g_ram[0x7ad..0x7af].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// down_scroller ($7E:07AF in ram_map).
-    pub fn set_down_scroller(&mut self, value: u16) {
-        self.g_ram[0x7af..0x7b1].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// door_list_pointer ($7E:07B5 in ram_map).
-    pub fn set_door_list_pointer(&mut self, value: u16) {
-        self.g_ram[0x7b5..0x7b7].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// room_size_in_blocks ($7E:07B9 in ram_map).
-    pub fn set_room_size_in_blocks(&mut self, value: u16) {
-        self.g_ram[0x7b9..0x7bb].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// roomdefroomstate_ptr ($7E:07BB in ram_map).
-    pub fn roomdefroomstate_ptr(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x7bb], self.g_ram[0x7bc]])
     }
 
     fn long_pointer_bytes(pointer: LongPtr) -> [u8; 3] {
@@ -459,176 +584,9 @@ impl Game {
         self.g_ram[0x7c6..0x7c9].copy_from_slice(&Self::long_pointer_bytes(value));
     }
 
-    /// room_music_track_index ($7E:07C9 in ram_map).
-    pub fn set_room_music_track_index(&mut self, value: u16) {
-        self.g_ram[0x7c9..0x7cb].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// room_music_data_index ($7E:07CB in ram_map).
-    pub fn set_room_music_data_index(&mut self, value: u16) {
-        self.g_ram[0x7cb..0x7cd].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// room_layer3_asm_ptr ($7E:07CD in ram_map).
-    pub fn set_room_layer3_asm_ptr(&mut self, value: u16) {
-        self.g_ram[0x7cd..0x7cf].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// room_enemy_population_ptr ($7E:07CF in ram_map).
-    pub fn set_room_enemy_population_ptr(&mut self, value: u16) {
-        self.g_ram[0x7cf..0x7d1].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// room_enemy_tilesets_ptr ($7E:07D1 in ram_map).
-    pub fn set_room_enemy_tilesets_ptr(&mut self, value: u16) {
-        self.g_ram[0x7d1..0x7d3].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// room_main_code_ptr ($7E:07DF in ram_map).
-    pub fn set_room_main_code_ptr(&mut self, value: u16) {
-        self.g_ram[0x7df..0x7e1].copy_from_slice(&value.to_le_bytes());
-    }
-
     /// layer2_scroll_x/y ($7E:091B/091C in ram_map).
     pub fn set_layer2_scroll_x_and_y(&mut self, x: u8, y: u8) {
         self.g_ram[0x91b..0x91d].copy_from_slice(&[x, y]);
-    }
-
-    /// reg_BG1VOFS ($7E:00B3 in ram_map).
-    pub fn reg_bg1vofs(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xb3], self.g_ram[0xb4]])
-    }
-    pub fn set_reg_bg1vofs(&mut self, value: u16) {
-        self.g_ram[0xb3..0xb5].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// reg_BG2HOFS ($7E:00B5 in ram_map).
-    pub fn set_reg_bg2hofs(&mut self, value: u16) {
-        self.g_ram[0xb5..0xb7].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// reg_BG2VOFS ($7E:00B7 in ram_map).
-    pub fn set_reg_bg2vofs(&mut self, value: u16) {
-        self.g_ram[0xb7..0xb9].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// scrolling_finished_hook ($7E:07E9 in ram_map).
-    pub fn set_scrolling_finished_hook(&mut self, value: u16) {
-        self.g_ram[0x7e9..0x7eb].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// door_transition_frame_counter ($7E:0925 in ram_map).
-    pub fn set_door_transition_frame_counter(&mut self, value: u16) {
-        self.g_ram[0x925..0x927].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// door_destination_x_pos ($7E:0927 in ram_map).
-    pub fn set_door_destination_x_pos(&mut self, value: u16) {
-        self.g_ram[0x927..0x929].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// door_destination_y_pos ($7E:0929 in ram_map).
-    pub fn set_door_destination_y_pos(&mut self, value: u16) {
-        self.g_ram[0x929..0x92b].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_door_transition_subspeed ($7E:092B in ram_map).
-    pub fn set_samus_door_transition_subspeed(&mut self, value: u16) {
-        self.g_ram[0x92b..0x92d].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_door_transition_speed ($7E:092D in ram_map).
-    pub fn set_samus_door_transition_speed(&mut self, value: u16) {
-        self.g_ram[0x92d..0x92f].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_x_pos ($7E:0AF6 in ram_map).
-    pub fn samus_x_pos(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xaf6], self.g_ram[0xaf7]])
-    }
-
-    pub fn set_samus_x_pos(&mut self, value: u16) {
-        self.g_ram[0xaf6..0xaf8].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// door_transition_flag ($7E:0931 in ram_map).
-    pub fn set_door_transition_flag(&mut self, value: u16) {
-        self.g_ram[0x931..0x933].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_x_subpos ($7E:0AF8 in ram_map).
-    pub fn samus_x_subpos(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xaf8], self.g_ram[0xaf9]])
-    }
-
-    pub fn set_samus_x_subpos(&mut self, value: u16) {
-        self.g_ram[0xaf8..0xafa].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_y_pos ($7E:0AFA in ram_map).
-    pub fn samus_y_pos(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xafa], self.g_ram[0xafb]])
-    }
-
-    pub fn set_samus_y_pos(&mut self, value: u16) {
-        self.g_ram[0xafa..0xafc].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// distance_to_eject_samus_up ($7E:0E08 in ram_map).
-    pub fn distance_to_eject_samus_up(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xe08], self.g_ram[0xe09]])
-    }
-
-    /// distance_to_eject_samus_down ($7E:0E0A in ram_map).
-    pub fn distance_to_eject_samus_down(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xe0a], self.g_ram[0xe0b]])
-    }
-
-    /// samus_y_subpos ($7E:0AFC in ram_map).
-    pub fn samus_y_subpos(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xafc], self.g_ram[0xafd]])
-    }
-
-    pub fn set_samus_y_subpos(&mut self, value: u16) {
-        self.g_ram[0xafc..0xafe].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_x_radius ($7E:0AFE in ram_map).
-    pub fn samus_x_radius(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xafe], self.g_ram[0xaff]])
-    }
-
-    /// extra_samus_y_displacement ($7E:0B5C in ram_map).
-    pub fn extra_samus_y_displacement(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xb5c], self.g_ram[0xb5d]])
-    }
-    pub fn set_extra_samus_y_displacement(&mut self, value: u16) {
-        self.g_ram[0xb5c..0xb5e].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_y_radius ($7E:0B00 in ram_map).
-    pub fn samus_y_radius(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xb00], self.g_ram[0xb01]])
-    }
-
-    /// samus_pose ($7E:0A1C in ram_map).
-    pub fn samus_pose(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xa1c], self.g_ram[0xa1d]])
-    }
-
-    /// samus_pose ($7E:0A1C in ram_map).
-    pub fn set_samus_pose(&mut self, value: u16) {
-        self.g_ram[0xa1c..0xa1e].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_prev_pose ($7E:0A20 in ram_map).
-    pub fn set_samus_prev_pose(&mut self, value: u16) {
-        self.g_ram[0xa20..0xa22].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_last_different_pose ($7E:0A24 in ram_map).
-    pub fn set_samus_last_different_pose(&mut self, value: u16) {
-        self.g_ram[0xa24..0xa26].copy_from_slice(&value.to_le_bytes());
     }
 
     /// samus_pose_x_dir / samus_movement_type ($7E:0A1E/0A1F).
@@ -667,503 +625,9 @@ impl Game {
         self.g_ram[0xa27]
     }
 
-    /// samus_anim_frame_timer ($7E:0A94 in ram_map).
-    pub fn set_samus_anim_frame_timer(&mut self, value: u16) {
-        self.g_ram[0xa94..0xa96].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_anim_frame ($7E:0A96 in ram_map).
-    pub fn samus_anim_frame(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xa96], self.g_ram[0xa97]])
-    }
-
-    pub fn set_samus_anim_frame(&mut self, value: u16) {
-        self.g_ram[0xa96..0xa98].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// joypad1_lastkeys ($7E:008B in ram_map).
-    pub fn joypad1_lastkeys(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x8b], self.g_ram[0x8c]])
-    }
-
-    pub fn set_joypad1_lastkeys(&mut self, value: u16) {
-        self.g_ram[0x8b..0x8d].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// input_to_pose_calc ($7E:0DC6 in ram_map).
-    pub fn set_input_to_pose_calc(&mut self, value: u16) {
-        self.g_ram[0xdc6..0xdc8].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_prev_x_pos ($7E:0B10 in ram_map).
-    pub fn samus_prev_x_pos(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xb10], self.g_ram[0xb11]])
-    }
-
-    pub fn set_samus_prev_x_pos(&mut self, value: u16) {
-        self.g_ram[0xb10..0xb12].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_prev_y_pos ($7E:0B14 in ram_map).
-    pub fn samus_prev_y_pos(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xb14], self.g_ram[0xb15]])
-    }
-
-    pub fn set_samus_prev_y_pos(&mut self, value: u16) {
-        self.g_ram[0xb14..0xb16].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_momentum_routine_index ($7E:0A2E in ram_map).
-    pub fn set_samus_momentum_routine_index(&mut self, value: u16) {
-        self.g_ram[0xa2e..0xa30].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_special_transgfx_index ($7E:0A30 in ram_map).
-    pub fn set_samus_special_transgfx_index(&mut self, value: u16) {
-        self.g_ram[0xa30..0xa32].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_hurt_switch_index ($7E:0A32 in ram_map).
-    pub fn set_samus_hurt_switch_index(&mut self, value: u16) {
-        self.g_ram[0xa32..0xa34].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// absolute_moved_last_frame_x ($7E:0DA2 in ram_map).
-    pub fn set_absolute_moved_last_frame_x(&mut self, value: u16) {
-        self.g_ram[0xda2..0xda4].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// absolute_moved_last_frame_x_fract ($7E:0DA4 in ram_map).
-    pub fn set_absolute_moved_last_frame_x_fract(&mut self, value: u16) {
-        self.g_ram[0xda4..0xda6].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// absolute_moved_last_frame_y ($7E:0DA6 in ram_map).
-    pub fn set_absolute_moved_last_frame_y(&mut self, value: u16) {
-        self.g_ram[0xda6..0xda8].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// absolute_moved_last_frame_y_fract ($7E:0DA8 in ram_map).
-    pub fn set_absolute_moved_last_frame_y_fract(&mut self, value: u16) {
-        self.g_ram[0xda8..0xdaa].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_y_subaccel ($7E:0B32 in ram_map).
-    pub fn set_samus_y_subaccel(&mut self, value: u16) {
-        self.g_ram[0xb32..0xb34].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_y_accel ($7E:0B34 in ram_map).
-    pub fn set_samus_y_accel(&mut self, value: u16) {
-        self.g_ram[0xb34..0xb36].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// debug_invincibility ($7E:0DE0 in ram_map).
-    pub fn set_debug_invincibility(&mut self, value: u16) {
-        self.g_ram[0xde0..0xde2].copy_from_slice(&value.to_le_bytes());
-    }
-
-    pub fn debug_invincibility(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xde0], self.g_ram[0xde1]])
-    }
-
-    /// unused_word_7e0a5e ($7E:0A5E in ram_map).
-    pub fn set_unused_word_7e0a5e(&mut self, value: u16) {
-        self.g_ram[0xa5e..0xa60].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_prev_health_for_flash ($7E:0A12 in ram_map).
-    pub fn set_samus_prev_health_for_flash(&mut self, value: u16) {
-        self.g_ram[0xa12..0xa14].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_visor_palette_timer_index ($7E:0A72 in ram_map).
-    pub fn set_samus_visor_palette_timer_index(&mut self, value: u16) {
-        self.g_ram[0xa72..0xa74].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// enable_horiz_slope_coll ($7E:0A46 in ram_map).
-    pub fn set_enable_horiz_slope_coll(&mut self, value: u16) {
-        self.g_ram[0xa46..0xa48].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_hurt_flash_counter ($7E:0A48 in ram_map).
-    pub fn set_samus_hurt_flash_counter(&mut self, value: u16) {
-        self.g_ram[0xa48..0xa4a].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_special_super_palette_flags ($7E:0A4A in ram_map).
-    pub fn set_samus_special_super_palette_flags(&mut self, value: u16) {
-        self.g_ram[0xa4a..0xa4c].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// fx_y_pos ($7E:195E in ram_map).
-    pub fn set_fx_y_pos(&mut self, value: u16) {
-        self.g_ram[0x195e..0x1960].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// lava_acid_y_pos ($7E:1962 in ram_map).
-    pub fn set_lava_acid_y_pos(&mut self, value: u16) {
-        self.g_ram[0x1962..0x1964].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// cinematic_function ($7E:1F51 in ram_map).
-    pub fn set_cinematic_function(&mut self, value: u16) {
-        self.g_ram[0x1f51..0x1f53].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// hud_item_index ($7E:09D2 in ram_map).
-    pub fn set_hud_item_index(&mut self, value: u16) {
-        self.g_ram[0x9d2..0x9d4].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_auto_cancel_hud_item_index ($7E:0A04 in ram_map).
-    pub fn set_samus_auto_cancel_hud_item_index(&mut self, value: u16) {
-        self.g_ram[0xa04..0xa06].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_invincibility_timer ($7E:18A8 in ram_map).
-    pub fn set_samus_invincibility_timer(&mut self, value: u16) {
-        self.g_ram[0x18a8..0x18aa].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_knockback_timer ($7E:18AA in ram_map).
-    pub fn set_samus_knockback_timer(&mut self, value: u16) {
-        self.g_ram[0x18aa..0x18ac].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// game_state ($7E:0998 in ram_map).
-    pub fn game_state(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x998], self.g_ram[0x999]])
-    }
-
-    /// loading_game_state ($7E:D914 in ram_map).
-    pub fn loading_game_state(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xd914], self.g_ram[0xd915]])
-    }
-
-    /// area_index ($7E:079F in ram_map).
-    pub fn area_index(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x79f], self.g_ram[0x7a0]])
-    }
-
-    /// has_area_map ($7E:0789 in ram_map).
-    pub fn set_has_area_map(&mut self, value: u16) {
-        self.g_ram[0x789..0x78b].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// collected_items ($7E:09A4 in ram_map).
-    pub fn set_collected_items(&mut self, value: u16) {
-        self.g_ram[0x9a4..0x9a6].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// equipped_items ($7E:09A2 in ram_map).
-    pub fn set_equipped_items(&mut self, value: u16) {
-        self.g_ram[0x9a2..0x9a4].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_max_missiles ($7E:09C8 in ram_map).
-    pub fn set_samus_max_missiles(&mut self, value: u16) {
-        self.g_ram[0x9c8..0x9ca].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_max_super_missiles ($7E:09CC in ram_map).
-    pub fn set_samus_max_super_missiles(&mut self, value: u16) {
-        self.g_ram[0x9cc..0x9ce].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_max_power_bombs ($7E:09D0 in ram_map).
-    pub fn set_samus_max_power_bombs(&mut self, value: u16) {
-        self.g_ram[0x9d0..0x9d2].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_max_health ($7E:09C4 in ram_map).
-    pub fn set_samus_max_health(&mut self, value: u16) {
-        self.g_ram[0x9c4..0x9c6].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// collected_beams ($7E:09A8 in ram_map).
-    pub fn set_collected_beams(&mut self, value: u16) {
-        self.g_ram[0x9a8..0x9aa].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// equipped_beams ($7E:09A6 in ram_map).
-    pub fn set_equipped_beams(&mut self, value: u16) {
-        self.g_ram[0x9a6..0x9a8].copy_from_slice(&value.to_le_bytes());
-    }
-
-    pub fn collected_items(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x9a4], self.g_ram[0x9a5]])
-    }
-
-    /// button_config_up ($7E:09AA in ram_map).
-    pub fn set_button_config_up(&mut self, value: u16) {
-        self.g_ram[0x9aa..0x9ac].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// button_config_down ($7E:09AC in ram_map).
-    pub fn set_button_config_down(&mut self, value: u16) {
-        self.g_ram[0x9ac..0x9ae].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// button_config_left ($7E:09AE in ram_map).
-    pub fn set_button_config_left(&mut self, value: u16) {
-        self.g_ram[0x9ae..0x9b0].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// button_config_right ($7E:09B0 in ram_map).
-    pub fn set_button_config_right(&mut self, value: u16) {
-        self.g_ram[0x9b0..0x9b2].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// button_config_shoot_x ($7E:09B2 in ram_map).
-    pub fn set_button_config_shoot_x(&mut self, value: u16) {
-        self.g_ram[0x9b2..0x9b4].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// button_config_jump_a ($7E:09B4 in ram_map).
-    pub fn set_button_config_jump_a(&mut self, value: u16) {
-        self.g_ram[0x9b4..0x9b6].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// button_config_run_b ($7E:09B6 in ram_map).
-    pub fn set_button_config_run_b(&mut self, value: u16) {
-        self.g_ram[0x9b6..0x9b8].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// button_config_itemcancel_y ($7E:09B8 in ram_map).
-    pub fn set_button_config_itemcancel_y(&mut self, value: u16) {
-        self.g_ram[0x9b8..0x9ba].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// button_config_itemswitch ($7E:09BA in ram_map).
-    pub fn set_button_config_itemswitch(&mut self, value: u16) {
-        self.g_ram[0x9ba..0x9bc].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// button_config_aim_up_r ($7E:09BE in ram_map).
-    pub fn set_button_config_aim_up_r(&mut self, value: u16) {
-        self.g_ram[0x9be..0x9c0].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// button_config_aim_down_l ($7E:09BC in ram_map).
-    pub fn set_button_config_aim_down_l(&mut self, value: u16) {
-        self.g_ram[0x9bc..0x9be].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// unused_word_7e09e8 ($7E:09E8 in ram_map).
-    pub fn set_unused_word_7e09e8(&mut self, value: u16) {
-        self.g_ram[0x9e8..0x9ea].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// debug_flag ($7E:09E6 in ram_map).
-    pub fn set_debug_flag(&mut self, value: u16) {
-        self.g_ram[0x9e6..0x9e8].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// moonwalk_flag ($7E:09E4 in ram_map).
-    pub fn set_moonwalk_flag(&mut self, value: u16) {
-        self.g_ram[0x9e4..0x9e6].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// unused_word_7e0df8 ($7E:0DF8 in ram_map).
-    pub fn set_unused_word_7e0df8(&mut self, value: u16) {
-        self.g_ram[0xdf8..0xdfa].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// unused_word_7e0dfa ($7E:0DFA in ram_map).
-    pub fn set_unused_word_7e0dfa(&mut self, value: u16) {
-        self.g_ram[0xdfa..0xdfc].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// unused_word_7e0dfc ($7E:0DFC in ram_map).
-    pub fn set_unused_word_7e0dfc(&mut self, value: u16) {
-        self.g_ram[0xdfc..0xdfe].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// demo_set ($7E:1F55 in ram_map).
-    pub fn demo_set(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x1f55], self.g_ram[0x1f56]])
-    }
-
-    /// demo_scene ($7E:1F57 in ram_map).
-    pub fn demo_scene(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x1f57], self.g_ram[0x1f58]])
-    }
-
-    /// demo_input_pre_instr ($7E:0A7A in ram_map).
-    pub fn demo_input_pre_instr(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xa7a], self.g_ram[0xa7b]])
-    }
-
-    pub fn set_demo_input_pre_instr(&mut self, value: u16) {
-        self.g_ram[0xa7a..0xa7c].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// demo_input_instr_timer ($7E:0A7C in ram_map).
-    pub fn demo_input_instr_timer(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xa7c], self.g_ram[0xa7d]])
-    }
-
-    pub fn set_demo_input_instr_timer(&mut self, value: u16) {
-        self.g_ram[0xa7c..0xa7e].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// demo_input_instr_ptr ($7E:0A7E in ram_map).
-    pub fn demo_input_instr_ptr(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xa7e], self.g_ram[0xa7f]])
-    }
-
-    pub fn set_demo_input_instr_ptr(&mut self, value: u16) {
-        self.g_ram[0xa7e..0xa80].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// demo_timer_counter ($7E:0A80 in ram_map).
-    pub fn set_demo_timer_counter(&mut self, value: u16) {
-        self.g_ram[0xa80..0xa82].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// xray_angle ($7E:0A82 in ram_map), also used by demo input objects.
-    pub fn set_xray_angle(&mut self, value: u16) {
-        self.g_ram[0xa82..0xa84].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// demo_input ($7E:0A84 in ram_map).
-    pub fn demo_input(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xa84], self.g_ram[0xa85]])
-    }
-
-    pub fn set_demo_input(&mut self, value: u16) {
-        self.g_ram[0xa84..0xa86].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// demo_input_new ($7E:0A86 in ram_map).
-    pub fn demo_input_new(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xa86], self.g_ram[0xa87]])
-    }
-
-    pub fn set_demo_input_new(&mut self, value: u16) {
-        self.g_ram[0xa86..0xa88].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// demo_enable ($7E:0A88 in ram_map), shared with hdma_ptr_1.
-    pub fn demo_enable(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xa88], self.g_ram[0xa89]])
-    }
-
-    pub fn set_demo_enable(&mut self, value: u16) {
-        self.g_ram[0xa88..0xa8a].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// demo_input_prev ($7E:0A8C in ram_map).
-    pub fn demo_input_prev(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xa8c], self.g_ram[0xa8d]])
-    }
-
-    pub fn set_demo_input_prev(&mut self, value: u16) {
-        self.g_ram[0xa8c..0xa8e].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// demo_input_prev_new ($7E:0A8E in ram_map), shared with hdma_ptr_3.
-    pub fn demo_input_prev_new(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xa8e], self.g_ram[0xa8f]])
-    }
-
-    pub fn set_demo_input_prev_new(&mut self, value: u16) {
-        self.g_ram[0xa8e..0xa90].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// joypad1_input_samusfilter ($7E:0DFE in ram_map).
-    pub fn set_joypad1_input_samusfilter(&mut self, value: u16) {
-        self.g_ram[0xdfe..0xe00].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// joypad1_newinput_samusfilter ($7E:0E00 in ram_map).
-    pub fn set_joypad1_newinput_samusfilter(&mut self, value: u16) {
-        self.g_ram[0xe00..0xe02].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// frame_handler_alfa ($7E:0A42 in ram_map).
-    pub fn set_frame_handler_alfa(&mut self, value: u16) {
-        self.g_ram[0xa42..0xa44].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// frame_handler_beta ($7E:0A44 in ram_map).
-    pub fn set_frame_handler_beta(&mut self, value: u16) {
-        self.g_ram[0xa44..0xa46].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// frame_handler_gamma ($7E:0A5A in ram_map).
-    pub fn set_frame_handler_gamma(&mut self, value: u16) {
-        self.g_ram[0xa5a..0xa5c].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_movement_handler ($7E:0A58 in ram_map).
-    pub fn set_samus_movement_handler(&mut self, value: u16) {
-        self.g_ram[0xa58..0xa5a].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_draw_handler ($7E:0A5C in ram_map).
-    pub fn set_samus_draw_handler(&mut self, value: u16) {
-        self.g_ram[0xa5c..0xa5e].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_input_handler ($7E:0A60 in ram_map).
-    pub fn set_samus_input_handler(&mut self, value: u16) {
-        self.g_ram[0xa60..0xa62].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// grapple_beam_function ($7E:0D32 in ram_map).
-    pub fn set_grapple_beam_function(&mut self, value: u16) {
-        self.g_ram[0xd32..0xd34].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_new_pose ($7E:0A28 in ram_map).
-    pub fn set_samus_new_pose(&mut self, value: u16) {
-        self.g_ram[0xa28..0xa2a].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_new_pose_interrupted ($7E:0A2A in ram_map).
-    pub fn set_samus_new_pose_interrupted(&mut self, value: u16) {
-        self.g_ram[0xa2a..0xa2c].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_new_pose_transitional ($7E:0A2C in ram_map).
-    pub fn set_samus_new_pose_transitional(&mut self, value: u16) {
-        self.g_ram[0xa2c..0xa2e].copy_from_slice(&value.to_le_bytes());
-    }
-
     /// samus_pose_x_dir ($7E:0A1E in ram_map); this is a byte, not a word.
     pub fn samus_pose_x_dir(&self) -> u8 {
         self.g_ram[0xa1e]
-    }
-
-    /// button_config_jump_a ($7E:09B4 in ram_map).
-    pub fn button_config_jump_a(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x9b4], self.g_ram[0x9b5]])
-    }
-
-    /// joypad1_newkeys ($7E:008F in ram_map).
-    pub fn joypad1_newkeys(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x8f], self.g_ram[0x90]])
-    }
-
-    pub fn set_joypad1_newkeys(&mut self, value: u16) {
-        self.g_ram[0x8f..0x91].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// collision_detection_index ($7E:18A6 in ram_map).
-    pub fn collision_detection_index(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x18a6], self.g_ram[0x18a7]])
-    }
-
-    pub fn set_collision_detection_index(&mut self, value: u16) {
-        self.g_ram[0x18a6..0x18a8].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// interactive_enemy_indexes_write_ptr ($7E:17A6 in ram_map).
-    pub fn interactive_enemy_indexes_write_ptr(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x17a6], self.g_ram[0x17a7]])
     }
 
     /// Read a word of interactive_enemy_indexes ($7E:17EC in ram_map).
@@ -1179,72 +643,9 @@ impl Game {
         self.g_ram[offset..offset + 2].copy_from_slice(&index.to_le_bytes());
     }
 
-    /// enemy_index_to_shake ($7E:0E1C in ram_map).
-    pub fn set_enemy_index_to_shake(&mut self, value: u16) {
-        self.g_ram[0xe1c..0xe1e].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_collision_direction ($7E:0B02 in ram_map).
-    pub fn samus_collision_direction(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xb02], self.g_ram[0xb03]])
-    }
-
-    pub fn set_samus_collision_direction(&mut self, value: u16) {
-        self.g_ram[0xb02..0xb04].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// samus_collision_flag ($7E:0DD0 in ram_map).
-    pub fn samus_collision_flag(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xdd0], self.g_ram[0xdd1]])
-    }
-
-    pub fn set_samus_collision_flag(&mut self, value: u16) {
-        self.g_ram[0xdd0..0xdd2].copy_from_slice(&value.to_le_bytes());
-    }
-
-    pub fn set_samus_pos_adjusted_by_slope_flag(&mut self, value: u16) {
-        self.g_ram[0xdba..0xdbc].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// flag_samus_in_quicksand ($7E:1E71 in ram_map).
-    pub fn flag_samus_in_quicksand(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x1e71], self.g_ram[0x1e72]])
-    }
-
-    pub fn set_flag_samus_in_quicksand(&mut self, value: u16) {
-        self.g_ram[0x1e71..0x1e73].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// inside_block_reaction_samus_point ($7E:1E73 in ram_map).
-    pub fn inside_block_reaction_samus_point(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x1e73], self.g_ram[0x1e74]])
-    }
-
-    pub fn set_inside_block_reaction_samus_point(&mut self, value: u16) {
-        self.g_ram[0x1e73..0x1e75].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// Current collision block index ($7E:0DC4 in ram_map).
-    pub fn cur_block_index(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xdc4], self.g_ram[0xdc5]])
-    }
-
-    pub fn set_cur_block_index(&mut self, index: u16) {
-        self.g_ram[0xdc4..0xdc6].copy_from_slice(&index.to_le_bytes());
-    }
-
     /// BTS behavior byte for the live collision block ($7F:6402 in ram_map).
     pub fn current_block_bts(&self) -> u8 {
         self.g_ram[0x16402 + usize::from(self.cur_block_index())]
-    }
-
-    /// BTS saved by horizontal nonsquare slope dispatch ($7E:1E77 in ram_map).
-    pub fn set_current_slope_bts(&mut self, bts: u16) {
-        self.g_ram[0x1e77..0x1e79].copy_from_slice(&bts.to_le_bytes());
-    }
-
-    pub fn current_slope_bts(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x1e77], self.g_ram[0x1e78]])
     }
 
     /// Live level-data word selected by the collision block index.
@@ -1272,79 +673,14 @@ impl Game {
         u16::from_le_bytes([self.g_ram[offset], self.g_ram[offset + 1]])
     }
 
-    /// enemy_tile_vram_src ($7E:0E7C in ram_map).
-    pub fn enemy_tile_vram_src(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xe7c], self.g_ram[0xe7d]])
-    }
-
-    pub fn set_enemy_tile_vram_src(&mut self, value: u16) {
-        self.g_ram[0xe7c..0xe7e].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// enemy_tile_vram_dst ($7E:0E7E in ram_map).
-    pub fn enemy_tile_vram_dst(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xe7e], self.g_ram[0xe7f]])
-    }
-
-    pub fn set_enemy_tile_vram_dst(&mut self, value: u16) {
-        self.g_ram[0xe7e..0xe80].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// nmi_flag_bg2_enemy_vram_transfer ($7E:0E1E in ram_map).
-    pub fn nmi_flag_bg2_enemy_vram_transfer(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xe1e], self.g_ram[0xe1f]])
-    }
-
-    pub fn set_nmi_flag_bg2_enemy_vram_transfer(&mut self, value: u16) {
-        self.g_ram[0xe1e..0xe20].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// enemy_bg2_tilemap_size ($7E:179A in ram_map).
-    pub fn enemy_bg2_tilemap_size(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x179a], self.g_ram[0x179b]])
-    }
-
-    /// debug_time_frozen_for_enemies ($7E:185E in ram_map).
-    pub fn debug_time_frozen_for_enemies(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x185e], self.g_ram[0x185f]])
-    }
-
-    /// time_is_frozen_flag ($7E:0A78 in ram_map).
-    pub fn time_is_frozen_flag(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xa78], self.g_ram[0xa79]])
-    }
-
     pub fn write_vram_queue_byte(&mut self, cursor: u16, field: usize, value: u8) {
         self.g_ram[0xd0 + usize::from(cursor) + field] = value;
-    }
-
-    /// VRAM write queue byte cursor ($7E:0330 in ram_map).
-    pub fn vram_write_queue_tail(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x330], self.g_ram[0x331]])
-    }
-
-    pub fn set_vram_write_queue_tail(&mut self, value: u16) {
-        self.g_ram[0x330..0x332].copy_from_slice(&value.to_le_bytes());
     }
 
     /// Write a word in the backing VRAM queue, including overlapping fields.
     pub fn write_vram_queue_word(&mut self, cursor: u16, field: usize, value: u16) {
         let offset = 0xd0 + usize::from(cursor) + field;
         self.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// Room width in blocks ($7E:07A5 in ram_map).
-    pub fn room_width_in_blocks(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0x7a5], self.g_ram[0x7a6]])
-    }
-
-    pub fn set_room_width_in_blocks(&mut self, value: u16) {
-        self.g_ram[0x7a5..0x7a7].copy_from_slice(&value.to_le_bytes());
-    }
-
-    /// Current enemy slot offset ($7E:0E54 in ram_map).
-    pub fn cur_enemy_index(&self) -> u16 {
-        u16::from_le_bytes([self.g_ram[0xe54], self.g_ram[0xe55]])
     }
 
     /// Preserve the original zero initialization, including RM_BOTH (0).

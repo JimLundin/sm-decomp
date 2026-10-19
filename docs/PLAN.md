@@ -199,6 +199,27 @@ state differ, so these are not a before/after speedup measurement. Net Rust
 lines -187, unsafe functions -29, c_int cast lines -69; raw RAM access count
 unchanged. Concurrent subsystem work retains its own validation.
 
+Fixed word fields (2026-10-19): 82 Game getters and 150 setters now use
+field declarations and two shared little-endian templates. All method names,
+addresses, documentation and read/write types are preserved; the Game layout,
+initialization and other methods are unchanged. Net Rust lines -664; casts,
+unsafe functions and raw accesses unchanged. This removes repeated source
+definitions, with no claimed compilation speedup.
+
+Actual old/new methods pass 15204352 comparisons, every u16 value at all
+232 methods. Stores compare target and neighboring bytes for every value;
+complete RAM comparisons cover eight boundary values and each setter's end.
+Shifted-address and extra-byte controls are rejected. An observed any% prefix
+passes 10000/0: read 237534 calls, write 79557, both at frames 0..9999.
+Checks and probes remain temporary. Frozen a91d1a4a plus the clean change
+passes full-boot any% 129712/0 (265.61s) and Warehouse return
+128547/0 (292.55s), native exits 0, with stable source, DLL and
+fixtures. Warehouse includes the full Varia prefix; no shorter replay is
+duplicated. Source audit, formatting/check and normal release builds pass
+(50.89s frozen, 62.07s workspace). Concurrent gameplay
+changes retain separate validation. Continue shared subsystem state and
+handler-family work to remove operations and unsafe boundaries.
+
 Independent split-word audit (2026-10-19): reconstruct e23ad2ee from
 its parent and the owning e8592193-based candidate across all 64 Rust files
 and six configuration/host files. The 19 addition and 12 store copies have
