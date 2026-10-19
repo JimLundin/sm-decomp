@@ -14704,6 +14704,73 @@ raw offsets-2, cast lines-7, unsafe functions-2, Rust lines-7. Other own
 counters unchanged. Further projectile field/update cleanup and broader
 gameplay/credits, hardware/audio/masks and ownership remain open.
 
+Enemy-projectile position reads (2026-10-19): reuse the existing
+Game X/Y position accessors at 39 indexed reads across 16 routines. Each
+original word index is an unchanged local initialized from an unchanged u16
+parameter shifted right once. The accessor takes that original byte index;
+all 65536 values satisfy 2 * (index >> 1) == (index & !1). Odd indices still
+round down, and accesses beyond the 18 normal slots retain their backing-RAM
+meaning. Both accessors read the same two bytes in little-endian order.
+No live mutable word reference crosses a replaced read. Read positions,
+short-circuit evaluation, writes, callbacks, arithmetic and truncations stay
+unchanged. Four now-unused word-index calculations are removed.
+CheckIfEprojIsOffScreen and the spike-shooting-plant visibility helper now
+contain only safe operations and lose their unsafe qualifier. No getter,
+state mirror, macro or new maintained abstraction is added.
+
+The frozen e26e0ffd survey compares original and named position reads
+at 146 explicit sites. Any% passes 129712/0 (301.48s), exercising 19 sites
+and 13264 comparisons; pre-Kraid passes 115663/0 (308.36s), exercising
+35 sites and 209949 comparisons. Every compared value matches. Both survey
+exits are 2 because all sites are requested and uncovered probes fail;
+zero failing frames does not imply that every candidate executed.
+The union reaches 41 sites. The 105 uncovered sites and two reads in the
+concurrently edited EprojInit_BombTorizoLowHealthExplode remain outside this
+change. The selected 39 sites have 223189 matching live-read comparisons.
+The following are read-check counts / absolute input ranges, not inferred
+function-entry counts; parentheses give changed read sites.
+
+| Routine (read sites) | Any% checks / inputs | Pre-Kraid checks / inputs |
+| --- | --- | --- |
+| `DrawEprojs` (2) | 6156 / 8324..97961 | 118774 / 8324..112432 |
+| `EprojBlockCollisition_Horiz` (6) | 3478 / 36745..89539 | 33402 / 50634..111292 |
+| `EprojBlockCollisition_Vertical` (6) | 3504 / 36745..89544 | 20932 / 18120..110609 |
+| `MoveEprojWithVelocityY` (1) | 13 / 70720..70847 | 0 |
+| `MoveEprojWithVelocityX` (1) | 25 / 36789..89544 | 0 |
+| `EprojPreInstr_9642_RidleysFireball` (2) | 12 / 36784..89522 | 0 |
+| `EprojInit_Common` (2) | 76 / 36789..89543 | 0 |
+| `EprojPreInstr_9734_CeresFallingDebris` (2) | 0 | 22 / 18189..18278 |
+| `EprojPreInstr_BombTorizosChozoOrbs` (1) | 0 | 23 / 50705..51314 |
+| `EprojPreInstr_KagosBugs_Func2` (1) | 0 | 336 / 65326..65687 |
+| `EprojInstr_D15C` (1) | 0 | 11 / 65348..65680 |
+| `EprojPreInstrHelper_SpikeShootingPlantSpikes_Func2` (4) | 0 | 4832 / 84850..91814 |
+| `CheckIfEprojIsOffScreen` (4) | 0 | 11094 / 18190..110366 |
+| `EprojInstr_ECE3` (2) | 0 | 96 / 110707..110827 |
+| `EprojInstr_ED17` (2) | 0 | 380 / 35462..112014 |
+| `EprojPreInstr_Pickup` (2) | 0 | 20023 / 37943..112416 |
+
+The final frozen e26e0ffd plus only this change passes full-boot
+any% 129712/0 (214.02s) and pre-Kraid 115663/0
+(215.47s), native exits 0. The latter includes the complete
+Hi-Jump/Spazer prefixes and exercises EprojInstr_ECE3 at 110707..110827;
+shorter duplicate prefixes are not replayed. Its input SHA-256 is the
+qualified 1751584f3ddf82d414ba65dd2caee9a18d1a80529124742927c97a76a8032366.
+Exact probe removal, the four pure index deletions, safe qualifiers and fmt
+recover the final source. Source, DLL, ROM and input hashes stay stable
+through both replays; saves are isolated and probes remain temporary.
+
+Cargo fmt/check, whitespace and progress pass. Windows refuses to execute
+new khronos_api and sdl2-sys build scripts in the isolated Cargo directory
+(OS error 5, after 26.01s). The standard workspace release build succeeds
+using its existing dependency cache (0.86s); no permissions or executable
+policies are changed. The final verifier build takes 16.32s and the measured
+edit-to-final-result cycle takes 259.18s under shared load.
+Own Rust lines -102, raw RAM reads -39, unsafe word loads -39, pointer-offset
+calls -78, actual c_int casts -47 and cast-containing lines -50. Unsafe
+functions fall by two; ABI/no_mangle counts are unchanged. Other sessions'
+changes stay separate. Remaining positions, scalar reads, updates, arithmetic,
+broader gameplay/credits, hardware/audio/masks and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

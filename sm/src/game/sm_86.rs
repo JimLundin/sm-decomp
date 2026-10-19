@@ -1486,17 +1486,13 @@ pub unsafe fn DrawEprojs(mut k: uint16, mut pt: Point16U, game: &mut Game) {
         .offset(v1 as isize) as ::core::ffi::c_int
         & 0xff00 as ::core::ffi::c_int) as uint16;
     let mut r20: uint16 = (pt.x as ::core::ffi::c_int
-        + *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as ::core::ffi::c_int
+        + game.enemy_projectile_x_pos(k) as ::core::ffi::c_int
         - game.layer1_x_pos() as ::core::ffi::c_int) as uint16;
     if r20 as ::core::ffi::c_int + 128 as ::core::ffi::c_int & 0xfe00 as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
     {
         let mut v3: uint16 = (pt.y as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v1 as isize) as ::core::ffi::c_int
+            + game.enemy_projectile_y_pos(k) as ::core::ffi::c_int
             - game.layer1_y_pos() as ::core::ffi::c_int) as uint16;
         let mut r18: uint16 = v3;
         if v3 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
@@ -2305,32 +2301,22 @@ pub unsafe fn EprojBlockCollisition_Horiz(mut k: uint16, game: &mut Game) -> uin
         .offset(0x1bb3 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(v1 as isize) as *mut uint16 as *mut uint8)
         .offset(0 as ::core::ffi::c_int as isize) as uint16;
-    let mut r26: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1a93 as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset(v1 as isize) as ::core::ffi::c_int
+    let mut r26: uint16 = (game.enemy_projectile_y_pos(k) as ::core::ffi::c_int
         - R30 as ::core::ffi::c_int
         & 0xfff0 as ::core::ffi::c_int) as uint16;
-    r26 = ((R30 as ::core::ffi::c_int
-        + *((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as ::core::ffi::c_int
+    r26 = ((R30 as ::core::ffi::c_int + game.enemy_projectile_y_pos(k) as ::core::ffi::c_int
         - 1 as ::core::ffi::c_int
         - r26 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
         >> 4 as ::core::ffi::c_int) as uint16;
     let mut R32: uint16 = r26;
     let mut prod: uint16 = Mult8x8(
-        ((*((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as ::core::ffi::c_int
-            - R30 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
+        ((game.enemy_projectile_y_pos(k) as ::core::ffi::c_int - R30 as ::core::ffi::c_int)
+            as uint16 as ::core::ffi::c_int
             >> 4 as ::core::ffi::c_int) as uint8,
         game.room_width_in_blocks() as uint8,
     );
     let mut v3: uint16 = ((amt as uint32).wrapping_add(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as uint32)
-            << 16 as ::core::ffi::c_int
+        (game.enemy_projectile_x_pos(k) as uint32) << 16 as ::core::ffi::c_int
             | *((&raw mut game.g_ram as *mut uint8).offset(0x1a27 as ::core::ffi::c_int as isize)
                 as *mut uint16)
                 .offset(v1 as isize) as uint32,
@@ -2388,11 +2374,7 @@ pub unsafe fn EprojBlockCollisition_Horiz(mut k: uint16, game: &mut Game) -> uin
         let mut v10: uint16 = (eci.eci_r28 as ::core::ffi::c_int
             + (eci.eci_r34 as ::core::ffi::c_int | 0xf as ::core::ffi::c_int)
             + 1 as ::core::ffi::c_int) as uint16;
-        if v10 as ::core::ffi::c_int
-            <= *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v8 as isize) as ::core::ffi::c_int
-        {
+        if v10 as ::core::ffi::c_int <= game.enemy_projectile_x_pos(k) as ::core::ffi::c_int {
             *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
                 as *mut uint16)
                 .offset(v8 as isize) = v10;
@@ -2400,11 +2382,7 @@ pub unsafe fn EprojBlockCollisition_Horiz(mut k: uint16, game: &mut Game) -> uin
     } else {
         let mut v9: uint16 = ((eci.eci_r34 as ::core::ffi::c_int & 0xfff0 as ::core::ffi::c_int)
             - eci.eci_r28 as ::core::ffi::c_int) as uint16;
-        if v9 as ::core::ffi::c_int
-            >= *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v8 as isize) as ::core::ffi::c_int
-        {
+        if v9 as ::core::ffi::c_int >= game.enemy_projectile_x_pos(k) as ::core::ffi::c_int {
             *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
                 as *mut uint16)
                 .offset(v8 as isize) = v9;
@@ -2431,24 +2409,16 @@ pub unsafe fn EprojBlockCollisition_Vertical(mut k: uint16, game: &mut Game) -> 
         .offset(0x1bb3 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(v1 as isize) as *mut uint16 as *mut uint8)
         .offset(0 as ::core::ffi::c_int as isize) as uint16;
-    let mut r26: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1a4b as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset(v1 as isize) as ::core::ffi::c_int
+    let mut r26: uint16 = (game.enemy_projectile_x_pos(k) as ::core::ffi::c_int
         - R28 as ::core::ffi::c_int
         & 0xfff0 as ::core::ffi::c_int) as uint16;
-    r26 = ((R28 as ::core::ffi::c_int
-        + *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as ::core::ffi::c_int
+    r26 = ((R28 as ::core::ffi::c_int + game.enemy_projectile_x_pos(k) as ::core::ffi::c_int
         - 1 as ::core::ffi::c_int
         - r26 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
         >> 4 as ::core::ffi::c_int) as uint16;
     let mut R32: uint16 = r26;
     let mut v3: uint16 = ((amt as uint32).wrapping_add(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as uint32)
-            << 16 as ::core::ffi::c_int
+        (game.enemy_projectile_y_pos(k) as uint32) << 16 as ::core::ffi::c_int
             | *((&raw mut game.g_ram as *mut uint8).offset(0x1a6f as ::core::ffi::c_int as isize)
                 as *mut uint16)
                 .offset(v1 as isize) as uint32,
@@ -2478,10 +2448,8 @@ pub unsafe fn EprojBlockCollisition_Vertical(mut k: uint16, game: &mut Game) -> 
         (v4 as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint8,
         game.room_width_in_blocks() as uint8,
     );
-    v5 = ((*((&raw mut game.g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v1 as isize) as ::core::ffi::c_int
-        - R28 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
+    v5 = ((game.enemy_projectile_x_pos(k) as ::core::ffi::c_int - R28 as ::core::ffi::c_int)
+        as uint16 as ::core::ffi::c_int
         >> 4 as ::core::ffi::c_int) as int16;
     let mut i: ::core::ffi::c_int =
         2 as ::core::ffi::c_int * (prod as ::core::ffi::c_int + v5 as ::core::ffi::c_int);
@@ -2512,11 +2480,7 @@ pub unsafe fn EprojBlockCollisition_Vertical(mut k: uint16, game: &mut Game) -> 
         let mut v11: uint16 = (eci.eci_r30 as ::core::ffi::c_int
             + (eci.eci_r34 as ::core::ffi::c_int | 0xf as ::core::ffi::c_int)
             + 1 as ::core::ffi::c_int) as uint16;
-        if v11 as ::core::ffi::c_int
-            <= *((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v9 as isize) as ::core::ffi::c_int
-        {
+        if v11 as ::core::ffi::c_int <= game.enemy_projectile_y_pos(k) as ::core::ffi::c_int {
             *((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
                 as *mut uint16)
                 .offset(v9 as isize) = v11;
@@ -2524,11 +2488,7 @@ pub unsafe fn EprojBlockCollisition_Vertical(mut k: uint16, game: &mut Game) -> 
     } else {
         let mut v10: uint16 = ((eci.eci_r34 as ::core::ffi::c_int & 0xfff0 as ::core::ffi::c_int)
             - eci.eci_r30 as ::core::ffi::c_int) as uint16;
-        if v10 as ::core::ffi::c_int
-            >= *((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v9 as isize) as ::core::ffi::c_int
-        {
+        if v10 as ::core::ffi::c_int >= game.enemy_projectile_y_pos(k) as ::core::ffi::c_int {
             *((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
                 as *mut uint16)
                 .offset(v9 as isize) = v10;
@@ -3465,10 +3425,7 @@ pub unsafe fn MoveEprojWithVelocityY(mut k: uint16, game: &mut Game) -> uint16 {
         as *mut uint16 as *mut uint8)
         .offset(k as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = carry as uint8;
-    let mut result: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1a93 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v1 as isize) as ::core::ffi::c_int
+    let mut result: uint16 = (game.enemy_projectile_y_pos(k) as ::core::ffi::c_int
         + (v2 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as int8 as ::core::ffi::c_int
         + (carry >> 8 as ::core::ffi::c_int)) as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
@@ -3491,10 +3448,7 @@ pub unsafe fn MoveEprojWithVelocityX(mut k: uint16, game: &mut Game) -> uint16 {
         as *mut uint16 as *mut uint8)
         .offset(k as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = carry as uint8;
-    let mut result: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1a4b as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v1 as isize) as ::core::ffi::c_int
+    let mut result: uint16 = (game.enemy_projectile_x_pos(k) as ::core::ffi::c_int
         + (v2 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as int8 as ::core::ffi::c_int
         + (carry >> 8 as ::core::ffi::c_int)) as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
@@ -3685,12 +3639,8 @@ pub unsafe fn EprojPreInstr_9642_RidleysFireball(mut k: uint16, game: &mut Game)
         == 0
     {
         game.eproj_spawn_pt = Point16U {
-            x: *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v2 as isize),
-            y: *((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v2 as isize),
+            x: game.enemy_projectile_x_pos(k),
+            y: game.enemy_projectile_y_pos(k),
         };
         SpawnEprojWithRoomGfx(v1, 3 as uint16, game);
         QueueSfx2_Max6(0x2b as uint16, game);
@@ -3741,16 +3691,10 @@ unsafe fn EprojInit_Common(mut j: uint16, mut k: uint16, mut a: uint16, game: &m
     let mut v4: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
-        .offset(v3 as isize) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1a4b as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v4 as isize);
+        .offset(v3 as isize) = game.enemy_projectile_x_pos(k);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
         as *mut uint16)
-        .offset(v3 as isize) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1a93 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v4 as isize);
+        .offset(v3 as isize) = game.enemy_projectile_y_pos(k);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(v3 as isize) = *((&raw mut game.g_ram as *mut uint8)
@@ -3943,12 +3887,8 @@ pub unsafe fn EprojPreInstr_9734_CeresFallingDebris(mut k: uint16, game: &mut Ga
             as *mut uint16)
             .offset(v1 as isize) = 0 as uint16;
         game.eproj_spawn_pt = Point16U {
-            x: *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v1 as isize),
-            y: *((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v1 as isize),
+            x: game.enemy_projectile_x_pos(k),
+            y: game.enemy_projectile_y_pos(k),
         };
         SpawnEprojWithRoomGfx(
             addr_kEproj_DustCloudExplosion as ::core::ffi::c_int as uint16,
@@ -6277,11 +6217,7 @@ pub unsafe fn EprojPreInstr_BombTorizosChozoOrbs(mut k: uint16, game: &mut Game)
             let mut v4: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
             *((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
                 as *mut uint16)
-                .offset(v4 as isize) = ((*((&raw mut game.g_ram as *mut uint8)
-                .offset(0x1a93 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v4 as isize)
-                as ::core::ffi::c_int
+                .offset(v4 as isize) = ((game.enemy_projectile_y_pos(k) as ::core::ffi::c_int
                 & 0xfff0 as ::core::ffi::c_int
                 | 8 as ::core::ffi::c_int)
                 - 2 as ::core::ffi::c_int) as uint16;
@@ -10239,10 +10175,8 @@ pub unsafe fn EprojPreInstr_KagosBugs_Func2(mut k: uint16, game: &mut Game) {
         game,
     );
     let mut v3: uint16 = abs16(
-        ((*v2).x_pos as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v1 as isize) as ::core::ffi::c_int) as uint16,
+        ((*v2).x_pos as ::core::ffi::c_int - game.enemy_projectile_x_pos(k) as ::core::ffi::c_int)
+            as uint16,
     );
     if v3 as ::core::ffi::c_int - 23 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
         let ref mut fresh26 = *((&raw mut game.g_ram as *mut uint8)
@@ -10382,9 +10316,7 @@ pub unsafe fn EprojInstr_D15C(
         game,
     );
     let mut t2: uint16 = ((*v3).x_pos as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v2 as isize) as ::core::ffi::c_int) as uint16;
+        - game.enemy_projectile_x_pos(k) as ::core::ffi::c_int) as uint16;
     if (abs16(t2) as ::core::ffi::c_int - g_word_86D084 as ::core::ffi::c_int) as int16
         as ::core::ffi::c_int
         >= 0 as ::core::ffi::c_int
@@ -11291,32 +11223,23 @@ pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes(mut k: uint16, game: &mut G
         .expect("non-null function pointer")(k, game);
     EprojPreInstrHelper_SpikeShootingPlantSpikes_Func1(k, game);
 }
-pub unsafe fn EprojPreInstrHelper_SpikeShootingPlantSpikes_Func2(
+pub fn EprojPreInstrHelper_SpikeShootingPlantSpikes_Func2(
     mut k: uint16,
     game: &mut Game,
 ) -> uint16 {
-    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    return (((*((&raw mut game.g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v1 as isize) as ::core::ffi::c_int
+    return (((game.enemy_projectile_x_pos(k) as ::core::ffi::c_int
         - game.layer1_x_pos() as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
         < 0 as ::core::ffi::c_int
         || ((game.layer1_x_pos() as ::core::ffi::c_int + 256 as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v1 as isize) as ::core::ffi::c_int) as int16
+            - game.enemy_projectile_x_pos(k) as ::core::ffi::c_int) as int16
             as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int
-        || ((*((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as ::core::ffi::c_int
+        || ((game.enemy_projectile_y_pos(k) as ::core::ffi::c_int
             - game.layer1_y_pos() as ::core::ffi::c_int) as int16
             as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int
         || ((game.layer1_y_pos() as ::core::ffi::c_int + 256 as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v1 as isize) as ::core::ffi::c_int) as int16
+            - game.enemy_projectile_y_pos(k) as ::core::ffi::c_int) as int16
             as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
 }
@@ -12205,30 +12128,21 @@ unsafe fn EprojInit_SaveStationElectricity(mut j: uint16, game: &mut Game) {
             as *mut uint16) as ::core::ffi::c_int
             - 2 as ::core::ffi::c_int)) as uint16;
 }
-unsafe fn CheckIfEprojIsOffScreen(mut k: uint16, game: &mut Game) -> uint16 {
-    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v1 as isize) as ::core::ffi::c_int
+fn CheckIfEprojIsOffScreen(mut k: uint16, game: &mut Game) -> uint16 {
+    if (game.enemy_projectile_x_pos(k) as ::core::ffi::c_int
         - game.layer1_x_pos() as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
         >= 0 as ::core::ffi::c_int
     {
-        if ((*((&raw mut game.g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) as ::core::ffi::c_int
+        if ((game.enemy_projectile_x_pos(k) as ::core::ffi::c_int
             - (game.layer1_x_pos() as ::core::ffi::c_int + 256 as ::core::ffi::c_int))
             as int16 as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int
-            && (*((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v1 as isize) as ::core::ffi::c_int
+            && (game.enemy_projectile_y_pos(k) as ::core::ffi::c_int
                 - game.layer1_y_pos() as ::core::ffi::c_int) as int16
                 as ::core::ffi::c_int
                 >= 0 as ::core::ffi::c_int
         {
-            if ((*((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v1 as isize) as ::core::ffi::c_int
+            if ((game.enemy_projectile_y_pos(k) as ::core::ffi::c_int
                 - (game.layer1_y_pos() as ::core::ffi::c_int + 256 as ::core::ffi::c_int))
                 as int16 as ::core::ffi::c_int)
                 < 0 as ::core::ffi::c_int
@@ -12818,15 +12732,10 @@ pub unsafe fn EprojInstr_ECE3(
     mut epjp: *const uint8,
     game: &mut Game,
 ) -> *const uint8 {
-    let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut x: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1a4b as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset(v2 as isize) as ::core::ffi::c_int
+    let mut x: uint16 = (game.enemy_projectile_x_pos(k) as ::core::ffi::c_int
         + (NextRandom(game) as ::core::ffi::c_int & 0x3f as ::core::ffi::c_int)
         - 32 as ::core::ffi::c_int) as uint16;
-    let mut y: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1a93 as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset(v2 as isize) as ::core::ffi::c_int
+    let mut y: uint16 = (game.enemy_projectile_y_pos(k) as ::core::ffi::c_int
         + ((*((&raw mut game.g_ram as *mut uint8).offset(0x5e5 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
             & 0x3f00 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
@@ -12840,15 +12749,10 @@ pub unsafe fn EprojInstr_ED17(
     mut epjp: *const uint8,
     game: &mut Game,
 ) -> *const uint8 {
-    let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut x: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1a4b as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset(v2 as isize) as ::core::ffi::c_int
+    let mut x: uint16 = (game.enemy_projectile_x_pos(k) as ::core::ffi::c_int
         + (NextRandom(game) as ::core::ffi::c_int & 0x1f as ::core::ffi::c_int)
         - 16 as ::core::ffi::c_int) as uint16;
-    let mut y: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1a93 as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset(v2 as isize) as ::core::ffi::c_int
+    let mut y: uint16 = (game.enemy_projectile_y_pos(k) as ::core::ffi::c_int
         + ((game.random_number() as ::core::ffi::c_int & 0x1f00 as ::core::ffi::c_int) as uint16
             as ::core::ffi::c_int
             >> 8 as ::core::ffi::c_int)
@@ -13161,10 +13065,7 @@ pub unsafe fn EprojPreInstr_Pickup(mut k: uint16, game: &mut Game) {
                     ) as uint16;
                 let mut v6: uint16 = abs16(
                     (game.samus_x_pos() as ::core::ffi::c_int
-                        - *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x1a4b as ::core::ffi::c_int as isize)
-                            as *mut uint16)
-                            .offset(v5 as isize) as ::core::ffi::c_int)
+                        - game.enemy_projectile_x_pos(k) as ::core::ffi::c_int)
                         as uint16,
                 );
                 let mut v7: bool =
@@ -13177,11 +13078,8 @@ pub unsafe fn EprojPreInstr_Pickup(mut k: uint16, game: &mut Game) {
                 {
                     let mut v9: uint16 = abs16(
                         (game.samus_y_pos() as ::core::ffi::c_int
-                            - *((&raw mut game.g_ram as *mut uint8)
-                                .offset(0x1a93 as ::core::ffi::c_int as isize)
-                                as *mut uint16)
-                                .offset(v5 as isize)
-                                as ::core::ffi::c_int) as uint16,
+                            - game.enemy_projectile_y_pos(k) as ::core::ffi::c_int)
+                            as uint16,
                     );
                     v7 = (v9 as ::core::ffi::c_int) < game.samus_y_radius() as ::core::ffi::c_int;
                     let mut v10: uint16 = (v9 as ::core::ffi::c_int
