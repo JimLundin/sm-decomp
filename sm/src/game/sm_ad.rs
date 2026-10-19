@@ -17,10 +17,7 @@ pub use crate::types::Consts_AD;
 pub use crate::types::{EnemyBase, EnemyData, EnemyProps, Func_V, Point16U, VoidP};
 pub const addr_kTurnOffLightsForShitroidDeath: Consts_AD = 61999;
 pub use crate::types::{Enemy_MotherBrain, Func_CalcHdma, Ram8000_Default, SpawnHardcodedPlmArgs};
-#[inline]
-unsafe fn RomPtr_AD(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0xad0000u32) | ((addr) as u32), game)
-}
+const RomPtr_AD: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xad>;
 pub const fnMotherBrainBody_FakeDeath_Descent_0_Pause: i32 = 0xa9881d;
 #[inline]
 unsafe fn gEnemyData(o: i32, game: &mut Game) -> *mut EnemyData {

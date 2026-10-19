@@ -398,22 +398,10 @@ unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
     };
     (&raw mut game.g_ram as *mut u8).offset(addr as i32 as isize)
 }
-#[inline]
-unsafe fn RomPtr_86(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0x860000u32) | ((addr) as u32), game)
-}
-#[inline]
-unsafe fn RomPtr_A1(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0xa10000u32) | ((addr) as u32), game)
-}
-#[inline]
-unsafe fn RomPtr_B4(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0xb40000u32) | ((addr) as u32), game)
-}
-#[inline]
-unsafe fn RomPtrWithBank(bank: u8, addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr(((bank as i32) << 16i32 | addr as i32) as u32, game)
-}
+const RomPtr_86: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x86>;
+const RomPtr_A1: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa1>;
+const RomPtr_B4: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xb4>;
+use crate::rtl::rom_ptr_with_bank as RomPtrWithBank;
 #[inline]
 unsafe fn RomBankBase(bank: u8, game: &mut Game) -> *const u8 {
     RomPtr((((bank as i32) << 16i32) + 0x8000i32) as u32, game).offset(-(0x8000i32 as isize))

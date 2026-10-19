@@ -23,10 +23,7 @@ pub use crate::types::{
     Consts_60, Ram3000, Ram3000_Menu, Ram3000_Misc, Ram3000_MsgBox, Ram3800, Ram4000,
     Ram4000_Backups,
 };
-#[inline]
-unsafe fn RomPtr_85(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0x850000u32) | ((addr) as u32), game)
-}
+const RomPtr_85: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x85>;
 pub const fnWriteLargeMessageBoxTilemap: u32 = 8749658;
 pub const fnWriteSmallMessageBoxTilemap: u32 = 8749705;
 pub const fnDrawShootButtonAndSetupPpuForLargeMessageBox: u32 = 8750021;

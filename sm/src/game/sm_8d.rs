@@ -14,10 +14,7 @@ pub struct PalFxDef {
     pub instrs: VoidP,
 }
 pub use crate::types::Consts_8D;
-#[inline]
-unsafe fn RomPtr_8D(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0x8d0000u32) | ((addr) as u32), game)
-}
+const RomPtr_8D: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8d>;
 #[inline]
 unsafe fn get_PalFxDef(a: u16, game: &mut Game) -> *mut PalFxDef {
     RomPtr((0x8d0000u32) | ((a) as u32), game) as *mut PalFxDef

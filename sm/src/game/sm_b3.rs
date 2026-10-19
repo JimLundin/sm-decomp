@@ -94,10 +94,7 @@ enemy_layout! {
     }
 }
 
-#[inline]
-unsafe fn RomPtr_B3(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0xb30000u32) | ((addr) as u32), game)
-}
+const RomPtr_B3: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xb3>;
 pub const fnnullsub_171_B3: i32 = 0xb3807b;
 pub const fnBrinstarPipeBug_PreInstr_1: i32 = 0xb38880;
 pub const fnBrinstarPipeBug_PreInstr_2: i32 = 0xb38890;

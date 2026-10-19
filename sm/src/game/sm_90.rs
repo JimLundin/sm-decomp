@@ -89,18 +89,9 @@ pub use crate::types::{
 };
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
-#[inline]
-unsafe fn RomPtr_82(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0x820000u32) | ((addr) as u32), game)
-}
-#[inline]
-unsafe fn RomPtr_90(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0x900000u32) | ((addr) as u32), game)
-}
-#[inline]
-unsafe fn RomPtr_91(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0x910000u32) | ((addr) as u32), game)
-}
+const RomPtr_82: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x82>;
+const RomPtr_90: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x90>;
+const RomPtr_91: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x91>;
 #[inline]
 unsafe fn gOamEnt(v: i32, game: &mut Game) -> *mut OamEnt {
     (&raw mut game.g_ram as *mut u8).offset((0x370i32 + v) as isize) as *mut u8 as *mut OamEnt

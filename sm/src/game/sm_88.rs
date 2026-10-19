@@ -63,10 +63,7 @@ pub use crate::types::SpawnHardcodedPlmArgs;
 pub const NULL: *mut c_void = null_mut::<c_void>();
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
-#[inline]
-unsafe fn RomPtr_88(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0x880000u32) | ((addr) as u32), game)
-}
+const RomPtr_88: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x88>;
 #[inline]
 unsafe fn RomBankBase(bank: u8, game: &mut Game) -> *const u8 {
     RomPtr((((bank as i32) << 16i32) + 0x8000i32) as u32, game).offset(-(0x8000i32 as isize))

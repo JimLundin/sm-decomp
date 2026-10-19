@@ -961,6 +961,18 @@ pub const fn lorom_offset(address: u32) -> isize {
     (((address >> 16) << 15 | address & 0x7fff) & 0x3fffff) as isize
 }
 
+/// Resolve a word address in a fixed ROM bank through the maintained validator.
+#[inline]
+pub(crate) unsafe fn rom_bank_ptr<const BANK: u8>(addr: u16, game: &mut Game) -> *const u8 {
+    RomPtr((u32::from(BANK) << 16) | u32::from(addr), game)
+}
+
+/// Resolve an explicit bank and word address, retaining RomPtr diagnostics.
+#[inline]
+pub(crate) unsafe fn rom_ptr_with_bank(bank: u8, addr: u16, game: &mut Game) -> *const u8 {
+    RomPtr((u32::from(bank) << 16) | u32::from(addr), game)
+}
+
 pub unsafe fn RomPtr(addr: u32, game: &mut Game) -> *const u8 {
     if addr & 0x8000u32 == 0 {
         printf(

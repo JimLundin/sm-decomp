@@ -3,10 +3,7 @@ use crate::game_state::Game;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{RomPtr, Unreachable};
 
-#[inline]
-unsafe fn RomPtr_B4(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0xb40000u32) | ((addr) as u32), game)
-}
+const RomPtr_B4: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xb4>;
 pub const fnSpriteObject_Instr_RepeatLast: u32 = 11844848;
 pub const fnSpriteObject_Instr_Terminate: u32 = 11844871;
 pub const fnSpriteObject_Instr_Goto: u32 = 11844882;

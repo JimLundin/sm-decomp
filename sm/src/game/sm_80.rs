@@ -79,18 +79,9 @@ pub const addrl_kDigitTilesetsHealth: Consts_80 = 8428991;
 pub const addr_kHudTilemaps_Missiles: Consts_80 = 39331;
 pub const addr_kHudTilemaps_AutoReserve: Consts_80 = 39307;
 pub use crate::types::SpawnHardcodedPlmArgs;
-#[inline]
-unsafe fn RomPtr_80(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0x800000u32) | ((addr) as u32), game)
-}
-#[inline]
-unsafe fn RomPtr_92(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0x920000u32) | ((addr) as u32), game)
-}
-#[inline]
-unsafe fn RomPtrWithBank(bank: u8, addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr(((bank as i32) << 16i32 | addr as i32) as u32, game)
-}
+const RomPtr_80: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x80>;
+const RomPtr_92: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x92>;
+use crate::rtl::rom_ptr_with_bank as RomPtrWithBank;
 #[inline]
 unsafe fn gVramWriteEntry(a: i32, game: &mut Game) -> *mut VramWriteEntry {
     (&raw mut game.g_ram as *mut u8).offset((0xd0i32 + a) as isize) as *mut u8

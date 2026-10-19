@@ -20211,6 +20211,28 @@ remain fixed. The earlier 2481f16f-plus-pairs replay (114.04s) remains
 bound to its pre-alias source. Continue substantial shared implementations; readability and
 full boot-to-credits coverage remain incomplete.
 
+ROM bank-pointer wrappers (2026-10-20): all 51 fixed-bank wrappers and
+six identical dynamic-bank wrappers share address assembly in rtl. Existing
+caller names and function-pointer casts remain exact: fixed callers bind a
+const function pointer to a bank-specialized helper, dynamic callers import
+the common helper. RomPtr validation, diagnostic text, g_fail updates and
+pointer mapping remain unchanged. RAM/hybrid pointer helpers retain their
+distinct behavior. Complete wrapper expansion reconstructs all 31 files.
+
+21102592 address/validator-trace comparisons pass, covering every word in
+each fixed bank with both initial failure states and all 256 dynamic banks
+times 65536 words. The checks bind the actual helper and address tuples;
+they do not establish broader pointer validity. Net Rust lines -159, casts
+-63 and unsafe functions -55; raw RAM and ABI counts remain unchanged.
+
+Formatting/check, normal registry-only release (16.83s), source/order checks,
+progress and diff checks pass. Frozen b9655531 plus this family passes full
+any% 129712/0 (109.05s), native exit 0; all 70 Rust/Cargo inputs and 72 replay
+pins remain fixed. This final composition includes HDMA and negative literals;
+earlier wrapper replays (114.46s and 127.38s) retain their earlier source
+bindings. Continue substantial shared implementations; readability
+and full boot-to-credits coverage remain incomplete.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

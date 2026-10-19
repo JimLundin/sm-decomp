@@ -46,14 +46,8 @@ struct PostGrappleCollisionSample {
 pub const NULL: *mut c_void = null_mut::<c_void>();
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
-#[inline]
-unsafe fn RomPtr_8F(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0x8f0000u32) | ((addr) as u32), game)
-}
-#[inline]
-unsafe fn RomPtr_94(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0x940000u32) | ((addr) as u32), game)
-}
+const RomPtr_8F: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8f>;
+const RomPtr_94: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x94>;
 #[inline]
 unsafe fn gOamEnt(v: i32, game: &mut Game) -> *mut OamEnt {
     (&raw mut game.g_ram as *mut u8).offset((0x370i32 + v) as isize) as *mut u8 as *mut OamEnt

@@ -11,10 +11,7 @@ use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{RomPtr, Unreachable};
 
 pub use crate::types::Consts_86;
-#[inline]
-unsafe fn RomPtr_87(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0x870000u32) | ((addr) as u32), game)
-}
+const RomPtr_87: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x87>;
 pub const fnAnimtilesInstr_Delete: u32 = 8880306;
 pub const fnAnimtilesInstr_Goto: u32 = 8880311;
 pub const fnAnimtilesInstr_GotoRel: u32 = 8880316;

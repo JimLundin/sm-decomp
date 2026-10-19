@@ -138,14 +138,8 @@ unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
     };
     (&raw mut game.g_ram as *mut u8).offset(addr as i32 as isize)
 }
-#[inline]
-unsafe fn RomPtr_91(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0x910000u32) | ((addr) as u32), game)
-}
-#[inline]
-unsafe fn RomPtr_9B(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0x9b0000u32) | ((addr) as u32), game)
-}
+const RomPtr_91: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x91>;
+const RomPtr_9B: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x9b>;
 #[inline]
 unsafe fn gVramWriteEntry(a: i32, game: &mut Game) -> *mut VramWriteEntry {
     (&raw mut game.g_ram as *mut u8).offset((0xd0i32 + a) as isize) as *mut u8

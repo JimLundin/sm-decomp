@@ -24,10 +24,7 @@ pub struct ProjectileDataTable {
     pub instr_ptrs: [u16; 10],
 }
 pub use crate::types::{ProjectileInstr, ProjectileType};
-#[inline]
-unsafe fn RomPtr_93(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0x930000u32) | ((addr) as u32), game)
-}
+const RomPtr_93: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x93>;
 #[inline]
 unsafe fn get_ProjectileDataTable(a: u16, game: &mut Game) -> *mut ProjectileDataTable {
     RomPtr((0x930000u32) | ((a) as u32), game) as *mut ProjectileDataTable

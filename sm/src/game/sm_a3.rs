@@ -422,10 +422,7 @@ enemy_layout! {
     }
 }
 
-#[inline]
-unsafe fn RomPtr_A3(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0xa30000u32) | ((addr) as u32), game)
-}
+const RomPtr_A3: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa3>;
 #[inline]
 unsafe fn get_EnemyDef_A2(a: u16, game: &mut Game) -> *mut EnemyDef {
     RomPtr((0xa00000u32) | ((a) as u32), game) as *mut EnemyDef

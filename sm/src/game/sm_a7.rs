@@ -178,10 +178,7 @@ enemy_layout! {
 }
 
 pub const kCoroutineNone: i32 = 0;
-#[inline]
-unsafe fn RomPtr_A7(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0xa70000u32) | ((addr) as u32), game)
-}
+const RomPtr_A7: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa7>;
 #[inline]
 unsafe fn gVramWriteEntry(a: i32, game: &mut Game) -> *mut VramWriteEntry {
     (&raw mut game.g_ram as *mut u8).offset((0xd0i32 + a) as isize) as *mut u8

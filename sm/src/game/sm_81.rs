@@ -83,30 +83,12 @@ pub const addr_kMenuTilemap_FindMetroidLarva: Consts_81 = 37636;
 pub const addr_kMenuTilemap_GameOver: Consts_81 = 37596;
 pub use crate::types::Consts_82;
 pub const true_0: i32 = 1;
-#[inline]
-unsafe fn RomPtr_81(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0x810000u32) | ((addr) as u32), game)
-}
-#[inline]
-unsafe fn RomPtr_82(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0x820000u32) | ((addr) as u32), game)
-}
-#[inline]
-unsafe fn RomPtr_8C(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0x8c0000u32) | ((addr) as u32), game)
-}
-#[inline]
-unsafe fn RomPtr_92(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0x920000u32) | ((addr) as u32), game)
-}
-#[inline]
-unsafe fn RomPtr_93(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0x930000u32) | ((addr) as u32), game)
-}
-#[inline]
-unsafe fn RomPtrWithBank(bank: u8, addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr(((bank as i32) << 16i32 | addr as i32) as u32, game)
-}
+const RomPtr_81: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x81>;
+const RomPtr_82: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x82>;
+const RomPtr_8C: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8c>;
+const RomPtr_92: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x92>;
+const RomPtr_93: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x93>;
+use crate::rtl::rom_ptr_with_bank as RomPtrWithBank;
 #[inline]
 unsafe fn gOamEnt(v: i32, game: &mut Game) -> *mut OamEnt {
     (&raw mut game.g_ram as *mut u8).offset((0x370i32 + v) as isize) as *mut u8 as *mut OamEnt

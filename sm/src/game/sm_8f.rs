@@ -36,10 +36,7 @@ pub use crate::types::Consts_87;
 pub use crate::types::SpawnHardcodedPlmArgs;
 pub use crate::types::{Consts_86, DoorDef, RoomDefRoomstate};
 pub const kCoroutineNone: i32 = 0;
-#[inline]
-unsafe fn RomPtr_8F(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0x8f0000u32) | ((addr) as u32), game)
-}
+const RomPtr_8F: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8f>;
 #[inline]
 unsafe fn get_DoorDef(a: u16, game: &mut Game) -> *mut DoorDef {
     RomPtr((0x830000u32) | ((a) as u32), game) as *mut DoorDef

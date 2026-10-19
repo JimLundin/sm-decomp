@@ -90,22 +90,10 @@ pub struct EprojCollInfo {
 pub type Func_EprojCollInfo_U8 = unsafe fn(*mut EprojCollInfo, &mut Game) -> u8;
 pub use crate::types::{Enemy_MotherBrain, Point32};
 pub const NULL: *mut c_void = null_mut::<c_void>();
-#[inline]
-unsafe fn RomPtr_86(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0x860000u32) | ((addr) as u32), game)
-}
-#[inline]
-unsafe fn RomPtr_A0(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0xa00000u32) | ((addr) as u32), game)
-}
-#[inline]
-unsafe fn RomPtr_A1(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0xa10000u32) | ((addr) as u32), game)
-}
-#[inline]
-unsafe fn RomPtr_B4(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0xb40000u32) | ((addr) as u32), game)
-}
+const RomPtr_86: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x86>;
+const RomPtr_A0: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa0>;
+const RomPtr_A1: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa1>;
+const RomPtr_B4: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xb4>;
 #[inline]
 unsafe fn RomBankBase(bank: u8, game: &mut Game) -> *const u8 {
     RomPtr(

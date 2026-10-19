@@ -30,10 +30,7 @@ pub struct FxDef {
     pub palette_blend: u8,
 }
 pub use crate::types::GameState;
-#[inline]
-unsafe fn RomPtr_83(addr: u16, game: &mut Game) -> *const u8 {
-    RomPtr((0x830000u32) | ((addr) as u32), game)
-}
+const RomPtr_83: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x83>;
 #[inline]
 unsafe fn get_FxDef(a: u16, game: &mut Game) -> *mut FxDef {
     RomPtr((0x830000u32) | ((a) as u32), game) as *mut FxDef
