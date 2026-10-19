@@ -773,27 +773,14 @@ unsafe fn shift_memory_left(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game)
     };
     set_zero_negative(result, (*cpu).mf, &mut *cpu);
 }
-unsafe fn increment_memory(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
+unsafe fn update_memory(cpu: *mut Cpu, low: u32, high: u32, delta: u16, game: &mut Game) {
     let result = if (*cpu).mf {
-        let result = u16::from(read_byte(cpu, low, game)).wrapping_add(1);
+        let result = u16::from(read_byte(cpu, low, game)).wrapping_add(delta);
         write_byte(cpu, low, result as u8, game);
         result
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(2);
-        let result = read_word(cpu, low, high, game).wrapping_add(1);
-        write_word(cpu, low, high, result, true, game);
-        result
-    };
-    set_zero_negative(result, (*cpu).mf, &mut *cpu);
-}
-unsafe fn decrement_memory(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
-    let result = if (*cpu).mf {
-        let result = u16::from(read_byte(cpu, low, game)).wrapping_sub(1);
-        write_byte(cpu, low, result as u8, game);
-        result
-    } else {
-        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(2);
-        let result = read_word(cpu, low, high, game).wrapping_sub(1);
+        let result = read_word(cpu, low, high, game).wrapping_add(delta);
         write_word(cpu, low, high, result, true, game);
         result
     };
@@ -2004,7 +1991,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0xc6 => {
                 let (low, high) = address_direct_page(cpu, game);
-                decrement_memory(cpu, low, high, game);
+                update_memory(cpu, low, high, u16::MAX, game);
                 break;
             }
             0xc7 => {
@@ -2041,7 +2028,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0xce => {
                 let (low, high) = address_absolute(cpu, game);
-                decrement_memory(cpu, low, high, game);
+                update_memory(cpu, low, high, u16::MAX, game);
                 break;
             }
             0xcf => {
@@ -2080,7 +2067,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0xd6 => {
                 let (low, high) = address_direct_page_x(cpu, game);
-                decrement_memory(cpu, low, high, game);
+                update_memory(cpu, low, high, u16::MAX, game);
                 break;
             }
             0xd7 => {
@@ -2123,7 +2110,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0xde => {
                 let (low, high) = address_absolute_x(cpu, true, game);
-                decrement_memory(cpu, low, high, game);
+                update_memory(cpu, low, high, u16::MAX, game);
                 break;
             }
             0xdf => {
@@ -2162,7 +2149,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0xe6 => {
                 let (low, high) = address_direct_page(cpu, game);
-                increment_memory(cpu, low, high, game);
+                update_memory(cpu, low, high, 1, game);
                 break;
             }
             0xe7 => {
@@ -2196,7 +2183,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0xee => {
                 let (low, high) = address_absolute(cpu, game);
-                increment_memory(cpu, low, high, game);
+                update_memory(cpu, low, high, 1, game);
                 break;
             }
             0xef => {
@@ -2238,7 +2225,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0xf6 => {
                 let (low, high) = address_direct_page_x(cpu, game);
-                increment_memory(cpu, low, high, game);
+                update_memory(cpu, low, high, 1, game);
                 break;
             }
             0xf7 => {
@@ -2285,7 +2272,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0xfe => {
                 let (low, high) = address_absolute_x(cpu, true, game);
-                increment_memory(cpu, low, high, game);
+                update_memory(cpu, low, high, 1, game);
                 break;
             }
             0xff => {

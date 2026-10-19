@@ -9596,6 +9596,22 @@ replay. Rust lines +3 introduce the safe helper; other own counters unchanged.
 Arbitrary MMIO mutation and complete gameplay/render/audio remain open.
 Continue covered CPU cleanup; TSX/ROR stay held for contextual execution.
 
+CPU shared memory INC/DEC (2026-10-19): update_memory uses wrapping deltas
+1/MAX for both operations. Selected byte/word reads, word cycle increment,
+high-before-low word writes and final live-MF Z/N remain exact. Addition by
+MAX preserves word subtraction, including byte decrement's widened FFFF result.
+Frozen `7779ed6e` plus this change passes 1,048,576 actual old/current helper
+cases across every input word, both widths/carry values and aliased/disjoint
+low/high byte addresses. Named CPU/bus fields, RAM writes, flags and cycles
+match; aliased word writes retain the final low byte. Prefix 3,600/0 (1.02s),
+native exit 0, executes word/byte INC 11,230/438 and DEC 56,008/996 times.
+Clean full any% 129,712/0 (50.62s), native exit 0. Cargo fmt/check, full release
+and release-library builds with external SDL2, normal metadata and optimized
+frozen core/DLL builds pass. Live CPU matches verified source; peer PPU changes
+are outside this replay. Unsafe functions -1, Rust lines -13; other own counters
+unchanged. Arbitrary MMIO mutation and full gameplay/render/audio remain open.
+Continue covered CPU cleanup; TSX/ROR stay held for contextual execution.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
