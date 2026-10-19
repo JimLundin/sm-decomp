@@ -2378,27 +2378,36 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `19eb90a9` shares all 114 eligible
-address-dispatch functions in 105 declaration groups across 23 callers.
-Independent AST inventory finds the complete family among 166 functions
-containing Unreachable; the other control-flow shapes retain their source.
-All signatures, 2102 selected arm bodies, selector names, caller-resolved
-fallbacks and declaration positions remain exact. No selected declaration
-has an adjacent attribute. Reverse reconstruction reproduces all 70 inputs.
+Latest reviewed integration (2026-10-20): `a61a5376` groups all 741 SDL
+constant declarations: 261 configuration, 449 frontend and 31 OpenGL aliases
+in 26 groups. Independent complete-AST review and whole-source reconstruction
+bind all 75 committed source/config/host inputs to the frozen candidate.
+The 701 cast expressions and 40 direct enum values retain their names, types,
+visibility and order. No adjacent attributes or SDL namespace shadows intervene.
+The exported helper remains within the existing frontend module configuration.
 
-Independent token comparison of the complete actual library expansions needs
-only the new helper definition/export and whitespace/comments removed: no
-commas, parentheses, literals or other tokens change. The baseline expansion
-is byte-identical to the previously reviewed inline-pointer expansion. The
-actual helper and both expansion hashes remain stable. All 70 committed
-Rust/Cargo inputs match the candidate, all 67 replay sources match the commit,
-and all 72 replay pins remain exact after completion.
+Independent actual frontend/library expansion comparisons preserve every token
+except the exact helper module, three imports and 741 leading path qualifiers
+(292 library, 449 binary). The binary has one expected checkpoint source-literal
+change: its payload independently reconstructs all 22 include_str inputs and
+differs only by the exact main.rs edit. The checkpoint compatibility source
+fingerprint therefore changes; other literal payloads, function bodies and
+constant types/values are exact. All five helper/expansion hashes remain stable.
 
-Normal release (30.35s wall), formatting and progress pass. The completed
-any% replay passes 129712/0 (107.40s), native exit 0; review reused these
-checks. Net Rust lines -344, total 139990. The unsafe-text count rises two
-for the macro matcher/template; compiled signatures, bodies and unsafe
-operations remain unchanged. Raw-access and cast counts are unchanged.
+Normal release (22.76s), formatting/check and progress pass. The single any%
+replay passes 129712/0 (104.39s wall, 104.24s replay), native exit 0; all 81
+replay pins remain exact after completion. Review reused these checks. Net
+Rust lines -867, total 139123; other progress counters are unchanged. Frontend
+constants are compiler-checked; this movie supplies core-gameplay regression
+coverage and does not establish frontend execution.
+
+Included `19eb90a9` dispatch review retains the complete 114-function inventory,
+105 groups and 2102 ordered arms across 23 callers. All 70 committed inputs,
+67 replay sources and 72 pins matched. Complete actual expansion tokens were
+identical, including every comma and literal; the helper/expansion hashes were
+stable. Release (30.35s), formatting/progress and any% 129712/0 (107.40s), native
+exit 0, passed. Net lines -344. The unsafe-text counter's increase of two comes
+from macro matcher/template spelling; compiled functions remain unchanged.
 
 Included `a4a6efa7` cinematic and `392705fa` inline-pointer reviews retain
 independent composition bindings for all 74 inputs of each stage and 80 stable
