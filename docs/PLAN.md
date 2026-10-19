@@ -400,8 +400,29 @@ artifacts are fixed. Complete checkpoint payloads and non-timing diagnostics
 match the original arithmetic runs; only the independently recomputed runtime
 compatibility fingerprint differs. No checkpoint is patched or reused.
 The committed Clippy and SPC changes and unrelated working edits are preserved.
-Next: consolidate the four Skree particle initializers. Gameplay through
-credits and the broader projectile scope remain unfinished.
+Gameplay through credits and the broader projectile scope remain unfinished.
+
+Skree particle initializer family (2026-10-19): four launch variants now
+share one safe helper through the dispatcher. Signed offsets and velocities,
+rounded word indices, Y read/store, Y-velocity store, then X read/store and
+X-velocity store remain exact, including unusual-index aliases. Net Rust
+lines -34, raw accesses -16, offset calls -32, unsafe functions -4 and casts
+-68 (14 c_int casts). The exact helper and 18 support items reuse 552112
+full-RAM/ordered-access comparisons, including odd-index, address-truncation
+and early-X-read fault controls; these are constructed cases, not route coverage.
+
+Frozen 8caf32e0 plus this family passes formatting/check, normal release
+(28.13s), any% 129712/0 (223.18s) and progress.
+Clean and observed Speed prefixes both pass 46651/0 (102.43s/88.37s),
+native exits 0. Four required completion probes report 3/3/3/3 calls
+at input indices 46050..46097, with at least 600 verified frames after
+each first call. The complete clean/observed prefix checkpoints and non-timing
+diagnostics match; any% matches the earlier arithmetic reference except for
+independently checked runtime compatibility bytes. All 74 prospective source
+and configuration paths match the verified clean snapshot at publication.
+Next assess the observed word-update family for consolidation, preserving
+old-value reads before RAM-dependent operands. The broader projectile scope
+and gameplay through credits remain unfinished.
 
 Remaining projectile scope: 35 unexercised same-slot AddToHiLo calls
 remain pending in sm_86. Seven exercised calls and nine safe signatures are

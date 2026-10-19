@@ -2081,54 +2081,20 @@ pub unsafe fn Eproj_PreInit_0x8aaf(mut k: uint16, game: &mut Game) {
             0 as uint16;
     }
 }
-unsafe fn Eproj_Init_0x8bc2_SkreeDownRight(mut j: uint16, game: &mut Game) {
+fn init_skree_particle(j: u16, x_offset: i16, x_velocity: i16, y_velocity: i16, game: &mut Game) {
     let enemy_index = game.cur_enemy_index();
-    let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v2 as isize) =
-        game.enemy_state(enemy_index).y_pos();
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v2 as isize) =
-        -(769 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v2 as isize) =
-        (game.enemy_state(enemy_index).x_pos()).wrapping_add(6u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(v2 as isize) =
-        320 as uint16;
+    let word_index = usize::from(j >> 1);
+    let y = game.enemy_state(enemy_index).y_pos();
+    EprojStateMut(&mut game.g_ram).write(0x1a93, word_index, y);
+    EprojStateMut(&mut game.g_ram).write(0x1adb, word_index, y_velocity as u16);
+    let x = game
+        .enemy_state(enemy_index)
+        .x_pos()
+        .wrapping_add_signed(x_offset);
+    EprojStateMut(&mut game.g_ram).write(0x1a4b, word_index, x);
+    EprojStateMut(&mut game.g_ram).write(0x1ab7, word_index, x_velocity as u16);
 }
-unsafe fn Eproj_Init_0x8bd0_SkreeUpRight(mut j: uint16, game: &mut Game) {
-    let enemy_index = game.cur_enemy_index();
-    let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v2 as isize) =
-        game.enemy_state(enemy_index).y_pos();
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v2 as isize) =
-        -(1025 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v2 as isize) =
-        (game.enemy_state(enemy_index).x_pos()).wrapping_add(6u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(v2 as isize) =
-        96 as uint16;
-}
-unsafe fn Eproj_Init_0x8bde_SkreeDownLeft(mut j: uint16, game: &mut Game) {
-    let enemy_index = game.cur_enemy_index();
-    let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v2 as isize) =
-        game.enemy_state(enemy_index).y_pos();
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v2 as isize) =
-        -(769 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v2 as isize) =
-        (game.enemy_state(enemy_index).x_pos()).wrapping_sub(6u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(v2 as isize) =
-        -(320 as ::core::ffi::c_int) as uint16;
-}
-unsafe fn Eproj_Init_0x8bec_SkreeUpLeft(mut j: uint16, game: &mut Game) {
-    let enemy_index = game.cur_enemy_index();
-    let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v2 as isize) =
-        game.enemy_state(enemy_index).y_pos();
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16).offset(v2 as isize) =
-        -(1025 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v2 as isize) =
-        (game.enemy_state(enemy_index).x_pos()).wrapping_sub(6u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(v2 as isize) =
-        -(96 as ::core::ffi::c_int) as uint16;
-}
+
 pub fn Eproj_PreInstr_SkreeParticle(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let split_amount = ((EprojState(&game.g_ram).slot_word(0x1ab7, v1 as usize) as int16
@@ -10243,16 +10209,16 @@ unsafe fn CallEprojInit(mut ea: uint32, mut j: uint16, game: &mut Game) {
             Eproj_Init_0x8aaf(j, game);
         }
         8817357 => {
-            Eproj_Init_0x8bc2_SkreeDownRight(j, game);
+            init_skree_particle(j, 6, 320, -769, game);
         }
         8817393 => {
-            Eproj_Init_0x8bd0_SkreeUpRight(j, game);
+            init_skree_particle(j, 6, 96, -1025, game);
         }
         8817429 => {
-            Eproj_Init_0x8bde_SkreeDownLeft(j, game);
+            init_skree_particle(j, -6, -320, -769, game);
         }
         8817465 => {
-            Eproj_Init_0x8bec_SkreeUpLeft(j, game);
+            init_skree_particle(j, -6, -96, -1025, game);
         }
         8817924 => {
             EprojInit_DraygonsGunk(j, game);
