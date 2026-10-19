@@ -79,18 +79,18 @@ pub unsafe fn cpu_reset(cpu: *mut Cpu, game: &mut Game) {
     (*cpu).cyclesUsed = 0;
 }
 pub unsafe fn cpu_saveload(
-    mut cpu: *mut Cpu,
-    mut func: Option<SaveLoadFunc>,
-    mut ctx: *mut ::core::ffi::c_void,
+    cpu: *mut Cpu,
+    func: Option<SaveLoadFunc>,
+    ctx: *mut ::core::ffi::c_void,
     game: &mut Game,
 ) {
     func.expect("non-null function pointer")(
         ctx,
         &raw mut (*cpu).a as *mut ::core::ffi::c_void,
-        (37 as usize).wrapping_sub(10 as usize),
+        27,
         game,
     );
-    (*cpu).spBreakpoint = 0 as u16;
+    (*cpu).spBreakpoint = 0;
 }
 pub unsafe fn cpu_runOpcode(cpu: *mut Cpu, game: &mut Game) -> ::core::ffi::c_int {
     (*cpu).cyclesUsed = 0;

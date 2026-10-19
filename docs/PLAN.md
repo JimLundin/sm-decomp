@@ -8811,6 +8811,19 @@ release library, normal metadata and optimized core/DLL builds pass; full
 frontend linking still lacks SDL2. Live CPU matches verified source. Progress
 counters unchanged. Complete gameplay and rendering/audio remain open.
 
+CPU save/load expression cleanup (2026-10-19): immutable CPU/callback/context
+bindings, plain 27-byte callback length and plain breakpoint zero replace
+generated expressions. Pointer, callback invocation and post-callback reset
+order remain exact. Frozen HEAD `02e4f91b` plus this change passes 131,072 actual
+old/current save/load calls over all register words and save/restore modes,
+checking the exact pointer/range, callback effects and breakpoint reset after
+the callback deliberately writes it. Prefix 3,600/0 (1.09s) and clean full
+any% 129,712/0 (57.94s), native exits 0. Dedicated callbacks provide changed-path
+execution; movie save/load hits are not claimed. Cargo fmt/check, release
+library, normal metadata and optimized core/DLL builds pass; full frontend
+linking still lacks SDL2. Live CPU matches verified source. Progress counters
+unchanged. Complete gameplay and rendering/audio remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
