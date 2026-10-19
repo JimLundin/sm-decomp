@@ -10606,6 +10606,21 @@ Next: clear the upper-platform overhang from retainedX415/Y731; obtain further
 item/boss coverage. Held upper99BD ascent,cliff tuning,old9AD9dropammoandHDMA
 stay held. Credits,gameplay/hardware,render/audio,maskedRAM andownership open.
 
+CPU safe tested-bit arithmetic (2026-10-19): tested_bit_result shares TSB/TRB
+zero-flag and set/reset arithmetic between byte/word paths. A is sampled after
+the read, Z assigned before writing, and existing cycles and reversed word
+writes stay unchanged. Frozen `3d761401` plus this change passes 18,874,368
+actual old/current wrapper cases: every accumulator, 36 operand patterns,
+both widths/operations and aliased/disjoint addresses. Named CPU/bus state,
+RAM writes and cycles match; static-WRAM cases do not exhaust mutating MMIO.
+Prefix 3,600/0 (0.99s), native exit 0, executes word TRB/TSB 4/9 times; byte
+paths are comparison-covered rather than prefix-executed. Clean full any%
+129,712/0 (49.73s), native exit 0. Cargo fmt/check, full release/release-library
+builds with external SDL2, normal metadata and frozen optimized core/DLL pass.
+Live CPU matches verified source; peer PPU work is outside this replay.
+Rust lines -3; other own counters unchanged. Prior CPU holds and complete
+gameplay/render/audio remain open. Continue covered CPU cleanup.
+
 Post-map Parlor ascent reaches Y651 (2026-10-19).
 From retained map-parlor-stop-spin X415/Y731,health34,map1,missiles1/10:
 Jump35,Jump/shoot1,Jump45,neutral60,left/jump40,Jump/shoot1,neutral75.

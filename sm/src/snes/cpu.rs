@@ -785,27 +785,24 @@ unsafe fn update_memory(cpu: *mut Cpu, low: u32, high: u32, delta: u16, game: &m
     };
     set_zero_negative(result, (*cpu).mf, &mut *cpu);
 }
+fn tested_bit_result(value: u16, byte: bool, set: bool, cpu: &mut Cpu) -> u16 {
+    let accumulator = if byte { cpu.a & 0xff } else { cpu.a };
+    cpu.z = accumulator & value == 0;
+    if set {
+        value | accumulator
+    } else {
+        value & !accumulator
+    }
+}
 unsafe fn test_and_update_bits(cpu: *mut Cpu, low: u32, high: u32, set: bool, game: &mut Game) {
     if (*cpu).mf {
         let value = read_byte(cpu, low, game);
-        (*cpu).z = (*cpu).a as u8 & value == 0;
-        let accumulator = (*cpu).a as u8;
-        let result = if set {
-            value | accumulator
-        } else {
-            value & !accumulator
-        };
-        write_byte(cpu, low, result, game);
+        let result = tested_bit_result(u16::from(value), true, set, &mut *cpu);
+        write_byte(cpu, low, result as u8, game);
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(2);
         let value = read_word(cpu, low, high, game);
-        (*cpu).z = (*cpu).a & value == 0;
-        let accumulator = (*cpu).a;
-        let result = if set {
-            value | accumulator
-        } else {
-            value & !accumulator
-        };
+        let result = tested_bit_result(value, false, set, &mut *cpu);
         write_word(cpu, low, high, result, true, game);
     }
 }
