@@ -18583,6 +18583,41 @@ No layout change, probe or ROM-derived artifact committed. Concurrent gameplay
 and standard-tool cleanup retain their own checks. Neither movie reaches
 credits; broader readability, hardware/audio and full progression remain open.
 
+SPC carry-arithmetic family (2026-10-19): normalized jscpd discovery
+and complete CST function selection identify the identical arithmetic/flag
+core in ADC, SBC and their memory-destination forms. One helper owns the
+byte adder and overflow/half-carry/carry writes. Subtraction still complements
+the source before destination reads; accumulator forms read their operand
+before the accumulator, memory forms read source before destination. The
+helper receives byte operands after those reads, reads carry at the original
+arithmetic points, writes V/H/C in order and returns the low result byte.
+The maximum sum is 511, so u16 arithmetic preserves every promoted result.
+Destination writes and Z/N updates remain in their original callers; no
+mutable SPC/APU borrow spans a bus operation. Word arithmetic, comparison
+and decimal adjustment have different invariants and remain separate.
+
+Complete-source reconstruction permits only the four selected functions and
+the helper; all other frozen source files match. Actual original/current
+routines agree in 524288 cases covering all byte operand pairs and both
+carry states for each of the four entries. Independent result, carry,
+half-carry, signed-overflow and Z/N expectations agree. Actual spc_runOpcode
+also agrees in 24576 constructed SPC/APU bus contexts: all 24 affected
+opcodes and 1024 register/flag/operand seeds, varied RAM, timer counters,
+ports and indirect/indexed addressing. Complete initialized SPC/APU/DSP
+state and cycle counts match. These exercise instruction dispatch and bus
+side effects; the constructed set does not establish every bus combination
+or hardware accuracy.
+
+Frozen ea204f0d plus only this family passes any% 129712/0
+(147.52s) and Speed Booster 148406/0 (204.89s), native exits 0,
+with fixed source/library/DLL/ROM/movie hashes. Cargo fmt/check, normal release
+(30.47s), progress and diff check pass. Own Rust lines -36 and c_int cast
+lines -48; unsafe functions +1 because one helper owns repeated raw flag
+writes. No RAM/layout change or probe/ROM-derived artifact committed.
+Concurrent gameplay/standard-tool cleanup retains its own checks. Neither
+movie reaches credits; full progression, readability and hardware/audio
+completion remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

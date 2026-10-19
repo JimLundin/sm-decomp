@@ -281,56 +281,31 @@ unsafe fn spc_eorm(mut spc: *mut Spc, mut dst: uint16_t, mut src: uint16_t) {
     spc_write(spc, dst, result);
     spc_setZN(spc, result);
 }
+// Subtraction passes the complemented right operand through the same adder.
+unsafe fn spc_add_with_carry(spc: *mut Spc, left: u8, right: u8) -> u8 {
+    let result = u16::from(left) + u16::from(right) + u16::from((*spc).c);
+    (*spc).v = left & 0x80 == right & 0x80 && u16::from(right & 0x80) != result & 0x80;
+    (*spc).h = u16::from(left & 0x0f) + u16::from(right & 0x0f) + u16::from((*spc).c) > 0x0f;
+    (*spc).c = result > 0xff;
+    result as u8
+}
 unsafe fn spc_adc(mut spc: *mut Spc, mut adr: uint16_t) {
     let mut value: uint8_t = spc_read(spc, adr);
-    let mut result: ::core::ffi::c_int = (*spc).a as ::core::ffi::c_int
-        + value as ::core::ffi::c_int
-        + (*spc).c as ::core::ffi::c_int;
-    (*spc).v = (*spc).a as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
-        == value as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
-        && value as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
-            != result & 0x80 as ::core::ffi::c_int;
-    (*spc).h = ((*spc).a as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
-        + (value as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
-        + (*spc).c as ::core::ffi::c_int
-        > 0xf as ::core::ffi::c_int;
-    (*spc).c = result > 0xff as ::core::ffi::c_int;
+    let result = spc_add_with_carry(spc, (*spc).a, value);
     (*spc).a = result as uint8_t;
     spc_setZN(spc, (*spc).a);
 }
 unsafe fn spc_adcm(mut spc: *mut Spc, mut dst: uint16_t, mut src: uint16_t) {
     let mut value: uint8_t = spc_read(spc, src);
     let mut applyOn: uint8_t = spc_read(spc, dst);
-    let mut result: ::core::ffi::c_int = applyOn as ::core::ffi::c_int
-        + value as ::core::ffi::c_int
-        + (*spc).c as ::core::ffi::c_int;
-    (*spc).v = applyOn as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
-        == value as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
-        && value as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
-            != result & 0x80 as ::core::ffi::c_int;
-    (*spc).h = (applyOn as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
-        + (value as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
-        + (*spc).c as ::core::ffi::c_int
-        > 0xf as ::core::ffi::c_int;
-    (*spc).c = result > 0xff as ::core::ffi::c_int;
+    let result = spc_add_with_carry(spc, applyOn, value);
     spc_write(spc, dst, result as uint8_t);
     spc_setZN(spc, result as uint8_t);
 }
 unsafe fn spc_sbc(mut spc: *mut Spc, mut adr: uint16_t) {
     let mut value: uint8_t =
         (spc_read(spc, adr) as ::core::ffi::c_int ^ 0xff as ::core::ffi::c_int) as uint8_t;
-    let mut result: ::core::ffi::c_int = (*spc).a as ::core::ffi::c_int
-        + value as ::core::ffi::c_int
-        + (*spc).c as ::core::ffi::c_int;
-    (*spc).v = (*spc).a as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
-        == value as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
-        && value as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
-            != result & 0x80 as ::core::ffi::c_int;
-    (*spc).h = ((*spc).a as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
-        + (value as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
-        + (*spc).c as ::core::ffi::c_int
-        > 0xf as ::core::ffi::c_int;
-    (*spc).c = result > 0xff as ::core::ffi::c_int;
+    let result = spc_add_with_carry(spc, (*spc).a, value);
     (*spc).a = result as uint8_t;
     spc_setZN(spc, (*spc).a);
 }
@@ -338,18 +313,7 @@ unsafe fn spc_sbcm(mut spc: *mut Spc, mut dst: uint16_t, mut src: uint16_t) {
     let mut value: uint8_t =
         (spc_read(spc, src) as ::core::ffi::c_int ^ 0xff as ::core::ffi::c_int) as uint8_t;
     let mut applyOn: uint8_t = spc_read(spc, dst);
-    let mut result: ::core::ffi::c_int = applyOn as ::core::ffi::c_int
-        + value as ::core::ffi::c_int
-        + (*spc).c as ::core::ffi::c_int;
-    (*spc).v = applyOn as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
-        == value as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
-        && value as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
-            != result & 0x80 as ::core::ffi::c_int;
-    (*spc).h = (applyOn as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
-        + (value as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
-        + (*spc).c as ::core::ffi::c_int
-        > 0xf as ::core::ffi::c_int;
-    (*spc).c = result > 0xff as ::core::ffi::c_int;
+    let result = spc_add_with_carry(spc, applyOn, value);
     spc_write(spc, dst, result as uint8_t);
     spc_setZN(spc, result as uint8_t);
 }
