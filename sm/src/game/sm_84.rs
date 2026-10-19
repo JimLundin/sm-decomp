@@ -3008,14 +3008,13 @@ fn setup_extension_block(j: uint16, block_type_and_bts: u16, game: &mut Game) ->
     DeletePlm(j, game);
     0
 }
+fn advance_plm_instruction(word_index: usize, bytes: u16, game: &mut Game) {
+    let offset = 0x1d27 + word_index * 2;
+    let instruction = u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]]);
+    game.g_ram[offset..offset + 2].copy_from_slice(&instruction.wrapping_add(bytes).to_le_bytes());
+}
 pub fn SkipDebugDrawInstructionsForScrollPlms(j: uint16, game: &mut Game) {
-    let instruction_offset = 0x1d27 + usize::from(j & !1);
-    let instruction = u16::from_le_bytes([
-        game.g_ram[instruction_offset],
-        game.g_ram[instruction_offset + 1],
-    ]);
-    game.g_ram[instruction_offset..instruction_offset + 2]
-        .copy_from_slice(&instruction.wrapping_add(4).to_le_bytes());
+    advance_plm_instruction(usize::from(j >> 1), 4, game);
 }
 pub fn PlmSetup_B703_ScrollPLM(j: uint16, game: &mut Game) -> uint8 {
     setup_scroll_block(j, 0x3046, game)
@@ -3056,10 +3055,8 @@ pub fn PlmSetup_B6FF_ScrollBlockTouch(j: uint16, game: &mut Game) -> uint8 {
     if read_word(game, 0x1e17 + index) & 0x8000 == 0 {
         write_word(game, 0x1e17 + index, 0x8000);
         // Retain both separate instruction writes before setting its timer.
-        let instruction = read_word(game, 0x1d27 + index).wrapping_add(1);
-        write_word(game, 0x1d27 + index, instruction);
-        let instruction = read_word(game, 0x1d27 + index).wrapping_add(1);
-        write_word(game, 0x1d27 + index, instruction);
+        advance_plm_instruction(slot, 1, game);
+        advance_plm_instruction(slot, 1, game);
         write_word(game, 0xde1c + index, 1);
     }
     0
@@ -3302,13 +3299,8 @@ pub unsafe fn PlmSetup_B76B_SaveStationTrigger(j: uint16, game: &mut Game) -> ui
             for slot in (0..40).rev() {
                 let slot_offset = slot * 2;
                 if read_word(game, 0x1c87 + slot_offset) == block_index {
-                    let instruction_offset = 0x1d27 + slot_offset;
-                    let instruction = read_word(game, instruction_offset).wrapping_add(1);
-                    game.g_ram[instruction_offset..instruction_offset + 2]
-                        .copy_from_slice(&instruction.to_le_bytes());
-                    let instruction = read_word(game, instruction_offset).wrapping_add(1);
-                    game.g_ram[instruction_offset..instruction_offset + 2]
-                        .copy_from_slice(&instruction.to_le_bytes());
+                    advance_plm_instruction(slot, 1, game);
+                    advance_plm_instruction(slot, 1, game);
                     game.g_ram[0xde1c + slot_offset..0xde1e + slot_offset]
                         .copy_from_slice(&1u16.to_le_bytes());
                     break;
@@ -3695,12 +3687,8 @@ pub unsafe fn PlmPreInstr_WakePlmIfTriggeredOrSamusBelowPlm(mut k: uint16, game:
             != 0
     {
         let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        let ref mut fresh76 = *((&raw mut game.g_ram as *mut uint8).offset(0x1d27) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh76 = (*fresh76).wrapping_add(1);
-        let ref mut fresh77 = *((&raw mut game.g_ram as *mut uint8).offset(0x1d27) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh77 = (*fresh77).wrapping_add(1);
+        advance_plm_instruction(v1 as usize, 1, game);
+        advance_plm_instruction(v1 as usize, 1, game);
         *((&raw mut game.g_ram as *mut uint8).offset(0xde1c) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1cd7) as *mut uint16).offset(v1 as isize) =
@@ -4570,9 +4558,7 @@ pub unsafe fn PlmSetup_RespawningBombBlock2(mut j: uint16, game: &mut Game) -> u
         & (0xf00i16));
     if v1 as ::core::ffi::c_int == 1280 as ::core::ffi::c_int {
         let mut v5: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        let ref mut fresh5 = *((&raw mut game.g_ram as *mut uint8).offset(0x1d27) as *mut uint16)
-            .offset(v5 as isize);
-        *fresh5 = ((*fresh5).wrapping_add((3u16)));
+        advance_plm_instruction(v5 as usize, 3, game);
         let mut v6: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x1c87)
             as *mut uint16)
             .offset(v5 as isize) as ::core::ffi::c_int
@@ -4855,9 +4841,7 @@ pub unsafe fn PlmPreInstr_WakePlmIfSamusHasBombs(mut k: uint16, game: &mut Game)
         let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0xde1c) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
-        let ref mut fresh72 = *((&raw mut game.g_ram as *mut uint8).offset(0x1d27) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh72 = ((*fresh72).wrapping_add((2u16)));
+        advance_plm_instruction(v1 as usize, 2, game);
         *((&raw mut game.g_ram as *mut uint8).offset(0x1cd7) as *mut uint16).offset(v1 as isize) =
             (((0x84d356i32) as u16) & (0xffffu16));
     }
@@ -5605,12 +5589,8 @@ pub unsafe fn PlmPreInstr_WakeIfTriggered(mut k: uint16, game: &mut Game) {
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1d77) as *mut uint16).offset(v1 as isize) =
             0 as uint16;
-        let ref mut fresh70 = *((&raw mut game.g_ram as *mut uint8).offset(0x1d27) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh70 = (*fresh70).wrapping_add(1);
-        let ref mut fresh71 = *((&raw mut game.g_ram as *mut uint8).offset(0x1d27) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh71 = (*fresh71).wrapping_add(1);
+        advance_plm_instruction(v1 as usize, 1, game);
+        advance_plm_instruction(v1 as usize, 1, game);
         *((&raw mut game.g_ram as *mut uint8).offset(0xde1c) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
     }

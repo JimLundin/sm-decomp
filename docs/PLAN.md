@@ -17366,6 +17366,52 @@ enemy-field reads. Later arithmetic/spawn-point changes retain their own
 validation; check the combined main batch next. Broader gameplay/credits,
 hardware/audio/masks and ownership remain unfinished.
 
+PLM instruction advance family (2026-10-19): survey all 17 raw
+constant instruction-pointer updates plus scroll, scroll-touch and save-station
+byte-backed variants. Frozen 1db7f12d full any% 129712/0 (153.87s)
+and Speed Booster 148406/0 (200.78s), native exits 0, establish
+seven exercised routines. Eleven zero-hit raw sites remain unchanged and pending.
+
+One safe operation now reads the little-endian live instruction word, adds
+the original byte count with word wrapping, then writes it back. Consolidate
+all eleven exercised calls across the seven routines, including already-safe
+variants. Retain both consecutive +1 writes and each original position around
+trigger/timer/level-data writes and callbacks. Captured word indexes and full
+16-bit odd/high byte-index rounding stay exact; raw pointers retained elsewhere
+in these routines are not reused across the helper borrow.
+
+Frozen 1db7f12d plus only this change passes clean any% 129712/0
+(170.79s) and Speed Booster 148406/0 (242.03s),
+native exits 0. Observed runs pass 129712/0 (203.25s) and
+148406/0 (235.73s); all eleven actual changed calls execute.
+Each helper call compares complete RAM with the original unaligned raw update;
+clean/observed non-timing output and diagnostics agree. Actual calls by routine:
+SkipDebugDrawInstructionsForScrollPlms: 179.
+PlmSetup_B6FF_ScrollBlockTouch: 4164.
+PlmSetup_B76B_SaveStationTrigger: 2.
+PlmPreInstr_WakePlmIfTriggeredOrSamusBelowPlm: 2.
+PlmSetup_RespawningBombBlock2: 27.
+PlmPreInstr_WakePlmIfSamusHasBombs: 1.
+PlmPreInstr_WakeIfTriggered: 2.
+
+786432 independent boundary comparisons cover every 16-bit byte index with
+two RAM patterns and +1/+2/+3/+4, plus every old word with those increments
+and a subsequent separate +1 store. Exact source reconstruction permits only
+the helper and selected substitutions; other frozen sources and source/library/
+DLL/ROM/movie hashes remain fixed. No gameplay coverage beyond these fixtures
+is claimed, and neither fixture reaches credits.
+
+Current 6eb27052 plus this exact PLM source independently passes
+full any% 129712/0 (168.89s) and Speed Booster 148406/0
+(221.92s), native exits 0. Integrated source/library/DLL
+hashes stay fixed; its archived sources match the committed integration.
+
+Cargo fmt/check, normal release build (41.56s; direct native exit 0 recheck),
+and progress pass. Own raw accesses -6 and Rust lines -20, including helper;
+casts and unsafe functions unchanged. Temporary probes and ROM-derived assets
+stay uncommitted. Continue coherent RAM update families; broader gameplay,
+hardware/audio/masks and ownership work remains unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
