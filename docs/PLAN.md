@@ -1912,14 +1912,30 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `db739c4c` passes
-uninterrupted full boot any% 129712/0 (200.55s) and Speed Booster
-148406/0 (250.63s), native exits 0. All 74 source/configuration/host/
-progress inputs match that commit. This adds seven committed hardware,
-gameplay and decoder families to the review. Later compiler cleanup and
-pending initializer edits retain their own checks outside this snapshot.
+Latest reviewed integration (2026-10-19): compiler cleanup in `a1511f71`
+matches the verified source, complete tracked Rust inventory, configuration
+and host. All 77 recorded source/library/DLL/fixture pins still match. The
+normal release build passes (24.04s), as does full boot any% 129712/0
+(163.71s), native exit 0. This reuses the completed implementation run;
+no duplicate replay or bespoke comparison harness was needed.
 
-Serialized checkpoint payloads are byte-identical to reviewed f6788036.
+Review covers 374 literal casts replaced by typed literals across 32 files,
+and 11538 unused mut keywords removed across 50 files. Complete word diffs
+for the latter contain only those keywords and 412 optional trailing commas
+removed by formatting; retained tokens and operation order are unchanged.
+All-target/all-feature compiler fixes, formatting/check and progress pass;
+no unused_mut warnings remain. Rust lines fall by 1913 in the binding batch.
+The cast batch's separate checked build passes any% 129712/0 (201.40s) and
+Speed Booster 148406/0 (250.15s). Its final compiler log has 104 remaining
+warning locations, correcting the earlier count of 54. These frontend and
+core compiler checks do not establish frontend execution or broader coverage.
+Later initializer/accessor and identity-operation work keeps its own checks.
+
+Retained broader integration: frozen `db739c4c` passes uninterrupted full
+boot any% 129712/0 (200.55s) and Speed Booster 148406/0 (250.63s), native
+exits 0. All 74 source/configuration/host/progress inputs match that commit.
+This review covers the seven hardware, gameplay and decoder families below.
+Its serialized checkpoint payloads are byte-identical to reviewed f6788036.
 The only changed header field is the runtime-source fingerprint, independently
 recomputed from its actual inputs; only snes/spc.rs changes among those inputs.
 The Game declaration and checkpoint codec are unchanged. All other bindings,
@@ -19418,7 +19434,7 @@ Compiler-assisted redundant casts (2026-10-19): standard Clippy
 unnecessary_cast fixes remove 374 casts across 32 files, including all Cargo
 targets and frontend features. Same-type literal casts become typed literals;
 operand order and narrowing casts remain unchanged. Net Rust lines -9;
-unsafe and raw-access counts unchanged. The 54 distinct remaining warnings
+unsafe and raw-access counts unchanged. The 104 remaining warning locations
 lack machine-applicable fixes and retain a separate manual-review scope.
 
 Frozen 5b12b799 plus only this batch passes full any% 129712/0
