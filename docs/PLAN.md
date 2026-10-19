@@ -12283,6 +12283,31 @@ verification is claimed. Quality session owns final on-screen replacement
 and integration. Complete gameplay/credits, hardware/audio, masked RAM and
 ownership remain open. No probe/ROM-derived assets are committed.
 
+Independent on-screen destination-read audit (2026-10-19): extend the
+retained exact C87A..C8E7 actual-ROM probe with CPU read_byte observation.
+All9,600 state-review cases and38,016 corner cases pass, native exits0,
+checking3,753,120 and15,093,120 ordered destination stores respectively.
+There are zero CPU reads from7E/7F destination banks during these kernels.
+An actual LDA long7E9100 control records the read and instruction fetches,
+confirming the observer detects destination-bank access.
+
+Exact ordered writes, complete WRAM except temporary return-stack storage,
+and final22/24/0D1E scratch state retain their existing checks. The broader
+cases include both table bases, start0/458/460/462/FFFE, reversed/zero
+gradients, poisoned RAM and scratch26. All1,330,254 zero-scratch temporary
+byte differences are overwritten; no final zero-scratch difference remains.
+State review separately covers unequal initial edges and prior carry rows.
+These checks classify kernel reads; they do not establish arbitrary aliases,
+asynchronous DMA or final production caller integration.
+
+No maintained source change; probe instrumentation remains outside tracked
+files and peer-owned source edits remain untouched. Cargo fmt/check, release
+and progress pass. Current source growth belongs to the pending rendering
+implementation. No new full replay is claimed; latest independent frozen
+prototype results remain any%129712/0 and Waver58109/0. Final revised-source
+replays and mask removal remain the implementation session's work. Complete
+gameplay/credits, hardware/audio timing, other masks and ownership stay open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
