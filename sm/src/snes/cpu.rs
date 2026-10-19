@@ -21,7 +21,7 @@ extern "C" {
 
 }
 use crate::types::{Cpu, SaveLoadFunc, Snes};
-static cyclesPerOpcode: [u8; 256] = [
+static CYCLES_PER_OPCODE: [u8; 256] = [
     7, 6, 7, 4, 5, 3, 5, 6, 3, 2, 2, 4, 6, 4, 6, 5, 2, 5, 5, 7, 5, 4, 6, 6, 2, 4, 2, 2, 6, 4, 7, 5,
     6, 6, 8, 4, 3, 3, 5, 6, 4, 2, 2, 5, 4, 4, 6, 5, 2, 5, 5, 7, 4, 4, 6, 6, 2, 4, 2, 2, 4, 4, 7, 5,
     6, 6, 2, 4, 7, 3, 5, 6, 3, 2, 2, 3, 3, 4, 6, 5, 2, 5, 5, 7, 7, 4, 6, 6, 2, 4, 3, 2, 4, 4, 7, 5,
@@ -108,16 +108,16 @@ pub unsafe fn cpu_runOpcode(cpu: *mut Cpu, game: &mut Game) -> ::core::ffi::c_in
         (*cpu).cyclesUsed = 7;
         if (*cpu).nmiWanted {
             (*cpu).nmiWanted = false;
-            cpu_doInterrupt(cpu, false, game);
+            service_interrupt(cpu, false, game);
         } else {
-            cpu_doInterrupt(cpu, true, game);
+            service_interrupt(cpu, true, game);
         }
     }
     let opcode = fetch_byte(cpu, game);
     (*cpu).cyclesUsed = (*cpu)
         .cyclesUsed
-        .wrapping_add(cyclesPerOpcode[usize::from(opcode)]);
-    cpu_doOpcode(cpu, opcode, game);
+        .wrapping_add(CYCLES_PER_OPCODE[usize::from(opcode)]);
+    dispatch_opcode(cpu, opcode, game);
     i32::from((*cpu).cyclesUsed)
 }
 unsafe fn fetch_byte(cpu: *mut Cpu, game: &mut Game) -> u8 {
@@ -220,7 +220,7 @@ unsafe fn write_word(
         write_byte(cpu, adrh, high, game);
     }
 }
-unsafe fn cpu_doInterrupt(cpu: *mut Cpu, irq: bool, game: &mut Game) {
+unsafe fn service_interrupt(cpu: *mut Cpu, irq: bool, game: &mut Game) {
     if !(*cpu).e {
         push_byte(cpu, (*cpu).k, game);
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
@@ -818,7 +818,7 @@ pub unsafe fn DumpCpuHistory(game: &mut Game) {
         i += 1;
     }
 }
-unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
+unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
     // Preserve the inherited history value of 0xffffffff when PC is zero.
     let cur_pc = (i32::from((*cpu).k) << 16 | (i32::from((*cpu).pc) - 1)) as u32;
     game.pc_hist[game.pc_hist_ctr as usize] = cur_pc;

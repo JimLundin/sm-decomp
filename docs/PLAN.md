@@ -8801,6 +8801,16 @@ full frontend linking still lacks SDL2. Live CPU matches verified source.
 Cast lines -5, Rust lines -7; other counters unchanged. Invalid-stack assertion
 execution, complete gameplay and rendering/audio remain open.
 
+CPU dispatch/interrupt names (2026-10-19): private dispatcher, interrupt
+helper and cycle table become dispatch_opcode, service_interrupt and
+CYCLES_PER_OPCODE. Seven source replacements reverse exactly to frozen HEAD
+`792a28e3`; original assertion strings, bodies and table values are unchanged.
+Prefix 3,600/0 (1.11s) executes 10,363,030 dispatcher and 3,600 interrupt-service
+calls. Clean full any% 129,712/0 (59.09s), native exit 0. Cargo fmt/check,
+release library, normal metadata and optimized core/DLL builds pass; full
+frontend linking still lacks SDL2. Live CPU matches verified source. Progress
+counters unchanged. Complete gameplay and rendering/audio remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
