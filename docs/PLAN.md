@@ -166,6 +166,22 @@ change and no new replay result belong to this cleanup.
 
 ## The oracle
 
+RAM diagnostic alignment fix (2026-10-19): paired mismatch words now use
+little-endian byte reads. The inherited grouping permits odd offsets below
+10000, where the former u16 pointer dereferences were unaligned. A guarded
+old-code control stops at frame 200, offset 1001, before the invalid read.
+The candidate's 1000-frame control counts seven injected failing frames and
+prints all 135 expected byte/word lines exactly, with first-frame context
+once. Cases cover odd/even offsets, a bank boundary, upper-bank odd bytes,
+the final word/byte and a 515-byte mismatch with the existing display bound.
+Grouping, dump bounds, failure counting and recovery retain their behavior.
+Frozen d979ac31 plus only this fix passes any% 129712/0 (224.54s), native
+exit 0, and Waver 58109/71 (119.05s), native exit 1. All 73 non-progress
+stderr lines equal baseline, including all 71 failure diagnostics. Maintained
+source equals the clean candidate. Cargo fmt/check, release and progress
+pass. Cast lines -3; Rust lines and other own counters unchanged. Later peer
+changes and the existing gameplay/render/audio coverage gaps remain separate.
+
 PPU reset initialization cleanup (2026-10-19): reset retains the raw whole-
 allocation clear, restores its three host fields and sets only the four
 nonzero defaults. Removed redundant zero stores and loops; no PPU/RAM/save

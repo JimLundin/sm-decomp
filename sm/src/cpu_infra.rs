@@ -1489,17 +1489,17 @@ unsafe fn VerifySnapshotsEq(
                         && (*a).ram[i.wrapping_add(1 as size_t) as usize] as ::core::ffi::c_int
                             != (*b).ram[i.wrapping_add(1 as size_t) as usize] as ::core::ffi::c_int
                     {
+                        let read_word = |ram: &[u8; 0x20000]| {
+                            i32::from(u16::from_le_bytes([ram[i as usize], ram[i as usize + 1]]))
+                        };
                         fprintf(
                             stderr,
                             b"0x%.6X: %.4X != %.4X (%.4X)\n\0" as *const u8
                                 as *const ::core::ffi::c_char,
                             i as ::core::ffi::c_int,
-                            *((&raw mut (*b).ram as *mut uint8).offset(i as isize) as *mut uint8
-                                as *mut uint16) as ::core::ffi::c_int,
-                            *((&raw mut (*a).ram as *mut uint8).offset(i as isize) as *mut uint8
-                                as *mut uint16) as ::core::ffi::c_int,
-                            *((&raw mut (*prev).ram as *mut uint8).offset(i as isize) as *mut uint8
-                                as *mut uint16) as ::core::ffi::c_int,
+                            read_word(&(*b).ram),
+                            read_word(&(*a).ram),
+                            read_word(&(*prev).ram),
                         );
                         i = i.wrapping_add(1);
                         j += 1;
