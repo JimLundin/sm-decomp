@@ -297,14 +297,18 @@ exit 0. The ledge remains X89/Y347, health59/199, missiles7/10, with Morph
 Ball/Bombs and no Supers or Power Bombs. At frame69725 the actual upward
 collision hits block868 at X78/Y316, radii5/12, and clamps ascent to zero.
 
-The obstruction uses crumble collision, but its separate bomb reaction
-accepts ordinary bombs. From below the explosion must be centered in the
-adjacent tile X64..79/Y304..319; earlier attempts around Y326 miss that row.
-The upper-right entrance near672/272 has a normal-shot reaction, offering
-another route candidate; traversal there remains unproved. Next: establish
-normal-input access through one of these paths, then verify the successful
-extension from boot. The 69714-frame ledge remains the strongest boot route;
-this geometry check adds no item, room or credits milestone. No maintained
+Later normal-input testing corrects the inferred Bomb passage: an early
+airborne morph places a bomb at X77/Y311, but its reaction only reveals the
+crumble icon and retains crumble collision. The 118-frame continuation
+(69714..69832) passes with zero failures, native exit 0. Bomb placement is
+therefore not a route through this obstruction from below.
+
+The upper-right entrance near672/272 has a normal-shot reaction, but the
+first timed shutter is already closed in the ledge checkpoint after the
+earlier missile pickup. Next: use the earlier verified 68096-frame prefix
+before that trigger and establish upper-corridor access, then verify the
+successful extension from boot. The 69714-frame ledge remains the strongest
+boot route; these checks add no item, room or credits milestone. No maintained
 source or residue changes, probes or ROM-derived assets belong to this audit.
 
 Reviewed-change integration QC (2026-10-19): frozen 626b0b7e plus the
