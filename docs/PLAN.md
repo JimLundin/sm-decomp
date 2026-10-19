@@ -35,6 +35,45 @@ Keep each commit one invariant, but apply it across the complete eligible family
 Rank by net deletion including shared code, unsafe operations removed and
 edit/build/verification cost. Prefer this work over further isolated cleanup.
 
+Established-tool audit (user priority, 2026-10-19): use jscpd 5.4.1 to discover
+exact, renamed and edited blocks/functions, then ast-grep 0.51.0 to select
+complete Rust structures and their variants. Keep temporary rules and reports
+outside the repository. Assess the resulting code for clarity and net size,
+including caller changes; normalized clone counts are not deletion estimates.
+Use complete syntax matching (`cst`) for rewrite rules: a partial search pattern
+can otherwise match an if-expression with additional else branches.
+
+The look-back compares the original Rust transpilation, 1311d3b4, with the
+2026-10-19 working tree. At 100 tokens/10 lines, exact matches fall from 1923
+to 955. Known abs16/AddToHiLo/SetHiLo copies now each have one implementation;
+swap16 and CFADD copies are gone. No literal operand remains in the old
+c_int/isize offset chain. Other promoted offsets are nonliteral expressions.
+The historical function pairs also need triage: disappearance from an AST
+report can mean changed code, another reported link, or a shorter function.
+Continue auditing declarations, casts and state-update variants; this look-back
+is not complete and does not establish that every useful family was found.
+
+Liquid-decision family completed (2026-10-19): 19 decisions in 18 routines
+across sm_90/sm_91 share one safe height query. Structural searches included
+spin-jump, palette, an already-simplified wall-jump animation and a value-
+assignment variant. Caller heights, suit checks and actions stay distinct;
+water precedence, sentinels and wrapped sign tests remain exact. Post-change
+searches find no old decision forms. FX selection and initialization differ.
+Net Rust lines -409, c_int cast lines -272, actual casts -461, raw accesses
+-91; unsafe function count is unchanged. Exact source reconstruction and
+boundary sweeps of each word input pass, including a rejected unsigned-
+comparison mutant; these are not every combination or new gameplay coverage.
+Frozen ab00d7d6 plus this change passes any% 129712/0 (139.76s) and Speed
+Booster 148406/0 (178.84s), native exits 0, with fixed source/DLL/inputs.
+Formatting, normal release (17.78s frozen, 17.8s stable workspace) and progress
+pass. Concurrent PLM/projectile changes retain their separate verification.
+
+The concurrent session owns the 24 corpse tile-row move/copy routines in
+sm_a9 (1712 lines); its live verification is in progress. Continue reviewing
+PPU initializer families and historical transition/block-reaction pairs. The
+112-constructor generic-pointer trial is rejected: expanded caller syntax
+leaves only ten net lines removed and does not justify that interface.
+
 The 8808dec6 survey finds 524 functions in exact token-clone groups and 1299
 candidates after local-name, literal and enemy-type normalization. These are
 discovery counts, not equivalence proofs. Larger structures include 94 enemy

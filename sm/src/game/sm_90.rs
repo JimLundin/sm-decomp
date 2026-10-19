@@ -709,14 +709,7 @@ unsafe fn Samus_AnimDelayFunc_11_SelectDelaySequenceWalljump(game: &mut Game) ->
         false
     } else {
         let top = Samus_GetTop_R20(game);
-        let water_level = u16::from_le_bytes([game.g_ram[0x195e], game.g_ram[0x195f]]);
-        if water_level & 0x8000 != 0 {
-            let lava_level = u16::from_le_bytes([game.g_ram[0x1962], game.g_ram[0x1963]]);
-            lava_level & 0x8000 == 0 && lava_level.wrapping_sub(top) & 0x8000 != 0
-        } else {
-            water_level.wrapping_sub(top) & 0x8000 != 0
-                && u16::from_le_bytes([game.g_ram[0x197e], game.g_ram[0x197f]]) & 4 == 0
-        }
+        liquid_at_height(game, top) != LiquidAtHeight::None
     };
     let (sound, frame_advance) = if liquid_limits_animation {
         (0x31, 1)
@@ -1967,6 +1960,35 @@ pub unsafe fn Samus_CalcSpritemapPos_Special(mut j: uint16, game: &mut Game) -> 
                 as ::core::ffi::c_int) as uint16,
     );
 }
+/// Which liquid contains a vertical position. This query deliberately ignores
+/// equipment: movement and graphics callers apply different suit rules.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum LiquidAtHeight {
+    None,
+    Water,
+    LavaAcid,
+}
+
+pub(crate) fn liquid_at_height(game: &Game, y: u16) -> LiquidAtHeight {
+    let water_y = u16::from_le_bytes([game.g_ram[0x195e], game.g_ram[0x195f]]);
+    // A present water surface takes precedence, even above the queried height.
+    // Preserve the SNES sign-bit test on subtraction, including wraparound.
+    if water_y & 0x8000 == 0 {
+        if water_y.wrapping_sub(y) & 0x8000 != 0 {
+            let options = u16::from_le_bytes([game.g_ram[0x197e], game.g_ram[0x197f]]);
+            if options & 4 == 0 {
+                return LiquidAtHeight::Water;
+            }
+        }
+    } else {
+        let lava_y = u16::from_le_bytes([game.g_ram[0x1962], game.g_ram[0x1963]]);
+        if lava_y & 0x8000 == 0 && lava_y.wrapping_sub(y) & 0x8000 != 0 {
+            return LiquidAtHeight::LavaAcid;
+        }
+    }
+    LiquidAtHeight::None
+}
+
 pub unsafe fn SetLiquidPhysicsType(game: &mut Game) {
     let mut r18: uint16 = Samus_GetBottom_R18(game);
     match (*((&raw mut game.g_ram as *mut uint8).offset(0x196e) as *mut uint16)
@@ -2998,38 +3020,16 @@ pub unsafe fn Samus_HandleExtraRunspeedX(game: &mut Game) {
         == 0 as ::core::ffi::c_int
     {
         r18 = Samus_GetBottom_R18(game);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16)
-            as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
-        {
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
-                as ::core::ffi::c_int
-                & 0x8000 as ::core::ffi::c_int
-                == 0 as ::core::ffi::c_int
-                && *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
-                    as ::core::ffi::c_int
-                    - r18 as ::core::ffi::c_int
-                    & 0x8000 as ::core::ffi::c_int
-                    != 0
-            {
+        match liquid_at_height(game, r18) {
+            LiquidAtHeight::Water => {
                 current_block = 3594490907146900115;
-            } else {
+            }
+            LiquidAtHeight::LavaAcid => {
+                current_block = 3594490907146900115;
+            }
+            LiquidAtHeight::None => {
                 current_block = 13183875560443969876;
             }
-        } else if *((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16)
-            as ::core::ffi::c_int
-            - r18 as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            != 0
-            && *((&raw mut game.g_ram as *mut uint8).offset(0x197e) as *mut uint16)
-                as ::core::ffi::c_int
-                & 4 as ::core::ffi::c_int
-                == 0 as ::core::ffi::c_int
-        {
-            current_block = 3594490907146900115;
-        } else {
-            current_block = 13183875560443969876;
         }
     } else {
         current_block = 13183875560443969876;
@@ -3224,40 +3224,18 @@ pub unsafe fn Samus_InitJump(game: &mut Game) {
         current_block = 18099320997399164961;
     } else {
         r18 = Samus_GetBottom_R18(game);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16)
-            as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
-        {
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16)
-                as ::core::ffi::c_int
-                - r18 as ::core::ffi::c_int
-                & 0x8000 as ::core::ffi::c_int
-                != 0
-                && *((&raw mut game.g_ram as *mut uint8).offset(0x197e) as *mut uint16)
-                    as ::core::ffi::c_int
-                    & 4 as ::core::ffi::c_int
-                    == 0 as ::core::ffi::c_int
-            {
+        match liquid_at_height(game, r18) {
+            LiquidAtHeight::Water => {
                 v0 = 2 as uint16;
                 current_block = 1917311967535052937;
-            } else {
+            }
+            LiquidAtHeight::LavaAcid => {
+                v0 = 4 as uint16;
+                current_block = 1917311967535052937;
+            }
+            LiquidAtHeight::None => {
                 current_block = 18099320997399164961;
             }
-        } else if *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
-            as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
-            || *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
-                as ::core::ffi::c_int
-                - r18 as ::core::ffi::c_int
-                & 0x8000 as ::core::ffi::c_int
-                == 0
-        {
-            current_block = 18099320997399164961;
-        } else {
-            v0 = 4 as uint16;
-            current_block = 1917311967535052937;
         }
     }
     match current_block {
@@ -3315,40 +3293,18 @@ pub unsafe fn Samus_InitWallJump(game: &mut Game) {
         current_block = 16262899787512852811;
     } else {
         r18 = Samus_GetBottom_R18(game);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16)
-            as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
-        {
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16)
-                as ::core::ffi::c_int
-                - r18 as ::core::ffi::c_int
-                & 0x8000 as ::core::ffi::c_int
-                != 0
-                && *((&raw mut game.g_ram as *mut uint8).offset(0x197e) as *mut uint16)
-                    as ::core::ffi::c_int
-                    & 4 as ::core::ffi::c_int
-                    == 0 as ::core::ffi::c_int
-            {
+        match liquid_at_height(game, r18) {
+            LiquidAtHeight::Water => {
                 v0 = 2 as uint16;
                 current_block = 1917311967535052937;
-            } else {
+            }
+            LiquidAtHeight::LavaAcid => {
+                v0 = 4 as uint16;
+                current_block = 1917311967535052937;
+            }
+            LiquidAtHeight::None => {
                 current_block = 16262899787512852811;
             }
-        } else if *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
-            as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
-            || *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
-                as ::core::ffi::c_int
-                - r18 as ::core::ffi::c_int
-                & 0x8000 as ::core::ffi::c_int
-                == 0
-        {
-            current_block = 16262899787512852811;
-        } else {
-            v0 = 4 as uint16;
-            current_block = 1917311967535052937;
         }
     }
     match current_block {
@@ -3403,40 +3359,18 @@ pub unsafe fn Samus_SetSpeedForKnockback_Y(game: &mut Game) {
         == 0 as ::core::ffi::c_int
     {
         let mut r18: uint16 = Samus_GetBottom_R18(game);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16)
-            as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
-        {
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
-                as ::core::ffi::c_int
-                & 0x8000 as ::core::ffi::c_int
-                == 0 as ::core::ffi::c_int
-                && *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
-                    as ::core::ffi::c_int
-                    - r18 as ::core::ffi::c_int
-                    & 0x8000 as ::core::ffi::c_int
-                    != 0
-            {
+        match liquid_at_height(game, r18) {
+            LiquidAtHeight::Water => {
+                v0 = 2 as uint16;
+                current_block = 3276175668257526147;
+            }
+            LiquidAtHeight::LavaAcid => {
                 v0 = 4 as uint16;
                 current_block = 3276175668257526147;
-            } else {
+            }
+            LiquidAtHeight::None => {
                 current_block = 7815301370352969686;
             }
-        } else if *((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16)
-            as ::core::ffi::c_int
-            - r18 as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            != 0
-            && *((&raw mut game.g_ram as *mut uint8).offset(0x197e) as *mut uint16)
-                as ::core::ffi::c_int
-                & 4 as ::core::ffi::c_int
-                == 0 as ::core::ffi::c_int
-        {
-            v0 = 2 as uint16;
-            current_block = 3276175668257526147;
-        } else {
-            current_block = 7815301370352969686;
         }
     } else {
         current_block = 7815301370352969686;
@@ -3467,40 +3401,18 @@ pub unsafe fn Samus_InitBombJump(game: &mut Game) {
         == 0 as ::core::ffi::c_int
     {
         let mut r18: uint16 = Samus_GetBottom_R18(game);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16)
-            as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
-        {
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
-                as ::core::ffi::c_int
-                & 0x8000 as ::core::ffi::c_int
-                == 0 as ::core::ffi::c_int
-                && *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
-                    as ::core::ffi::c_int
-                    - r18 as ::core::ffi::c_int
-                    & 0x8000 as ::core::ffi::c_int
-                    != 0
-            {
+        match liquid_at_height(game, r18) {
+            LiquidAtHeight::Water => {
+                v0 = 2 as uint16;
+                current_block = 11812396948646013369;
+            }
+            LiquidAtHeight::LavaAcid => {
                 v0 = 4 as uint16;
                 current_block = 11812396948646013369;
-            } else {
+            }
+            LiquidAtHeight::None => {
                 current_block = 17216689946888361452;
             }
-        } else if *((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16)
-            as ::core::ffi::c_int
-            - r18 as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            != 0
-            && *((&raw mut game.g_ram as *mut uint8).offset(0x197e) as *mut uint16)
-                as ::core::ffi::c_int
-                & 4 as ::core::ffi::c_int
-                == 0 as ::core::ffi::c_int
-        {
-            v0 = 2 as uint16;
-            current_block = 11812396948646013369;
-        } else {
-            current_block = 17216689946888361452;
         }
     } else {
         current_block = 17216689946888361452;
@@ -3667,36 +3579,16 @@ pub unsafe fn Samus_DetermineSpeedTableEntryPtr_X(game: &mut Game) -> uint16 {
         == 0 as ::core::ffi::c_int
     {
         let mut r18: uint16 = Samus_GetBottom_R18(game);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16)
-            as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
-        {
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
-                as ::core::ffi::c_int
-                & 0x8000 as ::core::ffi::c_int
-                == 0 as ::core::ffi::c_int
-                && *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
-                    as ::core::ffi::c_int
-                    - r18 as ::core::ffi::c_int
-                    & 0x8000 as ::core::ffi::c_int
-                    != 0
-            {
+        match liquid_at_height(game, r18) {
+            LiquidAtHeight::Water => {
+                *((&raw mut game.g_ram as *mut uint8).offset(0xa6c) as *mut uint16) =
+                    addr_kSamusSpeedTable_Water_X as uint16;
+            }
+            LiquidAtHeight::LavaAcid => {
                 *((&raw mut game.g_ram as *mut uint8).offset(0xa6c) as *mut uint16) =
                     addr_kSamusSpeedTable_LavaAcid_X as uint16;
             }
-        } else if *((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16)
-            as ::core::ffi::c_int
-            - r18 as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            != 0
-            && *((&raw mut game.g_ram as *mut uint8).offset(0x197e) as *mut uint16)
-                as ::core::ffi::c_int
-                & 4 as ::core::ffi::c_int
-                == 0 as ::core::ffi::c_int
-        {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa6c) as *mut uint16) =
-                addr_kSamusSpeedTable_Water_X as uint16;
+            LiquidAtHeight::None => {}
         }
     }
     return (*((&raw mut game.g_ram as *mut uint8).offset(0xa6c) as *mut uint16)
@@ -3712,37 +3604,12 @@ pub unsafe fn Samus_DetermineGrappleSwingSpeed_X(game: &mut Game) -> uint16 {
     {
         return addr_stru_909F31 as uint16;
     }
-    let mut r18: uint16 = Samus_GetBottom_R18(game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
-    {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16)
-            as ::core::ffi::c_int
-            - r18 as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            != 0
-            && *((&raw mut game.g_ram as *mut uint8).offset(0x197e) as *mut uint16)
-                as ::core::ffi::c_int
-                & 4 as ::core::ffi::c_int
-                == 0 as ::core::ffi::c_int
-        {
-            return addr_stru_909F3D as uint16;
-        }
-        return addr_stru_909F31 as uint16;
+    let bottom = Samus_GetBottom_R18(game);
+    match liquid_at_height(game, bottom) {
+        LiquidAtHeight::None => addr_stru_909F31 as uint16,
+        LiquidAtHeight::Water => addr_stru_909F3D as uint16,
+        LiquidAtHeight::LavaAcid => addr_kSamusSpeedTable_Normal_X as uint16,
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
-        || *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
-            as ::core::ffi::c_int
-            - r18 as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            == 0
-    {
-        return addr_stru_909F31 as uint16;
-    }
-    return addr_kSamusSpeedTable_Normal_X as uint16;
 }
 pub unsafe fn Samus_DetermineAccel_Y(game: &mut Game) {
     let mut r18: uint16 = 0;
@@ -3757,38 +3624,18 @@ pub unsafe fn Samus_DetermineAccel_Y(game: &mut Game) {
         != 0 as ::core::ffi::c_int)
     {
         r18 = Samus_GetBottom_R18(game);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16)
-            as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
-        {
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16)
-                as ::core::ffi::c_int
-                - r18 as ::core::ffi::c_int
-                & 0x8000 as ::core::ffi::c_int
-                != 0
-                && *((&raw mut game.g_ram as *mut uint8).offset(0x197e) as *mut uint16)
-                    as ::core::ffi::c_int
-                    & 4 as ::core::ffi::c_int
-                    == 0 as ::core::ffi::c_int
-            {
+        match liquid_at_height(game, r18) {
+            LiquidAtHeight::Water => {
                 *((&raw mut game.g_ram as *mut uint8).offset(0xb32) as *mut uint16) = g_word_909EA3;
                 *((&raw mut game.g_ram as *mut uint8).offset(0xb34) as *mut uint16) = g_word_909EA9;
                 return;
             }
-        } else if !(*((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
-            as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
-            || *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
-                as ::core::ffi::c_int
-                - r18 as ::core::ffi::c_int
-                & 0x8000 as ::core::ffi::c_int
-                == 0)
-        {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb32) as *mut uint16) = g_word_909EA5;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb34) as *mut uint16) = g_word_909EAB;
-            return;
+            LiquidAtHeight::LavaAcid => {
+                *((&raw mut game.g_ram as *mut uint8).offset(0xb32) as *mut uint16) = g_word_909EA5;
+                *((&raw mut game.g_ram as *mut uint8).offset(0xb34) as *mut uint16) = g_word_909EAB;
+                return;
+            }
+            LiquidAtHeight::None => {}
         }
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0xb32) as *mut uint16) = g_word_909EA1;
@@ -4004,33 +3851,7 @@ pub unsafe fn Samus_Movement_03_SpinJumping(game: &mut Game) {
         == 0 as ::core::ffi::c_int
     {
         let mut r20: uint16 = Samus_GetTop_R20(game);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16)
-            as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
-        {
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
-                as ::core::ffi::c_int
-                & 0x8000 as ::core::ffi::c_int
-                == 0 as ::core::ffi::c_int
-                && *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
-                    as ::core::ffi::c_int
-                    - r20 as ::core::ffi::c_int
-                    & 0x8000 as ::core::ffi::c_int
-                    != 0
-            {
-                r18 = 1 as uint16;
-            }
-        } else if *((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16)
-            as ::core::ffi::c_int
-            - r20 as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            != 0
-            && *((&raw mut game.g_ram as *mut uint8).offset(0x197e) as *mut uint16)
-                as ::core::ffi::c_int
-                & 4 as ::core::ffi::c_int
-                == 0 as ::core::ffi::c_int
-        {
+        if liquid_at_height(game, r20) != LiquidAtHeight::None {
             r18 = 1 as uint16;
         }
     }
@@ -12740,32 +12561,7 @@ pub unsafe fn Samus_FootstepGraphics_Crateria(game: &mut Game) {
 }
 pub unsafe fn Samus_FootstepGraphics_Maridia(game: &mut Game) {
     let mut r18: uint16 = Samus_GetBottom_R18(game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
-    {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
-            as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
-            && *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
-                as ::core::ffi::c_int
-                - r18 as ::core::ffi::c_int
-                & 0x8000 as ::core::ffi::c_int
-                != 0
-        {
-            return;
-        }
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16)
-        as ::core::ffi::c_int
-        - r18 as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        != 0
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x197e) as *mut uint16)
-            as ::core::ffi::c_int
-            & 4 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
-    {
+    if liquid_at_height(game, r18) != LiquidAtHeight::None {
         return;
     }
     if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) as ::core::ffi::c_int
@@ -12803,33 +12599,7 @@ pub unsafe fn Samus_FootstepGraphics_1(game: &mut Game) {
         == 1024 as ::core::ffi::c_int
     {
         let mut r18: uint16 = Samus_GetBottom_R18(game);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16)
-            as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
-        {
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
-                as ::core::ffi::c_int
-                & 0x8000 as ::core::ffi::c_int
-                == 0 as ::core::ffi::c_int
-                && *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
-                    as ::core::ffi::c_int
-                    - r18 as ::core::ffi::c_int
-                    & 0x8000 as ::core::ffi::c_int
-                    != 0
-            {
-                return;
-            }
-        } else if *((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16)
-            as ::core::ffi::c_int
-            - r18 as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            != 0
-            && *((&raw mut game.g_ram as *mut uint8).offset(0x197e) as *mut uint16)
-                as ::core::ffi::c_int
-                & 4 as ::core::ffi::c_int
-                == 0 as ::core::ffi::c_int
-        {
+        if liquid_at_height(game, r18) != LiquidAtHeight::None {
             return;
         }
         if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) as ::core::ffi::c_int
