@@ -467,6 +467,14 @@ fn apply_accumulator_logic(value: u16, byte: bool, operation: LogicOperation, cp
     };
     set_zero_negative(cpu.a, cpu.mf, cpu);
 }
+unsafe fn read_operand(cpu: *mut Cpu, low: u32, high: u32, byte: bool, game: &mut Game) -> u16 {
+    if byte {
+        u16::from(read_byte(cpu, low, game))
+    } else {
+        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
+        read_word(cpu, low, high, game)
+    }
+}
 unsafe fn logical_accumulator(
     cpu: *mut Cpu,
     low: u32,
@@ -475,12 +483,7 @@ unsafe fn logical_accumulator(
     game: &mut Game,
 ) {
     let byte = (*cpu).mf;
-    let value = if byte {
-        u16::from(read_byte(cpu, low, game))
-    } else {
-        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        read_word(cpu, low, high, game)
-    };
+    let value = read_operand(cpu, low, high, byte, game);
     apply_accumulator_logic(value, byte, operation, &mut *cpu);
 }
 fn addition_overflow(register: u16, value: u16, result: i32, byte: bool) -> bool {
@@ -645,12 +648,7 @@ unsafe fn compare_register(
     game: &mut Game,
 ) {
     let byte = register.byte(&*cpu);
-    let value = if byte {
-        u16::from(read_byte(cpu, low, game))
-    } else {
-        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        read_word(cpu, low, high, game)
-    };
+    let value = read_operand(cpu, low, high, byte, game);
     register.compare(value, byte, &mut *cpu);
 }
 fn test_bits(value: u16, byte: bool, cpu: &mut Cpu) {

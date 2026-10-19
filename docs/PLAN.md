@@ -10839,6 +10839,23 @@ work is outside this replay. Rust lines +4 provide the safe pointer-pair
 helper; other own counters unchanged. Prior holds and complete gameplay/
 render/audio remain open. Continue covered CPU cleanup.
 
+CPU shared width-selected operand read (2026-10-19): logical_accumulator and
+compare_register use read_operand for their identical captured-width read
+and word-cycle sequence. Width remains captured before the bus read; safe
+post-read arithmetic and live final flag widths stay in callers. Frozen
+`6dee3e4a` plus this change passes 51,707,904 old/current logic and 53,084,160
+comparison wrapper cases using retained previous bodies. Named CPU/bus state,
+cycles and arithmetic flags match. Existing static-WRAM/word-sampling limits
+remain; arbitrary MMIO is not exhausted. Prefix 3,600/0 (0.96s), native exit
+0, executes every logic operation/register and byte/word path with the same
+counts as the preceding logic/comparison probes. Clean full any% 129,712/0
+(51.73s), native exit 0. Cargo fmt/check, full release/release-library builds
+with external SDL2, normal metadata and frozen optimized core/DLL pass. Live
+CPU matches verified source; peer PPU work is outside this replay. Rust lines
+-2 and unsafe functions +1 centralize the duplicated bus operation; other own
+counters unchanged. Prior holds and complete gameplay/render/audio remain
+open. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
