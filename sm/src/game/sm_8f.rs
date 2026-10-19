@@ -545,7 +545,7 @@ pub unsafe fn RoomCode_GenRandomExplodes_Nonblank(game: &mut Game) {
                 (*(&raw mut Random as *mut uint8).offset(
                     (::core::mem::size_of::<uint16>())
                         .wrapping_div(::core::mem::size_of::<uint8>())
-                        .wrapping_sub(1 as usize) as isize,
+                        .wrapping_sub(1_usize) as isize,
                 )) as u16,
             );
         let mut prod: uint16 = Mult8x8(
@@ -589,7 +589,7 @@ pub unsafe fn RoomCode_GenRandomExplodes_4th(game: &mut Game) {
                 (*(&raw mut Random as *mut uint8).offset(
                     (::core::mem::size_of::<uint16>())
                         .wrapping_div(::core::mem::size_of::<uint8>())
-                        .wrapping_sub(1 as usize) as isize,
+                        .wrapping_sub(1_usize) as isize,
                 )) as u16,
             ),
             game,

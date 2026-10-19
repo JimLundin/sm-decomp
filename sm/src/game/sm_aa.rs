@@ -2372,7 +2372,7 @@ pub unsafe fn Shaktool_DC07(mut k: uint16, game: &mut Game) {
         (*(&raw mut v2 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         )) as u16,
     );
 }
@@ -2381,7 +2381,7 @@ pub unsafe fn Shaktool_DC2A(mut k: uint16, game: &mut Game) {
     let mut v3: ::core::ffi::c_int = *(&raw mut (*E).shakt_var_B as *mut uint8).offset(
         (::core::mem::size_of::<uint16>())
             .wrapping_div(::core::mem::size_of::<uint8>())
-            .wrapping_sub(1 as usize) as isize,
+            .wrapping_sub(1_usize) as isize,
     ) as ::core::ffi::c_int;
     let mut v5: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     SetHiLo(
@@ -2488,14 +2488,14 @@ pub unsafe fn Shaktool_DCD7(mut k: uint16, game: &mut Game) {
         let ref mut fresh2 = *(&raw mut v2 as *mut uint8).offset(
             (::core::mem::size_of::<int16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         );
         *fresh2 = (*fresh2) ^ (0x80u8);
     }
     let mut v3: uint16 = (*(&raw mut v2 as *mut uint8).offset(
         (::core::mem::size_of::<int16>())
             .wrapping_div(::core::mem::size_of::<uint8>())
-            .wrapping_sub(1 as usize) as isize,
+            .wrapping_sub(1_usize) as isize,
     ) as ::core::ffi::c_int
         + 8 as ::core::ffi::c_int
         & 0xe0 as ::core::ffi::c_int) as uint16;
@@ -2594,7 +2594,7 @@ pub unsafe fn Shaktool_DD25(mut k: uint16, game: &mut Game) {
                 (*E).shakt_var_D = ((*(&raw mut (*E).shakt_var_D as *mut uint8).offset(
                     (::core::mem::size_of::<uint16>())
                         .wrapping_div(::core::mem::size_of::<uint8>())
-                        .wrapping_sub(1 as usize) as isize,
+                        .wrapping_sub(1_usize) as isize,
                 ) as ::core::ffi::c_int)
                     << 8 as ::core::ffi::c_int) as uint16;
             }

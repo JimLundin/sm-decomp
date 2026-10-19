@@ -2168,11 +2168,11 @@ pub unsafe fn FileSelectMenu_22_FileClearSelectSlot(game: &mut Game) {
     *(&raw mut v0 as *mut uint8).offset(
         (::core::mem::size_of::<uint16>())
             .wrapping_div(::core::mem::size_of::<uint8>())
-            .wrapping_sub(1 as usize) as isize,
+            .wrapping_sub(1_usize) as isize,
     ) = *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16 as *mut uint8).offset(
         (::core::mem::size_of::<uint16>())
             .wrapping_div(::core::mem::size_of::<uint8>())
-            .wrapping_sub(1 as usize) as isize,
+            .wrapping_sub(1_usize) as isize,
     );
     if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int
         & (kButton_Start as ::core::ffi::c_int | kButton_A as ::core::ffi::c_int)

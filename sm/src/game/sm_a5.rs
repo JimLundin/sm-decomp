@@ -548,7 +548,7 @@ pub unsafe fn Draygon_Func_5(game: &mut Game) {
             (*(&raw mut varE22 as *mut uint8).offset(
                 (::core::mem::size_of::<uint16>())
                     .wrapping_div(::core::mem::size_of::<uint8>())
-                    .wrapping_sub(1 as usize) as isize,
+                    .wrapping_sub(1_usize) as isize,
             )) as u16,
         );
         if ((v1) as i16).wrapping_sub(((*E).draygon_var_01) as i16) < 0i16 {
@@ -558,7 +558,7 @@ pub unsafe fn Draygon_Func_5(game: &mut Game) {
             (*(&raw mut varE22 as *mut uint8).offset(
                 (::core::mem::size_of::<uint16>())
                     .wrapping_div(::core::mem::size_of::<uint8>())
-                    .wrapping_sub(1 as usize) as isize,
+                    .wrapping_sub(1_usize) as isize,
             )) as u16,
         );
         let fresh4 = varE26;
@@ -1207,7 +1207,7 @@ pub unsafe fn Draygon_Func_25(mut k: uint16, game: &mut Game) {
                         *(&raw mut v6 as *mut uint8).offset(
                             (::core::mem::size_of::<uint16>())
                                 .wrapping_div(::core::mem::size_of::<uint8>())
-                                .wrapping_sub(1 as usize) as isize,
+                                .wrapping_sub(1_usize) as isize,
                         ),
                     )) as uint16;
                 draygon_var_0A = (*E).draygon_var_0A;

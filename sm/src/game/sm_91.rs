@@ -1683,7 +1683,7 @@ pub unsafe fn Xray_SetupStage1_FreezeTimeBackup(mut k: uint16, game: &mut Game) 
         *((&raw mut game.g_ram as *mut uint8).offset(0xb5) as *mut uint16 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         );
     *((&raw mut game.g_ram as *mut uint8).offset(0x1920) as *mut uint16 as *mut uint8)
         .offset(k as uint8 as ::core::ffi::c_int as isize) =
@@ -1694,7 +1694,7 @@ pub unsafe fn Xray_SetupStage1_FreezeTimeBackup(mut k: uint16, game: &mut Game) 
         *((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         );
     *((&raw mut game.g_ram as *mut uint8).offset(0x192c) as *mut uint16 as *mut uint8)
         .offset(k as uint8 as ::core::ffi::c_int as isize) =
@@ -2928,14 +2928,14 @@ pub unsafe fn HandleVisorPalette(game: &mut Game) -> uint8 {
                     (*(&raw mut v1 as *mut uint8).offset(
                         (::core::mem::size_of::<uint16>())
                             .wrapping_div(::core::mem::size_of::<uint8>())
-                            .wrapping_sub(1 as usize) as isize,
+                            .wrapping_sub(1_usize) as isize,
                     ) as ::core::ffi::c_int
                         >> 1 as ::core::ffi::c_int) as isize,
                 );
         let mut v2: ::core::ffi::c_int = *(&raw mut v1 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         ) as ::core::ffi::c_int
             + 2 as ::core::ffi::c_int;
         if v2 - 12 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
@@ -4386,7 +4386,7 @@ pub unsafe fn Samus_HandleTransFromBlockColl_2(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16 as *mut uint8).offset(
         (::core::mem::size_of::<uint16>())
             .wrapping_div(::core::mem::size_of::<uint8>())
-            .wrapping_sub(1 as usize) as isize,
+            .wrapping_sub(1_usize) as isize,
     ) != 4u8
     {
         let mut v0: uint16 = (4u16).wrapping_mul(
@@ -4394,7 +4394,7 @@ pub unsafe fn Samus_HandleTransFromBlockColl_2(game: &mut Game) {
                 .offset(
                     (::core::mem::size_of::<uint16>())
                         .wrapping_div(::core::mem::size_of::<uint8>())
-                        .wrapping_sub(1 as usize) as isize,
+                        .wrapping_sub(1_usize) as isize,
                 )) as u16,
         );
         if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) == 4u8 {
@@ -4418,7 +4418,7 @@ pub unsafe fn Samus_HandleTransFromBlockColl_1(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16 as *mut uint8).offset(
         (::core::mem::size_of::<uint16>())
             .wrapping_div(::core::mem::size_of::<uint8>())
-            .wrapping_sub(1 as usize) as isize,
+            .wrapping_sub(1_usize) as isize,
     ) != 4u8
     {
         if off_91E951[*((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16
@@ -4426,7 +4426,7 @@ pub unsafe fn Samus_HandleTransFromBlockColl_1(game: &mut Game) {
             .offset(
                 (::core::mem::size_of::<uint16>())
                     .wrapping_div(::core::mem::size_of::<uint8>())
-                    .wrapping_sub(1 as usize) as isize,
+                    .wrapping_sub(1_usize) as isize,
             ) as usize]
             .expect("non-null function pointer")(game) as ::core::ffi::c_int
             & 1 as ::core::ffi::c_int
@@ -5291,7 +5291,7 @@ pub unsafe fn Samus_HandleTransitionsA_5_1(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16 as *mut uint8).offset(
         (::core::mem::size_of::<uint16>())
             .wrapping_div(::core::mem::size_of::<uint8>())
-            .wrapping_sub(1 as usize) as isize,
+            .wrapping_sub(1_usize) as isize,
     ) == 4u8
     {
         SamusFunc_F1D3(game);
@@ -5300,7 +5300,7 @@ pub unsafe fn Samus_HandleTransitionsA_5_1(game: &mut Game) {
         .offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         ) as usize]
         .expect("non-null function pointer")(game) as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int

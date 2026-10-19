@@ -649,7 +649,7 @@ pub unsafe fn InitPpuForGameplay(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x53) as *mut uint16 as *mut uint8).offset(
         (::core::mem::size_of::<uint16>())
             .wrapping_div(::core::mem::size_of::<uint8>())
-            .wrapping_sub(1 as usize) as isize,
+            .wrapping_sub(1_usize) as isize,
     ) = 0x80 as uint8;
     WriteReg(OAMDATA as uint16, 0 as uint8, game);
     WriteReg(OAMDATA as uint16, 0 as uint8, game);
@@ -2216,7 +2216,7 @@ pub unsafe fn SetupMapScrollingForFileSelectMap(game: &mut Game) {
                 .offset(
                     (::core::mem::size_of::<uint16>())
                         .wrapping_div(::core::mem::size_of::<uint8>())
-                        .wrapping_sub(1 as usize) as isize,
+                        .wrapping_sub(1_usize) as isize,
                 ) as ::core::ffi::c_int
             + 1 as ::core::ffi::c_int)
         + (112 as ::core::ffi::c_int - r18 as ::core::ffi::c_int & 0xfff8 as ::core::ffi::c_int))
@@ -2861,7 +2861,7 @@ pub unsafe fn SetupMapScrollingForPauseMenu(mut a: uint16, game: &mut Game) {
                 .offset(
                     (::core::mem::size_of::<uint16>())
                         .wrapping_div(::core::mem::size_of::<uint8>())
-                        .wrapping_sub(1 as usize) as isize,
+                        .wrapping_sub(1_usize) as isize,
                 ) as ::core::ffi::c_int
             + 1 as ::core::ffi::c_int)
         + (a as ::core::ffi::c_int - r18 as ::core::ffi::c_int & 0xfff8 as ::core::ffi::c_int))
@@ -3666,7 +3666,7 @@ pub unsafe fn HandlePauseScreenPaletteAnimation(game: &mut Game) {
             *(&raw mut v2 as *mut uint8).offset(
                 (::core::mem::size_of::<uint16>())
                     .wrapping_div(::core::mem::size_of::<uint8>())
-                    .wrapping_sub(1 as usize) as isize,
+                    .wrapping_sub(1_usize) as isize,
             ) = *((&raw mut game.g_ram as *mut uint8).offset(0x74f) as *mut uint16) as uint8;
             let mut v3: uint16 = ((v2 as ::core::ffi::c_int >> 3 as ::core::ffi::c_int)
                 + 30 as ::core::ffi::c_int) as uint16;
@@ -3759,7 +3759,7 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
                     *(&raw mut v5 as *mut uint8).offset(
                         (::core::mem::size_of::<int16>())
                             .wrapping_div(::core::mem::size_of::<uint8>())
-                            .wrapping_sub(1 as usize) as isize,
+                            .wrapping_sub(1_usize) as isize,
                     ) = (v4 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint8;
                     *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) =
                         ((v5) as u16) | (1u16);
@@ -3787,7 +3787,7 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
                         *(&raw mut v7 as *mut uint8).offset(
                             (::core::mem::size_of::<int16>())
                                 .wrapping_div(::core::mem::size_of::<uint8>())
-                                .wrapping_sub(1 as usize) as isize,
+                                .wrapping_sub(1_usize) as isize,
                         ) = (v6 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint8;
                         *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) =
                             ((v7) as u16) | (2u16);
@@ -3858,7 +3858,7 @@ pub unsafe fn EquipmentScreenCategory_Tanks(game: &mut Game) {
         .offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         ) as usize]
         .expect("non-null function pointer")(game);
     EquipmentScreenHandleDpad(game);
@@ -3931,7 +3931,7 @@ pub unsafe fn EquipmentScreenGlowingArrow(game: &mut Game) {
             .offset(
                 (::core::mem::size_of::<uint16>())
                     .wrapping_div(::core::mem::size_of::<uint8>())
-                    .wrapping_sub(1 as usize) as isize,
+                    .wrapping_sub(1_usize) as isize,
             ) as usize]
             .expect("non-null function pointer")(game);
     };
@@ -4200,7 +4200,7 @@ pub unsafe fn EquipmentScreenCategory_Weapons_MoveButtons(game: &mut Game) {
                         .offset(
                             (::core::mem::size_of::<uint16>())
                                 .wrapping_div(::core::mem::size_of::<uint8>())
-                                .wrapping_sub(1 as usize) as isize,
+                                .wrapping_sub(1_usize) as isize,
                         )) as u16,
                 ),
                 r18,
@@ -4227,8 +4227,7 @@ pub unsafe fn EquipmentScreenCategory_Weapons_MoveButtons(game: &mut Game) {
                             .offset(
                                 (::core::mem::size_of::<uint16>())
                                     .wrapping_div(::core::mem::size_of::<uint8>())
-                                    .wrapping_sub(1 as usize)
-                                    as isize,
+                                    .wrapping_sub(1_usize) as isize,
                             )) as u16,
                     ),
                     game,
@@ -4328,7 +4327,7 @@ pub unsafe fn EquipmentScreenCategory_Suit_MoveResponse(game: &mut Game) {
                         .offset(
                             (::core::mem::size_of::<uint16>())
                                 .wrapping_div(::core::mem::size_of::<uint8>())
-                                .wrapping_sub(1 as usize) as isize,
+                                .wrapping_sub(1_usize) as isize,
                         )) as u16,
                 ),
                 r18,
@@ -4355,8 +4354,7 @@ pub unsafe fn EquipmentScreenCategory_Suit_MoveResponse(game: &mut Game) {
                             .offset(
                                 (::core::mem::size_of::<uint16>())
                                     .wrapping_div(::core::mem::size_of::<uint8>())
-                                    .wrapping_sub(1 as usize)
-                                    as isize,
+                                    .wrapping_sub(1_usize) as isize,
                             )) as u16,
                     ),
                     game,
@@ -4404,7 +4402,7 @@ pub unsafe fn EquipmentScreenCategory_Boots_MoveResponse(game: &mut Game) {
                         .offset(
                             (::core::mem::size_of::<uint16>())
                                 .wrapping_div(::core::mem::size_of::<uint8>())
-                                .wrapping_sub(1 as usize) as isize,
+                                .wrapping_sub(1_usize) as isize,
                         )) as u16,
                 ),
                 r18,
@@ -4431,8 +4429,7 @@ pub unsafe fn EquipmentScreenCategory_Boots_MoveResponse(game: &mut Game) {
                             .offset(
                                 (::core::mem::size_of::<uint16>())
                                     .wrapping_div(::core::mem::size_of::<uint8>())
-                                    .wrapping_sub(1 as usize)
-                                    as isize,
+                                    .wrapping_sub(1_usize) as isize,
                             )) as u16,
                     ),
                     game,
@@ -4529,7 +4526,7 @@ pub unsafe fn EquipmentScreenDrawItemSelector(game: &mut Game) {
                         .offset(
                             (::core::mem::size_of::<uint16>())
                                 .wrapping_div(::core::mem::size_of::<uint8>())
-                                .wrapping_sub(1 as usize) as isize,
+                                .wrapping_sub(1_usize) as isize,
                         ) as ::core::ffi::c_int) as uint16_t,
             game,
         ) as *mut uint16;
@@ -4718,7 +4715,7 @@ pub unsafe fn EquipmentScreenMoveToBeams(mut v0: uint16, mut r18: uint16, game: 
                 *(&raw mut v1 as *mut uint8).offset(
                     (::core::mem::size_of::<int16>())
                         .wrapping_div(::core::mem::size_of::<uint8>())
-                        .wrapping_sub(1 as usize) as isize,
+                        .wrapping_sub(1_usize) as isize,
                 ) = (v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint8;
                 *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) =
                     (v1 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int
@@ -4777,7 +4774,7 @@ pub unsafe fn EquipmentScreenMoveLowerOnSuitsMisc(mut v0: uint16, game: &mut Gam
     *(&raw mut v1 as *mut uint8).offset(
         (::core::mem::size_of::<int16>())
             .wrapping_div(::core::mem::size_of::<uint8>())
-            .wrapping_sub(1 as usize) as isize,
+            .wrapping_sub(1_usize) as isize,
     ) = (v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint8;
     *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) =
         (v1 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int | 2 as ::core::ffi::c_int)
@@ -4861,7 +4858,7 @@ pub unsafe fn EquipmentScreenCategory_ButtonResponse(mut r24: uint16, game: &mut
             .offset(
                 (::core::mem::size_of::<uint16>())
                     .wrapping_div(::core::mem::size_of::<uint8>())
-                    .wrapping_sub(1 as usize) as isize,
+                    .wrapping_sub(1_usize) as isize,
             ) as ::core::ffi::c_int;
         let mut category: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x755)
             as *mut uint16) as uint8
@@ -5308,7 +5305,7 @@ pub unsafe fn MapScreenDrawSamusPositionIndicator(game: &mut Game) {
                     .offset(
                         (::core::mem::size_of::<uint16>())
                             .wrapping_div(::core::mem::size_of::<uint8>())
-                            .wrapping_sub(1 as usize) as isize,
+                            .wrapping_sub(1_usize) as isize,
                     ) as ::core::ffi::c_int)
             - *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16)
                 as ::core::ffi::c_int) as uint16,
@@ -5319,7 +5316,7 @@ pub unsafe fn MapScreenDrawSamusPositionIndicator(game: &mut Game) {
                     .offset(
                         (::core::mem::size_of::<uint16>())
                             .wrapping_div(::core::mem::size_of::<uint8>())
-                            .wrapping_sub(1 as usize) as isize,
+                            .wrapping_sub(1_usize) as isize,
                     ) as ::core::ffi::c_int
                 + 1 as ::core::ffi::c_int)
             - *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16)

@@ -396,7 +396,7 @@ pub unsafe fn SetGoldenTorizoPalette(mut a: uint16, game: &mut Game) {
     v1 = ((*(&raw mut a as *mut uint8).offset(
         (::core::mem::size_of::<uint16>())
             .wrapping_div(::core::mem::size_of::<uint8>())
-            .wrapping_sub(1 as usize) as isize,
+            .wrapping_sub(1_usize) as isize,
     )) as i16)
         & (0x78i16);
     if (v1 as ::core::ffi::c_int & 0x40 as ::core::ffi::c_int) != 0i32 {
@@ -4195,7 +4195,7 @@ pub unsafe fn PlmSetup_C794_GreyDoor(mut j: uint16, game: &mut Game) -> uint8 {
             .offset(
                 (::core::mem::size_of::<uint16>())
                     .wrapping_div(::core::mem::size_of::<uint8>())
-                    .wrapping_sub(1 as usize) as isize,
+                    .wrapping_sub(1_usize) as isize,
             )) as u16)
             & (0x7cu16)) as ::core::ffi::c_int
             >> 1 as ::core::ffi::c_int) as uint16;

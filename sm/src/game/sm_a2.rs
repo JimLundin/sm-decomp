@@ -2769,7 +2769,7 @@ pub unsafe fn SpikeShootingPlant_Init(game: &mut Game) {
     if *(&raw mut (*E).sspt_parameter_1 as *mut uint8).offset(
         (::core::mem::size_of::<uint16>())
             .wrapping_div(::core::mem::size_of::<uint8>())
-            .wrapping_sub(1 as usize) as isize,
+            .wrapping_sub(1_usize) as isize,
     ) != 0
     {
         SpikeShootingPlant_5(game);
@@ -2796,7 +2796,7 @@ pub unsafe fn SpikeShootingPlant_Init(game: &mut Game) {
         * *(&raw mut (*E).sspt_parameter_2 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         ) as ::core::ffi::c_int
         >> 1 as ::core::ffi::c_int;
     (*E).sspt_var_B = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa28187)) as *const uint8
@@ -2868,7 +2868,7 @@ pub unsafe fn SpikeShootingPlant_4(game: &mut Game) {
         if *(&raw mut (*E).sspt_parameter_1 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         ) != 0
         {
             SpikeShootingPlant_6(game);
@@ -2978,7 +2978,7 @@ pub unsafe fn MaridiaSpikeyShell_Init(game: &mut Game) {
     let mut v4: ::core::ffi::c_int = *(&raw mut (*E).mssl_parameter_2 as *mut uint8).offset(
         (::core::mem::size_of::<uint16>())
             .wrapping_div(::core::mem::size_of::<uint8>())
-            .wrapping_sub(1 as usize) as isize,
+            .wrapping_sub(1_usize) as isize,
     ) as ::core::ffi::c_int;
     (*E).mssl_var_02 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa2a3dd)) as *const uint8
         as *mut uint16)
@@ -2994,7 +2994,7 @@ pub unsafe fn MaridiaSpikeyShell_Init(game: &mut Game) {
             *(&raw mut (*E).mssl_parameter_1 as *mut uint8).offset(
                 (::core::mem::size_of::<uint16>())
                     .wrapping_div(::core::mem::size_of::<uint8>())
-                    .wrapping_sub(1 as usize) as isize,
+                    .wrapping_sub(1_usize) as isize,
             ) as isize,
         );
     (*E).mssl_var_F = 0 as uint16;
@@ -3094,7 +3094,7 @@ pub unsafe fn MaridiaSpikeyShell_6(game: &mut Game) {
                 *(&raw mut (*E).mssl_parameter_1 as *mut uint8).offset(
                     (::core::mem::size_of::<uint16>())
                         .wrapping_div(::core::mem::size_of::<uint8>())
-                        .wrapping_sub(1 as usize) as isize,
+                        .wrapping_sub(1_usize) as isize,
                 ) as isize,
             );
     }
@@ -3113,7 +3113,7 @@ pub unsafe fn MaridiaSpikeyShell_7(game: &mut Game) {
             .offset(
                 (::core::mem::size_of::<uint16>())
                     .wrapping_div(::core::mem::size_of::<uint8>())
-                    .wrapping_sub(1 as usize) as isize,
+                    .wrapping_sub(1_usize) as isize,
             )) as u16)
             & (1u16);
     }
@@ -3903,7 +3903,7 @@ pub unsafe fn Flies_1(mut k: uint16, game: &mut Game) {
             .offset(
                 (::core::mem::size_of::<int16>())
                     .wrapping_div(::core::mem::size_of::<uint8>())
-                    .wrapping_sub(1 as usize) as isize,
+                    .wrapping_sub(1_usize) as isize,
             ) as int8 as ::core::ffi::c_int
             + carry as ::core::ffi::c_int)) as uint16;
     carry = CarryAdd16(
@@ -3919,7 +3919,7 @@ pub unsafe fn Flies_1(mut k: uint16, game: &mut Game) {
             .offset(
                 (::core::mem::size_of::<int16>())
                     .wrapping_div(::core::mem::size_of::<uint8>())
-                    .wrapping_sub(1 as usize) as isize,
+                    .wrapping_sub(1_usize) as isize,
             ) as int8 as ::core::ffi::c_int
             + carry as ::core::ffi::c_int)) as uint16;
 }
@@ -3934,7 +3934,7 @@ pub unsafe fn Flies_2(mut k: uint16, game: &mut Game) -> uint16 {
         + (*(&raw mut (*E).flies_var_B as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         ) as int8 as ::core::ffi::c_int
             + carry as ::core::ffi::c_int)) as uint16;
     carry = CarryAdd16(
@@ -3946,7 +3946,7 @@ pub unsafe fn Flies_2(mut k: uint16, game: &mut Game) -> uint16 {
         + *(&raw mut (*E).flies_var_C as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         ) as int8 as ::core::ffi::c_int
         + carry as ::core::ffi::c_int) as uint16;
     (*E).base.y_pos = result;
@@ -4950,7 +4950,7 @@ pub unsafe fn NorfairLavajumpingEnemy_Func_2(mut k: uint16, game: &mut Game) {
                 .offset(
                     (::core::mem::size_of::<uint16>())
                         .wrapping_div(::core::mem::size_of::<uint8>())
-                        .wrapping_sub(1 as usize) as isize,
+                        .wrapping_sub(1_usize) as isize,
                 )) as u16)
                 & (6u16)) as ::core::ffi::c_int
                 >> 1 as ::core::ffi::c_int) as isize,
@@ -4970,7 +4970,7 @@ pub unsafe fn NorfairLavajumpingEnemy_Func_3(mut k: uint16, game: &mut Game) {
         + (*(&raw mut (*E).nley_var_C as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         ) as int8 as ::core::ffi::c_int
             + (t >> 16 as ::core::ffi::c_int))) as uint16;
     let mut v3: uint16 = ((*E).nley_var_C).wrapping_add(56u16);
@@ -4991,7 +4991,7 @@ pub unsafe fn NorfairLavajumpingEnemy_Func_4(mut k: uint16, game: &mut Game) {
         + (*(&raw mut (*E).nley_var_C as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         ) as int8 as ::core::ffi::c_int
             + (t >> 16 as ::core::ffi::c_int))) as uint16;
     (*E).nley_var_C = ((*E).nley_var_C).wrapping_add(56u16);
@@ -5011,7 +5011,7 @@ pub unsafe fn NorfairLavajumpingEnemy_Func_5(mut k: uint16, game: &mut Game) {
         + *(&raw mut (*E).nley_var_C as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         ) as int8 as ::core::ffi::c_int
         + (t >> 16 as ::core::ffi::c_int)) as uint16;
     if ((*E).base.y_pos as ::core::ffi::c_int & 0xf0 as ::core::ffi::c_int) == 240i32 {
@@ -6007,7 +6007,7 @@ pub unsafe fn HirisingSlowfalling_Init(game: &mut Game) {
     let mut v2: ::core::ffi::c_int = *(&raw mut (*E).hsg_parameter_1 as *mut uint8).offset(
         (::core::mem::size_of::<uint16>())
             .wrapping_div(::core::mem::size_of::<uint8>())
-            .wrapping_sub(1 as usize) as isize,
+            .wrapping_sub(1_usize) as isize,
     ) as ::core::ffi::c_int;
     (*E).hsg_var_E = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa2df5e)) as *const uint8
         as *mut uint16)
@@ -6123,7 +6123,7 @@ pub unsafe fn HirisingSlowfalling_Func_6(game: &mut Game) {
         * *(&raw mut (*E).hsg_var_B as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         ) as ::core::ffi::c_int;
     AddToHiLo(
         &raw mut (*E).base.y_pos,
@@ -6160,7 +6160,7 @@ pub unsafe fn HirisingSlowfalling_Func_7(game: &mut Game) {
                 * *(&raw mut (*E).hsg_var_C as *mut uint8).offset(
                     (::core::mem::size_of::<uint16>())
                         .wrapping_div(::core::mem::size_of::<uint8>())
-                        .wrapping_sub(1 as usize) as isize,
+                        .wrapping_sub(1_usize) as isize,
                 ) as ::core::ffi::c_int) as uint16_t,
         game,
     );
@@ -7003,7 +7003,7 @@ pub unsafe fn RisingFallingPlatform_Func_1(mut k: uint16, game: &mut Game) {
         *(&raw mut (*E).base.current_instruction as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         ) as uint16;
     (*E).rfpm_var_01 = current_instruction_high;
     (*E).rfpm_var_20 = current_instruction_high;
@@ -7015,7 +7015,7 @@ pub unsafe fn RisingFallingPlatform_Func_1(mut k: uint16, game: &mut Game) {
         .offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         ) as uint16;
     (*E).rfpm_var_03 = extra_properties_high;
     (*E).rfpm_var_09 = (16u16).wrapping_mul(extra_properties_high);
@@ -7026,7 +7026,7 @@ pub unsafe fn RisingFallingPlatform_Func_1(mut k: uint16, game: &mut Game) {
     (*E).rfpm_var_05 = *(&raw mut (*E).rfpm_parameter_1 as *mut uint8).offset(
         (::core::mem::size_of::<uint16>())
             .wrapping_div(::core::mem::size_of::<uint8>())
-            .wrapping_sub(1 as usize) as isize,
+            .wrapping_sub(1_usize) as isize,
     ) as uint16;
     let mut rfpm_parameter_2: uint16 = (*E).rfpm_parameter_2;
     (*E).rfpm_var_06 = rfpm_parameter_2;
@@ -7379,7 +7379,7 @@ pub unsafe fn HorizontalShootableShutter_Func_1(mut k: uint16, game: &mut Game) 
         *(&raw mut (*E).base.current_instruction as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         ) as uint16;
     (*E).rfpm_var_01 = current_instruction_high;
     (*E).rfpm_var_20 = (current_instruction_high) ^ (1u16);
@@ -7391,7 +7391,7 @@ pub unsafe fn HorizontalShootableShutter_Func_1(mut k: uint16, game: &mut Game) 
         .offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         ) as uint16;
     (*E).rfpm_var_03 = extra_properties_high;
     (*E).rfpm_var_09 = (16u16).wrapping_mul(extra_properties_high);
@@ -7402,7 +7402,7 @@ pub unsafe fn HorizontalShootableShutter_Func_1(mut k: uint16, game: &mut Game) 
     (*E).rfpm_var_05 = *(&raw mut (*E).rfpm_parameter_1 as *mut uint8).offset(
         (::core::mem::size_of::<uint16>())
             .wrapping_div(::core::mem::size_of::<uint8>())
-            .wrapping_sub(1 as usize) as isize,
+            .wrapping_sub(1_usize) as isize,
     ) as uint16;
     let mut rfpm_parameter_2: uint16 = (*E).rfpm_parameter_2;
     (*E).rfpm_var_06 = rfpm_parameter_2;

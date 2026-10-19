@@ -19366,6 +19366,22 @@ Concurrent block-reaction/projectile work keeps its own verification.
 No probe or ROM-derived artifact committed. Neither movie reaches credits;
 full progression, readability and hardware/audio completion remain open.
 
+Compiler-assisted redundant casts (2026-10-19): standard Clippy
+unnecessary_cast fixes remove 374 casts across 32 files, including all Cargo
+targets and frontend features. Same-type literal casts become typed literals;
+operand order and narrowing casts remain unchanged. Net Rust lines -9;
+unsafe and raw-access counts unchanged. The 54 distinct remaining warnings
+lack machine-applicable fixes and retain a separate manual-review scope.
+
+Frozen 5b12b799 plus only this batch passes full any% 129712/0
+(201.40s) and Speed Booster 148406/0 (250.15s), native exits 0.
+Compiler check, formatting/check, normal workspace release (40.12s), progress
+and diff check pass. Current-parent reconciliation preserves independent
+projectile and unused-mut work. The movies provide core regression coverage;
+frontend casts are compiler-checked. No probe or ROM-derived asset committed.
+Continue large compiler-assisted and RAM-access families toward this week's
+deadline; full gameplay/credits and readability remain incomplete.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

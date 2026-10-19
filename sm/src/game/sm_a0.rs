@@ -5224,7 +5224,7 @@ pub unsafe fn WriteEnemyOams(game: &mut Game) {
                     if *(&raw mut y as *mut uint8).offset(
                         (::core::mem::size_of::<uint16>())
                             .wrapping_div(::core::mem::size_of::<uint8>())
-                            .wrapping_sub(1 as usize) as isize,
+                            .wrapping_sub(1_usize) as isize,
                     ) != 0
                     {
                         DrawSpritemapWithBaseTileOffscreen(
@@ -5496,7 +5496,7 @@ pub unsafe fn EprojSamusCollDetect(game: &mut Game) {
                     .offset(
                         (::core::mem::size_of::<uint16>())
                             .wrapping_div(::core::mem::size_of::<uint8>())
-                            .wrapping_sub(1 as usize) as isize,
+                            .wrapping_sub(1_usize) as isize,
                     ) as uint16;
             if (abs16(
                 (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)).wrapping_sub(
@@ -6539,7 +6539,7 @@ pub unsafe fn ProcessEnemyPowerBombInteraction(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         ) as uint16;
     let mut ry: uint16 = (rx as ::core::ffi::c_int
         + (rx as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
@@ -6850,7 +6850,7 @@ pub unsafe fn NormalEnemyShotAi(game: &mut Game) {
             .offset(
                 (::core::mem::size_of::<uint16>())
                     .wrapping_div(::core::mem::size_of::<uint8>())
-                    .wrapping_sub(1 as usize) as isize,
+                    .wrapping_sub(1_usize) as isize,
             )) as u16)
             & (0xfu16);
         (*gEnemySpawnData(

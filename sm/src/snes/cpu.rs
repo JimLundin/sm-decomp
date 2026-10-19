@@ -820,7 +820,7 @@ pub unsafe fn DumpCpuHistory(game: &mut Game) {
     while i < 8 as ::core::ffi::c_int {
         printf(
             b"PC history: 0x%x\n\0" as *const u8 as *const ::core::ffi::c_char,
-            game.pc_hist[(game.pc_hist_ctr.wrapping_add(i as u32) & 7 as u32) as usize],
+            game.pc_hist[(game.pc_hist_ctr.wrapping_add(i as u32) & 7_u32) as usize],
         );
         i += 1;
     }
@@ -899,8 +899,8 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
             (*cpu).i = true;
             (*cpu).d = false;
-            (*cpu).k = 0 as u8;
-            (*cpu).pc = read_word(cpu, 0xffe4 as u32, 0xffe5 as u32, game);
+            (*cpu).k = 0_u8;
+            (*cpu).pc = read_word(cpu, 0xffe4_u32, 0xffe5_u32, game);
         }
         0x03 => {
             let (low, high) = address_stack_relative(cpu, game);

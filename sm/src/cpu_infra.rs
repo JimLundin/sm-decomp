@@ -433,7 +433,7 @@ pub unsafe fn PatchBugs(mut mode: uint32, mut addr: uint32, game: &mut Game) -> 
                     .offset(
                         (::core::mem::size_of::<uint16>() as usize)
                             .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                            .wrapping_sub(1 as usize) as isize,
+                            .wrapping_sub(1_usize) as isize,
                     ) as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(20) as *mut uint16) =
                 (*((&raw mut game.g_ram as *mut uint8).offset(18) as *mut uint16)

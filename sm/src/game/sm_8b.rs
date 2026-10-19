@@ -1264,7 +1264,7 @@ pub unsafe fn CinematicGetTilemapOffsetForTile(mut r18: uint16) -> uint16 {
         + *(&raw mut r18 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         ) as ::core::ffi::c_int
             * 0x40 as ::core::ffi::c_int) as uint16
 }
@@ -1384,7 +1384,7 @@ pub unsafe fn Mult0x80Add(mut r18: uint16) -> uint16 {
             * *(&raw mut r18 as *mut uint8).offset(
                 (::core::mem::size_of::<uint16>())
                     .wrapping_div(::core::mem::size_of::<uint8>())
-                    .wrapping_sub(1 as usize) as isize,
+                    .wrapping_sub(1_usize) as isize,
             ) as ::core::ffi::c_int) as uint16
 }
 pub unsafe fn Samus_CalcPos_Mode7(game: &mut Game) {
@@ -1635,7 +1635,7 @@ pub unsafe fn ComposeFadingPalettes(game: &mut Game) {
             .offset(
                 (::core::mem::size_of::<uint16>())
                     .wrapping_div(::core::mem::size_of::<uint8>())
-                    .wrapping_sub(1 as usize) as isize,
+                    .wrapping_sub(1_usize) as isize,
             ) as ::core::ffi::c_int
             & 0x1f as ::core::ffi::c_int;
         r18 |= *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
@@ -1952,7 +1952,7 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
                     .offset(
                         (::core::mem::size_of::<uint16>())
                             .wrapping_div(::core::mem::size_of::<uint8>())
-                            .wrapping_sub(1 as usize) as isize,
+                            .wrapping_sub(1_usize) as isize,
                     ) = 0x80 as uint8;
                 WriteReg(OAMDATA as uint16, 0 as uint8, game);
                 WriteReg(OAMDATA as uint16, 0 as uint8, game);
@@ -2802,7 +2802,7 @@ pub unsafe fn SpawnTextGlowObject(mut j: uint16, mut r18: uint16, game: &mut Gam
         .offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         ) as uint16;
     *(((&raw mut game.g_ram as *mut uint8).offset(0x1a37) as *mut uint16 as *mut uint8)
         .offset(v1 as ::core::ffi::c_int as isize) as *mut uint16) = 0 as uint16;
@@ -4311,7 +4311,7 @@ pub unsafe fn SetSomeStuffForSpriteObject_7(mut k: uint16, game: &mut Game) {
             .offset(
                 (::core::mem::size_of::<uint16>())
                     .wrapping_div(::core::mem::size_of::<uint8>())
-                    .wrapping_sub(1 as usize) as isize,
+                    .wrapping_sub(1_usize) as isize,
             ) as ::core::ffi::c_int;
     '_c2rust_label_0: {
         if (v6 + 1 as ::core::ffi::c_int) < 82i32 {
@@ -4677,7 +4677,7 @@ pub unsafe fn SetSomeStuffForSpriteObject_9(mut k: uint16, game: &mut Game) {
                 .offset(
                     (::core::mem::size_of::<uint16>())
                         .wrapping_div(::core::mem::size_of::<uint8>())
-                        .wrapping_sub(1 as usize) as isize,
+                        .wrapping_sub(1_usize) as isize,
                 ) as ::core::ffi::c_int;
         '_c2rust_label_0: {
             if (v12 + 1 as ::core::ffi::c_int) < 124i32 {
@@ -4708,7 +4708,7 @@ pub unsafe fn SetSomeStuffForSpriteObject_9(mut k: uint16, game: &mut Game) {
                 .offset(
                     (::core::mem::size_of::<uint16>())
                         .wrapping_div(::core::mem::size_of::<uint8>())
-                        .wrapping_sub(1 as usize) as isize,
+                        .wrapping_sub(1_usize) as isize,
                 ) as ::core::ffi::c_int;
         '_c2rust_label_1: {
             if (v6 + 1 as ::core::ffi::c_int) < 138i32 {
@@ -9725,7 +9725,7 @@ pub unsafe fn CinematicFunction_Intro_Func149(game: &mut Game) {
                 let mut r18: uint16 = *(&raw mut v23 as *mut uint8).offset(
                     (::core::mem::size_of::<uint16>())
                         .wrapping_div(::core::mem::size_of::<uint8>())
-                        .wrapping_sub(1 as usize) as isize,
+                        .wrapping_sub(1_usize) as isize,
                 ) as int8 as uint16;
                 let mut r20: uint16 = ((v23 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
                     & 0xff00 as ::core::ffi::c_int) as uint16;
@@ -9740,7 +9740,7 @@ pub unsafe fn CinematicFunction_Intro_Func149(game: &mut Game) {
                 r18 = *(&raw mut v24 as *mut uint8).offset(
                     (::core::mem::size_of::<uint16>())
                         .wrapping_div(::core::mem::size_of::<uint8>())
-                        .wrapping_sub(1 as usize) as isize,
+                        .wrapping_sub(1_usize) as isize,
                 ) as int8 as uint16;
                 r20 = ((v24 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
                     & 0xff00 as ::core::ffi::c_int) as uint16;

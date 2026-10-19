@@ -937,7 +937,7 @@ pub unsafe fn GrappleBeamFunc_BC1F(game: &mut Game) {
             if *(&raw mut v0 as *mut uint8).offset(
                 (::core::mem::size_of::<uint16>())
                     .wrapping_div(::core::mem::size_of::<uint8>())
-                    .wrapping_sub(1 as usize) as isize,
+                    .wrapping_sub(1_usize) as isize,
             ) as ::core::ffi::c_int
                 - 1 as ::core::ffi::c_int
                 & 0x8000 as ::core::ffi::c_int
@@ -1101,7 +1101,7 @@ pub unsafe fn GrappleBeamFunc_BD95(game: &mut Game) {
                         .offset(
                             (::core::mem::size_of::<uint16>())
                                 .wrapping_div(::core::mem::size_of::<uint8>())
-                                .wrapping_sub(1 as usize) as isize,
+                                .wrapping_sub(1_usize) as isize,
                         ) as isize,
                 ) as uint16;
             current_block = 13536709405535804910;
@@ -1118,7 +1118,7 @@ pub unsafe fn GrappleBeamFunc_BD95(game: &mut Game) {
                         .offset(
                             (::core::mem::size_of::<uint16>())
                                 .wrapping_div(::core::mem::size_of::<uint8>())
-                                .wrapping_sub(1 as usize) as isize,
+                                .wrapping_sub(1_usize) as isize,
                         ) as isize,
                 ) as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16) = v1;
@@ -2144,7 +2144,7 @@ pub unsafe fn PropelSamusFromGrappleSwing(game: &mut Game) {
             .offset(
                 (::core::mem::size_of::<uint16>())
                     .wrapping_div(::core::mem::size_of::<uint8>())
-                    .wrapping_sub(1 as usize) as isize,
+                    .wrapping_sub(1_usize) as isize,
             ) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int) as usize];
         if v2 >= 0i16 {
@@ -2171,7 +2171,7 @@ pub unsafe fn PropelSamusFromGrappleSwing(game: &mut Game) {
             .offset(
                 (::core::mem::size_of::<uint16>())
                     .wrapping_div(::core::mem::size_of::<uint8>())
-                    .wrapping_sub(1 as usize) as isize,
+                    .wrapping_sub(1_usize) as isize,
             ) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int) as usize];
         if v1 < 0i16 {

@@ -1066,7 +1066,7 @@ pub unsafe fn SpacePirates_Func_11(mut k: uint16, game: &mut Game) {
         (*(&raw mut (*E).sps_var_00 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         )) as u16,
     );
     (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
@@ -1082,7 +1082,7 @@ pub unsafe fn SpacePirates_Func_12(mut k: uint16, game: &mut Game) {
         (*(&raw mut (*E).sps_var_00 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         )) as u16,
     );
     (*E).base.y_pos = (*E).base.y_pos.wrapping_add(1);
@@ -1103,7 +1103,7 @@ pub unsafe fn SpacePirates_Func_13(mut k: uint16, game: &mut Game) {
         (*(&raw mut (*E).sps_var_00 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         )) as u16,
     );
     (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
@@ -1119,7 +1119,7 @@ pub unsafe fn SpacePirates_Func_14(mut k: uint16, game: &mut Game) {
         (*(&raw mut (*E).sps_var_00 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         )) as u16,
     );
     (*E).base.y_pos = (*E).base.y_pos.wrapping_add(1);
@@ -1188,7 +1188,7 @@ pub unsafe fn SpacePirates_F985(mut k: uint16, game: &mut Game) {
         (*(&raw mut (*E).sps_var_00 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         )) as u16,
     );
     v2 = (((*E).sps_var_00) as i16).wrapping_sub(64i16);
@@ -1209,7 +1209,7 @@ pub unsafe fn SpacePirates_F9C1(mut k: uint16, game: &mut Game) {
         ((*(&raw mut (*E).sps_var_00 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         ) as uint32)
             << 16 as ::core::ffi::c_int
             | *(&raw mut (*E).sps_var_00 as *mut uint8).offset(0) as uint16 as uint32)
@@ -1260,7 +1260,7 @@ pub unsafe fn SpacePirates_FA59(mut k: uint16, game: &mut Game) {
         (*(&raw mut (*E).sps_var_00 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         )) as u16,
     );
     v2 = (((*E).sps_var_00) as i16).wrapping_sub(64i16);
@@ -1281,7 +1281,7 @@ pub unsafe fn SpacePirates_FA95(mut k: uint16, game: &mut Game) {
         ((*(&raw mut (*E).sps_var_00 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         ) as uint32)
             << 16 as ::core::ffi::c_int
             | *(&raw mut (*E).sps_var_00 as *mut uint8).offset(0) as uint16 as uint32)

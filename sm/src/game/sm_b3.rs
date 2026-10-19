@@ -377,7 +377,7 @@ pub unsafe fn NorfairPipeBug_Init(game: &mut Game) {
         (*(&raw mut (*PipeBug).pbg_parameter_2 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         )) as u16,
     );
     (*PipeBug).pbg_var_C = 0 as uint16;
@@ -1698,7 +1698,7 @@ pub unsafe fn Botwoon_Func_15(game: &mut Game) {
         * *(&raw mut (*E).botwoon_var_28 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
-                .wrapping_sub(1 as usize) as isize,
+                .wrapping_sub(1_usize) as isize,
         ) as ::core::ffi::c_int
         >> 1 as ::core::ffi::c_int;
     AddToHiLo(

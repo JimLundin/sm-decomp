@@ -4558,7 +4558,7 @@ unsafe fn GlslPass_Compile(
         strings[0 as ::core::ffi::c_int as usize] =
             b"#version 330\n\0" as *const u8 as *const ::core::ffi::c_char as *const GLchar;
         lengths[0 as ::core::ffi::c_int as usize] =
-            (::core::mem::size_of::<[::core::ffi::c_char; 14]>() as usize).wrapping_sub(1 as usize)
+            (::core::mem::size_of::<[::core::ffi::c_char; 14]>() as usize).wrapping_sub(1_usize)
                 as GLint;
     } else {
         while skip < size && {
@@ -4576,9 +4576,9 @@ unsafe fn GlslPass_Compile(
         &raw const kFragmentPrefix as *const ::core::ffi::c_char
     }) as *const GLchar;
     lengths[1 as ::core::ffi::c_int as usize] = (if type_0 == GL_VERTEX_SHADER as uint {
-        (::core::mem::size_of::<[::core::ffi::c_char; 42]>() as usize).wrapping_sub(1 as usize)
+        (::core::mem::size_of::<[::core::ffi::c_char; 42]>() as usize).wrapping_sub(1_usize)
     } else {
-        (::core::mem::size_of::<[::core::ffi::c_char; 44]>() as usize).wrapping_sub(1 as usize)
+        (::core::mem::size_of::<[::core::ffi::c_char; 44]>() as usize).wrapping_sub(1_usize)
     }) as GLint;
     strings[2 as ::core::ffi::c_int as usize] = (data as *mut GLchar).offset(skip as isize);
     lengths[2 as ::core::ffi::c_int as usize] =
@@ -5488,9 +5488,9 @@ pub unsafe fn GlslShader_Render(
         ctx.num_vaos = 0 as uint;
         ctx.texture_unit = ctx.num_vaos;
         ctx.offset = (if last_pass as ::core::ffi::c_int != 0 {
-            (::core::mem::size_of::<::core::ffi::c_float>() as usize).wrapping_mul(8 as usize)
+            (::core::mem::size_of::<::core::ffi::c_float>() as usize).wrapping_mul(8_usize)
         } else {
-            0 as usize
+            0_usize
         }) as uint;
         GlslShader_SetShaderVars(gs, &raw mut ctx, pass);
         gl::DrawArrays(GL_TRIANGLE_STRIP as GLenum, 0 as GLint, 4 as GLsizei);

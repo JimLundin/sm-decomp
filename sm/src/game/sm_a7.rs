@@ -1828,7 +1828,7 @@ pub unsafe fn KraidsArm_Main(game: &mut Game) {
     if *(&raw mut (*E).kraid_mouth_flags as *mut uint8).offset(
         (::core::mem::size_of::<uint16>())
             .wrapping_div(::core::mem::size_of::<uint8>())
-            .wrapping_sub(1 as usize) as isize,
+            .wrapping_sub(1_usize) as isize,
     ) != 0
     {
         (*E1).base.instruction_timer = (*E1).base.instruction_timer.wrapping_add(1);
@@ -5162,7 +5162,7 @@ pub unsafe fn Phantoon_Hurt(game: &mut Game) {
                 .offset(
                     (::core::mem::size_of::<uint16>())
                         .wrapping_div(::core::mem::size_of::<uint8>())
-                        .wrapping_sub(1 as usize) as isize,
+                        .wrapping_sub(1_usize) as isize,
                 )
                 == 0
             {
@@ -5178,7 +5178,7 @@ pub unsafe fn Phantoon_Hurt(game: &mut Game) {
                 .offset(
                     (::core::mem::size_of::<uint16>())
                         .wrapping_div(::core::mem::size_of::<uint8>())
-                        .wrapping_sub(1 as usize) as isize,
+                        .wrapping_sub(1_usize) as isize,
                 )
                 == 0
             {
@@ -5384,7 +5384,7 @@ pub unsafe fn Etecoon_Main(game: &mut Game) {
     if *(&raw mut (*E).etecoon_parameter_2 as *mut uint8).offset(
         (::core::mem::size_of::<uint16>())
             .wrapping_div(::core::mem::size_of::<uint8>())
-            .wrapping_sub(1 as usize) as isize,
+            .wrapping_sub(1_usize) as isize,
     ) != 0
     {
         (*E).etecoon_parameter_2 = ((*E).etecoon_parameter_2).wrapping_sub(256u16);
@@ -5999,7 +5999,7 @@ pub unsafe fn Dachora_Func_6(mut k: uint16, game: &mut Game) -> int32 {
                         *(&raw mut (*E).dachor_var_E as *mut uint8).offset(
                             (::core::mem::size_of::<uint16>())
                                 .wrapping_div(::core::mem::size_of::<uint8>())
-                                .wrapping_sub(1 as usize) as isize,
+                                .wrapping_sub(1_usize) as isize,
                         ) as isize,
                     ),
                 k,
@@ -6185,7 +6185,7 @@ pub unsafe fn Dachora_Func_10(mut k: uint16, game: &mut Game) {
                 *(&raw mut (*E).dachor_var_E as *mut uint8).offset(
                     (::core::mem::size_of::<uint16>())
                         .wrapping_div(::core::mem::size_of::<uint8>())
-                        .wrapping_sub(1 as usize) as isize,
+                        .wrapping_sub(1_usize) as isize,
                 ) as isize,
             ),
         k,

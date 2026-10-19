@@ -176,8 +176,7 @@ unsafe fn OpenGLRenderer_Init(mut window: *mut SDL_Window, game: &mut Game) -> b
         3 as GLint,
         GL_FLOAT as GLenum,
         GL_FALSE as GLboolean,
-        (5 as usize).wrapping_mul(::core::mem::size_of::<::core::ffi::c_float>() as usize)
-            as GLsizei,
+        5_usize.wrapping_mul(::core::mem::size_of::<::core::ffi::c_float>() as usize) as GLsizei,
         ::core::ptr::null::<::core::ffi::c_void>(),
     );
     gl::EnableVertexAttribArray(0 as GLuint);
@@ -186,9 +185,8 @@ unsafe fn OpenGLRenderer_Init(mut window: *mut SDL_Window, game: &mut Game) -> b
         2 as GLint,
         GL_FLOAT as GLenum,
         GL_FALSE as GLboolean,
-        (5 as usize).wrapping_mul(::core::mem::size_of::<::core::ffi::c_float>() as usize)
-            as GLsizei,
-        (3 as usize).wrapping_mul(::core::mem::size_of::<::core::ffi::c_float>() as usize)
+        5_usize.wrapping_mul(::core::mem::size_of::<::core::ffi::c_float>() as usize) as GLsizei,
+        3_usize.wrapping_mul(::core::mem::size_of::<::core::ffi::c_float>() as usize)
             as *mut ::core::ffi::c_void,
     );
     gl::EnableVertexAttribArray(1 as GLuint);
