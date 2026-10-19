@@ -19058,6 +19058,35 @@ Own Rust lines -14, c_int cast lines -14 and unsafe functions -1. No layout
 change or probe/ROM-derived artifact committed. Neither movie reaches credits;
 full progression, readability and hardware/audio completion remain open.
 
+SPC direct-page bit family (2026-10-19): normalized jscpd discovery
+and complete CST dispatch/arm selection cover all 32 SET1/CLR1/BBS/BBC
+opcodes. Four repeated arms become two shared arms. Bits 5..7 select the
+byte mask; bit 4 selects clear or branch-if-clear. Address fetch, operand
+read and bus write order remain exact. Branch displacement is fetched
+before testing the saved operand, including when the branch is untaken.
+Flags, instruction cycle entries and taken-branch cycle additions stay exact.
+Absolute carry-bit instructions have distinct addressing/flag semantics
+and remain separate.
+
+Complete source reconstruction permits only the four selected arms and
+formatting; other frozen sources match. Both compiled implementations pass
+3149824 independent checks: every opcode/byte, every branch displacement,
+and ordinary/end-of-address-space PCs, checking destination bytes, flags,
+PC and cycles. Actual spc_runOpcode agrees in 32768 constructed bus contexts
+over all 32 opcodes and 1024 register/flag/operand seeds, including direct
+page RAM, ports and timer read-clear counters. Complete initialized
+SPC/APU/DSP state and cycles match. These are actual execution contexts,
+not a claim of exhaustive hardware state coverage.
+
+Frozen 8968d29c plus only this family passes any% 129712/0
+(160.11s) and Speed Booster 148406/0 (218.85s), native exits 0,
+with fixed source/library/DLL/ROM/movie hashes. Cargo fmt/check, normal live
+release (43.98s), progress and diff check pass. Own Rust lines -26 and
+c_int cast lines -13; unsafe/raw/layout counts unchanged. Concurrent SFX
+and projectile edits are preserved outside this commit. No probe or
+ROM-derived asset committed. Neither movie reaches credits; the broader
+readability, full progression and hardware/audio goal remains open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

@@ -375,49 +375,23 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
                 (adr as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16_t,
             );
         }
-        2 | 34 | 66 | 98 | 130 | 162 | 194 | 226 => {
-            let mut adr_0: uint16_t = spc_adrDp(spc);
-            spc_write(
-                spc,
-                adr_0,
-                (spc_read(spc, adr_0) as ::core::ffi::c_int
-                    | (1 as ::core::ffi::c_int)
-                        << (opcode as ::core::ffi::c_int >> 5 as ::core::ffi::c_int))
-                    as uint8_t,
-            );
+        2 | 18 | 34 | 50 | 66 | 82 | 98 | 114 | 130 | 146 | 162 | 178 | 194 | 210 | 226 | 242 => {
+            let address = spc_adrDp(spc);
+            let value = spc_read(spc, address);
+            let mask = 1u8 << (opcode >> 5);
+            let result = if opcode & 0x10 == 0 {
+                value | mask
+            } else {
+                value & !mask
+            };
+            spc_write(spc, address, result);
         }
-        18 | 50 | 82 | 114 | 146 | 178 | 210 | 242 => {
-            let mut adr_1: uint16_t = spc_adrDp(spc);
-            spc_write(
-                spc,
-                adr_1,
-                (spc_read(spc, adr_1) as ::core::ffi::c_int
-                    & !((1 as ::core::ffi::c_int)
-                        << (opcode as ::core::ffi::c_int >> 5 as ::core::ffi::c_int)))
-                    as uint8_t,
-            );
-        }
-        3 | 35 | 67 | 99 | 131 | 163 | 195 | 227 => {
-            let mut val: uint8_t = spc_read(spc, spc_adrDp(spc));
-            spc_doBranch(
-                spc,
-                spc_readOpcode(spc),
-                val as ::core::ffi::c_int
-                    & (1 as ::core::ffi::c_int)
-                        << (opcode as ::core::ffi::c_int >> 5 as ::core::ffi::c_int)
-                    != 0,
-            );
-        }
-        19 | 51 | 83 | 115 | 147 | 179 | 211 | 243 => {
-            let mut val_0: uint8_t = spc_read(spc, spc_adrDp(spc));
-            spc_doBranch(
-                spc,
-                spc_readOpcode(spc),
-                val_0 as ::core::ffi::c_int
-                    & (1 as ::core::ffi::c_int)
-                        << (opcode as ::core::ffi::c_int >> 5 as ::core::ffi::c_int)
-                    == 0 as ::core::ffi::c_int,
-            );
+        3 | 19 | 35 | 51 | 67 | 83 | 99 | 115 | 131 | 147 | 163 | 179 | 195 | 211 | 227 | 243 => {
+            let value = spc_read(spc, spc_adrDp(spc));
+            let displacement = spc_readOpcode(spc);
+            let bit_set = value & (1u8 << (opcode >> 5)) != 0;
+            // Bit 4 selects branch-if-clear instead of branch-if-set.
+            spc_doBranch(spc, displacement, bit_set == (opcode & 0x10 == 0));
         }
         4 | 36 | 68 => {
             spc_logic_accumulator(spc, spc_adrDp(spc), opcode);
