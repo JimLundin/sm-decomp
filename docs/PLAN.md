@@ -1912,12 +1912,28 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): compiler cleanup in `a1511f71`
-matches the verified source, complete tracked Rust inventory, configuration
-and host. All 77 recorded source/library/DLL/fixture pins still match. The
-normal release build passes (24.04s), as does full boot any% 129712/0
-(163.71s), native exit 0. This reuses the completed implementation run;
-no duplicate replay or bespoke comparison harness was needed.
+Latest reviewed integration (2026-10-19): frozen `e289a2f1` combines the
+compiler cleanups and five enemy-parameter initializers. A fresh normal
+release build passes (40.07s); full boot any% passes 129712/0
+(164.41s), native exit 0. Formatting/check and progress pass, with all
+source/library/DLL/configuration/fixture hashes stable. Only registry
+dependencies were reused; the maintained game and verifier host were rebuilt.
+
+Initializer review reconstructs exactly the five routines, two parameter
+getters and six-byte Mini Kraid view. Packed types and Game layout are
+unchanged. Captured byte indices, little-endian field widths and live reads
+preserve overlapping-write behavior, including odd and maximum indices.
+The earlier observed source and DLL retain checked bindings: 16 read sites
+execute 357 times across all five routines, excluding synthetic controls.
+Read positions/order remain unchanged after the reviewed compiler and counter
+helper changes. Exact observer stripping and source/ROM/movie bindings pass.
+Nine retained full-RAM controls cover Mini Kraid, laser and maw alias/index
+cases; these finite cases do not prove every branch or global alias safety.
+The owner's separate db739c4c-plus-initializers any% 129712/0 and Speed
+Booster 148406/0 runs also retain checked source/DLL/fixture bindings.
+
+The prior compiler-only `a1511f71` source and all 77 recorded pins match its
+completed normal release (24.04s) and any% 129712/0 (163.71s), native exit 0.
 
 Review covers 374 literal casts replaced by typed literals across 32 files,
 and 11538 unused mut keywords removed across 50 files. Complete word diffs
@@ -1929,7 +1945,7 @@ The cast batch's separate checked build passes any% 129712/0 (201.40s) and
 Speed Booster 148406/0 (250.15s). Its final compiler log has 104 remaining
 warning locations, correcting the earlier count of 54. These frontend and
 core compiler checks do not establish frontend execution or broader coverage.
-Later initializer/accessor and identity-operation work keeps its own checks.
+Later identity-operation and RAM-access work keeps its own checks.
 
 Retained broader integration: frozen `db739c4c` passes uninterrupted full
 boot any% 129712/0 (200.55s) and Speed Booster 148406/0 (250.63s), native
