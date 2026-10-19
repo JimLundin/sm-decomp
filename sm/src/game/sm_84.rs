@@ -1701,10 +1701,9 @@ pub unsafe fn PlmInstr_LoadItemPlmGfx(
             & 0x3fffff as ::core::ffi::c_int) as isize,
     ) as *const uint8 as *mut uint16)
         .offset(v3 as isize) as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1c2f as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v3 as isize) =
-        plmp.offset_from(RomBankBase(0x84 as uint8, game)) as ::core::ffi::c_long as uint16;
+    let instruction = plmp.offset_from(RomBankBase(0x84, game)) as u16;
+    let pointer_offset = 0x1c2f + usize::from(gfx_index >> 1) * 2; // plm_item_gfx_ptrs
+    game.g_ram[pointer_offset..pointer_offset + 2].copy_from_slice(&instruction.to_le_bytes());
     let mut v4: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
         .offset(0x330 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int;

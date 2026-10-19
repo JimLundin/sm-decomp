@@ -12987,6 +12987,25 @@ PLM decrement, Chozo guarded reads, Super Missile passage and previous holds
 stay held; complete credits, gameplay, hardware/audio, masks and ownership
 remain open.
 
+PLM item-graphics saved pointer (2026-10-19):
+PlmInstr_LoadItemPlmGfx now stores its little-endian bank-relative instruction
+pointer through byte-backed plm_item_gfx_ptrs. The full-width captured
+index>>1 slot remains exact. Three ROM table reads still precede RomBankBase
+and this store; queue and tile work remain afterward.
+
+Frozen def4b655 plus only this change passes any%129712/0
+(236.69s), native exit0, and pickup route68606/0
+(155.06s), native exit0. Observed pickup route68606/0
+(156.31s) executes 3 actual saved-pointer stores.
+Maintained source has no observers. All65536 slot address bounds pass
+separately; this adds no movie coverage. Cargo fmt/check and release build
+pass. Own raw offsets-1, cast lines-1, Rust lines-1; other own counters
+unchanged. Frozen replays exclude peer source, which remains preserved.
+Next: loader ROM-table words and queue state, retaining reads/store order
+and packed seven-byte entries. PLM decrement, Chozo guarded reads,
+Super Missile passage and previous holds stay held; complete credits,
+gameplay, hardware/audio, masks and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
