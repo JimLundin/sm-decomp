@@ -49,6 +49,22 @@ Everything that existed before is in the branch `archive/pre-transpile-2026-10-1
 
 ## Workspace discipline
 
+Retired upper99BD probes (2026-10-19): moved route-left-observe and
+route-all-bombs out of target with their sixteen helper scripts. Recovery is
+at temporary sm-workspace-retired-upper99bd-20261019-110248-551, preserving
+relative paths. All 61 files / 19,856,857 bytes have matching SHA-256 hashes.
+Retained repository scripts, top-level temporary scripts and live processes
+have no dependencies on this batch. Its old builders require the absent
+missile-restore directory. Historical input references require restoring
+the batch; current route inputs and build outputs remain available.
+
+Format/check, normal Cargo release (30.44s) and progress pass. This cleanup
+changes no maintained Rust or own residue counts. Concurrent restoration of
+uncovered animation command 7 and PLM decrement code explains residue
+increases; those routines retain their existing implementations. No new
+replay belongs to this cleanup; the reviewed integration retains any%
+129712/0, Waver 58109/0 and pickup 68606/0. Newer edits remain separate.
+
 Retired tank/door probes (2026-10-19): moved door-bit-cleanup,
 energy-tank-cleanup and tank-cleanup out of target, together with 34
 dependent helper scripts from route-gunship-top. Recovery is at temporary
