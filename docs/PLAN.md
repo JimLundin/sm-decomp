@@ -1431,60 +1431,70 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `8582a6ed` passes
-uninterrupted full boot any% 129712/0 (170.83s) and Speed Booster
-148406/0 (219.52s), native exits 0. This combines the completed 96-layout
-family with the projectile property OR helper (3e4bdfc2). Speed contains
-the exact Bubble Mountain, Warehouse, Varia and Hi-Jump prefixes; no shorter
-duplicate replay is run. Coverage remains 55 rooms and 53 enemy definitions.
+Latest reviewed integration (2026-10-19): frozen `00a74e6e` plus the audited
+6089-expression arithmetic candidate passes uninterrupted full boot
+any% 129712/0 (196.83s) and Speed Booster 148406/0 (260.79s),
+native exits 0. This combines the completed shared layouts, property OR
+helper, five projectile wrapping updates and cross-bank word arithmetic.
+The arithmetic candidate is still uncommitted at this review. Its exact
+31 files match the independently reconstructed and compiler-checked candidate;
+a later implementation commit must match these files before reusing this run.
 
-Both complete checkpoints, including every binding and serialized payload,
-are byte-identical to the reviewed complete-layout endpoints. Runtime-source
-inputs remain fixed, including the shared layout macro added in that pass.
-All bindings are independently recomputed and validated. Neither replay
-loads an earlier checkpoint. Non-timing diagnostics and coverage match,
-including the known fingernail diagnostic. Speed ends in state 8, room
-$AD1B, X171/Y123, pose $0089, health 46/399, missiles 6/15, Supers 0/5,
-items $3105 and beams $1004 equipped/collected. Kraid is defeated and all
-eight coroutine bytes are zero; credits remain unexercised.
+Both complete checkpoints, including all bindings and serialized payloads,
+are byte-identical to reviewed 8582a6ed. All bindings are independently
+recomputed; runtime-source inputs, including the shared layout macro, match.
+Neither replay loads an earlier checkpoint. Coverage and non-timing
+diagnostics match, including the known fingernail diagnostic. Speed contains
+the exact Bubble Mountain, Warehouse, Varia and Hi-Jump prefixes and reaches
+55 rooms and 53 enemy definitions. It ends in state 8, room $AD1B,
+X171/Y123, pose $0089, health 46/399, missiles 6/15, Supers 0/5,
+items $3105 and beams $1004 equipped/collected. Kraid is defeated,
+the eight coroutine bytes are zero and credits remain unexercised.
 
-Independent property review reconstructs the entire commit from the exact
-two original OR sequences and the four-line helper. Only sm_86.rs differs
-from the reviewed complete-layout source. The captured half-indices,
-0x1000/0x8000 masks, final Bomb Torizo store and conditional Kago store keep
-their positions. Caller review checks the live borrows; pointers carried
-through spawn and instruction dispatch derive from ROM. Nine unvisited
-fixed-bit handlers and both operand-based handlers remain unchanged.
+Independent arithmetic review reconstructs all 6089 selected replacements
+in 31 banks from frozen 300bfd44. Exact source operands, literal conversions,
+nesting, formatted outputs and unformatted compiler-input pins agree.
+All 3649 arithmetic operations have independently recomputed ranges within
+their old i32/u32 intermediates. Casting and add/subtract/multiply/bitwise
+operations preserve the target low bits; operand order and existing pointer
+operations remain unchanged. Fresh streamed compiler checks confirm every
+selected input/intermediate/result type and all 698765 retained expression
+types, kinds and mapped spans. Added expressions stay within replacements.
 
-Fresh controls pass 524288 cases: 262144 helper cases, 131072 complete
-Bomb Torizo routines and 131072 complete Kago routines. Each sweep includes
-every u16 slot argument. Helper cases vary all property words for both masks
-on two backing offsets. Whole-routine controls use exact bodies, maintained
-getters/EnemyData layout and abs16 in a reduced Game harness. Original word
-targets and the synthetic ROM table have asserted alignment. Full RAM,
-guards and callback traces agree. Bomb callbacks change properties, live
-index, parameter and coordinates; Kago cases vary relative positions and
-exercise the conditional store. These are constructed cases, not additional
-gameplay coverage. XOR, byte writes, wrong scaling, early property reads,
-the changed live index and a changed distance condition all fail.
+The 6089 selections are an exact subset of the tested 6482-member family.
+Reconstructed test source and fresh compiled runs pass 51818253 comparisons
+across 116 type/operator signatures, 1515 literal expressions and 12125
+selected boundary pairs. The test rejects 2101692 overflowing intermediate
+cases as inadmissible; the source range proof independently excludes those
+cases for the selected expressions. A changed-result mutant fails the same
+comparison run. The other saturation/sign/order examples are distinguished
+values, not whole-harness mutation tests. These controls add no gameplay
+coverage; per-site hits were not collected for the arithmetic family.
 
-The dedicated retained source reconstructs from its frozen base. All
-102 checked source, binary, fixture and control pins match. Observation
-logs record eight Bomb updates and 199 Kago updates, native exit 0 and
-matching clean/observed non-timing diagnostics. Full-RAM write comparisons
-pass. Discovery recorded 336 Kago routine entries; that is distinct from
-the conditional update count. Its nine fixed-bit handlers had no recorded
-hits and remain pending.
+Independent projectile review reconstructs the complete 00a74e6e source
+change: one helper and five exact updates. Scalar/indexed addresses, wrapping
++1/-1 values (delta 1/u16::MAX), returned new words, both gate writes,
+Ceres clamp and pickup callback order are preserved. No raw-place reference
+spans a new helper call: the other Ceres reference ends in its condition
+block, and the other gate references begin afterward. Dispatch callers
+retain no RAM pointer across these calls. Fresh exact-helper tests pass
+393216 complete-RAM/return cases, covering every rounded u16 slot and every
+word value for four base/delta pairs. Saturation, wrong scaling and returning
+the old word are rejected. The completed owner's clean/observed sources
+match the entire commit, and all saved source/binary/fixture pins remain
+fixed. Actual update hits are Ceres 73, Kago 86, gate 4/4 and pickup 27487;
+clean/observed non-timing diagnostics agree. Unvisited updates stay pending.
 
-All 74 integration source/configuration/host/progress files, Cargo library,
-DLL and copied fixtures stay fixed. Only registry dependencies seed this
-checkout. Formatting, normal release (27.09s), host build
-(2.40s) and progress pass. Including its helper, the property change
-removes two raw-offset lines and four c_int casts across two lines; Rust
-line and unsafe-function totals stay unchanged. Frozen totals: 212169 Rust
-lines, 21567 raw-offset lines, 65284 c_int casts across 49451 lines and 6517
-unsafe functions. This audit changes no maintained Rust or committed assets.
-The 96-layout review and earlier audits retain their recorded coverage limits.
+All 74 integration inputs, fresh Cargo library/DLL and copied fixtures stay
+fixed. Only registry dependencies seed this checkout. Formatting, normal
+release (21.95s), host build (2.72s) and progress pass. Against
+8582a6ed, Rust lines fall 2848 and c_int casts fall 12178 across 7688 lines;
+unsafe-function counts are unchanged. Five raw accesses disappear from the
+projectile update pass. The raw-offset line count falls six because one
+additional arithmetic line change is formatting only. Frozen totals:
+209321 Rust lines, 21561 raw-offset lines, 53106 c_int casts across 41763
+lines and 6517 unsafe functions. This review changes no maintained Rust
+or assets; peer changes outside the frozen snapshot retain their own checks.
 
 Later source changes need their own integration. Remaining bosses, credits,
 persistence and broader hardware/audio coverage remain unfinished.
