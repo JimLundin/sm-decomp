@@ -15269,6 +15269,27 @@ Concurrent literal-offset cast cleanup is preserved; its argument values are
 unchanged and its verification remains separate. Indexed updates, arithmetic,
 broader gameplay/credits, hardware/audio and ownership remain unfinished.
 
+Enemy-projectile enable update (2026-10-19): EnableEprojs is safe Rust,
+using existing byte-backed word reads/writes. It sets bit15 and preserves
+all other bits. No helper is added. The earlier two-direction candidate
+passes any%129712/0, Hi-Jump99191/0, observed Hi-Jump99191/0 and observed
+any%129712/0, but DisableEprojs executes zero times in both movies. Its
+original body is restored; X-ray/demo-recorder coverage remains pending.
+
+Final frozen f1feb06d plus only EnableEprojs passes
+any%129712/0 (315.89s) and Hi-Jump99191/0 (255.55s),
+native exits0. Observed Hi-Jump99191/0 (284.22s) checks
+2 actual enable calls against original unaligned OR writes,
+comparing complete RAM. Clean/observed non-timing diagnostics match;
+frozen source/DLL/input hashes remain stable and maintained body matches.
+No observers are committed. Existing boundary comparisons establish the
+OR operation across all65536 prior flags; movie calls establish its context.
+
+Cargo fmt/check, normal release build and progress pass. Own raw offsets-1,
+cast lines-1, unsafe functions-1; Rust lines and other counters unchanged.
+Further indexed-field/update cleanup, gameplay/credits, hardware/audio/masks
+and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

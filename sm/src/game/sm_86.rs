@@ -825,9 +825,9 @@ impl EprojStateMut<'_> {
     }
 }
 
-pub unsafe fn EnableEprojs(game: &mut Game) {
-    let ref mut fresh18 = *((&raw mut game.g_ram as *mut uint8).offset(0x198d) as *mut uint16);
-    *fresh18 = (*fresh18 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
+pub fn EnableEprojs(game: &mut Game) {
+    let flags = EprojState(&game.g_ram).slot_word(0x198d, 0) | 0x8000;
+    EprojStateMut(&mut game.g_ram).write(0x198d, 0, flags);
 }
 pub unsafe fn DisableEprojs(game: &mut Game) {
     let ref mut fresh17 = *((&raw mut game.g_ram as *mut uint8).offset(0x198d) as *mut uint16);
