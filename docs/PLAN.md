@@ -15316,6 +15316,33 @@ cast lines-1, unsafe functions-1; Rust lines and other counters unchanged.
 Further indexed-field/update cleanup, gameplay/credits, hardware/audio/masks
 and ownership remain unfinished.
 
+Independent named-read audit (2026-10-19): reconstruct all eight
+substitutions in cd40185c and its owning c08ce284-based candidate exactly
+after rustfmt. All other source/configuration/host files match their baseline.
+Review confirms unchanged read positions and outer casts. Collision contexts
+come from local values outside Game RAM; Mini-Kraid's changed reads complete
+before the retained enemy pointer is created. The sprite instruction retains
+its separate ROM pointer and RNG/callback order. Existing legacy pointer
+crossings elsewhere in these routines remain outside this audit.
+
+The earlier comparison observer used typed reference loads without an
+alignment guarantee. A fresh temporary observer now reads every reference
+word with read_unaligned and explicit little-endian conversion, including
+the odd-address fields. Exact observer stripping reconstructs the clean
+candidate. Its full Kraid run passes 119823/0 (227.49s including startup),
+native exit 0, with all 112 comparisons and the same eight call/frame reports.
+Complete non-timing diagnostics match the clean run, including the one known
+fingernail warning. Source, DLL, Cargo library and fixture hashes stay fixed.
+
+Exact accessor bodies also pass 262144 native value checks: every u16 value
+at each of four addresses, with distinct words and populated neighboring
+bytes. A deliberately wrong-address reader fails. The owning clean any%
+129712/0 and Kraid 119823/0 results are reused after checking DLL, source and
+input identity. Clean-source formatting, normal release and progress checks
+pass. No maintained Rust or residue changes; corrected observer code and
+test artifacts stay temporary. Later implementation changes, credits and
+broader gameplay/hardware coverage retain separate verification.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
