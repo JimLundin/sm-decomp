@@ -658,6 +658,71 @@ consolidation in this file; the commit contains only the six-function
 rewrite and this record. Temporary controls, probes, checkpoints and input
 assets remain uncommitted.
 
+Message-box layout family (2026-10-19): simplify eight text, border,
+button-label, initialization and selection routines. A safe row-copy helper
+replaces repeated border/selection loops; byte-backed RAM writes retain the
+original 1024-word tilemap bounds. Text still reads each ROM word before
+checking its destination, including writes before a bounds failure. Zero
+length retains the original do-loop behavior. Per-word mapper calls retain
+invalid-address diagnostics and g_fail; raw ROM reads remain unsafe and
+word loads explicitly permit unaligned addresses. Initialization captures
+the same signed table index and rereads the ROM base/config after drawing.
+Button priority and full-word selection XOR remain exact.
+
+Extracted before/after Rust passes 393631 cases, 1054912 callback snapshots
+and 1448543 complete-RAM comparisons. The suite covers all 28 tested table
+rows (including the terminator), zero/odd/wrapped/boundary lengths, signed
+indices, mapper diagnostics, live ROM/config changes after drawing, all
+65536 border continuations, binding words and selection words. It matches
+129736 expected bounds/index failures and 49398 mapper diagnostics.
+Zero-length skipping, wider destination bounds and cached pre-draw config
+mutants all fail. Compile 2.392s; native execution 51.349s. Independent
+source, extraction and artifact review passes. Legacy odd-address loads
+are compared under native x86-64 behavior, not claimed Rust-alignment-valid.
+
+Frozen 1458fe46 plus this change passes full any% 129712/0 (214.95s) and
+Warehouse 128547/0 (240.45s), native exits 0. Both complete checkpoints are
+byte-identical to the preceding verified implementation. All 77 source,
+configuration, host, library and asset pins stay fixed. Any% has no
+diagnostics; Warehouse retains the known fingernail warning.
+
+Observed original/candidate pairs cover all eight changed entries. The map
+continuation passes 49014/0 (96.70s/85.50s), and the two-toggle gunship
+continuation passes 1605/0 (2.18s/1.76s). Large/Shoot/Special/X glyph,
+64/192/256-byte text and both selection rows execute. The normal-input
+Speed Booster extension passes 19859/0 (49.03s/46.96s); Run, message 13,
+B glyph and its large text execute once at input frame 147889. Each pair's
+complete checkpoint and every shared probe count/range agree. All native
+exits are zero and all 175 combined source/artifact/input pins stay fixed.
+The clean Speed suffix also passes 19859/0 (20.03s), with complete RAM
+equal to the original route and the same checkpoint as both observers.
+
+The 21530 checkpoint precedes the affected call paths: prior full-boot
+entry probes record no message coroutine calls, and the exact 64-file
+caller audit finds no escapes from those roots. Speed uses the paired,
+byte-identical full-boot Warehouse 128547 checkpoints before its setup;
+runtime, ROM and exact input-prefix bindings match. Independent removal
+of the 16 observer marker blocks recovers the exact clean candidate.
+Other button glyphs, overlapping bindings and malformed table/length cases
+remain controls-only; this is not a claim that all 27 probes execute.
+
+Formatting/check, normal release (33.97s), Cargo verifier host (2.26s) and
+progress pass. Net Rust lines -121, raw-access tokens -22 (lines -21),
+c_int tokens -109 (lines -66), casts -211 and borrowed raw places -1,
+including the row helper. Unsafe function count is unchanged because ROM
+and hardware callees still require it. No RAM layout or shared Game API
+changes. Concurrent register/state cleanup retains separate verification;
+temporary controls, probes, checkpoints and input assets are uncommitted.
+
+The exact eight-body/helper rebase onto 020a52d4 preserves the consolidated
+constant imports. Independent reconstruction matches the rebased source;
+all 283 original constants retain their types/values and the relevant RAM
+layouts and RTL callees are unchanged. Isolated formatting/check and normal
+release pass (48.40s), with source pins fixed. Only registry dependency
+artifacts are reused after an access-denied dependency-script launch;
+game and host artifacts remain local to their checkout. This compilation
+checks the rebase; the gameplay results above retain their frozen source.
+
 Boolean truth-test cleanup (2026-10-19): replaced 128 conversions of
 Boolean locals to c_int followed by != 0 with direct Boolean conditions,
 across 85 routines in 14 files. Operand evaluation and short-circuit order

@@ -244,103 +244,56 @@ static kSmallMsgBoxTopBottomBorderTilemap: [uint16; 32] = [
     0xe as ::core::ffi::c_int as uint16,
 ];
 unsafe fn WriteMessageTilemap(game: &mut Game) -> uint16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x5a6) as *mut uint16) = 112 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x5a4) as *mut uint16) = 124 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x5a2) as *mut uint16) = 0 as uint16;
-    let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    while i != 112 as ::core::ffi::c_int {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap[i as usize] = 0 as uint16;
-        i += 1;
-    }
-    let mut r0: uint16 = (*(game.g_rom.offset(
-        (((0x85869b as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x85869b as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut MsgBoxConfig)
-        .offset(
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x1c1f) as *mut uint16)
-                as ::core::ffi::c_int
-                - 1 as ::core::ffi::c_int) as isize,
-        ))
-    .message_tilemap as uint16;
-    let mut r9: uint16 = ((*(game.g_rom.offset(
-        (((0x85869b as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x85869b as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut MsgBoxConfig)
-        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x1c1f) as *mut uint16) as isize))
-    .message_tilemap as ::core::ffi::c_int
-        - r0 as ::core::ffi::c_int) as uint16;
-    let mut n: ::core::ffi::c_int = r9 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    r9 = (r9 as ::core::ffi::c_int + 128 as ::core::ffi::c_int) as uint16;
-    game.message_box_das0l_value = r9;
-    let mut v1: uint16 = 32 as uint16;
-    let mut v2: uint16 = 0 as uint16;
+    game.g_ram[0x5a6..0x5a8].copy_from_slice(&112u16.to_le_bytes());
+    game.g_ram[0x5a4..0x5a6].copy_from_slice(&124u16.to_le_bytes());
+    game.g_ram[0x5a2..0x5a4].fill(0);
+    game.g_ram[0x3000..0x30e0].fill(0);
+    let message = u16::from_le_bytes([game.g_ram[0x1c1f], game.g_ram[0x1c20]]) as isize;
+    let configs = game.g_rom.add(0x2869b).cast::<MsgBoxConfig>();
+    let start = (*configs.offset(message - 1)).message_tilemap;
+    let length = (*configs.offset(message))
+        .message_tilemap
+        .wrapping_sub(start);
+    game.message_box_das0l_value = length.wrapping_add(128);
+    let mut remaining = i32::from(length >> 1);
+    let mut word = 32u16;
+    let mut source_offset = 0u16;
     loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap
-            [(v1 as ::core::ffi::c_int + 256 as ::core::ffi::c_int) as usize] =
-            *((RomPtr_85 as unsafe fn(uint16_t, &mut Game) -> *const uint8)(r0 as uint16_t, game)
-                .offset(v2 as isize) as *const uint8 as *mut uint16);
-        v1 = v1.wrapping_add(1);
-        v2 = (v2 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
-        n -= 1;
-        if !(n != 0) {
+        // Map every word, including the mapper's invalid-address diagnostics.
+        let tile = RomPtr_85(start, game)
+            .add(usize::from(source_offset))
+            .cast::<u16>()
+            .read_unaligned();
+        let byte_offset = 2 * (usize::from(word) + 256);
+        game.g_ram[0x3000..0x3800][byte_offset..byte_offset + 2]
+            .copy_from_slice(&tile.to_le_bytes());
+        word = word.wrapping_add(1);
+        source_offset = source_offset.wrapping_add(2);
+        remaining -= 1;
+        if remaining == 0 {
             break;
         }
     }
-    return v1;
+    word
+}
+fn WriteMessageBoxTilemapRow(mut word: u16, tiles: &[u16], game: &mut Game) {
+    // Preserve the legacy table bounds and any writes before a bounds failure.
+    for tile in tiles {
+        let byte_offset = 2 * (usize::from(word) + 256);
+        game.g_ram[0x3000..0x3800][byte_offset..byte_offset + 2]
+            .copy_from_slice(&tile.to_le_bytes());
+        word = word.wrapping_add(1);
+    }
 }
 unsafe fn WriteLargeMessageBoxTilemap(game: &mut Game) {
-    let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    while i != 32 as ::core::ffi::c_int {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap[(i + 256 as ::core::ffi::c_int) as usize] =
-            kLargeMsgBoxTopBottomBorderTilemap[i as usize];
-        i += 1;
-    }
-    let mut i_0: uint16 = WriteMessageTilemap(game);
-    let mut n: ::core::ffi::c_int = 32 as ::core::ffi::c_int;
-    let mut v1: uint16 = 0 as uint16;
-    loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap
-            [(i_0 as ::core::ffi::c_int + 256 as ::core::ffi::c_int) as usize] =
-            kLargeMsgBoxTopBottomBorderTilemap
-                [(v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize];
-        v1 = (v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
-        i_0 = i_0.wrapping_add(1);
-        n -= 1;
-        if !(n != 0) {
-            break;
-        }
-    }
+    WriteMessageBoxTilemapRow(0, &kLargeMsgBoxTopBottomBorderTilemap, game);
+    let end = WriteMessageTilemap(game);
+    WriteMessageBoxTilemapRow(end, &kLargeMsgBoxTopBottomBorderTilemap, game);
 }
 unsafe fn WriteSmallMessageBoxTilemap(game: &mut Game) {
-    let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    while i != 32 as ::core::ffi::c_int {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap[(i + 256 as ::core::ffi::c_int) as usize] =
-            kSmallMsgBoxTopBottomBorderTilemap[i as usize];
-        i += 1;
-    }
-    let mut i_0: uint16 = WriteMessageTilemap(game);
-    let mut n: ::core::ffi::c_int = 32 as ::core::ffi::c_int;
-    let mut v1: uint16 = 0 as uint16;
-    loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap
-            [(i_0 as ::core::ffi::c_int + 256 as ::core::ffi::c_int) as usize] =
-            kSmallMsgBoxTopBottomBorderTilemap
-                [(v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize];
-        v1 = (v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
-        i_0 = i_0.wrapping_add(1);
-        n -= 1;
-        if !(n != 0) {
-            break;
-        }
-    }
+    WriteMessageBoxTilemapRow(0, &kSmallMsgBoxTopBottomBorderTilemap, game);
+    let end = WriteMessageTilemap(game);
+    WriteMessageBoxTilemapRow(end, &kSmallMsgBoxTopBottomBorderTilemap, game);
 }
 unsafe fn CallMsgBoxDraw(mut ea: uint32, game: &mut Game) {
     match ea {
@@ -420,60 +373,33 @@ unsafe fn SetupPpuForActiveMessageBox(mut r52: uint16, game: &mut Game) {
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
     WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
 }
-unsafe fn DrawSpecialButtonAndSetupPpuForLargeMessageBox(mut a: uint16, game: &mut Game) {
-    let mut v1: uint16 = 0 as uint16;
-    if a as ::core::ffi::c_int & kButton_A as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-        v1 = 2 as uint16;
-        if a as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-            v1 = 4 as uint16;
-            if a as ::core::ffi::c_int & kButton_X as ::core::ffi::c_int == 0 as ::core::ffi::c_int
-            {
-                v1 = 6 as uint16;
-                if a as ::core::ffi::c_int & kButton_Y as ::core::ffi::c_int
-                    == 0 as ::core::ffi::c_int
-                {
-                    v1 = 8 as uint16;
-                    if a as ::core::ffi::c_int & kButton_Select as ::core::ffi::c_int
-                        == 0 as ::core::ffi::c_int
-                    {
-                        v1 = 10 as uint16;
-                        if a as ::core::ffi::c_int & kButton_L as ::core::ffi::c_int
-                            == 0 as ::core::ffi::c_int
-                        {
-                            v1 = 12 as uint16;
-                            if a as ::core::ffi::c_int & kButton_R as ::core::ffi::c_int
-                                == 0 as ::core::ffi::c_int
-                            {
-                                v1 = 14 as uint16;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    *(((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-        .pause_menu_map_tilemap as *mut uint16)
-        .offset(256) as *mut uint16 as *mut uint8)
-        .offset(
-            kMsgBoxSpecialButtonTilemapOffs[(*((&raw mut game.g_ram as *mut uint8).offset(0x1c1f)
-                as *mut uint16) as ::core::ffi::c_int
-                - 1 as ::core::ffi::c_int) as usize] as ::core::ffi::c_int as isize,
-        ) as *mut uint16) = kTileNumbersForButtonLetters
-        [(v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize];
-    SetupPpuForActiveMessageBox(416 as uint16, game);
+unsafe fn DrawSpecialButtonAndSetupPpuForLargeMessageBox(a: uint16, game: &mut Game) {
+    let buttons = [
+        kButton_A,
+        kButton_B,
+        kButton_X,
+        kButton_Y,
+        kButton_Select,
+        kButton_L,
+        kButton_R,
+    ];
+    let letter = buttons
+        .iter()
+        .position(|&button| a & button as u16 != 0)
+        .unwrap_or(7);
+    let message = u16::from_le_bytes([game.g_ram[0x1c1f], game.g_ram[0x1c20]]) as isize - 1;
+    let offset = usize::from(kMsgBoxSpecialButtonTilemapOffs[message as usize]);
+    game.g_ram[0x3200 + offset..0x3202 + offset]
+        .copy_from_slice(&kTileNumbersForButtonLetters[letter].to_le_bytes());
+    SetupPpuForActiveMessageBox(416, game);
 }
 unsafe fn DrawShootButtonAndSetupPpuForLargeMessageBox(game: &mut Game) {
-    DrawSpecialButtonAndSetupPpuForLargeMessageBox(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9b2) as *mut uint16),
-        game,
-    );
+    let button = u16::from_le_bytes([game.g_ram[0x9b2], game.g_ram[0x9b3]]);
+    DrawSpecialButtonAndSetupPpuForLargeMessageBox(button, game);
 }
 unsafe fn DrawRunButtonAndSetupPpuForLargeMessageBox(game: &mut Game) {
-    DrawSpecialButtonAndSetupPpuForLargeMessageBox(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9b6) as *mut uint16),
-        game,
-    );
+    let button = u16::from_le_bytes([game.g_ram[0x9b6], game.g_ram[0x9b7]]);
+    DrawSpecialButtonAndSetupPpuForLargeMessageBox(button, game);
 }
 unsafe fn SetupPpuForSmallMessageBox(game: &mut Game) {
     SetupPpuForActiveMessageBox(448 as uint16, game);
@@ -505,33 +431,11 @@ unsafe fn CallMsgBoxModify(mut ea: uint32, game: &mut Game) {
     };
 }
 unsafe fn InitializeMessageBox(game: &mut Game) {
-    let mut v0: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x1c1f)
-        as *mut uint16) as ::core::ffi::c_int
-        - 1 as ::core::ffi::c_int;
-    CallMsgBoxDraw(
-        ((*(game.g_rom.offset(
-            (((0x85869b as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x85869b as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut MsgBoxConfig)
-            .offset(v0 as isize))
-        .draw_initial_tilemap as ::core::ffi::c_int
-            | 0x850000 as ::core::ffi::c_int) as uint32,
-        game,
-    );
-    CallMsgBoxModify(
-        ((*(game.g_rom.offset(
-            (((0x85869b as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x85869b as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut MsgBoxConfig)
-            .offset(v0 as isize))
-        .modify_box_func as ::core::ffi::c_int
-            | 0x850000 as ::core::ffi::c_int) as uint32,
-        game,
-    );
+    let index = u16::from_le_bytes([game.g_ram[0x1c1f], game.g_ram[0x1c20]]) as isize - 1;
+    let draw = (*game.g_rom.add(0x2869b).cast::<MsgBoxConfig>().offset(index)).draw_initial_tilemap;
+    CallMsgBoxDraw(0x850000 | u32::from(draw), game);
+    let modify = (*game.g_rom.add(0x2869b).cast::<MsgBoxConfig>().offset(index)).modify_box_func;
+    CallMsgBoxModify(0x850000 | u32::from(modify), game);
 }
 static kSaveConfirmationSelectionTilemap: [uint16; 96] = [
     0xe as ::core::ffi::c_int as uint16,
@@ -632,29 +536,10 @@ static kSaveConfirmationSelectionTilemap: [uint16; 96] = [
     0xe as ::core::ffi::c_int as uint16,
 ];
 unsafe fn ToggleSaveConfirmationSelection(game: &mut Game) {
-    let ref mut fresh7 = *((&raw mut game.g_ram as *mut uint8).offset(0x5f9) as *mut uint16);
-    *fresh7 = (*fresh7 as ::core::ffi::c_int ^ 2 as ::core::ffi::c_int) as uint16;
-    let mut v0: uint16 = 64 as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x5f9) as *mut uint16) as ::core::ffi::c_int
-        == 2 as ::core::ffi::c_int
-    {
-        v0 = 128 as uint16;
-    }
-    let mut v1: uint16 = 128 as uint16;
-    let mut r52: ::core::ffi::c_int = 32 as ::core::ffi::c_int;
-    loop {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap
-            [(v1 as ::core::ffi::c_int + 256 as ::core::ffi::c_int) as usize] =
-            kSaveConfirmationSelectionTilemap
-                [(v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize];
-        v1 = v1.wrapping_add(1);
-        v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
-        r52 -= 1;
-        if !(r52 != 0) {
-            break;
-        }
-    }
+    let selection = u16::from_le_bytes([game.g_ram[0x5f9], game.g_ram[0x5fa]]) ^ 2;
+    game.g_ram[0x5f9..0x5fb].copy_from_slice(&selection.to_le_bytes());
+    let row = if selection == 2 { 64 } else { 32 };
+    WriteMessageBoxTilemapRow(128, &kSaveConfirmationSelectionTilemap[row..row + 32], game);
     WriteRegWord(
         VMADDL as ::core::ffi::c_int as uint16,
         addr_unk_6059A0 as ::core::ffi::c_int as uint16,
@@ -665,13 +550,7 @@ unsafe fn ToggleSaveConfirmationSelection(game: &mut Game) {
         0x1801 as uint16,
         game,
     );
-    WriteRegWord(
-        A1T1L as ::core::ffi::c_int as uint16,
-        (((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000 as *mut uint8)
-            .offset_from(&raw mut game.g_ram as *mut uint8) as ::core::ffi::c_long
-            + 512 as ::core::ffi::c_long) as uint16,
-        game,
-    );
+    WriteRegWord(A1T1L as ::core::ffi::c_int as uint16, 0x3200, game);
     WriteRegWord(A1B1 as ::core::ffi::c_int as uint16, 0x7e as uint16, game);
     WriteRegWord(DAS1L as ::core::ffi::c_int as uint16, 0x180 as uint16, game);
     WriteRegWord(DAS10 as ::core::ffi::c_int as uint16, 0 as uint16, game);
