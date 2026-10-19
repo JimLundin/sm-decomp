@@ -16617,6 +16617,31 @@ falls by one from formatting. Peer changes retain separate checks. No probe,
 input, checkpoint or temporary script is committed. Continue the shared
 state and movement-family cleanup; gameplay through credits remains unfinished.
 
+Fireball child-spawn parameter resets (2026-10-19): four scalar
+word stores in horizontal/vertical spawn instruction handlers now use the
+existing little-endian byte-backed projectile writer. Each reset remains
+immediately before its respective SpawnEprojWithRoomGfx callback; handler
+arguments, returned instruction pointer and unsafe callback boundary remain.
+
+Frozen 8ccedfcb plus only this change passes
+any% 129712/0 (207.22s) and Warehouse 128547/0
+(233.80s), native exits 0. Observed any% 129712/0
+(230.30s) reaches both handlers: 95BA 4,
+95ED 2. Every byte-backed write matches the original unaligned
+store over complete RAM. Clean/observed non-timing diagnostics match;
+source/DLL/ROM/input hashes remain fixed and maintained region matches.
+Extracted old/current handlers match complete RAM, callback arguments and
+return pointers in 262144 cases: both handlers, every 16-bit slot index,
+two backing patterns and parameter-mutating callbacks that require the
+second clear. Other frozen sources match HEAD after newline normalization;
+only these four stores differ in the bank.
+
+Cargo fmt/check, normal release build (42.41s) and progress pass. Net raw
+offsets -4; Rust lines, cast lines, unsafe functions and other own counters
+unchanged. No probes or ROM-derived artifacts committed. Continue indexed
+projectile state/handler families; broader gameplay/credits,
+hardware/audio/masks and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

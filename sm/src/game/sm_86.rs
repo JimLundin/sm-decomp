@@ -3085,9 +3085,9 @@ pub unsafe fn EprojInstr_95BA(
     mut epjp: *const uint8,
     game: &mut Game,
 ) -> *const uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1995) as *mut uint16) = 0 as uint16;
+    EprojStateMut(&mut game.g_ram).write(0x1995, 0, 0);
     SpawnEprojWithRoomGfx(addr_stru_86966C as ::core::ffi::c_int as uint16, k, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1995) as *mut uint16) = 0 as uint16;
+    EprojStateMut(&mut game.g_ram).write(0x1995, 0, 0);
     SpawnEprojWithRoomGfx(addr_stru_86967A as ::core::ffi::c_int as uint16, k, game);
     return epjp;
 }
@@ -3096,9 +3096,9 @@ pub unsafe fn EprojInstr_95ED(
     mut epjp: *const uint8,
     game: &mut Game,
 ) -> *const uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1995) as *mut uint16) = 0 as uint16;
+    EprojStateMut(&mut game.g_ram).write(0x1995, 0, 0);
     SpawnEprojWithRoomGfx(addr_stru_869688 as ::core::ffi::c_int as uint16, k, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1995) as *mut uint16) = 0 as uint16;
+    EprojStateMut(&mut game.g_ram).write(0x1995, 0, 0);
     SpawnEprojWithRoomGfx(addr_stru_869696 as ::core::ffi::c_int as uint16, k, game);
     return epjp;
 }
