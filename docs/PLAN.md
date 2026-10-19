@@ -9895,6 +9895,23 @@ item/boss coverage. Held upper99BD ascent, cliff tuning, old9AD9 drop ammo
 and HDMA stay held. Credits, complete gameplay/hardware, rendering/audio,
 masked RAM and ownership remain unfinished.
 
+CPU safe direct-page address completion (2026-10-19): direct_page_address
+shares callback-free alignment-cycle and wrapped address calculation after
+operand fetch for direct/DP-X/DP-Y wrappers. Full X/Y values remain independent
+of XF; low/high addresses wrap at 16 bits. Alignment cycle still precedes DP
+and index reads. The safe reference begins after fetch callbacks. Frozen
+`4a2fdaa7` plus this change passes 100,663,296 actual old/current wrapper cases:
+all DP words and operand bytes, three index selections with complementary
+X/Y values, varied MF/XF/E and PC 8000/FFFF. Address pairs, named CPU/bus
+fields, operand RAM, PC wrapping and cycles match. This is not all independent
+DP/index Cartesian values or mutating MMIO fetch coverage. Prefix 3,600/0
+(1.09s), native exit 0, executes direct/DP-X/DP-Y 1,152,945/26,579/5,963 times.
+Clean full any% 129,712/0 (58.74s), native exit 0. Cargo fmt/check, full release/
+release-library builds with external SDL2, normal metadata and optimized frozen
+core/DLL pass. Live CPU matches verified source; peer gameplay/PPU work is
+outside this replay. Rust lines -1; other own counters unchanged. Complete
+gameplay/render/audio remain open. Continue covered CPU cleanup; TSX/ROR held.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

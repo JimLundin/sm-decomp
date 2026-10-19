@@ -273,26 +273,25 @@ fn address_immediate(cpu: &mut Cpu, xFlag: bool) -> (u32, u32) {
 }
 unsafe fn address_direct_page(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
     let adr = u16::from(fetch_byte(cpu, game));
-    if (*cpu).dp & 0xff != 0 {
-        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-    }
-    let address = (*cpu).dp.wrapping_add(adr);
-    (u32::from(address), u32::from(address.wrapping_add(1)))
+    direct_page_address(adr, None, &mut *cpu)
 }
 unsafe fn address_direct_page_x(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
     let adr = u16::from(fetch_byte(cpu, game));
-    if (*cpu).dp & 0xff != 0 {
-        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-    }
-    let address = (*cpu).dp.wrapping_add(adr).wrapping_add((*cpu).x);
-    (u32::from(address), u32::from(address.wrapping_add(1)))
+    direct_page_address(adr, Some(CpuRegister::X), &mut *cpu)
 }
 unsafe fn address_direct_page_y(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
     let adr = u16::from(fetch_byte(cpu, game));
-    if (*cpu).dp & 0xff != 0 {
-        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
+    direct_page_address(adr, Some(CpuRegister::Y), &mut *cpu)
+}
+fn direct_page_address(offset: u16, index: Option<CpuRegister>, cpu: &mut Cpu) -> (u32, u32) {
+    if cpu.dp & 0xff != 0 {
+        cpu.cyclesUsed = cpu.cyclesUsed.wrapping_add(1);
     }
-    let address = (*cpu).dp.wrapping_add(adr).wrapping_add((*cpu).y);
+    let address = cpu.dp.wrapping_add(offset);
+    let address = match index {
+        Some(register) => address.wrapping_add(register.value(cpu)),
+        None => address,
+    };
     (u32::from(address), u32::from(address.wrapping_add(1)))
 }
 unsafe fn address_direct_page_indirect(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
