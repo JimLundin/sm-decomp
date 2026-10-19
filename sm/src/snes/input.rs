@@ -10,8 +10,8 @@ pub use crate::types::{
 pub unsafe fn input_init(snes: *mut Snes) -> *mut Input {
     let input: *mut Input = malloc(::core::mem::size_of::<Input>() as size_t) as *mut Input;
     (*input).snes = snes;
-    (*input).type_0 = 1 as u8;
-    (*input).currentState = 0 as u16;
+    (*input).type_0 = 1u8;
+    (*input).currentState = 0u16;
     input
 }
 pub unsafe fn input_free(input: *mut Input) {

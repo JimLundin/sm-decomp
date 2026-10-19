@@ -45,45 +45,45 @@ pub unsafe fn EnableAnimtiles(game: &mut Game) {
 pub unsafe fn DisableAnimtiles(game: &mut Game) {
     update_ram_word!(
         game.animtiles_enable_flag,
-        |fresh8| (fresh8 as i32 & !(0x8000 as i32)) as u16
+        |fresh8| (fresh8 as i32 & !(0x8000i32)) as u16
     );
 }
 pub unsafe fn ClearAnimtiles(game: &mut Game) {
-    let mut i: i32 = 10 as i32;
+    let mut i: i32 = 10i32;
     while i >= 0i32 {
-        set_ram_word!(game.animtiles_ids[(i >> 1i32)] = 0 as u16);
-        i -= 2 as i32;
+        set_ram_word!(game.animtiles_ids[(i >> 1i32)] = 0u16);
+        i -= 2i32;
     }
 }
 pub unsafe fn SpawnAnimtiles(j: u16, game: &mut Game) {
     let v0: u16 = j;
-    let mut v1: u16 = 10 as u16;
+    let mut v1: u16 = 10u16;
     while ram_word!(game, animtiles_ids[(v1 as i32 >> 1i32)]) != 0 {
         v1 = (v1).wrapping_sub(2u16);
-        if (v1 as i32 & 0x8000 as i32) != 0i32 {
+        if (v1 as i32 & 0x8000i32) != 0i32 {
             return;
         }
     }
-    let v2: i32 = v1 as i32 >> 1 as i32;
+    let v2: i32 = v1 as i32 >> 1i32;
     set_ram_word!(game.animtiles_ids[v2] = v0);
-    set_ram_word!(game.animtiles_timers[v2] = 0 as u16);
+    set_ram_word!(game.animtiles_timers[v2] = 0u16);
     let v3: *const u16 = RomPtr_87(v0, game) as *const u16;
     set_ram_word!(game.animtiles_instr_list_ptrs[v2] = *v3);
-    set_ram_word!(game.animtiles_src_ptr[v2] = 0 as u16);
+    set_ram_word!(game.animtiles_src_ptr[v2] = 0u16);
     set_ram_word!(game.animtiles_sizes[v2] = *v3.offset(1));
     set_ram_word!(game.animtiles_vram_ptr[v2] = *v3.offset(2));
-    set_ram_word!(game.animtiles_instr_timers[v2] = 1 as u16);
+    set_ram_word!(game.animtiles_instr_timers[v2] = 1u16);
 }
 pub unsafe fn AnimtilesHandler(game: &mut Game) {
-    if (ram_word!(game, animtiles_enable_flag) as i32 & 0x8000 as i32) != 0i32 {
-        let mut i: i32 = 10 as i32;
+    if (ram_word!(game, animtiles_enable_flag) as i32 & 0x8000i32) != 0i32 {
+        let mut i: i32 = 10i32;
         while i >= 0i32 {
             set_ram_word!(game.animtiles_object_index = i as u16);
             if ram_word!(game, animtiles_ids[(i >> 1i32)]) != 0 {
                 ProcessAnimtilesObject(game);
                 i = ram_word!(game, animtiles_object_index) as i32;
             }
-            i -= 2 as i32;
+            i -= 2i32;
         }
     }
 }
@@ -118,7 +118,7 @@ pub unsafe fn CallAnimtilesInstr(ea: u32, j: u16, k: u16, game: &mut Game) -> u1
 }
 pub unsafe fn ProcessAnimtilesObject(game: &mut Game) {
     let v0: u16 = ram_word!(game, animtiles_object_index);
-    let v1: i32 = ram_word!(game, animtiles_object_index) as i32 >> 1 as i32;
+    let v1: i32 = ram_word!(game, animtiles_object_index) as i32 >> 1i32;
     let ref mut fresh6 =
         *((&raw mut game.g_ram as *mut u8).offset(0x1f19) as *mut u16).offset(v1 as isize);
     let fresh7 = *fresh6;
@@ -129,7 +129,7 @@ pub unsafe fn ProcessAnimtilesObject(game: &mut Game) {
         loop {
             let v4: *const u16 = RomPtr_87(v3, game) as *const u16;
             v5 = *v4;
-            if (*v4 as i32 & 0x8000 as i32) == 0i32 {
+            if (*v4 as i32 & 0x8000i32) == 0i32 {
                 break;
             }
             set_ram_word!(game.animtiles_instruction = *v4);
@@ -143,15 +143,15 @@ pub unsafe fn ProcessAnimtilesObject(game: &mut Game) {
                 return;
             }
         }
-        let v6: i32 = v0 as i32 >> 1 as i32;
+        let v6: i32 = v0 as i32 >> 1i32;
         set_ram_word!(game.animtiles_instr_timers[v6] = v5);
         set_ram_word!(game.animtiles_src_ptr[v6] = *(RomPtr_87(v3, game) as *mut u16).offset(1));
         set_ram_word!(game.animtiles_instr_list_ptrs[v6] = (v3).wrapping_add(4u16));
     }
 }
 pub unsafe fn AnimtilesInstr_Delete(k: u16, j: u16, game: &mut Game) -> u16 {
-    set_ram_word!(game.animtiles_ids[(k as i32 >> 1i32)] = 0 as u16);
-    0 as u16
+    set_ram_word!(game.animtiles_ids[(k as i32 >> 1i32)] = 0u16);
+    0u16
 }
 pub unsafe fn AnimtilesInstr_Goto(k: u16, j: u16, game: &mut Game) -> u16 {
     *(RomPtr_87(j, game) as *mut u16)
@@ -161,7 +161,7 @@ pub unsafe fn AnimtilesInstr_GotoRel(k: u16, j: u16, game: &mut Game) -> u16 {
     (j).wrapping_add((*RomPtr_87(j, game) as i8) as u16)
 }
 pub unsafe fn AnimtilesInstr_DecrementTimerAndGoto(k: u16, j: u16, game: &mut Game) -> u16 {
-    let v2: i32 = k as i32 >> 1 as i32;
+    let v2: i32 = k as i32 >> 1i32;
     let ref mut fresh0 =
         *((&raw mut game.g_ram as *mut u8).offset(0x1f01) as *mut u16).offset(v2 as isize);
     let fresh1 = *fresh0;
@@ -173,7 +173,7 @@ pub unsafe fn AnimtilesInstr_DecrementTimerAndGoto(k: u16, j: u16, game: &mut Ga
     }
 }
 pub unsafe fn AnimtilesInstr_DecrementTimerAndGotoRel(k: u16, j: u16, game: &mut Game) -> u16 {
-    let v2: i32 = k as i32 >> 1 as i32;
+    let v2: i32 = k as i32 >> 1i32;
     let ref mut fresh2 =
         *((&raw mut game.g_ram as *mut u8).offset(0x1f01) as *mut u16).offset(v2 as isize);
     let fresh3 = *fresh2;
@@ -212,7 +212,7 @@ pub unsafe fn AnimtilesInstr_QueueSfx3(k: u16, j: u16, game: &mut Game) -> u16 {
 pub unsafe fn AnimtilesInstr_GotoIfBossBitSet(k: u16, j: u16, game: &mut Game) -> u16 {
     let v2: *const u8 = RomPtr_87(j, game);
     let v3: u16 = (j).wrapping_add(1u16);
-    if CheckBossBitForCurArea(*(v2 as *mut u16) as u8 as u16, game) as i32 & 1 as i32 != 0 {
+    if CheckBossBitForCurArea(*(v2 as *mut u16) as u8 as u16, game) as i32 & 1i32 != 0 {
         AnimtilesInstr_Goto(k, v3, game)
     } else {
         (v3).wrapping_add(2u16)
@@ -226,7 +226,7 @@ pub unsafe fn AnimtilesInstr_SetBossBit(k: u16, j: u16, game: &mut Game) -> u16 
 pub unsafe fn AnimtilesInstr_GotoIfEventHappened(k: u16, j: u16, game: &mut Game) -> u16 {
     let v2: *const u16 = RomPtr_87(j, game) as *const u16;
     let v3: u16 = (j).wrapping_add(2u16);
-    if CheckEventHappened(*v2, game) as i32 & 1 as i32 != 0 {
+    if CheckEventHappened(*v2, game) as i32 & 1i32 != 0 {
         AnimtilesInstr_Goto(k, v3, game)
     } else {
         (v3).wrapping_add(2u16)
@@ -238,19 +238,19 @@ pub unsafe fn AnimtilesInstr_SetEventHappened(k: u16, j: u16, game: &mut Game) -
     (j).wrapping_add(2u16)
 }
 pub unsafe fn UNUSED_sub_87815A(game: &mut Game) {
-    CallSomeSamusCode(0 as u16, game);
+    CallSomeSamusCode(0u16, game);
 }
 pub unsafe fn UNUSED_sub_878162(game: &mut Game) {
-    CallSomeSamusCode(1 as u16, game);
+    CallSomeSamusCode(1u16, game);
 }
 pub unsafe fn AnimtilesInstr_WaitUntilAreaBossDead_DoubleRet(
     k: u16,
     j: u16,
     game: &mut Game,
 ) -> u16 {
-    if CheckBossBitForCurArea(1 as u16, game) as i32 & 1 as i32 == 0 {
-        set_ram_word!(game.animtiles_instr_timers[(k as i32 >> 1i32)] = 1 as u16);
-        return 0 as u16;
+    if CheckBossBitForCurArea(1u16, game) as i32 & 1i32 == 0 {
+        set_ram_word!(game.animtiles_instr_timers[(k as i32 >> 1i32)] = 1u16);
+        return 0u16;
     }
     j
 }
@@ -279,7 +279,7 @@ pub unsafe fn AnimtilesInstr_SpawnTourianStatueSoul(k: u16, j: u16, game: &mut G
     (j).wrapping_add(2u16)
 }
 pub unsafe fn AnimtilesInstr_GotoIfTourianStatueBusy(k: u16, j: u16, game: &mut Game) -> u16 {
-    if (ram_word!(game, tourian_entrance_statue_animstate) as i32 & 0x8000 as i32) == 0i32 {
+    if (ram_word!(game, tourian_entrance_statue_animstate) as i32 & 0x8000i32) == 0i32 {
         (j).wrapping_add(2u16)
     } else {
         AnimtilesInstr_Goto(k, j, game)
@@ -298,10 +298,10 @@ pub unsafe fn AnimtilesInstr_TourianStatueClearState(k: u16, j: u16, game: &mut 
     (j).wrapping_add(2u16)
 }
 pub unsafe fn AnimtilesInstr_Clear3PaletteColors(k: u16, j: u16, game: &mut Game) -> u16 {
-    let v2: i32 = *(RomPtr_87(j, game) as *mut u16) as i32 >> 1 as i32;
-    set_ram_word!(game.palette_buffer[v2] = 0 as u16);
-    set_ram_word!(game.palette_buffer[(v2 + 1i32)] = 0 as u16);
-    set_ram_word!(game.palette_buffer[(v2 + 2i32)] = 0 as u16);
+    let v2: i32 = *(RomPtr_87(j, game) as *mut u16) as i32 >> 1i32;
+    set_ram_word!(game.palette_buffer[v2] = 0u16);
+    set_ram_word!(game.palette_buffer[(v2 + 1i32)] = 0u16);
+    set_ram_word!(game.palette_buffer[(v2 + 2i32)] = 0u16);
     (j).wrapping_add(2u16)
 }
 pub unsafe fn AnimtilesInstr_SpawnPalfxObj(k: u16, j: u16, game: &mut Game) -> u16 {
@@ -314,14 +314,14 @@ pub unsafe fn AnimtilesInstr_Write8PaletteColors(k: u16, j: u16, game: &mut Game
         0x3800, 0x7f58, 0x6ed5, 0x5a71, 0x49ee, 0x356a, 0x24e7, 0x1083,
     ];
     let mut v2: u16 = *(RomPtr_87(j, game) as *mut u16);
-    let mut i: i32 = 0 as i32;
+    let mut i: i32 = 0i32;
     while i != 16i32 {
         set_ram_word!(
             game.target_palettes[(v2 as i32 >> 1i32)] =
-                kAnimtilesInstr_Write8PaletteColors[(i >> 1 as i32) as usize]
+                kAnimtilesInstr_Write8PaletteColors[(i >> 1i32) as usize]
         );
         v2 = (v2).wrapping_add(2u16);
-        i += 2 as i32;
+        i += 2i32;
     }
     (j).wrapping_add(2u16)
 }

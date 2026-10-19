@@ -186,19 +186,19 @@ fn MsgBoxMakeHdmaTable(game: &mut Game) {
 }
 unsafe fn SetupMessageBoxBg3YscrollHdma(game: &mut Game) {
     game.g_ram[0x3380..0x3387].copy_from_slice(&[0xff, 0x00, 0x30, 0xe1, 0xfe, 0x30, 0x00]);
-    WriteReg(DMAP6 as u16, 0x42 as u8, game);
-    WriteReg(BBAD6 as u16, 0x12 as u8, game);
-    WriteReg(A1T6L as u16, 0x80 as u8, game);
-    WriteReg(DAS6L as u16, 0x80 as u8, game);
-    WriteReg(A1T6H as u16, 0x33 as u8, game);
-    WriteReg(DAS6H as u16, 0x33 as u8, game);
-    WriteReg(A1B6 as u16, 0x7e as u8, game);
-    WriteReg(DAS60 as u16, 0x7e as u8, game);
-    WriteReg(A2A6L as u16, 0 as u8, game);
-    WriteReg(A2A6H as u16, 0 as u8, game);
-    WriteReg(NTRL6 as u16, 0 as u8, game);
+    WriteReg(DMAP6 as u16, 0x42u8, game);
+    WriteReg(BBAD6 as u16, 0x12u8, game);
+    WriteReg(A1T6L as u16, 0x80u8, game);
+    WriteReg(DAS6L as u16, 0x80u8, game);
+    WriteReg(A1T6H as u16, 0x33u8, game);
+    WriteReg(DAS6H as u16, 0x33u8, game);
+    WriteReg(A1B6 as u16, 0x7eu8, game);
+    WriteReg(DAS60 as u16, 0x7eu8, game);
+    WriteReg(A2A6L as u16, 0u8, game);
+    WriteReg(A2A6H as u16, 0u8, game);
+    WriteReg(NTRL6 as u16, 0u8, game);
     MsgBoxMakeHdmaTable(game);
-    WriteReg(HDMAEN as u16, 0x40 as u8, game);
+    WriteReg(HDMAEN as u16, 0x40u8, game);
 }
 unsafe fn SetupPpuForActiveMessageBox(r52: u16, game: &mut Game) {
     SetupMessageBoxBg3YscrollHdma(game);
@@ -241,10 +241,10 @@ unsafe fn DrawRunButtonAndSetupPpuForLargeMessageBox(game: &mut Game) {
     DrawSpecialButtonAndSetupPpuForLargeMessageBox(button, game);
 }
 unsafe fn SetupPpuForSmallMessageBox(game: &mut Game) {
-    SetupPpuForActiveMessageBox(448 as u16, game);
+    SetupPpuForActiveMessageBox(448u16, game);
 }
 unsafe fn SetupPpuForLargeMessageBox(game: &mut Game) {
-    SetupPpuForActiveMessageBox(416 as u16, game);
+    SetupPpuForActiveMessageBox(416u16, game);
 }
 unsafe fn CallMsgBoxModify(ea: u32, game: &mut Game) {
     match ea {
@@ -289,14 +289,14 @@ unsafe fn ToggleSaveConfirmationSelection(game: &mut Game) {
     let row = if selection == 2 { 64 } else { 32 };
     WriteMessageBoxTilemapRow(128, &kSaveConfirmationSelectionTilemap[row..row + 32], game);
     WriteRegWord(VMADDL as u16, addr_unk_6059A0 as u16, game);
-    WriteRegWord(DMAP1 as u16, 0x1801 as u16, game);
+    WriteRegWord(DMAP1 as u16, 0x1801u16, game);
     WriteRegWord(A1T1L as u16, 0x3200, game);
-    WriteRegWord(A1B1 as u16, 0x7e as u16, game);
-    WriteRegWord(DAS1L as u16, 0x180 as u16, game);
-    WriteRegWord(DAS10 as u16, 0 as u16, game);
-    WriteRegWord(A2A1H as u16, 0 as u16, game);
-    WriteReg(VMAIN as u16, 0x80 as u8, game);
-    WriteReg(MDMAEN as u16, 2 as u8, game);
+    WriteRegWord(A1B1 as u16, 0x7eu16, game);
+    WriteRegWord(DAS1L as u16, 0x180u16, game);
+    WriteRegWord(DAS10 as u16, 0u16, game);
+    WriteRegWord(A2A1H as u16, 0u16, game);
+    WriteReg(VMAIN as u16, 0x80u8, game);
+    WriteReg(MDMAEN as u16, 2u8, game);
 }
 unsafe fn RestorePpuForMessageBox(game: &mut Game) {
     WriteRegWord(VMADDL as u16, addr_unk_605880 as u16, game);

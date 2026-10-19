@@ -137,7 +137,7 @@ unsafe fn RtlSyncMemoryRegion(ptr: *mut ::core::ffi::c_void, n: size_t, game: &m
                 b"data >= g_ram && data < g_ram + 0x20000\0" as *const u8
                     as *const ::core::ffi::c_char,
                 b"src/sm_rtl.c\0" as *const u8 as *const ::core::ffi::c_char,
-                38 as u32,
+                38u32,
                 b"void RtlSyncMemoryRegion(void *, size_t)\0" as *const u8
                     as *const ::core::ffi::c_char,
             );
@@ -154,9 +154,9 @@ unsafe fn RtlSyncMemoryRegion(ptr: *mut ::core::ffi::c_void, n: size_t, game: &m
     }
 }
 pub unsafe fn ByteArray_AppendVl(arr: *mut ByteArray, mut v: u32) {
-    while v >= 255 as u32 {
-        ByteArray_AppendByte(arr, 255 as u8);
-        v = v.wrapping_sub(255 as u32);
+    while v >= 255u32 {
+        ByteArray_AppendByte(arr, 255u8);
+        v = v.wrapping_sub(255u32);
     }
     ByteArray_AppendByte(arr, v as u8);
 }
@@ -182,7 +182,7 @@ pub unsafe fn loadFunc(
                 b"(size_t)(st->pend - st->p) >= data_size\0" as *const u8
                     as *const ::core::ffi::c_char,
                 b"src/sm_rtl.c\0" as *const u8 as *const ::core::ffi::c_char,
-                59 as u32,
+                59u32,
                 b"void loadFunc(void *, void *, size_t)\0" as *const u8
                     as *const ::core::ffi::c_char,
             );
@@ -201,26 +201,25 @@ unsafe fn LoadSnesState(
     (*(*game.g_snes).cpu).e = false_0 != 0;
     let next: u32 = ((*(*game.g_snes)
         .ram
-        .offset(((*(*game.g_snes).cpu).sp as i32 + 3 as i32) as isize)
-        as i32
+        .offset(((*(*game.g_snes).cpu).sp as i32 + 3i32) as isize) as i32
         | (*(*game.g_snes)
             .ram
-            .offset(((*(*game.g_snes).cpu).sp as i32 + 4 as i32) as isize) as i32)
-            << 8 as i32
+            .offset(((*(*game.g_snes).cpu).sp as i32 + 4i32) as isize) as i32)
+            << 8i32
         | (*(*game.g_snes)
             .ram
-            .offset(((*(*game.g_snes).cpu).sp as i32 + 5 as i32) as isize) as i32)
-            << 16 as i32)
-        + 1 as i32) as u32;
-    if next == 0x82897e as u32 {
+            .offset(((*(*game.g_snes).cpu).sp as i32 + 5i32) as isize) as i32)
+            << 16i32)
+        + 1i32) as u32;
+    if next == 0x82897eu32 {
         *(*game.g_snes)
             .ram
-            .offset(((*(*game.g_snes).cpu).sp as i32 + 3 as i32) as isize) =
-            (0xf71b as i32 - 1 as i32 & 0xff as i32) as u8;
+            .offset(((*(*game.g_snes).cpu).sp as i32 + 3i32) as isize) =
+            (0xf71bi32 - 1i32 & 0xffi32) as u8;
         *(*game.g_snes)
             .ram
-            .offset(((*(*game.g_snes).cpu).sp as i32 + 4 as i32) as isize) =
-            (0xf71b as i32 - 1 as i32 >> 8 as i32) as u8;
+            .offset(((*(*game.g_snes).cpu).sp as i32 + 4i32) as isize) =
+            (0xf71bi32 - 1i32 >> 8i32) as u8;
     }
     RtlSynchronizeWholeState(game);
 }
@@ -237,17 +236,17 @@ pub unsafe fn StateRecorder_Init(sr: *mut StateRecorder) {
     ByteArray_Destroy(&raw mut (*sr).base_snapshot);
     memset(
         sr as *mut ::core::ffi::c_void,
-        0 as i32,
+        0i32,
         ::core::mem::size_of::<StateRecorder>() as size_t,
     );
 }
 pub unsafe fn StateRecorder_RecordCmd(sr: *mut StateRecorder, cmd: u8) {
     let frames: i32 = (*sr).frames_since_last as i32;
-    (*sr).frames_since_last = 0 as u32;
-    let x: i32 = if (cmd as i32) < 0xc0 as i32 {
-        0xf as i32
+    (*sr).frames_since_last = 0u32;
+    let x: i32 = if (cmd as i32) < 0xc0i32 {
+        0xfi32
     } else {
-        0x1 as i32
+        0x1i32
     };
     ByteArray_AppendByte(
         &raw mut (*sr).log,
@@ -259,12 +258,12 @@ pub unsafe fn StateRecorder_RecordCmd(sr: *mut StateRecorder, cmd: u8) {
 }
 pub unsafe fn StateRecorder_Record(sr: *mut StateRecorder, inputs: u16) {
     let diff: u16 = (inputs as i32 ^ (*sr).last_inputs as i32) as u16;
-    if diff as i32 != 0 as i32 {
+    if diff as i32 != 0i32 {
         (*sr).last_inputs = inputs;
-        let mut i: i32 = 0 as i32;
-        while i < 12 as i32 {
-            if diff as i32 >> i & 1 as i32 != 0 {
-                StateRecorder_RecordCmd(sr, (i << 4 as i32) as u8);
+        let mut i: i32 = 0i32;
+        while i < 12i32 {
+            if diff as i32 >> i & 1i32 != 0 {
+                StateRecorder_RecordCmd(sr, (i << 4i32) as u8);
             }
             i += 1;
         }
@@ -279,39 +278,29 @@ pub unsafe fn StateRecorder_RecordPatchByte(
     num: i32,
 ) {
     '_c2rust_label: {
-        if addr < 0x20000 as u32 {
+        if addr < 0x20000u32 {
         } else {
             __assert_fail(
                 b"addr < 0x20000\0" as *const u8 as *const ::core::ffi::c_char,
                 b"src/sm_rtl.c\0" as *const u8 as *const ::core::ffi::c_char,
-                133 as u32,
+                133u32,
                 b"void StateRecorder_RecordPatchByte(StateRecorder *, uint32, const uint8 *, int)\0"
                     as *const u8 as *const ::core::ffi::c_char,
             );
         }
     };
     let lb: size_t = (*sr).log.size;
-    let lq: i32 = if num - 1 as i32 <= 3 as i32 {
-        num - 1 as i32
-    } else {
-        3 as i32
-    };
+    let lq: i32 = if num - 1i32 <= 3i32 { num - 1i32 } else { 3i32 };
     StateRecorder_RecordCmd(
         sr,
-        (0xc0 as i32
-            | (if addr & 0x10000 as u32 != 0 {
-                2 as i32
-            } else {
-                0 as i32
-            })
-            | lq << 2 as i32) as u8,
+        (0xc0i32 | (if addr & 0x10000u32 != 0 { 2i32 } else { 0i32 }) | lq << 2i32) as u8,
     );
-    if lq == 3 as i32 {
-        ByteArray_AppendVl(&raw mut (*sr).log, (num - 1 as i32 - 3 as i32) as u32);
+    if lq == 3i32 {
+        ByteArray_AppendVl(&raw mut (*sr).log, (num - 1i32 - 3i32) as u32);
     }
-    ByteArray_AppendByte(&raw mut (*sr).log, (addr >> 8 as i32) as u8);
+    ByteArray_AppendByte(&raw mut (*sr).log, (addr >> 8i32) as u8);
     ByteArray_AppendByte(&raw mut (*sr).log, addr as u8);
-    let mut i: i32 = 0 as i32;
+    let mut i: i32 = 0i32;
     while i < num {
         ByteArray_AppendByte(&raw mut (*sr).log, *value.offset(i as isize));
         i += 1;
@@ -323,21 +312,21 @@ pub unsafe fn ReadFromFile(f: *mut FILE, data: *mut ::core::ffi::c_void, n: size
     }
 }
 pub unsafe fn RtlReset(mode: i32, game: &mut Game) {
-    game.snes_frame_counter = 0 as i32;
+    game.snes_frame_counter = 0i32;
     snes_reset(game.g_snes as *mut Snes, true_0 != 0, game);
-    if mode & 1 as i32 == 0 {
+    if mode & 1i32 == 0 {
         memset(
             game.g_sram as *mut ::core::ffi::c_void,
-            0 as i32,
+            0i32,
             0x2000 as size_t,
         );
     }
-    *(&raw mut game.g_ram as *mut u8).offset(0x611) = 1 as u8;
+    *(&raw mut game.g_ram as *mut u8).offset(0x611) = 1u8;
     RtlApuLock();
     RtlRestoreMusicAfterLoad_Locked(true_0 != 0, game);
     RtlApuUnlock();
     RtlSynchronizeWholeState(game);
-    if mode & 2 as i32 == 0 as i32 {
+    if mode & 2i32 == 0i32 {
         StateRecorder_Init(&raw mut game.state_recorder);
     }
 }
@@ -353,7 +342,7 @@ pub unsafe fn StateRecorder_Load(
     replay_mode: bool,
     game: &mut Game,
 ) {
-    let mut hdr: [u32; 16] = [0 as i32 as u32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let mut hdr: [u32; 16] = [0i32 as u32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     let is_old: bool = false_0 != 0;
     let mut is_reset: bool = false_0 != 0;
     ReadFromFile(
@@ -361,15 +350,15 @@ pub unsafe fn StateRecorder_Load(
         &raw mut hdr as *mut u32 as *mut ::core::ffi::c_void,
         (8 as size_t).wrapping_mul(::core::mem::size_of::<u32>() as size_t),
     );
-    if hdr[0 as i32 as usize] != 2 as u32 {
-        hdr[8 as i32 as usize] = hdr[7 as i32 as usize];
-        hdr[7 as i32 as usize] = hdr[5 as i32 as usize] >> 1 as i32;
-        hdr[5 as i32 as usize] = if hdr[5 as i32 as usize] & 1 as u32 != 0 {
-            hdr[6 as i32 as usize]
+    if hdr[0i32 as usize] != 2u32 {
+        hdr[8i32 as usize] = hdr[7i32 as usize];
+        hdr[7i32 as usize] = hdr[5i32 as usize] >> 1i32;
+        hdr[5i32 as usize] = if hdr[5i32 as usize] & 1u32 != 0 {
+            hdr[6i32 as usize]
         } else {
-            0 as u32
+            0u32
         };
-    } else if hdr[0 as i32 as usize] == 2 as u32 {
+    } else if hdr[0i32 as usize] == 2u32 {
         ReadFromFile(
             f,
             (&raw mut hdr as *mut u32).offset(8) as *mut ::core::ffi::c_void,
@@ -380,40 +369,37 @@ pub unsafe fn StateRecorder_Load(
             __assert_fail(
                 b"0\0" as *const u8 as *const ::core::ffi::c_char,
                 b"src/sm_rtl.c\0" as *const u8 as *const ::core::ffi::c_char,
-                195 as u32,
+                195u32,
                 b"void StateRecorder_Load(StateRecorder *, FILE *, _Bool)\0" as *const u8
                     as *const ::core::ffi::c_char,
             );
         };
     }
-    (*sr).total_frames = hdr[1 as i32 as usize];
-    ByteArray_Resize(&raw mut (*sr).log, hdr[2 as i32 as usize] as size_t);
+    (*sr).total_frames = hdr[1i32 as usize];
+    ByteArray_Resize(&raw mut (*sr).log, hdr[2i32 as usize] as size_t);
     ReadFromFile(
         f,
         (*sr).log.data as *mut ::core::ffi::c_void,
         (*sr).log.size,
     );
-    (*sr).last_inputs = hdr[3 as i32 as usize] as u16;
-    (*sr).frames_since_last = hdr[4 as i32 as usize];
-    ByteArray_Resize(
-        &raw mut (*sr).base_snapshot,
-        hdr[5 as i32 as usize] as size_t,
-    );
+    (*sr).last_inputs = hdr[3i32 as usize] as u16;
+    (*sr).frames_since_last = hdr[4i32 as usize];
+    ByteArray_Resize(&raw mut (*sr).base_snapshot, hdr[5i32 as usize] as size_t);
     ReadFromFile(
         f,
         (*sr).base_snapshot.data as *mut ::core::ffi::c_void,
         (*sr).base_snapshot.size,
     );
     (*sr).has_base_audio_queue = false;
-    (*sr).snapshot_flags = hdr[9 as i32 as usize];
-    (*sr).replay_next_cmd_at = 0 as u32;
+    (*sr).snapshot_flags = hdr[9i32 as usize];
+    (*sr).replay_next_cmd_at = 0u32;
     (*sr).replay_mode = replay_mode;
     if replay_mode {
-        (*sr).frames_since_last = 0 as u32;
-        (*sr).last_inputs = 0 as u16;
-        (*sr).replay_pos_last_complete = 0 as u32;
+        (*sr).frames_since_last = 0u32;
+        (*sr).last_inputs = 0u16;
+        (*sr).replay_pos_last_complete = 0u32;
         (*sr).replay_pos = (*sr).replay_pos_last_complete;
-        (*sr).replay_frame_counter = 0 as u32;
+        (*sr).replay_frame_counter = 0u32;
         if (*sr).base_snapshot.size > 8192 as size_t {
             let mut state: LoadFuncState = LoadFuncState {
                 p: (*sr).base_snapshot.data,
@@ -441,14 +427,14 @@ pub unsafe fn StateRecorder_Load(
                     __assert_fail(
                         b"state.p == state.pend\0" as *const u8 as *const ::core::ffi::c_char,
                         b"src/sm_rtl.c\0" as *const u8 as *const ::core::ffi::c_char,
-                        219 as u32,
+                        219u32,
                         b"void StateRecorder_Load(StateRecorder *, FILE *, _Bool)\0" as *const u8
                             as *const ::core::ffi::c_char,
                     );
                 }
             };
         } else {
-            RtlReset(2 as i32, game);
+            RtlReset(2i32, game);
             if (*sr).base_snapshot.size == 8192 as size_t {
                 memcpy(
                     game.g_sram as *mut ::core::ffi::c_void,
@@ -459,17 +445,17 @@ pub unsafe fn StateRecorder_Load(
             is_reset = true_0 != 0;
         }
     } else {
-        (*sr).replay_pos_last_complete = hdr[7 as i32 as usize];
+        (*sr).replay_pos_last_complete = hdr[7i32 as usize];
         (*sr).replay_pos = (*sr).replay_pos_last_complete;
-        (*sr).replay_frame_counter = hdr[8 as i32 as usize];
-        (*sr).replay_mode = (*sr).replay_frame_counter != 0 as u32;
+        (*sr).replay_frame_counter = hdr[8i32 as usize];
+        (*sr).replay_mode = (*sr).replay_frame_counter != 0u32;
         '_c2rust_label_1: {
-            if hdr[6 as i32 as usize] == 275493 as u32 {
+            if hdr[6i32 as usize] == 275493u32 {
             } else {
                 __assert_fail(
                     b"hdr[6] == 275493\0" as *const u8 as *const ::core::ffi::c_char,
                     b"src/sm_rtl.c\0" as *const u8 as *const ::core::ffi::c_char,
-                    232 as u32,
+                    232u32,
                     b"void StateRecorder_Load(StateRecorder *, FILE *, _Bool)\0" as *const u8
                         as *const ::core::ffi::c_char,
                 );
@@ -480,7 +466,7 @@ pub unsafe fn StateRecorder_Load(
             size: 0,
             capacity: 0,
         };
-        ByteArray_Resize(&raw mut arr, hdr[6 as i32 as usize] as size_t);
+        ByteArray_Resize(&raw mut arr, hdr[6i32 as usize] as size_t);
         ReadFromFile(f, arr.data as *mut ::core::ffi::c_void, arr.size);
         let mut state_0: LoadFuncState = LoadFuncState {
             p: arr.data,
@@ -506,7 +492,7 @@ pub unsafe fn StateRecorder_Load(
                 __assert_fail(
                     b"state.p == state.pend\0" as *const u8 as *const ::core::ffi::c_char,
                     b"src/sm_rtl.c\0" as *const u8 as *const ::core::ffi::c_char,
-                    240 as u32,
+                    240u32,
                     b"void StateRecorder_Load(StateRecorder *, FILE *, _Bool)\0" as *const u8
                         as *const ::core::ffi::c_char,
                 );
@@ -559,7 +545,7 @@ pub unsafe fn StateRecorder_Save(
     saving_with_bug: bool,
     game: &mut Game,
 ) {
-    let mut hdr: [u32; 16] = [0 as i32 as u32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let mut hdr: [u32; 16] = [0i32 as u32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     let mut arr: ByteArray = ByteArray {
         data: ::core::ptr::null_mut::<u8>(),
         size: 0,
@@ -588,24 +574,24 @@ pub unsafe fn StateRecorder_Save(
                 b"sr->base_snapshot.size == 0 || sr->base_snapshot.size == arr.size || sr->base_snapshot.size == 8192\0"
                     as *const u8 as *const ::core::ffi::c_char,
                 b"src/sm_rtl.c\0" as *const u8 as *const ::core::ffi::c_char,
-                260 as u32,
+                260u32,
                 b"void StateRecorder_Save(StateRecorder *, FILE *, _Bool)\0" as *const u8
                     as *const ::core::ffi::c_char,
             );
         }
     };
-    hdr[0 as i32 as usize] = 2 as u32;
-    hdr[1 as i32 as usize] = (*sr).total_frames;
-    hdr[2 as i32 as usize] = (*sr).log.size as u32;
-    hdr[3 as i32 as usize] = (*sr).last_inputs as u32;
-    hdr[4 as i32 as usize] = (*sr).frames_since_last;
-    hdr[5 as i32 as usize] = (*sr).base_snapshot.size as u32;
-    hdr[6 as i32 as usize] = arr.size as u32;
+    hdr[0i32 as usize] = 2u32;
+    hdr[1i32 as usize] = (*sr).total_frames;
+    hdr[2i32 as usize] = (*sr).log.size as u32;
+    hdr[3i32 as usize] = (*sr).last_inputs as u32;
+    hdr[4i32 as usize] = (*sr).frames_since_last;
+    hdr[5i32 as usize] = (*sr).base_snapshot.size as u32;
+    hdr[6i32 as usize] = arr.size as u32;
     if (*sr).replay_mode {
-        hdr[7 as i32 as usize] = (*sr).replay_pos_last_complete;
-        hdr[8 as i32 as usize] = (*sr).replay_frame_counter;
+        hdr[7i32 as usize] = (*sr).replay_pos_last_complete;
+        hdr[8i32 as usize] = (*sr).replay_frame_counter;
     }
-    hdr[9 as i32 as usize] = (saving_with_bug as i32 * 1 as i32) as u32;
+    hdr[9i32 as usize] = (saving_with_bug as i32 * 1i32) as u32;
     // Reserved version-2 header words identify a final physical queue trailer.
     // Replay bases retain the host queue for either audio backend.
     let audio_queue = (!game.g_use_my_apu_code)
@@ -693,21 +679,21 @@ pub unsafe fn StateRecorder_ClearKeyLog(sr: *mut StateRecorder, game: &mut Game)
     let old_frames_since_last: i32 = (*sr).frames_since_last as i32;
     memset(
         &raw mut (*sr).log as *mut ::core::ffi::c_void,
-        0 as i32,
+        0i32,
         ::core::mem::size_of::<ByteArray>() as size_t,
     );
-    (*sr).frames_since_last = 0 as u32;
+    (*sr).frames_since_last = 0u32;
     if (*sr).last_inputs != 0 {
-        let mut i: i32 = 0 as i32;
-        while i < 12 as i32 {
-            if (*sr).last_inputs as i32 >> i & 1 as i32 != 0 {
-                StateRecorder_RecordCmd(sr, (i << 4 as i32) as u8);
+        let mut i: i32 = 0i32;
+        while i < 12i32 {
+            if (*sr).last_inputs as i32 >> i & 1i32 != 0 {
+                StateRecorder_RecordCmd(sr, (i << 4i32) as u8);
             }
             i += 1;
         }
     }
     if (*sr).replay_mode {
-        if (*sr).replay_next_cmd_at != 0xffffffff as u32 {
+        if (*sr).replay_next_cmd_at != 0xffffffffu32 {
             (*sr).replay_next_cmd_at = (*sr)
                 .replay_next_cmd_at
                 .wrapping_sub(old_frames_since_last as u32);
@@ -723,12 +709,12 @@ pub unsafe fn StateRecorder_ClearKeyLog(sr: *mut StateRecorder, game: &mut Game)
             );
         }
         (*sr).total_frames = (*sr).total_frames.wrapping_sub((*sr).replay_frame_counter);
-        (*sr).replay_frame_counter = 0 as u32;
+        (*sr).replay_frame_counter = 0u32;
     } else {
-        (*sr).total_frames = 0 as u32;
+        (*sr).total_frames = 0u32;
     }
     ByteArray_Destroy(&raw mut old_log);
-    (*sr).frames_since_last = 0 as u32;
+    (*sr).frames_since_last = 0u32;
 }
 pub unsafe fn StateRecorder_ReadNextReplayState(sr: *mut StateRecorder, game: &mut Game) -> u16 {
     '_c2rust_label: {
@@ -737,7 +723,7 @@ pub unsafe fn StateRecorder_ReadNextReplayState(sr: *mut StateRecorder, game: &m
             __assert_fail(
                 b"sr->replay_mode\0" as *const u8 as *const ::core::ffi::c_char,
                 b"src/sm_rtl.c\0" as *const u8 as *const ::core::ffi::c_char,
-                322 as u32,
+                322u32,
                 b"uint16 StateRecorder_ReadNextReplayState(StateRecorder *)\0" as *const u8
                     as *const ::core::ffi::c_char,
             );
@@ -746,40 +732,38 @@ pub unsafe fn StateRecorder_ReadNextReplayState(sr: *mut StateRecorder, game: &m
     while (*sr).frames_since_last >= (*sr).replay_next_cmd_at {
         let mut replay_pos: i32 = (*sr).replay_pos as i32;
         if replay_pos as u32 != (*sr).replay_pos_last_complete {
-            (*sr).frames_since_last = 0 as u32;
-            if ((*sr).replay_cmd as i32) < 0xc0 as i32 {
-                (*sr).last_inputs = ((*sr).last_inputs as i32
-                    ^ (1 as i32) << ((*sr).replay_cmd as i32 >> 4 as i32))
-                    as u16;
-            } else if ((*sr).replay_cmd as i32) < 0xd0 as i32 {
-                let mut nb: i32 = 1 as i32 + ((*sr).replay_cmd as i32 >> 2 as i32 & 3 as i32);
+            (*sr).frames_since_last = 0u32;
+            if ((*sr).replay_cmd as i32) < 0xc0i32 {
+                (*sr).last_inputs =
+                    ((*sr).last_inputs as i32 ^ (1i32) << ((*sr).replay_cmd as i32 >> 4i32)) as u16;
+            } else if ((*sr).replay_cmd as i32) < 0xd0i32 {
+                let mut nb: i32 = 1i32 + ((*sr).replay_cmd as i32 >> 2i32 & 3i32);
                 let mut t: u8 = 0;
-                if nb == 4 as i32 {
+                if nb == 4i32 {
                     loop {
                         let fresh3 = replay_pos;
                         replay_pos = replay_pos + 1;
                         t = *(*sr).log.data.offset(fresh3 as isize);
                         nb += t as i32;
-                        if (t as i32 != 255 as i32) {
+                        if (t as i32 != 255i32) {
                             break;
                         }
                     }
                 }
-                let mut addr: u32 =
-                    (((*sr).replay_cmd as i32 >> 1 as i32 & 1 as i32) << 16 as i32) as u32;
+                let mut addr: u32 = (((*sr).replay_cmd as i32 >> 1i32 & 1i32) << 16i32) as u32;
                 let fresh4 = replay_pos;
                 replay_pos = replay_pos + 1;
-                addr |= ((*(*sr).log.data.offset(fresh4 as isize) as i32) << 8 as i32) as u32;
+                addr |= ((*(*sr).log.data.offset(fresh4 as isize) as i32) << 8i32) as u32;
                 let fresh5 = replay_pos;
                 replay_pos = replay_pos + 1;
                 addr |= *(*sr).log.data.offset(fresh5 as isize) as u32;
                 loop {
                     let fresh6 = replay_pos;
                     replay_pos = replay_pos + 1;
-                    game.g_ram[(addr & 0x1ffff as u32) as usize] =
+                    game.g_ram[(addr & 0x1ffffu32) as usize] =
                         *(*sr).log.data.offset(fresh6 as isize);
                     RtlSyncMemoryRegion(
-                        (&raw mut game.g_ram as *mut u8).offset((addr & 0x1ffff as u32) as isize)
+                        (&raw mut game.g_ram as *mut u8).offset((addr & 0x1ffffu32) as isize)
                             as *mut u8 as *mut ::core::ffi::c_void,
                         1 as size_t,
                         game,
@@ -795,7 +779,7 @@ pub unsafe fn StateRecorder_ReadNextReplayState(sr: *mut StateRecorder, game: &m
                     __assert_fail(
                         b"0\0" as *const u8 as *const ::core::ffi::c_char,
                         b"src/sm_rtl.c\0" as *const u8 as *const ::core::ffi::c_char,
-                        344 as u32,
+                        344u32,
                         b"uint16 StateRecorder_ReadNextReplayState(StateRecorder *)\0" as *const u8
                             as *const ::core::ffi::c_char,
                     );
@@ -805,17 +789,17 @@ pub unsafe fn StateRecorder_ReadNextReplayState(sr: *mut StateRecorder, game: &m
         (*sr).replay_pos_last_complete = replay_pos as u32;
         if replay_pos as size_t >= (*sr).log.size {
             (*sr).replay_pos = replay_pos as u32;
-            (*sr).replay_next_cmd_at = 0xffffffff as u32 as u32;
+            (*sr).replay_next_cmd_at = 0xffffffffu32 as u32;
             break;
         } else {
             let fresh7 = replay_pos;
             replay_pos = replay_pos + 1;
             let cmd: u8 = *(*sr).log.data.offset(fresh7 as isize);
             let mut t_0: u8 = 0;
-            let mask: i32 = if (cmd as i32) < 0xc0 as i32 {
-                0xf as i32
+            let mask: i32 = if (cmd as i32) < 0xc0i32 {
+                0xfi32
             } else {
-                0x1 as i32
+                0x1i32
             };
             let mut frames: i32 = cmd as i32 & mask;
             if frames == mask {
@@ -824,7 +808,7 @@ pub unsafe fn StateRecorder_ReadNextReplayState(sr: *mut StateRecorder, game: &m
                     replay_pos = replay_pos + 1;
                     t_0 = *(*sr).log.data.offset(fresh8 as isize);
                     frames += t_0 as i32;
-                    if (t_0 as i32 != 255 as i32) {
+                    if (t_0 as i32 != 255i32) {
                         break;
                     }
                 }
@@ -858,19 +842,19 @@ pub unsafe fn RtlStopReplay(game: &mut Game) {
 pub unsafe fn RtlRunFrame(mut inputs: i32, game: &mut Game) -> bool {
     // TAS verification preserves every recorded button, including opposites.
     if !game.VERIFY_ACTIVE {
-        if inputs & 0x30 as i32 == 0x30 as i32 {
-            inputs ^= 0x30 as i32;
+        if inputs & 0x30i32 == 0x30i32 {
+            inputs ^= 0x30i32;
         }
-        if inputs & 0xc0 as i32 == 0xc0 as i32 {
-            inputs ^= 0xc0 as i32;
+        if inputs & 0xc0i32 == 0xc0i32 {
+            inputs ^= 0xc0i32;
         }
     }
     let is_replay: bool = game.state_recorder.replay_mode;
     if is_replay {
         inputs = StateRecorder_ReadNextReplayState(&raw mut game.state_recorder, game) as i32;
     } else {
-        if game.state_recorder.snapshot_flags & 1 as u32 != 0 {
-            game.state_recorder.snapshot_flags &= !(1 as i32) as u32;
+        if game.state_recorder.snapshot_flags & 1u32 != 0 {
+            game.state_recorder.snapshot_flags &= !(1i32) as u32;
             inputs = game.state_recorder.last_inputs as i32;
         } else if ram_word!(game, bug_fix_counter) as i32 != kCurrentBugFixCounter as i32 {
             if game.g_debug_flag {
@@ -888,7 +872,7 @@ pub unsafe fn RtlRunFrame(mut inputs: i32, game: &mut Game) -> bool {
                         .offset_from(&raw mut game.g_ram as *mut u8)
                         as ::core::ffi::c_long as u32,
                     (&raw mut game.g_ram as *mut u8).offset(0xc2) as *mut u16 as *mut u8,
-                    2 as i32,
+                    2i32,
                 );
             }
         }
@@ -897,7 +881,7 @@ pub unsafe fn RtlRunFrame(mut inputs: i32, game: &mut Game) -> bool {
     if ram_word!(game, bug_fix_counter) as i32 != game.currently_installed_bug_fix_counter as i32 {
         RtlUpdateSnesPatchForBugfix(game);
     }
-    game.g_rtl_runframe.expect("non-null function pointer")(inputs as u16, 0 as i32, game);
+    game.g_rtl_runframe.expect("non-null function pointer")(inputs as u16, 0i32, game);
     game.snes_frame_counter += 1;
     RtlPushApuState(game);
     is_replay
@@ -928,8 +912,8 @@ static kBugSaves: crate::types::ImmutableCStringPointers<7> = unsafe {
 };
 pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, game: &mut Game) {
     let mut name: [::core::ffi::c_char; 128] = [0; 128];
-    if slot >= 256 as i32 {
-        let i: i32 = slot - 256 as i32;
+    if slot >= 256i32 {
+        let i: i32 = slot - 256i32;
         if cmd == kSaveLoad_Save as i32
             || i as usize
                 >= (::core::mem::size_of::<[*const ::core::ffi::c_char; 7]>() as usize)
@@ -1000,11 +984,11 @@ pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, game: &mut Game) {
                 *(&raw mut game.g_ram as *mut u8).offset(0x615) as i32,
             );
         }
-        if *(&raw mut game.g_ram as *mut u8).offset(0x611) as i32 == 4 as i32 {
+        if *(&raw mut game.g_ram as *mut u8).offset(0x611) as i32 == 4i32 {
             *(&raw mut game.g_ram as *mut u8).offset(0x611) =
-                (10 as i32 + ram_word!(game, game_state) as i32) as u8;
+                (10i32 + ram_word!(game, game_state) as i32) as u8;
         }
-        if ram_word!(game, bug_fix_counter) as i32 == 0 as i32 {
+        if ram_word!(game, bug_fix_counter) as i32 == 0i32 {
             set_ram_word!(game.bug_fix_counter = ram_word!(game, bug_fix_counter_BAD));
         }
     } else {
@@ -1023,11 +1007,11 @@ pub unsafe fn MakePairU16(k: u16, j: u16) -> PairU16 {
     r
 }
 pub unsafe fn mov24(a: *mut LongPtr, d: u32) {
-    (*a).addr = (d & 0xffff as u32) as VoidP;
-    (*a).bank = (d >> 16 as i32) as u8;
+    (*a).addr = (d & 0xffffu32) as VoidP;
+    (*a).bank = (d >> 16i32) as u8;
 }
 pub unsafe fn Load24(src: *const LongPtr) -> u32 {
-    *(src as *mut u32) & 0xffffff as u32
+    *(src as *mut u32) & 0xffffffu32
 }
 pub unsafe fn Unreachable(game: &mut Game) -> bool {
     printf(b"Unreachable!\n\0" as *const u8 as *const ::core::ffi::c_char);
@@ -1035,11 +1019,11 @@ pub unsafe fn Unreachable(game: &mut Game) -> bool {
         __assert_fail(
             b"0\0" as *const u8 as *const ::core::ffi::c_char,
             b"src/sm_rtl.c\0" as *const u8 as *const ::core::ffi::c_char,
-            512 as u32,
+            512u32,
             b"_Bool Unreachable(void)\0" as *const u8 as *const ::core::ffi::c_char,
         );
     };
-    game.g_ram[0x1ffff as i32 as usize] = 1 as u8;
+    game.g_ram[0x1ffffi32 as usize] = 1u8;
     false_0 != 0
 }
 /// Map a banked LoROM address to an offset in the ROM allocation.
@@ -1050,7 +1034,7 @@ pub const fn lorom_offset(address: u32) -> isize {
 }
 
 pub unsafe fn RomPtr(addr: u32, game: &mut Game) -> *const u8 {
-    if addr & 0x8000 as u32 == 0 {
+    if addr & 0x8000u32 == 0 {
         printf(
             b"RomPtr - Invalid access 0x%x!\n\0" as *const u8 as *const ::core::ffi::c_char,
             addr,
@@ -1114,14 +1098,14 @@ pub unsafe fn Mult8x8(a: u8, b: u8) -> u16 {
     (a as i32 * b as i32) as u16
 }
 pub unsafe fn SnesDivide(a: u16, b: u8) -> u16 {
-    ((if b as i32 == 0 as i32 {
-        0xffff as i32
+    ((if b as i32 == 0i32 {
+        0xffffi32
     } else {
         a as i32 / b as i32
     }) as u16)
 }
 pub unsafe fn SnesModulus(a: u16, b: u8) -> u16 {
-    ((if b as i32 == 0 as i32 {
+    ((if b as i32 == 0i32 {
         a as i32
     } else {
         a as i32 % b as i32
@@ -1132,14 +1116,14 @@ pub unsafe fn ReadReg(reg: u16, game: &mut Game) -> u8 {
 }
 pub unsafe fn ReadRegWord(reg: u16, game: &mut Game) -> u16 {
     let mut rv: u16 = ReadReg(reg, game) as u16;
-    rv = (rv as i32 | (ReadReg((reg as i32 + 1 as i32) as u16, game) as i32) << 8 as i32) as u16;
+    rv = (rv as i32 | (ReadReg((reg as i32 + 1i32) as u16, game) as i32) << 8i32) as u16;
     rv as u16
 }
 pub unsafe fn WriteRegWord(reg: u16, value: u16, game: &mut Game) {
     WriteReg(reg, value as u8, game);
     WriteReg(
-        (reg as i32 + 1 as i32) as u16,
-        (value as i32 >> 8 as i32) as u8,
+        (reg as i32 + 1i32) as u16,
+        (value as i32 >> 8i32) as u8,
         game,
     );
 }
@@ -1151,34 +1135,34 @@ pub unsafe fn RtlApuWrite(adr: u32, val: u8, game: &mut Game) {
             __assert_fail(
                 b"adr >= APUI00 && adr <= APUI03\0" as *const u8 as *const ::core::ffi::c_char,
                 b"src/sm_rtl.c\0" as *const u8 as *const ::core::ffi::c_char,
-                571 as u32,
+                571u32,
                 b"void RtlApuWrite(uint32, uint8)\0" as *const u8 as *const ::core::ffi::c_char,
             );
         }
     };
     if ram_word!(game, is_uploading_apu) != 0 {
         snes_catchupApu(game.g_snes as *mut Snes, game);
-        (*(*game.g_snes).apu).inPorts[(adr & 0x3 as u32) as usize] = val as u8;
+        (*(*game.g_snes).apu).inPorts[(adr & 0x3u32) as usize] = val as u8;
         return;
     }
-    game.g_apu_write.ports[(adr & 0x3 as u32) as usize] = val;
+    game.g_apu_write.ports[(adr & 0x3u32) as usize] = val;
 }
 unsafe fn IsFrameEmpty(w: *mut ApuWriteEnt) -> bool {
-    (*w).ports[0 as i32 as usize] as i32 == 255 as i32
-        && (*w).ports[1 as i32 as usize] as i32 == 255 as i32
-        && (*w).ports[2 as i32 as usize] as i32 == 255 as i32
-        && (*w).ports[3 as i32 as usize] as i32 == 255 as i32
+    (*w).ports[0i32 as usize] as i32 == 255i32
+        && (*w).ports[1i32 as usize] as i32 == 255i32
+        && (*w).ports[2i32 as usize] as i32 == 255i32
+        && (*w).ports[3i32 as usize] as i32 == 255i32
 }
 pub unsafe fn RtlPushApuState(game: &mut Game) {
     RtlApuLock();
     if ram_word!(game, is_uploading_apu) == 0 {
-        if game.g_apu_queue_size as i32 == 0 as i32 {
-            game.g_apu_time_since_empty = 0 as u8;
+        if game.g_apu_queue_size as i32 == 0i32 {
+            game.g_apu_time_since_empty = 0u8;
         } else {
-            if game.g_apu_time_since_empty as i32 >= 32 as i32
+            if game.g_apu_time_since_empty as i32 >= 32i32
                 && IsFrameEmpty(&raw mut game.g_apu_write) as i32 != 0
             {
-                game.g_apu_time_since_empty = (game.g_apu_time_since_empty as i32 - 4 as i32) as u8;
+                game.g_apu_time_since_empty = (game.g_apu_time_since_empty as i32 - 4i32) as u8;
                 RtlApuUnlock();
                 return;
             }
@@ -1187,15 +1171,15 @@ pub unsafe fn RtlPushApuState(game: &mut Game) {
         let fresh2 = game.g_apu_write_ent_pos;
         game.g_apu_write_ent_pos = game.g_apu_write_ent_pos.wrapping_add(1);
         let w0: *mut ApuWriteEnt = (&raw mut game.g_apu_write_ents as *mut ApuWriteEnt)
-            .offset((fresh2 as i32 & kApuMaxQueueSize as i32 - 1 as i32) as isize)
+            .offset((fresh2 as i32 & kApuMaxQueueSize as i32 - 1i32) as isize)
             as *mut ApuWriteEnt;
         if game.g_apu_queue_size as i32 == kApuMaxQueueSize as i32 {
-            let w1: *mut ApuWriteEnt = (&raw mut game.g_apu_write_ents as *mut ApuWriteEnt).offset(
-                (game.g_apu_write_ent_pos as i32 & kApuMaxQueueSize as i32 - 1 as i32) as isize,
-            ) as *mut ApuWriteEnt;
-            let mut i: i32 = 0 as i32;
-            while i < 4 as i32 {
-                if (*w1).ports[i as usize] as i32 == 255 as i32 {
+            let w1: *mut ApuWriteEnt = (&raw mut game.g_apu_write_ents as *mut ApuWriteEnt)
+                .offset((game.g_apu_write_ent_pos as i32 & kApuMaxQueueSize as i32 - 1i32) as isize)
+                as *mut ApuWriteEnt;
+            let mut i: i32 = 0i32;
+            while i < 4i32 {
+                if (*w1).ports[i as usize] as i32 == 255i32 {
                     (*w1).ports[i as usize] = (*w0).ports[i as usize];
                 }
                 i += 1;
@@ -1206,11 +1190,11 @@ pub unsafe fn RtlPushApuState(game: &mut Game) {
         *w0 = game.g_apu_write as ApuWriteEnt;
         memset(
             &raw mut game.g_apu_write as *mut ::core::ffi::c_void,
-            0xff as i32,
+            0xffi32,
             ::core::mem::size_of::<ApuWriteEnt>() as size_t,
         );
     } else {
-        game.g_apu_queue_size = 0 as u8;
+        game.g_apu_queue_size = 0u8;
     }
     RtlApuUnlock();
 }
@@ -1223,16 +1207,16 @@ unsafe fn RtlPopApuState_Locked(game: &mut Game) {
     } else {
         &raw mut (*(*game.g_snes).apu).inPorts as *mut u8
     };
-    if game.g_apu_queue_size as i32 != 0 as i32 {
+    if game.g_apu_queue_size as i32 != 0i32 {
         let fresh1 = game.g_apu_queue_size;
         game.g_apu_queue_size = game.g_apu_queue_size.wrapping_sub(1);
         let w: *mut ApuWriteEnt = (&raw mut game.g_apu_write_ents as *mut ApuWriteEnt).offset(
-            (game.g_apu_write_ent_pos as i32 - fresh1 as i32 & kApuMaxQueueSize as i32 - 1 as i32)
+            (game.g_apu_write_ent_pos as i32 - fresh1 as i32 & kApuMaxQueueSize as i32 - 1i32)
                 as isize,
         ) as *mut ApuWriteEnt;
-        let mut i: i32 = 0 as i32;
-        while i != 4 as i32 {
-            if (*w).ports[i as usize] as i32 != 255 as i32 {
+        let mut i: i32 = 0i32;
+        while i != 4i32 {
+            if (*w).ports[i as usize] as i32 != 255i32 {
                 *input_ports.offset(i as isize) = (*w).ports[i as usize];
             }
             i += 1;
@@ -1240,12 +1224,12 @@ unsafe fn RtlPopApuState_Locked(game: &mut Game) {
     }
 }
 unsafe fn RtlResetApuQueue(game: &mut Game) {
-    game.g_apu_queue_size = 0 as u8;
+    game.g_apu_queue_size = 0u8;
     game.g_apu_time_since_empty = game.g_apu_queue_size;
     game.g_apu_write_ent_pos = game.g_apu_time_since_empty;
     memset(
         &raw mut game.g_apu_write as *mut ::core::ffi::c_void,
-        0xff as i32,
+        0xffi32,
         ::core::mem::size_of::<ApuWriteEnt>() as size_t,
     );
 }
@@ -1275,7 +1259,7 @@ unsafe fn RtlRestoreMusicAfterLoad_Locked(is_reset: bool, game: &mut Game) {
         memcpy(
             &raw mut (*game.g_spc_player).ram as *mut u8 as *mut ::core::ffi::c_void,
             &raw mut (*(*game.g_snes).apu).ram as *mut u8 as *const ::core::ffi::c_void,
-            65536 as i32 as size_t,
+            65536i32 as size_t,
         );
         memcpy(
             &raw mut (*(*game.g_spc_player).dsp).ram as *mut u8 as *mut ::core::ffi::c_void,
@@ -1299,11 +1283,11 @@ unsafe fn RtlSaveMusicStateToRam_Locked(game: &mut Game, include_queued_commands
         };
         while i != 0 {
             let we: *mut ApuWriteEnt = (&raw mut game.g_apu_write_ents as *mut ApuWriteEnt).offset(
-                (game.g_apu_write_ent_pos as i32 - i & kApuMaxQueueSize as i32 - 1 as i32) as isize,
+                (game.g_apu_write_ent_pos as i32 - i & kApuMaxQueueSize as i32 - 1i32) as isize,
             ) as *mut ApuWriteEnt;
-            let mut j: i32 = 0 as i32;
-            while j < 4 as i32 {
-                if (*we).ports[j as usize] as i32 != 255 as i32 {
+            let mut j: i32 = 0i32;
+            while j < 4i32 {
+                if (*we).ports[j as usize] as i32 != 255i32 {
                     (*spc_player).input_ports[j as usize] = (*we).ports[j as usize];
                 }
                 j += 1;
@@ -1319,18 +1303,18 @@ unsafe fn RtlSaveMusicStateToRam_Locked(game: &mut Game, include_queued_commands
         memcpy(
             &raw mut (*(*game.g_snes).apu).ram as *mut u8 as *mut ::core::ffi::c_void,
             &raw mut (*game.g_spc_player).ram as *mut u8 as *const ::core::ffi::c_void,
-            65536 as i32 as size_t,
+            65536i32 as size_t,
         );
     }
 }
 pub unsafe fn RtlRenderAudio(audio_buffer: *mut i16, samples: i32, channels: i32, game: &mut Game) {
     '_c2rust_label: {
-        if channels == 2 as i32 {
+        if channels == 2i32 {
         } else {
             __assert_fail(
                 b"channels == 2\0" as *const u8 as *const ::core::ffi::c_char,
                 b"src/sm_rtl.c\0" as *const u8 as *const ::core::ffi::c_char,
-                679 as u32,
+                679u32,
                 b"void RtlRenderAudio(int16 *, int, int)\0" as *const u8
                     as *const ::core::ffi::c_char,
             );
@@ -1340,7 +1324,7 @@ pub unsafe fn RtlRenderAudio(audio_buffer: *mut i16, samples: i32, channels: i32
     RtlPopApuState_Locked(game);
     if !game.g_use_my_apu_code {
         if ram_word!(game, is_uploading_apu) == 0 {
-            while ((*(*(*game.g_snes).apu).dsp).sampleOffset as i32) < 534 as i32 {
+            while ((*(*(*game.g_snes).apu).dsp).sampleOffset as i32) < 534i32 {
                 apu_cycle((*game.g_snes).apu, game);
             }
             dsp_getSamples((*(*game.g_snes).apu).dsp, audio_buffer as *mut i16, samples);
@@ -1356,35 +1340,35 @@ pub unsafe fn RtlCheat(c: ::core::ffi::c_char, game: &mut Game) {
         set_ram_word!(game.samus_health = ram_word!(game, samus_max_health));
         StateRecorder_RecordPatchByte(
             &raw mut game.state_recorder,
-            0x9c2 as u32,
+            0x9c2u32,
             (&raw mut game.g_ram as *mut u8).offset(0x9c2) as *mut u16 as *mut u8,
-            2 as i32,
+            2i32,
         );
     } else if c as i32 == 'q' as i32 {
-        update_ram_word!(game.samus_y_pos, |fresh0| (fresh0 as i32 - 4 as i32) as u16);
-        set_ram_word!(game.samus_y_speed = -(8 as i32) as u16);
+        update_ram_word!(game.samus_y_pos, |fresh0| (fresh0 as i32 - 4i32) as u16);
+        set_ram_word!(game.samus_y_speed = -(8i32) as u16);
         StateRecorder_RecordPatchByte(
             &raw mut game.state_recorder,
-            0xafa as u32,
+            0xafau32,
             (&raw mut game.g_ram as *mut u8).offset(0xafa) as *mut u16 as *mut u8,
-            2 as i32,
+            2i32,
         );
         StateRecorder_RecordPatchByte(
             &raw mut game.state_recorder,
-            0xb2e as u32,
+            0xb2eu32,
             (&raw mut game.g_ram as *mut u8).offset(0xb2e) as *mut u16 as *mut u8,
-            2 as i32,
+            2i32,
         );
-        set_ram_word!(game.menu_index = 0 as u16);
+        set_ram_word!(game.menu_index = 0u16);
     } else if c as i32 == 'q' as i32 {
         set_ram_word!(
             game.japanese_text_flag = (ram_word!(game, japanese_text_flag) == 0) as i32 as u16
         );
         StateRecorder_RecordPatchByte(
             &raw mut game.state_recorder,
-            0x9e2 as u32,
+            0x9e2u32,
             (&raw mut game.g_ram as *mut u8).offset(0x9e2) as *mut u16 as *mut u8,
-            2 as i32,
+            2i32,
         );
     }
 }

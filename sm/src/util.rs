@@ -65,7 +65,7 @@ pub unsafe fn NextDelim(s: *mut *mut ::core::ffi::c_char, sep: i32) -> *mut ::co
 }
 #[inline]
 unsafe fn ToLower(a: i32) -> i32 {
-    a + (a >= 'A' as i32 && a <= 'Z' as i32) as i32 * 32 as i32
+    a + (a >= 'A' as i32 && a <= 'Z' as i32) as i32 * 32i32
 }
 pub unsafe fn StringEqualsNoCase(
     mut a: *const ::core::ffi::c_char,
@@ -81,7 +81,7 @@ pub unsafe fn StringEqualsNoCase(
         if aa != bb {
             return false_0 != 0;
         }
-        if aa == 0 as i32 {
+        if aa == 0i32 {
             return true_0 != 0;
         }
     }
@@ -93,7 +93,7 @@ pub unsafe fn StringStartsWithNoCase(
     loop {
         let aa: i32 = ToLower(*a as i32);
         let bb: i32 = ToLower(*b as i32);
-        if bb == 0 as i32 {
+        if bb == 0i32 {
             return a;
         }
         if aa != bb {
@@ -115,7 +115,7 @@ pub unsafe fn ReadWholeFile(name: *const ::core::ffi::c_char, length: *mut size_
     if buffer.is_null() {
         Die(b"malloc failed\0" as *const u8 as *const ::core::ffi::c_char);
     }
-    *buffer.offset(size as isize) = 0 as u8;
+    *buffer.offset(size as isize) = 0u8;
     if fread(buffer as *mut ::core::ffi::c_void, 1 as size_t, size, f) as size_t != size {
         Die(b"fread failed\0" as *const u8 as *const ::core::ffi::c_char);
     }
@@ -148,9 +148,9 @@ pub unsafe fn NextLineStripComments(s: *mut *mut ::core::ffi::c_char) -> *mut ::
     ) as *mut ::core::ffi::c_char;
     eol = if !comment.is_null() { comment } else { eol };
     while eol > p
-        && (*eol.offset(-(1 as i32) as isize) as i32 == '\r' as i32
-            || *eol.offset(-(1 as i32) as isize) as i32 == ' ' as i32
-            || *eol.offset(-(1 as i32) as isize) as i32 == '\t' as i32)
+        && (*eol.offset(-(1i32) as isize) as i32 == '\r' as i32
+            || *eol.offset(-(1i32) as isize) as i32 == ' ' as i32
+            || *eol.offset(-(1i32) as isize) as i32 == '\t' as i32)
     {
         eol = eol.offset(-1);
     }
@@ -224,8 +224,8 @@ pub unsafe fn SplitKeyValue(p: *mut ::core::ffi::c_char) -> *mut ::core::ffi::c_
     }
     let mut kr: *mut ::core::ffi::c_char = equals;
     while kr > p
-        && (*kr.offset(-(1 as i32) as isize) as i32 == ' ' as i32
-            || *kr.offset(-(1 as i32) as isize) as i32 == '\t' as i32)
+        && (*kr.offset(-(1i32) as isize) as i32 == ' ' as i32
+            || *kr.offset(-(1i32) as isize) as i32 == '\t' as i32)
     {
         kr = kr.offset(-1);
     }
@@ -260,7 +260,7 @@ pub unsafe fn ByteArray_Resize(arr: *mut ByteArray, new_size: size_t) {
     if new_size > (*arr).capacity {
         let minsize: size_t = (*arr)
             .capacity
-            .wrapping_add((*arr).capacity >> 1 as i32)
+            .wrapping_add((*arr).capacity >> 1i32)
             .wrapping_add(8 as size_t);
         (*arr).capacity = if new_size < minsize {
             minsize

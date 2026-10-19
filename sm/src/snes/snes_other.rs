@@ -53,7 +53,7 @@ pub unsafe fn snes_loadRom(
     mut length: i32,
     game: &mut Game,
 ) -> bool {
-    if length < 0x8000 as i32 {
+    if length < 0x8000i32 {
         printf(
             b"Failed to load rom: rom to small (%d bytes)\n\0" as *const u8
                 as *const ::core::ffi::c_char,
@@ -87,61 +87,61 @@ pub unsafe fn snes_loadRom(
     }; 4];
     memset(
         &raw mut headers as *mut CartHeader as *mut ::core::ffi::c_void,
-        0 as i32,
+        0i32,
         ::core::mem::size_of::<[CartHeader; 4]>() as size_t,
     );
-    let mut i: i32 = 0 as i32;
-    while i < 4 as i32 {
-        headers[i as usize].score = -(50 as i32) as i16;
+    let mut i: i32 = 0i32;
+    while i < 4i32 {
+        headers[i as usize].score = -(50i32) as i16;
         i += 1;
     }
-    if length >= 0x8000 as i32 {
+    if length >= 0x8000i32 {
         readHeader(
             data,
             length,
-            0x7fc0 as i32,
+            0x7fc0i32,
             (&raw mut headers as *mut CartHeader).offset(0) as *mut CartHeader,
         );
     }
-    if length >= 0x8200 as i32 {
+    if length >= 0x8200i32 {
         readHeader(
             data,
             length,
-            0x81c0 as i32,
+            0x81c0i32,
             (&raw mut headers as *mut CartHeader).offset(1) as *mut CartHeader,
         );
     }
-    if length >= 0x10000 as i32 {
+    if length >= 0x10000i32 {
         readHeader(
             data,
             length,
-            0xffc0 as i32,
+            0xffc0i32,
             (&raw mut headers as *mut CartHeader).offset(2) as *mut CartHeader,
         );
     }
-    if length >= 0x10200 as i32 {
+    if length >= 0x10200i32 {
         readHeader(
             data,
             length,
-            0x101c0 as i32,
+            0x101c0i32,
             (&raw mut headers as *mut CartHeader).offset(3) as *mut CartHeader,
         );
     }
-    let mut max: i32 = 0 as i32;
-    let mut used: i32 = 0 as i32;
-    let mut i_0: i32 = 0 as i32;
-    while i_0 < 4 as i32 {
+    let mut max: i32 = 0i32;
+    let mut used: i32 = 0i32;
+    let mut i_0: i32 = 0i32;
+    while i_0 < 4i32 {
         if headers[i_0 as usize].score as i32 > max {
             max = headers[i_0 as usize].score as i32;
             used = i_0;
         }
         i_0 += 1;
     }
-    if used & 1 as i32 != 0 {
+    if used & 1i32 != 0 {
         data = data.offset(0x200);
-        length -= 0x200 as i32;
+        length -= 0x200i32;
     }
-    if headers[used as usize].cartType as i32 > 2 as i32 {
+    if headers[used as usize].cartType as i32 > 2i32 {
         printf(
             b"Failed to load rom: unsupported type (%d)\n\0" as *const u8
                 as *const ::core::ffi::c_char,
@@ -149,9 +149,9 @@ pub unsafe fn snes_loadRom(
         );
         return false_0 != 0;
     }
-    let mut newLength: i32 = 0x8000 as i32;
+    let mut newLength: i32 = 0x8000i32;
     while (length > newLength) {
-        newLength *= 2 as i32;
+        newLength *= 2i32;
     }
     let newData: *mut u8 = malloc(newLength as size_t) as *mut u8;
     memcpy(
@@ -159,7 +159,7 @@ pub unsafe fn snes_loadRom(
         data as *const ::core::ffi::c_void,
         length as size_t,
     );
-    let mut test: i32 = 1 as i32;
+    let mut test: i32 = 1i32;
     while length != newLength {
         if length & test != 0 {
             memcpy(
@@ -170,17 +170,17 @@ pub unsafe fn snes_loadRom(
             );
             length += test;
         }
-        test *= 2 as i32;
+        test *= 2i32;
     }
     cart_load(
         (*snes).cart,
         headers[used as usize].cartType as i32,
         newData,
         newLength,
-        (if headers[used as usize].chips as i32 > 0 as i32 {
+        (if headers[used as usize].chips as i32 > 0i32 {
             headers[used as usize].ramSize
         } else {
-            0 as u32
+            0u32
         }) as i32,
     );
     snes_reset(snes, true_0 != 0, game);
@@ -191,136 +191,126 @@ pub unsafe fn snes_setSamples(snes: *mut Snes, sampleData: *mut i16, samplesPerF
     dsp_getSamples((*(*snes).apu).dsp, sampleData, samplesPerFrame);
 }
 unsafe fn readHeader(data: *const u8, length: i32, location: i32, header: *mut CartHeader) {
-    let mut i: i32 = 0 as i32;
-    while i < 21 as i32 {
+    let mut i: i32 = 0i32;
+    while i < 21i32 {
         let ch: u8 = *data.offset((location + i) as isize);
-        if ch as i32 >= 0x20 as i32 && (ch as i32) < 0x7f as i32 {
+        if ch as i32 >= 0x20i32 && (ch as i32) < 0x7fi32 {
             (*header).name[i as usize] = ch as ::core::ffi::c_char;
         } else {
             (*header).name[i as usize] = '.' as i32 as ::core::ffi::c_char;
         }
         i += 1;
     }
-    (*header).name[21 as i32 as usize] = 0 as ::core::ffi::c_char;
-    (*header).speed = (*data.offset((location + 0x15 as i32) as isize) as i32 >> 4 as i32) as u8;
-    (*header).type_0 = (*data.offset((location + 0x15 as i32) as isize) as i32 & 0xf as i32) as u8;
-    (*header).coprocessor =
-        (*data.offset((location + 0x16 as i32) as isize) as i32 >> 4 as i32) as u8;
-    (*header).chips = (*data.offset((location + 0x16 as i32) as isize) as i32 & 0xf as i32) as u8;
-    (*header).romSize =
-        ((0x400 as i32) << *data.offset((location + 0x17 as i32) as isize) as i32) as u32;
-    (*header).ramSize =
-        ((0x400 as i32) << *data.offset((location + 0x18 as i32) as isize) as i32) as u32;
-    (*header).region = *data.offset((location + 0x19 as i32) as isize);
-    (*header).maker = *data.offset((location + 0x1a as i32) as isize);
-    (*header).version = *data.offset((location + 0x1b as i32) as isize);
-    (*header).checksumComplement =
-        (((*data.offset((location + 0x1d as i32) as isize) as i32) << 8 as i32)
-            + *data.offset((location + 0x1c as i32) as isize) as i32) as u16;
-    (*header).checksum = (((*data.offset((location + 0x1f as i32) as isize) as i32) << 8 as i32)
-        + *data.offset((location + 0x1e as i32) as isize) as i32) as u16;
-    (*header).headerVersion = 1 as u8;
-    if (*header).maker as i32 == 0x33 as i32 {
-        (*header).headerVersion = 3 as u8;
-        let mut i_0: i32 = 0 as i32;
-        while i_0 < 2 as i32 {
-            let ch_0: u8 = *data.offset((location - 0x10 as i32 + i_0) as isize);
-            if ch_0 as i32 >= 0x20 as i32 && (ch_0 as i32) < 0x7f as i32 {
+    (*header).name[21i32 as usize] = 0 as ::core::ffi::c_char;
+    (*header).speed = (*data.offset((location + 0x15i32) as isize) as i32 >> 4i32) as u8;
+    (*header).type_0 = (*data.offset((location + 0x15i32) as isize) as i32 & 0xfi32) as u8;
+    (*header).coprocessor = (*data.offset((location + 0x16i32) as isize) as i32 >> 4i32) as u8;
+    (*header).chips = (*data.offset((location + 0x16i32) as isize) as i32 & 0xfi32) as u8;
+    (*header).romSize = ((0x400i32) << *data.offset((location + 0x17i32) as isize) as i32) as u32;
+    (*header).ramSize = ((0x400i32) << *data.offset((location + 0x18i32) as isize) as i32) as u32;
+    (*header).region = *data.offset((location + 0x19i32) as isize);
+    (*header).maker = *data.offset((location + 0x1ai32) as isize);
+    (*header).version = *data.offset((location + 0x1bi32) as isize);
+    (*header).checksumComplement = (((*data.offset((location + 0x1di32) as isize) as i32) << 8i32)
+        + *data.offset((location + 0x1ci32) as isize) as i32)
+        as u16;
+    (*header).checksum = (((*data.offset((location + 0x1fi32) as isize) as i32) << 8i32)
+        + *data.offset((location + 0x1ei32) as isize) as i32) as u16;
+    (*header).headerVersion = 1u8;
+    if (*header).maker as i32 == 0x33i32 {
+        (*header).headerVersion = 3u8;
+        let mut i_0: i32 = 0i32;
+        while i_0 < 2i32 {
+            let ch_0: u8 = *data.offset((location - 0x10i32 + i_0) as isize);
+            if ch_0 as i32 >= 0x20i32 && (ch_0 as i32) < 0x7fi32 {
                 (*header).makerCode[i_0 as usize] = ch_0 as ::core::ffi::c_char;
             } else {
                 (*header).makerCode[i_0 as usize] = '.' as i32 as ::core::ffi::c_char;
             }
             i_0 += 1;
         }
-        (*header).makerCode[2 as i32 as usize] = 0 as ::core::ffi::c_char;
-        let mut i_1: i32 = 0 as i32;
-        while i_1 < 4 as i32 {
-            let ch_1: u8 = *data.offset((location - 0xe as i32 + i_1) as isize);
-            if ch_1 as i32 >= 0x20 as i32 && (ch_1 as i32) < 0x7f as i32 {
+        (*header).makerCode[2i32 as usize] = 0 as ::core::ffi::c_char;
+        let mut i_1: i32 = 0i32;
+        while i_1 < 4i32 {
+            let ch_1: u8 = *data.offset((location - 0xei32 + i_1) as isize);
+            if ch_1 as i32 >= 0x20i32 && (ch_1 as i32) < 0x7fi32 {
                 (*header).gameCode[i_1 as usize] = ch_1 as ::core::ffi::c_char;
             } else {
                 (*header).gameCode[i_1 as usize] = '.' as i32 as ::core::ffi::c_char;
             }
             i_1 += 1;
         }
-        (*header).gameCode[4 as i32 as usize] = 0 as ::core::ffi::c_char;
+        (*header).gameCode[4i32 as usize] = 0 as ::core::ffi::c_char;
         (*header).flashSize =
-            ((0x400 as i32) << *data.offset((location - 4 as i32) as isize) as i32) as u32;
+            ((0x400i32) << *data.offset((location - 4i32) as isize) as i32) as u32;
         (*header).exRamSize =
-            ((0x400 as i32) << *data.offset((location - 3 as i32) as isize) as i32) as u32;
-        (*header).specialVersion = *data.offset((location - 2 as i32) as isize);
-        (*header).exCoprocessor = *data.offset((location - 1 as i32) as isize);
-    } else if *data.offset((location + 0x14 as i32) as isize) as i32 == 0 as i32 {
-        (*header).headerVersion = 2 as u8;
-        (*header).exCoprocessor = *data.offset((location - 1 as i32) as isize);
+            ((0x400i32) << *data.offset((location - 3i32) as isize) as i32) as u32;
+        (*header).specialVersion = *data.offset((location - 2i32) as isize);
+        (*header).exCoprocessor = *data.offset((location - 1i32) as isize);
+    } else if *data.offset((location + 0x14i32) as isize) as i32 == 0i32 {
+        (*header).headerVersion = 2u8;
+        (*header).exCoprocessor = *data.offset((location - 1i32) as isize);
     }
-    (*header).pal = (*header).region as i32 >= 0x2 as i32 && (*header).region as i32 <= 0xc as i32
-        || (*header).region as i32 == 0x11 as i32;
-    (*header).cartType = (if location < 0x9000 as i32 {
-        1 as i32
+    (*header).pal = (*header).region as i32 >= 0x2i32 && (*header).region as i32 <= 0xci32
+        || (*header).region as i32 == 0x11i32;
+    (*header).cartType = (if location < 0x9000i32 { 1i32 } else { 2i32 }) as u8;
+    let mut score: i32 = 0i32;
+    score += if (*header).speed as i32 == 2i32 || (*header).speed as i32 == 3i32 {
+        5i32
     } else {
-        2 as i32
-    }) as u8;
-    let mut score: i32 = 0 as i32;
-    score += if (*header).speed as i32 == 2 as i32 || (*header).speed as i32 == 3 as i32 {
-        5 as i32
-    } else {
-        -(4 as i32)
+        -(4i32)
     };
-    score += if (*header).type_0 as i32 <= 3 as i32 || (*header).type_0 as i32 == 5 as i32 {
-        5 as i32
+    score += if (*header).type_0 as i32 <= 3i32 || (*header).type_0 as i32 == 5i32 {
+        5i32
     } else {
-        -(2 as i32)
+        -(2i32)
     };
-    score +=
-        if (*header).coprocessor as i32 <= 5 as i32 || (*header).coprocessor as i32 >= 0xe as i32 {
-            5 as i32
-        } else {
-            -(2 as i32)
-        };
-    score += if (*header).chips as i32 <= 6 as i32
-        || (*header).chips as i32 == 9 as i32
-        || (*header).chips as i32 == 0xa as i32
+    score += if (*header).coprocessor as i32 <= 5i32 || (*header).coprocessor as i32 >= 0xei32 {
+        5i32
+    } else {
+        -(2i32)
+    };
+    score += if (*header).chips as i32 <= 6i32
+        || (*header).chips as i32 == 9i32
+        || (*header).chips as i32 == 0xai32
     {
-        5 as i32
+        5i32
     } else {
-        -(2 as i32)
+        -(2i32)
     };
-    score += if (*header).region as i32 <= 0x14 as i32 {
-        5 as i32
+    score += if (*header).region as i32 <= 0x14i32 {
+        5i32
     } else {
-        -(2 as i32)
+        -(2i32)
     };
-    score += if (*header).checksum as i32 + (*header).checksumComplement as i32 == 0xffff as i32 {
-        8 as i32
+    score += if (*header).checksum as i32 + (*header).checksumComplement as i32 == 0xffffi32 {
+        8i32
     } else {
-        -(6 as i32)
+        -(6i32)
     };
-    let resetVector: u16 = (*data.offset((location + 0x3c as i32) as isize) as i32
-        | (*data.offset((location + 0x3d as i32) as isize) as i32) << 8 as i32)
+    let resetVector: u16 = (*data.offset((location + 0x3ci32) as isize) as i32
+        | (*data.offset((location + 0x3di32) as isize) as i32) << 8i32)
         as u16;
-    score += if resetVector as i32 >= 0x8000 as i32 {
-        8 as i32
+    score += if resetVector as i32 >= 0x8000i32 {
+        8i32
     } else {
-        -(20 as i32)
+        -(20i32)
     };
-    let opcodeLoc: i32 =
-        location + 0x40 as i32 - 0x8000 as i32 + (resetVector as i32 & 0x7fff as i32);
-    let mut opcode: u8 = 0xff as u8;
+    let opcodeLoc: i32 = location + 0x40i32 - 0x8000i32 + (resetVector as i32 & 0x7fffi32);
+    let mut opcode: u8 = 0xffu8;
     if opcodeLoc < length {
         opcode = *data.offset(opcodeLoc as isize);
     } else {
-        score -= 14 as i32;
+        score -= 14i32;
     }
-    if opcode as i32 == 0x78 as i32 || opcode as i32 == 0x18 as i32 {
-        score += 6 as i32;
+    if opcode as i32 == 0x78i32 || opcode as i32 == 0x18i32 {
+        score += 6i32;
     }
-    if opcode as i32 == 0x4c as i32 || opcode as i32 == 0x5c as i32 || opcode as i32 == 0x9c as i32
-    {
-        score += 3 as i32;
+    if opcode as i32 == 0x4ci32 || opcode as i32 == 0x5ci32 || opcode as i32 == 0x9ci32 {
+        score += 3i32;
     }
-    if opcode as i32 == 0 as i32 || opcode as i32 == 0xff as i32 || opcode as i32 == 0xdb as i32 {
-        score -= 6 as i32;
+    if opcode as i32 == 0i32 || opcode as i32 == 0xffi32 || opcode as i32 == 0xdbi32 {
+        score -= 6i32;
     }
     (*header).score = score as i16;
 }

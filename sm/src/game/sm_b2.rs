@@ -170,12 +170,12 @@ pub unsafe fn WalkingSpacePirates_8789(game: &mut Game) {
     if (*E).base.health == 0 {
         let v1: u16 = ram_word!(game, cur_enemy_index);
         if (*E).base.enemy_ptr as i32 == addr_kEnemyDef_F593 as i32 {
-            (*E).sps_var_B = 0 as u16;
-            EnemyDeathAnimation(v1, 4 as u16, game);
+            (*E).sps_var_B = 0u16;
+            EnemyDeathAnimation(v1, 4u16, game);
             Enemy_ItemDrop_LowerNorfairSpacePirate(v1, game);
         } else {
-            (*E).sps_var_B = 0 as u16;
-            EnemyDeathAnimation(v1, 4 as u16, game);
+            (*E).sps_var_B = 0u16;
+            EnemyDeathAnimation(v1, 4u16, game);
         }
     }
 }
@@ -198,7 +198,7 @@ pub unsafe fn WalkingSpacePirates_87C8(game: &mut Game) {
             projectile_type[ram_word!(game, collision_detection_index)]
         );
         if (r18 as i32 & kProjectileType_TypeMask as i32) - kProjectileType_PowerBomb as i32
-            & 0x8000 as i32
+            & 0x8000i32
             != 0
         {
             enemy_ptr = 0;
@@ -218,10 +218,10 @@ pub unsafe fn WalkingSpacePirates_87C8(game: &mut Game) {
                 {
                     current_block = 1528265894032410192;
                 } else {
-                    v3 = (((r18) & ((kProjectileType_TypeMask) as u16)) as i32 >> 8 as i32) as i16;
+                    v3 = (((r18) & ((kProjectileType_TypeMask) as u16)) as i32 >> 8i32) as i16;
                     v = get_Vulnerability((r20).wrapping_add((v3) as u16), game);
-                    if ((*v).plasma_ice_wave as i32 & 0xf as i32) != 0i32
-                        && ((*v).plasma_ice_wave as i32 & 0xf as i32) != 15i32
+                    if ((*v).plasma_ice_wave as i32 & 0xfi32) != 0i32
+                        && ((*v).plasma_ice_wave as i32 & 0xfi32) != 15i32
                     {
                         current_block = 1528265894032410192;
                     } else {
@@ -229,10 +229,8 @@ pub unsafe fn WalkingSpacePirates_87C8(game: &mut Game) {
                     }
                 }
             } else {
-                v2 = get_Vulnerability((r20 as i32 + (r18 as i32 & 0xf as i32)) as u16, game);
-                if ((*v2).power as i32 & 0xf as i32) != 0i32
-                    && ((*v2).power as i32 & 0xf as i32) != 15i32
-                {
+                v2 = get_Vulnerability((r20 as i32 + (r18 as i32 & 0xfi32)) as u16, game);
+                if ((*v2).power as i32 & 0xfi32) != 0i32 && ((*v2).power as i32 & 0xfi32) != 15i32 {
                     current_block = 1528265894032410192;
                 } else {
                     current_block = 17407779659766490442;
@@ -272,25 +270,25 @@ pub unsafe fn WalkingSpacePirates_883E(game: &mut Game) {
             return;
         }
     } else if (r18 as i32 & kProjectileType_TypeMask as i32) - kProjectileType_PowerBomb as i32
-        & 0x8000 as i32
+        & 0x8000i32
         == 0
     {
         return;
     }
     (*Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game))
         .base
-        .invincibility_timer = 10 as u16;
+        .invincibility_timer = 10u16;
     let mut v2: u16 = 0;
-    if (ram_word!(game, projectile_dir[v1]) as i32 & 0xf as i32) == 7i32 {
-        v2 = 1 as u16;
-    } else if (ram_word!(game, projectile_dir[v1]) as i32 & 0xf as i32) == 2i32 {
-        v2 = 8 as u16;
+    if (ram_word!(game, projectile_dir[v1]) as i32 & 0xfi32) == 7i32 {
+        v2 = 1u16;
+    } else if (ram_word!(game, projectile_dir[v1]) as i32 & 0xfi32) == 2i32 {
+        v2 = 8u16;
     } else {
-        v2 = 5 as u16;
+        v2 = 5u16;
     }
     set_ram_word!(game.projectile_dir[v1] = v2);
     ProjectileReflection(v0, game);
-    QueueSfx2_Max6(0x66 as u16, game);
+    QueueSfx2_Max6(0x66u16, game);
 }
 pub unsafe fn SpacePirates_Instr_MovePixelsDownAndChangeDirFaceRight(
     k: u16,
@@ -299,7 +297,7 @@ pub unsafe fn SpacePirates_Instr_MovePixelsDownAndChangeDirFaceRight(
 ) -> *const u16 {
     if Enemy_MoveDown(
         ram_word!(game, cur_enemy_index),
-        (*jp.offset(0) as i16 as i32) << 16 as i32,
+        (*jp.offset(0) as i16 as i32) << 16i32,
         game,
     ) == 0
     {
@@ -320,7 +318,7 @@ pub unsafe fn SpacePirates_Instr_MovePixelsDownAndChangeDirFaceLeft(
 ) -> *const u16 {
     if Enemy_MoveDown(
         ram_word!(game, cur_enemy_index),
-        (*jp.offset(0) as i16 as i32) << 16 as i32,
+        (*jp.offset(0) as i16 as i32) << 16i32,
         game,
     ) == 0
     {
@@ -368,9 +366,9 @@ pub unsafe fn SpacePirates_Instr_PrepareWallJumpR(
     let E: *mut Enemy_SpacePirates =
         Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).sps_var_B = ((*E).base.x_pos).wrapping_add((*E).sps_parameter_2);
-    (*E).sps_var_D = ((*E).base.x_pos as i32 + ((*E).sps_parameter_2 as i32 >> 1 as i32)) as u16;
+    (*E).sps_var_D = ((*E).base.x_pos as i32 + ((*E).sps_parameter_2 as i32 >> 1i32)) as u16;
     (*E).sps_var_E = (*E).base.y_pos;
-    (*E).sps_var_F = 64 as u16;
+    (*E).sps_var_F = 64u16;
     jp
 }
 pub unsafe fn SpacePirates_Instr_PrepareWallJumpL(
@@ -381,9 +379,9 @@ pub unsafe fn SpacePirates_Instr_PrepareWallJumpL(
     let E: *mut Enemy_SpacePirates =
         Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).sps_var_B = ((*E).base.x_pos).wrapping_sub((*E).sps_parameter_2);
-    (*E).sps_var_D = ((*E).base.x_pos as i32 - ((*E).sps_parameter_2 as i32 >> 1 as i32)) as u16;
+    (*E).sps_var_D = ((*E).base.x_pos as i32 - ((*E).sps_parameter_2 as i32 >> 1i32)) as u16;
     (*E).sps_var_E = (*E).base.y_pos;
-    (*E).sps_var_F = 192 as u16;
+    (*E).sps_var_F = 192u16;
     jp
 }
 pub unsafe fn SpacePirates_Instr_FireLaserL(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
@@ -396,8 +394,8 @@ pub unsafe fn SpacePirates_Instr_FireLaserL(k: u16, jp: *const u16, game: &mut G
         x: (((*E).base.x_pos).wrapping_sub(24u16)),
         y: (((*E).base.y_pos).wrapping_sub(16u16)),
     };
-    game.eproj_spawn_r22 = 0 as u16;
-    SpawnEprojWithRoomGfx(addr_stru_86A17B as u16, 0 as u16, game);
+    game.eproj_spawn_r22 = 0u16;
+    SpawnEprojWithRoomGfx(addr_stru_86A17B as u16, 0u16, game);
     jp
 }
 pub unsafe fn SpacePirates_Instr_FireLaserR(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
@@ -407,8 +405,8 @@ pub unsafe fn SpacePirates_Instr_FireLaserR(k: u16, jp: *const u16, game: &mut G
         x: (((*E).base.x_pos).wrapping_add(24u16)),
         y: (((*E).base.y_pos).wrapping_sub(16u16)),
     };
-    game.eproj_spawn_r22 = 1 as u16;
-    SpawnEprojWithRoomGfx(addr_stru_86A17B as u16, 1 as u16, game);
+    game.eproj_spawn_r22 = 1u16;
+    SpawnEprojWithRoomGfx(addr_stru_86A17B as u16, 1u16, game);
     jp
 }
 pub unsafe fn SpacePirates_Instr_SetEnemyFunc(
@@ -420,35 +418,35 @@ pub unsafe fn SpacePirates_Instr_SetEnemyFunc(
     jp.offset(1)
 }
 pub unsafe fn SpacePirates_Instr_PlaySfx(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    QueueSfx2_Max6(0x66 as u16, game);
+    QueueSfx2_Max6(0x66u16, game);
     jp
 }
 pub unsafe fn WallSpacePirates_Init(game: &mut Game) {
     let mut v0: u16 = addr_kSpacePirates_Ilist_ED36 as u16;
     let E: *mut Enemy_SpacePirates =
         Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
-    if ((*E).sps_parameter_1 as i32 & 1 as i32) != 0i32 {
+    if ((*E).sps_parameter_1 as i32 & 1i32) != 0i32 {
         v0 = addr_off_B2EDAC as u16;
     }
     (*E).base.current_instruction = v0;
-    (*E).sps_var_20 = 190 as u16;
-    (*E).sps_var_21 = 66 as u16;
-    (*E).sps_var_22 = 2 as u16;
-    if ((*E).sps_parameter_1 as i32 & 0x8000 as i32) == 0i32 {
+    (*E).sps_var_20 = 190u16;
+    (*E).sps_var_21 = 66u16;
+    (*E).sps_var_22 = 2u16;
+    if ((*E).sps_parameter_1 as i32 & 0x8000i32) == 0i32 {
         (*E).sps_var_20 = ((*E).sps_var_20).wrapping_add(2u16);
         (*E).sps_var_21 = ((*E).sps_var_21).wrapping_sub(2u16);
         (*E).sps_var_22 = ((*E).sps_var_22).wrapping_add(2u16);
     }
     let mut v2: u16 = ((0xb2f034i32) as u16);
-    if ((*E).sps_parameter_1 as i32 & 1 as i32) != 0i32 {
+    if ((*E).sps_parameter_1 as i32 & 1i32) != 0i32 {
         v2 = ((0xb2f0c8i32) as u16);
     }
     (*E).sps_var_A = v2;
     let mut v3: u16 = 0;
-    if ((*E).base.x_pos as i32 & 0xf as i32) - 11 as i32 & 0x8000 as i32 != 0 {
+    if ((*E).base.x_pos as i32 & 0xfi32) - 11i32 & 0x8000i32 != 0 {
         v3 = ((*E).base.x_pos) & (0xfff8u16);
     } else {
-        v3 = (((*E).base.x_pos as i32 & 0xfff0 as i32) + 16 as i32) as u16;
+        v3 = (((*E).base.x_pos as i32 & 0xfff0i32) + 16i32) as u16;
     }
     (*E).base.x_pos = v3;
 }
@@ -491,11 +489,11 @@ pub unsafe fn WallSpacePirates_Main(game: &mut Game) {
     );
 }
 pub unsafe fn SpacePirates_Func_1(k: u16, game: &mut Game) {
-    if IsSamusWithinEnemy_Y(ram_word!(game, cur_enemy_index), 0x20 as u16, game) != 0 {
+    if IsSamusWithinEnemy_Y(ram_word!(game, cur_enemy_index), 0x20u16, game) != 0 {
         let E: *mut Enemy_SpacePirates =
             Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
         (*E).base.current_instruction = addr_kSpacePirates_Ilist_ED80 as u16;
-        (*E).base.instruction_timer = 1 as u16;
+        (*E).base.instruction_timer = 1u16;
     }
 }
 pub unsafe fn SpacePirates_Func_2(k: u16, game: &mut Game) {
@@ -503,12 +501,12 @@ pub unsafe fn SpacePirates_Func_2(k: u16, game: &mut Game) {
         Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).base.x_pos = ((*E).sps_var_D).wrapping_add(SineMult8bit(
         (*E).sps_var_F,
-        ((*E).sps_parameter_2 as i32 >> 1 as i32) as u16,
+        ((*E).sps_parameter_2 as i32 >> 1i32) as u16,
         game,
     ));
     (*E).base.y_pos = ((*E).sps_var_E).wrapping_sub(CosineMult8bit(
         (*E).sps_var_F,
-        ((*E).sps_parameter_2 as i32 >> 2 as i32) as u16,
+        ((*E).sps_parameter_2 as i32 >> 2i32) as u16,
         game,
     ));
     let v1: u16 = ((*(&raw mut (*E).sps_var_F as *mut u8).offset(0))
@@ -516,22 +514,22 @@ pub unsafe fn SpacePirates_Func_2(k: u16, game: &mut Game) {
     (*E).sps_var_F = v1;
     if v1 == (*E).sps_var_20 {
         (*E).base.current_instruction = addr_kSpacePirates_Ilist_EDA4 as u16;
-        (*E).base.instruction_timer = 1 as u16;
+        (*E).base.instruction_timer = 1u16;
         let mut v2: u16 = 0;
-        if ((*E).base.x_pos as i32 & 0xf as i32) - 11 as i32 & 0x8000 as i32 != 0 {
+        if ((*E).base.x_pos as i32 & 0xfi32) - 11i32 & 0x8000i32 != 0 {
             v2 = ((*E).base.x_pos) & (0xfff8u16);
         } else {
-            v2 = (((*E).base.x_pos as i32 & 0xfff0 as i32) + 16 as i32) as u16;
+            v2 = (((*E).base.x_pos as i32 & 0xfff0i32) + 16i32) as u16;
         }
         (*E).base.x_pos = v2;
     }
 }
 pub unsafe fn SpacePirates_Func_3(k: u16, game: &mut Game) {
-    if IsSamusWithinEnemy_Y(ram_word!(game, cur_enemy_index), 0x20 as u16, game) != 0 {
+    if IsSamusWithinEnemy_Y(ram_word!(game, cur_enemy_index), 0x20u16, game) != 0 {
         let E: *mut Enemy_SpacePirates =
             Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
         (*E).base.current_instruction = addr_kSpacePirates_Ilist_ECC0 as u16;
-        (*E).base.instruction_timer = 1 as u16;
+        (*E).base.instruction_timer = 1u16;
     }
 }
 pub unsafe fn SpacePirates_Func_4(k: u16, game: &mut Game) {
@@ -539,12 +537,12 @@ pub unsafe fn SpacePirates_Func_4(k: u16, game: &mut Game) {
         Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).base.x_pos = ((*E).sps_var_D).wrapping_add(SineMult8bit(
         (*E).sps_var_F,
-        ((*E).sps_parameter_2 as i32 >> 1 as i32) as u16,
+        ((*E).sps_parameter_2 as i32 >> 1i32) as u16,
         game,
     ));
     (*E).base.y_pos = ((*E).sps_var_E).wrapping_sub(CosineMult8bit(
         (*E).sps_var_F,
-        ((*E).sps_parameter_2 as i32 >> 2 as i32) as u16,
+        ((*E).sps_parameter_2 as i32 >> 2i32) as u16,
         game,
     ));
     let v1: u16 = ((*(&raw mut (*E).sps_var_22 as *mut u8).offset(0))
@@ -552,12 +550,12 @@ pub unsafe fn SpacePirates_Func_4(k: u16, game: &mut Game) {
     (*E).sps_var_F = v1;
     if v1 == (*E).sps_var_21 {
         (*E).base.current_instruction = addr_kSpacePirates_Ilist_ECE4 as u16;
-        (*E).base.instruction_timer = 1 as u16;
+        (*E).base.instruction_timer = 1u16;
         let mut v2: u16 = 0;
-        if ((*E).base.x_pos as i32 & 0xf as i32) - 11 as i32 & 0x8000 as i32 != 0 {
+        if ((*E).base.x_pos as i32 & 0xfi32) - 11i32 & 0x8000i32 != 0 {
             v2 = ((*E).base.x_pos) & (0xfff8u16);
         } else {
-            v2 = (((*E).base.x_pos as i32 & 0xfff0 as i32) + 16 as i32) as u16;
+            v2 = (((*E).base.x_pos as i32 & 0xfff0i32) + 16i32) as u16;
         }
         (*E).base.x_pos = v2;
     }
@@ -573,7 +571,7 @@ pub unsafe fn SpacePirates_Instr_16(k: u16, jp: *const u16, game: &mut Game) -> 
     jp.offset(1)
 }
 pub unsafe fn sub_B2F554(game: &mut Game) {
-    (*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).instruction_timer = 1 as u16;
+    (*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).instruction_timer = 1u16;
 }
 pub unsafe fn SpacePirates_Instr_15(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let E: *mut Enemy_SpacePirates =
@@ -595,79 +593,77 @@ pub unsafe fn SpacePirates_Instr_15(k: u16, jp: *const u16, game: &mut Game) -> 
 pub unsafe fn SpacePirates_Instr_18(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let E: *mut Enemy_SpacePirates =
         Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).base.instruction_timer = 1 as u16;
-    (*E).sps_var_C = (if ((*E).base.x_pos as i32 - ram_word!(game, samus_x_pos) as i32
-        & 0x8000 as i32)
-        != 0i32
-    {
-        addr_kSpacePirates_Ilist_F420 as i32
-    } else {
-        addr_kSpacePirates_Ilist_F22E as i32
-    }) as u16;
+    (*E).base.instruction_timer = 1u16;
+    (*E).sps_var_C =
+        (if ((*E).base.x_pos as i32 - ram_word!(game, samus_x_pos) as i32 & 0x8000i32) != 0i32 {
+            addr_kSpacePirates_Ilist_F420 as i32
+        } else {
+            addr_kSpacePirates_Ilist_F22E as i32
+        }) as u16;
     (*E).sps_var_C as usize as *const u16
 }
 pub unsafe fn sub_B2F5B3(game: &mut Game) {
     let v0: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    (*v0).instruction_timer = 1 as u16;
+    (*v0).instruction_timer = 1u16;
     (*v0).ai_var_C =
-        (if ((*v0).x_pos as i32 - ram_word!(game, samus_x_pos) as i32 & 0x8000 as i32) != 0i32 {
+        (if ((*v0).x_pos as i32 - ram_word!(game, samus_x_pos) as i32 & 0x8000i32) != 0i32 {
             addr_kSpacePirates_Ilist_F51A as i32
         } else {
             addr_kSpacePirates_Ilist_F32E as i32
         }) as u16;
 }
 pub unsafe fn SpacePirates_Instr_17(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    (*Get_SpacePirates(k as i32, game)).sps_var_00 = 0 as u16;
+    (*Get_SpacePirates(k as i32, game)).sps_var_00 = 0u16;
     jp
 }
 pub unsafe fn NinjaSpacePirates_Init(game: &mut Game) {
     let E: *mut Enemy_SpacePirates =
         Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).base.current_instruction = (if ((*E).sps_parameter_1 as i32 & 1 as i32) != 0i32 {
+    (*E).base.current_instruction = (if ((*E).sps_parameter_1 as i32 & 1i32) != 0i32 {
         addr_kSpacePirates_Ilist_F4CC as i32
     } else {
         addr_kSpacePirates_Ilist_F2DA as i32
     }) as u16;
     (*E).sps_var_C = (*E).base.current_instruction;
     let x_pos: u16 = (*E).base.x_pos;
-    if ((*E).sps_parameter_1 as i32 & 1 as i32) != 0i32 {
+    if ((*E).sps_parameter_1 as i32 & 1i32) != 0i32 {
         (*E).sps_var_E = x_pos;
         (*E).sps_var_F = ((*E).sps_parameter_2).wrapping_add(x_pos);
     } else {
         (*E).sps_var_F = x_pos;
         (*E).sps_var_E = (x_pos).wrapping_sub((*E).sps_parameter_2);
     }
-    let mut r20: u16 = ((((*E).sps_var_F).wrapping_sub((*E).sps_var_E)) as i32 >> 1 as i32) as u16;
+    let mut r20: u16 = ((((*E).sps_var_F).wrapping_sub((*E).sps_var_E)) as i32 >> 1i32) as u16;
     (*E).sps_var_D = ((*E).sps_var_E).wrapping_add(r20);
-    let mut r18: u16 = 0 as u16;
-    let mut R22: u16 = 0 as u16;
-    r20 = ((r20 as u8 as i32) << 8 as i32) as u16;
+    let mut r18: u16 = 0u16;
+    let mut R22: u16 = 0u16;
+    r20 = ((r20 as u8 as i32) << 8i32) as u16;
     loop {
         r18 = (r18).wrapping_add(32u16);
         R22 = (R22).wrapping_add(r18);
-        if (R22 as i32 - r20 as i32 & 0x8000 as i32 == 0) {
+        if (R22 as i32 - r20 as i32 & 0x8000i32 == 0) {
             break;
         }
     }
     (*E).sps_var_B = r18;
-    let R24: u16 = ((R22 as i32 & 0xff00 as i32) >> 8 as i32) as u16;
+    let R24: u16 = ((R22 as i32 & 0xff00i32) >> 8i32) as u16;
     (*E).sps_var_F = ((*E).sps_var_D).wrapping_add(R24);
     (*E).sps_var_E = ((*E).sps_var_D).wrapping_sub(R24);
     let mut sps_var_E: u16 = (*E).sps_var_E;
-    if ((*E).sps_parameter_1 as i32 & 1 as i32) == 0i32 {
+    if ((*E).sps_parameter_1 as i32 & 1i32) == 0i32 {
         sps_var_E = (*E).sps_var_F;
     }
     (*E).base.x_pos = sps_var_E;
     (*E).sps_var_A = ((0xb2804bi32) as u16);
     (*E).sps_var_08 = (*E).base.y_pos;
-    let mut v6: u16 = 0 as u16;
-    let mut v7: u16 = 0 as u16;
-    let mut n: i32 = 15 as i32;
+    let mut v6: u16 = 0u16;
+    let mut v7: u16 = 0u16;
+    let mut n: i32 = 15i32;
     loop {
         *((&raw mut game.g_ram as *mut u8).offset(0xc200) as *mut u16)
-            .offset(((v7 as i32 >> 1 as i32) + 240 as i32) as isize) =
+            .offset(((v7 as i32 >> 1i32) + 240i32) as isize) =
             *(game.g_rom.offset(crate::rtl::lorom_offset(0xb28727)) as *const u8 as *mut u16)
-                .offset((v6 as i32 >> 1 as i32) as isize);
+                .offset((v6 as i32 >> 1i32) as isize);
         v6 = (v6).wrapping_add(2u16);
         v7 = (v7).wrapping_add(2u16);
         n -= 1;
@@ -695,13 +691,13 @@ pub unsafe fn SpacePirates_Func_5(k: u16, game: &mut Game) {
         SpacePirates_Func_8(game);
     } else {
         (*E).base.current_instruction =
-            (if (*E).base.x_pos as i32 - ram_word!(game, samus_x_pos) as i32 & 0x8000 as i32 != 0 {
+            (if (*E).base.x_pos as i32 - ram_word!(game, samus_x_pos) as i32 & 0x8000i32 != 0 {
                 addr_kSpacePirates_Ilist_F420 as i32
             } else {
                 addr_kSpacePirates_Ilist_F22E as i32
             }) as u16;
         (*E).sps_var_C = (*E).base.current_instruction;
-        (*E).base.instruction_timer = 1 as u16;
+        (*E).base.instruction_timer = 1u16;
     };
 }
 pub unsafe fn SpacePirates_Func_6(k: u16, game: &mut Game) {
@@ -714,7 +710,7 @@ pub unsafe fn SpacePirates_Func_6(k: u16, game: &mut Game) {
 }
 pub unsafe fn SpacePirates_Func_7(k: u16, game: &mut Game) {
     let E: *mut Enemy_SpacePirates = Get_SpacePirates(k as i32, game);
-    if ((*E).base.frame_counter as i32 & 0x3f as i32) == 0i32 {
+    if ((*E).base.frame_counter as i32 & 0x3fi32) == 0i32 {
         if (*E).base.x_pos == (*E).sps_var_E {
             if (((*E).base.x_pos) as i16).wrapping_sub((ram_word!(game, samus_x_pos)) as i16) < 0i16
             {
@@ -729,18 +725,18 @@ pub unsafe fn SpacePirates_Func_7(k: u16, game: &mut Game) {
             }
             (*E).base.current_instruction = addr_kSpacePirates_Ilist_F34A as u16;
         }
-        (*E).base.instruction_timer = 1 as u16;
+        (*E).base.instruction_timer = 1u16;
     }
 }
 pub unsafe fn SpacePirates_Func_8(game: &mut Game) -> u16 {
-    let mut v0: u16 = 8 as u16;
+    let mut v0: u16 = 8u16;
     while ram_word!(game, projectile_type[(v0 as i32 >> 1i32)]) == 0 {
         v0 = (v0).wrapping_sub(2u16);
-        if (v0 as i32 & 0x8000 as i32) != 0i32 {
-            return 0 as u16;
+        if (v0 as i32 & 0x8000i32) != 0i32 {
+            return 0u16;
         }
     }
-    let v1: i32 = v0 as i32 >> 1 as i32;
+    let v1: i32 = v0 as i32 >> 1i32;
     let E: *mut Enemy_SpacePirates =
         Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
     if ((abs16((ram_word!(game, projectile_x_pos[v1])).wrapping_sub((*E).base.x_pos))) as i16)
@@ -750,16 +746,16 @@ pub unsafe fn SpacePirates_Func_8(game: &mut Game) -> u16 {
             .wrapping_sub(32i16)
             >= 0i16
     {
-        return 0 as u16;
+        return 0u16;
     }
     (*E).base.current_instruction =
-        (if (*E).base.x_pos as i32 - ram_word!(game, samus_x_pos) as i32 & 0x8000 as i32 != 0 {
+        (if (*E).base.x_pos as i32 - ram_word!(game, samus_x_pos) as i32 & 0x8000i32 != 0 {
             addr_kSpacePirates_Ilist_F462 as i32
         } else {
             addr_kSpacePirates_Ilist_F270 as i32
         }) as u16;
-    (*E).base.instruction_timer = 1 as u16;
-    1 as u16
+    (*E).base.instruction_timer = 1u16;
+    1u16
 }
 pub unsafe fn SpacePirates_Func_9(game: &mut Game) -> u16 {
     let E: *mut Enemy_SpacePirates =
@@ -768,15 +764,15 @@ pub unsafe fn SpacePirates_Func_9(game: &mut Game) -> u16 {
         .wrapping_sub(32i16)
         >= 0i16
     {
-        return 0 as u16;
+        return 0u16;
     }
     let mut v1: u16 = addr_kSpacePirates_Ilist_F1C4 as u16;
     if (*E).base.x_pos == (*E).sps_var_E {
         v1 = addr_kSpacePirates_Ilist_F3B2 as u16;
     }
     (*E).base.current_instruction = v1;
-    (*E).base.instruction_timer = 1 as u16;
-    1 as u16
+    (*E).base.instruction_timer = 1u16;
+    1u16
 }
 pub unsafe fn SpacePirates_Func_10(game: &mut Game) -> u16 {
     let E: *mut Enemy_SpacePirates =
@@ -788,19 +784,16 @@ pub unsafe fn SpacePirates_Func_10(game: &mut Game) -> u16 {
             .wrapping_sub(40i16)
             >= 0i16
     {
-        return 0 as u16;
+        return 0u16;
     }
-    (*E).base.current_instruction = (if ((*E).base.x_pos as i32
-        - ram_word!(game, samus_x_pos) as i32
-        & 0x8000 as i32)
-        != 0i32
-    {
-        addr_kSpacePirates_Ilist_F51A as i32
-    } else {
-        addr_kSpacePirates_Ilist_F32E as i32
-    }) as u16;
-    (*E).base.instruction_timer = 1 as u16;
-    1 as u16
+    (*E).base.current_instruction =
+        (if ((*E).base.x_pos as i32 - ram_word!(game, samus_x_pos) as i32 & 0x8000i32) != 0i32 {
+            addr_kSpacePirates_Ilist_F51A as i32
+        } else {
+            addr_kSpacePirates_Ilist_F32E as i32
+        }) as u16;
+    (*E).base.instruction_timer = 1u16;
+    1u16
 }
 pub unsafe fn SpacePirates_Func_11(k: u16, game: &mut Game) {
     let E: *mut Enemy_SpacePirates = Get_SpacePirates(k as i32, game);
@@ -824,7 +817,7 @@ pub unsafe fn SpacePirates_Func_12(k: u16, game: &mut Game) {
     if v2 == 0 {
         (*E).sps_var_A = ((0xb2804bi32) as u16);
         (*E).base.current_instruction = addr_kSpacePirates_Ilist_F2F8 as u16;
-        (*E).base.instruction_timer = 1 as u16;
+        (*E).base.instruction_timer = 1u16;
         (*E).base.x_pos = (*E).sps_var_E;
         SpacePirates_FB11(k, game);
     }
@@ -851,7 +844,7 @@ pub unsafe fn SpacePirates_Func_14(k: u16, game: &mut Game) {
     if v2 == 0 {
         (*E).sps_var_A = ((0xb2804bi32) as u16);
         (*E).base.current_instruction = addr_kSpacePirates_Ilist_F4EA as u16;
-        (*E).base.instruction_timer = 1 as u16;
+        (*E).base.instruction_timer = 1u16;
         (*E).base.x_pos = (*E).sps_var_F;
         SpacePirates_FB11(k, game);
     }
@@ -876,21 +869,21 @@ pub unsafe fn SpacePirates_Func_16(game: &mut Game) {
                 break;
             }
         }
-        v3 = 0 as i16;
+        v3 = 0i16;
         if (*E).base.x_pos == (*E).sps_var_E {
-            v3 = 4 as i16;
+            v3 = 4i16;
         }
         (*E).base.current_instruction = *(game.g_rom.offset(crate::rtl::lorom_offset(0xb2f959))
             as *const u8 as *mut u16)
             .offset((v2 as i32 + v3 as i32) as isize);
-        (*E).base.instruction_timer = 1 as u16;
+        (*E).base.instruction_timer = 1u16;
     }
 }
 pub unsafe fn SpacePirates_Instr_19(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let E: *mut Enemy_SpacePirates = Get_SpacePirates(k as i32, game);
-    (*E).sps_var_00 = 1536 as u16;
+    (*E).sps_var_00 = 1536u16;
     (*E).sps_var_03 = ((*E).sps_var_D as i32
-        + ((((*E).sps_var_F).wrapping_sub((*E).sps_var_D)) as i32 >> 1 as i32))
+        + ((((*E).sps_var_F).wrapping_sub((*E).sps_var_D)) as i32 >> 1i32))
         as u16;
     jp
 }
@@ -904,8 +897,8 @@ pub unsafe fn SpacePirates_F985(k: u16, game: &mut Game) {
     if v2 < 0i16 {
         (*E).sps_var_A = ((0xb2f9c1i32) as u16);
         (*E).base.current_instruction = addr_kSpacePirates_Ilist_F2A0 as u16;
-        (*E).base.instruction_timer = 1 as u16;
-        (*E).sps_var_00 = 1536 as u16;
+        (*E).base.instruction_timer = 1u16;
+        (*E).sps_var_00 = 1536u16;
     }
 }
 pub unsafe fn SpacePirates_F9C1(k: u16, game: &mut Game) {
@@ -914,7 +907,7 @@ pub unsafe fn SpacePirates_F9C1(k: u16, game: &mut Game) {
     (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(5u16);
     if Enemy_MoveDown(
         k,
-        ((*(&raw mut (*E).sps_var_00 as *mut u8).offset(1isize) as u32) << 16 as i32
+        ((*(&raw mut (*E).sps_var_00 as *mut u8).offset(1isize) as u32) << 16i32
             | *(&raw mut (*E).sps_var_00 as *mut u8).offset(0) as u16 as u32) as i32,
         game,
     ) != 0u8
@@ -923,11 +916,11 @@ pub unsafe fn SpacePirates_F9C1(k: u16, game: &mut Game) {
             (*E).sps_var_00 = v2 as u16;
             v2 < 0i16
         }
-        || (v2 as i32 & 0xff00 as i32) == 0i32
+        || (v2 as i32 & 0xff00i32) == 0i32
     {
         (*E).sps_var_A = ((0xb2fa15i32) as u16);
         (*E).base.current_instruction = addr_kSpacePirates_Ilist_F2B2 as u16;
-        (*E).base.instruction_timer = 1 as u16;
+        (*E).base.instruction_timer = 1u16;
         (*E).base.y_pos = (*E).sps_var_08;
         SpacePirates_FB11(k, game);
     }
@@ -939,15 +932,15 @@ pub unsafe fn SpacePirates_FA15(k: u16, game: &mut Game) {
     if ((v2) as i16).wrapping_sub(((*E).sps_var_E) as i16) < 0i16 {
         (*E).base.x_pos = (*E).sps_var_E;
         (*E).base.current_instruction = addr_kSpacePirates_Ilist_F2F8 as u16;
-        (*E).base.instruction_timer = 1 as u16;
+        (*E).base.instruction_timer = 1u16;
         (*E).sps_var_A = ((0xb2804bi32) as u16);
     }
 }
 pub unsafe fn SpacePirates_Instr_21(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let E: *mut Enemy_SpacePirates = Get_SpacePirates(k as i32, game);
-    (*E).sps_var_00 = 1536 as u16;
+    (*E).sps_var_00 = 1536u16;
     (*E).sps_var_03 = ((*E).sps_var_E as i32
-        + ((((*E).sps_var_D).wrapping_sub((*E).sps_var_E)) as i32 >> 1 as i32))
+        + ((((*E).sps_var_D).wrapping_sub((*E).sps_var_E)) as i32 >> 1i32))
         as u16;
     jp
 }
@@ -961,8 +954,8 @@ pub unsafe fn SpacePirates_FA59(k: u16, game: &mut Game) {
     if v2 < 0i16 {
         (*E).sps_var_A = ((0xb2fa95i32) as u16);
         (*E).base.current_instruction = addr_kSpacePirates_Ilist_F492 as u16;
-        (*E).base.instruction_timer = 1 as u16;
-        (*E).sps_var_00 = 1536 as u16;
+        (*E).base.instruction_timer = 1u16;
+        (*E).sps_var_00 = 1536u16;
     }
 }
 pub unsafe fn SpacePirates_FA95(k: u16, game: &mut Game) {
@@ -971,7 +964,7 @@ pub unsafe fn SpacePirates_FA95(k: u16, game: &mut Game) {
     (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(5u16);
     if Enemy_MoveDown(
         k,
-        ((*(&raw mut (*E).sps_var_00 as *mut u8).offset(1isize) as u32) << 16 as i32
+        ((*(&raw mut (*E).sps_var_00 as *mut u8).offset(1isize) as u32) << 16i32
             | *(&raw mut (*E).sps_var_00 as *mut u8).offset(0) as u16 as u32) as i32,
         game,
     ) != 0u8
@@ -980,11 +973,11 @@ pub unsafe fn SpacePirates_FA95(k: u16, game: &mut Game) {
             (*E).sps_var_00 = v2 as u16;
             v2 < 0i16
         }
-        || (v2 as i32 & 0xff00 as i32) == 0i32
+        || (v2 as i32 & 0xff00i32) == 0i32
     {
         (*E).sps_var_A = ((0xb2fae9i32) as u16);
         (*E).base.current_instruction = addr_kSpacePirates_Ilist_F4A4 as u16;
-        (*E).base.instruction_timer = 1 as u16;
+        (*E).base.instruction_timer = 1u16;
         (*E).base.y_pos = (*E).sps_var_08;
         SpacePirates_FB11(k, game);
     }
@@ -996,7 +989,7 @@ pub unsafe fn SpacePirates_FAE9(k: u16, game: &mut Game) {
     if ((v2) as i16).wrapping_sub(((*E).sps_var_F) as i16) >= 0i16 {
         (*E).base.x_pos = (*E).sps_var_F;
         (*E).base.current_instruction = addr_kSpacePirates_Ilist_F4EA as u16;
-        (*E).base.instruction_timer = 1 as u16;
+        (*E).base.instruction_timer = 1u16;
         (*E).sps_var_A = ((0xb2804bi32) as u16);
     }
 }
@@ -1005,15 +998,15 @@ pub unsafe fn SpacePirates_FB11(k: u16, game: &mut Game) {
     CreateSpriteAtPos(
         ((*E).base.x_pos).wrapping_sub(8u16),
         ((*E).base.y_pos).wrapping_add(28u16),
-        10 as u16,
-        0 as u16,
+        10u16,
+        0u16,
         game,
     );
     CreateSpriteAtPos(
         ((*E).base.x_pos).wrapping_add(8u16),
         ((*E).base.y_pos).wrapping_add(28u16),
-        10 as u16,
-        0 as u16,
+        10u16,
+        0u16,
         game,
     );
 }
@@ -1024,8 +1017,8 @@ pub unsafe fn SpacePirates_Instr_12(k: u16, jp: *const u16, game: &mut Game) -> 
         x: (((*E).base.x_pos).wrapping_sub(24u16)),
         y: (((*E).base.y_pos).wrapping_sub(*jp.offset(0))),
     };
-    game.eproj_spawn_r22 = 0 as u16;
-    SpawnEprojWithRoomGfx(addr_stru_86A17B as u16, 0 as u16, game);
+    game.eproj_spawn_r22 = 0u16;
+    SpawnEprojWithRoomGfx(addr_stru_86A17B as u16, 0u16, game);
     jp.offset(1)
 }
 pub unsafe fn SpacePirates_Instr_14(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
@@ -1035,8 +1028,8 @@ pub unsafe fn SpacePirates_Instr_14(k: u16, jp: *const u16, game: &mut Game) -> 
         x: (((*E).base.x_pos).wrapping_add(24u16)),
         y: (((*E).base.y_pos).wrapping_sub(*jp.offset(0))),
     };
-    game.eproj_spawn_r22 = 1 as u16;
-    SpawnEprojWithRoomGfx(addr_stru_86A17B as u16, 1 as u16, game);
+    game.eproj_spawn_r22 = 1u16;
+    SpawnEprojWithRoomGfx(addr_stru_86A17B as u16, 1u16, game);
     jp.offset(1)
 }
 pub unsafe fn SpacePirates_Instr_11(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
@@ -1044,7 +1037,7 @@ pub unsafe fn SpacePirates_Instr_11(k: u16, jp: *const u16, game: &mut Game) -> 
     jp.offset(1)
 }
 pub unsafe fn SpacePirates_Instr_13(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    if IsSamusWithinEnemy_Y(ram_word!(game, cur_enemy_index), 0x10 as u16, game) != 0 {
+    if IsSamusWithinEnemy_Y(ram_word!(game, cur_enemy_index), 0x10u16, game) != 0 {
         if ((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(
             ((*Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game))
                 .base
@@ -1070,7 +1063,7 @@ pub unsafe fn WalkingSpacePirates_Init(game: &mut Game) {
     let mut v0: u16 = addr_kSpacePirates_Ilist_FB64 as u16;
     let E: *mut Enemy_SpacePirates =
         Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
-    if ((*E).sps_parameter_1 as i32 & 1 as i32) != 0i32 {
+    if ((*E).sps_parameter_1 as i32 & 1i32) != 0i32 {
         v0 = addr_kSpacePirates_Ilist_FBE6 as u16;
     }
     (*E).base.current_instruction = v0;
@@ -1086,23 +1079,23 @@ pub unsafe fn WalkingSpacePirates_Main(game: &mut Game) {
         ram_word!(game, cur_enemy_index),
         game,
     );
-    if ((*E).sps_parameter_1 as i32 & 0x8000 as i32) != 0i32 {
+    if ((*E).sps_parameter_1 as i32 & 0x8000i32) != 0i32 {
         WalkingSpacePirates_FE4B(game);
     }
 }
 pub unsafe fn WalkingSpacePirates_FD44(game: &mut Game) {
     let E: *mut Enemy_SpacePirates =
         Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
-    if IsSamusWithinEnemy_Y(ram_word!(game, cur_enemy_index), 0x10 as u16, game) != 0 {
+    if IsSamusWithinEnemy_Y(ram_word!(game, cur_enemy_index), 0x10u16, game) != 0 {
         let mut v1: u16 = addr_kSpacePirates_Ilist_FB8C as u16;
         if ((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(((*E).base.x_pos) as i16) >= 0i16 {
             v1 = addr_kSpacePirates_Ilist_FC0E as u16;
         }
         (*E).base.current_instruction = v1;
-        (*E).base.instruction_timer = 1 as u16;
+        (*E).base.instruction_timer = 1u16;
     } else if Enemy_MoveDown(
         ram_word!(game, cur_enemy_index),
-        (1 as i16 as i32) << 16 as i32,
+        (1i16 as i32) << 16i32,
         game,
     ) != 0
     {
@@ -1111,17 +1104,17 @@ pub unsafe fn WalkingSpacePirates_FD44(game: &mut Game) {
         (*E).base.x_pos = (x_pos).wrapping_sub(17u16);
         let result: u8 = Enemy_MoveDown(
             ram_word!(game, cur_enemy_index),
-            (1 as i16 as i32) << 16 as i32,
+            (1i16 as i32) << 16i32,
             game,
         );
         (*E).base.x_pos = (*E).sps_var_00;
         if result != 0 {
             EnemyFunc_BBBF(
                 ram_word!(game, cur_enemy_index),
-                (-(9 as i32) as i16 as i32) << 16 as i32,
+                (-(9i32) as i16 as i32) << 16i32,
                 game,
             );
-            if Enemy_MoveRight_IgnoreSlopes(ram_word!(game, cur_enemy_index), -(14337 as i32), game)
+            if Enemy_MoveRight_IgnoreSlopes(ram_word!(game, cur_enemy_index), -(14337i32), game)
                 == 0
                 && (((*E).base.x_pos) as i16).wrapping_sub(((*E).sps_var_E) as i16) >= 0i16
             {
@@ -1129,22 +1122,22 @@ pub unsafe fn WalkingSpacePirates_FD44(game: &mut Game) {
             }
         }
         (*E).base.current_instruction = addr_kSpacePirates_Ilist_FBC6 as u16;
-        (*E).base.instruction_timer = 1 as u16;
+        (*E).base.instruction_timer = 1u16;
     }
 }
 pub unsafe fn WalkingSpacePirates_FDCE(game: &mut Game) {
     let E: *mut Enemy_SpacePirates =
         Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
-    if IsSamusWithinEnemy_Y(ram_word!(game, cur_enemy_index), 0x10 as u16, game) != 0 {
+    if IsSamusWithinEnemy_Y(ram_word!(game, cur_enemy_index), 0x10u16, game) != 0 {
         let mut v1: u16 = addr_kSpacePirates_Ilist_FB8C as u16;
         if ((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(((*E).base.x_pos) as i16) >= 0i16 {
             v1 = addr_kSpacePirates_Ilist_FC0E as u16;
         }
         (*E).base.current_instruction = v1;
-        (*E).base.instruction_timer = 1 as u16;
+        (*E).base.instruction_timer = 1u16;
     } else if Enemy_MoveDown(
         ram_word!(game, cur_enemy_index),
-        (1 as i16 as i32) << 16 as i32,
+        (1i16 as i32) << 16i32,
         game,
     ) != 0
     {
@@ -1153,29 +1146,28 @@ pub unsafe fn WalkingSpacePirates_FDCE(game: &mut Game) {
         (*E).base.x_pos = (x_pos).wrapping_add(16u16);
         let result: u8 = Enemy_MoveDown(
             ram_word!(game, cur_enemy_index),
-            (1 as i16 as i32) << 16 as i32,
+            (1i16 as i32) << 16i32,
             game,
         );
         (*E).base.x_pos = (*E).sps_var_00;
         if result == 0
-            || Enemy_MoveRight_IgnoreSlopes(ram_word!(game, cur_enemy_index), 14336 as i32, game)
-                != 0u8
+            || Enemy_MoveRight_IgnoreSlopes(ram_word!(game, cur_enemy_index), 14336i32, game) != 0u8
             || (((*E).base.x_pos) as i16).wrapping_sub(((*E).sps_var_F) as i16) >= 0i16
         {
             (*E).base.current_instruction = addr_kSpacePirates_Ilist_FC48 as u16;
-            (*E).base.instruction_timer = 1 as u16;
+            (*E).base.instruction_timer = 1u16;
         }
     }
 }
 pub unsafe fn WalkingSpacePirates_FE4B(game: &mut Game) {
-    let mut v0: u16 = 8 as u16;
+    let mut v0: u16 = 8u16;
     while ram_word!(game, projectile_type[(v0 as i32 >> 1i32)]) == 0 {
         v0 = (v0).wrapping_sub(2u16);
-        if (v0 as i32 & 0x8000 as i32) != 0i32 {
+        if (v0 as i32 & 0x8000i32) != 0i32 {
             return;
         }
     }
-    let v1: i32 = v0 as i32 >> 1 as i32;
+    let v1: i32 = v0 as i32 >> 1i32;
     let E: *mut Enemy_SpacePirates =
         Get_SpacePirates(ram_word!(game, cur_enemy_index) as i32, game);
     if ((abs16((ram_word!(game, projectile_x_pos[v1])).wrapping_sub((*E).base.x_pos))) as i16)
@@ -1186,11 +1178,11 @@ pub unsafe fn WalkingSpacePirates_FE4B(game: &mut Game) {
             < 0i16
     {
         (*E).base.current_instruction =
-            (if (*E).base.x_pos as i32 - ram_word!(game, samus_x_pos) as i32 & 0x8000 as i32 != 0 {
+            (if (*E).base.x_pos as i32 - ram_word!(game, samus_x_pos) as i32 & 0x8000i32 != 0 {
                 addr_kSpacePirates_Ilist_FB58 as i32
             } else {
                 addr_kSpacePirates_Ilist_FB4C as i32
             }) as u16;
-        (*E).base.instruction_timer = 1 as u16;
+        (*E).base.instruction_timer = 1u16;
     }
 }

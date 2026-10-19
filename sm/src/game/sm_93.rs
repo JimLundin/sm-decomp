@@ -38,22 +38,22 @@ unsafe fn get_ProjectileInstr(a: u16, game: &mut Game) -> *mut ProjectileInstr {
 pub const fnProj93Instr_Delete: u32 = 9667119;
 pub const fnProj93Instr_Goto: u32 = 9667129;
 pub unsafe fn InitializeProjectile(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
-    let r18: i32 = ram_word!(game, projectile_dir[v1]) as i32 & 0xf as i32;
+    let v1: i32 = k as i32 >> 1i32;
+    let r18: i32 = ram_word!(game, projectile_dir[v1]) as i32 & 0xfi32;
     let mut v2: u16 = ram_word!(game, projectile_type[v1]);
     let mut v3: u16 = 0;
-    if (v2 as i32 & 0xf00 as i32) != 0i32 {
+    if (v2 as i32 & 0xf00i32) != 0i32 {
         v3 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9383f1)) as *const u8 as *mut u16)
-            .offset((*(&raw mut v2 as *mut u8).offset(1isize) as i32 & 0xf as i32) as isize);
-    } else if (v2 as i32 & 0x10 as i32) != 0i32 {
+            .offset((*(&raw mut v2 as *mut u8).offset(1isize) as i32 & 0xfi32) as isize);
+    } else if (v2 as i32 & 0x10i32) != 0i32 {
         v3 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9383d9)) as *const u8 as *mut u16)
-            .offset((ram_word!(game, projectile_type[v1]) as i32 & 0xf as i32) as isize);
+            .offset((ram_word!(game, projectile_type[v1]) as i32 & 0xfi32) as isize);
     } else {
         v3 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9383c1)) as *const u8 as *mut u16)
-            .offset((ram_word!(game, projectile_type[v1]) as i32 & 0xf as i32) as isize);
+            .offset((ram_word!(game, projectile_type[v1]) as i32 & 0xfi32) as isize);
     }
     let PD: *mut ProjectileDataTable = get_ProjectileDataTable(v3, game);
-    if (*PD).damage as i32 & 0x8000 as i32 != 0 {
+    if (*PD).damage as i32 & 0x8000i32 != 0 {
         InvalidInterrupt_Crash(game);
     }
     set_ram_word!(game.projectile_damage[v1] = (*PD).damage);
@@ -62,55 +62,55 @@ pub unsafe fn InitializeProjectile(k: u16, game: &mut Game) {
     let v8: *const u8 = RomPtr_93(v7, game);
     set_ram_word!(game.projectile_x_radius[v1] = *v8.offset(4) as u16);
     set_ram_word!(game.projectile_y_radius[v1] = *v8.offset(5) as u16);
-    set_ram_word!(game.projectile_bomb_instruction_timers[v1] = 1 as u16);
+    set_ram_word!(game.projectile_bomb_instruction_timers[v1] = 1u16);
 }
 pub unsafe fn InitializeInstrForSuperMissile(v0: u16, game: &mut Game) {
-    let v1: i32 = v0 as i32 >> 1 as i32;
+    let v1: i32 = v0 as i32 >> 1i32;
     let v3: *const u8 = RomPtr_93(
         *(game.g_rom.offset(crate::rtl::lorom_offset(0x93842b)) as *const u8 as *mut u16).offset(
             (*(((&raw mut game.g_ram as *mut u8).offset(0xc18) as *mut u16).offset(v1 as isize)
                 as *mut u16 as *mut u8)
                 .offset(1isize) as i32
-                & 0xf as i32) as isize,
+                & 0xfi32) as isize,
         ),
         game,
     );
     let v4: u16 = *(v3 as *mut u16);
     set_ram_word!(game.projectile_damage[v1] = v4);
-    if v4 as i32 & 0x8000 as i32 != 0 {
+    if v4 as i32 & 0x8000i32 != 0 {
         InvalidInterrupt_Crash(game);
     }
     set_ram_word!(game.projectile_bomb_instruction_ptr[v1] = *(v3.offset(2) as *mut u16));
-    set_ram_word!(game.projectile_bomb_instruction_timers[v1] = 1 as u16);
+    set_ram_word!(game.projectile_bomb_instruction_timers[v1] = 1u16);
 }
 pub unsafe fn InitializeInstrForMissile(v0: u16, game: &mut Game) {
-    let v1: i32 = v0 as i32 >> 1 as i32;
+    let v1: i32 = v0 as i32 >> 1i32;
     let v3: *const u8 = RomPtr_93(
         *(game.g_rom.offset(crate::rtl::lorom_offset(0x9383f1)) as *const u8 as *mut u16).offset(
             (*(((&raw mut game.g_ram as *mut u8).offset(0xc18) as *mut u16).offset(v1 as isize)
                 as *mut u16 as *mut u8)
                 .offset(1isize) as i32
-                & 0xf as i32) as isize,
+                & 0xfi32) as isize,
         ),
         game,
     );
     let v4: u16 = *(v3 as *mut u16);
     set_ram_word!(game.projectile_damage[v1] = *(v3 as *mut u16));
-    if v4 as i32 & 0x8000 as i32 != 0 {
+    if v4 as i32 & 0x8000i32 != 0 {
         InvalidInterrupt_Crash(game);
     }
     set_ram_word!(game.projectile_bomb_instruction_ptr[v1] = *(v3.offset(2) as *mut u16));
-    set_ram_word!(game.projectile_bomb_instruction_timers[v1] = 1 as u16);
+    set_ram_word!(game.projectile_bomb_instruction_timers[v1] = 1u16);
 }
 pub unsafe fn KillProjectileInner(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
-    if (ram_word!(game, projectile_type[v1]) as i32 & 0xf00 as i32) != 0i32 {
+    let v1: i32 = k as i32 >> 1i32;
+    if (ram_word!(game, projectile_type[v1]) as i32 & 0xf00i32) != 0i32 {
         if ram_word!(game, cinematic_function) == 0 {
-            QueueSfx2_Max6(7 as u16, game);
+            QueueSfx2_Max6(7u16, game);
         }
         let v2: u16 = ram_word!(game, projectile_type[v1]);
-        set_ram_word!(game.projectile_type[v1] = (v2 as i32 & 0xf0ff as i32 | 0x800 as i32) as u16);
-        if (v2 as i32 & 0x200 as i32) != 0i32 {
+        set_ram_word!(game.projectile_type[v1] = (v2 as i32 & 0xf0ffi32 | 0x800i32) as u16);
+        if (v2 as i32 & 0x200i32) != 0i32 {
             set_ram_word!(
                 game.projectile_bomb_instruction_ptr[v1] = *(&raw mut (*(game
                     .g_rom
@@ -121,8 +121,8 @@ pub unsafe fn KillProjectileInner(k: u16, game: &mut Game) {
                     as *mut u16)
                     .offset(1isize,)
             );
-            set_ram_word!(game.earthquake_type = 20 as u16);
-            set_ram_word!(game.earthquake_timer = 30 as u16);
+            set_ram_word!(game.earthquake_type = 20u16);
+            set_ram_word!(game.earthquake_timer = 30u16);
         } else {
             set_ram_word!(
                 game.projectile_bomb_instruction_ptr[v1] = *(&raw mut (*(game
@@ -134,13 +134,13 @@ pub unsafe fn KillProjectileInner(k: u16, game: &mut Game) {
                     .offset(1)
             );
         }
-        if ram_word!(game, cooldown_timer) as i32 - 21 as i32 & 0x8000 as i32 == 0 {
-            set_ram_word!(game.cooldown_timer = 20 as u16);
+        if ram_word!(game, cooldown_timer) as i32 - 21i32 & 0x8000i32 == 0 {
+            set_ram_word!(game.cooldown_timer = 20u16);
         }
     } else {
         set_ram_word!(
             game.projectile_type[v1] =
-                (ram_word!(game, projectile_type[v1]) as i32 & 0xf0ff as i32 | 0x700 as i32) as u16
+                (ram_word!(game, projectile_type[v1]) as i32 & 0xf0ffi32 | 0x700i32) as u16
         );
         set_ram_word!(
             game.projectile_bomb_instruction_ptr[v1] =
@@ -149,13 +149,13 @@ pub unsafe fn KillProjectileInner(k: u16, game: &mut Game) {
                     .damages as *mut u16)
                     .offset(1isize,)
         );
-        QueueSfx2_Max6(0xc as u16, game);
+        QueueSfx2_Max6(0xcu16, game);
     }
-    set_ram_word!(game.projectile_bomb_instruction_timers[v1] = 1 as u16);
-    set_ram_word!(game.projectile_damage[v1] = 8 as u16);
+    set_ram_word!(game.projectile_bomb_instruction_timers[v1] = 1u16);
+    set_ram_word!(game.projectile_damage[v1] = 8u16);
 }
 pub unsafe fn InitializeBombExplosion(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     set_ram_word!(
         game.projectile_bomb_instruction_ptr[v1] =
             *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x938681)) as *const u8
@@ -163,51 +163,51 @@ pub unsafe fn InitializeBombExplosion(k: u16, game: &mut Game) {
                 .damages as *mut u16)
                 .offset(1isize,)
     );
-    set_ram_word!(game.projectile_bomb_instruction_timers[v1] = 1 as u16);
+    set_ram_word!(game.projectile_bomb_instruction_timers[v1] = 1u16);
 }
 pub unsafe fn InitializeShinesparkEchoOrSpazerSba(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
-    let r18: i32 = ram_word!(game, projectile_dir[v1]) as i32 & 0xf as i32;
+    let v1: i32 = k as i32 >> 1i32;
+    let r18: i32 = ram_word!(game, projectile_dir[v1]) as i32 & 0xfi32;
     let PD: *mut ProjectileDataTable = get_ProjectileDataTable(
         *(game.g_rom.offset(crate::rtl::lorom_offset(0x938403)) as *const u8 as *mut u16).offset(
             (*(((&raw mut game.g_ram as *mut u8).offset(0xc18) as *mut u16).offset(v1 as isize)
                 as *mut u16 as *mut u8)
                 .offset(0) as i32
-                - 34 as i32) as isize,
+                - 34i32) as isize,
         ),
         game,
     );
     set_ram_word!(game.projectile_damage[v1] = (*PD).damage);
-    if (*PD).damage as i32 & 0x8000 as i32 != 0 {
+    if (*PD).damage as i32 & 0x8000i32 != 0 {
         InvalidInterrupt_Crash(game);
     }
     set_ram_word!(game.projectile_bomb_instruction_ptr[v1] = (*PD).instr_ptrs[r18 as usize]);
-    set_ram_word!(game.projectile_bomb_instruction_timers[v1] = 1 as u16);
+    set_ram_word!(game.projectile_bomb_instruction_timers[v1] = 1u16);
 }
 pub unsafe fn InitializeSbaProjectile(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     let v2: *const u8 = RomPtr_93(
         *(game.g_rom.offset(crate::rtl::lorom_offset(0x938413)) as *const u8 as *mut u16)
-            .offset((ram_word!(game, projectile_type[v1]) as i32 & 0xf as i32) as isize),
+            .offset((ram_word!(game, projectile_type[v1]) as i32 & 0xfi32) as isize),
         game,
     );
     let v3: u16 = *(v2 as *mut u16);
     set_ram_word!(game.projectile_damage[v1] = v3);
-    if v3 as i32 & 0x8000 as i32 != 0 {
+    if v3 as i32 & 0x8000i32 != 0 {
         InvalidInterrupt_Crash(game);
     }
     set_ram_word!(game.projectile_bomb_instruction_ptr[v1] = *(v2.offset(2) as *mut u16));
-    set_ram_word!(game.projectile_bomb_instruction_timers[v1] = 1 as u16);
+    set_ram_word!(game.projectile_bomb_instruction_timers[v1] = 1u16);
 }
 pub unsafe fn ProjectileInsts_GetValue(k: u16, game: &mut Game) -> u16 {
     let ip: i32 = ram_word!(game, projectile_bomb_instruction_ptr[(k as i32 >> 1i32)]) as i32;
     let delta: i32 = if ram_word!(game, projectile_bomb_instruction_timers[(k as i32 >> 1i32)])
         == 1u16
-        && (*get_ProjectileInstr(ip as u16, game)).timer as i32 & 0x8000 as i32 == 0
+        && (*get_ProjectileInstr(ip as u16, game)).timer as i32 & 0x8000i32 == 0
     {
-        0 as i32
+        0i32
     } else {
-        -(8 as i32)
+        -(8i32)
     };
     (*get_ProjectileInstr((ip + delta) as u16, game)).field_6
 }
@@ -221,7 +221,7 @@ pub unsafe fn CallProj93Instr(ea: u32, j: u16, k: u16, game: &mut Game) -> u16 {
 pub unsafe fn RunProjectileInstructions(game: &mut Game) {
     let mut PI: *mut ProjectileInstr = ::core::ptr::null_mut::<ProjectileInstr>();
     let v0: u16 = ram_word!(game, projectile_index);
-    let v1: i32 = ram_word!(game, projectile_index) as i32 >> 1 as i32;
+    let v1: i32 = ram_word!(game, projectile_index) as i32 >> 1i32;
     let ref mut fresh0 =
         *((&raw mut game.g_ram as *mut u8).offset(0xc54) as *mut u16).offset(v1 as isize);
     let fresh1 = *fresh0;
@@ -230,7 +230,7 @@ pub unsafe fn RunProjectileInstructions(game: &mut Game) {
         let mut v3: u16 = ram_word!(game, projectile_bomb_instruction_ptr[v1]);
         loop {
             PI = get_ProjectileInstr(v3, game);
-            if ((*PI).timer as i32 & 0x8000 as i32) == 0i32 {
+            if ((*PI).timer as i32 & 0x8000i32) == 0i32 {
                 break;
             }
             v3 = CallProj93Instr(
@@ -252,7 +252,7 @@ pub unsafe fn RunProjectileInstructions(game: &mut Game) {
 }
 pub unsafe fn Proj93Instr_Delete(k: u16, j: u16, game: &mut Game) -> u16 {
     ClearProjectile(k, game);
-    0 as u16
+    0u16
 }
 pub unsafe fn Proj93Instr_Goto(k: u16, j: u16, game: &mut Game) -> u16 {
     *(RomPtr_93(j, game) as *mut u16)
@@ -261,48 +261,48 @@ pub unsafe fn DrawPlayerExplosions2(game: &mut Game) {
     let mut v2: u16 = 0;
     let mut v3: u16 = 0;
     let mut current_block: u64;
-    let mut v0: u16 = 8 as u16;
+    let mut v0: u16 = 8u16;
     let mut r18: u16 = 0;
     let mut r20: u16 = 0;
-    set_ram_word!(game.projectile_index = 8 as u16);
+    set_ram_word!(game.projectile_index = 8u16);
     loop {
-        let v1: i32 = v0 as i32 >> 1 as i32;
+        let v1: i32 = v0 as i32 >> 1i32;
         if (ram_word!(game, projectile_bomb_instruction_ptr[v1]) != 0) {
             v2 = 0;
             v3 = 0;
             v2 = ram_word!(game, projectile_type[v1]);
-            if v2 as i32 & (kProjectileType_TypeMask as i32 | 0x10 as i32) != 0i32 {
-                if (v2 as i32 & 0xf00 as i32) - 768 as i32 & 0x8000 as i32 == 0 {
+            if v2 as i32 & (kProjectileType_TypeMask as i32 | 0x10i32) != 0i32 {
+                if (v2 as i32 & 0xf00i32) - 768i32 & 0x8000i32 == 0 {
                     current_block = 10261563330130345889;
                 } else {
                     current_block = 7149356873433890176;
                 }
-            } else if (v2 as i32 & 0xc as i32) != 0i32 {
-                if (v0 as i32 & 2 as i32) != 0i32 {
-                    if (ram_word!(game, nmi_frame_counter_word) as i32 & 2 as i32) == 0i32 {
+            } else if (v2 as i32 & 0xci32) != 0i32 {
+                if (v0 as i32 & 2i32) != 0i32 {
+                    if (ram_word!(game, nmi_frame_counter_word) as i32 & 2i32) == 0i32 {
                         current_block = 10261563330130345889;
                     } else {
                         current_block = 7149356873433890176;
                     }
-                } else if (ram_word!(game, nmi_frame_counter_word) as i32 & 2 as i32) != 0i32 {
+                } else if (ram_word!(game, nmi_frame_counter_word) as i32 & 2i32) != 0i32 {
                     current_block = 10261563330130345889;
                 } else {
                     current_block = 7149356873433890176;
                 }
-            } else if (v0 as i32 & 2 as i32) != 0i32 {
-                if (ram_word!(game, nmi_frame_counter_word) as i32 & 1 as i32) != 0i32 {
+            } else if (v0 as i32 & 2i32) != 0i32 {
+                if (ram_word!(game, nmi_frame_counter_word) as i32 & 1i32) != 0i32 {
                     current_block = 10261563330130345889;
                 } else {
                     current_block = 7149356873433890176;
                 }
-            } else if (ram_word!(game, nmi_frame_counter_word) as i32 & 1 as i32) == 0i32 {
+            } else if (ram_word!(game, nmi_frame_counter_word) as i32 & 1i32) == 0i32 {
                 current_block = 10261563330130345889;
             } else {
                 current_block = 7149356873433890176;
             }
             if current_block == 10261563330130345889 {
             } else {
-                if (ram_word!(game, ceres_status) as i32 & 0x8000 as i32) == 0i32 {
+                if (ram_word!(game, ceres_status) as i32 & 0x8000i32) == 0i32 {
                     r20 = (ram_word!(game, projectile_x_pos[v1]))
                         .wrapping_sub(ram_word!(game, layer1_x_pos));
                     v3 = (ram_word!(game, projectile_y_pos[v1]))
@@ -313,8 +313,8 @@ pub unsafe fn DrawPlayerExplosions2(game: &mut Game) {
                     v3 = pt.y;
                     r20 = pt.x;
                 }
-                if (v3 as i32 & 0xff00 as i32) == 0i32
-                    && (ram_word!(game, projectile_spritemap_pointers[v1]) as i32 & 0x8000 as i32)
+                if (v3 as i32 & 0xff00i32) == 0i32
+                    && (ram_word!(game, projectile_spritemap_pointers[v1]) as i32 & 0x8000i32)
                         != 0i32
                 {
                     DrawProjectileSpritemap(v0, r20, r18, game);
@@ -324,7 +324,7 @@ pub unsafe fn DrawPlayerExplosions2(game: &mut Game) {
         }
         v0 = (v0).wrapping_sub(2u16);
         set_ram_word!(game.projectile_index = v0);
-        if ((v0 as i32 & 0x8000 as i32) != 0i32) {
+        if ((v0 as i32 & 0x8000i32) != 0i32) {
             break;
         }
     }
@@ -332,19 +332,18 @@ pub unsafe fn DrawPlayerExplosions2(game: &mut Game) {
     HandleProjectileTrails(game);
 }
 pub unsafe fn sub_9382FD(game: &mut Game) {
-    let mut v0: u16 = 8 as u16;
-    set_ram_word!(game.projectile_index = 8 as u16);
+    let mut v0: u16 = 8u16;
+    set_ram_word!(game.projectile_index = 8u16);
     loop {
-        let v1: i32 = v0 as i32 >> 1 as i32;
+        let v1: i32 = v0 as i32 >> 1i32;
         if ram_word!(game, projectile_bomb_instruction_ptr[v1]) != 0 {
             let r20: u16 =
                 (ram_word!(game, projectile_x_pos[v1])).wrapping_sub(ram_word!(game, layer1_x_pos));
             let r18: u16 = (ram_word!(game, projectile_y_pos[v1]) as i32
-                - 8 as i32
+                - 8i32
                 - ram_word!(game, layer1_y_pos) as i32) as u16;
-            if ((r18 as i32 & 0xff00 as i32) == 0i32)
-                && (ram_word!(game, projectile_spritemap_pointers[v1]) as i32 & 0x8000 as i32)
-                    != 0i32
+            if ((r18 as i32 & 0xff00i32) == 0i32)
+                && (ram_word!(game, projectile_spritemap_pointers[v1]) as i32 & 0x8000i32) != 0i32
             {
                 DrawProjectileSpritemap(v0, r20, r18, game);
             }
@@ -352,7 +351,7 @@ pub unsafe fn sub_9382FD(game: &mut Game) {
         }
         v0 = (v0).wrapping_sub(2u16);
         set_ram_word!(game.projectile_index = v0);
-        if ((v0 as i32 & 0x8000 as i32) != 0i32) {
+        if ((v0 as i32 & 0x8000i32) != 0i32) {
             break;
         }
     }
@@ -360,25 +359,24 @@ pub unsafe fn sub_9382FD(game: &mut Game) {
 }
 pub unsafe fn DrawBombAndProjectileExplosions(game: &mut Game) {
     let mut current_block: u64;
-    let mut v0: u16 = 18 as u16;
+    let mut v0: u16 = 18u16;
     let mut v2: u16 = 0;
     let mut r18: u16 = 0;
     let mut r20: u16 = 0;
-    set_ram_word!(game.projectile_index = 18 as u16);
+    set_ram_word!(game.projectile_index = 18u16);
     loop {
-        let v1: i32 = v0 as i32 >> 1 as i32;
+        let v1: i32 = v0 as i32 >> 1i32;
         if !(ram_word!(game, projectile_bomb_instruction_ptr[v1]) == 0
-            || (((ram_word!(game, projectile_type[v1]) as i32 & 0xf00 as i32) - 768 as i32) as i16)
-                < 0i16)
+            || (((ram_word!(game, projectile_type[v1]) as i32 & 0xf00i32) - 768i32) as i16) < 0i16)
         {
-            if (ram_word!(game, projectile_type[v1]) as i32 & 0xf00 as i32) == 768i32 {
+            if (ram_word!(game, projectile_type[v1]) as i32 & 0xf00i32) == 768i32 {
                 if ram_word!(game, projectile_variables[v1]) == 0 {
                     current_block = 2612600445040741303;
                 } else {
                     current_block = 11875828834189669668;
                 }
-            } else if (ram_word!(game, projectile_type[v1]) as i32 & 0xf00 as i32) == 1280i32
-                || (ram_word!(game, ceres_status) as i32 & 0x8000 as i32) == 0i32
+            } else if (ram_word!(game, projectile_type[v1]) as i32 & 0xf00i32) == 1280i32
+                || (ram_word!(game, ceres_status) as i32 & 0x8000i32) == 0i32
             {
                 current_block = 11875828834189669668;
             } else {
@@ -392,9 +390,7 @@ pub unsafe fn DrawBombAndProjectileExplosions(game: &mut Game) {
                     let v3: u16 = (ram_word!(game, projectile_x_pos[v1]))
                         .wrapping_sub(ram_word!(game, layer1_x_pos));
                     r20 = v3;
-                    if v3 as i32 - 304 as i32 & 0x8000 as i32 == 0
-                        || v3 as i32 + 48 as i32 & 0x8000 as i32 != 0
-                    {
+                    if v3 as i32 - 304i32 & 0x8000i32 == 0 || v3 as i32 + 48i32 & 0x8000i32 != 0 {
                         current_block = 2612600445040741303;
                     } else {
                         v2 = (ram_word!(game, projectile_y_pos[v1]))
@@ -405,7 +401,7 @@ pub unsafe fn DrawBombAndProjectileExplosions(game: &mut Game) {
                 }
                 if current_block == 2612600445040741303 {
                 } else {
-                    if ((v2 as i32 & 0xff00 as i32) == 0i32) {
+                    if ((v2 as i32 & 0xff00i32) == 0i32) {
                         DrawProjectileSpritemap(v0, r20, r18, game);
                     }
                     v0 = ram_word!(game, projectile_index);
@@ -414,7 +410,7 @@ pub unsafe fn DrawBombAndProjectileExplosions(game: &mut Game) {
         }
         v0 = (v0).wrapping_sub(2u16);
         set_ram_word!(game.projectile_index = v0);
-        if ((v0 as i32 & 0x8000 as i32) != 0i32) {
+        if ((v0 as i32 & 0x8000i32) != 0i32) {
             break;
         }
     }

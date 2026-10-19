@@ -136,7 +136,7 @@ unsafe extern "C" fn MessageCallback(
 unsafe fn OpenGLRenderer_Init(window: *mut SDL_Window, game: &mut Game) -> bool {
     g_window = window;
     let context: SDL_GLContext = SDL_GL_CreateContext(window as *mut SDL_Window);
-    SDL_GL_SetSwapInterval(1 as i32);
+    SDL_GL_SetSwapInterval(1i32);
     gl::load_with(|name| {
         sdl2_sys::SDL_GL_GetProcAddress(std::ffi::CString::new(name).expect("GL symbol").as_ptr())
             as *const ::core::ffi::c_void
@@ -270,12 +270,12 @@ unsafe fn OpenGLRenderer_BeginDraw(
     if size as size_t > g_screen_buffer_size {
         g_screen_buffer_size = size as size_t;
         free(g_screen_buffer as *mut ::core::ffi::c_void);
-        g_screen_buffer = malloc((size * 4 as i32) as size_t) as *mut u8;
+        g_screen_buffer = malloc((size * 4i32) as size_t) as *mut u8;
     }
     g_draw_width = width;
     g_draw_height = height;
     *pixels = g_screen_buffer;
-    *pitch = width * 4 as i32;
+    *pitch = width * 4i32;
 }
 unsafe fn OpenGLRenderer_EndDraw(game: &mut Game) {
     let mut drawable_width: i32 = 0;
@@ -294,8 +294,8 @@ unsafe fn OpenGLRenderer_EndDraw(game: &mut Game) {
             viewport_width = viewport_height * g_draw_width / g_draw_height;
         }
     }
-    let viewport_x: i32 = drawable_width - viewport_width >> 1 as i32;
-    let viewport_y: i32 = viewport_height - viewport_height >> 1 as i32;
+    let viewport_x: i32 = drawable_width - viewport_width >> 1i32;
+    let viewport_y: i32 = viewport_height - viewport_height >> 1i32;
     gl::BindTexture(GL_TEXTURE_2D as GLenum, g_texture.gl_texture as GLuint);
     if g_draw_width == g_texture.width as i32 && g_draw_height == g_texture.height as i32 {
         gl::TexSubImage2D(
@@ -376,8 +376,8 @@ pub unsafe fn OpenGLRenderer_Create(funcs: *mut RendererFuncs) {
         SDL_GL_CONTEXT_PROFILE_MASK,
         SDL_GL_CONTEXT_PROFILE_CORE as i32,
     );
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3 as i32);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3 as i32);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3i32);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3i32);
     *funcs = kOpenGLRendererFuncs;
 }
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();

@@ -90,6 +90,27 @@ verification with typed integer literals on 58d51ace passes normal release
 composed run; no index-only replay is claimed. Final committed source matches
 the frozen composition. Continue substantial shared implementations.
 
+Typed integer literals (2026-10-20): ast-grep replaces 29178 casts of
+unsuffixed, in-range integer literals with literals of the identical type.
+All 24278 ordinary expressions and 4900 expressions in known RAM macros
+retain radix, value and result type. Unary negatives, suffixed/out-of-range
+casts, pointer-width casts and metadata/stringifying contexts stay separate.
+Independent AST/span/range checks and complete source reconstruction pass;
+no primitive-name shadows or diagnostic/metadata changes were found.
+
+Net Rust lines -1497 across 51 files and cast spellings -29178; total Rust
+is 147521. Raw-access and unsafe-function counts are unchanged. This removes
+constant cast boilerplate while preserving integer promotion in surrounding
+expressions; no nonliteral arithmetic or narrowing cast is changed.
+
+Combined verification with the 352-index family on 58d51ace passes normal
+release (28.47s), formatting/check, progress and full any% 129712/0
+(112.65s), native exit 0. All 73 committed source/config/host inputs
+match the frozen composition and all 78 replay pins remain fixed. Both focused
+commits share this run. Frontend changes are compiler-checked; the movie
+covers core gameplay. The broader readability and boot-to-credits goals
+remain incomplete; continue the largest repeated implementations.
+
 Named RAM word updates (2026-10-20): one caller-side macro shares all 882
 eligible read/modify/write sequences across 243 named fields and 29 callers.
 It captures the raw destination once, reads the old word before the RHS,

@@ -936,16 +936,15 @@ pub unsafe fn getProcessorStateSpc(apu: *mut Apu, line: *mut ::core::ffi::c_char
     );
 }
 unsafe fn getDisassemblyCpu(snes: *mut Snes, line: *mut ::core::ffi::c_char, game: &mut Game) {
-    let adr: u32 = ((*(*snes).cpu).pc as i32 | ((*(*snes).cpu).k as i32) << 16 as i32) as u32;
+    let adr: u32 = ((*(*snes).cpu).pc as i32 | ((*(*snes).cpu).k as i32) << 16i32) as u32;
     let opcode: u8 = snes_read(snes, adr, game);
-    let byte: u8 = snes_read(snes, adr.wrapping_add(1 as u32) & 0xffffff as u32, game);
-    let byte2: u8 = snes_read(snes, adr.wrapping_add(2 as u32) & 0xffffff as u32, game);
-    let word: u16 = ((byte2 as i32) << 8 as i32 | byte as i32) as u16;
-    let longv: u32 = ((snes_read(snes, adr.wrapping_add(3 as u32) & 0xffffff as u32, game) as i32)
-        << 16 as i32
+    let byte: u8 = snes_read(snes, adr.wrapping_add(1u32) & 0xffffffu32, game);
+    let byte2: u8 = snes_read(snes, adr.wrapping_add(2u32) & 0xffffffu32, game);
+    let word: u16 = ((byte2 as i32) << 8i32 | byte as i32) as u16;
+    let longv: u32 = ((snes_read(snes, adr.wrapping_add(3u32) & 0xffffffu32, game) as i32) << 16i32
         | word as i32) as u32;
-    let rel: u16 = ((*(*snes).cpu).pc as i32 + 2 as i32 + byte as i8 as i32) as u16;
-    let rell: u16 = ((*(*snes).cpu).pc as i32 + 3 as i32 + word as i16 as i32) as u16;
+    let rel: u16 = ((*(*snes).cpu).pc as i32 + 2i32 + byte as i8 as i32) as u16;
+    let rell: u16 = ((*(*snes).cpu).pc as i32 + 3i32 + word as i16 as i32) as u16;
     match opcodeType[opcode as usize] {
         0 => {
             sprintf(
@@ -997,13 +996,13 @@ unsafe fn getDisassemblyCpu(snes: *mut Snes, line: *mut ::core::ffi::c_char, gam
 unsafe fn getDisassemblySpc(apu: *mut Apu, line: *mut ::core::ffi::c_char) {
     let adr: u16 = (*(*apu).spc).pc;
     let opcode: u8 = apu_cpuRead(apu, adr);
-    let byte: u8 = apu_cpuRead(apu, (adr as i32 + 1 as i32 & 0xffff as i32) as u16);
-    let byte2: u8 = apu_cpuRead(apu, (adr as i32 + 2 as i32 & 0xffff as i32) as u16);
-    let word: u16 = ((byte2 as i32) << 8 as i32 | byte as i32) as u16;
-    let rel: u16 = ((*(*apu).spc).pc as i32 + 2 as i32 + byte as i8 as i32) as u16;
-    let rel2: u16 = ((*(*apu).spc).pc as i32 + 2 as i32 + byte2 as i8 as i32) as u16;
-    let wordb: u16 = (word as i32 & 0x1fff as i32) as u16;
-    let bit: u8 = (word as i32 >> 13 as i32) as u8;
+    let byte: u8 = apu_cpuRead(apu, (adr as i32 + 1i32 & 0xffffi32) as u16);
+    let byte2: u8 = apu_cpuRead(apu, (adr as i32 + 2i32 & 0xffffi32) as u16);
+    let word: u16 = ((byte2 as i32) << 8i32 | byte as i32) as u16;
+    let rel: u16 = ((*(*apu).spc).pc as i32 + 2i32 + byte as i8 as i32) as u16;
+    let rel2: u16 = ((*(*apu).spc).pc as i32 + 2i32 + byte2 as i8 as i32) as u16;
+    let wordb: u16 = (word as i32 & 0x1fffi32) as u16;
+    let bit: u8 = (word as i32 >> 13i32) as u8;
     match opcodeTypeSpc[opcode as usize] {
         0 => {
             sprintf(

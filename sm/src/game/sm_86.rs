@@ -107,14 +107,14 @@ unsafe fn RomPtr_B4(addr: u16, game: &mut Game) -> *const u8 {
 #[inline]
 unsafe fn RomBankBase(bank: u8, game: &mut Game) -> *const u8 {
     RomPtr(
-        (((bank as i32) << 16 as i32) as u32).wrapping_add(0x8000u32),
+        (((bank as i32) << 16i32) as u32).wrapping_add(0x8000u32),
         game,
     )
-    .offset(-(0x8000 as i32 as isize))
+    .offset(-(0x8000i32 as isize))
 }
 #[inline]
 unsafe fn gVramWriteEntry(a: i32, game: &mut Game) -> *mut VramWriteEntry {
-    (&raw mut game.g_ram as *mut u8).offset((0xd0 as i32 + a) as isize) as *mut u8
+    (&raw mut game.g_ram as *mut u8).offset((0xd0i32 + a) as isize) as *mut u8
         as *mut VramWriteEntry
 }
 #[inline]
@@ -127,7 +127,7 @@ unsafe fn get_EprojDef(a: u16, game: &mut Game) -> *mut EprojDef {
 }
 #[inline]
 unsafe fn gRam7800_Default(a: u16, game: &mut Game) -> *mut Ram7800_Default {
-    (&raw mut game.g_ram as *mut u8).offset((0x7800 as i32 + a as i32) as isize) as *mut u8
+    (&raw mut game.g_ram as *mut u8).offset((0x7800i32 + a as i32) as isize) as *mut u8
         as *mut Ram7800_Default
 }
 pub const fnEprojInstr_Delete: u32 = 8814932;
@@ -658,7 +658,7 @@ pub fn EnableEprojs(game: &mut Game) {
 pub unsafe fn DisableEprojs(game: &mut Game) {
     update_ram_word!(
         game.cinematic_var5,
-        |fresh17| (fresh17 as i32 & !(0x8000 as i32)) as u16
+        |fresh17| (fresh17 as i32 & !(0x8000i32)) as u16
     );
 }
 pub fn ClearEprojs(game: &mut Game) {
@@ -667,10 +667,10 @@ pub fn ClearEprojs(game: &mut Game) {
     }
 }
 unsafe fn SpawnEprojInner(j: u16, gfx_idx: u16, game: &mut Game) -> Option<u16> {
-    let mut v3: u16 = 34 as u16;
+    let mut v3: u16 = 34u16;
     while EprojState(&game.g_ram).id(usize::from(v3 >> 1)) != 0 {
         v3 = v3.wrapping_sub(2);
-        if (v3 as i32 & 0x8000 as i32) != 0i32 {
+        if (v3 as i32 & 0x8000i32) != 0i32 {
             return None;
         }
     }
@@ -757,7 +757,7 @@ pub fn EprojInstr_Delete(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 
     ::core::ptr::null()
 }
 pub unsafe fn EprojInstr_Sleep(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
-    let value = (epjp.offset_from(RomBankBase(0x86 as u8, game)) as ::core::ffi::c_long
+    let value = (epjp.offset_from(RomBankBase(0x86u8, game)) as ::core::ffi::c_long
         - 2 as ::core::ffi::c_long) as u16;
     EprojStateMut(&mut game.g_ram).set_instruction(usize::from(k >> 1), value);
     ::core::ptr::null()
@@ -807,7 +807,7 @@ pub unsafe fn EprojInstr_DecTimerAndGotoRelIfNonZero(
     epjp: *const u8,
     game: &mut Game,
 ) -> *const u8 {
-    let v2: i32 = k as i32 >> 1 as i32;
+    let v2: i32 = k as i32 >> 1i32;
     let ref mut fresh46 =
         *((&raw mut game.g_ram as *mut u8).offset(0x19df) as *mut u16).offset(v2 as isize);
     let fresh47 = *fresh46;
@@ -840,9 +840,9 @@ pub unsafe fn EprojInstr_MoveRandomlyWithinRadius(
         }
     }
     update_ram_word!(
-        game.eproj_x_pos[(k as i32 >> 1 as i32)],
+        game.eproj_x_pos[(k as i32 >> 1i32)],
         |fresh44| (fresh44 as i32
-            + if r18 as i32 & 0x8000 as i32 != 0 {
+            + if r18 as i32 & 0x8000i32 != 0 {
                 -(v4 as u8 as i32)
             } else {
                 v4 as u8 as i32
@@ -852,16 +852,16 @@ pub unsafe fn EprojInstr_MoveRandomlyWithinRadius(
         *(&raw mut v6 as *mut u8).offset(0) = NextRandom(game) as u8;
         *(&raw mut v6 as *mut u8).offset(0) =
             ((*epjp.offset(2) as i32 & v6 as i32) - *epjp.offset(3) as i32) as u8;
-        if ((v6 as i32 & 0x80 as i32) == 0i32) {
+        if ((v6 as i32 & 0x80i32) == 0i32) {
             break;
         }
     }
     v6 = v6 as u8 as i16;
-    if (r18 as i32 & 0x4000 as i32) != 0i32 {
+    if (r18 as i32 & 0x4000i32) != 0i32 {
         v6 = -(v6 as u8 as i32) as i16;
     }
     update_ram_word!(
-        game.eproj_y_pos[(k as i32 >> 1 as i32)],
+        game.eproj_y_pos[(k as i32 >> 1i32)],
         wrapping_add((v6) as u16)
     );
     epjp.offset(4)
@@ -894,8 +894,8 @@ pub unsafe fn EprojInstr_EnableCollisionWithSamusProj(
     game: &mut Game,
 ) -> *const u8 {
     update_ram_word!(
-        game.eproj_properties[(k as i32 >> 1 as i32)],
-        |fresh41| (fresh41 as i32 | 0x8000 as i32) as u16
+        game.eproj_properties[(k as i32 >> 1i32)],
+        |fresh41| (fresh41 as i32 | 0x8000i32) as u16
     );
     epjp
 }
@@ -905,8 +905,8 @@ pub unsafe fn EprojInstr_DisableCollisionWithSamusProj(
     game: &mut Game,
 ) -> *const u8 {
     update_ram_word!(
-        game.eproj_properties[(k as i32 >> 1 as i32)],
-        |fresh40| (fresh40 as i32 & !(0x8000 as i32)) as u16
+        game.eproj_properties[(k as i32 >> 1i32)],
+        |fresh40| (fresh40 as i32 & !(0x8000i32)) as u16
     );
     epjp
 }
@@ -916,8 +916,8 @@ pub unsafe fn EprojInstr_DisableCollisionWithSamus(
     game: &mut Game,
 ) -> *const u8 {
     update_ram_word!(
-        game.eproj_properties[(k as i32 >> 1 as i32)],
-        |fresh39| (fresh39 as i32 | 0x2000 as i32) as u16
+        game.eproj_properties[(k as i32 >> 1i32)],
+        |fresh39| (fresh39 as i32 | 0x2000i32) as u16
     );
     epjp
 }
@@ -927,8 +927,8 @@ pub unsafe fn EprojInstr_EnableCollisionWithSamus(
     game: &mut Game,
 ) -> *const u8 {
     update_ram_word!(
-        game.eproj_properties[(k as i32 >> 1 as i32)],
-        |fresh38| (fresh38 as i32 & !(0x2000 as i32)) as u16
+        game.eproj_properties[(k as i32 >> 1i32)],
+        |fresh38| (fresh38 as i32 & !(0x2000i32)) as u16
     );
     epjp
 }
@@ -938,29 +938,29 @@ pub unsafe fn EprojInstr_SetToNotDieOnContact(
     game: &mut Game,
 ) -> *const u8 {
     update_ram_word!(
-        game.eproj_properties[(k as i32 >> 1 as i32)],
-        |fresh37| (fresh37 as i32 | 0x4000 as i32) as u16
+        game.eproj_properties[(k as i32 >> 1i32)],
+        |fresh37| (fresh37 as i32 | 0x4000i32) as u16
     );
     epjp
 }
 pub unsafe fn EprojInstr_SetToDieOnContact(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
     update_ram_word!(
-        game.eproj_properties[(k as i32 >> 1 as i32)],
-        |fresh36| (fresh36 as i32 & !(0x4000 as i32)) as u16
+        game.eproj_properties[(k as i32 >> 1i32)],
+        |fresh36| (fresh36 as i32 & !(0x4000i32)) as u16
     );
     epjp
 }
 pub unsafe fn EprojInstr_SetLowPriority(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
     update_ram_word!(
-        game.eproj_properties[(k as i32 >> 1 as i32)],
-        |fresh35| (fresh35 as i32 | 0x1000 as i32) as u16
+        game.eproj_properties[(k as i32 >> 1i32)],
+        |fresh35| (fresh35 as i32 | 0x1000i32) as u16
     );
     epjp
 }
 pub unsafe fn EprojInstr_SetHighPriority(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
     update_ram_word!(
-        game.eproj_properties[(k as i32 >> 1 as i32)],
-        |fresh34| (fresh34 as i32 & !(0x1000 as i32)) as u16
+        game.eproj_properties[(k as i32 >> 1i32)],
+        |fresh34| (fresh34 as i32 & !(0x1000i32)) as u16
     );
     epjp
 }
@@ -969,7 +969,7 @@ pub unsafe fn EprojInstr_SetXyRadius(k: u16, epjp: *const u8, game: &mut Game) -
     epjp.offset(2)
 }
 pub unsafe fn EprojInstr_SetXyRadiusZero(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
-    set_ram_word!(game.eproj_radius[(k as i32 >> 1i32)] = 0 as u16);
+    set_ram_word!(game.eproj_radius[(k as i32 >> 1i32)] = 0u16);
     epjp
 }
 pub unsafe fn EprojInstr_CalculateDirectionTowardsSamus(
@@ -977,14 +977,14 @@ pub unsafe fn EprojInstr_CalculateDirectionTowardsSamus(
     epjp: *const u8,
     game: &mut Game,
 ) -> *const u8 {
-    let v2: i32 = k as i32 >> 1 as i32;
+    let v2: i32 = k as i32 >> 1i32;
     let x: u16 = (ram_word!(game, samus_x_pos)).wrapping_sub(ram_word!(game, eproj_x_pos[v2]));
     let y: u16 = (ram_word!(game, samus_y_pos)).wrapping_sub(ram_word!(game, eproj_y_pos[v2]));
     let v3: u16 = (2u16).wrapping_mul(CalculateAngleFromXY(x, y, game));
-    let v4: i32 = ram_word!(game, cinematic_var7) as i32 >> 1 as i32;
+    let v4: i32 = ram_word!(game, cinematic_var7) as i32 >> 1i32;
     set_ram_word!(game.eproj_E[v4] = v3);
-    let v5: i32 = v3 as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_x_vel[v4] = kSinCosTable8bit_Sext[(v5 + 64 as i32) as usize] as u16);
+    let v5: i32 = v3 as i32 >> 1i32;
+    set_ram_word!(game.eproj_x_vel[v4] = kSinCosTable8bit_Sext[(v5 + 64i32) as usize] as u16);
     set_ram_word!(game.eproj_y_vel[v4] = kSinCosTable8bit_Sext[v5 as usize] as u16);
     epjp
 }
@@ -1000,10 +1000,10 @@ pub unsafe fn EprojInstr_WriteColorsToPalette(
         set_ram_word!(
             game.palette_buffer[(v3 as i32 >> 1i32)] = *(RomPtr_86(v4, game) as *mut u16)
         );
-        v4 = (v4 as i32 + 2 as i32) as u16;
-        v3 = (v3 as i32 + 2 as i32) as u16;
+        v4 = (v4 as i32 + 2i32) as u16;
+        v3 = (v3 as i32 + 2i32) as u16;
         n -= 1;
-        if ((n & 0x8000 as i32) != 0i32) {
+        if ((n & 0x8000i32) != 0i32) {
             break;
         }
     }
@@ -1096,16 +1096,16 @@ pub unsafe fn DrawEprojs(k: u16, pt: Point16U, game: &mut Game) {
     let R28: u16 = EprojState(&game.g_ram).slot_word(0x19bb, v1) & 0xff00;
     let r20: u16 =
         (pt.x as i32 + game.enemy_projectile_x_pos(k) as i32 - game.layer1_x_pos() as i32) as u16;
-    if (r20 as i32 + 128 as i32 & 0xfe00 as i32) == 0i32 {
+    if (r20 as i32 + 128i32 & 0xfe00i32) == 0i32 {
         let v3: u16 = (pt.y as i32 + game.enemy_projectile_y_pos(k) as i32
             - game.layer1_y_pos() as i32) as u16;
         let r18: u16 = v3;
-        if (v3 as i32 & 0xff00 as i32) != 0i32 {
-            if (v3 as i32 + 128 as i32 & 0xfe00 as i32) == 0i32 {
-                DrawEprojSpritemapWithBaseTileOffscreen(0x8d as u8, v2, r20, r18, r26, R28, game);
+        if (v3 as i32 & 0xff00i32) != 0i32 {
+            if (v3 as i32 + 128i32 & 0xfe00i32) == 0i32 {
+                DrawEprojSpritemapWithBaseTileOffscreen(0x8du8, v2, r20, r18, r26, R28, game);
             }
         } else {
-            DrawEprojSpritemapWithBaseTile(0x8d as u8, v2, r20, r18, r26, R28, game);
+            DrawEprojSpritemapWithBaseTile(0x8du8, v2, r20, r18, r26, R28, game);
         }
     }
 }
@@ -1114,25 +1114,25 @@ pub unsafe fn GetValuesForScreenShaking(game: &mut Game) -> Point16U {
     let mut R36: u16 = 0;
     if ram_word!(game, earthquake_timer) != 0u16
         && game.time_is_frozen_flag() == 0
-        && ram_word!(game, earthquake_type) as i32 - 36 as i32 & 0x8000 as i32 != 0
+        && ram_word!(game, earthquake_type) as i32 - 36i32 & 0x8000i32 != 0
     {
-        let v0: i32 = ((4u16).wrapping_mul(ram_word!(game, earthquake_type))) as i32 >> 1 as i32;
-        if (ram_word!(game, earthquake_timer) as i32 & 2 as i32) != 0i32 {
+        let v0: i32 = ((4u16).wrapping_mul(ram_word!(game, earthquake_type))) as i32 >> 1i32;
+        if (ram_word!(game, earthquake_timer) as i32 & 2i32) != 0i32 {
             R36 = -(*(game.g_rom.offset(crate::rtl::lorom_offset(0x86846b)) as *const u8
                 as *mut u16)
                 .offset(v0 as isize) as i32) as u16;
             R34 = -(*(game.g_rom.offset(crate::rtl::lorom_offset(0x86846b)) as *const u8
                 as *mut u16)
-                .offset((v0 + 1 as i32) as isize) as i32) as u16;
+                .offset((v0 + 1i32) as isize) as i32) as u16;
         } else {
             R36 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x86846b)) as *const u8 as *mut u16)
                 .offset(v0 as isize);
             R34 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x86846b)) as *const u8 as *mut u16)
-                .offset((v0 + 1 as i32) as isize);
+                .offset((v0 + 1i32) as isize);
         }
     } else {
-        R34 = 0 as u16;
-        R36 = 0 as u16;
+        R34 = 0u16;
+        R36 = 0u16;
     }
     Point16U { x: R36, y: R34 }
 }
@@ -1147,9 +1147,9 @@ unsafe fn EprojColl_8506(eci: *mut EprojCollInfo, game: &mut Game) -> u8 {
                 .offset(0x16402)
                 .offset(ram_word!(game, cur_block_index) as isize) as i8 as i32)
             as u16);
-        return 0xff as u8;
+        return 0xffu8;
     }
-    0 as u8
+    0u8
 }
 unsafe fn EprojColl_Unknown8536(eci: *mut EprojCollInfo, game: &mut Game) -> u8 {
     if *(&raw mut game.g_ram as *mut u8)
@@ -1163,9 +1163,9 @@ unsafe fn EprojColl_Unknown8536(eci: *mut EprojCollInfo, game: &mut Game) -> u8 
                 .offset(ram_word!(game, cur_block_index) as isize) as i8 as i32
                 * ram_word!(game, room_width_in_blocks) as i32)
             as u16);
-        return 0xff as u8;
+        return 0xffu8;
     }
-    0 as u8
+    0u8
 }
 unsafe fn EprojColl_858E(eci: *mut EprojCollInfo, game: &mut Game) -> u8 {
     let v0: u16 = ((*(&raw mut game.g_ram as *mut u8)
@@ -1190,63 +1190,61 @@ unsafe fn EprojColl_85AD(eci: *mut EprojCollInfo, game: &mut Game) -> u8 {
     if v0 >= 5 {
         EprojColl_874E(eci, game)
     } else {
-        EprojColl_8676(eci, v0, game.cur_block_index(), 0 as u16, game)
+        EprojColl_8676(eci, v0, game.cur_block_index(), 0u16, game)
     }
 }
 static unk_868729: [u8; 20] = [
-    0 as u8, 1 as u8, 0x82 as u8, 0x83 as u8, 0 as u8, 0x81 as u8, 2 as u8, 0x83 as u8, 0 as u8,
-    1 as u8, 2 as u8, 0x83 as u8, 0 as u8, 0x81 as u8, 0x82 as u8, 0x83 as u8, 0x80 as u8,
-    0x81 as u8, 0x82 as u8, 0x83 as u8,
+    0u8, 1u8, 0x82u8, 0x83u8, 0u8, 0x81u8, 2u8, 0x83u8, 0u8, 1u8, 2u8, 0x83u8, 0u8, 0x81u8, 0x82u8,
+    0x83u8, 0x80u8, 0x81u8, 0x82u8, 0x83u8,
 ];
 unsafe fn EprojColl_85C2(eci: *mut EprojCollInfo, a: u16, k: u16, game: &mut Game) -> u8 {
     let mut current_block: u64;
-    let temp_collision_DD4: u16 = (4 as i32 * a as i32) as u16;
+    let temp_collision_DD4: u16 = (4i32 * a as i32) as u16;
     let temp_collision_DD6: u16 = (*(&raw mut game.g_ram as *mut u8)
         .offset(0x16402)
         .offset(k as isize) as i32
-        >> 6 as i32) as u16;
-    let v2: u16 = (4 as i32 * a as i32
-        + (temp_collision_DD6 as i32 ^ ((*eci).eci_r34 as i32 & 8 as i32) >> 3 as i32))
+        >> 6i32) as u16;
+    let v2: u16 = (4i32 * a as i32
+        + (temp_collision_DD6 as i32 ^ ((*eci).eci_r34 as i32 & 8i32) >> 3i32))
         as u16;
     if (*eci).eci_r32 == 0 {
-        let v3: i32 = ram_word!(game, cinematic_var7) as i32 >> 1 as i32;
-        if (ram_word!(game, eproj_y_pos[v3]) as i32 - (*eci).eci_r30 as i32 & 8 as i32) != 0i32
-            || (if unk_868729[v2 as usize] as i32 & 0x80 as i32 != 0 {
-                -(1 as i32)
+        let v3: i32 = ram_word!(game, cinematic_var7) as i32 >> 1i32;
+        if (ram_word!(game, eproj_y_pos[v3]) as i32 - (*eci).eci_r30 as i32 & 8i32) != 0i32
+            || (if unk_868729[v2 as usize] as i32 & 0x80i32 != 0 {
+                -(1i32)
             } else {
-                0 as i32
+                0i32
             }) >= 0i32
         {
-            let v4: u16 = (v2 as i32 ^ 2 as i32) as u16;
-            if ((*eci).eci_r30 as i32 + ram_word!(game, eproj_y_pos[v3]) as i32 - 1 as i32
-                & 8 as i32)
+            let v4: u16 = (v2 as i32 ^ 2i32) as u16;
+            if ((*eci).eci_r30 as i32 + ram_word!(game, eproj_y_pos[v3]) as i32 - 1i32 & 8i32)
                 == 0i32
-                || (if unk_868729[v4 as usize] as i32 & 0x80 as i32 != 0 {
-                    -(1 as i32)
+                || (if unk_868729[v4 as usize] as i32 & 0x80i32 != 0 {
+                    -(1i32)
                 } else {
-                    0 as i32
+                    0i32
                 }) >= 0i32
             {
-                return 0 as u8;
+                return 0u8;
             }
         }
     } else {
         if (*eci).eci_r26 == 0 {
             if ((*eci).eci_r30 as i32
                 + *((&raw mut game.g_ram as *mut u8).offset(0x1a93) as *mut u16)
-                    .offset((ram_word!(game, cinematic_var7) as i32 >> 1 as i32) as isize)
+                    .offset((ram_word!(game, cinematic_var7) as i32 >> 1i32) as isize)
                     as i32
-                - 1 as i32
-                & 8 as i32)
+                - 1i32
+                & 8i32)
                 == 0i32
             {
-                if (if unk_868729[v2 as usize] as i32 & 0x80 as i32 != 0 {
-                    -(1 as i32)
+                if (if unk_868729[v2 as usize] as i32 & 0x80i32 != 0 {
+                    -(1i32)
                 } else {
-                    0 as i32
+                    0i32
                 }) >= 0i32
                 {
-                    return 0 as u8;
+                    return 0u8;
                 }
                 current_block = 12039483399334584727;
             } else {
@@ -1254,10 +1252,10 @@ unsafe fn EprojColl_85C2(eci: *mut EprojCollInfo, a: u16, k: u16, game: &mut Gam
             }
         } else if (*eci).eci_r26 != (*eci).eci_r32
             || (*((&raw mut game.g_ram as *mut u8).offset(0x1a93) as *mut u16)
-                .offset((ram_word!(game, cinematic_var7) as i32 >> 1 as i32) as isize)
+                .offset((ram_word!(game, cinematic_var7) as i32 >> 1i32) as isize)
                 as i32
                 - (*eci).eci_r30 as i32
-                & 8 as i32)
+                & 8i32)
                 == 0i32
         {
             current_block = 2204372562120708137;
@@ -1267,10 +1265,10 @@ unsafe fn EprojColl_85C2(eci: *mut EprojCollInfo, a: u16, k: u16, game: &mut Gam
         if current_block == 12039483399334584727 {
         } else {
             if current_block == 2204372562120708137 {
-                if (if unk_868729[v2 as usize] as i32 & 0x80 as i32 != 0 {
-                    -(1 as i32)
+                if (if unk_868729[v2 as usize] as i32 & 0x80i32 != 0 {
+                    -(1i32)
                 } else {
-                    0 as i32
+                    0i32
                 }) < 0i32
                 {
                     current_block = 12039483399334584727;
@@ -1281,28 +1279,28 @@ unsafe fn EprojColl_85C2(eci: *mut EprojCollInfo, a: u16, k: u16, game: &mut Gam
             match current_block {
                 12039483399334584727 => {}
                 _ => {
-                    if (if unk_868729[(v2 as i32 ^ 2 as i32) as usize] as i32 & 0x80 as i32 != 0 {
-                        -(1 as i32)
+                    if (if unk_868729[(v2 as i32 ^ 2i32) as usize] as i32 & 0x80i32 != 0 {
+                        -(1i32)
                     } else {
-                        0 as i32
+                        0i32
                     }) >= 0i32
                     {
-                        return 0 as u8;
+                        return 0u8;
                     }
                 }
             }
         }
     }
-    let v6: i32 = ram_word!(game, cinematic_var7) as i32 >> 1 as i32;
+    let v6: i32 = ram_word!(game, cinematic_var7) as i32 >> 1i32;
     let mut v7: u16 = 0;
-    set_ram_word!(game.eproj_x_subpos[v6] = 0 as u16);
-    if ((*eci).eci_r20 as i32 & 0x8000 as i32) != 0i32 {
-        v7 = ((*eci).eci_r28 as i32 + ((*eci).eci_r34 as i32 | 7 as i32) + 1 as i32) as u16;
+    set_ram_word!(game.eproj_x_subpos[v6] = 0u16);
+    if ((*eci).eci_r20 as i32 & 0x8000i32) != 0i32 {
+        v7 = ((*eci).eci_r28 as i32 + ((*eci).eci_r34 as i32 | 7i32) + 1i32) as u16;
     } else {
-        v7 = (((*eci).eci_r34 as i32 & 0xfff8 as i32) - (*eci).eci_r28 as i32) as u16;
+        v7 = (((*eci).eci_r34 as i32 & 0xfff8i32) - (*eci).eci_r28 as i32) as u16;
     }
     set_ram_word!(game.eproj_x_pos[v6] = v7);
-    1 as u8
+    1u8
 }
 unsafe fn EprojColl_8676(eci: *mut EprojCollInfo, a: u16, k: u16, j: u16, game: &mut Game) -> u8 {
     let mut current_block: u64;
@@ -1311,49 +1309,48 @@ unsafe fn EprojColl_8676(eci: *mut EprojCollInfo, a: u16, k: u16, j: u16, game: 
     let temp_collision_DD6: u16 = (*(&raw mut game.g_ram as *mut u8)
         .offset(0x16402)
         .offset(k as isize) as i32
-        >> 6 as i32) as u16;
-    let v3: u16 = (4 as i32 * a as i32
-        + (temp_collision_DD6 as i32 ^ ((*eci).eci_r34 as i32 & 8 as i32) >> 2 as i32))
+        >> 6i32) as u16;
+    let v3: u16 = (4i32 * a as i32
+        + (temp_collision_DD6 as i32 ^ ((*eci).eci_r34 as i32 & 8i32) >> 2i32))
         as u16;
     if (*eci).eci_r32 == 0 {
-        let v4: i32 = v2 as i32 >> 1 as i32;
-        if (game.enemy_projectile_x_pos(v2) as i32 - (*eci).eci_r28 as i32 & 8 as i32) != 0i32
-            || (if unk_868729[v3 as usize] as i32 & 0x80 as i32 != 0 {
-                -(1 as i32)
+        let v4: i32 = v2 as i32 >> 1i32;
+        if (game.enemy_projectile_x_pos(v2) as i32 - (*eci).eci_r28 as i32 & 8i32) != 0i32
+            || (if unk_868729[v3 as usize] as i32 & 0x80i32 != 0 {
+                -(1i32)
             } else {
-                0 as i32
+                0i32
             }) >= 0i32
         {
             let v5: u16 = (v3) ^ (1u16);
-            if ((*eci).eci_r28 as i32 + game.enemy_projectile_x_pos(v2) as i32 - 1 as i32
-                & 8 as i32)
+            if ((*eci).eci_r28 as i32 + game.enemy_projectile_x_pos(v2) as i32 - 1i32 & 8i32)
                 == 0i32
-                || (if unk_868729[v5 as usize] as i32 & 0x80 as i32 != 0 {
-                    -(1 as i32)
+                || (if unk_868729[v5 as usize] as i32 & 0x80i32 != 0 {
+                    -(1i32)
                 } else {
-                    0 as i32
+                    0i32
                 }) >= 0i32
             {
-                return 0 as u8;
+                return 0u8;
             }
         }
     } else {
         if (*eci).eci_r26 == 0 {
             if ((*eci).eci_r28 as i32
                 + *((&raw mut game.g_ram as *mut u8).offset(0x1a4b) as *mut u16)
-                    .offset((ram_word!(game, cinematic_var7) as i32 >> 1 as i32) as isize)
+                    .offset((ram_word!(game, cinematic_var7) as i32 >> 1i32) as isize)
                     as i32
-                - 1 as i32
-                & 8 as i32)
+                - 1i32
+                & 8i32)
                 == 0i32
             {
-                if (if unk_868729[v3 as usize] as i32 & 0x80 as i32 != 0 {
-                    -(1 as i32)
+                if (if unk_868729[v3 as usize] as i32 & 0x80i32 != 0 {
+                    -(1i32)
                 } else {
-                    0 as i32
+                    0i32
                 }) >= 0i32
                 {
-                    return 0 as u8;
+                    return 0u8;
                 }
                 current_block = 5143058163439228106;
             } else {
@@ -1361,10 +1358,10 @@ unsafe fn EprojColl_8676(eci: *mut EprojCollInfo, a: u16, k: u16, j: u16, game: 
             }
         } else if (*eci).eci_r26 != (*eci).eci_r32
             || (*((&raw mut game.g_ram as *mut u8).offset(0x1a4b) as *mut u16)
-                .offset((ram_word!(game, cinematic_var7) as i32 >> 1 as i32) as isize)
+                .offset((ram_word!(game, cinematic_var7) as i32 >> 1i32) as isize)
                 as i32
                 - (*eci).eci_r28 as i32
-                & 8 as i32)
+                & 8i32)
                 == 0i32
         {
             current_block = 8777407941634159499;
@@ -1374,10 +1371,10 @@ unsafe fn EprojColl_8676(eci: *mut EprojCollInfo, a: u16, k: u16, j: u16, game: 
         if current_block == 5143058163439228106 {
         } else {
             if current_block == 8777407941634159499 {
-                if (if unk_868729[v3 as usize] as i32 & 0x80 as i32 != 0 {
-                    -(1 as i32)
+                if (if unk_868729[v3 as usize] as i32 & 0x80i32 != 0 {
+                    -(1i32)
                 } else {
-                    0 as i32
+                    0i32
                 }) < 0i32
                 {
                     current_block = 5143058163439228106;
@@ -1388,31 +1385,31 @@ unsafe fn EprojColl_8676(eci: *mut EprojCollInfo, a: u16, k: u16, j: u16, game: 
             match current_block {
                 5143058163439228106 => {}
                 _ => {
-                    if (if unk_868729[(v3 as i32 ^ 1 as i32) as usize] as i32 & 0x80 as i32 != 0 {
-                        -(1 as i32)
+                    if (if unk_868729[(v3 as i32 ^ 1i32) as usize] as i32 & 0x80i32 != 0 {
+                        -(1i32)
                     } else {
-                        0 as i32
+                        0i32
                     }) >= 0i32
                     {
-                        return 0 as u8;
+                        return 0u8;
                     }
                 }
             }
         }
     }
-    let v7: i32 = EprojState(&game.g_ram).index() as i32 >> 1 as i32;
+    let v7: i32 = EprojState(&game.g_ram).index() as i32 >> 1i32;
     let mut v8: u16 = 0;
-    EprojStateMut(&mut game.g_ram).write(0x1a6f, v7 as usize, 0 as u16);
-    if ((*eci).eci_r20 as i32 & 0x8000 as i32) != 0i32 {
-        v8 = ((*eci).eci_r30 as i32 + ((*eci).eci_r34 as i32 | 7 as i32) + 1 as i32) as u16;
+    EprojStateMut(&mut game.g_ram).write(0x1a6f, v7 as usize, 0u16);
+    if ((*eci).eci_r20 as i32 & 0x8000i32) != 0i32 {
+        v8 = ((*eci).eci_r30 as i32 + ((*eci).eci_r34 as i32 | 7i32) + 1i32) as u16;
     } else {
-        v8 = (((*eci).eci_r34 as i32 & 0xfff8 as i32) - (*eci).eci_r30 as i32) as u16;
+        v8 = (((*eci).eci_r34 as i32 & 0xfff8i32) - (*eci).eci_r30 as i32) as u16;
     }
     EprojStateMut(&mut game.g_ram).write(0x1a93, v7 as usize, v8);
-    1 as u8
+    1u8
 }
 pub fn EprojColl_873D() -> u8 {
-    0 as u8
+    0u8
 }
 unsafe fn EprojColl_874E(eci: *mut EprojCollInfo, game: &mut Game) -> u8 {
     let mut v3: i16 = 0;
@@ -1426,89 +1423,89 @@ unsafe fn EprojColl_874E(eci: *mut EprojCollInfo, game: &mut Game) -> u8 {
     let mut v14: u16 = 0;
     let mut v15: i16 = 0;
     let v0: u16 = EprojState(&game.g_ram).index();
-    if ((*eci).eci_r20 as i32 & 0x8000 as i32) != 0i32 {
+    if ((*eci).eci_r20 as i32 & 0x8000i32) != 0i32 {
         let v9: u16 = ram_word!(game, cur_block_index);
         let mod_0: u16 = SnesModulus(
             ram_word!(game, cur_block_index),
             ram_word!(game, room_width_in_blocks) as u8,
         );
-        let v10: i32 = v0 as i32 >> 1 as i32;
-        v11 = (ram_word!(game, eproj_x_pos[v10]) as i32 >> 4 as i32) as i16;
+        let v10: i32 = v0 as i32 >> 1i32;
+        v11 = (ram_word!(game, eproj_x_pos[v10]) as i32 >> 4i32) as i16;
         if v11 as i32 == mod_0 as i32 {
             let temp_collision_DD4: u16 =
-                ((*eci).eci_r24 as i32 - (*eci).eci_r30 as i32 & 0xf as i32 ^ 0xf as i32) as u16;
-            let temp_collision_DD6: u16 = (16 as i32
+                ((*eci).eci_r24 as i32 - (*eci).eci_r30 as i32 & 0xfi32 ^ 0xfi32) as u16;
+            let temp_collision_DD6: u16 = (16i32
                 * (*(&raw mut game.g_ram as *mut u8)
                     .offset(0x16402)
                     .offset(v9 as isize) as i32
-                    & 0x1f as i32)) as u16;
+                    & 0x1fi32)) as u16;
             v12 = ((*(&raw mut game.g_ram as *mut u8)
                 .offset(0x16402)
                 .offset(v9 as isize) as i32)
-                << 8 as i32) as i16;
+                << 8i32) as i16;
             if v12 < 0i16 && {
-                if (v12 as i32 & 0x4000 as i32) != 0i32 {
-                    v13 = (ram_word!(game, eproj_x_pos[v10]) as i32 ^ 0xf as i32) as u16;
+                if (v12 as i32 & 0x4000i32) != 0i32 {
+                    v13 = (ram_word!(game, eproj_x_pos[v10]) as i32 ^ 0xfi32) as u16;
                 } else {
                     v13 = ram_word!(game, eproj_x_pos[v10]);
                 };
-                v14 = (temp_collision_DD6 as i32 + (v13 as i32 & 0xf as i32)) as u16;
+                v14 = (temp_collision_DD6 as i32 + (v13 as i32 & 0xfi32)) as u16;
                 v15 = ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b)) as *const u8
                     as *mut u8)
                     .offset(v14 as isize) as i32
-                    & 0x1f as i32)
+                    & 0x1fi32)
                     - temp_collision_DD4 as i32
-                    - 1 as i32) as i16;
+                    - 1i32) as i16;
                 ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b)) as *const u8 as *mut u8)
                     .offset(v14 as isize) as i32
-                    & 0x1f as i32)
+                    & 0x1fi32)
                     - temp_collision_DD4 as i32)
                     == 1i32
                     || v15 < 0i16
             } {
                 set_ram_word!(game.eproj_y_pos[v10] = ((*eci).eci_r24 as i32 - v15 as i32) as u16);
-                set_ram_word!(game.eproj_y_subpos[v10] = 0 as u16);
-                1 as u8
+                set_ram_word!(game.eproj_y_subpos[v10] = 0u16);
+                1u8
             } else {
-                0 as u8
+                0u8
             }
         } else {
-            0 as u8
+            0u8
         }
     } else {
         let v1: u16 = game.cur_block_index();
         let mod_1: u16 = SnesModulus(game.cur_block_index(), game.room_width_in_blocks() as u8);
-        let v2: i32 = v0 as i32 >> 1 as i32;
-        v3 = (game.enemy_projectile_x_pos(v0) as i32 >> 4 as i32) as i16;
+        let v2: i32 = v0 as i32 >> 1i32;
+        v3 = (game.enemy_projectile_x_pos(v0) as i32 >> 4i32) as i16;
         if v3 as i32 == mod_1 as i32 {
             let temp_collision_DD4_0: u16 =
-                (((*eci).eci_r30 as i32 + (*eci).eci_r24 as i32 - 1 as i32) as u16) & (0xfu16);
+                (((*eci).eci_r30 as i32 + (*eci).eci_r24 as i32 - 1i32) as u16) & (0xfu16);
             let temp_collision_DD6_0: u16 = (16u16).wrapping_mul(
                 (*(&raw mut game.g_ram as *mut u8)
                     .offset(0x16402)
                     .offset(v1 as isize) as i32
-                    & 0x1f as i32) as u16,
+                    & 0x1fi32) as u16,
             );
             v5 = ((*(&raw mut game.g_ram as *mut u8)
                 .offset(0x16402)
                 .offset(v1 as isize) as i32)
-                << 8 as i32) as i16;
+                << 8i32) as i16;
             if v5 >= 0 && {
-                if (v5 as i32 & 0x4000 as i32) != 0i32 {
+                if (v5 as i32 & 0x4000i32) != 0i32 {
                     v6 = (game.enemy_projectile_x_pos(v0)) ^ (0xfu16);
                 } else {
                     v6 = game.enemy_projectile_x_pos(v0);
                 };
-                v7 = (temp_collision_DD6_0).wrapping_add((v6 as i32 & 0xf as i32) as u16);
+                v7 = (temp_collision_DD6_0).wrapping_add((v6 as i32 & 0xfi32) as u16);
                 v8 = (((*(game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b)) as *const u8
                     as *mut u8)
                     .offset(v7 as isize) as i32
-                    & 0x1f as i32)
+                    & 0x1fi32)
                     - temp_collision_DD4_0 as i32) as i16)
                     .wrapping_sub(1i16);
                 ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b)) as *const u8 as *mut u8)
                     .offset(v7 as isize) as i32
-                    & 0x1f as i32)
+                    & 0x1fi32)
                     - temp_collision_DD4_0 as i32)
                     == 1i32
                     || v8 < 0
@@ -1517,13 +1514,13 @@ unsafe fn EprojColl_874E(eci: *mut EprojCollInfo, game: &mut Game) -> u8 {
                     let eproj_position: u16 = ((*eci).eci_r24).wrapping_add((v8) as u16);
                     EprojStateMut(&mut game.g_ram).write(0x1a93, v2 as usize, eproj_position);
                 }
-                EprojStateMut(&mut game.g_ram).write(0x1a6f, v2 as usize, -(1 as i32) as u16);
-                1 as u8
+                EprojStateMut(&mut game.g_ram).write(0x1a6f, v2 as usize, -(1i32) as u16);
+                1u8
             } else {
-                0 as u8
+                0u8
             }
         } else {
-            0 as u8
+            0u8
         }
     }
 }
@@ -1533,7 +1530,7 @@ unsafe fn react_to_enemy_projectile_block(
     slope: Func_EprojCollInfo_U8,
     game: &mut Game,
 ) -> u8 {
-    set_ram_word!(game.cur_block_index = (k as i32 >> 1 as i32) as u16);
+    set_ram_word!(game.cur_block_index = (k as i32 >> 1i32) as u16);
     game.react_to_block(|block_type, game| match block_type {
         0 | 2 | 3 | 4 | 6 | 7 | 14 => 0,
         1 => slope(eci, game),
@@ -1558,9 +1555,8 @@ pub unsafe fn EprojBlockCollisition_CheckVertical(
     react_to_enemy_projectile_block(eci, k, EprojColl_85AD, game)
 }
 pub unsafe fn EprojBlockCollisition_Horiz(k: u16, game: &mut Game) -> u8 {
-    let v1: i32 = k as i32 >> 1 as i32;
-    let amt: i32 =
-        (EprojState(&game.g_ram).slot_word(0x1ab7, v1 as usize) as i16 as i32) << 8 as i32;
+    let v1: i32 = k as i32 >> 1i32;
+    let amt: i32 = (EprojState(&game.g_ram).slot_word(0x1ab7, v1 as usize) as i16 as i32) << 8i32;
     let R30: u16 = EprojState(&game.g_ram).y_radius(v1 as usize) as u16;
     let R28: u16 = EprojState(&game.g_ram).x_radius(v1 as usize) as u16;
     let mut r26: u16 = ((game.enemy_projectile_y_pos(k) as i32 - R30 as i32) as u16) & (0xfff0u16);
@@ -1568,16 +1564,16 @@ pub unsafe fn EprojBlockCollisition_Horiz(k: u16, game: &mut Game) -> u8 {
         .wrapping_add(game.enemy_projectile_y_pos(k))
         .wrapping_sub(1)
         .wrapping_sub(r26) as i32
-        >> 4 as i32) as u16;
+        >> 4i32) as u16;
     let R32: u16 = r26;
     let prod: u16 = Mult8x8(
-        (game.enemy_projectile_y_pos(k).wrapping_sub(R30) as i32 >> 4 as i32) as u8,
+        (game.enemy_projectile_y_pos(k).wrapping_sub(R30) as i32 >> 4i32) as u8,
         game.room_width_in_blocks() as u8,
     );
     let v3: u16 = ((amt as u32).wrapping_add(
-        (game.enemy_projectile_x_pos(k) as u32) << 16 as i32
+        (game.enemy_projectile_x_pos(k) as u32) << 16i32
             | EprojState(&game.g_ram).slot_word(0x1a27, v1 as usize) as u32,
-    ) >> 16 as i32) as u16;
+    ) >> 16i32) as u16;
     let r22: u16 = (amt + EprojState(&game.g_ram).slot_word(0x1a27, v1 as usize) as i32) as u16;
     let r24: u16 = v3;
     let mut v4: u16 = 0;
@@ -1587,7 +1583,7 @@ pub unsafe fn EprojBlockCollisition_Horiz(k: u16, game: &mut Game) -> u8 {
         v4 = R28.wrapping_add(v3).wrapping_sub(1);
     }
     let mut eci: EprojCollInfo = EprojCollInfo {
-        eci_r20: (amt >> 16 as i32) as u16,
+        eci_r20: (amt >> 16i32) as u16,
         eci_r24: r24,
         eci_r26: r26,
         eci_r28: R28,
@@ -1595,37 +1591,36 @@ pub unsafe fn EprojBlockCollisition_Horiz(k: u16, game: &mut Game) -> u8 {
         eci_r32: R32,
         eci_r34: v4,
     };
-    let mut v5: u16 = (2 as i32 * (prod as i32 + (v4 as i32 >> 4 as i32))) as u16;
-    while EprojBlockCollisition_CheckHorizontal(&raw mut eci, v5, game) as i32 & 1 as i32 == 0 {
-        v5 = (v5).wrapping_add((game.room_width_in_blocks() as i32 * 2 as i32) as u16);
+    let mut v5: u16 = (2i32 * (prod as i32 + (v4 as i32 >> 4i32))) as u16;
+    while EprojBlockCollisition_CheckHorizontal(&raw mut eci, v5, game) as i32 & 1i32 == 0 {
+        v5 = (v5).wrapping_add((game.room_width_in_blocks() as i32 * 2i32) as u16);
         eci.eci_r26 = eci.eci_r26.wrapping_sub(1);
-        if (eci.eci_r26 as i32 & 0x8000 as i32) != 0i32 {
-            let v6: i32 = k as i32 >> 1 as i32;
+        if (eci.eci_r26 as i32 & 0x8000i32) != 0i32 {
+            let v6: i32 = k as i32 >> 1i32;
             EprojStateMut(&mut game.g_ram).write(0x1a27, v6 as usize, r22);
             EprojStateMut(&mut game.g_ram).write(0x1a4b, v6 as usize, r24);
-            return 0 as u8;
+            return 0u8;
         }
     }
-    let v8: i32 = k as i32 >> 1 as i32;
-    EprojStateMut(&mut game.g_ram).write(0x1a27, v8 as usize, 0 as u16);
+    let v8: i32 = k as i32 >> 1i32;
+    EprojStateMut(&mut game.g_ram).write(0x1a27, v8 as usize, 0u16);
     if amt < 0i32 {
-        let v10: u16 = (eci.eci_r28 as i32 + (eci.eci_r34 as i32 | 0xf as i32) + 1 as i32) as u16;
+        let v10: u16 = (eci.eci_r28 as i32 + (eci.eci_r34 as i32 | 0xfi32) + 1i32) as u16;
         if v10 <= game.enemy_projectile_x_pos(k) {
             EprojStateMut(&mut game.g_ram).write(0x1a4b, v8 as usize, v10);
         }
     } else {
-        let v9: u16 = ((eci.eci_r34 as i32 & 0xfff0 as i32) - eci.eci_r28 as i32) as u16;
+        let v9: u16 = ((eci.eci_r34 as i32 & 0xfff0i32) - eci.eci_r28 as i32) as u16;
         if v9 >= game.enemy_projectile_x_pos(k) {
             EprojStateMut(&mut game.g_ram).write(0x1a4b, v8 as usize, v9);
         }
     }
-    1 as u8
+    1u8
 }
 pub unsafe fn EprojBlockCollisition_Vertical(k: u16, game: &mut Game) -> u8 {
     let mut v5: i16 = 0;
-    let v1: i32 = k as i32 >> 1 as i32;
-    let amt: i32 =
-        (EprojState(&game.g_ram).slot_word(0x1adb, v1 as usize) as i16 as i32) << 8 as i32;
+    let v1: i32 = k as i32 >> 1i32;
+    let amt: i32 = (EprojState(&game.g_ram).slot_word(0x1adb, v1 as usize) as i16 as i32) << 8i32;
     let R30: u16 = EprojState(&game.g_ram).y_radius(v1 as usize) as u16;
     let R28: u16 = EprojState(&game.g_ram).x_radius(v1 as usize) as u16;
     let mut r26: u16 = ((game.enemy_projectile_x_pos(k) as i32 - R28 as i32) as u16) & (0xfff0u16);
@@ -1633,12 +1628,12 @@ pub unsafe fn EprojBlockCollisition_Vertical(k: u16, game: &mut Game) -> u8 {
         .wrapping_add(game.enemy_projectile_x_pos(k))
         .wrapping_sub(1)
         .wrapping_sub(r26) as i32
-        >> 4 as i32) as u16;
+        >> 4i32) as u16;
     let R32: u16 = r26;
     let v3: u16 = ((amt as u32).wrapping_add(
-        (game.enemy_projectile_y_pos(k) as u32) << 16 as i32
+        (game.enemy_projectile_y_pos(k) as u32) << 16i32
             | EprojState(&game.g_ram).slot_word(0x1a6f, v1 as usize) as u32,
-    ) >> 16 as i32) as u16;
+    ) >> 16i32) as u16;
     let r22: u16 = (amt + EprojState(&game.g_ram).slot_word(0x1a6f, v1 as usize) as i32) as u16;
     let r24: u16 = v3;
     let mut v4: u16 = 0;
@@ -1648,7 +1643,7 @@ pub unsafe fn EprojBlockCollisition_Vertical(k: u16, game: &mut Game) -> u8 {
         v4 = R30.wrapping_add(v3).wrapping_sub(1);
     }
     let mut eci: EprojCollInfo = EprojCollInfo {
-        eci_r20: (amt >> 16 as i32) as u16,
+        eci_r20: (amt >> 16i32) as u16,
         eci_r24: r24,
         eci_r26: r26,
         eci_r28: R28,
@@ -1656,49 +1651,45 @@ pub unsafe fn EprojBlockCollisition_Vertical(k: u16, game: &mut Game) -> u8 {
         eci_r32: R32,
         eci_r34: v4,
     };
-    let prod: u16 = Mult8x8(
-        (v4 as i32 >> 4 as i32) as u8,
-        game.room_width_in_blocks() as u8,
-    );
-    v5 = (game.enemy_projectile_x_pos(k).wrapping_sub(R28) as i32 >> 4 as i32) as i16;
-    let mut i: i32 = 2 as i32 * (prod as i32 + v5 as i32);
-    while EprojBlockCollisition_CheckVertical(&raw mut eci, i as u16, game) as i32 & 1 as i32 == 0 {
+    let prod: u16 = Mult8x8((v4 as i32 >> 4i32) as u8, game.room_width_in_blocks() as u8);
+    v5 = (game.enemy_projectile_x_pos(k).wrapping_sub(R28) as i32 >> 4i32) as i16;
+    let mut i: i32 = 2i32 * (prod as i32 + v5 as i32);
+    while EprojBlockCollisition_CheckVertical(&raw mut eci, i as u16, game) as i32 & 1i32 == 0 {
         eci.eci_r26 = eci.eci_r26.wrapping_sub(1);
-        if (eci.eci_r26 as i32 & 0x8000 as i32) != 0i32 {
-            let v7: i32 = k as i32 >> 1 as i32;
+        if (eci.eci_r26 as i32 & 0x8000i32) != 0i32 {
+            let v7: i32 = k as i32 >> 1i32;
             EprojStateMut(&mut game.g_ram).write(0x1a6f, v7 as usize, r22);
             EprojStateMut(&mut game.g_ram).write(0x1a93, v7 as usize, r24);
-            return 0 as u8;
+            return 0u8;
         }
-        i += 2 as i32;
+        i += 2i32;
     }
-    let v9: i32 = k as i32 >> 1 as i32;
-    EprojStateMut(&mut game.g_ram).write(0x1a6f, v9 as usize, 0 as u16);
+    let v9: i32 = k as i32 >> 1i32;
+    EprojStateMut(&mut game.g_ram).write(0x1a6f, v9 as usize, 0u16);
     if amt < 0i32 {
-        let v11: u16 = (eci.eci_r30 as i32 + (eci.eci_r34 as i32 | 0xf as i32) + 1 as i32) as u16;
+        let v11: u16 = (eci.eci_r30 as i32 + (eci.eci_r34 as i32 | 0xfi32) + 1i32) as u16;
         if v11 <= game.enemy_projectile_y_pos(k) {
             EprojStateMut(&mut game.g_ram).write(0x1a93, v9 as usize, v11);
         }
     } else {
-        let v10: u16 = ((eci.eci_r34 as i32 & 0xfff0 as i32) - eci.eci_r30 as i32) as u16;
+        let v10: u16 = ((eci.eci_r34 as i32 & 0xfff0i32) - eci.eci_r30 as i32) as u16;
         if v10 >= game.enemy_projectile_y_pos(k) {
             EprojStateMut(&mut game.g_ram).write(0x1a93, v9 as usize, v10);
         }
     }
-    1 as u8
+    1u8
 }
 unsafe fn Eproj_Init_0x8aaf(j: u16, game: &mut Game) {
     NextRandom(game);
     let v1: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    let v2: u16 = ((*v1).y_pos as i32 + 12 as i32) as u16;
-    let v3: i32 = j as i32 >> 1 as i32;
+    let v2: u16 = ((*v1).y_pos as i32 + 12i32) as u16;
+    let v3: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_y_pos[v3] = v2);
-    set_ram_word!(game.eproj_timers[v3] = (v2 as i32 + 72 as i32) as u16);
+    set_ram_word!(game.eproj_timers[v3] = (v2 as i32 + 72i32) as u16);
     set_ram_word!(game.eproj_y_vel[v3] = (*v1).ai_var_D);
     set_ram_word!(
-        game.eproj_x_pos[v3] = ((*v1).x_pos as i32
-            + (ram_word!(game, random_number) as i32 & 0x1f as i32)
-            - 16 as i32) as u16
+        game.eproj_x_pos[v3] =
+            ((*v1).x_pos as i32 + (ram_word!(game, random_number) as i32 & 0x1fi32) - 16i32) as u16
     );
     set_ram_word!(
         game.eproj_instr_list_ptr[v3] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x868a75))
@@ -1707,22 +1698,22 @@ unsafe fn Eproj_Init_0x8aaf(j: u16, game: &mut Game) {
                 ((*(((&raw mut game.g_ram as *mut u8).offset(0x1adb) as *mut u16)
                     .offset(v3 as isize) as *mut u16 as *mut u8)
                     .offset(1isize,) as i32
-                    & 6 as i32) as u16 as i32
-                    >> 1 as i32) as isize,
+                    & 6i32) as u16 as i32
+                    >> 1i32) as isize,
             )
     );
 }
 pub unsafe fn Eproj_PreInit_0x8aaf(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut u8).offset(0x1a93) as *mut u16).offset(v1 as isize)
             as *mut u16,
         ((&raw mut game.g_ram as *mut u8).offset(0x1a6f) as *mut u16).offset(v1 as isize)
             as *mut u16,
-        ((ram_word!(game, eproj_y_vel[v1]) as i16 as i32) << 8 as i32) as u32,
+        ((ram_word!(game, eproj_y_vel[v1]) as i16 as i32) << 8i32) as u32,
     );
     if ram_word!(game, eproj_y_pos[v1]) >= ram_word!(game, eproj_timers[v1]) {
-        set_ram_word!(game.eproj_id[v1] = 0 as u16);
+        set_ram_word!(game.eproj_id[v1] = 0u16);
     }
 }
 fn init_skree_particle(j: u16, x_offset: i16, x_velocity: i16, y_velocity: i16, game: &mut Game) {
@@ -1740,12 +1731,12 @@ fn init_skree_particle(j: u16, x_offset: i16, x_velocity: i16, y_velocity: i16, 
 }
 
 pub fn Eproj_PreInstr_SkreeParticle(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     let split_amount =
-        ((EprojState(&game.g_ram).slot_word(0x1ab7, v1 as usize) as i16 as i32) << 8 as i32) as u32;
+        ((EprojState(&game.g_ram).slot_word(0x1ab7, v1 as usize) as i16 as i32) << 8i32) as u32;
     EprojStateMut(&mut game.g_ram).add_split_words(0x1a4b, 0x1a27, v1 as usize, split_amount);
     let split_amount =
-        ((EprojState(&game.g_ram).slot_word(0x1adb, v1 as usize) as i16 as i32) << 8 as i32) as u32;
+        ((EprojState(&game.g_ram).slot_word(0x1adb, v1 as usize) as i16 as i32) << 8i32) as u32;
     EprojStateMut(&mut game.g_ram).add_split_words(0x1a93, 0x1a6f, v1 as usize, split_amount);
     EprojStateMut(&mut game.g_ram).add_word(0x1adb, v1 as usize, 80);
     if CheckIfEprojIsOffScreen(k, game) != 0 {
@@ -1757,28 +1748,24 @@ pub unsafe fn EprojInstr_SpawnEnemyDropsWithDraygonsEyeDrops(
     epjp: *const u8,
     game: &mut Game,
 ) -> *const u8 {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     game.eproj_spawn_pt = Point16U {
         x: ram_word!(game, eproj_x_pos[v1]),
         y: ram_word!(game, eproj_y_pos[v1]),
     };
-    SpawnEnemyDrops(addr_kEnemyDef_DE7F as u16, k, 0 as u16, game);
+    SpawnEnemyDrops(addr_kEnemyDef_DE7F as u16, k, 0u16, game);
     epjp
 }
 pub unsafe fn EprojInstr_SetPreInstrA(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
-    set_ram_word!(
-        game.eproj_pre_instr[(k as i32 >> 1i32)] = (0x868dff as i32 & 0xffff as i32) as u16
-    );
+    set_ram_word!(game.eproj_pre_instr[(k as i32 >> 1i32)] = (0x868dffi32 & 0xffffi32) as u16);
     epjp
 }
 pub unsafe fn EprojInstr_SetPreInstrB(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
-    set_ram_word!(
-        game.eproj_pre_instr[(k as i32 >> 1i32)] = (0x868dca as i32 & 0xffff as i32) as u16
-    );
+    set_ram_word!(game.eproj_pre_instr[(k as i32 >> 1i32)] = (0x868dcai32 & 0xffffi32) as u16);
     epjp
 }
 unsafe fn EprojInit_DraygonsGunk(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
+    let v1: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_x_pos[v1] = game.eproj_spawn_pt.x);
     set_ram_word!(game.eproj_y_pos[v1] = game.eproj_spawn_pt.y);
     set_ram_word!(game.g_word_7E97DC[v1] = ram_word!(game, cinematic_var9));
@@ -1787,17 +1774,17 @@ unsafe fn EprojInit_DraygonsGunk(j: u16, game: &mut Game) {
         ram_word!(game, cinematic_var8),
         game,
     );
-    set_ram_word!(game.eproj_x_vel[v1] = (pt.x >> 16 as i32) as u16);
+    set_ram_word!(game.eproj_x_vel[v1] = (pt.x >> 16i32) as u16);
     set_ram_word!(game.eproj_E[v1] = pt.x as u16);
-    set_ram_word!(game.eproj_y_vel[v1] = (pt.y >> 16 as i32) as u16);
+    set_ram_word!(game.eproj_y_vel[v1] = (pt.y >> 16i32) as u16);
     set_ram_word!(game.eproj_F[v1] = pt.y as u16);
-    set_ram_word!(game.eproj_gfx_idx[v1] = 1024 as u16);
+    set_ram_word!(game.eproj_gfx_idx[v1] = 1024u16);
 }
 unsafe fn EprojInit_DraygonsWallTurretProjs(j: u16, game: &mut Game) {
     Eproj_AngleToSamus(j, game.eproj_spawn_pt.x, game.eproj_spawn_pt.y, game);
-    let v1: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_gfx_idx[v1] = 2560 as u16);
-    set_ram_word!(game.eproj_pre_instr[v1] = (0x868d54 as i32 & 0xffff as i32) as u16);
+    let v1: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_gfx_idx[v1] = 2560u16);
+    set_ram_word!(game.eproj_pre_instr[v1] = (0x868d54i32 & 0xffffi32) as u16);
 }
 pub unsafe fn EprojPowerBombCollision(k: u16, game: &mut Game) {
     let r18: u16 = *((&raw mut game.g_ram as *mut u8).offset(0xcea) as *mut u16 as *mut u8)
@@ -1807,11 +1794,11 @@ pub unsafe fn EprojPowerBombCollision(k: u16, game: &mut Game) {
         let r20: u16 = ((r18 as i32
             + (*((&raw mut game.g_ram as *mut u8).offset(0xcea) as *mut u16 as *mut u8)
                 .offset(1isize) as i32
-                & 1 as i32)
-            + (ram_word!(game, power_bomb_explosion_radius) as i32 >> 9 as i32))
+                & 1i32)
+            + (ram_word!(game, power_bomb_explosion_radius) as i32 >> 9i32))
             as u16 as i32
-            >> 1 as i32) as u16;
-        let v1: i32 = k as i32 >> 1 as i32;
+            >> 1i32) as u16;
+        let v1: i32 = k as i32 >> 1i32;
         if abs16(
             (ram_word!(game, power_bomb_explosion_x_pos) as i32
                 - ram_word!(game, eproj_x_pos[v1]) as i32) as u16,
@@ -1821,27 +1808,26 @@ pub unsafe fn EprojPowerBombCollision(k: u16, game: &mut Game) {
                     - ram_word!(game, eproj_y_pos[v1]) as i32) as u16,
             ) < r20
         {
-            set_ram_word!(game.eproj_id[v1] = 0 as u16);
-            set_ram_word!(game.samus_x_speed_divisor = 0 as u16);
+            set_ram_word!(game.eproj_id[v1] = 0u16);
+            set_ram_word!(game.samus_x_speed_divisor = 0u16);
         }
     }
 }
 pub unsafe fn EprojInstr_868D99(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
     EprojPowerBombCollision(k, game);
-    let v2: u16 = (ram_word!(game, samus_x_speed_divisor) as i32 + 1 as i32) as u16;
-    if ram_word!(game, samus_x_speed_divisor) as i32 - 5 as i32 & 0x8000 as i32 != 0 {
+    let v2: u16 = (ram_word!(game, samus_x_speed_divisor) as i32 + 1i32) as u16;
+    if ram_word!(game, samus_x_speed_divisor) as i32 - 5i32 & 0x8000i32 != 0 {
         update_ram_word!(game.samus_x_speed_divisor, wrapping_add(1));
-        let v3: i32 = k as i32 >> 1 as i32;
+        let v3: i32 = k as i32 >> 1i32;
         set_ram_word!(game.eproj_F[v3] = v2);
-        set_ram_word!(game.eproj_E[v3] = 256 as u16);
-        set_ram_word!(game.eproj_pre_instr[v3] = (0x868dca as i32 & 0xffff as i32) as u16);
+        set_ram_word!(game.eproj_E[v3] = 256u16);
+        set_ram_word!(game.eproj_pre_instr[v3] = (0x868dcai32 & 0xffffi32) as u16);
         set_ram_word!(
-            game.eproj_properties[v3] = (ram_word!(game, eproj_properties[v3]) as i32
-                & 0x5fff as i32
-                | 0x2000 as i32) as u16
+            game.eproj_properties[v3] =
+                (ram_word!(game, eproj_properties[v3]) as i32 & 0x5fffi32 | 0x2000i32) as u16
         );
-        set_ram_word!(game.samus_invincibility_timer = 0 as u16);
-        set_ram_word!(game.samus_knockback_timer = 0 as u16);
+        set_ram_word!(game.samus_invincibility_timer = 0u16);
+        set_ram_word!(game.samus_knockback_timer = 0u16);
     }
     epjp
 }
@@ -1849,22 +1835,22 @@ pub unsafe fn EprojPreInstr_8DCA(k: u16, game: &mut Game) {
     let mut v1: i32 = 0;
     EprojPowerBombCollision(k, game);
     if ram_word!(game, samus_contact_damage_index) != 0u16 || {
-        v1 = k as i32 >> 1 as i32;
+        v1 = k as i32 >> 1i32;
         set_ram_word!(game.eproj_x_pos[v1] = ram_word!(game, samus_x_pos));
         set_ram_word!(
             game.eproj_y_pos[v1] = (ram_word!(game, samus_y_pos) as i32
-                + 4 as i32 * ram_word!(game, eproj_F[v1]) as i32
-                - 12 as i32) as u16
+                + 4i32 * ram_word!(game, eproj_F[v1]) as i32
+                - 12i32) as u16
         );
         update_ram_word!(game.eproj_E[v1], wrapping_sub(1));
         ram_word!(game, eproj_E[v1]) == 0
     } {
-        set_ram_word!(game.eproj_id[(k as i32 >> 1i32)] = 0 as u16);
+        set_ram_word!(game.eproj_id[(k as i32 >> 1i32)] = 0u16);
         if (update_ram_word!(game.samus_x_speed_divisor, wrapping_sub(1), reread) as i32
-            & 0x8000 as i32)
+            & 0x8000i32)
             != 0i32
         {
-            set_ram_word!(game.samus_x_speed_divisor = 0 as u16);
+            set_ram_word!(game.samus_x_speed_divisor = 0u16);
         }
     }
 }
@@ -1874,143 +1860,107 @@ pub unsafe fn EprojPreInstr_DraygonsTurret_8DFF(k: u16, game: &mut Game) {
     Eproj_FuncE73E_MoveXY(k, game);
     v1 = Eproj_FuncE722(k, game) as i16;
     if v1 != 0 {
-        set_ram_word!(game.eproj_id[(k as i32 >> 1i32)] = 0 as u16);
+        set_ram_word!(game.eproj_id[(k as i32 >> 1i32)] = 0u16);
     }
 }
 pub unsafe fn EprojPreInstr_DraygonsGunk_8E0F(k: u16, game: &mut Game) {
     let mut v3: u16 = 0;
     EprojPowerBombCollision(k, game);
     Eproj_FuncE73E_MoveXY(k, game);
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     let v2: u16 = abs16(
         (ram_word!(game, samus_x_pos) as i32 - ram_word!(game, eproj_x_pos[v1]) as i32) as u16,
     );
-    if v2 as i32 - 16 as i32 & 0x8000 as i32 != 0 && {
+    if v2 as i32 - 16i32 & 0x8000i32 != 0 && {
         v3 = abs16(
             (ram_word!(game, samus_y_pos) as i32 - ram_word!(game, eproj_y_pos[v1]) as i32) as u16,
         );
-        v3 as i32 - 20 as i32 & 0x8000 as i32 != 0
+        v3 as i32 - 20i32 & 0x8000i32 != 0
     } {
-        set_ram_word!(game.eproj_instr_list_ptr[v1] = 0x8c38 as u16);
-        set_ram_word!(game.eproj_instr_timers[v1] = 1 as u16);
+        set_ram_word!(game.eproj_instr_list_ptr[v1] = 0x8c38u16);
+        set_ram_word!(game.eproj_instr_timers[v1] = 1u16);
     } else if Eproj_FuncE722(k, game) != 0 {
-        set_ram_word!(game.eproj_id[v1] = 0 as u16);
+        set_ram_word!(game.eproj_id[v1] = 0u16);
     }
 }
 unsafe fn EprojInit_CrocomireProjectile(j: u16, game: &mut Game) {
-    let v2: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_x_vel[v2] = -(512 as i32) as u16);
-    set_ram_word!(game.eproj_y_vel[v2] = 1 as u16);
+    let v2: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_x_vel[v2] = -(512i32) as u16);
+    set_ram_word!(game.eproj_y_vel[v2] = 1u16);
     let v3: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    set_ram_word!(game.eproj_x_pos[v2] = ((*v3).x_pos as i32 - 32 as i32) as u16);
-    set_ram_word!(game.eproj_y_pos[v2] = ((*v3).y_pos as i32 - 16 as i32) as u16);
-    set_ram_word!(game.eproj_timers[v2] = 0 as u16);
-    set_ram_word!(game.eproj_x_subpos[v2] = 0 as u16);
-    set_ram_word!(game.eproj_y_subpos[v2] = 0 as u16);
-    set_ram_word!(game.eproj_gfx_idx[v2] = 2560 as u16);
+    set_ram_word!(game.eproj_x_pos[v2] = ((*v3).x_pos as i32 - 32i32) as u16);
+    set_ram_word!(game.eproj_y_pos[v2] = ((*v3).y_pos as i32 - 16i32) as u16);
+    set_ram_word!(game.eproj_timers[v2] = 0u16);
+    set_ram_word!(game.eproj_x_subpos[v2] = 0u16);
+    set_ram_word!(game.eproj_y_subpos[v2] = 0u16);
+    set_ram_word!(game.eproj_gfx_idx[v2] = 2560u16);
 }
 pub unsafe fn EprojPreInstr_CrocomireProjectile(k: u16, game: &mut Game) {
     EprojBlockCollisition_Horiz(k, game);
-    set_ram_word!(game.eproj_gfx_idx[0] = 2560 as u16);
+    set_ram_word!(game.eproj_gfx_idx[0] = 2560u16);
     update_ram_word!(
-        game.eproj_timers[(k as i32 >> 1 as i32)],
+        game.eproj_timers[(k as i32 >> 1i32)],
         |fresh142| (fresh142 as i32 + ram_word!(game, eproj_x_vel[(k as i32 >> 1i32)]) as i32)
             as u16
     );
-    let x: u16 = -(64 as i32) as u16;
+    let x: u16 = -(64i32) as u16;
     let y: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x869059)) as *const u8 as *mut u16)
         .offset(
             ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0))
                 .ai_preinstr as i32
-                >> 1 as i32) as isize,
+                >> 1i32) as isize,
         );
     let v1: i32 = CalculateAngleFromXY(x, y, game) as i32;
-    let v2: i32 = k as i32 >> 1 as i32;
+    let v2: i32 = k as i32 >> 1i32;
     set_ram_word!(
-        game.eproj_x_vel[v2] =
-            (4 as i32 * kSinCosTable8bit_Sext[(v1 + 64 as i32) as usize] as i32) as u16
+        game.eproj_x_vel[v2] = (4i32 * kSinCosTable8bit_Sext[(v1 + 64i32) as usize] as i32) as u16
     );
-    set_ram_word!(
-        game.eproj_y_vel[v2] = (4 as i32 * kSinCosTable8bit_Sext[v1 as usize] as i32) as u16
-    );
-    set_ram_word!(game.eproj_pre_instr[v2] = (0x8690b3 as i32 & 0xffff as i32) as u16);
+    set_ram_word!(game.eproj_y_vel[v2] = (4i32 * kSinCosTable8bit_Sext[v1 as usize] as i32) as u16);
+    set_ram_word!(game.eproj_pre_instr[v2] = (0x8690b3i32 & 0xffffi32) as u16);
 }
 pub unsafe fn sub_8690B3(k: u16, game: &mut Game) {
-    if EprojBlockCollisition_Horiz(k, game) as i32 & 1 as i32 != 0
-        || EprojBlockCollisition_Vertical(k, game) as i32 & 1 as i32 != 0
+    if EprojBlockCollisition_Horiz(k, game) as i32 & 1i32 != 0
+        || EprojBlockCollisition_Vertical(k, game) as i32 & 1i32 != 0
     {
-        set_ram_word!(game.eproj_id[(k as i32 >> 1i32)] = 0 as u16);
+        set_ram_word!(game.eproj_id[(k as i32 >> 1i32)] = 0u16);
     }
 }
 unsafe fn EprojInit_CrocomireSpikeWallPieces(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
+    let v1: i32 = j as i32 >> 1i32;
     set_ram_word!(
         game.eproj_y_pos[v1] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x869105)) as *const u8
             as *mut u16)
-            .offset(((j as i32 - 20 as i32) as u16 as i32 >> 1 as i32) as isize,)
+            .offset(((j as i32 - 20i32) as u16 as i32 >> 1i32) as isize,)
     );
-    set_ram_word!(game.eproj_x_pos[v1] = 528 as u16);
-    set_ram_word!(game.eproj_x_vel[v1] = 0 as u16);
-    set_ram_word!(game.eproj_y_vel[v1] = 0 as u16);
-    set_ram_word!(game.eproj_E[v1] = 0 as u16);
-    set_ram_word!(game.eproj_F[v1] = 0 as u16);
-    set_ram_word!(game.eproj_x_subpos[v1] = 0 as u16);
-    set_ram_word!(game.eproj_y_subpos[v1] = 0 as u16);
-    set_ram_word!(game.eproj_y_vel[v1] = -(5 as i32) as u16);
-    set_ram_word!(game.eproj_F[v1] = -(30720 as i32) as u16);
+    set_ram_word!(game.eproj_x_pos[v1] = 528u16);
+    set_ram_word!(game.eproj_x_vel[v1] = 0u16);
+    set_ram_word!(game.eproj_y_vel[v1] = 0u16);
+    set_ram_word!(game.eproj_E[v1] = 0u16);
+    set_ram_word!(game.eproj_F[v1] = 0u16);
+    set_ram_word!(game.eproj_x_subpos[v1] = 0u16);
+    set_ram_word!(game.eproj_y_subpos[v1] = 0u16);
+    set_ram_word!(game.eproj_y_vel[v1] = -(5i32) as u16);
+    set_ram_word!(game.eproj_F[v1] = -(30720i32) as u16);
 }
 static CrocomireSpikeWallPieces_Tab2: [u16; 18] = [
-    0 as u16,
-    0 as u16,
-    0xff0 as u16,
-    0xee0 as u16,
-    0xcc0 as u16,
-    0xaa0 as u16,
-    0x880 as u16,
-    0x660 as u16,
-    0x440 as u16,
-    0x220 as u16,
-    0xff0 as u16,
-    0xee0 as u16,
-    0xcc0 as u16,
-    0xaa0 as u16,
-    0x880 as u16,
-    0x660 as u16,
-    0x440 as u16,
-    0x220 as u16,
+    0u16, 0u16, 0xff0u16, 0xee0u16, 0xcc0u16, 0xaa0u16, 0x880u16, 0x660u16, 0x440u16, 0x220u16,
+    0xff0u16, 0xee0u16, 0xcc0u16, 0xaa0u16, 0x880u16, 0x660u16, 0x440u16, 0x220u16,
 ];
 static CrocomireSpikeWallPieces_Tab1: [u16; 18] = [
-    0 as u16,
-    0 as u16,
-    0xff00 as u16,
-    0xee00 as u16,
-    0xcc00 as u16,
-    0xaa00 as u16,
-    0x8800 as u16,
-    0x6600 as u16,
-    0x4400 as u16,
-    0x2200 as u16,
-    0xff00 as u16,
-    0xee00 as u16,
-    0xcc00 as u16,
-    0xaa00 as u16,
-    0x8800 as u16,
-    0x6600 as u16,
-    0x4400 as u16,
-    0x2200 as u16,
+    0u16, 0u16, 0xff00u16, 0xee00u16, 0xcc00u16, 0xaa00u16, 0x8800u16, 0x6600u16, 0x4400u16,
+    0x2200u16, 0xff00u16, 0xee00u16, 0xcc00u16, 0xaa00u16, 0x8800u16, 0x6600u16, 0x4400u16,
+    0x2200u16,
 ];
 static CrocomireSpikeWallPieces_Tab3: [i8; 36] = [
-    0 as i8, 0 as i8, 0 as i8, 0 as i8, 4 as i8, 0 as i8, 4 as i8, 0 as i8, 3 as i8, 0 as i8,
-    3 as i8, 0 as i8, 2 as i8, 0 as i8, 2 as i8, 0 as i8, 1 as i8, 0 as i8, 1 as i8, 0 as i8,
-    6 as i8, 0 as i8, 5 as i8, 0 as i8, 4 as i8, 0 as i8, 3 as i8, 0 as i8, 2 as i8, 0 as i8,
-    2 as i8, 0 as i8, 1 as i8, 0 as i8, 1 as i8, 0 as i8,
+    0i8, 0i8, 0i8, 0i8, 4i8, 0i8, 4i8, 0i8, 3i8, 0i8, 3i8, 0i8, 2i8, 0i8, 2i8, 0i8, 1i8, 0i8, 1i8,
+    0i8, 6i8, 0i8, 5i8, 0i8, 4i8, 0i8, 3i8, 0i8, 2i8, 0i8, 2i8, 0i8, 1i8, 0i8, 1i8, 0i8,
 ];
 pub unsafe fn EprojPreInstr_CrocomireSpikeWallPieces(k: u16, game: &mut Game) {
     let mut v3: i8 = 0;
     let mut v6: i8 = 0;
     let mut v7: i8 = 0;
     let mut v8: i8 = 0;
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     let mut v2: u16 = ram_word!(game, eproj_E[v1]);
     if v2 != CrocomireSpikeWallPieces_Tab1[v1 as usize] {
         v2 = (v2 as i32 + CrocomireSpikeWallPieces_Tab2[v1 as usize] as i32) as u16;
@@ -2084,75 +2034,73 @@ pub unsafe fn EprojPreInstr_CrocomireSpikeWallPieces(k: u16, game: &mut Game) {
             as *mut u16,
         ((&raw mut game.g_ram as *mut u8).offset(0x1b23) as *mut u16).offset(v1 as isize)
             as *mut u16,
-        0x3000 as u32,
+        0x3000u32,
     );
     AddToHiLo(
         ((&raw mut game.g_ram as *mut u8).offset(0x1a93) as *mut u16).offset(v1 as isize)
             as *mut u16,
         ((&raw mut game.g_ram as *mut u8).offset(0x1a6f) as *mut u16).offset(v1 as isize)
             as *mut u16,
-        (ram_word!(game, eproj_y_vel[v1]) as u32) << 16 as i32
-            | ram_word!(game, eproj_F[v1]) as u32,
+        (ram_word!(game, eproj_y_vel[v1]) as u32) << 16i32 | ram_word!(game, eproj_F[v1]) as u32,
     );
     if ram_word!(game, eproj_y_pos[v1]) >= 0xa8u16 {
-        set_ram_word!(game.eproj_id[v1] = 0 as u16);
-        if (k as i32 & 2 as i32) == 0i32 {
-            QueueSfx2_Max6(0x29 as u16, game);
+        set_ram_word!(game.eproj_id[v1] = 0u16);
+        if (k as i32 & 2i32) == 0i32 {
+            QueueSfx2_Max6(0x29u16, game);
         }
-        let v12: i32 = k as i32 >> 1 as i32;
+        let v12: i32 = k as i32 >> 1i32;
         game.eproj_spawn_pt = Point16U {
             x: ram_word!(game, eproj_x_pos[v12]),
             y: ram_word!(game, eproj_y_pos[v12]),
         };
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15 as u16, game);
-        QueueSfx2_Max6(0x25 as u16, game);
+        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15u16, game);
+        QueueSfx2_Max6(0x25u16, game);
     }
 }
 pub unsafe fn EprojInstr_9270(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     game.eproj_spawn_pt = Point16U {
         x: ram_word!(game, eproj_x_pos[v1]),
         y: ram_word!(game, eproj_y_pos[v1]),
     };
-    SpawnEnemyDrops(addr_kEnemyDef_DDBF as u16, k, 0 as u16, game);
+    SpawnEnemyDrops(addr_kEnemyDef_DDBF as u16, k, 0u16, game);
     epjp
 }
 unsafe fn EprojInit_CrocomireBridgeCrumbling(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
+    let v1: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_x_pos[v1] = ram_word!(game, cinematic_var8));
-    set_ram_word!(game.eproj_y_pos[v1] = 187 as u16);
-    set_ram_word!(game.eproj_y_subpos[v1] = 0 as u16);
-    set_ram_word!(game.eproj_x_subpos[v1] = 0 as u16);
-    set_ram_word!(game.eproj_x_vel[v1] = 0 as u16);
+    set_ram_word!(game.eproj_y_pos[v1] = 187u16);
+    set_ram_word!(game.eproj_y_subpos[v1] = 0u16);
+    set_ram_word!(game.eproj_x_subpos[v1] = 0u16);
+    set_ram_word!(game.eproj_x_vel[v1] = 0u16);
     set_ram_word!(
-        game.eproj_y_vel[v1] =
-            ((ram_word!(game, random_number) as i32 & 0x3f as i32) + 64 as i32) as u16
+        game.eproj_y_vel[v1] = ((ram_word!(game, random_number) as i32 & 0x3fi32) + 64i32) as u16
     );
-    set_ram_word!(game.eproj_gfx_idx[v1] = 1024 as u16);
+    set_ram_word!(game.eproj_gfx_idx[v1] = 1024u16);
 }
 pub unsafe fn EprojPreInstr_CrocomireBridgeCrumbling(k: u16, game: &mut Game) {
-    if EprojBlockCollisition_Vertical(k, game) as i32 & 1 as i32 != 0 {
-        set_ram_word!(game.eproj_id[(k as i32 >> 1i32)] = 0 as u16);
+    if EprojBlockCollisition_Vertical(k, game) as i32 & 1i32 != 0 {
+        set_ram_word!(game.eproj_id[(k as i32 >> 1i32)] = 0u16);
     } else {
         set_ram_word!(
             game.eproj_y_vel[(k as i32 >> 1i32)] =
-                (ram_word!(game, eproj_y_vel[(k as i32 >> 1i32)]) as i32 + 24 as i32
-                    & 0x3fff as i32) as u16
+                (ram_word!(game, eproj_y_vel[(k as i32 >> 1i32)]) as i32 + 24i32 & 0x3fffi32)
+                    as u16
         );
     };
 }
 pub unsafe fn MoveEprojWithVelocity(k: u16, game: &mut Game) -> u16 {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     let v2: u16 = ram_word!(game, eproj_x_vel[v1]);
     let carry: i32 = *((&raw mut game.g_ram as *mut u8).offset(0x1a27) as *mut u16 as *mut u8)
         .offset(k as i32 as isize)
         .offset(1) as i32
-        + (v2 as i32 & 0xff as i32);
+        + (v2 as i32 & 0xffi32);
     *((&raw mut game.g_ram as *mut u8).offset(0x1a27) as *mut u16 as *mut u8)
         .offset(k as i32 as isize)
         .offset(1) = carry as u8;
     update_ram_word!(game.eproj_x_pos[v1], |fresh7| (fresh7 as i32
-        + ((v2 as i32 >> 8 as i32) as i8 as i32 + (carry >> 8 as i32)))
+        + ((v2 as i32 >> 8i32) as i8 as i32 + (carry >> 8i32)))
         as u16);
     MoveEprojWithVelocityY(k, game)
 }
@@ -2201,46 +2149,46 @@ pub unsafe fn SetAreaDependentEprojPropertiesEx(k: u16, j: u16, game: &mut Game)
     EprojStateMut(&mut game.g_ram).set_properties(usize::from(j >> 1), v2);
 }
 static kEprojInit_9634_Xvel: [i16; 4] = [
-    -(0x200 as i32) as i16,
-    -(0x1f0 as i32) as i16,
-    -(0x1bc as i32) as i16,
-    -(0x16a as i32) as i16,
+    -(0x200i32) as i16,
+    -(0x1f0i32) as i16,
+    -(0x1bci32) as i16,
+    -(0x16ai32) as i16,
 ];
-static kEprojInit_9634_Yvel: [i16; 4] = [0 as i16, 0x88 as i16, 0xfc as i16, 0x16a as i16];
+static kEprojInit_9634_Yvel: [i16; 4] = [0i16, 0x88i16, 0xfci16, 0x16ai16];
 unsafe fn EprojInit_9634(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_E[v1] = 0 as u16);
-    set_ram_word!(game.eproj_F[v1] = 0 as u16);
+    let v1: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_E[v1] = 0u16);
+    set_ram_word!(game.eproj_F[v1] = 0u16);
     set_ram_word!(
         game.eproj_x_pos[v1] =
             ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).x_pos
                 as i32
-                - 29 as i32) as u16
+                - 29i32) as u16
     );
     set_ram_word!(
         game.eproj_y_pos[v1] =
             ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).y_pos
                 as i32
-                - 35 as i32) as u16
+                - 35i32) as u16
     );
-    set_ram_word!(game.eproj_gfx_idx[v1] = 2560 as u16);
+    set_ram_word!(game.eproj_gfx_idx[v1] = 2560u16);
     let v2: i32 = (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0))
         .parameter_1 as i32;
     set_ram_word!(game.eproj_x_vel[v1] = kEprojInit_9634_Xvel[v2 as usize] as u16);
     set_ram_word!(game.eproj_y_vel[v1] = kEprojInit_9634_Yvel[v2 as usize] as u16);
 }
 pub unsafe fn EprojPreInstr_9634(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     if ram_word!(game, eproj_E[v1]) >= 8u16 {
         MoveEprojWithVelocity(k, game);
-        if EprojBlockCollisition_Vertical(k, game) as i32 & 1 as i32 != 0 {
+        if EprojBlockCollisition_Vertical(k, game) as i32 & 1i32 != 0 {
             set_ram_word!(game.eproj_instr_list_ptr[v1] = addr_off_869574 as u16);
             update_ram_word!(game.eproj_E[v1], wrapping_add(1));
-            set_ram_word!(game.eproj_instr_timers[v1] = 1 as u16);
-            set_ram_word!(game.eproj_x_vel[v1] = 0 as u16);
-            set_ram_word!(game.eproj_y_vel[v1] = 0 as u16);
-            set_ram_word!(game.eproj_gfx_idx[v1] = 2560 as u16);
-            QueueSfx2_Max6(0x2b as u16, game);
+            set_ram_word!(game.eproj_instr_timers[v1] = 1u16);
+            set_ram_word!(game.eproj_x_vel[v1] = 0u16);
+            set_ram_word!(game.eproj_y_vel[v1] = 0u16);
+            set_ram_word!(game.eproj_gfx_idx[v1] = 2560u16);
+            QueueSfx2_Max6(0x2bu16, game);
         }
     } else {
         update_ram_word!(game.eproj_E[v1], wrapping_add(1));
@@ -2251,9 +2199,9 @@ unsafe fn EprojInit_9642_RidleysFireball(j: u16, game: &mut Game) {
     let parameter = EprojState(&game.g_ram).slot_word(0x1995, 0);
     EprojStateMut(&mut game.g_ram).write(0x1b23, slot, parameter);
     let v2: i16 = (if EprojState(&game.g_ram).init_param_1() != 0u16 {
-        25 as i32
+        25i32
     } else {
-        -(25 as i32)
+        -(25i32)
     }) as i16;
     let x = (game.enemy_state(0).x_pos()).wrapping_add((v2) as u16);
     EprojStateMut(&mut game.g_ram).write(0x1a4b, slot, x);
@@ -2278,20 +2226,20 @@ fn SetEprojSpawnPoint(k: u16, game: &mut Game) {
 }
 pub unsafe fn EprojPreInstr_9642_RidleysFireball(k: u16, game: &mut Game) {
     let mut v1: u16 = 0;
-    if EprojBlockCollisition_Horiz(k, game) as i32 & 1 as i32 != 0 {
-        v1 = -(27042 as i32) as u16;
+    if EprojBlockCollisition_Horiz(k, game) as i32 & 1i32 != 0 {
+        v1 = -(27042i32) as u16;
     } else {
-        if EprojBlockCollisition_Vertical(k, game) as i32 & 1 as i32 == 0 {
+        if EprojBlockCollisition_Vertical(k, game) as i32 & 1i32 == 0 {
             return;
         }
-        v1 = -(27056 as i32) as u16;
+        v1 = -(27056i32) as u16;
     }
-    let v2: i32 = k as i32 >> 1 as i32;
+    let v2: i32 = k as i32 >> 1i32;
     EprojStateMut(&mut game.g_ram).set_id(v2 as usize, 0);
     if EprojState(&game.g_ram).slot_word(0x1b23, v2 as usize) == 0 {
         SetEprojSpawnPoint(k, game);
-        SpawnEprojWithRoomGfx(v1, 3 as u16, game);
-        QueueSfx2_Max6(0x2b as u16, game);
+        SpawnEprojWithRoomGfx(v1, 3u16, game);
+        QueueSfx2_Max6(0x2bu16, game);
     }
 }
 pub unsafe fn EprojInstr_DisableCollisionsWithSamus(
@@ -2300,8 +2248,8 @@ pub unsafe fn EprojInstr_DisableCollisionsWithSamus(
     game: &mut Game,
 ) -> *const u8 {
     update_ram_word!(
-        game.eproj_properties[(k as i32 >> 1 as i32)],
-        |fresh32| (fresh32 as i32 | 0x2000 as i32) as u16
+        game.eproj_properties[(k as i32 >> 1i32)],
+        |fresh32| (fresh32 as i32 | 0x2000i32) as u16
     );
     epjp
 }
@@ -2351,7 +2299,7 @@ unsafe fn EprojInit_967A(j: u16, game: &mut Game) {
 }
 pub unsafe fn EprojPreInstr_966C(k: u16, game: &mut Game) {
     MoveEprojWithVelocityX(k, game);
-    if EprojBlockCollisition_Vertical(k, game) as i32 & 1 as i32 != 0 {
+    if EprojBlockCollisition_Vertical(k, game) as i32 & 1i32 != 0 {
         let slot = usize::from(k >> 1);
         EprojStateMut(&mut game.g_ram).set_instruction(slot, addr_off_869574 as u16);
         EprojStateMut(&mut game.g_ram).set_instruction_timer(slot, 1);
@@ -2359,25 +2307,25 @@ pub unsafe fn EprojPreInstr_966C(k: u16, game: &mut Game) {
 }
 pub unsafe fn EprojPreInstr_9688(k: u16, game: &mut Game) {
     MoveEprojWithVelocityY(k, game);
-    if EprojBlockCollisition_Horiz(k, game) as i32 & 1 as i32 != 0 {
+    if EprojBlockCollisition_Horiz(k, game) as i32 & 1i32 != 0 {
         let slot = usize::from(k >> 1);
         EprojStateMut(&mut game.g_ram).set_instruction(slot, addr_off_869574 as u16);
         EprojStateMut(&mut game.g_ram).set_instruction_timer(slot, 1);
     }
 }
 pub unsafe fn EprojPreInstr_96A4(k: u16, game: &mut Game) {
-    if EprojBlockCollisition_Horiz(k, game) as i32 & 1 as i32 != 0 {
-        set_ram_word!(game.eproj_id[(k as i32 >> 1i32)] = 0 as u16);
+    if EprojBlockCollisition_Horiz(k, game) as i32 & 1i32 != 0 {
+        set_ram_word!(game.eproj_id[(k as i32 >> 1i32)] = 0u16);
     }
 }
 pub unsafe fn EprojPreInstr_96C0(k: u16, game: &mut Game) {
-    if EprojBlockCollisition_Vertical(k, game) as i32 & 1 as i32 != 0 {
-        set_ram_word!(game.eproj_id[(k as i32 >> 1i32)] = 0 as u16);
+    if EprojBlockCollisition_Vertical(k, game) as i32 & 1i32 != 0 {
+        set_ram_word!(game.eproj_id[(k as i32 >> 1i32)] = 0u16);
     }
 }
 pub unsafe fn EprojPreInstr_96CE(k: u16, game: &mut Game) {
-    if EprojBlockCollisition_Vertical(k, game) as i32 & 1 as i32 != 0 {
-        set_ram_word!(game.eproj_id[(k as i32 >> 1i32)] = 0 as u16);
+    if EprojBlockCollisition_Vertical(k, game) as i32 & 1i32 != 0 {
+        set_ram_word!(game.eproj_id[(k as i32 >> 1i32)] = 0u16);
     }
 }
 pub unsafe fn EprojInstr_95BA(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
@@ -2416,43 +2364,40 @@ fn EprojInit_9734_CeresFallingDebris(j: u16, game: &mut Game) {
 pub unsafe fn EprojPreInstr_9734_CeresFallingDebris(k: u16, game: &mut Game) {
     let slot = usize::from(k >> 1);
     EprojStateMut(&mut game.g_ram).add_word(0x1adb, slot, 16);
-    if EprojBlockCollisition_Vertical(k, game) as i32 & 1 as i32 != 0 {
+    if EprojBlockCollisition_Vertical(k, game) as i32 & 1i32 != 0 {
         EprojStateMut(&mut game.g_ram).set_id(slot, 0);
         SetEprojSpawnPoint(k, game);
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9 as u16, game);
-        QueueSfx2_Max6(0x6d as u16, game);
+        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9u16, game);
+        QueueSfx2_Max6(0x6du16, game);
     }
 }
 pub unsafe fn EprojInstr_980E(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
-    let v2: i32 = k as i32 >> 1 as i32;
+    let v2: i32 = k as i32 >> 1i32;
     game.eproj_spawn_pt = Point16U {
         x: ram_word!(game, eproj_x_pos[v2]),
         y: ram_word!(game, eproj_y_pos[v2]),
     };
-    SpawnEnemyDrops(addr_kEnemyDef_E4FF as u16, k, 0 as u16, game);
+    SpawnEnemyDrops(addr_kEnemyDef_E4FF as u16, k, 0u16, game);
     epjp
 }
 static byte_8698B4: [u8; 16] = [
-    0x10 as u8, 0x20 as u8, 0x30 as u8, 0x40 as u8, 0x50 as u8, 0x60 as u8, 0x70 as u8, 0x80 as u8,
-    0xf0 as u8, 0xe0 as u8, 0xd0 as u8, 0xc0 as u8, 0xb0 as u8, 0xa0 as u8, 0x90 as u8, 0x80 as u8,
+    0x10u8, 0x20u8, 0x30u8, 0x40u8, 0x50u8, 0x60u8, 0x70u8, 0x80u8, 0xf0u8, 0xe0u8, 0xd0u8, 0xc0u8,
+    0xb0u8, 0xa0u8, 0x90u8, 0x80u8,
 ];
 static byte_8698F7: [u8; 9] = [
-    0x30 as u8, 0x44 as u8, 0x58 as u8, 0x6c as u8, 0x80 as u8, 0x94 as u8, 0xa8 as u8, 0xbc as u8,
-    0xd0 as u8,
+    0x30u8, 0x44u8, 0x58u8, 0x6cu8, 0x80u8, 0x94u8, 0xa8u8, 0xbcu8, 0xd0u8,
 ];
-static byte_869979: [u8; 8] = [
-    0 as u8, 0x20 as u8, 0x40 as u8, 0x60 as u8, 0x80 as u8, 0xa0 as u8, 0xc0 as u8, 0xe0 as u8,
-];
+static byte_869979: [u8; 8] = [0u8, 0x20u8, 0x40u8, 0x60u8, 0x80u8, 0xa0u8, 0xc0u8, 0xe0u8];
 unsafe fn EprojInit_PhantoonDestroyableFireballs(j: u16, game: &mut Game) {
     let mut v1: i8 = 0;
-    v1 = ((ram_word!(game, cinematic_var8) as i32 & 0xff00 as i32) as u16 as i32 >> 8 as i32) as i8;
+    v1 = ((ram_word!(game, cinematic_var8) as i32 & 0xff00i32) as u16 as i32 >> 8i32) as i8;
     match v1 as i32 {
         0 => {
-            let v2: i32 = j as i32 >> 1 as i32;
-            set_ram_word!(game.eproj_x_subpos[v2] = 0 as u16);
-            set_ram_word!(game.eproj_y_subpos[v2] = 0 as u16);
-            set_ram_word!(game.eproj_x_vel[v2] = 0 as u16);
-            set_ram_word!(game.eproj_y_vel[v2] = 0 as u16);
+            let v2: i32 = j as i32 >> 1i32;
+            set_ram_word!(game.eproj_x_subpos[v2] = 0u16);
+            set_ram_word!(game.eproj_y_subpos[v2] = 0u16);
+            set_ram_word!(game.eproj_x_vel[v2] = 0u16);
+            set_ram_word!(game.eproj_y_vel[v2] = 0u16);
             set_ram_word!(
                 game.eproj_x_pos[v2] =
                     (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0))
@@ -2463,25 +2408,24 @@ unsafe fn EprojInit_PhantoonDestroyableFireballs(j: u16, game: &mut Game) {
                     as *mut EnemyData)
                     .offset(0))
                 .y_pos as i32
-                    + 32 as i32) as u16
+                    + 32i32) as u16
             );
             set_ram_word!(game.eproj_instr_list_ptr[v2] = addr_off_8697B4 as u16);
             set_ram_word!(
-                game.eproj_properties[v2] = (ram_word!(game, eproj_properties[v2]) as i32
-                    & 0xfff as i32
-                    | 0x2000 as i32) as u16
+                game.eproj_properties[v2] =
+                    (ram_word!(game, eproj_properties[v2]) as i32 & 0xfffi32 | 0x2000i32) as u16
             );
         }
         2 => {
-            let v3: i32 = j as i32 >> 1 as i32;
-            set_ram_word!(game.eproj_x_subpos[v3] = 0 as u16);
-            set_ram_word!(game.eproj_y_subpos[v3] = 0 as u16);
-            set_ram_word!(game.eproj_y_vel[v3] = 0 as u16);
+            let v3: i32 = j as i32 >> 1i32;
+            set_ram_word!(game.eproj_x_subpos[v3] = 0u16);
+            set_ram_word!(game.eproj_y_subpos[v3] = 0u16);
+            set_ram_word!(game.eproj_y_vel[v3] = 0u16);
             let v4: u16 = ram_word!(game, cinematic_var8) as u8 as u16;
-            if ((ram_word!(game, cinematic_var8) as u8 as i32 - 8 as i32) as i16) >= 0i16 {
-                set_ram_word!(game.eproj_x_vel[v3] = -(2 as i32) as u16);
+            if ((ram_word!(game, cinematic_var8) as u8 as i32 - 8i32) as i16) >= 0i16 {
+                set_ram_word!(game.eproj_x_vel[v3] = -(2i32) as u16);
             } else {
-                set_ram_word!(game.eproj_x_vel[v3] = 2 as u16);
+                set_ram_word!(game.eproj_x_vel[v3] = 2u16);
             }
             set_ram_word!(game.eproj_E[v3] = byte_8698B4[v4 as usize] as u16);
             set_ram_word!(
@@ -2494,33 +2438,32 @@ unsafe fn EprojInit_PhantoonDestroyableFireballs(j: u16, game: &mut Game) {
                     as *mut EnemyData)
                     .offset(0))
                 .y_pos as i32
-                    + 32 as i32) as u16
+                    + 32i32) as u16
             );
-            set_ram_word!(game.eproj_pre_instr[v3] = (0x869a45 as i32 & 0xffff as i32) as u16);
+            set_ram_word!(game.eproj_pre_instr[v3] = (0x869a45i32 & 0xffffi32) as u16);
         }
         4 => {
-            let v5: i32 = j as i32 >> 1 as i32;
-            set_ram_word!(game.eproj_x_subpos[v5] = 0 as u16);
-            set_ram_word!(game.eproj_y_subpos[v5] = 0 as u16);
-            set_ram_word!(game.eproj_y_vel[v5] = 0 as u16);
+            let v5: i32 = j as i32 >> 1i32;
+            set_ram_word!(game.eproj_x_subpos[v5] = 0u16);
+            set_ram_word!(game.eproj_y_subpos[v5] = 0u16);
+            set_ram_word!(game.eproj_y_vel[v5] = 0u16);
             set_ram_word!(
                 game.eproj_x_vel[v5] =
-                    ((ram_word!(game, cinematic_var8) as i32 & 0xf0 as i32) >> 1 as i32) as u16
+                    ((ram_word!(game, cinematic_var8) as i32 & 0xf0i32) >> 1i32) as u16
             );
             set_ram_word!(
-                game.eproj_x_pos[v5] = byte_8698F7
-                    [(ram_word!(game, cinematic_var8) as i32 & 0xf as i32) as usize]
-                    as u16
+                game.eproj_x_pos[v5] =
+                    byte_8698F7[(ram_word!(game, cinematic_var8) as i32 & 0xfi32) as usize] as u16
             );
-            set_ram_word!(game.eproj_y_pos[v5] = 40 as u16);
-            set_ram_word!(game.eproj_pre_instr[v5] = (0x869a94 as i32 & 0xffff as i32) as u16);
+            set_ram_word!(game.eproj_y_pos[v5] = 40u16);
+            set_ram_word!(game.eproj_pre_instr[v5] = (0x869a94i32 & 0xffffi32) as u16);
         }
         6 => {
-            let v7: i32 = j as i32 >> 1 as i32;
-            set_ram_word!(game.eproj_x_subpos[v7] = 0 as u16);
-            set_ram_word!(game.eproj_y_subpos[v7] = 0 as u16);
-            set_ram_word!(game.eproj_y_vel[v7] = 0 as u16);
-            set_ram_word!(game.eproj_x_vel[v7] = 128 as u16);
+            let v7: i32 = j as i32 >> 1i32;
+            set_ram_word!(game.eproj_x_subpos[v7] = 0u16);
+            set_ram_word!(game.eproj_y_subpos[v7] = 0u16);
+            set_ram_word!(game.eproj_y_vel[v7] = 0u16);
+            set_ram_word!(game.eproj_x_vel[v7] = 128u16);
             set_ram_word!(
                 game.eproj_E[v7] =
                     byte_869979[ram_word!(game, cinematic_var8) as u8 as usize] as u16
@@ -2535,9 +2478,9 @@ unsafe fn EprojInit_PhantoonDestroyableFireballs(j: u16, game: &mut Game) {
                     as *mut EnemyData)
                     .offset(0))
                 .y_pos as i32
-                    + 16 as i32) as u16
+                    + 16i32) as u16
             );
-            set_ram_word!(game.eproj_pre_instr[v7] = (0x869ada as i32 & 0xffff as i32) as u16);
+            set_ram_word!(game.eproj_pre_instr[v7] = (0x869adai32 & 0xffffi32) as u16);
         }
         _ => {
             Unreachable(game);
@@ -2545,14 +2488,14 @@ unsafe fn EprojInit_PhantoonDestroyableFireballs(j: u16, game: &mut Game) {
     };
 }
 unsafe fn EprojInit_PhantoonStartingFireballs(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_x_subpos[v1] = 0 as u16);
-    set_ram_word!(game.eproj_y_subpos[v1] = 0 as u16);
-    set_ram_word!(game.eproj_x_vel[v1] = 0 as u16);
-    set_ram_word!(game.eproj_y_vel[v1] = 0 as u16);
+    let v1: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_x_subpos[v1] = 0u16);
+    set_ram_word!(game.eproj_y_subpos[v1] = 0u16);
+    set_ram_word!(game.eproj_x_vel[v1] = 0u16);
+    set_ram_word!(game.eproj_y_vel[v1] = 0u16);
     let v2: u16 = byte_869979[ram_word!(game, cinematic_var8) as usize] as u16;
     set_ram_word!(game.eproj_E[v1] = v2);
-    let pt: Point16U = Eproj_PhantomFireballs_Func1(v2, 0x30 as u16);
+    let pt: Point16U = Eproj_PhantomFireballs_Func1(v2, 0x30u16);
     set_ram_word!(
         game.eproj_x_pos[v1] = (pt.x as i32
             + (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).x_pos
@@ -2562,89 +2505,77 @@ unsafe fn EprojInit_PhantoonStartingFireballs(j: u16, game: &mut Game) {
         game.eproj_y_pos[v1] = (pt.y as i32
             + (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).y_pos
                 as i32
-            + 16 as i32) as u16
+            + 16i32) as u16
     );
 }
 pub unsafe fn EprojPreInstr_PhantoonStartingFireballs(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
-    update_ram_word!(
-        game.eproj_y_vel[v1],
-        |fresh133| (fresh133 as i32 + 16 as i32) as u16
-    );
-    if EprojBlockCollisition_Vertical(k, game) as i32 & 1 as i32 != 0 {
+    let v1: i32 = k as i32 >> 1i32;
+    update_ram_word!(game.eproj_y_vel[v1], |fresh133| (fresh133 as i32 + 16i32)
+        as u16);
+    if EprojBlockCollisition_Vertical(k, game) as i32 & 1i32 != 0 {
         set_ram_word!(
-            game.eproj_properties[v1] = (ram_word!(game, eproj_properties[v1]) as i32
-                & 0xfff as i32
-                | 0x8000 as i32) as u16
+            game.eproj_properties[v1] =
+                (ram_word!(game, eproj_properties[v1]) as i32 & 0xfffi32 | 0x8000i32) as u16
         );
-        set_ram_word!(game.eproj_pre_instr[v1] = (0x8699bf as i32 & 0xffff as i32) as u16);
+        set_ram_word!(game.eproj_pre_instr[v1] = (0x8699bfi32 & 0xffffi32) as u16);
         set_ram_word!(game.eproj_instr_list_ptr[v1] = addr_word_86976C as u16);
-        set_ram_word!(game.eproj_instr_timers[v1] = 1 as u16);
-        set_ram_word!(game.eproj_E[v1] = 8 as u16);
-        update_ram_word!(
-            game.eproj_y_pos[v1],
-            |fresh134| (fresh134 as i32 + 8 as i32) as u16
-        );
+        set_ram_word!(game.eproj_instr_timers[v1] = 1u16);
+        set_ram_word!(game.eproj_E[v1] = 8u16);
+        update_ram_word!(game.eproj_y_pos[v1], |fresh134| (fresh134 as i32 + 8i32)
+            as u16);
     }
 }
 pub unsafe fn EprojPreInstr_PhantoonStartingFireballs2(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     let v2: bool = ram_word!(game, eproj_E[v1]) == 1u16;
-    let v3: bool = (update_ram_word!(game.eproj_E[v1], wrapping_sub(1), reread) as i32
-        & 0x8000 as i32)
-        != 0i32;
+    let v3: bool =
+        (update_ram_word!(game.eproj_E[v1], wrapping_sub(1), reread) as i32 & 0x8000i32) != 0i32;
     if v2 || v3 {
-        set_ram_word!(game.eproj_pre_instr[v1] = (0x869a01 as i32 & 0xffff as i32) as u16);
+        set_ram_word!(game.eproj_pre_instr[v1] = (0x869a01i32 & 0xffffi32) as u16);
         set_ram_word!(game.eproj_instr_list_ptr[v1] = addr_word_869772 as u16);
-        set_ram_word!(game.eproj_instr_timers[v1] = 1 as u16);
-        update_ram_word!(
-            game.eproj_y_pos[v1],
-            |fresh132| (fresh132 as i32 - 8 as i32) as u16
-        );
-        set_ram_word!(game.eproj_y_vel[v1] = -(768 as i32) as u16);
-        set_ram_word!(game.eproj_E[v1] = 0 as u16);
-        if (ram_word!(game, nmi_frame_counter_word) as i32 & 1 as i32) != 0i32 {
-            set_ram_word!(game.eproj_x_vel[v1] = -(128 as i32) as u16);
+        set_ram_word!(game.eproj_instr_timers[v1] = 1u16);
+        update_ram_word!(game.eproj_y_pos[v1], |fresh132| (fresh132 as i32 - 8i32)
+            as u16);
+        set_ram_word!(game.eproj_y_vel[v1] = -(768i32) as u16);
+        set_ram_word!(game.eproj_E[v1] = 0u16);
+        if (ram_word!(game, nmi_frame_counter_word) as i32 & 1i32) != 0i32 {
+            set_ram_word!(game.eproj_x_vel[v1] = -(128i32) as u16);
         } else {
-            set_ram_word!(game.eproj_x_vel[v1] = 128 as u16);
+            set_ram_word!(game.eproj_x_vel[v1] = 128u16);
         }
     }
 }
-static word_869A3E: [u16; 3] = [0xfd00 as u16, 0xfe00 as u16, 0xff00 as u16];
+static word_869A3E: [u16; 3] = [0xfd00u16, 0xfe00u16, 0xff00u16];
 pub unsafe fn EprojPreInstr_PhantoonStartingFireballs3(k: u16, game: &mut Game) {
     let current_block: u64;
-    let v1: i32 = k as i32 >> 1 as i32;
-    update_ram_word!(
-        game.eproj_y_vel[v1],
-        |fresh129| (fresh129 as i32 + 16 as i32) as u16
-    );
-    if EprojBlockCollisition_Vertical(k, game) as i32 & 1 as i32 != 0 {
-        let v2: u16 = (ram_word!(game, eproj_E[v1]) as i32 + 1 as i32) as u16;
+    let v1: i32 = k as i32 >> 1i32;
+    update_ram_word!(game.eproj_y_vel[v1], |fresh129| (fresh129 as i32 + 16i32)
+        as u16);
+    if EprojBlockCollisition_Vertical(k, game) as i32 & 1i32 != 0 {
+        let v2: u16 = (ram_word!(game, eproj_E[v1]) as i32 + 1i32) as u16;
         set_ram_word!(game.eproj_E[v1] = v2);
-        if v2 as i32 - 3 as i32 & 0x8000 as i32 != 0 {
+        if v2 as i32 - 3i32 & 0x8000i32 != 0 {
             set_ram_word!(game.eproj_y_vel[v1] = word_869A3E[v2 as usize]);
             return;
         }
         current_block = 220575731145207134;
-    } else if EprojBlockCollisition_Horiz(k, game) as i32 & 1 as i32 != 0 {
+    } else if EprojBlockCollisition_Horiz(k, game) as i32 & 1i32 != 0 {
         current_block = 220575731145207134;
     } else {
         current_block = 13183875560443969876;
     }
     if current_block == 220575731145207134 {
         set_ram_word!(game.eproj_instr_list_ptr[v1] = addr_word_869782 as u16);
-        set_ram_word!(game.eproj_instr_timers[v1] = 1 as u16);
-        set_ram_word!(game.eproj_pre_instr[v1] = (0x869a44 as i32 & 0xffff as i32) as u16);
+        set_ram_word!(game.eproj_instr_timers[v1] = 1u16);
+        set_ram_word!(game.eproj_pre_instr[v1] = (0x869a44i32 & 0xffffi32) as u16);
     };
 }
 pub unsafe fn EprojPreInstr_PhantoonDestroyableFireballs(k: u16, game: &mut Game) {
     let mut v4: i16 = 0;
     let mut v5: u16 = 0;
-    let v1: i32 = k as i32 >> 1 as i32;
-    update_ram_word!(
-        game.eproj_y_vel[v1],
-        |fresh128| (fresh128 as i32 + 4 as i32) as u16
-    );
+    let v1: i32 = k as i32 >> 1i32;
+    update_ram_word!(game.eproj_y_vel[v1], |fresh128| (fresh128 as i32 + 4i32)
+        as u16);
     let v2: u16 = (*(((&raw mut game.g_ram as *mut u8).offset(0x1ab7) as *mut u16)
         .offset(v1 as isize) as *mut u16 as *mut u8)
         .offset(0) as i32
@@ -2664,73 +2595,66 @@ pub unsafe fn EprojPreInstr_PhantoonDestroyableFireballs(k: u16, game: &mut Game
                 as i32) as u16
     );
     if v3
-        || v4 as i32 - 256 as i32 & 0x8000 as i32 == 0
+        || v4 as i32 - 256i32 & 0x8000i32 == 0
         || {
             v3 = ((pt.y as i32
                 + (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0))
                     .y_pos as i32
-                + 16 as i32) as i16)
+                + 16i32) as i16)
                 < 0i16;
             v5 = (pt.y as i32
                 + (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0))
                     .y_pos as i32
-                + 16 as i32) as u16;
+                + 16i32) as u16;
             set_ram_word!(game.eproj_y_pos[v1] = v5);
             v3 as i32 != 0
         }
-        || v5 as i32 - 256 as i32 & 0x8000 as i32 == 0
+        || v5 as i32 - 256i32 & 0x8000i32 == 0
     {
         set_ram_word!(game.eproj_instr_list_ptr[v1] = addr_off_8697F8 as u16);
-        set_ram_word!(game.eproj_instr_timers[v1] = 1 as u16);
+        set_ram_word!(game.eproj_instr_timers[v1] = 1u16);
     }
 }
 pub unsafe fn EprojPreInstr_PhantoonDestroyableFireballs_2(k: u16, game: &mut Game) {
     let mut v2: bool = false;
     let mut v3: bool = false;
     let current_block: u64;
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     if ram_word!(game, eproj_x_vel[v1]) == 0 {
         current_block = 8066597768905169940;
     } else {
         v2 = false;
         v3 = false;
         v2 = ram_word!(game, eproj_x_vel[v1]) == 1u16;
-        v3 = (update_ram_word!(game.eproj_x_vel[v1], wrapping_sub(1), reread) as i32
-            & 0x8000 as i32)
+        v3 = (update_ram_word!(game.eproj_x_vel[v1], wrapping_sub(1), reread) as i32 & 0x8000i32)
             != 0i32;
         if v2 || v3 {
-            QueueSfx3_Max6(0x1d as u16, game);
+            QueueSfx3_Max6(0x1du16, game);
             current_block = 8066597768905169940;
         } else {
             current_block = 2868539653012386629;
         }
     }
     if current_block == 8066597768905169940 {
-        update_ram_word!(
-            game.eproj_y_vel[v1],
-            |fresh126| (fresh126 as i32 + 16 as i32) as u16
-        );
-        if EprojBlockCollisition_Vertical(k, game) as i32 & 1 as i32 != 0 {
+        update_ram_word!(game.eproj_y_vel[v1], |fresh126| (fresh126 as i32 + 16i32)
+            as u16);
+        if EprojBlockCollisition_Vertical(k, game) as i32 & 1i32 != 0 {
             set_ram_word!(game.eproj_instr_list_ptr[v1] = addr_word_8697AC as u16);
-            set_ram_word!(game.eproj_instr_timers[v1] = 1 as u16);
-            update_ram_word!(
-                game.eproj_y_pos[v1],
-                |fresh127| (fresh127 as i32 + 8 as i32) as u16
-            );
-            set_ram_word!(game.eproj_pre_instr[v1] = (0x869a44 as i32 & 0xffff as i32) as u16);
-            QueueSfx3_Max6(0x1d as u16, game);
+            set_ram_word!(game.eproj_instr_timers[v1] = 1u16);
+            update_ram_word!(game.eproj_y_pos[v1], |fresh127| (fresh127 as i32 + 8i32)
+                as u16);
+            set_ram_word!(game.eproj_pre_instr[v1] = (0x869a44i32 & 0xffffi32) as u16);
+            QueueSfx3_Max6(0x1du16, game);
         }
     };
 }
 pub unsafe fn EprojPreInstr_PhantoonDestroyableFireballs_3(k: u16, game: &mut Game) {
     let mut v4: i16 = 0;
     let mut v5: u16 = 0;
-    let v1: i32 = k as i32 >> 1 as i32;
-    update_ram_word!(
-        game.eproj_y_vel[v1],
-        |fresh123| (fresh123 as i32 + 2 as i32) as u16
-    );
-    let v2: u16 = (ram_word!(game, eproj_E[v1]) as i32 + 2 as i32) as u8 as u16;
+    let v1: i32 = k as i32 >> 1i32;
+    update_ram_word!(game.eproj_y_vel[v1], |fresh123| (fresh123 as i32 + 2i32)
+        as u16);
+    let v2: u16 = (ram_word!(game, eproj_E[v1]) as i32 + 2i32) as u8 as u16;
     set_ram_word!(game.eproj_E[v1] = v2);
     let pt: Point16U = Eproj_PhantomFireballs_Func1(v2, ram_word!(game, eproj_y_vel[v1]));
     let mut v3: bool = ((pt.x as i32
@@ -2746,42 +2670,42 @@ pub unsafe fn EprojPreInstr_PhantoonDestroyableFireballs_3(k: u16, game: &mut Ga
                 as i32) as u16
     );
     if v3
-        || v4 as i32 - 256 as i32 & 0x8000 as i32 == 0
+        || v4 as i32 - 256i32 & 0x8000i32 == 0
         || {
             v3 = ((pt.y as i32
                 + (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0))
                     .y_pos as i32
-                + 16 as i32) as i16)
+                + 16i32) as i16)
                 < 0i16;
             v5 = (pt.y as i32
                 + (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0))
                     .y_pos as i32
-                + 16 as i32) as u16;
+                + 16i32) as u16;
             set_ram_word!(game.eproj_y_pos[v1] = v5);
             v3 as i32 != 0
         }
-        || v5 as i32 - 256 as i32 & 0x8000 as i32 == 0
+        || v5 as i32 - 256i32 & 0x8000i32 == 0
     {
         set_ram_word!(game.eproj_instr_list_ptr[v1] = addr_off_8697F8 as u16);
-        set_ram_word!(game.eproj_instr_timers[v1] = 1 as u16);
+        set_ram_word!(game.eproj_instr_timers[v1] = 1u16);
     }
 }
 pub unsafe fn EprojPreInstr_PhantoonStartingFireballsB(k: u16, game: &mut Game) {
     if (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).ai_var_B != 0
     {
-        let v1: i32 = k as i32 >> 1 as i32;
-        set_ram_word!(game.eproj_pre_instr[v1] = (0x869b41 as i32 & 0xffff as i32) as u16);
-        set_ram_word!(game.eproj_x_vel[v1] = 180 as u16);
-        set_ram_word!(game.eproj_y_vel[v1] = 48 as u16);
+        let v1: i32 = k as i32 >> 1i32;
+        set_ram_word!(game.eproj_pre_instr[v1] = (0x869b41i32 & 0xffffi32) as u16);
+        set_ram_word!(game.eproj_x_vel[v1] = 180u16);
+        set_ram_word!(game.eproj_y_vel[v1] = 48u16);
     }
 }
 pub unsafe fn EprojPreInstr_PhantoonStartingFireballsB_2(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     let v2: u16 = ram_word!(game, eproj_x_vel[v1]);
     if v2 != 0 {
-        set_ram_word!(game.eproj_x_vel[v1] = (v2 as i32 - 1 as i32) as u16);
-    } else if ((ram_word!(game, nmi_frame_counter_word) as i32 & 1 as i32) != 0i32) {
-        let v3: u16 = (ram_word!(game, eproj_y_vel[v1]) as i32 - 1 as i32) as u16;
+        set_ram_word!(game.eproj_x_vel[v1] = (v2 as i32 - 1i32) as u16);
+    } else if ((ram_word!(game, nmi_frame_counter_word) as i32 & 1i32) != 0i32) {
+        let v3: u16 = (ram_word!(game, eproj_y_vel[v1]) as i32 - 1i32) as u16;
         set_ram_word!(game.eproj_y_vel[v1] = v3);
         if (v3 == 0) {
             set_ram_word!(
@@ -2794,14 +2718,14 @@ pub unsafe fn EprojPreInstr_PhantoonStartingFireballsB_2(k: u16, game: &mut Game
                     as *mut EnemyData)
                     .offset(0))
                 .y_pos as i32
-                    + 16 as i32) as u16
+                    + 16i32) as u16
             );
-            set_ram_word!(game.eproj_instr_timers[v1] = 1 as u16);
+            set_ram_word!(game.eproj_instr_timers[v1] = 1u16);
             set_ram_word!(game.eproj_instr_list_ptr[v1] = addr_off_8697F8 as u16);
             return;
         }
     }
-    let v4: u8 = (ram_word!(game, eproj_E[v1]) as i32 + 1 as i32) as u8;
+    let v4: u8 = (ram_word!(game, eproj_E[v1]) as i32 + 1i32) as u8;
     set_ram_word!(game.eproj_E[v1] = v4 as u16);
     let pt: Point16U = Eproj_PhantomFireballs_Func1(v4 as u16, ram_word!(game, eproj_y_vel[v1]));
     set_ram_word!(
@@ -2813,7 +2737,7 @@ pub unsafe fn EprojPreInstr_PhantoonStartingFireballsB_2(k: u16, game: &mut Game
         game.eproj_y_pos[v1] = (pt.y as i32
             + (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).y_pos
                 as i32
-            + 16 as i32) as u16
+            + 16i32) as u16
     );
 }
 pub unsafe fn Eproj_PhantomFireballs_Func1(j: u16, a: u16) -> Point16U {
@@ -2822,23 +2746,19 @@ pub unsafe fn Eproj_PhantomFireballs_Func1(j: u16, a: u16) -> Point16U {
     let mut v4: u16 = 0;
     let r24: u16 = a;
     let r26: u16 = j;
-    if j as i32 - 128 as i32 & 0x8000 as i32 != 0 {
-        v2 = Eproj_PhantomFireballs_Func2((2 as i32 * j as i32) as u16, r24);
+    if j as i32 - 128i32 & 0x8000i32 != 0 {
+        v2 = Eproj_PhantomFireballs_Func2((2i32 * j as i32) as u16, r24);
     } else {
-        v2 = -(Eproj_PhantomFireballs_Func2(
-            (2 as i32 * (j as i32 + 0x80 as i32) as u8 as i32) as u16,
-            r24,
-        ) as i32) as u16;
+        v2 = -(Eproj_PhantomFireballs_Func2((2i32 * (j as i32 + 0x80i32) as u8 as i32) as u16, r24)
+            as i32) as u16;
     }
     let r20: u16 = v2;
-    v3 = (r26 as i32 - 64 as i32) as u8 as i16;
-    if v3 as i32 - 128 as i32 & 0x8000 as i32 != 0 {
-        v4 = Eproj_PhantomFireballs_Func2((2 as i32 * v3 as i32) as u16, r24);
+    v3 = (r26 as i32 - 64i32) as u8 as i16;
+    if v3 as i32 - 128i32 & 0x8000i32 != 0 {
+        v4 = Eproj_PhantomFireballs_Func2((2i32 * v3 as i32) as u16, r24);
     } else {
-        v4 = -(Eproj_PhantomFireballs_Func2(
-            (2 as i32 * (v3 as i32 + 0x80 as i32) as u8 as i32) as u16,
-            r24,
-        ) as i32) as u16;
+        v4 = -(Eproj_PhantomFireballs_Func2((2i32 * (v3 as i32 + 0x80i32) as u8 as i32) as u16, r24)
+            as i32) as u16;
     }
     let r22: u16 = v4;
     Point16U { x: r20, y: r22 }
@@ -2849,7 +2769,7 @@ pub unsafe fn Eproj_PhantomFireballs_Func2(k: u16, r24: u16) -> u16 {
             .offset(k as i32 as isize),
         r24 as u8,
     ) as i32
-        >> 8 as i32) as u16;
+        >> 8i32) as u16;
     (r18 as i32
         + Mult8x8(
             *((&raw const kSinCosTable8bit_Sext as *const i16).offset(64) as *const i16 as *mut u8)
@@ -2860,39 +2780,39 @@ pub unsafe fn Eproj_PhantomFireballs_Func2(k: u16, r24: u16) -> u16 {
 }
 unsafe fn EprojInit_RocksKraidSpits(j: u16, game: &mut Game) {
     let enemy_index = ram_word!(game, cur_enemy_index);
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(
         game.eproj_x_pos[v2] = (game.enemy_state(enemy_index).x_pos()).wrapping_add(16u16)
     );
     set_ram_word!(
         game.eproj_y_pos[v2] = (game.enemy_state(enemy_index).y_pos()).wrapping_sub(96u16)
     );
-    set_ram_word!(game.eproj_y_subpos[v2] = 0 as u16);
-    set_ram_word!(game.eproj_x_subpos[v2] = 0 as u16);
+    set_ram_word!(game.eproj_y_subpos[v2] = 0u16);
+    set_ram_word!(game.eproj_x_subpos[v2] = 0u16);
     set_ram_word!(game.eproj_x_vel[v2] = ram_word!(game, cinematic_var8));
-    set_ram_word!(game.eproj_y_vel[v2] = -(1024 as i32) as u16);
-    set_ram_word!(game.eproj_gfx_idx[v2] = 1536 as u16);
+    set_ram_word!(game.eproj_y_vel[v2] = -(1024i32) as u16);
+    set_ram_word!(game.eproj_gfx_idx[v2] = 1536u16);
 }
 unsafe fn EprojInit_RocksFallingKraidCeiling(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
+    let v1: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_x_pos[v1] = ram_word!(game, cinematic_var8));
-    set_ram_word!(game.eproj_y_pos[v1] = 312 as u16);
-    set_ram_word!(game.eproj_y_subpos[v1] = 0 as u16);
-    set_ram_word!(game.eproj_x_subpos[v1] = 0 as u16);
-    set_ram_word!(game.eproj_x_vel[v1] = 0 as u16);
+    set_ram_word!(game.eproj_y_pos[v1] = 312u16);
+    set_ram_word!(game.eproj_y_subpos[v1] = 0u16);
+    set_ram_word!(game.eproj_x_subpos[v1] = 0u16);
+    set_ram_word!(game.eproj_x_vel[v1] = 0u16);
     set_ram_word!(
         game.eproj_y_vel[v1] =
-            ((ram_word!(game, random_number) as i32 & 0x3f as i32) as u16).wrapping_add(64u16)
+            ((ram_word!(game, random_number) as i32 & 0x3fi32) as u16).wrapping_add(64u16)
     );
-    set_ram_word!(game.eproj_gfx_idx[v1] = 1536 as u16);
+    set_ram_word!(game.eproj_gfx_idx[v1] = 1536u16);
 }
 unsafe fn EprojInit_RocksWhenKraidRises(j: u16, game: &mut Game) {
     let mut v1: i16 = 0;
     v1 = ((ram_word!(game, random_number)) as i16) & (0x3fi16);
-    if (ram_word!(game, random_number) as i32 & 1 as i32) == 0i32 {
+    if (ram_word!(game, random_number) as i32 & 1i32) == 0i32 {
         v1 = !(v1 as i32) as i16;
     }
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(
         game.eproj_x_pos[v2] = ({
             let enemy_index = ram_word!(game, cur_enemy_index);
@@ -2900,145 +2820,145 @@ unsafe fn EprojInit_RocksWhenKraidRises(j: u16, game: &mut Game) {
         })
         .wrapping_add((v1) as u16)
     );
-    set_ram_word!(game.eproj_y_pos[v2] = 432 as u16);
-    set_ram_word!(game.eproj_y_subpos[v2] = 0 as u16);
-    set_ram_word!(game.eproj_x_subpos[v2] = 0 as u16);
+    set_ram_word!(game.eproj_y_pos[v2] = 432u16);
+    set_ram_word!(game.eproj_y_subpos[v2] = 0u16);
+    set_ram_word!(game.eproj_x_subpos[v2] = 0u16);
     set_ram_word!(game.eproj_x_vel[v2] = ram_word!(game, cinematic_var8));
-    set_ram_word!(game.eproj_y_vel[v2] = -(1280 as i32) as u16);
-    set_ram_word!(game.eproj_gfx_idx[v2] = 1536 as u16);
-    QueueSfx3_Max6(0x1e as u16, game);
+    set_ram_word!(game.eproj_y_vel[v2] = -(1280i32) as u16);
+    set_ram_word!(game.eproj_gfx_idx[v2] = 1536u16);
+    QueueSfx3_Max6(0x1eu16, game);
 }
 pub unsafe fn EprojPreInstr_KraidRocks(k: u16, game: &mut Game) {
-    if EprojBlockCollisition_Horiz(k, game) as i32 & 1 as i32 != 0
-        || EprojBlockCollisition_Vertical(k, game) as i32 & 1 as i32 != 0
+    if EprojBlockCollisition_Horiz(k, game) as i32 & 1i32 != 0
+        || EprojBlockCollisition_Vertical(k, game) as i32 & 1i32 != 0
     {
         EprojStateMut(&mut game.g_ram).set_id(usize::from(k >> 1), 0);
     } else {
-        let v1: i32 = k as i32 >> 1 as i32;
+        let v1: i32 = k as i32 >> 1i32;
         let mut v2: u16 = EprojStateMut(&mut game.g_ram).add_word(0x1ab7, v1 as usize, 8);
-        if v2 as i32 - 256 as i32 & 0x8000 as i32 == 0 {
-            v2 = -(256 as i32) as u16;
+        if v2 as i32 - 256i32 & 0x8000i32 == 0 {
+            v2 = -(256i32) as u16;
         }
         set_ram_word!(game.eproj_x_vel[v1] = v2);
         EprojStateMut(&mut game.g_ram).add_word(0x1adb, v1 as usize, 64);
     };
 }
 pub unsafe fn EprojPreInstr_RocksFallingKraidCeiling(k: u16, game: &mut Game) {
-    if EprojBlockCollisition_Vertical(k, game) as i32 & 1 as i32 != 0 {
+    if EprojBlockCollisition_Vertical(k, game) as i32 & 1i32 != 0 {
         EprojStateMut(&mut game.g_ram).set_id(usize::from(k >> 1), 0);
     } else {
         set_ram_word!(
             game.eproj_y_vel[(k as i32 >> 1i32)] =
-                ((ram_word!(game, eproj_y_vel[(k as i32 >> 1i32)]) as i32 + 24 as i32) as u16)
+                ((ram_word!(game, eproj_y_vel[(k as i32 >> 1i32)]) as i32 + 24i32) as u16)
                     & (0x3fffu16)
         );
     };
 }
 pub unsafe fn sub_869DA5(k: u16, game: &mut Game) {
-    set_ram_word!(game.eproj_gfx_idx[(k as i32 >> 1i32)] = 0 as u16);
+    set_ram_word!(game.eproj_gfx_idx[(k as i32 >> 1i32)] = 0u16);
 }
 unsafe fn EprojInit_MiniKraidSpit(j: u16, game: &mut Game) {
     let enemy_index = game.cur_enemy_index();
     let extra_index = ram_word!(game, cur_enemy_index);
-    let v3: i32 = j as i32 >> 1 as i32;
+    let v3: i32 = j as i32 >> 1i32;
     set_ram_word!(
         game.eproj_x_pos[v3] = (game.mini_kraid_spit_state(extra_index).x_offset() as i32
             + game.enemy_state(enemy_index).x_pos() as i32) as u16
     );
     set_ram_word!(
-        game.eproj_y_pos[v3] = (game.enemy_state(enemy_index).y_pos() as i32 - 16 as i32) as u16
+        game.eproj_y_pos[v3] = (game.enemy_state(enemy_index).y_pos() as i32 - 16i32) as u16
     );
-    set_ram_word!(game.eproj_y_subpos[v3] = 0 as u16);
-    set_ram_word!(game.eproj_x_subpos[v3] = 0 as u16);
+    set_ram_word!(game.eproj_y_subpos[v3] = 0u16);
+    set_ram_word!(game.eproj_x_subpos[v3] = 0u16);
     set_ram_word!(game.eproj_x_vel[v3] = game.mini_kraid_spit_state(extra_index).x_velocity());
     set_ram_word!(game.eproj_y_vel[v3] = game.mini_kraid_spit_state(extra_index).y_velocity());
 }
 pub unsafe fn EprojPreInit_MiniKraidSpit(k: u16, game: &mut Game) {
     let mut v2: i16 = 0;
-    if EprojBlockCollisition_Horiz(k, game) as i32 & 1 as i32 != 0
-        || EprojBlockCollisition_Vertical(k, game) as i32 & 1 as i32 != 0
+    if EprojBlockCollisition_Horiz(k, game) as i32 & 1i32 != 0
+        || EprojBlockCollisition_Vertical(k, game) as i32 & 1i32 != 0
     {
         EprojStateMut(&mut game.g_ram).set_id(usize::from(k >> 1), 0);
     } else {
-        let v1: i32 = k as i32 >> 1 as i32;
+        let v1: i32 = k as i32 >> 1i32;
         v2 = ((ram_word!(game, eproj_y_vel[v1])) as i16).wrapping_add(64i16);
-        if v2 >= 0 && ram_word!(game, eproj_y_vel[v1]) as i32 - 960 as i32 & 0x8000 as i32 == 0 {
-            v2 = 1024 as i16;
+        if v2 >= 0 && ram_word!(game, eproj_y_vel[v1]) as i32 - 960i32 & 0x8000i32 == 0 {
+            v2 = 1024i16;
         }
         set_ram_word!(game.eproj_y_vel[v1] = v2 as u16);
     };
 }
-static kEprojInit_MiniKraidSpikes_Tab0: [i16; 3] = [-(2 as i32) as i16, 12 as i16, 24 as i16];
+static kEprojInit_MiniKraidSpikes_Tab0: [i16; 3] = [-(2i32) as i16, 12i16, 24i16];
 unsafe fn EprojInit_MiniKraidSpikes(j: u16, a: u16, game: &mut Game) {
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_x_vel[v2] = a);
     let r18: u16 =
         kEprojInit_MiniKraidSpikes_Tab0[((*gExtraEnemyRam7800(game.cur_enemy_index() as i32, game))
             .kraid
-            .kraid_healths_8ths[0 as i32 as usize] as i32
-            >> 1 as i32) as usize] as u16;
+            .kraid_healths_8ths[0i32 as usize] as i32
+            >> 1i32) as usize] as u16;
     let enemy_index = game.cur_enemy_index();
     set_ram_word!(game.eproj_x_pos[v2] = game.enemy_state(enemy_index).x_pos());
     set_ram_word!(game.eproj_y_pos[v2] = (r18).wrapping_add(game.enemy_state(enemy_index).y_pos()));
-    set_ram_word!(game.eproj_y_subpos[v2] = 0 as u16);
-    set_ram_word!(game.eproj_x_subpos[v2] = 0 as u16);
-    set_ram_word!(game.eproj_y_vel[v2] = 0 as u16);
+    set_ram_word!(game.eproj_y_subpos[v2] = 0u16);
+    set_ram_word!(game.eproj_x_subpos[v2] = 0u16);
+    set_ram_word!(game.eproj_y_vel[v2] = 0u16);
 }
 unsafe fn EprojInit_MiniKraidSpikesLeft(j: u16, game: &mut Game) {
-    EprojInit_MiniKraidSpikes(j, -(0x200 as i32) as u16, game);
+    EprojInit_MiniKraidSpikes(j, -(0x200i32) as u16, game);
 }
 unsafe fn EprojInit_MiniKraidSpikesRight(j: u16, game: &mut Game) {
-    EprojInit_MiniKraidSpikes(j, 0x200 as u16, game);
+    EprojInit_MiniKraidSpikes(j, 0x200u16, game);
 }
 pub unsafe fn EprojPreInstr_MiniKraidSpikes(k: u16, game: &mut Game) {
-    if EprojBlockCollisition_Horiz(k, game) as i32 & 1 as i32 != 0 {
+    if EprojBlockCollisition_Horiz(k, game) as i32 & 1i32 != 0 {
         EprojStateMut(&mut game.g_ram).set_id(usize::from(k >> 1), 0);
     }
 }
 unsafe fn EprojInit_WalkingLavaSeahorseFireball(j: u16, game: &mut Game) {
-    static word_869EF9: [i16; 3] = [-(0x100 as i32) as i16, 0 as i16, 0x100 as i16];
+    static word_869EF9: [i16; 3] = [-(0x100i32) as i16, 0i16, 0x100i16];
     let v1: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    let v2: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_y_pos[v2] = ((*v1).y_pos as i32 - 12 as i32) as u16);
-    set_ram_word!(game.eproj_x_vel[v2] = -(1024 as i32) as u16);
-    set_ram_word!(game.eproj_x_pos[v2] = ((*v1).x_pos as i32 - 16 as i32) as u16);
-    if ((*v1).ai_var_D as i32 & 0x8000 as i32) == 0i32 {
-        set_ram_word!(game.eproj_x_vel[v2] = 1024 as u16);
-        set_ram_word!(game.eproj_x_pos[v2] = ((*v1).x_pos as i32 + 16 as i32) as u16);
+    let v2: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_y_pos[v2] = ((*v1).y_pos as i32 - 12i32) as u16);
+    set_ram_word!(game.eproj_x_vel[v2] = -(1024i32) as u16);
+    set_ram_word!(game.eproj_x_pos[v2] = ((*v1).x_pos as i32 - 16i32) as u16);
+    if ((*v1).ai_var_D as i32 & 0x8000i32) == 0i32 {
+        set_ram_word!(game.eproj_x_vel[v2] = 1024u16);
+        set_ram_word!(game.eproj_x_pos[v2] = ((*v1).x_pos as i32 + 16i32) as u16);
     }
     set_ram_word!(
         game.eproj_y_vel[v2] =
-            word_869EF9[(ram_word!(game, cinematic_var8) as i32 >> 1 as i32) as usize] as u16
+            word_869EF9[(ram_word!(game, cinematic_var8) as i32 >> 1i32) as usize] as u16
     );
-    set_ram_word!(game.eproj_y_subpos[v2] = 0 as u16);
-    set_ram_word!(game.eproj_x_subpos[v2] = 0 as u16);
+    set_ram_word!(game.eproj_y_subpos[v2] = 0u16);
+    set_ram_word!(game.eproj_x_subpos[v2] = 0u16);
 }
 pub unsafe fn EprojPreInstr_WalkingLavaSeahorseFireball(k: u16, game: &mut Game) {
     let mut v2: u16 = 0;
-    if EprojBlockCollisition_Vertical(k, game) as i32 & 1 as i32 != 0
-        || EprojBlockCollisition_Horiz(k, game) as i32 & 1 as i32 != 0
+    if EprojBlockCollisition_Vertical(k, game) as i32 & 1i32 != 0
+        || EprojBlockCollisition_Horiz(k, game) as i32 & 1i32 != 0
     {
-        set_ram_word!(game.eproj_id[(k as i32 >> 1i32)] = 0 as u16);
+        set_ram_word!(game.eproj_id[(k as i32 >> 1i32)] = 0u16);
     } else {
-        let v1: i32 = k as i32 >> 1 as i32;
-        if (ram_word!(game, eproj_x_vel[v1]) as i32 & 0x8000 as i32) == 0i32 {
-            v2 = (ram_word!(game, eproj_x_vel[v1]) as i32 - 64 as i32) as u16;
+        let v1: i32 = k as i32 >> 1i32;
+        if (ram_word!(game, eproj_x_vel[v1]) as i32 & 0x8000i32) == 0i32 {
+            v2 = (ram_word!(game, eproj_x_vel[v1]) as i32 - 64i32) as u16;
             set_ram_word!(game.eproj_x_vel[v1] = v2);
-            if v2 as i32 - 512 as i32 & 0x8000 as i32 != 0 {
-                v2 = 512 as u16;
+            if v2 as i32 - 512i32 & 0x8000i32 != 0 {
+                v2 = 512u16;
             }
         } else {
-            v2 = (ram_word!(game, eproj_x_vel[v1]) as i32 + 64 as i32) as u16;
+            v2 = (ram_word!(game, eproj_x_vel[v1]) as i32 + 64i32) as u16;
             set_ram_word!(game.eproj_x_vel[v1] = v2);
-            if v2 as i32 + 512 as i32 & 0x8000 as i32 == 0 {
-                v2 = -(512 as i32) as u16;
+            if v2 as i32 + 512i32 & 0x8000i32 == 0 {
+                v2 = -(512i32) as u16;
             }
         }
         set_ram_word!(game.eproj_x_vel[v1] = v2);
     };
 }
 unsafe fn EprojInit_PirateMotherBrainLaser(j: u16, game: &mut Game) {
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(
         game.eproj_instr_list_ptr[v2] = (if game.eproj_spawn_r22 != 0u16 {
             addr_word_869F7D as i32
@@ -3046,7 +2966,7 @@ unsafe fn EprojInit_PirateMotherBrainLaser(j: u16, game: &mut Game) {
             addr_word_869F41 as i32
         }) as u16
     );
-    set_ram_word!(game.eproj_pre_instr[v2] = (0x86a05b as i32 & 0xffff as i32) as u16);
+    set_ram_word!(game.eproj_pre_instr[v2] = (0x86a05bi32 & 0xffffi32) as u16);
     set_ram_word!(game.eproj_x_pos[v2] = game.eproj_spawn_pt.x);
     set_ram_word!(game.eproj_y_pos[v2] = game.eproj_spawn_pt.y);
     let enemy_index = game.cur_enemy_index();
@@ -3054,20 +2974,20 @@ unsafe fn EprojInit_PirateMotherBrainLaser(j: u16, game: &mut Game) {
         game.eproj_properties[v2] =
             (*(RomPtr_A0(game.enemy_state(enemy_index).enemy_ptr() as u16, game) as *mut u16)
                 .offset(3) as i32
-                | 0x1000 as i32) as u16
+                | 0x1000i32) as u16
     );
     set_ram_word!(game.eproj_E[v2] = game.enemy_state(enemy_index).parameter_1());
-    QueueSfx2_Max6(0x67 as u16, game);
+    QueueSfx2_Max6(0x67u16, game);
 }
 pub unsafe fn EprojInstr_SetPreInstrAndRun(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
     set_ram_word!(game.eproj_pre_instr[(k as i32 >> 1i32)] = *(epjp as *mut u16));
     epjp
 }
 pub unsafe fn EprojPreInstr_PirateMotherBrainLaser_MoveLeft(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     EprojStateMut(&mut game.g_ram).add_word(0x1a4b, v1 as usize, (-2i16) as u16);
-    if (ram_word!(game, eproj_E[v1]) as i32 & 0x8000 as i32) == 0i32 {
-        update_ram_word!(game.eproj_x_pos[v1], |fresh22| (fresh22 as i32 - 2 as i32)
+    if (ram_word!(game, eproj_E[v1]) as i32 & 0x8000i32) == 0i32 {
+        update_ram_word!(game.eproj_x_pos[v1], |fresh22| (fresh22 as i32 - 2i32)
             as u16);
     }
     if CheckIfEprojIsOffScreen(k, game) != 0 {
@@ -3075,10 +2995,10 @@ pub unsafe fn EprojPreInstr_PirateMotherBrainLaser_MoveLeft(k: u16, game: &mut G
     }
 }
 pub unsafe fn EprojPreInstr_PirateMotherBrainLaser_MoveRight(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     EprojStateMut(&mut game.g_ram).add_word(0x1a4b, v1 as usize, 2);
-    if (ram_word!(game, eproj_E[v1]) as i32 & 0x8000 as i32) == 0i32 {
-        update_ram_word!(game.eproj_x_pos[v1], |fresh24| (fresh24 as i32 + 2 as i32)
+    if (ram_word!(game, eproj_E[v1]) as i32 & 0x8000i32) == 0i32 {
+        update_ram_word!(game.eproj_x_pos[v1], |fresh24| (fresh24 as i32 + 2i32)
             as u16);
     }
     if CheckIfEprojIsOffScreen(k, game) != 0 {
@@ -3087,7 +3007,7 @@ pub unsafe fn EprojPreInstr_PirateMotherBrainLaser_MoveRight(k: u16, game: &mut 
 }
 unsafe fn EprojInit_PirateClaw(j: u16, game: &mut Game) {
     let r: Rect16U = game.eproj_spawn_rect;
-    let v1: i32 = j as i32 >> 1 as i32;
+    let v1: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_y_pos[v1] = (r.y as i32 + r.h as i32) as u16);
     set_ram_word!(game.eproj_x_pos[v1] = (r.x as i32 + r.w as i32) as u16);
     set_ram_word!(
@@ -3097,22 +3017,22 @@ unsafe fn EprojInit_PirateClaw(j: u16, game: &mut Game) {
             addr_off_869FB9 as i32
         }) as u16
     );
-    set_ram_word!(game.eproj_pre_instr[v1] = (0x86a05b as i32 & 0xffff as i32) as u16);
-    set_ram_word!(game.eproj_E[v1] = 2048 as u16);
-    set_ram_word!(game.eproj_F[v1] = 1 as u16);
+    set_ram_word!(game.eproj_pre_instr[v1] = (0x86a05bi32 & 0xffffi32) as u16);
+    set_ram_word!(game.eproj_E[v1] = 2048u16);
+    set_ram_word!(game.eproj_F[v1] = 1u16);
 }
 pub unsafe fn EprojPreInstr_PirateClawThrownLeft(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     if ram_word!(game, eproj_F[v1]) != 0 {
         update_ram_word!(game.eproj_x_pos[v1], |fresh118| (fresh118 as i32
             - *(((&raw mut game.g_ram as *mut u8).offset(0x1aff) as *mut u16).offset(v1 as isize)
                 as *mut u16 as *mut u8)
                 .offset(1isize,) as i32)
             as u16);
-        let v2: u16 = (ram_word!(game, eproj_E[v1]) as i32 - 32 as i32) as u16;
+        let v2: u16 = (ram_word!(game, eproj_E[v1]) as i32 - 32i32) as u16;
         set_ram_word!(game.eproj_E[v1] = v2);
         if v2 == 0 {
-            set_ram_word!(game.eproj_F[v1] = 0 as u16);
+            set_ram_word!(game.eproj_F[v1] = 0u16);
         }
     } else {
         update_ram_word!(game.eproj_x_pos[v1], |fresh119| (fresh119 as i32
@@ -3120,26 +3040,26 @@ pub unsafe fn EprojPreInstr_PirateClawThrownLeft(k: u16, game: &mut Game) {
                 as *mut u16 as *mut u8)
                 .offset(1isize,) as i32)
             as u16);
-        update_ram_word!(game.eproj_E[v1], |fresh120| (fresh120 as i32 + 32 as i32)
+        update_ram_word!(game.eproj_E[v1], |fresh120| (fresh120 as i32 + 32i32)
             as u16);
     }
     update_ram_word!(game.eproj_y_pos[v1], wrapping_add(1));
     if CheckIfEprojIsOffScreen(k, game) != 0 {
-        set_ram_word!(game.eproj_id[v1] = 0 as u16);
+        set_ram_word!(game.eproj_id[v1] = 0u16);
     }
 }
 pub unsafe fn EprojPreInstr_PirateClawThrownRight(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     if ram_word!(game, eproj_F[v1]) != 0 {
         update_ram_word!(game.eproj_x_pos[v1], |fresh114| (fresh114 as i32
             + *(((&raw mut game.g_ram as *mut u8).offset(0x1aff) as *mut u16).offset(v1 as isize)
                 as *mut u16 as *mut u8)
                 .offset(1isize,) as i32)
             as u16);
-        let v2: u16 = (ram_word!(game, eproj_E[v1]) as i32 - 32 as i32) as u16;
+        let v2: u16 = (ram_word!(game, eproj_E[v1]) as i32 - 32i32) as u16;
         set_ram_word!(game.eproj_E[v1] = v2);
         if v2 == 0 {
-            set_ram_word!(game.eproj_F[v1] = 0 as u16);
+            set_ram_word!(game.eproj_F[v1] = 0u16);
         }
     } else {
         update_ram_word!(game.eproj_x_pos[v1], |fresh115| (fresh115 as i32
@@ -3147,35 +3067,35 @@ pub unsafe fn EprojPreInstr_PirateClawThrownRight(k: u16, game: &mut Game) {
                 as *mut u16 as *mut u8)
                 .offset(1isize,) as i32)
             as u16);
-        update_ram_word!(game.eproj_E[v1], |fresh116| (fresh116 as i32 + 32 as i32)
+        update_ram_word!(game.eproj_E[v1], |fresh116| (fresh116 as i32 + 32i32)
             as u16);
     }
     update_ram_word!(game.eproj_y_pos[v1], wrapping_add(1));
     if CheckIfEprojIsOffScreen(k, game) != 0 {
-        set_ram_word!(game.eproj_id[v1] = 0 as u16);
+        set_ram_word!(game.eproj_id[v1] = 0u16);
     }
 }
 static word_86A2D6: [i16; 6] = [
-    64 as i16,
-    72 as i16,
-    80 as i16,
-    -(64 as i32) as i16,
-    -(72 as i32) as i16,
-    -(80 as i32) as i16,
+    64i16,
+    72i16,
+    80i16,
+    -(64i32) as i16,
+    -(72i32) as i16,
+    -(80i32) as i16,
 ];
 unsafe fn EprojInit_A379(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_x_subpos[v1] = 0 as u16);
-    set_ram_word!(game.eproj_y_subpos[v1] = 0 as u16);
-    set_ram_word!(game.eproj_x_vel[v1] = 0 as u16);
-    set_ram_word!(game.eproj_y_vel[v1] = 0 as u16);
+    let v1: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_x_subpos[v1] = 0u16);
+    set_ram_word!(game.eproj_y_subpos[v1] = 0u16);
+    set_ram_word!(game.eproj_x_vel[v1] = 0u16);
+    set_ram_word!(game.eproj_y_vel[v1] = 0u16);
     let v2: u16 = ram_word!(game, cinematic_var8);
-    let v3: i32 = ram_word!(game, cinematic_var8) as i32 >> 1 as i32;
+    let v3: i32 = ram_word!(game, cinematic_var8) as i32 >> 1i32;
     set_ram_word!(
         game.eproj_x_pos[v1] =
             (word_86A2D6[v3 as usize] as i32 + ram_word!(game, samus_x_pos) as i32) as u16
     );
-    set_ram_word!(game.eproj_y_pos[v1] = (ram_word!(game, samus_y_pos) as i32 + 80 as i32) as u16);
+    set_ram_word!(game.eproj_y_pos[v1] = (ram_word!(game, samus_y_pos) as i32 + 80i32) as u16);
     set_ram_word!(
         game.eproj_instr_list_ptr[v1] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x86a2e2))
             as *const u8 as *mut u16)
@@ -3184,31 +3104,31 @@ unsafe fn EprojInit_A379(j: u16, game: &mut Game) {
     set_ram_word!(game.eproj_E[v1] = v2);
 }
 fn EprojInit_CeresElevatorPad(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
+    let v1: i32 = j as i32 >> 1i32;
     let eproj_y_pos: u16 = game.samus_y_pos().wrapping_add(28);
     EprojStateMut(&mut game.g_ram).write(0x1a93, v1 as usize, eproj_y_pos);
-    EprojStateMut(&mut game.g_ram).write(0x1aff, v1 as usize, 60 as u16);
+    EprojStateMut(&mut game.g_ram).write(0x1aff, v1 as usize, 60u16);
     sub_86A301(j, game);
 }
 pub fn sub_86A301(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
-    EprojStateMut(&mut game.g_ram).write(0x1a27, v1 as usize, 0 as u16);
-    EprojStateMut(&mut game.g_ram).write(0x1a6f, v1 as usize, 0 as u16);
-    EprojStateMut(&mut game.g_ram).write(0x1ab7, v1 as usize, 0 as u16);
-    EprojStateMut(&mut game.g_ram).write(0x1adb, v1 as usize, 0 as u16);
-    EprojStateMut(&mut game.g_ram).write(0x19bb, v1 as usize, 0 as u16);
+    let v1: i32 = j as i32 >> 1i32;
+    EprojStateMut(&mut game.g_ram).write(0x1a27, v1 as usize, 0u16);
+    EprojStateMut(&mut game.g_ram).write(0x1a6f, v1 as usize, 0u16);
+    EprojStateMut(&mut game.g_ram).write(0x1ab7, v1 as usize, 0u16);
+    EprojStateMut(&mut game.g_ram).write(0x1adb, v1 as usize, 0u16);
+    EprojStateMut(&mut game.g_ram).write(0x19bb, v1 as usize, 0u16);
     let eproj_x_pos: u16 = game.samus_x_pos();
     EprojStateMut(&mut game.g_ram).write(0x1a4b, v1 as usize, eproj_x_pos);
 }
 fn EprojInit_CeresElevatorPlatform(j: u16, game: &mut Game) {
-    let eproj_word_index = (j as i32 >> 1 as i32) as usize;
-    EprojStateMut(&mut game.g_ram).write(0x1a93, eproj_word_index, 97 as u16);
+    let eproj_word_index = (j as i32 >> 1i32) as usize;
+    EprojStateMut(&mut game.g_ram).write(0x1a93, eproj_word_index, 97u16);
     sub_86A301(j, game);
 }
 pub unsafe fn EprojPreInstr_CeresElevatorPad(k: u16, game: &mut Game) {
     let mut v2: bool = false;
     let mut v3: bool = false;
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     if ram_word!(game, eproj_E[v1]) == 0
         || {
             v2 = ram_word!(game, eproj_E[v1]) == 1u16;
@@ -3220,26 +3140,26 @@ pub unsafe fn EprojPreInstr_CeresElevatorPad(k: u16, game: &mut Game) {
     {
         set_ram_word!(game.eproj_y_pos[v1] = game.samus_y_pos().wrapping_add(28));
         let fresh113 = EprojStateMut(&mut game.g_ram).add_word(0xafa, 0, 1);
-        if fresh113 as i32 - 73 as i32 & 0x8000 as i32 == 0 {
-            set_ram_word!(game.samus_y_pos = 72 as u16);
-            set_ram_word!(game.eproj_instr_timers[v1] = 1 as u16);
+        if fresh113 as i32 - 73i32 & 0x8000i32 == 0 {
+            set_ram_word!(game.samus_y_pos = 72u16);
+            set_ram_word!(game.eproj_instr_timers[v1] = 1u16);
             set_ram_word!(game.eproj_instr_list_ptr[v1] = addr_off_86A28B as u16);
-            CallSomeSamusCode(0xe as u16, game);
+            CallSomeSamusCode(0xeu16, game);
         }
     }
 }
 pub unsafe fn EprojPreInstr_CeresElevatorPlatform(k: u16, game: &mut Game) {
     if game.samus_y_pos() == 72 {
-        let v1: i32 = k as i32 >> 1 as i32;
-        set_ram_word!(game.eproj_instr_timers[v1] = 1 as u16);
+        let v1: i32 = k as i32 >> 1i32;
+        set_ram_word!(game.eproj_instr_timers[v1] = 1u16);
         set_ram_word!(game.eproj_instr_list_ptr[v1] = addr_off_86A28B as u16);
     }
 }
 pub unsafe fn EprojPreInstr_PrePhantomRoom(j: u16, game: &mut Game) {
-    set_ram_word!(game.bg2_y_scroll = 0 as u16);
+    set_ram_word!(game.bg2_y_scroll = 0u16);
 }
 pub unsafe fn EprojInstr_A3BE(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     set_ram_word!(game.eproj_x_pos[v1] = ram_word!(game, eproj_E[v1]));
     set_ram_word!(game.eproj_y_pos[v1] = ram_word!(game, eproj_F[v1]));
     epjp
@@ -3249,7 +3169,7 @@ pub unsafe fn EprojInstr_GotoWithProbability25(
     epjp: *const u8,
     game: &mut Game,
 ) -> *const u8 {
-    if (NextRandom(game) as i32 & 0xc000 as i32) == 0xc000i32 {
+    if (NextRandom(game) as i32 & 0xc000i32) == 0xc000i32 {
         *(epjp as *mut u16) as usize as *const u8
     } else {
         epjp.offset(2)
@@ -3260,47 +3180,45 @@ unsafe fn EprojInit_BombTorizoLowHealthDrool(j: u16, game: &mut Game) {
     let mut v4: u16 = 0;
     let mut v5: u16 = 0;
     let mut v8: u16 = 0;
-    let v1: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_gfx_idx[v1] = 0 as u16);
+    let v1: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_gfx_idx[v1] = 0u16);
     set_ram_word!(
         game.eproj_instr_list_ptr[v1] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x86a64d))
             as *const u8 as *mut u16)
             .offset(
-                ((((NextRandom(game) as i32 >> 1 as i32) as u16) & (0xeu16)) as i32 >> 1 as i32)
-                    as isize,
+                ((((NextRandom(game) as i32 >> 1i32) as u16) & (0xeu16)) as i32 >> 1i32) as isize,
             )
     );
     NextRandom(game);
     let v2: *mut EnemyData = gEnemyData(game.cur_enemy_index() as i32, game);
     set_ram_word!(game.eproj_y_pos[v1] = ((*v2).y_pos).wrapping_sub(5u16));
     parameter_1 = (*v2).parameter_1 as i16;
-    if (parameter_1 as i32 & 0x4000 as i32) != 0i32 {
-        v4 = (ram_word!(game, random_number) as i32 & 0x1fe as i32) as u16;
+    if (parameter_1 as i32 & 0x4000i32) != 0i32 {
+        v4 = (ram_word!(game, random_number) as i32 & 0x1fei32) as u16;
     } else {
         if parameter_1 < 0 {
-            v5 = 32 as u16;
+            v5 = 32u16;
         } else {
-            v5 = 224 as u16;
+            v5 = 224u16;
         }
-        v4 =
-            (2 as i32 * (v5 as i32 + (game.random_number() as i32 & 0xf as i32) - 8 as i32)) as u16;
+        v4 = (2i32 * (v5 as i32 + (game.random_number() as i32 & 0xfi32) - 8i32)) as u16;
     }
-    let v6: i32 = v4 as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_x_vel[v1] = kSinCosTable8bit_Sext[(v6 + 64 as i32) as usize] as u16);
+    let v6: i32 = v4 as i32 >> 1i32;
+    set_ram_word!(game.eproj_x_vel[v1] = kSinCosTable8bit_Sext[(v6 + 64i32) as usize] as u16);
     set_ram_word!(game.eproj_y_vel[v1] = kSinCosTable8bit_Sext[v6 as usize] as u16);
     let v7: *mut EnemyData = gEnemyData(game.cur_enemy_index() as i32, game);
-    if ((*v7).parameter_1 as i32 & 0x8000 as i32) != 0i32 {
+    if ((*v7).parameter_1 as i32 & 0x8000i32) != 0i32 {
         v8 = ((*v7).x_pos).wrapping_add(8u16);
     } else {
-        v8 = ((*v7).x_pos as i32 - 8 as i32) as u16;
+        v8 = ((*v7).x_pos as i32 - 8i32) as u16;
     }
     set_ram_word!(game.eproj_x_pos[v1] = v8);
 }
 unsafe fn EprojInit_BombTorizoLowHealthInitialDrool(j: u16, game: &mut Game) {
     let mut v3: i16 = 0;
     let mut parameter_1: i16 = 0;
-    let v1: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_gfx_idx[v1] = 0 as u16);
+    let v1: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_gfx_idx[v1] = 0u16);
     NextRandom(game);
     let v2: *mut EnemyData = gEnemyData(game.cur_enemy_index() as i32, game);
     // Avoid a shared Game reference while the returned enemy pointer remains live.
@@ -3313,7 +3231,7 @@ unsafe fn EprojInit_BombTorizoLowHealthInitialDrool(j: u16, game: &mut Game) {
                     .cast::<u16>()
                     .read_unaligned(),
             ) as i32
-                & 3 as i32)) as u16)
+                & 3i32)) as u16)
             .wrapping_sub(5u16)
     );
     set_ram_word!(
@@ -3324,7 +3242,7 @@ unsafe fn EprojInit_BombTorizoLowHealthInitialDrool(j: u16, game: &mut Game) {
                 .cast::<u16>()
                 .read_unaligned(),
         ) as i32
-            & 0x1f as i32) as u16)
+            & 0x1fi32) as u16)
             .wrapping_add(48u16)
     );
     NextRandom(game);
@@ -3337,9 +3255,9 @@ unsafe fn EprojInit_BombTorizoLowHealthInitialDrool(j: u16, game: &mut Game) {
     )) as i16)
         & (3i16);
     parameter_1 = (*v2).parameter_1 as i16;
-    if (parameter_1 as i32 & 0x4000 as i32) != 0i32 {
+    if (parameter_1 as i32 & 0x4000i32) != 0i32 {
         set_ram_word!(game.eproj_x_pos[v1] = ((*v2).x_pos as i32 + v3 as i32) as u16);
-        set_ram_word!(game.eproj_x_vel[v1] = 0 as u16);
+        set_ram_word!(game.eproj_x_vel[v1] = 0u16);
     } else {
         if parameter_1 < 0 {
             set_ram_word!(
@@ -3350,101 +3268,94 @@ unsafe fn EprojInit_BombTorizoLowHealthInitialDrool(j: u16, game: &mut Game) {
                 game.eproj_x_pos[v1] = (((*v2).x_pos as i32 + v3 as i32) as u16).wrapping_sub(8u16)
             );
         }
-        set_ram_word!(game.eproj_x_vel[v1] = 0 as u16);
+        set_ram_word!(game.eproj_x_vel[v1] = 0u16);
     };
 }
 unsafe fn EprojInit_A977(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_gfx_idx[v1] = 0 as u16);
+    let v1: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_gfx_idx[v1] = 0u16);
     CalculatePlmBlockCoords(ram_word!(game, plm_id), game);
-    set_ram_word!(game.eproj_x_pos[v1] = (16 as i32 * ram_word!(game, plm_x_block) as i32) as u16);
+    set_ram_word!(game.eproj_x_pos[v1] = (16i32 * ram_word!(game, plm_x_block) as i32) as u16);
     set_ram_word!(
-        game.eproj_y_pos[v1] = (16 as i32 * ram_word!(game, plm_y_block) as i32 - 4 as i32) as u16
+        game.eproj_y_pos[v1] = (16i32 * ram_word!(game, plm_y_block) as i32 - 4i32) as u16
     );
-    set_ram_word!(game.eproj_x_subpos[v1] = 0 as u16);
-    set_ram_word!(game.eproj_y_subpos[v1] = 0 as u16);
+    set_ram_word!(game.eproj_x_subpos[v1] = 0u16);
+    set_ram_word!(game.eproj_y_subpos[v1] = 0u16);
 }
 static kEprojInit_BombTorizoExplosiveSwipe_Tab0: [i16; 11] = [
-    -(30 as i32) as i16,
-    -(40 as i32) as i16,
-    -(47 as i32) as i16,
-    -(31 as i32) as i16,
-    -(21 as i32) as i16,
-    -(1 as i32) as i16,
-    -(28 as i32) as i16,
-    -(43 as i32) as i16,
-    -(48 as i32) as i16,
-    -(31 as i32) as i16,
-    -(21 as i32) as i16,
+    -(30i32) as i16,
+    -(40i32) as i16,
+    -(47i32) as i16,
+    -(31i32) as i16,
+    -(21i32) as i16,
+    -(1i32) as i16,
+    -(28i32) as i16,
+    -(43i32) as i16,
+    -(48i32) as i16,
+    -(31i32) as i16,
+    -(21i32) as i16,
 ];
 static kEprojInit_BombTorizoExplosiveSwipe_Tab1: [i16; 11] = [
-    -(52 as i32) as i16,
-    -(28 as i32) as i16,
-    -(11 as i32) as i16,
-    9 as i16,
-    21 as i16,
-    20 as i16,
-    -(52 as i32) as i16,
-    -(27 as i32) as i16,
-    -(10 as i32) as i16,
-    9 as i16,
-    20 as i16,
+    -(52i32) as i16,
+    -(28i32) as i16,
+    -(11i32) as i16,
+    9i16,
+    21i16,
+    20i16,
+    -(52i32) as i16,
+    -(27i32) as i16,
+    -(10i32) as i16,
+    9i16,
+    20i16,
 ];
 static kEprojInit_BombTorizoStatueBreaking_Xpos: [i16; 16] = [
-    8 as i16,
-    0x18 as i16,
-    -(8 as i32) as i16,
-    8 as i16,
-    0x18 as i16,
-    -(8 as i32) as i16,
-    8 as i16,
-    0x18 as i16,
-    8 as i16,
-    -(8 as i32) as i16,
-    0x18 as i16,
-    8 as i16,
-    -(8 as i32) as i16,
-    0x18 as i16,
-    8 as i16,
-    -(8 as i32) as i16,
+    8i16,
+    0x18i16,
+    -(8i32) as i16,
+    8i16,
+    0x18i16,
+    -(8i32) as i16,
+    8i16,
+    0x18i16,
+    8i16,
+    -(8i32) as i16,
+    0x18i16,
+    8i16,
+    -(8i32) as i16,
+    0x18i16,
+    8i16,
+    -(8i32) as i16,
 ];
 static kEprojInit_BombTorizoStatueBreaking_Ypos: [i16; 8] = [
-    -(8 as i32) as i16,
-    -(8 as i32) as i16,
-    8 as i16,
-    8 as i16,
-    8 as i16,
-    0x18 as i16,
-    0x18 as i16,
-    0x18 as i16,
+    -(8i32) as i16,
+    -(8i32) as i16,
+    8i16,
+    8i16,
+    8i16,
+    0x18i16,
+    0x18i16,
+    0x18i16,
 ];
 static kEprojInit_BombTorizoStatueBreaking_Yvel: [i16; 8] = [
-    256 as i16, 256 as i16, 256 as i16, 256 as i16, 256 as i16, 256 as i16, 256 as i16, 256 as i16,
+    256i16, 256i16, 256i16, 256i16, 256i16, 256i16, 256i16, 256i16,
 ];
-static kEprojInit_BombTorizoStatueBreaking_F: [i16; 8] = [
-    16 as i16, 16 as i16, 16 as i16, 16 as i16, 16 as i16, 16 as i16, 16 as i16, 16 as i16,
-];
-static kEprojInit_BombTorizoLowHealthExplode_X: [i16; 6] = [
-    0 as i16,
-    12 as i16,
-    -(12 as i32) as i16,
-    0 as i16,
-    16 as i16,
-    -(16 as i32) as i16,
-];
+static kEprojInit_BombTorizoStatueBreaking_F: [i16; 8] =
+    [16i16, 16i16, 16i16, 16i16, 16i16, 16i16, 16i16, 16i16];
+static kEprojInit_BombTorizoLowHealthExplode_X: [i16; 6] =
+    [0i16, 12i16, -(12i32) as i16, 0i16, 16i16, -(16i32) as i16];
 static kEprojInit_BombTorizoLowHealthExplode_Y: [i16; 6] = [
-    -(8 as i32) as i16,
-    -(8 as i32) as i16,
-    -(8 as i32) as i16,
-    -(20 as i32) as i16,
-    -(20 as i32) as i16,
-    -(20 as i32) as i16,
+    -(8i32) as i16,
+    -(8i32) as i16,
+    -(8i32) as i16,
+    -(20i32) as i16,
+    -(20i32) as i16,
+    -(20i32) as i16,
 ];
 unsafe fn EprojInit_BombTorizoExplosiveSwipe(j: u16, game: &mut Game) {
     let v1: *mut EnemyData = gEnemyData(game.cur_enemy_index() as i32, game);
-    if ((*v1).parameter_1 as i32 & 0x8000 as i32) != 0i32 {
-        let v4: i32 = ram_word!(game, cinematic_var8) as i32 >> 1 as i32;
-        let v5: i32 = j as i32 >> 1 as i32;
+    if ((*v1).parameter_1 as i32 & 0x8000i32) != 0i32 {
+        let v4: i32 = ram_word!(game, cinematic_var8) as i32 >> 1i32;
+        let v5: i32 = j as i32 >> 1i32;
         set_ram_word!(
             game.eproj_x_pos[v5] = ((*v1).x_pos)
                 .wrapping_sub((kEprojInit_BombTorizoExplosiveSwipe_Tab0[v4 as usize]) as u16)
@@ -3454,8 +3365,8 @@ unsafe fn EprojInit_BombTorizoExplosiveSwipe(j: u16, game: &mut Game) {
                 .wrapping_add((kEprojInit_BombTorizoExplosiveSwipe_Tab1[v4 as usize]) as u16)
         );
     } else {
-        let v2: i32 = ram_word!(game, cinematic_var8) as i32 >> 1 as i32;
-        let v3: i32 = j as i32 >> 1 as i32;
+        let v2: i32 = ram_word!(game, cinematic_var8) as i32 >> 1i32;
+        let v3: i32 = j as i32 >> 1i32;
         set_ram_word!(
             game.eproj_x_pos[v3] = ((*v1).x_pos as i32
                 + kEprojInit_BombTorizoExplosiveSwipe_Tab0[v2 as usize] as i32)
@@ -3472,8 +3383,8 @@ unsafe fn EprojInit_BombTorizoStatueBreaking(j: u16, game: &mut Game) {
     let mut v1: i8 = 0;
     CalculatePlmBlockCoords(ram_word!(game, plm_id), game);
     v1 = EprojState(&game.g_ram).init_param_1() as i8;
-    let v2: i32 = EprojState(&game.g_ram).init_param_1() as i32 >> 1 as i32;
-    let v3: i32 = j as i32 >> 1 as i32;
+    let v2: i32 = EprojState(&game.g_ram).init_param_1() as i32 >> 1i32;
+    let v3: i32 = j as i32 >> 1i32;
     set_ram_word!(
         game.eproj_instr_list_ptr[v3] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x86a7ab))
             as *const u8 as *mut u16)
@@ -3481,14 +3392,12 @@ unsafe fn EprojInit_BombTorizoStatueBreaking(j: u16, game: &mut Game) {
     );
     set_ram_word!(
         game.eproj_x_pos[v3] = (kEprojInit_BombTorizoStatueBreaking_Xpos[v2 as usize] as i32
-            + 16 as i32 * ram_word!(game, plm_x_block) as i32)
-            as u16
+            + 16i32 * ram_word!(game, plm_x_block) as i32) as u16
     );
-    let v4: i32 = (v1 as i32 & 0xf as i32) >> 1 as i32;
+    let v4: i32 = (v1 as i32 & 0xfi32) >> 1i32;
     set_ram_word!(
         game.eproj_y_pos[v3] = (kEprojInit_BombTorizoStatueBreaking_Ypos[v4 as usize] as i32
-            + 16 as i32 * ram_word!(game, plm_y_block) as i32)
-            as u16
+            + 16i32 * ram_word!(game, plm_y_block) as i32) as u16
     );
     set_ram_word!(
         game.eproj_y_vel[v3] = kEprojInit_BombTorizoStatueBreaking_Yvel[v4 as usize] as u16
@@ -3498,15 +3407,15 @@ unsafe fn EprojInit_BombTorizoStatueBreaking(j: u16, game: &mut Game) {
 }
 unsafe fn EprojInit_BombTorizoLowHealthExplode(j: u16, game: &mut Game) {
     let enemy_index = game.cur_enemy_index();
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_x_pos[v2] = game.enemy_state(enemy_index).x_pos());
     set_ram_word!(game.eproj_y_pos[v2] = game.enemy_state(enemy_index).y_pos());
-    if (game.enemy_state(enemy_index).parameter_1() as i32 & 0x8000 as i32) == 0i32 {
-        update_ram_word!(game.cinematic_var8, |fresh13| (fresh13 as i32 + 2 as i32)
+    if (game.enemy_state(enemy_index).parameter_1() as i32 & 0x8000i32) == 0i32 {
+        update_ram_word!(game.cinematic_var8, |fresh13| (fresh13 as i32 + 2i32)
             as u16);
     }
     EprojStateMut(&mut game.g_ram).add_word(0x1993, 0, 2);
-    let v3: i32 = EprojState(&game.g_ram).init_param_1() as i32 >> 1 as i32;
+    let v3: i32 = EprojState(&game.g_ram).init_param_1() as i32 >> 1i32;
     let v4: u16 = (kEprojInit_BombTorizoLowHealthExplode_X[v3 as usize] as i32
         + ram_word!(game, eproj_x_pos[v2]) as i32) as u16;
     set_ram_word!(game.eproj_x_pos[v2] = v4);
@@ -3519,7 +3428,7 @@ unsafe fn EprojInit_BombTorizoLowHealthExplode(j: u16, game: &mut Game) {
 unsafe fn EprojInit_BombTorizoDeathExplosion(j: u16, game: &mut Game) {
     let enemy_index = game.cur_enemy_index();
     let x_pos: u16 = game.enemy_state(enemy_index).x_pos();
-    let v3: i32 = j as i32 >> 1 as i32;
+    let v3: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_x_pos[v3] = x_pos);
     set_ram_word!(game.eproj_E[v3] = x_pos);
     let y_pos: u16 = game.enemy_state(enemy_index).y_pos();
@@ -3530,68 +3439,68 @@ pub unsafe fn sub_86A887(v0: u16, game: &mut Game) {
     let mut v2: i16 = 0;
     let mut v3: i16 = 0;
     let mut v4: i16 = 0;
-    if EprojBlockCollisition_Horiz(v0, game) as i32 & 1 as i32 != 0 {
-        let v6: i32 = v0 as i32 >> 1 as i32;
-        set_ram_word!(game.eproj_instr_list_ptr[v6] = 0xa48a as u16);
-        set_ram_word!(game.eproj_instr_timers[v6] = 1 as u16);
+    if EprojBlockCollisition_Horiz(v0, game) as i32 & 1i32 != 0 {
+        let v6: i32 = v0 as i32 >> 1i32;
+        set_ram_word!(game.eproj_instr_list_ptr[v6] = 0xa48au16);
+        set_ram_word!(game.eproj_instr_timers[v6] = 1u16);
     } else {
-        let v1: i32 = v0 as i32 >> 1 as i32;
+        let v1: i32 = v0 as i32 >> 1i32;
         v2 = ram_word!(game, eproj_x_vel[v1]) as i16;
         if v2 >= 0 {
             v4 = (v2).wrapping_sub(4i16);
             if v4 < 0 {
-                v4 = 3 as i16;
+                v4 = 3i16;
             }
             set_ram_word!(game.eproj_x_vel[v1] = v4 as u16);
         } else {
-            v3 = (v2 as i32 + 4 as i32) as i16;
+            v3 = (v2 as i32 + 4i32) as i16;
             if v3 >= 0i16 {
-                v3 = 3 as i16;
+                v3 = 3i16;
             }
             set_ram_word!(game.eproj_x_vel[v1] = v3 as u16);
         }
         let carry: u8 = EprojBlockCollisition_Vertical(v0, game);
-        if (ram_word!(game, eproj_y_vel[v1]) as i32 & 0x8000 as i32) != 0i32 || carry == 0 {
+        if (ram_word!(game, eproj_y_vel[v1]) as i32 & 0x8000i32) != 0i32 || carry == 0 {
             let v5: u16 = EprojStateMut(&mut game.g_ram).add_word(0x1adb, v1 as usize, 16);
-            if (v5 as i32 & 0xf000 as i32) == 4096i32 {
-                set_ram_word!(game.eproj_id[v1] = 0 as u16);
+            if (v5 as i32 & 0xf000i32) == 4096i32 {
+                set_ram_word!(game.eproj_id[v1] = 0u16);
             }
         } else {
-            let v7: i32 = v0 as i32 >> 1 as i32;
+            let v7: i32 = v0 as i32 >> 1i32;
             EprojStateMut(&mut game.g_ram).add_word(0x1a93, v7 as usize, (-3i16) as u16);
-            EprojStateMut(&mut game.g_ram).start_instruction(v7 as usize, 0xa48e as u16);
+            EprojStateMut(&mut game.g_ram).start_instruction(v7 as usize, 0xa48eu16);
         }
     };
 }
 pub unsafe fn EprojPreInstr_A977(k: u16, game: &mut Game) {
     let carry: u8 = EprojBlockCollisition_Vertical(k, game);
-    let v1: i32 = k as i32 >> 1 as i32;
-    if (ram_word!(game, eproj_y_vel[v1]) as i32 & 0x8000 as i32) != 0i32 || carry == 0 {
+    let v1: i32 = k as i32 >> 1i32;
+    if (ram_word!(game, eproj_y_vel[v1]) as i32 & 0x8000i32) != 0i32 || carry == 0 {
         let v2: u16 = (ram_word!(game, eproj_F[0])).wrapping_add(ram_word!(game, eproj_y_vel[v1]));
         set_ram_word!(game.eproj_y_vel[v1] = v2);
-        if (v2 as i32 & 0xf000 as i32) == 4096i32 {
-            set_ram_word!(game.eproj_y_vel[v1] = 4096 as u16);
+        if (v2 as i32 & 0xf000i32) == 4096i32 {
+            set_ram_word!(game.eproj_y_vel[v1] = 4096u16);
         }
     } else {
-        set_ram_word!(game.eproj_pre_instr[v1] = 0xa918 as u16);
+        set_ram_word!(game.eproj_pre_instr[v1] = 0xa918u16);
     };
 }
 pub unsafe fn sub_86A91A(v0: u16, game: &mut Game) {
-    let v1: i32 = v0 as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_x_vel[v1] = 0 as u16);
-    if (ram_word!(game, joypad2_last) as i32 & 0x100 as i32) != 0i32 {
-        set_ram_word!(game.eproj_x_vel[v1] = 256 as u16);
+    let v1: i32 = v0 as i32 >> 1i32;
+    set_ram_word!(game.eproj_x_vel[v1] = 0u16);
+    if (ram_word!(game, joypad2_last) as i32 & 0x100i32) != 0i32 {
+        set_ram_word!(game.eproj_x_vel[v1] = 256u16);
     }
-    if (ram_word!(game, joypad2_last) as i32 & 0x200 as i32) != 0i32 {
-        set_ram_word!(game.eproj_x_vel[v1] = -(256 as i32) as u16);
+    if (ram_word!(game, joypad2_last) as i32 & 0x200i32) != 0i32 {
+        set_ram_word!(game.eproj_x_vel[v1] = -(256i32) as u16);
     }
     EprojBlockCollisition_Horiz(v0, game);
-    set_ram_word!(game.eproj_y_vel[v1] = 0 as u16);
-    if (ram_word!(game, joypad2_last) as i32 & 0x400 as i32) != 0i32 {
-        set_ram_word!(game.eproj_y_vel[v1] = 256 as u16);
+    set_ram_word!(game.eproj_y_vel[v1] = 0u16);
+    if (ram_word!(game, joypad2_last) as i32 & 0x400i32) != 0i32 {
+        set_ram_word!(game.eproj_y_vel[v1] = 256u16);
     }
-    if (ram_word!(game, joypad2_last) as i32 & 0x800 as i32) != 0i32 {
-        set_ram_word!(game.eproj_y_vel[v1] = -(256 as i32) as u16);
+    if (ram_word!(game, joypad2_last) as i32 & 0x800i32) != 0i32 {
+        set_ram_word!(game.eproj_y_vel[v1] = -(256i32) as u16);
     }
     EprojBlockCollisition_Vertical(v0, game);
 }
@@ -3599,27 +3508,27 @@ unsafe fn EprojInit_AB07(j: u16, game: &mut Game) {
     let mut v1: u16 = ram_word!(game, vram_write_queue_tail);
     let v2: *mut VramWriteEntry =
         gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
-    (*v2).size = 64 as u16;
+    (*v2).size = 64u16;
     (*v2).src.addr = addr_kEprojInit_AB07_Tile0 as i32 as VoidP;
-    *(&raw mut (*v2).src.bank as *mut u16) = 134 as u16;
-    (*v2).vram_dst = 28160 as u16;
-    v1 = (v1 as i32 + 7 as i32) as u16;
+    *(&raw mut (*v2).src.bank as *mut u16) = 134u16;
+    (*v2).vram_dst = 28160u16;
+    v1 = (v1 as i32 + 7i32) as u16;
     let v3: *mut VramWriteEntry = gVramWriteEntry(v1 as i32, game);
-    (*v3).size = 64 as u16;
+    (*v3).size = 64u16;
     (*v3).src.addr = addr_kEprojInit_AB07_Tile1 as i32 as VoidP;
-    *(&raw mut (*v3).src.bank as *mut u16) = 134 as u16;
-    (*v3).vram_dst = 28416 as u16;
-    set_ram_word!(game.vram_write_queue_tail = (v1 as i32 + 7 as i32) as u16);
-    let v4: i32 = j as i32 >> 1 as i32;
+    *(&raw mut (*v3).src.bank as *mut u16) = 134u16;
+    (*v3).vram_dst = 28416u16;
+    set_ram_word!(game.vram_write_queue_tail = (v1 as i32 + 7i32) as u16);
+    let v4: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_x_pos[v4] = ram_word!(game, samus_x_pos));
-    set_ram_word!(game.eproj_y_pos[v4] = (ram_word!(game, samus_y_pos) as i32 - 36 as i32) as u16);
+    set_ram_word!(game.eproj_y_pos[v4] = (ram_word!(game, samus_y_pos) as i32 - 36i32) as u16);
 }
 pub unsafe fn EprojPreInstr_AB07(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
-    let mut amt: i32 = ((8 as i32
+    let v1: i32 = k as i32 >> 1i32;
+    let mut amt: i32 = ((8i32
         * (ram_word!(game, samus_x_pos) as i32 - ram_word!(game, eproj_x_pos[v1]) as i32))
         as i16 as i32)
-        << 8 as i32;
+        << 8i32;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut u8).offset(0x1a4b) as *mut u16).offset(v1 as isize)
             as *mut u16,
@@ -3627,11 +3536,10 @@ pub unsafe fn EprojPreInstr_AB07(k: u16, game: &mut Game) {
             as *mut u16,
         amt as u32,
     );
-    amt = ((8 as i32
-        * (ram_word!(game, samus_y_pos) as i32
-            - 36 as i32
-            - ram_word!(game, eproj_y_pos[v1]) as i32)) as i16 as i32)
-        << 8 as i32;
+    amt = ((8i32
+        * (ram_word!(game, samus_y_pos) as i32 - 36i32 - ram_word!(game, eproj_y_pos[v1]) as i32))
+        as i16 as i32)
+        << 8i32;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut u8).offset(0x1a93) as *mut u16).offset(v1 as isize)
             as *mut u16,
@@ -3641,7 +3549,7 @@ pub unsafe fn EprojPreInstr_AB07(k: u16, game: &mut Game) {
     );
 }
 pub unsafe fn EprojInstr_SpawnEnemyDrops(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
-    let v2: i32 = k as i32 >> 1 as i32;
+    let v2: i32 = k as i32 >> 1i32;
     game.eproj_spawn_pt = Point16U {
         x: ram_word!(game, eproj_x_pos[v2]),
         y: ram_word!(game, eproj_y_pos[v2]),
@@ -3653,29 +3561,29 @@ pub unsafe fn EprojInstr_SpawnEnemyDrops(k: u16, epjp: *const u8, game: &mut Gam
             *(epjp as *mut u16) as i32
         }) as u16,
         k,
-        0 as u16,
+        0u16,
         game,
     );
     epjp.offset(4)
 }
 unsafe fn Eproj_InitXYVelRandom(j: u16, k: u16, pt: Point16U, game: &mut Game) {
     let v2: *const u16 = RomPtr_86(k, game) as *const u16;
-    let v3: i32 = j as i32 >> 1 as i32;
+    let v3: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_instr_list_ptr[v3] = *v2);
     set_ram_word!(game.eproj_x_pos[v3] = (*v2.offset(1)).wrapping_add(pt.x));
     set_ram_word!(
         game.eproj_x_vel[v3] =
-            (*v2.offset(2) as i32 + NextRandom(game) as u8 as i32 - 128 as i32) as u16
+            (*v2.offset(2) as i32 + NextRandom(game) as u8 as i32 - 128i32) as u16
     );
     set_ram_word!(game.eproj_y_pos[v3] = (*v2.offset(3)).wrapping_add(pt.y));
     set_ram_word!(
         game.eproj_y_vel[v3] =
-            (*v2.offset(4) as i32 + NextRandom(game) as u8 as i32 - 128 as i32) as u16
+            (*v2.offset(4) as i32 + NextRandom(game) as u8 as i32 - 128i32) as u16
     );
 }
 unsafe fn EprojInit_BombTorizosChozoOrbs(j: u16, game: &mut Game) {
     let enemy_index = game.cur_enemy_index();
-    let v2: u16 = (if (game.enemy_state(enemy_index).parameter_1() as i32 & 0x8000 as i32) != 0i32 {
+    let v2: u16 = (if (game.enemy_state(enemy_index).parameter_1() as i32 & 0x8000i32) != 0i32 {
         addr_kEprojInit_BombTorizosChozoOrbs_init0 as i32
     } else {
         addr_kEprojInit_BombTorizosChozoOrbs_init1 as i32
@@ -3692,7 +3600,7 @@ unsafe fn EprojInit_BombTorizosChozoOrbs(j: u16, game: &mut Game) {
 }
 unsafe fn EprojInit_GoldenTorizosChozoOrbs(j: u16, game: &mut Game) {
     let E: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    let v2: u16 = (if ((*E).parameter_1 as i32 & 0x8000 as i32) != 0i32 {
+    let v2: u16 = (if ((*E).parameter_1 as i32 & 0x8000i32) != 0i32 {
         addr_kEprojInit_GoldenTorizosChozoOrbs_init0 as i32
     } else {
         addr_kEprojInit_GoldenTorizosChozoOrbs_init1 as i32
@@ -3709,21 +3617,21 @@ unsafe fn EprojInit_GoldenTorizosChozoOrbs(j: u16, game: &mut Game) {
 }
 pub unsafe fn EprojPreInstr_BombTorizosChozoOrbs(k: u16, game: &mut Game) {
     if EprojBlockCollisition_Horiz(k, game) != 0 {
-        let v3: i32 = k as i32 >> 1 as i32;
+        let v3: i32 = k as i32 >> 1i32;
         EprojStateMut(&mut game.g_ram).start_instruction(v3 as usize, addr_off_86AB25 as u16);
     } else {
         let carry: u8 = EprojBlockCollisition_Vertical(k, game);
-        let v1: i32 = k as i32 >> 1 as i32;
-        if (ram_word!(game, eproj_y_vel[v1]) as i32 & 0x8000 as i32) != 0i32 || carry == 0 {
+        let v1: i32 = k as i32 >> 1i32;
+        if (ram_word!(game, eproj_y_vel[v1]) as i32 & 0x8000i32) != 0i32 || carry == 0 {
             let v2: u16 = EprojStateMut(&mut game.g_ram).add_word(0x1adb, v1 as usize, 18);
-            if (v2 as i32 & 0xf000 as i32) == 4096i32 {
-                set_ram_word!(game.eproj_id[v1] = 0 as u16);
+            if (v2 as i32 & 0xf000i32) == 4096i32 {
+                set_ram_word!(game.eproj_id[v1] = 0u16);
             }
         } else {
-            let v4: i32 = k as i32 >> 1 as i32;
+            let v4: i32 = k as i32 >> 1i32;
             set_ram_word!(
-                game.eproj_y_pos[v4] = ((game.enemy_projectile_y_pos(k) as i32 & 0xfff0 as i32
-                    | 8 as i32) as u16)
+                game.eproj_y_pos[v4] = ((game.enemy_projectile_y_pos(k) as i32 & 0xfff0i32 | 8i32)
+                    as u16)
                     .wrapping_sub(2u16)
             );
             EprojStateMut(&mut game.g_ram).start_instruction(v4 as usize, addr_off_86AB41 as u16);
@@ -3735,42 +3643,41 @@ pub unsafe fn EprojPreInstr_GoldenTorizosChozoOrbs(k: u16, game: &mut Game) {
     let mut v2: i16 = 0;
     let mut v3: u16 = 0;
     let mut v4: u16 = 0;
-    if EprojBlockCollisition_Horiz(k, game) as i32 & 1 as i32 != 0 {
+    if EprojBlockCollisition_Horiz(k, game) as i32 & 1i32 != 0 {
         set_ram_word!(
             game.eproj_x_vel[(k as i32 >> 1i32)] =
                 -(ram_word!(game, eproj_x_vel[(k as i32 >> 1i32)]) as i32) as u16
         );
     }
-    if EprojBlockCollisition_Vertical(k, game) as i32 & 1 as i32 != 0
+    if EprojBlockCollisition_Vertical(k, game) as i32 & 1i32 != 0
         && {
-            v1 = k as i32 >> 1 as i32;
-            (ram_word!(game, eproj_y_vel[v1]) as i32 & 0x8000 as i32) == 0i32
+            v1 = k as i32 >> 1i32;
+            (ram_word!(game, eproj_y_vel[v1]) as i32 & 0x8000i32) == 0i32
         }
         && {
             v2 = ram_word!(game, eproj_x_vel[v1]) as i16;
             if v2 >= 0i16 {
-                v3 = (v2 as i32 - 64 as i32) as u16;
+                v3 = (v2 as i32 - 64i32) as u16;
             } else {
-                v3 = (v2 as i32 + 64 as i32) as u16;
+                v3 = (v2 as i32 + 64i32) as u16;
             };
             set_ram_word!(game.eproj_x_vel[v1] = v3);
-            v4 = -(ram_word!(game, eproj_y_vel[v1]) as i32 >> 1 as i32) as u16;
+            v4 = -(ram_word!(game, eproj_y_vel[v1]) as i32 >> 1i32) as u16;
             set_ram_word!(game.eproj_y_vel[v1] = v4);
-            (v4 as i32 & 0xff80 as i32) == 0xff80i32
+            (v4 as i32 & 0xff80i32) == 0xff80i32
         }
     {
-        let v5: i32 = k as i32 >> 1 as i32;
+        let v5: i32 = k as i32 >> 1i32;
         set_ram_word!(
-            game.eproj_y_pos[v5] = ((ram_word!(game, eproj_y_pos[v5]) as i32 & 0xfff0 as i32
-                | 8 as i32)
-                - 2 as i32) as u16
+            game.eproj_y_pos[v5] =
+                ((ram_word!(game, eproj_y_pos[v5]) as i32 & 0xfff0i32 | 8i32) - 2i32) as u16
         );
         set_ram_word!(game.eproj_instr_list_ptr[v5] = addr_off_86AB41 as u16);
-        set_ram_word!(game.eproj_instr_timers[v5] = 1 as u16);
+        set_ram_word!(game.eproj_instr_timers[v5] = 1u16);
     } else {
         update_ram_word!(
-            game.eproj_y_vel[(k as i32 >> 1 as i32)],
-            |fresh110| (fresh110 as i32 + 24 as i32) as u16
+            game.eproj_y_vel[(k as i32 >> 1i32)],
+            |fresh110| (fresh110 as i32 + 24i32) as u16
         );
     };
 }
@@ -3779,8 +3686,8 @@ pub unsafe fn EprojInstr_GotoDependingOnXDirection(
     epjp: *const u8,
     game: &mut Game,
 ) -> *const u8 {
-    let v2: i32 = k as i32 >> 1 as i32;
-    let amt: i32 = (ram_word!(game, eproj_x_vel[v2]) as i16 as i32) << 8 as i32;
+    let v2: i32 = k as i32 >> 1i32;
+    let amt: i32 = (ram_word!(game, eproj_x_vel[v2]) as i16 as i32) << 8i32;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut u8).offset(0x1a4b) as *mut u16).offset(v2 as isize)
             as *mut u16,
@@ -3788,74 +3695,74 @@ pub unsafe fn EprojInstr_GotoDependingOnXDirection(
             as *mut u16,
         amt as u32,
     );
-    if (ram_word!(game, eproj_x_vel[v2]) as i32 & 0x8000 as i32) == 0i32 {
+    if (ram_word!(game, eproj_x_vel[v2]) as i32 & 0x8000i32) == 0i32 {
         *(epjp.offset(2) as *mut u16) as usize as *const u8
     } else {
         *(epjp as *mut u16) as usize as *const u8
     }
 }
 unsafe fn EprojInit_TorizoSonicBoom(j: u16, game: &mut Game) {
-    let v1: i32 = if (NextRandom(game) as i32 & 1 as i32) != 0i32 {
-        -(12 as i32)
+    let v1: i32 = if (NextRandom(game) as i32 & 1i32) != 0i32 {
+        -(12i32)
     } else {
-        20 as i32
+        20i32
     };
     let v2: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    let v3: i32 = j as i32 >> 1 as i32;
+    let v3: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_y_pos[v3] = ((*v2).y_pos as i32 + v1) as u16);
-    set_ram_word!(game.eproj_y_vel[v3] = 0 as u16);
-    if ((*v2).parameter_1 as i32 & 0x8000 as i32) != 0i32 {
-        set_ram_word!(game.eproj_x_pos[v3] = ((*v2).x_pos as i32 + 32 as i32) as u16);
-        set_ram_word!(game.eproj_x_vel[v3] = 624 as u16);
+    set_ram_word!(game.eproj_y_vel[v3] = 0u16);
+    if ((*v2).parameter_1 as i32 & 0x8000i32) != 0i32 {
+        set_ram_word!(game.eproj_x_pos[v3] = ((*v2).x_pos as i32 + 32i32) as u16);
+        set_ram_word!(game.eproj_x_vel[v3] = 624u16);
         set_ram_word!(game.eproj_instr_list_ptr[v3] = addr_off_86ADD2 as u16);
     } else {
-        set_ram_word!(game.eproj_x_pos[v3] = ((*v2).x_pos as i32 - 32 as i32) as u16);
-        set_ram_word!(game.eproj_x_vel[v3] = -(624 as i32) as u16);
+        set_ram_word!(game.eproj_x_pos[v3] = ((*v2).x_pos as i32 - 32i32) as u16);
+        set_ram_word!(game.eproj_x_vel[v3] = -(624i32) as u16);
         set_ram_word!(game.eproj_instr_list_ptr[v3] = addr_off_86ADBF as u16);
     };
 }
 pub unsafe fn EprojPreInstr_TorizoSonicBoom(k: u16, game: &mut Game) {
-    if EprojBlockCollisition_Horiz(k, game) as i32 & 1 as i32 != 0 {
-        let v4: i32 = k as i32 >> 1 as i32;
+    if EprojBlockCollisition_Horiz(k, game) as i32 & 1i32 != 0 {
+        let v4: i32 = k as i32 >> 1i32;
         set_ram_word!(game.eproj_instr_list_ptr[v4] = addr_off_86ADE5 as u16);
-        set_ram_word!(game.eproj_instr_timers[v4] = 1 as u16);
+        set_ram_word!(game.eproj_instr_timers[v4] = 1u16);
         set_ram_word!(game.eproj_E[v4] = ram_word!(game, eproj_x_pos[v4]));
         set_ram_word!(game.eproj_F[v4] = ram_word!(game, eproj_y_pos[v4]));
     } else {
-        let v1: i32 = k as i32 >> 1 as i32;
+        let v1: i32 = k as i32 >> 1i32;
         update_ram_word!(game.eproj_x_vel[v1], |fresh109| (fresh109 as i32
-            + if ram_word!(game, eproj_x_vel[v1]) as i32 & 0x8000 as i32 != 0 {
-                -(16 as i32)
+            + if ram_word!(game, eproj_x_vel[v1]) as i32 & 0x8000i32 != 0 {
+                -(16i32)
             } else {
-                16 as i32
+                16i32
             }) as u16);
-        if (ram_word!(game, eproj_x_vel[v1]) as i32 & 0xf000 as i32) == 4096i32 {
-            set_ram_word!(game.eproj_id[v1] = 0 as u16);
+        if (ram_word!(game, eproj_x_vel[v1]) as i32 & 0xf000i32) == 4096i32 {
+            set_ram_word!(game.eproj_id[v1] = 0u16);
         }
     };
 }
 unsafe fn EprojInit_WreckedShipChozoSpikeFootsteps(j: u16, game: &mut Game) {
     let v1: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(
         game.eproj_x_pos[v2] = (ram_word!(game, cinematic_var8) as i32 + (*v1).x_pos as i32) as u16
     );
-    set_ram_word!(game.eproj_y_pos[v2] = ((*v1).y_pos as i32 + 28 as i32) as u16);
+    set_ram_word!(game.eproj_y_pos[v2] = ((*v1).y_pos as i32 + 28i32) as u16);
 }
 pub unsafe fn EprojInstr_ResetXYpos1(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
-    let v2: i32 = k as i32 >> 1 as i32;
+    let v2: i32 = k as i32 >> 1i32;
     set_ram_word!(game.eproj_x_pos[v2] = ram_word!(game, eproj_E[v2]));
     set_ram_word!(game.eproj_y_pos[v2] = ram_word!(game, eproj_F[v2]));
     epjp
 }
 unsafe fn EprojInit_TourianStatueDustClouds(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_E[v1] = 128 as u16);
-    set_ram_word!(game.eproj_F[v1] = 188 as u16);
+    let v1: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_E[v1] = 128u16);
+    set_ram_word!(game.eproj_F[v1] = 188u16);
 }
 unsafe fn EprojInit_TourianLandingDustCloudsRightFoot(j: u16, game: &mut Game) {
     let enemy_index = game.cur_enemy_index();
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(
         game.eproj_y_pos[v2] = (game.enemy_state(enemy_index).y_pos()).wrapping_add(48u16)
     );
@@ -3869,7 +3776,7 @@ pub fn EprojInstr_MoveY_Minus4(k: u16, epjp: *const u8, game: &mut Game) -> *con
 }
 unsafe fn EprojInit_TorizoLandingDustCloudLeftFoot(j: u16, game: &mut Game) {
     let enemy_index = game.cur_enemy_index();
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(
         game.eproj_y_pos[v2] = (game.enemy_state(enemy_index).y_pos()).wrapping_add(48u16)
     );
@@ -3879,10 +3786,10 @@ unsafe fn EprojInit_TorizoLandingDustCloudLeftFoot(j: u16, game: &mut Game) {
 }
 unsafe fn EprojInit_GoldenTorizoEgg(j: u16, game: &mut Game) {
     let v1: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    let v2: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_F[v2] = ((0xe2 as i32 & 0x1f as i32) + 64 as i32) as u16);
+    let v2: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_F[v2] = ((0xe2i32 & 0x1fi32) + 64i32) as u16);
     set_ram_word!(game.eproj_E[v2] = (*v1).parameter_1);
-    let v4: u16 = (if (*v1).parameter_1 as i32 & 0x8000 as i32 != 0 {
+    let v4: u16 = (if (*v1).parameter_1 as i32 & 0x8000i32 != 0 {
         addr_kEprojInit_GoldenTorizoEgg0 as i32
     } else {
         addr_kEprojInit_GoldenTorizoEgg1 as i32
@@ -3898,62 +3805,56 @@ unsafe fn EprojInit_GoldenTorizoEgg(j: u16, game: &mut Game) {
     );
 }
 pub unsafe fn EprojPreInstr_GoldenTorizoEgg(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
-    if (update_ram_word!(game.eproj_F[v1], wrapping_sub(1), reread) as i32 & 0x8000 as i32) != 0i32
-    {
+    let v1: i32 = k as i32 >> 1i32;
+    if (update_ram_word!(game.eproj_F[v1], wrapping_sub(1), reread) as i32 & 0x8000i32) != 0i32 {
         update_ram_word!(
             game.eproj_instr_list_ptr[v1],
-            |fresh105| (fresh105 as i32 + 2 as i32) as u16
+            |fresh105| (fresh105 as i32 + 2i32) as u16
         );
-        set_ram_word!(game.eproj_instr_timers[v1] = 1 as u16);
+        set_ram_word!(game.eproj_instr_timers[v1] = 1u16);
         set_ram_word!(
-            game.eproj_x_vel[v1] = (if (ram_word!(game, eproj_E[v1]) as i32 & 0x8000 as i32) != 0i32
-            {
-                256 as i32
+            game.eproj_x_vel[v1] = (if (ram_word!(game, eproj_E[v1]) as i32 & 0x8000i32) != 0i32 {
+                256i32
             } else {
-                -(256 as i32)
+                -(256i32)
             }) as u16
         );
     } else {
-        if EprojBlockCollisition_Horiz(k, game) as i32 & 1 as i32 != 0 {
+        if EprojBlockCollisition_Horiz(k, game) as i32 & 1i32 != 0 {
             set_ram_word!(game.eproj_x_vel[v1] = -(ram_word!(game, eproj_x_vel[v1]) as i32) as u16);
-            update_ram_word!(
-                game.eproj_E[v1],
-                |fresh106| (fresh106 as i32 ^ 0x8000 as i32) as u16
-            );
+            update_ram_word!(game.eproj_E[v1], |fresh106| (fresh106 as i32 ^ 0x8000i32)
+                as u16);
         }
-        if EprojBlockCollisition_Vertical(k, game) as i32 & 1 as i32 != 0
-            && (ram_word!(game, eproj_y_vel[v1]) as i32 & 0x8000 as i32) == 0i32
+        if EprojBlockCollisition_Vertical(k, game) as i32 & 1i32 != 0
+            && (ram_word!(game, eproj_y_vel[v1]) as i32 & 0x8000i32) == 0i32
         {
             update_ram_word!(game.eproj_x_vel[v1], |fresh107| (fresh107 as i32
-                + if ram_word!(game, eproj_x_vel[v1]) as i32 & 0x8000 as i32 != 0 {
-                    32 as i32
+                + if ram_word!(game, eproj_x_vel[v1]) as i32 & 0x8000i32 != 0 {
+                    32i32
                 } else {
-                    -(32 as i32)
+                    -(32i32)
                 }) as u16);
             set_ram_word!(game.eproj_y_vel[v1] = -(ram_word!(game, eproj_y_vel[v1]) as i32) as u16);
         }
-        update_ram_word!(
-            game.eproj_y_vel[v1],
-            |fresh108| (fresh108 as i32 + 48 as i32) as u16
-        );
-        if (ram_word!(game, eproj_y_vel[v1]) as i32 & 0xf000 as i32) == 4096i32 {
-            set_ram_word!(game.eproj_id[v1] = 0 as u16);
+        update_ram_word!(game.eproj_y_vel[v1], |fresh108| (fresh108 as i32 + 48i32)
+            as u16);
+        if (ram_word!(game, eproj_y_vel[v1]) as i32 & 0xf000i32) == 4096i32 {
+            set_ram_word!(game.eproj_id[v1] = 0u16);
         }
     };
 }
 pub unsafe fn sub_86B0B9(k: u16, game: &mut Game) {
     let mut v2: i16 = 0;
-    if EprojBlockCollisition_Horiz(k, game) as i32 & 1 as i32 != 0 {
-        let v3: i32 = k as i32 >> 1 as i32;
-        set_ram_word!(game.eproj_pre_instr[v3] = 0xb0dd as u16);
-        set_ram_word!(game.eproj_y_vel[v3] = 0 as u16);
+    if EprojBlockCollisition_Horiz(k, game) as i32 & 1i32 != 0 {
+        let v3: i32 = k as i32 >> 1i32;
+        set_ram_word!(game.eproj_pre_instr[v3] = 0xb0ddu16);
+        set_ram_word!(game.eproj_y_vel[v3] = 0u16);
     } else {
-        let v1: i32 = k as i32 >> 1 as i32;
-        if (ram_word!(game, eproj_E[v1]) as i32 & 0x8000 as i32) != 0i32 {
-            v2 = 48 as i16;
+        let v1: i32 = k as i32 >> 1i32;
+        if (ram_word!(game, eproj_E[v1]) as i32 & 0x8000i32) != 0i32 {
+            v2 = 48i16;
         } else {
-            v2 = -(48 as i32) as i16;
+            v2 = -(48i32) as i16;
         }
         update_ram_word!(
             game.eproj_x_vel[v1],
@@ -3962,45 +3863,45 @@ pub unsafe fn sub_86B0B9(k: u16, game: &mut Game) {
     };
 }
 pub unsafe fn sub_86B0DD(k: u16, game: &mut Game) {
-    if EprojBlockCollisition_Vertical(k, game) as i32 & 1 as i32 != 0 {
-        let v1: i32 = k as i32 >> 1 as i32;
+    if EprojBlockCollisition_Vertical(k, game) as i32 & 1i32 != 0 {
+        let v1: i32 = k as i32 >> 1i32;
         set_ram_word!(
             game.eproj_instr_list_ptr[v1] =
-                (if (ram_word!(game, eproj_E[v1]) as i32 & 0x8000 as i32) != 0i32 {
+                (if (ram_word!(game, eproj_E[v1]) as i32 & 0x8000i32) != 0i32 {
                     addr_off_86B1A8 as i32
                 } else {
                     addr_off_86B190 as i32
                 }) as u16
         );
-        set_ram_word!(game.eproj_instr_timers[v1] = 1 as u16);
+        set_ram_word!(game.eproj_instr_timers[v1] = 1u16);
     } else {
         update_ram_word!(
-            game.eproj_y_vel[(k as i32 >> 1 as i32)],
-            |fresh102| (fresh102 as i32 + 48 as i32) as u16
+            game.eproj_y_vel[(k as i32 >> 1i32)],
+            |fresh102| (fresh102 as i32 + 48i32) as u16
         );
     };
 }
 pub unsafe fn sub_86B13E(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
-    ((if (ram_word!(game, eproj_E[(k as i32 >> 1i32)]) as i32 & 0x8000 as i32) != 0i32 {
+    ((if (ram_word!(game, eproj_E[(k as i32 >> 1i32)]) as i32 & 0x8000i32) != 0i32 {
         addr_off_86B166 as i32
     } else {
         addr_off_86B14B as i32
     }) as usize as *const u8)
 }
-static word_86B205: [i16; 2] = [-(0x1e as i32) as i16, 0x1e as i16];
+static word_86B205: [i16; 2] = [-(0x1ei32) as i16, 0x1ei16];
 unsafe fn EprojInit_GoldenTorizoSuperMissile(j: u16, game: &mut Game) {
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_E[v2] = ram_word!(game, cur_enemy_index));
     let v3: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    let v4: i32 = if ((*v3).parameter_1 as i32 & 0x8000 as i32) != 0i32 {
-        1 as i32
+    let v4: i32 = if ((*v3).parameter_1 as i32 & 0x8000i32) != 0i32 {
+        1i32
     } else {
-        0 as i32
+        0i32
     };
     set_ram_word!(
         game.eproj_x_pos[v2] = ((*v3).x_pos as i32 + word_86B205[v4 as usize] as i32) as u16
     );
-    set_ram_word!(game.eproj_y_pos[v2] = ((*v3).y_pos as i32 - 52 as i32) as u16);
+    set_ram_word!(game.eproj_y_pos[v2] = ((*v3).y_pos as i32 - 52i32) as u16);
     set_ram_word!(
         game.eproj_instr_list_ptr[v2] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x86b209))
             as *const u8 as *mut u16)
@@ -4008,44 +3909,42 @@ unsafe fn EprojInit_GoldenTorizoSuperMissile(j: u16, game: &mut Game) {
     );
 }
 pub unsafe fn EprojPreInstr_GoldenTorizoSuperMissile(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     let v2: *mut EnemyData = gEnemyData(ram_word!(game, eproj_E[v1]) as i32, game);
-    let v3: i32 = if ((*v2).parameter_1 as i32 & 0x8000 as i32) != 0i32 {
-        32 as i32
+    let v3: i32 = if ((*v2).parameter_1 as i32 & 0x8000i32) != 0i32 {
+        32i32
     } else {
-        -(32 as i32)
+        -(32i32)
     };
     set_ram_word!(game.eproj_x_pos[v1] = ((*v2).x_pos as i32 + v3) as u16);
-    set_ram_word!(game.eproj_y_pos[v1] = ((*v2).y_pos as i32 - 52 as i32) as u16);
+    set_ram_word!(game.eproj_y_pos[v1] = ((*v2).y_pos as i32 - 52i32) as u16);
 }
 pub unsafe fn EprojPreInstr_B237(k: u16, game: &mut Game) {
     let mut v1: i32 = 0;
     let mut carry: u8 = 0;
     if EprojBlockCollisition_Horiz(k, game) != 0u8 || {
         carry = EprojBlockCollisition_Vertical(k, game);
-        v1 = k as i32 >> 1 as i32;
-        (ram_word!(game, eproj_y_vel[v1]) as i32 & 0x8000 as i32) == 0i32 && carry != 0u8
+        v1 = k as i32 >> 1i32;
+        (ram_word!(game, eproj_y_vel[v1]) as i32 & 0x8000i32) == 0i32 && carry != 0u8
     } {
-        let v3: i32 = k as i32 >> 1 as i32;
+        let v3: i32 = k as i32 >> 1i32;
         set_ram_word!(game.eproj_instr_list_ptr[v3] = addr_off_86B2EF as u16);
-        set_ram_word!(game.eproj_instr_timers[v3] = 1 as u16);
+        set_ram_word!(game.eproj_instr_timers[v3] = 1u16);
     } else {
-        let v2: u16 = (ram_word!(game, eproj_y_vel[v1]) as i32 + 16 as i32) as u16;
+        let v2: u16 = (ram_word!(game, eproj_y_vel[v1]) as i32 + 16i32) as u16;
         set_ram_word!(game.eproj_y_vel[v1] = v2);
-        if (v2 as i32 & 0xf000 as i32) == 4096i32 {
-            set_ram_word!(game.eproj_id[v1] = 0 as u16);
+        if (v2 as i32 & 0xf000i32) == 4096i32 {
+            set_ram_word!(game.eproj_id[v1] = 0u16);
         }
     };
 }
 unsafe fn sub_86B279(k: u16, a: u16, game: &mut Game) {
-    let v3: i32 = k as i32 >> 1 as i32;
+    let v3: i32 = k as i32 >> 1i32;
     set_ram_word!(
         game.eproj_x_vel[v3] =
-            (4 as i32 * kSinCosTable8bit_Sext[(a as i32 + 64 as i32) as usize] as i32) as u16
+            (4i32 * kSinCosTable8bit_Sext[(a as i32 + 64i32) as usize] as i32) as u16
     );
-    set_ram_word!(
-        game.eproj_y_vel[v3] = (4 as i32 * kSinCosTable8bit_Sext[a as usize] as i32) as u16
-    );
+    set_ram_word!(game.eproj_y_vel[v3] = (4i32 * kSinCosTable8bit_Sext[a as usize] as i32) as u16);
 }
 pub unsafe fn EprojInstr_SetVelTowardsSamus1(
     k: u16,
@@ -4054,7 +3953,7 @@ pub unsafe fn EprojInstr_SetVelTowardsSamus1(
 ) -> *const u8 {
     sub_86B279(
         k,
-        (CalculateAngleOfSamusFromEproj(k, game) as i32 & 0x7f as i32) as u16,
+        (CalculateAngleOfSamusFromEproj(k, game) as i32 & 0x7fi32) as u16,
         game,
     );
     epjp
@@ -4066,14 +3965,14 @@ pub unsafe fn EprojInstr_SetVelTowardsSamus2(
 ) -> *const u8 {
     sub_86B279(
         k,
-        (CalculateAngleOfSamusFromEproj(k, game) as i32 | 0x80 as i32) as u16,
+        (CalculateAngleOfSamusFromEproj(k, game) as i32 | 0x80i32) as u16,
         game,
     );
     epjp
 }
 unsafe fn EprojInit_GoldenTorizoEyeBeam(j: u16, game: &mut Game) {
     let E: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    let v2: u16 = (if ((*E).parameter_1 as i32 & 0x8000 as i32) != 0i32 {
+    let v2: u16 = (if ((*E).parameter_1 as i32 & 0x8000i32) != 0i32 {
         addr_stru_86B376 as i32
     } else {
         addr_stru_86B380 as i32
@@ -4087,42 +3986,38 @@ unsafe fn EprojInit_GoldenTorizoEyeBeam(j: u16, game: &mut Game) {
         },
         game,
     );
-    let mut v3: u16 = ((NextRandom(game) as i32 & 0x1e as i32) - 16 as i32 + 192 as i32) as u16;
-    if ((*E).parameter_1 as i32 & 0x8000 as i32) == 0i32 {
-        v3 = (v3 as i32 + 128 as i32) as u16;
+    let mut v3: u16 = ((NextRandom(game) as i32 & 0x1ei32) - 16i32 + 192i32) as u16;
+    if ((*E).parameter_1 as i32 & 0x8000i32) == 0i32 {
+        v3 = (v3 as i32 + 128i32) as u16;
     }
-    let v4: i32 = v3 as i32 >> 1 as i32;
-    let v5: i32 = j as i32 >> 1 as i32;
+    let v4: i32 = v3 as i32 >> 1i32;
+    let v5: i32 = j as i32 >> 1i32;
     set_ram_word!(
-        game.eproj_x_vel[v5] =
-            (8 as i32 * kSinCosTable8bit_Sext[(v4 + 64 as i32) as usize] as i32) as u16
+        game.eproj_x_vel[v5] = (8i32 * kSinCosTable8bit_Sext[(v4 + 64i32) as usize] as i32) as u16
     );
-    set_ram_word!(
-        game.eproj_y_vel[v5] = (8 as i32 * kSinCosTable8bit_Sext[v4 as usize] as i32) as u16
-    );
+    set_ram_word!(game.eproj_y_vel[v5] = (8i32 * kSinCosTable8bit_Sext[v4 as usize] as i32) as u16);
 }
 pub unsafe fn EprojPreInstr_GoldenTorizoEyeBeam(k: u16, game: &mut Game) {
-    if EprojBlockCollisition_Horiz(k, game) as i32 & 1 as i32 != 0 {
+    if EprojBlockCollisition_Horiz(k, game) as i32 & 1i32 != 0 {
         set_ram_word!(game.eproj_instr_list_ptr[(k as i32 >> 1i32)] = addr_off_86B3CD as u16);
-        set_ram_word!(game.eproj_instr_timers[(k as i32 >> 1i32)] = 1 as u16);
+        set_ram_word!(game.eproj_instr_timers[(k as i32 >> 1i32)] = 1u16);
         return;
     }
-    if EprojBlockCollisition_Vertical(k, game) as i32 & 1 as i32 != 0 {
-        let v1: i32 = k as i32 >> 1 as i32;
+    if EprojBlockCollisition_Vertical(k, game) as i32 & 1i32 != 0 {
+        let v1: i32 = k as i32 >> 1i32;
         set_ram_word!(
-            game.eproj_y_pos[v1] = ((ram_word!(game, eproj_y_pos[v1]) as i32 & 0xfff0 as i32
-                | 8 as i32)
-                - 2 as i32) as u16
+            game.eproj_y_pos[v1] =
+                ((ram_word!(game, eproj_y_pos[v1]) as i32 & 0xfff0i32 | 8i32) - 2i32) as u16
         );
         set_ram_word!(game.eproj_instr_list_ptr[v1] = addr_off_86B3E5 as u16);
-        set_ram_word!(game.eproj_instr_timers[v1] = 1 as u16);
+        set_ram_word!(game.eproj_instr_timers[v1] = 1u16);
     }
 }
 pub unsafe fn EprojInstr_GotoIfFunc1(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
     if ((*gExtraEnemyRam7800(ram_word!(game, eproj_F[(k as i32 >> 1i32)]) as i32, game))
         .kraid
-        .kraid_healths_8ths[0 as i32 as usize] as i32
-        & 0x8000 as i32)
+        .kraid_healths_8ths[0i32 as usize] as i32
+        & 0x8000i32)
         == 0i32
     {
         *(epjp as *mut u16) as usize as *const u8
@@ -4131,40 +4026,40 @@ pub unsafe fn EprojInstr_GotoIfFunc1(k: u16, epjp: *const u8, game: &mut Game) -
     }
 }
 pub unsafe fn EprojInstr_ResetXYpos2(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
-    let v2: i32 = k as i32 >> 1 as i32;
+    let v2: i32 = k as i32 >> 1i32;
     set_ram_word!(game.eproj_x_pos[v2] = ram_word!(game, eproj_E[v2]));
     set_ram_word!(game.eproj_y_pos[v2] = ram_word!(game, eproj_F[v2]));
     epjp
 }
 unsafe fn EprojInit_TourianEscapeShaftFakeWallExplode(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_x_pos[v1] = 272 as u16);
-    set_ram_word!(game.eproj_E[v1] = 272 as u16);
-    set_ram_word!(game.eproj_y_pos[v1] = 2184 as u16);
-    set_ram_word!(game.eproj_F[v1] = 2184 as u16);
+    let v1: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_x_pos[v1] = 272u16);
+    set_ram_word!(game.eproj_E[v1] = 272u16);
+    set_ram_word!(game.eproj_y_pos[v1] = 2184u16);
+    set_ram_word!(game.eproj_F[v1] = 2184u16);
 }
 unsafe fn EprojInit_LavaSeahorseFireball(j: u16, game: &mut Game) {
     let v1: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_y_pos[v2] = ((*v1).y_pos).wrapping_sub(28u16));
-    set_ram_word!(game.eproj_y_vel[v2] = -(961 as i32) as u16);
-    if ((*v1).ai_var_A as i32 & 0x8000 as i32) == 0i32 {
-        set_ram_word!(game.eproj_x_pos[v2] = ((*v1).x_pos as i32 + 12 as i32) as u16);
-        set_ram_word!(game.eproj_x_vel[v2] = 704 as u16);
+    set_ram_word!(game.eproj_y_vel[v2] = -(961i32) as u16);
+    if ((*v1).ai_var_A as i32 & 0x8000i32) == 0i32 {
+        set_ram_word!(game.eproj_x_pos[v2] = ((*v1).x_pos as i32 + 12i32) as u16);
+        set_ram_word!(game.eproj_x_vel[v2] = 704u16);
         set_ram_word!(game.eproj_instr_list_ptr[v2] = addr_word_86B4CB as u16);
     } else {
         set_ram_word!(game.eproj_x_pos[v2] = ((*v1).x_pos).wrapping_sub(12u16));
-        set_ram_word!(game.eproj_x_vel[v2] = -(704 as i32) as u16);
+        set_ram_word!(game.eproj_x_vel[v2] = -(704i32) as u16);
         set_ram_word!(game.eproj_instr_list_ptr[v2] = addr_word_86B4BF as u16);
     };
 }
 pub unsafe fn sub_86B535(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     let split_amount =
-        ((EprojState(&game.g_ram).slot_word(0x1ab7, v1 as usize) as i16 as i32) << 8 as i32) as u32;
+        ((EprojState(&game.g_ram).slot_word(0x1ab7, v1 as usize) as i16 as i32) << 8i32) as u32;
     EprojStateMut(&mut game.g_ram).add_split_words(0x1a4b, 0x1a27, v1 as usize, split_amount);
     let split_amount =
-        ((EprojState(&game.g_ram).slot_word(0x1adb, v1 as usize) as i16 as i32) << 8 as i32) as u32;
+        ((EprojState(&game.g_ram).slot_word(0x1adb, v1 as usize) as i16 as i32) << 8i32) as u32;
     EprojStateMut(&mut game.g_ram).add_split_words(0x1a93, 0x1a6f, v1 as usize, split_amount);
     let v6: i16 = EprojState(&game.g_ram).slot_word(0x1adb, v1 as usize) as i16;
     if v6 >= 0i16 {
@@ -4175,7 +4070,7 @@ pub unsafe fn sub_86B535(k: u16, game: &mut Game) {
         if (v6).wrapping_add(32i16) >= 0i16 {
             {
                 let instruction: u16 =
-                    (if (ram_word!(game, eproj_x_vel[v1]) as i32 & 0x8000 as i32) == 0i32 {
+                    (if (ram_word!(game, eproj_x_vel[v1]) as i32 & 0x8000i32) == 0i32 {
                         addr_word_86B4E3 as i32
                     } else {
                         addr_word_86B4D7 as i32
@@ -4186,7 +4081,7 @@ pub unsafe fn sub_86B535(k: u16, game: &mut Game) {
     };
 }
 pub unsafe fn Eproj_DeleteIfYposOutside(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     if ((ram_word!(game, eproj_y_pos[v1])) as i16)
         .wrapping_sub((ram_word!(game, layer1_y_pos)) as i16)
         >= 288i16
@@ -4195,78 +4090,73 @@ pub unsafe fn Eproj_DeleteIfYposOutside(k: u16, game: &mut Game) {
     }
 }
 static word_86B65B: [i16; 20] = [
-    -(16 as i32) as i16,
-    16 as i16,
-    -(96 as i32) as i16,
-    -(64 as i32) as i16,
-    -(128 as i32) as i16,
-    -(32 as i32) as i16,
-    -(96 as i32) as i16,
-    64 as i16,
-    -(128 as i32) as i16,
-    32 as i16,
-    16 as i16,
-    16 as i16,
-    96 as i16,
-    -(64 as i32) as i16,
-    112 as i16,
-    -(64 as i32) as i16,
-    128 as i16,
-    -(64 as i32) as i16,
-    144 as i16,
-    -(64 as i32) as i16,
+    -(16i32) as i16,
+    16i16,
+    -(96i32) as i16,
+    -(64i32) as i16,
+    -(128i32) as i16,
+    -(32i32) as i16,
+    -(96i32) as i16,
+    64i16,
+    -(128i32) as i16,
+    32i16,
+    16i16,
+    16i16,
+    96i16,
+    -(64i32) as i16,
+    112i16,
+    -(64i32) as i16,
+    128i16,
+    -(64i32) as i16,
+    144i16,
+    -(64i32) as i16,
 ];
 unsafe fn EprojInit_EyeDoorProjectile(j: u16, game: &mut Game) {
     let v1: u16 = ram_word!(game, plm_id);
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(
         game.eproj_F[v2] = *((&raw mut game.g_ram as *mut u8).offset(0x1dc7) as *mut u16)
-            .offset((ram_word!(game, plm_id) as i32 >> 1 as i32) as isize,)
+            .offset((ram_word!(game, plm_id) as i32 >> 1i32) as isize,)
     );
     CalculatePlmBlockCoords(v1, game);
-    let v3: i32 = ram_word!(game, cinematic_var8) as i32 >> 1 as i32;
+    let v3: i32 = ram_word!(game, cinematic_var8) as i32 >> 1i32;
     set_ram_word!(
         game.eproj_x_pos[v2] = (word_86B65B[v3 as usize] as i32
-            + 8 as i32 * (2 as i32 * ram_word!(game, plm_x_block) as i32 + 1 as i32))
+            + 8i32 * (2i32 * ram_word!(game, plm_x_block) as i32 + 1i32))
             as u16
     );
     set_ram_word!(
-        game.eproj_y_pos[v2] = (word_86B65B[(v3 + 1 as i32) as usize] as i32
-            + 16 as i32 * ram_word!(game, plm_y_block) as i32)
-            as u16
+        game.eproj_y_pos[v2] = (word_86B65B[(v3 + 1i32) as usize] as i32
+            + 16i32 * ram_word!(game, plm_y_block) as i32) as u16
     );
 }
-static word_86B6B1: [i16; 4] = [-(64 as i32) as i16, 512 as i16, 64 as i16, 512 as i16];
+static word_86B6B1: [i16; 4] = [-(64i32) as i16, 512i16, 64i16, 512i16];
 unsafe fn EprojInit_EyeDoorSweat(j: u16, game: &mut Game) {
     CalculatePlmBlockCoords(ram_word!(game, plm_id), game);
-    let v1: i32 = j as i32 >> 1 as i32;
+    let v1: i32 = j as i32 >> 1i32;
     set_ram_word!(
-        game.eproj_x_pos[v1] = (8 as i32
-            * (2 as i32 * (ram_word!(game, plm_x_block) as i32 - 1 as i32) + 1 as i32))
-            as u16
+        game.eproj_x_pos[v1] =
+            (8i32 * (2i32 * (ram_word!(game, plm_x_block) as i32 - 1i32) + 1i32)) as u16
     );
     set_ram_word!(
-        game.eproj_y_pos[v1] =
-            (16 as i32 * (ram_word!(game, plm_y_block) as i32 + 1 as i32)) as u16
+        game.eproj_y_pos[v1] = (16i32 * (ram_word!(game, plm_y_block) as i32 + 1i32)) as u16
     );
-    let v2: i32 = ram_word!(game, cinematic_var8) as i32 >> 1 as i32;
+    let v2: i32 = ram_word!(game, cinematic_var8) as i32 >> 1i32;
     set_ram_word!(game.eproj_x_vel[v1] = word_86B6B1[v2 as usize] as u16);
-    set_ram_word!(game.eproj_y_vel[v1] = word_86B6B1[(v2 + 1 as i32) as usize] as u16);
+    set_ram_word!(game.eproj_y_vel[v1] = word_86B6B1[(v2 + 1i32) as usize] as u16);
 }
 pub unsafe fn EprojPreInstr_EyeDoorProjectile(k: u16, game: &mut Game) {
-    let v3: i32 = k as i32 >> 1 as i32;
-    if !(EprojBlockCollisition_Horiz(k, game) as i32 & 1 as i32 != 0
-        || EprojBlockCollisition_Vertical(k, game) as i32 & 1 as i32 != 0)
+    let v3: i32 = k as i32 >> 1i32;
+    if !(EprojBlockCollisition_Horiz(k, game) as i32 & 1i32 != 0
+        || EprojBlockCollisition_Vertical(k, game) as i32 & 1i32 != 0)
     {
-        let v1: i32 = ram_word!(game, eproj_E[(k as i32 >> 1i32)]) as i32 >> 1 as i32;
+        let v1: i32 = ram_word!(game, eproj_E[(k as i32 >> 1i32)]) as i32 >> 1i32;
         update_ram_word!(
             game.eproj_x_vel[v3],
-            wrapping_add(
-                (kSinCosTable8bit_Sext[(v1 + 64 as i32) as usize] as i32 >> 4 as i32) as u16
-            )
+            wrapping_add((kSinCosTable8bit_Sext[(v1 + 64i32) as usize] as i32 >> 4i32) as u16)
         );
         update_ram_word!(game.eproj_y_vel[v3], |fresh101| (fresh101 as i32
-            + (kSinCosTable8bit_Sext[v1 as usize] as i32 >> 4 as i32))
+            + (kSinCosTable8bit_Sext[v1 as usize] as i32 >> 4i32))
             as u16);
         let t: i32 = PrepareBitAccess(ram_word!(game, eproj_F[v3]), game) as i32;
         if ((ram_word!(game, bitmask) as i32
@@ -4283,8 +4173,8 @@ pub unsafe fn EprojPreInstr_EyeDoorProjectile(k: u16, game: &mut Game) {
 pub unsafe fn EprojPreInstr_EyeDoorSweat(k: u16, game: &mut Game) {
     EprojBlockCollisition_Horiz(k, game);
     let carry: u8 = EprojBlockCollisition_Vertical(k, game);
-    let v1: i32 = k as i32 >> 1 as i32;
-    if (ram_word!(game, eproj_y_vel[v1]) as i32 & 0x8000 as i32) != 0i32 || carry == 0 {
+    let v1: i32 = k as i32 >> 1i32;
+    if (ram_word!(game, eproj_y_vel[v1]) as i32 & 0x8000i32) != 0i32 || carry == 0 {
         EprojStateMut(&mut game.g_ram).add_word(0x1adb, v1 as usize, 12);
     } else {
         EprojStateMut(&mut game.g_ram).add_word(0x1a93, v1 as usize, (-4i16) as u16);
@@ -4300,11 +4190,9 @@ pub unsafe fn EprojInstr_SpawnTourianStatueUnlockingParticle(
     epjp
 }
 pub unsafe fn EprojInstr_Earthquake(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
-    set_ram_word!(game.earthquake_type = 1 as u16);
-    update_ram_word!(
-        game.earthquake_timer,
-        |fresh29| (fresh29 as i32 | 0x20 as i32) as u16
-    );
+    set_ram_word!(game.earthquake_type = 1u16);
+    update_ram_word!(game.earthquake_timer, |fresh29| (fresh29 as i32 | 0x20i32)
+        as u16);
     epjp
 }
 pub unsafe fn EprojInstr_SpawnTourianStatueUnlockingParticleTail(
@@ -4321,114 +4209,95 @@ pub unsafe fn EprojInstr_SpawnTourianStatueUnlockingParticleTail(
 }
 pub unsafe fn EprojInstr_AddToYpos(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
     update_ram_word!(
-        game.eproj_y_pos[(k as i32 >> 1 as i32)],
+        game.eproj_y_pos[(k as i32 >> 1i32)],
         |fresh28| (fresh28 as i32 + *(epjp as *mut u16) as i32) as u16
     );
     epjp.offset(2)
 }
 unsafe fn EprojInit_TourianStatueUnlockingParticleWaterSplash(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
+    let v1: i32 = j as i32 >> 1i32;
     set_ram_word!(
         game.eproj_x_pos[v1] = *((&raw mut game.g_ram as *mut u8).offset(0x1a4b) as *mut u16)
-            .offset((ram_word!(game, cinematic_var8) as i32 >> 1 as i32) as isize,)
+            .offset((ram_word!(game, cinematic_var8) as i32 >> 1i32) as isize,)
     );
-    set_ram_word!(game.eproj_y_pos[v1] = (ram_word!(game, fx_y_pos) as i32 - 4 as i32) as u16);
+    set_ram_word!(game.eproj_y_pos[v1] = (ram_word!(game, fx_y_pos) as i32 - 4i32) as u16);
 }
-static kEprojInit_TourianStatueEyeGlow_X: [u16; 4] =
-    [0x84 as u16, 0x7a as u16, 0x9e as u16, 0x68 as u16];
-static kEprojInit_TourianStatueEyeGlow_Y: [u16; 4] =
-    [0x90 as u16, 0x51 as u16, 0x80 as u16, 0x72 as u16];
+static kEprojInit_TourianStatueEyeGlow_X: [u16; 4] = [0x84u16, 0x7au16, 0x9eu16, 0x68u16];
+static kEprojInit_TourianStatueEyeGlow_Y: [u16; 4] = [0x90u16, 0x51u16, 0x80u16, 0x72u16];
 static kEprojInit_TourianStatueEyeGlow_Colors: [u16; 16] = [
-    0x6bff as u16,
-    0x33b as u16,
-    0x216 as u16,
-    0x173 as u16,
-    0x7f5f as u16,
-    0x7c1f as u16,
-    0x5816 as u16,
-    0x300c as u16,
-    0x7f5a as u16,
-    0x7ec0 as u16,
-    0x6de0 as u16,
-    0x54e0 as u16,
-    0x6bfa as u16,
-    0x3be0 as u16,
-    0x2680 as u16,
-    0x1580 as u16,
+    0x6bffu16, 0x33bu16, 0x216u16, 0x173u16, 0x7f5fu16, 0x7c1fu16, 0x5816u16, 0x300cu16, 0x7f5au16,
+    0x7ec0u16, 0x6de0u16, 0x54e0u16, 0x6bfau16, 0x3be0u16, 0x2680u16, 0x1580u16,
 ];
 unsafe fn EprojInit_TourianStatueEyeGlow(j: u16, game: &mut Game) {
     let v1: u16 = ram_word!(game, cinematic_var8);
-    let v2: i32 = ram_word!(game, cinematic_var8) as i32 >> 1 as i32;
-    let v3: i32 = j as i32 >> 1 as i32;
+    let v2: i32 = ram_word!(game, cinematic_var8) as i32 >> 1i32;
+    let v3: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_x_pos[v3] = kEprojInit_TourianStatueEyeGlow_X[v2 as usize]);
     set_ram_word!(game.eproj_y_pos[v3] = kEprojInit_TourianStatueEyeGlow_Y[v2 as usize]);
-    let mut v4: u16 = (4 as i32 * v1 as i32) as u16;
-    let mut i: i32 = 498 as i32;
+    let mut v4: u16 = (4i32 * v1 as i32) as u16;
+    let mut i: i32 = 498i32;
     while i != 506i32 {
         set_ram_word!(
             game.palette_buffer[(i >> 1i32)] =
-                kEprojInit_TourianStatueEyeGlow_Colors[(v4 as i32 >> 1 as i32) as usize]
+                kEprojInit_TourianStatueEyeGlow_Colors[(v4 as i32 >> 1i32) as usize]
         );
-        v4 = (v4 as i32 + 2 as i32) as u16;
-        i += 2 as i32;
+        v4 = (v4 as i32 + 2i32) as u16;
+        i += 2i32;
     }
 }
 unsafe fn EprojInit_TourianStatueUnlockingParticle(j: u16, game: &mut Game) {
-    let v1: i32 = ram_word!(game, cinematic_var8) as i32 >> 1 as i32;
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v1: i32 = ram_word!(game, cinematic_var8) as i32 >> 1i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_x_pos[v2] = ram_word!(game, eproj_x_pos[v1]));
     set_ram_word!(game.eproj_y_pos[v2] = ram_word!(game, eproj_y_pos[v1]));
-    let v3: u16 =
-        (2 as i32 * ((NextRandom(game) as i32 & 0x3f as i32) - 32 as i32) as u8 as i32) as u16;
+    let v3: u16 = (2i32 * ((NextRandom(game) as i32 & 0x3fi32) - 32i32) as u8 as i32) as u16;
     set_ram_word!(game.eproj_E[v2] = v3);
-    let v4: i32 = v3 as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_x_vel[v2] = kSinCosTable8bit_Sext[(v4 + 64 as i32) as usize] as u16);
-    set_ram_word!(
-        game.eproj_y_vel[v2] = (4 as i32 * kSinCosTable8bit_Sext[v4 as usize] as i32) as u16
-    );
+    let v4: i32 = v3 as i32 >> 1i32;
+    set_ram_word!(game.eproj_x_vel[v2] = kSinCosTable8bit_Sext[(v4 + 64i32) as usize] as u16);
+    set_ram_word!(game.eproj_y_vel[v2] = (4i32 * kSinCosTable8bit_Sext[v4 as usize] as i32) as u16);
 }
 pub unsafe fn EprojIni_TourianStatueUnlockingParticleTail(v0: u16, game: &mut Game) {
-    let v1: i32 = ram_word!(game, cinematic_var8) as i32 >> 1 as i32;
-    let v2: i32 = v0 as i32 >> 1 as i32;
+    let v1: i32 = ram_word!(game, cinematic_var8) as i32 >> 1i32;
+    let v2: i32 = v0 as i32 >> 1i32;
     set_ram_word!(game.eproj_x_pos[v2] = ram_word!(game, eproj_x_pos[v1]));
     set_ram_word!(game.eproj_y_pos[v2] = ram_word!(game, eproj_y_pos[v1]));
 }
 unsafe fn EprojInit_TourianStatueSoul(j: u16, game: &mut Game) {
-    let v1: i32 = ram_word!(game, cinematic_var8) as i32 >> 1 as i32;
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v1: i32 = ram_word!(game, cinematic_var8) as i32 >> 1i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_x_pos[v2] = kEprojInit_TourianStatueEyeGlow_X[v1 as usize]);
     set_ram_word!(game.eproj_y_pos[v2] = kEprojInit_TourianStatueEyeGlow_Y[v1 as usize]);
-    set_ram_word!(game.eproj_y_vel[v2] = -(1024 as i32) as u16);
+    set_ram_word!(game.eproj_y_vel[v2] = -(1024i32) as u16);
 }
 unsafe fn EprojInit_TourianStatueBaseDecoration(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_E[v1] = 120 as u16);
-    set_ram_word!(game.eproj_x_pos[v1] = 120 as u16);
-    set_ram_word!(game.eproj_F[v1] = 184 as u16);
-    set_ram_word!(game.eproj_y_pos[v1] = 184 as u16);
+    let v1: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_E[v1] = 120u16);
+    set_ram_word!(game.eproj_x_pos[v1] = 120u16);
+    set_ram_word!(game.eproj_F[v1] = 184u16);
+    set_ram_word!(game.eproj_y_pos[v1] = 184u16);
 }
 unsafe fn EprojInit_TourianStatueRidley(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_E[v1] = 142 as u16);
-    set_ram_word!(game.eproj_x_pos[v1] = 142 as u16);
-    set_ram_word!(game.eproj_F[v1] = 85 as u16);
-    set_ram_word!(game.eproj_y_pos[v1] = 85 as u16);
+    let v1: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_E[v1] = 142u16);
+    set_ram_word!(game.eproj_x_pos[v1] = 142u16);
+    set_ram_word!(game.eproj_F[v1] = 85u16);
+    set_ram_word!(game.eproj_y_pos[v1] = 85u16);
 }
 unsafe fn EprojInit_TourianStatuePhantoon(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_E[v1] = 132 as u16);
-    set_ram_word!(game.eproj_x_pos[v1] = 132 as u16);
-    set_ram_word!(game.eproj_F[v1] = 136 as u16);
-    set_ram_word!(game.eproj_y_pos[v1] = 136 as u16);
+    let v1: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_E[v1] = 132u16);
+    set_ram_word!(game.eproj_x_pos[v1] = 132u16);
+    set_ram_word!(game.eproj_F[v1] = 136u16);
+    set_ram_word!(game.eproj_y_pos[v1] = 136u16);
 }
 pub unsafe fn EprojPreInstr_TourianStatueUnlockingParticleWaterSplash(k: u16, game: &mut Game) {
     set_ram_word!(
-        game.eproj_y_pos[(k as i32 >> 1i32)] = (ram_word!(game, fx_y_pos) as i32 - 4 as i32) as u16
+        game.eproj_y_pos[(k as i32 >> 1i32)] = (ram_word!(game, fx_y_pos) as i32 - 4i32) as u16
     );
 }
 pub unsafe fn EprojPreInstr_TourianStatueUnlockingParticle(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
-    let mut amt: i32 = (ram_word!(game, eproj_x_vel[v1]) as i16 as i32) << 8 as i32;
+    let v1: i32 = k as i32 >> 1i32;
+    let mut amt: i32 = (ram_word!(game, eproj_x_vel[v1]) as i16 as i32) << 8i32;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut u8).offset(0x1a4b) as *mut u16).offset(v1 as isize)
             as *mut u16,
@@ -4438,7 +4307,7 @@ pub unsafe fn EprojPreInstr_TourianStatueUnlockingParticle(k: u16, game: &mut Ga
     );
     let v7: u16 =
         (ram_word!(game, fx_y_pos) as i32 - ram_word!(game, eproj_y_pos[v1]) as i32) as u16;
-    amt = (ram_word!(game, eproj_y_vel[v1]) as i16 as i32) << 8 as i32;
+    amt = (ram_word!(game, eproj_y_vel[v1]) as i16 as i32) << 8i32;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut u8).offset(0x1a93) as *mut u16).offset(v1 as isize)
             as *mut u16,
@@ -4447,22 +4316,22 @@ pub unsafe fn EprojPreInstr_TourianStatueUnlockingParticle(k: u16, game: &mut Ga
         amt as u32,
     );
     if ((v7 as i32 ^ ram_word!(game, fx_y_pos) as i32 - ram_word!(game, eproj_y_pos[v1]) as i32)
-        & 0x8000 as i32)
+        & 0x8000i32)
         != 0i32
     {
         SpawnEprojWithRoomGfx(addr_stru_86BA5C as u16, k, game);
     }
-    if (ram_word!(game, eproj_y_pos[v1]) as i32 & 0xff00 as i32) == 256i32 {
+    if (ram_word!(game, eproj_y_pos[v1]) as i32 & 0xff00i32) == 256i32 {
         set_ram_word!(game.eproj_instr_list_ptr[v1] = addr_off_86B79F as u16);
-        set_ram_word!(game.eproj_instr_timers[v1] = 1 as u16);
+        set_ram_word!(game.eproj_instr_timers[v1] = 1u16);
     } else {
-        update_ram_word!(game.eproj_y_vel[v1], |fresh97| (fresh97 as i32 + 16 as i32)
+        update_ram_word!(game.eproj_y_vel[v1], |fresh97| (fresh97 as i32 + 16i32)
             as u16);
     };
 }
 pub unsafe fn EprojPreInstr_TourianStatueSoul(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
-    let amt: i32 = (ram_word!(game, eproj_y_vel[v1]) as i16 as i32) << 8 as i32;
+    let v1: i32 = k as i32 >> 1i32;
+    let amt: i32 = (ram_word!(game, eproj_y_vel[v1]) as i16 as i32) << 8i32;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut u8).offset(0x1a93) as *mut u16).offset(v1 as isize)
             as *mut u16,
@@ -4470,17 +4339,15 @@ pub unsafe fn EprojPreInstr_TourianStatueSoul(k: u16, game: &mut Game) {
             as *mut u16,
         amt as u32,
     );
-    if (ram_word!(game, eproj_y_pos[v1]) as i32 & 0x100 as i32) != 0i32 {
+    if (ram_word!(game, eproj_y_pos[v1]) as i32 & 0x100i32) != 0i32 {
         set_ram_word!(game.eproj_instr_list_ptr[v1] = addr_off_86B79F as u16);
-        set_ram_word!(game.eproj_instr_timers[v1] = 1 as u16);
+        set_ram_word!(game.eproj_instr_timers[v1] = 1u16);
     }
-    update_ram_word!(
-        game.eproj_y_vel[v1],
-        |fresh96| (fresh96 as i32 - 128 as i32) as u16
-    );
+    update_ram_word!(game.eproj_y_vel[v1], |fresh96| (fresh96 as i32 - 128i32)
+        as u16);
 }
 unsafe fn EprojPreInstr_BA42(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     set_ram_word!(game.eproj_x_pos[v1] = ram_word!(game, eproj_E[v1]));
     set_ram_word!(
         game.eproj_y_pos[v1] = (ram_word!(game, eproj_F[v1]) as i32
@@ -4495,7 +4362,7 @@ pub unsafe fn EprojPreInstr_TourianStatueStuff(k: u16, game: &mut Game) {
     if ram_word!(game, tourian_entrance_statue_animstate) == 0 {
         update_ram_word!(
             game.tourian_entrance_statue_finished,
-            |fresh95| (fresh95 as i32 | 0x8000 as i32) as u16
+            |fresh95| (fresh95 as i32 | 0x8000i32) as u16
         );
     }
     EprojPreInstr_BA42(k, game);
@@ -4503,7 +4370,7 @@ pub unsafe fn EprojPreInstr_TourianStatueStuff(k: u16, game: &mut Game) {
 pub unsafe fn sub_86BB30(j: u16, game: &mut Game) {
     let v1: *mut ExtraEnemyRam8000 =
         gExtraEnemyRam8000(ram_word!(game, cur_enemy_index) as i32, game);
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(
         game.eproj_x_pos[v2] = *((&raw mut (*v1).pad as *mut u8).offset(34) as *mut u8 as *mut u16)
     );
@@ -4518,7 +4385,7 @@ pub unsafe fn sub_86BB30(j: u16, game: &mut Game) {
 }
 unsafe fn EprojInit_NuclearWaffleBody(j: u16, game: &mut Game) {
     let v2: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    let v3: i32 = j as i32 >> 1 as i32;
+    let v3: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_x_pos[v3] = (*v2).x_pos);
     set_ram_word!(game.eproj_x_subpos[v3] = (*v2).x_subpos);
     set_ram_word!(game.eproj_y_pos[v3] = (*v2).y_pos);
@@ -4532,12 +4399,12 @@ unsafe fn EprojInit_NuclearWaffleBody(j: u16, game: &mut Game) {
     ))
     .kraid
     .kraid_next = j;
-    set_ram_word!(game.eproj_flags[v3] = 1 as u16);
+    set_ram_word!(game.eproj_flags[v3] = 1u16);
 }
 unsafe fn EprojInit_NorfairLavaquakeRocks(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
+    let v1: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_instr_list_ptr[v1] = addr_word_86BBD5 as u16);
-    set_ram_word!(game.eproj_E[v1] = (0x86bc16 as i32 & 0xffff as i32) as u16);
+    set_ram_word!(game.eproj_E[v1] = (0x86bc16i32 & 0xffffi32) as u16);
     set_ram_word!(game.eproj_y_vel[v1] = ram_word!(game, cinematic_var8));
     set_ram_word!(game.eproj_x_vel[v1] = ram_word!(game, cinematic_var9));
     let v2: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
@@ -4556,27 +4423,27 @@ pub unsafe fn CallNorfairLavaquakeRocksFunc(ea: u32, k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn EprojPreInstr_NorfairLavaquakeRocks_Inner2(k: u16, game: &mut Game) -> u16 {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     (((ram_word!(game, eproj_x_pos[v1]) as i32 - ram_word!(game, layer1_x_pos) as i32) as i16)
         < 0i16
-        || ((ram_word!(game, layer1_x_pos) as i32 + 256 as i32
+        || ((ram_word!(game, layer1_x_pos) as i32 + 256i32
             - ram_word!(game, eproj_x_pos[v1]) as i32) as i16)
             < 0i16
         || ((ram_word!(game, eproj_y_pos[v1]) as i32 - ram_word!(game, layer1_y_pos) as i32)
             as i16)
             < 0i16
-        || ((ram_word!(game, layer1_y_pos) as i32 + 256 as i32
+        || ((ram_word!(game, layer1_y_pos) as i32 + 256i32
             - ram_word!(game, eproj_y_pos[v1]) as i32) as i16)
             < 0i16) as u16
 }
 pub unsafe fn EprojPreInstr_NorfairLavaquakeRocks_Inner(k: u16, game: &mut Game) {
     if EprojPreInstr_NorfairLavaquakeRocks_Inner2(k, game) != 0 {
-        set_ram_word!(game.eproj_id[(k as i32 >> 1i32)] = 0 as u16);
+        set_ram_word!(game.eproj_id[(k as i32 >> 1i32)] = 0u16);
     }
 }
 pub unsafe fn EprojPreInstr_NorfairLavaquakeRocks(k: u16, game: &mut Game) {
     CallNorfairLavaquakeRocksFunc(
-        (ram_word!(game, eproj_E[(k as i32 >> 1i32)]) as i32 | 0x860000 as i32) as u32,
+        (ram_word!(game, eproj_E[(k as i32 >> 1i32)]) as i32 | 0x860000i32) as u32,
         k,
         game,
     );
@@ -4585,29 +4452,29 @@ pub unsafe fn EprojPreInstr_NorfairLavaquakeRocks(k: u16, game: &mut Game) {
 pub unsafe fn Eproj_NorfairLavaquakeRocks_Func1(k: u16, game: &mut Game) {
     let mut v2: i16 = 0;
     let mut v3: i16 = 0;
-    let v1: i32 = k as i32 >> 1 as i32;
-    v2 = (ram_word!(game, eproj_y_vel[v1]) as i32 - 2 as i32) as i16;
+    let v1: i32 = k as i32 >> 1i32;
+    v2 = (ram_word!(game, eproj_y_vel[v1]) as i32 - 2i32) as i16;
     set_ram_word!(game.eproj_y_vel[v1] = v2 as u16);
     if v2 >= 0i16 {
-        let mut n: i32 = 2 as i32;
+        let mut n: i32 = 2i32;
         loop {
-            v3 = (n + ram_word!(game, eproj_y_vel[v1]) as i32 - 1 as i32) as i16;
+            v3 = (n + ram_word!(game, eproj_y_vel[v1]) as i32 - 1i32) as i16;
             if v3 < 0i16 {
-                v3 = 0 as i16;
+                v3 = 0i16;
             }
-            let t: i32 = 8 as i32 * v3 as i32 + 4 as i32 >> 1 as i32;
+            let t: i32 = 8i32 * v3 as i32 + 4i32 >> 1i32;
             AddToHiLo(
                 ((&raw mut game.g_ram as *mut u8).offset(0x1a93) as *mut u16).offset(v1 as isize)
                     as *mut u16,
                 ((&raw mut game.g_ram as *mut u8).offset(0x1a6f) as *mut u16).offset(v1 as isize)
                     as *mut u16,
                 *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *const u8 as *mut u32)
-                    .offset((t >> 1 as i32) as isize),
+                    .offset((t >> 1i32) as isize),
             );
             set_ram_word!(
                 game.eproj_F[v1] = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7))
                     as *const u8 as *mut u16)
-                    .offset((t + 1 as i32) as isize)
+                    .offset((t + 1i32) as isize)
             );
             n -= 1;
             if (n == 0) {
@@ -4616,33 +4483,32 @@ pub unsafe fn Eproj_NorfairLavaquakeRocks_Func1(k: u16, game: &mut Game) {
         }
         Eproj_NorfairLavaquakeRocks_Func3(k, game);
     } else {
-        set_ram_word!(game.eproj_y_vel[v1] = 0 as u16);
-        set_ram_word!(game.eproj_E[v1] = (0x86bc8f as i32 & 0xffff as i32) as u16);
+        set_ram_word!(game.eproj_y_vel[v1] = 0u16);
+        set_ram_word!(game.eproj_E[v1] = (0x86bc8fi32 & 0xffffi32) as u16);
     };
 }
 pub unsafe fn Eproj_NorfairLavaquakeRocks_Func2(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
-    let v2: u16 = (ram_word!(game, eproj_y_vel[v1]) as i32 + 2 as i32) as u16;
+    let v1: i32 = k as i32 >> 1i32;
+    let v2: u16 = (ram_word!(game, eproj_y_vel[v1]) as i32 + 2i32) as u16;
     set_ram_word!(game.eproj_y_vel[v1] = v2);
-    if v2 as i32 - 64 as i32 & 0x8000 as i32 == 0 {
-        set_ram_word!(game.eproj_y_vel[v1] = 64 as u16);
+    if v2 as i32 - 64i32 & 0x8000i32 == 0 {
+        set_ram_word!(game.eproj_y_vel[v1] = 64u16);
     }
-    let mut n: i32 = 2 as i32;
+    let mut n: i32 = 2i32;
     loop {
-        let t: i32 =
-            8 as i32 * (ram_word!(game, eproj_y_vel[v1]) as i32 - n + 1 as i32) >> 1 as i32;
+        let t: i32 = 8i32 * (ram_word!(game, eproj_y_vel[v1]) as i32 - n + 1i32) >> 1i32;
         AddToHiLo(
             ((&raw mut game.g_ram as *mut u8).offset(0x1a93) as *mut u16).offset(v1 as isize)
                 as *mut u16,
             ((&raw mut game.g_ram as *mut u8).offset(0x1a6f) as *mut u16).offset(v1 as isize)
                 as *mut u16,
             *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *const u8 as *mut u32)
-                .offset((t >> 1 as i32) as isize),
+                .offset((t >> 1i32) as isize),
         );
         set_ram_word!(
             game.eproj_F[v1] = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *const u8
                 as *mut u16)
-                .offset((t + 1 as i32) as isize)
+                .offset((t + 1i32) as isize)
         );
         n -= 1;
         if (n == 0) {
@@ -4652,45 +4518,45 @@ pub unsafe fn Eproj_NorfairLavaquakeRocks_Func2(k: u16, game: &mut Game) {
     Eproj_NorfairLavaquakeRocks_Func3(k, game);
 }
 pub unsafe fn Eproj_NorfairLavaquakeRocks_Func3(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut u8).offset(0x1a4b) as *mut u16).offset(v1 as isize)
             as *mut u16,
         ((&raw mut game.g_ram as *mut u8).offset(0x1a27) as *mut u16).offset(v1 as isize)
             as *mut u16,
-        ((ram_word!(game, eproj_x_vel[v1]) as i16 as i32) << 8 as i32) as u32,
+        ((ram_word!(game, eproj_x_vel[v1]) as i16 as i32) << 8i32) as u32,
     );
 }
 static kEprojInit_ShaktoolAttackMiddleBackCircle_X: [i16; 8] = [
-    0 as i16,
-    12 as i16,
-    16 as i16,
-    12 as i16,
-    0 as i16,
-    -(12 as i32) as i16,
-    -(16 as i32) as i16,
-    -(12 as i32) as i16,
+    0i16,
+    12i16,
+    16i16,
+    12i16,
+    0i16,
+    -(12i32) as i16,
+    -(16i32) as i16,
+    -(12i32) as i16,
 ];
 static kEprojInit_ShaktoolAttackMiddleBackCircle_Y: [i16; 8] = [
-    -(16 as i32) as i16,
-    -(12 as i32) as i16,
-    0 as i16,
-    12 as i16,
-    16 as i16,
-    12 as i16,
-    0 as i16,
-    -(12 as i32) as i16,
+    -(16i32) as i16,
+    -(12i32) as i16,
+    0i16,
+    12i16,
+    16i16,
+    12i16,
+    0i16,
+    -(12i32) as i16,
 ];
 unsafe fn EprojInit_BDA2(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
+    let v1: i32 = j as i32 >> 1i32;
     let v2: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
     set_ram_word!(game.eproj_x_pos[v1] = (*v2).x_pos);
     set_ram_word!(game.eproj_y_pos[v1] = (*v2).y_pos);
-    let v3: u16 = (2 as i32 * *(&raw mut (*v2).ai_var_D as *mut u8).offset(0) as i32) as u16;
-    let v4: i32 = v3 as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_x_vel[v1] = kSinCosTable8bit_Sext[(v4 + 64 as i32) as usize] as u16);
+    let v3: u16 = (2i32 * *(&raw mut (*v2).ai_var_D as *mut u8).offset(0) as i32) as u16;
+    let v4: i32 = v3 as i32 >> 1i32;
+    set_ram_word!(game.eproj_x_vel[v1] = kSinCosTable8bit_Sext[(v4 + 64i32) as usize] as u16);
     set_ram_word!(game.eproj_y_vel[v1] = kSinCosTable8bit_Sext[v4 as usize] as u16);
-    let v5: i32 = (v3 as i32 >> 5 as i32) as u16 as i32 >> 1 as i32;
+    let v5: i32 = (v3 as i32 >> 5i32) as u16 as i32 >> 1i32;
     update_ram_word!(game.eproj_x_pos[v1], |fresh11| (fresh11 as i32
         + kEprojInit_ShaktoolAttackMiddleBackCircle_X[v5 as usize] as i32)
         as u16);
@@ -4703,66 +4569,46 @@ unsafe fn EprojInit_ShaktoolAttackMiddleBackCircle(j: u16, game: &mut Game) {
     EprojInit_BDA2(j, game);
 }
 unsafe fn EprojInit_ShaktoolAttackFrontCircle(v1: u16, game: &mut Game) {
-    if EprojBlockCollisition_Horiz(v1, game) as i32 & 1 as i32 != 0
-        || EprojBlockCollisition_Vertical(v1, game) as i32 & 1 as i32 != 0
+    if EprojBlockCollisition_Horiz(v1, game) as i32 & 1i32 != 0
+        || EprojBlockCollisition_Vertical(v1, game) as i32 & 1i32 != 0
     {
-        set_ram_word!(game.eproj_id[(v1 as i32 >> 1i32)] = 0 as u16);
+        set_ram_word!(game.eproj_id[(v1 as i32 >> 1i32)] = 0u16);
     }
 }
 pub unsafe fn EprojPreInstr_BE12(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     if *((&raw mut game.g_ram as *mut u8).offset(0x1997) as *mut u16)
-        .offset((ram_word!(game, eproj_E[v1]) as i32 >> 1 as i32) as isize)
+        .offset((ram_word!(game, eproj_E[v1]) as i32 >> 1i32) as isize)
         != 0
     {
         EprojBlockCollisition_Horiz(k, game);
         EprojBlockCollisition_Vertical(k, game);
     } else {
-        set_ram_word!(game.eproj_id[v1] = 0 as u16);
+        set_ram_word!(game.eproj_id[v1] = 0u16);
     };
 }
 static kEprojInit_MotherBrainRoomTurrets_X: [i16; 12] = [
-    0x398 as i16,
-    0x348 as i16,
-    0x328 as i16,
-    0x2d8 as i16,
-    0x288 as i16,
-    0x268 as i16,
-    0x218 as i16,
-    0x1c8 as i16,
-    0x1a8 as i16,
-    0x158 as i16,
-    0x108 as i16,
-    0xe8 as i16,
+    0x398i16, 0x348i16, 0x328i16, 0x2d8i16, 0x288i16, 0x268i16, 0x218i16, 0x1c8i16, 0x1a8i16,
+    0x158i16, 0x108i16, 0xe8i16,
 ];
 static EprojInit_MotherBrainRoomTurrets_Y: [i16; 12] = [
-    0x30 as i16,
-    0x40 as i16,
-    0x40 as i16,
-    0x30 as i16,
-    0x40 as i16,
-    0x40 as i16,
-    0x30 as i16,
-    0x40 as i16,
-    0x40 as i16,
-    0x30 as i16,
-    0x40 as i16,
-    0x40 as i16,
+    0x30i16, 0x40i16, 0x40i16, 0x30i16, 0x40i16, 0x40i16, 0x30i16, 0x40i16, 0x40i16, 0x30i16,
+    0x40i16, 0x40i16,
 ];
 unsafe fn EprojInit_MotherBrainRoomTurrets(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_gfx_idx[v1] = 1024 as u16);
-    let v2: u16 = (2 as i32 * ram_word!(game, cinematic_var8) as i32) as u16;
+    let v1: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_gfx_idx[v1] = 1024u16);
+    let v2: u16 = (2i32 * ram_word!(game, cinematic_var8) as i32) as u16;
     let v3: u16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x86bee1)) as *const u8 as *mut u16)
         .offset(ram_word!(game, cinematic_var8) as isize) as i32
-        | 0x100 as i32) as u16;
+        | 0x100i32) as u16;
     set_ram_word!(game.eproj_y_subpos[v1] = v3);
     set_ram_word!(
         game.eproj_instr_list_ptr[v1] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x86beb9))
             as *const u8 as *mut u16)
-            .offset(((2 as i32 * v3 as u8 as i32) as u16 as i32 >> 1 as i32) as isize,)
+            .offset(((2i32 * v3 as u8 as i32) as u16 as i32 >> 1i32) as isize,)
     );
-    let v4: i32 = v2 as i32 >> 1 as i32;
+    let v4: i32 = v2 as i32 >> 1i32;
     set_ram_word!(game.eproj_x_pos[v1] = kEprojInit_MotherBrainRoomTurrets_X[v4 as usize] as u16);
     set_ram_word!(game.eproj_y_pos[v1] = EprojInit_MotherBrainRoomTurrets_Y[v4 as usize] as u16);
     set_ram_word!(
@@ -4774,56 +4620,56 @@ unsafe fn EprojInit_MotherBrainRoomTurrets(j: u16, game: &mut Game) {
     Eproj_SetYvelRandom(j, game);
 }
 static kEproj_MotherBrainRoomTurretBullets_X: [i16; 8] = [
-    -(17 as i32) as i16,
-    -(12 as i32) as i16,
-    0 as i16,
-    12 as i16,
-    17 as i16,
-    12 as i16,
-    0 as i16,
-    -(12 as i32) as i16,
+    -(17i32) as i16,
+    -(12i32) as i16,
+    0i16,
+    12i16,
+    17i16,
+    12i16,
+    0i16,
+    -(12i32) as i16,
 ];
 static kEproj_MotherBrainRoomTurretBullets_Y: [i16; 8] = [
-    -(9 as i32) as i16,
-    3 as i16,
-    7 as i16,
-    3 as i16,
-    -(9 as i32) as i16,
-    -(19 as i32) as i16,
-    -(21 as i32) as i16,
-    -(19 as i32) as i16,
+    -(9i32) as i16,
+    3i16,
+    7i16,
+    3i16,
+    -(9i32) as i16,
+    -(19i32) as i16,
+    -(21i32) as i16,
+    -(19i32) as i16,
 ];
 static kEproj_MotherBrainRoomTurretBullets_Xvel: [i16; 8] = [
-    -(704 as i32) as i16,
-    -(498 as i32) as i16,
-    0 as i16,
-    498 as i16,
-    704 as i16,
-    498 as i16,
-    0 as i16,
-    -(498 as i32) as i16,
+    -(704i32) as i16,
+    -(498i32) as i16,
+    0i16,
+    498i16,
+    704i16,
+    498i16,
+    0i16,
+    -(498i32) as i16,
 ];
 static kEproj_MotherBrainRoomTurretBullets_Yvel: [i16; 8] = [
-    0 as i16,
-    498 as i16,
-    704 as i16,
-    498 as i16,
-    0 as i16,
-    -(498 as i32) as i16,
-    -(704 as i32) as i16,
-    -(498 as i32) as i16,
+    0i16,
+    498i16,
+    704i16,
+    498i16,
+    0i16,
+    -(498i32) as i16,
+    -(704i32) as i16,
+    -(498i32) as i16,
 ];
 unsafe fn EprojInit_MotherBrainRoomTurretBullets(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_F[v1] = 0 as u16);
-    set_ram_word!(game.eproj_gfx_idx[v1] = 1024 as u16);
-    let v2: u16 = (2 as i32
+    let v1: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_F[v1] = 0u16);
+    set_ram_word!(game.eproj_gfx_idx[v1] = 1024u16);
+    let v2: u16 = (2i32
         * *(((&raw mut game.g_ram as *mut u8).offset(0x1a6f) as *mut u16)
-            .offset((ram_word!(game, cinematic_var8) as i32 >> 1 as i32) as isize)
+            .offset((ram_word!(game, cinematic_var8) as i32 >> 1i32) as isize)
             as *mut u16 as *mut u8)
             .offset(0) as i32) as u16;
     set_ram_word!(game.eproj_E[v1] = v2);
-    let v3: i32 = v2 as i32 >> 1 as i32;
+    let v3: i32 = v2 as i32 >> 1i32;
     let pt: Point16U = Point16U {
         x: kEproj_MotherBrainRoomTurretBullets_X[v3 as usize] as u16,
         y: kEproj_MotherBrainRoomTurretBullets_Y[v3 as usize] as u16,
@@ -4834,7 +4680,7 @@ unsafe fn EprojInit_MotherBrainRoomTurretBullets(j: u16, game: &mut Game) {
     set_ram_word!(
         game.eproj_y_vel[v1] = kEproj_MotherBrainRoomTurretBullets_Yvel[v3 as usize] as u16
     );
-    let v4: i32 = ram_word!(game, cinematic_var8) as i32 >> 1 as i32;
+    let v4: i32 = ram_word!(game, cinematic_var8) as i32 >> 1i32;
     set_ram_word!(
         game.eproj_x_pos[v1] = (pt.x as i32 + ram_word!(game, eproj_x_pos[v4]) as i32) as u16
     );
@@ -4843,22 +4689,22 @@ unsafe fn EprojInit_MotherBrainRoomTurretBullets(j: u16, game: &mut Game) {
     );
 }
 pub unsafe fn EprojPreInstr_MotherBrainRoomTurrets(k: u16, game: &mut Game) {
-    if Eproj_MotherBrainRoomTurretBullets_CheckIfTurretOnScreen(k, game) as i32 & 1 as i32 != 0 {
-        if (*gRam7800_Default(0 as u16, game)).var_1D != 0 {
+    if Eproj_MotherBrainRoomTurretBullets_CheckIfTurretOnScreen(k, game) as i32 & 1i32 != 0 {
+        if (*gRam7800_Default(0u16, game)).var_1D != 0 {
             *(((&raw mut game.g_ram as *mut u8).offset(0x1997) as *mut u16 as *mut u8)
-                .offset(k as i32 as isize) as *mut u16) = 0 as u16;
+                .offset(k as i32 as isize) as *mut u16) = 0u16;
         }
-    } else if (*gRam7800_Default(0 as u16, game)).var_1D != 0 {
+    } else if (*gRam7800_Default(0u16, game)).var_1D != 0 {
         *(((&raw mut game.g_ram as *mut u8).offset(0x1997) as *mut u16 as *mut u8)
-            .offset(k as i32 as isize) as *mut u16) = 0 as u16;
-        let v5: i32 = k as i32 >> 1 as i32;
+            .offset(k as i32 as isize) as *mut u16) = 0u16;
+        let v5: i32 = k as i32 >> 1i32;
         game.eproj_spawn_pt = Point16U {
             x: ram_word!(game, eproj_x_pos[v5]),
             y: ram_word!(game, eproj_y_pos[v5]),
         };
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0xc as u16, game);
+        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0xcu16, game);
     } else {
-        let v1: i32 = k as i32 >> 1 as i32;
+        let v1: i32 = k as i32 >> 1i32;
         let ref mut fresh88 =
             *((&raw mut game.g_ram as *mut u8).offset(0x1ab7) as *mut u16).offset(v1 as isize);
         let fresh89 = *fresh88;
@@ -4867,7 +4713,7 @@ pub unsafe fn EprojPreInstr_MotherBrainRoomTurrets(k: u16, game: &mut Game) {
         if v2 {
             Eproj_SetXvelRandom(k, game);
             Eproj_MotherBrainRoomTurretBullets_Func2(k, game);
-            let v3: i32 = k as i32 >> 1 as i32;
+            let v3: i32 = k as i32 >> 1i32;
             set_ram_word!(
                 game.eproj_instr_list_ptr[v3] = *(game
                     .g_rom
@@ -4879,9 +4725,9 @@ pub unsafe fn EprojPreInstr_MotherBrainRoomTurrets(k: u16, game: &mut Game) {
                             .offset(0) as isize,
                     )
             );
-            set_ram_word!(game.eproj_instr_timers[v3] = 1 as u16);
+            set_ram_word!(game.eproj_instr_timers[v3] = 1u16);
         }
-        let v4: i32 = k as i32 >> 1 as i32;
+        let v4: i32 = k as i32 >> 1i32;
         let ref mut fresh92 =
             *((&raw mut game.g_ram as *mut u8).offset(0x1adb) as *mut u16).offset(v4 as isize);
         let fresh93 = *fresh92;
@@ -4899,9 +4745,9 @@ pub unsafe fn Eproj_MotherBrainRoomTurretBullets_Func2(v0: u16, game: &mut Game)
         .offset(1) as i32
         + *((&raw mut game.g_ram as *mut u8).offset(0x1a6f) as *mut u16 as *mut u8)
             .offset(v0 as i32 as isize) as i32
-        & 7 as i32) as u8;
+        & 7i32) as u8;
     let r18: u16 = ram_word!(game, eproj_x_subpos[(v0 as i32 >> 1i32)]);
-    if *RomPtr_86(r18, game).offset((r20 as i32 & 7 as i32) as isize) != 0 {
+    if *RomPtr_86(r18, game).offset((r20 as i32 & 7i32) as isize) != 0 {
         *((&raw mut game.g_ram as *mut u8).offset(0x1a6f) as *mut u16 as *mut u8)
             .offset(v0 as i32 as isize) = r20;
     } else {
@@ -4919,15 +4765,15 @@ pub unsafe fn Eproj_MotherBrainRoomTurretBullets_Func2(v0: u16, game: &mut Game)
 }
 pub unsafe fn Eproj_SetXvelRandom(v0: u16, game: &mut Game) {
     let mut Random: u16 = NextRandom(game) as u8 as u16;
-    if Random as u8 as i32 - 32 as i32 & 0x8000 as i32 != 0 {
-        Random = 32 as u16;
+    if Random as u8 as i32 - 32i32 & 0x8000i32 != 0 {
+        Random = 32u16;
     }
     set_ram_word!(game.eproj_x_vel[(v0 as i32 >> 1i32)] = Random);
 }
 pub unsafe fn Eproj_SetYvelRandom(v0: u16, game: &mut Game) {
     let mut Random: u16 = NextRandom(game) as u8 as u16;
-    if Random as u8 as i32 - 128 as i32 & 0x8000 as i32 != 0 {
-        Random = 128 as u16;
+    if Random as u8 as i32 - 128i32 & 0x8000i32 != 0 {
+        Random = 128u16;
     }
     set_ram_word!(game.eproj_y_vel[(v0 as i32 >> 1i32)] = Random);
 }
@@ -4939,17 +4785,17 @@ pub unsafe fn Eproj_MotherBrainRoomTurretBullets_CheckIfTurretOnScreen(
     let mut v3: i16 = 0;
     let mut v4: i16 = 0;
     let mut v5: i16 = 0;
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     v2 = ram_word!(game, eproj_y_pos[v1]) as i16;
-    let result: u8 = 1 as u8;
+    let result: u8 = 1u8;
     if v2 >= 0i16 {
-        v3 = (v2 as i32 + 16 as i32 - ram_word!(game, layer1_y_pos) as i32) as i16;
-        if v3 >= 0i16 && v3 as i32 - 256 as i32 & 0x8000 as i32 != 0 {
+        v3 = (v2 as i32 + 16i32 - ram_word!(game, layer1_y_pos) as i32) as i16;
+        if v3 >= 0i16 && v3 as i32 - 256i32 & 0x8000i32 != 0 {
             v4 = ram_word!(game, eproj_x_pos[v1]) as i16;
             if v4 >= 0i16 {
-                v5 = (v4 as i32 + 4 as i32 - ram_word!(game, layer1_x_pos) as i32) as i16;
-                if v5 >= 0i16 && v5 as i32 - 264 as i32 & 0x8000 as i32 != 0 {
-                    return 0 as u8;
+                v5 = (v4 as i32 + 4i32 - ram_word!(game, layer1_x_pos) as i32) as i16;
+                if v5 >= 0i16 && v5 as i32 - 264i32 & 0x8000i32 != 0 {
+                    return 0u8;
                 }
             }
         }
@@ -4957,10 +4803,10 @@ pub unsafe fn Eproj_MotherBrainRoomTurretBullets_CheckIfTurretOnScreen(
     result
 }
 pub unsafe fn EprojPreInstr_MotherBrainRoomTurretBullets(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     update_ram_word!(
         game.eproj_properties[v1],
-        |fresh85| (fresh85 as i32 ^ 0x8000 as i32) as u16
+        |fresh85| (fresh85 as i32 ^ 0x8000i32) as u16
     );
     MoveEprojWithVelocity(k, game);
     if Ridley_Func_103(
@@ -4968,47 +4814,37 @@ pub unsafe fn EprojPreInstr_MotherBrainRoomTurretBullets(k: u16, game: &mut Game
         ram_word!(game, eproj_y_pos[v1]),
         game,
     ) as i32
-        & 1 as i32
+        & 1i32
         != 0
     {
         *((&raw mut game.g_ram as *mut u8).offset(0x1997) as *mut u16)
-            .offset((ram_word!(game, cinematic_var7) as i32 >> 1 as i32) as isize) = 0 as u16;
+            .offset((ram_word!(game, cinematic_var7) as i32 >> 1i32) as isize) = 0u16;
     }
 }
 static kMotherBrainsBomb_Yaccel: [i16; 10] = [
-    7 as i16,
-    0x10 as i16,
-    0x20 as i16,
-    0x40 as i16,
-    0x70 as i16,
-    0xb0 as i16,
-    0xf0 as i16,
-    0x130 as i16,
-    0x170 as i16,
-    0 as i16,
+    7i16, 0x10i16, 0x20i16, 0x40i16, 0x70i16, 0xb0i16, 0xf0i16, 0x130i16, 0x170i16, 0i16,
 ];
 pub unsafe fn EprojPreInstr_MotherBrainBomb(k: u16, game: &mut Game) {
     let mut v2: i16 = 0;
     if MotherBrainBomb_Bomb_CollDetect_DoubleRet(k, game) != 0 {
         return;
     }
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     let current_block_19: u64;
     if ram_word!(game, eproj_F[v1]) != 0 {
-        let v4: i32 = k as i32 >> 1 as i32;
-        let v5: u16 = kMotherBrainsBomb_Yaccel
-            [(ram_word!(game, eproj_F[v4]) as i32 >> 1 as i32) as usize]
-            as u16;
+        let v4: i32 = k as i32 >> 1i32;
+        let v5: u16 =
+            kMotherBrainsBomb_Yaccel[(ram_word!(game, eproj_F[v4]) as i32 >> 1i32) as usize] as u16;
         if v5 == 0 {
-            set_ram_word!(game.eproj_x_vel[v4] = 0 as u16);
-            set_ram_word!(game.eproj_y_vel[v4] = 0 as u16);
+            set_ram_word!(game.eproj_x_vel[v4] = 0u16);
+            set_ram_word!(game.eproj_y_vel[v4] = 0u16);
             let fresh81 = &raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x7800)
                 as *mut ExtraEnemyRam7800)
                 .offset(1))
             .kraid
             .kraid_mouth_flags;
             fresh81.write_unaligned(fresh81.read_unaligned().wrapping_sub(1));
-            set_ram_word!(game.eproj_id[v4] = 0 as u16);
+            set_ram_word!(game.eproj_id[v4] = 0u16);
             game.eproj_spawn_pt = Point16U {
                 x: ram_word!(game, eproj_x_pos[v4]),
                 y: ram_word!(game, eproj_y_pos[v4]),
@@ -5024,38 +4860,36 @@ pub unsafe fn EprojPreInstr_MotherBrainBomb(k: u16, game: &mut Game) {
                 x: ram_word!(game, eproj_x_pos[v4]),
                 y: ram_word!(game, eproj_y_pos[v4]),
             };
-            SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 3 as u16, game);
-            QueueSfx3_Max6(0x13 as u16, game);
+            SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 3u16, game);
+            QueueSfx3_Max6(0x13u16, game);
             return;
         }
-        if MoveMotherBrainBomb(k, v5, game) as i32 & 1 as i32 != 0 {
+        if MoveMotherBrainBomb(k, v5, game) as i32 & 1i32 != 0 {
             current_block_19 = 15976848397966268834;
         } else {
             current_block_19 = 7175849428784450219;
         }
     } else {
-        v2 = (abs16(ram_word!(game, eproj_x_vel[v1])) as i32 - 2 as i32) as i16;
+        v2 = (abs16(ram_word!(game, eproj_x_vel[v1])) as i32 - 2i32) as i16;
         if v2 < 0i16 {
-            v2 = 0 as i16;
+            v2 = 0i16;
         }
         set_ram_word!(
-            game.eproj_x_vel[v1] = (if ram_word!(game, eproj_x_vel[v1]) as i32 & 0x8000 as i32 != 0
-            {
+            game.eproj_x_vel[v1] = (if ram_word!(game, eproj_x_vel[v1]) as i32 & 0x8000i32 != 0 {
                 -(v2 as i32)
             } else {
                 v2 as i32
             }) as u16
         );
-        if MoveMotherBrainBomb(k, 7 as u16, game) as i32 & 1 as i32 != 0 {
+        if MoveMotherBrainBomb(k, 7u16, game) as i32 & 1i32 != 0 {
             current_block_19 = 15976848397966268834;
         } else {
             current_block_19 = 7175849428784450219;
         }
     }
     if current_block_19 == 15976848397966268834 {
-        let v3: i32 = k as i32 >> 1 as i32;
-        update_ram_word!(game.eproj_F[v3], |fresh82| (fresh82 as i32 + 2 as i32)
-            as u16);
+        let v3: i32 = k as i32 >> 1i32;
+        update_ram_word!(game.eproj_F[v3], |fresh82| (fresh82 as i32 + 2i32) as u16);
     };
 }
 pub unsafe fn EprojInstr_SwitchJump(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
@@ -5063,17 +4897,17 @@ pub unsafe fn EprojInstr_SwitchJump(k: u16, epjp: *const u8, game: &mut Game) ->
         as usize as *const u8
 }
 pub unsafe fn EprojInstr_UserPalette0(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
-    set_ram_word!(game.eproj_gfx_idx[(k as i32 >> 1i32)] = 0 as u16);
+    set_ram_word!(game.eproj_gfx_idx[(k as i32 >> 1i32)] = 0u16);
     epjp
 }
 unsafe fn Eproj_CheckForBombCollisionWithRect(rect: Rect16U, game: &mut Game) -> u8 {
     if ram_word!(game, bomb_counter) == 0 {
-        return 0 as u8;
+        return 0u8;
     }
-    let mut v1: i32 = 10 as i32;
+    let mut v1: i32 = 10i32;
     while v1 < 20i32 {
-        let v2: i32 = v1 >> 1 as i32;
-        if (ram_word!(game, projectile_type[v2]) as i32 & 0xf00 as i32) == 1280i32
+        let v2: i32 = v1 >> 1i32;
+        if (ram_word!(game, projectile_type[v2]) as i32 & 0xf00i32) == 1280i32
             && ram_word!(game, projectile_variables[v2]) == 0
         {
             let x: u16 =
@@ -5087,13 +4921,13 @@ unsafe fn Eproj_CheckForBombCollisionWithRect(rect: Rect16U, game: &mut Game) ->
                     || ((y as i32 - ram_word!(game, projectile_y_radius[v2]) as i32) as u16)
                         < rect.h
                 {
-                    return 1 as u8;
+                    return 1u8;
                 }
             }
         }
-        v1 += 2 as i32;
+        v1 += 2i32;
     }
-    0 as u8
+    0u8
 }
 unsafe fn Eproj_CheckForEnemyCollisionWithRect(k: u16, rect: Rect16U, game: &mut Game) -> u8 {
     let v1: *mut EnemyData = gEnemyData(k as i32, game);
@@ -5107,13 +4941,13 @@ unsafe fn Eproj_CheckForCollisionWithSamus(v0: u16, game: &mut Game) -> u8 {
     let v1: u16 = abs16((ram_word!(game, samus_x_pos) as i32 - rect.x as i32) as u16);
     let mut v2: bool = v1 < ram_word!(game, samus_x_radius);
     let v3: u16 = (v1 as i32 - ram_word!(game, samus_x_radius) as i32) as u16;
-    let result: u8 = 0 as u8;
+    let result: u8 = 0u8;
     if v2 || v3 < rect.w {
         let v4: u16 = abs16((ram_word!(game, samus_y_pos) as i32 - rect.y as i32) as u16);
         v2 = v4 < ram_word!(game, samus_y_radius);
         let v5: u16 = (v4 as i32 - ram_word!(game, samus_y_radius) as i32) as u16;
         if v2 || v5 < rect.h {
-            return 1 as u8;
+            return 1u8;
         }
     }
     result
@@ -5125,61 +4959,61 @@ pub unsafe fn Math_MultByCos(a: u16, r18: u16) -> u16 {
     Math_MultBySinCos(a, r18.wrapping_add(64))
 }
 pub unsafe fn Math_MultBySinCos(r38: u16, a: u16) -> u16 {
-    let r46: u16 = kSinCosTable8bit_Sext[((a as i32 & 0xff as i32) + 64 as i32) as usize] as u16;
-    let prod: u16 = ((r38 as u32).wrapping_mul(abs16(r46) as u32) >> 8 as i32) as u16;
-    ((if r46 as i32 & 0x8000 as i32 != 0 {
+    let r46: u16 = kSinCosTable8bit_Sext[((a as i32 & 0xffi32) + 64i32) as usize] as u16;
+    let prod: u16 = ((r38 as u32).wrapping_mul(abs16(r46) as u32) >> 8i32) as u16;
+    ((if r46 as i32 & 0x8000i32 != 0 {
         -(prod as i32)
     } else {
         prod as i32
     }) as u16)
 }
 pub unsafe fn Eproj_MotherBrainsBlueRingLasers(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_E[v1] = 8 as u16);
-    set_ram_word!(game.eproj_F[v1] = 0 as u16);
-    set_ram_word!(game.eproj_gfx_idx[v1] = 1024 as u16);
+    let v1: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_E[v1] = 8u16);
+    set_ram_word!(game.eproj_F[v1] = 0u16);
+    set_ram_word!(game.eproj_gfx_idx[v1] = 1024u16);
     let r18: u16 = ram_word!(game, cinematic_var8);
-    set_ram_word!(game.eproj_x_vel[v1] = Math_MultBySin(0x450 as u16, r18));
-    set_ram_word!(game.eproj_y_vel[v1] = Math_MultByCos(0x450 as u16, r18));
+    set_ram_word!(game.eproj_x_vel[v1] = Math_MultBySin(0x450u16, r18));
+    set_ram_word!(game.eproj_y_vel[v1] = Math_MultByCos(0x450u16, r18));
     set_ram_word!(
         game.eproj_x_pos[v1] =
             ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(1)).x_pos
                 as i32
-                + 10 as i32) as u16
+                + 10i32) as u16
     );
     set_ram_word!(
         game.eproj_y_pos[v1] =
             ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(1)).y_pos
                 as i32
-                + 16 as i32) as u16
+                + 16i32) as u16
     );
     sub_86C320(j, game);
 }
 pub unsafe fn sub_86C320(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     set_ram_word!(
         game.eproj_x_pos[v1] =
             ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(1)).x_pos
                 as i32
-                + 10 as i32) as u16
+                + 10i32) as u16
     );
     set_ram_word!(
         game.eproj_y_pos[v1] =
             ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(1)).y_pos
                 as i32
-                + 16 as i32) as u16
+                + 16i32) as u16
     );
 }
 pub unsafe fn Eproj_MoveToBlueRingSpawnPosition(k: u16, game: &mut Game) {
     let mut v5: i16 = 0;
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     if ram_word!(game, eproj_E[v1]) != 0 {
         update_ram_word!(game.eproj_E[v1], wrapping_sub(1));
         sub_86C320(k, game);
     } else {
         MoveEprojWithVelocity(k, game);
         let t: u8 = CheckForCollisionWithShitroid_DoubleRet(k, game);
-        if t as i32 & 0x80 as i32 != 0 {
+        if t as i32 & 0x80i32 != 0 {
             return;
         }
         if t != 0 {
@@ -5194,34 +5028,34 @@ pub unsafe fn Eproj_MoveToBlueRingSpawnPosition(k: u16, game: &mut Game) {
                 as *mut ExtraEnemyRam7800)
                 .offset(1))
             .kraid
-            .kraid_healths_8ths[4 as i32 as usize];
+            .kraid_healths_8ths[4i32 as usize];
             (*gExtraEnemyRam7800(
                 (*((&raw mut game.g_ram as *mut u8).offset(0x7800) as *mut ExtraEnemyRam7800)
                     .offset(1))
                 .kraid
-                .kraid_healths_8ths[4 as i32 as usize] as i32,
+                .kraid_healths_8ths[4i32 as usize] as i32,
                 game,
             ))
             .kraid
-            .kraid_healths_8ths[0 as i32 as usize] = 16 as u16;
+            .kraid_healths_8ths[0i32 as usize] = 16u16;
             let v4: *mut EnemyData = gEnemyData(v3 as i32, game);
-            v5 = ((*v4).health as i32 - 80 as i32) as i16;
+            v5 = ((*v4).health as i32 - 80i32) as i16;
             if v5 < 0i16 {
-                v5 = 0 as i16;
+                v5 = 0i16;
             }
             (*v4).health = v5 as u16;
-        } else if Eproj_CheckForCollisionWithSamus(k, game) as i32 & 1 as i32 != 0 {
+        } else if Eproj_CheckForCollisionWithSamus(k, game) as i32 & 1i32 != 0 {
             BlueRingContactExplosion(k, game);
-            Samus_DealDamage(SuitDamageDivision(0x50 as u16, game), game);
-            set_ram_word!(game.samus_invincibility_timer = 96 as u16);
-            set_ram_word!(game.samus_knockback_timer = 5 as u16);
+            Samus_DealDamage(SuitDamageDivision(0x50u16, game), game);
+            set_ram_word!(game.samus_invincibility_timer = 96u16);
+            set_ram_word!(game.samus_knockback_timer = 5u16);
             set_ram_word!(
                 game.knockback_x_dir = (((ram_word!(game, samus_x_pos) as i32
                     - ram_word!(game, eproj_x_pos[(k as i32 >> 1i32)]) as i32)
                     as i16)
                     >= 0i16) as u16
             );
-        } else if CheckForBlueRingCollisionWithRoom(k, game) as i32 & 1 as i32 != 0 {
+        } else if CheckForBlueRingCollisionWithRoom(k, game) as i32 & 1i32 != 0 {
             Eproj_Earthqhake5(k, game);
         }
     };
@@ -5229,15 +5063,15 @@ pub unsafe fn Eproj_MoveToBlueRingSpawnPosition(k: u16, game: &mut Game) {
 pub unsafe fn CheckForCollisionWithShitroid_DoubleRet(v0: u16, game: &mut Game) -> u8 {
     if (*((&raw mut game.g_ram as *mut u8).offset(0x7800) as *mut ExtraEnemyRam7800).offset(1))
         .kraid
-        .kraid_healths_8ths[4 as i32 as usize]
+        .kraid_healths_8ths[4i32 as usize]
         == 0
     {
-        return 0 as u8;
+        return 0u8;
     }
     if (*gEnemyData(
         (*((&raw mut game.g_ram as *mut u8).offset(0x7800) as *mut ExtraEnemyRam7800).offset(1))
             .kraid
-            .kraid_healths_8ths[4 as i32 as usize] as i32,
+            .kraid_healths_8ths[4i32 as usize] as i32,
         game,
     ))
     .health
@@ -5248,34 +5082,34 @@ pub unsafe fn CheckForCollisionWithShitroid_DoubleRet(v0: u16, game: &mut Game) 
             (*((&raw mut game.g_ram as *mut u8).offset(0x7800) as *mut ExtraEnemyRam7800)
                 .offset(1))
             .kraid
-            .kraid_healths_8ths[4 as i32 as usize],
+            .kraid_healths_8ths[4i32 as usize],
             rect,
             game,
         );
     }
-    set_ram_word!(game.eproj_id[(v0 as i32 >> 1i32)] = 0 as u16);
-    0xff as u8
+    set_ram_word!(game.eproj_id[(v0 as i32 >> 1i32)] = 0u16);
+    0xffu8
 }
 pub unsafe fn CheckForBlueRingCollisionWithRoom(k: u16, game: &mut Game) -> u8 {
     let mut v2: i16 = 0;
     let mut v3: i16 = 0;
-    let v1: i32 = k as i32 >> 1 as i32;
-    let result: u8 = 1 as u8;
-    if ram_word!(game, eproj_y_pos[v1]) as i32 - 32 as i32 & 0x8000 as i32 == 0
+    let v1: i32 = k as i32 >> 1i32;
+    let result: u8 = 1u8;
+    if ram_word!(game, eproj_y_pos[v1]) as i32 - 32i32 & 0x8000i32 == 0
         && ram_word!(game, eproj_y_pos[v1]) < 0xd8u16
     {
         v2 = ram_word!(game, eproj_x_pos[v1]) as i16;
         if v2 >= 0i16 {
             v3 = (v2 as i32 - ram_word!(game, layer1_x_pos) as i32) as i16;
-            if v3 >= 0i16 && v3 as i32 - 248 as i32 & 0x8000 as i32 != 0 {
-                return 0 as u8;
+            if v3 >= 0i16 && v3 as i32 - 248i32 & 0x8000i32 != 0 {
+                return 0u8;
             }
         }
     }
     result
 }
 unsafe fn Eproj_GetCollDetectRect(k: u16, game: &mut Game) -> Rect16U {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     let rect: Rect16U = Rect16U {
         x: ram_word!(game, eproj_x_pos[v1]),
         y: ram_word!(game, eproj_y_pos[v1]),
@@ -5289,45 +5123,45 @@ unsafe fn Eproj_GetCollDetectRect(k: u16, game: &mut Game) -> Rect16U {
     rect
 }
 pub unsafe fn Eproj_Earthqhake5(k: u16, game: &mut Game) {
-    set_ram_word!(game.earthquake_timer = 10 as u16);
-    set_ram_word!(game.earthquake_type = 5 as u16);
+    set_ram_word!(game.earthquake_timer = 10u16);
+    set_ram_word!(game.earthquake_type = 5u16);
     BlueRingContactExplosion(k, game);
 }
 pub unsafe fn BlueRingContactExplosion(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_id[v1] = 0 as u16);
+    let v1: i32 = k as i32 >> 1i32;
+    set_ram_word!(game.eproj_id[v1] = 0u16);
     game.eproj_spawn_pt = Point16U {
         x: ram_word!(game, eproj_x_pos[v1]),
         y: ram_word!(game, eproj_y_pos[v1]),
     };
-    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 3 as u16, game);
-    QueueSfx3_Max6(0x13 as u16, game);
+    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 3u16, game);
+    QueueSfx3_Max6(0x13u16, game);
     sub_86C42E(k, game);
 }
 pub unsafe fn sub_86C42E(k: u16, game: &mut Game) {
-    set_ram_word!(game.eproj_gfx_idx[(k as i32 >> 1i32)] = 0 as u16);
+    set_ram_word!(game.eproj_gfx_idx[(k as i32 >> 1i32)] = 0u16);
 }
 unsafe fn EprojInit_MotherBrainBomb(j: u16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut u8).offset(0x1a27) as *mut u16 as *mut u8)
         .offset(j as i32 as isize) = ram_word!(game, cinematic_var8) as u8;
-    let v1: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_y_vel[v1] = 256 as u16);
-    set_ram_word!(game.eproj_x_vel[v1] = 224 as u16);
+    let v1: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_y_vel[v1] = 256u16);
+    set_ram_word!(game.eproj_x_vel[v1] = 224u16);
     set_ram_word!(
         game.eproj_x_pos[v1] =
             ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(1)).x_pos
                 as i32
-                + 12 as i32) as u16
+                + 12i32) as u16
     );
     set_ram_word!(
         game.eproj_y_pos[v1] =
             ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(1)).y_pos
                 as i32
-                + 16 as i32) as u16
+                + 16i32) as u16
     );
-    set_ram_word!(game.eproj_gfx_idx[v1] = 1024 as u16);
-    set_ram_word!(game.eproj_E[v1] = 112 as u16);
-    set_ram_word!(game.eproj_F[v1] = 0 as u16);
+    set_ram_word!(game.eproj_gfx_idx[v1] = 1024u16);
+    set_ram_word!(game.eproj_E[v1] = 112u16);
+    set_ram_word!(game.eproj_F[v1] = 0u16);
     let fresh10 = &raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x7800)
         as *mut ExtraEnemyRam7800)
         .offset(1))
@@ -5336,7 +5170,7 @@ unsafe fn EprojInit_MotherBrainBomb(j: u16, game: &mut Game) {
     fresh10.write_unaligned(fresh10.read_unaligned().wrapping_add(1));
 }
 pub unsafe fn MotherBrainBomb_Bomb_CollDetect_DoubleRet(k: u16, game: &mut Game) -> u8 {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     let rect: Rect16U = Rect16U {
         x: ram_word!(game, eproj_x_pos[v1]),
         y: ram_word!(game, eproj_y_pos[v1]),
@@ -5348,7 +5182,7 @@ pub unsafe fn MotherBrainBomb_Bomb_CollDetect_DoubleRet(k: u16, game: &mut Game)
             .offset(1isize) as u16,
     };
     if Eproj_CheckForBombCollisionWithRect(rect, game) == 0 {
-        return 0 as u8;
+        return 0u8;
     }
     let fresh2 = &raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x7800)
         as *mut ExtraEnemyRam7800)
@@ -5356,73 +5190,73 @@ pub unsafe fn MotherBrainBomb_Bomb_CollDetect_DoubleRet(k: u16, game: &mut Game)
     .kraid
     .kraid_mouth_flags;
     fresh2.write_unaligned(fresh2.read_unaligned().wrapping_sub(1));
-    set_ram_word!(game.eproj_x_vel[v1] = 0 as u16);
-    set_ram_word!(game.eproj_y_vel[v1] = 0 as u16);
-    set_ram_word!(game.eproj_id[v1] = 0 as u16);
+    set_ram_word!(game.eproj_x_vel[v1] = 0u16);
+    set_ram_word!(game.eproj_y_vel[v1] = 0u16);
+    set_ram_word!(game.eproj_id[v1] = 0u16);
     game.eproj_spawn_pt = Point16U {
         x: ram_word!(game, eproj_x_pos[v1]),
         y: ram_word!(game, eproj_y_pos[v1]),
     };
-    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9 as u16, game);
+    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9u16, game);
     game.eproj_spawn_pt = Point16U {
         x: ram_word!(game, eproj_x_pos[v1]),
         y: ram_word!(game, eproj_y_pos[v1]),
     };
-    SpawnEnemyDrops(addr_kEnemyDef_EC3F as u16, k, 0 as u16, game);
-    1 as u8
+    SpawnEnemyDrops(addr_kEnemyDef_EC3F as u16, k, 0u16, game);
+    1u8
 }
 pub unsafe fn MoveMotherBrainBomb(k: u16, a: u16, game: &mut Game) -> u8 {
-    let v2: i32 = k as i32 >> 1 as i32;
+    let v2: i32 = k as i32 >> 1i32;
     update_ram_word!(game.eproj_y_vel[v2], |fresh16| (fresh16 as i32 + a as i32)
         as u16);
     MoveEprojWithVelocity(k, game);
-    if ram_word!(game, eproj_x_pos[v2]) as i32 - 240 as i32 & 0x8000 as i32 == 0 {
+    if ram_word!(game, eproj_x_pos[v2]) as i32 - 240i32 & 0x8000i32 == 0 {
         set_ram_word!(game.eproj_x_vel[v2] = -(ram_word!(game, eproj_x_vel[v2]) as i32) as u16);
     }
-    if ram_word!(game, eproj_y_pos[v2]) as i32 - 208 as i32 & 0x8000 as i32 != 0 {
-        return 0 as u8;
+    if ram_word!(game, eproj_y_pos[v2]) as i32 - 208i32 & 0x8000i32 != 0 {
+        return 0u8;
     }
-    set_ram_word!(game.eproj_y_pos[v2] = 208 as u16);
+    set_ram_word!(game.eproj_y_pos[v2] = 208u16);
     set_ram_word!(
-        game.eproj_x_vel[v2] = (if ram_word!(game, eproj_x_vel[v2]) as i32 & 0x8000 as i32 != 0 {
+        game.eproj_x_vel[v2] = (if ram_word!(game, eproj_x_vel[v2]) as i32 & 0x8000i32 != 0 {
             -(ram_word!(game, eproj_E[v2]) as i32)
         } else {
             ram_word!(game, eproj_E[v2]) as i32
         }) as u16
     );
-    set_ram_word!(game.eproj_y_vel[v2] = -(512 as i32) as u16);
-    1 as u8
+    set_ram_word!(game.eproj_y_vel[v2] = -(512i32) as u16);
+    1u8
 }
 pub unsafe fn sub_86C605(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_E[v1] = 0 as u16);
-    set_ram_word!(game.eproj_F[v1] = 0 as u16);
-    set_ram_word!(game.eproj_x_vel[v1] = 0 as u16);
-    set_ram_word!(game.eproj_y_vel[v1] = 0 as u16);
-    set_ram_word!(game.eproj_x_subpos[v1] = 0 as u16);
-    set_ram_word!(game.eproj_y_subpos[v1] = 0 as u16);
-    let E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as i32, game);
-    (*E).mbn_var_23 = 0 as u16;
-    (*E).mbn_var_25 = 0 as u16;
-    set_ram_word!(game.eproj_gfx_idx[v1] = 1024 as u16);
+    let v1: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_E[v1] = 0u16);
+    set_ram_word!(game.eproj_F[v1] = 0u16);
+    set_ram_word!(game.eproj_x_vel[v1] = 0u16);
+    set_ram_word!(game.eproj_y_vel[v1] = 0u16);
+    set_ram_word!(game.eproj_x_subpos[v1] = 0u16);
+    set_ram_word!(game.eproj_y_subpos[v1] = 0u16);
+    let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
+    (*E).mbn_var_23 = 0u16;
+    (*E).mbn_var_25 = 0u16;
+    set_ram_word!(game.eproj_gfx_idx[v1] = 1024u16);
     let ref mut fresh8 =
         *((&raw mut game.g_ram as *mut u8).offset(0x1a4b) as *mut u16).offset(v1 as isize);
-    *fresh8 = ((*E).base.x_pos as i32 + 64 as i32) as u16;
+    *fresh8 = ((*E).base.x_pos as i32 + 64i32) as u16;
     (*E).mbn_var_24 = *fresh8;
     let x: u16 = (ram_word!(game, samus_x_pos) as i32 - (*E).mbn_var_24 as i32) as u16;
     let ref mut fresh9 =
         *((&raw mut game.g_ram as *mut u8).offset(0x1a93) as *mut u16).offset(v1 as isize);
-    *fresh9 = ((*E).base.y_pos as i32 - 48 as i32) as u16;
+    *fresh9 = ((*E).base.y_pos as i32 - 48i32) as u16;
     (*E).mbn_var_26 = *fresh9;
     let y: u16 = (ram_word!(game, samus_y_pos) as i32 - (*E).mbn_var_26 as i32) as u16;
-    let r18: i32 = -(CalculateAngleFromXY(x, y, game) as i32 + 0x80 as i32) as u8 as i32;
+    let r18: i32 = -(CalculateAngleFromXY(x, y, game) as i32 + 0x80i32) as u8 as i32;
     (*E).mbn_var_29 = r18 as u16;
-    (*E).mbn_var_27 = Math_MultBySin(0xc00 as u16, r18 as u16);
-    (*E).mbn_var_28 = Math_MultByCos(0xc00 as u16, r18 as u16);
+    (*E).mbn_var_27 = Math_MultBySin(0xc00u16, r18 as u16);
+    (*E).mbn_var_28 = Math_MultByCos(0xc00u16, r18 as u16);
 }
 unsafe fn EprojInit_MotherBrainDeathBeemFired(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
-    let E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as i32, game);
+    let v1: i32 = j as i32 >> 1i32;
+    let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
     set_ram_word!(game.eproj_x_pos[v1] = (*E).mbn_var_24);
     set_ram_word!(game.eproj_x_subpos[v1] = (*E).mbn_var_23);
     set_ram_word!(game.eproj_y_pos[v1] = (*E).mbn_var_26);
@@ -5437,35 +5271,35 @@ unsafe fn EprojInit_MotherBrainDeathBeemFired(j: u16, game: &mut Game) {
     let r18: u16 = (*(&raw mut (*E).mbn_var_29 as *mut u8).offset(0) as i32
         + NextRandom(game) as i32) as u8 as u16;
     let rv: u16 = NextRandom(game);
-    set_ram_word!(game.eproj_x_vel[v1] = Math_MultBySin((rv as i32 & 0x700 as i32) as u16, r18,));
+    set_ram_word!(game.eproj_x_vel[v1] = Math_MultBySin((rv as i32 & 0x700i32) as u16, r18,));
     set_ram_word!(
         game.eproj_y_vel[v1] = Math_MultByCos(
-            (ram_word!(game, random_number) as i32 & 0x700 as i32) as u16,
+            (ram_word!(game, random_number) as i32 & 0x700i32) as u16,
             r18,
         )
     );
     MoveEprojWithVelocity(j, game);
-    if ram_word!(game, eproj_y_pos[v1]) as i32 - 34 as i32 & 0x8000 as i32 != 0
-        || ram_word!(game, eproj_y_pos[v1]) as i32 - 206 as i32 & 0x8000 as i32 == 0
-        || ram_word!(game, eproj_x_pos[v1]) as i32 - 2 as i32 & 0x8000 as i32 != 0
-        || ram_word!(game, eproj_x_pos[v1]) as i32 - 238 as i32 & 0x8000 as i32 == 0
+    if ram_word!(game, eproj_y_pos[v1]) as i32 - 34i32 & 0x8000i32 != 0
+        || ram_word!(game, eproj_y_pos[v1]) as i32 - 206i32 & 0x8000i32 == 0
+        || ram_word!(game, eproj_x_pos[v1]) as i32 - 2i32 & 0x8000i32 != 0
+        || ram_word!(game, eproj_x_pos[v1]) as i32 - 238i32 & 0x8000i32 == 0
     {
-        set_ram_word!(game.eproj_id[v1] = 0 as u16);
+        set_ram_word!(game.eproj_id[v1] = 0u16);
         game.eproj_spawn_pt = Point16U {
             x: ram_word!(game, eproj_x_pos[v1]),
             y: ram_word!(game, eproj_y_pos[v1]),
         };
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x1d as u16, game);
-        QueueSfx3_Max6(0x13 as u16, game);
-        set_ram_word!(game.earthquake_timer = 10 as u16);
-        set_ram_word!(game.earthquake_type = 5 as u16);
+        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x1du16, game);
+        QueueSfx3_Max6(0x13u16, game);
+        set_ram_word!(game.earthquake_timer = 10u16);
+        set_ram_word!(game.earthquake_type = 5u16);
     } else {
         set_ram_word!(
-            game.eproj_E[v1] = (ram_word!(game, eproj_E[v1]) as i32 + 1 as i32 & 3 as i32) as u16
+            game.eproj_E[v1] = (ram_word!(game, eproj_E[v1]) as i32 + 1i32 & 3i32) as u16
         );
-        set_ram_word!(game.eproj_F[v1] = 0 as u16);
-        set_ram_word!(game.eproj_x_vel[v1] = 0 as u16);
-        set_ram_word!(game.eproj_y_vel[v1] = 0 as u16);
+        set_ram_word!(game.eproj_F[v1] = 0u16);
+        set_ram_word!(game.eproj_x_vel[v1] = 0u16);
+        set_ram_word!(game.eproj_y_vel[v1] = 0u16);
     };
 }
 pub unsafe fn SpawnMotherBrainDeathBeam(x: u16, game: &mut Game) {
@@ -5476,7 +5310,7 @@ pub unsafe fn SpawnMotherBrainDeathBeam(x: u16, game: &mut Game) {
     );
 }
 pub unsafe fn EprojPreInstr_MotherBrainRainbowBeam(k: u16, game: &mut Game) {
-    let v2: i32 = k as i32 >> 1 as i32;
+    let v2: i32 = k as i32 >> 1i32;
     set_ram_word!(
         game.eproj_x_pos[v2] =
             (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(1)).x_pos
@@ -5487,29 +5321,19 @@ pub unsafe fn EprojPreInstr_MotherBrainRainbowBeam(k: u16, game: &mut Game) {
     );
 }
 unsafe fn EprojInit_MotherBrainRainbowBeam(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_gfx_idx[v1] = 0 as u16);
-    set_ram_word!(game.eproj_x_vel[v1] = 0 as u16);
-    set_ram_word!(game.eproj_y_vel[v1] = 0 as u16);
+    let v1: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_gfx_idx[v1] = 0u16);
+    set_ram_word!(game.eproj_x_vel[v1] = 0u16);
+    set_ram_word!(game.eproj_y_vel[v1] = 0u16);
     EprojPreInstr_MotherBrainRainbowBeam(j, game);
 }
 static kEprojInit_MotherBrainsDrool: [i16; 12] = [
-    6 as i16,
-    0x14 as i16,
-    0xe as i16,
-    0x12 as i16,
-    8 as i16,
-    0x17 as i16,
-    0xa as i16,
-    0x13 as i16,
-    0xb as i16,
-    0x19 as i16,
-    0xc as i16,
-    0x12 as i16,
+    6i16, 0x14i16, 0xei16, 0x12i16, 8i16, 0x17i16, 0xai16, 0x13i16, 0xbi16, 0x19i16, 0xci16,
+    0x12i16,
 ];
 pub unsafe fn EprojPreInstr_C84D(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
-    let v2: i32 = (4 as i32 * ram_word!(game, eproj_E[v1]) as i32) as u16 as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
+    let v2: i32 = (4i32 * ram_word!(game, eproj_E[v1]) as i32) as u16 as i32 >> 1i32;
     set_ram_word!(
         game.eproj_x_pos[v1] =
             ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(1)).x_pos
@@ -5520,37 +5344,37 @@ pub unsafe fn EprojPreInstr_C84D(k: u16, game: &mut Game) {
         game.eproj_y_pos[v1] =
             ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(1)).y_pos
                 as i32
-                + kEprojInit_MotherBrainsDrool[(v2 + 1 as i32) as usize] as i32) as u16
+                + kEprojInit_MotherBrainsDrool[(v2 + 1i32) as usize] as i32) as u16
     );
-    set_ram_word!(game.eproj_x_vel[v1] = 0 as u16);
-    set_ram_word!(game.eproj_y_vel[v1] = 0 as u16);
+    set_ram_word!(game.eproj_x_vel[v1] = 0u16);
+    set_ram_word!(game.eproj_y_vel[v1] = 0u16);
 }
 unsafe fn EprojInit_MotherBrainsDrool(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_gfx_idx[v1] = 0 as u16);
+    let v1: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_gfx_idx[v1] = 0u16);
     set_ram_word!(game.eproj_E[v1] = ram_word!(game, cinematic_var8));
     EprojPreInstr_C84D(j, game);
 }
 unsafe fn EprojInit_MotherBrainsDrool_Falling(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
-    update_ram_word!(game.eproj_y_vel[v1], |fresh79| (fresh79 as i32 + 12 as i32)
+    let v1: i32 = k as i32 >> 1i32;
+    update_ram_word!(game.eproj_y_vel[v1], |fresh79| (fresh79 as i32 + 12i32)
         as u16);
     if MoveEprojWithVelocityY(k, game) >= 0xd7u16 {
-        update_ram_word!(game.eproj_y_pos[v1], |fresh80| (fresh80 as i32 - 4 as i32)
+        update_ram_word!(game.eproj_y_pos[v1], |fresh80| (fresh80 as i32 - 4i32)
             as u16);
         set_ram_word!(game.eproj_instr_list_ptr[v1] = addr_off_86C8E1 as u16);
-        set_ram_word!(game.eproj_instr_timers[v1] = 1 as u16);
+        set_ram_word!(game.eproj_instr_timers[v1] = 1u16);
     }
 }
 pub unsafe fn EprojInstr_Add12ToY(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
     update_ram_word!(
-        game.eproj_y_pos[(k as i32 >> 1 as i32)],
-        |fresh27| (fresh27 as i32 + 12 as i32) as u16
+        game.eproj_y_pos[(k as i32 >> 1i32)],
+        |fresh27| (fresh27 as i32 + 12i32) as u16
     );
     epjp
 }
 pub unsafe fn EprojPreInit_MotherBrainsDeathExplosion_0(k: u16, game: &mut Game) {
-    let v2: i32 = k as i32 >> 1 as i32;
+    let v2: i32 = k as i32 >> 1i32;
     set_ram_word!(
         game.eproj_x_pos[v2] =
             ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).x_pos
@@ -5565,21 +5389,21 @@ pub unsafe fn EprojPreInit_MotherBrainsDeathExplosion_0(k: u16, game: &mut Game)
     );
 }
 unsafe fn EprojInit_MotherBrainsDeathExplosion(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
+    let v1: i32 = j as i32 >> 1i32;
     set_ram_word!(
         game.eproj_instr_list_ptr[v1] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x86c929))
             as *const u8 as *mut u16)
             .offset(ram_word!(game, cinematic_var8) as isize)
     );
-    set_ram_word!(game.eproj_instr_timers[v1] = 1 as u16);
-    set_ram_word!(game.eproj_gfx_idx[v1] = 0 as u16);
+    set_ram_word!(game.eproj_instr_timers[v1] = 1u16);
+    set_ram_word!(game.eproj_gfx_idx[v1] = 0u16);
     set_ram_word!(game.eproj_x_vel[v1] = game.eproj_spawn_pt.x);
     set_ram_word!(game.eproj_y_vel[v1] = game.eproj_spawn_pt.y);
     EprojPreInit_MotherBrainsDeathExplosion_0(j, game);
 }
 unsafe fn EprojInit_MotherBrainsRainbowBeamExplosion(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_gfx_idx[v1] = 0 as u16);
+    let v1: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_gfx_idx[v1] = 0u16);
     set_ram_word!(game.eproj_x_vel[v1] = game.eproj_spawn_pt.x);
     set_ram_word!(
         game.eproj_x_pos[v1] =
@@ -5592,7 +5416,7 @@ unsafe fn EprojInit_MotherBrainsRainbowBeamExplosion(j: u16, game: &mut Game) {
     );
 }
 pub unsafe fn EprojPreInstr_MotherBrainsRainbowBeamExplosion(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     set_ram_word!(
         game.eproj_x_pos[v1] =
             (ram_word!(game, samus_x_pos) as i32 + ram_word!(game, eproj_x_vel[v1]) as i32) as u16
@@ -5604,124 +5428,123 @@ pub unsafe fn EprojPreInstr_MotherBrainsRainbowBeamExplosion(k: u16, game: &mut 
 }
 unsafe fn EprojInit_MotherBrainEscapeDoorParticles(j: u16, game: &mut Game) {
     static kEprojInit_MotherBrainEscapeDoorParticles_X: [i16; 16] = [
-        0 as i16,
-        -(0x20 as i32) as i16,
-        0 as i16,
-        -(0x18 as i32) as i16,
-        0 as i16,
-        -(0x10 as i32) as i16,
-        0 as i16,
-        -(8 as i32) as i16,
-        0 as i16,
-        0 as i16,
-        0 as i16,
-        8 as i16,
-        0 as i16,
-        0x10 as i16,
-        0 as i16,
-        0x18 as i16,
+        0i16,
+        -(0x20i32) as i16,
+        0i16,
+        -(0x18i32) as i16,
+        0i16,
+        -(0x10i32) as i16,
+        0i16,
+        -(8i32) as i16,
+        0i16,
+        0i16,
+        0i16,
+        8i16,
+        0i16,
+        0x10i16,
+        0i16,
+        0x18i16,
     ];
     static kEprojInit_MotherBrainEscapeDoorParticles_Xvel: [i16; 16] = [
-        0x500 as i16,
-        -(0x200 as i32) as i16,
-        0x500 as i16,
-        -(0x100 as i32) as i16,
-        0x500 as i16,
-        -(0x100 as i32) as i16,
-        0x500 as i16,
-        -(0x80 as i32) as i16,
-        0x500 as i16,
-        -(0x80 as i32) as i16,
-        0x500 as i16,
-        0x80 as i16,
-        0x500 as i16,
-        -(0x100 as i32) as i16,
-        0x500 as i16,
-        0x200 as i16,
+        0x500i16,
+        -(0x200i32) as i16,
+        0x500i16,
+        -(0x100i32) as i16,
+        0x500i16,
+        -(0x100i32) as i16,
+        0x500i16,
+        -(0x80i32) as i16,
+        0x500i16,
+        -(0x80i32) as i16,
+        0x500i16,
+        0x80i16,
+        0x500i16,
+        -(0x100i32) as i16,
+        0x500i16,
+        0x200i16,
     ];
-    let v1: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_gfx_idx[v1] = 0 as u16);
-    let v2: i32 = 4 as i32 * ram_word!(game, cinematic_var8) as i32 >> 1 as i32;
+    let v1: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_gfx_idx[v1] = 0u16);
+    let v2: i32 = 4i32 * ram_word!(game, cinematic_var8) as i32 >> 1i32;
     set_ram_word!(
         game.eproj_x_pos[v1] =
-            (kEprojInit_MotherBrainEscapeDoorParticles_X[v2 as usize] as i32 + 16 as i32) as u16
+            (kEprojInit_MotherBrainEscapeDoorParticles_X[v2 as usize] as i32 + 16i32) as u16
     );
     set_ram_word!(
-        game.eproj_y_pos[v1] = (kEprojInit_MotherBrainEscapeDoorParticles_X
-            [(v2 + 1 as i32) as usize] as i32
-            + 128 as i32) as u16
+        game.eproj_y_pos[v1] = (kEprojInit_MotherBrainEscapeDoorParticles_X[(v2 + 1i32) as usize]
+            as i32
+            + 128i32) as u16
     );
     set_ram_word!(
         game.eproj_x_vel[v1] = kEprojInit_MotherBrainEscapeDoorParticles_Xvel[v2 as usize] as u16
     );
     set_ram_word!(
         game.eproj_y_vel[v1] =
-            kEprojInit_MotherBrainEscapeDoorParticles_Xvel[(v2 + 1 as i32) as usize] as u16
+            kEprojInit_MotherBrainEscapeDoorParticles_Xvel[(v2 + 1i32) as usize] as u16
     );
-    set_ram_word!(game.eproj_E[v1] = 32 as u16);
+    set_ram_word!(game.eproj_E[v1] = 32u16);
 }
 pub unsafe fn EprojPreInstr_MotherBrainsExplodedDoorParticles(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
-    let mut v2: i16 = (abs16(ram_word!(game, eproj_x_vel[v1])) as i32 - 16 as i32) as i16;
+    let v1: i32 = k as i32 >> 1i32;
+    let mut v2: i16 = (abs16(ram_word!(game, eproj_x_vel[v1])) as i32 - 16i32) as i16;
     if v2 < 0i16 {
-        v2 = 0 as i16;
+        v2 = 0i16;
     }
     set_ram_word!(
-        game.eproj_x_vel[v1] = (if ram_word!(game, eproj_x_vel[v1]) as i32 & 0x8000 as i32 != 0 {
+        game.eproj_x_vel[v1] = (if ram_word!(game, eproj_x_vel[v1]) as i32 & 0x8000i32 != 0 {
             -(v2 as i32)
         } else {
             v2 as i32
         }) as u16
     );
-    update_ram_word!(game.eproj_y_vel[v1], |fresh76| (fresh76 as i32 + 32 as i32)
+    update_ram_word!(game.eproj_y_vel[v1], |fresh76| (fresh76 as i32 + 32i32)
         as u16);
     MoveEprojWithVelocity(k, game);
-    if (update_ram_word!(game.eproj_E[v1], wrapping_sub(1), reread) as i32 & 0x8000 as i32) != 0i32
-    {
-        set_ram_word!(game.eproj_id[v1] = 0 as u16);
-        update_ram_word!(game.eproj_y_pos[v1], |fresh78| (fresh78 as i32 - 4 as i32)
+    if (update_ram_word!(game.eproj_E[v1], wrapping_sub(1), reread) as i32 & 0x8000i32) != 0i32 {
+        set_ram_word!(game.eproj_id[v1] = 0u16);
+        update_ram_word!(game.eproj_y_pos[v1], |fresh78| (fresh78 as i32 - 4i32)
             as u16);
         game.eproj_spawn_pt = Point16U {
             x: ram_word!(game, eproj_x_pos[v1]),
             y: ram_word!(game, eproj_y_pos[v1]),
         };
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9 as u16, game);
+        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9u16, game);
     }
 }
 unsafe fn EprojInit_MotherBrainPurpleBreathBig(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_gfx_idx[v1] = 0 as u16);
+    let v1: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_gfx_idx[v1] = 0u16);
     set_ram_word!(
         game.eproj_x_pos[v1] =
             ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(1)).x_pos
                 as i32
-                + 6 as i32) as u16
+                + 6i32) as u16
     );
     set_ram_word!(
         game.eproj_y_pos[v1] =
             ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(1)).y_pos
                 as i32
-                + 16 as i32) as u16
+                + 16i32) as u16
     );
 }
 unsafe fn EprojInit_MotherBrainPurpleBreathSmall(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_gfx_idx[v1] = 0 as u16);
+    let v1: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_gfx_idx[v1] = 0u16);
     set_ram_word!(
         game.eproj_x_pos[v1] =
             ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(1)).x_pos
                 as i32
-                + 6 as i32) as u16
+                + 6i32) as u16
     );
     set_ram_word!(
         game.eproj_y_pos[v1] =
             ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(1)).y_pos
                 as i32
-                + 16 as i32) as u16
+                + 16i32) as u16
     );
     (*((&raw mut game.g_ram as *mut u8).offset(0x7800) as *mut ExtraEnemyRam7800).offset(1))
         .kraid
-        .kraid_hurt_frame = 1 as u16;
+        .kraid_hurt_frame = 1u16;
 }
 pub unsafe fn EprojInstr_MotherBrainPurpleBreathIsActive(
     k: u16,
@@ -5730,28 +5553,28 @@ pub unsafe fn EprojInstr_MotherBrainPurpleBreathIsActive(
 ) -> *const u8 {
     (*((&raw mut game.g_ram as *mut u8).offset(0x7800) as *mut ExtraEnemyRam7800).offset(1))
         .kraid
-        .kraid_hurt_frame = 0 as u16;
+        .kraid_hurt_frame = 0u16;
     epjp
 }
 pub unsafe fn EprojPreInstr_TimeBombSetJapaneseText(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_x_vel[v1] = 0 as u16);
-    set_ram_word!(game.eproj_y_vel[v1] = 0 as u16);
-    set_ram_word!(game.eproj_x_pos[v1] = 128 as u16);
-    set_ram_word!(game.eproj_y_pos[v1] = 192 as u16);
+    let v1: i32 = k as i32 >> 1i32;
+    set_ram_word!(game.eproj_x_vel[v1] = 0u16);
+    set_ram_word!(game.eproj_y_vel[v1] = 0u16);
+    set_ram_word!(game.eproj_x_pos[v1] = 128u16);
+    set_ram_word!(game.eproj_y_pos[v1] = 192u16);
 }
 unsafe fn EprojInit_TimeBombSetJapaneseText(j: u16, game: &mut Game) {
-    set_ram_word!(game.eproj_gfx_idx[(j as i32 >> 1i32)] = 0 as u16);
+    set_ram_word!(game.eproj_gfx_idx[(j as i32 >> 1i32)] = 0u16);
     EprojPreInstr_TimeBombSetJapaneseText(j, game);
 }
 unsafe fn EprojInit_MotherBrainTubeFalling(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_gfx_idx[v1] = 3584 as u16);
-    set_ram_word!(game.eproj_x_vel[v1] = 0 as u16);
-    set_ram_word!(game.eproj_y_vel[v1] = 0 as u16);
+    let v1: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_gfx_idx[v1] = 3584u16);
+    set_ram_word!(game.eproj_x_vel[v1] = 0u16);
+    set_ram_word!(game.eproj_y_vel[v1] = 0u16);
     set_ram_word!(game.eproj_x_pos[v1] = game.eproj_spawn_pt.x);
     set_ram_word!(game.eproj_y_pos[v1] = game.eproj_spawn_pt.y);
-    set_ram_word!(game.eproj_E[v1] = (0x86cbea as i32 & 0xffff as i32) as u16);
+    set_ram_word!(game.eproj_E[v1] = (0x86cbeai32 & 0xffffi32) as u16);
 }
 pub unsafe fn CallMotherBrainTubeFallingFunc(ea: u32, k: u16, game: &mut Game) {
     match ea {
@@ -5764,91 +5587,87 @@ pub unsafe fn CallMotherBrainTubeFallingFunc(ea: u32, k: u16, game: &mut Game) {
 }
 pub unsafe fn EprojPreInstr_MotherBrainTubeFalling(k: u16, game: &mut Game) {
     CallMotherBrainTubeFallingFunc(
-        (ram_word!(game, eproj_E[(k as i32 >> 1i32)]) as i32 | 0x860000 as i32) as u32,
+        (ram_word!(game, eproj_E[(k as i32 >> 1i32)]) as i32 | 0x860000i32) as u32,
         k,
         game,
     );
 }
 pub unsafe fn MotherBrainTubeFallingFunc_GenerateExplosion(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     game.eproj_spawn_pt = Point16U {
         x: ram_word!(game, eproj_x_pos[v1]),
-        y: (ram_word!(game, eproj_y_pos[v1]) as i32 + 8 as i32) as u16,
+        y: (ram_word!(game, eproj_y_pos[v1]) as i32 + 8i32) as u16,
     };
-    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9 as u16, game);
-    set_ram_word!(game.eproj_E[v1] = (0x86cc08 as i32 & 0xffff as i32) as u16);
+    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9u16, game);
+    set_ram_word!(game.eproj_E[v1] = (0x86cc08i32 & 0xffffi32) as u16);
     MotherBrainTubeFallingFunc_Falling(k, game);
 }
 pub unsafe fn MotherBrainTubeFallingFunc_Falling(k: u16, game: &mut Game) {
     let mut v2: i16 = 0;
-    let v1: i32 = k as i32 >> 1 as i32;
-    update_ram_word!(game.eproj_y_vel[v1], |fresh75| (fresh75 as i32 + 6 as i32)
+    let v1: i32 = k as i32 >> 1i32;
+    update_ram_word!(game.eproj_y_vel[v1], |fresh75| (fresh75 as i32 + 6i32)
         as u16);
     v2 = MoveEprojWithVelocityY(k, game) as i16;
-    if v2 as i32 - 208 as i32 & 0x8000 as i32 == 0 {
-        set_ram_word!(game.eproj_id[v1] = 0 as u16);
+    if v2 as i32 - 208i32 & 0x8000i32 == 0 {
+        set_ram_word!(game.eproj_id[v1] = 0u16);
         game.eproj_spawn_pt = Point16U {
             x: ram_word!(game, eproj_x_pos[v1]),
             y: ram_word!(game, eproj_y_pos[v1]),
         };
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0xc as u16, game);
+        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0xcu16, game);
     }
 }
 static kEprojInit_MotherBrainGlassShatteringShard_X: [i16; 3] =
-    [8 as i16, -(40 as i32) as i16, -(16 as i32) as i16];
-static kEprojInit_MotherBrainGlassShatteringShard_Y: [i16; 3] = [32 as i16, 32 as i16, 32 as i16];
+    [8i16, -(40i32) as i16, -(16i32) as i16];
+static kEprojInit_MotherBrainGlassShatteringShard_Y: [i16; 3] = [32i16, 32i16, 32i16];
 unsafe fn EprojInit_MotherBrainGlassShatteringShard(j: u16, game: &mut Game) {
-    let v1: u16 = (2 as i32 * NextRandom(game) as i32 & 0x1fe as i32) as u16;
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v1: u16 = (2i32 * NextRandom(game) as i32 & 0x1fei32) as u16;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_E[v2] = v1);
-    let v3: i32 = v1 as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_x_vel[v2] = kSinCosTable8bit_Sext[(v3 + 64 as i32) as usize] as u16);
-    set_ram_word!(
-        game.eproj_y_vel[v2] = (4 as i32 * kSinCosTable8bit_Sext[v3 as usize] as i32) as u16
-    );
+    let v3: i32 = v1 as i32 >> 1i32;
+    set_ram_word!(game.eproj_x_vel[v2] = kSinCosTable8bit_Sext[(v3 + 64i32) as usize] as u16);
+    set_ram_word!(game.eproj_y_vel[v2] = (4i32 * kSinCosTable8bit_Sext[v3 as usize] as i32) as u16);
     set_ram_word!(
         game.eproj_instr_list_ptr[v2] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x86ce41))
             as *const u8 as *mut u16)
-            .offset(((v1 as i32 >> 4 as i32 & 0x1e as i32) as u16 as i32 >> 1 as i32) as isize,)
+            .offset(((v1 as i32 >> 4i32 & 0x1ei32) as u16 as i32 >> 1i32) as isize,)
     );
-    set_ram_word!(game.eproj_gfx_idx[v2] = 1600 as u16);
+    set_ram_word!(game.eproj_gfx_idx[v2] = 1600u16);
     CalculatePlmBlockCoords(ram_word!(game, plm_id), game);
-    let v4: i32 = ram_word!(game, cinematic_var8) as i32 >> 1 as i32;
+    let v4: i32 = ram_word!(game, cinematic_var8) as i32 >> 1i32;
     set_ram_word!(
         game.eproj_x_pos[v2] = (kEprojInit_MotherBrainGlassShatteringShard_X[v4 as usize] as i32
-            + 16 as i32 * ram_word!(game, plm_x_block) as i32)
-            as u16
+            + 16i32 * ram_word!(game, plm_x_block) as i32) as u16
     );
     set_ram_word!(
         game.eproj_y_pos[v2] = (kEprojInit_MotherBrainGlassShatteringShard_Y[v4 as usize] as i32
-            + 16 as i32 * ram_word!(game, plm_y_block) as i32)
-            as u16
+            + 16i32 * ram_word!(game, plm_y_block) as i32) as u16
     );
     update_ram_word!(game.eproj_x_pos[v2], |fresh5| (fresh5 as i32
-        + ((NextRandom(game) as i32 & 0xf as i32) - 8 as i32))
+        + ((NextRandom(game) as i32 & 0xfi32) - 8i32))
         as u16);
     update_ram_word!(game.eproj_y_pos[v2], |fresh6| (fresh6 as i32
-        + ((NextRandom(game) as i32 & 0xf as i32) - 8 as i32))
+        + ((NextRandom(game) as i32 & 0xfi32) - 8i32))
         as u16);
 }
 unsafe fn EprojInit_MotherBrainGlassShatteringSparkle(j: u16, game: &mut Game) {
-    let v1: i32 = ram_word!(game, cinematic_var8) as i32 >> 1 as i32;
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v1: i32 = ram_word!(game, cinematic_var8) as i32 >> 1i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(
         game.eproj_x_pos[v2] = (ram_word!(game, eproj_x_pos[v1]) as i32
-            + (NextRandom(game) as i32 & 0x1f as i32)
-            - 16 as i32) as u16
+            + (NextRandom(game) as i32 & 0x1fi32)
+            - 16i32) as u16
     );
     set_ram_word!(
         game.eproj_y_pos[v2] = (ram_word!(game, eproj_y_pos[v1]) as i32
-            + (NextRandom(game) as i32 & 0x1f as i32)
-            - 16 as i32) as u16
+            + (NextRandom(game) as i32 & 0x1fi32)
+            - 16i32) as u16
     );
-    set_ram_word!(game.eproj_gfx_idx[v2] = 1600 as u16);
+    set_ram_word!(game.eproj_gfx_idx[v2] = 1600u16);
 }
 pub unsafe fn EprojPreInstr_MotherBrainGlassShatteringShard(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
-    let mut amt: i32 = (ram_word!(game, eproj_x_vel[v1]) as i16 as i32) << 8 as i32;
+    let v1: i32 = k as i32 >> 1i32;
+    let mut amt: i32 = (ram_word!(game, eproj_x_vel[v1]) as i16 as i32) << 8i32;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut u8).offset(0x1a4b) as *mut u16).offset(v1 as isize)
             as *mut u16,
@@ -5856,7 +5675,7 @@ pub unsafe fn EprojPreInstr_MotherBrainGlassShatteringShard(k: u16, game: &mut G
             as *mut u16,
         amt as u32,
     );
-    amt = (ram_word!(game, eproj_y_vel[v1]) as i16 as i32) << 8 as i32;
+    amt = (ram_word!(game, eproj_y_vel[v1]) as i16 as i32) << 8i32;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut u8).offset(0x1a93) as *mut u16).offset(v1 as isize)
             as *mut u16,
@@ -5865,12 +5684,12 @@ pub unsafe fn EprojPreInstr_MotherBrainGlassShatteringShard(k: u16, game: &mut G
         amt as u32,
     );
     let v6: u16 = ram_word!(game, eproj_y_subpos[v1]);
-    if (ram_word!(game, eproj_y_pos[v1]) as i32 & 0xff00 as i32) != 0i32 {
-        set_ram_word!(game.eproj_id[v1] = 0 as u16);
+    if (ram_word!(game, eproj_y_pos[v1]) as i32 & 0xff00i32) != 0i32 {
+        set_ram_word!(game.eproj_id[v1] = 0u16);
     } else {
-        update_ram_word!(game.eproj_y_vel[v1], |fresh74| (fresh74 as i32 + 32 as i32)
+        update_ram_word!(game.eproj_y_vel[v1], |fresh74| (fresh74 as i32 + 32i32)
             as u16);
-        if (NextRandom(game) as i32 & 0x420 as i32) == 0i32 {
+        if (NextRandom(game) as i32 & 0x420i32) == 0i32 {
             SpawnEprojWithRoomGfx(
                 addr_kEproj_MotherBrainGlassShatteringSparkle as u16,
                 k,
@@ -5880,97 +5699,97 @@ pub unsafe fn EprojPreInstr_MotherBrainGlassShatteringShard(k: u16, game: &mut G
     };
 }
 unsafe fn EprojInit_KiHunterAcidSpitCommon(k: u16, j: u16, game: &mut Game) {
-    let v2: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_y_vel[v2] = 0 as u16);
+    let v2: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_y_vel[v2] = 0u16);
     set_ram_word!(
-        game.eproj_y_pos[v2] = ((*gEnemyData(k as i32, game)).y_pos as i32 - 16 as i32) as u16
+        game.eproj_y_pos[v2] = ((*gEnemyData(k as i32, game)).y_pos as i32 - 16i32) as u16
     );
-    set_ram_word!(game.eproj_y_subpos[v2] = 0 as u16);
-    set_ram_word!(game.eproj_x_subpos[v2] = 0 as u16);
+    set_ram_word!(game.eproj_y_subpos[v2] = 0u16);
+    set_ram_word!(game.eproj_x_subpos[v2] = 0u16);
 }
 unsafe fn EprojInit_KiHunterAcidSpitLeft(j: u16, game: &mut Game) {
-    let v2: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_x_vel[v2] = -(768 as i32) as u16);
+    let v2: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_x_vel[v2] = -(768i32) as u16);
     set_ram_word!(
         game.eproj_x_pos[v2] = ((*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).x_pos
             as i32
-            - 22 as i32) as u16
+            - 22i32) as u16
     );
     EprojInit_KiHunterAcidSpitCommon(ram_word!(game, cur_enemy_index), j, game);
 }
 unsafe fn EprojInit_KiHunterAcidSpitRight(j: u16, game: &mut Game) {
-    let v2: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_x_vel[v2] = 768 as u16);
+    let v2: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_x_vel[v2] = 768u16);
     set_ram_word!(
         game.eproj_x_pos[v2] = ((*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).x_pos
             as i32
-            + 22 as i32) as u16
+            + 22i32) as u16
     );
     EprojInit_KiHunterAcidSpitCommon(ram_word!(game, cur_enemy_index), j, game);
 }
 pub unsafe fn sub_86CFD5(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_pre_instr[v1] = (0x86cff8 as i32 & 0xffff as i32) as u16);
-    update_ram_word!(game.eproj_x_pos[v1], |fresh73| (fresh73 as i32 - 19 as i32)
+    let v1: i32 = k as i32 >> 1i32;
+    set_ram_word!(game.eproj_pre_instr[v1] = (0x86cff8i32 & 0xffffi32) as u16);
+    update_ram_word!(game.eproj_x_pos[v1], |fresh73| (fresh73 as i32 - 19i32)
         as u16);
 }
 pub unsafe fn sub_86CFE6(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_pre_instr[v1] = (0x86cff8 as i32 & 0xffff as i32) as u16);
-    update_ram_word!(game.eproj_x_pos[v1], |fresh72| (fresh72 as i32 + 19 as i32)
+    let v1: i32 = k as i32 >> 1i32;
+    set_ram_word!(game.eproj_pre_instr[v1] = (0x86cff8i32 & 0xffffi32) as u16);
+    update_ram_word!(game.eproj_x_pos[v1], |fresh72| (fresh72 as i32 + 19i32)
         as u16);
 }
 pub unsafe fn sub_86CFF8(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
-    if EprojBlockCollisition_Vertical(k, game) as i32 & 1 as i32 != 0 {
+    let v1: i32 = k as i32 >> 1i32;
+    if EprojBlockCollisition_Vertical(k, game) as i32 & 1i32 != 0 {
         set_ram_word!(game.eproj_instr_list_ptr[v1] = addr_off_86CF56 as u16);
-        set_ram_word!(game.eproj_instr_timers[v1] = 1 as u16);
-    } else if EprojBlockCollisition_Horiz(k, game) as i32 & 1 as i32 != 0 {
-        set_ram_word!(game.eproj_x_vel[(k as i32 >> 1i32)] = 0 as u16);
+        set_ram_word!(game.eproj_instr_timers[v1] = 1u16);
+    } else if EprojBlockCollisition_Horiz(k, game) as i32 & 1i32 != 0 {
+        set_ram_word!(game.eproj_x_vel[(k as i32 >> 1i32)] = 0u16);
     } else {
-        let mut v2: u16 = (ram_word!(game, eproj_y_vel[v1]) as i32 + 16 as i32) as u16;
+        let mut v2: u16 = (ram_word!(game, eproj_y_vel[v1]) as i32 + 16i32) as u16;
         set_ram_word!(game.eproj_y_vel[v1] = v2);
-        if v2 as i32 - 512 as i32 & 0x8000 as i32 == 0 {
-            v2 = 512 as u16;
+        if v2 as i32 - 512i32 & 0x8000i32 == 0 {
+            v2 = 512u16;
         }
         set_ram_word!(game.eproj_y_vel[v1] = v2);
     };
 }
 unsafe fn EprojInit_KagosBugs(j: u16, game: &mut Game) {
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_F[v2] = game.cur_enemy_index());
     let enemy_index = game.cur_enemy_index();
     set_ram_word!(game.eproj_x_pos[v2] = game.enemy_state(enemy_index).x_pos());
     set_ram_word!(game.eproj_y_pos[v2] = game.enemy_state(enemy_index).y_pos());
-    let v4: u16 = ((game.random_number() as i32 & 7 as i32) + 1 as i32) as u16;
+    let v4: u16 = ((game.random_number() as i32 & 7i32) + 1i32) as u16;
     set_ram_word!(game.eproj_G[v2] = v4);
     set_ram_word!(game.eproj_E[v2] = v4.wrapping_add(4));
     set_ram_word!(game.eproj_pre_instr[v2] = ((0x86d0cai32) as u16));
 }
 pub unsafe fn EprojPreInstr_KagosBugs_Func1(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     let v2: u16 = EprojState(&game.g_ram).slot_word(0x1aff, v1 as usize);
     if v2 != 0 {
         let v3: u16 = v2.wrapping_sub(1);
         EprojStateMut(&mut game.g_ram).write(0x1aff, v1 as usize, v3);
         if v3 == 0 {
-            QueueSfx2_Max6(0x6c as u16, game);
+            QueueSfx2_Max6(0x6cu16, game);
         }
     }
 }
 pub unsafe fn EprojPreInstr_KagosBugs_Func2(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     let enemy_index = ram_word!(game, eproj_F[v1]);
     let v3: u16 =
         abs16((game.enemy_state(enemy_index).x_pos()).wrapping_sub(game.enemy_projectile_x_pos(k)));
-    if v3 as i32 - 23 as i32 & 0x8000 as i32 == 0 {
+    if v3 as i32 - 23i32 & 0x8000i32 == 0 {
         EprojStateMut(&mut game.g_ram).set_property_bits(v1 as usize, 0x8000);
     }
 }
 pub unsafe fn EprojPreInstr_KagosBugs(k: u16, game: &mut Game) {
     EprojPreInstr_KagosBugs_Func1(k, game);
     EprojPreInstr_KagosBugs_Func2(k, game);
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     if ram_word!(game, eproj_G[v1]) != 0 {
         let fresh71 = EprojStateMut(&mut game.g_ram).add_word(0x1bfb, v1 as usize, u16::MAX);
     } else {
@@ -5978,13 +5797,13 @@ pub unsafe fn EprojPreInstr_KagosBugs(k: u16, game: &mut Game) {
         set_ram_word!(game.eproj_pre_instr[v1] = ((0x86d0ebi32) as u16));
     };
 }
-static word_86D082: u16 = 0xe0 as u16;
+static word_86D082: u16 = 0xe0u16;
 pub unsafe fn EprojPreInstr_D0EC(k: u16, game: &mut Game) {
     let current_block: u64;
     EprojPreInstr_KagosBugs_Func1(k, game);
     EprojPreInstr_KagosBugs_Func2(k, game);
     if EprojBlockCollisition_Horiz(k, game) != 0 {
-        set_ram_word!(game.eproj_x_vel[(k as i32 >> 1i32)] = 0 as u16);
+        set_ram_word!(game.eproj_x_vel[(k as i32 >> 1i32)] = 0u16);
         current_block = 4781832012581146689;
     } else if EprojBlockCollisition_Vertical(k, game) != 0 {
         current_block = 4781832012581146689;
@@ -5999,7 +5818,7 @@ pub unsafe fn EprojPreInstr_D0EC(k: u16, game: &mut Game) {
         }
     }
     if current_block == 4781832012581146689 {
-        set_ram_word!(game.eproj_y_vel[(k as i32 >> 1i32)] = 256 as u16);
+        set_ram_word!(game.eproj_y_vel[(k as i32 >> 1i32)] = 256u16);
     }
     set_ram_word!(game.eproj_pre_instr[(k as i32 >> 1i32)] = ((0x86d128i32) as u16));
     EprojStateMut(&mut game.g_ram).start_instruction(usize::from(k >> 1), addr_word_86D04A as u16);
@@ -6007,39 +5826,39 @@ pub unsafe fn EprojPreInstr_D0EC(k: u16, game: &mut Game) {
 pub unsafe fn EprojPreInstr_D128(v0: u16, game: &mut Game) {
     EprojPreInstr_KagosBugs_Func1(v0, game);
     EprojPreInstr_KagosBugs_Func2(v0, game);
-    if EprojBlockCollisition_Horiz(v0, game) as i32 & 1 as i32 != 0 {
-        set_ram_word!(game.eproj_x_vel[(v0 as i32 >> 1i32)] = 0 as u16);
-    } else if EprojBlockCollisition_Vertical(v0, game) as i32 & 1 as i32 != 0 {
-        let v1: i32 = v0 as i32 >> 1 as i32;
+    if EprojBlockCollisition_Horiz(v0, game) as i32 & 1i32 != 0 {
+        set_ram_word!(game.eproj_x_vel[(v0 as i32 >> 1i32)] = 0u16);
+    } else if EprojBlockCollisition_Vertical(v0, game) as i32 & 1i32 != 0 {
+        let v1: i32 = v0 as i32 >> 1i32;
         set_ram_word!(game.eproj_pre_instr[v1] = ((0x86d0ebi32) as u16));
         EprojStateMut(&mut game.g_ram).start_instruction(v1 as usize, addr_word_86D03C as u16);
     } else {
         update_ram_word!(
-            game.eproj_y_vel[(v0 as i32 >> 1 as i32)],
+            game.eproj_y_vel[(v0 as i32 >> 1i32)],
             wrapping_add(word_86D082)
         );
     };
 }
-static g_word_86D086: u16 = 0x200 as u16;
-static g_word_86D084: u16 = 0x30 as u16;
+static g_word_86D086: u16 = 0x200u16;
+static g_word_86D084: u16 = 0x30u16;
 pub unsafe fn EprojInstr_D15C(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
     EprojPreInstr_KagosBugs_Func1(k, game);
     EprojPreInstr_KagosBugs_Func2(k, game);
-    let v2: i32 = k as i32 >> 1 as i32;
-    let mut t: u16 = ((game.random_number() as i32 & 0x300 as i32) + 2048 as i32) as u16;
+    let v2: i32 = k as i32 >> 1i32;
+    let mut t: u16 = ((game.random_number() as i32 & 0x300i32) + 2048i32) as u16;
     set_ram_word!(game.eproj_y_vel[v2] = -(t as i32) as u16);
     let enemy_index = ram_word!(game, eproj_F[v2]);
     let t2: u16 =
         (game.enemy_state(enemy_index).x_pos()).wrapping_sub(game.enemy_projectile_x_pos(k));
     if ((abs16(t2)) as i16).wrapping_sub((g_word_86D084) as i16) >= 0i16 {
-        t = (if t2 as i32 & 0x8000 as i32 != 0 {
-            -(1 as i32)
+        t = (if t2 as i32 & 0x8000i32 != 0 {
+            -(1i32)
         } else {
-            0 as i32
+            0i32
         }) as u16;
     }
     let mut v4: u16 = g_word_86D086;
-    if t as i32 & 0x100 as i32 != 0 {
+    if t as i32 & 0x100i32 != 0 {
         v4 = -(v4 as i32) as u16;
     }
     set_ram_word!(game.eproj_x_vel[v2] = v4);
@@ -6047,15 +5866,15 @@ pub unsafe fn EprojInstr_D15C(k: u16, epjp: *const u8, game: &mut Game) -> *cons
     epjp
 }
 pub unsafe fn EprojInstr_D1B6(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     set_ram_word!(
-        game.eproj_G[v1] = ((game.random_number() as i32 & 0x1f as i32) as u16).wrapping_add(1u16)
+        game.eproj_G[v1] = ((game.random_number() as i32 & 0x1fi32) as u16).wrapping_add(1u16)
     );
     set_ram_word!(game.eproj_pre_instr[v1] = ((0x86d0cai32) as u16));
     epjp
 }
 pub unsafe fn EprojInstr_D1C7(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
-    set_ram_word!(game.eproj_gfx_idx[(k as i32 >> 1i32)] = 0 as u16);
+    set_ram_word!(game.eproj_gfx_idx[(k as i32 >> 1i32)] = 0u16);
     epjp
 }
 pub unsafe fn EprojInstr_D1CE(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
@@ -6063,119 +5882,119 @@ pub unsafe fn EprojInstr_D1CE(k: u16, epjp: *const u8, game: &mut Game) -> *cons
         x: ram_word!(game, eproj_x_pos[(k as i32 >> 1i32)]),
         y: ram_word!(game, eproj_y_pos[(k as i32 >> 1i32)]),
     };
-    SpawnEnemyDrops(addr_kEnemyDef_E7FF as u16, k, 0 as u16, game);
+    SpawnEnemyDrops(addr_kEnemyDef_E7FF as u16, k, 0u16, game);
     epjp
 }
 unsafe fn EprojInit_MaridiaFloatersSpikes(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_x_subpos[v1] = 0 as u16);
-    set_ram_word!(game.eproj_y_subpos[v1] = 0 as u16);
-    set_ram_word!(game.eproj_x_vel[v1] = 0 as u16);
-    set_ram_word!(game.eproj_y_vel[v1] = 0 as u16);
+    let v1: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_x_subpos[v1] = 0u16);
+    set_ram_word!(game.eproj_y_subpos[v1] = 0u16);
+    set_ram_word!(game.eproj_x_vel[v1] = 0u16);
+    set_ram_word!(game.eproj_y_vel[v1] = 0u16);
     let v2: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
     set_ram_word!(game.eproj_x_pos[v1] = (*v2).x_pos);
     set_ram_word!(game.eproj_y_pos[v1] = (*v2).y_pos);
     set_ram_word!(game.eproj_E[v1] = ram_word!(game, cinematic_var8));
 }
 static word_86D21A: [i16; 8] = [
-    0 as i16,
-    32 as i16,
-    32 as i16,
-    32 as i16,
-    0 as i16,
-    -(32 as i32) as i16,
-    -(32 as i32) as i16,
-    -(32 as i32) as i16,
+    0i16,
+    32i16,
+    32i16,
+    32i16,
+    0i16,
+    -(32i32) as i16,
+    -(32i32) as i16,
+    -(32i32) as i16,
 ];
 static word_86D22A: [i16; 8] = [
-    -(32 as i32) as i16,
-    -(32 as i32) as i16,
-    0 as i16,
-    32 as i16,
-    32 as i16,
-    32 as i16,
-    0 as i16,
-    -(32 as i32) as i16,
+    -(32i32) as i16,
+    -(32i32) as i16,
+    0i16,
+    32i16,
+    32i16,
+    32i16,
+    0i16,
+    -(32i32) as i16,
 ];
 pub unsafe fn EprojPreInstr_MaridiaFloatersSpikes(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     update_ram_word!(game.eproj_x_vel[v1], |fresh68| (fresh68 as i32
         + word_86D21A[ram_word!(game, eproj_E[v1]) as usize] as i32)
         as u16);
-    if EprojBlockCollisition_Horiz(k, game) as i32 & 1 as i32 != 0 || {
+    if EprojBlockCollisition_Horiz(k, game) as i32 & 1i32 != 0 || {
         update_ram_word!(game.eproj_y_vel[v1], |fresh69| (fresh69 as i32
             + word_86D22A[ram_word!(game, eproj_E[v1]) as usize] as i32)
             as u16);
-        EprojBlockCollisition_Vertical(k, game) as i32 & 1 as i32 != 0
+        EprojBlockCollisition_Vertical(k, game) as i32 & 1i32 != 0
     } {
         set_ram_word!(game.eproj_instr_list_ptr[v1] = addr_off_86D218 as u16);
-        set_ram_word!(game.eproj_instr_timers[v1] = 1 as u16);
+        set_ram_word!(game.eproj_instr_timers[v1] = 1u16);
     }
 }
 unsafe fn EprojInit_WreckedShipRobotLaserCommon(k: u16, j: u16, game: &mut Game) {
     let v2: *mut EnemyData = gEnemyData(k as i32, game);
-    let v3: i32 = j as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_y_pos[v3] = ((*v2).y_pos as i32 - 16 as i32) as u16);
+    let v3: i32 = j as i32 >> 1i32;
+    set_ram_word!(game.eproj_y_pos[v3] = ((*v2).y_pos as i32 - 16i32) as u16);
     set_ram_word!(
         game.eproj_x_pos[v3] = ((*v2).x_pos as i32
-            + (if ram_word!(game, eproj_x_vel[v3]) as i32 & 0x8000 as i32 != 0 {
-                -(4 as i32)
+            + (if ram_word!(game, eproj_x_vel[v3]) as i32 & 0x8000i32 != 0 {
+                -(4i32)
             } else {
-                4 as i32
+                4i32
             })) as u16
     );
-    set_ram_word!(game.eproj_y_subpos[v3] = 0 as u16);
-    set_ram_word!(game.eproj_x_subpos[v3] = 0 as u16);
+    set_ram_word!(game.eproj_y_subpos[v3] = 0u16);
+    set_ram_word!(game.eproj_x_subpos[v3] = 0u16);
     if (((*v2).x_width as i32 + (*v2).x_pos as i32 - ram_word!(game, layer1_x_pos) as i32) as i16)
         >= 0i16
         && (((*v2).x_pos as i32
             - (*v2).x_width as i32
-            - 257 as i32
+            - 257i32
             - ram_word!(game, layer1_x_pos) as i32) as i16)
             < 0i16
         && (((*v2).y_height as i32 + (*v2).y_pos as i32 - ram_word!(game, layer1_y_pos) as i32)
             as i16)
             >= 0i16
-        && (((*v2).y_pos as i32 - (*v2).y_height as i32 - 224 as i32) as i16) < 0i16
+        && (((*v2).y_pos as i32 - (*v2).y_height as i32 - 224i32) as i16) < 0i16
     {
-        QueueSfx2_Max6(0x67 as u16, game);
+        QueueSfx2_Max6(0x67u16, game);
     }
 }
 unsafe fn EprojInit_WreckedShipRobotLaserDown(j: u16, game: &mut Game) {
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(
         game.eproj_x_vel[v2] =
             (*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).ai_var_A
     );
-    set_ram_word!(game.eproj_y_vel[v2] = 128 as u16);
-    set_ram_word!(game.eproj_gfx_idx[v2] = 0 as u16);
+    set_ram_word!(game.eproj_y_vel[v2] = 128u16);
+    set_ram_word!(game.eproj_gfx_idx[v2] = 0u16);
     EprojInit_WreckedShipRobotLaserCommon(ram_word!(game, cur_enemy_index), j, game);
 }
 unsafe fn EprojInit_WreckedShipRobotLaserHorizontal(j: u16, game: &mut Game) {
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(
         game.eproj_x_vel[v2] =
             (*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).ai_var_A
     );
-    set_ram_word!(game.eproj_y_vel[v2] = 0 as u16);
+    set_ram_word!(game.eproj_y_vel[v2] = 0u16);
     EprojInit_WreckedShipRobotLaserCommon(ram_word!(game, cur_enemy_index), j, game);
 }
 unsafe fn EprojInit_WreckedShipRobotLaserUp(j: u16, game: &mut Game) {
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(
         game.eproj_x_vel[v2] =
             (*gEnemyData(ram_word!(game, cur_enemy_index) as i32, game)).ai_var_A
     );
-    set_ram_word!(game.eproj_y_vel[v2] = -(128 as i32) as u16);
+    set_ram_word!(game.eproj_y_vel[v2] = -(128i32) as u16);
     EprojInit_WreckedShipRobotLaserCommon(ram_word!(game, cur_enemy_index), j, game);
 }
 pub unsafe fn EprojPreInstr_WreckedShipRobotLaser(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_gfx_idx[v1] = 0 as u16);
-    if EprojBlockCollisition_Horiz(k, game) as i32 & 1 as i32 != 0
-        || EprojBlockCollisition_Vertical(k, game) as i32 & 1 as i32 != 0
+    let v1: i32 = k as i32 >> 1i32;
+    set_ram_word!(game.eproj_gfx_idx[v1] = 0u16);
+    if EprojBlockCollisition_Horiz(k, game) as i32 & 1i32 != 0
+        || EprojBlockCollisition_Vertical(k, game) as i32 & 1i32 != 0
     {
-        set_ram_word!(game.eproj_id[v1] = 0 as u16);
+        set_ram_word!(game.eproj_id[v1] = 0u16);
     }
 }
 pub unsafe fn EprojInstr_AssignNewN00bTubeShardVelocity(
@@ -6184,51 +6003,50 @@ pub unsafe fn EprojInstr_AssignNewN00bTubeShardVelocity(
     game: &mut Game,
 ) -> *const u8 {
     NextRandom(game);
-    let v2: i32 = k as i32 >> 1 as i32;
+    let v2: i32 = k as i32 >> 1i32;
     set_ram_word!(
         game.eproj_x_vel[v2] = *(((&raw mut game.g_ram as *mut u8).offset(0x5e5) as *mut u16
             as *mut u8)
             .offset(1) as *mut u16)
     );
-    set_ram_word!(game.eproj_y_vel[v2] = 192 as u16);
+    set_ram_word!(game.eproj_y_vel[v2] = 192u16);
     epjp
 }
 pub unsafe fn EprojInstr_SetN00bTubeShardX(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
-    let v2: i32 = k as i32 >> 1 as i32;
-    if ram_word!(game, nmi_frame_counter_word) as i32 & 1 as i32 != 0 {
+    let v2: i32 = k as i32 >> 1i32;
+    if ram_word!(game, nmi_frame_counter_word) as i32 & 1i32 != 0 {
         set_ram_word!(game.eproj_x_pos[v2] = ram_word!(game, eproj_F[v2]));
         set_ram_word!(game.eproj_spritemap_ptr[v2] = *(epjp as *mut u16));
     } else {
         set_ram_word!(
-            game.eproj_x_pos[v2] =
-                (128 as i32 - ram_word!(game, eproj_F[v2]) as i32 + 128 as i32) as u16
+            game.eproj_x_pos[v2] = (128i32 - ram_word!(game, eproj_F[v2]) as i32 + 128i32) as u16
         );
         set_ram_word!(game.eproj_spritemap_ptr[v2] = *(epjp.offset(2) as *mut u16));
     }
     set_ram_word!(
-        game.eproj_instr_list_ptr[v2] = (epjp.offset_from(RomBankBase(0x86 as u8, game))
+        game.eproj_instr_list_ptr[v2] = (epjp.offset_from(RomBankBase(0x86u8, game))
             as ::core::ffi::c_long
             + 4 as ::core::ffi::c_long) as u16
     );
-    set_ram_word!(game.eproj_instr_timers[v2] = 1 as u16);
+    set_ram_word!(game.eproj_instr_timers[v2] = 1u16);
     ::core::ptr::null::<u8>()
 }
 pub unsafe fn EprojInstr_D62A(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
-    if ram_word!(game, nmi_frame_counter_word) as i32 & 1 as i32 != 0 {
+    if ram_word!(game, nmi_frame_counter_word) as i32 & 1i32 != 0 {
         set_ram_word!(
             game.eproj_x_pos[(k as i32 >> 1i32)] = ram_word!(game, eproj_F[(k as i32 >> 1i32)])
         );
     } else {
-        set_ram_word!(game.eproj_x_pos[(k as i32 >> 1i32)] = -(4608 as i32) as u16);
+        set_ram_word!(game.eproj_x_pos[(k as i32 >> 1i32)] = -(4608i32) as u16);
     }
-    let v2: i32 = k as i32 >> 1 as i32;
+    let v2: i32 = k as i32 >> 1i32;
     set_ram_word!(game.eproj_spritemap_ptr[v2] = *(epjp as *mut u16));
     set_ram_word!(
-        game.eproj_instr_list_ptr[v2] = (epjp.offset_from(RomBankBase(0x86 as u8, game))
+        game.eproj_instr_list_ptr[v2] = (epjp.offset_from(RomBankBase(0x86u8, game))
             as ::core::ffi::c_long
             + 2 as ::core::ffi::c_long) as u16
     );
-    set_ram_word!(game.eproj_instr_timers[v2] = 1 as u16);
+    set_ram_word!(game.eproj_instr_timers[v2] = 1u16);
     ::core::ptr::null::<u8>()
 }
 pub unsafe fn EprojInstr_SetXvelRandom(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
@@ -6242,76 +6060,76 @@ pub unsafe fn EprojInstr_SetXvelRandom(k: u16, epjp: *const u8, game: &mut Game)
 }
 unsafe fn EprojInit_N00bTubeCrack(j: u16, game: &mut Game) {
     CalculatePlmBlockCoords(ram_word!(game, plm_id), game);
-    let v1: i32 = j as i32 >> 1 as i32;
+    let v1: i32 = j as i32 >> 1i32;
     set_ram_word!(
-        game.eproj_x_pos[v1] = (16 as i32 * ram_word!(game, plm_x_block) as i32 + 96 as i32) as u16
+        game.eproj_x_pos[v1] = (16i32 * ram_word!(game, plm_x_block) as i32 + 96i32) as u16
     );
     set_ram_word!(
-        game.eproj_y_pos[v1] = (16 as i32 * ram_word!(game, plm_y_block) as i32 + 48 as i32) as u16
+        game.eproj_y_pos[v1] = (16i32 * ram_word!(game, plm_y_block) as i32 + 48i32) as u16
     );
 }
 static kEprojInit_N00bTubeShards_X: [i16; 10] = [
-    -(56 as i32) as i16,
-    -(64 as i32) as i16,
-    -(20 as i32) as i16,
-    -(40 as i32) as i16,
-    -(64 as i32) as i16,
-    -(48 as i32) as i16,
-    -(24 as i32) as i16,
-    -(40 as i32) as i16,
-    0 as i16,
-    -(8 as i32) as i16,
+    -(56i32) as i16,
+    -(64i32) as i16,
+    -(20i32) as i16,
+    -(40i32) as i16,
+    -(64i32) as i16,
+    -(48i32) as i16,
+    -(24i32) as i16,
+    -(40i32) as i16,
+    0i16,
+    -(8i32) as i16,
 ];
 static kEprojInit_N00bTubeShards_Y: [i16; 10] = [
-    8 as i16,
-    -(12 as i32) as i16,
-    -(26 as i32) as i16,
-    -(24 as i32) as i16,
-    -(32 as i32) as i16,
-    28 as i16,
-    16 as i16,
-    -(8 as i32) as i16,
-    -(24 as i32) as i16,
-    16 as i16,
+    8i16,
+    -(12i32) as i16,
+    -(26i32) as i16,
+    -(24i32) as i16,
+    -(32i32) as i16,
+    28i16,
+    16i16,
+    -(8i32) as i16,
+    -(24i32) as i16,
+    16i16,
 ];
 static kEprojInit_N00bTubeShards_Xvel: [i16; 10] = [
-    -(384 as i32) as i16,
-    -(384 as i32) as i16,
-    -(160 as i32) as i16,
-    -(288 as i32) as i16,
-    -(288 as i32) as i16,
-    -(320 as i32) as i16,
-    -(96 as i32) as i16,
-    -(352 as i32) as i16,
-    0 as i16,
-    -(64 as i32) as i16,
+    -(384i32) as i16,
+    -(384i32) as i16,
+    -(160i32) as i16,
+    -(288i32) as i16,
+    -(288i32) as i16,
+    -(320i32) as i16,
+    -(96i32) as i16,
+    -(352i32) as i16,
+    0i16,
+    -(64i32) as i16,
 ];
 static kEprojInit_N00bTubeShards_Yvel: [i16; 10] = [
-    320 as i16,
-    -(256 as i32) as i16,
-    -(416 as i32) as i16,
-    -(288 as i32) as i16,
-    -(288 as i32) as i16,
-    448 as i16,
-    576 as i16,
-    -(96 as i32) as i16,
-    -(288 as i32) as i16,
-    384 as i16,
+    320i16,
+    -(256i32) as i16,
+    -(416i32) as i16,
+    -(288i32) as i16,
+    -(288i32) as i16,
+    448i16,
+    576i16,
+    -(96i32) as i16,
+    -(288i32) as i16,
+    384i16,
 ];
 unsafe fn EprojInit_N00bTubeShards(j: u16, game: &mut Game) {
     CalculatePlmBlockCoords(ram_word!(game, plm_id), game);
-    let v1: i32 = ram_word!(game, cinematic_var8) as i32 >> 1 as i32;
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v1: i32 = ram_word!(game, cinematic_var8) as i32 >> 1i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(
         game.eproj_F[v2] = (kEprojInit_N00bTubeShards_X[v1 as usize] as i32
-            + 16 as i32 * ram_word!(game, plm_x_block) as i32
-            + 96 as i32) as u16
+            + 16i32 * ram_word!(game, plm_x_block) as i32
+            + 96i32) as u16
     );
-    set_ram_word!(game.eproj_E[v2] = 0 as u16);
+    set_ram_word!(game.eproj_E[v2] = 0u16);
     set_ram_word!(
         game.eproj_y_pos[v2] = (kEprojInit_N00bTubeShards_Y[v1 as usize] as i32
-            + 16 as i32 * ram_word!(game, plm_y_block) as i32
-            + 48 as i32) as u16
+            + 16i32 * ram_word!(game, plm_y_block) as i32
+            + 48i32) as u16
     );
     set_ram_word!(
         game.eproj_instr_list_ptr[v2] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x86d760))
@@ -6321,42 +6139,39 @@ unsafe fn EprojInit_N00bTubeShards(j: u16, game: &mut Game) {
     set_ram_word!(game.eproj_x_vel[v2] = kEprojInit_N00bTubeShards_Xvel[v1 as usize] as u16);
     set_ram_word!(game.eproj_y_vel[v2] = kEprojInit_N00bTubeShards_Yvel[v1 as usize] as u16);
 }
-static kEprojInit_N00bTubeReleasedAirBubbles_X: [u16; 6] = [
-    40 as u16, 80 as u16, 104 as u16, 120 as u16, 152 as u16, 184 as u16,
-];
-static kEprojInit_N00bTubeReleasedAirBubbles_Y: [u16; 6] = [
-    80 as u16, 72 as u16, 84 as u16, 32 as u16, 64 as u16, 84 as u16,
-];
+static kEprojInit_N00bTubeReleasedAirBubbles_X: [u16; 6] =
+    [40u16, 80u16, 104u16, 120u16, 152u16, 184u16];
+static kEprojInit_N00bTubeReleasedAirBubbles_Y: [u16; 6] =
+    [80u16, 72u16, 84u16, 32u16, 64u16, 84u16];
 unsafe fn EprojInit_N00bTubeReleasedAirBubbles(j: u16, game: &mut Game) {
     CalculatePlmBlockCoords(ram_word!(game, plm_id), game);
-    let v1: i32 = ram_word!(game, cinematic_var8) as i32 >> 1 as i32;
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v1: i32 = ram_word!(game, cinematic_var8) as i32 >> 1i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(
         game.eproj_F[v2] = (kEprojInit_N00bTubeReleasedAirBubbles_X[v1 as usize] as i32
-            + 16 as i32 * ram_word!(game, plm_x_block) as i32) as u16
+            + 16i32 * ram_word!(game, plm_x_block) as i32) as u16
     );
-    set_ram_word!(game.eproj_E[v2] = 0 as u16);
+    set_ram_word!(game.eproj_E[v2] = 0u16);
     set_ram_word!(
         game.eproj_y_pos[v2] = (kEprojInit_N00bTubeReleasedAirBubbles_Y[v1 as usize] as i32
-            + 16 as i32 * ram_word!(game, plm_y_block) as i32)
-            as u16
+            + 16i32 * ram_word!(game, plm_y_block) as i32) as u16
     );
-    set_ram_word!(game.eproj_y_vel[v2] = -(1280 as i32) as u16);
+    set_ram_word!(game.eproj_y_vel[v2] = -(1280i32) as u16);
 }
 pub unsafe fn sub_86D7BF(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     if ram_word!(game, eproj_x_pos[v1]) != 0xee00u16 {
         set_ram_word!(game.eproj_E[v1] = ram_word!(game, eproj_x_pos[v1]));
     }
-    if ram_word!(game, nmi_frame_counter_word) as i32 & 1 as i32 != 0 {
-        set_ram_word!(game.eproj_x_pos[v1] = -(4608 as i32) as u16);
+    if ram_word!(game, nmi_frame_counter_word) as i32 & 1i32 != 0 {
+        set_ram_word!(game.eproj_x_pos[v1] = -(4608i32) as u16);
     } else {
         set_ram_word!(game.eproj_x_pos[v1] = ram_word!(game, eproj_E[v1]));
     };
 }
 pub unsafe fn sub_86D7DE(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
-    let amt: i32 = (192 as i16 as i32) << 8 as i32;
+    let v1: i32 = k as i32 >> 1i32;
+    let amt: i32 = (192i16 as i32) << 8i32;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut u8).offset(0x1a93) as *mut u16).offset(v1 as isize)
             as *mut u16,
@@ -6366,8 +6181,8 @@ pub unsafe fn sub_86D7DE(k: u16, game: &mut Game) {
     );
 }
 pub unsafe fn EprojPreInstr_N00bTubeShards(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
-    let mut amt: i32 = (ram_word!(game, eproj_x_vel[v1]) as i16 as i32) << 8 as i32;
+    let v1: i32 = k as i32 >> 1i32;
+    let mut amt: i32 = (ram_word!(game, eproj_x_vel[v1]) as i16 as i32) << 8i32;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut u8).offset(0x1b23) as *mut u16).offset(v1 as isize)
             as *mut u16,
@@ -6375,7 +6190,7 @@ pub unsafe fn EprojPreInstr_N00bTubeShards(k: u16, game: &mut Game) {
             as *mut u16,
         amt as u32,
     );
-    amt = (ram_word!(game, eproj_y_vel[v1]) as i16 as i32) << 8 as i32;
+    amt = (ram_word!(game, eproj_y_vel[v1]) as i16 as i32) << 8i32;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut u8).offset(0x1a93) as *mut u16).offset(v1 as isize)
             as *mut u16,
@@ -6386,13 +6201,11 @@ pub unsafe fn EprojPreInstr_N00bTubeShards(k: u16, game: &mut Game) {
     Eproj_DeleteIfYposOutside(k, game);
 }
 pub unsafe fn sub_86D83D(k: u16, game: &mut Game) {
-    let v2: i32 = (ram_word!(game, eproj_x_vel[(k as i32 >> 1i32)]) as i32 & 0x17e as i32
-        | 0x80 as i32)
-        >> 1 as i32;
-    let v6: i32 = ram_word!(game, cinematic_var7) as i32 >> 1 as i32;
-    let mut amt: i32 = ((kSinCosTable8bit_Sext[(v2 + 64 as i32) as usize] as i32 >> 2 as i32) as i16
-        as i32)
-        << 8 as i32;
+    let v2: i32 =
+        (ram_word!(game, eproj_x_vel[(k as i32 >> 1i32)]) as i32 & 0x17ei32 | 0x80i32) >> 1i32;
+    let v6: i32 = ram_word!(game, cinematic_var7) as i32 >> 1i32;
+    let mut amt: i32 =
+        ((kSinCosTable8bit_Sext[(v2 + 64i32) as usize] as i32 >> 2i32) as i16 as i32) << 8i32;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut u8).offset(0x1b23) as *mut u16).offset(v6 as isize)
             as *mut u16,
@@ -6400,9 +6213,9 @@ pub unsafe fn sub_86D83D(k: u16, game: &mut Game) {
             as *mut u16,
         amt as u32,
     );
-    update_ram_word!(game.eproj_x_vel[v6], |fresh67| (fresh67 as i32 + 2 as i32)
+    update_ram_word!(game.eproj_x_vel[v6], |fresh67| (fresh67 as i32 + 2i32)
         as u16);
-    amt = (ram_word!(game, eproj_y_vel[v6]) as i16 as i32) << 8 as i32;
+    amt = (ram_word!(game, eproj_y_vel[v6]) as i16 as i32) << 8i32;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut u8).offset(0x1a93) as *mut u16).offset(v6 as isize)
             as *mut u16,
@@ -6413,13 +6226,12 @@ pub unsafe fn sub_86D83D(k: u16, game: &mut Game) {
     Eproj_DeleteIfYposOutside(ram_word!(game, cinematic_var7), game);
 }
 pub unsafe fn sub_86D89F(k: u16, game: &mut Game) {
-    let v1: u16 = (ram_word!(game, eproj_x_vel[(k as i32 >> 1i32)]) as i32 & 0x17e as i32
-        | 0x80 as i32) as u16;
-    let v2: i32 = v1 as i32 >> 1 as i32;
-    let amt: i32 = ((kSinCosTable8bit_Sext[(v2 + 64 as i32) as usize] as i32 >> 2 as i32) as i16
-        as i32)
-        << 8 as i32;
-    let v5: i32 = ram_word!(game, cinematic_var7) as i32 >> 1 as i32;
+    let v1: u16 =
+        (ram_word!(game, eproj_x_vel[(k as i32 >> 1i32)]) as i32 & 0x17ei32 | 0x80i32) as u16;
+    let v2: i32 = v1 as i32 >> 1i32;
+    let amt: i32 =
+        ((kSinCosTable8bit_Sext[(v2 + 64i32) as usize] as i32 >> 2i32) as i16 as i32) << 8i32;
+    let v5: i32 = ram_word!(game, cinematic_var7) as i32 >> 1i32;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut u8).offset(0x1b23) as *mut u16).offset(v5 as isize)
             as *mut u16,
@@ -6427,13 +6239,13 @@ pub unsafe fn sub_86D89F(k: u16, game: &mut Game) {
             as *mut u16,
         amt as u32,
     );
-    update_ram_word!(game.eproj_x_vel[v5], |fresh66| (fresh66 as i32 + 4 as i32)
+    update_ram_word!(game.eproj_x_vel[v5], |fresh66| (fresh66 as i32 + 4i32)
         as u16);
     sub_86D8DF(ram_word!(game, cinematic_var7), game);
 }
 pub unsafe fn sub_86D8DF(k: u16, game: &mut Game) {
-    let v5: i32 = k as i32 >> 1 as i32;
-    let amt: i32 = (ram_word!(game, eproj_y_vel[v5]) as i16 as i32) << 8 as i32;
+    let v5: i32 = k as i32 >> 1i32;
+    let amt: i32 = (ram_word!(game, eproj_y_vel[v5]) as i16 as i32) << 8i32;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut u8).offset(0x1a93) as *mut u16).offset(v5 as isize)
             as *mut u16,
@@ -6445,51 +6257,51 @@ pub unsafe fn sub_86D8DF(k: u16, game: &mut Game) {
 }
 pub unsafe fn sub_86D992(v0: u16, game: &mut Game) {
     let v1: u16 = EprojState(&game.g_ram).init_param_1();
-    let v2: i32 = v0 as i32 >> 1 as i32;
+    let v2: i32 = v0 as i32 >> 1i32;
     set_ram_word!(game.eproj_E[v2] = EprojState(&game.g_ram).init_param_1());
     set_ram_word!(
         game.eproj_instr_list_ptr[v2] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x86d96a))
             as *const u8 as *mut u16)
-            .offset((v1 as i32 >> 1 as i32) as isize)
+            .offset((v1 as i32 >> 1i32) as isize)
     );
     let enemy_index = game.cur_enemy_index();
     set_ram_word!(game.eproj_x_pos[v2] = game.enemy_state(enemy_index).x_pos());
     set_ram_word!(game.eproj_x_subpos[v2] = game.enemy_state(enemy_index).x_subpos());
     set_ram_word!(game.eproj_y_pos[v2] = game.enemy_state(enemy_index).y_pos());
     set_ram_word!(game.eproj_y_subpos[v2] = game.enemy_state(enemy_index).y_subpos());
-    set_ram_word!(game.eproj_y_vel[v2] = -(512 as i32) as u16);
-    set_ram_word!(game.eproj_x_vel[v2] = 512 as u16);
-    if EprojState(&game.g_ram).init_param_1() as i32 - 12 as i32 & 0x8000 as i32 == 0 {
-        set_ram_word!(game.eproj_y_vel[v2] = -(384 as i32) as u16);
-        set_ram_word!(game.eproj_x_vel[v2] = 384 as u16);
+    set_ram_word!(game.eproj_y_vel[v2] = -(512i32) as u16);
+    set_ram_word!(game.eproj_x_vel[v2] = 512u16);
+    if EprojState(&game.g_ram).init_param_1() as i32 - 12i32 & 0x8000i32 == 0 {
+        set_ram_word!(game.eproj_y_vel[v2] = -(384i32) as u16);
+        set_ram_word!(game.eproj_x_vel[v2] = 384u16);
     }
 }
 pub fn EprojPreInstr_SpikeShootingPlantSpikes_MoveY1(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     let split_amount =
-        ((EprojState(&game.g_ram).slot_word(0x1adb, v1 as usize) as i16 as i32) << 8 as i32) as u32;
+        ((EprojState(&game.g_ram).slot_word(0x1adb, v1 as usize) as i16 as i32) << 8i32) as u32;
     EprojStateMut(&mut game.g_ram).add_split_words(0x1a93, 0x1a6f, v1 as usize, split_amount);
 }
 pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_MoveY2(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut u8).offset(0x1a93) as *mut u16).offset(v1 as isize)
             as *mut u16,
         ((&raw mut game.g_ram as *mut u8).offset(0x1a6f) as *mut u16).offset(v1 as isize)
             as *mut u16,
-        ((ram_word!(game, eproj_x_vel[v1]) as i16 as i32) << 8 as i32) as u32,
+        ((ram_word!(game, eproj_x_vel[v1]) as i16 as i32) << 8i32) as u32,
     );
 }
 pub fn EprojPreInstr_SpikeShootingPlantSpikes_MoveX1(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     let split_amount =
-        ((EprojState(&game.g_ram).slot_word(0x1adb, v1 as usize) as i16 as i32) << 8 as i32) as u32;
+        ((EprojState(&game.g_ram).slot_word(0x1adb, v1 as usize) as i16 as i32) << 8i32) as u32;
     EprojStateMut(&mut game.g_ram).add_split_words(0x1a4b, 0x1a27, v1 as usize, split_amount);
 }
 pub fn EprojPreInstr_SpikeShootingPlantSpikes_MoveX2(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     let split_amount =
-        ((EprojState(&game.g_ram).slot_word(0x1ab7, v1 as usize) as i16 as i32) << 8 as i32) as u32;
+        ((EprojState(&game.g_ram).slot_word(0x1ab7, v1 as usize) as i16 as i32) << 8i32) as u32;
     EprojStateMut(&mut game.g_ram).add_split_words(0x1a4b, 0x1a27, v1 as usize, split_amount);
 }
 pub fn EprojPreInstr_SpikeShootingPlantSpikes_0_MoveX1(k: u16, game: &mut Game) {
@@ -6541,7 +6353,7 @@ pub fn EprojPreInstrHelper_SpikeShootingPlantSpikes_Func1(k: u16, game: &mut Gam
 }
 pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes(k: u16, game: &mut Game) {
     kEprojPreInstr_SpikeShootingPlantSpikes
-        [(ram_word!(game, eproj_E[(k as i32 >> 1i32)]) as i32 >> 1 as i32) as usize]
+        [(ram_word!(game, eproj_E[(k as i32 >> 1i32)]) as i32 >> 1i32) as usize]
         .expect("non-null function pointer")(k, game);
     EprojPreInstrHelper_SpikeShootingPlantSpikes_Func1(k, game);
 }
@@ -6566,107 +6378,107 @@ pub fn EprojPreInstrHelper_SpikeShootingPlantSpikes_Func2(k: u16, game: &mut Gam
             < 0i16) as u16
 }
 unsafe fn EprojInit_DBF2(j: u16, game: &mut Game) {
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_instr_list_ptr[v2] = addr_word_86DB0C as u16);
-    set_ram_word!(game.eproj_E[v2] = (0x86db62 as i32 & 0xffff as i32) as u16);
+    set_ram_word!(game.eproj_E[v2] = (0x86db62i32 & 0xffffi32) as u16);
     if ram_word!(game, cinematic_var8) != 0 {
-        set_ram_word!(game.eproj_E[v2] = (0x86db8c as i32 & 0xffff as i32) as u16);
+        set_ram_word!(game.eproj_E[v2] = (0x86db8ci32 & 0xffffi32) as u16);
     }
     let v3: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
     set_ram_word!(game.eproj_x_pos[v2] = (*v3).x_pos);
     set_ram_word!(game.eproj_x_subpos[v2] = (*v3).x_subpos);
-    set_ram_word!(game.eproj_y_pos[v2] = ((*v3).y_pos as i32 + 2 as i32) as u16);
+    set_ram_word!(game.eproj_y_pos[v2] = ((*v3).y_pos as i32 + 2i32) as u16);
     set_ram_word!(game.eproj_y_subpos[v2] = (*v3).y_subpos);
-    set_ram_word!(game.eproj_y_vel[v2] = -(256 as i32) as u16);
-    set_ram_word!(game.eproj_x_vel[v2] = 256 as u16);
+    set_ram_word!(game.eproj_y_vel[v2] = -(256i32) as u16);
+    set_ram_word!(game.eproj_x_vel[v2] = 256u16);
 }
 pub unsafe fn EprojPreInstr_DBF2_Func1(k: u16, game: &mut Game) {
     if EprojPreInstrHelper_DBF2_Func2(k, game) != 0 {
-        set_ram_word!(game.eproj_id[(k as i32 >> 1i32)] = 0 as u16);
+        set_ram_word!(game.eproj_id[(k as i32 >> 1i32)] = 0u16);
     }
 }
 pub unsafe fn EprojPreInstr_DBF2(k: u16, game: &mut Game) {
     CallEprojPreInstr(
-        (ram_word!(game, eproj_E[(k as i32 >> 1i32)]) as i32 | 0x860000 as i32) as u32,
+        (ram_word!(game, eproj_E[(k as i32 >> 1i32)]) as i32 | 0x860000i32) as u32,
         k,
         game,
     );
     EprojPreInstr_DBF2_Func1(k, game);
 }
 pub unsafe fn EprojPreInstr_DBF2_MoveX1(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut u8).offset(0x1a4b) as *mut u16).offset(v1 as isize)
             as *mut u16,
         ((&raw mut game.g_ram as *mut u8).offset(0x1a27) as *mut u16).offset(v1 as isize)
             as *mut u16,
-        ((ram_word!(game, eproj_y_vel[v1]) as i16 as i32) << 8 as i32) as u32,
+        ((ram_word!(game, eproj_y_vel[v1]) as i16 as i32) << 8i32) as u32,
     );
 }
 pub unsafe fn EprojPreInstr_DBF2_MoveX2(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut u8).offset(0x1a4b) as *mut u16).offset(v1 as isize)
             as *mut u16,
         ((&raw mut game.g_ram as *mut u8).offset(0x1a27) as *mut u16).offset(v1 as isize)
             as *mut u16,
-        ((ram_word!(game, eproj_x_vel[v1]) as i16 as i32) << 8 as i32) as u32,
+        ((ram_word!(game, eproj_x_vel[v1]) as i16 as i32) << 8i32) as u32,
     );
 }
 pub unsafe fn EprojPreInstrHelper_DBF2_Func2(k: u16, game: &mut Game) -> u16 {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     (((ram_word!(game, eproj_x_pos[v1]) as i32 - ram_word!(game, layer1_x_pos) as i32) as i16)
         < 0i16
-        || ((ram_word!(game, layer1_x_pos) as i32 + 256 as i32
+        || ((ram_word!(game, layer1_x_pos) as i32 + 256i32
             - ram_word!(game, eproj_x_pos[v1]) as i32) as i16)
             < 0i16
         || ((ram_word!(game, eproj_y_pos[v1]) as i32 - ram_word!(game, layer1_y_pos) as i32)
             as i16)
             < 0i16
-        || ((ram_word!(game, layer1_y_pos) as i32 + 256 as i32
+        || ((ram_word!(game, layer1_y_pos) as i32 + 256i32
             - ram_word!(game, eproj_y_pos[v1]) as i32) as i16)
             < 0i16) as u16
 }
 pub unsafe fn EprojInstr_DC5A(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
-    set_ram_word!(game.eproj_properties[(k as i32 >> 1i32)] = 12288 as u16);
+    set_ram_word!(game.eproj_properties[(k as i32 >> 1i32)] = 12288u16);
     epjp
 }
 pub unsafe fn EprojInstr_SpawnEnemyDrops_0(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
-    let v2: i32 = k as i32 >> 1 as i32;
+    let v2: i32 = k as i32 >> 1i32;
     game.eproj_spawn_pt = Point16U {
         x: ram_word!(game, eproj_x_pos[v2]),
         y: ram_word!(game, eproj_y_pos[v2]),
     };
-    SpawnEnemyDrops(addr_kEnemyDef_DF7F as u16, k, 0 as u16, game);
+    SpawnEnemyDrops(addr_kEnemyDef_DF7F as u16, k, 0u16, game);
     epjp
 }
 pub unsafe fn EprojInstr_SpawnSporesEproj(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
-    let v2: i32 = k as i32 >> 1 as i32;
+    let v2: i32 = k as i32 >> 1i32;
     game.eproj_spawn_pt = Point16U {
         x: ram_word!(game, eproj_x_pos[v2]),
         y: ram_word!(game, eproj_y_pos[v2]),
     };
-    SpawnEprojWithRoomGfx(addr_kEproj_Spores as u16, 0 as u16, game);
+    SpawnEprojWithRoomGfx(addr_kEproj_Spores as u16, 0u16, game);
     epjp
 }
 unsafe fn EprojInit_Spores(j: u16, game: &mut Game) {
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v2: i32 = j as i32 >> 1i32;
     let ref mut fresh4 =
         *((&raw mut game.g_ram as *mut u8).offset(0x1a4b) as *mut u16).offset(v2 as isize);
     *fresh4 = game.eproj_spawn_pt.x;
     set_ram_word!(game.eproj_F[v2] = *fresh4);
     set_ram_word!(game.eproj_y_pos[v2] = game.eproj_spawn_pt.y);
-    set_ram_word!(game.eproj_gfx_idx[v2] = 512 as u16);
+    set_ram_word!(game.eproj_gfx_idx[v2] = 512u16);
 }
 static word_86DCB9: [i16; 5] = [
-    -(64 as i32) as i16,
-    -(56 as i32) as i16,
-    -(48 as i32) as i16,
-    -(40 as i32) as i16,
-    -(32 as i32) as i16,
+    -(64i32) as i16,
+    -(56i32) as i16,
+    -(48i32) as i16,
+    -(40i32) as i16,
+    -(32i32) as i16,
 ];
 unsafe fn EprojInit_SporeSpawnStalk(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
+    let v1: i32 = j as i32 >> 1i32;
     set_ram_word!(
         game.eproj_y_pos[v1] =
             ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).y_pos
@@ -6679,29 +6491,29 @@ unsafe fn EprojInit_SporeSpawnStalk(j: u16, game: &mut Game) {
     );
 }
 pub unsafe fn sub_86DCC3(v0: u16, game: &mut Game) {
-    let v1: i32 = v0 as i32 >> 1 as i32;
+    let v1: i32 = v0 as i32 >> 1i32;
     set_ram_word!(
         game.eproj_y_pos[v1] =
             ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).y_pos
                 as i32
-                - 96 as i32) as u16
+                - 96i32) as u16
     );
     set_ram_word!(
         game.eproj_x_pos[v1] =
             (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).x_pos
     );
 }
-static kEprojInit_SporeSpawners_X: [i16; 4] = [0x20 as i16, 0x60 as i16, 0xa0 as i16, 0xe0 as i16];
+static kEprojInit_SporeSpawners_X: [i16; 4] = [0x20i16, 0x60i16, 0xa0i16, 0xe0i16];
 unsafe fn EprojInit_SporeSpawners(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
+    let v1: i32 = j as i32 >> 1i32;
     set_ram_word!(
         game.eproj_x_pos[v1] =
             kEprojInit_SporeSpawners_X[ram_word!(game, cinematic_var8) as usize] as u16
     );
-    set_ram_word!(game.eproj_y_pos[v1] = 520 as u16);
+    set_ram_word!(game.eproj_y_pos[v1] = 520u16);
 }
 pub unsafe fn EprojPreInstr_Spores(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     let v2: u16 = *(((&raw mut game.g_ram as *mut u8).offset(0x1aff) as *mut u16)
         .offset(v1 as isize) as *mut u16 as *mut u8)
         .offset(0) as u16;
@@ -6712,7 +6524,7 @@ pub unsafe fn EprojPreInstr_Spores(k: u16, game: &mut Game) {
                 .offset(0) as isize,
         ) as u16,
     );
-    if (ram_word!(game, eproj_F[v1]) as i32 & 0x80 as i32) != 0i32 {
+    if (ram_word!(game, eproj_F[v1]) as i32 & 0x80i32) != 0i32 {
         r18 = -(r18 as i32) as u16;
     }
     update_ram_word!(
@@ -6721,51 +6533,49 @@ pub unsafe fn EprojPreInstr_Spores(k: u16, game: &mut Game) {
     );
     r18 = SignExtend8(
         *(game.g_rom.offset(crate::rtl::lorom_offset(0x86dd6c)) as *const u8 as *mut u8)
-            .offset((v2 as i32 + 1 as i32) as isize) as u16,
+            .offset((v2 as i32 + 1i32) as isize) as u16,
     );
     let v3: u16 = (r18 as i32 + ram_word!(game, eproj_y_pos[v1]) as i32 + r18 as i32) as u16;
     set_ram_word!(game.eproj_y_pos[v1] = v3);
-    if v3 as i32 - 768 as i32 & 0x8000 as i32 == 0 {
-        set_ram_word!(game.eproj_id[v1] = 0 as u16);
+    if v3 as i32 - 768i32 & 0x8000i32 == 0 {
+        set_ram_word!(game.eproj_id[v1] = 0u16);
     }
     set_ram_word!(
         game.eproj_E[v1] = (*(((&raw mut game.g_ram as *mut u8).offset(0x1aff) as *mut u16)
             .offset(v1 as isize) as *mut u16 as *mut u8)
             .offset(0) as i32
-            + 2 as i32) as u8 as u16
+            + 2i32) as u8 as u16
     );
 }
 pub unsafe fn EprojPreInstr_SporeSpawners(k: u16, game: &mut Game) {
     if ram_word!(game, kraid_unk9000) == 0 {
-        let v1: i32 = k as i32 >> 1 as i32;
+        let v1: i32 = k as i32 >> 1i32;
         if ram_word!(game, eproj_F[v1]) == 0 {
             set_ram_word!(game.eproj_instr_list_ptr[v1] = addr_word_86DC06 as u16);
-            set_ram_word!(game.eproj_instr_timers[v1] = 1 as u16);
-            set_ram_word!(game.eproj_F[v1] = (NextRandom(game) as i32 & 0x1ff as i32) as u16);
+            set_ram_word!(game.eproj_instr_timers[v1] = 1u16);
+            set_ram_word!(game.eproj_F[v1] = (NextRandom(game) as i32 & 0x1ffi32) as u16);
         }
         update_ram_word!(game.eproj_F[v1], wrapping_sub(1));
     }
 }
 unsafe fn EprojInit_NamiFuneFireball(j: u16, game: &mut Game) {
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_instr_list_ptr[v2] = addr_word_86DE96 as u16);
-    set_ram_word!(game.eproj_E[v2] = (0x86df40 as i32 & 0xffff as i32) as u16);
+    set_ram_word!(game.eproj_E[v2] = (0x86df40i32 & 0xffffi32) as u16);
     if ram_word!(game, cinematic_var8) != 0 {
         set_ram_word!(game.eproj_instr_list_ptr[v2] = addr_word_86DEA6 as u16);
-        set_ram_word!(game.eproj_E[v2] = (0x86df6a as i32 & 0xffff as i32) as u16);
+        set_ram_word!(game.eproj_E[v2] = (0x86df6ai32 & 0xffffi32) as u16);
     }
     let v3: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
     set_ram_word!(game.eproj_x_pos[v2] = (*v3).x_pos);
     set_ram_word!(game.eproj_x_subpos[v2] = (*v3).x_subpos);
     set_ram_word!(game.eproj_y_pos[v2] = (*v3).y_pos);
     set_ram_word!(game.eproj_y_subpos[v2] = (*v3).y_subpos);
-    if ((*v3).parameter_1 as i32 & 0xf as i32) != 0i32 {
-        update_ram_word!(game.eproj_y_pos[v2], |fresh3| (fresh3 as i32 + 4 as i32)
-            as u16);
+    if ((*v3).parameter_1 as i32 & 0xfi32) != 0i32 {
+        update_ram_word!(game.eproj_y_pos[v2], |fresh3| (fresh3 as i32 + 4i32) as u16);
     }
-    let v4: i32 = (4 as i32 * *(&raw mut (*v3).parameter_2 as *mut u8).offset(0) as i32) as u16
-        as i32
-        >> 1 as i32;
+    let v4: i32 =
+        (4i32 * *(&raw mut (*v3).parameter_2 as *mut u8).offset(0) as i32) as u16 as i32 >> 1i32;
     set_ram_word!(
         game.eproj_y_vel[v2] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x86deb6)) as *const u8
             as *mut u16)
@@ -6774,27 +6584,27 @@ unsafe fn EprojInit_NamiFuneFireball(j: u16, game: &mut Game) {
     set_ram_word!(
         game.eproj_x_vel[v2] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x86deb6)) as *const u8
             as *mut u16)
-            .offset((v4 + 1 as i32) as isize)
+            .offset((v4 + 1i32) as isize)
     );
 }
 unsafe fn EprojInit_NamiFuneFireball_MoveX1(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut u8).offset(0x1a4b) as *mut u16).offset(v1 as isize)
             as *mut u16,
         ((&raw mut game.g_ram as *mut u8).offset(0x1a27) as *mut u16).offset(v1 as isize)
             as *mut u16,
-        ((ram_word!(game, eproj_y_vel[v1]) as i16 as i32) << 8 as i32) as u32,
+        ((ram_word!(game, eproj_y_vel[v1]) as i16 as i32) << 8i32) as u32,
     );
 }
 unsafe fn EprojInit_NamiFuneFireball_MoveX2(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut u8).offset(0x1a4b) as *mut u16).offset(v1 as isize)
             as *mut u16,
         ((&raw mut game.g_ram as *mut u8).offset(0x1a27) as *mut u16).offset(v1 as isize)
             as *mut u16,
-        ((ram_word!(game, eproj_x_vel[v1]) as i16 as i32) << 8 as i32) as u32,
+        ((ram_word!(game, eproj_x_vel[v1]) as i16 as i32) << 8i32) as u32,
     );
 }
 pub unsafe fn CallNamiFuneFireballFunc(ea: u32, k: u16, game: &mut Game) {
@@ -6808,7 +6618,7 @@ pub unsafe fn CallNamiFuneFireballFunc(ea: u32, k: u16, game: &mut Game) {
 }
 pub unsafe fn EprojPreInstr_NamiFuneFireball(v0: u16, game: &mut Game) {
     CallNamiFuneFireballFunc(
-        (ram_word!(game, eproj_E[(v0 as i32 >> 1i32)]) as i32 | 0x860000 as i32) as u32,
+        (ram_word!(game, eproj_E[(v0 as i32 >> 1i32)]) as i32 | 0x860000i32) as u32,
         v0,
         game,
     );
@@ -6816,41 +6626,41 @@ pub unsafe fn EprojPreInstr_NamiFuneFireball(v0: u16, game: &mut Game) {
 }
 pub unsafe fn Eproj_NamiFuneFireball_After(v0: u16, game: &mut Game) {
     if EprojPreInstrHelper_DBF2_Func2(v0, game) != 0 {
-        set_ram_word!(game.eproj_id[(v0 as i32 >> 1i32)] = 0 as u16);
+        set_ram_word!(game.eproj_id[(v0 as i32 >> 1i32)] = 0u16);
     }
 }
 pub unsafe fn sub_86DFA0(k: u16, game: &mut Game) -> u16 {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     (((ram_word!(game, eproj_x_pos[v1]) as i32 - ram_word!(game, layer1_x_pos) as i32) as i16)
         < 0i16
-        || ((ram_word!(game, layer1_x_pos) as i32 + 256 as i32
+        || ((ram_word!(game, layer1_x_pos) as i32 + 256i32
             - ram_word!(game, eproj_x_pos[v1]) as i32) as i16)
             < 0i16) as u16
 }
 pub unsafe fn EprojInstr_DFEA(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     game.eproj_spawn_pt = Point16U {
         x: ram_word!(game, eproj_x_pos[v1]),
         y: ram_word!(game, eproj_y_pos[v1]),
     };
-    SpawnEnemyDrops(addr_kEnemyDef_E83F as u16, k, 0 as u16, game);
+    SpawnEnemyDrops(addr_kEnemyDef_E83F as u16, k, 0u16, game);
     epjp
 }
 unsafe fn EprojInit_LavaThrownByLavaman(j: u16, game: &mut Game) {
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_instr_list_ptr[v2] = addr_word_86DFD8 as u16);
-    set_ram_word!(game.eproj_E[v2] = (0x86e050 as i32 & 0xffff as i32) as u16);
+    set_ram_word!(game.eproj_E[v2] = (0x86e050i32 & 0xffffi32) as u16);
     if ram_word!(game, cinematic_var8) != 0 {
         set_ram_word!(game.eproj_instr_list_ptr[v2] = addr_word_86DFDE as u16);
-        set_ram_word!(game.eproj_E[v2] = (0x86e07a as i32 & 0xffff as i32) as u16);
+        set_ram_word!(game.eproj_E[v2] = (0x86e07ai32 & 0xffffi32) as u16);
     }
     let v3: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
     set_ram_word!(game.eproj_x_pos[v2] = (*v3).x_pos);
     set_ram_word!(game.eproj_x_subpos[v2] = (*v3).x_subpos);
-    set_ram_word!(game.eproj_y_pos[v2] = ((*v3).y_pos as i32 + 2 as i32) as u16);
+    set_ram_word!(game.eproj_y_pos[v2] = ((*v3).y_pos as i32 + 2i32) as u16);
     set_ram_word!(game.eproj_y_subpos[v2] = (*v3).y_subpos);
-    set_ram_word!(game.eproj_y_vel[v2] = -(768 as i32) as u16);
-    set_ram_word!(game.eproj_x_vel[v2] = 768 as u16);
+    set_ram_word!(game.eproj_y_vel[v2] = -(768i32) as u16);
+    set_ram_word!(game.eproj_x_vel[v2] = 768u16);
 }
 pub unsafe fn CallLavamanFunc(ea: u32, k: u16, game: &mut Game) {
     match ea {
@@ -6863,53 +6673,53 @@ pub unsafe fn CallLavamanFunc(ea: u32, k: u16, game: &mut Game) {
 }
 pub unsafe fn sub_86E049(v0: u16, game: &mut Game) {
     CallLavamanFunc(
-        (ram_word!(game, eproj_E[(v0 as i32 >> 1i32)]) as i32 | 0x860000 as i32) as u32,
+        (ram_word!(game, eproj_E[(v0 as i32 >> 1i32)]) as i32 | 0x860000i32) as u32,
         v0,
         game,
     );
     sub_86E0A4(v0, game);
 }
 pub unsafe fn Eproj_LavaThrownByLavaman_MoveX1(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut u8).offset(0x1a4b) as *mut u16).offset(v1 as isize)
             as *mut u16,
         ((&raw mut game.g_ram as *mut u8).offset(0x1a27) as *mut u16).offset(v1 as isize)
             as *mut u16,
-        ((ram_word!(game, eproj_y_vel[v1]) as i16 as i32) << 8 as i32) as u32,
+        ((ram_word!(game, eproj_y_vel[v1]) as i16 as i32) << 8i32) as u32,
     );
 }
 pub unsafe fn Eproj_LavaThrownByLavaman_MoveX2(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut u8).offset(0x1a4b) as *mut u16).offset(v1 as isize)
             as *mut u16,
         ((&raw mut game.g_ram as *mut u8).offset(0x1a27) as *mut u16).offset(v1 as isize)
             as *mut u16,
-        ((ram_word!(game, eproj_x_vel[v1]) as i16 as i32) << 8 as i32) as u32,
+        ((ram_word!(game, eproj_x_vel[v1]) as i16 as i32) << 8i32) as u32,
     );
 }
 pub unsafe fn sub_86E0A4(v0: u16, game: &mut Game) {
     if sub_86E0B0(v0, game) != 0 {
-        set_ram_word!(game.eproj_id[(v0 as i32 >> 1i32)] = 0 as u16);
+        set_ram_word!(game.eproj_id[(v0 as i32 >> 1i32)] = 0u16);
     }
 }
 pub unsafe fn sub_86E0B0(k: u16, game: &mut Game) -> u16 {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     (((ram_word!(game, eproj_x_pos[v1]) as i32 - ram_word!(game, layer1_x_pos) as i32) as i16)
         < 0i16
-        || ((ram_word!(game, layer1_x_pos) as i32 + 256 as i32
+        || ((ram_word!(game, layer1_x_pos) as i32 + 256i32
             - ram_word!(game, eproj_x_pos[v1]) as i32) as i16)
             < 0i16
         || ((ram_word!(game, eproj_y_pos[v1]) as i32 - ram_word!(game, layer1_y_pos) as i32)
             as i16)
             < 0i16
-        || ((ram_word!(game, layer1_y_pos) as i32 + 256 as i32
+        || ((ram_word!(game, layer1_y_pos) as i32 + 256i32
             - ram_word!(game, eproj_y_pos[v1]) as i32) as i16)
             < 0i16) as u16
 }
 unsafe fn EprojInit_DustCloudOrExplosion(v0: u16, game: &mut Game) {
-    let v1: i32 = v0 as i32 >> 1 as i32;
+    let v1: i32 = v0 as i32 >> 1i32;
     set_ram_word!(
         game.eproj_instr_list_ptr[v1] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x86e42c))
             as *const u8 as *mut u16)
@@ -6919,36 +6729,34 @@ unsafe fn EprojInit_DustCloudOrExplosion(v0: u16, game: &mut Game) {
     set_ram_word!(game.eproj_y_pos[v1] = game.eproj_spawn_pt.y);
 }
 unsafe fn EprojInit_EyeDoorSmoke(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
+    let v1: i32 = j as i32 >> 1i32;
     set_ram_word!(
         game.eproj_instr_list_ptr[v1] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x86e42c))
             as *const u8 as *mut u16)
             .offset(ram_word!(game, cinematic_var8) as u8 as isize)
     );
-    let v2: i32 = 8 as i32
+    let v2: i32 = 8i32
         * *((&raw mut game.g_ram as *mut u8).offset(0x1993) as *mut u16 as *mut u8).offset(1isize)
             as i32
-        >> 1 as i32;
+        >> 1i32;
     let x: u16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x86e47e)) as *const u8 as *mut u16)
-        .offset((v2 + 2 as i32) as isize) as i32
+        .offset((v2 + 2i32) as isize) as i32
         + (*(game.g_rom.offset(crate::rtl::lorom_offset(0x86e47e)) as *const u8 as *mut u16)
             .offset(v2 as isize) as i32
             & ram_word!(game, random_number) as i32)) as u16;
     let y: u16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x86e47e)) as *const u8 as *mut u16)
-        .offset((v2 + 3 as i32) as isize) as i32
+        .offset((v2 + 3i32) as isize) as i32
         + (*(game.g_rom.offset(crate::rtl::lorom_offset(0x86e47e)) as *const u8 as *mut u16)
-            .offset((v2 + 1 as i32) as isize) as i32
-            & ram_word!(game, random_number) as i32 >> 8 as i32)) as u16;
+            .offset((v2 + 1i32) as isize) as i32
+            & ram_word!(game, random_number) as i32 >> 8i32)) as u16;
     CalculatePlmBlockCoords(ram_word!(game, plm_id), game);
     set_ram_word!(
-        game.eproj_x_pos[v1] = (x as i32
-            + 8 as i32 * (2 as i32 * ram_word!(game, plm_x_block) as i32 + 1 as i32))
-            as u16
+        game.eproj_x_pos[v1] =
+            (x as i32 + 8i32 * (2i32 * ram_word!(game, plm_x_block) as i32 + 1i32)) as u16
     );
     set_ram_word!(
-        game.eproj_y_pos[v1] = (y as i32
-            + 8 as i32 * (2 as i32 * ram_word!(game, plm_y_block) as i32 + 1 as i32))
-            as u16
+        game.eproj_y_pos[v1] =
+            (y as i32 + 8i32 * (2i32 * ram_word!(game, plm_y_block) as i32 + 1i32)) as u16
     );
     NextRandom(game);
 }
@@ -6964,38 +6772,38 @@ pub unsafe fn EprojInstr_SetYVel(k: u16, epjp: *const u8, game: &mut Game) -> *c
 unsafe fn EprojInit_SpawnedGate_Common(j: u16, v1: u16, game: &mut Game) {
     let v2: u16 = ram_word!(game, plm_id);
     CalculatePlmBlockCoords(ram_word!(game, plm_id), game);
-    let v3: i32 = j as i32 >> 1 as i32;
+    let v3: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_E[v3] = ram_word!(game, plm_block_indices[(v2 as i32 >> 1i32)]));
     set_ram_word!(game.eproj_x_pos[v3] = (16u16).wrapping_mul(ram_word!(game, plm_x_block)));
     set_ram_word!(
-        game.eproj_y_pos[v3] = (v1 as i32 + 16 as i32 * ram_word!(game, plm_y_block) as i32) as u16
+        game.eproj_y_pos[v3] = (v1 as i32 + 16i32 * ram_word!(game, plm_y_block) as i32) as u16
     );
 }
 unsafe fn EprojInit_SpawnedShotGate(j: u16, game: &mut Game) {
-    EprojInit_SpawnedGate_Common(j, 0 as u16, game);
+    EprojInit_SpawnedGate_Common(j, 0u16, game);
 }
 unsafe fn EprojInit_ClosedDownwardsShotGate(j: u16, game: &mut Game) {
-    EprojInit_SpawnedGate_Common(j, 0x40 as u16, game);
+    EprojInit_SpawnedGate_Common(j, 0x40u16, game);
 }
 unsafe fn EprojInit_ClosedUpwardsShotGate(j: u16, game: &mut Game) {
-    EprojInit_SpawnedGate_Common(j, -(0x40 as i32) as u16, game);
+    EprojInit_SpawnedGate_Common(j, -(0x40i32) as u16, game);
 }
 pub unsafe fn EprojPreInstr_E605(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     let mut v2: u16 =
         (ram_word!(game, eproj_timers[v1])).wrapping_add(abs16(ram_word!(game, eproj_y_vel[v1])));
     if v2 >= 0x1000 {
-        set_ram_word!(game.eproj_instr_timers[v1] = 1 as u16);
+        set_ram_word!(game.eproj_instr_timers[v1] = 1u16);
         let fresh60 = EprojStateMut(&mut game.g_ram).add_word(0x1b47, v1 as usize, 1);
         let fresh61 = EprojStateMut(&mut game.g_ram).add_word(0x1b47, v1 as usize, 1);
-        v2 = 0 as u16;
+        v2 = 0u16;
     }
     set_ram_word!(game.eproj_timers[v1] = v2);
     update_ram_word!(game.eproj_y_subpos[v1], |fresh62| (fresh62 as i32
         + ((*(((&raw mut game.g_ram as *mut u8).offset(0x1adb) as *mut u16).offset(v1 as isize)
             as *mut u16 as *mut u8)
             .offset(0) as i32)
-            << 8 as i32))
+            << 8i32))
         as u16);
     update_ram_word!(
         game.eproj_y_pos[v1],
@@ -7008,14 +6816,12 @@ pub unsafe fn EprojPreInstr_E605(k: u16, game: &mut Game) {
 }
 unsafe fn EprojInit_SaveStationElectricity(j: u16, game: &mut Game) {
     CalculatePlmBlockCoords(ram_word!(game, plm_id), game);
-    let v1: i32 = j as i32 >> 1 as i32;
+    let v1: i32 = j as i32 >> 1i32;
     set_ram_word!(
-        game.eproj_x_pos[v1] =
-            (16 as i32 * (ram_word!(game, plm_x_block) as i32 + 1 as i32)) as u16
+        game.eproj_x_pos[v1] = (16i32 * (ram_word!(game, plm_x_block) as i32 + 1i32)) as u16
     );
     set_ram_word!(
-        game.eproj_y_pos[v1] =
-            (16 as i32 * (ram_word!(game, plm_y_block) as i32 - 2 as i32)) as u16
+        game.eproj_y_pos[v1] = (16i32 * (ram_word!(game, plm_y_block) as i32 - 2i32)) as u16
     );
 }
 fn CheckIfEprojIsOffScreen(k: u16, game: &mut Game) -> u16 {
@@ -7023,44 +6829,42 @@ fn CheckIfEprojIsOffScreen(k: u16, game: &mut Game) -> u16 {
         .enemy_projectile_x_pos(k)
         .wrapping_sub(game.layer1_x_pos()) as i16)
         >= 0i16
-        && ((game.enemy_projectile_x_pos(k) as i32 - (game.layer1_x_pos() as i32 + 256 as i32))
-            as i16)
+        && ((game.enemy_projectile_x_pos(k) as i32 - (game.layer1_x_pos() as i32 + 256i32)) as i16)
             < 0i16
         && (game
             .enemy_projectile_y_pos(k)
             .wrapping_sub(game.layer1_y_pos()) as i16)
             >= 0i16
-        && ((game.enemy_projectile_y_pos(k) as i32 - (game.layer1_y_pos() as i32 + 256 as i32))
-            as i16)
+        && ((game.enemy_projectile_y_pos(k) as i32 - (game.layer1_y_pos() as i32 + 256i32)) as i16)
             < 0i16
     {
-        return 0 as u16;
+        return 0u16;
     }
-    1 as u16
+    1u16
 }
 pub unsafe fn Eproj_FuncE722(k: u16, game: &mut Game) -> u16 {
     let mut v2: i16 = 0;
     let mut v3: i16 = 0;
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     v2 = ram_word!(game, eproj_x_pos[v1]) as i16;
-    let result: u16 = 1 as u16;
-    if v2 >= 0i16 && v2 as i32 - 512 as i32 & 0x8000 as i32 != 0 {
+    let result: u16 = 1u16;
+    if v2 >= 0i16 && v2 as i32 - 512i32 & 0x8000i32 != 0 {
         v3 = ram_word!(game, eproj_y_pos[v1]) as i16;
-        if v3 >= 0i16 && v3 as i32 - 512 as i32 & 0x8000 as i32 != 0 {
-            return 0 as u16;
+        if v3 >= 0i16 && v3 as i32 - 512i32 & 0x8000i32 != 0 {
+            return 0u16;
         }
     }
     result
 }
 pub unsafe fn Eproj_FuncE73E_MoveXY(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
-    if (ram_word!(game, g_word_7E97DC[v1]) as i32 + 64 as i32 & 0x80 as i32) != 0i32 {
+    let v1: i32 = k as i32 >> 1i32;
+    if (ram_word!(game, g_word_7E97DC[v1]) as i32 + 64i32 & 0x80i32) != 0i32 {
         AddToHiLo(
             ((&raw mut game.g_ram as *mut u8).offset(0x1a4b) as *mut u16).offset(v1 as isize)
                 as *mut u16,
             ((&raw mut game.g_ram as *mut u8).offset(0x1a27) as *mut u16).offset(v1 as isize)
                 as *mut u16,
-            -((ram_word!(game, eproj_x_vel[v1]) as i32) << 16 as i32
+            -((ram_word!(game, eproj_x_vel[v1]) as i32) << 16i32
                 | ram_word!(game, eproj_E[v1]) as i32) as u32,
         );
     } else {
@@ -7069,17 +6873,17 @@ pub unsafe fn Eproj_FuncE73E_MoveXY(k: u16, game: &mut Game) {
                 as *mut u16,
             ((&raw mut game.g_ram as *mut u8).offset(0x1a27) as *mut u16).offset(v1 as isize)
                 as *mut u16,
-            (ram_word!(game, eproj_x_vel[v1]) as u32) << 16 as i32
+            (ram_word!(game, eproj_x_vel[v1]) as u32) << 16i32
                 | ram_word!(game, eproj_E[v1]) as u32,
         );
     }
-    if (ram_word!(game, g_word_7E97DC[v1]) as i32 + 128 as i32 & 0x80 as i32) != 0i32 {
+    if (ram_word!(game, g_word_7E97DC[v1]) as i32 + 128i32 & 0x80i32) != 0i32 {
         AddToHiLo(
             ((&raw mut game.g_ram as *mut u8).offset(0x1a93) as *mut u16).offset(v1 as isize)
                 as *mut u16,
             ((&raw mut game.g_ram as *mut u8).offset(0x1a6f) as *mut u16).offset(v1 as isize)
                 as *mut u16,
-            -((ram_word!(game, eproj_y_vel[v1]) as i32) << 16 as i32
+            -((ram_word!(game, eproj_y_vel[v1]) as i32) << 16i32
                 | ram_word!(game, eproj_F[v1]) as i32) as u32,
         );
     } else {
@@ -7088,16 +6892,16 @@ pub unsafe fn Eproj_FuncE73E_MoveXY(k: u16, game: &mut Game) {
                 as *mut u16,
             ((&raw mut game.g_ram as *mut u8).offset(0x1a6f) as *mut u16).offset(v1 as isize)
                 as *mut u16,
-            (ram_word!(game, eproj_y_vel[v1]) as u32) << 16 as i32
+            (ram_word!(game, eproj_y_vel[v1]) as u32) << 16i32
                 | ram_word!(game, eproj_F[v1]) as u32,
         );
     };
 }
 pub unsafe fn Eproj_AngleToSamus(j: u16, r18: u16, r20: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
+    let v1: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_x_pos[v1] = r18);
     set_ram_word!(game.eproj_y_pos[v1] = r20);
-    let v2: u16 = (64 as i32
+    let v2: u16 = (64i32
         - CalculateAngleFromXY(
             (ram_word!(game, samus_x_pos) as i32 - ram_word!(game, eproj_x_pos[v1]) as i32) as u16,
             (ram_word!(game, samus_y_pos) as i32 - ram_word!(game, eproj_y_pos[v1]) as i32) as u16,
@@ -7105,13 +6909,13 @@ pub unsafe fn Eproj_AngleToSamus(j: u16, r18: u16, r20: u16, game: &mut Game) {
         ) as i32) as u8 as u16;
     set_ram_word!(game.g_word_7E97DC[v1] = v2);
     let pt: Point32 = ConvertAngleToXy(v2, ram_word!(game, cinematic_var8), game);
-    set_ram_word!(game.eproj_x_vel[v1] = (pt.x >> 16 as i32) as u16);
+    set_ram_word!(game.eproj_x_vel[v1] = (pt.x >> 16i32) as u16);
     set_ram_word!(game.eproj_E[v1] = pt.x as u16);
-    set_ram_word!(game.eproj_y_vel[v1] = (pt.y >> 16 as i32) as u16);
+    set_ram_word!(game.eproj_y_vel[v1] = (pt.y >> 16i32) as u16);
     set_ram_word!(game.eproj_F[v1] = pt.y as u16);
 }
 unsafe fn EprojInit_BotwoonsBody(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
+    let v1: i32 = j as i32 >> 1i32;
     set_ram_word!(
         game.eproj_x_pos[v1] =
             (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).x_pos
@@ -7120,30 +6924,30 @@ unsafe fn EprojInit_BotwoonsBody(j: u16, game: &mut Game) {
         game.eproj_y_pos[v1] =
             (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).y_pos
     );
-    set_ram_word!(game.eproj_y_vel[v1] = 0 as u16);
+    set_ram_word!(game.eproj_y_vel[v1] = 0u16);
     let v2: u16 = (if (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData)
         .offset(0))
     .ai_var_A
         != 0u16
     {
-        16 as i32
+        16i32
     } else {
-        48 as i32
+        48i32
     }) as u16;
     let v3: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x86e9f1)) as *const u8 as *mut u16)
-        .offset((v2 as i32 >> 1 as i32) as isize);
+        .offset((v2 as i32 >> 1i32) as isize);
     set_ram_word!(game.eproj_instr_list_ptr[v1] = v3);
     set_ram_word!(game.eproj_F[v1] = v3);
     set_ram_word!(game.eproj_E[v1] = v2);
-    set_ram_word!(game.eproj_x_vel[v1] = (0x86ea98 as i32 & 0xffff as i32) as u16);
+    set_ram_word!(game.eproj_x_vel[v1] = (0x86ea98i32 & 0xffffi32) as u16);
     let Ex: *mut ExtraEnemyRam7800 = gExtraEnemyRam7800(
         (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).ai_var_A
             as i32,
         game,
     );
     (*Ex).kraid.kraid_next = j;
-    set_ram_word!(game.eproj_flags[v1] = 2 as u16);
-    (*Ex).kraid.kraid_healths_4ths[0 as i32 as usize] = 1 as u16;
+    set_ram_word!(game.eproj_flags[v1] = 2u16);
+    (*Ex).kraid.kraid_healths_4ths[0i32 as usize] = 1u16;
 }
 pub unsafe fn CallBotwoonEprojFunc(ea: u32, k: u16, game: &mut Game) {
     match ea {
@@ -7164,120 +6968,114 @@ pub unsafe fn EprojPreInstr_BotwoonsBody(k: u16, game: &mut Game) {
         .offset(32) as *mut u8 as *mut u16)
         != 0
     {
-        let v1: i32 = k as i32 >> 1 as i32;
-        if ram_word!(game, eproj_x_vel[v1]) as i32 == 0x86ea98 as i32 & 0xffff as i32 {
-            set_ram_word!(game.eproj_x_vel[v1] = (0x86eaf4 as i32 & 0xffff as i32) as u16);
+        let v1: i32 = k as i32 >> 1i32;
+        if ram_word!(game, eproj_x_vel[v1]) as i32 == 0x86ea98i32 & 0xffffi32 {
+            set_ram_word!(game.eproj_x_vel[v1] = (0x86eaf4i32 & 0xffffi32) as u16);
         }
     }
     CallBotwoonEprojFunc(
-        (ram_word!(game, eproj_x_vel[(k as i32 >> 1i32)]) as i32 | 0x860000 as i32) as u32,
+        (ram_word!(game, eproj_x_vel[(k as i32 >> 1i32)]) as i32 | 0x860000i32) as u32,
         k,
         game,
     );
 }
 pub unsafe fn Eproj_BotwoonsBody_Main(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     let v2: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x86e9f1)) as *const u8 as *mut u16)
-        .offset((ram_word!(game, eproj_E[v1]) as i32 >> 1 as i32) as isize);
+        .offset((ram_word!(game, eproj_E[v1]) as i32 >> 1i32) as isize);
     if v2 != ram_word!(game, eproj_F[v1]) {
         set_ram_word!(game.eproj_instr_list_ptr[v1] = v2);
         set_ram_word!(game.eproj_F[v1] = v2);
-        set_ram_word!(game.eproj_instr_timers[v1] = 1 as u16);
+        set_ram_word!(game.eproj_instr_timers[v1] = 1u16);
     }
     Eproj_BotwoonsBodyHurtFlashHandling1(k, game);
 }
 pub unsafe fn Eproj_BotwoonsBodyHurtFlashHandling1(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     update_ram_word!(
         game.eproj_gfx_idx[v1],
-        |fresh58| (fresh58 as i32 | 0xe00 as i32) as u16
+        |fresh58| (fresh58 as i32 | 0xe00i32) as u16
     );
     if (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).flash_timer
         != 0
-        && (ram_word!(game, random_enemy_counter) as i32 & 2 as i32) != 0i32
+        && (ram_word!(game, random_enemy_counter) as i32 & 2i32) != 0i32
     {
         update_ram_word!(
             game.eproj_gfx_idx[v1],
-            |fresh59| (fresh59 as i32 & 0xf1ff as i32) as u16
+            |fresh59| (fresh59 as i32 & 0xf1ffi32) as u16
         );
     }
 }
 pub unsafe fn Eproj_BotwoonsBodyHurtFlashHandling2(j: u16, game: &mut Game) {
-    let v1: i32 = j as i32 >> 1 as i32;
+    let v1: i32 = j as i32 >> 1i32;
     update_ram_word!(
         game.eproj_gfx_idx[v1],
-        |fresh55| (fresh55 as i32 | 0xe00 as i32) as u16
+        |fresh55| (fresh55 as i32 | 0xe00i32) as u16
     );
     if (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).flash_timer
         != 0
-        && (ram_word!(game, random_enemy_counter) as i32 & 2 as i32) != 0i32
+        && (ram_word!(game, random_enemy_counter) as i32 & 2i32) != 0i32
     {
         update_ram_word!(
             game.eproj_gfx_idx[v1],
-            |fresh56| (fresh56 as i32 & 0xf1ff as i32) as u16
+            |fresh56| (fresh56 as i32 & 0xf1ffi32) as u16
         );
     }
 }
 pub unsafe fn Eproj_BotwonsBodyFunction_Dying(v0: u16, game: &mut Game) {
-    let v1: i32 = v0 as i32 >> 1 as i32;
-    set_ram_word!(game.eproj_E[v1] = (4 as i32 * v0 as i32 + 96 as i32) as u16);
-    set_ram_word!(game.eproj_x_vel[v1] = 0xeb04 as u16);
+    let v1: i32 = v0 as i32 >> 1i32;
+    set_ram_word!(game.eproj_E[v1] = (4i32 * v0 as i32 + 96i32) as u16);
+    set_ram_word!(game.eproj_x_vel[v1] = 0xeb04u16);
     Eproj_BotwonsBodyFunction_Dying2(v0, game);
 }
 pub unsafe fn Eproj_BotwonsBodyFunction_Dying2(v0: u16, game: &mut Game) {
-    let v1: i32 = v0 as i32 >> 1 as i32;
-    if update_ram_word!(game.eproj_E[v1], wrapping_add(1), reread) as i32 - 256 as i32
-        & 0x8000 as i32
-        == 0
+    let v1: i32 = v0 as i32 >> 1i32;
+    if update_ram_word!(game.eproj_E[v1], wrapping_add(1), reread) as i32 - 256i32 & 0x8000i32 == 0
     {
-        set_ram_word!(game.eproj_x_vel[v1] = (0x86eb1f as i32 & 0xffff as i32) as u16);
+        set_ram_word!(game.eproj_x_vel[v1] = (0x86eb1fi32 & 0xffffi32) as u16);
     }
-    set_ram_word!(game.eproj_instr_timers[v1] = 0 as u16);
+    set_ram_word!(game.eproj_instr_timers[v1] = 0u16);
     Eproj_BotwoonsBodyHurtFlashHandling1(v0, game);
 }
 pub unsafe fn Eproj_BotwonsBodyFunction_DyingFalling(v0: u16, game: &mut Game) {
-    let v1: i32 = v0 as i32 >> 1 as i32;
-    let v3: i32 = 8 as i32
-        * ((ram_word!(game, eproj_y_vel[v1]) as i32 & 0xff00 as i32) >> 8 as i32)
-        >> 1 as i32;
+    let v1: i32 = v0 as i32 >> 1i32;
+    let v3: i32 = 8i32 * ((ram_word!(game, eproj_y_vel[v1]) as i32 & 0xff00i32) >> 8i32) >> 1i32;
     AddToHiLo(
         ((&raw mut game.g_ram as *mut u8).offset(0x1a93) as *mut u16).offset(v1 as isize)
             as *mut u16,
         ((&raw mut game.g_ram as *mut u8).offset(0x1a6f) as *mut u16).offset(v1 as isize)
             as *mut u16,
         *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *const u8 as *mut u32)
-            .offset((v3 >> 1 as i32) as isize),
+            .offset((v3 >> 1i32) as isize),
     );
-    if ram_word!(game, eproj_y_pos[v1]) as i32 - 200 as i32 & 0x8000 as i32 != 0 {
-        let v7: i32 = v0 as i32 >> 1 as i32;
-        update_ram_word!(
-            game.eproj_y_vel[v7],
-            |fresh54| (fresh54 as i32 + 192 as i32) as u16
-        );
-        set_ram_word!(game.eproj_instr_timers[v7] = 0 as u16);
+    if ram_word!(game, eproj_y_pos[v1]) as i32 - 200i32 & 0x8000i32 != 0 {
+        let v7: i32 = v0 as i32 >> 1i32;
+        update_ram_word!(game.eproj_y_vel[v7], |fresh54| (fresh54 as i32 + 192i32)
+            as u16);
+        set_ram_word!(game.eproj_instr_timers[v7] = 0u16);
         Eproj_BotwoonsBodyHurtFlashHandling2(v0, game);
     } else {
-        set_ram_word!(game.eproj_y_pos[v1] = 200 as u16);
-        set_ram_word!(game.eproj_x_vel[v1] = (0x86eb93 as i32 & 0xffff as i32) as u16);
+        set_ram_word!(game.eproj_y_pos[v1] = 200u16);
+        set_ram_word!(game.eproj_x_vel[v1] = (0x86eb93i32 & 0xffffi32) as u16);
         set_ram_word!(game.eproj_instr_list_ptr[v1] = addr_word_86E208 as u16);
-        set_ram_word!(game.eproj_gfx_idx[v1] = 2560 as u16);
-        set_ram_word!(game.eproj_instr_timers[v1] = 1 as u16);
+        set_ram_word!(game.eproj_gfx_idx[v1] = 2560u16);
+        set_ram_word!(game.eproj_instr_timers[v1] = 1u16);
         QueueSmallExplosionSfx(game);
         if v0 == 10u16 {
             *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x8800)
                 as *mut ExtraEnemyRam8800)
                 .offset(0))
             .pad as *mut u8)
-                .offset(62) as *mut u8 as *mut u16) = 1 as u16;
+                .offset(62) as *mut u8 as *mut u16) = 1u16;
         }
     };
 }
 pub unsafe fn QueueSmallExplosionSfx(game: &mut Game) {
-    QueueSfx2_Max6(0x24 as u16, game);
+    QueueSfx2_Max6(0x24u16, game);
 }
 unsafe fn EprojInit_BotwoonsSpit(j: u16, game: &mut Game) {
     let v1: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_x_pos[v2] = (*v1).x_pos);
     set_ram_word!(game.eproj_y_pos[v2] = (*v1).y_pos);
     set_ram_word!(game.eproj_instr_list_ptr[v2] = addr_word_86EBAE as u16);
@@ -7287,9 +7085,9 @@ unsafe fn EprojInit_BotwoonsSpit(j: u16, game: &mut Game) {
         ram_word!(game, cinematic_var8),
         game,
     );
-    set_ram_word!(game.eproj_x_vel[v2] = (pt.x >> 16 as i32) as u16);
+    set_ram_word!(game.eproj_x_vel[v2] = (pt.x >> 16i32) as u16);
     set_ram_word!(game.eproj_E[v2] = pt.x as u16);
-    set_ram_word!(game.eproj_y_vel[v2] = (pt.y >> 16 as i32) as u16);
+    set_ram_word!(game.eproj_y_vel[v2] = (pt.y >> 16i32) as u16);
     set_ram_word!(game.eproj_F[v2] = pt.y as u16);
 }
 pub unsafe fn EprojPreInstr_BotwoonsSpit(k: u16, game: &mut Game) {
@@ -7298,26 +7096,26 @@ pub unsafe fn EprojPreInstr_BotwoonsSpit(k: u16, game: &mut Game) {
 }
 pub unsafe fn sub_86EC0C(k: u16, game: &mut Game) {
     if sub_86EC18(k, game) != 0 {
-        set_ram_word!(game.eproj_id[(k as i32 >> 1i32)] = 0 as u16);
+        set_ram_word!(game.eproj_id[(k as i32 >> 1i32)] = 0u16);
     }
 }
 pub unsafe fn sub_86EC18(k: u16, game: &mut Game) -> u16 {
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     (((ram_word!(game, eproj_x_pos[v1]) as i32 - ram_word!(game, layer1_x_pos) as i32) as i16)
         < 0i16
-        || ((ram_word!(game, layer1_x_pos) as i32 + 256 as i32
+        || ((ram_word!(game, layer1_x_pos) as i32 + 256i32
             - ram_word!(game, eproj_x_pos[v1]) as i32) as i16)
             < 0i16
         || ((ram_word!(game, eproj_y_pos[v1]) as i32 - ram_word!(game, layer1_y_pos) as i32)
             as i16)
             < 0i16
-        || ((ram_word!(game, layer1_y_pos) as i32 + 256 as i32
+        || ((ram_word!(game, layer1_y_pos) as i32 + 256i32
             - ram_word!(game, eproj_y_pos[v1]) as i32) as i16)
             < 0i16) as u16
 }
 unsafe fn EprojInit_YappingMawsBody(j: u16, game: &mut Game) {
     let enemy_index = game.cur_enemy_index();
-    let v3: i32 = j as i32 >> 1 as i32;
+    let v3: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_x_pos[v3] = game.enemy_state(enemy_index).x_pos());
     set_ram_word!(game.eproj_y_pos[v3] = game.enemy_state(enemy_index).y_pos());
     set_ram_word!(game.eproj_instr_list_ptr[v3] = addr_word_86EC5C as u16);
@@ -7329,69 +7127,69 @@ unsafe fn EprojInit_YappingMawsBody(j: u16, game: &mut Game) {
     .pad as *mut u8)
         .offset(
             (game.cur_enemy_index() as i32
-                + 2 as i32
+                + 2i32
                     * *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x8800)
                         as *mut ExtraEnemyRam8800)
                         .offset(0))
                     .pad as *mut u8)
-                        .offset((game.cur_enemy_index() as i32 + 8 as i32) as isize)
+                        .offset((game.cur_enemy_index() as i32 + 8i32) as isize)
                         as *mut u8 as *mut u16) as i32) as u16 as isize,
         ) as *mut u8 as *mut u16) = j;
 }
 pub unsafe fn EprojInstr_ECE3(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
-    let x: u16 = (game.enemy_projectile_x_pos(k) as i32 + (NextRandom(game) as i32 & 0x3f as i32)
-        - 32 as i32) as u16;
+    let x: u16 = (game.enemy_projectile_x_pos(k) as i32 + (NextRandom(game) as i32 & 0x3fi32)
+        - 32i32) as u16;
     let y: u16 = ((game.enemy_projectile_y_pos(k) as i32
-        + (((game.random_number()) & (0x3f00u16)) as i32 >> 8 as i32)) as u16)
+        + (((game.random_number()) & (0x3f00u16)) as i32 >> 8i32)) as u16)
         .wrapping_sub(32u16);
-    CreateSpriteAtPos(x, y, *(epjp as *mut u16), 0 as u16, game);
+    CreateSpriteAtPos(x, y, *(epjp as *mut u16), 0u16, game);
     epjp.offset(2)
 }
 pub unsafe fn EprojInstr_ED17(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
-    let x: u16 = (game.enemy_projectile_x_pos(k) as i32 + (NextRandom(game) as i32 & 0x1f as i32)
-        - 16 as i32) as u16;
+    let x: u16 = (game.enemy_projectile_x_pos(k) as i32 + (NextRandom(game) as i32 & 0x1fi32)
+        - 16i32) as u16;
     let y: u16 = ((game.enemy_projectile_y_pos(k) as i32
-        + (((game.random_number()) & (0x1f00u16)) as i32 >> 8 as i32)) as u16)
+        + (((game.random_number()) & (0x1f00u16)) as i32 >> 8i32)) as u16)
         .wrapping_sub(16u16);
-    CreateSpriteAtPos(x, y, *(epjp as *mut u16), 0 as u16, game);
+    CreateSpriteAtPos(x, y, *(epjp as *mut u16), 0u16, game);
     epjp.offset(2)
 }
 pub unsafe fn EprojInstr_QueueSfx2_9(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
-    QueueSfx2_Max1(9 as u16, game);
+    QueueSfx2_Max1(9u16, game);
     epjp
 }
 pub unsafe fn EprojInstr_QueueSfx2_24(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
-    QueueSfx2_Max1(0x24 as u16, game);
+    QueueSfx2_Max1(0x24u16, game);
     epjp
 }
 pub unsafe fn EprojInstr_QueueSfx2_B(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
-    QueueSfx2_Max1(0xb as u16, game);
+    QueueSfx2_Max1(0xbu16, game);
     epjp
 }
 pub unsafe fn EprojInstr_EEAF(k: u16, epjp: *const u8, game: &mut Game) -> *const u8 {
     let v2: u16 = RandomDropRoutine(k, game);
-    if k != 0 && v2 as i32 - 6 as i32 & 0x8000 as i32 != 0 {
+    if k != 0 && v2 as i32 - 6i32 & 0x8000i32 != 0 {
         let v3: u16 = (2u16).wrapping_mul(v2);
-        let v4: i32 = k as i32 >> 1 as i32;
+        let v4: i32 = k as i32 >> 1i32;
         set_ram_word!(game.eproj_E[v4] = v3);
         set_ram_word!(
             game.eproj_instr_list_ptr[v4] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x86ef04))
                 as *const u8 as *mut u16)
-                .offset((v3 as i32 >> 1 as i32) as isize)
+                .offset((v3 as i32 >> 1i32) as isize)
         );
-        set_ram_word!(game.eproj_instr_timers[v4] = 1 as u16);
-        set_ram_word!(game.eproj_F[v4] = 400 as u16);
+        set_ram_word!(game.eproj_instr_timers[v4] = 1u16);
+        set_ram_word!(game.eproj_F[v4] = 400u16);
         set_ram_word!(game.eproj_pre_instr[v4] = ((0x86efe0i32) as u16));
         update_ram_word!(game.eproj_properties[v4], |fresh25| (fresh25)
-            & ((!(0x4000 as i32)) as u16));
+            & ((!(0x4000i32)) as u16));
         ram_word!(game, eproj_instr_list_ptr[v4]) as usize as *const u8
     } else {
-        let v6: i32 = k as i32 >> 1 as i32;
-        set_ram_word!(game.eproj_instr_timers[v6] = 1 as u16);
-        set_ram_word!(game.eproj_properties[v6] = 12288 as u16);
+        let v6: i32 = k as i32 >> 1i32;
+        set_ram_word!(game.eproj_instr_timers[v6] = 1u16);
+        set_ram_word!(game.eproj_properties[v6] = 12288u16);
         set_ram_word!(game.eproj_pre_instr[v6] = ((0x86efdfi32) as u16));
-        set_ram_word!(game.eproj_instr_list_ptr[v6] = 0xeca3 as u16);
-        0xeca3 as i32 as usize as *const u8
+        set_ram_word!(game.eproj_instr_list_ptr[v6] = 0xeca3u16);
+        0xeca3i32 as usize as *const u8
     }
 }
 pub unsafe fn EprojInstr_HandleRespawningEnemy(
@@ -7408,42 +7206,42 @@ pub unsafe fn EprojInstr_HandleRespawningEnemy(
     epjp
 }
 unsafe fn EprojInit_F337(j: u16, game: &mut Game) {
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_x_pos[v2] = game.eproj_spawn_pt.x);
     set_ram_word!(game.eproj_y_pos[v2] = game.eproj_spawn_pt.y);
-    set_ram_word!(game.eproj_gfx_idx[v2] = 0 as u16);
+    set_ram_word!(game.eproj_gfx_idx[v2] = 0u16);
     set_ram_word!(game.eproj_enemy_header_ptr[v2] = game.eproj_spawn_varE24);
     let v3: u16 = RandomDropRoutine(j, game);
-    if v3 != 0 && v3 as i32 - 6 as i32 & 0x8000 as i32 != 0 {
+    if v3 != 0 && v3 as i32 - 6i32 & 0x8000i32 != 0 {
         let v4: u16 = (2u16).wrapping_mul(v3);
         set_ram_word!(game.eproj_E[v2] = v4);
         set_ram_word!(
             game.eproj_instr_list_ptr[v2] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x86ef04))
                 as *const u8 as *mut u16)
-                .offset((v4 as i32 >> 1 as i32) as isize)
+                .offset((v4 as i32 >> 1i32) as isize)
         );
-        set_ram_word!(game.eproj_instr_timers[v2] = 1 as u16);
-        set_ram_word!(game.eproj_F[v2] = 400 as u16);
-        set_ram_word!(game.eproj_killed_enemy_index[(j as i32 >> 1i32)] = -(1 as i32) as u16);
+        set_ram_word!(game.eproj_instr_timers[v2] = 1u16);
+        set_ram_word!(game.eproj_F[v2] = 400u16);
+        set_ram_word!(game.eproj_killed_enemy_index[(j as i32 >> 1i32)] = -(1i32) as u16);
     } else {
-        let v5: i32 = j as i32 >> 1 as i32;
+        let v5: i32 = j as i32 >> 1i32;
         set_ram_word!(game.eproj_instr_list_ptr[v5] = addr_word_86ECA3 as u16);
-        set_ram_word!(game.eproj_instr_timers[v5] = 1 as u16);
-        set_ram_word!(game.eproj_properties[v5] = 12288 as u16);
-        set_ram_word!(game.eproj_pre_instr[v5] = (0x86efdf as i32 & 0xffff as i32) as u16);
+        set_ram_word!(game.eproj_instr_timers[v5] = 1u16);
+        set_ram_word!(game.eproj_properties[v5] = 12288u16);
+        set_ram_word!(game.eproj_pre_instr[v5] = (0x86efdfi32 & 0xffffi32) as u16);
     };
 }
 unsafe fn EprojInit_EnemyDeathExplosion(j: u16, game: &mut Game) {
     let enemy_index = game.cur_enemy_index();
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_x_pos[v2] = game.enemy_state(enemy_index).x_pos());
     set_ram_word!(game.eproj_y_pos[v2] = game.enemy_state(enemy_index).y_pos());
     set_ram_word!(game.eproj_killed_enemy_index[v2] = game.cur_enemy_index());
-    if (game.enemy_state(enemy_index).properties() as i32 & 0x4000 as i32) != 0i32 {
+    if (game.enemy_state(enemy_index).properties() as i32 & 0x4000i32) != 0i32 {
         set_ram_word!(game.eproj_killed_enemy_index[v2] = (game.cur_enemy_index()) | (0x8000u16));
     }
     set_ram_word!(game.eproj_enemy_header_ptr[v2] = game.enemy_state(enemy_index).enemy_ptr());
-    set_ram_word!(game.eproj_gfx_idx[v2] = 0 as u16);
+    set_ram_word!(game.eproj_gfx_idx[v2] = 0u16);
     {
         let instruction: u16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x86efd5)) as *const u8
             as *mut u16)
@@ -7466,11 +7264,11 @@ pub unsafe fn EprojPreInstr_Pickup(k: u16, game: &mut Game) {
     let mut v2: u16 = 0;
     let mut v3: u16 = 0;
     let current_block: u64;
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     let fresh53 = EprojStateMut(&mut game.g_ram).add_word(0x1b23, v1 as usize, u16::MAX);
     if (fresh53 != 0) {
-        if CallSomeSamusCode(0xd as u16, game) != 0 {
-            if ram_word!(game, eproj_F[v1]) as i32 - 384 as i32 & 0x8000 as i32 != 0 {
+        if CallSomeSamusCode(0xdu16, game) != 0 {
+            if ram_word!(game, eproj_F[v1]) as i32 - 384i32 & 0x8000i32 != 0 {
                 v2 = 0;
                 v3 = 0;
                 v2 = abs16(
@@ -7478,14 +7276,14 @@ pub unsafe fn EprojPreInstr_Pickup(k: u16, game: &mut Game) {
                         - ram_word!(game, grapple_beam_end_x_pos) as i32)
                         as u16,
                 );
-                if v2 as i32 - 16 as i32 & 0x8000 as i32 != 0 {
+                if v2 as i32 - 16i32 & 0x8000i32 != 0 {
                     v3 = abs16(
                         (ram_word!(game, eproj_y_pos[v1]) as i32
                             - ram_word!(game, grapple_beam_end_y_pos) as i32)
                             as u16,
                     );
-                    if v3 as i32 - 16 as i32 & 0x8000 as i32 != 0 {
-                        off_86F0AD[(ram_word!(game, eproj_E[v1]) as i32 >> 1 as i32) as usize]
+                    if v3 as i32 - 16i32 & 0x8000i32 != 0 {
+                        off_86F0AD[(ram_word!(game, eproj_E[v1]) as i32 >> 1i32) as usize]
                             .expect("non-null function pointer")(game);
                         current_block = 4906268039856690917;
                     } else {
@@ -7502,7 +7300,7 @@ pub unsafe fn EprojPreInstr_Pickup(k: u16, game: &mut Game) {
         }
         if current_block == 4906268039856690917 {
         } else {
-            let v5: i32 = k as i32 >> 1 as i32;
+            let v5: i32 = k as i32 >> 1i32;
             let varE20: u16 = EprojState(&game.g_ram).x_radius(v5 as usize) as u16;
             let varE22: u16 = EprojState(&game.g_ram).y_radius(v5 as usize) as u16;
             let v6: u16 = abs16(
@@ -7519,39 +7317,39 @@ pub unsafe fn EprojPreInstr_Pickup(k: u16, game: &mut Game) {
                 v7 = v9 < game.samus_y_radius();
                 let v10: u16 = v9.wrapping_sub(game.samus_y_radius());
                 if v7 || v10 < varE22 {
-                    off_86F0AD[(ram_word!(game, eproj_E[v5]) as i32 >> 1 as i32) as usize]
+                    off_86F0AD[(ram_word!(game, eproj_E[v5]) as i32 >> 1i32) as usize]
                         .expect("non-null function pointer")(game);
-                    let v11: i32 = k as i32 >> 1 as i32;
+                    let v11: i32 = k as i32 >> 1i32;
                     EprojStateMut(&mut game.g_ram).finish_pickup(v11 as usize);
                 }
             }
             return;
         }
     }
-    let v4: i32 = k as i32 >> 1 as i32;
+    let v4: i32 = k as i32 >> 1i32;
     EprojStateMut(&mut game.g_ram).finish_pickup(v4 as usize);
 }
 pub unsafe fn Eproj_Pickup_SmallHealth(game: &mut Game) {
-    Samus_RestoreHealth(5 as u16, game);
-    QueueSfx2_Max1(1 as u16, game);
+    Samus_RestoreHealth(5u16, game);
+    QueueSfx2_Max1(1u16, game);
 }
 pub unsafe fn Eproj_Pickup_BigHealth(game: &mut Game) {
-    Samus_RestoreHealth(0x14 as u16, game);
-    QueueSfx2_Max1(2 as u16, game);
+    Samus_RestoreHealth(0x14u16, game);
+    QueueSfx2_Max1(2u16, game);
 }
 pub unsafe fn Eproj_Pickup_PowerBombs(game: &mut Game) {
-    Samus_RestorePowerBombs(1 as u16, game);
-    QueueSfx2_Max1(5 as u16, game);
+    Samus_RestorePowerBombs(1u16, game);
+    QueueSfx2_Max1(5u16, game);
 }
 pub unsafe fn Eproj_Pickup_Missiles(game: &mut Game) {
-    Samus_RestoreMissiles(2 as u16, game);
-    QueueSfx2_Max1(3 as u16, game);
+    Samus_RestoreMissiles(2u16, game);
+    QueueSfx2_Max1(3u16, game);
 }
 pub unsafe fn Eproj_Pickup_SuperMissiles(game: &mut Game) {
-    Samus_RestoreSuperMissiles(1 as u16, game);
-    QueueSfx2_Max1(4 as u16, game);
+    Samus_RestoreSuperMissiles(1u16, game);
+    QueueSfx2_Max1(4u16, game);
 }
-static byte_86F25E: [u8; 6] = [1 as u8, 2 as u8, 4 as u8, 6 as u8, 5 as u8, 3 as u8];
+static byte_86F25E: [u8; 6] = [1u8, 2u8, 4u8, 6u8, 5u8, 3u8];
 pub unsafe fn RandomDropRoutine(k: u16, game: &mut Game) -> u16 {
     let mut v2: u16 = 0;
     let mut Random: u8 = 0;
@@ -7564,7 +7362,7 @@ pub unsafe fn RandomDropRoutine(k: u16, game: &mut Game) -> u16 {
     let mut r22: u8 = 0;
     let mut r20: u8 = 0;
     let mut r24: u16 = 0;
-    let v1: i32 = k as i32 >> 1 as i32;
+    let v1: i32 = k as i32 >> 1i32;
     let varE28: u16 = ram_word!(game, eproj_enemy_header_ptr[v1]);
     if (varE28 != 0) {
         v2 = 0;
@@ -7577,10 +7375,10 @@ pub unsafe fn RandomDropRoutine(k: u16, game: &mut Game) -> u16 {
                     break;
                 }
             }
-            r20 = 255 as u8;
-            r24 = 0 as u16;
+            r20 = 255u8;
+            r24 = 0u16;
             v5 = 0;
-            v5 = 1 as u16;
+            v5 = 1u16;
             if game
                 .samus_reserve_health()
                 .wrapping_add(game.samus_health())
@@ -7593,7 +7391,7 @@ pub unsafe fn RandomDropRoutine(k: u16, game: &mut Game) -> u16 {
                 {
                     current_block = 4166486009154926805;
                 } else {
-                    v5 = 0 as u16;
+                    v5 = 0u16;
                     current_block = 5399440093318478209;
                 }
             } else {
@@ -7605,10 +7403,10 @@ pub unsafe fn RandomDropRoutine(k: u16, game: &mut Game) -> u16 {
             v7 = RomPtr_B4(v2, game);
             if ram_word!(game, health_drop_bias_flag) as u8 != 0 {
                 r18 = (*v7.offset(1)).wrapping_add(*v7);
-                r22 = 3 as u8;
+                r22 = 3u8;
             } else {
                 r18 = *v7.offset(3);
-                r22 = 8 as u8;
+                r22 = 8u8;
                 if game.samus_health() != game.samus_max_health()
                     || game.samus_reserve_health() != game.samus_max_reserve_health()
                 {
@@ -7625,20 +7423,20 @@ pub unsafe fn RandomDropRoutine(k: u16, game: &mut Game) -> u16 {
                 }
                 if game.samus_power_bombs() != game.samus_max_power_bombs() {
                     r20 = (r20 as i32 - *v7.offset(5) as i32) as u8;
-                    r22 = (r22 as i32 | 0x20 as i32) as u8;
+                    r22 = (r22 as i32 | 0x20i32) as u8;
                 }
             }
             i = 0;
-            i = 0 as i32;
+            i = 0i32;
             while i != 4i32 {
                 if r18 == 0 {
-                    r22 = (r22 as i32 >> 4 as i32) as u8;
+                    r22 = (r22 as i32 >> 4i32) as u8;
                     v2 = v2.wrapping_add(4);
-                    i = 4 as i32;
+                    i = 4i32;
                     break;
                 } else {
                     v9 = ((r22) as i8) & (1i8);
-                    r22 = (r22 as i32 >> 1 as i32) as u8;
+                    r22 = (r22 as i32 >> 1i32) as u8;
                     if v9 != 0 {
                         let v10: *const u8 = RomPtr_B4(v2, game);
                         let RegWord: u16 = Mult8x8(r20, *v10);
@@ -7656,7 +7454,7 @@ pub unsafe fn RandomDropRoutine(k: u16, game: &mut Game) -> u16 {
             }
             loop {
                 v9 = ((r22) as i8) & (1i8);
-                r22 = (r22 as i32 >> 1 as i32) as u8;
+                r22 = (r22 as i32 >> 1i32) as u8;
                 if v9 != 0 {
                     let v14: *const u8 = RomPtr_B4(v2, game);
                     if (r24).wrapping_add((*v14) as u16) >= ((Random) as u16) {
@@ -7672,13 +7470,13 @@ pub unsafe fn RandomDropRoutine(k: u16, game: &mut Game) -> u16 {
             }
         }
     }
-    i = 3 as i32;
+    i = 3i32;
     byte_86F25E[i as usize] as u16
 }
 pub unsafe fn RespawnEnemy(v0: u16, game: &mut Game) {
     set_ram_word!(game.cur_enemy_index = v0);
     let v1: *const u8 = RomPtr_A1(
-        (ram_word!(game, room_enemy_population_ptr)).wrapping_add((v0 as i32 >> 2 as i32) as u16),
+        (ram_word!(game, room_enemy_population_ptr)).wrapping_add((v0 as i32 >> 2i32) as u16),
         game,
     );
     let E: *mut EnemyData = gEnemyData(v0 as i32, game);
@@ -7693,18 +7491,18 @@ pub unsafe fn RespawnEnemy(v0: u16, game: &mut Game) {
     let ESD: *mut EnemySpawnData = gEnemySpawnData(v0 as i32, game);
     (*E).palette_index = (*ESD).palette_index;
     (*E).vram_tiles_index = (*ESD).vram_tiles_index;
-    (*E).frozen_timer = 0 as u16;
-    (*E).flash_timer = 0 as u16;
-    (*E).invincibility_timer = 0 as u16;
-    (*E).timer = 0 as u16;
-    (*E).frame_counter = 0 as u16;
-    (*E).ai_var_A = 0 as u16;
-    (*E).ai_var_B = 0 as u16;
-    (*E).ai_var_C = 0 as u16;
-    (*E).ai_var_D = 0 as u16;
-    (*E).ai_var_E = 0 as u16;
-    (*E).ai_preinstr = 0 as u16;
-    (*E).instruction_timer = 1 as u16;
+    (*E).frozen_timer = 0u16;
+    (*E).flash_timer = 0u16;
+    (*E).invincibility_timer = 0u16;
+    (*E).timer = 0u16;
+    (*E).frame_counter = 0u16;
+    (*E).ai_var_A = 0u16;
+    (*E).ai_var_B = 0u16;
+    (*E).ai_var_C = 0u16;
+    (*E).ai_var_D = 0u16;
+    (*E).ai_var_E = 0u16;
+    (*E).ai_preinstr = 0u16;
+    (*E).instruction_timer = 1u16;
     let Edef: *mut EnemyDef = get_EnemyDef_A2((*E).enemy_ptr, game);
     (*E).x_width = (*Edef).x_radius;
     (*E).y_height = (*Edef).y_radius;
@@ -7712,77 +7510,63 @@ pub unsafe fn RespawnEnemy(v0: u16, game: &mut Game) {
     (*E).layer = (*Edef).layer as u16;
     *(&raw mut (*E).bank as *mut u16) = *(&raw mut (*Edef).bank as *mut u16);
     CallEnemyAi(
-        (((*Edef).bank as i32) << 16 as i32 | (*Edef).ai_init as i32) as u32,
+        (((*Edef).bank as i32) << 16i32 | (*Edef).ai_init as i32) as u32,
         game,
     );
 }
 unsafe fn EprojInit_Sparks(j: u16, game: &mut Game) {
     static word_86F3D4: [u16; 14] = [
-        0xffff as u16,
-        0xb800 as u16,
-        0xffff as u16,
-        0xc000 as u16,
-        0xffff as u16,
-        0xe000 as u16,
-        0xffff as u16,
-        0xff00 as u16,
-        0 as u16,
-        0x100 as u16,
-        0 as u16,
-        0x2000 as u16,
-        0 as u16,
-        0x4000 as u16,
+        0xffffu16, 0xb800u16, 0xffffu16, 0xc000u16, 0xffffu16, 0xe000u16, 0xffffu16, 0xff00u16,
+        0u16, 0x100u16, 0u16, 0x2000u16, 0u16, 0x4000u16,
     ];
-    let v2: i32 = j as i32 >> 1 as i32;
+    let v2: i32 = j as i32 >> 1i32;
     set_ram_word!(game.eproj_instr_list_ptr[v2] = addr_kEnemyDef_F353 as u16);
     let v3: *mut EnemyData = gEnemyData(ram_word!(game, cur_enemy_index) as i32, game);
     set_ram_word!(game.eproj_x_pos[v2] = (*v3).x_pos);
     set_ram_word!(game.eproj_x_subpos[v2] = (*v3).x_subpos);
-    set_ram_word!(game.eproj_y_pos[v2] = ((*v3).y_pos as i32 + 8 as i32) as u16);
+    set_ram_word!(game.eproj_y_pos[v2] = ((*v3).y_pos as i32 + 8i32) as u16);
     set_ram_word!(game.eproj_y_subpos[v2] = (*v3).y_subpos);
-    set_ram_word!(game.eproj_x_vel[v2] = 0 as u16);
-    set_ram_word!(game.eproj_y_vel[v2] = 0 as u16);
-    let v4: u16 = ((NextRandom(game) as i32 & 0x1c as i32) >> 1 as i32) as u16;
+    set_ram_word!(game.eproj_x_vel[v2] = 0u16);
+    set_ram_word!(game.eproj_y_vel[v2] = 0u16);
+    let v4: u16 = ((NextRandom(game) as i32 & 0x1ci32) >> 1i32) as u16;
     set_ram_word!(
         game.eproj_F[v2] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x86f3d4)) as *const u8
             as *mut u16)
-            .offset((v4 as i32 + 0 as i32) as isize)
+            .offset((v4 as i32 + 0i32) as isize)
     );
     set_ram_word!(
         game.eproj_E[v2] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x86f3d4)) as *const u8
             as *mut u16)
-            .offset((v4 as i32 + 1 as i32) as isize)
+            .offset((v4 as i32 + 1i32) as isize)
     );
 }
 pub unsafe fn EprojPreInstr_Sparks(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1 as i32;
-    if (ram_word!(game, eproj_y_vel[v1]) as i32 & 0x8000 as i32) == 0i32 {
-        if EprojBlockCollisition_Vertical(k, game) as i32 & 1 as i32 != 0 {
-            set_ram_word!(game.eproj_instr_list_ptr[v1] = 0xf363 as u16);
-            set_ram_word!(game.eproj_instr_timers[v1] = 1 as u16);
+    let v1: i32 = k as i32 >> 1i32;
+    if (ram_word!(game, eproj_y_vel[v1]) as i32 & 0x8000i32) == 0i32 {
+        if EprojBlockCollisition_Vertical(k, game) as i32 & 1i32 != 0 {
+            set_ram_word!(game.eproj_instr_list_ptr[v1] = 0xf363u16);
+            set_ram_word!(game.eproj_instr_timers[v1] = 1u16);
             set_ram_word!(
-                game.eproj_F[v1] = (ram_word!(game, eproj_F[v1]) as i32 * 2 as i32
-                    + (ram_word!(game, eproj_E[v1]) as i32 >> 15 as i32))
+                game.eproj_F[v1] = (ram_word!(game, eproj_F[v1]) as i32 * 2i32
+                    + (ram_word!(game, eproj_E[v1]) as i32 >> 15i32))
                     as u16
             );
-            update_ram_word!(game.eproj_E[v1], |fresh50| (fresh50 as i32 * 2 as i32)
-                as u16);
+            update_ram_word!(game.eproj_E[v1], |fresh50| (fresh50 as i32 * 2i32) as u16);
             set_ram_word!(
-                game.eproj_F[v1] = (ram_word!(game, eproj_F[v1]) as i32 * 2 as i32
-                    + (ram_word!(game, eproj_E[v1]) as i32 >> 15 as i32))
+                game.eproj_F[v1] = (ram_word!(game, eproj_F[v1]) as i32 * 2i32
+                    + (ram_word!(game, eproj_E[v1]) as i32 >> 15i32))
                     as u16
             );
-            update_ram_word!(game.eproj_E[v1], |fresh51| (fresh51 as i32 * 2 as i32)
-                as u16);
-            set_ram_word!(game.eproj_x_vel[v1] = 0x8000 as u16);
-            set_ram_word!(game.eproj_y_vel[v1] = -(1 as i32) as u16);
-            update_ram_word!(game.eproj_y_pos[v1], |fresh52| (fresh52 as i32 - 2 as i32)
+            update_ram_word!(game.eproj_E[v1], |fresh51| (fresh51 as i32 * 2i32) as u16);
+            set_ram_word!(game.eproj_x_vel[v1] = 0x8000u16);
+            set_ram_word!(game.eproj_y_vel[v1] = -(1i32) as u16);
+            update_ram_word!(game.eproj_y_pos[v1], |fresh52| (fresh52 as i32 - 2i32)
                 as u16);
             return;
         }
         let v2: u16 = ram_word!(game, eproj_x_vel[v1]);
-        set_ram_word!(game.eproj_x_vel[v1] = (v2 as i32 + 0x4000 as i32) as u16);
-        let v3: u16 = (u16::overflowing_add(v2, 0x4000 as u16).1 as i32
+        set_ram_word!(game.eproj_x_vel[v1] = (v2 as i32 + 0x4000i32) as u16);
+        let v3: u16 = (u16::overflowing_add(v2, 0x4000u16).1 as i32
             + ram_word!(game, eproj_y_vel[v1]) as i32) as u16;
         if v3 < 4u16 {
             set_ram_word!(game.eproj_y_vel[v1] = v3);
@@ -7793,7 +7577,7 @@ pub unsafe fn EprojPreInstr_Sparks(k: u16, game: &mut Game) {
             as *mut u16,
         ((&raw mut game.g_ram as *mut u8).offset(0x1a6f) as *mut u16).offset(v1 as isize)
             as *mut u16,
-        (ram_word!(game, eproj_y_vel[v1]) as u32) << 16 as i32
+        (ram_word!(game, eproj_y_vel[v1]) as u32) << 16i32
             | ram_word!(game, eproj_x_vel[v1]) as u32,
     );
     AddToHiLo(
@@ -7801,13 +7585,13 @@ pub unsafe fn EprojPreInstr_Sparks(k: u16, game: &mut Game) {
             as *mut u16,
         ((&raw mut game.g_ram as *mut u8).offset(0x1a27) as *mut u16).offset(v1 as isize)
             as *mut u16,
-        (ram_word!(game, eproj_F[v1]) as u32) << 16 as i32 | ram_word!(game, eproj_E[v1]) as u32,
+        (ram_word!(game, eproj_F[v1]) as u32) << 16i32 | ram_word!(game, eproj_E[v1]) as u32,
     );
-    if (*(&raw mut game.g_ram as *mut u8).offset(0x5b5) as i32 & 3 as i32) == 0i32 {
+    if (*(&raw mut game.g_ram as *mut u8).offset(0x5b5) as i32 & 3i32) == 0i32 {
         CreateSpriteAtPos(
             ram_word!(game, eproj_x_pos[v1]),
             ram_word!(game, eproj_y_pos[v1]),
-            48 as u16,
+            48u16,
             ram_word!(game, eproj_gfx_idx[v1]),
             game,
         );

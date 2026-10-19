@@ -812,8 +812,8 @@ unsafe fn test_and_update_bits(cpu: *mut Cpu, low: u32, high: u32, set: bool, ga
 }
 
 pub unsafe fn DumpCpuHistory(game: &mut Game) {
-    let mut i: i32 = 0 as i32;
-    while i < 8 as i32 {
+    let mut i: i32 = 0i32;
+    while i < 8i32 {
         printf(
             b"PC history: 0x%x\n\0" as *const u8 as *const ::core::ffi::c_char,
             game.pc_hist[(game.pc_hist_ctr.wrapping_add(i as u32) & 7_u32) as usize],
@@ -1284,7 +1284,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             if target_bank == 0x80 && target == 0x8573 {
                 printf(
                     b"Current PC = 0x%x\n\0" as *const u8 as *const ::core::ffi::c_char,
-                    ((*cpu).k as i32) << 16 as i32 | (*cpu).pc as i32,
+                    ((*cpu).k as i32) << 16i32 | (*cpu).pc as i32,
                 );
                 DumpCpuHistory(game);
                 Die(b"The game has crashed!\n\0" as *const u8 as *const ::core::ffi::c_char);
@@ -1311,7 +1311,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                     __assert_fail(
                         b"delta == 0 || delta == 2\0" as *const u8 as *const ::core::ffi::c_char,
                         b"src/snes/cpu.c\0" as *const u8 as *const ::core::ffi::c_char,
-                        1386 as u32,
+                        1386u32,
                         b"void cpu_doOpcode(Cpu *, uint8_t)\0" as *const u8
                             as *const ::core::ffi::c_char,
                     );
@@ -1375,7 +1375,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                         b"cpu->sp == cpu->spBreakpoint\0" as *const u8
                             as *const ::core::ffi::c_char,
                         b"src/snes/cpu.c\0" as *const u8 as *const ::core::ffi::c_char,
-                        1464 as u32,
+                        1464u32,
                         b"void cpu_doOpcode(Cpu *, uint8_t)\0" as *const u8
                             as *const ::core::ffi::c_char,
                     );

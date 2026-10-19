@@ -249,9 +249,7 @@ pub type C2RustUnnamed_1 = u32;
 pub type C2RustUnnamed_2 = u32;
 pub type C2RustUnnamed_3 = u32;
 pub const INT_MAX: i32 = __INT_MAX__;
-pub const UINT_MAX: u32 = (__INT_MAX__ as u32)
-    .wrapping_mul(2 as u32)
-    .wrapping_add(1 as u32);
+pub const UINT_MAX: u32 = (__INT_MAX__ as u32).wrapping_mul(2u32).wrapping_add(1u32);
 pub const GL_TEXTURE_2D: i32 = gl::TEXTURE_2D as i32;
 pub const GL_CLAMP: i32 = 0x2900;
 pub const GL_FALSE: i32 = gl::FALSE as i32;
@@ -289,19 +287,19 @@ pub const GL_FRAMEBUFFER_SRGB: i32 = gl::FRAMEBUFFER_SRGB as i32;
 pub const GL_RGBA32F: i32 = gl::RGBA32F as i32;
 #[inline]
 unsafe fn atoi(mut __nptr: *const ::core::ffi::c_char) -> i32 {
-    strtol(__nptr, NULL as *mut *mut ::core::ffi::c_char, 10 as i32) as i32
+    strtol(__nptr, NULL as *mut *mut ::core::ffi::c_char, 10i32) as i32
 }
 #[inline]
 unsafe fn atof(mut __nptr: *const ::core::ffi::c_char) -> ::core::ffi::c_double {
     strtod(__nptr, NULL as *mut *mut ::core::ffi::c_char)
 }
-pub const EOF: i32 = -(1 as i32);
+pub const EOF: i32 = -(1i32);
 pub const SEEK_SET: i32 = 0;
 pub const SEEK_CUR: i32 = 1;
 unsafe fn stbi__start_mem(s: *mut stbi__context, buffer: *const stbi_uc, len: i32) {
     (*s).io.read = None;
-    (*s).read_from_callbacks = 0 as i32;
-    (*s).callback_already_read = 0 as i32;
+    (*s).read_from_callbacks = 0i32;
+    (*s).callback_already_read = 0i32;
     (*s).img_buffer_original = buffer as *mut stbi_uc;
     (*s).img_buffer = (*s).img_buffer_original;
     (*s).img_buffer_original_end = (buffer as *mut stbi_uc).offset(len as isize);
@@ -315,8 +313,8 @@ unsafe fn stbi__start_callbacks(
     (*s).io = *c;
     (*s).io_user_data = user;
     (*s).buflen = ::core::mem::size_of::<[stbi_uc; 128]>() as i32;
-    (*s).read_from_callbacks = 1 as i32;
-    (*s).callback_already_read = 0 as i32;
+    (*s).read_from_callbacks = 1i32;
+    (*s).callback_already_read = 0i32;
     (*s).img_buffer_original = &raw mut (*s).buffer_start as *mut stbi_uc;
     (*s).img_buffer = (*s).img_buffer_original;
     stbi__refill_buffer(s);
@@ -375,17 +373,17 @@ unsafe fn stbi__malloc(size: size_t) -> *mut ::core::ffi::c_void {
     malloc(size)
 }
 unsafe fn stbi__addsizes_valid(a: i32, b: i32) -> i32 {
-    if b < 0 as i32 {
-        return 0 as i32;
+    if b < 0i32 {
+        return 0i32;
     }
     (a <= INT_MAX - b) as i32
 }
 unsafe fn stbi__mul2sizes_valid(a: i32, b: i32) -> i32 {
-    if a < 0 as i32 || b < 0 as i32 {
-        return 0 as i32;
+    if a < 0i32 || b < 0i32 {
+        return 0i32;
     }
-    if b == 0 as i32 {
-        return 1 as i32;
+    if b == 0i32 {
+        return 1i32;
     }
     (a <= INT_MAX / b) as i32
 }
@@ -424,7 +422,7 @@ unsafe fn stbi__malloc_mad4(a: i32, b: i32, c: i32, d: i32, add: i32) -> *mut ::
 pub unsafe fn stbi_image_free(retval_from_stbi_load: *mut ::core::ffi::c_void) {
     free(retval_from_stbi_load);
 }
-static mut stbi__vertically_flip_on_load_global: i32 = 0 as i32;
+static mut stbi__vertically_flip_on_load_global: i32 = 0i32;
 pub unsafe fn stbi_set_flip_vertically_on_load(flag_true_if_should_flip: i32) {
     stbi__vertically_flip_on_load_global = flag_true_if_should_flip;
 }
@@ -439,16 +437,16 @@ unsafe fn stbi__load_main(
 ) -> *mut ::core::ffi::c_void {
     memset(
         ri as *mut ::core::ffi::c_void,
-        0 as i32,
+        0i32,
         ::core::mem::size_of::<stbi__result_info>() as size_t,
     );
-    (*ri).bits_per_channel = 8 as i32;
+    (*ri).bits_per_channel = 8i32;
     (*ri).channel_order = STBI_ORDER_RGB as i32;
-    (*ri).num_channels = 0 as i32;
+    (*ri).num_channels = 0i32;
     if stbi__png_test(s) != 0 {
         return stbi__png_load(s, x, y, comp, req_comp, ri);
     }
-    ((if 0 as i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_uchar
+    ((if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_uchar
         as *mut ::core::ffi::c_void)
 }
 unsafe fn stbi__convert_16_to_8(
@@ -462,12 +460,12 @@ unsafe fn stbi__convert_16_to_8(
     let mut reduced: *mut stbi_uc = ::core::ptr::null_mut::<stbi_uc>();
     reduced = stbi__malloc(img_len as size_t) as *mut stbi_uc;
     if reduced.is_null() {
-        return (if 0 as i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut stbi_uc;
+        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut stbi_uc;
     }
-    i = 0 as i32;
+    i = 0i32;
     while i < img_len {
         *reduced.offset(i as isize) =
-            (*orig.offset(i as isize) as i32 >> 8 as i32 & 0xff as i32) as stbi_uc;
+            (*orig.offset(i as isize) as i32 >> 8i32 & 0xffi32) as stbi_uc;
         i += 1;
     }
     free(orig as *mut ::core::ffi::c_void);
@@ -482,14 +480,14 @@ unsafe fn stbi__convert_8_to_16(
     let mut i: i32 = 0;
     let img_len: i32 = w * h * channels;
     let mut enlarged: *mut stbi__uint16 = ::core::ptr::null_mut::<stbi__uint16>();
-    enlarged = stbi__malloc((img_len * 2 as i32) as size_t) as *mut stbi__uint16;
+    enlarged = stbi__malloc((img_len * 2i32) as size_t) as *mut stbi__uint16;
     if enlarged.is_null() {
-        return (if 0 as i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_uchar
+        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_uchar
             as *mut stbi__uint16;
     }
-    i = 0 as i32;
+    i = 0i32;
     while i < img_len {
-        *enlarged.offset(i as isize) = (((*orig.offset(i as isize) as i32) << 8 as i32)
+        *enlarged.offset(i as isize) = (((*orig.offset(i as isize) as i32) << 8i32)
             + *orig.offset(i as isize) as i32)
             as stbi__uint16;
         i += 1;
@@ -507,12 +505,12 @@ unsafe fn stbi__vertical_flip(
     let bytes_per_row: size_t = (w as size_t).wrapping_mul(bytes_per_pixel as size_t);
     let mut temp: [stbi_uc; 2048] = [0; 2048];
     let bytes: *mut stbi_uc = image as *mut stbi_uc;
-    row = 0 as i32;
-    while row < h >> 1 as i32 {
+    row = 0i32;
+    while row < h >> 1i32 {
         let mut row0: *mut stbi_uc =
             bytes.offset((row as size_t).wrapping_mul(bytes_per_row) as isize);
         let mut row1: *mut stbi_uc =
-            bytes.offset(((h - row - 1 as i32) as size_t).wrapping_mul(bytes_per_row) as isize);
+            bytes.offset(((h - row - 1i32) as size_t).wrapping_mul(bytes_per_row) as isize);
         let mut bytes_left: size_t = bytes_per_row;
         while bytes_left != 0 {
             let bytes_copy: size_t =
@@ -556,36 +554,32 @@ unsafe fn stbi__load_and_postprocess_8bit(
         channel_order: 0,
     };
     let mut result: *mut ::core::ffi::c_void =
-        stbi__load_main(s, x, y, comp, req_comp, &raw mut ri, 8 as i32);
+        stbi__load_main(s, x, y, comp, req_comp, &raw mut ri, 8i32);
     if result.is_null() {
         return ::core::ptr::null_mut::<::core::ffi::c_uchar>();
     }
     '_c2rust_label: {
-        if ri.bits_per_channel == 8 as i32 || ri.bits_per_channel == 16 as i32 {
+        if ri.bits_per_channel == 8i32 || ri.bits_per_channel == 16i32 {
         } else {
             __assert_fail(
                 b"ri.bits_per_channel == 8 || ri.bits_per_channel == 16\0" as *const u8
                     as *const ::core::ffi::c_char,
                 b"./third_party/stb/stb_image.h\0" as *const u8
                     as *const ::core::ffi::c_char,
-                1249 as u32,
+                1249u32,
                 b"unsigned char *stbi__load_and_postprocess_8bit(stbi__context *, int *, int *, int *, int)\0"
                     as *const u8 as *const ::core::ffi::c_char,
             );
         }
     };
-    if ri.bits_per_channel != 8 as i32 {
+    if ri.bits_per_channel != 8i32 {
         result = stbi__convert_16_to_8(
             result as *mut stbi__uint16,
             *x,
             *y,
-            if req_comp == 0 as i32 {
-                *comp
-            } else {
-                req_comp
-            },
+            if req_comp == 0i32 { *comp } else { req_comp },
         ) as *mut ::core::ffi::c_void;
-        ri.bits_per_channel = 8 as i32;
+        ri.bits_per_channel = 8i32;
     }
     if stbi__vertically_flip_on_load_global != 0 {
         let channels: i32 = if req_comp != 0 { req_comp } else { *comp };
@@ -611,36 +605,32 @@ unsafe fn stbi__load_and_postprocess_16bit(
         channel_order: 0,
     };
     let mut result: *mut ::core::ffi::c_void =
-        stbi__load_main(s, x, y, comp, req_comp, &raw mut ri, 16 as i32);
+        stbi__load_main(s, x, y, comp, req_comp, &raw mut ri, 16i32);
     if result.is_null() {
         return ::core::ptr::null_mut::<stbi__uint16>();
     }
     '_c2rust_label: {
-        if ri.bits_per_channel == 8 as i32 || ri.bits_per_channel == 16 as i32 {
+        if ri.bits_per_channel == 8i32 || ri.bits_per_channel == 16i32 {
         } else {
             __assert_fail(
                 b"ri.bits_per_channel == 8 || ri.bits_per_channel == 16\0" as *const u8
                     as *const ::core::ffi::c_char,
                 b"./third_party/stb/stb_image.h\0" as *const u8
                     as *const ::core::ffi::c_char,
-                1275 as u32,
+                1275u32,
                 b"stbi__uint16 *stbi__load_and_postprocess_16bit(stbi__context *, int *, int *, int *, int)\0"
                     as *const u8 as *const ::core::ffi::c_char,
             );
         }
     };
-    if ri.bits_per_channel != 16 as i32 {
+    if ri.bits_per_channel != 16i32 {
         result = stbi__convert_8_to_16(
             result as *mut stbi_uc,
             *x,
             *y,
-            if req_comp == 0 as i32 {
-                *comp
-            } else {
-                req_comp
-            },
+            if req_comp == 0i32 { *comp } else { req_comp },
         ) as *mut ::core::ffi::c_void;
-        ri.bits_per_channel = 16 as i32;
+        ri.bits_per_channel = 16i32;
     }
     if stbi__vertically_flip_on_load_global != 0 {
         let channels: i32 = if req_comp != 0 { req_comp } else { *comp };
@@ -672,7 +662,7 @@ pub unsafe fn stbi_load(
     let f: *mut FILE = stbi__fopen(filename, b"rb\0" as *const u8 as *const ::core::ffi::c_char);
     let mut result: *mut ::core::ffi::c_uchar = ::core::ptr::null_mut::<::core::ffi::c_uchar>();
     if f.is_null() {
-        return (if 0 as i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut stbi_uc;
+        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut stbi_uc;
     }
     result = stbi_load_from_file(f, x, y, comp, req_comp) as *mut ::core::ffi::c_uchar;
     fclose(f);
@@ -730,7 +720,7 @@ pub unsafe fn stbi_load_16(
     let f: *mut FILE = stbi__fopen(filename, b"rb\0" as *const u8 as *const ::core::ffi::c_char);
     let mut result: *mut stbi__uint16 = ::core::ptr::null_mut::<stbi__uint16>();
     if f.is_null() {
-        return (if 0 as i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_uchar
+        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_uchar
             as *mut stbi_us;
     }
     result = stbi_load_from_file_16(f, x, y, comp, req_comp) as *mut stbi__uint16;
@@ -804,7 +794,7 @@ unsafe fn stbi__loadf_main(
             if req_comp != 0 { req_comp } else { *comp },
         );
     }
-    ((if 0 as i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_float)
+    ((if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_float)
 }
 pub unsafe fn stbi_loadf_from_memory(
     buffer: *const stbi_uc,
@@ -840,8 +830,7 @@ pub unsafe fn stbi_loadf(
     let mut result: *mut ::core::ffi::c_float = ::core::ptr::null_mut::<::core::ffi::c_float>();
     let f: *mut FILE = stbi__fopen(filename, b"rb\0" as *const u8 as *const ::core::ffi::c_char);
     if f.is_null() {
-        return (if 0 as i32 != 0 { NULL_0 } else { NULL_0 }) as size_t
-            as *mut ::core::ffi::c_float;
+        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_float;
     }
     result = stbi_loadf_from_file(f, x, y, comp, req_comp);
     fclose(f);
@@ -859,11 +848,11 @@ pub unsafe fn stbi_loadf_from_file(
     stbi__loadf_main(&raw mut s, x, y, comp, req_comp)
 }
 pub fn stbi_is_hdr_from_memory(buffer: *const stbi_uc, len: i32) -> i32 {
-    0 as i32
+    0i32
 }
 pub unsafe fn stbi_is_hdr(filename: *const ::core::ffi::c_char) -> i32 {
     let f: *mut FILE = stbi__fopen(filename, b"rb\0" as *const u8 as *const ::core::ffi::c_char);
-    let mut result: i32 = 0 as i32;
+    let mut result: i32 = 0i32;
     if !f.is_null() {
         result = stbi_is_hdr_from_file(f);
         fclose(f);
@@ -871,13 +860,13 @@ pub unsafe fn stbi_is_hdr(filename: *const ::core::ffi::c_char) -> i32 {
     result
 }
 pub fn stbi_is_hdr_from_file(f: *mut FILE) -> i32 {
-    0 as i32
+    0i32
 }
 pub fn stbi_is_hdr_from_callbacks(
     clbk: *const stbi_io_callbacks,
     user: *mut ::core::ffi::c_void,
 ) -> i32 {
-    0 as i32
+    0i32
 }
 static mut stbi__l2h_scale: ::core::ffi::c_float = 1.0f32;
 static mut stbi__l2h_gamma: ::core::ffi::c_float = 2.2f32;
@@ -890,10 +879,10 @@ pub unsafe fn stbi_ldr_to_hdr_scale(scale: ::core::ffi::c_float) {
 static mut stbi__h2l_scale_i: ::core::ffi::c_float = 1.0f32;
 static mut stbi__h2l_gamma_i: ::core::ffi::c_float = 1.0f32 / 2.2f32;
 pub unsafe fn stbi_hdr_to_ldr_gamma(gamma: ::core::ffi::c_float) {
-    stbi__h2l_gamma_i = 1 as i32 as ::core::ffi::c_float / gamma;
+    stbi__h2l_gamma_i = 1i32 as ::core::ffi::c_float / gamma;
 }
 pub unsafe fn stbi_hdr_to_ldr_scale(scale: ::core::ffi::c_float) {
-    stbi__h2l_scale_i = 1 as i32 as ::core::ffi::c_float / scale;
+    stbi__h2l_scale_i = 1i32 as ::core::ffi::c_float / scale;
 }
 unsafe fn stbi__refill_buffer(s: *mut stbi__context) {
     let n: i32 = (*s).io.read.expect("non-null function pointer")(
@@ -903,8 +892,8 @@ unsafe fn stbi__refill_buffer(s: *mut stbi__context) {
     );
     (*s).callback_already_read +=
         (*s).img_buffer.offset_from((*s).img_buffer_original) as ::core::ffi::c_long as i32;
-    if n == 0 as i32 {
-        (*s).read_from_callbacks = 0 as i32;
+    if n == 0i32 {
+        (*s).read_from_callbacks = 0i32;
         (*s).img_buffer = &raw mut (*s).buffer_start as *mut stbi_uc;
         (*s).img_buffer_end = (&raw mut (*s).buffer_start as *mut stbi_uc).offset(1);
         *(*s).img_buffer = 0 as stbi_uc;
@@ -928,10 +917,10 @@ unsafe fn stbi__get8(s: *mut stbi__context) -> stbi_uc {
     0 as stbi_uc
 }
 unsafe fn stbi__skip(s: *mut stbi__context, n: i32) {
-    if n == 0 as i32 {
+    if n == 0i32 {
         return;
     }
-    if n < 0 as i32 {
+    if n < 0i32 {
         (*s).img_buffer = (*s).img_buffer_end;
         return;
     }
@@ -975,18 +964,18 @@ unsafe fn stbi__getn(s: *mut stbi__context, buffer: *mut stbi_uc, n: i32) -> i32
             n as size_t,
         );
         (*s).img_buffer = (*s).img_buffer.offset(n as isize);
-        1 as i32
+        1i32
     } else {
-        0 as i32
+        0i32
     }
 }
 unsafe fn stbi__get16be(s: *mut stbi__context) -> i32 {
     let z: i32 = stbi__get8(s) as i32;
-    (z << 8 as i32) + stbi__get8(s) as i32
+    (z << 8i32) + stbi__get8(s) as i32
 }
 unsafe fn stbi__get32be(s: *mut stbi__context) -> stbi__uint32 {
     let z: stbi__uint32 = stbi__get16be(s) as stbi__uint32;
-    (z << 16 as i32).wrapping_add(stbi__get16be(s) as stbi__uint32)
+    (z << 16i32).wrapping_add(stbi__get16be(s) as stbi__uint32)
 }
 // Channel values use the same integer luminance weights at both widths.
 trait ImageChannel: Copy {
@@ -1116,24 +1105,23 @@ unsafe fn stbi__convert_format(
         return data;
     }
     '_c2rust_label: {
-        if req_comp >= 1 as i32 && req_comp <= 4 as i32 {
+        if req_comp >= 1i32 && req_comp <= 4i32 {
         } else {
             __assert_fail(
                 b"req_comp >= 1 && req_comp <= 4\0" as *const u8
                     as *const ::core::ffi::c_char,
                 b"./third_party/stb/stb_image.h\0" as *const u8
                     as *const ::core::ffi::c_char,
-                1741 as u32,
+                1741u32,
                 b"unsigned char *stbi__convert_format(unsigned char *, int, int, unsigned int, unsigned int)\0"
                     as *const u8 as *const ::core::ffi::c_char,
             );
         }
     };
-    good = stbi__malloc_mad3(req_comp, x as i32, y as i32, 0 as i32) as *mut ::core::ffi::c_uchar;
+    good = stbi__malloc_mad3(req_comp, x as i32, y as i32, 0i32) as *mut ::core::ffi::c_uchar;
     if good.is_null() {
         free(data as *mut ::core::ffi::c_void);
-        return (if 0 as i32 != 0 { NULL_0 } else { NULL_0 }) as size_t
-            as *mut ::core::ffi::c_uchar;
+        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_uchar;
     }
     if !convert_image_channels(data, good, img_n, req_comp, x, y) {
         '_c2rust_label_0: {
@@ -1141,15 +1129,14 @@ unsafe fn stbi__convert_format(
             b"0\0" as *const u8 as *const ::core::ffi::c_char,
             b"./third_party/stb/stb_image.h\0" as *const u8
                 as *const ::core::ffi::c_char,
-            1770 as u32,
+            1770u32,
             b"unsigned char *stbi__convert_format(unsigned char *, int, int, unsigned int, unsigned int)\0"
                 as *const u8 as *const ::core::ffi::c_char,
         );
         };
         free(data as *mut ::core::ffi::c_void);
         free(good as *mut ::core::ffi::c_void);
-        return (if 0 as i32 != 0 { NULL_0 } else { NULL_0 }) as size_t
-            as *mut ::core::ffi::c_uchar;
+        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_uchar;
     }
     free(data as *mut ::core::ffi::c_void);
     good
@@ -1166,14 +1153,14 @@ unsafe fn stbi__convert_format16(
         return data;
     }
     '_c2rust_label: {
-        if req_comp >= 1 as i32 && req_comp <= 4 as i32 {
+        if req_comp >= 1i32 && req_comp <= 4i32 {
         } else {
             __assert_fail(
                 b"req_comp >= 1 && req_comp <= 4\0" as *const u8
                     as *const ::core::ffi::c_char,
                 b"./third_party/stb/stb_image.h\0" as *const u8
                     as *const ::core::ffi::c_char,
-                1798 as u32,
+                1798u32,
                 b"stbi__uint16 *stbi__convert_format16(stbi__uint16 *, int, int, unsigned int, unsigned int)\0"
                     as *const u8 as *const ::core::ffi::c_char,
             );
@@ -1183,11 +1170,11 @@ unsafe fn stbi__convert_format16(
         (req_comp as u32)
             .wrapping_mul(x)
             .wrapping_mul(y)
-            .wrapping_mul(2 as u32) as size_t,
+            .wrapping_mul(2u32) as size_t,
     ) as *mut stbi__uint16;
     if good.is_null() {
         free(data as *mut ::core::ffi::c_void);
-        return (if 0 as i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_uchar
+        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_uchar
             as *mut stbi__uint16;
     }
     if !convert_image_channels(data, good, img_n, req_comp, x, y) {
@@ -1196,14 +1183,14 @@ unsafe fn stbi__convert_format16(
             b"0\0" as *const u8 as *const ::core::ffi::c_char,
             b"./third_party/stb/stb_image.h\0" as *const u8
                 as *const ::core::ffi::c_char,
-            1827 as u32,
+            1827u32,
             b"stbi__uint16 *stbi__convert_format16(stbi__uint16 *, int, int, unsigned int, unsigned int)\0"
                 as *const u8 as *const ::core::ffi::c_char,
         );
         };
         free(data as *mut ::core::ffi::c_void);
         free(good as *mut ::core::ffi::c_void);
-        return (if 0 as i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_uchar
+        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_uchar
             as *mut stbi__uint16;
     }
     free(data as *mut ::core::ffi::c_void);
@@ -1227,21 +1214,20 @@ unsafe fn stbi__ldr_to_hdr(
         y,
         comp,
         ::core::mem::size_of::<::core::ffi::c_float>() as i32,
-        0 as i32,
+        0i32,
     ) as *mut ::core::ffi::c_float;
     if output.is_null() {
         free(data as *mut ::core::ffi::c_void);
-        return (if 0 as i32 != 0 { NULL_0 } else { NULL_0 }) as size_t
-            as *mut ::core::ffi::c_float;
+        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_float;
     }
-    if comp & 1 as i32 != 0 {
+    if comp & 1i32 != 0 {
         n = comp;
     } else {
-        n = comp - 1 as i32;
+        n = comp - 1i32;
     }
-    i = 0 as i32;
+    i = 0i32;
     while i < x * y {
-        k = 0 as i32;
+        k = 0i32;
         while k < n {
             *output.offset((i * comp + k) as isize) = (pow(
                 (*data.offset((i * comp + k) as isize) as i32 as ::core::ffi::c_float / 255.0f32)
@@ -1254,7 +1240,7 @@ unsafe fn stbi__ldr_to_hdr(
         i += 1;
     }
     if n < comp {
-        i = 0 as i32;
+        i = 0i32;
         while i < x * y {
             *output.offset((i * comp + n) as isize) =
                 *data.offset((i * comp + n) as isize) as i32 as ::core::ffi::c_float / 255.0f32;
@@ -1265,102 +1251,102 @@ unsafe fn stbi__ldr_to_hdr(
     output
 }
 pub const STBI__ZFAST_BITS: i32 = 9;
-pub const STBI__ZFAST_MASK: i32 = ((1 as i32) << STBI__ZFAST_BITS) - 1 as i32;
+pub const STBI__ZFAST_MASK: i32 = ((1i32) << STBI__ZFAST_BITS) - 1i32;
 pub const STBI__ZNSYMS: i32 = 288;
 unsafe fn stbi__bitreverse16(mut n: i32) -> i32 {
-    n = (n & 0xaaaa as i32) >> 1 as i32 | (n & 0x5555 as i32) << 1 as i32;
-    n = (n & 0xcccc as i32) >> 2 as i32 | (n & 0x3333 as i32) << 2 as i32;
-    n = (n & 0xf0f0 as i32) >> 4 as i32 | (n & 0xf0f as i32) << 4 as i32;
-    n = (n & 0xff00 as i32) >> 8 as i32 | (n & 0xff as i32) << 8 as i32;
+    n = (n & 0xaaaai32) >> 1i32 | (n & 0x5555i32) << 1i32;
+    n = (n & 0xcccci32) >> 2i32 | (n & 0x3333i32) << 2i32;
+    n = (n & 0xf0f0i32) >> 4i32 | (n & 0xf0fi32) << 4i32;
+    n = (n & 0xff00i32) >> 8i32 | (n & 0xffi32) << 8i32;
     n
 }
 unsafe fn stbi__bit_reverse(v: i32, bits: i32) -> i32 {
     '_c2rust_label: {
-        if bits <= 16 as i32 {
+        if bits <= 16i32 {
         } else {
             __assert_fail(
                 b"bits <= 16\0" as *const u8 as *const ::core::ffi::c_char,
                 b"./third_party/stb/stb_image.h\0" as *const u8 as *const ::core::ffi::c_char,
-                4061 as u32,
+                4061u32,
                 b"int stbi__bit_reverse(int, int)\0" as *const u8 as *const ::core::ffi::c_char,
             );
         }
     };
-    stbi__bitreverse16(v) >> 16 as i32 - bits
+    stbi__bitreverse16(v) >> 16i32 - bits
 }
 unsafe fn stbi__zbuild_huffman(z: *mut stbi__zhuffman, sizelist: *const stbi_uc, num: i32) -> i32 {
     let mut i: i32 = 0;
-    let mut k: i32 = 0 as i32;
+    let mut k: i32 = 0i32;
     let mut code: i32 = 0;
     let mut next_code: [i32; 16] = [0; 16];
     let mut sizes: [i32; 17] = [0; 17];
     memset(
         &raw mut sizes as *mut i32 as *mut ::core::ffi::c_void,
-        0 as i32,
+        0i32,
         ::core::mem::size_of::<[i32; 17]>() as size_t,
     );
     memset(
         &raw mut (*z).fast as *mut stbi__uint16 as *mut ::core::ffi::c_void,
-        0 as i32,
+        0i32,
         ::core::mem::size_of::<[stbi__uint16; 512]>() as size_t,
     );
-    i = 0 as i32;
+    i = 0i32;
     while i < num {
         sizes[*sizelist.offset(i as isize) as usize] += 1;
         i += 1;
     }
-    sizes[0 as i32 as usize] = 0 as i32;
-    i = 1 as i32;
-    while i < 16 as i32 {
-        if sizes[i as usize] > (1 as i32) << i {
-            return 0 as i32;
+    sizes[0i32 as usize] = 0i32;
+    i = 1i32;
+    while i < 16i32 {
+        if sizes[i as usize] > (1i32) << i {
+            return 0i32;
         }
         i += 1;
     }
-    code = 0 as i32;
-    i = 1 as i32;
-    while i < 16 as i32 {
+    code = 0i32;
+    i = 1i32;
+    while i < 16i32 {
         next_code[i as usize] = code;
         (*z).firstcode[i as usize] = code as stbi__uint16;
         (*z).firstsymbol[i as usize] = k as stbi__uint16;
         code = code + sizes[i as usize];
-        if sizes[i as usize] != 0 && code - 1 as i32 >= (1 as i32) << i {
-            return 0 as i32;
+        if sizes[i as usize] != 0 && code - 1i32 >= (1i32) << i {
+            return 0i32;
         }
-        (*z).maxcode[i as usize] = code << 16 as i32 - i;
-        code <<= 1 as i32;
+        (*z).maxcode[i as usize] = code << 16i32 - i;
+        code <<= 1i32;
         k += sizes[i as usize];
         i += 1;
     }
-    (*z).maxcode[16 as i32 as usize] = 0x10000 as i32;
-    i = 0 as i32;
+    (*z).maxcode[16i32 as usize] = 0x10000i32;
+    i = 0i32;
     while i < num {
         let s: i32 = *sizelist.offset(i as isize) as i32;
         if s != 0 {
             let c: i32 = next_code[s as usize] - (*z).firstcode[s as usize] as i32
                 + (*z).firstsymbol[s as usize] as i32;
-            let fastv: stbi__uint16 = (s << 9 as i32 | i) as stbi__uint16;
+            let fastv: stbi__uint16 = (s << 9i32 | i) as stbi__uint16;
             (*z).size[c as usize] = s as stbi_uc;
             (*z).value[c as usize] = i as stbi__uint16;
             if s <= STBI__ZFAST_BITS {
                 let mut j: i32 = stbi__bit_reverse(next_code[s as usize], s);
-                while j < (1 as i32) << STBI__ZFAST_BITS {
+                while j < (1i32) << STBI__ZFAST_BITS {
                     (*z).fast[j as usize] = fastv;
-                    j += (1 as i32) << s;
+                    j += (1i32) << s;
                 }
             }
             next_code[s as usize] += 1;
         }
         i += 1;
     }
-    1 as i32
+    1i32
 }
 unsafe fn stbi__zeof(z: *mut stbi__zbuf) -> i32 {
     ((*z).zbuffer >= (*z).zbuffer_end) as i32
 }
 unsafe fn stbi__zget8(z: *mut stbi__zbuf) -> stbi_uc {
     ((if stbi__zeof(z) != 0 {
-        0 as i32
+        0i32
     } else {
         let fresh49 = (*z).zbuffer;
         (*z).zbuffer = (*z).zbuffer.offset(1);
@@ -1375,8 +1361,8 @@ unsafe fn stbi__fill_bits(z: *mut stbi__zbuf) {
         }
         (*z).code_buffer =
             ((*z).code_buffer as u32 | (stbi__zget8(z) as u32) << (*z).num_bits) as stbi__uint32;
-        (*z).num_bits += 8 as i32;
-        if ((*z).num_bits > 24 as i32) {
+        (*z).num_bits += 8i32;
+        if ((*z).num_bits > 24i32) {
             break;
         }
     }
@@ -1386,7 +1372,7 @@ unsafe fn stbi__zreceive(z: *mut stbi__zbuf, n: i32) -> u32 {
     if (*z).num_bits < n {
         stbi__fill_bits(z);
     }
-    k = ((*z).code_buffer & (((1 as i32) << n) - 1 as i32) as stbi__uint32) as u32;
+    k = ((*z).code_buffer & (((1i32) << n) - 1i32) as stbi__uint32) as u32;
     (*z).code_buffer >>= n;
     (*z).num_bits -= n;
     k
@@ -1395,21 +1381,20 @@ unsafe fn stbi__zhuffman_decode_slowpath(a: *mut stbi__zbuf, z: *mut stbi__zhuff
     let mut b: i32 = 0;
     let mut s: i32 = 0;
     let mut k: i32 = 0;
-    k = stbi__bit_reverse((*a).code_buffer as i32, 16 as i32);
-    s = STBI__ZFAST_BITS + 1 as i32;
+    k = stbi__bit_reverse((*a).code_buffer as i32, 16i32);
+    s = STBI__ZFAST_BITS + 1i32;
     while (k >= (*z).maxcode[s as usize]) {
         s += 1;
     }
-    if s >= 16 as i32 {
-        return -(1 as i32);
+    if s >= 16i32 {
+        return -(1i32);
     }
-    b = (k >> 16 as i32 - s) - (*z).firstcode[s as usize] as i32
-        + (*z).firstsymbol[s as usize] as i32;
+    b = (k >> 16i32 - s) - (*z).firstcode[s as usize] as i32 + (*z).firstsymbol[s as usize] as i32;
     if b >= STBI__ZNSYMS {
-        return -(1 as i32);
+        return -(1i32);
     }
     if (*z).size[b as usize] as i32 != s {
-        return -(1 as i32);
+        return -(1i32);
     }
     (*a).code_buffer >>= s;
     (*a).num_bits -= s;
@@ -1418,18 +1403,18 @@ unsafe fn stbi__zhuffman_decode_slowpath(a: *mut stbi__zbuf, z: *mut stbi__zhuff
 unsafe fn stbi__zhuffman_decode(a: *mut stbi__zbuf, z: *mut stbi__zhuffman) -> i32 {
     let mut b: i32 = 0;
     let mut s: i32 = 0;
-    if (*a).num_bits < 16 as i32 {
+    if (*a).num_bits < 16i32 {
         if stbi__zeof(a) != 0 {
-            return -(1 as i32);
+            return -(1i32);
         }
         stbi__fill_bits(a);
     }
     b = (*z).fast[((*a).code_buffer & STBI__ZFAST_MASK as stbi__uint32) as usize] as i32;
     if b != 0 {
-        s = b >> 9 as i32;
+        s = b >> 9i32;
         (*a).code_buffer >>= s;
         (*a).num_bits -= s;
-        return b & 511 as i32;
+        return b & 511i32;
     }
     stbi__zhuffman_decode_slowpath(a, z)
 }
@@ -1440,29 +1425,29 @@ unsafe fn stbi__zexpand(z: *mut stbi__zbuf, zout: *mut ::core::ffi::c_char, n: i
     let mut old_limit: u32 = 0;
     (*z).zout = zout;
     if (*z).z_expandable == 0 {
-        return 0 as i32;
+        return 0i32;
     }
     cur = (*z).zout.offset_from((*z).zout_start) as ::core::ffi::c_long as u32;
     old_limit = (*z).zout_end.offset_from((*z).zout_start) as ::core::ffi::c_long as u32;
     limit = old_limit;
     if UINT_MAX.wrapping_sub(cur) < n as u32 {
-        return 0 as i32;
+        return 0i32;
     }
     while cur.wrapping_add(n as u32) > limit {
-        if limit > UINT_MAX.wrapping_div(2 as u32) {
-            return 0 as i32;
+        if limit > UINT_MAX.wrapping_div(2u32) {
+            return 0i32;
         }
-        limit = limit.wrapping_mul(2 as u32);
+        limit = limit.wrapping_mul(2u32);
     }
     q = realloc((*z).zout_start as *mut ::core::ffi::c_void, limit as size_t)
         as *mut ::core::ffi::c_char;
     if q.is_null() {
-        return 0 as i32;
+        return 0i32;
     }
     (*z).zout_start = q;
     (*z).zout = q.offset(cur as isize);
     (*z).zout_end = q.offset(limit as isize);
-    1 as i32
+    1i32
 }
 static mut stbi__zlength_base: [i32; 31] = [
     3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67, 83, 99, 115, 131,
@@ -1483,13 +1468,13 @@ unsafe fn stbi__parse_huffman_block(a: *mut stbi__zbuf) -> i32 {
     let mut zout: *mut ::core::ffi::c_char = (*a).zout;
     loop {
         let mut z: i32 = stbi__zhuffman_decode(a, &raw mut (*a).z_length);
-        if z < 256 as i32 {
-            if z < 0 as i32 {
-                return 0 as i32;
+        if z < 256i32 {
+            if z < 0i32 {
+                return 0i32;
             }
             if zout >= (*a).zout_end {
-                if stbi__zexpand(a, zout, 1 as i32) == 0 {
-                    return 0 as i32;
+                if stbi__zexpand(a, zout, 1i32) == 0 {
+                    return 0i32;
                 }
                 zout = (*a).zout;
             }
@@ -1500,19 +1485,19 @@ unsafe fn stbi__parse_huffman_block(a: *mut stbi__zbuf) -> i32 {
             let mut p: *mut stbi_uc = ::core::ptr::null_mut::<stbi_uc>();
             let mut len: i32 = 0;
             let mut dist: i32 = 0;
-            if z == 256 as i32 {
+            if z == 256i32 {
                 (*a).zout = zout;
-                return 1 as i32;
+                return 1i32;
             }
-            z -= 257 as i32;
+            z -= 257i32;
             len = stbi__zlength_base[z as usize];
             if stbi__zlength_extra[z as usize] != 0 {
                 len = (len as u32).wrapping_add(stbi__zreceive(a, stbi__zlength_extra[z as usize]))
                     as i32 as i32;
             }
             z = stbi__zhuffman_decode(a, &raw mut (*a).z_distance);
-            if z < 0 as i32 {
-                return 0 as i32;
+            if z < 0i32 {
+                return 0i32;
             }
             dist = stbi__zdist_base[z as usize];
             if stbi__zdist_extra[z as usize] != 0 {
@@ -1522,16 +1507,16 @@ unsafe fn stbi__parse_huffman_block(a: *mut stbi__zbuf) -> i32 {
             if (zout.offset_from((*a).zout_start) as ::core::ffi::c_long)
                 < dist as ::core::ffi::c_long
             {
-                return 0 as i32;
+                return 0i32;
             }
             if zout.offset(len as isize) > (*a).zout_end {
                 if stbi__zexpand(a, zout, len) == 0 {
-                    return 0 as i32;
+                    return 0i32;
                 }
                 zout = (*a).zout;
             }
             p = zout.offset(-(dist as isize)) as *mut stbi_uc;
-            if dist == 1 as i32 {
+            if dist == 1i32 {
                 let v: stbi_uc = *p;
                 if len != 0 {
                     loop {
@@ -1569,56 +1554,56 @@ unsafe fn stbi__compute_huffman_codes(a: *mut stbi__zbuf) -> i32 {
     let mut codelength_sizes: [stbi_uc; 19] = [0; 19];
     let mut i: i32 = 0;
     let mut n: i32 = 0;
-    let hlit: i32 = stbi__zreceive(a, 5 as i32).wrapping_add(257 as u32) as i32;
-    let hdist: i32 = stbi__zreceive(a, 5 as i32).wrapping_add(1 as u32) as i32;
-    let hclen: i32 = stbi__zreceive(a, 4 as i32).wrapping_add(4 as u32) as i32;
+    let hlit: i32 = stbi__zreceive(a, 5i32).wrapping_add(257u32) as i32;
+    let hdist: i32 = stbi__zreceive(a, 5i32).wrapping_add(1u32) as i32;
+    let hclen: i32 = stbi__zreceive(a, 4i32).wrapping_add(4u32) as i32;
     let ntot: i32 = hlit + hdist;
     memset(
         &raw mut codelength_sizes as *mut stbi_uc as *mut ::core::ffi::c_void,
-        0 as i32,
+        0i32,
         ::core::mem::size_of::<[stbi_uc; 19]>() as size_t,
     );
-    i = 0 as i32;
+    i = 0i32;
     while i < hclen {
-        let s: i32 = stbi__zreceive(a, 3 as i32) as i32;
+        let s: i32 = stbi__zreceive(a, 3i32) as i32;
         codelength_sizes[length_dezigzag[i as usize] as usize] = s as stbi_uc;
         i += 1;
     }
     if stbi__zbuild_huffman(
         &raw mut z_codelength,
         &raw mut codelength_sizes as *mut stbi_uc,
-        19 as i32,
+        19i32,
     ) == 0
     {
-        return 0 as i32;
+        return 0i32;
     }
-    n = 0 as i32;
+    n = 0i32;
     while n < ntot {
         let mut c: i32 = stbi__zhuffman_decode(a, &raw mut z_codelength);
-        if c < 0 as i32 || c >= 19 as i32 {
-            return 0 as i32;
+        if c < 0i32 || c >= 19i32 {
+            return 0i32;
         }
-        if c < 16 as i32 {
+        if c < 16i32 {
             let fresh50 = n;
             n = n + 1;
             lencodes[fresh50 as usize] = c as stbi_uc;
         } else {
             let mut fill: stbi_uc = 0 as stbi_uc;
-            if c == 16 as i32 {
-                c = stbi__zreceive(a, 2 as i32).wrapping_add(3 as u32) as i32;
-                if n == 0 as i32 {
-                    return 0 as i32;
+            if c == 16i32 {
+                c = stbi__zreceive(a, 2i32).wrapping_add(3u32) as i32;
+                if n == 0i32 {
+                    return 0i32;
                 }
-                fill = lencodes[(n - 1 as i32) as usize];
-            } else if c == 17 as i32 {
-                c = stbi__zreceive(a, 3 as i32).wrapping_add(3 as u32) as i32;
-            } else if c == 18 as i32 {
-                c = stbi__zreceive(a, 7 as i32).wrapping_add(11 as u32) as i32;
+                fill = lencodes[(n - 1i32) as usize];
+            } else if c == 17i32 {
+                c = stbi__zreceive(a, 3i32).wrapping_add(3u32) as i32;
+            } else if c == 18i32 {
+                c = stbi__zreceive(a, 7i32).wrapping_add(11u32) as i32;
             } else {
-                return 0 as i32;
+                return 0i32;
             }
             if ntot - n < c {
-                return 0 as i32;
+                return 0i32;
             }
             memset(
                 (&raw mut lencodes as *mut stbi_uc).offset(n as isize) as *mut ::core::ffi::c_void,
@@ -1629,7 +1614,7 @@ unsafe fn stbi__compute_huffman_codes(a: *mut stbi__zbuf) -> i32 {
         }
     }
     if n != ntot {
-        return 0 as i32;
+        return 0i32;
     }
     if stbi__zbuild_huffman(
         &raw mut (*a).z_length,
@@ -1637,7 +1622,7 @@ unsafe fn stbi__compute_huffman_codes(a: *mut stbi__zbuf) -> i32 {
         hlit,
     ) == 0
     {
-        return 0 as i32;
+        return 0i32;
     }
     if stbi__zbuild_huffman(
         &raw mut (*a).z_distance,
@@ -1645,44 +1630,44 @@ unsafe fn stbi__compute_huffman_codes(a: *mut stbi__zbuf) -> i32 {
         hdist,
     ) == 0
     {
-        return 0 as i32;
+        return 0i32;
     }
-    1 as i32
+    1i32
 }
 unsafe fn stbi__parse_uncompressed_block(a: *mut stbi__zbuf) -> i32 {
     let mut header: [stbi_uc; 4] = [0; 4];
     let mut len: i32 = 0;
     let mut nlen: i32 = 0;
     let mut k: i32 = 0;
-    if (*a).num_bits & 7 as i32 != 0 {
-        stbi__zreceive(a, (*a).num_bits & 7 as i32);
+    if (*a).num_bits & 7i32 != 0 {
+        stbi__zreceive(a, (*a).num_bits & 7i32);
     }
-    k = 0 as i32;
-    while (*a).num_bits > 0 as i32 {
+    k = 0i32;
+    while (*a).num_bits > 0i32 {
         let fresh51 = k;
         k = k + 1;
         header[fresh51 as usize] = ((*a).code_buffer & 255 as stbi__uint32) as stbi_uc;
-        (*a).code_buffer >>= 8 as i32;
-        (*a).num_bits -= 8 as i32;
+        (*a).code_buffer >>= 8i32;
+        (*a).num_bits -= 8i32;
     }
-    if (*a).num_bits < 0 as i32 {
-        return 0 as i32;
+    if (*a).num_bits < 0i32 {
+        return 0i32;
     }
-    while k < 4 as i32 {
+    while k < 4i32 {
         let fresh52 = k;
         k = k + 1;
         header[fresh52 as usize] = stbi__zget8(a);
     }
-    len = header[1 as i32 as usize] as i32 * 256 as i32 + header[0 as i32 as usize] as i32;
-    nlen = header[3 as i32 as usize] as i32 * 256 as i32 + header[2 as i32 as usize] as i32;
-    if nlen != len ^ 0xffff as i32 {
-        return 0 as i32;
+    len = header[1i32 as usize] as i32 * 256i32 + header[0i32 as usize] as i32;
+    nlen = header[3i32 as usize] as i32 * 256i32 + header[2i32 as usize] as i32;
+    if nlen != len ^ 0xffffi32 {
+        return 0i32;
     }
     if (*a).zbuffer.offset(len as isize) > (*a).zbuffer_end {
-        return 0 as i32;
+        return 0i32;
     }
     if (*a).zout.offset(len as isize) > (*a).zout_end && stbi__zexpand(a, (*a).zout, len) == 0 {
-        return 0 as i32;
+        return 0i32;
     }
     memcpy(
         (*a).zout as *mut ::core::ffi::c_void,
@@ -1691,25 +1676,25 @@ unsafe fn stbi__parse_uncompressed_block(a: *mut stbi__zbuf) -> i32 {
     );
     (*a).zbuffer = (*a).zbuffer.offset(len as isize);
     (*a).zout = (*a).zout.offset(len as isize);
-    1 as i32
+    1i32
 }
 unsafe fn stbi__parse_zlib_header(a: *mut stbi__zbuf) -> i32 {
     let cmf: i32 = stbi__zget8(a) as i32;
-    let cm: i32 = cmf & 15 as i32;
+    let cm: i32 = cmf & 15i32;
     let flg: i32 = stbi__zget8(a) as i32;
     if stbi__zeof(a) != 0 {
-        return 0 as i32;
+        return 0i32;
     }
-    if (cmf * 256 as i32 + flg) % 31 as i32 != 0 as i32 {
-        return 0 as i32;
+    if (cmf * 256i32 + flg) % 31i32 != 0i32 {
+        return 0i32;
     }
-    if flg & 32 as i32 != 0 {
-        return 0 as i32;
+    if flg & 32i32 != 0 {
+        return 0i32;
     }
-    if cm != 8 as i32 {
-        return 0 as i32;
+    if cm != 8i32 {
+        return 0i32;
     }
-    1 as i32
+    1i32
 }
 static mut stbi__zdefault_length: [stbi_uc; 288] = [
     8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
@@ -1729,49 +1714,49 @@ unsafe fn stbi__parse_zlib(a: *mut stbi__zbuf, parse_header: i32) -> i32 {
     let mut final_0: i32 = 0;
     let mut type_0: i32 = 0;
     if parse_header != 0 && stbi__parse_zlib_header(a) == 0 {
-        return 0 as i32;
+        return 0i32;
     }
-    (*a).num_bits = 0 as i32;
+    (*a).num_bits = 0i32;
     (*a).code_buffer = 0 as stbi__uint32;
     loop {
-        final_0 = stbi__zreceive(a, 1 as i32) as i32;
-        type_0 = stbi__zreceive(a, 2 as i32) as i32;
-        if type_0 == 0 as i32 {
+        final_0 = stbi__zreceive(a, 1i32) as i32;
+        type_0 = stbi__zreceive(a, 2i32) as i32;
+        if type_0 == 0i32 {
             if stbi__parse_uncompressed_block(a) == 0 {
-                return 0 as i32;
+                return 0i32;
             }
-        } else if type_0 == 3 as i32 {
-            return 0 as i32;
+        } else if type_0 == 3i32 {
+            return 0i32;
         } else {
-            if type_0 == 1 as i32 {
+            if type_0 == 1i32 {
                 if stbi__zbuild_huffman(
                     &raw mut (*a).z_length,
                     &raw const stbi__zdefault_length as *const stbi_uc,
                     STBI__ZNSYMS,
                 ) == 0
                 {
-                    return 0 as i32;
+                    return 0i32;
                 }
                 if stbi__zbuild_huffman(
                     &raw mut (*a).z_distance,
                     &raw const stbi__zdefault_distance as *const stbi_uc,
-                    32 as i32,
+                    32i32,
                 ) == 0
                 {
-                    return 0 as i32;
+                    return 0i32;
                 }
             } else if stbi__compute_huffman_codes(a) == 0 {
-                return 0 as i32;
+                return 0i32;
             }
             if stbi__parse_huffman_block(a) == 0 {
-                return 0 as i32;
+                return 0i32;
             }
         }
         if (final_0 != 0) {
             break;
         }
     }
-    1 as i32
+    1i32
 }
 unsafe fn stbi__do_zlib(
     a: *mut stbi__zbuf,
@@ -1799,7 +1784,7 @@ pub unsafe fn stbi_zlib_decode_malloc(
     len: i32,
     outlen: *mut i32,
 ) -> *mut ::core::ffi::c_char {
-    stbi_zlib_decode_malloc_guesssize(buffer, len, 16384 as i32, outlen)
+    stbi_zlib_decode_malloc_guesssize(buffer, len, 16384i32, outlen)
 }
 pub unsafe fn stbi_zlib_decode_malloc_guesssize_headerflag(
     buffer: *const ::core::ffi::c_char,
@@ -1816,7 +1801,7 @@ pub unsafe fn stbi_zlib_decode_malloc_guesssize_headerflag(
     }
     a.zbuffer = buffer as *mut stbi_uc;
     a.zbuffer_end = (buffer as *mut stbi_uc).offset(len as isize);
-    if stbi__do_zlib(&raw mut a, p, initial_size, 1 as i32, parse_header) != 0 {
+    if stbi__do_zlib(&raw mut a, p, initial_size, 1i32, parse_header) != 0 {
         if !outlen.is_null() {
             *outlen = a.zout.offset_from(a.zout_start) as ::core::ffi::c_long as i32;
         }
@@ -1877,14 +1862,14 @@ unsafe fn stbi__get_chunk_header(s: *mut stbi__context) -> stbi__pngchunk {
 unsafe fn stbi__check_png_header(s: *mut stbi__context) -> i32 {
     static mut png_sig: [stbi_uc; 8] = [137, 80, 78, 71, 13, 10, 26, 10];
     let mut i: i32 = 0;
-    i = 0 as i32;
-    while i < 8 as i32 {
+    i = 0i32;
+    while i < 8i32 {
         if stbi__get8(s) as i32 != png_sig[i as usize] as i32 {
-            return 0 as i32;
+            return 0i32;
         }
         i += 1;
     }
-    1 as i32
+    1i32
 }
 static mut first_row_filter: [stbi_uc; 5] = [
     STBI__F_none as i32 as stbi_uc,
@@ -1917,11 +1902,7 @@ unsafe fn stbi__create_png_image_raw(
     depth: i32,
     color: i32,
 ) -> i32 {
-    let bytes: i32 = if depth == 16 as i32 {
-        2 as i32
-    } else {
-        1 as i32
-    };
+    let bytes: i32 = if depth == 16i32 { 2i32 } else { 1i32 };
     let s: *mut stbi__context = (*a).s;
     let mut i: stbi__uint32 = 0;
     let mut j: stbi__uint32 = 0;
@@ -1936,36 +1917,36 @@ unsafe fn stbi__create_png_image_raw(
     let mut filter_bytes: i32 = img_n * bytes;
     let mut width: i32 = x as i32;
     '_c2rust_label: {
-        if out_n == (*s).img_n || out_n == (*s).img_n + 1 as i32 {
+        if out_n == (*s).img_n || out_n == (*s).img_n + 1i32 {
         } else {
             __assert_fail(
                 b"out_n == s->img_n || out_n == s->img_n+1\0" as *const u8
                     as *const ::core::ffi::c_char,
                 b"./third_party/stb/stb_image.h\0" as *const u8
                     as *const ::core::ffi::c_char,
-                4607 as u32,
+                4607u32,
                 b"int stbi__create_png_image_raw(stbi__png *, stbi_uc *, stbi__uint32, int, stbi__uint32, stbi__uint32, int, int)\0"
                     as *const u8 as *const ::core::ffi::c_char,
             );
         }
     };
-    (*a).out = stbi__malloc_mad3(x as i32, y as i32, output_bytes, 0 as i32) as *mut stbi_uc;
+    (*a).out = stbi__malloc_mad3(x as i32, y as i32, output_bytes, 0i32) as *mut stbi_uc;
     if (*a).out.is_null() {
-        return 0 as i32;
+        return 0i32;
     }
-    if stbi__mad3sizes_valid(img_n, x as i32, depth, 7 as i32) == 0 {
-        return 0 as i32;
+    if stbi__mad3sizes_valid(img_n, x as i32, depth, 7i32) == 0 {
+        return 0i32;
     }
     img_width_bytes = (img_n as stbi__uint32)
         .wrapping_mul(x)
         .wrapping_mul(depth as stbi__uint32)
         .wrapping_add(7 as stbi__uint32)
-        >> 3 as i32;
+        >> 3i32;
     img_len = img_width_bytes
         .wrapping_add(1 as stbi__uint32)
         .wrapping_mul(y);
     if raw_len < img_len {
-        return 0 as i32;
+        return 0i32;
     }
     j = 0 as stbi__uint32;
     while j < y {
@@ -1974,25 +1955,25 @@ unsafe fn stbi__create_png_image_raw(
         let fresh19 = raw;
         raw = raw.offset(1);
         let mut filter: i32 = *fresh19 as i32;
-        if filter > 4 as i32 {
-            return 0 as i32;
+        if filter > 4i32 {
+            return 0i32;
         }
-        if depth < 8 as i32 {
+        if depth < 8i32 {
             if img_width_bytes > x {
-                return 0 as i32;
+                return 0i32;
             }
             cur = cur.offset(
                 x.wrapping_mul(out_n as stbi__uint32)
                     .wrapping_sub(img_width_bytes) as isize,
             );
-            filter_bytes = 1 as i32;
+            filter_bytes = 1i32;
             width = img_width_bytes as i32;
         }
         prior = cur.offset(-(stride as isize));
         if j == 0 as stbi__uint32 {
             filter = first_row_filter[filter as usize] as i32;
         }
-        k = 0 as i32;
+        k = 0i32;
         while k < filter_bytes {
             match filter {
                 0 => {
@@ -2004,17 +1985,17 @@ unsafe fn stbi__create_png_image_raw(
                 2 => {
                     *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
                         + *prior.offset(k as isize) as i32
-                        & 255 as i32) as stbi_uc;
+                        & 255i32) as stbi_uc;
                 }
                 3 => {
                     *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
-                        + (*prior.offset(k as isize) as i32 >> 1 as i32)
-                        & 255 as i32) as stbi_uc;
+                        + (*prior.offset(k as isize) as i32 >> 1i32)
+                        & 255i32) as stbi_uc;
                 }
                 4 => {
                     *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
-                        + stbi__paeth(0 as i32, *prior.offset(k as isize) as i32, 0 as i32)
-                        & 255 as i32) as stbi_uc;
+                        + stbi__paeth(0i32, *prior.offset(k as isize) as i32, 0i32)
+                        & 255i32) as stbi_uc;
                 }
                 5 => {
                     *cur.offset(k as isize) = *raw.offset(k as isize);
@@ -2026,17 +2007,17 @@ unsafe fn stbi__create_png_image_raw(
             }
             k += 1;
         }
-        if depth == 8 as i32 {
+        if depth == 8i32 {
             if img_n != out_n {
                 *cur.offset(img_n as isize) = 255 as stbi_uc;
             }
             raw = raw.offset(img_n as isize);
             cur = cur.offset(out_n as isize);
             prior = prior.offset(out_n as isize);
-        } else if depth == 16 as i32 {
+        } else if depth == 16i32 {
             if img_n != out_n {
                 *cur.offset(filter_bytes as isize) = 255 as stbi_uc;
-                *cur.offset((filter_bytes + 1 as i32) as isize) = 255 as stbi_uc;
+                *cur.offset((filter_bytes + 1i32) as isize) = 255 as stbi_uc;
             }
             raw = raw.offset(filter_bytes as isize);
             cur = cur.offset(output_bytes as isize);
@@ -2046,8 +2027,8 @@ unsafe fn stbi__create_png_image_raw(
             cur = cur.offset(1);
             prior = prior.offset(1);
         }
-        if depth < 8 as i32 || img_n == out_n {
-            let nk: i32 = (width - 1 as i32) * filter_bytes;
+        if depth < 8i32 || img_n == out_n {
+            let nk: i32 = (width - 1i32) * filter_bytes;
             match filter {
                 0 => {
                     memcpy(
@@ -2057,38 +2038,36 @@ unsafe fn stbi__create_png_image_raw(
                     );
                 }
                 1 => {
-                    k = 0 as i32;
+                    k = 0i32;
                     while k < nk {
                         *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
                             + *cur.offset((k - filter_bytes) as isize) as i32
-                            & 255 as i32)
-                            as stbi_uc;
+                            & 255i32) as stbi_uc;
                         k += 1;
                     }
                 }
                 2 => {
-                    k = 0 as i32;
+                    k = 0i32;
                     while k < nk {
-                        *cur.offset(k as isize) =
-                            (*raw.offset(k as isize) as i32 + *prior.offset(k as isize) as i32
-                                & 255 as i32) as stbi_uc;
+                        *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
+                            + *prior.offset(k as isize) as i32
+                            & 255i32) as stbi_uc;
                         k += 1;
                     }
                 }
                 3 => {
-                    k = 0 as i32;
+                    k = 0i32;
                     while k < nk {
                         *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
                             + (*prior.offset(k as isize) as i32
                                 + *cur.offset((k - filter_bytes) as isize) as i32
-                                >> 1 as i32)
-                            & 255 as i32)
-                            as stbi_uc;
+                                >> 1i32)
+                            & 255i32) as stbi_uc;
                         k += 1;
                     }
                 }
                 4 => {
-                    k = 0 as i32;
+                    k = 0i32;
                     while k < nk {
                         *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
                             + stbi__paeth(
@@ -2096,32 +2075,29 @@ unsafe fn stbi__create_png_image_raw(
                                 *prior.offset(k as isize) as i32,
                                 *prior.offset((k - filter_bytes) as isize) as i32,
                             )
-                            & 255 as i32)
-                            as stbi_uc;
+                            & 255i32) as stbi_uc;
                         k += 1;
                     }
                 }
                 5 => {
-                    k = 0 as i32;
+                    k = 0i32;
                     while k < nk {
                         *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
-                            + (*cur.offset((k - filter_bytes) as isize) as i32 >> 1 as i32)
-                            & 255 as i32)
-                            as stbi_uc;
+                            + (*cur.offset((k - filter_bytes) as isize) as i32 >> 1i32)
+                            & 255i32) as stbi_uc;
                         k += 1;
                     }
                 }
                 6 => {
-                    k = 0 as i32;
+                    k = 0i32;
                     while k < nk {
                         *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
                             + stbi__paeth(
                                 *cur.offset((k - filter_bytes) as isize) as i32,
-                                0 as i32,
-                                0 as i32,
+                                0i32,
+                                0i32,
                             )
-                            & 255 as i32)
-                            as stbi_uc;
+                            & 255i32) as stbi_uc;
                         k += 1;
                     }
                 }
@@ -2130,13 +2106,13 @@ unsafe fn stbi__create_png_image_raw(
             raw = raw.offset(nk as isize);
         } else {
             '_c2rust_label_0: {
-                if img_n + 1 as i32 == out_n {
+                if img_n + 1i32 == out_n {
                 } else {
                     __assert_fail(
                         b"img_n+1 == out_n\0" as *const u8 as *const ::core::ffi::c_char,
                         b"./third_party/stb/stb_image.h\0" as *const u8
                             as *const ::core::ffi::c_char,
-                        4691 as u32,
+                        4691u32,
                         b"int stbi__create_png_image_raw(stbi__png *, stbi_uc *, stbi__uint32, int, stbi__uint32, stbi__uint32, int, int)\0"
                             as *const u8 as *const ::core::ffi::c_char,
                     );
@@ -2146,7 +2122,7 @@ unsafe fn stbi__create_png_image_raw(
                 0 => {
                     i = x.wrapping_sub(1 as stbi__uint32);
                     while i >= 1 as stbi__uint32 {
-                        k = 0 as i32;
+                        k = 0i32;
                         while k < filter_bytes {
                             *cur.offset(k as isize) = *raw.offset(k as isize);
                             k += 1;
@@ -2161,11 +2137,11 @@ unsafe fn stbi__create_png_image_raw(
                 1 => {
                     i = x.wrapping_sub(1 as stbi__uint32);
                     while i >= 1 as stbi__uint32 {
-                        k = 0 as i32;
+                        k = 0i32;
                         while k < filter_bytes {
                             *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
                                 + *cur.offset((k - output_bytes) as isize) as i32
-                                & 255 as i32)
+                                & 255i32)
                                 as stbi_uc;
                             k += 1;
                         }
@@ -2179,11 +2155,11 @@ unsafe fn stbi__create_png_image_raw(
                 2 => {
                     i = x.wrapping_sub(1 as stbi__uint32);
                     while i >= 1 as stbi__uint32 {
-                        k = 0 as i32;
+                        k = 0i32;
                         while k < filter_bytes {
                             *cur.offset(k as isize) =
                                 (*raw.offset(k as isize) as i32 + *prior.offset(k as isize) as i32
-                                    & 255 as i32) as stbi_uc;
+                                    & 255i32) as stbi_uc;
                             k += 1;
                         }
                         i = i.wrapping_sub(1);
@@ -2196,13 +2172,13 @@ unsafe fn stbi__create_png_image_raw(
                 3 => {
                     i = x.wrapping_sub(1 as stbi__uint32);
                     while i >= 1 as stbi__uint32 {
-                        k = 0 as i32;
+                        k = 0i32;
                         while k < filter_bytes {
                             *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
                                 + (*prior.offset(k as isize) as i32
                                     + *cur.offset((k - output_bytes) as isize) as i32
-                                    >> 1 as i32)
-                                & 255 as i32)
+                                    >> 1i32)
+                                & 255i32)
                                 as stbi_uc;
                             k += 1;
                         }
@@ -2216,7 +2192,7 @@ unsafe fn stbi__create_png_image_raw(
                 4 => {
                     i = x.wrapping_sub(1 as stbi__uint32);
                     while i >= 1 as stbi__uint32 {
-                        k = 0 as i32;
+                        k = 0i32;
                         while k < filter_bytes {
                             *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
                                 + stbi__paeth(
@@ -2224,7 +2200,7 @@ unsafe fn stbi__create_png_image_raw(
                                     *prior.offset(k as isize) as i32,
                                     *prior.offset((k - output_bytes) as isize) as i32,
                                 )
-                                & 255 as i32)
+                                & 255i32)
                                 as stbi_uc;
                             k += 1;
                         }
@@ -2238,11 +2214,11 @@ unsafe fn stbi__create_png_image_raw(
                 5 => {
                     i = x.wrapping_sub(1 as stbi__uint32);
                     while i >= 1 as stbi__uint32 {
-                        k = 0 as i32;
+                        k = 0i32;
                         while k < filter_bytes {
                             *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
-                                + (*cur.offset((k - output_bytes) as isize) as i32 >> 1 as i32)
-                                & 255 as i32)
+                                + (*cur.offset((k - output_bytes) as isize) as i32 >> 1i32)
+                                & 255i32)
                                 as stbi_uc;
                             k += 1;
                         }
@@ -2256,15 +2232,15 @@ unsafe fn stbi__create_png_image_raw(
                 6 => {
                     i = x.wrapping_sub(1 as stbi__uint32);
                     while i >= 1 as stbi__uint32 {
-                        k = 0 as i32;
+                        k = 0i32;
                         while k < filter_bytes {
                             *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
                                 + stbi__paeth(
                                     *cur.offset((k - output_bytes) as isize) as i32,
-                                    0 as i32,
-                                    0 as i32,
+                                    0i32,
+                                    0i32,
                                 )
-                                & 255 as i32)
+                                & 255i32)
                                 as stbi_uc;
                             k += 1;
                         }
@@ -2277,11 +2253,11 @@ unsafe fn stbi__create_png_image_raw(
                 }
                 _ => {}
             }
-            if depth == 16 as i32 {
+            if depth == 16i32 {
                 cur = (*a).out.offset(stride.wrapping_mul(j) as isize);
                 i = 0 as stbi__uint32;
                 while i < x {
-                    *cur.offset((filter_bytes + 1 as i32) as isize) = 255 as stbi_uc;
+                    *cur.offset((filter_bytes + 1i32) as isize) = 255 as stbi_uc;
                     i = i.wrapping_add(1);
                     cur = cur.offset(output_bytes as isize);
                 }
@@ -2289,7 +2265,7 @@ unsafe fn stbi__create_png_image_raw(
         }
         j = j.wrapping_add(1);
     }
-    if depth < 8 as i32 {
+    if depth < 8i32 {
         j = 0 as stbi__uint32;
         while j < y {
             let mut cur_0: *mut stbi_uc = (*a).out.offset(stride.wrapping_mul(j) as isize);
@@ -2298,180 +2274,178 @@ unsafe fn stbi__create_png_image_raw(
                 .offset(stride.wrapping_mul(j) as isize)
                 .offset(x.wrapping_mul(out_n as stbi__uint32) as isize)
                 .offset(-(img_width_bytes as isize));
-            let scale: stbi_uc = (if color == 0 as i32 {
+            let scale: stbi_uc = (if color == 0i32 {
                 stbi__depth_scale_table[depth as usize] as i32
             } else {
-                1 as i32
+                1i32
             }) as stbi_uc;
-            if depth == 4 as i32 {
+            if depth == 4i32 {
                 k = x.wrapping_mul(img_n as stbi__uint32) as i32;
-                while k >= 2 as i32 {
+                while k >= 2i32 {
                     let fresh20 = cur_0;
                     cur_0 = cur_0.offset(1);
-                    *fresh20 = (scale as i32 * (*in_0 as i32 >> 4 as i32)) as stbi_uc;
+                    *fresh20 = (scale as i32 * (*in_0 as i32 >> 4i32)) as stbi_uc;
                     let fresh21 = cur_0;
                     cur_0 = cur_0.offset(1);
-                    *fresh21 = (scale as i32 * (*in_0 as i32 & 0xf as i32)) as stbi_uc;
-                    k -= 2 as i32;
+                    *fresh21 = (scale as i32 * (*in_0 as i32 & 0xfi32)) as stbi_uc;
+                    k -= 2i32;
                     in_0 = in_0.offset(1);
                 }
-                if k > 0 as i32 {
+                if k > 0i32 {
                     let fresh22 = cur_0;
                     cur_0 = cur_0.offset(1);
-                    *fresh22 = (scale as i32 * (*in_0 as i32 >> 4 as i32)) as stbi_uc;
+                    *fresh22 = (scale as i32 * (*in_0 as i32 >> 4i32)) as stbi_uc;
                 }
-            } else if depth == 2 as i32 {
+            } else if depth == 2i32 {
                 k = x.wrapping_mul(img_n as stbi__uint32) as i32;
-                while k >= 4 as i32 {
+                while k >= 4i32 {
                     let fresh23 = cur_0;
                     cur_0 = cur_0.offset(1);
-                    *fresh23 = (scale as i32 * (*in_0 as i32 >> 6 as i32)) as stbi_uc;
+                    *fresh23 = (scale as i32 * (*in_0 as i32 >> 6i32)) as stbi_uc;
                     let fresh24 = cur_0;
                     cur_0 = cur_0.offset(1);
-                    *fresh24 = (scale as i32 * (*in_0 as i32 >> 4 as i32 & 0x3 as i32)) as stbi_uc;
+                    *fresh24 = (scale as i32 * (*in_0 as i32 >> 4i32 & 0x3i32)) as stbi_uc;
                     let fresh25 = cur_0;
                     cur_0 = cur_0.offset(1);
-                    *fresh25 = (scale as i32 * (*in_0 as i32 >> 2 as i32 & 0x3 as i32)) as stbi_uc;
+                    *fresh25 = (scale as i32 * (*in_0 as i32 >> 2i32 & 0x3i32)) as stbi_uc;
                     let fresh26 = cur_0;
                     cur_0 = cur_0.offset(1);
-                    *fresh26 = (scale as i32 * (*in_0 as i32 & 0x3 as i32)) as stbi_uc;
-                    k -= 4 as i32;
+                    *fresh26 = (scale as i32 * (*in_0 as i32 & 0x3i32)) as stbi_uc;
+                    k -= 4i32;
                     in_0 = in_0.offset(1);
                 }
-                if k > 0 as i32 {
+                if k > 0i32 {
                     let fresh27 = cur_0;
                     cur_0 = cur_0.offset(1);
-                    *fresh27 = (scale as i32 * (*in_0 as i32 >> 6 as i32)) as stbi_uc;
+                    *fresh27 = (scale as i32 * (*in_0 as i32 >> 6i32)) as stbi_uc;
                 }
-                if k > 1 as i32 {
+                if k > 1i32 {
                     let fresh28 = cur_0;
                     cur_0 = cur_0.offset(1);
-                    *fresh28 = (scale as i32 * (*in_0 as i32 >> 4 as i32 & 0x3 as i32)) as stbi_uc;
+                    *fresh28 = (scale as i32 * (*in_0 as i32 >> 4i32 & 0x3i32)) as stbi_uc;
                 }
-                if k > 2 as i32 {
+                if k > 2i32 {
                     let fresh29 = cur_0;
                     cur_0 = cur_0.offset(1);
-                    *fresh29 = (scale as i32 * (*in_0 as i32 >> 2 as i32 & 0x3 as i32)) as stbi_uc;
+                    *fresh29 = (scale as i32 * (*in_0 as i32 >> 2i32 & 0x3i32)) as stbi_uc;
                 }
-            } else if depth == 1 as i32 {
+            } else if depth == 1i32 {
                 k = x.wrapping_mul(img_n as stbi__uint32) as i32;
-                while k >= 8 as i32 {
+                while k >= 8i32 {
                     let fresh30 = cur_0;
                     cur_0 = cur_0.offset(1);
-                    *fresh30 = (scale as i32 * (*in_0 as i32 >> 7 as i32)) as stbi_uc;
+                    *fresh30 = (scale as i32 * (*in_0 as i32 >> 7i32)) as stbi_uc;
                     let fresh31 = cur_0;
                     cur_0 = cur_0.offset(1);
-                    *fresh31 = (scale as i32 * (*in_0 as i32 >> 6 as i32 & 0x1 as i32)) as stbi_uc;
+                    *fresh31 = (scale as i32 * (*in_0 as i32 >> 6i32 & 0x1i32)) as stbi_uc;
                     let fresh32 = cur_0;
                     cur_0 = cur_0.offset(1);
-                    *fresh32 = (scale as i32 * (*in_0 as i32 >> 5 as i32 & 0x1 as i32)) as stbi_uc;
+                    *fresh32 = (scale as i32 * (*in_0 as i32 >> 5i32 & 0x1i32)) as stbi_uc;
                     let fresh33 = cur_0;
                     cur_0 = cur_0.offset(1);
-                    *fresh33 = (scale as i32 * (*in_0 as i32 >> 4 as i32 & 0x1 as i32)) as stbi_uc;
+                    *fresh33 = (scale as i32 * (*in_0 as i32 >> 4i32 & 0x1i32)) as stbi_uc;
                     let fresh34 = cur_0;
                     cur_0 = cur_0.offset(1);
-                    *fresh34 = (scale as i32 * (*in_0 as i32 >> 3 as i32 & 0x1 as i32)) as stbi_uc;
+                    *fresh34 = (scale as i32 * (*in_0 as i32 >> 3i32 & 0x1i32)) as stbi_uc;
                     let fresh35 = cur_0;
                     cur_0 = cur_0.offset(1);
-                    *fresh35 = (scale as i32 * (*in_0 as i32 >> 2 as i32 & 0x1 as i32)) as stbi_uc;
+                    *fresh35 = (scale as i32 * (*in_0 as i32 >> 2i32 & 0x1i32)) as stbi_uc;
                     let fresh36 = cur_0;
                     cur_0 = cur_0.offset(1);
-                    *fresh36 = (scale as i32 * (*in_0 as i32 >> 1 as i32 & 0x1 as i32)) as stbi_uc;
+                    *fresh36 = (scale as i32 * (*in_0 as i32 >> 1i32 & 0x1i32)) as stbi_uc;
                     let fresh37 = cur_0;
                     cur_0 = cur_0.offset(1);
-                    *fresh37 = (scale as i32 * (*in_0 as i32 & 0x1 as i32)) as stbi_uc;
-                    k -= 8 as i32;
+                    *fresh37 = (scale as i32 * (*in_0 as i32 & 0x1i32)) as stbi_uc;
+                    k -= 8i32;
                     in_0 = in_0.offset(1);
                 }
-                if k > 0 as i32 {
+                if k > 0i32 {
                     let fresh38 = cur_0;
                     cur_0 = cur_0.offset(1);
-                    *fresh38 = (scale as i32 * (*in_0 as i32 >> 7 as i32)) as stbi_uc;
+                    *fresh38 = (scale as i32 * (*in_0 as i32 >> 7i32)) as stbi_uc;
                 }
-                if k > 1 as i32 {
+                if k > 1i32 {
                     let fresh39 = cur_0;
                     cur_0 = cur_0.offset(1);
-                    *fresh39 = (scale as i32 * (*in_0 as i32 >> 6 as i32 & 0x1 as i32)) as stbi_uc;
+                    *fresh39 = (scale as i32 * (*in_0 as i32 >> 6i32 & 0x1i32)) as stbi_uc;
                 }
-                if k > 2 as i32 {
+                if k > 2i32 {
                     let fresh40 = cur_0;
                     cur_0 = cur_0.offset(1);
-                    *fresh40 = (scale as i32 * (*in_0 as i32 >> 5 as i32 & 0x1 as i32)) as stbi_uc;
+                    *fresh40 = (scale as i32 * (*in_0 as i32 >> 5i32 & 0x1i32)) as stbi_uc;
                 }
-                if k > 3 as i32 {
+                if k > 3i32 {
                     let fresh41 = cur_0;
                     cur_0 = cur_0.offset(1);
-                    *fresh41 = (scale as i32 * (*in_0 as i32 >> 4 as i32 & 0x1 as i32)) as stbi_uc;
+                    *fresh41 = (scale as i32 * (*in_0 as i32 >> 4i32 & 0x1i32)) as stbi_uc;
                 }
-                if k > 4 as i32 {
+                if k > 4i32 {
                     let fresh42 = cur_0;
                     cur_0 = cur_0.offset(1);
-                    *fresh42 = (scale as i32 * (*in_0 as i32 >> 3 as i32 & 0x1 as i32)) as stbi_uc;
+                    *fresh42 = (scale as i32 * (*in_0 as i32 >> 3i32 & 0x1i32)) as stbi_uc;
                 }
-                if k > 5 as i32 {
+                if k > 5i32 {
                     let fresh43 = cur_0;
                     cur_0 = cur_0.offset(1);
-                    *fresh43 = (scale as i32 * (*in_0 as i32 >> 2 as i32 & 0x1 as i32)) as stbi_uc;
+                    *fresh43 = (scale as i32 * (*in_0 as i32 >> 2i32 & 0x1i32)) as stbi_uc;
                 }
-                if k > 6 as i32 {
+                if k > 6i32 {
                     let fresh44 = cur_0;
                     cur_0 = cur_0.offset(1);
-                    *fresh44 = (scale as i32 * (*in_0 as i32 >> 1 as i32 & 0x1 as i32)) as stbi_uc;
+                    *fresh44 = (scale as i32 * (*in_0 as i32 >> 1i32 & 0x1i32)) as stbi_uc;
                 }
             }
             if img_n != out_n {
                 let mut q: i32 = 0;
                 cur_0 = (*a).out.offset(stride.wrapping_mul(j) as isize);
-                if img_n == 1 as i32 {
+                if img_n == 1i32 {
                     q = x.wrapping_sub(1 as stbi__uint32) as i32;
-                    while q >= 0 as i32 {
-                        *cur_0.offset((q * 2 as i32 + 1 as i32) as isize) = 255 as stbi_uc;
-                        *cur_0.offset((q * 2 as i32 + 0 as i32) as isize) =
-                            *cur_0.offset(q as isize);
+                    while q >= 0i32 {
+                        *cur_0.offset((q * 2i32 + 1i32) as isize) = 255 as stbi_uc;
+                        *cur_0.offset((q * 2i32 + 0i32) as isize) = *cur_0.offset(q as isize);
                         q -= 1;
                     }
                 } else {
                     '_c2rust_label_1: {
-                        if img_n == 3 as i32 {
+                        if img_n == 3i32 {
                         } else {
                             __assert_fail(
                                 b"img_n == 3\0" as *const u8 as *const ::core::ffi::c_char,
                                 b"./third_party/stb/stb_image.h\0" as *const u8
                                     as *const ::core::ffi::c_char,
-                                4780 as u32,
+                                4780u32,
                                 b"int stbi__create_png_image_raw(stbi__png *, stbi_uc *, stbi__uint32, int, stbi__uint32, stbi__uint32, int, int)\0"
                                     as *const u8 as *const ::core::ffi::c_char,
                             );
                         }
                     };
                     q = x.wrapping_sub(1 as stbi__uint32) as i32;
-                    while q >= 0 as i32 {
-                        *cur_0.offset((q * 4 as i32 + 3 as i32) as isize) = 255 as stbi_uc;
-                        *cur_0.offset((q * 4 as i32 + 2 as i32) as isize) =
-                            *cur_0.offset((q * 3 as i32 + 2 as i32) as isize);
-                        *cur_0.offset((q * 4 as i32 + 1 as i32) as isize) =
-                            *cur_0.offset((q * 3 as i32 + 1 as i32) as isize);
-                        *cur_0.offset((q * 4 as i32 + 0 as i32) as isize) =
-                            *cur_0.offset((q * 3 as i32 + 0 as i32) as isize);
+                    while q >= 0i32 {
+                        *cur_0.offset((q * 4i32 + 3i32) as isize) = 255 as stbi_uc;
+                        *cur_0.offset((q * 4i32 + 2i32) as isize) =
+                            *cur_0.offset((q * 3i32 + 2i32) as isize);
+                        *cur_0.offset((q * 4i32 + 1i32) as isize) =
+                            *cur_0.offset((q * 3i32 + 1i32) as isize);
+                        *cur_0.offset((q * 4i32 + 0i32) as isize) =
+                            *cur_0.offset((q * 3i32 + 0i32) as isize);
                         q -= 1;
                     }
                 }
             }
             j = j.wrapping_add(1);
         }
-    } else if depth == 16 as i32 {
+    } else if depth == 16i32 {
         let mut cur_1: *mut stbi_uc = (*a).out;
         let mut cur16: *mut stbi__uint16 = cur_1 as *mut stbi__uint16;
         i = 0 as stbi__uint32;
         while i < x.wrapping_mul(y).wrapping_mul(out_n as stbi__uint32) {
-            *cur16 =
-                ((*cur_1.offset(0) as i32) << 8 as i32 | *cur_1.offset(1) as i32) as stbi__uint16;
+            *cur16 = ((*cur_1.offset(0) as i32) << 8i32 | *cur_1.offset(1) as i32) as stbi__uint16;
             i = i.wrapping_add(1);
             cur16 = cur16.offset(1);
             cur_1 = cur_1.offset(2);
         }
     }
-    1 as i32
+    1i32
 }
 unsafe fn stbi__create_png_image(
     a: *mut stbi__png,
@@ -2482,11 +2456,7 @@ unsafe fn stbi__create_png_image(
     color: i32,
     interlaced: i32,
 ) -> i32 {
-    let bytes: i32 = if depth == 16 as i32 {
-        2 as i32
-    } else {
-        1 as i32
-    };
+    let bytes: i32 = if depth == 16i32 { 2i32 } else { 1i32 };
     let out_bytes: i32 = out_n * bytes;
     let mut final_0: *mut stbi_uc = ::core::ptr::null_mut::<stbi_uc>();
     let mut p: i32 = 0;
@@ -2506,25 +2476,17 @@ unsafe fn stbi__create_png_image(
         (*(*a).s).img_x as i32,
         (*(*a).s).img_y as i32,
         out_bytes,
-        0 as i32,
+        0i32,
     ) as *mut stbi_uc;
     if final_0.is_null() {
-        return 0 as i32;
+        return 0i32;
     }
-    p = 0 as i32;
-    while p < 7 as i32 {
-        let xorig: [i32; 7] = [
-            0 as i32, 4 as i32, 0 as i32, 2 as i32, 0 as i32, 1 as i32, 0 as i32,
-        ];
-        let yorig: [i32; 7] = [
-            0 as i32, 0 as i32, 4 as i32, 0 as i32, 2 as i32, 0 as i32, 1 as i32,
-        ];
-        let xspc: [i32; 7] = [
-            8 as i32, 8 as i32, 4 as i32, 4 as i32, 2 as i32, 2 as i32, 1 as i32,
-        ];
-        let yspc: [i32; 7] = [
-            8 as i32, 8 as i32, 8 as i32, 4 as i32, 4 as i32, 2 as i32, 2 as i32,
-        ];
+    p = 0i32;
+    while p < 7i32 {
+        let xorig: [i32; 7] = [0i32, 4i32, 0i32, 2i32, 0i32, 1i32, 0i32];
+        let yorig: [i32; 7] = [0i32, 0i32, 4i32, 0i32, 2i32, 0i32, 1i32];
+        let xspc: [i32; 7] = [8i32, 8i32, 4i32, 4i32, 2i32, 2i32, 1i32];
+        let yspc: [i32; 7] = [8i32, 8i32, 8i32, 4i32, 4i32, 2i32, 2i32];
         let mut i: i32 = 0;
         let mut j: i32 = 0;
         let mut x: i32 = 0;
@@ -2542,9 +2504,8 @@ unsafe fn stbi__create_png_image(
             .wrapping_sub(1 as stbi__uint32)
             .wrapping_div(yspc[p as usize] as stbi__uint32) as i32;
         if x != 0 && y != 0 {
-            let img_len: stbi__uint32 = ((((*(*a).s).img_n * x * depth + 7 as i32 >> 3 as i32)
-                + 1 as i32)
-                * y) as stbi__uint32;
+            let img_len: stbi__uint32 =
+                ((((*(*a).s).img_n * x * depth + 7i32 >> 3i32) + 1i32) * y) as stbi__uint32;
             if stbi__create_png_image_raw(
                 a,
                 image_data,
@@ -2557,11 +2518,11 @@ unsafe fn stbi__create_png_image(
             ) == 0
             {
                 free(final_0 as *mut ::core::ffi::c_void);
-                return 0 as i32;
+                return 0i32;
             }
-            j = 0 as i32;
+            j = 0i32;
             while j < y {
-                i = 0 as i32;
+                i = 0i32;
                 while i < x {
                     let out_y: i32 = j * yspc[p as usize] + yorig[p as usize];
                     let out_x: i32 = i * xspc[p as usize] + xorig[p as usize];
@@ -2590,7 +2551,7 @@ unsafe fn stbi__create_png_image(
         p += 1;
     }
     (*a).out = final_0;
-    1 as i32
+    1i32
 }
 unsafe fn stbi__compute_transparency(z: *mut stbi__png, tc: *mut stbi_uc, out_n: i32) -> i32 {
     let s: *mut stbi__context = (*z).s;
@@ -2598,24 +2559,24 @@ unsafe fn stbi__compute_transparency(z: *mut stbi__png, tc: *mut stbi_uc, out_n:
     let pixel_count: stbi__uint32 = (*s).img_x.wrapping_mul((*s).img_y);
     let mut p: *mut stbi_uc = (*z).out;
     '_c2rust_label: {
-        if out_n == 2 as i32 || out_n == 4 as i32 {
+        if out_n == 2i32 || out_n == 4i32 {
         } else {
             __assert_fail(
                 b"out_n == 2 || out_n == 4\0" as *const u8 as *const ::core::ffi::c_char,
                 b"./third_party/stb/stb_image.h\0" as *const u8 as *const ::core::ffi::c_char,
-                4859 as u32,
+                4859u32,
                 b"int stbi__compute_transparency(stbi__png *, stbi_uc *, int)\0" as *const u8
                     as *const ::core::ffi::c_char,
             );
         }
     };
-    if out_n == 2 as i32 {
+    if out_n == 2i32 {
         i = 0 as stbi__uint32;
         while i < pixel_count {
             *p.offset(1) = (if *p.offset(0) as i32 == *tc.offset(0) as i32 {
-                0 as i32
+                0i32
             } else {
-                255 as i32
+                255i32
             }) as stbi_uc;
             p = p.offset(2);
             i = i.wrapping_add(1);
@@ -2633,7 +2594,7 @@ unsafe fn stbi__compute_transparency(z: *mut stbi__png, tc: *mut stbi_uc, out_n:
             i = i.wrapping_add(1);
         }
     }
-    1 as i32
+    1i32
 }
 unsafe fn stbi__compute_transparency16(
     z: *mut stbi__png,
@@ -2645,24 +2606,24 @@ unsafe fn stbi__compute_transparency16(
     let pixel_count: stbi__uint32 = (*s).img_x.wrapping_mul((*s).img_y);
     let mut p: *mut stbi__uint16 = (*z).out as *mut stbi__uint16;
     '_c2rust_label: {
-        if out_n == 2 as i32 || out_n == 4 as i32 {
+        if out_n == 2i32 || out_n == 4i32 {
         } else {
             __assert_fail(
                 b"out_n == 2 || out_n == 4\0" as *const u8 as *const ::core::ffi::c_char,
                 b"./third_party/stb/stb_image.h\0" as *const u8 as *const ::core::ffi::c_char,
-                4884 as u32,
+                4884u32,
                 b"int stbi__compute_transparency16(stbi__png *, stbi__uint16 *, int)\0" as *const u8
                     as *const ::core::ffi::c_char,
             );
         }
     };
-    if out_n == 2 as i32 {
+    if out_n == 2i32 {
         i = 0 as stbi__uint32;
         while i < pixel_count {
             *p.offset(1) = (if *p.offset(0) as i32 == *tc.offset(0) as i32 {
-                0 as i32
+                0i32
             } else {
-                65535 as i32
+                65535i32
             }) as stbi__uint16;
             p = p.offset(2);
             i = i.wrapping_add(1);
@@ -2680,7 +2641,7 @@ unsafe fn stbi__compute_transparency16(
             i = i.wrapping_add(1);
         }
     }
-    1 as i32
+    1i32
 }
 unsafe fn stbi__expand_png_palette(
     a: *mut stbi__png,
@@ -2693,39 +2654,39 @@ unsafe fn stbi__expand_png_palette(
     let mut p: *mut stbi_uc = ::core::ptr::null_mut::<stbi_uc>();
     let mut temp_out: *mut stbi_uc = ::core::ptr::null_mut::<stbi_uc>();
     let orig: *mut stbi_uc = (*a).out;
-    p = stbi__malloc_mad2(pixel_count as i32, pal_img_n, 0 as i32) as *mut stbi_uc;
+    p = stbi__malloc_mad2(pixel_count as i32, pal_img_n, 0i32) as *mut stbi_uc;
     if p.is_null() {
-        return 0 as i32;
+        return 0i32;
     }
     temp_out = p;
-    if pal_img_n == 3 as i32 {
+    if pal_img_n == 3i32 {
         i = 0 as stbi__uint32;
         while i < pixel_count {
-            let n: i32 = *orig.offset(i as isize) as i32 * 4 as i32;
+            let n: i32 = *orig.offset(i as isize) as i32 * 4i32;
             *p.offset(0) = *palette.offset(n as isize);
-            *p.offset(1) = *palette.offset((n + 1 as i32) as isize);
-            *p.offset(2) = *palette.offset((n + 2 as i32) as isize);
+            *p.offset(1) = *palette.offset((n + 1i32) as isize);
+            *p.offset(2) = *palette.offset((n + 2i32) as isize);
             p = p.offset(3);
             i = i.wrapping_add(1);
         }
     } else {
         i = 0 as stbi__uint32;
         while i < pixel_count {
-            let n_0: i32 = *orig.offset(i as isize) as i32 * 4 as i32;
+            let n_0: i32 = *orig.offset(i as isize) as i32 * 4i32;
             *p.offset(0) = *palette.offset(n_0 as isize);
-            *p.offset(1) = *palette.offset((n_0 + 1 as i32) as isize);
-            *p.offset(2) = *palette.offset((n_0 + 2 as i32) as isize);
-            *p.offset(3) = *palette.offset((n_0 + 3 as i32) as isize);
+            *p.offset(1) = *palette.offset((n_0 + 1i32) as isize);
+            *p.offset(2) = *palette.offset((n_0 + 2i32) as isize);
+            *p.offset(3) = *palette.offset((n_0 + 3i32) as isize);
             p = p.offset(4);
             i = i.wrapping_add(1);
         }
     }
     free((*a).out as *mut ::core::ffi::c_void);
     (*a).out = temp_out;
-    1 as i32
+    1i32
 }
-static mut stbi__unpremultiply_on_load_global: i32 = 0 as i32;
-static mut stbi__de_iphone_flag_global: i32 = 0 as i32;
+static mut stbi__unpremultiply_on_load_global: i32 = 0i32;
+static mut stbi__de_iphone_flag_global: i32 = 0i32;
 pub unsafe fn stbi_set_unpremultiply_on_load(flag_true_if_should_unpremultiply: i32) {
     stbi__unpremultiply_on_load_global = flag_true_if_should_unpremultiply;
 }
@@ -2737,7 +2698,7 @@ unsafe fn stbi__de_iphone(z: *mut stbi__png) {
     let mut i: stbi__uint32 = 0;
     let pixel_count: stbi__uint32 = (*s).img_x.wrapping_mul((*s).img_y);
     let mut p: *mut stbi_uc = (*z).out;
-    if (*s).img_out_n == 3 as i32 {
+    if (*s).img_out_n == 3i32 {
         i = 0 as stbi__uint32;
         while i < pixel_count {
             let t: stbi_uc = *p.offset(0);
@@ -2748,12 +2709,12 @@ unsafe fn stbi__de_iphone(z: *mut stbi__png) {
         }
     } else {
         '_c2rust_label: {
-            if (*s).img_out_n == 4 as i32 {
+            if (*s).img_out_n == 4i32 {
             } else {
                 __assert_fail(
                     b"s->img_out_n == 4\0" as *const u8 as *const ::core::ffi::c_char,
                     b"./third_party/stb/stb_image.h\0" as *const u8 as *const ::core::ffi::c_char,
-                    4992 as u32,
+                    4992u32,
                     b"void stbi__de_iphone(stbi__png *)\0" as *const u8
                         as *const ::core::ffi::c_char,
                 );
@@ -2765,12 +2726,12 @@ unsafe fn stbi__de_iphone(z: *mut stbi__png) {
                 let a: stbi_uc = *p.offset(3);
                 let t_0: stbi_uc = *p.offset(0);
                 if a != 0 {
-                    let half: stbi_uc = (a as i32 / 2 as i32) as stbi_uc;
+                    let half: stbi_uc = (a as i32 / 2i32) as stbi_uc;
                     *p.offset(0) =
-                        ((*p.offset(2) as i32 * 255 as i32 + half as i32) / a as i32) as stbi_uc;
+                        ((*p.offset(2) as i32 * 255i32 + half as i32) / a as i32) as stbi_uc;
                     *p.offset(1) =
-                        ((*p.offset(1) as i32 * 255 as i32 + half as i32) / a as i32) as stbi_uc;
-                    *p.offset(2) = ((t_0 as i32 * 255 as i32 + half as i32) / a as i32) as stbi_uc;
+                        ((*p.offset(1) as i32 * 255i32 + half as i32) / a as i32) as stbi_uc;
+                    *p.offset(2) = ((t_0 as i32 * 255i32 + half as i32) / a as i32) as stbi_uc;
                 } else {
                     *p.offset(0) = *p.offset(2);
                     *p.offset(2) = t_0;
@@ -2794,129 +2755,122 @@ unsafe fn stbi__parse_png_file(z: *mut stbi__png, scan: i32, req_comp: i32) -> i
     let mut palette: [stbi_uc; 1024] = [0; 1024];
     let mut pal_img_n: stbi_uc = 0 as stbi_uc;
     let mut has_trans: stbi_uc = 0 as stbi_uc;
-    let mut tc: [stbi_uc; 3] = [0 as i32 as stbi_uc, 0, 0];
+    let mut tc: [stbi_uc; 3] = [0i32 as stbi_uc, 0, 0];
     let mut tc16: [stbi__uint16; 3] = [0; 3];
     let mut ioff: stbi__uint32 = 0 as stbi__uint32;
     let mut idata_limit: stbi__uint32 = 0 as stbi__uint32;
     let mut i: stbi__uint32 = 0;
     let mut pal_len: stbi__uint32 = 0 as stbi__uint32;
-    let mut first: i32 = 1 as i32;
+    let mut first: i32 = 1i32;
     let mut k: i32 = 0;
-    let mut interlace: i32 = 0 as i32;
-    let mut color: i32 = 0 as i32;
-    let mut is_iphone: i32 = 0 as i32;
+    let mut interlace: i32 = 0i32;
+    let mut color: i32 = 0i32;
+    let mut is_iphone: i32 = 0i32;
     let s: *mut stbi__context = (*z).s;
     (*z).expanded = ::core::ptr::null_mut::<stbi_uc>();
     (*z).idata = ::core::ptr::null_mut::<stbi_uc>();
     (*z).out = ::core::ptr::null_mut::<stbi_uc>();
     if stbi__check_png_header(s) == 0 {
-        return 0 as i32;
+        return 0i32;
     }
     if scan == STBI__SCAN_type as i32 {
-        return 1 as i32;
+        return 1i32;
     }
     loop {
         let c: stbi__pngchunk = stbi__get_chunk_header(s);
         match c.type_0 {
             1130840649 => {
-                is_iphone = 1 as i32;
+                is_iphone = 1i32;
                 stbi__skip(s, c.length as i32);
             }
             1229472850 => {
                 let mut comp: i32 = 0;
                 let mut filter: i32 = 0;
                 if first == 0 {
-                    return 0 as i32;
+                    return 0i32;
                 }
-                first = 0 as i32;
+                first = 0i32;
                 if c.length != 13 as stbi__uint32 {
-                    return 0 as i32;
+                    return 0i32;
                 }
                 (*s).img_x = stbi__get32be(s);
                 (*s).img_y = stbi__get32be(s);
                 if (*s).img_y > STBI_MAX_DIMENSIONS as stbi__uint32 {
-                    return 0 as i32;
+                    return 0i32;
                 }
                 if (*s).img_x > STBI_MAX_DIMENSIONS as stbi__uint32 {
-                    return 0 as i32;
+                    return 0i32;
                 }
                 (*z).depth = stbi__get8(s) as i32;
-                if (*z).depth != 1 as i32
-                    && (*z).depth != 2 as i32
-                    && (*z).depth != 4 as i32
-                    && (*z).depth != 8 as i32
-                    && (*z).depth != 16 as i32
+                if (*z).depth != 1i32
+                    && (*z).depth != 2i32
+                    && (*z).depth != 4i32
+                    && (*z).depth != 8i32
+                    && (*z).depth != 16i32
                 {
-                    return 0 as i32;
+                    return 0i32;
                 }
                 color = stbi__get8(s) as i32;
-                if color > 6 as i32 {
-                    return 0 as i32;
+                if color > 6i32 {
+                    return 0i32;
                 }
-                if color == 3 as i32 && (*z).depth == 16 as i32 {
-                    return 0 as i32;
+                if color == 3i32 && (*z).depth == 16i32 {
+                    return 0i32;
                 }
-                if color == 3 as i32 {
+                if color == 3i32 {
                     pal_img_n = 3 as stbi_uc;
-                } else if color & 1 as i32 != 0 {
-                    return 0 as i32;
+                } else if color & 1i32 != 0 {
+                    return 0i32;
                 }
                 comp = stbi__get8(s) as i32;
                 if comp != 0 {
-                    return 0 as i32;
+                    return 0i32;
                 }
                 filter = stbi__get8(s) as i32;
                 if filter != 0 {
-                    return 0 as i32;
+                    return 0i32;
                 }
                 interlace = stbi__get8(s) as i32;
-                if interlace > 1 as i32 {
-                    return 0 as i32;
+                if interlace > 1i32 {
+                    return 0i32;
                 }
                 if (*s).img_x == 0 || (*s).img_y == 0 {
-                    return 0 as i32;
+                    return 0i32;
                 }
                 if pal_img_n == 0 {
-                    (*s).img_n = (if color & 2 as i32 != 0 {
-                        3 as i32
-                    } else {
-                        1 as i32
-                    }) + (if color & 4 as i32 != 0 {
-                        1 as i32
-                    } else {
-                        0 as i32
-                    });
-                    if (((1 as i32) << 30 as i32) as stbi__uint32)
+                    (*s).img_n = (if color & 2i32 != 0 { 3i32 } else { 1i32 })
+                        + (if color & 4i32 != 0 { 1i32 } else { 0i32 });
+                    if (((1i32) << 30i32) as stbi__uint32)
                         .wrapping_div((*s).img_x)
                         .wrapping_div((*s).img_n as stbi__uint32)
                         < (*s).img_y
                     {
-                        return 0 as i32;
+                        return 0i32;
                     }
                     if scan == STBI__SCAN_header as i32 {
-                        return 1 as i32;
+                        return 1i32;
                     }
                 } else {
-                    (*s).img_n = 1 as i32;
-                    if (((1 as i32) << 30 as i32) as stbi__uint32)
+                    (*s).img_n = 1i32;
+                    if (((1i32) << 30i32) as stbi__uint32)
                         .wrapping_div((*s).img_x)
                         .wrapping_div(4 as stbi__uint32)
                         < (*s).img_y
                     {
-                        return 0 as i32;
+                        return 0i32;
                     }
                 }
             }
             1347179589 => {
                 if first != 0 {
-                    return 0 as i32;
+                    return 0i32;
                 }
-                if c.length > (256 as i32 * 3 as i32) as stbi__uint32 {
-                    return 0 as i32;
+                if c.length > (256i32 * 3i32) as stbi__uint32 {
+                    return 0i32;
                 }
                 pal_len = c.length.wrapping_div(3 as stbi__uint32);
                 if pal_len.wrapping_mul(3 as stbi__uint32) != c.length {
-                    return 0 as i32;
+                    return 0i32;
                 }
                 i = 0 as stbi__uint32;
                 while i < pal_len {
@@ -2937,21 +2891,21 @@ unsafe fn stbi__parse_png_file(z: *mut stbi__png, scan: i32, req_comp: i32) -> i
             }
             1951551059 => {
                 if first != 0 {
-                    return 0 as i32;
+                    return 0i32;
                 }
                 if !(*z).idata.is_null() {
-                    return 0 as i32;
+                    return 0i32;
                 }
                 if pal_img_n != 0 {
                     if scan == STBI__SCAN_header as i32 {
-                        (*s).img_n = 4 as i32;
-                        return 1 as i32;
+                        (*s).img_n = 4i32;
+                        return 1i32;
                     }
                     if pal_len == 0 as stbi__uint32 {
-                        return 0 as i32;
+                        return 0i32;
                     }
                     if c.length > pal_len {
-                        return 0 as i32;
+                        return 0i32;
                     }
                     pal_img_n = 4 as stbi_uc;
                     i = 0 as stbi__uint32;
@@ -2963,23 +2917,23 @@ unsafe fn stbi__parse_png_file(z: *mut stbi__png, scan: i32, req_comp: i32) -> i
                         i = i.wrapping_add(1);
                     }
                 } else {
-                    if (*s).img_n & 1 as i32 == 0 {
-                        return 0 as i32;
+                    if (*s).img_n & 1i32 == 0 {
+                        return 0i32;
                     }
                     if c.length != ((*s).img_n as stbi__uint32).wrapping_mul(2 as stbi__uint32) {
-                        return 0 as i32;
+                        return 0i32;
                     }
                     has_trans = 1 as stbi_uc;
-                    if (*z).depth == 16 as i32 {
-                        k = 0 as i32;
+                    if (*z).depth == 16i32 {
+                        k = 0i32;
                         while k < (*s).img_n {
                             tc16[k as usize] = stbi__get16be(s) as stbi__uint16;
                             k += 1;
                         }
                     } else {
-                        k = 0 as i32;
+                        k = 0i32;
                         while k < (*s).img_n {
-                            tc[k as usize] = ((stbi__get16be(s) & 255 as i32) as stbi_uc as i32
+                            tc[k as usize] = ((stbi__get16be(s) & 255i32) as stbi_uc as i32
                                 * stbi__depth_scale_table[(*z).depth as usize] as i32)
                                 as stbi_uc;
                             k += 1;
@@ -2989,17 +2943,17 @@ unsafe fn stbi__parse_png_file(z: *mut stbi__png, scan: i32, req_comp: i32) -> i
             }
             1229209940 => {
                 if first != 0 {
-                    return 0 as i32;
+                    return 0i32;
                 }
                 if pal_img_n as i32 != 0 && pal_len == 0 {
-                    return 0 as i32;
+                    return 0i32;
                 }
                 if scan == STBI__SCAN_header as i32 {
                     (*s).img_n = pal_img_n as i32;
-                    return 1 as i32;
+                    return 1i32;
                 }
                 if (ioff.wrapping_add(c.length) as i32) < ioff as i32 {
-                    return 0 as i32;
+                    return 0i32;
                 }
                 if ioff.wrapping_add(c.length) > idata_limit {
                     let idata_limit_old: stbi__uint32 = idata_limit;
@@ -3019,12 +2973,12 @@ unsafe fn stbi__parse_png_file(z: *mut stbi__png, scan: i32, req_comp: i32) -> i
                         idata_limit as size_t,
                     ) as *mut stbi_uc;
                     if p.is_null() {
-                        return 0 as i32;
+                        return 0i32;
                     }
                     (*z).idata = p;
                 }
                 if stbi__getn(s, (*z).idata.offset(ioff as isize), c.length as i32) == 0 {
-                    return 0 as i32;
+                    return 0i32;
                 }
                 ioff = ioff.wrapping_add(c.length);
             }
@@ -3032,13 +2986,13 @@ unsafe fn stbi__parse_png_file(z: *mut stbi__png, scan: i32, req_comp: i32) -> i
                 let mut raw_len: stbi__uint32 = 0;
                 let mut bpl: stbi__uint32 = 0;
                 if first != 0 {
-                    return 0 as i32;
+                    return 0i32;
                 }
                 if scan != STBI__SCAN_load as i32 {
-                    return 1 as i32;
+                    return 1i32;
                 }
                 if (*z).idata.is_null() {
-                    return 0 as i32;
+                    return 0i32;
                 }
                 bpl = (*s)
                     .img_x
@@ -3057,14 +3011,14 @@ unsafe fn stbi__parse_png_file(z: *mut stbi__png, scan: i32, req_comp: i32) -> i
                     (is_iphone == 0) as i32,
                 ) as *mut stbi_uc;
                 if (*z).expanded.is_null() {
-                    return 0 as i32;
+                    return 0i32;
                 }
                 free((*z).idata as *mut ::core::ffi::c_void);
                 (*z).idata = ::core::ptr::null_mut::<stbi_uc>();
-                if req_comp == (*s).img_n + 1 as i32 && req_comp != 3 as i32 && pal_img_n == 0
+                if req_comp == (*s).img_n + 1i32 && req_comp != 3i32 && pal_img_n == 0
                     || has_trans as i32 != 0
                 {
-                    (*s).img_out_n = (*s).img_n + 1 as i32;
+                    (*s).img_out_n = (*s).img_n + 1i32;
                 } else {
                     (*s).img_out_n = (*s).img_n;
                 }
@@ -3078,17 +3032,17 @@ unsafe fn stbi__parse_png_file(z: *mut stbi__png, scan: i32, req_comp: i32) -> i
                     interlace,
                 ) == 0
                 {
-                    return 0 as i32;
+                    return 0i32;
                 }
                 if has_trans != 0 {
-                    if (*z).depth == 16 as i32 {
+                    if (*z).depth == 16i32 {
                         if stbi__compute_transparency16(
                             z,
                             &raw mut tc16 as *mut stbi__uint16,
                             (*s).img_out_n,
                         ) == 0
                         {
-                            return 0 as i32;
+                            return 0i32;
                         }
                     } else if stbi__compute_transparency(
                         z,
@@ -3096,16 +3050,16 @@ unsafe fn stbi__parse_png_file(z: *mut stbi__png, scan: i32, req_comp: i32) -> i
                         (*s).img_out_n,
                     ) == 0
                     {
-                        return 0 as i32;
+                        return 0i32;
                     }
                 }
-                if is_iphone != 0 && stbi__de_iphone_flag_global != 0 && (*s).img_out_n > 2 as i32 {
+                if is_iphone != 0 && stbi__de_iphone_flag_global != 0 && (*s).img_out_n > 2i32 {
                     stbi__de_iphone(z);
                 }
                 if pal_img_n != 0 {
                     (*s).img_n = pal_img_n as i32;
                     (*s).img_out_n = pal_img_n as i32;
-                    if req_comp >= 3 as i32 {
+                    if req_comp >= 3i32 {
                         (*s).img_out_n = req_comp;
                     }
                     if stbi__expand_png_palette(
@@ -3115,7 +3069,7 @@ unsafe fn stbi__parse_png_file(z: *mut stbi__png, scan: i32, req_comp: i32) -> i
                         (*s).img_out_n,
                     ) == 0
                     {
-                        return 0 as i32;
+                        return 0i32;
                     }
                 } else if has_trans != 0 {
                     (*s).img_n += 1;
@@ -3123,14 +3077,14 @@ unsafe fn stbi__parse_png_file(z: *mut stbi__png, scan: i32, req_comp: i32) -> i
                 free((*z).expanded as *mut ::core::ffi::c_void);
                 (*z).expanded = ::core::ptr::null_mut::<stbi_uc>();
                 stbi__get32be(s);
-                return 1 as i32;
+                return 1i32;
             }
             _ => {
                 if first != 0 {
-                    return 0 as i32;
+                    return 0i32;
                 }
-                if c.type_0 & ((1 as i32) << 29 as i32) as stbi__uint32 == 0 as stbi__uint32 {
-                    return 0 as i32;
+                if c.type_0 & ((1i32) << 29i32) as stbi__uint32 == 0 as stbi__uint32 {
+                    return 0i32;
                 }
                 stbi__skip(s, c.length as i32);
             }
@@ -3147,23 +3101,23 @@ unsafe fn stbi__do_png(
     ri: *mut stbi__result_info,
 ) -> *mut ::core::ffi::c_void {
     let mut result: *mut ::core::ffi::c_void = NULL_0;
-    if req_comp < 0 as i32 || req_comp > 4 as i32 {
-        return (if 0 as i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_uchar
+    if req_comp < 0i32 || req_comp > 4i32 {
+        return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_uchar
             as *mut ::core::ffi::c_void;
     }
     if stbi__parse_png_file(p, STBI__SCAN_load as i32, req_comp) != 0 {
-        if (*p).depth <= 8 as i32 {
-            (*ri).bits_per_channel = 8 as i32;
-        } else if (*p).depth == 16 as i32 {
-            (*ri).bits_per_channel = 16 as i32;
+        if (*p).depth <= 8i32 {
+            (*ri).bits_per_channel = 8i32;
+        } else if (*p).depth == 16i32 {
+            (*ri).bits_per_channel = 16i32;
         } else {
-            return (if 0 as i32 != 0 { NULL_0 } else { NULL_0 }) as size_t
-                as *mut ::core::ffi::c_uchar as *mut ::core::ffi::c_void;
+            return (if 0i32 != 0 { NULL_0 } else { NULL_0 }) as size_t as *mut ::core::ffi::c_uchar
+                as *mut ::core::ffi::c_void;
         }
         result = (*p).out as *mut ::core::ffi::c_void;
         (*p).out = ::core::ptr::null_mut::<stbi_uc>();
         if req_comp != 0 && req_comp != (*(*p).s).img_out_n {
-            if (*ri).bits_per_channel == 8 as i32 {
+            if (*ri).bits_per_channel == 8i32 {
                 result = stbi__convert_format(
                     result as *mut ::core::ffi::c_uchar,
                     (*(*p).s).img_out_n,
@@ -3218,9 +3172,9 @@ unsafe fn stbi__png_test(s: *mut stbi__context) -> i32 {
     r
 }
 unsafe fn stbi__png_info_raw(p: *mut stbi__png, x: *mut i32, y: *mut i32, comp: *mut i32) -> i32 {
-    if stbi__parse_png_file(p, STBI__SCAN_header as i32, 0 as i32) == 0 {
+    if stbi__parse_png_file(p, STBI__SCAN_header as i32, 0i32) == 0 {
         stbi__rewind((*p).s);
-        return 0 as i32;
+        return 0i32;
     }
     if !x.is_null() {
         *x = (*(*p).s).img_x as i32;
@@ -3231,7 +3185,7 @@ unsafe fn stbi__png_info_raw(p: *mut stbi__png, x: *mut i32, y: *mut i32, comp: 
     if !comp.is_null() {
         *comp = (*(*p).s).img_n;
     }
-    1 as i32
+    1i32
 }
 unsafe fn stbi__png_info(s: *mut stbi__context, x: *mut i32, y: *mut i32, comp: *mut i32) -> i32 {
     let mut p: stbi__png = stbi__png::EMPTY;
@@ -3248,25 +3202,25 @@ unsafe fn stbi__png_is16(s: *mut stbi__context) -> i32 {
         ::core::ptr::null_mut::<i32>(),
     ) == 0
     {
-        return 0 as i32;
+        return 0i32;
     }
-    if p.depth != 16 as i32 {
+    if p.depth != 16i32 {
         stbi__rewind(p.s);
-        return 0 as i32;
+        return 0i32;
     }
-    1 as i32
+    1i32
 }
 unsafe fn stbi__info_main(s: *mut stbi__context, x: *mut i32, y: *mut i32, comp: *mut i32) -> i32 {
     if stbi__png_info(s, x, y, comp) != 0 {
-        return 1 as i32;
+        return 1i32;
     }
-    0 as i32
+    0i32
 }
 unsafe fn stbi__is_16_main(s: *mut stbi__context) -> i32 {
     if stbi__png_is16(s) != 0 {
-        return 1 as i32;
+        return 1i32;
     }
-    0 as i32
+    0i32
 }
 pub unsafe fn stbi_info(
     filename: *const ::core::ffi::c_char,
@@ -3277,7 +3231,7 @@ pub unsafe fn stbi_info(
     let f: *mut FILE = stbi__fopen(filename, b"rb\0" as *const u8 as *const ::core::ffi::c_char);
     let mut result: i32 = 0;
     if f.is_null() {
-        return 0 as i32;
+        return 0i32;
     }
     result = stbi_info_from_file(f, x, y, comp);
     fclose(f);
@@ -3296,7 +3250,7 @@ pub unsafe fn stbi_is_16_bit(filename: *const ::core::ffi::c_char) -> i32 {
     let f: *mut FILE = stbi__fopen(filename, b"rb\0" as *const u8 as *const ::core::ffi::c_char);
     let mut result: i32 = 0;
     if f.is_null() {
-        return 0 as i32;
+        return 0i32;
     }
     result = stbi_is_16_bit_from_file(f);
     fclose(f);
@@ -3362,11 +3316,11 @@ unsafe fn ParseConfigKeyPass(
         key = key.offset(1);
         match_0 = match_0.offset(1);
     }
-    if (*key as i32 - '0' as i32) as u8 as i32 >= 10 as i32 {
+    if (*key as i32 - '0' as i32) as u8 as i32 >= 10i32 {
         return ::core::ptr::null_mut::<GlslPass>();
     }
-    let pass: u32 = strtoul(key, &raw mut endp, 10 as i32) as u32;
-    if pass >= (*gs).n_pass as u32 || *endp as i32 != 0 as i32 {
+    let pass: u32 = strtoul(key, &raw mut endp, 10i32) as u32;
+    if pass >= (*gs).n_pass as u32 || *endp as i32 != 0i32 {
         return ::core::ptr::null_mut::<GlslPass>();
     }
     (*gs).pass.offset(pass as isize).offset(1)
@@ -3412,7 +3366,7 @@ unsafe fn GlslPass_Initialize(pass: *mut GlslPass) {
 unsafe fn ParseTextures(gs: *mut GlslShader, mut value: *mut ::core::ffi::c_char) {
     let mut id: *mut ::core::ffi::c_char = ::core::ptr::null_mut::<::core::ffi::c_char>();
     let mut nextp: *mut *mut GlslTexture = &raw mut (*gs).first_texture;
-    let mut num: i32 = 0 as i32;
+    let mut num: i32 = 0i32;
     loop {
         id = NextDelim(&raw mut value, ';' as i32);
         if !(!id.is_null() && num < kGlslMaxTextures as i32) {
@@ -3438,7 +3392,7 @@ unsafe fn ParseTextureKeyValue(
     while !t.is_null() {
         let key2: *const ::core::ffi::c_char = SkipPrefix(key, (*t).id);
         if !key2.is_null() {
-            if *key2 as i32 == 0 as i32 {
+            if *key2 as i32 == 0i32 {
                 StrSet(&raw mut (*t).filename, value);
                 return true_0 != 0;
             } else if strcmp(
@@ -3506,7 +3460,7 @@ unsafe fn ParseParameterKeyValue(
 ) -> bool {
     let mut p: *mut GlslParam = (*gs).first_param;
     while !p.is_null() {
-        if strcmp((*p).id, key) == 0 as i32 {
+        if strcmp((*p).id, key) == 0i32 {
             (*p).value = atof(value) as ::core::ffi::c_float;
             (*p).has_value = true_0 != 0;
             return true_0 != 0;
@@ -3518,10 +3472,10 @@ unsafe fn ParseParameterKeyValue(
 unsafe fn GlslShader_InitializePasses(gs: *mut GlslShader, passes: i32) {
     (*gs).n_pass = passes;
     (*gs).pass = calloc(
-        ((*gs).n_pass + 1 as i32) as size_t,
+        ((*gs).n_pass + 1i32) as size_t,
         ::core::mem::size_of::<GlslPass>() as size_t,
     ) as *mut GlslPass;
-    let mut i: i32 = 0 as i32;
+    let mut i: i32 = 0i32;
     while i < (*gs).n_pass {
         GlslPass_Initialize((*gs).pass.offset(i as isize).offset(1));
         i += 1;
@@ -3539,7 +3493,7 @@ unsafe fn GlslShader_ReadPresetFile(
     if data.is_null() {
         return false_0 != 0;
     }
-    let mut lineno: i32 = 1 as i32;
+    let mut lineno: i32 = 1i32;
     loop {
         line = NextLineStripComments(&raw mut data);
         if line.is_null() {
@@ -3567,11 +3521,11 @@ unsafe fn GlslShader_ReadPresetFile(
                     *t = 0 as ::core::ffi::c_char;
                 }
             }
-            if (*gs).n_pass == 0 as i32 {
+            if (*gs).n_pass == 0i32 {
                 if strcmp(
                     line,
                     b"shaders\0" as *const u8 as *const ::core::ffi::c_char,
-                ) != 0 as i32
+                ) != 0i32
                 {
                     fprintf(
                         stderr,
@@ -3585,9 +3539,9 @@ unsafe fn GlslShader_ReadPresetFile(
                     let passes: i32 = strtoul(
                         value,
                         ::core::ptr::null_mut::<*mut ::core::ffi::c_char>(),
-                        10 as i32,
+                        10i32,
                     ) as i32;
-                    if passes < 1 as i32 || passes > kGlslMaxPasses as i32 {
+                    if passes < 1i32 || passes > kGlslMaxPasses as i32 {
                         break;
                     }
                     GlslShader_InitializePasses(gs, passes);
@@ -3735,14 +3689,14 @@ unsafe fn GlslShader_ReadPresetFile(
                                                                         if strcmp(
                                                                             line,
                                                                             b"textures\0" as *const u8 as *const ::core::ffi::c_char,
-                                                                        ) == 0 as i32
+                                                                        ) == 0i32
                                                                             && (*gs).first_texture.is_null()
                                                                         {
                                                                             ParseTextures(gs, value);
                                                                         } else if strcmp(
                                                                             line,
                                                                             b"parameters\0" as *const u8 as *const ::core::ffi::c_char,
-                                                                        ) == 0 as i32
+                                                                        ) == 0i32
                                                                         {
                                                                             ParseParameters(gs, value);
                                                                         } else if !ParseTextureKeyValue(gs, line, value)
@@ -3776,7 +3730,7 @@ unsafe fn GlslShader_ReadPresetFile(
         lineno += 1;
     }
     free(data_org as *mut ::core::ffi::c_void);
-    (*gs).n_pass != 0 as i32
+    (*gs).n_pass != 0i32
 }
 pub unsafe fn GlslShader_ReadShaderFile(
     gs: *mut GlslShader,
@@ -3807,7 +3761,7 @@ pub unsafe fn GlslShader_ReadShaderFile(
                 b"#include\0" as *const u8 as *const ::core::ffi::c_char
                     as *const ::core::ffi::c_void,
                 8 as size_t,
-            ) == 0 as i32
+            ) == 0i32
         {
             let mut tt: *mut ::core::ffi::c_char = line.offset(8);
             let new_filename: *mut ::core::ffi::c_char =
@@ -3820,7 +3774,7 @@ pub unsafe fn GlslShader_ReadShaderFile(
                 b"#pragma parameter\0" as *const u8 as *const ::core::ffi::c_char
                     as *const ::core::ffi::c_void,
                 17 as size_t,
-            ) == 0 as i32
+            ) == 0i32
         {
             let mut tt_0: *mut ::core::ffi::c_char = line.offset(17);
             let param: *mut GlslParam =
@@ -3861,11 +3815,11 @@ unsafe fn GlslPass_Compile(p: *mut GlslPass, type_0: u32, data: *const u8, size:
             data as *const ::core::ffi::c_void,
             b"#version\0" as *const u8 as *const ::core::ffi::c_char as *const ::core::ffi::c_void,
             8 as size_t,
-        ) != 0 as i32
+        ) != 0i32
     {
-        strings[0 as i32 as usize] =
+        strings[0i32 as usize] =
             b"#version 330\n\0" as *const u8 as *const ::core::ffi::c_char as *const GLchar;
-        lengths[0 as i32 as usize] = (::core::mem::size_of::<[::core::ffi::c_char; 14]>() as usize)
+        lengths[0i32 as usize] = (::core::mem::size_of::<[::core::ffi::c_char; 14]>() as usize)
             .wrapping_sub(1_usize) as GLint;
     } else {
         while skip < size && {
@@ -3873,22 +3827,22 @@ unsafe fn GlslPass_Compile(p: *mut GlslPass, type_0: u32, data: *const u8, size:
             skip = skip.wrapping_add(1);
             *data.offset(fresh53 as isize) as i32 != '\n' as i32
         } {}
-        strings[0 as i32 as usize] = data as *mut ::core::ffi::c_char;
-        lengths[0 as i32 as usize] = skip as i32 as GLint;
+        strings[0i32 as usize] = data as *mut ::core::ffi::c_char;
+        lengths[0i32 as usize] = skip as i32 as GLint;
     }
-    strings[1 as i32 as usize] = (if type_0 == GL_VERTEX_SHADER as u32 {
+    strings[1i32 as usize] = (if type_0 == GL_VERTEX_SHADER as u32 {
         &raw const kVertexPrefix as *const ::core::ffi::c_char as *mut ::core::ffi::c_char
             as *const ::core::ffi::c_char
     } else {
         &raw const kFragmentPrefix as *const ::core::ffi::c_char
     }) as *const GLchar;
-    lengths[1 as i32 as usize] = (if type_0 == GL_VERTEX_SHADER as u32 {
+    lengths[1i32 as usize] = (if type_0 == GL_VERTEX_SHADER as u32 {
         (::core::mem::size_of::<[::core::ffi::c_char; 42]>() as usize).wrapping_sub(1_usize)
     } else {
         (::core::mem::size_of::<[::core::ffi::c_char; 44]>() as usize).wrapping_sub(1_usize)
     }) as GLint;
-    strings[2 as i32 as usize] = (data as *mut GLchar).offset(skip as isize);
-    lengths[2 as i32 as usize] = size.wrapping_sub(skip) as i32 as GLint;
+    strings[2i32 as usize] = (data as *mut GLchar).offset(skip as isize);
+    lengths[2i32 as usize] = size.wrapping_sub(skip) as i32 as GLint;
     let shader: u32 = gl::CreateShader(type_0 as GLenum) as u32;
     gl::ShaderSource(
         shader as GLuint,
@@ -3902,14 +3856,14 @@ unsafe fn GlslPass_Compile(p: *mut GlslPass, type_0: u32, data: *const u8, size:
         GL_COMPILE_STATUS as GLenum,
         &raw mut compile_status,
     );
-    buffer[0 as i32 as usize] = 0 as ::core::ffi::c_char;
+    buffer[0i32 as usize] = 0 as ::core::ffi::c_char;
     gl::GetShaderInfoLog(
         shader as GLuint,
         ::core::mem::size_of::<[::core::ffi::c_char; 256]>() as GLsizei,
         ::core::ptr::null_mut::<GLsizei>(),
         &raw mut buffer as *mut GLchar,
     );
-    if compile_status != GL_TRUE || buffer[0 as i32 as usize] as i32 != 0 {
+    if compile_status != GL_TRUE || buffer[0i32 as usize] as i32 != 0 {
         fprintf(
             stderr,
             b"%s compiling %s shader in file '%s':\n%s\n\0" as *const u8
@@ -3950,7 +3904,7 @@ unsafe fn GlslTextureUniform_Read(
         ) -> i32)(
         &raw mut buf as *mut ::core::ffi::c_char,
         ::core::mem::size_of::<[::core::ffi::c_char; 40]>() as size_t,
-        if i >= 0 as i32 {
+        if i >= 0i32 {
             b"%s%u\0" as *const u8 as *const ::core::ffi::c_char
         } else {
             b"%s\0" as *const u8 as *const ::core::ffi::c_char
@@ -3993,8 +3947,8 @@ static mut kMvpMatrixOrtho: [::core::ffi::c_float; 16] = [
     0.0f32, -1.0f32, -1.0f32, 0.0f32, 1.0f32,
 ];
 unsafe fn GlslShader_GetUniforms(gs: *mut GlslShader) {
-    let mut pass_idx: i32 = 1 as i32;
-    (*gs).max_prev_frame = 0 as i32;
+    let mut pass_idx: i32 = 1i32;
+    (*gs).max_prev_frame = 0i32;
     let mut p: *mut GlslPass = (*gs).pass.offset(1);
     let p_end: *mut GlslPass = p.offset((*gs).n_pass as isize);
     while p < p_end {
@@ -4004,7 +3958,7 @@ unsafe fn GlslShader_GetUniforms(gs: *mut GlslShader) {
             program as GLuint,
             b"MVPMatrix\0" as *const u8 as *const GLchar,
         );
-        if MVPMatrix >= 0 as i32 {
+        if MVPMatrix >= 0i32 {
             gl::UniformMatrix4fv(
                 MVPMatrix,
                 1 as GLsizei,
@@ -4015,7 +3969,7 @@ unsafe fn GlslShader_GetUniforms(gs: *mut GlslShader) {
         GlslTextureUniform_Read(
             program,
             b"\0" as *const u8 as *const ::core::ffi::c_char,
-            -(1 as i32),
+            -(1i32),
             &raw mut (*p).unif.Top,
         );
         (*p).unif.OutputSize = gl::GetUniformLocation(
@@ -4041,24 +3995,24 @@ unsafe fn GlslShader_GetUniforms(gs: *mut GlslShader) {
         GlslTextureUniform_Read(
             program,
             b"Orig\0" as *const u8 as *const ::core::ffi::c_char,
-            -(1 as i32),
+            -(1i32),
             &raw mut (*p).unif.Orig,
         );
-        let mut j: i32 = 0 as i32;
-        while j < 7 as i32 {
+        let mut j: i32 = 0i32;
+        while j < 7i32 {
             GlslTextureUniform_Read(
                 program,
                 b"Prev\0" as *const u8 as *const ::core::ffi::c_char,
-                if j != 0 { j } else { -(1 as i32) },
+                if j != 0 { j } else { -(1i32) },
                 (&raw mut (*p).unif.Prev as *mut GlslTextureUniform).offset(j as isize)
                     as *mut GlslTextureUniform,
             );
-            if (*p).unif.Prev[j as usize].Texture >= 0 as i32 {
-                (*gs).max_prev_frame = j + 1 as i32;
+            if (*p).unif.Prev[j as usize].Texture >= 0i32 {
+                (*gs).max_prev_frame = j + 1i32;
             }
             j += 1;
         }
-        let mut j_0: i32 = 0 as i32;
+        let mut j_0: i32 = 0i32;
         while j_0 < (*gs).n_pass {
             GlslTextureUniform_Read(
                 program,
@@ -4077,7 +4031,7 @@ unsafe fn GlslShader_GetUniforms(gs: *mut GlslShader) {
             j_0 += 1;
         }
         let mut t: *mut GlslTexture = (*gs).first_texture;
-        let mut j_1: i32 = 0 as i32;
+        let mut j_1: i32 = 0i32;
         while !t.is_null() {
             (*p).unif.Texture[j_1 as usize] =
                 gl::GetUniformLocation(program as GLuint, (*t).id) as i32;
@@ -4099,11 +4053,10 @@ unsafe fn IsGlslFilename(filename: *const ::core::ffi::c_char) -> bool {
     let len: size_t = strlen(filename);
     len >= 5 as size_t
         && memcmp(
-            filename.offset(len as isize).offset(-(5 as i32 as isize))
-                as *const ::core::ffi::c_void,
+            filename.offset(len as isize).offset(-(5i32 as isize)) as *const ::core::ffi::c_void,
             b".glsl\0" as *const u8 as *const ::core::ffi::c_char as *const ::core::ffi::c_void,
             5 as size_t,
-        ) == 0 as i32
+        ) == 0i32
 }
 pub unsafe fn GlslShader_CreateFromFile(
     mut filename: *const ::core::ffi::c_char,
@@ -4127,7 +4080,7 @@ pub unsafe fn GlslShader_CreateFromFile(
         return gs;
     }
     if IsGlslFilename(filename) {
-        GlslShader_InitializePasses(gs, 1 as i32);
+        GlslShader_InitializePasses(gs, 1i32);
         let ref mut fresh0 = (*(*gs).pass.offset(1)).filename;
         *fresh0 = strdup(filename);
         filename = b"\0" as *const u8 as *const ::core::ffi::c_char;
@@ -4143,7 +4096,7 @@ pub unsafe fn GlslShader_CreateFromFile(
         current_block = 1394248824506584008;
     }
     if current_block == 1394248824506584008 {
-        let mut i: i32 = 1 as i32;
+        let mut i: i32 = 1i32;
         loop {
             if (i > (*gs).n_pass) {
                 current_block = 7056779235015430508;
@@ -4155,7 +4108,7 @@ pub unsafe fn GlslShader_CreateFromFile(
                 fprintf(
                     stderr,
                     b"shader%d attribute missing\n\0" as *const u8 as *const ::core::ffi::c_char,
-                    i - 1 as i32,
+                    i - 1i32,
                 );
                 current_block = 13851546192323845927;
                 break;
@@ -4195,14 +4148,14 @@ pub unsafe fn GlslShader_CreateFromFile(
                         GL_LINK_STATUS as GLenum,
                         &raw mut link_status,
                     );
-                    buffer[0 as i32 as usize] = 0 as ::core::ffi::c_char;
+                    buffer[0i32 as usize] = 0 as ::core::ffi::c_char;
                     gl::GetProgramInfoLog(
                         (*p).gl_program as GLuint,
                         ::core::mem::size_of::<[::core::ffi::c_char; 256]>() as GLsizei,
                         ::core::ptr::null_mut::<GLsizei>(),
                         &raw mut buffer as *mut GLchar,
                     );
-                    if link_status != GL_TRUE || buffer[0 as i32 as usize] as i32 != 0 {
+                    if link_status != GL_TRUE || buffer[0i32 as usize] as i32 != 0 {
                         fprintf(
                             stderr,
                             b"%s linking shader in file '%s':\n%s\n\0" as *const u8
@@ -4271,7 +4224,7 @@ pub unsafe fn GlslShader_CreateFromFile(
                         &raw mut imw,
                         &raw mut imh,
                         &raw mut imn,
-                        0 as i32,
+                        0i32,
                     )
                         as *mut ::core::ffi::c_uchar;
                     if data.is_null() {
@@ -4289,9 +4242,9 @@ pub unsafe fn GlslShader_CreateFromFile(
                             imw as GLsizei,
                             imh as GLsizei,
                             0 as GLint,
-                            (if imn == 4 as i32 {
+                            (if imn == 4i32 {
                                 GL_RGBA
-                            } else if imn == 3 as i32 {
+                            } else if imn == 3i32 {
                                 GL_RGB
                             } else {
                                 GL_LUMINANCE
@@ -4320,12 +4273,12 @@ pub unsafe fn GlslShader_CreateFromFile(
                 p_0 = (*p_0).next as *mut GlslParam;
             }
             GlslShader_GetUniforms(gs);
-            let mut i_0: i32 = 0 as i32;
+            let mut i_0: i32 = 0i32;
             while i_0 < (*gs).max_prev_frame {
                 gl::GenTextures(
                     1 as GLsizei,
                     &raw mut (*(&raw mut (*gs).prev_frame as *mut GlTextureWithSize)
-                        .offset((-i_0 - 1 as i32 & 7 as i32) as isize))
+                        .offset((-i_0 - 1i32 & 7i32) as isize))
                     .gl_texture,
                 );
                 i_0 += 1;
@@ -4382,8 +4335,8 @@ pub unsafe fn GlslShader_Destroy(gs: *mut GlslShader) {
         free((*pp).id as *mut ::core::ffi::c_void);
         free(pp as *mut ::core::ffi::c_void);
     }
-    let mut i: i32 = 0 as i32;
-    while i < 8 as i32 {
+    let mut i: i32 = 0i32;
+    while i < 8i32 {
         gl::DeleteTextures(
             1 as GLsizei,
             &raw mut (*(&raw mut (*gs).prev_frame as *mut GlTextureWithSize).offset(i as isize))
@@ -4395,7 +4348,7 @@ pub unsafe fn GlslShader_Destroy(gs: *mut GlslShader) {
     free(gs as *mut ::core::ffi::c_void);
 }
 unsafe fn RenderCtx_SetTexture(ctx: *mut RenderCtx, textureu: i32, texture_id: u32) {
-    if textureu >= 0 as i32 {
+    if textureu >= 0i32 {
         gl::ActiveTexture((GL_TEXTURE0 as GLenum).wrapping_add((*ctx).texture_unit as GLenum));
         gl::BindTexture(GL_TEXTURE_2D as GLenum, texture_id as GLuint);
         let fresh55 = (*ctx).texture_unit;
@@ -4404,7 +4357,7 @@ unsafe fn RenderCtx_SetTexture(ctx: *mut RenderCtx, textureu: i32, texture_id: u
     }
 }
 unsafe fn RenderCtx_SetTexCoords(ctx: *mut RenderCtx, tex_coord: i32, offset: usize) {
-    if tex_coord >= 0 as i32 {
+    if tex_coord >= 0i32 {
         '_c2rust_label: {
             if (*ctx).num_vaos < kMaxVaosInRenderCtx as i32 as u32 {
             } else {
@@ -4412,7 +4365,7 @@ unsafe fn RenderCtx_SetTexCoords(ctx: *mut RenderCtx, tex_coord: i32, offset: us
                     b"ctx->num_vaos < kMaxVaosInRenderCtx\0" as *const u8
                         as *const ::core::ffi::c_char,
                     b"src/glsl_shader.c\0" as *const u8 as *const ::core::ffi::c_char,
-                    467 as u32,
+                    467u32,
                     b"void RenderCtx_SetTexCoords(RenderCtx *, int, uintptr_t)\0" as *const u8
                         as *const ::core::ffi::c_char,
                 );
@@ -4444,14 +4397,14 @@ unsafe fn RenderCtx_SetGlslTextureUniform(
         height as ::core::ffi::c_float,
     ];
     RenderCtx_SetTexture(ctx, (*u).Texture, texture);
-    if (*u).InputSize >= 0 as i32 {
+    if (*u).InputSize >= 0i32 {
         gl::Uniform2fv(
             (*u).InputSize as GLint,
             1 as GLsizei,
             &raw mut size as *mut ::core::ffi::c_float,
         );
     }
-    if (*u).TextureSize >= 0 as i32 {
+    if (*u).TextureSize >= 0i32 {
         gl::Uniform2fv(
             (*u).TextureSize as GLint,
             1 as GLsizei,
@@ -4465,11 +4418,11 @@ unsafe fn GlslShader_SetShaderVars(gs: *mut GlslShader, ctx: *mut RenderCtx, pas
     RenderCtx_SetGlslTextureUniform(
         ctx,
         &raw mut (*p).unif.Top,
-        (*p.offset(-(1 as i32) as isize)).width as i32,
-        (*p.offset(-(1 as i32) as isize)).height as i32,
-        (*p.offset(-(1 as i32) as isize)).gl_texture,
+        (*p.offset(-(1i32) as isize)).width as i32,
+        (*p.offset(-(1i32) as isize)).height as i32,
+        (*p.offset(-(1i32) as isize)).gl_texture,
     );
-    if (*p).unif.OutputSize >= 0 as i32 {
+    if (*p).unif.OutputSize >= 0i32 {
         let mut output_size: [::core::ffi::c_float; 2] = [
             (*p.offset(0)).width as ::core::ffi::c_float,
             (*p.offset(0)).height as ::core::ffi::c_float,
@@ -4480,7 +4433,7 @@ unsafe fn GlslShader_SetShaderVars(gs: *mut GlslShader, ctx: *mut RenderCtx, pas
             &raw mut output_size as *mut ::core::ffi::c_float,
         );
     }
-    if (*p).unif.FrameCount >= 0 as i32 {
+    if (*p).unif.FrameCount >= 0i32 {
         gl::Uniform1i(
             (*p).unif.FrameCount as GLint,
             (if (*p).frame_count_mod != 0 {
@@ -4490,7 +4443,7 @@ unsafe fn GlslShader_SetShaderVars(gs: *mut GlslShader, ctx: *mut RenderCtx, pas
             }) as GLint,
         );
     }
-    if (*p).unif.FrameDirection >= 0 as i32 {
+    if (*p).unif.FrameDirection >= 0i32 {
         gl::Uniform1i((*p).unif.FrameDirection as GLint, 1 as GLint);
     }
     RenderCtx_SetTexCoords(ctx, (*p).unif.LUTTexCoord, (*ctx).offset as usize);
@@ -4502,23 +4455,18 @@ unsafe fn GlslShader_SetShaderVars(gs: *mut GlslShader, ctx: *mut RenderCtx, pas
         (*(*gs).pass.offset(0)).height as i32,
         (*(*gs).pass.offset(0)).gl_texture,
     );
-    let mut i: i32 = 0 as i32;
+    let mut i: i32 = 0i32;
     while i < (*gs).max_prev_frame {
         let t: *mut GlTextureWithSize = (&raw mut (*gs).prev_frame as *mut GlTextureWithSize)
-            .offset(
-                ((*gs)
-                    .frame_count
-                    .wrapping_sub(1 as u32)
-                    .wrapping_sub(i as u32)
-                    & 7 as u32) as isize,
-            ) as *mut GlTextureWithSize;
+            .offset(((*gs).frame_count.wrapping_sub(1u32).wrapping_sub(i as u32) & 7u32) as isize)
+            as *mut GlTextureWithSize;
         '_c2rust_label: {
-            if (*t).gl_texture != 0 as u32 {
+            if (*t).gl_texture != 0u32 {
             } else {
                 __assert_fail(
                     b"t->gl_texture != 0\0" as *const u8 as *const ::core::ffi::c_char,
                     b"src/glsl_shader.c\0" as *const u8 as *const ::core::ffi::c_char,
-                    504 as u32,
+                    504u32,
                     b"void GlslShader_SetShaderVars(GlslShader *, RenderCtx *, int)\0" as *const u8
                         as *const ::core::ffi::c_char,
                 );
@@ -4536,14 +4484,14 @@ unsafe fn GlslShader_SetShaderVars(gs: *mut GlslShader, ctx: *mut RenderCtx, pas
         }
         i += 1;
     }
-    let mut tctr: i32 = 0 as i32;
+    let mut tctr: i32 = 0i32;
     let mut t_0: *mut GlslTexture = (*gs).first_texture;
     while !t_0.is_null() {
         RenderCtx_SetTexture(ctx, (*p).unif.Texture[tctr as usize], (*t_0).gl_texture);
         t_0 = (*t_0).next as *mut GlslTexture;
         tctr += 1;
     }
-    let mut i_0: i32 = 1 as i32;
+    let mut i_0: i32 = 1i32;
     while i_0 < pass {
         RenderCtx_SetGlslTextureUniform(
             ctx,
@@ -4555,7 +4503,7 @@ unsafe fn GlslShader_SetShaderVars(gs: *mut GlslShader, ctx: *mut RenderCtx, pas
         );
         i_0 += 1;
     }
-    let mut i_1: i32 = 1 as i32;
+    let mut i_1: i32 = 1i32;
     while i_1 < pass {
         RenderCtx_SetGlslTextureUniform(
             ctx,
@@ -4569,7 +4517,7 @@ unsafe fn GlslShader_SetShaderVars(gs: *mut GlslShader, ctx: *mut RenderCtx, pas
     }
     let mut pa: *mut GlslParam = (*gs).first_param;
     while !pa.is_null() {
-        if (*pa).uniform[pass as usize] >= 0 as u32 {
+        if (*pa).uniform[pass as usize] >= 0u32 {
             gl::Uniform1f(
                 (*pa).uniform[pass as usize] as GLint,
                 (*pa).value as GLfloat,
@@ -4596,7 +4544,7 @@ pub unsafe fn GlslShader_Render(
         &raw mut previous_framebuffer,
     );
     gl::BindBuffer(GL_ARRAY_BUFFER as GLenum, (*gs).gl_vbo as GLuint);
-    let mut pass: i32 = 1 as i32;
+    let mut pass: i32 = 1i32;
     while pass <= (*gs).n_pass {
         let last_pass: bool = pass == (*gs).n_pass;
         let p: *mut GlslPass = (*gs).pass.offset(pass as isize);
@@ -4605,8 +4553,7 @@ pub unsafe fn GlslShader_Render(
                 (*p).width = (*p).scale_x as u16;
             }
             1 => {
-                (*p).width = ((*p.offset(-(1 as i32) as isize)).width as i32
-                    as ::core::ffi::c_float
+                (*p).width = ((*p.offset(-(1i32) as isize)).width as i32 as ::core::ffi::c_float
                     * (*p).scale_x) as u16;
             }
             2 => {
@@ -4616,7 +4563,7 @@ pub unsafe fn GlslShader_Render(
                 (*p).width = (if last_pass as i32 != 0 {
                     viewport_width as ::core::ffi::c_float
                 } else {
-                    (*p.offset(-(1 as i32) as isize)).width as i32 as ::core::ffi::c_float
+                    (*p.offset(-(1i32) as isize)).width as i32 as ::core::ffi::c_float
                         * (*p).scale_x
                 }) as u16;
             }
@@ -4626,8 +4573,7 @@ pub unsafe fn GlslShader_Render(
                 (*p).height = (*p).scale_y as u16;
             }
             1 => {
-                (*p).height = ((*p.offset(-(1 as i32) as isize)).height as i32
-                    as ::core::ffi::c_float
+                (*p).height = ((*p.offset(-(1i32) as isize)).height as i32 as ::core::ffi::c_float
                     * (*p).scale_y) as u16;
             }
             2 => {
@@ -4637,7 +4583,7 @@ pub unsafe fn GlslShader_Render(
                 (*p).height = (if last_pass as i32 != 0 {
                     viewport_height as ::core::ffi::c_float
                 } else {
-                    (*p.offset(-(1 as i32) as isize)).height as i32 as ::core::ffi::c_float
+                    (*p.offset(-(1i32) as isize)).height as i32 as ::core::ffi::c_float
                         * (*p).scale_y
                 }) as u16;
             }
@@ -4703,7 +4649,7 @@ pub unsafe fn GlslShader_Render(
         }
         gl::BindTexture(
             GL_TEXTURE_2D as GLenum,
-            (*p.offset(-(1 as i32) as isize)).gl_texture as GLuint,
+            (*p.offset(-(1i32) as isize)).gl_texture as GLuint,
         );
         let filter: u32 = if (*p).filter != 0 {
             (*p).filter
@@ -4752,7 +4698,7 @@ pub unsafe fn GlslShader_Render(
             num_vaos: 0,
             vaos: [0; 51],
         };
-        ctx.num_vaos = 0 as u32;
+        ctx.num_vaos = 0u32;
         ctx.texture_unit = ctx.num_vaos;
         ctx.offset = (if last_pass as i32 != 0 {
             (::core::mem::size_of::<::core::ffi::c_float>() as usize).wrapping_mul(8_usize)
@@ -4761,7 +4707,7 @@ pub unsafe fn GlslShader_Render(
         }) as u32;
         GlslShader_SetShaderVars(gs, &raw mut ctx, pass);
         gl::DrawArrays(GL_TRIANGLE_STRIP as GLenum, 0 as GLint, 4 as GLsizei);
-        let mut i: i32 = 0 as i32;
+        let mut i: i32 = 0i32;
         while i < ctx.num_vaos as i32 {
             gl::DisableVertexAttribArray(ctx.vaos[i as usize]);
             i += 1;
@@ -4775,23 +4721,21 @@ pub unsafe fn GlslShader_Render(
     gl::UseProgram(0 as GLuint);
     gl::BindTexture(GL_TEXTURE_2D as GLenum, 0 as GLuint);
     gl::BindBuffer(GL_ARRAY_BUFFER as GLenum, 0 as GLuint);
-    if (*gs).max_prev_frame != 0 as i32 {
-        let store_pos: *mut GlTextureWithSize = (&raw mut (*gs).prev_frame
-            as *mut GlTextureWithSize)
-            .offset(((*gs).frame_count & 7 as u32) as isize)
-            as *mut GlTextureWithSize;
+    if (*gs).max_prev_frame != 0i32 {
+        let store_pos: *mut GlTextureWithSize =
+            (&raw mut (*gs).prev_frame as *mut GlTextureWithSize)
+                .offset(((*gs).frame_count & 7u32) as isize) as *mut GlTextureWithSize;
         let load_pos: *mut GlTextureWithSize = (&raw mut (*gs).prev_frame as *mut GlTextureWithSize)
-            .offset(
-                ((*gs).frame_count.wrapping_sub((*gs).max_prev_frame as u32) & 7 as u32) as isize,
-            ) as *mut GlTextureWithSize;
+            .offset(((*gs).frame_count.wrapping_sub((*gs).max_prev_frame as u32) & 7u32) as isize)
+            as *mut GlTextureWithSize;
         '_c2rust_label: {
-            if (*store_pos).gl_texture == 0 as u32 {
+            if (*store_pos).gl_texture == 0u32 {
             } else {
                 __assert_fail(
                     b"store_pos->gl_texture == 0\0" as *const u8
                         as *const ::core::ffi::c_char,
                     b"src/glsl_shader.c\0" as *const u8 as *const ::core::ffi::c_char,
-                    609 as u32,
+                    609u32,
                     b"void GlslShader_Render(GlslShader *, GlTextureWithSize *, int, int, int, int)\0"
                         as *const u8 as *const ::core::ffi::c_char,
                 );
@@ -4801,7 +4745,7 @@ pub unsafe fn GlslShader_Render(
         *tex = *load_pos;
         memset(
             load_pos as *mut ::core::ffi::c_void,
-            0 as i32,
+            0i32,
             ::core::mem::size_of::<GlTextureWithSize>() as size_t,
         );
     }
