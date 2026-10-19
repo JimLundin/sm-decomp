@@ -1701,28 +1701,69 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `3c93b8bc` passes
-uninterrupted full boot any% 129712/0 (212.17s) and Speed Booster
-148406/0 (268.87s), native exits 0. All 74 source/configuration/host/
-progress inputs match that commit. This adds the literal arrays, integer
-comparisons and PPU window interval helper to the reviewed families below.
-Later projectile, parenthesis and hardware work retains its own checks.
+Latest reviewed integration (2026-10-19): frozen `c66ea0b3` passes
+uninterrupted full boot any% 129712/0 (173.07s) and Speed Booster
+148406/0 (215.89s), native exits 0. All 74 source/configuration/host/
+progress inputs match that commit. This adds the shared HDMA table reads to
+the reviewed families below. Later projectile, parenthesis and hardware work
+retains its own checks outside this snapshot.
 
-Serialized checkpoint payloads are byte-identical to independently reviewed
-cc17d506 and ee7e7510. Against cc17d506, the only changed header field is the
-runtime-source fingerprint, independently recomputed from its actual inputs;
-only snes/ppu.rs changes among those inputs. The Game declaration and checkpoint
-codec are unchanged. All other bindings, including the payload checksum,
-agree. No compatibility hash is patched and neither replay loads an earlier
-checkpoint. Complete non-timing diagnostics and coverage agree, including the
-known fingernail diagnostic. Speed reaches 55 rooms and 53 enemy definitions,
-ending in state 8, room $AD1B, X171/Y123, pose $0089, health 46/399,
-missiles 6/15, Supers 0/5, items $3105 and beams $1004 equipped/collected.
-Kraid is defeated and all eight coroutine bytes are zero. Credits remain
-unexercised. The same build passes the full-boot pause route 40836/0
-(73.18s), native exit 0, returning to gameplay in room $96BA.
-Its payload and every non-runtime binding match the prior pause run, as do
-complete non-timing logs. Earlier mode observations retain their scope below.
+Serialized checkpoint payloads are byte-identical to reviewed 3c93b8bc.
+The only changed header field is the runtime-source fingerprint, independently
+recomputed from its actual inputs; only snes/dma.rs changes among those inputs.
+The Game declaration and checkpoint codec are unchanged. All other bindings,
+including the payload checksum, agree. No compatibility hash is patched and
+neither replay loads an earlier checkpoint. Complete non-timing diagnostics
+and coverage agree, including the known fingernail diagnostic. Speed reaches
+55 rooms and 53 enemy definitions, ending in state 8, room $AD1B, X171/Y123,
+pose $0089, health 46/399, missiles 6/15, Supers 0/5, items $3105 and
+beams $1004 equipped/collected. Kraid is defeated and all eight coroutine
+bytes are zero. Credits remain unexercised. The same build passes the full-boot
+pause route 40836/0 (58.30s), native exit 0, returning to gameplay in
+room $96BA. Its payload and every non-runtime binding match the prior pause
+run, as do complete non-timing logs. Earlier mode observations retain their
+scope below.
+
+Independent HDMA reconstruction covers all 74 integration inputs and all
+67 sources in the owner's comparison and final-replay snapshots. Replacing
+only four selected sequences and adding the two helpers reconstructs the
+entire DMA file. Both indirect-load sequences and both descriptor reads are
+identical after local renaming. Callers, gates, the direct data-transfer path
+and all other sources remain exact. The helper advances the table pointer
+before each bus read, reads the bank and SNES pointer at that read, writes
+the low size byte before the high read, captures size before that callback,
+and updates the timer afterward. Callback changes remain live at their
+original points. Combining a u8 bank and u16 address fits u32 and the earlier
+i32; size combination fits u16, and wrapping timer addition preserves truncation.
+Raw DMA/channel pointers stay raw; no mutable DMA/channel borrow spans a bus
+operation. RAM layout and the Game declaration are unchanged.
+
+Fresh synthetic-bus checks compare the exact extracted old/new sequences and
+an independent state model in 3145728 cases. Every u16 table address and timer
+occurs for all eight channels, both descriptor/indirect operations, and three
+callback modes. Mutations always target the active channel; they also change
+a neighboring channel and can switch the SNES pointer between reads. Complete
+initialized DMA bytes and ordered callback observations agree. Late pointer
+increment, delayed low-byte write, reading size after the high callback and
+early timer update each fail the comparator. Inputs are correlated sweeps,
+not every field combination or natural bus execution.
+
+Another 12288 contexts compare the actual fresh-library dma_initHdma and
+dma_doHdma entries against exact extracted former callers using the unchanged
+real SNES bus and transfer routine. They include 3072 general contexts and
+9216 targeted DMA-register reads covering all eight channels. Complete
+initialized DMA, PPU, SNES, cart, WRAM and Game RAM agree after normalizing
+only allocation-pointer identities. Memory cases run four steps; register
+cases run one. Targeted observations confirm 6480 initial zero descriptors
+skip indirect loading, while 2160 zero reloads still load it and set
+termination/doTransfer as before. These are constructed contexts, not movie
+call counts or full frontend/audio coverage.
+
+The owner's 1048576 synthetic comparisons select the observed/mutated channel
+from the address bank, which differs from the active channel in many cases.
+The fresh active-channel checks supplement that limitation. Its separate 3072
+real-bus contexts and final full-boot logs retain checked source/library/input
+pins. Superseded overlapping replays are excluded; the final snapshots match.
 
 Independent comparison review checks all 4657 operators, bool results and
 ordered operands against before/after compiler records. Every nonliteral
@@ -2096,15 +2137,15 @@ dedicated 5544-case API checks and 24/24 site observations are recorded by
 implementation; this review verifies the source transformation. The movie
 replays do not establish frontend decoder execution coverage.
 
-The normal Cargo integration is independently built from frozen 3c93b8bc.
+The normal Cargo integration is independently built from frozen c66ea0b3.
 All 74 inputs, the fresh game library/DLL and copied fixtures stay fixed.
 Only registry dependencies seed this checkout, including existing registry
 build-script executable links. Formatting, normal release
-(33.51s), host build (4.02s) and progress pass. Since reviewed ee7e7510,
-these families remove 7855 Rust lines and 9196 c_int casts across 7791 lines.
-Raw-offset lines rise by one through formatting; raw operations and unsafe,
-extern and export counts are unchanged. Frozen totals: 192949 Rust lines,
-21355 raw-offset lines, 34468 c_int casts across 27496 lines and 6501 unsafe
+(29.24s), host build (4.16s) and progress pass. This family removes
+54 Rust lines and 28 c_int casts across 28 lines. Two private unsafe helpers
+own the repeated raw bus operations, raising unsafe functions by two; other
+progress counters are unchanged. Frozen totals: 192895 Rust lines,
+21355 raw-offset lines, 34440 c_int casts across 27468 lines and 6503 unsafe
 functions. This audit changes no maintained Rust or assets; later peer work
 retains its own checks.
 
