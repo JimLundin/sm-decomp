@@ -72,6 +72,26 @@ Formatting/check, normal release (21.32s), stable workspace release and
 progress pass. The two staged files match the verified source; concurrent
 projectile and SPC work remains separate.
 
+Zlib decode family (2026-10-19): all six public entry points now share
+one allocating core and one caller-buffer core. Header flags, initial sizes,
+outlen writes, partial buffer writes and failure cleanup remain exact.
+Complete ast-grep nodes and parameter substitution account for the family;
+expanding the change reconstructs the original source. Net Rust lines -57,
+casts -32. Unsafe functions +1 is the new private pointer-buffer helper;
+the six existing public pointer APIs retain their contracts.
+
+Actual before/after release libraries match 4004 focused zlib cases, including
+stored/fixed/dynamic streams, truncations, malformed headers, small buffers,
+null outlen, 207 partial-write failures and 150 allocation-failure cases.
+The existing 5472 image and 72 zlib API cases also pass, preserving the six
+known raw-stream rejections. These checks are finite fixture coverage.
+Frozen c5f296f8 plus this family passes any% 129712/0 (159.66s),
+native exit 0, with fixed source/DLL/fixtures. This movie supplies core
+regression coverage; the direct API comparisons exercise the frontend.
+Formatting/check, normal release, stable workspace release and progress pass.
+Concurrent projectile and SPC edits remain separate. Continue the complete
+block-reaction/extension family audit and eligible Clippy simplifications.
+
 Refreshed historical-link triage (2026-10-19): the committed 8caf32e0
 snapshot reports 335 AST pairs at 0.90/100 nodes and 744 at 0.90/50 nodes.
 Of the original Rust's 456 pairs, 304 retain the standard link and 82 more

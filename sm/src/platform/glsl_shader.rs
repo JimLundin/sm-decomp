@@ -2239,35 +2239,12 @@ unsafe fn stbi__do_zlib(
     stbi__parse_zlib(a, parse_header)
 }
 pub unsafe fn stbi_zlib_decode_malloc_guesssize(
-    mut buffer: *const ::core::ffi::c_char,
-    mut len: ::core::ffi::c_int,
-    mut initial_size: ::core::ffi::c_int,
-    mut outlen: *mut ::core::ffi::c_int,
+    buffer: *const ::core::ffi::c_char,
+    len: ::core::ffi::c_int,
+    initial_size: ::core::ffi::c_int,
+    outlen: *mut ::core::ffi::c_int,
 ) -> *mut ::core::ffi::c_char {
-    let mut a: stbi__zbuf = stbi__zbuf::EMPTY;
-    let mut p: *mut ::core::ffi::c_char =
-        stbi__malloc(initial_size as size_t) as *mut ::core::ffi::c_char;
-    if p.is_null() {
-        return ::core::ptr::null_mut::<::core::ffi::c_char>();
-    }
-    a.zbuffer = buffer as *mut stbi_uc;
-    a.zbuffer_end = (buffer as *mut stbi_uc).offset(len as isize);
-    if stbi__do_zlib(
-        &raw mut a,
-        p,
-        initial_size,
-        1 as ::core::ffi::c_int,
-        1 as ::core::ffi::c_int,
-    ) != 0
-    {
-        if !outlen.is_null() {
-            *outlen = a.zout.offset_from(a.zout_start) as ::core::ffi::c_long as ::core::ffi::c_int;
-        }
-        a.zout_start
-    } else {
-        free(a.zout_start as *mut ::core::ffi::c_void);
-        ::core::ptr::null_mut::<::core::ffi::c_char>()
-    }
+    stbi_zlib_decode_malloc_guesssize_headerflag(buffer, len, initial_size, outlen, 1)
 }
 pub unsafe fn stbi_zlib_decode_malloc(
     mut buffer: *const ::core::ffi::c_char,
@@ -2308,78 +2285,44 @@ pub unsafe fn stbi_zlib_decode_malloc_guesssize_headerflag(
         ::core::ptr::null_mut::<::core::ffi::c_char>()
     }
 }
-pub unsafe fn stbi_zlib_decode_buffer(
-    mut obuffer: *mut ::core::ffi::c_char,
-    mut olen: ::core::ffi::c_int,
-    mut ibuffer: *const ::core::ffi::c_char,
-    mut ilen: ::core::ffi::c_int,
+unsafe fn decode_zlib_buffer(
+    output: *mut ::core::ffi::c_char,
+    output_len: ::core::ffi::c_int,
+    input: *const ::core::ffi::c_char,
+    input_len: ::core::ffi::c_int,
+    parse_header: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
-    let mut a: stbi__zbuf = stbi__zbuf::EMPTY;
-    a.zbuffer = ibuffer as *mut stbi_uc;
-    a.zbuffer_end = (ibuffer as *mut stbi_uc).offset(ilen as isize);
-    if stbi__do_zlib(
-        &raw mut a,
-        obuffer,
-        olen,
-        0 as ::core::ffi::c_int,
-        1 as ::core::ffi::c_int,
-    ) != 0
-    {
-        a.zout.offset_from(a.zout_start) as ::core::ffi::c_long as ::core::ffi::c_int
+    let mut state = stbi__zbuf::EMPTY;
+    state.zbuffer = input as *mut stbi_uc;
+    state.zbuffer_end = (input as *mut stbi_uc).offset(input_len as isize);
+    if stbi__do_zlib(&raw mut state, output, output_len, 0, parse_header) != 0 {
+        state.zout.offset_from(state.zout_start) as ::core::ffi::c_long as ::core::ffi::c_int
     } else {
-        -(1 as ::core::ffi::c_int)
+        -1
     }
+}
+pub unsafe fn stbi_zlib_decode_buffer(
+    obuffer: *mut ::core::ffi::c_char,
+    olen: ::core::ffi::c_int,
+    ibuffer: *const ::core::ffi::c_char,
+    ilen: ::core::ffi::c_int,
+) -> ::core::ffi::c_int {
+    decode_zlib_buffer(obuffer, olen, ibuffer, ilen, 1)
 }
 pub unsafe fn stbi_zlib_decode_noheader_malloc(
-    mut buffer: *const ::core::ffi::c_char,
-    mut len: ::core::ffi::c_int,
-    mut outlen: *mut ::core::ffi::c_int,
+    buffer: *const ::core::ffi::c_char,
+    len: ::core::ffi::c_int,
+    outlen: *mut ::core::ffi::c_int,
 ) -> *mut ::core::ffi::c_char {
-    let mut a: stbi__zbuf = stbi__zbuf::EMPTY;
-    let mut p: *mut ::core::ffi::c_char = stbi__malloc(16384 as size_t) as *mut ::core::ffi::c_char;
-    if p.is_null() {
-        return ::core::ptr::null_mut::<::core::ffi::c_char>();
-    }
-    a.zbuffer = buffer as *mut stbi_uc;
-    a.zbuffer_end = (buffer as *mut stbi_uc).offset(len as isize);
-    if stbi__do_zlib(
-        &raw mut a,
-        p,
-        16384 as ::core::ffi::c_int,
-        1 as ::core::ffi::c_int,
-        0 as ::core::ffi::c_int,
-    ) != 0
-    {
-        if !outlen.is_null() {
-            *outlen = a.zout.offset_from(a.zout_start) as ::core::ffi::c_long as ::core::ffi::c_int;
-        }
-        a.zout_start
-    } else {
-        free(a.zout_start as *mut ::core::ffi::c_void);
-        ::core::ptr::null_mut::<::core::ffi::c_char>()
-    }
+    stbi_zlib_decode_malloc_guesssize_headerflag(buffer, len, 16384, outlen, 0)
 }
 pub unsafe fn stbi_zlib_decode_noheader_buffer(
-    mut obuffer: *mut ::core::ffi::c_char,
-    mut olen: ::core::ffi::c_int,
-    mut ibuffer: *const ::core::ffi::c_char,
-    mut ilen: ::core::ffi::c_int,
+    obuffer: *mut ::core::ffi::c_char,
+    olen: ::core::ffi::c_int,
+    ibuffer: *const ::core::ffi::c_char,
+    ilen: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
-    let mut a: stbi__zbuf = stbi__zbuf::EMPTY;
-    a.zbuffer = ibuffer as *mut stbi_uc;
-    a.zbuffer_end = (ibuffer as *mut stbi_uc).offset(ilen as isize);
-    if stbi__do_zlib(
-        &raw mut a,
-        obuffer,
-        olen,
-        0 as ::core::ffi::c_int,
-        0 as ::core::ffi::c_int,
-    ) != 0
-    {
-        a.zout.offset_from(a.zout_start) as ::core::ffi::c_long as ::core::ffi::c_int
-    } else {
-        -(1 as ::core::ffi::c_int)
-    }
+    decode_zlib_buffer(obuffer, olen, ibuffer, ilen, 0)
 }
 unsafe fn stbi__get_chunk_header(mut s: *mut stbi__context) -> stbi__pngchunk {
     let mut c: stbi__pngchunk = stbi__pngchunk {
