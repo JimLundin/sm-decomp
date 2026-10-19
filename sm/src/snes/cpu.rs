@@ -1021,11 +1021,11 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0x22 => {
-                let value_0 = fetch_word(cpu, game);
+                let target = fetch_word(cpu, game);
                 let newK = fetch_byte(cpu, game);
                 push_byte(cpu, (*cpu).k, game);
                 push_word(cpu, (*cpu).pc.wrapping_sub(1), game);
-                (*cpu).pc = value_0;
+                (*cpu).pc = target;
                 (*cpu).k = newK;
                 break;
             }
@@ -1369,9 +1369,9 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0x5c => {
-                let value_1: u16 = fetch_word(cpu, game);
-                let new_k: u8 = fetch_byte(cpu, game);
-                if new_k == 0x80 && value_1 == 0x8573 {
+                let target: u16 = fetch_word(cpu, game);
+                let target_bank: u8 = fetch_byte(cpu, game);
+                if target_bank == 0x80 && target == 0x8573 {
                     printf(
                         b"Current PC = 0x%x\n\0" as *const u8 as *const ::core::ffi::c_char,
                         ((*cpu).k as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
@@ -1380,8 +1380,8 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                     DumpCpuHistory(game);
                     Die(b"The game has crashed!\n\0" as *const u8 as *const ::core::ffi::c_char);
                 }
-                (*cpu).k = new_k;
-                (*cpu).pc = value_1;
+                (*cpu).k = target_bank;
+                (*cpu).pc = target;
                 break;
             }
             0x5d => {
@@ -2274,9 +2274,9 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0xfc => {
-                let value_3 = address_absolute_indexed_indirect(cpu, game);
+                let target = address_absolute_indexed_indirect(cpu, game);
                 push_word(cpu, (*cpu).pc.wrapping_sub(1), game);
-                (*cpu).pc = value_3;
+                (*cpu).pc = target;
                 break;
             }
             0xfd => {

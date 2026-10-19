@@ -8933,6 +8933,16 @@ remote sync remain separate; ROM/inputs/probes stay ignored. Credits, full
 gameplay/hardware, render/audio fidelity, masked RAM and ownership remain
 unfinished.
 
+CPU jump target names (2026-10-19): JSL/JML/indexed-indirect JSR use target
+instead of numbered values; JML's bank is target_bank. Scoped identifier-only
+replacement matches frozen HEAD `77cb4368` plus this change exactly; operand
+fetches, stack writes, diagnostics and PC/bank stores are unchanged. Prefix
+3,600/0 (1.16s) executes JSL/JML/indexed-indirect JSR 74,052/3,664/31,462 times.
+Clean full any% 129,712/0 (51.66s), native exit 0. Cargo fmt/check, release
+library, normal metadata and optimized core/DLL builds pass; full frontend
+linking still lacks SDL2. Live CPU matches verified source. Progress counters
+unchanged. Complete gameplay and rendering/audio remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
