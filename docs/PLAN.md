@@ -43,18 +43,18 @@ No maintained source or own residue counters change in this quality check.
 Later Cargo-profile and gameplay changes retain separate verification;
 full gameplay/credits, hardware/audio coverage and remaining masks stay open.
 
-Latest focused check: frozen `5fee3c5a` plus safe screen fades passes
-any% 129712/0 (226.87s) and Waver 58109/0 (115.77s), both native exits 0.
-HandleFadeIn/Out share a byte-backed timer update, preserving the signed
-decrement test, reload-before-brightness order and force-blank bit behavior.
-A shared 9,000-frame prefix passes with 182 actual old/current full-RAM
-comparisons: 107 fade-out and 75 fade-in calls. Constructed controls pass
-155,648 pairs across every timer word and all display bytes at selected
-timer/delay boundaries; all 128 KiB RAM matches. Terminal brightness cases
-that preserve the entire display byte have constructed coverage only.
-Frozen source hashes, exact observation stripping and independent review
-pass. Formatting, release build and progress pass. Own raw offsets -16,
-unsafe functions -2, cast lines -38 and Rust lines -30; other counters unchanged.
+Latest focused check: frozen `cd0a6111` plus safe OAM clears passes
+any% 129712/0 (199.39s) and Waver 58109/0 (104.81s), both native exits 0.
+ClearUnusedOam uses four-byte slices to hide only unused sprite Y positions,
+then resets oam_next_ptr. ClearOamExt still clears exactly 32 bytes.
+A shared 9,000-frame prefix passes 17,870 actual old/current full-RAM
+comparisons, 8,935 calls per routine, with both routines changing RAM.
+Constructed controls pass all 65,536 pointer words and 336 extension cases,
+preserving index rounding, high-pointer no-op behavior and neighboring RAM.
+Natural pointers are aligned and at most 512; odd/higher cases are constructed.
+Frozen hashes, exact observation stripping and independent review pass.
+Formatting, release build and progress pass. Own raw offsets -4, unsafe
+functions -2, cast lines -8 and Rust lines -7; other counters unchanged.
 
 Everything that existed before is in the branch `archive/pre-transpile-2026-10-17`.
 

@@ -1114,28 +1114,21 @@ pub fn HandleFadeIn(game: &mut Game) {
         *reg_inidisp = brightness;
     }
 }
-pub unsafe fn ClearUnusedOam(game: &mut Game) {
-    let mut i: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x590 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        >> 2 as ::core::ffi::c_int;
-    while i < 0x80 as ::core::ffi::c_int {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x370 as ::core::ffi::c_int as isize)
-            as *mut OamEnt)
-            .offset(i as isize))
-        .ycoord = 0xf0 as uint8;
-        i += 1;
+pub fn ClearUnusedOam(game: &mut Game) {
+    let oam_next_ptr = u16::from_le_bytes([game.g_ram[0x590], game.g_ram[0x591]]);
+    let first_unused_sprite = usize::from(oam_next_ptr >> 2);
+    for sprite in game.g_ram[0x370..0x570]
+        .chunks_exact_mut(4)
+        .skip(first_unused_sprite)
+    {
+        // Each four-byte OAM entry stores its Y coordinate in byte 1.
+        sprite[1] = 0xf0;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    game.g_ram[0x590..0x592].fill(0);
 }
-pub unsafe fn ClearOamExt(game: &mut Game) {
-    memset(
-        (&raw mut game.g_ram as *mut uint8).offset(0x570 as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut ::core::ffi::c_void,
-        0 as ::core::ffi::c_int,
-        (::core::mem::size_of::<uint16>() as size_t).wrapping_mul(16 as size_t),
-    );
+
+pub fn ClearOamExt(game: &mut Game) {
+    game.g_ram[0x570..0x590].fill(0);
 }
 pub unsafe fn QueueMode7Transfers(mut db: uint8, mut k: uint16, game: &mut Game) {
     let mut p: *const uint8 = RomPtrWithBank(db, k as uint16_t, game);
