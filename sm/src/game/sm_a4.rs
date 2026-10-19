@@ -2598,47 +2598,43 @@ pub unsafe fn Crocomire_Func_94(game: &mut Game) {
 pub unsafe fn Crocomire_Powerbomb(game: &mut Game) {
     let mut v2: uint16 = 0;
     let E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int, game);
-    if (*E).crocom_var_A == 0 {
-        if g_word_A4869E != 0 {
-            (*E).crocom_var_D = g_word_A4869E;
-            if (*E).crocom_var_C != 24u16 {
-                (*E).crocom_var_B = ((*E).crocom_var_B as ::core::ffi::c_int
-                    & 0x3ff0 as ::core::ffi::c_int
-                    | 0x8000 as ::core::ffi::c_int) as uint16;
-                (*E).crocom_var_E = 10 as uint16;
-                (*E).base.flash_timer = ((*E).base.flash_timer).wrapping_add(4u16);
-                (*E).base.ai_handler_bits = ((*E).base.ai_handler_bits) | (2u16);
-                (*E).crocom_var_C = 24 as uint16;
-                let mut spritemap_pointer: uint16 = (*E).base.spritemap_pointer;
-                let mut v3: uint16 = 0;
-                let mut n: ::core::ffi::c_int =
-                    *(RomPtr_A4(spritemap_pointer, game) as *mut uint16) as ::core::ffi::c_int;
-                loop {
-                    v2 = *(RomPtr_A4(spritemap_pointer, game) as *mut uint16).offset(3);
-                    v3 = addr_kCrocomire_Ilist_BDAE as uint16;
-                    if v2 as ::core::ffi::c_int
-                        == addr_kCrocomire_BigSprmap_D600 as ::core::ffi::c_int
-                    {
-                        break;
-                    }
-                    v3 = addr_kCrocomire_Ilist_BDB2 as uint16;
-                    if v2 as ::core::ffi::c_int
-                        == addr_kCrocomire_BigSprmap_D51C as ::core::ffi::c_int
-                    {
-                        break;
-                    }
-                    spritemap_pointer = (spritemap_pointer).wrapping_add(8u16);
-                    n -= 1;
-                    if (n != 0) {
-                        continue;
-                    }
-                    v3 = addr_kCrocomire_Ilist_BDB6 as uint16;
+    if (*E).crocom_var_A == 0 && g_word_A4869E != 0 {
+        (*E).crocom_var_D = g_word_A4869E;
+        if (*E).crocom_var_C != 24u16 {
+            (*E).crocom_var_B = ((*E).crocom_var_B as ::core::ffi::c_int
+                & 0x3ff0 as ::core::ffi::c_int
+                | 0x8000 as ::core::ffi::c_int) as uint16;
+            (*E).crocom_var_E = 10 as uint16;
+            (*E).base.flash_timer = ((*E).base.flash_timer).wrapping_add(4u16);
+            (*E).base.ai_handler_bits = ((*E).base.ai_handler_bits) | (2u16);
+            (*E).crocom_var_C = 24 as uint16;
+            let mut spritemap_pointer: uint16 = (*E).base.spritemap_pointer;
+            let mut v3: uint16 = 0;
+            let mut n: ::core::ffi::c_int =
+                *(RomPtr_A4(spritemap_pointer, game) as *mut uint16) as ::core::ffi::c_int;
+            loop {
+                v2 = *(RomPtr_A4(spritemap_pointer, game) as *mut uint16).offset(3);
+                v3 = addr_kCrocomire_Ilist_BDAE as uint16;
+                if v2 as ::core::ffi::c_int == addr_kCrocomire_BigSprmap_D600 as ::core::ffi::c_int
+                {
                     break;
                 }
-                let E0: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int, game);
-                (*E0).base.current_instruction = v3;
-                (*E0).base.instruction_timer = 1 as uint16;
+                v3 = addr_kCrocomire_Ilist_BDB2 as uint16;
+                if v2 as ::core::ffi::c_int == addr_kCrocomire_BigSprmap_D51C as ::core::ffi::c_int
+                {
+                    break;
+                }
+                spritemap_pointer = (spritemap_pointer).wrapping_add(8u16);
+                n -= 1;
+                if (n != 0) {
+                    continue;
+                }
+                v3 = addr_kCrocomire_Ilist_BDB6 as uint16;
+                break;
             }
+            let E0: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int, game);
+            (*E0).base.current_instruction = v3;
+            (*E0).base.instruction_timer = 1 as uint16;
         }
     }
 }

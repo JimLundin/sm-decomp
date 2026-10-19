@@ -1349,15 +1349,14 @@ pub unsafe fn MotherBrainsBody_FirstPhase_DoubleRet(game: &mut Game) {
         if ram_word!(game, samus_x_pos) as ::core::ffi::c_int - 236 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             != 0
+            && (*E1).base.health == 0
         {
-            if (*E1).base.health == 0 {
-                let E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
-                (*E).mbn_var_1D = 1 as uint16;
-                (*E).mbn_var_00 = 1 as uint16;
-                DisableMinimapAndMarkBossRoomAsExplored(game);
-                QueueMusic_Delayed8(6 as uint16, game);
-                MotherBrain_SealWall(game);
-            }
+            let E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
+            (*E).mbn_var_1D = 1 as uint16;
+            (*E).mbn_var_00 = 1 as uint16;
+            DisableMinimapAndMarkBossRoomAsExplored(game);
+            QueueMusic_Delayed8(6 as uint16, game);
+            MotherBrain_SealWall(game);
         }
     }
     MotherBrain_SamusCollDetect(game);
@@ -3488,8 +3487,8 @@ pub unsafe fn MotherBrain_SamusCollDetect(game: &mut Game) {
         {
             v1 = ((R26) as i8) & (1i8);
             R26 = (R26 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
-            if v1 != 0 {
-                if MotherBrain_SamusCollDetectPart(
+            if v1 != 0
+                && MotherBrain_SamusCollDetectPart(
                     0xb44b as uint16,
                     (*E).mbn_var_25,
                     (*E).mbn_var_26,
@@ -3497,24 +3496,21 @@ pub unsafe fn MotherBrain_SamusCollDetect(game: &mut Game) {
                 ) as ::core::ffi::c_int
                     & 1 as ::core::ffi::c_int
                     == 0
-                {
-                    if MotherBrain_SamusCollDetectPart(
-                        0xb44b as uint16,
-                        (*E).mbn_var_28,
-                        (*E).mbn_var_29,
-                        game,
-                    ) as ::core::ffi::c_int
-                        & 1 as ::core::ffi::c_int
-                        == 0
-                    {
-                        MotherBrain_SamusCollDetectPart(
-                            0xb44b as uint16,
-                            (*E).mbn_var_2B,
-                            (*E).mbn_var_2C,
-                            game,
-                        );
-                    }
-                }
+                && MotherBrain_SamusCollDetectPart(
+                    0xb44b as uint16,
+                    (*E).mbn_var_28,
+                    (*E).mbn_var_29,
+                    game,
+                ) as ::core::ffi::c_int
+                    & 1 as ::core::ffi::c_int
+                    == 0
+            {
+                MotherBrain_SamusCollDetectPart(
+                    0xb44b as uint16,
+                    (*E).mbn_var_2B,
+                    (*E).mbn_var_2C,
+                    game,
+                );
             }
         }
     }
@@ -3622,10 +3618,9 @@ pub unsafe fn MotherBrainsBrain_Shot(game: &mut Game) {
             v2 = 13 as int16;
             let E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int, game);
             let flash_timer: uint16 = (*E1).base.flash_timer;
-            if flash_timer != 0 {
-                if flash_timer as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
-                    v2 = 14 as int16;
-                }
+            if flash_timer != 0 && flash_timer as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
+            {
+                v2 = 14 as int16;
             }
             (*E1).base.flash_timer = v2 as uint16;
             NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
@@ -3675,10 +3670,8 @@ pub unsafe fn MotherBrainsBrain_Touch(game: &mut Game) {
         v0 = 13 as int16;
         let v1: *mut EnemyData = gEnemyData(0 as ::core::ffi::c_int, game);
         let flash_timer: uint16 = (*v1.offset(1)).flash_timer;
-        if flash_timer != 0 {
-            if flash_timer as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
-                v0 = 14 as int16;
-            }
+        if flash_timer != 0 && flash_timer as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
+            v0 = 14 as int16;
         }
         (*v1.offset(1)).flash_timer = v0 as uint16;
     }
@@ -5415,14 +5408,13 @@ pub unsafe fn MotherBrain_HandleWalking(game: &mut Game) {
             }
             current_block_15 = 3512920355445576850;
         }
-        if current_block_15 == 3512920355445576850 {
-            if (ram_word!(game, random_number) as ::core::ffi::c_int & 0xfff as ::core::ffi::c_int)
+        if current_block_15 == 3512920355445576850
+            && (ram_word!(game, random_number) as ::core::ffi::c_int & 0xfff as ::core::ffi::c_int)
                 - 4032 as ::core::ffi::c_int
                 & 0x8000 as ::core::ffi::c_int
                 != 0
-            {
-                return;
-            }
+        {
+            return;
         }
         (*E).mbn_var_07 = 128 as uint16;
         if (*E).base.x_pos as ::core::ffi::c_int - 128 as ::core::ffi::c_int
@@ -6301,8 +6293,7 @@ pub unsafe fn ShitroidInCutscene_Touch(game: &mut Game) {
         Get_ShitroidInCutscene(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     if (*E).sice_var_A as ::core::ffi::c_int
         == 0xa9ca66 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
-    {
-        if Shitroid_AccelerateTowardsPoint(
+        && Shitroid_AccelerateTowardsPoint(
             ram_word!(game, cur_enemy_index),
             0x10 as uint16,
             ram_word!(game, samus_x_pos),
@@ -6311,11 +6302,10 @@ pub unsafe fn ShitroidInCutscene_Touch(game: &mut Game) {
         ) as ::core::ffi::c_int
             & 1 as ::core::ffi::c_int
             != 0
-        {
-            (*E).sice_var_B = 0 as uint16;
-            (*E).sice_var_C = 0 as uint16;
-            (*E).sice_var_A = ((0xa9ca7ai32) as u16);
-        }
+    {
+        (*E).sice_var_B = 0 as uint16;
+        (*E).sice_var_C = 0 as uint16;
+        (*E).sice_var_A = ((0xa9ca7ai32) as u16);
     }
 }
 pub unsafe fn ShitroidInCutscene_UpdateSpeedAndAngle(
@@ -6387,22 +6377,22 @@ pub unsafe fn MotherBrain_Pal_ProcessInvincibility(game: &mut Game) {
         let flash_timer: uint16 = (*Get_MotherBrain(0x40 as ::core::ffi::c_int, game))
             .base
             .flash_timer;
-        if flash_timer as ::core::ffi::c_int >> 1 as ::core::ffi::c_int != 0 {
-            if flash_timer as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
-                let mut i: ::core::ffi::c_int = 28 as ::core::ffi::c_int;
-                while i >= 0i32 {
-                    let v2: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-                    let v3: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xc000)
-                        as *mut uint16)
-                        .offset((v2 + 129 as ::core::ffi::c_int) as isize);
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
-                        .offset((v2 + 145 as ::core::ffi::c_int) as isize) = v3;
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
-                        .offset((v2 + 177 as ::core::ffi::c_int) as isize) = v3;
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
-                        .offset((v2 + 65 as ::core::ffi::c_int) as isize) = v3;
-                    i -= 2 as ::core::ffi::c_int;
-                }
+        if flash_timer as ::core::ffi::c_int >> 1 as ::core::ffi::c_int != 0
+            && flash_timer as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0
+        {
+            let mut i: ::core::ffi::c_int = 28 as ::core::ffi::c_int;
+            while i >= 0i32 {
+                let v2: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
+                let v3: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xc000)
+                    as *mut uint16)
+                    .offset((v2 + 129 as ::core::ffi::c_int) as isize);
+                *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
+                    .offset((v2 + 145 as ::core::ffi::c_int) as isize) = v3;
+                *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
+                    .offset((v2 + 177 as ::core::ffi::c_int) as isize) = v3;
+                *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
+                    .offset((v2 + 65 as ::core::ffi::c_int) as isize) = v3;
+                i -= 2 as ::core::ffi::c_int;
             }
         }
     }
@@ -8340,22 +8330,21 @@ pub unsafe fn Torizo_CorpseRottingCopyFunc(j: uint16, k: uint16, game: &mut Game
             *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
                 .offset((v19 + 136 as ::core::ffi::c_int) as isize);
     }
-    if (*E).dms_var_41 >= 0x10u16 {
-        if (*E).dms_var_41 as ::core::ffi::c_int - 94 as ::core::ffi::c_int
+    if (*E).dms_var_41 >= 0x10u16
+        && (*E).dms_var_41 as ::core::ffi::c_int - 94 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             != 0
-        {
-            let v21: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-            let v22: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    {
+        let v21: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        let v22: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
+            .offset((v22 + 145 as ::core::ffi::c_int) as isize) =
             *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                .offset((v22 + 145 as ::core::ffi::c_int) as isize) =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                    .offset((v21 + 144 as ::core::ffi::c_int) as isize);
+                .offset((v21 + 144 as ::core::ffi::c_int) as isize);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
+            .offset((v22 + 153 as ::core::ffi::c_int) as isize) =
             *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                .offset((v22 + 153 as ::core::ffi::c_int) as isize) =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                    .offset((v21 + 152 as ::core::ffi::c_int) as isize);
-        }
+                .offset((v21 + 152 as ::core::ffi::c_int) as isize);
     }
 }
 pub unsafe fn Sidehopper_CorpseRottingMoveFunc_0(j: uint16, k: uint16, game: &mut Game) {
@@ -8706,22 +8695,21 @@ pub unsafe fn Sidehopper_CorpseRottingCopyFunc_2(j: uint16, k: uint16, game: &mu
             *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
                 .offset((v9 + 456 as ::core::ffi::c_int) as isize);
     }
-    if (*E).dms_var_41 >= 8u16 {
-        if (*E).dms_var_41 as ::core::ffi::c_int - 38 as ::core::ffi::c_int
+    if (*E).dms_var_41 >= 8u16
+        && (*E).dms_var_41 as ::core::ffi::c_int - 38 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             != 0
-        {
-            let v11: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-            let v12: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    {
+        let v11: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        let v12: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
+            .offset((v12 + 465 as ::core::ffi::c_int) as isize) =
             *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                .offset((v12 + 465 as ::core::ffi::c_int) as isize) =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                    .offset((v11 + 464 as ::core::ffi::c_int) as isize);
+                .offset((v11 + 464 as ::core::ffi::c_int) as isize);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
+            .offset((v12 + 473 as ::core::ffi::c_int) as isize) =
             *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                .offset((v12 + 473 as ::core::ffi::c_int) as isize) =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                    .offset((v11 + 472 as ::core::ffi::c_int) as isize);
-        }
+                .offset((v11 + 472 as ::core::ffi::c_int) as isize);
     }
 }
 pub unsafe fn Zoomer_CorpseRottingMoveFunc_0(j: uint16, k: uint16, game: &mut Game) {
@@ -9697,20 +9685,19 @@ pub unsafe fn MotherBrain_CorpseRottingCopyFunc(j: uint16, k: uint16, game: &mut
             *(((&raw mut game.g_ram as *mut uint8).offset(0x90b0) as *mut uint16 as *mut uint8)
                 .offset(k as ::core::ffi::c_int as isize) as *mut uint16);
     }
-    if (*E).dms_var_41 >= 0x20u16 {
-        if (*E).dms_var_41 as ::core::ffi::c_int - 46 as ::core::ffi::c_int
+    if (*E).dms_var_41 >= 0x20u16
+        && (*E).dms_var_41 as ::core::ffi::c_int - 46 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             != 0
-        {
-            *(((&raw mut game.g_ram as *mut uint8).offset(0x90c2) as *mut uint16 as *mut uint8)
-                .offset(j as ::core::ffi::c_int as isize) as *mut uint16) =
-                *(((&raw mut game.g_ram as *mut uint8).offset(0x90c0) as *mut uint16 as *mut uint8)
-                    .offset(k as ::core::ffi::c_int as isize) as *mut uint16);
-            *(((&raw mut game.g_ram as *mut uint8).offset(0x90d2) as *mut uint16 as *mut uint8)
-                .offset(j as ::core::ffi::c_int as isize) as *mut uint16) =
-                *(((&raw mut game.g_ram as *mut uint8).offset(0x90d0) as *mut uint16 as *mut uint8)
-                    .offset(k as ::core::ffi::c_int as isize) as *mut uint16);
-        }
+    {
+        *(((&raw mut game.g_ram as *mut uint8).offset(0x90c2) as *mut uint16 as *mut uint8)
+            .offset(j as ::core::ffi::c_int as isize) as *mut uint16) =
+            *(((&raw mut game.g_ram as *mut uint8).offset(0x90c0) as *mut uint16 as *mut uint8)
+                .offset(k as ::core::ffi::c_int as isize) as *mut uint16);
+        *(((&raw mut game.g_ram as *mut uint8).offset(0x90d2) as *mut uint16 as *mut uint8)
+            .offset(j as ::core::ffi::c_int as isize) as *mut uint16) =
+            *(((&raw mut game.g_ram as *mut uint8).offset(0x90d0) as *mut uint16 as *mut uint8)
+                .offset(k as ::core::ffi::c_int as isize) as *mut uint16);
     }
 }
 pub unsafe fn sub_A9ECD0(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
@@ -10524,23 +10511,21 @@ pub unsafe fn Shitroid_CheckIfOnScreen(k: uint16, game: &mut Game) -> uint8 {
     if y_pos >= 0i16 {
         v3 = (y_pos as ::core::ffi::c_int + 96 as ::core::ffi::c_int
             - ram_word!(game, layer1_y_pos) as ::core::ffi::c_int) as int16;
-        if v3 >= 0i16 {
-            if v3 as ::core::ffi::c_int - 416 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
+        if v3 >= 0i16
+            && v3 as ::core::ffi::c_int - 416 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                 != 0
-            {
-                x_pos = (*E).base.x_pos as int16;
-                if x_pos >= 0i16 {
-                    v5 = (x_pos as ::core::ffi::c_int + 16 as ::core::ffi::c_int
-                        - ram_word!(game, layer1_x_pos) as ::core::ffi::c_int)
-                        as int16;
-                    if v5 >= 0i16 {
-                        if v5 as ::core::ffi::c_int - 288 as ::core::ffi::c_int
-                            & 0x8000 as ::core::ffi::c_int
-                            != 0
-                        {
-                            return 0 as uint8;
-                        }
-                    }
+        {
+            x_pos = (*E).base.x_pos as int16;
+            if x_pos >= 0i16 {
+                v5 = (x_pos as ::core::ffi::c_int + 16 as ::core::ffi::c_int
+                    - ram_word!(game, layer1_x_pos) as ::core::ffi::c_int)
+                    as int16;
+                if v5 >= 0i16
+                    && v5 as ::core::ffi::c_int - 288 as ::core::ffi::c_int
+                        & 0x8000 as ::core::ffi::c_int
+                        != 0
+                {
+                    return 0 as uint8;
                 }
             }
         }

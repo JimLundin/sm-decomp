@@ -1840,26 +1840,24 @@ unsafe fn main_0(
                     if event.button.button as ::core::ffi::c_int == SDL_BUTTON_LEFT
                         && event.button.state as ::core::ffi::c_int == SDL_PRESSED
                         && event.button.clicks as ::core::ffi::c_int == 2 as ::core::ffi::c_int
-                    {
-                        if g_win_flags
+                        && g_win_flags
                             & SDL_WINDOW_FULLSCREEN_DESKTOP as ::core::ffi::c_int as uint32
                             == 0 as uint32
-                            && g_win_flags & SDL_WINDOW_FULLSCREEN as ::core::ffi::c_int as uint32
-                                == 0 as uint32
-                            && SDL_GetModState() as ::core::ffi::c_uint
-                                & KMOD_SHIFT as ::core::ffi::c_int as ::core::ffi::c_uint
-                                != 0
-                        {
-                            g_win_flags ^= SDL_WINDOW_BORDERLESS as ::core::ffi::c_int as uint32;
-                            SDL_SetWindowBordered(
-                                g_window as *mut SDL_Window,
-                                if g_win_flags & SDL_WINDOW_BORDERLESS as uint32 == 0 as uint32 {
-                                    SDL_TRUE
-                                } else {
-                                    SDL_FALSE
-                                },
-                            );
-                        }
+                        && g_win_flags & SDL_WINDOW_FULLSCREEN as ::core::ffi::c_int as uint32
+                            == 0 as uint32
+                        && SDL_GetModState() as ::core::ffi::c_uint
+                            & KMOD_SHIFT as ::core::ffi::c_int as ::core::ffi::c_uint
+                            != 0
+                    {
+                        g_win_flags ^= SDL_WINDOW_BORDERLESS as ::core::ffi::c_int as uint32;
+                        SDL_SetWindowBordered(
+                            g_window as *mut SDL_Window,
+                            if g_win_flags & SDL_WINDOW_BORDERLESS as uint32 == 0 as uint32 {
+                                SDL_TRUE
+                            } else {
+                                SDL_FALSE
+                            },
+                        );
                     }
                 }
                 768 => {
@@ -2369,20 +2367,19 @@ unsafe fn HandleGamepadAxisInput(
                 >> 5 as ::core::ffi::c_int) as usize] as ::core::ffi::c_int;
         }
         g_gamepad_buttons = buttons as uint8;
-    } else if axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT as ::core::ffi::c_int
-        || axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT as ::core::ffi::c_int
+    } else if (axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT as ::core::ffi::c_int
+        || axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT as ::core::ffi::c_int)
+        && (value < 12000 as ::core::ffi::c_int || value >= 16000 as ::core::ffi::c_int)
     {
-        if value < 12000 as ::core::ffi::c_int || value >= 16000 as ::core::ffi::c_int {
-            HandleGamepadInput(
-                if axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT as ::core::ffi::c_int {
-                    kGamepadBtn_L2 as ::core::ffi::c_int
-                } else {
-                    kGamepadBtn_R2 as ::core::ffi::c_int
-                },
-                value >= 12000 as ::core::ffi::c_int,
-                game,
-            );
-        }
+        HandleGamepadInput(
+            if axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT as ::core::ffi::c_int {
+                kGamepadBtn_L2 as ::core::ffi::c_int
+            } else {
+                kGamepadBtn_R2 as ::core::ffi::c_int
+            },
+            value >= 12000 as ::core::ffi::c_int,
+            game,
+        );
     }
 }
 unsafe fn SwitchDirectory() {

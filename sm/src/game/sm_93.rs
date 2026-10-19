@@ -465,14 +465,13 @@ pub unsafe fn sub_9382FD(game: &mut Game) {
                 - 8 as ::core::ffi::c_int
                 - ram_word!(game, layer1_y_pos) as ::core::ffi::c_int)
                 as uint16;
-            if ((r18 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int) == 0i32) {
-                if (*((&raw mut game.g_ram as *mut uint8).offset(0xcb8) as *mut uint16)
+            if ((r18 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int) == 0i32)
+                && (*((&raw mut game.g_ram as *mut uint8).offset(0xcb8) as *mut uint16)
                     .offset(v1 as isize) as ::core::ffi::c_int
                     & 0x8000 as ::core::ffi::c_int)
                     != 0i32
-                {
-                    DrawProjectileSpritemap(v0, r20, r18, game);
-                }
+            {
+                DrawProjectileSpritemap(v0, r20, r18, game);
             }
             v0 = ram_word!(game, projectile_index);
         }

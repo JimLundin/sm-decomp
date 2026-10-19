@@ -1753,17 +1753,14 @@ static kSpcPlayer_Maps: [MemMapSized; 283] = [
 ];
 unsafe fn Dsp_Write(p: *mut SpcPlayer, mut reg: uint8_t, value: uint8) {
     let hist: *mut DspRegWriteHistory = (*p).reg_write_history;
-    if !hist.is_null() {
-        if (*hist).count < 256 as uint32_t {
-            if (*hist).count == 9 as uint32_t
-                && reg as ::core::ffi::c_int == 0x5d as ::core::ffi::c_int
-            {
-                reg = (reg as ::core::ffi::c_int + 0 as ::core::ffi::c_int) as uint8_t;
-            }
-            (*hist).addr[(*hist).count as usize] = reg;
-            (*hist).val[(*hist).count as usize] = value as uint8_t;
-            (*hist).count = (*hist).count.wrapping_add(1);
+    if !hist.is_null() && (*hist).count < 256 as uint32_t {
+        if (*hist).count == 9 as uint32_t && reg as ::core::ffi::c_int == 0x5d as ::core::ffi::c_int
+        {
+            reg = (reg as ::core::ffi::c_int + 0 as ::core::ffi::c_int) as uint8_t;
         }
+        (*hist).addr[(*hist).count as usize] = reg;
+        (*hist).val[(*hist).count as usize] = value as uint8_t;
+        (*hist).count = (*hist).count.wrapping_add(1);
     }
     if !(*p).dsp.is_null() {
         dsp_write((*p).dsp, reg, value as uint8_t);
@@ -2495,16 +2492,16 @@ unsafe fn HandlePanAndSweep(p: *mut SpcPlayer, c: *mut Channel) {
     }
 }
 unsafe fn HandleNoteTick(p: *mut SpcPlayer, c: *mut Channel) {
-    if (*c).note_keyoff_ticks_left as ::core::ffi::c_int != 0 as ::core::ffi::c_int && {
-        (*c).note_keyoff_ticks_left = (*c).note_keyoff_ticks_left.wrapping_sub(1);
-        (*c).note_keyoff_ticks_left as ::core::ffi::c_int == 0 as ::core::ffi::c_int
-            || (*c).note_ticks_left as ::core::ffi::c_int == 2 as ::core::ffi::c_int
-    } {
-        if WantWriteKof(p, c) as ::core::ffi::c_int != 0
-            && (*p).cur_chan_bit as ::core::ffi::c_int & (*p).is_chan_on as ::core::ffi::c_int == 0
-        {
-            Dsp_Write(p, KOF as ::core::ffi::c_int as uint8_t, (*p).cur_chan_bit);
+    if (*c).note_keyoff_ticks_left as ::core::ffi::c_int != 0 as ::core::ffi::c_int
+        && {
+            (*c).note_keyoff_ticks_left = (*c).note_keyoff_ticks_left.wrapping_sub(1);
+            (*c).note_keyoff_ticks_left as ::core::ffi::c_int == 0 as ::core::ffi::c_int
+                || (*c).note_ticks_left as ::core::ffi::c_int == 2 as ::core::ffi::c_int
         }
+        && WantWriteKof(p, c) as ::core::ffi::c_int != 0
+        && (*p).cur_chan_bit as ::core::ffi::c_int & (*p).is_chan_on as ::core::ffi::c_int == 0
+    {
+        Dsp_Write(p, KOF as ::core::ffi::c_int as uint8_t, (*p).cur_chan_bit);
     }
     (*p).did_affect_volumepitch_flag = 0 as uint8;
     if (*c).pitch_slide_length != 0 {

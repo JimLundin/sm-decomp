@@ -1714,10 +1714,10 @@ unsafe fn stbi__zbuild_huffman(
         (*z).firstcode[i as usize] = code as stbi__uint16;
         (*z).firstsymbol[i as usize] = k as stbi__uint16;
         code = code + sizes[i as usize];
-        if sizes[i as usize] != 0 {
-            if code - 1 as ::core::ffi::c_int >= (1 as ::core::ffi::c_int) << i {
-                return 0 as ::core::ffi::c_int;
-            }
+        if sizes[i as usize] != 0
+            && code - 1 as ::core::ffi::c_int >= (1 as ::core::ffi::c_int) << i
+        {
+            return 0 as ::core::ffi::c_int;
         }
         (*z).maxcode[i as usize] = code << 16 as ::core::ffi::c_int - i;
         code <<= 1 as ::core::ffi::c_int;
@@ -2108,10 +2108,8 @@ unsafe fn stbi__parse_uncompressed_block(a: *mut stbi__zbuf) -> ::core::ffi::c_i
     if (*a).zbuffer.offset(len as isize) > (*a).zbuffer_end {
         return 0 as ::core::ffi::c_int;
     }
-    if (*a).zout.offset(len as isize) > (*a).zout_end {
-        if stbi__zexpand(a, (*a).zout, len) == 0 {
-            return 0 as ::core::ffi::c_int;
-        }
+    if (*a).zout.offset(len as isize) > (*a).zout_end && stbi__zexpand(a, (*a).zout, len) == 0 {
+        return 0 as ::core::ffi::c_int;
     }
     memcpy(
         (*a).zout as *mut ::core::ffi::c_void,
@@ -2161,10 +2159,8 @@ unsafe fn stbi__parse_zlib(
 ) -> ::core::ffi::c_int {
     let mut final_0: ::core::ffi::c_int = 0;
     let mut type_0: ::core::ffi::c_int = 0;
-    if parse_header != 0 {
-        if stbi__parse_zlib_header(a) == 0 {
-            return 0 as ::core::ffi::c_int;
-        }
+    if parse_header != 0 && stbi__parse_zlib_header(a) == 0 {
+        return 0 as ::core::ffi::c_int;
     }
     (*a).num_bits = 0 as ::core::ffi::c_int;
     (*a).code_buffer = 0 as stbi__uint32;

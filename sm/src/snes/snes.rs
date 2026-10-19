@@ -151,10 +151,8 @@ pub unsafe fn snes_handle_pos_stuff(snes: *mut Snes, game: &mut Game) {
             dma_initHdma((*snes).dma, game);
         } else if (*snes).vPos == 225 {
             startingVblank = !ppu_checkOverscan((*snes).ppu);
-        } else if (*snes).vPos == 240 {
-            if !(*snes).inVblank {
-                startingVblank = true;
-            }
+        } else if (*snes).vPos == 240 && !(*snes).inVblank {
+            startingVblank = true;
         }
         if startingVblank {
             ppu_handleVblank((*snes).ppu);
@@ -169,10 +167,8 @@ pub unsafe fn snes_handle_pos_stuff(snes: *mut Snes, game: &mut Game) {
         if !(*snes).inVblank && !(*snes).disableRender {
             ppu_runLine((*snes).ppu, i32::from((*snes).vPos), game);
         }
-    } else if (*snes).hPos == 1024 {
-        if !(*snes).inVblank {
-            dma_doHdma((*snes).dma, game);
-        }
+    } else if (*snes).hPos == 1024 && !(*snes).inVblank {
+        dma_doHdma((*snes).dma, game);
     }
     (*snes).hPos = (*snes).hPos.wrapping_add(2);
     if (*snes).hPos == 1364 {

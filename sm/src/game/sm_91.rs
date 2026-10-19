@@ -413,13 +413,11 @@ pub unsafe fn TranslateCustomControllerBindingsToDefault(game: &mut Game) -> Pai
     }
     if (ram_word!(game, button_config_aim_up_R) as ::core::ffi::c_int & v0 as ::core::ffi::c_int)
         != 0i32
-    {
-        if ram_word!(game, button_config_aim_up_R) as ::core::ffi::c_int
+        && ram_word!(game, button_config_aim_up_R) as ::core::ffi::c_int
             & (kButton_L as ::core::ffi::c_int | kButton_R as ::core::ffi::c_int)
             != 0i32
-        {
-            r18 = (r18) | ((kButton_R) as u16);
-        }
+    {
+        r18 = (r18) | ((kButton_R) as u16);
     }
     if (ram_word!(game, button_config_aim_down_L) as ::core::ffi::c_int & v0 as ::core::ffi::c_int)
         != 0i32
@@ -454,13 +452,11 @@ pub unsafe fn TranslateCustomControllerBindingsToDefault(game: &mut Game) -> Pai
     }
     if (ram_word!(game, button_config_aim_up_R) as ::core::ffi::c_int & v1 as ::core::ffi::c_int)
         != 0i32
-    {
-        if ram_word!(game, button_config_aim_up_R) as ::core::ffi::c_int
+        && ram_word!(game, button_config_aim_up_R) as ::core::ffi::c_int
             & (kButton_L as ::core::ffi::c_int | kButton_R as ::core::ffi::c_int)
             != 0i32
-        {
-            r20 = (r20) | ((kButton_R) as u16);
-        }
+    {
+        r20 = (r20) | ((kButton_R) as u16);
     }
     if (ram_word!(game, button_config_aim_down_L) as ::core::ffi::c_int & v1 as ::core::ffi::c_int)
         != 0i32
@@ -548,16 +544,14 @@ pub unsafe fn LoadDemoInputObject(angle: u16, object_ptr: u16, game: &mut Game) 
     game.set_demo_timer_counter(0);
 }
 pub unsafe fn DemoObjectInputHandler(game: &mut Game) {
-    if game.demo_enable() & 0x8000 != 0 {
-        if game.demo_input_instr_ptr() != 0 {
-            ProcessDemoInputObject(game);
-            game.set_joypad1_input_samusfilter(game.demo_input_prev());
-            game.set_joypad1_newinput_samusfilter(game.demo_input_prev_new());
-            game.set_joypad1_lastkeys(game.demo_input());
-            game.set_demo_input_prev(game.demo_input());
-            game.set_joypad1_newkeys(game.demo_input_new());
-            game.set_demo_input_prev_new(game.demo_input_new());
-        }
+    if game.demo_enable() & 0x8000 != 0 && game.demo_input_instr_ptr() != 0 {
+        ProcessDemoInputObject(game);
+        game.set_joypad1_input_samusfilter(game.demo_input_prev());
+        game.set_joypad1_newinput_samusfilter(game.demo_input_prev_new());
+        game.set_joypad1_lastkeys(game.demo_input());
+        game.set_demo_input_prev(game.demo_input());
+        game.set_joypad1_newkeys(game.demo_input_new());
+        game.set_demo_input_prev_new(game.demo_input_new());
     }
 }
 pub unsafe fn CallDemoPreInstr(address: u32, game: &mut Game) {
@@ -1615,15 +1609,14 @@ pub unsafe fn XrayRunHandler(game: &mut Game) {
         && (ram_word!(game, button_config_run_b) as ::core::ffi::c_int
             & ram_word!(game, joypad1_lastkeys) as ::core::ffi::c_int)
             != 0i32
+        && Xray_Initialize(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
     {
-        if Xray_Initialize(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
-            SpawnHdmaObject(
-                0x91 as uint8,
-                game.g_rom.offset(crate::rtl::lorom_offset(0x91caf2)) as *const uint8
-                    as *mut SpawnHdmaObject_Args as *const ::core::ffi::c_void,
-                game,
-            );
-        }
+        SpawnHdmaObject(
+            0x91 as uint8,
+            game.g_rom.offset(crate::rtl::lorom_offset(0x91caf2)) as *const uint8
+                as *mut SpawnHdmaObject_Args as *const ::core::ffi::c_void,
+            game,
+        );
     }
 }
 pub unsafe fn Xray_SetupStage1_FreezeTimeBackup(k: uint16, game: &mut Game) {
@@ -5208,14 +5201,14 @@ pub unsafe fn Samus_HandleTransitionsA_5_5(game: &mut Game) {
     QueueSfx3_Max6(5 as uint16, game);
 }
 pub unsafe fn Samus_HandleTransitionsA_5_6(game: &mut Game) {
-    if ram_word!(game, samus_collides_with_solid_enemy) != 0 {
-        if *(&raw mut game.g_ram as *mut uint8).offset(0xa23) == 9u8 {
-            set_ram_word!(
-                game.enable_horiz_slope_coll =
-                    (*(&raw mut game.g_ram as *mut uint8).offset(0xa1e) != 4u8) as uint16
-            );
-            set_ram_word!(game.UNUSED_word_7E0A18 = 0 as uint16);
-        }
+    if ram_word!(game, samus_collides_with_solid_enemy) != 0
+        && *(&raw mut game.g_ram as *mut uint8).offset(0xa23) == 9u8
+    {
+        set_ram_word!(
+            game.enable_horiz_slope_coll =
+                (*(&raw mut game.g_ram as *mut uint8).offset(0xa1e) != 4u8) as uint16
+        );
+        set_ram_word!(game.UNUSED_word_7E0A18 = 0 as uint16);
     }
 }
 pub unsafe fn Samus_HandleTransitionsC_1(game: &mut Game) {

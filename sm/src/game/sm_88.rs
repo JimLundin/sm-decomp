@@ -1171,8 +1171,8 @@ pub unsafe fn MoveXrayUp(game: &mut Game) {
         & 0x8000 as ::core::ffi::c_int
         != 0
     {
-        if ram_word!(game, xray_angle) != ram_word!(game, demo_input) {
-            if ((ram_word!(game, xray_angle)) as i16)
+        if ram_word!(game, xray_angle) != ram_word!(game, demo_input)
+            && (((ram_word!(game, xray_angle)) as i16)
                 .wrapping_sub((ram_word!(game, demo_input)) as i16)
                 < 0i16
                 || {
@@ -1185,16 +1185,14 @@ pub unsafe fn MoveXrayUp(game: &mut Game) {
                             + ram_word!(game, demo_input) as ::core::ffi::c_int))
                         as int16)
                         < 0i16
-                }
-            {
-                set_ram_word!(game.xray_angle = ram_word!(game, demo_input));
-            }
+                })
+        {
+            set_ram_word!(game.xray_angle = ram_word!(game, demo_input));
         }
     } else if (ram_word!(game, demo_input) as ::core::ffi::c_int
         + ram_word!(game, xray_angle) as ::core::ffi::c_int)
         != 256i32
-    {
-        if ((ram_word!(game, demo_input) as ::core::ffi::c_int
+        && (((ram_word!(game, demo_input) as ::core::ffi::c_int
             + ram_word!(game, xray_angle) as ::core::ffi::c_int
             - 256 as ::core::ffi::c_int) as int16)
             >= 0i16
@@ -1210,10 +1208,9 @@ pub unsafe fn MoveXrayUp(game: &mut Game) {
                     *((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16);
                 *fresh53 = (*fresh53).wrapping_add(1);
                 v1 != 256i16 && (v1).wrapping_sub(256i16) >= 0i16
-            }
-        {
-            set_ram_word!(game.xray_angle = (256u16).wrapping_sub(ram_word!(game, demo_input)));
-        }
+            })
+    {
+        set_ram_word!(game.xray_angle = (256u16).wrapping_sub(ram_word!(game, demo_input)));
     }
 }
 pub unsafe fn MoveXrayDown(game: &mut Game) {
@@ -1226,8 +1223,7 @@ pub unsafe fn MoveXrayDown(game: &mut Game) {
         if (ram_word!(game, demo_input) as ::core::ffi::c_int
             + ram_word!(game, xray_angle) as ::core::ffi::c_int)
             != 128i32
-        {
-            if ((ram_word!(game, demo_input) as ::core::ffi::c_int
+            && (((ram_word!(game, demo_input) as ::core::ffi::c_int
                 + ram_word!(game, xray_angle) as ::core::ffi::c_int
                 - 128 as ::core::ffi::c_int) as int16)
                 >= 0i16
@@ -1243,16 +1239,14 @@ pub unsafe fn MoveXrayDown(game: &mut Game) {
                         *((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16);
                     *fresh50 = (*fresh50).wrapping_add(1);
                     v0 != 128i16 && (v0).wrapping_sub(128i16) >= 0i16
-                }
-            {
-                set_ram_word!(game.xray_angle = (128u16).wrapping_sub(ram_word!(game, demo_input)));
-            }
+                })
+        {
+            set_ram_word!(game.xray_angle = (128u16).wrapping_sub(ram_word!(game, demo_input)));
         }
     } else if (ram_word!(game, xray_angle) as ::core::ffi::c_int
         - ram_word!(game, demo_input) as ::core::ffi::c_int)
         != 128i32
-    {
-        if ((ram_word!(game, xray_angle) as ::core::ffi::c_int
+        && (((ram_word!(game, xray_angle) as ::core::ffi::c_int
             - ram_word!(game, demo_input) as ::core::ffi::c_int
             - 128 as ::core::ffi::c_int) as int16)
             < 0i16
@@ -1270,10 +1264,9 @@ pub unsafe fn MoveXrayDown(game: &mut Game) {
                             + ram_word!(game, demo_input) as ::core::ffi::c_int)
                         - 128 as ::core::ffi::c_int) as int16)
                         < 0i16
-            }
-        {
-            set_ram_word!(game.xray_angle = (ram_word!(game, demo_input)).wrapping_add(128u16));
-        }
+            })
+    {
+        set_ram_word!(game.xray_angle = (ram_word!(game, demo_input)).wrapping_add(128u16));
     }
 }
 pub unsafe fn CalculateXrayHdmaTable(game: &mut Game) {
@@ -4644,41 +4637,32 @@ pub unsafe fn sub_88DBCB(k: uint16, game: &mut Game) {
     );
 }
 pub unsafe fn HdmaobjPreInstr_CheckLotsOfEventsHappened(mut v0: uint16, game: &mut Game) {
-    if CheckEventHappened(6 as uint16, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
-        if CheckEventHappened(7 as uint16, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
+    if CheckEventHappened(6 as uint16, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
+        && CheckEventHappened(7 as uint16, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
             != 0
+        && CheckEventHappened(8 as uint16, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
+            != 0
+        && CheckEventHappened(9 as uint16, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
+            != 0
+    {
+        let ref mut fresh90 = *((&raw mut game.g_ram as *mut uint8).offset(0x1e6f) as *mut uint16);
+        *fresh90 = (*fresh90) | (0x10u16);
+        if (ram_word!(game, tourian_entrance_statue_animstate) as ::core::ffi::c_int
+            & 0x8000 as ::core::ffi::c_int)
+            == 0i32
         {
-            if CheckEventHappened(8 as uint16, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
-                != 0
-            {
-                if CheckEventHappened(9 as uint16, game) as ::core::ffi::c_int
-                    & 1 as ::core::ffi::c_int
-                    != 0
-                {
-                    let ref mut fresh90 =
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x1e6f) as *mut uint16);
-                    *fresh90 = (*fresh90) | (0x10u16);
-                    if (ram_word!(game, tourian_entrance_statue_animstate) as ::core::ffi::c_int
-                        & 0x8000 as ::core::ffi::c_int)
-                        == 0i32
-                    {
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x192c) as *mut uint16)
-                            .offset(
-                                (v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                            ) = 300 as uint16;
-                        v0 = ram_word!(game, hdma_object_index);
-                        let v1: ::core::ffi::c_int = ram_word!(game, hdma_object_index)
-                            as ::core::ffi::c_int
-                            >> 1 as ::core::ffi::c_int;
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x18e4) as *mut uint16)
-                            .offset(v1 as isize) = 1 as uint16;
-                        let ref mut fresh91 = *((&raw mut game.g_ram as *mut uint8).offset(0x18cc)
-                            as *mut uint16)
-                            .offset(v1 as isize);
-                        *fresh91 = (*fresh91).wrapping_add(2u16);
-                    }
-                }
-            }
+            *((&raw mut game.g_ram as *mut uint8).offset(0x192c) as *mut uint16)
+                .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+                300 as uint16;
+            v0 = ram_word!(game, hdma_object_index);
+            let v1: ::core::ffi::c_int =
+                ram_word!(game, hdma_object_index) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x18e4) as *mut uint16)
+                .offset(v1 as isize) = 1 as uint16;
+            let ref mut fresh91 = *((&raw mut game.g_ram as *mut uint8).offset(0x18cc)
+                as *mut uint16)
+                .offset(v1 as isize);
+            *fresh91 = (*fresh91).wrapping_add(2u16);
         }
     }
     sub_88DBCB(v0, game);

@@ -19622,6 +19622,20 @@ review finds no runtime issue. Movies supply core regression coverage;
 frontend branches are compiler checked. Full credits/readability remain open.
 Next: complete eligible named scalar-word writes and larger compiler families.
 
+Compiler nested-if cleanup (2026-10-19): standard Clippy collapsible_if
+fixes combine 124 nested conditions across 24 files using short-circuit &&.
+Condition order, branch bodies and pointer guards remain unchanged. Final
+all-target/all-feature check has zero collapsible_if diagnostics. Net Rust
+lines -213; raw RAM accesses, unsafe functions and cast tokens are unchanged.
+The c_int cast-line counter falls by eight through formatting.
+
+Frozen 1b9b8ccd plus this batch passes full any% 129712/0 (128.26s)
+and Speed Booster 148406/0 (164.16s), native exits 0, with fixed
+source/library/fixture pins. Formatting/check, normal release (22.35s snapshot,
+23.09s workspace), progress and diff check pass. Movies supply core regression
+coverage; frontend conditions are compiler checked. Full credits/readability
+remain open. Continue named scalar writes and larger compiler families.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

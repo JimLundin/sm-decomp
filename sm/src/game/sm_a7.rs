@@ -1458,15 +1458,14 @@ pub unsafe fn Kraid_Shot_Body(game: &mut Game) {
                 i -= 2 as ::core::ffi::c_int;
             }
         }
-        if R48 != 0 {
-            if (*E).kraid_var_A as ::core::ffi::c_int
+        if R48 != 0
+            && (*E).kraid_var_A as ::core::ffi::c_int
                 == 0xa7aea4 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
-            {
-                (*E).kraid_var_A = ((0xa7b6bfi32) as u16);
-                let kraid_mouth_flags: uint16 = (*E).kraid_mouth_flags;
-                if (kraid_mouth_flags as ::core::ffi::c_int & 1 as ::core::ffi::c_int) != 0i32 {
-                    (*E).kraid_mouth_flags = (kraid_mouth_flags) | (0x302u16);
-                }
+        {
+            (*E).kraid_var_A = ((0xa7b6bfi32) as u16);
+            let kraid_mouth_flags: uint16 = (*E).kraid_mouth_flags;
+            if (kraid_mouth_flags as ::core::ffi::c_int & 1 as ::core::ffi::c_int) != 0i32 {
+                (*E).kraid_mouth_flags = (kraid_mouth_flags) | (0x302u16);
             }
         }
     }
@@ -1624,26 +1623,24 @@ pub unsafe fn Kraid_Instr_MoveHimRight(
 ) -> *const uint16 {
     let mut v3: uint16 = 0;
     let E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int, game);
-    if (*E).base.x_pos as ::core::ffi::c_int - 320 as ::core::ffi::c_int
+    if ((*E).base.x_pos as ::core::ffi::c_int - 320 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0
         || {
             v3 = ((*E).kraid_target_x).wrapping_sub(1u16);
             (*E).kraid_target_x = v3;
             (*E).kraid_target_x == 0u16
-        }
-    {
-        if Enemy_MoveRight_IgnoreSlopes(
+        })
+        && Enemy_MoveRight_IgnoreSlopes(
             0 as uint16,
             (g_word_A7A922 as int16 as int32) << 16 as ::core::ffi::c_int,
             game,
         ) != 0
-        {
-            set_ram_word!(game.earthquake_type = 0 as uint16);
-            set_ram_word!(game.earthquake_timer = 7 as uint16);
-            let x_pos: uint16 = (*Get_Kraid(0 as ::core::ffi::c_int, game)).base.x_pos;
-            (*Get_Kraid(0x140 as ::core::ffi::c_int, game)).base.x_pos = x_pos;
-        }
+    {
+        set_ram_word!(game.earthquake_type = 0 as uint16);
+        set_ram_word!(game.earthquake_timer = 7 as uint16);
+        let x_pos: uint16 = (*Get_Kraid(0 as ::core::ffi::c_int, game)).base.x_pos;
+        (*Get_Kraid(0x140 as ::core::ffi::c_int, game)).base.x_pos = x_pos;
     }
     jp
 }
@@ -1947,51 +1944,47 @@ pub unsafe fn Kraid_EnemyTouch_Lint(k: uint16, game: &mut Game) {
             - r18 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             == 0
-        {
-            if ram_word!(game, samus_x_pos) as ::core::ffi::c_int
+            && ram_word!(game, samus_x_pos) as ::core::ffi::c_int
                 - ram_word!(game, samus_x_radius) as ::core::ffi::c_int
                 - r18 as ::core::ffi::c_int
                 & 0x8000 as ::core::ffi::c_int
                 != 0
+        {
+            let r22: uint16 = ((*(game.g_rom.offset(crate::rtl::lorom_offset(0xa792b7))
+                as *const uint8 as *mut Hitbox))
+                .top as ::core::ffi::c_int
+                + (*E).base.y_pos as ::core::ffi::c_int
+                + 2 as ::core::ffi::c_int) as uint16;
+            if ram_word!(game, samus_y_radius) as ::core::ffi::c_int
+                + ram_word!(game, samus_y_pos) as ::core::ffi::c_int
+                - r22 as ::core::ffi::c_int
+                & 0x8000 as ::core::ffi::c_int
+                == 0
             {
-                let r22: uint16 = ((*(game.g_rom.offset(crate::rtl::lorom_offset(0xa792b7))
+                let r24: uint16 = ((*(game.g_rom.offset(crate::rtl::lorom_offset(0xa792b7))
                     as *const uint8 as *mut Hitbox))
-                    .top as ::core::ffi::c_int
+                    .bottom as ::core::ffi::c_int
                     + (*E).base.y_pos as ::core::ffi::c_int
-                    + 2 as ::core::ffi::c_int) as uint16;
-                if ram_word!(game, samus_y_radius) as ::core::ffi::c_int
-                    + ram_word!(game, samus_y_pos) as ::core::ffi::c_int
-                    - r22 as ::core::ffi::c_int
+                    - 2 as ::core::ffi::c_int) as uint16;
+                if ram_word!(game, samus_y_pos) as ::core::ffi::c_int
+                    - ram_word!(game, samus_y_radius) as ::core::ffi::c_int
+                    - r24 as ::core::ffi::c_int
                     & 0x8000 as ::core::ffi::c_int
-                    == 0
+                    != 0
                 {
-                    let r24: uint16 = ((*(game.g_rom.offset(crate::rtl::lorom_offset(0xa792b7))
-                        as *const uint8 as *mut Hitbox))
-                        .bottom as ::core::ffi::c_int
-                        + (*E).base.y_pos as ::core::ffi::c_int
-                        - 2 as ::core::ffi::c_int) as uint16;
-                    if ram_word!(game, samus_y_pos) as ::core::ffi::c_int
-                        - ram_word!(game, samus_y_radius) as ::core::ffi::c_int
-                        - r24 as ::core::ffi::c_int
-                        & 0x8000 as ::core::ffi::c_int
-                        != 0
-                    {
-                        let mut v2: uint16 = (ram_word!(game, extra_samus_x_displacement)
-                            as ::core::ffi::c_int
+                    let mut v2: uint16 =
+                        (ram_word!(game, extra_samus_x_displacement) as ::core::ffi::c_int
                             + !(ram_word!(game, samus_x_radius) as ::core::ffi::c_int
-                                + 16 as ::core::ffi::c_int))
-                            as uint16;
-                        if v2 as ::core::ffi::c_int - 16 as ::core::ffi::c_int
-                            & 0x8000 as ::core::ffi::c_int
-                            == 0
-                        {
-                            v2 = 16 as uint16;
-                        }
-                        set_ram_word!(game.extra_samus_x_displacement = v2);
-                        NormalEnemyTouchAi(game);
-                        (*E).base.properties =
-                            ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
+                                + 16 as ::core::ffi::c_int)) as uint16;
+                    if v2 as ::core::ffi::c_int - 16 as ::core::ffi::c_int
+                        & 0x8000 as ::core::ffi::c_int
+                        == 0
+                    {
+                        v2 = 16 as uint16;
                     }
+                    set_ram_word!(game.extra_samus_x_displacement = v2);
+                    NormalEnemyTouchAi(game);
+                    (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
                 }
             }
         }
@@ -4575,12 +4568,11 @@ pub unsafe fn Phantoon_CompleteSwoopAfterFatalShot(k: uint16, game: &mut Game) {
     Phantoon_ChangeEyeSpriteBasedOnSamusDist(game);
     Phantoon_MoveInSwoopingPattern(k, game);
     let x_pos: uint16 = (*Get_Phantoon(0 as ::core::ffi::c_int, game)).base.x_pos;
-    if x_pos as ::core::ffi::c_int - 96 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
-        if x_pos as ::core::ffi::c_int - 160 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
+    if x_pos as ::core::ffi::c_int - 96 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0
+        && x_pos as ::core::ffi::c_int - 160 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             != 0
-        {
-            (*Get_Phantoon(k as ::core::ffi::c_int, game)).phant_var_F = ((0xa7d948i32) as u16);
-        }
+    {
+        (*Get_Phantoon(k as ::core::ffi::c_int, game)).phant_var_F = ((0xa7d948i32) as u16);
     }
 }
 pub unsafe fn Phantoon_DyingPhantoonFadeInOut(k: uint16, game: &mut Game) {

@@ -6054,24 +6054,22 @@ pub unsafe fn Eproj_MotherBrainRoomTurretBullets_CheckIfTurretOnScreen(
     if v2 >= 0i16 {
         v3 = (v2 as ::core::ffi::c_int + 16 as ::core::ffi::c_int
             - ram_word!(game, layer1_y_pos) as ::core::ffi::c_int) as int16;
-        if v3 >= 0i16 {
-            if v3 as ::core::ffi::c_int - 256 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
+        if v3 >= 0i16
+            && v3 as ::core::ffi::c_int - 256 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                 != 0
-            {
-                v4 = *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
-                    .offset(v1 as isize) as int16;
-                if v4 >= 0i16 {
-                    v5 = (v4 as ::core::ffi::c_int + 4 as ::core::ffi::c_int
-                        - ram_word!(game, layer1_x_pos) as ::core::ffi::c_int)
-                        as int16;
-                    if v5 >= 0i16 {
-                        if v5 as ::core::ffi::c_int - 264 as ::core::ffi::c_int
-                            & 0x8000 as ::core::ffi::c_int
-                            != 0
-                        {
-                            return 0 as uint8;
-                        }
-                    }
+        {
+            v4 = *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
+                .offset(v1 as isize) as int16;
+            if v4 >= 0i16 {
+                v5 = (v4 as ::core::ffi::c_int + 4 as ::core::ffi::c_int
+                    - ram_word!(game, layer1_x_pos) as ::core::ffi::c_int)
+                    as int16;
+                if v5 >= 0i16
+                    && v5 as ::core::ffi::c_int - 264 as ::core::ffi::c_int
+                        & 0x8000 as ::core::ffi::c_int
+                        != 0
+                {
+                    return 0 as uint8;
                 }
             }
         }
@@ -6471,13 +6469,12 @@ pub unsafe fn CheckForBlueRingCollisionWithRoom(k: uint16, game: &mut Game) -> u
         if v2 >= 0i16 {
             v3 = (v2 as ::core::ffi::c_int - ram_word!(game, layer1_x_pos) as ::core::ffi::c_int)
                 as int16;
-            if v3 >= 0i16 {
-                if v3 as ::core::ffi::c_int - 248 as ::core::ffi::c_int
+            if v3 >= 0i16
+                && v3 as ::core::ffi::c_int - 248 as ::core::ffi::c_int
                     & 0x8000 as ::core::ffi::c_int
                     != 0
-                {
-                    return 0 as uint8;
-                }
+            {
+                return 0 as uint8;
             }
         }
     }
@@ -8665,24 +8662,20 @@ fn CheckIfEprojIsOffScreen(k: uint16, game: &mut Game) -> uint16 {
         .enemy_projectile_x_pos(k)
         .wrapping_sub(game.layer1_x_pos()) as int16)
         >= 0i16
-    {
-        if ((game.enemy_projectile_x_pos(k) as ::core::ffi::c_int
+        && ((game.enemy_projectile_x_pos(k) as ::core::ffi::c_int
             - (game.layer1_x_pos() as ::core::ffi::c_int + 256 as ::core::ffi::c_int))
             as int16)
             < 0i16
-            && (game
-                .enemy_projectile_y_pos(k)
-                .wrapping_sub(game.layer1_y_pos()) as int16)
-                >= 0i16
-        {
-            if ((game.enemy_projectile_y_pos(k) as ::core::ffi::c_int
-                - (game.layer1_y_pos() as ::core::ffi::c_int + 256 as ::core::ffi::c_int))
-                as int16)
-                < 0i16
-            {
-                return 0 as uint16;
-            }
-        }
+        && (game
+            .enemy_projectile_y_pos(k)
+            .wrapping_sub(game.layer1_y_pos()) as int16)
+            >= 0i16
+        && ((game.enemy_projectile_y_pos(k) as ::core::ffi::c_int
+            - (game.layer1_y_pos() as ::core::ffi::c_int + 256 as ::core::ffi::c_int))
+            as int16)
+            < 0i16
+    {
+        return 0 as uint16;
     }
     1 as uint16
 }
@@ -8693,19 +8686,16 @@ pub unsafe fn Eproj_FuncE722(k: uint16, game: &mut Game) -> uint16 {
     v2 = *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v1 as isize)
         as int16;
     let result: uint16 = 1 as uint16;
-    if v2 >= 0i16 {
-        if v2 as ::core::ffi::c_int - 512 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0
+    if v2 >= 0i16
+        && v2 as ::core::ffi::c_int - 512 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0
+    {
+        v3 = *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
+            .offset(v1 as isize) as int16;
+        if v3 >= 0i16
+            && v3 as ::core::ffi::c_int - 512 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
+                != 0
         {
-            v3 = *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
-                .offset(v1 as isize) as int16;
-            if v3 >= 0i16 {
-                if v3 as ::core::ffi::c_int - 512 as ::core::ffi::c_int
-                    & 0x8000 as ::core::ffi::c_int
-                    != 0
-                {
-                    return 0 as uint16;
-                }
-            }
+            return 0 as uint16;
         }
     }
     result
@@ -8908,15 +8898,12 @@ pub unsafe fn Eproj_BotwoonsBodyHurtFlashHandling1(k: uint16, game: &mut Game) {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
         .flash_timer
         != 0
-    {
-        if (ram_word!(game, random_enemy_counter) as ::core::ffi::c_int & 2 as ::core::ffi::c_int)
+        && (ram_word!(game, random_enemy_counter) as ::core::ffi::c_int & 2 as ::core::ffi::c_int)
             != 0i32
-        {
-            let ref mut fresh59 = *((&raw mut game.g_ram as *mut uint8).offset(0x19bb)
-                as *mut uint16)
-                .offset(v1 as isize);
-            *fresh59 = (*fresh59 as ::core::ffi::c_int & 0xf1ff as ::core::ffi::c_int) as uint16;
-        }
+    {
+        let ref mut fresh59 = *((&raw mut game.g_ram as *mut uint8).offset(0x19bb) as *mut uint16)
+            .offset(v1 as isize);
+        *fresh59 = (*fresh59 as ::core::ffi::c_int & 0xf1ff as ::core::ffi::c_int) as uint16;
     }
 }
 pub unsafe fn Eproj_BotwoonsBodyHurtFlashHandling2(j: uint16, game: &mut Game) {
@@ -8927,15 +8914,12 @@ pub unsafe fn Eproj_BotwoonsBodyHurtFlashHandling2(j: uint16, game: &mut Game) {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
         .flash_timer
         != 0
-    {
-        if (ram_word!(game, random_enemy_counter) as ::core::ffi::c_int & 2 as ::core::ffi::c_int)
+        && (ram_word!(game, random_enemy_counter) as ::core::ffi::c_int & 2 as ::core::ffi::c_int)
             != 0i32
-        {
-            let ref mut fresh56 = *((&raw mut game.g_ram as *mut uint8).offset(0x19bb)
-                as *mut uint16)
-                .offset(v1 as isize);
-            *fresh56 = (*fresh56 as ::core::ffi::c_int & 0xf1ff as ::core::ffi::c_int) as uint16;
-        }
+    {
+        let ref mut fresh56 = *((&raw mut game.g_ram as *mut uint8).offset(0x19bb) as *mut uint16)
+            .offset(v1 as isize);
+        *fresh56 = (*fresh56 as ::core::ffi::c_int & 0xf1ff as ::core::ffi::c_int) as uint16;
     }
 }
 pub unsafe fn Eproj_BotwonsBodyFunction_Dying(v0: uint16, game: &mut Game) {

@@ -1070,21 +1070,20 @@ pub unsafe fn MiniDraygon_Func_10(game: &mut Game) {
     }
 }
 pub unsafe fn MiniDraygon_Func_11(game: &mut Game) {
-    if EnemyFunc_ADA3(0x100 as uint16, game) != 0 {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16).offset(
+    if EnemyFunc_ADA3(0x100 as uint16, game) != 0
+        && *((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16).offset(
             ((ram_word!(game, cur_enemy_index) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
                 + 77 as ::core::ffi::c_int) as isize,
         ) == 0
-        {
-            let E: *mut Enemy_MiniDraygon =
-                Get_MiniDraygon(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
-            (*E).mdn_var_0B = 0 as uint16;
-            (*E).mdn_var_0C = 1 as uint16;
-            (*E).mdn_var_C = ((0xa88a78i32) as u16);
-            (*E).mdn_var_0C = 1 as uint16;
-            (*E).mdn_var_02 = addr_kMiniDraygon_Ilist_8775 as uint16;
-            MiniDraygon_Func_12(game);
-        }
+    {
+        let E: *mut Enemy_MiniDraygon =
+            Get_MiniDraygon(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
+        (*E).mdn_var_0B = 0 as uint16;
+        (*E).mdn_var_0C = 1 as uint16;
+        (*E).mdn_var_C = ((0xa88a78i32) as u16);
+        (*E).mdn_var_0C = 1 as uint16;
+        (*E).mdn_var_02 = addr_kMiniDraygon_Ilist_8775 as uint16;
+        MiniDraygon_Func_12(game);
     }
 }
 pub unsafe fn MiniDraygon_Func_12(game: &mut Game) {
@@ -2401,15 +2400,14 @@ pub unsafe fn YappingMaw_Func_18(j: uint16, game: &mut Game) {
         if frozen_timer as ::core::ffi::c_int - 90 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             != 0
+            && (frozen_timer as ::core::ffi::c_int & 2 as ::core::ffi::c_int) == 0i32
         {
-            if (frozen_timer as ::core::ffi::c_int & 2 as ::core::ffi::c_int) == 0i32 {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x19bb) as *mut uint16)
-                    .offset(v1 as isize) = ((*E).ymw_var_45 as ::core::ffi::c_int
-                    | *((&raw mut game.g_ram as *mut uint8).offset(0x19bb) as *mut uint16)
-                        .offset(v1 as isize) as ::core::ffi::c_int
-                        & 0xf1ff as ::core::ffi::c_int)
-                    as uint16;
-            }
+            *((&raw mut game.g_ram as *mut uint8).offset(0x19bb) as *mut uint16)
+                .offset(v1 as isize) = ((*E).ymw_var_45 as ::core::ffi::c_int
+                | *((&raw mut game.g_ram as *mut uint8).offset(0x19bb) as *mut uint16)
+                    .offset(v1 as isize) as ::core::ffi::c_int
+                    & 0xf1ff as ::core::ffi::c_int)
+                as uint16;
         }
     }
 }
@@ -2437,16 +2435,15 @@ pub unsafe fn YappingMaw_Func_19(game: &mut Game) {
         if frozen_timer as ::core::ffi::c_int - 90 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             != 0
+            && (frozen_timer as ::core::ffi::c_int & 2 as ::core::ffi::c_int) == 0i32
         {
-            if (frozen_timer as ::core::ffi::c_int & 2 as ::core::ffi::c_int) == 0i32 {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xf078) as *mut uint16)
-                    .offset((r20 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-                    (r18 as ::core::ffi::c_int
-                        | *((&raw mut game.g_ram as *mut uint8).offset(0xf078) as *mut uint16)
-                            .offset((r20 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-                            as ::core::ffi::c_int
-                            & 0xf1ff as ::core::ffi::c_int) as uint16;
-            }
+            *((&raw mut game.g_ram as *mut uint8).offset(0xf078) as *mut uint16)
+                .offset((r20 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+                (r18 as ::core::ffi::c_int
+                    | *((&raw mut game.g_ram as *mut uint8).offset(0xf078) as *mut uint16)
+                        .offset((r20 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
+                        as ::core::ffi::c_int
+                        & 0xf1ff as ::core::ffi::c_int) as uint16;
         }
     }
 }
@@ -4563,46 +4560,44 @@ pub unsafe fn WreckedShipRobot_Main(game: &mut Game) {
 pub unsafe fn WreckedShipRobot_Func_1(game: &mut Game) {
     let mut i: uint16 = 0;
     let mut v2: int16 = 0;
-    if ram_word!(game, door_transition_flag_enemies) == 0 {
-        if ram_word!(game, wrecked_ship_robot_palanim_timer) != 0 {
-            let ref mut fresh13 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0xd654) as *mut uint16);
-            *fresh13 = (*fresh13).wrapping_sub(1);
-            if *fresh13 == 0 {
-                let mut v1: ::core::ffi::c_int = 0;
-                i = *((&raw mut game.g_ram as *mut uint8).offset(0xd656) as *mut uint16);
-                loop {
-                    v1 = i as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-                    v2 = g_word_A8CCC1[v1 as usize];
-                    if v2 >= 0i16 {
-                        break;
-                    }
-                    i = 0 as uint16;
+    if ram_word!(game, door_transition_flag_enemies) == 0
+        && ram_word!(game, wrecked_ship_robot_palanim_timer) != 0
+    {
+        let ref mut fresh13 = *((&raw mut game.g_ram as *mut uint8).offset(0xd654) as *mut uint16);
+        *fresh13 = (*fresh13).wrapping_sub(1);
+        if *fresh13 == 0 {
+            let mut v1: ::core::ffi::c_int = 0;
+            i = *((&raw mut game.g_ram as *mut uint8).offset(0xd656) as *mut uint16);
+            loop {
+                v1 = i as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+                v2 = g_word_A8CCC1[v1 as usize];
+                if v2 >= 0i16 {
+                    break;
                 }
-                let v3: ::core::ffi::c_int = 16 as ::core::ffi::c_int
-                    * ((ram_word!(game, wrecked_ship_robot_palanim_palindex)
-                        as ::core::ffi::c_int
-                        & 0xff00 as ::core::ffi::c_int)
-                        >> 8 as ::core::ffi::c_int)
-                    >> 1 as ::core::ffi::c_int;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
-                    .offset((v3 + 137 as ::core::ffi::c_int) as isize) = v2 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
-                    .offset((v3 + 138 as ::core::ffi::c_int) as isize) =
-                    g_word_A8CCC1[(v1 + 1 as ::core::ffi::c_int) as usize] as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
-                    .offset((v3 + 139 as ::core::ffi::c_int) as isize) =
-                    g_word_A8CCC1[(v1 + 2 as ::core::ffi::c_int) as usize] as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
-                    .offset((v3 + 140 as ::core::ffi::c_int) as isize) =
-                    g_word_A8CCC1[(v1 + 3 as ::core::ffi::c_int) as usize] as uint16;
-                set_ram_word!(
-                    game.wrecked_ship_robot_palanim_timer =
-                        g_word_A8CCC1[(v1 + 4 as ::core::ffi::c_int) as usize] as uint16
-                );
-                *((&raw mut game.g_ram as *mut uint8).offset(0xd656) as *mut uint16) =
-                    (i).wrapping_add(10u16);
+                i = 0 as uint16;
             }
+            let v3: ::core::ffi::c_int = 16 as ::core::ffi::c_int
+                * ((ram_word!(game, wrecked_ship_robot_palanim_palindex) as ::core::ffi::c_int
+                    & 0xff00 as ::core::ffi::c_int)
+                    >> 8 as ::core::ffi::c_int)
+                >> 1 as ::core::ffi::c_int;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
+                .offset((v3 + 137 as ::core::ffi::c_int) as isize) = v2 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
+                .offset((v3 + 138 as ::core::ffi::c_int) as isize) =
+                g_word_A8CCC1[(v1 + 1 as ::core::ffi::c_int) as usize] as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
+                .offset((v3 + 139 as ::core::ffi::c_int) as isize) =
+                g_word_A8CCC1[(v1 + 2 as ::core::ffi::c_int) as usize] as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
+                .offset((v3 + 140 as ::core::ffi::c_int) as isize) =
+                g_word_A8CCC1[(v1 + 3 as ::core::ffi::c_int) as usize] as uint16;
+            set_ram_word!(
+                game.wrecked_ship_robot_palanim_timer =
+                    g_word_A8CCC1[(v1 + 4 as ::core::ffi::c_int) as usize] as uint16
+            );
+            *((&raw mut game.g_ram as *mut uint8).offset(0xd656) as *mut uint16) =
+                (i).wrapping_add(10u16);
         }
     }
 }
@@ -6197,16 +6192,14 @@ pub unsafe fn KiHunter_Func_2(k: uint16, game: &mut Game) {
     } else {
         current_block = 17179679302217393232;
     }
-    if current_block == 17179679302217393232 {
-        if (*E).khr_var_10 == 0 {
-            (*E).khr_var_10 = 1 as uint16;
-            let mut v2: uint16 = addr_kKiHunter_Ilist_EA32 as uint16;
-            if ((*E).khr_var_04 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
-                v2 = addr_kKiHunter_Ilist_EA08 as uint16;
-            }
-            (*E).base.current_instruction = v2;
-            (*E).base.instruction_timer = 1 as uint16;
+    if current_block == 17179679302217393232 && (*E).khr_var_10 == 0 {
+        (*E).khr_var_10 = 1 as uint16;
+        let mut v2: uint16 = addr_kKiHunter_Ilist_EA32 as uint16;
+        if ((*E).khr_var_04 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
+            v2 = addr_kKiHunter_Ilist_EA08 as uint16;
         }
+        (*E).base.current_instruction = v2;
+        (*E).base.instruction_timer = 1 as uint16;
     }
     if ((*E).khr_var_04 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32 {
         AddToHiLo(

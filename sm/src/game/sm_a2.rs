@@ -3874,11 +3874,11 @@ pub unsafe fn LavaquakeRocks_Main(game: &mut Game) {
     CallLavaQuakeRocksFunc((((*E).lrs_var_A) as u32) | (0xa20000u32), game);
 }
 pub unsafe fn LavaquakeRocks_1(game: &mut Game) {
-    if IsSamusWithinEnemy_X(ram_word!(game, cur_enemy_index), 0x40 as uint16, game) != 0 {
-        if IsSamusWithinEnemy_Y(ram_word!(game, cur_enemy_index), 0x40 as uint16, game) != 0 {
-            (*Get_LavaquakeRocks(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
-                .lrs_var_A = ((0xa2b5b2i32) as u16);
-        }
+    if IsSamusWithinEnemy_X(ram_word!(game, cur_enemy_index), 0x40 as uint16, game) != 0
+        && IsSamusWithinEnemy_Y(ram_word!(game, cur_enemy_index), 0x40 as uint16, game) != 0
+    {
+        (*Get_LavaquakeRocks(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+            .lrs_var_A = ((0xa2b5b2i32) as u16);
     }
 }
 pub unsafe fn LavaquakeRocks_2(game: &mut Game) {
@@ -4240,23 +4240,21 @@ pub unsafe fn Rinka_9(k: uint16, game: &mut Game) -> uint8 {
     if y_pos >= 0i16 {
         v3 = (y_pos as ::core::ffi::c_int + 16 as ::core::ffi::c_int
             - ram_word!(game, layer1_y_pos) as ::core::ffi::c_int) as int16;
-        if v3 >= 0i16 {
-            if v3 as ::core::ffi::c_int - 256 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
+        if v3 >= 0i16
+            && v3 as ::core::ffi::c_int - 256 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                 != 0
-            {
-                x_pos = (*E).base.x_pos as int16;
-                if x_pos >= 0i16 {
-                    v5 = (x_pos as ::core::ffi::c_int + 16 as ::core::ffi::c_int
-                        - ram_word!(game, layer1_x_pos) as ::core::ffi::c_int)
-                        as int16;
-                    if v5 >= 0i16 {
-                        if v5 as ::core::ffi::c_int - 288 as ::core::ffi::c_int
-                            & 0x8000 as ::core::ffi::c_int
-                            != 0
-                        {
-                            return 0 as uint8;
-                        }
-                    }
+        {
+            x_pos = (*E).base.x_pos as int16;
+            if x_pos >= 0i16 {
+                v5 = (x_pos as ::core::ffi::c_int + 16 as ::core::ffi::c_int
+                    - ram_word!(game, layer1_x_pos) as ::core::ffi::c_int)
+                    as int16;
+                if v5 >= 0i16
+                    && v5 as ::core::ffi::c_int - 288 as ::core::ffi::c_int
+                        & 0x8000 as ::core::ffi::c_int
+                        != 0
+                {
+                    return 0 as uint8;
                 }
             }
         }
@@ -6517,10 +6515,9 @@ pub unsafe fn RisingFallingPlatform_Main(game: &mut Game) {
                 & *((&raw mut game.g_ram as *mut uint8).offset(0x182c) as *mut uint16).offset(0)
                     as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
             == ram_word!(game, cur_enemy_index) as ::core::ffi::c_int
+        && ram_word!(game, samus_contact_damage_index) != 0
     {
-        if ram_word!(game, samus_contact_damage_index) != 0 {
-            RisingFallingPlatform_Powerbomb(game);
-        }
+        RisingFallingPlatform_Powerbomb(game);
     }
 }
 static off_A2EDFB: [Option<Func_V>; 5] = unsafe {
@@ -6913,27 +6910,23 @@ pub unsafe fn HorizontalShootableShutter_Func_9(game: &mut Game) {
     }
 }
 pub unsafe fn HorizontalShootableShutter_Func_10(k: uint16, game: &mut Game) {
-    if (*Get_RisingFallingPlatform(k as ::core::ffi::c_int, game)).rfpm_var_13 != 0 {
-        if (ram_word!(game, joypad1_lastkeys) as ::core::ffi::c_int & 0x100 as ::core::ffi::c_int)
+    if (*Get_RisingFallingPlatform(k as ::core::ffi::c_int, game)).rfpm_var_13 != 0
+        && (ram_word!(game, joypad1_lastkeys) as ::core::ffi::c_int & 0x100 as ::core::ffi::c_int)
             != 0i32
-        {
-            let ref mut fresh12 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16);
-            *fresh12 = (*fresh12).wrapping_sub(4u16);
-            set_ram_word!(game.extra_samus_y_subdisplacement = 0 as uint16);
-        }
+    {
+        let ref mut fresh12 = *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16);
+        *fresh12 = (*fresh12).wrapping_sub(4u16);
+        set_ram_word!(game.extra_samus_y_subdisplacement = 0 as uint16);
     }
 }
 pub unsafe fn HorizontalShootableShutter_Func_11(k: uint16, game: &mut Game) {
-    if (*Get_RisingFallingPlatform(k as ::core::ffi::c_int, game)).rfpm_var_13 != 0 {
-        if (ram_word!(game, joypad1_lastkeys) as ::core::ffi::c_int & 0x200 as ::core::ffi::c_int)
+    if (*Get_RisingFallingPlatform(k as ::core::ffi::c_int, game)).rfpm_var_13 != 0
+        && (ram_word!(game, joypad1_lastkeys) as ::core::ffi::c_int & 0x200 as ::core::ffi::c_int)
             != 0i32
-        {
-            let ref mut fresh13 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16);
-            *fresh13 = (*fresh13).wrapping_add(4u16);
-            set_ram_word!(game.extra_samus_y_subdisplacement = 0 as uint16);
-        }
+    {
+        let ref mut fresh13 = *((&raw mut game.g_ram as *mut uint8).offset(0xb58) as *mut uint16);
+        *fresh13 = (*fresh13).wrapping_add(4u16);
+        set_ram_word!(game.extra_samus_y_subdisplacement = 0 as uint16);
     }
 }
 pub unsafe fn HorizontalShootableShutter_Func_12(game: &mut Game) {
@@ -6942,10 +6935,8 @@ pub unsafe fn HorizontalShootableShutter_Func_12(game: &mut Game) {
     (*E).rfpm_var_B = (*E).rfpm_var_B.wrapping_sub(1);
     if ((*E).rfpm_var_B as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
         (*E).rfpm_var_A = ((0xa2f2e4i32) as u16);
-        if (*E).rfpm_var_04 == 1u16 {
-            if (*E).rfpm_var_01 != 0 {
-                (*E).rfpm_var_A = ((0xa2f243i32) as u16);
-            }
+        if (*E).rfpm_var_04 == 1u16 && (*E).rfpm_var_01 != 0 {
+            (*E).rfpm_var_A = ((0xa2f243i32) as u16);
         }
     }
 }

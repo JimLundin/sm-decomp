@@ -5231,100 +5231,91 @@ pub unsafe fn SamusProjectileInteractionHandler(game: &mut Game) {
                 - 1792 as ::core::ffi::c_int
                 & 0x8000 as ::core::ffi::c_int
                 == 0)
-        {
-            if ((*((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16)
+            && ((*((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16)
                 .offset(pidx as isize) as ::core::ffi::c_int
                 & 0x10 as ::core::ffi::c_int)
                 == 0i32)
+            && (abs16(
+                (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
+                    .offset(pidx as isize))
+                .wrapping_sub(ram_word!(game, samus_x_pos)),
+            ) as ::core::ffi::c_int
+                - *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16)
+                    .offset(pidx as isize) as ::core::ffi::c_int)
+                < ram_word!(game, samus_x_radius) as ::core::ffi::c_int
+            && (abs16(
+                (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
+                    .offset(pidx as isize))
+                .wrapping_sub(ram_word!(game, samus_y_pos)),
+            ) as ::core::ffi::c_int
+                - *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
+                    .offset(pidx as isize) as ::core::ffi::c_int)
+                < ram_word!(game, samus_y_radius) as ::core::ffi::c_int
+        {
+            if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
+                .offset(pidx as isize) as ::core::ffi::c_int
+                & 0xff00 as ::core::ffi::c_int)
+                != 768i32
+                && (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
+                    .offset(pidx as isize) as ::core::ffi::c_int
+                    & 0xff00 as ::core::ffi::c_int)
+                    != 1280i32
             {
-                if (abs16(
-                    (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
-                        .offset(pidx as isize))
-                    .wrapping_sub(ram_word!(game, samus_x_pos)),
-                ) as ::core::ffi::c_int
-                    - *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16)
-                        .offset(pidx as isize) as ::core::ffi::c_int)
-                    < ram_word!(game, samus_x_radius) as ::core::ffi::c_int
-                    && (abs16(
-                        (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
-                            .offset(pidx as isize))
-                        .wrapping_sub(ram_word!(game, samus_y_pos)),
-                    ) as ::core::ffi::c_int
-                        - *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
-                            .offset(pidx as isize) as ::core::ffi::c_int)
-                        < ram_word!(game, samus_y_radius) as ::core::ffi::c_int
-                {
-                    if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
-                        .offset(pidx as isize) as ::core::ffi::c_int
-                        & 0xff00 as ::core::ffi::c_int)
-                        != 768i32
-                        && (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
+                let ref mut fresh43 = *((&raw mut game.g_ram as *mut uint8).offset(0xc04)
+                    as *mut uint16)
+                    .offset(pidx as isize);
+                *fresh43 = (*fresh43) | (0x10u16);
+                Samus_DealDamage(
+                    SuitDamageDivision(
+                        *((&raw mut game.g_ram as *mut uint8).offset(0xc2c) as *mut uint16)
+                            .offset(pidx as isize),
+                        game,
+                    ),
+                    game,
+                );
+                set_ram_word!(game.samus_invincibility_timer = 96 as uint16);
+                set_ram_word!(game.samus_knockback_timer = 5 as uint16);
+                '_c2rust_label: {
+                    __assert_fail(
+                        b"0\0" as *const u8 as *const ::core::ffi::c_char,
+                        b"src/sm_a0.c\0" as *const u8 as *const ::core::ffi::c_char,
+                        2048 as ::core::ffi::c_uint,
+                        b"void SamusProjectileInteractionHandler(void)\0" as *const u8
+                            as *const ::core::ffi::c_char,
+                    );
+                };
+                let mut v0: uint16 = 0 as uint16;
+                set_ram_word!(
+                    game.knockback_x_dir =
+                        (((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(
+                            (*((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
+                                .offset(
+                                    (v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
+                                )) as i16,
+                        ) >= 0i16) as uint16
+                );
+                return;
+            }
+            if *((&raw mut game.g_ram as *mut uint8).offset(0xc7c) as *mut uint16)
+                .offset(pidx as isize)
+                == 8u16
+            {
+                set_ram_word!(
+                    game.bomb_jump_dir = (if ram_word!(game, samus_x_pos)
+                        == *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
                             .offset(pidx as isize)
-                            as ::core::ffi::c_int
-                            & 0xff00 as ::core::ffi::c_int)
-                            != 1280i32
                     {
-                        let ref mut fresh43 = *((&raw mut game.g_ram as *mut uint8).offset(0xc04)
-                            as *mut uint16)
-                            .offset(pidx as isize);
-                        *fresh43 = (*fresh43) | (0x10u16);
-                        Samus_DealDamage(
-                            SuitDamageDivision(
-                                *((&raw mut game.g_ram as *mut uint8).offset(0xc2c) as *mut uint16)
-                                    .offset(pidx as isize),
-                                game,
-                            ),
-                            game,
-                        );
-                        set_ram_word!(game.samus_invincibility_timer = 96 as uint16);
-                        set_ram_word!(game.samus_knockback_timer = 5 as uint16);
-                        '_c2rust_label: {
-                            __assert_fail(
-                                b"0\0" as *const u8 as *const ::core::ffi::c_char,
-                                b"src/sm_a0.c\0" as *const u8 as *const ::core::ffi::c_char,
-                                2048 as ::core::ffi::c_uint,
-                                b"void SamusProjectileInteractionHandler(void)\0" as *const u8
-                                    as *const ::core::ffi::c_char,
-                            );
-                        };
-                        let mut v0: uint16 = 0 as uint16;
-                        set_ram_word!(
-                            game.knockback_x_dir =
-                                (((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(
-                                    (*((&raw mut game.g_ram as *mut uint8).offset(0x1a4b)
-                                        as *mut uint16)
-                                        .offset(
-                                            (v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
-                                                as isize,
-                                        )) as i16,
-                                ) >= 0i16) as uint16
-                        );
-                        return;
-                    }
-                    if *((&raw mut game.g_ram as *mut uint8).offset(0xc7c) as *mut uint16)
-                        .offset(pidx as isize)
-                        == 8u16
+                        2 as ::core::ffi::c_int
+                    } else if ((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(
+                        (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
+                            .offset(pidx as isize)) as i16,
+                    ) < 0i16
                     {
-                        set_ram_word!(
-                            game.bomb_jump_dir = (if ram_word!(game, samus_x_pos)
-                                == *((&raw mut game.g_ram as *mut uint8).offset(0xb64)
-                                    as *mut uint16)
-                                    .offset(pidx as isize)
-                            {
-                                2 as ::core::ffi::c_int
-                            } else if ((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(
-                                (*((&raw mut game.g_ram as *mut uint8).offset(0xb64)
-                                    as *mut uint16)
-                                    .offset(pidx as isize)) as i16,
-                            ) < 0i16
-                            {
-                                1 as ::core::ffi::c_int
-                            } else {
-                                3 as ::core::ffi::c_int
-                            }) as uint16
-                        );
-                    }
-                }
+                        1 as ::core::ffi::c_int
+                    } else {
+                        3 as ::core::ffi::c_int
+                    }) as uint16
+                );
             }
         }
         pidx += 1;
@@ -5461,27 +5452,24 @@ pub unsafe fn EprojProjCollDet(game: &mut Game) {
                         - 1792 as ::core::ffi::c_int
                         & 0x8000 as ::core::ffi::c_int
                         != 0
-                {
-                    if *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
+                    && *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
                         .offset(i as isize) as ::core::ffi::c_int
                         & 0xffe0 as ::core::ffi::c_int
                         == *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
                             .offset(j as isize) as ::core::ffi::c_int
                             & 0xffe0 as ::core::ffi::c_int
-                        && *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
-                            .offset(i as isize) as ::core::ffi::c_int
+                    && *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
+                        .offset(i as isize) as ::core::ffi::c_int
+                        & 0xffe0 as ::core::ffi::c_int
+                        == *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
+                            .offset(j as isize) as ::core::ffi::c_int
                             & 0xffe0 as ::core::ffi::c_int
-                            == *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
-                                .offset(j as isize)
-                                as ::core::ffi::c_int
-                                & 0xffe0 as ::core::ffi::c_int
-                    {
-                        HandleEprojCollWithProj(
-                            (i * 2 as ::core::ffi::c_int) as uint16,
-                            (j * 2 as ::core::ffi::c_int) as uint16,
-                            game,
-                        );
-                    }
+                {
+                    HandleEprojCollWithProj(
+                        (i * 2 as ::core::ffi::c_int) as uint16,
+                        (j * 2 as ::core::ffi::c_int) as uint16,
+                        game,
+                    );
                 }
                 j += 1;
             }
@@ -6170,16 +6158,14 @@ pub unsafe fn EnemySamusCollHandler(game: &mut Game) {
         && (abs16((ram_word!(game, samus_y_pos)).wrapping_sub((*E).y_pos)) as ::core::ffi::c_int
             - ram_word!(game, samus_y_radius) as ::core::ffi::c_int)
             < (*E).y_height as ::core::ffi::c_int
+        && ((*E).enemy_ptr as ::core::ffi::c_int == addr_kEnemyDef_DAFF as ::core::ffi::c_int
+            || (*E).frozen_timer == 0)
     {
-        if (*E).enemy_ptr as ::core::ffi::c_int == addr_kEnemyDef_DAFF as ::core::ffi::c_int
-            || (*E).frozen_timer == 0
-        {
-            CallEnemyAi(
-                (((*E).bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                    | (*ED).touch_ai as ::core::ffi::c_int) as uint32,
-                game,
-            );
-        }
+        CallEnemyAi(
+            (((*E).bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
+                | (*ED).touch_ai as ::core::ffi::c_int) as uint32,
+            game,
+        );
     }
 }
 pub unsafe fn EprojCollHandler(game: &mut Game) {
@@ -6223,42 +6209,38 @@ pub unsafe fn EprojCollHandler(game: &mut Game) {
                 - *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16)
                     .offset(pidx as isize) as ::core::ffi::c_int)
                 < (*E).x_width as ::core::ffi::c_int
-            {
-                if (y as ::core::ffi::c_int
+                && (y as ::core::ffi::c_int
                     - *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
                         .offset(pidx as isize) as ::core::ffi::c_int)
                     < (*E).y_height as ::core::ffi::c_int
+            {
+                if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
+                    .offset(pidx as isize) as ::core::ffi::c_int
+                    & 0xf00 as ::core::ffi::c_int)
+                    == 512i32
                 {
-                    if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
-                        .offset(pidx as isize) as ::core::ffi::c_int
-                        & 0xf00 as ::core::ffi::c_int)
-                        == 512i32
-                    {
-                        set_ram_word!(game.earthquake_timer = 30 as uint16);
-                        set_ram_word!(game.earthquake_type = 18 as uint16);
-                    }
-                    if ((*E).properties as ::core::ffi::c_int & 0x1000 as ::core::ffi::c_int)
-                        != 0i32
-                        || (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
-                            .offset(pidx as isize)
-                            as ::core::ffi::c_int
-                            & 8 as ::core::ffi::c_int)
-                            == 0i32
-                    {
-                        let ref mut fresh26 = *((&raw mut game.g_ram as *mut uint8).offset(0xc04)
-                            as *mut uint16)
-                            .offset(pidx as isize);
-                        *fresh26 = (*fresh26) | (0x10u16);
-                    }
-                    set_ram_word!(game.collision_detection_index = pidx as uint16);
-                    CallEnemyAi(
-                        (((*E).bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                            | (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai
-                                as ::core::ffi::c_int) as uint32,
-                        game,
-                    );
-                    return;
+                    set_ram_word!(game.earthquake_timer = 30 as uint16);
+                    set_ram_word!(game.earthquake_type = 18 as uint16);
                 }
+                if ((*E).properties as ::core::ffi::c_int & 0x1000 as ::core::ffi::c_int) != 0i32
+                    || (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
+                        .offset(pidx as isize) as ::core::ffi::c_int
+                        & 8 as ::core::ffi::c_int)
+                        == 0i32
+                {
+                    let ref mut fresh26 = *((&raw mut game.g_ram as *mut uint8).offset(0xc04)
+                        as *mut uint16)
+                        .offset(pidx as isize);
+                    *fresh26 = (*fresh26) | (0x10u16);
+                }
+                set_ram_word!(game.collision_detection_index = pidx as uint16);
+                CallEnemyAi(
+                    (((*E).bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
+                        | (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai as ::core::ffi::c_int)
+                        as uint32,
+                    game,
+                );
+                return;
             }
         }
         pidx += 1;
@@ -6291,8 +6273,7 @@ pub unsafe fn EnemyBombCollHandler(game: &mut Game) {
                     .offset(pidx as isize) as ::core::ffi::c_int
                     & 0x8000 as ::core::ffi::c_int)
                     == 0i32)
-        {
-            if (abs16(
+            && (abs16(
                 (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
                     .offset(pidx as isize))
                 .wrapping_sub((*E).x_pos),
@@ -6300,28 +6281,27 @@ pub unsafe fn EnemyBombCollHandler(game: &mut Game) {
                 - *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16)
                     .offset(pidx as isize) as ::core::ffi::c_int)
                 < (*E).x_width as ::core::ffi::c_int
-                && (abs16(
-                    (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
-                        .offset(pidx as isize))
-                    .wrapping_sub((*E).y_pos),
-                ) as ::core::ffi::c_int
-                    - *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
-                        .offset(pidx as isize) as ::core::ffi::c_int)
-                    < (*E).y_height as ::core::ffi::c_int
-            {
-                set_ram_word!(game.collision_detection_index = pidx as uint16);
-                let ref mut fresh23 = *((&raw mut game.g_ram as *mut uint8).offset(0xc04)
-                    as *mut uint16)
-                    .offset(pidx as isize);
-                *fresh23 = (*fresh23) | (0x10u16);
-                CallEnemyAi(
-                    (((*E).bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                        | (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai as ::core::ffi::c_int)
-                        as uint32,
-                    game,
-                );
-                return;
-            }
+            && (abs16(
+                (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
+                    .offset(pidx as isize))
+                .wrapping_sub((*E).y_pos),
+            ) as ::core::ffi::c_int
+                - *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
+                    .offset(pidx as isize) as ::core::ffi::c_int)
+                < (*E).y_height as ::core::ffi::c_int
+        {
+            set_ram_word!(game.collision_detection_index = pidx as uint16);
+            let ref mut fresh23 = *((&raw mut game.g_ram as *mut uint8).offset(0xc04)
+                as *mut uint16)
+                .offset(pidx as isize);
+            *fresh23 = (*fresh23) | (0x10u16);
+            CallEnemyAi(
+                (((*E).bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
+                    | (*get_EnemyDef_A2((*E).enemy_ptr, game)).shot_ai as ::core::ffi::c_int)
+                    as uint32,
+                game,
+            );
+            return;
         }
         pidx += 1;
     }
@@ -6356,25 +6336,23 @@ pub unsafe fn ProcessEnemyPowerBombInteraction(game: &mut Game) {
             .power_bomb as ::core::ffi::c_int
                 & 0x7f as ::core::ffi::c_int)
                 != 0i32)
-            {
-                if abs16((ram_word!(game, power_bomb_explosion_x_pos)).wrapping_sub((*E).x_pos))
+                && abs16((ram_word!(game, power_bomb_explosion_x_pos)).wrapping_sub((*E).x_pos))
                     < rx
-                    && abs16((ram_word!(game, power_bomb_explosion_y_pos)).wrapping_sub((*E).y_pos))
-                        < ry
-                {
-                    set_ram_word!(game.cur_enemy_index = i as uint16);
-                    let func: uint16 = (if (*ED).powerbomb_reaction != 0u16 {
-                        (*ED).powerbomb_reaction as ::core::ffi::c_int
-                    } else {
-                        0xa08037 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
-                    }) as uint16;
-                    CallEnemyAi(
-                        (((*E).bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                            | func as ::core::ffi::c_int) as uint32,
-                        game,
-                    );
-                    (*E).properties = ((*E).properties) | (0x800u16);
-                }
+                && abs16((ram_word!(game, power_bomb_explosion_y_pos)).wrapping_sub((*E).y_pos))
+                    < ry
+            {
+                set_ram_word!(game.cur_enemy_index = i as uint16);
+                let func: uint16 = (if (*ED).powerbomb_reaction != 0u16 {
+                    (*ED).powerbomb_reaction as ::core::ffi::c_int
+                } else {
+                    0xa08037 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
+                }) as uint16;
+                CallEnemyAi(
+                    (((*E).bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
+                        | func as ::core::ffi::c_int) as uint32,
+                    game,
+                );
+                (*E).properties = ((*E).properties) | (0x800u16);
             }
         }
         i -= 0x40 as ::core::ffi::c_int;
@@ -6916,76 +6894,71 @@ pub fn Samus_CheckSolidEnemyColl(amt: int32, game: &mut Game) -> CheckEnemyColl_
         }
         game.set_collision_detection_index(index);
         let enemy = SolidEnemyCollisionBody::new(game, index);
-        if enemy.frozen_timer() != 0 || enemy.properties() & 0x8000 != 0 {
-            if solid_enemy_axis_overlaps(enemy.x_pos(), pos.x_pos, enemy.x_width(), pos.width) {
-                if solid_enemy_axis_overlaps(enemy.y_pos(), pos.y_pos, enemy.y_height(), pos.height)
-                {
-                    let direction = game.samus_collision_direction() & 3;
-                    let (distance, exact) = match direction {
-                        0 | 2 => {
-                            let (position, radius, enemy_position, enemy_radius) = if direction == 0
-                            {
-                                (
-                                    game.samus_x_pos(),
-                                    game.samus_x_radius(),
-                                    enemy.x_pos(),
-                                    enemy.x_width(),
-                                )
-                            } else {
-                                (
-                                    game.samus_y_pos(),
-                                    game.samus_y_radius(),
-                                    enemy.y_pos(),
-                                    enemy.y_height(),
-                                )
-                            };
-                            let enemy_edge = enemy_position.wrapping_add(enemy_radius);
-                            // Negative-edge equality uses the unwrapped Samus subtraction.
-                            let samus_edge = i32::from(position) - i32::from(radius);
-                            (
-                                (samus_edge - i32::from(enemy_edge)) as i16,
-                                samus_edge == i32::from(enemy_edge),
-                            )
-                        }
-                        1 | 3 => {
-                            let (position, radius, enemy_position, enemy_radius) = if direction == 1
-                            {
-                                (
-                                    game.samus_x_pos(),
-                                    game.samus_x_radius(),
-                                    enemy.x_pos(),
-                                    enemy.x_width(),
-                                )
-                            } else {
-                                (
-                                    game.samus_y_pos(),
-                                    game.samus_y_radius(),
-                                    enemy.y_pos(),
-                                    enemy.y_height(),
-                                )
-                            };
-                            let distance = (i32::from(enemy_position)
-                                - i32::from(enemy_radius)
-                                - i32::from(radius)
-                                - i32::from(position))
-                                as i16;
-                            (distance, distance == 0)
-                        }
-                        _ => unreachable!(),
+        if (enemy.frozen_timer() != 0 || enemy.properties() & 0x8000 != 0)
+            && solid_enemy_axis_overlaps(enemy.x_pos(), pos.x_pos, enemy.x_width(), pos.width)
+            && solid_enemy_axis_overlaps(enemy.y_pos(), pos.y_pos, enemy.y_height(), pos.height)
+        {
+            let direction = game.samus_collision_direction() & 3;
+            let (distance, exact) = match direction {
+                0 | 2 => {
+                    let (position, radius, enemy_position, enemy_radius) = if direction == 0 {
+                        (
+                            game.samus_x_pos(),
+                            game.samus_x_radius(),
+                            enemy.x_pos(),
+                            enemy.x_width(),
+                        )
+                    } else {
+                        (
+                            game.samus_y_pos(),
+                            game.samus_y_radius(),
+                            enemy.y_pos(),
+                            enemy.y_height(),
+                        )
                     };
-                    if exact || distance >= 0 {
-                        if exact {
-                            // Exact contact clears Y fraction even for horizontal probes.
-                            game.set_samus_y_subpos(0);
-                        }
-                        let index = game.collision_detection_index();
-                        game.set_enemy_index_colliding_dir(game.samus_collision_direction(), index);
-                        return CheckSolidEnemyColl_Result {
-                            collision: 0xffff,
-                            amt: if exact { 0 } else { i32::from(distance) << 16 },
-                        };
-                    }
+                    let enemy_edge = enemy_position.wrapping_add(enemy_radius);
+                    // Negative-edge equality uses the unwrapped Samus subtraction.
+                    let samus_edge = i32::from(position) - i32::from(radius);
+                    (
+                        (samus_edge - i32::from(enemy_edge)) as i16,
+                        samus_edge == i32::from(enemy_edge),
+                    )
                 }
+                1 | 3 => {
+                    let (position, radius, enemy_position, enemy_radius) = if direction == 1 {
+                        (
+                            game.samus_x_pos(),
+                            game.samus_x_radius(),
+                            enemy.x_pos(),
+                            enemy.x_width(),
+                        )
+                    } else {
+                        (
+                            game.samus_y_pos(),
+                            game.samus_y_radius(),
+                            enemy.y_pos(),
+                            enemy.y_height(),
+                        )
+                    };
+                    let distance = (i32::from(enemy_position)
+                        - i32::from(enemy_radius)
+                        - i32::from(radius)
+                        - i32::from(position)) as i16;
+                    (distance, distance == 0)
+                }
+                _ => unreachable!(),
+            };
+            if exact || distance >= 0 {
+                if exact {
+                    // Exact contact clears Y fraction even for horizontal probes.
+                    game.set_samus_y_subpos(0);
+                }
+                let index = game.collision_detection_index();
+                game.set_enemy_index_colliding_dir(game.samus_collision_direction(), index);
+                return CheckSolidEnemyColl_Result {
+                    collision: 0xffff,
+                    amt: if exact { 0 } else { i32::from(distance) << 16 },
+                };
             }
         }
         list_index += 1;

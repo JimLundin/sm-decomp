@@ -3999,11 +3999,11 @@ pub unsafe fn EquipmentScreenCategory_Tanks_1(game: &mut Game) {
 pub unsafe fn EquipmentScreenCategory_Weapons(game: &mut Game) {
     EquipmentScreenCategory_Weapons_MoveButtons(game);
     let R36: uint16 = ram_word!(game, equipped_beams);
-    if ram_word!(game, collected_beams) != 0 {
-        if (ram_word!(game, pausemenu_equipment_category_item) as uint8) == 1u8 {
-            EquipmentScreenCategory_ButtonResponse(10 as uint16, game);
-            EquipmentScreenCategory_Weapons_PlazmaSpazerCheck(R36, game);
-        }
+    if ram_word!(game, collected_beams) != 0
+        && (ram_word!(game, pausemenu_equipment_category_item) as uint8) == 1u8
+    {
+        EquipmentScreenCategory_ButtonResponse(10 as uint16, game);
+        EquipmentScreenCategory_Weapons_PlazmaSpazerCheck(R36, game);
     }
 }
 pub unsafe fn EquipmentScreenCategory_Weapons_MoveButtons(game: &mut Game) {
@@ -4043,8 +4043,7 @@ pub unsafe fn EquipmentScreenCategory_Weapons_MoveButtons(game: &mut Game) {
         }
     } else if (ram_word!(game, joypad1_newkeys) as ::core::ffi::c_int & 0x800 as ::core::ffi::c_int)
         != 0i32
-    {
-        if (ram_word!(game, pausemenu_equipment_category_item) as ::core::ffi::c_int
+        && ((ram_word!(game, pausemenu_equipment_category_item) as ::core::ffi::c_int
             & 0xff00 as ::core::ffi::c_int)
             == 0i32
             || {
@@ -4063,12 +4062,10 @@ pub unsafe fn EquipmentScreenCategory_Weapons_MoveButtons(game: &mut Game) {
                     ),
                     game,
                 ) == 0xffffu16
-            }
-        {
-            if EquipmentScreenMoveToReserveTanks(game) == 0 {
-                set_ram_word!(game.pausemenu_equipment_category_item = r18);
-            }
-        }
+            })
+        && EquipmentScreenMoveToReserveTanks(game) == 0
+    {
+        set_ram_word!(game.pausemenu_equipment_category_item = r18);
     }
 }
 pub unsafe fn EquipmentScreenCategory_Weapons_PlazmaSpazerCheck(R36: uint16, game: &mut Game) {
@@ -4158,8 +4155,7 @@ pub unsafe fn EquipmentScreenCategory_Suit_MoveResponse(game: &mut Game) {
     } else if (ram_word!(game, joypad1_newkeys) as ::core::ffi::c_int
         & kButton_Down as ::core::ffi::c_int)
         != 0i32
-    {
-        if (ram_word!(game, pausemenu_equipment_category_item) as ::core::ffi::c_int
+        && ((ram_word!(game, pausemenu_equipment_category_item) as ::core::ffi::c_int
             & 0xff00 as ::core::ffi::c_int)
             == 1280i32
             || {
@@ -4178,10 +4174,9 @@ pub unsafe fn EquipmentScreenCategory_Suit_MoveResponse(game: &mut Game) {
                     ),
                     game,
                 ) == 0xffffu16
-            }
-        {
-            EquipmentScreenMoveToHighJumpOrLowerInBoots(0 as uint16, r18, game);
-        }
+            })
+    {
+        EquipmentScreenMoveToHighJumpOrLowerInBoots(0 as uint16, r18, game);
     }
 }
 pub unsafe fn EquipmentScreenCategory_Boots(game: &mut Game) {
@@ -4228,8 +4223,7 @@ pub unsafe fn EquipmentScreenCategory_Boots_MoveResponse(game: &mut Game) {
     } else if (ram_word!(game, joypad1_newkeys) as ::core::ffi::c_int
         & kButton_Up as ::core::ffi::c_int)
         != 0i32
-    {
-        if (ram_word!(game, pausemenu_equipment_category_item) as ::core::ffi::c_int
+        && ((ram_word!(game, pausemenu_equipment_category_item) as ::core::ffi::c_int
             & 0xff00 as ::core::ffi::c_int)
             == 0i32
             || {
@@ -4248,10 +4242,9 @@ pub unsafe fn EquipmentScreenCategory_Boots_MoveResponse(game: &mut Game) {
                     ),
                     game,
                 ) == 0xffffu16
-            }
-        {
-            EquipmentScreenMoveToScrewOrHigherOnSuits(0xa as uint16, r18, game);
-        }
+            })
+    {
+        EquipmentScreenMoveToScrewOrHigherOnSuits(0xa as uint16, r18, game);
     }
 }
 pub unsafe fn WriteSamusWireframeTilemapAndQueue(game: &mut Game) {

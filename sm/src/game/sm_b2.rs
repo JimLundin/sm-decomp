@@ -1348,10 +1348,9 @@ pub unsafe fn WalkingSpacePirates_FD44(game: &mut Game) {
                 -(14337 as int32),
                 game,
             ) == 0
+                && (((*E).base.x_pos) as i16).wrapping_sub(((*E).sps_var_E) as i16) >= 0i16
             {
-                if (((*E).base.x_pos) as i16).wrapping_sub(((*E).sps_var_E) as i16) >= 0i16 {
-                    return;
-                }
+                return;
             }
         }
         (*E).base.current_instruction = addr_kSpacePirates_Ilist_FBC6 as uint16;

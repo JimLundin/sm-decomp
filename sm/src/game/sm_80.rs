@@ -2346,21 +2346,19 @@ pub unsafe fn ProcessTimer_Decrement(game: &mut Game) -> uint8 {
         (&raw mut game.g_ram as *mut uint8).offset(0x945),
         kTimerCentisecondDecrements[(ram_word!(game, nmi_frame_counter_word) as ::core::ffi::c_int
             & 0x7f as ::core::ffi::c_int) as usize],
+    ) && DecrementDecimal(
+        (&raw mut game.g_ram as *mut uint8).offset(0x946),
+        1 as uint8,
     ) {
         if DecrementDecimal(
-            (&raw mut game.g_ram as *mut uint8).offset(0x946),
+            (&raw mut game.g_ram as *mut uint8).offset(0x947),
             1 as uint8,
         ) {
-            if DecrementDecimal(
-                (&raw mut game.g_ram as *mut uint8).offset(0x947),
-                1 as uint8,
-            ) {
-                *(&raw mut game.g_ram as *mut uint8).offset(0x945) = 0 as uint8;
-                *(&raw mut game.g_ram as *mut uint8).offset(0x946) = 0 as uint8;
-                *(&raw mut game.g_ram as *mut uint8).offset(0x947) = 0 as uint8;
-            } else {
-                *(&raw mut game.g_ram as *mut uint8).offset(0x946) = 0x59 as uint8;
-            }
+            *(&raw mut game.g_ram as *mut uint8).offset(0x945) = 0 as uint8;
+            *(&raw mut game.g_ram as *mut uint8).offset(0x946) = 0 as uint8;
+            *(&raw mut game.g_ram as *mut uint8).offset(0x947) = 0 as uint8;
+        } else {
+            *(&raw mut game.g_ram as *mut uint8).offset(0x946) = 0x59 as uint8;
         }
     }
     ((*(&raw mut game.g_ram as *mut uint8).offset(0x945) as ::core::ffi::c_int
@@ -4098,32 +4096,27 @@ pub unsafe fn DoorTransition_Up(game: &mut Game) -> uint8 {
     (v6 == 56u16) as uint8
 }
 pub unsafe fn ConfigureMode7RotationMatrix(game: &mut Game) {
-    if ram_word!(game, irq_enable_mode7) != 0 {
-        if (ram_word!(game, nmi_frame_counter_word) as ::core::ffi::c_int & 7 as ::core::ffi::c_int)
+    if ram_word!(game, irq_enable_mode7) != 0
+        && (ram_word!(game, nmi_frame_counter_word) as ::core::ffi::c_int & 7 as ::core::ffi::c_int)
             == 0i32
-        {
-            set_ram_word!(
-                game.reg_M7B = kSinCosTable8bit_Sext[(ram_word!(game, mode7_rotation_angle) as uint8
-                    as ::core::ffi::c_int
-                    + 64 as ::core::ffi::c_int)
-                    as usize] as uint16
-            );
-            set_ram_word!(
-                game.reg_M7C = -(ram_word!(game, reg_M7B) as ::core::ffi::c_int) as uint16
-            );
-            set_ram_word!(
-                game.reg_M7A = kSinCosTable8bit_Sext[((((ram_word!(game, mode7_rotation_angle))
-                    as u8)
-                    .wrapping_add(64u8))
-                    as ::core::ffi::c_int
-                    + 64 as ::core::ffi::c_int)
-                    as usize] as uint16
-            );
-            set_ram_word!(game.reg_M7D = ram_word!(game, reg_M7A));
-            let ref mut fresh21 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x785) as *mut uint16);
-            *fresh21 = (*fresh21).wrapping_add(1);
-        }
+    {
+        set_ram_word!(
+            game.reg_M7B = kSinCosTable8bit_Sext[(ram_word!(game, mode7_rotation_angle) as uint8
+                as ::core::ffi::c_int
+                + 64 as ::core::ffi::c_int)
+                as usize] as uint16
+        );
+        set_ram_word!(game.reg_M7C = -(ram_word!(game, reg_M7B) as ::core::ffi::c_int) as uint16);
+        set_ram_word!(
+            game.reg_M7A = kSinCosTable8bit_Sext[((((ram_word!(game, mode7_rotation_angle)) as u8)
+                .wrapping_add(64u8))
+                as ::core::ffi::c_int
+                + 64 as ::core::ffi::c_int)
+                as usize] as uint16
+        );
+        set_ram_word!(game.reg_M7D = ram_word!(game, reg_M7A));
+        let ref mut fresh21 = *((&raw mut game.g_ram as *mut uint8).offset(0x785) as *mut uint16);
+        *fresh21 = (*fresh21).wrapping_add(1);
     }
 }
 

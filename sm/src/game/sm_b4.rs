@@ -178,45 +178,42 @@ pub unsafe fn DrawSpriteObjects(game: &mut Game) {
             let x: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xf0f8) as *mut uint16)
                 .offset(v1 as isize))
             .wrapping_sub(ram_word!(game, layer1_x_pos));
-            if ((x) as i16).wrapping_add(16i16) >= 0i16 {
-                if x as ::core::ffi::c_int - 272 as ::core::ffi::c_int
+            if ((x) as i16).wrapping_add(16i16) >= 0i16
+                && x as ::core::ffi::c_int - 272 as ::core::ffi::c_int
                     & 0x8000 as ::core::ffi::c_int
                     != 0
+            {
+                let y: int16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xf1f8)
+                    as *mut uint16)
+                    .offset(v1 as isize)) as i16)
+                    .wrapping_sub((ram_word!(game, layer1_y_pos)) as i16);
+                if y >= 0i16
+                    && y as ::core::ffi::c_int - 272 as ::core::ffi::c_int
+                        & 0x8000 as ::core::ffi::c_int
+                        != 0
                 {
-                    let y: int16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xf1f8)
+                    let r3: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xf078)
                         as *mut uint16)
-                        .offset(v1 as isize)) as i16)
-                        .wrapping_sub((ram_word!(game, layer1_y_pos)) as i16);
-                    if y >= 0i16 {
-                        if y as ::core::ffi::c_int - 272 as ::core::ffi::c_int
-                            & 0x8000 as ::core::ffi::c_int
-                            != 0
-                        {
-                            let r3: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xf078)
-                                as *mut uint16)
-                                .offset(v1 as isize))
-                                & (0xe00u16);
-                            let r0: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xf078)
-                                as *mut uint16)
-                                .offset(v1 as isize))
-                                & (0x1ffu16);
-                            let v3: *const uint8 = RomPtr_B4(
-                                *((&raw mut game.g_ram as *mut uint8).offset(0xef78)
-                                    as *mut uint16)
-                                    .offset(v1 as isize),
-                                game,
-                            );
-                            DrawSpritemapWithBaseTile(
-                                0xb4 as uint8,
-                                *(v3.offset(2) as *mut uint16),
-                                x,
-                                y as uint16,
-                                r3,
-                                r0,
-                                game,
-                            );
-                        }
-                    }
+                        .offset(v1 as isize))
+                        & (0xe00u16);
+                    let r0: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xf078)
+                        as *mut uint16)
+                        .offset(v1 as isize))
+                        & (0x1ffu16);
+                    let v3: *const uint8 = RomPtr_B4(
+                        *((&raw mut game.g_ram as *mut uint8).offset(0xef78) as *mut uint16)
+                            .offset(v1 as isize),
+                        game,
+                    );
+                    DrawSpritemapWithBaseTile(
+                        0xb4 as uint8,
+                        *(v3.offset(2) as *mut uint16),
+                        x,
+                        y as uint16,
+                        r3,
+                        r0,
+                        game,
+                    );
                 }
             }
         }

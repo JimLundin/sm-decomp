@@ -937,15 +937,12 @@ pub unsafe fn Fireflea_Common(game: &mut Game) {
         .base
         .health
         == 0
-    {
-        if ram_word!(game, fireflea_darkness_level) as ::core::ffi::c_int - 12 as ::core::ffi::c_int
+        && ram_word!(game, fireflea_darkness_level) as ::core::ffi::c_int - 12 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             != 0
-        {
-            let ref mut fresh6 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x177e) as *mut uint16);
-            *fresh6 = (*fresh6).wrapping_add(2u16);
-        }
+    {
+        let ref mut fresh6 = *((&raw mut game.g_ram as *mut uint8).offset(0x177e) as *mut uint16);
+        *fresh6 = (*fresh6).wrapping_add(2u16);
     }
 }
 pub unsafe fn MaridiaFish_Instr_3(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
@@ -1153,14 +1150,14 @@ static off_A39540: [Option<Func_V>; 4] = unsafe {
     ]
 };
 pub unsafe fn Elevator_Frozen(game: &mut Game) {
-    if ram_word!(game, door_transition_flag_elevator_zebetites) == 0 {
-        if (ram_word!(game, elevator_status) as uint32) << 16 as ::core::ffi::c_int
+    if ram_word!(game, door_transition_flag_elevator_zebetites) == 0
+        && (ram_word!(game, elevator_status) as uint32) << 16 as ::core::ffi::c_int
             | ram_word!(game, elevator_flags) as uint32
             != 0
-        {
-            off_A39540[ram_word!(game, elevator_status) as usize]
-                .expect("non-null function pointer")(game);
-        }
+    {
+        off_A39540[ram_word!(game, elevator_status) as usize].expect("non-null function pointer")(
+            game,
+        );
     }
 }
 pub unsafe fn Elevator_Func_1(game: &mut Game) {
@@ -1875,23 +1872,21 @@ pub unsafe fn Roach_Func_9(game: &mut Game) {
         *(&raw mut (*E).roach_parameter_2 as *mut uint8).offset(0) as uint16,
         game,
     ) != 0
-    {
-        if IsSamusWithinEnemy_Y(
+        && IsSamusWithinEnemy_Y(
             ram_word!(game, cur_enemy_index),
             *(&raw mut (*E).roach_parameter_2 as *mut uint8).offset(0) as uint16,
             game,
         ) != 0
-        {
-            (*E).roach_var_B = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa3a121))
-                as *const uint8 as *mut uint16)
-                .offset(
-                    *(&raw mut (*E).roach_parameter_2 as *mut uint8).offset(
-                        (::core::mem::size_of::<uint16>())
-                            .wrapping_div(::core::mem::size_of::<uint8>())
-                            .wrapping_sub(1_usize) as isize,
-                    ) as isize,
-                );
-        }
+    {
+        (*E).roach_var_B = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa3a121)) as *const uint8
+            as *mut uint16)
+            .offset(
+                *(&raw mut (*E).roach_parameter_2 as *mut uint8).offset(
+                    (::core::mem::size_of::<uint16>())
+                        .wrapping_div(::core::mem::size_of::<uint8>())
+                        .wrapping_sub(1_usize) as isize,
+                ) as isize,
+            );
     }
 }
 pub unsafe fn Roach_Func_10(game: &mut Game) {

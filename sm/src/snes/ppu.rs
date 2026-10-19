@@ -1591,21 +1591,19 @@ unsafe fn ppu_getPixelForBgLayer(
         7 as ::core::ffi::c_int - (x & 0x7 as ::core::ffi::c_int)
     };
     let mut tileNum: ::core::ffi::c_int = tile as ::core::ffi::c_int & 0x3ff as ::core::ffi::c_int;
-    if wideTiles {
-        if (x & 8 as ::core::ffi::c_int != 0) as ::core::ffi::c_int
+    if wideTiles
+        && (x & 8 as ::core::ffi::c_int != 0) as ::core::ffi::c_int
             ^ (tile as ::core::ffi::c_int & 0x4000 as ::core::ffi::c_int != 0) as ::core::ffi::c_int
             != 0
-        {
-            tileNum += 1 as ::core::ffi::c_int;
-        }
+    {
+        tileNum += 1 as ::core::ffi::c_int;
     }
-    if (*ppu).bgLayer[layer as usize].bigTiles {
-        if (y & 8 as ::core::ffi::c_int != 0) as ::core::ffi::c_int
+    if (*ppu).bgLayer[layer as usize].bigTiles
+        && (y & 8 as ::core::ffi::c_int != 0) as ::core::ffi::c_int
             ^ (tile as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0) as ::core::ffi::c_int
             != 0
-        {
-            tileNum += 0x10 as ::core::ffi::c_int;
-        }
+    {
+        tileNum += 0x10 as ::core::ffi::c_int;
     }
     let bitDepth: ::core::ffi::c_int = bitDepthsPerMode[(*ppu).mode as usize][layer as usize];
     if (*ppu).mode as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
