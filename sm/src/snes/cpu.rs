@@ -758,18 +758,24 @@ unsafe fn shift_memory_left(cpu: *mut Cpu, low: u32, high: u32, rotate: bool, ga
     };
     set_zero_negative(result, (*cpu).mf, &mut *cpu);
 }
+fn shifted_right_result(value: u16, byte: bool, cpu: &mut Cpu) -> u16 {
+    cpu.c = value & 1 != 0;
+    if byte {
+        value >> 1 & 0x7f
+    } else {
+        value >> 1
+    }
+}
 unsafe fn shift_memory_right(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).mf {
         let value = read_byte(cpu, low, game);
-        (*cpu).c = value & 1 != 0;
-        let result = value >> 1;
-        write_byte(cpu, low, result, game);
-        u16::from(result)
+        let result = shifted_right_result(u16::from(value), true, &mut *cpu);
+        write_byte(cpu, low, result as u8, game);
+        result
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(2);
         let value = read_word(cpu, low, high, game);
-        (*cpu).c = value & 1 != 0;
-        let result = value >> 1;
+        let result = shifted_right_result(value, false, &mut *cpu);
         write_word(cpu, low, high, result, true, game);
         result
     };
@@ -825,12 +831,7 @@ fn shift_accumulator_left(rotate: bool, cpu: &mut Cpu) {
     load_accumulator(result, cpu);
 }
 fn shift_accumulator_right(cpu: &mut Cpu) {
-    cpu.c = cpu.a & 1 != 0;
-    let result = if cpu.mf {
-        cpu.a >> 1 & 0x7f
-    } else {
-        cpu.a >> 1
-    };
+    let result = shifted_right_result(cpu.a, cpu.mf, cpu);
     load_accumulator(result, cpu);
 }
 fn update_accumulator(delta: u16, cpu: &mut Cpu) {

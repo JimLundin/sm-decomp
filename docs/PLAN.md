@@ -10718,6 +10718,23 @@ work and remote sync are separate. Next: climb from X398/Y523 toward the
 upper hall and onward item/boss coverage. Credits, complete gameplay/hardware,
 render/audio, masked RAM and ownership remain open.
 
+CPU shared right-shift arithmetic (2026-10-19): shifted_right_result shares
+LSR carry/result between accumulator and memory callers, retaining byte 7F
+masking, carry-before-write and final live-width Z/N order. Actual old/current
+cases pass: 524,288 memory (every word, both widths/carry, aliased/disjoint
+addresses) and 262,144 accumulator (every word, both widths/carry). Named CPU/
+bus state and writes match; static-WRAM cases do not exhaust MMIO. Initial
+prefix 3,600/0 has zero memory-LSR calls, so its coverage assertion correctly
+rejects completion. Full instrumented any% on frozen `f663d0cf` plus candidate
+passes 129,712/0 (50.18s), executing memory word/byte 23,214/0 and accumulator
+word/byte 14,395,655/222,217 calls. Byte memory remains comparison-covered.
+Clean full any% 129,712/0 (65.97s), native exit 0. Cargo fmt/check and full
+release/release-library builds pass on the earlier committed source plus
+candidate; normal metadata and final frozen optimized core/DLL pass. Live CPU
+matches verified source; peer PPU work is outside replay. Rust lines +1 provide
+the shared safe arithmetic helper; other own counters unchanged. Prior holds
+and complete gameplay/render/audio remain open. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
