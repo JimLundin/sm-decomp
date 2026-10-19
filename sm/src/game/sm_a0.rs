@@ -1775,8 +1775,8 @@ pub unsafe fn SetAllEnemiesToShakeFor2Frames(game: &mut Game) {
         i += 2i32;
     }
 }
-pub unsafe fn CallEnemyGfxDrawHook(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallEnemyGfxDrawHook(ea: u32, game: &mut Game) => ea, game {
         10518604 => (),
         10738444 => Reflec_Func_1(game),
         10851138 => Draygon_Func_36(game),
@@ -1789,9 +1789,6 @@ pub unsafe fn CallEnemyGfxDrawHook(ea: u32, game: &mut Game) {
         11110345 => MotherBrain_DrawBrainNeck_EnemyGfxDrawHook(game),
         11110365 => MotherBrainsBrain_GfxDrawHook(game),
         11129754 => DeadTorizo_MainGfxHook(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn DrawSamusEnemiesAndProjectiles(game: &mut Game) {
@@ -2195,8 +2192,8 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
         ) = -1i32 as u16;
     };
 }
-pub unsafe fn CallEnemyAi(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallEnemyAi(ea: u32, game: &mut Game) => ea, game {
         10649605 => Enemy_GrappleReact_SamusLatchesOn_A2(game),
         10649610 => Enemy_GrappleReact_KillEnemy_A2(game),
         10649615 => Enemy_GrappleReact_CancelBeam_A2(game),
@@ -2636,9 +2633,6 @@ pub unsafe fn CallEnemyAi(ea: u32, game: &mut Game) {
         11791130 => (),
         10518583 | 10649655 | 10715191 | 10780727 | 10846263 | 10911799 | 10977335 | 11042871
         | 11108407 | 11173943 | 11698231 | 11763767 => NormalEnemyPowerBombAi(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn CallEnemyPreInstr(ea: u32, game: &mut Game) {
@@ -3965,8 +3959,8 @@ pub unsafe fn HandleEprojCollWithProj(k: u16, j: u16, game: &mut Game) {
         update_ram_word!(game.eproj_properties[j_0], |fresh31| (fresh31) & (0xfffu16));
     };
 }
-pub unsafe fn CallHitboxTouch(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallHitboxTouch(ea: u32, game: &mut Game) => ea, game {
         10518563 => Enemy_NormalTouchAI_A0(game),
         10670984 => MaridiaLargeSnail_Func_12(game),
         10670988 => MaridiaLargeSnail_Touch(game),
@@ -3986,13 +3980,8 @@ pub unsafe fn CallHitboxTouch(ea: u32, game: &mut Game) {
         11122118 => MotherBrainsBrain_Touch(game),
         11192695 => GoldTorizo_Touch(game),
         11700076 => WalkingSpacePirates_Touch(game),
-        _ => {
-            Unreachable(game);
-        }
     }
-}
-pub unsafe fn CallHitboxShot(ea: u32, j: u16, game: &mut Game) {
-    match ea {
+    pub unsafe fn CallHitboxShot(ea: u32, j: u16, game: &mut Game) => ea, game {
         10518573 => Enemy_NormalShotAI_A0(game),
         10649676 => (),
         10671028 => MaridiaLargeSnail_Shot(game),
@@ -4020,9 +4009,6 @@ pub unsafe fn CallHitboxShot(ea: u32, j: u16, game: &mut Game) {
         11700089 => WalkingSpacePirates_Shot(game),
         11700168 => WalkingSpacePirates_87C8(game),
         11700286 => WalkingSpacePirates_883E(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn EnemySamusCollHandler_Multibox(game: &mut Game) {

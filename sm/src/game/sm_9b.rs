@@ -415,8 +415,8 @@ unsafe fn ProcessEnemyGrappleBeamColl(a: u16, mut r18: u16, game: &mut Game) -> 
         }
     }
 }
-pub unsafe fn CallGrappleNextFunc(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallGrappleNextFunc(ea: u32, game: &mut Game) => ea, game {
         10205657 => GrappleNext_SwingClockwise(game),
         10205666 => GrappleNext_SwingAntiClockwise(game),
         10205674 => GrappleNext_StandAimRight(game),
@@ -427,9 +427,6 @@ pub unsafe fn CallGrappleNextFunc(ea: u32, game: &mut Game) {
         10205719 => GrappleNext_CrouchAimDownRight(game),
         10205728 => GrappleNext_CrouchAimDownLeft(game),
         10205737 => GrappleNext_CrouchAimLeft(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn HandleConnectingGrapple(game: &mut Game) {
@@ -1669,8 +1666,8 @@ pub unsafe fn GrappleBeamFunc_ReleaseFromSwing(game: &mut Game) {
         set_ram_word!(game.samus_auto_cancel_hud_item_index = 0u16);
     }
 }
-pub unsafe fn CallGrappleBeamFunc(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallGrappleBeamFunc(ea: u32, game: &mut Game) => ea, game {
         10206052 => GrappleBeamFunc_BB64(game),
         10206239 => GrappleBeamFunc_BC1F(game),
         10206463 => GrappleBeamFunc_BCFF(game),
@@ -1690,8 +1687,5 @@ pub unsafe fn CallGrappleBeamFunc(ea: u32, game: &mut Game) {
         10209742 => GrappleBeamFunc_C9CE(game),
         10210187 => GrappleBeamFunc_ReleaseFromSwing(game),
         10209477 => GrappleBeam_Func2(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }

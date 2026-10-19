@@ -372,15 +372,12 @@ static g_word_A7F4D5: u16 = 8u16;
 static g_word_A7F4D7: u16 = 0u16;
 static g_word_A7F4D9: u16 = 0u16;
 static g_word_A7F4DB: u16 = 0x1000u16;
-pub unsafe fn CallEnemyInstrExtFunc(ea: u32, k: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallEnemyInstrExtFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
         10997485 => Phantoon_Func_1(game),
         10997598 => Phantoon_Func_4(k, game),
         10997823 => Phantoon_StartTrackingSamusAndInitEyeTimer(game),
         10997878 => Phantoon_PickPatternForRound2(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn EnemyInstr_Call_A7(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
@@ -917,13 +914,10 @@ pub unsafe fn KraidInstr_PlayRoarSfx(game: &mut Game) {
 pub unsafe fn KraidInstr_PlayDyingSfx(game: &mut Game) {
     QueueSfx2_Max15(0x2eu16, game);
 }
-pub unsafe fn CallKraidInstr(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallKraidInstr(ea: u32, game: &mut Game) => ea, game {
         10989460 => KraidInstr_PlayRoarSfx(game),
         10989471 => KraidInstr_PlayDyingSfx(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn Kraid_ExecuteInstr(game: &mut Game) -> u16 {
@@ -2519,8 +2513,8 @@ pub unsafe fn Kraid_CrumbleRightPlatform_Right(game: &mut Game) {
         game,
     );
 }
-pub unsafe fn CallKraidSinkTableFunc(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallKraidSinkTableFunc(ea: u32, game: &mut Game) => ea, game {
         10995345 => Kraid_CrumbleLeftPlatform_Left(game),
         10995366 => (),
         10995367 => Kraid_CrumbleRightPlatform_Middle(game),
@@ -2528,9 +2522,6 @@ pub unsafe fn CallKraidSinkTableFunc(ea: u32, game: &mut Game) {
         10995411 => Kraid_CrumbleLeftPlatform_Right(game),
         10995433 => Kraid_CrumbleLeftPlatform_Middle(game),
         10995455 => Kraid_CrumbleRightPlatform_Right(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn Kraid_FadeInBg_ClearBg2TilemapTopHalf(game: &mut Game) {

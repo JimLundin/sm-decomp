@@ -269,8 +269,8 @@ pub unsafe fn Draygon_Init(game: &mut Game) {
     (*Get_Draygon(0i32, game)).draygon_var_45 = 1u16;
     DisableMinimapAndMarkBossRoomAsExplored(game);
 }
-pub unsafe fn CallDraygonFunc(ea: u32, k: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallDraygonFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
         10846283 => (),
         10848027 => Draygon_Func_1(game),
         10848139 => Draygon_Func_2(game),
@@ -309,9 +309,6 @@ pub unsafe fn CallDraygonFunc(ea: u32, k: u16, game: &mut Game) {
         10873682 => SporeSpawn_Func_2(k, game),
         10873755 => SporeSpawn_Func_3(game),
         10873838 => SporeSpawn_Func_4(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn Draygon_Main(game: &mut Game) {
@@ -1982,8 +1979,8 @@ pub unsafe fn SporeSpawn_Init(game: &mut Game) {
         SporeSpawn_Func_5(game);
     };
 }
-pub unsafe fn CallSporeSpawnFunc(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallSporeSpawnFunc(ea: u32, game: &mut Game) => ea, game {
         10873626 => (),
         10873627 => SporeSpawn_Func_1(game),
         10873682 => {
@@ -1991,9 +1988,6 @@ pub unsafe fn CallSporeSpawnFunc(ea: u32, game: &mut Game) {
         }
         10873755 => SporeSpawn_Func_3(game),
         10873838 => SporeSpawn_Func_4(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn SporeSpawn_Main(game: &mut Game) {

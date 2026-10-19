@@ -722,8 +722,8 @@ pub unsafe fn HdmaobjInstr_ClearPreInstr(k: u16, hdp: *const u8, game: &mut Game
     );
     hdp
 }
-pub unsafe fn CallHdmaobjInstrFunc(ea: u32, k: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallHdmaobjInstrFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
         8948500 => Hdmaobj_PreExplodeWhite(game),
         8948530 => Hdmaobj_PreExplodeYellow(game),
         8948537 => Hdmaobj_ExplodeYellow(game),
@@ -745,9 +745,6 @@ pub unsafe fn CallHdmaobjInstrFunc(ea: u32, k: u16, game: &mut Game) {
         9556384 => Xray_SetupStage7(game),
         9556668 => Xray_SetupStage8_SetBackdropColor(game),
         9557650 => InitializeSuitPickupHdma(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn HdmaobjInstr_CallFarFunc(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
@@ -2531,17 +2528,14 @@ pub unsafe fn HdmaobjInstr_B3A9(k: u16, hdp: *const u8, game: &mut Game) -> *con
     set_ram_word!(game.hdma_object_C[(k as i32 >> 1i32)] = 112u16);
     hdp
 }
-pub unsafe fn CallFxRisingFunc(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallFxRisingFunc(ea: u32, game: &mut Game) => ea, game {
         8958787 => FxRisingFunction_LavaAcid(game),
         8958823 => FxRisingFunction_LavaAcid_WaitToRise(game),
         8958850 => FxRisingFunction_LavaAcid_Raising(game),
         8963112 => FxRisingFunction_C428_WaterNormal(game),
         8963148 => FxRisingFunction_WaterWaitToRise(game),
         8963160 => FxRisingFunction_WaterRising(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 static kLavaSoundEffects: [u8; 8] = [0x12, 0x13, 0x14, 0x12, 0x13, 0x14, 0x12, 0x13];
@@ -2793,17 +2787,14 @@ pub unsafe fn HdmaobjInstr_SetFlagB_Copy2(k: u16, hdp: *const u8, game: &mut Gam
     set_ram_word!(game.hdma_object_B[(k as i32 >> 1i32)] = 1u16);
     hdp
 }
-pub unsafe fn CallFxRisingFunction(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallFxRisingFunction(ea: u32, game: &mut Game) => ea, game {
         8958787 => FxRisingFunction_LavaAcid(game),
         8958823 => FxRisingFunction_LavaAcid_WaitToRise(game),
         8958850 => FxRisingFunction_LavaAcid_Raising(game),
         8963112 => FxRisingFunction_C428_WaterNormal(game),
         8963148 => FxRisingFunction_WaterWaitToRise(game),
         8963160 => FxRisingFunction_WaterRising(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn HdmaobjPreInstr_WaterBG3XScroll(k: u16, game: &mut Game) {
@@ -4318,8 +4309,8 @@ pub unsafe fn HdmaobjPreInstr_ECB6(k: u16, game: &mut Game) {
         set_ram_word!(game.hdma_object_instruction_timers[v2] = 1u16);
     };
 }
-pub unsafe fn CallHdmaobjPreInstr(ea: u32, k: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallHdmaobjPreInstr(ea: u32, k: u16, game: &mut Game) => ea, game {
         8491739 => (),
         8946872 => (),
         10785852 => (),
@@ -4385,9 +4376,6 @@ pub unsafe fn CallHdmaobjPreInstr(ea: u32, k: u16, game: &mut Game) {
         8973341 => HdmaobjPreInstr_IntroCutsceneCrossfade(k, game),
         8972070 => (),
         8973494 => HdmaobjPreInstr_ECB6(k, game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn CallHdmaobjInstr(ea: u32, k: u16, j: *const u8, game: &mut Game) -> *const u8 {

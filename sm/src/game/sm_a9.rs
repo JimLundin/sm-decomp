@@ -566,8 +566,8 @@ static g_word_A9C544: u16 = 1u16;
 static g_byte_A9F56A: [i8; 16] = [
     0x10, 0xf, 0xe, 0xd, 0xc, 0xb, 0xa, 9, 8, 7, 6, 5, 4, 3, 2, 1,
 ];
-pub unsafe fn CallCorpseRottingMove(ea: u32, k: u16, j: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallCorpseRottingMove(ea: u32, k: u16, j: u16, game: &mut Game) => ea, game {
         11133835 => Torizo_CorpseRottingCopyFunc(k, j, game),
         11134197 => Sidehopper_CorpseRottingCopyFunc_0(k, j, game),
         11134454 => Sidehopper_CorpseRottingCopyFunc_2(k, j, game),
@@ -592,13 +592,8 @@ pub unsafe fn CallCorpseRottingMove(ea: u32, k: u16, j: u16, game: &mut Game) {
         11135364 => Skree_CorpseRottingMoveFunc_2(k, j, game),
         11135458 => Skree_CorpseRottingMoveFunc_4(k, j, game),
         11135552 => MotherBrain_CorpseRottingMoveFunc(k, j, game),
-        _ => {
-            Unreachable(game);
-        }
     }
-}
-pub unsafe fn CallCorpseRottingInit(ea: u32, game: &mut Game) {
-    match ea {
+    pub unsafe fn CallCorpseRottingInit(ea: u32, game: &mut Game) => ea, game {
         11132440 => Torizo_CorpseRottingInitFunc(game),
         11132609 => Sidehopper_CorpseRottingInitFunc_0(game),
         11132680 => Sidehopper_CorpseRottingInitFunc_2(game),
@@ -611,23 +606,13 @@ pub unsafe fn CallCorpseRottingInit(ea: u32, game: &mut Game) {
         11132953 => Skree_CorpseRottingInitFunc_2(game),
         11133010 => Skree_CorpseRottingInitFunc_4(game),
         11133067 => MotherBrain_CorpseRottingInitFunc(game),
-        _ => {
-            Unreachable(game);
-        }
     }
-}
-pub unsafe fn CallCorpseRottingFinish(ea: u32, game: &mut Game) {
-    match ea {
+    pub unsafe fn CallCorpseRottingFinish(ea: u32, game: &mut Game) => ea, game {
         11121187 => MotherBrain_CorpseRottingFinished(game),
         11130301 => DeadTorizo_CorpseRottingFinished(game),
         11131912 => CorpseRottingRotEntryFinishedHook(game),
-        _ => {
-            Unreachable(game);
-        }
     }
-}
-pub unsafe fn CallMotherBrainFunc(ea: u32, game: &mut Game) {
-    match ea {
+    pub unsafe fn CallMotherBrainFunc(ea: u32, game: &mut Game) => ea, game {
         11110352 => MotherBrainsBrain_SetupBrainToDraw(game),
         11110369 => {
             Unreachable(game);
@@ -760,9 +745,6 @@ pub unsafe fn CallMotherBrainFunc(ea: u32, game: &mut Game) {
         11111140 => (),
         11125133 => (),
         11110306 => MotherBrainsBrain_SetupBrainAndNeckToDraw(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn Enemy_GrappleReact_CancelBeam_A9(game: &mut Game) {
@@ -1206,14 +1188,11 @@ pub unsafe fn MotherBrainsTubesFalling_Init(game: &mut Game) {
     (*E).mbtfg_var_C = 0u16;
     (*E).mbtfg_var_A = crate::rtl::rom_table_word!(game, 0xa98b7b, v1 as isize);
 }
-pub unsafe fn CallMotherBrainsTubesFalling(ea: u32, k: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallMotherBrainsTubesFalling(ea: u32, k: u16, game: &mut Game) => ea, game {
         11111304 => MotherBrainsTubesFalling_Main_NonMain(k, game),
         11111371 => MotherBrainsTubesFalling_WaitToFall(k, game),
         11111382 => MotherBrainsTubesFalling_Falling(k, game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn MotherBrainsTubesFalling_Main(k: u16, game: &mut Game) {
@@ -3643,15 +3622,12 @@ pub unsafe fn MotherBrain_DrainedByShitroid_1(game: &mut Game) {
         (*E1).mbn_var_33 = 4u16;
     }
 }
-pub unsafe fn CallMotherBrainPainfulWalk(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallMotherBrainPainfulWalk(ea: u32, game: &mut Game) => ea, game {
         11124688 => MotherBrain_PainfulWalkForwards(game),
         11124712 => MotherBrain_PainfulWalkingForwards(game),
         11124740 => MotherBrain_PainfulWalkBackwards(game),
         11124764 => MotherBrain_PainfulWalkingBackwards(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn MotherBrain_DrainedByShitroid_2(game: &mut Game) {
@@ -3946,14 +3922,11 @@ pub unsafe fn MotherBrain_Phase3_Fighting_Cooldown(game: &mut Game) {
         (*E).mbn_var_A = ((0xa9c209i32) as u16);
     }
 }
-pub unsafe fn CallMotherBrainWallkFunc1A(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallMotherBrainWallkFunc1A(ea: u32, game: &mut Game) => ea, game {
         11125354 => MotherBrain_Phase3_Walk_TryToInchForward(game),
         11125427 => MotherBrain_Phase3_Walk_RetreatQuickly(game),
         11125458 => MotherBrain_Phase3_Walk_RetreatSlowly(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn MotherBrain_Phase3_WalkHandler(game: &mut Game) {
@@ -4013,17 +3986,14 @@ pub unsafe fn MotherBrain_SetToTryToInchForward(a: u16, game: &mut Game) {
     (*E1).mbn_var_1A = ((0xa9c26ai32) as u16);
     (*E1).mbn_var_1B = ((*E).base.x_pos).wrapping_add(1u16);
 }
-pub unsafe fn CallMotherBrainNeckFunc(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallMotherBrainNeckFunc(ea: u32, game: &mut Game) => ea, game {
         11125587 => (),
         11125552 => MotherBrain_Phase3_Neck_Normal(game),
         11125588 => MotherBrain_Phase3_Neck_SetupRecoilRecovery(game),
         11125627 => MotherBrain_Phase3_Neck_RecoilRecovery(game),
         11125653 => MotherBrain_Phase3_Neck_SetupHyperBeamRecoil(game),
         11125709 => MotherBrain_Phase3_Neck_HyperBeamRecoil(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn MotherBrain_Phase3_NeckHandler(game: &mut Game) {
@@ -4393,8 +4363,8 @@ pub unsafe fn ShitroidInCutscene_Init(game: &mut Game) {
         game,
     );
 }
-pub unsafe fn CallShitroidCutsceneFuncA(ea: u32, k: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallShitroidCutsceneFuncA(ea: u32, k: u16, game: &mut Game) => ea, game {
         11125133 => (),
         11126732 => ShitroidInCutscene_DashOntoScreen(k, game),
         11126764 => ShitroidInCutscene_CurveTowardsBrain(k, game),
@@ -4423,20 +4393,12 @@ pub unsafe fn CallShitroidCutsceneFuncA(ea: u32, k: u16, game: &mut Game) {
         11128000 => ShitroidInCutscene_UnloadShitroid(k, game),
         11128030 => ShitroidInCutscene_LetSamusRainbowMore(k, game),
         11128048 => ShitroidInCutscene_FinishCutscene(k, game),
-        _ => {
-            Unreachable(game);
-        }
     }
-}
-pub unsafe fn CallShitroidCutsceneFunc0F(ea: u32, game: &mut Game) {
-    match ea {
+    pub unsafe fn CallShitroidCutsceneFunc0F(ea: u32, game: &mut Game) => ea, game {
         11127484 => (),
         11127960 => (),
         11138691 => Shitroid_HandleCutscenePalette(game),
         11138703 => Shitroid_HandleCutscenePalette_LowHealth(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn ShitroidInCutscene_Main(game: &mut Game) {
@@ -4624,13 +4586,10 @@ pub unsafe fn ShitroidInCutscene_SpawnThreeDustClouds(game: &mut Game) {
     ShitroidInCutscene_SpawnOneDustCloudAt(0u16, -16i32 as u16, game);
     ShitroidInCutscene_SpawnOneDustCloudAt(16u16, -8i32 as u16, game);
 }
-pub unsafe fn CallShitroidMoveFunc(ea: u32, k: u16, j: u16, r18: u16, r20: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallShitroidMoveFunc(ea: u32, k: u16, j: u16, r18: u16, r20: u16, game: &mut Game) => ea, game {
         11138143 => Shitroid_GraduallyAccelerateTowards0x8(k, j, r18, r20, game),
         11138150 => Shitroid_GraduallyAccelerateTowards0x10(k, j, r18, r20, game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn ShitroidInCutscene_MoveToSamus(k: u16, game: &mut Game) {
@@ -4876,13 +4835,10 @@ pub unsafe fn ShitroidInCutscene_FinishCutscene(k: u16, game: &mut Game) {
         (*Get_ShitdroidInCutscene(0x40i32, game)).sice_var_0A = 0u16;
     }
 }
-pub unsafe fn CallSamusRainbowPaletteFunc(ea: u32, k: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallSamusRainbowPaletteFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
         11128112 => SamusRainbowPaletteFunc_ActivateWhenEnemyLow(k, game),
         11128139 => SamusRainbowPaletteFunc_GraduallySlowDown(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn HandleSamusRainbowPaletteAnimation(k: u16, game: &mut Game) {
@@ -5295,17 +5251,14 @@ pub unsafe fn DeadTorizo_Init(game: &mut Game) {
     (*E).dto_var_03 = 0u16;
     InitializeEnemyCorpseRotting(0u16, addr_stru_A9DD58 as u16, game);
 }
-pub unsafe fn CallDeadTorizoFuncA(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallDeadTorizoFuncA(ea: u32, game: &mut Game) => ea, game {
         11129773 => {
             DeadTorizo_WaitForSamusColl(ram_word!(game, cur_enemy_index), game);
         }
         11129830 => DeadTorizo_Rotting(game),
         11129800 => DeadTorizo_PreRotDelay(game),
         11129799 => (),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn DeadTorizo_Main(game: &mut Game) {
@@ -5632,8 +5585,8 @@ pub unsafe fn DeadSidehopper_Powerbomb(game: &mut Game) {
         DeadSidehopper_Main(game);
     };
 }
-pub unsafe fn CallDeadSidehopperFunc(ea: u32, k: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallDeadSidehopperFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
         11131121 => DeadSidehopper_Activated(k, game),
         11131106 => DeadSidehopper_Alive_WaitForActivate(k, game),
         11131492 => DeadSidehopper_WaitForSamusColl(k, game),
@@ -5653,9 +5606,6 @@ pub unsafe fn CallDeadSidehopperFunc(ea: u32, k: u16, game: &mut Game) {
         11131400 => DeadMonsters_Func_5(k, game),
         11131151 => (),
         11131491 => (),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn DeadSidehopper_Main(game: &mut Game) {
@@ -6454,8 +6404,8 @@ pub unsafe fn Shitroid_Powerbomb(game: &mut Game) {
     }
     Shitroid_Main(game);
 }
-pub unsafe fn CallShitroidFunc(ea: u32, k: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallShitroidFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
         11136991 => Shitroid_Func_3(k, game),
         11136998 => Shitroid_Func_4(game),
         11137067 => Shitroid_Func_5(k, game),
@@ -6479,9 +6429,6 @@ pub unsafe fn CallShitroidFunc(ea: u32, k: u16, game: &mut Game) {
         11137901 => Shitroid_Func_23(game),
         11137955 => Shitroid_Func_24(k, game),
         11137982 => Shitroid_Func_25(k, game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn Shitroid_Main(game: &mut Game) {

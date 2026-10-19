@@ -926,8 +926,8 @@ pub unsafe fn RoomDefStateSelect_PowerBombs(k: u16, game: &mut Game) -> u16 {
     let v1: *const u16 = RomPtr_8F(k, game) as *const u16;
     RoomDefStateSelect_Finish(*v1, game)
 }
-pub unsafe fn CallRoomSetupCode(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallRoomSetupCode(ea: u32, game: &mut Game) => ea, game {
         9408916 => RoomSetup_AfterSavingAnimals(game),
         9408937 => RoomSetup_AutoDestroyWallAfterEscape(game),
         9408946 => RoomSetup_TurnWallIntoShotblocks(game),
@@ -948,9 +948,6 @@ pub unsafe fn CallRoomSetupCode(ea: u32, game: &mut Game) {
         9423214 => RoomCode_SetCeresDoorSolid(game),
         9423222 => RoomCode_CeresColorMathHdma(game),
         9423227 => RoomCode_CeresColorMathHdma_BgBase(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn RunRoomSetupCode(game: &mut Game) {
@@ -963,8 +960,8 @@ pub unsafe fn RunRoomSetupCode(game: &mut Game) {
         );
     }
 }
-pub unsafe fn CallDoorDefSetupCode(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallDoorDefSetupCode(ea: u32, game: &mut Game) => ea, game {
         9419121 => DoorCode_StartWreckedShipTreadmillWest(game),
         9419137 => DoorCode_Scroll6_Green(game),
         9419148 => DoorCode_Scroll0_Blue(game),
@@ -1047,9 +1044,6 @@ pub unsafe fn CallDoorDefSetupCode(ea: u32, game: &mut Game) {
         9430223 => DoorCode_SetScroll_65(game),
         9430240 => DoorCode_CeresElevatorShaft(game),
         9430291 => DoorCode_CeresElevatorShaft_2(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn RunDoorSetupCode(game: &mut Game) {
@@ -1122,8 +1116,8 @@ pub unsafe fn RoomCode_RidleyRoomShaking(game: &mut Game) {
         );
     }
 }
-pub unsafe fn CallRoomCode(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallRoomCode(ea: u32, game: &mut Game) => ea, game {
         9421078 => RoomCode_ScrollingSkyLand_(game),
         9421083 => RoomCode_ScrollingSkyOcean_(game),
         9421088 => RoomCode_ScrollingSkyLand_Shakes(game),
@@ -1139,9 +1133,6 @@ pub unsafe fn CallRoomCode(ea: u32, game: &mut Game) {
         9430436 => RoomCode_ShakeScreenHorizDiagStrong(game),
         9431245 => RoomCode_CrocomireShaking(game),
         9431376 => RoomCode_RidleyRoomShaking(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn RunRoomMainCode(game: &mut Game) {

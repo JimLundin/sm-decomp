@@ -305,8 +305,8 @@ pub unsafe fn NorfairPipeBug_Init(game: &mut Game) {
     (*PipeBug).base.current_instruction = addr_kNorfairPipeBug_Ilist_8AE1 as u16;
     (*PipeBug).pbg_var_A = ((0xb38bcdi32) as u16);
 }
-pub unsafe fn CallBugInstr(ea: u32, k: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallBugInstr(ea: u32, k: u16, game: &mut Game) => ea, game {
         11766733 => NorfairPipeBug_Func_1(game),
         11766783 => NorfairPipeBug_Func_2(game),
         11766950 => NorfairPipeBug_Func_4(game),
@@ -326,9 +326,6 @@ pub unsafe fn CallBugInstr(ea: u32, k: u16, game: &mut Game) {
         11767997 => BrinstarYellowPipeBug_Func_5(game),
         11768154 => BrinstarYellowPipeBug_Func_7(game),
         11768280 => BrinstarYellowPipeBug_Func_8(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn NorfairPipeBug_Main(game: &mut Game) {
@@ -908,8 +905,8 @@ pub unsafe fn Botwoon_Init(game: &mut Game) {
         (*E).botwoon_var_4E = (((*E).base.palette_index as i32 >> 4i32) + 256i32) as u16;
     };
 }
-pub unsafe fn CallBotwoonFuncVarD(ea: u32, k: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallBotwoonFuncVarD(ea: u32, k: u16, game: &mut Game) => ea, game {
         11769976 => Botwoon_Func_6(game),
         11770013 => Botwoon_Func_7(game),
         11770276 => Botwoon_Func_12(game),
@@ -918,19 +915,11 @@ pub unsafe fn CallBotwoonFuncVarD(ea: u32, k: u16, game: &mut Game) {
         11770462 => Botwoon_Func_15(game),
         11770570 => Botwoon_Func_16(game),
         11770617 => Botwoon_Func_18(k, game),
-        _ => {
-            Unreachable(game);
-        }
     }
-}
-pub unsafe fn CallBotwoonFuncVarE(ea: u32, game: &mut Game) {
-    match ea {
+    pub unsafe fn CallBotwoonFuncVarE(ea: u32, game: &mut Game) => ea, game {
         11770807 => Botwoon_Func_19(game),
         11788880 => Botwoon_Func_32(game),
         11788940 => Botwoon_Func_33(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn Botwoon_Main(game: &mut Game) {

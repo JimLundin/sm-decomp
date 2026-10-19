@@ -16,6 +16,22 @@
 
 /// Gameplay, one module per original ROM bank (`sm_80` = bank $80, ...).
 pub mod game {
+    // Declare address tables with the same calls and unreachable fallback.
+    macro_rules! address_dispatch {
+        ($($visibility:vis unsafe fn $name:ident($($argument:ident: $argument_type:ty),* $(,)?)
+            $(-> $result:ty)? => $selector:ident, $game:ident { $($arms:tt)* })*) => {
+            $(
+                $visibility unsafe fn $name($($argument: $argument_type),*) $(-> $result)? {
+                    match $selector {
+                        $($arms)*
+                        _ => { Unreachable($game); }
+                    }
+                }
+            )*
+        };
+    }
+    pub(crate) use address_dispatch;
+
     pub mod constants;
     pub(crate) mod enemy_layouts;
     pub(crate) mod enemy_ram;

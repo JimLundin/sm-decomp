@@ -344,8 +344,8 @@ pub unsafe fn PalInit_F779_Brinstar8(k: u16, j: u16, game: &mut Game) {
         set_ram_word!(game.palettefx_ids[(j as i32 >> 1i32)] = 0u16);
     }
 }
-pub unsafe fn CallPalFxPreInstr(ea: u32, k: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallPalFxPreInstr(ea: u32, k: u16, game: &mut Game) => ea, game {
         9291046 => PalPreInstr_nullsub_129(k),
         9298443 => PalPreInstr_E1BC(k, game),
         9298656 => PalPreInstr_CheckEnemy0Health(k, game),
@@ -354,9 +354,6 @@ pub unsafe fn CallPalFxPreInstr(ea: u32, k: u16, game: &mut Game) {
         9301081 => PalPreInstr_SwitchIfYpos(k, game),
         9301380 => PalPreInstr_SwitchIfYpos2(k, game),
         9303585 => PalPreInstr_F621(k, game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn CallPalInstr(ea: u32, k: u16, j: u16, game: &mut Game) -> PairU16 {
@@ -386,14 +383,11 @@ pub unsafe fn CallPalInstr(ea: u32, k: u16, j: u16, game: &mut Game) -> PairU16 
         }
     }
 }
-pub unsafe fn CallPalfxFunc(ea: u32, k: u16, j: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallPalfxFunc(ea: u32, k: u16, j: u16, game: &mut Game) => ea, game {
         9291397 => (),
         9298436 => PalInit_E1BC(k, j, game),
         9299008 => PalInit_F761_Norfair1(k, j, game),
         9303856 => PalInit_F779_Brinstar8(k, j, game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }

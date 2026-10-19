@@ -503,16 +503,13 @@ pub unsafe fn DemoObjectInputHandler(game: &mut Game) {
         game.set_demo_input_prev_new(game.demo_input_new());
     }
 }
-pub unsafe fn CallDemoPreInstr(address: u32, game: &mut Game) {
-    match address {
+crate::game::address_dispatch! {
+    pub unsafe fn CallDemoPreInstr(address: u32, game: &mut Game) => address, game {
         0x9183bf => (),
         0x91864f => DemoPreInstr_864F(game),
         0x91866a => DemoPreInstr_866A(game),
         0x918a9b => DemoPreInstr_CheckLeaveDemo(game),
         0x918ab0 => DemoPreInstr_8AB0(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn CallDemoInstr(address: u32, k: u16, j: u16, game: &mut Game) -> u16 {
@@ -1887,8 +1884,8 @@ unsafe fn Xray_Func11(r18: u16, dst_r22: u16, jp: *const u8, game: &mut Game) {
             .offset(dst_r22 as i32 as isize) as *mut u16) = top_left;
     }
 }
-unsafe fn CallXrayFunc(ea: u32, jp: *const u8, r18: u16, r22: u16, r36: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    unsafe fn CallXrayFunc(ea: u32, jp: *const u8, r18: u16, r22: u16, r36: u16, game: &mut Game) => ea, game {
         9555577 => {
             Xray_CombinedMove(r22, r36, true_0 != 0, game);
         }
@@ -1900,9 +1897,6 @@ unsafe fn CallXrayFunc(ea: u32, jp: *const u8, r18: u16, r22: u16, r36: u16, gam
         9555790 => Xray_Func9(r18, r22, jp, game),
         9555810 => Xray_Func10(r22, jp, game),
         9555823 => Xray_Func11(r18, r22, jp, game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn Xray_SetupStage4_Func3(r18: u16, r22: u16, r36: u16, game: &mut Game) {

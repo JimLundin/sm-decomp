@@ -441,8 +441,8 @@ pub unsafe fn WallSpacePirates_Init(game: &mut Game) {
     }
     (*E).base.x_pos = v3;
 }
-pub unsafe fn CallSpacePiratesEnemyFunc(ea: u32, k: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallSpacePiratesEnemyFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
         11698251 => (),
         11726900 => SpacePirates_Func_1(k, game),
         11726927 => (),
@@ -466,9 +466,6 @@ pub unsafe fn CallSpacePiratesEnemyFunc(ea: u32, k: u16, game: &mut Game) {
         11729641 => SpacePirates_FAE9(k, game),
         11730244 => WalkingSpacePirates_FD44(game),
         11730382 => WalkingSpacePirates_FDCE(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn WallSpacePirates_Main(game: &mut Game) {

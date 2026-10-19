@@ -895,13 +895,10 @@ pub fn PlmInstr_ClearPreInstr(plmp: *const u8, k: u16, game: &mut Game) -> *cons
     game.g_ram[offset..offset + 2].copy_from_slice(&0x86d0u16.to_le_bytes());
     plmp
 }
-pub unsafe fn CallPlmInstrFunc(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallPlmInstrFunc(ea: u32, game: &mut Game) => ea, game {
         9557220 => VariaSuitPickup(game),
         9557434 => GravitySuitPickup(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn PlmInstr_CallFunction(plmp: *const u8, k: u16, game: &mut Game) -> *const u8 {
@@ -4210,8 +4207,8 @@ pub unsafe fn CallPlmHeaderFunc(
         _ => Unreachable(game) as u8,
     }
 }
-pub unsafe fn CallPlmPreInstr(ea: u32, k: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallPlmPreInstr(ea: u32, k: u16, game: &mut Game) => ea, game {
         8684649 => (),
         8708008 => (),
         8685264 => (),
@@ -4265,9 +4262,6 @@ pub unsafe fn CallPlmPreInstr(ea: u32, k: u16, game: &mut Game) {
         8706798 => PlmPreInstr_SetMetroidsClearState_Ev0x11(k, game),
         8706814 => PlmPreInstr_SetMetroidsClearState_Ev0x12(k, game),
         8706830 => PlmPreInstr_SetMetroidsClearState_Ev0x13(k, game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn CallPlmInstr(ea: u32, j: *const u8, k: u16, game: &mut Game) -> *const u8 {

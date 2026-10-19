@@ -152,13 +152,10 @@ unsafe fn WriteSmallMessageBoxTilemap(game: &mut Game) {
     let end = WriteMessageTilemap(game);
     WriteMessageBoxTilemapRow(end, &kSmallMsgBoxTopBottomBorderTilemap, game);
 }
-unsafe fn CallMsgBoxDraw(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    unsafe fn CallMsgBoxDraw(ea: u32, game: &mut Game) => ea, game {
         8749658 => WriteLargeMessageBoxTilemap(game),
         8749705 => WriteSmallMessageBoxTilemap(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 fn MsgBoxMakeHdmaTable(game: &mut Game) {
@@ -243,15 +240,12 @@ unsafe fn SetupPpuForSmallMessageBox(game: &mut Game) {
 unsafe fn SetupPpuForLargeMessageBox(game: &mut Game) {
     SetupPpuForActiveMessageBox(416u16, game);
 }
-unsafe fn CallMsgBoxModify(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    unsafe fn CallMsgBoxModify(ea: u32, game: &mut Game) => ea, game {
         8750021 => DrawShootButtonAndSetupPpuForLargeMessageBox(game),
         8750028 => DrawRunButtonAndSetupPpuForLargeMessageBox(game),
         8750134 => SetupPpuForSmallMessageBox(game),
         8750145 => SetupPpuForLargeMessageBox(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 unsafe fn InitializeMessageBox(game: &mut Game) {

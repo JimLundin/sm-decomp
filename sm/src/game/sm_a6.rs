@@ -532,17 +532,14 @@ pub unsafe fn Boulder_Init(game: &mut Game) {
         (*E).boulder_var_01 = 5u16;
     }
 }
-pub unsafe fn CallBoulderFunc(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallBoulderFunc(ea: u32, game: &mut Game) => ea, game {
         10913690 => Boulder_Func_1(game),
         10913773 => Boulder_Func_2(game),
         10913842 => Boulder_Func_3(game),
         10913931 => Boulder_Func_4(game),
         10914114 => Boulder_Func_5(game),
         10914300 => Boulder_Func_6(),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn Boulder_Main(game: &mut Game) {
@@ -775,15 +772,12 @@ pub unsafe fn SpikeyPlatform2ndEnemy_Main(game: &mut Game) {
     (*v1).x_pos = ram_word!(game, enemy_drawing_queue[(v0 + 91i32)]);
     (*v1).y_pos = (ram_word!(game, enemy_drawing_queue[(v0 + 93i32)])).wrapping_add(12u16);
 }
-pub unsafe fn CallSpikeyPlatformFunc(ea: u32, k: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallSpikeyPlatformFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
         10914740 => SpikeyPlatform_Func_1(game),
         10914780 => SpikeyPlatform_Func_2(game),
         10914890 => SpikeyPlatform_Func_3(k, game),
         10914909 => SpikeyPlatform_Func_4(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn SpikeyPlatform_Main(game: &mut Game) {
@@ -1007,13 +1001,10 @@ pub unsafe fn FireGeyser_Init(game: &mut Game) {
         (*E).base.x_width = 0u16;
     }
 }
-pub unsafe fn CallFireGeyserFunc(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallFireGeyserFunc(ea: u32, game: &mut Game) => ea, game {
         10915887 => FireGeyser_Func_1(game),
         10915938 => FireGeyser_Func_2(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn FireGeyser_Main(game: &mut Game) {
@@ -1117,13 +1108,10 @@ pub unsafe fn NuclearWaffle_Init(game: &mut Game) {
         }
     }
 }
-pub unsafe fn CallNuclearWaffleFunc(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallNuclearWaffleFunc(ea: u32, game: &mut Game) => ea, game {
         10917397 => NuclearWaffle_Func_1(game),
         10917506 => NuclearWaffle_Func_2(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn NuclearWaffle_Main(game: &mut Game) {
@@ -1618,8 +1606,8 @@ pub unsafe fn CeresRidley_Init(game: &mut Game) {
         }
     };
 }
-pub unsafe fn CallRidleyFunc(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallRidleyFunc(ea: u32, game: &mut Game) => ea, game {
         10920788 => CeresRidley_Func_2(game),
         10920795 => CeresRidley_Func_3(game),
         10920823 => CeresRidley_A377(game),
@@ -1682,9 +1670,6 @@ pub unsafe fn CallRidleyFunc(ea: u32, game: &mut Game) {
         10929608 => Ridley_Func_66(game),
         10929626 => Ridley_Func_67(game),
         10929664 => (),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn CeresRidley_Main(game: &mut Game) {
@@ -3220,16 +3205,13 @@ pub unsafe fn Ridley_Func_48(rect: Rect16U, game: &mut Game) -> u8 {
     }
     result
 }
-pub unsafe fn CallRidleyFunc_var40(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallRidleyFunc_var40(ea: u32, game: &mut Game) => ea, game {
         10927772 => Ridley_Func_50(game),
         10927795 => Ridley_Func_51(game),
         10927818 => Ridley_Func_52(game),
         10927836 => Ridley_Func_53(game),
         10927897 => (),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn Ridley_Func_49(game: &mut Game) {
@@ -5797,13 +5779,10 @@ pub unsafe fn CeresSteam_Init(game: &mut Game) {
     (*E).base.current_instruction = crate::rtl::rom_table_word!(game, 0xa6eff5, v1 as isize);
     (*E).csm_var_A = crate::rtl::rom_table_word!(game, 0xa6f001, v1 as isize);
 }
-pub unsafe fn CallCeresSteamFunc(ea: u32, k: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallCeresSteamFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
         10940404 => (),
         10940441 => CeresSteam_Func_1(k, game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn CeresSteam_Main(game: &mut Game) {
@@ -6116,14 +6095,11 @@ pub unsafe fn Zebetites_Init(game: &mut Game) {
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
     };
 }
-pub unsafe fn CallZebetitesFunc(ea: u32, k: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallZebetitesFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
         10943553 => Zebetites_Func_1(k, game),
         10943579 => Zebetites_Func_2(k, game),
         10943591 => Zebetites_Func_3(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn Zebetites_Main(game: &mut Game) {

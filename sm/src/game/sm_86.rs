@@ -734,13 +734,10 @@ pub fn EprojInstr_ClearPreInstr(k: u16, epjp: *const u8, game: &mut Game) -> *co
     EprojStateMut(&mut game.g_ram).set_preinstruction(usize::from(k >> 1), 0x8170);
     epjp
 }
-pub unsafe fn CallEprojFunc(ea: u32, k: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallEprojFunc(ea: u32, k: u32, game: &mut Game) => ea, game {
         8833019 => {
             SpawnMotherBrainDeathBeam(k as u16, game);
-        }
-        _ => {
-            Unreachable(game);
         }
     }
 }
@@ -4147,13 +4144,10 @@ unsafe fn EprojInit_NorfairLavaquakeRocks(j: u16, game: &mut Game) {
     set_ram_word!(game.eproj_y_pos[v1] = (*v2).y_pos);
     set_ram_word!(game.eproj_y_subpos[v1] = (*v2).y_subpos);
 }
-pub unsafe fn CallNorfairLavaquakeRocksFunc(ea: u32, k: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallNorfairLavaquakeRocksFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
         8829974 => Eproj_NorfairLavaquakeRocks_Func1(k, game),
         8830095 => Eproj_NorfairLavaquakeRocks_Func2(k, game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn EprojPreInstr_NorfairLavaquakeRocks_Inner2(k: u16, game: &mut Game) -> u16 {
@@ -5158,13 +5152,10 @@ unsafe fn EprojInit_MotherBrainTubeFalling(j: u16, game: &mut Game) {
     set_ram_word!(game.eproj_y_pos[v1] = game.eproj_spawn_pt.y);
     set_ram_word!(game.eproj_E[v1] = (0x86cbeai32 & 0xffffi32) as u16);
 }
-pub unsafe fn CallMotherBrainTubeFallingFunc(ea: u32, k: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallMotherBrainTubeFallingFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
         8834026 => MotherBrainTubeFallingFunc_GenerateExplosion(k, game),
         8834056 => MotherBrainTubeFallingFunc_Falling(k, game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn EprojPreInstr_MotherBrainTubeFalling(k: u16, game: &mut Game) {
@@ -6073,13 +6064,10 @@ unsafe fn EprojInit_NamiFuneFireball_MoveX2(k: u16, game: &mut Game) {
         ((ram_word!(game, eproj_x_vel[v1]) as i16 as i32) << 8i32) as u32,
     );
 }
-pub unsafe fn CallNamiFuneFireballFunc(ea: u32, k: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallNamiFuneFireballFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
         8838976 => EprojInit_NamiFuneFireball_MoveX1(k, game),
         8839018 => EprojInit_NamiFuneFireball_MoveX2(k, game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn EprojPreInstr_NamiFuneFireball(v0: u16, game: &mut Game) {
@@ -6128,13 +6116,10 @@ unsafe fn EprojInit_LavaThrownByLavaman(j: u16, game: &mut Game) {
     set_ram_word!(game.eproj_y_vel[v2] = -768i32 as u16);
     set_ram_word!(game.eproj_x_vel[v2] = 768u16);
 }
-pub unsafe fn CallLavamanFunc(ea: u32, k: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallLavamanFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
         8839248 => Eproj_LavaThrownByLavaman_MoveX1(k, game),
         8839290 => Eproj_LavaThrownByLavaman_MoveX2(k, game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn sub_86E049(v0: u16, game: &mut Game) {
@@ -6385,16 +6370,13 @@ unsafe fn EprojInit_BotwoonsBody(j: u16, game: &mut Game) {
     set_ram_word!(game.eproj_flags[v1] = 2u16);
     (*Ex).kraid.kraid_healths_4ths[0i32 as usize] = 1u16;
 }
-pub unsafe fn CallBotwoonEprojFunc(ea: u32, k: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallBotwoonEprojFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
         8841880 => Eproj_BotwoonsBody_Main(k, game),
         8841972 => Eproj_BotwonsBodyFunction_Dying(k, game),
         8841988 => Eproj_BotwonsBodyFunction_Dying2(k, game),
         8842015 => Eproj_BotwonsBodyFunction_DyingFalling(k, game),
         8842131 => (),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn EprojPreInstr_BotwoonsBody(k: u16, game: &mut Game) {
@@ -7014,8 +6996,8 @@ pub unsafe fn EprojPreInstr_Sparks(k: u16, game: &mut Game) {
         );
     }
 }
-unsafe fn CallEprojInit(ea: u32, j: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    unsafe fn CallEprojInit(ea: u32, j: u16, game: &mut Game) => ea, game {
         8817209 => Eproj_Init_0x8aaf(j, game),
         8817357 => {
             init_skree_particle(j, 6, 320, -769, game);
@@ -7138,13 +7120,8 @@ unsafe fn CallEprojInit(ea: u32, j: u16, game: &mut Game) {
         8843049 => EprojInit_F337(j, game),
         8843145 => EprojInit_EnemyDeathExplosion(j, game),
         8844177 => EprojInit_Sparks(j, game),
-        _ => {
-            Unreachable(game);
-        }
     }
-}
-unsafe fn CallEprojPreInstr(ea: u32, k: u16, game: &mut Game) {
-    match ea {
+    unsafe fn CallEprojPreInstr(ea: u32, k: u16, game: &mut Game) => ea, game {
         8825112 => (),
         8814960 => (),
         8815867 => (),
@@ -7288,9 +7265,6 @@ unsafe fn CallEprojPreInstr(ea: u32, k: u16, game: &mut Game) {
         8843232 => EprojPreInstr_Pickup(k, game),
         8844272 => EprojPreInstr_Sparks(k, game),
         8832877 => (),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 unsafe fn CallEprojInstr(ea: u32, k: u16, j: *const u8, game: &mut Game) -> *const u8 {

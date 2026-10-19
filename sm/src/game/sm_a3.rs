@@ -545,17 +545,14 @@ pub unsafe fn Metalee_Init(game: &mut Game) {
     (*E).base.current_instruction = addr_kMetalee_Ilist_8910 as u16;
     (*E).metalee_var_B = ((0xa38987i32) as u16);
 }
-pub unsafe fn CallMetaleeFunc(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallMetaleeFunc(ea: u32, game: &mut Game) => ea, game {
         10717575 => Metalee_Func_1(game),
         10717652 => {
             Metalee_Func_3(ram_word!(game, cur_enemy_index), game);
         }
         10717683 => Metalee_Func_4(game),
         10717788 => Metalee_Func_5(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn Metalee_Main(game: &mut Game) {
@@ -910,15 +907,12 @@ pub unsafe fn MaridiaFish_Func_4(game: &mut Game) {
         (*E).base.current_instruction = addr_kMaridiaFish_Ilist_902A as u16;
     }
 }
-pub unsafe fn CallMaridiaFishFunc(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallMaridiaFishFunc(ea: u32, game: &mut Game) => ea, game {
         10719538 => MaridiaFish_Func_1(game),
         10719659 => MaridiaFish_Func_2(game),
         10719780 => MaridiaFish_Func_3(game),
         10719830 => MaridiaFish_Func_4(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn MaridiaFish_Main(game: &mut Game) {
@@ -1481,8 +1475,8 @@ pub unsafe fn Roach_Func_8(k: u16, game: &mut Game) {
             as u8 as i32
             >> 5i32)) as u16;
 }
-pub unsafe fn CallRoachFunc(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallRoachFunc(ea: u32, game: &mut Game) => ea, game {
         10724055 => Roach_Func_9(game),
         10724097 => Roach_Func_10(game),
         10724107 => Roach_Func_11(game),
@@ -1500,9 +1494,6 @@ pub unsafe fn CallRoachFunc(ea: u32, game: &mut Game) {
         10724470 => Roach_Func_25(game),
         10724534 => Roach_Func_26(game),
         10724592 => Roach_Func_27(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn Roach_Main(game: &mut Game) {
@@ -2176,8 +2167,8 @@ pub unsafe fn Sidehopper_Func_18(game: &mut Game) {
         (*E).sideh_var_B = ((0xa3abd6i32) as u16);
     }
 }
-unsafe fn CallSidehopperFunc(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    unsafe fn CallSidehopperFunc(ea: u32, game: &mut Game) => ea, game {
         10726358 => {
             Sidehopper_Func_4(ram_word!(game, cur_enemy_index), game);
         }
@@ -2195,9 +2186,6 @@ unsafe fn CallSidehopperFunc(ea: u32, game: &mut Game) {
         10726706 => Sidehopper_Func_16(game),
         10726724 => Sidehopper_Func_17(game),
         10726742 => Sidehopper_Func_18(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn Sidehopper_Func_19(game: &mut Game) {
@@ -2341,14 +2329,11 @@ pub unsafe fn MaridiaRefillCandy_Init(game: &mut Game) {
     (*E).mrcy_var_B = (*E).base.x_pos;
     (*E).mrcy_var_C = (*E).base.y_pos;
 }
-pub unsafe fn CallMaridiaRefillCandyFunc(ea: u32, k: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallMaridiaRefillCandyFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
         10728578 => MaridiaRefillCandy_Func_1(game),
         10728616 => MaridiaRefillCandy_Func_2(k, game),
         10728662 => MaridiaRefillCandy_Func_3(k, game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn MaridiaRefillCandy_Main(game: &mut Game) {
@@ -2724,17 +2709,14 @@ pub unsafe fn Skree_Init(game: &mut Game) {
     (*E).base.current_instruction = addr_kSkree_Ilist_C65E as u16;
     (*E).skree_var_B = ((0xa3c6d5i32) as u16);
 }
-pub unsafe fn CallSkreeFunc(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallSkreeFunc(ea: u32, game: &mut Game) => ea, game {
         10733269 => Skree_Func_1(game),
         10733303 => {
             Skree_Func_2(ram_word!(game, cur_enemy_index), game);
         }
         10733334 => Skree_Func_3(game),
         10733439 => Skree_Func_4(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn Skree_Main(game: &mut Game) {

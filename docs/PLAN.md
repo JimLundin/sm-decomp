@@ -31,6 +31,25 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Address dispatch declarations (2026-10-20): all 114 complete functions
+with a direct selector match and Unreachable fallback share one declaration
+macro across 23 callers. All signatures, visibility, return types, selector
+and game names, 2102 ordered arms and caller-resolved fallback remain exact.
+No selected function has adjacent attributes. Functions with preceding work,
+different fallback behavior or computed selectors retain their original bodies.
+
+All 114 expanded functions and the entire expanded library reconstruct
+exactly after removing the new macro definition/import and comments, including
+every comma, parenthesis and literal. Independent full-source review passes.
+Final composition on a0241136 includes
+the reviewed inline RAM pointers and cinematic helper. Normal release
+(30.35s), formatting and progress pass. Full any% passes 129712/0
+(107.40s), native exit 0; all 70 inputs, 67 replay sources and 72 pins
+remain fixed. Net Rust lines -344 (139990 total); raw accesses and casts
+are unchanged. The unsafe-text counter rises two for macro matcher/template
+spellings; compiled function signatures and bodies are unchanged. Continue
+substantial shared implementations; broader gameplay and hardware/audio remain open.
+
 Cinematic graphics loads (2026-10-20): one private loader shares all 92
 decompression and immediate VRAM-transfer operations across 11 setup handlers.
 All 230 payload values, widths, word/low-byte/high-byte modes, register order

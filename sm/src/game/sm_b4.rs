@@ -35,14 +35,11 @@ pub unsafe fn CreateSpriteAtPos(
     set_ram_word!(game.sprite_instr_timer[v1] = *(RomPtr_B4(v2, game) as *mut u16));
     v0 as u16
 }
-pub unsafe fn CallSpriteObjectInstr(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallSpriteObjectInstr(ea: u32, game: &mut Game) => ea, game {
         11844848 => SpriteObject_Instr_RepeatLast(game),
         11844871 => SpriteObject_Instr_Terminate(game),
         11844882 => SpriteObject_Instr_Goto(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn HandleSpriteObjects(game: &mut Game) {

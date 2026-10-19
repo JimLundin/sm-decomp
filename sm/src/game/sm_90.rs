@@ -1912,12 +1912,9 @@ pub unsafe fn Samus_HandleMovement_DrainedCrouching(game: &mut Game) {
         set_ram_word!(game.samus_y_speed = 0u16);
     }
 }
-pub unsafe fn CallScrollingFinishedHook(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallScrollingFinishedHook(ea: u32, game: &mut Game) => ea, game {
         9475465 => Samus_ScrollFinishedHook_SporeSpawnFight(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn MainScrollingRoutine(game: &mut Game) {
@@ -3646,8 +3643,8 @@ pub unsafe fn KillProjectile(k: u16, game: &mut Game) {
         game.projectile_bomb_pre_instructions[(k as i32 >> 1i32)] = ((0x90b169i32) as u16)
     );
 }
-pub unsafe fn CallProjPreInstr(ea: u32, k: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallProjPreInstr(ea: u32, k: u16, game: &mut Game) => ea, game {
         9482601 => (),
         9481971 => ProjPreInstr_Beam_NoWaveBeam(k, game),
         9482058 => ProjPreInstr_Dir0459(k, game),
@@ -3683,9 +3680,6 @@ pub unsafe fn CallProjPreInstr(ea: u32, k: u16, game: &mut Game) {
         9493254 => ProjPreInstr_SpazerSba(k, game),
         9493660 => ProjPreInstr_EndOfSpazerSba(k, game),
         9498579 => ProjPreInstr_UnknownProj8027(k, game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn HandleProjectile(game: &mut Game) {
@@ -4344,14 +4338,11 @@ pub unsafe fn SpawnProjectileTrail(k: u16, game: &mut Game) {
     );
     ProjectileTrail_Func5(ram_word!(game, projectile_index), v4, game);
 }
-pub unsafe fn CallProjInstr(ea: u32, j: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallProjInstr(ea: u32, j: u16, game: &mut Game) => ea, game {
         9483557 => ProjInstr_MoveLeftProjectileTrailDown(j, game),
         9483655 => ProjInstr_MoveRightProjectileTrailDown(j, game),
         9483699 => ProjInstr_MoveLeftProjectileTrailUp(j, game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn HandleProjectileTrails(game: &mut Game) {
@@ -7461,8 +7452,8 @@ pub unsafe fn Samus_MoveHandler_BombJumpFunc1(game: &mut Game) {
     }
     set_ram_word!(game.bomb_jump_dir = 0u16);
 }
-pub unsafe fn CallFrameHandlerGamma(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallFrameHandlerGamma(ea: u32, game: &mut Game) => ea, game {
         9494683 => Samus_Func1(game),
         9494725 => Samus_Func2(game),
         9494758 => Samus_Func3(game),
@@ -7474,9 +7465,6 @@ pub unsafe fn CallFrameHandlerGamma(ea: u32, game: &mut Game) {
         9495459 => Samus_Func7(game),
         9495579 => Samus_Func9(game),
         9496846 => (),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn RunFrameHandlerGamma(game: &mut Game) {
@@ -7816,15 +7804,12 @@ pub unsafe fn Samus_MoveDown_SetPoseCalcInput(game: &mut Game) {
             kSamus_MoveDown_SetPoseCalcInput_Tab0[*ram_ptr!(game; 0xa1f) as usize];
     }
 }
-pub unsafe fn CallFrameHandlerAlfa(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallFrameHandlerAlfa(ea: u32, game: &mut Game) => ea, game {
         9496213 => Samus_FrameHandlerAlfa_Func11(game),
         9496265 => Samus_FrameHandlerAlfa_Func12(game),
         9496339 => Samus_FrameHandlerAlfa_Func13(game),
         9496781 => (),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn HandleControllerInputForGamePhysics(game: &mut Game) {
@@ -7875,8 +7860,8 @@ pub unsafe fn Samus_FrameHandlerAlfa_Func13(game: &mut Game) {
     HandleProjectile(game);
     Samus_Func10(game);
 }
-pub unsafe fn CallFrameHandlerBeta(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallFrameHandlerBeta(ea: u32, game: &mut Game) => ea, game {
         9496357 => Samus_FrameHandlerBeta_Func17(game),
         9496530 => HandleDemoRecorder_3(game),
         9496565 => Samus_FrameHandlerBeta_Func14(game),
@@ -7889,9 +7874,6 @@ pub unsafe fn CallFrameHandlerBeta(ea: u32, game: &mut Game) {
         9496796 => SetContactDamageIndexAndUpdateMinimap(game),
         9496812 => Samus_Func19(game),
         9496834 => Samus_LowHealthCheck(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn HandleSamusMovementAndPause(game: &mut Game) {
@@ -8012,16 +7994,13 @@ pub unsafe fn Samus_Func19(game: &mut Game) {
 pub unsafe fn Samus_LowHealthCheck(game: &mut Game) {
     Samus_LowHealthCheck_(game);
 }
-pub unsafe fn CallSamusInputHandler(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallSamusInputHandler(ea: u32, game: &mut Game) => ea, game {
         9496846 => (),
         9496851 => Samus_InputHandler_E913(game),
         9496856 => Samus_Func20_(game),
         9496861 => Samus_InputHandler_E91D(game),
         9496870 => HandleAutoJumpHack(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn Samus_CallInputHandler(game: &mut Game) {
@@ -8053,8 +8032,8 @@ pub unsafe fn HandleAutoJumpHack(game: &mut Game) {
     set_ram_word!(game.joypad1_newkeys = v0);
     set_ram_word!(game.samus_input_handler = ((0x90e913i32) as u16));
 }
-pub unsafe fn CallSamusMovementHandler(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallSamusMovementHandler(ea: u32, game: &mut Game) => ea, game {
         9475182 => Samus_MoveHandler_ReleaseFromGrapple(game),
         9475275 => Samus_HandleMovement_DrainedCrouching(game),
         9478967 => Samus_MovementHandler_Normal(game),
@@ -8083,9 +8062,6 @@ pub unsafe fn CallSamusMovementHandler(ea: u32, game: &mut Game) {
         9496911 => SamusMovementType_Xray(game),
         9498699 => Samus_Func25_ShineSpark(game),
         9498738 => Samus_MoveHandler_F072(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn RunSamusMovementHandler(game: &mut Game) {
@@ -8238,17 +8214,14 @@ pub unsafe fn DrawSamusAndProjectiles(game: &mut Game) {
     Samus_JumpCheck(game);
     Samus_ShootCheck(game);
 }
-pub unsafe fn CallSamusDrawHandler(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallSamusDrawHandler(ea: u32, game: &mut Game) => ea, game {
         9497426 => SamusDrawHandler_Default(game),
         9497478 => sub_90EB86(game),
         9496846 | 9497586 => (),
         9497587 => Samus_DrawHandler_EndOfShinespark(game),
         9497620 => SamusDisplayHandler_UsingElevator(game),
         9497629 => SamusDisplayHandler_SamusReceivedFatal(game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn SamusDrawSprites(game: &mut Game) {

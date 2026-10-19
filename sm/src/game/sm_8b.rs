@@ -995,17 +995,14 @@ pub unsafe fn CinematicUpdateSomeBg(game: &mut Game) {
         set_ram_word!(game.vram_write_queue_tail = (v0).wrapping_add(2u16));
     }
 }
-pub unsafe fn CallProcessCinematicBgObject(ea: u32, k: u16, j: u16, r18: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallProcessCinematicBgObject(ea: u32, k: u16, j: u16, r18: u16, game: &mut Game) => ea, game {
         9144393 => ProcessCinematicBgObject_Nothing(k, j, r18),
         9144397 => ProcessCinematicBgObject_DrawChar(k, j, r18, game),
         9144503 => ProcessCinematicBgObject_DrawToTextTilemap(k, j, r18, game),
         9144573 => ProcessCinematicBgObject_DrawToBgTilemap(k, j, r18, game),
         9144683 => ProcessCinematicBgObject_Unk1(k, j, r18, game),
         9144783 => ProcessCinematicBgObject_Unk2(k, j, r18, game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn ProcessCinematicBgObject(v0: u16, r18: u16, game: &mut Game) {
@@ -2047,12 +2044,9 @@ pub unsafe fn ClearCinematicBgObjects(a: u16, game: &mut Game) {
     }
     set_ram_word!(game.cinematicbg_var1 = 0u16);
 }
-pub unsafe fn CallCinematicBgObjectSetup(ea: u32, j: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallCinematicBgObjectSetup(ea: u32, j: u16, game: &mut Game) => ea, game {
         9147353 => (),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn SpawnCinematicBgObject(j: u16, a: u16, game: &mut Game) -> u8 {
@@ -4037,13 +4031,10 @@ pub unsafe fn CinematicBgPreInstr_SamusBlink(k: u16, game: &mut Game) {
         set_ram_word!(game.cinematicbg_preinstr[v1] = ((0x8b93d9i32) as u16));
     }
 }
-pub unsafe fn CallCreditsObjectFunc(ea: u32, k: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallCreditsObjectFunc(ea: u32, k: u16, game: &mut Game) => ea, game {
         9147353 => (),
         9155772 => CinematicBgPreInstr_SamusBlink(k, game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn CinematicFunction_Intro_Func19(k: u16, game: &mut Game) {
@@ -7392,8 +7383,8 @@ pub unsafe fn CinematicFunction_Intro_Func219(k: u16, j: u16, game: &mut Game) -
     set_ram_word!(game.cinematic_var4 = 60u16);
     j
 }
-pub unsafe fn CallCinematicFunction(ea: u32, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallCinematicFunction(ea: u32, game: &mut Game) => ea, game {
         9148999 => CinematicFunctionNone(),
         9149288 => CinematicFunctionOpening(game),
         9149719 => CinematicFunc_Func2(game),
@@ -7491,9 +7482,6 @@ pub unsafe fn CallCinematicFunction(ea: u32, game: &mut Game) {
         9168266 => CinematicFunction_Intro_Func144(game),
         9168791 => CinematicFunction_Intro_Func148(game),
         9168826 => (),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn CallCinematicSprInstr(ea: u32, k: u16, j: u16, game: &mut Game) -> u16 {
@@ -7553,8 +7541,8 @@ pub unsafe fn CallCinematicSprInstr(ea: u32, k: u16, j: u16, game: &mut Game) ->
         _ => Unreachable(game) as u16,
     }
 }
-pub unsafe fn CallCinematicSprPreInstr(ea: u32, j: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallCinematicSprPreInstr(ea: u32, j: u16, game: &mut Game) => ea, game {
         9158617 => (),
         9147353 => (),
         9147487 => (),
@@ -7611,18 +7599,10 @@ pub unsafe fn CallCinematicSprPreInstr(ea: u32, j: u16, game: &mut Game) {
         9172264 => CinematicSprPreInstr_F528(j, game),
         9172351 => CinematicSprPreInstr_F57F(j, game),
         9172445 => CinematicFunction_Intro_Func215(j, game),
-        _ => {
-            Unreachable(game);
-        }
     }
-}
-pub unsafe fn CallCinematicBgPreInstr(ea: u32, j: u16, game: &mut Game) {
-    match ea {
+    pub unsafe fn CallCinematicBgPreInstr(ea: u32, j: u16, game: &mut Game) => ea, game {
         9147353 => (),
         9155772 => CinematicBgPreInstr_SamusBlink(j, game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn CallCinematicBgInstr(ea: u32, k: u16, j: u16, game: &mut Game) -> u16 {
@@ -7650,8 +7630,8 @@ pub unsafe fn CallCinematicBgInstr(ea: u32, k: u16, j: u16, game: &mut Game) -> 
         _ => Unreachable(game) as u16,
     }
 }
-pub unsafe fn CallCinematicSpriteObjectSetup(ea: u32, j: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallCinematicSpriteObjectSetup(ea: u32, j: u16, game: &mut Game) => ea, game {
         9147353 => (),
         9149210 => CinematicSpriteInit_7(j, game),
         9149229 => CinematicSpriteInit_8(j, game),
@@ -7720,9 +7700,6 @@ pub unsafe fn CallCinematicSpriteObjectSetup(ea: u32, j: u16, game: &mut Game) {
         9171368 => CinematicFunction_Intro_Func176(j, game),
         9171393 => CinematicFunction_Intro_Func177(j, game),
         9171412 => CinematicFunction_Intro_Func178(j, game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn CallIntroObjectInstr(ea: u32, k: u16, j: u16, game: &mut Game) -> u16 {
@@ -7735,8 +7712,8 @@ pub unsafe fn CallIntroObjectInstr(ea: u32, k: u16, j: u16, game: &mut Game) -> 
         _ => Unreachable(game) as u16,
     }
 }
-pub unsafe fn CallCinematicSpriteInit(ea: u32, j: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallCinematicSpriteInit(ea: u32, j: u16, game: &mut Game) => ea, game {
         9149210 => CinematicSpriteInit_7(j, game),
         9149229 => CinematicSpriteInit_8(j, game),
         9149248 => CinematicSpriteInit_9(j, game),
@@ -7748,9 +7725,6 @@ pub unsafe fn CallCinematicSpriteInit(ea: u32, j: u16, game: &mut Game) {
         9150166 => CinematicSpriteInit_5(j, game),
         9150207 => CinematicSpriteInit_6(j, game),
         9147353 => (),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
 pub unsafe fn CallMode7Instr(ea: u32, k: u16, j: u16, game: &mut Game) -> u16 {
@@ -7783,15 +7757,12 @@ pub unsafe fn CallMode7Instr(ea: u32, k: u16, j: u16, game: &mut Game) -> u16 {
         _ => Unreachable(game) as u16,
     }
 }
-pub unsafe fn CallMode7PreInstr(ea: u32, k: u16, game: &mut Game) {
-    match ea {
+crate::game::address_dispatch! {
+    pub unsafe fn CallMode7PreInstr(ea: u32, k: u16, game: &mut Game) => ea, game {
         9147353 => (),
         9155973 => CinematicFunction_Intro_Func22(k, game),
         9156078 => CinematicFunction_Intro_Func24(k, game),
         9156183 => CinematicFunction_Intro_Func27(k, game),
         9156288 => CinematicFunction_Intro_Func30(k, game),
-        _ => {
-            Unreachable(game);
-        }
     }
 }
