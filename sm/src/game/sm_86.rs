@@ -1521,7 +1521,7 @@ unsafe fn EprojColl_8506(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 
 unsafe fn EprojColl_Unknown8536(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 {
     if *(&raw mut game.g_ram as *mut uint8)
         .offset(0x16402)
-        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
+        .offset(game.cur_block_index() as isize)
         != 0
     {
         let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16);
@@ -1752,7 +1752,7 @@ unsafe fn EprojColl_8676(
     game: &mut Game,
 ) -> uint8 {
     let mut current_block: u64;
-    let mut v2: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x1991) as *mut uint16);
+    let mut v2: uint16 = EprojState(&game.g_ram).index();
     let mut temp_collision_DD4: uint16 =
         (4 as ::core::ffi::c_int * a as ::core::ffi::c_int) as uint16;
     let mut temp_collision_DD6: uint16 = (*(&raw mut game.g_ram as *mut uint8)
@@ -1876,9 +1876,8 @@ unsafe fn EprojColl_8676(
             }
         }
     }
-    let mut v7: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x1991)
-        as *mut uint16) as ::core::ffi::c_int
-        >> 1 as ::core::ffi::c_int;
+    let mut v7: ::core::ffi::c_int =
+        EprojState(&game.g_ram).index() as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v8: uint16 = 0;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a6f) as *mut uint16).offset(v7 as isize) =
         0 as uint16;
@@ -1909,7 +1908,7 @@ unsafe fn EprojColl_874E(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 
     let mut v13: uint16 = 0;
     let mut v14: uint16 = 0;
     let mut v15: int16 = 0;
-    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x1991) as *mut uint16);
+    let mut v0: uint16 = EprojState(&game.g_ram).index();
     if (*eci).eci_r20 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
@@ -4149,10 +4148,7 @@ pub unsafe fn sub_869DA5(mut k: uint16, game: &mut Game) {
 }
 unsafe fn EprojInit_MiniKraidSpit(mut j: uint16, game: &mut Game) {
     let mut v2: *mut ExtraEnemyRam7800 = ::core::ptr::null_mut::<ExtraEnemyRam7800>();
-    let mut v1: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let mut v1: *mut EnemyData = gEnemyData(game.cur_enemy_index() as ::core::ffi::c_int, game);
     v2 = gExtraEnemyRam7800(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
@@ -4206,7 +4202,7 @@ unsafe fn EprojInit_MiniKraidSpikes(mut j: uint16, mut a: uint16, game: &mut Gam
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(v2 as isize) = a;
     let mut r18: uint16 = kEprojInit_MiniKraidSpikes_Tab0[((*gExtraEnemyRam7800(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
+        game.cur_enemy_index() as ::core::ffi::c_int,
         game,
     ))
     .kraid
@@ -4214,10 +4210,7 @@ unsafe fn EprojInit_MiniKraidSpikes(mut j: uint16, mut a: uint16, game: &mut Gam
         as ::core::ffi::c_int
         >> 1 as ::core::ffi::c_int)
         as usize] as uint16;
-    let mut v3: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
+    let mut v3: *mut EnemyData = gEnemyData(game.cur_enemy_index() as ::core::ffi::c_int, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v2 as isize) =
         (*v3).x_pos;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v2 as isize) =
@@ -10488,9 +10481,8 @@ pub unsafe fn EprojInstr_ECE3(
         + (NextRandom(game) as ::core::ffi::c_int & 0x3f as ::core::ffi::c_int)
         - 32 as ::core::ffi::c_int) as uint16;
     let mut y: uint16 = (game.enemy_projectile_y_pos(k) as ::core::ffi::c_int
-        + ((*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
+        + ((game.random_number() as ::core::ffi::c_int & 0x3f00 as ::core::ffi::c_int) as uint16
             as ::core::ffi::c_int
-            & 0x3f00 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
             >> 8 as ::core::ffi::c_int)
         - 32 as ::core::ffi::c_int) as uint16;
     CreateSpriteAtPos(x, y, *(epjp as *mut uint16), 0 as uint16, game);

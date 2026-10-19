@@ -15050,6 +15050,40 @@ raw offsets-2, cast lines-5, Rust lines-1; unsafe functions and other own
 counters unchanged. Broader gameplay/credits, hardware/audio/masks and
 ownership remain open; further projectile cleanup requires actual coverage.
 
+Enemy-projectile extended-route scalar reads (2026-10-19): reuse existing
+Game and EprojState accessors at eight reads across six routines. Full-word
+values, separate live index reads, surrounding casts and callback order stay
+unchanged. Two reads inside fresh0's mutable borrow and MiniKraidSpit's second
+enemy-index read across gEnemyData's returned pointer remain raw.
+
+Frozen c08ce284 plus these eight replacements passes full
+any%129712/0 and Kraid119823/0, both native exits0. Observed Kraid119823/0
+also exits0 and compares all 112 executed named reads with their original
+values at the actual read. These are read counts, not routine-entry counts.
+
+| Routine | Changed reads | Comparisons | Input frames |
+| --- | --- | --- | --- |
+| `EprojColl_Unknown8536` | 1 | 4 | 110898..117232 |
+| `EprojColl_8676` | 2 | 2 | 65527..65527 |
+| `EprojColl_874E` | 1 | 34 | 18186..65646 |
+| `EprojInit_MiniKraidSpit` | 1 | 4 | 110317..110557 |
+| `EprojInit_MiniKraidSpikes` | 2 | 20 | 110214..110690 |
+| `EprojInstr_ECE3` | 1 | 48 | 110707..110827 |
+
+Clean/observed non-timing diagnostics match, including the existing single
+Kraid `X undefined` message. That investigation and credits remain open.
+Exact observer stripping, source/DLL/input identities, independent provenance
+review, formatting/check, normal release build and progress pass. Cargo uses
+the snapshot's target and reuses only registry dependency artifacts.
+The release build takes 27.85s, the clean host link
+1.51s, and the final build/replay cycle 325.19s.
+Relative to this commit's parent, own Rust lines -8, raw-offset
+lines -8, cast-containing lines -1; unsafe functions are unchanged.
+Eight unsafe word reads are removed; shared definitions are unchanged.
+Concurrent literal-offset cast cleanup is preserved; its argument values are
+unchanged and its verification remains separate. Indexed updates, arithmetic,
+broader gameplay/credits, hardware/audio and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
