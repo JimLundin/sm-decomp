@@ -413,18 +413,22 @@ unsafe fn address_absolute(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
 }
 unsafe fn address_absolute_x(cpu: *mut Cpu, write: bool, game: &mut Game) -> (u32, u32) {
     let adr = u32::from(fetch_word(cpu, game));
-    if write && (!(*cpu).xf || adr >> 8 != (adr + u32::from((*cpu).x)) >> 8) {
-        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-    }
-    let low = ((u32::from((*cpu).db) << 16) + adr + u32::from((*cpu).x)) & 0xffffff;
-    (low, low.wrapping_add(1) & 0xffffff)
+    absolute_indexed_address(adr, CpuRegister::X, write, &mut *cpu)
 }
 unsafe fn address_absolute_y(cpu: *mut Cpu, write: bool, game: &mut Game) -> (u32, u32) {
     let adr = u32::from(fetch_word(cpu, game));
-    if write && (!(*cpu).xf || adr >> 8 != (adr + u32::from((*cpu).y)) >> 8) {
-        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
+    absolute_indexed_address(adr, CpuRegister::Y, write, &mut *cpu)
+}
+fn absolute_indexed_address(
+    offset: u32,
+    index: CpuRegister,
+    write: bool,
+    cpu: &mut Cpu,
+) -> (u32, u32) {
+    if write && (!cpu.xf || offset >> 8 != (offset + u32::from(index.value(cpu))) >> 8) {
+        cpu.cyclesUsed = cpu.cyclesUsed.wrapping_add(1);
     }
-    let low = ((u32::from((*cpu).db) << 16) + adr + u32::from((*cpu).y)) & 0xffffff;
+    let low = ((u32::from(cpu.db) << 16) + offset + u32::from(index.value(cpu))) & 0xffffff;
     (low, low.wrapping_add(1) & 0xffffff)
 }
 unsafe fn address_absolute_long(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {

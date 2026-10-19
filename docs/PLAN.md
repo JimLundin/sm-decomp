@@ -9912,6 +9912,25 @@ core/DLL pass. Live CPU matches verified source; peer gameplay/PPU work is
 outside this replay. Rust lines -1; other own counters unchanged. Complete
 gameplay/render/audio remain open. Continue covered CPU cleanup; TSX/ROR held.
 
+CPU safe absolute indexed address completion (2026-10-19): absolute X/Y
+wrappers share absolute_indexed_address after word fetch. The inherited write
+gate, short-circuited XF/page-cross test, cycle store before final bank/index
+reads and 24-bit low/high wrapping remain exact. Full indexes are retained.
+The safe reference begins after fetch callbacks. Frozen `6d891ece` plus this
+change passes 37,748,736 actual old/current wrapper cases: every operand word,
+36 index bit patterns, X/Y selections, both write/XF values, varied MF/E/banks
+and PC 8000/FFFF. Address pairs, named CPU/bus fields, operand RAM, PC wrapping
+and cycles match. This is not the full operand/index/bank Cartesian product or
+mutating MMIO fetch coverage. Prefix 3,600/0 (0.99s), native exit 0, executes
+all eight X/Y/write/XF combinations: X false 310,366/64,118, true 158,214/3,142;
+Y false 227,245/10,184, true 6,592/953 (word/byte XF). Clean full any%
+129,712/0 (50.22s), native exit 0. Cargo fmt/check, full release/release-library
+builds with external SDL2, normal metadata and optimized frozen core/DLL pass.
+Live CPU matches verified source; peer PPU work is outside this replay.
+Rust lines +4 introduces the safe shared helper and formatter reflow; other
+own counters unchanged. Complete gameplay/render/audio remain open. Continue
+covered CPU cleanup; TSX/ROR stay held for contextual execution.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
