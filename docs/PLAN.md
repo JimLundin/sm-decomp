@@ -9849,6 +9849,52 @@ Rust lines +3 introduces the safe helper while removing dispatcher pointer
 operations; other own counters unchanged. Complete gameplay/render/audio
 remain open. Continue covered CPU cleanup; TSX/ROR stay held.
 
+Missile Tank ammunition writes now use existing byte-backed accessors
+(2026-10-19). PlmInstr_CollectAmmoMissileTank still reads the same live ROM
+word first, stores maximum missiles before current missiles, then updates
+HUD, music and message2 in their original order. Both additions wrap as
+16-bit words, matching the former widened-add/narrow-store expressions.
+Unsafe remains at the ROM/instruction pointer and existing callback boundaries.
+No new helper or RAM layout is introduced.
+
+Pinned source 7fcc20d6e07b143048ce0034aa95c1136220a377 plus this focused
+change passes the actual pickup/return route. Read-only call instrumentation
+observes two executions, amount5 at missiles0/0 and5/5. The second is in
+9A90 between frames67600 and67700; the following trace has missiles10/10.
+Standard host before-route68685/0 (36.87s), instrumented
+after-route68685/0 (38.15s), clean-route68685/0
+(37.23s). Instrumented any%129712/0
+(74.07s), clean any%129712/0 (62.61s).
+All five native exits0 were observed. These standard-host runs retain its
+inherited disableRender state; they do not replace explicit-render checks.
+
+Explicit-render hosts set disableRender=false and link the same pinned
+before/clean cores. Before pickup route68685/71 (83.24s), after68685/71
+(82.49s), native exits1; the first comparison diagnostic matches exactly.
+The current verifier suppresses later diagnostics, so read-only hosts also
+record every failure-counter increment: before68685/71
+(86.88s), after68685/71
+(88.07s), native exits1. All71 ordered failing
+frame numbers match exactly; no new failing frames. Clean explicit-render any%129712/0
+(136.88s), native exit0. No instrumentation enters maintained source.
+Concurrent CPU/PPU work is excluded from these frozen cores; its owner
+retains responsibility for separate integration replays.
+
+Cargo fmt/check, full release build with external SDL2 and progress pass.
+Own counters: raw RAM offsets-2, c_int casts-4, Rust lines-4; other own
+counters unchanged. Progress:22689 raw,39 extern blocks,3 C ABI exports,
+5 no_mangle,6714 unsafe,85558 casts,257470 Rust lines; total counters also
+include separately owned peer changes.
+No ROM/input/SRAM/geometry or probe assets enter the commit.
+An input-only tunnel-return trial on the older frozen render host finishes
+69387/71 (170.69s), native exit1, in9A44 atX171/Y153 health59/99,
+stopped at another breakable. Its diagnostics match Waver71. Retain
+tank-return-tunnel.inputs for the next fresh-bomb traversal; it does not
+establish a return to Parlor. Next: continue that return and accessible
+item/boss coverage. Held upper99BD ascent, cliff tuning, old9AD9 drop ammo
+and HDMA stay held. Credits, complete gameplay/hardware, rendering/audio,
+masked RAM and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

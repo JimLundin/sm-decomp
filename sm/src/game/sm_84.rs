@@ -2035,13 +2035,9 @@ pub unsafe fn PlmInstr_CollectAmmoMissileTank(
     mut k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
-    let mut t: uint16 = *(plmp as *mut uint16);
-    let ref mut fresh48 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9c8 as ::core::ffi::c_int as isize) as *mut uint16);
-    *fresh48 = (*fresh48 as ::core::ffi::c_int + t as ::core::ffi::c_int) as uint16;
-    let ref mut fresh49 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9c6 as ::core::ffi::c_int as isize) as *mut uint16);
-    *fresh49 = (*fresh49 as ::core::ffi::c_int + t as ::core::ffi::c_int) as uint16;
+    let t = *(plmp as *const uint16);
+    game.set_samus_max_missiles(game.samus_max_missiles().wrapping_add(t));
+    game.set_samus_missiles(game.samus_missiles().wrapping_add(t));
     AddMissilesToHudTilemap(game);
     PlayRoomMusicTrackAfterAFrames(0x168 as uint16, game);
     DisplayMessageBox(2 as uint16, game);
