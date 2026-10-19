@@ -595,26 +595,8 @@ pub unsafe fn RoomCode_GenRandomExplodes_4th(game: &mut Game) {
     }
 }
 pub unsafe fn RoomCode_GenRandomExplodes(mut x_r18: uint16, mut y_r20: uint16, game: &mut Game) {
-    static kRoomCode_GenRandomExplodes_Sprite: [uint8; 8] = [
-        3 as uint8,
-        3 as uint8,
-        9 as uint8,
-        12 as uint8,
-        12 as uint8,
-        18 as uint8,
-        18 as uint8,
-        21 as uint8,
-    ];
-    static kRoomCode_GenRandomExplodes_Sfx: [uint8; 8] = [
-        0x24 as uint8,
-        0 as uint8,
-        0 as uint8,
-        0x25 as uint8,
-        0 as uint8,
-        0 as uint8,
-        0 as uint8,
-        0 as uint8,
-    ];
+    static kRoomCode_GenRandomExplodes_Sprite: [uint8; 8] = [3, 3, 9, 12, 12, 18, 18, 21];
+    static kRoomCode_GenRandomExplodes_Sfx: [uint8; 8] = [0x24, 0, 0, 0x25, 0, 0, 0, 0];
     let mut v1: uint16 = ((NextRandom(game)) & (0xfu16));
     if (v1 as ::core::ffi::c_int) < 8 as ::core::ffi::c_int {
         let mut v2: uint16 = kRoomCode_GenRandomExplodes_Sfx[v1 as usize] as uint16;
@@ -977,22 +959,8 @@ pub unsafe fn RoomCode_CeresElevatorShaft_(game: &mut Game) {
     RoomCode_CeresElevatorShaft(game);
 }
 static kRoomCode_SpawnCeresFallingDebris_Tab: [uint16; 16] = [
-    0x50 as uint16,
-    0x60 as uint16,
-    0x70 as uint16,
-    0x80 as uint16,
-    0x90 as uint16,
-    0xa0 as uint16,
-    0xb0 as uint16,
-    0xc0 as uint16,
-    0xd0 as uint16,
-    0xe0 as uint16,
-    0xf0 as uint16,
-    0x110 as uint16,
-    0x130 as uint16,
-    0x150 as uint16,
-    0x170 as uint16,
-    0x190 as uint16,
+    0x50, 0x60, 0x70, 0x80, 0x90, 0xa0, 0xb0, 0xc0, 0xd0, 0xe0, 0xf0, 0x110, 0x130, 0x150, 0x170,
+    0x190,
 ];
 pub unsafe fn RoomCode_SpawnCeresFallingDebris(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x93f) as *mut uint16) as ::core::ffi::c_int
@@ -1688,26 +1656,8 @@ pub unsafe fn RoomCode_CrocomireShaking(game: &mut Game) {
         }
     }
 }
-static kRoomCode_RidleyRoomShaking_X: [int16; 8] = [
-    0 as int16,
-    2 as int16,
-    2 as int16,
-    2 as int16,
-    0 as int16,
-    -(2 as ::core::ffi::c_int) as int16,
-    -(2 as ::core::ffi::c_int) as int16,
-    -(2 as ::core::ffi::c_int) as int16,
-];
-static kRoomCode_RidleyRoomShaking_Y: [int16; 8] = [
-    -(2 as ::core::ffi::c_int) as int16,
-    -(2 as ::core::ffi::c_int) as int16,
-    0 as int16,
-    2 as int16,
-    2 as int16,
-    2 as int16,
-    0 as int16,
-    -(2 as ::core::ffi::c_int) as int16,
-];
+static kRoomCode_RidleyRoomShaking_X: [int16; 8] = [0, 2, 2, 2, 0, -(2), -(2), -(2)];
+static kRoomCode_RidleyRoomShaking_Y: [int16; 8] = [-(2), -(2), 0, 2, 2, 2, 0, -(2)];
 pub unsafe fn RoomCode_RidleyRoomShaking(game: &mut Game) {
     let mut ai_var_A: uint16 =
         (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(4)).ai_var_A;

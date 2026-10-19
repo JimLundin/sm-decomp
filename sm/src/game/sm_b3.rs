@@ -176,7 +176,7 @@ unsafe fn Get_PipeBug(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_
         .offset(0xf78)
         .offset(o as isize) as *mut Enemy_PipeBug;
 }
-static g_word_B39E77: [int16; 3] = [2 as int16, 3 as int16, 4 as int16];
+static g_word_B39E77: [int16; 3] = [2, 3, 4];
 pub unsafe fn Enemy_GrappleReact_NoInteract_B3(game: &mut Game) {
     SwitchEnemyAiToMainAi(game);
 }

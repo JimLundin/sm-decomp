@@ -515,10 +515,7 @@ pub unsafe fn Samus_Pose_CancelGrapple(game: &mut Game) {
     };
 }
 static kSamus_Pose_Func2_Tab: [uint8; 28] = [
-    2 as uint8, 1 as uint8, 1 as uint8, 0 as uint8, 6 as uint8, 2 as uint8, 8 as uint8, 2 as uint8,
-    1 as uint8, 6 as uint8, 2 as uint8, 2 as uint8, 2 as uint8, 6 as uint8, 2 as uint8, 2 as uint8,
-    2 as uint8, 6 as uint8, 6 as uint8, 6 as uint8, 6 as uint8, 2 as uint8, 6 as uint8, 2 as uint8,
-    2 as uint8, 2 as uint8, 2 as uint8, 2 as uint8,
+    2, 1, 1, 0, 6, 2, 8, 2, 1, 6, 2, 2, 2, 6, 2, 2, 2, 6, 6, 6, 6, 2, 6, 2, 2, 2, 2, 2,
 ];
 pub unsafe fn Samus_Pose_Func2(game: &mut Game) -> uint8 {
     let mut v0: uint16 = kSamus_Pose_Func2_Tab
@@ -3821,10 +3818,7 @@ pub unsafe fn Samus_Initialize(game: &mut Game) {
 }
 pub unsafe fn Xray_Initialize(game: &mut Game) -> uint8 {
     static byte_91E291: [uint8; 28] = [
-        1 as uint8, 1 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 2 as uint8, 0 as uint8,
-        0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8,
-        0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8,
-        1 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8,
+        1, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
     ];
     if *((&raw mut game.g_ram as *mut uint8).offset(0xccc) as *mut uint16) as ::core::ffi::c_int
         == 7 as ::core::ffi::c_int
@@ -5034,20 +5028,7 @@ pub unsafe fn Samus_HandleTransitionsA_2(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xb4a) as *mut uint16) = 0 as uint16;
     Samus_CancelSpeedBoost(game);
 }
-static word_91ED36: [uint16; 12] = [
-    5 as uint16,
-    5 as uint16,
-    9 as uint16,
-    9 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-];
+static word_91ED36: [uint16; 12] = [5, 5, 9, 9, 0, 0, 0, 0, 0, 0, 0, 0];
 pub unsafe fn Samus_HandleTransitionsA_7(game: &mut Game) {
     let mut amt: int32 = 0;
     let mut current_block_11: u64;
@@ -5578,11 +5559,7 @@ pub unsafe fn HandleLandingGraphics_Ceres(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xaec) as *mut uint16).offset(2) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xaec) as *mut uint16).offset(3) = 0 as uint16;
 }
-static g_byte_91F0F3: [uint8; 17] = [
-    1 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 2 as uint8, 0 as uint8, 4 as uint8,
-    0 as uint8, 4 as uint8, 4 as uint8, 4 as uint8, 4 as uint8, 0 as uint8, 4 as uint8, 0 as uint8,
-    0 as uint8,
-];
+static g_byte_91F0F3: [uint8; 17] = [1, 0, 0, 0, 0, 2, 0, 4, 0, 4, 4, 4, 4, 0, 4, 0, 0];
 pub unsafe fn HandleLandingGraphics_Crateria(game: &mut Game) {
     let mut current_block: u64;
     if !(*((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) != 0) {

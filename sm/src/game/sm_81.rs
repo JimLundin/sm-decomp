@@ -134,14 +134,7 @@ unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int, game: &mut Game) -> *mut Vr
 unsafe fn get_RoomDefHeader(mut a: uint16, game: &mut Game) -> *mut RoomDefHeader {
     return RomPtr(((0x8f0000u32) | ((a) as u32)), game) as *mut RoomDefHeader;
 }
-static kFileSelectMap_AreaIndexes: [uint16; 6] = [
-    0 as uint16,
-    3 as uint16,
-    5 as uint16,
-    1 as uint16,
-    4 as uint16,
-    2 as uint16,
-];
+static kFileSelectMap_AreaIndexes: [uint16; 6] = [0, 3, 5, 1, 4, 2];
 pub unsafe fn SoftReset(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) = 0xffff as uint16;
 }
@@ -1421,18 +1414,7 @@ pub unsafe fn FileSelectMenu_15_FadeOutToMain(game: &mut Game) {
     }
 }
 static kMenuSelectionMissileXY: [uint16; 12] = [
-    0x30 as uint16,
-    0xe as uint16,
-    0x58 as uint16,
-    0xe as uint16,
-    0x80 as uint16,
-    0xe as uint16,
-    0xa3 as uint16,
-    0xe as uint16,
-    0xbb as uint16,
-    0xe as uint16,
-    0xd3 as uint16,
-    0xe as uint16,
+    0x30, 0xe, 0x58, 0xe, 0x80, 0xe, 0xa3, 0xe, 0xbb, 0xe, 0xd3, 0xe,
 ];
 pub unsafe fn FileSelectMenu_17_FadeInToMain(game: &mut Game) {
     let mut v0: ::core::ffi::c_int = ((4u16)
@@ -1629,7 +1611,7 @@ pub unsafe fn QueueTransferOfMenuTilemapToVramBG1(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) =
         ((v0).wrapping_add((7u16)));
 }
-static kBitShl: [uint8; 3] = [1 as uint8, 2 as uint8, 4 as uint8];
+static kBitShl: [uint8; 3] = [1, 2, 4];
 pub unsafe fn FileSelectMenu_8(game: &mut Game) {
     let mut v0: uint8 = 0;
     DrawBorderAroundDataCopyMode(game);
@@ -2095,7 +2077,7 @@ pub unsafe fn HandleFileCopyArrowPalette(game: &mut Game) {
     }
 }
 pub unsafe fn FileSelectMenu_13_FileCopyDoIt(game: &mut Game) {
-    static kBitShl_16bit: [uint16; 3] = [1 as uint16, 2 as uint16, 4 as uint16];
+    static kBitShl_16bit: [uint16; 3] = [1, 2, 4];
     DrawBorderAroundDataCopyMode(game);
     DrawMenuSelectionMissile(game);
     HandleFileCopyArrowPalette(game);
@@ -2258,7 +2240,7 @@ pub unsafe fn InitFileSelectMenuFileClear(game: &mut Game) {
     SetFileClearMenuMissilePos(game);
 }
 pub unsafe fn FileSelectMenu_22_FileClearSelectSlot(game: &mut Game) {
-    static kBitShl_: [uint8; 3] = [1 as uint8, 2 as uint8, 4 as uint8];
+    static kBitShl_: [uint8; 3] = [1, 2, 4];
     let mut v0: uint16 = 0;
     let mut v1: uint8 = 0;
     DrawBorderAroundDataClearMode(game);
@@ -2450,7 +2432,7 @@ pub unsafe fn FileSelectMenu_24_FileClearConfirm(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(5) = 94 as uint16;
 }
 pub unsafe fn FileSelectMenu_25_FileClearDoClear(game: &mut Game) {
-    static kBitShl_Not: [uint16; 3] = [0xfffe as uint16, 0xfffd as uint16, 0xfffb as uint16];
+    static kBitShl_Not: [uint16; 3] = [0xfffe, 0xfffd, 0xfffb];
     DrawBorderAroundDataClearMode(game);
     let mut sram_addr: ::core::ffi::c_int = *(game.g_rom.offset(crate::rtl::lorom_offset(0x81812b))
         as *const uint8 as *mut uint16)
@@ -2627,17 +2609,8 @@ pub unsafe fn DrawFileSelectSlotSamusHelmet(mut k: uint16, game: &mut Game) {
     let mut v6: uint16 = ((2u16).wrapping_mul(
         (*((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(v5 as isize)),
     ));
-    static kDrawFileSlotHelmet_Spritemaps: [uint16; 9] = [
-        0x2c as uint16,
-        0x2d as uint16,
-        0x2e as uint16,
-        0x2f as uint16,
-        0x30 as uint16,
-        0x31 as uint16,
-        0x32 as uint16,
-        0x33 as uint16,
-        0x33 as uint16,
-    ];
+    static kDrawFileSlotHelmet_Spritemaps: [uint16; 9] =
+        [0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x33];
     DrawMenuSpritemap(
         kDrawFileSlotHelmet_Spritemaps
             [(v6 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize],
@@ -3287,22 +3260,8 @@ pub unsafe fn FileSelectMap_1(game: &mut Game) {
 pub unsafe fn sub_81A3D1(mut k: uint16, game: &mut Game) {
     LoadActiveAreaMapForegroundColors(k, game);
 }
-static kActiveAreaMapForegroundColors: [uint16; 6] = [
-    0 as uint16,
-    0xa as uint16,
-    0x10 as uint16,
-    0x16 as uint16,
-    0x24 as uint16,
-    0x2a as uint16,
-];
-static kInactiveAreaMapForegroundColors: [uint16; 6] = [
-    0x30 as uint16,
-    0x3a as uint16,
-    0x40 as uint16,
-    0x46 as uint16,
-    0x54 as uint16,
-    0x5a as uint16,
-];
+static kActiveAreaMapForegroundColors: [uint16; 6] = [0, 0xa, 0x10, 0x16, 0x24, 0x2a];
+static kInactiveAreaMapForegroundColors: [uint16; 6] = [0x30, 0x3a, 0x40, 0x46, 0x54, 0x5a];
 pub unsafe fn LoadActiveAreaMapForegroundColors(mut v0: uint16, game: &mut Game) {
     LoadAreaMapForegroundColors(kActiveAreaMapForegroundColors[v0 as usize], game);
 }
@@ -3883,18 +3842,7 @@ pub unsafe fn SwitchActiveFileSelectMapArea(mut R28: uint16, game: &mut Game) {
     );
 }
 static kAreaSelectMapLabelPositions: [uint16; 12] = [
-    0x5b as uint16,
-    0x32 as uint16,
-    0x2a as uint16,
-    0x7f as uint16,
-    0x5e as uint16,
-    0xb5 as uint16,
-    0xce as uint16,
-    0x50 as uint16,
-    0xce as uint16,
-    0x9f as uint16,
-    0x87 as uint16,
-    0x8b as uint16,
+    0x5b, 0x32, 0x2a, 0x7f, 0x5e, 0xb5, 0xce, 0x50, 0xce, 0x9f, 0x87, 0x8b,
 ];
 pub unsafe fn DrawAreaSelectMapLabels(game: &mut Game) {
     let mut r3: uint16 = 0 as uint16;
@@ -3965,14 +3913,7 @@ pub unsafe fn DrawAreaSelectMapLabels(game: &mut Game) {
         i += 1;
     }
 }
-static kRoomSelectMapExpandingSquareTimers: [uint16; 6] = [
-    0x33 as uint16,
-    0x35 as uint16,
-    0x2d as uint16,
-    0x33 as uint16,
-    0x33 as uint16,
-    0x22 as uint16,
-];
+static kRoomSelectMapExpandingSquareTimers: [uint16; 6] = [0x33, 0x35, 0x2d, 0x33, 0x33, 0x22];
 pub unsafe fn FileSelectMap_7_PrepExpandSquareTransToRoomMap(game: &mut Game) {
     DrawAreaSelectMapLabels(game);
     SetupInitialExpandingSquareHDMA(game);

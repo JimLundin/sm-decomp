@@ -3416,16 +3416,7 @@ pub unsafe fn PlmPreInstr_WakePLMAndStartFxMotionSamusFarLeft(mut k: uint16, gam
 }
 pub unsafe fn PlmPreInstr_AdvanceLavaSamusMovesLeft(mut k: uint16, game: &mut Game) {
     static g_word_84B876: [uint16; 10] = [
-        0x72b as uint16,
-        0x1bf as uint16,
-        0xff50 as uint16,
-        0x50a as uint16,
-        0x167 as uint16,
-        0xff20 as uint16,
-        0x244 as uint16,
-        0x100 as uint16,
-        0xff20 as uint16,
-        0x8000 as uint16,
+        0x72b, 0x1bf, 0xff50, 0x50a, 0x167, 0xff20, 0x244, 0x100, 0xff20, 0x8000,
     ];
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: uint16 =

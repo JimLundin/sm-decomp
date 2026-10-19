@@ -383,9 +383,7 @@ static g_word_A7CD9D: uint16 = 0xc00 as uint16;
 static g_word_A7CD9F: uint16 = 0x100 as uint16;
 static g_word_A7CDA1: uint16 = 0xf000 as uint16;
 static g_word_A7CDA3: uint16 = 8 as uint16;
-static g_byte_A7CDA5: [uint8; 8] = [
-    6 as uint8, 6 as uint8, 8 as uint8, 8 as uint8, 6 as uint8, 8 as uint8, 6 as uint8, 8 as uint8,
-];
+static g_byte_A7CDA5: [uint8; 8] = [6, 6, 8, 8, 6, 8, 6, 8];
 static g_word_A7E900: uint16 = 0xfffd as uint16;
 static g_word_A7E902: uint16 = 0 as uint16;
 static g_word_A7E906: uint16 = 0 as uint16;

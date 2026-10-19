@@ -408,14 +408,7 @@ pub unsafe fn AnimtilesInstr_Write8PaletteColors(
     game: &mut Game,
 ) -> uint16 {
     static kAnimtilesInstr_Write8PaletteColors: [uint16; 8] = [
-        0x3800 as uint16,
-        0x7f58 as uint16,
-        0x6ed5 as uint16,
-        0x5a71 as uint16,
-        0x49ee as uint16,
-        0x356a as uint16,
-        0x24e7 as uint16,
-        0x1083 as uint16,
+        0x3800, 0x7f58, 0x6ed5, 0x5a71, 0x49ee, 0x356a, 0x24e7, 0x1083,
     ];
     let mut v2: uint16 = *(RomPtr_87(j, game) as *mut uint16);
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;

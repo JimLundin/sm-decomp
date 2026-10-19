@@ -3212,24 +3212,7 @@ pub unsafe fn HdmaobjInstr_SetFlagB(
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 1 as uint16;
     return hdp;
 }
-static g_word_88C46E: [int16; 16] = [
-    0 as int16,
-    1 as int16,
-    1 as int16,
-    0 as int16,
-    0 as int16,
-    -(1 as ::core::ffi::c_int) as int16,
-    -(1 as ::core::ffi::c_int) as int16,
-    0 as int16,
-    0 as int16,
-    1 as int16,
-    1 as int16,
-    0 as int16,
-    0 as int16,
-    -(1 as ::core::ffi::c_int) as int16,
-    -(1 as ::core::ffi::c_int) as int16,
-    0 as int16,
-];
+static g_word_88C46E: [int16; 16] = [0, 1, 1, 0, 0, -(1), -(1), 0, 0, 1, 1, 0, 0, -(1), -(1), 0];
 pub unsafe fn HdmaobjPreInstr_BG3Xscroll(mut k: uint16, game: &mut Game) {
     let mut v8: int16 = 0;
     let mut v9: int16 = 0;
@@ -3738,27 +3721,9 @@ static unk_88B08C: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
     addr: 0xb0ac as VoidP,
 };
 static kFirefleaFlashingShades: [uint16; 12] = [
-    0 as uint16,
-    0x100 as uint16,
-    0x200 as uint16,
-    0x300 as uint16,
-    0x400 as uint16,
-    0x500 as uint16,
-    0x600 as uint16,
-    0x500 as uint16,
-    0x400 as uint16,
-    0x300 as uint16,
-    0x200 as uint16,
-    0x100 as uint16,
+    0, 0x100, 0x200, 0x300, 0x400, 0x500, 0x600, 0x500, 0x400, 0x300, 0x200, 0x100,
 ];
-static kFirefleaDarknessShades: [uint16; 6] = [
-    0 as uint16,
-    0x600 as uint16,
-    0xc00 as uint16,
-    0x1200 as uint16,
-    0x1800 as uint16,
-    0x1900 as uint16,
-];
+static kFirefleaDarknessShades: [uint16; 6] = [0, 0x600, 0xc00, 0x1200, 0x1800, 0x1900];
 pub unsafe fn FxTypeFunc_24(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1778) as *mut uint16) = 6 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x177a) as *mut uint16) = 0 as uint16;
@@ -3903,23 +3868,7 @@ pub unsafe fn ExpandingContractingHdmaEffect(game: &mut Game) {
     }
 }
 static g_word_88B256: [uint16; 17] = [
-    0x46 as uint16,
-    1 as uint16,
-    0x46 as uint16,
-    3 as uint16,
-    0x46 as uint16,
-    2 as uint16,
-    0x46 as uint16,
-    1 as uint16,
-    0x46 as uint16,
-    1 as uint16,
-    0x46 as uint16,
-    2 as uint16,
-    0x46 as uint16,
-    2 as uint16,
-    0x46 as uint16,
-    1 as uint16,
-    0x8000 as uint16,
+    0x46, 1, 0x46, 3, 0x46, 2, 0x46, 1, 0x46, 1, 0x46, 2, 0x46, 2, 0x46, 1, 0x8000,
 ];
 pub unsafe fn HandleEarthquakeSoundEffect(game: &mut Game) {
     let mut v1: int16 = 0;
@@ -4178,16 +4127,7 @@ pub unsafe fn CallFxRisingFunc(mut ea: uint32, game: &mut Game) {
         }
     };
 }
-static kLavaSoundEffects: [uint8; 8] = [
-    0x12 as uint8,
-    0x13 as uint8,
-    0x14 as uint8,
-    0x12 as uint8,
-    0x13 as uint8,
-    0x14 as uint8,
-    0x12 as uint8,
-    0x13 as uint8,
-];
+static kLavaSoundEffects: [uint8; 8] = [0x12, 0x13, 0x14, 0x12, 0x13, 0x14, 0x12, 0x13];
 pub unsafe fn HdmaobjPreInstr_LavaAcidBG3YScroll(mut k: uint16, game: &mut Game) {
     let mut current_block: u64;
     let mut v2: int16 = 0;

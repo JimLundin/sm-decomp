@@ -1084,16 +1084,7 @@ unsafe fn PpuDrawWholeLine(mut ppu: *mut Ppu, mut y: uint) {
     }
     let mut cwin: PpuWindows = PpuWindows::EMPTY;
     PpuWindows_Calc(&raw mut cwin, ppu, 5 as uint);
-    static kCwBitsMod: [uint8; 8] = [
-        0 as ::core::ffi::c_int as uint8,
-        0xff as ::core::ffi::c_int as uint8,
-        0xff as ::core::ffi::c_int as uint8,
-        0 as ::core::ffi::c_int as uint8,
-        0xff as ::core::ffi::c_int as uint8,
-        0 as ::core::ffi::c_int as uint8,
-        0xff as ::core::ffi::c_int as uint8,
-        0 as ::core::ffi::c_int as uint8,
-    ];
+    static kCwBitsMod: [uint8; 8] = [0, 0xff, 0xff, 0, 0xff, 0, 0xff, 0];
     let mut cw_clip_math: uint32 = (cwin.bits as ::core::ffi::c_int
         & kCwBitsMod[(*ppu).clipMode as usize] as ::core::ffi::c_int
         ^ kCwBitsMod[((*ppu).clipMode as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as usize]

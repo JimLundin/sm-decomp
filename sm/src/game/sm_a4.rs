@@ -2355,16 +2355,7 @@ pub unsafe fn Crocomire_Func_66(game: &mut Game) {
         ((v2).wrapping_add((7u16)));
     Crocomire_9BB3(game);
 }
-static kCrocoEraseLineMasks: [uint8; 8] = [
-    0x7f as uint8,
-    0xbf as uint8,
-    0xdf as uint8,
-    0xef as uint8,
-    0xf7 as uint8,
-    0xfb as uint8,
-    0xfd as uint8,
-    0xfe as uint8,
-];
+static kCrocoEraseLineMasks: [uint8; 8] = [0x7f, 0xbf, 0xdf, 0xef, 0xf7, 0xfb, 0xfd, 0xfe];
 pub unsafe fn Crocomire_Func_67(game: &mut Game) -> uint16 {
     let mut n: ::core::ffi::c_int =
         *(&raw mut game.g_ram as *mut uint8).offset(0x68c) as ::core::ffi::c_int;

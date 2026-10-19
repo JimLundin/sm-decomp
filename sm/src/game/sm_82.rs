@@ -2454,38 +2454,7 @@ pub unsafe fn MapScrolling_GetSpeedIndex(game: &mut Game) -> uint16 {
     return result;
 }
 static kMapScrollingSpeedTable: [uint16; 32] = [
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    8 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    8 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
+    0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 ];
 pub unsafe fn MapScrolling_1_Left(game: &mut Game) {
     let ref mut fresh105 = *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16);
@@ -2978,26 +2947,8 @@ pub unsafe fn SetupMapScrollingForPauseMenu(mut a: uint16, game: &mut Game) {
         }
     }
 }
-static k0x80Shr: [uint8; 8] = [
-    0x80 as uint8,
-    0x40 as uint8,
-    0x20 as uint8,
-    0x10 as uint8,
-    8 as uint8,
-    4 as uint8,
-    2 as uint8,
-    1 as uint8,
-];
-static k0x80Shr_0: [uint8; 8] = [
-    0x80 as uint8,
-    0x40 as uint8,
-    0x20 as uint8,
-    0x10 as uint8,
-    8 as uint8,
-    4 as uint8,
-    2 as uint8,
-    1 as uint8,
-];
+static k0x80Shr: [uint8; 8] = [0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1];
+static k0x80Shr_0: [uint8; 8] = [0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1];
 unsafe fn DetermineLeftmostMapColumn(mut r0: *const uint8) -> uint16 {
     let mut r18: uint8 = 0;
     let mut v2: uint16 = 0;
@@ -3592,9 +3543,9 @@ pub unsafe fn HandlePauseScreenLrInput(game: &mut Game) {
         _ => {}
     };
 }
-static kPauseLrButtonPressedHighlight_Spritemap: [uint16; 2] = [0x28 as uint16, 0x29 as uint16];
-static kPauseLrButtonPressedHighlight_Y: [uint16; 2] = [0x18 as uint16, 0xe8 as uint16];
-static kPauseLrButtonPressedHighlight_X: [uint16; 2] = [0xd0 as uint16, 0xd0 as uint16];
+static kPauseLrButtonPressedHighlight_Spritemap: [uint16; 2] = [0x28, 0x29];
+static kPauseLrButtonPressedHighlight_Y: [uint16; 2] = [0x18, 0xe8];
+static kPauseLrButtonPressedHighlight_X: [uint16; 2] = [0xd0, 0xd0];
 pub unsafe fn HandlePauseMenuLRPressHighlight(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x729) as *mut uint16) != 0 {
         let ref mut fresh42 = *((&raw mut game.g_ram as *mut uint8).offset(0x729) as *mut uint16);
@@ -4080,72 +4031,14 @@ pub unsafe fn EquipmentScreenGlowingArrow(game: &mut Game) {
     };
 }
 static kEquipmentScreenGlowingArrowPalettes0: [uint16; 32] = [
-    0x39e as uint16,
-    0x77d as uint16,
-    0xb5c as uint16,
-    0xf5b as uint16,
-    0x133a as uint16,
-    0x171a as uint16,
-    0x1f19 as uint16,
-    0x22f8 as uint16,
-    0x26d7 as uint16,
-    0x2ad6 as uint16,
-    0x2eb6 as uint16,
-    0x3695 as uint16,
-    0x3a94 as uint16,
-    0x3e73 as uint16,
-    0x4253 as uint16,
-    0x4a52 as uint16,
-    0x4a52 as uint16,
-    0x4253 as uint16,
-    0x3e73 as uint16,
-    0x3a94 as uint16,
-    0x3695 as uint16,
-    0x2eb6 as uint16,
-    0x2ad6 as uint16,
-    0x26d7 as uint16,
-    0x22f8 as uint16,
-    0x1f19 as uint16,
-    0x171a as uint16,
-    0x133a as uint16,
-    0xf5b as uint16,
-    0xb5c as uint16,
-    0x77d as uint16,
-    0x39e as uint16,
+    0x39e, 0x77d, 0xb5c, 0xf5b, 0x133a, 0x171a, 0x1f19, 0x22f8, 0x26d7, 0x2ad6, 0x2eb6, 0x3695,
+    0x3a94, 0x3e73, 0x4253, 0x4a52, 0x4a52, 0x4253, 0x3e73, 0x3a94, 0x3695, 0x2eb6, 0x2ad6, 0x26d7,
+    0x22f8, 0x1f19, 0x171a, 0x133a, 0xf5b, 0xb5c, 0x77d, 0x39e,
 ];
 static kEquipmentScreenGlowingArrowPalettes1: [uint16; 32] = [
-    0x156 as uint16,
-    0x155 as uint16,
-    0x554 as uint16,
-    0x954 as uint16,
-    0xd53 as uint16,
-    0xd52 as uint16,
-    0x1152 as uint16,
-    0x1551 as uint16,
-    0x1970 as uint16,
-    0x1d70 as uint16,
-    0x1d6f as uint16,
-    0x216e as uint16,
-    0x256e as uint16,
-    0x296d as uint16,
-    0x296c as uint16,
-    0x318c as uint16,
-    0x318c as uint16,
-    0x296c as uint16,
-    0x296d as uint16,
-    0x256e as uint16,
-    0x216e as uint16,
-    0x1d6f as uint16,
-    0x1d70 as uint16,
-    0x1970 as uint16,
-    0x1551 as uint16,
-    0x1152 as uint16,
-    0xd52 as uint16,
-    0xd53 as uint16,
-    0x954 as uint16,
-    0x554 as uint16,
-    0x155 as uint16,
-    0x156 as uint16,
+    0x156, 0x155, 0x554, 0x954, 0xd53, 0xd52, 0x1152, 0x1551, 0x1970, 0x1d70, 0x1d6f, 0x216e,
+    0x256e, 0x296d, 0x296c, 0x318c, 0x318c, 0x296c, 0x296d, 0x256e, 0x216e, 0x1d6f, 0x1d70, 0x1970,
+    0x1551, 0x1152, 0xd52, 0xd53, 0x954, 0x554, 0x155, 0x156,
 ];
 pub unsafe fn EquipmentScreenGlowingArrowAnimated(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x9c0) as *mut uint16) as ::core::ffi::c_int
@@ -4233,18 +4126,8 @@ pub unsafe fn EquipmentScreenEnergyArrowGlow_Off(game: &mut Game) {
         i_0 += 1;
     }
 }
-static kEquipmentScreenTilemap_MANUAL: [uint16; 4] = [
-    0x3d46 as uint16,
-    0x3d47 as uint16,
-    0x3d48 as uint16,
-    0x3d49 as uint16,
-];
-static kEquipmentScreenTilemap_AUTO: [uint16; 4] = [
-    0x3d56 as uint16,
-    0x3d57 as uint16,
-    0x3d58 as uint16,
-    0x3d59 as uint16,
-];
+static kEquipmentScreenTilemap_MANUAL: [uint16; 4] = [0x3d46, 0x3d47, 0x3d48, 0x3d49];
+static kEquipmentScreenTilemap_AUTO: [uint16; 4] = [0x3d56, 0x3d57, 0x3d58, 0x3d59];
 pub unsafe fn EquipmentScreenCategory_Tanks_0(game: &mut Game) {
     let mut v0: int16 = 0;
     let mut v2: int16 = 0;
@@ -4775,32 +4658,10 @@ pub unsafe fn EquipmentScreenDrawItemSelector(game: &mut Game) {
 pub unsafe fn EquipmentScreenDisplayReserveTankAmount(game: &mut Game) {
     EquipmentScreenDisplayReserveTankAmount_(game);
 }
-static kEquipmentScreenReserveTank_X: [uint16; 6] = [
-    0x18 as uint16,
-    0x20 as uint16,
-    0x28 as uint16,
-    0x30 as uint16,
-    0x38 as uint16,
-    0x40 as uint16,
-];
+static kEquipmentScreenReserveTank_X: [uint16; 6] = [0x18, 0x20, 0x28, 0x30, 0x38, 0x40];
 static kEquipmentScreenReserveTank_Y: uint16 = 0x60 as uint16;
 static kPartialReserveTankSpritemapIds: [uint16; 16] = [
-    0x20 as uint16,
-    0x21 as uint16,
-    0x22 as uint16,
-    0x23 as uint16,
-    0x24 as uint16,
-    0x25 as uint16,
-    0x26 as uint16,
-    0x27 as uint16,
-    0x20 as uint16,
-    0x21 as uint16,
-    0x22 as uint16,
-    0x23 as uint16,
-    0x24 as uint16,
-    0x25 as uint16,
-    0x26 as uint16,
-    0x27 as uint16,
+    0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27,
 ];
 pub unsafe fn EquipmentScreenDisplayReserveTankAmount_(game: &mut Game) {
     let mut r3: uint16 = EquipmentScreenDisplayReserves_PaletteSetup(game);
@@ -5188,22 +5049,8 @@ pub unsafe fn UNKNOWN_sub_82B650(game: &mut Game) {
     };
 }
 static kMap_Criteria_SavePoints: [uint16; 16] = [
-    0xd8 as uint16,
-    0x28 as uint16,
-    0x90 as uint16,
-    0x38 as uint16,
-    0xfffe as uint16,
-    0xfffe as uint16,
-    0xfffe as uint16,
-    0xfffe as uint16,
-    0xfffe as uint16,
-    0xfffe as uint16,
-    0xfffe as uint16,
-    0xfffe as uint16,
-    0xfffe as uint16,
-    0xfffe as uint16,
-    0xfffe as uint16,
-    0xfffe as uint16,
+    0xd8, 0x28, 0x90, 0x38, 0xfffe, 0xfffe, 0xfffe, 0xfffe, 0xfffe, 0xfffe, 0xfffe, 0xfffe, 0xfffe,
+    0xfffe, 0xfffe, 0xfffe,
 ];
 pub unsafe fn DrawMapIcons(game: &mut Game) {
     DrawBossMapIcons(9 as uint16, addr_kMapIconDataPointers as uint16, game);
@@ -5303,16 +5150,7 @@ pub unsafe fn DrawSaveStationMapIcon(
     mut r3: uint16,
     game: &mut Game,
 ) {
-    static kShlBit: [uint8; 8] = [
-        1 as uint8,
-        2 as uint8,
-        4 as uint8,
-        8 as uint8,
-        0x10 as uint8,
-        0x20 as uint8,
-        0x40 as uint8,
-        0x80 as uint8,
-    ];
+    static kShlBit: [uint8; 8] = [1, 2, 4, 8, 0x10, 0x20, 0x40, 0x80];
     let mut R34: uint16 = a;
     if *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as ::core::ffi::c_int
         == *((&raw mut game.g_ram as *mut uint8).offset(0xd918) as *mut uint16)
@@ -5433,16 +5271,7 @@ pub unsafe fn CheckIfMapPositionIsExplored(
     mut j: uint16,
     game: &mut Game,
 ) -> uint16 {
-    static kBits0x80Shr: [uint8; 8] = [
-        0x80 as uint8,
-        0x40 as uint8,
-        0x20 as uint8,
-        0x10 as uint8,
-        8 as uint8,
-        4 as uint8,
-        2 as uint8,
-        1 as uint8,
-    ];
+    static kBits0x80Shr: [uint8; 8] = [0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1];
     let mut r18: ::core::ffi::c_int =
         ((k) & (0xff00u16)) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     r18 += k as uint8 as ::core::ffi::c_int >> 6 as ::core::ffi::c_int;
@@ -5624,12 +5453,7 @@ pub unsafe fn MapScreenDrawSamusPositionIndicator(game: &mut Game) {
 }
 static kMap_SamusPositionIndicator_Delays: [uint16; 4] =
     [8 as uint16, 4 as uint16, 8 as uint16, 4 as uint16];
-static kMap_SamusPositionIndicator_SpritemapIds: [uint16; 4] = [
-    0x5f as uint16,
-    0x60 as uint16,
-    0x61 as uint16,
-    0x60 as uint16,
-];
+static kMap_SamusPositionIndicator_SpritemapIds: [uint16; 4] = [0x5f, 0x60, 0x61, 0x60];
 pub unsafe fn UpdateSamusPositionIndicatorAnimation(game: &mut Game) -> uint16 {
     let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x778) as *mut uint16);
     if v0 == 0 {
@@ -5683,12 +5507,7 @@ pub unsafe fn DrawBorderAroundDataClearMode(game: &mut Game) {
 }
 static kDrawMenuSelectionMissile_Enable: [uint16; 4] =
     [8 as uint16, 8 as uint16, 8 as uint16, 8 as uint16];
-static kDrawMenuSelectionMissile_SpriteMap: [uint16; 4] = [
-    0x37 as uint16,
-    0x36 as uint16,
-    0x35 as uint16,
-    0x34 as uint16,
-];
+static kDrawMenuSelectionMissile_SpriteMap: [uint16; 4] = [0x37, 0x36, 0x35, 0x34];
 pub unsafe fn DrawMenuSelectionMissile(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x198d) as *mut uint16) != 0 {
         let ref mut fresh38 = *((&raw mut game.g_ram as *mut uint8).offset(0x198d) as *mut uint16);
@@ -8293,18 +8112,8 @@ pub unsafe fn GameOptionsMenuSpecialSettings_2(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) = 0 as uint16;
     GameOptionsMenuItemFunc_4(game);
 }
-static g_word_82F149: [uint16; 4] = [
-    0x1e0 as uint16,
-    0x220 as uint16,
-    0x360 as uint16,
-    0x3a0 as uint16,
-];
-static g_word_82F151: [uint16; 4] = [
-    0x1ee as uint16,
-    0x22e as uint16,
-    0x36e as uint16,
-    0x3ae as uint16,
-];
+static g_word_82F149: [uint16; 4] = [0x1e0, 0x220, 0x360, 0x3a0];
+static g_word_82F151: [uint16; 4] = [0x1ee, 0x22e, 0x36e, 0x3ae];
 pub unsafe fn OptionsMenuFunc7(game: &mut Game) {
     let mut v0: uint16 = ((4u16)
         .wrapping_mul((*((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16))));
@@ -8377,22 +8186,8 @@ pub unsafe fn OptionsMenuFunc7(game: &mut Game) {
     };
 }
 static word_82F204: [uint16; 16] = [
-    0x20 as uint16,
-    0x20 as uint16,
-    0x20 as uint16,
-    0x20 as uint16,
-    0x10 as uint16,
-    0x10 as uint16,
-    0x10 as uint16,
-    0x10 as uint16,
-    0x10 as uint16,
-    0x10 as uint16,
-    0x4000 as uint16,
-    0x40 as uint16,
-    0x40 as uint16,
-    0x80 as uint16,
-    0x80 as uint16,
-    0x80 as uint16,
+    0x20, 0x20, 0x20, 0x20, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x4000, 0x40, 0x40, 0x80, 0x80,
+    0x80,
 ];
 pub unsafe fn GameOptionsMenu_7_ControllerSettings(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int
@@ -8787,14 +8582,7 @@ pub unsafe fn OptionsMenuFunc8(game: &mut Game) -> uint8 {
     }
     return 0 as uint8;
 }
-static g_word_82F6AD: [uint16; 6] = [
-    0 as uint16,
-    0xe as uint16,
-    0xe as uint16,
-    0x10 as uint16,
-    0x1f as uint16,
-    0x1f as uint16,
-];
+static g_word_82F6AD: [uint16; 6] = [0, 0xe, 0xe, 0x10, 0x1f, 0x1f];
 pub unsafe fn OptionsMenuFunc6(game: &mut Game) {
     let mut v0: uint16 = 0 as uint16;
     let mut v4: uint16 = 0;

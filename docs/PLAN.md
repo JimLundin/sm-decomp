@@ -18334,6 +18334,36 @@ Repeated raw PPU access syntax is removed; execution and RAM/layout stay exact.
 No probe or ROM-derived asset committed. Neither movie reaches credits;
 broader readability, hardware/audio/masks and ownership remain unfinished.
 
+Literal integer array family (2026-10-19): fresh jscpd normalized
+declaration discovery and complete CST static/const arrays expand the earlier
+c_int-table audit to 322 arrays with 9157 casts. Simplify all 272 eligible
+arrays across 30 files, including signed literals, nested arrays, local
+statics and frontend/audio tables. Fifty sm_86 arrays stay with the concurrent
+projectile owner. Every declaration's name, visibility, mutability, element
+type, shape, element order and value remains exact; no values are deduplicated
+or generated. Remove 8540 literal cast operations and 2188 counted c_int
+cast lines. Rustfmt compacts the arrays: net Rust lines -5034. Unsafe functions,
+actual raw accesses and pointer offset operations are unchanged.
+
+Independent expression parsing applies each original cast width/sign and
+checks that the plain signed literal already has the same final value in
+the declared type. None of the selected expressions requires retained
+narrowing. Compiled old/new declarations agree on all 6352 elements and
+independent expected values, including every nested element. Full-source
+reconstruction reproduces all 30 candidates exactly and confirms every other
+frozen source unchanged. This is a declaration-value proof; runtime calls
+to every table consumer are not claimed. No gameplay routine is rewritten.
+
+Frozen 8f9b9a89 plus only this family passes full any% 129712/0
+(166.78s) and Speed Booster 148406/0 (212.80s), native exits 0,
+with fixed source/library/DLL/ROM/movie hashes. Cargo fmt/check, normal release
+(37.68s, native exit 0), diff check and progress pass. Neither movie reaches
+credits. Concurrent projectile and other gameplay edits retain their own checks.
+Temporary discovery/parsing/compiled probes stay outside maintained source;
+no ROM or derived asset is committed. Continue larger coherent state/handler
+families and actual route coverage; hardware/audio/masks and ownership remain
+unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

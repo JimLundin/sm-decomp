@@ -611,18 +611,8 @@ unsafe fn Get_WreckedShipOrangeZoomer(
         .offset(0xf78)
         .offset(o as isize) as *mut Enemy_WreckedShipOrangeZoomer;
 }
-static g_word_A3A76D: [int16; 4] = [
-    2 as int16,
-    0 as int16,
-    -(2 as ::core::ffi::c_int) as int16,
-    0 as int16,
-];
-static g_word_A3A775: [int16; 4] = [
-    0 as int16,
-    -(2 as ::core::ffi::c_int) as int16,
-    0 as int16,
-    2 as int16,
-];
+static g_word_A3A76D: [int16; 4] = [2, 0, -(2), 0];
+static g_word_A3A775: [int16; 4] = [0, -(2), 0, 2];
 pub unsafe fn Enemy_GrappleReact_NoInteract_A3(game: &mut Game) {
     SwitchEnemyAiToMainAi(game);
 }

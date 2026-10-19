@@ -96,59 +96,21 @@ pub const fnGrappleBeam_Func2: ::core::ffi::c_int = 0x9bc8c5;
 pub const fnGrappleBeamFunc_C9CE: ::core::ffi::c_int = 0x9bc9ce;
 pub const fnGrappleBeamFunc_ReleaseFromSwing: ::core::ffi::c_int = 0x9bcb8b;
 static kDeathAnimationFrames: [uint8; 28] = [
-    5 as uint8, 5 as uint8, 5 as uint8, 5 as uint8, 1 as uint8, 5 as uint8, 5 as uint8, 0 as uint8,
-    1 as uint8, 0 as uint8, 5 as uint8, 5 as uint8, 5 as uint8, 5 as uint8, 5 as uint8, 5 as uint8,
-    5 as uint8, 1 as uint8, 1 as uint8, 1 as uint8, 5 as uint8, 5 as uint8, 5 as uint8, 5 as uint8,
-    5 as uint8, 5 as uint8, 5 as uint8, 5 as uint8,
+    5, 5, 5, 5, 1, 5, 5, 0, 1, 0, 5, 5, 5, 5, 5, 5, 5, 1, 1, 1, 5, 5, 5, 5, 5, 5, 5, 5,
 ];
 static g_word_9BC118: uint16 = 24 as uint16;
 static g_word_9BC11A: uint16 = 0xc as uint16;
 static g_word_9BC11C: uint16 = 5 as uint16;
 static g_word_9BC11E: uint16 = 0x480 as uint16;
 static g_word_9BC120: uint16 = 0x300 as uint16;
-static g_word_9BB7BF: [uint16; 5] = [
-    0x8400 as uint16,
-    0x8800 as uint16,
-    0x8c00 as uint16,
-    0x9000 as uint16,
-    0x8000 as uint16,
-];
-static g_word_9BB7C9: [uint16; 5] = [
-    0x6200 as uint16,
-    0x6400 as uint16,
-    0x6600 as uint16,
-    0x6800 as uint16,
-    0x6000 as uint16,
-];
+static g_word_9BB7BF: [uint16; 5] = [0x8400, 0x8800, 0x8c00, 0x9000, 0x8000];
+static g_word_9BB7C9: [uint16; 5] = [0x6200, 0x6400, 0x6600, 0x6800, 0x6000];
 static kShadesOfWhite: [uint16; 22] = [
-    0x421 as uint16,
-    0xc63 as uint16,
-    0x14a5 as uint16,
-    0x1ce7 as uint16,
-    0x2529 as uint16,
-    0x2d6b as uint16,
-    0x35ad as uint16,
-    0x4210 as uint16,
-    0x4a52 as uint16,
-    0x4e73 as uint16,
-    0x5294 as uint16,
-    0x56b5 as uint16,
-    0x5ad6 as uint16,
-    0x5ef7 as uint16,
-    0x6318 as uint16,
-    0x6739 as uint16,
-    0x6b5a as uint16,
-    0x6f7b as uint16,
-    0x739c as uint16,
-    0x77bd as uint16,
-    0x7bde as uint16,
-    0x7fff as uint16,
+    0x421, 0xc63, 0x14a5, 0x1ce7, 0x2529, 0x2d6b, 0x35ad, 0x4210, 0x4a52, 0x4e73, 0x5294, 0x56b5,
+    0x5ad6, 0x5ef7, 0x6318, 0x6739, 0x6b5a, 0x6f7b, 0x739c, 0x77bd, 0x7bde, 0x7fff,
 ];
 static kIsGrappleBannedForMovementType: [uint8; 28] = [
-    0 as uint8, 0 as uint8, 0 as uint8, 1 as uint8, 1 as uint8, 0 as uint8, 0 as uint8, 1 as uint8,
-    1 as uint8, 1 as uint8, 1 as uint8, 0 as uint8, 0 as uint8, 1 as uint8, 1 as uint8, 1 as uint8,
-    0 as uint8, 1 as uint8, 1 as uint8, 1 as uint8, 1 as uint8, 0 as uint8, 0 as uint8, 1 as uint8,
-    1 as uint8, 1 as uint8, 0 as uint8, 1 as uint8,
+    0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1,
 ];
 pub unsafe fn ProjectileTrail_Func5(mut k: uint16, mut j: uint16, game: &mut Game) {
     let mut R22: uint16 = ProjectileInsts_GetValue(k, game);

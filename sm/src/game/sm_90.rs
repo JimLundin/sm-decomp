@@ -224,108 +224,19 @@ pub const fnGrappleBeamFunc_ConnectedLockedInPlace: ::core::ffi::c_int = 0x9bc77
 pub const fnGrappleBeamFunc_Cancel: ::core::ffi::c_int = 0x9bc856;
 pub const fnGrappleBeam_Func2: ::core::ffi::c_int = 0x9bc8c5;
 static kUnchargedProjectile_Sfx: [uint16; 12] = [
-    0xb as uint16,
-    0xd as uint16,
-    0xc as uint16,
-    0xe as uint16,
-    0xf as uint16,
-    0x12 as uint16,
-    0x10 as uint16,
-    0x11 as uint16,
-    0x13 as uint16,
-    0x16 as uint16,
-    0x14 as uint16,
-    0x15 as uint16,
+    0xb, 0xd, 0xc, 0xe, 0xf, 0x12, 0x10, 0x11, 0x13, 0x16, 0x14, 0x15,
 ];
 static kChargedProjectile_Sfx: [uint16; 12] = [
-    0x17 as uint16,
-    0x19 as uint16,
-    0x18 as uint16,
-    0x1a as uint16,
-    0x1b as uint16,
-    0x1e as uint16,
-    0x1c as uint16,
-    0x1d as uint16,
-    0x1f as uint16,
-    0x22 as uint16,
-    0x20 as uint16,
-    0x21 as uint16,
+    0x17, 0x19, 0x18, 0x1a, 0x1b, 0x1e, 0x1c, 0x1d, 0x1f, 0x22, 0x20, 0x21,
 ];
-static kNonBeamProjectile_Sfx: [uint16; 9] = [
-    0 as uint16,
-    3 as uint16,
-    4 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-];
+static kNonBeamProjectile_Sfx: [uint16; 9] = [0, 3, 4, 0, 0, 0, 0, 0, 0];
 static kProjectileCooldown_Uncharged: [uint8; 38] = [
-    15 as uint8,
-    15 as uint8,
-    15 as uint8,
-    15 as uint8,
-    15 as uint8,
-    15 as uint8,
-    15 as uint8,
-    15 as uint8,
-    15 as uint8,
-    15 as uint8,
-    12 as uint8,
-    15 as uint8,
-    0 as uint8,
-    0 as uint8,
-    0 as uint8,
-    0 as uint8,
-    30 as uint8,
-    30 as uint8,
-    30 as uint8,
-    30 as uint8,
-    30 as uint8,
-    30 as uint8,
-    30 as uint8,
-    30 as uint8,
-    30 as uint8,
-    30 as uint8,
-    30 as uint8,
-    30 as uint8,
-    0 as uint8,
-    0 as uint8,
-    0 as uint8,
-    0 as uint8,
-    0 as uint8,
-    0 as uint8,
-    0 as uint8,
-    0 as uint8,
-    0 as uint8,
-    0 as uint8,
+    15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 12, 15, 0, 0, 0, 0, 30, 30, 30, 30, 30, 30, 30, 30, 30,
+    30, 30, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 ];
-static kNonBeamProjectileCooldowns: [uint8; 9] = [
-    0 as uint8,
-    0xa as uint8,
-    0x14 as uint8,
-    0x28 as uint8,
-    0 as uint8,
-    0x10 as uint8,
-    0 as uint8,
-    0 as uint8,
-    0 as uint8,
-];
+static kNonBeamProjectileCooldowns: [uint8; 9] = [0, 0xa, 0x14, 0x28, 0, 0x10, 0, 0, 0];
 static kBeamAutoFireCooldowns: [uint8; 12] = [
-    0x19 as uint8,
-    0x19 as uint8,
-    0x19 as uint8,
-    0x19 as uint8,
-    0x19 as uint8,
-    0x19 as uint8,
-    0x19 as uint8,
-    0x19 as uint8,
-    0x19 as uint8,
-    0x19 as uint8,
-    0x19 as uint8,
-    0x19 as uint8,
+    0x19, 0x19, 0x19, 0x19, 0x19, 0x19, 0x19, 0x19, 0x19, 0x19, 0x19, 0x19,
 ];
 pub unsafe fn Samus_Animate(game: &mut Game) {
     let fx_type = u16::from_le_bytes([game.g_ram[0x196e], game.g_ram[0x196f]]);
@@ -409,10 +320,7 @@ pub unsafe fn Samus_Animate_WaterFx(game: &mut Game) {
 }
 pub unsafe fn Samus_SpawnWaterSplash(mut r18: uint16, game: &mut Game) {
     static kWaterSplashTypeTable: [uint8; 28] = [
-        1 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 1 as uint8, 1 as uint8, 0 as uint8,
-        0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8,
-        1 as uint8, 1 as uint8, 1 as uint8, 1 as uint8, 0 as uint8, 0 as uint8, 0 as uint8,
-        1 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8,
+        1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
     ];
     if kWaterSplashTypeTable[*(&raw mut game.g_ram as *mut uint8).offset(0xa1f) as usize] != 0 {
         *((&raw mut game.g_ram as *mut uint8).offset(0xaec) as *mut uint16).offset(0) =
@@ -1698,11 +1606,7 @@ pub unsafe fn Samus_CalcSpritemapPos_Default(mut j: uint16, game: &mut Game) -> 
     );
 }
 pub unsafe fn Samus_CalcSpritemapPos_Standing(mut j: uint16, game: &mut Game) -> PairU16 {
-    static g_byte_908D28: [uint8; 16] = [
-        3 as uint8, 6 as uint8, 0 as uint8, 0 as uint8, 3 as uint8, 6 as uint8, 0 as uint8,
-        0 as uint8, 3 as uint8, 3 as uint8, 6 as uint8, 0 as uint8, 3 as uint8, 3 as uint8,
-        6 as uint8, 0 as uint8,
-    ];
+    static g_byte_908D28: [uint8; 16] = [3, 6, 0, 0, 3, 6, 0, 0, 3, 3, 6, 0, 3, 3, 6, 0];
     let mut v1: int16 = 0;
     let mut v3: PairU16 = PairU16 { k: 0, j: 0 };
     v1 = (j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as int16;
@@ -1776,30 +1680,30 @@ pub unsafe fn Samus_CalcSpritemapPos_Standing(mut j: uint16, game: &mut Game) ->
 }
 pub unsafe fn Samus_CalcSpritemapPos_Crouch(mut j: uint16, game: &mut Game) -> PairU16 {
     static byte_908D80: [int8; 24] = [
-        -(8 as ::core::ffi::c_int) as int8,
-        0 as int8,
-        -(8 as ::core::ffi::c_int) as int8,
-        0 as int8,
-        -(4 as ::core::ffi::c_int) as int8,
-        -(2 as ::core::ffi::c_int) as int8,
-        -(4 as ::core::ffi::c_int) as int8,
-        -(2 as ::core::ffi::c_int) as int8,
-        0 as int8,
-        0 as int8,
-        0 as int8,
-        0 as int8,
-        -(4 as ::core::ffi::c_int) as int8,
-        0 as int8,
-        -(4 as ::core::ffi::c_int) as int8,
-        0 as int8,
-        5 as int8,
-        4 as int8,
-        5 as int8,
-        4 as int8,
-        0 as int8,
-        0 as int8,
-        0 as int8,
-        0 as int8,
+        -(8),
+        0,
+        -(8),
+        0,
+        -(4),
+        -(2),
+        -(4),
+        -(2),
+        0,
+        0,
+        0,
+        0,
+        -(4),
+        0,
+        -(4),
+        0,
+        5,
+        4,
+        5,
+        4,
+        0,
+        0,
+        0,
+        0,
     ];
     let mut v1: int16 = 0;
     v1 = (j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as int16;
@@ -1837,38 +1741,38 @@ pub unsafe fn Samus_CalcSpritemapPos_Crouch(mut j: uint16, game: &mut Game) -> P
 }
 pub unsafe fn Samus_CalcSpritemapPos_Special(mut j: uint16, game: &mut Game) -> PairU16 {
     static byte_908DEF: [int8; 32] = [
-        7 as int8,
-        5 as int8,
-        -(8 as ::core::ffi::c_int) as int8,
-        -(8 as ::core::ffi::c_int) as int8,
-        -(8 as ::core::ffi::c_int) as int8,
-        -(8 as ::core::ffi::c_int) as int8,
-        -(8 as ::core::ffi::c_int) as int8,
-        -(5 as ::core::ffi::c_int) as int8,
-        4 as int8,
-        4 as int8,
-        4 as int8,
-        4 as int8,
-        0 as int8,
-        0 as int8,
-        4 as int8,
-        -(3 as ::core::ffi::c_int) as int8,
-        -(5 as ::core::ffi::c_int) as int8,
-        0 as int8,
-        0 as int8,
-        4 as int8,
-        -(3 as ::core::ffi::c_int) as int8,
-        -(5 as ::core::ffi::c_int) as int8,
-        -(3 as ::core::ffi::c_int) as int8,
-        4 as int8,
-        0 as int8,
-        0 as int8,
-        4 as int8,
-        0 as int8,
-        0 as int8,
-        4 as int8,
-        0 as int8,
-        0 as int8,
+        7,
+        5,
+        -(8),
+        -(8),
+        -(8),
+        -(8),
+        -(8),
+        -(5),
+        4,
+        4,
+        4,
+        4,
+        0,
+        0,
+        4,
+        -(3),
+        -(5),
+        0,
+        0,
+        4,
+        -(3),
+        -(5),
+        -(3),
+        4,
+        0,
+        0,
+        4,
+        0,
+        0,
+        4,
+        0,
+        0,
     ];
     let mut v1: ::core::ffi::c_int = 0;
     let mut v2: ::core::ffi::c_int = 0;
@@ -2741,18 +2645,8 @@ pub unsafe fn Samus_ScrollFinishedHook_SporeSpawnFight(game: &mut Game) {
     }
 }
 pub unsafe fn Samus_HandleScroll_X(game: &mut Game) {
-    static kSamus_HandleScroll_X_FaceLeft: [uint16; 4] = [
-        0xa0 as uint16,
-        0x50 as uint16,
-        0x20 as uint16,
-        0xe0 as uint16,
-    ];
-    static kSamus_HandleScroll_X_FaceRight: [uint16; 4] = [
-        0x60 as uint16,
-        0x40 as uint16,
-        0x20 as uint16,
-        0xe0 as uint16,
-    ];
+    static kSamus_HandleScroll_X_FaceLeft: [uint16; 4] = [0xa0, 0x50, 0x20, 0xe0];
+    static kSamus_HandleScroll_X_FaceRight: [uint16; 4] = [0x60, 0x40, 0x20, 0xe0];
     if *((&raw mut game.g_ram as *mut uint8).offset(0xb10) as *mut uint16) as ::core::ffi::c_int
         == *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) as ::core::ffi::c_int
     {
@@ -2951,13 +2845,13 @@ pub unsafe fn Samus_CalcDistanceMoved_Y(game: &mut Game) {
         );
     };
 }
-static kSamus_HandleExtraRunspeedX_Tab0: [uint16; 3] = [0 as uint16, 0 as uint16, 0 as uint16];
+static kSamus_HandleExtraRunspeedX_Tab0: [uint16; 3] = [0, 0, 0];
 static kSamus_HandleExtraRunspeedX_Tab1: [uint16; 3] =
     [0x1000 as uint16, 0x400 as uint16, 0x400 as uint16];
-static kSamus_HandleExtraRunspeedX_Tab2: [uint16; 3] = [7 as uint16, 4 as uint16, 4 as uint16];
-static kSamus_HandleExtraRunspeedX_Tab3: [uint16; 3] = [0 as uint16, 0 as uint16, 0 as uint16];
-static kSamus_HandleExtraRunspeedX_Tab4: [uint16; 3] = [2 as uint16, 1 as uint16, 0 as uint16];
-static kSamus_HandleExtraRunspeedX_Tab5: [uint16; 3] = [0 as uint16, 0 as uint16, 0 as uint16];
+static kSamus_HandleExtraRunspeedX_Tab2: [uint16; 3] = [7, 4, 4];
+static kSamus_HandleExtraRunspeedX_Tab3: [uint16; 3] = [0, 0, 0];
+static kSamus_HandleExtraRunspeedX_Tab4: [uint16; 3] = [2, 1, 0];
+static kSamus_HandleExtraRunspeedX_Tab5: [uint16; 3] = [0, 0, 0];
 pub unsafe fn Samus_HandleExtraRunspeedX(game: &mut Game) {
     let mut r18: uint16 = 0;
     let mut current_block: u64;
@@ -3151,11 +3045,11 @@ pub unsafe fn Samus_MoveUp_NoColl(mut amt: int32, game: &mut Game) {
 pub unsafe fn Samus_InitJump(game: &mut Game) {
     let mut r18: uint16 = 0;
     let mut current_block: u64;
-    static kSamus_InitJump_Speed_Y: [uint16; 3] = [4 as uint16, 1 as uint16, 2 as uint16];
+    static kSamus_InitJump_Speed_Y: [uint16; 3] = [4, 1, 2];
     static kSamus_InitJump_Subspeed_Y: [uint16; 3] =
         [0xe000 as uint16, 0xc000 as uint16, 0xc000 as uint16];
-    static kSamus_InitJump_Tab2: [uint16; 3] = [6 as uint16, 2 as uint16, 3 as uint16];
-    static kSamus_InitJump_Tab3: [uint16; 3] = [0 as uint16, 0x8000 as uint16, 0x8000 as uint16];
+    static kSamus_InitJump_Tab2: [uint16; 3] = [6, 2, 3];
+    static kSamus_InitJump_Tab3: [uint16; 3] = [0, 0x8000, 0x8000];
     let mut v0: uint16 = 0;
     if *((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16) as ::core::ffi::c_int
         & 0x20 as ::core::ffi::c_int
@@ -3219,10 +3113,10 @@ pub unsafe fn Samus_InitJump(game: &mut Game) {
 pub unsafe fn Samus_InitWallJump(game: &mut Game) {
     let mut r18: uint16 = 0;
     let mut current_block: u64;
-    static kSamus_InitWallJump_0: [uint16; 3] = [4 as uint16, 0 as uint16, 2 as uint16];
+    static kSamus_InitWallJump_0: [uint16; 3] = [4, 0, 2];
     static kSamus_InitWallJump_1: [uint16; 3] =
         [0xa000 as uint16, 0x4000 as uint16, 0xa000 as uint16];
-    static kSamus_InitWallJump_2: [uint16; 3] = [5 as uint16, 0 as uint16, 3 as uint16];
+    static kSamus_InitWallJump_2: [uint16; 3] = [5, 0, 3];
     static kSamus_InitWallJump_3: [uint16; 3] =
         [0x8000 as uint16, 0x8000 as uint16, 0x8000 as uint16];
     let mut v0: uint16 = 0;
@@ -3288,7 +3182,7 @@ pub unsafe fn Samus_InitWallJump(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xaa0) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xb36) as *mut uint16) = 1 as uint16;
 }
-static kSamus_SetSpeedForKnockback_Y_Speed: [uint16; 3] = [5 as uint16, 2 as uint16, 2 as uint16];
+static kSamus_SetSpeedForKnockback_Y_Speed: [uint16; 3] = [5, 2, 2];
 static kSamus_SetSpeedForKnockback_Y_Subspeed: [uint16; 3] =
     [0 as uint16, 0 as uint16, 0 as uint16];
 pub unsafe fn Samus_SetSpeedForKnockback_Y(game: &mut Game) {
@@ -3332,7 +3226,7 @@ pub unsafe fn Samus_SetSpeedForKnockback_Y(game: &mut Game) {
 }
 pub unsafe fn Samus_InitBombJump(game: &mut Game) {
     let mut current_block: u64;
-    static kSamus_InitBombJump_Speed: [uint16; 3] = [2 as uint16, 0 as uint16, 0 as uint16];
+    static kSamus_InitBombJump_Speed: [uint16; 3] = [2, 0, 0];
     static kSamus_InitBombJump_Subspeed: [uint16; 3] =
         [0xc000 as uint16, 0x1000 as uint16, 0x1000 as uint16];
     let mut v0: uint16 = 0;
@@ -3749,10 +3643,7 @@ pub unsafe fn Samus_Movement_00_Standing(game: &mut Game) {
     };
 }
 pub unsafe fn Samus_Movement_01_Running(game: &mut Game) {
-    static kSamusFootstepFrame: [uint8; 10] = [
-        0 as uint8, 0 as uint8, 1 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8,
-        1 as uint8, 0 as uint8, 0 as uint8,
-    ];
+    static kSamusFootstepFrame: [uint8; 10] = [0, 0, 1, 0, 0, 0, 0, 1, 0, 0];
     Samus_HandleMovement_X(game);
     Samus_Move_NoSpeedCalc_Y(game);
     if *((&raw mut game.g_ram as *mut uint8).offset(0xa94) as *mut uint16) as ::core::ffi::c_int
@@ -4222,26 +4113,8 @@ pub unsafe fn Samus_Movement_1A_GrabbedByDraygon(game: &mut Game) {
 pub unsafe fn Samus_Movement_1B_ShinesparkEtc(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16) = 0 as uint16;
 }
-static kShr0x80: [uint8; 8] = [
-    0x80 as uint8,
-    0x40 as uint8,
-    0x20 as uint8,
-    0x10 as uint8,
-    8 as uint8,
-    4 as uint8,
-    2 as uint8,
-    1 as uint8,
-];
-static kShr0xFc00: [uint16; 8] = [
-    0xfc00 as uint16,
-    0x7e00 as uint16,
-    0x3f00 as uint16,
-    0x1f80 as uint16,
-    0xfc0 as uint16,
-    0x7e0 as uint16,
-    0x3f0 as uint16,
-    0x1f8 as uint16,
-];
+static kShr0x80: [uint8; 8] = [0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1];
+static kShr0xFc00: [uint16; 8] = [0xfc00, 0x7e00, 0x3f00, 0x1f80, 0xfc0, 0x7e0, 0x3f0, 0x1f8];
 unsafe fn MarkMapTileAsExplored(mut r18: uint16, mut r24: uint16, game: &mut Game) {
     let mut v0: uint8 =
         (((r18) & (0xff00u16)) as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint8;
@@ -5196,30 +5069,8 @@ pub unsafe fn HandleProjectile(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16) = i as uint16;
     }
 }
-static kDirToVelMult16_X: [int16; 10] = [
-    0 as int16,
-    16 as int16,
-    16 as int16,
-    16 as int16,
-    0 as int16,
-    0 as int16,
-    -(16 as ::core::ffi::c_int) as int16,
-    -(16 as ::core::ffi::c_int) as int16,
-    -(16 as ::core::ffi::c_int) as int16,
-    0 as int16,
-];
-static kDirToVelMult16_Y: [int16; 10] = [
-    -(16 as ::core::ffi::c_int) as int16,
-    -(16 as ::core::ffi::c_int) as int16,
-    0 as int16,
-    16 as int16,
-    16 as int16,
-    16 as int16,
-    16 as int16,
-    0 as int16,
-    -(16 as ::core::ffi::c_int) as int16,
-    -(16 as ::core::ffi::c_int) as int16,
-];
+static kDirToVelMult16_X: [int16; 10] = [0, 16, 16, 16, 0, 0, -(16), -(16), -(16), 0];
+static kDirToVelMult16_Y: [int16; 10] = [-(16), -(16), 0, 16, 16, 16, 16, 0, -(16), -(16)];
 static kProjPreInstr_Beam_Funcs: [Option<Func_Y_V>; 10] = unsafe {
     [
         Some(ProjPreInstr_Dir0459 as unsafe fn(uint16, &mut Game) -> ()),
@@ -5661,30 +5512,8 @@ pub unsafe fn DeleteProjectileIfFarOffScreen(game: &mut Game) -> uint8 {
     return 1 as uint8;
 }
 static kInitializeProjectileSpeed_XY_Diag: [uint16; 24] = [
-    0x400 as uint16,
-    0x2ab as uint16,
-    0x400 as uint16,
-    0x2ab as uint16,
-    0x400 as uint16,
-    0x2ab as uint16,
-    0x400 as uint16,
-    0x2ab as uint16,
-    0x400 as uint16,
-    0x2ab as uint16,
-    0x400 as uint16,
-    0x2ab as uint16,
-    0x400 as uint16,
-    0x2ab as uint16,
-    0x400 as uint16,
-    0x2ab as uint16,
-    0x400 as uint16,
-    0x2ab as uint16,
-    0x400 as uint16,
-    0x2ab as uint16,
-    0x400 as uint16,
-    0x2ab as uint16,
-    0x400 as uint16,
-    0x2ab as uint16,
+    0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400,
+    0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab,
 ];
 pub unsafe fn SetInitialProjectileSpeed(mut r20: uint16, game: &mut Game) {
     let mut v0: ::core::ffi::c_int = r20 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -6871,54 +6700,13 @@ pub unsafe fn FireChargedBeam(game: &mut Game) {
         QueueSfx1_Max15(2 as uint16, game);
     }
 }
-static kProjectileOriginOffsets3_X: [int16; 10] = [
-    2 as int16,
-    13 as int16,
-    11 as int16,
-    13 as int16,
-    2 as int16,
-    -(5 as ::core::ffi::c_int) as int16,
-    -(14 as ::core::ffi::c_int) as int16,
-    -(11 as ::core::ffi::c_int) as int16,
-    -(19 as ::core::ffi::c_int) as int16,
-    -(2 as ::core::ffi::c_int) as int16,
-];
-static kProjectileOriginOffsets3_Y: [int16; 10] = [
-    -(8 as ::core::ffi::c_int) as int16,
-    -(13 as ::core::ffi::c_int) as int16,
-    1 as int16,
-    4 as int16,
-    13 as int16,
-    13 as int16,
-    4 as int16,
-    1 as int16,
-    -(19 as ::core::ffi::c_int) as int16,
-    -(8 as ::core::ffi::c_int) as int16,
-];
-static kProjectileOriginOffsets4_X: [int16; 10] = [
-    2 as int16,
-    15 as int16,
-    15 as int16,
-    13 as int16,
-    2 as int16,
-    -(5 as ::core::ffi::c_int) as int16,
-    -(13 as ::core::ffi::c_int) as int16,
-    -(13 as ::core::ffi::c_int) as int16,
-    -(15 as ::core::ffi::c_int) as int16,
-    -(2 as ::core::ffi::c_int) as int16,
-];
-static kProjectileOriginOffsets4_Y: [int16; 10] = [
-    -(8 as ::core::ffi::c_int) as int16,
-    -(16 as ::core::ffi::c_int) as int16,
-    -(2 as ::core::ffi::c_int) as int16,
-    1 as int16,
-    13 as int16,
-    13 as int16,
-    1 as int16,
-    -(2 as ::core::ffi::c_int) as int16,
-    -(16 as ::core::ffi::c_int) as int16,
-    -(8 as ::core::ffi::c_int) as int16,
-];
+static kProjectileOriginOffsets3_X: [int16; 10] =
+    [2, 13, 11, 13, 2, -(5), -(14), -(11), -(19), -(2)];
+static kProjectileOriginOffsets3_Y: [int16; 10] = [-(8), -(13), 1, 4, 13, 13, 4, 1, -(19), -(8)];
+static kProjectileOriginOffsets4_X: [int16; 10] =
+    [2, 15, 15, 13, 2, -(5), -(13), -(13), -(15), -(2)];
+static kProjectileOriginOffsets4_Y: [int16; 10] =
+    [-(8), -(16), -(2), 1, 13, 13, 1, -(2), -(16), -(8)];
 pub unsafe fn InitProjectilePositionDirection(mut r20: uint16, game: &mut Game) -> uint8 {
     let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16);
     let mut direction_shots_fired: uint16 = 0;
@@ -7140,62 +6928,42 @@ pub unsafe fn HandleChargingBeamGfxAudio(game: &mut Game) {
     }
 }
 static kProjectileOriginOffsets_X: [int16; 13] = [
-    2 as int16,
-    18 as int16,
-    15 as int16,
-    17 as int16,
-    3 as int16,
-    -(4 as ::core::ffi::c_int) as int16,
-    -(17 as ::core::ffi::c_int) as int16,
-    -(15 as ::core::ffi::c_int) as int16,
-    -(18 as ::core::ffi::c_int) as int16,
-    -(2 as ::core::ffi::c_int) as int16,
-    -(4 as ::core::ffi::c_int) as int16,
-    -(4 as ::core::ffi::c_int) as int16,
-    -(4 as ::core::ffi::c_int) as int16,
+    2,
+    18,
+    15,
+    17,
+    3,
+    -(4),
+    -(17),
+    -(15),
+    -(18),
+    -(2),
+    -(4),
+    -(4),
+    -(4),
 ];
 static kProjectileOriginOffsets_Y: [int16; 13] = [
-    -(28 as ::core::ffi::c_int) as int16,
-    -(19 as ::core::ffi::c_int) as int16,
-    1 as int16,
-    6 as int16,
-    17 as int16,
-    17 as int16,
-    6 as int16,
-    1 as int16,
-    -(20 as ::core::ffi::c_int) as int16,
-    -(28 as ::core::ffi::c_int) as int16,
-    -(20 as ::core::ffi::c_int) as int16,
-    -(2 as ::core::ffi::c_int) as int16,
-    8 as int16,
+    -(28),
+    -(19),
+    1,
+    6,
+    17,
+    17,
+    6,
+    1,
+    -(20),
+    -(28),
+    -(20),
+    -(2),
+    8,
 ];
-static kProjectileOriginOffsets2_X: [int16; 10] = [
-    2 as int16,
-    19 as int16,
-    20 as int16,
-    18 as int16,
-    3 as int16,
-    -(4 as ::core::ffi::c_int) as int16,
-    -(18 as ::core::ffi::c_int) as int16,
-    -(20 as ::core::ffi::c_int) as int16,
-    -(19 as ::core::ffi::c_int) as int16,
-    -(2 as ::core::ffi::c_int) as int16,
-];
-static kProjectileOriginOffsets2_Y: [int16; 10] = [
-    -(32 as ::core::ffi::c_int) as int16,
-    -(22 as ::core::ffi::c_int) as int16,
-    -(3 as ::core::ffi::c_int) as int16,
-    6 as int16,
-    25 as int16,
-    25 as int16,
-    6 as int16,
-    -(3 as ::core::ffi::c_int) as int16,
-    -(20 as ::core::ffi::c_int) as int16,
-    -(32 as ::core::ffi::c_int) as int16,
-];
+static kProjectileOriginOffsets2_X: [int16; 10] =
+    [2, 19, 20, 18, 3, -(4), -(18), -(20), -(19), -(2)];
+static kProjectileOriginOffsets2_Y: [int16; 10] =
+    [-(32), -(22), -(3), 6, 25, 25, 6, -(3), -(20), -(32)];
 pub unsafe fn DrawFlareAnimationComponent(mut k: uint16, game: &mut Game) {
-    static word_93A225: [uint16; 3] = [0 as uint16, 0x1e as uint16, 0x24 as uint16];
-    static word_93A22B: [uint16; 3] = [0 as uint16, 0x2a as uint16, 0x30 as uint16];
+    static word_93A225: [uint16; 3] = [0, 0x1e, 0x24];
+    static word_93A22B: [uint16; 3] = [0, 0x2a, 0x30];
     let mut v2: int16 = 0;
     let mut v1: uint16 = 0;
     let mut r20: uint16 = 0;
@@ -8130,9 +7898,7 @@ pub unsafe fn HandleArmCannonOpenState(game: &mut Game) {
     .offset(1) as uint16;
 }
 pub unsafe fn UpdateArmCannonIsOpenFlag(game: &mut Game) -> uint8 {
-    static kFlagShouldArmCannonBeOpen: [int8; 6] = [
-        0 as int8, 1 as int8, 1 as int8, 0 as int8, 1 as int8, 0 as int8,
-    ];
+    static kFlagShouldArmCannonBeOpen: [int8; 6] = [0, 1, 1, 0, 1, 0];
     if *((&raw mut game.g_ram as *mut uint8).offset(0xaaa) as *mut uint16) as ::core::ffi::c_int
         - 2 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -8188,16 +7954,7 @@ pub unsafe fn AdvanceArmCannonFrame(game: &mut Game) {
 }
 pub unsafe fn Samus_ArmCannon_Draw(game: &mut Game) {
     static kDrawArmCannon_Char: [uint16; 10] = [
-        0x281f as uint16,
-        0x281f as uint16,
-        0x281f as uint16,
-        0x681f as uint16,
-        0xa81f as uint16,
-        0xe81f as uint16,
-        0x281f as uint16,
-        0x681f as uint16,
-        0x681f as uint16,
-        0x681f as uint16,
+        0x281f, 0x281f, 0x281f, 0x681f, 0xa81f, 0xe81f, 0x281f, 0x681f, 0x681f, 0x681f,
     ];
     let mut v3: uint16 = 0;
     let mut r22: uint16 = 0;
@@ -8372,20 +8129,7 @@ pub unsafe fn Projectile_SinLookup(mut j: uint16, mut a: uint16) -> Point16U {
     }
     return Point16U { x: v2, y: v4 };
 }
-static kCostOfSbaInPowerBombs: [uint16; 12] = [
-    0 as uint16,
-    1 as uint16,
-    1 as uint16,
-    0 as uint16,
-    1 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    1 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-];
+static kCostOfSbaInPowerBombs: [uint16; 12] = [0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0];
 static kFireSbaFuncs: [Option<Func_V_A>; 12] = unsafe {
     [
         Some(FireSba_ClearCarry as unsafe fn(&mut Game) -> uint8),
@@ -8436,18 +8180,8 @@ pub fn FireSba_ClearCarry(game: &mut Game) -> uint8 {
     return 0 as uint8;
 }
 pub unsafe fn FireSba_FireWave(game: &mut Game) -> uint8 {
-    static kFireSba_FireWave_X: [int16; 4] = [
-        128 as int16,
-        128 as int16,
-        -(128 as ::core::ffi::c_int) as int16,
-        -(128 as ::core::ffi::c_int) as int16,
-    ];
-    static kFireSba_FireWave_Y: [int16; 4] = [
-        128 as int16,
-        -(128 as ::core::ffi::c_int) as int16,
-        -(128 as ::core::ffi::c_int) as int16,
-        128 as int16,
-    ];
+    static kFireSba_FireWave_X: [int16; 4] = [128, 128, -(128), -(128)];
+    static kFireSba_FireWave_Y: [int16; 4] = [128, -(128), -(128), 128];
     let mut i: ::core::ffi::c_int = 6 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
@@ -8494,16 +8228,8 @@ pub unsafe fn FireSba_FireWave(game: &mut Game) -> uint8 {
     return 1 as uint8;
 }
 pub unsafe fn FireSba_FireIce(game: &mut Game) -> uint8 {
-    static kIcePlasmaSbaProjectileOriginAngles: [uint16; 8] = [
-        0 as uint16,
-        0x40 as uint16,
-        0x80 as uint16,
-        0xc0 as uint16,
-        0x20 as uint16,
-        0x60 as uint16,
-        0xa0 as uint16,
-        0xe0 as uint16,
-    ];
+    static kIcePlasmaSbaProjectileOriginAngles: [uint16; 8] =
+        [0, 0x40, 0x80, 0xc0, 0x20, 0x60, 0xa0, 0xe0];
     if *((&raw mut game.g_ram as *mut uint8).offset(0xc68) as *mut uint16).offset(0)
         as ::core::ffi::c_int
         == 0x90cf7a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
@@ -8552,13 +8278,8 @@ pub unsafe fn FireSba_FireIce(game: &mut Game) -> uint8 {
     return 1 as uint8;
 }
 pub unsafe fn FireSba_FireSpazer(game: &mut Game) -> uint8 {
-    static kFireSpazer_Timer: [int16; 4] = [0 as int16, 0 as int16, 4 as int16, 4 as int16];
-    static kFireSpazer_Yspeed: [int16; 4] = [
-        4 as int16,
-        -(4 as ::core::ffi::c_int) as int16,
-        4 as int16,
-        -(4 as ::core::ffi::c_int) as int16,
-    ];
+    static kFireSpazer_Timer: [int16; 4] = [0, 0, 4, 4];
+    static kFireSpazer_Yspeed: [int16; 4] = [4, -(4), 4, -(4)];
     let mut i: ::core::ffi::c_int = 6 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
@@ -8607,16 +8328,8 @@ pub unsafe fn FireSba_FireSpazer(game: &mut Game) -> uint8 {
     return 1 as uint8;
 }
 pub unsafe fn FireSba_FirePlasma(game: &mut Game) -> uint8 {
-    static kIcePlasmaSbaProjectileOriginAngles: [uint16; 8] = [
-        0 as uint16,
-        0x40 as uint16,
-        0x80 as uint16,
-        0xc0 as uint16,
-        0x20 as uint16,
-        0x60 as uint16,
-        0xa0 as uint16,
-        0xe0 as uint16,
-    ];
+    static kIcePlasmaSbaProjectileOriginAngles: [uint16; 8] =
+        [0, 0x40, 0x80, 0xc0, 0x20, 0x60, 0xa0, 0xe0];
     if *((&raw mut game.g_ram as *mut uint8).offset(0xc68) as *mut uint16).offset(0)
         as ::core::ffi::c_int
         == 0x90d793 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
@@ -9220,18 +8933,7 @@ pub unsafe fn Samus_MoveHandler_ShinesparkCrashEchoCircle(game: &mut Game) {
 }
 pub unsafe fn Samus_MoveHandler_ShinesparkCrashFinish(game: &mut Game) {
     static kShinesparkCrashFinish_Tab0: [uint8; 12] = [
-        0 as uint8,
-        0x80 as uint8,
-        0 as uint8,
-        0x80 as uint8,
-        0x40 as uint8,
-        0xc0 as uint8,
-        0x40 as uint8,
-        0xc0 as uint8,
-        0xe0 as uint8,
-        0x60 as uint8,
-        0x20 as uint8,
-        0xa0 as uint8,
+        0, 0x80, 0, 0x80, 0x40, 0xc0, 0x40, 0xc0, 0xe0, 0x60, 0x20, 0xa0,
     ];
     *((&raw mut game.g_ram as *mut uint8).offset(0xaae) as *mut uint16) = 0 as uint16;
     if *((&raw mut game.g_ram as *mut uint8).offset(0xcce) as *mut uint16) as ::core::ffi::c_int
@@ -9734,34 +9436,10 @@ pub unsafe fn ProjPreInstr_PlasmaSbaFunc_2(mut j: uint16, game: &mut Game) {
                 .wrapping_add((4u8))) as uint16;
     };
 }
-static kBombSpread_Tab0: [uint16; 5] = [
-    0x78 as uint16,
-    0x6e as uint16,
-    0x64 as uint16,
-    0x6e as uint16,
-    0x78 as uint16,
-];
-static kBombSpread_Tab1: [uint16; 5] = [
-    0x8100 as uint16,
-    0x8080 as uint16,
-    0 as uint16,
-    0x80 as uint16,
-    0x100 as uint16,
-];
-static kBombSpread_Tab2: [uint16; 5] = [
-    0 as uint16,
-    1 as uint16,
-    2 as uint16,
-    1 as uint16,
-    0 as uint16,
-];
-static kBombSpread_Tab3: [uint16; 5] = [
-    0 as uint16,
-    0 as uint16,
-    0x8000 as uint16,
-    0 as uint16,
-    0 as uint16,
-];
+static kBombSpread_Tab0: [uint16; 5] = [0x78, 0x6e, 0x64, 0x6e, 0x78];
+static kBombSpread_Tab1: [uint16; 5] = [0x8100, 0x8080, 0, 0x80, 0x100];
+static kBombSpread_Tab2: [uint16; 5] = [0, 1, 2, 1, 0];
+static kBombSpread_Tab3: [uint16; 5] = [0, 0, 0x8000, 0, 0];
 pub unsafe fn ProjPreInstr_SpreadBomb(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16).offset(v1 as isize)
@@ -10142,12 +9820,7 @@ pub unsafe fn ProjPreInstr_SpazerSba_FuncA_3(mut k: uint16, game: &mut Game) {
     ClearProjectile(2 as uint16, game);
 }
 pub unsafe fn ProjPreInstr_SpazerSba_FuncB_0(mut j: uint16, mut r22: uint16, game: &mut Game) {
-    static kProjPreInstr_SpazerSba_Yspeed: [int16; 4] = [
-        2 as int16,
-        -(2 as ::core::ffi::c_int) as int16,
-        2 as int16,
-        -(2 as ::core::ffi::c_int) as int16,
-    ];
+    static kProjPreInstr_SpazerSba_Yspeed: [int16; 4] = [2, -(2), 2, -(2)];
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v1 as isize) =
         ((r22).wrapping_add((*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16))));
@@ -10172,12 +9845,7 @@ pub unsafe fn ProjPreInstr_SpazerSba_FuncB_0(mut j: uint16, mut r22: uint16, gam
     }
 }
 pub unsafe fn ProjPreInstr_SpazerSba_FuncB_1(mut j: uint16, mut r22: uint16, game: &mut Game) {
-    static kSpazerProjectileYSpeed: [int16; 4] = [
-        -(2 as ::core::ffi::c_int) as int16,
-        2 as int16,
-        -(2 as ::core::ffi::c_int) as int16,
-        2 as int16,
-    ];
+    static kSpazerProjectileYSpeed: [int16; 4] = [-(2), 2, -(2), 2];
     let mut v1: uint16 = (r22 as ::core::ffi::c_int
         + *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) as ::core::ffi::c_int
         - 114 as ::core::ffi::c_int) as uint16;
@@ -10259,12 +9927,7 @@ pub unsafe fn ProjPreInstr_SpazerSba_FuncB_2(mut j: uint16, mut r22: uint16, gam
     }
 }
 pub unsafe fn FireEndOfSpazerSba(mut j: uint16, game: &mut Game) {
-    static kFireEndOfSpazerSba: [int16; 4] = [
-        16 as int16,
-        16 as int16,
-        -(16 as ::core::ffi::c_int) as int16,
-        -(16 as ::core::ffi::c_int) as int16,
-    ];
+    static kFireEndOfSpazerSba: [int16; 4] = [16, 16, -(16), -(16)];
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh22 =
         *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v1 as isize);
@@ -10427,10 +10090,7 @@ pub unsafe fn HudSelectionHandler_TurningAround(game: &mut Game) {
 }
 pub unsafe fn HudSelectionHandler_CrouchEtcTrans(game: &mut Game) {
     let mut current_block: u64;
-    static byte_90DDAA: [uint8; 12] = [
-        0 as uint8, 0 as uint8, 1 as uint8, 1 as uint8, 1 as uint8, 1 as uint8, 0 as uint8,
-        0 as uint8, 1 as uint8, 1 as uint8, 1 as uint8, 1 as uint8,
-    ];
+    static byte_90DDAA: [uint8; 12] = [0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1];
     if *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as ::core::ffi::c_int
         - kPose_F1_FaceR_CrouchTrans_AimU as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -11323,16 +10983,10 @@ pub unsafe fn Samus_MoveUp_SetPoseCalcInput(game: &mut Game) {
     };
 }
 static kSamus_MoveDown_SetPoseCalcInput_Tab0: [uint8; 28] = [
-    0 as uint8, 0 as uint8, 4 as uint8, 4 as uint8, 1 as uint8, 0 as uint8, 4 as uint8, 2 as uint8,
-    4 as uint8, 4 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 4 as uint8, 4 as uint8,
-    0 as uint8, 3 as uint8, 4 as uint8, 4 as uint8, 4 as uint8, 0 as uint8, 4 as uint8, 4 as uint8,
-    4 as uint8, 4 as uint8, 4 as uint8, 4 as uint8,
+    0, 0, 4, 4, 1, 0, 4, 2, 4, 4, 0, 0, 0, 0, 4, 4, 0, 3, 4, 4, 4, 0, 4, 4, 4, 4, 4, 4,
 ];
 static kSamus_MoveDown_SetPoseCalcInput_Tab1: [uint8; 28] = [
-    4 as uint8, 4 as uint8, 0 as uint8, 0 as uint8, 4 as uint8, 4 as uint8, 0 as uint8, 4 as uint8,
-    1 as uint8, 2 as uint8, 0 as uint8, 4 as uint8, 4 as uint8, 0 as uint8, 4 as uint8, 4 as uint8,
-    4 as uint8, 4 as uint8, 3 as uint8, 3 as uint8, 0 as uint8, 4 as uint8, 4 as uint8, 4 as uint8,
-    4 as uint8, 0 as uint8, 4 as uint8, 4 as uint8,
+    4, 4, 0, 0, 4, 4, 0, 4, 1, 2, 0, 4, 4, 0, 4, 4, 4, 4, 3, 3, 0, 4, 4, 4, 4, 0, 4, 4,
 ];
 pub unsafe fn Samus_MoveDown_SetPoseCalcInput(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xdd0) as *mut uint16) != 0 {
@@ -12244,10 +11898,7 @@ pub unsafe fn MoveSamusWithControlPad(game: &mut Game) {
     }
 }
 static byte_90ED50: [uint8; 28] = [
-    0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 1 as uint8, 0 as uint8, 0 as uint8, 1 as uint8,
-    1 as uint8, 1 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8,
-    0 as uint8, 1 as uint8, 1 as uint8, 1 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8,
-    0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8,
+    0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
 ];
 pub unsafe fn SwappedAmmoRoutine(game: &mut Game) {
     if byte_90ED50[*(&raw mut game.g_ram as *mut uint8).offset(0xa1f) as usize] != 0 {
@@ -12300,10 +11951,7 @@ pub unsafe fn Samus_FootstepGraphics(game: &mut Game) {
         [*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as usize]
         .expect("non-null function pointer")(game);
 }
-static byte_90EDC9: [uint8; 16] = [
-    1 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 2 as uint8, 0 as uint8, 4 as uint8,
-    0 as uint8, 4 as uint8, 4 as uint8, 4 as uint8, 4 as uint8, 0 as uint8, 4 as uint8, 0 as uint8,
-];
+static byte_90EDC9: [uint8; 16] = [1, 0, 0, 0, 0, 2, 0, 4, 0, 4, 4, 4, 4, 0, 4, 0];
 pub unsafe fn Samus_FootstepGraphics_Crateria(game: &mut Game) {
     let mut current_block: u64;
     if !(*((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) as ::core::ffi::c_int
@@ -12483,30 +12131,10 @@ pub fn Samus_PostGrappleCollisionDetect(game: &mut Game) {
     }
 }
 pub unsafe fn ProjPreInstr_UnknownProj8027(mut k: uint16, game: &mut Game) {
-    static kProjPreInstr_UnknownProj8027_X: [int16; 4] = [
-        -(4 as ::core::ffi::c_int) as int16,
-        -(4 as ::core::ffi::c_int) as int16,
-        4 as int16,
-        4 as int16,
-    ];
-    static kProjPreInstr_UnknownProj8027_Y: [int16; 4] = [
-        4 as int16,
-        -(4 as ::core::ffi::c_int) as int16,
-        -(4 as ::core::ffi::c_int) as int16,
-        4 as int16,
-    ];
-    static kProjPreInstr_UnknownProj8027_X2: [int16; 4] = [
-        0x80 as int16,
-        0x80 as int16,
-        -(0x80 as ::core::ffi::c_int) as int16,
-        -(0x80 as ::core::ffi::c_int) as int16,
-    ];
-    static kProjPreInstr_UnknownProj8027_Y2: [int16; 4] = [
-        -(0x80 as ::core::ffi::c_int) as int16,
-        0x80 as int16,
-        0x80 as int16,
-        -(0x80 as ::core::ffi::c_int) as int16,
-    ];
+    static kProjPreInstr_UnknownProj8027_X: [int16; 4] = [-(4), -(4), 4, 4];
+    static kProjPreInstr_UnknownProj8027_Y: [int16; 4] = [4, -(4), -(4), 4];
+    static kProjPreInstr_UnknownProj8027_X2: [int16; 4] = [0x80, 0x80, -(0x80), -(0x80)];
+    static kProjPreInstr_UnknownProj8027_Y2: [int16; 4] = [-(0x80), 0x80, 0x80, -(0x80)];
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh28 =
         *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v1 as isize);

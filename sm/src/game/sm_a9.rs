@@ -629,188 +629,58 @@ unsafe fn Get_ShitroidInCutscene(
         .offset(0xf78)
         .offset(o as isize) as *mut Enemy_ShitroidInCutscene;
 }
-static g_word_A98B5D: [uint16; 5] = [
-    0x10 as uint16,
-    0x10 as uint16,
-    8 as uint16,
-    8 as uint16,
-    0x10 as uint16,
-];
-static g_word_A98B67: [uint16; 5] = [
-    0x20 as uint16,
-    0x20 as uint16,
-    0x18 as uint16,
-    0x18 as uint16,
-    0x20 as uint16,
-];
-static g_word_A98B71: [uint16; 5] = [
-    0xf8 as uint16,
-    0xf8 as uint16,
-    0xf0 as uint16,
-    0xf0 as uint16,
-    0xf6 as uint16,
-];
-static g_word_A98C61: [uint16; 4] = [0xfff8 as uint16, 2 as uint16, 0xfffc as uint16, 6 as uint16];
-static g_byte_A98F7D: [uint8; 2] = [9 as uint8, 0x12 as uint8];
-static g_word_A98F7F: [uint16; 8] = [
-    0x3d as uint16,
-    0x54 as uint16,
-    0x20 as uint16,
-    0x35 as uint16,
-    0x5a as uint16,
-    0x43 as uint16,
-    0x67 as uint16,
-    0x29 as uint16,
-];
-static g_word_A993BB: [int16; 4] = [
-    0 as int16,
-    -(1 as ::core::ffi::c_int) as int16,
-    0 as int16,
-    1 as int16,
-];
-static g_word_A993C3: [int16; 4] = [
-    0 as int16,
-    1 as int16,
-    -(1 as ::core::ffi::c_int) as int16,
-    1 as int16,
-];
+static g_word_A98B5D: [uint16; 5] = [0x10, 0x10, 8, 8, 0x10];
+static g_word_A98B67: [uint16; 5] = [0x20, 0x20, 0x18, 0x18, 0x20];
+static g_word_A98B71: [uint16; 5] = [0xf8, 0xf8, 0xf0, 0xf0, 0xf6];
+static g_word_A98C61: [uint16; 4] = [0xfff8, 2, 0xfffc, 6];
+static g_byte_A98F7D: [uint8; 2] = [9, 0x12];
+static g_word_A98F7F: [uint16; 8] = [0x3d, 0x54, 0x20, 0x35, 0x5a, 0x43, 0x67, 0x29];
+static g_word_A993BB: [int16; 4] = [0, -(1), 0, 1];
+static g_word_A993C3: [int16; 4] = [0, 1, -(1), 1];
 static g_word_A99E0F: [uint16; 13] = [
-    0x6f as uint16,
-    0x6f as uint16,
-    0x6f as uint16,
-    0x7e as uint16,
-    0x6f as uint16,
-    0x6f as uint16,
-    0x7e as uint16,
-    0x6f as uint16,
-    0x6f as uint16,
-    0x7e as uint16,
-    0x7e as uint16,
-    0x6f as uint16,
-    0x6f as uint16,
+    0x6f, 0x6f, 0x6f, 0x7e, 0x6f, 0x6f, 0x7e, 0x6f, 0x6f, 0x7e, 0x7e, 0x6f, 0x6f,
 ];
-static g_word_A9B393: [uint16; 8] = [
-    8 as uint16,
-    0x6c as uint16,
-    0x18 as uint16,
-    0x80 as uint16,
-    9 as uint16,
-    0x90 as uint16,
-    0x18 as uint16,
-    0x74 as uint16,
-];
-static g_byte_A9B546: [uint8; 8] = [
-    0 as uint8, 1 as uint8, 1 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8,
-];
-static g_byte_A9B5A1: [uint8; 8] = [
-    2 as uint8, 1 as uint8, 1 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8, 0 as uint8,
-];
+static g_word_A9B393: [uint16; 8] = [8, 0x6c, 0x18, 0x80, 9, 0x90, 0x18, 0x74];
+static g_byte_A9B546: [uint8; 8] = [0, 1, 1, 0, 0, 0, 0, 0];
+static g_byte_A9B5A1: [uint8; 8] = [2, 1, 1, 0, 0, 0, 0, 0];
 static g_word_A9B72C: [int16; 28] = [
-    -(1 as ::core::ffi::c_int) as int16,
-    -(17 as ::core::ffi::c_int) as int16,
-    0 as int16,
-    0 as int16,
-    -(1 as ::core::ffi::c_int) as int16,
-    -(1 as ::core::ffi::c_int) as int16,
-    0 as int16,
-    -(1 as ::core::ffi::c_int) as int16,
-    0 as int16,
-    0 as int16,
-    -(1 as ::core::ffi::c_int) as int16,
-    0 as int16,
-    0 as int16,
-    0 as int16,
-    -(17 as ::core::ffi::c_int) as int16,
-    -(1 as ::core::ffi::c_int) as int16,
-    -(1 as ::core::ffi::c_int) as int16,
-    -(1 as ::core::ffi::c_int) as int16,
-    0 as int16,
-    0 as int16,
-    0 as int16,
-    -(17 as ::core::ffi::c_int) as int16,
-    -(1 as ::core::ffi::c_int) as int16,
-    -(1 as ::core::ffi::c_int) as int16,
-    -(1 as ::core::ffi::c_int) as int16,
-    -(1 as ::core::ffi::c_int) as int16,
-    -(1 as ::core::ffi::c_int) as int16,
-    -(1 as ::core::ffi::c_int) as int16,
+    -(1),
+    -(17),
+    0,
+    0,
+    -(1),
+    -(1),
+    0,
+    -(1),
+    0,
+    0,
+    -(1),
+    0,
+    0,
+    0,
+    -(17),
+    -(1),
+    -(1),
+    -(1),
+    0,
+    0,
+    0,
+    -(17),
+    -(1),
+    -(1),
+    -(1),
+    -(1),
+    -(1),
+    -(1),
 ];
-static g_word_A9BCA6: [int16; 8] = [
-    -(8 as ::core::ffi::c_int) as int16,
-    6 as int16,
-    -(4 as ::core::ffi::c_int) as int16,
-    2 as int16,
-    3 as int16,
-    -(6 as ::core::ffi::c_int) as int16,
-    8 as int16,
-    0 as int16,
-];
-static g_word_A9BCB6: [int16; 8] = [
-    -(7 as ::core::ffi::c_int) as int16,
-    2 as int16,
-    5 as int16,
-    -(4 as ::core::ffi::c_int) as int16,
-    6 as int16,
-    -(2 as ::core::ffi::c_int) as int16,
-    -(6 as ::core::ffi::c_int) as int16,
-    7 as int16,
-];
-static g_byte_A9BEEE: [uint8; 16] = [
-    2 as uint8,
-    0 as uint8,
-    2 as uint8,
-    0 as uint8,
-    6 as uint8,
-    0 as uint8,
-    6 as uint8,
-    0 as uint8,
-    8 as uint8,
-    0 as uint8,
-    8 as uint8,
-    0 as uint8,
-    10 as uint8,
-    0 as uint8,
-    10 as uint8,
-    0 as uint8,
-];
-static g_word_A9BEFE: [uint16; 8] = [
-    0x500 as uint16,
-    0x500 as uint16,
-    0x200 as uint16,
-    0x200 as uint16,
-    0xc0 as uint16,
-    0xc0 as uint16,
-    0x40 as uint16,
-    0x40 as uint16,
-];
-static g_word_A9C049: [int16; 8] = [
-    0x10 as int16,
-    0x10 as int16,
-    0x20 as int16,
-    0x20 as int16,
-    0x30 as int16,
-    0x30 as int16,
-    0x40 as int16,
-    0x40 as int16,
-];
+static g_word_A9BCA6: [int16; 8] = [-(8), 6, -(4), 2, 3, -(6), 8, 0];
+static g_word_A9BCB6: [int16; 8] = [-(7), 2, 5, -(4), 6, -(2), -(6), 7];
+static g_byte_A9BEEE: [uint8; 16] = [2, 0, 2, 0, 6, 0, 6, 0, 8, 0, 8, 0, 10, 0, 10, 0];
+static g_word_A9BEFE: [uint16; 8] = [0x500, 0x500, 0x200, 0x200, 0xc0, 0xc0, 0x40, 0x40];
+static g_word_A9C049: [int16; 8] = [0x10, 0x10, 0x20, 0x20, 0x30, 0x30, 0x40, 0x40];
 static g_word_A9C544: uint16 = 1 as uint16;
 static g_byte_A9F56A: [int8; 16] = [
-    0x10 as int8,
-    0xf as int8,
-    0xe as int8,
-    0xd as int8,
-    0xc as int8,
-    0xb as int8,
-    0xa as int8,
-    9 as int8,
-    8 as int8,
-    7 as int8,
-    6 as int8,
-    5 as int8,
-    4 as int8,
-    3 as int8,
-    2 as int8,
-    1 as int8,
+    0x10, 0xf, 0xe, 0xd, 0xc, 0xb, 0xa, 9, 8, 7, 6, 5, 4, 3, 2, 1,
 ];
 pub unsafe fn CallCorpseRottingMove(mut ea: uint32, mut k: uint16, mut j: uint16, game: &mut Game) {
     match ea {

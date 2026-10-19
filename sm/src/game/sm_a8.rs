@@ -660,18 +660,8 @@ unsafe fn Get_YappingMaw(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Ene
         .offset(0xf78)
         .offset(o as isize) as *mut Enemy_YappingMaw;
 }
-static g_word_A890CA: [int16; 4] = [
-    -(8 as ::core::ffi::c_int) as int16,
-    8 as int16,
-    0 as int16,
-    0 as int16,
-];
-static g_word_A890D2: [int16; 4] = [
-    0 as int16,
-    0 as int16,
-    -(8 as ::core::ffi::c_int) as int16,
-    8 as int16,
-];
+static g_word_A890CA: [int16; 4] = [-(8), 8, 0, 0];
+static g_word_A890D2: [int16; 4] = [0, 0, -(8), 8];
 static g_word_A89050: uint16 = 0x80 as uint16;
 static g_word_A89052: uint16 = 0xb0 as uint16;
 static g_word_A89054: uint16 = 0x80 as uint16;
@@ -683,89 +673,19 @@ static g_word_A89AA2: uint16 = 1 as uint16;
 static g_word_A89AA4: uint16 = 0x78 as uint16;
 static g_word_A89AA6: uint16 = 0x78 as uint16;
 static g_word_A89AA8: [uint16; 18] = [
-    0xffc0 as uint16,
-    0xffc0 as uint16,
-    0 as uint16,
-    0xffc0 as uint16,
-    0x40 as uint16,
-    0 as uint16,
-    0xffc0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0 as uint16,
-    0x40 as uint16,
-    0 as uint16,
-    0xffc0 as uint16,
-    0x40 as uint16,
-    0 as uint16,
-    0x40 as uint16,
-    0x40 as uint16,
-    0x40 as uint16,
+    0xffc0, 0xffc0, 0, 0xffc0, 0x40, 0, 0xffc0, 0, 0, 0, 0x40, 0, 0xffc0, 0x40, 0, 0x40, 0x40, 0x40,
 ];
-static g_word_A89ACC: [uint16; 17] = [
-    1 as uint16,
-    8 as uint16,
-    1 as uint16,
-    8 as uint16,
-    1 as uint16,
-    7 as uint16,
-    1 as uint16,
-    7 as uint16,
-    2 as uint16,
-    6 as uint16,
-    2 as uint16,
-    6 as uint16,
-    3 as uint16,
-    5 as uint16,
-    3 as uint16,
-    5 as uint16,
-    0xffff as uint16,
-];
+static g_word_A89ACC: [uint16; 17] = [1, 8, 1, 8, 1, 7, 1, 7, 2, 6, 2, 6, 3, 5, 3, 5, 0xffff];
 static kWreckedShipGhost_Palette: [uint16; 16] = [
-    0x3800 as uint16,
-    0x57ff as uint16,
-    0x42f7 as uint16,
-    0x929 as uint16,
-    0xa5 as uint16,
-    0x4f5a as uint16,
-    0x36b5 as uint16,
-    0x2610 as uint16,
-    0x1dce as uint16,
-    0x1df as uint16,
-    0x1f as uint16,
-    0x18 as uint16,
-    0xa as uint16,
-    0x6b9 as uint16,
-    0xea as uint16,
-    0x45 as uint16,
+    0x3800, 0x57ff, 0x42f7, 0x929, 0xa5, 0x4f5a, 0x36b5, 0x2610, 0x1dce, 0x1df, 0x1f, 0x18, 0xa,
+    0x6b9, 0xea, 0x45,
 ];
 static g_word_A89D32: uint16 = 1 as uint16;
 static g_word_A89D34: uint16 = 1 as uint16;
-static g_word_A8C277: [int16; 3] = [
-    -(12 as ::core::ffi::c_int) as int16,
-    -(16 as ::core::ffi::c_int) as int16,
-    -(20 as ::core::ffi::c_int) as int16,
-];
-static g_word_A8C27D: [int16; 3] = [
-    -(20 as ::core::ffi::c_int) as int16,
-    -(16 as ::core::ffi::c_int) as int16,
-    -(12 as ::core::ffi::c_int) as int16,
-];
+static g_word_A8C277: [int16; 3] = [-(12), -(16), -(20)];
+static g_word_A8C27D: [int16; 3] = [-(20), -(16), -(12)];
 static g_word_A8C19F: uint16 = 0x40 as uint16;
-static g_word_A8C1A1: [uint16; 12] = [
-    0 as uint16,
-    1 as uint16,
-    2 as uint16,
-    3 as uint16,
-    2 as uint16,
-    1 as uint16,
-    0 as uint16,
-    0xffff as uint16,
-    0xfffe as uint16,
-    0xfffd as uint16,
-    0xfffe as uint16,
-    0xffff as uint16,
-];
+static g_word_A8C1A1: [uint16; 12] = [0, 1, 2, 3, 2, 1, 0, 0xffff, 0xfffe, 0xfffd, 0xfffe, 0xffff];
 static g_word_A8C1B9: uint16 = 0 as uint16;
 static g_word_A8C1BB: uint16 = 0 as uint16;
 static g_word_A8C1BD: uint16 = 0 as uint16;
@@ -775,87 +695,42 @@ static g_word_A8C1C3: uint16 = 0 as uint16;
 static g_word_A8C1C5: uint16 = 0xffff as uint16;
 static g_word_A8C1C7: uint16 = 0x8000 as uint16;
 static g_word_A8CCC1: [int16; 31] = [
-    0x1f as int16,
-    0x18 as int16,
-    0xf as int16,
-    8 as int16,
-    0x40 as int16,
-    0x18 as int16,
-    0xf as int16,
-    8 as int16,
-    0x1f as int16,
-    0x10 as int16,
-    0xf as int16,
-    8 as int16,
-    0x1f as int16,
-    0x18 as int16,
-    0x10 as int16,
-    8 as int16,
-    0x1f as int16,
-    0x18 as int16,
-    0xf as int16,
-    0x40 as int16,
-    0xf as int16,
-    8 as int16,
-    0x1f as int16,
-    0x18 as int16,
-    0x10 as int16,
-    0x18 as int16,
-    0xf as int16,
-    8 as int16,
-    0x1f as int16,
-    0x10 as int16,
-    -(1 as ::core::ffi::c_int) as int16,
+    0x1f,
+    0x18,
+    0xf,
+    8,
+    0x40,
+    0x18,
+    0xf,
+    8,
+    0x1f,
+    0x10,
+    0xf,
+    8,
+    0x1f,
+    0x18,
+    0x10,
+    8,
+    0x1f,
+    0x18,
+    0xf,
+    0x40,
+    0xf,
+    8,
+    0x1f,
+    0x18,
+    0x10,
+    0x18,
+    0xf,
+    8,
+    0x1f,
+    0x10,
+    -(1),
 ];
-static g_word_A8D871: [int16; 10] = [
-    0xc0 as int16,
-    0xe0 as int16,
-    0 as int16,
-    0x20 as int16,
-    0x40 as int16,
-    0x40 as int16,
-    0x60 as int16,
-    0x80 as int16,
-    0xa0 as int16,
-    0xc0 as int16,
-];
-static g_word_A8D885: [int16; 8] = [
-    0x3ff as int16,
-    0x4ff as int16,
-    0x5ff as int16,
-    0x6ff as int16,
-    0x7ff as int16,
-    0x8ff as int16,
-    0x9ff as int16,
-    0xaff as int16,
-];
+static g_word_A8D871: [int16; 10] = [0xc0, 0xe0, 0, 0x20, 0x40, 0x40, 0x60, 0x80, 0xa0, 0xc0];
+static g_word_A8D885: [int16; 8] = [0x3ff, 0x4ff, 0x5ff, 0x6ff, 0x7ff, 0x8ff, 0x9ff, 0xaff];
 static g_word_A8D895: [int16; 26] = [
-    3 as int16,
-    1 as int16,
-    4 as int16,
-    1 as int16,
-    5 as int16,
-    2 as int16,
-    6 as int16,
-    2 as int16,
-    7 as int16,
-    2 as int16,
-    8 as int16,
-    3 as int16,
-    9 as int16,
-    3 as int16,
-    0xa as int16,
-    4 as int16,
-    0xb as int16,
-    4 as int16,
-    0xc as int16,
-    5 as int16,
-    0xd as int16,
-    5 as int16,
-    0xe as int16,
-    6 as int16,
-    0xf as int16,
-    6 as int16,
+    3, 1, 4, 1, 5, 2, 6, 2, 7, 2, 8, 3, 9, 3, 0xa, 4, 0xb, 4, 0xc, 5, 0xd, 5, 0xe, 6, 0xf, 6,
 ];
 static g_word_A8DCC7: uint16 = 0x50 as uint16;
 static g_word_A8DCCB: uint16 = 0x70 as uint16;

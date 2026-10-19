@@ -511,7 +511,7 @@ unsafe fn Get_Zebetites(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enem
         .offset(0xf78)
         .offset(o as isize) as *mut Enemy_Zebetites;
 }
-static g_word_A686F1: [uint16; 2] = [0x1000 as uint16, 0x1800 as uint16];
+static g_word_A686F1: [uint16; 2] = [0x1000, 0x1800];
 static g_word_A68DBB: uint16 = 5 as uint16;
 static g_word_A68DBD: uint16 = 0xa as uint16;
 static g_word_A68DBF: uint16 = 0xf as uint16;
@@ -556,110 +556,43 @@ static g_word_A68E0B: uint16 = 0x14 as uint16;
 static g_word_A68E0D: uint16 = 0x10 as uint16;
 static g_word_A68E0F: uint16 = 0xc as uint16;
 static g_word_A68E11: uint16 = 8 as uint16;
-static g_word_A695F6: [uint16; 4] = [
-    0x190 as uint16,
-    0xf0 as uint16,
-    0xf0 as uint16,
-    0x190 as uint16,
-];
-static g_word_A695FE: [uint16; 4] = [
-    0xffe8 as uint16,
-    0xfff4 as uint16,
-    0x18 as uint16,
-    0xc as uint16,
-];
-static g_word_A69606: [uint16; 4] = [
-    0x180 as uint16,
-    0x100 as uint16,
-    0x100 as uint16,
-    0x180 as uint16,
-];
-static g_word_A69A48: [uint16; 8] = [
-    0xfe00 as uint16,
-    0xfb00 as uint16,
-    0xfc00 as uint16,
-    0xfb00 as uint16,
-    0x200 as uint16,
-    0xfb00 as uint16,
-    0x400 as uint16,
-    0xfb00 as uint16,
-];
+static g_word_A695F6: [uint16; 4] = [0x190, 0xf0, 0xf0, 0x190];
+static g_word_A695FE: [uint16; 4] = [0xffe8, 0xfff4, 0x18, 0xc];
+static g_word_A69606: [uint16; 4] = [0x180, 0x100, 0x100, 0x180];
+static g_word_A69A48: [uint16; 8] = [0xfe00, 0xfb00, 0xfc00, 0xfb00, 0x200, 0xfb00, 0x400, 0xfb00];
 static g_word_A6B288: uint16 = 8 as uint16;
-static g_word_A6BBEB: [uint16; 3] = [0x40 as uint16, 0 as uint16, 0xd0 as uint16];
-static g_word_A6BC62: [uint16; 3] = [0xb0 as uint16, 0 as uint16, 0x50 as uint16];
+static g_word_A6BBEB: [uint16; 3] = [0x40, 0, 0xd0];
+static g_word_A6BC62: [uint16; 3] = [0xb0, 0, 0x50];
 static g_word_A6C66E: [int16; 20] = [
-    -(24 as ::core::ffi::c_int) as int16,
-    -(24 as ::core::ffi::c_int) as int16,
-    -(20 as ::core::ffi::c_int) as int16,
-    20 as int16,
-    16 as int16,
-    -(30 as ::core::ffi::c_int) as int16,
-    30 as int16,
-    -(3 as ::core::ffi::c_int) as int16,
-    14 as int16,
-    -(13 as ::core::ffi::c_int) as int16,
-    -(2 as ::core::ffi::c_int) as int16,
-    18 as int16,
-    -(2 as ::core::ffi::c_int) as int16,
-    -(32 as ::core::ffi::c_int) as int16,
-    -(31 as ::core::ffi::c_int) as int16,
-    8 as int16,
-    -(4 as ::core::ffi::c_int) as int16,
-    -(10 as ::core::ffi::c_int) as int16,
-    19 as int16,
-    19 as int16,
+    -(24),
+    -(24),
+    -(20),
+    20,
+    16,
+    -(30),
+    30,
+    -(3),
+    14,
+    -(13),
+    -(2),
+    18,
+    -(2),
+    -(32),
+    -(31),
+    8,
+    -(4),
+    -(10),
+    19,
+    19,
 ];
-static g_word_A6CF54: [int16; 3] = [
-    0x20 as int16,
-    0 as int16,
-    -(0x20 as ::core::ffi::c_int) as int16,
-];
+static g_word_A6CF54: [int16; 3] = [0x20, 0, -(0x20)];
 static g_byte_A6D61F: [uint8; 16] = [
-    0x10 as uint8,
-    0xf as uint8,
-    0xe as uint8,
-    0xd as uint8,
-    0xc as uint8,
-    0xb as uint8,
-    0xa as uint8,
-    9 as uint8,
-    8 as uint8,
-    7 as uint8,
-    6 as uint8,
-    5 as uint8,
-    4 as uint8,
-    3 as uint8,
-    2 as uint8,
-    1 as uint8,
+    0x10, 0xf, 0xe, 0xd, 0xc, 0xb, 0xa, 9, 8, 7, 6, 5, 4, 3, 2, 1,
 ];
 static g_byte_A6D712: [uint8; 16] = [
-    0x10 as uint8,
-    0xf as uint8,
-    0xe as uint8,
-    0xd as uint8,
-    0xc as uint8,
-    0xb as uint8,
-    0xa as uint8,
-    9 as uint8,
-    8 as uint8,
-    7 as uint8,
-    6 as uint8,
-    5 as uint8,
-    4 as uint8,
-    3 as uint8,
-    2 as uint8,
-    1 as uint8,
+    0x10, 0xf, 0xe, 0xd, 0xc, 0xb, 0xa, 9, 8, 7, 6, 5, 4, 3, 2, 1,
 ];
-static g_word_A6D9ED: [uint16; 8] = [
-    0xc as uint16,
-    0xe as uint16,
-    0x10 as uint16,
-    0x12 as uint16,
-    0x1c as uint16,
-    0x20 as uint16,
-    0x28 as uint16,
-    0x30 as uint16,
-];
+static g_word_A6D9ED: [uint16; 8] = [0xc, 0xe, 0x10, 0x12, 0x1c, 0x20, 0x28, 0x30];
 pub unsafe fn Enemy_GrappleReact_NoInteract_A6(game: &mut Game) {
     SwitchEnemyAiToMainAi(game);
 }
@@ -2938,12 +2871,7 @@ pub unsafe fn Ridley_A2F2(game: &mut Game) {
     }
     let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0x40 as ::core::ffi::c_int, game);
     if (*E).cry_var_B != 0 {
-        static g_word_A6A321: [int16; 4] = [
-            0 as int16,
-            -(1024 as ::core::ffi::c_int) as int16,
-            -(4 as ::core::ffi::c_int) as int16,
-            -(1 as ::core::ffi::c_int) as int16,
-        ];
+        static g_word_A6A321: [int16; 4] = [0, -(1024), -(4), -(1)];
         DrawSpritemap(
             0xa6 as uint8,
             addr_kCeresRidley_Sprmap_A329 as uint16,
@@ -3833,7 +3761,7 @@ pub unsafe fn Ridley_Func_6(game: &mut Game) {
     };
 }
 pub unsafe fn Ridley_Func_7(game: &mut Game) -> uint16 {
-    static g_word_A6B439: [uint16; 4] = [4 as uint16, 8 as uint16, 0xa as uint16, 0xc as uint16];
+    static g_word_A6B439: [uint16; 4] = [4, 8, 0xa, 0xc];
     return g_word_A6B439[(*Get_Ridley(0 as ::core::ffi::c_int, game)).ridley_var_12 as usize];
 }
 pub unsafe fn Ridley_Func_8(game: &mut Game) {
@@ -4681,34 +4609,8 @@ pub unsafe fn Ridley_Func_39(game: &mut Game) {
     }
 }
 static byte_A6BD04: [uint8; 28] = [
-    0x80 as uint8,
-    0x80 as uint8,
-    0x80 as uint8,
-    0 as uint8,
-    0xff as uint8,
-    0x80 as uint8,
-    0x80 as uint8,
-    0xff as uint8,
-    0xff as uint8,
-    0xff as uint8,
-    0x80 as uint8,
-    0 as uint8,
-    0 as uint8,
-    0x80 as uint8,
-    0x80 as uint8,
-    0x80 as uint8,
-    0x80 as uint8,
-    0xff as uint8,
-    0xff as uint8,
-    0xff as uint8,
-    0x80 as uint8,
-    0x80 as uint8,
-    0 as uint8,
-    0x80 as uint8,
-    0x80 as uint8,
-    0 as uint8,
-    0 as uint8,
-    0x80 as uint8,
+    0x80, 0x80, 0x80, 0, 0xff, 0x80, 0x80, 0xff, 0xff, 0xff, 0x80, 0, 0, 0x80, 0x80, 0x80, 0x80,
+    0xff, 0xff, 0xff, 0x80, 0x80, 0, 0x80, 0x80, 0, 0, 0x80,
 ];
 unsafe fn Ridley_Func_40_Carry(game: &mut Game) -> uint8 {
     return (byte_A6BD04[*(&raw mut game.g_ram as *mut uint8).offset(0xa1f) as usize]
