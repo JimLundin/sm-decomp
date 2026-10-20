@@ -1,3 +1,4 @@
+use crate::game::beam_firing::{clear_animation, update_input};
 use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_86::*;
@@ -172,21 +173,12 @@ crate::game::constants::typed_constants! { i32;
     fnGrappleBeamFunc_ConnectedLockedInPlace = 0x9bc77e,
     fnGrappleBeamFunc_Cancel = 0x9bc856, fnGrappleBeam_Func2 = 0x9bc8c5,
 }
-static kUnchargedProjectile_Sfx: [u16; 12] = [
-    0xb, 0xd, 0xc, 0xe, 0xf, 0x12, 0x10, 0x11, 0x13, 0x16, 0x14, 0x15,
-];
-static kChargedProjectile_Sfx: [u16; 12] = [
-    0x17, 0x19, 0x18, 0x1a, 0x1b, 0x1e, 0x1c, 0x1d, 0x1f, 0x22, 0x20, 0x21,
-];
 static kNonBeamProjectile_Sfx: [u16; 9] = [0, 3, 4, 0, 0, 0, 0, 0, 0];
-static kProjectileCooldown_Uncharged: [u8; 38] = [
+pub(crate) static kProjectileCooldown_Uncharged: [u8; 38] = [
     15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 12, 15, 0, 0, 0, 0, 30, 30, 30, 30, 30, 30, 30, 30, 30,
     30, 30, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 ];
 static kNonBeamProjectileCooldowns: [u8; 9] = [0, 0xa, 0x14, 0x28, 0, 0x10, 0, 0, 0];
-static kBeamAutoFireCooldowns: [u8; 12] = [
-    0x19, 0x19, 0x19, 0x19, 0x19, 0x19, 0x19, 0x19, 0x19, 0x19, 0x19, 0x19,
-];
 pub unsafe fn Samus_Animate(game: &mut Game) {
     let fx_type = u16::from_le_bytes([game.g_ram[0x196e], game.g_ram[0x196f]]);
     match (fx_type & 0xf) >> 1 {
@@ -2834,16 +2826,6 @@ pub unsafe fn Samus_HandleCooldown(game: &mut Game) {
         word!(game.cooldown_timer = 0);
     }
 }
-pub unsafe fn Samus_CanFireBeam(game: &mut Game) -> u8 {
-    if word!(game.projectile_counter) as i32 - 5i32 & 0x8000 == 0
-        || (word!(game.cooldown_timer) as u8) != 0
-    {
-        return 0;
-    }
-    word!(game.cooldown_timer = 1);
-    word!(game.projectile_counter, wrapping_add(1));
-    1
-}
 pub unsafe fn Samus_CanFireSuperMissile(game: &mut Game) -> u8 {
     if word!(game.hud_item_index) != 2 {
         if word!(game.projectile_counter) as i32 - 5i32 & 0x8000 == 0 {
@@ -3713,138 +3695,7 @@ pub unsafe fn HandleProjectileTrails(game: &mut Game) {
         }
     }
 }
-pub unsafe fn HudSelectionHandler_NothingOrPowerBombs(game: &mut Game) {
-    word!(game.prev_beam_charge_counter = word!(game.flare_counter));
-    if word!(game.hyper_beam_flag) != 0 || (word!(game.equipped_beams) & 0x1000) == 0 {
-        if (word!(game.button_config_shoot_x) & word!(game.joypad1_lastkeys)) != 0 {
-            FireUnchargedBeam(game);
-        }
-        return;
-    }
-    let fire_uncharged: bool = if word!(game.new_projectile_direction_changed_pose) != 0 {
-        (word!(game.flare_counter) as i32 - 60i32 & 0x8000 != 0)
-    } else if (word!(game.button_config_shoot_x) & word!(game.joypad1_lastkeys)) == 0 {
-        if word!(game.flare_counter) == 0 {
-            return;
-        }
-        (word!(game.flare_counter) as i32 - 60i32 & 0x8000 != 0)
-    } else {
-        if word!(game.flare_counter) as i32 - 120i32 & 0x8000 != 0 {
-            if word!(game.flare_counter, wrapping_add(1), reread) == 1 {
-                ClearFlareAnimationState(game);
-                FireUnchargedBeam(game);
-            }
-        } else if FireSba(game) & 1 != 0 {
-            word!(game.flare_counter = 0);
-            ClearFlareAnimationState(game);
-            Samus_LoadSuitPalette(game);
-        }
-        return;
-    };
-    if fire_uncharged {
-        word!(game.flare_counter = 0);
-        ClearFlareAnimationState(game);
-        FireUnchargedBeam(game);
-    } else {
-        word!(game.flare_counter = 0);
-        ClearFlareAnimationState(game);
-        FireChargedBeam(game);
-    }
-}
-static kProjectileBombPreInstr: [u16; 12] = [
-    fnProjPreInstr_Beam_NoWaveBeam as u16,
-    fnProjPreInstr_BeamOrIceWave as u16,
-    fnProjPreInstr_Beam_NoWaveBeam as u16,
-    fnProjPreInstr_BeamOrIceWave as u16,
-    fnProjPreInstr_Beam_NoWaveBeam as u16,
-    fnProjPreInstr_WavePlasmaEtc as u16,
-    fnProjPreInstr_Beam_NoWaveBeam as u16,
-    fnProjPreInstr_WavePlasmaEtc as u16,
-    fnProjPreInstr_Beam_NoWaveBeam as u16,
-    fnProjPreInstr_WavePlasmaEtc as u16,
-    fnProjPreInstr_Beam_NoWaveBeam as u16,
-    fnProjPreInstr_WavePlasmaEtc as u16,
-];
-pub unsafe fn FireUnchargedBeam(game: &mut Game) {
-    if word!(game.hyper_beam_flag) != 0 {
-        FireHyperBeam(game);
-        return;
-    }
-    if Samus_CanFireBeam(game) & 1 != 0 {
-        let mut v0: u16 = 0;
-        while word!(game.projectile_damage[(v0 >> 1)]) != 0 {
-            v0 = (v0).wrapping_add(2);
-            if (((v0) as i16).wrapping_sub(10) < 0) {
-                continue;
-            }
-            v0 = (v0).wrapping_sub(2);
-            break;
-        }
-        if InitProjectilePositionDirection(v0, game) & 1 == 0 {
-            word!(game.projectile_invincibility_timer = 10);
-            let mut v1: u16 = v0;
-            let v2: i32 = v0 as i32 >> 1;
-            word!(game.projectile_timers[v2] = 4);
-            let mut v3: i8 = word!(game.equipped_beams) as i8;
-            word!(game.projectile_type[v2] = (word!(game.equipped_beams)) | (0x8000u16));
-            QueueSfx1_Max15(kUnchargedProjectile_Sfx[(v3 as i32 & 0xf) as usize], game);
-            word!(game.play_resume_charging_beam_sfx = 0);
-            InitializeProjectile(v1, game);
-            let initialize_projectile: bool = if (word!(game.equipped_beams) & 0x1000) != 0
-                || (word!(game.button_config_shoot_x) & word!(game.joypad1_newkeys)) != 0
-                || (word!(game.button_config_shoot_x) & word!(game.joypad1_newinput_samusfilter))
-                    != 0
-            {
-                let mut v6: u16 = word!(game.projectile_type[v2]);
-                word!(
-                    game.cooldown_timer =
-                        kProjectileCooldown_Uncharged[(v6 as i32 & 0x3f) as usize] as u16
-                );
-                !((v6 & 1) == 0)
-            } else {
-                let mut v5: u16 = word!(game.projectile_type[v2]);
-                word!(
-                    game.cooldown_timer =
-                        kBeamAutoFireCooldowns[(v5 as i32 & 0x3f) as usize] as u16
-                );
-                !((v5 & 1) == 0)
-            };
-            if initialize_projectile {
-                let mut v4: i32 = v1 as i32 >> 1;
-                word! { game, 0;
-                    projectile_bomb_x_speed[v4], projectile_bomb_y_speed[v4],
-                }
-                word!(game.projectile_index = v1);
-                WaveBeam_CheckColl(v1, game);
-            } else {
-                word! { game, 0;
-                    projectile_bomb_x_speed[v2], projectile_bomb_y_speed[v2],
-                }
-                word!(game.projectile_index = v1);
-                CheckBeamCollByDir(v1, game);
-                v1 = word!(game.projectile_index);
-                if (*(ram_ptr!(game, u16; 0xc18))
-                    .offset((word!(game.projectile_index) >> 1) as isize)
-                    & 0xf00)
-                    != 0
-                {
-                    return;
-                }
-            }
-            word!(
-                game.projectile_bomb_pre_instructions[(v1 >> 1)] = kProjectileBombPreInstr
-                    [(word!(game.projectile_type[(v1 >> 1)]) as i32 & 0xf) as usize]
-            );
-            SetInitialProjectileSpeed(v1, game);
-            return;
-        }
-    }
-    if word!(game.prev_beam_charge_counter) as i32 - 16i32 & 0x8000 == 0 {
-        word!(game.play_resume_charging_beam_sfx = 0);
-        QueueSfx1_Max15(2, game);
-    }
-}
-static kFireChargedBeam_Funcs: [u16; 12] = [
+pub(crate) static kFireChargedBeam_Funcs: [u16; 12] = [
     fnProjPreInstr_Beam_NoWaveBeam as u16,
     fnProjPreInstr_WavePlasmaEtc as u16,
     fnProjPreInstr_Beam_NoWaveBeam as u16,
@@ -3858,70 +3709,6 @@ static kFireChargedBeam_Funcs: [u16; 12] = [
     fnProjPreInstr_Beam_NoWaveBeam as u16,
     fnProjPreInstr_WavePlasmaEtc as u16,
 ];
-pub unsafe fn FireChargedBeam(game: &mut Game) {
-    if Samus_CanFireBeam(game) & 1 != 0 {
-        let mut v0: u16 = 0;
-        while word!(game.projectile_damage[(v0 >> 1)]) != 0 {
-            v0 = (v0).wrapping_add(2);
-            if (((v0) as i16).wrapping_sub(10) < 0) {
-                continue;
-            }
-            v0 = (v0).wrapping_sub(2);
-            break;
-        }
-        let mut r20: u16 = v0;
-        if InitProjectilePositionDirection(r20, game) & 1 == 0 {
-            word!(game.projectile_invincibility_timer = 10);
-            let mut v1: u16 = r20;
-            let v2: i32 = r20 as i32 >> 1;
-            word!(game.projectile_timers[v2] = 4);
-            let v3: u16 = (word!(game.equipped_beams) & 0x100f | 0x8010);
-            word!(game.projectile_type[v2] = v3);
-            QueueSfx1_Max15(kChargedProjectile_Sfx[(v3 as i32 & 0xf) as usize], game);
-            word!(game.play_resume_charging_beam_sfx = 0);
-            InitializeProjectile(v1, game);
-            let v5: u16 = word!(game.projectile_type[v2]);
-            word!(
-                game.cooldown_timer =
-                    kProjectileCooldown_Uncharged[(v5 as i32 & 0x3f) as usize] as u16
-            );
-            let initialize_projectile: bool = if (v5 & 1) != 0 {
-                let v4: i32 = v1 as i32 >> 1;
-                word! { game, 0;
-                    projectile_bomb_x_speed[v4], projectile_bomb_y_speed[v4],
-                }
-                word!(game.projectile_index = v1);
-                WaveBeam_CheckColl(v1, game);
-                true
-            } else {
-                word! { game, 0;
-                    projectile_bomb_x_speed[v2], projectile_bomb_y_speed[v2],
-                }
-                word!(game.projectile_index = v1);
-                CheckBeamCollByDir(v1, game);
-                v1 = word!(game.projectile_index);
-                !((*(ram_ptr!(game, u16; 0xc18))
-                    .offset((word!(game.projectile_index) >> 1) as isize)
-                    & 0xf00)
-                    != 0)
-            };
-            if initialize_projectile {
-                r20 = v1;
-                word!(
-                    game.projectile_bomb_pre_instructions[(v1 >> 1)] = kFireChargedBeam_Funcs
-                        [(word!(game.projectile_type[(v1 >> 1)]) as i32 & 0xf) as usize]
-                );
-                SetInitialProjectileSpeed(r20, game);
-            }
-            word!(game.charged_shot_glow_timer = 4);
-            return;
-        }
-    }
-    if word!(game.prev_beam_charge_counter) as i32 - 16i32 & 0x8000 == 0 {
-        word!(game.play_resume_charging_beam_sfx = 0);
-        QueueSfx1_Max15(2, game);
-    }
-}
 static kProjectileOriginOffsets3_X: [i16; 10] = [2, 13, 11, 13, 2, -5, -14, -11, -19, -2];
 static kProjectileOriginOffsets3_Y: [i16; 10] = [-8, -13, 1, 4, 13, 13, 4, 1, -19, -8];
 static kProjectileOriginOffsets4_X: [i16; 10] = [2, 15, 15, 13, 2, -5, -13, -13, -15, -2];
@@ -4117,54 +3904,6 @@ pub unsafe fn DrawFlareAnimationComponent(k: u16, game: &mut Game) {
         if (word!(game.ceres_status) & 0x8000) != 0 {
             word!(game.samus_y_pos = old_y);
             word!(game.samus_x_pos = old_x);
-        }
-    }
-}
-pub unsafe fn ClearFlareAnimationState(game: &mut Game) {
-    word! { game, 0;
-        flare_animation_frame, flare_slow_sparks_anim_frame, flare_fast_sparks_anim_frame,
-        flare_animation_timer, flare_slow_sparks_anim_timer, flare_fast_sparks_anim_timer,
-    }
-}
-pub unsafe fn FireHyperBeam(game: &mut Game) {
-    if Samus_CanFireBeam(game) & 1 != 0 {
-        let mut v0: u16 = 0;
-        while word!(game.projectile_damage[(v0 >> 1)]) != 0 {
-            v0 = (v0).wrapping_add(2);
-            if (((v0) as i16).wrapping_sub(10) < 0) {
-                continue;
-            }
-            v0 = (v0).wrapping_sub(2);
-            break;
-        }
-        let mut r20: u16 = v0;
-        if InitProjectilePositionDirection(r20, game) & 1 == 0 {
-            word!(game.projectile_invincibility_timer = 10);
-            let k: u16 = r20;
-            word!(game.projectile_type[(r20 >> 1)] = -28648i32 as u16);
-            QueueSfx1_Max15(kChargedProjectile_Sfx[8i32 as usize], game);
-            word!(game.play_resume_charging_beam_sfx = 0);
-            InitializeProjectile(k, game);
-            let v1: i32 = k as i32 >> 1;
-            word! { game, 0; projectile_bomb_x_speed[v1], projectile_bomb_y_speed[v1] }
-            word!(game.projectile_index = k);
-            WaveBeam_CheckColl(k, game);
-            let v2: u16 = word!(game.projectile_index);
-            let v3: i32 = word!(game.projectile_index) as i32 >> 1;
-            word!(game.projectile_damage[v3] = 1000);
-            word!(game.projectile_bomb_pre_instructions[v3] = ((0x90b159i32) as u16));
-            r20 = v2;
-            SetInitialProjectileSpeed(r20, game);
-            word!(game.cooldown_timer = 21);
-            word!(game.charged_shot_glow_timer = -32748i32 as u16);
-            word!(game.flare_animation_frame = 29);
-            word! { game, 5;
-                flare_slow_sparks_anim_frame, flare_fast_sparks_anim_frame,
-            }
-            word! { game, 3;
-                flare_animation_timer, flare_slow_sparks_anim_timer, flare_fast_sparks_anim_timer,
-            }
-            word!(game.flare_counter = 0x8000);
         }
     }
 }
@@ -4411,7 +4150,7 @@ pub unsafe fn HudSelectionHandler_MorphBall(game: &mut Game) {
     } else if word!(game.flare_counter) != 0 {
         QueueSfx1_Max9(2, game);
         word!(game.flare_counter = 0);
-        ClearFlareAnimationState(game);
+        clear_animation(game);
         Samus_LoadSuitPalette(game);
     }
 }
@@ -4441,7 +4180,7 @@ pub unsafe fn HudSelectionHandler_MorphBall_Helper2(game: &mut Game) -> u8 {
         if word!(game.flare_counter) != 0 {
             QueueSfx1_Max9(2, game);
             word!(game.flare_counter = 0);
-            ClearFlareAnimationState(game);
+            clear_animation(game);
             Samus_LoadSuitPalette(game);
         }
         0
@@ -4543,7 +4282,7 @@ pub unsafe fn HandleSwitchingHudSelection(game: &mut Game) {
 }
 pub unsafe fn SwitchToHudHandler_Nothing(game: &mut Game) -> u8 {
     word!(game.flare_counter = 0);
-    ClearFlareAnimationState(game);
+    clear_animation(game);
     Samus_LoadSuitPalette(game);
     0
 }
@@ -4552,7 +4291,7 @@ pub unsafe fn SwitchToHudHandler_Missiles(game: &mut Game) -> u8 {
         return 1;
     }
     word!(game.flare_counter = 0);
-    ClearFlareAnimationState(game);
+    clear_animation(game);
     Samus_LoadSuitPalette(game);
     0
 }
@@ -4561,7 +4300,7 @@ pub unsafe fn SwitchToHudHandler_SuperMissiles(game: &mut Game) -> u8 {
         return 1;
     }
     word!(game.flare_counter = 0);
-    ClearFlareAnimationState(game);
+    clear_animation(game);
     Samus_LoadSuitPalette(game);
     0
 }
@@ -4570,7 +4309,7 @@ pub unsafe fn SwitchToHudHandler_PowerBombs(game: &mut Game) -> u8 {
         return 1;
     }
     word!(game.flare_counter = 0);
-    ClearFlareAnimationState(game);
+    clear_animation(game);
     Samus_LoadSuitPalette(game);
     0
 }
@@ -4581,7 +4320,7 @@ pub unsafe fn SwitchToHudHandler_Grapple(game: &mut Game) -> u8 {
     if word!(game.grapple_beam_function) as i32 == 0x9bc4f0 & 0xffff {
         Samus_LoadSuitPalette(game);
         word!(game.flare_counter = 0);
-        ClearFlareAnimationState(game);
+        clear_animation(game);
         word!(game.grapple_beam_function = ((0x9bc4f0i32) as u16));
     }
     0
@@ -4591,7 +4330,7 @@ pub unsafe fn SwitchToHudHandler_Xray(game: &mut Game) -> u8 {
         return 1;
     }
     word!(game.flare_counter = 0);
-    ClearFlareAnimationState(game);
+    clear_animation(game);
     Samus_LoadSuitPalette(game);
     0
 }
@@ -5019,7 +4758,7 @@ pub unsafe fn Projectile_Func7_Shinespark(game: &mut Game) {
             QueueSfx1_Max9(2, game);
         }
         word!(game.flare_counter = 0);
-        ClearFlareAnimationState(game);
+        clear_animation(game);
     }
 }
 pub unsafe fn Samus_MoveHandlerShinesparkWindup(game: &mut Game) {
@@ -5896,8 +5635,8 @@ pub unsafe fn Samus_HandleHudSpecificBehaviorAndProjs(game: &mut Game) {
 }
 pub unsafe fn HudSelectionHandler_Normal(game: &mut Game) {
     static kHudSelectionHandler_Normal: [Option<Func_V>; 7] = callback_table! { unsafe Func_V;
-        HudSelectionHandler_NothingOrPowerBombs, HudSelectionHandler_MissilesOrSuperMissiles,
-        HudSelectionHandler_MissilesOrSuperMissiles, HudSelectionHandler_NothingOrPowerBombs,
+        update_input, HudSelectionHandler_MissilesOrSuperMissiles,
+        HudSelectionHandler_MissilesOrSuperMissiles, update_input,
         HudSelectionHandler_Grappling, HudSelectionHandler_Xray, HudSelectionHandler_TurningAround,
     };
     let mut v0: u16 = if word!(game.grapple_beam_function) as i32 == 0x9bc4f0 & 0xffff {
@@ -5952,7 +5691,7 @@ pub unsafe fn HudSelectionHandler_Xray(game: &mut Game) {
     if (word!(game.button_config_run_b) & word!(game.joypad1_lastkeys)) != 0 {
         XrayRunHandler(game);
     } else {
-        HudSelectionHandler_NothingOrPowerBombs(game);
+        update_input(game);
     };
 }
 pub unsafe fn HudSelectionHandler_GrabbedByDraygon(game: &mut Game) {
@@ -7306,7 +7045,7 @@ pub unsafe fn SamusCode_11_SetupForDeath(game: &mut Game) -> u8 {
 pub unsafe fn SamusCode_15_CalledBySuitAcquision(game: &mut Game) -> u8 {
     Samus_UpdatePreviousPose(game);
     word!(game.flare_counter = 0);
-    ClearFlareAnimationState(game);
+    clear_animation(game);
     Samus_LoadSuitPalette(game);
     SamusCode_11_15_Common(game)
 }
@@ -7353,7 +7092,7 @@ pub unsafe fn Samus_SetupForBeingDrained(game: &mut Game) -> u8 {
     Samus_SetAnimationFrameIfPoseChanged(game);
     Samus_UpdatePreviousPose(game);
     word!(game.flare_counter = 0);
-    ClearFlareAnimationState(game);
+    clear_animation(game);
     Samus_LoadSuitPalette(game);
     word!(game.frame_handler_alfa = ((0x90e713i32) as u16));
     word!(game.frame_handler_beta = ((0x90e8d9i32) as u16));

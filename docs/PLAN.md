@@ -257,7 +257,7 @@ explicit domain migration but is not evidence of a large volume payoff.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **10,296-line** gap; parked small drafts are not
+   replacement yet funds the **10,231-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
 
    Complete local-binding cohort: **207 bindings across 31 files**, placing
@@ -299,6 +299,14 @@ explicit domain migration but is not evidence of a large volume payoff.
    loading (770 comparisons), including unusual formats and malformed-stream
    quirks. Independent input-operation review, normal release and compiled-source
    checks pass. This frontend-only change needs no gameplay replay.
+
+   Complete beam-firing ownership removes **65 lines (110,295 -> 110,230)**:
+   charge input, reservation, uncharged/charged/hyper firing and flare reset
+   share a 191-line module, with the old entry points retired. All callers,
+   imports and source registrations are included. Focused SNES comparisons
+   cover exceptional firing and subsequent projectile calls; full any% and
+   Speed Booster pass on the clean release. Hyper coverage is constructed,
+   not an endgame movie. This domain migration does not fund the remaining gap.
 
    Keep one active implementation per overlapping subsystem. Use a stable
    source snapshot and checkout-local build cache for its checks. Design
@@ -423,11 +431,11 @@ checkpoint constraints are in [movies/README.md](../movies/README.md).
 
 ## The oracle
 
-Latest full subsystem integration: the intro-page replacement over 4c5e744e
+Latest full subsystem integration: the beam-firing replacement over 7617b682
 passes any% **129712/0** and Speed Booster **148406/0**, with normal rendering,
-audio and comparisons. The Japanese intro route passes **7570/0** and 233
-focused oracle cases cover markers and inactive input. These checks also
-include the preceding Japanese correction and local-binding cohort.
+audio and comparisons. Its 20,420 focused SNES comparisons cover 5,780 input/
+firing cases and 14,640 subsequent projectile calls. The earlier intro-page
+checks include Japanese **7570/0** and 233 marker/inactive-input oracle cases.
 
 The any% input visits six rooms; Speed Booster visits 55 rooms and 53 enemy
 definitions. Neither reaches credits. Kraid/Varia are reached by the extended
@@ -487,12 +495,13 @@ Rust lines 112265. The unrelated 83-line shader draft is excluded from the
 committed baseline and budget.
 
 After the Japanese correction, local bindings, intro pages, enemy callback
-imports, ordered stores and PNG texture loading, maintained Rust is **110,295**,
-leaving **10,296** to reach 99,999. Counters:
+imports, ordered stores, PNG texture loading and beam firing, maintained Rust
+is **110,230**, leaving **10,231** to reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
-unsafe functions 5236; cast lines 8746. The unrelated 83-line shader draft
+unsafe functions 5234; cast lines 8739. The unrelated 83-line shader draft
 remains excluded; working-tree counts are not the committed baseline.
-Continue item 2's remaining-responsibility comparison and the complete
-hopping-lifecycle candidate's outstanding validation.
+Continue item 2's remaining-responsibility comparison. The complete hopping
+draft remains parked; neither it nor the completed small migrations establish
+a replacement budget for the remaining gap.
 
 Historical details before this reset remain in **ec45c573:docs/PLAN.md**.
