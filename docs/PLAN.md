@@ -24,16 +24,21 @@ forecast. This work order replaces earlier reduction and cleanup queues.
 
 Active persistent goal: keep improving the translation process until there is
 a verified path to an implementation below 100,000 lines. A successful partial
-profile or pilot does not finish this goal. The latest implemented composition
-now produces **162,136 -> 125,802 (-36,334)**, with complete optimized library
-and actual frontend metadata compilation passing. It combines current-derived
-numeric/table policies, RAM and ROM access, external GL bindings, PNG algorithms,
-unreferenced declarations, canonical types and shared transfer/tile kernels.
-All local support and overlaps are counted; external GL dependency code is
-disclosed separately. No new main deletion or whole-game replay is claimed.
-Next are the earlier C algorithm families and alpha-equivalent enemy layouts.
-Then match remaining generated routines to current named kernels, accounting
-for moved helpers. Numeric, comparison, entity-access and initialization trials
+profile or pilot does not finish this goal. The latest frozen composition
+now produces **162,136 -> 116,791 (-45,345)**, with complete optimized library
+and actual frontend metadata compilation passing. The latest stages remove
+**9,011** from the previous 125,802 checkpoint, including the selected C
+algorithm families, shared enemy layouts, CPU/SPC grids, dispatchers, register
+writes, byte/split-word places and initialization/transfer families. All local
+support and overlaps are counted; external GL dependency code is disclosed
+separately. No new main deletion or whole-game replay is claimed.
+Map component checks exposed the original C2Rust VramWriteEntry packing defect
+again: destination offset 6 instead of 5. A separate zero-volume stage now
+repairs it; 65,536 complete-buffer stores and 8,192 actual NMI consumer cases
+match C, and both complete builds pass. The uncorrected control is preserved.
+These bounded checks do not establish whole-game correctness. Next are the
+remaining verified generic policies and complete current-guided families.
+Numeric, comparison, entity-access and initialization trials
 on current source save only 31, 69, 152 and 13 lines on their separate inputs;
 park these as volume priorities. Moving functions into associated Game
 functions increases code, so reject that spelling as a volume strategy.

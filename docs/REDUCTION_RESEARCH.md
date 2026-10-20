@@ -1,13 +1,19 @@
 # Reducing transpiled Rust: tools and process
 
-Research date: 2026-10-20. Immediate objective: reduce maintained source,
+Research updated: 2026-10-21. Immediate objective: reduce maintained source,
 preserving behavior. This note records primary-source research, scanner trials
 and isolated measured experiments. Their scopes are explicit; they are not an
 exhaustive discovery result or a whole-game deletion forecast.
 
-Latest result: executable translation rules learned from current Rust compose
-on the complete compact original: **195,699 -> 162,136 lines (-33,563)**,
-including support and overlap, with both optimized roots compiling. A separate
+Latest frozen result: executable translation rules learned from current Rust
+produce **116,791 lines**, down **9,011** from the previous 125,802 checkpoint
+and **162,145** from the initial 278,936-line Rust. All emitted support and
+overlap are counted. Complete optimized library and actual frontend metadata
+compilation pass, along with the documented component checks. A separate
+zero-volume stage repairs an inherited C2Rust packed-record defect and passes
+the actual queue comparisons; this is not whole-game correctness or an
+under-100,000 result.
+Maintained Rust remains 107,520 committed lines. A separate
 rule regenerates all 24 corpse tile callbacks as calls to the current helper:
 **793 C -> 2,319 initial Rust -> 208 emitted Rust lines**. Its output matches
 current Rust's ordinary-function form exactly, and 126,720 C cases pass.
@@ -1219,8 +1225,9 @@ claims. This is why isolated successful passes are insufficient.
 
 Frozen passes, complete outputs, component checks and reproduction commands
 are under `TEMP/sm-tailored-next/`, with the accepted composition in
-`integration/phase4/RESULTS.json`. The earlier C algorithm families and
-alpha-equivalent enemy layouts are the next composition work. Current-source
+`integration/phase4/RESULTS.json`. This checkpoint is retained unchanged;
+the subsequent composition below includes the earlier C algorithm families
+and alpha-equivalent enemy layouts. Current-source
 numeric, comparison, entity-access and local-initialization experiments remove
 only 31, 69, 152 and 13 lines respectively on their separate inputs. They have
 compiled component checks but are parked as volume priorities, rather than
@@ -1241,6 +1248,83 @@ still adds 97. Both full roots compile, all 17,058 ordinary calls retain their
 argument/target structure, and callback/order controls pass. Reject associated
 ownership as a volume reduction. Receiver methods and reorganization into
 domain modules remain untested by this trial.
+
+### Follow current Rust back to reusable emission rules
+
+The next actual composition reaches **116,791 lines in 63 Rust files**,
+removing another **9,011** from the frozen 125,802-line control. It uses the
+current implementation to identify compact operations, then recognizes their
+original C/generated-Rust forms and derives replacements. It does not copy
+complete current gameplay bodies into a supposedly automatic result.
+
+| Sequential stage | Complete Rust lines | Incremental removal |
+| --- | ---: | ---: |
+| Previous frozen profile | 125,802 | - |
+| Selected original-C algorithm families | 124,291 | 1,511 |
+| Shared enemy record layouts | 122,887 | 1,404 |
+| CPU opcode grid | 122,095 | 792 |
+| Planar background kernels | 121,689 | 406 |
+| Configuration initialization | 121,216 | 473 |
+| Shared decompression | 121,134 | 82 |
+| Remaining ordinary dispatchers | 119,905 | 1,229 |
+| Borrowed byte-array arguments | 119,496 | 409 |
+| SPC opcode grid | 119,140 | 356 |
+| Projectile trails | 119,042 | 98 |
+| Scrolling tilemaps and DMA | 118,908 | 134 |
+| Sound command/process family | 118,774 | 134 |
+| Ordered register writes | 118,237 | 537 |
+| Byte lanes and split-word field operations | 116,791 | 1,446 |
+| Original packed VRAM record repair | **116,791** | **0** |
+
+The register stage's standalone 570 and byte-field stage's standalone 1,565
+are not added: their actual marginal savings are 537 and 1,446 after earlier
+families have changed the source. The C-family stage also rejects two families
+that increase volume. Its 1,511 includes downstream type/forwarding/tile overlap.
+
+A concrete translation rule is C's `HIBYTE(field)`: generated Rust expands
+this into a raw-pointer cast, two `size_of` calls, division, subtraction and
+an offset. Current Rust describes the same caller-side place with `byte!`.
+The actual final stage rewrites 377 byte accesses and 134 split-word field
+calls, retaining receiver rereads, pointer-before-value order and the original
+low-before-high helper stores. An independent comparison of both complete
+crates after rustc macro expansion passes; only redundant syntax and fixed
+primitive lane constants are normalized. Twenty-one unsupported unstable
+parser nodes are byte-identical and checked as opaque text. All 66,598 compiled
+byte/value/alias/order cases pass. No gameplay algorithm is deleted by this rule.
+
+The entire final library and real frontend entrypoint compile. Checks run
+against each actual composition pair: full original-C enemy layout values,
+compiled field offsets and ordered RAM writes; CPU/SPC state and bus traces;
+PPU state and access order; C/old/new array, register, decompression and
+algorithm comparisons. The final dispatcher cohort includes 750 numeric
+routes and passes 27,684 boundary cases. Its first composed harness omitted
+an earlier family's enum dependency; the corrected harness passes and the
+failed log is retained. These checks remain bounded component evidence.
+
+Map testing rediscovered the original C2Rust forward-declaration/pragma packing
+defect already documented above: `VramWriteEntry` in the original-derived
+control has destination offset 6, while C and maintained Rust require 5.
+Actual map queue writes fail against C with that unchanged type on both sides
+of the map refactor. The reduction rules did not introduce it. The control is
+retained; a separate stage now applies the explicit zero-volume packing repair.
+Its 65,536 complete-buffer stores and 8,192 actual original-C/Rust NMI consumer
+cases pass, including 429,056 ordered events. The old layout deliberately fails
+all store cases and 7,168 nonempty consumers. Auditing 98 packed C records finds
+only two forward-before-definition cases; the other is the already-correct
+byte-only OamEnt. Both complete corrected builds pass. This fixes a concrete
+compiler defect; it supplies no reduction credit or whole-game proof.
+
+Frozen outputs, stage-specific commands, rule hashes and checks are in
+`TEMP/sm-tailored-next/integration/phase5` through `phase8`; the final corrected
+source is `phase8/30-packed-records`. The nine-line dependency manifest and the
+external GL generator's separately disclosed 21,338 lines remain. Invoked local
+Python rules, validators and orchestration add 3,820 unique lines across phases
+5-7, totaling 7,731 with the previous 3,911; this excludes external compiler/parser
+packages and owner-only fixtures not invoked by integration. These are separately
+counted experiment tools, not emitted engine source. The maintained
+107,520-line implementation and unrelated shader draft are unchanged. Continue
+with the complete remaining policies; 116,791 is a partial
+result, not completion of the under-100,000 goal.
 
 ## Independent transpilers: executed comparisons
 
