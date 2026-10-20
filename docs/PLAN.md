@@ -31,6 +31,28 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+PNG row reconstruction (2026-10-20): share all seven filter modes across
+first-byte, contiguous-row and inserted-alpha paths, plus the 1/2/4-bit
+packed-pixel expansion. Raw/neighbor read order, per-store packed-byte
+rereads, pointer/count advancement, no-filter memcpy and invalid-filter
+no-store branches remain exact. Allocation, validation, alpha and endian
+handling stay in the original decoder.
+
+Independent complete source reconstruction binds the assertion composition on 9e34a92e.
+Focused raw-decoder checks pass 52418 cases (52320 independent expected
+pixels) and 10992322 ordered read/write events. Another 460800 overlap
+cases pass; cached-byte and read-order mutations are detected. Actual
+release-library public decoder checks pass 8928 memory/file/callback cases
+across all five supported depths, byte/16-bit/float outputs and metadata.
+
+Formatting/check, normal release (23.51s), progress and full any%
+129712/0 (131.78s wall), native exit 0, pass; all 127 verification
+pins remain fixed. Rust lines -242 to 128934, cast-containing lines -49.
+Two private helpers raise the unsafe-function source count by two; this
+consolidates the operations without claiming their removal. Other counters
+are unchanged. Any% supplies core integration coverage; broader frontend,
+route and alias safety remain open. Continue substantial shared families.
+
 Native assertion wrappers (2026-10-20): one caller-side macro shares all
 64 existing failure sites across 16 callers: 40 labeled conditions, 18 labeled
 unconditional failures and six direct calls, including two CPU opcode bodies.

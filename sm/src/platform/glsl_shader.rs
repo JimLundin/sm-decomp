@@ -1685,6 +1685,65 @@ unsafe fn stbi__paeth(a: i32, b: i32, c: i32) -> i32 {
     c
 }
 static mut stbi__depth_scale_table: [stbi_uc; 9] = [0, 0xff, 0x55, 0, 0x11, 0, 0, 0, 0x1];
+// Reconstruct one PNG byte, keeping raw/left/above reads in filter order.
+unsafe fn png_filtered_byte(
+    filter: i32,
+    raw: *const u8,
+    cur: *const u8,
+    prior: *const u8,
+    k: i32,
+    previous_pixel_bytes: Option<i32>,
+) -> u8 {
+    let source = *raw.offset(k as isize);
+    let prediction = match (filter, previous_pixel_bytes) {
+        (0, _) | (1 | 5 | 6, None) => return source,
+        (1, Some(bytes)) => *cur.offset((k - bytes) as isize) as i32,
+        (2, _) => *prior.offset(k as isize) as i32,
+        (3, None) => *prior.offset(k as isize) as i32 >> 1i32,
+        (3, Some(bytes)) => {
+            (*prior.offset(k as isize) as i32 + *cur.offset((k - bytes) as isize) as i32) >> 1i32
+        }
+        (4, None) => stbi__paeth(0i32, *prior.offset(k as isize) as i32, 0i32),
+        (4, Some(bytes)) => stbi__paeth(
+            *cur.offset((k - bytes) as isize) as i32,
+            *prior.offset(k as isize) as i32,
+            *prior.offset((k - bytes) as isize) as i32,
+        ),
+        (5, Some(bytes)) => *cur.offset((k - bytes) as isize) as i32 >> 1i32,
+        (6, Some(bytes)) => stbi__paeth(*cur.offset((k - bytes) as isize) as i32, 0i32, 0i32),
+        _ => return source,
+    };
+    (source as i32 + prediction & 255i32) as u8
+}
+
+// Packed input may overlap output: reload the source byte after each store.
+unsafe fn unpack_png_low_depth(
+    mut output: *mut u8,
+    mut input: *mut u8,
+    mut remaining: i32,
+    depth: i32,
+    scale: u8,
+) -> (*mut u8, *mut u8, i32) {
+    let pixels_per_byte = 8 / depth;
+    let mask = (1i32 << depth) - 1;
+    while remaining >= pixels_per_byte {
+        for pixel in 0..pixels_per_byte {
+            let destination = output;
+            output = output.offset(1);
+            *destination =
+                (scale as i32 * (*input as i32 >> (8 - depth * (pixel + 1)) & mask)) as u8;
+        }
+        remaining -= pixels_per_byte;
+        input = input.offset(1);
+    }
+    for pixel in 0..remaining {
+        let destination = output;
+        output = output.offset(1);
+        *destination = (scale as i32 * (*input as i32 >> (8 - depth * (pixel + 1)) & mask)) as u8;
+    }
+    (output, input, remaining)
+}
+
 unsafe fn stbi__create_png_image_raw(
     a: *mut stbi__png,
     mut raw: *mut stbi_uc,
@@ -1755,27 +1814,8 @@ unsafe fn stbi__create_png_image_raw(
         }
         k = 0i32;
         while k < filter_bytes {
-            match filter {
-                0 => *cur.offset(k as isize) = *raw.offset(k as isize),
-                1 => *cur.offset(k as isize) = *raw.offset(k as isize),
-                2 => {
-                    *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
-                        + *prior.offset(k as isize) as i32
-                        & 255i32) as stbi_uc
-                }
-                3 => {
-                    *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
-                        + (*prior.offset(k as isize) as i32 >> 1i32)
-                        & 255i32) as stbi_uc
-                }
-                4 => {
-                    *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
-                        + stbi__paeth(0i32, *prior.offset(k as isize) as i32, 0i32)
-                        & 255i32) as stbi_uc
-                }
-                5 => *cur.offset(k as isize) = *raw.offset(k as isize),
-                6 => *cur.offset(k as isize) = *raw.offset(k as isize),
-                _ => {}
+            if (0..=6).contains(&filter) {
+                *cur.offset(k as isize) = png_filtered_byte(filter, raw, cur, prior, k, None);
             }
             k += 1;
         }
@@ -1805,67 +1845,11 @@ unsafe fn stbi__create_png_image_raw(
                 0 => {
                     memcpy(cur as *mut c_void, raw as *const c_void, nk as size_t);
                 }
-                1 => {
+                1..=6 => {
                     k = 0i32;
                     while k < nk {
-                        *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
-                            + *cur.offset((k - filter_bytes) as isize) as i32
-                            & 255i32) as stbi_uc;
-                        k += 1;
-                    }
-                }
-                2 => {
-                    k = 0i32;
-                    while k < nk {
-                        *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
-                            + *prior.offset(k as isize) as i32
-                            & 255i32) as stbi_uc;
-                        k += 1;
-                    }
-                }
-                3 => {
-                    k = 0i32;
-                    while k < nk {
-                        *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
-                            + (*prior.offset(k as isize) as i32
-                                + *cur.offset((k - filter_bytes) as isize) as i32
-                                >> 1i32)
-                            & 255i32) as stbi_uc;
-                        k += 1;
-                    }
-                }
-                4 => {
-                    k = 0i32;
-                    while k < nk {
-                        *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
-                            + stbi__paeth(
-                                *cur.offset((k - filter_bytes) as isize) as i32,
-                                *prior.offset(k as isize) as i32,
-                                *prior.offset((k - filter_bytes) as isize) as i32,
-                            )
-                            & 255i32) as stbi_uc;
-                        k += 1;
-                    }
-                }
-                5 => {
-                    k = 0i32;
-                    while k < nk {
-                        *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
-                            + (*cur.offset((k - filter_bytes) as isize) as i32 >> 1i32)
-                            & 255i32) as stbi_uc;
-                        k += 1;
-                    }
-                }
-                6 => {
-                    k = 0i32;
-                    while k < nk {
-                        *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
-                            + stbi__paeth(
-                                *cur.offset((k - filter_bytes) as isize) as i32,
-                                0i32,
-                                0i32,
-                            )
-                            & 255i32) as stbi_uc;
+                        *cur.offset(k as isize) =
+                            png_filtered_byte(filter, raw, cur, prior, k, Some(filter_bytes));
                         k += 1;
                     }
                 }
@@ -1878,140 +1862,21 @@ unsafe fn stbi__create_png_image_raw(
                 b"img_n+1 == out_n\0", b"./third_party/stb/stb_image.h\0", 4691u32,
                 b"int stbi__create_png_image_raw(stbi__png *, stbi_uc *, stbi__uint32, int, stbi__uint32, stbi__uint32, int, int)\0"
             };
-            match filter {
-                0 => {
-                    i = x.wrapping_sub(1 as stbi__uint32);
-                    while i >= 1 as stbi__uint32 {
-                        k = 0i32;
-                        while k < filter_bytes {
-                            *cur.offset(k as isize) = *raw.offset(k as isize);
-                            k += 1;
-                        }
-                        i = i.wrapping_sub(1);
-                        *cur.offset(filter_bytes as isize) = 255 as stbi_uc;
-                        raw = raw.offset(filter_bytes as isize);
-                        cur = cur.offset(output_bytes as isize);
-                        prior = prior.offset(output_bytes as isize);
+            if (0..=6).contains(&filter) {
+                i = x.wrapping_sub(1 as stbi__uint32);
+                while i >= 1 as stbi__uint32 {
+                    k = 0i32;
+                    while k < filter_bytes {
+                        *cur.offset(k as isize) =
+                            png_filtered_byte(filter, raw, cur, prior, k, Some(output_bytes));
+                        k += 1;
                     }
+                    i = i.wrapping_sub(1);
+                    *cur.offset(filter_bytes as isize) = 255 as stbi_uc;
+                    raw = raw.offset(filter_bytes as isize);
+                    cur = cur.offset(output_bytes as isize);
+                    prior = prior.offset(output_bytes as isize);
                 }
-                1 => {
-                    i = x.wrapping_sub(1 as stbi__uint32);
-                    while i >= 1 as stbi__uint32 {
-                        k = 0i32;
-                        while k < filter_bytes {
-                            *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
-                                + *cur.offset((k - output_bytes) as isize) as i32
-                                & 255i32)
-                                as stbi_uc;
-                            k += 1;
-                        }
-                        i = i.wrapping_sub(1);
-                        *cur.offset(filter_bytes as isize) = 255 as stbi_uc;
-                        raw = raw.offset(filter_bytes as isize);
-                        cur = cur.offset(output_bytes as isize);
-                        prior = prior.offset(output_bytes as isize);
-                    }
-                }
-                2 => {
-                    i = x.wrapping_sub(1 as stbi__uint32);
-                    while i >= 1 as stbi__uint32 {
-                        k = 0i32;
-                        while k < filter_bytes {
-                            *cur.offset(k as isize) =
-                                (*raw.offset(k as isize) as i32 + *prior.offset(k as isize) as i32
-                                    & 255i32) as stbi_uc;
-                            k += 1;
-                        }
-                        i = i.wrapping_sub(1);
-                        *cur.offset(filter_bytes as isize) = 255 as stbi_uc;
-                        raw = raw.offset(filter_bytes as isize);
-                        cur = cur.offset(output_bytes as isize);
-                        prior = prior.offset(output_bytes as isize);
-                    }
-                }
-                3 => {
-                    i = x.wrapping_sub(1 as stbi__uint32);
-                    while i >= 1 as stbi__uint32 {
-                        k = 0i32;
-                        while k < filter_bytes {
-                            *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
-                                + (*prior.offset(k as isize) as i32
-                                    + *cur.offset((k - output_bytes) as isize) as i32
-                                    >> 1i32)
-                                & 255i32)
-                                as stbi_uc;
-                            k += 1;
-                        }
-                        i = i.wrapping_sub(1);
-                        *cur.offset(filter_bytes as isize) = 255 as stbi_uc;
-                        raw = raw.offset(filter_bytes as isize);
-                        cur = cur.offset(output_bytes as isize);
-                        prior = prior.offset(output_bytes as isize);
-                    }
-                }
-                4 => {
-                    i = x.wrapping_sub(1 as stbi__uint32);
-                    while i >= 1 as stbi__uint32 {
-                        k = 0i32;
-                        while k < filter_bytes {
-                            *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
-                                + stbi__paeth(
-                                    *cur.offset((k - output_bytes) as isize) as i32,
-                                    *prior.offset(k as isize) as i32,
-                                    *prior.offset((k - output_bytes) as isize) as i32,
-                                )
-                                & 255i32)
-                                as stbi_uc;
-                            k += 1;
-                        }
-                        i = i.wrapping_sub(1);
-                        *cur.offset(filter_bytes as isize) = 255 as stbi_uc;
-                        raw = raw.offset(filter_bytes as isize);
-                        cur = cur.offset(output_bytes as isize);
-                        prior = prior.offset(output_bytes as isize);
-                    }
-                }
-                5 => {
-                    i = x.wrapping_sub(1 as stbi__uint32);
-                    while i >= 1 as stbi__uint32 {
-                        k = 0i32;
-                        while k < filter_bytes {
-                            *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
-                                + (*cur.offset((k - output_bytes) as isize) as i32 >> 1i32)
-                                & 255i32)
-                                as stbi_uc;
-                            k += 1;
-                        }
-                        i = i.wrapping_sub(1);
-                        *cur.offset(filter_bytes as isize) = 255 as stbi_uc;
-                        raw = raw.offset(filter_bytes as isize);
-                        cur = cur.offset(output_bytes as isize);
-                        prior = prior.offset(output_bytes as isize);
-                    }
-                }
-                6 => {
-                    i = x.wrapping_sub(1 as stbi__uint32);
-                    while i >= 1 as stbi__uint32 {
-                        k = 0i32;
-                        while k < filter_bytes {
-                            *cur.offset(k as isize) = (*raw.offset(k as isize) as i32
-                                + stbi__paeth(
-                                    *cur.offset((k - output_bytes) as isize) as i32,
-                                    0i32,
-                                    0i32,
-                                )
-                                & 255i32)
-                                as stbi_uc;
-                            k += 1;
-                        }
-                        i = i.wrapping_sub(1);
-                        *cur.offset(filter_bytes as isize) = 255 as stbi_uc;
-                        raw = raw.offset(filter_bytes as isize);
-                        cur = cur.offset(output_bytes as isize);
-                        prior = prior.offset(output_bytes as isize);
-                    }
-                }
-                _ => {}
             }
             if depth == 16i32 {
                 cur = (*a).out.offset(stride.wrapping_mul(j) as isize);
@@ -2039,121 +1904,14 @@ unsafe fn stbi__create_png_image_raw(
             } else {
                 1i32
             }) as stbi_uc;
-            if depth == 4i32 {
-                k = x.wrapping_mul(img_n as stbi__uint32) as i32;
-                while k >= 2i32 {
-                    let fresh20 = cur_0;
-                    cur_0 = cur_0.offset(1);
-                    *fresh20 = (scale as i32 * (*in_0 as i32 >> 4i32)) as stbi_uc;
-                    let fresh21 = cur_0;
-                    cur_0 = cur_0.offset(1);
-                    *fresh21 = (scale as i32 * (*in_0 as i32 & 0xfi32)) as stbi_uc;
-                    k -= 2i32;
-                    in_0 = in_0.offset(1);
-                }
-                if k > 0i32 {
-                    let fresh22 = cur_0;
-                    cur_0 = cur_0.offset(1);
-                    *fresh22 = (scale as i32 * (*in_0 as i32 >> 4i32)) as stbi_uc;
-                }
-            } else if depth == 2i32 {
-                k = x.wrapping_mul(img_n as stbi__uint32) as i32;
-                while k >= 4i32 {
-                    let fresh23 = cur_0;
-                    cur_0 = cur_0.offset(1);
-                    *fresh23 = (scale as i32 * (*in_0 as i32 >> 6i32)) as stbi_uc;
-                    let fresh24 = cur_0;
-                    cur_0 = cur_0.offset(1);
-                    *fresh24 = (scale as i32 * (*in_0 as i32 >> 4i32 & 0x3i32)) as stbi_uc;
-                    let fresh25 = cur_0;
-                    cur_0 = cur_0.offset(1);
-                    *fresh25 = (scale as i32 * (*in_0 as i32 >> 2i32 & 0x3i32)) as stbi_uc;
-                    let fresh26 = cur_0;
-                    cur_0 = cur_0.offset(1);
-                    *fresh26 = (scale as i32 * (*in_0 as i32 & 0x3i32)) as stbi_uc;
-                    k -= 4i32;
-                    in_0 = in_0.offset(1);
-                }
-                if k > 0i32 {
-                    let fresh27 = cur_0;
-                    cur_0 = cur_0.offset(1);
-                    *fresh27 = (scale as i32 * (*in_0 as i32 >> 6i32)) as stbi_uc;
-                }
-                if k > 1i32 {
-                    let fresh28 = cur_0;
-                    cur_0 = cur_0.offset(1);
-                    *fresh28 = (scale as i32 * (*in_0 as i32 >> 4i32 & 0x3i32)) as stbi_uc;
-                }
-                if k > 2i32 {
-                    let fresh29 = cur_0;
-                    cur_0 = cur_0.offset(1);
-                    *fresh29 = (scale as i32 * (*in_0 as i32 >> 2i32 & 0x3i32)) as stbi_uc;
-                }
-            } else if depth == 1i32 {
-                k = x.wrapping_mul(img_n as stbi__uint32) as i32;
-                while k >= 8i32 {
-                    let fresh30 = cur_0;
-                    cur_0 = cur_0.offset(1);
-                    *fresh30 = (scale as i32 * (*in_0 as i32 >> 7i32)) as stbi_uc;
-                    let fresh31 = cur_0;
-                    cur_0 = cur_0.offset(1);
-                    *fresh31 = (scale as i32 * (*in_0 as i32 >> 6i32 & 0x1i32)) as stbi_uc;
-                    let fresh32 = cur_0;
-                    cur_0 = cur_0.offset(1);
-                    *fresh32 = (scale as i32 * (*in_0 as i32 >> 5i32 & 0x1i32)) as stbi_uc;
-                    let fresh33 = cur_0;
-                    cur_0 = cur_0.offset(1);
-                    *fresh33 = (scale as i32 * (*in_0 as i32 >> 4i32 & 0x1i32)) as stbi_uc;
-                    let fresh34 = cur_0;
-                    cur_0 = cur_0.offset(1);
-                    *fresh34 = (scale as i32 * (*in_0 as i32 >> 3i32 & 0x1i32)) as stbi_uc;
-                    let fresh35 = cur_0;
-                    cur_0 = cur_0.offset(1);
-                    *fresh35 = (scale as i32 * (*in_0 as i32 >> 2i32 & 0x1i32)) as stbi_uc;
-                    let fresh36 = cur_0;
-                    cur_0 = cur_0.offset(1);
-                    *fresh36 = (scale as i32 * (*in_0 as i32 >> 1i32 & 0x1i32)) as stbi_uc;
-                    let fresh37 = cur_0;
-                    cur_0 = cur_0.offset(1);
-                    *fresh37 = (scale as i32 * (*in_0 as i32 & 0x1i32)) as stbi_uc;
-                    k -= 8i32;
-                    in_0 = in_0.offset(1);
-                }
-                if k > 0i32 {
-                    let fresh38 = cur_0;
-                    cur_0 = cur_0.offset(1);
-                    *fresh38 = (scale as i32 * (*in_0 as i32 >> 7i32)) as stbi_uc;
-                }
-                if k > 1i32 {
-                    let fresh39 = cur_0;
-                    cur_0 = cur_0.offset(1);
-                    *fresh39 = (scale as i32 * (*in_0 as i32 >> 6i32 & 0x1i32)) as stbi_uc;
-                }
-                if k > 2i32 {
-                    let fresh40 = cur_0;
-                    cur_0 = cur_0.offset(1);
-                    *fresh40 = (scale as i32 * (*in_0 as i32 >> 5i32 & 0x1i32)) as stbi_uc;
-                }
-                if k > 3i32 {
-                    let fresh41 = cur_0;
-                    cur_0 = cur_0.offset(1);
-                    *fresh41 = (scale as i32 * (*in_0 as i32 >> 4i32 & 0x1i32)) as stbi_uc;
-                }
-                if k > 4i32 {
-                    let fresh42 = cur_0;
-                    cur_0 = cur_0.offset(1);
-                    *fresh42 = (scale as i32 * (*in_0 as i32 >> 3i32 & 0x1i32)) as stbi_uc;
-                }
-                if k > 5i32 {
-                    let fresh43 = cur_0;
-                    cur_0 = cur_0.offset(1);
-                    *fresh43 = (scale as i32 * (*in_0 as i32 >> 2i32 & 0x1i32)) as stbi_uc;
-                }
-                if k > 6i32 {
-                    let fresh44 = cur_0;
-                    cur_0 = cur_0.offset(1);
-                    *fresh44 = (scale as i32 * (*in_0 as i32 >> 1i32 & 0x1i32)) as stbi_uc;
-                }
+            if depth == 4i32 || depth == 2i32 || depth == 1i32 {
+                (cur_0, in_0, k) = unpack_png_low_depth(
+                    cur_0,
+                    in_0,
+                    x.wrapping_mul(img_n as stbi__uint32) as i32,
+                    depth,
+                    scale,
+                );
             }
             if img_n != out_n {
                 let mut q: i32 = 0;
