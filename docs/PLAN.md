@@ -173,6 +173,31 @@ keep the fixed target visible instead of claiming success from small cleanups.
 
 ### Already harvested or parked
 
+- Hopping-cycle projection (2026-10-20, based on `9cce192d`): sharing
+  Sidehopper, Beetom and Thin Hopping Blobs movement phases replaces 31
+  entry points / 549 lines with 259 lines including eight helpers and callers,
+  a **290-line net reduction**. The complete named families contain 82 ordinary
+  functions / 1,097 lines. The temporary draft formats and passes
+  `cargo check --release --all-targets --locked`; it has no normal release or
+  oracle replay result and remains parked. This prices the selected hopping
+  algorithms, not the wider enemy/projectile workstream.
+- Samus action projection (same baseline): the four jump initializers plus
+  horizontal displacement/collision, air control, jump release, ground-ball,
+  bomb-jump, bounce and airborne-turn paths replace 22 entry points with a
+  **152-line net reduction**, including helpers and callers across 90/91.
+  Formatting and `cargo check --release --all-targets --locked` pass. No normal
+  release, oracle replay or equivalence result is claimed; park this draft too.
+  Zero-speed collision calls, springball byte/full-word phase checks and the
+  wall-jump extra read remain explicit. This is a measured subset of workstream
+  2, not a bound on all Samus algorithms. Neither parked draft funds the target.
+- Transfer discovery at the same source: of 372 loop candidates, 282 disjoint
+  copy/fill/word-transform candidates occupy 2,014 loop lines; 86 distinct
+  algorithms occupy 1,321, and four nested duplicates account for 46. These
+  are gross spans, not net savings. The separate 151 adjacent-store runs / 841
+  lines include unrelated field initialization and overlap the loop survey.
+  Do not add these totals into the budget. A complete transfer projection must
+  count helpers/callers and retain direction, overlap, cursor wrapping, live
+  reads and store order.
 - Shared RAM/word/byte interfaces, enemy layouts, metadata, instruction
   declarations, forwarding wrappers, address dispatch, exact aliases and
   audited unused-function removal are already in current source. Their old
