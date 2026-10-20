@@ -20,6 +20,42 @@ iterations. Readability takes priority in maintained gameplay and hardware
 code. Earlier gameplay, renderer, DSP and CPU speedup follow-ups below are
 retired; preserve their behavior while making the code easier to read.
 
+## Shared snapshot field diagnostics (2026-10-20)
+
+VerifySnapshotsEq now shares the repeated comparison/failure/report sequence
+for 18 snapshot fields, in four original-position groups of 1/14/2/1. Every
+field, comparison direction, failure-flag store, diagnostic literal/specifier,
+frame read and repeated field read remains unchanged. Special tuple, pixel,
+audio and memory comparisons stay explicit. The complete formatted change
+removes **117 lines**, including the local macro and all callers.
+
+Independent source inversion reconstructs the entire original cpu_infra.rs
+exactly and checks macro scope/hygiene. Full frontend-library compiler
+expansions match **10266722 normalized bytes** after excluding only the new
+macro declaration, inter-token whitespace and the decoded/file-bound changed
+source payload. Every verifier comparison and operation remains identical.
+This uses the current static validation strategy; no new movie is claimed.
+
+Formatting, normal release (21.11s frozen; 31.35s main), compiled-library
+source checks (1.89s frozen; 1.99s main), diff check and progress pass. The
+existing frozen source/target is refreshed from ae5ee73a; no build artifacts
+are copied. Foreign shader work is preserved separately. Committed Rust is
+**112265 lines**, leaving **12266 further lines** to reach below 100000.
+Other progress counters are unchanged. Checks and the independent report are
+under TEMP sm-snapshot-fields-ae5ee73a. The full remaining budget is unproven.
+
+The efficiency subagent reconciled the old 445-line whole-function-template
+draft without repeating discovery. Only 29 complete groups / 71 functions
+across 15 banks survive unchanged, saving **185 formatted lines** including
+the 530-line template module and both registrations. The other 27 groups
+overlap landed sharing or later edits; their old savings cannot be counted
+again. This generic representation remains parked without builds or behavior
+validation. Report: TEMP sm-known-cohort-reconcile-2941c9a9/REPORT.md.
+The separate bitwise-word-update draft saves **62 complete formatted lines**
+at 136 OR/AND/XOR callers across 22 files, including its macro cost; source
+inversion passes but no compiler/behavior checks ran. Keep it parked too
+(TEMP sm-word-bitwise-0a0d22b8). Neither draft supplies the remaining budget.
+
 ## Shared HUD highlight traversal (2026-10-20)
 
 ToggleHudItemHighlight now traverses each icon's tiles once, preserving the

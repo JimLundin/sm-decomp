@@ -486,14 +486,17 @@ unsafe fn VerifySnapshotsEq(
             );
         }
     }
-    if (*b).status_flags != (*a).status_flags {
-        game.g_fail = true;
-        eprintln!(
-            "@{}: PPU status flags (rangeOver, timeOver, evenFrame) compare failed: mine {:?} != theirs {:?}",
-            game.snes_frame_counter,
-            (*b).status_flags,
-            (*a).status_flags
-        );
+    // Keep every field comparison and diagnostic in its original order.
+    macro_rules! compare_snapshot_fields {
+        ($($field:ident => $message:literal),* $(,)?) => {
+            $(if (*b).$field != (*a).$field {
+                game.g_fail = true;
+                eprintln!($message, game.snes_frame_counter, (*b).$field, (*a).$field);
+            })*
+        };
+    }
+    compare_snapshot_fields! {
+        status_flags => "@{}: PPU status flags (rangeOver, timeOver, evenFrame) compare failed: mine {:?} != theirs {:?}",
     }
     if ((*b).brightness, (*b).forced_blank) != ((*a).brightness, (*a).forced_blank) {
         game.g_fail = true;
@@ -504,121 +507,21 @@ unsafe fn VerifySnapshotsEq(
             ((*a).brightness, (*a).forced_blank)
         );
     }
-    if (*b).display_geometry != (*a).display_geometry {
-        game.g_fail = true;
-        eprintln!(
-            "@{}: Display geometry (interlace, OBJ interlace, overscan, pseudo-hires, frame interlace, frame overscan) compare failed: mine {:?} != theirs {:?}",
-            game.snes_frame_counter, (*b).display_geometry, (*a).display_geometry
-        );
-    }
-    if (*b).color_selection != (*a).color_selection {
-        game.g_fail = true;
-        eprintln!(
-            "@{}: CGWSEL (clip, prevent math, subscreen, direct color) compare failed: mine {:?} != theirs {:?}",
-            game.snes_frame_counter, (*b).color_selection, (*a).color_selection
-        );
-    }
-    if (*b).color_math != (*a).color_math {
-        game.g_fail = true;
-        eprintln!(
-            "@{}: CGADSUB (subtract, half, layer enables) compare failed: mine {:?} != theirs {:?}",
-            game.snes_frame_counter,
-            (*b).color_math,
-            (*a).color_math
-        );
-    }
-    if (*b).fixed_color != (*a).fixed_color {
-        game.g_fail = true;
-        eprintln!(
-            "@{}: Fixed color (R, G, B) compare failed: mine {:?} != theirs {:?}",
-            game.snes_frame_counter,
-            (*b).fixed_color,
-            (*a).fixed_color
-        );
-    }
-    if (*b).window_bounds != (*a).window_bounds {
-        game.g_fail = true;
-        eprintln!(
-            "@{}: Window boundaries (WH0, WH1, WH2, WH3) compare failed: mine {:?} != theirs {:?}",
-            game.snes_frame_counter,
-            (*b).window_bounds,
-            (*a).window_bounds
-        );
-    }
-    if (*b).window_select != (*a).window_select {
-        game.g_fail = true;
-        eprintln!(
-            "@{}: Window selection (raw, enables, inversion, logic) compare failed: mine {:?} != theirs {:?}",
-            game.snes_frame_counter, (*b).window_select, (*a).window_select
-        );
-    }
-    if (*b).screen_routing != (*a).screen_routing {
-        game.g_fail = true;
-        eprintln!(
-            "@{}: Screen routing (enables, windows, layer flags) compare failed: mine {:?} != theirs {:?}",
-            game.snes_frame_counter, (*b).screen_routing, (*a).screen_routing
-        );
-    }
-    if (*b).bg_address != (*a).bg_address {
-        game.g_fail = true;
-        eprintln!(
-            "@{}: BG address (wide, high, tilemap, tile data) compare failed: mine {:?} != theirs {:?}",
-            game.snes_frame_counter, (*b).bg_address, (*a).bg_address
-        );
-    }
-    if (*b).bg_scroll != (*a).bg_scroll {
-        game.g_fail = true;
-        eprintln!(
-            "@{}: BG scroll (horizontal, vertical) compare failed: mine {:?} != theirs {:?}",
-            game.snes_frame_counter,
-            (*b).bg_scroll,
-            (*a).bg_scroll
-        );
-    }
-    if (*b).bgmode != (*a).bgmode {
-        game.g_fail = true;
-        eprintln!(
-            "@{}: BGMODE (mode, BG3 priority, tile sizes) compare failed: mine {:?} != theirs {:?}",
-            game.snes_frame_counter,
-            (*b).bgmode,
-            (*a).bgmode
-        );
-    }
-    if (*b).mosaic != (*a).mosaic {
-        game.g_fail = true;
-        eprintln!(
-            "@{}: Mosaic (BG enables, size, start line) compare failed: mine {:?} != theirs {:?}",
-            game.snes_frame_counter,
-            (*b).mosaic,
-            (*a).mosaic
-        );
-    }
-    if (*b).mode7_flags != (*a).mode7_flags {
-        game.g_fail = true;
-        eprintln!(
-            "@{}: Mode 7 flags (large field, character fill, X flip, Y flip, EXTBG) compare failed: mine {:?} != theirs {:?}",
-            game.snes_frame_counter,
-            (*b).mode7_flags,
-            (*a).mode7_flags
-        );
-    }
-    if (*b).mode7_matrix != (*a).mode7_matrix {
-        game.g_fail = true;
-        eprintln!(
-            "@{}: Mode 7 matrix compare failed: mine {:?} != theirs {:?}",
-            game.snes_frame_counter,
-            (*b).mode7_matrix,
-            (*a).mode7_matrix
-        );
-    }
-    if (*b).counters != (*a).counters {
-        game.g_fail = true;
-        eprintln!(
-            "@{}: PPU counter compare failed: mine {:?} != theirs {:?}",
-            game.snes_frame_counter,
-            (*b).counters,
-            (*a).counters
-        );
+    compare_snapshot_fields! {
+        display_geometry => "@{}: Display geometry (interlace, OBJ interlace, overscan, pseudo-hires, frame interlace, frame overscan) compare failed: mine {:?} != theirs {:?}",
+        color_selection => "@{}: CGWSEL (clip, prevent math, subscreen, direct color) compare failed: mine {:?} != theirs {:?}",
+        color_math => "@{}: CGADSUB (subtract, half, layer enables) compare failed: mine {:?} != theirs {:?}",
+        fixed_color => "@{}: Fixed color (R, G, B) compare failed: mine {:?} != theirs {:?}",
+        window_bounds => "@{}: Window boundaries (WH0, WH1, WH2, WH3) compare failed: mine {:?} != theirs {:?}",
+        window_select => "@{}: Window selection (raw, enables, inversion, logic) compare failed: mine {:?} != theirs {:?}",
+        screen_routing => "@{}: Screen routing (enables, windows, layer flags) compare failed: mine {:?} != theirs {:?}",
+        bg_address => "@{}: BG address (wide, high, tilemap, tile data) compare failed: mine {:?} != theirs {:?}",
+        bg_scroll => "@{}: BG scroll (horizontal, vertical) compare failed: mine {:?} != theirs {:?}",
+        bgmode => "@{}: BGMODE (mode, BG3 priority, tile sizes) compare failed: mine {:?} != theirs {:?}",
+        mosaic => "@{}: Mosaic (BG enables, size, start line) compare failed: mine {:?} != theirs {:?}",
+        mode7_flags => "@{}: Mode 7 flags (large field, character fill, X flip, Y flip, EXTBG) compare failed: mine {:?} != theirs {:?}",
+        mode7_matrix => "@{}: Mode 7 matrix compare failed: mine {:?} != theirs {:?}",
+        counters => "@{}: PPU counter compare failed: mine {:?} != theirs {:?}",
     }
     if ((*b).ppu1_open_bus, (*b).ppu2_open_bus) != ((*a).ppu1_open_bus, (*a).ppu2_open_bus) {
         game.g_fail = true;
@@ -667,23 +570,9 @@ unsafe fn VerifySnapshotsEq(
             game.snes_frame_counter, mine_vram_port, their_vram_port
         );
     }
-    if (*b).vram_read_buffer != (*a).vram_read_buffer {
-        game.g_fail = true;
-        eprintln!(
-            "@{}: VRAM read buffer compare failed: mine ${:04X} != theirs ${:04X}",
-            game.snes_frame_counter,
-            (*b).vram_read_buffer,
-            (*a).vram_read_buffer
-        );
-    }
-    if (*b).write_latches != (*a).write_latches {
-        game.g_fail = true;
-        eprintln!(
-            "@{}: PPU write latch compare failed (scrollPrev, scrollPrev2, m7prev): mine {:?} != theirs {:?}",
-            game.snes_frame_counter,
-            (*b).write_latches,
-            (*a).write_latches
-        );
+    compare_snapshot_fields! {
+        vram_read_buffer => "@{}: VRAM read buffer compare failed: mine ${:04X} != theirs ${:04X}",
+        write_latches => "@{}: PPU write latch compare failed (scrollPrev, scrollPrev2, m7prev): mine {:?} != theirs {:?}",
     }
     if (*b).cgram != (*a).cgram {
         game.g_fail = true;
@@ -877,14 +766,8 @@ unsafe fn VerifySnapshotsEq(
             eprintln!("OAM byte ${offset:03X}: mine ${mine:04X} != theirs ${theirs:04X}, previous ${previous:04X}");
         }
     }
-    if (*b).sprite != (*a).sprite {
-        game.g_fail = true;
-        eprintln!(
-            "@{}: Sprite state compare failed: mine {:?} != theirs {:?}",
-            game.snes_frame_counter,
-            (*b).sprite,
-            (*a).sprite
-        );
+    compare_snapshot_fields! {
+        sprite => "@{}: Sprite state compare failed: mine {:?} != theirs {:?}",
     }
 }
 // Snapshot storage is separate from the live emulator allocations. Narrow
