@@ -6333,6 +6333,37 @@ Everything that existed before is in the branch `archive/pre-transpile-2026-10-1
 
 ## Workspace discipline
 
+Performance/storage oversight (2026-10-20): coordinate new heavy builds and
+replays with the active implementation owners. Report normal release time,
+verifier setup time and full replay time separately, with source, movie,
+cache and concurrent-load context. Compare matched runs before calling a
+timing change a regression or improvement. Keep all oracle checks and the
+required final any% replay; use exercised checkpoint segments for iteration.
+Use `CARGO_INCREMENTAL=0` for disposable snapshots, registry-only dependency
+seeding and checkout-local game/host artifacts. Do not copy an entire prior
+target directory. After landing or abandoning work, retire its disposable
+artifacts once owners confirm that active helpers and inputs no longer need
+them. Report cleanup failures rather than accumulating silent copies.
+
+The oversight pass found about **96.8 GiB free on C:** and **5.6-6.0 GiB
+available RAM**. Four replay workers advanced between observations, each with
+about 33 MiB resident memory; no Git locks were present. Recent normal release
+builds took **19.29-26.14s**, and host setup took **2.28-3.79s**. One completed
+source-checked any% replay passed **129712/0 in 163.76s** under concurrent load.
+These are observations of the owners' runs, not controlled benchmarks or
+new verification of the changing shared checkout.
+
+A read-only scan counted **1,635 project-prefixed TEMP directories** totaling
+**250,664,501,994 logical bytes (233.45 GiB)**; 75 vanished/unreadable paths
+were excluded. Main's target held **3.22 GiB**, versus about **4.45 MiB** in
+sm and **143.8 MiB** in Git. Logical file sizes are not allocated disk usage.
+The bindings and ROM-pointer roots held about 1.02 GiB and 315 MiB and were
+still active. The cleanup owner confirms that substantial retired-artifact
+deletion remains blocked by the earlier automatic policy rejection; no user
+deletion was reported. Storage cleanup remains unfinished. Active owners
+have been contacted about artifact lifetimes, dependency-only reuse and
+resource/timing reports; no new monitoring tooling or runtime change is added.
+
 File lifetime (user direction, 2026-10-20): after committing or abandoning
 work, remove its disposable scripts, copied source trees, probes and logs
 from both target and the system temporary directory once no active task or
