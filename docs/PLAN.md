@@ -100,9 +100,36 @@ unchanged. TEMP drafts/checks are under `sm-zero-pointer-offsets-7e41e99c`,
 
 New declaration-fragment pricing saves only 72 lines across 24 adjacent macro
 groups. Separate import grouping saves 139, mostly presentation changes. Both
-remain parked without builds. The next distinct repetition study compares
-existing helper algorithms with copies embedded inside larger callers, avoiding
-new-helper costs. The under-100000 target and its complete budget stay open.
+remain parked without builds. Two distinct repetition studies also finish small:
+
+- Internal branch sharing: **73 formatted lines** across 27 functions/12 files,
+  including shared prefixes/tails (42), equal match arms (25) and reusing the
+  existing suit-palette helper (6). Forty-four eligible drafts were formatted;
+  nonpositive projections and scope/routing exceptions retain their originals.
+  RestoreMissiles captures its threshold before the shared reserve update.
+- Existing-helper algorithms repeated inside larger callers: **49 formatted
+  lines**, eight sites/banks, no new helper or import. Nine bounded matches were
+  inspected; the walking/ninja space-pirate match was rejected because its
+  captured enemy pointer remains live after dispatch. The Samus palette example
+  above is excluded. New native calls would need Game-borrow-boundary review.
+
+These complete TEMP drafts have formatting/pricing only, no compiler or behavior
+validation. They remain parked under the substantial-family priority. Reports
+are in `sm-declaration-groups-c6a9c564`, `sm-shared-arms-c6a9c564` and
+`sm-existing-helper-reuse-c6a9c564`. Neither their containing-function sizes nor
+these small prices demonstrate the remaining budget; do not repeat the same
+bounded scans. The concurrent occupied-file navigation commit `b9759013`
+subsequently brings committed Rust to **112752**, leaving **12753 lines** for
+the under-100000 target. Its source and PLAN update are preserved. These new
+discovery notes are documentation only; no additional build or replay is claimed.
+
+After landing, all involved agents confirmed no active disposable-artifact
+dependencies. No Python/Cargo/Rust compiler process or Git lock remained in
+the live check. Checked native PowerShell deletion of the two completed
+zero-offset validation roots and these three discovery roots was rejected by
+automatic approval review as **"blocked by policy"**. No deletion occurred;
+the read-only inventory was 914 files / 207050656 bytes before that attempt.
+The parent's current frozen build cache and main target remain retained.
 
 ## Shared key-group construction (2026-10-20)
 
