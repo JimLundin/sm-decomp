@@ -2437,7 +2437,28 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `33abebc9` shares the complete
+Latest reviewed integration (2026-10-20): `f8b235ce` shares all 95 callback
+array initializers across 17 callers. Independent AST inventory and signature
+review cover all 1039 slots: 1020 function casts, 18 None entries and the
+unchanged transmute. All 12 aliases and 36 caller bindings resolve to their
+original types, including the local PairU16 callback alias. The 93 unsafe
+and two plain initializers retain their scopes; declarations and callers
+remain intact. The nested demo-table reference array is unchanged.
+
+Full-source reconstruction, including rustfmt import placement, binds all
+76 committed source/config/host inputs to the frozen CPU/string composition.
+Reviewed actual compiler expansion retains all 2228487 baseline tokens after
+only the exact helper/imports and 1020 verified cast-alias substitutions.
+Every comma, literal, null slot and transmute expression remains exact.
+All three helper/expansion hashes remain stable.
+
+Normal release (30.14s), formatting/check, progress and any% 129712/0
+(134.33s wall, 134.16s replay), native exit 0, pass. All 82 replay pins remain
+unchanged after completion; review reused these checks. Net Rust lines -821,
+total 137298; other progress counters remain unchanged. No removal of runtime
+unsafe operations or execution coverage of every callback route is claimed.
+
+Included `33abebc9` shares the complete
 177-arm CPU address/operation family. Reused independent source review binds
 all 255 ordered dispatch arms, 78 retained special cases, opcode hooks and
 88 other functions to the original source. The macro preserves the original
