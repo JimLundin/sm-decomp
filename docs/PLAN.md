@@ -257,7 +257,7 @@ explicit domain migration but is not evidence of a large volume payoff.
    completed replacement, record baseline -> result, net deletion including
    shared code, checks, and the remaining gap. Count overlapping spans once.
    Keep measured drafts separate from landed savings. No selected large
-   replacement yet funds the **11,415-line** gap; parked small drafts are not
+   replacement yet funds the **10,296-line** gap; parked small drafts are not
    an aggregate reduction forecast. Update the budget as candidates qualify.
 
    Complete local-binding cohort: **207 bindings across 31 files**, placing
@@ -290,6 +290,15 @@ explicit domain migration but is not evidence of a large volume payoff.
    and documentation. Independent reconstruction and whole-library compiler
    expansion establish identical executable operations and store order. Normal
    release and compiled-source checks pass; this is static-only validation.
+
+   Complete PNG texture loading removes **1,119 lines (111,414 -> 110,295)**:
+   a shared filter/unpack/pass loop, chunk parser and buffered input replace
+   repeated decoding paths; the exact legacy inflater remains maintained.
+   Counts include both modules, imports, caller and source registrations; no
+   dependencies are added. All 385 frozen cases match through decoding and file
+   loading (770 comparisons), including unusual formats and malformed-stream
+   quirks. Independent input-operation review, normal release and compiled-source
+   checks pass. This frontend-only change needs no gameplay replay.
 
    Keep one active implementation per overlapping subsystem. Use a stable
    source snapshot and checkout-local build cache for its checks. Design
@@ -339,8 +348,10 @@ may overlap landed work and are not a current reduction budget.
 - Grapple angular sweep: a 126-line draft passes 6,574 original/replacement
   comparisons and 6,574 oracle cases plus 254 follow-up calls. It remains
   unlanded and parked as a standalone fragment; no movie execution is claimed.
-- Renderer unification and PNG library substitution remain parked: previously
-  assessed alternatives did not preserve the existing contracts.
+- Renderer unification remains parked: assessed alternatives did not preserve
+  the existing contracts. PNG inflater substitution is rejected by concrete
+  EOF/reserved-code counterexamples; the native decoder replacement above
+  retains that inflater and removes only the surrounding repeated algorithms.
 - Single-use local inlining: 318 order-safe scalar candidates across 38 files
   grow by 86 formatted lines with ordinary inference, or 181 with explicit
   type constraints. Reject both; no compilation or behavior claim. Branch
@@ -349,6 +360,12 @@ may overlap landed work and are not a current reduction budget.
   studies do not justify repeating the same scans. TEMP reports/drafts:
   sm-single-use-8d654c29, sm-branch-prefixes-8d654c29,
   sm-audio-repetition-8d654c29 and sm-dead-initializers-8d654c29.
+
+Further syntax preflight at b64a0470 found no substantial unpriced cohort:
+844 non-shader direct wrapping assignments occupy 963 lines; 329 adjacent
+computed-result/store pairs occupy 844 gross lines before replacement costs.
+Pointer, timer, null-guard and string-cast envelopes provide no credible
+thousand-line replacement. These bounds do not exhaust algorithmic sharing.
 
 When revisiting one of these exact families, consult its historical section
 with `git show ec45c573:docs/PLAN.md` and search the relevant heading/symbol.
@@ -469,12 +486,13 @@ exports 4; no_mangle 8; unsafe functions 5307; i32/c_int cast lines 8848;
 Rust lines 112265. The unrelated 83-line shader draft is excluded from the
 committed baseline and budget.
 
-After the Japanese correction, local-binding cohort, intro-page replacement,
-enemy callback imports and ordered stores, maintained Rust is **111,414**,
-leaving **11,415** to reach 99,999. Counters:
+After the Japanese correction, local bindings, intro pages, enemy callback
+imports, ordered stores and PNG texture loading, maintained Rust is **110,295**,
+leaving **10,296** to reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
-unsafe functions 5278; cast lines 8843. Uncommitted frontend work remains
-excluded; working-tree counts are not the committed baseline. Intro lifecycle
-replacement is complete; continue item 2's remaining-responsibility comparison.
+unsafe functions 5236; cast lines 8746. The unrelated 83-line shader draft
+remains excluded; working-tree counts are not the committed baseline.
+Continue item 2's remaining-responsibility comparison and the complete
+hopping-lifecycle candidate's outstanding validation.
 
 Historical details before this reset remain in **ec45c573:docs/PLAN.md**.
