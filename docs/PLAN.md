@@ -223,6 +223,16 @@ explicit domain migration but is not evidence of a large volume payoff.
    Continue discovery from the remaining responsibilities, using these bounded
    preflights and measured drafts instead of repeating the same searches.
 
+   Complete hopping-enemy repricing at b64a0470 includes initialization,
+   routing, animation, movement and contact handling for Sidehopper, Beetom
+   and Thin Hopping Blobs. Relocation costs 26 lines; the full replacement
+   removes only **44 net lines**, including all imports and registrations.
+   It formats and compiles across all targets, with no new runtime coverage.
+   Park this volume candidate and advance discovery. The earlier covered
+   Sidehopper/Beetom sharing is already in the baseline, so its historical
+   projection cannot be counted again. Draft: TEMP
+   sm-bindings-root-9c4daf2f/hopping-lifecycle/REPORT.md.
+
    - Enemy/projectile lifecycles across A2/A3/A8/B2/B3/86: initialization,
      state selection, movement, collision, animation and reset together.
      Classify real differences before choosing shared algorithms and data.
@@ -304,8 +314,10 @@ may overlap landed work and are not a current reduction budget.
   71 functions for only 185 net lines; generic representation remains parked.
 - Named repeated-algorithm extraction: 713 lines already landed. Earlier
   548/808-line estimates and the rejected 1,227-line draft overlap it.
-- Hopping cycles: 31 entries / 549 old lines replaced with 259, saving 290;
-  the selected Sidehopper/Beetom/Thin Hopping Blob subset is parked.
+- Hopping cycles: the historical 290-line projection overlaps the covered
+  Sidehopper/Beetom sharing landed in 7a9e0122. The remaining Blob animation,
+  Beetom descent and release changes are unlanded; the complete current
+  lifecycle draft above saves 44 lines, not 290.
 - Samus jump/movement subset: 22 entries, 152 net lines; parked. It did not
   redesign the joint movement/pose/transition pipeline in work-order item 1.
 - Script execution: 22 selected loop spans contain only 578 gross lines and
@@ -461,8 +473,8 @@ After the Japanese correction, local-binding cohort, intro-page replacement,
 enemy callback imports and ordered stores, maintained Rust is **111,414**,
 leaving **11,415** to reach 99,999. Counters:
 raw offsets 30; extern C blocks 3; counted C ABI exports 4; no_mangle 8;
-unsafe functions 5278; cast lines 8843. The unrelated 83-line shader draft
-remains excluded; working-tree progress reports **111,331**. Intro lifecycle
+unsafe functions 5278; cast lines 8843. Uncommitted frontend work remains
+excluded; working-tree counts are not the committed baseline. Intro lifecycle
 replacement is complete; continue item 2's remaining-responsibility comparison.
 
 Historical details before this reset remain in **ec45c573:docs/PLAN.md**.
