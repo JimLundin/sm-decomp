@@ -6245,6 +6245,27 @@ Everything that existed before is in the branch `archive/pre-transpile-2026-10-1
 
 ## Workspace discipline
 
+File lifetime (user direction, 2026-10-20): after committing or abandoning
+work, remove its disposable scripts, copied source trees, probes and logs
+from both target and the system temporary directory once no active task or
+retained helper depends on them. Moving files to another directory is not
+cleanup. Keep current build caches and inputs still needed for verification.
+Check live task status, child processes, memory/disk use and Git locks before
+starting another batch. Confirm progress from live handles; an observation
+timeout alone is not a stopped task. Never remove another process's lock.
+
+Workspace audit (2026-10-20): project-prefixed temporary files total roughly
+229 GiB. Of 86 explicitly retired/cache directories, two still have helper
+dependencies. Bulk deletion of the reviewed independent directories, and a
+smaller compiler-artifact-only batch, was rejected as "blocked by policy".
+One individually named obsolete Python bytecode file (5,270 bytes) was
+deleted. Further cleanup remains unfinished; historical recovery-path notes
+below are not a requirement to retain spent artifacts indefinitely.
+Two implementation tasks are active; the shader task has a terminal socket
+timeout, with its unfinished source and validation files retained. No Git
+lock or lingering shader replay process was found. Formatting, release build
+and progress pass; this audit changes no gameplay or verification inputs.
+
 Retired transpiler fixup (2026-10-20): remove the unused 110-line
 tools/transpile/fixup.py. Its original-output paths and line numbers have no
 current build, CI or maintenance callers. Keep the provenance README and a
