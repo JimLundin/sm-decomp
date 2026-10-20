@@ -3,6 +3,7 @@ use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_82::*;
 pub use crate::game::constants::buttons::*;
 pub use crate::game::constants::game_states::*;
+use crate::game::enemy_instruction;
 use crate::game::sm_80::{
     HandleFadeIn, HandleFadeOut, HasQueuedMusic, LoadFromLoadStation, LoadMirrorOfExploredMapTiles,
     QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx3_Max6, ScreenOff, ScreenOn, SetupDmaTransfer,
@@ -868,8 +869,7 @@ pub unsafe fn GameOverMenu_1_Init(game: &mut Game) {
     LoadMenuTilemap(0x414u16, addr_kMenuTilemap_TryAgain as u16, game);
     LoadMenuTilemap(0x4ceu16, addr_kMenuTilemap_YesReturnToGame as u16, game);
     LoadMenuTilemap(0x5ceu16, addr_kMenuTilemap_NoGoToTitle as u16, game);
-    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).current_instruction = 0u16;
-    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).instruction_timer = 0u16;
+    enemy_instruction! {[(*(ram_ptr!(game, EnemyData; 0xf78)).offset(0))]; instruction = 0u16, timer = 0u16}
     HandleGameOverBabyMetroid(game);
     *(ram_ptr!(game, u16; 0x6f)) = ((*ram_ptr!(game; 0x70) as i32) << 8i32) as u16;
     DisableHdmaObjects(game);

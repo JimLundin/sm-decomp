@@ -5,6 +5,7 @@ pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_a6::*;
 pub use crate::game::constants::bank_a9::*;
 pub use crate::game::constants::enemy_properties::*;
+use crate::game::enemy_instruction;
 use crate::game::enemy_layouts::enemy_layout;
 use crate::game::sm_80::{
     CheckEventHappened, NextRandom, QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx2_Max3,
@@ -3933,14 +3934,12 @@ pub unsafe fn MoveEnemyWithVelocity(game: &mut Game) {
 }
 pub unsafe fn MotherBrain_SetBodyInstrs(a: u16, game: &mut Game) {
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0i32, game);
-    (*E).base.current_instruction = a;
-    (*E).base.instruction_timer = 1u16;
+    enemy_instruction! {[(*E).base]; instruction = a, timer = 1u16}
     (*E).base.timer = 0u16;
 }
 pub unsafe fn MotherBrain_SetBrainUnusedInstrs(a: u16, game: &mut Game) {
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40i32, game);
-    (*E).base.current_instruction = a;
-    (*E).base.instruction_timer = 1u16;
+    enemy_instruction! {[(*E).base]; instruction = a, timer = 1u16}
     (*E).base.timer = 0u16;
 }
 pub unsafe fn MotherBrain_SetBrainInstrs(a: u16, game: &mut Game) {
@@ -3950,8 +3949,7 @@ pub unsafe fn MotherBrain_SetBrainInstrs(a: u16, game: &mut Game) {
 }
 pub unsafe fn Enemy_SetInstrList(k: u16, a: u16, game: &mut Game) {
     let v2: *mut EnemyData = gEnemyData(k as i32, game);
-    (*v2).current_instruction = a;
-    (*v2).instruction_timer = 1u16;
+    enemy_instruction! {[(*v2)]; instruction = a, timer = 1u16}
     (*v2).timer = 0u16;
 }
 pub unsafe fn ComputeSinMult(a: u16, r18: u16, game: &mut Game) -> u16 {
@@ -4201,8 +4199,7 @@ pub unsafe fn ShitroidInCutscene_Init(game: &mut Game) {
         | (kEnemyProps_DisableSamusColl as i32 | kEnemyProps_BlockPlasmaBeam as i32))
         as u16;
     (*E).base.palette_index = 3584u16;
-    (*E).base.current_instruction = addr_kShitroid_Ilist_CFA2 as u16;
-    (*E).base.instruction_timer = 1u16;
+    enemy_instruction! {[(*E).base]; instruction = addr_kShitroid_Ilist_CFA2 as u16, timer = 1u16}
     (*E).sice_var_04 = 1u16;
     (*E).base.timer = 0u16;
     (*E).sice_var_E = 10u16;
@@ -5093,8 +5090,7 @@ pub unsafe fn DeadTorizo_Init(game: &mut Game) {
     let E: *mut Enemy_DeadTorizo = Get_DeadTorizo(0i32, game);
     (*E).dto_var_A = ((0xa9d3adi32) as u16);
     (*E).base.properties = ((*E).base.properties) | (0xa000u16);
-    (*E).base.current_instruction = addr_kDeadTorizo_Ilist_D6DC as u16;
-    (*E).base.instruction_timer = 1u16;
+    enemy_instruction! {[(*E).base]; instruction = addr_kDeadTorizo_Ilist_D6DC as u16, timer = 1u16}
     (*E).base.timer = 0u16;
     (*E).base.palette_index = 512u16;
     (*E).dto_var_B = 0u16;
@@ -6213,8 +6209,7 @@ pub unsafe fn Shitroid_Init(game: &mut Game) {
         | (kEnemyProps_DisableSamusColl as i32 | kEnemyProps_BlockPlasmaBeam as i32))
         as u16;
     (*E).base.palette_index = 1024u16;
-    (*E).base.current_instruction = addr_kShitroid_Ilist_F90E as u16;
-    (*E).base.instruction_timer = 1u16;
+    enemy_instruction! {[(*E).base]; instruction = addr_kShitroid_Ilist_F90E as u16, timer = 1u16}
     (*E).base.timer = 0u16;
     let mut v2: u16 = ((0xa9efe6i32) as u16);
     if (ram_word!(game, layer1_x_pos) as i32 & 0x8000i32) != 0i32 {
@@ -6358,8 +6353,7 @@ pub unsafe fn Shitroid_Func_9(k: u16, game: &mut Game) {
         (*E).shitr_var_C = 0u16;
         (*E).base.x_pos = (*E1).base.x_pos;
         (*E).base.y_pos = ((*E1).base.y_pos).wrapping_sub(32u16);
-        (*E).base.current_instruction = addr_kShitroid_Ilist_F924 as u16;
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = addr_kShitroid_Ilist_F924 as u16, timer = 1u16}
         (*E).base.timer = 0u16;
         (*E).shitr_var_A = ((0xa9f0e6i32) as u16);
         (*E).shitr_var_E = 1u16;
@@ -6377,8 +6371,7 @@ pub unsafe fn Shitroid_Func_10(k: u16, game: &mut Game) {
     (*E).shitr_var_F = (*E).shitr_var_F.wrapping_sub(1);
     if fresh13 == 1u16 {
         (*E).shitr_var_A = ((0xa9f125i32) as u16);
-        (*E).base.current_instruction = addr_kShitroid_Ilist_F906 as u16;
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = addr_kShitroid_Ilist_F906 as u16, timer = 1u16}
         (*E).base.timer = 0u16;
         (*E).shitr_var_E = 10u16;
     }
@@ -6522,8 +6515,7 @@ pub unsafe fn Shitroid_Func_19(k: u16, game: &mut Game) {
         QueueSfx2_Max6(0x7du16, game);
         (*E).shitr_var_A = ((0xa9f2fbi32) as u16);
         (*E).shitr_var_F = 88u16;
-        (*E).base.current_instruction = addr_kShitroid_Ilist_F924 as u16;
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = addr_kShitroid_Ilist_F924 as u16, timer = 1u16}
         (*E).base.timer = 0u16;
         Shitroid_Func_20(game);
     }
@@ -6557,8 +6549,7 @@ pub unsafe fn Shitroid_Func_21(game: &mut Game) {
     if ((*E).shitr_var_F as i32 & 0x8000i32) != 0i32 {
         (*E).shitr_var_A = ((0xa9f3a3i32) as u16);
         (*E).shitr_var_F = 256u16;
-        (*E).base.current_instruction = addr_kShitroid_Ilist_F93A as u16;
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = addr_kShitroid_Ilist_F93A as u16, timer = 1u16}
         (*E).base.timer = 0u16;
     }
 }
@@ -6972,8 +6963,7 @@ pub unsafe fn Shitroid_Touch(game: &mut Game) {
                 & 1i32
                 != 0
             {
-                (*E).base.current_instruction = addr_kShitroid_Ilist_F924 as u16;
-                (*E).base.instruction_timer = 1u16;
+                enemy_instruction! {[(*E).base]; instruction = addr_kShitroid_Ilist_F924 as u16, timer = 1u16}
                 (*E).base.timer = 0u16;
                 (*E).shitr_var_E = 1u16;
                 (*E).shitr_parameter_2 = 0u16;

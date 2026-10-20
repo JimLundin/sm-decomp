@@ -3,6 +3,7 @@ use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a4::*;
 pub use crate::game::constants::enemy_properties::*;
+use crate::game::enemy_instruction;
 use crate::game::enemy_layouts::enemy_layout;
 use crate::game::sm_80::{QueueMusic_Delayed8, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::sm_84::SpawnHardcodedPlm;
@@ -453,8 +454,7 @@ pub unsafe fn Crocomire_Init(game: &mut Game) {
             game,
         );
         (*E).crocom_var_A = 84u16;
-        (*E).base.current_instruction = addr_kCrocomire_Ilist_E1CC as u16;
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = addr_kCrocomire_Ilist_E1CC as u16, timer = 1u16}
         (*E).base.x_pos = 576u16;
         (*E).base.y_pos = 144u16;
         (*E).base.y_height = 28u16;
@@ -734,13 +734,11 @@ pub unsafe fn Crocomire_Func_37(game: &mut Game) {
                 SpawnHardcodedPlmArgs::new(0x4eu8, 0x3u8, 0xb757 as VoidP),
                 game,
             );
-            (*EK).base.current_instruction = addr_kCrocomire_Ilist_BFB0 as u16;
-            (*EK).base.instruction_timer = 1u16;
+            enemy_instruction! {[(*EK).base]; instruction = addr_kCrocomire_Ilist_BFB0 as u16, timer = 1u16}
             (*EK).base.properties = ((*EK).base.properties) | ((kEnemyProps_Tangible) as u16);
             let E1: *mut Enemy_Crocomire =
                 Get_Crocomire(ram_word!(game, cur_enemy_index) as i32 + 64i32, game);
-            (*E1).base.instruction_timer = 0x7fffu16;
-            (*E1).base.current_instruction = addr_kCrocomire_Ilist_BF62 as u16;
+            enemy_instruction! {[(*E1).base]; timer = 0x7fffu16, instruction = addr_kCrocomire_Ilist_BF62 as u16}
             let fresh11 = &raw mut (*Get_Crocomire(0x40i32, game)).base.properties;
             fresh11.write_unaligned((fresh11.read_unaligned()) | (0x100u16));
             (*EK).crocom_var_E = 0u16;
@@ -940,8 +938,7 @@ pub unsafe fn Crocomire_Func_50(game: &mut Game) {
             }
         }
     }
-    (*E).base.current_instruction = v2;
-    (*E).base.instruction_timer = 1u16;
+    enemy_instruction! {[(*E).base]; instruction = v2, timer = 1u16}
 }
 pub unsafe fn Crocomire_Func_51(game: &mut Game) {
     Crocomire_Func_53(game);
@@ -957,8 +954,7 @@ pub unsafe fn Crocomire_Func_51(game: &mut Game) {
             }
         }
     }
-    (*E).base.current_instruction = v2;
-    (*E).base.instruction_timer = 1u16;
+    enemy_instruction! {[(*E).base]; instruction = v2, timer = 1u16}
     Crocomire_Func_55(game);
 }
 pub unsafe fn Crocomire_Func_52(game: &mut Game) {
@@ -1082,8 +1078,7 @@ pub unsafe fn Crocomire_Func_56(game: &mut Game) {
             }
         }
     }
-    (*E).base.current_instruction = v2;
-    (*E).base.instruction_timer = 1u16;
+    enemy_instruction! {[(*E).base]; instruction = v2, timer = 1u16}
     Crocomire_Func_53(game);
     Crocomire_92D8(game);
 }
@@ -1101,8 +1096,7 @@ pub unsafe fn Crocomire_929E(game: &mut Game) {
             }
         }
     }
-    (*E).base.current_instruction = v2;
-    (*E).base.instruction_timer = 1u16;
+    enemy_instruction! {[(*E).base]; instruction = v2, timer = 1u16}
     Crocomire_92D8(game);
 }
 pub unsafe fn Crocomire_92CE(game: &mut Game) {
@@ -1156,13 +1150,11 @@ pub unsafe fn Crocomire_Func_57(game: &mut Game) {
     let E: *mut Enemy_Crocomire = Get_Crocomire(ram_word!(game, cur_enemy_index) as i32, game);
     (*E).crocom_var_A = (*E).crocom_var_A.wrapping_add(1);
     (*E).crocom_var_A = (*E).crocom_var_A.wrapping_add(1);
-    (*E).base.current_instruction = addr_kCrocomire_Ilist_BF64 as u16;
-    (*E).base.instruction_timer = 1u16;
+    enemy_instruction! {[(*E).base]; instruction = addr_kCrocomire_Ilist_BF64 as u16, timer = 1u16}
     set_ram_word!(game.nmi_flag_bg2_enemy_vram_transfer = 1u16);
     let E1: *mut Enemy_Crocomire =
         Get_Crocomire(ram_word!(game, cur_enemy_index) as i32 + 64i32, game);
-    (*E1).base.current_instruction = addr_kCrocomire_Ilist_BF98 as u16;
-    (*E1).base.instruction_timer = 1u16;
+    enemy_instruction! {[(*E1).base]; instruction = addr_kCrocomire_Ilist_BF98 as u16, timer = 1u16}
     (*E1).base.properties = ((*E1).base.properties as i32 & 0xd2ffi32 | 0x2c00i32) as u16;
     (*E1).base.x_pos = (*E).base.x_pos;
     (*E1).base.y_pos = ((*E).base.y_pos).wrapping_add(16u16);
@@ -1694,8 +1686,7 @@ pub unsafe fn Crocomire_Func_71(game: &mut Game) {
             game,
         );
         QueueSfx2_Max6(0x29u16, game);
-        (*E).base.current_instruction = addr_kCrocomire_Ilist_E158 as u16;
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = addr_kCrocomire_Ilist_E158 as u16, timer = 1u16}
         (*E).base.palette_index = 0u16;
         let mut i: i32 = 30i32;
         while i >= 0i32 {
@@ -1742,8 +1733,7 @@ pub unsafe fn Crocomire_Func_72(game: &mut Game) {
         fresh19 == 1u16
     } {
         (*E).crocom_var_E = 0u16;
-        (*E).base.current_instruction = addr_kCrocomire_Ilist_E14A as u16;
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = addr_kCrocomire_Ilist_E14A as u16, timer = 1u16}
         Crocomire_9BB3(game);
     }
 }
@@ -1764,8 +1754,7 @@ pub unsafe fn Crocomire_Func_73(game: &mut Game) {
     if (*E).base.x_pos as i32 - 576i32 & 0x8000i32 == 0 {
         QueueSfx2_Max6(0x25u16, game);
         (*Get_Crocomire(0x40i32, game)).base.palette_index = (*E).base.palette_index;
-        (*E).base.current_instruction = addr_kCrocomire_Ilist_E158 as u16;
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = addr_kCrocomire_Ilist_E158 as u16, timer = 1u16}
         Crocomire_9BB3(game);
     }
 }
@@ -1828,8 +1817,7 @@ pub unsafe fn Crocomire_Func_88(game: &mut Game) {
         }
         SetHiLo(&raw mut (*E).crocom_var_F, &raw mut (*E).crocom_var_E, t);
     } else {
-        (*E).base.current_instruction = addr_kCrocomire_Ilist_E1CC as u16;
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = addr_kCrocomire_Ilist_E1CC as u16, timer = 1u16}
         (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(64u16);
         (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(21u16);
         (*E).base.y_height = 28u16;
@@ -1938,8 +1926,7 @@ pub unsafe fn Crocomire_Powerbomb(game: &mut Game) {
                 break;
             }
             let E0: *mut Enemy_Crocomire = Get_Crocomire(0i32, game);
-            (*E0).base.current_instruction = v3;
-            (*E0).base.instruction_timer = 1u16;
+            enemy_instruction! {[(*E0).base]; instruction = v3, timer = 1u16}
         }
     }
 }

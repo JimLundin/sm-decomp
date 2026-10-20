@@ -4,6 +4,7 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a6::*;
 pub use crate::game::constants::bank_a9::*;
 pub use crate::game::constants::enemy_properties::*;
+use crate::game::enemy_instruction;
 use crate::game::enemy_layouts::enemy_layout;
 use crate::game::sm_80::{
     CheckEventHappened, ClearEventHappened, NextRandom, QueueMode7Transfers, QueueMusic_Delayed8,
@@ -4644,8 +4645,7 @@ pub unsafe fn Ridley_Func_98(game: &mut Game) {
 }
 pub unsafe fn Ridley_Func_99(a: u16, game: &mut Game) {
     let E: *mut Enemy_Ridley = Get_Ridley(0i32, game);
-    (*E).base.current_instruction = a;
-    (*E).base.instruction_timer = 1u16;
+    enemy_instruction! {[(*E).base]; instruction = a, timer = 1u16}
     (*E).base.timer = 0u16;
 }
 pub unsafe fn Ridley_Func_100(game: &mut Game) {
@@ -5024,8 +5024,7 @@ pub unsafe fn Ridley_Func_114(game: &mut Game) {
             })
     };
     if change_instruction {
-        (*E).base.current_instruction = v2;
-        (*E).base.instruction_timer = 2u16;
+        enemy_instruction! {[(*E).base]; instruction = v2, timer = 2u16}
         (*E).base.timer = 0u16;
     };
 }
@@ -6082,8 +6081,7 @@ pub unsafe fn Zebetites_Func_5(game: &mut Game) {
     if ((*E).zebet_var_F as i32 & 0x8000i32) != 0i32 {
         v4 = crate::rtl::rom_table_word!(game, 0xa6fd54, v3 as isize);
     }
-    (*E).base.current_instruction = v4;
-    (*E).base.instruction_timer = 1u16;
+    enemy_instruction! {[(*E).base]; instruction = v4, timer = 1u16}
     (*E).base.timer = 0u16;
 }
 pub unsafe fn Zebetites_Func_4(game: &mut Game) {

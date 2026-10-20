@@ -2,6 +2,7 @@ use crate::c_library::printf;
 use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::enemy_properties::*;
+use crate::game::enemy_instruction;
 use crate::game::enemy_layouts::enemy_layout;
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx2_Max9, QueueSfx3_Max6};
 use crate::game::sm_86::SpawnEprojWithGfx;
@@ -1600,9 +1601,7 @@ pub unsafe fn YappingMaw_Func_2(game: &mut Game) {
     YappingMaw_Func_3(game);
     let v2: u16 = (2i32 * (((((*E).ymw_var_0A) as u8).wrapping_add(16u8)) as i32 >> 5i32)) as u16;
     (*E).ymw_var_34 = v2;
-    (*E).base.current_instruction =
-        crate::rtl::rom_table_word!(game, 0xa8a097, (v2 as i32 >> 1i32) as isize);
-    (*E).base.instruction_timer = 1u16;
+    enemy_instruction! {[(*E).base]; instruction = crate::rtl::rom_table_word!(game, 0xa8a097, (v2 as i32 >> 1i32) as isize), timer = 1u16}
     (*E).base.timer = 0u16;
     (*E).ymw_var_32 = *((game.g_rom.offset(crate::rtl::lorom_offset(0xa8a0a7)) as *mut u16
         as *mut u8)
@@ -1949,8 +1948,7 @@ pub unsafe fn Kago_Shot(game: &mut Game) {
     let E: *mut Enemy_Kago = Get_Kago(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).kago_var_B == 0 {
         (*E).kago_var_B = 1u16;
-        (*E).base.current_instruction = addr_kKago_Ilist_AB32 as u16;
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = addr_kKago_Ilist_AB32 as u16, timer = 1u16}
     }
     v2 = (((*E).kago_var_04) as i16).wrapping_sub(1i16);
     (*E).kago_var_04 = v2 as u16;
@@ -2505,8 +2503,7 @@ pub fn Beetom_Instr_1(k: u16, jp: *const u16) -> *const u16 {
 }
 pub unsafe fn Beetom_Func_1(game: &mut Game) {
     let E: *mut Enemy_Beetom = Get_Beetom(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).base.current_instruction = (*E).beetom_var_00;
-    (*E).base.instruction_timer = 1u16;
+    enemy_instruction! {[(*E).base]; instruction = (*E).beetom_var_00, timer = 1u16}
     (*E).base.timer = 0u16;
 }
 pub unsafe fn Beetom_Init(game: &mut Game) {
@@ -3148,8 +3145,7 @@ pub unsafe fn MaridiaFloater_Func_4(k: u16, game: &mut Game) {
         (*E).mfr_var_F = ((0xa8c2cfi32) as u16);
         (*E).mfr_var_A = g_word_A8C1C5;
         (*E).mfr_var_B = g_word_A8C1C7;
-        (*E).base.instruction_timer = 1u16;
-        (*E).base.current_instruction = addr_kMaridiaFloater_Ilist_C163 as u16;
+        enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_kMaridiaFloater_Ilist_C163 as u16}
     }
     MaridiaFloater_Func_2(k, game);
 }
@@ -3393,8 +3389,7 @@ pub unsafe fn MaridiaFloater_Func_11(k: u16, game: &mut Game) {
         (*E).base.y_pos = ram_word!(game, enemy_drawing_queue_sizes[(v4 + 1i32)]);
         (*E).mfr_var_F = ((0xa8c283i32) as u16);
         (*E).mfr_var_E = 60u16;
-        (*E).base.instruction_timer = 1u16;
-        (*E).base.current_instruction = addr_kMaridiaFloater_Ilist_C173 as u16;
+        enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_kMaridiaFloater_Ilist_C173 as u16}
     }
     MaridiaFloater_Func_2(k, game);
 }
@@ -3892,8 +3887,7 @@ pub unsafe fn WreckedShipRobot_Shot(game: &mut Game) {
             } else {
                 v1 = addr_kWreckedShipRobot_Ilist_CA01 as u16;
             }
-            (*E).base.current_instruction = v1;
-            (*E).base.instruction_timer = 1u16;
+            enemy_instruction! {[(*E).base]; instruction = v1, timer = 1u16}
             (*E).wsrt_var_B = ((*E).wsrt_var_B).wrapping_add(64u16);
         }
     }
@@ -4150,8 +4144,7 @@ pub unsafe fn WalkingLavaSeahorse_Func_3(k: u16, game: &mut Game) {
             v5 = 2i16;
         }
         (*E).wlse_var_D = v5 as u16;
-        (*E).base.current_instruction = v4;
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = v4, timer = 1u16}
         (*E).wlse_var_A = ((0xa8ddc6i32) as u16);
         QueueSfx2_Max6(0x5eu16, game);
     }
@@ -4174,8 +4167,7 @@ pub unsafe fn sub_A8DDDE(k: u16, game: &mut Game) {
     if ((*v1).ai_var_D as i32 & 0x8000i32) == 0i32 {
         v2 = addr_kWalkingLavaSeahorse_Ilist_DCC1 as u16;
     }
-    (*v1).current_instruction = v2;
-    (*v1).instruction_timer = 1u16;
+    enemy_instruction! {[(*v1)]; instruction = v2, timer = 1u16}
 }
 pub unsafe fn WalkingLavaSeahorse_Func_5(k: u16, game: &mut Game) {
     let E: *mut Enemy_WalkingLavaSeahorse = Get_WalkingLavaSeahorse(k as i32, game);
@@ -4200,8 +4192,7 @@ pub unsafe fn WalkingLavaSeahorse_Func_6(k: u16, game: &mut Game) {
             v2 = addr_kWalkingLavaSeahorse_Ilist_DC57 as u16;
         }
         (*E).wlse_var_D = v3 as u16;
-        (*E).base.current_instruction = v2;
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = v2, timer = 1u16}
         (*E).wlse_var_A = ((0xa8de4bi32) as u16);
         (*E).wlse_var_04 = 1u16;
     } else {
@@ -4222,8 +4213,7 @@ pub unsafe fn WalkingLavaSeahorse_Func_7(k: u16, game: &mut Game) {
         if ((*E).wlse_var_D as i32 & 0x8000i32) == 0i32 {
             v4 = addr_kWalkingLavaSeahorse_Ilist_DCC1 as u16;
         }
-        (*E).base.current_instruction = v4;
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = v4, timer = 1u16}
     } else {
         if (*E).wlse_var_04 != 0 {
             return;
@@ -4241,8 +4231,7 @@ pub unsafe fn WalkingLavaSeahorse_Func_7(k: u16, game: &mut Game) {
                 return;
             }
         }
-        (*E).base.current_instruction = v3;
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = v3, timer = 1u16}
         (*E).wlse_var_A = ((0xa8decci32) as u16);
     };
 }
@@ -4458,8 +4447,7 @@ pub unsafe fn WreckedShipSpark_Init(game: &mut Game) {
     (*E).wssk_var_B = crate::rtl::rom_table_word!(game, 0xa8e688, v2 as isize);
     (*E).wssk_var_E = (*E).wssk_parameter_2;
     WreckedShipSpark_Func_4(ram_word!(game, cur_enemy_index), 0u16, game);
-    (*E).base.instruction_timer = 1u16;
-    (*E).base.current_instruction = crate::rtl::rom_table_word!(game, 0xa8e682, v2 as isize);
+    enemy_instruction! {[(*E).base]; timer = 1u16, instruction = crate::rtl::rom_table_word!(game, 0xa8e682, v2 as isize)}
     (*E).base.timer = 0u16;
     (*E).base.instruction_timer = 1u16;
     if (*ram_ptr!(game; 0xd828, ram_word!(game, area_index) as isize) as i32 & 1i32) == 0i32 {
@@ -4493,8 +4481,7 @@ pub unsafe fn WreckedShipSpark_Func_1(k: u16, game: &mut Game) {
     let E: *mut Enemy_WreckedShipSpark = Get_WreckedShipSpark(k as i32, game);
     if (*E).wssk_var_F == 1u16 {
         (*E).wssk_var_B = ((0xa8e6b7i32) as u16);
-        (*E).base.current_instruction = addr_kWreckedShipSpark_Ilist_E5A7 as u16;
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = addr_kWreckedShipSpark_Ilist_E5A7 as u16, timer = 1u16}
         WreckedShipSpark_Func_4(k, 0u16, game);
     } else {
         (*E).wssk_var_F = (*E).wssk_var_F.wrapping_sub(1);
@@ -4504,8 +4491,7 @@ pub unsafe fn WreckedShipSpark_Func_2(k: u16, game: &mut Game) {
     let E: *mut Enemy_WreckedShipSpark = Get_WreckedShipSpark(k as i32, game);
     if (*E).wssk_var_F == 1u16 {
         (*E).wssk_var_B = ((0xa8e695i32) as u16);
-        (*E).base.current_instruction = addr_kWreckedShipSpark_Ilist_E5E5 as u16;
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = addr_kWreckedShipSpark_Ilist_E5E5 as u16, timer = 1u16}
         WreckedShipSpark_Func_4(k, 8u16, game);
     } else {
         (*E).wssk_var_F = (*E).wssk_var_F.wrapping_sub(1);
@@ -4602,8 +4588,7 @@ pub unsafe fn BlueBrinstarFaceBlock_Main(game: &mut Game) {
                     if ((*v1).ai_var_B as i32 & 0x8000i32) == 0i32 {
                         v4 = addr_kBlueBrinstarFaceBlock_Ilist_E81A as u16;
                     }
-                    (*v1).current_instruction = v4;
-                    (*v1).instruction_timer = 1u16;
+                    enemy_instruction! {[(*v1)]; instruction = v4, timer = 1u16}
                     (*v1).ai_var_A = 1u16;
                     set_ram_word!(game.variables_for_enemy_graphics_drawn_hook[2] = 16u16);
                 }
@@ -4795,8 +4780,7 @@ pub unsafe fn KiHunter_Func_2(k: u16, game: &mut Game) {
         if ((*E).khr_var_04 as i32 & 0x8000i32) != 0i32 {
             v2 = addr_kKiHunter_Ilist_EA08 as u16;
         }
-        (*E).base.current_instruction = v2;
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = v2, timer = 1u16}
     }
     if ((*E).khr_var_04 as i32 & 0x8000i32) == 0i32 {
         AddToHiLo(
@@ -4883,12 +4867,10 @@ pub unsafe fn KiHunter_Instr_1(k: u16, jp: *const u16, game: &mut Game) -> *cons
         result = addr_kKiHunter_Ilist_EA24 as u16;
         r18 = addr_kKiHunter_Ilist_EA5E as u16;
     }
-    (*E).base.current_instruction = r18;
-    (*E).base.instruction_timer = 1u16;
+    enemy_instruction! {[(*E).base]; instruction = r18, timer = 1u16}
     let E1: *mut Enemy_KiHunter = Get_KiHunter(k as i32 + 64i32, game);
     if (*E1).khr_var_A as i32 == 0xa8f6f3i32 & 0xffffi32 {
-        (*E1).base.current_instruction = r18;
-        (*E1).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E1).base]; instruction = r18, timer = 1u16}
     }
     result as usize as *const u16
 }
@@ -4949,8 +4931,7 @@ pub unsafe fn KiHunter_Func_6(k: u16, game: &mut Game) {
             if (*E).base.current_instruction as i32 + 0x155ai32 & 0x8000i32 == 0 {
                 v4 = addr_kKiHunter_Ilist_EADA as u16;
             }
-            (*E).base.current_instruction = v4;
-            (*E).base.instruction_timer = 1u16;
+            enemy_instruction! {[(*E).base]; instruction = v4, timer = 1u16}
         }
     } else if Enemy_MoveRight_IgnoreSlopes(
         k,
@@ -4992,8 +4973,7 @@ pub unsafe fn KiHunter_Func_8(k: u16, game: &mut Game) {
     if (((*E).base.x_pos) as i16).wrapping_sub((ram_word!(game, samus_x_pos)) as i16) < 0i16 {
         v1 = addr_kKiHunter_Ilist_EB10 as u16;
     }
-    (*E).base.current_instruction = v1;
-    (*E).base.instruction_timer = 1u16;
+    enemy_instruction! {[(*E).base]; instruction = v1, timer = 1u16}
     (*E).khr_var_A = addr_locret_A8F5E3 as u16;
 }
 pub unsafe fn KiHunter_Instr_4(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {

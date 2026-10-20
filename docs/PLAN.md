@@ -31,6 +31,23 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+Enemy instruction/timer pairs (2026-10-20): one caller-side macro shares all
+249 adjacent direct field pairs with exactly matching receiver expressions
+across 13 callers: 192 instruction-first and 57 timer-first. Receiver tokens
+are emitted separately at each original assignment; values, calls, live reads
+and statement boundaries remain exact. Eight different-receiver adjacent
+pairs remain explicit. Whole-source reconstruction and actual whole-library
+compiler comparison pass: every original nonblank expanded line is byte-exact
+after removing only the added macro/comment/re-export and 13 imports.
+No punctuation normalization or new runtime borrow/helper is introduced.
+
+Formatting, normal release (27.86s), progress and full any% 129712/0
+(127.63s), native exit 0, pass on the reviewed map/dispatch composition.
+All frozen source/compiler/replay pins remain stable. Rust lines -240 to
+132101; raw access, cast and unsafe-function counts are unchanged. Any% is
+integration coverage; wider enemy routes and alias safety remain open.
+Continue substantial shared families toward the full project goal.
+
 Pause/file-select map rendering (2026-10-20): the complete two-screen renderer
 and four directional map-bound scans now share private named implementations.
 Both mapped/unmapped branches preserve original ROM/RAM read and write order,

@@ -1,5 +1,6 @@
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::enemy_properties::*;
+use crate::game::enemy_instruction;
 use crate::game::enemy_layouts::enemy_layout;
 use crate::game::sm_80::{
     CheckEventHappened, NextRandom, QueueMusic_Delayed8, QueueSfx2_Max6, SetBossBitForCurArea,
@@ -260,12 +261,11 @@ pub unsafe fn BrinstarPipeBug_Func_1(game: &mut Game) {
     let pbg_var_E: u16 = (*PipeBug).pbg_var_E;
     if pbg_var_E != (*PipeBug).pbg_var_01 {
         (*PipeBug).pbg_var_01 = pbg_var_E;
-        (*PipeBug).base.current_instruction = (if (*PipeBug).pbg_parameter_1 != 0u16 {
+        enemy_instruction! {[(*PipeBug).base]; instruction = (if (*PipeBug).pbg_parameter_1 != 0u16 {
             crate::rtl::rom_table_word!(game, 0xb38833, pbg_var_E as isize) as i32
         } else {
             crate::rtl::rom_table_word!(game, 0xb3882b, pbg_var_E as isize) as i32
-        }) as u16;
-        (*PipeBug).base.instruction_timer = 1u16;
+        }) as u16, timer = 1u16}
         (*PipeBug).base.timer = 0u16;
     }
 }

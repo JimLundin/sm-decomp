@@ -41,6 +41,19 @@ pub mod game {
     }
     pub(crate) use address_dispatch;
 
+    // Keep both field assignments in their original statement/evaluation order.
+    macro_rules! enemy_instruction {
+        ([$($enemy:tt)*]; instruction = $instruction:expr, timer = $timer:expr) => {
+            $($enemy)*.current_instruction = $instruction;
+            $($enemy)*.instruction_timer = $timer;
+        };
+        ([$($enemy:tt)*]; timer = $timer:expr, instruction = $instruction:expr) => {
+            $($enemy)*.instruction_timer = $timer;
+            $($enemy)*.current_instruction = $instruction;
+        };
+    }
+    pub(crate) use enemy_instruction;
+
     pub mod constants;
     pub(crate) mod enemy_layouts;
     pub(crate) mod enemy_ram;

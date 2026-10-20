@@ -4,6 +4,7 @@ use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_b4::*;
 pub use crate::game::constants::enemy_properties::*;
+use crate::game::enemy_instruction;
 use crate::game::enemy_layouts::enemy_layout;
 use crate::game::sm_80::{
     Multiply16x16, NextRandom, QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max6,
@@ -605,9 +606,7 @@ pub unsafe fn Metalee_Func_6(game: &mut Game) {
     let metalee_var_C: u16 = (*E).metalee_var_C;
     if metalee_var_C != (*E).metalee_var_D {
         (*E).metalee_var_D = metalee_var_C;
-        (*E).base.current_instruction =
-            crate::rtl::rom_table_word!(game, 0xa3894e, metalee_var_C as isize);
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = crate::rtl::rom_table_word!(game, 0xa3894e, metalee_var_C as isize), timer = 1u16}
         (*E).base.timer = 0u16;
     }
 }
@@ -1223,8 +1222,7 @@ pub unsafe fn PlatformThatFallsWithSamus_Func_5(game: &mut Game) {
     if ((*E).ptfwss_var_1F as i32 & 0x8000i32) != 0i32 {
         v0 = addr_kPlatformThatFallsWithSamus_Ilist_9BBB as u16;
     }
-    (*E).base.current_instruction = v0;
-    (*E).base.instruction_timer = 1u16;
+    enemy_instruction! {[(*E).base]; instruction = v0, timer = 1u16}
     (*E).base.timer = 0u16;
 }
 pub unsafe fn PlatformThatFallsWithSamus_Func_6(game: &mut Game) {
@@ -1234,8 +1232,7 @@ pub unsafe fn PlatformThatFallsWithSamus_Func_6(game: &mut Game) {
     if ((*E).ptfwss_var_1F as i32 & 0x8000i32) != 0i32 {
         v0 = addr_kPlatformThatFallsWithSamus_Ilist_9BD1 as u16;
     }
-    (*E).base.current_instruction = v0;
-    (*E).base.instruction_timer = 1u16;
+    enemy_instruction! {[(*E).base]; instruction = v0, timer = 1u16}
     (*E).base.timer = 0u16;
 }
 pub unsafe fn PlatformThatFallsWithSamus_Func_7(game: &mut Game) {
@@ -1245,8 +1242,7 @@ pub unsafe fn PlatformThatFallsWithSamus_Func_7(game: &mut Game) {
     if ((*E).ptfwss_var_1F as i32 & 0x8000i32) != 0i32 {
         v0 = addr_kPlatformThatFallsWithSamus_Ilist_9BE7 as u16;
     }
-    (*E).base.current_instruction = v0;
-    (*E).base.instruction_timer = 1u16;
+    enemy_instruction! {[(*E).base]; instruction = v0, timer = 1u16}
     (*E).base.timer = 0u16;
 }
 pub unsafe fn PlatformThatFallsWithSamus_Func_8(game: &mut Game) {
@@ -1256,8 +1252,7 @@ pub unsafe fn PlatformThatFallsWithSamus_Func_8(game: &mut Game) {
     if ((*E).ptfwss_var_1F as i32 & 0x8000i32) != 0i32 {
         v0 = addr_kPlatformThatFallsWithSamus_Ilist_9BFD as u16;
     }
-    (*E).base.current_instruction = v0;
-    (*E).base.instruction_timer = 1u16;
+    enemy_instruction! {[(*E).base]; instruction = v0, timer = 1u16}
     (*E).base.timer = 0u16;
 }
 pub unsafe fn PlatformThatFallsWithSamus_Func_9(game: &mut Game) {
@@ -1303,8 +1298,7 @@ pub unsafe fn Roach_Func_1(game: &mut Game) {
     let roach_var_24: u16 = (*E).roach_var_24;
     if roach_var_24 != (*E).roach_var_25 {
         (*E).roach_var_25 = roach_var_24;
-        (*E).base.current_instruction = roach_var_24;
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = roach_var_24, timer = 1u16}
         (*E).base.timer = 0u16;
     }
 }
@@ -1865,8 +1859,7 @@ pub unsafe fn Mochtroid_Func_4(k: u16, a: u16, game: &mut Game) {
     let E: *mut Enemy_Mochtroid = Get_Mochtroid(k as i32, game);
     if a != (*E).mochtr_var_01 {
         (*E).mochtr_var_01 = a;
-        (*E).base.current_instruction = a;
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = a, timer = 1u16}
         (*E).base.timer = 0u16;
     }
 }
@@ -1968,8 +1961,7 @@ pub unsafe fn Sidehopper_Func_2(r22: u16, r24: u16, game: &mut Game) -> u16 {
 }
 pub unsafe fn Sidehopper_Func_3(game: &mut Game) {
     let E: *mut Enemy_Sidehopper = Get_Sidehopper(ram_word!(game, cur_enemy_index) as i32, game);
-    (*E).base.current_instruction = (*E).sideh_var_00;
-    (*E).base.instruction_timer = 1u16;
+    enemy_instruction! {[(*E).base]; instruction = (*E).sideh_var_00, timer = 1u16}
     (*E).base.timer = 0u16;
 }
 pub unsafe fn Sidehopper_Main(game: &mut Game) {
@@ -2329,9 +2321,7 @@ pub unsafe fn MaridiaRefillCandy_Func_4(game: &mut Game) {
     let mrcy_var_D: u16 = (*E).mrcy_var_D;
     if mrcy_var_D != (*E).mrcy_var_E {
         (*E).mrcy_var_E = mrcy_var_D;
-        (*E).base.current_instruction =
-            crate::rtl::rom_table_word!(game, 0xa3b40d, mrcy_var_D as isize);
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = crate::rtl::rom_table_word!(game, 0xa3b40d, mrcy_var_D as isize), timer = 1u16}
         (*E).base.timer = 0u16;
     }
 }
@@ -2587,9 +2577,7 @@ pub unsafe fn Bang_Func_18(game: &mut Game) {
     let bang_var_20: u16 = (*E).bang_var_20;
     if bang_var_20 != (*E).bang_var_21 {
         (*E).bang_var_21 = bang_var_20;
-        (*E).base.current_instruction =
-            crate::rtl::rom_table_word!(game, 0xa3b722, bang_var_20 as isize);
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = crate::rtl::rom_table_word!(game, 0xa3b722, bang_var_20 as isize), timer = 1u16}
         (*E).base.timer = 0u16;
     }
 }
@@ -2728,9 +2716,7 @@ pub unsafe fn Skree_Func_5(game: &mut Game) {
     let skree_var_C: u16 = (*E).skree_var_C;
     if skree_var_C != (*E).skree_var_D {
         (*E).skree_var_D = skree_var_C;
-        (*E).base.current_instruction =
-            crate::rtl::rom_table_word!(game, 0xa3c69c, skree_var_C as isize);
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = crate::rtl::rom_table_word!(game, 0xa3c69c, skree_var_C as isize), timer = 1u16}
         (*E).base.timer = 0u16;
     }
 }
@@ -3060,8 +3046,7 @@ pub unsafe fn MaridiaSnail_Func_12(k: u16, carry: u16, game: &mut Game) {
 }
 pub unsafe fn MaridiaSnail_Func_13(k: u16, a: u16, game: &mut Game) {
     let E: *mut Enemy_MaridiaSnail = Get_MaridiaSnail(k as i32, game);
-    (*E).base.current_instruction = a;
-    (*E).base.instruction_timer = 1u16;
+    enemy_instruction! {[(*E).base]; instruction = a, timer = 1u16}
     (*E).msl_var_05 = 1u16;
     (*E).msl_var_04 = 0u16;
 }
@@ -3136,8 +3121,7 @@ pub unsafe fn MaridiaSnail_Func_15(k: u16, game: &mut Game) {
                 ((*E).msl_var_C as i32 | (*E).base.properties as i32 & !(3i32)) as u16;
             StoneZoomer_E67A(k, game);
             (*E).msl_var_F = ((0xa3cf5fi32) as u16);
-            (*E).base.current_instruction = (*E).msl_var_D;
-            (*E).base.instruction_timer = 1u16;
+            enemy_instruction! {[(*E).base]; instruction = (*E).msl_var_D, timer = 1u16}
             (*E).base.timer = 0u16;
         } else {
             (*E).msl_var_00 = -((*E).msl_var_00 as i32) as u16;
@@ -3391,9 +3375,7 @@ pub unsafe fn Reflec_Shot(game: &mut Game) {
         if (*ET).base.health != 0 {
             Enemy_NormalShotAI_SkipSomeParts_A3(game);
             if (*ET).base.health == 0 {
-                (*ET).base.current_instruction =
-                    crate::rtl::rom_table_word!(game, 0xa3dca6, (*ET).reflec_parameter_2 as isize);
-                (*ET).base.instruction_timer = 1u16;
+                enemy_instruction! {[(*ET).base]; instruction = crate::rtl::rom_table_word!(game, 0xa3dca6, (*ET).reflec_parameter_2 as isize), timer = 1u16}
                 (*ET).base.timer = 0u16;
             }
         }
@@ -3482,8 +3464,7 @@ pub unsafe fn WreckedShipOrangeZoomer_Func_2(k: u16, game: &mut Game) {
         if ((*E).wsozr_var_B as i32 & 0x8000i32) != 0i32 {
             v9 = addr_kWreckedShipOrangeZoomer_Ilist_E003 as u16;
         }
-        (*E).base.current_instruction = v9;
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = v9, timer = 1u16}
     } else {
         let v11: u16 = ((*E).wsozr_var_04).wrapping_add(1u16);
         (*E).wsozr_var_04 = v11;
@@ -3493,8 +3474,7 @@ pub unsafe fn WreckedShipOrangeZoomer_Func_2(k: u16, game: &mut Game) {
             if ((*E).wsozr_var_B as i32 & 0x8000i32) != 0i32 {
                 v12 = addr_kWreckedShipOrangeZoomer_Ilist_E003 as u16;
             }
-            (*E).base.current_instruction = v12;
-            (*E).base.instruction_timer = 1u16;
+            enemy_instruction! {[(*E).base]; instruction = v12, timer = 1u16}
         } else {
             (*E).wsozr_var_03 = (*E).wsozr_var_F;
             (*E).wsozr_var_F = ((0xa3e785i32) as u16);
@@ -3535,8 +3515,7 @@ pub unsafe fn sub_A3E168(k: u16, game: &mut Game) {
         if ((*E).wsozr_var_A as i32 & 0x8000i32) != 0i32 {
             v9 = addr_kWreckedShipOrangeZoomer_Ilist_DFCB as u16;
         }
-        (*E).base.current_instruction = v9;
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = v9, timer = 1u16}
     } else {
         let v11: u16 = ((*E).wsozr_var_04).wrapping_add(1u16);
         (*E).wsozr_var_04 = v11;
@@ -3546,8 +3525,7 @@ pub unsafe fn sub_A3E168(k: u16, game: &mut Game) {
             if ((*E).wsozr_var_A as i32 & 0x8000i32) != 0i32 {
                 v12 = addr_kWreckedShipOrangeZoomer_Ilist_DFCB as u16;
             }
-            (*E).base.current_instruction = v12;
-            (*E).base.instruction_timer = 1u16;
+            enemy_instruction! {[(*E).base]; instruction = v12, timer = 1u16}
         } else {
             (*E).wsozr_var_03 = (*E).wsozr_var_F;
             (*E).wsozr_var_F = ((0xa3e785i32) as u16);
@@ -3634,8 +3612,7 @@ pub unsafe fn FireZoomer_Func_1(k: u16, game: &mut Game) {
                     (fzr_parameter_2 as i32 >> 1i32) as isize
                 );
             }
-            (*E).base.current_instruction = v7;
-            (*E).base.instruction_timer = 1u16;
+            enemy_instruction! {[(*E).base]; instruction = v7, timer = 1u16}
         }
     } else {
         let v8: u16 = ((*E).fzr_var_04).wrapping_add(1u16);
@@ -3649,8 +3626,7 @@ pub unsafe fn FireZoomer_Func_1(k: u16, game: &mut Game) {
             } else {
                 v10 = crate::rtl::rom_table_word!(game, 0xa3e630, (v9 as i32 >> 1i32) as isize);
             }
-            (*E).base.current_instruction = v10;
-            (*E).base.instruction_timer = 1u16;
+            enemy_instruction! {[(*E).base]; instruction = v10, timer = 1u16}
         } else {
             (*E).fzr_var_03 = (*E).fzr_var_F;
             (*E).fzr_var_F = ((0xa3e785i32) as u16);
@@ -3712,8 +3688,7 @@ pub unsafe fn FireZoomer_Func_3(k: u16, game: &mut Game) {
                     (fzr_parameter_2 as i32 >> 1i32) as isize
                 );
             }
-            (*E).base.current_instruction = v6;
-            (*E).base.instruction_timer = 1u16;
+            enemy_instruction! {[(*E).base]; instruction = v6, timer = 1u16}
         } else {
             EnemyFunc_C8AD(k, game);
         }
@@ -3729,8 +3704,7 @@ pub unsafe fn FireZoomer_Func_3(k: u16, game: &mut Game) {
             } else {
                 v9 = crate::rtl::rom_table_word!(game, 0xa3e648, (v8 as i32 >> 1i32) as isize);
             }
-            (*E).base.current_instruction = v9;
-            (*E).base.instruction_timer = 1u16;
+            enemy_instruction! {[(*E).base]; instruction = v9, timer = 1u16}
         } else {
             (*E).fzr_var_03 = (*E).fzr_var_F;
             (*E).fzr_var_F = ((0xa3e785i32) as u16);
@@ -4050,8 +4024,7 @@ pub unsafe fn Metroid_Func_4(varE32: u16, game: &mut Game) {
     (*E).metroid_var_E = (*E).metroid_var_E.wrapping_sub(1);
     if fresh9 == 1u16 {
         (*E).metroid_var_F = 0u16;
-        (*E).base.current_instruction = addr_kMetroid_Ilist_E9CF as u16;
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = addr_kMetroid_Ilist_E9CF as u16, timer = 1u16}
     }
 }
 pub unsafe fn Metroid_Touch(game: &mut Game) {
@@ -4071,8 +4044,7 @@ pub unsafe fn Metroid_Touch(game: &mut Game) {
             *((&raw mut (*E).metroid_var_C as *mut u8).offset(1) as *mut u16) =
                 ((v4 as i32) << 6i32) as u16;
             (*E).metroid_var_F = 0u16;
-            (*E).base.current_instruction = addr_kMetroid_Ilist_E9CF as u16;
-            (*E).base.instruction_timer = 1u16;
+            enemy_instruction! {[(*E).base]; instruction = addr_kMetroid_Ilist_E9CF as u16, timer = 1u16}
         }
     } else {
         let v5: u16 = ram_word!(game, cur_enemy_index);
@@ -4094,8 +4066,7 @@ pub unsafe fn Metroid_Touch(game: &mut Game) {
             }
             (*E).metroid_var_F = v7;
             if v7 == 2u16 {
-                (*E).base.current_instruction = addr_kMetroid_Ilist_EA25 as u16;
-                (*E).base.instruction_timer = 1u16;
+                enemy_instruction! {[(*E).base]; instruction = addr_kMetroid_Ilist_EA25 as u16, timer = 1u16}
             }
         }
     };
@@ -4144,8 +4115,7 @@ pub unsafe fn Metroid_Shot(game: &mut Game) {
         if (ram_word!(game, projectile_type[(v0 as i32 >> 1i32)]) as i32 & 0xf00i32) == 1280i32 {
             (*E).metroid_var_E = 4u16;
             (*E).metroid_var_F = 3u16;
-            (*E).base.current_instruction = addr_kMetroid_Ilist_E9CF as u16;
-            (*E).base.instruction_timer = 1u16;
+            enemy_instruction! {[(*E).base]; instruction = addr_kMetroid_Ilist_E9CF as u16, timer = 1u16}
             CallSomeSamusCode(0x13u16, game);
         }
     } else {
@@ -4162,8 +4132,7 @@ pub unsafe fn Metroid_Shot(game: &mut Game) {
         *((&raw mut (*E).metroid_var_C as *mut u8).offset(1) as *mut u16) =
             (32u16).wrapping_mul((v9) as u16);
         (*E).metroid_var_F = 0u16;
-        (*E).base.current_instruction = addr_kMetroid_Ilist_E9CF as u16;
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = addr_kMetroid_Ilist_E9CF as u16, timer = 1u16}
         let v10: i32 = ram_word!(game, collision_detection_index) as i32;
         if (ram_word!(game, projectile_type[v10]) as i32 & 2i32) != 0i32 {
             QueueSfx3_Max6(0xau16, game);

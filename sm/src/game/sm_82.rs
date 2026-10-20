@@ -8,6 +8,7 @@ pub use crate::game::constants::buttons::*;
 pub use crate::game::constants::game_states::*;
 pub use crate::game::constants::loading_game_states::*;
 pub use crate::game::constants::samus_poses::*;
+use crate::game::enemy_instruction;
 use crate::game::sm_80::{
     memset7E, CalculateLayer2PosAndScrollsWhenScrolling, CheckEventHappened, ClearBG2Tilemap,
     ClearFXTilemap, ClearOamExt, ClearTimerRam, ClearUnusedOam, CopyToVramNow,
@@ -4044,9 +4045,7 @@ pub unsafe fn sub_82BB7F(a: u16, game: &mut Game) {
     };
 }
 pub unsafe fn sub_82BBDD(game: &mut Game) {
-    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).current_instruction =
-        addr_kgameOverBabyMetridInstructionList as u16;
-    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).instruction_timer = 10u16;
+    enemy_instruction! {[(*(ram_ptr!(game, EnemyData; 0xf78)).offset(0))]; instruction = addr_kgameOverBabyMetridInstructionList as u16, timer = 10u16}
     sub_82BB7F(0xau16, game);
 }
 pub unsafe fn DrawBabyMetroid(k: u16, game: &mut Game) {

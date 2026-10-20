@@ -2,6 +2,7 @@ use crate::c_library::{memcpy, printf};
 use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::enemy_properties::*;
+use crate::game::enemy_instruction;
 use crate::game::enemy_layouts::enemy_layout;
 use crate::game::sm_80::{
     DecompressToMem, NextRandom, QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx2_Max15,
@@ -500,8 +501,7 @@ pub unsafe fn KraidsArm_Init(game: &mut Game) {
         let v0: *mut EnemyData = gEnemyData(0i32, game);
         (*v0.offset(1)).palette_index = (*v0).palette_index;
         (*v0.offset(1)).ai_var_A = ((0xa7ba2di32) as u16);
-        (*v0.offset(1)).current_instruction = addr_kKraid_Ilist_8AA4 as u16;
-        (*v0.offset(1)).instruction_timer = 1u16;
+        enemy_instruction! {[(*v0.offset(1))]; instruction = addr_kKraid_Ilist_8AA4 as u16, timer = 1u16}
         (*v0.offset(1)).ai_var_B = 0u16;
     };
 }
@@ -511,8 +511,7 @@ pub unsafe fn KraidsTopLint_Init(game: &mut Game) {
     } else {
         let v0: *mut EnemyData = gEnemyData(0i32, game);
         (*v0.offset(2)).palette_index = (*v0).palette_index;
-        (*v0.offset(2)).instruction_timer = 0x7fffu16;
-        (*v0.offset(2)).current_instruction = addr_kKraid_Ilist_8AFE as u16;
+        enemy_instruction! {[(*v0.offset(2))]; timer = 0x7fffu16, instruction = addr_kKraid_Ilist_8AFE as u16}
         (*v0.offset(2)).spritemap_pointer = addr_kKraid_Sprmap_A5DF as u16;
         (*v0.offset(2)).ai_var_A = addr_locret_A7B831 as u16;
         (*v0.offset(2)).ai_preinstr = 0x7fffu16;
@@ -525,8 +524,7 @@ pub unsafe fn KraidsMiddleLint_Init(game: &mut Game) {
     } else {
         let v0: *mut EnemyData = gEnemyData(0i32, game);
         (*v0.offset(3)).palette_index = (*v0).palette_index;
-        (*v0.offset(3)).instruction_timer = 0x7fffu16;
-        (*v0.offset(3)).current_instruction = addr_kKraid_Ilist_8AFE as u16;
+        enemy_instruction! {[(*v0.offset(3))]; timer = 0x7fffu16, instruction = addr_kKraid_Ilist_8AFE as u16}
         (*v0.offset(3)).spritemap_pointer = addr_kKraid_Sprmap_A5DF as u16;
         (*v0.offset(3)).ai_var_A = addr_locret_A7B831 as u16;
         (*v0.offset(3)).ai_var_C = -16i32 as u16;
@@ -538,8 +536,7 @@ pub unsafe fn KraidsBottomLint_Init(game: &mut Game) {
     } else {
         let v0: *mut EnemyData = gEnemyData(0i32, game);
         (*v0.offset(4)).palette_index = (*v0).palette_index;
-        (*v0.offset(4)).instruction_timer = 0x7fffu16;
-        (*v0.offset(4)).current_instruction = addr_kKraid_Ilist_8AFE as u16;
+        enemy_instruction! {[(*v0.offset(4))]; timer = 0x7fffu16, instruction = addr_kKraid_Ilist_8AFE as u16}
         (*v0.offset(4)).spritemap_pointer = addr_kKraid_Sprmap_A5DF as u16;
         (*v0.offset(4)).ai_var_A = addr_locret_A7B831 as u16;
         (*v0.offset(4)).ai_var_C = -16i32 as u16;
@@ -552,8 +549,7 @@ pub unsafe fn KraidsFoot_Init(game: &mut Game) {
         let palette_index: u16 = (*Get_Kraid(0i32, game)).base.palette_index;
         let E: *mut Enemy_Kraid = Get_Kraid(0x140i32, game);
         (*E).base.palette_index = palette_index;
-        (*E).base.current_instruction = addr_kKraid_Ilist_86E7 as u16;
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = addr_kKraid_Ilist_86E7 as u16, timer = 1u16}
         (*E).kraid_var_A = ((0xa7ba2di32) as u16);
         (*E).kraid_next = 0u16;
     };
@@ -678,8 +674,7 @@ pub unsafe fn Kraid_GetsBig_SetBG2TilemapPrioBits(game: &mut Game) {
 pub unsafe fn Kraid_GetsBig_FinishUpdateBg2Tilemap(game: &mut Game) {
     (*Get_Kraid(0i32, game)).kraid_var_A = ((0xa7ad8ei32) as u16);
     let E5: *mut Enemy_Kraid = Get_Kraid(0x140i32, game);
-    (*E5).base.instruction_timer = 1u16;
-    (*E5).base.current_instruction = addr_kKraid_Ilist_86ED as u16;
+    enemy_instruction! {[(*E5).base]; timer = 1u16, instruction = addr_kKraid_Ilist_86ED as u16}
     let E2: *mut Enemy_Kraid = Get_Kraid(0x80i32, game);
     (*E2).base.current_instruction = addr_kKraid_Ilist_8B04 as u16;
     let E3: *mut Enemy_Kraid = Get_Kraid(0xc0i32, game);
@@ -769,8 +764,7 @@ pub unsafe fn Kraid_GetsBig_FadeInRoomBg(game: &mut Game) {
         (*E0).kraid_target_x = 288u16;
         let E5: *mut Enemy_Kraid = Get_Kraid(0x140i32, game);
         (*E5).kraid_var_A = ((0xa7bb6ei32) as u16);
-        (*E5).base.instruction_timer = 1u16;
-        (*E5).base.current_instruction = addr_kKraid_Ilist_8887 as u16;
+        enemy_instruction! {[(*E5).base]; timer = 1u16, instruction = addr_kKraid_Ilist_8887 as u16}
     }
 }
 pub unsafe fn Kraid_Mainloop_Thinking(game: &mut Game) {
@@ -1475,8 +1469,7 @@ pub unsafe fn KraidEnemy_DecrementEnemyFunctionTimer(game: &mut Game) {
         (*E).kraid_var_F = (*E).kraid_var_F.wrapping_sub(1);
         if fresh8 == 1u16 {
             (*E).kraid_var_A = (*E).kraid_next;
-            (*E).base.current_instruction = addr_kKraid_Ilist_8887 as u16;
-            (*E).base.instruction_timer = 1u16;
+            enemy_instruction! {[(*E).base]; instruction = addr_kKraid_Ilist_8887 as u16, timer = 1u16}
         }
     }
 }
@@ -1565,16 +1558,14 @@ pub unsafe fn Kraid_SetWalkingBackwards(j: u16, a: u16, game: &mut Game) {
     let E: *mut Enemy_Kraid = Get_Kraid(0x140i32, game);
     (*E).kraid_next = j;
     (*E).kraid_var_A = ((0xa7bb45i32) as u16);
-    (*E).base.instruction_timer = 1u16;
-    (*E).base.current_instruction = addr_kKraid_Ilist_8887 as u16;
+    enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_kKraid_Ilist_8887 as u16}
 }
 pub unsafe fn Kraid_SetWalkingForwards(j: u16, a: u16, game: &mut Game) {
     (*Get_Kraid(0i32, game)).kraid_target_x = a;
     let E: *mut Enemy_Kraid = Get_Kraid(0x140i32, game);
     (*E).kraid_next = j;
     (*E).kraid_var_A = ((0xa7bbaei32) as u16);
-    (*E).base.instruction_timer = 1u16;
-    (*E).base.current_instruction = addr_kKraid_Ilist_86F3 as u16;
+    enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_kKraid_Ilist_86F3 as u16}
 }
 pub unsafe fn KraidsFoot_SecondPhase_Thinking(game: &mut Game) {
     let mut v4: i16 = 0;
@@ -1627,8 +1618,7 @@ pub unsafe fn KraidsFoot_SecondPhase_WalkingBackwards(game: &mut Game) {
     let E5: *mut Enemy_Kraid = Get_Kraid(0x140i32, game);
     if (*E5).base.current_instruction as i32 + 0x76c7i32 & 0x8000i32 == 0 {
         (*E5).kraid_var_A = ((0xa7ba2ei32) as u16);
-        (*E5).base.instruction_timer = 1u16;
-        (*E5).base.current_instruction = addr_kKraid_Ilist_86ED as u16;
+        enemy_instruction! {[(*E5).base]; timer = 1u16, instruction = addr_kKraid_Ilist_86ED as u16}
     }
 }
 pub unsafe fn KraidsFoot_SecondPhaseSetup_WalkToStartPt(game: &mut Game) {
@@ -1645,8 +1635,7 @@ pub unsafe fn KraidsFoot_SecondPhaseSetup_WalkToStartPt(game: &mut Game) {
         (*E5).kraid_var_A = ((0xa7b92di32) as u16);
         (*E5).kraid_var_F = 180u16;
         (*E5).kraid_next = ((0xa7bba4i32) as u16);
-        (*E5).base.instruction_timer = 1u16;
-        (*E5).base.current_instruction = addr_kKraid_Ilist_86ED as u16;
+        enemy_instruction! {[(*E5).base]; timer = 1u16, instruction = addr_kKraid_Ilist_86ED as u16}
     }
 }
 pub unsafe fn KraidsFoot_SecondPhase_Init(game: &mut Game) {
@@ -1658,16 +1647,14 @@ pub unsafe fn KraidsFoot_SecondPhase_WalkForward(game: &mut Game) {
     if ((kraid_target_x) as i16).wrapping_sub(((*E0).base.x_pos) as i16) < 0i16 {
         let E5: *mut Enemy_Kraid = Get_Kraid(0x140i32, game);
         if (*E5).base.current_instruction == (addr_off_A787BB as u16) {
-            (*E5).base.current_instruction = addr_kKraid_Ilist_86F3 as u16;
-            (*E5).base.instruction_timer = 1u16;
+            enemy_instruction! {[(*E5).base]; instruction = addr_kKraid_Ilist_86F3 as u16, timer = 1u16}
         }
     } else {
         (*E0).base.x_pos = kraid_target_x;
         let E5_0: *mut Enemy_Kraid = Get_Kraid(0x140i32, game);
         if (*E5_0).base.current_instruction == (addr_off_A787BB as u16) {
             (*E5_0).kraid_var_A = ((0xa7ba2ei32) as u16);
-            (*E5_0).base.instruction_timer = 1u16;
-            (*E5_0).base.current_instruction = addr_kKraid_Ilist_86ED as u16;
+            enemy_instruction! {[(*E5_0).base]; timer = 1u16, instruction = addr_kKraid_Ilist_86ED as u16}
         }
     };
 }
@@ -1725,8 +1712,7 @@ pub unsafe fn KraidFingernailInit(k: u16, game: &mut Game) {
     (*E).base.palette_index = palette_index;
     (*E).kraid_var_B = 40u16;
     (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);
-    (*E).base.instruction_timer = 0x7fffu16;
-    (*E).base.current_instruction = addr_kKraid_Ilist_8B0A as u16;
+    enemy_instruction! {[(*E).base]; timer = 0x7fffu16, instruction = addr_kKraid_Ilist_8B0A as u16}
     (*E).base.spritemap_pointer =
         (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa78b0a)) as *mut SpriteDrawInstr)).field_2;
     (*E).kraid_next = ((0xa7bd60i32) as u16);
@@ -1796,8 +1782,7 @@ pub unsafe fn KraidsFingernail_Init(game: &mut Game) {
     (*E).base.properties = ((*E).base.properties as i32
         & !(kEnemyProps_Tangible as i32 | kEnemyProps_Invisible as i32))
         as u16;
-    (*E).base.instruction_timer = 1u16;
-    (*E).base.current_instruction = addr_kKraid_Ilist_8B0A as u16;
+    enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_kKraid_Ilist_8B0A as u16}
     (*E).kraid_var_A = ((0xa7be8ei32) as u16);
     let position_at_kraid: bool = ((ram_word!(game, random_number) as i32 & 1i32) == 0i32)
         || ({
@@ -1886,10 +1871,8 @@ pub unsafe fn KraidsFoot_PrepareToLungeForward(game: &mut Game) {
     Kraid_HandleFirstPhase(game);
     let v0: *mut EnemyData = gEnemyData(0i32, game);
     if (*v0.offset(1)).current_instruction as i32 + 0x75c9i32 & 0x8000i32 == 0 {
-        (*v0.offset(1)).current_instruction = addr_kKraid_Ilist_8AF0 as u16;
-        (*v0.offset(1)).instruction_timer = 1u16;
-        (*v0.offset(5)).instruction_timer = 1u16;
-        (*v0.offset(5)).current_instruction = addr_kKraid_Ilist_87BD as u16;
+        enemy_instruction! {[(*v0.offset(1))]; instruction = addr_kKraid_Ilist_8AF0 as u16, timer = 1u16}
+        enemy_instruction! {[(*v0.offset(5))]; timer = 1u16, instruction = addr_kKraid_Ilist_87BD as u16}
         (*v0.offset(5)).ai_var_A = ((0xa7bf5di32) as u16);
         (*v0.offset(5)).ai_preinstr = 0u16;
     }
@@ -1906,11 +1889,9 @@ pub unsafe fn KraidsFoot_FirstPhase_LungeForward(game: &mut Game) {
             (*E5).kraid_next = ((0xa7bfabi32) as u16);
             (*E5).kraid_var_A = ((0xa7b93fi32) as u16);
             (*E5).kraid_var_F = 1u16;
-            (*E5).base.instruction_timer = 1u16;
-            (*E5).base.current_instruction = addr_kKraid_Ilist_86ED as u16;
+            enemy_instruction! {[(*E5).base]; timer = 1u16, instruction = addr_kKraid_Ilist_86ED as u16}
         } else {
-            (*E5).base.instruction_timer = 1u16;
-            (*E5).base.current_instruction = addr_kKraid_Ilist_87BD as u16;
+            enemy_instruction! {[(*E5).base]; timer = 1u16, instruction = addr_kKraid_Ilist_87BD as u16}
         }
     }
 }
@@ -1924,18 +1905,15 @@ pub unsafe fn KraidsFoot_FirstPhase_RetreatFromLunge(game: &mut Game) {
     if (*E5).base.current_instruction as i32 + 0x76c7i32 & 0x8000i32 == 0 {
         if (*E0).base.x_pos == 176u16 {
             let E1: *mut Enemy_Kraid = Get_Kraid(0x40i32, game);
-            (*E1).base.current_instruction = addr_kKraid_Ilist_89F3 as u16;
-            (*E1).base.instruction_timer = 1u16;
-            (*E5).base.instruction_timer = 1u16;
-            (*E5).base.current_instruction = addr_kKraid_Ilist_86ED as u16;
+            enemy_instruction! {[(*E1).base]; instruction = addr_kKraid_Ilist_89F3 as u16, timer = 1u16}
+            enemy_instruction! {[(*E5).base]; timer = 1u16, instruction = addr_kKraid_Ilist_86ED as u16}
             (*E5).kraid_var_A = ((0xa7b960i32) as u16);
             (*E5).kraid_var_F = 300u16;
             (*E5).kraid_next = ((0xa7bf2di32) as u16);
         } else {
             printf(b"X undefined\n\0" as *const u8 as *const c_char);
             let E: *mut Enemy_Kraid = Get_Kraid(ram_word!(game, cur_enemy_index) as i32, game);
-            (*E).base.current_instruction = addr_kKraid_Ilist_8887 as u16;
-            (*E).base.instruction_timer = 1u16;
+            enemy_instruction! {[(*E).base]; instruction = addr_kKraid_Ilist_8887 as u16, timer = 1u16}
         }
     }
 }
@@ -1966,12 +1944,10 @@ pub unsafe fn Kraid_HandleFirstPhase(game: &mut Game) {
         set_ram_word!(game.earthquake_type = 4u16);
         set_ram_word!(game.earthquake_timer = 340u16);
         let E5: *mut Enemy_Kraid = Get_Kraid(0x140i32, game);
-        (*E5).base.current_instruction = addr_kKraid_Ilist_86E7 as u16;
-        (*E5).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E5).base]; instruction = addr_kKraid_Ilist_86E7 as u16, timer = 1u16}
         (*E5).kraid_var_A = ((0xa7ba2di32) as u16);
         let E1: *mut Enemy_Kraid = Get_Kraid(0x40i32, game);
-        (*E1).base.current_instruction = addr_kKraid_Ilist_89F3 as u16;
-        (*E1).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E1).base]; instruction = addr_kKraid_Ilist_89F3 as u16, timer = 1u16}
         let E2: *mut Enemy_Kraid = Get_Kraid(0x80i32, game);
         (*E2).base.properties = ((*E2).base.properties) | (0x100u16);
         let E3: *mut Enemy_Kraid = Get_Kraid(0xc0i32, game);
@@ -2176,8 +2152,7 @@ pub unsafe fn Kraid_Death_Init(game: &mut Game) {
             i -= 2i32;
         }
         let E1: *mut Enemy_Kraid = Get_Kraid(0x40i32, game);
-        (*E1).base.current_instruction = addr_kKraid_Ilist_8AF0 as u16;
-        (*E1).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E1).base]; instruction = addr_kKraid_Ilist_8AF0 as u16, timer = 1u16}
         (*E0).kraid_var_A = ((0xa7c3f9i32) as u16);
         (*E0).kraid_var_B = (addr_stru_A79764 as i32 + 8i32) as u16;
         (*E0).kraid_var_C = (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa79764))
@@ -2259,11 +2234,9 @@ pub unsafe fn Kraid_Death_UpdateBG2TilemapBottomHalf(game: &mut Game) {
     set_ram_word!(game.earthquake_type = 1u16);
     set_ram_word!(game.earthquake_timer = 256u16);
     let E1: *mut Enemy_Kraid = Get_Kraid(0x40i32, game);
-    (*E1).base.current_instruction = addr_kKraid_Ilist_8AA4 as u16;
-    (*E1).base.instruction_timer = 1u16;
+    enemy_instruction! {[(*E1).base]; instruction = addr_kKraid_Ilist_8AA4 as u16, timer = 1u16}
     let E5: *mut Enemy_Kraid = Get_Kraid(0x140i32, game);
-    (*E5).base.current_instruction = addr_kKraid_Ilist_86E7 as u16;
-    (*E5).base.instruction_timer = 1u16;
+    enemy_instruction! {[(*E5).base]; instruction = addr_kKraid_Ilist_86E7 as u16, timer = 1u16}
     (*E5).kraid_var_A = ((0xa7ba2di32) as u16);
     Kraid_UpdateBG2TilemapBottomHalf(game);
 }
@@ -2618,8 +2591,7 @@ pub unsafe fn Kraid_Raise_Handler(game: &mut Game) {
         (*E0).kraid_var_B = addr_stru_A796DA as u16;
         Kraid_Mainloop_Thinking_Setup(game);
         let E1: *mut Enemy_Kraid = Get_Kraid(0x40i32, game);
-        (*E1).base.current_instruction = addr_kKraid_Ilist_89F3 as u16;
-        (*E1).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E1).base]; instruction = addr_kKraid_Ilist_89F3 as u16, timer = 1u16}
     }
 }
 pub unsafe fn Kraid_SpawnRandomQuakeProjs(game: &mut Game) {
@@ -2908,8 +2880,7 @@ pub unsafe fn Phantoon_Func_7(k: u16, game: &mut Game) {
                 ) as *mut u16)
                     .offset(1);
             }
-            (*E).base.instruction_timer = 1u16;
-            (*E).base.current_instruction = addr_kKraid_Ilist_CCEB as u16;
+            enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_kKraid_Ilist_CCEB as u16}
         } else {
             let v5: u16 = (NextRandom(game)) & (3u16);
             (*E).phant_var_A = v5;
@@ -2924,15 +2895,13 @@ pub unsafe fn Phantoon_Func_7(k: u16, game: &mut Game) {
 pub unsafe fn Phantoon_StartTrackingSamusAndInitEyeTimer(game: &mut Game) {
     (*Get_Phantoon(0x80i32, game)).phant_var_A = 0u16;
     let E: *mut Enemy_Phantoon = Get_Phantoon(0i32, game);
-    (*E).base.instruction_timer = 1u16;
-    (*E).base.current_instruction = addr_kKraid_Ilist_CC4D as u16;
+    enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_kKraid_Ilist_CC4D as u16}
     (*E).base.properties = ((*E).base.properties as i32 & !(kEnemyProps_Tangible as i32)) as u16;
     (*E).phant_var_E =
         crate::rtl::rom_table_word!(game, 0xa7cd41, (NextRandom(game) as i32 & 7i32) as isize);
     (*E).phant_var_F = ((0xa7d60di32) as u16);
     let E1: *mut Enemy_Phantoon = Get_Phantoon(0x40i32, game);
-    (*E1).base.instruction_timer = 1u16;
-    (*E1).base.current_instruction = addr_kKraid_Ilist_CC9D as u16;
+    enemy_instruction! {[(*E1).base]; timer = 1u16, instruction = addr_kKraid_Ilist_CC9D as u16}
 }
 pub unsafe fn Phantoon_PickPatternForRound2(game: &mut Game) {
     let mut v4: i16 = 0;
@@ -3175,9 +3144,7 @@ pub unsafe fn Phantoon_BeginSwoopingPattern(k: u16, game: &mut Game) {
 pub unsafe fn Phantoon_ChangeEyeSpriteBasedOnSamusDist(game: &mut Game) {
     let v0: u16 = (2u16).wrapping_mul(DetermineDirectionOfSamusFromEnemy(game));
     let E: *mut Enemy_Phantoon = Get_Phantoon(0x40i32, game);
-    (*E).base.instruction_timer = 1u16;
-    (*E).base.current_instruction =
-        crate::rtl::rom_table_word!(game, 0xa7d40d, (v0 as i32 >> 1i32) as isize);
+    enemy_instruction! {[(*E).base]; timer = 1u16, instruction = crate::rtl::rom_table_word!(game, 0xa7d40d, (v0 as i32 >> 1i32) as isize)}
 }
 pub unsafe fn Phantoon_StartDeathSequence(k: u16, game: &mut Game) {
     let mut v3: i16 = 0;
@@ -3349,8 +3316,7 @@ pub unsafe fn Phantoon_MovePhantoonInFigure8ThenOpenEye(k: u16, game: &mut Game)
     let v3: bool = ((*E).phant_var_A as i32 & 0x8000i32) != 0i32;
     if v2 || v3 {
         (*Get_Phantoon(k as i32, game)).phant_var_F = ((0xa7d4a8i32) as u16);
-        (*E).base.instruction_timer = 1u16;
-        (*E).base.current_instruction = addr_kKraid_Ilist_CC53 as u16;
+        enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_kKraid_Ilist_CC53 as u16}
         (*Get_Phantoon(0i32, game)).phant_parameter_2 = 0u16;
         Phantoon_Func_5(k, game);
     }
@@ -3389,8 +3355,7 @@ pub unsafe fn Phantoon_BecomesSolidAndBodyVuln(v0: u16, game: &mut Game) {
     );
     Phantoon_BeginSwoopingPattern(v0, game);
     let E: *mut Enemy_Phantoon = Get_Phantoon(0i32, game);
-    (*E).base.instruction_timer = 1u16;
-    (*E).base.current_instruction = addr_kKraid_Ilist_CC47 as u16;
+    enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_kKraid_Ilist_CC47 as u16}
 }
 pub unsafe fn Phantoon_IsSwooping(k: u16, game: &mut Game) {
     Phantoon_ChangeEyeSpriteBasedOnSamusDist(game);
@@ -3625,8 +3590,7 @@ pub unsafe fn Phantoon_Enraged(k: u16, game: &mut Game) {
         if v7 as i32 - 8i32 & 0x8000i32 != 0 {
             (*Get_Phantoon(k as i32, game)).phant_var_E = 128u16;
         } else {
-            (*E1).base.instruction_timer = 1u16;
-            (*E1).base.current_instruction = addr_kKraid_Ilist_CC91 as u16;
+            enemy_instruction! {[(*E1).base]; timer = 1u16, instruction = addr_kKraid_Ilist_CC91 as u16}
             (*E1).phant_var_F = 0u16;
             (*Get_Phantoon(k as i32, game)).phant_var_F = ((0xa7d916i32) as u16);
         }
@@ -4188,8 +4152,7 @@ pub unsafe fn Etecoon_Func_4(k: u16, game: &mut Game) {
             if ((*E).etecoon_parameter_2 as i32 & 3i32) == 0i32 {
                 QueueSfx2_Max15(0x35u16, game);
             }
-            (*E).base.instruction_timer = 1u16;
-            (*E).base.current_instruction = addr_kEtecoon_Ilist_E8D6 as u16;
+            enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_kEtecoon_Ilist_E8D6 as u16}
             (*E).etecoon_var_E = 256u16;
         }
     }
@@ -4202,8 +4165,7 @@ pub unsafe fn Etecoon_Func_5(k: u16, game: &mut Game) {
     if v2 || v3 {
         (*E).etecoon_var_A = g_word_A7E900;
         (*E).etecoon_var_B = g_word_A7E902;
-        (*E).base.current_instruction = ((*E).base.current_instruction).wrapping_add(2u16);
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = ((*E).base.current_instruction).wrapping_add(2u16), timer = 1u16}
         (*E).etecoon_var_F = ((0xa7ea37i32) as u16);
         if ram_word!(game, samus_x_pos) as i32 - 256i32 & 0x8000i32 == 0 {
             QueueSfx2_Max6(0x33u16, game);
@@ -4231,14 +4193,12 @@ pub unsafe fn Etecoon_Func_6(k: u16, game: &mut Game) {
             } else {
                 (*E).etecoon_var_E = 11u16;
                 (*E).etecoon_var_F = ((0xa7ea00i32) as u16);
-                (*E).base.instruction_timer = 1u16;
-                (*E).base.current_instruction = addr_kEtecoon_Ilist_E854 as u16;
+                enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_kEtecoon_Ilist_E854 as u16}
             }
         } else {
             (*E).etecoon_var_A = 0u16;
             (*E).etecoon_var_B = 0u16;
-            (*E).base.instruction_timer = 3u16;
-            (*E).base.current_instruction = addr_stru_A7E862 as u16;
+            enemy_instruction! {[(*E).base]; timer = 3u16, instruction = addr_stru_A7E862 as u16}
         }
     }
 }
@@ -4248,8 +4208,7 @@ pub unsafe fn Etecoon_Func_7(k: u16, game: &mut Game) {
     (*E).etecoon_var_E = (*E).etecoon_var_E.wrapping_sub(1);
     let v3: bool = ((*E).etecoon_var_E as i32 & 0x8000i32) != 0i32;
     if v2 || v3 {
-        (*E).base.current_instruction = ((*E).base.current_instruction).wrapping_add(2u16);
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = ((*E).base.current_instruction).wrapping_add(2u16), timer = 1u16}
         if (*E).etecoon_parameter_1 != 0 {
             (*E).etecoon_var_C = g_word_A7E908;
             (*E).etecoon_var_D = g_word_A7E90A;
@@ -4269,16 +4228,14 @@ pub unsafe fn Etecoon_Func_8(k: u16, game: &mut Game) {
         (*E).etecoon_var_C = g_word_A7E908;
         (*E).etecoon_var_D = g_word_A7E90A;
         (*E).etecoon_var_F = ((0xa7eb2ci32) as u16);
-        (*E).base.instruction_timer = 1u16;
-        (*E).base.current_instruction = addr_stru_A7E880 as u16;
+        enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_stru_A7E880 as u16}
         (*E).etecoon_parameter_1 = 1u16;
     }
 }
 pub unsafe fn Etecoon_Func_9(k: u16, game: &mut Game) {
     if EnemyFunc_BBBF(k, ((32u32) << 16i32 | 0u16 as u32) as i32, game) != 0 {
         let E: *mut Enemy_Etecoon = Get_Etecoon(k as i32, game);
-        (*E).base.instruction_timer = 1u16;
-        (*E).base.current_instruction = addr_stru_A7E898 as u16;
+        enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_stru_A7E898 as u16}
         (*E).etecoon_var_F = ((0xa7eb50i32) as u16);
     } else {
         Etecoon_Func_2(k, game);
@@ -4380,8 +4337,7 @@ pub unsafe fn Etecoon_Func_16(k: u16, game: &mut Game) {
     if (*E).base.x_pos as i32 - 537i32 & 0x8000i32 != 0 {
         (*E).etecoon_var_E = 11u16;
         (*E).etecoon_var_F = ((0xa7edc7i32) as u16);
-        (*E).base.instruction_timer = 1u16;
-        (*E).base.current_instruction = addr_kEtecoon_Ilist_E854 as u16;
+        enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_kEtecoon_Ilist_E854 as u16}
     }
 }
 pub unsafe fn Etecoon_Func_17(k: u16, game: &mut Game) {
@@ -4390,8 +4346,7 @@ pub unsafe fn Etecoon_Func_17(k: u16, game: &mut Game) {
     if (*E).base.x_pos as i32 - 600i32 & 0x8000i32 == 0 {
         (*E).etecoon_var_E = 11u16;
         (*E).etecoon_var_F = ((0xa7edc7i32) as u16);
-        (*E).base.instruction_timer = 1u16;
-        (*E).base.current_instruction = addr_kEtecoon_Ilist_E854 as u16;
+        enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_kEtecoon_Ilist_E854 as u16}
     }
 }
 pub unsafe fn Etecoon_Func_18(k: u16, game: &mut Game) {
@@ -4401,8 +4356,7 @@ pub unsafe fn Etecoon_Func_18(k: u16, game: &mut Game) {
         (*E).etecoon_var_F = ((0xa7ed09i32) as u16);
         (*E).etecoon_var_A = g_word_A7E904;
         (*E).etecoon_var_B = g_word_A7E906;
-        (*E).base.instruction_timer = 1u16;
-        (*E).base.current_instruction = addr_stru_A7E898 as u16;
+        enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_stru_A7E898 as u16}
     }
 }
 pub unsafe fn Etecoon_Func_19(k: u16, game: &mut Game) {
@@ -4410,8 +4364,7 @@ pub unsafe fn Etecoon_Func_19(k: u16, game: &mut Game) {
     Etecoon_Func_3(k, game);
     let E: *mut Enemy_Etecoon = Get_Etecoon(k as i32, game);
     if (*E).base.x_pos as i32 - 680i32 & 0x8000i32 == 0 {
-        (*E).base.instruction_timer = 1u16;
-        (*E).base.current_instruction = addr_stru_A7E880 as u16;
+        enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_stru_A7E880 as u16}
         (*E).etecoon_var_F = ((0xa7ed2ai32) as u16);
     }
 }
@@ -4419,8 +4372,7 @@ pub unsafe fn Etecoon_Func_20(k: u16, game: &mut Game) {
     Etecoon_Func_2(k, game);
     let E: *mut Enemy_Etecoon = Get_Etecoon(k as i32, game);
     if (*E).base.x_pos as i32 - 840i32 & 0x8000i32 == 0 {
-        (*E).base.instruction_timer = 1u16;
-        (*E).base.current_instruction = addr_stru_A7E898 as u16;
+        enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_stru_A7E898 as u16}
         (*E).etecoon_var_F = ((0xa7ed54i32) as u16);
         (*E).etecoon_var_A = -1i32 as u16;
         (*E).etecoon_var_B = g_word_A7E906;
@@ -4431,8 +4383,7 @@ pub unsafe fn Etecoon_Func_21(k: u16, game: &mut Game) {
     if Etecoon_Func_3(k, game) as i32 & 1i32 != 0 {
         let E: *mut Enemy_Etecoon = Get_Etecoon(k as i32, game);
         (*E).etecoon_var_E = 11u16;
-        (*E).base.instruction_timer = 1u16;
-        (*E).base.current_instruction = addr_kEtecoon_Ilist_E854 as u16;
+        enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_kEtecoon_Ilist_E854 as u16}
         (*E).etecoon_var_F = ((0xa7edc7i32) as u16);
     }
 }
@@ -4442,8 +4393,7 @@ pub unsafe fn Etecoon_Func_22(k: u16, game: &mut Game) {
         let E: *mut Enemy_Etecoon = Get_Etecoon(k as i32, game);
         if ((*E).etecoon_var_A as i32 & 0x8000i32) == 0i32 {
             (*E).etecoon_var_E = 11u16;
-            (*E).base.instruction_timer = 1u16;
-            (*E).base.current_instruction = addr_kEtecoon_Ilist_E854 as u16;
+            enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_kEtecoon_Ilist_E854 as u16}
             if ((*E).etecoon_parameter_2 as i32 & 2i32) != 0i32
                 && (*E).base.x_pos as i32 - 832i32 & 0x8000i32 != 0
             {
@@ -4454,8 +4404,7 @@ pub unsafe fn Etecoon_Func_22(k: u16, game: &mut Game) {
         } else {
             (*E).etecoon_var_A = 0u16;
             (*E).etecoon_var_B = 0u16;
-            (*E).base.instruction_timer = 3u16;
-            (*E).base.current_instruction = addr_stru_A7E862 as u16;
+            enemy_instruction! {[(*E).base]; timer = 3u16, instruction = addr_stru_A7E862 as u16}
         }
     }
 }
@@ -4518,8 +4467,7 @@ pub unsafe fn Etecoon_Func_25(k: u16, game: &mut Game) {
     let E: *mut Enemy_Etecoon = Get_Etecoon(k as i32, game);
     if (*E).base.x_pos as i32 - 600i32 & 0x8000i32 == 0 {
         (*E).etecoon_var_F = ((0xa7eeb8i32) as u16);
-        (*E).base.instruction_timer = 1u16;
-        (*E).base.current_instruction = addr_stru_A7E898 as u16;
+        enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_stru_A7E898 as u16}
     }
 }
 pub unsafe fn Etecoon_Func_26(k: u16, game: &mut Game) {
@@ -4531,8 +4479,7 @@ pub unsafe fn Etecoon_Func_26(k: u16, game: &mut Game) {
         (*E).etecoon_var_F = ((0xa7eb02i32) as u16);
         (*E).etecoon_var_A = g_word_A7E900;
         (*E).etecoon_var_B = g_word_A7E902;
-        (*E).base.instruction_timer = 1u16;
-        (*E).base.current_instruction = addr_stru_A7E828 as u16;
+        enemy_instruction! {[(*E).base]; timer = 1u16, instruction = addr_stru_A7E828 as u16}
     }
 }
 pub unsafe fn Dachora_Init(game: &mut Game) {
@@ -4701,8 +4648,7 @@ pub unsafe fn Dachora_Func_7(k: u16, game: &mut Game) {
     let fresh3 = (*E).dachor_var_A;
     (*E).dachor_var_A = (*E).dachor_var_A.wrapping_sub(1);
     if fresh3 == 1u16 {
-        (*E).base.current_instruction = ((*E).base.current_instruction).wrapping_add(2u16);
-        (*E).base.instruction_timer = 1u16;
+        enemy_instruction! {[(*E).base]; instruction = ((*E).base.current_instruction).wrapping_add(2u16), timer = 1u16}
         (*E).dachor_var_F = ((0xa7f806i32) as u16);
         let E1: *mut Enemy_Dachora = Get_Dachora(k as i32 + 64i32, game);
         (*E1).dachor_var_A = 0u16;
