@@ -72,6 +72,28 @@ results, including `7de53cc1`, describe the earlier codec.
 
 ## Cleanup approach (2026-10-19)
 
+DSP signed-sample saturation (2026-10-20): all 14 identical signed16-bit
+clamps share one safe saturate_sample operation. Channel-by-channel mixing,
+master-volume output, FIR sums/feedback, Gaussian interpolation and BRR retain
+each original clamp position and every surrounding signed shift/truncation.
+No load/store/callback or pointer boundary changes.
+
+Complete original/candidate DSP modules, actual packed declarations and existing
+field-store macro pass 4245504 state/output comparisons: 2048 echo,16384 BRR,
+4194304 interpolation and32768 active multi-cycle mixing cases. Arithmetic
+checks cover262149 nearby/extremei32 inputs. Wrapping,32766 ceiling and omitted
+per-channel clamp controls all fail. The initial muted/reset mock missed the
+per-channel control; corrected active noise/direct-gain mixing detects it.
+Independent complete-file inversion restores all14 original expressions.
+These local implementation checks do not establish ROM-driver audio equality
+or complete alias safety.
+
+Rust lines -79; the explicit signed bounds add one cast-containing line.
+Unsafe/raw/FFI counters unchanged. Formatting/check, normalrelease22.57s and
+progress pass. Full any%129712/0 (105.20s replay/107.39s wall), nativeexit0, passes with all77
+source inputs and final artifacts fixed. Broader routes/hardware/audio/
+frontend and alias ownership remain open.
+
 Shared decompression (2026-10-20): RAM and VRAM outputs now share the complete
 command decoder. Two private output implementations retain raw byte RAM
 accesses and the original VRAM register protocol. ROM bank rollover,
