@@ -614,7 +614,7 @@ unsafe fn WritePitch(p: *mut SpcPlayer, c: *mut Channel, mut pitch: u16) {
 unsafe fn Music_ResetChan(p: *mut SpcPlayer) {
     let mut c = (&raw mut (*p).channel as *mut Channel).offset(7);
     (*p).cur_chan_bit = 0x80;
-    loop {
+    do_until! { ((*p).cur_chan_bit == 0);
         byte!((*c).channel_volume; (size_of::<u16>() as usize)
                 .wrapping_div(size_of::<u8>() as usize)
                 .wrapping_sub(1_) as isize) = 0xff;
@@ -623,9 +623,6 @@ unsafe fn Music_ResetChan(p: *mut SpcPlayer) {
         set_fields! {[(*c)], 0; instrument_id, fine_tune, channel_transposition, pitch_envelope_num_ticks, cutk, vib_depth, tremolo_depth}
         c = c.offset(-1);
         (*p).cur_chan_bit = ((*p).cur_chan_bit >> 1);
-        if ((*p).cur_chan_bit == 0) {
-            break;
-        }
     }
     set_fields! {[(*p)], 0; master_volume_fade_ticks, echo_volume_fade_ticks, tempo_fade_num_ticks, global_transposition, block_count, percussion_base_id}
     *(&raw mut (*p).master_volume as *mut u8).offset(
@@ -1100,7 +1097,7 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
                         }
                         c = &raw mut (*p).channel as *mut Channel;
                         (*p).cur_chan_bit = 1;
-                        loop {
+                        do_until! { ((*p).cur_chan_bit == 0);
                             if byte!((*c).pattern_order_ptr_for_chan; (size_of::<u16>() as usize)
                                     .wrapping_div(size_of::<u8>() as usize)
                                     .wrapping_sub(1_) as isize)
@@ -1114,9 +1111,6 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
                             (*c).note_ticks_left = 1;
                             c = c.offset(1);
                             (*p).cur_chan_bit = (((*p).cur_chan_bit as i32) << 1) as u8;
-                            if ((*p).cur_chan_bit == 0) {
-                                break;
-                            }
                         }
                         read_toplevel_word = false;
                     } else if t == 0 {
@@ -1146,7 +1140,7 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
                     (*p).vol_dirty = 0;
                     c = &raw mut (*p).channel as *mut Channel;
                     (*p).cur_chan_bit = 1;
-                    loop {
+                    do_until! { ((*p).cur_chan_bit == 0);
                         if (byte!((*c).pattern_order_ptr_for_chan; (size_of::<u16>() as usize)
                                 .wrapping_div(size_of::<u8>() as usize)
                                 .wrapping_sub(1_) as isize)
@@ -1214,9 +1208,6 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
                         }
                         c = c.offset(1);
                         (*p).cur_chan_bit = (((*p).cur_chan_bit as i32) << 1) as u8;
-                        if ((*p).cur_chan_bit == 0) {
-                            break;
-                        }
                     }
                     if (*p).tempo_fade_num_ticks != 0 {
                         (*p).tempo_fade_num_ticks = (*p).tempo_fade_num_ticks.wrapping_sub(1);
@@ -1253,7 +1244,7 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
                     }
                     c = &raw mut (*p).channel as *mut Channel;
                     (*p).cur_chan_bit = 1;
-                    loop {
+                    do_until! { ((*p).cur_chan_bit == 0);
                         if byte!((*c).pattern_order_ptr_for_chan; (size_of::<u16>() as usize)
                                 .wrapping_div(size_of::<u8>() as usize)
                                 .wrapping_sub(1_) as isize)
@@ -1263,9 +1254,6 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
                         }
                         c = c.offset(1);
                         (*p).cur_chan_bit = (((*p).cur_chan_bit as i32) << 1) as u8;
-                        if ((*p).cur_chan_bit == 0) {
-                            break;
-                        }
                     }
                     return;
                 }
@@ -1346,11 +1334,8 @@ unsafe fn Spc_Loop_Part2(p: *mut SpcPlayer, ticks: u8) {
                     .wrapping_sub(1_) as isize) as i32) as u8 as i32;
     (*p).main_tempo_accum = t as u8;
     if t >= 256 {
-        loop {
+        do_until! { ((*p).fast_forward == 0);
             Music_HandleCmdFromSnes(p);
-            if ((*p).fast_forward == 0) {
-                break;
-            }
         }
     } else if (*p).port_to_snes[0i32 as usize] != 0 {
         let mut c = &raw mut (*p).channel as *mut Channel;
@@ -1778,7 +1763,7 @@ pub unsafe fn SpcPlayer_GenerateSamples(p: *mut SpcPlayer) {
         b"p->dsp->sampleOffset <= 534\0", b"src/spc_player.c\0", 1552,
         b"void SpcPlayer_GenerateSamples(SpcPlayer *)\0"
     };
-    loop {
+    do_until! { (*(*p).dsp).sampleOffset as i32 == 534;
         if (*p).timer_cycles as i32 >= 64 {
             Spc_Loop_Part2(p, ((*p).timer_cycles >> 6));
             Spc_Loop_Part1(p);
@@ -1794,9 +1779,6 @@ pub unsafe fn SpcPlayer_GenerateSamples(p: *mut SpcPlayer) {
             dsp_cycle((*p).dsp);
             i += 1;
         }
-        if (*(*p).dsp).sampleOffset as i32 == 534 {
-            break;
-        }
     }
 }
 pub unsafe fn SpcPlayer_Upload(p: *mut SpcPlayer, mut data: *const u8) {
@@ -1810,14 +1792,11 @@ pub unsafe fn SpcPlayer_Upload(p: *mut SpcPlayer, mut data: *const u8) {
         }
         let mut target: i32 = *(data.offset(2) as *mut u16) as i32;
         data = data.offset(4);
-        loop {
+        do_until! { (numbytes == 0);
             crate::update_place! { previous fresh32 = data => data.offset(1); }
             crate::update_place! { previous fresh33 = target => target + 1; }
             (*p).ram[(fresh33 & 0xffff) as usize] = *fresh32;
             numbytes -= 1;
-            if (numbytes == 0) {
-                break;
-            }
         }
     }
     (*p).port_to_snes[0i32 as usize] = 0;

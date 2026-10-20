@@ -247,7 +247,7 @@ pub unsafe fn DrawPlayerExplosions2(game: &mut Game) {
     let mut r18: u16 = 0;
     let mut r20: u16 = 0;
     word!(game.projectile_index = 8);
-    loop {
+    do_until! { ((v0 & 0x8000) != 0);
         let v1: i32 = v0 as i32 >> 1;
         if (word!(game.projectile_bomb_instruction_ptr[v1]) != 0) {
             let mut v3: u16 = 0;
@@ -287,9 +287,6 @@ pub unsafe fn DrawPlayerExplosions2(game: &mut Game) {
         }
         v0 = (v0).wrapping_sub(2);
         word!(game.projectile_index = v0);
-        if ((v0 & 0x8000) != 0) {
-            break;
-        }
     }
     Samus_DrawShinesparkCrashEchoProjectiles(game);
     HandleProjectileTrails(game);
@@ -300,7 +297,7 @@ pub unsafe fn DrawBombAndProjectileExplosions(game: &mut Game) {
     let mut r18: u16 = 0;
     let mut r20: u16 = 0;
     word!(game.projectile_index = 18);
-    loop {
+    do_until! { ((v0 & 0x8000) != 0);
         let v1: i32 = v0 as i32 >> 1;
         if !(word!(game.projectile_bomb_instruction_ptr[v1]) == 0
             || (((word!(game.projectile_type[v1]) as i32 & 0xf00) - 768i32) as i16) < 0)
@@ -339,8 +336,5 @@ pub unsafe fn DrawBombAndProjectileExplosions(game: &mut Game) {
         }
         v0 = (v0).wrapping_sub(2);
         word!(game.projectile_index = v0);
-        if ((v0 & 0x8000) != 0) {
-            break;
-        }
     }
 }

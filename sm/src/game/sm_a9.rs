@@ -2221,7 +2221,7 @@ pub unsafe fn MotherBrain_AddSpritemapToOam(j: u16, r18: u16, r20: u16, r22: u16
     let mut n: i32 = *(p as *mut u16) as i32;
     p = p.offset(2);
     let mut idx: i32 = word!(game.oam_next_ptr) as i32;
-    loop {
+    do_until! { (n == 0);
         let y: i16 =
             (r20 as i32 + *p.offset(2) as i8 as i32 - word!(game.layer1_y_pos) as i32) as i16;
         if y >= 0 {
@@ -2239,9 +2239,6 @@ pub unsafe fn MotherBrain_AddSpritemapToOam(j: u16, r18: u16, r20: u16, r22: u16
         }
         p = p.offset(5);
         n -= 1;
-        if (n == 0) {
-            break;
-        }
     }
     word!(game.oam_next_ptr = idx as u16);
 }
@@ -2456,7 +2453,7 @@ pub unsafe fn MotherBrain_GenerateExplosions(a: u16, r22: u16, r24: u16, game: &
         }
         let mut v3: u16 = (16u16).wrapping_mul((*E).var_F);
         let mut v4: u16 = r24;
-        loop {
+        do_until! { (v9 == 1);
             let mut v9: u16 = v4;
             let v5: i32 = v3 as i32 >> 1;
             game.eproj_spawn_pt = Point16U {
@@ -2475,9 +2472,6 @@ pub unsafe fn MotherBrain_GenerateExplosions(a: u16, r22: u16, r24: u16, game: &
             SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainDeathExplosion as u16, v7, game);
             v3 = (v3).wrapping_add(4);
             v4 = (v9).wrapping_sub(1);
-            if (v9 == 1) {
-                break;
-            }
         }
         QueueSfx3_Max3(0x13, game);
     }
@@ -2802,12 +2796,9 @@ pub unsafe fn MotherBrain_HandleRainbowBeamPalette(game: &mut Game) {
     if ((*Get_MotherBrain(0i32, game)).base.frame_counter & 2) != 0 {
         let mut mbn_var_01: u16 = (*Get_MotherBrain(0x40i32, game)).var_01;
         let mut v1: u16 = 0;
-        loop {
+        do_until! { (mbn_var_01 != 0);
             v1 = mbn_var_01;
             mbn_var_01 = crate::rtl::rom_table_word!(game, 0xade434, (mbn_var_01 >> 1) as isize);
-            if (mbn_var_01 != 0) {
-                break;
-            }
         }
         let v2: u16 = (v1).wrapping_add(2);
         (*Get_MotherBrain(0x40i32, game)).var_01 = v2;
@@ -4093,26 +4084,20 @@ pub unsafe fn MotherBrain_SetupBrainPalForLaser(game: &mut Game) {
 }
 pub unsafe fn WriteColorsToPalette(mut k: u16, db: u8, mut j: u16, a: u16, game: &mut Game) {
     let mut n: i32 = a as i32;
-    loop {
+    do_until! { (n == 0);
         word!(game.palette_buffer[(k >> 1)] = *(RomPtrWithBank(db, j, game) as *mut u16));
         k = (k).wrapping_add(2);
         j = (j).wrapping_add(2);
         n -= 1;
-        if (n == 0) {
-            break;
-        }
     }
 }
 pub unsafe fn WriteColorsToTargetPalette(db: u8, mut k: u16, mut j: u16, a: u16, game: &mut Game) {
     let mut n: i32 = a as i32;
-    loop {
+    do_until! { (n == 0);
         word!(game.target_palettes[(k >> 1)] = *(RomPtrWithBank(db, j, game) as *mut u16));
         k = (k).wrapping_add(2);
         j = (j).wrapping_add(2);
         n -= 1;
-        if (n == 0) {
-            break;
-        }
     }
 }
 pub unsafe fn DeadTorizo_Init(game: &mut Game) {
@@ -4662,15 +4647,12 @@ pub unsafe fn CopyMoveCorpseRottingRotEntry(r20: *const u16, a: u16, r18: u16, g
 pub unsafe fn InitializeCorpseRottingDataTable(mut table: *mut u16, a: u16) {
     let mut v2: i16 = ((a) as i16).wrapping_sub(1);
     let mut r18: u16 = 0;
-    loop {
+    do_until! { (v2 < 0);
         *table = v2 as u16;
         *table.offset(1) = r18;
         table = table.offset(2);
         r18 = (r18).wrapping_add(2);
         v2 -= 1;
-        if (v2 < 0) {
-            break;
-        }
     }
 }
 pub unsafe fn InitializeEnemyCorpseRotting(k: u16, j: u16, game: &mut Game) {
@@ -4697,7 +4679,7 @@ pub unsafe fn ProcessCorpseRottingVramTransfers(k: u16, game: &mut Game) {
     let mut p = RomPtr_A9(k, game);
     let mut v1: u16 = word!(game.vram_write_queue_tail);
     let mut v2: u16 = *(p as *mut u16);
-    loop {
+    do_until! { (v2 == 0);
         let v3 = gVramWriteEntry(v1 as i32, game);
         (*v3).size = v2;
         *((&raw mut (*v3).src.addr as *mut u8).offset(1) as *mut VoidP) =
@@ -4707,9 +4689,6 @@ pub unsafe fn ProcessCorpseRottingVramTransfers(k: u16, game: &mut Game) {
         v1 = (v1).wrapping_add(7);
         p = p.offset(8);
         v2 = *(p as *mut u16);
-        if (v2 == 0) {
-            break;
-        }
     }
     (*Get_DeadEnemy(0i32, game)).var_22 = 0;
     word!(game.vram_write_queue_tail = v1);

@@ -222,13 +222,10 @@ pub unsafe fn ScreenOn(game: &mut Game) {
     crate::update_place! { reference fresh90 = *ram_ptr!(game; 0x51) => (*fresh90 & !(0x80)); }
 }
 pub unsafe fn memset7E(mut k: *mut u16, a: u16, mut j: u16) {
-    loop {
+    do_until! { (j == 0);
         crate::update_place! { previous fresh99 = k => k.offset(1); }
         *fresh99 = a;
         j = (j).wrapping_sub(2);
-        if (j == 0) {
-            break;
-        }
     }
 }
 pub unsafe fn Vector_RESET_Async(game: &mut Game) -> CoroutineRet {
@@ -1838,7 +1835,7 @@ pub unsafe fn DisplayViewablePartOfRoom(game: &mut Game) {
     word!(game.size_of_bg2 = (v1 & 0xf800) as u16);
     CalculateBgScrollAndLayerPositionBlocks(game);
     let mut v2: i32 = 0;
-    loop {
+    do_until! { (v3 == 16);
         let mut v3: i32 = v2;
         word!(game.blocks_to_update_x_block = word!(game.layer1_x_block));
         word!(game.blocks_to_update_y_block = word!(game.layer1_y_block));
@@ -1858,9 +1855,6 @@ pub unsafe fn DisplayViewablePartOfRoom(game: &mut Game) {
         word!(game.layer2_x_block, wrapping_add(1));
         word!(game.bg2_x_block, wrapping_add(1));
         v2 += 1;
-        if (v3 == 16) {
-            break;
-        }
     }
 }
 pub unsafe fn QueueClearingOfFxTilemap(game: &mut Game) {
@@ -2682,33 +2676,27 @@ unsafe fn decompress<O: DecompressionOutput>(src: u32, output: O, game: *mut Gam
                 let low = DecompNextByte(&mut *game) as i32;
                 low + DecompNextByte(&mut *game) as i32 * 256 + output.start()
             };
-            loop {
+            do_until! { remaining == 0;
                 let value = output.read(source, game) ^ xor;
                 source += 1;
                 output.write(destination, value, true, game);
                 destination += 1;
                 remaining -= 1;
-                if remaining == 0 {
-                    break;
-                }
             }
         } else {
             match command {
                 0x20 => {
                     let value = DecompNextByte(&mut *game);
-                    loop {
+                    do_until! { remaining == 0;
                         output.write(destination, value, false, game);
                         destination += 1;
                         remaining -= 1;
-                        if remaining == 0 {
-                            break;
-                        }
                     }
                 }
                 0x40 => {
                     let first = DecompNextByte(&mut *game);
                     let second = DecompNextByte(&mut *game);
-                    loop {
+                    do_until! { remaining == 0;
                         output.write(destination, first, false, game);
                         destination += 1;
                         remaining -= 1;
@@ -2718,31 +2706,22 @@ unsafe fn decompress<O: DecompressionOutput>(src: u32, output: O, game: *mut Gam
                         output.write(destination, second, false, game);
                         destination += 1;
                         remaining -= 1;
-                        if remaining == 0 {
-                            break;
-                        }
                     }
                 }
                 0x60 => {
                     let mut value = DecompNextByte(&mut *game);
-                    loop {
+                    do_until! { remaining == 0;
                         crate::update_place! { previous previous = value => value.wrapping_add(1); }
                         output.write(destination, previous, false, game);
                         destination += 1;
                         remaining -= 1;
-                        if remaining == 0 {
-                            break;
-                        }
                     }
                 }
-                _ => loop {
-                    let value = DecompNextByte(&mut *game);
-                    output.write(destination, value, false, game);
-                    destination += 1;
-                    remaining -= 1;
-                    if remaining == 0 {
-                        break;
-                    }
+                _ => do_until! { remaining == 0;
+                                    let value = DecompNextByte(&mut *game);
+                                    output.write(destination, value, false, game);
+                                    destination += 1;
+                                    remaining -= 1;
                 },
             }
         }

@@ -105,7 +105,7 @@ unsafe fn WriteMessageTilemap(game: &mut Game) -> u16 {
     let mut remaining = i32::from(length >> 1);
     let mut word = 32u16;
     let mut source_offset = 0u16;
-    loop {
+    do_until! { remaining == 0;
         // Map every word, including the mapper's invalid-address diagnostics.
         let tile = RomPtr_85(start, game)
             .add(usize::from(source_offset))
@@ -117,9 +117,6 @@ unsafe fn WriteMessageTilemap(game: &mut Game) -> u16 {
         word = word.wrapping_add(1);
         source_offset = source_offset.wrapping_add(2);
         remaining -= 1;
-        if remaining == 0 {
-            break;
-        }
     }
     word
 }
@@ -403,7 +400,7 @@ unsafe fn HandleMessageBoxInteraction_Async(game: &mut Game) -> CoroutineRet {
 }
 unsafe fn CloseMessageBox_Async(game: &mut Game) -> CoroutineRet {
     if matches!(game.g_ram[0x615], 0 | 1) {
-        loop {
+        do_until! { radius & 0x8000 != 0;
             let result = WaitForNMI_NoUpdate_Async(game);
             if result != 0 {
                 game.g_ram[0x615] = 1;
@@ -415,9 +412,6 @@ unsafe fn CloseMessageBox_Async(game: &mut Game) -> CoroutineRet {
             let radius =
                 u16::from_le_bytes([game.g_ram[0x5a2], game.g_ram[0x5a3]]).wrapping_sub(0x200);
             game.g_ram[0x5a2..0x5a4].copy_from_slice(&radius.to_le_bytes());
-            if radius & 0x8000 != 0 {
-                break;
-            }
         }
     }
     game.g_ram[0x615] = 0;

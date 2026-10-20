@@ -59,7 +59,7 @@ pub unsafe fn HandleSpriteObjects(game: &mut Game) {
         return;
     }
     word!(game.sprite_object_index = 62);
-    loop {
+    do_until! { (word!(game.sprite_object_index, wrapping_sub(2), reread) & 0x8000 != 0);
         let mut v0: i32 = word!(game.sprite_object_index) as i32 >> 1;
         if !(word!(game.sprite_instr_list_ptrs[v0]) == 0
             || (word!(game.sprite_disable_flag[v0]) & 1) != 0)
@@ -85,9 +85,6 @@ pub unsafe fn HandleSpriteObjects(game: &mut Game) {
             if !(skip_instruction) {
                 CallSpriteObjectInstr(((v1) as u32) | (0xb40000u32), game);
             }
-        }
-        if (word!(game.sprite_object_index, wrapping_sub(2), reread) & 0x8000 != 0) {
-            break;
         }
     }
 }

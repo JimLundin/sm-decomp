@@ -627,7 +627,7 @@ pub unsafe fn Kraid_Shot_Mouth(game: &mut Game) {
         let mut r18: u16 = ((*E).base.y_pos).wrapping_add(*(v5.offset(6) as *mut u16));
         if word!(game.projectile_counter) != 0 {
             let mut v6: u16 = (2u16).wrapping_mul(word!(game.projectile_counter));
-            loop {
+            do_until! { (v6 & 0x8000) != 0;
                 let mut v7: i32 = v6 as i32 >> 1;
                 if !(word!(game.projectile_y_pos[v7]) as i32
                     - word!(game.projectile_y_radius[v7]) as i32
@@ -665,9 +665,6 @@ pub unsafe fn Kraid_Shot_Mouth(game: &mut Game) {
                     }
                 }
                 v6 = (v6).wrapping_sub(2);
-                if (v6 & 0x8000) != 0 {
-                    break;
-                }
             }
         }
     }
@@ -715,14 +712,11 @@ pub unsafe fn Kraid_HurtFlash_Handling(game: &mut Game) {
         v0 = 32;
     }
     let mut v1: u16 = 0;
-    loop {
+    do_until! { (((v1) as i16).wrapping_sub(32) >= 0);
         *(ram_ptr!(game, u16; 0xc000)).offset(((v1 as i32 >> 1) + 240) as isize) =
             crate::rtl::rom_table_word!(game, 0xa7b513, (v0 >> 1) as isize);
         v1 = (v1).wrapping_add(2);
         v0 = (v0).wrapping_add(2);
-        if (((v1) as i16).wrapping_sub(32) >= 0) {
-            break;
-        }
     }
 }
 pub unsafe fn Kraid_HealthBasedPaletteHandling(game: &mut Game) {
@@ -2075,25 +2069,22 @@ crate::game::callback_dispatch! {
         let mut v2: u16 = (16 * (v0 as i32 + 2)) as u16;
         let mut v3: u16 = 226;
         let mut r20: u16 = 0;
-        loop {
-            let v4: i32 = v3 as i32 >> 1;
-            let mut r18: u16 = (word!(game.palette_buffer[v4])) & (0x1fu16);
-            let v5: i32 = v2 as i32 >> 1;
-            if crate::rtl::rom_table_word!(game, 0xa7b3d3, (v5 + 1) as isize) & 0x1f != r18 {
-                r20 = r20.wrapping_add(1);
-                word!(game.palette_buffer[v4], wrapping_sub(1));
-            }
-            r18 = (word!(game.palette_buffer[v4])) & (0x3e0u16);
-            if crate::rtl::rom_table_word!(game, 0xa7b3d3, (v5 + 1) as isize) & 0x3e0 != r18 {
-                r20 = r20.wrapping_add(1);
-                word!(game.palette_buffer[v4], wrapping_sub(32));
-            }
-            v3 = (v3).wrapping_add(2);
-            v2 = (v2).wrapping_add(2);
-            if (((v3) as i16).wrapping_sub(232) >= 0) {
-                break;
-            }
-        }
+        do_until! { (((v3) as i16).wrapping_sub(232) >= 0);
+    let v4: i32 = v3 as i32 >> 1;
+    let mut r18: u16 = (word!(game.palette_buffer[v4])) & (0x1fu16);
+    let v5: i32 = v2 as i32 >> 1;
+    if crate::rtl::rom_table_word!(game, 0xa7b3d3, (v5 + 1) as isize) & 0x1f != r18 {
+        r20 = r20.wrapping_add(1);
+        word!(game.palette_buffer[v4], wrapping_sub(1));
+    }
+    r18 = (word!(game.palette_buffer[v4])) & (0x3e0u16);
+    if crate::rtl::rom_table_word!(game, 0xa7b3d3, (v5 + 1) as isize) & 0x3e0 != r18 {
+        r20 = r20.wrapping_add(1);
+        word!(game.palette_buffer[v4], wrapping_sub(32));
+    }
+    v3 = (v3).wrapping_add(2);
+    v2 = (v2).wrapping_add(2);
+}
         if r20 == 0 {
             (*E).kraid_var_A = ((0xa7aee4i32) as u16);
             (*E).kraid_var_B = addr_stru_A796DA as u16;
@@ -2838,7 +2829,7 @@ pub unsafe fn Phantoon_Enraged(k: u16, game: &mut Game) {
     if v2 || v3 {
         if ((*Get_Phantoon(0x40i32, game)).var_F & 1) != 0 {
             let mut v5: i16 = 15;
-            loop {
+            do_until! { ((v8).wrapping_sub(9) < 0);
                 let mut v8: i16 = v5;
                 crate::update_place! { previous fresh24 = v5 => v5 - 1; }
                 SpawnEprojWithGfx(
@@ -2847,9 +2838,6 @@ pub unsafe fn Phantoon_Enraged(k: u16, game: &mut Game) {
                     addr_kEproj_DestroyableFireballs as u16,
                     game,
                 );
-                if ((v8).wrapping_sub(9) < 0) {
-                    break;
-                }
             }
         } else {
             for i in (0i32..=6).rev() {
@@ -3304,13 +3292,10 @@ pub unsafe fn Phantoon_Hurt(game: &mut Game) {
         }
     }
     let mut v1: u16 = 30;
-    loop {
+    do_until! { (((Entry.k) as i16).wrapping_sub(2) < 0);
         Entry = Phantoon_SetColorBasedOnHp_FindEntry(v1, game);
         *(ram_ptr!(game, u16; 0xc000)).offset(((Entry.k as i32 >> 1) + 112) as isize) = Entry.j;
         v1 = (Entry.k).wrapping_sub(2);
-        if (((Entry.k) as i16).wrapping_sub(2) < 0) {
-            break;
-        }
     }
     let E3 = Get_Phantoon(0x80, game);
     (*E3).parameter_2 = byte!((*E3).parameter_2; 0) as u16;

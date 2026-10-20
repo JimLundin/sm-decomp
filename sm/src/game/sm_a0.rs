@@ -322,7 +322,7 @@ pub unsafe fn DrawSamusEnemiesAndProjectiles(game: &mut Game) {
             let varE3A: u16 = crate::rtl::rom_table_word!(game, 0xa0b133, phase_varE32 as isize);
             let mut v1: u16 = 0;
             word!(game.enemy_drawing_queue_sizes[phase_varE32] = 0);
-            loop {
+            do_until! { (varE38 as i32 + 2 == varE36 as i32);
                 let mut varE38: u16 = v1;
                 let v2 = RomPtr_RAM((varE3A).wrapping_add(v1), game);
                 let v3: u16 = *(v2 as *mut u16);
@@ -330,9 +330,6 @@ pub unsafe fn DrawSamusEnemiesAndProjectiles(game: &mut Game) {
                 word!(game.cur_enemy_index = v3);
                 WriteEnemyOams(game);
                 v1 = (varE38).wrapping_add(2);
-                if (varE38 as i32 + 2 == varE36 as i32) {
-                    break;
-                }
             }
         }
     }
@@ -405,7 +402,7 @@ pub unsafe fn InitializeEnemies(game: &mut Game) {
     }
     word!(game.UNUSED_word_7E0E48 = 0);
     let mut v5: u16 = 0;
-    loop {
+    do_until! { ((*get_EnemyPopulation(0xa1u8, v4, game)).enemy_ptr == 0xffff);
         LoadEnemyGfxIndexes(v4, v5, game);
         let EP = get_EnemyPopulation(0xa1, v4, game);
         let ED = get_EnemyDef_A2((*EP).enemy_ptr, game);
@@ -442,9 +439,6 @@ pub unsafe fn InitializeEnemies(game: &mut Game) {
         }
         v5 = (v5).wrapping_add(64);
         v4 = (v4).wrapping_add(16);
-        if ((*get_EnemyPopulation(0xa1u8, v4, game)).enemy_ptr == 0xffff) {
-            break;
-        }
     }
     word!(game.first_free_enemy_index = v5);
     word!(game.num_enemies_in_room = (v5 >> 6));
@@ -484,28 +478,22 @@ pub unsafe fn LoadEnemyTileData(game: &mut Game) {
     if word!(game.enemy_tile_load_data_write_pos) != 0 {
         let mut v1: u16 = 0;
         let mut load_data: *mut EnemyTileLoadData = ram_ptr!(game, EnemyTileLoadData; 0xe5a);
-        loop {
+        do_until! { (v1 == word!(game.enemy_tile_load_data_write_pos));
             let mut v2: u16 = (*load_data).tile_data_ptr.addr;
             let r18: u16 = ((*load_data).tile_data_size).wrapping_add(v2);
             let mut v3: u16 = (*load_data).offset_into_ram;
             let db: u8 = (*load_data).tile_data_ptr.bank;
-            loop {
-                memcpy(
-                    ram_ptr!(game, c_void; (0x7000 + v3 as i32) as isize),
-                    RomPtrWithBank(db, v2, game) as *const c_void,
-                    8 as size_t,
-                );
-                v3 = (v3).wrapping_add(8);
-                v2 = (v2).wrapping_add(8);
-                if (v2 == r18) {
-                    break;
-                }
-            }
+            do_until! { (v2 == r18);
+            memcpy(
+                ram_ptr!(game, c_void; (0x7000 + v3 as i32) as isize),
+                RomPtrWithBank(db, v2, game) as *const c_void,
+                8 as size_t,
+            );
+            v3 = (v3).wrapping_add(8);
+            v2 = (v2).wrapping_add(8);
+        }
             load_data = load_data.offset(1);
             v1 = (v1).wrapping_add(7);
-            if (v1 == word!(game.enemy_tile_load_data_write_pos)) {
-                break;
-            }
         }
         word!(game.enemy_tile_load_data_write_pos = 0);
     }
@@ -591,7 +579,7 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
         cur_enemy_index, active_enemy_indexes_write_ptr, interactive_enemy_indexes_write_ptr,
     }
     if word!(game.flag_process_all_enemies) != 0 {
-        loop {
+        do_until! { (word!(game.cur_enemy_index) as i32 - 2048i32 & 0x8000 == 0);
             let v5: u16 = word!(game.cur_enemy_index);
             let v6 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
             if (*v6).enemy_ptr != 0 && (*v6).enemy_ptr as i32 != addr_kEnemyDef_DAFF as i32 {
@@ -613,16 +601,13 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
                 }
             }
             word!(game.cur_enemy_index, wrapping_add(64));
-            if (word!(game.cur_enemy_index) as i32 - 2048i32 & 0x8000 == 0) {
-                break;
-            }
         }
         *(ram_ptr!(game, u16; 0x17ac))
             .offset((word!(game.active_enemy_indexes_write_ptr) >> 1) as isize) = -1i32 as u16;
         *(ram_ptr!(game, u16; 0x17ec))
             .offset((word!(game.interactive_enemy_indexes_write_ptr) >> 1) as isize) = -1i32 as u16;
     } else {
-        loop {
+        do_until! { (word!(game.cur_enemy_index) as i32 - 2048i32 & 0x8000 == 0);
             let v0: u16 = word!(game.cur_enemy_index);
             let v1 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
             if (*v1).enemy_ptr != 0 && (*v1).enemy_ptr as i32 != addr_kEnemyDef_DAFF as i32 {
@@ -656,9 +641,6 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
                 }
             }
             word!(game.cur_enemy_index, wrapping_add(64));
-            if (word!(game.cur_enemy_index) as i32 - 2048i32 & 0x8000 == 0) {
-                break;
-            }
         }
         *(ram_ptr!(game, u16; 0x17ac))
             .offset((word!(game.active_enemy_indexes_write_ptr) >> 1) as isize) = -1i32 as u16;
@@ -1424,13 +1406,10 @@ pub unsafe fn EnemyMain(game: &mut Game) {
                         let mut v6: i16 = 0;
                         let mut ai_handler_bits: u16 = (*E).ai_handler_bits;
                         if ai_handler_bits != 0 {
-                            loop {
+                            do_until! { (v8 != 0);
                                 v6 += 1;
                                 let mut v8: i8 = ((ai_handler_bits) as i8) & (1i8);
                                 ai_handler_bits = (ai_handler_bits >> 1);
-                                if (v8 != 0) {
-                                    break;
-                                }
                             }
                         }
                         CallEnemyAi(
@@ -1528,13 +1507,10 @@ pub unsafe fn DeleteEnemyAndConnectedEnemies(game: &mut Game) {
         num_parts = 1;
     }
     let mut v2: u16 = num_parts;
-    loop {
+    do_until! { (v2 == 0);
         (*gEnemyData(word!(game.cur_enemy_index) as i32, game)).enemy_ptr = 0;
         word!(game.cur_enemy_index, wrapping_add(64));
         v2 = v2.wrapping_sub(1);
-        if (v2 == 0) {
-            break;
-        }
     }
 }
 pub unsafe fn SpawnEnemy(db: u8, k: u16, game: &mut Game) -> u16 {
@@ -1680,7 +1656,7 @@ pub unsafe fn WriteEnemyOams(game: &mut Game) {
         }
         let mut n: i32 = *RomPtrWithBank((*E).bank, (*E).spritemap_pointer, game) as i32;
         let mut v5: u16 = ((*E).spritemap_pointer).wrapping_add(2);
-        loop {
+        do_until! { (n == 0);
             let ext = get_ExtendedSpriteMap((*E).bank, v5, game);
             if *(RomPtrWithBank((*E).bank, (*ext).spritemap, game) as *mut u16) == 0xfffe {
                 x = (x2).wrapping_add((*ext).xpos);
@@ -1709,9 +1685,6 @@ pub unsafe fn WriteEnemyOams(game: &mut Game) {
             }
             v5 = (v5).wrapping_add(8);
             n -= 1;
-            if (n == 0) {
-                break;
-            }
         }
     } else {
         word!(game.enemy_processing_stage = 1);
@@ -2198,34 +2171,31 @@ crate::prefixed_callbacks! {
             (word!(game.samus_y_pos)).wrapping_sub(word!(game.samus_y_radius));
         let mut n: i32 = *RomPtrWithBank((*E).bank, (*E).spritemap_pointer, game) as i32;
         let mut enemy_spritemap_entry_pointer: u16 = ((*E).spritemap_pointer).wrapping_add(2);
-        loop {
-            let ES = get_ExtendedSpriteMap((*E).bank, enemy_spritemap_entry_pointer, game);
-            let coll_x_pos: u16 = ((*ES).xpos).wrapping_add((*E).x_pos);
-            let coll_y_pos: u16 = ((*ES).ypos).wrapping_add((*E).y_pos);
-            let p = RomPtrWithBank((*E).bank, (*ES).hitbox_ptr_, game);
-            let mut m: i32 = *(p as *mut u16) as i32;
-            let mut hb = p.offset(2) as *mut Hitbox;
-            while m != 0 {
-                if (((*hb).left as i32 + coll_x_pos as i32 - samus_right_border_coll as i32) as i16) < 0
-                    && (((*hb).right as i32 + coll_x_pos as i32 - samus_left_border_coll as i32) as i16)
-                        >= 0
-                    && (((*hb).top as i32 + coll_y_pos as i32 - samus_bottom_border_coll as i32) as i16)
-                        < 0
-                    && (((*hb).bottom as i32 + coll_y_pos as i32 - samus_top_border_coll as i32) as i16)
-                        >= 0
-                {
-                    CallHitboxTouch((words!(i32, ((*E).bank, (*hb).func_ptr))) as u32, game);
-                    return;
-                }
-                m -= 1;
-                hb = hb.offset(1);
-            }
-            enemy_spritemap_entry_pointer = (enemy_spritemap_entry_pointer).wrapping_add(8);
-            n -= 1;
-            if (n == 0) {
-                break;
-            }
+        do_until! { (n == 0);
+    let ES = get_ExtendedSpriteMap((*E).bank, enemy_spritemap_entry_pointer, game);
+    let coll_x_pos: u16 = ((*ES).xpos).wrapping_add((*E).x_pos);
+    let coll_y_pos: u16 = ((*ES).ypos).wrapping_add((*E).y_pos);
+    let p = RomPtrWithBank((*E).bank, (*ES).hitbox_ptr_, game);
+    let mut m: i32 = *(p as *mut u16) as i32;
+    let mut hb = p.offset(2) as *mut Hitbox;
+    while m != 0 {
+        if (((*hb).left as i32 + coll_x_pos as i32 - samus_right_border_coll as i32) as i16) < 0
+            && (((*hb).right as i32 + coll_x_pos as i32 - samus_left_border_coll as i32) as i16)
+                >= 0
+            && (((*hb).top as i32 + coll_y_pos as i32 - samus_bottom_border_coll as i32) as i16)
+                < 0
+            && (((*hb).bottom as i32 + coll_y_pos as i32 - samus_top_border_coll as i32) as i16)
+                >= 0
+        {
+            CallHitboxTouch((words!(i32, ((*E).bank, (*hb).func_ptr))) as u32, game);
+            return;
         }
+        m -= 1;
+        hb = hb.offset(1);
+    }
+    enemy_spritemap_entry_pointer = (enemy_spritemap_entry_pointer).wrapping_add(8);
+    n -= 1;
+}
     };
     EprojCollHandler_Multibox [] {
         word!(game.enemy_processing_stage = 3);

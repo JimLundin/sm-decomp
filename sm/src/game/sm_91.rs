@@ -243,7 +243,7 @@ pub unsafe fn Samus_LookupTransitionTable(game: &mut Game) {
         if (*pe).new_input == 0xffff {
             return;
         }
-        loop {
+        do_until! { ((*pe).new_input == 0xffff);
             if (pair.r18 & (*pe).new_input) == 0 && (pair.r20 & (*pe).cur_input) == 0 {
                 if (*pe).new_pose != word!(game.samus_pose) {
                     word!(game.samus_new_pose = (*pe).new_pose);
@@ -252,9 +252,6 @@ pub unsafe fn Samus_LookupTransitionTable(game: &mut Game) {
                 return;
             }
             pe = pe.offset(1);
-            if ((*pe).new_input == 0xffff) {
-                break;
-            }
         }
     }
     word!(game.UNUSED_word_7E0A18 = 0);
@@ -639,21 +636,15 @@ pub unsafe fn DemoSetFunc_6(game: &mut Game) {
     Samus_SetAnimationFrameIfPoseChanged(game);
 }
 unsafe fn XrayFillUp(dest: *mut u16, fill_with: u16, mut v1: u16) {
-    loop {
+    do_until! { (v1 & 0x8000 != 0);
         *dest.offset((v1 >> 1) as isize) = fill_with;
         v1 = (v1).wrapping_sub(2);
-        if (v1 & 0x8000 != 0) {
-            break;
-        }
     }
 }
 unsafe fn XrayFillDown(dest: *mut u16, fill_with: u16, mut v1: u16) {
-    loop {
+    do_until! { (v1 >= 460);
         *dest.offset((v1 >> 1) as isize) = fill_with;
         v1 = (v1).wrapping_add(2);
-        if (v1 >= 460) {
-            break;
-        }
     }
 }
 
@@ -695,7 +686,7 @@ unsafe fn XrayFillUpRamped(
     right_step: u32,
     adjust: i32,
 ) {
-    loop {
+    do_until! { (pos < 0);
         advance_xray_ramp_row!(left, left_step, right, right_step, finished, dest, pos);
         if finished {
             pos += adjust;
@@ -709,9 +700,6 @@ unsafe fn XrayFillUpRamped(
             return;
         }
         pos -= 2;
-        if (pos < 0) {
-            break;
-        }
     }
 }
 unsafe fn XrayFillDownRamped(
@@ -723,7 +711,7 @@ unsafe fn XrayFillDownRamped(
     right_step: u32,
     adjust: i32,
 ) {
-    loop {
+    do_until! { (pos >= 460);
         advance_xray_ramp_row!(left, left_step, right, right_step, finished, dest, pos);
         if finished {
             pos += adjust;
@@ -737,9 +725,6 @@ unsafe fn XrayFillDownRamped(
             return;
         }
         pos += 2;
-        if (pos >= 460) {
-            break;
-        }
     }
 }
 unsafe fn XrayHdmaFunc_BeamAimedR(ctx: *mut XrayHdmaCtx, game: &mut Game) {
@@ -845,27 +830,21 @@ fn xray_onscreen_positive_stores(
     }
 
     let mut index = start;
-    loop {
+    do_until! { !continues(index);
         let (value, carry) = low_edge.overflowing_add(low_step);
         low_edge = value;
         if carry {
             carry_row = index;
-            loop {
-                word(&mut write, base, index, 0x00ff);
-                index = index.wrapping_add(2);
-                if !continues(index) {
-                    break;
-                }
-            }
+            do_until! { !continues(index);
+        word(&mut write, base, index, 0x00ff);
+        index = index.wrapping_add(2);
+    }
             break;
         }
         // The high-edge pass overwrites this word's high byte.
         let value = low_edge >> 8;
         word(&mut write, base, index, value);
         index = index.wrapping_add(2);
-        if !continues(index) {
-            break;
-        }
     }
 
     index = start.wrapping_add(1);
@@ -873,12 +852,9 @@ fn xray_onscreen_positive_stores(
         let (value, carry) = high_edge.overflowing_add(high_step);
         high_edge = value;
         if carry {
-            loop {
+            do_until! { !continues(index);
                 write(base + u32::from(index), 0xff);
                 index = index.wrapping_add(2);
-                if !continues(index) {
-                    break;
-                }
             }
             break;
         }
@@ -983,20 +959,14 @@ fn xray_offscreen_positive_stores(
         true,
     );
     let mut index = low;
-    loop {
+    do_until! { index < high;
         byte(&mut write, base, index, 0);
         index -= 2;
-        if index < high {
-            break;
-        }
     }
     let mut index = high - 1;
-    loop {
+    do_until! { index < 0;
         word(&mut write, base, index, 255);
         index -= 2;
-        if index < 0 {
-            break;
-        }
     }
 }
 
@@ -1360,7 +1330,7 @@ pub unsafe fn Xray_SetupStage4(game: &mut Game) {
         as u16;
     let mut r22: u16 = 0;
     let mut m: i32 = 16;
-    loop {
+    do_until! { (m == 0);
         let mut r26: u16 = (r24) & (0x7e0u16);
         let mut r28: u16 = (r24) & (0x1fu16);
         let mut r30: u16 = 0;
@@ -1397,9 +1367,6 @@ pub unsafe fn Xray_SetupStage4(game: &mut Game) {
         r24 = ((r24 as i32 & 0x400) + (r24 as i32 + 64 & 0x3ff)) as u16;
         r22 = (r22).wrapping_add(64);
         m -= 1;
-        if (m == 0) {
-            break;
-        }
     }
     crate::native_assertion! {
         '_c2rust_label: ((word!(game.layer1_y_pos) as i32 >> 12) as u16) == 0;
@@ -1413,7 +1380,7 @@ pub unsafe fn Xray_SetupStage4(game: &mut Game) {
         + (word!(game.layer1_x_pos) as i32 >> 4)) as u16;
     r22 = 0;
     m = 16;
-    loop {
+    do_until! { (m == 0);
         Xray_SetupStage4_Func2(r22, r34, game);
         let mut r36: u16 = r34;
         for n_0 in (1i32..=16).rev() {
@@ -1426,9 +1393,6 @@ pub unsafe fn Xray_SetupStage4(game: &mut Game) {
         r22 = (v12).wrapping_add(64);
         r34 = (r34).wrapping_add(word!(game.room_width_in_blocks));
         m -= 1;
-        if (m == 0) {
-            break;
-        }
     }
     LoadXrayBlocks(game);
     let v7: u16 = word!(game.vram_read_queue_tail);

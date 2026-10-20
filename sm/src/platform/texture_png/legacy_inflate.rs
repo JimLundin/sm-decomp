@@ -147,7 +147,7 @@ unsafe fn stbi__zget8(z: *mut stbi__zbuf) -> stbi_uc {
     }) as stbi_uc)
 }
 unsafe fn stbi__fill_bits(z: *mut stbi__zbuf) {
-    loop {
+    do_until! { ((*z).num_bits > 24);
         if (*z).code_buffer >= (1 as stbi__uint32) << (*z).num_bits {
             (*z).zbuffer = (*z).zbuffer_end;
             return;
@@ -155,9 +155,6 @@ unsafe fn stbi__fill_bits(z: *mut stbi__zbuf) {
         (*z).code_buffer =
             ((*z).code_buffer | (stbi__zget8(z) as u32) << (*z).num_bits) as stbi__uint32;
         (*z).num_bits += 8;
-        if ((*z).num_bits > 24) {
-            break;
-        }
     }
 }
 unsafe fn stbi__zreceive(z: *mut stbi__zbuf, n: i32) -> u32 {
@@ -297,24 +294,18 @@ unsafe fn stbi__parse_huffman_block(a: *mut stbi__zbuf) -> i32 {
             if dist == 1 {
                 let v: stbi_uc = *p;
                 if len != 0 {
-                    loop {
+                    do_until! { (len == 0);
                         crate::update_place! { previous fresh46 = zout => zout.offset(1); }
                         *fresh46 = v as c_char;
                         len -= 1;
-                        if (len == 0) {
-                            break;
-                        }
                     }
                 }
             } else if len != 0 {
-                loop {
+                do_until! { (len == 0);
                     crate::update_place! { previous fresh47 = p => p.offset(1); }
                     crate::update_place! { previous fresh48 = zout => zout.offset(1); }
                     *fresh48 = *fresh47 as c_char;
                     len -= 1;
-                    if (len == 0) {
-                        break;
-                    }
                 }
             }
         }
@@ -483,7 +474,7 @@ unsafe fn stbi__parse_zlib(a: *mut stbi__zbuf, parse_header: i32) -> i32 {
     }
     (*a).num_bits = 0;
     (*a).code_buffer = 0 as stbi__uint32;
-    loop {
+    do_until! { (final_0 != 0);
         let mut final_0: i32 = stbi__zreceive(a, 1) as i32;
         let mut type_0: i32 = stbi__zreceive(a, 2) as i32;
         if type_0 == 0 {
@@ -516,9 +507,6 @@ unsafe fn stbi__parse_zlib(a: *mut stbi__zbuf, parse_header: i32) -> i32 {
             if stbi__parse_huffman_block(a) == 0 {
                 return 0;
             }
-        }
-        if (final_0 != 0) {
-            break;
         }
     }
     1

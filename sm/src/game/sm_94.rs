@@ -321,7 +321,7 @@ fn post_grapple_traverse(horizontal: bool, positive: bool, game: &mut Game) {
         initial_span: span,
         edge_position: edge,
     };
-    loop {
+    do_until! { context.remaining_span & 0x8000 != 0;
         let result = if horizontal {
             PostGrappleColl_Horiz(&context, block_offset, game)
         } else {
@@ -344,9 +344,6 @@ fn post_grapple_traverse(horizontal: bool, positive: bool, game: &mut Game) {
         };
         block_offset = block_offset.wrapping_add(step);
         context.remaining_span = context.remaining_span.wrapping_sub(1);
-        if context.remaining_span & 0x8000 != 0 {
-            break;
-        }
     }
 }
 pub fn PostGrappleCollisionDetect_X(game: &mut Game) {
@@ -1503,13 +1500,10 @@ unsafe fn BlockFunc_A0F4(mut a: u16, r22: u16, r24: u16, r26: u16, r28: u16, gam
         ci_r38: 0,
         ci_r40: 0,
     };
-    loop {
+    do_until! { (v4 < 0);
         BlockBombedReact(&raw mut ci, v3, game);
         v3 = (v3).wrapping_add(2);
         v4 -= 1;
-        if (v4 < 0) {
-            break;
-        }
     }
 }
 unsafe fn BlockFunc_A11A(mut a: u16, r24: u16, r26: u16, r28: u16, game: &mut Game) {
@@ -1526,13 +1520,10 @@ unsafe fn BlockFunc_A11A(mut a: u16, r24: u16, r26: u16, r28: u16, game: &mut Ga
         ci_r38: 0,
         ci_r40: 0,
     };
-    loop {
+    do_until! { (v4 < 0);
         BlockBombedReact(&raw mut ci, v3, game);
         v3 = (v3 as i32 + word!(game.room_width_in_blocks) as i32 * 2) as u16;
         v4 -= 1;
-        if (v4 < 0) {
-            break;
-        }
     }
 }
 unsafe fn BlockShotReactHoriz_Slope(ci: *mut CollInfo, game: &mut Game) -> u8 {
@@ -1737,13 +1728,10 @@ unsafe fn beam_block_collision(k: u16, axis: ShotAxis, wave: bool, game: &mut Ga
             return 0;
         }
     }
-    loop {
+    do_until! { ci.ci_r38 & 0x8000 != 0;
         axis.react(&raw mut ci, block, game);
         block = axis.advance(block, game);
         ci.ci_r38 = ci.ci_r38.wrapping_sub(1);
-        if ci.ci_r38 & 0x8000 != 0 {
-            break;
-        }
     }
     if wave || ci.ci_r40 & 0x8000 == 0 {
         return 0;
@@ -2480,7 +2468,7 @@ pub unsafe fn HandleGrappleBeamGfx(game: &mut Game) {
     }
     let mut n: i32 = (word!(game.grapple_beam_length) as i32 / 8 & 0xf) - 1i32;
     let mut q: i32 = 15;
-    loop {
+    do_until! { (n < 0);
         crate::update_place! { reference fresh17 [fresh18] = *(ram_ptr!(game, u16; 0xd42)).offset(q as isize) => (*fresh17).wrapping_sub(1); }
         if fresh18 == 1 {
             let mut v9 = null::<u16>();
@@ -2512,9 +2500,6 @@ pub unsafe fn HandleGrappleBeamGfx(game: &mut Game) {
         r24_r22 = r24_r22.wrapping_add(r32_r30);
         q -= 1;
         n -= 1;
-        if (n < 0) {
-            break;
-        }
     }
     if word!(game.samus_pose) as i32 == kPose_B2_FaceR_Grapple_Air as i32
         || word!(game.samus_pose) as i32 == kPose_B3_FaceL_Grapple_Air as i32

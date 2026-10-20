@@ -650,20 +650,17 @@ crate::game::callback_dispatch! {
         } else {
             let v3: u16 = 24;
             (*E).var_A = 24;
-            loop {
-                SpawnEprojWithGfx(
-                    v3,
-                    word!(game.cur_enemy_index),
-                    addr_kEproj_BotwoonsBody as u16,
-                    game,
-                );
-                (*E).var_A = (*E).var_A.wrapping_sub(1);
-                let mut v5: bool = (((*E).var_A) as i16).wrapping_sub(1) < 0;
-                (*E).var_A = (*E).var_A.wrapping_sub(1);
-                if v5 {
-                    break;
-                }
-            }
+            do_until! { v5;
+    SpawnEprojWithGfx(
+        v3,
+        word!(game.cur_enemy_index),
+        addr_kEproj_BotwoonsBody as u16,
+        game,
+    );
+    (*E).var_A = (*E).var_A.wrapping_sub(1);
+    let mut v5: bool = (((*E).var_A) as i16).wrapping_sub(1) < 0;
+    (*E).var_A = (*E).var_A.wrapping_sub(1);
+}
             (*E).base.current_instruction = addr_kBotwoon_Ilist_9389 as u16;
             (*E).var_3B = addr_kBotwoon_Ilist_9389 as u16;
             (*E).var_D = ((0xb39878i32) as u16);
@@ -710,18 +707,15 @@ crate::game::callback_dispatch! {
         {
             let mut r18: u16 = (16u16).wrapping_mul((*E).var_4F);
             let mut r20: u16 = (*E).var_4E;
-            loop {
-                crate::update_place! { previous fresh5 = r18 => r18.wrapping_add(1); }
-                word!(
-                    game.palette_buffer[(r20 >> 1)] =
-                        crate::rtl::rom_table_word!(game, 0xb3971b, (fresh5 >> 1) as isize)
-                );
-                r18 = r18.wrapping_add(1);
-                r20 = (r20).wrapping_add(2);
-                if (r20 == 512) {
-                    break;
-                }
-            }
+            do_until! { (r20 == 512);
+    crate::update_place! { previous fresh5 = r18 => r18.wrapping_add(1); }
+    word!(
+        game.palette_buffer[(r20 >> 1)] =
+            crate::rtl::rom_table_word!(game, 0xb3971b, (fresh5 >> 1) as isize)
+    );
+    r18 = r18.wrapping_add(1);
+    r20 = (r20).wrapping_add(2);
+}
             (*E).var_4F = ((*E).var_4F).wrapping_add(2);
         }
     };
@@ -982,26 +976,23 @@ crate::game::callback_dispatch! {
         } else {
             -2i32
         };
-        loop {
-            let v6 = RomPtr_B3((*E).var_42, game);
-            let v7: u16 = SignExtend8(*v6 as u16);
-            let mut v8: u16 = 0;
-            if v7 == 0xff80 || {
-                x = (x).wrapping_add(v7);
-                v8 = SignExtend8(*v6.offset(1) as u16);
-                v8 == 0xff80
-            } {
-                (*E).var_41 = 0;
-                (*E).var_3C = 1;
-                return;
-            }
-            y = (y).wrapping_add(v8);
-            (*E).var_42 = ((*E).var_42 as i32 + step) as u16;
-            n -= 1;
-            if (n == 0) {
-                break;
-            }
-        }
+        do_until! { (n == 0);
+    let v6 = RomPtr_B3((*E).var_42, game);
+    let v7: u16 = SignExtend8(*v6 as u16);
+    let mut v8: u16 = 0;
+    if v7 == 0xff80 || {
+        x = (x).wrapping_add(v7);
+        v8 = SignExtend8(*v6.offset(1) as u16);
+        v8 == 0xff80
+    } {
+        (*E).var_41 = 0;
+        (*E).var_3C = 1;
+        return;
+    }
+    y = (y).wrapping_add(v8);
+    (*E).var_42 = ((*E).var_42 as i32 + step) as u16;
+    n -= 1;
+}
         if ((*E).var_44 & 0x8000) != 0 {
             x = -(x as i32) as u16;
             y = -(y as i32) as u16;

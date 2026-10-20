@@ -651,13 +651,10 @@ pub unsafe fn StateRecorder_ReadNextReplayState(sr: *mut StateRecorder, game: &m
             } else if ((*sr).replay_cmd as i32) < 0xd0 {
                 let mut nb: i32 = 1 + ((*sr).replay_cmd as i32 >> 2 & 3);
                 if nb == 4 {
-                    loop {
+                    do_until! { (t as i32 != 255);
                         crate::update_place! { previous fresh3 = replay_pos => replay_pos + 1; }
                         let mut t: u8 = *(*sr).log.data.offset(fresh3 as isize);
                         nb += t as i32;
-                        if (t as i32 != 255) {
-                            break;
-                        }
                     }
                 }
                 let mut addr: u32 = (((*sr).replay_cmd as i32 >> 1 & 1) << 16) as u32;
@@ -665,7 +662,7 @@ pub unsafe fn StateRecorder_ReadNextReplayState(sr: *mut StateRecorder, game: &m
                 addr |= ((*(*sr).log.data.offset(fresh4 as isize) as i32) << 8) as u32;
                 crate::update_place! { previous fresh5 = replay_pos => replay_pos + 1; }
                 addr |= *(*sr).log.data.offset(fresh5 as isize) as u32;
-                loop {
+                do_until! { (nb == 0);
                     crate::update_place! { previous fresh6 = replay_pos => replay_pos + 1; }
                     game.g_ram[(addr & 0x1ffff) as usize] = *(*sr).log.data.offset(fresh6 as isize);
                     RtlSyncMemoryRegion(
@@ -675,9 +672,6 @@ pub unsafe fn StateRecorder_ReadNextReplayState(sr: *mut StateRecorder, game: &m
                     );
                     addr = addr.wrapping_add(1);
                     nb -= 1;
-                    if (nb == 0) {
-                        break;
-                    }
                 }
             } else {
                 crate::native_assertion! {
@@ -698,13 +692,10 @@ pub unsafe fn StateRecorder_ReadNextReplayState(sr: *mut StateRecorder, game: &m
             let mask: i32 = if (cmd as i32) < 0xc0 { 0xf } else { 0x1 };
             let mut frames: i32 = cmd as i32 & mask;
             if frames == mask {
-                loop {
+                do_until! { (t_0 as i32 != 255);
                     crate::update_place! { previous fresh8 = replay_pos => replay_pos + 1; }
                     let mut t_0: u8 = *(*sr).log.data.offset(fresh8 as isize);
                     frames += t_0 as i32;
-                    if (t_0 as i32 != 255) {
-                        break;
-                    }
                 }
             }
             (*sr).replay_next_cmd_at = frames as u32;

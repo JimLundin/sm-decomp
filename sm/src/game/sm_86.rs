@@ -1589,11 +1589,8 @@ pub unsafe fn RandomDropRoutine(k: u16, game: &mut Game) -> u16 {
         let mut v2: u16 = (*get_EnemyDef_A2(varE28, game)).item_drop_chances_ptr;
         if (v2 != 0) {
             let mut Random: u8 = 0;
-            loop {
+            do_until! { (Random != 0);
                 Random = NextRandom(game) as u8;
-                if (Random != 0) {
-                    break;
-                }
             }
             let mut r20: u8 = 255;
             let mut r24: u16 = 0;
@@ -1665,7 +1662,7 @@ pub unsafe fn RandomDropRoutine(k: u16, game: &mut Game) -> u16 {
                     i += 1;
                 }
             }
-            loop {
+            do_until! { (i == 6);
                 v9 = ((r22) as i8) & (1i8);
                 r22 = (r22 >> 1);
                 if v9 != 0 {
@@ -1677,9 +1674,6 @@ pub unsafe fn RandomDropRoutine(k: u16, game: &mut Game) -> u16 {
                 }
                 v2 = v2.wrapping_add(1);
                 i += 1;
-                if (i == 6) {
-                    break;
-                }
             }
         }
     }
@@ -5129,27 +5123,21 @@ crate::game::callback_dispatch! {
         let mut v4: i8 = 0;
         let mut v6: i16 = 0;
         let r18: u16 = NextRandom(game);
-        loop {
-            let mut Random: i8 = NextRandom(game) as i8;
-            v4 = ((*epjp as i32 & Random as i32) - *epjp.offset(1) as i32) as i8;
-            if (v4 >= 0) {
-                break;
-            }
-        }
+        do_until! { (v4 >= 0);
+    let mut Random: i8 = NextRandom(game) as i8;
+    v4 = ((*epjp as i32 & Random as i32) - *epjp.offset(1) as i32) as i8;
+}
         word!(game.eproj_x_pos[(k >> 1)], |fresh44| (fresh44 as i32
             + if r18 & 0x8000 != 0 {
                 -(v4 as u8 as i32)
             } else {
                 v4 as u8 as i32
             }) as u16);
-        loop {
-            *(&raw mut v6 as *mut u8) = NextRandom(game) as u8;
-            *(&raw mut v6 as *mut u8) =
-                ((*epjp.offset(2) as i32 & v6 as i32) - *epjp.offset(3) as i32) as u8;
-            if ((v6 as u16 & 0x80) == 0) {
-                break;
-            }
-        }
+        do_until! { ((v6 as u16 & 0x80) == 0);
+    *(&raw mut v6 as *mut u8) = NextRandom(game) as u8;
+    *(&raw mut v6 as *mut u8) =
+        ((*epjp.offset(2) as i32 & v6 as i32) - *epjp.offset(3) as i32) as u8;
+}
         v6 = v6 as u8 as i16;
         if (r18 & 0x4000) != 0 {
             v6 = -(v6 as u8 as i32) as i16;
@@ -5225,15 +5213,12 @@ crate::game::callback_dispatch! {
         let mut v3: u16 = *(epjp.offset(2) as *mut u16);
         let mut n: i32 = *epjp.offset(4) as i32;
         let mut v4: u16 = *(epjp as *mut u16);
-        loop {
-            word!(game.palette_buffer[(v3 >> 1)] = *(RomPtr_86(v4, game) as *mut u16));
-            v4 = (v4 as i32 + 2) as u16;
-            v3 = (v3 as i32 + 2) as u16;
-            n -= 1;
-            if ((n & 0x8000) != 0) {
-                break;
-            }
-        }
+        do_until! { ((n & 0x8000) != 0);
+    word!(game.palette_buffer[(v3 >> 1)] = *(RomPtr_86(v4, game) as *mut u16));
+    v4 = (v4 as i32 + 2) as u16;
+    v3 = (v3 as i32 + 2) as u16;
+    n -= 1;
+}
     };
     @functions [pub unsafe fn (k: u16, epjp: *const u8, game: &mut Game) -> *const u8];
     [8815357] EprojInstr_QueueMusic [epjp.offset(1)] { QueueMusic_Delayed8(*epjp as u16, game); };

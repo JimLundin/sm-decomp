@@ -104,7 +104,7 @@ pub unsafe fn PalFx_ProcessOne(k: u16, game: &mut Game) {
     word!(game.palettefx_instr_timers[v8] = v6);
     let mut color_idx: u16 = word!(game.palettefx_color_indexes[v8]);
     let mut v11: u16 = 0;
-    loop {
+    do_until! { (j == 0);
         loop {
             let mut v10 = RomPtr_8D(j, game);
             v11 = *(v10.offset(2) as *mut u16);
@@ -118,9 +118,6 @@ pub unsafe fn PalFx_ProcessOne(k: u16, game: &mut Game) {
         let v12: PairU16 = CallPalInstr(((v11) as u32) | (0x8d0000u32), color_idx, j, game);
         color_idx = v12.k;
         j = v12.j;
-        if (j == 0) {
-            break;
-        }
     }
 }
 crate::forward_calls! { pub unsafe fn (k: u16, j: u16) -> PairU16;

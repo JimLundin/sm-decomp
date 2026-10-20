@@ -1322,16 +1322,13 @@ pub unsafe fn Sidehopper_Func_2(r22: u16, r24: u16, game: &mut Game) -> u16 {
     crate::verify_probe::hit("hop.Sidehopper_Func_2");
     let mut r18: u16 = 0;
     let mut r20: u16 = 0;
-    loop {
+    do_until! { (r20 as i32 - r22 as i32 & 0x8000 == 0);
         r18 = (r18).wrapping_add(r24);
         r20 = (r20).wrapping_add(
             *((rom_ptr!(game, u16; 0xa2838f) as *mut u8)
                 .offset((8i32 * r18 as i32) as isize)
                 .offset(1) as *mut u16),
         );
-        if (r20 as i32 - r22 as i32 & 0x8000 == 0) {
-            break;
-        }
     }
     r18
 }

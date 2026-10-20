@@ -762,13 +762,10 @@ crate::prefixed_callbacks! {
         let mut r18: u16 = 0;
         let mut R22: u16 = 0;
         r20 = ((r20 as u8 as i32) << 8) as u16;
-        loop {
-            r18 = (r18).wrapping_add(32);
-            R22 = (R22).wrapping_add(r18);
-            if (R22 as i32 - r20 as i32 & 0x8000 == 0) {
-                break;
-            }
-        }
+        do_until! { (R22 as i32 - r20 as i32 & 0x8000 == 0);
+    r18 = (r18).wrapping_add(32);
+    R22 = (R22).wrapping_add(r18);
+}
         (*E).var_B = r18;
         let R24: u16 = ((R22 as i32 & 0xff00) >> 8) as u16;
         (*E).var_F = ((*E).var_D).wrapping_add(R24);
@@ -792,12 +789,9 @@ crate::prefixed_callbacks! {
     SpacePirates_Func_16 [] {
         if ((abs16(((*E).var_D).wrapping_sub(word!(game.samus_x_pos)))) as i16).wrapping_sub(32) < 0 {
             let mut v2: u16 = 0;
-            loop {
-                v2 = (NextRandom(game)) & (3u16);
-                if (v2 != 0) {
-                    break;
-                }
-            }
+            do_until! { (v2 != 0);
+    v2 = (NextRandom(game)) & (3u16);
+}
             let mut v3: i16 = 0;
             if (*E).base.x_pos == (*E).var_E {
                 v3 = 4;

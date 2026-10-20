@@ -3689,7 +3689,7 @@ pub unsafe fn HandleChargingBeamGfxAudio(game: &mut Game) {
                 QueueSfx1_Max9(8, game);
             }
             let mut v0: u16 = 0;
-            loop {
+            do_until! { (((v9) as i16).wrapping_sub(4) >= 0);
                 let mut v1: i16 = ((*((ram_ptr!(game, u16; 0xcdc) as *mut u8)
                     .offset(v0 as i32 as isize) as *mut u16))
                     as i16)
@@ -3731,9 +3731,6 @@ pub unsafe fn HandleChargingBeamGfxAudio(game: &mut Game) {
                     break;
                 }
                 v0 = (v0).wrapping_add(2);
-                if (((v9) as i16).wrapping_sub(4) >= 0) {
-                    break;
-                }
             }
         }
     }

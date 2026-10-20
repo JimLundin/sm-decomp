@@ -286,16 +286,13 @@ crate::game::callback_dispatch! {
 }
 pub unsafe fn HandleRoomDefStateSelect(k: u16, game: &mut Game) {
     let mut v1: u16 = (k).wrapping_add(11);
-    loop {
+    do_until! { (v1 == 0);
         let event_pointer: u16 = (*get_RoomDefStateSelect_E6E5_Finish(v1, game)).code_ptr;
         v1 = CallRoomDefStateSelect(
             ((event_pointer) as u32) | (0x8f0000u32),
             (v1).wrapping_add(2),
             game,
         );
-        if (v1 == 0) {
-            break;
-        }
     }
 }
 crate::game::callback_dispatch! {

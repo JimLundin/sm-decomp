@@ -239,7 +239,7 @@ crate::forward_calls! { pub unsafe fn (game: &mut Game);
     Enemy_NormalShotAI_A2 => NormalEnemyShotAi(game);
 }
 pub fn BouncingGoofball_Func1(k: u16, game: &mut Game) {
-    loop {
+    do_until! { (accumulated.wrapping_sub(GoofballState::new(game, k).distance()) as i16) >= 0;
         let phase = GoofballState::new(game, k).phase();
         let product = goofball_movement_product(k, phase, game);
         GoofballState::new(game, k).set_product(product);
@@ -249,9 +249,6 @@ pub fn BouncingGoofball_Func1(k: u16, game: &mut Game) {
         GoofballState::new(game, k).set_accumulated(accumulated);
         let phase = GoofballState::new(game, k).phase().wrapping_add(1);
         GoofballState::new(game, k).set_phase(phase);
-        if (accumulated.wrapping_sub(GoofballState::new(game, k).distance()) as i16) >= 0 {
-            break;
-        }
     }
     let phase = GoofballState::new(game, k).phase();
     GoofballState::new(game, k).set_limit(phase);
@@ -1277,25 +1274,22 @@ crate::game::callback_dispatch! {
         let mut thbs_var_F: u16 = (*E).var_F;
         let mut r22: u16 = 0;
         let mut r24: u16 = 0;
-        loop {
-            r22 = (r22).wrapping_add(
-                *((rom_ptr!(game, u16; 0xa29a09) as *mut u8).offset(thbs_var_F as i32 as isize)
-                    as *mut u16),
-            );
-            r24 = (r24).wrapping_add(
-                *((rom_ptr!(game, u16; 0xa2838f) as *mut u8)
-                    .offset((8i32 * ((r22 as i32 & 0xff00i32) >> 8i32)) as isize)
-                    .offset(1) as *mut u16),
-            );
-            thbs_var_F = (*E).var_F;
-            let mut v2: u16 = u16::swap_bytes(
-                *((rom_ptr!(game, u16; 0xa29a07) as *mut u8).offset(thbs_var_F as i32 as isize)
-                    as *mut u16),
-            );
-            if (v2 as i32 - r24 as i32 & 0x8000 != 0) {
-                break;
-            }
-        }
+        do_until! { (v2 as i32 - r24 as i32 & 0x8000 != 0);
+    r22 = (r22).wrapping_add(
+        *((rom_ptr!(game, u16; 0xa29a09) as *mut u8).offset(thbs_var_F as i32 as isize)
+            as *mut u16),
+    );
+    r24 = (r24).wrapping_add(
+        *((rom_ptr!(game, u16; 0xa2838f) as *mut u8)
+            .offset((8i32 * ((r22 as i32 & 0xff00i32) >> 8i32)) as isize)
+            .offset(1) as *mut u16),
+    );
+    thbs_var_F = (*E).var_F;
+    let mut v2: u16 = u16::swap_bytes(
+        *((rom_ptr!(game, u16; 0xa29a07) as *mut u8).offset(thbs_var_F as i32 as isize)
+            as *mut u16),
+    );
+}
         (*E).var_B = r22;
         (*E).var_03 = 0;
         let v3: u16 = (r22 >> 1);
@@ -3439,16 +3433,13 @@ pub unsafe fn HirisingSlowfalling_Init(game: &mut Game) {
 pub unsafe fn HirisingSlowfalling_Func_2(k: u16, r18: u16, game: &mut Game) {
     let mut v: u32 = 0;
     let mut r24: u16 = 0;
-    loop {
+    do_until! { ((v >> 16i32).wrapping_sub(r18 as u32) & 0x8000 == 0);
         r24 = (r24).wrapping_add(512);
         let v1: i32 = 4 * (r24 as i32 >> 8);
         v = v.wrapping_add(words!((
             crate::rtl::rom_table_word!(game, 0xa2838f, (v1 + 1) as isize),
             crate::rtl::rom_table_word!(game, 0xa2838f, v1 as isize)
         )));
-        if ((v >> 16i32).wrapping_sub(r18 as u32) & 0x8000 == 0) {
-            break;
-        }
     }
     (*Get_HirisingSlowfalling(k as i32, game)).var_06 = r24;
 }

@@ -153,7 +153,7 @@ unsafe fn calculate_power_bomb_hdma(
     side: ExplosionWindowSide,
     game: &mut Game,
 ) {
-    loop {
+    do_until! { k == 192;
         let w: u8 = *j;
         match side {
             ExplosionWindowSide::Left => {
@@ -192,9 +192,6 @@ unsafe fn calculate_power_bomb_hdma(
         }
         j = j.offset(1);
         k = k.wrapping_add(1);
-        if k == 192 {
-            break;
-        }
     }
 }
 
@@ -207,7 +204,7 @@ unsafe fn calculate_explosion_hdma_scaled(
 ) -> u16 {
     let mut left: u8;
     let mut right: u8;
-    loop {
+    do_until! { (j & 0x80) != 0;
         let r20: u8 = (Mult8x8(
             match scale {
                 ExplosionWindowScale::PowerBomb(value) => value,
@@ -279,9 +276,6 @@ unsafe fn calculate_explosion_hdma_scaled(
                 *(&raw mut j as *mut u8) = ((j) as u8).wrapping_add(1)
             }
             ExplosionWindowScale::CrystalFlash => j = j.wrapping_add(1),
-        }
-        if (j & 0x80) != 0 {
-            break;
         }
     }
     game.k_out = byte!(k; 0) as u16;
@@ -474,12 +468,9 @@ pub(crate) unsafe fn update_scaled(k: u16, phase: Phase, game: &mut Game) {
         (edges >> 8) as u8
     };
     let mut row = game.k_out as u8;
-    loop {
+    do_until! { row & 0x80 != 0;
         write_explosion_window_row!(row as isize, edges as u8, right, game);
         row = row.wrapping_sub(1);
-        if row & 0x80 != 0 {
-            break;
-        }
     }
     let mut row = bottom + 1;
     while row != 0xc0 {

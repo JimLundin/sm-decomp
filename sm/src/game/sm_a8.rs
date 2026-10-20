@@ -930,7 +930,7 @@ pub unsafe fn WreckedShipGhost_Func_8(game: &mut Game) -> u16 {
         let v2: u16 = u16::swap_bytes((*E).base.palette_index);
         let mut v3: u16 = (16 * v2 as i32 + 256) as u16;
         let r20: u16 = (16 * v2 as i32 + 288) as u16;
-        loop {
+        do_until! { (((v3) as i16).wrapping_sub((r20) as i16) >= 0);
             let v4: i32 = v3 as i32 >> 1;
             if word!(game.target_palettes[v4]) != word!(game.palette_buffer[v4]) {
                 let mut r18: u16 = (word!(game.target_palettes[v4])) & (0x1fu16);
@@ -972,9 +972,6 @@ pub unsafe fn WreckedShipGhost_Func_8(game: &mut Game) -> u16 {
                 }
             }
             v3 = (v3).wrapping_add(2);
-            if (((v3) as i16).wrapping_sub((r20) as i16) >= 0) {
-                break;
-            }
         }
     }
     v0
@@ -1041,19 +1038,16 @@ crate::game::callback_dispatch! {
         (*E).var_45 = ((*E).base.palette_index) & (0xe00u16);
         let mut v1: i16 = 3;
         (*E).var_44 = 3;
-        loop {
-            SpawnEprojWithGfx(
-                v1 as u16,
-                word!(game.cur_enemy_index),
-                addr_kEproj_YappingMawsBody as u16,
-                game,
-            );
-            v1 = (((*E).var_44) as i16).wrapping_sub(1);
-            (*E).var_44 = v1 as u16;
-            if (v1 < 0) {
-                break;
-            }
-        }
+        do_until! { (v1 < 0);
+    SpawnEprojWithGfx(
+        v1 as u16,
+        word!(game.cur_enemy_index),
+        addr_kEproj_YappingMawsBody as u16,
+        game,
+    );
+    v1 = (((*E).var_44) as i16).wrapping_sub(1);
+    (*E).var_44 = v1 as u16;
+}
         let v3: u16 = ((*E).base.vram_tiles_index) | ((*E).base.palette_index);
         (*E).var_47 = v3;
         (*E).var_46 = CreateSpriteAtPos(
@@ -3090,11 +3084,8 @@ pub unsafe fn WalkingLavaSeahorse_Init(game: &mut Game) {
     (*E).base.current_instruction = addr_kWalkingLavaSeahorse_Ilist_DBE7 as u16;
     (*E).var_A = ((0xa8dd71i32) as u16);
     WalkingLavaSeahorse_Func_1(word!(game.cur_enemy_index), game);
-    loop {
+    do_until! { ((WalkingLavaSeahorse_Func_2(word!(game.cur_enemy_index), game) & 0x8000) == 0);
         words!((*E).base, y_pos, y_subpos += words!((*E), var_B, var_C));
-        if ((WalkingLavaSeahorse_Func_2(word!(game.cur_enemy_index), game) & 0x8000) == 0) {
-            break;
-        }
     }
     while (Enemy_MoveDown(
         word!(game.cur_enemy_index),
@@ -3952,19 +3943,16 @@ crate::game::callback_dispatch! {
     };
     KiHunter_Func_17 [] {
         set_fields! {[(*E)], 0; var_0A, var_B}
-        loop {
-            let mut v3: u16 = ((*E).var_0A).wrapping_add(384);
-            (*E).var_0A = v3;
-            v3 = (v3 >> 8);
-            let mut v5: u16 = (*((rom_ptr!(game, u16; 0xa2838f) as *mut u8)
-                .offset((8i32 * v3 as i32) as isize)
-                .offset(1) as *mut u16))
-                .wrapping_add((*E).var_D);
-            (*E).var_D = v5;
-            if (v5 as i32 - 0x2000i32 & 0x8000 == 0) {
-                break;
-            }
-        }
+        do_until! { (v5 as i32 - 0x2000i32 & 0x8000 == 0);
+    let mut v3: u16 = ((*E).var_0A).wrapping_add(384);
+    (*E).var_0A = v3;
+    v3 = (v3 >> 8);
+    let mut v5: u16 = (*((rom_ptr!(game, u16; 0xa2838f) as *mut u8)
+        .offset((8i32 * v3 as i32) as isize)
+        .offset(1) as *mut u16))
+        .wrapping_add((*E).var_D);
+    (*E).var_D = v5;
+}
     };
 }
 pub unsafe fn KiHunter_Func_12(game: &mut Game) {

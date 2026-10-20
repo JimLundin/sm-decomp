@@ -510,28 +510,25 @@ crate::game::callback_dispatch! {
         let mut n: u16 = *v2.offset(3) as u16;
         let mut v3: u16 = (j).wrapping_add(4);
         let mut v4: u16 = word!(game.mode7_vram_write_queue_tail);
-        loop {
-            *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).field_0)
-                .offset(v4 as i32 as isize) as *mut u16) = 128;
-            *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).field_1 as *mut u8)
-                .offset(v4 as i32 as isize) as *mut u16) = v3;
-            *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
-                .offset(v4 as isize) as *mut u16) = 139;
-            *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
-                .offset((v4 as i32 + 1) as isize) as *mut u16) = r18x;
-            *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
-                .offset((v4 as i32 + 3) as isize) as *mut u16) = r22;
-            *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(1)).field_1
-                as *mut u8)
-                .offset(v4 as i32 as isize) as *mut u16) = 0;
-            v4 = (v4).wrapping_add(9);
-            v3 = (v3).wrapping_add(r18x);
-            r22 = (r22).wrapping_add(128);
-            n = n.wrapping_sub(1);
-            if (n == 0) {
-                break;
-            }
-        }
+        do_until! { (n == 0);
+    *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).field_0)
+        .offset(v4 as i32 as isize) as *mut u16) = 128;
+    *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).field_1 as *mut u8)
+        .offset(v4 as i32 as isize) as *mut u16) = v3;
+    *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
+        .offset(v4 as isize) as *mut u16) = 139;
+    *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
+        .offset((v4 as i32 + 1) as isize) as *mut u16) = r18x;
+    *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
+        .offset((v4 as i32 + 3) as isize) as *mut u16) = r22;
+    *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(1)).field_1
+        as *mut u8)
+        .offset(v4 as i32 as isize) as *mut u16) = 0;
+    v4 = (v4).wrapping_add(9);
+    v3 = (v3).wrapping_add(r18x);
+    r22 = (r22).wrapping_add(128);
+    n = n.wrapping_sub(1);
+}
         word!(game.mode7_vram_write_queue_tail = v4);
     };
     [9144783] ProcessCinematicBgObject_Unk2 [] {
@@ -541,28 +538,25 @@ crate::game::callback_dispatch! {
         let r20: u16 = *v2.offset(3) as u16;
         let mut v3: u16 = (j).wrapping_add(4);
         let mut v4: u16 = word!(game.mode7_vram_write_queue_tail);
-        loop {
-            *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).field_0)
-                .offset(v4 as i32 as isize) as *mut u16) = 128;
-            *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).field_1 as *mut u8)
-                .offset(v4 as i32 as isize) as *mut u16) = v3;
-            *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
-                .offset(v4 as isize) as *mut u16) = 139;
-            *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
-                .offset((v4 as i32 + 1) as isize) as *mut u16) = r20;
-            *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
-                .offset((v4 as i32 + 3) as isize) as *mut u16) = r22;
-            *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(1)).field_1
-                as *mut u8)
-                .offset(v4 as i32 as isize) as *mut u16) = 2;
-            v4 = (v4).wrapping_add(9);
-            v3 = (v3).wrapping_add(r20);
-            r22 = r22.wrapping_add(1);
-            n -= 1;
-            if (n == 0) {
-                break;
-            }
-        }
+        do_until! { (n == 0);
+    *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).field_0)
+        .offset(v4 as i32 as isize) as *mut u16) = 128;
+    *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).field_1 as *mut u8)
+        .offset(v4 as i32 as isize) as *mut u16) = v3;
+    *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
+        .offset(v4 as isize) as *mut u16) = 139;
+    *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
+        .offset((v4 as i32 + 1) as isize) as *mut u16) = r20;
+    *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0))).gap3 as *mut u8)
+        .offset((v4 as i32 + 3) as isize) as *mut u16) = r22;
+    *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(1)).field_1
+        as *mut u8)
+        .offset(v4 as i32 as isize) as *mut u16) = 2;
+    v4 = (v4).wrapping_add(9);
+    v3 = (v3).wrapping_add(r20);
+    r22 = r22.wrapping_add(1);
+    n -= 1;
+}
         word!(game.mode7_vram_write_queue_tail = v4);
     };
     @functions [pub unsafe fn (
@@ -682,7 +676,7 @@ pub unsafe fn DecomposePaletteDataForFading(game: &mut Game) {
     }
 }
 pub unsafe fn ClearYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
-    loop {
+    do_until! { (j == 0);
         let v2: i32 = k as i32 >> 1;
         word! { game, 0;
             tilemap_stuff[(v2 + 256)], tilemap_stuff[(v2 + 512)],
@@ -690,13 +684,10 @@ pub unsafe fn ClearYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
         }
         k = (k).wrapping_add(2);
         j = j.wrapping_sub(1);
-        if (j == 0) {
-            break;
-        }
     }
 }
 pub unsafe fn FadeOutYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
-    loop {
+    do_until! { (j == 0);
         let v2: i32 = k as i32 >> 1;
         word!(
             game.tilemap_stuff[(v2 + 512)],
@@ -712,13 +703,10 @@ pub unsafe fn FadeOutYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) 
         );
         k = (k).wrapping_add(2);
         j = j.wrapping_sub(1);
-        if (j == 0) {
-            break;
-        }
     }
 }
 pub unsafe fn FadeInYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
-    loop {
+    do_until! { (j == 0);
         let v2: i32 = k as i32 >> 1;
         word! { game;
             tilemap_stuff[(v2 + 512)] = (word!(game.tilemap_stuff[(v2 + 1280)]) as i32
@@ -733,9 +721,6 @@ pub unsafe fn FadeInYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
         }
         k = (k).wrapping_add(2);
         j = j.wrapping_sub(1);
-        if (j == 0) {
-            break;
-        }
     }
 }
 pub unsafe fn ComposeFadingPalettes(game: &mut Game) {
@@ -757,7 +742,7 @@ pub unsafe fn CinematicFunction_Intro_Func20(j: u16, game: &mut Game) {
     let mut v2: u16 = *tt;
     let mut r18: i32 = *tt.offset(1) as i32;
     let dst = &raw mut (*(ram_ptr!(game, Ram4000; 0x4000))).intro_japanese_text_tiles as *mut u16;
-    loop {
+    do_until! { (r18 == 0);
         memcpy(
             dst.offset((v2 >> 1) as isize) as *mut c_void,
             ram_ptr!(game, u16; (*tt.offset(2) as i32 + 0x1a000) as isize) as *const c_void,
@@ -771,9 +756,6 @@ pub unsafe fn CinematicFunction_Intro_Func20(j: u16, game: &mut Game) {
         v2 = (v2).wrapping_add(16);
         tt = tt.offset(2);
         r18 -= 1;
-        if (r18 == 0) {
-            break;
-        }
     }
 }
 pub unsafe fn TransferJapaneseTextTilesToVram(game: &mut Game) {
@@ -1339,7 +1321,7 @@ pub unsafe fn ProcessTextGlowObject(game: &mut Game) {
         let norg: i32 = n;
         let mut m: i32 = *v5.offset(3) as i32;
         loop {
-            loop {
+            do_until! { (n == 0);
                 *((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16
                     as *mut u8)
                     .offset(v4 as i32 as isize) as *mut u16) = (R28
@@ -1350,9 +1332,6 @@ pub unsafe fn ProcessTextGlowObject(game: &mut Game) {
                 v3 = (v3).wrapping_add(2);
                 v4 = (v4).wrapping_add(2);
                 n -= 1;
-                if (n == 0) {
-                    break;
-                }
             }
             n = norg;
             m -= 1;
@@ -1939,7 +1918,7 @@ pub unsafe fn CinematicFunction_Intro_Func127(game: &mut Game) {
     let mut v0: u16 =
         ram_ptr!(game; 0xe0c).offset_from(&raw mut game.g_ram as *mut u8) as c_long as u16;
     let mut v1: i16 = 0;
-    loop {
+    do_until! { ((v4).wrapping_sub(39) >= 0);
         let mut v4: i16 = v1;
         let v2 = RomPtr_RAM(v0, game);
         *(v2 as *mut u16) = v1 as u16;
@@ -1959,9 +1938,6 @@ pub unsafe fn CinematicFunction_Intro_Func127(game: &mut Game) {
         *(v2 as *mut u16).offset(4) = 0;
         v0 = (v0).wrapping_add(16);
         v1 += 1;
-        if ((v4).wrapping_sub(39) >= 0) {
-            break;
-        }
     }
 }
 pub unsafe fn CinematicFunction_Intro_Func149(game: &mut Game) {

@@ -642,7 +642,7 @@ pub unsafe fn NuclearWaffle_Init(game: &mut Game) {
     (*E).base.y_pos = v7;
     let mut v8: u16 = 8;
     (*E).var_2A = 8;
-    loop {
+    do_until! { (v8 == 0);
         SpawnEprojWithGfx(
             v8,
             word!(game.cur_enemy_index),
@@ -651,12 +651,9 @@ pub unsafe fn NuclearWaffle_Init(game: &mut Game) {
         );
         v8 = ((*E).var_2A).wrapping_sub(2);
         (*E).var_2A = v8;
-        if (v8 == 0) {
-            break;
-        }
     }
     (*E).var_2A = 6;
-    loop {
+    do_until! { (v15 == 0);
         let v13: u16 = ((*E).base.vram_tiles_index) | ((*E).base.palette_index);
         (*E).var_34 = v13;
         let r18: u16 = CreateSpriteAtPos((*E).base.x_pos, (*E).base.y_pos, 43, v13, game);
@@ -667,9 +664,6 @@ pub unsafe fn NuclearWaffle_Init(game: &mut Game) {
         .var_10 = r18;
         let mut v15: u16 = ((*E).var_2A).wrapping_sub(2);
         (*E).var_2A = v15;
-        if (v15 == 0) {
-            break;
-        }
     }
 }
 crate::game::callback_dispatch! {
@@ -724,7 +718,7 @@ pub unsafe fn NuclearWaffle_Func_3(varE32: u16, game: &mut Game) {
     (*E).var_2A = 8;
     let mut R36: u16 = ((*E).var_2C).wrapping_add((*E).var_21);
     let mut r28: u16 = 0;
-    loop {
+    do_until! { (v12 == 0);
         R36 = (R36).wrapping_sub((*E).var_2B);
         let ET = Get_NuclearWaffle(
             word!(game.cur_enemy_index) as i32 + (*E).var_2A as i32,
@@ -759,9 +753,6 @@ pub unsafe fn NuclearWaffle_Func_3(varE32: u16, game: &mut Game) {
         word!(game.eproj_y_pos[v10] = ((*E).var_27).wrapping_add(SineMult8bit(v11, varE32, game)));
         let mut v12: u16 = ((*E).var_2A).wrapping_sub(2);
         (*E).var_2A = v12;
-        if (v12 == 0) {
-            break;
-        }
     }
     if r28 != 0 {
         (*E).var_A = ((0xa69615i32) as u16);
@@ -774,7 +765,7 @@ pub unsafe fn NuclearWaffle_Func_4(varE32: u16, game: &mut Game) {
     (*E).var_2A = 6;
     let mut R36: u16 = (*E).var_21;
     let mut r28: u16 = 0;
-    loop {
+    do_until! { (v12 == 0);
         R36 = (R36).wrapping_sub((*E).var_2B);
         let ET = Get_NuclearWaffle(
             word!(game.cur_enemy_index) as i32 + (*E).var_2A as i32,
@@ -812,9 +803,6 @@ pub unsafe fn NuclearWaffle_Func_4(varE32: u16, game: &mut Game) {
         word!(game.sprite_y_pos[(nwe_var_10 >> 1)] = R34);
         let mut v12: u16 = ((*E).var_2A).wrapping_sub(2);
         (*E).var_2A = v12;
-        if (v12 == 0) {
-            break;
-        }
     }
 }
 pub unsafe fn NuclearWaffle_Func_5(a: u16, r28_out: *mut u16, game: &mut Game) -> u16 {
@@ -1758,19 +1746,16 @@ crate::game::callback_dispatch! {
             let mut r18: u16 = 290;
             let mut r20: u16 = 482;
             let mut v2: i16 = 11;
-            loop {
-                let mut v5: i16 = v2;
-                let v3: u16 = crate::rtl::rom_table_word!(game, 0xa6e30a, (cry_var_E >> 1) as isize);
-                word!(game.palette_buffer[(r18 >> 1)] = v3);
-                word!(game.palette_buffer[(r20 >> 1)] = v3);
-                cry_var_E = (cry_var_E).wrapping_add(2);
-                r18 = (r18).wrapping_add(2);
-                r20 = (r20).wrapping_add(2);
-                v2 = (v5).wrapping_sub(1);
-                if (v5 == 1) {
-                    break;
-                }
-            }
+            do_until! { (v5 == 1);
+    let mut v5: i16 = v2;
+    let v3: u16 = crate::rtl::rom_table_word!(game, 0xa6e30a, (cry_var_E >> 1) as isize);
+    word!(game.palette_buffer[(r18 >> 1)] = v3);
+    word!(game.palette_buffer[(r20 >> 1)] = v3);
+    cry_var_E = (cry_var_E).wrapping_add(2);
+    r18 = (r18).wrapping_add(2);
+    r20 = (r20).wrapping_add(2);
+    v2 = (v5).wrapping_sub(1);
+}
             if cry_var_E >= 0x160 {
                 if word!(game.area_index) == 2 {
                     (*E).base.layer = 2;
@@ -3288,13 +3273,10 @@ pub unsafe fn Ridley_CBD5(game: &mut Game) {
 pub unsafe fn Ridley_CBDC(game: &mut Game) {
     let mut v0: u16 = 7;
     let mut v1: u16 = 0;
-    loop {
+    do_until! { (fresh11 == 1);
         Ridley_Func_88(v1, game);
         v1 = (v1).wrapping_add(20);
         crate::update_place! { previous fresh11 = v0 => v0.wrapping_sub(1); }
-        if (fresh11 == 1) {
-            break;
-        }
     }
 }
 pub unsafe fn Ridley_Func_77(game: &mut Game) {
@@ -4087,7 +4069,7 @@ pub unsafe fn sub_A6DC13(j: u16, r18: u16, r20: u16, r22: u16, game: &mut Game) 
     let mut n: i32 = *(p as *mut u16) as i32;
     p = p.offset(2);
     let mut idx: i32 = word!(game.oam_next_ptr) as i32;
-    loop {
+    do_until! { (n == 0);
         let v9: i16 =
             (r20 as i32 + *p.offset(2) as i8 as i32 - word!(game.layer1_y_pos) as i32) as i16;
         if v9 >= 0 && v9 as i32 - 224i32 & 0x8000 != 0 {
@@ -4105,9 +4087,6 @@ pub unsafe fn sub_A6DC13(j: u16, r18: u16, r20: u16, r22: u16, game: &mut Game) 
         }
         p = p.offset(5);
         n -= 1;
-        if (n == 0) {
-            break;
-        }
     }
     word!(game.oam_next_ptr = idx as u16);
 }

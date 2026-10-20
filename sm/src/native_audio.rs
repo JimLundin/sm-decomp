@@ -61,13 +61,10 @@ pub(crate) unsafe fn upload(mut source: u32, game: &mut Game) {
         write(game, 0, token);
         let mut timeout = 0x1000;
         let mut timedout = false;
-        loop {
+        do_until! { read(game, 0) == token;
             timeout -= 1;
             if timeout == 0 {
                 timedout = true;
-                break;
-            }
-            if read(game, 0) == token {
                 break;
             }
         }

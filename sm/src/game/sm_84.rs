@@ -655,7 +655,7 @@ pub unsafe fn DrawPlm(mut k: u16, game: &mut Game) {
             r18 = (r18).wrapping_mul(2);
             r3 = (r18 as i32 + v1 as i32 + 2) as u16;
             let mut v26: u16 = 0;
-            loop {
+            do_until! { r20 == 0;
                 x = *(RomPtr_84orRAM(r3, game) as *mut u16);
                 let mut v29: u16 = (v26).wrapping_add(2);
                 TileTables::draw_block(
@@ -677,9 +677,6 @@ pub unsafe fn DrawPlm(mut k: u16, game: &mut Game) {
                     break '_LABEL_2;
                 }
                 r20 = r20.wrapping_sub(1);
-                if r20 == 0 {
-                    break;
-                }
             }
         } else {
             r20 = ((v2) as u16) & (0x7fffu16);
@@ -780,7 +777,7 @@ pub unsafe fn DrawPlm(mut k: u16, game: &mut Game) {
             r18 = (r18).wrapping_mul(2);
             r3 = (r18 as i32 + v1 as i32 + 2) as u16;
             let mut v16: u16 = 0;
-            loop {
+            do_until! { r20 == 0;
                 x = *(RomPtr_84orRAM(r3, game) as *mut u16);
                 let mut v19: u16 = (v16).wrapping_add(2);
                 TileTables::draw_block(
@@ -801,9 +798,6 @@ pub unsafe fn DrawPlm(mut k: u16, game: &mut Game) {
                     break '_LABEL_2;
                 }
                 r20 = r20.wrapping_sub(1);
-                if r20 == 0 {
-                    break;
-                }
             }
         }
         k = v35;

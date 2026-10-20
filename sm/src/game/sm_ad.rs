@@ -79,7 +79,7 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(mut r22: u16, mut r24: u16, ga
     *v2.offset(1) = 255;
     *v2.offset(2) = 255;
     let v8 = v2;
-    loop {
+    do_until! { (mbn_var_3F == 32);
         let mut v4: u16 = (r20).wrapping_add(r24);
         if u16::overflowing_add(r20, r24).1 {
             break;
@@ -88,17 +88,11 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(mut r22: u16, mut r24: u16, ga
         crate::update_place! { previous fresh11 = v2 => v2.offset(-1); }
         *fresh11 = ((byte!(v4; 1)) as u16) | (0xff00u16);
         mbn_var_3F = mbn_var_3F.wrapping_sub(1);
-        if (mbn_var_3F == 32) {
-            break;
-        }
     }
-    loop {
+    do_until! { (mbn_var_3F == 32);
         crate::update_place! { previous fresh12 = v2 => v2.offset(-1); }
         *fresh12 = 255;
         mbn_var_3F = mbn_var_3F.wrapping_sub(1);
-        if (mbn_var_3F == 32) {
-            break;
-        }
     }
     let mut v5 = v8.offset(1);
     let mut var_3F: u16 = (*gRam8000_Default(0i32, game)).var_3F;
@@ -115,13 +109,10 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(mut r22: u16, mut r24: u16, ga
             return;
         }
     }
-    loop {
+    do_until! { (var_3F == 232);
         crate::update_place! { previous fresh14 = v5 => v5.offset(1); }
         *fresh14 = 255;
         var_3F = var_3F.wrapping_add(1);
-        if (var_3F == 232) {
-            break;
-        }
     }
 }
 static off_ADE024: [Option<Func_CalcHdma>; 4] = callback_table! { unsafe Func_CalcHdma;
@@ -206,13 +197,10 @@ unsafe fn mother_brain_beam_edges(
     let mut dst = if down {
         let mut remaining = row.wrapping_sub(32);
         let mut dst = ram_ptr!(game, u16; 0x9d00).offset(2);
-        loop {
+        do_until! { remaining == 0;
             crate::update_place! { previous current = dst => dst.offset(1); }
             *current = 255;
             remaining = remaining.wrapping_sub(1);
-            if remaining == 0 {
-                break;
-            }
         }
         // Preserve the original post-fill read of the starting row.
         row = (*Get_MotherBrain(0, game)).var_3D;
@@ -225,7 +213,7 @@ unsafe fn mother_brain_beam_edges(
         *dst.offset(2) = 255;
         dst
     };
-    loop {
+    do_until! { row == if down { 232 } else { 32 };
         left = if add_left {
             left_step.saturating_add(left)
         } else {
@@ -248,9 +236,6 @@ unsafe fn mother_brain_beam_edges(
         } else {
             row.wrapping_sub(1)
         };
-        if row == if down { 232 } else { 32 } {
-            break;
-        }
     }
 }
 

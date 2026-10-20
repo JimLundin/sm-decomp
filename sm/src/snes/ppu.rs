@@ -466,7 +466,7 @@ unsafe fn ppu_draw_partial_tile<const PLANES: u32>(
     hflip: bool,
 ) -> (u32, *mut PpuZbufType, i32) {
     let mut pixel;
-    loop {
+    do_until! { count == 0;
         pixel = ppu_planar_pixel::<PLANES>(bits, if hflip { 0 } else { 7 });
         let visible = if PLANES == 4 {
             bits & if hflip { 0x01010101 } else { 0x80808080 } != 0
@@ -483,9 +483,6 @@ unsafe fn ppu_draw_partial_tile<const PLANES: u32>(
         }
         dst = dst.offset(1);
         count = count.wrapping_sub(1);
-        if count == 0 {
-            break;
-        }
     }
     (bits, dst, pixel)
 }
@@ -729,29 +726,23 @@ unsafe fn PpuDrawBackground_mode7(ppu: *mut Ppu, mut y: u32, sub: bool, z: PpuZb
             if mosaic_enabled {
                 let mut w: i32 =
                     (*ppu).mosaicSize as i32 - (x - (*ppu).mosaicModulo[x as usize] as i32);
-                loop {
+                do_until! { (dstz_end.offset_from(dstz) as c_long == 0 as c_long);
                     w = IntMin(w, dstz_end.offset_from(dstz) as c_long as i32);
                     let pixel = ppu_mode7_sample(ppu, xpos, ypos, outside_value, char_fill);
                     if pixel != 0 {
                         let mut i: i32 = 0;
-                        loop {
-                            *dstz.offset(i as isize) = (pixel as i32 + z as i32) as PpuZbufType;
-                            i += 1;
-                            if (i == w) {
-                                break;
-                            }
-                        }
+                        do_until! { (i == w);
+                    *dstz.offset(i as isize) = (pixel as i32 + z as i32) as PpuZbufType;
+                    i += 1;
+                }
                     }
                     xpos = xpos.wrapping_add(dx.wrapping_mul(w as u32));
                     ypos = ypos.wrapping_add(dy.wrapping_mul(w as u32));
                     dstz = dstz.offset(w as isize);
                     w = (*ppu).mosaicSize as i32;
-                    if (dstz_end.offset_from(dstz) as c_long == 0 as c_long) {
-                        break;
-                    }
                 }
             } else {
-                loop {
+                do_until! { (dstz == dstz_end);
                     let pixel_0 = ppu_mode7_sample(ppu, xpos, ypos, outside_value, char_fill);
                     if pixel_0 != 0 {
                         *dstz = (pixel_0 as i32 + z as i32) as PpuZbufType;
@@ -759,9 +750,6 @@ unsafe fn PpuDrawBackground_mode7(ppu: *mut Ppu, mut y: u32, sub: bool, z: PpuZb
                     xpos = xpos.wrapping_add(dx);
                     ypos = ypos.wrapping_add(dy);
                     dstz = dstz.offset(1);
-                    if (dstz == dstz_end) {
-                        break;
-                    }
                 }
             }
         }
@@ -794,16 +782,13 @@ unsafe fn PpuDrawSprites(ppu: *mut Ppu, y: u32, sub: u32, clear_backdrop: bool) 
                     (width as size_t).wrapping_mul(size_of::<u16>() as size_t),
                 );
             } else {
-                loop {
+                do_until! { (width == 0);
                     if *src as i32 > *dst as i32 {
                         *dst = *src;
                     }
                     src = src.offset(1);
                     dst = dst.offset(1);
                     width -= 1;
-                    if (width == 0) {
-                        break;
-                    }
                 }
             }
         }
@@ -905,7 +890,7 @@ unsafe fn PpuDrawWholeLine(ppu: *mut Ppu, y: u32) {
         as *mut u32;
     crate::update_place! { previous dst_org = dst_0 => dst_0.offset(((*ppu).extraLeftRight as i32 - (*ppu).extraLeftCur as i32) as isize); }
     let mut windex: u32 = 0;
-    loop {
+    do_until! { (windex >= cwin.nr as u32);
         let left: u32 = (cwin.edges[windex as usize] as i32 + kPpuExtraLeftRight as i32) as u32;
         let right: u32 =
             (cwin.edges[windex.wrapping_add(1) as usize] as i32 + kPpuExtraLeftRight as i32) as u32;
@@ -970,9 +955,6 @@ unsafe fn PpuDrawWholeLine(ppu: *mut Ppu, y: u32) {
         }
         cw_clip_math >>= 1;
         windex = windex.wrapping_add(1);
-        if (windex >= cwin.nr as u32) {
-            break;
-        }
     }
 }
 unsafe fn ppu_handlePixel(ppu: *mut Ppu, x: i32, y: i32) {

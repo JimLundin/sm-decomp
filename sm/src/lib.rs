@@ -14,6 +14,19 @@
 #![allow(unused_assignments)]
 #![allow(unused_mut)]
 
+// Run the body before testing the guard; body locals remain in scope.
+#[macro_export]
+macro_rules! do_until {
+    ($guard:expr; $($body:tt)*) => {
+        loop {
+            $($body)*
+            if $guard {
+                break;
+            }
+        }
+    };
+}
+
 // Access byte lanes through the original caller-side raw pointer.
 #[macro_export]
 macro_rules! byte {

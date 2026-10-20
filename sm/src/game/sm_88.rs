@@ -478,7 +478,7 @@ pub unsafe fn HdmaObjectHandler(game: &mut Game) {
     if (word!(game.hdma_objects_enable_flag) & 0x8000) != 0 {
         *ram_ptr!(game; 0x85) = 0;
         let mut i: i32 = 0;
-        loop {
+        do_until! { (i == 12);
             word!(game.hdma_object_index = i as u16);
             let mut v1: i8 = byte!(@pointer ram_ptr!(game, u16; 0x18b4); i as isize) as i8;
             if v1 != 0 {
@@ -487,9 +487,6 @@ pub unsafe fn HdmaObjectHandler(game: &mut Game) {
                 i = word!(game.hdma_object_index) as i32;
             }
             i += 2;
-            if (i == 12) {
-                break;
-            }
         }
         LayerBlendingHandler(game);
     }
@@ -1079,16 +1076,13 @@ pub unsafe fn HdmaobjPreInstr_BG3Xscroll(k: u16, game: &mut Game) {
         }
         let mut v1: u16 = word!(game.g_word_7E0596);
         let mut v2: u16 = 0;
-        loop {
+        do_until! { (((v1) as i16).wrapping_sub(32) >= 0);
             word!(
                 game.g_word_7E9E80[(v2 >> 1)] =
                     crate::rtl::rom_table_word!(game, 0x88a938, (v1 >> 1) as isize)
             );
             v2 = (v2).wrapping_add(2);
             v1 = (v1).wrapping_add(2);
-            if (((v1) as i16).wrapping_sub(32) >= 0) {
-                break;
-            }
         }
     } else {
         let v3: i32 = k as i32 >> 1;
@@ -2187,23 +2181,17 @@ pub unsafe fn VariaSuitPickup_0_LightBeamAppears(game: &mut Game) -> u8 {
     word!(game.suit_pickup_light_beam_pos, wrapping_add(8));
     let mut v0: i16 = word!(game.suit_pickup_light_beam_pos) as i16;
     let mut v1: u16 = 0;
-    loop {
+    do_until! { (v0 <= 0);
         word!(game.hdma_table_1[(v1 >> 1)] = g_word_88E0D5);
         v1 = (v1).wrapping_add(2);
         v0 -= 1;
-        if (v0 <= 0) {
-            break;
-        }
     }
     let mut v2: u16 = 510;
     let mut v3: i16 = word!(game.suit_pickup_light_beam_pos) as i16;
-    loop {
+    do_until! { (v3 <= 0);
         word!(game.hdma_table_1[(v2 >> 1)] = g_word_88E0D5);
         v2 = (v2).wrapping_sub(2);
         v3 -= 1;
-        if (v3 <= 0) {
-            break;
-        }
     }
     if word!(game.suit_pickup_light_beam_pos) as i32 - 128i32 & 0x8000 == 0 {
         word!(game.substate, wrapping_add(1));
@@ -2286,20 +2274,14 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> u8 {
     }
     let mut v2: i16 = 0;
     let mut v3: u16 = 0;
-    loop {
+    do_until! { (v2 >= 0x100);
         widen_suit_pickup_beam_row!(game, v3, v2);
         v3 = v3.wrapping_add(1);
-        if (v2 >= 0x100) {
-            break;
-        }
     }
     let mut v7: u16 = (v3).wrapping_sub(1);
-    loop {
+    do_until! { (v2 >= 0x200);
         widen_suit_pickup_beam_row!(game, v7, v2);
         v7 = v7.wrapping_sub(1);
-        if (v2 >= 0x200) {
-            break;
-        }
     }
     word!(game.suit_pickup_light_beam_widening_speed, wrapping_add(96));
     if word!(game.suit_pickup_light_beam_pos) == 0xff00 {
@@ -2323,23 +2305,17 @@ pub unsafe fn VariaSuitPickup_4_LightBeamShrinks(game: &mut Game) -> u8 {
         as u16);
     let mut v0: i16 = word!(game.suit_pickup_light_beam_pos) as i16;
     let mut v1: u16 = 0;
-    loop {
+    do_until! { (v0 <= 0);
         word!(game.hdma_table_1[(v1 >> 1)] = 255);
         v1 = (v1).wrapping_add(2);
         v0 -= 1;
-        if (v0 <= 0) {
-            break;
-        }
     }
     let mut v2: u16 = 510;
     let mut v3: i16 = ((word!(game.suit_pickup_light_beam_pos)) as i16).wrapping_sub(1);
-    loop {
+    do_until! { (v3 <= 0);
         word!(game.hdma_table_1[(v2 >> 1)] = 255);
         v2 = (v2).wrapping_sub(2);
         v3 -= 1;
-        if (v3 <= 0) {
-            break;
-        }
     }
     word!(game.suit_pickup_light_beam_widening_speed, wrapping_sub(32));
     if word!(game.suit_pickup_light_beam_widening_speed) as i32 - 256i32 & 0x8000 != 0 {
@@ -2563,7 +2539,7 @@ pub unsafe fn HdmaobjPreInstr_E567(v0: u16, game: &mut Game) {
         }
         let mut r20: u16 = word!(game.hdma_object_A[v2]);
         let mut v4: u16 = 0;
-        loop {
+        do_until! { (((v4) as i16).wrapping_sub((r30) as i16) >= 0);
             let v5: u16 = r20;
             let v6: i32 = r20 as i32 >> 1;
             let sample = kSinCosTable8bit_Sext[(v6 + 64) as usize];
@@ -2576,9 +2552,6 @@ pub unsafe fn HdmaobjPreInstr_E567(v0: u16, game: &mut Game) {
             *((ram_ptr!(game, u16; 0x9100) as *mut u8).offset(v4 as i32 as isize) as *mut u16) =
                 word!(game.reg_BG2HOFS).wrapping_add(offset);
             v4 = v4.wrapping_add(2);
-            if (((v4) as i16).wrapping_sub((r30) as i16) >= 0) {
-                break;
-            }
         }
         if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(1)).parameter_1 & 1) != 0 {
             for i in (0i32..=126).rev().step_by(2) {
@@ -2902,7 +2875,7 @@ pub unsafe fn HdmaobjPreInstr_ECB6(k: u16, game: &mut Game) {
         );
         let mut r20: u16 = word!(game.hdma_object_A[v3]);
         let mut v4: u16 = 0;
-        loop {
+        do_until! { (((v4 as i32 - n) as i16) >= 0);
             let v5: u16 = r20;
             let v6: i32 = r20 as i32 >> 1;
             let sample = kSinCosTable8bit_Sext[(v6 + 64) as usize];
@@ -2910,9 +2883,6 @@ pub unsafe fn HdmaobjPreInstr_ECB6(k: u16, game: &mut Game) {
             r20 = (r28 as i32 + v5 as i32 & 0x1ff) as u16;
             word!(game.hdma_table_1[(v4 >> 1)] = word!(game.reg_BG3HOFS).wrapping_add(offset));
             v4 = v4.wrapping_add(2);
-            if (((v4 as i32 - n) as i16) >= 0) {
-                break;
-            }
         }
         for i in (0i32..=126).rev().step_by(2) {
             word!(
