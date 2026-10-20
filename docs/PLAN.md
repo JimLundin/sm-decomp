@@ -118,6 +118,42 @@ non-instruction setup (884 total source lines) surveys below the target.
 Next search: complete duplicated algorithms or data representations; no
 additional thousand-line candidate is demonstrated by these surveys.
 
+Current-source discovery bounds (2026-10-20, d0bb9069): the efficiency
+subagent's exact whole-function census offers 501 optimistic aggregate lines.
+Allowing local renaming and integer parameters finds 183 unrelated groups:
+1451 lines with declaration rows, only 863 with ordinary wrappers, both before
+additional argument/signature costs. The largest group is 35 cinematic sprite
+initializers (167 optimistic lines). Expanded macro functions exaggerate the
+maintained-source opportunity because many already occupy one declaration row.
+The ordinary census covers 5121 functions; 239 complex-scope/ABI cases are
+conservatively excluded. These are discovery bounds, not verified projections.
+
+A separate ordinary-function statement-window scan (3..10 statements, exact
+remaining tokens after conventional-local renaming) selects 136 disjoint groups
+at 300 sites with 922 optimistic net lines before real helper arguments. Its
+largest group is four Samus displacement copies (76 optimistic lines). Neither
+this greedy selection nor the whole-function census exhausts semantic designs.
+The refreshed ordinary field-store projection covers 1364 groups/3859 stores:
+4501 source lines become 4501 declaration lines before helper/import cost.
+Shorter shared enemy field names therefore do not revive that parked approach.
+
+Local routing now has 45 discriminators, 400 assignments and 103 reads in
+4161 containing-function/declaration lines; only 548 physical lines mention
+the tags. Eight coroutine functions account for 108 tag-bearing lines. Direct
+control projections retain every gameplay body and coroutine RAM operation:
+Vector_RESET_Async 84->82 and MainScrollingRoutine 59->51 after formatting.
+Branches/labels replace much of the routing scaffolding. No thousand-line
+structural reduction is established; the samples are uncompiled TEMP drafts.
+
+Hardware follow-up also stays parked: remaining SFX command/channel sharing
+would save roughly 100..140 lines. The two PPU renderers have distinct mode
+support, including the per-pixel EXTBG/mosaic path; overlapping routine size
+is not a removable duplicate implementation. Further work needs a concrete
+broader subsystem design with measured maintained-source costs, not another
+pass over these same clone/representation families. No maintained Rust changes
+in this discovery pass. All 81 source/input/artifact pins still match the
+preceding any% 129712/0 and Speed Booster 148406/0 results; no replay rerun.
+
 Residual unused-import draft (2026-10-20): an independent 183-function
 assessment overlaps 178 removals already committed in 7299f73b. Its remaining
 five Bang helpers and 569 unused import bindings save 331 formatted Rust
