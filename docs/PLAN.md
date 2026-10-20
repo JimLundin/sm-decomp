@@ -2612,7 +2612,32 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `fd1c8abb` shares the six Mother
+Latest reviewed integration (2026-10-20): `939101ab` shares callback arguments
+across 133 address dispatchers: all 114 existing macro declarations and
+19 ordinary functions. The 3126 arms retain 2860 shared calls and 266 explicit
+expressions. Independent reconstruction binds all 77 committed inputs to the
+reviewed candidate, including separate formatting of all 26 edited files;
+the other 51 inputs remain exact. Five other sole-match functions retain
+their different fallbacks or nonmatching callback forms.
+
+Shared arguments are the original bare identifiers and remain inside the
+selected match arm. Signatures, return types, patterns, calls and fallbacks
+are unchanged; no value is evaluated early. All 294 ordered gameplay comments
+and 151 attributes remain exact. The six CallPlmHeaderFunc documentation lines,
+including its safety contract, now reach the generated function through
+metadata forwarding, with each original payload independently checked.
+
+Actual whole-library compiler expansion retains all 2068743 remaining tokens,
+including 68283 commas, after removing only the old/new helper definitions
+and the six separately verified documentation attributes. Normal release
+(22.85s wall), formatting/check, progress and full any% pass: 129712/0,
+native exit 0, 107.32s wall/107.18s replay. Review reused the completed run;
+all 93 source/build/proof/fixture pins remain stable through final binding.
+Rust lines fall 1208 to 132445; all other progress counters are unchanged.
+The movie covers six rooms, three enemy definitions and no ending/credits
+frames. Broader gameplay, frontend execution and alias safety remain open.
+
+Included `fd1c8abb` shares the six Mother
 Brain upward/downward beam builders through one private rasterizer and named
 direction enum. Independent reconstruction binds all 74 committed source,
 Cargo and verifier inputs to the final candidate. All six original bodies
